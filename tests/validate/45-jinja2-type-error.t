@@ -31,14 +31,11 @@ cat >'suite.rc' <<'__SUITERC__'
 __SUITERC__
 run_fail "${TEST_NAME}" cylc validate 'suite.rc'
 cmp_ok "${TEST_NAME}.stderr" <<'__ERROR__'
-FileParseError: Jinja2Error:
-  File "<template>", line 5, in top-level template code
-TypeError: unsupported operand type(s) for /: 'int' and 'str'
+Jinja2Error: unsupported operand type(s) for /: 'int' and 'str'
 Context lines:
-[scheduling]
     [[dependencies]]
         graph = foo
-{{ 1 / 'foo' }}	<-- Jinja2Error
+{{ 1 / 'foo' }}	<-- TypeError
 __ERROR__
 
 TEST_NAME="${TEST_NAME}-value-error"
@@ -49,12 +46,11 @@ cat >'suite.rc' <<'__SUITERC__'
 __SUITERC__
 run_fail "${TEST_NAME}" cylc validate 'suite.rc'
 cmp_ok "${TEST_NAME}.stderr" <<'__ERROR__'
-FileParseError: Jinja2Error:
-  File "<template>", line 2, in top-level template code
-ValueError: not enough values to unpack (expected 3, got 2)
+Jinja2Error: not enough values to unpack (expected 3, got 2)
 Context lines:
+#!Jinja2
 {% set foo = [1, 2] %}
-{% set a, b, c = foo %}	<-- Jinja2Error
+{% set a, b, c = foo %}	<-- ValueError
 __ERROR__
 
 exit

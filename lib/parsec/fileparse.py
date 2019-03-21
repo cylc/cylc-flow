@@ -35,13 +35,12 @@ parsec config file parsing:
 import os
 import sys
 import re
-import traceback
 
 from parsec import LOG
 from parsec.exceptions import ParsecError, FileParseError
 from parsec.OrderedDict import OrderedDictWithDefaults
 from parsec.include import inline
-from parsec.jinja2support import jinja2process
+
 from parsec.util import itemstr
 
 
@@ -248,57 +247,22 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
         if flines and re.match(r'^#![Ee]m[Pp]y\s*', flines[0]):
             LOG.debug('Processing with EmPy')
             try:
-                from parsec.empysupport import EmPyError, empyprocess
-            except ImportError:
+                from parsec.empysupport import empyprocess
+            except (ImportError, ModuleNotFoundError):
                 raise ParsecError('EmPy Python package must be installed '
                                   'to process file: ' + fpath)
-
-            try:
-                flines = empyprocess(flines, fdir, template_vars)
-            except EmPyError as exc:
-                lines = flines[max(exc.lineno - 4, 0): exc.lineno]
-                msg = traceback.format_exc()
-                raise FileParseError(msg, lines=lines,
-                                     error_name="EmPyError")
+            flines = empyprocess(flines, fdir, template_vars)
 
     # process with Jinja2
     if do_jinja2:
         if flines and re.match(r'^#![jJ]inja2\s*', flines[0]):
             LOG.debug('Processing with Jinja2')
             try:
-                flines = jinja2process(flines, fdir, template_vars)
-            except ParsecError as exc:
-                raise
-            except Exception as exc:
-                # Extract diagnostic info from the end of the Jinja2 traceback.
-                exc_lines = traceback.format_exc().splitlines()
-                suffix = []
-                for line in reversed(exc_lines):
-                    suffix.append(line)
-                    if re.match(r"\s*File", line):
-                        break
-                msg = '\n'.join(reversed(suffix))
-                lines = None
-                lineno = None
-                if hasattr(exc, 'lineno'):
-                    lineno = exc.lineno
-                else:
-                    match = re.search(r'File "<template>", line (\d+)', msg)
-                    if match:
-                        lineno = int(match.groups()[0])
-                if (lineno and getattr(exc, 'filename', None) is None):
-                    # Jinja2 omits the line if it isn't from an external file.
-                    line_index = lineno - 1
-                    if getattr(exc, 'source', None) is None:
-                        # Jinja2Support strips the shebang line.
-                        lines = flines[1:]
-                    elif isinstance(exc.source, str):
-                        lines = exc.source.splitlines()
-                    if lines:
-                        min_line_index = max(line_index - 3, 0)
-                        lines = lines[min_line_index: line_index + 1]
-                raise FileParseError(
-                    msg, lines=lines, error_name="Jinja2Error")
+                from parsec.jinja2support import jinja2process
+            except (ImportError, ModuleNotFoundError):
+                raise ParsecError('Jinja2 Python package must be installed '
+                                  'to process file: ' + fpath)
+            flines = jinja2process(flines, fdir, template_vars)
 
     # concatenate continuation lines
     if do_contin:

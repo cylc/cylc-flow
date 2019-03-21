@@ -19,7 +19,7 @@
 import tempfile
 import unittest
 
-from parsec.exceptions import IncludeFileNotFoundError
+from parsec.exceptions import IncludeFileNotFoundError, Jinja2Error
 from parsec.fileparse import *
 
 
@@ -113,7 +113,7 @@ class TestFileparse(unittest.TestCase):
 
         error = FileParseError("", lines=["a", "b"])
         self.assertEqual("\nContext lines:\n"
-                         "a\nb\t<-- ", str(error))
+                         "a\nb\t<--", str(error))
 
     def test_addsect(self):
         cfg = OrderedDictWithDefaults()
@@ -323,7 +323,7 @@ class TestFileparse(unittest.TestCase):
             asedit = None
             tf.write("#!jinja2\na={{ name \n".encode())
             tf.flush()
-            with self.assertRaises(FileParseError) as cm:
+            with self.assertRaises(Jinja2Error) as cm:
                 read_and_proc(fpath=fpath, template_vars=template_vars,
                               viewcfg=viewcfg, asedit=asedit)
             self.assertIn(

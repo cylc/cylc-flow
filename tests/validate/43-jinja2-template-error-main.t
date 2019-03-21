@@ -31,10 +31,12 @@ cat >'suite.rc' <<'__SUITERC__'
         script = sleep 1
 __SUITERC__
 run_fail "${TEST_NAME_BASE}" cylc validate 'suite.rc'
-contains_ok "${TEST_NAME_BASE}.stderr" <<'__ERROR__'
-FileParseError: Jinja2Error:
-    'You can only sort by either "key" or "value"'
-jinja2.exceptions.FilterArgumentError: You can only sort by either "key" or "value"
+cmp_ok "${TEST_NAME_BASE}.stderr" <<'__ERROR__'
+Jinja2Error: You can only sort by either "key" or "value"
+Context lines:
+[scheduling]
+    [[dependencies]]
+        graph = {{ foo|dictsort(by='by') }}	<-- FilterArgumentError
 __ERROR__
 
 exit

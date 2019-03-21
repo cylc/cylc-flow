@@ -18,8 +18,12 @@
 
 from copy import copy
 import os
+import textwrap
 
 from parsec.util import itemstr
+
+
+TRACEBACK_WRAPPER = textwrap.TextWrapper()
 
 
 class ParsecError(Exception):
@@ -47,10 +51,8 @@ class FileParseError(ParsecError):
     """Error raised when attempting to read in the config file(s)."""
 
     def __init__(self, reason, index=None, line=None, lines=None,
-                 error_name=""):
+                 err_type=None):
         msg = ''
-        if error_name:
-            msg = error_name + ":\n"
         msg += reason
         if index:
             msg += " (line " + str(index + 1) + ")"
@@ -58,11 +60,47 @@ class FileParseError(ParsecError):
             msg += ":\n   " + line.strip()
         if lines:
             msg += "\nContext lines:\n" + "\n".join(lines)
-            msg += "\t<-- " + error_name
+            msg += "\t<--"
+            if err_type:
+                msg += ' %s' % err_type
         if index:
             # TODO - make 'view' function independent of cylc:
             msg += "\n(line numbers match 'cylc view -p')"
         ParsecError.__init__(self, msg)
+
+
+class EmPyError(FileParseError):
+    """Wrapper class for EmPy exceptions."""
+
+
+class Jinja2Error(FileParseError):
+    """Wrapper class for Jinja2 exceptions."""
+
+    def __init__(self, exception, lines=None, filename=None):
+        # extract the first sentence of exception
+        msg = str(exception)
+        try:
+            msg, tail = msg.split('. ', 1)
+        except ValueError:
+            tail = ''
+        else:
+            msg += '.'
+            tail = tail.strip()
+
+        # append the filename e.g. for a Jinja2 template
+        if filename:
+            msg += f'\nError in file "{filename}"'
+
+        # append the rest of the exception
+        if tail:
+            msg += '\n' + '\n'.join(TRACEBACK_WRAPPER.wrap(tail))
+
+        FileParseError.__init__(
+            self,
+            msg,
+            lines=lines,
+            err_type=exception.__class__.__name__
+        )
 
 
 class IncludeFileNotFoundError(ParsecError):
@@ -124,11 +162,3 @@ class IllegalItemError(ValidationError):
         else:
             msg = '%s' % itemstr(keys, key)
         ValidationError.__init__(self, msg)
-
-
-class EmPyError(Exception):
-    """Wrapper class for EmPy exceptions."""
-
-    def __init__(self, exc, lineno):
-        Exception.__init__(self, exc)
-        self.lineno = lineno
