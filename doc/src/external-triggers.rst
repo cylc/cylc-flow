@@ -138,16 +138,16 @@ the ``cylc suite-state`` command - see
 ``cylc suite-state --help`` for documentation.
 
 As a simple example, consider the suites in
-``<cylc-dir>/etc/dev-suites/xtrigger/suite_state/``. The "upstream"
+``<cylc-dir>/etc/examples/xtrigger/suite_state/``. The "upstream"
 suite (which we want to trigger off of) looks like this:
 
-.. literalinclude:: ../../etc/dev-suites/xtrigger/suite_state/upstream/suite.rc
+.. literalinclude:: ../../etc/examples/xtrigger/suite_state/upstream/suite.rc
    :language: cylc
 
 It must be registered and run under the name *up*, as referenced in the
 "downstream" suite that depends on it:
 
-.. literalinclude:: ../../etc/dev-suites/xtrigger/suite_state/downstream/suite.rc
+.. literalinclude:: ../../etc/examples/xtrigger/suite_state/downstream/suite.rc
    :language: cylc
 
 Try starting the downstream suite first, then the upstream, and
@@ -355,7 +355,7 @@ to (for example) task name, task ID, or cycle point (just use the appropriate
 string templates in the suite configuration for this).
 
 An example xrandom trigger suite is
-``<cylc-dir>/etc/dev-suites/xtriggers/xrandom/``.
+``<cylc-dir>/etc/examples/xtriggers/xrandom/``.
 
 
 .. _Current Trigger Function Limitations:
