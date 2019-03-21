@@ -103,8 +103,6 @@
 #         (Remote job tests should really use set_test_remote, below, however).
 #     set_test_remote
 #         set CYLC_TEST_HOST and CYLC_TEST_OWNER for remote job tests.
-#     port_is_busy $PORT
-#         Return 0 if $PORT is busy or 1 if $PORT is not busy.
 #     set_test_remote_host
 #         set CYLC_TEST_HOST from global config, for remote job tests.
 #         (Remote job tests should really use set_test_remote, below, however).
@@ -578,18 +576,6 @@ set_test_remote() {
 
 
 # tags
-
-port_is_busy() {
-    local WS_PORT="${1}"
-    if type -P netcat 1>/dev/null; then
-        WS_HOSTNAME="${WS_HOSTNAME:-"$(hostname)"}"
-        WS_HOSTNAME="${WS_HOSTNAME:-'localhost'}"
-        netcat -z "${WS_HOSTNAME}" "${WS_PORT}"
-    else
-        netstat -atun | grep -q "0.0.0.0:${WS_PORT}"
-    fi
-}
-
 
 CYLC_DIR="${CYLC_DIR:-$(cd $(dirname "${BASH_SOURCE}")/../../.. && pwd)}"
 PATH="${CYLC_DIR}/bin:${PATH}"
