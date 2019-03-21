@@ -35,7 +35,6 @@ Arguments:
 import os
 import re
 import sys
-from subprocess import PIPE, CalledProcessError, check_call
 
 from cylc.cylc_subproc import procopen
 
@@ -47,7 +46,7 @@ FOUND_UNKNOWNVER_MSG = 'FOUND but could not determine version (?)'
 NOTFOUND_MSG = 'NOT FOUND (-)'
 
 """Specification of cylc core & full-functionality module requirements, the
-latter grouped as Python, TeX or 'other' (neither). 'opt_spec' item format:
+latter grouped as Python or 'other'. 'opt_spec' item format:
 <MODULE>: [<MIN VER OR 'None'>, <FUNC TAG>, <GROUP>, <'OTHER' TUPLE>] with
 <'OTHER' TUPLE> = ([<BASE CMD(S)>], <VER OPT>, <REGEX>, <OUTFILE ARG>).
 """
@@ -172,25 +171,6 @@ def check_py_module_ver(module, min_ver, write=True):
     return res[1]
 
 
-def tex_module_search(tex_module, write=True):
-    """Print outcome of local TeX module search using 'kpsewhich' command."""
-    msg = 'TeX:%s (any)' % tex_module
-    cmd = ['kpsewhich', '%s.sty' % tex_module]
-    # This is less intensive & quicker than searching via 'find' or 'locate'.
-    try:
-        process = procopen(cmd, stdin=open(os.devnull), stdoutpipe=True)
-        check_call(['test', '-n', process.communicate()[0].strip()],
-                   stdin=open(os.devnull), stdout=PIPE, stderr=PIPE)
-    except (CalledProcessError, OSError):
-        if write:
-            shell_align_write('.', msg, NOTFOUND_MSG)
-        return False
-    else:
-        if write:
-            shell_align_write('.', msg, FOUND_NOVER_MSG + ' (n/a)')
-        return True
-
-
 def cmd_find_ver(module, min_ver, cmd_base, ver_opt, ver_extr, outfile=1,
                  write=True):
     """Print outcome & return Boolean (True for pass) of local module version
@@ -234,8 +214,6 @@ def functionality_print(func):
         if func_dep == func:
             if tag == 'PY':
                 opt_result[module] = check_py_module_ver(module, ver_req)
-            elif tag == 'TEX':
-                opt_result[module] = tex_module_search(module)
             elif tag == 'OTHER':
                 opt_result[module] = cmd_find_ver(module, ver_req, *items[3])
     return
@@ -249,8 +227,6 @@ def individual_status_print(module):
         ver_req, _, tag = opt_spec[module][:3]
         if tag == 'PY':
             return int(not check_py_module_ver(module, ver_req, write=False))
-        elif tag == 'TEX':
-            return int(not tex_module_search(module, write=False))
         elif tag == 'OTHER':
             other_args = opt_spec[module][3]
             return int(
