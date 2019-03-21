@@ -174,53 +174,6 @@ The job will attempt to source the first of these files it finds to set up its
 environment.
 
 
-.. _ConfiguringCylcReviewApache:
-
-Configuring Cylc Review Under Apache
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The Cylc Review web service displays suite job logs and other information in
-web pages - see :ref:`ViewingSuiteLogsCylcReview` and
-:numref:`fig-review-screenshot`. It can run under a WSGI server (e.g.
-Apache with ``mod_wsgi``) as a service for all users, or as an ad hoc
-service under your own user account.
-
-To run Cylc Review under Apache, install ``mod_wsgi`` and configure it
-as follows, with paths modified appropriately:
-
-.. code-block:: apacheconf
-
-   # Apache mod_wsgi config file, e.g.:
-   #   Red Hat Linux: /etc/httpd/conf.d/cylc-wsgi.conf
-   #   Ubuntu Linux: /etc/apache2/mods-available/wsgi.conf
-   # E.g. for /opt/cylc-7.8.1/
-   WSGIPythonPath /opt/cylc-7.8.1/lib
-   WSGIScriptAlias /cylc-review /opt/cylc-7.8.1/bin/cylc-review
-
-(Note the ``WSGIScriptAlias`` determines the service URL under the
-server root).
-
-And allow Apache access to the Cylc library:
-
-.. code-block:: apacheconf
-
-   # Directory access, in main Apache config file, e.g.:
-   #   Red Hat Linux: /etc/httpd/conf/httpd.conf
-   #   Ubuntu Linux: /etc/apache2/apache2.conf
-   # E.g. for /opt/cylc-7.8.1/
-   <Directory /opt/cylc-7.8.1/>
-	   AllowOverride None
-	   Require all granted
-   </Directory>
-
-The host running the Cylc Review web service, and the service itself (or the
-user that it runs as) must be able to view the ``~/cylc-run`` directory
-of all Cylc users.
-
-Use the web server log, e.g. ``/var/log/httpd/`` or ``/var/log/apache2/``, to
-debug problems.
-
-
 .. _RTAST:
 
 Automated Tests

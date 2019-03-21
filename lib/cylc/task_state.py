@@ -160,13 +160,6 @@ TASK_STATUSES_TRIGGERABLE = set([
     TASK_STATUS_RETRYING
 ])
 
-# Tasks statuses grouped for cylc review 'create_suite_cycles_summary()'
-TASK_STATUS_GROUPS = {
-    "active": list(TASK_STATUSES_NOT_STALLED),
-    "fail": list(TASK_STATUSES_FAILURE),
-    "success": list(TASK_STATUSES_SUCCESS)
-}
-
 
 def status_leq(status_a, status_b):
     """"Return True if status_a <= status_b"""

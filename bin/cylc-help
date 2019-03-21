@@ -227,7 +227,6 @@ information_commands['get-suite-contact'] = [
     'get-suite-contact', 'get-contact']
 information_commands['get-suite-version'] = [
     'get-suite-version', 'get-cylc-version']
-information_commands['review'] = ['review']
 
 information_commands['documentation'] = ['documentation', 'browse']
 information_commands['monitor'] = ['monitor']
@@ -374,7 +373,6 @@ comsum['get-host-metrics'] = 'Print localhost metric data'
 comsum['get-suite-contact'] = (
     'Print contact information of a suite server program')
 comsum['get-suite-version'] = 'Print cylc version of a suite server program'
-comsum['review'] = 'Start/stop ad-hoc Cylc Review web service server.'
 # control
 comsum['run'] = 'Start a suite at a given cycle point'
 comsum['stop'] = 'Shut down running suites'
