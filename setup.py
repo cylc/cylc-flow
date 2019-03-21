@@ -60,9 +60,11 @@ tests_require = [
 
 extra_requires = {
     'empy': ['EmPy'],
+    'docs': ['sphinx'],
     'all': []
 }
 extra_requires['all'] += extra_requires['empy']
+extra_requires['all'] += extra_requires['docs']
 extra_requires['all'] += tests_require
 
 setup(
