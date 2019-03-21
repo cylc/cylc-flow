@@ -54,7 +54,8 @@ tests_require = [
     'coverage',
     'pytest-cov',
     'pytest',
-    'pycodestyle'
+    'pycodestyle',
+    'testfixtures'
 ]
 
 extra_requires = {
