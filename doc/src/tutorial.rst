@@ -457,40 +457,6 @@ Task job logs can be viewed with the ``cylc cat-log`` command:
   ``$CYLC_SUITE_SHARE_DIR``, see :ref:`TaskExecutionEnvironment`.
 
 
-.. _ViewingSuiteLogsCylcReview:
-
-Viewing Suite Logs in a Web Browser: Cylc Review
-------------------------------------------------
-
-The Cylc Review web service displays suite job logs and other information in
-web pages, as shown in :numref:`fig-review-screenshot`. It can run under a
-WSGI server (e.g. Apache with ``mod_wsgi``) as a service for all
-users, or as an ad hoc service under your own user account.
-
-If a central Cylc Review service has been set up at your site (e.g. as
-described in :ref:`ConfiguringCylcReviewApache`) the URL will typically be
-something like ``http://<server>/cylc-review/``.
-
-.. _fig-review-screenshot:
-
-.. figure:: graphics/png/orig/cylc-review-screenshot.png
-   :align: center
-
-   Screenshot of a Cylc Review web page
-
-Otherwise, to start an ad hoc Cylc Review service to view your own suite logs
-(or those of others, if you have read access to them), run:
-
-.. code-block:: none
-
-   setsid cylc review start 0</dev/null 1>/dev/null 2>&1 &
-
-The service should start at ``http://<server>:8080`` (the port number
-can optionally be set on the command line). Service logs are written to
-``~/.cylc/cylc-review*``. Run ``cylc review`` to view
-status information, and ``cylc review stop`` to stop the service.
-
-
 .. _RemoteTasks:
 
 Remote Tasks
