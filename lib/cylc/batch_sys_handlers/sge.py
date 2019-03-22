@@ -15,14 +15,14 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"SGE qsub job submission"
+"""SGE qsub job submission"""
 
 import re
 
 
 class SGEHandler(object):
 
-    "SGE qsub job submission"
+    """SGE qsub job submission"""
 
     DIRECTIVE_PREFIX = "#$ "
     KILL_CMD_TMPL = "qdel '%(job_id)s'"

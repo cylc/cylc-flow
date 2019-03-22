@@ -15,14 +15,14 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"PBS batch system job submission and manipulation."
+"""PBS batch system job submission and manipulation."""
 
 import re
 
 
 class PBSHandler(object):
 
-    "PBS batch system job submission and manipulation."
+    """PBS batch system job submission and manipulation."""
 
     DIRECTIVE_PREFIX = "#PBS "
     # PBS fails a job submit if job "name" in "-N name" is too long.

@@ -15,14 +15,14 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"Loadleveler job submission"
+"""Loadleveler job submission"""
 
 import re
 
 
 class LoadlevelerHandler(object):
 
-    "Loadleveler job submission"
+    """Loadleveler job submission"""
 
     DIRECTIVE_PREFIX = "# @ "
     KILL_CMD_TMPL = "llcancel '%(job_id)s'"

@@ -329,7 +329,7 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
 
 
 def parse(fpath, output_fname=None, template_vars=None):
-    "Parse file items line-by-line into a corresponding nested dict."
+    """Parse file items line-by-line into a corresponding nested dict."""
 
     # read and process the file (jinja2, include-files, line continuation)
     flines = read_and_proc(fpath, template_vars)
