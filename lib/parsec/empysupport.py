@@ -23,7 +23,6 @@ Importing code should catch ImportError in case EmPy is not installed.
 from io import StringIO
 import em
 import os
-import sys
 
 from parsec.exceptions import EmPyError
 

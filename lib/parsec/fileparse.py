@@ -40,7 +40,6 @@ from parsec import LOG
 from parsec.exceptions import ParsecError, FileParseError
 from parsec.OrderedDict import OrderedDictWithDefaults
 from parsec.include import inline
-
 from parsec.util import itemstr
 
 

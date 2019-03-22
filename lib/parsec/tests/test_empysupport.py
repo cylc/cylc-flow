@@ -25,7 +25,7 @@ import tempfile
 import unittest
 
 from parsec.exceptions import EmPyError
-from parsec.fileparse import FileParseError, read_and_proc
+from parsec.fileparse import read_and_proc
 
 IS_EMPY_INSTALLED = True
 
@@ -82,7 +82,7 @@ class TestEmpysupport1(unittest.TestCase):
 
             del template_vars['name']
 
-            with self.assertRaises(EmPyError) as cm:
+            with self.assertRaises(EmPyError):
                 read_and_proc(fpath=fpath, template_vars=template_vars,
                               viewcfg=viewcfg, asedit=asedit)
             sys.stdout.getvalue = lambda: ''

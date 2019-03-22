@@ -168,12 +168,12 @@ class ListValueError(IllegalValueError):
     """Bad setting value, for a comma separated list."""
 
     def __init__(self, keys, value, msg=None, exc=None):
-        ValidationError.__init__(
-            self, keys, value, msg=msg, exc=exc, vtype='list')
+        IllegalValueError.__init__(
+            self, 'list', keys, value, exc=exc, msg=msg)
 
 
 class IllegalItemError(ValidationError):
     """Bad setting section or option name."""
 
-    def __init__(self, keys, key, msg=None):
-        ValidationError.__init__(self, keys, key=key, msg=msg)
+    def __init__(self, keys, key, msg=None, exc=None):
+        ValidationError.__init__(self, keys, key=key, exc=exc, msg=msg)
