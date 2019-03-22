@@ -123,7 +123,9 @@ def scan_many(items, methods=None, timeout=None, ordered=False):
 
     Args:
         items (list): list of 'host' string or ('host', port) tuple to scan.
+        methods (list): list of 'method' string to be executed when scanning.
         timeout (float): connection timeout, default is CONNECT_TIMEOUT.
+        ordered (bool): whether to scan items in order or not (default).
 
     Return:
         list: [(host, port, identify_result), ...]
