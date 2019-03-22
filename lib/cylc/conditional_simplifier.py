@@ -95,7 +95,7 @@ class ConditionalSimplifier(object):
         """Nest a list according to any brackets in it"""
         start = 0
         finish = len(nest_me)
-        indices = range(0, len(nest_me))
+        indices = list(range(0, len(nest_me)))
         for i in indices:
             if nest_me[i] == "(":
                 start = i
