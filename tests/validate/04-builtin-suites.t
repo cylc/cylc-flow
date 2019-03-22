@@ -18,8 +18,7 @@
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 # Generate a list of suites.
-SUITES=($(find "${CYLC_DIR}/etc/examples" -name 'suite.rc' \
-    | grep -v 'empy' ))  # TODO - don't validate empy suites see: #2958
+SUITES=($(find "${CYLC_DIR}/etc/examples" -name 'suite.rc' ))
 ABS_PATH_LENGTH=${#CYLC_DIR}
 #-------------------------------------------------------------------------------
 # Filter out certain warnings to prevent tests being failed by them.

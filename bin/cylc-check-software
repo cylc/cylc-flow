@@ -52,7 +52,7 @@ latter grouped as Python or 'other'. 'opt_spec' item format:
 """
 req_py_ver_range = ((3,6),)
 opt_spec = {
-    'EmPy': [None, 'TEMPLATING', 'PY'],
+    'EmPy': [(3, 3, 4), 'TEMPLATING', 'PY'],
     'sphinx': [(1, 5, 3), 'HTMLDOCS', 'PY'],
 }
 

@@ -29,12 +29,11 @@ if grep -E '(unit-tests|functional-tests)' <<< "${args[@]}"; then
     # coverage dependencies
     pip install coverage pytest-cov
     # common Cylc reqirements
-    pip install colorama python-jose zmq
+    pip install colorama python-jose zmq empy
 fi
 
 if grep 'unit-tests' <<< "${args[@]}"; then
-    pip install pycodestyle pytest testfixtures
-    # TODO: EmPy removed from testing, see:  #2958
+    pip install pycodestyle pytest testfixtures empy
 fi
 
 # install dependencies required for building documentation
