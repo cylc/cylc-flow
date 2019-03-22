@@ -35,12 +35,10 @@ Use -v/--verbose to see the command invoked to determine the remote version
 site dependent -- see cylc global config documentation."""
 
 import os
-import shlex
 import sys
 from time import sleep
 
 import cylc.flags
-from cylc.config import SuiteConfig
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.cylc_subproc import procopen
 from cylc import __version__ as CYLC_VERSION

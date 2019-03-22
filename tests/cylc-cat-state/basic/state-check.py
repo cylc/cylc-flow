@@ -19,7 +19,6 @@ import os
 import sqlite3
 import sys
 from cylc.cylc_subproc import procopen
-import shlex
 
 
 def main(argv):
