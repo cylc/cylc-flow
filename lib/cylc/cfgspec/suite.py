@@ -15,7 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"Define all legal items and values for cylc suite definition files."
+"""Define all legal items and values for cylc suite definition files."""
 
 from isodatetime.data import Calendar
 

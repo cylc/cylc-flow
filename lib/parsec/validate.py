@@ -209,7 +209,7 @@ class ParsecValidator(object):
 
     @classmethod
     def coerce_float_list(cls, value, keys):
-        "Coerce list values with optional multipliers to float."
+        """Coerce list values with optional multipliers to float."""
         values = cls.strip_and_unquote_list(keys, value)
         return cls.expand_list(values, keys, float)
 
@@ -226,7 +226,7 @@ class ParsecValidator(object):
 
     @classmethod
     def coerce_int_list(cls, value, keys):
-        "Coerce list values with optional multipliers to integer."
+        """Coerce list values with optional multipliers to integer."""
         items = []
         for item in cls.strip_and_unquote_list(keys, value):
             values = cls.parse_int_range(item)

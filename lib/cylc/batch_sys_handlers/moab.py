@@ -15,14 +15,14 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"Moab batch system job submission and manipulation."
+"""Moab batch system job submission and manipulation."""
 
 import re
 
 
 class MoabHandler(object):
 
-    "Moab batch system job submission and manipulation."
+    """Moab batch system job submission and manipulation."""
 
     DIRECTIVE_PREFIX = "#PBS "
     KILL_CMD_TMPL = "mjobctl -c '%(job_id)s'"

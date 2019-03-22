@@ -15,13 +15,13 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"IBM Platform LSF bsub job submission"
+"""IBM Platform LSF bsub job submission"""
 
 import re
 
 
 class LSFHandler(object):
-    "IBM Platform LSF bsub job submission"
+    """IBM Platform LSF bsub job submission"""
 
     DIRECTIVE_PREFIX = "#BSUB "
     KILL_CMD_TMPL = "bkill '%(job_id)s'"

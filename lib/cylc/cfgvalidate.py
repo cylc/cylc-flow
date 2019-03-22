@@ -195,6 +195,8 @@ class CylcConfigValidator(ParsecValidator):
                 This can be a list of str values. Each str value must conform
                 to the same restriction as a task name.
                 Otherwise, this can be a mixture of int ranges and int values.
+            keys (list):
+                Keys in nested dict that represents the raw configuration.
 
         Return (list):
             A list of strings or a list of sorted integers.
