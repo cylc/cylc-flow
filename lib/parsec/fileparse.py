@@ -37,7 +37,6 @@ import sys
 import re
 import traceback
 
-from jinja2 import TemplateError, UndefinedError
 from parsec import LOG, ParsecError
 from parsec.OrderedDict import OrderedDictWithDefaults
 from parsec.include import inline, IncludeFileNotFoundError
