@@ -1716,7 +1716,7 @@ conditions; see `cylc conditions`.
                     self.suite, 'suite log')
                 for line in open(logpath):
                     if any(text in line for text in self.REF_LOG_TEXTS):
-                        handle.write(line)
+                        handle.write(line.encode('utf-8'))
                 handle.close()
             except IOError as exc:
                 LOG.exception(exc)
