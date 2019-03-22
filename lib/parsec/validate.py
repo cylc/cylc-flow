@@ -227,9 +227,9 @@ class ParsecValidator(object):
             >>> ParsecValidator.coerce_spaceless_str_list(
             ...     'a, b c, d', ['foo'])  # doctest: +NORMALIZE_WHITESPACE
             Traceback (most recent call last):
-            parsec.exceptions.ListValueError:\
-            list item "b c" cannot contain a space character:
-                foo = a, b c, d
+            parsec.exceptions.ListValueError: \
+            (type=list) foo = a, b c, d - \
+            (list item "b c" cannot contain a space character)
 
         """
         lst = cls.strip_and_unquote_list(keys, value)
@@ -237,7 +237,7 @@ class ParsecValidator(object):
             if ' ' in item:
                 raise ListValueError(
                     keys, value,
-                    msg='list item "%s" cannot contain a space character:' %
+                    msg='list item "%s" cannot contain a space character' %
                     item)
         return lst
 
@@ -251,8 +251,8 @@ class ParsecValidator(object):
             ... )  # doctest: +NORMALIZE_WHITESPACE
             Traceback (most recent call last):
             parsec.exceptions.ListValueError: \
-            ambiguous host "127.0.0.1:8080"
-                pub = foo, bar, 127.0.0.1:8080, baz
+                (type=list) pub = foo, bar, 127.0.0.1:8080, baz - \
+                (ambiguous host "127.0.0.1:8080")
 
         """
         hosts = cls.coerce_spaceless_str_list(value, keys)
@@ -275,13 +275,13 @@ class ParsecValidator(object):
                 try:
                     lvalues.append(type_(item))
                 except ValueError as exc:
-                    raise IllegalValueError('list', keys, item, exc)
+                    raise IllegalValueError('list', keys, item, exc=exc)
             else:
                 # mult * val
                 try:
                     lvalues += int(mult) * [type_(val)]
                 except ValueError as exc:
-                    raise IllegalValueError('list', keys, item, exc)
+                    raise IllegalValueError('list', keys, item, exc=exc)
         return lvalues
 
     @classmethod
@@ -388,8 +388,8 @@ class ParsecValidator(object):
         if cls._REC_MULTI_PARAM.search(value):
             raise ListValueError(
                 keys, value,
-                msg="names containing commas must be quoted "
-                "(e.g. 'foo<m,n>'):")
+                msg="names containing commas must be quoted"
+                "(e.g. 'foo<m,n>')")
         pos = 0
         while True:
             match = cls._REC_UQLP.search(value, pos)

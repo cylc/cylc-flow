@@ -130,35 +130,50 @@ class UpgradeError(ParsecError):
 class ValidationError(ParsecError):
     """Generic exception for invalid configurations."""
 
+    def __init__(self, keys, value=None, msg=None, exc=None, vtype=None,
+                 key=None):
+        self.keys = keys
+        self.value = value
+        self.msg = msg
+        self.exc = exc
+        self.vtype = vtype
+        self.key = key
+
+    def __str__(self):
+        msg = ''
+        if self.vtype:
+            msg += f'(type={self.vtype}) '
+        if self.key:
+            msg += itemstr(self.keys, self.key)
+        elif self.value:
+            msg += itemstr(self.keys[:-1], self.keys[-1], value=self.value)
+        if self.msg or self.exc:
+            msg += (
+                f' - ({self.exc or ""}'
+                f'{": " if (self.exc and self.msg) else ""}'
+                f'{self.msg or ""})'
+            )
+        return msg
+
 
 class IllegalValueError(ValidationError):
     """Bad setting value."""
 
-    def __init__(self, vtype, keys, value, exc=None):
-        msg = '(type=%s) %s' % (
-            vtype, itemstr(keys[:-1], keys[-1], value=value))
-        if exc:
-            msg += " - (%s)" % exc
-        ValidationError.__init__(self, msg)
+    def __init__(self, vtype, keys, value, exc=None, msg=None):
+        ValidationError.__init__(
+            self, keys, vtype=vtype, value=value, exc=exc, msg=msg)
 
 
 class ListValueError(IllegalValueError):
     """Bad setting value, for a comma separated list."""
 
-    def __init__(self, keys, value, msg='', exc=None):
-        msg = '%s\n    %s' % (
-            msg, itemstr(keys[:-1], keys[-1], value=value))
-        if exc:
-            msg += ": %s" % exc
-        ValidationError.__init__(self, msg)
+    def __init__(self, keys, value, msg=None, exc=None):
+        ValidationError.__init__(
+            self, keys, value, msg=msg, exc=exc, vtype='list')
 
 
 class IllegalItemError(ValidationError):
     """Bad setting section or option name."""
 
     def __init__(self, keys, key, msg=None):
-        if msg is not None:
-            msg = '%s - (%s)' % (itemstr(keys, key), msg)
-        else:
-            msg = '%s' % itemstr(keys, key)
-        ValidationError.__init__(self, msg)
+        ValidationError.__init__(self, keys, key=key, msg=msg)

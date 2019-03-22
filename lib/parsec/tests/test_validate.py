@@ -111,18 +111,18 @@ class TestValidate(unittest.TestCase):
     def test_list_value_error(self):
         keys = ['a,', 'b', 'c']
         value = 'a sample value'
-        error = ListValueError(keys, value, "who cares:")
+        error = ListValueError(keys, value, "who cares")
         output = str(error)
-        expected = 'who cares:\n    [a,][b]c = a sample value'
+        expected = '(type=list) [a,][b]c = a sample value - (who cares)'
         self.assertEqual(expected, output)
 
     def test_list_value_error_with_exception(self):
         keys = ['a,', 'b', 'c']
         value = 'a sample value'
         exc = Exception('test')
-        error = ListValueError(keys, value, "who cares:", exc)
+        error = ListValueError(keys, value, "who cares", exc)
         output = str(error)
-        expected = 'who cares:\n    [a,][b]c = a sample value: test'
+        expected = '(type=list) [a,][b]c = a sample value - (test: who cares)'
         self.assertEqual(expected, output)
 
     def test_illegal_value_error(self):
