@@ -5,10 +5,14 @@ from cherrypy._cpcompat import ntob
 
 
 def get_xmlrpclib():
+    # XMLRPC is particularly dangerous as it is also concerned with
+    # communicating data over a network. Use defused.xmlrpc.monkey_patch()
+    # function to monkey-patch xmlrpclib and mitigate remote XML attacks.
+    # https://docs.openstack.org/developer/bandit/blacklists/blacklist_imports.html#b411-import-xmlrpclib
     try:
         import xmlrpc.client as x
     except ImportError:
-        import xmlrpclib as x
+        import defusedxml.xmlrpclib as x
     return x
 
 

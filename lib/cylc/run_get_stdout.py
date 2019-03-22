@@ -20,8 +20,9 @@
 
 from os import devnull, killpg, setpgrp
 from signal import SIGTERM
-from subprocess import Popen, PIPE
 from time import sleep, time
+
+from cylc.cylc_subproc import procopen
 
 
 ERR_TIMEOUT = "ERROR: command timed out (>%ds), terminated by signal %d\n%s"
@@ -44,22 +45,22 @@ def run_get_stdout(command, timeout=None, poll_delay=None):
 
     """
     try:
-        popen = Popen(
-            command, shell=True, preexec_fn=setpgrp, stdin=open(devnull),
-            stderr=PIPE, stdout=PIPE)
+        proc = procopen(command, usesh=True, preexec_fn=setpgrp,
+                        stdin=open(devnull), stderrpipe=True, stdoutpipe=True)
+        # calls to open a shell are aggregated in cylc_subproc.procopen()
         is_killed_after_timeout = False
         if timeout:
             if poll_delay is None:
                 poll_delay = POLL_DELAY
             timeout_time = time() + timeout
-            while popen.poll() is None:
+            while proc.poll() is None:
                 if time() > timeout_time:
-                    killpg(popen.pid, SIGTERM)
+                    killpg(proc.pid, SIGTERM)
                     is_killed_after_timeout = True
                     break
                 sleep(poll_delay)
-        out, err = popen.communicate()
-        res = popen.wait()
+        out, err = proc.communicate()
+        res = proc.wait()
         if res < 0 and is_killed_after_timeout:
             return (False, [ERR_TIMEOUT % (timeout, -res, err), command])
         elif res < 0:

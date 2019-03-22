@@ -41,3 +41,17 @@ passphrase
 .coverage.*
 coverage.xml
 htmlcov/
+
+# vscode
+.vscode/*
+
+# pytest
+.pytest_cache/v/cache/
+
+# cherrypy
+lib/cherrypy/**/*.log
+lib/cherrypy/**/**/*.log
+lib/cherrypy/test/test.conf
+
+# pipenv
+Pipfile

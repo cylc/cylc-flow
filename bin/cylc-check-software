@@ -32,10 +32,12 @@ Arguments:
                 valid module arguments (lower-case equivalents accepted).
 """
 
-import sys
-import re
 import os
-from subprocess import check_call, PIPE, Popen, CalledProcessError
+import re
+import sys
+from subprocess import PIPE, CalledProcessError, check_call
+
+from cylc.cylc_subproc import procopen
 
 # Standardised output messages
 FOUND_NOVER_MSG = 'FOUND'
@@ -81,7 +83,7 @@ opt_result = {}
 
 def output_width(min_width=65, max_width=90):
     """Return a suitable output alignment width given user terminal width."""
-    proc = Popen(['stty', 'size'], stdout=PIPE)
+    proc = procopen(['stty', 'size'], stdoutpipe=True)
     if proc.wait():
         return int((min_width + max_width) / 2)
     else:
@@ -188,7 +190,7 @@ def tex_module_search(tex_module, write=True):
     cmd = ['kpsewhich', '%s.sty' % tex_module]
     # This is less intensive & quicker than searching via 'find' or 'locate'.
     try:
-        process = Popen(cmd, stdin=open(os.devnull), stdout=PIPE)
+        process = procopen(cmd, stdin=open(os.devnull), stdoutpipe=True)
         check_call(['test', '-n', process.communicate()[0].strip()],
                    stdin=open(os.devnull), stdout=PIPE, stderr=PIPE)
     except (CalledProcessError, OSError):
@@ -201,8 +203,8 @@ def tex_module_search(tex_module, write=True):
         return True
 
 
-def cmd_find_ver(
-    module, min_ver, cmd_base, ver_opt, ver_extr, outfile=1, write=True):
+def cmd_find_ver(module, min_ver, cmd_base, ver_opt, ver_extr, outfile=1,
+                 write=True):
     """Print outcome & return Boolean (True for pass) of local module version
     requirement test using relevant custom command base keyword(s),
     version-checking option(s) & version-extraction regex.
@@ -211,14 +213,15 @@ def cmd_find_ver(
                        min_ver is not None else 'any')
     for cmd in cmd_base:
         try_next_cmd = True
-        if Popen(['which', cmd], stdin=open(os.devnull), stdout=PIPE,
-                 stderr=PIPE).wait():
+        if procopen(['which', cmd], stdin=open(os.devnull),
+                    stdoutpipe=True, stderrpipe=True).wait():
             res = [NOTFOUND_MSG, False]
         else:
             try:
-                output = Popen([cmd, ver_opt], stdin=open(os.devnull),
-                               stdout=PIPE,
-                               stderr=PIPE).communicate()[outfile - 1].strip()
+                output = procopen([cmd, ver_opt], stdoutpipe=True,
+                                  stdin=open(os.devnull),
+                                  stderrpipe=True).communicate()
+                [outfile - 1].strip()
                 version = re.search(ver_extr, output).groups()[0]
                 try_next_cmd = False
                 if min_ver is None:

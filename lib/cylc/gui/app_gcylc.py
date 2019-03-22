@@ -20,22 +20,45 @@
 
 import os
 import re
-import sys
-import gtk
-import pango
-import gobject
 import shlex
-from subprocess import Popen, PIPE, STDOUT
+import sys
 from uuid import uuid4
 
-from isodatetime.parsers import TimePointParser
-
-from cylc.hostuserutil import is_remote_host, is_remote_user
-from cylc.gui.dbchooser import dbchooser
+import gobject
+import gtk
+import pango
+from cylc.cfgspec.gcylc import GcylcConfig
+from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.gui.combo_logviewer import ComboLogViewer
-from cylc.gui.warning_dialog import warning_dialog, info_dialog
+from cylc.gui.dbchooser import dbchooser
+from cylc.gui.dot_maker import DotMaker
+from cylc.gui.gcapture import Gcapture
+from cylc.gui.legend import ThemeLegendWindow
+from cylc.gui.option_group import controlled_option_group
+from cylc.gui.suite_log_viewer import SuiteLogViewer
+from cylc.gui.updater import Updater
+from cylc.gui.util import (EntryDialog, EntryTempText, get_icon, get_image_dir,
+                           get_logo, set_exception_hook_dialog, setup_icons)
+from cylc.gui.view_dot import ControlLED
+from cylc.gui.view_tree import ControlTree
+from cylc.gui.warning_dialog import info_dialog, warning_dialog
+from cylc.hostuserutil import is_remote_host, is_remote_user
+from cylc.network.httpclient import ClientError
+from cylc.cylc_subproc import procopen
+from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
+from cylc.suite_status import SUITE_STATUS_STOPPED_WITH
+from cylc.task_id import TaskID
 from cylc.task_job_logs import JOB_LOG_OPTS
+from cylc.task_state import (TASK_STATUS_FAILED, TASK_STATUS_HELD,
+                             TASK_STATUS_RUNNING, TASK_STATUSES_ACTIVE,
+                             TASK_STATUSES_ALL, TASK_STATUSES_CAN_RESET_TO,
+                             TASK_STATUSES_NO_JOB_FILE,
+                             TASK_STATUSES_RESTRICTED,
+                             TASK_STATUSES_TRIGGERABLE)
+from cylc.task_state_prop import extract_group_state, get_status_prop
+from cylc.version import CYLC_VERSION
 from cylc.wallclock import get_current_time_string
+from isodatetime.parsers import TimePointParser
 
 try:
     from cylc.gui.view_graph import ControlGraph
@@ -48,39 +71,15 @@ except ImportError as exc:
 else:
     graphing_disabled = False
 
-from cylc.gui.legend import ThemeLegendWindow
-from cylc.gui.view_dot import ControlLED
-from cylc.gui.view_tree import ControlTree
-from cylc.gui.dot_maker import DotMaker
-from cylc.gui.updater import Updater
-from cylc.gui.util import (
-    get_icon, get_image_dir, get_logo, EntryTempText,
-    EntryDialog, setup_icons, set_exception_hook_dialog)
-from cylc.network.httpclient import ClientError
-from cylc.suite_status import SUITE_STATUS_STOPPED_WITH
-from cylc.task_id import TaskID
-from cylc.task_state_prop import extract_group_state, get_status_prop
-from cylc.version import CYLC_VERSION
-from cylc.gui.option_group import controlled_option_group
-from cylc.gui.suite_log_viewer import SuiteLogViewer
-from cylc.gui.gcapture import Gcapture
-from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
-from cylc.cfgspec.glbl_cfg import glbl_cfg
-from cylc.cfgspec.gcylc import GcylcConfig
-from cylc.task_state import (
-    TASK_STATUSES_ALL, TASK_STATUSES_RESTRICTED, TASK_STATUSES_CAN_RESET_TO,
-    TASK_STATUSES_TRIGGERABLE, TASK_STATUSES_ACTIVE, TASK_STATUS_RUNNING,
-    TASK_STATUS_HELD, TASK_STATUS_FAILED, TASK_STATUSES_NO_JOB_FILE)
-
 
 def run_get_stdout(command, filter_=False):
     try:
-        popen = Popen(
-            command,
-            shell=True, stdin=open(os.devnull), stderr=PIPE, stdout=PIPE)
-        out = popen.stdout.read()
-        err = popen.stderr.read()
-        res = popen.wait()
+        proc = procopen(command, usesh=True, stdoutpipe=True, stderrpipe=True,
+                        stdin=open(os.devnull), splitcmd=True)
+        # calls to open a shell are aggregated in cylc_subproc.procopen()
+        out = proc.stdout.read()
+        err = proc.stderr.read()
+        res = proc.wait()
         if res < 0:
             warning_dialog(
                 "ERROR: command terminated by signal %d\n%s" % (res, err)
@@ -994,7 +993,7 @@ class ControlApp(object):
             # process can detach as a process group leader and not subjected to
             # SIGHUP from the current process.
             # See also "cylc.batch_sys_handlers.background".
-            Popen(
+            procopen(
                 [
                     "nohup",
                     "bash",
@@ -1005,7 +1004,7 @@ class ControlApp(object):
                 preexec_fn=os.setpgrp,
                 stdin=open(os.devnull),
                 stdout=open(os.devnull, "wb"),
-                stderr=STDOUT)
+                stderrout=True)
         else:
             self.reset(reg, auth)
 
@@ -1202,7 +1201,9 @@ been defined for this suite""").inform()
             pass  # Cannot print to terminal (session may be closed).
 
         try:
-            Popen([command], shell=True, stdin=open(os.devnull))
+            procopen(command, usesh=True, stdin=open(os.devnull),
+                     splitcmd=True)
+            # calls to open a shell are aggregated in cylc_subproc.procopen()
         except OSError:
             warning_dialog('Error: failed to start ' + self.cfg.suite,
                            self.window).warn()
@@ -2852,18 +2853,18 @@ This is what my suite does:..."""
         cat_menu.append(cylc_help_item)
         cylc_help_item.connect('activate', self.command_help)
 
-        cout = Popen(
+        cout = procopen(
             ["cylc", "categories"],
-            stdin=open(os.devnull), stdout=PIPE).communicate()[0]
+            stdin=open(os.devnull), stdoutpipe=True).communicate()[0]
         categories = cout.rstrip().split()
         for category in categories:
             foo_item = gtk.MenuItem(category)
             cat_menu.append(foo_item)
             com_menu = gtk.Menu()
             foo_item.set_submenu(com_menu)
-            cout = Popen(
+            cout = procopen(
                 ["cylc-help", "category=" + category],
-                stdin=open(os.devnull), stdout=PIPE).communicate()[0]
+                stdin=open(os.devnull), stdoutpipe=True).communicate()[0]
             commands = cout.rstrip().split()
             for command in commands:
                 bar_item = gtk.MenuItem(command)

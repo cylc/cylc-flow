@@ -29,6 +29,7 @@ import cherrypy
 from fnmatch import fnmatch
 from glob import glob
 import jinja2
+from jinja2 import select_autoescape
 import json
 import mimetypes
 import os
@@ -82,7 +83,7 @@ class CylcReviewService(object):
         template_env = jinja2.Environment(
             loader=jinja2.FileSystemLoader(
                 get_util_home("lib", "cylc", "cylc-review", "template")),
-            autoescape=jinja2.select_autoescape(
+            autoescape=select_autoescape(
                 enabled_extensions=('html', 'xml'), default_for_string=True),
         )
         template_env.filters['urlise'] = self.url2hyperlink

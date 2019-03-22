@@ -16,17 +16,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import gobject
-import gtk
 import os
-import pango
-from subprocess import Popen, STDOUT
 import tempfile
 
+import gobject
+import gtk
+import pango
+from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.gui.tailer import Tailer
 from cylc.gui.util import get_icon
-from cylc.gui.warning_dialog import warning_dialog, info_dialog
-from cylc.cfgspec.glbl_cfg import glbl_cfg
+from cylc.gui.warning_dialog import info_dialog, warning_dialog
+from cylc.cylc_subproc import procopen
 
 
 class Gcapture(object):
@@ -130,9 +130,10 @@ class Gcapture(object):
         self.window.show()
 
     def run(self):
-        proc = Popen(
-            self.command, stdin=open(os.devnull), stdout=self.stdoutfile,
-            stderr=STDOUT, shell=True)
+        proc = procopen(self.command, stdin=open(os.devnull),
+                        stdout=self.stdoutfile, stderrout=True,
+                        usesh=True, splitcmd=True)
+        # calls to open a shell are aggregated in cylc_subproc.procopen()
         self.proc = proc
         gobject.timeout_add(40, self.pulse_proc_progress)
         tail_cmd_tmpl = glbl_cfg().get_host_item("tail command template")

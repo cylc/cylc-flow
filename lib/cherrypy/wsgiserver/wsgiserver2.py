@@ -1,3 +1,21 @@
+import os
+try:
+    import queue
+except:  # noqa: E722
+    import Queue as queue
+import re
+import email.utils
+import socket
+import sys
+import threading
+import time
+import traceback as traceback_
+import operator
+from urllib import unquote
+from urlparse import urlparse
+import errno
+import logging
+
 """A high-speed, production ready, thread pooled, generic HTTP server.
 
 Simplest example on how to use this module directly
@@ -78,24 +96,6 @@ __all__ = ['HTTPRequest', 'HTTPConnection', 'HTTPServer',
            'WSGIPathInfoDispatcher', 'get_ssl_adapter_class',
            'socket_errors_to_ignore']
 
-import os
-try:
-    import queue
-except:
-    import Queue as queue
-import re
-import email.utils
-import socket
-import sys
-import threading
-import time
-import traceback as traceback_
-import operator
-from urllib import unquote
-from urlparse import urlparse
-import warnings
-import errno
-import logging
 try:
     # prefer slower Python-based io module
     import _pyio as io
@@ -130,6 +130,7 @@ class FauxSocket(object):
 
     def _reuse(self):
         pass
+
 
 _fileobject_uses_str_type = isinstance(
     socket._fileobject(FauxSocket())._rbuf, basestring)
@@ -184,6 +185,7 @@ def plat_specific_errors(*errnames):
     nums = [getattr(errno, k) for k in errnames if k in errno_names]
     # de-dupe the list
     return list(dict.fromkeys(nums).keys())
+
 
 socket_error_eintr = plat_specific_errors("EINTR", "WSAEINTR")
 
@@ -392,7 +394,7 @@ class KnownLengthRFile(object):
     def close(self):
         self.rfile.close()
 
-    def __iter__(self):
+    def __iter__(self):  # pylint: disable=E0301
         return self
 
     def __next__(self):
@@ -440,7 +442,7 @@ class ChunkedRFile(object):
             self.closed = True
             return
 
-##            if line: chunk_extension = line[0]
+#            if line: chunk_extension = line[0]
 
         if self.maxlen and self.bytes_read + chunk_size > self.maxlen:
             raise IOError("Request Entity Too Large")
@@ -542,7 +544,7 @@ class ChunkedRFile(object):
     def close(self):
         self.rfile.close()
 
-    def __iter__(self):
+    def __iter__(self, sizehint=0):
         # Shamelessly stolen from StringIO
         total = 0
         line = self.readline(sizehint)
@@ -940,8 +942,8 @@ class HTTPRequest(object):
             if status < 200 or status in (204, 205, 304):
                 pass
             else:
-                if (self.response_protocol == 'HTTP/1.1'
-                        and self.method != 'HEAD'):
+                if (self.response_protocol == 'HTTP/1.1' and
+                        self.method != 'HEAD'):
                     # Use the chunked transfer-coding
                     self.chunked_write = True
                     self.outheaders.append(("Transfer-Encoding", "chunked"))
@@ -1038,8 +1040,8 @@ class CP_fileobject(socket._fileobject):
                 self.bytes_read += len(data)
                 return data
             except socket.error, e:
-                if (e.args[0] not in socket_errors_nonblocking
-                        and e.args[0] not in socket_error_eintr):
+                if (e.args[0] not in socket_errors_nonblocking and e.args[0]
+                        not in socket_error_eintr):
                     raise
 
     if not _fileobject_uses_str_type:
@@ -1105,7 +1107,7 @@ class CP_fileobject(socket._fileobject):
                     buf.write(data)
                     buf_len += n
                     del data  # explicit free
-                    #assert buf_len == buf.tell()
+                    #  assert buf_len == buf.tell()
                 return buf.getvalue()
 
         def readline(self, size=-1):
@@ -1195,7 +1197,7 @@ class CP_fileobject(socket._fileobject):
                         break
                     buf.write(data)
                     buf_len += n
-                    #assert buf_len == buf.tell()
+                    #  assert buf_len == buf.tell()
                 return buf.getvalue()
     else:
         def read(self, size=-1):
@@ -1452,6 +1454,8 @@ class TrueyZero(object):
 
     def __radd__(self, other):
         return other
+
+
 trueyzero = TrueyZero()
 
 
@@ -1553,7 +1557,7 @@ class ThreadPool(object):
     """
 
     def __init__(self, server, min=10, max=-1,
-        accepted_queue_size=-1, accepted_queue_timeout=10):
+                 accepted_queue_size=-1, accepted_queue_timeout=10):
         self.server = server
         self.min = min
         self.max = max
@@ -1720,10 +1724,10 @@ class SSLAdapter(object):
         self.certificate_chain = certificate_chain
 
     def wrap(self, sock):
-        raise NotImplemented
+        raise NotImplementedError
 
     def makefile(self, sock, mode='r', bufsize=DEFAULT_BUFFER_SIZE):
-        raise NotImplemented
+        raise NotImplementedError
 
 
 class HTTPServer(object):
@@ -1898,13 +1902,20 @@ class HTTPServer(object):
             # So we can reuse the socket...
             try:
                 os.unlink(self.bind_addr)
-            except:
+            except:  # noqa: E722
                 pass
 
             # So everyone can access the socket...
             try:
-                os.chmod(self.bind_addr, 0o777)
-            except:
+                # this was set to 777 changed to 755
+                # https://docs.openstack.org/developer/bandit/plugins/set_bad_file_permissions.html
+                # This plugin test looks for the use of chmod and will alert
+                # when it is used to set particularly permissive control flags.
+                # A MEDIUM warning is generated if a file is set to group
+                # executable and a HIGH warning is reported if a file is set
+                # world writable. Warnings are given with HIGH confidence.
+                os.chmod(self.bind_addr, 0o755)
+            except:  # noqa: E722
                 pass
 
             info = [
@@ -1956,7 +1967,7 @@ class HTTPServer(object):
                 self.tick()
             except (KeyboardInterrupt, SystemExit):
                 raise
-            except:
+            except:  # noqa: E722
                 self.error_log("Error in HTTPServer.tick", level=logging.ERROR,
                                traceback=True)
 
@@ -1990,8 +2001,8 @@ class HTTPServer(object):
         # If listening on the IPV6 any address ('::' = IN6ADDR_ANY),
         # activate dual-stack. See
         # https://github.com/cherrypy/cherrypy/issues/871.
-        if (hasattr(socket, 'AF_INET6') and family == socket.AF_INET6
-                and self.bind_addr[0] in ('::', '::0', '::0.0.0.0')):
+        if (hasattr(socket, 'AF_INET6') and family == socket.AF_INET6 and
+                self.bind_addr[0] in ('::', '::0', '::0.0.0.0')):
             try:
                 self.socket.setsockopt(
                     socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
@@ -2163,7 +2174,7 @@ class Gateway(object):
 
     def respond(self):
         """Process the current request. Must be overridden in a subclass."""
-        raise NotImplemented
+        raise NotImplementedError
 
 
 # These may either be wsgiserver.SSLAdapter subclasses or the string names
@@ -2212,7 +2223,8 @@ class CherryPyWSGIServer(HTTPServer):
     def __init__(self, bind_addr, wsgi_app, numthreads=10, server_name=None,
                  max=-1, request_queue_size=5, timeout=10, shutdown_timeout=5,
                  accepted_queue_size=-1, accepted_queue_timeout=10):
-        self.requests = ThreadPool(self, min=numthreads or 1, max=max,
+        self.requests = ThreadPool(
+            self, min=numthreads or 1, max=max,
             accepted_queue_size=accepted_queue_size,
             accepted_queue_timeout=accepted_queue_timeout)
         self.wsgi_app = wsgi_app
@@ -2248,7 +2260,7 @@ class WSGIGateway(Gateway):
 
     def get_environ(self):
         """Return a new environ dict targeting the given wsgi.version"""
-        raise NotImplemented
+        raise NotImplementedError
 
     def respond(self):
         """Process the current request."""
@@ -2404,7 +2416,7 @@ class WSGIGateway_u0(WSGIGateway_10):
 
     def get_environ(self):
         """Return a new environ dict targeting the given wsgi.version"""
-        req = self.req
+        # req = self.req
         env_10 = WSGIGateway_10.get_environ(self)
         env = dict([(k.decode('ISO-8859-1'), v)
                    for k, v in env_10.iteritems()])
@@ -2426,6 +2438,7 @@ class WSGIGateway_u0(WSGIGateway_10):
                 env[k] = v.decode('ISO-8859-1')
 
         return env
+
 
 wsgi_gateways = {
     (1, 0): WSGIGateway_10,
