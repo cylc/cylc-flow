@@ -68,7 +68,7 @@ common use cases. Includes combine two config files with precedence order.
 
 Files are parsed into ordered dicts, in case order is important. In Cylc
 it is important in at least two places: variables defined in
-``[[[environment]]]`` sections under ``[runtime]`` may depend on other varialbes
+``[[[environment]]]`` sections under ``[runtime]`` may depend on other variables
 previously defined in the same section; and in site/user config files,
 parsed host sections need to remain ordered in case of an ordered hierarchy
 (specific to general) of hostname match patterns.
