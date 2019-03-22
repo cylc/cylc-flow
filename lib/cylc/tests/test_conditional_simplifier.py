@@ -73,6 +73,12 @@ class TestConditionalSimplifier(unittest.TestCase):
             self.assertEqual(expected,
                              ConditionalSimplifier.clean_expr(expr, criterion))
 
+    def test_flatten_nested_expr_with_brackets(self):
+        """Test expressions with brackets"""
+        bracketed = ConditionalSimplifier.get_bracketed(
+            ['(', 'a', '&', 'b', ')'])
+        self.assertEqual(['(', ['a', '&', 'b'], ')'], bracketed)
+
 
 if __name__ == '__main__':
     unittest.main()
