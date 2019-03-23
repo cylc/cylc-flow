@@ -135,7 +135,7 @@ The first three arguments are compulsory; they single out the target suite name
 (``suite``) task name (``task``) and cycle point
 (``point``). The function arguments mirror the arguments and options of
 the ``cylc suite-state`` command - see
-``cylc suite-state --help`` for documentation.
+:ref:`command-suite-state` for documentation.
 
 As a simple example, consider the suites in
 ``<cylc-dir>/etc/examples/xtrigger/suite_state/``. The "upstream"

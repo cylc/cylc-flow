@@ -72,7 +72,7 @@ not, they will be ignored.
 Restart and Suite State Checkpoints
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-At restart (see ``cylc restart --help``) a suite server program
+At restart (see :ref:`command-restart` for documentation) a suite server program
 initializes its task pool from a previously recorded checkpoint state. By
 default the latest automatic checkpoint - which is updated with every task
 state change - is loaded so that the suite can carry on exactly as it was just
@@ -285,7 +285,7 @@ Task Job Polling
 
 At any point after job submission task jobs can be *polled* to check that
 their true state conforms to what is currently recorded by the suite server
-program.  See ``cylc poll --help`` for how to poll one or more tasks
+program.  See :ref:`command-poll` for how to poll one or more tasks
 manually.
 
 Polling may be necessary if, for example, a task job gets killed by the

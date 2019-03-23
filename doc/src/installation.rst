@@ -207,7 +207,7 @@ Residual Tests
 
       Some test failures can be expected to result from suites timing out,
       even if nothing is wrong, if you run too many tests in parallel. See
-      ``cylc test-battery --help``.
+      :ref:`command-test-battery` for documentation.
 
 Code Style Tests
    Tests to ensure the codebase conforms to code style.
