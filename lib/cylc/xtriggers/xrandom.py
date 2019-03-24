@@ -62,6 +62,17 @@ def xrandom(percent, secs=0, _=None, debug=False):
     >>> sys.modules[__name__].randint = mocked_randint
     >>> xrandom(99, 0)
     (True, {'COLOR': 'orange', 'SIZE': 'small'})
+
+    Args:
+        percent (int): percent likelihood.
+        secs (int): seconds to sleep before starting the trigger.
+        _ (object): used to allow users to specialize the trigger
+                    with extra parameters.
+        debug (bool): flag to enable debug information.
+    Returns:
+        A tuple with the trigger flag (bool) which is set to True if the
+        trigger was evaluated successful, False otherwise, and a random
+        color and size (dict).
     """
     sleep(float(secs))
     results = {}
