@@ -59,13 +59,7 @@ def get_test_get_status_prop():
             "ascii_ctrl",
             None,
             TASK_STATUS_HELD
-        ),
-        (
-            TASK_STATUS_HELD,
-            "gtk_label",
-            None,
-            "_held"
-        ),
+        )
     ]
 
 
