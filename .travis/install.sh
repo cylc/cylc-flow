@@ -24,22 +24,21 @@ shopt -s extglob
 
 args=("$@")
 
-if grep -E '(unit-tests|functional-tests)' <<< "${args[@]}"; then
+if grep 'functional-tests' <<< "${args[@]}"; then
     sudo apt-get install heirloom-mailx
-    pip install -e .[all]
 fi
 
 if grep 'unit-tests' <<< "${args[@]}"; then
     sudo apt-get install shellcheck
-    pip install -e .[all]
 fi
 
 # install dependencies required for building documentation
 if grep 'docs' <<< "${args[@]}$"; then
-    pip install -e .[docs]
     # for PDF output via LaTeX builder
     sudo apt-get install texlive-latex-base
 fi
+
+pip install -e .[all]
 
 # configure local SSH for Cylc jobs
 ssh-keygen -t rsa -f ~/.ssh/id_rsa -N "" -q
