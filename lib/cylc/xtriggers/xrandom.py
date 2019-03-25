@@ -76,10 +76,10 @@ def xrandom(percent, secs=0, _=None, debug=False):
     """
     sleep(float(secs))
     results = {}
-    satisfied = random() < int(percent) / 100
+    satisfied = random() < int(percent) / 100  # nosec
     if satisfied:
         results = {
-            'COLOR': COLORS[randint(0, len(COLORS) - 1)],
-            'SIZE': SIZES[randint(0, len(SIZES) - 1)]
+            'COLOR': COLORS[randint(0, len(COLORS) - 1)],  # nosec
+            'SIZE': SIZES[randint(0, len(SIZES) - 1)]  # nosec
         }
     return (satisfied, results)
