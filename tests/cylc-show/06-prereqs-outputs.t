@@ -38,7 +38,7 @@ suite_run_ok $TEST_NAME cylc run --debug --no-detach "$SUITE_NAME"
 #-------------------------------------------------------------------------------
 # While bar_4 runs, before baz.1 runs.
 TEST_NAME=$TEST_NAME_BASE-show-bar_x4
-cmp_ok "${SHARE}/bar_x4.out" <<__SHOW_OUTPUT__
+contains_ok "${SHARE}/bar_x4.out" <<__SHOW_OUTPUT__
 title: (not given)
 description: (not given)
 URL: (not given)
@@ -53,11 +53,11 @@ prerequisites (- => not satisfied):
   - 	5 = bar_x3.1 succeeded
   - 	6 = bar_x4.1 failed
   - 	7 = bar_x4.1 succeeded
-  + (0 | 1 | 2 | 3)
+  - (0 | 1 | 2 | 3)
   - 	0 = foo_x1.1 succeeded
   - 	1 = foo_x2.1 succeeded
   - 	2 = foo_x3.1 succeeded
-  + 	3 = foo_x4.1 succeeded
+  - 	3 = foo_x4.1 succeeded
 
 outputs (- => not completed):
   - baz.1 expired
@@ -71,7 +71,7 @@ __SHOW_OUTPUT__
 #-------------------------------------------------------------------------------
 # While baz.1 runs
 TEST_NAME=$TEST_NAME_BASE-show-baz
-cmp_ok "${SHARE}/baz2.out" <<__SHOW_OUTPUT__
+contains_ok "${SHARE}/baz2.out" <<__SHOW_OUTPUT__
 title: (not given)
 description: (not given)
 URL: (not given)
@@ -104,7 +104,7 @@ __SHOW_OUTPUT__
 #-------------------------------------------------------------------------------
 # After baz.1 succeeded.
 TEST_NAME=$TEST_NAME_BASE-show-succeeded
-cmp_ok "${SHARE}/succeeded.out" <<__SHOW_OUTPUT__
+contains_ok "${SHARE}/succeeded.out" <<__SHOW_OUTPUT__
 title: (not given)
 description: (not given)
 URL: (not given)
@@ -137,7 +137,7 @@ __SHOW_OUTPUT__
 #-------------------------------------------------------------------------------
 # After baz.1 reset to expired.
 TEST_NAME=$TEST_NAME_BASE-show-expired
-cmp_ok "${SHARE}/expired.out" <<__SHOW_OUTPUT__
+contains_ok "${SHARE}/expired.out" <<__SHOW_OUTPUT__
 title: (not given)
 description: (not given)
 URL: (not given)
@@ -170,7 +170,7 @@ __SHOW_OUTPUT__
 #-------------------------------------------------------------------------------
 # After baz.1 reset to failed.
 TEST_NAME=$TEST_NAME_BASE-show-failed
-cmp_ok "${SHARE}/failed.out" <<__SHOW_OUTPUT__
+contains_ok "${SHARE}/failed.out" <<__SHOW_OUTPUT__
 title: (not given)
 description: (not given)
 URL: (not given)
@@ -203,7 +203,7 @@ __SHOW_OUTPUT__
 #-------------------------------------------------------------------------------
 # After baz.1 reset to submit-failed
 TEST_NAME=$TEST_NAME_BASE-show-submit-failed
-cmp_ok "${SHARE}/submit-failed.out" <<__SHOW_OUTPUT__
+contains_ok "${SHARE}/submit-failed.out" <<__SHOW_OUTPUT__
 title: (not given)
 description: (not given)
 URL: (not given)
@@ -236,7 +236,7 @@ __SHOW_OUTPUT__
 #-------------------------------------------------------------------------------
 # After removing upstream dependences and then resetting baz.1 to waiting.
 TEST_NAME=$TEST_NAME_BASE-show-waiting
-cmp_ok "${SHARE}/waiting.out" <<__SHOW_OUTPUT__
+contains_ok "${SHARE}/waiting.out" <<__SHOW_OUTPUT__
 title: (not given)
 description: (not given)
 URL: (not given)
@@ -269,7 +269,7 @@ __SHOW_OUTPUT__
 #-------------------------------------------------------------------------------
 # After baz.1 manually triggered (prereqs should remain unset).
 TEST_NAME=$TEST_NAME_BASE-show-trigger
-cmp_ok "${SHARE}/trigger.out" <<__SHOW_OUTPUT__
+contains_ok "${SHARE}/trigger.out" <<__SHOW_OUTPUT__
 title: (not given)
 description: (not given)
 URL: (not given)
