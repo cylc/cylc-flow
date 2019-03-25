@@ -37,55 +37,42 @@ from colorama import Style, Fore, Back
 
 _STATUS_MAP = {
     TASK_STATUS_RUNAHEAD: {
-        "gtk_label": "r_unahead",  # GTK widget labels.
         "ascii_ctrl": Style.BRIGHT + Fore.WHITE + Back.BLUE
     },
     TASK_STATUS_WAITING: {
-        "gtk_label": "_waiting",
         "ascii_ctrl": Style.BRIGHT + Fore.CYAN + Back.RESET
     },
     TASK_STATUS_HELD: {
-        "gtk_label": "_held",
         "ascii_ctrl": Style.BRIGHT + Fore.WHITE + Back.YELLOW
     },
     TASK_STATUS_QUEUED: {
-        "gtk_label": "_queued",
         "ascii_ctrl": Style.BRIGHT + Fore.WHITE + Back.BLUE
     },
     TASK_STATUS_READY: {
-        "gtk_label": "rea_dy",
         "ascii_ctrl": Style.BRIGHT + Fore.GREEN + Back.RESET
     },
     TASK_STATUS_EXPIRED: {
-        "gtk_label": "e_xpired",
         "ascii_ctrl": Style.BRIGHT + Fore.WHITE + Back.BLACK
     },
     TASK_STATUS_SUBMITTED: {
-        "gtk_label": "sub_mitted",
         "ascii_ctrl": Style.BRIGHT + Fore.YELLOW + Back.RESET
     },
     TASK_STATUS_SUBMIT_FAILED: {
-        "gtk_label": "submit-f_ailed",
         "ascii_ctrl": Style.BRIGHT + Fore.BLUE + Back.RESET
     },
     TASK_STATUS_SUBMIT_RETRYING: {
-        "gtk_label": "submit-retryin_g",
         "ascii_ctrl": Style.BRIGHT + Fore.BLUE + Back.RESET
     },
     TASK_STATUS_RUNNING: {
-        "gtk_label": "_running",
         "ascii_ctrl": Style.BRIGHT + Fore.WHITE + Back.GREEN
     },
     TASK_STATUS_SUCCEEDED: {
-        "gtk_label": "_succeeded",
         "ascii_ctrl": Style.NORMAL + Fore.BLACK + Back.RESET
     },
     TASK_STATUS_FAILED: {
-        "gtk_label": "_failed",
         "ascii_ctrl": Style.BRIGHT + Fore.WHITE + Back.RED
     },
     TASK_STATUS_RETRYING: {
-        "gtk_label": "retr_ying",
         "ascii_ctrl": Style.BRIGHT + Fore.MAGENTA + Back.RESET
     }
 }
