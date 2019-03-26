@@ -22,7 +22,7 @@ Used for testing xtriggers.
 
 """
 
-from random import randint
+from random import random, randint
 from time import sleep
 
 
@@ -38,13 +38,48 @@ def xrandom(percent, secs=0, _=None, debug=False):
     The '_' argument is not used in the function code, but can be used to
     specialize the function signature to cycle point or task.
 
+    If the percent is zero, it returns that the trigger condition was
+    not satisfied, and an empty dictionary.
+    >>> xrandom(0, 0)
+    (False, {})
+
+    If the percent is not zero, but the random percent success is not met,
+    then it also returns that the trigger condition was not satisfied,
+    and an empty dictionary.
+    >>> import sys
+    >>> mocked_random = lambda: 0.3
+    >>> sys.modules[__name__].random = mocked_random
+    >>> xrandom(15.5, 0)
+    (False, {})
+
+    Finally, if the percent is not zero, and the random percent success is
+    met, then it returns that the trigger condition was satisfied, and a
+    dictionary containing random color and size as result.
+    >>> import sys
+    >>> mocked_random = lambda: 0.9
+    >>> sys.modules[__name__].random = mocked_random
+    >>> mocked_randint = lambda x, y: 1
+    >>> sys.modules[__name__].randint = mocked_randint
+    >>> xrandom(99.99, 0)
+    (True, {'COLOR': 'orange', 'SIZE': 'small'})
+
+    Args:
+        percent (float): percent likelihood.
+        secs (int): seconds to sleep before starting the trigger.
+        _ (object): used to allow users to specialize the trigger
+                    with extra parameters.
+        debug (bool): flag to enable debug information.
+    Returns:
+        A tuple with the trigger flag (bool) which is set to True if the
+        trigger was evaluated successful, False otherwise, and a random
+        color and size (dict).
     """
     sleep(float(secs))
     results = {}
-    satisfied = (1 == randint(1, 100 / int(percent)))
+    satisfied = random() < float(percent) / 100  # nosec
     if satisfied:
         results = {
-            'COLOR': COLORS[randint(0, len(COLORS) - 1)],
-            'SIZE': SIZES[randint(0, len(SIZES) - 1)]
+            'COLOR': COLORS[randint(0, len(COLORS) - 1)],  # nosec
+            'SIZE': SIZES[randint(0, len(SIZES) - 1)]  # nosec
         }
     return (satisfied, results)
