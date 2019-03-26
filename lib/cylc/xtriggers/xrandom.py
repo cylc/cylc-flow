@@ -49,7 +49,7 @@ def xrandom(percent, secs=0, _=None, debug=False):
     >>> import sys
     >>> mocked_random = lambda: 0.3
     >>> sys.modules[__name__].random = mocked_random
-    >>> xrandom(20, 0)
+    >>> xrandom(15.5, 0)
     (False, {})
 
     Finally, if the percent is not zero, and the random percent success is
@@ -60,11 +60,11 @@ def xrandom(percent, secs=0, _=None, debug=False):
     >>> sys.modules[__name__].random = mocked_random
     >>> mocked_randint = lambda x, y: 1
     >>> sys.modules[__name__].randint = mocked_randint
-    >>> xrandom(99, 0)
+    >>> xrandom(99.99, 0)
     (True, {'COLOR': 'orange', 'SIZE': 'small'})
 
     Args:
-        percent (int): percent likelihood.
+        percent (float): percent likelihood.
         secs (int): seconds to sleep before starting the trigger.
         _ (object): used to allow users to specialize the trigger
                     with extra parameters.
@@ -76,7 +76,7 @@ def xrandom(percent, secs=0, _=None, debug=False):
     """
     sleep(float(secs))
     results = {}
-    satisfied = random() < int(percent) / 100  # nosec
+    satisfied = random() < float(percent) / 100  # nosec
     if satisfied:
         results = {
             'COLOR': COLORS[randint(0, len(COLORS) - 1)],  # nosec
