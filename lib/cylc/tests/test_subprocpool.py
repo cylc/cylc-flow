@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from tempfile import NamedTemporaryFile, TemporaryFile
+from tempfile import NamedTemporaryFile, SpooledTemporaryFile, TemporaryFile
 import unittest
 
 from cylc.subprocctx import SubProcContext
@@ -24,6 +24,11 @@ from cylc.subprocpool import SubProcPool
 
 
 class TestSubProcPool(unittest.TestCase):
+
+    def test_get_temporary_file(self):
+        """Test SubProcPool.get_temporary_file."""
+        self.assertIsInstance(
+            SubProcPool.get_temporary_file(), SpooledTemporaryFile)
 
     def test_run_command_returns_0(self):
         """Test basic usage, command returns 0"""
@@ -64,6 +69,14 @@ class TestSubProcPool(unittest.TestCase):
         SubProcPool.run_command(ctx)
         self.assertEqual(ctx.err, '')
         self.assertEqual(ctx.out, 'catches mice.\n')
+        self.assertEqual(ctx.ret_code, 0)
+
+    def test_run_command_with_stdin_from_unicode(self):
+        """Test STDIN from string with Unicode"""
+        ctx = SubProcContext('meow', ['cat'], stdin_str='喵\n')
+        SubProcPool.run_command(ctx)
+        self.assertEqual(ctx.err, '')
+        self.assertEqual(ctx.out, '喵\n')
         self.assertEqual(ctx.ret_code, 0)
 
     def test_run_command_with_stdin_from_handle(self):
