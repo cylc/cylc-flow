@@ -273,7 +273,8 @@ class CGraphPlain(pygraphviz.AGraph):
     def set_def_style(self, fgcolor, bgcolor, def_node_attr=None):
         """Set default graph styles.
 
-        Depending on light/dark desktop color theme.
+        Node, edge, and font color: desktop theme foreground.
+        Node fill color: destkop theme background.
         """
 
         if def_node_attr is None:
@@ -282,18 +283,11 @@ class CGraphPlain(pygraphviz.AGraph):
         # Transparent graph bg - let the desktop theme bg shine through.
         self.graph_attr['bgcolor'] = '#ffffff00'
 
-        # graph and cluster:
         self.graph_attr['color'] = fgcolor
         self.graph_attr['fontcolor'] = fgcolor
-        # node outlines (or node fill if fillcolor is not defined):
         self.node_attr['color'] = fgcolor
-        # edges:
+        self.node_attr['fontcolor'] = fgcolor  # node labels
         self.edge_attr['color'] = fgcolor  # edges
-        # node labels:
-        if def_node_attr.get('style', '') == "filled":
-            self.node_attr['fontcolor'] = bgcolor  # node labels
-        else:
-            self.node_attr['fontcolor'] = fgcolor  # node labels
 
 
 class CGraph(CGraphPlain):
