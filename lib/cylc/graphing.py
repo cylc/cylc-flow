@@ -270,15 +270,12 @@ class CGraphPlain(pygraphviz.AGraph):
 
         return subgraph
 
-    def set_def_style(self, fgcolor, bgcolor, def_node_attr=None):
+    def set_def_style(self, fgcolor, bgcolor):
         """Set default graph styles.
 
         Node, edge, and font color: desktop theme foreground.
         Node fill color: destkop theme background.
         """
-
-        if def_node_attr is None:
-            def_node_attr = {}
 
         # Transparent graph bg - let the desktop theme bg shine through.
         self.graph_attr['bgcolor'] = '#ffffff00'
@@ -416,7 +413,7 @@ class CGraph(CGraphPlain):
             suiterc.suite_polling_tasks,
             suiterc.cfg['visualization'])
 
-        graph.set_def_style(fgcolor, bgcolor, graph.node_attr)
+        graph.set_def_style(fgcolor, bgcolor)
 
         gr_edges = suiterc.get_graph_raw(
             start_point_string, stop_point_string,
