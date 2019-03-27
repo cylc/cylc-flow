@@ -279,12 +279,13 @@ class CGraphPlain(pygraphviz.AGraph):
 
         # Transparent graph bg - let the desktop theme bg shine through.
         self.graph_attr['bgcolor'] = '#ffffff00'
-
         self.graph_attr['color'] = fgcolor
         self.graph_attr['fontcolor'] = fgcolor
+
         self.node_attr['color'] = fgcolor
-        self.node_attr['fontcolor'] = fgcolor  # node labels
-        self.edge_attr['color'] = fgcolor  # edges
+        self.node_attr['fontcolor'] = fgcolor
+
+        self.edge_attr['color'] = fgcolor
 
 
 class CGraph(CGraphPlain):
@@ -307,13 +308,14 @@ class CGraph(CGraphPlain):
             }
         self.vizconfig = vizconfig
 
+    def set_attributes(self):
         # graph attributes
         # - default node attributes
-        for item in vizconfig['default node attributes']:
+        for item in self.vizconfig['default node attributes']:
             attr, value = [val.strip() for val in item.split('=', 1)]
             self.node_attr[attr] = value
         # - default edge attributes
-        for item in vizconfig['default edge attributes']:
+        for item in self.vizconfig['default edge attributes']:
             attr, value = [val.strip() for val in item.split('=', 1)]
             self.edge_attr[attr] = value
 
@@ -414,6 +416,7 @@ class CGraph(CGraphPlain):
             suiterc.cfg['visualization'])
 
         graph.set_def_style(fgcolor, bgcolor)
+        graph.set_attributes()
 
         gr_edges = suiterc.get_graph_raw(
             start_point_string, stop_point_string,
