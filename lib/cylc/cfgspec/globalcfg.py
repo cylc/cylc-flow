@@ -73,6 +73,7 @@ SPEC = {
             'timeout handler': [VDR.V_STRING_LIST],
             'inactivity handler': [VDR.V_STRING_LIST],
             'shutdown handler': [VDR.V_STRING_LIST],
+            'aborted handler': [VDR.V_STRING_LIST],
             'stalled handler': [VDR.V_STRING_LIST],
             'timeout': [VDR.V_INTERVAL],
             'inactivity': [VDR.V_INTERVAL],

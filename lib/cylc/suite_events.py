@@ -38,6 +38,7 @@ class SuiteEventHandler(object):
 
     EVENT_STARTUP = 'startup'
     EVENT_SHUTDOWN = 'shutdown'
+    EVENT_ABORTED = 'aborted'
     EVENT_TIMEOUT = 'timeout'
     EVENT_INACTIVITY_TIMEOUT = 'inactivity'
     EVENT_STALLED = 'stalled'
