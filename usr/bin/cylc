@@ -28,13 +28,13 @@
 #
 #  2. Install cylc versions as described in the INSTALL file, e.g.:
 #     /opt/cylc-7.6.1/
-#     /opt/cylc-7.7.0/
-#     /opt/cylc -> cylc-7.7.0/  # symlink DEFAULT version
+#     /opt/cylc-7.8.2/
+#     /opt/cylc -> cylc-7.8.2/  # symlink DEFAULT version
 #
 # Environment variables:
 #  $CYLC_HOME_ROOT: top installation directory, e.g. /opt/
-#  $CYLC_HOME:   a specific version, e.g. /opt/cylc-7.7.0/
-#  $CYLC_VERSION: a specific version string, e.g. 7.7.0
+#  $CYLC_HOME:   a specific version, e.g. /opt/cylc-7.8.2/
+#  $CYLC_VERSION: a specific version string, e.g. 7.8.2
 #
 #  3. Set $CYLC_HOME_ROOT for your site - see "!!! EDIT ME !!! below.
 

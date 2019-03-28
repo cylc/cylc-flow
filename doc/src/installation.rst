@@ -151,15 +151,15 @@ modified slightly to point to a location such as ``/opt`` where
 successive Cylc releases will be unpacked side by side.
 
 To install Cylc, unpack the release tarball in the right location, e.g.
-``/opt/cylc-7.7.0``, type ``make`` inside the release
+``/opt/cylc-7.8.2``, type ``make`` inside the release
 directory, and set site defaults - if necessary - in a site global config file
 (below).
 
 Make a symbolic link from ``cylc`` to the latest installed version:
-``ln -s /opt/cylc-7.7.0 /opt/cylc``. This will be invoked by the
+``ln -s /opt/cylc-7.8.2 /opt/cylc``. This will be invoked by the
 central wrapper if a specific version is not requested. Otherwise, the
 wrapper will attempt to invoke the Cylc version specified in
-``$CYLC_VERSION``, e.g. ``CYLC_VERSION=7.7.0``. This variable
+``$CYLC_VERSION``, e.g. ``CYLC_VERSION=7.8.2``. This variable
 is automatically set in task job scripts to ensure that jobs use the same Cylc
 version as their parent suite server program.  It can also be set by users,
 manually or in login scripts, to fix the Cylc version in their environment.
