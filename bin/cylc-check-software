@@ -197,10 +197,9 @@ def cmd_find_ver(
             res = [NOTFOUND_MSG, False]
         else:
             try:
-                output = procopen([cmd, ver_opt], stdoutpipe=True,
-                                  stdin=open(os.devnull),
-                                  stderrpipe=True).communicate()
-                [outfile - 1].strip()
+                output = procopen(
+                    [cmd, ver_opt], stdoutpipe=True, stdin=open(os.devnull),
+                    stderrpipe=True).communicate()[outfile - 1].strip()
                 version = re.search(ver_extr, output).groups()[0]
                 try_next_cmd = False
                 if min_ver is None:
