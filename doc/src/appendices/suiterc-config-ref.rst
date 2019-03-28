@@ -387,6 +387,7 @@ following EVENTs occurs:
 
 - **startup**  - the suite has started running
 - **shutdown** - the suite is shutting down
+- **aborted** - the suite is shutting down due to unexpected/unrecoverable error
 - **timeout**  - the suite has timed out
 - **stalled** - the suite has stalled
 - **inactivity** - the suite is inactive

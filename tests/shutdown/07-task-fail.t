@@ -24,7 +24,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_fail "${TEST_NAME_BASE}-run" cylc run --no-detach "${SUITE_NAME}"
 LOGD="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log"
-grep_ok 'INFO - Suite shutting down - AUTOMATIC(ON-TASK-FAILURE)' \
+grep_ok "ERROR - Suite shutting down - 'AUTOMATIC(ON-TASK-FAILURE)'" \
     "${LOGD}/suite/log"
 JLOGD="${LOGD}/job/1/t1/01"
 # Check that t1.1 event handler runs
