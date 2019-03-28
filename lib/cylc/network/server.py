@@ -83,7 +83,7 @@ class ZMQServer(object):
         self.decode = decode_method
         self.secret = secret_method
 
-    def start(self, ports):
+    def start(self, min_port, max_port):
         """Start the server running
 
         Args:
@@ -96,17 +96,8 @@ class ZMQServer(object):
         self.socket = self.context.socket(zmq.REP)
         self.socket.RCVTIMEO = int(self.RECV_TIMEOUT) * 1000
 
-        # pick port
-        for port in ports:
-            try:
-                self.socket.bind('tcp://*:%d' % port)
-            except zmq.error.ZMQError:
-                pass
-            else:
-                self.port = port
-                break
-        else:
-            raise IOError('No room at the inn, all ports occupied.')
+        self.port = self.socket.bind_to_random_port(
+            'tcp://*', min_port, max_port)
 
         # start accepting requests
         self.register_endpoints()

@@ -248,7 +248,8 @@ class Scheduler(object):
                 daemonize(self)
             self._setup_suite_logger()
             self.server = SuiteRuntimeServer(self)
-            self.server.start(glbl_cfg().get(['suite servers', 'run ports']))
+            port_range = glbl_cfg().get(['suite servers', 'run ports'])
+            self.server.start(port_range[0], port_range[-1])
             self.port = self.server.port
             self.configure()
             self.profiler.start()
