@@ -33,6 +33,7 @@ if grep -E '(unit-tests|functional-tests)' <<< "${args[@]}"; then
 fi
 
 if grep 'unit-tests' <<< "${args[@]}"; then
+    sudo apt-get install shellcheck
     pip install pycodestyle pytest testfixtures empy
 fi
 
