@@ -27,25 +27,25 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run --debug --no-detach "${SUITE_NAME}"
 
 LOG="${SUITE_RUN_DIR}/log/suite/log"
-sed -n -e 's/^.* \([A-Z]* - \[foo.1\] -(current:running)> .*$\)/\1/p' \
+sed -n -e 's/^.* \([A-Z]* - \[foo.1\] status=running: (received).*$\)/\1/p' \
        -e '/badness\|slowness\|incorrectness/p' "${LOG}" >'sed.out'
 sed -i 's/\(^.*\) at .*$/\1/;' 'sed.out'
 
 # Note: the continuation bit gets printed twice, because the message gets a
 # warning as being unhandled.
 cmp_ok 'sed.out' <<'__LOG__'
-WARNING - [foo.1] -(current:running)> Warn this
-INFO - [foo.1] -(current:running)> Greeting
-WARNING - [foo.1] -(current:running)> Warn that
-DEBUG - [foo.1] -(current:running)> Remove stuffs such as
+WARNING - [foo.1] status=running: (received)Warn this
+INFO - [foo.1] status=running: (received)Greeting
+WARNING - [foo.1] status=running: (received)Warn that
+DEBUG - [foo.1] status=running: (received)Remove stuffs such as
 	badness
 	slowness
 	and other incorrectness.
 	badness
 	slowness
 	and other incorrectness.
-INFO - [foo.1] -(current:running)> whatever
-INFO - [foo.1] -(current:running)> succeeded
+INFO - [foo.1] status=running: (received)whatever
+INFO - [foo.1] status=running: (received)succeeded
 __LOG__
 
 purge_suite "${SUITE_NAME}"

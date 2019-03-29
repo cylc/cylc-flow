@@ -36,7 +36,7 @@ suite_run_ok "${TEST_NAME_BASE}-run-simulation" \
     cylc run -m 'simulation' --reference-test --debug --no-detach ${SUITE_NAME}
 
 LOG=$(cylc log -m p $SUITE_NAME)
-count_ok '> meet' ${LOG} 1
-count_ok '> greet' ${LOG} 1
+count_ok '(received)meet' ${LOG} 1
+count_ok '(received)greet' ${LOG} 1
 
 purge_suite "${SUITE_NAME}"

@@ -45,14 +45,14 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 sed -n 's/^.*\(\[jobs-poll err\]\) \(Connection refused\).*$/\1\n\2/p;
         s/^.*\(\[jobs-poll err\]\).*$/\1/p;
         s/^.*\(Connection refused\).*$/\1/p;
-        s/^.*\(INFO - \[t1.1\] -(current:running)(polled) started\).*$/\1/p' \
+        s/^.*\(INFO - \[t1.1\] status=running: (polled)started\).*$/\1/p' \
     "${SUITE_RUN_DIR}/log/suite/log" >'sed-log.out'
 contains_ok 'sed-log.out' <<'__LOG__'
 [jobs-poll err]
 Connection refused
 __LOG__
 contains_ok 'sed-log.out' <<'__LOG__'
-INFO - [t1.1] -(current:running)(polled) started
+INFO - [t1.1] status=running: (polled)started
 __LOG__
 
 if [[ "${CYLC_TEST_BATCH_TASK_HOST}" != 'localhost' ]]; then

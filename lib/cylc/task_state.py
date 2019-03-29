@@ -405,7 +405,7 @@ class TaskState(object):
         else:
             return self.reset_state(self.hold_swap)
 
-    def reset_state(self, status):
+    def reset_state(self, status, respect_hold_swap=False):
         """Change status, and manipulate outputs and prerequisites accordingly.
 
         Outputs are manipulated on manual state reset to reflect the new task
@@ -424,7 +424,18 @@ class TaskState(object):
         Return:
             A 2-element tuple with the previous value of (status, hold_swap)
             on change of status, or None if no change.
+
+        Arguments:
+            status (str):
+                New status.
+            respect_hold_swap (boolean):
+                If True, take no action if either `.status` or `.hold_swap` is
+                equivalent to `status`.
         """
+        ret = self._set_state(status, respect_hold_swap)
+        if not ret:  # no change
+            return ret
+
         self.kill_failed = False
 
         # Set standard outputs in accordance with task state.
@@ -447,15 +458,20 @@ class TaskState(object):
         if status == TASK_STATUS_WAITING:
             self.set_prerequisites_not_satisfied()
 
-        return self._set_state(status)
+        return ret
 
-    def _set_state(self, status):
-        """Set, log and record task status (normal change, not forced - don't
-        update task_events table)."""
+    def _set_state(self, status, respect_hold_swap=False):
+        """Set state to new status and log."""
         if self.status == self.hold_swap:
             self.hold_swap = None
-        if status == self.status and self.hold_swap is None:
+        if (self.status, self.hold_swap) == (status, None):
             return
+        if (
+            respect_hold_swap
+            and (self.status, self.hold_swap) == (TASK_STATUS_HELD, status)
+        ):
+            return
+        prev_message = str(self)
         prev_status, prev_hold_swap = self.status, self.hold_swap
         if status == TASK_STATUS_HELD:
             self.hold_swap = self.status
@@ -471,14 +487,7 @@ class TaskState(object):
         self.status = status
         self.time_updated = get_current_time_string()
         self.is_updated = True
-        # Log
-        message = str(prev_status)
-        if prev_hold_swap:
-            message += " (%s)" % prev_hold_swap
-        message += " => %s" % self.status
-        if self.hold_swap:
-            message += " (%s)" % self.hold_swap
-        LOG.debug("[%s] -%s", self.identity, message)
+        LOG.debug("[%s] -%s => %s", self.identity, prev_message, str(self))
         return (prev_status, prev_hold_swap)
 
     def is_gt(self, status):
