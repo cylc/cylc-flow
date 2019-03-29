@@ -28,7 +28,7 @@ while (($(date +%s) < TIMEOUT)) && \
 do
     sleep 1
 done
-grep_ok '\[t1\.1\] .* succeeded' "${SUITE_RUN_DIR}/log/suite/log"
+grep_ok '\[t1\.1\] .*succeeded' "${SUITE_RUN_DIR}/log/suite/log"
 
 sleep 5
 cylc stop --max-polls=10 --interval=2 "${SUITE_NAME}" 1>'/dev/null' 2>&1
