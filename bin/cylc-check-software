@@ -154,6 +154,9 @@ def check_py_module_ver(module, min_ver, write=True):
             import pkg_resources
             module_version = pkg_resources.get_distribution(
                 'ansimarkup').version
+        elif module == 'protobuf':
+            from google import protobuf
+            module_version = protobuf.__version__
         else:
             imported_module = __import__(module)
             module_version = imported_module.__version__
@@ -280,6 +283,7 @@ def main():
         and check_py_module_ver('jose', None)
         and check_py_module_ver('colorama', None)
         and check_py_module_ver('ansimarkup', None)
+        and check_py_module_ver('protobuf', (3,7,0))
     )
     for tag, text in func_tags_and_text.items():
         shell_centre_write(True, '*OPTIONAL SOFTWARE for the ' + text + '*')

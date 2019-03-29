@@ -142,18 +142,24 @@ class ZMQClient(object):
 
         # receive response
         if self.poller.poll(timeout):
-            res = await self.socket.recv_string()
+            if msg['command'].startswith('pb_'):
+                res = await self.socket.recv()
+            else:
+                res = await self.socket.recv_string()
         else:
             if self.timeout_handler:
                 self.timeout_handler()
             raise ClientTimeout('Timeout waiting for server response.')
 
-        try:
-            response = decrypt(res, secret)
-            LOG.debug('zmq:recv %s' % response)
-        except jose.exceptions.JWTError:
-            raise ClientError(
-                'Could not decrypt response. Has the passphrase changed?')
+        if isinstance(res, bytes):
+            response = {'data': res}
+        else:
+            try:
+                response = decrypt(res, secret)
+                LOG.debug('zmq:recv %s' % response)
+            except jose.exceptions.JWTError:
+                raise ClientError(
+                    'Could not decrypt response. Has the passphrase changed?')
 
         try:
             return response['data']

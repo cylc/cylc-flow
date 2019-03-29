@@ -47,6 +47,7 @@ install_requires = [
     'isodatetime==1!2.0.*',
     'jinja2>=2.10.1, <2.11.0',
     'markupsafe==1.1.*',
+    'protobuf==3.7.*',
     'python-jose==3.0.*',
     'pyzmq==18.0.*'
 ]

@@ -45,6 +45,7 @@ from cylc.flow.exceptions import (
 import cylc.flow.flags
 from cylc.flow.host_appointer import HostAppointer, EmptyHostList
 from cylc.flow.hostuserutil import get_host, get_user, get_fqdn_by_host
+from cylc.flow.job_pool import JobPool
 from cylc.flow.loggingutil import TimestampRotatingFileHandler,\
     ReferenceLogFileHandler
 from cylc.flow.log_diagnosis import LogSpec
@@ -76,6 +77,7 @@ from cylc.flow.task_state import (
     TASK_STATUSES_ACTIVE, TASK_STATUSES_NEVER_ACTIVE, TASK_STATUS_FAILED)
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow import __version__ as CYLC_VERSION
+from cylc.flow.ws_data_mgr import WsDataMgr
 from cylc.flow.wallclock import (
     get_current_time_string, get_seconds_as_interval_string,
     get_time_string_from_unix_time as time2str, get_utc_mode)
@@ -197,6 +199,8 @@ class Scheduler(object):
         self.command_queue = None
         self.message_queue = None
         self.ext_trigger_queue = None
+        self.ws_data_mgr = None
+        self.job_pool = None
 
         self._profile_amounts = {}
         self._profile_update_times = {}
@@ -356,16 +360,19 @@ see `COPYING' in the Cylc source distribution.
         # Start up essential services
         self.proc_pool = SubProcPool()
         self.state_summary_mgr = StateSummaryMgr()
+        self.ws_data_mgr = WsDataMgr(self)
         self.command_queue = Queue()
         self.message_queue = Queue()
         self.ext_trigger_queue = Queue()
         self.suite_event_handler = SuiteEventHandler(self.proc_pool)
+        self.job_pool = JobPool(self.suite, self.owner)
         self.task_events_mgr = TaskEventsManager(
-            self.suite, self.proc_pool, self.suite_db_mgr, self.broadcast_mgr)
+            self.suite, self.proc_pool, self.suite_db_mgr, self.broadcast_mgr,
+            self.job_pool)
         self.task_events_mgr.uuid_str = self.uuid_str
         self.task_job_mgr = TaskJobManager(
             self.suite, self.proc_pool, self.suite_db_mgr,
-            self.suite_srv_files_mgr, self.task_events_mgr)
+            self.suite_srv_files_mgr, self.task_events_mgr, self.job_pool)
         self.task_job_mgr.task_remote_mgr.uuid_str = self.uuid_str
 
         self.xtrigger_mgr = XtriggerManager(
@@ -463,7 +470,7 @@ see `COPYING' in the Cylc source distribution.
 
         self.pool = TaskPool(
             self.config, self.final_point, self.suite_db_mgr,
-            self.task_events_mgr)
+            self.task_events_mgr, self.job_pool)
 
         self.profiler.log_memory("scheduler.py: before load_tasks")
         if self.is_restart:
@@ -1236,7 +1243,7 @@ see `COPYING' in the Cylc source distribution.
 
         # Is the suite ready to shut down now?
         if self.pool.can_stop(self.stop_mode):
-            self.update_state_summary()
+            self.update_data_structure()
             self.proc_pool.close()
             if self.stop_mode != TaskPool.STOP_REQUEST_NOW_NOW:
                 # Wait for process pool to complete,
@@ -1531,9 +1538,10 @@ see `COPYING' in the Cylc source distribution.
             self.process_command_queue()
             self.task_events_mgr.process_events(self)
 
-            # Update state summary and database
+            # Update state summary, database, and uifeed
             self.suite_db_mgr.put_task_event_timers(self.task_events_mgr)
-            has_updated = self.update_state_summary()
+            has_updated = self.update_data_structure()
+
             self.process_suite_db_queue()
 
             # If public database is stuck, blast it away by copying the content
@@ -1570,14 +1578,21 @@ see `COPYING' in the Cylc source distribution.
             self.main_loop_intervals.append(time() - tinit)
             # END MAIN LOOP
 
-    def update_state_summary(self):
-        """Update state summary."""
+    def update_data_structure(self):
+        """Update DB, UIS, Summary data elements"""
         updated_tasks = [
             t for t in self.pool.get_all_tasks() if t.state.is_updated]
         has_updated = self.is_updated or updated_tasks
         if has_updated:
+            # UI Server data update
+            # TODO: process the entire pool once with self.is_updated
+            # and update deltas here to be published
+            self.ws_data_mgr.initiate_data_model()
+            # TODO: deprecate state summary manager just use protobuf
             self.state_summary_mgr.update(self)
+            # Database update
             self.suite_db_mgr.put_task_pool(self.pool)
+            # Reset suite and task updated flags.
             self.is_updated = False
             self.is_stalled = False
             for itask in updated_tasks:

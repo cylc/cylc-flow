@@ -164,11 +164,18 @@ class ZMQServer(object):
                 # success case - serve the request
                 LOG.debug('zmq:recv %s', message)
                 res = self._receiver(message)
-                response = self.encode(res, self.secret())
-                LOG.debug('zmq:send %s', res)
+                # workaround for protobuf
+                if isinstance(res.get('data', None), bytes):
+                    response = res['data']
+                    LOG.debug('zmq:send protobuf message')
+                    # send back the bytes response
+                    self.socket.send(response)
+                else:
+                    response = self.encode(res, self.secret())
+                    LOG.debug('zmq:send %s', res)
+                    # send back the string to bytes response
+                    self.socket.send_string(response)
 
-            # send back the response
-            self.socket.send_string(response)
             sleep(0)  # yield control to other threads
 
     def _receiver(self, message):
@@ -1229,3 +1236,16 @@ class SuiteRuntimeServer(ZMQServer):
         self.schd.command_queue.put(
             ("trigger_tasks", (task_globs,), {"back_out": back_out}))
         return (True, 'Command queued')
+
+    # UIServer Data Commands
+    #
+    @authorise(Priv.READ)
+    @ZMQServer.expose
+    def pb_entire_workflow(self):
+        """Get data elements of entire workflow.
+
+        Returns:
+            Protobuf encoded message
+
+        """
+        return self.schd.ws_data_mgr.get_entire_workflow()

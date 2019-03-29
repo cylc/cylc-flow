@@ -1,0 +1,227 @@
+syntax = "proto3";
+
+/* THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+ Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.*/
+
+/* Protobuf message definitions
+ *
+ * The original intention of these messages is for use as data elements sent
+ * to and used in resolving GraphQL queries at the UI Server.
+ *
+ * This file is not needed at runtime. It is used to generate python protobuf
+ * message modules.*/
+
+
+// Query type messages
+message PbMeta {
+    string title = 1;
+    string description = 2;
+    string URL = 3;
+    /*map<string, string> user_defined = 4;*/
+    repeated string user_defined = 4;
+}
+
+message PbTimeZone {
+    int32 hours = 1;
+    int32 minutes = 2;
+    string string_basic = 3;
+    string string_extended = 4;
+}
+
+message PbStateTotals {
+    int32 runahead = 1;
+    int32 waiting = 2;
+    int32 held = 3;
+    int32 queued = 4;
+    int32 expired = 5;
+    int32 ready = 6;
+    int32 submit_failed = 7;
+    int32 submit_retrying = 8;
+    int32 submitted = 9;
+    int32 retrying = 10;
+    int32 running = 11;
+    int32 failed = 12;
+    int32 succeeded = 13;
+}
+
+message PbWorkflow {
+    string checksum = 1;
+    string id = 2;
+    string name = 3;
+    string status = 4;
+    string host = 5;
+    int32 port = 6;
+    string owner = 7;
+    repeated string tasks = 8;
+    repeated string families = 9;
+    PbEdges edges = 10;
+    int32 api_version = 11;
+    string cylc_version = 12;
+    float last_updated = 13;
+    PbMeta meta = 14;
+    string newest_runahead_cycle_point = 15;
+    string newest_cycle_point = 16;
+    string oldest_cycle_point = 17;
+    bool reloading = 18;
+    string run_mode = 19;
+    string cycling_mode = 20;
+    PbStateTotals state_totals = 21;
+    string workflow_log_dir = 22;
+    PbTimeZone time_zone_info = 23;
+    int32 tree_depth = 24;
+    repeated string job_log_names = 25;
+    repeated string ns_defn_order = 26;
+    repeated string states = 27;
+}
+
+message PbJob {
+    string checksum = 1;
+    string id = 2;
+    int32 submit_num = 3;
+    string state = 4;
+    string task_proxy = 5;
+    string submitted_time = 6;
+    string started_time = 7;
+    string finished_time = 8;
+    string batch_sys_job_id = 9;
+    string batch_sys_name = 10;
+    string env_script = 11;
+    string err_script = 12;
+    string exit_script = 13;
+    float execution_time_limit = 14;
+    string host = 15;
+    string init_script = 16;
+    string job_log_dir = 17;
+    string owner = 18;
+    string post_script = 19;
+    string pre_script = 20;
+    string script = 21;
+    string shell = 22;
+    string work_sub_dir = 23;
+    repeated string batch_sys_conf = 24;
+    repeated string environment = 25;
+    repeated string directives = 26;
+    repeated string param_env_tmpl = 27;
+    repeated string param_var = 28;
+    repeated string extra_logs = 29;
+}
+
+message PbTask {
+    string checksum = 1;
+    string id = 2;
+    string name = 3;
+    PbMeta meta = 4;
+    float mean_elapsed_time = 5;
+    int32 depth = 6;
+    repeated string proxies = 7;
+    repeated string namespace = 8;
+}
+
+message PbPollTask {
+    string local_proxy = 1;
+    string workflow = 2;
+    string remote_proxy = 3;
+    string req_state = 4;
+    string graph_string = 5;
+}
+
+message PbCondition {
+    string task_proxy = 1;
+    string expr_alias = 2;
+    string req_state = 3;
+    bool satisfied = 4;
+    string message = 5;
+}
+
+message PbPrerequisite {
+    string expression = 1;
+    repeated PbCondition conditions = 2;
+    repeated string cycle_points = 3;
+    bool satisfied = 4;
+}
+
+message PbTaskProxy {
+    string checksum = 1;
+    string id = 2;
+    string task = 3;
+    string state = 4;
+    string cycle_point = 5;
+    bool spawned = 6;
+    int32 depth = 7;
+    int32 job_submits = 8;
+    string latest_message = 9;
+    repeated string outputs = 10;
+    repeated string broadcasts = 11;
+    repeated string namespace = 12;
+    repeated string proxy_namespace = 13;
+    repeated PbPrerequisite prerequisites = 14;
+    repeated string jobs = 15;
+    repeated string parents = 16;
+}
+
+message PbFamily {
+    string checksum = 1;
+    string id = 2;
+    string name = 3;
+    PbMeta meta = 4;
+    int32 depth = 5;
+    repeated string proxies = 6;
+    repeated string parents = 7;
+    repeated string child_tasks = 8;
+    repeated string child_families = 9;
+}
+
+message PbFamilyProxy {
+    string checksum = 1;
+    string id = 2;
+    string cycle_point = 3;
+    string name = 4;
+    string family = 5;
+    string state = 6;
+    int32 depth = 7;
+    repeated string parents = 8;
+    repeated string child_tasks = 9;
+    repeated string child_families = 10;
+}
+
+message PbEdge {
+    string checksum = 1;
+    string id = 2;
+    string tail_node = 3;
+    string head_node = 4;
+    bool suicide = 5;
+    bool cond = 6;
+}
+
+message PbEdges {
+    string id = 1;
+    repeated string edges = 2;
+    repeated PbPollTask workflow_polling_tasks = 3;
+    repeated string leaves = 4;
+    repeated string feet = 5;
+}
+
+
+/* Now bundle for messaging */
+message PbEntireWorkflow {
+    PbWorkflow workflow = 1;
+    repeated PbTask tasks = 2;
+    repeated PbTaskProxy task_proxies = 3;
+    repeated PbJob jobs = 4;
+    repeated PbFamily families = 5;
+    repeated PbFamilyProxy family_proxies = 6;
+    repeated PbEdge edges = 7;
+}
