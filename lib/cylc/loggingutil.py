@@ -151,3 +151,31 @@ class TimestampRotatingFileHandler(logging.FileHandler):
                 header_record.args = header_record.args[0:-1] + (
                     header_record.__dict__[self.FILE_NUM],)
             logging.FileHandler.emit(self, header_record)
+
+
+class ReferenceLogFileHandler(logging.FileHandler):
+    """A handler class which writes filtered reference logging records
+    to disk files.
+    """
+
+    REF_LOG_TEXTS = (
+        'triggered off', 'Initial point', 'Start point', 'Final point')
+    """List of texts used for filtering messages."""
+
+    def __init__(self, filename):
+        """Create the reference log file handler, specifying the file to
+        write the reference log lines."""
+        super().__init__(filename)
+        self.formatter = CylcLogFormatter()
+        self.addFilter(self._filter)
+
+    def _filter(self, record):
+        """Filter a logging record. From the base class Filterer (parent of
+            logging.Handler).
+
+            Args:
+                record (logging.LogRecord): a log record.
+            Returns:
+                bool: True for message to be logged, False otherwise.
+        """
+        return any(text in record.getMessage() for text in self.REF_LOG_TEXTS)
