@@ -64,7 +64,7 @@ from cylc.task_id import TaskID
 from parsec.OrderedDict import OrderedDictWithDefaults
 
 # To split runtime heading name lists.
-REC_NAMES = re.compile(r'(?:[^,<]|\<[^>]*\>)+')
+REC_NAMES = re.compile(r'(?:[^,<]|<[^>]*>)+')
 # To extract (e.g.) 'name', 'the, quick, brown', and 'other' from
 #   'name<the, quick, brown>other' (other is used for clock-offsets).
 REC_P_ALL = re.compile(r"(%s)?(?:<(.*?)>)?(.+)?" % TaskID.NAME_RE)
@@ -72,7 +72,7 @@ REC_P_ALL = re.compile(r"(%s)?(?:<(.*?)>)?(.+)?" % TaskID.NAME_RE)
 REC_P_GROUP = re.compile(r"<(.*?)>")
 # To extract parameter name and optional offset or value e.g. 'm-1'.
 REC_P_OFFS = re.compile(
-    r'(\w+)\s*([\-\+]\s*\d+|=\s*%s)?' % TaskID.NAME_SUFFIX_RE)
+    r'(\w+)\s*([\-+]\s*\d+|=\s*%s)?' % TaskID.NAME_SUFFIX_RE)
 
 
 def item_in_iterable(item, itt):

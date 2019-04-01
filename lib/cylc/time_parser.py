@@ -99,7 +99,7 @@ class CylcTimeParser(object):
 
     CHAIN_REGEX = re.compile(r'((?:[+-P]|[\dT])[\d\w]*)')
 
-    MIN_REGEX = re.compile(r'min\(([^\)]+)\)')
+    MIN_REGEX = re.compile(r'min\(([^)]+)\)')
 
     OFFSET_REGEX = re.compile(r"(?P<sign>[+-])(?P<intv>P.+)$")
 

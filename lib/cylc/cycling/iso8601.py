@@ -684,12 +684,12 @@ def ingest_time(value, my_now=None):
 
     # correct for year in 'now' if year only,
     # or year and time, specified in input
-    if re.search(r"\(-\d{2}[\);T]", value):
+    if re.search(r"\(-\d{2}[);T]", value):
         my_now.year = my_now.year + 1
 
     # correct for month in 'now' if year and month only,
     # or year, month and time, specified in input
-    elif re.search(r"\(-\d{4}[\);T]", value):
+    elif re.search(r"\(-\d{4}[);T]", value):
         my_now.month_of_year = my_now.month_of_year + 1
 
     if "next" in value or "previous" in value:
@@ -751,11 +751,11 @@ def ingest_time(value, my_now=None):
         # for time point is reversed!!!
         # https://github.com/metomi/isodatetime/pull/101
         # case 1 - year only
-        if re.search(r"\(-\d{2}[\);T]", value):
+        if re.search(r"\(-\d{2}[);T]", value):
             my_cp.month_of_year = 1
             my_cp.day_of_month = 1
         # case 2 - month only or year and month
-        elif re.search(r"\(-(-\d{2}|\d{4})[;T\)]", value):
+        elif re.search(r"\(-(-\d{2}|\d{4})[;T)]", value):
             my_cp.day_of_month = 1
 
     elif value.startswith("P") or value.startswith("-P"):

@@ -79,7 +79,7 @@ DISK_TEMPLATES, e.g. for mount directory path option '--disk-space=/boot':
     /dev/md0                    96978     33904   *57856*      37% /boot.
 """
 LOAD_TEMPLATES = ['uptime', (1, 5, 15), re.compile(
-                  r'load average:\s([\d\.]+),\s([\d\.]+),\s([\d\.]+)')]
+                  r'load average:\s([\d.]+),\s([\d.]+),\s([\d.]+)')]
 MEMORY_TEMPLATES = ['cat /proc/meminfo', re.compile(
                     (r'MemFree:\s*(\d+)\skB\n.*\n*Buffers:\s*(\d+)\skB'
                      r'\n.*\n*Cached:\s*(\d+)\skB'))]
