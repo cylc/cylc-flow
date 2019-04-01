@@ -382,6 +382,20 @@ conditions; see `cylc conditions`.
             self.configure_contact()
             n_restart = 0
 
+        # Copy local python modules from source to run directory
+        for sub_dir in ["python", os.path.join("lib", "python")]:
+            # TODO - eventually drop the deprecated "python" sub-dir.
+            suite_py = os.path.join(self.suite_dir, sub_dir)
+            if (os.path.realpath(self.suite_dir) !=
+                    os.path.realpath(self.suite_run_dir) and
+                    os.path.isdir(suite_py)):
+                suite_run_py = os.path.join(self.suite_run_dir, sub_dir)
+                try:
+                    rmtree(suite_run_py)
+                except OSError:
+                    pass
+                copytree(suite_py, suite_run_py)
+
         self.profiler.log_memory("scheduler.py: before load_suiterc")
         self.load_suiterc()
         self.profiler.log_memory("scheduler.py: after load_suiterc")
@@ -450,20 +464,6 @@ conditions; see `cylc conditions`.
         self.suite_db_mgr.put_suite_params(self)
         self.suite_db_mgr.put_suite_template_vars(self.template_vars)
         self.suite_db_mgr.put_runtime_inheritance(self.config)
-
-        # Copy local python modules from source to run directory
-        for sub_dir in ["python", os.path.join("lib", "python")]:
-            # TODO - eventually drop the deprecated "python" sub-dir.
-            suite_py = os.path.join(self.suite_dir, sub_dir)
-            if (os.path.realpath(self.suite_dir) !=
-                    os.path.realpath(self.suite_run_dir) and
-                    os.path.isdir(suite_py)):
-                suite_run_py = os.path.join(self.suite_run_dir, sub_dir)
-                try:
-                    rmtree(suite_run_py)
-                except OSError:
-                    pass
-                copytree(suite_py, suite_run_py)
 
         self.already_timed_out = False
         self.set_suite_timer()
