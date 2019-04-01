@@ -97,7 +97,7 @@ prev_file = None
 
 for line in lines:
 
-    m = re.match(r'^#\+\+\+\+ START INLINED INCLUDE FILE ([\w/\.\-]+)', line)
+    m = re.match(r'^#\+\+\+\+ START INLINED INCLUDE FILE ([\w/.\-]+)', line)
     if m:
         inc_file = m.groups()[0]
         in_include_file = True

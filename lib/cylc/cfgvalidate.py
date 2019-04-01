@@ -46,7 +46,7 @@ class CylcConfigValidator(ParsecValidator):
     """
     # Parameterized names containing at least one comma.
     _REC_NAME_SUFFIX = re.compile(r'\A[\w\-+%@]+\Z')
-    _REC_TRIG_FUNC = re.compile(r'(\w+)\((.*)\)(?:\:(\w+))?')
+    _REC_TRIG_FUNC = re.compile(r'(\w+)\((.*)\)(?::(\w+))?')
 
     # Value type constants
     V_CYCLE_POINT = 'V_CYCLE_POINT'

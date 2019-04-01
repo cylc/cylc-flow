@@ -83,8 +83,8 @@ class ParsecValidator(object):
     _REC_SQ_L_VALUE = re.compile(r"'([^'\\]*(?:\\.[^'\\]*)*)'")
     _REC_DQ_L_VALUE = re.compile(r'"([^"\\]*(?:\\.[^"\\]*)*)"')
     # quoted values with ignored trailing comments
-    _REC_SQ_VALUE = re.compile(r"'([^'\\]*(?:\\.[^'\\]*)*)'(?:\s*(?:\#.*)?)?$")
-    _REC_DQ_VALUE = re.compile(r'"([^"\\]*(?:\\.[^"\\]*)*)"(?:\s*(?:\#.*)?)?$')
+    _REC_SQ_VALUE = re.compile(r"'([^'\\]*(?:\\.[^'\\]*)*)'(?:\s*(?:#.*)?)?$")
+    _REC_DQ_VALUE = re.compile(r'"([^"\\]*(?:\\.[^"\\]*)*)"(?:\s*(?:#.*)?)?$')
 
     _REC_UQLP = re.compile(r"""(['"]?)(.*?)\1(,|$)""")
     _REC_SQV = re.compile(r"((?:^[^']*(?:'[^']*')*[^']*)*)(#.*)$")
@@ -96,7 +96,7 @@ class ParsecValidator(object):
         r'\A"""(.*?)"""\s*(?:#.*)?\Z', re.MULTILINE | re.DOTALL)
     # integer range syntax START..END[..STEP]
     _REC_INT_RANGE = re.compile(
-        r'\A([\+\-]?\d+)\s*\.\.\s*([\+\-]?\d+)(?:\s*\.\.\s*(\d+))?\Z')
+        r'\A([+\-]?\d+)\s*\.\.\s*([+\-]?\d+)(?:\s*\.\.\s*(\d+))?\Z')
     # Parameterized names containing at least one comma.
     _REC_MULTI_PARAM = re.compile(r'<[\w]+,.*?>')
 

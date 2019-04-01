@@ -194,7 +194,7 @@ def split_file(dir_, lines, filename, recovery=False, level=None):
         if not match_on:
             m = re.match(
                 r'^#\+\+\+\+ START INLINED INCLUDE FILE ' +
-                r'([\w\/\.\-]+) \(DO NOT MODIFY THIS LINE!\)', line)
+                r'([\w/.\-]+) \(DO NOT MODIFY THIS LINE!\)', line)
             if m:
                 match_on = True
                 inc_filename = m.groups()[0]
