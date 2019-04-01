@@ -43,7 +43,8 @@ from cylc.exceptions import CylcError
 import cylc.flags
 from cylc.host_appointer import HostAppointer, EmptyHostList
 from cylc.hostuserutil import get_host, get_user, get_fqdn_by_host
-from cylc.loggingutil import TimestampRotatingFileHandler
+from cylc.loggingutil import TimestampRotatingFileHandler,\
+    ReferenceLogFileHandler
 from cylc.log_diagnosis import LogSpec
 from cylc.network.server import SuiteRuntimeServer
 from cylc.profiler import Profiler
@@ -128,9 +129,6 @@ class Scheduler(object):
         'insert_tasks',
         'reload_suite'
     )
-
-    REF_LOG_TEXTS = (
-        'triggered off', 'Initial point', 'Start point', 'Final point')
 
     def __init__(self, is_restart, options, args):
         self.options = options
@@ -1066,7 +1064,8 @@ conditions; see `cylc conditions`.
         """Configure the reference test."""
         if self.options.genref:
             self.config.cfg['cylc']['log resolved dependencies'] = True
-
+            reference_log = os.path.join(self.config.fdir, 'reference.log')
+            LOG.addHandler(ReferenceLogFileHandler(reference_log))
         elif self.options.reftest:
             rtc = self.config.cfg['cylc']['reference test']
             req = rtc['required run mode']
@@ -1707,19 +1706,6 @@ conditions; see `cylc conditions`.
             msg += ' - %s' % reason
 
         LOG.info(msg)
-
-        if self.options.genref:
-            try:
-                handle = open(
-                    os.path.join(self.config.fdir, 'reference.log'), 'wb')
-                logpath = glbl_cfg().get_derived_host_item(
-                    self.suite, 'suite log')
-                for line in open(logpath):
-                    if any(text in line for text in self.REF_LOG_TEXTS):
-                        handle.write(line)
-                handle.close()
-            except IOError as exc:
-                LOG.exception(exc)
 
         if self.proc_pool:
             if self.proc_pool.is_not_done():
