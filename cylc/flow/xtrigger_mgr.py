@@ -82,7 +82,7 @@ class XtriggerManager(object):
 
     """
 
-    def __init__(self, suite, user, broadcast_mgr=None, proc_pool=None,
+    def __init__(self, suite, user, *, broadcast_mgr=None, proc_pool=None,
                  suite_run_dir=None, suite_share_dir=None,
                  suite_source_dir=None):
         """Initialize the xtrigger manager."""
