@@ -83,8 +83,7 @@ class XtriggerManager(object):
     """
 
     def __init__(self, suite, user, broadcast_mgr=None, suite_run_dir=None,
-                 suite_share_dir=None, suite_work_dir=None,
-                 suite_source_dir=None):
+                 suite_share_dir=None, suite_source_dir=None):
         """Initialize the xtrigger manager."""
         # Suite function and clock triggers by label.
         self.functx_map = {}

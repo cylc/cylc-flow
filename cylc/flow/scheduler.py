@@ -222,7 +222,7 @@ class Scheduler(object):
         self.broadcast_mgr = BroadcastMgr(self.suite_db_mgr)
         self.xtrigger_mgr = XtriggerManager(
             self.suite, self.owner, self.broadcast_mgr, self.suite_run_dir,
-            self.suite_share_dir, self.suite_work_dir, self.suite_dir)
+            self.suite_share_dir, self.suite_dir)
         self.ref_test_allowed_failures = []
         # Last 10 durations (in seconds) of the main loop
         self.main_loop_intervals = deque(maxlen=10)
