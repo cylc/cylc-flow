@@ -40,7 +40,7 @@ from cylc.task_remote_cmd import (
     FILE_BASE_UUID, REMOTE_INIT_DONE, REMOTE_INIT_NOT_REQUIRED)
 
 
-REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*(`|\))$')
+REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
 REMOTE_INIT_FAILED = 'REMOTE INIT FAILED'
 
 
