@@ -267,3 +267,12 @@ class XtriggerManager(object):
         if satisfied:
             self.pflag = True
             self.sat_xtrig[sig] = results
+
+    def check_xtriggers(self, itasks, proc_pool):
+        """See if any xtriggers are satisfied."""
+        self.collate(itasks)
+        for itask in itasks:
+            if itask.state.xclock is not None:
+                self.satisfy_xclock(itask)
+            if itask.state.xtriggers:
+                self.satisfy_xtriggers(itask, proc_pool)

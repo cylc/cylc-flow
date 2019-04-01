@@ -451,7 +451,7 @@ see `COPYING' in the Cylc source distribution.
 
         self.pool = TaskPool(
             self.config, self.final_point, self.suite_db_mgr,
-            self.task_events_mgr, self.proc_pool, self.xtrigger_mgr)
+            self.task_events_mgr)
 
         self.profiler.log_memory("scheduler.py: before load_tasks")
         if self.is_restart:
@@ -1634,7 +1634,8 @@ see `COPYING' in the Cylc source distribution.
         process = False
 
         # New-style xtriggers.
-        self.pool.check_xtriggers()
+        self.xtrigger_mgr.check_xtriggers(
+            self.pool.get_tasks(), self.proc_pool)
         if self.xtrigger_mgr.pflag:
             process = True
             self.xtrigger_mgr.pflag = False  # reset
