@@ -46,7 +46,7 @@ NO_EMPY=true
 if cylc check-software 2>'/dev/null' | grep -q '^Python:EmPy.*([^-]*)$'; then
     NO_EMPY=false
 fi
-for suite in ${SUITES[@]}; do
+for suite in "${SUITES[@]}"; do
     suite_name=$(sed 's/\//-/g' <<<"${suite:$ABS_PATH_LENGTH}")
     TEST_NAME="${TEST_NAME_BASE}${suite_name}"
     if "${NO_EMPY}" && grep -qi '^#!empy' < <(head -1 "${suite}"); then

@@ -38,7 +38,7 @@ if grep 'unit-tests' <<< "${args[@]}"; then
 fi
 
 # install dependencies required for building documentation
-if grep 'docs' <<< "${args[@]}$"; then
+if grep 'docs' <<< "${args[@]}"; then
     pip install sphinx
     # for PDF output via LaTeX builder
     sudo apt-get install texlive-latex-base

@@ -148,12 +148,12 @@ set_test_number() {
 }
 
 ok() {
-    echo "ok $((++TEST_NUMBER)) - $@"
+    echo "ok $((++TEST_NUMBER)) - $*"
 }
 
 fail() {
     ((++FAILURES))
-    echo "not ok $((++TEST_NUMBER)) - $@"
+    echo "not ok $((++TEST_NUMBER)) - $*"
     if [[ -n "${CYLC_TEST_DEBUG:-}" ]]; then
         echo >'/dev/tty'
         echo "${TEST_NAME_BASE} ${TEST_NAME}" >'/dev/tty'
@@ -455,12 +455,12 @@ skip() {
     shift 1
     local COUNT=0
     while ((COUNT++ < N_TO_SKIP)); do
-        echo "ok $((++TEST_NUMBER)) # skip $@"
+        echo "ok $((++TEST_NUMBER)) # skip $*"
     done
 }
 
 skip_all() {
-    echo "1..0 # SKIP $@"
+    echo "1..0 # SKIP $*"
     exit
 }
 
