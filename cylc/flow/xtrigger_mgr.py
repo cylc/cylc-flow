@@ -82,8 +82,9 @@ class XtriggerManager(object):
 
     """
 
-    def __init__(self, suite, user, broadcast_mgr=None, suite_run_dir=None,
-                 suite_share_dir=None, suite_source_dir=None):
+    def __init__(self, suite, user, broadcast_mgr=None, proc_pool=None,
+                 suite_run_dir=None, suite_share_dir=None,
+                 suite_source_dir=None):
         """Initialize the xtrigger manager."""
         # Suite function and clock triggers by label.
         self.functx_map = {}
@@ -110,6 +111,7 @@ class XtriggerManager(object):
             TMPL_SUITE_SHARE_DIR: suite_share_dir,
             TMPL_DEBUG_MODE: cylc.flow.flags.debug
         }
+        self.proc_pool = proc_pool
         self.broadcast_mgr = broadcast_mgr
         self.suite_source_dir = suite_source_dir
 
@@ -221,7 +223,7 @@ class XtriggerManager(object):
             if itask.state.xclock is not None:
                 self.all_xclock.append(self._get_xclock(itask, sig_only=True))
 
-    def satisfy_xtriggers(self, itask, proc_pool):
+    def satisfy_xtriggers(self, itask):
         """Attempt to satisfy itask's xtriggers."""
         for label, sig, ctx, _ in self._get_xtrig(itask, unsat_only=True):
             if sig in self.sat_xtrig:
@@ -247,7 +249,7 @@ class XtriggerManager(object):
             self.t_next_call[sig] = now + ctx.intvl
             # Queue to the process pool, and record as active.
             self.active.append(sig)
-            proc_pool.put_command(ctx, self.callback)
+            self.proc_pool.put_command(ctx, self.callback)
 
     def callback(self, ctx):
         """Callback for asynchronous xtrigger functions.
@@ -267,11 +269,11 @@ class XtriggerManager(object):
             self.pflag = True
             self.sat_xtrig[sig] = results
 
-    def check_xtriggers(self, itasks, proc_pool):
+    def check_xtriggers(self, itasks):
         """See if any xtriggers are satisfied."""
         self.collate(itasks)
         for itask in itasks:
             if itask.state.xclock is not None:
                 self.satisfy_xclock(itask)
             if itask.state.xtriggers:
-                self.satisfy_xtriggers(itask, proc_pool)
+                self.satisfy_xtriggers(itask)
