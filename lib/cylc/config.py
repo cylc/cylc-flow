@@ -2098,7 +2098,11 @@ class SuiteConfig(object):
                             self.taskdefs[task_name].xclock_label = label
                 else:
                     try:
-                        xfunc = get_func(xtrig.func_name, self.fdir)
+                        if not callable(get_func(xtrig.func_name, self.fdir)):
+                            raise SuiteConfigError(
+                                f"ERROR, "
+                                f"xtrigger function not callable: "
+                                f"{xtrig.func_name}")
                     except ModuleNotFoundError:
                         raise SuiteConfigError(
                             f"ERROR, "
