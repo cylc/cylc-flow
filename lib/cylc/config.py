@@ -58,6 +58,7 @@ import cylc.flags
 from cylc.graphnode import GraphNodeParser, GraphNodeError
 from cylc.print_tree import print_tree
 from cylc.subprocctx import SubFuncContext
+from cylc.subprocpool import get_func
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.taskdef import TaskDef, TaskDefError
 from cylc.task_id import TaskID
@@ -2096,6 +2097,16 @@ class SuiteConfig(object):
                         if offset > old_offset:
                             self.taskdefs[task_name].xclock_label = label
                 else:
+                    try:
+                        if not callable(get_func(xtrig.func_name, self.fdir)):
+                            raise SuiteConfigError(
+                                f"ERROR, "
+                                f"xtrigger function not callable: "
+                                f"{xtrig.func_name}")
+                    except ModuleNotFoundError:
+                        raise SuiteConfigError(
+                            f"ERROR, "
+                            f"xtrigger function not found: {xtrig.func_name}")
                     self.xtrigger_mgr.add_trig(label, xtrig)
                     self.taskdefs[task_name].xtrig_labels.add(label)
 
