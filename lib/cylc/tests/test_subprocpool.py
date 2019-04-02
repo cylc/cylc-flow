@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -16,11 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from tempfile import NamedTemporaryFile, SpooledTemporaryFile, TemporaryFile
+from tempfile import NamedTemporaryFile, SpooledTemporaryFile, TemporaryFile,\
+    TemporaryDirectory
 import unittest
 
+from pathlib import Path
+
 from cylc.subprocctx import SubProcContext
-from cylc.subprocpool import SubProcPool
+from cylc.subprocpool import SubProcPool, _XTRIG_FUNCS, get_func
 
 
 class TestSubProcPool(unittest.TestCase):
@@ -135,6 +138,63 @@ class TestSubProcPool(unittest.TestCase):
         self.assertEqual(ctx.ret_code, 0)
         for handle in handles:
             handle.close()
+
+    def test_xfunction(self):
+        """Test xtrigger function import."""
+        with TemporaryDirectory() as temp_dir:
+            python_dir = Path(temp_dir, "lib", "python")
+            python_dir.mkdir(parents=True)
+            the_answer_file = python_dir / "the_answer.py"
+            with the_answer_file.open(mode="w") as f:
+                f.write("""the_answer = lambda: 42""")
+                f.flush()
+            fn = get_func("the_answer", temp_dir)
+            result = fn()
+            self.assertEqual(42, result)
+
+    def test_xfunction_cache(self):
+        """Test xtrigger function import cache."""
+        with TemporaryDirectory() as temp_dir:
+            python_dir = Path(temp_dir, "lib", "python")
+            python_dir.mkdir(parents=True)
+            amandita_file = python_dir / "amandita.py"
+            with amandita_file.open(mode="w") as f:
+                f.write("""amandita = lambda: 'chocolate'""")
+                f.flush()
+            fn = get_func("amandita", temp_dir)
+            result = fn()
+            self.assertEqual('chocolate', result)
+
+            # is in the cache
+            self.assertTrue('amandita' in _XTRIG_FUNCS)
+            # returned from cache
+            self.assertEqual(fn, get_func("amandita", temp_dir))
+            del _XTRIG_FUNCS['amandita']
+            # is not in the cache
+            self.assertFalse('amandita' in _XTRIG_FUNCS)
+
+    def test_xfunction_import_error(self):
+        """Test for error on importing a xtrigger function.
+
+        To prevent the test eventually failing if the test function is added
+        and successfully imported, we use an invalid module name as per Python
+        spec.
+        """
+        with TemporaryDirectory() as temp_dir:
+            with self.assertRaises(ModuleNotFoundError):
+                get_func("invalid-module-name", temp_dir)
+
+    def test_xfunction_attribute_error(self):
+        """Test for error on looking for an attribute in a xtrigger script."""
+        with TemporaryDirectory() as temp_dir:
+            python_dir = Path(temp_dir, "lib", "python")
+            python_dir.mkdir(parents=True)
+            the_answer_file = python_dir / "the_sword.py"
+            with the_answer_file.open(mode="w") as f:
+                f.write("""the_droid = lambda: 'excalibur'""")
+                f.flush()
+            with self.assertRaises(AttributeError):
+                get_func("the_sword", temp_dir)
 
 
 if __name__ == '__main__':
