@@ -1290,8 +1290,8 @@ environment variables. It can be an external command or script, or inlined
 scripting. The original intention for this item was to allow remote tasks to
 source login scripts to configure their access to cylc, but this should no
 longer be necessary (see :ref:`HowTasksGetAccessToCylc`). See also
-``env-script``, ``err-script``, ``exit-script``,
-``pre-script``, ``script``, and ``post-script``.
+``env-script``, ``pre-script``, ``script``,
+``post-script``, ``err-script``, ``exit-script``.
 
 - *type*: string
 - *default*: (none)
@@ -1306,45 +1306,12 @@ Custom script invoked by the task job script between the cylc-defined environmen
 so it has access to the cylc environment (and the task environment has
 access to variables defined by this scripting). It can be an external command
 or script, or inlined scripting. See also ``init-script``,
-``err-script``, ``exit-script``, ``pre-script``,
-``script``, and ``post-script``.
+``pre-script``, ``script``, ``post-script``,
+``err-script``, and ``exit-script``.
 
 - *type*: string
 - *default*: (none)
 - *example*: ``env-script = "echo Hello World"``
-
-
-[runtime] ``->`` [[\_\_NAME\_\_]] ``->`` exit-script
-""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-Custom script invoked at the very end of *successful* job execution, just
-before the job script exits. It should execute very quickly. Companion of
-``err-script``, which is executed on job failure. It can be an external
-command or script, or inlined scripting. See also ``init-script``,
-``env-script``, ``exit-script``, ``pre-script``,
-``script``, and ``post-script``.
-
-- *type*: string
-- *default*: (none)
-- *example*: ``exit-script = "rm -f $TMP_FILES"``
-
-
-[runtime] ``->`` [[\_\_NAME\_\_]] ``->`` err-script
-"""""""""""""""""""""""""""""""""""""""""""""""""""
-
-Custom script to be invoked at the end of the error trap, which is triggered
-due to failure of a command in the task job script or trappable job kill. The
-output of this will always be sent to STDERR and ``$1`` is set to the
-name of the signal caught by the error trap. The script should be fast and use
-very little system resource to ensure that the error trap can return quickly.
-Companion of ``exit-script``, which is executed on job success.
-It can be an external command or script, or inlined scripting. See also
-``init-script``, ``env-script``, ``exit-script``,
-``pre-script``, ``script``, and ``post-script``.
-
-- *type*: string
-- *default*: (none)
-- *example*: ``err-script = "printenv FOO"``
 
 
 [runtime] ``->`` [[\_\_NAME\_\_]] ``->`` pre-script
@@ -1353,8 +1320,8 @@ It can be an external command or script, or inlined scripting. See also
 Custom script invoked by the task job script immediately before the ``script``
 item (just below). It can be an external command or script, or inlined scripting.
 See also ``init-script``, ``env-script``,
-``err-script``, ``exit-script``, ``script``, and
-``post-script``.
+``script``, ``post-script``, ``err-script``, and
+``exit-script``.
 
 - *type*: string
 - *default*: (none)
@@ -1367,15 +1334,13 @@ See also ``init-script``, ``env-script``,
        echo Hello from suite ${CYLC_SUITE_NAME}!"""
 
 
-.. _ScriptItem:
-
 [runtime] ``->`` [[\_\_NAME\_\_]] ``->`` script
 """""""""""""""""""""""""""""""""""""""""""""""
 
 The main custom script invoked from the task job script. It can be an
 external command or script, or inlined scripting. See also
-``init-script``, ``env-script``, ``err-script``,
-``exit-script``, ``pre-script``, and ``post-script``.
+``init-script``, ``env-script``, ``pre-script``,
+``post-script``, ``err-script``, and ``exit-script``.
 
 - *type*: string
 - *root default*: (none)
@@ -1387,11 +1352,44 @@ external command or script, or inlined scripting. See also
 Custom script invoked by the task job script immediately after the
 ``script`` item (just above). It can be an external command or script,
 or inlined scripting.  See also
-``init-script``, ``env-script``, ``err-script``,
-``exit-script``, ``pre-script``, and ``script``.
+``init-script``, ``env-script``, ``pre-script``,
+``script``, ``err-script``, and ``exit-script``.
 
 - *type*: string
 - *default*: (none)
+
+
+[runtime] ``->`` [[\_\_NAME\_\_]] ``->`` err-script
+"""""""""""""""""""""""""""""""""""""""""""""""""""
+
+Custom script to be invoked at the end of the error trap, which is triggered
+due to failure of a command in the task job script or trappable job kill. The
+output of this will always be sent to STDERR and ``$1`` is set to the
+name of the signal caught by the error trap. The script should be fast and use
+very little system resource to ensure that the error trap can return quickly.
+Companion of ``exit-script``, which is executed on job success.
+It can be an external command or script, or inlined scripting. See also
+``init-script``, ``env-script``, ``pre-script``,
+``script``, ``post-script``, and ``exit-script``.
+
+- *type*: string
+- *default*: (none)
+- *example*: ``err-script = "printenv FOO"``
+
+
+[runtime] ``->`` [[\_\_NAME\_\_]] ``->`` exit-script
+""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+Custom script invoked at the very end of *successful* job execution, just
+before the job script exits. It should execute very quickly. Companion of
+``err-script``, which is executed on job failure. It can be an external
+command or script, or inlined scripting. See also ``init-script``,
+``env-script``, ``pre-script``, ``script``,
+``post-script``, and ``err-script``.
+
+- *type*: string
+- *default*: (none)
+- *example*: ``exit-script = "rm -f $TMP_FILES"``
 
 
 .. _worksubdirectory:
