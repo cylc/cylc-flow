@@ -2103,7 +2103,7 @@ class SuiteConfig(object):
                                 f"ERROR, "
                                 f"xtrigger function not callable: "
                                 f"{xtrig.func_name}")
-                    except ModuleNotFoundError:
+                    except (ModuleNotFoundError, AttributeError):
                         raise SuiteConfigError(
                             f"ERROR, "
                             f"xtrigger function not found: {xtrig.func_name}")

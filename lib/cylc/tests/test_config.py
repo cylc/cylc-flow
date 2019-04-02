@@ -76,6 +76,32 @@ class TestSuiteConfig(object):
                     SuiteConfig(suite="caiman_suite", fpath=f.name)
                 assert "not found" in str(excinfo.value)
 
+    def test_xfunction_attribute_error(self):
+        """Test for error when a xtrigger function cannot be imported."""
+        with TemporaryDirectory() as temp_dir:
+            python_dir = Path(os.path.join(temp_dir, "lib", "python"))
+            python_dir.mkdir(parents=True)
+            capybara_file = python_dir / "capybara.py"
+            with capybara_file.open(mode="w") as f:
+                # NB: we are not returning a lambda, instead we have a scalar
+                f.write("""toucan = lambda: True""")
+                f.flush()
+            suite_rc = Path(temp_dir, "suite.rc")
+            with suite_rc.open(mode="w") as f:
+                f.write("""
+    [scheduling]
+        initial cycle point = 2018-01-01
+        [[xtriggers]]
+            oopsie = capybara()
+        [[dependencies]]
+            [[[R1]]]
+                graph = '@oopsie => qux'
+                """)
+                f.flush()
+                with pytest.raises(SuiteConfigError) as excinfo:
+                    SuiteConfig(suite="capybara_suite", fpath=f.name)
+                assert "not found" in str(excinfo.value)
+
     def test_xfunction_not_callable(self):
         """Test for error when a xtrigger function is not callable."""
         with TemporaryDirectory() as temp_dir:
