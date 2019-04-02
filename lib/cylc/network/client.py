@@ -190,8 +190,13 @@ class ZMQClient(object):
             raise ClientError(response['error'])
 
     def serial_request(self, command, args=None, timeout=None):
-        return asyncio.run(
-            self.async_request(command, args, timeout))
+        # TODO: replace by asyncio.run when minimum req is py37
+        loop = asyncio.new_event_loop()
+        try:
+            return loop.run_until_complete(
+                self.async_request(command, args, timeout))
+        finally:
+            loop.close()
 
     __call__ = serial_request
 
