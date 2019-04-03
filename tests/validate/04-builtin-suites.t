@@ -54,6 +54,11 @@ for suite in ${SUITES[@]}; do
         skip 2 "${TEST_NAME}: EmPy not installed"
         continue
     fi
+    # ignore kafka suites TODO: revisit it later (kafka dependency)
+    if [[ $suite == *"kafka"* ]]; then
+        skip 2 "${TEST_NAME}: Skipping suites using Kafka dependencies"
+        continue
+    fi
     run_ok "${TEST_NAME}" cylc validate "${suite}" -v
     filter_warnings "${TEST_NAME}.stderr"
     cmp_ok "${TEST_NAME}.stderr.processed" /dev/null

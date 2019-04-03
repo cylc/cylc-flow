@@ -62,8 +62,8 @@ class XtriggerManager(object):
                         '''
 
     Task proxies only store xtriggers labels: clock_0, suite_x, etc. above.
-    These mapped to the defined function calls. Dependence on xtriggers is
-    satisfied by calling these functions asynchronously in the task pool
+    These are mapped to the defined function calls. Dependence on xtriggers
+    is satisfied by calling these functions asynchronously in the task pool
     (except clock triggers which are called synchronously as they're quick).
 
     A unique call is defined by a unique function call signature, i.e. the
@@ -261,7 +261,7 @@ class XtriggerManager(object):
         self.active.remove(sig)
         try:
             satisfied, results = json.loads(ctx.out)
-        except ValueError:
+        except (ValueError, TypeError):
             return
         LOG.debug('%s: returned %s' % (sig, results))
         if satisfied:
