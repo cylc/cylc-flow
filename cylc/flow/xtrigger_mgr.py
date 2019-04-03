@@ -243,7 +243,7 @@ class XtriggerManager(object):
                 # Already waiting on this result.
                 continue
             now = time()
-            if (sig in self.t_next_call and now < self.t_next_call[sig]):
+            if sig in self.t_next_call and now < self.t_next_call[sig]:
                 # Too soon to call this one again.
                 continue
             self.t_next_call[sig] = now + ctx.intvl
