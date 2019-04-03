@@ -1,0 +1,12 @@
+exclude_paths:
+  - 'conf/**'
+  - 'doc/joss-paper/**'
+  - 'etc/**'
+  - 'lib/cylc/tests/**'
+  - 'lib/isodatetime/**'
+  - 'lib/jinja2/**'
+  - 'lib/markupsafe/**'
+  - 'lib/parsec/tests/**'
+  - 'licences/**'
+  - 'tests/**'
+
