@@ -102,7 +102,8 @@ __HELP__
     fi
     # Deal with cases like 'cylc --help [COMMAND/CATEGORY]'
     if [[ $# -gt 1 && -f "$(ls "cylc-$2"* 2>'/dev/null')" ]]; then
-        local COMMAND="${CYLC_HOME_BIN}/$(ls "cylc-$2"*)"
+        COMMAND="${CYLC_HOME_BIN}/$(ls "cylc-$2"*)"
+        local COMMAND
         exec "${COMMAND}" "--help"
     fi
     # If not a category or not an actual command in the bin dir, exit
@@ -151,7 +152,8 @@ path_lead() {
 }
 
 get_command_from_abbr() {
-    local COMMAND="$(cd "${CYLC_HOME_BIN}" && ls "cylc-$1"* 2>'/dev/null')"
+    COMMAND="$(cd "${CYLC_HOME_BIN}" && ls "cylc-$1"* 2>'/dev/null')"
+    local COMMAND
     if [[ -z "${COMMAND}" ]]; then
         # Abbreviation has no match, bad
         echo "cylc $1: unknown utility. Abort." >&2

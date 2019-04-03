@@ -66,4 +66,4 @@ if [[ -z ${CYLC_HOME:-} ]]; then
         CYLC_HOME=$CYLC_HOME_ROOT/cylc
     fi
 fi
-exec $CYLC_HOME/bin/$(basename $0) "$@"
+exec "$CYLC_HOME/bin/$(basename "$0")" "$@"

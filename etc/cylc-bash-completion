@@ -33,7 +33,7 @@
 
 _cylc() {
 
-    local cur sec opts base
+    local cur sec opts
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     sec="${COMP_WORDS[1]}"
@@ -43,10 +43,10 @@ _cylc() {
 
     if [[ ${COMP_CWORD} -eq 1 ]]; then
         CYLC_DIR=$(__cylc_get_cylc_dir)
-        cylc_cmds=$(cd $CYLC_DIR/bin && ls cylc-* | sed "s/^cylc-//g")
-        COMPREPLY=($(compgen -W "${cylc_cmds}" -- ${cur}))
+        cylc_cmds="$(cd "$CYLC_DIR/bin" && echo cylc-* | sed "s/^cylc-//g")"
+        COMPREPLY=("$(compgen -W "${cylc_cmds}" -- "${cur}")")
     elif [[ ${sec} =~ ^($suite_cmds)$ ]]; then
-        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+        COMPREPLY=( "$(compgen -W "${opts}" -- "${cur}")" )
     fi
     return 0
 }

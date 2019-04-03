@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd $(mktemp -d)
+cd "$(mktemp -d)" || exit 1
 
 cat > suite.rc <<__EOF__
 title = "gcylc task state color theme demo"
