@@ -2103,13 +2103,15 @@ class SuiteConfig(object):
                 else:
                     try:
                         if not callable(get_func(xtrig.func_name, self.fdir)):
-                            raise SuiteConfigError("ERROR, xtrigger function "
-                                                   "not callable: "
-                                                   "%s" % xtrig.func_name)
-                    except ImportError:
-                        raise SuiteConfigError("ERROR, xtrigger function "
-                                               "not found: "
-                                               "%s" % xtrig.func_name)
+                            raise SuiteConfigError(
+                                "ERROR, "
+                                "xtrigger function not callable: %s" %
+                                xtrig.func_name)
+                    except (ImportError, AttributeError):
+                        raise SuiteConfigError(
+                            "ERROR, "
+                            "xtrigger function not found: %s" %
+                            xtrig.func_name)
                     self.xtrigger_mgr.add_trig(label, xtrig)
                     self.taskdefs[task_name].xtrig_labels.add(label)
 
