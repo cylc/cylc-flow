@@ -32,6 +32,6 @@ cat >'suite.rc' <<'__SUITE_RC__'
 __SUITE_RC__
 run_fail "${TEST_NAME_BASE}" cylc validate --strict "${PWD}/suite.rc"
 cmp_ok "${TEST_NAME_BASE}.stderr" <<'__ERR__'
-'ERROR: clock-trigger task "foo" is not defined.'
+SuiteConfigError: clock-trigger task "foo" is not defined.
 __ERR__
 exit

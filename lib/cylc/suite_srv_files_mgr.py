@@ -25,14 +25,10 @@ from string import ascii_letters, digits
 
 from cylc import LOG
 from cylc.cfgspec.glbl_cfg import glbl_cfg
+from cylc.exceptions import SuiteServiceFileError
 import cylc.flags
 from cylc.hostuserutil import (
     get_host, get_user, is_remote, is_remote_host, is_remote_user)
-
-
-class SuiteServiceFileError(Exception):
-    """Raise on error related to suite service files."""
-    pass
 
 
 class SuiteSrvFilesManager(object):
@@ -170,7 +166,7 @@ class SuiteSrvFilesManager(object):
 
         raise SuiteServiceFileError(
             (
-                r"""ERROR, suite contact file exists: %(fname)s
+                r"""suite contact file exists: %(fname)s
 
 Suite "%(suite)s" is already running, and listening at "%(host)s:%(port)s".
 
@@ -335,7 +331,7 @@ To start a new run, stop the old one first with one or more of these:
                 self.register(reg=reg, source=suite_d)
                 return suite_d
             else:
-                raise SuiteServiceFileError("ERROR: Suite not found %s" % reg)
+                raise SuiteServiceFileError("Suite not found %s" % reg)
         else:
             if os.path.isabs(source):
                 return source
@@ -443,7 +439,7 @@ To start a new run, stop the old one first with one or more of these:
 
         if os.path.isabs(reg):
             raise SuiteServiceFileError(
-                "ERROR: suite name cannot be an absolute path: %s" % reg)
+                "suite name cannot be an absolute path: %s" % reg)
 
         if source is not None:
             if os.path.basename(source) == self.FILE_BASE_SUITE_RC:
@@ -454,7 +450,7 @@ To start a new run, stop the old one first with one or more of these:
         # suite.rc must exist so we can detect accidentally reversed args.
         source = os.path.abspath(source)
         if not os.path.isfile(os.path.join(source, self.FILE_BASE_SUITE_RC)):
-            raise SuiteServiceFileError("ERROR: no suite.rc in %s" % source)
+            raise SuiteServiceFileError("no suite.rc in %s" % source)
 
         # Create service dir if necessary.
         srv_d = self.get_suite_srv_dir(reg)
@@ -473,7 +469,7 @@ To start a new run, stop the old one first with one or more of these:
         if orig_source is not None and source != orig_source:
             if not redirect:
                 raise SuiteServiceFileError(
-                    "ERROR: the name '%s' already points to %s.\nUse "
+                    "the name '%s' already points to %s.\nUse "
                     "--redirect to re-use an existing name and run "
                     "directory." % (reg, orig_source))
             LOG.warning(

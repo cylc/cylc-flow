@@ -27,7 +27,7 @@ __SUITE_RC__
 
 run_fail "${TEST_NAME_BASE}" cylc validate 'suite.rc'
 cmp_ok "${TEST_NAME_BASE}.stderr" <<'__ERR__'
-ERROR, mismatched quotes: %include 'foo.rc
+ParsecError: mismatched quotes: %include 'foo.rc
 __ERR__
 
 exit

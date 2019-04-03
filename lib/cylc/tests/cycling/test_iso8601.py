@@ -26,6 +26,9 @@ from cylc.cycling.iso8601 import init, ISO8601Sequence, ISO8601Point,\
 class TestISO8601Sequence(unittest.TestCase):
     """Contains unit tests for the ISO8601Sequence class."""
 
+    def setUp(self):
+        init(time_zone='Z')
+
     def test_exclusions_simple(self):
         """Test the generation of points for sequences with exclusions."""
         init(time_zone='Z')

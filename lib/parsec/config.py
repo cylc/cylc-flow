@@ -17,22 +17,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-from parsec import ParsecError
+from parsec.exceptions import (
+    ParsecError, ItemNotFoundError, NotSingleItemError)
 from parsec.fileparse import parse
 from parsec.util import printcfg
 from parsec.validate import parsec_validate
 from parsec.OrderedDict import OrderedDictWithDefaults
 from parsec.util import itemstr, m_override, replicate, un_many
-
-
-class ItemNotFoundError(ParsecError):
-    def __init__(self, msg):
-        self.msg = 'ERROR: item not found: %s' % msg
-
-
-class NotSingleItemError(ParsecError):
-    def __init__(self, msg):
-        self.msg = 'ERROR: not a singular item: %s' % msg
 
 
 class ParsecConfig(object):

@@ -23,14 +23,14 @@ install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-val
 run_fail "$TEST_NAME" cylc validate suite.rc
-contains_ok "$TEST_NAME.stderr" <<'__ERROR__'
-Jinja2Error:
-jinja2.exceptions.TemplateSyntaxError: Encountered unknown tag 'end'. Jinja was looking for the following tags: 'elif' or 'else' or 'endif'. The innermost block that needs to be closed is 'if'.
+cmp_ok "$TEST_NAME.stderr" <<'__ERROR__'
+Jinja2Error: Encountered unknown tag 'end'.
+Jinja was looking for the following tags: 'elif' or 'else' or 'endif'.
+The innermost block that needs to be closed is 'if'.
 Context lines:
-    [[dependencies]]
         {% if true %}
         graph = foo
-        {% end if %	<-- Jinja2Error
+        {% end if %	<-- TemplateSyntaxError
 __ERROR__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

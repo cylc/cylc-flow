@@ -41,5 +41,6 @@ def add_offset(cycle_point, offset):
         else:
             my_target_point += my_shift
     else:
+        # TODO - raise appropriate exception
         raise ValueError("ERROR, bad offset format: %s" % offset)
     return my_target_point

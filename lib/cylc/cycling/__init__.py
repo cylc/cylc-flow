@@ -20,6 +20,10 @@
 
 from abc import ABCMeta, abstractmethod
 
+from cylc.exceptions import (
+    CyclerTypeError, PointParsingError, IntervalParsingError,
+    SequenceDegenerateError)
+
 
 def parse_exclusion(expr):
     count = expr.count('!')
@@ -39,47 +43,6 @@ def parse_exclusion(expr):
         exclusions = exclusions.translate(str.maketrans('', '', ' ()'))
         exclusions = exclusions.split(',')
         return remainder.strip(), exclusions
-
-
-class CyclerTypeError(TypeError):
-
-    """An error raised when incompatible cycling types are wrongly mixed."""
-
-    ERROR_MESSAGE = "Incompatible cycling types: {0} ({1}), {2} ({3})"
-
-    def __str__(self):
-        return self.ERROR_MESSAGE.format(*self.args)
-
-
-class PointParsingError(ValueError):
-
-    """An error raised when a point has an incorrect value."""
-
-    ERROR_MESSAGE = "Incompatible value for {0}: {1}: {2}"
-
-    def __str__(self):
-        return self.ERROR_MESSAGE.format(*self.args)
-
-
-class IntervalParsingError(ValueError):
-
-    """An error raised when an interval has an incorrect value."""
-
-    ERROR_MESSAGE = "Incompatible value for {0}: {1}"
-
-    def __str__(self):
-        return self.ERROR_MESSAGE.format(*self.args)
-
-
-class SequenceDegenerateError(Exception):
-
-    """An error raised when adjacent points on a sequence are equal."""
-
-    ERROR_MESSAGE = (
-        "Sequence {0}, point format {1}: equal adjacent points: {2} => {3}.")
-
-    def __str__(self):
-        return self.ERROR_MESSAGE.format(*self.args)
 
 
 class PointBase(object, metaclass=ABCMeta):

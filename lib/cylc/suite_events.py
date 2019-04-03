@@ -23,13 +23,9 @@ from shlex import quote
 
 from cylc import LOG
 from cylc.cfgspec.glbl_cfg import glbl_cfg
+from cylc.exceptions import SuiteEventError
 from cylc.hostuserutil import get_host, get_user
 from cylc.subprocctx import SubProcContext
-
-
-class SuiteEventError(Exception):
-    """Suite event error."""
-    pass
 
 
 SuiteEventContext = namedtuple(

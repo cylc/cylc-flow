@@ -56,6 +56,7 @@ from stat import S_IRUSR
 from tempfile import mkstemp
 from subprocess import Popen, PIPE
 
+from cylc.exceptions import UserInputError
 import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.rundb import CylcSuiteDAO
@@ -64,6 +65,7 @@ from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.task_id import TaskID
 from cylc.task_job_logs import (
     JOB_LOG_OUT, JOB_LOG_ERR, JOB_LOG_OPTS, NN, JOB_LOGS_LOCAL)
+from cylc.terminal import cli_function
 
 
 # Immortal tail-follow processes on job hosts can be cleaned up by killing
@@ -135,7 +137,7 @@ def view_log(logpath, mode, tailer_tmpl, batchview_cmd=None, remote=False):
     elif not os.path.exists(logpath) and batchview_cmd is None:
         # Note: batchview_cmd may not need to have access to logpath, so don't
         # test for existence of path if it is set.
-        sys.stderr.write('ERROR: file not found: %s\n' % logpath)
+        sys.stderr.write('file not found: %s\n' % logpath)
         return 1
     elif mode == 'print-dir':
         print(os.path.dirname(logpath))
@@ -277,6 +279,7 @@ def tmpfile_edit(tmpfile, geditor=False):
         sys.stderr.write(err)
 
 
+@cli_function
 def main():
     """Implement cylc cat-log CLI.
 
@@ -321,7 +324,8 @@ def main():
             try:
                 logpath = logs[int(options.rotation_num)]
             except IndexError:
-                sys.exit("ERROR: max rotation %d" % (len(logs) - 1))
+                raise UserInputError(
+                    "max rotation %d" % (len(logs) - 1))
         tail_tmpl = str(glbl_cfg().get_host_item("tail command template"))
         out = view_log(logpath, mode, tail_tmpl)
         if out == 1:
@@ -333,7 +337,8 @@ def main():
     if len(args) == 2:
         # Cat task job logs, may be on suite or job host.
         if options.rotation_num is not None:
-            sys.exit("ERROR: only suite (not job) logs get rotated")
+            raise UserInputError(
+                "only suite (not job) logs get rotated")
         task_id = args[1]
         try:
             task, point = TaskID.split(task_id)

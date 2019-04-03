@@ -25,10 +25,10 @@ from time import sleep, time
 from cylc.cylc_subproc import procopen
 
 
-ERR_TIMEOUT = "ERROR: command timed out (>%ds), terminated by signal %d\n%s"
-ERR_SIGNAL = "ERROR: command terminated by signal %d\n%s"
-ERR_RETCODE = "ERROR: command failed %d\n%s"
-ERR_OS = "ERROR: command invocation failed"
+ERR_TIMEOUT = "command timed out (>%ds), terminated by signal %d\n%s"
+ERR_SIGNAL = "command terminated by signal %d\n%s"
+ERR_RETCODE = "command failed %d\n%s"
+ERR_OS = "command invocation failed"
 POLL_DELAY = 0.1
 
 

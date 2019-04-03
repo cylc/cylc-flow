@@ -200,6 +200,7 @@ def construct_ssh_cmd(raw_cmd, user=None, host=None, forward_x11=False,
         if ssh_cylc.endswith('cylc'):
             command.append(ssh_cylc)
         else:
+            # TODO - raise appropriate exception
             raise ValueError(
                 r'ERROR: bad cylc executable in global config: %s' % ssh_cylc)
 

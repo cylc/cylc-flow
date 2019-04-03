@@ -222,7 +222,7 @@ __SUITE__
 TNAME=${TEST_NAME_BASE}-err-1
 run_fail "${TNAME}" cylc validate "suite.rc"
 cmp_ok "${TNAME}.stderr" - << __ERR__
-ERROR, illegal value 'i=frog' in 'inherit = FAM<i=frog,j>'
+ParamExpandError: illegal value 'i=frog' in 'inherit = FAM<i=frog,j>'
 __ERR__
 
 #------------------------------------------------------------------------------
@@ -250,5 +250,5 @@ __SUITE__
 TNAME="${TEST_NAME_BASE}-err-2"
 run_fail "${TNAME}" cylc validate "suite.rc"
 cmp_ok "${TNAME}.stderr" - << __ERR__
-ERROR, parameter 'i' undefined in 'inherit = FAM<i,j=1>'
+ParamExpandError: parameter 'i' undefined in 'inherit = FAM<i,j=1>'
 __ERR__

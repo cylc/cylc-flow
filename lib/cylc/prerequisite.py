@@ -22,11 +22,7 @@ import math
 
 from cylc.conditional_simplifier import ConditionalSimplifier
 from cylc.cycling.loader import get_point
-
-
-class TriggerExpressionError(ValueError):
-    """Trigger expression syntax issue."""
-    pass
+from cylc.exceptions import TriggerExpressionError
 
 
 class Prerequisite(object):

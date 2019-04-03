@@ -55,12 +55,14 @@ from cylc.remote import remrun
 if remrun():
     sys.exit(0)
 
+from cylc.exceptions import CylcError, UserInputError
 import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.dbstatecheck import CylcSuiteDBChecker
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.command_polling import Poller
 from cylc.task_state import TASK_STATUSES_ORDERED
+from cylc.terminal import cli_function
 from cylc.cycling.util import add_offset
 
 from isodatetime.parsers import TimePointParser
@@ -119,7 +121,7 @@ class SuitePoller(Poller):
             self.args['status'], self.args['message'])
 
 
-def main():
+def parse_args():
     parser = COP(__doc__)
 
     parser.add_option(
@@ -176,45 +178,47 @@ def main():
         action="store", dest="msg", default=None)
 
     SuitePoller.add_to_cmd_options(parser)
-    (options, args) = parser.parse_args(remove_opts=["--db"])
+    return parser.parse_args(remove_opts=["--db"])
 
+
+@cli_function
+def main():
+    options, args = parse_args()
     suite = args[0]
 
     if options.use_task_point and options.cycle:
-        sys.exit(
-            "ERROR: cannot specify a cycle point and use environment variable")
+        raise UserInputError(
+            "cannot specify a cycle point and use environment variable")
 
     if options.use_task_point:
         if "CYLC_TASK_CYCLE_POINT" in os.environ:
             options.cycle = os.environ["CYLC_TASK_CYCLE_POINT"]
         else:
-            sys.exit("ERROR: CYLC_TASK_CYCLE_POINT is not defined")
+            raise UserInputError("CYLC_TASK_CYCLE_POINT is not defined")
 
     if options.offset and not options.cycle:
-        sys.exit("ERROR: You must target a cycle point to use an offset")
+        raise UserInputError(
+            "You must target a cycle point to use an offset")
 
     if options.template:
         print("WARNING: ignoring --template (no longer needed)", file=sys.stderr)
 
     # Attempt to apply specified offset to the targeted cycle
     if options.offset:
-        try:
-            options.cycle = str(add_offset(options.cycle, options.offset))
-        except ValueError as exc:
-            sys.exit(exc)
+        options.cycle = str(add_offset(options.cycle, options.offset))
 
     # Exit if both task state and message are to being polled
     if options.status and options.msg:
-        sys.exit("ERROR: cannot poll both status and custom output")
+        raise UserInputError("cannot poll both status and custom output")
 
     if options.msg and not options.task and not options.cycle:
-        sys.exit("ERROR: need a taskname and cyclepoint")
+        raise UserInputError("need a taskname and cyclepoint")
 
     # Exit if an invalid status is requested
     if (options.status and
             options.status not in TASK_STATUSES_ORDERED and
             options.status not in CylcSuiteDBChecker.STATE_ALIASES):
-        sys.exit("ERROR: invalid status '" + options.status + "'")
+        raise UserInputError("invalid status '" + options.status + "'")
 
     # this only runs locally (use of --host or --user results in remote
     # re-invocation).
@@ -238,20 +242,20 @@ def main():
     connected, formatted_pt = spoller.connect()
 
     if not connected:
-        sys.exit("ERROR: cannot connect to the suite DB")
+        raise CylcError("cannot connect to the suite DB")
 
     if options.status and options.task and options.cycle:
-        """check a task status"""
+        # check a task status
         spoller.condition = options.status
         if not spoller.poll():
             sys.exit(1)
     elif options.msg:
-        """Check for a custom task output"""
+        # Check for a custom task output
         spoller.condition = "output: %s" % options.msg
         if not spoller.poll():
             sys.exit(1)
     else:
-        """just display query results"""
+        # just display query results
         spoller.checker.display_maps(
             spoller.checker.suite_state_query(
                 task=options.task,
@@ -260,9 +264,4 @@ def main():
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as exc:
-        if cylc.flags.debug:
-            raise
-        sys.exit(str(exc))
+    main()

@@ -29,7 +29,8 @@ do
         graph = ${GRAPH}
 __SUITE_RC__
     run_fail "${TEST_NAME_BASE}" cylc validate 'suite.rc'
-    grep_ok 'ERROR, null task name in graph: ' "${TEST_NAME_BASE}.stderr"
+    grep_ok 'GraphParseError: null task name in graph: ' \
+        "${TEST_NAME_BASE}.stderr"
 done
 
 exit

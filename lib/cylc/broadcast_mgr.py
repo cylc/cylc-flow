@@ -25,8 +25,8 @@ from cylc.broadcast_report import (
     CHANGE_FMT, CHANGE_PREFIX_SET,
     get_broadcast_change_report,
     get_broadcast_bad_options_report)
-from cylc.cycling import PointParsingError
 from cylc.cycling.loader import get_point, standardise_point_string
+from cylc.exceptions import PointParsingError
 from cylc.task_id import TaskID
 
 

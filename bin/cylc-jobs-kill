@@ -26,8 +26,10 @@ terminate the jobs.
 
 
 from cylc.remote import remrun
+from cylc.terminal import cli_function
 
 
+@cli_function
 def main():
     """CLI main."""
     parser = COP(__doc__, argdoc=[

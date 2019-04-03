@@ -18,20 +18,22 @@
 
 import unittest
 
-import parsec
+from parsec.exceptions import ParsecError
 
 
 class TestParsec(unittest.TestCase):
 
     def test_parsec_error_msg(self):
-        parsec_error = parsec.ParsecError()
-        self.assertEqual('', parsec_error.msg)
-        # TBD: why do we have msg if the Exception class provides message?
-        self.assertEqual(parsec_error.msg, str(parsec_error))
+        parsec_error = ParsecError()
+        self.assertEqual('', str(parsec_error))
+        parsec_error = ParsecError('foo')
+        self.assertEqual('foo', str(parsec_error))
+        parsec_error = ParsecError('foo', 'bar', 'baz')
+        self.assertEqual('foo bar baz', str(parsec_error))
 
     def test_parsec_error_str(self):
         msg = 'Turbulence!'
-        parsec_error = parsec.ParsecError(msg)
+        parsec_error = ParsecError(msg)
         self.assertEqual(msg, str(parsec_error))
 
 

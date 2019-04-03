@@ -23,15 +23,8 @@ Importing code should catch ImportError in case EmPy is not installed.
 from io import StringIO
 import em
 import os
-import sys
 
-
-class EmPyError(Exception):
-    """Wrapper class for EmPy exceptions."""
-
-    def __init__(self, exc, lineno):
-        Exception.__init__(self, exc)
-        self.lineno = lineno
+from parsec.exceptions import EmPyError
 
 
 def empyprocess(flines, dir_, template_vars=None):
@@ -47,8 +40,7 @@ def empyprocess(flines, dir_, template_vars=None):
         interpreter.file(ftempl, '<template>', template_vars)
     except Exception as exc:
         lineno = interpreter.contexts[-1].identify()[1]
-        raise EmPyError(
-            interpreter.meta(exc), lineno).with_traceback(sys.exc_info()[2])
+        raise EmPyError(str(exc), lines=flines[max(lineno - 4, 0): lineno])
     finally:
         interpreter.shutdown()
         xsuite = xtempl.getvalue()

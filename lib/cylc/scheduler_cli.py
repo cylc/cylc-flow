@@ -30,6 +30,7 @@ from cylc.remote import remrun, remote_cylc_cmd
 from cylc.scheduler import Scheduler
 from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
+from cylc.terminal import cli_function
 
 RUN_DOC = r"""cylc [control] run|start [OPTIONS] [ARGS]
 
@@ -77,6 +78,7 @@ START_POINT_ARG_DOC = (
     "overrides the suite definition.")
 
 
+@cli_function
 def main(is_restart=False):
     """CLI main."""
     options, args = parse_commandline(is_restart)

@@ -48,6 +48,7 @@ from subprocess import Popen, PIPE, CalledProcessError
 import json
 
 from cylc.option_parsers import OptionParser
+from cylc.terminal import cli_function
 
 
 """Templates for extracting desired metric data via regular expression.
@@ -87,6 +88,7 @@ DISK_TEMPLATES = ['df -Pk', re.compile(
                   r'Mounted on\n\S+\s+\d+\s+\d+\s+(\d+)\s+')]
 
 
+@cli_function
 def main():
     parser = OptionParser(__doc__)
 

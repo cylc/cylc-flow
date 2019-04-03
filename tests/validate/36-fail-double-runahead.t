@@ -24,8 +24,8 @@ set_test_number 2
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE
-run_fail $TEST_NAME cylc validate --debug -v $SUITE_NAME
-grep_ok "ERROR: use 'runahead limit' OR 'max active cycle points', not both" \
+run_fail $TEST_NAME cylc validate -v $SUITE_NAME
+grep_ok "SuiteConfigError: use 'runahead limit' OR 'max active cycle points', not both" \
   $TEST_NAME.stderr
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

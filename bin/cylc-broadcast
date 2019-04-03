@@ -81,6 +81,8 @@ if '--use-ssh' in sys.argv[1:]:
 import re
 from tempfile import NamedTemporaryFile
 
+from cylc.exceptions import UserInputError
+from cylc.terminal import cli_function
 from cylc.broadcast_report import (
     get_broadcast_change_report, get_broadcast_bad_options_report)
 from cylc.cfgspec.suite import SPEC, upg
@@ -114,8 +116,8 @@ def get_rdict(left, right=None):
     left can be key, [key], [key1]key2, [key1][key2], [key1][key2]key3, etc.
     """
     if left == "inherit":
-        raise ValueError(
-            "ERROR: Inheritance cannot be changed by broadcast")
+        raise UserInputError(
+            "Inheritance cannot be changed by broadcast")
     rdict = {}
     cur_dict = rdict
     tail = left
@@ -171,7 +173,7 @@ def files_to_settings(settings, setting_files, cancel_mode=False):
                     cur_setting[key] = item
 
 
-def main():
+def parse_args():
     """CLI for "cylc broadcast"."""
     parser = COP(__doc__, comms=True)
 
@@ -245,7 +247,12 @@ def main():
              "the broadcast config structure in raw Python form.",
         action="store_true", default=False, dest="raw")
 
-    options, args = parser.parse_args()
+    return parser.parse_args()
+
+
+@cli_function
+def main():
+    options, args = parse_args()
     suite = args[0]
 
     pclient = SuiteRuntimeClient(
@@ -257,7 +264,7 @@ def main():
             try:
                 TaskID.split(options.showtask)
             except ValueError:
-                parser.error("TASKID must be " + TaskID.SYNTAX)
+                raise UserInputError("TASKID must be " + TaskID.SYNTAX)
         settings = pclient('get_broadcast', {'task_id': options.showtask})
         padding = get_padding(settings) * ' '
         if options.raw:
@@ -299,8 +306,8 @@ def main():
         settings = []
         for option_item in options.cancel:
             if "=" in option_item:
-                raise ValueError(
-                    "ERROR: --cancel=[SEC]ITEM does not take a value")
+                raise UserInputError(
+                    "--cancel=[SEC]ITEM does not take a value")
             option_item = option_item.strip()
             setting = get_rdict(option_item)
             settings.append(setting)
@@ -320,8 +327,8 @@ def main():
         settings = []
         for option_item in options.settings:
             if "=" not in option_item:
-                raise ValueError(
-                    "ERROR: --set=[SEC]ITEM=VALUE requires a value")
+                raise UserInputError(
+                    "--set=[SEC]ITEM=VALUE requires a value")
             lhs, rhs = [s.strip() for s in option_item.split("=", 1)]
             setting = get_rdict(lhs, rhs)
             settings.append(setting)
@@ -338,9 +345,4 @@ def main():
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as exc:
-        if cylc.flags.debug:
-            raise
-        sys.exit(str(exc))
+    main()

@@ -21,27 +21,8 @@ import os
 import re
 import sys
 from shutil import copy as shcopy
-from copy import copy
-from parsec import ParsecError
 
-
-class IncludeFileNotFoundError(ParsecError):
-
-    def __init__(self, flist):
-        """Missing include file error.
-
-        E.g. for [DIR/top.rc, DIR/inc/sub.rc, DIR/inc/gone.rc]
-        "Include-file not found: inc/gone.rc via inc/sub.rc from DIR/top.rc"
-        """
-        rflist = copy(flist)
-        top_file = rflist[0]
-        top_dir = os.path.dirname(top_file) + '/'
-        rflist.reverse()
-        self.msg = (
-            "Include-file not found: %s" % rflist[0].replace(top_dir, ''))
-        for f in rflist[1:-1]:
-            self.msg += ' via %s' % f.replace(top_dir, '')
-        self.msg += ' from %s' % top_file
+from parsec.exceptions import ParsecError, IncludeFileNotFoundError
 
 
 done = []
@@ -110,7 +91,7 @@ def inline(lines, dir_, filename, for_grep=False, for_edit=False, viewcfg=None,
         if m:
             q1, match, q2 = m.groups()
             if q1 and (q1 != q2):
-                raise ParsecError("ERROR, mismatched quotes: " + line)
+                raise ParsecError("mismatched quotes: " + line)
             inc = os.path.join(dir_, match)
             if inc not in done:
                 if single or for_edit:

@@ -35,12 +35,11 @@ parsec config file parsing:
 import os
 import sys
 import re
-import traceback
 
-from parsec import LOG, ParsecError
+from parsec import LOG
+from parsec.exceptions import ParsecError, FileParseError
 from parsec.OrderedDict import OrderedDictWithDefaults
-from parsec.include import inline, IncludeFileNotFoundError
-from parsec.jinja2support import jinja2process
+from parsec.include import inline
 from parsec.util import itemstr
 
 
@@ -93,25 +92,6 @@ _TRIPLE_QUOTE = {
 }
 
 
-class FileParseError(ParsecError):
-
-    """An error raised when attempting to read in the config file(s)."""
-
-    def __init__(self, reason, index=None, line=None, lines=None,
-                 error_name="FileParseError"):
-        self.msg = error_name + ":\n" + reason
-        if index:
-            self.msg += " (line " + str(index + 1) + ")"
-        if line:
-            self.msg += ":\n   " + line.strip()
-        if lines:
-            self.msg += "\nContext lines:\n" + "\n".join(lines)
-            self.msg += "\t<-- " + error_name
-        if index:
-            # TODO - make 'view' function independent of cylc:
-            self.msg += "\n(line numbers match 'cylc view -p')"
-
-
 def _concatenate(lines):
     """concatenate continuation lines"""
     index = 0
@@ -159,7 +139,7 @@ def addict(cfig, key, val, parents, index):
     if not isinstance(cfig, dict):
         # an item of this name has already been encountered at this level
         raise FileParseError(
-            'ERROR line %d: already encountered %s',
+            'line %d: already encountered %s',
             index, itemstr(parents, key, val))
 
     if key in cfig:
@@ -258,66 +238,30 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
 
     # inline any cylc include-files
     if do_inline:
-        try:
-            flines = inline(
-                flines, fdir, fpath, False, viewcfg=viewcfg, for_edit=asedit)
-        except IncludeFileNotFoundError as exc:
-            raise FileParseError(str(exc))
+        flines = inline(
+            flines, fdir, fpath, False, viewcfg=viewcfg, for_edit=asedit)
 
     # process with EmPy
     if do_empy:
         if flines and re.match(r'^#![Ee]m[Pp]y\s*', flines[0]):
             LOG.debug('Processing with EmPy')
             try:
-                from parsec.empysupport import EmPyError, empyprocess
-            except ImportError:
+                from parsec.empysupport import empyprocess
+            except (ImportError, ModuleNotFoundError):
                 raise ParsecError('EmPy Python package must be installed '
                                   'to process file: ' + fpath)
-
-            try:
-                flines = empyprocess(flines, fdir, template_vars)
-            except EmPyError as exc:
-                lines = flines[max(exc.lineno - 4, 0): exc.lineno]
-                msg = traceback.format_exc()
-                raise FileParseError(msg, lines=lines,
-                                     error_name="EmPyError")
+            flines = empyprocess(flines, fdir, template_vars)
 
     # process with Jinja2
     if do_jinja2:
         if flines and re.match(r'^#![jJ]inja2\s*', flines[0]):
             LOG.debug('Processing with Jinja2')
             try:
-                flines = jinja2process(flines, fdir, template_vars)
-            except Exception as exc:
-                # Extract diagnostic info from the end of the Jinja2 traceback.
-                exc_lines = traceback.format_exc().splitlines()
-                suffix = []
-                for line in reversed(exc_lines):
-                    suffix.append(line)
-                    if re.match(r"\s*File", line):
-                        break
-                msg = '\n'.join(reversed(suffix))
-                lines = None
-                lineno = None
-                if hasattr(exc, 'lineno'):
-                    lineno = exc.lineno
-                else:
-                    match = re.search(r'File "<template>", line (\d+)', msg)
-                    if match:
-                        lineno = int(match.groups()[0])
-                if (lineno and getattr(exc, 'filename', None) is None):
-                    # Jinja2 omits the line if it isn't from an external file.
-                    line_index = lineno - 1
-                    if getattr(exc, 'source', None) is None:
-                        # Jinja2Support strips the shebang line.
-                        lines = flines[1:]
-                    elif isinstance(exc.source, str):
-                        lines = exc.source.splitlines()
-                    if lines:
-                        min_line_index = max(line_index - 3, 0)
-                        lines = lines[min_line_index: line_index + 1]
-                raise FileParseError(
-                    msg, lines=lines, error_name="Jinja2Error")
+                from parsec.jinja2support import jinja2process
+            except (ImportError, ModuleNotFoundError):
+                raise ParsecError('Jinja2 Python package must be installed '
+                                  'to process file: ' + fpath)
+            flines = jinja2process(flines, fdir, template_vars)
 
     # concatenate continuation lines
     if do_contin:

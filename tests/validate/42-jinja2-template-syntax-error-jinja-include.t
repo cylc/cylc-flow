@@ -23,12 +23,15 @@ install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-val
 run_fail "$TEST_NAME" cylc validate suite.rc
-sed -i 's/^  File ".*", line/  File "FILE", line/g' "$TEST_NAME.stderr"
 cmp_ok "$TEST_NAME.stderr" <<'__ERROR__'
-Jinja2Error:
-  File "FILE", line 59, in fail
-    raise exc(msg, lineno, self.name, self.filename)
-jinja2.exceptions.TemplateSyntaxError: Encountered unknown tag 'end'. Jinja was looking for the following tags: 'elif' or 'else' or 'endif'. The innermost block that needs to be closed is 'if'.
+Jinja2Error: Encountered unknown tag 'end'.
+Error in file "suite-includeme.rc"
+Jinja was looking for the following tags: 'elif' or 'else' or 'endif'.
+The innermost block that needs to be closed is 'if'.
+Context lines:
+        {% if true %}
+        graph = foo
+        {% end if %	<-- TemplateSyntaxError
 __ERROR__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

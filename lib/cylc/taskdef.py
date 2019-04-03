@@ -22,18 +22,8 @@ from collections import deque
 
 from cylc.cycling.loader import (
     get_point_relative, get_interval, is_offset_absolute)
+from cylc.exceptions import TaskDefError
 from cylc.task_id import TaskID
-
-
-class TaskDefError(Exception):
-    """Exception raise for errors in TaskDef initialization."""
-
-    def __init__(self, msg):
-        Exception.__init__(self, msg)
-        self.msg = msg
-
-    def __str__(self):
-        return "ERROR: %s" % self.msg
 
 
 class TaskDef(object):

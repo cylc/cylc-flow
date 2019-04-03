@@ -33,6 +33,7 @@ import os
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.rundb import CylcSuiteDAO
+from cylc.terminal import cli_function
 
 
 DELIM = "#" * 71
@@ -42,6 +43,7 @@ TITLE_BROADCAST_STATES = "\n# BROADCAST STATES (POINT|NAMESPACE|KEY|VALUE)\n"
 TITLE_TASK_POOL = "\n# TASK POOL (CYCLE|NAME|SPAWNED|STATUS|HOLD_SWAP)\n"
 
 
+@cli_function
 def main():
     """CLI."""
     parser = COP(__doc__, argdoc=[

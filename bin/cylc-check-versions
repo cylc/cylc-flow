@@ -47,8 +47,10 @@ from cylc.subprocpool import SubProcPool
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.task_remote_mgr import TaskRemoteMgr
 from cylc.templatevars import load_template_vars
+from cylc.terminal import cli_function
 
 
+@cli_function
 def main():
     parser = COP(__doc__, prep=True, jset=True)
 
@@ -143,9 +145,4 @@ def main():
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as exc:
-        if cylc.flags.debug:
-            raise
-        sys.exit(str(exc))
+    main()

@@ -25,7 +25,7 @@ from cylc.cycling import (
     PointBase, IntervalBase, SequenceBase, ExclusionBase, PointParsingError,
     IntervalParsingError, parse_exclusion, cmp
 )
-from cylc.time_parser import CylcMissingContextPointError
+from cylc.exceptions import CylcMissingContextPointError
 
 CYCLER_TYPE_INTEGER = "integer"
 CYCLER_TYPE_SORT_KEY_INTEGER = "a"
@@ -329,7 +329,7 @@ class IntegerSequence(SequenceBase):
             break
 
         if not matched_recurrence:
-            raise ValueError(
+            raise ValueError(  # TODO - raise appropriate exception
                 "ERROR, bad integer cycling format: %s" % expression)
 
         self.p_start = get_point_from_expression(
@@ -389,7 +389,7 @@ class IntegerSequence(SequenceBase):
 
         if self.i_step and self.i_step < IntegerInterval.get_null():
             # (TODO - this should be easy to handle but needs testing)
-            raise ValueError(
+            raise ValueError(  # TODO - raise appropriate exception
                 "ERROR, negative intervals not supported yet: %s" %
                 self.i_step
             )

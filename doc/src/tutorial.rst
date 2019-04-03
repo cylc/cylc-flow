@@ -159,7 +159,7 @@ Suite configurations can be validated to detect syntax (and other) errors:
    0
    # fail:
    $ cylc validate my/bad/suite
-   Illegal item: [scheduling]special tusks
+   IllegalItemError: [scheduling]special tusks
    $ echo $?
    1
 

@@ -25,11 +25,14 @@ from cylc.remote import remrun
 if remrun():
     sys.exit(0)
 
+from cylc.exceptions import CylcError
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
+from cylc.terminal import cli_function
 
 
+@cli_function
 def main():
     """CLI for "cylc get-suite-contact"."""
     parser = COP(__doc__, argdoc=[('REG', 'Suite name')])
@@ -37,7 +40,8 @@ def main():
     try:
         data = SuiteSrvFilesManager().load_contact_file(reg)
     except SuiteServiceFileError:
-        sys.exit("%s: cannot get contact info, suite not running?" % (reg,))
+        raise CylcError(
+            "%s: cannot get contact info, suite not running?" % (reg,))
     else:
         for key, value in sorted(data.items()):
             print("%s=%s" % (key, value))

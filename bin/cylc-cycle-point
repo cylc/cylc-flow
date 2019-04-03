@@ -57,11 +57,14 @@ import sys
 
 import cylc.cycling.iso8601
 from cylc.option_parsers import CylcOptionParser as COP
+from cylc.terminal import cli_function
+
 import isodatetime.data
 import isodatetime.dumpers
 import isodatetime.parsers
 
 
+@cli_function
 def main():
     parser = COP(
         __doc__,

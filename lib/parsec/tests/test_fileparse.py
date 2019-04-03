@@ -19,6 +19,7 @@
 import tempfile
 import unittest
 
+from parsec.exceptions import IncludeFileNotFoundError, Jinja2Error
 from parsec.fileparse import *
 
 
@@ -35,7 +36,7 @@ def get_multiline():
             0,
             0,
             FileParseError,
-            "FileParseError:\nMultiline string not closed:\n   '''single line"
+            "Multiline string not closed:\n   '''single line"
         ),
         (
             ["'''", "single line"],
@@ -43,7 +44,7 @@ def get_multiline():
             0,
             0,
             FileParseError,
-            "FileParseError:\nInvalid line:\n   '''"
+            "Invalid line:\n   '''"
         ),
         (
             ["", "another value"],  # multiline, but we forgot to close quotes
@@ -51,7 +52,7 @@ def get_multiline():
             0,
             1,
             FileParseError,
-            "FileParseError:\nMultiline string not closed"
+            "Multiline string not closed"
         ),
         (
             ["", "c'''"],
@@ -75,7 +76,7 @@ def get_multiline():
             0,
             3,
             FileParseError,
-            "FileParseError:\nMultiline string not closed"
+            "Multiline string not closed"
         ),
         (
             ["", "c", "hello", ""],
@@ -91,7 +92,7 @@ def get_multiline():
             0,
             3,
             FileParseError,
-            "FileParseError:\nInvalid line:\n   a'''c"
+            "Invalid line:\n   a'''c"
         )
     ]
     return r
@@ -101,18 +102,18 @@ class TestFileparse(unittest.TestCase):
 
     def test_file_parse_error(self):
         error = FileParseError(reason="No reason")
-        self.assertEqual("FileParseError:\nNo reason", error.msg)
+        self.assertEqual("No reason", str(error))
 
         error = FileParseError("", index=2)
-        self.assertEqual("FileParseError:\n (line 3)\n"
-                         "(line numbers match 'cylc view -p')", error.msg)
+        self.assertEqual(" (line 3)\n"
+                         "(line numbers match 'cylc view -p')", str(error))
 
         error = FileParseError("", line="test")
-        self.assertEqual("FileParseError:\n:\n   test", error.msg)
+        self.assertEqual(":\n   test", str(error))
 
         error = FileParseError("", lines=["a", "b"])
-        self.assertEqual("FileParseError:\n\nContext lines:\n"
-                         "a\nb	<-- FileParseError", error.msg)
+        self.assertEqual("\nContext lines:\n"
+                         "a\nb\t<--", str(error))
 
     def test_addsect(self):
         cfg = OrderedDictWithDefaults()
@@ -223,7 +224,7 @@ class TestFileparse(unittest.TestCase):
                 with self.assertRaises(exc) as cm:
                     multiline(flines, value, index, maxline)
                 if isinstance(cm.exception, FileParseError):
-                    self.assertEqual(expected, cm.exception.msg)
+                    self.assertEqual(expected, str(cm.exception))
             else:
                 r = multiline(flines, value, index, maxline)
                 self.assertEqual(expected, r)
@@ -287,11 +288,10 @@ class TestFileparse(unittest.TestCase):
             asedit = None
             tf.write("a=b\n%include \"404.txt\"".encode())
             tf.flush()
-            with self.assertRaises(FileParseError) as cm:
+            with self.assertRaises(IncludeFileNotFoundError) as cm:
                 read_and_proc(fpath=fpath, template_vars=template_vars,
                               viewcfg=viewcfg, asedit=asedit)
-            self.assertTrue("Include-file not found: 404.txt"
-                            in cm.exception.msg)
+            self.assertIn("404.txt", str(cm.exception))
 
     def test_read_and_proc_jinja2(self):
         with tempfile.NamedTemporaryFile() as tf:
@@ -323,12 +323,13 @@ class TestFileparse(unittest.TestCase):
             asedit = None
             tf.write("#!jinja2\na={{ name \n".encode())
             tf.flush()
-            with self.assertRaises(FileParseError) as cm:
+            with self.assertRaises(Jinja2Error) as cm:
                 read_and_proc(fpath=fpath, template_vars=template_vars,
                               viewcfg=viewcfg, asedit=asedit)
-            self.assertTrue("TemplateSyntaxError: unexpected end of "
-                            "template, expected 'end of print statement'."
-                            in cm.exception.msg)
+            self.assertIn(
+                "unexpected end of template, expected "
+                "'end of print statement'.",
+                str(cm.exception))
 
     def test_read_and_proc_jinja2_error_missing_shebang(self):
         with tempfile.NamedTemporaryFile() as tf:
@@ -396,7 +397,7 @@ class TestFileparse(unittest.TestCase):
                 with self.assertRaises(FileParseError) as cm:
                     parse(fpath=fpath, output_fname=of.name,
                           template_vars=template_vars)
-                self.assertTrue("Invalid line 1: Cylc" in cm.exception.msg)
+                self.assertIn("Invalid line 1: Cylc", str(cm.exception))
 
     def test_parse_comments(self):
         with tempfile.NamedTemporaryFile() as of:
@@ -458,7 +459,8 @@ class TestFileparse(unittest.TestCase):
             with self.assertRaises(FileParseError) as cm:
                 parse(fpath=fpath, output_fname="",
                       template_vars=template_vars)
-            self.assertTrue("bracket mismatch" in cm.exception.msg)
+            self.assertEqual("bracket mismatch:\n   [[section1]",
+                             str(cm.exception))
 
     def test_parse_with_sections_error_wrong_level(self):
         with tempfile.NamedTemporaryFile() as of:
@@ -475,8 +477,9 @@ class TestFileparse(unittest.TestCase):
                 with self.assertRaises(FileParseError) as cm:
                     parse(fpath=fpath, output_fname=of.name,
                           template_vars=template_vars)
-                self.assertEqual("FileParseError:\nError line 4: "
-                                 "[[[subsection1]]]", cm.exception.msg)
+                self.assertEqual(
+                    "Error line 4: [[[subsection1]]]",
+                    str(cm.exception))
 
 
 if __name__ == '__main__':

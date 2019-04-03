@@ -22,15 +22,25 @@ Importing code should catch ImportError in case Jinja2 is not installed.
 
 from glob import glob
 import os
+import re
 import sys
+import traceback
+
 from jinja2 import (
     BaseLoader,
     ChoiceLoader,
     Environment,
     FileSystemLoader,
     StrictUndefined,
-    TemplateNotFound)
+    TemplateNotFound,
+    TemplateSyntaxError)
+
 from parsec import LOG
+from parsec.exceptions import Jinja2Error
+
+
+TRACEBACK_LINENO = re.compile(r'(\s+)?File "<template>", line (\d+)')
+CONTEXT_LINES = 3
 
 
 class PyModuleLoader(BaseLoader):
@@ -77,6 +87,7 @@ class PyModuleLoader(BaseLoader):
 
 def raise_helper(message, error_type='Error'):
     """Provides a Jinja2 function for raising exceptions."""
+    # TODO - this more nicely
     raise Exception('Jinja2 %s: %s' % (error_type, message))
 
 
@@ -106,10 +117,13 @@ def jinja2environment(dir_=None):
     # |     return str(value).rjust( int(length), str(fillchar) )
     for namespace in ['filters', 'tests', 'globals']:
         nspdir = 'Jinja2' + namespace.capitalize()
-        for fdir in [
-                os.path.join(os.environ['CYLC_DIR'], 'lib', nspdir),
-                os.path.join(dir_, nspdir),
-                os.path.join(os.environ['HOME'], '.cylc', nspdir)]:
+        fdirs = [
+            os.path.join(dir_, nspdir),
+            os.path.join(os.environ['HOME'], '.cylc', nspdir)
+        ]
+        if 'CYLC_DIR' in os.environ:
+            fdirs.append(os.path.join(os.environ['CYLC_DIR'], 'lib', nspdir))
+        for fdir in fdirs:
             if os.path.isdir(fdir):
                 sys.path.append(os.path.abspath(fdir))
                 for name in glob(os.path.join(fdir, '*.py')):
@@ -127,11 +141,22 @@ def jinja2environment(dir_=None):
     return env
 
 
+def get_error_location():
+    """Extract template line number from end of traceback.
+
+    Returns:
+        int: The line number or None if not found.
+
+    """
+    for line in reversed(traceback.format_exc().splitlines()):
+        match = TRACEBACK_LINENO.match(line)
+        if match:
+            return int(match.groups()[1])
+    return None
+
+
 def jinja2process(flines, dir_, template_vars=None):
     """Pass configure file through Jinja2 processor."""
-    # Set up Jinja2 environment.
-    env = jinja2environment(dir_)
-
     # Load file lines into a template, excluding '#!jinja2' so that
     # '#!cylc-x.y.z' rises to the top. Callers should handle jinja2
     # TemplateSyntaxerror and TemplateError.
@@ -149,9 +174,39 @@ def jinja2process(flines, dir_, template_vars=None):
     # AND TYPEERROR (e.g. for not using "|int" filter on number inputs.
     # Convert unicode to plain str, ToDo - still needed for parsec?)
 
+    try:
+        env = jinja2environment(dir_)
+        template = env.from_string('\n'.join(flines[1:]))
+        lines = str(template.render(template_vars)).splitlines()
+    except TemplateSyntaxError as exc:
+        filename = None
+        # extract source lines
+        if exc.lineno and exc.source and not exc.filename:
+            # error in suite.rc or cylc include file
+            lines = exc.source.splitlines()
+        elif exc.lineno and exc.filename:
+            # error in jinja2 include file
+            filename = os.path.relpath(exc.filename, dir_)
+            with open(exc.filename, 'r') as include_file:
+                include_file.seek(max(exc.lineno - CONTEXT_LINES, 0), 0)
+                lines = []
+                for _ in range(CONTEXT_LINES):
+                    lines.append(include_file.readline().splitlines()[0])
+        if lines:
+            # extract context lines from source lines
+            lines = lines[max(exc.lineno - CONTEXT_LINES, 0):exc.lineno]
+
+        raise Jinja2Error(exc, lines=lines, filename=filename)
+    except Exception as exc:
+        lineno = get_error_location()
+        lines = None
+        if lineno:
+            lineno += 1  # shebang line ignored by jinja2
+            lines = flines[max(lineno - CONTEXT_LINES, 0):lineno]
+        raise Jinja2Error(exc, lines=lines)
+
     suiterc = []
-    template = env.from_string('\n'.join(flines[1:]))
-    for line in str(template.render(template_vars)).splitlines():
+    for line in lines:
         # Jinja2 leaves blank lines where source lines contain
         # only Jinja2 code; this matters if line continuation
         # markers are involved, so we remove blank lines here.

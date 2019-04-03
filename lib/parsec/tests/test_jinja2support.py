@@ -20,6 +20,7 @@ import tempfile
 import unittest
 
 import jinja2
+
 from parsec.jinja2support import *
 
 
@@ -80,8 +81,9 @@ class TestJinja2support(unittest.TestCase):
         lines = ["skipped", "My name is {{ name }}", ""]
         template_dir = tempfile.gettempdir()
 
-        with self.assertRaises(jinja2.UndefinedError):
+        with self.assertRaises(Jinja2Error) as exc:
             jinja2process(lines, template_dir, template_vars=None)
+            self.assertIn('jinja2.UndefinedError', str(exc))
 
     def test_pymoduleloader(self):
         temp_directory = tempfile.mkdtemp(prefix='cylc', suffix='test_jinja2')

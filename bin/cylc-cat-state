@@ -34,16 +34,19 @@ import traceback
 
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.dump import dump_to_stdout
+from cylc.exceptions import CylcError
 import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.rundb import CylcSuiteDAO
 from cylc.task_id import TaskID
+from cylc.terminal import cli_function
 from cylc.wallclock import get_unix_time_from_time_string
 
 
 REC_BROADCAST_KEY_SECTIONS = re.compile(r"\[([^\]]+)\]")
 
 
+@cli_function
 def main():
     """CLI of "cylc cat-state"."""
     parser = COP(__doc__, argdoc=[("REG", "Suite name")])
@@ -61,7 +64,7 @@ def main():
     except sqlite3.Error:
         if cylc.flags.debug:
             traceback.print_exc()
-        sys.exit("ERROR: cannot print suite state for %s" % suite)
+        raise CylcError("cannot print suite state for %s" % suite)
 
     if options.dumpform:
         dump_to_stdout(extract_json(state))

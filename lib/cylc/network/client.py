@@ -27,32 +27,12 @@ import zmq
 import zmq.asyncio
 
 from cylc import LOG
+from cylc.exceptions import ClientError, ClientTimeout
 import cylc.flags
 from cylc.hostuserutil import get_fqdn_by_host
 from cylc.network import encrypt, decrypt, get_secret
 from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
-
-
-class ClientError(Exception):
-    # TODO: this is a bit messy, lets tidy
-    # TODO: ServerError class
-
-    def __init__(self, error):
-        self.message = error.get(
-            'message', 'Request failed but returned no error message.')
-        traceback = error.get('traceback')
-        self.traceback = '\n%s' % traceback if traceback else ''
-
-    def __str__(self):
-        ret = 'Request returned error: %s' % self.message
-        if cylc.flags.debug:
-            ret += self.traceback
-        return ret
-
-
-class ClientTimeout(Exception):
-    pass
 
 
 class ZMQClient(object):
@@ -158,7 +138,7 @@ class ZMQClient(object):
         try:
             secret = self.secret()
         except cylc.suite_srv_files_mgr.SuiteServiceFileError:
-            raise ClientError({'message': 'could not read suite passphrase'})
+            raise ClientError('could not read suite passphrase')
 
         # send message
         msg = {'command': command, 'args': args}
@@ -179,15 +159,14 @@ class ZMQClient(object):
             response = decrypt(res, secret)
             LOG.debug('zmq:recv %s' % response)
         except jose.exceptions.JWTError:
-            raise ClientError({
-                'message': 'Could not decrypt response. Has the passphrase '
-                           + 'changed?'})
+            raise ClientError(
+                'Could not decrypt response. Has the passphrase changed?')
 
-        # return data or handle error
-        if 'data' in response:
+        try:
             return response['data']
-        else:  # if else to avoid complicating the traceback stack
-            raise ClientError(response['error'])
+        except KeyError:
+            error = response['error']
+            raise ClientError(error['message'], error.get('traceback'))
 
     def serial_request(self, command, args=None, timeout=None):
         return asyncio.run(
@@ -271,8 +250,7 @@ class SuiteRuntimeClient:
             return
         else:
             # the suite has stopped
-            raise ClientError(  # TODO: SuiteStoppedError?
-                {'message': 'Suite "%s" already stopped' % suite})
+            raise ClientError('Suite "%s" already stopped' % suite)
 
     @classmethod
     def get_location(cls, suite, owner, host):

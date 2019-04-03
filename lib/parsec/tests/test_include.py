@@ -24,6 +24,7 @@ tests. So this suite of unit tests should not cover all the module features.
 import tempfile
 import unittest
 
+from parsec.exceptions import ParsecError
 from parsec.include import *
 
 
@@ -34,8 +35,7 @@ class TestInclude(unittest.TestCase):
         with tempfile.NamedTemporaryFile(dir=dir_temp) as tf:
             file_list = [tf.name, tf.name, tf.name]
             error = IncludeFileNotFoundError(file_list)
-            self.assertTrue("Include-file not found:" in error.msg)
-            self.assertTrue(" via " in error.msg)
+            self.assertTrue(" via " in str(error))
 
     def test_inline_error_empty_lines_1(self):
         """The inline function throws an error when you have the following

@@ -27,43 +27,8 @@ from collections import deque
 import re
 from textwrap import dedent
 
-from parsec import ParsecError
-from parsec.util import itemstr
-
-
-class ValidationError(ParsecError):
-    """Base class for bad setting errors."""
-    pass
-
-
-class ListValueError(ValidationError):
-    """Bad setting value, for a comma separated list."""
-    def __init__(self, keys, value, msg='', exc=None):
-        ValidationError.__init__(self)
-        self.msg = '%s\n    %s' % (
-            msg, itemstr(keys[:-1], keys[-1], value=value))
-        if exc:
-            self.msg += ": %s" % exc
-
-
-class IllegalValueError(ValidationError):
-    """Bad setting value."""
-    def __init__(self, vtype, keys, value, exc=None):
-        ValidationError.__init__(self)
-        self.msg = 'Illegal %s value: %s' % (
-            vtype, itemstr(keys[:-1], keys[-1], value=value))
-        if exc:
-            self.msg += ": %s" % exc
-
-
-class IllegalItemError(ValidationError):
-    """Bad setting section or option name."""
-    def __init__(self, keys, key, msg=None):
-        ValidationError.__init__(self)
-        if msg is not None:
-            self.msg = 'Illegal item (%s): %s' % (msg, itemstr(keys, key))
-        else:
-            self.msg = 'Illegal item: %s' % itemstr(keys, key)
+from parsec.exceptions import (
+    ListValueError, IllegalValueError, IllegalItemError)
 
 
 class ParsecValidator(object):
@@ -262,16 +227,17 @@ class ParsecValidator(object):
             >>> ParsecValidator.coerce_spaceless_str_list(
             ...     'a, b c, d', ['foo'])  # doctest: +NORMALIZE_WHITESPACE
             Traceback (most recent call last):
-            parsec.validate.ListValueError: list item "b c" cannot contain a \
-            space character:
-                foo = a, b c, d
+            parsec.exceptions.ListValueError: \
+            (type=list) foo = a, b c, d - \
+            (list item "b c" cannot contain a space character)
+
         """
         lst = cls.strip_and_unquote_list(keys, value)
         for item in lst:
             if ' ' in item:
                 raise ListValueError(
                     keys, value,
-                    msg='list item "%s" cannot contain a space character:' %
+                    msg='list item "%s" cannot contain a space character' %
                     item)
         return lst
 
@@ -281,10 +247,13 @@ class ParsecValidator(object):
 
         Example:
             >>> ParsecValidator.coerce_absolute_host_list(
-            ...     'foo, bar, 127.0.0.1:8080, baz', ['pub'])
+            ...     'foo, bar, 127.0.0.1:8080, baz', ['pub']
+            ... )  # doctest: +NORMALIZE_WHITESPACE
             Traceback (most recent call last):
-            parsec.validate.ListValueError: ambiguous host "127.0.0.1:8080"
-                pub = foo, bar, 127.0.0.1:8080, baz
+            parsec.exceptions.ListValueError: \
+                (type=list) pub = foo, bar, 127.0.0.1:8080, baz - \
+                (ambiguous host "127.0.0.1:8080")
+
         """
         hosts = cls.coerce_spaceless_str_list(value, keys)
         for host in hosts:
@@ -306,13 +275,13 @@ class ParsecValidator(object):
                 try:
                     lvalues.append(type_(item))
                 except ValueError as exc:
-                    raise IllegalValueError('list', keys, item, exc)
+                    raise IllegalValueError('list', keys, item, exc=exc)
             else:
                 # mult * val
                 try:
                     lvalues += int(mult) * [type_(val)]
                 except ValueError as exc:
-                    raise IllegalValueError('list', keys, item, exc)
+                    raise IllegalValueError('list', keys, item, exc=exc)
         return lvalues
 
     @classmethod
@@ -419,8 +388,8 @@ class ParsecValidator(object):
         if cls._REC_MULTI_PARAM.search(value):
             raise ListValueError(
                 keys, value,
-                msg="names containing commas must be quoted "
-                "(e.g. 'foo<m,n>'):")
+                msg="names containing commas must be quoted"
+                "(e.g. 'foo<m,n>')")
         pos = 0
         while True:
             match = cls._REC_UQLP.search(value, pos)

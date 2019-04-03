@@ -19,12 +19,9 @@
 
 from logging import DEBUG, WARNING
 
-from parsec import LOG, ParsecError
+from parsec import LOG
+from parsec.exceptions import UpgradeError
 from parsec.OrderedDict import OrderedDict
-
-
-class UpgradeError(ParsecError):
-    pass
 
 
 class converter(object):
@@ -139,7 +136,7 @@ class upgrader(object):
                     npre = nkeys[:i]
                     npost = nkeys[i + 1:]
             if not npre or not npost:
-                raise UpgradeError('ERROR: __MANY__ mismatch')
+                raise UpgradeError('__MANY__ mismatch')
             for m in many:
                 exp_upgs.append({
                     'old': pre + [m] + post,

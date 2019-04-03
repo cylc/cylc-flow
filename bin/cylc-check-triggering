@@ -49,32 +49,40 @@ import os
 import sys
 
 from cylc.log_diagnosis import LogAnalyser
+from cylc.terminal import cli_function
 
-if len(sys.argv) == 2 and sys.argv[1] == '--help':
-    print(__doc__)
-    sys.exit(0)
 
-print("\nThis is the cylc check-triggering shutdown event handler")
+@cli_function
+def main():
+    if len(sys.argv) == 2 and sys.argv[1] == '--help':
+        print(__doc__)
+        sys.exit(0)
 
-event, suite = sys.argv[1], sys.argv[2]
+    print("\nThis is the cylc check-triggering shutdown event handler")
 
-if event != 'shutdown':
-    raise SystemExit("ERROR: run this as a shutdown event handler")
+    event, suite = sys.argv[1], sys.argv[2]
 
-try:
-    log_dir = os.path.expandvars(os.environ['CYLC_SUITE_LOG_DIR'])
-    suite_dir = os.path.expandvars(os.environ['CYLC_SUITE_DEF_PATH'])
-except KeyError as exc:
-    raise SystemExit(exc)
+    if event != 'shutdown':
+        raise SystemExit("ERROR: run this as a shutdown event handler")
 
-new_log = os.path.join(log_dir, 'log')
-ref_log = os.path.join(suite_dir, 'reference.log')
+    try:
+        log_dir = os.path.expandvars(os.environ['CYLC_SUITE_LOG_DIR'])
+        suite_dir = os.path.expandvars(os.environ['CYLC_SUITE_DEF_PATH'])
+    except KeyError as exc:
+        raise SystemExit(exc)
 
-try:
-    lanal = LogAnalyser(new_log, ref_log)
-    lanal.verify_triggering()
-except Exception as exc:
-    print(exc, file=sys.stderr)
-    raise SystemExit("ERROR: Triggering check FAILED")
-else:
-    print("Triggering check passed")
+    new_log = os.path.join(log_dir, 'log')
+    ref_log = os.path.join(suite_dir, 'reference.log')
+
+    try:
+        lanal = LogAnalyser(new_log, ref_log)
+        lanal.verify_triggering()
+    except Exception as exc:
+        print(exc, file=sys.stderr)
+        raise SystemExit("ERROR: Triggering check FAILED")
+    else:
+        print("Triggering check passed")
+
+
+if __name__ == '__main__':
+    main()

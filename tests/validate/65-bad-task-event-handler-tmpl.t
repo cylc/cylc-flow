@@ -33,7 +33,7 @@ cat >'suite.rc' <<'__SUITE_RC__'
 __SUITE_RC__
 run_fail "${TEST_NAME}" cylc validate 'suite.rc'
 cmp_ok "${TEST_NAME}.stderr" <<'__ERR__'
-"ERROR: bad task event handler template t1: echo %(rubbish)s: KeyError('rubbish')"
+SuiteConfigError: bad task event handler template t1: echo %(rubbish)s: KeyError('rubbish')
 __ERR__
 
 TEST_NAME="${TEST_NAME_BASE}-bad-value"
@@ -49,7 +49,7 @@ cat >'suite.rc' <<'__SUITE_RC__'
 __SUITE_RC__
 run_fail "${TEST_NAME}" cylc validate 'suite.rc'
 cmp_ok "${TEST_NAME}.stderr" <<'__ERR__'
-"ERROR: bad task event handler template t1: echo %(ids: ValueError('incomplete format key')"
+SuiteConfigError: bad task event handler template t1: echo %(ids: ValueError('incomplete format key')
 __ERR__
 
 exit

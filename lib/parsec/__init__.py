@@ -20,15 +20,6 @@
 import logging
 
 
-class ParsecError(Exception):
-    def __init__(self, msg=''):
-        Exception.__init__(self, msg)
-        self.msg = self.args[0]
-
-    def __str__(self):
-        return str(self.msg)
-
-
 LOG = logging.getLogger('cylc')  # Acceptable?
 if hasattr(logging, 'NullHandler'):  # Back compat Python <2.7
     LOG.addHandler(logging.NullHandler())  # Start with a null handler

@@ -18,7 +18,8 @@
 
 import unittest
 
-from cylc.graph_parser import GraphParser, GraphParseError
+from cylc.exceptions import GraphParseError, ParamExpandError
+from cylc.graph_parser import GraphParser
 
 
 class TestGraphParser(unittest.TestCase):
@@ -139,7 +140,7 @@ class TestGraphParser(unittest.TestCase):
         """Test parsing graphs with invalid parameters."""
         parameterized_parser = GraphParser(
             None, ({'city': ['la_paz']}, {'city': '_%(city)s'}))
-        with self.assertRaises(GraphParseError):
+        with self.assertRaises(ParamExpandError):
             # no state in the parameters list
             parameterized_parser.parse_graph('a => b<state>')
 

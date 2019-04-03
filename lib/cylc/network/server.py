@@ -223,6 +223,8 @@ def authorise(req_priv_level):
     """
     def wrapper(fcn):
         def _authorise(self, *args, user='?', meta=None, **kwargs):
+            if not meta:
+                meta = {}
             host = meta.get('host', '?')
             prog = meta.get('prog', '?')
 

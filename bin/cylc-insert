@@ -40,13 +40,15 @@ if '--use-ssh' in sys.argv[1:]:
     if remrun():
         sys.exit(0)
 
+from cylc.exceptions import UserInputError
 import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.network.client import SuiteRuntimeClient
 from cylc.task_id import TaskID
-from cylc.terminal import prompt
+from cylc.terminal import prompt, cli_function
 
 
+@cli_function
 def main():
     parser = COP(
         __doc__, comms=True, multitask=True,
@@ -80,8 +82,9 @@ def main():
         items = args
         for i, item in enumerate(items):
             if not TaskID.is_valid_id_2(item):
-                sys.exit('ERROR: "%s": invalid task ID (argument %d)' % (
-                    item, i + 1))
+                raise UserInputError(
+                    '"%s": invalid task ID (argument %d)' % (
+                        item, i + 1))
         prompt('Insert %s in %s' % (items, suite), options.force)
 
     pclient = SuiteRuntimeClient(
@@ -96,9 +99,4 @@ def main():
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as exc:
-        if cylc.flags.debug:
-            raise
-        sys.exit(str(exc))
+    main()

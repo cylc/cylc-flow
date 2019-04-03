@@ -17,14 +17,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Provide graph node parsing and caching service"""
 
-from cylc.cycling.loader import get_interval, get_interval_cls
-from cylc.task_id import TaskID
 import re
 
-
-class GraphNodeError(Exception):
-    """Graph node parsing error."""
-    pass
+from cylc.cycling.loader import get_interval, get_interval_cls
+from cylc.exceptions import GraphParseError
+from cylc.task_id import TaskID
 
 
 class GraphNodeParser(object):
@@ -97,12 +94,12 @@ class GraphNodeParser(object):
             (name, offset_is_from_icp, offset_is_irregular, offset, output)
 
         Raise:
-            GraphNodeError: on illegal syntax.
+            GraphParseError: on illegal syntax.
         """
         if node not in self._nodes:
             match = self.REC_NODE.match(node)
             if not match:
-                raise GraphNodeError('Illegal graph node: %s' % node)
+                raise GraphParseError('Illegal graph node: %s' % node)
             name, offset_is_from_icp, offset, output = match.groups()
             if offset_is_from_icp and not offset:
                 offset = self._get_offset()

@@ -32,7 +32,7 @@ PORT="$(awk -F= '$1 ~ /CYLC_SUITE_PORT/ {print $2}' "${SRVD}/contact")"
 echo 'garbage' >"${SRVD}/contact"
 run_fail "${TEST_NAME_BASE}-stop-1" cylc stop "${SUITE_NAME}"
 contains_ok "${TEST_NAME_BASE}-stop-1.stderr" <<__ERR__
-not enough values to unpack (expected 2, got 1)
+ValueError: not enough values to unpack (expected 2, got 1)
 __ERR__
 # ^ the error raised by SuiteServierFileManager.load_contact_file as it
 #   attempts to parse "garbage"

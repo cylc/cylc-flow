@@ -28,8 +28,10 @@ Multiple items can be specified at once."""
 
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.option_parsers import CylcOptionParser as COP
+from cylc.terminal import cli_function
 
 
+@cli_function
 def main():
     parser = COP(__doc__, argdoc=[])
 
