@@ -156,7 +156,6 @@ class XtriggerManager(object):
         if satisfied:
             return
         if wall_clock(*ctx.func_args, **ctx.func_kwargs):
-            satisfied = True
             itask.state.xclock = (label, True)
             self.sat_xclock.append(sig)
             LOG.info('clock xtrigger satisfied: %s = %s' % (label, str(ctx)))
