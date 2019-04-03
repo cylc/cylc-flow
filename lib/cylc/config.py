@@ -2084,12 +2084,10 @@ class SuiteConfig(object):
                     try:
                         if not callable(get_func(xtrig.func_name, self.fdir)):
                             raise SuiteConfigError(
-                                f"ERROR, "
                                 f"xtrigger function not callable: "
                                 f"{xtrig.func_name}")
                     except ModuleNotFoundError:
                         raise SuiteConfigError(
-                            f"ERROR, "
                             f"xtrigger function not found: {xtrig.func_name}")
                     self.xtrigger_mgr.add_trig(label, xtrig)
                     self.taskdefs[task_name].xtrig_labels.add(label)
