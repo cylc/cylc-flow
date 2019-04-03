@@ -55,16 +55,16 @@ if [[ -d $DESTINATION ]]; then
 fi
 
 echo " + Copying example suites"
-mkdir -p $DESTINATION
-cp -r $CYLC_DIR/etc/examples/* $DESTINATION
+mkdir -p "$DESTINATION"
+cp -r "$CYLC_DIR/etc/examples/*" "$DESTINATION"
 
 echo " + Registering example suites"
-cd $DESTINATION
+cd "$DESTINATION"
 SUITE_RCS=$(find . -name suite.rc | sed -e 's@./@@')
 for SUITE_RC in $SUITE_RCS; do
-    SUITE_DEF_DIR=$(dirname $SUITE_RC)
+    SUITE_DEF_DIR="$(dirname "$SUITE_RC")"
     SUITE_REG_NAME=$BASE_DIR/$SUITE_DEF_DIR
-    cylc register $SUITE_REG_NAME $SUITE_DEF_DIR
+    cylc register "$SUITE_REG_NAME" "$SUITE_DEF_DIR"
 done
 
 echo "DONE"

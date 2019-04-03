@@ -22,5 +22,7 @@
 
 cylc scan -f --color=never
 
-find $HOME/cylc-run -name '*.err' -type f -exec echo '==== {} ====' \; -exec cat '{}' \;
-find /tmp/${USER}/cylctb-* -type f -exec echo '==== {} ====' \; -exec cat '{}' \;
+find "$HOME/cylc-run" -name '*.err' -type f \
+    -exec echo '==== {} ====' \; -exec cat '{}' \;
+find "/tmp/${USER}/cylctb-"* -type f \
+    -exec echo '==== {} ====' \; -exec cat '{}' \;

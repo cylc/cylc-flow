@@ -54,7 +54,7 @@ cylc__job__main() {
     done
     # Ensure that the "cylc" command is in PATH. It may not be set up correctly
     # in Prelude above, and also not inherited from the job submit environment.
-    if ! which cylc 1>'/dev/null' 2>&1; then
+    if ! command -v cylc 1>'/dev/null' 2>&1; then
         PATH="${CYLC_DIR}/bin:${PATH}"
     fi
     # Init-Script
@@ -147,7 +147,7 @@ cylc__job__main() {
     # Send task succeeded message
     wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>'/dev/null' || true
     cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" 'succeeded' || true
-    trap '' ${CYLC_VACATION_SIGNALS:-} ${CYLC_FAIL_SIGNALS}
+    trap '' "${CYLC_VACATION_SIGNALS:-}" "${CYLC_FAIL_SIGNALS}"
     # Execute success exit script
     cylc__job__run_inst_func 'exit_script'
     exit 0

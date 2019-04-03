@@ -19,7 +19,7 @@ set -eu
 
 _clean() {
     if [[ -n "${DIFF_FILES:-}" ]]; then
-        rm -f ${DIFF_FILES:-}
+        rm -f "${DIFF_FILES[@]:-}"
     fi
 }
 
@@ -55,7 +55,7 @@ for ARG in "$@"; do
     else
         # A suite - check it's registered.
         if ! cylc print --fail "$ARG$" >/dev/null 2>&1; then
-            echo "Suite not found: "$ARG >&2
+            echo "Suite not found: $ARG" >&2
             exit 1
         fi
         SUITES="$SUITES $ARG"
@@ -69,17 +69,17 @@ fi
 
 trap _clean EXIT
 trap _clean ERR
-DIFF_FILES=""
+DIFF_FILES=()
 for SUITE in $SUITES; do
     FILE=$(mktemp -t "$(tr '/' '.' <<<"${SUITE}").graph.ref.XXXX")
-    cylc graph --reference "${SUITE}" "$@" >$FILE
-    DIFF_FILES="$DIFF_FILES $FILE"
+    cylc graph --reference "${SUITE}" "$@" >"$FILE"
+    DIFF_FILES+=("$FILE")
 done
 
 if $GRAPHICAL_DIFF; then
     for DIFFTOOL in xxdiff diffuse kdiff3 kompare gvimdiff2 meld tkdiff; do
         if type -P $DIFFTOOL >/dev/null; then
-            "$DIFFTOOL" $DIFF_FILES
+            "$DIFFTOOL" "${DIFF_FILES[@]}"
             exit 0
         fi
     done
@@ -87,4 +87,4 @@ if $GRAPHICAL_DIFF; then
     exit 1
 fi
 
-$DIFF_CMD $DIFF_FILES
+$DIFF_CMD "${DIFF_FILES[@]}"
