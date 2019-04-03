@@ -16,15 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from copy import deepcopy
 import json
 import re
+from copy import deepcopy
 from time import time
 
-from cylc.flow import LOG
 import cylc.flow.flags
+from cylc.flow import LOG
 from cylc.flow.xtriggers.wall_clock import wall_clock
-
 
 # Templates for string replacement in function arg values.
 TMPL_USER_NAME = 'user_name'
