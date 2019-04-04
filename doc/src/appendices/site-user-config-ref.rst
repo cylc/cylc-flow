@@ -1095,23 +1095,7 @@ password.
 This sets the client privilege level for public access - i.e. no
 suite passphrase required.
 
-- *type*: string (must be one of the following options)
-- *options*:
+- *type*: string (must be one of the following options).
+- *options*: A Cylc privilege level: :py:obj:`cylc.network.Priv`.
 
-  none
-     Permit no public suite access.
-  identity
-     Only suite and owner names revealed.
-  description
-     Identity plus suite title and description.
-  state-totals
-     Identity, description, and task state totals.
-  read
-     Full read-only access.
-  shutdown
-     *Not yet implemented*
-     Full read access plus shutdown, but no other control.
-  control
-     Permit full control (not recommended).
-
-- *default*: state-totals
+- *default*: :py:obj:`cylc.network.Priv.STATE_TOTALS`

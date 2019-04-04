@@ -108,23 +108,9 @@ class ZMQClient(object):
             self.header = dict(header)
 
     async def async_request(self, command, args=None, timeout=None):
-        """Send a request.
+        """Send an asynchronous request using asyncio.
 
-        For convenience use __call__ to call this method.
-
-        Args:
-            command (str): The name of the endpoint to call.
-            args (dict): Arguments to pass to the endpoint function.
-            timeout (float): Override the default timeout (seconds).
-
-        Raises:
-            ClientTimeout: If a response takes longer than timeout to arrive.
-            ClientError: Coverall for all other issues including failed
-                authentication.
-
-        Returns:
-            object: The data exactly as returned from the endpoint function,
-                nothing more, nothing less.
+        Has the same arguments and return values as ``serial_request``.
 
         """
         if timeout:
@@ -169,6 +155,24 @@ class ZMQClient(object):
             raise ClientError(error['message'], error.get('traceback'))
 
     def serial_request(self, command, args=None, timeout=None):
+        """Send a request.
+
+        For convenience use ``__call__`` to call this method.
+
+        Args:
+            command (str): The name of the endpoint to call.
+            args (dict): Arguments to pass to the endpoint function.
+            timeout (float): Override the default timeout (seconds).
+
+        Raises:
+            ClientTimeout: If a response takes longer than timeout to arrive.
+            ClientError: Coverall for all other issues including failed auth.
+
+        Returns:
+            object: The data exactly as returned from the endpoint function,
+                nothing more, nothing less.
+
+        """
         return asyncio.run(
             self.async_request(command, args, timeout))
 
@@ -197,6 +201,16 @@ class SuiteRuntimeClient:
 
     If there is no socket bound to the specified host/port the client will
     bail after ``timeout`` seconds.
+
+    Call server "endpoints" using:
+
+    ``__call__``, ``serial_request``
+
+       .. automethod:: cylc.network.client.ZMQClient.serial_request
+
+    ``async_request``
+
+       .. automethod:: cylc.network.client.ZMQClient.async_request
 
     """
 

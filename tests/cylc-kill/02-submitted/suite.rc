@@ -24,7 +24,7 @@ sleep 60
         script="""
 wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
 sleep 5
-cylc kill -m "${CYLC_SUITE_NAME}" '*:submitted'
+cylc kill "${CYLC_SUITE_NAME}" '*:submitted'
 """
     [[sleeper]]
         script=sleep 20

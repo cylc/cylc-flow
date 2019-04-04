@@ -1,5 +1,3 @@
-.. cylc documentation master file.
-
 Cylc documentation
 ==================
 
@@ -41,6 +39,8 @@ indefinitely.
    external-triggers
    running-suites
    suite-storage-etc
+
+   api/index
 
    appendices/appendices-master
 

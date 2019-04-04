@@ -18,13 +18,13 @@ second task fixes and retriggers it with an edit-run."""
         script = /bin/false
     [[fixer-task]]
         script = """
-cylc trigger --edit $CYLC_SUITE_NAME broken-task 1 << __END__
+cylc trigger --edit $CYLC_SUITE_NAME 'broken-task.1' << __END__
 y
 __END__"""
     [[syntax_errored_task]]
         script = $(
     [[syntax_fixer_task]]
         script = """
-cylc trigger --edit $CYLC_SUITE_NAME syntax_errored_task 1 << __END__
+cylc trigger --edit $CYLC_SUITE_NAME 'syntax_errored_task.1' << __END__
 y
 __END__"""

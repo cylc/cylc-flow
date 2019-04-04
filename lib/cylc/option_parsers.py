@@ -32,7 +32,8 @@ class CylcOptionParser(OptionParser):
     """Common options for all cylc CLI commands."""
 
     MULTITASK_USAGE = """
-TASKID is a pattern to match task proxies or task families, or groups of them:
+TASK_GLOB is a pattern to match task proxies or task families,
+or groups of them:
 * [CYCLE-POINT-GLOB/]TASK-NAME-GLOB[:TASK-STATE]
 * [CYCLE-POINT-GLOB/]FAMILY-NAME-GLOB[:TASK-STATE]
 * TASK-NAME-GLOB[.CYCLE-POINT-GLOB][:TASK-STATE]
@@ -45,11 +46,7 @@ For example, to match:
   '*0000Z/foo*:retrying'
 * retrying tasks in 'BAR' family: '*/BAR:retrying' or 'BAR.*:retrying'
 * retrying tasks in 'BAR' or 'BAZ' families: '*/BA[RZ]:retrying' or
-  'BA[RZ].*:retrying'
-
-The old 'MATCH POINT' syntax will be automatically detected and supported. To
-avoid this, use the '--no-multitask-compat' option, or use the new syntax
-(with a '/' or a '.') when specifying 2 TASKID arguments."""
+  'BA[RZ].*:retrying'"""
 
     def __init__(self, usage, argdoc=None, comms=False, noforce=False,
                  jset=False, multitask=False, prep=False, auto_add=True,
@@ -74,7 +71,6 @@ avoid this, use the '--no-multitask-compat' option, or use the new syntax
         self.comms = comms
         self.jset = jset
         self.noforce = noforce
-        self.multitask = multitask
         self.prep = prep
         self.icp = icp
         self.suite_info = []
@@ -211,22 +207,6 @@ avoid this, use the '--no-multitask-compat' option, or use the new syntax
                 ),
                 action="store", default=None, dest="templatevars_file")
 
-        if self.multitask:
-            self.add_std_option(
-                "-m", "--family",
-                help=(
-                    "(Obsolete) This option is now ignored "
-                    "and is retained for backward compatibility only. "
-                    "TASKID in the argument list can be used to match "
-                    "task and family names regardless of this option."),
-                action="store_true", default=False, dest="is_family")
-
-            self.add_std_option(
-                "--no-multitask-compat",
-                help="Disallow backward compatible multitask interface.",
-                action="store_false", default=True,
-                dest="multitask_compat")
-
         if self.icp:
             self.add_option(
                 "--icp",
@@ -284,26 +264,3 @@ avoid this, use the '--no-multitask-compat' option, or use the new syntax
         LOG.addHandler(errhandler)
 
         return (options, args)
-
-    @classmethod
-    def parse_multitask_compat(cls, options, mtask_args):
-        """Parse argument items for multitask backward compatibility.
-
-        If options.multitask_compat is False, return (mtask_args, None).
-
-        If options.multitask_compat is True, it checks if mtask_args is a
-        2-element array and if the 1st and 2nd arguments look like the old
-        "MATCH" "POINT" CLI arguments.
-        If so, it returns (mtask_args[0], mtask_args[1]).
-        Otherwise, it return (mtask_args, None).
-
-        """
-        if (options.multitask_compat and len(mtask_args) == 2 and
-                not any("/" in mtask_arg for mtask_arg in mtask_args) and
-                "." not in mtask_args[1]):
-            # For backward compat, argument list should have 2 elements.
-            # Element 1 may be a regular expression, so it may contain "." but
-            # should not contain a "/".
-            # All other elements should contain no "." and "/".
-            return (mtask_args[0] + "." + mtask_args[1],)
-        return mtask_args

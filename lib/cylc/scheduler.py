@@ -248,7 +248,8 @@ class Scheduler(object):
                 daemonize(self)
             self._setup_suite_logger()
             self.server = SuiteRuntimeServer(self)
-            self.server.start(glbl_cfg().get(['suite servers', 'run ports']))
+            port_range = glbl_cfg().get(['suite servers', 'run ports'])
+            self.server.start(port_range[0], port_range[-1])
             self.port = self.server.port
             self.configure()
             self.profiler.start()
@@ -1838,9 +1839,9 @@ conditions; see `cylc conditions`.
         """Force spawn task successors."""
         return self.pool.spawn_tasks(items)
 
-    def command_take_checkpoints(self, items):
+    def command_take_checkpoints(self, name):
         """Insert current task_pool, etc to checkpoints tables."""
-        return self.suite_db_mgr.checkpoint(items[0])
+        return self.suite_db_mgr.checkpoint(name)
 
     def filter_initial_task_list(self, inlist):
         """Return list of initial tasks after applying a filter."""
