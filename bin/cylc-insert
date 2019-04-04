@@ -64,25 +64,13 @@ def main():
         "--no-check", help="Add task even if the provided cycle point is not "
         "valid for the given task.", action="store_true", default=False)
 
-    options, args = parser.parse_args()
-    suite = args.pop(0)
+    options, (suite, *items) = parser.parse_args()
 
-    if (len(args) in [2, 3]
-            and all("/" not in arg for arg in args)
-            and all("." not in arg for arg in args[1:])):
-        items = [(args[0] + "." + args[1])]
-        if len(args) == 3:
-            options.stop_point_string = args[2]
-        prompt(
-            'Insert %s in %s' % (items, suite), options.force)
-    else:
-        items = args
-        for i, item in enumerate(items):
-            if not TaskID.is_valid_id_2(item):
-                raise UserInputError(
-                    '"%s": invalid task ID (argument %d)' % (
-                        item, i + 1))
-        prompt('Insert %s in %s' % (items, suite), options.force)
+    for i, item in enumerate(items):
+        if not TaskID.is_valid_id_2(item):
+            raise UserInputError(
+                '"%s": invalid task ID (argument %d)' % (item, i + 1))
+    prompt('Insert %s in %s' % (items, suite), options.force)
 
     pclient = SuiteRuntimeClient(
         suite, options.owner, options.host, options.port)

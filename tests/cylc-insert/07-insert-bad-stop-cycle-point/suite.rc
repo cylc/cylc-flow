@@ -24,4 +24,6 @@
         script = "sleep 1" # quick
     [[prep]]
         # Insert the task with a bad cycle point
-        script = cylc insert $CYLC_SUITE_NAME foo 20140101T00 soon
+        script = """
+            cylc insert $CYLC_SUITE_NAME 'foo.20140101T00' --stop-point=soon
+        """
