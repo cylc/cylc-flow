@@ -242,10 +242,11 @@ class XtriggerManager(object):
                 label, signature, function context, and flag for satisfied.
         """
         res = []
-        farg_templ = {}
-        farg_templ[TMPL_TASK_CYCLE_POINT] = str(itask.point)
-        farg_templ[TMPL_TASK_NAME] = str(itask.tdef.name)
-        farg_templ[TMPL_TASK_IDENT] = str(itask.identity)
+        farg_templ = {
+            TMPL_TASK_CYCLE_POINT: str(itask.point),
+            TMPL_TASK_NAME: str(itask.tdef.name),
+            TMPL_TASK_IDENT: str(itask.identity)
+        }
         farg_templ.update(self.farg_templ)
         for label, satisfied in itask.state.xtriggers.items():
             if unsat_only and satisfied:
