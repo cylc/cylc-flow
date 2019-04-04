@@ -12,7 +12,7 @@ Third-Party Software Packages
 
 Requirements:
 
-- Python 3.6+
+- Python 3.7+
 
   - `python-jose <https://pypi.org/project/python-jose/>`_
   - `zmq <https://pypi.org/project/zmq/>`_
