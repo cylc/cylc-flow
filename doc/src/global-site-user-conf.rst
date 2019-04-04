@@ -19,7 +19,7 @@ can be overridden by users,
 .. code-block:: bash
 
    # cylc user global config file
-   ~/.cylc/$(cylc --version)/global.rc  # e.g. ~/.cylc/7.7.0/global.rc
+   ~/.cylc/$(cylc --version)/global.rc  # e.g. ~/.cylc/7.8.2/global.rc
 
 The file ``<cylc-dir>/etc/global.rc.eg`` contains instructions on how
 to generate and install site and user global config files:

@@ -17,7 +17,7 @@
 # you may unwittingly override future changes to system defaults).
 #
 # The SITE FILE LOCATION is [cylc-dir]/etc/global.rc, where [cylc-dir] is your
-# install location, e.g. /opt/cylc/cylc-7.7.0.
+# install location, e.g. /opt/cylc/cylc-7.8.2.
 #
 # FORWARD COMPATIBILITY: The site global.rc file must be kept in the source
 # installation (i.e. it is version specific) because older versions of Cylc
@@ -29,7 +29,7 @@
 # you may unwittingly override future changes to site or system defaults).
 #
 # The USER FILE LOCATIONS are:
-#   1) ~/.cylc/<CYLC-VERSION>/global.rc  # e.g. ~/.cylc/7.7.0/global.rc
+#   1) ~/.cylc/<CYLC-VERSION>/global.rc  # e.g. ~/.cylc/7.8.2/global.rc
 #   2) ~/.cylc/global.rc
 # If the first lcoation is not found, the second will be checked.
 # 

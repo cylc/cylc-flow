@@ -6,6 +6,17 @@ more detailed information.**
 Cylc must be installed on suite and task job hosts. Third-party dependencies
 (below) are not required on job hosts.
 
+### Python 2 or Python 3 ?
+
+Currently in the source code repository:
+- **master branch:** Python 3, ZeroMQ network layer, **no GUI** - Cylc-8 Work In Progress
+- **7.8.x branch:** Python 2, Cherrypy network layer, PyGTK GUI - Cylc-7 Maintenance
+
+The first official Cylc-8 release (with a new web UI) is not expected until late 2019.
+Until then we recommend the latest cylc-7.8 release for production use.
+
+**THIS IS THE 7.8.x (PYTHON 2) INSTALL.md**
+
 ### Third-party Software Packages
 
 Install the packages listed in the **Installation** section of the User Guide.
@@ -21,24 +32,20 @@ such as `/opt`:
 
 ```bash
 cd /opt
-tar xzf cylc-7.7.0.tar.gz
+tar xzf cylc-7.8.1.tar.gz
 # DO NOT CHANGE THE NAME OF THE UNPACKED CYLC SOURCE DIRECTORY.
-cd cylc-7.7.0
+cd cylc-7.8.1
 export PATH=$PWD/bin:$PATH
 make
 ```
 
 Then make (or update) a symlink to the latest installed version:
 ```bash
-ln -s /opt/cylc-7.7.0 /opt/cylc
+ln -s /opt/cylc-7.8.1 /opt/cylc
 ```
 
 When you type `make`:
-  * A file called VERSION is created, containing the Cylc version number
-    * The version number is taken from the name of the parent directory. DO
-      NOT CHANGE THE NAME OF THE UNPACKED CYLC SOURCE DIRECTORY
-  * The Cylc documentation is generated from source and put in doc/install/
-    (if you have pdflatex, tex4ht, and several other LateX packages installed).
+  * The Cylc User Guide is generated from source (if you have sphinx-doc installed).
 
 If this is the first installed version of Cylc, copy the wrapper script
 `usr/bin/cylc` to a location in the system executable path, such as
@@ -46,7 +53,7 @@ If this is the first installed version of Cylc, copy the wrapper script
 instructions - to point to the Cylc install location:
 
 ```bash
-cp /opt/cylc-7.7.0/usr/bin/cylc /usr/local/bin/
+cp /opt/cylc-7.8.1/usr/bin/cylc /usr/local/bin/
 # (and EDIT /usr/local/bin/cylc as instructed)
 ```
 
@@ -61,44 +68,4 @@ version.
 ```
 $ cylc check-software
 Checking your software...
-
-Individual results:
-===============================================================================
-Package (version requirements)                          Outcome (version found)
-===============================================================================
-                              *REQUIRED SOFTWARE*                              
-Python (2.6+, <3).....................FOUND & min. version MET (2.7.12.final.0)
-
-       *OPTIONAL SOFTWARE for the GUI & dependency graph visualisation*       
-Python:pygtk (2.0+)...........................FOUND & min. version MET (2.24.0)
-graphviz (any)...................................................FOUND (2.38.0)
-Python:pygraphviz (any)...........................................FOUND (1.3.1)
-
-                  *OPTIONAL SOFTWARE for the HTML User Guide*                  
-ImageMagick (any)...............................................FOUND (6.8.9-9)
-
-            *OPTIONAL SOFTWARE for the HTTPS communications layer*            
-Python:urllib3 (any).............................................FOUND (1.13.1)
-Python:OpenSSL (any).............................................FOUND (17.2.0)
-Python:requests (2.4.2+).......................FOUND & min. version MET (2.9.1)
-
-                 *OPTIONAL SOFTWARE for the LaTeX User Guide*                 
-TeX:framed (any)....................................................FOUND (n/a)
-TeX (3.0+)................................FOUND & min. version MET (3.14159265)
-TeX:preprint (any)..................................................FOUND (n/a)
-TeX:tex4ht (any)....................................................FOUND (n/a)
-TeX:tocloft (any)...................................................FOUND (n/a)
-TeX:texlive (any)...................................................FOUND (n/a)
-===============================================================================
-
-Summary:
-                         ****************************                         
-                             Core requirements: ok                             
-                            Full-functionality: ok                            
-                         ****************************  
-```
-
-### Installing The Documentation
-
-After running `make`, copy the `doc/install` directory to a location such as
-`/var/www/html/` and update your Cylc site config file to point to it.
+...
