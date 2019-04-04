@@ -224,7 +224,7 @@ class XtriggerManager(object):
         if sig_only:
             return sig
         else:
-            return (label, sig, ctx, satisfied)
+            return label, sig, ctx, satisfied
 
     def _get_xtrig(self, itask: TaskProxy, unsat_only: bool = False,
                    sigs_only: bool = False):
