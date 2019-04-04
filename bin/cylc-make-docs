@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+set -eu
+
 usage() {
     echo "Usage: cylc [admin] make-docs [--help]"
     echo "Build the HTML User Guide, with Sphinx."
@@ -36,7 +38,7 @@ fi
 echo >&2
 echo "Building the HTML Cylc Documentation with Sphinx:"
 echo >&2
-cd "$CYLC_DIR/doc/" || exit 1
+cd "$CYLC_DIR/doc/"
 echo "... Generating the command reference ..."
 ./src/custom/make-commands.sh
 echo >&2

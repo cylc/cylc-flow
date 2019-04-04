@@ -18,14 +18,14 @@
 
 # Wrapper for running `shellcheck` over projects.
 
-shopt -s extglob
-cd "$(dirname "$0")/../" || exit 1
+set -e
+cd "$(dirname "$0")/../"
 
 # find shell files under the specified directory
 find_files () {
-    FPATH="$1"
-    grep --color=never -rl '^#\!.*bash' "${FPATH}" | sed 's/^\.\///' &
-    find "${FPATH}" -name '*.sh' | sed 's/^\.\///'
+    SEARCH_PATH="$1"
+    grep --color=never -Rl '^#\!.*bash' "${SEARCH_PATH}" | sed 's/^\.\///'
+    find "${SEARCH_PATH}" -name '*.sh' | sed 's/^\.\///'
 }
 
 main () {
