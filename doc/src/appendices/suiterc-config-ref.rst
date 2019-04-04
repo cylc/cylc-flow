@@ -1239,9 +1239,6 @@ contain letters, digits, underscores, and hyphens. A namespace
 represents a group or family of tasks if other namespaces inherit from
 it, or a task if no others inherit from it.
 
-.. todo::
-   following para here is a '%' thing i.e. not meant to be seen /comment:
-
   Names may not contain colons (which would preclude use of directory paths
   involving the registration name in ``$PATH`` variables). They
   may not contain the "." character (it will be interpreted as the
