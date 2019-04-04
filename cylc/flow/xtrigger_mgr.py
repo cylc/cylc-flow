@@ -20,10 +20,16 @@ import json
 import re
 from copy import deepcopy
 from time import time
+from typing import List, Tuple, Union
 
 import cylc.flow.flags
 from cylc.flow import LOG
 from cylc.flow.xtriggers.wall_clock import wall_clock
+
+from cylc.subprocctx import SubFuncContext
+from cylc.broadcast_mgr import BroadcastMgr
+from cylc.subprocpool import SubProcPool
+from cylc.task_proxy import TaskProxy
 
 # Templates for string replacement in function arg values.
 TMPL_USER_NAME = 'user_name'
@@ -81,10 +87,22 @@ class XtriggerManager(object):
 
     """
 
-    def __init__(self, suite, user, *, broadcast_mgr=None, proc_pool=None,
-                 suite_run_dir=None, suite_share_dir=None,
-                 suite_source_dir=None):
-        """Initialize the xtrigger manager."""
+    def __init__(self, suite: str, user: str, *,
+                 broadcast_mgr: BroadcastMgr = None,
+                 proc_pool: SubProcPool = None,
+                 suite_run_dir: str = None, suite_share_dir: str = None,
+                 suite_source_dir: str = None):
+        """Initialize the xtrigger manager.
+
+        Args:
+            suite (str): suite name
+            user (str): suite owner
+            broadcast_mgr (BroadcastMgr): the Broadcast Manager
+            proc_pool (SubProcPool): pool of Subprocesses
+            suite_run_dir (str): suite run directory
+            suite_share_dir (str): suite share directory
+            suite_source_dir (str): suite source directory
+        """
         # Suite function and clock triggers by label.
         self.functx_map = {}
         self.clockx_map = {}
@@ -114,12 +132,25 @@ class XtriggerManager(object):
         self.broadcast_mgr = broadcast_mgr
         self.suite_source_dir = suite_source_dir
 
-    def add_clock(self, label, fctx):
-        """Add a new clock xtrigger."""
+    def add_clock(self, label: str, fctx: SubFuncContext):
+        """Add a new clock xtrigger.
+
+        Args:
+            label (str): xtrigger label
+            fctx (SubFuncContext): function context
+        """
         self.clockx_map[label] = fctx
 
-    def add_trig(self, label, fctx):
-        """Add a new xtrigger."""
+    def add_trig(self, label: str, fctx: SubFuncContext):
+        """Add a new xtrigger.
+
+        Args:
+            label (str): xtrigger label
+            fctx (SubFuncContext): function context
+        Raises:
+            ValueError: if any string template in the function context
+                arguments are not present in the expected template values.
+        """
         self.functx_map[label] = fctx
         # Check any string templates in the function arg values (note this
         # won't catch bad task-specific values - which are added dynamically).
@@ -134,8 +165,15 @@ class XtriggerManager(object):
                 # Not a string arg.
                 pass
 
-    def load_xtrigger_for_restart(self, row_idx, row):
-        """Load satisfied xtrigger results from suite DB."""
+    def load_xtrigger_for_restart(self, row_idx: int, row: Tuple[str, str]):
+        """Load satisfied xtrigger results from suite DB.
+
+        Args:
+            row_idx (int): row index (used for logging)
+            row (Tuple[str, str]): tuple with the signature and results (json)
+        Raises:
+            ValueError: if the row cannot be parsed as JSON
+        """
         if row_idx == 0:
             LOG.info("LOADING satisfied xtriggers")
         sig, results = row
@@ -149,8 +187,12 @@ class XtriggerManager(object):
         self.sat_xclock = [
             sig for sig in self.sat_xclock if sig in self.all_xclock]
 
-    def satisfy_xclock(self, itask):
-        """Attempt to satisfy itask's clock trigger, if it has one."""
+    def satisfy_xclock(self, itask: TaskProxy):
+        """Attempt to satisfy itask's clock trigger, if it has one.
+
+        Args:
+            itask (TaskProxy): TaskProxy
+        """
         label, sig, ctx, satisfied = self._get_xclock(itask)
         if satisfied:
             return
@@ -159,8 +201,18 @@ class XtriggerManager(object):
             self.sat_xclock.append(sig)
             LOG.info('clock xtrigger satisfied: %s = %s' % (label, str(ctx)))
 
-    def _get_xclock(self, itask, sig_only=False):
-        """(Internal helper method.)"""
+    def _get_xclock(self, itask: TaskProxy, sig_only: bool = False) ->\
+            Union[str, Tuple[str, str, SubFuncContext, bool]]:
+        """(Internal helper method.)
+
+        Args:
+            itask (TaskProxy): TaskProxy
+            sig_only (bool): whether to return the signature only or not
+        Returns:
+            Union[str, Tuple[str, str, SubFuncContext, bool]]: the signature
+                of the function (if sigs_only True) or a tuple with
+                label, signature, function context, and flag for satisfied.
+        """
         label, satisfied = itask.state.xclock
         ctx = deepcopy(self.clockx_map[label])
         ctx.func_kwargs.update(
@@ -174,8 +226,21 @@ class XtriggerManager(object):
         else:
             return (label, sig, ctx, satisfied)
 
-    def _get_xtrig(self, itask, unsat_only=False, sigs_only=False):
-        """(Internal helper method.)"""
+    def _get_xtrig(self, itask: TaskProxy, unsat_only: bool = False,
+                   sigs_only: bool = False):
+        """(Internal helper method.)
+
+        Args:
+            itask (TaskProxy): TaskProxy
+            unsat_only (bool): whether to retrieve only unsatisfied xtriggers
+                or not
+            sigs_only (bool): whether to append only the function signature
+                or not
+        Returns:
+            List[Union[str, Tuple[str, str, SubFuncContext, bool]]]: a list
+                with either signature (if sigs_only True) or with tuples of
+                label, signature, function context, and flag for satisfied.
+        """
         res = []
         farg_templ = {}
         farg_templ[TMPL_TASK_CYCLE_POINT] = str(itask.point)
@@ -212,17 +277,12 @@ class XtriggerManager(object):
                 res.append((label, sig, ctx, satisfied))
         return res
 
-    def collate(self, itasks):
-        """Get list of all current xtrigger sigs."""
-        self.all_xtrig = []
-        self.all_xclock = []
-        for itask in itasks:
-            self.all_xtrig += self._get_xtrig(itask, sigs_only=True)
-            if itask.state.xclock is not None:
-                self.all_xclock.append(self._get_xclock(itask, sig_only=True))
+    def satisfy_xtriggers(self, itask: TaskProxy):
+        """Attempt to satisfy itask's xtriggers.
 
-    def satisfy_xtriggers(self, itask):
-        """Attempt to satisfy itask's xtriggers."""
+        Args:
+            itask (TaskProxy): TaskProxy
+        """
         for label, sig, ctx, _ in self._get_xtrig(itask, unsat_only=True):
             if sig in self.sat_xtrig:
                 if not itask.state.xtriggers[label]:
@@ -249,11 +309,28 @@ class XtriggerManager(object):
             self.active.append(sig)
             self.proc_pool.put_command(ctx, self.callback)
 
-    def callback(self, ctx):
+    def collate(self, itasks: List[TaskProxy]):
+        """Get list of all current xtrigger signatures.
+
+        Args:
+            itasks (List[TaskProxy]): list of TaskProxy's
+        """
+        self.all_xtrig = []
+        self.all_xclock = []
+        for itask in itasks:
+            self.all_xtrig += self._get_xtrig(itask, sigs_only=True)
+            if itask.state.xclock is not None:
+                self.all_xclock.append(self._get_xclock(itask, sig_only=True))
+
+    def callback(self, ctx: SubFuncContext):
         """Callback for asynchronous xtrigger functions.
 
         Record satisfaction status and function results dict.
 
+        Args:
+            ctx (SubFuncContext): function context
+        Raises:
+            ValueError: if the context given is not active
         """
         LOG.debug(ctx)
         sig = ctx.get_signature()
@@ -267,8 +344,12 @@ class XtriggerManager(object):
             self.pflag = True
             self.sat_xtrig[sig] = results
 
-    def check_xtriggers(self, itasks):
-        """See if any xtriggers are satisfied."""
+    def check_xtriggers(self, itasks: List[TaskProxy]):
+        """See if any xtriggers are satisfied.
+
+        Args:
+            itasks (List[TaskProxy]): list of TaskProxy's
+        """
         self.collate(itasks)
         for itask in itasks:
             if itask.state.xclock is not None:
