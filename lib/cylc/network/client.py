@@ -18,6 +18,7 @@
 """Client for suite runtime API."""
 
 import asyncio
+from functools import partial
 import os
 import socket
 import sys
@@ -231,9 +232,9 @@ class SuiteRuntimeClient:
 
         # create connection
         return ZMQClient(
-            host, port, encrypt, decrypt, lambda: get_secret(suite),
+            host, port, encrypt, decrypt, partial(get_secret(suite)),
             timeout=timeout, header=cls.get_header(),
-            timeout_handler=lambda: cls._timeout_handler(suite, host, port)
+            timeout_handler=partial(cls._timeout_handler(suite, host, port))
         )
 
     @staticmethod

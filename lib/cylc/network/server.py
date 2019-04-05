@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Server for suite runtime API."""
 
-from functools import wraps
+from functools import partial, wraps
 import getpass
 from queue import Queue
 from textwrap import dedent
@@ -286,7 +286,7 @@ class SuiteRuntimeServer(ZMQServer):
             self,
             encrypt,
             decrypt,
-            lambda: get_secret(schd.suite)
+            partial(get_secret, schd.suite)
         )
         self.schd = schd
         self.public_priv = None  # update in get_public_priv()
