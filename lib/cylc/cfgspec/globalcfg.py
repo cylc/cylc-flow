@@ -236,9 +236,6 @@ SPEC = {
 
 def upg(cfg, descr):
     """Upgrader."""
-    add_bin_dir = converter(lambda x: x + '/bin', "Added + '/bin' to path")
-    use_ssh = converter(lambda x: "ssh", "set to 'ssh'")
-
     u = upgrader(cfg, descr)
 
     u.obsolete('6.4.1', ['test battery', 'directives'])
