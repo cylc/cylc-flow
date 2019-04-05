@@ -28,6 +28,7 @@ import zmq
 
 from cylc import LOG
 from cylc.cfgspec.glbl_cfg import glbl_cfg
+from cylc.exceptions import CylcError
 from cylc.network import Priv, encrypt, decrypt, get_secret
 from cylc.suite_status import (
     KEY_META, KEY_NAME, KEY_OWNER, KEY_STATES,
@@ -96,8 +97,15 @@ class ZMQServer(object):
         self.socket = self.context.socket(zmq.REP)
         self.socket.RCVTIMEO = int(self.RECV_TIMEOUT) * 1000
 
-        self.port = self.socket.bind_to_random_port(
-            'tcp://*', min_port, max_port)
+        try:
+            if min_port == max_port:
+                self.port = min_port
+                self.socket.bind('tcp://*:%d' % min_port)
+            else:
+                self.port = self.socket.bind_to_random_port(
+                    'tcp://*', min_port, max_port)
+        except zmq.error.ZMQError as exc:
+            raise CylcError('could not start Cylc ZMQ server: %s' % str(exc))
 
         # start accepting requests
         self.register_endpoints()
