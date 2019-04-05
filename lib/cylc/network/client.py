@@ -232,9 +232,9 @@ class SuiteRuntimeClient:
 
         # create connection
         return ZMQClient(
-            host, port, encrypt, decrypt, partial(get_secret(suite)),
+            host, port, encrypt, decrypt, partial(get_secret, suite),
             timeout=timeout, header=cls.get_header(),
-            timeout_handler=partial(cls._timeout_handler(suite, host, port))
+            timeout_handler=partial(cls._timeout_handler, suite, host, port)
         )
 
     @staticmethod

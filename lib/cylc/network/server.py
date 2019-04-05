@@ -104,7 +104,8 @@ class ZMQServer(object):
             else:
                 self.port = self.socket.bind_to_random_port(
                     'tcp://*', min_port, max_port)
-        except zmq.error.ZMQError as exc:
+        except (zmq.error.ZMQError, zmq.error.ZMQBindError) as exc:
+            self.socket.close()
             raise CylcError('could not start Cylc ZMQ server: %s' % str(exc))
 
         # start accepting requests
@@ -120,6 +121,7 @@ class ZMQServer(object):
         LOG.debug('stopping zmq server...')
         self.queue.put('STOP')
         self.thread.join()  # wait for the listener to return
+        self.socket.close()
         LOG.debug('...stopped')
 
     def register_endpoints(self):
