@@ -51,8 +51,7 @@ def main():
 
     parser.add_option(
         "--local",
-        help=("Open the local documentation (if it has been built, see cylc "
-              "make-docs)."),
+        help="Open the local documentation (if it has been built).",
         action="store_true", default=False, dest="local")
 
     parser.add_option(

@@ -3,7 +3,6 @@
 *.py[cod]
 __pycache__/
 
-# Generated documentation files (from 'cylc make-docs')
 # - Command reference from called script 'custom/make-commands.sh'.
 doc/src/appendices/command-ref.rst
 

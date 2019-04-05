@@ -269,7 +269,6 @@ admin_commands = {}
 admin_commands['test-battery'] = ['test-battery']
 admin_commands['import-examples'] = ['import-examples']
 admin_commands['check-software'] = ['check-software']
-admin_commands['make-docs'] = ['make-docs']
 
 preparation_commands = {}
 preparation_commands['register'] = ['register']
@@ -332,7 +331,6 @@ comsum = {}
 comsum['test-battery'] = 'Run a battery of self-diagnosing test suites'
 comsum['import-examples'] = 'Import example suites your suite run directory'
 comsum['check-software'] = 'Check required software is installed'
-comsum['make-docs'] = 'Build the HTML documentation with Sphinx.'
 # preparation
 comsum['register'] = 'Register a suite for use'
 comsum['print'] = 'Print registered suites'
