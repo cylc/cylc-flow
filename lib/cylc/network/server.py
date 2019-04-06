@@ -63,7 +63,7 @@ class ZMQServer(object):
     """
 
     RECV_TIMEOUT = 1
-    """Max time the ZMQServer will wait for an incomming message in seconds.
+    """Max time the ZMQServer will wait for an incoming message in seconds.
 
     We use a timeout here so as to give the _listener a chance to respond to
     requests (i.e. stop) from its spawner (the scheduler).
@@ -105,7 +105,7 @@ class ZMQServer(object):
         self.register_endpoints()
 
         self.queue = Queue()
-        # TODO: this in asyncio? Requires the Cylc main loop in ascyncio first
+        # TODO: this in asyncio? Requires the Cylc main loop in asyncio first
         self.thread = Thread(target=self._listener)
         self.thread.start()
 
@@ -125,7 +125,7 @@ class ZMQServer(object):
     def _listener(self):
         """The server main loop, listen for and serve requests."""
         while True:
-            # process any commands passed to the listner by its parent process
+            # process any commands passed to the listener by its parent process
             if self.queue.qsize():
                 command = self.queue.get()
                 if command == 'STOP':
@@ -644,7 +644,7 @@ class SuiteRuntimeServer(ZMQServer):
             cylc.suite_status.KEY_OWNER
                The user account the suite is running under.
             cylc.suite_status.KEY_VERSION
-               The Cylc version the suite is runnin with.
+               The Cylc version the suite is running with.
 
         """
         return {
