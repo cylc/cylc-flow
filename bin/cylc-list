@@ -34,7 +34,6 @@ if remrun():
     sys.exit(0)
 
 from cylc.config import SuiteConfig
-import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.templatevars import load_template_vars

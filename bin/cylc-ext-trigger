@@ -35,12 +35,10 @@ The suite passphrase must be installed in $HOME/.cylc/<SUITE>/.
 
 Note: to manually trigger a task use 'cylc trigger', not this command."""
 
-import sys
 from time import sleep
 
 from cylc import LOG
 from cylc.exceptions import CylcError, ClientError
-import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.network.client import SuiteRuntimeClient
 from cylc.terminal import cli_function

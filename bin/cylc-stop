@@ -47,7 +47,6 @@ if '--use-ssh' in sys.argv[1:]:
 
 from cylc.command_polling import Poller
 from cylc.exceptions import ClientError, ClientTimeout
-import cylc.flags
 from cylc.network.client import SuiteRuntimeClient
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.task_id import TaskID

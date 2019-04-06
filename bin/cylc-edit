@@ -71,7 +71,6 @@ from parsec.include import inline, \
     split_file, backup, backups, newfiles, cleanup, modtimes
 
 
-import cylc.flags
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager

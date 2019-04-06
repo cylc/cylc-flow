@@ -20,9 +20,7 @@
 
 from abc import ABCMeta, abstractmethod
 
-from cylc.exceptions import (
-    CyclerTypeError, PointParsingError, IntervalParsingError,
-    SequenceDegenerateError)
+from cylc.exceptions import CyclerTypeError
 
 
 def parse_exclusion(expr):
