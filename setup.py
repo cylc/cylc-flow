@@ -109,17 +109,17 @@ install_requires = [
     'pyzmq==18.0.1'
 ]
 tests_require = [
-    'codecov',
-    'coverage',
-    'pytest-cov',
-    'pytest',
-    'pycodestyle',
-    'testfixtures'
+    'codecov==2.0.15',
+    'coverage==4.5.3',
+    'pytest-cov==2.6.1',
+    'pytest==4.4.0',
+    'pycodestyle==2.5.0',
+    'testfixtures==6.6.2'
 ]
 
 extra_requires = {
-    'empy': ['EmPy'],
-    'docs': ['sphinx'],
+    'empy': ['EmPy==3.3.4'],
+    'docs': ['sphinx==2.0.0'],
     'all': []
 }
 extra_requires['all'] += extra_requires['empy']
