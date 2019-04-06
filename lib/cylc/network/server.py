@@ -84,12 +84,13 @@ class ZMQServer(object):
         self.secret = secret_method
 
     def start(self, min_port, max_port):
-        """Start the server running
+        """Start the server running.
+
+        Will use a port range provided to select random ports.
 
         Args:
-            ports (iterable): Generator of ports (int) to choose from.
-                The lowest available port will be chosen.
-
+            min_port (int): minimum socket port number
+            max_port (int): maximum socket port number
         """
         # create socket
         self.context = zmq.Context()
@@ -161,7 +162,11 @@ class ZMQServer(object):
             sleep(0)  # yield control to other threads
 
     def _receiver(self, message):
-        """Wrap incoming messages and dispatch them to exposed methods."""
+        """Wrap incoming messages and dispatch them to exposed methods.
+
+        Args:
+            message (dict): message contents
+        """
         # determine the server method to call
         try:
             method = getattr(self, message['command'])
@@ -556,6 +561,8 @@ class SuiteRuntimeServer(ZMQServer):
         Args:
             task_globs (list, optional):
                 List of identifiers, see `task globs`_
+            list_prereqs (bool): whether to include the prerequisites in
+                the results or not.
 
         Returns:
             list: Dictionary of `task identifiers <task identifier>`_
