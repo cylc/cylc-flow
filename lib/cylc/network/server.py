@@ -75,6 +75,7 @@ class ZMQServer(object):
 
     def __init__(self, encode_method, decode_method, secret_method):
         self.port = None
+        self.context = None
         self.socket = None
         self.endpoints = None
         self.thread = None
