@@ -22,8 +22,7 @@ CATEGORIES=('control' 'con' 'information' 'info' 'all' 'task' 'license' \
 HELP_OPTS=('help' '--help' '-h' 'h' '?')
 
 print_version() {
-    echo "$(python -c "from cylc import __version__;\
-        print(__version__)")"
+    python3 -c "from cylc import __version__; print(__version__)"
 }
 
 init_cylc() {
