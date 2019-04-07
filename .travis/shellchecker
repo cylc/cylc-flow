@@ -81,7 +81,6 @@ default () {
         --exclude 'etc/dev-bin/live-graph-movie.sh' \
         -- -e SC1090
     main 'lib/cylc/job.sh' -- -e SC1090 -s bash
-    main 'lib/cylc/job.sh' -- -e SC1090 -s ksh
 
     # run a lenient check on all test scripts
     main 'tests' 'lib/parsec/tests' -- -S error -e SC1090

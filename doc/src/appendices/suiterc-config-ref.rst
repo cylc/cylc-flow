@@ -1577,18 +1577,8 @@ job file path.
 [runtime] ``->`` [[\_\_NAME\_\_]] ``->`` [[[job]]] ``->`` shell
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-Location of the command used to interpret the job script submitted by the suite
-server program when a task is ready to run. This can be set to the location of
-``bash`` in the job host if the shell is not installed in the standard
-location.
-
-.. note::
-
-   It has no bearing on any sub-shells that may be called by the job script.
-
-Setting this to the path of a ksh93 interpreter is deprecated. Support of which
-will be withdrawn in a future cylc release. Setting this to any other shell is
-not supported.
+Location of the bash shell invoked on job hosts to interpret task job scripts,
+if not installed in the standard location.
 
 - *type*: string
 - *root default*: ``/bin/bash``

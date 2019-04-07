@@ -42,14 +42,6 @@ class LoadlevelerHandler(object):
             job_conf["suite_name"] + "." + job_conf["task_id"])
         directives["output"] = job_file_path + ".out"
         directives["error"] = job_file_path + ".err"
-        # NOTE ON SHELL DIRECTIVE: on AIX at NIWA '#@ shell = /bin/bash'
-        # results in the job executing in a non-login shell (.profile not
-        # sourced) whereas /bin/ksh does get a login shell. WTF?! In any
-        # case this directive appears to affect only the shell *from which
-        # the task job script is executed*, NOT the shell *in which it is
-        # executed* (that is determined by the '#!' at the top of the task
-        # job script).
-        directives["shell"] = "/bin/ksh"
         if (job_conf["execution_time_limit"] and
                 directives.get("wall_clock_limit") is None):
             directives["wall_clock_limit"] = "%d,%d" % (
