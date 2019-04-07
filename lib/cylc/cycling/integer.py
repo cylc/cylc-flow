@@ -22,10 +22,11 @@ Integer cycling by point, interval, and sequence classes.
 import re
 
 from cylc.cycling import (
-    PointBase, IntervalBase, SequenceBase, ExclusionBase, PointParsingError,
-    IntervalParsingError, parse_exclusion, cmp
+    PointBase, IntervalBase, SequenceBase, ExclusionBase, parse_exclusion, cmp
 )
-from cylc.exceptions import CylcMissingContextPointError
+from cylc.exceptions import (
+    CylcMissingContextPointError, PointParsingError, IntervalParsingError
+)
 
 CYCLER_TYPE_INTEGER = "integer"
 CYCLER_TYPE_SORT_KEY_INTEGER = "a"
