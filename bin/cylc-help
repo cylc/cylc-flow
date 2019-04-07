@@ -217,7 +217,6 @@ information_commands = {}
 
 information_commands['list'] = ['list', 'ls']
 information_commands['dump'] = ['dump']
-information_commands['cat-state'] = ['cat-state']
 information_commands['show'] = ['show']
 information_commands['cat-log'] = ['cat-log', 'log']
 information_commands['get-suite-contact'] = [
@@ -359,7 +358,6 @@ comsum['diff'] = 'Compare two suite definitions and print differences'
 # information
 comsum['list'] = 'List suite tasks and family namespaces'
 comsum['dump'] = 'Print the state of tasks in a running suite'
-comsum['cat-state'] = 'Print the state of tasks from the state dump'
 comsum['show'] = 'Print task state (prerequisites and outputs etc.)'
 comsum['cat-log'] = 'Print various suite and task log files'
 comsum['documentation'] = 'Display cylc documentation (User Guide etc.)'

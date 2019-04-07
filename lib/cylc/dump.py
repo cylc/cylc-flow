@@ -15,7 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Utility for "cylc cat-state" and "cylc dump"."""
+"""Utility for "cylc dump"."""
 
 
 def dump_to_stdout(states, sort_by_cycle=False):

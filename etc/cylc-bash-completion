@@ -38,7 +38,7 @@ _cylc() {
     cur="${COMP_WORDS[COMP_CWORD]}"
     sec="${COMP_WORDS[1]}"
     opts="$(cylc print -x -y 2>/dev/null)"
-    suite_cmds="broadcast|bcast|cat-log|log|cat-state|check-versions|checkpoint|diff|compare|documentation|browse|dump|edit|ext-trigger|external-trigger|get-directory|get-suite-config|get-config|get-suite-version|get-cylc-version|graph|graph-diff|hold|import-examples|insert|jobscript|kill|list|ls|ls-checkpoints|monitor|nudge|ping|poll|print|register|release|unhold|reload|remove|report-timings|reset|restart|run|start|scan|scp-transfer|search|grep|set-verbosity|show|spawn|stop|shutdown|submit|single|suite-state|test-battery|trigger|validate|view|warranty"
+    suite_cmds="broadcast|bcast|cat-log|log|check-versions|checkpoint|diff|compare|documentation|browse|dump|edit|ext-trigger|external-trigger|get-directory|get-suite-config|get-config|get-suite-version|get-cylc-version|graph|graph-diff|hold|import-examples|insert|jobscript|kill|list|ls|ls-checkpoints|monitor|nudge|ping|poll|print|register|release|unhold|reload|remove|report-timings|reset|restart|run|start|scan|scp-transfer|search|grep|set-verbosity|show|spawn|stop|shutdown|submit|single|suite-state|test-battery|trigger|validate|view|warranty"
 
 
     if [[ ${COMP_CWORD} -eq 1 ]]; then
