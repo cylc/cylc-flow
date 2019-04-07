@@ -23,7 +23,6 @@ Options:
   --help   Print this usage message."""
 
 import sys
-import cylc.flags
 from cylc.terminal import cli_function
 
 

@@ -35,7 +35,6 @@ if remrun():
 import os
 import re
 
-import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.print_tree import print_tree

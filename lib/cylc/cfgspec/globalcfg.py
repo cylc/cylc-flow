@@ -25,7 +25,7 @@ from tempfile import mkdtemp
 
 from parsec.config import ParsecConfig
 from parsec.exceptions import ParsecError
-from parsec.upgrade import upgrader, converter
+from parsec.upgrade import upgrader
 
 from cylc import LOG
 from cylc.cfgvalidate import (

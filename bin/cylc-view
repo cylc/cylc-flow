@@ -40,7 +40,6 @@ from tempfile import NamedTemporaryFile
 import shlex
 from subprocess import call
 
-import cylc.flags
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager

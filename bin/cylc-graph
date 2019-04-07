@@ -22,7 +22,6 @@ Implement the old ``cylc graph --reference command`` for producing a textural
 graph of a suite.
 
 """
-import sys
 
 from cylc.config import SuiteConfig
 from cylc.cycling.loader import get_point

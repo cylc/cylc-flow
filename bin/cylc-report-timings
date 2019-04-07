@@ -58,7 +58,6 @@ import contextlib
 import os
 
 from cylc.exceptions import CylcError
-import cylc.flags
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.rundb import CylcSuiteDAO

@@ -49,7 +49,6 @@ import difflib
 from subprocess import call
 
 from cylc.exceptions import CylcError, UserInputError
-import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.network.client import SuiteRuntimeClient
 from cylc.cfgspec.glbl_cfg import glbl_cfg

@@ -26,8 +26,11 @@ from isodatetime.timezone import (
     get_local_time_zone, get_local_time_zone_format, TimeZoneFormatMode)
 from cylc.time_parser import CylcTimeParser
 from cylc.cycling import (
-    PointBase, IntervalBase, SequenceBase, ExclusionBase, PointParsingError,
-    IntervalParsingError, SequenceDegenerateError, cmp_to_rich, cmp)
+    PointBase, IntervalBase, SequenceBase, ExclusionBase, cmp_to_rich, cmp
+)
+from cylc.exceptions import (
+    SequenceDegenerateError, PointParsingError, IntervalParsingError
+)
 from cylc.wallclock import get_current_time_string
 from parsec.validate import IllegalValueError
 

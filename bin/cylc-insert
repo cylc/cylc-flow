@@ -41,7 +41,6 @@ if '--use-ssh' in sys.argv[1:]:
         sys.exit(0)
 
 from cylc.exceptions import UserInputError
-import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.network.client import SuiteRuntimeClient
 from cylc.task_id import TaskID

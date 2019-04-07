@@ -33,7 +33,6 @@ from cylc.remote import remrun
 if remrun():
     sys.exit(0)
 
-import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.config import SuiteConfig
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
