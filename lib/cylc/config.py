@@ -1470,13 +1470,6 @@ class SuiteConfig(object):
 
         for taskdef in self.taskdefs.values():
             taskdef.check_for_explicit_cycling()
-            # Check use of ksh in "[job]shell" setting
-            job_shell = taskdef.rtconfig['job']['shell']
-            if job_shell and 'ksh' in os.path.basename(job_shell):
-                LOG.warning(
-                    ('deprecated: [runtime][%s][job]shell=%s: '
-                     'use of ksh to run cylc task job file') %
-                    (taskdef.name, job_shell))
             # Check custom event handler templates compat with task meta
             if taskdef.rtconfig['events']:
                 subs = dict((key, key) for key in self.TASK_EVENT_TMPL_KEYS)
