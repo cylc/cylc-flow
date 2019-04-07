@@ -32,8 +32,7 @@ set -e
 mkdir -p png/scaled
 for PNG in "png/orig/"*; do
     if [[ ! -f png/scaled/$PNG ]]; then
-    echo "scaling $PNG"
-    convert -resize '600>' "png/orig/$PNG" "png/scaled/$PNG"
+        echo "scaling $PNG"
+        convert -resize '600>' "png/orig/$PNG" "png/scaled/$PNG"
     fi
 done
-
