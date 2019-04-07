@@ -250,36 +250,6 @@ def upg(cfg, descr):
     """Upgrader."""
     u = upgrader(cfg, descr)
     u.deprecate(
-        '5.1.1',
-        ['editors', 'in-terminal'],
-        ['editors', 'terminal'])
-    u.deprecate(
-        '5.1.1',
-        ['task hosts'],
-        ['hosts'])
-    u.deprecate(
-        '5.1.1',
-        ['hosts', 'local'],
-        ['hosts', 'localhost'])
-    u.deprecate(
-        '5.1.1',
-        ['hosts', '__MANY__', 'workspace directory'],
-        ['hosts', '__MANY__', 'workdirectory'])
-    u.deprecate(
-        '5.1.1',
-        ['hosts', '__MANY__', 'cylc directory'],
-        ['hosts', '__MANY__', 'cylc bin directory'],
-        add_bin_dir)
-    u.obsolete(
-        '5.2.0',
-        ['hosts', '__MANY__', 'cylc bin directory'],
-        ['hosts', '__MANY__', 'cylc bin directory'])
-    u.deprecate(
-        '5.2.0',
-        ['hosts', '__MANY__', 'use ssh messaging'],
-        ['hosts', '__MANY__', 'task communication method'],
-        use_ssh)
-    u.deprecate(
         '6.1.2',
         ['task messaging', 'connection timeout in seconds'],
         ['task messaging', 'connection timeout'])
