@@ -240,10 +240,10 @@ that you can exit the terminal or even log out without killing the suite:
                | |                 The Cylc Suite Engine [7.0.0]
    ._____._. ._| |_____.           Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
    | .___| | | | | .___|  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
-   | !___| !_! | | !___.  This program comes with ABSOLUTELY NO WARRANTY;
-   !_____!___. |_!_____!  see `cylc warranty`.  It is free software, you
-         .___! |           are welcome to redistribute it under certain
-         !_____!                conditions; see `cylc conditions`.
+   | !___| !_! | | !___.  This program comes with ABSOLUTELY NO WARRANTY.
+   !_____!___. |_!_____!  It is free software, you are welcome to
+         .___! |          redistribute it under certain conditions;
+         !_____!          see `COPYING' in the Cylc source distribution.
 
    *** listening on tcp://nwp-1:43027/ ***
 

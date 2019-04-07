@@ -19,7 +19,7 @@
 
 . "$(dirname "$0")/test_header"
 # Number of tests depends on the number of 'cylc' commands.
-set_test_number $(( 45 + $(cd "${CYLC_DIR}/bin" && ls 'cylc-'* | wc -l) ))
+set_test_number $(( 34 + $(cd "${CYLC_DIR}/bin" && ls 'cylc-'* | wc -l) ))
 
 # Top help
 run_ok "${TEST_NAME_BASE}-0" cylc
@@ -36,29 +36,12 @@ do
     cmp_ok "${FILE}" "${TEST_NAME_BASE}-0.stdout"
 done
 
-# Sub-command
-run_ok "${TEST_NAME_BASE}-warranty" cylc warranty
-run_ok "${TEST_NAME_BASE}-license-warranty" cylc license warranty
-run_ok "${TEST_NAME_BASE}-GPL-warranty" cylc GPL warranty
-run_ok "${TEST_NAME_BASE}-w" cylc w
-run_ok "${TEST_NAME_BASE}-license-w" cylc license w
-run_ok "${TEST_NAME_BASE}-GPL-w" cylc GPL w
-for FILE in \
-    "${TEST_NAME_BASE}-license-warranty.stdout" \
-    "${TEST_NAME_BASE}-GPL-warranty.stdout" \
-    "${TEST_NAME_BASE}-w.stdout" \
-    "${TEST_NAME_BASE}-license-w.stdout" \
-    "${TEST_NAME_BASE}-GPL-w.stdout"
-do
-    cmp_ok "${FILE}" "${TEST_NAME_BASE}-warranty.stdout"
-done
-
 # Sub-command - no match
 run_fail "${TEST_NAME_BASE}-aardvark" cylc aardvark
-run_fail "${TEST_NAME_BASE}-license-aardvark" cylc license aardvark
+run_fail "${TEST_NAME_BASE}-prep-aardvark" cylc prep aardvark
 for FILE in \
     "${TEST_NAME_BASE}-aardvark.stderr" \
-    "${TEST_NAME_BASE}-license-aardvark.stderr"
+    "${TEST_NAME_BASE}-prep-aardvark.stderr"
 do
     cmp_ok "${FILE}" <<'__STDERR__'
 cylc aardvark: unknown utility. Abort.
@@ -83,22 +66,22 @@ cylc get: is ambiguous for:
 __STDERR__
 
 # Sub-command help
-run_ok "${TEST_NAME_BASE}-warranty--help" cylc warranty --help
-run_ok "${TEST_NAME_BASE}-warranty-h" cylc warranty -h
-run_ok "${TEST_NAME_BASE}-help-warranty" cylc help warranty
-run_ok "${TEST_NAME_BASE}-h-license-warranty" cylc h license warranty
-run_ok "${TEST_NAME_BASE}---help-license-warranty" cylc --help license warranty
-run_ok "${TEST_NAME_BASE}-help-w" cylc help w
-run_ok "${TEST_NAME_BASE}-license-w" cylc help license w
+run_ok "${TEST_NAME_BASE}-validate--help" cylc validate --help
+run_ok "${TEST_NAME_BASE}-validate-h" cylc validate -h
+run_ok "${TEST_NAME_BASE}-help-validate" cylc help validate
+run_ok "${TEST_NAME_BASE}-h-prep-validate" cylc h prep validate
+run_ok "${TEST_NAME_BASE}---help-prep-validate" cylc --help prep validate
+run_ok "${TEST_NAME_BASE}-help-va" cylc help va
+run_ok "${TEST_NAME_BASE}-prep-va" cylc help prep va
 for FILE in \
-    "${TEST_NAME_BASE}-warranty-h.stdout" \
-    "${TEST_NAME_BASE}-help-warranty.stdout" \
-    "${TEST_NAME_BASE}-h-license-warranty.stdout" \
-    "${TEST_NAME_BASE}---help-license-warranty.stdout" \
-    "${TEST_NAME_BASE}-help-w.stdout" \
-    "${TEST_NAME_BASE}-license-w.stdout"
+    "${TEST_NAME_BASE}-validate-h.stdout" \
+    "${TEST_NAME_BASE}-help-validate.stdout" \
+    "${TEST_NAME_BASE}-h-prep-validate.stdout" \
+    "${TEST_NAME_BASE}---help-prep-validate.stdout" \
+    "${TEST_NAME_BASE}-help-va.stdout" \
+    "${TEST_NAME_BASE}-prep-va.stdout"
 do
-    cmp_ok "${FILE}" "${TEST_NAME_BASE}-warranty--help.stdout"
+    cmp_ok "${FILE}" "${TEST_NAME_BASE}-validate--help.stdout"
 done
 
 # Version

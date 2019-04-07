@@ -321,10 +321,10 @@ The Cylc Suite Engine [%s]
 Copyright (C) 2008-2019 NIWA
 & British Crown (Met Office) & Contributors.
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
-This program comes with ABSOLUTELY NO WARRANTY;
-see `cylc warranty`.  It is free software, you
-are welcome to redistribute it under certain
-conditions; see `cylc conditions`.
+This program comes with ABSOLUTELY NO WARRANTY.
+It is free software, you are welcome to
+redistribute it under certain conditions;
+see `COPYING' in the Cylc source distribution.
 
   """ % CYLC_VERSION
 

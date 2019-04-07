@@ -67,7 +67,6 @@ def match_command(abbrev):
     matches = set()
     finished_matching = False
     for dct in [admin_commands,
-                license_commands,
                 preparation_commands,
                 information_commands,
                 discovery_commands,
@@ -211,7 +210,6 @@ categories['utility'] = ['utility']
 categories['task'] = ['task']
 categories['hook'] = ['hook']
 categories['admin'] = ['admin']
-categories['license'] = ['license', 'GPL']
 
 information_commands = {}
 
@@ -273,10 +271,6 @@ admin_commands['import-examples'] = ['import-examples']
 admin_commands['check-software'] = ['check-software']
 admin_commands['make-docs'] = ['make-docs']
 
-license_commands = {}
-license_commands['warranty'] = ['warranty']
-license_commands['conditions'] = ['conditions']
-
 preparation_commands = {}
 preparation_commands['register'] = ['register']
 preparation_commands['print'] = ['print']
@@ -314,15 +308,13 @@ for dct in [
         utility_commands,
         task_commands,
         admin_commands,
-        hook_commands,
-        license_commands]:
+        hook_commands]:
     all_commands.update(dct)
 
 # topic summaries
 catsum = {}
 catsum['all'] = "The complete command set."
 catsum['admin'] = "Cylc installation, testing, and example suites."
-catsum['license'] = "Software licensing information (GPL v3.0)."
 catsum['information'] = "Interrogate suite definitions and running suites."
 catsum['preparation'] = "Suite editing, validation, visualization, etc."
 catsum['discovery'] = "Detect running suites."
@@ -341,9 +333,6 @@ comsum['test-battery'] = 'Run a battery of self-diagnosing test suites'
 comsum['import-examples'] = 'Import example suites your suite run directory'
 comsum['check-software'] = 'Check required software is installed'
 comsum['make-docs'] = 'Build the HTML documentation with Sphinx.'
-# license
-comsum['warranty'] = 'Print the GPLv3 disclaimer of warranty'
-comsum['conditions'] = 'Print the GNU General Public License v3.0'
 # preparation
 comsum['register'] = 'Register a suite for use'
 comsum['print'] = 'Print registered suites'
