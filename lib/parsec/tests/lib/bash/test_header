@@ -81,12 +81,12 @@ function set_test_number() {
 }
 
 function ok() {
-    echo "ok $((++TEST_NUMBER)) - $@"
+    echo "ok $((++TEST_NUMBER)) - $*"
 }
 
 function fail() {
     ((++FAILURES))
-    echo "not ok $((++TEST_NUMBER)) - $@"
+    echo "not ok $((++TEST_NUMBER)) - $*"
 }
 
 function run_ok() {
@@ -166,7 +166,7 @@ function skip() {
     shift 1
     local COUNT=0
     while ((COUNT++ < N_TO_SKIP)); do
-        echo "ok $((++TEST_NUMBER)) # skip $@"
+        echo "ok $((++TEST_NUMBER)) # skip $*"
     done
 }
 

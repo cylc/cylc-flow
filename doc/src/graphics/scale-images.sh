@@ -30,10 +30,9 @@ set -e
 # for the online documentation, and re-creating them seems to result in 
 # "different" binary files each time.
 mkdir -p png/scaled
-for PNG in $( ls png/orig/ ); do
+for PNG in "png/orig/"*; do
     if [[ ! -f png/scaled/$PNG ]]; then
-    echo "scaling $PNG"
-    convert -resize '600>' png/orig/$PNG png/scaled/$PNG
+        echo "scaling $PNG"
+        convert -resize '600>' "png/orig/$PNG" "png/scaled/$PNG"
     fi
 done
-

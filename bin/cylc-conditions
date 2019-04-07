@@ -38,5 +38,5 @@ fi
 echo
 echo "The GNU General Public License v3.0"
 echo
-cat $CYLC_DIR/COPYING
+cat "$CYLC_DIR/COPYING"
 echo

@@ -33,11 +33,12 @@ if grep -E '(unit-tests|functional-tests)' <<< "${args[@]}"; then
 fi
 
 if grep 'unit-tests' <<< "${args[@]}"; then
+    sudo apt-get install shellcheck
     pip install pycodestyle pytest testfixtures empy
 fi
 
 # install dependencies required for building documentation
-if grep 'docs' <<< "${args[@]}$"; then
+if grep 'docs' <<< "${args[@]}"; then
     pip install sphinx
     # for PDF output via LaTeX builder
     sudo apt-get install texlive-latex-base

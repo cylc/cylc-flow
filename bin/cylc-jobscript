@@ -54,7 +54,7 @@ if sys.argv[1] in ['-g', '--gedit']:
     print glbl_cfg().get(['editors', 'gui'])
 elif sys.argv[1] in ['-e', '--edit']:
     print glbl_cfg().get(['editors', 'terminal'])
-" $1
+" "$1"
 }
 
 PLAIN=false
@@ -66,7 +66,7 @@ for arg in "${@}"; do
         exit 0
     elif [[ "${arg}" == '--edit' ]] || [[ "${arg}" == '--gedit' ]] || \
          [[ "${arg}" == '-e' ]] || [[ "${arg}" == '-g' ]]; then
-        EDITOR_CMD="$(editor ${arg})"
+        EDITOR_CMD="$(editor "${arg}")"
     elif [[ "${arg}" == '--plain' ]]; then
         PLAIN=true
     else
@@ -74,12 +74,13 @@ for arg in "${@}"; do
     fi
 done
 
-if CYLC_SUBMIT_OUT="$(cylc submit --dry-run ${SUBMIT_ARGS})"; then
+if CYLC_SUBMIT_OUT="$(cylc submit --dry-run "${SUBMIT_ARGS}")"; then
     JOBSCRIPT="$(sed -n 's/^JOB SCRIPT=//p' <<<"${CYLC_SUBMIT_OUT}")"
     if ! "${PLAIN}"; then
         echo "Task Job Script Generated: ${JOBSCRIPT}" >&2
     fi
     if [[ -n ${EDITOR_CMD} ]]; then
+        # shellcheck disable=2086
         exec $EDITOR_CMD "${JOBSCRIPT}"
     else
         exec less "${JOBSCRIPT}"

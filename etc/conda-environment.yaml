@@ -1,0 +1,17 @@
+name: cylc8
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.7
+  - pyzmq
+  - python-jose
+  - colorama
+  - jinja2
+  - sphinx
+  - pytest
+  - pycodestyle
+  - coverage
+  - pytest-cov
+  - pip:
+    - empy

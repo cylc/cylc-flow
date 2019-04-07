@@ -42,5 +42,5 @@ RELEASE="cylc-${CYLC_VERSION}"
 TARBALL=${RELEASE}.tar.gz
 BRANCH=$( git rev-parse --abbrev-ref HEAD )
 
-git archive $BRANCH --prefix=$RELEASE/ | gzip > $TARBALL
-ls -lh $TARBALL
+git archive "$BRANCH" --prefix="$RELEASE/" | gzip > "$TARBALL"
+ls -lh "$TARBALL"

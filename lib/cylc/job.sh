@@ -54,7 +54,7 @@ cylc__job__main() {
     done
     # Ensure that the "cylc" command is in PATH. It may not be set up correctly
     # in Prelude above, and also not inherited from the job submit environment.
-    if ! which cylc 1>'/dev/null' 2>&1; then
+    if ! command -v cylc 1>'/dev/null' 2>&1; then
         PATH="${CYLC_DIR}/bin:${PATH}"
     fi
     # Init-Script
@@ -63,9 +63,11 @@ cylc__job__main() {
     # Start error and vacation traps
     typeset signal_name=
     for signal_name in ${CYLC_FAIL_SIGNALS}; do
+        # shellcheck disable=SC2064
         trap "cylc__job_err ${signal_name}" "${signal_name}"
     done
     for signal_name in ${CYLC_VACATION_SIGNALS:-}; do
+        # shellcheck disable=SC2064
         trap "cylc__job_vacation ${signal_name}" "${signal_name}"
     done
     set -euo pipefail
@@ -92,8 +94,9 @@ cylc__job__main() {
     CYLC_SUITE_WORK_DIR_ROOT="${CYLC_SUITE_WORK_DIR_ROOT:-${CYLC_SUITE_RUN_DIR}}"
     export CYLC_SUITE_SHARE_DIR="${CYLC_SUITE_WORK_DIR_ROOT}/share"
     export CYLC_SUITE_WORK_DIR="${CYLC_SUITE_WORK_DIR_ROOT}/work"
-    export CYLC_TASK_CYCLE_POINT="$(cut -d '/' -f 1 <<<"${CYLC_TASK_JOB}")"
-    export CYLC_TASK_NAME="$(cut -d '/' -f 2 <<<"${CYLC_TASK_JOB}")"
+    CYLC_TASK_CYCLE_POINT="$(cut -d '/' -f 1 <<<"${CYLC_TASK_JOB}")"
+    CYLC_TASK_NAME="$(cut -d '/' -f 2 <<<"${CYLC_TASK_JOB}")"
+    export CYLC_TASK_NAME CYLC_TASK_CYCLE_POINT
     # The "10#" part ensures that the submit number is interpreted in base 10.
     # Otherwise, a zero padded number will be interpreted as an octal.
     export CYLC_TASK_SUBMIT_NUMBER=$((10#$(cut -d '/' -f 3 <<<"${CYLC_TASK_JOB}")))
@@ -111,8 +114,9 @@ cylc__job__main() {
     export CYLC_TASK_WORK_DIR="${CYLC_SUITE_WORK_DIR}/${CYLC_TASK_WORK_DIR_BASE}"
     typeset contact="${CYLC_SUITE_RUN_DIR}/.service/contact"
     if [[ -f "${contact}" ]]; then
-        export CYLC_SUITE_HOST="$(sed -n 's/^CYLC_SUITE_HOST=//p' "${contact}")"
-        export CYLC_SUITE_OWNER="$(sed -n 's/^CYLC_SUITE_OWNER=//p' "${contact}")"
+        CYLC_SUITE_HOST="$(sed -n 's/^CYLC_SUITE_HOST=//p' "${contact}")"
+        CYLC_SUITE_OWNER="$(sed -n 's/^CYLC_SUITE_OWNER=//p' "${contact}")"
+        export CYLC_SUITE_HOST CYLC_SUITE_OWNER
     fi
     # DEPRECATED environment variables
     export CYLC_SUITE_SHARE_PATH="${CYLC_SUITE_SHARE_DIR}"
@@ -143,7 +147,7 @@ cylc__job__main() {
     # Send task succeeded message
     wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>'/dev/null' || true
     cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" 'succeeded' || true
-    trap '' ${CYLC_VACATION_SIGNALS:-} ${CYLC_FAIL_SIGNALS}
+    trap '' "${CYLC_VACATION_SIGNALS:-}" "${CYLC_FAIL_SIGNALS}"
     # Execute success exit script
     cylc__job__run_inst_func 'exit_script'
     exit 0
@@ -182,7 +186,7 @@ cylc__job_finish_err() {
     typeset run_err_script="$2"
     shift 2
     typeset signal_name=
-    trap '' ${CYLC_VACATION_SIGNALS:-} ${CYLC_FAIL_SIGNALS}
+    trap '' "${CYLC_VACATION_SIGNALS:-}" "${CYLC_FAIL_SIGNALS}"
     if [[ -n "${CYLC_TASK_MESSAGE_STARTED_PID:-}" ]]; then
         wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>'/dev/null' || true
     fi
@@ -227,7 +231,7 @@ cylc__job_err() {
 #   1 - dummy job fail
 cylc__job__dummy_result() {
     typeset fail_try_1_only="$1"; shift
-    typeset fail_cycle_points="$@"
+    typeset fail_cycle_points="$*"
     typeset fail_this_point=false
     if [[ "${fail_cycle_points}" == *all* ]]; then
         # Fail all points.
@@ -243,7 +247,7 @@ cylc__job__dummy_result() {
             done
         else
             for POINT in ${fail_cycle_points}; do
-                if $(cylc cyclepoint --equal="$POINT"); then
+                if cylc cyclepoint --equal="$POINT"; then
                     fail_this_point=true
                     break
                 fi

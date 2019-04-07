@@ -19,10 +19,10 @@
 # Create appendices/command-ref.rst for inclusion in HTML doc.
 
 # All paths relative to 'doc/src/custom/' directory:
-COMMAND_REF_FILE="$(dirname $0)/../appendices/command-ref.rst"
-CYLC=$(dirname $0)/../../../bin/cylc
+COMMAND_REF_FILE="$(dirname "$0")/../appendices/command-ref.rst"
+CYLC="$(dirname "$0")/../../../bin/cylc"
 
-$(cat > "$COMMAND_REF_FILE" <<END
+cat > "$COMMAND_REF_FILE" <<END
 .. _CommandReference:
 
 Command Reference
@@ -41,10 +41,9 @@ Command Categories
 ------------------
 
 END
-)
 
 for CAT in $($CYLC categories); do
-	$(cat >> "$COMMAND_REF_FILE" <<END
+	cat >> "$COMMAND_REF_FILE" <<END
 
 ${CAT}
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -53,23 +52,21 @@ ${CAT}
 
 .. code-block:: none
 
-   $($CYLC $CAT --help | awk '{print "   " $0}')
+   $("$CYLC" "$CAT" --help | awk '{print "   " $0}')
 
 END
-)
 
 done
 
-$(cat >> "$COMMAND_REF_FILE" <<END
+cat >> "$COMMAND_REF_FILE" <<END
 
 Commands
 --------
 
 END
-)
 
 for COM in $($CYLC commands); do
-	$(cat >> "$COMMAND_REF_FILE" <<END
+	cat >> "$COMMAND_REF_FILE" <<END
 
 ${COM}
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -78,9 +75,8 @@ ${COM}
 
 .. code-block:: none
 
-   $($CYLC $COM --help  | awk '{print "   " $0}')
+   $("$CYLC" "$COM" --help  | awk '{print "   " $0}')
 
 END
-)
 
 done

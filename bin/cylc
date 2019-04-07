@@ -31,7 +31,7 @@ print_version() {
     if [[ "$#" -eq 0 ]]; then
         echo "$CYLC_VERSION"
     fi
-    if [[ "$@" == 'long' || "$@" == '--long' ]]; then
+    if [[ "$*" == 'long' || "$*" == '--long' ]]; then
     echo "Cylc ${CYLC_VERSION} (${CYLC_DIR})"    
     fi
 }
@@ -52,11 +52,6 @@ init_cylc() {
 help_util() {
     # Deals with form 'cylc [COMMAND] --help'
     cd "${CYLC_HOME_BIN}"
-    # deal with graph which is a weird edge case...
-    if [[ "$@" == "graph" ]]; then
-        local COMMAND="${CYLC_HOME_BIN}/cylc-graph"
-        exec "${COMMAND}" "--help"
-    fi
     # For help command/option with no args
     if [[ $# == 0 && "${HELP_OPTS[*]} " == *"$UTIL"* ]]; then
         exec "${CYLC_HOME_BIN}/cylc-help"
@@ -100,14 +95,15 @@ __HELP__
         fi
     fi
     # If category name is used as arg, call the help func with the category
+    local COMMAND
     if [[ $# -gt 1  &&  ( "${CATEGORIES[*]} " == *" $1 "* 
             || " ${HELP_OPTS[*]} " == *" $1 "* ) ]]; then
-        local COMMAND="${CYLC_HOME_BIN}/cylc-help"
+        COMMAND="${CYLC_HOME_BIN}/cylc-help"
         exec "${COMMAND}" "$@"
     fi
     # Deal with cases like 'cylc --help [COMMAND/CATEGORY]'
     if [[ $# -gt 1 && -f "$(ls "cylc-$2"* 2>'/dev/null')" ]]; then
-        local COMMAND="${CYLC_HOME_BIN}/$(ls "cylc-$2"*)"
+        COMMAND="${CYLC_HOME_BIN}/$(ls "cylc-$2"*)"
         exec "${COMMAND}" "--help"
     fi
     # If not a category or not an actual command in the bin dir, exit
@@ -156,7 +152,8 @@ path_lead() {
 }
 
 get_command_from_abbr() {
-    local COMMAND="$(cd "${CYLC_HOME_BIN}" && ls "cylc-$1"* 2>'/dev/null')"
+    local COMMAND
+    COMMAND="$(cd "${CYLC_HOME_BIN}" && ls "cylc-$1"* 2>'/dev/null')"
     if [[ -z "${COMMAND}" ]]; then
         # Abbreviation has no match, bad
         echo "cylc $1: unknown utility. Abort." >&2

@@ -10,14 +10,16 @@ set -e
 sleep 10 # (time to observe the failed tasks in the suite monitor).
 
 # Determine which family member(s) failed, if any
-FAILED_TASKS=$(cylc dump $CYLC_SUITE_NAME | grep $CYLC_TASK_CYCLE_TIME | grep failed | sed -e 's/,.*$//')
+FAILED_TASKS="$(cylc dump "$CYLC_SUITE_NAME" \
+    | grep "$CYLC_TASK_CYCLE_TIME" | grep failed | sed -e 's/,.*$//')"
 
 echo "FAILED TASKS:"
 for T in $FAILED_TASKS; do
     echo -n "   $T ..."
     if [[ $T == m_* ]]; then
         echo "REMOVING family member"
-        cylc control remove --force $CYLC_SUITE_NAME ${T}.$CYLC_TASK_CYCLE_TIME
+        cylc control remove \
+            --force "$CYLC_SUITE_NAME" "${T}.$CYLC_TASK_CYCLE_TIME"
     else
         echo "NOT REMOVING (not family member)"
     fi

@@ -55,6 +55,7 @@ unittest: &unittest
   script:
     - export PYTHONPATH=$(pwd -P)/lib/
     - pycodestyle
+    - .travis/shellchecker
     - pytest --cov-append --cov=lib/cylc --cov=lib/parsec
   after_success:
     # Report metrics, such as coverage

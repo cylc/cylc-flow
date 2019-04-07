@@ -69,18 +69,18 @@ for T in $SRCE; do
         RMACH=${D%:*}
         RPATH=${D#*:}
 
-        RDIR=$( dirname $RPATH )
+        RDIR="$( dirname "$RPATH" )"
 
         cylc task message "Creating remote destination directory, $RDIR"
-        ssh $RMACH mkdir -p $RDIR
+        ssh "$RMACH" mkdir -p "$RDIR"
     else
-        DIR=$( dirname $D )
+        DIR="$( dirname "$D" )"
         cylc task message "Creating destination directory, $DIR"
-        mkdir -p $DIR
+        mkdir -p "$DIR"
     fi
 
     COMMAND="scp -B -r $T $D"
-    echo $COMMAND
+    echo "$COMMAND"
     if $VERBOSE; then
         $COMMAND
     else

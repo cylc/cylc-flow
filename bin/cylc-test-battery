@@ -99,12 +99,12 @@ eof
 
 chunk () {
     # argument in the format chunk_no/no_chunks
-    IFS=$'/' read CHUNK_NO CHUNKS <<< "$1"
+    IFS=$'/' read -r CHUNK_NO CHUNKS <<< "$1"
     # create lists of tests in a temp file
     TEST_FILE="$(mktemp)"
     cylc test-battery --dry | sort > "$TEST_FILE"
     LINES_PER_FILE=$(( ( $(wc -l "$TEST_FILE" | cut -d ' ' -f 1) \
-        + $CHUNKS - 1 ) / CHUNKS ))
+        + CHUNKS - 1 ) / CHUNKS ))
     # chunk tests
     split -d -l "$LINES_PER_FILE" "$TEST_FILE" "$TEST_FILE"
     # select chunk
@@ -117,11 +117,12 @@ export CYLC_TEST_RUN_GENERIC=${CYLC_TEST_RUN_GENERIC:-true}
 export CYLC_TEST_RUN_PLATFORM=${CYLC_TEST_RUN_PLATFORM:-true}
 export CYLC_TEST_SKIP=${CYLC_TEST_SKIP:-}
 export CYLC_TEST_IS_GENERIC=true
-export CYLC_TEST_TIME_INIT="$(date -u +'%Y%m%dT%H%M%SZ')"
+CYLC_TEST_TIME_INIT="$(date -u +'%Y%m%dT%H%M%SZ')"
+export CYLC_TEST_TIME_INIT
 
 if [[ "$PWD" != "$CYLC_DIR" ]]; then
     echo "cd \"$CYLC_DIR\""
-    cd "$CYLC_DIR"
+    cd "$CYLC_DIR" || exit 1
 fi
 
 ARG_COUNT=1
@@ -134,7 +135,7 @@ for ARG in "$@"; do
         --chunk)
             # Replace "--chunk a/b" with the appropriate tests.
             set -- "${@:1:$(( ARG_COUNT - 1 ))}" \
-                $(chunk ${@:$(( ARG_COUNT + 1 )):1}) \
+                "$(chunk "${@:$(( ARG_COUNT + 1 )):1}")" \
                 "${@:$(( ARG_COUNT + 2 ))}"
             ;;
         *)
