@@ -75,7 +75,7 @@ class ZMQServer(object):
 
     def __init__(self, encode_method, decode_method, secret_method):
         self.port = None
-        self.context = None
+        self.context = zmq.Context()
         self.socket = None
         self.endpoints = None
         self.thread = None
@@ -94,7 +94,6 @@ class ZMQServer(object):
             max_port (int): maximum socket port number
         """
         # create socket
-        self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REP)
         self.socket.RCVTIMEO = int(self.RECV_TIMEOUT) * 1000
 
