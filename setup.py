@@ -101,25 +101,25 @@ if SPHINX_AVAILABLE:
 
 
 install_requires = [
-    'colorama==0.4.1',
-    'isodatetime==1!2.0.0',
+    'colorama==0.4.*',
+    'isodatetime==1!2.0.*',
     'jinja2==2.10',
-    'markupsafe==1.1.1',
-    'python-jose==3.0.1',
-    'pyzmq==18.0.1'
+    'markupsafe==1.1.*',
+    'python-jose==3.0.*',
+    'pyzmq==18.0.*'
 ]
 tests_require = [
-    'codecov==2.0.15',
-    'coverage==4.5.3',
-    'pytest-cov==2.6.1',
-    'pytest==4.4.0',
-    'pycodestyle==2.5.0',
-    'testfixtures==6.6.2'
+    'codecov==2.0.*',
+    'coverage==4.5.*',
+    'pytest-cov==2.6.*',
+    'pytest==4.4.*',
+    'pycodestyle==2.5.*',
+    'testfixtures==6.6.*'
 ]
 
 extra_requires = {
-    'empy': ['EmPy==3.3.4'],
-    'docs': ['sphinx==2.0.0'],
+    'empy': ['EmPy==3.3.*'],
+    'docs': ['sphinx==2.0.*'],
     'all': []
 }
 extra_requires['all'] += extra_requires['empy']
