@@ -40,7 +40,8 @@ ClientError: Request returned error: Suite "$SUITE_NAME" already stopped
 __ERR__
 run_fail "${TEST_NAME_BASE}-2" cylc ping "${SUITE_NAME}"
 contains_ok "${TEST_NAME_BASE}-2.stderr" <<__ERR__
-Contact info not found for suite "${SUITE_NAME}", suite not running?
+ClientError: Request returned error: Contact info not found for suite \
+"${SUITE_NAME}", suite not running?
 __ERR__
 purge_suite "${SUITE_NAME}"
 exit

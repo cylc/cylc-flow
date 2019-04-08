@@ -199,8 +199,6 @@ class SuiteRuntimeClient(ZMQClient):
            .. automethod:: cylc.network.client.ZMQClient.async_request
     """
 
-    NOT_RUNNING = "Contact info not found for suite \"%s\", suite not running?"
-
     def __init__(
             self,
             suite: str,
@@ -230,6 +228,8 @@ class SuiteRuntimeClient(ZMQClient):
             timeout (int):
                 Message receive timeout in seconds. Also used to set the
                 "linger" time, see ``ZMQClient``.
+        Raises:
+            ClientError: if the suite is not running.
         """
         if isinstance(timeout, str):
             timeout = float(timeout)
@@ -306,17 +306,15 @@ class SuiteRuntimeClient(ZMQClient):
             host (str): host name
         Returns:
             Tuple[str, int]: tuple with the host name and port number.
+        Raises:
+            ClientError: if the suite is not running.
         """
         try:
             contact = SuiteSrvFilesManager().load_contact_file(
                 suite, owner, host)
         except SuiteServiceFileError:
-            # TODO: this makes it harder to use this function from other
-            #       code, as it would exit the program. Use exception later?
-            sys.exit(cls.NOT_RUNNING % suite)
-            # monkey-patch the error message to make it more informative.
-            # exc.args = (cls.NOT_RUNNING % suite,)
-            # raise
+            raise ClientError(f'Contact info not found for suite '
+                              f'"{suite}", suite not running?')
 
         if not host:
             host = contact[SuiteSrvFilesManager.KEY_HOST]
