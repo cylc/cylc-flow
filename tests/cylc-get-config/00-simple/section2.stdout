@@ -70,7 +70,6 @@
         retrieve job logs max size = 
         retrieve job logs retry delays = 
     [[[job]]]
-        shell = /bin/bash
         batch submit command template = 
         batch system = background
         submission retry delays = 
@@ -149,7 +148,6 @@
         retrieve job logs max size = 
         retrieve job logs retry delays = 
     [[[job]]]
-        shell = /bin/bash
         batch submit command template = 
         batch system = background
         submission retry delays = 
@@ -229,7 +227,6 @@
         retrieve job logs max size = 
         retrieve job logs retry delays = 
     [[[job]]]
-        shell = /bin/bash
         batch submit command template = 
         batch system = background
         submission retry delays = 
@@ -309,7 +306,6 @@
         retrieve job logs max size = 
         retrieve job logs retry delays = 
     [[[job]]]
-        shell = /bin/bash
         batch submit command template = 
         batch system = background
         submission retry delays = 
@@ -389,7 +385,6 @@
         retrieve job logs max size = 
         retrieve job logs retry delays = 
     [[[job]]]
-        shell = /bin/bash
         batch submit command template = 
         batch system = background
         submission retry delays = 
@@ -469,7 +464,6 @@
         retrieve job logs max size = 
         retrieve job logs retry delays = 
     [[[job]]]
-        shell = /bin/bash
         batch submit command template = 
         batch system = background
         submission retry delays = 
@@ -549,7 +543,6 @@
         retrieve job logs max size = 
         retrieve job logs retry delays = 
     [[[job]]]
-        shell = /bin/bash
         batch submit command template = 
         batch system = background
         submission retry delays = 
@@ -628,7 +621,6 @@
         retrieve job logs max size = 
         retrieve job logs retry delays = 
     [[[job]]]
-        shell = /bin/bash
         batch submit command template = 
         batch system = background
         submission retry delays = 
@@ -708,7 +700,6 @@
         retrieve job logs max size = 
         retrieve job logs retry delays = 
     [[[job]]]
-        shell = /bin/bash
         batch submit command template = 
         batch system = background
         submission retry delays = 
@@ -788,7 +779,6 @@
         retrieve job logs max size = 
         retrieve job logs retry delays = 
     [[[job]]]
-        shell = /bin/bash
         batch submit command template = 
         batch system = background
         submission retry delays = 
@@ -867,7 +857,6 @@
         retrieve job logs max size = 
         retrieve job logs retry delays = 
     [[[job]]]
-        shell = /bin/bash
         batch submit command template = 
         batch system = background
         submission retry delays = 
@@ -947,7 +936,6 @@
         retrieve job logs max size = 
         retrieve job logs retry delays = 
     [[[job]]]
-        shell = /bin/bash
         batch submit command template = 
         batch system = background
         submission retry delays = 
@@ -1027,7 +1015,6 @@
         retrieve job logs max size = 
         retrieve job logs retry delays = 
     [[[job]]]
-        shell = /bin/bash
         batch submit command template = 
         batch system = background
         submission retry delays = 

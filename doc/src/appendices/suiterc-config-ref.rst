@@ -1572,18 +1572,6 @@ job file path.
 - *example*: ``llsubmit \%(job)s``
 
 
-.. _JobSubShell:
-
-[runtime] ``->`` [[\_\_NAME\_\_]] ``->`` [[[job]]] ``->`` shell
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-
-Location of the bash shell invoked on job hosts to interpret task job scripts,
-if not installed in the standard location.
-
-- *type*: string
-- *root default*: ``/bin/bash``
-
-
 .. _JobSubRefRetries:
 
 [runtime] ``->`` [[\_\_NAME\_\_]] ``->`` [[[job]]] ``->`` submission retry delays

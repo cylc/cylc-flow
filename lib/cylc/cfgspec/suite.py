@@ -195,7 +195,6 @@ SPEC = {
                 'execution polling intervals': [VDR.V_INTERVAL_LIST, None],
                 'execution retry delays': [VDR.V_INTERVAL_LIST, None],
                 'execution time limit': [VDR.V_INTERVAL],
-                'shell': [VDR.V_STRING, '/bin/bash'],
                 'submission polling intervals': [VDR.V_INTERVAL_LIST, None],
                 'submission retry delays': [VDR.V_INTERVAL_LIST, None],
             },
@@ -295,6 +294,7 @@ def upg(cfg, descr):
     u.obsolete('7.8.1', ['cylc', 'events', 'reset timer'])
     u.obsolete('7.8.1', ['cylc', 'events', 'reset inactivity timer'])
     u.obsolete('7.8.1', ['runtime', '__MANY__', 'events', 'reset timer'])
+    u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'shell'])
 
     u.upgrade()
 

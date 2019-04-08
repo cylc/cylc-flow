@@ -80,13 +80,13 @@ class JobFileWriter(object):
         if check_syntax:
             try:
                 proc = Popen(
-                    [job_conf['shell'], '-n', tmp_name],
+                    ['/bin/bash', '-n', tmp_name],
                     stderr=PIPE, stdin=open(os.devnull))
             except OSError as exc:
                 # Popen has a bad habit of not telling you anything if it fails
                 # to run the executable.
                 if exc.filename is None:
-                    exc.filename = job_conf['shell']
+                    exc.filename = '/bin/bash'
                 # Remove temporary file
                 try:
                     os.unlink(tmp_name)
@@ -130,7 +130,7 @@ class JobFileWriter(object):
     @staticmethod
     def _write_header(handle, job_conf):
         """Write job script header."""
-        handle.write("#!%s -l\n" % job_conf['shell'])
+        handle.write("#!/bin/bash -l\n")
         handle.write("#\n# ++++ THIS IS A CYLC TASK JOB SCRIPT ++++")
         for prefix, value in [
                 ("# Suite: ", job_conf['suite_name']),
