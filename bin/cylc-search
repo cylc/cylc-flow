@@ -61,7 +61,8 @@ def print_heading(heading):
     print('>>>' + '->'.join(heading))
 
 
-def parse_args():
+@cli_function
+def main():
     parser = COP(
         __doc__, prep=True,
         argdoc=[('SUITE', 'Suite name or path'),
@@ -72,12 +73,7 @@ def parse_args():
         "-x", help="Do not search in the suite bin directory",
         action="store_false", default=True, dest="search_bin")
 
-    return parser.parse_args()
-
-
-@cli_function
-def main():
-    options, args = parse_args()
+    options, args = parser.parse_args()
     suite, suiterc = SuiteSrvFilesManager().parse_suite_arg(options, args[0])
 
     # cylc search SUITE PATTERN
