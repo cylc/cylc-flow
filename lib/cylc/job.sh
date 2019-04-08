@@ -147,7 +147,9 @@ cylc__job__main() {
     # Send task succeeded message
     wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>'/dev/null' || true
     cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" 'succeeded' || true
-    trap '' "${CYLC_VACATION_SIGNALS:-}" "${CYLC_FAIL_SIGNALS}"
+    # (Ignore shellcheck "globbing and word splitting" warning here).
+    # shellcheck disable=SC2086
+    trap '' ${CYLC_VACATION_SIGNALS:-} ${CYLC_FAIL_SIGNALS}
     # Execute success exit script
     cylc__job__run_inst_func 'exit_script'
     exit 0
@@ -186,7 +188,9 @@ cylc__job_finish_err() {
     typeset run_err_script="$2"
     shift 2
     typeset signal_name=
-    trap '' "${CYLC_VACATION_SIGNALS:-}" "${CYLC_FAIL_SIGNALS}"
+    # (Ignore shellcheck "globbing and word splitting" warning here).
+    # shellcheck disable=SC2086
+    trap '' ${CYLC_VACATION_SIGNALS:-} ${CYLC_FAIL_SIGNALS}
     if [[ -n "${CYLC_TASK_MESSAGE_STARTED_PID:-}" ]]; then
         wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>'/dev/null' || true
     fi

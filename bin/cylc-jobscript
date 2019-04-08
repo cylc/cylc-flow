@@ -51,9 +51,9 @@ editor () {
 import sys
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 if sys.argv[1] in ['-g', '--gedit']:
-    print glbl_cfg().get(['editors', 'gui'])
+    print(glbl_cfg().get(['editors', 'gui']))
 elif sys.argv[1] in ['-e', '--edit']:
-    print glbl_cfg().get(['editors', 'terminal'])
+    print(glbl_cfg().get(['editors', 'terminal']))
 " "$1"
 }
 
@@ -74,7 +74,8 @@ for arg in "${@}"; do
     fi
 done
 
-if CYLC_SUBMIT_OUT="$(cylc submit --dry-run "${SUBMIT_ARGS}")"; then
+# shellcheck disable=2086
+if CYLC_SUBMIT_OUT="$(cylc submit --dry-run ${SUBMIT_ARGS})"; then
     JOBSCRIPT="$(sed -n 's/^JOB SCRIPT=//p' <<<"${CYLC_SUBMIT_OUT}")"
     if ! "${PLAIN}"; then
         echo "Task Job Script Generated: ${JOBSCRIPT}" >&2
