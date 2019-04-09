@@ -50,7 +50,7 @@ For example, to match:
 
     def __init__(self, usage, argdoc=None, comms=False, noforce=False,
                  jset=False, multitask=False, prep=False, auto_add=True,
-                 icp=False):
+                 icp=False, color=False):
 
         self.auto_add = auto_add
         if argdoc is None:
@@ -74,6 +74,7 @@ For example, to match:
         self.prep = prep
         self.icp = icp
         self.suite_info = []
+        self.color = color
 
         maxlen = 0
         for arg in argdoc:
@@ -129,6 +130,12 @@ For example, to match:
             help="Output developer information and show exception tracebacks.",
             action="store_true", dest="debug",
             default=(os.getenv("CYLC_DEBUG", "false").lower() == "true"))
+
+        if self.color:
+            self.add_std_option(
+                '--color', '--colour', metavar='WHEN', action='store',
+                default='auto', choices=['never', 'auto', 'always'],
+                help='Determine when to use color in terminal output.')
 
         if self.prep:
             self.add_std_option(

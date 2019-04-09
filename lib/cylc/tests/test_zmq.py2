@@ -1,0 +1,67 @@
+"""Test abstract ZMQ interface."""
+from functools import partial
+import pytest
+import secrets
+
+from cylc.cfgspec.glbl_cfg import glbl_cfg
+from cylc.exceptions import CylcError
+from cylc.network import encrypt, decrypt
+from cylc.network.client import ZMQClient
+from cylc.network.server import ZMQServer
+
+
+def get_port_range():
+    ports = glbl_cfg().get(['suite servers', 'run ports'])
+    return min(ports), max(ports)
+
+
+PORT_RANGE = get_port_range()
+SECRET = str(secrets.SystemRandom().randint(10**0, 10**100))
+
+
+def get_secret():
+    return SECRET
+
+
+# def test_single_port():
+#     serv1 = ZMQServer(encrypt, decrypt, get_secret)
+#     serv2 = ZMQServer(encrypt, decrypt, get_secret)
+
+#     serv1.start(*PORT_RANGE)
+#     port = serv1.port
+
+#     with pytest.raises(CylcError) as exc:
+#         serv2.start(port, port)
+#         assert 'Address already in use' in str(exc)
+
+#     serv1.stop()
+
+
+class MyZMQServer(ZMQServer):
+
+    @ZMQServer.expose
+    def hello(self, world='Earth'):
+        return 'Hello %s!' % world
+
+
+from queue import Queue
+from multiproessing import Process
+import socket
+
+
+def run_server(queue, min_port, max_port):
+    srv = MyZMQServer(encrypt, decrypt, get_secret)
+    srv.start(min_port, max_port)
+    queue.put(srv.port)
+
+
+def test_srv_cli():
+    queue = Queue()
+    Process(target=run_server, args=(queue, PORT_RANGE[0], PORT_RANGE[1]))
+
+
+    cli = ZMQClient(socket.gethostname(), srv.port, encrypt, decrypt, get_secret)
+    try:
+        assert cli('hello') == 'Hello Earth!'
+    finally:
+        srv.stop()

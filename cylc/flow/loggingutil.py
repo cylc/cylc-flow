@@ -28,7 +28,9 @@ import os
 import sys
 from glob import glob
 import logging
+from textwrap import TextWrapper
 
+from colorama import Fore, Style
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.pathutil import get_suite_run_log_name
@@ -44,16 +46,46 @@ class CylcLogFormatter(logging.Formatter):
     Date time in ISO date time with correct time zone.
     """
 
-    def __init__(self, timestamp=True):
+    COLORS = {  # (prefix, suffix)
+        'CRITICAL': (f'{Fore.RED}{Style.BRIGHT}',
+                     f'{Fore.RESET}{Style.NORMAL}'),
+        'ERROR': (f'{Fore.RED}', f'{Fore.RESET}'),
+        'WARNING': (f'{Fore.YELLOW}', f'{Fore.RESET}')
+    }
+
+    def __init__(self, timestamp=True, color=False, max_width=None):
+        self.timestamp = None
+        self.color = None
+        self.max_width = None
+        self.wrapper = None
+        self.configure(timestamp, color, max_width)
         logging.Formatter.__init__(
-            self, ('%(asctime)s ' if timestamp else '')
-            + '%(levelname)-2s - %(message)s',
+            self,
+            '%(asctime)s %(levelname)-2s - %(message)s',
             '%Y-%m-%dT%H:%M:%S%Z')
+
+    def configure(self, timestamp=None, color=None, max_width=None):
+        """Reconfigure the format settings."""
+        if timestamp is not None:
+            self.timestamp = timestamp
+        if color is not None:
+            self.color = color
+        if max_width is not None:
+            self.max_width = max_width
+        textwrap_args = {'subsequent_indent': '\t'}
+        if self.max_width:
+            textwrap_args['width'] = self.max_width
+        self.wrapper = TextWrapper(**textwrap_args)
 
     def format(self, record):
         """Indent continuation lines in multi-line messages."""
         text = logging.Formatter.format(self, record)
-        return '\t'.join(text.splitlines(True))
+        if not self.timestamp:
+            _, text = text.split(' ', 1)  # ISO8601 time points have no spaces
+        if self.color and record.levelname in self.COLORS:
+            pre, post = self.COLORS.get(record.levelname, ('', ''))
+            text = f'{pre}{text}{post}'
+        return self.wrapper.fill(text)
 
     def formatTime(self, record, datefmt=None):
         """Formats the record time as an ISO date time with correct time zone.
