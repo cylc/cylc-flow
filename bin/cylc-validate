@@ -23,29 +23,34 @@ Validate a suite definition.
 If the suite definition uses include-files reported line numbers
 will correspond to the inlined version seen by the parser; use
 'cylc view -i,--inline SUITE' for comparison."""
-
 import sys
 import textwrap
+
 from cylc.flow.remote import remrun
+
 if remrun():
     sys.exit(0)
 
+from colorama import Fore
+
+import cylc.flow.flags
+
 from cylc.flow import LOG, __version__ as CYLC_VERSION
 from cylc.flow.config import SuiteConfig
-from cylc.flow.exceptions import (
-    SuiteConfigError, TriggerExpressionError, TaskProxySequenceBoundsError)
-import cylc.flow.flags
-from cylc.flow.loggingutil import CylcLogFormatter
-from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.profiler import Profiler
-from cylc.flow.suite_srv_files_mgr import SuiteSrvFilesManager
-from cylc.flow.task_proxy import TaskProxy
-from cylc.flow.templatevars import load_template_vars
 from cylc.flow.terminal import cli_function
+from cylc.flow.exceptions import (SuiteConfigError,
+                                  TaskProxySequenceBoundsError,
+                                  TriggerExpressionError)
+from cylc.flow.task_proxy import TaskProxy
+from cylc.flow.loggingutil import CylcLogFormatter
+from cylc.flow.templatevars import load_template_vars
+from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.suite_srv_files_mgr import SuiteSrvFilesManager
 
 
 def parse_args():
-    parser = COP(__doc__, jset=True, prep=True, icp=True)
+    parser = COP(__doc__, jset=True, prep=True, icp=True, color=True)
 
     parser.add_option(
         "--strict",
@@ -69,23 +74,23 @@ def parse_args():
         default="live", dest="run_mode",
         choices=['live', 'dummy', 'dummy-local', 'simulation'])
 
-    return parser.parse_args()
+    return parser
 
 
-@cli_function
-def main():
+@cli_function2(parse_args)
+def main(_, options, reg):
     """cylc validate CLI."""
-    options, args = parse_args()
-
+    # import pdb; pdb.set_trace()
     profiler = Profiler(options.profile_mode)
     profiler.start()
 
     if not cylc.flow.flags.debug:
         # for readability omit timestamps from logging unless in debug mode
         for handler in LOG.handlers:
-            handler.setFormatter(CylcLogFormatter(timestamp=False))
+            if isinstance(handler.formatter, CylcLogFormatter):
+                handler.formatter.configure(timestamp=False)
 
-    suite, suiterc = SuiteSrvFilesManager().parse_suite_arg(options, args[0])
+    suite, suiterc = SuiteSrvFilesManager().parse_suite_arg(options, reg)
     cfg = SuiteConfig(
         suite, suiterc,
         load_template_vars(options.templatevars, options.templatevars_file),
@@ -149,7 +154,7 @@ def main():
         if cylc.flow.flags.verbose:
             print('  + %s ok' % itask.identity)
 
-    print('Valid for cylc-%s' % CYLC_VERSION)
+    print(f'{Fore.GREEN}Valid for cylc-%s' % CYLC_VERSION)
     profiler.stop()
 
 
