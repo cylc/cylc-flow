@@ -77,10 +77,8 @@ default () {
     main '.' \
         --exclude 'tests/' \
         --exclude 'lib/parsec/tests' \
-        --exclude 'lib/cylc/job.sh' \
         --exclude 'etc/dev-bin/live-graph-movie.sh' \
         -- -e SC1090
-    main 'lib/cylc/job.sh' -- -e SC1090 -s bash
 
     # run a lenient check on all test scripts
     main 'tests' 'lib/parsec/tests' -- -S error -e SC1090

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.

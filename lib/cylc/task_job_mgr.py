@@ -881,7 +881,6 @@ class TaskJobManager(object):
             'pre-script': scripts[0],
             'remote_suite_d': rtconfig['remote']['suite definition directory'],
             'script': scripts[1],
-            'shell': rtconfig['job']['shell'],
             'submit_num': itask.submit_num,
             'suite_name': suite,
             'task_id': itask.identity,
