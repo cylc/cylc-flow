@@ -109,16 +109,18 @@
   <td>
     <!-- entry: submi_num -->
     <small>
+    {% if entry.submit_num > 0 %}
       <a
       href="{{taskjobs_link}}&amp;cycles={{cycle_str}}&amp;tasks={{entry.name}}"
       >{{entry.submit_num}} of {{entry.submit_num_max}}</a>
+    {% endif %}
     </small>
   </td>
   <td>
     <!-- entry: submit time -->
     <small>
       <abbr class="t_submit livestamp"
-      title="{{entry.events[0]}}">{{entry.events[0]}}</abbr>
+      title="{{entry.events[0]}}">{{entry.events[0] or ''}}</abbr>
     </small>
   </td>
   <td class="text-right">

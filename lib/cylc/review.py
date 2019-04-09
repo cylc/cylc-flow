@@ -45,7 +45,7 @@ import urllib
 from cylc.hostuserutil import get_host
 from cylc.review_dao import CylcReviewDAO
 from cylc.task_state import (
-    TASK_STATUSES_ORDERED, TASK_STATUS_GROUPS)
+    TASK_STATUSES_ORDERED, TASK_STATUS_GROUPS, TASK_STATUS_WAITING)
 from cylc.version import CYLC_VERSION
 from cylc.ws import get_util_home
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
@@ -294,17 +294,20 @@ class CylcReviewService(object):
             page = int(page)
         else:
             page = 1
-        task_statuses = (
-            [[item, ""] for item in TASK_STATUSES_ORDERED])
-        if task_status:
-            if not isinstance(task_status, list):
-                task_status = [task_status]
-        for item in task_statuses:
-            if not task_status or item[0] in task_status:
-                item[1] = "1"
-        all_task_statuses = all([status[1] == "1" for status in task_statuses])
-        if all_task_statuses:
-            task_status = []
+
+        # get selected task states
+        if not task_status:
+            # default task statuses - if updating please also change the
+            # $("#reset_task_statuses").click function in cylc-review.js
+            task_status = [state for state in TASK_STATUSES_ORDERED
+                           if state != TASK_STATUS_WAITING]
+        elif not isinstance(task_status, list):
+            task_status = [task_status]
+
+        # generate list of all task states [(state, "0" or "1"), ...]
+        task_statuses = [(status, "1" if status in task_status else "0")
+                         for status in TASK_STATUSES_ORDERED]
+
         data = {
             "cycles": cycles,
             "host": self.host_name,
@@ -312,7 +315,6 @@ class CylcReviewService(object):
             "logo": self.logo,
             "method": "taskjobs",
             "no_fuzzy_time": no_fuzzy_time,
-            "all_task_statuses": all_task_statuses,
             "task_statuses": task_statuses,
             "job_status": job_status,
             "order": order,

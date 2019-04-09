@@ -193,7 +193,7 @@ class CylcReviewDAO(object):
         # Get number of entries
         of_n_entries = 0
         stmt = ("SELECT COUNT(*)" +
-                " FROM task_jobs JOIN task_states USING (name, cycle)" +
+                " FROM task_states LEFT JOIN task_jobs USING (name, cycle)" +
                 where_expr)
         try:
             for row in self._db_exec(user_name, suite_name, stmt, where_args):
@@ -217,7 +217,7 @@ class CylcReviewDAO(object):
                 " time_submit, submit_status," +
                 " time_run, time_run_exit, run_signal, run_status," +
                 " user_at_host, batch_sys_name, batch_sys_job_id" +
-                " FROM task_jobs JOIN task_states USING (cycle, name)" +
+                " FROM task_states LEFT JOIN task_jobs USING (cycle, name)" +
                 where_expr +
                 " ORDER BY " +
                 self.JOB_ORDERS.get(order, self.JOB_ORDERS["time_desc"]))
@@ -236,7 +236,7 @@ class CylcReviewDAO(object):
             entry = {
                 "cycle": cycle,
                 "name": name,
-                "submit_num": submit_num,
+                "submit_num": submit_num or 0,
                 "submit_num_max": submit_num_max,
                 "events": [time_submit, time_run, time_run_exit],
                 "task_status": task_status,

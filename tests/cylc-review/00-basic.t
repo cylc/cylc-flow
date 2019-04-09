@@ -22,7 +22,7 @@ if ! python2 -c 'import cherrypy' 2>'/dev/null'; then
     skip_all '"cherrypy" not installed'
 fi
 
-set_test_number 62
+set_test_number 64
 #-------------------------------------------------------------------------------
 # Initialise, validate and run a suite for testing with
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
@@ -88,6 +88,19 @@ for METHOD in 'cycles' 'jobs'; do
     grep_ok 'HTTP/.* 404 Not Found' "${TEST_NAME}.stdout"
 done
 #-------------------------------------------------------------------------------
+# Check that waiting tasks appear when "task_status=waiting"
+TEST_NAME="${TEST_NAME_BASE}-200-waiting-tasks"
+
+URL_PARAMS='?form=json&task_status=waiting'
+run_ok "${TEST_NAME}" \
+    curl "${TEST_CYLC_WS_URL}/taskjobs/${USER}/${ESC_SUITE_NAME}${URL_PARAMS}"
+
+FOO2="{'cycle': '20010101T0000Z', 'name': 'foo0', 'submit_num': 0}"
+FOO3="{'cycle': '20010101T0000Z', 'name': 'foo1', 'submit_num': 0}"
+cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
+    "[('entries', ${FOO2}, 'events',), [None, None, None]]" \
+    "[('entries', ${FOO3}, 'events',), [None, None, None]]"
+#-------------------------------------------------------------------------------
 # Data transfer output check for a specific suite's cycles & jobs page
 TEST_NAME="${TEST_NAME_BASE}-200-curl-cycles"
 
@@ -117,7 +130,6 @@ FOO0="{'cycle': '20000101T0000Z', 'name': 'foo0', 'submit_num': 1}"
 FOO0_JOB='log/job/20000101T0000Z/foo0/01/job'
 FOO1="{'cycle': '20000101T0000Z', 'name': 'foo1', 'submit_num': 1}"
 FOO1_JOB='log/job/20000101T0000Z/foo1/01/job'
-
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('cylc_version',), '$(cylc version | cut -d' ' -f 2)']" \
     "[('title',), 'Cylc Review']" \
