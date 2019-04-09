@@ -63,7 +63,7 @@ class ZMQServer(object):
     """
 
     RECV_TIMEOUT = 1
-    """Max time the ZMQServer will wait for an incomming message in seconds.
+    """Max time the ZMQServer will wait for an incoming message in seconds.
 
     We use a timeout here so as to give the _listener a chance to respond to
     requests (i.e. stop) from its spawner (the scheduler).
@@ -75,6 +75,7 @@ class ZMQServer(object):
 
     def __init__(self, encode_method, decode_method, secret_method):
         self.port = None
+        self.context = zmq.Context()
         self.socket = None
         self.endpoints = None
         self.thread = None
@@ -84,15 +85,15 @@ class ZMQServer(object):
         self.secret = secret_method
 
     def start(self, min_port, max_port):
-        """Start the server running
+        """Start the server running.
+
+        Will use a port range provided to select random ports.
 
         Args:
-            ports (iterable): Generator of ports (int) to choose from.
-                The lowest available port will be chosen.
-
+            min_port (int): minimum socket port number
+            max_port (int): maximum socket port number
         """
         # create socket
-        self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REP)
         self.socket.RCVTIMEO = int(self.RECV_TIMEOUT) * 1000
 
@@ -103,7 +104,7 @@ class ZMQServer(object):
         self.register_endpoints()
 
         self.queue = Queue()
-        # TODO: this in asyncio? Requires the Cylc main loop in ascyncio first
+        # TODO: this in asyncio? Requires the Cylc main loop in asyncio first
         self.thread = Thread(target=self._listener)
         self.thread.start()
 
@@ -123,7 +124,7 @@ class ZMQServer(object):
     def _listener(self):
         """The server main loop, listen for and serve requests."""
         while True:
-            # process any commands passed to the listner by its parent process
+            # process any commands passed to the listener by its parent process
             if self.queue.qsize():
                 command = self.queue.get()
                 if command == 'STOP':
@@ -161,7 +162,11 @@ class ZMQServer(object):
             sleep(0)  # yield control to other threads
 
     def _receiver(self, message):
-        """Wrap incoming messages and dispatch them to exposed methods."""
+        """Wrap incoming messages and dispatch them to exposed methods.
+
+        Args:
+            message (dict): message contents
+        """
         # determine the server method to call
         try:
             method = getattr(self, message['command'])
@@ -556,6 +561,8 @@ class SuiteRuntimeServer(ZMQServer):
         Args:
             task_globs (list, optional):
                 List of identifiers, see `task globs`_
+            list_prereqs (bool): whether to include the prerequisites in
+                the results or not.
 
         Returns:
             list: Dictionary of `task identifiers <task identifier>`_
@@ -636,7 +643,7 @@ class SuiteRuntimeServer(ZMQServer):
             cylc.suite_status.KEY_OWNER
                The user account the suite is running under.
             cylc.suite_status.KEY_VERSION
-               The Cylc version the suite is runnin with.
+               The Cylc version the suite is running with.
 
         """
         return {
