@@ -14,15 +14,30 @@ for failure - and do not spawn detaching processes internally
 Task Job Scripts
 ----------------
 
-When the suite dameon determines that a task is ready to run it generates a
-*job script* that embodies the task runtime configuration in the suite.rc
-file, and submits it to the configured job host and batch system
-(see :ref:`TaskJobSubmission`).
+When the suite server program determines that a task is ready to run it
+generates a *job script* for the task, and submits it to run (see
+:ref:`TaskJobSubmission`).
+
+Job scripts encapsulate configured task runtime settings: ``script`` and
+``environment`` items, if defined, are just concatenated in the order shown in
+:numref:`fig-anatomy-of-a-job-script`, to make the job script. Everything
+executes in the same shell, so each part of the script can potentially affect
+the environment of subsequent parts.
+
+.. _fig-anatomy-of-a-job-script:
+
+.. figure:: graphics/png/orig/anatomy-of-a-job-script.png
+   :align: center
+
+   The order in which task runtime script and environment configuration items
+   are combined, in the same shell, to create a task job script. ``cylc-env``
+   represents Cylc-defined environment variables, and ``user-env`` user-defined
+   variables from the task ``[environment]`` section. (Note this is not a suite
+   dependency graph).
 
 Task job scripts are written to the suite's job log directory. They can be
 printed with ``cylc cat-log`` or generated and printed with
 ``cylc jobscript``.
-
 
 Inlined Tasks
 -------------
