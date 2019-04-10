@@ -418,13 +418,13 @@ class SuiteRuntimeService(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def kill_tasks(self, items):
+    def kill_tasks(self, items=None):
         """Kill task jobs.
 
         items is a list of identifiers for matching task proxies.
         """
         self._check_access_priv_and_report(PRIV_FULL_CONTROL)
-        if not isinstance(items, list):
+        if items is not None and not isinstance(items, list):
             items = [items]
         self.schd.command_queue.put(("kill_tasks", (items,), {}))
         return (True, 'Command queued')
