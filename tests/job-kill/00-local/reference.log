@@ -1,5 +1,9 @@
-2013/12/18 09:33:35 INFO - Initial point: 1
-2013/12/18 09:33:35 INFO - Final point: 1
-2013/12/18 09:33:35 INFO - [t2.1] -triggered off []
-2013/12/18 09:33:35 INFO - [t1.1] -triggered off []
-2013/12/18 09:33:39 INFO - [stop.1] -triggered off ['t1.1', 't2.1']
+2019-04-10T16:15:32+12:00 INFO - Initial point: 1
+2019-04-10T16:15:32+12:00 INFO - Final point: 1
+2019-04-10T16:15:32+12:00 INFO - [t2.1] -triggered off []
+2019-04-10T16:15:32+12:00 INFO - [t1.1] -triggered off []
+2019-04-10T16:15:36+12:00 INFO - [stop1.1] -triggered off ['t1.1', 't2.1']
+2019-04-10T16:15:39+12:00 INFO - [t4.1] -triggered off ['stop1.1']
+2019-04-10T16:15:39+12:00 INFO - [t3.1] -triggered off ['stop1.1']
+2019-04-10T16:15:43+12:00 INFO - [stop2.1] -triggered off ['t3.1', 't4.1']
+2019-04-10T16:15:46+12:00 INFO - [shutdown.1] -triggered off ['stop2.1']
