@@ -1425,8 +1425,20 @@ class TimePoint(object):
         if was_week_date:
             self.to_week_date()
 
-    def tick_over(self):
-        """Correct all the units going from smallest to largest."""
+    def tick_over(self, check_changes=False):
+        """Correct all the units going from smallest to largest.
+
+        Args:
+            check_changes (bool, optional):
+                If True tick_over will return a dict of any changed fields.
+
+        Returns:
+            dict: Dictionary of changed fields with before and after values
+            if check_changes is True else None.
+
+        """
+        if check_changes:
+            before = {key: getattr(self, key) for key in self.DATA_ATTRIBUTES}
         if (self.hour_of_day is not None and
                 self.minute_of_hour is not None):
             hours_remainder = self.hour_of_day - int(self.hour_of_day)
@@ -1491,6 +1503,12 @@ class TimePoint(object):
             while self.month_of_year > CALENDAR.MONTHS_IN_YEAR:
                 self.month_of_year -= CALENDAR.MONTHS_IN_YEAR
                 self.year += 1
+        if check_changes:
+            return {
+                key: (value, getattr(self, key))
+                for key, value in before.items()
+                if getattr(self, key) != value
+            }
 
     def _tick_over_day_of_month(self):
         if self.day_of_month < 1:
