@@ -277,8 +277,7 @@ class CGraphPlain(pygraphviz.AGraph):
         Node fill color: destkop theme background.
         """
 
-        # Transparent graph bg - let the desktop theme bg shine through.
-        self.graph_attr['bgcolor'] = '#ffffff00'
+        self.graph_attr['bgcolor'] = bgcolor
         self.graph_attr['color'] = fgcolor
         self.graph_attr['fontcolor'] = fgcolor
 
@@ -360,6 +359,11 @@ class CGraph(CGraphPlain):
             attr, value = [val.strip() for val in item.split('=', 1)]
             attrs[attr] = value
             node.attr[attr] = value
+        # For "style=filled", ensure labels are readable (inverse lightness)
+        if node.attr['style'] == 'filled' and not (
+            any(attribute.startswith('fontcolor') for
+                attribute in self.vizconfig['default node attributes'])):
+            node.attr['fontcolor'] = self.graph_attr['bgcolor']
         if node.attr['style'] != 'filled' and (
                 'color' in attrs and 'fontcolor' not in attrs):
             node.attr['fontcolor'] = node.attr['color']
