@@ -624,7 +624,7 @@ conditions; see `cylc conditions`.
             for submit_num, event_time, severity, message in message_items:
                 if self.task_events_mgr.process_message(
                         itask, severity, message, event_time,
-                        self.task_events_mgr.INCOMING_FLAG, submit_num):
+                        self.task_events_mgr.FLAG_RECEIVED, submit_num):
                     should_poll = True
             if should_poll:
                 to_poll_tasks.append(itask)

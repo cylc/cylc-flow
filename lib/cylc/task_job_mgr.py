@@ -239,7 +239,7 @@ class TaskJobManager(object):
             for itask in itasks:
                 # Log and persist
                 LOG.info(
-                    '[%s] -submit-num=%d, owner@host=%s',
+                    '[%s] -submit-num=%02d, owner@host=%s',
                     itask, itask.submit_num, owner_at_host)
                 self.suite_db_mgr.put_insert_task_jobs(itask, {
                     'is_manual_submit': itask.is_manual_submit,
@@ -560,7 +560,7 @@ class TaskJobManager(object):
         finally:
             log_task_job_activity(ctx, suite, itask.point, itask.tdef.name)
 
-        flag = self.task_events_mgr.POLLED_FLAG
+        flag = self.task_events_mgr.FLAG_POLLED
         if jp_ctx.run_status == 1 and jp_ctx.run_signal in ["ERR", "EXIT"]:
             # Failed normally
             self.task_events_mgr.process_message(
@@ -617,7 +617,7 @@ class TaskJobManager(object):
             ctx.ret_code = 0
             self.task_events_mgr.process_message(
                 itask, severity, message, event_time,
-                self.task_events_mgr.POLLED_FLAG)
+                self.task_events_mgr.FLAG_POLLED)
         log_task_job_activity(ctx, suite, itask.point, itask.tdef.name)
 
     def _run_job_cmd(self, cmd_key, suite, itasks, callback):

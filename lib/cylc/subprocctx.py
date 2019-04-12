@@ -88,7 +88,7 @@ class SubProcContext(object):
                 if attr == 'cmd' and self.cmd_kwargs.get('stdin_files'):
                     mesg += 'cat'
                     for file_path in self.cmd_kwargs.get('stdin_files'):
-                        mesg += ' ' + quote(file_path)
+                        mesg += ' ' + quote(str(file_path))
                     mesg += ' | '
                 if attr == 'cmd' and isinstance(value, list):
                     mesg += ' '.join(quote(item) for item in value)

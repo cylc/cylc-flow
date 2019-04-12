@@ -40,7 +40,7 @@ $SCP $PWD/bin/my-tailer.sh ${CYLC_TEST_OWNER}@${CYLC_TEST_HOST}:cylc-run/.bin/my
 # Run detached.
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-while ! grep -q -F '[foo.1] -(current:submitted)> started' \
+while ! grep -q -F '[foo.1] status=submitted: (received)started' \
     "${SUITE_RUN_DIR}/log/suite/log"
 do
     sleep 1
