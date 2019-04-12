@@ -82,6 +82,8 @@ class TestGraphParser(unittest.TestCase):
                  ('baz.3', 'qux.3', False, False, False)
                  ]
         self.cgraph.add_edges(edges)
+        self.cgraph.set_def_style('white', 'black')
+        self.cgraph.set_attributes()
 
     def test_gtk_rgb_to_hex(self):
         self.assertEqual(gtk_rgb_to_hex(fake_gtk_color()), '#ffffff')
@@ -99,7 +101,9 @@ class TestGraphParser(unittest.TestCase):
         self.assertEqual(
             node.attr.items(),
             [(u'URL', u'foo.1'),
+             (u'color', u'white'),
              (u'fillcolor', u'yellow'),
+             (u'fontcolor', u'black'),
              (u'label', u'foo\\n1'),
              (u'penwidth', u'2')]
         )
@@ -109,9 +113,9 @@ class TestGraphParser(unittest.TestCase):
         bgcolor = 'blue'
         def_node_attr = {}
         def_node_attr['style'] = 'filled'
-        self.cgraph.set_def_style(fgcolor, bgcolor, def_node_attr)
+        self.cgraph.set_def_style(fgcolor, bgcolor)
         self.assertEqual(
-            self.cgraph.graph_attr['bgcolor'], '#ffffff00'
+            self.cgraph.graph_attr['bgcolor'], bgcolor
         )
         for attr in ['color', 'fontcolor']:
             self.assertEqual(
@@ -124,7 +128,7 @@ class TestGraphParser(unittest.TestCase):
             self.cgraph.node_attr['fontcolor'], fgcolor
         )
         def_node_attr['style'] = 'unfilled'
-        self.cgraph.set_def_style(fgcolor, bgcolor, def_node_attr)
+        self.cgraph.set_def_style(fgcolor, bgcolor)
         self.assertEqual(
             self.cgraph.node_attr['fontcolor'], fgcolor
         )

@@ -298,6 +298,7 @@ class CGraph(CGraphPlain):
 
         # suite.rc visualization config section
         CGraphPlain.__init__(self, title, suite_polling_tasks)
+        self.task_attr = {}
         if vizconfig is None:
             vizconfig = {
                 'default node attributes': [],
@@ -320,7 +321,6 @@ class CGraph(CGraphPlain):
 
         # non-default node attributes by task name
         # TODO - ERROR CHECKING FOR INVALID TASK NAME
-        self.task_attr = {}
 
         for item in self.vizconfig['node attributes']:
             if item in self.vizconfig['node groups']:
