@@ -270,30 +270,21 @@ class CGraphPlain(pygraphviz.AGraph):
 
         return subgraph
 
-    def set_def_style(self, fgcolor, bgcolor, def_node_attr=None):
+    def set_def_style(self, fgcolor, bgcolor):
         """Set default graph styles.
 
-        Depending on light/dark desktop color theme.
+        Node, edge, and font color: desktop theme foreground.
+        Node fill color: destkop theme background.
         """
 
-        if def_node_attr is None:
-            def_node_attr = {}
-
-        # Transparent graph bg - let the desktop theme bg shine through.
-        self.graph_attr['bgcolor'] = '#ffffff00'
-
-        # graph and cluster:
+        self.graph_attr['bgcolor'] = bgcolor
         self.graph_attr['color'] = fgcolor
         self.graph_attr['fontcolor'] = fgcolor
-        # node outlines (or node fill if fillcolor is not defined):
+
         self.node_attr['color'] = fgcolor
-        # edges:
-        self.edge_attr['color'] = fgcolor  # edges
-        # node labels:
-        if def_node_attr.get('style', '') == "filled":
-            self.node_attr['fontcolor'] = bgcolor  # node labels
-        else:
-            self.node_attr['fontcolor'] = fgcolor  # node labels
+        self.node_attr['fontcolor'] = fgcolor
+
+        self.edge_attr['color'] = fgcolor
 
 
 class CGraph(CGraphPlain):
@@ -307,6 +298,7 @@ class CGraph(CGraphPlain):
 
         # suite.rc visualization config section
         CGraphPlain.__init__(self, title, suite_polling_tasks)
+        self.task_attr = {}
         if vizconfig is None:
             vizconfig = {
                 'default node attributes': [],
@@ -316,19 +308,19 @@ class CGraph(CGraphPlain):
             }
         self.vizconfig = vizconfig
 
+    def set_attributes(self):
         # graph attributes
         # - default node attributes
-        for item in vizconfig['default node attributes']:
+        for item in self.vizconfig['default node attributes']:
             attr, value = [val.strip() for val in item.split('=', 1)]
             self.node_attr[attr] = value
         # - default edge attributes
-        for item in vizconfig['default edge attributes']:
+        for item in self.vizconfig['default edge attributes']:
             attr, value = [val.strip() for val in item.split('=', 1)]
             self.edge_attr[attr] = value
 
         # non-default node attributes by task name
         # TODO - ERROR CHECKING FOR INVALID TASK NAME
-        self.task_attr = {}
 
         for item in self.vizconfig['node attributes']:
             if item in self.vizconfig['node groups']:
@@ -367,6 +359,11 @@ class CGraph(CGraphPlain):
             attr, value = [val.strip() for val in item.split('=', 1)]
             attrs[attr] = value
             node.attr[attr] = value
+        # For "style=filled", ensure labels are readable (inverse lightness)
+        if node.attr['style'] == 'filled' and not (
+            any(attribute.startswith('fontcolor') for
+                attribute in self.vizconfig['default node attributes'])):
+            node.attr['fontcolor'] = self.graph_attr['bgcolor']
         if node.attr['style'] != 'filled' and (
                 'color' in attrs and 'fontcolor' not in attrs):
             node.attr['fontcolor'] = node.attr['color']
@@ -422,7 +419,8 @@ class CGraph(CGraphPlain):
             suiterc.suite_polling_tasks,
             suiterc.cfg['visualization'])
 
-        graph.set_def_style(fgcolor, bgcolor, graph.node_attr)
+        graph.set_def_style(fgcolor, bgcolor)
+        graph.set_attributes()
 
         gr_edges = suiterc.get_graph_raw(
             start_point_string, stop_point_string,

@@ -665,14 +665,6 @@ class SuiteConfig(object):
             raise SuiteConfigError("Node attributes must be of the form "
                                    "'key1=value1', 'key2=value2', etc.")
 
-        # (Note that we're retaining 'default node attributes' even
-        # though this could now be achieved by styling the root family,
-        # because putting default attributes for root in the suite.rc spec
-        # results in root appearing last in the ordered dict of node
-        # names, so it overrides the styling for lesser groups and
-        # nodes, whereas the reverse is needed - fixing this would
-        # require reordering task_attr in lib/cylc/graphing.py).
-
         self.leaves = self.get_task_name_list()
         for ancestors in self.runtime['first-parent ancestors'].values():
             try:
