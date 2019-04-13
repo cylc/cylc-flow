@@ -45,3 +45,6 @@ cylc.egg-info
 # virtualenv
 venv
 
+# mypy
+.mypy_cache/
+
