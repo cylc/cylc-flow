@@ -103,7 +103,7 @@ if SPHINX_AVAILABLE:
 install_requires = [
     'colorama==0.4.*',
     'isodatetime==1!2.0.*',
-    'jinja2==2.10',
+    'jinja2>=2.10.1, <2.11.0',
     'markupsafe==1.1.*',
     'python-jose==3.0.*',
     'pyzmq==18.0.*'
