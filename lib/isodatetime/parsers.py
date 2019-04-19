@@ -232,14 +232,43 @@ class TimePointParser(object):
         expression = "^" + expression + "$"
         return expression
 
-    def parse(self, timepoint_string, dump_format=None, dump_as_parsed=False):
-        """Parse a user-supplied timepoint string."""
+    def parse(self, timepoint_string, dump_format=None, dump_as_parsed=False,
+              validate=True):
+        """Parse a user-supplied timepoint string.
+
+        Args:
+            validate (bool, optional):
+                If True the datetime will be "ticked over", if this results in
+                a change a ValueError will be raised.
+                Note that `validate` is incompatible with `allow_truncated`.
+
+        Raises:
+            ValueError: If validation fails.
+
+        Returns:
+            TimePoint
+
+        """
         date_info, time_info, parsed_expr = self.get_info(timepoint_string)
         if dump_as_parsed:
             dump_format = parsed_expr
-        return self._create_timepoint_from_info(
+        time_point = self._create_timepoint_from_info(
             date_info, time_info, dump_format=dump_format,
             truncated_dump_format=dump_format)
+
+        if validate and not self.allow_truncated:
+            changed_fields = time_point.tick_over(check_changes=True)
+            if changed_fields:
+                raise ValueError(
+                    'Invalid date-time components: ' +
+                    ', '.join((
+                        '%s=%s' % (key, before)
+                        for key, (before, after) in changed_fields.items()
+                        if before > after
+                    ))
+                )
+
+        return time_point
 
     def _create_timepoint_from_info(self, date_info, time_info,
                                     dump_format=None,
@@ -574,7 +603,11 @@ class DurationParser(object):
             # TimePoint-like duration - don't allow our negative extension.
             try:
                 timepoint = parse_timepoint_expression(
-                    expression[1:], allow_truncated=False,
+                    expression[1:],
+                    # this is a duration but we are parsing it as a timepoint
+                    # so don't validate.
+                    validate=False,
+                    allow_truncated=False,
                     assumed_time_zone=(0, 0)
                 )
             except ISO8601SyntaxError:
@@ -597,7 +630,7 @@ class DurationParser(object):
         raise ISO8601SyntaxError("duration", expression)
 
 
-def parse_timepoint_expression(timepoint_expression, **kwargs):
+def parse_timepoint_expression(timepoint_expression, validate=True, **kwargs):
     """Return a data model that represents timepoint_expression."""
     parser = TimePointParser(**kwargs)
-    return parser.parse(timepoint_expression)
+    return parser.parse(timepoint_expression, validate=validate)
