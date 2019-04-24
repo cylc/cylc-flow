@@ -90,8 +90,8 @@ SPEC = {
     'documentation': {
         'local': [VDR.V_STRING, '$CYLC_DIR/doc/built-sphinx/index.html'],
         'online': [VDR.V_STRING,
-                   'http://cylc.github.io/cylc/doc/built-sphinx/index.html'],
-        'cylc homepage': [VDR.V_STRING, 'http://cylc.github.io/cylc/'],
+                   'http://cylc.github.io/doc/built-sphinx/index.html'],
+        'cylc homepage': [VDR.V_STRING, 'http://cylc.github.io/'],
     },
 
     'document viewers': {
