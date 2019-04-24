@@ -21,8 +21,8 @@ suites), and end with some pointers to future developments.
    A good working knowledge of Cylc and Rose is assumed. For further details,
    please consult the:
  
-   - `Cylc documentation <http://cylc.github.io/cylc/documentation.html>`_
-   - `Rose documentation <http://metomi.github.io/rose/doc/rose.html>`_
+   - `Cylc documentation <http://cylc.github.io/documentation.html>`_
+   - `Rose documentation <http://metomi.github.io/rose>`_
 
 .. note::
 

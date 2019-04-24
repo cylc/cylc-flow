@@ -1,6 +1,6 @@
 # Cylc: Quick Installation Guide
 
-**See [The Cylc User Guide](https://cylc.github.io/cylc/documentation.html) for
+**See [The Cylc User Guide](https://cylc.github.io/documentation.html) for
 more detailed information.**
 
 Cylc must be installed on suite and task job hosts. Third-party dependencies
@@ -25,7 +25,7 @@ See also *Check Software Installation* below.
 ### Installing Cylc
 
 Download the latest tarball from [Cylc
-Releases](https://github.com/cylc/cylc/releases).
+Releases](https://github.com/cylc/cylc-flow/releases).
 
 Successive Cylc releases should be installed side-by-side under a location
 such as `/opt`:

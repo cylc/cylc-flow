@@ -12,8 +12,8 @@ forecasting systems at [NIWA](https://www.niwa.co.nz). Cylc is a general
 workflow engine, however; it is not specialized to forecasting in any way.
 
 [Quick Installation](INSTALL.md) |
-[Web Site](https://cylc.github.io/cylc) |
-[Documentation](https://cylc.github.io/cylc/documentation) |
+[Web Site](https://cylc.github.io/) |
+[Documentation](https://cylc.github.io/documentation) |
 [Contributing](CONTRIBUTING.md)
 
 ### Copyright and Terms of Use
@@ -32,7 +32,7 @@ You should have received a copy of the GNU General Public License along with
 Cylc.  If not, see [GNU licenses](http://www.gnu.org/licenses/).
 
 ## Cylc Documentation
- * See [The Cylc Web Site](https://cylc.github.io/cylc)
+ * See [The Cylc Web Site](https://cylc.github.io/)
 
 ## Acknowledgement for non-Cylc Work
 
