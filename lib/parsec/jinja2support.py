@@ -125,7 +125,7 @@ def jinja2environment(dir_=None):
             fdirs.append(os.path.join(os.environ['CYLC_DIR'], 'lib', nspdir))
         for fdir in fdirs:
             if os.path.isdir(fdir):
-                sys.path.append(os.path.abspath(fdir))
+                sys.path.insert(1, os.path.abspath(fdir))
                 for name in glob(os.path.join(fdir, '*.py')):
                     fname = os.path.splitext(os.path.basename(name))[0]
                     # TODO - EXCEPTION HANDLING FOR LOADING CUSTOM FILTERS
