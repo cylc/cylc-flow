@@ -170,13 +170,13 @@ class="table table-bordered table-condensed table-striped">
       <td><small>{{entry.name}}</small></td>
       <td>
         <small>
-          <a href="{{script}}/cycles/{{user}}/?suite={{entry.name|replace('/', '%2F')}}">cycles list</a>
+          <a href="{{script}}/cycles/{{user}}/?suite={{entry.name|urlencode}}">cycles list</a>
         </small>
       </td>
 
       <td>
         <small>
-          <a href="{{script}}/taskjobs/{{user}}/?suite={{entry.name|replace('/', '%2F')}}">task jobs list</a>
+          <a href="{{script}}/taskjobs/{{user}}/?suite={{entry.name|urlencode}}">task jobs list</a>
         </small>
       </td>
 
