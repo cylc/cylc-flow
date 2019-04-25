@@ -6,10 +6,10 @@
 {% set cycle_str = entry.cycle|replace('+', '%2B') -%}
 {% set taskjobs_link = (
     (script ~ "/taskjobs/" ~ user ~ "?&amp;suite=" ~
-     suite|replace('+', '%2F') ~ no_fuzzy_time_str) | safe
+     suite|urlencode|replace('/', '%2F') ~ no_fuzzy_time_str) | safe
 ) -%}
 {% set view_link = (
-    (script ~ "/view/" ~ user ~ "?&amp;suite=" ~ suite|replace('+', '%2F') ~
+    (script ~ "/view/" ~ user ~ "?&amp;suite=" ~ suite|urlencode|replace('/', '%2F') ~
      no_fuzzy_time_str) | safe
 ) -%}
 <tr class="entry"><!-- entry row -->
@@ -50,7 +50,7 @@
     <small>
     {% set link = (
         (script ~ "/taskjobs/" ~ user ~ "?&amp;suite=" ~
-         suite|replace('+', '%2F') ~ no_fuzzy_time_str) | safe
+         suite|urlencode|replace('/', '%2F') ~ no_fuzzy_time_str) | safe
     ) -%}
     {% if entry.run_status == 0 -%}
       <a href="{{taskjobs_link}}&amp;job_status=succeeded"
@@ -102,7 +102,7 @@
     <!-- entry: name -->
     <small>
       <a
-      href="{{taskjobs_link}}&amp;tasks={{entry.name}}"
+      href="{{taskjobs_link}}&amp;tasks={{entry.name|urlencode}}"
       title="{{entry.name}}">{{entry.name}}</a>
     </small>
   </td>
@@ -111,7 +111,7 @@
     <small>
     {% if entry.submit_num > 0 %}
       <a
-      href="{{taskjobs_link}}&amp;cycles={{cycle_str}}&amp;tasks={{entry.name}}"
+      href="{{taskjobs_link}}&amp;cycles={{cycle_str}}&amp;tasks={{entry.name|urlencode}}"
       >{{entry.submit_num}} of {{entry.submit_num_max}}</a>
     {% endif %}
     </small>
@@ -170,12 +170,12 @@
               {% set key_str = key -%}
             {% endif -%}
             <li>
-              {% set path_arg = log.path|replace('+', '%2B') -%}
+              {% set path_arg = log.path|urlencode -%}
               {% if log.path_in_tar -%}
                 {% if path_in_tar is defined and path_in_tar == log.path_in_tar -%}
                   {{key_str}}
                 {% else -%}
-                  {% set path_in_tar_arg = log.path_in_tar|replace('+', '%2B') -%}
+                  {% set path_in_tar_arg = log.path_in_tar|urlencode -%}
                   <a
                   {% if log.size == "?" or not log.size -%}class="text-muted" {% endif -%}
                   href="{{view_link}}&amp;path={{path_arg}}&amp;path_in_tar={{path_in_tar_arg}}"
@@ -202,7 +202,7 @@
               <form action="{{script}}/view" class="form-inline"
                 autocomplete="off">
                 <input type="hidden" name="user" value="{{user}}"/>
-                <input type="hidden" name="suite" value="{{suite|replace("/", "%2F")}}"/>
+                <input type="hidden" name="suite" value="{{suite|urlencode|replace("/", "%2F")}}"/>
                 <input type="hidden" name="no_fuzzy_time"
                 value="{{no_fuzzy_time}}"/>
                 {% if entry.logs[indexes.values()|first].path_in_tar -%}

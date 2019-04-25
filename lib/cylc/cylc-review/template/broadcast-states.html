@@ -7,7 +7,7 @@
 <div class="row"><div class="col-md-12">
 <ul class="list-inline pull-right">
   <li>states</li>
-  <li><a href="{{script}}/broadcast_events/{{user}}/?&amp;suite={{suite|replace("/", "%2F")}}">events</a></li>
+  <li><a href="{{script}}/broadcast_events/{{user}}/?&amp;suite={{suite|urlencode|replace("/", "%2F")}}">events</a></li>
 </ul>
 
 {% if broadcast_states %}

@@ -54,7 +54,7 @@ rel="stylesheet" media="screen" />
         </li>
         {% else %}
         <li>
-          <a href="{{script}}/{{method}}/{{user}}?&amp;suite={{suite|replace("/", "%2F")}}">
+          <a href="{{script}}/{{method}}/{{user}}?&amp;suite={{suite|urlencode|replace("/", "%2F")}}">
             <i class="glyphicon {{icon}}" title="{{name}}"></i>
             {{name}}
           </a>
@@ -76,7 +76,7 @@ rel="stylesheet" media="screen" />
               <ul class="dropdown-menu">
         {% for log_path in log.paths -%}
                 <li>
-                  <a href="{{script}}/view/{{user}}?&amp;suite={{suite|replace("/", "%2F")}}&amp;path={{log_path}}&amp;no_fuzzy_time={{no_fuzzy_time}}"
+                  <a href="{{script}}/view/{{user}}?&amp;suite={{suite|urlencode|replace("/", "%2F")}}&amp;path={{log_path}}&amp;no_fuzzy_time={{no_fuzzy_time}}"
                   title="{{log.size}} bytes">{{log_path}}</a>
                 </li>
         {% endfor -%}
@@ -84,7 +84,7 @@ rel="stylesheet" media="screen" />
             </li>
         {% else -%}
             <li>
-              <a href="{{script}}/view/{{user}}?&amp;suite={{suite|replace("/", "%2F")}}&amp;path={{log.path}}&amp;no_fuzzy_time={{no_fuzzy_time}}"
+              <a href="{{script}}/view/{{user}}?&amp;suite={{suite|urlencode|replace("/", "%2F")}}&amp;path={{log.path}}&amp;no_fuzzy_time={{no_fuzzy_time}}"
               title="{{log.size}} bytes">{{key}}</a></li>
         {% endif -%}
         {% endfor -%}

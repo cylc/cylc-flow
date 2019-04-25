@@ -16,7 +16,7 @@
   </div>
   <div>
     <small>
-      <a href="{{script}}/view/{{user}}/?&amp;suite={{suite|replace("/", "%2F")}}&amp;path={{path}}">{{f_name}}</a>
+      <a href="{{script}}/view/{{user}}/?&amp;suite={{suite|urlencode|replace("/", "%2F")}}&amp;path={{path}}">{{f_name}}</a>
       <span class="label label-default">Content loaded
       <abbr class="livestamp" title="{{time}}">{{time}}</abbr></span>
     </small>

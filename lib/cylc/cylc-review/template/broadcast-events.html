@@ -6,7 +6,7 @@
 
 <div class="row"><div class="col-md-12">
 <ul class="list-inline pull-right">
-  <li><a href="{{script}}/broadcast_states/{{user}}/?&amp;suite={{suite|replace("/", "%2F")}}">states</a></li>
+  <li><a href="{{script}}/broadcast_states/{{user}}/?&amp;suite={{suite|urlencode|replace("/", "%2F")}}">states</a></li>
   <li>events</li>
 </ul>
 
