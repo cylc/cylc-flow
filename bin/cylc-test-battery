@@ -120,6 +120,11 @@ export CYLC_TEST_IS_GENERIC=true
 CYLC_TEST_TIME_INIT="$(date -u +'%Y%m%dT%H%M%SZ')"
 export CYLC_TEST_TIME_INIT
 
+# CYLC_DIR does not work under virtualenv
+if [[ -n ${TRAVIS_BUILD_DIR:-} ]]; then
+    export CYLC_DIR="${TRAVIS_BUILD_DIR}"
+fi
+
 if [[ "$PWD" != "$CYLC_DIR" ]]; then
     echo "cd \"$CYLC_DIR\""
     cd "$CYLC_DIR" || exit 1

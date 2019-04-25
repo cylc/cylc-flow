@@ -21,32 +21,15 @@ CATEGORIES=('control' 'con' 'information' 'info' 'all' 'task' 'license' \
                 
 HELP_OPTS=('help' '--help' '-h' 'h' '?')
 
-get_version() {
-    CYLC_VERSION="$(python -c "from cylc import __version__;\
-        print(__version__)")"
-}
-
 print_version() {
-    get_version
-    if [[ "$#" -eq 0 ]]; then
-        echo "$CYLC_VERSION"
-    fi
-    if [[ "$*" == 'long' || "$*" == '--long' ]]; then
-    echo "Cylc ${CYLC_VERSION} (${CYLC_DIR})"    
-    fi
+    python3 -c "from cylc import __version__; print(__version__)"
 }
 
 init_cylc() {
     set -eu
-
     CYLC_HOME_BIN=$(cd "$(dirname "$0")" && pwd -P)
-    CYLC_DIR="$(dirname "${CYLC_HOME_BIN}")"
-
-    PATH="$(path_lead "${PATH:-}" "${CYLC_HOME_BIN}")"
-    PYTHONPATH="$(path_lead "${PYTHONPATH:-}" "${CYLC_DIR}/lib/")"
     PYTHONUNBUFFERED='true'
-    
-    export PATH PYTHONPATH PYTHONUNBUFFERED CYLC_DIR
+    export PYTHONUNBUFFERED
 }
 
 help_util() {

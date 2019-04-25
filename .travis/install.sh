@@ -26,23 +26,19 @@ args=("$@")
 
 if grep -E '(unit-tests|functional-tests)' <<< "${args[@]}"; then
     sudo apt-get install heirloom-mailx
-    # coverage dependencies
-    pip install coverage pytest-cov
-    # common Cylc reqirements
-    pip install colorama python-jose zmq empy
 fi
 
 if grep 'unit-tests' <<< "${args[@]}"; then
     sudo apt-get install shellcheck
-    pip install pycodestyle pytest testfixtures empy
 fi
 
 # install dependencies required for building documentation
 if grep 'docs' <<< "${args[@]}"; then
-    pip install sphinx
     # for PDF output via LaTeX builder
     sudo apt-get install texlive-latex-base
 fi
+
+pip install -e ."[all]"
 
 # configure local SSH for Cylc jobs
 ssh-keygen -t rsa -f ~/.ssh/id_rsa -N "" -q
