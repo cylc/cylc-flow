@@ -229,7 +229,7 @@ warnings emitted by `urllib3` under old Python versions (2.6). *We are
 aware of the security issues, but these warnings serve no purpose on affected
 platforms except to confuse and annoy users.*
 
-[#2676](https://github.com/cylc/cylc-flow/pull/2676) - use `#!/usr/bin/env python3`
+[#2676](https://github.com/cylc/cylc-flow/pull/2676) - use `#!/usr/bin/env python2`
 (i.e. Python-2 specific) in Cylc source files, to avoid issues with default
 Python 3 installations (note Cylc is going to Python 3 next year)
 
