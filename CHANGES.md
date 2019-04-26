@@ -6,6 +6,21 @@ milestones](https://github.com/cylc/cylc/milestones?state=closed) for each
 release.
 
 -------------------------------------------------------------------------------
+## SECURITY NOTE
+
+*[Jinja2 CVE-2019-8341 (High)](https://nvd.nist.gov/vuln/detail/CVE-2019-8341)
+An issue was discovered in Jinja2 2.10. The `from_string` function is prone to
+Server Side Template Injection (SSTI) where it takes the "source" parameter as
+a template object, renders it, and then returns it. The attacker can exploit it
+with `{{INJECTION COMMANDS}}` in a URI*
+
+- cylc-7 (7.8.x branch, written in Python 2) has a bundled copy of Jinja2 2.10
+that cannot be updated because the new Jinja2 requires Python 3. However **this
+CVE does not impact cylc-7 because Cylc workflow definitions are not web
+pages**.
+- cylc-8 (master branch, written in Python 3) does not bundle Jinja2.
+
+-------------------------------------------------------------------------------
 ## __cylc-7.8.1 (2019-01-25)__
 
 Maintenance and minor enhancement release, plus new-format User Guide.
