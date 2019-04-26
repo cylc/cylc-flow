@@ -6,7 +6,6 @@ project.
   * [Reporting a Bug](#reporting-a-bug)
   * [Disclosure Policy](#disclosure-policy)
   * [Comments on this Policy](#comments-on-this-policy)
-  * [Current Alerts](#current-alerts)
 
 ## Reporting a Bug
 
@@ -14,11 +13,11 @@ The Cylc team take security bugs seriously. Thank you for improving the
 security of Cylc. We appreciate your efforts and responsible disclosure and
 will make every effort to acknowledge your contributions.
 
-Report security bugs by sending an email to the [Cylc
-Forum](mailto:cylc@googlegroups.com) or by posting a [Cylc repository
-Issue](https://github.com/cylc/cylc-flow/issues). Project maintainers will
-endeavor to respond within 48 hours. Progress toward a fix will be recorded on
-the Issue page, and resulting new releases will be announced on the mail forum. 
+Please report security bugs by sending an email to the lead Cylc maintainers,
+[Hilary Oliver](mailto:hilary.oliver@niwa.co.nz) and [Matt
+Shin](matthew.shin@metoffice.gov.uk). If a fix is needed, progress will be
+recorded on Cylc repository Issue page on GitHub, and resulting new releases
+will be announced on the Cylc [mail forum](mailto:cylc@googlegroups.com). 
 
 Report security bugs in third-party modules to the person or team maintaining
 the module.
@@ -37,7 +36,3 @@ handler. This person will coordinate the fix and release process as follows:
 
 If you have suggestions on how this process could be improved please submit a
 pull request.
-
-## Current Alerts
-
-(None)
