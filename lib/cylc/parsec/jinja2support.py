@@ -103,7 +103,9 @@ def jinja2environment(dir_=None):
     if dir_ is None:
         dir_ = os.getcwd()
 
-    env = Environment(
+    # Ignore bandit false positive: B701:jinja2_autoescape_false
+    # This env is not used to render content that is vulnerable to XSS.
+    env = Environment(  # nosec
         loader=ChoiceLoader([FileSystemLoader(dir_), PyModuleLoader()]),
         undefined=StrictUndefined,
         extensions=['jinja2.ext.do'])
