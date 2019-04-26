@@ -35,7 +35,7 @@ suite_run_fail "${TEST_NAME_BASE}-run" \
 SRVD="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/.service"
 LOGD="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log"
 grep_ok \
-    "${SRVD}/contact: suite contact file corrupted/modified and may be left" \
+    "${SRVD}/contact: contact file corrupted/modified and may be left" \
     "${LOGD}/suite/log"
 purge_suite "${SUITE_NAME}"
 exit

@@ -18,6 +18,7 @@
 """Cylc scheduler server."""
 
 from collections import deque
+from errno import ENOENT
 import logging
 from logging.handlers import BufferingHandler
 import os
@@ -76,13 +77,13 @@ from cylc.wallclock import (
 from cylc.xtrigger_mgr import XtriggerManager
 
 
-class SchedulerError(CylcError):
-    """Scheduler error."""
+class SchedulerStop(CylcError):
+    """Scheduler normal stop."""
     pass
 
 
-class SchedulerStop(CylcError):
-    """Scheduler has stopped."""
+class SchedulerError(CylcError):
+    """Scheduler expected error stop."""
     pass
 
 
@@ -102,6 +103,7 @@ class Scheduler(object):
 
     EVENT_STARTUP = SuiteEventHandler.EVENT_STARTUP
     EVENT_SHUTDOWN = SuiteEventHandler.EVENT_SHUTDOWN
+    EVENT_ABORTED = SuiteEventHandler.EVENT_ABORTED
     EVENT_TIMEOUT = SuiteEventHandler.EVENT_TIMEOUT
     EVENT_INACTIVITY_TIMEOUT = SuiteEventHandler.EVENT_INACTIVITY_TIMEOUT
     EVENT_STALLED = SuiteEventHandler.EVENT_STALLED
@@ -273,7 +275,7 @@ class Scheduler(object):
 
         except KeyboardInterrupt as exc:
             try:
-                self.shutdown(str(exc))
+                self.shutdown(exc)
             except Exception as exc2:
                 # In case of exceptions in the shutdown method itself.
                 LOG.exception(exc2)
@@ -281,10 +283,8 @@ class Scheduler(object):
             self.close_logs()
 
         except Exception as exc:
-            LOG.exception(exc)
-            LOG.error("error caught: cleaning up before exit")
             try:
-                self.shutdown('ERROR: ' + str(exc))
+                self.shutdown(exc)
             except Exception as exc2:
                 # In case of exceptions in the shutdown method itself
                 LOG.exception(exc2)
@@ -293,7 +293,7 @@ class Scheduler(object):
 
         else:
             # main loop ends (not used?)
-            self.shutdown()
+            self.shutdown(SchedulerStop(TaskPool.STOP_AUTO))
             self.close_logs()
 
     def close_logs(self):
@@ -420,8 +420,8 @@ conditions; see `cylc conditions`.
         reqmode = self.config.cfg['cylc']['required run mode']
         if reqmode:
             if reqmode != self.run_mode:
-                raise SchedulerError(
-                    'ERROR: this suite requires the %s run mode' % reqmode)
+                raise ValueError(
+                    'this suite requires the %s run mode' % reqmode)
 
         self.broadcast_mgr.linearized_ancestors.update(
             self.config.get_linearized_ancestors())
@@ -1024,8 +1024,8 @@ conditions; see `cylc conditions`.
                 process_str = line.strip()
                 break
         if ret_code or not process_str:
-            raise SchedulerError(
-                'ERROR, cannot get process "args" from "ps": %s' % err)
+            raise RuntimeError(
+                'cannot get process "args" from "ps": %s' % err)
         # Write suite contact file.
         # Preserve contact data in memory, for regular health check.
         mgr = self.suite_srv_files_mgr
@@ -1050,14 +1050,8 @@ conditions; see `cylc conditions`.
                 ['task messaging', 'connection timeout']))),
             mgr.KEY_UUID: self.uuid_str.value,
             mgr.KEY_VERSION: CYLC_VERSION}
-        try:
-            mgr.dump_contact_file(self.suite, contact_data)
-        except IOError as exc:
-            raise SchedulerError(
-                'ERROR, cannot write suite contact file: %s: %s' %
-                (mgr.get_contact_file(self.suite), exc))
-        else:
-            self.contact_data = contact_data
+        mgr.dump_contact_file(self.suite, contact_data)
+        self.contact_data = contact_data
 
     def load_suiterc(self, is_reload=False):
         """Load, and log the suite definition."""
@@ -1095,13 +1089,9 @@ conditions; see `cylc conditions`.
             load_type = "run"
         base_name = "%s-%s.rc" % (time_str, load_type)
         file_name = os.path.join(cfg_logdir, base_name)
-        try:
-            with open(file_name, "wb") as handle:
-                handle.write("# cylc-version: %s\n" % CYLC_VERSION)
-                printcfg(self.config.cfg, none_str=None, handle=handle)
-        except IOError as exc:
-            LOG.exception(exc)
-            raise SchedulerError("Unable to log the loaded suite definition")
+        with open(file_name, "wb") as handle:
+            handle.write("# cylc-version: %s\n" % CYLC_VERSION)
+            printcfg(self.config.cfg, none_str=None, handle=handle)
         # Initial and final cycle times - command line takes precedence.
         # self.config already alters the 'initial cycle point' for CLI.
         self.initial_point = self.config.initial_point
@@ -1162,7 +1152,7 @@ conditions; see `cylc conditions`.
             req = rtc['required run mode']
             if req and req != self.run_mode:
                 raise SchedulerError(
-                    'ERROR: suite allows only ' + req + ' reference tests')
+                    'suite allows only %s reference tests' % req)
             handlers = self._get_events_conf('shutdown handler')
             if handlers:
                 LOG.warning('shutdown handlers replaced by reference test')
@@ -1185,7 +1175,7 @@ conditions; see `cylc conditions`.
             timeout = rtc[self.run_mode + ' mode suite timeout']
             if not timeout:
                 raise SchedulerError(
-                    'ERROR: timeout not defined for %s reference tests' % (
+                    'timeout not defined for %s reference tests' % (
                         self.run_mode))
             self.config.cfg['cylc']['events'][self.EVENT_TIMEOUT] = (
                 timeout)
@@ -1206,10 +1196,10 @@ conditions; see `cylc conditions`.
             self.suite_event_handler.handle(self.config, SuiteEventContext(
                 event, reason, self.suite, self.uuid_str, self.owner,
                 self.host, self.httpserver.port))
-        except SuiteEventError as exc:
+        except SuiteEventError:
             if event == self.EVENT_SHUTDOWN and self.options.reftest:
                 LOG.error('SUITE REFERENCE TEST FAILED')
-            raise SchedulerError(exc.args[0])
+            raise
         else:
             if event == self.EVENT_SHUTDOWN and self.options.reftest:
                 LOG.info('SUITE REFERENCE TEST PASSED')
@@ -1269,20 +1259,12 @@ conditions; see `cylc conditions`.
 
     def process_suite_db_queue(self):
         """Update suite DB."""
-        try:
-            self.suite_db_mgr.process_queued_ops()
-        except OSError as exc:
-            LOG.exception(exc)
-            raise SchedulerError(str(exc))
+        self.suite_db_mgr.process_queued_ops()
 
     def database_health_check(self):
         """If public database is stuck, blast it away by copying the content
         of the private database into it."""
-        try:
-            self.suite_db_mgr.recover_pub_from_pri()
-        except (IOError, OSError) as exc:
-            # Something has to be very wrong here, so stop the suite
-            raise SchedulerError(str(exc))
+        self.suite_db_mgr.recover_pub_from_pri()
 
     def late_tasks_check(self):
         """Report tasks that are never active and are late."""
@@ -1388,8 +1370,8 @@ conditions; see `cylc conditions`.
             #           (no restart)
             self._set_stop(TaskPool.STOP_REQUEST_NOW)
         else:
-            raise SchedulerError('Invalid auto_restart_mode=%s' %
-                                 self.auto_restart_mode)
+            raise SchedulerError(
+                'Invalid auto_restart_mode=%s' % self.auto_restart_mode)
 
     def suite_auto_restart(self, max_retries=3):
         """Attempt to restart the suite assuming it has already stopped."""
@@ -1573,8 +1555,7 @@ conditions; see `cylc conditions`.
 
             # 3. check if suite run dir still present - if not shutdown.
             if not os.path.exists(self.suite_run_dir):
-                raise SchedulerError(
-                    "%s: suite run directory not found" % self.suite_run_dir)
+                raise OSError(ENOENT, os.strerror(ENOENT), self.suite_run_dir)
 
             # 4. check if contact file consistent with current start - if not
             #    shutdown.
@@ -1582,13 +1563,11 @@ conditions; see `cylc conditions`.
                 contact_data = self.suite_srv_files_mgr.load_contact_file(
                     self.suite)
                 if contact_data != self.contact_data:
-                    raise AssertionError()
+                    raise AssertionError('contact file modified')
             except (AssertionError, IOError, ValueError,
                     SuiteServiceFileError) as exc:
-                LOG.exception(exc)
-                exc = SchedulerError(
-                    ("%s: suite contact file corrupted/modified and" +
-                     " may be left") %
+                LOG.error(
+                    "%s: contact file corrupted/modified and may be left",
                     self.suite_srv_files_mgr.get_contact_file(self.suite))
                 raise exc
             self.time_next_health_check = (
@@ -1786,18 +1765,16 @@ conditions; see `cylc conditions`.
 
         return process
 
-    def shutdown(self, reason=None):
+    def shutdown(self, reason):
         """Shutdown the suite."""
-        msg = "Suite shutting down"
-        if isinstance(reason, CylcError):
-            msg += ' - %s' % reason.args[0]
-            if isinstance(reason, SchedulerError):
-                LOG.exception(msg)
-            reason = reason.args[0]
-        elif reason:
-            msg += ' - %s' % reason
-
-        LOG.info(msg)
+        if isinstance(reason, SchedulerStop):
+            LOG.info('Suite shutting down - %s', reason.args[0])
+        elif isinstance(reason, SchedulerError):
+            LOG.exception(reason)
+            LOG.error('Suite shutting down - %s', reason)
+        else:
+            LOG.exception(reason)
+            LOG.critical('Suite shutting down - %s', reason)
 
         if self.options.genref:
             try:
@@ -1813,6 +1790,7 @@ conditions; see `cylc conditions`.
                 LOG.exception(exc)
 
         if self.proc_pool:
+            self.proc_pool.close()
             if self.proc_pool.is_not_done():
                 # e.g. KeyboardInterrupt
                 self.proc_pool.terminate()
@@ -1854,7 +1832,10 @@ conditions; see `cylc conditions`.
         # suite is not fully configured before the shutdown is called.
         if getattr(self, "config", None) is not None:
             # run shutdown handlers
-            self.run_event_handlers(self.EVENT_SHUTDOWN, str(reason))
+            if isinstance(reason, CylcError):
+                self.run_event_handlers(self.EVENT_SHUTDOWN, reason.args[0])
+            else:
+                self.run_event_handlers(self.EVENT_ABORTED, str(reason))
 
     def set_stop_point(self, stop_point_string):
         """Set stop point."""

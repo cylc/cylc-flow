@@ -26,7 +26,7 @@ SYM_SUITE_RUND="${SUITE_RUN_DIR}-sym"
 SYM_SUITE_NAME="${SUITE_NAME}-sym"
 ln -s "$(basename "${SUITE_NAME}")" "${SYM_SUITE_RUND}"
 run_fail "${TEST_NAME_BASE}-run" cylc run "${SYM_SUITE_NAME}" --debug --no-detach
-grep_ok 'Suite shutting down.*ERROR: unable to open database file' \
+grep_ok 'CRITICAL - Suite shutting down - unable to open database file' \
     "${SUITE_RUN_DIR}/log/suite/log".*
 
 rm -f "${SYM_SUITE_RUND}"
