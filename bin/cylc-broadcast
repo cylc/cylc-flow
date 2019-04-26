@@ -91,7 +91,7 @@ from cylc.network.client import SuiteRuntimeClient
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.print_tree import print_tree
 from cylc.task_id import TaskID
-from parsec.config import ParsecConfig
+from cylc.parsec.config import ParsecConfig
 
 
 REC_ITEM = re.compile(r'^\[([^\]]*)\](.*)$')

@@ -19,7 +19,7 @@
 
 import os
 import sys
-from parsec import LOG
+from cylc.parsec import LOG
 
 
 def environ_init():

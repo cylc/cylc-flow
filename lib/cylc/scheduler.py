@@ -31,7 +31,7 @@ import traceback
 from uuid import uuid4
 
 from isodatetime.parsers import TimePointParser
-from parsec.util import printcfg
+from cylc.parsec.util import printcfg
 
 from cylc import LOG
 from cylc.broadcast_mgr import BroadcastMgr

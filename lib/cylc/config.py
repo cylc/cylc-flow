@@ -37,8 +37,8 @@ import traceback
 
 from isodatetime.data import Calendar
 from isodatetime.parsers import DurationParser
-from parsec.OrderedDict import OrderedDictWithDefaults
-from parsec.util import replicate
+from cylc.parsec.OrderedDict import OrderedDictWithDefaults
+from cylc.parsec.util import replicate
 
 from cylc import LOG
 from cylc.c3mro import C3

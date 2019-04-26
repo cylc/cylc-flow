@@ -34,7 +34,7 @@ from shlex import quote
 import shlex
 from time import time
 
-from parsec.config import ItemNotFoundError
+from cylc.parsec.config import ItemNotFoundError
 
 from cylc import LOG
 from cylc.cfgspec.glbl_cfg import glbl_cfg

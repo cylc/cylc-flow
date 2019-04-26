@@ -19,8 +19,8 @@
 
 from isodatetime.data import Calendar
 
-from parsec.upgrade import upgrader
-from parsec.config import ParsecConfig
+from cylc.parsec.upgrade import upgrader
+from cylc.parsec.config import ParsecConfig
 
 from cylc.cfgvalidate import (
     cylc_config_validate, CylcConfigValidator as VDR, DurationFloat)

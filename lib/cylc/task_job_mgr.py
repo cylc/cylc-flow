@@ -33,7 +33,7 @@ from shutil import rmtree
 from time import time
 import traceback
 
-from parsec.util import pdeepcopy, poverride
+from cylc.parsec.util import pdeepcopy, poverride
 
 from cylc import LOG
 from cylc.batch_sys_manager import JobPollContext

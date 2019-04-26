@@ -23,9 +23,9 @@ import re
 import shutil
 from tempfile import mkdtemp
 
-from parsec.config import ParsecConfig
-from parsec.exceptions import ParsecError
-from parsec.upgrade import upgrader
+from cylc.parsec.config import ParsecConfig
+from cylc.parsec.exceptions import ParsecError
+from cylc.parsec.upgrade import upgrader
 
 from cylc import LOG
 from cylc.cfgvalidate import (

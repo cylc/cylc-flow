@@ -42,7 +42,7 @@ from collections import deque
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.terminal import cli_function
-from parsec.include import inline
+from cylc.parsec.include import inline
 
 
 def section_level(heading):

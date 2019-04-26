@@ -32,7 +32,7 @@ from cylc.exceptions import (
     SequenceDegenerateError, PointParsingError, IntervalParsingError
 )
 from cylc.wallclock import get_current_time_string
-from parsec.validate import IllegalValueError
+from cylc.parsec.validate import IllegalValueError
 
 CYCLER_TYPE_ISO8601 = "iso8601"
 CYCLER_TYPE_SORT_KEY_ISO8601 = "b"

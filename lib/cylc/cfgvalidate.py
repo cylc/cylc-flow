@@ -25,7 +25,7 @@ import re
 from isodatetime.data import Calendar, Duration, TimePoint
 from isodatetime.dumpers import TimePointDumper
 from isodatetime.parsers import DurationParser, TimePointParser
-from parsec.validate import ParsecValidator, IllegalValueError
+from cylc.parsec.validate import ParsecValidator, IllegalValueError
 
 from cylc.subprocctx import SubFuncContext
 
