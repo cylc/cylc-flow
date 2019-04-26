@@ -46,8 +46,8 @@ To change the test file comparision command from "diff -u" do (for example):
 
 Some test suites submit jobs to the 'at' so atd must be up on the job hosts.
 
-Commits or Pull Requests to cylc/cylc on GitHub will trigger Travis CI to run
-generic (non platform-specific) tests - see $CYLC_DIR/.travis.yml.
+Commits or Pull Requests to cylc/cylc-flow on GitHub will trigger Travis CI to
+run generic (non platform-specific) tests - see $CYLC_DIR/.travis.yml.
 
 By default all tests are executed.  To run just a subset of them:
   * list individual tests or test directories to run on the comand line
