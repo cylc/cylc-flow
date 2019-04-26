@@ -9,7 +9,7 @@ project.
 
 ## Reporting a Bug
 
-The Cylc team take security bugs seriously. Thank you for improving the
+The Cylc maintainers take security bugs seriously. Thank you for improving the
 security of Cylc. We appreciate your efforts and responsible disclosure and
 will make every effort to acknowledge your contributions.
 
@@ -24,8 +24,9 @@ the module.
 
 ## Disclosure Policy
 
-When the team receives a security bug report, they will assign it to a primary
-handler. This person will coordinate the fix and release process as follows:
+When the Cylc maintainers receive a security bug report, they will assign it to
+a primary handler. This person will coordinate the fix and release process as
+follows:
 
   * Confirm the problem and determine the affected versions.
   * Audit code to find any potential similar problems.
