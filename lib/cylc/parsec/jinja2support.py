@@ -35,7 +35,7 @@ from jinja2 import (
     TemplateNotFound,
     TemplateSyntaxError)
 
-from cylc.parsec import LOG
+from cylc import LOG
 from cylc.parsec.exceptions import Jinja2Error
 
 

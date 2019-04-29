@@ -36,7 +36,7 @@ import os
 import sys
 import re
 
-from cylc.parsec import LOG
+from cylc import LOG
 from cylc.parsec.exceptions import ParsecError, FileParseError
 from cylc.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.parsec.include import inline

@@ -16,10 +16,3 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Parsec - library for parsing nested Cylc's INI-style configuration."""
-
-import logging
-
-
-LOG = logging.getLogger('cylc')  # Acceptable?
-if hasattr(logging, 'NullHandler'):  # Back compat Python <2.7
-    LOG.addHandler(logging.NullHandler())  # Start with a null handler

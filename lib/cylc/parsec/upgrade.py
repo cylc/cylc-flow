@@ -19,7 +19,7 @@
 
 from logging import DEBUG, WARNING
 
-from cylc.parsec import LOG
+from cylc import LOG
 from cylc.parsec.exceptions import UpgradeError
 from cylc.parsec.OrderedDict import OrderedDict
 
