@@ -19,12 +19,12 @@
 import tempfile
 import unittest
 
-from cylc.parsec import config, validate
-from cylc.parsec.exceptions import ParsecError
-from cylc.cfgvalidate import CylcConfigValidator as VDR
-from cylc.cfgvalidate import cylc_config_validate
+from cylc.parsec import config
 from cylc.parsec.OrderedDict import OrderedDictWithDefaults
+from cylc.parsec.exceptions import ParsecError
 from cylc.parsec.upgrade import upgrader
+from cylc.parsec.validate import (
+    cylc_config_validate, IllegalItemError, CylcConfigValidator as VDR)
 
 SAMPLE_SPEC_1 = {
     'section1': {
@@ -176,7 +176,7 @@ class TestConfig(unittest.TestCase):
         sparse = OrderedDictWithDefaults()
         parsec_config.validate(sparse)  # empty dict is OK
 
-        with self.assertRaises(validate.IllegalItemError):
+        with self.assertRaises(IllegalItemError):
             sparse = OrderedDictWithDefaults()
             sparse['name'] = 'True'
             parsec_config.validate(sparse)  # name is not valid
