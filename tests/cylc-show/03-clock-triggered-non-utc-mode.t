@@ -23,15 +23,16 @@ set_test_number 3
 install_suite $TEST_NAME_BASE clock-triggered-non-utc-mode
 #-------------------------------------------------------------------------------
 TEST_SHOW_OUTPUT_PATH="$PWD/$TEST_NAME_BASE-show.stdout"
-TZ_OFFSET_EXTENDED=$(date +%:::z | sed "/^%/d")
-if [[ -z "$TZ_OFFSET_EXTENDED" ]]; then
+TZ_OFFSET_EXTENDED=$(date +%:z | sed "/^%/d")
+if [[ -z "${TZ_OFFSET_EXTENDED}" ]]; then
     skip 3 "'date' command doesn't support '%:::z'"
     exit 0
 fi
-if [[ TZ_OFFSET_EXTENDED -eq "+00" ]]; then
+if [[ "${TZ_OFFSET_EXTENDED}" == "+00:00" ]]; then
     TZ_OFFSET_EXTENDED=Z
 fi
-TZ_OFFSET_BASIC=${TZ_OFFSET_EXTENDED/:/}
+TZ_OFFSET_BASIC=${TZ_OFFSET_EXTENDED/:00/}
+TZ_OFFSET_BASIC=${TZ_OFFSET_BASIC/:/}
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate \
@@ -48,13 +49,14 @@ TEST_NAME=$TEST_NAME_BASE-show
 contains_ok $TEST_NAME.stdout <<__SHOW_OUTPUT__
 title: (not given)
 description: (not given)
+URL: (not given)
 
 prerequisites (- => not satisfied):
   - show.20140808T0900$TZ_OFFSET_BASIC succeeded
 
 outputs (- => not completed):
-  - foo.20140808T0900$TZ_OFFSET_BASIC started
   - foo.20140808T0900$TZ_OFFSET_BASIC submitted
+  - foo.20140808T0900$TZ_OFFSET_BASIC started
   - foo.20140808T0900$TZ_OFFSET_BASIC succeeded
 
 other:
