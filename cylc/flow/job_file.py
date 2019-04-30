@@ -322,6 +322,6 @@ class JobFileWriter(object):
     @staticmethod
     def _write_epilogue(handle, job_conf):
         """Write epilogue."""
-        handle.write('\n\n. "${CYLC_DIR}/cylc/flow/job.sh"\ncylc__job__main')
+        handle.write('\n\n. "${CYLC_DIR}/job.sh"\ncylc__job__main')
         handle.write("\n\n%s%s\n" % (
             BatchSysManager.LINE_PREFIX_EOF, job_conf['job_d']))

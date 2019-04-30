@@ -18,7 +18,6 @@
 """Set up the cylc environment."""
 
 import os
-import sys
 import logging
 
 
@@ -28,14 +27,8 @@ LOG.addHandler(logging.NullHandler())  # Start with a null handler
 
 def environ_init():
     """Initialise cylc environment."""
-    cylc_dir_lib = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-    environ_path_add([cylc_dir_lib], 'PYTHONPATH')
-    # Ensure cylc library is at the front of "sys.path".
-    if sys.path[0:1] != [cylc_dir_lib]:
-        if cylc_dir_lib in sys.path:
-            sys.path.remove(cylc_dir_lib)
-        sys.path.insert(0, cylc_dir_lib)
-    os.environ['CYLC_DIR'] = os.path.dirname(cylc_dir_lib)
+    cylc_dir_lib = os.path.dirname(os.path.realpath(__file__))
+    os.environ['CYLC_DIR'] = cylc_dir_lib
     if os.getenv('CYLC_SUITE_DEF_PATH', ''):
         environ_path_add([os.getenv('CYLC_SUITE_DEF_PATH')])
 
