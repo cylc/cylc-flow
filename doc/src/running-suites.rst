@@ -1370,8 +1370,8 @@ suite to finish and shut down.  Here's the complete suite log for this run:
    2017-03-30T09:46:10Z INFO - Cold Start 2017-01-01T00Z
    2017-03-30T09:46:11Z INFO - [foo.2017-01-01T00Z] -submit_method_id=3507
    2017-03-30T09:46:11Z INFO - [foo.2017-01-01T00Z] -submission succeeded
-   2017-03-30T09:46:11Z INFO - [foo.2017-01-01T00Z] -(current:submitted)> started at 2017-03-30T09:46:10Z
-   2017-03-30T09:46:41Z CRITICAL - [foo.2017-01-01T00Z] -(current:running)> failed/EXIT at 2017-03-30T09:46:40Z
+   2017-03-30T09:46:11Z INFO - [foo.2017-01-01T00Z] status=submitted: (received)started at 2017-03-30T09:46:10Z for job(01)
+   2017-03-30T09:46:41Z CRITICAL - [foo.2017-01-01T00Z] status=running: (received)failed/EXIT at 2017-03-30T09:46:40Z for job(01)
    2017-03-30T09:46:42Z WARNING - suite stalled
    2017-03-30T09:46:42Z WARNING - Unmet prerequisites for bar.2017-01-01T00Z:
    2017-03-30T09:46:42Z WARNING -  * foo.2017-01-01T00Z succeeded
@@ -1380,8 +1380,8 @@ suite to finish and shut down.  Here's the complete suite log for this run:
    2017-03-30T09:47:58Z INFO - Command succeeded: reset_task_states(['foo.2017'], state=succeeded)
    2017-03-30T09:47:59Z INFO - [bar.2017-01-01T00Z] -submit_method_id=3565
    2017-03-30T09:47:59Z INFO - [bar.2017-01-01T00Z] -submission succeeded
-   2017-03-30T09:47:59Z INFO - [bar.2017-01-01T00Z] -(current:submitted)> started at 2017-03-30T09:47:58Z
-   2017-03-30T09:48:29Z INFO - [bar.2017-01-01T00Z] -(current:running)> succeeded at 2017-03-30T09:48:28Z
+   2017-03-30T09:47:59Z INFO - [bar.2017-01-01T00Z] status=submitted: (received)started at 2017-03-30T09:47:58Z for job(01)
+   2017-03-30T09:48:29Z INFO - [bar.2017-01-01T00Z] status=running: (received)succeeded at 2017-03-30T09:48:28Z for job(01)
    2017-03-30T09:48:30Z INFO - Waiting for the command process pool to empty for shutdown
    2017-03-30T09:48:30Z INFO - Suite shutting down - AUTOMATIC
 

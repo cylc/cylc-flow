@@ -19,7 +19,7 @@
 wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
 if [[ "${CYLC_TASK_CYCLE_POINT}" == '2017' ]]; then
     LOG="${CYLC_SUITE_LOG_DIR}/log"
-    while ! grep -qF '[t1.2017] -(current:submitted)> started' "${LOG}"; do
+    while ! grep -qF '[t1.2017] status=submitted: (received)started' "${LOG}"; do
         sleep 1  # make sure started message is recorded in suite
     done
     sleep 2

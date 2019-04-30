@@ -56,24 +56,24 @@ print(
 __PYTHON__
 }
 #-------------------------------------------------------------------------------
-LOG_FILE="${SUITE_RUN_DIR}/log/suite/log"
+LOG="${SUITE_RUN_DIR}/log/suite/log"
 # Test logging of the "next job poll" message when task starts.
 TEST_NAME="${TEST_NAME_BASE}-log-entry"
-LINE=$(grep -A 1 '[foo.1].*current\:submitted.*started' "${LOG_FILE}" | tail -1)
+LINE="$(grep -F '[foo.1] -health check settings: execution timeout=PT10S' "${LOG}")"
 run_ok "${TEST_NAME}" grep -q 'health check settings: execution timeout=PT10S' \
     <<< "${LINE}"
 # Determine poll times.
 PREDICTED_POLL_TIME=$(time_offset \
     "$(cut -d ' ' -f 1 <<< "${LINE}")" \
-    "$(sed 's/.*execution timeout=\([^,]\+\).*/\1/' <<< "${LINE}")")
+    "$(sed -n 's/^.*execution timeout=\([^,]\+\).*$/\1/p' <<< "${LINE}")")
 ACTUAL_POLL_TIME=$(sed -n \
-    's/\(.*\) INFO - \[foo.1\] -(current:running)(polled) failed .*/\1/p' \
-    "${LOG_FILE}")
+    's/\(.*\) INFO - \[foo.1\] status=running: (polled)failed .*/\1/p' \
+    "${LOG}")
 # Test execution timeout polling.
 # Main loop is roughly 1 second, but integer rounding may give an apparent 2
 # seconds delay, so set threshold as 2 seconds.
 run_ok "${TEST_NAME_BASE}-poll-time" \
-    cmp_times "${PREDICTED_POLL_TIME}" "${ACTUAL_POLL_TIME}" '2'
+    cmp_times "${PREDICTED_POLL_TIME}" "${ACTUAL_POLL_TIME}" '10'
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"
 exit
