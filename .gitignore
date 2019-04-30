@@ -40,6 +40,7 @@ build
 dist
 MANIFEST
 cylc.egg-info
+cylc_flow.egg-info
 .eggs
 
 # virtualenv
