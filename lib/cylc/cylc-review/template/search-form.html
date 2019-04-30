@@ -2,7 +2,7 @@
   <form name="file-search" role="search" action="#" onsubmit="return false">
     <input type="hidden" name="search-mode" value="TEXT">
     <input type="hidden" value="{{user}}" name="user">
-    <input type="hidden" value="{{suite|replace("/", "%2F")}}" name="suite">
+    <input type="hidden" value="{{suite|urlencode|replace("/", "%2F")}}" name="suite">
     <input type="hidden" value="{{path}}" name="path">
     <input type="hidden" value="{{path_in_tar}}" name="path_in_tar">
     <input type="hidden" value="{{mode}}" name="mode">
