@@ -3,21 +3,22 @@
 ## Report Bugs
 
 Report bugs by opening an issue at [Cylc Issues on 
-Github](https://github.com/cylc/cylc/issues). Give the Cylc version affected
-by the bug (you should test the latest release if possible) and a recipe to
-reproduce the problem.
+Github](https://github.com/cylc/cylc-flow/issues). Give the Cylc version
+affected by the bug (you should test the latest release if possible) and a
+recipe to reproduce the problem.
 
 ## Request Enhancements
 
 Request enhancements by opening an issue at [Cylc Issues @
-Github](https://github.com/cylc/cylc/issues). Describe your use case in detail.
+Github](https://github.com/cylc/cylc-flow/issues). Describe your use case in
+detail.
 
 ## Contribute Code
 
 All contributions to Cylc are made via Pull Requests against the *master*
-branch of [cylc/cylc](https://github.com/cylc/cylc). Non-trivial
+branch of [cylc/cylc-flow](https://github.com/cylc/cylc-flow). Non-trivial
 developments must be discussed and agreed in advance in a [Cylc
-Issue](https://github.com/cylc/cylc/issues) as the team may not be able to
+Issue](https://github.com/cylc/cylc-flow/issues) as the team may not be able to
 consider large changes that appear out of the blue. New contributors should
 add their details to the [Code Contributors](#code-contributors) section of
 this file as part of their first Pull Request, and reviewers are responsible

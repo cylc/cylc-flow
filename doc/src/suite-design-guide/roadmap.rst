@@ -29,7 +29,7 @@ suite, which breaks the otherwise clean separation into core and site files.
 
 .. note::
 
-   In the future we `plan to <https://github.com/cylc/cylc/issues/1363>`_
+   In the future we `plan to <https://github.com/cylc/cylc-flow/issues/1363>`_
    support add, subtract, unset, and override semantics for all items.
 
 

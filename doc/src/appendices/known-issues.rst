@@ -10,7 +10,7 @@ Current Known Issues
 --------------------
 
 The best place to find current known issues is on
-`GitHub <https://github.com/cylc/cylc/issues>`_.
+`GitHub <https://github.com/cylc/cylc-flow/issues>`_.
 
 
 .. _NotableKnownIssues:

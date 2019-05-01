@@ -15,8 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test validatation error message on zero-width date-time interval.
-# See issue cylc/cylc#1800.
+# Test validation error message on zero-width date-time interval.
+# See issue cylc/cylc-flow#1800.
 . "$(dirname "$0")/test_header"
 set_test_number 2
 
