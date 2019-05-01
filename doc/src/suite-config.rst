@@ -2073,10 +2073,10 @@ must:
    - alphanumeric characters or underscores (as above);
    - any of these additional character symbols:
 
-     - dashes (``-``);
+     - hyphens (``-``);
      - plus characters (``+``);
-     - the percent sign (``%``);
-     - the "at" sign (``@``).
+     - percent signs (``%``);
+     - "at" signs (``@``).
 
 3. not be so long, typically over ``255`` characters, as to raise errors
    from exceeding maximum filename length on the operating system for
