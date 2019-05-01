@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test reset succeeded task to waiting will reset its outputs.
-# https://github.com/cylc/cylc/issues/2115
+# https://github.com/cylc/cylc-flow/issues/2115
 . "$(dirname "$0")/test_header"
 set_test_number 2
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"

@@ -89,7 +89,7 @@ run_tests() {
 
 # Programs running in some environment is unable to trap SIGUSR1. E.g.:
 # An environment documented in this comment:
-# https://github.com/cylc/cylc/pull/1648#issuecomment-149348410
+# https://github.com/cylc/cylc-flow/pull/1648#issuecomment-149348410
 trap 'run_tests' 'SIGUSR1'
 kill -s 'SIGUSR1' "$$"
 sleep 1

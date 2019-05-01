@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test "cylc trigger" a task should reset its output to incomplete.
-# https://github.com/cylc/cylc/issues/1852
+# https://github.com/cylc/cylc-flow/issues/1852
 . "$(dirname "$0")/test_header"
 
 set_test_number 2

@@ -1382,7 +1382,7 @@ see `COPYING' in the Cylc source distribution.
             ('stop_clock_time', self.stop_clock_time),
             ('stop_point', (self.stop_point and
                             self.stop_point != self.final_point)),
-            # ^ https://github.com/cylc/cylc/issues/2799#issuecomment-436720805
+            # ^ cylc/cylc-flow/issues/2799#issuecomment-436720805
             ('stop_task', self.stop_task)
         ] if value]
 

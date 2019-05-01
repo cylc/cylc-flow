@@ -41,7 +41,7 @@ TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME_BASE}" <<< '
     abort if any task fails = True
 [scheduling]
     initial cycle point = 2000
-    final cycle point = 9999  # test https://github.com/cylc/cylc/issues/2799
+    final cycle point = 9999  # test cylc/cylc-flow/issues/2799
     [[dependencies]]
         [[[P1Y]]]
             graph = foo[-P1Y] => foo
