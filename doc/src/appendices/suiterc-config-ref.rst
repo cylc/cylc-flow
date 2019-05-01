@@ -1252,15 +1252,11 @@ hierarchies. For details and examples see :ref:`NIORP`.
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Replace ``\_\_NAME\_\_`` with a namespace name, or a comma-separated list of
-names, and repeat as needed to define all tasks in the suite. Names may
-contain letters, digits, underscores, and hyphens. A namespace
-represents a group or family of tasks if other namespaces inherit from
-it, or a task if no others inherit from it.
+names, and repeat as needed to define all tasks in the suite. Names must
+be valid according to the restrictions outlined in :ref:`TaskNames`.
 
-  Names may not contain colons (which would preclude use of directory paths
-  involving the registration name in ``$PATH`` variables). They
-  may not contain the "." character (it will be interpreted as the
-  namespace hierarchy delimiter, separating groups and names -huh?).
+A namespace represents a group or family of tasks if other namespaces
+inherit from it, or a task if no others inherit from it.
 
 - *legal values*:
   - ``[[foo]]``
