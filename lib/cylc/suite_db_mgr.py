@@ -264,18 +264,18 @@ class SuiteDatabaseManager(object):
         Arguments:
             schd (cylc.scheduler.Scheduler): scheduler object.
         """
-        if schd.final_point is None:
+        if schd.config.final_point is None:
             # Store None as proper null value in database. No need to do this
             # for initial cycle point, which should never be None.
             final_point_str = None
         else:
-            final_point_str = str(schd.final_point)
+            final_point_str = str(schd.config.final_point)
         self.db_inserts_map[self.TABLE_SUITE_PARAMS].extend([
             {"key": "uuid_str", "value": str(schd.uuid_str)},
             {"key": "run_mode", "value": schd.run_mode},
             {"key": "cylc_version", "value": CYLC_VERSION},
             {"key": "UTC_mode", "value": get_utc_mode()},
-            {"key": "initial_point", "value": str(schd.initial_point)},
+            {"key": "initial_point", "value": str(schd.config.initial_point)},
             {"key": "final_point", "value": final_point_str},
         ])
         if schd.config.cfg['cylc']['cycle point format']:
@@ -285,9 +285,16 @@ class SuiteDatabaseManager(object):
         if schd.pool.is_held:
             self.db_inserts_map[self.TABLE_SUITE_PARAMS].append({
                 "key": "is_held", "value": 1})
+        if schd.options.final_point_string:
+            self.db_inserts_map[self.TABLE_SUITE_PARAMS].append({
+                "key": "override_final_point",
+                "value": schd.options.final_point_string})
         if schd.cli_start_point_string:
             self.db_inserts_map[self.TABLE_SUITE_PARAMS].append({
                 "key": "start_point", "value": schd.cli_start_point_string})
+        if schd.options.stop_point_string:
+            self.db_inserts_map[self.TABLE_SUITE_PARAMS].append({
+                "key": "stop_point", "value": schd.options.stop_point_string})
 
     def put_suite_template_vars(self, template_vars):
         """Put template_vars in runtime database.

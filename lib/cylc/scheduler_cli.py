@@ -173,7 +173,7 @@ def parse_commandline(is_restart):
                 "Ignore the final cycle point in the suite run database. " +
                 "If one is specified in the suite definition it will " +
                 "be used, however."),
-            action="store_true", default=False, dest="ignore_stop_point")
+            action="store_true", default=False, dest="ignore_final_point")
 
         parser.add_option(
             "--ignore-initial-cycle-point",
@@ -181,7 +181,17 @@ def parse_commandline(is_restart):
                 "Ignore the initial cycle point in the suite run database. " +
                 "If one is specified in the suite definition it will " +
                 "be used, however."),
+            action="store_true", default=False, dest="ignore_initial_point")
+
+        parser.add_option(
+            "--ignore-start-cycle-point",
+            help="Ignore the start cycle point in the suite run database.",
             action="store_true", default=False, dest="ignore_start_point")
+
+        parser.add_option(
+            "--ignore-stop-cycle-point",
+            help="Ignore the stop cycle point in the suite run database.",
+            action="store_true", default=False, dest="ignore_stop_point")
     else:
         parser.add_option(
             "-w", "--warm",
@@ -203,7 +213,7 @@ def parse_commandline(is_restart):
     parser.add_option(
         "--hold",
         help="Hold (don't run tasks) immediately on starting.",
-        action="store_true", default=False, dest="start_held")
+        action="store_true", dest="start_held")
 
     parser.add_option(
         "--hold-after",
@@ -232,6 +242,8 @@ def parse_commandline(is_restart):
         help="Specify the host on which to start-up the suite. Without this "
         "set a host will be selected using the 'suite servers' global config.",
         metavar="HOST", action="store", dest="host")
+
+    parser.set_defaults(stop_point_string=None)
 
     options, args = parser.parse_args()
 

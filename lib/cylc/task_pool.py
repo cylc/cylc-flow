@@ -70,10 +70,10 @@ class TaskPool(object):
     STOP_REQUEST_NOW = 'REQUEST(NOW)'
     STOP_REQUEST_NOW_NOW = 'REQUEST(NOW-NOW)'
 
-    def __init__(self, config, stop_point, suite_db_mgr, task_events_mgr,
+    def __init__(self, config, suite_db_mgr, task_events_mgr,
                  proc_pool, xtrigger_mgr):
         self.config = config
-        self.stop_point = stop_point
+        self.stop_point = config.final_point
         self.suite_db_mgr = suite_db_mgr
         self.task_events_mgr = task_events_mgr
         self.proc_pool = proc_pool
@@ -686,15 +686,18 @@ class TaskPool(object):
                 max_offset = itask.tdef.max_future_prereq_offset
         self.max_future_offset = max_offset
 
-    def set_do_reload(self, config, stop_point):
+    def set_do_reload(self, config, stop_point_str):
         """Set the task pool to reload mode."""
         self.config = config
+        if stop_point_str:
+            self.stop_point = get_point(stop_point_str)
+        else:
+            self.stop_point = config.final_point
         self.do_reload = True
 
         self.custom_runahead_limit = self.config.get_custom_runahead_limit()
         self.max_num_active_cycle_points = (
             self.config.get_max_num_active_cycle_points())
-        self.stop_point = stop_point
 
         # reassign live tasks from the old queues to the new.
         # self.queues[queue][id_] = task
@@ -760,6 +763,9 @@ class TaskPool(object):
 
     def set_stop_point(self, stop_point):
         """Set the global suite stop point."""
+        if self.stop_point == stop_point:
+            return
+        LOG.info("Setting stop cycle point: %s", stop_point)
         self.stop_point = stop_point
         for itask in self.get_tasks():
             # check cycle stop or hold conditions
@@ -771,6 +777,7 @@ class TaskPool(object):
                     itask,
                     self.stop_point)
                 itask.state.set_held()
+        return self.stop_point
 
     def can_stop(self, stop_mode):
         """Return True if suite can stop.

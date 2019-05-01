@@ -31,8 +31,7 @@ suite_run_ok "${TEST_NAME_BASE}-restart" cylc restart --debug --no-detach "${SUI
 sed 's/^.* INFO - //' "${SUITE_RUN_DIR}/log/suite/log" >'edited.log'
 contains_ok 'edited.log' <<'__OUT__'
 LOADING suite parameters
-+ initial cycle point = 20000101T0000Z
-+ final cycle point = 20030101T0000Z
++ initial point = 20000101T0000Z
 LOADING broadcast states
 + [root.*] [environment]CYLC_TEST_VAR=hello
 LOADING task run times
@@ -66,7 +65,7 @@ run_ok "${TEST_NAME_BASE}-suite_params_checkpoints" \
     sqlite3 "${SUITE_RUN_DIR}/log/db" \
     'SELECT key,value FROM suite_params_checkpoints WHERE id==1 ORDER BY key'
 cmp_ok "${TEST_NAME_BASE}-suite_params_checkpoints.stdout" <<__OUT__
-final_point|20030101T0000Z
+final_point|20050101T0000Z
 initial_point|20000101T0000Z
 run_mode|live
 __OUT__

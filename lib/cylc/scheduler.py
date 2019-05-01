@@ -207,13 +207,11 @@ class Scheduler(object):
 
         # TODO - stop task should be held by the task pool.
         self.stop_task = None
-        self.stop_point = None
         self.stop_clock_time = None  # When not None, in Unix time
         self.stop_clock_time_string = None  # Human-readable format.
 
         self.initial_point = None
         self.start_point = None
-        self.final_point = None
         self.pool_hold_point = None
         self.suite_timer_timeout = 0.0
         self.suite_timer_active = False
@@ -373,7 +371,7 @@ conditions; see `cylc conditions`.
             # This logic handles the lack of initial cycle point in "suite.rc".
             # Things that can't change on suite reload.
             pri_dao = self.suite_db_mgr.get_pri_dao()
-            pri_dao.select_suite_params(self._load_suite_params_1)
+            pri_dao.select_suite_params(self._load_suite_params)
             # Configure contact data only after loading UUID string
             self.configure_contact()
             pri_dao.select_suite_template_vars(self._load_template_vars)
@@ -453,10 +451,10 @@ conditions; see `cylc conditions`.
         LOG.info('Initial point: %s', self.initial_point, extra=log_extra)
         if self.start_point != self.initial_point:
             LOG.info('Start point: %s', self.start_point, extra=log_extra)
-        LOG.info('Final point: %s', self.final_point, extra=log_extra)
+        LOG.info('Final point: %s', self.config.final_point, extra=log_extra)
 
         self.pool = TaskPool(
-            self.config, self.final_point, self.suite_db_mgr,
+            self.config, self.suite_db_mgr,
             self.task_events_mgr, self.proc_pool, self.xtrigger_mgr)
 
         self.profiler.log_memory("scheduler.py: before load_tasks")
@@ -504,8 +502,6 @@ conditions; see `cylc conditions`.
 
     def load_tasks_for_restart(self):
         """Load tasks for restart."""
-        self.suite_db_mgr.pri_dao.select_suite_params(
-            self._load_suite_params_2, self.options.checkpoint)
         if self.cli_start_point_string:
             self.start_point = self.cli_start_point_string
         self.suite_db_mgr.pri_dao.select_broadcast_states(
@@ -537,44 +533,8 @@ conditions; see `cylc conditions`.
                 # Remote init is done via process pool
                 self.proc_pool.process()
         self.command_poll_tasks()
-
-    def _load_suite_params_2(self, row_idx, row):
-        """Load previous initial/final cycle point."""
-        if row_idx == 0:
-            LOG.info("LOADING suite parameters")
-        key, value = row
-        if key == "is_held":
-            self.pool.is_held = bool(value)
-            LOG.info("+ hold suite = %s" % (bool(value),))
-            return
-        for key_str, self_attr, option_ignore_attr in [
-                ("initial", "start_point", "ignore_start_point"),
-                ("final", "stop_point", "ignore_stop_point")]:
-            if key != key_str + "_point" or value is None or value == 'None':
-                continue
-            # the suite_params table prescribes a start/stop cycle
-            # (else we take whatever the suite.rc file gives us)
-            point = get_point(value)
-            my_point = getattr(self, self_attr)
-            if getattr(self.options, option_ignore_attr):
-                # ignore it and take whatever the suite.rc file gives us
-                if my_point is not None:
-                    LOG.warning(
-                        "I'm ignoring the old " + key_str +
-                        " cycle point as requested,\n"
-                        "but I can't ignore the one set"
-                        " on the command line or in the suite definition.")
-            elif my_point is not None:
-                # Given in the suite.rc file
-                if my_point != point:
-                    LOG.warning(
-                        "old %s cycle point %s, overriding suite.rc %s" %
-                        (key_str, point, my_point))
-                    setattr(self, self_attr, point)
-            else:
-                # reinstate from old
-                setattr(self, self_attr, point)
-            LOG.info("+ %s cycle point = %s" % (key_str, value))
+        if self.options.stop_point_string:
+            self.pool.set_stop_point(get_point(self.options.stop_point_string))
 
     def _load_task_run_times(self, row_idx, row):
         """Load run times of previously succeeded task jobs."""
@@ -858,7 +818,10 @@ conditions; see `cylc conditions`.
 
     def command_set_stop_after_point(self, point_string):
         """Set stop after ... point."""
-        self.set_stop_point(self.get_standardised_point_string(point_string))
+        stop_point = self.get_standardised_point(point_string)
+        if self.pool.set_stop_point(stop_point):
+            self.options.stop_point_string = str(stop_point)
+            self.suite_db_mgr.put_suite_params(self)
 
     def command_set_stop_after_clock_time(self, arg):
         """Set stop after clock time.
@@ -867,15 +830,15 @@ conditions; see `cylc conditions`.
         """
         parser = TimePointParser()
         try:
-            stop_point = parser.parse(arg)
+            stop_time = parser.parse(arg)
         except ValueError as exc:
             try:
-                stop_point = parser.strptime(arg, "%Y/%m/%d-%H:%M")
+                stop_time = parser.strptime(arg, "%Y/%m/%d-%H:%M")
             except ValueError:
                 raise exc  # Raise the first (prob. more relevant) ValueError.
-        stop_time_in_epoch_seconds = int(stop_point.get(
+        stop_time_in_epoch_seconds = int(stop_time.get(
             "seconds_since_unix_epoch"))
-        self.set_stop_clock(stop_time_in_epoch_seconds, str(stop_point))
+        self.set_stop_clock(stop_time_in_epoch_seconds, str(stop_time))
 
     def command_set_stop_after_task(self, task_id):
         """Set stop after a task."""
@@ -962,12 +925,7 @@ conditions; see `cylc conditions`.
         self.load_suiterc(is_reload=True)
         self.broadcast_mgr.linearized_ancestors = (
             self.config.get_linearized_ancestors())
-        self.suite_db_mgr.put_runtime_inheritance(self.config)
-        if self.stop_point is None:
-            stop_point = self.final_point
-        else:
-            stop_point = self.stop_point
-        self.pool.set_do_reload(self.config, stop_point)
+        self.pool.set_do_reload(self.config, self.options.stop_point_string)
         self.task_events_mgr.mail_interval = self._get_cylc_conf(
             "task event mail interval")
         self.task_events_mgr.mail_footer = self._get_events_conf("mail footer")
@@ -980,6 +938,8 @@ conditions; see `cylc conditions`.
 
         if self.options.genref or self.options.reftest:
             self.configure_reftest(recon=True)
+        self.suite_db_mgr.put_suite_template_vars(self.template_vars)
+        self.suite_db_mgr.put_runtime_inheritance(self.config)
         self.suite_db_mgr.put_suite_params(self)
         self.is_updated = True
 
@@ -1096,7 +1056,6 @@ conditions; see `cylc conditions`.
         # self.config already alters the 'initial cycle point' for CLI.
         self.initial_point = self.config.initial_point
         self.start_point = self.config.start_point
-        self.final_point = self.config.final_point
 
         if not self.initial_point and not self.is_restart:
             LOG.warning('No initial cycle point provided - no cycling tasks '
@@ -1114,26 +1073,53 @@ conditions; see `cylc conditions`.
             'CYLC_CYCLING_MODE': str(
                 self.config.cfg['scheduling']['cycling mode']),
             'CYLC_SUITE_INITIAL_CYCLE_POINT': str(self.initial_point),
-            'CYLC_SUITE_FINAL_CYCLE_POINT': str(self.final_point),
+            'CYLC_SUITE_FINAL_CYCLE_POINT': str(self.config.final_point),
         })
 
-    def _load_suite_params_1(self, _, row):
-        """Load previous initial cycle point or (warm) start cycle point.
+    def _load_suite_params(self, row_idx, row):
+        """Load a row in the "suite_params" table in a restart.
 
-        For restart, these may be missing from "suite.rc", but was specified as
-        a command line argument on cold/warm start.
-
+        This currently includes:
+        * Initial/Final cycle points.
+        * Start/Stop Cycle points.
+        * Suite UUID.
+        * A flag to indicate if the suite should be held or not.
         """
+        if row_idx == 0:
+            LOG.info('LOADING suite parameters')
         key, value = row
         if key == 'initial_point':
-            self.cli_initial_point_string = value
-            self.task_events_mgr.pflag = True
+            if self.options.ignore_initial_point:
+                LOG.debug('- initial point = %s' % value)
+            elif self.cli_initial_point_string is None:
+                self.cli_initial_point_string = value
+                LOG.info('+ initial point = %s' % value)
         elif key in ['start_point', 'warm_point']:
             # 'warm_point' for back compat <= 7.6.X
-            self.cli_start_point_string = value
-            self.task_events_mgr.pflag = True
+            if self.options.ignore_start_point:
+                LOG.debug('- start point = %s' % value)
+            elif self.cli_start_point_string is None:
+                self.cli_start_point_string = value
+                LOG.info('+ start point = %s' % value)
+        elif key == 'override_final_point':
+            if self.options.ignore_final_point:
+                LOG.debug('- override final point = %s' % value)
+            elif self.options.final_point_string is None:
+                self.options.final_point_string = value
+                LOG.info('+ override final point = %s' % value)
+        elif key == 'stop_point':
+            if self.options.ignore_stop_point:
+                LOG.debug('- stop point = %s' % value)
+            elif self.options.stop_point_string is None:
+                self.options.stop_point_string = value
+                LOG.info('+ stop point = %s' % value)
         elif key == 'uuid_str':
             self.uuid_str.value = value
+            LOG.info('+ suite UUID = %s', value)
+        elif key == 'is_held':
+            if self.options.start_held is None:
+                self.options.start_held = bool(value)
+                LOG.info('+ hold suite = %s', bool(value))
 
     def _load_template_vars(self, _, row):
         """Load suite start up template variables."""
@@ -1166,7 +1152,8 @@ conditions; see `cylc conditions`.
                 self.initial_point = get_point(spec.get_initial_point_string())
                 self.start_point = get_point(
                     spec.get_start_point_string()) or self.initial_point
-                self.final_point = get_point(spec.get_final_point_string())
+                self.config.final_point = get_point(
+                    spec.get_final_point_string())
             self.ref_test_allowed_failures = rtc['expected task failures']
             if (not rtc['allow task failures'] and
                     not self.ref_test_allowed_failures):
@@ -1465,15 +1452,11 @@ conditions; see `cylc conditions`.
         # Check the suite is auto-restartable see #2799.
         ret = ['Incompatible configuration: "%s"' % key for key, value in [
             ('can_auto_stop', not self.can_auto_stop),
-            ('final_point', self.options.final_point_string),
             ('no_detach', self.options.no_detach),
             ('pool_hold_point', self.pool_hold_point),
             ('run_mode', self.run_mode != 'live'),
             ('stop_clock_time', self.stop_clock_time),
-            ('stop_point', (self.stop_point and
-                            self.stop_point != self.final_point)),
-            # ^ cylc/cylc-flow/issues/2799#issuecomment-436720805
-            ('stop_task', self.stop_task)
+            ('stop_task', self.stop_task),
         ] if value]
 
         # Check whether there is currently an available host to restart on.
@@ -1837,13 +1820,6 @@ conditions; see `cylc conditions`.
             else:
                 self.run_event_handlers(self.EVENT_ABORTED, str(reason))
 
-    def set_stop_point(self, stop_point_string):
-        """Set stop point."""
-        stop_point = get_point(stop_point_string)
-        self.stop_point = stop_point
-        LOG.info("Setting stop cycle point: %s" % stop_point_string)
-        self.pool.set_stop_point(self.stop_point)
-
     def set_stop_clock(self, unix_time, date_time_string):
         """Set stop clock time."""
         LOG.info("Setting stop clock time: %s (unix time: %s)" % (
@@ -1873,6 +1849,7 @@ conditions; see `cylc conditions`.
         """Hold all tasks in suite."""
         if point is None:
             self.pool.hold_all_tasks()
+            self.task_events_mgr.pflag = True
             sdm = self.suite_db_mgr
             sdm.db_inserts_map[sdm.TABLE_SUITE_PARAMS].append(
                 {"key": "is_held", "value": 1})

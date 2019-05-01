@@ -143,18 +143,18 @@ class StateSummaryMgr(object):
         elif schd.pool.hold_point:
             global_summary['status_string'] = (
                 SUITE_STATUS_RUNNING_TO_HOLD % schd.pool.hold_point)
-        elif schd.stop_point:
+        elif schd.pool.stop_point:
             global_summary['status_string'] = (
-                SUITE_STATUS_RUNNING_TO_STOP % schd.stop_point)
+                SUITE_STATUS_RUNNING_TO_STOP % schd.pool.stop_point)
         elif schd.stop_clock_time is not None:
             global_summary['status_string'] = (
                 SUITE_STATUS_RUNNING_TO_STOP % schd.stop_clock_time_string)
         elif schd.stop_task:
             global_summary['status_string'] = (
                 SUITE_STATUS_RUNNING_TO_STOP % schd.stop_task)
-        elif schd.final_point:
+        elif schd.config.final_point:
             global_summary['status_string'] = (
-                SUITE_STATUS_RUNNING_TO_STOP % schd.final_point)
+                SUITE_STATUS_RUNNING_TO_STOP % schd.config.final_point)
         else:
             global_summary['status_string'] = SUITE_STATUS_RUNNING
 

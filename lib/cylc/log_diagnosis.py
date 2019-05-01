@@ -24,12 +24,7 @@ from cylc import LOG
 
 
 class LogAnalyserError(Exception):
-    def __init__(self, msg):
-        Exception.__init__(self, msg)
-        self.msg = msg
-
-    def __str__(self):
-        return repr(self.msg)
+    pass
 
 
 class LogSpec(object):
