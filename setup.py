@@ -143,7 +143,7 @@ setup(
     extras_require=extra_requires,
     project_urls={
         "Documentation": "https://cylc.github.io/documentation.html",
-        "Source": "https://github.com/cylc/cylc",
-        "Tracker": "https://github.com/cylc/cylc/issues"
+        "Source": "https://github.com/cylc/cylc-flow",
+        "Tracker": "https://github.com/cylc/cylc-flow/issues"
     }
 )
