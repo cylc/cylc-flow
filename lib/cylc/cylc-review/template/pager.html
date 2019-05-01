@@ -26,7 +26,7 @@
               <input type="hidden" name="no_fuzzy_time" value="{{no_fuzzy_time}}" />
             {% endif -%}
             {% if suite -%}
-              <input type="hidden" name="suite" value="{{suite|urlencode|replace("/", "%2F")}}" />
+              <input type="hidden" name="suite" value="{{suite}}" />
             {% endif -%}
             {% if cycles -%}
               <input type="hidden" name="cycles" value="{{cycles}}" />
