@@ -2,7 +2,7 @@
 import os
 import sys
 
-from parsec.exceptions import ParsecError
+from cylc.parsec.exceptions import ParsecError
 
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.exceptions import CylcError

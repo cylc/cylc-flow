@@ -62,7 +62,7 @@ import re
 
 from cylc.exceptions import ParamExpandError
 from cylc.task_id import TaskID
-from parsec.OrderedDict import OrderedDictWithDefaults
+from cylc.parsec.OrderedDict import OrderedDictWithDefaults
 
 # To split runtime heading name lists.
 REC_NAMES = re.compile(r'(?:[^,<]|<[^>]*>)+')

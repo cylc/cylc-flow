@@ -32,7 +32,7 @@ import os
 import re
 from time import sleep, time
 
-from parsec.OrderedDict import OrderedDict
+from cylc.parsec.OrderedDict import OrderedDict
 
 from cylc.exceptions import ClientError
 from cylc.option_parsers import CylcOptionParser as COP

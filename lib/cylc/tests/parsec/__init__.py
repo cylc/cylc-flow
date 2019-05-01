@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
@@ -13,18 +15,3 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-[pytest]
-addopts = --verbose
-    --doctest-modules
-    --ignore=lib/cylc/parsec/empysupport.py
-    --ignore=lib/cylc/tests/parsec/getcfg/bin/one-line.py
-    --ignore=lib/cylc/tests/parsec/synonyms/bin/synonyms.py
-    --ignore=lib/cylc/tests/parsec/nullcfg/bin/empty.py
-    --ignore=lib/cylc/parsec/example
-    --ignore=lib/isodatetime
-    --ignore=lib/markupsafe
-testpaths =
-    lib/cylc/
-    lib/Jinja2Filters/
-    tests/lib/python/

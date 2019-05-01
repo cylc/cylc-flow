@@ -23,17 +23,16 @@ import re
 import shutil
 from tempfile import mkdtemp
 
-from parsec.config import ParsecConfig
-from parsec.exceptions import ParsecError
-from parsec.upgrade import upgrader
-
 from cylc import LOG
-from cylc.cfgvalidate import (
-    cylc_config_validate, CylcConfigValidator as VDR, DurationFloat)
+from cylc import __version__ as CYLC_VERSION
 from cylc.exceptions import GlobalConfigError
 from cylc.hostuserutil import get_user_home, is_remote_user
 from cylc.network import Priv
-from cylc import __version__ as CYLC_VERSION
+from cylc.parsec.config import ParsecConfig
+from cylc.parsec.exceptions import ParsecError
+from cylc.parsec.upgrade import upgrader
+from cylc.parsec.validate import (
+    DurationFloat, CylcConfigValidator as VDR, cylc_config_validate)
 
 # Nested dict of spec items.
 # Spec value is [value_type, default, allowed_2, allowed_3, ...]

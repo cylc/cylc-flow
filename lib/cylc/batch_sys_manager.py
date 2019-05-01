@@ -124,7 +124,7 @@ from cylc.task_job_logs import (JOB_LOG_ERR, JOB_LOG_JOB, JOB_LOG_OUT,
                                 JOB_LOG_STATUS)
 from cylc.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.wallclock import get_current_time_string
-from parsec.OrderedDict import OrderedDict
+from cylc.parsec.OrderedDict import OrderedDict
 
 
 class JobPollContext(object):

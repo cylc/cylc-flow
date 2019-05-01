@@ -35,7 +35,7 @@ from fnmatch import fnmatchcase
 import json
 from time import time
 
-from parsec.OrderedDict import OrderedDict
+from cylc.parsec.OrderedDict import OrderedDict
 
 from cylc import LOG
 from cylc.cycling.loader import get_point, standardise_point_string

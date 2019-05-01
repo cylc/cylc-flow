@@ -45,7 +45,7 @@ from cylc.option_parsers import CylcOptionParser as COP
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.templatevars import load_template_vars
 from cylc.terminal import cli_function
-from parsec.fileparse import read_and_proc
+from cylc.parsec.fileparse import read_and_proc
 
 
 def parse_args():

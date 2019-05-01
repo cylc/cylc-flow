@@ -19,7 +19,11 @@
 
 import os
 import sys
-from parsec import LOG
+import logging
+
+
+LOG = logging.getLogger('cylc')  # Acceptable?
+LOG.addHandler(logging.NullHandler())  # Start with a null handler
 
 
 def environ_init():

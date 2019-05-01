@@ -20,7 +20,6 @@
 import os
 import sys
 
-from cylc import LOG
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
 from cylc.host_appointer import HostAppointer, EmptyHostList

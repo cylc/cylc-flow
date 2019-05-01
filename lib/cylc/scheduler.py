@@ -31,7 +31,7 @@ import traceback
 from uuid import uuid4
 
 from isodatetime.parsers import TimePointParser
-from parsec.util import printcfg
+from cylc.parsec.util import printcfg
 
 from cylc import LOG
 from cylc.broadcast_mgr import BroadcastMgr
@@ -1318,7 +1318,7 @@ see `COPYING' in the Cylc source distribution.
         Restart handled by `suite_auto_restart`.
 
         Args:
-            restart_delay (cylc.cfgvalidate.DurationFloat):
+            restart_delay (cylc.parsec.DurationFloat):
                 Suite will wait a random period between 0 and
                 `restart_delay` seconds before attempting to stop/restart in
                 order to avoid multiple suites restarting simultaneously.

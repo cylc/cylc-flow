@@ -67,7 +67,7 @@ from subprocess import call
 from shutil import copy
 
 
-from parsec.include import inline, \
+from cylc.parsec.include import inline, \
     split_file, backup, backups, newfiles, cleanup, modtimes
 
 
