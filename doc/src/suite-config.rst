@@ -2052,10 +2052,47 @@ namespace (as for single-inheritance) is used for suite visualization
 purposes.
 
 
-Namespace Names
-^^^^^^^^^^^^^^^
+.. _TaskNames:
 
-Namespace names may contain letters, digits, underscores, and hyphens.
+Task and Namespace Names
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+There are restrictions on names that can be used for tasks and namespaces
+to ensure all tasks are processed and implemented correctly. Valid names
+must:
+
+1. *begin with* (or consist only of, as single-character task names are
+   allowed) either:
+
+   - an alphanumeric character, i.e. a letter in either upper or lower case
+     (``a-z`` or ``A-Z``), or a digit (``0-9``);
+   - an underscore (``_``).
+
+2. *otherwise* contain *only* characters from the following options:
+
+   - alphanumeric characters or underscores (as above);
+   - any of these additional character symbols:
+
+     - dashes (``-``);
+     - plus characters (``+``);
+     - the percent sign (``%``);
+     - the "at" sign (``@``).
+
+3. not be so long, typically over ``255`` characters, as to raise errors
+   from exceeding maximum filename length on the operating system for
+   generated outputs e.g. directories named (in part) after the task they
+   concern.
+
+.. warning::
+
+   Task and namespace names may not contain colons (``:``), which would
+   preclude use of directory paths involving the registration name in
+   ``$PATH`` variables). They also may not contain the dot (``.``) character,
+   as it will be interpreted as the delimiter separating the task name from
+   an appended cycle point (see :ref:`TaskIdentifiers`).
+
+Invalid names for tasks or namespaces will be raised as errors
+by ``cylc validate``.
 
 .. note::
 

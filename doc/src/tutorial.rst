@@ -363,12 +363,14 @@ The scan GUI is shown in :numref:`fig-gscan`; clicking on a suite in
 it opens gcylc.
 
 
+.. _TaskIdentifiers:
+
 Task Identifiers
 ----------------
 
-At run time, task instances are identified by *name*, which is
-determined entirely by the suite configuration, and a *cycle point* which is
-usually a date-time or an integer:
+At run time, task instances are identified by their *name* (see
+:ref:`TaskNames`), which is determined entirely by the suite configuration,
+and a *cycle point* which is usually a date-time or an integer:
 
 .. code-block:: bash
 
