@@ -361,7 +361,7 @@ class ParsecValidator(object):
             lexer.whitespace_split = False
             lexer.whitespace = "\t\n\r"
             lexer.wordchars += " "
-            values = [t.strip() for t in lexer if t != ","]
+            values = [t.strip() for t in lexer if t != "," and t.strip()]
         else:
             # unquoted values (may contain internal quoted strings with list
             # delimiters inside 'em!)
