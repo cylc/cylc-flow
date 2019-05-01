@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test task submit failed + reload
-# https://github.com/cylc/cylc/issues/2964
+# https://github.com/cylc/cylc-flow/issues/2964
 . "$(dirname "$0")/test_header"
 
 set_test_number 4

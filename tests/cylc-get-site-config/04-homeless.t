@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Test on absence HOME (cylc/cylc#2895)
+# Test on absence HOME (cylc/cylc-flow#2895)
 
 . "$(dirname "$0")/test_header"
 set_test_number 3

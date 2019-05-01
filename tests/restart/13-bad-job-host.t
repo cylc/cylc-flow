@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test restarting a suite when the host of a submitted or running job is not
-# available. https://github.com/cylc/cylc/issues/1327
+# available. https://github.com/cylc/cylc-flow/issues/1327
 CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
 set_test_remote_host

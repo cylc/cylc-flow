@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test validation error message on zero-width date-time interval.
-# See issue cylc/cylc#1800.
+# See issue cylc/cylc-flow#1800.
 . "$(dirname "$0")/test_header"
 set_test_number 2
 

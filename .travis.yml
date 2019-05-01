@@ -8,7 +8,7 @@
 # Test results get posted back to Github. By default Travis will run tests on any
 # pull requests, adding a comment on the pull request page to say if the tests
 # pass or fail, it will also test any new commits, showing the test results on
-# the branch page, e.g. https://github.com/cylc/cylc/branches.
+# the branch page, e.g. https://github.com/cylc/cylc-flow/branches.
 # 
 # Connecting a Cylc branch
 # ------------------------
