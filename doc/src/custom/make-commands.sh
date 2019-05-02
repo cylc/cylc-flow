@@ -46,10 +46,10 @@ END
 for CAT in $($CYLC categories); do
 	$(cat >> "$COMMAND_REF_FILE" <<END
 
+.. _command-cat-${CAT}:
+
 ${CAT}
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. _command-cat-${CAT}:
 
 .. code-block:: none
 
@@ -71,10 +71,10 @@ END
 for COM in $($CYLC commands); do
 	$(cat >> "$COMMAND_REF_FILE" <<END
 
+.. _command-${COM}:
+
 ${COM}
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. _command-${COM}:
 
 .. code-block:: none
 

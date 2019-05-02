@@ -2581,7 +2581,7 @@ task families in the *namespaces* example suite.
 .. _Parameterized Tasks Label:
 
 Parameterized Tasks
-^^^^^^^^^^^^^^^^^^^
+-------------------
 
 Cylc can automatically generate tasks and dependencies by expanding
 parameterized task names over lists of parameter values. Uses for this
@@ -3717,7 +3717,7 @@ For better clarity and disambiguation Python modules can be prefixed with
 .. _EmPylabel:
 
 EmPy
-^^^^
+----
 
 In addition to Jinja2, Cylc supports EmPy template processor in suite
 configurations. Similarly to Jinja2, EmPy provides variables, mathematical
@@ -3772,7 +3772,7 @@ reasons:
 
 
 Omitting Tasks At Runtime
-^^^^^^^^^^^^^^^^^^^^^^^^^
+-------------------------
 
 It is sometimes convenient to omit certain tasks from the suite at
 runtime without actually deleting their definitions from the suite.
