@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Server for suite runtime API."""
 
-from functools import wraps
+from functools import partial, wraps
 import getpass
 from queue import Queue
 from textwrap import dedent
@@ -28,6 +28,7 @@ import zmq
 
 from cylc import LOG
 from cylc.cfgspec.glbl_cfg import glbl_cfg
+from cylc.exceptions import CylcError
 from cylc.network import Priv, encrypt, decrypt, get_secret
 from cylc.suite_status import (
     KEY_META, KEY_NAME, KEY_OWNER, KEY_STATES,
@@ -97,8 +98,16 @@ class ZMQServer(object):
         self.socket = self.context.socket(zmq.REP)
         self.socket.RCVTIMEO = int(self.RECV_TIMEOUT) * 1000
 
-        self.port = self.socket.bind_to_random_port(
-            'tcp://*', min_port, max_port)
+        try:
+            if min_port == max_port:
+                self.port = min_port
+                self.socket.bind('tcp://*:%d' % min_port)
+            else:
+                self.port = self.socket.bind_to_random_port(
+                    'tcp://*', min_port, max_port)
+        except (zmq.error.ZMQError, zmq.error.ZMQBindError) as exc:
+            self.socket.close()
+            raise CylcError('could not start Cylc ZMQ server: %s' % str(exc))
 
         # start accepting requests
         self.register_endpoints()
@@ -113,6 +122,7 @@ class ZMQServer(object):
         LOG.debug('stopping zmq server...')
         self.queue.put('STOP')
         self.thread.join()  # wait for the listener to return
+        self.socket.close()
         LOG.debug('...stopped')
 
     def register_endpoints(self):
@@ -283,7 +293,7 @@ class SuiteRuntimeServer(ZMQServer):
             self,
             encrypt,
             decrypt,
-            lambda: get_secret(schd.suite)
+            partial(get_secret, schd.suite)
         )
         self.schd = schd
         self.public_priv = None  # update in get_public_priv()
