@@ -1,15 +1,16 @@
-COMMENT: Complete this TEMPLATE and delete all "COMMENT:" lines.
+COMMENT: Complete this Pull Request template and delete all "COMMENT:" lines.
 
-COMMENT: Non-trivial PRs must address an existing Issue.
-COMMENT: Choose one of:
-Changes to partially address #xxxx
-Changes to Close #xxxx
-Small change with no associated Issue.
+COMMENT: Significant PRs should address an existing Issue. Choose one of:
+These changes partially address #xxxx
+These changes close #xxxx
+This is a small change with no associated Issue.
 
-COMMENT: Check all requirements now or later. Mark the PR as a Draft if later.
+COMMENT: The following requirements must be satisfied, now or before merge.
+COMMENT: Mark the PR as a Draft if not all are satisfied just yet.
+Requirements check-list:
 - [ ] I have read `CONTRIBUTING.md` and added my name as a Code Contributor.
-- [ ] Minimal number of commits with logically grouped changes (use interactive
-         rebase to tidy your branch history if necessary).
-- [ ] No off-topic changes changes (use other PRs for these).
-- [ ] Tests with adequate coverage included (unit and/or functional).
-- [ ] Entry added to the change log `CHANGES.md` for next release.
+- [ ] My commits have logically grouped changes (use interactive rebase
+      to tidy your branch history if necessary).
+- [ ] I have not included off-topic changes (use other PRs for these).
+- [ ] I have included tests with adequate coverage.
+- [ ] I have added an entry in `CHANGES.md` for next release.

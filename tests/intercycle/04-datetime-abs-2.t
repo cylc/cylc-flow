@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test dependency on absolute datetime point
-# https://github.com/cylc/cylc/issues/1951
+# https://github.com/cylc/cylc-flow/issues/1951
 . "$(dirname "$0")/test_header"
 
 set_test_number 2

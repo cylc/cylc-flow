@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test that the state summary updates immediately on start-up.
-# See https://github.com/cylc/cylc/pull/1756
+# See https://github.com/cylc/cylc-flow/pull/1756
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 2

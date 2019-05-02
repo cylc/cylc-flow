@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test calling "cylc shutdown suite1" from suite2.
-# See https://github.com/cylc/cylc/issues/1843
+# See https://github.com/cylc/cylc-flow/issues/1843
 . "$(dirname "$0")/test_header"
 
 set_test_number 1

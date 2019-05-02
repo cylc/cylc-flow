@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test for "cylc review", cycles/taskjobs list, suite server host:port.
-# Require a version of cylc with cylc/cylc#1705 merged in.
+# Require a version of cylc with cylc/cylc-flow#1705 merged in.
 #-------------------------------------------------------------------------------
 . "$(dirname "$0")/test_header"
 if ! python2 -c 'import cherrypy' 2>'/dev/null'; then

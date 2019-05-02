@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Test that simultaneous warnings from a task job are all handled by the
 # warning event handler.
-# https://github.com/cylc/cylc/issues/2806
+# https://github.com/cylc/cylc-flow/issues/2806
 
 . "$(dirname "$0")/test_header"
 

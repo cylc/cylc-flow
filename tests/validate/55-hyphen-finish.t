@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Test hyphen in task name + ":finish". See cylc/cylc#1949.
+# Test hyphen in task name + ":finish". See cylc/cylc-flow#1949.
 
 . "$(dirname "$0")/test_header"
 
