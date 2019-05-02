@@ -177,7 +177,7 @@ environment.
 .. _RTAST:
 
 Automated Tests
-^^^^^^^^^^^^^^^
+---------------
 
 For development purposes there are four sets of tests:
 
