@@ -267,7 +267,7 @@ debug problems.
 .. _RTAST:
 
 Automated Tests
-^^^^^^^^^^^^^^^
+---------------
 
 The cylc test battery is primarily intended for developers to check that
 changes to the source code don't break existing functionality.
