@@ -18,23 +18,23 @@
 """Client for suite runtime API."""
 
 import asyncio
-from functools import partial
 import os
 import socket
 import sys
+from functools import partial
+from typing import Union
 
 import jose.exceptions
 import zmq
 import zmq.asyncio
 
+import cylc.flags
 from cylc import LOG
 from cylc.exceptions import ClientError, ClientTimeout
-import cylc.flags
 from cylc.hostuserutil import get_fqdn_by_host
 from cylc.network import encrypt, decrypt, get_secret
 from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
-
 
 # we should only have one ZMQ context per-process
 CONTEXT = zmq.asyncio.Context()
@@ -78,7 +78,8 @@ class ZMQClient(object):
     Message interface:
         * Accepts responses of the format: {"data": {...}}
         * Accepts error in the format: {"error": {"message": MSG}}
-        * Returns requests of the format: {"command": CMD, "args": {...}}
+        * Returns requests of the format: {"command": CMD,
+        "args": {...}}
 
     """
 
@@ -183,63 +184,78 @@ class ZMQClient(object):
     __call__ = serial_request
 
 
-class SuiteRuntimeClient:
-    """Initiate a client to the suite runtime API.
-
-    This class contains the logic specific to communicating with Cylc suites.
-
-    Args:
-        suite (str):
-            Name of the suite to connect to.
-        owner (str):
-            Owner of suite, defaults to $USER.
-        host (str):
-            Overt need to check contact file if provided along with the port.
-        port (int):
-            Overt need to check contact file if provided along with the host.
-        timeout (int):
-            Message receive timeout in seconds. Also used to set the
-            "linger" time, see ``ZMQClient``.
-
-    Determine host and port from the contact file unless provided.
-
-    If there is no socket bound to the specified host/port the client will
-    bail after ``timeout`` seconds.
+class SuiteRuntimeClient(ZMQClient):
+    """This class contains the logic specific to communicating with Cylc
+    suites.
 
     Call server "endpoints" using:
 
-    ``__call__``, ``serial_request``
+        ``__call__``, ``serial_request``
 
-       .. automethod:: cylc.network.client.ZMQClient.serial_request
+           .. automethod:: cylc.network.client.ZMQClient.serial_request
 
-    ``async_request``
+        ``async_request``
 
-       .. automethod:: cylc.network.client.ZMQClient.async_request
-
+           .. automethod:: cylc.network.client.ZMQClient.async_request
     """
 
-    NOT_RUNNING = "Contact info not found for suite \"%s\", suite not running?"
+    def __init__(
+            self,
+            suite: str,
+            owner: str = None,
+            host: str = None,
+            port: Union[int, str] = None,
+            timeout: Union[float, str] = None
+    ):
+        """Initiate a client to the suite runtime API.
 
-    def __new__(cls, suite, owner=None, host=None, port=None, timeout=None):
+        Determine host and port from the contact file unless provided.
+
+        If there is no socket bound to the specified host/port the client will
+        bail after ``timeout`` seconds.
+
+        Args:
+            suite (str):
+                Name of the suite to connect to.
+            owner (str):
+                Owner of suite, defaults to $USER.
+            host (str):
+                Overt need to check contact file if provided along with the
+                port.
+            port (int):
+                Overt need to check contact file if provided along with the
+                host.
+            timeout (int):
+                Message receive timeout in seconds. Also used to set the
+                "linger" time, see ``ZMQClient``.
+        Raises:
+            ClientError: if the suite is not running.
+        """
         if isinstance(timeout, str):
             timeout = float(timeout)
-
-        # work out what we are connecting to
         if port:
             port = int(port)
         if not (host and port):
-            host, port = cls.get_location(suite, owner, host)
-
-        # create connection
-        return ZMQClient(
-            host, port, encrypt, decrypt, partial(get_secret, suite),
-            timeout=timeout, header=cls.get_header(),
-            timeout_handler=partial(cls._timeout_handler, suite, host, port)
+            host, port = self.get_location(suite, owner, host)
+        super().__init__(
+            host=host,
+            port=port,
+            encode_method=encrypt,
+            decode_method=decrypt,
+            secret_method=partial(get_secret, suite),
+            timeout=timeout,
+            header=self.get_header(),
+            timeout_handler=partial(self._timeout_handler, suite, host, port)
         )
 
     @staticmethod
-    def get_header():
-        """Return "header" data to attach to each request for traceability."""
+    def get_header() -> dict:
+        """Return "header" data to attach to each request for traceability.
+
+        Returns:
+            dict: dictionary with the header information, such as
+                program and hostname.
+        """
         CYLC_EXE = os.path.join(os.environ['CYLC_DIR'], 'bin', '')
         cmd = sys.argv[0]
 
@@ -254,8 +270,16 @@ class SuiteRuntimeClient:
         }
 
     @staticmethod
-    def _timeout_handler(suite, host, port):
-        """Handle the eventuality of a communication timeout with the suite."""
+    def _timeout_handler(suite: str, host: str, port: Union[int, str]):
+        """Handle the eventuality of a communication timeout with the suite.
+
+        Args:
+            suite (str): suite name
+            host (str): host name
+            port (Union[int, str]): port number
+        Raises:
+            ClientError: if the suite has already stopped.
+        """
         if suite is None:
             return
         # Cannot connect, perhaps suite is no longer running and is leaving
@@ -271,16 +295,26 @@ class SuiteRuntimeClient:
             raise ClientError('Suite "%s" already stopped' % suite)
 
     @classmethod
-    def get_location(cls, suite, owner, host):
-        """Extract host and port from a suite's contact file."""
+    def get_location(cls, suite: str, owner: str, host: str):
+        """Extract host and port from a suite's contact file.
+
+        NB: if it fails to load the suite contact file, it will exit.
+
+        Args:
+            suite (str): suite name
+            owner (str): owner of the suite
+            host (str): host name
+        Returns:
+            Tuple[str, int]: tuple with the host name and port number.
+        Raises:
+            ClientError: if the suite is not running.
+        """
         try:
             contact = SuiteSrvFilesManager().load_contact_file(
                 suite, owner, host)
         except SuiteServiceFileError:
-            sys.exit(cls.NOT_RUNNING % suite)
-            # monkey-patch the error message to make it more informative.
-            # exc.args = (cls.NOT_RUNNING % suite,)
-            # raise
+            raise ClientError(f'Contact info not found for suite '
+                              f'"{suite}", suite not running?')
 
         if not host:
             host = contact[SuiteSrvFilesManager.KEY_HOST]
