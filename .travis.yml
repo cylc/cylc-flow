@@ -53,10 +53,9 @@ unittest: &unittest
   install:
     - .travis/install.sh unit-tests
   script:
-    - export PYTHONPATH=$(pwd -P)/lib/
     - pycodestyle
     - .travis/shellchecker
-    - pytest --cov-append --cov=lib/cylc --cov=lib/parsec
+    - pytest --cov-append --cov=cylc/flow
   after_success:
     # Report metrics, such as coverage
     - coverage combine --append

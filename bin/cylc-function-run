@@ -27,7 +27,7 @@ local xtrigger modules.
 """
 
 import sys
-from cylc.subprocpool import run_function
+from cylc.flow.subprocpool import run_function
 
 
 if __name__ == "__main__":

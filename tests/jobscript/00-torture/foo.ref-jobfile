@@ -101,7 +101,7 @@ echo VAR_CS is $VAR_CS
 export VAR_PostCS=postcs
 }
 
-. "${CYLC_DIR}/lib/cylc/job.sh"
+. "${CYLC_DIR}/cylc/flow/job.sh"
 cylc__job__main
 
 #EOF: 1/foo/01

@@ -22,4 +22,4 @@ set_test_number 1
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-timeparse
 PYTHONPATH=$CYLC_DIR/lib/:$PYTHONPATH
-run_ok $TEST_NAME python $CYLC_DIR/lib/cylc/time_parser.py
+run_ok $TEST_NAME python $CYLC_DIR/cylc/flow/time_parser.py

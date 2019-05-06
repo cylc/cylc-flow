@@ -21,15 +21,15 @@
 Print contact information of running suite REG."""
 
 import sys
-from cylc.remote import remrun
+from cylc.flow.remote import remrun
 if remrun():
     sys.exit(0)
 
-from cylc.exceptions import CylcError
-from cylc.option_parsers import CylcOptionParser as COP
-from cylc.suite_srv_files_mgr import (
+from cylc.flow.exceptions import CylcError
+from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
-from cylc.terminal import cli_function
+from cylc.flow.terminal import cli_function
 
 
 @cli_function

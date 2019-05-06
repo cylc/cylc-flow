@@ -18,9 +18,9 @@
 import sys
 
 # Import cylc to initialise CYLC_DIR and the path for python (__init__.py).
-from cylc import __version__ as CYLC_VERSION
-from cylc.exceptions import CylcError
-from cylc.terminal import cli_function
+from cylc.flow import __version__ as CYLC_VERSION
+from cylc.flow.exceptions import CylcError
+from cylc.flow.terminal import cli_function
 
 
 class CommandError(CylcError):

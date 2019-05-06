@@ -76,12 +76,12 @@ default () {
     # run a strict check on all "functional" scripts
     main '.' \
         --exclude 'tests/' \
-        --exclude 'lib/cylc/tests/parsec' \
+        --exclude 'cylc/flow/tests/parsec' \
         --exclude 'etc/dev-bin/live-graph-movie.sh' \
         -- -e SC1090
 
     # run a lenient check on all test scripts
-    main 'tests' 'lib/cylc/tests/parsec' -- -S error -e SC1090
+    main 'tests' 'cylc/flow/tests/parsec' -- -S error -e SC1090
 }
 
 if [[ $# -gt 0 ]]; then

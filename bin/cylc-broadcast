@@ -74,24 +74,24 @@ See also 'cylc reload' - reload a modified suite definition at run time."""
 import sys
 if '--use-ssh' in sys.argv[1:]:
     sys.argv.remove('--use-ssh')
-    from cylc.remote import remrun
+    from cylc.flow.remote import remrun
     if remrun():
         sys.exit(0)
 
 import re
 from tempfile import NamedTemporaryFile
 
-from cylc.exceptions import UserInputError
-from cylc.terminal import cli_function
-from cylc.broadcast_report import (
+from cylc.flow.exceptions import UserInputError
+from cylc.flow.terminal import cli_function
+from cylc.flow.broadcast_report import (
     get_broadcast_change_report, get_broadcast_bad_options_report)
-from cylc.cfgspec.suite import SPEC, upg
-from cylc.parsec.validate import cylc_config_validate
-from cylc.network.client import SuiteRuntimeClient
-from cylc.option_parsers import CylcOptionParser as COP
-from cylc.print_tree import print_tree
-from cylc.task_id import TaskID
-from cylc.parsec.config import ParsecConfig
+from cylc.flow.cfgspec.suite import SPEC, upg
+from cylc.flow.parsec.validate import cylc_config_validate
+from cylc.flow.network.client import SuiteRuntimeClient
+from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.print_tree import print_tree
+from cylc.flow.task_id import TaskID
+from cylc.flow.parsec.config import ParsecConfig
 
 
 REC_ITEM = re.compile(r'^\[([^\]]*)\](.*)$')

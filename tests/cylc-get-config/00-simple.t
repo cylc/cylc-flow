@@ -60,7 +60,7 @@ TEST_NAME=$TEST_NAME_BASE-python
 run_ok $TEST_NAME cylc get-config --python --sparse $SUITE_NAME
 run_ok $TEST_NAME-parse-config python3 -c "
 import sys
-from cylc.parsec.OrderedDict import OrderedDictWithDefaults
+from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 with open(sys.argv[1], 'r') as file_:
     print(eval(file_.read()))
 " "$TEST_NAME.stdout"

@@ -29,19 +29,16 @@ debug=
 #include
 note=
 omit=
-    */lib/cylc/tests/*
-    */lib/cylc/profiler.py
-    */lib/cylc/profiling/*
-    */lib/parsec/OrderedDictCompat.py
-    */lib/isodatetime/*
-    */lib/jinja2/*
-    */lib/markupsafe/*
-    */lib/parsec/tests/*
+    */cylc/flow/tests/*
+    */cylc/flow/profiler.py
+    */cylc/flow/profiling/*
+    */cylc/flow/parsec/OrderedDictCompat.py
+    */cylc/flow/parsec/tests/*
 parallel = True
 plugins=
 source=
     ./bin
-    ./lib
+    ./cylc
 timid = False
 
 
@@ -57,14 +54,11 @@ fail_under=0
 ignore_errors = False
 include=
 omit=
-    */lib/cylc/tests/*
-    */lib/cylc/profiler.py
-    */lib/cylc/profiling/*
-    */lib/parsec/OrderedDictCompat.py
-    */lib/isodatetime/*
-    */lib/jinja2/*
-    */lib/markupsafe/*
-    */lib/parsec/tests/*
+    */cylc/flow/tests/*
+    */cylc/flow/profiler.py
+    */cylc/flow/profiling/*
+    */cylc/flow/parsec/OrderedDictCompat.py
+    */cylc/flow/parsec/tests/*
 partial_branches=
 precision=2
 show_missing=False

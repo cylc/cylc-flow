@@ -55,9 +55,9 @@ Other examples:
 import os
 import sys
 
-import cylc.cycling.iso8601
-from cylc.option_parsers import CylcOptionParser as COP
-from cylc.terminal import cli_function
+import cylc.flow.cycling.iso8601
+from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.terminal import cli_function
 
 import isodatetime.data
 import isodatetime.dumpers
@@ -187,7 +187,7 @@ def main():
         if n_chosen != 0 and n_chosen != 1:
             parser.error("Choose NONE or ONE of print_(year|month|day|hour)")
 
-    cylc.cycling.iso8601.init(
+    cylc.flow.cycling.iso8601.init(
         num_expanded_year_digits=options.num_expanded_year_digits,
         time_zone=options.time_zone
     )

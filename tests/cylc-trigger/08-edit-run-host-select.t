@@ -46,7 +46,7 @@ cmp_ok "${DIFF_LOG}" - <<'__END__'
 +/bin/true
  }
  
- . "${CYLC_DIR}/lib/cylc/job.sh"
+ . "${CYLC_DIR}/cylc/flow/job.sh"
 __END__
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"

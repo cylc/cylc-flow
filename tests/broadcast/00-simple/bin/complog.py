@@ -5,7 +5,7 @@ import sys
 
 print()
 print("This is the broadcast test suite log comparator")
-from cylc.cylc_subproc import procopen
+from cylc.flow.cylc_subproc import procopen
 
 event, suite = sys.argv[1], sys.argv[2]
 if event != 'shutdown':

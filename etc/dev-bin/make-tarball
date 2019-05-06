@@ -20,7 +20,7 @@ eof
 }
 
 get_version() {
-    CYLC_VERSION="$(python -c "from cylc import __version__;\
+    CYLC_VERSION="$(python -c "from cylc.flow import __version__;\
         print(__version__)")"
 }
 

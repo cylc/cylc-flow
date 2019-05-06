@@ -50,20 +50,20 @@ import sqlite3
 import sys
 from time import sleep
 
-from cylc.remote import remrun
+from cylc.flow.remote import remrun
 
 if remrun():
     sys.exit(0)
 
-from cylc.exceptions import CylcError, UserInputError
-import cylc.flags
-from cylc.option_parsers import CylcOptionParser as COP
-from cylc.dbstatecheck import CylcSuiteDBChecker
-from cylc.cfgspec.glbl_cfg import glbl_cfg
-from cylc.command_polling import Poller
-from cylc.task_state import TASK_STATUSES_ORDERED
-from cylc.terminal import cli_function
-from cylc.cycling.util import add_offset
+from cylc.flow.exceptions import CylcError, UserInputError
+import cylc.flow.flags
+from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.dbstatecheck import CylcSuiteDBChecker
+from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.command_polling import Poller
+from cylc.flow.task_state import TASK_STATUSES_ORDERED
+from cylc.flow.terminal import cli_function
+from cylc.flow.cycling.util import add_offset
 
 from isodatetime.parsers import TimePointParser
 
@@ -79,7 +79,7 @@ class SuitePoller(Poller):
         # connect, or max number of polls exhausted) False
         connected = False
 
-        if cylc.flags.verbose:
+        if cylc.flow.flags.verbose:
             sys.stdout.write(
                 "connecting to suite db for " +
                 self.args['run_dir'] + "/" + self.args['suite'])
@@ -100,10 +100,10 @@ class SuitePoller(Poller):
             except (OSError, sqlite3.Error):
                 if self.n_polls >= max_polls:
                     raise
-                if cylc.flags.verbose:
+                if cylc.flow.flags.verbose:
                     sys.stdout.write('.')
                 sleep(self.interval)
-        if cylc.flags.verbose:
+        if cylc.flow.flags.verbose:
             sys.stdout.write('\n')
 
         if connected and self.args['cycle']:

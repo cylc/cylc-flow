@@ -2,6 +2,6 @@ exclude_paths:
   - 'conf/**'
   - 'doc/joss-paper/**'
   - 'etc/**'
-  - 'lib/cylc/tests/**'
+  - 'cylc/flow/tests/**'
   - 'tests/**'
 

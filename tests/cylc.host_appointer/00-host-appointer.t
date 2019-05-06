@@ -23,7 +23,7 @@ set_test_number 10
 # No run hosts list
 create_test_globalrc '' ''
 run_ok "${TEST_NAME_BASE}-no-host-list" python3 - <<'__PYTHON__'
-from cylc.host_appointer import HostAppointer
+from cylc.flow.host_appointer import HostAppointer
 assert HostAppointer().appoint_host() == 'localhost'
 __PYTHON__
 
@@ -33,7 +33,7 @@ create_test_globalrc '' '
     run hosts =
 '
 run_ok "${TEST_NAME_BASE}-empty-host-list" python3 - <<'__PYTHON__'
-from cylc.host_appointer import HostAppointer
+from cylc.flow.host_appointer import HostAppointer
 assert HostAppointer().appoint_host() == 'localhost'
 __PYTHON__
 
@@ -44,7 +44,7 @@ create_test_globalrc '' "
 "
 run_ok "${TEST_NAME_BASE}-uncontactable" python3 -c '
 import sys
-from cylc.host_appointer import HostAppointer
+from cylc.flow.host_appointer import HostAppointer
 appointer = HostAppointer()
 for _ in range(10):
     if appointer.appoint_host() != "localhost":
@@ -59,7 +59,7 @@ create_test_globalrc '' "
     condemned hosts = $(hostname)
 "
 run_fail "${TEST_NAME_BASE}-invalid" python3 -c '
-from cylc.host_appointer import HostAppointer
+from cylc.flow.host_appointer import HostAppointer
 HostAppointer().appoint_host()
 '
 grep_ok 'list item "foo bar" cannot contain a space character' \
@@ -83,7 +83,7 @@ create_test_globalrc '' "
 "
 run_ok "${TEST_NAME_BASE}-condemned-local" python3 -c '
 import sys
-from cylc.host_appointer import HostAppointer
+from cylc.flow.host_appointer import HostAppointer
 appointer = HostAppointer()
 for _ in range(10):
     if appointer.appoint_host() == "localhost":
@@ -99,7 +99,7 @@ create_test_globalrc '' "
 "
 run_ok "${TEST_NAME_BASE}-condemned-variants" python3 -c '
 import sys
-from cylc.host_appointer import HostAppointer
+from cylc.flow.host_appointer import HostAppointer
 appointer = HostAppointer()
 for _ in range(10):
     if appointer.appoint_host() == "localhost":
@@ -114,7 +114,7 @@ create_test_globalrc '' "
     condemned hosts = $(hostname)
 "
 run_fail "${TEST_NAME_BASE}-condemned-all" python3 -c '
-from cylc.host_appointer import HostAppointer
+from cylc.flow.host_appointer import HostAppointer
 HostAppointer().appoint_host()
 '
 
@@ -126,7 +126,7 @@ create_test_globalrc '' "
     condemned hosts = localhost
 "
 run_fail "${TEST_NAME_BASE}-condemned-all" python3 -c '
-from cylc.host_appointer import HostAppointer
+from cylc.flow.host_appointer import HostAppointer
 HostAppointer().appoint_host()
 '
 grep_ok 'ambiguous host "localhost"' "${TEST_NAME_BASE}-condemned-all.stderr"

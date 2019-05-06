@@ -20,7 +20,7 @@
 # new working directory. As .coveragerc contains relatives paths, it fails
 # to produce the correct coverage, unless we use absolute paths. The `sed`
 # call below tries to define the data_file, and sources locations for Travis.
-sed -e "s|data_file=.coverage|data_file=${TRAVIS_BUILD_DIR}/.coverage|g; s|./bin|${TRAVIS_BUILD_DIR}/bin|g; s|./lib|${TRAVIS_BUILD_DIR}/lib|g" .coveragerc > /tmp/.coveragerc
+sed -e "s|data_file=.coverage|data_file=${TRAVIS_BUILD_DIR}/.coverage|g; s|./bin|${TRAVIS_BUILD_DIR}/bin|g; s|\./cylc|${TRAVIS_BUILD_DIR}/cylc|g" .coveragerc > /tmp/.coveragerc
 # And some tests fail if we touch files in the git working directory, due
 # to Cylc's version appearing with the "dirty" suffix. To avoid this, we
 # are using a new coveragerc created under the temporary directory.

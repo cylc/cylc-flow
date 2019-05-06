@@ -6,11 +6,11 @@ Cylc suites are TCP servers which use the ZeroMQ protocol to communicate with
 clients and jobs.
 
 Cylc provides a Python client to communicate with this server
-:py:class:`cylc.network.client.SuiteRuntimeClient`
+:py:class:`cylc.flow.network.client.SuiteRuntimeClient`
 
 .. code-block:: python
 
-   >>> from cylc.network.client import SuiteRuntimeClient
+   >>> from cylc.flow.network.client import SuiteRuntimeClient
    >>> client = SuiteRuntimeClient('my-suite')
    >>> client('ping_suite')
    True
@@ -24,7 +24,7 @@ wrapper of the Python client.
    true
 
 The available "commands" or ("endpoints") are contained in
-:py:class:`cylc.network.server.SuiteRuntimeServer` class.
+:py:class:`cylc.flow.network.server.SuiteRuntimeServer` class.
 
 
 Privilege Levels
@@ -33,18 +33,18 @@ Privilege Levels
 Cylc protects its network interface with configurable privilege levels which
 can be used to allocate different levels of control to different users.
 
-.. autoclass:: cylc.network.Priv
+.. autoclass:: cylc.flow.network.Priv
    :members:
 
 
 Client
 ------
 
-.. autoclass:: cylc.network.client.SuiteRuntimeClient
+.. autoclass:: cylc.flow.network.client.SuiteRuntimeClient
 
 
 Server
 ------
 
-.. autoclass:: cylc.network.server.SuiteRuntimeServer
+.. autoclass:: cylc.flow.network.server.SuiteRuntimeServer
    :members:
