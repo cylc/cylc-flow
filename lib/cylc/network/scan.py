@@ -82,6 +82,8 @@ def async_map(coroutine, iterator):
                 yield completed_tasks.pop(index)
                 changed = True
                 index += 1
+            else:
+                break
 
 
 def async_unordered_map(coroutine, iterator):
