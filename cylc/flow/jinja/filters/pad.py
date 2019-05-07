@@ -20,7 +20,7 @@ def pad(value, length, fillchar=' '):
     """Pads a string to some length with a fill character
 
     Args:
-        value (str): The string to padd.
+        value (str): The string to pad.
         length (int/str): The length for the returned string.
         fillchar (str - optional): The character to fill in surplus space
             (space by default).
