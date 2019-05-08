@@ -76,11 +76,9 @@ def async_map(coroutine, iterator):
             asyncio.wait(awaiting, return_when=asyncio.FIRST_COMPLETED))
         completed_tasks.update({t.ind: t.result() for t in completed})
 
-        changed = True
-        while changed and completed_tasks:
+        while completed_tasks:
             if index in completed_tasks:
                 yield completed_tasks.pop(index)
-                changed = True
                 index += 1
             else:
                 break
