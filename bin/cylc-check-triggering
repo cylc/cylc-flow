@@ -48,8 +48,8 @@ Reference tests can use any run mode:
 import os
 import sys
 
-from cylc.log_diagnosis import LogAnalyser
-from cylc.terminal import cli_function
+from cylc.flow.log_diagnosis import LogAnalyser
+from cylc.flow.terminal import cli_function
 
 
 @cli_function

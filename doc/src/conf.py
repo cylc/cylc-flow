@@ -16,7 +16,7 @@
 
 import sys
 import os
-from cylc import __version__ as CYLC_VERSION
+from cylc.flow import __version__ as CYLC_VERSION
 
 
 # -- General configuration ------------------------------------------------

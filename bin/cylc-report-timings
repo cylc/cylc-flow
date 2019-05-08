@@ -48,7 +48,7 @@ the database query to obtain the timing information may take some time.
 """
 
 import sys
-from cylc.remote import remrun
+from cylc.flow.remote import remrun
 if remrun():
     sys.exit(0)
 
@@ -57,11 +57,11 @@ import collections
 import contextlib
 import os
 
-from cylc.exceptions import CylcError
-from cylc.cfgspec.glbl_cfg import glbl_cfg
-from cylc.option_parsers import CylcOptionParser as COP
-from cylc.rundb import CylcSuiteDAO
-from cylc.terminal import cli_function
+from cylc.flow.exceptions import CylcError
+from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.rundb import CylcSuiteDAO
+from cylc.flow.terminal import cli_function
 
 
 @contextlib.contextmanager
@@ -171,7 +171,7 @@ def _get_dao(suite):
 
 
 class TimingSummary(object):
-    """Base class for summarizing timing output from cylc run database."""
+    """Base class for summarizing timing output from cylc.flow run database."""
 
     def __init__(self, filepath_or_buffer=None):
         """Set up internal dataframe storage for time durations."""

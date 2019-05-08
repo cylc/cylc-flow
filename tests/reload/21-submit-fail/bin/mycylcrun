@@ -20,9 +20,9 @@
 
 from time import sleep
 
-from cylc import LOG
-from cylc.scheduler import Scheduler
-from cylc.scheduler_cli import main
+from cylc.flow import LOG
+from cylc.flow.scheduler import Scheduler
+from cylc.flow.scheduler_cli import main
 
 
 def patch_load_suiterc(method):

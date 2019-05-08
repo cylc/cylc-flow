@@ -36,7 +36,7 @@ import os
 import re
 import sys
 
-from cylc.cylc_subproc import procopen
+from cylc.flow.cylc_subproc import procopen
 
 # Standardised output messages
 FOUND_NOVER_MSG = 'FOUND'

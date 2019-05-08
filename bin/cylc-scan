@@ -34,7 +34,7 @@ connection times out (see --comms-timeout)."""
 import sys
 if "--use-ssh" in sys.argv[1:]:
     sys.argv.remove("--use-ssh")
-    from cylc.remote import remrun
+    from cylc.flow.remote import remrun
     if remrun():
         sys.exit(0)
 
@@ -42,14 +42,14 @@ import json
 
 from colorama import Fore, Style, init as color_init
 
-from cylc.exceptions import UserInputError
-from cylc.network.scan import (
+from cylc.flow.exceptions import UserInputError
+from cylc.flow.network.scan import (
     get_scan_items_from_fs, re_compile_filters, scan_many)
-from cylc.option_parsers import CylcOptionParser as COP
-from cylc.suite_status import KEY_META, KEY_NAME, KEY_OWNER, KEY_STATES
-from cylc.task_state import TASK_STATUSES_ORDERED
-from cylc.task_state_prop import get_status_prop
-from cylc import terminal
+from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.suite_status import KEY_META, KEY_NAME, KEY_OWNER, KEY_STATES
+from cylc.flow.task_state import TASK_STATUSES_ORDERED
+from cylc.flow.task_state_prop import get_status_prop
+from cylc.flow import terminal
 
 
 INDENT = "   "

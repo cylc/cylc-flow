@@ -36,15 +36,15 @@ See also 'cylc submit', for running tasks without the scheduler.
 import sys
 if '--use-ssh' in sys.argv[1:]:
     sys.argv.remove('--use-ssh')
-    from cylc.remote import remrun
+    from cylc.flow.remote import remrun
     if remrun():
         sys.exit(0)
 
-from cylc.exceptions import UserInputError
-from cylc.option_parsers import CylcOptionParser as COP
-from cylc.network.client import SuiteRuntimeClient
-from cylc.task_id import TaskID
-from cylc.terminal import prompt, cli_function
+from cylc.flow.exceptions import UserInputError
+from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.network.client import SuiteRuntimeClient
+from cylc.flow.task_id import TaskID
+from cylc.flow.terminal import prompt, cli_function
 
 
 @cli_function

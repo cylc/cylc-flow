@@ -36,12 +36,12 @@ Return:
 """
 
 
-from cylc.remote import remrun
+from cylc.flow.remote import remrun
 
 
 if __name__ == '__main__' and not remrun():
-    from cylc.option_parsers import CylcOptionParser as COP
-    from cylc.task_remote_cmd import remote_init
+    from cylc.flow.option_parsers import CylcOptionParser as COP
+    from cylc.flow.task_remote_cmd import remote_init
     parser = COP(__doc__, argdoc=[
         ('UUID', 'UUID of current suite server process'),
         ('RUND', 'The run directory of the suite')])

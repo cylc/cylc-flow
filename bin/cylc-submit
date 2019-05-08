@@ -30,7 +30,7 @@ WARNING: do not 'cylc submit' a task that is running in its suite at the
 same time - both instances will attempt to write to the same job logs."""
 
 import sys
-from cylc.remote import remrun
+from cylc.flow.remote import remrun
 if remrun():
     sys.exit(0)
 
@@ -38,24 +38,24 @@ from logging import WARNING
 import os
 from time import sleep
 
-from cylc import LOG
-from cylc.cfgspec.glbl_cfg import glbl_cfg
-from cylc.config import SuiteConfig
-from cylc.cycling.loader import get_point
-from cylc.exceptions import UserInputError
-import cylc.flags
-from cylc.subprocpool import SubProcPool
-from cylc.option_parsers import CylcOptionParser as COP
-from cylc.suite_db_mgr import SuiteDatabaseManager
-from cylc.broadcast_mgr import BroadcastMgr
-from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
-from cylc.task_id import TaskID
-from cylc.task_job_mgr import TaskJobManager
-from cylc.task_events_mgr import TaskEventsManager
-from cylc.task_proxy import TaskProxy
-from cylc.task_state import TASK_STATUS_SUBMIT_FAILED
-from cylc.templatevars import load_template_vars
-from cylc.terminal import cli_function
+from cylc.flow import LOG
+from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.config import SuiteConfig
+from cylc.flow.cycling.loader import get_point
+from cylc.flow.exceptions import UserInputError
+import cylc.flow.flags
+from cylc.flow.subprocpool import SubProcPool
+from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.suite_db_mgr import SuiteDatabaseManager
+from cylc.flow.broadcast_mgr import BroadcastMgr
+from cylc.flow.suite_srv_files_mgr import SuiteSrvFilesManager
+from cylc.flow.task_id import TaskID
+from cylc.flow.task_job_mgr import TaskJobManager
+from cylc.flow.task_events_mgr import TaskEventsManager
+from cylc.flow.task_proxy import TaskProxy
+from cylc.flow.task_state import TASK_STATUS_SUBMIT_FAILED
+from cylc.flow.templatevars import load_template_vars
+from cylc.flow.terminal import cli_function
 
 
 @cli_function
@@ -115,8 +115,8 @@ def main():
     task_job_mgr.task_remote_mgr.single_task_mode = True
     task_job_mgr.job_file_writer.set_suite_env({
         'CYLC_UTC': str(config.cfg['cylc']['UTC mode']),
-        'CYLC_DEBUG': str(cylc.flags.debug).lower(),
-        'CYLC_VERBOSE': str(cylc.flags.verbose).lower(),
+        'CYLC_DEBUG': str(cylc.flow.flags.debug).lower(),
+        'CYLC_VERBOSE': str(cylc.flow.flags.verbose).lower(),
         'CYLC_SUITE_NAME': suite,
         'CYLC_CYCLING_MODE': str(config.cfg['scheduling']['cycling mode']),
         'CYLC_SUITE_INITIAL_CYCLE_POINT': str(

@@ -18,8 +18,8 @@
 
 import sys
 
-from cylc.parsec.config import ParsecConfig
-from cylc.parsec.validate import ParsecValidator as VDR
+from cylc.flow.parsec.config import ParsecConfig
+from cylc.flow.parsec.validate import ParsecValidator as VDR
 
 SPEC = {
     'boolean': {'__MANY__': {'__MANY__': [VDR.V_BOOLEAN]}},

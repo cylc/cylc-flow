@@ -24,16 +24,16 @@ parameters, task pool and broadcast states in the suite runtime database.
 """
 
 import sys
-from cylc.remote import remrun
+from cylc.flow.remote import remrun
 if remrun():
     sys.exit(0)
 
 import os
 
-from cylc.cfgspec.glbl_cfg import glbl_cfg
-from cylc.option_parsers import CylcOptionParser as COP
-from cylc.rundb import CylcSuiteDAO
-from cylc.terminal import cli_function
+from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.rundb import CylcSuiteDAO
+from cylc.flow.terminal import cli_function
 
 
 DELIM = "#" * 71

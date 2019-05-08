@@ -216,7 +216,5 @@ Code Style Tests
       .. code-block:: console
 
          $ pycodestyle --ignore=E402,W503,W504 \
-            lib/cylc \
-            lib/Jinja2Filters/*.py \
-            lib/parsec/*.py \
+            cylc/flow \
             $(grep -l '#!.*\<python\>' bin/*)

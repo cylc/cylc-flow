@@ -23,9 +23,9 @@ An empty config file should successfully yield an empty sparse config dict.
 import os
 import sys
 
-from cylc.parsec.config import ParsecConfig
-from cylc.parsec.validate import ParsecValidator as VDR
-from cylc.parsec.OrderedDict import OrderedDict
+from cylc.flow.parsec.config import ParsecConfig
+from cylc.flow.parsec.validate import ParsecValidator as VDR
+from cylc.flow.parsec.OrderedDict import OrderedDict
 
 fpath = os.path.dirname(os.path.abspath(__file__))
 # parsec

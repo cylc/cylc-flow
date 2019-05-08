@@ -1100,6 +1100,6 @@ This sets the client privilege level for public access - i.e. no
 suite passphrase required.
 
 - *type*: string (must be one of the following options).
-- *options*: A Cylc privilege level: :py:obj:`cylc.network.Priv`.
+- *options*: A Cylc privilege level: :py:obj:`cylc.flow.network.Priv`.
 
-- *default*: :py:obj:`cylc.network.Priv.STATE_TOTALS`
+- *default*: :py:obj:`cylc.flow.network.Priv.STATE_TOTALS`

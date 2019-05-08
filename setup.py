@@ -24,7 +24,8 @@ from glob import glob
 from os.path import join, dirname, abspath
 from shutil import move, rmtree
 
-from setuptools import setup, find_packages
+from setuptools import setup, find_namespace_packages
+
 SPHINX_AVAILABLE = False
 try:
     from sphinx.setup_command import BuildDoc
@@ -127,14 +128,13 @@ extra_requires['all'] += extra_requires['docs']
 extra_requires['all'] += tests_require
 
 setup(
-    version=find_version("lib", "cylc", "__init__.py"),
+    version=find_version("cylc", "flow", "__init__.py"),
     long_description=open('README.md').read(),
     long_description_content_type="text/markdown",
     scripts=glob(join('bin', '*')),
-    packages=find_packages("lib/") + ["Jinja2Filters"],
-    package_dir={"": "lib"},
+    packages=find_namespace_packages(include=["cylc.*"]),
     package_data={
-        '': ['*.txt', '*.md', '*.sh']
+        'cylc.flow': ['*.txt', '*.md', '*.sh']
     },
     cmdclass=cmdclass,
     include_package_data=False,

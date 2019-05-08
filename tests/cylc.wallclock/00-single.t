@@ -24,7 +24,7 @@ export PYTHONPATH=$CYLC_DIR/lib:$PYTHONPATH
 # Arguments: TEST_NAME TIME_STRING EXPECTED_UNIX_TIME CALENDAR_IS_360
 function test_get_unix_time_from_time_string () {
     run_ok $1 python <<__PYTHON__
-from cylc.wallclock import get_unix_time_from_time_string
+from cylc.flow.wallclock import get_unix_time_from_time_string
 
 if $4:
     from isodatetime.data import CALENDAR

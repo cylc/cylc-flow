@@ -25,8 +25,8 @@ fpath = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(fpath + '/../../..')
 
 
-from cylc.parsec.config import ParsecConfig
-from cylc.parsec.validate import ParsecValidator as VDR
+from cylc.flow.parsec.config import ParsecConfig
+from cylc.flow.parsec.validate import ParsecValidator as VDR
 
 SPEC = {'foo': {'bar': {'__MANY__': [VDR.V_STRING]}}}
 cfg = ParsecConfig(SPEC)

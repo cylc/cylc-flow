@@ -24,8 +24,8 @@ job files from STDIN.
 """
 
 
-from cylc.remote import remrun
-from cylc.terminal import cli_function
+from cylc.flow.remote import remrun
+from cylc.flow.terminal import cli_function
 
 
 @cli_function
@@ -50,6 +50,6 @@ def main():
 
 
 if __name__ == "__main__" and not remrun():
-    from cylc.option_parsers import CylcOptionParser as COP
-    from cylc.batch_sys_manager import BatchSysManager
+    from cylc.flow.option_parsers import CylcOptionParser as COP
+    from cylc.flow.batch_sys_manager import BatchSysManager
     main()

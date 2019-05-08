@@ -37,11 +37,11 @@ Note: to manually trigger a task use 'cylc trigger', not this command."""
 
 from time import sleep
 
-from cylc import LOG
-from cylc.exceptions import CylcError, ClientError
-from cylc.option_parsers import CylcOptionParser as COP
-from cylc.network.client import SuiteRuntimeClient
-from cylc.terminal import cli_function
+from cylc.flow import LOG
+from cylc.flow.exceptions import CylcError, ClientError
+from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.network.client import SuiteRuntimeClient
+from cylc.flow.terminal import cli_function
 
 
 MAX_N_TRIES = 5

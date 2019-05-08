@@ -554,7 +554,7 @@ batch system handler to change the directive prefix from ``#PBS`` to
 
    #!/usr/bin/env python3
 
-   from cylc.batch_sys_handlers.pbs import PBSHandler
+   from cylc.flow.batch_sys_handlers.pbs import PBSHandler
 
    class QSUBHandler(PBSHandler):
        DIRECTIVE_PREFIX = "#QSUB "

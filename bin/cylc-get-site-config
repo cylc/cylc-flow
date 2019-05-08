@@ -26,9 +26,9 @@ use -i/--item and wrap parent sections in square brackets:
 Multiple items can be specified at once."""
 
 
-from cylc.cfgspec.glbl_cfg import glbl_cfg
-from cylc.option_parsers import CylcOptionParser as COP
-from cylc.terminal import cli_function
+from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.terminal import cli_function
 
 
 @cli_function

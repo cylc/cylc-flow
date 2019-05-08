@@ -21,7 +21,7 @@ import json
 import os
 import sys
 
-from cylc.network.client import SuiteRuntimeClient
+from cylc.flow.network.client import SuiteRuntimeClient
 
 
 def main():

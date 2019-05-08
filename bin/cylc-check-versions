@@ -38,16 +38,16 @@ import os
 import sys
 from time import sleep
 
-import cylc.flags
-from cylc.option_parsers import CylcOptionParser as COP
-from cylc.cylc_subproc import procopen
-from cylc import __version__ as CYLC_VERSION
-from cylc.config import SuiteConfig
-from cylc.subprocpool import SubProcPool
-from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
-from cylc.task_remote_mgr import TaskRemoteMgr
-from cylc.templatevars import load_template_vars
-from cylc.terminal import cli_function
+import cylc.flow.flags
+from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.cylc_subproc import procopen
+from cylc.flow import __version__ as CYLC_VERSION
+from cylc.flow.config import SuiteConfig
+from cylc.flow.subprocpool import SubProcPool
+from cylc.flow.suite_srv_files_mgr import SuiteSrvFilesManager
+from cylc.flow.task_remote_mgr import TaskRemoteMgr
+from cylc.flow.templatevars import load_template_vars
+from cylc.flow.terminal import cli_function
 
 
 @cli_function
@@ -97,7 +97,7 @@ def main():
     # "cylc --version".
 
     # (save verbose flag as gets reset in remrun)
-    verbose = cylc.flags.verbose
+    verbose = cylc.flow.flags.verbose
 
     warn = {}
     contacted = 0

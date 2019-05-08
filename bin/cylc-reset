@@ -36,14 +36,14 @@ import os
 import sys
 if '--use-ssh' in sys.argv[1:]:
     sys.argv.remove('--use-ssh')
-    from cylc.remote import remrun
+    from cylc.flow.remote import remrun
     if remrun():
         sys.exit(0)
 
-from cylc.option_parsers import CylcOptionParser as COP
-from cylc.network.client import SuiteRuntimeClient
-from cylc.task_state import TASK_STATUSES_CAN_RESET_TO
-from cylc.terminal import prompt, cli_function
+from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.network.client import SuiteRuntimeClient
+from cylc.flow.task_state import TASK_STATUSES_CAN_RESET_TO
+from cylc.flow.terminal import prompt, cli_function
 
 
 @cli_function

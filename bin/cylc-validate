@@ -26,22 +26,22 @@ will correspond to the inlined version seen by the parser; use
 
 import sys
 import textwrap
-from cylc.remote import remrun
+from cylc.flow.remote import remrun
 if remrun():
     sys.exit(0)
 
-from cylc import LOG, __version__ as CYLC_VERSION
-from cylc.config import SuiteConfig
-from cylc.exceptions import (
+from cylc.flow import LOG, __version__ as CYLC_VERSION
+from cylc.flow.config import SuiteConfig
+from cylc.flow.exceptions import (
     SuiteConfigError, TriggerExpressionError, TaskProxySequenceBoundsError)
-import cylc.flags
-from cylc.loggingutil import CylcLogFormatter
-from cylc.option_parsers import CylcOptionParser as COP
-from cylc.profiler import Profiler
-from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
-from cylc.task_proxy import TaskProxy
-from cylc.templatevars import load_template_vars
-from cylc.terminal import cli_function
+import cylc.flow.flags
+from cylc.flow.loggingutil import CylcLogFormatter
+from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.profiler import Profiler
+from cylc.flow.suite_srv_files_mgr import SuiteSrvFilesManager
+from cylc.flow.task_proxy import TaskProxy
+from cylc.flow.templatevars import load_template_vars
+from cylc.flow.terminal import cli_function
 
 
 def parse_args():
@@ -80,7 +80,7 @@ def main():
     profiler = Profiler(options.profile_mode)
     profiler.start()
 
-    if not cylc.flags.debug:
+    if not cylc.flow.flags.debug:
         # for readability omit timestamps from logging unless in debug mode
         for handler in LOG.handlers:
             handler.setFormatter(CylcLogFormatter(timestamp=False))
@@ -108,13 +108,13 @@ def main():
                 out_of_bounds[0], cfg.start_point)
         if options.strict:
             LOG.warning(msg)
-        elif cylc.flags.verbose:
+        elif cylc.flow.flags.verbose:
             sys.stderr.write(' + %s\n' % msg)
 
     # Instantiate tasks and force evaluation of trigger expressions.
     # (Taken from config.py to avoid circular import problems.)
     # TODO - This is not exhaustive, it only uses the initial cycle point.
-    if cylc.flags.verbose:
+    if cylc.flow.flags.verbose:
         print('Instantiating tasks to check trigger expressions')
     for name, taskdef in cfg.taskdefs.items():
         try:
@@ -122,7 +122,7 @@ def main():
         except TaskProxySequenceBoundsError:
             # Should already failed above in strict mode.
             mesg = 'Task out of bounds for %s: %s\n' % (cfg.start_point, name)
-            if cylc.flags.verbose:
+            if cylc.flow.flags.verbose:
                 sys.stderr.write(' + %s\n' % mesg)
             continue
         except Exception as exc:
@@ -146,7 +146,7 @@ def main():
             print(str(exc), file=sys.stderr)
             raise SuiteConfigError(
                 '%s: failed to evaluate triggers.' % name)
-        if cylc.flags.verbose:
+        if cylc.flow.flags.verbose:
             print('  + %s ok' % itask.identity)
 
     print('Valid for cylc-%s' % CYLC_VERSION)

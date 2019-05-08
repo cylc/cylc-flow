@@ -31,7 +31,7 @@ the '-g,--gui' flag is used to spawn a remote GUI edit session.
 See also 'cylc [prep] edit'."""
 
 import sys
-from cylc.remote import remrun
+from cylc.flow.remote import remrun
 if remrun(forward_x11=True):
     sys.exit(0)
 
@@ -40,12 +40,12 @@ from tempfile import NamedTemporaryFile
 import shlex
 from subprocess import call
 
-from cylc.cfgspec.glbl_cfg import glbl_cfg
-from cylc.option_parsers import CylcOptionParser as COP
-from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
-from cylc.templatevars import load_template_vars
-from cylc.terminal import cli_function
-from cylc.parsec.fileparse import read_and_proc
+from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.suite_srv_files_mgr import SuiteSrvFilesManager
+from cylc.flow.templatevars import load_template_vars
+from cylc.flow.terminal import cli_function
+from cylc.flow.parsec.fileparse import read_and_proc
 
 
 def parse_args():

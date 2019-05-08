@@ -32,18 +32,18 @@ import os
 import re
 from time import sleep, time
 
-from cylc.parsec.OrderedDict import OrderedDict
+from cylc.flow.parsec.OrderedDict import OrderedDict
 
-from cylc.exceptions import ClientError
-from cylc.option_parsers import CylcOptionParser as COP
-from cylc.network.client import SuiteRuntimeClient
-from cylc.cfgspec.glbl_cfg import glbl_cfg
-from cylc.task_state import (
+from cylc.flow.exceptions import ClientError
+from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.network.client import SuiteRuntimeClient
+from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.task_state import (
     TASK_STATUS_RUNAHEAD, TASK_STATUSES_ORDERED,
     TASK_STATUSES_RESTRICTED)
-from cylc.task_state_prop import get_status_prop
-from cylc.terminal import cli_function
-from cylc.wallclock import get_time_string_from_unix_time
+from cylc.flow.task_state_prop import get_status_prop
+from cylc.flow.terminal import cli_function
+from cylc.flow.wallclock import get_time_string_from_unix_time
 
 
 SUITE_STATUS_SPLIT_REC = re.compile('^([a-z ]+ at )(.*)$')

@@ -22,14 +22,14 @@ Retrieve and print the source directory location of suite REG.
 Here's an easy way to move to a suite source directory:
   $ cd $(cylc get-dir REG)."""
 
-from cylc.remote import remrun
+from cylc.flow.remote import remrun
 if remrun():
     import sys
     sys.exit(0)
 
-from cylc.option_parsers import CylcOptionParser as COP
-from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
-from cylc.terminal import cli_function
+from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.suite_srv_files_mgr import SuiteSrvFilesManager
+from cylc.flow.terminal import cli_function
 
 
 @cli_function

@@ -19,7 +19,7 @@
 import os
 
 
-from cylc.batch_sys_handlers.pbs import PBSHandler
+from cylc.flow.batch_sys_handlers.pbs import PBSHandler
 
 
 class MyPBSHandler(PBSHandler):

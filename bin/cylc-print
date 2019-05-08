@@ -28,17 +28,17 @@ each pattern ('foo' is the same as 'foo/*'); use the string end marker
 to prevent this ('foo$' matches only literal 'foo')."""
 
 import sys
-from cylc.remote import remrun
+from cylc.flow.remote import remrun
 if remrun():
     sys.exit(0)
 
 import os
 import re
 
-from cylc.option_parsers import CylcOptionParser as COP
-from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
-from cylc.print_tree import print_tree
-from cylc.terminal import cli_function
+from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.suite_srv_files_mgr import SuiteSrvFilesManager
+from cylc.flow.print_tree import print_tree
+from cylc.flow.terminal import cli_function
 
 
 def get_padding(reglist):

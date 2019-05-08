@@ -21,8 +21,8 @@
 set_test_number 3
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-iso8601
-run_ok $TEST_NAME python $CYLC_DIR/lib/cylc/cycling/iso8601.py
+run_ok $TEST_NAME python $CYLC_DIR/cylc/flow/cycling/iso8601.py
 TEST_NAME=$TEST_NAME_BASE-integer
-run_ok $TEST_NAME python $CYLC_DIR/lib/cylc/cycling/integer.py
+run_ok $TEST_NAME python $CYLC_DIR/cylc/flow/cycling/integer.py
 TEST_NAME=$TEST_NAME_BASE-cycling
-run_ok $TEST_NAME python $CYLC_DIR/lib/cylc/cycling/__init__.py
+run_ok $TEST_NAME python $CYLC_DIR/cylc/flow/cycling/__init__.py

@@ -38,7 +38,7 @@ If no options are specified, --load and --memory are invoked by default.
 import sys
 if '--use-ssh' in sys.argv[1:]:
     sys.argv.remove('--use-ssh')
-    from cylc.remote import remrun
+    from cylc.flow.remote import remrun
     if remrun():
         sys.exit(0)
 
@@ -47,8 +47,8 @@ import re
 from subprocess import Popen, PIPE, CalledProcessError
 import json
 
-from cylc.option_parsers import OptionParser
-from cylc.terminal import cli_function
+from cylc.flow.option_parsers import OptionParser
+from cylc.flow.terminal import cli_function
 
 
 """Templates for extracting desired metric data via regular expression.

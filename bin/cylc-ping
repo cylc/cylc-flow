@@ -24,16 +24,16 @@ exit with success status, else exit with error status."""
 import sys
 if '--use-ssh' in sys.argv[1:]:
     sys.argv.remove('--use-ssh')
-    from cylc.remote import remrun
+    from cylc.flow.remote import remrun
     if remrun():
         sys.exit(0)
 
-from cylc.exceptions import UserInputError
-import cylc.flags
-from cylc.option_parsers import CylcOptionParser as COP
-from cylc.task_id import TaskID
-from cylc.network.client import SuiteRuntimeClient
-from cylc.terminal import cli_function
+from cylc.flow.exceptions import UserInputError
+import cylc.flow.flags
+from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.task_id import TaskID
+from cylc.flow.network.client import SuiteRuntimeClient
+from cylc.flow.terminal import cli_function
 
 
 @cli_function
@@ -51,7 +51,7 @@ def main():
 
     # cylc ping SUITE
     pclient('ping_suite')  # (no need to check the result)
-    if cylc.flags.verbose:
+    if cylc.flow.flags.verbose:
         host, port = SuiteRuntimeClient.get_location(
             suite, options.owner, options.host)
         sys.stdout.write("Running on %s:%s\n" % (host, port))

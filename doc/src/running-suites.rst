@@ -504,9 +504,10 @@ server program is determined by the public access privilege level set in global
 site/user config (:ref:`GlobalAuth`) and optionally overridden in suites
 (:ref:`SuiteAuth`):
 
-See Cylc privilege levels: :py:obj:`cylc.network.Priv`.
+See Cylc privilege levels: :py:obj:`cylc.flow.network.Priv`.
 
-The default public access level is :py:obj:`cylc.network.Priv.STATE_TOTALS`.
+The default public access level is
+:py:obj:`cylc.flow.network.Priv.STATE_TOTALS`.
 
 The ``cylc scan`` command can print
 descriptions and task state totals in addition to basic suite identity, if the
