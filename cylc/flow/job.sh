@@ -36,26 +36,15 @@ cylc__job__main() {
         set -x
     fi
     # Prelude
-    typeset file_name=
+    typeset JOB_INIT_ENV=
     # conf/job-init-env.sh for back-compat pre 7.7.0.
-    for file_name in \
-        "${HOME}/.cylc/job-init-env.sh" \
-        "${CYLC_DIR}/etc/job-init-env.sh" \
-        "${CYLC_DIR}/conf/job-init-env.sh"
-    do
-        if [[ -f "${file_name}" ]]; then
-            if "${CYLC_DEBUG:-false}"; then
-                . "${file_name}"
-            else
-                . "${file_name}" 1>'/dev/null' 2>&1
-            fi
-            break
+    JOB_INIT_ENV="${HOME}/.cylc/job-init-env.sh"
+    if [[ -f "${JOB_INIT_ENV}" ]]; then
+        if "${CYLC_DEBUG:-false}"; then
+            . "${JOB_INIT_ENV}"
+        else
+            . "${JOB_INIT_ENV}" 1>'/dev/null' 2>&1
         fi
-    done
-    # Ensure that the "cylc" command is in PATH. It may not be set up correctly
-    # in Prelude above, and also not inherited from the job submit environment.
-    if ! command -v cylc 1>'/dev/null' 2>&1; then
-        PATH="${CYLC_DIR}/bin:${PATH}"
     fi
     # Init-Script
     cylc__job__run_inst_func 'global_init_script'

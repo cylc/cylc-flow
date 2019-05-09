@@ -274,9 +274,10 @@ class GlobalConfig(ParsecConfig):
     _DEFAULT = None
     _HOME = os.getenv('HOME') or get_user_home()
     CONF_BASE = "global.rc"
+    # TODO: do we need new values for these variables?
     # Site global.rc loc preference: if not in etc/ look in old conf/.
-    SITE_CONF_DIR = os.path.join(os.environ["CYLC_DIR"], "etc")
-    SITE_CONF_DIR_OLD = os.path.join(os.environ["CYLC_DIR"], "conf")
+    # SITE_CONF_DIR = os.path.join(os.environ["CYLC_DIR"], "etc")
+    # SITE_CONF_DIR_OLD = os.path.join(os.environ["CYLC_DIR"], "conf")
     # User global.rc loc preference: if not in .cylc/x.y.z/ look in .cylc/.
     USER_CONF_DIR_1 = os.path.join(_HOME, '.cylc', CYLC_VERSION)
     USER_CONF_DIR_2 = os.path.join(_HOME, '.cylc')
@@ -310,8 +311,6 @@ class GlobalConfig(ParsecConfig):
         if conf_path_str is None:
             # CYLC_CONF_PATH not defined, use default locations.
             for conf_dir_1, conf_dir_2, conf_type in [
-                    (self.SITE_CONF_DIR, self.SITE_CONF_DIR_OLD,
-                     upgrader.SITE_CONFIG),
                     (self.USER_CONF_DIR_1, self.USER_CONF_DIR_2,
                      upgrader.USER_CONFIG)]:
                 fname1 = os.path.join(conf_dir_1, self.CONF_BASE)
