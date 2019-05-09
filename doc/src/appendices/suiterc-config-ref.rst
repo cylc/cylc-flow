@@ -75,7 +75,7 @@ be collapsed into a single state summary when the "group" column is displayed.
 [meta] ``->`` \_\_MANY\_\_
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Replace \_\_MANY\_\_ with any user-defined metadata item. These, like
+Replace ``__MANY__`` with any user-defined metadata item. These, like
 title, URL, etc. can be passed to suite event handlers to be interpreted
 according to your needs. For example, "suite-priority".
 
@@ -589,7 +589,7 @@ task event handlers.
 [cylc] ``->`` [[environment]] ``->`` \_\_VARIABLE\_\_
 """""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Replace ``\_\_VARIABLE\_\_`` with any number of environment variable
+Replace ``__VARIABLE__`` with any number of environment variable
 assignment expressions.
 Values may refer to other local environment variables (order of
 definition is preserved) and are not evaluated or manipulated by
@@ -999,7 +999,7 @@ See also :ref:`InternalQueues`.
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 Section heading for configuration of a single queue. Replace
-``\_\_QUEUE\_\_`` with a queue name, and repeat the section as required.
+``__QUEUE__`` with a queue name, and repeat the section as required.
 
 - *type*: string
 - *default*: "default"
@@ -1034,7 +1034,7 @@ see :ref:`External Triggers`.
 [scheduling] ``->`` [[xtriggers]] ``->`` \_\_MANY\_\_
 """""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Replace ``\_\_MANY\_\_`` with any user-defined event trigger function
+Replace ``__MANY__`` with any user-defined event trigger function
 declarations and corresponding labels for use in the graph:
 
 - *type*: string: function signature followed by optional call interval
@@ -1190,7 +1190,7 @@ string syntax.
 [scheduling] ``->`` [[dependencies]] ``->`` [[[\_\_RECURRENCE\_\_]]]
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-``\_\_RECURRENCE\_\_`` section headings define the sequence of cycle points for
+``__RECURRENCE__`` section headings define the sequence of cycle points for
 which the subsequent graph section is valid. These should be specified in
 our ISO 8601 derived sequence syntax, or similar for integer cycling:
 
@@ -1251,7 +1251,7 @@ hierarchies. For details and examples see :ref:`NIORP`.
 [runtime] ``->`` [[\_\_NAME\_\_]]
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Replace ``\_\_NAME\_\_`` with a namespace name, or a comma-separated list of
+Replace ``__NAME__`` with a namespace name, or a comma-separated list of
 names, and repeat as needed to define all tasks in the suite. Names must
 be valid according to the restrictions outlined in :ref:`TaskNames`.
 
@@ -1505,7 +1505,7 @@ See also :ref:`SuiteURL`.
 [runtime] ``->`` [[\_\_NAME\_\_]] ``->`` [[[meta]]] ``->`` \_\_MANY\_\_
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-Replace ``\_\_MANY\_\_`` with any user-defined metadata item. These, like title,
+Replace ``__MANY__`` with any user-defined metadata item. These, like title,
 URL, etc. can be passed to task event handlers to be interpreted according to your
 needs. For example, the value of an "importance" item could determine how an event
 handler responds to task failure events.
@@ -2030,7 +2030,7 @@ earlier in the script.  See also :ref:`TaskExecutionEnvironment`.
 [runtime] ``->`` [[\_\_NAME\_\_]] ``->`` [[[environment]]] ``->`` \_\_VARIABLE\_\_
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-Replace ``\_\_VARIABLE\_\_`` with any number of environment variable
+Replace ``__VARIABLE__`` with any number of environment variable
 assignment expressions. Order of definition is preserved so values can
 refer to previously defined variables. Values are passed through to the task
 job script without evaluation or manipulation by cylc, so any variable assignment
@@ -2107,11 +2107,11 @@ relevant for *parameterized tasks* - see :ref:`Parameterized Tasks Label`.
 [runtime] ``->`` [[\_\_NAME\_\_]] ``->`` [[[parameter environment templates]]] ``->`` \_\_VARIABLE\_\_
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-Replace ``\_\_VARIABLE\_\_`` with pairs of environment variable
+Replace ``__VARIABLE__`` with pairs of environment variable
 name and Python string template for parameter substitution. This is only
 relevant for *parameterized tasks* - see :ref:`Parameterized Tasks Label`.
 
-If specified, in addition to the standard ``CYLC\_TASK\_PARAM\_<key>``
+If specified, in addition to the standard ``CYLC_TASK_PARAM_<key>``
 variables, the job script will also export the named variables specified
 here, with the template strings substituted with the parameter values.
 
@@ -2140,7 +2140,7 @@ individually overridden at lower levels of the runtime namespace hierarchy.
 [runtime] ``->`` [[\_\_NAME\_\_]] ``->`` [[[directives]]] ``->`` \_\_DIRECTIVE\_\_
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-Replace ``\_\_DIRECTIVE\_\_`` with each directive assignment, e.g.
+Replace ``__DIRECTIVE__`` with each directive assignment, e.g.
 ``class = parallel``.
 
 - *type*: string
@@ -2160,7 +2160,7 @@ Register custom task outputs for use in message triggering in this section
 [runtime] ``->`` [[\_\_NAME\_\_]] ``->`` [[[outputs]]] ``->`` \_\_OUTPUT\_\_
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-Replace ``\_\_OUTPUT\_\_`` with one or more custom task output messages
+Replace ``__OUTPUT__`` with one or more custom task output messages
 (:ref:`MessageTriggers`).  The item name is used to select the custom output
 message in graph trigger notation.
 
@@ -2474,7 +2474,7 @@ root, so you can style family and member nodes at once by family name.
 [visualization] ``->`` [[node groups]] ``->`` __GROUP__
 """""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Replace ``\_\_GROUP\_\_`` with each named group of tasks or families.
+Replace ``__GROUP__`` with each named group of tasks or families.
 
 - *type*: Comma-separated list of task or family names.
 - *default*: (none)
@@ -2501,7 +2501,7 @@ override the earlier green styling of the member.
 [visualization] ``->`` [[node attributes]] ``->`` \_\_NAME\_\_
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Replace ``\_\_NAME\_\_`` with each node or node group for style attribute
+Replace ``__NAME__`` with each node or node group for style attribute
 assignment.
 
 - *type*: Comma-separated list of quoted ``'attribute=value'`` pairs.
