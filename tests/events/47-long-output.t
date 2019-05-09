@@ -38,7 +38,7 @@ init_suite "${TEST_NAME_BASE}" <<__SUITERC__
     [[t1]]
         script = true
         [[[events]]]
-            succeeded handler = cat "${CYLC_DIR}/COPYING" "${CYLC_DIR}/COPYING" "${CYLC_DIR}/COPYING" && echo
+            succeeded handler = cat "${CYLC_REPO_DIR}/COPYING" "${CYLC_REPO_DIR}/COPYING" "${CYLC_REPO_DIR}/COPYING" && echo
 __SUITERC__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
@@ -71,7 +71,7 @@ init_suite "${TEST_NAME_BASE}" <<__SUITERC__
     [[t1]]
         script = true
         [[[events]]]
-            succeeded handler = cat "${CYLC_DIR}/COPYING" "${CYLC_DIR}/COPYING" "${CYLC_DIR}/COPYING" >&2 && echo
+            succeeded handler = cat "${CYLC_REPO_DIR}/COPYING" "${CYLC_REPO_DIR}/COPYING" "${CYLC_REPO_DIR}/COPYING" >&2 && echo
 __SUITERC__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"

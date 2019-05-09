@@ -27,8 +27,6 @@ LOG.addHandler(logging.NullHandler())  # Start with a null handler
 
 def environ_init():
     """Initialise cylc environment."""
-    cylc_dir_lib = os.path.dirname(os.path.realpath(__file__))
-    os.environ['CYLC_DIR'] = cylc_dir_lib
     if os.getenv('CYLC_SUITE_DEF_PATH', ''):
         environ_path_add([os.getenv('CYLC_SUITE_DEF_PATH')])
 

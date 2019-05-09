@@ -77,7 +77,7 @@ default () {
     main '.' \
         --exclude 'tests/' \
         --exclude 'cylc/flow/tests/parsec' \
-        --exclude 'etc/dev-bin/live-graph-movie.sh' \
+        --exclude 'etc/bin/live-graph-movie.sh' \
         -- -e SC1090
 
     # run a lenient check on all test scripts

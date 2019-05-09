@@ -4,9 +4,7 @@ Running Suites
 ==============
 
 This chapter currently features a diverse collection of topics related
-to running suites. Please also see :ref:`Tutorial` and
-:ref:`CommandReference`, and experiment with plenty of examples.
-
+to running suites.
 
 .. _SuiteStartUp:
 
@@ -262,8 +260,7 @@ is not in ``$PATH``, then ``[hosts][HOST]cylc executable`` can
 be used to specify the direct path to the executable.
 
 To customize the environment more generally for Cylc on jobs hosts,
-use of ``job-init-env.sh`` is described in
-:ref:`Configure Environment on Job Hosts`.
+use ``job-init-env.sh``.
 
 
 .. _The Suite Contact File:
@@ -730,7 +727,7 @@ queue. The *queues* example suite illustrates how queues work by
 running two task trees side by side each
 limited to 2 and 3 tasks respectively:
 
-.. literalinclude:: ../../etc/examples/queues/suite.rc
+.. literalinclude:: suites/queues/suite.rc
    :language: cylc
 
 

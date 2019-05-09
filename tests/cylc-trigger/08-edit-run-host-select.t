@@ -46,7 +46,7 @@ cmp_ok "${DIFF_LOG}" - <<'__END__'
 +/bin/true
  }
  
- . "${CYLC_DIR}/job.sh"
+ TDIR="$(mktemp -d)"
 __END__
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"

@@ -19,7 +19,7 @@
 #     test_header
 #
 # SYNOPSIS
-#     . $CYLC_DIR/t/lib/bash/test_header
+#     . $CYLC_REPO_DIR/tests/lib/bash/test_header
 #
 # DESCRIPTION
 #     Interface for constructing tests under a TAP harness (the "prove"
@@ -239,7 +239,7 @@ cmp_json() {
     local FILE1="$2"
     shift; shift
 
-    if python3 "$CYLC_DIR/tests/lib/python/diffr.py" \
+    if python3 "$CYLC_REPO_DIR/tests/lib/python/diffr.py" \
         "$(cat "${FILE1}")" "$@" >"${TEST_NAME}.stdout" 2>"${TEST_NAME}.stderr"
     then
         ok "${TEST_NAME}"
@@ -476,7 +476,7 @@ ssh_install_cylc() {
     local RHOST="$1"
     local RHOST_CYLC_DIR=$(_ssh_mkdtemp_cylc_dir "${RHOST}")
     TEST_RHOST_CYLC_DIR="${RHOST}:${RHOST_CYLC_DIR}"
-    rsync -a '--exclude=*.pyc' "${CYLC_DIR}"/* "${RHOST}:${RHOST_CYLC_DIR}/"
+    rsync -a '--exclude=*.pyc' "${CYLC_REPO_DIR}"/* "${RHOST}:${RHOST_CYLC_DIR}/"
     ssh -n -oBatchMode=yes -oConnectTimeout=5 "${RHOST}" \
         "make -C '${RHOST_CYLC_DIR}' 'version'" 1>'/dev/null' 2>&1
 }
@@ -585,8 +585,7 @@ set_test_remote() {
 
 # tags
 
-CYLC_DIR="${CYLC_DIR:-$(cd $(dirname "${BASH_SOURCE}")/../../.. && pwd)}"
-PATH="${CYLC_DIR}/bin:${PATH}"
+PATH="${CYLC_REPO_DIR}/bin:${PATH}"
 
 TEST_NAME_BASE="$(basename "$0" '.t')"
 TEST_SOURCE_DIR="$(cd "$(dirname "$0")" && pwd)"

@@ -1724,8 +1724,8 @@ on the suite host. If you want the job logs pulled back to the suite host
 automatically, you can set this item to ``True``. The suite will
 then attempt to ``rsync`` the job logs once from the remote host each
 time a task job completes. E.g. if the job file is
-``~/cylc-run/tut.oneoff.remote/log/job/1/hello/01/job``, anything under
-``~/cylc-run/tut.oneoff.remote/log/job/1/hello/01/`` will be retrieved.
+``~/cylc-run/my-suite/log/job/1/hello/01/job``, anything under
+``~/cylc-run/my-suite/log/job/1/hello/01/`` will be retrieved.
 
 - *type*: boolean
 - *default*: False
@@ -2003,8 +2003,6 @@ parser is concerned these are just normal configuration items).
 
 - *type*: string
 - *default*: (none)
-- *legal values*: depends to some extent on the task job
-  submission shell (:ref:`JobSubShell`).
 - *examples*, for the bash shell:
 
   - ``FOO = $HOME/bar/baz``

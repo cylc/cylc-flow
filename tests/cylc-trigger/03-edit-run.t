@@ -46,7 +46,7 @@ cmp_ok "${DIFF_LOG}" - <<'__END__'
 +/bin/true
  }
  
- . "${CYLC_DIR}/job.sh"
+ TDIR="$(mktemp -d)"
 __END__
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-diff2"
@@ -60,11 +60,11 @@ cmp_ok "${DIFF_LOG}" - <<'__END__'
  
  cylc__job__inst__script() {
  # SCRIPT:
--$(
+-$(x
 +/bin/true
  }
  
- . "${CYLC_DIR}/job.sh"
+ TDIR="$(mktemp -d)"
 __END__
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"

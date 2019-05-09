@@ -1,6 +1,0 @@
-[meta]
-    title = "The minimal complete runnable cylc suite"
-[scheduling]
-    [[dependencies]]
-        graph = "foo"
-# (actually, 'title' is optional too ... and so is this comment)

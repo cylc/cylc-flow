@@ -346,18 +346,18 @@ Task stdout And stderr Logs
 ---------------------------
 
 When a task is ready to run cylc generates a filename root to be used
-for the task job script and log files. The filename containing the task
+for the task job script and log files. The file path contains the task
 name, cycle point, and a submit number that increments if the same task is
 re-triggered multiple times:
 
 .. code-block:: bash
 
    # task job script:
-   ~/cylc-run/tut/oneoff/basic/log/job/1/hello/01/job
+   ~/cylc-run/my-suite/basic/log/job/1/hello/01/job
    # task stdout:
-   ~/cylc-run/tut/oneoff/basic/log/job/1/hello/01/job.out
+   ~/cylc-run/my-suite/basic/log/job/1/hello/01/job.out
    # task stderr:
-   ~/cylc-run/tut/oneoff/basic/log/job/1/hello/01/job.err
+   ~/cylc-run/my-suite/basic/log/job/1/hello/01/job.err
 
 How the stdout and stderr streams are directed into these files depends
 on the batch system. The ``background`` method just uses

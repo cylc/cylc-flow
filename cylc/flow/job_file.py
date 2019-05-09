@@ -156,7 +156,6 @@ class JobFileWriter(object):
     def _write_prelude(self, handle, job_conf):
         """Job script prelude."""
         # Environment variables for prelude
-        handle.write("\nexport CYLC_DIR='%s'" % (os.environ['CYLC_DIR']))
         if cylc.flow.flags.debug:
             handle.write("\nexport CYLC_DEBUG=true")
         handle.write("\nexport CYLC_VERSION='%s'" % CYLC_VERSION)
@@ -322,6 +321,8 @@ class JobFileWriter(object):
     @staticmethod
     def _write_epilogue(handle, job_conf):
         """Write epilogue."""
-        handle.write('\n\n. "${CYLC_DIR}/job.sh"\ncylc__job__main')
+        handle.write('\n\nTDIR="$(mktemp -d)"')
+        handle.write('\ncylc get-pkg-resources "${TDIR}" etc/job.sh')
+        handle.write('\n. "${TDIR}/etc/job.sh"\ncylc__job__main')
         handle.write("\n\n%s%s\n" % (
             BatchSysManager.LINE_PREFIX_EOF, job_conf['job_d']))

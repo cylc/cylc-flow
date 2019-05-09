@@ -134,10 +134,12 @@ setup(
     scripts=glob(join('bin', '*')),
     packages=find_namespace_packages(include=["cylc.*"]),
     package_data={
-        'cylc.flow': ['*.txt', '*.md', '*.sh']
+        'cylc.flow': [
+            'etc/*.yaml', 'etc/global*.eg', 'etc/job.sh',
+            'etc/syntax/*', 'etc/syntax/*/*',
+        ]
     },
     cmdclass=cmdclass,
-    include_package_data=False,
     install_requires=install_requires,
     tests_require=tests_require,
     extras_require=extra_requires,

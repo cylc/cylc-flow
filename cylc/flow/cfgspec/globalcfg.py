@@ -88,7 +88,7 @@ SPEC = {
     },
 
     'documentation': {
-        'local': [VDR.V_STRING, '$CYLC_DIR/doc/built-sphinx/index.html'],
+        'local': [VDR.V_STRING, ''],
         'online': [VDR.V_STRING,
                    'http://cylc.github.io/doc/built-sphinx/index.html'],
         'cylc homepage': [VDR.V_STRING, 'http://cylc.github.io/'],
@@ -274,10 +274,6 @@ class GlobalConfig(ParsecConfig):
     _DEFAULT = None
     _HOME = os.getenv('HOME') or get_user_home()
     CONF_BASE = "global.rc"
-    # TODO: do we need new values for these variables?
-    # Site global.rc loc preference: if not in etc/ look in old conf/.
-    # SITE_CONF_DIR = os.path.join(os.environ["CYLC_DIR"], "etc")
-    # SITE_CONF_DIR_OLD = os.path.join(os.environ["CYLC_DIR"], "conf")
     # User global.rc loc preference: if not in .cylc/x.y.z/ look in .cylc/.
     USER_CONF_DIR_1 = os.path.join(_HOME, '.cylc', CYLC_VERSION)
     USER_CONF_DIR_2 = os.path.join(_HOME, '.cylc')

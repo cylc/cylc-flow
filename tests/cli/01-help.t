@@ -19,7 +19,7 @@
 
 . "$(dirname "$0")/test_header"
 # Number of tests depends on the number of 'cylc' commands.
-set_test_number $(( 34 + $(cd "${CYLC_DIR}/bin" && ls 'cylc-'* | wc -l) ))
+set_test_number $(( 34 + $(cd "${CYLC_REPO_DIR}/bin" && ls 'cylc-'* | wc -l) ))
 
 # Top help
 run_ok "${TEST_NAME_BASE}-0" cylc
@@ -59,6 +59,7 @@ cylc get: is ambiguous for:
     cylc get-directory
     cylc get-global-config
     cylc get-host-metrics
+    cylc get-pkg-resources
     cylc get-site-config
     cylc get-suite-config
     cylc get-suite-contact
@@ -97,6 +98,6 @@ cmp_ok "${TEST_NAME_BASE}-version.stdout" "${TEST_NAME_BASE}-V.stdout"
 while read ITEM; do
     run_ok "${TEST_NAME_BASE}-no-display-${ITEM}--help" \
         env DISPLAY= cylc "${ITEM#cylc-}" --help
-done < <(cd "${CYLC_DIR}/bin" && ls 'cylc-'*)
+done < <(cd "${CYLC_REPO_DIR}/bin" && ls 'cylc-'*)
 
 exit

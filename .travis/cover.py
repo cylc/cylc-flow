@@ -23,12 +23,13 @@ from subprocess import call
 
 def main():
     # Run tests with virtual frame buffer for X support.
-    if call('xvfb-run -a cylc test-battery --chunk $CHUNK --state=save -j 5',
-            shell=True) != 0:
+    if call('xvfb-run -a etc/bin/run-functional-tests.sh '
+            '--chunk $CHUNK --state=save -j 5', shell=True) != 0:
         # Non-zero return code
         sys.stderr.write('\n\nRerunning Failed Tests...\n\n')
         # Exit with final return code
-        sys.exit(call('cylc test-battery --state=failed -j 5', shell=True))
+        sys.exit(call(
+            'etc/bin/run-functional-tests.sh --state=failed -j 5', shell=True))
 
 
 if __name__ == '__main__':

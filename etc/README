@@ -1,0 +1,5 @@
+Miscellaneous developer files, not intended for distribution to users.
+
+- Example suites:
+  - Some of these are used in generating the User Guide.
+  - TODO: how to make these available to Cylc-8 users?

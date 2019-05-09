@@ -5,7 +5,6 @@
 # Task: foo.1
 # Job log directory: 1/foo/01
 # Job submit method: background
-export CYLC_DIR=
 export CYLC_VERSION=
 CYLC_FAIL_SIGNALS='EXIT ERR TERM XCPU'
 
@@ -101,7 +100,9 @@ echo VAR_CS is $VAR_CS
 export VAR_PostCS=postcs
 }
 
-. "${CYLC_DIR}/job.sh"
+TDIR="$(mktemp -d)"
+cylc get-pkg-resources $TDIR etc/job.sh
+. "${TDIR}/etc/job.sh"
 cylc__job__main
 
 #EOF: 1/foo/01

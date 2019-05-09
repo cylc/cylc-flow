@@ -169,16 +169,12 @@ Jinja2 (:ref:`Jinja`) also has template inclusion functionality.
 Syntax Highlighting For Suite Configuration
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Cylc comes with syntax files for a number of text editors:
-
-.. code-block:: bash
-
-   <cylc-dir>/etc/syntax/cylc.vim     # vim
-   <cylc-dir>/etc/syntax/cylc-mode.el # emacs
-   <cylc-dir>/etc/syntax/cylc.lang    # gedit (and other gtksourceview programs)
-   <cylc-dir>/etc/syntax/cylc.xml     # kate
+Cylc comes with syntax files for a number of text editors: vim, emacs,
+gedit (and other gtksourceview programs), and kate.
 
 Refer to comments at the top of each file to see how to use them.
+
+.. TODO: TELL USERS WHERE TO GET THIS FROM.
 
 
 Gross File Structure
@@ -852,8 +848,7 @@ Advanced Starting Up
 """"""""""""""""""""
 
 Dependencies that are only valid at the initial cycle point can be written
-using the ``R1`` notation (e.g. as in :ref:`initial-non-repeating-r1-tasks`.
-For example:
+using the ``R1`` notation. For example:
 
 .. code-block:: cylc
 
@@ -1068,31 +1063,7 @@ where suite initial and final cycle points can be assumed. Some examples:
                      # (short for R1/P0/final-point)
 
 
-Example
-'''''''
-
-The tutorial illustrates integer cycling in :ref:`TutInteger`, and
-``<cylc-dir>/etc/examples/satellite/`` is a
-self-contained example of a realistic use for integer cycling. It simulates
-the processing of incoming satellite data: each new dataset arrives after a
-random (as far as the suite is concerned) interval, and is labeled by an
-arbitrary (as far as the suite is concerned) ID in the filename. A task called
-``get_data`` at the top of the repeating workflow waits on the next
-dataset and, when it finds one, moves it to a cycle-point-specific shared
-workspace for processing by the downstream tasks. When ``get_data.1``
-finishes, ``get_data.2`` triggers and begins waiting for the next
-dataset at the same time as the downstream tasks in cycle point 1 are
-processing the first one, and so on. In this way multiple datasets can be
-processed at once if they happen to come in quickly. A single shutdown task
-runs at the end of the final cycle to collate results. The suite graph is
-shown in :numref:`fig-satellite`.
-
-.. _fig-satellite:
-
-.. figure:: graphics/png/orig/satellite.png
-   :align: center
-
-   The ``etc/examples/satellite`` integer suite.
+.. TODO: INTEGER CYCLING EXAMPLE REMOVED - REPLACE IT?  
 
 
 Advanced Integer Cycling Syntax
@@ -1243,10 +1214,9 @@ Tasks can also trigger off custom output messages. These must be registered in
 the ``[runtime]`` section of the emitting task, and reported using the
 ``cylc message`` command in task scripting. The graph trigger notation
 refers to the item name of the registered output message.
-The example suite ``<cylc-dir>/etc/examples/message-triggers`` illustrates
-message triggering.
+And example mesage triggering suite:
 
-.. literalinclude:: ../../etc/examples/message-triggers/suite.rc
+.. literalinclude:: suites/message-triggers/suite.rc
    :language: cylc
 
 
@@ -1609,8 +1579,7 @@ restart files, for instance, then an initial set of restart files has to be
 generated somehow or the first model task will presumably fail with
 missing input files. There are several ways to handle this in cylc
 using different kinds of one-off (non-cycling) tasks that run at suite
-start-up. They are illustrated in :ref:`TutInterCyclePointTriggers`; to
-summarize here briefly:
+start-up.
 
 - ``R1`` tasks (recommended):
 
@@ -1844,8 +1813,7 @@ The offset should be positive to make the task expire if the wall-clock time
 has gone beyond the cycle point. Triggering off an expired task typically
 requires suicide triggers to remove the workflow that runs if the task has not
 expired. Here a task called ``copy`` expires, and its downstream
-workflow is skipped, if it is more than one day behind the wall-clock (see also
-``etc/examples/clock-expire``):
+workflow is skipped, if it is more than one day behind the wall-clock:
 
 .. code-block:: cylc
 
@@ -2108,7 +2076,7 @@ Runtime Inheritance - Single
 The following listing of the *inherit.single.one* example suite
 illustrates basic runtime inheritance with single parents.
 
-.. literalinclude:: ../../etc/examples/inherit/single/one/suite.rc
+.. literalinclude:: suites/inherit/single/one/suite.rc
    :language: cylc
 
 
@@ -2128,7 +2096,7 @@ but for detailed documentation of how the algorithm works refer to the
 The *inherit.multi.one* example suite, listed here, makes use of
 multiple inheritance:
 
-.. literalinclude:: ../../etc/examples/inherit/multi/one/suite.rc
+.. literalinclude:: suites/inherit/multi/one/suite.rc
    :language: cylc
 
 ``cylc get-suite-config`` provides an easy way to check the result of
@@ -2286,7 +2254,6 @@ The task job script may export the following environment variables:
 .. code-block:: bash
 
    CYLC_DEBUG                      # Debug mode, true or not defined
-   CYLC_DIR                        # Location of cylc installation used
    CYLC_VERSION                    # Version of cylc installation used
 
    CYLC_CYCLING_MODE               # Cycling mode, e.g. gregorian
@@ -3212,7 +3179,7 @@ add the city name to list at the top of the file. The suite is graphed,
 with the New York City task family expanded, in
 :numref:`fig-jinja2-cities`.
 
-.. literalinclude:: ../../etc/examples/jinja2/cities/suite.rc
+.. literalinclude:: suites/jinja2/cities/suite.rc
    :language: cylc
 
 .. _fig-jinja2-cities:
@@ -3247,7 +3214,6 @@ prior to configuration parsing to provide suite context:
 .. code-block:: bash
 
    CYLC_DEBUG                      # Debug mode, true or not defined
-   CYLC_DIR                        # Location of cylc installation used
    CYLC_VERBOSE                    # Verbose mode, True or False
    CYLC_VERSION                    # Version of cylc installation used
 
@@ -3300,11 +3266,7 @@ filter or test is a single Python function in a source file with the same name
 as the function (plus ".py" extension) and stored in one of the following
 locations:
 
-- ``<cylc-dir>/lib/Jinja2[namespace]/``
-- ``[suite configuration directory]/Jinja2[namespace]/``
-- ``$HOME/.cylc/Jinja2[namespace]/``
-
-where ``[namespace]/`` is one of ``Globals/``, ``Filters/`` or ``Tests/``.
+.. TODO: THIS HAS BEEN UPDATED ON MASTER?
 
 In the argument list of filter or test function, the first argument is
 the variable value to be "filtered" or "tested", respectively, and
@@ -3395,7 +3357,7 @@ Associative Arrays In Jinja2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Associative arrays (*dicts* in Python) can be very useful.
-Here's an example, from ``<cylc-dir>/etc/examples/jinja2/dict``:
+Here's an example:
 
 .. code-block:: cylc
 
@@ -3430,9 +3392,9 @@ Jinja2 Default Values And Template Inputs
 
 The values of Jinja2 variables can be passed in from the cylc command
 line rather than hardwired in the suite configuration.
-Here's an example, from ``<cylc-dir>/etc/examples/jinja2/defaults``:
+Here's an example:
 
-.. literalinclude:: ../../etc/examples/jinja2/defaults/suite.rc
+.. literalinclude:: suites/jinja2/defaults/suite.rc
    :language: cylc
 
 Here's the result:
@@ -3621,7 +3583,7 @@ An example suite ``empy.cities`` demonstrating its use is shown below.
 It is a translation of ``jinja2.cities`` example from
 :ref:`Jinja` and can be directly compared against it.
 
-.. literalinclude:: ../../etc/examples/empy/cities/suite.rc
+.. literalinclude:: suites/empy/cities/suite.rc
    :language: cylc
 
 For basic usage the difference between Jinja2 and EmPy amounts to a different

@@ -463,8 +463,7 @@ The ``cylc`` executable on a remote host.
 .. note::
 
    This should normally point to the cylc multi-version wrapper
-   (see :ref:`CUI`) on the host, not ``bin/cylc`` for a specific
-   installed version.
+   on the host, not ``bin/cylc`` for a specific installed version.
 
 Specify a full path if ``cylc`` is not in ``\$PATH`` when it is
 invoked via ``ssh`` on this host.
@@ -845,8 +844,7 @@ name. This should resolve on remote task hosts to the IP address of the
 suite host; if it doesn't, adjust network settings or use one of the
 other methods. For the *address* method, cylc attempts to use a
 special external "target address" to determine the IP address of the
-suite host as seen by remote task hosts (in-source documentation in
-``<cylc-dir>/lib/cylc/hostuserutil.py`` explains how this works).
+suite host as seen by remote task hosts.
 And finally, as a last resort, you can choose the *hardwired* method
 and manually specify the host name or IP address of the suite host.
 
@@ -898,7 +896,7 @@ Settings for the automated development tests.
 .. note::
 
    The test battery reads
-   ``<cylc-dir>/etc/global-tests.rc`` instead of the normal site/user
+   ``global-tests.rc`` instead of the normal site/user
    global config files.
 
 
@@ -1087,8 +1085,7 @@ Authentication of client programs with suite server programs can be configured
 here, and overridden in suites if necessary (see :ref:`SuiteAuth`).
 
 The suite-specific passphrase must be installed on a user's account to
-authorize full control privileges (see :ref:`tutPassphrases`
-and :ref:`ConnectionAuthentication`). In the future we plan to move to a more
+authorize full control privileges (see :ref:`ConnectionAuthentication`). In the future we plan to move to a more
 traditional user account model so that each authorized user can have their own
 password.
 

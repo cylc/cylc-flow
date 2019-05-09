@@ -22,11 +22,14 @@ CATEGORIES=('control' 'con' 'information' 'info' 'all' 'task' 'license' \
 HELP_OPTS=('help' '--help' '-h' 'h' '?')
 
 print_version() {
+    VN=$(python3 -c "from cylc.flow import __version__; print(__version__)")
     if [[ "$#" -eq 0 ]]; then
-        python3 -c "from cylc.flow import __version__; print(__version__)"
+        echo "$VN"
     fi
     if [[ "$*" == 'long' || "$*" == '--long' ]]; then
-        python3 -c """import cylc.flow;import os;print(f'{cylc.flow.__version__} ({os.path.dirname(os.path.realpath(cylc.flow.__file__))})')"""
+	LOC1=$(dirname "$0")
+	LOC2=$(cd "${LOC1}"; pwd -P)
+	echo  "${VN}(${LOC2})"
     fi
 }
 
