@@ -1438,7 +1438,8 @@ class TimePoint(object):
 
         """
         if check_changes:
-            before = {key: getattr(self, key) for key in self.DATA_ATTRIBUTES}
+            before = dict(
+                (key, getattr(self, key)) for key in self.DATA_ATTRIBUTES)
         if (self.hour_of_day is not None and
                 self.minute_of_hour is not None):
             hours_remainder = self.hour_of_day - int(self.hour_of_day)
@@ -1504,11 +1505,10 @@ class TimePoint(object):
                 self.month_of_year -= CALENDAR.MONTHS_IN_YEAR
                 self.year += 1
         if check_changes:
-            return {
-                key: (value, getattr(self, key))
-                for key, value in before.items()
-                if getattr(self, key) != value
-            }
+            return dict(
+                (key, (value, getattr(self, key)))
+                for key, value in before.items() if getattr(self, key) != value
+            )
 
     def _tick_over_day_of_month(self):
         if self.day_of_month < 1:
