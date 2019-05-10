@@ -26,10 +26,10 @@ import cylc.flow.flags
 from cylc.flow import LOG
 from cylc.flow.xtriggers.wall_clock import wall_clock
 
-from cylc.subprocctx import SubFuncContext
-from cylc.broadcast_mgr import BroadcastMgr
-from cylc.subprocpool import SubProcPool
-from cylc.task_proxy import TaskProxy
+from cylc.flow.subprocctx import SubFuncContext
+from cylc.flow.broadcast_mgr import BroadcastMgr
+from cylc.flow.subprocpool import SubProcPool
+from cylc.flow.task_proxy import TaskProxy
 
 # Templates for string replacement in function arg values.
 TMPL_USER_NAME = 'user_name'
