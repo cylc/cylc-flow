@@ -101,7 +101,7 @@ export VAR_PostCS=postcs
 }
 
 TDIR="$(mktemp -d)"
-cylc get-pkg-resources $TDIR etc/job.sh
+cylc get-pkg-resources "${TDIR}" etc/job.sh
 . "${TDIR}/etc/job.sh"
 cylc__job__main
 
