@@ -15,22 +15,24 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test the cylc test-battery --chunk option
+# Test the run-functional-tests.sh --chunk option
 . $(dirname $0)/test_header
 NO_CHUNKS=2
 set_test_number $(( 2 + $NO_CHUNKS ))
 #-------------------------------------------------------------------------------
 # list all tests
 DRY_TEST_NAME="$TEST_NAME_BASE-all"
-run_ok "$DRY_TEST_NAME" cylc test-battery --dry
-# list tests for each chunk (from prove not cylc test-battery)
+run_ok "$DRY_TEST_NAME" $CYLC_REPO_DIR/etc/bin/run-functional-tests.sh --dry
+# list tests for each chunk (from prove not run-functional-tests.sh)
 temp_file=$(mktemp)
 for chunk_no in $(seq $NO_CHUNKS); do
     TEST_NAME="$TEST_NAME_BASE-chunk-$chunk_no"
-    run_ok "$TEST_NAME" cylc test-battery --chunk "$chunk_no/$NO_CHUNKS" --dry
+    run_ok "$TEST_NAME" \
+        $CYLC_REPO_DIR/etc/bin/run-functional-tests.sh \
+            --chunk "$chunk_no/$NO_CHUNKS" --dry
     cat "$TEST_NAME.stdout" >> "$temp_file"
 done
-# sort files (cylc test-battery uses --shuffle)
+# sort files ($CYLC_REPO_DIR/etc/bin/run-functional-tests.sh uses --shuffle)
 sort -o "$DRY_TEST_NAME.stdout" "$DRY_TEST_NAME.stdout"
 sort -o "$temp_file" "$temp_file"
 # remove cd "$CYLC_HOME" lines
