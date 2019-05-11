@@ -53,7 +53,7 @@ By default all tests are executed.  To run just a subset of them:
   * list individual tests or test directories to skip in \$CYLC_TEST_SKIP
   * skip all generic tests with CYLC_TEST_RUN_GENERIC=false
   * skip all platform-specific tests with CYLC_TEST_RUN_PLATFORM=false
-  List specific tests relative to \$CYLC_TOP_DIR (i.e. starting with "test/").
+  List specific tests relative to \$CYLC_REPO_DIR (i.e. starting with "test/").
 Some platform-specific tests are automatically skipped, depending on platform.
 
 Platform-specific tests must set "CYLC_TEST_IS_GENERIC=false" before sourcing
