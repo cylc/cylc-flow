@@ -42,7 +42,7 @@ _cylc() {
 
 
     if [[ ${COMP_CWORD} -eq 1 ]]; then
-        CYLC_BIN_DIR=$(__cylc_get_cylc_dir)
+        CYLC_BIN_DIR=$(__cylc_get_cylc_bin_dir)
         cylc_cmds="$(cd "$CYLC_BIN_DIR" && echo cylc-* | sed "s/^cylc-//g")"
         COMPREPLY=("$(compgen -W "${cylc_cmds}" -- "${cur}")")
     elif [[ ${sec} =~ ^($suite_cmds)$ ]]; then

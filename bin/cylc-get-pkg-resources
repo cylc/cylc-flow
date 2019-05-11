@@ -13,7 +13,7 @@ Arguments:
 
 import sys
 from cylc.flow.package_resources import get_pkg_resources, list_pkg_resources
-from cylc.flow.terminal import prompt, cli_function
+from cylc.flow.terminal import cli_function
 
 
 @cli_function
