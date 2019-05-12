@@ -30,7 +30,7 @@ def main():
             shell=True) != 0:  # nosec
         sys.stderr.write('\n\nRerunning Failed Tests...\n\n')
         sys.exit(
-            call(fn_tests + '--state=failed -j 5', shell=True)  # nosec
+            call(fn_tests + ' --state=failed -j 5', shell=True)  # nosec
         )
 
 
