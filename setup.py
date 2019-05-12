@@ -137,6 +137,7 @@ setup(
         'cylc.flow': [
             'etc/*.yaml', 'etc/global*.eg', 'etc/job.sh',
             'etc/syntax/*', 'etc/syntax/*/*',
+            'etc/cylc-bash-completion'
         ]
     },
     cmdclass=cmdclass,
