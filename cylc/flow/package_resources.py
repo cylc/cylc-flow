@@ -64,6 +64,6 @@ def get_pkg_resources(target_dir, resources=None):
         if not pdir.exists():
             pdir.mkdir(parents=True)
         # In spite of the name, this returns a byte array, not a string:
-        bytes = pr.resource_string('cylc.flow', resource)
+        res = pr.resource_string('cylc.flow', resource)
         with open(path, 'wb') as h:
-            h.write(bytes)
+            h.write(res)
