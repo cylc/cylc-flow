@@ -81,10 +81,12 @@ def record_messages(suite, task_job, messages):
         if cylc.flow.flags.debug:
             import traceback
             traceback.print_exc()
-    pclient(
-        'put_messages',
-        {'task_job': task_job, 'event_time': event_time, 'messages': messages}
-    )
+    else:
+        pclient(
+            'put_messages',
+            {'task_job': task_job, 'event_time': event_time,
+             'messages': messages}
+        )
 
 
 def _append_job_status_file(suite, task_job, event_time, messages):
