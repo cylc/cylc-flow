@@ -1,3 +1,5 @@
+#!Jinja2
+
 [cylc]
     [[events]]
         timeout = PT1M
@@ -18,4 +20,4 @@
             exit 1
         """
         [[[job]]]
-            execution time limit = PT5S
+            execution time limit = PT{{ETL}}S

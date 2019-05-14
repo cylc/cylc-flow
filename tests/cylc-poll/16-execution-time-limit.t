@@ -18,21 +18,23 @@
 # Test execution time limit polling.
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 4
-create_test_globalrc '
+set_test_number 3
+
+ETL=5  # execution time limit -> seconds
+ETL_P_INT=7  # execution time limit polling intervals -> seconds
+
+create_test_globalrc "
 [hosts]
    [[localhost]]
-        task communication method = poll
-        submission polling intervals = PT2S
         execution polling intervals = PT1M
         [[[batch systems]]]
             [[[[background]]]]
-                execution time limit polling intervals = PT5S'
+                execution time limit polling intervals = PT${ETL_P_INT}S"
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}" -s "ETL=$ETL"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --no-detach "${SUITE_NAME}"
+    cylc run --reference-test --no-detach "${SUITE_NAME}" -s "ETL=$ETL"
 #-------------------------------------------------------------------------------
 cmp_times () {
     # Test if the times $1 and $2 are within $3 seconds of each other.
@@ -57,23 +59,28 @@ __PYTHON__
 }
 #-------------------------------------------------------------------------------
 LOG="${SUITE_RUN_DIR}/log/suite/log"
-# Test logging of the "next job poll" message when task starts.
-TEST_NAME="${TEST_NAME_BASE}-log-entry"
-LINE="$(grep -F '[foo.1] -health check settings: execution timeout=PT10S' "${LOG}")"
-run_ok "${TEST_NAME}" grep -q 'health check settings: execution timeout=PT10S' \
-    <<< "${LINE}"
-# Determine poll times.
+SUBMITTED_TIME="$(sed -n \
+    's/\(.*\) \w.*\[foo.1\] status=submitted: (received)started.*/\1/p' \
+    "${LOG}" | head -n 1)"
 PREDICTED_POLL_TIME=$(time_offset \
-    "$(cut -d ' ' -f 1 <<< "${LINE}")" \
-    "$(sed -n 's/^.*execution timeout=\([^,]\+\).*$/\1/p' <<< "${LINE}")")
+    "${SUBMITTED_TIME}" \
+    "PT$(( ETL + ETL_P_INT ))S" )
 ACTUAL_POLL_TIME=$(sed -n \
-    's/\(.*\) INFO - \[foo.1\] status=running: (polled)failed .*/\1/p' \
-    "${LOG}")
+    's/\(.*\) \w.*\[foo.1\] status=running: (polled)failed.*/\1/p' "${LOG}" \
+    | head -n 1)
+
 # Test execution timeout polling.
 # Main loop is roughly 1 second, but integer rounding may give an apparent 2
 # seconds delay, so set threshold as 2 seconds.
 run_ok "${TEST_NAME_BASE}-poll-time" \
-    cmp_times "${PREDICTED_POLL_TIME}" "${ACTUAL_POLL_TIME}" '10'
+    cmp_times "${PREDICTED_POLL_TIME}" "${ACTUAL_POLL_TIME}" '2'
+if [[ $FAILURES -gt 0 ]]; then
+    cylc cat-log "${SUITE_NAME}" >&2
+    echo >&2
+    echo "SUBM_TIME: $SUBMITTED_TIME" >&2
+    echo "PRED_TIME: $PREDICTED_POLL_TIME" >&2
+    echo "POLL_TIME: $ACTUAL_POLL_TIME" >&2
+fi
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"
 exit
