@@ -135,7 +135,7 @@ def main():
             messages.append([options.severity, message_str.strip()])
         else:
             messages.append([getLevelName(INFO), message_str.strip()])
-    return record_messages(suite, task_job, messages)
+    record_messages(suite, task_job, messages)
 
 
 if __name__ == '__main__':
