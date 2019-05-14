@@ -172,9 +172,9 @@ Syntax Highlighting For Suite Configuration
 Cylc comes with syntax files for a number of text editors: vim, emacs,
 gedit (and other gtksourceview programs), and kate.
 
-Refer to comments at the top of each file to see how to use them.
-
-.. TODO: TELL USERS WHERE TO GET THIS FROM.
+These can be extracted from the cylc-flow library with the ``cylc
+get-pkg-resources`` command. Refer to comments at the top of each file for
+usage instructions.
 
 
 Gross File Structure
