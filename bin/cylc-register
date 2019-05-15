@@ -60,8 +60,7 @@ from cylc.flow.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.flow.terminal import cli_function
 
 
-@cli_function
-def main():
+def get_option_parser():
     parser = COP(
         __doc__,
         argdoc=[("[REG]", "Suite name"),
@@ -72,14 +71,11 @@ def main():
                            "to be used with another suite.",
         action="store_true", default=False, dest="redirect")
 
-    opts, args = parser.parse_args()
-    if len(args) == 2:
-        reg, src = args
-    elif len(args) == 1:
-        reg = args[0]
-        src = None
-    else:
-        reg = src = None
+    return parser
+
+
+@cli_function(get_option_parser)
+def main(parser, opts, reg=None, src=None):
     SuiteSrvFilesManager().register(reg, src, redirect=opts.redirect)
 
 

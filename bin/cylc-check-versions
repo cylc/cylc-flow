@@ -50,8 +50,7 @@ from cylc.flow.templatevars import load_template_vars
 from cylc.flow.terminal import cli_function
 
 
-@cli_function
-def main():
+def get_option_parser():
     parser = COP(__doc__, prep=True, jset=True)
 
     parser.add_option(
@@ -59,8 +58,11 @@ def main():
         "if " + CYLC_VERSION + " is not available on all remote accounts.",
         action="store_true", default=False, dest="error")
 
-    (options, args) = parser.parse_args(remove_opts=['--host', '--user'])
+    return parser
 
+
+@cli_function(get_option_parser, remove_opts=['--host', '--user'])
+def main(_, opts, *args):
     # suite name or file path
     suite_srv_files_mgr = SuiteSrvFilesManager()
     suite, suiterc = suite_srv_files_mgr.parse_suite_arg(options, args[0])

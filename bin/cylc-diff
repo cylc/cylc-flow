@@ -112,8 +112,7 @@ def prdict(dct, arrow='<', section='', level=0, diff=False, nested=False):
                 print(' ' + arrow + '  ', key, '=', dct[key])
 
 
-@cli_function
-def main():
+def get_option_parser():
     parser = COP(
         __doc__, jset=True, prep=True, icp=True,
         argdoc=[('SUITE1', 'Suite name or path'),
@@ -124,8 +123,11 @@ def main():
         help="print suite.rc section headings in nested form.",
         action="store_true", default=False, dest="nested")
 
-    (options, args) = parser.parse_args()
+    return parser
 
+
+@cli_function(get_option_parser)
+def main(parser, options, *args):
     srv_files_manager = SuiteSrvFilesManager()
     suite1, suite1rc = srv_files_manager.parse_suite_arg(options, args[0])
     suite2, suite2rc = srv_files_manager.parse_suite_arg(options, args[1])

@@ -42,7 +42,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_RUNAHEAD, TASK_STATUSES_ORDERED,
     TASK_STATUSES_RESTRICTED)
 from cylc.flow.task_state_prop import get_status_prop
-from cylc.flow.terminal import cli_function2
+from cylc.flow.terminal import cli_function
 from cylc.flow.wallclock import get_time_string_from_unix_time
 
 
@@ -270,7 +270,7 @@ cylc monitor $(cylc scan | grep <suite_name>)
     return parser
 
 
-@cli_function2(parse_args)
+@cli_function(parse_args)
 def main(_, options, *args):
     SuiteMonitor().run(options, *args)
 

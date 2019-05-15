@@ -74,9 +74,7 @@ import sys
 
 if '--use-ssh' in sys.argv[1:]:
     sys.argv.remove('--use-ssh')
-
     from cylc.flow.remote import remrun
-
     if remrun():
         sys.exit(0)
 
@@ -87,7 +85,7 @@ from tempfile import NamedTemporaryFile
 from ansimarkup import parse as cparse
 
 from cylc.flow.task_id import TaskID
-from cylc.flow.terminal import cli_function2
+from cylc.flow.terminal import cli_function
 from cylc.flow.exceptions import UserInputError
 from cylc.flow.print_tree import print_tree
 from cylc.flow.option_parsers import CylcOptionParser as COP
@@ -177,16 +175,15 @@ def files_to_settings(settings, setting_files, cancel_mode=False):
 
 
 def report_bad_options(bad_options, is_set=False):
-    return cparse(
-        '<red>'
-        + get_broadcast_bad_options_report(bad_options, is_set=is_set)
-        + '</red>'
-    )
+    bad_opts = get_broadcast_bad_options_report(bad_options, is_set=is_set)
+    if bad_opts is not None:
+        return cparse(f'<red>{bad_opts}</red>')
+    return bad_opts
 
 
-def parse_args():
+def get_option_parser():
     """CLI for "cylc broadcast"."""
-    parser = COP(__doc__, comms=True, color=True)
+    parser = COP(__doc__, comms=True)
 
     parser.add_option(
         "-p", "--point", metavar="CYCLE_POINT",
@@ -261,9 +258,9 @@ def parse_args():
     return parser
 
 
-@cli_function2(parse_args)
+@cli_function(get_option_parser)
 def main(_, options, suite):
-
+    """Implement cylc broadcast."""
     pclient = SuiteRuntimeClient(
         suite, options.owner, options.host, options.port,
         options.comms_timeout)

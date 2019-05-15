@@ -28,14 +28,18 @@ from cylc.flow.remote import remrun
 from cylc.flow.terminal import cli_function
 
 
-@cli_function
-def main():
-    """CLI main."""
+def get_option_parser():
     parser = COP(__doc__, argdoc=[
         ("JOB-LOG-ROOT", "The log/job sub-directory for the suite"),
         ("[JOB-LOG-DIR ...]", "A point/name/submit_num sub-directory")])
-    args = parser.parse_args()[1]
-    BatchSysManager().jobs_poll(args[0], args[1:])
+
+    return parser
+
+
+@cli_function(get_option_parser)
+def main(parser, options, job_log_root, *job_log_dirs):
+    """CLI main."""
+    BatchSysManager().jobs_poll(job_log_root, job_log_dirs)
 
 
 if __name__ == "__main__" and not remrun():

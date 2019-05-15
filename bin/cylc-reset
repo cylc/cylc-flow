@@ -46,8 +46,7 @@ from cylc.flow.task_state import TASK_STATUSES_CAN_RESET_TO
 from cylc.flow.terminal import prompt, cli_function
 
 
-@cli_function
-def main():
+def get_option_parser():
     parser = COP(
         __doc__, comms=True, multitask=True,
         argdoc=[
@@ -70,8 +69,11 @@ def main():
               "Can be used more than once to reset multiple task outputs."),
         action="append", default=[], dest="outputs")
 
-    options, (suite, *task_globs) = parser.parse_args()
+    return parser
 
+
+@cli_function(get_option_parser)
+def main(parser, options, suite, *task_globs):
     if not options.state and not options.outputs:
         parser.error("Neither --state=STATE nor --output=OUTPUT is set")
 

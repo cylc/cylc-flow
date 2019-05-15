@@ -50,7 +50,7 @@ For example, to match:
 
     def __init__(self, usage, argdoc=None, comms=False, noforce=False,
                  jset=False, multitask=False, prep=False, auto_add=True,
-                 icp=False, color=False):
+                 icp=False, color=True):
 
         self.auto_add = auto_add
         if argdoc is None:

@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Common logic for "cylc run" and "cylc restart" CLI."""
 
+from functools import partial
 import os
 import sys
 
@@ -77,62 +78,7 @@ START_POINT_ARG_DOC = (
     "overrides the suite definition.")
 
 
-@cli_function
-def main(is_restart=False):
-    """CLI main."""
-    options, args = parse_commandline(is_restart)
-    if not args:
-        # Auto-registration: "cylc run" (no args) in source dir.
-        try:
-            reg = SuiteSrvFilesManager().register()
-        except SuiteServiceFileError as exc:
-            sys.exit(exc)
-        # Replace this process with "cylc run REG ..." for 'ps -f'.
-        os.execv(sys.argv[0], [sys.argv[0]] + [reg] + sys.argv[1:])
-
-    # Check suite is not already running before start of host selection.
-    try:
-        SuiteSrvFilesManager().detect_old_contact_file(args[0])
-    except SuiteServiceFileError as exc:
-        sys.exit(exc)
-
-    # Create auth files if needed.
-    SuiteSrvFilesManager().create_auth_files(args[0])
-
-    # Check whether a run host is explicitly specified, else select one.
-    if not options.host:
-        try:
-            host = HostAppointer().appoint_host()
-        except EmptyHostList as exc:
-            if cylc.flow.flags.debug:
-                raise
-            else:
-                sys.exit(str(exc))
-        if is_remote_host(host):
-            if is_restart:
-                base_cmd = ["restart"] + sys.argv[1:]
-            else:
-                base_cmd = ["run"] + sys.argv[1:]
-            # Prevent recursive host selection
-            base_cmd.append("--host=localhost")
-            return remote_cylc_cmd(base_cmd, host=host)
-    if remrun(set_rel_local=True):  # State localhost as above.
-        sys.exit()
-
-    try:
-        SuiteSrvFilesManager().get_suite_source_dir(args[0], options.owner)
-    except SuiteServiceFileError:
-        # Source path is assumed to be the run directory
-        SuiteSrvFilesManager().register(args[0], get_suite_run_dir(args[0]))
-
-    try:
-        scheduler = Scheduler(is_restart, options, args)
-    except SuiteServiceFileError as exc:
-        sys.exit(exc)
-    scheduler.start()
-
-
-def parse_commandline(is_restart):
+def get_option_parser(is_restart):
     """Parse CLI for "cylc run" or "cylc restart"."""
     if is_restart:
         parser = COP(RESTART_DOC, jset=True, argdoc=[SUITE_NAME_ARG_DOC])
@@ -231,10 +177,83 @@ def parse_commandline(is_restart):
         "set a host will be selected using the 'suite servers' global config.",
         metavar="HOST", action="store", dest="host")
 
-    options, args = parser.parse_args()
+    return parser
 
-    if not is_restart and options.warm and len(args) < 2:
+
+def _auto_register():
+    """Register a suite installed in the cylc-run directory."""
+    try:
+        reg = SuiteSrvFilesManager().register()
+    except SuiteServiceFileError as exc:
+        sys.exit(exc)
+    # Replace this process with "cylc run REG ..." for 'ps -f'.
+    os.execv(sys.argv[0], [sys.argv[0]] + [reg] + sys.argv[1:])
+
+
+def scheduler_cli(parser, options, args, is_restart=False):
+    """CLI main."""
+    # Check suite is not already running before start of host selection.
+    try:
+        SuiteSrvFilesManager().detect_old_contact_file(args[0])
+    except SuiteServiceFileError as exc:
+        sys.exit(exc)
+
+    # Create auth files if needed.
+    SuiteSrvFilesManager().create_auth_files(args[0])
+
+    # Check whether a run host is explicitly specified, else select one.
+    if not options.host:
+        try:
+            host = HostAppointer().appoint_host()
+        except EmptyHostList as exc:
+            if cylc.flow.flags.debug:
+                raise
+            else:
+                sys.exit(str(exc))
+        if is_remote_host(host):
+            if is_restart:
+                base_cmd = ["restart"] + sys.argv[1:]
+            else:
+                base_cmd = ["run"] + sys.argv[1:]
+            # Prevent recursive host selection
+            base_cmd.append("--host=localhost")
+            return remote_cylc_cmd(base_cmd, host=host)
+    if remrun(set_rel_local=True):  # State localhost as above.
+        sys.exit()
+
+    try:
+        SuiteSrvFilesManager().get_suite_source_dir(args[0], options.owner)
+    except SuiteServiceFileError:
+        # Source path is assumed to be the run directory
+        SuiteSrvFilesManager().register(args[0], get_suite_run_dir(args[0]))
+
+    try:
+        scheduler = Scheduler(is_restart, options, args)
+    except SuiteServiceFileError as exc:
+        sys.exit(exc)
+    scheduler.start()
+
+
+def main(is_restart=False):
+    """Abstraction for cylc (run|restart) CLI"""
+    if is_restart:
+        return restart()
+    else:
+        return run()
+
+
+@cli_function(partial(get_option_parser, is_restart=True))
+def restart(parser, options, *args):
+    """Implement cylc restart."""
+    return scheduler_cli(parser, options, args, is_restart=True)
+
+
+@cli_function(partial(get_option_parser, is_restart=False))
+def run(parser, options, *args):
+    """Implement cylc run."""
+    if not args:
+        _auto_register()
+    if options.warm and len(args) < 2:
         # Warm start must have a start point
         sys.exit(parser.get_usage())
-
-    return options, args
+    return scheduler_cli(parser, options, args, is_restart=False)

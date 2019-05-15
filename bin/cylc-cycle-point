@@ -64,8 +64,7 @@ import isodatetime.dumpers
 import isodatetime.parsers
 
 
-@cli_function
-def main():
+def get_option_parser():
     parser = COP(
         __doc__,
         argdoc=[
@@ -133,8 +132,11 @@ def main():
         "--print-hour", help="Print only hh of result",
         action="store_true", default=False, dest="print_hour")
 
-    options, args = parser.parse_args(remove_opts=['--host', '--user'])
+    return parser
 
+
+@cli_function(get_option_parser, remove_opts=['--host', '--user'])
+def main(parser, options, *args):
     if len(args) == 0:
         # input cycle point must be defined in the environment.
         if 'CYLC_TASK_CYCLE_POINT' not in os.environ:

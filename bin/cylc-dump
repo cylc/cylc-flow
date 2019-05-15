@@ -45,8 +45,7 @@ from cylc.flow.dump import dump_to_stdout
 from cylc.flow.terminal import cli_function
 
 
-@cli_function
-def main():
+def get_option_parser():
     parser = COP(__doc__, comms=True, noforce=True)
     parser.add_option(
         "-g", "--global", help="Global information only.",
@@ -63,9 +62,11 @@ def main():
         help="Task states only; sort by cycle point instead of name.",
         action="store_true", default=False, dest="sort_by_cycle")
 
-    options, args = parser.parse_args()
-    suite = args[0]
+    return parser
 
+
+@cli_function(get_option_parser)
+def main(_, options, suite):
     pclient = SuiteRuntimeClient(
         suite, options.owner, options.host, options.port,
         options.comms_timeout)

@@ -79,9 +79,7 @@ from cylc.flow.task_message import record_messages
 from cylc.flow.terminal import cli_function
 
 
-@cli_function
-def main():
-    """CLI."""
+def get_option_parser():
     parser = COP(
         __doc__, comms=True,
         argdoc=[
@@ -93,7 +91,13 @@ def main():
         metavar='SEVERITY',
         help='Set severity levels for messages that do not have one',
         action='store', dest='severity')
-    options, args = parser.parse_args()
+
+    return parser
+
+
+@cli_function(get_option_parser)
+def main(parser, options, *args):
+    """CLI."""
     if not args:
         return parser.error('No message supplied')
     cylc.flow.flags.verbose = os.getenv('CYLC_VERBOSE') == 'true'
@@ -101,10 +105,9 @@ def main():
     if len(args) <= 2:  # compat
         suite = os.getenv('CYLC_SUITE_NAME')
         task_job = os.getenv('CYLC_TASK_JOB')
-        message_strs = args
+        message_strs = list(args)
     else:
-        suite, task_job = args[0:2]
-        message_strs = args[2:]
+        suite, task_job, *message_strs = args
     # Read messages from STDIN
     if '-' in message_strs:
         current_message_str = ''

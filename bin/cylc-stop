@@ -72,8 +72,7 @@ class StopPoller(Poller):
             return False
 
 
-@cli_function
-def main():
+def get_option_parser():
     parser = COP(
         __doc__, comms=True,
         argdoc=[("REG", "Suite name"),
@@ -102,15 +101,14 @@ def main():
         action="store", dest="wall_clock")
 
     StopPoller.add_to_cmd_options(parser, d_max_polls=0)
-    (options, args) = parser.parse_args()
-    suite = args[0]
 
-    shutdown_at = False
-    if len(args) == 2:
-        shutdown_at = True
-        shutdown_arg = args[1]
-        if options.kill:
-            parser.error("ERROR: --kill is not compatible with [STOP]")
+    return parser
+
+
+@cli_function(get_option_parser)
+def main(parser, options, suite, shutdown_arg=None):
+    if shutdown_arg is not None and options.kill:
+        parser.error("ERROR: --kill is not compatible with [STOP]")
 
     if options.kill and options.now:
         parser.error("ERROR: --kill is not compatible with --now")
@@ -131,13 +129,13 @@ def main():
             options.force)
         pclient('set_stop_after_clock_time',
                 {'datetime_string': options.wall_clock})
-    elif shutdown_at and TaskID.is_valid_id(shutdown_arg):
+    elif shutdown_arg is not None and TaskID.is_valid_id(shutdown_arg):
         # STOP argument detected
         prompt(
             'Set shutdown after task %s for %s' % (shutdown_arg, suite),
             options.force)
         pclient('set_stop_after_task', {'task_id': shutdown_arg})
-    elif shutdown_at:
+    elif shutdown_arg is not None:
         # not a task ID, may be a cycle point
         prompt(
             'Set shutdown at cycle point %s for %s' % (shutdown_arg, suite),

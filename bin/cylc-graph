@@ -178,7 +178,7 @@ def get_config(suite, icp=None, template_vars=None):
                        template_vars=template_vars)
 
 
-def parse_args():
+def get_option_parser():
     """CLI."""
     parser = COP(
         __doc__, jset=True, prep=True,
@@ -216,19 +216,14 @@ def parse_args():
         '--icp', action='store', default=None, metavar='CYCLE_POINT', help=(
             'Set initial cycle point. Required if not defined in suite.rc.'))
 
-    opts, args = parser.parse_args()
+    return parser
 
+
+@cli_function(get_option_parser)
+def main(parser, opts, suite=None, start=None, stop=None):
+    """Implement ``cylc graph``."""
     if opts.ungrouped and opts.namespaces:
         raise UserInputError('Cannot combine --ungrouped and --namespaces.')
-
-    return opts, args + [None] * (3 - len(args))
-
-
-@cli_function
-def main():
-    """Implement ``cylc graph``."""
-    opts, (suite, start, stop) = parse_args()
-
     if not opts.reference:
         raise UserInputError('Only the --reference use cases are supported')
 

@@ -17,6 +17,10 @@ from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.parsec.exceptions import ParsecError
 
 
+# CLI exception message format
+EXC_EXIT = cparse('<red><bold>{name}: </bold>{exc}</red>')
+
+
 def is_terminal():
     """Determine if running in a terminal."""
     return hasattr(sys.stderr, 'isatty') and sys.stderr.isatty()
@@ -94,40 +98,25 @@ def ansi_log(name='cylc', stream='stderr'):
             handler.formatter.configure(color=True, max_width=get_width())
 
 
-def cli_function(function):
+def cli_function(parser_function=None, **parser_kwargs):
     """Decorator for CLI entry points.
 
     Catches "known" errors and suppresses [full] traceback.
 
     """
-    def wrapper(*args, **kwargs):
-        color_init(strip=True)
-        try:
-            function(*args, **kwargs)
-        except (CylcError, ParsecError) as exc:
-            if is_terminal() or not cylc.flow.flags.debug:
-                # catch "known" CylcErrors which should have sensible short
-                # summations of the issue, full traceback not necessary
-                sys.exit(f'{exc.__class__.__name__}: {exc}')
-            else:
-                # if command is running non-interactively just raise the full
-                # traceback
-                raise
-    return wrapper
-
-
-def cli_function2(parser_function=None, **kwargs):
     def inner(wrapped_function):
         @wraps(wrapped_function)
         def wrapper():
             use_color = False
             if parser_function:
                 parser = parser_function()
-                opts, args = parser_function().parse_args(**kwargs)
+                opts, args = parser_function().parse_args(**parser_kwargs)
                 use_color = (
                     hasattr(opts, 'color')
-                    and (opts.color == 'always'
-                    or (opts.color == 'auto' and supports_color()))
+                    and (
+                        opts.color == 'always'
+                        or (opts.color == 'auto' and supports_color())
+                    )
                 )
             color_init(autoreset=True, strip=not use_color)
             if use_color:
@@ -149,5 +138,15 @@ def cli_function2(parser_function=None, **kwargs):
                     # if command is running non-interactively just raise the
                     # full traceback
                     raise
+            except SystemExit as exc:
+                if exc.args and isinstance(exc.args[0], str):
+                    # catch and reformat sys.exit(<str>)
+                    # NOTE: sys.exit(a) is equivalent to:
+                    #       print(a, file=sys.stderr); sys.exit(1)
+                    sys.exit(EXC_EXIT.format(
+                        name='ERROR',
+                        exc=exc.args[0]
+                    ))
+                raise
         return wrapper
     return inner

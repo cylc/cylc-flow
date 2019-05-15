@@ -280,8 +280,8 @@ def tmpfile_edit(tmpfile, geditor=False):
         sys.stderr.write(err)
 
 
-@cli_function
-def main():
+@cli_function(get_option_parser)
+def main(parser, options, *args, color=False):
     """Implement cylc cat-log CLI.
 
     Determine log path, user@host, batchview_cmd, and action (print, dir-list,
@@ -290,8 +290,6 @@ def main():
       b) remote: re-invoke cylc cat-log as a) on the remote account
 
     """
-    parser = get_option_parser()
-    options, args = parser.parse_args()
     if options.remote_args:
         # Invoked on job hosts for job logs only, as a wrapper to view_log().
         # Tail and batchview commands come from global config on suite host).

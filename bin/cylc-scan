@@ -59,13 +59,13 @@ ERROR_STYLE = Fore.RED
 META_KEY_ORDER = ['title', 'description', 'group']
 
 
-def get_parser():
+def get_option_parser():
     """CLI opts for "cylc scan"."""
     parser = COP(
         __doc__,
         comms=True,
         noforce=True,
-        argdoc=[]
+        argdoc=[],
     )
 
     parser.add_option(
@@ -124,12 +124,9 @@ def get_parser():
     return parser
 
 
-@terminal.cli_function
-def main():
+@terminal.cli_function(get_option_parser)
+def main(parser, options):
     """Implement "cylc scan"."""
-    parser = get_parser()
-    options, _ = parser.parse_args()
-
     if options.full:
         options.describe = options.state_totals = True
     if options.format in ['raw', 'json']:

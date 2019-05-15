@@ -36,12 +36,12 @@ from ansimarkup import ansiprint
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.task_id import TaskID
-from cylc.flow.terminal import cli_function2
+from cylc.flow.terminal import cli_function
 
 
-def get_parser():
+def get_option_parser():
     parser = COP(
-        __doc__, comms=True, noforce=True, multitask=True, color=True,
+        __doc__, comms=True, noforce=True, multitask=True,
         argdoc=[
             ('REG', 'Suite name'),
             ('[TASKS ...]', 'Task names or ids (name.cycle)')])
@@ -55,7 +55,7 @@ def get_parser():
     return parser
 
 
-@cli_function2(get_parser)
+@cli_function(get_option_parser)
 def main(_, options, suite, *task_args):
     """Implement "cylc show" CLI."""
     pclient = SuiteRuntimeClient(
@@ -70,7 +70,8 @@ def main(_, options, suite, *task_args):
             json_filter.append(suite_info)
         else:
             for key, value in sorted(suite_info.items(), reverse=True):
-                ansiprint(f'<bold>{key}:</bold> {value or "<m>not given</m>"}')
+                ansiprint(
+                    f'<bold>{key}:</bold> {value or "<m>(not given)</m>"}')
 
     task_names = [arg for arg in task_args if TaskID.is_valid_name(arg)]
     task_ids = [arg for arg in task_args if TaskID.is_valid_id_2(arg)]
@@ -85,7 +86,7 @@ def main(_, options, suite, *task_args):
                     print("----\nTASK NAME: %s" % task_name)
                 for key, value in sorted(result.items(), reverse=True):
                     ansiprint(
-                        f'<bold>{key}:</bold> {value or "<m>not given</m>"}')
+                        f'<bold>{key}:</bold> {value or "<m>(not given)</m>"}')
 
     if task_ids:
         results, bad_items = pclient(
@@ -106,12 +107,12 @@ def main(_, options, suite, *task_args):
                             result["meta"].items(), reverse=True):
                         ansiprint(
                             f'<bold>{key}:</bold>'
-                            f' {value or "<m>not given</m>"}')
+                            f' {value or "<m>(not given)</m>"}')
 
                     for name, done in [("prerequisites", "satisfied"),
                                        ("outputs", "completed")]:
                         ansiprint(
-                            f'\n<bold>{name}:</bold>'
+                            f'\n<bold>{name}</bold>'
                             f' (<red>- => not {done}</red>):')
                         if not result[name]:
                             print('  (None)')

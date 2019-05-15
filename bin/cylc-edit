@@ -57,6 +57,7 @@ Where <editor> is defined in the cylc site/user config files.
 See also 'cylc [prep] view'."""
 
 import sys
+from cylc.flow.exceptions import CylcError, UserInputError
 from cylc.flow.remote import remrun
 if remrun(forward_x11=True):
     sys.exit(0)
@@ -78,8 +79,7 @@ from cylc.flow.terminal import cli_function
 from cylc.flow.wallclock import get_current_time_string
 
 
-@cli_function
-def main():
+def get_option_parser():
     parser = COP(__doc__, prep=True)
 
     parser.add_option(
@@ -96,8 +96,11 @@ def main():
         "--gui", "-g", help="Force use of the configured GUI editor.",
         action="store_true", default=False, dest="geditor")
 
-    (options, args) = parser.parse_args()
+    return parser
 
+
+@cli_function(get_option_parser)
+def main(parser, options, *args):
     suiterc = SuiteSrvFilesManager().parse_suite_arg(options, args[0])[1]
 
     if options.geditor:
@@ -119,8 +122,7 @@ def main():
 
         # edit the suite.rc file
         if not os.path.isfile(suiterc):
-            print('file not found: ', suiterc, file=sys.stderr)
-            sys.exit(1)
+            raise UserInputError(f'file not found: {suiterc}')
 
         # in case editor has options, e.g. 'emacs -nw':
         command_list = re.split(' ', editor)
@@ -130,8 +132,7 @@ def main():
         retcode = call(command_list)
         if retcode != 0:
             # the command returned non-zero exist status
-            print(command, 'failed:', retcode, file=sys.stderr)
-            sys.exit(1)
+            raise CylcError(f'{command} failed: {retcode}')
 
         # !!!EDITING FINISHED!!!
         sys.exit(0)
@@ -178,8 +179,7 @@ def main():
     retcode = call(command_list)
     if retcode != 0:
         # the command returned non-zero exist status
-        print(command, 'failed:', retcode, file=sys.stderr)
-        sys.exit(1)
+        raise CylcError(f'{command} failed: {retcode}')
     print('EDITING DONE')
 
     # Now back up the inlined file in case of absolute disaster, so as the

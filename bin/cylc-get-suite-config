@@ -63,8 +63,7 @@ from cylc.flow.templatevars import load_template_vars
 from cylc.flow.terminal import cli_function
 
 
-@cli_function
-def main():
+def get_option_parser():
     parser = COP(__doc__, jset=True, prep=True, icp=True)
 
     parser.add_option(
@@ -114,8 +113,12 @@ def main():
         help="Get config for suite run mode.", action="store", default="live",
         dest="run_mode", choices=['live', 'dummy', 'simulation'])
 
-    (options, args) = parser.parse_args()
-    suite, suiterc = SuiteSrvFilesManager().parse_suite_arg(options, args[0])
+    return parser
+
+
+@cli_function(get_option_parser)
+def main(parser, options, reg):
+    suite, suiterc = SuiteSrvFilesManager().parse_suite_arg(options, reg)
 
     if options.markup:
         prefix = '!cylc!'

@@ -44,8 +44,7 @@ from cylc.flow.run_get_stdout import run_get_stdout
 from cylc.flow.terminal import cli_function
 
 
-@cli_function
-def main():
+def get_option_parser():
     parser = COP(
         __doc__, argdoc=[('[TARGET]', 'File or suite name')])
 
@@ -79,8 +78,11 @@ def main():
         help="Print exception traceback on error.",
         action="store_true", default=False, dest="debug")
 
-    options, args = parser.parse_args(remove_opts=['--host', '--user'])
+    return parser
 
+
+@cli_function(get_option_parser, remove_opts=['--host', '--user'])
+def main(parser, options, *args):
     viewer = glbl_cfg().get(['document viewers', 'html'])
     if len(args) == 0:
         # Cylc documentation.

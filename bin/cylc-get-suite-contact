@@ -32,16 +32,17 @@ from cylc.flow.suite_srv_files_mgr import (
 from cylc.flow.terminal import cli_function
 
 
-@cli_function
-def main():
+def get_option_parser():
+    return COP(__doc__, argdoc=[('REG', 'Suite name')])
+
+
+@cli_function(get_option_parser)
+def main(parser, options, reg):
     """CLI for "cylc get-suite-contact"."""
-    parser = COP(__doc__, argdoc=[('REG', 'Suite name')])
-    reg = parser.parse_args()[1][0]
     try:
         data = SuiteSrvFilesManager().load_contact_file(reg)
     except SuiteServiceFileError:
-        raise CylcError(
-            "%s: cannot get contact info, suite not running?" % (reg,))
+        raise CylcError(f"{reg}: cannot get contact info, suite not running?")
     else:
         for key, value in sorted(data.items()):
             print("%s=%s" % (key, value))

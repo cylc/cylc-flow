@@ -58,16 +58,7 @@ from cylc.flow.templatevars import load_template_vars
 from cylc.flow.terminal import cli_function
 
 
-@cli_function
-def main():
-    """cylc submit CLI.
-
-    No TASK EVENT HOOKS are set for the submit command because there is
-    no scheduler instance watching for task failure etc.
-
-    Note: a suite contact env file is not written by this command (it
-    would overwrite the real one if the suite is running).
-    """
+def get_option_parser():
     parser = COP(
         __doc__, jset=True, icp=True,
         argdoc=[("REG", "Suite name"),
@@ -77,13 +68,25 @@ def main():
         "-d", "--dry-run",
         help="Generate the job script for the task, but don't submit it.",
         action="store_true", dest="dry_run")
-    (options, args) = parser.parse_args()
+
+    return parser
+
+
+@cli_function(get_option_parser)
+def main(parser, options, suite, *task_ids):
+    """cylc submit CLI.
+
+    No TASK EVENT HOOKS are set for the submit command because there is
+    no scheduler instance watching for task failure etc.
+
+    Note: a suite contact env file is not written by this command (it
+    would overwrite the real one if the suite is running).
+    """
     if not options.verbose and not options.debug:
         LOG.setLevel(WARNING)
-    suite = args.pop(0)
-    for arg in args:
-        if not TaskID.is_valid_id(arg):
-            raise UserInputError("Invalid task ID %s" % arg)
+    for task_id in task_ids:
+        if not TaskID.is_valid_id(task_id):
+            raise UserInputError("Invalid task ID %s" % task_id)
     suite_srv_mgr = SuiteSrvFilesManager()
     suiterc = suite_srv_mgr.get_suite_rc(suite)
     suite_dir = os.path.dirname(suiterc)
@@ -96,11 +99,11 @@ def main():
         load_template_vars(options.templatevars, options.templatevars_file),
         cli_initial_point_string=options.icp)
     itasks = []
-    for arg in args:
-        name_str, point_str = TaskID.split(arg)
+    for task_id in task_ids:
+        name_str, point_str = TaskID.split(task_id)
         taskdefs = config.find_taskdefs(name_str)
         if not taskdefs:
-            raise UserInputError("No task found for %s" % arg)
+            raise UserInputError("No task found for %s" % task_id)
         for taskdef in taskdefs:
             itasks.append(TaskProxy(
                 taskdef, get_point(point_str).standardise(), is_startup=True))

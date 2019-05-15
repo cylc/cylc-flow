@@ -38,7 +38,7 @@ import cylc.flow.flags
 from cylc.flow import LOG, __version__ as CYLC_VERSION
 from cylc.flow.config import SuiteConfig
 from cylc.flow.profiler import Profiler
-from cylc.flow.terminal import cli_function2
+from cylc.flow.terminal import cli_function
 from cylc.flow.exceptions import (SuiteConfigError,
                                   TaskProxySequenceBoundsError,
                                   TriggerExpressionError)
@@ -50,7 +50,7 @@ from cylc.flow.suite_srv_files_mgr import SuiteSrvFilesManager
 
 
 def parse_args():
-    parser = COP(__doc__, jset=True, prep=True, icp=True, color=True)
+    parser = COP(__doc__, jset=True, prep=True, icp=True)
 
     parser.add_option(
         "--strict",
@@ -77,7 +77,7 @@ def parse_args():
     return parser
 
 
-@cli_function2(parse_args)
+@cli_function(parse_args)
 def main(_, options, reg):
     """cylc validate CLI."""
     # import pdb; pdb.set_trace()
