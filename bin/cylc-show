@@ -31,17 +31,17 @@ if '--use-ssh' in sys.argv[1:]:
 
 import json
 
+from ansimarkup import ansiprint
+
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.task_id import TaskID
-from cylc.flow.terminal import cli_function
+from cylc.flow.terminal import cli_function2
 
 
-@cli_function
-def main():
-    """Implement "cylc show" CLI."""
+def get_parser():
     parser = COP(
-        __doc__, comms=True, noforce=True, multitask=True,
+        __doc__, comms=True, noforce=True, multitask=True, color=True,
         argdoc=[
             ('REG', 'Suite name'),
             ('[TASKS ...]', 'Task names or ids (name.cycle)')])
@@ -52,8 +52,12 @@ def main():
     parser.add_option('--json', action="store_true", default=False,
                       help="Print output in JSON format.")
 
-    options, (suite, *task_args) = parser.parse_args()
+    return parser
 
+
+@cli_function2(get_parser)
+def main(_, options, suite, *task_args):
+    """Implement "cylc show" CLI."""
     pclient = SuiteRuntimeClient(
         suite, options.owner, options.host, options.port,
         options.comms_timeout)
@@ -66,7 +70,7 @@ def main():
             json_filter.append(suite_info)
         else:
             for key, value in sorted(suite_info.items(), reverse=True):
-                print('%s: %s' % (key, value or "(not given)"))
+                ansiprint(f'<bold>{key}:</bold> {value or "<m>not given</m>"}')
 
     task_names = [arg for arg in task_args if TaskID.is_valid_name(arg)]
     task_ids = [arg for arg in task_args if TaskID.is_valid_id_2(arg)]
@@ -80,7 +84,8 @@ def main():
                 if len(results) > 1:
                     print("----\nTASK NAME: %s" % task_name)
                 for key, value in sorted(result.items(), reverse=True):
-                    print("%s: %s" % (key, value or "(not given)"))
+                    ansiprint(
+                        f'<bold>{key}:</bold> {value or "<m>not given</m>"}')
 
     if task_ids:
         results, bad_items = pclient(
@@ -99,25 +104,31 @@ def main():
                 else:
                     for key, value in sorted(
                             result["meta"].items(), reverse=True):
-                        print("%s: %s" % (key, value or "(not given)"))
+                        ansiprint(
+                            f'<bold>{key}:</bold>'
+                            f' {value or "<m>not given</m>"}')
 
                     for name, done in [("prerequisites", "satisfied"),
                                        ("outputs", "completed")]:
-                        print('\n%s (- => not %s):' % (name, done))
+                        ansiprint(
+                            f'\n<bold>{name}:</bold>'
+                            f' (<red>- => not {done}</red>):')
                         if not result[name]:
                             print('  (None)')
                         for msg, state in result[name]:
                             if state:
-                                print('  + ' + msg)
+                                ansiprint(f'<green>  + {msg}</green>')
                             else:
-                                print('  - ' + msg)
+                                ansiprint(f'<red>  - {msg}</red>')
 
                     if result["extras"]:
                         print('\nother:')
                         for key, value in result["extras"].items():
                             print('  o  %s ... %s' % (key, value))
             for bad_item in bad_items:
-                sys.stderr.write("No matching tasks found: %s\n" % bad_item)
+                ansiprint(
+                    f"<red>No matching tasks found: {bad_item}\n",
+                    file=sys.stderr)
             if bad_items:
                 sys.exit(1)
 
