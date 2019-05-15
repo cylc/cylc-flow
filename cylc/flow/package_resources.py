@@ -21,7 +21,6 @@
 Uses the pkg_resources API in case the package is a compressed archive.
 """
 
-import os
 from pathlib import Path
 import pkg_resources as pr
 
