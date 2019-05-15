@@ -6,6 +6,254 @@ milestones](https://github.com/cylc/cylc-flow/milestones?state=closed) for each
 release.
 
 -------------------------------------------------------------------------------
+## __cylc-8.0a1 (2019-??-??)__
+
+Second alpha release of Cylc 8.
+
+### Backward incompatible changes
+
+Cylc 8.0a1 is not compatible with Cylc 7 or with Cylc 8.0a0, as the API is
+still under heavy development.
+
+The commands `cylc-profile-battery`, `cylc-test-battery`, `cylc-license`
+were removed in this version.
+
+The xtriggers examples were moved to a separate `cylc/cylc-xtriggers`
+project (see #3123).
+
+In this version Cylc got a `setup.py` file, and became a Python package
+with modules, that could be installed with `pip` (see #2990).
+
+Cylc also was renamed in this version to `cylc-flow`, and `cylc`
+started being used as a native namespace, to allow other projects to
+re-use it to extend Cylc with plug-ins.
+
+Jinja filters were moved from its `Jinja2Filters` folder to within the
+`cylc` namespace, under `cylc.jinja.filters`.
+
+### Enhancements
+
+[#2963](https://github.com/cylc/cylc-flow/pull/2963) - make suite context
+available before config parsing.
+
+[#3001](https://github.com/cylc/cylc-flow/pull/3001) - simplify cylc version,
+dropping VERSION file and git info.
+
+[#3007](https://github.com/cylc/cylc-flow/pull/3007) - add tests for quoting
+of tilde expressions in environment section.
+
+[#3006](https://github.com/cylc/cylc-flow/pull/3006) - remove cylc.profiling
+package and cylc-profile-battery.
+
+[#2998](https://github.com/cylc/cylc-flow/pull/2998) - Bandit security
+recommendations for Cylc 8 target.
+
+[#3024](https://github.com/cylc/cylc-flow/pull/3024) - remove remaining Cylc
+Review files.
+
+[#3022](https://github.com/cylc/cylc-flow/pull/3022) - removed LaTeX support
+from check-software.
+
+[#3029](https://github.com/cylc/cylc-flow/pull/3029) - remove dev-suites
+from tests.
+
+[#3036](https://github.com/cylc/cylc-flow/pull/3036) - re-enable EmPy
+templating.
+
+[#3044](https://github.com/cylc/cylc-flow/pull/3044) - remove GTK labels
+from task states.
+
+[#3055](https://github.com/cylc/cylc-flow/pull/3055) - simplify regexes.
+
+[#2995](https://github.com/cylc/cylc-flow/pull/2995) - elegantly handle
+known errors.
+
+[#3069](https://github.com/cylc/cylc-flow/pull/3069) - make Python 3.7 the
+min version for Cylc.
+
+[#3068](https://github.com/cylc/cylc-flow/pull/3068) - add shellcheck to
+lint shell script files.
+
+[#3088](https://github.com/cylc/cylc-flow/pull/3088) - remove obsolete
+ksh support.
+
+[#3091](https://github.com/cylc/cylc-flow/pull/3091) - remove useless
+license commands.
+
+[#3095](https://github.com/cylc/cylc-flow/pull/3095) - run prove with
+--timer.
+
+[#3093](https://github.com/cylc/cylc-flow/pull/3093) - job.sh: run
+as bash only.
+
+[#3101](https://github.com/cylc/cylc-flow/pull/3101) - add kill all to
+functional tests.
+
+[#3123](https://github.com/cylc/cylc-flow/pull/3123) - remove Kafka
+xtrigger example.
+
+[#2990](https://github.com/cylc/cylc-flow/pull/2990) - make cylc a module.
+
+[#3131](https://github.com/cylc/cylc-flow/pull/3131) - renamed cylc to
+cylc-flow, and simplified project summary.
+
+[#3140](https://github.com/cylc/cylc-flow/pull/3140) - cylc-flow rename in
+README badges, setup.py, and a few more places.
+
+[#3138](https://github.com/cylc/cylc-flow/pull/3138) - add suite aborted
+event.
+
+[#3132](https://github.com/cylc/cylc-flow/pull/3132) - move parsec to
+cylc.parsec.
+
+[#3113](https://github.com/cylc/cylc-flow/pull/3113) - document
+select_autoescape security ignore.
+
+[#3083](https://github.com/cylc/cylc-flow/pull/3083) - extend
+ZMQClient and update docstrings.
+
+[#3155](https://github.com/cylc/cylc-flow/pull/3155) - remove changed
+variable in async_map.
+
+[#3135](https://github.com/cylc/cylc-flow/pull/3135) - incorporate
+jinja2filters into cylc.flow.jinja.filters, and use native namespaces.
+
+[#3134](https://github.com/cylc/cylc-flow/pull/3134) - update how
+CYLC_DIR is used in Cylc.
+
+[#3165](https://github.com/cylc/cylc-flow/pull/3165) - added GitHub
+Issue and Pull Request templates.
+
+### Fixes
+
+[#3010](https://github.com/cylc/cylc-flow/pull/3010) - fixes except KeyError
+in task_job_mgr.
+
+[#3031](https://github.com/cylc/cylc-flow/pull/3031) - convert range to list
+so that we can use reduce.
+
+[#3040](https://github.com/cylc/cylc-flow/pull/3040) - add check for zero
+to xrandom.
+
+[#3018](https://github.com/cylc/cylc-flow/pull/3018) - subprocpool: use
+SpooledTemporaryFile instead of TemporaryFile.
+
+[#3032](https://github.com/cylc/cylc-flow/pull/3032) - fix syntax for
+array access in cylc check-software.
+
+[#3035](https://github.com/cylc/cylc-flow/pull/3035) - fix scheduler#shutdown
+when reference-log option is used.
+
+[#3056](https://github.com/cylc/cylc-flow/pull/3056) - fix suite freeze on
+non-existent xtrigger.
+
+[#3060](https://github.com/cylc/cylc-flow/pull/3060) - fix bug when an
+AttributeError is raised, and add unit tests for xtrigger.
+
+[#3015](https://github.com/cylc/cylc-flow/pull/3015) - use global client
+zmq context.
+
+[#3092](https://github.com/cylc/cylc-flow/pull/3092) - fix recent
+shellcheck-inspired quoting errors.
+
+[#3085](https://github.com/cylc/cylc-flow/pull/3085) - fix cylc-search
+for directories without suite.rc.
+
+[#3105](https://github.com/cylc/cylc-flow/pull/3105) - fix work location
+assumption in a test.
+
+[#3112](https://github.com/cylc/cylc-flow/pull/3112) - prepend custom
+Jinja2 paths.
+
+[#3130](https://github.com/cylc/cylc-flow/pull/3130) - remove Python 2
+compatibility in setup.py for wheel.
+
+[#3137](https://github.com/cylc/cylc-flow/pull/3137) - fix job kill
+hold-retry logic.
+
+[#3077](https://github.com/cylc/cylc-flow/pull/3077) - support single
+port configuration for zmq.
+
+[#3153](https://github.com/cylc/cylc-flow/pull/3153) - fix bug in
+async_map.
+
+[#3164](https://github.com/cylc/cylc-flow/pull/3164) - fix pclient
+undefined error.
+
+### Documentation
+
+[#3025](https://github.com/cylc/cylc-flow/pull/3025) - fix dev-suites
+reference in docs (now in examples).
+
+[#3004](https://github.com/cylc/cylc-flow/pull/3004) - document suite
+runtime interface.
+
+[#3066](https://github.com/cylc/cylc-flow/pull/3066) - minor fix to
+docs about exit-script.
+
+[#3108](https://github.com/cylc/cylc-flow/pull/3108) - anatomy of a
+job script.
+
+[#3129](https://github.com/cylc/cylc-flow/pull/3129) - added
+SECURITY.md.
+
+[#3151](https://github.com/cylc/cylc-flow/pull/3151) - fix documentation
+heading levels.
+
+[#3158](https://github.com/cylc/cylc-flow/pull/3158) - fix \ in doco
+when wrapped in ``..``.
+
+### Security issues
+
+None. Note that we added a `SECURITY.md` file in this release (see #3129)
+with instructions for reporting security issues, as well as a
+listing with current incident reports.
+
+-------------------------------------------------------------------------------
+## __cylc-8.0a0 (2019-03-12)__
+
+First alpha release of Cylc 8. Also first release of Cylc uploaded
+to PYPI: https://pypi.org/project/cylc-flow/.
+
+### Backward incompatible changes
+
+Cylc 8.0a0 API is not backward compatible with Cylc 7. The main changes are
+Python 3 and dropping the old PyGTK GUI, which was replaced by a Web GUI.
+Other changes include dependency management via Setuptools, and code being
+broken up into separate projects.
+
+Cylc Review was also removed in this version.
+
+### Enhancements
+
+[#2936](https://github.com/cylc/cylc-flow/pull/2936) - remove obsolete commands,
+modules, configuration, and documentation.
+
+[#2966](https://github.com/cylc/cylc-flow/pull/2966) - port Cylc to Python 3.
+
+### Fixes
+
+None.
+
+### Documentation
+
+[#2939](https://github.com/cylc/cylc-flow/pull/2939) - use higher contrast link
+colours for the generated documentation.
+
+[#2954](https://github.com/cylc/cylc-flow/pull/2954) - fix jinja2 variable
+setting example suites.
+
+[#2951](https://github.com/cylc/cylc-flow/pull/2951) - amend makefile command
+and address warning.
+
+[#2971](https://github.com/cylc/cylc-flow/pull/2971) - general single- and
+multi-page User Guides.
+
+### Security issues
+
+None.
+
+-------------------------------------------------------------------------------
 ## __cylc-7.8.1 (2019-01-25)__
 
 Maintenance and minor enhancement release, plus new-format User Guide.
