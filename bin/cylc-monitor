@@ -42,7 +42,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_RUNAHEAD, TASK_STATUSES_ORDERED,
     TASK_STATUSES_RESTRICTED)
 from cylc.flow.task_state_prop import get_status_prop
-from cylc.flow.terminal import cli_function
+from cylc.flow.terminal import cli_function2
 from cylc.flow.wallclock import get_time_string_from_unix_time
 
 
@@ -51,65 +51,11 @@ SUITE_STATUS_SPLIT_REC = re.compile('^([a-z ]+ at )(.*)$')
 
 class SuiteMonitor(object):
 
-    def __init__(self):
-        self.parser = COP(
-            """cylc [info] monitor [OPTIONS] ARGS
-
-A terminal-based live suite monitor.  Exit with 'Ctrl-C'.
-
-The USER_AT_HOST argument allows suite selection by 'cylc scan' output:
-  cylc monitor $(cylc scan | grep <suite_name>)
-""",
-            argdoc=[('REG', 'Suite name'),
-                    ('[USER_AT_HOST]', 'user@host:port, shorthand for --user, '
-                     '--host & --port.')], comms=True, noforce=True)
-
-        self.parser.add_option(
-            "-a", "--align",
-            help="Align task names. Only useful for small suites.",
-            action="store_true", default=False, dest="align_columns")
-
-        self.parser.add_option(
-            "-r", "--restricted",
-            help="Restrict display to active task states. "
-            "This may be useful for monitoring very large suites. "
-            "The state summary line still reflects all task proxies.",
-            action="store_true", default=False, dest="restricted")
-
-        def_sort_order = glbl_cfg().get(["monitor", "sort order"])
-
-        self.parser.add_option(
-            "-s", "--sort", metavar="ORDER",
-            help="Task sort order: \"definition\" or \"alphanumeric\"."
-            "The default is " + def_sort_order + " order, as determined by "
-            "global config. (Definition order is the order that tasks appear "
-            "under [runtime] in the suite definition).",
-            action="store", default=def_sort_order, dest="sort_order")
-
-        self.parser.add_option(
-            "-o", "--once",
-            help="Show a single view then exit.",
-            action="store_true", default=False, dest="once")
-
-        self.parser.add_option(
-            "-u", "--runahead",
-            help="Display task proxies in the runahead pool (off by default).",
-            action="store_true", default=False, dest="display_runahead")
-
-        self.parser.add_option(
-            "-i", "--interval",
-            help="Interval between suite state retrievals, "
-                 "in seconds (default 1).",
-            metavar="SECONDS", action="store", default=1,
-            dest="update_interval")
-
     def reset(self, suite, owner, host, port, timeout):
         self.pclient = SuiteRuntimeClient(
             suite, owner, host, port, timeout)
 
-    @cli_function
-    def run(self):
-        (options, args) = self.parser.parse_args()
+    def run(self, options, *args):
         suite = args[0]
 
         if len(args) > 1:
@@ -269,8 +215,68 @@ The USER_AT_HOST argument allows suite selection by 'cylc scan' output:
                     print(blitlines[ix])
 
 
+def parse_args():
+    parser = COP(
+        """cylc [info] monitor [OPTIONS] ARGS
+
+A terminal-based live suite monitor.  Exit with 'Ctrl-C'.
+
+The USER_AT_HOST argument allows suite selection by 'cylc scan' output:
+cylc monitor $(cylc scan | grep <suite_name>)
+""",
+        argdoc=[('REG', 'Suite name'),
+                ('[USER_AT_HOST]', 'user@host:port, shorthand for --user, '
+                 '--host & --port.')], comms=True, noforce=True, color=True)
+
+    parser.add_option(
+        "-a", "--align",
+        help="Align task names. Only useful for small suites.",
+        action="store_true", default=False, dest="align_columns")
+
+    parser.add_option(
+        "-r", "--restricted",
+        help="Restrict display to active task states. "
+        "This may be useful for monitoring very large suites. "
+        "The state summary line still reflects all task proxies.",
+        action="store_true", default=False, dest="restricted")
+
+    def_sort_order = glbl_cfg().get(["monitor", "sort order"])
+
+    parser.add_option(
+        "-s", "--sort", metavar="ORDER",
+        help="Task sort order: \"definition\" or \"alphanumeric\"."
+        "The default is " + def_sort_order + " order, as determined by "
+        "global config. (Definition order is the order that tasks appear "
+        "under [runtime] in the suite definition).",
+        action="store", default=def_sort_order, dest="sort_order")
+
+    parser.add_option(
+        "-o", "--once",
+        help="Show a single view then exit.",
+        action="store_true", default=False, dest="once")
+
+    parser.add_option(
+        "-u", "--runahead",
+        help="Display task proxies in the runahead pool (off by default).",
+        action="store_true", default=False, dest="display_runahead")
+
+    parser.add_option(
+        "-i", "--interval",
+        help="Interval between suite state retrievals, "
+             "in seconds (default 1).",
+        metavar="SECONDS", action="store", default=1,
+        dest="update_interval")
+
+    return parser
+
+
+@cli_function2(parse_args)
+def main(_, options, *args):
+    SuiteMonitor().run(options, *args)
+
+
 if __name__ == "__main__":
     try:
-        SuiteMonitor().run()
+        main()
     except KeyboardInterrupt:
         pass
