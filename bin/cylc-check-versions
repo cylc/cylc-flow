@@ -69,7 +69,9 @@ def main(_, opts, *args):
 
     # extract task host accounts from the suite
     config = SuiteConfig(
-        suite, suiterc,
+        suite,
+        suiterc,
+        options,
         load_template_vars(options.templatevars, options.templatevars_file))
     account_set = set()
     for name in config.get_namespace_list('all tasks'):

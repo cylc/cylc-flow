@@ -22,8 +22,9 @@ from copy import deepcopy
 from time import time
 from typing import List, Tuple, Union
 
-import cylc.flow.flags
 from cylc.flow import LOG
+import cylc.flow.flags
+from cylc.flow.hostuserutil import get_user
 from cylc.flow.xtriggers.wall_clock import wall_clock
 
 from cylc.flow.subprocctx import SubFuncContext
@@ -87,11 +88,17 @@ class XtriggerManager(object):
 
     """
 
-    def __init__(self, suite: str, user: str, *,
-                 broadcast_mgr: BroadcastMgr = None,
-                 proc_pool: SubProcPool = None,
-                 suite_run_dir: str = None, suite_share_dir: str = None,
-                 suite_source_dir: str = None):
+    def __init__(
+        self,
+        suite: str,
+        user: str = None,
+        broadcast_mgr: BroadcastMgr = None,
+        proc_pool: SubProcPool = None,
+        suite_run_dir: str = None,
+        suite_share_dir: str = None,
+        suite_work_dir: str = None,
+        suite_source_dir: str = None,
+    ):
         """Initialize the xtrigger manager.
 
         Args:
@@ -121,6 +128,8 @@ class XtriggerManager(object):
         self.pflag = False
 
         # For function arg templating.
+        if not user:
+            user = get_user()
         self.farg_templ = {
             TMPL_SUITE_NAME: suite,
             TMPL_USER_NAME: user,

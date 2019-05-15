@@ -216,11 +216,15 @@ For example, to match:
 
         if self.icp:
             self.add_option(
-                "--icp",
+                "--initial-cycle-point", "--initial-point", "--icp", "--ict",
                 metavar="CYCLE_POINT",
                 help=(
-                    "Set initial cycle point. "
-                    "Required if not defined in suite.rc."))
+                    "Set the initial cycle point. "
+                    "Required if not defined in suite.rc."
+                ),
+                action="store",
+                dest="icp",
+            )
 
     def parse_args(self, remove_opts=None):
         """Parse options and arguments, overrides OptionParser.parse_args."""
