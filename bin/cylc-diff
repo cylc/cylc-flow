@@ -133,13 +133,10 @@ def main():
     print "Parsing %s (%s)" % (suite1, suite1rc)
     template_vars = load_template_vars(
         options.templatevars, options.templatevars_file)
-    config1 = SuiteConfig(
-        suite1, suite1rc, template_vars,
-        cli_initial_point_string=options.icp).cfg
+    config1 = SuiteConfig(suite1, suite1rc, options, template_vars).cfg
     print "Parsing %s (%s)" % (suite2, suite2rc)
     config2 = SuiteConfig(
-        suite2, suite2rc, template_vars,
-        cli_initial_point_string=options.icp, is_reload=True).cfg
+        suite2, suite2rc, options, template_vars, is_reload=True).cfg
 
     if config1 == config2:
         print "Suite definitions %s and %s are identical" % (suite1, suite2)

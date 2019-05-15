@@ -23,6 +23,7 @@ from time import time
 
 from cylc import LOG
 import cylc.flags
+from cylc.hostuserutil import get_user
 from cylc.xtriggers.wall_clock import wall_clock
 
 
@@ -82,9 +83,16 @@ class XtriggerManager(object):
 
     """
 
-    def __init__(self, suite, user, broadcast_mgr=None, suite_run_dir=None,
-                 suite_share_dir=None, suite_work_dir=None,
-                 suite_source_dir=None):
+    def __init__(
+        self,
+        suite,
+        user=None,
+        broadcast_mgr=None,
+        suite_run_dir=None,
+        suite_share_dir=None,
+        suite_work_dir=None,
+        suite_source_dir=None,
+    ):
         """Initialize the xtrigger manager."""
         # Suite function and clock triggers by label.
         self.functx_map = {}
@@ -104,6 +112,8 @@ class XtriggerManager(object):
         self.pflag = False
 
         # For function arg templating.
+        if not user:
+            user = get_user()
         self.farg_templ = {
             TMPL_SUITE_NAME: suite,
             TMPL_USER_NAME: user,

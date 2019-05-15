@@ -111,7 +111,7 @@ class TaskPool(object):
         for queue, qconfig in self.config.cfg['scheduling']['queues'].items():
             self.myq.update((name, queue) for name in qconfig['members'])
 
-    def insert_tasks(self, items, stop_point_str, no_check=False):
+    def insert_tasks(self, items, stopcp, no_check=False):
         """Insert tasks."""
         n_warnings = 0
         task_items = {}
@@ -138,15 +138,14 @@ class TaskPool(object):
             for taskdef in taskdefs:
                 task_items[(taskdef.name, point_str)] = taskdef
             select_args.append((name_str, point_str))
-        if stop_point_str is None:
+        if stopcp is None:
             stop_point = None
         else:
             try:
                 stop_point = get_point(
-                    standardise_point_string(stop_point_str))
+                    standardise_point_string(stopcp))
             except ValueError as exc:
-                LOG.warning("Invalid stop point: %s (%s)" % (
-                    stop_point_str, exc))
+                LOG.warning("Invalid stop point: %s (%s)" % (stopcp, exc))
                 n_warnings += 1
                 return n_warnings
         submit_nums = self.suite_db_mgr.pri_dao.select_submit_nums_for_insert(
@@ -686,11 +685,11 @@ class TaskPool(object):
                 max_offset = itask.tdef.max_future_prereq_offset
         self.max_future_offset = max_offset
 
-    def set_do_reload(self, config, stop_point_str):
+    def set_do_reload(self, config):
         """Set the task pool to reload mode."""
         self.config = config
-        if stop_point_str:
-            self.stop_point = get_point(stop_point_str)
+        if config.options.stopcp:
+            self.stop_point = get_point(config.options.stopcp)
         else:
             self.stop_point = config.final_point
         self.do_reload = True

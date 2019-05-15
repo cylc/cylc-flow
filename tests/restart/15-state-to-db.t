@@ -31,7 +31,6 @@ suite_run_ok "${TEST_NAME_BASE}-restart" cylc restart --debug --no-detach "${SUI
 sed 's/^.* INFO - //' "${SUITE_RUN_DIR}/log/suite/log" >'edited.log'
 contains_ok 'edited.log' <<'__OUT__'
 LOADING suite parameters
-+ initial point = 20000101T0000Z
 LOADING broadcast states
 + [root.*] [environment]CYLC_TEST_VAR=hello
 LOADING task run times

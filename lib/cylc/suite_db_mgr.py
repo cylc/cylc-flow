@@ -114,6 +114,11 @@ class SuiteDatabaseManager(object):
                 os.unlink(temp_pub_db_file_name)
             raise
 
+    def delete_suite_params(self, *keys):
+        """Schedule deletion of rows from suite_params table by keys."""
+        for key in keys:
+            self.db_deletes_map[self.TABLE_SUITE_PARAMS].append({'key': key})
+
     def get_pri_dao(self):
         """Return the primary DAO."""
         return CylcSuiteDAO(self.pri_path)
@@ -272,7 +277,7 @@ class SuiteDatabaseManager(object):
             final_point_str = str(schd.config.final_point)
         self.db_inserts_map[self.TABLE_SUITE_PARAMS].extend([
             {"key": "uuid_str", "value": str(schd.uuid_str)},
-            {"key": "run_mode", "value": schd.run_mode},
+            {"key": "run_mode", "value": schd.config.run_mode()},
             {"key": "cylc_version", "value": CYLC_VERSION},
             {"key": "UTC_mode", "value": get_utc_mode()},
             {"key": "initial_point", "value": str(schd.config.initial_point)},
@@ -285,16 +290,21 @@ class SuiteDatabaseManager(object):
         if schd.pool.is_held:
             self.db_inserts_map[self.TABLE_SUITE_PARAMS].append({
                 "key": "is_held", "value": 1})
-        if schd.options.final_point_string:
-            self.db_inserts_map[self.TABLE_SUITE_PARAMS].append({
-                "key": "override_final_point",
-                "value": schd.options.final_point_string})
-        if schd.cli_start_point_string:
-            self.db_inserts_map[self.TABLE_SUITE_PARAMS].append({
-                "key": "start_point", "value": schd.cli_start_point_string})
-        if schd.options.stop_point_string:
-            self.db_inserts_map[self.TABLE_SUITE_PARAMS].append({
-                "key": "stop_point", "value": schd.options.stop_point_string})
+        for key in ('icp', 'fcp', 'startcp', 'stopcp', 'no_auto_shutdown'):
+            value = getattr(schd.options, key, None)
+            if value is not None:
+                self.db_inserts_map[self.TABLE_SUITE_PARAMS].append({
+                    "key": key, "value": value})
+        for key in ('stop_clock_time', 'stop_task'):
+            value = getattr(schd, key, None)
+            if value is not None:
+                self.db_inserts_map[self.TABLE_SUITE_PARAMS].append({
+                    "key": key, "value": value})
+
+    def put_suite_params_1(self, key, value):
+        """Queue insertion of 1 key=value pair to the suite_params table."""
+        self.db_inserts_map[self.TABLE_SUITE_PARAMS].append(
+            {"key": key, "value": value})
 
     def put_suite_template_vars(self, template_vars):
         """Put template_vars in runtime database.

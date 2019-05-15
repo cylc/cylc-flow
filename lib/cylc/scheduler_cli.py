@@ -140,26 +140,30 @@ def parse_commandline(is_restart):
         parser = COP(RESTART_DOC, jset=True, argdoc=[SUITE_NAME_ARG_DOC])
     else:
         parser = COP(
-            RUN_DOC, jset=True,
+            RUN_DOC,
+            icp=True,
+            jset=True,
             argdoc=[SUITE_NAME_ARG_DOC, START_POINT_ARG_DOC])
 
     parser.add_option(
-        "--non-daemon", help="(deprecated: use --no-detach)",
-        action="store_true", default=False, dest="no_detach")
-
-    parser.add_option(
-        "-n", "--no-detach", help="Do not daemonize the suite",
-        action="store_true", default=False, dest="no_detach")
+        "-n", "--no-detach", "--non-daemon", help="Do not daemonize the suite",
+        action="store_true", dest="no_detach")
 
     parser.add_option(
         "-a", "--no-auto-shutdown", help="Do not shut down"
         " the suite automatically when all tasks have finished."
         " This flag overrides the corresponding suite config item.",
-        action="store_true", default=False, dest="no_auto_shutdown")
+        action="store_true", dest="no_auto_shutdown")
+
+    parser.add_option(
+        "--auto-shutdown", help="Shut down"
+        " the suite automatically when all tasks have finished."
+        " This flag overrides the corresponding suite config item.",
+        action="store_false", dest="no_auto_shutdown")
 
     parser.add_option(
         "--profile", help="Output profiling (performance) information",
-        action="store_true", default=False, dest="profile_mode")
+        action="store_true", dest="profile_mode")
 
     if is_restart:
         parser.add_option(
@@ -168,62 +172,77 @@ def parse_commandline(is_restart):
             metavar="CHECKPOINT-ID", action="store", dest="checkpoint")
 
         parser.add_option(
-            "--ignore-final-cycle-point",
-            help=(
-                "Ignore the final cycle point in the suite run database. " +
-                "If one is specified in the suite definition it will " +
-                "be used, however."),
-            action="store_true", default=False, dest="ignore_final_point")
-
-        parser.add_option(
             "--ignore-initial-cycle-point",
             help=(
                 "Ignore the initial cycle point in the suite run database. " +
                 "If one is specified in the suite definition it will " +
                 "be used, however."),
-            action="store_true", default=False, dest="ignore_initial_point")
+            action="store_true", dest="ignore_icp")
+
+        parser.add_option(
+            "--ignore-final-cycle-point",
+            help=(
+                "Ignore the final cycle point in the suite run database. " +
+                "If one is specified in the suite definition it will " +
+                "be used, however."),
+            action="store_true", dest="ignore_fcp")
 
         parser.add_option(
             "--ignore-start-cycle-point",
             help="Ignore the start cycle point in the suite run database.",
-            action="store_true", default=False, dest="ignore_start_point")
+            action="store_true", dest="ignore_startcp")
 
         parser.add_option(
             "--ignore-stop-cycle-point",
             help="Ignore the stop cycle point in the suite run database.",
-            action="store_true", default=False, dest="ignore_stop_point")
+            action="store_true", dest="ignore_stopcp")
+
+        parser.set_defaults(icp=None, startcp=None, warm=None)
     else:
         parser.add_option(
             "-w", "--warm",
-            help="Warm start the suite. "
-                 "The default is to cold start.",
-            action="store_true", default=False, dest="warm")
+            help="Warm start the suite. The default is to cold start.",
+            action="store_true", dest="warm")
 
         parser.add_option(
-            "--ict",
-            help="Does nothing, option for backward compatibility only",
-            action="store_true", default=False, dest="set_ict")
+            "--start-cycle-point", "--start-point",
+            help=(
+                "Set the start cycle point. Implies --warm."
+                "(Not to be confused with the initial cycle point.)"
+            ),
+            metavar="CYCLE_POINT", action="store", dest="startcp")
 
     parser.add_option(
-        "--until",
-        help=("Shut down after all tasks have PASSED " +
-              "this cycle point."),
-        metavar="CYCLE_POINT", action="store", dest="final_point_string")
+        "--final-cycle-point", "--final-point", "--until", "--fcp",
+        help="Set the final cycle point.",
+        metavar="CYCLE_POINT", action="store", dest="fcp")
+
+    parser.add_option(
+        "--stop-cycle-point", "--stop-point",
+        help=(
+            "Set stop point. "
+            "Shut down after all tasks have PASSED this cycle point. "
+            "(Not to be confused with the final cycle point.)"
+        ),
+        metavar="CYCLE_POINT", action="store", dest="stopcp")
 
     parser.add_option(
         "--hold",
-        help="Hold (don't run tasks) immediately on starting.",
-        action="store_true", dest="start_held")
+        help="Hold suite immediately on starting.",
+        action="store_true", dest="hold_start")
 
     parser.add_option(
-        "--hold-after",
-        help="Hold (don't run tasks) AFTER this cycle point.",
-        metavar="CYCLE_POINT", action="store", dest="hold_point_string")
+        "--hold-point", "--hold-after",
+        help=(
+            "Set hold cycle point. "
+            "Hold suite AFTER all tasks have PASSED this cycle point."
+        ),
+        metavar="CYCLE_POINT", action="store", dest="holdcp")
 
     parser.add_option(
         "-m", "--mode",
         help="Run mode: live, dummy, dummy-local, simulation (default live).",
-        metavar="STRING", action="store", default='live', dest="run_mode",
+        metavar="STRING", action="store", dest="run_mode",
         choices=["live", "dummy", "dummy-local", "simulation"])
 
     parser.add_option(
@@ -239,16 +258,25 @@ def parse_commandline(is_restart):
     # Override standard parser option for specific help description.
     parser.add_option(
         "--host",
-        help="Specify the host on which to start-up the suite. Without this "
-        "set a host will be selected using the 'suite servers' global config.",
+        help=(
+            "Specify the host on which to start-up the suite. "
+            "If not specified, a host will be selected using "
+            "the 'suite servers' global config."
+        ),
         metavar="HOST", action="store", dest="host")
-
-    parser.set_defaults(stop_point_string=None)
 
     options, args = parser.parse_args()
 
-    if not is_restart and options.warm and len(args) < 2:
-        # Warm start must have a start point
-        sys.exit(parser.get_usage())
+    if not is_restart:
+        if options.startcp:
+            options.warm = True
+        if len(args) >= 2:
+            if not options.warm and not options.icp:
+                options.icp = args[1]
+            elif options.warm and not options.startcp:
+                options.startcp = args[1]
+        if options.warm and not options.startcp:
+            # Warm start must have a start point
+            sys.exit(parser.get_usage())
 
     return options, args

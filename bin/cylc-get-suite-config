@@ -122,9 +122,10 @@ def main():
         prefix = ''
 
     config = SuiteConfig(
-        suite, suiterc,
-        load_template_vars(options.templatevars, options.templatevars_file),
-        cli_initial_point_string=options.icp, run_mode=options.run_mode)
+        suite,
+        suiterc,
+        options,
+        load_template_vars(options.templatevars, options.templatevars_file))
     if options.tasks:
         for task in config.get_task_name_list():
             print prefix + task

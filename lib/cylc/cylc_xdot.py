@@ -35,6 +35,16 @@ from cylc.gui import util
 from cylc.task_id import TaskID
 
 
+class MyOptions(object):
+    """Object to hold options to pass to SuiteConfig."""
+
+    def __init__(self, icp, collapsed, vis_initial, vis_final):
+        self.icp = icp
+        self.collapsed = collapsed
+        self.vis_initial = vis_initial
+        self.vis_final = vis_final
+
+
 class CylcDotViewerCommon(xdot.DotWindow):
 
     def __init__(self, suite, suiterc, template_vars, orientation="TB",
@@ -51,7 +61,7 @@ class CylcDotViewerCommon(xdot.DotWindow):
 
         self.outfile = None
         self.disable_output_image = False
-        self.file = suiterc
+        self.suitercfile = suiterc
         self.filter_recs = []
 
         util.setup_icons()
@@ -73,11 +83,16 @@ class CylcDotViewerCommon(xdot.DotWindow):
             collapsed = []
         try:
             self.suiterc = SuiteConfig(
-                self.suite, self.file, self.template_vars,
-                is_reload=is_reload, collapsed=collapsed,
-                cli_initial_point_string=self.start_point_string,
-                vis_start_string=self.start_point_string,
-                vis_stop_string=self.stop_point_string)
+                self.suite,
+                self.suitercfile,
+                MyOptions(
+                    icp=self.start_point_string,
+                    collapsed=collapsed,
+                    vis_initial=self.start_point_string,
+                    vis_final=self.stop_point_string,
+                ),
+                self.template_vars,
+                is_reload=is_reload)
         except Exception as exc:
             msg = "Failed - parsing error?\n\n%s" % exc
             LOG.error(msg)
