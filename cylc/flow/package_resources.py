@@ -58,8 +58,10 @@ def get_pkg_resources(target_dir, resources=None):
     if resources is None:
         resources = resource_names
     for resource in resources:
-        path = Path(os.path.join(target_dir, resource))
-        print("Extracting %s to %s" % (resource, path))
+        if ".." in resource:
+            raise ValueError(f"Invalid resource name {resource}")
+        path = Path(target_dir, resource)
+        print(f"Extracting {resource} to {path}")
         pdir = path.parent
         if not pdir.exists():
             pdir.mkdir(parents=True)

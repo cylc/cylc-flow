@@ -1214,7 +1214,7 @@ Tasks can also trigger off custom output messages. These must be registered in
 the ``[runtime]`` section of the emitting task, and reported using the
 ``cylc message`` command in task scripting. The graph trigger notation
 refers to the item name of the registered output message.
-And example mesage triggering suite:
+And example message triggering suite:
 
 .. literalinclude:: suites/message-triggers/suite.rc
    :language: cylc
