@@ -70,29 +70,33 @@ from standard input.
 Broadcast cannot change [runtime] inheritance.
 
 See also 'cylc reload' - reload a modified suite definition at run time."""
-
 import sys
+
 if '--use-ssh' in sys.argv[1:]:
     sys.argv.remove('--use-ssh')
+
     from cylc.flow.remote import remrun
+
     if remrun():
         sys.exit(0)
 
 import re
+
 from tempfile import NamedTemporaryFile
 
-from cylc.flow.exceptions import UserInputError
-from cylc.flow.terminal import cli_function
-from cylc.flow.broadcast_report import (
-    get_broadcast_change_report, get_broadcast_bad_options_report)
-from cylc.flow.cfgspec.suite import SPEC, upg
-from cylc.flow.parsec.validate import cylc_config_validate
-from cylc.flow.network.client import SuiteRuntimeClient
-from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.print_tree import print_tree
-from cylc.flow.task_id import TaskID
-from cylc.flow.parsec.config import ParsecConfig
+from ansimarkup import parse as cparse
 
+from cylc.flow.task_id import TaskID
+from cylc.flow.terminal import cli_function2
+from cylc.flow.exceptions import UserInputError
+from cylc.flow.print_tree import print_tree
+from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.broadcast_report import (
+    get_broadcast_bad_options_report, get_broadcast_change_report)
+from cylc.flow.cfgspec.suite import SPEC, upg
+from cylc.flow.network.client import SuiteRuntimeClient
+from cylc.flow.parsec.config import ParsecConfig
+from cylc.flow.parsec.validate import cylc_config_validate
 
 REC_ITEM = re.compile(r'^\[([^\]]*)\](.*)$')
 
@@ -172,9 +176,17 @@ def files_to_settings(settings, setting_files, cancel_mode=False):
                     cur_setting[key] = item
 
 
+def report_bad_options(bad_options, is_set=False):
+    return cparse(
+        '<red>'
+        + get_broadcast_bad_options_report(bad_options, is_set=is_set)
+        + '</red>'
+    )
+
+
 def parse_args():
     """CLI for "cylc broadcast"."""
-    parser = COP(__doc__, comms=True)
+    parser = COP(__doc__, comms=True, color=True)
 
     parser.add_option(
         "-p", "--point", metavar="CYCLE_POINT",
@@ -246,13 +258,11 @@ def parse_args():
              "the broadcast config structure in raw Python form.",
         action="store_true", default=False, dest="raw")
 
-    return parser.parse_args()
+    return parser
 
 
-@cli_function
-def main():
-    options, args = parse_args()
-    suite = args[0]
+@cli_function2(parse_args)
+def main(_, options, suite):
 
     pclient = SuiteRuntimeClient(
         suite, options.owner, options.host, options.port,
@@ -281,7 +291,7 @@ def main():
         if modified_settings:
             print(get_broadcast_change_report(
                 modified_settings, is_cancel=True))
-        sys.exit(get_broadcast_bad_options_report(bad_options))
+        sys.exit(report_bad_options(bad_options))
 
     if options.expire:
         modified_settings, bad_options = pclient(
@@ -291,7 +301,7 @@ def main():
         if modified_settings:
             print(get_broadcast_change_report(
                 modified_settings, is_cancel=True))
-        sys.exit(get_broadcast_bad_options_report(bad_options))
+        sys.exit(report_bad_options(bad_options))
 
     # implement namespace and cycle point defaults here
     namespaces = options.namespaces
@@ -320,7 +330,7 @@ def main():
         if modified_settings:
             print(get_broadcast_change_report(
                 modified_settings, is_cancel=True))
-        sys.exit(get_broadcast_bad_options_report(bad_options))
+        sys.exit(report_bad_options(bad_options))
 
     if options.settings or options.setting_files:
         settings = []
@@ -340,7 +350,7 @@ def main():
             }
         )
         print(get_broadcast_change_report(modified_settings))
-        sys.exit(get_broadcast_bad_options_report(bad_options, is_set=True))
+        sys.exit(report_bad_options(bad_options, is_set=True))
 
 
 if __name__ == "__main__":
