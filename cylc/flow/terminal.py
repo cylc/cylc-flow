@@ -6,6 +6,7 @@ import logging
 from functools import wraps
 from subprocess import PIPE, Popen
 
+from ansimarkup import parse as cparse
 from colorama import Fore, Style, init as color_init
 
 import cylc.flow.flags
@@ -137,12 +138,13 @@ def cli_function2(parser_function=None, **kwargs):
                 else:
                     wrapped_function()
             except (CylcError, ParsecError) as exc:
-                if is_terminal() or not cylc.flags.debug:
+                if is_terminal() or not cylc.flow.flags.debug:
                     # catch "known" CylcErrors which should have sensible short
                     # summations of the issue, full traceback not necessary
-                    sys.exit(
-                        f'{Fore.RED}{Style.BRIGHT}{exc.__class__.__name__}:'
-                        f'{Style.NORMAL} {exc}')
+                    sys.exit(cparse(
+                        f'<red><bold>{exc.__class__.__name__}:</bold>'
+                        f' {exc}</red>'
+                    ))
                 else:
                     # if command is running non-interactively just raise the
                     # full traceback

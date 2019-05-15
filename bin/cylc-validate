@@ -31,14 +31,14 @@ from cylc.flow.remote import remrun
 if remrun():
     sys.exit(0)
 
-from colorama import Fore
+from ansimarkup import parse as cparse
 
 import cylc.flow.flags
 
 from cylc.flow import LOG, __version__ as CYLC_VERSION
 from cylc.flow.config import SuiteConfig
 from cylc.flow.profiler import Profiler
-from cylc.flow.terminal import cli_function
+from cylc.flow.terminal import cli_function2
 from cylc.flow.exceptions import (SuiteConfigError,
                                   TaskProxySequenceBoundsError,
                                   TriggerExpressionError)
@@ -154,7 +154,7 @@ def main(_, options, reg):
         if cylc.flow.flags.verbose:
             print('  + %s ok' % itask.identity)
 
-    print(f'{Fore.GREEN}Valid for cylc-%s' % CYLC_VERSION)
+    print(cparse(f'<green>Valid for cylc-%s</green>' % CYLC_VERSION))
     profiler.stop()
 
 
