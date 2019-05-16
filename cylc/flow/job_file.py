@@ -56,19 +56,20 @@ class JobFileWriter(object):
         # variables: NEXT_CYCLE=$( cylc cycle-point --offset-hours=6 )
 
         tmp_name = local_job_file_path + '.tmp'
+        run_d = self._get_derived_host_item(job_conf, 'suite run directory')
         try:
             with open(tmp_name, 'w') as handle:
                 self._write_header(handle, job_conf)
                 self._write_directives(handle, job_conf)
                 self._write_prelude(handle, job_conf)
-                self._write_environment_1(handle, job_conf)
+                self._write_environment_1(handle, job_conf, run_d)
                 self._write_global_init_script(handle, job_conf)
                 # suite bin access must be before runtime environment
                 # because suite bin commands may be used in variable
                 # assignment expressions: FOO=$(command args).
                 self._write_environment_2(handle, job_conf)
                 self._write_script(handle, job_conf)
-                self._write_epilogue(handle, job_conf)
+                self._write_epilogue(handle, job_conf, run_d)
         except IOError as exc:
             # Remove temporary file
             try:
@@ -170,7 +171,7 @@ class JobFileWriter(object):
         if vacation_signals_str:
             handle.write("\nCYLC_VACATION_SIGNALS='%s'" % vacation_signals_str)
 
-    def _write_environment_1(self, handle, job_conf):
+    def _write_environment_1(self, handle, job_conf, run_d):
         """Suite and task environment."""
         handle.write("\n\ncylc__job__inst__cylc_env() {")
         handle.write("\n    # CYLC SUITE ENVIRONMENT:")
@@ -184,7 +185,6 @@ class JobFileWriter(object):
 
         handle.write('\n')
         # override and write task-host-specific suite variables
-        run_d = self._get_derived_host_item(job_conf, 'suite run directory')
         work_d = self._get_derived_host_item(job_conf, 'suite work root')
         handle.write('\n    export CYLC_SUITE_RUN_DIR="%s"' % run_d)
         if work_d != run_d:
@@ -319,10 +319,8 @@ class JobFileWriter(object):
                 handle.write("\n}")
 
     @staticmethod
-    def _write_epilogue(handle, job_conf):
+    def _write_epilogue(handle, job_conf, run_d):
         """Write epilogue."""
-        handle.write('\n\nTDIR="$(mktemp -d)"')
-        handle.write('\ncylc get-pkg-resources "${TDIR}" etc/job.sh')
-        handle.write('\n. "${TDIR}/etc/job.sh"\ncylc__job__main')
+        handle.write(f'\n. "{run_d}/.service/etc/job.sh"\ncylc__job__main')
         handle.write("\n\n%s%s\n" % (
             BatchSysManager.LINE_PREFIX_EOF, job_conf['job_d']))
