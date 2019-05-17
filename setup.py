@@ -136,8 +136,7 @@ setup(
     package_data={
         'cylc.flow': [
             'etc/*.yaml', 'etc/global*.eg', 'etc/job.sh',
-            'etc/syntax/*', 'etc/syntax/*/*',
-            'etc/cylc-bash-completion'
+            'etc/syntax/*', 'etc/cylc-bash-completion'
         ]
     },
     cmdclass=cmdclass,
