@@ -57,7 +57,7 @@ def get_pkg_resources(target_dir, resources=None):
     if resources is None:
         resources = resource_names
     for resource in resources:
-        if ".." in resource:
+        if resource not in resource_names:
             raise ValueError(f"Invalid resource name {resource}")
         path = Path(target_dir, resource)
         print(f"Extracting {resource} to {path}")
