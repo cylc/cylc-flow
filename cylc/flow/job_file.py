@@ -156,6 +156,14 @@ class JobFileWriter(object):
 
     def _write_prelude(self, handle, job_conf):
         """Job script prelude."""
+        # Path to cylc on job host.
+        cylc_exec = glbl_cfg().get_host_item(
+            'cylc executable', job_conf["host"], job_conf["owner"])
+        if not cylc_exec.endswith('cylc'):
+            raise ValueError(
+                r'ERROR: bad cylc executable in global config: %s' % ssh_cylc)
+        cylc_bin = os.path.dirname(cylc_exec)
+        handle.write(f"\nexport PATH={cylc_bin}:$PATH")
         # Environment variables for prelude
         if cylc.flow.flags.debug:
             handle.write("\nexport CYLC_DEBUG=true")
