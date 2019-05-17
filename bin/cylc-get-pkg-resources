@@ -30,7 +30,7 @@ def main(args):
 if __name__ == '__main__':
     if {'help', '--help', "-h"} & set(sys.argv):
         print(__doc__)
-    elif len(sys.argv) not in [2, 3]:
+    elif len(sys.argv) < 2:
         sys.exit("ERROR: wrong number of arguments, see '%s --help'." % (
             os.path.basename(sys.argv[0])))
     elif '--list' in sys.argv:
