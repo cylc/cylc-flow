@@ -175,25 +175,26 @@ class TestSuiteSrvFilesManager(unittest.TestCase):
         self.suite_srv_files_mgr = SuiteSrvFilesManager()
 
     @mock.patch('cylc.flow.suite_srv_files_mgr.os')
-    def test_register(self, mocked_os):
+    @mock.patch('cylc.flow.suite_srv_files_mgr.get_pkg_resources')
+    def test_register(self, mocked_get_pkg_resources, mocked_os):
         """Test the SuiteSrvFilesManager register function."""
         def mkdirs_standin(_, exist_ok=False):
             return True
 
         # we do not need to mock these functions
-        mocked_os.path.basename.side_effect = os.path.basename
+        mocked_os.path.basename = os.path.basename
         mocked_os.path.join = os.path.join
         mocked_os.path.normpath = os.path.normpath
         mocked_os.path.dirname = os.path.dirname
-        mocked_os.makedirs.side_effect = mkdirs_standin
-        mocked_os.path.abspath.side_effect = lambda x: x
+        mocked_os.makedirs = mkdirs_standin
+        mocked_os.path.abspath = lambda x: x
 
         for reg, source, redirect, cwd, isabs, isfile, \
             suite_srv_dir, readlink, expected_symlink, \
             expected, e_expected, e_message \
                 in get_register_test_cases():
-            mocked_os.getcwd.side_effect = lambda: cwd
-            mocked_os.path.isabs.side_effect = lambda x: isabs
+            mocked_os.getcwd = lambda: cwd
+            mocked_os.path.isabs = lambda x: isabs
 
             mocked_os.path.isfile = lambda x: isfile
             self.suite_srv_files_mgr.get_suite_srv_dir = mock.MagicMock(
@@ -207,6 +208,7 @@ class TestSuiteSrvFilesManager(unittest.TestCase):
             if e_expected is None:
                 reg = self.suite_srv_files_mgr.register(reg, source, redirect)
                 self.assertEqual(expected, reg)
+                assert mocked_get_pkg_resources.called
                 if mocked_os.symlink.call_count > 0:
                     # first argument, of the first call
                     arg0 = mocked_os.symlink.call_args[0][0]
