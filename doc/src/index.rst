@@ -31,7 +31,6 @@ indefinitely.
    terminology
    workflows
    global-site-user-conf
-   tutorial
    suite-name-reg
    suite-config
    task-implementation

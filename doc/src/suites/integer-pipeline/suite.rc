@@ -1,0 +1,18 @@
+[scheduling]
+    cycling mode = integer
+    initial cycle point = 1
+    [[dependencies]]
+        [[[R/^/P1]]]
+            graph = """
+                A => B => C
+                A[-P1] => A
+                B[-P1] => B
+                C[-P1] => C
+                     """
+[runtime]
+    [[A]]
+        # ...
+    [[B]]
+        # ...
+    [[C]]
+        # ...

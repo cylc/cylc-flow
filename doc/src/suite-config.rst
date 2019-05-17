@@ -1062,10 +1062,6 @@ where suite initial and final cycle points can be assumed. Some examples:
    [[[ R1/P0 ]]]     # Run once at the final cycle point
                      # (short for R1/P0/final-point)
 
-
-.. TODO: INTEGER CYCLING EXAMPLE REMOVED - REPLACE IT?  
-
-
 Advanced Integer Cycling Syntax
 '''''''''''''''''''''''''''''''
 
@@ -1111,6 +1107,30 @@ integer points, an integer sequence, or a combination of both:
    [[[ P1 !(P2,6,8) ]]]  # Run with step 1 from the initial cycle point,
                          # excluding every other step, and also excluding
                          # steps 6 and 8.
+
+An Integer Cycling Example
+''''''''''''''''''''''''''
+
+.. _fig-integer-pipeline:
+
+.. figure:: graphics/png/orig/pipe-pub.png
+   :align: center
+
+The following suite definition, graphed in :numref:`fig-integer-pipeline`,
+implements a classical linear pipeline using integer cycling. The workflow
+ensures that one instance each of A, B, and C runs concurrently and the
+pipeline is kept full: when A.1 has finished processing the first dataset, A.2
+can start on the second one at the same time as B.1 begins processing the
+output of A.1, and so on. The artificial cross-cycle dependence ensures that
+only one instance of A can run at a time; and similarly B and C. If available
+compute resource supports more than three concurrent jobs, remove the
+cross-cycle dependence and Cylc will run many cycles at once. Task runtime
+configuration is omitted, but it would likely involve retrieving datasets by
+cycle point and processing them in cycle point-specific shared workspaces under
+the self-contained suite run directory.
+
+.. literalinclude:: suites/integer-pipeline/suite.rc
+   :language: cylc
 
 
 .. _TriggerTypes:
