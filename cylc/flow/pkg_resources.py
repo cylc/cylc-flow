@@ -26,8 +26,8 @@ import pkg_resources as pr
 
 
 resource_names = [
-    'etc/global.rc.eg',
-    'etc/global-tests.rc.eg',
+    'etc/flow.rc.eg',
+    'etc/flow-tests.rc.eg',
     'etc/syntax/cylc-mode.el',
     'etc/syntax/cylc.lang',
     'etc/syntax/cylc.vim',

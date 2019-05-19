@@ -135,7 +135,7 @@ class HostUtil(object):
         """Return the preferred identifier for the suite (or current) host.
 
         As specified by the "suite host self-identification" settings in the
-        site/user global.rc files. This is mainly used for suite host
+        site/user flow.rc files. This is mainly used for suite host
         identification by task jobs.
 
         """

@@ -135,7 +135,7 @@ setup(
     packages=find_namespace_packages(include=["cylc.*"]),
     package_data={
         'cylc.flow': [
-            'etc/*.yaml', 'etc/global*.eg', 'etc/job.sh',
+            'etc/*.yaml', 'etc/flow*.eg', 'etc/job.sh',
             'etc/syntax/*', 'etc/cylc-bash-completion'
         ]
     },

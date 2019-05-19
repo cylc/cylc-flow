@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test global.rc PBS host setting for job name length maximum.
+# Test flow.rc PBS host setting for job name length maximum.
 . "$(dirname "${0}")/test_header"
 
 set_test_number 6

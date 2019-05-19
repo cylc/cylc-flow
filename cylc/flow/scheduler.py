@@ -1888,7 +1888,7 @@ see `COPYING' in the Cylc source distribution.
         self._update_profile_info("CPU %", cpu_frac, amount_format="%.1f")
 
     def _get_cylc_conf(self, key, default=None):
-        """Return a named setting under [cylc] from suite.rc or global.rc."""
+        """Return a named setting under [cylc] from suite.rc or flow.rc."""
         for getter in [self.config.cfg['cylc'], glbl_cfg().get(['cylc'])]:
             try:
                 value = getter[key]

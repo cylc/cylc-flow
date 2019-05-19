@@ -273,10 +273,9 @@ class GlobalConfig(ParsecConfig):
 
     _DEFAULT = None
     _HOME = os.getenv('HOME') or get_user_home()
-    CONF_BASE = "global.rc"
-    # User global.rc loc preference: if not in .cylc/x.y.z/ look in .cylc/.
-    USER_CONF_DIR_1 = os.path.join(_HOME, '.cylc', CYLC_VERSION)
-    USER_CONF_DIR_2 = os.path.join(_HOME, '.cylc')
+    CONF_BASENAME = "flow.rc"
+    SITE_CONF_DIR = os.path.join(os.sep, 'etc', 'cylc', 'flow', CYLC_VERSION)
+    USER_CONF_DIR = os.path.join(_HOME, '.cylc', 'flow', CYLC_VERSION)
 
     @classmethod
     def get_inst(cls, cached=True):
@@ -302,20 +301,20 @@ class GlobalConfig(ParsecConfig):
         """Load or reload configuration from files."""
         self.sparse.clear()
         self.dense.clear()
-        LOG.debug("Loading site/user global config files")
+        LOG.debug("Loading site/user config files")
         conf_path_str = os.getenv("CYLC_CONF_PATH")
-        if conf_path_str is None:
-            # CYLC_CONF_PATH not defined, use default locations.
-            for conf_dir_1, conf_dir_2, conf_type in [
-                    (self.USER_CONF_DIR_1, self.USER_CONF_DIR_2,
-                     upgrader.USER_CONFIG)]:
-                fname1 = os.path.join(conf_dir_1, self.CONF_BASE)
-                fname2 = os.path.join(conf_dir_2, self.CONF_BASE)
-                if os.access(fname1, os.F_OK | os.R_OK):
-                    fname = fname1
-                elif os.access(fname2, os.F_OK | os.R_OK):
-                    fname = fname2
-                else:
+        if conf_path_str:
+            # Explicit config file override.
+            fname = os.path.join(conf_path_str, self.CONF_BASENAME)
+            if os.access(fname, os.F_OK | os.R_OK):
+                self.loadcfg(fname, upgrader.USER_CONFIG)
+        elif conf_path_str is None:
+            # Use default locations.
+            for conf_dir, conf_type in [
+                    (self.SITE_CONF_DIR, upgrader.SITE_CONFIG),
+                    (self.USER_CONF_DIR, upgrader.USER_CONFIG)]:
+                fname = os.path.join(conf_dir, self.CONF_BASENAME)
+                if not os.access(fname, os.F_OK | os.R_OK):
                     continue
                 try:
                     self.loadcfg(fname, conf_type)
@@ -328,14 +327,7 @@ class GlobalConfig(ParsecConfig):
                         # Abort on bad user file (users can fix it).
                         LOG.error('bad %s %s', conf_type, fname)
                         raise
-                    break
-        elif conf_path_str:
-            # CYLC_CONF_PATH defined with a value
-            for path in conf_path_str.split(os.pathsep):
-                fname = os.path.join(path, self.CONF_BASE)
-                if os.access(fname, os.F_OK | os.R_OK):
-                    self.loadcfg(fname, upgrader.USER_CONFIG)
-        # (OK if no global.rc is found, just use system defaults).
+        # (OK if no flow.rc is found, just use system defaults).
         self.transform()
 
     def get_derived_host_item(

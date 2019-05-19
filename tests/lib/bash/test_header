@@ -543,12 +543,12 @@ create_test_globalrc() {
     rm -fr 'etc'
     mkdir 'etc'
     # Suite host self-identification method.
-    echo "$PRE" >'etc/global.rc'
+    echo "$PRE" >'etc/flow.rc'
     TESTS_CONF_FILE="$(cylc get-global --print-site-dir)/global-tests.rc"
     if [[ -f "${TESTS_CONF_FILE}" ]]; then
-        cat "${TESTS_CONF_FILE}" >>'etc/global.rc'
+        cat "${TESTS_CONF_FILE}" >>'etc/flow.rc'
     fi
-    echo "$POST" >>'etc/global.rc'
+    echo "$POST" >>'etc/flow.rc'
     export CYLC_CONF_PATH="${PWD}/etc"
 }
 
