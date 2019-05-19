@@ -329,6 +329,6 @@ class JobFileWriter(object):
     @staticmethod
     def _write_epilogue(handle, job_conf, run_d):
         """Write epilogue."""
-        handle.write(f'\n. "{run_d}/.service/etc/job.sh"\ncylc__job__main')
+        handle.write(f'\n\n. "{run_d}/.service/etc/job.sh"\ncylc__job__main')
         handle.write("\n\n%s%s\n" % (
             BatchSysManager.LINE_PREFIX_EOF, job_conf['job_d']))
