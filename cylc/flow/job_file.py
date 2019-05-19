@@ -156,6 +156,12 @@ class JobFileWriter(object):
 
     def _write_prelude(self, handle, job_conf):
         """Job script prelude."""
+        # Variables for traps
+        handle.write("\nCYLC_FAIL_SIGNALS='%s'" % " ".join(
+            self.batch_sys_mgr.get_fail_signals(job_conf)))
+        vacation_signals_str = self.batch_sys_mgr.get_vacation_signal(job_conf)
+        if vacation_signals_str:
+            handle.write("\nCYLC_VACATION_SIGNALS='%s'" % vacation_signals_str)
         # Path to cylc on job host.
         cylc_exec = glbl_cfg().get_host_item(
             'cylc executable', job_conf["host"], job_conf["owner"])
@@ -172,12 +178,6 @@ class JobFileWriter(object):
                 job_conf, 'copyable environment variables'):
             if key in os.environ:
                 handle.write("\nexport %s='%s'" % (key, os.environ[key]))
-        # Variables for traps
-        handle.write("\nCYLC_FAIL_SIGNALS='%s'" % " ".join(
-            self.batch_sys_mgr.get_fail_signals(job_conf)))
-        vacation_signals_str = self.batch_sys_mgr.get_vacation_signal(job_conf)
-        if vacation_signals_str:
-            handle.write("\nCYLC_VACATION_SIGNALS='%s'" % vacation_signals_str)
 
     def _write_environment_1(self, handle, job_conf, run_d):
         """Suite and task environment."""
