@@ -47,7 +47,7 @@ def list_pkg_resources():
     return resource_names
 
 
-def get_pkg_resources(target_dir, resources=None):
+def extract_pkg_resources(target_dir, resources=None):
     """Extract cylc.flow resources and write them to a target directory.
 
     Arguments:

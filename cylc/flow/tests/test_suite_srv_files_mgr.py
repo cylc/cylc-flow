@@ -175,8 +175,8 @@ class TestSuiteSrvFilesManager(unittest.TestCase):
         self.suite_srv_files_mgr = SuiteSrvFilesManager()
 
     @mock.patch('cylc.flow.suite_srv_files_mgr.os')
-    @mock.patch('cylc.flow.suite_srv_files_mgr.get_pkg_resources')
-    def test_register(self, mocked_get_pkg_resources, mocked_os):
+    @mock.patch('cylc.flow.suite_srv_files_mgr.extract_pkg_resources')
+    def test_register(self, mocked_extract_pkg_resources, mocked_os):
         """Test the SuiteSrvFilesManager register function."""
         def mkdirs_standin(_, exist_ok=False):
             return True
@@ -208,7 +208,7 @@ class TestSuiteSrvFilesManager(unittest.TestCase):
             if e_expected is None:
                 reg = self.suite_srv_files_mgr.register(reg, source, redirect)
                 self.assertEqual(expected, reg)
-                assert mocked_get_pkg_resources.called
+                assert mocked_extract_pkg_resources.called
                 if mocked_os.symlink.call_count > 0:
                     # first argument, of the first call
                     arg0 = mocked_os.symlink.call_args[0][0]

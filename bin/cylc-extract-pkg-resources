@@ -2,7 +2,7 @@
 
 """cylc [info] get-pkg-resources [OPTIONS] DIR [RESOURCES]
 
-Extract resources from the cylc.flow package, to DIR.
+Extract resources from the cylc.flow package and write them to DIR.
 
 Options:
     --list      List available resources
@@ -13,7 +13,7 @@ Arguments:
 
 import os
 import sys
-from cylc.flow.package_resources import get_pkg_resources, list_pkg_resources
+from cylc.flow.pkg_resources import extract_pkg_resources, list_pkg_resources
 from cylc.flow.terminal import cli_function
 
 
@@ -24,7 +24,7 @@ def main(args):
         resources = args[1:]
     else:
         resources = None
-    get_pkg_resources(target_dir, resources)
+    extract_pkg_resources(target_dir, resources)
 
 
 if __name__ == '__main__':

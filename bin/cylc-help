@@ -216,7 +216,7 @@ information_commands['list'] = ['list', 'ls']
 information_commands['dump'] = ['dump']
 information_commands['show'] = ['show']
 information_commands['cat-log'] = ['cat-log', 'log']
-information_commands['get-pkg-resources'] = ['get-pkg-resources']
+information_commands['extract-pkg-resources'] = ['extract-pkg-resources']
 information_commands['get-suite-contact'] = [
     'get-suite-contact', 'get-contact']
 information_commands['get-suite-version'] = [
@@ -343,7 +343,7 @@ comsum['list'] = 'List suite tasks and family namespaces'
 comsum['dump'] = 'Print the state of tasks in a running suite'
 comsum['show'] = 'Print task state (prerequisites and outputs etc.)'
 comsum['cat-log'] = 'Print various suite and task log files'
-comsum['get-pkg-resources'] = 'Extract cylc.flow library package resources'
+comsum['extract-pkg-resources'] = 'Extract cylc.flow library package resources'
 comsum['documentation'] = 'Display cylc documentation (User Guide etc.)'
 comsum['monitor'] = 'An in-terminal suite monitor'
 comsum['get-suite-config'] = 'Print suite configuration items'
