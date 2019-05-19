@@ -162,14 +162,15 @@ class JobFileWriter(object):
         vacation_signals_str = self.batch_sys_mgr.get_vacation_signal(job_conf)
         if vacation_signals_str:
             handle.write("\nCYLC_VACATION_SIGNALS='%s'" % vacation_signals_str)
-        # Path to cylc on job host.
+        # Path to cylc executable, if defined.
         cylc_exec = glbl_cfg().get_host_item(
             'cylc executable', job_conf["host"], job_conf["owner"])
         if not cylc_exec.endswith('cylc'):
             raise ValueError(
                 r'ERROR: bad cylc executable in global config: %s' % ssh_cylc)
         cylc_bin = os.path.dirname(cylc_exec)
-        handle.write(f"\nexport PATH={cylc_bin}:$PATH")
+        if cylc_bin:
+            handle.write(f"\nexport PATH={cylc_bin}:$PATH")
         # Environment variables for prelude
         if cylc.flow.flags.debug:
             handle.write("\nexport CYLC_DEBUG=true")
