@@ -38,9 +38,11 @@ A cylc *suite configuration directory* contains:
 
 - **A** ``lib/python/`` **sub-directory** (optional)
 
-  - For custom job submission modules
+  - Python libraries for use by suite tasks.
+  - Automatically added to `$PYTHONPATH`` in task execution environments.
+  - Custom job submission modules
     (see :ref:`CustomJobSubmissionMethods`)
-    and local Python modules imported by custom Jinja2 filters,
+  - Python libraries for use by Jinja2 in custom filters,
     tests and globals (see :ref:`CustomJinja2Filters`).
 
 - **Any other sub-directories and files** - documentation,
