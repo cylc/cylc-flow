@@ -19,7 +19,7 @@
 #     test_header
 #
 # SYNOPSIS
-#     . $CYLC_DIR/t/lib/bash/test_header
+#     . lib/bash/test_header
 #
 # DESCRIPTION
 #     Interface for constructing tests under a TAP harness (the "prove"

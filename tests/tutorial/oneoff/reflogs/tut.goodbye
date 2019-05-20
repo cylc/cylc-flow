@@ -1,4 +1,0 @@
-2018-05-14T09:41:31+12 INFO - Initial point: 1
-2018-05-14T09:41:31+12 INFO - Final point: 1
-2018-05-14T09:41:31+12 INFO - [hello.1] -triggered off []
-2018-05-14T09:41:34+12 INFO - [goodbye.1] -triggered off ['hello.1']

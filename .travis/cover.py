@@ -17,18 +17,21 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-
+from os.path import dirname, abspath, join
 from subprocess import call
 
 
 def main():
     # Run tests with virtual frame buffer for X support.
-    if call('xvfb-run -a cylc test-battery --chunk $CHUNK --state=save -j 5',
-            shell=True) != 0:
-        # Non-zero return code
+    pdir = dirname(dirname(abspath(__file__)))
+    fn_tests = join(pdir, 'etc', 'bin', 'run-functional-tests.sh')
+    # shell=True is no threat here: this is test code, not production.
+    if call('xvfb-run -a ' + fn_tests + ' --chunk $CHUNK --state=save -j 5',
+            shell=True) != 0:  # nosec
         sys.stderr.write('\n\nRerunning Failed Tests...\n\n')
-        # Exit with final return code
-        sys.exit(call('cylc test-battery --state=failed -j 5', shell=True))
+        sys.exit(
+            call(fn_tests + ' --state=failed -j 5', shell=True)  # nosec
+        )
 
 
 if __name__ == '__main__':

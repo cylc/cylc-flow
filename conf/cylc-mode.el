@@ -1,1 +1,0 @@
-../etc/syntax/cylc-mode.el

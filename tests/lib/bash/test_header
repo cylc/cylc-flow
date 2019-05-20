@@ -19,7 +19,7 @@
 #     test_header
 #
 # SYNOPSIS
-#     . $CYLC_DIR/t/lib/bash/test_header
+#     . $CYLC_REPO_DIR/tests/lib/bash/test_header
 #
 # DESCRIPTION
 #     Interface for constructing tests under a TAP harness (the "prove"
@@ -239,7 +239,7 @@ cmp_json() {
     local FILE1="$2"
     shift; shift
 
-    if python3 "$CYLC_DIR/tests/lib/python/diffr.py" \
+    if python3 "$CYLC_REPO_DIR/tests/lib/python/diffr.py" \
         "$(cat "${FILE1}")" "$@" >"${TEST_NAME}.stdout" 2>"${TEST_NAME}.stderr"
     then
         ok "${TEST_NAME}"
@@ -476,7 +476,7 @@ ssh_install_cylc() {
     local RHOST="$1"
     local RHOST_CYLC_DIR=$(_ssh_mkdtemp_cylc_dir "${RHOST}")
     TEST_RHOST_CYLC_DIR="${RHOST}:${RHOST_CYLC_DIR}"
-    rsync -a '--exclude=*.pyc' "${CYLC_DIR}"/* "${RHOST}:${RHOST_CYLC_DIR}/"
+    rsync -a '--exclude=*.pyc' "${CYLC_REPO_DIR}"/* "${RHOST}:${RHOST_CYLC_DIR}/"
     ssh -n -oBatchMode=yes -oConnectTimeout=5 "${RHOST}" \
         "make -C '${RHOST_CYLC_DIR}' 'version'" 1>'/dev/null' 2>&1
 }
@@ -495,7 +495,7 @@ mock_smtpd_init() {  # Logic borrowed from Rose
     for SMTPD_PORT in 8025 8125 8225 8325 8425 8525 8625 8725 8825 8925; do 
         local SMTPD_HOST="localhost:${SMTPD_PORT}"
         local SMTPD_LOG="${TEST_DIR}/smtpd.log"
-        python3 -m 'smtpd' -c 'DebuggingServer' -d -n "${SMTPD_HOST}" \
+        python3 -u -m 'smtpd' -c 'DebuggingServer' -d -n "${SMTPD_HOST}" \
             1>"${SMTPD_LOG}" 2>&1 &
         local SMTPD_PID="$!"
         while ! grep -q 'DebuggingServer started' "${SMTPD_LOG}" 2>'/dev/null'
@@ -543,12 +543,12 @@ create_test_globalrc() {
     rm -fr 'etc'
     mkdir 'etc'
     # Suite host self-identification method.
-    echo "$PRE" >'etc/global.rc'
+    echo "$PRE" >'etc/flow.rc'
     TESTS_CONF_FILE="$(cylc get-global --print-site-dir)/global-tests.rc"
     if [[ -f "${TESTS_CONF_FILE}" ]]; then
-        cat "${TESTS_CONF_FILE}" >>'etc/global.rc'
+        cat "${TESTS_CONF_FILE}" >>'etc/flow.rc'
     fi
-    echo "$POST" >>'etc/global.rc'
+    echo "$POST" >>'etc/flow.rc'
     export CYLC_CONF_PATH="${PWD}/etc"
 }
 
@@ -585,8 +585,7 @@ set_test_remote() {
 
 # tags
 
-CYLC_DIR="${CYLC_DIR:-$(cd $(dirname "${BASH_SOURCE}")/../../.. && pwd)}"
-PATH="${CYLC_DIR}/bin:${PATH}"
+PATH="${CYLC_REPO_DIR}/bin:${PATH}"
 
 TEST_NAME_BASE="$(basename "$0" '.t')"
 TEST_SOURCE_DIR="$(cd "$(dirname "$0")" && pwd)"

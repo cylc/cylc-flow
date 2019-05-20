@@ -17,7 +17,6 @@
 
 import sys
 
-# Import cylc to initialise CYLC_DIR and the path for python (__init__.py).
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.exceptions import CylcError
 from cylc.flow.terminal import cli_function
@@ -217,6 +216,7 @@ information_commands['list'] = ['list', 'ls']
 information_commands['dump'] = ['dump']
 information_commands['show'] = ['show']
 information_commands['cat-log'] = ['cat-log', 'log']
+information_commands['extract-pkg-resources'] = ['extract-pkg-resources']
 information_commands['get-suite-contact'] = [
     'get-suite-contact', 'get-contact']
 information_commands['get-suite-version'] = [
@@ -266,8 +266,6 @@ hook_commands = {}
 hook_commands['check-triggering'] = ['check-triggering']
 
 admin_commands = {}
-admin_commands['test-battery'] = ['test-battery']
-admin_commands['import-examples'] = ['import-examples']
 admin_commands['check-software'] = ['check-software']
 
 preparation_commands = {}
@@ -328,8 +326,6 @@ catsum['utility'] = "Cycle arithmetic and templating, etc."
 # command summaries
 comsum = {}
 # admin
-comsum['test-battery'] = 'Run a battery of self-diagnosing test suites'
-comsum['import-examples'] = 'Import example suites your suite run directory'
 comsum['check-software'] = 'Check required software is installed'
 # preparation
 comsum['register'] = 'Register a suite for use'
@@ -347,6 +343,7 @@ comsum['list'] = 'List suite tasks and family namespaces'
 comsum['dump'] = 'Print the state of tasks in a running suite'
 comsum['show'] = 'Print task state (prerequisites and outputs etc.)'
 comsum['cat-log'] = 'Print various suite and task log files'
+comsum['extract-pkg-resources'] = 'Extract cylc.flow library package resources'
 comsum['documentation'] = 'Display cylc documentation (User Guide etc.)'
 comsum['monitor'] = 'An in-terminal suite monitor'
 comsum['get-suite-config'] = 'Print suite configuration items'

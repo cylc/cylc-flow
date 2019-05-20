@@ -1,7 +1,7 @@
 [meta]
     title = """Job script: 
 suite to environment test execution and submission polling intervals, task
-communication method, connection timeout and retry interval the in global.rc"""
+communication method, connection timeout and retry interval the in flow.rc"""
 
 [cylc]
     [[reference test]]

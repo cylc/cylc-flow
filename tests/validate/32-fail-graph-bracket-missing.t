@@ -25,7 +25,6 @@ install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE
 run_fail $TEST_NAME cylc validate -v $SUITE_NAME
-cat $TEST_NAME.stderr >&2
 grep_ok "GraphParseError: parenthesis mismatch in: " $TEST_NAME.stderr
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

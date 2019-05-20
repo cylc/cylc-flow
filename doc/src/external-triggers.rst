@@ -33,8 +33,7 @@ called once - albeit repeatedly until satisfied - for the entire suite run,
 after which the function result will be remembered for all dependent tasks
 throughout the suite run.
 
-Several built-in external trigger functions are located in
-``<cylc-dir>/lib/cylc/xtriggers/``:
+Cylc has several built-in external trigger functions:
 
 - clock triggers - see :ref:`Built-in Clock Triggers`
 - inter-suite triggers - see :ref:`Built-in Suite State Triggers`
@@ -137,17 +136,16 @@ The first three arguments are compulsory; they single out the target suite name
 the ``cylc suite-state`` command - see
 ``cylc suite-state --help`` for documentation.
 
-As a simple example, consider the suites in
-``<cylc-dir>/etc/examples/xtrigger/suite_state/``. The "upstream"
-suite (which we want to trigger off of) looks like this:
+As a simple example, consider the following "upstream"
+suite (which we want to trigger off of):
 
-.. literalinclude:: ../../etc/examples/xtrigger/suite_state/upstream/suite.rc
+.. literalinclude:: suites/xtrigger/suite_state/upstream/suite.rc
    :language: cylc
 
 It must be registered and run under the name *up*, as referenced in the
 "downstream" suite that depends on it:
 
-.. literalinclude:: ../../etc/examples/xtrigger/suite_state/downstream/suite.rc
+.. literalinclude:: suites/xtrigger/suite_state/downstream/suite.rc
    :language: cylc
 
 Try starting the downstream suite first, then the upstream, and
@@ -227,7 +225,6 @@ properties:
 
 - they must be defined in a module with the same name as the function
 - they can be located in:
-  - ``<cylc-dir>/lib/cylc/xtriggers/``
   - ``<suite-dir>/lib/python/``
   - (or anywhere in your Python library path)
 - they can take arbitrary positional and keyword arguments
@@ -296,16 +293,12 @@ The suite server program manages trigger functions as follows:
 Toy Examples
 ^^^^^^^^^^^^
 
-A couple of toy examples in ``<cylc-dir>/lib/cylc/xtriggers/`` may
-be a useful aid to understanding trigger functions and how they work.
-
-
 echo
 """"
 
-The ``echo`` function is a trivial one that takes any number of
-positional and keyword arguments (from the suite configuration) and simply
-prints them to stdout, and then returns False (i.e. trigger condition not
+The trivial built in ``echo`` function takes any number of positional
+and keyword arguments (from the suite configuration) and simply prints
+them to stdout, and then returns False (i.e. trigger condition not
 satisfied). Here it is in its entirety.
 
 .. code-block:: python
@@ -338,10 +331,10 @@ your terminal).
 xrandom
 """""""
 
-The ``xrandom`` function sleeps for a configurable amount of time
-(useful for testing the effect of a long-running trigger function - which
-should be avoided) and has a configurable random chance of success. The
-function signature is:
+The built in ``xrandom`` function sleeps for a configurable amount of
+time (useful for testing the effect of a long-running trigger function
+- which should be avoided) and has a configurable random chance of
+success. The function signature is:
 
 .. code-block:: python
 
@@ -350,13 +343,14 @@ function signature is:
 The ``percent`` argument sets the odds of success in any given call;
 ``secs`` is the number of seconds to sleep before returning; and the
 ``_`` argument (underscore is a conventional name for a variable
-that is not used, in Python) is provided to allow specialization of the trigger
-to (for example) task name, task ID, or cycle point (just use the appropriate
-string templates in the suite configuration for this).
+that is not used, in Python) is provided to allow specialization of the
+trigger to (for example) task name, task ID, or cycle point (just use
+the appropriate string templates in the suite configuration for this).
 
-An example xrandom trigger suite is
-``<cylc-dir>/etc/examples/xtriggers/xrandom/``.
+An example xrandom trigger suite:
 
+.. literalinclude:: suites/xtrigger/xrandom/suite.rc
+   :language: cylc
 
 .. _Current Trigger Function Limitations:
 
@@ -459,8 +453,10 @@ the new event. The suite passphrase must be installed on triggering account.
    Other tasks can trigger off the externally triggered task as required,
    of course.
 
-``<cylc-dir>/etc/examples/satellite/ext-triggers/suite.rc`` is a working
-example of a simulated satellite processing suite.
+Here is a working example of a simulated satellite processing suite:
+
+.. literalinclude:: suites/satellite/ext-trigger/suite.rc
+   :language: cylc
 
 External triggers are not normally needed in date-time cycling suites driven
 by real time data that comes in at regular intervals. In these cases a data

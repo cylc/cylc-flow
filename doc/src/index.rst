@@ -30,8 +30,7 @@ indefinitely.
    installation
    terminology
    workflows
-   global-site-user-conf
-   tutorial
+   global-flow-conf
    suite-name-reg
    suite-config
    task-implementation

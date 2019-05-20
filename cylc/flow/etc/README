@@ -1,0 +1,2 @@
+This directory contains package resources to be installed with the cylc.flow
+library. If new files are added, please update bin/cylc-get-pkg-resources.

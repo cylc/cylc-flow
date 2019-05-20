@@ -1,0 +1,39 @@
+#!/usr/bin/env python3
+
+"""cylc [info] get-pkg-resources [OPTIONS] DIR [RESOURCES]
+
+Extract resources from the cylc.flow package and write them to DIR.
+
+Options:
+    --list      List available resources
+Arguments:
+    DIR         Target Directory
+    [RESOURCES] Specific resources to extract (default all).
+"""
+
+import os
+import sys
+from cylc.flow.pkg_resources import extract_pkg_resources, list_pkg_resources
+from cylc.flow.terminal import cli_function
+
+
+@cli_function
+def main(args):
+    target_dir = args[0]
+    if len(args) > 1:
+        resources = args[1:]
+    else:
+        resources = None
+    extract_pkg_resources(target_dir, resources)
+
+
+if __name__ == '__main__':
+    if {'help', '--help', "-h"} & set(sys.argv):
+        print(__doc__)
+    elif len(sys.argv) < 2:
+        sys.exit("ERROR: wrong number of arguments, see '%s --help'." % (
+            os.path.basename(sys.argv[0])))
+    elif '--list' in sys.argv:
+        print('\n'.join(list_pkg_resources()))
+    else:
+        main(sys.argv[1:])

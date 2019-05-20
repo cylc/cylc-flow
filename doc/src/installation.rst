@@ -162,59 +162,11 @@ script. Users and sites should ensure that their bash login profiles are able
 to set up the correct environment for running cylc and their task jobs.
 
 Your site administrator may customise the environment for all task jobs by
-adding a ``<cylc-dir>/etc/job-init-env.sh`` file and populate it with the
-appropriate contents. If customisation is still required, you can add your own
+adding a site ``job-init-env.sh`` file and populate it with appropriate contents. If customisation is still required, you can add your own
 ``${HOME}/.cylc/job-init-env.sh`` file and populate it with the
 appropriate contents.
 
-- ``${HOME}/.cylc/job-init-env.sh``
-- ``<cylc-dir>/etc/job-init-env.sh``
+.. TODO: define site global config dir under cylc-8
 
-The job will attempt to source the first of these files it finds to set up its
-environment.
-
-
-.. _RTAST:
-
-Automated Tests
----------------
-
-For development purposes there are four sets of tests:
-
-Unittests
-   Fast to run Python unittests.
-
-   Location
-      ``tests`` sub directories within the Python code library.
-   Configuration
-      ``pytest.ini``
-   Execution
-      .. code-block:: console
-
-         $ pytest
-
-Residual Tests
-   Large scale integration tests of the whole Cylc machinary.
-
-   Location
-      ``tests/``
-   Execution
-      .. code-block:: console
-
-         $ cylc test-battery
-
-   .. note::
-
-      Some test failures can be expected to result from suites timing out,
-      even if nothing is wrong, if you run too many tests in parallel. See
-      ``cylc test-battery --help``.
-
-Code Style Tests
-   Tests to ensure the codebase conforms to code style.
-
-   Execution
-      .. code-block:: console
-
-         $ pycodestyle --ignore=E402,W503,W504 \
-            cylc/flow \
-            $(grep -l '#!.*\<python\>' bin/*)
+The job will attempt to source the first of these files it finds to set
+up its environment.

@@ -15,11 +15,6 @@ doc/src/appendices/command-ref.rst
 # ordereddict-0.4.5 build 
 ext/ordereddict-0.4.5/build
 
-# global configuration and processed configuration
-etc/job-init-env.sh
-etc/global.rc
-etc/global-tests.rc
-
 # processed suite definitions
 *.rc.processed
 

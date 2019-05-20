@@ -169,8 +169,6 @@ def jinja2environment(dir_=None):
             os.path.join(dir_, nspdir),
             os.path.join(os.environ['HOME'], '.cylc', nspdir)
         ]
-        if 'CYLC_DIR' in os.environ:
-            fdirs.append(os.path.join(os.environ['CYLC_DIR'], 'lib', nspdir))
         for fdir in fdirs:
             if os.path.isdir(fdir):
                 sys.path.insert(1, os.path.abspath(fdir))

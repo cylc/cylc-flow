@@ -190,14 +190,11 @@ class BatchSysManager(object):
     CYLC_BATCH_SYS_JOB_ID = "CYLC_BATCH_SYS_JOB_ID"
     CYLC_BATCH_SYS_JOB_SUBMIT_TIME = "CYLC_BATCH_SYS_JOB_SUBMIT_TIME"
     CYLC_BATCH_SYS_EXIT_POLLED = "CYLC_BATCH_SYS_EXIT_POLLED"
-    LINE_PREFIX_CYLC_DIR = "export CYLC_DIR="
     LINE_PREFIX_BATCH_SYS_NAME = "# Job submit method: "
     LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL = "# Job submit command template: "
     LINE_PREFIX_EXECUTION_TIME_LIMIT = "# Execution time limit: "
     LINE_PREFIX_EOF = "#EOF: "
     LINE_PREFIX_JOB_LOG_DIR = "# Job log directory: "
-    LINE_UPDATE_CYLC_DIR = (
-        "# N.B. CYLC_DIR has been updated on the remote host\n")
     OUT_PREFIX_COMMAND = "[TASK JOB COMMAND]"
     OUT_PREFIX_MESSAGE = "[TASK JOB MESSAGE]"
     OUT_PREFIX_SUMMARY = "[TASK JOB SUMMARY]"
@@ -724,9 +721,8 @@ class BatchSysManager(object):
     def _jobs_submit_prep_by_stdin(self, job_log_root, job_log_dirs):
         """Prepare job files for submit by reading from STDIN.
 
-        Job files are uploaded via STDIN in remote mode. Modify job
-        files' CYLC_DIR for this host. Extract job submission methods
-        and job submission command templates from each job file.
+        Job files are uploaded via STDIN in remote mode. Extract job submission
+        methods and job submission command templates from each job file.
 
         Return a list, where each element contains something like:
         (job_log_dir, batch_sys_name, submit_opts)
@@ -742,7 +738,6 @@ class BatchSysManager(object):
         job_log_dir = None
         lines = []
         # Get job files from STDIN.
-        # Modify CYLC_DIR in job file, if necessary.
         # Get batch system name and batch submit command template from each job
         # file.
         # Write job file in correct location.
@@ -752,14 +747,7 @@ class BatchSysManager(object):
                 if handle is not None:
                     handle.close()
                 break
-
-            if cur_line.startswith(self.LINE_PREFIX_CYLC_DIR):
-                old_line = cur_line
-                cur_line = "%s'%s'\n" % (
-                    self.LINE_PREFIX_CYLC_DIR, os.environ["CYLC_DIR"])
-                if old_line != cur_line:
-                    lines.append(self.LINE_UPDATE_CYLC_DIR)
-            elif cur_line.startswith(self.LINE_PREFIX_BATCH_SYS_NAME):
+            if cur_line.startswith(self.LINE_PREFIX_BATCH_SYS_NAME):
                 batch_sys_name = cur_line.replace(
                     self.LINE_PREFIX_BATCH_SYS_NAME, "").strip()
             elif cur_line.startswith(self.LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL):

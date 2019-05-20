@@ -19,7 +19,6 @@
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 7
-export PYTHONPATH=$CYLC_DIR/lib:$PYTHONPATH
 
 # Arguments: TEST_NAME TIME_STRING EXPECTED_UNIX_TIME CALENDAR_IS_360
 function test_get_unix_time_from_time_string () {

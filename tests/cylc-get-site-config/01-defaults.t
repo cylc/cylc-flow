@@ -23,10 +23,10 @@ set_test_number 1
 
 # Empty it (of non-default global-tests.rc items, which would then be retrieved
 # by "cylc get-global-config" below).
-echo '' > "$CYLC_CONF_PATH/global.rc"
+echo '' > "$CYLC_CONF_PATH/flow.rc"
 
 # Replace it entirely with system defaults.
-cylc get-global-config > "$CYLC_CONF_PATH/global.rc"
+cylc get-global-config > "$CYLC_CONF_PATH/flow.rc"
 
 # Check that the new file parses OK.
 run_ok "${TEST_NAME_BASE}" cylc get-global-config

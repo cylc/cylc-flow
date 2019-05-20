@@ -36,7 +36,7 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 #-------------------------------------------------------------------------------
 cmp_times () {
     # Test if the times $1 and $2 are within $3 seconds of each other.
-    python3 - "$@" <<'__PYTHON__'
+    python3 -u - "$@" <<'__PYTHON__'
 import sys
 from isodatetime.parsers import TimePointParser
 parser = TimePointParser()
@@ -48,7 +48,7 @@ __PYTHON__
 }
 time_offset () {
     # Add an ISO8601 duration to an ISO8601 date-time.
-    python3 - "$@" <<'__PYTHON__'
+    python3 -u - "$@" <<'__PYTHON__'
 import sys
 from isodatetime.parsers import TimePointParser, DurationParser
 print(
