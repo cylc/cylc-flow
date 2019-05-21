@@ -20,16 +20,27 @@
 
 def load_template_vars(template_vars=None, template_vars_file=None):
     """Load template variables from key=value strings."""
+    glbs = {'none': None, 'false': False, 'true': True}
     res = {}
+    vars_list = []
     if template_vars_file:
-        for line in open(template_vars_file):
-            line = line.strip().split("#", 1)[0]
-            if not line:
-                continue
-            key, val = line.split("=", 1)
-            res[key.strip()] = val.strip()
+        with open(template_vars_file) as vars_file:
+            vars_from_file = vars_file.read()
+        if template_vars_file.endswith('.py'):
+            exec(vars_from_file, glbs, res)
+        else:
+            vars_list.extend(vars_from_file.split('\n'))
     if template_vars:
-        for pair in template_vars:
-            key, val = pair.split("=", 1)
-            res[key.strip()] = val.strip()
+        try:
+            exec('\n'.join(template_vars), glbs, res)
+        except:
+            vars_list.extend(template_vars)
+    for line in vars_list:
+        line = line.strip().split("#", 1)[0]
+        if not line:
+            continue
+        key, val = line.split("=", 1)
+        val = val.strip()
+        res[key.strip()] = val.strip()
+    res['SUITE_VARIABLES'] = dict(res)
     return res
