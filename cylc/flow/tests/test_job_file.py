@@ -17,9 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
+from tempfile import TemporaryFile
+from unittest import mock
 
 from cylc.flow.job_file import JobFileWriter
-
 
 # List of tilde variable inputs
 # input value, expected output value
@@ -37,6 +38,21 @@ class TestJobFile(unittest.TestCase):
         for in_value, out_value in TILDE_IN_OUT:
             res = JobFileWriter._get_variable_value_definition(in_value)
             self.assertEqual(out_value, res)
+
+    @mock.patch("cylc.flow.job_file.glbl_cfg")
+    def test_write_prelude_invalid_cylc_command(self, mocked_glbl_cfg):
+        job_conf = {
+            "batch_system_name": "background",
+            "host": "localhost",
+            "owner": "me"
+        }
+        mocked = mock.MagicMock()
+        mocked_glbl_cfg.return_value = mocked
+        mocked.get_host_item.return_value = 'cylc-testing'
+        with self.assertRaises(ValueError) as ex:
+            with TemporaryFile(mode="w+") as handle:
+                JobFileWriter()._write_prelude(handle, job_conf)
+        self.assertIn("bad cylc executable", str(ex.exception))
 
 
 if __name__ == '__main__':
