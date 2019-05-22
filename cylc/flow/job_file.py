@@ -167,7 +167,7 @@ class JobFileWriter(object):
             'cylc executable', job_conf["host"], job_conf["owner"])
         if not cylc_exec.endswith('cylc'):
             raise ValueError(
-                r'ERROR: bad cylc executable in global config: %s' % ssh_cylc)
+                f'ERROR: bad cylc executable in global config: {cylc_exec}')
         cylc_bin = os.path.dirname(cylc_exec)
         if cylc_bin:
             handle.write(f"\nexport PATH={cylc_bin}:$PATH")

@@ -180,6 +180,9 @@ async_map.
 [#3164](https://github.com/cylc/cylc-flow/pull/3164) - fix pclient
 undefined error.
 
+[#3173](https://github.com/cylc/cylc-flow/issues/3173) - NameError when
+invalid cylc command is used (instead of a ValueError).
+
 ### Documentation
 
 [#3025](https://github.com/cylc/cylc-flow/pull/3025) - fix dev-suites
