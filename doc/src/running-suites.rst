@@ -207,8 +207,7 @@ updated automatically according to the poll results.
 
 Existing instances of tasks removed from the suite configuration before restart
 are not removed from the task pool automatically, but they will not spawn new
-instances. They can be removed manually if necessary,
-with~``cylc remove``.
+instances. They can be removed manually if necessary, with ``cylc remove``.
 
 Similarly, instances of new tasks added to the suite configuration before
 restart are not inserted into the task pool automatically, because it is
