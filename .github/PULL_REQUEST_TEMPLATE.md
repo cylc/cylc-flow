@@ -9,7 +9,7 @@ COMMENT: The following requirements must be satisfied (with "[x]").
 COMMENT: Mark the PR as a Draft if not all are satisfied just yet.
 **Requirements check-list**
 - [ ] I have read `CONTRIBUTING.md` and added my name as a Code Contributor.
-- [ ] Constains logically grouped changes (else tidy your branch by rebase).
+- [ ] Contains logically grouped changes (else tidy your branch by rebase).
 - [ ] Does not contain off-topic changes (use other PRs for other changes).
 COMMENT: choose one:
 - [ ] Appropriate tests are included (unit and/or functional).
