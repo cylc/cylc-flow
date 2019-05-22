@@ -208,9 +208,9 @@ class TaskState(object):
         .xtriggers (dict):
             xtriggers as {trigger (str): satisfied (boolean), ...}.
         ._is_satisfied (boolean):
-            Are prerequisites satisified?
+            Are prerequisites satisfied?
         ._suicide_is_satisfied (boolean):
-            Are prerequisites to trigger suicide satisified?
+            Are prerequisites to trigger suicide satisfied?
     """
 
     # Memory optimization - constrain possible attributes to this list.
