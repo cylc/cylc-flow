@@ -16,13 +16,14 @@
 
 import sys
 import os
-from cylc.flow import __version__ as CYLC_VERSION
 
 
 # -- General configuration ------------------------------------------------
 
+# Note: Cylc version & release info passed through via the setup.py.
+
 # minimal Sphinx version required.
-needs_sphinx = '1.5.3'
+needs_sphinx = '2.0.0'
 
 # Sphinx extension module names.
 sys.path.append(os.path.abspath('custom'))  # path to custom extensions.
@@ -46,10 +47,6 @@ master_doc = 'index'
 # General information about the project.
 project = 'The Cylc Suite Engine'
 copyright = '2008-2019 NIWA & British Crown (Met Office) & Contributors'
-
-# Versioning information. Sphinx advises version strictly meaning X.Y.
-version = '.'.join(CYLC_VERSION.split('.')[:2])  # The short X.Y version.
-release = CYLC_VERSION  # The full version, including alpha/beta/rc tags.
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.

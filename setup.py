@@ -2,7 +2,7 @@
 # coding=utf-8
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -64,7 +64,7 @@ if SPHINX_AVAILABLE:
         commands help information, in the appendices.
 
         Then, instead of calling one builder, this class will call the
-        builder fot he single HTML, and also the builder for the multiple
+        builder for the single HTML, and also the builder for the multiple
         HTML documentation.
 
         Finally, one more tweak in this class is to move the doctrees
@@ -127,8 +127,10 @@ extra_requires['all'] += extra_requires['empy']
 extra_requires['all'] += extra_requires['docs']
 extra_requires['all'] += tests_require
 
+cylc_version = find_version("cylc", "flow", "__init__.py")
+
 setup(
-    version=find_version("cylc", "flow", "__init__.py"),
+    version=cylc_version,
     long_description=open('README.md').read(),
     long_description_content_type="text/markdown",
     scripts=glob(join('bin', '*')),
@@ -147,5 +149,11 @@ setup(
         "Documentation": "https://cylc.github.io/documentation.html",
         "Source": "https://github.com/cylc/cylc-flow",
         "Tracker": "https://github.com/cylc/cylc-flow/issues"
-    }
+    },
+    # Passed to Sphinx conf.py, avoiding the need to access cylc.flow there:
+    command_options={
+        'build_sphinx': {
+            'project': ('setup.py', 'cylc-flow'),
+            'version': ('setup.py', '.'.join(cylc_version.split('.')[:2])),
+            'release': ('setup.py', cylc_version)}},
 )
