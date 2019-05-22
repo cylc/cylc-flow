@@ -737,7 +737,6 @@ def ingest_time(value, my_now=None):
                     timepoints[i_time] -
                     duration_parser.parse(go_back[next_unit]))
 
-        my_diff = []
         my_diff = [abs(my_time - my_now) for my_time in timepoints]
 
         my_cp = timepoints[my_diff.index(min(my_diff))]
