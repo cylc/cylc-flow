@@ -6,7 +6,7 @@ These changes close #xxxx
 This is a small change with no associated Issue.
 
 COMMENT: The following requirements must be satisfied (with "[x]").
-COMMENT: Mark the PR as a Draft if not all are satisfied just yet.
+COMMENT: Mark the PR as a Draft if all requirements are not yet satisfied.
 **Requirements check-list**
 - [ ] I have read `CONTRIBUTING.md` and added my name as a Code Contributor.
 - [ ] Contains logically grouped changes (else tidy your branch by rebase).
