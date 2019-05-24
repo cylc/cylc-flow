@@ -1,16 +1,19 @@
 COMMENT: Complete this Pull Request template and delete all "COMMENT:" lines.
 
-COMMENT: Significant PRs should address an existing Issue. Choose one of:
+COMMENT: Significant PRs should address an existing Issue. Choose one:
 These changes partially address #xxxx
 These changes close #xxxx
 This is a small change with no associated Issue.
 
-COMMENT: The following requirements must be satisfied, now or before merge.
-COMMENT: Mark the PR as a Draft if not all are satisfied just yet.
-Requirements check-list:
+COMMENT: The following requirements must be satisfied (with "[x]").
+COMMENT: Mark the PR as a Draft if all requirements are not yet satisfied.
+**Requirements check-list**
 - [ ] I have read `CONTRIBUTING.md` and added my name as a Code Contributor.
-- [ ] My commits have logically grouped changes (use interactive rebase
-      to tidy your branch history if necessary).
-- [ ] I have not included off-topic changes (use other PRs for these).
-- [ ] I have included tests with adequate coverage.
-- [ ] I have added an entry in `CHANGES.md` for next release.
+- [ ] Contains logically grouped changes (else tidy your branch by rebase).
+- [ ] Does not contain off-topic changes (use other PRs for other changes).
+COMMENT: choose one:
+- [ ] Appropriate tests are included (unit and/or functional).
+- [ ] These changes are already covered by existing tests.
+COMMENT: choose one:
+- [ ] Includes an appropriate entry in the release change log `CHANGES.md`.
+- [ ] No change log entry required (e.g. change is small or internal only).
