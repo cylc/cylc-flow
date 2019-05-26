@@ -26,13 +26,6 @@ from shutil import move, rmtree
 
 from setuptools import setup, find_namespace_packages
 
-SPHINX_AVAILABLE = False
-try:
-    from sphinx.setup_command import BuildDoc
-    SPHINX_AVAILABLE = True
-except ImportError:
-    pass
-
 here = abspath(dirname(__file__))
 
 
@@ -48,58 +41,6 @@ def find_version(*file_paths):
     if version_match:
         return version_match.group(1)
     raise RuntimeError("Unable to find version string.")
-
-
-cmdclass = {}
-if SPHINX_AVAILABLE:
-
-    class MakeDocs(BuildDoc):
-        """Port of old `cylc-make-docs`. Removed in #2989.
-
-        This class extends the Sphinx command class for setuptools. With
-        a difference that it tries to mimic the behaviour of the previous
-        `cylc-make-docs`.
-
-        So first it will execute `make-commands.sh`, which builds the
-        commands help information, in the appendices.
-
-        Then, instead of calling one builder, this class will call the
-        builder fot he single HTML, and also the builder for the multiple
-        HTML documentation.
-
-        Finally, one more tweak in this class is to move the doctrees
-        folder (in the same level as the documentation) to within the
-        documentation folder, named `.doctrees`, as before with
-        `cylc-make-docs`.
-        """
-
-        def run(self):  # type: () -> None
-            try:
-                self.spawn(["./doc/src/custom/make-commands.sh"])
-            except DistutilsExecError as e:
-                self.warn("Failed to run make-commands.sh")
-                raise e
-            self.do_run("html", "built-sphinx")
-            self.do_run("singlehtml", "built-sphinx-single")
-
-        def do_run(self, builder: str, output_dir: str):
-            """
-            Args:
-                builder (str): name of the Sphinx builder
-                output_dir (str): directory to write the documentation produced
-            """
-            self.builder = builder
-            self.builder_target_dirs = [
-                (builder, join(self.build_dir, output_dir))]
-            super().run()
-            # move doctrees to $build_dir/.doctrees
-            correct_doctrees = join(self.builder_target_dirs[0][1],
-                                    ".doctrees")
-            rmtree(correct_doctrees, ignore_errors=True)
-            move(self.doctree_dir, correct_doctrees)
-
-    cmdclass["build_sphinx"] = MakeDocs
-
 
 install_requires = [
     'colorama==0.4.*',
@@ -120,11 +61,9 @@ tests_require = [
 
 extra_requires = {
     'empy': ['EmPy==3.3.*'],
-    'docs': ['sphinx==2.0.*'],
     'all': []
 }
 extra_requires['all'] += extra_requires['empy']
-extra_requires['all'] += extra_requires['docs']
 extra_requires['all'] += tests_require
 
 setup(
@@ -139,7 +78,6 @@ setup(
             'etc/syntax/*', 'etc/cylc-bash-completion'
         ]
     },
-    cmdclass=cmdclass,
     install_requires=install_requires,
     tests_require=tests_require,
     extras_require=extra_requires,

@@ -1,7 +1,8 @@
 # Cylc: Quick Installation Guide
 
 **See [The Cylc User Guide](https://cylc.github.io/documentation.html) for
-more detailed information.**
+more detailed information.**  Cylc documentation is now maintained in the
+cylc/cylc-doc repository on GitHub.
 
 Cylc must be installed on suite and task job hosts. Third-party dependencies
 (below) are not required on job hosts.

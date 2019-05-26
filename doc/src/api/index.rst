@@ -1,7 +1,0 @@
-Cylc API
-========
-
-
-.. toctree::
-
-   zmq

@@ -8,7 +8,6 @@ dependencies:
   - python-jose
   - colorama
   - jinja2
-  - sphinx
   - pytest
   - pycodestyle
   - coverage

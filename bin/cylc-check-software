@@ -53,7 +53,6 @@ latter grouped as Python or 'other'. 'opt_spec' item format:
 req_py_ver_range = ((3,7),)
 opt_spec = {
     'EmPy': [(3, 3, 4), 'TEMPLATING', 'PY'],
-    'sphinx': [(1, 5, 3), 'HTMLDOCS', 'PY'],
 }
 
 # All possible module reqs to accept as arguments, as above or all lower case.
@@ -64,7 +63,6 @@ upper_case_conv = dict(
 # Package-dep. functionality dict; item format <FUNC TAG>: <FULL DESCRIPTION>
 func_tags_and_text = {
     'TEMPLATING': 'configuration templating',
-    'HTMLDOCS': 'HTML documentation',
 }
 
 # Initialise results dict

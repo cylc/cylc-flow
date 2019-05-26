@@ -32,12 +32,6 @@ if grep 'unit-tests' <<< "${args[@]}"; then
     sudo apt-get install shellcheck
 fi
 
-# install dependencies required for building documentation
-if grep 'docs' <<< "${args[@]}"; then
-    # for PDF output via LaTeX builder
-    sudo apt-get install texlive-latex-base
-fi
-
 pip install -e ."[all]"
 
 # configure local SSH for Cylc jobs
