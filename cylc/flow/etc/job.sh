@@ -118,8 +118,11 @@ cylc__job__main() {
     # Send task started message
     cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" 'started' &
     CYLC_TASK_MESSAGE_STARTED_PID=$!
-    # Access to the suite bin directory (installed run-dir first).
+    # System paths:
+    # * suite directory (installed run-dir first).
     export PATH="${CYLC_SUITE_RUN_DIR}/bin:${CYLC_SUITE_DEF_PATH}/bin:${PATH}"
+    export
+    PYTHONPATH="${CYLC_SUITE_RUN_DIR}/lib/python:${CYLC_SUITE_DEF_PATH}/lib/python:${PYTHONPATH:-}"
     # Create share and work directories
     mkdir -p "${CYLC_SUITE_SHARE_DIR}" || true
     mkdir -p "$(dirname "${CYLC_TASK_WORK_DIR}")" || true
