@@ -75,7 +75,7 @@ else:
 def run_get_stdout(command, filter_=False):
     try:
         proc = procopen(command, usesh=True, stdoutpipe=True, stderrpipe=True,
-                        stdin=open(os.devnull), splitcmd=True)
+                        stdin=open(os.devnull))
         # calls to open a shell are aggregated in cylc_subproc.procopen()
         out = proc.stdout.read()
         err = proc.stderr.read()
@@ -1201,8 +1201,7 @@ been defined for this suite""").inform()
             pass  # Cannot print to terminal (session may be closed).
 
         try:
-            procopen(command, usesh=True, stdin=open(os.devnull),
-                     splitcmd=True)
+            procopen(command, usesh=True, stdin=open(os.devnull))
             # calls to open a shell are aggregated in cylc_subproc.procopen()
         except OSError:
             warning_dialog('Error: failed to start ' + self.cfg.suite,
