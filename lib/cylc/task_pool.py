@@ -22,8 +22,7 @@ pool, which does not participate in dependency matching and is not visible in
 the GUI. Tasks are then released to the task pool if not beyond the current
 runahead limit.
 
-check_auto_shutdown() and remove_spent_tasks() have to consider tasks in the
-runahead pool too.
+remove_spent_tasks() have to consider tasks in the runahead pool too.
 
 TODO - spawn-on-submit means a only one waiting instance of each task exists,
 in the pool, so if a new stop cycle is set we just need to check waiting pool
@@ -142,8 +141,7 @@ class TaskPool(object):
             stop_point = None
         else:
             try:
-                stop_point = get_point(
-                    standardise_point_string(stopcp))
+                stop_point = get_point(standardise_point_string(stopcp))
             except ValueError as exc:
                 LOG.warning("Invalid stop point: %s (%s)" % (stopcp, exc))
                 n_warnings += 1
@@ -1150,26 +1148,6 @@ class TaskPool(object):
             if not itask.state.status == TASK_STATUS_QUEUED:
                 itask.state.reset_state(TASK_STATUS_READY)
         return n_warnings
-
-    def check_auto_shutdown(self):
-        """Check if we should do a normal automatic shutdown."""
-        shutdown = True
-        for itask in self.get_all_tasks():
-            if self.stop_point is None:
-                # Don't if any unsucceeded task exists.
-                if itask.state.status not in [
-                        TASK_STATUS_SUCCEEDED, TASK_STATUS_EXPIRED]:
-                    shutdown = False
-                    break
-            elif (itask.point <= self.stop_point and
-                    itask.state.status not in [TASK_STATUS_SUCCEEDED,
-                                               TASK_STATUS_EXPIRED]):
-                # Don't if any unsucceeded task exists < stop point...
-                if itask.identity not in self.held_future_tasks:
-                    # ...unless it has a future trigger extending > stop point.
-                    shutdown = False
-                    break
-        return shutdown
 
     def sim_time_check(self, message_queue):
         """Simulation mode: simulate task run times and set states."""

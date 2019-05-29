@@ -68,7 +68,8 @@ from cylc.task_job_mgr import TaskJobManager
 from cylc.task_pool import TaskPool
 from cylc.task_proxy import TaskProxy, TaskProxySequenceBoundsError
 from cylc.task_state import (
-    TASK_STATUSES_ACTIVE, TASK_STATUSES_NEVER_ACTIVE, TASK_STATUS_FAILED)
+    TASK_STATUSES_ACTIVE, TASK_STATUSES_NEVER_ACTIVE, TASK_STATUSES_SUCCESS,
+    TASK_STATUS_FAILED)
 from cylc.templatevars import load_template_vars
 from cylc.version import CYLC_VERSION
 from cylc.wallclock import (
@@ -1286,8 +1287,10 @@ conditions; see `cylc conditions`.
 
         # Can suite shut down automatically?
         if self.stop_mode is None and (
-                self.stop_clock_done() or self.stop_task_done() or
-                self.can_auto_stop and self.pool.check_auto_shutdown()):
+            self.stop_clock_done() or
+            self.stop_task_done() or
+            self.check_auto_shutdown()
+        ):
             self._set_stop(TaskPool.STOP_AUTO)
 
         # Is the suite ready to shut down now?
@@ -1409,6 +1412,12 @@ conditions; see `cylc conditions`.
         if self.auto_restart_time is not None:
             return True
 
+        # No detach suite should not auto restart, but should fail and be dealt
+        # with by caller.
+        if self.options.no_detach:
+            raise RuntimeError(
+                'Suite cannot automatically restart in no detach mode')
+
         # Check suite is able to be safely restarted.
         if not self.can_auto_restart():
             return False
@@ -1437,26 +1446,24 @@ conditions; see `cylc conditions`.
 
     def can_auto_restart(self):
         """Determine whether this suite can safely auto stop-restart."""
-        # Check the suite is auto-restartable see #2799.
-        ret = ['Incompatible configuration: "%s"' % key for key, value in [
-            ('no_detach', self.options.no_detach),
-        ] if value]
-
         # Check whether there is currently an available host to restart on.
         try:
             HostAppointer(cached=False).appoint_host()
         except EmptyHostList:
-            ret.append('No alternative host to restart suite on.')
+            LOG.critical(
+                'Suite cannot automatically restart because:\n' +
+                'No alternative host to restart suite on.')
+            return False
         except Exception:
             # Any unexpected error in host selection shouldn't be able to take
             # down the suite.
-            ret.append('Error in host selection:\n' + traceback.format_exc())
-
-        if ret:
-            LOG.critical('Suite cannot automatically restart because:\n' +
-                         '\n'.join(ret))
+            LOG.critical(
+                'Suite cannot automatically restart because:\n' +
+                'Error in host selection:\n' +
+                traceback.format_exc())
             return False
-        return True
+        else:
+            return True
 
     def suite_health_check(self, has_changes):
         """Detect issues with the suite or its environment and act accordingly.
@@ -1824,6 +1831,17 @@ conditions; see `cylc conditions`.
         else:
             LOG.warning("Requested stop task name does not exist: %s" % name)
 
+    def stop_clock_done(self):
+        """Return True if wall clock stop time reached."""
+        if self.stop_clock_time is not None and time() > self.stop_clock_time:
+            LOG.info("Wall clock stop time reached: %s", time2str(
+                self.stop_clock_time))
+            self.stop_clock_time = None
+            self.suite_db_mgr.delete_suite_params("stop_clock_time")
+            return True
+        else:
+            return False
+
     def stop_task_done(self):
         """Return True if stop task has succeeded."""
         if self.stop_task and self.pool.task_succeeded(self.stop_task):
@@ -1833,6 +1851,32 @@ conditions; see `cylc conditions`.
             return True
         else:
             return False
+
+    def check_auto_shutdown(self):
+        """Check if we should do a normal automatic shutdown."""
+        if not self.can_auto_stop:
+            return False
+        can_shutdown = True
+        for itask in self.pool.get_all_tasks():
+            if self.pool.stop_point is None:
+                # Don't if any unsucceeded task exists.
+                if itask.state.status not in TASK_STATUSES_SUCCESS:
+                    can_shutdown = False
+                    break
+            elif (
+                itask.point <= self.pool.stop_point and
+                itask.state.status not in TASK_STATUSES_SUCCESS
+            ):
+                # Don't if any unsucceeded task exists < stop point...
+                if itask.identity not in self.pool.held_future_tasks:
+                    # ...unless it has a future trigger extending > stop point.
+                    can_shutdown = False
+                    break
+        if can_shutdown and self.pool.stop_point:
+            self.options.stopcp = None
+            self.pool.stop_point = None
+            self.suite_db_mgr.delete_suite_params("stopcp")
+        return can_shutdown
 
     def hold_suite(self, point=None):
         """Hold all tasks in suite."""
@@ -1907,17 +1951,6 @@ conditions; see `cylc conditions`.
                     continue
             outlist.append(name)
         return outlist
-
-    def stop_clock_done(self):
-        """Return True if wall clock stop time reached."""
-        if self.stop_clock_time is not None and time() > self.stop_clock_time:
-            LOG.info("Wall clock stop time reached: %s", time2str(
-                self.stop_clock_time))
-            self.stop_clock_time = None
-            self.suite_db_mgr.delete_suite_params("stop_clock_time")
-            return True
-        else:
-            return False
 
     def _update_profile_info(self, category, amount, amount_format="%s"):
         """Update the 1, 5, 15 minute dt averages for a given category."""
