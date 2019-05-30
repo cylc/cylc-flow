@@ -798,7 +798,8 @@ conditions; see `cylc conditions`.
         stop_point = self.get_standardised_point(point_string)
         if self.pool.set_stop_point(stop_point):
             self.options.stopcp = str(stop_point)
-            self.suite_db_mgr.put_suite_params(self)
+            self.suite_db_mgr.put_suite_params_1(
+                'stopcp', self.options.stopcp)
 
     def command_set_stop_after_clock_time(self, arg):
         """Set stop after clock time.
@@ -1057,26 +1058,26 @@ conditions; see `cylc conditions`.
         key, value = row
         if key == 'icp':
             if self.options.ignore_icp:
-                LOG.debug('- initial point = %s' % value)
+                LOG.debug('- initial point = %s (ignored)' % value)
             elif self.options.icp is None:
                 self.options.icp = value
                 LOG.info('+ initial point = %s' % value)
         elif key in ['startcp', 'start_point', 'warm_point']:
             # 'warm_point' for back compat <= 7.6.X
             if self.options.ignore_startcp:
-                LOG.debug('- start point = %s' % value)
+                LOG.debug('- start point = %s (ignored)' % value)
             elif self.options.startcp is None:
                 self.options.startcp = value
                 LOG.info('+ start point = %s' % value)
         elif key == 'fcp':
             if self.options.ignore_fcp:
-                LOG.debug('- override final point = %s' % value)
+                LOG.debug('- override final point = %s (ignored)' % value)
             elif self.options.fcp is None:
                 self.options.fcp = value
                 LOG.info('+ override final point = %s' % value)
         elif key == 'stopcp':
             if self.options.ignore_stopcp:
-                LOG.debug('- stop point = %s' % value)
+                LOG.debug('- stop point = %s (ignored)' % value)
             elif self.options.stopcp is None:
                 self.options.stopcp = value
                 LOG.info('+ stop point = %s' % value)
@@ -1092,15 +1093,25 @@ conditions; see `cylc conditions`.
                 self.options.holdcp = value
                 LOG.info('+ hold point = %s', value)
         elif key == 'no_auto_shutdown':
+            value = bool(int(value))
             if self.options.no_auto_shutdown is None:
-                self.options.no_auto_shutdown = bool(value)
-                LOG.info('+ no auto shutdown = %s', bool(value))
+                self.options.no_auto_shutdown = value
+                LOG.info('+ no auto shutdown = %s', value)
+            else:
+                LOG.debug('- no auto shutdown = %s (ignored)', value)
         elif key == 'stop_clock_time':
+            value = int(value)
             if time() <= value:
                 self.stop_clock_time = value
+                LOG.info('+ stop clock time = %d (%s)', value, time2str(value))
+            else:
+                LOG.debug(
+                    '- stop clock time = %d (%s) (ignored)',
+                    value,
+                    time2str(value))
         elif key == 'stop_task':
             self.stop_task = value
-        # TODO: retrieve hold point
+            LOG.info('+ stop task = %s', value)
 
     def _load_template_vars(self, _, row):
         """Load suite start up template variables."""
@@ -1199,9 +1210,11 @@ conditions; see `cylc conditions`.
         if self.options.profile_mode:
             self.previous_profile_point = 0
             self.count = 0
-        self.can_auto_stop = (
-            not self.config.cfg['cylc']['disable automatic shutdown'] and
-            not self.options.no_auto_shutdown)
+        if self.options.no_auto_shutdown is not None:
+            self.can_auto_stop = not self.options.no_auto_shutdown
+        elif self.config.cfg['cylc']['disable automatic shutdown'] is not None:
+            self.can_auto_stop = (
+                not self.config.cfg['cylc']['disable automatic shutdown'])
 
     def process_task_pool(self):
         """Process ALL TASKS whenever something has changed that might
@@ -1819,6 +1832,8 @@ conditions; see `cylc conditions`.
             time2str(unix_time),
             unix_time)
         self.stop_clock_time = unix_time
+        self.suite_db_mgr.put_suite_params_1(
+            'stop_clock_time', self.stop_clock_time)
 
     def set_stop_task(self, task_id):
         """Set stop after a task."""
@@ -1827,19 +1842,25 @@ conditions; see `cylc conditions`.
             task_id = self.get_standardised_taskid(task_id)
             LOG.info("Setting stop task: " + task_id)
             self.stop_task = task_id
-            self.suite_db_mgr.put_suite_params(self)
+            self.suite_db_mgr.put_suite_params_1(
+                'stop_task', self.stop_task)
         else:
             LOG.warning("Requested stop task name does not exist: %s" % name)
 
     def stop_clock_done(self):
         """Return True if wall clock stop time reached."""
-        if self.stop_clock_time is not None and time() > self.stop_clock_time:
+        if self.stop_clock_time is None:
+            return
+        now = time()
+        if now > self.stop_clock_time:
             LOG.info("Wall clock stop time reached: %s", time2str(
                 self.stop_clock_time))
             self.stop_clock_time = None
             self.suite_db_mgr.delete_suite_params("stop_clock_time")
             return True
         else:
+            LOG.debug(
+                "stop time=%d; current time=%d", self.stop_clock_time, now)
             return False
 
     def stop_task_done(self):
