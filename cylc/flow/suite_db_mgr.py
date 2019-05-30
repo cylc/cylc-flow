@@ -254,6 +254,7 @@ class SuiteDatabaseManager(object):
         Arguments:
             schd (cylc.flow.scheduler.Scheduler): scheduler object.
         """
+        self.db_deletes_map[self.TABLE_SUITE_PARAMS].append({})
         if schd.config.final_point is None:
             # Store None as proper null value in database. No need to do this
             # for initial cycle point, which should never be None.
