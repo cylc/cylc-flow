@@ -1056,7 +1056,7 @@ conditions; see `cylc conditions`.
         if row_idx == 0:
             LOG.info('LOADING suite parameters')
         key, value = row
-        if key == 'icp':
+        if key in ['icp', 'initial_point']:
             if self.options.ignore_icp:
                 LOG.debug('- initial point = %s (ignored)' % value)
             elif self.options.icp is None:
@@ -1069,7 +1069,7 @@ conditions; see `cylc conditions`.
             elif self.options.startcp is None:
                 self.options.startcp = value
                 LOG.info('+ start point = %s' % value)
-        elif key == 'fcp':
+        elif key in ['fcp', 'final_point']:
             if self.options.ignore_fcp:
                 LOG.debug('- override final point = %s (ignored)' % value)
             elif self.options.fcp is None:
@@ -1425,11 +1425,12 @@ conditions; see `cylc conditions`.
         if self.auto_restart_time is not None:
             return True
 
-        # No detach suite should not auto restart, but should fail and be dealt
-        # with by caller.
+        # Suite host is condemned and suite running in no detach mode.
+        # Raise an error to cause the suite to abort.
+        # This should raise an "abort" event and return a non-zero code to the
+        # caller still attached to the suite process.
         if self.options.no_detach:
-            raise RuntimeError(
-                'Suite cannot automatically restart in no detach mode')
+            raise RuntimeError('Suite host condemned in no detach mode')
 
         # Check suite is able to be safely restarted.
         if not self.can_auto_restart():

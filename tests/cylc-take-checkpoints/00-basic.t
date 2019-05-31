@@ -46,8 +46,6 @@ contains_ok 'cylc-ls-checkpoints-1.out' <<'__OUT__'
 1|DATE|snappy
 
 # SUITE PARAMS (KEY|VALUE)
-final_point|2020
-initial_point|2016
 run_mode|live
 
 # TASK POOL (CYCLE|NAME|SPAWNED|STATUS|HOLD_SWAP)
