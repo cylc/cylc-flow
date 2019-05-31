@@ -266,8 +266,6 @@ class SuiteDatabaseManager(object):
             {"key": "run_mode", "value": schd.config.run_mode()},
             {"key": "cylc_version", "value": CYLC_VERSION},
             {"key": "UTC_mode", "value": get_utc_mode()},
-            {"key": "initial_point", "value": str(schd.config.initial_point)},
-            {"key": "final_point", "value": final_point_str},
         ])
         if schd.config.cfg['cylc']['cycle point format']:
             self.db_inserts_map[self.TABLE_SUITE_PARAMS].append({

@@ -417,7 +417,7 @@ class SuiteConfig(object):
                     # Relative, ISO8601 cycling.
                     self.final_point = get_point_relative(
                         fcp_str, self.initial_point).standardise()
-                except ValueError as exc:
+                except ValueError:
                     # (not relative)
                     pass
             if self.final_point is None:
@@ -528,7 +528,6 @@ class SuiteConfig(object):
                     '%s is not a first parent' % fam)
 
         if getattr(options, 'collapsed', None):
-            # on suite reload retain an existing state of collapse
             # (used by the "cylc graph" viewer)
             self.closed_families = getattr(self.options, 'collapsed', None)
         elif is_reload:
