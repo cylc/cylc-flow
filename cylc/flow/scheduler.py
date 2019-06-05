@@ -733,8 +733,7 @@ see `COPYING' in the Cylc source distribution.
         stop_point = self.get_standardised_point(point_string)
         if self.pool.set_stop_point(stop_point):
             self.options.stopcp = str(stop_point)
-            self.suite_db_mgr.put_suite_params_1(
-                'stopcp', self.options.stopcp)
+            self.suite_db_mgr.put_suite_stop_cycle_point(self.options.stopcp)
 
     def command_set_stop_after_clock_time(self, arg):
         """Set stop after clock time.
@@ -986,50 +985,50 @@ see `COPYING' in the Cylc source distribution.
         if row_idx == 0:
             LOG.info('LOADING suite parameters')
         key, value = row
-        if key in ['icp', 'initial_point']:
+        if key in self.suite_db_mgr.KEY_INITIAL_CYCLE_POINT_COMPATS:
             if self.options.ignore_icp:
                 LOG.debug('- initial point = %s (ignored)' % value)
             elif self.options.icp is None:
                 self.options.icp = value
                 LOG.info('+ initial point = %s' % value)
-        elif key in ['startcp', 'start_point', 'warm_point']:
+        elif key in self.suite_db_mgr.KEY_START_CYCLE_POINT_COMPATS:
             # 'warm_point' for back compat <= 7.6.X
             if self.options.ignore_startcp:
                 LOG.debug('- start point = %s (ignored)' % value)
             elif self.options.startcp is None:
                 self.options.startcp = value
                 LOG.info('+ start point = %s' % value)
-        elif key in ['fcp', 'final_point']:
+        elif key in self.suite_db_mgr.KEY_FINAL_CYCLE_POINT_COMPATS:
             if self.options.ignore_fcp:
                 LOG.debug('- override final point = %s (ignored)' % value)
             elif self.options.fcp is None:
                 self.options.fcp = value
                 LOG.info('+ override final point = %s' % value)
-        elif key == 'stopcp':
+        elif key == self.suite_db_mgr.KEY_STOP_CYCLE_POINT:
             if self.options.ignore_stopcp:
                 LOG.debug('- stop point = %s (ignored)' % value)
             elif self.options.stopcp is None:
                 self.options.stopcp = value
                 LOG.info('+ stop point = %s' % value)
-        elif key == 'uuid_str':
+        elif key == self.suite_db_mgr.KEY_UUID_STR:
             self.uuid_str.value = value
             LOG.info('+ suite UUID = %s', value)
-        elif key == 'is_held':
+        elif key == self.suite_db_mgr.KEY_HOLD:
             if self.options.hold_start is None:
                 self.options.hold_start = bool(value)
                 LOG.info('+ hold suite = %s', bool(value))
-        elif key == 'holdcp':
+        elif key == self.suite_db_mgr.KEY_HOLD_CYCLE_POINT:
             if self.options.holdcp is None:
                 self.options.holdcp = value
                 LOG.info('+ hold point = %s', value)
-        elif key == 'no_auto_shutdown':
+        elif key == self.suite_db_mgr.KEY_NO_AUTO_SHUTDOWN:
             value = bool(int(value))
             if self.options.no_auto_shutdown is None:
                 self.options.no_auto_shutdown = value
                 LOG.info('+ no auto shutdown = %s', value)
             else:
                 LOG.debug('- no auto shutdown = %s (ignored)', value)
-        elif key == 'stop_clock_time':
+        elif key == self.suite_db_mgr.KEY_STOP_CLOCK_TIME:
             value = int(value)
             if time() <= value:
                 self.stop_clock_time = value
@@ -1039,7 +1038,7 @@ see `COPYING' in the Cylc source distribution.
                     '- stop clock time = %d (%s) (ignored)',
                     value,
                     time2str(value))
-        elif key == 'stop_task':
+        elif key == self.suite_db_mgr.KEY_STOP_TASK:
             self.stop_task = value
             LOG.info('+ stop task = %s', value)
 
@@ -1758,8 +1757,7 @@ see `COPYING' in the Cylc source distribution.
             time2str(unix_time),
             unix_time)
         self.stop_clock_time = unix_time
-        self.suite_db_mgr.put_suite_params_1(
-            'stop_clock_time', self.stop_clock_time)
+        self.suite_db_mgr.put_suite_stop_clock_time(self.stop_clock_time)
 
     def set_stop_task(self, task_id):
         """Set stop after a task."""
@@ -1768,8 +1766,7 @@ see `COPYING' in the Cylc source distribution.
             task_id = self.get_standardised_taskid(task_id)
             LOG.info("Setting stop task: " + task_id)
             self.stop_task = task_id
-            self.suite_db_mgr.put_suite_params_1(
-                'stop_task', self.stop_task)
+            self.suite_db_mgr.put_suite_stop_task(self.stop_task)
         else:
             LOG.warning("Requested stop task name does not exist: %s" % name)
 
@@ -1782,7 +1779,7 @@ see `COPYING' in the Cylc source distribution.
             LOG.info("Wall clock stop time reached: %s", time2str(
                 self.stop_clock_time))
             self.stop_clock_time = None
-            self.suite_db_mgr.delete_suite_params("stop_clock_time")
+            self.suite_db_mgr.delete_suite_stop_clock_time()
             return True
         else:
             LOG.debug(
@@ -1794,7 +1791,7 @@ see `COPYING' in the Cylc source distribution.
         if self.stop_task and self.pool.task_succeeded(self.stop_task):
             LOG.info("Stop task %s finished" % self.stop_task)
             self.stop_task = None
-            self.suite_db_mgr.delete_suite_params("stop_task")
+            self.suite_db_mgr.delete_suite_stop_task()
             return True
         else:
             return False
@@ -1822,7 +1819,7 @@ see `COPYING' in the Cylc source distribution.
         if can_shutdown and self.pool.stop_point:
             self.options.stopcp = None
             self.pool.stop_point = None
-            self.suite_db_mgr.delete_suite_params("stopcp")
+            self.suite_db_mgr.delete_suite_stop_cycle_point()
         return can_shutdown
 
     def hold_suite(self, point=None):
@@ -1830,11 +1827,11 @@ see `COPYING' in the Cylc source distribution.
         if point is None:
             self.pool.hold_all_tasks()
             self.task_events_mgr.pflag = True
-            self.suite_db_mgr.put_suite_params_1("is_held", 1)
+            self.suite_db_mgr.put_suite_hold()
         else:
-            LOG.info("Setting suite hold cycle point: " + str(point))
+            LOG.info("Setting suite hold cycle point: %s", point)
             self.pool.set_hold_point(point)
-            self.suite_db_mgr.put_suite_params_1("holdcp", str(point))
+            self.suite_db_mgr.put_suite_hold_cycle_point(point)
 
     def release_suite(self):
         """Release (un-hold) all tasks in suite."""
@@ -1842,7 +1839,7 @@ see `COPYING' in the Cylc source distribution.
             LOG.info("RELEASE: new tasks will be queued when ready")
         self.pool.set_hold_point(None)
         self.pool.release_all_tasks()
-        self.suite_db_mgr.delete_suite_params("is_held", "holdcp")
+        self.suite_db_mgr.delete_suite_hold()
 
     def paused(self):
         """Is the suite paused?"""

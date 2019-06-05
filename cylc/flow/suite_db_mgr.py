@@ -41,6 +41,22 @@ from cylc.flow.wallclock import get_current_time_string, get_utc_mode
 class SuiteDatabaseManager(object):
     """Manage the suite runtime private and public databases."""
 
+    KEY_INITIAL_CYCLE_POINT = 'icp'
+    KEY_INITIAL_CYCLE_POINT_COMPATS = (
+        KEY_INITIAL_CYCLE_POINT, 'initial_point')
+    KEY_START_CYCLE_POINT = 'startcp'
+    KEY_START_CYCLE_POINT_COMPATS = (
+        KEY_START_CYCLE_POINT, 'start_point', 'warm_point')
+    KEY_FINAL_CYCLE_POINT = 'fcp'
+    KEY_FINAL_CYCLE_POINT_COMPATS = (KEY_FINAL_CYCLE_POINT, 'final_point')
+    KEY_STOP_CYCLE_POINT = 'stopcp'
+    KEY_UUID_STR = 'uuid_str'
+    KEY_HOLD = 'is_held'
+    KEY_HOLD_CYCLE_POINT = 'holdcp'
+    KEY_NO_AUTO_SHUTDOWN = 'no_auto_shutdown'
+    KEY_STOP_CLOCK_TIME = 'stop_clock_time'
+    KEY_STOP_TASK = 'stop_task'
+
     TABLE_BROADCAST_EVENTS = CylcSuiteDAO.TABLE_BROADCAST_EVENTS
     TABLE_BROADCAST_STATES = CylcSuiteDAO.TABLE_BROADCAST_STATES
     TABLE_CHECKPOINT_ID = CylcSuiteDAO.TABLE_CHECKPOINT_ID
@@ -117,6 +133,22 @@ class SuiteDatabaseManager(object):
         """Schedule deletion of rows from suite_params table by keys."""
         for key in keys:
             self.db_deletes_map[self.TABLE_SUITE_PARAMS].append({'key': key})
+
+    def delete_suite_hold(self):
+        """Delete suite hold flag and hold cycle point."""
+        self.delete_suite_params(self.KEY_HOLD, self.KEY_HOLD_CYCLE_POINT)
+
+    def delete_suite_stop_clock_time(self):
+        """Delete suite stop clock time from suite_params table."""
+        self.delete_suite_params(self.KEY_STOP_CLOCK_TIME)
+
+    def delete_suite_stop_cycle_point(self):
+        """Delete suite stop cycle point from suite_params table."""
+        self.delete_suite_params(self.KEY_STOP_CYCLE_POINT)
+
+    def delete_suite_stop_task(self):
+        """Delete suite stop task from suite_params table."""
+        self.delete_suite_params(self.KEY_STOP_TASK)
 
     def get_pri_dao(self):
         """Return the primary DAO."""
@@ -262,7 +294,7 @@ class SuiteDatabaseManager(object):
         else:
             final_point_str = str(schd.config.final_point)
         self.db_inserts_map[self.TABLE_SUITE_PARAMS].extend([
-            {"key": "uuid_str", "value": str(schd.uuid_str)},
+            {"key": self.KEY_UUID_STR, "value": str(schd.uuid_str)},
             {"key": "run_mode", "value": schd.config.run_mode()},
             {"key": "cylc_version", "value": CYLC_VERSION},
             {"key": "UTC_mode", "value": get_utc_mode()},
@@ -273,13 +305,22 @@ class SuiteDatabaseManager(object):
                 "value": schd.config.cfg['cylc']['cycle point format']})
         if schd.pool.is_held:
             self.db_inserts_map[self.TABLE_SUITE_PARAMS].append({
-                "key": "is_held", "value": 1})
-        for key in ('icp', 'fcp', 'startcp', 'stopcp', 'no_auto_shutdown'):
+                "key": self.KEY_HOLD, "value": 1})
+        for key in (
+            self.KEY_INITIAL_CYCLE_POINT,
+            self.KEY_FINAL_CYCLE_POINT,
+            self.KEY_START_CYCLE_POINT,
+            self.KEY_STOP_CYCLE_POINT,
+        ):
             value = getattr(schd.options, key, None)
             if value is not None:
                 self.db_inserts_map[self.TABLE_SUITE_PARAMS].append({
                     "key": key, "value": value})
-        for key in ('stop_clock_time', 'stop_task'):
+        if schd.options.no_auto_shutdown is not None:
+            self.db_inserts_map[self.TABLE_SUITE_PARAMS].append({
+                "key": self.KEY_NO_AUTO_SHUTDOWN,
+                "value": int(schd.options.no_auto_shutdown)})
+        for key in (self.KEY_STOP_CLOCK_TIME, self.KEY_STOP_TASK):
             value = getattr(schd, key, None)
             if value is not None:
                 self.db_inserts_map[self.TABLE_SUITE_PARAMS].append({
@@ -289,6 +330,26 @@ class SuiteDatabaseManager(object):
         """Queue insertion of 1 key=value pair to the suite_params table."""
         self.db_inserts_map[self.TABLE_SUITE_PARAMS].append(
             {"key": key, "value": value})
+
+    def put_suite_hold(self):
+        """Put suite hold flag to suite_params table."""
+        self.put_suite_params_1(self.KEY_HOLD, 1)
+
+    def put_suite_hold_cycle_point(self, value):
+        """Put suite hold cycle point to suite_params table."""
+        self.put_suite_params_1(self.KEY_HOLD_CYCLE_POINT, str(value))
+
+    def put_suite_stop_clock_time(self, value):
+        """Put suite stop clock time to suite_params table."""
+        self.put_suite_params_1(self.KEY_STOP_CLOCK_TIME, value)
+
+    def put_suite_stop_cycle_point(self, value):
+        """Put suite stop cycle point to suite_params table."""
+        self.put_suite_params_1(self.KEY_STOP_CYCLE_POINT, value)
+
+    def put_suite_stop_task(self, value):
+        """Put suite stop task to suite_params table."""
+        self.put_suite_params_1(self.KEY_STOP_TASK, value)
 
     def put_suite_template_vars(self, template_vars):
         """Put template_vars in runtime database.

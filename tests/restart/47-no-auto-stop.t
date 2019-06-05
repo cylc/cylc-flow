@@ -77,7 +77,7 @@ cmp_ok 'noautoshutdown.out' <<<'no_auto_shutdown|1'
 cut -d ' ' -f 4- "${SUITE_RUN_DIR}/log/suite/log" >'log.edited'
 contains_ok 'log.edited' <<__LOG__
 + no auto shutdown = True
-Suite shutting down - 'Abort on suite inactivity is set'
+Suite shutting down - Abort on suite inactivity is set
 __LOG__
 cmp_ok 'taskpool.out' <<'__OUT__'
 1|t_i01|1|succeeded|
