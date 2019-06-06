@@ -189,6 +189,33 @@ invalid cylc command is used (instead of a ValueError).
 [#3003](https://github.com/cylc/cylc-flow/pull/3003) - Fix inheritance
 with quotes using shlex.
 
+[#3184] (https://github.com/cylc/cylc-flow/pull/3184) - Fix restart
+correctness when the suite has a hold point, stop point, a stop task, a stop
+clock time and/or an auto stop option. These settings are now stored in the
+suite run SQLite file and are retrieved on suite restart. In addition, the
+settings are removed when they are consumed, e.g. if the suite stopped
+previously on rearching the stop point, the stop point would be consumed, so
+that on restart the suite would not stop again immediately.
+
+The `cylc run` command can now accept `--initial-cycle-point=CYCLE-POINT`
+(`--icp=CYCLE-POINT)` and `--start-cycle-point=CYCLE-POINT` options. This
+change should allow the command to have  a more uniform interface with commands
+such as `cylc validate`, and with the final/stop cycle point options).
+
+After this change:
+* `cylc run SUITE POINT` is equivalent to `cylc run --icp=POINT SUITE`.
+* `cylc run -w SUITE POINT` is equivalent to
+  `cylc run -w --start-point=POINT SUITE`.
+
+The `cylc run` and `cylc restart` commands can now accept the
+`--final-cycle-point=POINT` and `--stop-cycle-point=POINT` options. The
+`--until=POINT` option is now an alias for `--final-cycle-point=POINT` option.
+
+The `cylc run` and `cylc restart` commands can now accept the new
+`--auto-shutdown` option. This option overrides the equivalent suite
+configuration to force auto shutdown to be enabled. Previously, it is only
+possible to disable auto shutdown on the command line.
+
 ### Documentation
 
 [#3181](https://github.com/cylc/cylc-flow/pull/3181) - moved documentation to
