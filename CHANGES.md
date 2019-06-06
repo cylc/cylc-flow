@@ -29,8 +29,10 @@ Selected user-facing changes:
 
 ### Fixes
 
-[#3183] (https://github.com/cylc/cylc-flow/pull/3183) - Fix for suites failing
-to start when initiated by the GUI
+[#3186] (https://github.com/cylc/cylc-flow/pull/3186),
+[#3183] (https://github.com/cylc/cylc-flow/pull/3183) - Fix invocations of
+various commands from GUI, e.g. `cylc run` and `cylc trigger-edit`, which were
+broken at 7.8.2.
 
 [#3147] (https://github.com/cylc/cylc-flow/pull/3147) - Fix restart
 correctness when the suite has a hold point, stop point, a stop task, a stop
