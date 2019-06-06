@@ -69,6 +69,8 @@ def main():
         default="live", dest="run_mode",
         choices=['live', 'dummy', 'dummy-local', 'simulation'])
 
+    parser.set_defaults(is_validate=True)
+
     (options, args) = parser.parse_args()
 
     profiler = Profiler(options.profile_mode)
@@ -81,10 +83,10 @@ def main():
 
     suite, suiterc = SuiteSrvFilesManager().parse_suite_arg(options, args[0])
     cfg = SuiteConfig(
-        suite, suiterc,
+        suite,
+        suiterc,
+        options,
         load_template_vars(options.templatevars, options.templatevars_file),
-        cli_initial_point_string=options.icp,
-        is_validate=True, strict=options.strict, run_mode=options.run_mode,
         output_fname=options.output, mem_log_func=profiler.log_memory)
 
     # Check bounds of sequences

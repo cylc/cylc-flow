@@ -27,7 +27,11 @@ from cylc.suite_status import (
 from cylc.task_state import TASK_STATUS_RUNAHEAD
 from cylc.task_state_prop import extract_group_state
 from cylc.wallclock import (
-    TIME_ZONE_LOCAL_INFO, TIME_ZONE_UTC_INFO, get_utc_mode)
+    TIME_ZONE_LOCAL_INFO,
+    TIME_ZONE_UTC_INFO,
+    get_time_string_from_unix_time as time2str,
+    get_utc_mode,
+)
 
 
 class StateSummaryMgr(object):
@@ -123,7 +127,7 @@ class StateSummaryMgr(object):
         else:
             global_summary['time zone info'] = TIME_ZONE_LOCAL_INFO
         global_summary['last_updated'] = self.update_time
-        global_summary['run_mode'] = schd.run_mode
+        global_summary['run_mode'] = schd.config.run_mode()
         global_summary['states'] = all_states
         global_summary['namespace definition order'] = (
             schd.config.ns_defn_order)
@@ -143,18 +147,18 @@ class StateSummaryMgr(object):
         elif schd.pool.hold_point:
             global_summary['status_string'] = (
                 SUITE_STATUS_RUNNING_TO_HOLD % schd.pool.hold_point)
-        elif schd.stop_point:
+        elif schd.pool.stop_point:
             global_summary['status_string'] = (
-                SUITE_STATUS_RUNNING_TO_STOP % schd.stop_point)
+                SUITE_STATUS_RUNNING_TO_STOP % schd.pool.stop_point)
         elif schd.stop_clock_time is not None:
             global_summary['status_string'] = (
-                SUITE_STATUS_RUNNING_TO_STOP % schd.stop_clock_time_string)
+                SUITE_STATUS_RUNNING_TO_STOP % time2str(schd.stop_clock_time))
         elif schd.stop_task:
             global_summary['status_string'] = (
                 SUITE_STATUS_RUNNING_TO_STOP % schd.stop_task)
-        elif schd.final_point:
+        elif schd.config.final_point:
             global_summary['status_string'] = (
-                SUITE_STATUS_RUNNING_TO_STOP % schd.final_point)
+                SUITE_STATUS_RUNNING_TO_STOP % schd.config.final_point)
         else:
             global_summary['status_string'] = SUITE_STATUS_RUNNING
 

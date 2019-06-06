@@ -897,8 +897,8 @@ class CylcSuiteDAO(object):
             return
         for name, key in [
                 ("run mode", "run_mode"),
-                ("initial cycle", "initial_point"),
-                ("final cycle", "final_point")]:
+                ("initial cycle", "icp"),
+                ("final cycle", "fcp")]:
             if tail == "None":
                 tail = None
             if head == name:

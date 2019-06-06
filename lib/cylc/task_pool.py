@@ -22,8 +22,7 @@ pool, which does not participate in dependency matching and is not visible in
 the GUI. Tasks are then released to the task pool if not beyond the current
 runahead limit.
 
-check_auto_shutdown() and remove_spent_tasks() have to consider tasks in the
-runahead pool too.
+remove_spent_tasks() have to consider tasks in the runahead pool too.
 
 TODO - spawn-on-submit means a only one waiting instance of each task exists,
 in the pool, so if a new stop cycle is set we just need to check waiting pool
@@ -70,10 +69,10 @@ class TaskPool(object):
     STOP_REQUEST_NOW = 'REQUEST(NOW)'
     STOP_REQUEST_NOW_NOW = 'REQUEST(NOW-NOW)'
 
-    def __init__(self, config, stop_point, suite_db_mgr, task_events_mgr,
+    def __init__(self, config, suite_db_mgr, task_events_mgr,
                  proc_pool, xtrigger_mgr):
         self.config = config
-        self.stop_point = stop_point
+        self.stop_point = config.final_point
         self.suite_db_mgr = suite_db_mgr
         self.task_events_mgr = task_events_mgr
         self.proc_pool = proc_pool
@@ -111,7 +110,7 @@ class TaskPool(object):
         for queue, qconfig in self.config.cfg['scheduling']['queues'].items():
             self.myq.update((name, queue) for name in qconfig['members'])
 
-    def insert_tasks(self, items, stop_point_str, no_check=False):
+    def insert_tasks(self, items, stopcp, no_check=False):
         """Insert tasks."""
         n_warnings = 0
         task_items = {}
@@ -138,15 +137,13 @@ class TaskPool(object):
             for taskdef in taskdefs:
                 task_items[(taskdef.name, point_str)] = taskdef
             select_args.append((name_str, point_str))
-        if stop_point_str is None:
+        if stopcp is None:
             stop_point = None
         else:
             try:
-                stop_point = get_point(
-                    standardise_point_string(stop_point_str))
+                stop_point = get_point(standardise_point_string(stopcp))
             except ValueError as exc:
-                LOG.warning("Invalid stop point: %s (%s)" % (
-                    stop_point_str, exc))
+                LOG.warning("Invalid stop point: %s (%s)" % (stopcp, exc))
                 n_warnings += 1
                 return n_warnings
         submit_nums = self.suite_db_mgr.pri_dao.select_submit_nums_for_insert(
@@ -686,15 +683,18 @@ class TaskPool(object):
                 max_offset = itask.tdef.max_future_prereq_offset
         self.max_future_offset = max_offset
 
-    def set_do_reload(self, config, stop_point):
+    def set_do_reload(self, config):
         """Set the task pool to reload mode."""
         self.config = config
+        if config.options.stopcp:
+            self.stop_point = get_point(config.options.stopcp)
+        else:
+            self.stop_point = config.final_point
         self.do_reload = True
 
         self.custom_runahead_limit = self.config.get_custom_runahead_limit()
         self.max_num_active_cycle_points = (
             self.config.get_max_num_active_cycle_points())
-        self.stop_point = stop_point
 
         # reassign live tasks from the old queues to the new.
         # self.queues[queue][id_] = task
@@ -760,6 +760,9 @@ class TaskPool(object):
 
     def set_stop_point(self, stop_point):
         """Set the global suite stop point."""
+        if self.stop_point == stop_point:
+            return
+        LOG.info("Setting stop cycle point: %s", stop_point)
         self.stop_point = stop_point
         for itask in self.get_tasks():
             # check cycle stop or hold conditions
@@ -771,6 +774,7 @@ class TaskPool(object):
                     itask,
                     self.stop_point)
                 itask.state.set_held()
+        return self.stop_point
 
     def can_stop(self, stop_mode):
         """Return True if suite can stop.
@@ -1144,26 +1148,6 @@ class TaskPool(object):
             if not itask.state.status == TASK_STATUS_QUEUED:
                 itask.state.reset_state(TASK_STATUS_READY)
         return n_warnings
-
-    def check_auto_shutdown(self):
-        """Check if we should do a normal automatic shutdown."""
-        shutdown = True
-        for itask in self.get_all_tasks():
-            if self.stop_point is None:
-                # Don't if any unsucceeded task exists.
-                if itask.state.status not in [
-                        TASK_STATUS_SUCCEEDED, TASK_STATUS_EXPIRED]:
-                    shutdown = False
-                    break
-            elif (itask.point <= self.stop_point and
-                    itask.state.status not in [TASK_STATUS_SUCCEEDED,
-                                               TASK_STATUS_EXPIRED]):
-                # Don't if any unsucceeded task exists < stop point...
-                if itask.identity not in self.held_future_tasks:
-                    # ...unless it has a future trigger extending > stop point.
-                    shutdown = False
-                    break
-        return shutdown
 
     def sim_time_check(self, message_queue):
         """Simulation mode: simulate task run times and set states."""

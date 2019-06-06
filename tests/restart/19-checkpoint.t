@@ -48,8 +48,6 @@ contains_ok 'cylc-ls-checkpoints-1.out' <<'__OUT__'
 1|DATE|reload-init
 
 # SUITE PARAMS (KEY|VALUE)
-final_point|2020
-initial_point|2016
 is_held|1
 run_mode|live
 
@@ -67,8 +65,6 @@ contains_ok 'cylc-ls-checkpoints-2.out' <<'__OUT__'
 2|DATE|reload-done
 
 # SUITE PARAMS (KEY|VALUE)
-final_point|2020
-initial_point|2016
 is_held|1
 run_mode|live
 
@@ -87,8 +83,6 @@ contains_ok 'cylc-ls-checkpoints-0.out' <<'__OUT__'
 
 # SUITE PARAMS (KEY|VALUE)
 run_mode|live
-initial_point|2016
-final_point|2020
 
 # BROADCAST STATES (POINT|NAMESPACE|KEY|VALUE)
 2017|t1|script|true
