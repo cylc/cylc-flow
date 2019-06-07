@@ -281,6 +281,7 @@ def main():
         check_py_ver(*req_py_ver_range)
         and check_py_module_ver('zmq', None)
         and check_py_module_ver('jose', None)
+        and check_py_module_ver('graphene', None)
         and check_py_module_ver('colorama', None)
         and check_py_module_ver('ansimarkup', None)
         and check_py_module_ver('protobuf', (3,7,0))

@@ -616,9 +616,11 @@ see `COPYING' in the Cylc source distribution.
                 break
             self.message_queue.task_done()
             if '/' in task_job:  # cycle/task-name/submit-num
-                cycle, task_name, submit_num = task_job.split('/', 2)
+                cycle, task_name, submit_num, _ = (
+                    self.job_pool.parse_job_item(task_job))
                 task_id = TaskID.get(task_name, cycle)
-                submit_num = int(submit_num, 10)
+                if submit_num:
+                    submit_num = int(submit_num, 10)
             else:  # back compat: task-name.cycle
                 task_id = task_job
                 submit_num = None

@@ -180,10 +180,11 @@ class WsDataMgr(object):
 
         for name, parent_list in parents_dict.items():
             if parent_list and parent_list[0] in families:
+                ch_id = f"{self.workflow_id}/{name}"
                 if name in config.taskdefs:
-                    families[parent_list[0]].child_tasks.append(name)
+                    families[parent_list[0]].child_tasks.append(ch_id)
                 else:
-                    families[parent_list[0]].child_families.append(name)
+                    families[parent_list[0]].child_families.append(ch_id)
 
         for point_string, c_task_states in self.task_states.items():
             # For each cycle point, construct a family state tree
@@ -390,4 +391,4 @@ class WsDataMgr(object):
         workflow_msg.family_proxies.extend(list(self.family_proxies.values()))
         workflow_msg.edges.extend(list(self.edges.values()))
 
-        return workflow_msg.SerializeToString()
+        return workflow_msg
