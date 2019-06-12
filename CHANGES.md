@@ -21,18 +21,21 @@ pages**.
 - cylc-8 (master branch, written in Python 3) does not bundle Jinja2, and uses the fixed version 2.10.1.
 
 -------------------------------------------------------------------------------
-## __cylc-7.8.3 (2019-06-??)__
+## __cylc-7.8.3 (2019-06-12)__
 
-Maintenance release with minor enhancements.
+Minor maintenance release.
 
 Selected user-facing changes:
 
 ### Fixes
 
+[#3159] (https://github.com/cylc/cylc-flow/pull/3159) - restore compatibility
+with Python 2.6 (for those stuck on older systems).
+
 [#3186] (https://github.com/cylc/cylc-flow/pull/3186),
-[#3183] (https://github.com/cylc/cylc-flow/pull/3183) - Fix invocations of
-various commands from GUI, e.g. `cylc run` and `cylc trigger-edit`, which were
-broken at 7.8.2.
+[#3183] (https://github.com/cylc/cylc-flow/pull/3183) - Fix subprocess
+invocation of commands from GUI, e.g. `cylc run` and `cylc trigger-edit`, which
+were broken at 7.8.2.
 
 [#3147] (https://github.com/cylc/cylc-flow/pull/3147) - Fix restart
 correctness when the suite has a hold point, stop point, a stop task, a stop
@@ -43,23 +46,22 @@ previously on rearching the stop point, the stop point would be consumed, so
 that on restart the suite would not stop again immediately.
 
 The `cylc run` command can now accept `--initial-cycle-point=CYCLE-POINT`
-(`--icp=CYCLE-POINT)` and `--start-cycle-point=CYCLE-POINT` options. This
-change should allow the command to have  a more uniform interface with commands
-such as `cylc validate`, and with the final/stop cycle point options).
+(`--icp=CYCLE-POINT)` and `--start-cycle-point=CYCLE-POINT` options, as an
+alternative to a second command line argument. This is more consistent with
+commands such as `cylc validate`, and with the final/stop cycle point options.
 
 After this change:
 * `cylc run SUITE POINT` is equivalent to `cylc run --icp=POINT SUITE`.
-* `cylc run -w SUITE POINT` is equivalent to
-  `cylc run -w --start-point=POINT SUITE`.
+* `cylc run -w SUITE POINT` is equivalent to `cylc run -w --start-point=POINT SUITE`.
 
 The `cylc run` and `cylc restart` commands can now accept the
-`--final-cycle-point=POINT` and `--stop-cycle-point=POINT` options. The
+`--final-cycle-point=POINT` and `--stop-cycle-point=POINT` options too. The
 `--until=POINT` option is now an alias for `--final-cycle-point=POINT` option.
 
 The `cylc run` and `cylc restart` commands can now accept the new
-`--auto-shutdown` option. This option overrides the equivalent suite
-configuration to force auto shutdown to be enabled. Previously, it is only
-possible to disable auto shutdown on the command line.
+`--auto-shutdown` option. This overrides the equivalent suite configuration to
+force auto shutdown to be enabled. Previously, it was only possible to disable
+auto shutdown on the command line.
 
 -------------------------------------------------------------------------------
 ## __cylc-7.8.2 (2019-05-02)__
