@@ -19,10 +19,8 @@
 
 import codecs
 import re
-from distutils.errors import DistutilsExecError
 from glob import glob
 from os.path import join, dirname, abspath
-from shutil import move, rmtree
 
 from setuptools import setup, find_namespace_packages
 
