@@ -393,17 +393,9 @@ def main():
         log_is_retrieved = (glbl_cfg().get_host_item('retrieve job logs', host)
                             and live_job_id is None)
         if log_is_remote and (not log_is_retrieved or options.force_remote):
-            logpath = os.path.normpath(
-                get_remote_suite_run_job_dir(
-                    host,
-                    user,
-                    suite_name,
-                    point,
-                    task,
-                    options.submit_num,
-                    options.filename,
-                )
-            )
+            logpath = os.path.normpath(get_remote_suite_run_job_dir(
+                host, user,
+                suite_name, point, task, options.submit_num, options.filename))
             tail_tmpl = str(glbl_cfg().get_host_item(
                 "tail command template", host, user))
             # Reinvoke the cat-log command on the remote account.
