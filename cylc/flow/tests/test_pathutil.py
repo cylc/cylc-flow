@@ -37,6 +37,7 @@ from cylc.flow.pathutil import (
 
 
 class TestPathutil(TestCase):
+    """Tests for functions in "cylc.flow.pathutil"."""
 
     @patch('cylc.flow.pathutil.glbl_cfg')
     def test_get_remote_suite_run_dirs(self, mocked_glbl_cfg):
@@ -141,5 +142,6 @@ class TestPathutil(TestCase):
         ))
 
 
-if __name__ == "__main__":
-    unittest.main()
+if __name__ == '__main__':
+    from unittest import main
+    main()
