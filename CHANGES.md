@@ -29,15 +29,15 @@ Selected user-facing changes:
 
 ### Fixes
 
-[#3159] (https://github.com/cylc/cylc-flow/pull/3159) - restore compatibility
+[#3159](https://github.com/cylc/cylc-flow/pull/3159) - restore compatibility
 with Python 2.6 (for those stuck on older systems).
 
-[#3186] (https://github.com/cylc/cylc-flow/pull/3186),
-[#3183] (https://github.com/cylc/cylc-flow/pull/3183) - Fix subprocess
+[#3186](https://github.com/cylc/cylc-flow/pull/3186),
+[#3183](https://github.com/cylc/cylc-flow/pull/3183) - Fix subprocess
 invocation of commands from GUI, e.g. `cylc run` and `cylc trigger-edit`, which
 were broken at 7.8.2.
 
-[#3147] (https://github.com/cylc/cylc-flow/pull/3147) - Fix restart
+[#3147](https://github.com/cylc/cylc-flow/pull/3147) - Fix restart
 correctness when the suite has a hold point, stop point, a stop task, a stop
 clock time and/or an auto stop option. These settings are now stored in the
 suite run SQLite file and are retrieved on suite restart. In addition, the
