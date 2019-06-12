@@ -39,6 +39,9 @@ from cylc.flow.parsec.config import ItemNotFoundError
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.hostuserutil import get_host, get_user
+from cylc.flow.pathutil import (
+    get_remote_suite_run_job_dir,
+    get_suite_run_job_dir)
 from cylc.flow.subprocctx import SubProcContext
 from cylc.flow.task_action_timer import TaskActionTimer
 from cylc.flow.task_job_logs import (
@@ -577,11 +580,11 @@ class TaskEventsManager(object):
         cmd += ["--include=%s" % (include) for include in sorted(includes)]
         cmd.append("--exclude=/**")  # exclude everything else
         # Remote source
-        cmd.append(ctx.user_at_host + ":" + glbl_cfg().get_derived_host_item(
-            schd_ctx.suite, "suite job log directory", s_host, s_user) + "/")
+        cmd.append("%s:%s/" % (
+            ctx.user_at_host,
+            get_remote_suite_run_job_dir(s_host, s_user, schd_ctx.suite)))
         # Local target
-        cmd.append(glbl_cfg().get_derived_host_item(
-            schd_ctx.suite, "suite job log directory") + "/")
+        cmd.append(get_suite_run_job_dir(schd_ctx.suite) + "/")
         self.proc_pool.put_command(
             SubProcContext(ctx, cmd, env=dict(os.environ), id_keys=id_keys),
             self._job_logs_retrieval_callback, [schd_ctx])

@@ -42,10 +42,10 @@ from subprocess import call
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.parsec.fileparse import read_and_proc
 from cylc.flow.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow.terminal import cli_function
-from cylc.flow.parsec.fileparse import read_and_proc
 
 
 def parse_args():
@@ -119,7 +119,6 @@ def main():
     options, args = parse_args()
     suite, suiterc = SuiteSrvFilesManager().parse_suite_arg(options, args[0])
 
-    cylc_tmpdir = glbl_cfg().get_tmpdir()
     if options.geditor:
         editor = glbl_cfg().get(['editors', 'gui'])
     else:
@@ -148,7 +147,6 @@ def main():
     # write to a temporary file
     viewfile = NamedTemporaryFile(
         suffix=".suite.rc", prefix=suite.replace('/', '_') + '.',
-        dir=cylc_tmpdir
     )
     for line in lines:
         viewfile.write((line + '\n').encode())

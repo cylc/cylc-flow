@@ -56,6 +56,12 @@ from cylc.flow.cycling.loader import (
 from cylc.flow.cycling.iso8601 import ingest_time
 import cylc.flow.flags
 from cylc.flow.graphnode import GraphNodeParser
+from cylc.flow.pathutil import (
+    get_suite_run_dir,
+    get_suite_run_log_dir,
+    get_suite_run_share_dir,
+    get_suite_run_work_dir,
+)
 from cylc.flow.print_tree import print_tree
 from cylc.flow.subprocctx import SubFuncContext
 from cylc.flow.subprocpool import get_func
@@ -119,14 +125,10 @@ class SuiteConfig(object):
         self.suite = suite  # suite name
         self.fpath = fpath  # suite definition
         self.fdir = os.path.dirname(fpath)
-        self.run_dir = run_dir or glbl_cfg().get_derived_host_item(
-            self.suite, 'suite run directory')
-        self.log_dir = log_dir or glbl_cfg().get_derived_host_item(
-            self.suite, 'suite log directory')
-        self.work_dir = work_dir or glbl_cfg().get_derived_host_item(
-            self.suite, 'suite work directory')
-        self.share_dir = share_dir or glbl_cfg().get_derived_host_item(
-            self.suite, 'suite share directory')
+        self.run_dir = run_dir or get_suite_run_dir(self.suite)
+        self.log_dir = log_dir or get_suite_run_log_dir(self.suite)
+        self.share_dir = share_dir or get_suite_run_share_dir(self.suite)
+        self.work_dir = work_dir or get_suite_run_work_dir(self.suite)
         self.owner = owner
         self.run_mode = run_mode
         self.strict = strict

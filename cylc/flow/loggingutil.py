@@ -31,6 +31,7 @@ import logging
 
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.pathutil import get_suite_run_log_name
 from cylc.flow.wallclock import (
     get_current_time_string, get_time_string_from_unix_time)
 
@@ -77,8 +78,7 @@ class TimestampRotatingFileHandler(logging.FileHandler):
     MIN_BYTES = 1024
 
     def __init__(self, suite, no_detach=False):
-        logging.FileHandler.__init__(
-            self, glbl_cfg().get_derived_host_item(suite, 'suite log'))
+        logging.FileHandler.__init__(self, get_suite_run_log_name(suite))
         self.no_detach = no_detach
         self.stamp = None
         self.formatter = CylcLogFormatter()

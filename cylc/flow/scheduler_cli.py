@@ -20,11 +20,11 @@
 import os
 import sys
 
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flow.flags
 from cylc.flow.host_appointer import HostAppointer, EmptyHostList
 from cylc.flow.hostuserutil import is_remote_host
 from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.pathutil import get_suite_run_dir
 from cylc.flow.remote import remrun, remote_cylc_cmd
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.suite_srv_files_mgr import (
@@ -123,9 +123,7 @@ def main(is_restart=False):
         SuiteSrvFilesManager().get_suite_source_dir(args[0], options.owner)
     except SuiteServiceFileError:
         # Source path is assumed to be the run directory
-        SuiteSrvFilesManager().register(
-            args[0],
-            glbl_cfg().get_derived_host_item(args[0], 'suite run directory'))
+        SuiteSrvFilesManager().register(args[0], get_suite_run_dir(args[0]))
 
     try:
         scheduler = Scheduler(is_restart, options, args)

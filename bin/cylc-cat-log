@@ -53,15 +53,20 @@ import shlex
 from glob import glob
 from shlex import quote
 from stat import S_IRUSR
-from tempfile import mkstemp
+from tempfile import NamedTemporaryFile
 from subprocess import Popen, PIPE
 
+from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import UserInputError
 import cylc.flow.flags
-from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.rundb import CylcSuiteDAO
 from cylc.flow.hostuserutil import is_remote
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.pathutil import (
+    get_remote_suite_run_job_dir,
+    get_suite_run_job_dir,
+    get_suite_run_log_name,
+    get_suite_run_pub_db_name)
+from cylc.flow.rundb import CylcSuiteDAO
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_job_logs import (
     JOB_LOG_OUT, JOB_LOG_ERR, JOB_LOG_OPTS, NN, JOB_LOGS_LOCAL)
@@ -149,14 +154,14 @@ def view_log(logpath, mode, tailer_tmpl, batchview_cmd=None, remote=False):
     elif not remote and mode == 'edit':
         # Copy the log to a temporary read-only file for viewing in editor.
         # Copy only BUFSIZE bytes at time, in case the file is huge.
-        outfile = mkstemp(dir=glbl_cfg().get_tmpdir())[1]
+        outfile = NamedTemporaryFile()
         with open(logpath, 'rb') as log:
-            with open(outfile, 'wb') as out:
+            data = log.read(BUFSIZE)
+            while data:
+                outfile.write(data)
                 data = log.read(BUFSIZE)
-                while data:
-                    out.write(data)
-                    data = log.read(BUFSIZE)
-        os.chmod(outfile, S_IRUSR)
+        os.chmod(outfile.name, S_IRUSR)
+        outfile.seek(0, 0)
         return outfile
     elif mode == 'cat' or (remote and mode == 'edit'):
         # Just cat file contents to stdout.
@@ -234,11 +239,7 @@ def get_task_job_attrs(suite_name, point, task, submit_num):
 
     """
     suite_dao = CylcSuiteDAO(
-        os.path.join(
-            glbl_cfg().get_derived_host_item(
-                suite_name, "suite run directory"),
-            "log", CylcSuiteDAO.DB_FILE_BASE_NAME),
-        is_public=True)
+        get_suite_run_pub_db_name(suite_name), is_public=True)
     task_job_data = suite_dao.select_task_job(point, task, submit_num)
     suite_dao.close()
     if task_job_data is None:
@@ -264,17 +265,17 @@ def tmpfile_edit(tmpfile, geditor=False):
         editor = glbl_cfg().get(['editors', 'gui'])
     else:
         editor = glbl_cfg().get(['editors', 'terminal'])
-    modtime1 = os.stat(tmpfile).st_mtime
+    modtime1 = os.stat(tmpfile.name).st_mtime
     cmd = shlex.split(editor)
-    cmd.append(tmpfile)
+    cmd.append(tmpfile.name)
     proc = Popen(cmd, stderr=PIPE)
     err = proc.communicate()[1].decode()
     ret_code = proc.wait()
     if ret_code == 0:
-        if os.stat(tmpfile).st_mtime > modtime1:
+        if os.stat(tmpfile.name).st_mtime > modtime1:
             sys.stderr.write(
                 'WARNING: you edited a TEMPORARY COPY of %s\n' % (
-                    os.path.basename(tmpfile)))
+                    os.path.basename(tmpfile.name)))
     if ret_code and err:
         sys.stderr.write(err)
 
@@ -317,7 +318,7 @@ def main():
 
     if len(args) == 1:
         # Cat suite logs, local only.
-        logpath = glbl_cfg().get_derived_host_item(suite_name, "suite log")
+        logpath = get_suite_run_log_name(suite_name)
         if options.rotation_num:
             logs = glob('%s.*' % logpath)
             logs.sort(key=os.path.getmtime, reverse=True)
@@ -392,10 +393,9 @@ def main():
         log_is_retrieved = (glbl_cfg().get_host_item('retrieve job logs', host)
                             and live_job_id is None)
         if log_is_remote and (not log_is_retrieved or options.force_remote):
-            logpath = os.path.normpath(os.path.join(
-                glbl_cfg().get_derived_host_item(
-                    suite_name, "suite job log directory", host, user),
-                point, task, options.submit_num, options.filename))
+            logpath = os.path.normpath(get_remote_suite_run_job_dir(
+                host, user,
+                suite_name, point, task, options.submit_num, options.filename))
             tail_tmpl = str(glbl_cfg().get_host_item(
                 "tail command template", host, user))
             # Reinvoke the cat-log command on the remote account.
@@ -407,31 +407,29 @@ def main():
             if batchview_cmd:
                 cmd.append('--remote-arg=%s' % quote(batchview_cmd))
             cmd.append(suite_name)
-            capture = (mode == 'edit')
+            is_edit_mode = (mode == 'edit')
             try:
                 proc = remote_cylc_cmd(
-                    cmd, user, host, capture_process=capture,
+                    cmd, user, host, capture_process=is_edit_mode,
                     manage=(mode == 'tail'))
             except KeyboardInterrupt:
                 # Ctrl-C while tailing.
                 pass
             else:
-                if capture:
+                if is_edit_mode:
                     # Write remote stdout to a temp file for viewing in editor.
                     # Only BUFSIZE bytes at a time in case huge stdout volume.
-                    out = mkstemp(dir=glbl_cfg().get_tmpdir())[1]
-                    with open(out, 'wb') as outf:
+                    out = NamedTemporaryFile()
+                    data = proc.stdout.read(BUFSIZE)
+                    while data:
+                        out.write(data)
                         data = proc.stdout.read(BUFSIZE)
-                        while data:
-                            outf.write(data)
-                            data = proc.stdout.read(BUFSIZE)
-                    os.chmod(out, S_IRUSR)
+                    os.chmod(out.name, S_IRUSR)
+                    out.seek(0, 0)
         else:
             # Local task job or local job log.
-            logpath = os.path.normpath(os.path.join(
-                glbl_cfg().get_derived_host_item(
-                    suite_name, "suite job log directory"),
-                point, task, options.submit_num, options.filename))
+            logpath = os.path.normpath(get_suite_run_job_dir(
+                suite_name, point, task, options.submit_num, options.filename))
             tail_tmpl = str(glbl_cfg().get_host_item("tail command template"))
             out = view_log(logpath, mode, tail_tmpl, batchview_cmd)
             if mode != 'edit':
