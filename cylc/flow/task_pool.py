@@ -70,14 +70,11 @@ class TaskPool(object):
     STOP_REQUEST_NOW = 'REQUEST(NOW)'
     STOP_REQUEST_NOW_NOW = 'REQUEST(NOW-NOW)'
 
-    def __init__(self, config, stop_point, suite_db_mgr, task_events_mgr,
-                 proc_pool, xtrigger_mgr):
+    def __init__(self, config, stop_point, suite_db_mgr, task_events_mgr):
         self.config = config
         self.stop_point = stop_point
         self.suite_db_mgr = suite_db_mgr
         self.task_events_mgr = task_events_mgr
-        self.proc_pool = proc_pool
-        self.xtrigger_mgr = xtrigger_mgr
 
         self.do_reload = False
         self.custom_runahead_limit = self.config.get_custom_runahead_limit()
@@ -1299,16 +1296,6 @@ class TaskPool(object):
                 "outputs": outputs,
                 "extras": extras}
         return results, bad_items
-
-    def check_xtriggers(self):
-        """See if any xtriggers are satisfied."""
-        itasks = self.get_tasks()
-        self.xtrigger_mgr.collate(itasks)
-        for itask in itasks:
-            if itask.state.xclock is not None:
-                self.xtrigger_mgr.satisfy_xclock(itask)
-            if itask.state.xtriggers:
-                self.xtrigger_mgr.satisfy_xtriggers(itask, self.proc_pool)
 
     def filter_task_proxies(self, items):
         """Return task proxies that match names, points, states in items.

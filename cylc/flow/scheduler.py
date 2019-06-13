@@ -224,9 +224,8 @@ class Scheduler(object):
             self.suite_srv_files_mgr.get_suite_srv_dir(self.suite),  # pri_d
             os.path.join(self.suite_run_dir, 'log'))                 # pub_d
         self.broadcast_mgr = BroadcastMgr(self.suite_db_mgr)
-        self.xtrigger_mgr = XtriggerManager(
-            self.suite, self.owner, self.broadcast_mgr, self.suite_run_dir,
-            self.suite_share_dir, self.suite_work_dir, self.suite_dir)
+        self.xtrigger_mgr = None  # type: XtriggerManager
+
         self.ref_test_allowed_failures = []
         # Last 10 durations (in seconds) of the main loop
         self.main_loop_intervals = deque(maxlen=10)
@@ -368,6 +367,14 @@ see `COPYING' in the Cylc source distribution.
             self.suite_srv_files_mgr, self.task_events_mgr)
         self.task_job_mgr.task_remote_mgr.uuid_str = self.uuid_str
 
+        self.xtrigger_mgr = XtriggerManager(
+            self.suite, self.owner,
+            broadcast_mgr=self.broadcast_mgr,
+            proc_pool=self.proc_pool,
+            suite_run_dir=self.suite_run_dir,
+            suite_share_dir=self.suite_share_dir,
+            suite_source_dir=self.suite_dir)
+
         if self.is_restart:
             # This logic handles the lack of initial cycle point in "suite.rc".
             # Things that can't change on suite reload.
@@ -455,7 +462,7 @@ see `COPYING' in the Cylc source distribution.
 
         self.pool = TaskPool(
             self.config, self.final_point, self.suite_db_mgr,
-            self.task_events_mgr, self.proc_pool, self.xtrigger_mgr)
+            self.task_events_mgr)
 
         self.profiler.log_memory("scheduler.py: before load_tasks")
         if self.is_restart:
@@ -1636,7 +1643,7 @@ see `COPYING' in the Cylc source distribution.
         process = False
 
         # New-style xtriggers.
-        self.pool.check_xtriggers()
+        self.xtrigger_mgr.check_xtriggers(self.pool.get_tasks())
         if self.xtrigger_mgr.pflag:
             process = True
             self.xtrigger_mgr.pflag = False  # reset
