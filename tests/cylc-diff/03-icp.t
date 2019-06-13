@@ -74,9 +74,9 @@ Suite definitions ${SUITE_NAME1} and ${SUITE_NAME2} differ
  <   members = ['foo', 'bar']
  >   members = ['food', 'barley']
 
-   [scheduling] [[dependencies]] [[[R1]]]
- <   graph = foo => bar
- >   graph = food => barley
+   [scheduling] [[dependencies]]
+ <   R1 = foo => bar
+ >   R1 = food => barley
 
    [visualization] [[node groups]]
  <   root = ['root', 'foo', 'bar']

@@ -34,7 +34,6 @@ cat > suite.rc <<__END__
 [scheduling]
     initial cycle point = 2015
     [[dependencies]]
-        [[[R1]]]
 __END__
 run_fail $TEST_NAME cylc validate -v suite.rc
 grep_ok "No suite dependency graph defined." $TEST_NAME.stderr

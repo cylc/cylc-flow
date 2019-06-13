@@ -151,11 +151,7 @@ SPEC = {
             '__MANY__': [VDR.V_XTRIGGER],
         },
         'dependencies': {
-            'graph': [VDR.V_STRING],
-            '__MANY__':
-            {
-                'graph': [VDR.V_STRING],
-            },
+            '__MANY__': [VDR.V_STRING],
         },
     },
     'runtime': {
@@ -294,6 +290,15 @@ def upg(cfg, descr):
     u.obsolete('7.8.1', ['cylc', 'events', 'reset inactivity timer'])
     u.obsolete('7.8.1', ['runtime', '__MANY__', 'events', 'reset timer'])
     u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'shell'])
+
+    # TODO: not obvious how to do this using upgrader
+    try:
+        dependencies = cfg['scheduling']['dependencies']
+        for key, value in dependencies.copy().items():
+            if isinstance(value, dict) and 'graph' in value:
+                dependencies[key] = value['graph']
+    except KeyError:
+        pass
 
     u.upgrade()
 

@@ -31,22 +31,22 @@ cmp_ok a.txt <<'__END'
 the quick brown fox
 __END
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-b
-cylc get-config -i '[scheduling][dependencies][R1]graph' $SUITE_NAME >b.txt \
-    2>/dev/null
-cmp_ok b.txt <<'__END'
-foo => bar
+TEST_NAME="${TEST_NAME_BASE}-b"
+cylc get-config -i '[scheduling][dependencies]R1' "${SUITE_NAME}" | sort \
+    >'b.txt' 2>'/dev/null'
+cmp_ok 'b.txt' <<'__END'
 bar => baz
+foo => bar
 __END
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-c
-cylc get-config -i '[scheduling][dependencies][T00]graph' $SUITE_NAME >c.txt \
-    2>/dev/null
-cmp_ok c.txt <<'__END'
-cfoo => cbar
+TEST_NAME="${TEST_NAME_BASE}-c"
+cylc get-config -i '[scheduling][dependencies]T00' "${SUITE_NAME}" | sort \
+    >'c.txt' 2>'/dev/null'
+cmp_ok 'c.txt' <<'__END'
 cbar => cbaz
-dfoo => dbar
+cfoo => cbar
 dbar => dbaz
+dfoo => dbar
 __END
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-d

@@ -123,7 +123,7 @@ class ParsecConfig(object):
             for key in keys:
                 try:
                     cfg = cfg[key]
-                except KeyError:
+                except (KeyError, TypeError):
                     raise ItemNotFoundError(itemstr(parents, key))
                 else:
                     parents.append(key)

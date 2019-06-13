@@ -143,22 +143,18 @@ def addict(cfig, key, val, parents, index):
             index, itemstr(parents, key, val))
 
     if key in cfig:
+        oldval = cfig[key]
         # this item already exists
-        if (key == 'graph' and (
-                parents == ['scheduling', 'dependencies'] or
-                len(parents) == 3 and
-                parents[-3:-1] == ['scheduling', 'dependencies'])):
+        if parents[0:2] == ['scheduling', 'dependencies']:
             # append the new graph string to the existing one
-            LOG.debug('Merging graph strings under %s', itemstr(parents))
-            if not isinstance(cfig[key], list):
+            if not isinstance(cfig, list):
                 cfig[key] = [cfig[key]]
             cfig[key].append(val)
         else:
-            # otherwise override the existing item
-            LOG.debug(
-                'overriding %s old value: %s new value: %s',
-                itemstr(parents, key), cfig[key], val)
             cfig[key] = val
+        LOG.debug(
+            '%s: already exists in configuration:\nold: %s\nnew: %s',
+            key, repr(oldval), repr(cfig[key]))  # repr preserves \n
     else:
         cfig[key] = val
 
