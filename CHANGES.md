@@ -189,12 +189,12 @@ invalid cylc command is used (instead of a ValueError).
 [#3003](https://github.com/cylc/cylc-flow/pull/3003) - Fix inheritance
 with quotes using shlex.
 
-[#3184] (https://github.com/cylc/cylc-flow/pull/3184) - Fix restart
+[#3184](https://github.com/cylc/cylc-flow/pull/3184) - Fix restart
 correctness when the suite has a hold point, stop point, a stop task, a stop
 clock time and/or an auto stop option. These settings are now stored in the
 suite run SQLite file and are retrieved on suite restart. In addition, the
 settings are removed when they are consumed, e.g. if the suite stopped
-previously on rearching the stop point, the stop point would be consumed, so
+previously on reaching the stop point, the stop point would be consumed, so
 that on restart the suite would not stop again immediately.
 
 The `cylc run` command can now accept `--initial-cycle-point=CYCLE-POINT`
