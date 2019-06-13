@@ -185,6 +185,9 @@ invalid cylc command is used (instead of a ValueError).
 
 ### Documentation
 
+[#3181](https://github.com/cylc/cylc-flow/pull/3181) - moved documentation to
+the new cylc/cylc-doc repository.
+
 [#3025](https://github.com/cylc/cylc-flow/pull/3025) - fix dev-suites
 reference in docs (now in examples).
 

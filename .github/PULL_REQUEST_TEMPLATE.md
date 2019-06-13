@@ -17,3 +17,6 @@ COMMENT: choose one:
 COMMENT: choose one:
 - [ ] Includes an appropriate entry in the release change log `CHANGES.md`.
 - [ ] No change log entry required (e.g. change is small or internal only).
+COMMENT: choose one:
+- [ ] I have opened a corresponding documentation PR at cylc/cylc-doc#XXXX.
+- [ ] No documentation update required for this change.

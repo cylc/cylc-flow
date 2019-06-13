@@ -105,11 +105,3 @@ jobs:
 
   # TODO: run shortlist of regression tests with the
   #       least contemporary Python version
-
-  # build documentation
-  - stage: documentation
-    python: "3.7"
-    install:
-      - .travis/install.sh docs
-    script:
-      - python setup.py build_sphinx
