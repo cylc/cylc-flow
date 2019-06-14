@@ -3,5 +3,4 @@
     runahead limit = P2D
     max active cycle points = 2
     [[dependencies]]
-        [[[P1D]]]
-            graph = foo
+        P1D = foo

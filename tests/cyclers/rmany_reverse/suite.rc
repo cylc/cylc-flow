@@ -4,12 +4,9 @@
     initial cycle point = 2015-02-21T00
     final cycle point = 2015-02-21T18
     [[dependencies]]
-        [[[PT6H]]]
-            graph = foo
-        [[[R1/P0D]]]
-            graph = foo => stop
-        [[[R20/PT6H/-PT6H]]]
-            graph = foo => nonstop
+        PT6H = foo
+        R1/P0D = foo => stop
+        R20/PT6H/-PT6H = foo => nonstop
 [runtime]
     [[root]]
         script = true

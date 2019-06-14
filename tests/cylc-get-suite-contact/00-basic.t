@@ -24,8 +24,7 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
 [scheduling]
     initial cycle point = 2016
     [[dependencies]]
-        [[[R1]]]
-            graph = t1
+        R1 = t1
 [runtime]
     [[t1]]
         script = true

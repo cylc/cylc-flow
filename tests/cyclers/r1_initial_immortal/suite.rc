@@ -5,12 +5,9 @@
 [scheduling]
     initial cycle point = 20140101
     [[dependencies]]
-        [[[ R1 ]]]
-            graph = "cold_foo"
-        [[[ PT12H ]]]
-            graph = "cold_foo[^] & foo[-PT12H] => foo"
-        [[[ R1/+P4D ]]]
-            graph = "stop => foo"
+        R1 = "cold_foo"
+        PT12H = "cold_foo[^] & foo[-PT12H] => foo"
+        R1/+P4D = "stop => foo"
 [runtime]
     [[root]]
         script = true

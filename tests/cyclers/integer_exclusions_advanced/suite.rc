@@ -7,16 +7,11 @@
     runahead limit = P12
     cycling mode = integer
     [[dependencies]]
-        [[[ R/P1!(2,3,7) ]]]
-            graph = foo
-        [[[ P1 ! P2 ]]]
-            graph = woo
-        [[[ P1 ! +P1/P2 ]]]
-            graph = bar
-        [[[ P1 !(P2,6,8) ]]]
-            graph = qux
-        [[[ R/1/P2!P3 ]]]
-            graph = cthulhu
+        R/P1!(2,3,7) = foo
+        P1 ! P2 = woo
+        P1 ! +P1/P2 = bar
+        P1 !(P2,6,8) = qux
+        R/1/P2!P3 = cthulhu
 [runtime]
     [[foo]]
         script = """

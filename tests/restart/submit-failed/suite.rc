@@ -9,12 +9,11 @@
     initial cycle point = 20130923T00
     final cycle point   = 20130923T00
     [[dependencies]]
-        [[[R1]]]
-            graph = """
-                submit_failed_task:submit-fail => shutdown
-                shutdown => output_states
-                output_states => finish => !submit_failed_task
-            """
+        R1 = """
+            submit_failed_task:submit-fail => shutdown
+            shutdown => output_states
+            output_states => finish => !submit_failed_task
+        """
 [runtime]
     [[submit_failed_task]]
         script = """

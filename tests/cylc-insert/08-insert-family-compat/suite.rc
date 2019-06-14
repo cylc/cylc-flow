@@ -12,10 +12,10 @@ The ref test will fail if either operation fails to work properly."""
     final cycle point = 2
     cycling mode = integer
     [[dependencies]]
-        [[[P1]]]
-            graph = """
-        remover => inserter => FAM-A & FAM-B
-        FAM-A[-P1]:succeed-all => remover"""
+        P1 = """
+            remover => inserter => FAM-A & FAM-B
+            FAM-A[-P1]:succeed-all => remover
+        """
 [runtime]
     [[root]]
         script = /bin/true

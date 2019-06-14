@@ -6,15 +6,9 @@
     initial cycle point = 20100101T0000Z
     final cycle point = +P1D
 [[dependencies]]
-    [[[R1]]]
-        graph = init_cycle
-
-    [[[R1/2010-01-01T06:00+00:00]]]
-        graph = fixed_cycle
-
-    [[[T12]]]
-        graph = fixed_cycle[2010-01-01T06:00+00:00] => foo
-
+    R1 = init_cycle
+    R1/2010-01-01T06:00+00:00 = fixed_cycle
+    T12 = fixed_cycle[2010-01-01T06:00+00:00] => foo
 [runtime]
     [[foo, fixed_cycle, init_cycle]]
         script = true

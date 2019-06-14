@@ -4,12 +4,9 @@
     initial cycle point = 20130808T00
     final cycle point = 20130809T18
     [[dependencies]]
-        [[[R1]]]
-            graph = "foo"
-        [[[R1/T12]]]
-            graph = "foo[^] | bar => baz"
-        [[[T12]]]
-            graph = "baz[-P1D] => baz"
+        R1 = "foo"
+        R1/T12 = "foo[^] | bar => baz"
+        T12 = "baz[-P1D] => baz"
 [runtime]
     [[root]]
         script = true

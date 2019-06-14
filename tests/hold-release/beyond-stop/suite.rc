@@ -16,10 +16,8 @@ beyond the suite stop point."""
     initial cycle point = 20140101T00
     final cycle point   = 20140101T00
     [[dependencies]]
-        [[[R1]]]
-            graph = foo => holdrelease
-        [[[T00]]]
-            graph = "foo => bar"
+        R1 = foo => holdrelease
+        T00 = "foo => bar"
 [runtime]
     [[holdrelease]]
         # When this task runs foo will be held beyond the suite stop point.

@@ -16,13 +16,11 @@
     initial cycle point = 20140101T00
     final cycle point   = 20140104T00
     [[dependencies]]
-        [[[R1]]]
-            graph = """
-                stopper
-                holdafter => foo
-            """
-        [[[T00, T12]]]
-            graph = foo[-PT12H] => foo => bar
+        R1 = """
+            stopper
+            holdafter => foo
+        """
+        T00, T12 = foo[-PT12H] => foo => bar
 [runtime]
     [[holdafter]]
         script = cylc hold --after '20140101T12' "${CYLC_SUITE_NAME}"

@@ -28,8 +28,7 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
     initial cycle point = 1
     final cycle point = 20
     [[dependencies]]
-        [[[P1]]]
-            graph = t1 & t2 & t3
+        P1 = t1 & t2 & t3
 [runtime]
     [[t1, t2, t3]]
         script = true

@@ -9,14 +9,12 @@
     initial cycle point = 2020
     final cycle point = 2021
     [[dependencies]]
-        [[[R1]]]
-            graph = remover
-        [[[P1Y]]]
-            # NOTE: Graph changed to make test pass on Python3.
-            #       The reason for this is that without the dependency from
-            #       remover[^] => foo there was no guarantee that remover would
-            #       finish before baz ran.
-            graph = remover[^] => foo => bar & baz
+        R1 = remover
+        # NOTE: Graph changed to make test pass on Python3.
+        #       The reason for this is that without the dependency from
+        #       remover[^] => foo there was no guarantee that remover would
+        #       finish before baz ran.
+        P1Y = remover[^] => foo => bar & baz
 [runtime]
     [[remover]]
         script = """

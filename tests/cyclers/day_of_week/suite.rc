@@ -8,8 +8,7 @@
     initial cycle point = 20100101T0000Z
     final cycle point = 20100125T0000Z
     [[dependencies]]
-        [[[ R5/W-1/P1W ]]]
-            graph = foo
+        R5/W-1/P1W = foo
 
 [runtime]
     [[foo]]

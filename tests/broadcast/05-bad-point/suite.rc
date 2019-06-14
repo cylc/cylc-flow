@@ -11,8 +11,7 @@
     initial cycle point = 20150808
     final cycle point = 20150808
     [[dependencies]]
-        [[[P1M]]]
-            graph = broadcast
+        P1M = broadcast
 [runtime]
     [[broadcast]]
         script="""

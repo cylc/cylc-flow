@@ -26,8 +26,7 @@ cat > suite.rc <<__END__
 [scheduling]
     initial cycle point = 2000
     [[dependencies]]
-        [[[R1//1999]]]
-            graph = t1
+        R1//1999 = t1
 [runtime]
     [[t1]]
         script = true

@@ -39,8 +39,7 @@ cat > suite.rc <<__END__
 [scheduling]
     initial cycle point = 2015
     [[dependencies]]
-        [[[R1]]]
-            graph = foo && bar => baz
+        R1 = foo && bar => baz
 __END__
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-cycling-and

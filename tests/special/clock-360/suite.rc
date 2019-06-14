@@ -11,8 +11,7 @@
     [[special tasks]]
         clock-trigger = clock(0)
     [[dependencies]]
-        [[[T00]]]
-            graph = "clock"
+        T00 = "clock"
 [runtime]
     [[clock]]
         script = true

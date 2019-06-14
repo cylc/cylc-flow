@@ -14,8 +14,7 @@
     initial cycle point = 20140201T05
     final cycle point = 20140204T11+12
     [[dependencies]]
-        [[[T00]]]
-            graph = "foo"
+        T00 = "foo"
 [runtime]
     [[foo]]
         init-script = echo HELLO FROM INIT-SCRIPT

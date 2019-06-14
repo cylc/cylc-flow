@@ -9,8 +9,7 @@
     initial cycle point=1999
     final cycle point=1999
     [[dependencies]]
-        [[[P1Y]]]
-            graph="""t1 => t2"""
+        P1Y="""t1 => t2"""
 [runtime]
     [[t1]]
         script = cylc broadcast -v -v --debug "${CYLC_SUITE_NAME}" -n t2 -s 'script=true'

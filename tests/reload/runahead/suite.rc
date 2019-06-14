@@ -8,10 +8,8 @@
     final cycle point = 2010-01-05
     runahead limit = PT12H # marker
     [[dependencies]]
-        [[[T00]]]
-            graph = "foo:fail => reloader"
-        [[[T00/PT6H]]]
-            graph = "foo => bar"
+        T00 = "foo:fail => reloader"
+        T00/PT6H = "foo => bar"
 [runtime]
     [[foo]]
         script = false

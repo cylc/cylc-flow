@@ -25,11 +25,11 @@ cat >'suite.rc' <<'__SUITE_RC__'
 [scheduling]
     initial cycle point = 2000
     [[dependencies]]
-        [[[T00]]]
-            graph = """
-                A
-                B
-                A[-PT24H]:fail-any | B[-PT24H]:fail-any => c"""
+        T00 = """
+            A
+            B
+            A[-PT24H]:fail-any | B[-PT24H]:fail-any => c
+        """
 [runtime]
     [[A]]
     [[B]]

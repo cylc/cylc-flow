@@ -5,12 +5,9 @@
     initial cycle point = 0
     final cycle point = 4
     [[dependencies]]
-        [[[R1]]]
-            graph = start => bad & qux
-        [[[P5]]]
-            graph = baz[-P5] => bad => ugly => good => baz
-        [[[P10]]]
-            graph = qux[-P5] => qux
+        R1 = start => bad & qux
+        P5 = baz[-P5] => bad => ugly => good => baz
+        P10 = qux[-P5] => qux
 [runtime]
     [[start]]
         script = """

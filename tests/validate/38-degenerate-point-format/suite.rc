@@ -3,5 +3,4 @@
 [scheduling]
     initial cycle point = 2015-08
     [[dependencies]]
-        [[[P1D]]]
-            graph = foo
+        P1D = foo

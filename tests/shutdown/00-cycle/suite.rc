@@ -6,8 +6,7 @@
     initial cycle point = 20100101T00
     final cycle point = 20100105T00
     [[dependencies]]
-        [[[T00, T06, T12, T18]]]
-            graph = "a[-PT6H] & c[-PT6H] => a => stopper => c"
+        T00, T06, T12, T18 = "a[-PT6H] & c[-PT6H] => a => stopper => c"
 [runtime]
     [[a,c]]
         script = "true"

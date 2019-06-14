@@ -6,10 +6,8 @@
     [[xtriggers]]
         x1 = faker(name="bob")
     [[dependencies]]
-        [[[R1]]]
-            graph = "@x1 => foo => shutdown"
-        [[[P1Y]]]
-            graph = "@x1 => foo"
+        R1 = "@x1 => foo => shutdown"
+        P1Y = "@x1 => foo"
 [runtime]
     [[foo]]
         script = "echo NAME is $x1_name"

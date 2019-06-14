@@ -61,11 +61,10 @@ class XtriggerManager(object):
             suite_x = suite_state(suite=other,
                                   point=%(task_cycle_point)s):PT30S
         [[dependencies]]
-            [[[PT1H]]]
-                graph = '''
-                    @clock_1 & @suite_x => foo & bar
-                    @wall_clock = baz  # pre-defined zero-offset clock
-                        '''
+            PT1H = '''
+                @clock_1 & @suite_x => foo & bar
+                @wall_clock = baz  # pre-defined zero-offset clock
+            '''
 
     Task proxies only store xtriggers labels: clock_0, suite_x, etc. above.
     These are mapped to the defined function calls. Dependence on xtriggers

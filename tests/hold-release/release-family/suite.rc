@@ -12,12 +12,8 @@ first cycle point of the suite.."""
 [scheduling]
     initial cycle point = 20141009T00
     [[dependencies]]
-        [[[R1]]]
-            graph = holdrelease => foo & unrelated
-        [[[P1D]]]
-            graph = """
-                foo => bar => stop
-            """
+        R1 = holdrelease => foo & unrelated
+        P1D = foo => bar => stop
 [runtime]
     [[holdrelease]]
         script = """

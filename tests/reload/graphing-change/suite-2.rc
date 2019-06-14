@@ -2,10 +2,8 @@
     initial cycle point = 20160101T00Z
     final cycle point = 20160102T00Z
     [[dependencies]]
-        [[[ R1 ]]]
-            graph = start => one
-        [[[ PT1H ]]]
-            graph = add => foo => boo => baz
+        R1 = start => one
+        PT1H = add => foo => boo => baz
 [runtime]
     [[root]]
         script = sleep 1

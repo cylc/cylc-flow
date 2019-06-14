@@ -6,10 +6,8 @@
     initial cycle point = 20000131T0100Z
     final cycle point = 20000202T0600+0600
     [[dependencies]]
-        [[[ PT3H ]]]
-            graph = "foo[-PT3H] => foo => bar"
-        [[[ PT6H ]]]
-            graph = "baz[-PT6H] => baz => qux"
+        PT3H = "foo[-PT3H] => foo => bar"
+        PT6H = "baz[-PT6H] => baz => qux"
 [runtime]
     [[root]]
         script = true

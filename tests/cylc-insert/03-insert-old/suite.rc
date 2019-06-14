@@ -11,12 +11,9 @@
     initial cycle point = 20140101T00
     final cycle point   = 20140104T00
     [[dependencies]]
-        [[[R1]]]
-            graph = "foo_cold => foo"
-        [[[T00]]]
-            graph = "foo[-P1D] => foo"
-        [[[R1/+P1D]]]
-            graph = "foo[-P1D] => reinsert_foo => foo"
+        R1 = "foo_cold => foo"
+        T00 = "foo[-P1D] => foo"
+        R1/+P1D = "foo[-P1D] => reinsert_foo => foo"
 
 [runtime]
     [[foo_cold, foo]]

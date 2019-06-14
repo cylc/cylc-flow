@@ -7,8 +7,7 @@
     initial cycle point = 20100101T00
     final cycle point   = T06+P1D+PT6H
     [[dependencies]]
-        [[[T00, T06, T12, T18]]]
-            graph = "foo[-PT6H] => foo"
+        T00, T06, T12, T18 = "foo[-PT6H] => foo"
 
 [runtime]
     [[foo]]

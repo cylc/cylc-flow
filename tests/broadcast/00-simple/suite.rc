@@ -19,13 +19,11 @@ generated reference version.
     initial cycle point = 20100808T00
     final cycle point   = 20100809T00
     [[dependencies]]
-        [[[R1]]]
-            graph = prep => foo
-        [[[T00]]]
-            graph = """
-           foo => bar & baz & qux & wibble => ENS
-           ENS:finish-all => wobble
-                    """
+        R1 = prep => foo
+        T00 = """
+            foo => bar & baz & qux & wibble => ENS
+            ENS:finish-all => wobble
+        """
 [runtime]
     [[root]]
         pre-script = "echo $CYLC_TASK_CYCLE_POINT $CYLC_TASK_NAME BCAST is $BCAST | tee -a $BCASTLOG"

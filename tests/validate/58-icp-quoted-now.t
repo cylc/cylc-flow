@@ -27,8 +27,7 @@ cat >'suite.rc' <<'__SUITE_RC__'
 [scheduling]
     initial cycle point = "now"
     [[dependencies]]
-        [[[P1D]]]
-            graph = t1
+        P1D = t1
 [runtime]
     [[t1]]
         script = true

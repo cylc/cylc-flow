@@ -10,8 +10,7 @@
     initial cycle point=1970
     final cycle point=1970
     [[dependencies]]
-        [[[P1Y]]]
-            graph=t1
+        P1Y=t1
 [runtime]
     [[t1]]
         script=printenv CYLC_TEST_VAR_FOO

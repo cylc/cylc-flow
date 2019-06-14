@@ -20,11 +20,10 @@
     # use the command line as described above
     final cycle point = 20100810T00
     [[dependencies]]
-        [[[T00]]]
-            graph = """
-                foo[-P1D] => bar
-                foo
-            """
+        T00 = """
+            foo[-P1D] => bar
+            foo
+        """
 [runtime]
     [[root]]
         script = /bin/true

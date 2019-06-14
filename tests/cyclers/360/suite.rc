@@ -8,8 +8,7 @@
     final cycle point = 20130301T00
     cycling mode = 360day
     [[dependencies]]
-        [[[ P1D ]]]
-            graph = foo[-P1D] => foo
+        P1D = foo[-P1D] => foo
 [runtime]
     [[foo]]
         script = true

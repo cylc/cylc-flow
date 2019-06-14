@@ -8,8 +8,7 @@
     final cycle point = 2018
     runahead limit = P1D
     [[dependencies]]
-        [[[2010/P3Y]]]
-            graph = "a"
+        2010/P3Y = "a"
 [runtime]
     [[a]]
         script = "sleep 1"

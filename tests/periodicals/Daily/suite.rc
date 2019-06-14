@@ -8,9 +8,8 @@
     final cycle point = 20140118
     runahead limit = P1D # enforce sequential running
     [[dependencies]]
-        [[[20140110T06/P3D]]]
-            # daily cycling *with a non-zero hour* is a more stringent test
-            graph = "a"
+        # daily cycling *with a non-zero hour* is a more stringent test
+        20140110T06/P3D = "a"
 [runtime]
     [[a]]
         script = "sleep 1"

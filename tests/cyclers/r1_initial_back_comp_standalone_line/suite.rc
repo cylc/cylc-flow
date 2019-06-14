@@ -6,11 +6,10 @@
     [[special tasks]]
         start-up = cold_foo
     [[dependencies]]
-        [[[ 0 ]]]
-            graph = """
-                cold_foo
-                foo_midnight[T-24] & cold_foo => foo_midnight
-            """
+        0 = """
+            cold_foo
+            foo_midnight[T-24] & cold_foo => foo_midnight
+        """
 [runtime]
     [[root]]
         script = true

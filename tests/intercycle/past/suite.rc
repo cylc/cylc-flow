@@ -13,11 +13,8 @@ Task A should only run at 0, 12 hours; Task B at 6, 18"""
     initial cycle point = 20120101T00
     final cycle point = 20120101T18
     [[dependencies]]
-        [[[T00,T12]]]
-            graph = "A"
-        [[[T06,T18]]]
-            graph = "A[-PT6H] => B"
-
+        T00,T12 = "A"
+        T06,T18 = "A[-PT6H] => B"
 [runtime]
     [[root]]
         script = "/bin/true" # fast

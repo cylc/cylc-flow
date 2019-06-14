@@ -11,8 +11,7 @@
     initial cycle point = 2016
     final cycle point = 2016
     [[dependencies]]
-        [[[P1Y]]]
-            graph = """
+        P1Y = """
 holder => t1
 holder => releaser
 t1[-P1Y] => t1

@@ -28,8 +28,7 @@ cat >'suite.rc' <<'__SUITE_RC__'
 [scheduling]
     initial cycle point = previous(-17T1200Z; -18T1200Z) - P1D
     [[dependencies]]
-        [[[P1D]]]
-            graph = t1
+        P1D = t1
 [runtime]
     [[t1]]
         script = true

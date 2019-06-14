@@ -39,17 +39,14 @@
     [[special tasks]]
         external-trigger = get_data("new dataset ready for processing")
     [[dependencies]]
-        [[[R1]]] # first cycle
-            graph = prep => satsim & get_data
-        [[[P1]]]
-            graph = """
-                # Processing chain for each dataset
-                get_data => proc1 => proc2 => products
-                # As one dataset is retrieved, start waiting on another.
-                get_data[-P1] => get_data
-            """
-        [[[R1//{{N_DATASETS}}]]] # last cycle
-            graph = products => collate
+        R1 = prep => satsim & get_data
+        P1 = """
+            # Processing chain for each dataset
+            get_data => proc1 => proc2 => products
+            # As one dataset is retrieved, start waiting on another.
+            get_data[-P1] => get_data
+        """
+        R1//{{N_DATASETS}} = products => collate  # last cycle
 
 [runtime]
     [[prep]]

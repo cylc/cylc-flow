@@ -9,10 +9,7 @@
     initial cycle point=2020
     final cycle point=2025
     [[dependencies]]
-        [[[P1Y]]]
-            graph="""
-T[-P1Y]:succeed-all => T
-"""
+        P1Y=T[-P1Y]:succeed-all => T
 [runtime]
     [[T]]
         script = true

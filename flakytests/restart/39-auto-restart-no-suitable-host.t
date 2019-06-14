@@ -40,8 +40,7 @@ init_suite "${TEST_NAME_BASE}" <<< '
 [scheduling]
     initial cycle point = 2000
     [[dependencies]]
-        [[[P1D]]]
-            graph = foo
+        P1D = foo
 '
 
 create_test_globalrc '' "

@@ -9,41 +9,26 @@
     [[special tasks]]
         sequential = seq
     [[dependencies]]
-        [[[ R1 ]]]
-            graph = wibble
-        [[[ R1/+P6 ]]]
-            graph = wibble[^] => wobble
-        [[[ R1/P0 ]]]
-            graph = wobble[^+P6] => wubble
-        [[[ P3 ]]]
-            graph = """
-             seq => foo        # sequential task
-        foo[-P3] => foo        # prev instance trigger
-             foo => bar        # plain trigger
-        woo[+P1] => foo        # prev cycle
-        woo[+P1] => bar
-        woo[-P1] => foo        # next cycle
-
-        foo[-P3]:out1 => on_toast # message outputs
-                    """
-        [[[ +P1/P3 ]]]
-            graph = woo
-        [[[ R/+P2/P3 ]]]
-            graph = woo
-        [[[ R/7/P6 ]]]
-            graph = """
-         foo[-P3] => qux       # every second cycle
-                    """
-        [[[ R1/$ ]]]
-            graph = baz
-        [[[ R/P4!8 ]]]
-            graph = ning
-        [[[ R/P4!(4,12) ]]]    # Multiple exclusion points
-            graph = quux
-        [[[ R1/^ ]]]
-            graph = nang
-        [[[ R/+P1/P6!14 ]]]
-            graph = nong
+        R1 = wibble
+        R1/+P6 = wibble[^] => wobble
+        R1/P0 = wobble[^+P6] => wubble
+        P3 = """
+            seq => foo        # sequential task
+            foo[-P3] => foo   # prev instance trigger
+            foo => bar        # plain trigger
+            woo[+P1] => foo   # prev cycle
+            woo[+P1] => bar
+            woo[-P1] => foo   # next cycle
+            foo[-P3]:out1 => on_toast  # message outputs
+        """
+        +P1/P3 = woo
+        R/+P2/P3 = woo
+        R/7/P6 = foo[-P3] => qux       # every second cycle
+        R1/$ = baz
+        R/P4!8 = ning
+        R/P4!(4,12) = quux    # Multiple exclusion points
+        R1/^ = nang
+        R/+P1/P6!14 = nong
 [runtime]
     [[foo]]
         script = """

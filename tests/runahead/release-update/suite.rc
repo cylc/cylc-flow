@@ -10,9 +10,10 @@
     [[special tasks]]
         clock-trigger = foo(P0Y)
     [[dependencies]]
-        [[[P1Y]]]
-            graph = """foo => bar
-                bar[-P1Y] => bar""" # (or sequential bar)
+        P1Y = """
+            foo => bar
+            bar[-P1Y] => bar
+        """ # (or sequential bar)
 [runtime]
     [[root]]
         script = /bin/true

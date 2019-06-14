@@ -4,10 +4,8 @@
     initial cycle point = 20140101
     final cycle point = 20140102T12
     [[dependencies]]
-        [[[ R1 ]]]
-            graph = "cold_foo => foo"
-        [[[ PT12H ]]]
-            graph = "foo[-PT12H] => foo"
+        R1 = "cold_foo => foo"
+        PT12H = "foo[-PT12H] => foo"
 [runtime]
     [[root]]
         script = true

@@ -61,7 +61,8 @@ _HEADING = re.compile(
 _KEY_VALUE = re.compile(
     r'''^
     (\s*)                   # indentation
-    ([.\-\w ,]+?(\s*<.*?>)?)  # key with optional parameters, e.g. foo<m,n>
+    ([\w+\-:.,!/()^$ ]+?(\s*<.*?>)?)
+                            # key (and parameters, e.g. foo<m,n>)
     \s*=\s*                 # =
     (.*)                    # value (quoted any style + comment)
     $   # line end

@@ -14,8 +14,7 @@
     [[xtriggers]]
         clock = wall_clock(offset={{OFFSET}})
     [[dependencies]]
-        [[[T{{HOUR}}]]]
-            graph = "@clock => foo"
+        T{{HOUR}} = "@clock => foo"
 [runtime]
     [[foo]]
         script = true

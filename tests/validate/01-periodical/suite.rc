@@ -6,12 +6,9 @@
     initial cycle point = 20100101T00
     final cycle point = 20100102T00
     [[dependencies]]
-        [[[P1D]]]
-            graph = "daily"
-        [[[P1M]]]
-            graph = "monthly"
-        [[[P1Y]]]
-            graph = "yearly"
+        P1D = "daily"
+        P1M = "monthly"
+        P1Y = "yearly"
 [runtime]
     [[root]]
         script = "true"

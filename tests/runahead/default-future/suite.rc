@@ -9,15 +9,13 @@
     final cycle point = 20100105T00
     [[dependencies]]
         # foo will fail and cause a stuck bar task at T00.
-        [[[PT1H]]]
-            graph = "foo => bar"
+        PT1H = "foo => bar"
         # If wibble gets into the pool, it will demand a +PT6H raise
         # of the 'runahead limit'.
-        [[[{{ FUTURE_TRIGGER_START_POINT }}/PT6H]]]
-            graph = """
-                baz[+PT6H] => wibble
-                baz
-            """
+        {{ FUTURE_TRIGGER_START_POINT }}/PT6H = """
+            baz[+PT6H] => wibble
+            baz
+        """
 [runtime]
     [[foo]]
         script = false

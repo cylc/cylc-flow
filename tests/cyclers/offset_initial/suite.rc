@@ -4,8 +4,7 @@
     initial cycle point = 20140101
     final cycle point = 20140102T12
     [[dependencies]]
-        [[[ +P1D/PT6H ]]]
-            graph = "bar => baz"
+        +P1D/PT6H = "bar => baz"
 [runtime]
     [[root]]
         script = true

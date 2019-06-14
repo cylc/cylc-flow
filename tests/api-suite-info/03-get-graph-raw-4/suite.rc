@@ -7,8 +7,7 @@
     initial cycle point = 20200202T0000Z
     final cycle point = 20200203T0000Z
     [[dependencies]]
-        [[[P1D]]]
-            graph = t1[-P1D] => t1
+        P1D = t1[-P1D] => t1
 [runtime]
     [[t1]]
         script = """

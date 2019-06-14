@@ -10,8 +10,7 @@
     initial cycle point = 2016
     final cycle point = 2020
     [[dependencies]]
-        [[[P1Y]]]
-            graph=t2[-P1Y] => t1 => t2
+        P1Y=t2[-P1Y] => t1 => t2
 [runtime]
     [[t1]]
         script = true

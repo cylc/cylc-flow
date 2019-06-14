@@ -2,7 +2,6 @@
     initial cycle point = 20100101T0 # missing a zero
     final cycle point = 201001050T0
     [[dependencies]]
-        [[[T00]]]
-            graph = t1
+        T00 = t1
 [runtime]
     [[t1]]

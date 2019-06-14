@@ -3,10 +3,10 @@
 [scheduling]
    initial cycle point = 20140808T00
    [[dependencies]]
-      [[[P1D]]]
-         graph = """
-      fido[-P1D] => fido
-      fido => cujo & manny"""
+      P1D = """
+          fido[-P1D] => fido
+          fido => cujo & manny
+      """
 [runtime]
    [[not-used]]
        [[[meta]]]

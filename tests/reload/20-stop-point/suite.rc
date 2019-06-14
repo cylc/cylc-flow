@@ -10,10 +10,8 @@
     initial cycle point = 1
     final cycle point = 5
     [[dependencies]]
-        [[[R1]]]
-            graph="set-stop-point => reload => t1"
-        [[[P1]]]
-            graph="t1[-P1] => t1"
+        R1="set-stop-point => reload => t1"
+        P1="t1[-P1] => t1"
 
 [runtime]
     [[set-stop-point]]

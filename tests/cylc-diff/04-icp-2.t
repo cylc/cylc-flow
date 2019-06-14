@@ -25,8 +25,7 @@ init_suite "${TEST_NAME_BASE}-1" <<'__SUITE_RC__'
     UTC mode = True
 [scheduling]
     [[dependencies]]
-        [[[R1]]]
-            graph = foo => bar
+        R1 = foo => bar
 [runtime]
     [[foo, bar]]
         script = true
@@ -38,8 +37,7 @@ init_suite "${TEST_NAME_BASE}-2" <<'__SUITE_RC__'
 [scheduling]
     initial cycle point = 2016
     [[dependencies]]
-        [[[R1]]]
-            graph = food => barley
+        R1 = food => barley
 [runtime]
     [[food, barley]]
         script = true

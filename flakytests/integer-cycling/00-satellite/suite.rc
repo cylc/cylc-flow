@@ -29,17 +29,14 @@
     max active cycle points = 3
     #runahead limit = P3 # (alternative limiting method)
     [[dependencies]]
-        [[[R1]]] # first cycle
-            graph = prep => satsim & get_data
-        [[[P1]]]
-            graph = """
-                # Processing chain for each dataset
-                get_data => proc1 => proc2 => products
-                # As one dataset is retrieved, start waiting on another.
-                get_data[-P1] => get_data
-            """
-        [[[R1//{{N_DATASETS}}]]] # last cycle
-            graph = products => collate
+        R1 = prep => satsim & get_data
+        P1 = """
+            # Processing chain for each dataset
+            get_data => proc1 => proc2 => products
+            # As one dataset is retrieved, start waiting on another.
+            get_data[-P1] => get_data
+        """
+        R1//{{N_DATASETS}} = products => collate
 
 [runtime]
     [[prep]]

@@ -3,5 +3,4 @@
     [[special tasks]]
         start-up = cold_foo
     [[dependencies]]
-        [[[T12]]]
-            graph = "cold_foo => foo"
+        T12 = "cold_foo => foo"

@@ -4,8 +4,7 @@
     initial cycle point = 2018
     max active cycle points = 2
     [[dependencies]]
-        [[[P1Y]]]
-            graph = t1[-P3Y] => t1 => t2 => t3
+        P1Y = t1[-P3Y] => t1 => t2 => t3
 [runtime]
     [[t1]]
         script = """

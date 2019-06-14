@@ -16,14 +16,13 @@
     initial cycle point = 20110101T00
     final cycle point = 20110101T12
     [[dependencies]]
-        [[[T00,T12]]]
-            graph = """
-               pre:finish => model  # finish trigger
-               model:fail => diagnose => recover # fail trigger
-               model => !diagnose & !recover  # explicit success trigger
-               model:succeed | recover => post  # conditional and explicit success 
-               post => !model  # removes failed model to allow suite to auto finish
-            """
+        T00,T12 = """
+           pre:finish => model  # finish trigger
+           model:fail => diagnose => recover # fail trigger
+           model => !diagnose & !recover  # explicit success trigger
+           model:succeed | recover => post  # conditional and explicit success 
+           post => !model  # removes failed model to allow suite to auto finish
+        """
 
 [runtime]
     [[root]]
