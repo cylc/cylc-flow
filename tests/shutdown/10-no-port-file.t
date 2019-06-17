@@ -35,7 +35,7 @@ fi
 rm -f "${SRVD}/contact"
 run_fail "${TEST_NAME_BASE}-stop-1" cylc stop "${SUITE_NAME}"
 contains_ok "${TEST_NAME_BASE}-stop-1.stderr" <<__ERR__
-ClientError: Request returned error: Contact info not found for suite \
+ClientError: Contact info not found for suite \
 "${SUITE_NAME}", suite not running?
 __ERR__
 run_ok "${TEST_NAME_BASE}-stop-2" \
