@@ -108,6 +108,7 @@ def cli_function(parser_function=None, **parser_kwargs):
         @wraps(wrapped_function)
         def wrapper():
             use_color = False
+            wrapped_args = tuple()
             if parser_function:
                 parser = parser_function()
                 opts, args = parser_function().parse_args(**parser_kwargs)
@@ -118,21 +119,20 @@ def cli_function(parser_function=None, **parser_kwargs):
                         or (opts.color == 'auto' and supports_color())
                     )
                 )
+                wrapped_args = (parser, opts, *args)
+
             color_init(autoreset=True, strip=not use_color)
             if use_color:
                 ansi_log()
             try:
-                if parser_function:
-                    wrapped_function(parser, opts, *args)
-                else:
-                    wrapped_function()
+                wrapped_function(*wrapped_args)
             except (CylcError, ParsecError) as exc:
                 if is_terminal() or not cylc.flow.flags.debug:
                     # catch "known" CylcErrors which should have sensible short
                     # summations of the issue, full traceback not necessary
-                    sys.exit(cparse(
-                        f'<red><bold>{exc.__class__.__name__}:</bold>'
-                        f' {exc}</red>'
+                    sys.exit(EXC_EXIT.format(
+                        name=exc.__class__.__name__,
+                        exc=exc
                     ))
                 else:
                     # if command is running non-interactively just raise the
