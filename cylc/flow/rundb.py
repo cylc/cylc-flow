@@ -40,19 +40,26 @@ class CylcSuiteDAOTableColumn(object):
 class CylcSuiteDAOTable(object):
     """Represent a table in the suite runtime database."""
 
-    FMT_CREATE = "CREATE TABLE %(name)s(%(columns_str)s%(primary_keys_str)s)"
+    FMT_CREATE = "CREATE TABLE %(name)s(%(columns_str)s%(primary_keys_str)s" \
+                 "%(constraints)s)"
     FMT_DELETE = "DELETE FROM %(name)s%(where_str)s"
     FMT_INSERT = "INSERT OR REPLACE INTO %(name)s VALUES(%(values_str)s)"
     FMT_UPDATE = "UPDATE %(name)s SET %(set_str)s%(where_str)s"
 
     __slots__ = ('name', 'columns', 'delete_queues', 'insert_queue',
-                 'update_queues')
+                 'update_queues', 'constraints')
 
     def __init__(self, name, column_items):
         self.name = name
         self.columns = []
+        self.constraints = ""
         for column_item in column_items:
             name = column_item[0]
+
+            if name == '_constraints':
+                self.constraints = column_item[1]
+                continue
+
             attrs = {}
             if len(column_item) > 1:
                 attrs = column_item[1]
@@ -78,7 +85,8 @@ class CylcSuiteDAOTable(object):
         return self.FMT_CREATE % {
             "name": self.name,
             "columns_str": ", ".join(column_str_list),
-            "primary_keys_str": primary_keys_str}
+            "primary_keys_str": primary_keys_str,
+            "constraints": self.constraints}
 
     def get_insert_stmt(self):
         """Return an SQL statement to insert a row to this table."""
@@ -212,6 +220,10 @@ class CylcSuiteDAO(object):
             ["namespace", {"is_primary_key": True}],
             ["key", {"is_primary_key": True}],
             ["value"],
+            ["_constraints", f", CONSTRAINT fk_id FOREIGN KEY(id) REFERENCES "
+             f"{TABLE_CHECKPOINT_ID}(id), CONSTRAINT fk_point_namespace_key "
+             f"FOREIGN KEY(point, namespace, key) "
+             f"REFERENCES {TABLE_BROADCAST_STATES}(point, namespace, key)"]
         ],
         TABLE_CHECKPOINT_ID: [
             ["id", {"datatype": "INTEGER", "is_primary_key": True}],
@@ -230,6 +242,9 @@ class CylcSuiteDAO(object):
             ["id", {"datatype": "INTEGER", "is_primary_key": True}],
             ["key", {"is_primary_key": True}],
             ["value"],
+            ["_constraints", f", CONSTRAINT fk_id FOREIGN KEY(id) REFERENCES "
+             f"{TABLE_CHECKPOINT_ID}(id), CONSTRAINT fk_key FOREIGN KEY(key) "
+             f"REFERENCES {TABLE_SUITE_PARAMS}(key)"]
         ],
         TABLE_SUITE_TEMPLATE_VARS: [
             ["key", {"is_primary_key": True}],
@@ -244,6 +259,8 @@ class CylcSuiteDAO(object):
             ["num", {"datatype": "INTEGER"}],
             ["delay"],
             ["timeout"],
+            ["_constraints", f", CONSTRAINT fk_name_cycle FOREIGN KEY "
+             f"(name, cycle) REFERENCES {TABLE_TASK_POOL} (name, cycle)"]
         ],
         TABLE_TASK_JOBS: [
             ["cycle", {"is_primary_key": True}],
@@ -261,6 +278,8 @@ class CylcSuiteDAO(object):
             ["user_at_host"],
             ["batch_sys_name"],
             ["batch_sys_job_id"],
+            ["_constraints", f", CONSTRAINT fk_name_cycle FOREIGN KEY "
+             f"(name, cycle) REFERENCES {TABLE_TASK_STATES} (name, cycle)"]
         ],
         TABLE_TASK_EVENTS: [
             ["name"],
@@ -269,16 +288,22 @@ class CylcSuiteDAO(object):
             ["submit_num", {"datatype": "INTEGER"}],
             ["event"],
             ["message"],
+            ["_constraints", f", CONSTRAINT fk_name_cycle FOREIGN KEY "
+             f"(name, cycle) REFERENCES {TABLE_TASK_STATES} (name, cycle)"]
         ],
         TABLE_TASK_LATE_FLAGS: [
             ["cycle", {"is_primary_key": True}],
             ["name", {"is_primary_key": True}],
             ["value", {"datatype": "INTEGER"}],
+            ["_constraints", f", CONSTRAINT fk_name_cycle FOREIGN KEY "
+             f"(name, cycle) REFERENCES {TABLE_TASK_POOL} (name, cycle)"]
         ],
         TABLE_TASK_OUTPUTS: [
             ["cycle", {"is_primary_key": True}],
             ["name", {"is_primary_key": True}],
             ["outputs"],
+            ["_constraints", f", CONSTRAINT fk_name_cycle FOREIGN KEY "
+             f"(name, cycle) REFERENCES {TABLE_TASK_POOL} (name, cycle)"]
         ],
         TABLE_TASK_POOL: [
             ["cycle", {"is_primary_key": True}],
@@ -298,6 +323,10 @@ class CylcSuiteDAO(object):
             ["spawned", {"datatype": "INTEGER"}],
             ["status"],
             ["hold_swap"],
+            ["_constraints", f", CONSTRAINT fk_name_cycle FOREIGN KEY"
+             f" (name, cycle) REFERENCES {TABLE_TASK_POOL}"
+             f"(name, cycle), CONSTRAINT fk_id FOREIGN KEY"
+             f" (id) REFERENCES {TABLE_CHECKPOINT_ID} (id)"]
         ],
         TABLE_TASK_STATES: [
             ["name", {"is_primary_key": True}],
@@ -311,6 +340,8 @@ class CylcSuiteDAO(object):
             ["cycle", {"is_primary_key": True}],
             ["name", {"is_primary_key": True}],
             ["timeout", {"datatype": "REAL"}],
+            ["_constraints", f", CONSTRAINT fk_name_cycle FOREIGN KEY "
+             f"(name, cycle) REFERENCES {TABLE_TASK_POOL} (name, cycle)"]
         ],
     }
 
