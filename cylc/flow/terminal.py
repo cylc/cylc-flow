@@ -1,6 +1,7 @@
 """Functionality to assist working with terminals"""
 import os
 import sys
+import inspect
 import logging
 
 from functools import wraps
@@ -108,7 +109,8 @@ def cli_function(parser_function=None, **parser_kwargs):
         @wraps(wrapped_function)
         def wrapper():
             use_color = False
-            wrapped_args = tuple()
+            wrapped_args, wrapped_kwargs = tuple(), {}
+            # should we use colour?
             if parser_function:
                 parser = parser_function()
                 opts, args = parser_function().parse_args(**parser_kwargs)
@@ -120,12 +122,17 @@ def cli_function(parser_function=None, **parser_kwargs):
                     )
                 )
                 wrapped_args = (parser, opts, *args)
+            if 'color' in inspect.signature(wrapped_function).parameters:
+                wrapped_kwargs['color'] = use_color
 
+            # configure Cylc to use colour
             color_init(autoreset=True, strip=not use_color)
             if use_color:
                 ansi_log()
+
             try:
-                wrapped_function(*wrapped_args)
+                # run the command
+                wrapped_function(*wrapped_args, **wrapped_kwargs)
             except (CylcError, ParsecError) as exc:
                 if is_terminal() or not cylc.flow.flags.debug:
                     # catch "known" CylcErrors which should have sensible short

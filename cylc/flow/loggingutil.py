@@ -24,6 +24,7 @@ This module provides:
   because "time.strftime" will handle time zone from "localtime" properly.
 """
 import os
+import re
 import sys
 import logging
 import textwrap
@@ -220,3 +221,19 @@ class ReferenceLogFileHandler(logging.FileHandler):
                 bool: True for message to be logged, False otherwise.
         """
         return any(text in record.getMessage() for text in self.REF_LOG_TEXTS)
+
+
+LOG_LEVEL_REGEXES = [
+    (
+        re.compile(r'(^.*%s.*\n((^\t.*\n)+)?)' % level, re.M),
+        replacement.format(r'\1')
+    )
+    for level, replacement in CylcLogFormatter.COLORS.items()
+]
+
+
+def re_formatter(log_string):
+    """Read in an uncoloured log_string file and apply colour formatting."""
+    for sub, repl in LOG_LEVEL_REGEXES:
+        log_string = sub.sub(repl, log_string)
+    return log_string

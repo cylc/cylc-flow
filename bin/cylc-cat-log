@@ -109,6 +109,34 @@ MODES = {
 BUFSIZE = 1024 * 1024
 
 
+def colorise_cat_log(cat_proc, color=False):
+    """Print a Cylc log file in color at it would appear in the terminal.
+
+    Args:
+        cat_proc (subprocess.Process):
+            A process which outputs a Cylc log file i.e. `cat`.
+        color (bool):
+            If `True` log will appear in color, if `False` no controll
+            characters will be added.
+
+    """
+    if color:
+        color_proc = Popen(
+            [
+                'python', '-c',
+                '; '.join([
+                    'import sys',
+                    'from cylc.flow.loggingutil import re_formatter',
+                    'print(re_formatter(sys.stdin.read()), end="")'
+                ]),
+            ],
+            stdin=PIPE
+        )
+        color_proc.communicate(cat_proc.communicate()[0])
+    else:
+        cat_proc.wait()
+
+
 def split_user_at_host(user_at_host):
     """split user@host into user, host."""
     if user_at_host is None:
@@ -123,7 +151,8 @@ def split_user_at_host(user_at_host):
     return (user, host)
 
 
-def view_log(logpath, mode, tailer_tmpl, batchview_cmd=None, remote=False):
+def view_log(logpath, mode, tailer_tmpl, batchview_cmd=None, remote=False,
+             color=False):
     """View (by mode) local log file. This is only called on the file host.
 
     batchview_cmd is a batch-system-specific job stdout or stderr cat or tail
@@ -169,8 +198,12 @@ def view_log(logpath, mode, tailer_tmpl, batchview_cmd=None, remote=False):
             cmd = shlex.split(batchview_cmd)
         else:
             cmd = ['cat', logpath]
-        proc = Popen(cmd, stdin=open(os.devnull))
-        proc.wait()
+        proc1 = Popen(
+            cmd,
+            stdin=open(os.devnull),
+            stdout=PIPE if color else None
+        )
+        colorise_cat_log(proc1, color=color)
         return 0
     elif mode == 'tail':
         if batchview_cmd is not None:
@@ -302,7 +335,8 @@ def main(parser, options, *args, color=False):
             batchview_cmd = options.remote_args[3]
         except IndexError:
             batchview_cmd = None
-        res = view_log(logpath, mode, tail_tmpl, batchview_cmd, remote=True)
+        res = view_log(logpath, mode, tail_tmpl, batchview_cmd, remote=True,
+                       color=color)
         if res == 1:
             sys.exit(res)
         return
@@ -326,7 +360,7 @@ def main(parser, options, *args, color=False):
                 raise UserInputError(
                     "max rotation %d" % (len(logs) - 1))
         tail_tmpl = str(glbl_cfg().get_host_item("tail command template"))
-        out = view_log(logpath, mode, tail_tmpl)
+        out = view_log(logpath, mode, tail_tmpl, color=color)
         if out == 1:
             sys.exit(1)
         if mode == 'edit':
@@ -429,7 +463,8 @@ def main(parser, options, *args, color=False):
             logpath = os.path.normpath(get_suite_run_job_dir(
                 suite_name, point, task, options.submit_num, options.filename))
             tail_tmpl = str(glbl_cfg().get_host_item("tail command template"))
-            out = view_log(logpath, mode, tail_tmpl, batchview_cmd)
+            out = view_log(logpath, mode, tail_tmpl, batchview_cmd,
+                           color=color)
             if mode != 'edit':
                 sys.exit(out)
         if mode == 'edit':
