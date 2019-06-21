@@ -15,10 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test remote host (with shared fs) job log NN link correctness.
+# Test job log NN link correctness on reaching 100, remote (with shared fs).
 CYLC_TEST_IS_GENERIC=false
-. $(dirname $0)/test_header
-#-------------------------------------------------------------------------------
+. "$(dirname "$0")/test_header"
 export CYLC_TEST_HOST=$( \
     cylc get-global-config -i '[test battery]remote host with shared fs' \
     2>'/dev/null')
@@ -26,15 +25,13 @@ if [[ -z "$CYLC_TEST_HOST" ]]; then
     skip_all '"[test battery]remote host with shared fs": not defined'
 fi
 set_test_number 2
-#-------------------------------------------------------------------------------
-install_suite "$TEST_NAME_BASE" "$TEST_NAME_BASE"
-#-------------------------------------------------------------------------------
-TEST_NAME="$TEST_NAME_BASE-validate"
-run_ok "$TEST_NAME" cylc validate "$SUITE_NAME"
-#-------------------------------------------------------------------------------
-TEST_NAME="$TEST_NAME_BASE-run"
-suite_run_ok "$TEST_NAME" cylc run --reference-test --debug --no-detach "$SUITE_NAME"
-#-------------------------------------------------------------------------------
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+sqlite3 "${SUITE_RUN_DIR}/.service/db" <'db.sqlite3'
+suite_run_ok "${TEST_NAME_BASE}-restart" \
+    cylc restart --reference-test --debug --no-detach "${SUITE_NAME}"
+
 if [[ "$CYLC_TEST_HOST" != 'localhost' ]]; then
     purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
 fi
