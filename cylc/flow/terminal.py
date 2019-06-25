@@ -5,10 +5,10 @@ import inspect
 import logging
 
 from functools import wraps
-from subprocess import PIPE, Popen
+from subprocess import PIPE, Popen  # nosec
 
 from ansimarkup import parse as cparse
-from colorama import Fore, Style, init as color_init
+from colorama import init as color_init
 
 import cylc.flow.flags
 
@@ -28,7 +28,9 @@ def is_terminal():
 
 
 def get_width(default=80):
-    proc = Popen(['stty', 'size'], stdout=PIPE)
+    """Return the terminal width or `default` if it is not determinable."""
+    # stty can have different install locs so don't use absolute path
+    proc = Popen(['stty', 'size'], stdout=PIPE)  # nosec
     if proc.wait():
         return default
     try:

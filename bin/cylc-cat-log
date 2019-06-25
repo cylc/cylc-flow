@@ -116,7 +116,7 @@ def colorise_cat_log(cat_proc, color=False):
         cat_proc (subprocess.Process):
             A process which outputs a Cylc log file i.e. `cat`.
         color (bool):
-            If `True` log will appear in color, if `False` no controll
+            If `True` log will appear in color, if `False` no control
             characters will be added.
 
     """
