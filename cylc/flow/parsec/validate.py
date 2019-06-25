@@ -25,6 +25,7 @@ Also provides default values from the spec as a nested dict.
 """
 
 import re
+import shlex
 from collections import deque
 from textwrap import dedent
 
@@ -354,18 +355,13 @@ class ParsecValidator(object):
         Return (list):
             Processed value as a list.
         """
-        if value.startswith('"'):
-            # double-quoted values
-            match = cls._REC_DQV.match(value)
-            if match:
-                value = match.groups()[0]
-            values = cls._REC_DQ_L_VALUE.findall(value)
-        elif value.startswith("'"):
-            # single-quoted values
-            match = cls._REC_SQV.match(value)
-            if match:
-                value = match.groups()[0]
-            values = cls._REC_SQ_L_VALUE.findall(value)
+        if value.startswith('"') or value.startswith("'"):
+            lexer = shlex.shlex(value, posix=True, punctuation_chars=",")
+            lexer.commenters = '#'
+            lexer.whitespace_split = False
+            lexer.whitespace = "\t\n\r"
+            lexer.wordchars += " "
+            values = [t.strip() for t in lexer if t != "," and t.strip()]
         else:
             # unquoted values (may contain internal quoted strings with list
             # delimiters inside 'em!)

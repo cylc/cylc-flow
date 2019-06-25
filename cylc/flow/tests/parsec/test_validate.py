@@ -107,6 +107,27 @@ def get_parsec_validator_invalid_values():
     return values
 
 
+def get_test_strip_and_unquote_list():
+    return [
+        [
+            '"a,b", c, "d e"',  # input
+            ["a,b", "c", "d e"]  # expected
+        ],
+        [
+            'foo bar baz',  # input
+            ["foo bar baz"]  # expected
+        ],
+        [
+            '"a", \'b\', c',  # input
+            ["a", "b", "c"]  # expected
+        ],
+        [
+            'a b c, d e f',  # input
+            ["a b c", "d e f"]  # expected
+        ],
+    ]
+
+
 class TestValidate(unittest.TestCase):
     """Unit Tests for cylc.flow.parsec.validate.ParsecValidator.coerce*
     methods."""
@@ -596,6 +617,15 @@ class TestValidate(unittest.TestCase):
             self.assertRaises(
                 IllegalValueError,
                 validator.coerce_xtrigger, value, ['whatever'])
+
+    def test_strip_and_unquote_list(self):
+        """Test strip_and_unquote_list"""
+        validator = VDR()
+        for values in get_test_strip_and_unquote_list():
+            value = values[0]
+            expected = values[1]
+            output = validator.strip_and_unquote_list(keys=[], value=value)
+            self.assertEqual(expected, output)
 
 
 if __name__ == '__main__':

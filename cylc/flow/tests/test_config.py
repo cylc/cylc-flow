@@ -16,9 +16,72 @@
 
 import os
 import pytest
-from tempfile import TemporaryDirectory
+from tempfile import TemporaryDirectory, NamedTemporaryFile
 from pathlib import Path
 from cylc.flow.config import SuiteConfig, SuiteConfigError
+
+
+def get_test_inheritance_quotes():
+    """Provide test data for test_family_inheritance_and_quotes."""
+    return [
+        # first case, second family name surrounded by double quotes
+        b'''
+[cylc]
+    [[parameters]]
+        major = 1..5
+        minor = 10..20
+[scheduling]
+    [[dependencies]]
+        graph = """hello => MAINFAM<major, minor>
+                   hello => SOMEFAM
+        """
+[runtime]
+    [[root]]
+        script = true
+    [[MAINFAM<major, minor>]]
+    [[SOMEFAM]]
+    [[ goodbye_0<major, minor> ]]
+        inherit = 'MAINFAM<major, minor>', "SOMEFAM"
+        ''',
+        # second case, second family surrounded by single quotes
+        b'''
+[cylc]
+    [[parameters]]
+        major = 1..5
+        minor = 10..20
+[scheduling]
+    [[dependencies]]
+        graph = """hello => MAINFAM<major, minor>
+                   hello => SOMEFAM
+        """
+[runtime]
+    [[root]]
+        script = true
+    [[MAINFAM<major, minor>]]
+    [[SOMEFAM]]
+    [[ goodbye_0<major, minor> ]]
+        inherit = 'MAINFAM<major, minor>', 'SOMEFAM'
+        ''',
+        # third case, second family name without quotes
+        b'''
+[cylc]
+    [[parameters]]
+        major = 1..5
+        minor = 10..20
+[scheduling]
+    [[dependencies]]
+        graph = """hello => MAINFAM<major, minor>
+                   hello => SOMEFAM
+        """
+[runtime]
+    [[root]]
+        script = true
+    [[MAINFAM<major, minor>]]
+    [[SOMEFAM]]
+    [[ goodbye_0<major, minor> ]]
+        inherit = 'MAINFAM<major, minor>', SOMEFAM
+        '''
+    ]
 
 
 class TestSuiteConfig(object):
@@ -127,3 +190,28 @@ class TestSuiteConfig(object):
                 with pytest.raises(SuiteConfigError) as excinfo:
                     SuiteConfig(suite="suite_with_not_callable", fpath=f.name)
                 assert "callable" in str(excinfo.value)
+
+    def test_family_inheritance_and_quotes(self):
+        """Test that inheritance does not ignore items, if not all quoted.
+
+        For example:
+
+            inherit = 'MAINFAM<major, minor>', SOMEFAM
+            inherit = 'BIGFAM', SOMEFAM
+
+        See bug #2700 for more/
+        """
+        template_vars = {}
+        for content in get_test_inheritance_quotes():
+            with NamedTemporaryFile() as tf:
+                tf.write(content)
+                tf.flush()
+                config = SuiteConfig(
+                    'test',
+                    tf.name,
+                    template_vars=template_vars)
+                assert 'goodbye_0_major1_minor10' in \
+                       (config.runtime['descendants']
+                        ['MAINFAM_major1_minor10'])
+                assert 'goodbye_0_major1_minor10' in \
+                       config.runtime['descendants']['SOMEFAM']
