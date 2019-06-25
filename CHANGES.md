@@ -183,6 +183,9 @@ undefined error.
 [#3173](https://github.com/cylc/cylc-flow/issues/3173) - NameError when
 invalid cylc command is used (instead of a ValueError).
 
+[#3003](https://github.com/cylc/cylc-flow/pull/3003) - Fix inheritance
+with quotes using shlex.
+
 ### Documentation
 
 [#3181](https://github.com/cylc/cylc-flow/pull/3181) - moved documentation to
