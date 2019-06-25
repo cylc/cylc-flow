@@ -127,8 +127,7 @@ class Prerequisite(object):
                 continue
             if self.start_point:
                 if message[1]:  # Cycle point.
-                    if (get_point(message[1]) < self.start_point and
-                            self.point >= self.start_point):
+                    if get_point(message[1]) < self.start_point <= self.point:
                         # Drop if outside of relevant point range.
                         drop_these.append(message)
 
