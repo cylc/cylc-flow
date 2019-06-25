@@ -19,6 +19,7 @@
 
 from collections import deque
 from errno import ENOENT
+from itertools import zip_longest
 import logging
 import os
 from shlex import quote
@@ -328,15 +329,15 @@ This program comes with ABSOLUTELY NO WARRANTY.
 It is free software, you are welcome to
 redistribute it under certain conditions;
 see `COPYING' in the Cylc source distribution.
-
   """ % CYLC_VERSION
 
         logo_lines = logo.splitlines()
         license_lines = cylc_license.splitlines()
         lmax = max(len(line) for line in license_lines)
         print(('\n'.join((
-            ('{0} {1: ^%s}' % lmax).format(*x)
-            for x in zip(logo_lines, license_lines)))))
+            ('{0} {1: ^%s}' % lmax).format(*x) for x in zip_longest(
+                logo_lines, license_lines, fillvalue=' ' * (
+                    len(logo_lines[-1]) + 1))))))
 
     def _setup_suite_logger(self):
         """Set up logger for suite."""
