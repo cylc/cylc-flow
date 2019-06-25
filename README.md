@@ -1,27 +1,28 @@
 # The Cylc Workflow Engine
 
-[![Build Status](https://travis-ci.org/cylc/cylc-flow.svg?branch=master)](https://travis-ci.org/cylc/cylc-flow)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/1d6a97bf05114066ae30b63dcb0cdcf9)](https://www.codacy.com/app/Cylc/cylc?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=cylc/cylc&amp;utm_campaign=Badge_Grade)
-[![codecov](https://codecov.io/gh/cylc/cylc-flow/branch/master/graph/badge.svg)](https://codecov.io/gh/cylc/cylc-flow)
-[![DOI](https://zenodo.org/badge/1836229.svg)](https://zenodo.org/badge/latestdoi/1836229)
-[![DOI](http://joss.theoj.org/papers/10.21105/joss.00737/status.svg)](https://doi.org/10.21105/joss.00737)
+**Project**: [![PyPI](https://img.shields.io/pypi/v/cylc-flow.svg?color=yellow)](https://pypi.org/project/cylc-flow/) [![License](https://img.shields.io/github/license/cylc/cylc-flow.svg?color=lightgrey)](https://github.com/cylc/cylc-flow/blob/master/COPYING) [![Website](https://img.shields.io/website/https/cylc.github.io.svg?color=green&up_message=live)](https://cylc.github.io/) [![Documentation](https://img.shields.io/website/https/cylc.github.io/doc/built-sphinx/index.html.svg?color=red&label=documentation&up_message=live)](https://cylc.github.io/doc/built-sphinx/index.html)
+**Support**: [![Discourse](https://img.shields.io/discourse/https/cylc.discourse.group/posts.svg?color=blueviolet)](https://cylc.discourse.group/)
+**References**: [![DOI](https://zenodo.org/badge/1836229.svg)](https://zenodo.org/badge/latestdoi/1836229) [![JOSS](http://joss.theoj.org/papers/10.21105/joss.00737/status.svg)](https://doi.org/10.21105/joss.00737) [![CISE](https://img.shields.io/website/https/ieeexplore.ieee.org/document/8675433.svg?color=orange&label=CISE&up_message=10.1109%2FMCSE.2019.2906593)](https://ieeexplore.ieee.org/document/8675433)
+**Development**: [![Contributors](https://img.shields.io/github/contributors/cylc/cylc-flow.svg?color=9cf)](https://github.com/cylc/cylc-flow/graphs/contributors) [![Commit activity](https://img.shields.io/github/commit-activity/m/cylc/cylc-flow.svg?color=yellowgreen)](https://github.com/cylc/cylc-flow/commits/master) [![Last commit](https://img.shields.io/github/last-commit/cylc/cylc-flow.svg?color=ff69b4)](https://github.com/cylc/cylc-flow/commits/master)
+**Testing**: [![Build Status](https://travis-ci.org/cylc/cylc-flow.svg?branch=master)](https://travis-ci.org/cylc/cylc-flow) [![Codecov](https://codecov.io/gh/cylc/cylc-flow/branch/master/graph/badge.svg)](https://codecov.io/gh/cylc/cylc-flow) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/1d6a97bf05114066ae30b63dcb0cdcf9)](https://www.codacy.com/app/Cylc/cylc?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=cylc/cylc&amp;utm_campaign=Badge_Grade)
 
-Cylc (“silk”) orchestrates complex distributed suites of interdependent cycling
+
+Cylc ("silk") orchestrates complex distributed suites of interdependent cycling
 (or non-cycling) tasks. It was originally designed to automate environmental
 forecasting systems at [NIWA](https://www.niwa.co.nz). Cylc is a general
-workflow engine, however; it is not specialized to forecasting in any way.
+workflow engine, however it is not specialized to forecasting in any way.
 
 ### Python 2 or Python 3 ?
 
 Currently in the source code repository:
- - **master branch:** Python 3, ZeroMQ network layer, **no GUI** -  **Cylc-8 Work In Progress**
+ - **master branch:** Python 3, ZeroMQ network layer, *no GUI* -  **Cylc-8 Work In Progress**
  - **7.8.x branch:** Python 2, Cherrypy network layer, PyGTK GUI - **Cylc-7 Maintenance**
 
 The first official Cylc-8 release (with a new web UI) is not expected until late 2019.
 Until then we recommend the latest cylc-7.8 release for production use.
 
 [Quick Installation](INSTALL.md) |
-[Web Site](https://cylc.github.io/) |
+[Website](https://cylc.github.io/) |
 [Documentation](https://cylc.github.io/documentation) |
 [Contributing](CONTRIBUTING.md)
 
@@ -41,7 +42,7 @@ You should have received a copy of the GNU General Public License along with
 Cylc.  If not, see [GNU licenses](http://www.gnu.org/licenses/).
 
 ## Cylc Documentation
- * See [The Cylc Web Site](https://cylc.github.io/)
+ * See [The Cylc Website](https://cylc.github.io/)
 
 ## Acknowledgement for non-Cylc Work
 
