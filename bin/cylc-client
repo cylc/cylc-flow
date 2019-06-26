@@ -36,6 +36,7 @@ from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.terminal import cli_function
 from cylc.flow.ws_messages_pb2 import PbEntireWorkflow
+from cylc.flow.network.server import PB_METHOD_MAP
 
 
 def get_option_parser():
@@ -61,8 +62,8 @@ def main(_, options, suite, func):
         kwargs = json.load(sys.stdin)
     sys.stdin.close()
     res = pclient(func, kwargs, timeout=options.comms_timeout)
-    if func.startswith('pb_'):
-        pb_msg = PbEntireWorkflow()
+    if func in PB_METHOD_MAP:
+        pb_msg = PB_METHOD_MAP[func]()
         pb_msg.ParseFromString(res)
         res_msg = MessageToDict(pb_msg)
     else:

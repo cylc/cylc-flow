@@ -44,7 +44,7 @@ def find_version(*file_paths):
 install_requires = [
     'ansimarkup>=1.0.0',
     'colorama==0.4.*',
-    'graphene==2.1.3',
+    'graphene==2.1.6',
     'isodatetime==1!2.0.*',
     'jinja2>=2.10.1, <2.11.0',
     'markupsafe==1.1.*',

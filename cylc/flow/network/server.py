@@ -36,7 +36,13 @@ from cylc.flow.network.resolvers import Resolvers
 from cylc.flow.suite_status import (
     KEY_META, KEY_NAME, KEY_OWNER, KEY_STATES,
     KEY_TASKS_BY_STATE, KEY_UPDATE_TIME, KEY_VERSION)
+from cylc.flow.ws_messages_pb2 import PbEntireWorkflow
 from cylc.flow import __version__ as CYLC_VERSION
+
+# maps server methods to the protobuf message (for client/UIS import)
+PB_METHOD_MAP = {
+    'pb_entire_workflow': PbEntireWorkflow
+}
 
 
 class ZMQServer(object):
@@ -167,17 +173,13 @@ class ZMQServer(object):
                 # success case - serve the request
                 LOG.debug('zmq:recv %s', message)
                 res = self._receiver(message)
-                # workaround for protobuf
-                if isinstance(res.get('data', None), bytes):
+                if message['command'] in PB_METHOD_MAP:
                     response = res['data']
-                    LOG.debug('zmq:send protobuf message')
-                    # send back the bytes response
-                    self.socket.send(response)
                 else:
-                    response = self.encode(res, self.secret())
-                    LOG.debug('zmq:send %s', res)
-                    # send back the string to bytes response
-                    self.socket.send_string(response)
+                    response = self.encode(res, self.secret()).encode()
+                LOG.debug('zmq:send %s', res)
+                # send back the string to bytes response
+                self.socket.send(response)
 
             sleep(0)  # yield control to other threads
 
@@ -1296,4 +1298,7 @@ class SuiteRuntimeServer(ZMQServer):
             Protobuf encoded message
 
         """
-        return self.schd.ws_data_mgr.get_entire_workflow().SerializeToString()
+        pb_msg = self.schd.ws_data_mgr.get_entire_workflow()
+        # Use google.protobuf.json_format.MessageToJson
+        # to jump through security hoop on response
+        return pb_msg.SerializeToString()

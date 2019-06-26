@@ -22,7 +22,12 @@ syntax = "proto3";
  * to and used in resolving GraphQL queries at the UI Server.
  *
  * This file is not needed at runtime. It is used to generate python protobuf
- * message modules.*/
+ * message modules.
+ *
+ * Command:
+ * $ protoc -I=./ --python_out=./ ws_messages.proto
+ *
+ * */
 
 
 // Query type messages
@@ -85,6 +90,8 @@ message PbWorkflow {
     repeated string job_log_names = 25;
     repeated string ns_defn_order = 26;
     repeated string states = 27;
+    repeated string task_proxies = 28;
+    repeated string family_proxies = 29;
 }
 
 message PbJob {
@@ -166,10 +173,10 @@ message PbTaskProxy {
     repeated string outputs = 10;
     repeated string broadcasts = 11;
     repeated string namespace = 12;
-    repeated string proxy_namespace = 13;
-    repeated PbPrerequisite prerequisites = 14;
-    repeated string jobs = 15;
-    repeated string parents = 16;
+    repeated PbPrerequisite prerequisites = 13;
+    repeated string jobs = 14;
+    repeated string parents = 15;
+    string first_parent = 16;
 }
 
 message PbFamily {
@@ -192,16 +199,17 @@ message PbFamilyProxy {
     string family = 5;
     string state = 6;
     int32 depth = 7;
-    repeated string parents = 8;
-    repeated string child_tasks = 9;
-    repeated string child_families = 10;
+    string first_parent = 8;
+    repeated string parents = 9;
+    repeated string child_tasks = 10;
+    repeated string child_families = 11;
 }
 
 message PbEdge {
     string checksum = 1;
     string id = 2;
-    string tail_node = 3;
-    string head_node = 4;
+    string source = 3;
+    string target = 4;
     bool suicide = 5;
     bool cond = 6;
 }

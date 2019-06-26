@@ -19,42 +19,107 @@
 from fnmatch import fnmatchcase
 
 
+# Message Filters
+def collate_workflow_atts(workflow):
+    """Collate workflow filter attributes."""
+    return [
+        workflow.owner,
+        workflow.name,
+        workflow.status,
+    ]
+
+
+def workflow_atts_filter(natts, items):
+    """Match components of id argument with those of workflow id."""
+    for owner, name, status in set(items):
+        if ((not owner or fnmatchcase(natts[0], owner)) and
+                (not name or fnmatchcase(natts[1], name)) and
+                (not status or natts[2] == status)):
+            return True
+    return False
+
+
+def workflow_filter(flow, args):
+    """Filter workflows based on attribute arguments"""
+    natts = collate_workflow_atts(flow.workflow)
+    return ((not args.get('workflows') or
+            workflow_atts_filter(natts, args['workflows'])) and
+            not (args.get('exworkflows') and
+            workflow_atts_filter(natts, args['exworkflows'])))
+
+
+def collate_node_atts(node):
+    """Collate node filter attributes."""
+    node_id = getattr(node, 'id')
+    slash_count = node_id.count('/')
+    n_id = node_id.split('/', slash_count)
+    if slash_count == 2:
+        n_cycle = None
+        n_name = n_id[2]
+    else:
+        n_cycle = n_id[2]
+        n_name = n_id[3]
+    return [
+        n_id[0],
+        n_id[1],
+        n_cycle,
+        getattr(node, 'namespace', [n_name]),
+        getattr(node, 'submit_num', None),
+        getattr(node, 'state', None),
+    ]
+
+
+def node_atts_filter(natts, items):
+    """Match node id argument with node attributes."""
+    for owner, workflow, cycle, name, submit_num, state in items:
+        if ((not owner or fnmatchcase(natts[0], owner)) and
+                (not workflow or fnmatchcase(natts[1], workflow)) and
+                (not cycle or fnmatchcase(natts[2], cycle)) and
+                any(fnmatchcase(nn, name) for nn in natts[3]) and
+                (not submit_num or
+                    fnmatchcase(str(natts[4]), submit_num.lstrip('0'))) and
+                (not state or natts[5] == state)):
+            return True
+    return False
+
+
+def node_filter(node, args):
+    """Filter nodes based on attribute arguments"""
+    natts = collate_node_atts(node)
+    return (
+        (args.get('ghosts') or node.state != '') and
+        (not (args.get('states') and node.state != '')
+         or node.state in args['states']) and
+        not (args.get('exstates') and node.state != '' and
+             node.state in args['exstates']) and
+        (args.get('mindepth', -1) < 0 or node.depth >= args['mindepth']) and
+        (args.get('maxdepth', -1) < 0 or node.depth <= args['maxdepth']) and
+        (not args.get('ids') or node_atts_filter(natts, args['ids'])) and
+        not (args.get('exids') and node_atts_filter(natts, args['exids']))
+    )
+
+
 class Resolvers(object):
+    """Data access methods for resolving GraphQL queries in the workflow."""
 
     def __init__(self, schd):
         self.schd = schd
 
     # Query resolvers
-    # workflows
     async def get_workflow_msgs(self, args):
         """Return list of workflows."""
-        result = []
         flow_msg = self.schd.ws_data_mgr.get_entire_workflow()
-        if self._workflow_filter(flow_msg, args):
-            result.append(flow_msg)
-        # TODO: Sorting and Pagination
-        return result
-
-    def _workflow_filter(self, flow, args):
-        """Filter workflows based on attribute arguments"""
-        natts = self._collate_workflow_atts(flow.workflow)
-        return ((not args.get('workflows') or
-                self._workflow_atts_filter(natts, args['workflows'])) and
-                not (args.get('exworkflows') and
-                     self._workflow_atts_filter(natts, args['exworkflows'])))
+        if workflow_filter(flow_msg, args):
+            return [flow_msg]
+        return []
 
     # nodes
     async def get_nodes_all(self, node_type, args):
         """Return nodes from all workflows, filter by args."""
-        nodes = [
+        return [
             n for k in await self.get_workflow_msgs(args)
-            for n in getattr(k, node_type)]
-        result = []
-        for node in nodes:
-            if self._node_filter(node, args):
-                result.append(node)
-        # TODO: Sorting and Pagination
-        return result
+            for n in getattr(k, node_type)
+            if node_filter(n, args)]
 
     async def get_nodes_by_id(self, node_type, args):
         """Return protobuf node objects for given id."""
@@ -67,32 +132,13 @@ class Resolvers(object):
             return []
         flow_msg = self.schd.ws_data_mgr.get_entire_workflow()
         if node_type == 'proxy_nodes':
-            nodes = list(list(getattr(flow_msg, 'task_proxies', []))
-                         + list(getattr(flow_msg, 'family_proxies', [])))
+            nodes = (list(getattr(flow_msg, 'task_proxies', []))
+                     + list(getattr(flow_msg, 'family_proxies', [])))
         else:
             nodes = list(getattr(flow_msg, node_type, []))
-        result = []
-        for node in nodes:
-            if ((not nat_ids or node.id in set(nat_ids)) and
-                    self._node_filter(node, args)):
-                result.append(node)
-        # TODO: Sorting and Pagination
-        return result
-
-    def _node_filter(self, node, args):
-        """Filter nodes based on attribute arguments"""
-        natts = self._collate_node_atts(node)
-        return ((not args.get('states') or node.state in args['states']) and
-                not (args.get('exstates') and
-                     node.state in args['exstates']) and
-                (args.get('mindepth', -1) < 0 or
-                    node.depth >= args['mindepth']) and
-                (args.get('maxdepth', -1) < 0 or
-                    node.depth <= args['maxdepth']) and
-                (not args.get('ids') or
-                    self._node_atts_filter(natts, args['ids'])) and
-                not (args.get('exids') and
-                     self._node_atts_filter(natts, args['exids'])))
+        return [node for node in nodes
+                if ((not nat_ids or node.id in set(nat_ids)) and
+                    node_filter(node, args))]
 
     async def get_node_by_id(self, node_type, args):
         """Return protobuf node object for given id."""
@@ -116,13 +162,9 @@ class Resolvers(object):
     # edges
     async def get_edges_all(self, args):
         """Return edges from all workflows, filter by args."""
-        result = []
-        for edge in [
-                n for k in await self.get_workflow_msgs(args)
-                for n in getattr(k, 'edges')]:
-            result.append(edge)
-        # TODO: Sorting and Pagination
-        return result
+        return [
+            e for w in await self.get_workflow_msgs(args)
+            for e in getattr(w, 'edges')]
 
     async def get_edges_by_id(self, args):
         """Return protobuf edge objects for given id."""
@@ -133,12 +175,8 @@ class Resolvers(object):
             w_ids.append(f'{oname}/{wname}')
         if self.schd.ws_data_mgr.workflow.id not in set(w_ids):
             return []
-        flow_msg = self.schd.ws_data_mgr.get_entire_workflow()
-        result = []
-        for edge in list(getattr(flow_msg, 'edges')):
-            result.append(edge)
-        # TODO: Sorting and Pagination
-        return result
+        return list(
+            getattr(self.schd.ws_data_mgr.get_entire_workflow(), 'edges'))
 
     # Mutations
     async def mutator(self, command, w_args, args):
@@ -222,58 +260,3 @@ class Resolvers(object):
                 else:
                     mutate_args[2][key] = val
             return self.schd.command_queue.put(tuple(mutate_args))
-
-    # Message Filters
-    @staticmethod
-    def _collate_workflow_atts(workflow):
-        """Collate workflow filter attributes."""
-        return [
-            workflow.owner,
-            workflow.name,
-            workflow.status,
-        ]
-
-    @staticmethod
-    def _workflow_atts_filter(natts, items):
-        """Match components of id argument with those of workflow id."""
-        for owner, name, status in set(items):
-            if ((not owner or fnmatchcase(natts[0], owner)) and
-                    (not name or fnmatchcase(natts[1], name)) and
-                    (not status or natts[2] == status)):
-                return True
-        return False
-
-    @staticmethod
-    def _collate_node_atts(node):
-        """Collate node filter attributes."""
-        node_id = getattr(node, 'id')
-        slash_count = node_id.count('/')
-        n_id = node_id.split('/', slash_count)
-        if slash_count == 2:
-            n_cycle = None
-            n_name = n_id[2]
-        else:
-            n_cycle = n_id[2]
-            n_name = n_id[3]
-        return [
-            n_id[0],
-            n_id[1],
-            n_cycle,
-            getattr(node, 'namespace', [n_name]),
-            getattr(node, 'submit_num', None),
-            getattr(node, 'state', None),
-        ]
-
-    @staticmethod
-    def _node_atts_filter(natts, items):
-        """Match node id argument with node attributes."""
-        for owner, workflow, cycle, name, submit_num, state in items:
-            if ((not owner or fnmatchcase(natts[0], owner)) and
-                    (not workflow or fnmatchcase(natts[1], workflow)) and
-                    (not cycle or fnmatchcase(natts[2], cycle)) and
-                    any(fnmatchcase(nn, name) for nn in natts[3]) and
-                    (not submit_num or
-                        fnmatchcase(str(natts[4]), submit_num.lstrip('0'))) and
-                    (not state or natts[5] == state)):
-                return True
-        return False

@@ -1914,10 +1914,7 @@ class SuiteConfig(object):
         self._last_graph_raw_edges = graph_raw_edges
         return graph_raw_edges
 
-    def get_graph_edges(self, start_point_string, stop_point_string,
-                        group_nodes=None, ungroup_nodes=None,
-                        ungroup_recursive=False, group_all=False,
-                        is_validate=False):
+    def get_graph_edges(self, start_point_string, stop_point_string):
         """Convert the abstract graph edges (self.edges, etc) to actual edges
 
         (This method differs from the get_graph_raw; class attributes are not
@@ -1926,45 +1923,6 @@ class SuiteConfig(object):
         Actual edges have concrete ranges of cycle points.
 
         """
-        # TODO: Replace get_graph_raw contents with these (no class storage)
-        if group_nodes is None:
-            group_nodes = []
-        if ungroup_nodes is None:
-            ungroup_nodes = []
-
-        first_parent_descendants = self.runtime['first-parent descendants']
-        first_parent_ancestors = self.runtime['first-parent ancestors']
-
-        closed_families = []
-        if group_all:
-            if self.collapsed_families_rc:
-                closed_families = copy(self.collapsed_families_rc)
-            else:
-                for fam in first_parent_descendants:
-                    if fam != 'root':
-                        if fam not in closed_families:
-                            closed_families.append(fam)
-        elif group_nodes:
-            # Group chosen family nodes
-            for node in group_nodes:
-                parent = first_parent_ancestors[node][1]
-                if parent not in closed_families and parent != 'root':
-                    closed_families.append(parent)
-
-        if ungroup_nodes:
-            # Ungroup chosen family nodes
-            for node in ungroup_nodes:
-                if node not in self.runtime['descendants']:
-                    # not a family node
-                    continue
-                if node in closed_families:
-                    closed_families.remove(node)
-                if ungroup_recursive:
-                    for fam in copy(closed_families):
-                        if fam in first_parent_descendants[node]:
-                            closed_families.remove(fam)
-
-        n_points = self.cfg['visualization']['number of cycle points']
 
         # Now define the concrete graph edges (pairs of nodes) for plotting.
         if start_point_string in [None, '']:
@@ -1975,19 +1933,12 @@ class SuiteConfig(object):
         suite_final_point = get_point(
             self.cfg['scheduling']['final cycle point'])
 
-        # For the computed stop point, we store n_points of each sequence,
-        # and then cull later to the first n_points over all sequences.
-        if stop_point_string is not None:
-            stop_point = get_point(stop_point_string)
-        else:
-            stop_point = None
-
-        # For nested families, only consider the outermost one
-        clf_map = {}
-        for name in closed_families:
-            if all(name not in first_parent_descendants[i]
-                   for i in closed_families):
-                clf_map[name] = first_parent_descendants[name]
+        # Require a stop point determined by the data manager
+        if stop_point_string in [None, '']:
+            return []
+        stop_point = get_point(stop_point_string)
+        if not stop_point:
+            return []
 
         gr_edges = {}
         start_point_offset_cache = {}
@@ -1995,23 +1946,15 @@ class SuiteConfig(object):
         for sequence, edges in self.edges.items():
             # Get initial cycle point for this sequence
             point = sequence.get_first_point(start_point)
-            new_points = []
             while point is not None:
-                if point not in new_points:
-                    new_points.append(point)
-                if stop_point is not None and point > stop_point:
+                if point > stop_point:
                     # Beyond requested final cycle point.
                     break
                 if suite_final_point is not None and point > suite_final_point:
                     # Beyond suite final cycle point.
                     break
-                if stop_point is None and len(new_points) > n_points:
-                    # Take n_points cycles from each sequence.
-                    break
                 point_offset_cache = {}
                 for left, right, suicide, cond in edges:
-                    if is_validate and (not right or suicide):
-                        continue
                     if right:
                         r_id = (right, point)
                     else:
@@ -2046,8 +1989,7 @@ class SuiteConfig(object):
                         # Check that l_id is not earlier than start time.
                         # NOTE BUG GITHUB #919
                         # sct = start_point
-                        if (r_id is None or r_id[1] < actual_first_point or
-                                is_validate):
+                        if r_id is None or r_id[1] < actual_first_point:
                             continue
                         # Pre-initial dependency;
                         # keep right hand node.
@@ -2055,28 +1997,18 @@ class SuiteConfig(object):
                         r_id = None
                     if point not in gr_edges:
                         gr_edges[point] = []
-                    if is_validate:
-                        gr_edges[point].append((l_id, r_id))
-                    else:
-                        lstr, rstr = self._close_families(l_id, r_id, clf_map)
-                        gr_edges[point].append(
-                            (lstr, rstr, None, suicide, cond))
+                    # only used to get task ID here
+                    lstr, rstr = self._close_families(l_id, r_id, {})
+                    gr_edges[point].append((lstr, rstr, None, suicide, cond))
                 # Increment the cycle point.
                 point = sequence.get_next_point_on_sequence(point)
 
-        del clf_map
         del start_point_offset_cache
         del point_offset_cache
         GraphNodeParser.get_inst().clear()
-        if stop_point is None:
-            # Prune to n_points points in total.
-            graph_raw_edges = []
-            for point in sorted(gr_edges)[:n_points]:
-                graph_raw_edges.extend(gr_edges[point])
-        else:
-            # Flatten nested list.
-            graph_raw_edges = (
-                [i for sublist in gr_edges.values() for i in sublist])
+        # Flatten nested list.
+        graph_raw_edges = (
+            [i for sublist in gr_edges.values() for i in sublist])
         graph_raw_edges.sort(key=lambda x: [y if y else '' for y in x])
         return graph_raw_edges
 

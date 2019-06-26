@@ -169,6 +169,7 @@ all_def_args = dict(
 )
 
 proxy_args = dict(
+    ghosts=Boolean(default_value=False),
     ids=List(ID, default_value=[]),
     exids=List(ID, default_value=[]),
     states=List(String, default_value=[]),
@@ -178,6 +179,7 @@ proxy_args = dict(
 )
 
 all_proxy_args = dict(
+    ghosts=Boolean(default_value=False),
     workflows=List(ID, default_value=[]),
     exworkflows=List(ID, default_value=[]),
     ids=List(ID, default_value=[]),
@@ -264,7 +266,12 @@ async def get_nodes_by_id(root, info, **args):
 async def get_node_by_id(root, info, **args):
     """Resolver for returning job, task, family node"""
     field_name = to_snake_case(info.field_name)
-    field_id = getattr(root, field_name, None)
+    if field_name == 'source_node':
+        field_id = getattr(root, 'source', None)
+    elif field_name == 'target_node':
+        field_id = getattr(root, 'target', None)
+    else:
+        field_id = getattr(root, field_name, None)
     if field_id:
         args['id'] = field_id
     if args.get('id', None) is None:
@@ -278,6 +285,10 @@ async def get_node_by_id(root, info, **args):
 
 
 async def get_edges_all(root, info, **args):
+    args['workflows'] = [
+        parse_workflow_id(w_id) for w_id in args['workflows']]
+    args['exworkflows'] = [
+        parse_workflow_id(w_id) for w_id in args['exworkflows']]
     resolvers = info.context.get('resolvers')
     return await resolvers.get_edges_all(args)
 
@@ -344,6 +355,16 @@ class Workflow(ObjectType):
         lambda: Family,
         description="""Family definitions.""",
         args=def_args,
+        resolver=get_nodes_by_id)
+    task_proxies = List(
+        lambda: TaskProxy,
+        description="""Task cycle instances.""",
+        args=proxy_args,
+        resolver=get_nodes_by_id)
+    family_proxies = List(
+        lambda: FamilyProxy,
+        description="""Family cycle instances.""",
+        args=proxy_args,
         resolver=get_nodes_by_id)
     edges = Field(
         lambda: Edges,
@@ -465,7 +486,6 @@ class TaskProxy(ObjectType):
     outputs = List(String, default_value=[])
     broadcasts = List(String, default_value=[])
     namespace = List(String, required=True)
-    proxy_namespace = List(String)
     prerequisites = List(Prerequisite)
     jobs = List(
         Job,
@@ -477,6 +497,11 @@ class TaskProxy(ObjectType):
         description="""Task parents.""",
         args=proxy_args,
         resolver=get_nodes_by_id)
+    first_parent = Field(
+        lambda: FamilyProxy,
+        description="""Task first parent.""",
+        args=proxy_args,
+        resolver=get_node_by_id)
 
 
 class Family(ObjectType):
@@ -535,6 +560,11 @@ class FamilyProxy(ObjectType):
         description="""Descendedant family proxies.""",
         args=proxy_args,
         resolver=get_nodes_by_id)
+    first_parent = Field(
+        lambda: FamilyProxy,
+        description="""Task first parent.""",
+        args=proxy_args,
+        resolver=get_node_by_id)
 
 
 class Node(Union):
@@ -552,10 +582,12 @@ class Edge(ObjectType):
     class Meta:
         description = """Dependency edge task/family proxies"""
     id = ID(required=True)
-    tail_node = Field(
+    source = ID()
+    source_node = Field(
         Node,
         resolver=get_node_by_id)
-    head_node = Field(
+    target = ID()
+    target_node = Field(
         Node,
         resolver=get_node_by_id)
     suicide = Boolean()

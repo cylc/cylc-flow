@@ -116,7 +116,7 @@ class TaskPool(object):
         task_items = {}
         select_args = []
         for item in items:
-            point_str, name_str = self.parse_task_item(item)[:2]
+            point_str, name_str = self._parse_task_item(item)[:2]
             if point_str is None:
                 LOG.warning(
                     "%s: task ID for insert must contain cycle point" % (item))
@@ -1321,7 +1321,7 @@ class TaskPool(object):
             itasks += self.get_all_tasks()
         else:
             for item in items:
-                point_str, name_str, status = self.parse_task_item(item)
+                point_str, name_str, status = self._parse_task_item(item)
                 if point_str is None:
                     point_str = "*"
                 else:
@@ -1345,7 +1345,7 @@ class TaskPool(object):
         return itasks, bad_items
 
     @staticmethod
-    def parse_task_item(item):
+    def _parse_task_item(item):
         """Parse point/name:state or name.point:state syntax."""
         if ":" in item:
             head, state_str = item.rsplit(":", 1)

@@ -206,7 +206,7 @@ class Prerequisite(object):
         if self.conditional_expression:
             temp = self.get_raw_conditional_expression()
             messages = []
-            num_length = int(math.ceil(float(len(self.satisfied)) / float(10)))
+            num_length = math.ceil(len(self.satisfied) / 10)
             for ind, message_tuple in enumerate(sorted(self.satisfied)):
                 message = self.MESSAGE_TEMPLATE % message_tuple
                 char = '%.{0}d'.format(num_length) % ind
@@ -225,6 +225,8 @@ class Prerequisite(object):
 
     def api_dump(self, workflow_id):
         """Return list of populated Protobuf data objects."""
+        if not self.satisfied:
+            return None
         if self.conditional_expression:
             temp = self.get_raw_conditional_expression()
             temp = temp.replace('|', ' | ')
@@ -233,7 +235,7 @@ class Prerequisite(object):
             for s_msg in self.satisfied:
                 temp = self.MESSAGE_TEMPLATE % s_msg
         conds = []
-        num_length = int(math.ceil(float(len(self.satisfied)) / float(10)))
+        num_length = math.ceil(len(self.satisfied) / 10)
         for ind, message_tuple in enumerate(sorted(self.satisfied)):
             name, point = message_tuple[0:2]
             t_id = f"{workflow_id}/{point}/{name}"
@@ -241,7 +243,7 @@ class Prerequisite(object):
             c_msg = self.MESSAGE_TEMPLATE % message_tuple
             c_val = self.satisfied[message_tuple]
             c_bool = bool(c_val)
-            if c_val is False:
+            if c_bool is False:
                 c_val = "unsatisfied"
             cond = PbCondition(
                 task_proxy=t_id,
@@ -252,15 +254,13 @@ class Prerequisite(object):
             )
             conds.append(cond)
             temp = temp.replace(c_msg, char)
-        if self.satisfied:
-            prereq_buf = PbPrerequisite(
-                expression=temp,
-                satisfied=self.is_satisfied(),
-            )
-            prereq_buf.conditions.extend(conds)
-            prereq_buf.cycle_points.extend(self.target_point_strings)
-            return prereq_buf
-        return None
+        prereq_buf = PbPrerequisite(
+            expression=temp,
+            satisfied=self.is_satisfied(),
+        )
+        prereq_buf.conditions.extend(conds)
+        prereq_buf.cycle_points.extend(self.target_point_strings)
+        return prereq_buf
 
     def set_satisfied(self):
         """Force this prerequisite into the satisfied state.
