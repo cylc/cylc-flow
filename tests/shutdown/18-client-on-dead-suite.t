@@ -36,11 +36,11 @@ kill "${MYPID}"  # Should leave behind the contact file
 wait "${MYPID}" 1>'/dev/null' 2>&1 || true
 run_fail "${TEST_NAME_BASE}-1" cylc ping "${SUITE_NAME}"
 contains_ok "${TEST_NAME_BASE}-1.stderr" <<__ERR__
-ClientError: Request returned error: Suite "$SUITE_NAME" already stopped
+ClientError: Suite "$SUITE_NAME" already stopped
 __ERR__
 run_fail "${TEST_NAME_BASE}-2" cylc ping "${SUITE_NAME}"
 contains_ok "${TEST_NAME_BASE}-2.stderr" <<__ERR__
-ClientError: Request returned error: Contact info not found for suite \
+ClientError: Contact info not found for suite \
 "${SUITE_NAME}", suite not running?
 __ERR__
 purge_suite "${SUITE_NAME}"

@@ -13,27 +13,39 @@ Arguments:
 
 import os
 import sys
+
+from cylc.flow.exceptions import UserInputError
 from cylc.flow.pkg_resources import extract_pkg_resources, list_pkg_resources
 from cylc.flow.terminal import cli_function
 
 
-@cli_function
-def main(args):
-    target_dir = args[0]
-    if len(args) > 1:
-        resources = args[1:]
-    else:
-        resources = None
-    extract_pkg_resources(target_dir, resources)
+class ArgParser:
+    """Lightweight standin for cylc.flow.option_parsers.CylcOptionParser."""
+
+    @classmethod
+    def parser(cls):
+        return cls
+
+    @staticmethod
+    def parse_args():
+        if {'help', '--help', "-h"} & set(sys.argv):
+            print(__doc__)
+        elif len(sys.argv) < 2:
+            raise UserInputError(
+                "wrong number of arguments, "
+                f"see '{os.path.basename(sys.argv[0])} --help'."
+            )
+        elif '--list' in sys.argv:
+            print('\n'.join(list_pkg_resources()))
+        else:
+            return (None, sys.argv[1:])
+        sys.exit()
+
+
+@cli_function(ArgParser.parser)
+def main(parser, _, target_dir, *resources):
+    extract_pkg_resources(target_dir, resources or None)
 
 
 if __name__ == '__main__':
-    if {'help', '--help', "-h"} & set(sys.argv):
-        print(__doc__)
-    elif len(sys.argv) < 2:
-        sys.exit("ERROR: wrong number of arguments, see '%s --help'." % (
-            os.path.basename(sys.argv[0])))
-    elif '--list' in sys.argv:
-        print('\n'.join(list_pkg_resources()))
-    else:
-        main(sys.argv[1:])
+    main()

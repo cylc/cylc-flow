@@ -84,8 +84,7 @@ def smart_open(filename=None):
             fh.close()
 
 
-@cli_function
-def main():
+def get_option_parser():
     parser = COP(
         __doc__,
         argdoc=[('REG', 'Suite name')]
@@ -109,8 +108,12 @@ def main():
         "-O", "--output-file",
         help="Output to a specific file",
         action="store", default=None, dest="output_filename")
-    options, args = parser.parse_args()
 
+    return parser
+
+
+@cli_function(get_option_parser)
+def main(parser, options, suite):
     output_options = [
         options.show_raw, options.show_summary, options.html_summary
     ]
@@ -120,7 +123,6 @@ def main():
         # No output specified - choose summary by default
         options.show_summary = True
 
-    suite = args.pop(0)
     run_db = _get_dao(suite)
     row_buf = format_rows(*run_db.select_task_times())
 

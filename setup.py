@@ -42,6 +42,7 @@ def find_version(*file_paths):
 
 
 install_requires = [
+    'ansimarkup>=1.0.0',
     'colorama==0.4.*',
     'isodatetime==1!2.0.*',
     'jinja2>=2.10.1, <2.11.0',

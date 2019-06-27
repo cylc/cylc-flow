@@ -32,12 +32,15 @@ from cylc.flow.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.flow.terminal import cli_function
 
 
-@cli_function
-def main():
+def get_option_parser():
+    return COP(__doc__, prep=True)
+
+
+@cli_function(get_option_parser)
+def main(parser, options, suite):
     """Implement "cylc get-directory"."""
-    options, args = COP(__doc__, prep=True).parse_args()
     print(SuiteSrvFilesManager().get_suite_source_dir(
-        args[0], options.suite_owner))
+        suite, options.suite_owner))
 
 
 if __name__ == "__main__":

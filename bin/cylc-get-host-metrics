@@ -88,8 +88,7 @@ DISK_TEMPLATES = ['df -Pk', re.compile(
                   r'Mounted on\n\S+\s+\d+\s+\d+\s+(\d+)\s+')]
 
 
-@cli_function
-def main():
+def get_option_parser():
     parser = OptionParser(__doc__)
 
     parser.add_option(
@@ -108,10 +107,12 @@ def main():
         help="Available disk space, in KB, from the 'df -Pk' command.",
         action="store", default=None, dest="disk")
 
-    options, args = parser.parse_args()
+    return parser
 
+
+@cli_function(get_option_parser)
+def main(parser, options):
     print(get_host_metric(options.load, options.memory, options.disk))
-
     sys.exit()
 
 

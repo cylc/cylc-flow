@@ -51,12 +51,15 @@ from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.terminal import prompt, cli_function
 
 
-@cli_function
-def main():
+def get_option_parser():
     parser = COP(__doc__, comms=True)
-    (options, args) = parser.parse_args()
-    suite = args[0]
 
+    return parser
+
+
+
+@cli_function(get_option_parser)
+def main(parser, options, suite):
     prompt('Reload %s' % suite, options.force)
     pclient = SuiteRuntimeClient(
         suite, options.owner, options.host, options.port,

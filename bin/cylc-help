@@ -398,8 +398,7 @@ comsum['function-run'] = '(Internal) Run a function in the process pool'
 comsum['check-triggering'] = 'A suite shutdown event hook for cylc testing'
 
 
-@cli_function
-def main():
+def help_func():
     # no arguments: print help and exit
     if len(sys.argv) == 1:
         print(usage.replace("__CYLC_VERSION__", CYLC_VERSION))
@@ -475,6 +474,23 @@ def main():
             # cylc help CATEGORY
             category_help(category)
             sys.exit(0)
+
+
+class ArgumentParser:
+
+    @classmethod
+    def parse(cls):
+        return cls
+
+    @staticmethod
+    def parse_args():
+        help_func()
+        return (None, None)
+
+
+@cli_function(ArgumentParser.parse)
+def main():
+    pass
 
 
 if __name__ == "__main__":

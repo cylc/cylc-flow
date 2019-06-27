@@ -36,8 +36,7 @@ from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.terminal import cli_function
 
 
-@cli_function
-def main():
+def get_option_parser():
     parser = COP(__doc__, comms=True, argdoc=[
         ('REG', 'Suite name'),
         ('METHOD', 'Network API function name')])
@@ -46,9 +45,12 @@ def main():
         '-n', '--no-input',
         help='Do not read from STDIN, assume null input',
         action='store_true', dest='no_input')
-    options, args = parser.parse_args()
-    suite = args[0]
-    func = args[1]
+
+    return parser
+
+
+@cli_function(get_option_parser)
+def main(_, options, suite, func):
     pclient = SuiteRuntimeClient(
         suite, options.owner, options.host, options.port)
     if options.no_input:

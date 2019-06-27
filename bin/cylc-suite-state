@@ -121,7 +121,7 @@ class SuitePoller(Poller):
             self.args['status'], self.args['message'])
 
 
-def parse_args():
+def get_option_parser():
     parser = COP(__doc__)
 
     parser.add_option(
@@ -178,14 +178,12 @@ def parse_args():
         action="store", dest="msg", default=None)
 
     SuitePoller.add_to_cmd_options(parser)
-    return parser.parse_args(remove_opts=["--db"])
+
+    return parser
 
 
-@cli_function
-def main():
-    options, args = parse_args()
-    suite = args[0]
-
+@cli_function(get_option_parser, remove_opts=["--db"])
+def main(parser, options, suite):
     if options.use_task_point and options.cycle:
         raise UserInputError(
             "cannot specify a cycle point and use environment variable")

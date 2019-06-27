@@ -149,11 +149,18 @@ def check_py_module_ver(module, min_ver, write=True):
             # we want the one that provides 'Interpreter'
             from em import Interpreter
             module_version = sys.modules['em'].__version__
+        elif module == 'ansimarkup':
+            import ansimarkup
+            import pkg_resources
+            module_version = pkg_resources.get_distribution(
+                'ansimarkup').version
         else:
             imported_module = __import__(module)
             module_version = imported_module.__version__
     except ImportError:
         res = [NOTFOUND_MSG, False]
+    except AttributeError:
+        res = [FOUND_UNKNOWNVER_MSG, False]
     else:
         try:
             if min_ver is None:
@@ -272,6 +279,7 @@ def main():
         and check_py_module_ver('zmq', None)
         and check_py_module_ver('jose', None)
         and check_py_module_ver('colorama', None)
+        and check_py_module_ver('ansimarkup', None)
     )
     for tag, text in func_tags_and_text.items():
         shell_centre_write(True, '*OPTIONAL SOFTWARE for the ' + text + '*')

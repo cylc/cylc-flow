@@ -23,17 +23,21 @@ This module provides:
   Note: The ISO date time bit is redundant in Python 3,
   because "time.strftime" will handle time zone from "localtime" properly.
 """
-
 import os
+import re
 import sys
-from glob import glob
 import logging
+import textwrap
 
+from glob import glob
+from functools import partial
 
+from ansimarkup import parse as cparse
+
+from cylc.flow.wallclock import (get_current_time_string,
+                                 get_time_string_from_unix_time)
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.pathutil import get_suite_run_log_name
-from cylc.flow.wallclock import (
-    get_current_time_string, get_time_string_from_unix_time)
 
 
 class CylcLogFormatter(logging.Formatter):
@@ -44,16 +48,54 @@ class CylcLogFormatter(logging.Formatter):
     Date time in ISO date time with correct time zone.
     """
 
-    def __init__(self, timestamp=True):
+    COLORS = {
+        'CRITICAL': cparse('<red><bold>{0}</bold></red>'),
+        'ERROR': cparse('<red>{0}</red>'),
+        'WARNING': cparse('<yellow>{0}</yellow>'),
+        'DEBUG': cparse('<fg #888888>{0}</fg #888888>')
+    }
+
+    # default hard-coded max width for log entries
+    # NOTE: this should be sufficiently long that log entries read by the
+    #       deamonise script (url, pid) are not wrapped
+    MAX_WIDTH = 999
+
+    def __init__(self, timestamp=True, color=False, max_width=None):
+        self.timestamp = None
+        self.color = None
+        self.max_width = self.MAX_WIDTH
+        self.wrapper = None
+        self.configure(timestamp, color, max_width)
         logging.Formatter.__init__(
-            self, ('%(asctime)s ' if timestamp else '')
-            + '%(levelname)-2s - %(message)s',
+            self,
+            '%(asctime)s %(levelname)-2s - %(message)s',
             '%Y-%m-%dT%H:%M:%S%Z')
+
+    def configure(self, timestamp=None, color=None, max_width=None):
+        """Reconfigure the format settings."""
+        if timestamp is not None:
+            self.timestamp = timestamp
+        if color is not None:
+            self.color = color
+        if max_width is not None:
+            self.max_width = max_width
+        if self.max_width is None:
+            self.wrapper = lambda x: [x]
+        else:
+            self.wrapper = partial(textwrap.wrap, width=self.max_width)
 
     def format(self, record):
         """Indent continuation lines in multi-line messages."""
         text = logging.Formatter.format(self, record)
-        return '\t'.join(text.splitlines(True))
+        if not self.timestamp:
+            _, text = text.split(' ', 1)  # ISO8601 time points have no spaces
+        if self.color and record.levelname in self.COLORS:
+            text = self.COLORS[record.levelname].format(text)
+        return '\n\t'.join((
+            wrapped_line
+            for line in text.splitlines()
+            for wrapped_line in self.wrapper(line)
+        ))
 
     def formatTime(self, record, datefmt=None):
         """Formats the record time as an ISO date time with correct time zone.
@@ -179,3 +221,19 @@ class ReferenceLogFileHandler(logging.FileHandler):
                 bool: True for message to be logged, False otherwise.
         """
         return any(text in record.getMessage() for text in self.REF_LOG_TEXTS)
+
+
+LOG_LEVEL_REGEXES = [
+    (
+        re.compile(r'(^.*%s.*\n((^\t.*\n)+)?)' % level, re.M),
+        replacement.format(r'\1')
+    )
+    for level, replacement in CylcLogFormatter.COLORS.items()
+]
+
+
+def re_formatter(log_string):
+    """Read in an uncoloured log_string file and apply colour formatting."""
+    for sub, repl in LOG_LEVEL_REGEXES:
+        log_string = sub.sub(repl, log_string)
+    return log_string

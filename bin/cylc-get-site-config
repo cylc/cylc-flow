@@ -31,8 +31,7 @@ from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
 
 
-@cli_function
-def main():
+def get_option_parser():
     parser = COP(__doc__, argdoc=[])
 
     parser.add_option(
@@ -60,8 +59,11 @@ def main():
         help="Print the cylc site configuration directory location.",
         action="store_true", default=False, dest="site_dir")
 
-    options = parser.parse_args(remove_opts=['--host', '--user'])[0]
+    return parser
 
+
+@cli_function(get_option_parser, remove_opts=['--host', '--user'])
+def main(parser, options):
     if options.run_dir:
         print(glbl_cfg().get_host_item('run directory'))
     else:

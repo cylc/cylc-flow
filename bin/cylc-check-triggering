@@ -52,7 +52,7 @@ from cylc.flow.log_diagnosis import LogAnalyser
 from cylc.flow.terminal import cli_function
 
 
-@cli_function
+@cli_function(None)
 def main():
     if len(sys.argv) == 2 and sys.argv[1] == '--help':
         print(__doc__)

@@ -28,9 +28,7 @@ from cylc.flow.remote import remrun
 from cylc.flow.terminal import cli_function
 
 
-@cli_function
-def main():
-    """CLI main."""
+def get_option_parser():
     parser = COP(__doc__, argdoc=[
         ("JOB-LOG-ROOT", "The log/job sub-directory for the suite"),
         ("[JOB-LOG-DIR ...]", "A point/name/submit_num sub-directory")])
@@ -43,9 +41,14 @@ def main():
         help="(for remote mode) is the suite running in UTC mode?",
         action="store_true", dest="utc_mode", default=False)
 
-    opts, args = parser.parse_args()
+    return parser
+
+
+@cli_function(get_option_parser)
+def main(parser, opts, job_log_root, *job_log_dirs):
+    """CLI main."""
     BatchSysManager().jobs_submit(
-        args[0], args[1:], remote_mode=opts.remote_mode,
+        job_log_root, job_log_dirs, remote_mode=opts.remote_mode,
         utc_mode=opts.utc_mode)
 
 

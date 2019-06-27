@@ -43,9 +43,7 @@ TITLE_BROADCAST_STATES = "\n# BROADCAST STATES (POINT|NAMESPACE|KEY|VALUE)\n"
 TITLE_TASK_POOL = "\n# TASK POOL (CYCLE|NAME|SPAWNED|STATUS|HOLD_SWAP)\n"
 
 
-@cli_function
-def main():
-    """CLI."""
+def get_option_parser():
     parser = COP(__doc__, argdoc=[
         ("REG", "Suite name"),
         ("[ID ...]", "Checkpoint ID (default=latest)")])
@@ -55,8 +53,12 @@ def main():
         help="Display data of all available checkpoints.",
         action="store_true", default=False, dest="all_mode")
 
-    options, args = parser.parse_args()
-    suite = args.pop(0)
+    return parser
+
+
+@cli_function(get_option_parser)
+def main(parser, options, suite, *args):
+    """CLI."""
     if options.all_mode:
         dao = _get_dao(suite)
         args = []

@@ -28,6 +28,8 @@ if '--use-ssh' in sys.argv[1:]:
     if remrun():
         sys.exit(0)
 
+from ansimarkup import parse as cparse
+
 from cylc.flow.exceptions import UserInputError
 import cylc.flow.flags
 from cylc.flow.option_parsers import CylcOptionParser as COP
@@ -36,15 +38,16 @@ from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.terminal import cli_function
 
 
-@cli_function
-def main():
+def get_option_parser():
     parser = COP(
         __doc__, comms=True,
         argdoc=[('REG', 'Suite name'), ('[TASK]', 'Task ' + TaskID.SYNTAX)])
 
-    (options, args) = parser.parse_args()
-    suite = args[0]
+    return parser
 
+
+@cli_function(get_option_parser)
+def main(parser, options, suite, task_id=None):
     pclient = SuiteRuntimeClient(
         suite, options.owner, options.host, options.port,
         options.comms_timeout)
@@ -55,14 +58,17 @@ def main():
         host, port = SuiteRuntimeClient.get_location(
             suite, options.owner, options.host)
         sys.stdout.write("Running on %s:%s\n" % (host, port))
-    if len(args) == 1:
+    if task_id is None:
         sys.exit(0)
 
     # cylc ping SUITE TASKID
-    task_id = args[1]
     if not TaskID.is_valid_id(task_id):
         raise UserInputError("Invalid task ID: %s" % task_id)
     success, msg = pclient('ping_task', {'task_id': task_id})
+
+    if not success:
+        print(cparse(f'<red>{msg}</red>'))
+        sys.exit(1)
 
 
 if __name__ == "__main__":

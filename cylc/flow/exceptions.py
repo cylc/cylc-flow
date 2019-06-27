@@ -112,7 +112,7 @@ class TaskDefError(SuiteConfigError):
 class ClientError(CylcError):
 
     def __str__(self):
-        ret = 'Request returned error: %s' % self.args[0]
+        ret = self.args[0]
         if len(self.args) > 1 and self.args[1]:
             # append server-side traceback if appended
             ret += '\n' + self.args[1]

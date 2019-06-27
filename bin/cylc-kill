@@ -36,17 +36,19 @@ from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.terminal import prompt, cli_function
 
 
-@cli_function
-def main():
-    """CLI of "cylc kill"."""
+def get_option_parser():
     parser = COP(
         __doc__, comms=True, multitask=True,
         argdoc=[
             ('REG', 'Suite name'),
             ('[TASK_GLOB ...]', 'Task matching patterns')])
 
-    options, (suite, *task_globs) = parser.parse_args()
+    return parser
 
+
+@cli_function(get_option_parser)
+def main(parser, options, suite, *task_globs):
+    """CLI of "cylc kill"."""
     if task_globs:
         prompt('Kill task %s in %s' % (task_globs, suite), options.force)
     else:

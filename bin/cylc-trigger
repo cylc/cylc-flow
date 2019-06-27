@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
@@ -56,9 +55,7 @@ from cylc.flow.task_job_logs import JOB_LOG_DIFF
 from cylc.flow.terminal import prompt, cli_function
 
 
-@cli_function
-def main():
-    """CLI for "cylc trigger"."""
+def get_option_parser():
     parser = COP(
         __doc__, comms=True, multitask=True,
         argdoc=[
@@ -75,8 +72,12 @@ def main():
         help="(with --edit) force use of the configured GUI editor.",
         action="store_true", default=False, dest="geditor")
 
-    options, (suite, *task_globs) = parser.parse_args()
+    return parser
 
+
+@cli_function(get_option_parser)
+def main(parser, options, suite, *task_globs):
+    """CLI for "cylc trigger"."""
     msg = 'Trigger task(s) %s in %s' % (task_globs, suite)
     prompt(msg, options.force)
 
@@ -112,8 +113,10 @@ def main():
             old_mtime = None
 
         # Tell the suite server program to generate the job file.
-        pclient('dry_run_tasks', {
-                'task_globs': [task_id], 'check_syntax': False})
+        pclient(
+            'dry_run_tasks',
+            {'task_globs': [task_id], 'check_syntax': False}
+        )
 
         # Wait for the new job file to be written. Use mtime because the same
         # file could potentially exist already, left from a previous run.

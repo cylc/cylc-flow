@@ -52,8 +52,7 @@ MSG_SEND_RETRY = "Retrying in %s seconds, timeout is %s"
 MSG_SEND_SUCCEED = "Send message: try %s of %s succeeded"
 
 
-@cli_function
-def main():
+def get_option_parser():
     parser = COP(
         __doc__, comms=True,
         argdoc=[("REG", "Suite name"),
@@ -70,9 +69,11 @@ def main():
         "(default %s)." % RETRY_INTVL_SECS, metavar="SEC",
         action="store", default=RETRY_INTVL_SECS, dest="retry_intvl_secs")
 
-    (options, args) = parser.parse_args()
-    suite, event_msg, event_id = args
+    return parser
 
+
+@cli_function(get_option_parser)
+def main(parser, options, suite, event_msg, event_id):
     LOG.info('Send to suite %s: "%s" (%s)', suite, event_msg, event_id)
 
     pclient = SuiteRuntimeClient(

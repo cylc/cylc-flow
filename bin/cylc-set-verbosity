@@ -45,8 +45,7 @@ LOGGING_LVL_OF = {
 }
 
 
-@cli_function
-def main():
+def get_option_parser():
     parser = COP(
         __doc__, comms=True,
         argdoc=[
@@ -54,10 +53,12 @@ def main():
             ('LEVEL', ', '.join(LOGGING_LVL_OF.keys()))
         ]
     )
-    (options, args) = parser.parse_args()
-    suite = args[0]
 
-    severity_str = args[1]
+    return parser
+
+
+@cli_function(get_option_parser)
+def main(parser, options, suite, severity_str):
     try:
         severity = LOGGING_LVL_OF[severity_str]
     except KeyError:

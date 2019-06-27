@@ -33,15 +33,16 @@ from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.terminal import cli_function
 
 
-@cli_function
-def main():
+def get_option_parser():
     parser = COP(__doc__, comms=True, argdoc=[
         ("REG", "Suite name"),
         ("CHECKPOINT-NAME", "Checkpoint name")])
 
-    options, args = parser.parse_args()
-    suite, name = args
+    return parser
 
+
+@cli_function(get_option_parser)
+def main(_, options, suite, name):
     pclient = SuiteRuntimeClient(
         suite, options.owner, options.host, options.port,
         options.comms_timeout)

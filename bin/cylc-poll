@@ -36,8 +36,7 @@ from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.terminal import prompt, cli_function
 
 
-@cli_function
-def main():
+def get_option_parser():
     parser = COP(
         __doc__, comms=True, multitask=True,
         argdoc=[
@@ -48,8 +47,11 @@ def main():
         "-s", "--succeeded", help="Allow polling of succeeded tasks.",
         action="store_true", default=False, dest="poll_succ")
 
-    options, (suite, *task_globs) = parser.parse_args()
+    return parser
 
+
+@cli_function(get_option_parser)
+def main(parser, options, suite, *task_globs):
     if task_globs:
         prompt('Poll task %s in %s' % (task_globs, suite), options.force)
     else:
