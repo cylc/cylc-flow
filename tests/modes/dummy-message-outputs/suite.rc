@@ -2,14 +2,17 @@
     title = A suite that should only succeed in dummy mode.
 [cylc]
     [[events]]
-        abort on timeout = true
+        abort on stalled = True
     [[reference test]]
         required run mode = dummy
-        dummy mode suite timeout = PT30S
 [scheduling]
     [[dependencies]]
         graph = foo:x => bar
 [runtime]
+    [[root]]
+        [[[simulation]]]
+            default run length = PT0S
+            time limit buffer = PT1M
     [[bar]]
     [[foo]]
         script = false
