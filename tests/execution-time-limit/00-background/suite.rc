@@ -3,10 +3,12 @@
    abort if any task fails = True
    [[events]]
        abort on inactivity = True
+       abort on stalled = True
        inactivity = PT2M
    [[reference test]]
        required run mode = live
        live mode suite timeout = PT30S
+       expected task failures = foo.1
 
 [scheduling]
     [[dependencies]]
@@ -14,12 +16,7 @@
 
 [runtime]
     [[foo]]
-        script = """
-if [[ "${CYLC_TASK_SUBMIT_NUMBER}" == '1' ]]; then
-    sleep 10
-fi
-"""
+        script = sleep 10
         [[[job]]]
             batch system = {{CYLC_TEST_BATCH_SYS}}
             execution time limit = PT5S
-            execution retry delays = PT0S

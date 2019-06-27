@@ -18,7 +18,7 @@
 # Test execution time limit, background/at job
 . "$(dirname "$0")/test_header"
 
-set_test_number 5
+set_test_number 4
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 CYLC_TEST_BATCH_SYS=${TEST_NAME_BASE##??-}
@@ -27,7 +27,7 @@ run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate \
     -s "CYLC_TEST_BATCH_SYS=${CYLC_TEST_BATCH_SYS}" \
     "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" \
+suite_run_fail "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug --no-detach \
     -s "CYLC_TEST_BATCH_SYS=${CYLC_TEST_BATCH_SYS}" \
     "${SUITE_NAME}"
@@ -35,7 +35,6 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 LOGD="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/job/1/foo"
 grep_ok '# Execution time limit: 5.0' "${LOGD}/01/job"
 grep_ok 'CYLC_JOB_EXIT=\(ERR\|XCPU\)' "${LOGD}/01/job.status"
-grep_ok 'CYLC_JOB_EXIT=SUCCEEDED' "${LOGD}/02/job.status"
 
 purge_suite "${SUITE_NAME}"
 exit
