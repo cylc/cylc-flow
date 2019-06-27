@@ -18,13 +18,13 @@
 # Test "cylc cat-log" on the suite host.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 27
+set_test_number 29
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
-# Run detached so we get suite out and err logs.
+# Run detached.
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
 sleep 5
 # Wait for the suite to finish.
@@ -33,6 +33,12 @@ cylc stop --max-polls=10 --interval=2 $SUITE_NAME 2>'/dev/null'
 TEST_NAME=${TEST_NAME_BASE}-suite-log-log
 run_ok $TEST_NAME cylc cat-log $SUITE_NAME
 contains_ok "${TEST_NAME}.stdout" "${SUITE_RUN_DIR}/log/suite/log"
+#-------------------------------------------------------------------------------
+TEST_NAME=${TEST_NAME_BASE}-suite-log-fail
+run_fail $TEST_NAME cylc cat-log -f e $SUITE_NAME
+contains_ok "${TEST_NAME}.stderr" - << __END__
+UserInputError: The '-f' option is for job logs only.
+__END__
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-task-out
 run_ok $TEST_NAME cylc cat-log -f o $SUITE_NAME a-task.1
@@ -48,7 +54,7 @@ echo "the quick brown fox"
 echo "jumped over the lazy dog" >&2
 # Write to a custom log file
 echo "drugs and money" > \${CYLC_TASK_LOG_ROOT}.custom-log
-# Generate a message in the suite err log.
+# Generate a warning message in the suite log.
 cylc task message -p WARNING 'marmite and squashed bananas'
 __END__
 #-------------------------------------------------------------------------------

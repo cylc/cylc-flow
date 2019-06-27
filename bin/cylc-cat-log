@@ -32,11 +32,21 @@ If remote job logs are retrieved to the suite host on completion (global config
 '[JOB-HOST]retrieve job logs = True') and the job is not currently running, the
 local (retrieved) log will be accessed unless '-o/--force-remote' is used.
 
-Custom job logs (written to $CYLC_TASK_LOG_DIR on the job host) can be 
+Custom job logs (written to $CYLC_TASK_LOG_DIR on the job host) can be
 listed in 'extra log files' in the suite definition. The file
-name must be given here, but can be discovered with '--mode=l' (list-dir).
+name must be given, but can be discovered with '--mode=l' (list-dir).
 
-The correct cycle point format of the suite must be for task job logs.
+The correct cycle poin t format of the suite must be used for task job logs,
+but can be discovered with '--mode=d' (print-dir).
+
+Basic examples, for a task "bar.2020" in suite "foo":
+  Print suite log:
+    cylc cat-log foo
+  Print task stdout:
+    cylc cat-log foo bar.2020
+    cylc cat-log -f o foo bar.2020
+  Print task stderr:
+    cylc cat-log -f e foo bar.2020
 
 Note the --host/user options are not needed to view remote job logs. They are
 the general command reinvocation options for sites using ssh-based task
@@ -232,8 +242,8 @@ def get_option_parser():
         "-m", "--mode",
         help="Mode: %s. Default c(cat)." % (
             ', '.join(['%s(%s)' % (i, j) for i, j in MODES.items()])),
-        action="store", choices=list(MODES.keys()) + list(MODES.values()), default='c',
-        dest="mode")
+        action="store", choices=list(MODES.keys()) + list(MODES.values()),
+        default='c', dest="mode")
 
     parser.add_option(
         "-r", "--rotation",
@@ -350,6 +360,10 @@ def main(parser, options, *args, color=False):
 
     if len(args) == 1:
         # Cat suite logs, local only.
+        if options.filename is not None:
+            raise UserInputError("The '-f' option is for job logs only.")
+        tail_tmpl = str(glbl_cfg().get_host_item("tail command template"))
+
         logpath = get_suite_run_log_name(suite_name)
         if options.rotation_num:
             logs = glob('%s.*' % logpath)
