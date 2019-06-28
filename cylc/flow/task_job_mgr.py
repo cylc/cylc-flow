@@ -32,6 +32,7 @@ import os
 from shutil import rmtree
 from time import time
 import traceback
+from copy import deepcopy
 
 from cylc.flow.parsec.util import pdeepcopy, poverride
 
@@ -81,11 +82,12 @@ class TaskJobManager(object):
     KEY_EXECUTE_TIME_LIMIT = TaskEventsManager.KEY_EXECUTE_TIME_LIMIT
 
     def __init__(self, suite, proc_pool, suite_db_mgr, suite_srv_files_mgr,
-                 task_events_mgr):
+                 task_events_mgr, job_pool):
         self.suite = suite
         self.proc_pool = proc_pool
         self.suite_db_mgr = suite_db_mgr
         self.task_events_mgr = task_events_mgr
+        self.job_pool = job_pool
         self.job_file_writer = JobFileWriter()
         self.batch_sys_mgr = self.job_file_writer.batch_sys_mgr
         self.suite_srv_files_mgr = suite_srv_files_mgr
@@ -723,8 +725,10 @@ class TaskJobManager(object):
         if ctx.ret_code == SubProcPool.RET_CODE_SUITE_STOPPING:
             return
 
+        job_d = get_task_job_id(itask.point, itask.tdef.name, itask.submit_num)
         try:
             itask.summary['submit_method_id'] = items[3]
+            self.job_pool.set_job_attr(job_d, 'batch_sys_job_id', items[3])
         except IndexError:
             itask.summary['submit_method_id'] = None
         if itask.summary['submit_method_id'] == "None":
@@ -796,6 +800,12 @@ class TaskJobManager(object):
             itask.set_summary_message('job file written (edit/dry-run)')
             LOG.debug('[%s] -%s', itask, itask.summary['latest_message'])
 
+        job_config = deepcopy(job_conf)
+        job_config['logfiles'] = deepcopy(itask.summary['logfiles'])
+        job_config['job_log_dir'] = get_task_job_log(
+            suite, itask.point, itask.tdef.name, itask.submit_num)
+        itask.jobs.append(job_config['job_d'])
+        self.job_pool.insert_job(job_config)
         # Return value used by "cylc submit" and "cylc jobscript":
         return itask
 

@@ -30,10 +30,13 @@ if '--use-ssh' in sys.argv[1:]:
     from cylc.flow.remote import remrun
     if remrun():
         sys.exit(0)
+from google.protobuf.json_format import MessageToDict
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.terminal import cli_function
+from cylc.flow.ws_messages_pb2 import PbEntireWorkflow
+from cylc.flow.network.server import PB_METHOD_MAP
 
 
 def get_option_parser():
@@ -58,10 +61,14 @@ def main(_, options, suite, func):
     else:
         kwargs = json.load(sys.stdin)
     sys.stdin.close()
-    sys.stdout.write(json.dumps(
-        pclient(func, kwargs, timeout=options.comms_timeout), indent=4
-    ) + '\n')
-
+    res = pclient(func, kwargs, timeout=options.comms_timeout)
+    if func in PB_METHOD_MAP:
+        pb_msg = PB_METHOD_MAP[func]()
+        pb_msg.ParseFromString(res)
+        res_msg = MessageToDict(pb_msg)
+    else:
+        res_msg = res
+    sys.stdout.write(json.dumps(res_msg, indent=4) + '\n')
 
 if __name__ == '__main__':
     main()

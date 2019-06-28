@@ -1914,6 +1914,104 @@ class SuiteConfig(object):
         self._last_graph_raw_edges = graph_raw_edges
         return graph_raw_edges
 
+    def get_graph_edges(self, start_point_string, stop_point_string):
+        """Convert the abstract graph edges (self.edges, etc) to actual edges
+
+        (This method differs from the get_graph_raw; class attributes are not
+        used to hold information from previous method calls.)
+
+        Actual edges have concrete ranges of cycle points.
+
+        """
+
+        # Now define the concrete graph edges (pairs of nodes) for plotting.
+        if start_point_string in [None, '']:
+            return []
+        start_point = get_point(start_point_string)
+        actual_first_point = self.get_actual_first_point(start_point)
+
+        suite_final_point = get_point(
+            self.cfg['scheduling']['final cycle point'])
+
+        # Require a stop point determined by the data manager
+        if stop_point_string in [None, '']:
+            return []
+        stop_point = get_point(stop_point_string)
+        if not stop_point:
+            return []
+
+        gr_edges = {}
+        start_point_offset_cache = {}
+        point_offset_cache = None
+        for sequence, edges in self.edges.items():
+            # Get initial cycle point for this sequence
+            point = sequence.get_first_point(start_point)
+            while point is not None:
+                if point > stop_point:
+                    # Beyond requested final cycle point.
+                    break
+                if suite_final_point is not None and point > suite_final_point:
+                    # Beyond suite final cycle point.
+                    break
+                point_offset_cache = {}
+                for left, right, suicide, cond in edges:
+                    if right:
+                        r_id = (right, point)
+                    else:
+                        r_id = None
+                    if left.startswith('@'):
+                        # @trigger node.
+                        name = left
+                        offset_is_from_icp = False
+                        offset = None
+                    else:
+                        name, offset_is_from_icp, _, offset, _ = (
+                            GraphNodeParser.get_inst().parse(left))
+                    if offset:
+                        if offset_is_from_icp:
+                            cache = start_point_offset_cache
+                            rel_point = start_point
+                        else:
+                            cache = point_offset_cache
+                            rel_point = point
+                        try:
+                            l_point = cache[offset]
+                        except KeyError:
+                            l_point = get_point_relative(offset, rel_point)
+                            cache[offset] = l_point
+                    else:
+                        l_point = point
+                    l_id = (name, l_point)
+
+                    if l_id is None and r_id is None:
+                        continue
+                    if l_id is not None and actual_first_point > l_id[1]:
+                        # Check that l_id is not earlier than start time.
+                        # NOTE BUG GITHUB #919
+                        # sct = start_point
+                        if r_id is None or r_id[1] < actual_first_point:
+                            continue
+                        # Pre-initial dependency;
+                        # keep right hand node.
+                        l_id = r_id
+                        r_id = None
+                    if point not in gr_edges:
+                        gr_edges[point] = []
+                    # only used to get task ID here
+                    lstr, rstr = self._close_families(l_id, r_id, {})
+                    gr_edges[point].append((lstr, rstr, None, suicide, cond))
+                # Increment the cycle point.
+                point = sequence.get_next_point_on_sequence(point)
+
+        del start_point_offset_cache
+        del point_offset_cache
+        GraphNodeParser.get_inst().clear()
+        # Flatten nested list.
+        graph_raw_edges = (
+            [i for sublist in gr_edges.values() for i in sublist])
+        graph_raw_edges.sort(key=lambda x: [y if y else '' for y in x])
+        return graph_raw_edges
+
     def get_node_labels(self, start_point_string, stop_point_string=None):
         """Return dependency graph node labels."""
         stop_point = None

@@ -23,17 +23,26 @@ from queue import Queue
 from textwrap import dedent
 from time import sleep
 from threading import Thread
+import asyncio
+from graphql.execution.executors.asyncio import AsyncioExecutor
 
 import zmq
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import CylcError
-from cylc.flow.network import Priv, encrypt, decrypt, get_secret
+from cylc.flow.network import Priv, encrypt, decrypt, get_secret, schema
+from cylc.flow.network.resolvers import Resolvers
 from cylc.flow.suite_status import (
     KEY_META, KEY_NAME, KEY_OWNER, KEY_STATES,
     KEY_TASKS_BY_STATE, KEY_UPDATE_TIME, KEY_VERSION)
+from cylc.flow.ws_messages_pb2 import PbEntireWorkflow
 from cylc.flow import __version__ as CYLC_VERSION
+
+# maps server methods to the protobuf message (for client/UIS import)
+PB_METHOD_MAP = {
+    'pb_entire_workflow': PbEntireWorkflow
+}
 
 
 class ZMQServer(object):
@@ -164,11 +173,14 @@ class ZMQServer(object):
                 # success case - serve the request
                 LOG.debug('zmq:recv %s', message)
                 res = self._receiver(message)
-                response = self.encode(res, self.secret())
+                if message['command'] in PB_METHOD_MAP:
+                    response = res['data']
+                else:
+                    response = self.encode(res, self.secret()).encode()
                 LOG.debug('zmq:send %s', res)
+                # send back the string to bytes response
+                self.socket.send(response)
 
-            # send back the response
-            self.socket.send_string(response)
             sleep(0)  # yield control to other threads
 
     def _receiver(self, message):
@@ -298,6 +310,7 @@ class SuiteRuntimeServer(ZMQServer):
         )
         self.schd = schd
         self.public_priv = None  # update in get_public_priv()
+        self.resolvers = Resolvers(self.schd)
 
     def _get_public_priv(self):
         """Return the public privilege level of this suite."""
@@ -348,6 +361,50 @@ class SuiteRuntimeServer(ZMQServer):
             tail = dedent(tail)
             return '%s\n%s' % (head, tail)
         return 'No method by name "%s"' % endpoint
+
+    @authorise(Priv.READ)
+    @ZMQServer.expose
+    def graphql(self, request_string=None, variables=None):
+        """Return the GraphQL scheme execution result.
+
+        Args:
+            query (str, optional):
+                Specifies the data to fetch in both form and content.
+
+        Returns:
+            Dict: The query or mutation execution result.
+
+        """
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        try:
+            executed = schema.schema.execute(
+                request_string,
+                variables=variables,
+                context={
+                    'resolvers': self.resolvers,
+                },
+                executor=AsyncioExecutor(),
+                return_promise=False,
+            )
+        except Exception as exc:
+            return 'ERROR: GraphQL execution error \n%s' % exc
+        if executed.errors:
+            errors = []
+            for error in executed.errors:
+                if hasattr(error, '__traceback__'):
+                    import traceback
+                    errors.append({'error': {
+                        'message': str(error),
+                        'traceback': traceback.format_exception(
+                            error.__class__, error, error.__traceback__)}})
+                    continue
+                errors.append(getattr(error, 'message', None))
+            return errors
+        return executed.data
 
     @authorise(Priv.CONTROL)
     @ZMQServer.expose
@@ -1229,3 +1286,19 @@ class SuiteRuntimeServer(ZMQServer):
         self.schd.command_queue.put(
             ("trigger_tasks", (task_globs,), {"back_out": back_out}))
         return (True, 'Command queued')
+
+    # UIServer Data Commands
+    #
+    @authorise(Priv.READ)
+    @ZMQServer.expose
+    def pb_entire_workflow(self):
+        """Get data elements of entire workflow.
+
+        Returns:
+            Protobuf encoded message
+
+        """
+        pb_msg = self.schd.ws_data_mgr.get_entire_workflow()
+        # Use google.protobuf.json_format.MessageToJson
+        # to jump through security hoop on response
+        return pb_msg.SerializeToString()

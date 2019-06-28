@@ -35,6 +35,7 @@ from cylc.flow import LOG
 from cylc.flow.exceptions import ClientError, ClientTimeout
 from cylc.flow.hostuserutil import get_fqdn_by_host
 from cylc.flow.network import encrypt, decrypt, get_secret
+from cylc.flow.network.server import PB_METHOD_MAP
 from cylc.flow.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
 
@@ -142,18 +143,21 @@ class ZMQClient(object):
 
         # receive response
         if self.poller.poll(timeout):
-            res = await self.socket.recv_string()
+            res = await self.socket.recv()
         else:
             if self.timeout_handler:
                 self.timeout_handler()
             raise ClientTimeout('Timeout waiting for server response.')
 
-        try:
-            response = decrypt(res, secret)
-            LOG.debug('zmq:recv %s' % response)
-        except jose.exceptions.JWTError:
-            raise ClientError(
-                'Could not decrypt response. Has the passphrase changed?')
+        if msg['command'] in PB_METHOD_MAP:
+            response = {'data': res}
+        else:
+            try:
+                response = decrypt(res.decode(), secret)
+            except jose.exceptions.JWTError:
+                raise ClientError(
+                    'Could not decrypt response. Has the passphrase changed?')
+        LOG.debug('zmq:recv %s' % response)
 
         try:
             return response['data']

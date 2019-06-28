@@ -48,6 +48,8 @@ class TaskProxy(object):
             Is the latest job submission due to a manual trigger?
         .job_vacated (boolean):
             Is the latest job pre-empted (or vacated)?
+        .jobs (list):
+            A list of job ids associated with the task proxy.
         .local_job_file_path (str):
             Path on suite host to the latest job script for running the task.
         .late_time (float):
@@ -156,6 +158,7 @@ class TaskProxy(object):
         'is_late',
         'is_manual_submit',
         'job_vacated',
+        'jobs',
         'late_time',
         'local_job_file_path',
         'manual_trigger',
@@ -183,6 +186,7 @@ class TaskProxy(object):
         if submit_num is None:
             submit_num = 0
         self.submit_num = submit_num
+        self.jobs = []
 
         if is_startup:
             # adjust up to the first on-sequence cycle point

@@ -48,6 +48,8 @@ from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.pathutil import make_suite_run_tree
 from cylc.flow.suite_db_mgr import SuiteDatabaseManager
 from cylc.flow.broadcast_mgr import BroadcastMgr
+from cylc.flow.hostuserutil import get_user
+from cylc.flow.job_pool import JobPool
 from cylc.flow.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_job_mgr import TaskJobManager
@@ -111,10 +113,13 @@ def main(parser, options, suite, *task_ids):
     # Initialise job submit environment
     make_suite_run_tree(suite)
     pool = SubProcPool()
+    owner = get_user()
+    job_pool = JobPool(suite, owner)
     db_mgr = SuiteDatabaseManager()
     task_job_mgr = TaskJobManager(
         suite, pool, db_mgr, suite_srv_mgr,
-        TaskEventsManager(suite, pool, db_mgr, BroadcastMgr(db_mgr)))
+        TaskEventsManager(suite, pool, db_mgr, BroadcastMgr(db_mgr),
+            job_pool), job_pool)
     task_job_mgr.task_remote_mgr.single_task_mode = True
     task_job_mgr.job_file_writer.set_suite_env({
         'CYLC_UTC': str(config.cfg['cylc']['UTC mode']),

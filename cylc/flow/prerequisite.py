@@ -23,6 +23,7 @@ import math
 from cylc.flow.conditional_simplifier import ConditionalSimplifier
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.exceptions import TriggerExpressionError
+from cylc.flow.ws_messages_pb2 import PbPrerequisite, PbCondition
 
 
 class Prerequisite(object):
@@ -205,7 +206,7 @@ class Prerequisite(object):
         if self.conditional_expression:
             temp = self.get_raw_conditional_expression()
             messages = []
-            num_length = int(math.ceil(float(len(self.satisfied)) / float(10)))
+            num_length = math.ceil(len(self.satisfied) / 10)
             for ind, message_tuple in enumerate(sorted(self.satisfied)):
                 message = self.MESSAGE_TEMPLATE % message_tuple
                 char = '%.{0}d'.format(num_length) % ind
@@ -221,6 +222,45 @@ class Prerequisite(object):
                 res.append([self.MESSAGE_TEMPLATE % message, val])
         # (Else trigger wiped out by pre-initial simplification.)
         return res
+
+    def api_dump(self, workflow_id):
+        """Return list of populated Protobuf data objects."""
+        if not self.satisfied:
+            return None
+        if self.conditional_expression:
+            temp = self.get_raw_conditional_expression()
+            temp = temp.replace('|', ' | ')
+            temp = temp.replace('&', ' & ')
+        else:
+            for s_msg in self.satisfied:
+                temp = self.MESSAGE_TEMPLATE % s_msg
+        conds = []
+        num_length = math.ceil(len(self.satisfied) / 10)
+        for ind, message_tuple in enumerate(sorted(self.satisfied)):
+            name, point = message_tuple[0:2]
+            t_id = f"{workflow_id}/{point}/{name}"
+            char = 'c%.{0}d'.format(num_length) % ind
+            c_msg = self.MESSAGE_TEMPLATE % message_tuple
+            c_val = self.satisfied[message_tuple]
+            c_bool = bool(c_val)
+            if c_bool is False:
+                c_val = "unsatisfied"
+            cond = PbCondition(
+                task_proxy=t_id,
+                expr_alias=char,
+                req_state=message_tuple[2],
+                satisfied=c_bool,
+                message=c_val,
+            )
+            conds.append(cond)
+            temp = temp.replace(c_msg, char)
+        prereq_buf = PbPrerequisite(
+            expression=temp,
+            satisfied=self.is_satisfied(),
+        )
+        prereq_buf.conditions.extend(conds)
+        prereq_buf.cycle_points.extend(self.target_point_strings)
+        return prereq_buf
 
     def set_satisfied(self):
         """Force this prerequisite into the satisfied state.
