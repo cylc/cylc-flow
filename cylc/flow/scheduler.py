@@ -447,7 +447,10 @@ see `COPYING' in the Cylc source distribution.
         LOG.info('Final point: %s', self.config.final_point, extra=log_extra)
 
         self.pool = TaskPool(
-            self.config, .suite_db_mgr, self.task_events_mgr, self.job_pool)
+            self.config,
+            self.suite_db_mgr,
+            self.task_events_mgr,
+            self.job_pool)
 
         self.profiler.log_memory("scheduler.py: before load_tasks")
         if self.is_restart:
