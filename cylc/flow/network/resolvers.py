@@ -16,7 +16,10 @@
 
 """GraphQL resolvers for use in data accessing and mutation of workflows."""
 
+from operator import attrgetter
 from fnmatch import fnmatchcase
+
+from cylc.flow.ws_data_mgr import ID_DELIM
 
 
 # Message Filters
@@ -57,15 +60,7 @@ def workflow_filter(flow, args):
 
 def collate_node_atts(node):
     """Collate node filter attributes, setting defaults if non-existent."""
-    node_id = getattr(node, 'id')
-    slash_count = node_id.count('/')
-    n_id = node_id.split('/', slash_count)
-    if slash_count == 2:
-        n_cycle = None
-        n_name = n_id[2]
-    else:
-        n_cycle = n_id[2]
-        n_name = n_id[3]
+    owner, workflow, _ = node.id.split(ID_DELIM, 2)
     # Append new atts to the end of the list,
     # this will retain order used in index access
     # 0 - owner
@@ -75,10 +70,10 @@ def collate_node_atts(node):
     # 4 - submit number or None
     # 5 - state
     return [
-        n_id[0],
-        n_id[1],
-        n_cycle,
-        getattr(node, 'namespace', [n_name]),
+        owner,
+        workflow,
+        getattr(node, 'cycle_point', None),
+        getattr(node, 'namespace', [node.name]),
         getattr(node, 'submit_num', None),
         getattr(node, 'state', None),
     ]
@@ -107,16 +102,23 @@ def node_filter(node, args):
     # or defaults (see collate function for index item).
     return (
         (args.get('ghosts') or n_atts[5] != '') and
-        (not (args.get('states') and n_atts[5] != '')
-         or n_atts[5] in args['states']) and
-        not (args.get('exstates') and n_atts[5] != '' and
-             n_atts[5] in args['exstates']) and
+        (not args.get('states') or n_atts[5] in args['states']) and
+        not (args.get('exstates') and n_atts[5] in args['exstates']) and
         (args.get('mindepth', -1) < 0 or node.depth >= args['mindepth']) and
         (args.get('maxdepth', -1) < 0 or node.depth <= args['maxdepth']) and
         # Now filter node against id arg lists
         (not args.get('ids') or node_ids_filter(n_atts, args['ids'])) and
         not (args.get('exids') and node_ids_filter(n_atts, args['exids']))
     )
+
+
+def sort_elements(elements, args):
+    sort_args = args.get('sort')
+    if sort_args:
+        elements.sort(
+            key=attrgetter(*sort_args.keys),
+            reverse=sort_args.reverse)
+    return elements
 
 
 class Resolvers(object):
@@ -136,19 +138,21 @@ class Resolvers(object):
     # nodes
     async def get_nodes_all(self, node_type, args):
         """Return nodes from all workflows, filter by args."""
-        return [
-            n for k in await self.get_workflow_msgs(args)
-            for n in getattr(k, node_type)
-            if node_filter(n, args)]
+        return sort_elements(
+            [n
+             for k in await self.get_workflow_msgs(args)
+             for n in getattr(k, node_type)
+             if node_filter(n, args)],
+            args)
 
-    async def get_nodes_by_id(self, node_type, args):
+    async def get_nodes_by_ids(self, node_type, args):
         """Return protobuf node objects for given id."""
-        nat_ids = args.get('native_ids', [])
-        w_ids = []
+        nat_ids = set(args.get('native_ids', []))
+        w_ids = set()
         for nat_id in nat_ids:
-            o_name, w_name, _ = nat_id.split('/', 2)
-            w_ids.append(f'{o_name}/{w_name}')
-        if self.schd.ws_data_mgr.workflow.id not in set(w_ids):
+            o_name, w_name, _ = nat_id.split(ID_DELIM, 2)
+            w_ids.add(f'{o_name}{ID_DELIM}{w_name}')
+        if self.schd.ws_data_mgr.workflow.id not in w_ids:
             return []
         flow_msg = self.schd.ws_data_mgr.get_entire_workflow()
         if node_type == 'proxy_nodes':
@@ -156,15 +160,17 @@ class Resolvers(object):
                      + list(getattr(flow_msg, 'family_proxies', [])))
         else:
             nodes = list(getattr(flow_msg, node_type, []))
-        return [node for node in nodes
-                if ((not nat_ids or node.id in set(nat_ids)) and
-                    node_filter(node, args))]
+        return sort_elements(
+            [node
+             for node in nodes
+             if node.id in nat_ids and node_filter(node, args)],
+            args)
 
     async def get_node_by_id(self, node_type, args):
         """Return protobuf node object for given id."""
         n_id = args.get('id')
-        o_name, w_name, _ = n_id.split('/', 2)
-        w_id = f'{o_name}/{w_name}'
+        o_name, w_name, _ = n_id.split(ID_DELIM, 2)
+        w_id = f'{o_name}{ID_DELIM}{w_name}'
         if self.schd.ws_data_mgr.workflow.id != w_id:
             return None
         flow_msg = self.schd.ws_data_mgr.get_entire_workflow()
@@ -182,24 +188,31 @@ class Resolvers(object):
     # edges
     async def get_edges_all(self, args):
         """Return edges from all workflows, filter by args."""
-        return [
-            e for w in await self.get_workflow_msgs(args)
-            for e in getattr(w, 'edges')]
+        return sort_elements(
+            [e
+             for w in await self.get_workflow_msgs(args)
+             for e in getattr(w, 'edges')],
+            args)
 
-    async def get_edges_by_id(self, args):
+    async def get_edges_by_ids(self, args):
         """Return protobuf edge objects for given id."""
-        nat_ids = args.get('native_ids', [])
-        w_ids = []
+        # TODO: Filter by given native ids.
+        nat_ids = set(args.get('native_ids', []))
+        w_ids = set()
         for nat_id in nat_ids:
-            oname, wname, _ = nat_id.split('/', 2)
-            w_ids.append(f'{oname}/{wname}')
-        if self.schd.ws_data_mgr.workflow.id not in set(w_ids):
+            oname, wname, _ = nat_id.split(ID_DELIM, 2)
+            w_ids.add(f'{oname}{ID_DELIM}{wname}')
+        if self.schd.ws_data_mgr.workflow.id not in w_ids:
             return []
-        return list(
-            getattr(self.schd.ws_data_mgr.get_entire_workflow(), 'edges'))
+        edges = getattr(self.schd.ws_data_mgr.get_entire_workflow(), 'edges')
+        return sort_elements(
+            [edge
+             for edge in edges
+             if edge.id in nat_ids],
+            args)
 
     # Mutations
-    async def mutator(self, command, w_args, args):
+    async def mutator(self, info, command, w_args, args):
         """Mutate workflow."""
         w_ids = [flow.workflow.id
                  for flow in await self.get_workflow_msgs(w_args)]
@@ -211,7 +224,7 @@ class Resolvers(object):
             result = (True, 'Command queued')
         return [{'id': w_id, 'response': result}]
 
-    async def nodes_mutator(self, command, ids, w_args, args):
+    async def nodes_mutator(self, info, command, ids, w_args, args):
         """Mutate node items of associated workflows."""
         w_ids = [flow.workflow.id
                  for flow in await self.get_workflow_msgs(w_args)]
@@ -224,7 +237,7 @@ class Resolvers(object):
             if workflow and owner is None:
                 owner = "*"
             if (not (owner and workflow) or
-                    fnmatchcase(w_id, f'{owner}/{workflow}')):
+                    fnmatchcase(w_id, f'{owner}{ID_DELIM}{workflow}')):
                 if cycle is None:
                     cycle = '*'
                 id_arg = f'{cycle}/{name}'

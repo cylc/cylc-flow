@@ -32,33 +32,33 @@ run_graphql_ok "${TEST_NAME}" "${SUITE_NAME}" '
     "request_string": "
         query {
             workflows {
-                name,
-                status,
-                statusMsg,
-                host,
-                port,
-                owner,
-                cylcVersion,
+                name
+                status
+                statusMsg
+                host
+                port
+                owner
+                cylcVersion
                 meta {
-                    title,
+                    title
                     description
-                },
-                newestRunaheadCyclePoint,
-                newestCyclePoint,
-                oldestCyclePoint,
-                reloading,
-                runMode,
+                }
+                newestRunaheadCyclePoint
+                newestCyclePoint
+                oldestCyclePoint
+                reloading
+                runMode
                 stateTotals {
-                    waiting,
-                    held,
+                    waiting
+                    held
                     running
-                },
-                workflowLogDir,
+                }
+                workflowLogDir
                 timeZoneInfo {
-                    hours,
+                    hours
                     minutes
-                },
-                nsDefnOrder,
+                }
+                nsDefnOrder
                 states
             }
         }

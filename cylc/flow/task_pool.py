@@ -87,8 +87,9 @@ class TaskPool(object):
 
         self.pool_list = []
         self.rhpool_list = []
-        self.pool_changed = []
-        self.rhpool_changed = []
+        self.pool_changed = False
+        self.rhpool_changed = False
+        self.pool_changes = []
 
         self.is_held = False
         self.hold_point = None
@@ -502,6 +503,7 @@ class TaskPool(object):
         self.pool.setdefault(itask.point, {})
         self.pool[itask.point][itask.identity] = itask
         self.pool_changed = True
+        self.pool_changes.append(itask)
         LOG.debug("[%s] -released to the task pool", itask)
         del self.runahead_pool[itask.point][itask.identity]
         if not self.runahead_pool[itask.point]:
@@ -519,7 +521,6 @@ class TaskPool(object):
         else:
             if not self.runahead_pool[itask.point]:
                 del self.runahead_pool[itask.point]
-            self.job_pool.remove_task_jobs(itask.identity)
             self.rhpool_changed = True
             return
 
@@ -536,7 +537,6 @@ class TaskPool(object):
         LOG.debug("[%s] -%s", itask, msg)
         if itask.tdef.max_future_prereq_offset is not None:
             self.set_max_future_offset()
-        self.job_pool.remove_task_jobs(itask.identity)
         del itask
 
     def get_all_tasks(self):
@@ -560,6 +560,12 @@ class TaskPool(object):
             for itask_id_maps in self.runahead_pool.values():
                 self.rhpool_list.extend(list(itask_id_maps.values()))
         return self.rhpool_list
+
+    def get_pool_change_tasks(self):
+        """Return a list of task proxies that changed pool."""
+        results = self.pool_changes
+        self.pool_changes = []
+        return results
 
     def get_tasks_by_point(self, incl_runahead):
         """Return a map of task proxies by cycle point."""

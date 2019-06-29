@@ -23,6 +23,8 @@ from graphene import (
 from graphene.types.generic import GenericScalar
 from graphene.utils.str_converters import to_snake_case
 
+from cylc.flow.ws_data_mgr import ID_DELIM
+
 
 NODE_MAP = {
     'Task': 'tasks',
@@ -60,7 +62,7 @@ DEF_TYPES = [
 def parse_workflow_id(item):
     """Split workflow id argument to individual workflow attributes.
     Args:
-        item (owner/workflow:status):
+        item (owner|workflow:status):
             It's possible to traverse workflows,
             defaults to UI Server owner, and ``*`` glob for workflow.
 
@@ -74,8 +76,8 @@ def parse_workflow_id(item):
         head, status = item.rsplit(':', 1)
     else:
         head, status = (item, None)
-    if head.count('/'):
-        owner, workflow = head.split('/', 1)
+    if head.count(ID_DELIM):
+        owner, workflow = head.split(ID_DELIM, 1)
     else:
         # more common to filter on workflow (with owner constant)
         workflow = head
@@ -87,18 +89,15 @@ def parse_node_id(item, node_type=None):
 
     Args:
         item: An string representing a node ID. Jobs fill out
-            cycle/name/num first, cycle is irrelevant to Def
-            owner/workflow is always last.
+            cycle%name%num first, cycle is irrelevant to Def
+            owner%workflow is always last.
             For example:
 
             name
-            cycle/na*
-            submit_num.name.cycle.workflow.owner:state
-            nam*.cycle*
-            workflow/cycle/name
-            owner/workflow/cycle/name/submit_num:state
-            cycle/*/submit_num
-            submit_num.name:state
+            cycle|na*
+            workflow|cycle|name
+            owner|workflow|cycle|name|submit_num:state
+            cycle|*|submit_num
 
     Returns:
         A tuple of string id components in respective order. For example:
@@ -111,21 +110,18 @@ def parse_node_id(item, node_type=None):
         head, state = item.rsplit(':', 1)
     else:
         head, state = (item, None)
-    if '/' in head:
-        dil_count = head.count('/')
-        parts = head.split('/', dil_count)
+    if ID_DELIM in head:
+        dil_count = head.count(ID_DELIM)
+        parts = head.split(ID_DELIM, dil_count)
     else:
-        dil_count = head.count('.')
-        parts = head.split('.', dil_count)[::-1]
+        return (None, None, None, head, None, state)
     if node_type in DEF_TYPES:
         owner, workflow, name = [None] * (2 - dil_count) + parts
         parts = [owner, workflow, None, name, None]
     elif node_type in PROXY_TYPES:
         parts = [None] * (3 - dil_count) + parts + [None]
     elif dil_count < 4:
-        if dil_count == 0:
-            parts = [None, None, None] + parts + [None]
-        elif dil_count < 3:
+        if dil_count < 3:
             parts = [None, None] + parts + [None] * (2 - dil_count)
         else:
             parts = [None] * (4 - dil_count) + parts
@@ -136,11 +132,17 @@ def parse_node_id(item, node_type=None):
 # ** Query Related **#
 
 # Field args (i.e. for queries etc):
+class SortArgs(InputObjectType):
+    keys = List(String, default_value=['id'])
+    reverse = Boolean()
+
+
 jobs_args = dict(
     ids=List(ID, default_value=[]),
     exids=List(ID, default_value=[]),
     states=List(String, default_value=[]),
     exstates=List(String, default_value=[]),
+    sort=SortArgs(default_value=None),
 )
 
 all_jobs_args = dict(
@@ -150,6 +152,7 @@ all_jobs_args = dict(
     exids=List(ID, default_value=[]),
     states=List(String, default_value=[]),
     exstates=List(String, default_value=[]),
+    sort=SortArgs(default_value=None),
 )
 
 def_args = dict(
@@ -157,6 +160,7 @@ def_args = dict(
     exids=List(ID, default_value=[]),
     mindepth=Int(default_value=-1),
     maxdepth=Int(default_value=-1),
+    sort=SortArgs(default_value=None),
 )
 
 all_def_args = dict(
@@ -166,6 +170,7 @@ all_def_args = dict(
     exids=List(ID, default_value=[]),
     mindepth=Int(default_value=-1),
     maxdepth=Int(default_value=-1),
+    sort=SortArgs(default_value=None),
 )
 
 proxy_args = dict(
@@ -176,6 +181,7 @@ proxy_args = dict(
     exstates=List(String, default_value=[]),
     mindepth=Int(default_value=-1),
     maxdepth=Int(default_value=-1),
+    sort=SortArgs(default_value=None),
 )
 
 all_proxy_args = dict(
@@ -188,6 +194,7 @@ all_proxy_args = dict(
     exstates=List(String, default_value=[]),
     mindepth=Int(default_value=-1),
     maxdepth=Int(default_value=-1),
+    sort=SortArgs(default_value=None),
 )
 
 edge_args = dict(
@@ -197,13 +204,29 @@ edge_args = dict(
     exstates=List(String, default_value=[]),
     mindepth=Int(default_value=-1),
     maxdepth=Int(default_value=-1),
+    sort=SortArgs(default_value=None),
 )
 
 all_edge_args = dict(
     workflows=List(ID, default_value=[]),
     exworkflows=List(ID, default_value=[]),
+    sort=SortArgs(default_value=None),
 )
 
+
+# Resolvers are used to collate data needed for query resolution.
+# Treated as implicit static methods;
+# https://docs.graphene-python.org/en/latest/types
+# /objecttypes/#implicit-staticmethod
+# they can exist inside or outside the query object types.
+#
+# Here we define them outside the queries so they can be used with
+# multiple resolution calls, both at root query or object field level.
+#
+# The first argument has a namining convention;
+# https://docs.graphene-python.org/en/latest/types
+# /objecttypes/#naming-convention
+# with name 'root' used here, it provides context to the resolvers.
 
 # Resolvers:
 
@@ -240,7 +263,7 @@ async def get_nodes_all(root, info, **args):
     return await resolvers.get_nodes_all(node_type, args)
 
 
-async def get_nodes_by_id(root, info, **args):
+async def get_nodes_by_ids(root, info, **args):
     """Resolver for returning job, task, family node"""
     field_name = to_snake_case(info.field_name)
     field_ids = getattr(root, field_name, None)
@@ -260,7 +283,7 @@ async def get_nodes_by_id(root, info, **args):
     args['ids'] = [parse_node_id(n_id, node_type) for n_id in args['ids']]
     args['exids'] = [parse_node_id(n_id, node_type) for n_id in args['exids']]
     resolvers = info.context.get('resolvers')
-    return await resolvers.get_nodes_by_id(node_type, args)
+    return await resolvers.get_nodes_by_ids(node_type, args)
 
 
 async def get_node_by_id(root, info, **args):
@@ -293,7 +316,7 @@ async def get_edges_all(root, info, **args):
     return await resolvers.get_edges_all(args)
 
 
-async def get_edges_by_id(root, info, **args):
+async def get_edges_by_ids(root, info, **args):
     field_name = to_snake_case(info.field_name)
     field_ids = getattr(root, field_name, None)
     if field_ids:
@@ -301,7 +324,7 @@ async def get_edges_by_id(root, info, **args):
     elif field_ids == []:
         return []
     resolvers = info.context.get('resolvers')
-    return await resolvers.get_edges_by_id(args)
+    return await resolvers.get_edges_by_ids(args)
 
 
 # Types:
@@ -351,22 +374,22 @@ class Workflow(ObjectType):
         lambda: Task,
         description="""Task definitions.""",
         args=def_args,
-        resolver=get_nodes_by_id)
+        resolver=get_nodes_by_ids)
     families = List(
         lambda: Family,
         description="""Family definitions.""",
         args=def_args,
-        resolver=get_nodes_by_id)
+        resolver=get_nodes_by_ids)
     task_proxies = List(
         lambda: TaskProxy,
         description="""Task cycle instances.""",
         args=proxy_args,
-        resolver=get_nodes_by_id)
+        resolver=get_nodes_by_ids)
     family_proxies = List(
         lambda: FamilyProxy,
         description="""Family cycle instances.""",
         args=proxy_args,
-        resolver=get_nodes_by_id)
+        resolver=get_nodes_by_ids)
     edges = Field(
         lambda: Edges,
         args=edge_args,
@@ -394,6 +417,9 @@ class Job(ObjectType):
     id = ID(required=True)
     submit_num = Int()
     state = String()
+    # name and cycle_point for filtering/sorting
+    name = String(required=True)
+    cycle_point = String(required=True)
     task_proxy = Field(
         lambda: TaskProxy,
         description="""Associated Task Proxy""",
@@ -435,7 +461,7 @@ class Task(ObjectType):
         lambda: TaskProxy,
         description="""Associated cycle point proxies""",
         args=proxy_args,
-        resolver=get_nodes_by_id)
+        resolver=get_nodes_by_ids)
     namespace = List(String, required=True)
 
 
@@ -479,25 +505,27 @@ class TaskProxy(ObjectType):
         required=True,
         resolver=get_node_by_id)
     state = String()
-    cycle_point = String()
+    cycle_point = String(required=True)
     spawned = Boolean()
     depth = Int()
     job_submits = Int()
     latest_message = String()
     outputs = List(String, default_value=[])
     broadcasts = List(String, default_value=[])
+    # name & namespace for filtering/sorting
+    name = String(required=True)
     namespace = List(String, required=True)
     prerequisites = List(Prerequisite)
     jobs = List(
         Job,
         description="""Task jobs.""",
         args=jobs_args,
-        resolver=get_nodes_by_id)
+        resolver=get_nodes_by_ids)
     parents = List(
         lambda: FamilyProxy,
         description="""Task parents.""",
         args=proxy_args,
-        resolver=get_nodes_by_id)
+        resolver=get_nodes_by_ids)
     first_parent = Field(
         lambda: FamilyProxy,
         description="""Task first parent.""",
@@ -515,22 +543,22 @@ class Family(ObjectType):
         lambda: FamilyProxy,
         description="""Associated cycle point proxies""",
         args=proxy_args,
-        resolver=get_nodes_by_id)
+        resolver=get_nodes_by_ids)
     parents = List(
         lambda: Family,
         description="""Family definition parent.""",
         args=def_args,
-        resolver=get_nodes_by_id)
+        resolver=get_nodes_by_ids)
     child_tasks = List(
         Task,
         description="""Descendedant definition tasks.""",
         args=def_args,
-        resolver=get_nodes_by_id)
+        resolver=get_nodes_by_ids)
     child_families = List(
         lambda: Family,
         description="""Descendedant desc families.""",
         args=def_args,
-        resolver=get_nodes_by_id)
+        resolver=get_nodes_by_ids)
 
 
 class FamilyProxy(ObjectType):
@@ -538,7 +566,8 @@ class FamilyProxy(ObjectType):
         description = """Family composite."""
     id = ID(required=True)
     cycle_point = String()
-    name = String()
+    # name & namespace for filtering/sorting
+    name = String(required=True)
     family = Field(
         Family,
         description="""Family definition""",
@@ -550,17 +579,17 @@ class FamilyProxy(ObjectType):
         lambda: FamilyProxy,
         description="""Family parent proxies.""",
         args=proxy_args,
-        resolver=get_nodes_by_id)
+        resolver=get_nodes_by_ids)
     child_tasks = List(
         TaskProxy,
         description="""Descendedant task proxies.""",
         args=proxy_args,
-        resolver=get_nodes_by_id)
+        resolver=get_nodes_by_ids)
     child_families = List(
         lambda: FamilyProxy,
         description="""Descendedant family proxies.""",
         args=proxy_args,
-        resolver=get_nodes_by_id)
+        resolver=get_nodes_by_ids)
     first_parent = Field(
         lambda: FamilyProxy,
         description="""Task first parent.""",
@@ -602,7 +631,7 @@ class Edges(ObjectType):
         Edge,
         required=True,
         args=edge_args,
-        resolver=get_edges_by_id)
+        resolver=get_edges_by_ids)
     workflow_polling_tasks = List(PollTask)
     leaves = List(String)
     feet = List(String)
@@ -663,6 +692,7 @@ class Queries(ObjectType):
 
 # ** Mutation Related ** #
 
+
 # Generic containers
 class GenericResponse(ObjectType):
     class Meta:
@@ -671,9 +701,17 @@ class GenericResponse(ObjectType):
     result = GenericScalar()
 
 
-# Mutation resolvers:
-async def mutator(self, info, command, workflows=None,
+# Mutators are used to call the internals of the parent program in the
+# resolution of mutation requests (or can make external calls themselves).
+# Like query resolvers (read above), they are treated as implicit
+# static metthods, with object context pass in as the first argument.
+
+# Mutators:
+
+async def mutator(root, info, command, workflows=None,
                   exworkflows=None, **args):
+    """Call the resolver method that act on the workflow service
+    via the internal command queue."""
     if workflows is None:
         workflows = []
     if exworkflows is None:
@@ -685,12 +723,14 @@ async def mutator(self, info, command, workflows=None,
         args.update(args.get('args', {}))
         args.pop('args')
     resolvers = info.context.get('resolvers')
-    res = await resolvers.mutator(command, w_args, args)
+    res = await resolvers.mutator(info, command, w_args, args)
     return GenericResponse(result=res)
 
 
-async def nodes_mutator(self, info, command, ids, workflows=None,
+async def nodes_mutator(root, info, command, ids, workflows=None,
                         exworkflows=None, **args):
+    """Call the resolver method, dealing with multiple node id arguments,
+    which acts on the workflow service via the internal command queue."""
     if command == 'put_messages':
         node_type = 'jobs'
     else:
@@ -698,12 +738,12 @@ async def nodes_mutator(self, info, command, ids, workflows=None,
     ids = [parse_node_id(n_id, node_type) for n_id in ids]
     # if the workflows arg is empty extract from proxy args
     if workflows is None:
-        workflows = []
+        workflows = set()
         for owner, workflow, _, _, _, _ in ids:
             if owner and workflow:
-                workflows.append(f'{owner}/{workflow}')
+                workflows.add(f'{owner}{ID_DELIM}{workflow}')
             elif workflow:
-                workflows = append(workflow)
+                workflows.add(workflow)
     if not workflows:
         return GenericResponse(result="Error: No given Workflow(s)")
     if exworkflows is None:
@@ -715,7 +755,7 @@ async def nodes_mutator(self, info, command, ids, workflows=None,
         args.update(args.get('args', {}))
         args.pop('args')
     resolvers = info.context.get('resolvers')
-    res = await resolvers.nodes_mutator(command, ids, w_args, args)
+    res = await resolvers.nodes_mutator(info, command, ids, w_args, args)
     return GenericResponse(result=res)
 
 
@@ -825,7 +865,7 @@ later by the main loop."""
         ids = List(
             String,
             description="""Task job in the form
-`"CYCLE/TASK_NAME/SUBMIT_NUM"`""",
+`"CYCLE%TASK_NAME%SUBMIT_NUM"`""",
             required=True)
         event_time = String(default_value=None)
         messages = List(
@@ -964,17 +1004,18 @@ class TaskActions(Mutation):
             description="""Used with:
 - All Commands
 
-A list of identifiers (family/glob/id) for matching task proxies, i.e.
+A list of identifiers (family%glob%id) for matching task proxies, i.e.
 ```
 [
-    "owner/workflow/201905*/foo",
+    "owner%workflow%201905*%foo",
     "foo.201901*:failed",
-    "201901*/baa:failed",
+    "201901*%baa:failed",
     "FAM.20190101T0000Z",
     "FAM2",
     "*.20190101T0000Z"
 ]
 ```
+(where % is the delimiter)
 
 Splits argument into componnents, creates workflows argument if non-existent.
 """,

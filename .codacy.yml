@@ -4,4 +4,4 @@ exclude_paths:
   - 'etc/**'
   - 'cylc/flow/tests/**'
   - 'tests/**'
-
+  - 'cylc/flow/**_pb2.py'
