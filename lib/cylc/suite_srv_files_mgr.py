@@ -469,13 +469,13 @@ To start a new run, stop the old one first with one or more of these:
         # Create service dir if necessary.
         srv_d = self.get_suite_srv_dir(reg)
         if rundir is None:
-            os.makedirs(srv_d, exist_ok=True)
+            mkdir_p(srv_d)
         else:
             suite_run_d, srv_d_name = os.path.split(srv_d)
             alt_suite_run_d = os.path.join(rundir, reg)
             alt_srv_d = os.path.join(rundir, reg, srv_d_name)
-            os.makedirs(alt_srv_d, exist_ok=True)
-            os.makedirs(os.path.dirname(suite_run_d), exist_ok=True)
+            mkdir_p(alt_srv_d)
+            mkdir_p(os.path.dirname(suite_run_d))
             if os.path.islink(suite_run_d) and not os.path.exists(suite_run_d):
                 # Remove a bad symlink.
                 os.unlink(suite_run_d)
@@ -483,14 +483,14 @@ To start a new run, stop the old one first with one or more of these:
                 os.symlink(alt_suite_run_d, suite_run_d)
             elif not os.path.islink(suite_run_d):
                 raise SuiteServiceFileError(
-                    f"Run directory '{suite_run_d}' already exists.")
+                    "Run directory '%s' already exists." % suite_run_d)
             elif alt_suite_run_d != os.readlink(suite_run_d):
                 target = os.readlink(suite_run_d)
                 raise SuiteServiceFileError(
-                    f"Symlink '{suite_run_d}' already points to {target}.")
+                    "Symlink '%s' already points to %s." % (
+                         suite_run_d, target))
             # (else already the right symlink)
 
-        temp = None
         # See if suite already has a source or not
         try:
             orig_source = os.readlink(

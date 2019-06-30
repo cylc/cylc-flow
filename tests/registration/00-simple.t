@@ -168,7 +168,7 @@ mkdir "${RUN_DIR}"
 mkdir "${SRC_DIR}"; touch "${SRC_DIR}/suite.rc"
 run_fail "${TEST_NAME}" cylc register --run-dir="${ALT_RUN_DIR}" "${REG}" "${SRC_DIR}"
 contains_ok "${TEST_NAME}.stderr" <<__OUT__
-SuiteServiceFileError: Run directory '${RUN_DIR}' already exists.
+Run directory '${RUN_DIR}' already exists.
 __OUT__
 rm -r $SRC_DIR ${RUN_DIR}
 
@@ -180,7 +180,7 @@ mkdir "${PWD}/target"
 ln -s "${PWD}/target" "${RUN_DIR}"
 run_fail "${TEST_NAME}" cylc register --run-dir="${ALT_RUN_DIR}" "${REG}" "${SRC_DIR}"
 contains_ok "${TEST_NAME}.stderr" <<__OUT__
-SuiteServiceFileError: Symlink '${RUN_DIR}' already points to ${PWD}/target.
+Symlink '${RUN_DIR}' already points to ${PWD}/target.
 __OUT__
 rm -r "${SRC_DIR}" "${PWD}/target" "${CYLC_RUN_DIR}/${PRE}"
 
