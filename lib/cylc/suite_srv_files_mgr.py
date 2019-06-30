@@ -476,8 +476,21 @@ To start a new run, stop the old one first with one or more of these:
             alt_srv_d = os.path.join(rundir, reg, srv_d_name)
             os.makedirs(alt_srv_d, exist_ok=True)
             os.makedirs(os.path.dirname(suite_run_d), exist_ok=True)
-            os.symlink(alt_suite_run_d, suite_run_d)
+            if os.path.islink(suite_run_d) and not os.path.exists(suite_run_d):
+                # Remove a bad symlink.
+                os.unlink(suite_run_d)
+            if not os.path.exists(suite_run_d):
+                os.symlink(alt_suite_run_d, suite_run_d)
+            elif not os.path.islink(suite_run_d):
+                raise SuiteServiceFileError(
+                    f"Run directory '{suite_run_d}' already exists.")
+            elif alt_suite_run_d != os.readlink(suite_run_d):
+                target = os.readlink(suite_run_d)
+                raise SuiteServiceFileError(
+                    f"Symlink '{suite_run_d}' already points to {target}.")
+            # (else already the right symlink)
 
+        temp = None
         # See if suite already has a source or not
         try:
             orig_source = os.readlink(
