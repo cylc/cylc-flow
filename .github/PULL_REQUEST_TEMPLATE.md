@@ -18,5 +18,6 @@ COMMENT: choose one:
 - [ ] Includes an appropriate entry in the release change log `CHANGES.md`.
 - [ ] No change log entry required (e.g. change is small or internal only).
 COMMENT: choose one:
-- [ ] I have opened a corresponding documentation PR at cylc/cylc-doc#XXXX.
+- [ ] (master branch) I have opened a documentation PR at cylc/cylc-doc#XXXX.
+- [ ] (7.8.x branch) I have updated the documentation in this PR branch.
 - [ ] No documentation update required for this change.
