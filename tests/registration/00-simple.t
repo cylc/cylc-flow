@@ -18,7 +18,7 @@
 # Test suite registration
 
 . "$(dirname "$0")/test_header"
-set_test_number 25
+set_test_number 34
 
 init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
 [meta]
@@ -32,7 +32,7 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
 __SUITE_RC__
 
 # Unique suite run-dir prefix to avoid messing with real suites.
-PRE=cylctb-reg-${CYLC_TEST_TIME_INIT}
+PRE=cylctb-${CYLC_TEST_TIME_INIT}
 
 # Test fail no suite.rc file.
 CYLC_RUN_DIR=$(cylc get-global --print-run-dir)
@@ -143,6 +143,46 @@ if [ "$ERR2_COUNT" -eq "0" ]; then
 else
     fail "${TEST_NAME_BASE}-print.stderr"
 fi
+
+# Test alternate run dir.
+# 1. Normal case.
+TEST_NAME="${TEST_NAME_BASE}-alt-run-dir"
+SRC_DIR="${PWD}/foo"
+REG="${PRE}/foo"
+RUN_DIR="${CYLC_RUN_DIR}/${REG}"
+ALT_RUN_DIR="${PWD}/alt"
+mkdir "${SRC_DIR}"; touch "${SRC_DIR}/suite.rc"
+run_ok "${TEST_NAME}" cylc register --run-dir="${ALT_RUN_DIR}" "${REG}" "${SRC_DIR}"
+contains_ok "${TEST_NAME}.stdout" <<__OUT__
+REGISTERED ${REG} -> ${SRC_DIR}
+__OUT__
+run_ok "${TEST_NAME}-check-link" test -L "${RUN_DIR}"
+run_ok "${TEST_NAME}-rm-link" rm "${RUN_DIR}"
+run_ok "${TEST_NAME}-rm-alt-run-dir" rm -r "${ALT_RUN_DIR}"
+rm -r "${SRC_DIR}"
+
+# Test alternate run dir.
+# 2. If reg already exists (as a directory).
+TEST_NAME="${TEST_NAME_BASE}-alt-exists1"
+mkdir "${RUN_DIR}"
+mkdir "${SRC_DIR}"; touch "${SRC_DIR}/suite.rc"
+run_fail "${TEST_NAME}" cylc register --run-dir="${ALT_RUN_DIR}" "${REG}" "${SRC_DIR}"
+contains_ok "${TEST_NAME}.stderr" <<__OUT__
+SuiteServiceFileError: Run directory '${RUN_DIR}' already exists.
+__OUT__
+rm -r $SRC_DIR ${RUN_DIR}
+
+# Test alternate run dir.
+# 3. If reg already exists (as a valid symlink).
+TEST_NAME="${TEST_NAME_BASE}-alt-exists2"
+mkdir "${SRC_DIR}"; touch "${SRC_DIR}/suite.rc"
+mkdir "${PWD}/target"
+ln -s "${PWD}/target" "${RUN_DIR}"
+run_fail "${TEST_NAME}" cylc register --run-dir="${ALT_RUN_DIR}" "${REG}" "${SRC_DIR}"
+contains_ok "${TEST_NAME}.stderr" <<__OUT__
+SuiteServiceFileError: Symlink '${RUN_DIR}' already points to ${PWD}/target.
+__OUT__
+rm -r "${SRC_DIR}" "${PWD}/target" "${CYLC_RUN_DIR}/${PRE}"
 
 purge_suite "${SUITE_NAME}"
 exit
