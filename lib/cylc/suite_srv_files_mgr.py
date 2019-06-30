@@ -488,7 +488,7 @@ To start a new run, stop the old one first with one or more of these:
                 target = os.readlink(suite_run_d)
                 raise SuiteServiceFileError(
                     "Symlink '%s' already points to %s." % (
-                         suite_run_d, target))
+                        suite_run_d, target))
             # (else already the right symlink)
 
         # See if suite already has a source or not
