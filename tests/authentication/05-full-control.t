@@ -41,7 +41,7 @@ cylc suite-state "${SUITE_NAME}" --task=foo --status=failed --point=1 \
 SRV_D="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/.service"
 HOST="$(sed -n 's/^CYLC_SUITE_HOST=//p' "${SRV_D}/contact")"
 PORT="$(sed -n 's/^CYLC_SUITE_PORT=//p' "${SRV_D}/contact")"
-cylc scan --comms-timeout=5 -f --color=never -n "${SUITE_NAME}" >'scan-f.out'
+cylc scan --comms-timeout=10 -f --color=never -n "${SUITE_NAME}" >'scan-f.out'
 cmp_ok 'scan-f.out' <<__END__
 ${SUITE_NAME} ${USER}@${HOST}:${PORT}
    Title:
@@ -64,7 +64,7 @@ ${SUITE_NAME} ${USER}@${HOST}:${PORT}
 __END__
 
 # Check scan --describe output.
-cylc scan --comms-timeout=5 -d --color=never -n "${SUITE_NAME}" >'scan-d.out'
+cylc scan --comms-timeout=10 -d --color=never -n "${SUITE_NAME}" >'scan-d.out'
 cmp_ok 'scan-d.out' <<__END__
 ${SUITE_NAME} ${USER}@${HOST}:${PORT}
    Title:
@@ -83,7 +83,7 @@ ${SUITE_NAME} ${USER}@${HOST}:${PORT}
 __END__
 
 # Check scan --raw output.
-cylc scan --comms-timeout=5 -f -t raw --color=never -n "${SUITE_NAME}" \
+cylc scan --comms-timeout=10 -f -t raw --color=never -n "${SUITE_NAME}" \
     >'scan-r.out'
 cmp_ok 'scan-r.out' <<__END__
 ${SUITE_NAME}|${USER}|${HOST}|port|${PORT}
@@ -99,7 +99,7 @@ ${SUITE_NAME}|${USER}|${HOST}|states:2|waiting:1
 __END__
 
 # Check scan --json output.
-cylc scan --comms-timeout=5 -f -t json --color=never -n "${SUITE_NAME}" \
+cylc scan --comms-timeout=10 -f -t json --color=never -n "${SUITE_NAME}" \
     >'scan-j.out'
 sed -i -r 's/[0-9\.]{10,}/"<FLOAT_REPLACED>"/' 'scan-j.out'
 cmp_json 'scan-j.out' 'scan-j.out' <<__END__

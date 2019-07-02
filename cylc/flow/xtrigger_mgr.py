@@ -92,6 +92,7 @@ class XtriggerManager(object):
         self,
         suite: str,
         user: str = None,
+        *,  # following must be keyword args
         broadcast_mgr: BroadcastMgr = None,
         proc_pool: SubProcPool = None,
         suite_run_dir: str = None,
