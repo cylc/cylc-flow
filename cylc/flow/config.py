@@ -355,18 +355,20 @@ class SuiteConfig(object):
             set_utc_mode(self.cfg['cylc']['UTC mode'])
 
         # Initial point from suite definition (or CLI override above).
-        icp = self.cfg['scheduling']['initial cycle point']
-        if icp is None:
+        orig_icp = self.cfg['scheduling']['initial cycle point']
+        if orig_icp is None:
             raise SuiteConfigError(
                 "This suite requires an initial cycle point.")
-        if icp == "now":
+        if orig_icp == "now":
             icp = get_current_time_string()
         else:
             try:
                 my_now = get_current_time_string()
-                icp = ingest_time(icp, my_now)
+                icp = ingest_time(orig_icp, my_now)
             except ValueError as exc:
                 raise SuiteConfigError(str(exc))
+        if orig_icp != icp:
+            self.options.icp = icp
         self.initial_point = get_point(icp).standardise()
         self.cfg['scheduling']['initial cycle point'] = str(self.initial_point)
         if getattr(self.options, 'startcp', None) is not None:
