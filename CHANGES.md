@@ -21,6 +21,18 @@ pages**.
 - cylc-8 (master branch, written in Python 3) does not bundle Jinja2, and uses the fixed version 2.10.1.
 
 -------------------------------------------------------------------------------
+## __cylc-7.8.4 (2019-Q3?)__
+
+Bug fix release.
+
+Selected user-facing changes:
+
+### Fixes
+
+[#3204](https://github.com/cylc/cylc-flow/pull/3204) - fix restart on
+`cylc run --icp=now SUITE` and related, which was broken at 7.8.3.
+
+-------------------------------------------------------------------------------
 ## __cylc-7.8.3 (2019-06-12)__
 
 Minor maintenance release.
