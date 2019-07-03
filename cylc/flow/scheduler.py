@@ -1013,6 +1013,10 @@ see `COPYING' in the Cylc source distribution.
             elif self.options.stopcp is None:
                 self.options.stopcp = value
                 LOG.info('+ stop point = %s' % value)
+        elif key == self.suite_db_mgr.KEY_RUN_MODE:
+            if self.options.run_mode is None:
+                self.options.run_mode = value
+                LOG.info('+ run mode = %s' % value)
         elif key == self.suite_db_mgr.KEY_UUID_STR:
             self.uuid_str.value = value
             LOG.info('+ suite UUID = %s', value)

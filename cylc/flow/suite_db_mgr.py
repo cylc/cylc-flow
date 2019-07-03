@@ -54,6 +54,7 @@ class SuiteDatabaseManager(object):
     KEY_HOLD = 'is_held'
     KEY_HOLD_CYCLE_POINT = 'holdcp'
     KEY_NO_AUTO_SHUTDOWN = 'no_auto_shutdown'
+    KEY_RUN_MODE = 'run_mode'
     KEY_STOP_CLOCK_TIME = 'stop_clock_time'
     KEY_STOP_TASK = 'stop_task'
 
@@ -295,7 +296,6 @@ class SuiteDatabaseManager(object):
             final_point_str = str(schd.config.final_point)
         self.db_inserts_map[self.TABLE_SUITE_PARAMS].extend([
             {"key": self.KEY_UUID_STR, "value": str(schd.uuid_str)},
-            {"key": "run_mode", "value": schd.config.run_mode()},
             {"key": "cylc_version", "value": CYLC_VERSION},
             {"key": "UTC_mode", "value": get_utc_mode()},
         ])
@@ -311,6 +311,7 @@ class SuiteDatabaseManager(object):
             self.KEY_FINAL_CYCLE_POINT,
             self.KEY_START_CYCLE_POINT,
             self.KEY_STOP_CYCLE_POINT,
+            self.KEY_RUN_MODE,
         ):
             value = getattr(schd.options, key, None)
             if value is not None:
