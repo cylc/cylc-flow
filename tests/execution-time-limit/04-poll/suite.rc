@@ -32,5 +32,5 @@ fi
 exit
 """
         [[[job]]]
-            execution time limit = PT5S
+            execution time limit = PT10S
             execution retry delays = PT0S

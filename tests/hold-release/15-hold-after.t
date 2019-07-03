@@ -16,16 +16,20 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test cylc hold --after CYCLE_POINT.
-. $(dirname $0)/test_header
-#-------------------------------------------------------------------------------
-set_test_number 2
-#-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE hold-after
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-val
-run_ok $TEST_NAME cylc validate $SUITE_NAME
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --reference-test --debug --no-detach $SUITE_NAME
-#-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+. "$(dirname "$0")/test_header"
+set_test_number 3
+install_suite "${TEST_NAME_BASE}" 'hold-after'
+
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}" \
+    cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
+sqlite3 "${SUITE_RUN_DIR}/log/db" \
+    'SELECT * FROM task_pool WHERE cycle=="20140102T0000Z" ORDER BY name' \
+    >'taskpool.out'
+cmp_ok 'taskpool.out' <<'__OUT__'
+20140102T0000Z|bar|0|held|waiting
+20140102T0000Z|foo|0|held|waiting
+__OUT__
+
+purge_suite "${SUITE_NAME}"
+exit
