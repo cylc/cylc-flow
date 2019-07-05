@@ -97,9 +97,10 @@ def main(parser, options, suite, *task_ids):
 
     # Load suite config and tasks
     config = SuiteConfig(
-        suite, suiterc,
-        load_template_vars(options.templatevars, options.templatevars_file),
-        cli_initial_point_string=options.icp)
+        suite,
+        suiterc,
+        options,
+        load_template_vars(options.templatevars, options.templatevars_file))
     itasks = []
     for task_id in task_ids:
         name_str, point_str = TaskID.split(task_id)

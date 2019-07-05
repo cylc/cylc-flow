@@ -5,13 +5,16 @@
 
 [cylc]
     UTC mode = True
-    [[reference test]]
-        live mode suite timeout = PT1M
+    [[events]]
+        abort on inactivity = true
+        abort on stalled = true
+        abort on timeout = true
+        inactivity = PT30S
+        timeout = PT30S
 
 [scheduling]
     initial cycle point = 20140101T00
     final cycle point   = 20140104T00
-    max active cycle points = 10
     [[dependencies]]
         [[[R1]]]
             graph = """
@@ -22,8 +25,17 @@
             graph = foo[-PT12H] => foo => bar
 [runtime]
     [[holdafter]]
-        script = cylc hold --after 20140101T12 $CYLC_SUITE_NAME
+        script = cylc hold --after '20140101T12' "${CYLC_SUITE_NAME}"
     [[stopper]]
-        script = sleep 30; cylc stop $CYLC_SUITE_NAME
-    [[foo,bar]]
+        script = """
+            while ! grep -qF '[bar.20140102T0000Z] -waiting => held (waiting)' \
+                "${CYLC_SUITE_LOG_DIR}/log"
+            do
+                sleep 1
+            done
+            cylc stop "${CYLC_SUITE_NAME}"
+        """
+        [[[job]]]
+            execution time limit = PT1M
+    [[foo, bar]]
         script = true

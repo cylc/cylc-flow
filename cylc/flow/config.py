@@ -108,15 +108,21 @@ class SuiteConfig(object):
         'message', 'batch_sys_name', 'batch_sys_job_id', 'submit_time',
         'start_time', 'finish_time', 'user@host', 'try_num')
 
-    def __init__(self, suite, fpath, template_vars=None,
-                 owner=None, run_mode='live', is_validate=False, strict=False,
-                 collapsed=None, cli_initial_point_string=None,
-                 cli_start_point_string=None, cli_final_point_string=None,
-                 is_reload=False, output_fname=None,
-                 vis_start_string=None, vis_stop_string=None,
-                 xtrigger_mgr=None, mem_log_func=None,
-                 run_dir=None, log_dir=None,
-                 work_dir=None, share_dir=None):
+    def __init__(
+        self,
+        suite,
+        fpath,
+        options=None,
+        template_vars=None,
+        is_reload=False,
+        output_fname=None,
+        xtrigger_mgr=None,
+        mem_log_func=None,
+        run_dir=None,
+        log_dir=None,
+        work_dir=None,
+        share_dir=None,
+    ):
 
         self.mem_log = mem_log_func
         if mem_log_func is None:
@@ -129,9 +135,7 @@ class SuiteConfig(object):
         self.log_dir = log_dir or get_suite_run_log_dir(self.suite)
         self.share_dir = share_dir or get_suite_run_share_dir(self.suite)
         self.work_dir = work_dir or get_suite_run_work_dir(self.suite)
-        self.owner = owner
-        self.run_mode = run_mode
-        self.strict = strict
+        self.options = options
         self.naked_dummy_tasks = []
         self.edges = {}
         self.taskdefs = {}
@@ -145,13 +149,11 @@ class SuiteConfig(object):
         self.ext_triggers = {}
         if xtrigger_mgr is None:
             # For validation and graph etc.
-            self.xtrigger_mgr = XtriggerManager(self.suite, self.owner)
+            self.xtrigger_mgr = XtriggerManager(self.suite)
         else:
             self.xtrigger_mgr = xtrigger_mgr
         self.xtriggers = {}
         self.suite_polling_tasks = {}
-        self.vis_start_point_string = vis_start_string
-        self.vis_stop_point_string = vis_stop_string
         self._last_graph_raw_id = None
         self._last_graph_raw_edges = []
 
@@ -212,9 +214,9 @@ class SuiteConfig(object):
                 "'max active cycle points', not both")
 
         # Override the suite defn with an initial point from the CLI.
-        if cli_initial_point_string is not None:
-            self.cfg['scheduling']['initial cycle point'] = (
-                cli_initial_point_string)
+        icp_str = getattr(self.options, 'icp', None)
+        if icp_str is not None:
+            self.cfg['scheduling']['initial cycle point'] = icp_str
 
         dependency_map = self.cfg.get('scheduling', {}).get(
             'dependencies', {})
@@ -353,26 +355,27 @@ class SuiteConfig(object):
             set_utc_mode(self.cfg['cylc']['UTC mode'])
 
         # Initial point from suite definition (or CLI override above).
-        icp = self.cfg['scheduling']['initial cycle point']
-        if icp is None:
+        orig_icp = self.cfg['scheduling']['initial cycle point']
+        if orig_icp is None:
             raise SuiteConfigError(
                 "This suite requires an initial cycle point.")
-        if icp == "now":
+        if orig_icp == "now":
             icp = get_current_time_string()
         else:
             try:
                 my_now = get_current_time_string()
-                icp = ingest_time(icp, my_now)
+                icp = ingest_time(orig_icp, my_now)
             except ValueError as exc:
                 raise SuiteConfigError(str(exc))
+        if orig_icp != icp:
+            self.options.icp = icp
         self.initial_point = get_point(icp).standardise()
         self.cfg['scheduling']['initial cycle point'] = str(self.initial_point)
-        if cli_start_point_string:
+        if getattr(self.options, 'startcp', None) is not None:
             # Warm start from a point later than initial point.
-            if cli_start_point_string == "now":
-                cli_start_point_string = get_current_time_string()
-            cli_start_point = get_point(cli_start_point_string).standardise()
-            self.start_point = cli_start_point
+            if self.options.startcp == "now":
+                self.options.startcp = get_current_time_string()
+            self.start_point = get_point(self.options.startcp).standardise()
         else:
             # Cold start.
             self.start_point = self.initial_point
@@ -399,12 +402,13 @@ class SuiteConfig(object):
         if (self.cfg['scheduling']['final cycle point'] is not None and
                 self.cfg['scheduling']['final cycle point'].strip() is ""):
             self.cfg['scheduling']['final cycle point'] = None
-        final_point_string = (cli_final_point_string or
-                              self.cfg['scheduling']['final cycle point'])
-        if final_point_string is not None:
+        fcp_str = getattr(self.options, 'fcp', None)
+        if fcp_str is None:
+            fcp_str = self.cfg['scheduling']['final cycle point']
+        if fcp_str is not None:
             # Is the final "point"(/interval) relative to initial?
             if get_interval_cls().get_null().TYPE == INTEGER_CYCLING_TYPE:
-                if "P" in final_point_string:
+                if "P" in fcp_str:
                     # Relative, integer cycling.
                     self.final_point = get_point_relative(
                         self.cfg['scheduling']['final cycle point'],
@@ -414,13 +418,13 @@ class SuiteConfig(object):
                 try:
                     # Relative, ISO8601 cycling.
                     self.final_point = get_point_relative(
-                        final_point_string, self.initial_point).standardise()
+                        fcp_str, self.initial_point).standardise()
                 except ValueError:
                     # (not relative)
                     pass
             if self.final_point is None:
                 # Must be absolute.
-                self.final_point = get_point(final_point_string).standardise()
+                self.final_point = get_point(fcp_str).standardise()
             self.cfg['scheduling']['final cycle point'] = str(self.final_point)
 
         if (self.final_point is not None and
@@ -525,10 +529,9 @@ class SuiteConfig(object):
                     '[visualization]collapsed families: '
                     '%s is not a first parent' % fam)
 
-        if is_reload and collapsed:
-            # on suite reload retain an existing state of collapse
+        if getattr(options, 'collapsed', None):
             # (used by the "cylc graph" viewer)
-            self.closed_families = collapsed
+            self.closed_families = getattr(self.options, 'collapsed', None)
         elif is_reload:
             self.closed_families = []
         else:
@@ -541,15 +544,11 @@ class SuiteConfig(object):
                         '[visualization][collapsed families]: ' +
                         'family ' + cfam + ' not defined')
 
-        # check for run mode override at suite level
-        if self.cfg['cylc']['force run mode']:
-            self.run_mode = self.cfg['cylc']['force run mode']
-
         self.process_config_env()
 
         self.mem_log("config.py: before load_graph()")
         self.load_graph()
-        if not is_validate:
+        if self._is_validate():
             GraphNodeParser.get_inst().clear()
         self.mem_log("config.py: after load_graph()")
 
@@ -557,7 +556,7 @@ class SuiteConfig(object):
 
         self.configure_queues()
 
-        if self.run_mode in ['simulation', 'dummy', 'dummy-local']:
+        if self.run_mode('simulation', 'dummy', 'dummy-local'):
             self.configure_sim_modes()
 
         self.configure_suite_state_polling_tasks()
@@ -565,17 +564,17 @@ class SuiteConfig(object):
         # Warn or abort (if --strict) if naked dummy tasks (no runtime
         # section) are found in graph or queue config.
         if len(self.naked_dummy_tasks) > 0:
-            if self.strict or cylc.flow.flags.verbose:
+            if self._is_validate(is_strict=True) or cylc.flow.flags.verbose:
                 err_msg = ('naked dummy tasks detected (no entry'
                            ' under [runtime]):')
                 for ndt in self.naked_dummy_tasks:
                     err_msg += '\n+\t' + str(ndt)
                 LOG.warning(err_msg)
-            if self.strict:
+            if self._is_validate(is_strict=True):
                 raise SuiteConfigError(
                     'strict validation fails naked dummy tasks')
 
-        if is_validate:
+        if self._is_validate():
             self.check_tasks()
 
         # Check that external trigger messages are only used once (they have to
@@ -677,12 +676,10 @@ class SuiteConfig(object):
                     self.feet.append(foot)
 
         # CLI override for visualization settings.
-        if self.vis_start_point_string:
-            self.cfg['visualization']['initial cycle point'] = (
-                self.vis_start_point_string)
-        if self.vis_stop_point_string:
-            self.cfg['visualization']['final cycle point'] = (
-                self.vis_stop_point_string)
+        for key in ('initial', 'final'):
+            vis_str = getattr(self.options, 'vis_' + key, None)
+            if vis_str:
+                self.cfg['visualization'][key + ' cycle point'] = vis_str
 
         # For static visualization, start point defaults to suite initial
         # point; stop point must be explicit with initial point, or None.
@@ -731,7 +728,7 @@ class SuiteConfig(object):
             cfg['meta']['URL'] = RE_TASK_NAME_VAR.sub(
                 name, cfg['meta']['URL'])
 
-        if is_validate:
+        if self._is_validate():
             self.mem_log("config.py: before _check_circular()")
             self._check_circular()
             self.mem_log("config.py: after _check_circular()")
@@ -745,7 +742,9 @@ class SuiteConfig(object):
         lhs2rhss = {}  # left hand side to right hand sides
         rhs2lhss = {}  # right hand side to left hand sides
         for lhs, rhs in self.get_graph_raw(
-                start_point_string, stop_point_string=None, is_validate=True):
+            start_point_string,
+            stop_point_string=None,
+        ):
             lhs2rhss.setdefault(lhs, set())
             lhs2rhss[lhs].add(rhs)
             rhs2lhss.setdefault(rhs, set())
@@ -873,6 +872,13 @@ class SuiteConfig(object):
                         if subvalue != '':
                             return True
         return False
+
+    def _is_validate(self, is_strict=False):
+        """Return whether we are in (strict) validate mode."""
+        return (
+            getattr(self.options, 'is_validate', False) and
+            (not is_strict or getattr(self.options, 'strict', False))
+        )
 
     @staticmethod
     def dequote(s):
@@ -1454,6 +1460,23 @@ class SuiteConfig(object):
         for var, val in cenv.items():
             os.environ[var] = val
 
+    def run_mode(self, *reqmodes):
+        """Return the run mode.
+
+        Combine command line option with configuration setting.
+        If "reqmodes" is specified, return the boolean (mode in reqmodes).
+        Otherwise, return the mode as a str.
+        """
+        mode = getattr(self.options, 'run_mode', None)
+        if not mode:
+            mode = self.cfg['cylc']['force run mode']
+        if not mode:
+            mode = 'live'
+        if reqmodes:
+            return mode in reqmodes
+        else:
+            return mode
+
     def check_tasks(self):
         """Call after all tasks are defined.
 
@@ -1515,7 +1538,7 @@ class SuiteConfig(object):
                 if (name not in self.taskdefs and
                         name not in self.cfg['runtime']):
                     msg = '%s task "%s" is not defined.' % (task_type, name)
-                    if self.strict:
+                    if self._is_validate(is_strict=True):
                         raise SuiteConfigError(msg)
                     else:
                         LOG.warning(msg)
@@ -1733,7 +1756,7 @@ class SuiteConfig(object):
     def get_graph_raw(self, start_point_string, stop_point_string,
                       group_nodes=None, ungroup_nodes=None,
                       ungroup_recursive=False, group_all=False,
-                      ungroup_all=False, is_validate=False):
+                      ungroup_all=False):
         """Convert the abstract graph edges (self.edges, etc) to actual edges
 
         Actual edges have concrete ranges of cycle points.
@@ -1741,6 +1764,7 @@ class SuiteConfig(object):
         In validate mode, set ungroup_all to True, and only return non-suicide
         edges with left and right nodes.
         """
+        is_validate = self._is_validate()
         if is_validate:
             ungroup_all = True
         if group_nodes is None:
@@ -2259,7 +2283,7 @@ class SuiteConfig(object):
 
         # Get the taskdef object for generating the task proxy class
         taskd = TaskDef(
-            name, rtcfg, self.run_mode, self.start_point,
+            name, rtcfg, self.run_mode(), self.start_point,
             self.cfg['scheduling']['spawn to max active cycle points'])
 
         # TODO - put all taskd.foo items in a single config dict

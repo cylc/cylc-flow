@@ -163,7 +163,7 @@ class WsDataMgr(object):
             setattr(workflow.time_zone_info, key, val)
 
         workflow.last_updated = update_time
-        workflow.run_mode = self.schd.run_mode
+        workflow.run_mode = config.run_mode()
         workflow.cycling_mode = config.cfg['scheduling']['cycling mode']
         workflow.workflow_log_dir = self.schd.suite_log_dir
         workflow.job_log_names.extend(list(JOB_LOG_OPTS.values()))
@@ -451,10 +451,10 @@ class WsDataMgr(object):
             status_string = (
                 SUITE_STATUS_RUNNING_TO_HOLD %
                 self.schd.pool.hold_point)
-        elif self.schd.stop_point:
+        elif self.schd.pool.stop_point:
             status_string = (
                 SUITE_STATUS_RUNNING_TO_STOP %
-                self.schd.stop_point)
+                self.schd.pool.stop_point)
         elif self.schd.stop_clock_time is not None:
             status_string = (
                 SUITE_STATUS_RUNNING_TO_STOP %
@@ -463,10 +463,10 @@ class WsDataMgr(object):
             status_string = (
                 SUITE_STATUS_RUNNING_TO_STOP %
                 self.schd.stop_task)
-        elif self.schd.final_point:
+        elif self.schd.config.final_point:
             status_string = (
                 SUITE_STATUS_RUNNING_TO_STOP %
-                self.schd.final_point)
+                self.schd.config.final_point)
         else:
             status_string = SUITE_STATUS_RUNNING
         workflow.status = status_string

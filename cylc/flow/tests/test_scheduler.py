@@ -33,7 +33,6 @@ class Options(object):
         self.profile_mode = False
         self.templatevars = {}
         self.templatevars_file = ""
-        self.run_mode = ""
 
 
 class TestScheduler(unittest.TestCase):
