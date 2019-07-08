@@ -24,6 +24,7 @@ pages**.
 ## __cylc-7.8.4 (2019-Q3?)__
 
 Bug fix release.
+=======
 
 Selected user-facing changes:
 
@@ -31,6 +32,11 @@ Selected user-facing changes:
 
 [#3204](https://github.com/cylc/cylc-flow/pull/3204) - fix restart on
 `cylc run --icp=now SUITE` and related, which was broken at 7.8.3.
+
+[#3205](https://github.com/cylc/cylc-flow/pull/3205) - fix output from `cylc
+version`, which should return the numerical version string "7.8.4" not
+"flow-7.8.4". (Broken since the source repository was renamed to cylc-flow
+to align with the new multi-component cylc-8 architecture).
 
 -------------------------------------------------------------------------------
 ## __cylc-7.8.3 (2019-06-12)__
