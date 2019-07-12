@@ -49,6 +49,7 @@ returning the IP address associated with this socket.
 import os
 import pwd
 import socket
+from contextlib import suppress
 from time import time
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
@@ -99,13 +100,10 @@ class HostUtil(object):
         """
 
         ipaddr = ""
-        try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            sock.connect((target, 8000))
-            ipaddr = sock.getsockname()[0]
-            sock.close()
-        except IOError:
-            pass
+        with suppress(IOError):
+            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+                sock.connect((target, 8000))
+                ipaddr = sock.getsockname()[0]
         return ipaddr
 
     @staticmethod
