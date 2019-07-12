@@ -368,15 +368,16 @@ class SuiteRuntimeServer(ZMQServer):
         """Return the GraphQL scheme execution result.
 
         Args:
-            query (str, optional):
-                Specifies the data to fetch in both form and content.
+            request_string (str, optional):
+                GraphQL request passed to Graphene
+            variables (dict, optional):
+                Dict of variables passed to Graphene
 
         Returns:
-            Dict: The query or mutation execution result.
-
+            object: Execution result, or a list with errors.
         """
         try:
-            loop = asyncio.get_running_loop()
+            asyncio.get_running_loop()
         except RuntimeError:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
