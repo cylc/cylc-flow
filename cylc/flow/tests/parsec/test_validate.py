@@ -465,7 +465,8 @@ class TestValidate(unittest.TestCase):
         with self.assertRaises(IllegalValueError):
             ParsecValidator.strip_and_unquote(['a'], '"""')
 
-    def test_strip_and_unquote_list(self):
+    def test_strip_and_unquote_list_parsec(self):
+        """Test strip_and_unquote_list using ParsecValidator."""
         for value, results in [
             ('"a"\n"b"', ['a', 'b']),
             ('"a", "b"', ['a', 'b']),
@@ -484,6 +485,15 @@ class TestValidate(unittest.TestCase):
         ]:
             self.assertEqual(results, ParsecValidator.strip_and_unquote_list(
                 ['a'], value))
+
+    def test_strip_and_unquote_list_cylc(self):
+        """Test strip_and_unquote_list using CylcConfigValidator."""
+        validator = VDR()
+        for values in get_test_strip_and_unquote_list():
+            value = values[0]
+            expected = values[1]
+            output = validator.strip_and_unquote_list(keys=[], value=value)
+            self.assertEqual(expected, output)
 
     def test_strip_and_unquote_list_multiparam(self):
         with self.assertRaises(ListValueError):
@@ -617,15 +627,6 @@ class TestValidate(unittest.TestCase):
             self.assertRaises(
                 IllegalValueError,
                 validator.coerce_xtrigger, value, ['whatever'])
-
-    def test_strip_and_unquote_list(self):
-        """Test strip_and_unquote_list"""
-        validator = VDR()
-        for values in get_test_strip_and_unquote_list():
-            value = values[0]
-            expected = values[1]
-            output = validator.strip_and_unquote_list(keys=[], value=value)
-            self.assertEqual(expected, output)
 
 
 if __name__ == '__main__':
