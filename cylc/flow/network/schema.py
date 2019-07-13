@@ -223,7 +223,7 @@ async def get_nodes_all(root, info, **args):
         args['ids'] = [args.get('id')]
     if field_ids:
         args['ids'] = field_ids
-    elif field_ids == []:
+    elif not field_ids:
         return []
     try:
         obj_type = str(info.return_type.of_type).replace('!', '')
@@ -250,7 +250,7 @@ async def get_nodes_by_id(root, info, **args):
         if isinstance(field_ids, str):
             field_ids = [field_ids]
         args['native_ids'] = field_ids
-    elif field_ids == []:
+    elif not field_ids:
         return []
     try:
         obj_type = str(info.return_type.of_type).replace('!', '')
@@ -298,7 +298,7 @@ async def get_edges_by_id(root, info, **args):
     field_ids = getattr(root, field_name, None)
     if field_ids:
         args['native_ids'] = list(field_ids)
-    elif field_ids == []:
+    elif not field_ids:
         return []
     resolvers = info.context.get('resolvers')
     return await resolvers.get_edges_by_id(args)
@@ -703,7 +703,7 @@ async def nodes_mutator(self, info, command, ids, workflows=None,
                 workflows.append(f'{owner}/{workflow}')
             elif workflow:
                 workflows = append(workflow)
-    if workflows == []:
+    if not workflows:
         return GenericResponse(result="Error: No given Workflow(s)")
     if exworkflows is None:
         exworkflows = []
