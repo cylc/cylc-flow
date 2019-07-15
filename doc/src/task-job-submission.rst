@@ -560,7 +560,7 @@ batch system handler to change the directive prefix from ``#PBS`` to
    class QSUBHandler(PBSHandler):
        DIRECTIVE_PREFIX = "#QSUB "
 
-   BATCH_SYSTEM_HANDLER = QSUBHandler()
+   BATCH_SYS_HANDLER = QSUBHandler()
 
 If this is in the Python search path (see
 :ref:`Where To Put Batch System Handler Modules` below) you can use it by
