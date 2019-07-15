@@ -38,6 +38,10 @@ version`, which should return the numerical version string "7.8.4" not
 "flow-7.8.4". (Broken since the source repository was renamed to cylc-flow
 to align with the new multi-component cylc-8 architecture).
 
+[#3218](https://github.com/cylc/cylc-flow/pull/3218) - fixed typo in the
+User Guide custom batch system handler example (`BATCH_SYSTEM_HANDLER` should
+be `BATCH_SYS_HANDLER`). 
+
 -------------------------------------------------------------------------------
 ## __cylc-7.8.3 (2019-06-12)__
 
