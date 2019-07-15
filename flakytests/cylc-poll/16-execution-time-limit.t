@@ -38,7 +38,7 @@ cmp_times () {
     # Test if the times $1 and $2 are within $3 seconds of each other.
     python3 -u - "$@" <<'__PYTHON__'
 import sys
-from isodatetime.parsers import TimePointParser
+from metomi.isodatetime.parsers import TimePointParser
 parser = TimePointParser()
 time_1 = parser.parse(sys.argv[1])
 time_2 = parser.parse(sys.argv[2])
@@ -50,7 +50,7 @@ time_offset () {
     # Add an ISO8601 duration to an ISO8601 date-time.
     python3 -u - "$@" <<'__PYTHON__'
 import sys
-from isodatetime.parsers import TimePointParser, DurationParser
+from metomi.isodatetime.parsers import TimePointParser, DurationParser
 print(
     TimePointParser().parse(sys.argv[1]) + DurationParser().parse(sys.argv[2]))
 __PYTHON__

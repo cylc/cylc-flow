@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Cycling utility functions."""
 
-from isodatetime.parsers import TimePointParser, DurationParser
+from metomi.isodatetime.parsers import TimePointParser, DurationParser
 
 
 def add_offset(cycle_point, offset):

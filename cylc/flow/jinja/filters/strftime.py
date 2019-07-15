@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Provides a Jinja2 filter for formatting ISO8601 datetime strings."""
 
-from isodatetime.parsers import TimePointParser
+from metomi.isodatetime.parsers import TimePointParser
 
 
 def strftime(iso8601_datetime, strftime_str, strptime_str=None):
@@ -58,17 +58,17 @@ def strftime(iso8601_datetime, strftime_str, strptime_str=None):
         >>> # Exceptions.
         >>> strftime('invalid', '%H')  # doctest: +NORMALIZE_WHITESPACE
         Traceback (most recent call last):
-        <class 'isodatetime.parsers.ISO8601SyntaxError'>
-        isodatetime.parsers.ISO8601SyntaxError: Invalid ISO 8601 date \
+        <class 'metomi.isodatetime.parsers.ISO8601SyntaxError'>
+        metomi.isodatetime.parsers.ISO8601SyntaxError: Invalid ISO 8601 date \
         representation: invalid
         >>> strftime('2000', '%invalid')  # doctest: +NORMALIZE_WHITESPACE
         Traceback (most recent call last):
-        isodatetime.parser_spec.StrftimeSyntaxError: Invalid \
+        metomi.isodatetime.parser_spec.StrftimeSyntaxError: Invalid \
         strftime/strptime representation: %i
         >>> strftime('2000', '%Y', '%invalid')
         ... # doctest: +NORMALIZE_WHITESPACE
         Traceback (most recent call last):
-        isodatetime.parser_spec.StrftimeSyntaxError: Invalid \
+        metomi.isodatetime.parser_spec.StrftimeSyntaxError: Invalid \
         strftime/strptime representation: %i
     """
     if not strptime_str:

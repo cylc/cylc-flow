@@ -29,9 +29,9 @@ import shlex
 from collections import deque
 from textwrap import dedent
 
-from isodatetime.data import Duration, TimePoint, Calendar
-from isodatetime.dumpers import TimePointDumper
-from isodatetime.parsers import TimePointParser, DurationParser
+from metomi.isodatetime.data import Duration, TimePoint, Calendar
+from metomi.isodatetime.dumpers import TimePointDumper
+from metomi.isodatetime.parsers import TimePointParser, DurationParser
 
 from cylc.flow.parsec.exceptions import (
     ListValueError, IllegalValueError, IllegalItemError)

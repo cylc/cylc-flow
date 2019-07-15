@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Define all legal items and values for cylc suite definition files."""
 
-from isodatetime.data import Calendar
+from metomi.isodatetime.data import Calendar
 
 from cylc.flow.network import Priv
 from cylc.flow.parsec.config import ParsecConfig

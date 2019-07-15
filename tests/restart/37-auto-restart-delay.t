@@ -27,7 +27,7 @@ set_test_number 6
 time_gt () {
     python3 -c "
 import sys
-from isodatetime.parsers import TimePointParser
+from metomi.isodatetime.parsers import TimePointParser
 parser = TimePointParser()
 sys.exit(not parser.parse('$1') > parser.parse('$2'))
 "

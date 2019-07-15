@@ -31,7 +31,7 @@ from time import sleep, time
 import traceback
 from uuid import uuid4
 
-from isodatetime.parsers import TimePointParser
+from metomi.isodatetime.parsers import TimePointParser
 from cylc.flow.parsec.util import printcfg
 
 from cylc.flow import LOG

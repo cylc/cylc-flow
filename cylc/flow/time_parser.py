@@ -33,8 +33,8 @@ time for inter-cycle task references such as "foo[-P6Y] => foo".
 
 import re
 
-import isodatetime.data
-import isodatetime.parsers
+import metomi.isodatetime.data
+import metomi.isodatetime.parsers
 
 from cylc.flow.cycling import parse_exclusion
 from cylc.flow.exceptions import (
@@ -53,7 +53,7 @@ class CylcTimeParser(object):
     context_start_point describes the beginning date/time used for
     extrapolating incomplete date/time syntax (usually initial
     cycle point). It is either a date/time string in full ISO 8601
-    syntax or an isodatetime.data.TimePoint object.
+    syntax or a metomi.isodatetime.data.TimePoint object.
     context_end_point is the same as context_start_point, but describes
     a final time - e.g. the final cycle point.
 
@@ -129,10 +129,12 @@ class CylcTimeParser(object):
 
         Returns:
             tuple: (timepoint_parser, duration_parser, time_recurrence_parser)
-                - timepoint_parser - isodatetime.parsers.TimePointParser obj.
-                - duration_parser - isodatetime.parsers.DurationParser obj.
+                - timepoint_parser - metomi.isodatetime.parsers.TimePointParser
+                  obj.
+                - duration_parser - metomi.isodatetime.parsers.DurationParser
+                  obj.
                 - time_recurrence_parser -
-                  isodatetime.parsers.TimeRecurrenceParser obj
+                  metomi.isodatetime.parsers.TimeRecurrenceParser obj
         """
 
         if dump_format is None:
@@ -141,7 +143,7 @@ class CylcTimeParser(object):
             else:
                 dump_format = "CCYYMMDDThhmmZ"
 
-        timepoint_parser = isodatetime.parsers.TimePointParser(
+        timepoint_parser = metomi.isodatetime.parsers.TimePointParser(
             allow_only_basic=False,
             allow_truncated=True,
             num_expanded_year_digits=num_expanded_year_digits,
@@ -150,8 +152,8 @@ class CylcTimeParser(object):
         )
 
         return (timepoint_parser,
-                isodatetime.parsers.DurationParser(),
-                isodatetime.parsers.TimeRecurrenceParser()
+                metomi.isodatetime.parsers.DurationParser(),
+                metomi.isodatetime.parsers.TimeRecurrenceParser()
                 )
 
     def parse_interval(self, expr):
@@ -163,7 +165,7 @@ class CylcTimeParser(object):
 
         expression should be a string such as 20010205T00Z, or a
         truncated/abbreviated format string such as T06 or -P2Y.
-        context_point should be an isodatetime.data.TimePoint object
+        context_point should be a metomi.isodatetime.data.TimePoint object
         that supplies the missing information for truncated
         expressions. For example, context_point should be the task
         cycle point for inter-cycle dependency expressions. If
@@ -277,7 +279,7 @@ class CylcTimeParser(object):
                     repetitions += 1
                 end_point = None
 
-            return isodatetime.data.TimeRecurrence(
+            return metomi.isodatetime.data.TimeRecurrence(
                 repetitions=repetitions,
                 start_point=start_point,
                 duration=interval,
@@ -310,7 +312,7 @@ class CylcTimeParser(object):
                 kwargs = {"minutes": 1}
             if not kwargs:
                 return None
-            return isodatetime.data.Duration(**kwargs)
+            return metomi.isodatetime.data.Duration(**kwargs)
         return self.duration_parser.parse(expr)
 
     def _get_min_from_expression(self, expr, context):

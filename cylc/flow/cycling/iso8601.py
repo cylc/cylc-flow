@@ -20,9 +20,9 @@
 
 import re
 
-from isodatetime.data import Calendar, Duration
-from isodatetime.dumpers import TimePointDumper
-from isodatetime.timezone import (
+from metomi.isodatetime.data import Calendar, Duration
+from metomi.isodatetime.dumpers import TimePointDumper
+from metomi.isodatetime.timezone import (
     get_local_time_zone, get_local_time_zone_format, TimeZoneFormatMode)
 from cylc.flow.time_parser import CylcTimeParser
 from cylc.flow.cycling import (

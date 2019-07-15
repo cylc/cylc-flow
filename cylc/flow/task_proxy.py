@@ -18,7 +18,7 @@
 
 """Provide a class to represent a task proxy in a running suite."""
 
-from isodatetime.timezone import get_local_time_zone
+from metomi.isodatetime.timezone import get_local_time_zone
 
 import cylc.flow.cycling.iso8601
 from cylc.flow.exceptions import TaskProxySequenceBoundsError
