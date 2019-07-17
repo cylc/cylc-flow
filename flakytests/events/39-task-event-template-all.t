@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-
+#!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
@@ -16,33 +15,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-from subprocess import call
-import sys
+# Compare actual and expected event handler command args.
 
+. "$(dirname "$0")/test_header"
+set_test_number 3
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-def main():
-    """Run tests with virtual frame buffer for X support."""
-    command = [
-        'xvfb-run',
-        '-a',
-        os.path.join(
-            os.path.dirname(__file__),
-            '..',
-            'etc',
-            'bin',
-            'run-functional-tests.sh',
-        ),
-    ]
-    flakytests = os.getenv('FLAKYTESTS')
-    if flakytests:
-        command.append(flakytests)
-        command.append('--jobs=1')
-    else:
-        command.append('--jobs=5')
-    # Safe here - only used in Travis CI for tests with predefined environment
-    sys.exit(call(command, stdin=open(os.devnull)))  # nosec
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
+suite_run_ok "${TEST_NAME_BASE}-run" cylc run --debug --no-detach "${SUITE_NAME}"
 
-if __name__ == '__main__':
-    main()
+FOO_ACTIVITY_LOG="${SUITE_RUN_DIR}/log/job/1/foo/NN/job-activity.log"
+grep_ok 'OK: command line checks out' "${FOO_ACTIVITY_LOG}"
+
+purge_suite "${SUITE_NAME}"
+exit

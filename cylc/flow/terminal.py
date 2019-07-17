@@ -30,7 +30,7 @@ def is_terminal():
 def get_width(default=80):
     """Return the terminal width or `default` if it is not determinable."""
     # stty can have different install locs so don't use absolute path
-    proc = Popen(['stty', 'size'], stdout=PIPE)  # nosec
+    proc = Popen(['stty', 'size'], stdout=PIPE, stderr=PIPE)  # nosec
     if proc.wait():
         return default
     try:

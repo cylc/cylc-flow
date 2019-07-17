@@ -1,7 +1,7 @@
 #!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -15,27 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test the run-functional-tests.sh --chunk option
+# Test that when polling all a failed task sets the task state correctly
 . "$(dirname "$0")/test_header"
-N_CHUNKS=2
-set_test_number "$(( 2 + N_CHUNKS ))"
 #-------------------------------------------------------------------------------
-# list all tests
-DRY_TEST_NAME="$TEST_NAME_BASE-all"
-CTB="${CYLC_REPO_DIR}/etc/bin/run-functional-tests.sh"
-run_ok "${DRY_TEST_NAME}" "${CTB}" --dry './tests'
-# list tests for each chunk (from prove not run-functional-tests.sh)
-for i_chunk in $(seq "${N_CHUNKS}"); do
-    TEST_NAME="${TEST_NAME_BASE}-chunk-${i_chunk}"
-    run_ok "${TEST_NAME}" env CHUNK="${i_chunk}/${N_CHUNKS}" "${CTB}" --dry
-    cat "${TEST_NAME}.stdout" >>'chunks.out'
-done
-# sort files ($CYLC_REPO_DIR/etc/bin/run-functional-tests.sh uses --shuffle)
-sort -o "${DRY_TEST_NAME}.stdout" "${DRY_TEST_NAME}.stdout"
-sort -o 'chunks.out' 'chunks.out'
-# remove cd "$CYLC_HOME" lines
-sed -i '/^cd "/d' "${DRY_TEST_NAME}.stdout"
-sed -i '/^cd "/d' 'chunks.out'
-# compare test plan for the full and chunked versions
-cmp_ok "${DRY_TEST_NAME}.stdout" 'chunks.out'
+set_test_number 2
+#-------------------------------------------------------------------------------
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+#-------------------------------------------------------------------------------
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}-run" \
+    cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
+#-------------------------------------------------------------------------------
+purge_suite "${SUITE_NAME}"
 exit

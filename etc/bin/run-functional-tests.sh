@@ -70,10 +70,6 @@ is not otherwise a Cylc software prerequisite):
 
 Options:
   -h, --help       Print this help message and exit.
-  --chunk CHUNK    Divide the test battery into chunks and run the specified
-                   chunk. CHUNK takes the format 'a/b' where 'b' is the number
-                   of chunks to divide the battery into and 'a' is the number
-                   of the chunk to run (1 >= a >= b).
 
 Examples:
 
@@ -89,72 +85,39 @@ Run only tests under "tests/cyclers/", and skip 00-daily.t
   export CYLC_TEST_SKIP=tests/cyclers/00-daily.t
   run-functional-tests.sh tests/cyclers
 Run the first quarter of the test battery
-  run-functional-tests.sh --chunk '1/4'
+  CHUNK=1/4 run-functional-tests.sh
 Re-run failed tests
   run-functional-tests.sh --state=save
   run-functional-tests.sh --state=failed
 eof
 }
+for ARG in "$@"; do
+    case "${ARG}" in
+        --help|-h)
+            usage
+            exit 0
+            ;;
+    esac
+done
 
-chunk () {
-    # argument in the format chunk_no/no_chunks
-    IFS=$'/' read -r CHUNK_NO CHUNKS <<< "$1"
-    # create lists of tests in a temp file
-    TEST_FILE="$(mktemp)"
-    etc/bin/run-functional-tests.sh --dry | sort > "$TEST_FILE"
-    LINES_PER_FILE=$(( ( $(wc -l "$TEST_FILE" | cut -d ' ' -f 1) \
-        + CHUNKS - 1 ) / CHUNKS ))
-    # chunk tests
-    split -d -l "$LINES_PER_FILE" "$TEST_FILE" "$TEST_FILE"
-    # select chunk
-    FILENO="$(printf '%02d' $(( CHUNK_NO - 1 )) )"
-    tr '\n' ' ' < "${TEST_FILE}${FILENO}"
-}
-
-# Defaults.
+# (Should be the same as $TRAVIS_BUILD_DIR, on Travis CI)
+cd "$(dirname "$0")/../.." || exit 1
+export CYLC_REPO_DIR="${PWD}"
+# Defaults
 export CYLC_TEST_RUN_GENERIC=${CYLC_TEST_RUN_GENERIC:-true}
 export CYLC_TEST_RUN_PLATFORM=${CYLC_TEST_RUN_PLATFORM:-true}
 export CYLC_TEST_SKIP=${CYLC_TEST_SKIP:-}
 export CYLC_TEST_IS_GENERIC=true
 CYLC_TEST_TIME_INIT="$(date -u +'%Y%m%dT%H%M%SZ')"
 export CYLC_TEST_TIME_INIT
-
-LOCN=$(dirname "$0")/../..
-CYLC_REPO_DIR=$(cd "${LOCN}" && pwd -P)
-export CYLC_REPO_DIR
-# (Should be the same as $TRAVIS_BUILD_DIR, on Travis CI)
-
-cd "$CYLC_REPO_DIR" || exit 1
-
-ARG_COUNT=1
-for ARG in "$@"; do
-    case "$ARG" in
-        --help|-h)
-            usage
-            exit 0
-            ;;
-        --chunk)
-            # Replace "--chunk a/b" with the appropriate tests.
-	    # (Ignore shellcheck "word splitting" warning here).
-	    # shellcheck disable=SC2046 
-            set -- "${@:1:$(( ARG_COUNT - 1 ))}" \
-                $(chunk "${@:$(( ARG_COUNT + 1 )):1}") \
-                "${@:$(( ARG_COUNT + 2 ))}"
-            ;;
-        *)
-            ARG_COUNT=$(( ARG_COUNT + 1 ))
-            ;;
-    esac
-done
-
-if perl -e 'use Test::Harness 3.00' 2>/dev/null; then
-    NPROC=$(cylc get-global-config '--item=process pool size')
-    if [[ -z "${NPROC}" ]]; then
-        NPROC=$(python3 -c \
-            'import multiprocessing as mp; print(mp.cpu_count())')
-    fi
-    exec prove --timer -j "$NPROC" -s -r "${@:-tests}"
+# Normal run
+NPROC=$(cylc get-global-config '--item=process pool size')
+if [[ -z "${NPROC}" ]]; then
+    NPROC=$(python3 -c 'import multiprocessing as mp; print(mp.cpu_count())')
+fi
+if [[ -n "${CHUNK:-}" ]]; then
+    exec env -u 'CHUNK' prove --timer -j "${NPROC}" -s -r "$@" - \
+        < <(prove --dry --recurse './tests' | sort | split -n "r/${CHUNK}")
 else
-    echo "WARNING: cannot run tests in parallel (Test::Harness < 3.00)" >&2
-    exec prove --timer -s -r "${@:-tests}"
+    exec prove --timer -j "${NPROC}" -s -r "$@"
 fi

@@ -71,7 +71,7 @@
 #         Provides SUITE_NAME and SUITE_RUN_DIR variables.
 #     install_suite TEST_NAME SOURCE
 #         Same as init_suite, but SOURCE must be a directory containing a
-#         "suite.rc" file. Also provides SOURCE as ORIG_SUITE_NAME variable.
+#         "suite.rc" file.
 #     log_scan TEST_NAME FILE ATTEMPTS DELAY PATTERN...
 #         Monitor FILE polling every DELAY seconds for maximum of ATTEMPTS
 #         tries grepping for each PATTERN in turn. Tests will only pass if the
@@ -124,13 +124,15 @@ FINALLY() {
         rm -rf "${TEST_DIR}"
     fi
     if [[ -n "${TEST_RHOST_CYLC_DIR}" ]]; then
+        # TEST_RHOST_CYLC_DIR is a local variable of this script
+        # shellcheck disable=SC2029
         ssh -oBatchMode=yes -oConnectTimeout=5 "${TEST_RHOST_CYLC_DIR%%:*}" \
             "rm -fr ${TEST_RHOST_CYLC_DIR#*:}"
     fi
     if [[ -n "${TEST_SMTPD_PID:-}" ]]; then
         kill "${TEST_SMTPD_PID}"
     fi
-    if (($FAILURES > 0)); then
+    if ((FAILURES > 0)); then
         echo -e "\n    stdout and stderr stored in: ${TEST_LOG_DIR}" >&2
         if "${SUITE_RUN_FAILS}"; then
             echo -e "    suite logs can be found under: ${SUITE_LOG_DIR}/" >&2
@@ -138,6 +140,8 @@ FINALLY() {
     fi
 }
 for S in ${SIGNALS}; do
+    # Signal as argument to FINALLY
+    # shellcheck disable=SC2064
     trap "FINALLY ${S}" "${S}"
 done
 
@@ -220,7 +224,8 @@ suite_run_fail() {
 cmp_ok() {
     local FILE_TEST="$1"
     local FILE_CONTROL="${2:--}"
-    local TEST_NAME="$(basename "${FILE_TEST}")-cmp-ok"
+    local TEST_NAME
+    TEST_NAME="$(basename "${FILE_TEST}")-cmp-ok"
     local DIFF_CMD=${CYLC_TEST_DIFF_CMD:-'diff -u'}
     if ${DIFF_CMD} "${FILE_CONTROL}" "${FILE_TEST}" >"${TEST_NAME}.stderr" 2>&1
     then
@@ -255,15 +260,18 @@ cmp_json() {
 contains_ok() {
     local FILE_TEST="$1"
     local FILE_CONTROL="${2:--}"
-    local TEST_NAME="$(basename "${FILE_TEST}")-contains-ok"
+    local TEST_NAME
+    TEST_NAME="$(basename "${FILE_TEST}")-contains-ok"
     comm -13 <(sort "${FILE_TEST}") <(sort "${FILE_CONTROL}") \
         1>"${TEST_NAME}.stdout" 2>"${TEST_NAME}.stderr"
     if [[ -s "${TEST_NAME}.stdout" ]]; then
         mkdir -p "${TEST_LOG_DIR}"
-        echo "Missing lines:" >>"${TEST_NAME}.stderr"
-        cat "${TEST_NAME}.stdout" >>"${TEST_NAME}.stderr"
-        echo 'Test File:' >>"${TEST_NAME}.stderr"
-        cat "${FILE_TEST}" >>"${TEST_NAME}.stderr"
+        {
+            echo 'Missing lines:'
+            cat "${TEST_NAME}.stdout"
+            echo 'Test File:'
+            cat "${FILE_TEST}"
+        } >>"${TEST_NAME}.stderr"
         cp -p "${TEST_NAME}.stderr" "${TEST_LOG_DIR}/${TEST_NAME}.stderr"
         fail "${TEST_NAME}"
         return
@@ -275,8 +283,9 @@ count_ok() {
     local BRE="$1"
     local FILE="$2"
     local COUNT="$3"
-    local TEST_NAME="$(basename "${FILE}")-count-ok"
-    local NEW_COUNT=$(grep -c "${BRE}" "${FILE}")
+    local TEST_NAME NEW_COUNT
+    TEST_NAME="$(basename "${FILE}")-count-ok"
+    NEW_COUNT=$(grep -c "${BRE}" "${FILE}")
     if (( NEW_COUNT == COUNT )); then
         ok "${TEST_NAME}"
         return
@@ -290,26 +299,32 @@ count_ok() {
 grep_ok() {
     local BRE="$1"
     local FILE="$2"
-    local TEST_NAME="$(basename "${FILE}")-grep-ok"
+    local TEST_NAME
+    TEST_NAME="$(basename "${FILE}")-grep-ok"
     if grep -q -e "${BRE}" "${FILE}"; then
         ok "${TEST_NAME}"
         return
     fi
     mkdir -p "${TEST_LOG_DIR}"
-    echo "Can't find:
+    {
+        cat <<__ERR__
+Can't find:
 ===========
 ${BRE}
 ===========
 in:
 ===========
-$(cat ${FILE})" >"${TEST_LOG_DIR}/${TEST_NAME}.stderr"
+__ERR__
+        cat "${FILE}"
+    } >"${TEST_LOG_DIR}/${TEST_NAME}.stderr"
     fail "${TEST_NAME}"
 }
 
 grep_fail() {
     local BRE="$1"
     local FILE="$2"
-    local TEST_NAME="$(basename "${FILE}")-grep-fail"
+    local TEST_NAME
+    TEST_NAME="$(basename "${FILE}")-grep-fail"
     if grep -q -e "${BRE}" "${FILE}"; then
         mkdir -p "${TEST_LOG_DIR}"
         echo "ERROR: Found ${BRE} in ${FILE}" \
@@ -321,8 +336,9 @@ grep_fail() {
 }
 
 exists_ok() {
-    local FILE=$1
-    local TEST_NAME="$(basename "${FILE}")-file-exists-ok"
+    local FILE="$1"
+    local TEST_NAME
+    TEST_NAME="$(basename "${FILE}")-file-exists-ok"
     if [[ -a $FILE ]]; then
         ok "${TEST_NAME}"
         return
@@ -334,7 +350,8 @@ exists_ok() {
 
 exists_fail() {
     local FILE="$1"
-    local TEST_NAME="$(basename "${FILE}")-file-exists-fail"
+    local TEST_NAME
+    TEST_NAME="$(basename "${FILE}")-file-exists-fail"
     if [[ ! -a "${FILE}" ]]; then
         ok "${TEST_NAME}"
         return
@@ -367,7 +384,6 @@ init_suite() {
 install_suite() {
     local TEST_NAME="$1"
     local TEST_SOURCE_BASE="$2"
-    ORIG_SUITE_NAME="${TEST_SOURCE_BASE}"
     SUITE_NAME="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME}"
     SUITE_RUN_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
     mkdir -p "${TEST_DIR}/${SUITE_NAME}/"
@@ -395,7 +411,7 @@ log_scan () {
         count=$(( count + 1 ))
         success=false
         echo -n "scanning for '${pattern:0:30}'" >& $ERR
-        for try in $(seq 1 $REPS); do
+        for _ in $(seq 1 "${REPS}"); do
             echo -n '.' >& $ERR
             newposition=$(grep -n "$pattern" "$FILE" | \
                 tail -n 1 | cut -d ':' -f 1)
@@ -406,13 +422,13 @@ log_scan () {
                 success=true
                 break
             fi
-            sleep $DELAY
+            sleep "${DELAY}"
         done
         shift
-        if ! $success; then
+        if ! "${success}"; then
             echo ': failed' >& $ERR
             fail "${TEST_NAME}-${count}"
-            if ${CYLC_TEST_DEBUG:-}; then
+            if "${CYLC_TEST_DEBUG:-}"; then
                 cat "${FILE}" >&2
             fi
             skip "$#"
@@ -425,10 +441,13 @@ purge_suite_remote() {
     local HOST="$1"  # or "owner@host"
     local NAME="$2"
     local CMD="cd 'cylc-run' && rm -fr '${NAME}'"
-    local DIRNAME="$(dirname "${NAME}")"
+    local DIRNAME
+    DIRNAME="$(dirname "${NAME}")"
     if [[ "${DIRNAME}" != '.' ]]; then
         CMD="${CMD} && rmdir -p '${DIRNAME}'"
     fi
+    # CMD is part of this function
+    # shellcheck disable=SC2029
     ssh -n -oBatchMode=yes -oConnectTimeout=5 "${HOST}" "${CMD}" \
         2>'/dev/null' || true
 }
@@ -436,18 +455,21 @@ purge_suite_remote() {
 purge_suite() {
     local SUITE_NAME="$1"
     cd "${TEST_DIR:-}"
-    if (($FAILURES == 0)); then
-        local RUND="$(cylc get-global-config --print-run-dir)"
-        local SUITE_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
+    if ((FAILURES == 0)); then
+        local RUND SUITE_DIR
+        RUND="$(cylc get-global-config --print-run-dir)"
+        SUITE_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
         # Note: lsof can hang, so call with "timeout".
         while grep -q "${SUITE_DIR}" < <(timeout 5 lsof); do
             sleep 1
         done
         rm -fr "${SUITE_DIR}"
+        # The || true is here to prevent setting off the error trap no matter
+        # shellcheck disable=SC2015
         (cd "${RUND}" && rmdir -p "$(dirname "${SUITE_DIR}")" 2>'/dev/null' || true)
     fi
     if [[ -n "${TEST_DIR:-}" && -n "${SUITE_NAME:-}" ]]; then
-        rm -fr "${TEST_DIR}/${SUITE_NAME}"
+        rm -fr "${TEST_DIR:?}/${SUITE_NAME:?}"
     fi
 }
 
@@ -474,9 +496,12 @@ skip_all() {
 
 ssh_install_cylc() {
     local RHOST="$1"
-    local RHOST_CYLC_DIR=$(_ssh_mkdtemp_cylc_dir "${RHOST}")
+    local RHOST_CYLC_DIR=
+    RHOST_CYLC_DIR=$(_ssh_mkdtemp_cylc_dir "${RHOST}")
     TEST_RHOST_CYLC_DIR="${RHOST}:${RHOST_CYLC_DIR}"
     rsync -a '--exclude=*.pyc' "${CYLC_REPO_DIR}"/* "${RHOST}:${RHOST_CYLC_DIR}/"
+    # RHOST_CYLC_DIR is a variable of this function
+    # shellcheck disable=SC2029
     ssh -n -oBatchMode=yes -oConnectTimeout=5 "${RHOST}" \
         "make -C '${RHOST_CYLC_DIR}' 'version'" 1>'/dev/null' 2>&1
 }
@@ -509,9 +534,12 @@ mock_smtpd_init() {  # Logic borrowed from Rose
             fi
         done
         if [[ -n "${SMTPD_PID:-}" ]]; then
+            # Variables used by tests
+            # shellcheck disable=SC2034
             TEST_SMTPD_HOST="${SMTPD_HOST}"
-            TEST_SMTPD_PID="${SMTPD_PID}"
+            # shellcheck disable=SC2034
             TEST_SMTPD_LOG="${SMTPD_LOG}"
+            TEST_SMTPD_PID="${SMTPD_PID}"
             break
         fi
     done
@@ -595,7 +623,6 @@ TEST_SOURCE_DIR_BASE="${TEST_SOURCE_DIR##*tests/}"
 TEST_LOG_DIR_BASE="${TMPDIR:-/tmp}/${USER}/cylctb-${CYLC_TEST_TIME_INIT}"
 TEST_LOG_DIR="${TEST_LOG_DIR_BASE}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}"
 SUITE_RUN_FAILS=false
-SSH_OPTS='-oBatchMode=yes -oConnectTimeout=10'
 
 CYLC_TEST_SKIP="${CYLC_TEST_SKIP:-}"
 # Is this test in the skip list?
@@ -604,6 +631,8 @@ THIS_DIR="$(dirname "${THIS}")"
 for SKIP in ${CYLC_TEST_SKIP}; do
     RSKIP="${SKIP#./}"
     if [[ "${THIS}" == "${RSKIP}" || "${THIS_DIR%/}" == "${RSKIP%/}" ]]; then
+        # Deliberately print variable substitution syntax unexpanded
+        # shellcheck disable=SC2016
         skip_all 'this test is in $CYLC_TEST_SKIP.'
         break
     fi
@@ -614,6 +643,6 @@ elif ! "${CYLC_TEST_RUN_PLATFORM}" && ! "${CYLC_TEST_IS_GENERIC}"; then
     skip_all 'not running platform-specific tests'
 fi
 # Ignore the normal site/user global config, use etc/global-tests.rc.
-create_test_globalrc
+create_test_globalrc "$@"
 set +x
 set +e

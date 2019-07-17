@@ -29,14 +29,14 @@ cache: pip
 dist: xenial
 addons:
   apt:
-    update: true  # instruct travis-ci to always run apt-get before each build
+    update: true  # instruct travis-ci to always run apt before each build
 
 language: python
 
 stages:
 - unit-test
 - functional-test
-- documentation
+- sensitive-test
 
 env:
   global:
@@ -67,7 +67,26 @@ regressiontest: &regressiontest
   python:
     - "3.7"
   install:
-    - .travis/install.sh functional-tests docs
+    - .travis/install.sh functional-tests
+  script:
+    - export PYTHONPATH="${TRAVIS_BUILD_DIR}/.travis"
+    - .travis/coverage-data.sh
+    - coverage run .travis/cover.py
+    - unset PYTHONPATH
+  after_failure:
+    - .travis/after_failure.sh
+  after_success:
+    # Report metrics, such as coverage
+    - coverage combine --append
+    - coverage xml --ignore-errors
+    - bash <(curl -s https://codecov.io/bash)
+
+flakytest: &flakytest
+  stage: sensitive-test
+  python:
+    - "3.7"
+  install:
+    - .travis/install.sh functional-tests
   script:
     - export PYTHONPATH="${TRAVIS_BUILD_DIR}/.travis"
     - .travis/coverage-data.sh
@@ -102,6 +121,10 @@ jobs:
   - <<: *regressiontest
     python: "3.7"
     env: CHUNK="4/4"
+
+  - <<: *flakytest
+    python: "3.7"
+    env: FLAKYTESTS="./flakytests"
 
   # TODO: run shortlist of regression tests with the
   #       least contemporary Python version
