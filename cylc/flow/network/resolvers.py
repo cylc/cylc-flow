@@ -21,7 +21,9 @@ from fnmatch import fnmatchcase
 
 # Message Filters
 def collate_workflow_atts(workflow):
-    """Collate workflow filter attributes."""
+    """Collate workflow filter attributes, setting defaults if non-existent."""
+    # Append new atts to the end of the list,
+    # this will retain order used in index access.
     return [
         workflow.owner,
         workflow.name,
@@ -29,27 +31,32 @@ def collate_workflow_atts(workflow):
     ]
 
 
-def workflow_atts_filter(natts, items):
-    """Match components of id argument with those of workflow id."""
+def workflow_ids_filter(w_atts, items):
+    """Match id arguments with workflow attributes.
+
+    Returns a boolean."""
+    # Return true if workflow matches any id arg.
     for owner, name, status in set(items):
-        if ((not owner or fnmatchcase(natts[0], owner)) and
-                (not name or fnmatchcase(natts[1], name)) and
-                (not status or natts[2] == status)):
+        if ((not owner or fnmatchcase(w_atts[0], owner)) and
+                (not name or fnmatchcase(w_atts[1], name)) and
+                (not status or w_atts[2] == status)):
             return True
     return False
 
 
 def workflow_filter(flow, args):
     """Filter workflows based on attribute arguments"""
-    natts = collate_workflow_atts(flow.workflow)
+    w_atts = collate_workflow_atts(flow.workflow)
+    # The w_atts (workflow attributes) list contains ordered workflow values
+    # or defaults (see collate function for index item).
     return ((not args.get('workflows') or
-            workflow_atts_filter(natts, args['workflows'])) and
+            workflow_ids_filter(w_atts, args['workflows'])) and
             not (args.get('exworkflows') and
-            workflow_atts_filter(natts, args['exworkflows'])))
+            workflow_ids_filter(w_atts, args['exworkflows'])))
 
 
 def collate_node_atts(node):
-    """Collate node filter attributes."""
+    """Collate node filter attributes, setting defaults if non-existent."""
     node_id = getattr(node, 'id')
     slash_count = node_id.count('/')
     n_id = node_id.split('/', slash_count)
@@ -59,6 +66,14 @@ def collate_node_atts(node):
     else:
         n_cycle = n_id[2]
         n_name = n_id[3]
+    # Append new atts to the end of the list,
+    # this will retain order used in index access
+    # 0 - owner
+    # 1 - workflow
+    # 2 - Cycle point or None
+    # 3 - name or namespace list
+    # 4 - submit number or None
+    # 5 - state
     return [
         n_id[0],
         n_id[1],
@@ -69,33 +84,38 @@ def collate_node_atts(node):
     ]
 
 
-def node_atts_filter(natts, items):
-    """Match node id argument with node attributes."""
+def node_ids_filter(n_atts, items):
+    """Match id arguments with node attributes.
+
+    Returns a boolean."""
     for owner, workflow, cycle, name, submit_num, state in items:
-        if ((not owner or fnmatchcase(natts[0], owner)) and
-                (not workflow or fnmatchcase(natts[1], workflow)) and
-                (not cycle or fnmatchcase(natts[2], cycle)) and
-                any(fnmatchcase(nn, name) for nn in natts[3]) and
+        if ((not owner or fnmatchcase(n_atts[0], owner)) and
+                (not workflow or fnmatchcase(n_atts[1], workflow)) and
+                (not cycle or fnmatchcase(n_atts[2], cycle)) and
+                any(fnmatchcase(nn, name) for nn in n_atts[3]) and
                 (not submit_num or
-                    fnmatchcase(str(natts[4]), submit_num.lstrip('0'))) and
-                (not state or natts[5] == state)):
+                    fnmatchcase(str(n_atts[4]), submit_num.lstrip('0'))) and
+                (not state or n_atts[5] == state)):
             return True
     return False
 
 
 def node_filter(node, args):
     """Filter nodes based on attribute arguments"""
-    natts = collate_node_atts(node)
+    n_atts = collate_node_atts(node)
+    # The n_atts (node attributes) list contains ordered node values
+    # or defaults (see collate function for index item).
     return (
-        (args.get('ghosts') or node.state != '') and
-        (not (args.get('states') and node.state != '')
-         or node.state in args['states']) and
-        not (args.get('exstates') and node.state != '' and
-             node.state in args['exstates']) and
+        (args.get('ghosts') or n_atts[5] != '') and
+        (not (args.get('states') and n_atts[5] != '')
+         or n_atts[5] in args['states']) and
+        not (args.get('exstates') and n_atts[5] != '' and
+             n_atts[5] in args['exstates']) and
         (args.get('mindepth', -1) < 0 or node.depth >= args['mindepth']) and
         (args.get('maxdepth', -1) < 0 or node.depth <= args['maxdepth']) and
-        (not args.get('ids') or node_atts_filter(natts, args['ids'])) and
-        not (args.get('exids') and node_atts_filter(natts, args['exids']))
+        # Now filter node against id arg lists
+        (not args.get('ids') or node_ids_filter(n_atts, args['ids'])) and
+        not (args.get('exids') and node_ids_filter(n_atts, args['exids']))
     )
 
 
