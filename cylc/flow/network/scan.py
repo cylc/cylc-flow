@@ -196,11 +196,13 @@ def re_compile_filters(patterns_owner=None, patterns_name=None):
     return (cres['owner'], cres['name'])
 
 
-def get_scan_items_from_fs(owner_pattern=None, reg_pattern=None):
+def get_scan_items_from_fs(
+        owner_pattern=None, reg_pattern=None, compile_reg=False,
+        active_only=True):
     """Scrape list of suites from the filesystem.
 
     Walk users' "~/cylc-run/" to get (host, port) from ".service/contact" for
-    active suites.
+    active, or all (active plus registered but dormant), suites.
 
     Yields:
         tuple - (reg, host, port)
@@ -239,17 +241,34 @@ def get_scan_items_from_fs(owner_pattern=None, reg_pattern=None):
 
             # Filter suites by name
             reg = os.path.relpath(dirpath, run_d)
-            if reg_pattern and not reg_pattern.match(reg):
-                continue
+            if reg_pattern:
+                if compile_reg:
+                    try:
+                        reg_pattern = re.compile(reg_pattern)
+                    except re.error as exc:
+                        raise ValueError("%s: %s" % (reg_pattern, exc))
+                if not reg_pattern.match(reg):
+                    continue
 
             # Choose only suites with .service and matching filter
-            try:
-                contact_data = srv_files_mgr.load_contact_file(reg, owner)
-            except (SuiteServiceFileError, IOError, TypeError, ValueError):
-                continue
-            else:
+            if active_only:
+                try:
+                    contact_data = srv_files_mgr.load_contact_file(reg, owner)
+                except (SuiteServiceFileError, IOError, TypeError, ValueError):
+                    continue
                 yield (
                     reg,
                     contact_data[srv_files_mgr.KEY_HOST],
                     contact_data[srv_files_mgr.KEY_PORT]
+                )
+            else:
+                try:
+                    source_dir = srv_files_mgr.get_suite_source_dir(reg)
+                    title = srv_files_mgr.get_suite_title(reg)
+                except (SuiteServiceFileError, IOError):
+                    continue
+                yield (
+                    reg,
+                    source_dir,
+                    title
                 )
