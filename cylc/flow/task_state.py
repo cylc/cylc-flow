@@ -34,8 +34,6 @@ from cylc.flow.wallclock import get_current_time_string
 TASK_STATUS_RUNAHEAD = "runahead"
 # Held back from job submission due to un-met prerequisites:
 TASK_STATUS_WAITING = "waiting"
-# Held back from job submission even if prerequisites are met:
-TASK_STATUS_HELD = "held"
 # Prerequisites met, but held back in a limited internal queue:
 TASK_STATUS_QUEUED = "queued"
 # Ready (prerequisites met) to be passed to job submission system:
@@ -61,7 +59,6 @@ TASK_STATUS_RETRYING = "retrying"
 TASK_STATUSES_ORDERED = [
     TASK_STATUS_RUNAHEAD,
     TASK_STATUS_WAITING,
-    TASK_STATUS_HELD,
     TASK_STATUS_QUEUED,
     TASK_STATUS_EXPIRED,
     TASK_STATUS_READY,
@@ -91,7 +88,6 @@ TASK_STATUSES_RESTRICTED = set([
 TASK_STATUSES_NO_JOB_FILE = set([
     TASK_STATUS_RUNAHEAD,
     TASK_STATUS_WAITING,
-    TASK_STATUS_HELD,
     TASK_STATUS_READY,
     TASK_STATUS_EXPIRED,
     TASK_STATUS_QUEUED
@@ -150,7 +146,6 @@ TASK_STATUSES_NOT_STALLED = TASK_STATUSES_ACTIVE | TASK_STATUSES_TO_BE_ACTIVE
 # Task statuses that can be manually triggered.
 TASK_STATUSES_TRIGGERABLE = set([
     TASK_STATUS_WAITING,
-    TASK_STATUS_HELD,
     TASK_STATUS_QUEUED,
     TASK_STATUS_EXPIRED,
     TASK_STATUS_SUBMIT_FAILED,
@@ -216,7 +211,7 @@ class TaskState(object):
     # Memory optimization - constrain possible attributes to this list.
     __slots__ = [
         "external_triggers",
-        "hold_swap",
+        "is_held",
         "identity",
         "is_updated",
         "kill_failed",
@@ -231,10 +226,10 @@ class TaskState(object):
         "_suicide_is_satisfied",
     ]
 
-    def __init__(self, tdef, point, status, hold_swap):
+    def __init__(self, tdef, point, status, is_held):
         self.identity = TaskID.get(tdef.name, str(point))
         self.status = status
-        self.hold_swap = hold_swap
+        self.is_held = is_held
         self.is_updated = False
         self.time_updated = None
 
@@ -271,9 +266,20 @@ class TaskState(object):
     def __str__(self):
         """Print status (hold_swap)."""
         ret = self.status
-        if self.hold_swap:
-            ret += ' (%s)' % self.hold_swap
+        if self.is_held:
+            ret += ' (held)'
         return ret
+
+    def __call__(self, *status, is_held=None):
+        return (
+            (
+                not status
+                or self.status in status
+            ) and (
+                is_held is None
+                or self.is_held == is_held
+            )
+        )
 
     def satisfy_me(self, all_task_outputs):
         """Attempt to get my prerequisites satisfied."""
@@ -353,42 +359,12 @@ class TaskState(object):
                            prereq.get_resolved_dependencies()))
 
     def set_held(self):
-        """Set state to TASK_STATUS_HELD, if possible.
-
-        If state can be held, set hold_swap to current state.
-        If state is active, set hold_swap to TASK_STATUS_HELD.
-        If state cannot be held, do nothing.
-
-        Return:
-            A 2-element tuple with the previous value of (status, hold_swap)
-            on change of status, or None if no change.
-        """
-        if self.status in TASK_STATUSES_ACTIVE:
-            self.hold_swap = TASK_STATUS_HELD
-            return (self.status, self.hold_swap)
-        elif self.status in [
-                TASK_STATUS_WAITING, TASK_STATUS_QUEUED,
-                TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING]:
-            return self._set_state(TASK_STATUS_HELD)
+        return self._set_state(is_held=True)
 
     def unset_held(self):
-        """Reset to my pre-held state, if not beyond the stop point.
+        return self._set_state(is_held=False)
 
-        Return:
-            A 2-element tuple with the previous value of (status, hold_swap)
-            on change of status, or None if no change.
-        """
-        if self.status != TASK_STATUS_HELD:
-            return
-        elif self.hold_swap is None:
-            return self.reset_state(TASK_STATUS_WAITING)
-        elif self.hold_swap == TASK_STATUS_HELD:
-            self.hold_swap = None
-            return (self.status, self.hold_swap)
-        else:
-            return self.reset_state(self.hold_swap)
-
-    def reset_state(self, status, respect_hold_swap=False):
+    def reset_state(self, status, is_held=None):
         """Change status, and manipulate outputs and prerequisites accordingly.
 
         Outputs are manipulated on manual state reset to reflect the new task
@@ -415,7 +391,7 @@ class TaskState(object):
                 If True, take no action if either `.status` or `.hold_swap` is
                 equivalent to `status`.
         """
-        ret = self._set_state(status, respect_hold_swap)
+        ret = self._set_state(status, is_held)
         if not ret:  # no change
             return ret
 
@@ -443,35 +419,26 @@ class TaskState(object):
 
         return ret
 
-    def _set_state(self, status, respect_hold_swap=False):
+    def _set_state(self, status=None, is_held=None):
         """Set state to new status and log."""
-        if self.status == self.hold_swap:
-            self.hold_swap = None
-        if (self.status, self.hold_swap) == (status, None):
+        current_status = (
+            self.status,
+            self.is_held
+        )
+        requested_status = (
+            status if status is not None else self.status,
+            is_held if is_held is not None else self.is_held
+        )
+        if current_status == requested_status:
             return
-        if (
-            respect_hold_swap
-            and (self.status, self.hold_swap) == (TASK_STATUS_HELD, status)
-        ):
-            return
+
         prev_message = str(self)
-        prev_status, prev_hold_swap = self.status, self.hold_swap
-        if status == TASK_STATUS_HELD:
-            self.hold_swap = self.status
-        elif status in TASK_STATUSES_ACTIVE:
-            if self.status == TASK_STATUS_HELD:
-                self.hold_swap = TASK_STATUS_HELD
-        elif (self.hold_swap == TASK_STATUS_HELD and
-                status not in TASK_STATUSES_FINAL):
-            self.hold_swap = status
-            status = TASK_STATUS_HELD
-        elif self.hold_swap:
-            self.hold_swap = None
-        self.status = status
+        self.status, self.is_held = requested_status
+
         self.time_updated = get_current_time_string()
         self.is_updated = True
         LOG.debug("[%s] -%s => %s", self.identity, prev_message, str(self))
-        return (prev_status, prev_hold_swap)
+        return current_status
 
     def is_gt(self, status):
         """"Return True if self.status > status."""

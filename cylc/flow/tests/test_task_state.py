@@ -22,7 +22,6 @@ from cylc.flow.cycling.iso8601 import ISO8601Point
 from cylc.flow.taskdef import TaskDef
 from cylc.flow.task_state import (
     TaskState,
-    TASK_STATUS_HELD,
     TASK_STATUS_RETRYING,
     TASK_STATUS_SUCCEEDED,
     TASK_STATUS_WAITING,
@@ -35,19 +34,19 @@ class TestTaskState(unittest.TestCase):
         """Test instantiation and simple resets."""
         point = ISO8601Point('2020')
         taskdef = TaskDef('who-cares', {}, 'live', point, False)
-        taskstate = TaskState(taskdef, point, TASK_STATUS_WAITING, None)
+        taskstate = TaskState(taskdef, point, TASK_STATUS_WAITING, False)
         self.assertIsNone(
             taskstate.reset_state(TASK_STATUS_WAITING),
             'same status returns None',
         )
         self.assertEqual(
             taskstate.reset_state(TASK_STATUS_SUCCEEDED),
-            (TASK_STATUS_WAITING, None),
+            (TASK_STATUS_WAITING, False),
             'different status returns previous (status, hold_swap)',
         )
         self.assertEqual(
-            (taskstate.status, taskstate.hold_swap),
-            (TASK_STATUS_SUCCEEDED, None),
+            (taskstate.status, taskstate.is_held),
+            (TASK_STATUS_SUCCEEDED, False),
             'reset status OK',
         )
 
@@ -55,21 +54,19 @@ class TestTaskState(unittest.TestCase):
         point = ISO8601Point('2020')
         taskdef = TaskDef('who-cares', {}, 'live', point, False)
         taskstate = TaskState(
-            taskdef, point, TASK_STATUS_HELD, TASK_STATUS_RETRYING)
+            taskdef, point, TASK_STATUS_RETRYING, is_held=True)
         self.assertIsNone(
-            taskstate.reset_state(
-                TASK_STATUS_RETRYING, respect_hold_swap=True),
+            taskstate.reset_state(TASK_STATUS_RETRYING),
             'same status returns None',
         )
         self.assertEqual(
-            taskstate.reset_state(
-                TASK_STATUS_SUCCEEDED, respect_hold_swap=True),
-            (TASK_STATUS_HELD, TASK_STATUS_RETRYING),
+            taskstate.reset_state(TASK_STATUS_SUCCEEDED),
+            (TASK_STATUS_RETRYING, True),
             'different status returns previous (status, hold_swap)',
         )
         self.assertEqual(
-            (taskstate.status, taskstate.hold_swap),
-            (TASK_STATUS_SUCCEEDED, None),
+            (taskstate.status, taskstate.is_held),
+            (TASK_STATUS_SUCCEEDED, True),
             'reset status OK',
         )
 

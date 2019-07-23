@@ -119,7 +119,10 @@ class TaskJobManager(object):
         """
         to_kill_tasks = []
         for itask in itasks:
-            if itask.state.status in TASK_STATUSES_ACTIVE:
+            if itask.state(
+                    *TASK_STATUSES_ACTIVE,
+                    is_held=False
+            ):
                 itask.state.set_held()
                 to_kill_tasks.append(itask)
             else:
@@ -146,7 +149,10 @@ class TaskJobManager(object):
         if poll_succ:
             pollable_statuses.add(TASK_STATUS_SUCCEEDED)
         for itask in itasks:
-            if itask.state.status in pollable_statuses:
+            if itask.state(
+                    *pollable_statuses,
+                    is_held=False
+            ):
                 to_poll_tasks.append(itask)
             else:
                 LOG.debug("skipping %s: not pollable, "
@@ -458,11 +464,17 @@ class TaskJobManager(object):
             log_lvl = WARNING
             log_msg = 'kill failed'
             itask.state.kill_failed = True
-        elif itask.state.status == TASK_STATUS_SUBMITTED:
+        elif itask.state(
+                TASK_STATUS_SUBMITTED,
+                is_held=False
+        ):
             self.task_events_mgr.process_message(
                 itask, CRITICAL, self.task_events_mgr.EVENT_SUBMIT_FAILED,
                 ctx.timestamp)
-        elif itask.state.status == TASK_STATUS_RUNNING:
+        elif itask.state(
+                TASK_STATUS_RUNNING,
+                is_held=False
+        ):
             self.task_events_mgr.process_message(
                 itask, CRITICAL, TASK_OUTPUT_FAILED)
         else:

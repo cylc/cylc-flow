@@ -166,7 +166,10 @@ def main(parser, options, suite, *task_ids):
             if itask.summary.get('submit_method_id') is not None:
                 print(('[%s] Job ID: %s' % (
                     itask.identity, itask.summary['submit_method_id'])))
-            if itask.state.status == TASK_STATUS_SUBMIT_FAILED:
+            if itask.state(
+                    TASK_STATUS_SUBMIT_FAILED,
+                    is_held=False
+            ):
                 ret_code = 1
     sys.exit(ret_code)
 

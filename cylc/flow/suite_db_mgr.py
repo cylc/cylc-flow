@@ -403,7 +403,7 @@ class SuiteDatabaseManager(object):
                 "cycle": str(itask.point),
                 "spawned": int(itask.has_spawned),
                 "status": itask.state.status,
-                "hold_swap": itask.state.hold_swap})
+                "is_held": itask.state.is_held})
             if itask.timeout is not None:
                 self.db_inserts_map[self.TABLE_TASK_TIMEOUT_TIMERS].append({
                     "name": itask.tdef.name,

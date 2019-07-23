@@ -285,7 +285,7 @@ class CylcSuiteDAO(object):
             ["name", {"is_primary_key": True}],
             ["spawned", {"datatype": "INTEGER"}],
             ["status"],
-            ["hold_swap"],
+            ["is_held", {"datatype": "INTEGER"}],
         ],
         TABLE_XTRIGGERS: [
             ["signature", {"is_primary_key": True}],
@@ -297,7 +297,7 @@ class CylcSuiteDAO(object):
             ["name", {"is_primary_key": True}],
             ["spawned", {"datatype": "INTEGER"}],
             ["status"],
-            ["hold_swap"],
+            ["is_held", {"datatype": "INTEGER"}],
         ],
         TABLE_TASK_STATES: [
             ["name", {"is_primary_key": True}],
@@ -693,7 +693,7 @@ class CylcSuiteDAO(object):
         select from task_pool table if id_key == CHECKPOINT_LATEST_ID.
         Otherwise select from task_pool_checkpoints where id == id_key.
         """
-        form_stmt = r"SELECT cycle,name,spawned,status,hold_swap FROM %s"
+        form_stmt = r"SELECT cycle,name,spawned,status,is_held FROM %s"
         if id_key is None or id_key == self.CHECKPOINT_LATEST_ID:
             stmt = form_stmt % self.TABLE_TASK_POOL
             stmt_args = []
@@ -708,7 +708,7 @@ class CylcSuiteDAO(object):
         """Select from task_pool+task_states+task_jobs for restart.
 
         Invoke callback(row_idx, row) on each row, where each row contains:
-            [cycle, name, spawned, is_late, status, hold_swap, submit_num,
+            [cycle, name, spawned, is_late, status, is_held, submit_num,
              try_num, user_at_host, time_submit, time_run, timeout, outputs]
 
         If id_key is specified,
@@ -722,7 +722,7 @@ class CylcSuiteDAO(object):
                 %(task_pool)s.spawned,
                 %(task_late_flags)s.value,
                 %(task_pool)s.status,
-                %(task_pool)s.hold_swap,
+                %(task_pool)s.is_held,
                 %(task_states)s.submit_num,
                 %(task_jobs)s.try_num,
                 %(task_jobs)s.user_at_host,
