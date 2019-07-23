@@ -1,0 +1,67 @@
+[cylc]
+    UTC mode = True
+
+[scheduling]
+    initial cycle point = 19831213T0600Z
+    final cycle point = 19831213T0600Z
+    [[dependencies]]
+        [[[PT3H]]]
+            graph="""Alice => Bob 
+                  Alice => Charlie
+                  Alice => Dai
+                  """
+
+[job platforms]
+    [[spice]]
+        [[[batch system]]]
+            class = slurm
+            before command = sshare
+            after command = sacct -j %(jobid)s --format=""
+    [[xcs]]
+        login hosts = xcslr0, xcslr1
+        retrieve job logs = True
+        [[[batch system]]]
+            class = pbs
+    [[desktop]]
+        login hosts = vld392
+
+
+[runtime]
+    [[Alice]]
+        # This script should run on desktop (?) after the changes
+        script="""
+               sleep 5
+               echo "Alice\'s script is boring"
+               """
+
+    [[Bob]]
+        script="""
+               sleep 5
+               echo "Bob\'s script is boring"
+               """
+        [[[platform]]]
+            platform = desktop
+
+
+    [[Charlie]]
+        script="""
+               sleep 5
+               echo "Charlie\'s script is boring"
+               """
+
+        [[[platform]]]
+            platform = spice
+        [[[directives]]]
+            --mem=5
+            --ntasks=1
+
+    [[Dai]]
+        script="""
+               sleep 5
+               echo "Dai\'s script is boring"
+               """
+        [[[platform]]]
+            platform = cray
+
+
+
