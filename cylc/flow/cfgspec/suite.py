@@ -158,6 +158,51 @@ SPEC = {
             },
         },
     },
+    'job platforms': {
+        '__MANY__': {
+            'batch system': {
+                'class': [VDR.V_STRING],
+                'before command': [VDR.V_STRING],
+                'after command': [VDR.V_STRING],
+            },
+            'run directory': [VDR.V_STRING, '$HOME/cylc-run'],
+            'work directory': [VDR.V_STRING, '$HOME/cylc-run'],
+            'task communication method': [
+                VDR.V_STRING, 'default', 'ssh', 'poll'],
+            'submission polling intervals': [VDR.V_INTERVAL_LIST],
+            'execution polling intervals': [VDR.V_INTERVAL_LIST],
+            'scp command': [
+                VDR.V_STRING, 'scp -oBatchMode=yes -oConnectTimeout=10'],
+            'ssh command': [
+                VDR.V_STRING, 'ssh -oBatchMode=yes -oConnectTimeout=10'],
+            'login hosts': [VDR.V_STRING_LIST],
+            'use login shell': [VDR.V_BOOLEAN, True],
+            'cylc executable': [VDR.V_STRING, 'cylc'],
+            'global init-script': [VDR.V_STRING],
+            'copyable environment variables': [VDR.V_STRING_LIST],
+            'retrieve job logs': [VDR.V_BOOLEAN],
+            'retrieve job logs command': [VDR.V_STRING, 'rsync -a'],
+            'retrieve job logs max size': [VDR.V_STRING],
+            'retrieve job logs retry delays': [VDR.V_INTERVAL_LIST],
+            'task event handler retry delays': [VDR.V_INTERVAL_LIST],
+            'tail command template': [
+                VDR.V_STRING, 'tail -n +1 -F %(filename)s'],
+            'owner': [VDR.V_STRING],
+            'suite definition directory': [VDR.V_STRING],
+            'batch systems': {
+                '__MANY__': {
+                    'batch submit command template': [VDR.V_STRING],
+                    'err tailer': [VDR.V_STRING],
+                    'out tailer': [VDR.V_STRING],
+                    'err viewer': [VDR.V_STRING],
+                    'out viewer': [VDR.V_STRING],
+                    'job name length maximum': [VDR.V_INTEGER],
+                    'execution time limit polling intervals': [
+                        VDR.V_INTERVAL_LIST],
+                },
+            },
+        },
+    },
     'runtime': {
         '__MANY__': {
             'inherit': [VDR.V_STRING_LIST],
@@ -189,21 +234,11 @@ SPEC = {
                 'exclude': [VDR.V_STRING_LIST],
             },
             'job': {
-                'batch system': [VDR.V_STRING, 'background'],
-                'batch submit command template': [VDR.V_STRING],
                 'execution polling intervals': [VDR.V_INTERVAL_LIST, None],
                 'execution retry delays': [VDR.V_INTERVAL_LIST, None],
                 'execution time limit': [VDR.V_INTERVAL],
                 'submission polling intervals': [VDR.V_INTERVAL_LIST, None],
                 'submission retry delays': [VDR.V_INTERVAL_LIST, None],
-            },
-            'remote': {
-                'host': [VDR.V_STRING],
-                'owner': [VDR.V_STRING],
-                'suite definition directory': [VDR.V_STRING],
-                'retrieve job logs': [VDR.V_BOOLEAN],
-                'retrieve job logs max size': [VDR.V_STRING],
-                'retrieve job logs retry delays': [VDR.V_INTERVAL_LIST, None],
             },
             'events': {
                 'execution timeout': [VDR.V_INTERVAL],
@@ -253,6 +288,9 @@ SPEC = {
             },
             'parameter environment templates': {
                 '__MANY__': [VDR.V_STRING],
+            },
+            'platform': {
+                'platform': [VDR.V_STRING],
             },
         },
     },

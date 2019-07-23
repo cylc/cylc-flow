@@ -109,8 +109,13 @@ SPEC = {
     },
 
     # task
-    'platforms': {
-        'default_platform': {
+    'job platforms': {
+        'default platform': {
+            'batch system': {
+                'class': [VDR.V_STRING],
+                'before command': [VDR.V_STRING],
+                'after command': [VDR.V_STRING],
+            },
             'run directory': [VDR.V_STRING, '$HOME/cylc-run'],
             'work directory': [VDR.V_STRING, '$HOME/cylc-run'],
             'task communication method': [
@@ -121,7 +126,7 @@ SPEC = {
                 VDR.V_STRING, 'scp -oBatchMode=yes -oConnectTimeout=10'],
             'ssh command': [
                 VDR.V_STRING, 'ssh -oBatchMode=yes -oConnectTimeout=10'],
-            'login host': [VDR.V_STRING],
+            'login hosts': [VDR.V_STRING],
             'use login shell': [VDR.V_BOOLEAN, True],
             'cylc executable': [VDR.V_STRING, 'cylc'],
             'global init-script': [VDR.V_STRING],
@@ -341,36 +346,36 @@ class GlobalConfig(ParsecConfig):
 
     def get_host_item(self, item, host=None, owner=None, replace_home=False,
                       owner_home=None):
-        """This allows platforms with no matching entry in the config file
-        to default to appropriately modified default_platform settings."""
+        """This allows job platforms with no matching entry in the config file
+        to default to appropriately modified default platform settings."""
 
         cfg = self.get()
 
-        # (this may be called with explicit None values for default_platform
+        # (this may be called with explicit None values for default platform
         # and owner, so we can't use proper defaults in the arg list)
         if not host:
-            # if no host is given the caller is asking about default_platform
-            host = 'default_platform'
+            # if no host is given the caller is asking about default platform
+            host = 'default platform'
 
         # is there a matching host section?
         host_key = None
-        if host in cfg['platforms']:
+        if host in cfg['job platforms']:
             # there's an entry for this host
             host_key = host
         else:
             # try for a pattern match
-            for cfg_host in cfg['platforms']:
+            for cfg_host in cfg['job platforms']:
                 if re.match(cfg_host, host):
                     host_key = cfg_host
                     break
         modify_dirs = False
         if host_key is not None:
             # entry exists, any unset items under it have already
-            # defaulted to modified default_platform values (see site cfgspec)
-            value = cfg['platforms'][host_key][item]
+            # defaulted to modified default platform values (see site cfgspec)
+            value = cfg['job platforms'][host_key][item]
         else:
-            # no entry so default to default_platform and modify appropriately
-            value = cfg['platforms']['default_platform'][item]
+            # no entry so default to default platform and modify appropriately
+            value = cfg['job platforms']['default platform'][item]
             modify_dirs = True
         if value is not None and 'directory' in item:
             if replace_home or modify_dirs:
@@ -390,32 +395,32 @@ class GlobalConfig(ParsecConfig):
     def _transform(self):
         """Transform various settings.
 
-        Host item values of None default to modified default_platform values.
+        Host item values of None default to modified default platform values.
         Expand environment variables and ~ notations.
 
         Ensure os.environ['HOME'] is defined with the correct value.
         """
         cfg = self.get()
 
-        for host in cfg['platforms']:
-            if host == 'default_platform':
+        for host in cfg['job platforms']:
+            if host == 'default platform':
                 continue
-            for item, value in cfg['platforms'][host].items():
+            for item, value in cfg['job platforms'][host].items():
                 if value is None:
-                    newvalue = cfg['platforms']['default_platform'][item]
+                    newvalue = cfg['job platforms']['default platform'][item]
                 else:
                     newvalue = value
                 if newvalue and 'directory' in item:
                     # replace local home dir with $HOME for evaluation on other
                     # host
                     newvalue = newvalue.replace(self._HOME, '$HOME')
-                cfg['platforms'][host][item] = newvalue
+                cfg['job platforms'][host][item] = newvalue
 
         # Expand environment variables and ~user in LOCAL file paths.
         if 'HOME' not in os.environ:
             os.environ['HOME'] = self._HOME
         cfg['documentation']['local'] = os.path.expandvars(
             cfg['documentation']['local'])
-        for key, val in cfg['platforms']['default_platform'].items():
+        for key, val in cfg['job platforms']['default platform'].items():
             if val and 'directory' in key:
-                cfg['platforms']['default_platform'][key] = os.path.expandvars(val)
+                cfg['job platforms']['default platform'][key] = os.path.expandvars(val)

@@ -761,9 +761,11 @@ class TaskJobManager(object):
 
         # Determine task host settings now, just before job submission,
         # because dynamic host selection may be used.
+        # @TODO Get task host here.
         try:
+            import pdb; pdb.set_trace()
             task_host = self.task_remote_mgr.remote_host_select(
-                rtconfig['remote']['host'])
+                rtconfig['platform']['platform'])
         except TaskRemoteMgmtError as exc:
             # Submit number not yet incremented
             itask.submit_num += 1
