@@ -1,9 +1,13 @@
 # The Cylc Workflow Engine
 
 **Project**: [![PyPI](https://img.shields.io/pypi/v/cylc-flow.svg?color=yellow)](https://pypi.org/project/cylc-flow/) [![License](https://img.shields.io/github/license/cylc/cylc-flow.svg?color=lightgrey)](https://github.com/cylc/cylc-flow/blob/master/COPYING) [![Website](https://img.shields.io/website/https/cylc.github.io.svg?color=green&up_message=live)](https://cylc.github.io/) [![Documentation](https://img.shields.io/website/https/cylc.github.io/doc/built-sphinx/index.html.svg?color=red&label=documentation&up_message=live)](https://cylc.github.io/doc/built-sphinx/index.html)
+
 **Support**: [![Discourse](https://img.shields.io/discourse/https/cylc.discourse.group/posts.svg?color=blueviolet)](https://cylc.discourse.group/)
+
 **References**: [![DOI](https://zenodo.org/badge/1836229.svg)](https://zenodo.org/badge/latestdoi/1836229) [![JOSS](http://joss.theoj.org/papers/10.21105/joss.00737/status.svg)](https://doi.org/10.21105/joss.00737) [![CISE](https://img.shields.io/website/https/ieeexplore.ieee.org/document/8675433.svg?color=orange&label=CISE&up_message=10.1109%2FMCSE.2019.2906593)](https://ieeexplore.ieee.org/document/8675433)
+
 **Development**: [![Contributors](https://img.shields.io/github/contributors/cylc/cylc-flow.svg?color=9cf)](https://github.com/cylc/cylc-flow/graphs/contributors) [![Commit activity](https://img.shields.io/github/commit-activity/m/cylc/cylc-flow.svg?color=yellowgreen)](https://github.com/cylc/cylc-flow/commits/master) [![Last commit](https://img.shields.io/github/last-commit/cylc/cylc-flow.svg?color=ff69b4)](https://github.com/cylc/cylc-flow/commits/master)
+
 **Testing**: [![Build Status](https://travis-ci.org/cylc/cylc-flow.svg?branch=master)](https://travis-ci.org/cylc/cylc-flow) [![Codecov](https://codecov.io/gh/cylc/cylc-flow/branch/master/graph/badge.svg)](https://codecov.io/gh/cylc/cylc-flow) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/1d6a97bf05114066ae30b63dcb0cdcf9)](https://www.codacy.com/app/Cylc/cylc?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=cylc/cylc&amp;utm_campaign=Badge_Grade)
 
 
