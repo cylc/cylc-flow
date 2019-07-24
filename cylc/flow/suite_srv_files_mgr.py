@@ -349,36 +349,6 @@ To start a new run, stop the old one first with one or more of these:
             run_d = get_suite_run_dir(reg)
         return os.path.join(run_d, self.DIR_BASE_SRV)
 
-    def list_suites(self, regfilter=None):
-        """Return a filtered list of valid suite registrations."""
-        rec_regfilter = None
-        if regfilter:
-            try:
-                rec_regfilter = re.compile(regfilter)
-            except re.error as exc:
-                raise ValueError("%s: %s" % (regfilter, exc))
-        run_d = glbl_cfg().get_host_item('run directory')
-        results = []
-        for dirpath, dnames, _ in os.walk(run_d, followlinks=True):
-            # Always descend for top directory, but
-            # don't descend further if it has a .service/ dir
-            if dirpath != run_d and self.DIR_BASE_SRV in dnames:
-                dnames[:] = []
-            # Choose only suites with .service and matching filter
-            reg = os.path.relpath(dirpath, run_d)
-            path = os.path.join(dirpath, self.DIR_BASE_SRV)
-            if (not self._locate_item(self.FILE_BASE_SOURCE, path) or
-                    rec_regfilter and not rec_regfilter.search(reg)):
-                continue
-            try:
-                results.append([
-                    reg,
-                    self.get_suite_source_dir(reg),
-                    self.get_suite_title(reg)])
-            except (IOError, SuiteServiceFileError) as exc:
-                LOG.error('%s: %s', reg, exc)
-        return results
-
     def load_contact_file(self, reg, owner=None, host=None, file_base=None):
         """Load contact file. Return data as key=value dict."""
         if not file_base:

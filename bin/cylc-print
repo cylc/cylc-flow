@@ -35,9 +35,10 @@ if remrun():
 import os
 import re
 
+from cylc.flow.network.scan import get_scan_items_from_fs
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.flow.print_tree import print_tree
+from cylc.flow.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.flow.terminal import cli_function
 
 
@@ -89,8 +90,13 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser, options, regfilter=None):
-    suite_src_files_mgr = SuiteSrvFilesManager()
-    allsuites = suite_src_files_mgr.list_suites(regfilter)
+    if regfilter:
+        try:
+            regfilter = re.compile(regfilter)
+        except re.error as exc:
+            raise ValueError("%s: %s" % (regfilter, exc))
+    allsuites = list(
+        get_scan_items_from_fs(reg_pattern=regfilter, active_only=False))
     if options.fail and not allsuites:
         raise SystemExit('ERROR: no suites matched.')
     if not options.tree:
