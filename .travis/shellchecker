@@ -75,9 +75,9 @@ main () {
 default () {
     # run a strict check on all "functional" scripts
     main '.' \
-        --exclude 'tests/' \
         --exclude 'cylc/flow/tests/parsec' \
         --exclude 'etc/bin/live-graph-movie.sh' \
+        --exclude 'tests/' \
         -- -e SC1090
 
     # run a lenient check on all test scripts

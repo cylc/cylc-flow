@@ -72,6 +72,8 @@ for T in $SRCE; do
         RDIR="$( dirname "$RPATH" )"
 
         cylc task message "Creating remote destination directory, $RDIR"
+        # RDIR is a variable local to this script
+        # shellcheck disable=SC2029
         ssh "$RMACH" mkdir -p "$RDIR"
     else
         DIR="$( dirname "$D" )"

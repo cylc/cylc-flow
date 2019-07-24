@@ -1,0 +1,5 @@
+edge "foo.1" "bar.1"
+graph
+node "bar.1" "bar\n1"
+node "foo.1" "foo\n1"
+stop
