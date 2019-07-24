@@ -134,7 +134,7 @@ class TaskPool(object):
                 continue
             for taskdef in taskdefs:
                 task_items[(taskdef.name, point_str)] = taskdef
-            select_args.append((name_str, point_str))
+                select_args.append((taskdef.name, point_str))
         if stopcp is None:
             stop_point = None
         else:
@@ -161,11 +161,11 @@ class TaskPool(object):
                         key[1]))
                     continue
 
-            submit_num = submit_nums.get(key)
+            submit_num = submit_nums.get(key, 0)
             itask = self.add_to_runahead_pool(TaskProxy(
                 taskdef, point, stop_point=stop_point, submit_num=submit_num))
             if itask:
-                LOG.info("[%s] -inserted", itask)
+                LOG.info("[%s] -submit-num=%02d, inserted", itask, submit_num)
         return n_warnings
 
     def add_to_runahead_pool(self, itask, is_new=True):

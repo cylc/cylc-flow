@@ -216,6 +216,9 @@ The `cylc run` and `cylc restart` commands can now accept the new
 configuration to force auto shutdown to be enabled. Previously, it is only
 possible to disable auto shutdown on the command line.
 
+[#3236](https://github.com/cylc/cylc-flow/pull/3236) - Fix submit number
+increment logic on insert of family with tasks that were previously submitted.
+
 ### Documentation
 
 [#3181](https://github.com/cylc/cylc-flow/pull/3181) - moved documentation to
