@@ -119,10 +119,7 @@ class TaskJobManager(object):
         """
         to_kill_tasks = []
         for itask in itasks:
-            if itask.state(
-                    *TASK_STATUSES_ACTIVE,
-                    is_held=False
-            ):
+            if itask.state(*TASK_STATUSES_ACTIVE):
                 itask.state.set_held()
                 to_kill_tasks.append(itask)
             else:
@@ -462,17 +459,11 @@ class TaskJobManager(object):
             log_lvl = WARNING
             log_msg = 'kill failed'
             itask.state.kill_failed = True
-        elif itask.state(
-                TASK_STATUS_SUBMITTED,
-                is_held=False
-        ):
+        elif itask.state(TASK_STATUS_SUBMITTED):
             self.task_events_mgr.process_message(
                 itask, CRITICAL, self.task_events_mgr.EVENT_SUBMIT_FAILED,
                 ctx.timestamp)
-        elif itask.state(
-                TASK_STATUS_RUNNING,
-                is_held=False
-        ):
+        elif itask.state(TASK_STATUS_RUNNING):
             self.task_events_mgr.process_message(
                 itask, CRITICAL, TASK_OUTPUT_FAILED)
         else:

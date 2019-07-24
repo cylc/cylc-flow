@@ -241,8 +241,7 @@ class TaskPool(object):
                 if itask.state(
                     TASK_STATUS_FAILED,
                     TASK_STATUS_SUCCEEDED,
-                    TASK_STATUS_EXPIRED,
-                    is_held=False
+                    TASK_STATUS_EXPIRED
                 ):
                     self.release_runahead_task(itask)
                     released = True
@@ -257,8 +256,7 @@ class TaskPool(object):
                 if not itask.state(
                     TASK_STATUS_FAILED,
                     TASK_STATUS_SUCCEEDED,
-                    TASK_STATUS_EXPIRED,
-                    is_held=False
+                    TASK_STATUS_EXPIRED
                 ):
                     has_unfinished_itasks = True
                     break
@@ -365,8 +363,7 @@ class TaskPool(object):
         else:
             if itask.state(
                 TASK_STATUS_SUBMITTED,
-                TASK_STATUS_RUNNING,
-                is_held=False
+                TASK_STATUS_RUNNING
             ):
                 itask.state.set_prerequisites_all_satisfied()
                 # update the task proxy with user@host
@@ -385,8 +382,7 @@ class TaskPool(object):
 
             elif itask.state(
                 TASK_STATUS_SUBMIT_FAILED,
-                TASK_STATUS_FAILED,
-                is_held=False
+                TASK_STATUS_FAILED
             ):
                 itask.state.set_prerequisites_all_satisfied()
 
@@ -407,8 +403,7 @@ class TaskPool(object):
                 itask.state.set_prerequisites_all_satisfied()
 
             elif itask.state(
-                TASK_STATUS_SUCCEEDED,
-                is_held=False
+                TASK_STATUS_SUCCEEDED
             ):
                 itask.state.set_prerequisites_all_satisfied()
 
@@ -418,8 +413,7 @@ class TaskPool(object):
             if itask.state(
                     TASK_STATUS_RUNNING,
                     TASK_STATUS_FAILED,
-                    TASK_STATUS_SUCCEEDED,
-                    is_held=False
+                    TASK_STATUS_SUCCEEDED
             ):
                 try:
                     for message in json.loads(outputs_str).values():
@@ -791,10 +785,7 @@ class TaskPool(object):
                     submit_num=itask.submit_num))
                 itask.copy_to_reload_successor(new_task)
                 LOG.info('[%s] -reloaded task definition', itask)
-                if itask.state(
-                        *TASK_STATUSES_ACTIVE,
-                        is_held=False
-                ):
+                if itask.state(*TASK_STATUSES_ACTIVE):
                     LOG.warning(
                         "[%s] -job(%02d) active with pre-reload settings",
                         itask,
@@ -842,10 +833,7 @@ class TaskPool(object):
         for itask in self.get_tasks():
             if (
                     stop_mode == StopMode.REQUEST_CLEAN
-                    and itask.state(
-                        *TASK_STATUSES_ACTIVE,
-                        is_held=False
-                    )
+                    and itask.state(*TASK_STATUSES_ACTIVE)
                     and not itask.state.kill_failed
             ):
                 return False
@@ -855,17 +843,12 @@ class TaskPool(object):
         """Log (warning) orphaned tasks on suite stop."""
         for itask in self.get_tasks():
             if (
-                    itask.state(
-                        *TASK_STATUSES_ACTIVE,
-                        is_held=False
-                    ) and itask.state.kill_failed
+                    itask.state(*TASK_STATUSES_ACTIVE)
+                    and itask.state.kill_failed
             ):
                 LOG.warning("%s: orphaned task (%s, kill failed)" % (
                     itask.identity, itask.state.status))
-            elif itask.state(
-                    *TASK_STATUSES_ACTIVE,
-                    is_held=False
-            ):
+            elif itask.state(*TASK_STATUSES_ACTIVE):
                 LOG.warning("%s: orphaned task (%s)" % (
                     itask.identity, itask.state.status))
         for key1, point, name, submit_num in self.task_events_mgr.event_timers:
@@ -891,7 +874,6 @@ class TaskPool(object):
                     or itask.state(
                         TASK_STATUS_SUCCEEDED,
                         TASK_STATUS_EXPIRED,
-                        is_held=False
                     )
             ):
                 # Ignore: Task beyond stop point.
@@ -989,7 +971,6 @@ class TaskPool(object):
             if itask.state(
                     TASK_STATUS_FAILED,
                     TASK_STATUS_SUBMIT_FAILED,
-                    is_held=False
             ):
                 failed.append(itask)
         return failed
@@ -1000,7 +981,6 @@ class TaskPool(object):
             if itask.state(
                     TASK_STATUS_FAILED,
                     TASK_STATUS_SUBMIT_FAILED,
-                    is_held=False
             ):
                 return True
         return False
@@ -1054,15 +1034,11 @@ class TaskPool(object):
             #      to run concurrently, but not out of order).
             if (
                 not itask.has_spawned
-                and not itask.state(
-                    TASK_STATUS_SUBMIT_FAILED,
-                    is_held=False
-                ) and (
+                and not itask.state(TASK_STATUS_SUBMIT_FAILED)
+                and (
                     itask.tdef.spawn_ahead
-                    or itask.state(
-                        TASK_STATUS_EXPIRED,
-                        is_held=False
-                    ) or (
+                    or itask.state(TASK_STATUS_EXPIRED)
+                    or (
                         itask.state(is_held=False)
                         and itask.state.is_gt(TASK_STATUS_READY)
                     )
@@ -1141,8 +1117,7 @@ class TaskPool(object):
             if (
                     itask.state(
                         TASK_STATUS_SUCCEEDED,
-                        TASK_STATUS_EXPIRED,
-                        is_held=False
+                        TASK_STATUS_EXPIRED
                     )
                     and itask.has_spawned
                     and itask.cleanup_cutoff is not None
@@ -1235,10 +1210,7 @@ class TaskPool(object):
                 itask.summary['submit_num'] = itask.submit_num
                 itask.local_job_file_path = None
                 continue
-            if itask.state(
-                    *TASK_STATUSES_ACTIVE,
-                    is_held=False
-            ):
+            if itask.state(*TASK_STATUSES_ACTIVE):
                 LOG.warning('%s: already triggered' % itask.identity)
                 n_warnings += 1
                 continue
@@ -1311,10 +1283,7 @@ class TaskPool(object):
         for itask in self.get_tasks():
             if (
                     itask.identity == id_
-                    and itask.state(
-                        TASK_STATUS_SUCCEEDED,
-                        is_held=False
-                    )
+                    and itask.state(TASK_STATUS_SUCCEEDED)
             ):
                 return True
         return False
@@ -1326,10 +1295,7 @@ class TaskPool(object):
         for itask in self.get_tasks():
             if itask.identity == id_:
                 found = True
-                if itask.state(
-                        TASK_STATUS_RUNNING,
-                        is_held=False
-                ):
+                if itask.state(TASK_STATUS_RUNNING):
                     running = True
                 break
         if found and exists_only:

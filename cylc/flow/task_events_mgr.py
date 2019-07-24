@@ -162,10 +162,7 @@ class TaskEventsManager(object):
         If now is set, set the timer only if the previous delay is done.
         Return the next delay.
         """
-        if not itask.state(
-                *TASK_STATUSES_ACTIVE,
-                is_held=False
-        ):
+        if not itask.state(*TASK_STATUSES_ACTIVE):
             # Reset, task not active
             itask.timeout = None
             itask.poll_timer = None
@@ -189,16 +186,10 @@ class TaskEventsManager(object):
         if itask.timeout is None or now <= itask.timeout:
             return can_poll
         # Timeout reached for task, emit event and reset itask.timeout
-        if itask.state(
-                TASK_STATUS_RUNNING,
-                is_held=False
-        ):
+        if itask.state(TASK_STATUS_RUNNING):
             time_ref = itask.summary['started_time']
             event = 'execution timeout'
-        elif itask.state(
-                TASK_STATUS_SUBMITTED,
-                is_held=False
-        ):
+        elif itask.state(TASK_STATUS_SUBMITTED):
             time_ref = itask.summary['submitted_time']
             event = 'submission timeout'
         msg = event
@@ -374,7 +365,6 @@ class TaskEventsManager(object):
         if message == TASK_OUTPUT_STARTED:
             if (
                     flag == self.FLAG_RECEIVED
-                    and itask.state(is_held=False)  # TODO - relax this req?
                     and itask.state.is_gt(TASK_STATUS_RUNNING)
             ):
                 return True
@@ -384,7 +374,6 @@ class TaskEventsManager(object):
         elif message == TASK_OUTPUT_FAILED:
             if (
                     flag == self.FLAG_RECEIVED
-                    and itask.state(is_held=False)
                     and itask.state.is_gt(TASK_STATUS_FAILED)
             ):
                 return True
@@ -392,7 +381,6 @@ class TaskEventsManager(object):
         elif message == self.EVENT_SUBMIT_FAILED:
             if (
                     flag == self.FLAG_RECEIVED
-                    and itask.state(is_held=False)
                     and itask.state.is_gt(TASK_STATUS_SUBMIT_FAILED)
             ):
                 return True
@@ -400,7 +388,6 @@ class TaskEventsManager(object):
         elif message == TASK_OUTPUT_SUBMITTED:
             if (
                     flag == self.FLAG_RECEIVED
-                    and itask.state(is_held=False)
                     and itask.state.is_gt(TASK_STATUS_SUBMITTED)
             ):
                 return True
@@ -409,7 +396,6 @@ class TaskEventsManager(object):
             # Task received signal.
             if (
                     flag == self.FLAG_RECEIVED
-                    and itask.state(is_held=False)
                     and itask.state.is_gt(TASK_STATUS_FAILED)
             ):
                 return True
@@ -422,7 +408,6 @@ class TaskEventsManager(object):
             # Task aborted with message
             if (
                     flag == self.FLAG_RECEIVED
-                    and itask.state(is_held=False)
                     and itask.state.is_gt(TASK_STATUS_FAILED)
             ):
                 return True
@@ -978,10 +963,7 @@ class TaskEventsManager(object):
 
     def _reset_job_timers(self, itask):
         """Set up poll timer and timeout for task."""
-        if not itask.state(
-                *TASK_STATUSES_ACTIVE,
-                is_held=False
-        ):
+        if not itask.state(*TASK_STATUSES_ACTIVE):
             # Reset, task not active
             itask.timeout = None
             itask.poll_timer = None
@@ -993,10 +975,7 @@ class TaskEventsManager(object):
         # Set timeout
         timeref = None  # reference time, submitted or started time
         timeout = None  # timeout in setting
-        if itask.state(
-                TASK_STATUS_RUNNING,
-                is_held=False
-        ):
+        if itask.state(TASK_STATUS_RUNNING):
             timeref = itask.summary['started_time']
             timeout_key = 'execution timeout'
             timeout = self._get_events_conf(itask, timeout_key)

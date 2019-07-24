@@ -515,10 +515,7 @@ see `COPYING' in the Cylc source distribution.
         # Note: tasks should all be in the runahead pool at this point.
         auths = set()
         for itask in self.pool.get_rh_tasks():
-            if itask.state(
-                    *TASK_STATUSES_ACTIVE,
-                    is_held=False
-            ):
+            if itask.state(*TASK_STATUSES_ACTIVE):
                 auths.add((itask.task_host, itask.task_owner))
         while auths:
             for host, owner in auths.copy():
@@ -782,9 +779,7 @@ see `COPYING' in the Cylc source distribution.
         itasks, bad_items = self.pool.filter_task_proxies(items)
         if self.config.run_mode('simulation'):
             for itask in itasks:
-                if itask.state(
-                        *TASK_STATUSES_ACTIVE,
-                ):
+                if itask.state(*TASK_STATUSES_ACTIVE):
                     itask.state.reset_state(TASK_STATUS_FAILED)
             return len(bad_items)
         self.task_job_mgr.kill_task_jobs(self.suite, itasks)
@@ -1294,10 +1289,7 @@ see `COPYING' in the Cylc source distribution.
             #             suite has stopped running.
             for itask in self.pool.get_tasks():
                 if (
-                        itask.state(
-                            *TASK_STATUSES_ACTIVE,
-                            is_held=False
-                        )
+                        itask.state(*TASK_STATUSES_ACTIVE)
                         and itask.summary['batch_sys_name']
                         and self.task_job_mgr.batch_sys_mgr
                         .is_job_local_to_host(
@@ -1826,18 +1818,12 @@ see `COPYING' in the Cylc source distribution.
         for itask in self.pool.get_all_tasks():
             if self.pool.stop_point is None:
                 # Don't if any unsucceeded task exists.
-                if not itask.state(
-                        *TASK_STATUSES_SUCCESS,
-                        is_held=False
-                ):
+                if not itask.state(*TASK_STATUSES_SUCCESS):
                     can_shutdown = False
                     break
             elif (
                     itask.point <= self.pool.stop_point
-                    and not itask.state(
-                        *TASK_STATUSES_SUCCESS,
-                        is_held=False
-                    )
+                    and not itask.state(*TASK_STATUSES_SUCCESS)
             ):
                 # Don't if any unsucceeded task exists < stop point...
                 if itask.identity not in self.pool.held_future_tasks:
