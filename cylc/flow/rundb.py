@@ -663,19 +663,16 @@ class CylcSuiteDAO(object):
         task_ids should be specified as [(name-glob, cycle), ...]
 
         """
-        stmt = r"SELECT name,cycle,submit_num FROM %(name)s" % {
-            "name": self.TABLE_TASK_STATES}
-        stmt_args = []
-        if task_ids:
-            stmt += (
-                " WHERE (" +
-                ") OR (".join(["name GLOB ? AND cycle==?"] * len(task_ids)) +
-                ")")
-            for name, cycle in task_ids:
-                stmt_args += [name, cycle]
+        stmt = (
+            r"SELECT name,cycle,submit_num FROM %(name)s"
+            r" WHERE name==? AND CYCLE==?"
+        ) % {"name": self.TABLE_TASK_STATES}
         ret = {}
-        for name, cycle, submit_num in self.connect().execute(stmt, stmt_args):
-            ret[(name, cycle)] = submit_num
+        for name, cycle in task_ids:
+            for name, cycle, submit_num in self.connect().execute(
+                stmt, (name, cycle,)
+            ):
+                ret[(name, cycle)] = submit_num
         return ret
 
     def select_xtriggers_for_restart(self, callback):
