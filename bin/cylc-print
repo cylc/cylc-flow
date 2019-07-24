@@ -90,8 +90,13 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser, options, regfilter=None):
-    allsuites = list(get_scan_items_from_fs(
-        reg_pattern=regfilter, compile_reg=True, active_only=False))
+    if regfilter:
+        try:
+            regfilter = re.compile(regfilter)
+        except re.error as exc:
+            raise ValueError("%s: %s" % (regfilter, exc))
+    allsuites = list(
+        get_scan_items_from_fs(reg_pattern=regfilter, active_only=False))
     if options.fail and not allsuites:
         raise SystemExit('ERROR: no suites matched.')
     if not options.tree:

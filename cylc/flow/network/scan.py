@@ -197,8 +197,7 @@ def re_compile_filters(patterns_owner=None, patterns_name=None):
 
 
 def get_scan_items_from_fs(
-        owner_pattern=None, reg_pattern=None, compile_reg=False,
-        active_only=True):
+        owner_pattern=None, reg_pattern=None, active_only=True):
     """Scrape list of suites from the filesystem.
 
     Walk users' "~/cylc-run/" to get (host, port) from ".service/contact" for
@@ -241,14 +240,8 @@ def get_scan_items_from_fs(
 
             # Filter suites by name
             reg = os.path.relpath(dirpath, run_d)
-            if reg_pattern:
-                if compile_reg:
-                    try:
-                        reg_pattern = re.compile(reg_pattern)
-                    except re.error as exc:
-                        raise ValueError("%s: %s" % (reg_pattern, exc))
-                if not reg_pattern.match(reg):
-                    continue
+            if reg_pattern and not reg_pattern.match(reg):
+                continue
 
             # Choose only suites with .service and matching filter
             if active_only:
