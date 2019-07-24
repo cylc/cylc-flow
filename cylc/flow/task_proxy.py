@@ -329,6 +329,7 @@ class TaskProxy(object):
         ret['label'] = str(self.point)
         ret['submit_num'] = self.submit_num
         ret['state'] = self.state.status
+        ret['is_held'] = self.state.is_held
         ret['spawned'] = str(self.has_spawned)
         ntimes = len(self.tdef.elapsed_times)
         if ntimes:
