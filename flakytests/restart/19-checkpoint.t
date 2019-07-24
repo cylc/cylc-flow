@@ -54,7 +54,7 @@ is_held|1
 2017|t1|script|true
 
 # TASK POOL (CYCLE|NAME|SPAWNED|STATUS|IS_HELD)
-2017|t1|1|running|0
+2017|t1|1|running|1
 2018|t1|0|waiting|1
 __OUT__
 cylc ls-checkpoints "${SUITE_NAME}" 2 | date-remove >'cylc-ls-checkpoints-2.out'
@@ -70,7 +70,7 @@ is_held|1
 2017|t1|script|true
 
 # TASK POOL (CYCLE|NAME|SPAWNED|STATUS|IS_HELD)
-2017|t1|1|running|0
+2017|t1|1|running|1
 2018|t1|0|waiting|1
 __OUT__
 cylc ls-checkpoints "${SUITE_NAME}" 0 | date-remove >'cylc-ls-checkpoints-0.out'

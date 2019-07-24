@@ -36,7 +36,7 @@ __OUT__
 fi
 suite_run_ok "${TEST_NAME_BASE}-restart" \
     cylc restart "${SUITE_NAME}" --debug --no-detach --until=2017
-grep_ok 'INFO - + t2\.2016 held (retrying)' "${SUITE_RUN_DIR}/log/suite/log"
+grep_ok 'INFO - + t2\.2016 retrying (held)' "${SUITE_RUN_DIR}/log/suite/log"
 if ! which sqlite3 > /dev/null; then
     skip 1 "sqlite3 not installed?"
 else

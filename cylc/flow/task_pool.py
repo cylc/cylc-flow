@@ -1141,11 +1141,12 @@ class TaskPool(object):
 
     def reset_task_states(self, items, status, outputs):
         """Operator-forced task status reset and output manipulation."""
+        is_held = False  # replecate old task status logic - TODO improve
         itasks, bad_items = self.filter_task_proxies(items)
         for itask in itasks:
-            if status and status != itask.state.status:
+            if status and not itask.state(status, is_held=is_held):
                 LOG.info("[%s] -resetting state to %s", itask, status)
-                itask.state.reset_state(status)
+                itask.state.reset_state(status, is_held=is_held)
                 if status in [TASK_STATUS_FAILED, TASK_STATUS_SUCCEEDED]:
                     itask.set_summary_time('finished',
                                            get_current_time_string())

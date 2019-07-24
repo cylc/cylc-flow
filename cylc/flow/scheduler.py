@@ -1884,6 +1884,7 @@ see `COPYING' in the Cylc source distribution.
 
     def command_reset_task_states(self, items, state=None, outputs=None):
         """Reset the state of tasks."""
+        # TODO - add is_held functionality?
         return self.pool.reset_task_states(items, state, outputs)
 
     def command_spawn_tasks(self, items):
