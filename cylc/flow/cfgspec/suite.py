@@ -19,6 +19,7 @@
 
 from metomi.isodatetime.data import Calendar
 
+from cylc.flow import LOG
 from cylc.flow.network import Priv
 from cylc.flow.parsec.config import ParsecConfig
 from cylc.flow.parsec.upgrade import upgrader
@@ -290,17 +291,26 @@ def upg(cfg, descr):
     u.obsolete('7.8.1', ['cylc', 'events', 'reset inactivity timer'])
     u.obsolete('7.8.1', ['runtime', '__MANY__', 'events', 'reset timer'])
     u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'shell'])
+    u.upgrade()
 
-    # TODO: not obvious how to do this using upgrader
+    # Upgrader cannot do this type of move.
     try:
+        head = False
         dependencies = cfg['scheduling']['dependencies']
         for key, value in dependencies.copy().items():
             if isinstance(value, dict) and 'graph' in value:
                 dependencies[key] = value['graph']
+                if head:
+                    LOG.warning(
+                        "deprecated graph section upgraded in '%s':", descr)
+                    head = False
+                LOG.warning(
+                    ' * (8.0.0) %s -> %s - value unchanged',
+                    u.show_keys(['scheduling', 'dependencies', key, 'graph']),
+                    u.show_keys(['scheduling', 'dependencies', key]),
+                )
     except KeyError:
         pass
-
-    u.upgrade()
 
 
 class RawSuiteConfig(ParsecConfig):
