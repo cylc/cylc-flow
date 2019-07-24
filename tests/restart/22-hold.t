@@ -26,22 +26,22 @@ if ! which sqlite3 > /dev/null; then
     skip 1 "sqlite3 not installed?"
 else
     sqlite3 "${SUITE_RUN_DIR}/log/db" \
-      'SELECT status,hold_swap FROM task_pool WHERE cycle=="2016" AND name=="t2"' \
+      'SELECT status,is_held FROM task_pool WHERE cycle=="2016" AND name=="t2"' \
           >'t2-status.out'
-    cmp_ok 't2-status.out' <<<'held|waiting'
+    cmp_ok 't2-status.out' <<<'waiting|1'
 fi
 suite_run_ok "${TEST_NAME_BASE}-restart" cylc restart "${SUITE_NAME}" --debug --no-detach
-grep_ok 'INFO - + t2\.2016 held (waiting)' "${SUITE_RUN_DIR}/log/suite/log"
+grep_ok 'INFO - + t2\.2016 waiting (held)' "${SUITE_RUN_DIR}/log/suite/log"
 if ! which sqlite3 > /dev/null; then
     skip 1 "sqlite3 not installed?"
 else
     sqlite3 "${SUITE_RUN_DIR}/log/db" 'SELECT * FROM task_pool ORDER BY cycle, name' \
         >'task-pool.out'
     cmp_ok 'task-pool.out' <<__OUT__
-2017|t1|1|succeeded|
-2017|t2|1|succeeded|
-2018|t1|0|waiting|
-2018|t2|0|waiting|
+2017|t1|1|succeeded|0
+2017|t2|1|succeeded|0
+2018|t1|0|waiting|0
+2018|t2|0|waiting|0
 __OUT__
 fi
 purge_suite "${SUITE_NAME}"

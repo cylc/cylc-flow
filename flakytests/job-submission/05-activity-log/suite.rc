@@ -11,21 +11,21 @@
 [runtime]
     [[t1]]
         script = """
-wait
-set +e
-trap '' SIGKILL
-kill -s SIGKILL $$
-sleep 5 # Prevent the script to run to success before it is killed
-"""
+            wait
+            set +e
+            trap '' SIGKILL
+            kill -s SIGKILL $$
+            sleep 5 # Prevent the script to run to success before it is killed
+        """
         [[[events]]]
             failed handler = echo
     [[t2]]
         script = """
-cylc kill "${CYLC_SUITE_NAME}" 't1'
-sleep 1
-cylc poll "${CYLC_SUITE_NAME}" 't1'
-sleep 1
-cylc shutdown "${CYLC_SUITE_NAME}"
-"""
+            cylc kill "${CYLC_SUITE_NAME}" 't1'
+            sleep 1
+            cylc poll "${CYLC_SUITE_NAME}" 't1'
+            sleep 1
+            cylc shutdown "${CYLC_SUITE_NAME}"
+        """
         [[[job]]]
             execution time limit = PT25S

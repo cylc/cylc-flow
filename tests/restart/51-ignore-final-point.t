@@ -68,8 +68,8 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 dumpdbtables
 cmp_ok 'fcp.out' <<<'fcp|2018'
 cmp_ok 'taskpool.out' <<'__OUT__'
-2015|t1|1|succeeded|
-2016|t1|0|waiting|
+2015|t1|1|succeeded|0
+2016|t1|0|waiting|0
 __OUT__
 
 suite_run_ok "${TEST_NAME_BASE}-restart-1" \
@@ -77,8 +77,8 @@ suite_run_ok "${TEST_NAME_BASE}-restart-1" \
 dumpdbtables
 cmp_ok 'fcp.out' <<<'fcp|2018'
 cmp_ok 'taskpool.out' <<'__OUT__'
-2018|t1|1|succeeded|
-2019|t1|0|waiting|
+2018|t1|1|succeeded|0
+2019|t1|0|waiting|0
 __OUT__
 
 suite_run_ok "${TEST_NAME_BASE}-restart-2" \
@@ -86,8 +86,8 @@ suite_run_ok "${TEST_NAME_BASE}-restart-2" \
 dumpdbtables
 cmp_ok 'fcp.out' <<<'fcp|2018'
 cmp_ok 'taskpool.out' <<'__OUT__'
-2018|t1|1|succeeded|
-2019|t1|0|waiting|
+2018|t1|1|succeeded|0
+2019|t1|0|waiting|0
 __OUT__
 
 suite_run_ok "${TEST_NAME_BASE}-restart-3" \
@@ -95,8 +95,8 @@ suite_run_ok "${TEST_NAME_BASE}-restart-3" \
 dumpdbtables
 cmp_ok 'fcp.out' <'/dev/null'
 cmp_ok 'taskpool.out' <<'__OUT__'
-2020|t1|1|succeeded|
-2021|t1|0|waiting|
+2020|t1|1|succeeded|0
+2021|t1|0|waiting|0
 __OUT__
 
 purge_suite "${SUITE_NAME}"

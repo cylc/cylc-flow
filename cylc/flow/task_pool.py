@@ -438,7 +438,7 @@ class TaskPool(object):
                 itask.summary['job_hosts'][int(submit_num)] = user_at_host
             if is_held:
                 LOG.info("+ %s.%s %s%s" % (
-                    name, cycle, status, ' held' if is_held else ''))
+                    name, cycle, status, ' (held)' if is_held else ''))
             else:
                 LOG.info("+ %s.%s %s" % (name, cycle, status))
             self.add_to_runahead_pool(itask, is_new=False)

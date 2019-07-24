@@ -28,11 +28,11 @@ if which 'sqlite3' >'/dev/null'; then
     sqlite3 "${DBFILE}" 'SELECT * FROM task_pool ORDER BY cycle, name;' \
         >'sqlite3.out'
     cmp_ok 'sqlite3.out' <<'__OUT__'
-2|fin|1|succeeded|
-3|bad|1|succeeded|
-3|fin|1|succeeded|
-3|good|1|succeeded|
-3|showdown|1|succeeded|
+2|fin|1|succeeded|0
+3|bad|1|succeeded|0
+3|fin|1|succeeded|0
+3|good|1|succeeded|0
+3|showdown|1|succeeded|0
 __OUT__
 else
     skip 1 "sqlite3 not installed?"

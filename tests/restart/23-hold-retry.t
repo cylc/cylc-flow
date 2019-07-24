@@ -29,9 +29,9 @@ else
     sqlite3 "${SUITE_RUN_DIR}/log/db" 'SELECT * FROM task_pool ORDER BY cycle, name' \
         >'task-pool.out'
     contains_ok 'task-pool.out' <<__OUT__
-2016|t2|1|held|retrying
-2017|t1|0|waiting|
-2017|t2|0|waiting|
+2016|t2|1|retrying|1
+2017|t1|0|waiting|0
+2017|t2|0|waiting|0
 __OUT__
 fi
 suite_run_ok "${TEST_NAME_BASE}-restart" \
@@ -43,9 +43,9 @@ else
     sqlite3 "${SUITE_RUN_DIR}/log/db" 'SELECT * FROM task_pool ORDER BY cycle, name' \
         >'task-pool.out'
     contains_ok 'task-pool.out' <<__OUT__
-2016|t2|1|succeeded|
-2018|t1|0|waiting|
-2018|t2|0|waiting|
+2016|t2|1|succeeded|0
+2018|t1|0|waiting|0
+2018|t2|0|waiting|0
 __OUT__
 fi
 purge_suite "${SUITE_NAME}"

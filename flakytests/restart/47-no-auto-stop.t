@@ -58,16 +58,16 @@ suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" --no-detach -a
 dumpdbtables
 cmp_ok 'noautoshutdown.out' <<<"no_auto_shutdown|1"
 cmp_ok 'taskpool.out' <<'__OUT__'
-1|t_i01|1|succeeded|
-1|t_i02|1|succeeded|
-1|t_i03|0|waiting|
-1|t_i04|0|waiting|
-1|t_i05|0|waiting|
-1|t_i06|0|waiting|
-1|t_i07|0|waiting|
-1|t_i08|0|waiting|
-1|t_i09|0|waiting|
-1|t_i10|0|waiting|
+1|t_i01|1|succeeded|0
+1|t_i02|1|succeeded|0
+1|t_i03|0|waiting|0
+1|t_i04|0|waiting|0
+1|t_i05|0|waiting|0
+1|t_i06|0|waiting|0
+1|t_i07|0|waiting|0
+1|t_i08|0|waiting|0
+1|t_i09|0|waiting|0
+1|t_i10|0|waiting|0
 __OUT__
 
 suite_run_fail "${TEST_NAME_BASE}-restart-1" \
@@ -80,16 +80,16 @@ contains_ok 'log.edited' <<__LOG__
 Suite shutting down - Abort on suite inactivity is set
 __LOG__
 cmp_ok 'taskpool.out' <<'__OUT__'
-1|t_i01|1|succeeded|
-1|t_i02|1|succeeded|
-1|t_i03|1|succeeded|
-1|t_i04|1|succeeded|
-1|t_i05|1|succeeded|
-1|t_i06|1|succeeded|
-1|t_i07|1|succeeded|
-1|t_i08|1|succeeded|
-1|t_i09|1|succeeded|
-1|t_i10|1|succeeded|
+1|t_i01|1|succeeded|0
+1|t_i02|1|succeeded|0
+1|t_i03|1|succeeded|0
+1|t_i04|1|succeeded|0
+1|t_i05|1|succeeded|0
+1|t_i06|1|succeeded|0
+1|t_i07|1|succeeded|0
+1|t_i08|1|succeeded|0
+1|t_i09|1|succeeded|0
+1|t_i10|1|succeeded|0
 __OUT__
 
 purge_suite "${SUITE_NAME}"

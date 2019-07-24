@@ -45,9 +45,9 @@ if ! which sqlite3 > /dev/null; then
     skip 1 "sqlite3 not installed?"
 else
     sqlite3 "${SUITE_RUN_DIR}/log/db" \
-        'SELECT status,hold_swap FROM task_pool WHERE cycle=="2017" AND name=="t2"' \
+        'SELECT status,is_held FROM task_pool WHERE cycle=="2017" AND name=="t2"' \
             >'task-pool.out'
-    cmp_ok 'task-pool.out' <<<'held|waiting'
+    cmp_ok 'task-pool.out' <<<'waiting|1'
 fi
 cylc release "${SUITE_NAME}"
 cylc poll "${SUITE_NAME}"
@@ -63,10 +63,10 @@ else
     sqlite3 "${SUITE_RUN_DIR}/log/db" \
         'SELECT * FROM task_pool ORDER BY cycle, name' >'task-pool.out'
     cmp_ok 'task-pool.out' <<'__OUT__'
-2017|t1|1|succeeded|
-2017|t2|1|succeeded|
-2018|t1|0|waiting|
-2018|t2|0|waiting|
+2017|t1|1|succeeded|0
+2017|t2|1|succeeded|0
+2018|t1|0|waiting|0
+2018|t2|0|waiting|0
 __OUT__
 fi
 purge_suite "${SUITE_NAME}"

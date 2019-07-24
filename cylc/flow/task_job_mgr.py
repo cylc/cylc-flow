@@ -144,15 +144,13 @@ class TaskJobManager(object):
         _poll_task_job_callback() executes one specific job.
         """
         to_poll_tasks = []
-        pollable_statuses = set([
-            TASK_STATUS_SUBMITTED, TASK_STATUS_RUNNING, TASK_STATUS_FAILED])
+        pollable_statuses = {
+            TASK_STATUS_SUBMITTED, TASK_STATUS_RUNNING, TASK_STATUS_FAILED
+        }
         if poll_succ:
             pollable_statuses.add(TASK_STATUS_SUCCEEDED)
         for itask in itasks:
-            if itask.state(
-                    *pollable_statuses,
-                    is_held=False
-            ):
+            if itask.state(*pollable_statuses):
                 to_poll_tasks.append(itask)
             else:
                 LOG.debug("skipping %s: not pollable, "
