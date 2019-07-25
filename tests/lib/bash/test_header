@@ -428,7 +428,7 @@ log_scan () {
         if ! "${success}"; then
             echo ': failed' >& $ERR
             fail "${TEST_NAME}-${count}"
-            if "${CYLC_TEST_DEBUG:-}"; then
+            if "${CYLC_TEST_DEBUG:-false}"; then
                 cat "${FILE}" >&2
             fi
             skip "$#"

@@ -26,6 +26,10 @@ BASE_GLOBALRC="
         abort on timeout = True
         inactivity = PT2M
         timeout = PT2M
+# FIXME: Handle Travis CI recent change to host identification in Python
+[suite host self-identification]
+    host = ${HOSTNAME}
+    method = hardwired
 "
 #-------------------------------------------------------------------------------
 # test that suites will not attempt to auto stop-restart if there is no
@@ -46,7 +50,7 @@ ${BASE_GLOBALRC}
     run hosts = localhost
 "
 
-cylc run "${SUITE_NAME}" >/dev/null 2>&1
+cylc run "${SUITE_NAME}"
 poll ! test -f "${SUITE_RUN_DIR}/.service/contact"
 sleep 1
 
@@ -54,7 +58,7 @@ create_test_globalrc '' "
 ${BASE_GLOBALRC}
 [suite servers]
     run hosts = localhost
-    condemned hosts = $(hostname)
+    condemned hosts = ${HOSTNAME}
 "
 
 FILE=$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)
@@ -69,3 +73,4 @@ cylc stop "${SUITE_NAME}" --kill
 poll test -f "${SUITE_RUN_DIR}/.service/contact"
 sleep 1
 purge_suite "${SUITE_NAME}"
+exit
