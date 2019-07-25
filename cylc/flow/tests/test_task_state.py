@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import pytest
 import unittest
 
 from cylc.flow.cycling.iso8601 import ISO8601Point
@@ -69,6 +70,31 @@ class TestTaskState(unittest.TestCase):
             (TASK_STATUS_SUCCEEDED, True),
             'reset status OK',
         )
+
+
+@pytest.mark.parametrize(
+    'state,is_held',
+    [
+        (TASK_STATUS_WAITING, True),
+        (TASK_STATUS_SUCCEEDED, False)
+    ]
+)
+def test_state_comparison(state, is_held):
+    tdef = TaskDef('foo', {}, 'live', '123', True)
+    tstate = TaskState(tdef, '123', state, is_held)
+
+    assert tstate(state, is_held=is_held)
+    assert tstate(state)
+    assert tstate(is_held=is_held)
+    assert tstate(state, 'of', 'flux')
+    assert tstate(state, 'of', 'flux', is_held=is_held)
+
+    assert not tstate(state + 'x', is_held=not is_held)
+    assert not tstate(state, is_held=not is_held)
+    assert not tstate(state + 'x', is_held=is_held)
+    assert not tstate(state + 'x')
+    assert not tstate(is_held=not is_held)
+    assert not tstate(state + 'x', 'of', 'flux')
 
 
 if __name__ == '__main__':
