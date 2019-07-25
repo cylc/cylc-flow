@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Provides a Jinja2 filter for formatting ISO8601 duration strings."""
 
-from isodatetime.parsers import DurationParser
+from metomi.isodatetime.parsers import DurationParser
 
 SECONDS_PER_MINUTE = 60.0
 MINUTES_PER_HOUR = 60.0
@@ -59,8 +59,8 @@ def duration_as(iso8601_duration, units):
         >>> # Exceptions.
         >>> duration_as('invalid', 's')  # doctest: +NORMALIZE_WHITESPACE
         Traceback (most recent call last):
-        isodatetime.parsers.ISO8601SyntaxError: Invalid ISO 8601 duration \
-        representation: invalid
+        metomi.isodatetime.parsers.ISO8601SyntaxError: Invalid ISO 8601\
+        duration representation: invalid
     """
     for converter_names in CONVERSIONS:
         if units.lower() in converter_names:

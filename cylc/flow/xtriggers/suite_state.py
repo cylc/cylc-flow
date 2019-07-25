@@ -25,7 +25,7 @@ import sqlite3
 from cylc.flow.cycling.util import add_offset
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.dbstatecheck import CylcSuiteDBChecker
-from isodatetime.parsers import TimePointParser
+from metomi.isodatetime.parsers import TimePointParser
 
 
 def suite_state(suite, task, point, offset=None, status='succeeded',

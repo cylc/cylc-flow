@@ -20,7 +20,7 @@
 from calendar import timegm
 from datetime import datetime, timedelta
 
-from isodatetime.timezone import (
+from metomi.isodatetime.timezone import (
     get_local_time_zone_format, get_local_time_zone, TimeZoneFormatMode)
 
 
@@ -238,7 +238,7 @@ def get_unix_time_from_time_string(datetime_string):
     except ValueError:
         global PARSER
         if PARSER is None:
-            from isodatetime.parsers import TimePointParser
+            from metomi.isodatetime.parsers import TimePointParser
             PARSER = TimePointParser()
         time_zone_info = PARSER.get_info(datetime_string)[1]
         time_zone_hour = int(time_zone_info["time_zone_hour"])
@@ -256,5 +256,5 @@ def get_unix_time_from_time_string(datetime_string):
 
 def get_seconds_as_interval_string(seconds):
     """Convert a number of seconds into an ISO 8601 duration string."""
-    from isodatetime.data import Duration
+    from metomi.isodatetime.data import Duration
     return str(Duration(seconds=seconds, standardize=True))

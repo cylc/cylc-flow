@@ -23,7 +23,7 @@ Each task may have multiple sequences, e.g. 12-hourly and 6-hourly.
 
 from . import integer
 from . import iso8601
-from isodatetime.data import Calendar
+from metomi.isodatetime.data import Calendar
 
 
 ISO8601_CYCLING_TYPE = 'iso8601'

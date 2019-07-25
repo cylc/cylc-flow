@@ -26,7 +26,7 @@ function test_get_unix_time_from_time_string () {
 from cylc.flow.wallclock import get_unix_time_from_time_string
 
 if $4:
-    from isodatetime.data import CALENDAR
+    from metomi.isodatetime.data import CALENDAR
     CALENDAR.set_mode(CALENDAR.MODE_360)
 assert(get_unix_time_from_time_string('$2') == $3)
 __PYTHON__

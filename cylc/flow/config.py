@@ -35,8 +35,8 @@ import os
 import re
 import traceback
 
-from isodatetime.data import Calendar
-from isodatetime.parsers import DurationParser
+from metomi.isodatetime.data import Calendar
+from metomi.isodatetime.parsers import DurationParser
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.util import replicate
 
