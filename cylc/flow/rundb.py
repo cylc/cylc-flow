@@ -663,7 +663,10 @@ class CylcSuiteDAO(object):
         task_ids should be specified as [(name-glob, cycle), ...]
 
         """
-        stmt = (
+        # Ignore bandit false positive: B608: hardcoded_sql_expressions
+        # Not an injection, simply putting the table name in the SQL query
+        # expression as a string constant local to this module.
+        stmt = (  # nosec
             r"SELECT name,cycle,submit_num FROM %(name)s"
             r" WHERE name==? AND CYCLE==?"
         ) % {"name": self.TABLE_TASK_STATES}
