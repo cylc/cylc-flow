@@ -35,7 +35,6 @@ from google.protobuf.json_format import MessageToDict
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.terminal import cli_function
-from cylc.flow.ws_messages_pb2 import PbEntireWorkflow
 from cylc.flow.network.server import PB_METHOD_MAP
 
 
