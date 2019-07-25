@@ -55,7 +55,6 @@ if remrun():
 import io as StringIO
 import collections
 import contextlib
-import os
 
 from cylc.flow.exceptions import CylcError
 from cylc.flow.option_parsers import CylcOptionParser as COP
