@@ -47,7 +47,3 @@ Cylc.  If not, see [GNU licenses](http://www.gnu.org/licenses/).
 
 ## Cylc Documentation
  * See [The Cylc Website](https://cylc.github.io/)
-
-## Acknowledgement for non-Cylc Work
-
-See [Acknowledgement for Non-Cylc Work](ACKNOWLEDGEMENT.md).
