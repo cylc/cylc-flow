@@ -668,7 +668,7 @@ class CylcSuiteDAO(object):
         # expression as a string constant local to this module.
         stmt = (  # nosec
             r"SELECT name,cycle,submit_num FROM %(name)s"
-            r" WHERE name==? AND CYCLE==?"
+            r" WHERE name==? AND cycle==?"
         ) % {"name": self.TABLE_TASK_STATES}
         ret = {}
         for name, cycle in task_ids:
