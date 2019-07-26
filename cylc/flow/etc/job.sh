@@ -85,7 +85,12 @@ cylc__job__main() {
     export CYLC_SUITE_WORK_DIR="${CYLC_SUITE_WORK_DIR_ROOT}/work"
     CYLC_TASK_CYCLE_POINT="$(cut -d '/' -f 1 <<<"${CYLC_TASK_JOB}")"
     CYLC_TASK_NAME="$(cut -d '/' -f 2 <<<"${CYLC_TASK_JOB}")"
-    export CYLC_TASK_NAME CYLC_TASK_CYCLE_POINT
+    export CYLC_TASK_NAME CYLC_TASK_CYCLE_POINT ISODATETIMEREF
+    if [[ "${CYLC_CYCLING_MODE}" != "integer" ]]; then  # i.e. date-time cycling
+        ISODATETIMECALENDAR="${CYLC_CYCLING_MODE}"
+        ISODATETIMEREF="${CYLC_TASK_CYCLE_POINT}"
+        export ISODATETIMECALENDAR ISODATETIMEREF
+    fi
     # The "10#" part ensures that the submit number is interpreted in base 10.
     # Otherwise, a zero padded number will be interpreted as an octal.
     export CYLC_TASK_SUBMIT_NUMBER=$((10#$(cut -d '/' -f 3 <<<"${CYLC_TASK_JOB}")))

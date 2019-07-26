@@ -149,6 +149,11 @@ Can now be written as:
         P1D = task1 => task2
 ```
 
+[#3249](https://github.com/cylc/cylc-flow/pull/3249) - export the environment
+variable `ISODATETIMEREF` (reference time for the `isodatetime` command from
+[metomi-isodatetime](https://github.com/metomi/isodatetime/)) in task jobs to
+have the same value as `CYLC_TASK_CYCLE_POINT`.
+
 ### Fixes
 
 [#3010](https://github.com/cylc/cylc-flow/pull/3010) - fixes except KeyError
