@@ -295,20 +295,22 @@ def upg(cfg, descr):
 
     # Upgrader cannot do this type of move.
     try:
-        head = False
+        keys = set()
         dependencies = cfg['scheduling']['dependencies']
         for key, value in dependencies.copy().items():
             if isinstance(value, dict) and 'graph' in value:
                 dependencies[key] = value['graph']
-                if head:
-                    LOG.warning(
-                        "deprecated graph section upgraded in '%s':", descr)
-                    head = False
-                LOG.warning(
-                    ' * (8.0.0) %s -> %s - value unchanged',
-                    u.show_keys(['scheduling', 'dependencies', key, 'graph']),
-                    u.show_keys(['scheduling', 'dependencies', key]),
-                )
+                keys.add(key)
+        if keys:
+            LOG.warning(
+                "deprecated graph items were automatically upgraded in '%s':",
+                descr)
+            LOG.warning(
+                ' * (8.0.0) %s -> %s - for X in:\n%s',
+                u.show_keys(['scheduling', 'dependencies', 'X', 'graph']),
+                u.show_keys(['scheduling', 'dependencies', 'X']),
+                '\n'.join(sorted(keys)),
+            )
     except KeyError:
         pass
 
