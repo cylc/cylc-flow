@@ -15,26 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test cylc insert command, with wildcard in a task name string
+# Test "cylc insert" family where a task in the family have previous jobs.
+# The submit number of the task should increment.
 . "$(dirname "$0")/test_header"
-set_test_number 4
+set_test_number 3
+
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-run_ok "${TEST_NAME_BASE}" cylc run --hold "${SUITE_NAME}"
-LOG="${SUITE_RUN_DIR}/log/suite/log"
-poll "! grep -q -F 'Held on start-up' '${LOG}' 2>'/dev/null'"
-run_ok "${TEST_NAME_BASE}-insert" cylc insert "${SUITE_NAME}" '2008/*'
-poll "! grep -q -F 'Command succeeded: insert_tasks' '${LOG}' 2>'/dev/null'"
-cylc stop --max-polls=10 --interval=6 "${SUITE_NAME}" 2>'/dev/null'
-cut -d' ' -f 2- "${LOG}" >'trimmed-log'
-{
-    for I in {001..500}; do
-        echo "INFO - [v_i${I}.2008] -submit-num=00, inserted"
-    done
-    echo "INFO - Command succeeded: insert_tasks(['2008/*'], stop_point_string=None, no_check=False)"
-} >'expected-log'
-contains_ok 'trimmed-log' 'expected-log'
+suite_run_ok "${TEST_NAME_BASE}-run" \
+    cylc run "${SUITE_NAME}" --no-detach --debug --reference-test
+run_ok "${TEST_NAME_BASE}-bar-02" test -d "${SUITE_RUN_DIR}/log/job/1/bar/02"
 
 purge_suite "${SUITE_NAME}"
 exit
