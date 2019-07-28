@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""cylc [info] get-pkg-resources [OPTIONS] DIR [RESOURCES]
+"""cylc [info] extract-pkg-resources [OPTIONS] DIR [RESOURCES]
 
 Extract resources from the cylc.flow package and write them to DIR.
 
