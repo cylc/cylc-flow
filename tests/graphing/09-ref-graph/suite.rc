@@ -5,10 +5,8 @@
 [scheduling]
     initial cycle point = 20140808T00
     [[dependencies]]
-       [[[R//PT6H]]] # (= [[[PT6H]]])
-            graph = foo
-       [[[T00]]]
-            graph = foo => bar
+       R//PT6H = foo
+       T00 = foo => bar
 
 [visualization]
     number of cycle points = 3

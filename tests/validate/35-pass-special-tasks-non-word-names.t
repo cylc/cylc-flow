@@ -25,8 +25,7 @@ cat >'suite.rc' <<'__SUITE_RC__'
     [[special tasks]]
         clock-trigger = t-1, t+1, t%1, t@1
     [[dependencies]]
-        [[[P1D]]]
-            graph = """
+        P1D = """
 t-1
 t+1
 t%1

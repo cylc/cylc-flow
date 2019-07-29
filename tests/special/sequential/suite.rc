@@ -10,10 +10,8 @@
     [[special tasks]]
         sequential = "foo"
     [[dependencies]]
-        [[[R1]]]
-            graph = monitor:start => foo
-        [[[PT6H]]]
-            graph = foo
+        R1 = monitor:start => foo
+        PT6H = foo
 [runtime]
     [[foo]]
         script = sleep 10

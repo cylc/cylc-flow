@@ -41,8 +41,7 @@ TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME_BASE}" <<< '
 [scheduling]
     initial cycle point = 2000
     [[dependencies]]
-        [[[P1Y]]]
-            graph = foo[-P1Y] => foo
+        P1Y = foo[-P1Y] => foo
 '
 
 create_test_globalrc '' "

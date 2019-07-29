@@ -27,12 +27,9 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITE__'
 [scheduling]
     initial cycle point = 20171101T0000Z
     [[dependencies]]
-        [[[R1]]]
-            graph = foo
-        [[[R1/T00]]]
-            graph = foo[^] => qux
-        [[[R1/T06]]]
-            graph = foo[^] => qux
+        R1 = foo
+        R1/T00 = foo[^] => qux
+        R1/T06 = foo[^] => qux
 [runtime]
     [[foo, qux]]
         script = true

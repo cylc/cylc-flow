@@ -6,14 +6,10 @@
     initial cycle point = 20000331T0100Z
     final cycle point = 2001
     [[dependencies]]
-        [[[20T-P2W/P1M]]]
-            graph = "foo"
-        [[[30T06+P8DT6H/P3W]]]
-            graph = "foo[20T-P2W] => bar"
-        [[[R1/+P1M]]]
-            graph = "flub"
-        [[[R4//P1D]]]
-            graph = "flub[^+P1M] & flob[-P1D] => flob"
+        20T-P2W/P1M = "foo"
+        30T06+P8DT6H/P3W = "foo[20T-P2W] => bar"
+        R1/+P1M = "flub"
+        R4//P1D = "flub[^+P1M] & flob[-P1D] => flob"
 [runtime]
     [[root]]
         script = true

@@ -9,12 +9,11 @@
     runahead limit = PT12H # Enforces sequential behaviour
     [[dependencies]]
         # (this triggers a monthly task off the last daily task each month)
-        [[[T00]]]
-            graph = """
-                daily
-            daily[-PT24H] => dummy""" # marker1
-        [[[R/01T/P1M]]]
-            graph = "dummy => monthly" # marker2
+        T00 = """
+            daily
+            daily[-PT24H] => dummy
+        """ # marker1
+        R/01T/P1M = "dummy => monthly" # marker2
 [runtime]
     [[root]]
         script = "sleep 1"

@@ -3,10 +3,8 @@
 [scheduling]
     initial cycle point = 20140808T00
     [[dependencies]]
-        [[[R1]]]
-            graph = cold_foo => foo
-        [[[T00]]]
-            graph = foo => bar & baz
+        R1 = cold_foo => foo
+        T00 = foo => bar & baz
 [runtime]
     [[FOO]]
     [[foo]]

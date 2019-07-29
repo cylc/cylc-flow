@@ -8,8 +8,7 @@
     initial cycle point = 20100101T00
     final cycle point = 20100105T00
     [[dependencies]]
-        [[[PT6H]]]
-            graph = "foo => bar"
+        PT6H = "foo => bar"
 [runtime]
     [[foo]]
         script = false

@@ -49,8 +49,7 @@ TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME_BASE}" <<< '
 [scheduling]
     initial cycle point = 2000
     [[dependencies]]
-        [[[P1D]]]
-            graph = foo
+        P1D = foo
 '
 
 MAX_RESTART_DELAY=30

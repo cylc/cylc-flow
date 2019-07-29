@@ -12,10 +12,8 @@
     initial cycle point = 20100101T00
     final cycle point = 20100102T00 # marker
     [[dependencies]]
-        [[[R1]]]
-            graph = "reloader => a"
-        [[[PT6H]]]
-        graph = "a[-PT6H] => a"
+        R1 = "reloader => a"
+        PT6H = "a[-PT6H] => a"
 [runtime]
     [[reloader]]
         script = """

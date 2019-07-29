@@ -5,10 +5,8 @@
     initial cycle point = 1
     cycling mode = integer
     [[dependencies]]
-        [[[R1/+P1]]]
-            graph = start
-        [[[R//P1]]]
-            graph = start[2] => foo
+        R1/+P1 = start
+        R//P1 = start[2] => foo
 [runtime]
     [[root]]
         script = true

@@ -1,8 +1,7 @@
 [scheduling]
     initial cycle point = 20100101T00
     [[dependencies]]
-        [[[T00,T06,T12]]]
-            graph = "foo"
+        T00,T06,T12 = "foo"
 [runtime]
     [[root]]
         [[[events]]]

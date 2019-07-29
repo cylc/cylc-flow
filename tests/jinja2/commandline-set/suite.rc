@@ -15,8 +15,7 @@ to pass the test run their values must be 'foo' and '2', respectively."""
     initial cycle point = 2010
     final cycle point = 2012
     [[dependencies]]
-        [[[ P{{STEP}}Y ]]]
-            graph = {{TASKNAME}}
+        P{{STEP}}Y = {{TASKNAME}}
 [runtime]
     [[ {{TASKNAME}} ]]
         script = "sleep 1"

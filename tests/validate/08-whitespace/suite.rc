@@ -10,8 +10,7 @@
             bar    
             {% endif %}   
     [[   dependencies  ]]   
-        [[[ T00, T12  ]]]   
-            graph="""   
+        T00, T12  ="""   
         a => b   
         foo => bar &  baz  """   
         

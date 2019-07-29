@@ -64,8 +64,7 @@ cat >'suite.rc' <<'__SUITE_RC__'
     initial cycle point = 2001
     final cycle point = 2010
     [[dependencies]]
-        [[[P1Y]]]
-            graph = '''
+        P1Y = '''
 a[-P1Y] => a
 a[+P1Y] => a
 '''
@@ -81,10 +80,8 @@ cat >'suite.rc' <<'__SUITE_RC__'
     cycling mode = integer
     initial cycle point = 1
     [[dependencies]]
-        [[[2/P3]]]
-            graph = foo => bar => baz
-        [[[8/P1]]]
-           graph = baz => foo
+        2/P3 = foo => bar => baz
+        8/P1 = baz => foo
 __SUITE_RC__
 
 run_fail "${TEST_NAME_BASE}-intercycle-2" cylc validate 'suite.rc'
@@ -114,10 +111,8 @@ cat >'suite.rc' <<'__SUITE_RC__'
     cycling mode = integer
     initial cycle point = 1
     [[dependencies]]
-        [[[1/P3]]]
-            graph = foo => bar
-        [[[2/P3]]]
-           graph = bar => foo
+        1/P3 = foo => bar
+        2/P3 = bar => foo
 __SUITE_RC__
 
 run_ok "${TEST_NAME_BASE}-param-2" cylc validate 'suite.rc'

@@ -7,12 +7,9 @@
     initial cycle point = 20100101T00
     final cycle point = 20100102T00
     [[dependencies]]
-        [[[R1]]]
-            graph = "start => a"
-        [[[T00, T06]]]
-            graph = "c[-PT6H] => a => b => c"
-        [[[T18]]]
-            graph = "c"
+        R1 = "start => a"
+        T00, T06 = "c[-PT6H] => a => b => c"
+        T18 = "c"
 [runtime]
     [[a,c,start]]
         script = "sleep 1"

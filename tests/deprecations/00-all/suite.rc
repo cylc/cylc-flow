@@ -9,8 +9,7 @@
     initial cycle point = 20150808T00
     final cycle point = 20150808T00
     [[dependencies]]
-        [[[P1D]]]
-            graph = foo => cat & dog
+        P1D = foo => cat & dog
     [[special tasks]]
         external-trigger = cat("meow available") # deprecated name
 [runtime]

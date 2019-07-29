@@ -7,8 +7,7 @@
     initial cycle point=2020
     final cycle point=2020
     [[dependencies]]
-        [[[P1Y]]]
-            graph = t1
+        P1Y = t1
 [runtime]
     [[t1]]
         script=test "${CYLC_TASK_SUBMIT_NUMBER}" -gt 2

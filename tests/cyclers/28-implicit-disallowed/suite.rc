@@ -5,7 +5,6 @@
 [scheduling]
    initial cycle point = 20140808T00
    [[dependencies]]
-       [[[P1D]]]
-          graph = foo[-P1D] => bar
+       P1D = foo[-P1D] => bar
 [runtime]
    [[foo,bar]]

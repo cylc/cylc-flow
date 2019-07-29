@@ -124,7 +124,11 @@ class ParsecValidator(object):
                         # as that of the __MANY__  item, i.e. dict or not-dict.
                         val_is_dict = isinstance(value, dict)
                         spc_is_dict = isinstance(spec['__MANY__'], dict)
-                        if not val_is_dict and '  ' in key:
+                        if (
+                            keys != ['scheduling', 'dependencies'] and
+                            not val_is_dict and
+                            '  ' in key
+                        ):
                             # Item names shouldn't have consecutive spaces
                             # (GitHub #2417)
                             raise IllegalItemError(
@@ -214,8 +218,13 @@ class ParsecValidator(object):
         if isinstance(value, list):
             # handle graph string merging
             vraw = []
-            for val in value:
-                vraw.append(cls.strip_and_unquote(keys, val))
+            vals = [value]
+            while vals:
+                val = vals.pop()
+                if isinstance(val, list):
+                    vals.extend(reversed(val))  # reverse to preserve order
+                else:
+                    vraw.append(cls.strip_and_unquote(keys, val))
             value = '\n'.join(vraw)
         else:
             value = cls.strip_and_unquote(keys, value)

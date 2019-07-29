@@ -13,11 +13,10 @@
     [[special tasks]]
         exclude at start-up = foo
     [[dependencies]]
-        [[[R1]]]
-            graph = """
-                prep
-                foo => bar
-            """
+        R1 = """
+            prep
+            foo => bar
+        """
 
 [runtime]
     [[root]]

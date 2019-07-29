@@ -6,15 +6,12 @@
 [scheduling]
     initial cycle point = 20130101T0000Z
     [[dependencies]]
-        [[[R1]]]
-            graph = "foo => bar"
-            graph = "bar => baz"
-        [[[T00]]]
-            graph = "cfoo => cbar"
-            graph = "cbar => cbaz"
-        [[[T00]]]
-            graph = "dfoo => dbar"
-            graph = "dbar => dbaz"
+        R1 = "foo => bar"
+        R1 = "bar => baz"
+        T00 = "cfoo => cbar"
+        T00 = "cbar => cbaz"
+        T00 = "dfoo => dbar"
+        T00 = "dbar => dbaz"
 [runtime]
     [[FOO]]
         [[[meta]]]

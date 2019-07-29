@@ -4,32 +4,25 @@
     initial cycle point = 20000101T00Z
     final cycle point = 20000102T12Z
     [[dependencies]]
-        [[[ R1 ]]]
-            graph = start => foo
+        R1 = start => foo
 
         # Don't run at the initial cycle point
         # Also test whitespace tolerance
-        [[[ T00 ! ^ ]]]
-            graph = bar
+        T00 ! ^ = bar
 
         # Don't run at the final cycle point
-        [[[ PT12H!$ ]]]
-            graph = baz
+        PT12H!$ = baz
 
         # Don't run at a specific datetime
-        [[[ PT12H!20000101T1200Z ]]]
-            graph = qux
+        PT12H!20000101T1200Z = qux
 
         # Don't run at a datetime with an offset
-        [[[ R/PT6H!20000101T05Z+PT1H ]]]
-            graph = nip
+        R/PT6H!20000101T05Z+PT1H = nip
 
         # Don't run a multiple specific datetimes
-        [[[ PT5H!(20000101T05Z,20000102T05Z) ]]]
-            graph = quux
+        PT5H!(20000101T05Z,20000102T05Z) = quux
 
-        [[[ R1/$ ]]]
-            graph = pub
+        R1/$ = pub
 
 [runtime]
     [[root]]

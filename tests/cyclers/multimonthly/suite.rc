@@ -6,10 +6,8 @@
     initial cycle point = 1000
     final cycle point = 1001
     [[dependencies]]
-        [[[ P1M ]]]
-            graph = "foo[-P1M] => foo => bar"
-        [[[ P6M ]]]
-            graph = "baz[-P6M] => baz => qux"
+        P1M = "foo[-P1M] => foo => bar"
+        P6M = "baz[-P6M] => baz => qux"
 [runtime]
     [[root]]
         script = true

@@ -2,7 +2,5 @@
     initial cycle point = 20130101T00
     final cycle point = 20130101T00
     [[dependencies]]
-        [[[R1]]]
-            graph = foo => bar
-        [[[T00]]]
-            graph = bar
+        R1 = foo => bar
+        T00 = bar

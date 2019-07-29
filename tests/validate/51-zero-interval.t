@@ -26,8 +26,7 @@ cat >'suite.rc' <<'__SUITE_RC__'
 [scheduling]
     initial cycle point = 2010
     [[dependencies]]
-        [[[P0M]]]   # OOPS! zero-width interval
-            graph = foo
+        P0M = foo  # OOPS! zero-width interval
 [runtime]
     [[foo]]
         script = true

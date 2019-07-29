@@ -5,8 +5,7 @@
     initial cycle point = 20100808T06
     final cycle point =
     [[dependencies]]
-        [[[T06]]]
-            graph = foo
+        T06 = foo
 [runtime]
     [[foo]]
         script = sleep 5

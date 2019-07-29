@@ -7,13 +7,12 @@
     initial cycle point = 20100101T00Z
     final cycle point = 20100103T00Z
     [[dependencies]]
-        [[[T00]]]
-            graph = "foo[-P1D] => foo"
-        [[[R1/20100102T00Z]]]
-            graph = """foo => env_polling
-                     foo => offset_polling
-                     foo[+P1D] => offset_polling2
-                    """
+        T00 = "foo[-P1D] => foo"
+        R1/20100102T00Z = """
+            foo => env_polling
+            foo => offset_polling
+            foo[+P1D] => offset_polling2
+        """
 [runtime]
     [[foo]]
         script = true

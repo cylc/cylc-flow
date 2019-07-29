@@ -221,7 +221,7 @@ class SuiteConfig(object):
         dependency_map = self.cfg.get('scheduling', {}).get(
             'dependencies', {})
 
-        if not self.is_graph_defined(dependency_map):
+        if not any(dependency_map.values()):
             raise SuiteConfigError('No suite dependency graph defined.')
 
         if 'cycling mode' not in self.cfg.get('scheduling', {}):
@@ -234,7 +234,7 @@ class SuiteConfig(object):
                 just_has_async_graph = True
                 non_async_item = None
                 for item, value in dependency_map.items():
-                    if item != 'graph' and value.get('graph'):
+                    if item != 'graph':
                         just_has_async_graph = False
                         non_async_item = item
                         break
@@ -245,7 +245,7 @@ class SuiteConfig(object):
                     raise SuiteConfigError(
                         'Conflicting syntax: integer vs ' +
                         'cycling suite: ' +
-                        'are you missing a [dependencies][[[R1]]] section?')
+                        'are you missing a [dependencies]R1 value?')
                 if just_has_async_graph:
                     # There aren't any other graphs, so set integer cycling.
                     self.cfg['scheduling']['cycling mode'] = (
@@ -259,8 +259,7 @@ class SuiteConfig(object):
                     # Looks like cylc-5 mixed-async.
                     raise SuiteConfigError(
                         'Obsolete syntax: mixed integer [dependencies]graph ' +
-                        'with cycling [dependencies][{0}]'.format(
-                            non_async_item)
+                        f'with cycling [dependencies]{non_async_item}'
                     )
 
         # allow test suites with no [runtime]:
@@ -857,21 +856,6 @@ class SuiteConfig(object):
             for name, _ in name_expander.expand(node):
                 expanded_node_attrs[name] = val
         self.cfg['visualization']['node attributes'] = expanded_node_attrs
-
-    @staticmethod
-    def is_graph_defined(dependency_map):
-        for item, value in dependency_map.items():
-            if item == 'graph':
-                # Async graph.
-                if value != '':
-                    return True
-            else:
-                # Cycling section.
-                for subitem, subvalue in value.items():
-                    if subitem == 'graph':
-                        if subvalue != '':
-                            return True
-        return False
 
     def _is_validate(self, is_strict=False):
         """Return whether we are in (strict) validate mode."""
@@ -2109,26 +2093,18 @@ class SuiteConfig(object):
                 t in self.runtime['parents'] and
                 t not in self.runtime['descendants'])]
 
-        # Move a cylc-5 non-cycling graph to an R1 section.
-        non_cycling_graph = self.cfg['scheduling']['dependencies']['graph']
-        if non_cycling_graph:
+        dependencies = self.cfg['scheduling']['dependencies']
+        if 'graph' in dependencies:
             section = get_sequence_cls().get_async_expr()
-            self.cfg['scheduling']['dependencies'][section] = (
-                OrderedDictWithDefaults())
-            self.cfg['scheduling']['dependencies'][section]['graph'] = (
-                non_cycling_graph)
-        del self.cfg['scheduling']['dependencies']['graph']
+            dependencies[section] = dependencies.pop('graph')
 
         icp = self.cfg['scheduling']['initial cycle point']
         fcp = self.cfg['scheduling']['final cycle point']
 
         # Make a stack of sections and graphs [(sec1, graph1), ...]
         sections = []
-        for section, sec_map in self.cfg['scheduling']['dependencies'].items():
+        for section, value in self.cfg['scheduling']['dependencies'].items():
             # Substitute initial and final cycle points.
-            if not sec_map['graph']:
-                # Empty section.
-                continue
             if icp:
                 section = section.replace("^", icp)
             elif "^" in section:
@@ -2143,9 +2119,9 @@ class SuiteConfig(object):
             new_sections = RE_SEC_MULTI_SEQ.split(section)
             if len(new_sections) > 1:
                 for new_section in new_sections:
-                    sections.append((new_section.strip(), sec_map['graph']))
+                    sections.append((new_section.strip(), value))
             else:
-                sections.append((section, sec_map['graph']))
+                sections.append((section, value))
 
         # Parse and process each graph section.
         task_triggers = {}

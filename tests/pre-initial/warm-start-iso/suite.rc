@@ -7,14 +7,10 @@
     initial cycle point = 20130101T00
     final cycle point = 20130103T00
     [[dependencies]]
-        [[[R1]]]
-            graph = "foo"
-        [[[R1/T18]]]
-            graph = "bar => baz"
-        [[[R6//PT6H]]]
-            graph = "wibble"
-        [[[T00,T06,T12,T18]]]
-            graph = "foo[^] & qux[-PT6H] => qux"
+        R1 = "foo"
+        R1/T18 = "bar => baz"
+        R6//PT6H = "wibble"
+        T00,T06,T12,T18 = "foo[^] & qux[-PT6H] => qux"
 [runtime]
     [[root]]
         script = "true"

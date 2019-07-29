@@ -5,8 +5,7 @@
     initial cycle time = 2014030300
     final cycle time   = 2014030306
     [[dependencies]]
-        [[[0,6,12,18]]]
-           graph = " A "
+        0,6,12,18 = A
 [runtime]
     [[A]]
         script = "sleep 10"

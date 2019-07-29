@@ -25,8 +25,7 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
     UTC mode = True
 [scheduling]
     [[dependencies]]
-        [[[R1]]]
-            graph = foo => bar
+        R1 = foo => bar
 [runtime]
     [[foo, bar]]
         script = true

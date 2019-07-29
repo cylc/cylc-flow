@@ -17,10 +17,8 @@
     initial cycle point = 20140101T00
     final cycle point   = 20140101T00
     [[dependencies]]
-        [[[R1]]]
-            graph = "holdrelease => foo & bar"
-        [[[T00, T06]]]
-            graph = "bar"
+        R1 = "holdrelease => foo & bar"
+        T00, T06 = "bar"
 [runtime]
     [[holdrelease]]
         script = """

@@ -8,8 +8,7 @@
     final cycle point = 2010-08
     runahead limit = P1D # Enforce sequential running
     [[dependencies]]
-        [[[2010-01/P3M]]]
-            graph = "a"
+        2010-01/P3M = "a"
 [runtime]
     [[a]]
         script = "sleep 1"

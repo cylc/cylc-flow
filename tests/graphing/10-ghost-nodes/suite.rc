@@ -2,8 +2,7 @@
     initial cycle point = 1
     cycling mode = integer
     [[dependencies]]
-        [[[P1!3]]]
-            graph = foo[-P1] => foo
+        P1!3 = foo[-P1] => foo
 [runtime]
     [[foo]]
 [visualization]

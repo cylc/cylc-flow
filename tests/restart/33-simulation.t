@@ -28,8 +28,7 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
 [scheduling]
     initial cycle point = 2018
     [[dependencies]]
-        [[[P1Y]]]
-            graph = t1
+        P1Y = t1
 [runtime]
     [[t1]]
         script = true

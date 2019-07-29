@@ -4,8 +4,7 @@
     initial cycle point = 20131231T2300
     final cycle point = 20140101T0050
     [[dependencies]]
-        [[[ PT30M ]]]
-            graph = "foo[-PT30M] => foo => bar"
+        PT30M = "foo[-PT30M] => foo => bar"
 [runtime]
     [[root]]
         script = true

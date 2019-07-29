@@ -10,10 +10,7 @@
     initial cycle point = 20100808T0000Z
     final cycle point   = 20100809T0000Z
     [[dependencies]]
-        [[[R1]]]
-            graph = """
-                send_broadcast => timeout
-            """
+        R1 = send_broadcast => timeout
 
 [runtime]
     [[send_broadcast]]

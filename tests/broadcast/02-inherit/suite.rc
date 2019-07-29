@@ -11,10 +11,8 @@
     initial cycle point = 20140101T00
     final cycle point   = 20140101T00
     [[dependencies]]
-        [[[R1]]]
-            graph = broadcast_all => broadcast_tag
-        [[[T00]]]
-            graph = broadcast_tag => t1
+        R1 = broadcast_all => broadcast_tag
+        T00 = broadcast_tag => t1
 [runtime]
     [[broadcast_all]]
         script="""

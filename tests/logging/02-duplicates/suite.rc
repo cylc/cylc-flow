@@ -2,17 +2,15 @@
     cycling mode = integer
     initial cycle point = 1
     [[dependencies]]
-        [[[R1/1]]]
-            graph = """
-                foo:fail => bar
-                foo & bar => restart
-            """
-        [[[R1/2]]]
-            graph = """
-                restart[-P1] => foo
-                foo:fail => bar
-                foo & bar => pub
-            """
+        R1/1 = """
+            foo:fail => bar
+            foo & bar => restart
+        """
+        R1/2 = """
+            restart[-P1] => foo
+            foo:fail => bar
+            foo & bar => pub
+        """
 [runtime]
     [[foo]]
         script = false

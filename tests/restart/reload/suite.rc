@@ -18,8 +18,7 @@ which should run to completion on restarting."""
     [[special tasks]]
         sequential = foo
     [[dependencies]]
-        [[[T00]]]
-            graph = "foo => bar"
+        T00 = "foo => bar"
 [runtime]
     [[root]]
         script = true

@@ -9,8 +9,7 @@ group="test group 1"
     cycling mode = integer
     initial cycle point = 1
 [[dependencies]]
-[[[P1]]]
-graph = foo => bar
+P1 = foo => bar
 
 [runtime]
 [[root]]

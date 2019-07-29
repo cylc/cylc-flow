@@ -7,10 +7,8 @@
     runahead limit = PT18H
     initial cycle point = 20100101T00
     [[dependencies]]
-        [[[PT6H]]]
-            graph = "foo => bar"
-        [[[T12]]]
-            graph = "foo:fail => shutdown"
+        PT6H = "foo => bar"
+        T12 = "foo:fail => shutdown"
 [runtime]
     [[foo]]
         script = false

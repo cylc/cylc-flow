@@ -13,12 +13,8 @@
     final cycle point    = 20100110T00Z
     hold after point    = 20100102T00Z
     [[dependencies]]
-        [[[R1]]]
-            graph = """
-                stopper
-            """
-        [[[T00]]]
-            graph = foo[-P1D] => foo
+        R1 = stopper
+        T00 = foo[-P1D] => foo
 [runtime]
     [[stopper]]
         script = sleep 30; cylc stop $CYLC_SUITE_NAME

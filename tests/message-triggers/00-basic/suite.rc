@@ -8,9 +8,10 @@
     initial cycle point = 20140801T00
     final cycle point = 20141201T00
     [[dependencies]]
-        [[[P2M]]]
-           graph = """foo:out1 => bar
-                      foo[-P2M]:out2 => baz"""
+        P2M = """
+            foo:out1 => bar
+            foo[-P2M]:out2 => baz
+        """
 [runtime]
     [[foo]]
         script = """

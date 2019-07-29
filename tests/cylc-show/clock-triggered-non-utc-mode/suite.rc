@@ -6,12 +6,11 @@
     [[special tasks]]
         clock-trigger = foo(PT5M)
     [[dependencies]]
-        [[[PT1H]]]
-            graph = """
-                show => foo
-                foo[-PT1H] => foo
-                foo:start => baz & bar
-            """
+        PT1H = """
+            show => foo
+            foo[-PT1H] => foo
+            foo:start => baz & bar
+        """
 [runtime]
     [[foo]]
         script = sleep 10

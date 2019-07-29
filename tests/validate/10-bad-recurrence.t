@@ -28,8 +28,8 @@ cat >'suite.rc' <<'__SUITE__'
     initial cycle point = 20140101T00
     final cycle point = 20140201T00
     [[dependencies]]
-        [[[R/T00/PT5D]]]  # PT5D is invalid - should be P5D
-            graph = "foo"
+        # PT5D is invalid - should be P5D
+        R/T00/PT5D = "foo"
 [runtime]
     [[foo]]
         script = true
@@ -46,8 +46,7 @@ cat >'suite.rc' <<'__SUITE__'
 [scheduling]
     initial cycle point = 20140101
     [[dependencies]]
-        [[[ R1/P0D ]]]
-            graph = "foo => final_foo"
+        R1/P0D = "foo => final_foo"
 [runtime]
     [[root]]
         script = true
@@ -67,8 +66,7 @@ cat >'suite.rc' <<'__SUITE__'
     [[dependencies]]
         # Users may easily write 00 where they mean T00 or '0' in old syntax.
         # Technically 00 means the year 0000, but we won't allow it in Cylc.
-        [[[R/00/P5D]]]
-            graph = "foo"
+        R/00/P5D = "foo"
 [runtime]
     [[foo]]
         script = true
@@ -85,8 +83,7 @@ cat >'suite.rc' <<'__SUITE__'
 [scheduling]
     initial cycle point = 20100101T00
     [[dependencies]]
-        [[[0,6,12]]]
-            graph = "foo"
+        0,6,12 = "foo"
 __SUITE__
 run_fail "${TEST_NAME}" cylc validate 'suite.rc'
 cmp_ok "${TEST_NAME}.stderr" <<'__ERR__'
@@ -100,8 +97,7 @@ cat >'suite.rc' <<'__SUITE__'
 [scheduling]
     initial cycle point = 2010010101
     [[dependencies]]
-        [[[R1]]]
-            graph = foo
+        R1 = foo
 __SUITE__
 run_fail "${TEST_NAME}" cylc validate 'suite.rc'
 cmp_ok "${TEST_NAME}.stderr" <<'__ERR__'

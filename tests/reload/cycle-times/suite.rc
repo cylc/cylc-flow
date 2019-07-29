@@ -12,18 +12,15 @@
     initial cycle point = 20100101T00
     final cycle point = 20100101T18
     [[dependencies]]
-        [[[T00]]]
-            graph = "reloader => a"
-        [[[T00,T12]]] # marker
-            graph = "a[-PT12H] => a"
+        T00 = reloader => a
+        T00,T12 = a[-PT12H] => a
 [runtime]
     [[reloader]]
         script = """
 # change the order of FOO and BAR in the graphing section:
-perl -pi -e 's/(\[\[\[)T00,T12(\]\]\] # marker)/\1 T00,T06,T12,T18\2/' $CYLC_SUITE_DEF_PATH/suite.rc
-perl -pi -e 's/(graph = ")a\[-PT12H\]( => a")/\1a\[-PT6H\]\2/' $CYLC_SUITE_DEF_PATH/suite.rc
+sed -i 's/T00,T12 = a\[-PT12H\]/T00,T06,T12,T18 = a[-PT6H]/' "${CYLC_SUITE_DEF_PATH}/suite.rc"
 # reload
-cylc reload -f $CYLC_SUITE_NAME
+cylc reload -f "${CYLC_SUITE_NAME}"
 sleep 5
 """
     [[a]]

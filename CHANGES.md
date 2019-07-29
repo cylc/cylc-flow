@@ -127,6 +127,28 @@ CYLC_DIR is used in Cylc.
 [#3165](https://github.com/cylc/cylc-flow/pull/3165) - added GitHub
 Issue and Pull Request templates.
 
+[#3191](https://github.com/cylc/cylc-flow/pull/3191) - uniform configuration
+section level for defining non-cycling and cycling graphs. E.g.:
+
+```
+# Deprecated Syntax
+[scheduling]
+    initial cycle point = next(T00)
+    [[dependencies]]
+        [[[P1D]]]
+            graph = task1 => task2
+```
+
+Can now be written as:
+
+```
+# New Syntax
+[scheduling]
+    initial cycle point = next(T00)
+    [[dependencies]]
+        P1D = task1 => task2
+```
+
 ### Fixes
 
 [#3010](https://github.com/cylc/cylc-flow/pull/3010) - fixes except KeyError

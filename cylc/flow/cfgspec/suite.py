@@ -19,6 +19,7 @@
 
 from metomi.isodatetime.data import Calendar
 
+from cylc.flow import LOG
 from cylc.flow.network import Priv
 from cylc.flow.parsec.config import ParsecConfig
 from cylc.flow.parsec.upgrade import upgrader
@@ -151,11 +152,7 @@ SPEC = {
             '__MANY__': [VDR.V_XTRIGGER],
         },
         'dependencies': {
-            'graph': [VDR.V_STRING],
-            '__MANY__':
-            {
-                'graph': [VDR.V_STRING],
-            },
+            '__MANY__': [VDR.V_STRING],
         },
     },
     'runtime': {
@@ -294,8 +291,28 @@ def upg(cfg, descr):
     u.obsolete('7.8.1', ['cylc', 'events', 'reset inactivity timer'])
     u.obsolete('7.8.1', ['runtime', '__MANY__', 'events', 'reset timer'])
     u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'shell'])
-
     u.upgrade()
+
+    # Upgrader cannot do this type of move.
+    try:
+        keys = set()
+        dependencies = cfg['scheduling']['dependencies']
+        for key, value in dependencies.copy().items():
+            if isinstance(value, dict) and 'graph' in value:
+                dependencies[key] = value['graph']
+                keys.add(key)
+        if keys:
+            LOG.warning(
+                "deprecated graph items were automatically upgraded in '%s':",
+                descr)
+            LOG.warning(
+                ' * (8.0.0) %s -> %s - for X in:\n%s',
+                u.show_keys(['scheduling', 'dependencies', 'X', 'graph']),
+                u.show_keys(['scheduling', 'dependencies', 'X']),
+                '\n'.join(sorted(keys)),
+            )
+    except KeyError:
+        pass
 
 
 class RawSuiteConfig(ParsecConfig):

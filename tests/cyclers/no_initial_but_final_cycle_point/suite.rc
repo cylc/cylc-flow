@@ -3,8 +3,7 @@
 [scheduling]
     final cycle point = 20140101T00
     [[dependencies]]
-        [[[ P1D ]]]
-            graph = "foo[-P1D] => foo => bar"
+        P1D = "foo[-P1D] => foo => bar"
 [runtime]
     [[root]]
         script = true

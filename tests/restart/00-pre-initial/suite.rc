@@ -8,11 +8,11 @@
     initial cycle point = 20100808T00
     final cycle point = 20100808T06
     [[dependencies]]
-        [[[R1]]]
-            graph = "p1 => p2"
-        [[[T00]]]
-            graph = """p2 => foo
-                foo[-P1D] => foo => bar"""
+        R1 = "p1 => p2"
+        T00 = """
+            p2 => foo
+            foo[-P1D] => foo => bar
+        """
 [runtime]
     [[p1]]
         script = """

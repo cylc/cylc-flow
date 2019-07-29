@@ -9,12 +9,11 @@
     initial cycle point = 20141106T09
     final cycle point = 20141106T09
     [[dependencies]]
-        [[[PT1H]]]
-            graph = """
-                bar => foo
-                foo:start => show-suite & show-task & show-taskinstance & \
-                show-suite-json & show-task-json & show-taskinstance-json
-            """
+        PT1H = """
+            bar => foo
+            foo:start => show-suite & show-task & show-taskinstance & \
+            show-suite-json & show-task-json & show-taskinstance-json
+        """
 [runtime]
     [[foo]]
         script = sleep 10

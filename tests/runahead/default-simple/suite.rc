@@ -8,8 +8,7 @@
     final cycle point = 20100105T00
     [[dependencies]]
         # Intervals are all 24 hours, but we really have a 6 hour repetition.
-        [[[T00, T06, T12, T18]]]
-            graph = "foo => bar"
+        T00, T06, T12, T18 = "foo => bar"
 [runtime]
     [[foo]]
         script = false

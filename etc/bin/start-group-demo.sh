@@ -18,10 +18,8 @@ to show what they look like live in gcylc."""
             limit = 2
             members = FAMILY
     [[dependencies]]
-        [[[R1]]]
-            graph = cfoo => foo
-        [[[P1D]]]
-            graph =  """
+        R1 = cfoo => foo
+        P1D =  """
     foo[-P1D] => foo => FAMILY
     FAMILY:finish-all => bar
     foo => bird & fish & dog

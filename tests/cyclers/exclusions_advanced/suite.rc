@@ -4,47 +4,36 @@
     initial cycle point = 20000101T00Z
     final cycle point = 20000102T12Z
     [[dependencies]]
-        [[[ R1/^ ]]]
-            graph = start => foo
+        R1/^ = start => foo
 
         # Don't run at the initial cycle point
         # Also test whitespace tolerance
-        [[[ T00 ! ^ ]]]
-            graph = bar
+        T00 ! ^ = bar
 
         # Run 3-hourly but not 6 hourly.
-        [[[ PT3H!PT6H ]]]
-            graph = baz
+        PT3H!PT6H = baz
 
         # Run 4 hourly but not at 0800 from ICP
-        [[[ PT3H!T08 ]]]
-            graph = qux
+        PT3H!T08 = qux
 
         # Run hourly but not at 00:00, 06:00, 12:00, 18:00
-        [[[ T-00!(T00, T06, T12, T18) ]]]
-            graph = nip
+        T-00!(T00, T06, T12, T18) = nip
 
         # Run half-hourly but not on the hour from ICP
-        [[[ PT30M!T-00 ]]]
-            graph = quux
+        PT30M!T-00 = quux
 
         # Run hourly on the hour, but not 6 hourly on the hour
-        [[[ T-00!PT6H ]]]
-            graph = wibble
+        T-00!PT6H = wibble
 
         # Run hourly at 15 minutes past except every 3rd hour
-        [[[ T-15!T-15/PT3H ]]]
-            graph = bob
+        T-15!T-15/PT3H = bob
         # Run hourly at 15 minutes past except every 3rd hour
         # Implicit start point
-        [[[ T-15!PT3H ]]]
-            graph = toot
+        T-15!PT3H = toot
         # Stacked sequences
-        [[[ T0230, PT3H!     (T09,    T12  ) , T1945 ]]]
-            graph = dibble
+        T0230, PT3H!     (T09,    T12  ) , T1945 = dibble
 
-        [[[ R1/$ ]]]
-            graph = pub
+        R1/$  = pub
 
 [runtime]
     [[root]]

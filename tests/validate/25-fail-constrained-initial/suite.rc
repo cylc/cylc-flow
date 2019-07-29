@@ -6,8 +6,7 @@
 initial cycle point = 20100101T03
 initial cycle point constraints = T00, T06, T12, T18
 [[dependencies]]
-[[[T00, T06, T12, T18]]]
-graph = """foo"""
+T00, T06, T12, T18 = foo
 [runtime]
 [[FOO]]
 [[BAR]]

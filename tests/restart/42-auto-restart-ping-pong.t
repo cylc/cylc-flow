@@ -43,8 +43,7 @@ TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME_BASE}" <<< '
     initial cycle point = 2000
     final cycle point = 9999  # test cylc/cylc-flow/issues/2799
     [[dependencies]]
-        [[[P1Y]]]
-            graph = foo[-P1Y] => foo
+        P1Y = foo[-P1Y] => foo
 [runtime]
     [[root]]
         script = sleep 5

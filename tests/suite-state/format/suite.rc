@@ -8,8 +8,7 @@
     initial cycle point = 20100101
 
 [[dependencies]]
-    [[[R1]]]
-        graph = foo
+    R1 = foo
 
 [runtime]
     [[foo]]

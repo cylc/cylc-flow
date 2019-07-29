@@ -24,8 +24,7 @@ cat >'suite.rc' <<'__SUITE_RC__'
     [[special tasks]]
         clock-trigger = foo(PT0M)
     [[dependencies]]
-        [[[T00]]]
-            graph = bar
+        T00 = bar
 [runtime]
     [[bar]]
         script = true

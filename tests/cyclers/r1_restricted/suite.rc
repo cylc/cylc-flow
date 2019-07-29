@@ -4,10 +4,8 @@
     initial cycle point = 20130808T00
     final cycle point = 20130808T18
     [[dependencies]]
-        [[[R1]]]
-            graph = "setup_foo => foo"
-        [[[+PT6H/PT6H]]]
-            graph = "foo[-PT6H] => foo => bar"
+        R1 = "setup_foo => foo"
+        +PT6H/PT6H = "foo[-PT6H] => foo => bar"
 [runtime]
     [[root]]
         script = true

@@ -12,8 +12,7 @@
     initial cycle point=2020-02-02T02:02Z
     final cycle point=2020-02-02T02:02Z
     [[dependencies]]
-        [[[R1]]]
-            graph=T
+        R1=T
 
 [runtime]
     [[T]]

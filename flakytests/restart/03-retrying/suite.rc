@@ -11,12 +11,11 @@
     initial cycle point = 20130923T00
     final cycle point   = 20130923T00
     [[dependencies]]
-        [[[R1]]]
-            graph = """
-                retrying_task:start => shutdown
-                shutdown => output_states
-                output_states & retrying_task => finish
-            """
+        R1 = """
+            retrying_task:start => shutdown
+            shutdown => output_states
+            output_states & retrying_task => finish
+        """
 [runtime]
     [[retrying_task]]
         script = """

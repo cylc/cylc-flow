@@ -8,10 +8,8 @@
     initial cycle point = 1970
     final cycle point = 2010
     [[dependencies]]
-        [[[P20Y]]]
-            graph = fixable
-        [[[R1/2010]]]
-            graph = """
+        P20Y = fixable
+        R1/2010 = """
 fixable[1970]:fail & fixable[1990]:fail => fixer
 fixable:fail & fixer => resetter
 fixable => z

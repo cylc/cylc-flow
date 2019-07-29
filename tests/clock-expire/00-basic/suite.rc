@@ -19,10 +19,10 @@ Skip a daily post-processing workflow if the 'copy' task has expired."""
         # to stay near the wall clock, so expire the task if more than 1 day
         # behind "now + 1 day". This makes the first two 'copy' tasks expire.
     [[dependencies]]
-        [[[P1D]]]
-            graph = """
-        model[-P1D] => model => copy => proc
-              copy:expired => !proc"""
+        P1D = """
+            model[-P1D] => model => copy => proc
+            copy:expired => !proc
+        """
 [runtime]
     [[root]]
         script = /bin/true

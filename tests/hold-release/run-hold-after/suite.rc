@@ -13,10 +13,8 @@
     final cycle point   = 20140104T00
     max active cycle points = 10    
     [[dependencies]]
-        [[[R1]]]
-            graph = stopper
-        [[[T00, T12]]]
-            graph = foo[-PT12H] => foo => bar
+        R1 = stopper
+        T00, T12 = foo[-PT12H] => foo => bar
 [runtime]
     [[stopper]]
         script = sleep 30; cylc stop $CYLC_SUITE_NAME

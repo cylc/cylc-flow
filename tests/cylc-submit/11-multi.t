@@ -29,8 +29,7 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
     initial cycle point = 2020
     final cycle point = 2021
     [[dependencies]]
-        [[[P1Y]]]
-            graph = FOO & bar
+        P1Y = FOO & bar
 [runtime]
     [[FOO]]
         script = echo "${CYLC_TASK_ID}"
