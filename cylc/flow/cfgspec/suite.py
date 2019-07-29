@@ -20,7 +20,7 @@
 from metomi.isodatetime.data import Calendar
 
 from cylc.flow import LOG
-from cylc.flow.network import Priv
+from cylc.flow.network.authorisation import Priv
 from cylc.flow.parsec.config import ParsecConfig
 from cylc.flow.parsec.upgrade import upgrader
 from cylc.flow.parsec.validate import (

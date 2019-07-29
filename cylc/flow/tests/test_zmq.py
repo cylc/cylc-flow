@@ -4,7 +4,7 @@ import secrets
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import CylcError
-from cylc.flow.network import encrypt, decrypt
+from cylc.flow.network.authentication import encrypt, decrypt
 from cylc.flow.network.server import ZMQServer
 
 
