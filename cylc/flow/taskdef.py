@@ -64,7 +64,7 @@ class TaskDef(object):
         self.expiration_offset = None
         self.namespace_hierarchy = []
         self.dependencies = {}
-        self.outputs = []
+        self.outputs = set()
         self.param_var = {}
         self.external_triggers = []
         self.xtrig_labels = {}  # {sequence: [labels]}
