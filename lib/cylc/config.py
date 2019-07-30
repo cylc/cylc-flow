@@ -1649,7 +1649,7 @@ class SuiteConfig(object):
             # Record custom message outputs.
             for item in self.cfg['runtime'][name]['outputs'].items():
                 if item not in taskdef.outputs:
-                    taskdef.outputs.append(item)
+                    taskdef.outputs.add(item)
                     # Check for obsolete task message offsets.
                     if BCOMPAT_MSG_RE_C6.match(item[1]):
                         raise SuiteConfigError(
