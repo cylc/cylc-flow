@@ -34,7 +34,7 @@ import cylc.flow.flags
 from cylc.flow import LOG
 from cylc.flow.exceptions import ClientError, ClientTimeout
 from cylc.flow.hostuserutil import get_fqdn_by_host
-from cylc.flow.network import encrypt, decrypt, get_secret
+from cylc.flow.network.authentication import encrypt, decrypt, get_secret
 from cylc.flow.network.server import PB_METHOD_MAP
 from cylc.flow.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)

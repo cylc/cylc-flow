@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Server for suite runtime API."""
 
-from functools import partial, wraps
+from functools import partial
 import getpass
 from queue import Queue
 from textwrap import dedent
@@ -31,8 +31,10 @@ import zmq
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import CylcError
-from cylc.flow.network import Priv, encrypt, decrypt, get_secret, schema
+from cylc.flow.network.authorisation import Priv, authorise
+from cylc.flow.network.authentication import encrypt, decrypt, get_secret
 from cylc.flow.network.resolvers import Resolvers
+from cylc.flow.network.schema import schema
 from cylc.flow.suite_status import (
     KEY_META, KEY_NAME, KEY_OWNER, KEY_STATES,
     KEY_TASKS_BY_STATE, KEY_UPDATE_TIME, KEY_VERSION)
@@ -222,49 +224,6 @@ class ZMQServer(object):
         """Expose a method on the sever."""
         func.exposed = True
         return func
-
-
-def authorise(req_priv_level):
-    """Add authorisation to an endpoint.
-
-    This decorator extracts the `user` field from the incoming message to
-    determine the client's privilege level.
-
-    Args:
-        req_priv_level (cylc.flow.network.Priv): A privilege level for the
-            method.
-
-    Wrapped function args:
-        user
-            The authenticated user (determined server side)
-        host
-            The client host (if provided by client) - non trustworthy
-        prog
-            The client program name (if provided by client) - non trustworthy
-
-    """
-    def wrapper(fcn):
-        @wraps(fcn)  # preserve args and docstrings
-        def _authorise(self, *args, user='?', meta=None, **kwargs):
-            if not meta:
-                meta = {}
-            host = meta.get('host', '?')
-            prog = meta.get('prog', '?')
-
-            usr_priv_level = self._get_priv_level(user)
-            if usr_priv_level < req_priv_level:
-                LOG.warn(
-                    "[client-connect] DENIED (privilege '%s' < '%s') %s@%s:%s",
-                    usr_priv_level, req_priv_level, user, host, prog)
-                raise Exception('Authorisation failure')
-            LOG.info(
-                '[client-command] %s %s@%s:%s', fcn.__name__, user, host, prog)
-            return fcn(self, *args, **kwargs)
-        _authorise.__doc__ += (  # add auth level to docstring
-            'Authentication:\n%s:py:obj:`cylc.flow.network.%s`\n' % (
-                ' ' * 12, req_priv_level))
-        return _authorise
-    return wrapper
 
 
 class SuiteRuntimeServer(ZMQServer):
