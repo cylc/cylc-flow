@@ -40,8 +40,9 @@ ARG_VAL_TEMPLATES = [
     TMPL_TASK_CYCLE_POINT, TMPL_TASK_IDENT, TMPL_TASK_NAME, TMPL_SUITE_RUN_DIR,
     TMPL_SUITE_SHARE_DIR, TMPL_USER_NAME, TMPL_SUITE_NAME, TMPL_DEBUG_MODE]
 
-# Extract all 'foo' from string templates '%(foo)s'.
-RE_STR_TMPL = re.compile(r'%\(([\w]+)\)s')
+# Extract 'foo' from string templates '%(foo)s', avoiding '%%' escaping
+# ('%%(foo)s` is not a string template).
+RE_STR_TMPL = re.compile(r'(?<!%)%\(([\w]+)\)s')
 
 
 class XtriggerManager(object):
