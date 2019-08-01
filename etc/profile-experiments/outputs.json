@@ -1,0 +1,38 @@
+{
+    "runs": [
+        {
+            "name": "1",
+            "suite dir": "etc/dev-suites/outputs",
+            "options": ["N=1"],
+            "repeats": 5
+        },
+        {
+            "name": "10",
+            "suite dir": "etc/dev-suites/outputs",
+            "options": ["N=10"],
+            "repeats": 5
+        },
+        {
+            "name": "100",
+            "suite dir": "etc/dev-suites/outputs",
+            "options": ["N=100"],
+            "repeats": 5
+        },
+        {
+            "name": "1000",
+            "suite dir": "etc/dev-suites/outputs",
+            "options": ["N=1000"],
+            "repeats": 3
+        },
+        {
+            "name": "10000",
+            "suite dir": "etc/dev-suites/outputs",
+            "options": ["N=10000"],
+            "repeats": 2
+        }
+    ],
+    "profile modes": ["time"],
+    "analysis": "scale",
+    "mode": "validate",
+    "x-axis": "outputs"
+}
