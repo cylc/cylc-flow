@@ -21,29 +21,29 @@ import unittest
 import tempfile
 import shutil
 
-from cylc.flow.pkg_resources import (
-    resource_names, list_pkg_resources, extract_pkg_resources)
+from cylc.flow.resources import (
+    resource_names, list_resources, extract_resources)
 
 
 class TestPkgResources(unittest.TestCase):
 
-    def test_list_pkg_resources(self):
-        """Test pkg_resources.list_pkg_resources."""
-        self.assertEqual(list_pkg_resources(), resource_names)
+    def test_list_resources(self):
+        """Test resources.list_resources."""
+        self.assertEqual(list_resources(), resource_names)
 
-    def test_extract_pkg_resources_one(self):
+    def test_extract_resources_one(self):
         """Test extraction of a specific resource.
 
         Just check that a file of the right name gets extracted, but not its
         content - which may change in the future.
         """
         tmpdir = tempfile.gettempdir()
-        extract_pkg_resources(tmpdir, resources=['etc/job.sh'])
+        extract_resources(tmpdir, resources=['etc/job.sh'])
         extracted = os.path.join(tmpdir, 'etc', 'job.sh')
         self.assertTrue(os.path.isfile(extracted))
         shutil.rmtree(os.path.dirname(extracted), ignore_errors=True)
 
-    def test_extract_pkg_resources_all(self):
+    def test_extract_resources_all(self):
         """Test extraction of all resources under 'etc'.
 
         Just check that file of the right names gets extracted, but not their
@@ -51,7 +51,7 @@ class TestPkgResources(unittest.TestCase):
 
         """
         tmpdir = tempfile.gettempdir()
-        extract_pkg_resources(tmpdir, None)
+        extract_resources(tmpdir, None)
         for resource in resource_names:
             extracted = os.path.join(tmpdir, resource)
             self.assertTrue(os.path.isfile(extracted))

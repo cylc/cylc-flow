@@ -23,7 +23,7 @@ import tarfile
 
 import cylc.flow.flags
 from cylc.flow.suite_srv_files_mgr import SuiteSrvFilesManager
-from cylc.flow.pkg_resources import extract_pkg_resources
+from cylc.flow.resources import extract_resources
 
 
 FILE_BASE_UUID = 'uuid'
@@ -53,7 +53,7 @@ def remote_init(uuid_str, rund, indirect_comm=None):
     oldcwd = os.getcwd()
     os.chdir(rund)
     # Extract job.sh from library, for use in job scripts.
-    extract_pkg_resources(SuiteSrvFilesManager.DIR_BASE_SRV, ['etc/job.sh'])
+    extract_resources(SuiteSrvFilesManager.DIR_BASE_SRV, ['etc/job.sh'])
     try:
         tarhandle = tarfile.open(fileobj=sys.stdin.buffer, mode='r|')
         tarhandle.extractall()
