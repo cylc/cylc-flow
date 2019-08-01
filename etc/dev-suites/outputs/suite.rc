@@ -1,0 +1,20 @@
+#!Jinja2
+
+{% if not N is defined %}
+    {% set N = 1000 %}
+{% else %}
+    {% set N = N | int %}
+{% endif %}
+
+[scheduling]
+    [[dependencies]]
+        graph = """
+            foo => bar
+        """
+
+[runtime]
+    [[foo]]
+        [[[outputs]]]
+{% for i in range(N) %}
+            output_{{ i }} = 123{{ i }}
+{% endfor %}
