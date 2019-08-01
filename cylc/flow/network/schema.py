@@ -343,6 +343,7 @@ class Workflow(ObjectType):
     id = ID(required=True)
     name = String()
     status = String()
+    status_msg = String()
     host = String()
     port = Int()
     owner = String()
