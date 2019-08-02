@@ -26,7 +26,7 @@ import sys
 from tempfile import SpooledTemporaryFile
 from threading import RLock
 from time import time
-from subprocess import DEVNULL
+from subprocess import DEVNULL  # nosec
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg

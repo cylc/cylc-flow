@@ -609,7 +609,7 @@ To start a new run, stop the old one first with one or more of these:
         command = shlex.split(
             glbl_cfg().get_host_item('ssh command', host, owner))
         command += ['-n', owner + '@' + host, script]
-        from subprocess import Popen, PIPE, DEVNULL
+        from subprocess import Popen, PIPE, DEVNULL  # nosec
         try:
             proc = Popen(
                 command, stdin=DEVNULL, stdout=PIPE, stderr=PIPE)
