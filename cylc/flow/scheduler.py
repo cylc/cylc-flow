@@ -64,7 +64,7 @@ from cylc.flow.subprocpool import SubProcPool
 from cylc.flow.suite_db_mgr import SuiteDatabaseManager
 from cylc.flow.suite_events import (
     SuiteEventContext, SuiteEventError, SuiteEventHandler)
-from cylc.flow.suite_status import StopMode
+from cylc.flow.suite_status import StopMode, AutoRestartMode
 from cylc.flow.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
 from cylc.flow.taskdef import TaskDef
@@ -132,9 +132,6 @@ class Scheduler(object):
     START_MESSAGE_TMPL = (
         START_MESSAGE_PREFIX +
         'url=%(comms_method)s://%(host)s:%(port)s/ pid=%(pid)s')
-
-    AUTO_STOP_RESTART_NORMAL = 'stop and restart'
-    AUTO_STOP_RESTART_FORCE = 'stop'
 
     # Dependency negotiation etc. will run after these commands
     PROC_CMDS = (
@@ -256,7 +253,7 @@ class Scheduler(object):
         except SchedulerStop as exc:
             # deliberate stop
             self.shutdown(exc)
-            if self.auto_restart_mode == self.AUTO_STOP_RESTART_NORMAL:
+            if self.auto_restart_mode == AutoRestartMode.RESTART_NORMAL:
                 self.suite_auto_restart()
             self.close_logs()
 
@@ -1279,7 +1276,7 @@ see `COPYING' in the Cylc source distribution.
         if self.auto_restart_time is None or time() < self.auto_restart_time:
             # ... no
             pass
-        elif self.auto_restart_mode == self.AUTO_STOP_RESTART_NORMAL:
+        elif self.auto_restart_mode == AutoRestartMode.RESTART_NORMAL:
             # ... yes - wait for local jobs to complete before restarting
             #           * Avoid polling issues see #2843
             #           * Ensure the host can be safely taken down once the
@@ -1294,7 +1291,7 @@ see `COPYING' in the Cylc source distribution.
                     break
             else:
                 self._set_stop(StopMode.REQUEST_NOW_NOW)
-        elif self.auto_restart_mode == self.AUTO_STOP_RESTART_FORCE:
+        elif self.auto_restart_mode == AutoRestartMode.FORCE_STOP:
             # ... yes - leave local jobs running then stop the suite
             #           (no restart)
             self._set_stop(StopMode.REQUEST_NOW)
@@ -1331,7 +1328,7 @@ see `COPYING' in the Cylc source distribution.
         return False
 
     def set_auto_restart(self, restart_delay=None,
-                         mode=AUTO_STOP_RESTART_NORMAL):
+                         mode=AutoRestartMode.RESTART_NORMAL):
         """Configure the suite to automatically stop and restart.
 
         Restart handled by `suite_auto_restart`.
@@ -1352,7 +1349,7 @@ see `COPYING' in the Cylc source distribution.
             return True
 
         # Force mode, stop the suite now, don't restart it.
-        if mode == self.AUTO_STOP_RESTART_FORCE:
+        if mode == AutoRestartMode.FORCE_STOP:
             if self.auto_restart_time:
                 LOG.info('Scheduled automatic restart canceled')
             self.auto_restart_time = time()
@@ -1392,7 +1389,7 @@ see `COPYING' in the Cylc source distribution.
         else:
             self.auto_restart_time = time()
 
-        self.auto_restart_mode = self.AUTO_STOP_RESTART_NORMAL
+        self.auto_restart_mode = AutoRestartMode.RESTART_NORMAL
 
         return True
 
@@ -1444,21 +1441,21 @@ see `COPYING' in the Cylc source distribution.
                                                   'condemned hosts']):
                     if host.endswith('!'):
                         # host ends in an `!` -> force shutdown mode
-                        mode = self.AUTO_STOP_RESTART_FORCE
+                        mode = AutoRestartMode.FORCE_STOP
                         host = host[:-1]
                     else:
                         # normal mode (stop and restart the suite)
-                        mode = self.AUTO_STOP_RESTART_NORMAL
+                        mode = AutoRestartMode.RESTART_NORMAL
                         if self.auto_restart_time is not None:
                             # suite is already scheduled to stop-restart only
-                            # AUTO_STOP_RESTART_FORCE can override this.
+                            # AutoRestartMode.FORCE_STOP can override this.
                             continue
 
                     if get_fqdn_by_host(host) == self.host:
                         # this host is condemned, take the appropriate action
                         LOG.info('The Cylc suite host will soon become '
                                  'un-available.')
-                        if mode == self.AUTO_STOP_RESTART_FORCE:
+                        if mode == AutoRestartMode.FORCE_STOP:
                             # server is condemned in "force" mode -> stop
                             # the suite, don't attempt to restart
                             LOG.critical(

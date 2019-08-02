@@ -33,8 +33,8 @@ KEY_VERSION = "version"
 SUITE_STATUS_RUNNING_TO_STOP = "running to stop at %s"
 SUITE_STATUS_RUNNING_TO_HOLD = "running to hold at %s"
 
-# TODO - move auto-restart state into this module
-# TODO - the suite status should be a property of the Scheduler instance?
+# TODO - the suite status should be a property of the Scheduler instance
+#        rather than derived from scheduler state?
 
 
 class SuiteStatus(Enum):
@@ -85,10 +85,15 @@ class StopMode(Enum):
             return 'immediate shutdown'
         return ''
 
-    def __eq__(self, other):
-        if other is None:
-            return False
-        return self.name == other.name
+
+class AutoRestartMode(Enum):
+    """The possible modes of a suite auto-restart."""
+
+    RESTART_NORMAL = 'stop and restart'
+    """Suite will stop immeduately and attempt to restart."""
+
+    FORCE_STOP = 'stop'
+    """Suite will stop immeduately but *not* attempt to restart."""
 
 
 def get_suite_status(schd):
