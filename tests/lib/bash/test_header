@@ -41,6 +41,9 @@
 #         Run COMMAND with any following options/arguments and store stdout
 #         and stderr in TEST_NAME.stdout and TEST_NAME.stderr.
 #         This is expected to have a non-zero return code, which ok's the test.
+#     run_graphql_ok SUITE TEST_NAME JSON
+#         Send a graphql query to the suite, extract the result from
+#         ${TEST_NAME}.stdout
 #     cmp_ok FILE_TEST [FILE_CONTROL]
 #         Compare FILE_TEST with a file or stdin given by FILE_CONTROL (stdin
 #         if FILE_CONTROL is "-" or missing). By default, it uses "diff -u" to
@@ -189,6 +192,19 @@ run_fail() {
         return
     fi
     ok "${TEST_NAME}"
+}
+
+run_graphql_ok () {
+    # this is a thin wrapper to `cylc client` which strips newlines from $2 to
+    # make it valid JSON
+    local TEST_NAME="$1"
+    local SUITE="$2"
+    local JSON="$3"
+    # shellcheck disable=SC2086
+    run_ok "${TEST_NAME}" cylc client \
+        "${SUITE}" \
+        'graphql' \
+        < <(echo ${JSON})
 }
 
 suite_run_ok() {

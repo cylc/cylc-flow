@@ -1,0 +1,14 @@
+[meta]
+    title = foo
+    description = bar
+
+[cylc]
+    UTC mode = True
+
+[scheduling]
+    [[dependencies]]
+        graph = "foo"
+
+[runtime]
+    [[foo]]
+        script = sleep 60
