@@ -149,12 +149,6 @@ Can now be written as:
         P1D = task1 => task2
 ```
 
-[#3268](https://github.com/cylc/cylc-flow/pull/3268) - sped up suite validation
-(which also affects responsiveness of suite controllers during suite startup,
-restarts, and reloads).  Impact of the speedup is most noticeable when dealing
-with suite configurations that contain tasks with many task outputs.
-
-
 ### Fixes
 
 [#3010](https://github.com/cylc/cylc-flow/pull/3010) - fixes except KeyError
