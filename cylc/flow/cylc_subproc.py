@@ -34,7 +34,7 @@ def procopen(cmd, bufsize=0, executable=None, stdin=None, stdout=None,
              cwd=None, env=None, universal_newlines=False, startupinfo=None,
              creationflags=0, splitcmd=False, stdoutpipe=False,
              stdoutout=False, stderrpipe=False, stderrout=False,
-             stdindevnull=False):
+             stdindevnull=DEVNULL):
 
     shell = usesh
 
