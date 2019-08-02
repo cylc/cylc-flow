@@ -570,7 +570,8 @@ To start a new run, stop the old one first with one or more of these:
     def _load_local_item(item, path):
         """Load and return content of a file (item) in path."""
         try:
-            return open(os.path.join(path, item)).read()
+            with open(os.path.join(path, item)) as f:
+                return f.read()
         except IOError:
             return None
 
