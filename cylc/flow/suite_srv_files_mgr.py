@@ -138,9 +138,9 @@ class SuiteSrvFilesManager(object):
             import shlex
             ssh_str = str(glbl_cfg().get_host_item("ssh command", old_host))
             cmd = shlex.split(ssh_str) + ["-n", old_host] + cmd
-        from subprocess import Popen, PIPE, DEVNULL
+        from subprocess import Popen, PIPE, DEVNULL  # nosec
         from time import sleep, time
-        proc = Popen(cmd, stdin=DEVNULL, stdout=PIPE, stderr=PIPE)
+        proc = Popen(cmd, stdin=DEVNULL, stdout=PIPE, stderr=PIPE)  # nosec
         # Terminate command after 10 seconds to prevent hanging SSH, etc.
         timeout = time() + 10.0
         while proc.poll() is None:
@@ -612,7 +612,7 @@ To start a new run, stop the old one first with one or more of these:
         from subprocess import Popen, PIPE, DEVNULL  # nosec
         try:
             proc = Popen(
-                command, stdin=DEVNULL, stdout=PIPE, stderr=PIPE)
+                command, stdin=DEVNULL, stdout=PIPE, stderr=PIPE)  # nosec
         except OSError:
             if cylc.flow.flags.debug:
                 import traceback
