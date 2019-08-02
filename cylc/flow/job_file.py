@@ -84,9 +84,13 @@ class JobFileWriter(object):
         # check syntax
         if check_syntax:
             try:
-                proc = Popen(
-                    ['/bin/bash', '-n', tmp_name],
-                    stderr=PIPE, stdin=DEVNULL)
+                with Popen(
+                        ['/bin/bash', '-n', tmp_name],
+                        stderr=PIPE, stdin=DEVNULL) as proc:
+                    if proc.wait():
+                        # This will leave behind the temporary file,
+                        # which is useful for debugging syntax errors, etc.
+                        raise RuntimeError(proc.communicate()[1].decode())
             except OSError as exc:
                 # Popen has a bad habit of not telling you anything if it fails
                 # to run the executable.
@@ -98,11 +102,6 @@ class JobFileWriter(object):
                 except OSError:
                     pass
                 raise exc
-            else:
-                if proc.wait():
-                    # This will leave behind the temporary file,
-                    # which is useful for debugging syntax errors, etc.
-                    raise RuntimeError(proc.communicate()[1].decode())
         # Make job file executable
         mode = (
             os.stat(tmp_name).st_mode |
