@@ -135,4 +135,4 @@ def get_suite_status(schd):
             SUITE_STATUS_RUNNING_TO_STOP %
             schd.config.final_point)
 
-    return (status, status_msg)
+    return (status.value, status_msg)

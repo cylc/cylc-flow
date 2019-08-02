@@ -184,8 +184,10 @@ class ZMQClient(object):
                 nothing more, nothing less.
 
         """
-        return asyncio.run(
-            self.async_request(command, args, timeout))
+        loop = asyncio.get_event_loop()
+        task = loop.create_task(self.async_request(command, args, timeout))
+        loop.run_until_complete(task)
+        return task.result()
 
     __call__ = serial_request
 
