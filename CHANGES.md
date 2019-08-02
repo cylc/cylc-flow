@@ -28,6 +28,14 @@ Bug fix release.
 
 Selected user-facing changes:
 
+### Enhancements
+
+[#3259](https://github.com/cylc/cylc-flow/pull/3259) - sped up suite validation
+(which also affects responsiveness of suite controllers during suite startup,
+restarts, and reloads).  Impact of the speedup is most noticeable when dealing
+with suite configurations that contain tasks with many task outputs.
+
+
 ### Fixes
 
 [#3204](https://github.com/cylc/cylc-flow/pull/3204) - fix restart on
