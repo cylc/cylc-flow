@@ -1,4 +1,4 @@
-<!-- Complete this Pull Request template and delete all "COMMENT:" lines. -->
+<!-- Complete this Pull Request template. -->
 
 <!-- Significant PRs should address an existing Issue. Choose one: -->
 
