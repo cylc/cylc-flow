@@ -23,7 +23,7 @@ import re
 from cylc.flow import LOG
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.hostuserutil import get_user_home, is_remote_user
-from cylc.flow.network import Priv
+from cylc.flow.network.authorisation import Priv
 from cylc.flow.parsec.config import ParsecConfig
 from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.parsec.upgrade import upgrader

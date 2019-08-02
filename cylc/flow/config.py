@@ -399,7 +399,7 @@ class SuiteConfig(object):
                 )
 
         if (self.cfg['scheduling']['final cycle point'] is not None and
-                self.cfg['scheduling']['final cycle point'].strip() is ""):
+                not self.cfg['scheduling']['final cycle point'].strip()):
             self.cfg['scheduling']['final cycle point'] = None
         fcp_str = getattr(self.options, 'fcp', None)
         if fcp_str is None:

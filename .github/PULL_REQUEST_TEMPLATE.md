@@ -1,4 +1,4 @@
-<!-- Complete this Pull Request template and delete all "COMMENT:" lines. -->
+<!-- Complete this Pull Request template. -->
 
 <!-- Significant PRs should address an existing Issue. Choose one: -->
 
@@ -15,11 +15,12 @@ This is a small change with no associated Issue.
 - [ ] Does not contain off-topic changes (use other PRs for other changes).
 <!-- choose one: -->
 - [ ] Appropriate tests are included (unit and/or functional).
-- [ ] These changes are already covered by existing tests.
+- [ ] Already covered by existing tests.
+- [ ] Does not need tests (why?).
 <!-- choose one: -->
-- [ ] Includes an appropriate entry in the release change log `CHANGES.md`.
-- [ ] No change log entry required (e.g. change is small or internal only).
+- [ ] Appropriate change log entry included.
+- [ ] No change log entry required (why? e.g. invisible to users).
 <!-- choose one: -->
-- [ ] (master branch) I have opened a documentation PR at cylc/cylc-doc#XXXX.
+- [ ] (master branch) I have opened a documentation PR at cylc/cylc-doc/pull/XXXX.
 - [ ] (7.8.x branch) I have updated the documentation in this PR branch.
-- [ ] No documentation update required for this change.
+- [ ] No documentation update required.

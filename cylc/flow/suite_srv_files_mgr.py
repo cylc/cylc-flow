@@ -27,7 +27,7 @@ from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import SuiteServiceFileError
 from cylc.flow.pathutil import get_remote_suite_run_dir, get_suite_run_dir
-from cylc.flow.pkg_resources import extract_pkg_resources
+from cylc.flow.resources import extract_resources
 import cylc.flow.flags
 from cylc.flow.hostuserutil import (
     get_host, get_user, is_remote, is_remote_host, is_remote_user)
@@ -463,7 +463,7 @@ To start a new run, stop the old one first with one or more of these:
             os.symlink(source_str, target)
 
         # Extract job.sh from library, for use in job scripts.
-        extract_pkg_resources(srv_d, ['etc/job.sh'])
+        extract_resources(srv_d, ['etc/job.sh'])
         print('REGISTERED %s -> %s' % (reg, source))
         return reg
 

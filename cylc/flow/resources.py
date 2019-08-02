@@ -38,7 +38,7 @@ resource_names = [
 ]
 
 
-def list_pkg_resources():
+def list_resources():
     """List available cylc.flow package resources.
 
     The API has a "listdir" function but no automatic recursion capability,
@@ -47,7 +47,7 @@ def list_pkg_resources():
     return resource_names
 
 
-def extract_pkg_resources(target_dir, resources=None):
+def extract_resources(target_dir, resources=None):
     """Extract cylc.flow resources and write them to a target directory.
 
     Arguments:
