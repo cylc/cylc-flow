@@ -26,6 +26,7 @@ import sys
 from tempfile import SpooledTemporaryFile
 from threading import RLock
 from time import time
+from subprocess import DEVNULL
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
@@ -333,7 +334,7 @@ class SubProcPool(object):
                 stdin_file.write(ctx.cmd_kwargs.get('stdin_str').encode())
                 stdin_file.seek(0)
             else:
-                stdin_file = open(os.devnull)
+                stdin_file = DEVNULL
             proc = procopen(
                 ctx.cmd, stdin=stdin_file, stdoutpipe=True, stderrpipe=True,
                 # Execute command as a process group leader,

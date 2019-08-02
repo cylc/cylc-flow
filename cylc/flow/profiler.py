@@ -21,7 +21,7 @@ import os
 import cProfile
 import io
 import pstats
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, DEVNULL
 
 
 class Profiler(object):
@@ -58,6 +58,6 @@ class Profiler(object):
             return
         proc = Popen(
             ["ps", "h", "-orss", str(os.getpid())],
-            stdin=open(os.devnull), stdout=PIPE)
+            stdin=DEVNULL, stdout=PIPE)
         memory = int(proc.communicate()[0])
         print("PROFILE: Memory: %d KiB: %s" % (memory, message))

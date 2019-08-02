@@ -20,7 +20,7 @@
 import os
 import re
 import stat
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, DEVNULL
 
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.batch_sys_manager import BatchSysManager
@@ -86,7 +86,7 @@ class JobFileWriter(object):
             try:
                 proc = Popen(
                     ['/bin/bash', '-n', tmp_name],
-                    stderr=PIPE, stdin=open(os.devnull))
+                    stderr=PIPE, stdin=DEVNULL)
             except OSError as exc:
                 # Popen has a bad habit of not telling you anything if it fails
                 # to run the executable.

@@ -27,7 +27,7 @@ This module provides logic to:
 import os
 from shlex import quote
 import re
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, DEVNULL
 import tarfile
 from time import time
 
@@ -237,7 +237,7 @@ class TaskRemoteMgr(object):
             cmd.append(get_remote_suite_run_dir(host, owner, self.suite))
             procs[(host, owner)] = (
                 cmd,
-                Popen(cmd, stdout=PIPE, stderr=PIPE, stdin=open(os.devnull)))
+                Popen(cmd, stdout=PIPE, stderr=PIPE, stdin=open(DEVNULL)))
         # Wait for commands to complete for a max of 10 seconds
         timeout = time() + 10.0
         while procs and time() < timeout:

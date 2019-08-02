@@ -413,7 +413,7 @@ class BatchSysManager(object):
                     command = shlex.split(
                         batch_sys.KILL_CMD_TMPL % {"job_id": job_id})
                     try:
-                        proc = procopen(command, stdin=open(os.devnull),
+                        proc = procopen(command, stdindevnull=True,
                                         stderrpipe=True)
                     except OSError as exc:
                         # subprocess.Popen has a bad habit of not setting the
@@ -546,7 +546,7 @@ class BatchSysManager(object):
                 # Simple poll command that takes a list of job IDs
                 cmd = [batch_sys.POLL_CMD] + exp_ids
             try:
-                proc = procopen(cmd, stdin=open(os.devnull),
+                proc = procopen(cmd, stdindevnull=True,
                                 stderrpipe=True, stdoutpipe=True)
             except OSError as exc:
                 # subprocess.Popen has a bad habit of not setting the
@@ -634,6 +634,7 @@ class BatchSysManager(object):
         # Submit job
         batch_sys = self._get_sys(batch_sys_name)
         proc_stdin_arg = None
+        # TODO: close stdin
         proc_stdin_value = open(os.devnull)
         if hasattr(batch_sys, "get_submit_stdin"):
             proc_stdin_arg, proc_stdin_value = batch_sys.get_submit_stdin(

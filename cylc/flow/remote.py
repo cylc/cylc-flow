@@ -26,7 +26,7 @@ import signal
 #   Consider possible security implications associated with Popen module.
 # REASON IGNORED:
 #   Subprocess is needed, but we use it with security in mind.
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, DEVNULL
 import sys
 from time import sleep
 
@@ -72,7 +72,7 @@ def run_cmd(command, stdin=None, capture_process=False, capture_status=False,
             command inclusive of all opts and args required to run via ssh.
         stdin (file):
             If specified, it should be a readable file object.
-            If None, `open(os.devnull)` is set if output is to be captured.
+            If None, `open(DEVNULL)` is set if output is to be captured.
         capture_process (boolean):
             If True, set stdout=PIPE and return the Popen object.
         capture_status (boolean):
@@ -100,7 +100,7 @@ def run_cmd(command, stdin=None, capture_process=False, capture_status=False,
         stdout = PIPE
         stderr = PIPE
         if stdin is None:
-            stdin = open(os.devnull)
+            stdin = DEVNULL
     if isinstance(stdin, str):
         stdin = stdin.encode()
 
