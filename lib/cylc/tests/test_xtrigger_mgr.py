@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import re
 import unittest
 
 from cylc.xtrigger_mgr import RE_STR_TMPL
@@ -26,7 +25,7 @@ class TestXtriggerManager(unittest.TestCase):
 
     def test_extract_templates(self):
         """Test escaped templates in xtrigger arg string.
-        
+
         They should be left alone and passed into the function as string
         literals, not identified as template args.
         """
