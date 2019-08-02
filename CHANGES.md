@@ -30,6 +30,9 @@ Selected user-facing changes:
 
 ### Fixes
 
+[#3257](https://github.com/cylc/cylc-flow/pull/3257) - leave '%'-escaped string
+templates alone in xtrigger arguments.
+
 [#3204](https://github.com/cylc/cylc-flow/pull/3204) - fix restart on
 `cylc run --icp=now SUITE` and related, which was broken at 7.8.3.
 
