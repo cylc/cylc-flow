@@ -260,6 +260,10 @@ and less commonly needed:
 - ``%(suite_run_dir)s`` - suite run directory
 - ``%(suite_share_dir)s`` - suite share directory
 
+If you need to pass a string template into an xtrigger function as a string
+literal - i.e. to be used as a template inside the function - escape it with
+``%`` to avoid detection by the Cylc xtrigger parser: ``%%(cat)s``.
+
 Function return values should be as follows:
 
 - if the trigger condition is *not satisfied*:
