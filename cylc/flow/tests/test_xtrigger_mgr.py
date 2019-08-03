@@ -22,7 +22,7 @@ from cylc.flow.subprocctx import SubFuncContext
 from cylc.flow.subprocpool import SubProcPool
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.taskdef import TaskDef
-from cylc.flow.xtrigger_mgr import XtriggerManager
+from cylc.flow.xtrigger_mgr import XtriggerManager, RE_STR_TMPL
 
 
 def test_constructor():
@@ -32,6 +32,17 @@ def test_constructor():
     assert not xtrigger_mgr.clockx_map
     # the dict with normal xtriggers starts empty
     assert not xtrigger_mgr.functx_map
+
+
+def test_extract_templates():
+    """Test escaped templates in xtrigger arg string.
+
+    They should be left alone and passed into the function as string
+    literals, not identified as template args.
+    """
+    assert (
+        RE_STR_TMPL.findall('%(cat)s, %(dog)s, %%(fish)s') == ['cat', 'dog']
+    )
 
 
 def test_add_clock_xtrigger():
