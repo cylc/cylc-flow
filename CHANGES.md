@@ -156,6 +156,9 @@ have the same value as `CYLC_TASK_CYCLE_POINT`.
 
 ### Fixes
 
+[#3258](https://github.com/cylc/cylc-flow/pull/3258) - leave '%'-escaped string
+templates alone in xtrigger arguments.
+
 [#3010](https://github.com/cylc/cylc-flow/pull/3010) - fixes except KeyError
 in task_job_mgr.
 
