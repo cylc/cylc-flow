@@ -30,6 +30,7 @@ from cylc.flow.remote import remrun, remote_cylc_cmd
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
+from cylc.flow.resources import extract_resources
 from cylc.flow.terminal import cli_function
 
 RUN_DOC = r"""cylc [control] run|start [OPTIONS] [ARGS]
@@ -226,14 +227,20 @@ def _auto_register():
 
 def scheduler_cli(parser, options, args, is_restart=False):
     """CLI main."""
+    reg = args[0]
     # Check suite is not already running before start of host selection.
     try:
-        SuiteSrvFilesManager().detect_old_contact_file(args[0])
+        SuiteSrvFilesManager().detect_old_contact_file(reg)
     except SuiteServiceFileError as exc:
         sys.exit(exc)
 
     # Create auth files if needed.
-    SuiteSrvFilesManager().create_auth_files(args[0])
+    SuiteSrvFilesManager().create_auth_files(reg)
+
+    # Extract job.sh from library, for use in job scripts.
+    extract_resources(
+        SuiteSrvFilesManager().get_suite_srv_dir(reg),
+        ['etc/job.sh'])
 
     # Check whether a run host is explicitly specified, else select one.
     if not options.host:
