@@ -17,9 +17,9 @@ sleep 5
 # There should be 3 task proxies in the suite state.
 cylc dump -t $CYLC_SUITE_NAME | sort > log.1
 diff log.1 - << __EOF__
-bar, 1, waiting, unspawned
-baz, 1, waiting, unspawned
-foo, 1, running, spawned
+bar, 1, waiting, unspawned, unheld
+baz, 1, waiting, unspawned, unheld
+foo, 1, running, spawned, unheld
 __EOF__
 
 cylc message "the quick brown fox"
@@ -27,8 +27,8 @@ sleep 5
 # There should now be 2 task proxies in the suite state.
 cylc dump -t $CYLC_SUITE_NAME | sort > log.2
 diff log.2 - << __EOF__
-baz, 1, waiting, unspawned
-foo, 1, running, spawned
+baz, 1, waiting, unspawned, unheld
+foo, 1, running, spawned, unheld
 __EOF__
 
 cylc message "jumped over the lazy dog"
@@ -36,7 +36,7 @@ sleep 5
 # There should now be only 1 task proxy in the suite state.
 cylc dump -t $CYLC_SUITE_NAME | sort > log.3
 diff log.3 - << __EOF__
-foo, 1, running, spawned
+foo, 1, running, spawned, unheld
 __EOF__
 """
         [[[outputs]]]
