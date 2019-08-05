@@ -127,6 +127,7 @@ CYLC_DIR is used in Cylc.
 [#3165](https://github.com/cylc/cylc-flow/pull/3165) - added GitHub
 Issue and Pull Request templates.
 
+[#3272](https://github.com/cylc/cylc-flow/pull/3272),
 [#3191](https://github.com/cylc/cylc-flow/pull/3191) - uniform configuration
 section level for defining non-cycling and cycling graphs. E.g.:
 
