@@ -234,14 +234,14 @@ class SuiteConfig(object):
                 just_has_async_graph = True
                 non_async_item = None
                 for item, value in dependency_map.items():
-                    if item != 'graph':
+                    if item not in ['graph', '1', 'R1']:
                         just_has_async_graph = False
                         non_async_item = item
                         break
                 icp = self.cfg['scheduling'].get('initial cycle point')
                 fcp = self.cfg['scheduling'].get('final cycle point')
                 if just_has_async_graph and not (
-                        icp in [None, "1"] and fcp in [None, icp]):
+                        icp in [None, '1'] and fcp in [None, icp]):
                     raise SuiteConfigError(
                         'Conflicting syntax: integer vs ' +
                         'cycling suite: ' +
