@@ -64,6 +64,7 @@ from cylc.flow.subprocpool import SubProcPool
 from cylc.flow.suite_db_mgr import SuiteDatabaseManager
 from cylc.flow.suite_events import (
     SuiteEventContext, SuiteEventError, SuiteEventHandler)
+from cylc.flow.suite_status import StopMode, AutoRestartMode
 from cylc.flow.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
 from cylc.flow.taskdef import TaskDef
@@ -131,9 +132,6 @@ class Scheduler(object):
     START_MESSAGE_TMPL = (
         START_MESSAGE_PREFIX +
         'url=%(comms_method)s://%(host)s:%(port)s/ pid=%(pid)s')
-
-    AUTO_STOP_RESTART_NORMAL = 'stop and restart'
-    AUTO_STOP_RESTART_FORCE = 'stop'
 
     # Dependency negotiation etc. will run after these commands
     PROC_CMDS = (
@@ -255,7 +253,7 @@ class Scheduler(object):
         except SchedulerStop as exc:
             # deliberate stop
             self.shutdown(exc)
-            if self.auto_restart_mode == self.AUTO_STOP_RESTART_NORMAL:
+            if self.auto_restart_mode == AutoRestartMode.RESTART_NORMAL:
                 self.suite_auto_restart()
             self.close_logs()
 
@@ -284,7 +282,7 @@ class Scheduler(object):
 
         else:
             # main loop ends (not used?)
-            self.shutdown(SchedulerStop(TaskPool.STOP_AUTO))
+            self.shutdown(SchedulerStop(StopMode.AUTO.value))
             self.close_logs()
 
     def close_logs(self):
@@ -720,15 +718,15 @@ see `COPYING' in the Cylc source distribution.
     def command_stop_now(self, terminate=False):
         """Shutdown immediately."""
         if terminate:
-            self._set_stop(TaskPool.STOP_REQUEST_NOW_NOW)
+            self._set_stop(StopMode.REQUEST_NOW_NOW)
         else:
-            self._set_stop(TaskPool.STOP_REQUEST_NOW)
+            self._set_stop(StopMode.REQUEST_NOW)
 
     def _set_stop(self, stop_mode=None):
         """Set shutdown mode."""
         self.proc_pool.set_stopping()
         if stop_mode is None:
-            stop_mode = TaskPool.STOP_REQUEST_CLEAN
+            stop_mode = StopMode.REQUEST_CLEAN
         self.stop_mode = stop_mode
 
     def command_set_stop_after_point(self, point_string):
@@ -1113,7 +1111,7 @@ see `COPYING' in the Cylc source distribution.
             pass
         try:
             self.suite_event_handler.handle(self.config, SuiteEventContext(
-                event, reason, self.suite, self.uuid_str, self.owner,
+                event, str(reason), self.suite, self.uuid_str, self.owner,
                 self.host, self.server.port))
         except SuiteEventError:
             if event == self.EVENT_SHUTDOWN and self.options.reftest:
@@ -1222,7 +1220,7 @@ see `COPYING' in the Cylc source distribution.
         if (self.config.cfg['cylc']['abort if any task fails'] and
                 self.pool.any_task_failed()):
             # Task failure + abort if any task fails
-            self._set_stop(TaskPool.STOP_AUTO_ON_TASK_FAILURE)
+            self._set_stop(StopMode.AUTO_ON_TASK_FAILURE)
         elif self.options.reftest and self.ref_test_allowed_failures:
             # In reference test mode and unexpected failures occurred
             bad_tasks = []
@@ -1233,7 +1231,7 @@ see `COPYING' in the Cylc source distribution.
                 LOG.error(
                     'Failed task(s) not in allowed failures list:\n%s',
                     '\n'.join('\t%s' % itask.identity for itask in bad_tasks))
-                self._set_stop(TaskPool.STOP_AUTO_ON_TASK_FAILURE)
+                self._set_stop(StopMode.AUTO_ON_TASK_FAILURE)
 
         # Can suite shut down automatically?
         if self.stop_mode is None and (
@@ -1241,13 +1239,13 @@ see `COPYING' in the Cylc source distribution.
             self.stop_task_done() or
             self.check_auto_shutdown()
         ):
-            self._set_stop(TaskPool.STOP_AUTO)
+            self._set_stop(StopMode.AUTO)
 
         # Is the suite ready to shut down now?
         if self.pool.can_stop(self.stop_mode):
             self.update_data_structure()
             self.proc_pool.close()
-            if self.stop_mode != TaskPool.STOP_REQUEST_NOW_NOW:
+            if self.stop_mode != StopMode.REQUEST_NOW_NOW:
                 # Wait for process pool to complete,
                 # unless --now --now is requested
                 stop_process_pool_empty_msg = (
@@ -1264,10 +1262,10 @@ see `COPYING' in the Cylc source distribution.
                 self.profiler.log_memory(
                     "scheduler.py: end main loop (total loops %d): %s" %
                     (self.count, get_current_time_string()))
-            if self.stop_mode == TaskPool.STOP_AUTO_ON_TASK_FAILURE:
-                raise SchedulerError(self.stop_mode)
+            if self.stop_mode == StopMode.AUTO_ON_TASK_FAILURE:
+                raise SchedulerError(self.stop_mode.value)
             else:
-                raise SchedulerStop(self.stop_mode)
+                raise SchedulerStop(self.stop_mode.value)
         elif (self.time_next_kill is not None and
               time() > self.time_next_kill):
             self.command_poll_tasks()
@@ -1278,7 +1276,7 @@ see `COPYING' in the Cylc source distribution.
         if self.auto_restart_time is None or time() < self.auto_restart_time:
             # ... no
             pass
-        elif self.auto_restart_mode == self.AUTO_STOP_RESTART_NORMAL:
+        elif self.auto_restart_mode == AutoRestartMode.RESTART_NORMAL:
             # ... yes - wait for local jobs to complete before restarting
             #           * Avoid polling issues see #2843
             #           * Ensure the host can be safely taken down once the
@@ -1292,11 +1290,11 @@ see `COPYING' in the Cylc source distribution.
                              'complete before attempting restart')
                     break
             else:
-                self._set_stop(TaskPool.STOP_REQUEST_NOW_NOW)
-        elif self.auto_restart_mode == self.AUTO_STOP_RESTART_FORCE:
+                self._set_stop(StopMode.REQUEST_NOW_NOW)
+        elif self.auto_restart_mode == AutoRestartMode.FORCE_STOP:
             # ... yes - leave local jobs running then stop the suite
             #           (no restart)
-            self._set_stop(TaskPool.STOP_REQUEST_NOW)
+            self._set_stop(StopMode.REQUEST_NOW)
         else:
             raise SchedulerError(
                 'Invalid auto_restart_mode=%s' % self.auto_restart_mode)
@@ -1330,7 +1328,7 @@ see `COPYING' in the Cylc source distribution.
         return False
 
     def set_auto_restart(self, restart_delay=None,
-                         mode=AUTO_STOP_RESTART_NORMAL):
+                         mode=AutoRestartMode.RESTART_NORMAL):
         """Configure the suite to automatically stop and restart.
 
         Restart handled by `suite_auto_restart`.
@@ -1351,7 +1349,7 @@ see `COPYING' in the Cylc source distribution.
             return True
 
         # Force mode, stop the suite now, don't restart it.
-        if mode == self.AUTO_STOP_RESTART_FORCE:
+        if mode == AutoRestartMode.FORCE_STOP:
             if self.auto_restart_time:
                 LOG.info('Scheduled automatic restart canceled')
             self.auto_restart_time = time()
@@ -1391,7 +1389,7 @@ see `COPYING' in the Cylc source distribution.
         else:
             self.auto_restart_time = time()
 
-        self.auto_restart_mode = self.AUTO_STOP_RESTART_NORMAL
+        self.auto_restart_mode = AutoRestartMode.RESTART_NORMAL
 
         return True
 
@@ -1443,21 +1441,21 @@ see `COPYING' in the Cylc source distribution.
                                                   'condemned hosts']):
                     if host.endswith('!'):
                         # host ends in an `!` -> force shutdown mode
-                        mode = self.AUTO_STOP_RESTART_FORCE
+                        mode = AutoRestartMode.FORCE_STOP
                         host = host[:-1]
                     else:
                         # normal mode (stop and restart the suite)
-                        mode = self.AUTO_STOP_RESTART_NORMAL
+                        mode = AutoRestartMode.RESTART_NORMAL
                         if self.auto_restart_time is not None:
                             # suite is already scheduled to stop-restart only
-                            # AUTO_STOP_RESTART_FORCE can override this.
+                            # AutoRestartMode.FORCE_STOP can override this.
                             continue
 
                     if get_fqdn_by_host(host) == self.host:
                         # this host is condemned, take the appropriate action
                         LOG.info('The Cylc suite host will soon become '
                                  'un-available.')
-                        if mode == self.AUTO_STOP_RESTART_FORCE:
+                        if mode == AutoRestartMode.FORCE_STOP:
                             # server is condemned in "force" mode -> stop
                             # the suite, don't attempt to restart
                             LOG.critical(

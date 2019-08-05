@@ -92,6 +92,7 @@ message PbWorkflow {
     repeated string states = 27;
     repeated string task_proxies = 28;
     repeated string family_proxies = 29;
+    string status_msg = 30;
 }
 
 message PbJob {

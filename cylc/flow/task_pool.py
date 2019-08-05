@@ -39,6 +39,7 @@ from cylc.flow.parsec.OrderedDict import OrderedDict
 from cylc.flow import LOG
 from cylc.flow.cycling.loader import get_point, standardise_point_string
 from cylc.flow.exceptions import SuiteConfigError, PointParsingError
+from cylc.flow.suite_status import StopMode
 from cylc.flow.task_action_timer import TaskActionTimer
 from cylc.flow.task_events_mgr import (
     CustomTaskEventHandlerContext, TaskEventMailContext,
@@ -62,12 +63,6 @@ class TaskPool(object):
 
     ERR_PREFIX_TASKID_MATCH = "No matching tasks found: "
     ERR_PREFIX_TASK_NOT_ON_SEQUENCE = "Invalid cycle point for task: "
-
-    STOP_AUTO = 'AUTOMATIC'
-    STOP_AUTO_ON_TASK_FAILURE = 'AUTOMATIC(ON-TASK-FAILURE)'
-    STOP_REQUEST_CLEAN = 'REQUEST(CLEAN)'
-    STOP_REQUEST_NOW = 'REQUEST(NOW)'
-    STOP_REQUEST_NOW_NOW = 'REQUEST(NOW-NOW)'
 
     def __init__(self, config, suite_db_mgr, task_events_mgr, job_pool):
         self.config = config
@@ -785,12 +780,12 @@ class TaskPool(object):
         """
         if stop_mode is None:
             return False
-        if stop_mode == self.STOP_REQUEST_NOW_NOW:
+        if stop_mode == StopMode.REQUEST_NOW_NOW:
             return True
         if self.task_events_mgr.event_timers:
             return False
         for itask in self.get_tasks():
-            if (stop_mode == self.STOP_REQUEST_CLEAN and
+            if (stop_mode == StopMode.REQUEST_CLEAN and
                     itask.state.status in TASK_STATUSES_ACTIVE and
                     not itask.state.kill_failed):
                 return False

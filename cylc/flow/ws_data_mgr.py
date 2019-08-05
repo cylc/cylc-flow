@@ -22,10 +22,7 @@ from copy import copy, deepcopy
 import ast
 
 from cylc.flow.task_id import TaskID
-from cylc.flow.suite_status import (
-    SUITE_STATUS_HELD, SUITE_STATUS_STOPPING,
-    SUITE_STATUS_RUNNING, SUITE_STATUS_RUNNING_TO_STOP,
-    SUITE_STATUS_RUNNING_TO_HOLD)
+from cylc.flow.suite_status import get_suite_status
 from cylc.flow.task_state_prop import extract_group_state
 from cylc.flow.wallclock import (
     TIME_ZONE_LOCAL_INFO, TIME_ZONE_UTC_INFO, get_utc_mode)
@@ -443,33 +440,8 @@ class WsDataMgr(object):
         workflow.reloading = self.schd.pool.do_reload
 
         # Construct a workflow status string for use by monitoring clients.
-        if self.schd.pool.is_held:
-            status_string = SUITE_STATUS_HELD
-        elif self.schd.stop_mode is not None:
-            status_string = SUITE_STATUS_STOPPING
-        elif self.schd.pool.hold_point:
-            status_string = (
-                SUITE_STATUS_RUNNING_TO_HOLD %
-                self.schd.pool.hold_point)
-        elif self.schd.pool.stop_point:
-            status_string = (
-                SUITE_STATUS_RUNNING_TO_STOP %
-                self.schd.pool.stop_point)
-        elif self.schd.stop_clock_time is not None:
-            status_string = (
-                SUITE_STATUS_RUNNING_TO_STOP %
-                self.schd.stop_clock_time_string)
-        elif self.schd.stop_task:
-            status_string = (
-                SUITE_STATUS_RUNNING_TO_STOP %
-                self.schd.stop_task)
-        elif self.schd.config.final_point:
-            status_string = (
-                SUITE_STATUS_RUNNING_TO_STOP %
-                self.schd.config.final_point)
-        else:
-            status_string = SUITE_STATUS_RUNNING
-        workflow.status = status_string
+        workflow.status, workflow.status_msg = map(
+            str, get_suite_status(self.schd))
 
         workflow.task_proxies[:] = [
             t.id for t in self.task_proxies.values()]

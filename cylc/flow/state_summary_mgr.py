@@ -20,10 +20,7 @@
 from time import time
 
 from cylc.flow.task_id import TaskID
-from cylc.flow.suite_status import (
-    SUITE_STATUS_HELD, SUITE_STATUS_STOPPING,
-    SUITE_STATUS_RUNNING, SUITE_STATUS_RUNNING_TO_STOP,
-    SUITE_STATUS_RUNNING_TO_HOLD)
+from cylc.flow.suite_status import get_suite_status
 from cylc.flow.task_state import TASK_STATUS_RUNAHEAD
 from cylc.flow.task_state_prop import extract_group_state
 from cylc.flow.wallclock import (
@@ -140,27 +137,9 @@ class StateSummaryMgr(object):
         global_summary['suite_urls']['suite'] = schd.config.cfg['meta']['URL']
 
         # Construct a suite status string for use by monitoring clients.
-        if schd.pool.is_held:
-            global_summary['status_string'] = SUITE_STATUS_HELD
-        elif schd.stop_mode is not None:
-            global_summary['status_string'] = SUITE_STATUS_STOPPING
-        elif schd.pool.hold_point:
-            global_summary['status_string'] = (
-                SUITE_STATUS_RUNNING_TO_HOLD % schd.pool.hold_point)
-        elif schd.pool.stop_point:
-            global_summary['status_string'] = (
-                SUITE_STATUS_RUNNING_TO_STOP % schd.pool.stop_point)
-        elif schd.stop_clock_time is not None:
-            global_summary['status_string'] = (
-                SUITE_STATUS_RUNNING_TO_STOP % time2str(schd.stop_clock_time))
-        elif schd.stop_task:
-            global_summary['status_string'] = (
-                SUITE_STATUS_RUNNING_TO_STOP % schd.stop_task)
-        elif schd.config.final_point:
-            global_summary['status_string'] = (
-                SUITE_STATUS_RUNNING_TO_STOP % schd.config.final_point)
-        else:
-            global_summary['status_string'] = SUITE_STATUS_RUNNING
+        status, status_msg = get_suite_status(schd)
+        global_summary['status'] = str(status)
+        global_summary['status_string'] = status_msg
 
         # Replace the originals (atomic update, for access from other threads).
         self.task_summary = task_summary

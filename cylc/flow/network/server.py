@@ -341,7 +341,7 @@ class SuiteRuntimeServer(ZMQServer):
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
         try:
-            executed = schema.schema.execute(
+            executed = schema.execute(
                 request_string,
                 variables=variables,
                 context={

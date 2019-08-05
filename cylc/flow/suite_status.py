@@ -17,6 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Suite status constants."""
 
+from enum import Enum
+
 # Keys for identify API call
 KEY_GROUP = "group"
 KEY_META = "meta"
@@ -27,19 +29,115 @@ KEY_TASKS_BY_STATE = "tasks-by-state"
 KEY_UPDATE_TIME = "update-time"
 KEY_VERSION = "version"
 
-# Suite status strings.
-SUITE_STATUS_HELD = "held"
-SUITE_STATUS_RUNNING = "running"
-SUITE_STATUS_STOPPING = "stopping"
+# Status message strings
 SUITE_STATUS_RUNNING_TO_STOP = "running to stop at %s"
 SUITE_STATUS_RUNNING_TO_HOLD = "running to hold at %s"
 
-# Pseudo status strings for use by suite monitors.
-#   Use before attempting to determine status:
-SUITE_STATUS_NOT_CONNECTED = "not connected"
-#   Use prior to first status update:
-SUITE_STATUS_CONNECTED = "connected"
-SUITE_STATUS_INITIALISING = "initialising"
-#   Use when the suite is not running:
-SUITE_STATUS_STOPPED = "stopped"
-SUITE_STATUS_STOPPED_WITH = "stopped with '%s'"
+# TODO - the suite status should be a property of the Scheduler instance
+#        rather than derived from scheduler state?
+
+
+class SuiteStatus(Enum):
+    """The possible statuses of a suite."""
+
+    HELD = "held"
+    """Suite will not submit any new jobs."""
+
+    RUNNING = "running"
+    """Suite is running as normal."""
+
+    STOPPING = "stopping"
+    """Suite is in the process of shutting down."""
+
+    STOPPED = "stopped"
+    """Suite is not running."""
+
+
+class StopMode(Enum):
+    """The possible modes of a suite shutdown"""
+
+    AUTO = 'AUTOMATIC'
+    """Suite has reached a state where it can automatically stop"""
+
+    AUTO_ON_TASK_FAILURE = 'AUTOMATIC(ON-TASK-FAILURE)'
+    """A task has failed and ``abort if any task fails = True``."""
+
+    REQUEST_CLEAN = 'REQUEST(CLEAN)'
+    """External shutdown request, will wait for active jobs to complete."""
+
+    REQUEST_NOW = 'REQUEST(NOW)'
+    """External shutdown request, will wait for event handlers to complete."""
+
+    REQUEST_NOW_NOW = 'REQUEST(NOW-NOW)'
+    """External immediate shutdown request."""
+
+    def describe(self):
+        """Return a user-friendly description of this state."""
+        if self == self.AUTO:
+            return 'suite has completed'
+        if self == self.AUTO_ON_TASK_FAILURE:
+            return 'a task has finished'
+        if self == self.REQUEST_CLEAN:
+            return 'waiting for active jobs to complete'
+        if self == self.REQUEST_NOW:
+            return 'waiting for event handlers to complete'
+        if self == self.REQUEST_NOW_NOW:
+            return 'immediate shutdown'
+        return ''
+
+
+class AutoRestartMode(Enum):
+    """The possible modes of a suite auto-restart."""
+
+    RESTART_NORMAL = 'stop and restart'
+    """Suite will stop immeduately and attempt to restart."""
+
+    FORCE_STOP = 'stop'
+    """Suite will stop immeduately but *not* attempt to restart."""
+
+
+def get_suite_status(schd):
+    """Return the status of the provided suite.
+
+    Args:
+        schd (cylc.flow.Scheduler): The running suite
+
+    Returns:
+        tuple - (state, state_msg)
+
+        state (cylc.flow.suite_status.SuiteStatus):
+            The SuiteState.
+        state_msg (str):
+            Text describing the current state (may be an empty string).
+
+    """
+    status = SuiteStatus.RUNNING
+    status_msg = ''
+
+    if schd.pool.is_held:
+        status = SuiteStatus.HELD
+    elif schd.stop_mode is not None:
+        status = SuiteStatus.STOPPING
+        status_msg = f'Stopping: {schd.stop_mode.describe()}'
+    elif schd.pool.hold_point:
+        status_msg = (
+            SUITE_STATUS_RUNNING_TO_HOLD %
+            schd.pool.hold_point)
+    elif schd.pool.stop_point:
+        status_msg = (
+            SUITE_STATUS_RUNNING_TO_STOP %
+            schd.pool.stop_point)
+    elif schd.stop_clock_time is not None:
+        status_msg = (
+            SUITE_STATUS_RUNNING_TO_STOP %
+            schd.stop_clock_time_string)
+    elif schd.stop_task:
+        status_msg = (
+            SUITE_STATUS_RUNNING_TO_STOP %
+            schd.stop_task)
+    elif schd.config.final_point:
+        status_msg = (
+            SUITE_STATUS_RUNNING_TO_STOP %
+            schd.config.final_point)
+
+    return (status.value, status_msg)
