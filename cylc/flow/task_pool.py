@@ -361,9 +361,9 @@ class TaskPool(object):
         except Exception:
             LOG.exception('could not load task %s' % name)
         else:
-            if itask.state(
-                TASK_STATUS_SUBMITTED,
-                TASK_STATUS_RUNNING
+            if status in (
+                    TASK_STATUS_SUBMITTED,
+                    TASK_STATUS_RUNNING
             ):
                 itask.state.set_prerequisites_all_satisfied()
                 # update the task proxy with user@host
@@ -380,30 +380,28 @@ class TaskPool(object):
                 if timeout is not None:
                     itask.timeout = timeout
 
-            elif itask.state(
-                TASK_STATUS_SUBMIT_FAILED,
-                TASK_STATUS_FAILED
+            elif status in (
+                    TASK_STATUS_SUBMIT_FAILED,
+                    TASK_STATUS_FAILED
             ):
                 itask.state.set_prerequisites_all_satisfied()
 
-            elif itask.state(
-                TASK_STATUS_QUEUED,
-                TASK_STATUS_READY,
-                is_held=False
+            elif status in (
+                    TASK_STATUS_QUEUED,
+                    TASK_STATUS_READY,
             ):
                 # reset to waiting as these had not been submitted yet.
                 status = TASK_STATUS_WAITING
                 itask.state.set_prerequisites_all_satisfied()
 
-            elif itask.state(
-                TASK_STATUS_SUBMIT_RETRYING,
-                TASK_STATUS_RETRYING,
-                is_held=False
+            elif status in (
+                    TASK_STATUS_SUBMIT_RETRYING,
+                    TASK_STATUS_RETRYING,
             ):
                 itask.state.set_prerequisites_all_satisfied()
 
-            elif itask.state(
-                TASK_STATUS_SUCCEEDED
+            elif status in (
+                    TASK_STATUS_SUCCEEDED,
             ):
                 itask.state.set_prerequisites_all_satisfied()
 
@@ -430,11 +428,8 @@ class TaskPool(object):
 
             if user_at_host:
                 itask.summary['job_hosts'][int(submit_num)] = user_at_host
-            if is_held:
-                LOG.info("+ %s.%s %s%s" % (
-                    name, cycle, status, ' (held)' if is_held else ''))
-            else:
-                LOG.info("+ %s.%s %s" % (name, cycle, status))
+            LOG.info("+ %s.%s %s%s" % (
+                name, cycle, status, ' (held)' if is_held else ''))
             self.add_to_runahead_pool(itask, is_new=False)
 
     def load_db_task_action_timers(self, row_idx, row):
@@ -651,10 +646,7 @@ class TaskPool(object):
 
             # 2.2) release queued tasks if not limited or if manually forced
             for itask in tasks:
-                if not itask.state(
-                        TASK_STATUS_QUEUED,
-                        is_held=False
-                ):
+                if not itask.state(TASK_STATUS_QUEUED):
                     # (This excludes tasks remaining TASK_STATUS_READY because
                     # job submission has been stopped with 'cylc shutdown').
                     continue
@@ -1141,7 +1133,7 @@ class TaskPool(object):
 
     def reset_task_states(self, items, status, outputs):
         """Operator-forced task status reset and output manipulation."""
-        is_held = False  # replecate old task status logic - TODO improve
+        is_held = None  # replecate old task status logic - TODO improve
         itasks, bad_items = self.filter_task_proxies(items)
         for itask in itasks:
             if status and not itask.state(status, is_held=is_held):
