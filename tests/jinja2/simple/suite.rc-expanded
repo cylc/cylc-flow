@@ -1,6 +1,6 @@
 [scheduling]
-    [[dependencies]]
-        graph = "a => FAM"
+    [[graph]]
+        R1 = "a => FAM"
 [runtime]
     [[a]]
         script = echo this is a set variable

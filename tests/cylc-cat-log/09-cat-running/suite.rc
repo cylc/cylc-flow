@@ -4,8 +4,8 @@
         abort on timeout = True
         timeout = PT90S
 [scheduling]
-    [[dependencies]]
-        graph = local-task:echo & remote-task:echo => cat-log
+    [[graph]]
+        R1 = local-task:echo & remote-task:echo => cat-log
 [runtime]
     [[ECHO]]
         script = """

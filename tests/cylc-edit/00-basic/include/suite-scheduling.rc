@@ -1,5 +1,5 @@
 [scheduling]
 initial cycle point=20130101
 final cycle point=20130110
-[[dependencies]]
+[[graph]]
 P1D="""foo[-P2D]=>foo=>bar"""

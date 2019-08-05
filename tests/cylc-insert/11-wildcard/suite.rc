@@ -7,8 +7,8 @@
 [scheduling]
     [[special tasks]]
         exclude at start-up = t1, t2
-    [[dependencies]]
-        graph = """
+    [[graph]]
+        R1 = """
 i1 => t1 & t2
 """
 [runtime]

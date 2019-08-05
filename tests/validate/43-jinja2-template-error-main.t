@@ -24,8 +24,8 @@ cat >'suite.rc' <<'__SUITERC__'
 #!jinja2
 {% set foo = {} %}
 [scheduling]
-    [[dependencies]]
-        graph = {{ foo|dictsort(by='by') }}
+    [[graph]]
+        R1 = {{ foo|dictsort(by='by') }}
 [runtime]
     [[foo]]
         script = sleep 1
@@ -35,8 +35,8 @@ cmp_ok "${TEST_NAME_BASE}.stderr" <<'__ERROR__'
 Jinja2Error: You can only sort by either "key" or "value"
 Context lines:
 [scheduling]
-    [[dependencies]]
-        graph = {{ foo|dictsort(by='by') }}	<-- FilterArgumentError
+    [[graph]]
+        R1 = {{ foo|dictsort(by='by') }}	<-- FilterArgumentError
 __ERROR__
 
 exit

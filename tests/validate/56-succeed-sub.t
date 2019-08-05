@@ -24,8 +24,8 @@ set_test_number 1
 
 cat >'suite.rc' <<'__SUITE_RC__'
 [scheduling]
-[[dependencies]]
-graph = foo:fail | (foo & bar:fail) => something
+[[graph]]
+R1 = foo:fail | (foo & bar:fail) => something
 [runtime]
 [[root]]
 script = true

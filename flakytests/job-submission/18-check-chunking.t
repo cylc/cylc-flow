@@ -33,8 +33,8 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
     [[parameters]]
         p = 1..202
 [scheduling]
-    [[dependencies]]
-        graph = t1<p>
+    [[graph]]
+        R1 = t1<p>
 [runtime]
     [[t1<p>]]
         # Reduce the load on many jobs sending the "started" message

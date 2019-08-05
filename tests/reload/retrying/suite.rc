@@ -8,8 +8,8 @@ new task proxy; ref github #945"""
        required run mode = live
        live mode suite timeout = PT30S
 [scheduling]
-    [[dependencies]]
-        graph = "retrier & reloader"
+    [[graph]]
+        R1 = "retrier & reloader"
 [runtime]
     [[retrier]]
         script = "((CYLC_TASK_TRY_NUMBER >= 2)) || exit 1"

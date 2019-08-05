@@ -5,8 +5,8 @@
         live mode suite timeout = PT10M
 
 [scheduling]
-    [[dependencies]]
-        graph=foo
+    [[graph]]
+        R1=foo
 
 [runtime]
 {% if "CYLC_TEST_HOST" in environ %}

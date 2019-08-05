@@ -161,8 +161,8 @@ class TestFileparse(unittest.TestCase):
     def test_addict_replace_value_1(self):
         """"Special case depending on key and parents, for
 
-        - key is 'graph' AND parents['scheduling']['dependencies'] OR
-        - len(parents)==3 AND parents['scheduling']['dependencies'][?]
+        - key is 'graph' AND parents['scheduling']['graph'] OR
+        - len(parents)==3 AND parents['scheduling']['graph'][?]
         """
 
         # set 1 key is graph, parents is wrong (T, F)
@@ -174,21 +174,21 @@ class TestFileparse(unittest.TestCase):
         # set 2 key is graph, parents right (T, T)
         cfg = {
             'scheduling': {
-                'dependencies': {
+                'graph': {
                     'graph': 'ABC'
                 }
             }
         }
-        addict(cfg, 'graph', 'test', ['scheduling', 'dependencies'], 0)
+        addict(cfg, 'graph', 'test', ['scheduling', 'graph'], 0)
         self.assertEqual(['ABC', 'test'],
-                         cfg['scheduling']['dependencies']['graph'])
+                         cfg['scheduling']['graph']['graph'])
 
         # other side of boolean expression
 
         # set 3 len(parents) is 3, parents is wrong (T, F)
         cfg = {
             'scheduling': {
-                'dependencies': {
+                'graph': {
                     'team': {
                         'graph': 'ABC'
                     }
@@ -207,16 +207,16 @@ class TestFileparse(unittest.TestCase):
         # set 3 len(parents) is 3, parents is right (T, T)
         cfg = {
             'scheduling': {
-                'dependencies': {
+                'graph': {
                     'team': {
                         'graph': 'ABC'
                     }
                 }
             }
         }
-        addict(cfg, 'graph', 'test', ['scheduling', 'dependencies', 'team'], 0)
+        addict(cfg, 'graph', 'test', ['scheduling', 'graph', 'team'], 0)
         self.assertEqual(['ABC', 'test'],
-                         cfg['scheduling']['dependencies']['team']['graph'])
+                         cfg['scheduling']['graph']['team']['graph'])
 
     def test_multiline(self):
         for flines, value, index, maxline, exc, expected in get_multiline():

@@ -2,8 +2,8 @@
     abort if any task fails = True
 
 [scheduling]
-    [[dependencies]]
-        graph = foo
+    [[graph]]
+        R1 = foo
 
 [runtime]
     [[foo]]

@@ -24,7 +24,7 @@ cat >'suite.rc' <<'__SUITE_RC__'
     final cycle point = 20300303
     [[special tasks]]
         clock-trigger = t-1, t+1, t%1, t@1
-    [[dependencies]]
+    [[graph]]
         P1D = """
 t-1
 t+1

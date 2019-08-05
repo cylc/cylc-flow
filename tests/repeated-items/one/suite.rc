@@ -5,7 +5,7 @@
     UTC mode = True
 [scheduling]
     initial cycle point = 20130101T0000Z
-    [[dependencies]]
+    [[graph]]
         R1 = "foo => bar"
         R1 = "bar => baz"
         T00 = "cfoo => cbar"

@@ -10,8 +10,8 @@
         timeout = PT1M
 
 [scheduling]
-    [[dependencies]]
-        graph = t1
+    [[graph]]
+        R1 = t1
 
 [runtime]
     [[t1]]

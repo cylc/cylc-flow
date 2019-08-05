@@ -1,8 +1,8 @@
 #!jinja2
 # {{ ""|hello }}
 [scheduling]
-    [[dependencies]]
-        graph = foo => bar
+    [[graph]]
+        R1 = foo => bar
 [runtime]
     [[foo]]
         pre-script = {{ true|truly }}

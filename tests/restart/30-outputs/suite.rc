@@ -7,8 +7,8 @@
         timeout = PT1M
         #stalled handler = cylc reset '%(suite)s' -O greet 't1.1'
 [scheduling]
-    [[dependencies]]
-        graph = """
+    [[graph]]
+        R1 = """
 t1:hello => t2
 t1:greet => t3
 """

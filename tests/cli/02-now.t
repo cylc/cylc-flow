@@ -28,9 +28,8 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
         abort on inactivity = true
         inactivity = PT1M
 [scheduling]
-    [[dependencies]]
-        [[[R1]]]
-            graph = foo
+    [[graph]]
+        R1 = foo
 [runtime]
     [[foo]]
         script = cylc stop --now --now "${CYLC_SUITE_NAME}"; sleep 5

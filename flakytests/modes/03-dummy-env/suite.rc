@@ -3,8 +3,8 @@
     [[reference test]]
         dummy-local mode suite timeout = PT30S
 [scheduling]
-    [[dependencies]]
-        graph = oxygas
+    [[graph]]
+        R1 = oxygas
 [runtime]
     [[root]]
         script = sleep 1

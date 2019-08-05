@@ -7,5 +7,5 @@
 {{ assert(ANSWER | int == 42, 'Universal constant incorrectly set.') }}
 
 [scheduling]
-    [[dependencies]]
-        graph = foo
+    [[graph]]
+        R1 = foo

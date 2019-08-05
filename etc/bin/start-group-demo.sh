@@ -17,7 +17,7 @@ to show what they look like live in gcylc."""
         [[[fam_queue]]]
             limit = 2
             members = FAMILY
-    [[dependencies]]
+    [[graph]]
         R1 = cfoo => foo
         P1D =  """
     foo[-P1D] => foo => FAMILY

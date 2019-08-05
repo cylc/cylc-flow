@@ -1,8 +1,8 @@
 [meta]
     URL = http://localhost/suite-docs/${CYLC_SUITE_NAME}.html
 [scheduling]
-   [[dependencies]]
-        graph = foo => FAM
+   [[graph]]
+        R1 = foo => FAM
 [runtime]
     [[root]]
         [[[meta]]]

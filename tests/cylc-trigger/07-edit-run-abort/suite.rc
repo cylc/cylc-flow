@@ -5,8 +5,8 @@
         abort on timeout = True
         timeout = PT20S
 [scheduling]
-    [[dependencies]]
-        graph = victim => perpetrator
+    [[graph]]
+        R1 = victim => perpetrator
 [runtime]
     [[victim]]
         script = echo HELLO

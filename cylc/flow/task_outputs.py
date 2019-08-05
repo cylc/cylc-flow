@@ -44,8 +44,8 @@ class TaskOutputs(object):
 
     Manage standard task outputs and custom outputs, e.g.:
     [scheduling]
-        [[dependencies]]
-            graph = t1:trigger1 => t2
+        [[graph]]
+            R1 = t1:trigger1 => t2
     [runtime]
         [[t1]]
             [[[outputs]]]

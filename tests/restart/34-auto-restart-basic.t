@@ -44,8 +44,8 @@ TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME}" <<< '
     [[parameters]]
         foo = 1..25
 [scheduling]
-    [[dependencies]]
-        graph = "task<foo> => task<foo+1>"
+    [[graph]]
+        R1 = "task<foo> => task<foo+1>"
 ' # note change TEST_DIR to force local installation in suite run dir
 # run suite on localhost normally
 create_test_globalrc '' "${BASE_GLOBALRC}"

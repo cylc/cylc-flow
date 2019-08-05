@@ -1,8 +1,8 @@
 [meta]
     priority = HIGH
 [scheduling]
-    [[dependencies]]
-        graph = t1:fail => dummy => !t1
+    [[graph]]
+        R1 = t1:fail => dummy => !t1
 [runtime]
     [[dummy]]
         script = sleep 5

@@ -26,7 +26,7 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITE__'
         abort on stalled = True
 [scheduling]
     initial cycle point = 20171101T0000Z
-    [[dependencies]]
+    [[graph]]
         R1 = foo
         R1/T00 = foo[^] => qux
         R1/T06 = foo[^] => qux

@@ -38,7 +38,7 @@
     max active cycle points = 5
     [[special tasks]]
         external-trigger = get_data("new dataset ready for processing")
-    [[dependencies]]
+    [[graph]]
         R1 = prep => satsim & get_data
         P1 = """
             # Processing chain for each dataset

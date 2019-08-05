@@ -2,8 +2,8 @@
     [[reference test]]
         live mode suite timeout = PT1M
 [scheduling]
-    [[dependencies]]
-        graph = """
+    [[graph]]
+        R1 = """
 t1:submit => recover-t1
 """
 [runtime]

@@ -26,7 +26,7 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
         abort on stalled = True
 [scheduling]
     initial cycle point = 20200202T2020Z
-    [[dependencies]]
+    [[graph]]
         R1 = foo
 [runtime]
     [[foo]]
@@ -47,8 +47,8 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
     [[events]]
         abort on stalled = True
 [scheduling]
-    [[dependencies]]
-        graph = foo
+    [[graph]]
+        R1 = foo
 [runtime]
     [[foo]]
         script = """

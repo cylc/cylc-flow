@@ -5,8 +5,8 @@
     [[reference test]]
         expected task failures = t1.1
 [scheduling]
-    [[dependencies]]
-        graph = """
+    [[graph]]
+        R1 = """
             t0:failed & t1:failed => !t2
             t0 | t1 => t2
         """

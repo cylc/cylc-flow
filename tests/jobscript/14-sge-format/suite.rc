@@ -1,8 +1,8 @@
 [meta]
     title = "Job script: directives test for SGE"
 [scheduling]
-    [[dependencies]]
-        graph = foo
+    [[graph]]
+        R1 = foo
 [runtime]
     [[foo]]
         [[[job]]]

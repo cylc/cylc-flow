@@ -24,16 +24,16 @@ SUITE_NAME="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BA
 mkdir -p 'good' "${SUITE_NAME}"
 cat >'good/suite.rc' <<'__SUITE_RC__'
 [scheduling]
-    [[dependencies]]
-        graph = t0
+    [[graph]]
+        R1 = t0
 [runtime]
     [[t0]]
         script = true
 __SUITE_RC__
 cat >"${SUITE_NAME}/suite.rc" <<'__SUITE_RC__'
 [scheduling]
-    [[dependencies]]
-        graph = t0
+    [[graph]]
+        R1 = t0
 [runtime]
     [[t0]]
         scribble = true

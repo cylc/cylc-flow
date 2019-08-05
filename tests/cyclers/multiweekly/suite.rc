@@ -5,7 +5,7 @@
 [scheduling]
     initial cycle point = 1000W011
     final cycle point = 1000W064
-    [[dependencies]]
+    [[graph]]
         P1W = "foo[-P1W] => foo => bar"
         P3W = "baz[-P3W] => baz => qux"
 [runtime]

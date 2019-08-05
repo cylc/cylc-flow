@@ -1,7 +1,7 @@
 # Hello from a filter!
 [scheduling]
-    [[dependencies]]
-        graph = foo => bar
+    [[graph]]
+        R1 = foo => bar
 [runtime]
     [[foo]]
         pre-script = true

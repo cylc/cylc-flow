@@ -1,6 +1,6 @@
 [scheduling]
-    [[dependencies]]
-        graph = bar
+    [[graph]]
+        R1 = bar
 [runtime]
     [[bar]]
         script = """

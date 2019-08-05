@@ -8,8 +8,8 @@
         simulation mode suite timeout = PT0.5M
 
 [scheduling]
-    [[dependencies]]
-        graph = foo
+    [[graph]]
+        R1 = foo
 
 [runtime]
     [[foo]]

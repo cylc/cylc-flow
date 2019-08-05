@@ -1,9 +1,9 @@
 #!jinja2
 
 [scheduling]
-    [[dependencies]]
+    [[graph]]
         {% if true %}
-        graph = foo
+        R1 = foo
         {% end if %
 [runtime]
     [[foo]]

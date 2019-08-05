@@ -6,7 +6,7 @@
 [scheduling]
     initial cycle point = 20100101T0000Z
     final cycle point   = 20110101T0000Z
-    [[dependencies]]
+    [[graph]]
         P1Y = poll_foo<{{REF_SUITE}}::foo>
 
 [runtime]

@@ -27,8 +27,8 @@ cat >'suite.rc' <<'__SUITE__'
         i = cat, dog, fish
         j = 1..5
 [scheduling]
-    [[dependencies]]
-        graph = """foo => bar<i,j>
+    [[graph]]
+        R1 = """foo => bar<i,j>
                    bar<i=cat,j=3> => boo"""
 [runtime]
     [[root]]
@@ -60,8 +60,8 @@ cat >'suite.rc' <<'__SUITE__'
         i = cat, dog, fish
         j = 1..5
 [scheduling]
-    [[dependencies]]
-        graph = """foo => bar<i,j>
+    [[graph]]
+        R1 = """foo => bar<i,j>
                    bar<i=cat,j=3> => boo"""
 [runtime]
     [[root]]
@@ -94,8 +94,8 @@ cat >'suite.rc' <<'__SUITE__'
         i = cat, dog, fish
         j = 1..5
 [scheduling]
-    [[dependencies]]
-        graph = """foo => bar< i ,j >
+    [[graph]]
+        R1 = """foo => bar< i ,j >
                    bar< i = cat , j = 3 > => boo"""
 [runtime]
     [[root]]
@@ -127,8 +127,8 @@ cat >'suite.rc' <<'__SUITE__'
         i = cat, dog, fish
         j = 1..5
 [scheduling]
-    [[dependencies]]
-        graph = """foo => bar<i,j>
+    [[graph]]
+        R1 = """foo => bar<i,j>
                    bar<i=cat,j=3> => boo"""
 [runtime]
     [[root]]
@@ -160,8 +160,8 @@ cat >'suite.rc' <<'__SUITE__'
         i = cat, dog, fish
         j = 1..5
 [scheduling]
-    [[dependencies]]
-        graph = """foo => bar<i,j>
+    [[graph]]
+        R1 = """foo => bar<i,j>
                    bar<i=cat,j=3> => boo"""
 [runtime]
     [[root]]
@@ -184,8 +184,8 @@ cat >'suite.rc' <<'__SUITE__'
         i = cat, dog, fish
         j = 1..5
 [scheduling]
-    [[dependencies]]
-        graph = """foo => bar<i>_baz<j>"""
+    [[graph]]
+        R1 = """foo => bar<i>_baz<j>"""
 [runtime]
     [[root]]
         script = true
@@ -206,8 +206,8 @@ cat >'suite.rc' <<'__SUITE__'
         i = cat, dog, fish
         j = 1..5
 [scheduling]
-    [[dependencies]]
-        graph = """foo => bar<i,j>
+    [[graph]]
+        R1 = """foo => bar<i,j>
                    bar<i=cat,j=3> => boo"""
 [runtime]
     [[root]]
@@ -232,8 +232,8 @@ cat >'suite.rc' <<'__SUITE__'
         i = cat, dog, fish
         j = 1..5
 [scheduling]
-    [[dependencies]]
-        graph = """foo => bar<i,j>
+    [[graph]]
+        R1 = """foo => bar<i,j>
                    bar<i=cat,j=3> => boo"""
 [runtime]
     [[root]]

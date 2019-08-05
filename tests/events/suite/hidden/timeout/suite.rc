@@ -10,8 +10,8 @@ deliberately fails."""
         abort if timeout handler fails = True
 
 [scheduling]
-    [[dependencies]]
-        graph = """foo
+    [[graph]]
+        R1 = """foo
                    foo:fail => bar"""
 
 [runtime]

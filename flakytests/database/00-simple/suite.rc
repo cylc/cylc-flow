@@ -1,6 +1,6 @@
 [scheduling]
-    [[dependencies]]
-        graph = "foo => bar => baz"
+    [[graph]]
+        R1 = "foo => bar => baz"
 [runtime]
     [[foo, bar, baz]]
         script = true

@@ -9,7 +9,7 @@
 [scheduling]
     initial cycle point = 2020
     final cycle point = 2025
-    [[dependencies]]
+    [[graph]]
         P5Y="""
 broadcast => t1 => broadcast-expire => t2
 t2[-P5Y] => broadcast-expire

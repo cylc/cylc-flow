@@ -22,8 +22,8 @@ set_test_number 8
 #-------------------------------------------------------------------------------
 init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
 [scheduling]
-    [[dependencies]]
-        graph = foo
+    [[graph]]
+        R1 = foo
 [runtime]
     [[foo]]
         script = fi
@@ -39,8 +39,8 @@ purge_suite "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
 [scheduling]
-    [[dependencies]]
-        graph = foo
+    [[graph]]
+        R1 = foo
 [runtime]
     [[foo]]
         script = true

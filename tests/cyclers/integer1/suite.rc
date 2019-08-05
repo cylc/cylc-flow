@@ -8,7 +8,7 @@
     cycling mode = integer
     [[special tasks]]
         sequential = seq
-    [[dependencies]]
+    [[graph]]
         R1 = wibble
         R1/+P6 = wibble[^] => wobble
         R1/P0 = wobble[^+P6] => wubble

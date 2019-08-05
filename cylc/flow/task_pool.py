@@ -1033,7 +1033,7 @@ class TaskPool(object):
         Remove cycling tasks that are no longer needed to satisfy others'
         prerequisites.  Each task proxy knows its "cleanup cutoff" from the
         graph. For example:
-          graph = 'foo[T-6]=>bar \n foo[T-12]=>baz'
+          R1 = 'foo[T-6]=>bar \n foo[T-12]=>baz'
         implies foo's cutoff is T+12: if foo has succeeded (or expired) and
         spawned, it can be removed if no unsatisfied task proxy exists with
         T<=T+12. Note this only uses information about the cycle point of

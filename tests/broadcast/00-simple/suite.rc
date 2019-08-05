@@ -18,7 +18,7 @@ generated reference version.
 [scheduling]
     initial cycle point = 20100808T00
     final cycle point   = 20100809T00
-    [[dependencies]]
+    [[graph]]
         R1 = prep => foo
         T00 = """
             foo => bar & baz & qux & wibble => ENS

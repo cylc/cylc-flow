@@ -25,8 +25,8 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
 [meta]
     title = the quick brown fox
 [scheduling]
-    [[dependencies]]
-        graph = a => b => c
+    [[graph]]
+        R1 = a => b => c
 [runtime]
     [[a,b,c]]
         script = true

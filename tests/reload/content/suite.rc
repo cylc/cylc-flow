@@ -9,8 +9,8 @@ fail, unless the first reloads the suite definition after modifying it."""
        live mode suite timeout = PT30S
 
 [scheduling]
-    [[dependencies]]
-        graph = "reloader => foo"
+    [[graph]]
+        R1 = "reloader => foo"
 
 [runtime]
     [[reloader]]

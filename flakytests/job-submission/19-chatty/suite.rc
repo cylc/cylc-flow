@@ -3,7 +3,7 @@
       abort on timeout = True
       timeout = PT20S
 [scheduling]
-    [[dependencies]]
+    [[graph]]
         # The "starter" task sleeps 5 seconds between start and complete.
         # NOHOPE family should start first, so we'll have a "cylc jobs-submit"
         # starting to run the talkingnonsense command (which sleeps and talks
@@ -16,10 +16,10 @@
         # family to go into submission failure and triggering the stopper task.
         # The idea is that the NOHOPE job submission nonsense should not block
         # the HOPEFUL tasks from launching normally.
-        graph = "starter:start => NOHOPE"
-        graph = "starter => HOPEFUL"
-        graph = HOPEFUL:succeeded-all
-        graph = "NOHOPE:submit-fail-all => stopper"
+        R1 = "starter:start => NOHOPE"
+        R1 = "starter => HOPEFUL"
+        R1 = HOPEFUL:succeeded-all
+        R1 = "NOHOPE:submit-fail-all => stopper"
 [runtime]
     [[starter]]
         script = wait && sleep 5

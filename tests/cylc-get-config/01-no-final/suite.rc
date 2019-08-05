@@ -4,7 +4,7 @@
 [scheduling]
     initial cycle point = 20100808T06
     final cycle point =
-    [[dependencies]]
+    [[graph]]
         T06 = foo
 [runtime]
     [[foo]]

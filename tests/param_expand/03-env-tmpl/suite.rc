@@ -5,8 +5,8 @@
     [[reference test]]
         live mode suite timeout = PT1M
 [scheduling]
-    [[dependencies]]
-        graph = "t1<num,stuff> => t2<num,stuff>"
+    [[graph]]
+        R1 = "t1<num,stuff> => t2<num,stuff>"
 [runtime]
     [[T]]
         [[[parameter environment templates]]]

@@ -14,7 +14,7 @@ to pass the test run their values must be 'foo' and '2', respectively."""
 [scheduling]
     initial cycle point = 2010
     final cycle point = 2012
-    [[dependencies]]
+    [[graph]]
         P{{STEP}}Y = {{TASKNAME}}
 [runtime]
     [[ {{TASKNAME}} ]]

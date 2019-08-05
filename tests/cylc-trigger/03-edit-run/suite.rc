@@ -8,8 +8,8 @@ second task fixes and retriggers it with an edit-run."""
         abort on timeout = True
         timeout = PT20S
 [scheduling]
-    [[dependencies]]
-        graph = """
+    [[graph]]
+        R1 = """
             broken-task:fail => fixer-task
             syntax_errored_task:submit-fail => syntax_fixer_task
         """

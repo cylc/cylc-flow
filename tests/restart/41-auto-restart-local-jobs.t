@@ -38,8 +38,8 @@ BASE_GLOBALRC="
 
 TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME_BASE}" <<< '
 [scheduling]
-    [[dependencies]]
-        graph = foo => bar => baz
+    [[graph]]
+        R1 = foo => bar => baz
 [runtime]
     [[root]]
         script = sleep 15

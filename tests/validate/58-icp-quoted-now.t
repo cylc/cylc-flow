@@ -26,7 +26,7 @@ cat >'suite.rc' <<'__SUITE_RC__'
     cycle point format = %Y%m%d
 [scheduling]
     initial cycle point = "now"
-    [[dependencies]]
+    [[graph]]
         P1D = t1
 [runtime]
     [[t1]]

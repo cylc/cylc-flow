@@ -25,7 +25,7 @@ cat >'suite.rc' <<'__SUITE_RC__'
     UTC mode = True
 [scheduling]
     initial cycle point = 2010
-    [[dependencies]]
+    [[graph]]
         P0M = foo  # OOPS! zero-width interval
 [runtime]
     [[foo]]

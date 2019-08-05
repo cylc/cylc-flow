@@ -5,8 +5,8 @@
         live mode suite timeout=PT1M
 
 [scheduling]
-    [[dependencies]]
-        graph = """a => b => c
+    [[graph]]
+        R1 = """a => b => c
                    c:fail => cleaner
                    cleaner => d"""
 [runtime]

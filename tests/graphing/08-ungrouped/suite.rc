@@ -1,6 +1,6 @@
 [scheduling]
-    [[dependencies]]
-        graph = foo => BAR
+    [[graph]]
+        R1 = foo => BAR
 [runtime]
     [[foo]]
     [[BAR]]

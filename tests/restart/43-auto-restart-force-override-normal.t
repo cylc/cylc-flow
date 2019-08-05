@@ -40,7 +40,7 @@ TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME_BASE}" <<< '
     abort if any task fails = True
 [scheduling]
     initial cycle point = 2000
-    [[dependencies]]
+    [[graph]]
         P1Y = foo[-P1Y] => foo
 '
 

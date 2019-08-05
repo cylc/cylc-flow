@@ -23,8 +23,8 @@ set_test_number 17
 # a test suite that uses environment filtering:
 init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
 [scheduling]
-    [[dependencies]]
-        graph = "foo & bar & baz & qux"
+    [[graph]]
+        R1 = "foo & bar & baz & qux"
 [runtime]
     [[root]]
         [[[environment]]]

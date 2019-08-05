@@ -3,8 +3,8 @@
        required run mode = live
        live mode suite timeout = PT30S
 [scheduling]
-    [[dependencies]]
-        graph = t1 => t2 & t3
+    [[graph]]
+        R1 = t1 => t2 & t3
 [runtime]
     [[t1]]
         script = """

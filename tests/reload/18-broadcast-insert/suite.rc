@@ -3,8 +3,8 @@
        live mode suite timeout = PT1M
        required run mode = live
 [scheduling]
-    [[dependencies]]
-        graph=foo
+    [[graph]]
+        R1=foo
 
 [runtime]
     [[foo]]

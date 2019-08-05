@@ -3,7 +3,7 @@
 [scheduling]
     initial cycle point = 2015
     final cycle point = 2016
-    [[dependencies]]
+    [[graph]]
         P1Y = t1
 [runtime]
     [[t1]]

@@ -40,8 +40,8 @@ BASE_GLOBALRC="
 TEST_NAME="${TEST_NAME_BASE}"
 TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME}" <<< '
 [scheduling]
-    [[dependencies]]
-        graph = foo
+    [[graph]]
+        R1 = foo
 '
 create_test_globalrc '' "${BASE_GLOBALRC}"
 run_ok "${TEST_NAME}-suite-start" \

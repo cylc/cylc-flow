@@ -11,8 +11,8 @@
   % cylc get-config --sparse --item [runtime]var_p2 foo"""
 
 [scheduling]
-    [[dependencies]]
-        graph = "OPS:finish-all => VAR"
+    [[graph]]
+        R1 = "OPS:finish-all => VAR"
 
 [runtime]
     [[root]]

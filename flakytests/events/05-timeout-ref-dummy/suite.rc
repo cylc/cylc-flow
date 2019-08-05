@@ -8,8 +8,8 @@
         simulation mode suite timeout = PT12S
 
 [scheduling]
-    [[dependencies]]
-        graph = """foo
+    [[graph]]
+        R1 = """foo
                    foo:fail => bar"""
 
 [runtime]

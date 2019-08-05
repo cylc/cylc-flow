@@ -3,7 +3,7 @@
 [scheduling]
     initial cycle point = 20130808T00
     final cycle point = 20130808T18
-    [[dependencies]]
+    [[graph]]
         R1 = "setup_foo => foo"
         +PT6H/PT6H = "foo[-PT6H] => foo => bar"
 [runtime]

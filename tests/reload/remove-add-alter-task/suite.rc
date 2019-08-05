@@ -9,8 +9,8 @@
         live mode suite timeout = PT60S
 
 [scheduling]
-    [[dependencies]]
-        graph = reloader => remove_add_alter_me
+    [[graph]]
+        R1 = reloader => remove_add_alter_me
 
 [runtime]
    [[remove_add_alter_me]]

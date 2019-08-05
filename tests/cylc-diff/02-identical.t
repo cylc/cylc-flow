@@ -22,8 +22,8 @@ set_test_number 3
 
 init_suite "${TEST_NAME_BASE}-1" <<'__SUITE_RC__'
 [scheduling]
-    [[dependencies]]
-        graph = foo => bar
+    [[graph]]
+        R1 = foo => bar
 [runtime]
     [[foo, bar]]
         script = true
@@ -31,8 +31,8 @@ __SUITE_RC__
 SUITE_NAME1="${SUITE_NAME}"
 init_suite "${TEST_NAME_BASE}-2" <<'__SUITE_RC__'
 [scheduling]
-    [[dependencies]]
-        graph = foo => bar
+    [[graph]]
+        R1 = foo => bar
 [runtime]
     [[foo, bar]]
         script = true

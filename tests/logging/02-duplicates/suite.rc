@@ -1,7 +1,7 @@
 [scheduling]
     cycling mode = integer
     initial cycle point = 1
-    [[dependencies]]
+    [[graph]]
         R1/1 = """
             foo:fail => bar
             foo & bar => restart

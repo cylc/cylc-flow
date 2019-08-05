@@ -5,8 +5,8 @@
         abort on inactivity = True
         inactivity = PT2M
 [scheduling]
-    [[dependencies]]
-        graph = bar => foo
+    [[graph]]
+        R1 = bar => foo
 [runtime]
     [[foo]]
         script = """

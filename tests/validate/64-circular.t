@@ -22,8 +22,8 @@ set_test_number 13
 
 cat >'suite.rc' <<'__SUITE_RC__'
 [scheduling]
-    [[dependencies]]
-        graph = a => a
+    [[graph]]
+        R1 = a => a
 __SUITE_RC__
 
 run_fail "${TEST_NAME_BASE}-simple-1" cylc validate 'suite.rc'
@@ -33,8 +33,8 @@ __ERR__
 
 cat >'suite.rc' <<'__SUITE_RC__'
 [scheduling]
-    [[dependencies]]
-        graph = a => b => c => d => a => z
+    [[graph]]
+        R1 = a => b => c => d => a => z
 __SUITE_RC__
 
 run_fail "${TEST_NAME_BASE}-simple-2" cylc validate 'suite.rc'
@@ -44,8 +44,8 @@ __ERR__
 
 cat >'suite.rc' <<'__SUITE_RC__'
 [scheduling]
-    [[dependencies]]
-        graph = FAM:succeed-all => f & g => z
+    [[graph]]
+        R1 = FAM:succeed-all => f & g => z
 [runtime]
     [[FAM]]
     [[f,g,h]]
@@ -63,7 +63,7 @@ cat >'suite.rc' <<'__SUITE_RC__'
 [scheduling]
     initial cycle point = 2001
     final cycle point = 2010
-    [[dependencies]]
+    [[graph]]
         P1Y = '''
 a[-P1Y] => a
 a[+P1Y] => a
@@ -79,7 +79,7 @@ cat >'suite.rc' <<'__SUITE_RC__'
 [scheduling]
     cycling mode = integer
     initial cycle point = 1
-    [[dependencies]]
+    [[graph]]
         2/P3 = foo => bar => baz
         8/P1 = baz => foo
 __SUITE_RC__
@@ -94,8 +94,8 @@ cat >'suite.rc' <<'__SUITE_RC__'
     [[parameters]]
         foo = 1..5
 [scheduling]
-    [[dependencies]]
-        graph = """
+    [[graph]]
+        R1 = """
             fool<foo-1> => fool<foo>
             fool<foo=2> => fool<foo=1>
         """
@@ -110,7 +110,7 @@ cat >'suite.rc' <<'__SUITE_RC__'
 [scheduling]
     cycling mode = integer
     initial cycle point = 1
-    [[dependencies]]
+    [[graph]]
         1/P3 = foo => bar
         2/P3 = bar => foo
 __SUITE_RC__

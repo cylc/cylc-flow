@@ -23,8 +23,8 @@ set_test_number 4
 TEST_NAME="${TEST_NAME_BASE}-bad-key"
 cat >'suite.rc' <<'__SUITE_RC__'
 [scheduling]
-    [[dependencies]]
-        graph=t1
+    [[graph]]
+        R1=t1
 [runtime]
     [[t1]]
         script=true
@@ -39,8 +39,8 @@ __ERR__
 TEST_NAME="${TEST_NAME_BASE}-bad-value"
 cat >'suite.rc' <<'__SUITE_RC__'
 [scheduling]
-    [[dependencies]]
-        graph=t1
+    [[graph]]
+        R1=t1
 [runtime]
     [[t1]]
         script=true

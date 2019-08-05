@@ -4,8 +4,8 @@
     [[reference test]]
         expected task failures = foo.1
 [scheduling]
-    [[dependencies]]
-        graph = """
+    [[graph]]
+        R1 = """
             foo
             foo:fail => ! foo
         """

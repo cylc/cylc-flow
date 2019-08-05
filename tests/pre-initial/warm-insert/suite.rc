@@ -11,7 +11,7 @@
 [scheduling]
     initial cycle point = 20100101T0000Z
     final cycle point   = 20100102T0000Z
-    [[dependencies]]
+    [[graph]]
         T00, T06, T12, T18 = bar[-PT6H] => foo => bar
         T18 = inserter => bar
 

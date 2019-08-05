@@ -145,7 +145,7 @@ Can now be written as:
 # New Syntax
 [scheduling]
     initial cycle point = next(T00)
-    [[dependencies]]
+    [[graph]]
         P1D = task1 => task2
 ```
 

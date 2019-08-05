@@ -43,8 +43,8 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
         abort on inactivity = True
         inactivity = PT10S
 [scheduling]
-    [[dependencies]]
-        graph = t<i-1> => t<i>
+    [[graph]]
+        R1 = t<i-1> => t<i>
 [runtime]
     [[t<i>]]
         script = true

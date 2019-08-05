@@ -3,8 +3,8 @@
         abort on timeout = True
         timeout = PT30S
 [scheduling]
-    [[dependencies]]
-        graph = """
+    [[graph]]
+        R1 = """
 foo:fail => bar
 foo & bar => baz
 """

@@ -1,6 +1,6 @@
 [scheduling]
-    [[dependencies]]
-         graph = foo => FAM:succeed-all => bar
+    [[graph]]
+         R1 = foo => FAM:succeed-all => bar
 [runtime]
     [[FAM]]
     [[BAM]]

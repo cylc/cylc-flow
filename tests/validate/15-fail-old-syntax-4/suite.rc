@@ -1,4 +1,4 @@
 [scheduling]
     initial cycle point = 2010010100
-    [[dependencies]]
+    [[graph]]
         T12 = "foo"

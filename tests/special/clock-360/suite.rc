@@ -10,7 +10,7 @@
     cycling mode = 360day
     [[special tasks]]
         clock-trigger = clock(0)
-    [[dependencies]]
+    [[graph]]
         T00 = "clock"
 [runtime]
     [[clock]]

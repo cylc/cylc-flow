@@ -6,8 +6,8 @@
         live mode suite timeout = PT1M
         expected task failures = killable-1.1, killable-2.1, killable-3.1
 [scheduling]
-    [[dependencies]]
-        graph="""
+    [[graph]]
+        R1="""
 KILLABLE:submit-all & sleeper:start => killer
 KILLABLE:submit-fail-all & sleeper => stopper
 """

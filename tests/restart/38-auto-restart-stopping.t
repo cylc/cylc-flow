@@ -42,8 +42,8 @@ TEST_NAME="${TEST_NAME_BASE}"
 
 init_suite "${TEST_NAME}" <<< '
 [scheduling]
-    [[dependencies]]
-        graph = foo => bar
+    [[graph]]
+        R1 = foo => bar
 [runtime]
     [[foo]]
         script = cylc stop "${CYLC_SUITE_NAME}"; sleep 15

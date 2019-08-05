@@ -5,8 +5,8 @@
        live mode suite timeout=PT5M # minutes
 
 [scheduling]
-    [[dependencies]]
-        graph="""
+    [[graph]]
+        R1="""
 t1
 t2
 """

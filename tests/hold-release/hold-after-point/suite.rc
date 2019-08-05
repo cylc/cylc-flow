@@ -12,7 +12,7 @@
     initial cycle point  = 20100101T00Z
     final cycle point    = 20100110T00Z
     hold after point    = 20100102T00Z
-    [[dependencies]]
+    [[graph]]
         R1 = stopper
         T00 = foo[-P1D] => foo
 [runtime]

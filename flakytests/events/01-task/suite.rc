@@ -15,8 +15,8 @@
         expected task failures = bar.1, baz.1
 
 [scheduling]
-    [[dependencies]]
-        graph = """
+    [[graph]]
+        R1 = """
           prep => foo & bar & baz
       bar:submit-fail & baz:fail & foo => done
            done => !bar & !baz

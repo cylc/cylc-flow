@@ -2,5 +2,5 @@
     initial cycle point = 2015-01-01
     runahead limit = P2D
     max active cycle points = 2
-    [[dependencies]]
+    [[graph]]
         P1D = foo

@@ -7,8 +7,8 @@
         abort on timeout = True
 
 [scheduling]
-    [[dependencies]]
-        graph = """foo
+    [[graph]]
+        R1 = """foo
                    foo:fail => bar"""
 
 [runtime]

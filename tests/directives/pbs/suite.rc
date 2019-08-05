@@ -7,8 +7,8 @@
        live mode suite timeout = PT3.5M
        expected task failures = rem2.1
 [scheduling]
-    [[dependencies]]
-        graph = """rem1 => rem2
+    [[graph]]
+        R1 = """rem1 => rem2
                    rem2:start => killer => !rem2
                    """
 [runtime]

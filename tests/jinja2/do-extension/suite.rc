@@ -11,8 +11,8 @@
 {% endfor %}
 
 [scheduling]
-    [[dependencies]]
-        graph =  "FAMILY"
+    [[graph]]
+        R1 =  "FAMILY"
 [runtime]
     [[FAMILY]]
 {% for T in TASKS %}

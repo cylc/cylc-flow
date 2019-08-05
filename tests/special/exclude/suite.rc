@@ -5,8 +5,8 @@
 [scheduling]
     [[special tasks]]
         exclude at start-up = "exclude" # should not run
-    [[dependencies]]
-        graph = "exclude & foo"
+    [[graph]]
+        R1 = "exclude & foo"
 [runtime]
     [[foo]]
         script = true

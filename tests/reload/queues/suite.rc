@@ -12,8 +12,8 @@
         [[[ q_fam ]]]
             limit = 5 # marker
             members = reloader, FAM
-    [[dependencies]]
-        graph = """reloader:start => FAM
+    [[graph]]
+        R1 = """reloader:start => FAM
                    reloader => monitor"""
 [runtime]
     [[FAM]]

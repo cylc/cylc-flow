@@ -5,8 +5,8 @@
        live mode suite timeout = PT30S
 
 [scheduling]
-    [[dependencies]]
-        graph = """t1:start => t2"""
+    [[graph]]
+        R1 = """t1:start => t2"""
 
 [runtime]
     [[t1]]

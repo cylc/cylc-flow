@@ -6,7 +6,7 @@
 [scheduling]
     initial cycle point = 1990
     final cycle point = 2030
-    [[dependencies]]
+    [[graph]]
         R1/1990 = """holder => releaser => t1"""
         R1/2010 = """releaser[1990] => t2"""
         R1/2030 = """

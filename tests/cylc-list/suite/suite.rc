@@ -2,7 +2,7 @@
    UTC mode = True
 [scheduling]
    initial cycle point = 20140808T00
-   [[dependencies]]
+   [[graph]]
       P1D = """
           fido[-P1D] => fido
           fido => cujo & manny

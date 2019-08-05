@@ -1,7 +1,7 @@
 [scheduling]
     initial cycle point = 20160101T00Z
     final cycle point = 20160102T00Z
-    [[dependencies]]
+    [[graph]]
         R1 = start
         PT1H = foo => bar => baz => bol
 [runtime]

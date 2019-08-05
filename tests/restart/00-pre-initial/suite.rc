@@ -7,7 +7,7 @@
 [scheduling]
     initial cycle point = 20100808T00
     final cycle point = 20100808T06
-    [[dependencies]]
+    [[graph]]
         R1 = "p1 => p2"
         T00 = """
             p2 => foo

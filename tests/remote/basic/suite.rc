@@ -11,8 +11,8 @@
         live mode suite timeout = PT30S
         suite shutdown event handler = cleanup.sh
 [scheduling]
-    [[dependencies]]
-        graph = "foo => bar"
+    [[graph]]
+        R1 = "foo => bar"
 [runtime]
     [[foo]]
         script = "/bin/true" # fast

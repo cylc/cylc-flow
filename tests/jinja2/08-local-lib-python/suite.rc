@@ -1,5 +1,5 @@
 #!Jinja2
 
 [scheduling]
-    [[dependencies]]
-        graph = {{"foo" | qualify}} => {{"bar" | qualify}}
+    [[graph]]
+        R1 = {{"foo" | qualify}} => {{"bar" | qualify}}

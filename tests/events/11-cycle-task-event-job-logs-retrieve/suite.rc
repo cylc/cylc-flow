@@ -11,7 +11,7 @@
 [scheduling]
     initial cycle point=2020-02-02T02:02Z
     final cycle point=2020-02-02T02:02Z
-    [[dependencies]]
+    [[graph]]
         R1=T
 
 [runtime]

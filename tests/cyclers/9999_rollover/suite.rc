@@ -6,7 +6,7 @@
     UTC mode = True
 [scheduling]
     initial cycle point = 99991231T2200
-    [[dependencies]]
+    [[graph]]
         R3//PT1H = "foo"
 [runtime]
     [[root]]

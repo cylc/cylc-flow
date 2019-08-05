@@ -3,8 +3,8 @@
          t = 1..5
          u = right,left
 [scheduling]
-    [[dependencies]]
-        graph = foo<t,u>
+    [[graph]]
+        R1 = foo<t,u>
 [runtime]
     [[root]]
         script = sleep 1

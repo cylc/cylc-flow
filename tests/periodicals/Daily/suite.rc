@@ -7,7 +7,7 @@
     initial cycle point = 20140107
     final cycle point = 20140118
     runahead limit = P1D # enforce sequential running
-    [[dependencies]]
+    [[graph]]
         # daily cycling *with a non-zero hour* is a more stringent test
         20140110T06/P3D = "a"
 [runtime]

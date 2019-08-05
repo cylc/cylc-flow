@@ -5,8 +5,8 @@
        live mode suite timeout = PT1M
        required run mode = live
 [scheduling]
-    [[dependencies]]
-        graph = """
+    [[graph]]
+        R1 = """
 FIXABLES:fail-all => fixer
 FIXABLES:succeed-all => Z
 """

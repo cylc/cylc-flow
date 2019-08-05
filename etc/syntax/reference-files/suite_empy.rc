@@ -59,7 +59,7 @@ a = @( b_b | c.d('1', "2", 3) )
 
 # syntax 3./1.3
 # tasks and deps outside of the templating code should display as normal
-graph = """
+R1 = """
     foo => @( b_az.pub('1', "2", 3) ) => qux =>
 @[ if BAR ]
     bar => pub
@@ -70,6 +70,6 @@ graph = """
 
 # syntax 3./2.5
 # clashing xtrigger and empy syntax should somehow be handled
-graph = """
+R1 = """
     @wall_clock => @@bar => baz  # note empy evaluates @@ as @
 """

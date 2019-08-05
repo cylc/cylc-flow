@@ -8,8 +8,8 @@
        live mode suite timeout=PT1M
 
 [scheduling]
-    [[dependencies]]
-        graph = """
+    [[graph]]
+        R1 = """
                    reloader => BAR # marker1
                    BAR:finish-all => FOO # marker2
                 """

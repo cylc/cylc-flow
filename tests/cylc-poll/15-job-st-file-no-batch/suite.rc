@@ -3,8 +3,8 @@
     [[events]]
         abort on stalled = True
 [scheduling]
-    [[dependencies]]
-        graph = t1
+    [[graph]]
+        R1 = t1
 [runtime]
     [[t1]]
         script = """

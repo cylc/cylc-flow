@@ -4,8 +4,8 @@
        live mode suite timeout = PT30S
 
 [scheduling]
-    [[dependencies]]
-        graph = "foo:submit => bar"
+    [[graph]]
+        R1 = "foo:submit => bar"
 [runtime]
     [[foo,bar]]
         script = "true"

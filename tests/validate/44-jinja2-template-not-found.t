@@ -26,7 +26,7 @@ run_fail "$TEST_NAME" cylc validate suite.rc
 cmp_ok "$TEST_NAME.stderr" <<'__ERROR__'
 Jinja2Error: suite-foo.rc
 Context lines:
-        graph = foo
+        R1 = foo
 [runtime]
 {% include 'suite-foo.rc' %}	<-- TemplateNotFound
 __ERROR__

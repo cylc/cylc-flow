@@ -23,8 +23,8 @@ set_test_number 1
 
 cat >'suite.rc' <<'__SUITE_RC__'
 [scheduling]
-    [[dependencies]]
-        graph = foo-bar:finish => baz
+    [[graph]]
+        R1 = foo-bar:finish => baz
 [runtime]
     [[foo-bar,baz]]
         script = true

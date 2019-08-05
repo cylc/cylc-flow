@@ -24,7 +24,7 @@ trigger, and the suite to shut down successfully."""
 [scheduling]
     initial cycle point = 20141207T0000Z
     final cycle point   = 20141208T0000Z
-    [[dependencies]]
+    [[graph]]
         T00 = """
             run_kill[-P1D]:fail => run_kill
             run_kill:start => submit_hold

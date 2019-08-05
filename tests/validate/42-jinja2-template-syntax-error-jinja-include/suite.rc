@@ -1,6 +1,6 @@
 #!jinja2
 [scheduling]
-    [[dependencies]]
+    [[graph]]
 {% include 'suite-includeme.rc' %}
 [runtime]
     [[foo]]

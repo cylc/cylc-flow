@@ -13,8 +13,8 @@
         live mode suite timeout=PT3M
 
 [scheduling]
-    [[dependencies]]
-        graph=t1 & t2 & t3 & t4 & t5
+    [[graph]]
+        R1=t1 & t2 & t3 & t4 & t5
 
 [runtime]
     [[t1, t2, t3, t4, t5]]

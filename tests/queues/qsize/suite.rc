@@ -8,8 +8,8 @@
         [[[ q_fam ]]]
             limit = {{q_size}} # allow testing with various queue sizes
             members = monitor, FAM
-    [[dependencies]]
-        graph = monitor:start => FAM
+    [[graph]]
+        R1 = monitor:start => FAM
 [runtime]
     [[FAM]]
         script = sleep 10

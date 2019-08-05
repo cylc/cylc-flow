@@ -27,7 +27,7 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
         abort on stalled = True
 [scheduling]
     initial cycle point = 2018
-    [[dependencies]]
+    [[graph]]
         P1Y = t1
 [runtime]
     [[t1]]

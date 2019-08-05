@@ -201,9 +201,8 @@ class SuiteConfig(object):
         # First check for the essential scheduling section.
         if 'scheduling' not in self.cfg:
             raise SuiteConfigError("missing [scheduling] section.")
-        if 'dependencies' not in self.cfg['scheduling']:
-            raise SuiteConfigError(
-                "missing [scheduling][[dependencies]] section.")
+        if 'graph' not in self.cfg['scheduling']:
+            raise SuiteConfigError("missing [scheduling][[graph]] section.")
         # (The check that 'graph' is defined is below).
         # The two runahead limiting schemes are mutually exclusive.
         rlim = self.cfg['scheduling'].get('runahead limit')
@@ -218,49 +217,21 @@ class SuiteConfig(object):
         if icp_str is not None:
             self.cfg['scheduling']['initial cycle point'] = icp_str
 
-        dependency_map = self.cfg.get('scheduling', {}).get(
-            'dependencies', {})
+        graphdict = self.cfg['scheduling']['graph']
 
-        if not any(dependency_map.values()):
+        if not any(graphdict.values()):
             raise SuiteConfigError('No suite dependency graph defined.')
 
-        if 'cycling mode' not in self.cfg.get('scheduling', {}):
-            # Auto-detect integer cycling for pure async graph suites.
-            if dependency_map.get('graph'):
-                # There is an async graph setting.
-                # If it is by itself, it is integer shorthand.
-                # If there are cycling graphs as well, it is obsolete
-                # (pre cylc-6) syntax.
-                just_has_async_graph = True
-                non_async_item = None
-                for item, value in dependency_map.items():
-                    if item not in ['graph', '1', 'R1']:
-                        just_has_async_graph = False
-                        non_async_item = item
-                        break
-                icp = self.cfg['scheduling'].get('initial cycle point')
-                fcp = self.cfg['scheduling'].get('final cycle point')
-                if just_has_async_graph and not (
-                        icp in [None, '1'] and fcp in [None, icp]):
-                    raise SuiteConfigError(
-                        'Conflicting syntax: integer vs ' +
-                        'cycling suite: ' +
-                        'are you missing a [dependencies]R1 value?')
-                if just_has_async_graph:
-                    # There aren't any other graphs, so set integer cycling.
-                    self.cfg['scheduling']['cycling mode'] = (
-                        INTEGER_CYCLING_TYPE
-                    )
-                    if 'initial cycle point' not in self.cfg['scheduling']:
-                        self.cfg['scheduling']['initial cycle point'] = "1"
-                    if 'final cycle point' not in self.cfg['scheduling']:
-                        self.cfg['scheduling']['final cycle point'] = "1"
-                else:
-                    # Looks like cylc-5 mixed-async.
-                    raise SuiteConfigError(
-                        'Obsolete syntax: mixed integer [dependencies]graph ' +
-                        f'with cycling [dependencies]{non_async_item}'
-                    )
+        if (
+            'cycling mode' not in self.cfg['scheduling'] and
+            self.cfg['scheduling'].get('initial cycle point', '1') == '1' and
+            all(item in ['graph', '1', 'R1'] for item in graphdict)
+        ):
+            # Pure async graph, assume integer cycling mode with '1' cycle
+            self.cfg['scheduling']['cycling mode'] = INTEGER_CYCLING_TYPE
+            for key in ('initial cycle point', 'final cycle point'):
+                if key not in self.cfg['scheduling']:
+                    self.cfg['scheduling'][key] = '1'
 
         # allow test suites with no [runtime]:
         if 'runtime' not in self.cfg:
@@ -383,7 +354,8 @@ class SuiteConfig(object):
         if self.cfg['scheduling']['initial cycle point constraints']:
             valid_icp = False
             for entry in (
-                    self.cfg['scheduling']['initial cycle point constraints']):
+                self.cfg['scheduling']['initial cycle point constraints']
+            ):
                 possible_pt = get_point_relative(
                     entry, self.initial_point
                 ).standardise()
@@ -398,8 +370,10 @@ class SuiteConfig(object):
                      "%s") % (str(self.initial_point), constraints_str)
                 )
 
-        if (self.cfg['scheduling']['final cycle point'] is not None and
-                not self.cfg['scheduling']['final cycle point'].strip()):
+        if (
+            self.cfg['scheduling']['final cycle point'] is not None and
+            not self.cfg['scheduling']['final cycle point'].strip()
+        ):
             self.cfg['scheduling']['final cycle point'] = None
         fcp_str = getattr(self.options, 'fcp', None)
         if fcp_str is None:
@@ -434,11 +408,14 @@ class SuiteConfig(object):
                 str(self.final_point) + ".")
 
         # Validate final cycle point against any constraints
-        if (self.final_point is not None and
-                self.cfg['scheduling']['final cycle point constraints']):
+        if (
+            self.final_point is not None and
+            self.cfg['scheduling']['final cycle point constraints']
+        ):
             valid_fcp = False
             for entry in (
-                    self.cfg['scheduling']['final cycle point constraints']):
+                self.cfg['scheduling']['final cycle point constraints']
+            ):
                 possible_pt = get_point_relative(
                     entry, self.final_point).standardise()
                 if self.final_point == possible_pt:
@@ -473,8 +450,10 @@ class SuiteConfig(object):
                         raise SuiteConfigError(
                             "Illegal %s spec: %s" % (s_type, item)
                         )
-                    if (self.cfg['scheduling']['cycling mode'] !=
-                            Calendar.MODE_GREGORIAN):
+                    if (
+                        self.cfg['scheduling']['cycling mode'] !=
+                        Calendar.MODE_GREGORIAN
+                    ):
                         raise SuiteConfigError(
                             "%s tasks require "
                             "[scheduling]cycling mode=%s" % (
@@ -2093,17 +2072,17 @@ class SuiteConfig(object):
                 t in self.runtime['parents'] and
                 t not in self.runtime['descendants'])]
 
-        dependencies = self.cfg['scheduling']['dependencies']
-        if 'graph' in dependencies:
+        graphdict = self.cfg['scheduling']['graph']
+        if 'graph' in graphdict:
             section = get_sequence_cls().get_async_expr()
-            dependencies[section] = dependencies.pop('graph')
+            graphdict[section] = graphdict.pop('graph')
 
         icp = self.cfg['scheduling']['initial cycle point']
         fcp = self.cfg['scheduling']['final cycle point']
 
         # Make a stack of sections and graphs [(sec1, graph1), ...]
         sections = []
-        for section, value in self.cfg['scheduling']['dependencies'].items():
+        for section, value in self.cfg['scheduling']['graph'].items():
             # Substitute initial and final cycle points.
             if icp:
                 section = section.replace("^", icp)

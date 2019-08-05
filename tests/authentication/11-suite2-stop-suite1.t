@@ -33,8 +33,8 @@ cat >"${SUITE2_RUND}/suite.rc" <<__SUITERC__
 [cylc]
     abort if any task fails=True
 [scheduling]
-    [[dependencies]]
-        graph=t1
+    [[graph]]
+        R1=t1
 [runtime]
     [[t1]]
         script=cylc shutdown "${NAME1}"

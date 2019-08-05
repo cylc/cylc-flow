@@ -12,7 +12,7 @@ error."""
 [scheduling]
     initial cycle point = 20141208T0000Z
     final cycle point   = 20141207T0000Z
-    [[dependencies]]
+    [[graph]]
         T00 = A => B
     
 [runtime]

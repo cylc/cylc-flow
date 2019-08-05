@@ -7,8 +7,8 @@
         abort on inactivity = True
         inactivity = P6M
 [scheduling]
-    [[dependencies]]
-        graph = t1
+    [[graph]]
+        R1 = t1
 [runtime]
     [[t1]]
         script = sleep 300

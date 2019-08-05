@@ -5,8 +5,8 @@
        expected task failures = t1.1
        live mode suite timeout= PT5M
 [scheduling]
-    [[dependencies]]
-        graph=t1:start=>stop
+    [[graph]]
+        R1=t1:start=>stop
 [runtime]
     [[t1]]
         script=sleep 120

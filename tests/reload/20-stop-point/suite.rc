@@ -9,7 +9,7 @@
     cycling mode = integer
     initial cycle point = 1
     final cycle point = 5
-    [[dependencies]]
+    [[graph]]
         R1="set-stop-point => reload => t1"
         P1="t1[-P1] => t1"
 

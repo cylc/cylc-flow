@@ -6,8 +6,8 @@
     [[queues]]
         [[[default]]]
             limit = 1
-    [[dependencies]]
-        graph = m1 & m2
+    [[graph]]
+        R1 = m1 & m2
 [runtime]
     [[m1, m2]]
         script = sleep 10

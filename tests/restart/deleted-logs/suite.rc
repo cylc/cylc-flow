@@ -3,8 +3,8 @@
         abort on timeout = True
         timeout = PT20S
 [scheduling]
-    [[dependencies]]
-        graph = one => two
+    [[graph]]
+        R1 = one => two
 [runtime]
     [[one]]
         script = """
