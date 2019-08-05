@@ -81,9 +81,6 @@ RE_SEC_MULTI_SEQ = re.compile(r'(?![^(]+\)),')
 RE_SUITE_NAME_VAR = re.compile(r'\${?CYLC_SUITE_(REG_)?NAME}?')
 RE_TASK_NAME_VAR = re.compile(r'\${?CYLC_TASK_NAME}?')
 
-# Message trigger offset regex.
-BCOMPAT_MSG_RE_C6 = re.compile(r'^(.*)\[\s*(([+-])?\s*(.*))?\s*\](.*)$')
-
 
 def check_varnames(env):
     """Check a list of env var names for legality.
@@ -1597,10 +1594,6 @@ class SuiteConfig(object):
             for item in self.cfg['runtime'][name]['outputs'].items():
                 if item not in taskdef.outputs:
                     taskdef.outputs.append(item)
-                    # Check for obsolete task message offsets.
-                    if BCOMPAT_MSG_RE_C6.match(item[1]):
-                        raise SuiteConfigError(
-                            'Message trigger offsets are obsolete.')
 
     def generate_triggers(self, lexpression, left_nodes, right, seq,
                           suicide, task_triggers):
