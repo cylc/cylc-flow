@@ -362,9 +362,9 @@ class TaskState(object):
         return self._set_state(is_held=True)
 
     def unset_held(self):
-        return self._set_state(is_held=False)
+        return self.reset_state(is_held=False)
 
-    def reset_state(self, status, is_held=None):
+    def reset_state(self, status=None, is_held=None):
         """Change status, and manipulate outputs and prerequisites accordingly.
 
         Outputs are manipulated on manual state reset to reflect the new task
@@ -398,6 +398,8 @@ class TaskState(object):
         self.kill_failed = False
 
         # Set standard outputs in accordance with task state.
+        if not status:
+            status = self.status
         if status_leq(status, TASK_STATUS_SUBMITTED):
             self.outputs.set_all_incomplete()
         self.outputs.set_completion(
@@ -421,6 +423,7 @@ class TaskState(object):
 
     def _set_state(self, status=None, is_held=None):
         """Set state to new status and log."""
+        # TODO - we don't need the reset_state / _set_state logic any more?
         current_status = (
             self.status,
             self.is_held
