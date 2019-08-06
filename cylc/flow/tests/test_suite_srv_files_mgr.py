@@ -165,6 +165,20 @@ def get_register_test_cases():
          None,  # expected return value
          SuiteServiceFileError,  # expected exception
          "cannot be an absolute path"  # expected part of exception message
+         ),
+        # 10 invalid suite name
+        ("-foo",  # reg
+         None,  # source
+         False,  # redirect,
+         None,  # cwd
+         True,  # isabs
+         True,  # isfile
+         None,  # suite_srv_dir
+         None,  # readlink
+         None,  # expected symlink
+         None,  # expected return value
+         SuiteServiceFileError,  # expected exception
+         "can not start with: ., -"  # expected part of exception message
          )
     ]
 

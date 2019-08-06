@@ -31,6 +31,7 @@ from cylc.flow.resources import extract_resources
 import cylc.flow.flags
 from cylc.flow.hostuserutil import (
     get_host, get_user, is_remote, is_remote_host, is_remote_user)
+from cylc.flow.unicode_rules import SuiteNameValidator
 
 
 class SuiteSrvFilesManager(object):
@@ -396,7 +397,7 @@ To start a new run, stop the old one first with one or more of these:
             redirect (bool): allow reuse of existing name and run directory.
 
         Return:
-            The registered suite name (which may be computed here).
+            str: The registered suite name (which may be computed here).
 
         Raise:
             SuiteServiceFileError:
@@ -406,6 +407,12 @@ To start a new run, stop the old one first with one or more of these:
         """
         if reg is None:
             reg = os.path.basename(os.getcwd())
+
+        is_valid, message = SuiteNameValidator.validate(reg)
+        if not is_valid:
+            raise SuiteServiceFileError(
+                f'invalid suite name - {message}'
+            )
 
         if os.path.isabs(reg):
             raise SuiteServiceFileError(
