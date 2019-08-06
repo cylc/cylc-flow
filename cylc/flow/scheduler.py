@@ -1197,10 +1197,7 @@ see `COPYING' in the Cylc source distribution.
             if (
                     not itask.is_late
                     and itask.get_late_time()
-                    and itask.state(
-                        *TASK_STATUSES_NEVER_ACTIVE,
-                        is_held=False
-                    )
+                    and itask.state(*TASK_STATUSES_NEVER_ACTIVE)
                     and now > itask.get_late_time()
             ):
                 msg = '%s (late-time=%s)' % (
@@ -1884,7 +1881,6 @@ see `COPYING' in the Cylc source distribution.
 
     def command_reset_task_states(self, items, state=None, outputs=None):
         """Reset the state of tasks."""
-        # TODO - add is_held functionality?
         return self.pool.reset_task_states(items, state, outputs)
 
     def command_spawn_tasks(self, items):
