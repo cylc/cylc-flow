@@ -25,51 +25,9 @@ from cylc.flow.task_state import (
     TaskState,
     TASK_STATUS_RETRYING,
     TASK_STATUS_SUCCEEDED,
+    TASK_STATUS_FAILED,
     TASK_STATUS_WAITING,
 )
-
-
-class TestTaskState(unittest.TestCase):
-
-    def test_reset(self):
-        """Test instantiation and simple resets."""
-        point = ISO8601Point('2020')
-        taskdef = TaskDef('who-cares', {}, 'live', point, False)
-        taskstate = TaskState(taskdef, point, TASK_STATUS_WAITING, False)
-        self.assertIsNone(
-            taskstate.reset(TASK_STATUS_WAITING),
-            'same status returns None',
-        )
-        self.assertEqual(
-            taskstate.reset(TASK_STATUS_SUCCEEDED),
-            (TASK_STATUS_WAITING, False),
-            'different status returns previous (status, hold_swap)',
-        )
-        self.assertEqual(
-            (taskstate.status, taskstate.is_held),
-            (TASK_STATUS_SUCCEEDED, False),
-            'reset status OK',
-        )
-
-    def test_reset_respect_hold_swap(self):
-        point = ISO8601Point('2020')
-        taskdef = TaskDef('who-cares', {}, 'live', point, False)
-        taskstate = TaskState(
-            taskdef, point, TASK_STATUS_RETRYING, is_held=True)
-        self.assertIsNone(
-            taskstate.reset(TASK_STATUS_RETRYING),
-            'same status returns None',
-        )
-        self.assertEqual(
-            taskstate.reset(TASK_STATUS_SUCCEEDED),
-            (TASK_STATUS_RETRYING, True),
-            'different status returns previous (status, hold_swap)',
-        )
-        self.assertEqual(
-            (taskstate.status, taskstate.is_held),
-            (TASK_STATUS_SUCCEEDED, True),
-            'reset status OK',
-        )
 
 
 @pytest.mark.parametrize(
@@ -80,6 +38,7 @@ class TestTaskState(unittest.TestCase):
     ]
 )
 def test_state_comparison(state, is_held):
+    """Test the __call__ method."""
     tdef = TaskDef('foo', {}, 'live', '123', True)
     tstate = TaskState(tdef, '123', state, is_held)
 
@@ -97,5 +56,79 @@ def test_state_comparison(state, is_held):
     assert not tstate(state + 'x', 'of', 'flux')
 
 
-if __name__ == '__main__':
-    unittest.main()
+@pytest.mark.parametrize(
+    'state,is_held,should_reset',
+    [
+        (None, None, False),
+        (TASK_STATUS_WAITING, None, False),
+        (None, True, False),
+        (TASK_STATUS_WAITING, True, False),
+        (TASK_STATUS_SUCCEEDED, None, True),
+        (None, False, True),
+        (TASK_STATUS_WAITING, False, True),
+    ]
+)
+def test_reset(state, is_held, should_reset):
+    """Test that tasks do or don't have their state changed."""
+    tdef = TaskDef('foo', {}, 'live', '123', True)
+    # create task state:
+    #   * status: waiting
+    #   * is_held: true
+    tstate = TaskState(tdef, '123', TASK_STATUS_WAITING, True)
+    assert tstate.reset(state, is_held) == should_reset
+    if is_held is not None:
+        assert tstate.is_held == is_held
+    if state is not None:
+        assert tstate.status == state
+
+
+@pytest.mark.parametrize(
+    'before,after,outputs',
+    [
+        (
+            (TASK_STATUS_WAITING, False),
+            (TASK_STATUS_SUCCEEDED, False),
+            ['submitted', 'started', 'succeeded']
+        ),
+        (
+            (TASK_STATUS_WAITING, False),
+            (TASK_STATUS_FAILED, False),
+            ['submitted', 'started', 'failed']
+        ),
+        (
+            (TASK_STATUS_WAITING, False),
+            (TASK_STATUS_FAILED, None),  # no change to is_held
+            ['submitted', 'started', 'failed']
+        ),
+        (
+            (TASK_STATUS_WAITING, False),
+            (None, False),  # no change to status
+            []
+        ),
+        # only reset task outputs if not setting task to held
+        # https://github.com/cylc/cylc-flow/pull/2116
+        (
+            (TASK_STATUS_WAITING, False),
+            (TASK_STATUS_FAILED, True),
+            []
+        ),
+        # only reset task outputs if not setting task to held
+        # https://github.com/cylc/cylc-flow/pull/2116
+        (
+            (TASK_STATUS_WAITING, False),
+            (TASK_STATUS_SUCCEEDED, True),
+            []
+        )
+    ]
+)
+def test_reset_outputs(before, after, outputs):
+    """Test that outputs are reset correctly on state changes."""
+    tdef = TaskDef('foo', {}, 'live', '123', True)
+
+    orig_status, orig_is_held = before
+    new_status, new_is_held = after
+
+    tstate = TaskState(tdef, '123', orig_status, orig_is_held)
+    assert tstate.outputs.get_completed() == []
+    tstate.reset(status=new_status, is_held=new_is_held)
+    assert tstate.outputs.get_completed() == outputs

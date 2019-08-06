@@ -174,12 +174,8 @@ class TaskState(object):
     Attributes:
         .external_triggers (dict):
             External triggers as {trigger (str): satisfied (boolean), ...}.
-        .hold_swap (str):
-            While the task is in `held` status, this holds the actual status if
-            the task is not held. For tasks in `submitted` or `running`
-            statuses, setting this to `held` will cause the task to hold when
-            the task is reset to anything other than the `submitted` or
-            `running` statuses.
+        .is_held (bool):
+            True if the task is "held" else False.
         .identity (str):
             The task ID as `TASK.CYCLE` associated with this object.
         .is_updated (boolean):
@@ -264,13 +260,30 @@ class TaskState(object):
         self.kill_failed = False
 
     def __str__(self):
-        """Print status (hold_swap)."""
+        """Print status (is_held)."""
         ret = self.status
         if self.is_held:
             ret += ' (held)'
         return ret
 
     def __call__(self, *status, is_held=None):
+        """Compare task state attributes.
+
+        Args:
+            status (str/list/None):
+                ``str``
+                    Check if the task status is the same as the one provided
+                ``list``
+                    Check if the task status is one of the ones provided
+                ``None``
+                    Do not check the task state.
+            is_held (bool):
+                ``bool``
+                    Check the task is_held attribute is the same as provided
+                ``None``
+                    Do not check the is_held attribute
+
+        """
         return (
             (
                 not status
