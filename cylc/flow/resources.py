@@ -23,6 +23,7 @@ Uses the pkg_resources API in case the package is a compressed archive.
 
 from pathlib import Path
 import pkg_resources as pr
+from cylc.flow import LOG
 
 
 resource_names = [
@@ -60,7 +61,7 @@ def extract_resources(target_dir, resources=None):
         if resource not in resource_names:
             raise ValueError(f"Invalid resource name {resource}")
         path = Path(target_dir, resource)
-        print(f"Extracting {resource} to {path}")
+        LOG.debug(f"Extracting {resource} to {path}")
         pdir = path.parent
         if not pdir.exists():
             pdir.mkdir(parents=True)
