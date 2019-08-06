@@ -7,7 +7,7 @@
 [scheduling]
     initial cycle point = 20100101T00
     final cycle point = 20100105T00
-    [[dependencies]]
+    [[graph]]
         # foo will fail and cause a stuck bar task at T00.
         PT1H = "foo => bar"
         # If wibble gets into the pool, it will demand a +PT6H raise

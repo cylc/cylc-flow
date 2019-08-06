@@ -13,8 +13,8 @@
 continuation
 
 [scheduling]
-    [[dependencies]]
-        graph = """ {# generate ensemble dependencies #}
+    [[graph]]
+        R1 = """ {# generate ensemble dependencies #}
         {% for I in range( 0, N_MEMBERS ) %}
           foo => mem_{{ I }} => post_{{ I }} => bar
         {% endfor %}"""

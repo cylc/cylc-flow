@@ -7,8 +7,8 @@
        required run mode = live
        expected task failures = t1.1
 [scheduling]
-    [[dependencies]]
-        graph="""
+    [[graph]]
+        R1="""
 t1:submit-fail => stopper
 reloader => stopper
 """

@@ -6,8 +6,8 @@
        expected task failures = foo.1
 
 [scheduling]
-    [[dependencies]]
-        graph = """foo:fail => bar
+    [[graph]]
+        R1 = """foo:fail => bar
                    bar => !foo"""
 [runtime]
     [[foo]]

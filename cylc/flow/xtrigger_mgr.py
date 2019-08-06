@@ -61,7 +61,7 @@ class XtriggerManager(object):
                  # or wall_clock(PT1H)
             suite_x = suite_state(suite=other,
                                   point=%(task_cycle_point)s):PT30S
-        [[dependencies]]
+        [[graph]]
             PT1H = '''
                 @clock_1 & @suite_x => foo & bar
                 @wall_clock = baz  # pre-defined zero-offset clock

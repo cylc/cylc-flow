@@ -6,7 +6,7 @@
     final cycle point = +P15  # = 16
     runahead limit = P12
     cycling mode = integer
-    [[dependencies]]
+    [[graph]]
         R/P1!(2,3,7) = foo
         P1 ! P2 = woo
         P1 ! +P1/P2 = bar

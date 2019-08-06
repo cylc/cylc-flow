@@ -1,7 +1,7 @@
 
 [scheduling]
-   [[dependencies]]
-      graph = FAM
+   [[graph]]
+      R1 = FAM
 [runtime]
    [[TOP]]
    [[FAM]]

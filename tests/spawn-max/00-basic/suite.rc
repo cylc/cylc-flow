@@ -8,7 +8,7 @@
     final cycle point = 2013
     max active cycle points = 4
     spawn to max active cycle points = True
-    [[dependencies]]
+    [[graph]]
         P1Y = get_obs => proc_obs
         R1/P0Y = proc_obs => cleanup
 [runtime]

@@ -8,13 +8,13 @@
        live mode suite timeout=PT1M
 
 [scheduling]
-    [[dependencies]]
-        graph = reloader => bar => foo # marker
+    [[graph]]
+        R1 = reloader => bar => foo # marker
 [runtime]
     [[reloader]]
         script = """
 # change the order of foo and bar in the graphing section:
-perl -pi -e 's/(graph = reloader => )bar => foo( # marker)/\1foo => bar\2/' $CYLC_SUITE_DEF_PATH/suite.rc
+perl -pi -e 's/(R1 = reloader => )bar => foo( # marker)/\1foo => bar\2/' $CYLC_SUITE_DEF_PATH/suite.rc
 # reload
 cylc reload -f $CYLC_SUITE_NAME
 sleep 5

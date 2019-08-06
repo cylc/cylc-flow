@@ -15,7 +15,7 @@ beyond the suite stop point."""
 [scheduling]
     initial cycle point = 20140101T00
     final cycle point   = 20140101T00
-    [[dependencies]]
+    [[graph]]
         R1 = foo => holdrelease
         T00 = "foo => bar"
 [runtime]

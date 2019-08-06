@@ -12,8 +12,8 @@
         m = %(m)s
 
 [scheduling]
-    [[dependencies]]
-        graph = """
+    [[graph]]
+        R1 = """
             FOO:succeed-any & BAR:finish-all => baz & baz2
             foo<x>:finish => foo<x+1>  # ensure foo<x=4> is the last to run
             bar<x>:finish => bar<x+1>  # ensure bar<x=4> is the last to run

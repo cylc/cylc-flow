@@ -5,8 +5,8 @@
         abort on inactivity = True
         inactivity = P1M
 [scheduling]
-    [[dependencies]]
-        graph = t1
+    [[graph]]
+        R1 = t1
 [runtime]
     [[t1]]
         script = true

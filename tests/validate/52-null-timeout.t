@@ -23,8 +23,8 @@ set_test_number 1
 
 cat >'suite.rc' <<'__SUITE_RC__'
 [scheduling]
-    [[dependencies]]
-        graph = foo
+    [[graph]]
+        R1 = foo
 [runtime]
     [[foo]]
         [[[events]]]

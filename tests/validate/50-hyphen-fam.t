@@ -22,8 +22,8 @@ set_test_number 2
 
 cat >'suite.rc' <<'__SUITE_RC__'
 [scheduling]
-    [[dependencies]]
-        graph = "baz-foo => bar"
+    [[graph]]
+        R1 = "baz-foo => bar"
 [runtime]
     [[foo]]
     [[bar, baz-foo]]
@@ -34,8 +34,8 @@ run_ok "${TEST_NAME_BASE}" cylc validate 'suite.rc'
 
 cat >'suite.rc' <<'__SUITE_RC__'
 [scheduling]
-    [[dependencies]]
-        graph = "foo-baz => bar"
+    [[graph]]
+        R1 = "foo-baz => bar"
 [runtime]
     [[foo]]
     [[bar, foo-baz]]

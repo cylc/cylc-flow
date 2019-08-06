@@ -1,3 +1,3 @@
 [scheduling]
-    [[dependencies]]
-        graph = artichoke & azuki => banana & blackberry & blueberry => carrot
+    [[graph]]
+        R1 = artichoke & azuki => banana & blackberry & blueberry => carrot

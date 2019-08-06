@@ -27,7 +27,7 @@ cat >'suite.rc' <<'__SUITE__'
 [scheduling]
     initial cycle point = 20140101T00
     final cycle point = 20140201T00
-    [[dependencies]]
+    [[graph]]
         # PT5D is invalid - should be P5D
         R/T00/PT5D = "foo"
 [runtime]
@@ -45,7 +45,7 @@ cat >'suite.rc' <<'__SUITE__'
     UTC mode = True
 [scheduling]
     initial cycle point = 20140101
-    [[dependencies]]
+    [[graph]]
         R1/P0D = "foo => final_foo"
 [runtime]
     [[root]]
@@ -63,7 +63,7 @@ cat >'suite.rc' <<'__SUITE__'
 [scheduling]
     initial cycle point = 20140101T00
     final cycle point = 20140201T00
-    [[dependencies]]
+    [[graph]]
         # Users may easily write 00 where they mean T00 or '0' in old syntax.
         # Technically 00 means the year 0000, but we won't allow it in Cylc.
         R/00/P5D = "foo"
@@ -82,7 +82,7 @@ cat >'suite.rc' <<'__SUITE__'
     cycle point time zone = +01
 [scheduling]
     initial cycle point = 20100101T00
-    [[dependencies]]
+    [[graph]]
         0,6,12 = "foo"
 __SUITE__
 run_fail "${TEST_NAME}" cylc validate 'suite.rc'
@@ -96,7 +96,7 @@ cat >'suite.rc' <<'__SUITE__'
     cycle point format = %Y%m%d%H
 [scheduling]
     initial cycle point = 2010010101
-    [[dependencies]]
+    [[graph]]
         R1 = foo
 __SUITE__
 run_fail "${TEST_NAME}" cylc validate 'suite.rc'

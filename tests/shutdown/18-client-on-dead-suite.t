@@ -20,8 +20,8 @@
 set_test_number 5
 init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
 [scheduling]
-    [[dependencies]]
-        graph = t1
+    [[graph]]
+        R1 = t1
 [runtime]
     [[t1]]
         script = true

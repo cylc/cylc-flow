@@ -32,7 +32,7 @@ the quick brown fox
 __END
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-b"
-cylc get-config -i '[scheduling][dependencies]R1' "${SUITE_NAME}" | sort \
+cylc get-config -i '[scheduling][graph]R1' "${SUITE_NAME}" | sort \
     >'b.txt' 2>'/dev/null'
 cmp_ok 'b.txt' <<'__END'
 bar => baz
@@ -40,7 +40,7 @@ foo => bar
 __END
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-c"
-cylc get-config -i '[scheduling][dependencies]T00' "${SUITE_NAME}" | sort \
+cylc get-config -i '[scheduling][graph]T00' "${SUITE_NAME}" | sort \
     >'c.txt' 2>'/dev/null'
 cmp_ok 'c.txt' <<'__END'
 cbar => cbaz

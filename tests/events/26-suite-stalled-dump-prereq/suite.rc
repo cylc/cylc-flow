@@ -7,7 +7,7 @@
         live mode suite timeout=PT1M
 [scheduling]
     initial cycle point = 20100101T0000Z
-    [[dependencies]]
+    [[graph]]
         T00, T06, T12, T18 = foo[-PT6H] & bar[-PT6H] => foo => bar => qux
         T12 = qux[-PT6H] => baz
 [runtime]

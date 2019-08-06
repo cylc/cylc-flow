@@ -25,16 +25,16 @@ cat >'suite.rc' <<'__SUITERC__'
 #!jinja2
 
 [scheduling]
-    [[dependencies]]
-        graph = foo
+    [[graph]]
+        R1 = foo
 {{ 1 / 'foo' }}
 __SUITERC__
 run_fail "${TEST_NAME}" cylc validate 'suite.rc'
 cmp_ok "${TEST_NAME}.stderr" <<'__ERROR__'
 Jinja2Error: unsupported operand type(s) for /: 'int' and 'str'
 Context lines:
-    [[dependencies]]
-        graph = foo
+    [[graph]]
+        R1 = foo
 {{ 1 / 'foo' }}	<-- TypeError
 __ERROR__
 

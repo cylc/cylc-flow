@@ -3,8 +3,8 @@
     description = should fail validation
 
 [scheduling]
-   [[dependencies]]
-      graph = foo
+   [[graph]]
+      R1 = foo
 
 [runtime]
    [[A]]

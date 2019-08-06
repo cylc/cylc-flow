@@ -3,8 +3,8 @@
        required run mode = live
        live mode suite timeout=PT1M
 [scheduling]
-    [[dependencies]]
-        graph = a:start => b
+    [[graph]]
+        R1 = a:start => b
 [runtime]
     [[a]]
         script = sleep 20

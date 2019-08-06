@@ -17,8 +17,8 @@ expressions."""
         simulation mode suite timeout = PT30S
 
 [scheduling]
-    [[dependencies]]
-        graph = "foo"
+    [[graph]]
+        R1 = "foo"
 [runtime]
     [[foo]]
         init-script = """

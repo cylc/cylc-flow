@@ -15,8 +15,8 @@ will time out."""
 [scheduling]
     [[special tasks]]
         external-trigger = foo("drugs and money")
-    [[dependencies]]
-        graph = """foo & bar
+    [[graph]]
+        R1 = """foo & bar
                    bar:fail => !bar"""
 [runtime]
     [[foo]]

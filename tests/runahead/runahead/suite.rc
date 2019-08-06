@@ -7,7 +7,7 @@
     runahead limit = PT18H
     initial cycle point = 20100101T00
     final cycle point = 20100105T00
-    [[dependencies]]
+    [[graph]]
         PT6H = "foo => bar"
 [runtime]
     [[foo]]

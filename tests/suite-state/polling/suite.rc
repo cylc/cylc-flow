@@ -6,8 +6,8 @@
     [[reference test]]
         live mode suite timeout = PT1M
 [scheduling]
-    [[dependencies]]
-        graph = """
+    [[graph]]
+        R1 = """
           l-good<{{UPSTREAM}}::good-stuff> & lbad<{{UPSTREAM}}::bad:fail>
           l-mess<{{UPSTREAM}}::messenger> => done
                 """

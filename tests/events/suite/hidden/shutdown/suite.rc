@@ -4,8 +4,8 @@
         abort if shutdown handler fails = True
 
 [scheduling]
-    [[dependencies]]
-        graph = "foo"
+    [[graph]]
+        R1 = "foo"
 
 [runtime]
     [[root]]

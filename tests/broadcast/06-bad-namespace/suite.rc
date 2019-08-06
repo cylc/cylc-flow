@@ -9,7 +9,7 @@
 [scheduling]
     initial cycle point = 20150808
     final cycle point = 20150808
-    [[dependencies]]
+    [[graph]]
         P1M = broadcast
 [runtime]
     [[broadcast]]

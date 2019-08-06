@@ -2,7 +2,7 @@
     UTC mode = True
 [scheduling]
     initial cycle point = 20140808T00
-    [[dependencies]]
+    [[graph]]
         R1 = cold_foo => foo
         T00 = foo => bar => baz
 [runtime]

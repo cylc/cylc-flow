@@ -8,8 +8,8 @@
        live mode suite timeout = PT30S
 
 [scheduling]
-    [[dependencies]]
-        graph = reloader => inheritor
+    [[graph]]
+        R1 = reloader => inheritor
 [runtime]
     [[FAM1]]
         script = false

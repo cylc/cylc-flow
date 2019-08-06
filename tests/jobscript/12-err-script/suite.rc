@@ -4,8 +4,8 @@
     [[events]]
         abort on stalled = True
 [scheduling]
-    [[dependencies]]
-        graph = foo
+    [[graph]]
+        R1 = foo
 [runtime]
     [[foo]]
         err-script = echo "$1 ${FOO}"

@@ -13,7 +13,7 @@
     final cycle point = {{START}}
     [[xtriggers]]
         clock = wall_clock(offset={{OFFSET}})
-    [[dependencies]]
+    [[graph]]
         T{{HOUR}} = "@clock => foo"
 [runtime]
     [[foo]]

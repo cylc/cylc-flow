@@ -9,7 +9,7 @@
     runahead limit = PT18H
     [[special tasks]]
         sequential = "foo"
-    [[dependencies]]
+    [[graph]]
         R1 = monitor:start => foo
         PT6H = foo
 [runtime]

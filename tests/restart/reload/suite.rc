@@ -17,7 +17,7 @@ which should run to completion on restarting."""
     runahead limit = PT12H
     [[special tasks]]
         sequential = foo
-    [[dependencies]]
+    [[graph]]
         T00 = "foo => bar"
 [runtime]
     [[root]]

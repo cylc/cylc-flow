@@ -6,8 +6,8 @@
         required run mode=live
         live mode suite timeout=PT1M
 [scheduling]
-    [[dependencies]]
-        graph="broadcast => t1"
+    [[graph]]
+        R1="broadcast => t1"
 [runtime]
     [[broadcast]]
         script="""

@@ -3,8 +3,8 @@
         [[[my_queue]]]
             limit = 1
             members = METASYNTACTIC
-    [[dependencies]]
-        graph = "foo:start => bar"
+    [[graph]]
+        R1 = "foo:start => bar"
 [runtime]
     [[METASYNTACTIC]]
     [[foo]]

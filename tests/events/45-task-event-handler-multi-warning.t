@@ -25,8 +25,8 @@ set_test_number 3
 
 init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
 [scheduling]
-   [[dependencies]]
-      graph = foo
+   [[graph]]
+      R1 = foo
 [runtime]
    [[foo]]
       script = """

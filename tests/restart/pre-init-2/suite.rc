@@ -19,7 +19,7 @@
     # DO NOT PUT AN INITIAL CYCLE TIME HERE,
     # use the command line as described above
     final cycle point = 20100810T00
-    [[dependencies]]
+    [[graph]]
         T00 = """
             foo[-P1D] => bar
             foo

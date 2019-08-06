@@ -4,7 +4,7 @@
       live mode suite timeout = PT2M
 [scheduling]
     initial cycle point = 20140101
-    [[dependencies]]
+    [[graph]]
         R1 = "cold_foo"
         PT12H = "cold_foo[^] & foo[-PT12H] => foo"
         R1/+P4D = "stop => foo"

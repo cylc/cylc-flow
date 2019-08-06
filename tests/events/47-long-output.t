@@ -32,8 +32,8 @@ process pool timeout = PT10S" ""
 init_suite "${TEST_NAME_BASE}" <<__SUITERC__
 [cylc]
 [scheduling]
-    [[dependencies]]
-        graph = t1
+    [[graph]]
+        R1 = t1
 [runtime]
     [[t1]]
         script = true
@@ -65,8 +65,8 @@ purge_suite "${SUITE_NAME}"
 init_suite "${TEST_NAME_BASE}" <<__SUITERC__
 [cylc]
 [scheduling]
-    [[dependencies]]
-        graph = t1
+    [[graph]]
+        R1 = t1
 [runtime]
     [[t1]]
         script = true

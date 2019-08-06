@@ -24,7 +24,7 @@ cat >'suite.rc' <<'__SUITE_RC__'
     UTC mode = True
 [scheduling]
     initial cycle point = 2000
-    [[dependencies]]
+    [[graph]]
         T00 = """
             A
             B

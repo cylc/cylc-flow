@@ -8,8 +8,8 @@
         live mode suite timeout = PT10S
         expected task failures = foo.1
 [scheduling]
-    [[dependencies]]
-        graph = "foo:submit-fail => !foo"
+    [[graph]]
+        R1 = "foo:submit-fail => !foo"
 [runtime]
     [[foo]]
         script = true

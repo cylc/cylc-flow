@@ -12,7 +12,7 @@
     final cycle point = 20140101T00
     [[special tasks]]
         exclude at start-up = foo
-    [[dependencies]]
+    [[graph]]
         R1 = """
             prep
             foo => bar

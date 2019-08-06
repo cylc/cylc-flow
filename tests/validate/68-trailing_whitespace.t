@@ -25,7 +25,7 @@ cat >'suite.rc' <<'__SUITE_RC__'
 [scheduling]
     initial cycle point = 20000101T06
     final cycle point = 20010101T18
-    [[dependencies]]
+    [[graph]]
         T00 = """
             foo | bar \ 
             => baz & qux

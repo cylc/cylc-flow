@@ -24,8 +24,8 @@ set_test_number 2
 
 cat >'suite.rc' <<__SUITE_RC__
 [scheduling]
-    [[dependencies]]
-        graph = BAR
+    [[graph]]
+        R1 = BAR
 [runtime]
     [[root]]
         script = sleep 1

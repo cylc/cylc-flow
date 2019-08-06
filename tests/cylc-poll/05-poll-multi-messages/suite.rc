@@ -5,8 +5,8 @@
         required run mode = live
         live mode suite timeout = PT1M
 [scheduling]
-    [[dependencies]]
-        graph="""
+    [[graph]]
+        R1="""
 speaker1:start & speaker2:start => poller
 speaker1:hello1 & speaker1:hello2 & speaker2:greet => finisher
 """

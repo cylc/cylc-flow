@@ -2,7 +2,7 @@
     UTC mode = True
 [scheduling]
     final cycle point = 20140101T00
-    [[dependencies]]
+    [[graph]]
         P1D = "foo[-P1D] => foo => bar"
 [runtime]
     [[root]]

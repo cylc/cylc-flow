@@ -36,7 +36,7 @@ n = """
 
 
 # SYNTAX: 2.
-graph = """
+R1 = """
     # settings should not be highlighted here
     a = b
 

@@ -151,7 +151,7 @@ SPEC = {
         'xtriggers': {
             '__MANY__': [VDR.V_XTRIGGER],
         },
-        'dependencies': {
+        'graph': {
             '__MANY__': [VDR.V_STRING],
         },
     },
@@ -296,10 +296,13 @@ def upg(cfg, descr):
     # Upgrader cannot do this type of move.
     try:
         keys = set()
-        dependencies = cfg['scheduling']['dependencies']
-        for key, value in dependencies.copy().items():
+        cfg['scheduling'].setdefault('graph', {})
+        cfg['scheduling']['graph'].update(
+            cfg['scheduling'].pop('dependencies'))
+        graphdict = cfg['scheduling']['graph']
+        for key, value in graphdict.copy().items():
             if isinstance(value, dict) and 'graph' in value:
-                dependencies[key] = value['graph']
+                graphdict[key] = value['graph']
                 keys.add(key)
         if keys:
             LOG.warning(
@@ -308,7 +311,7 @@ def upg(cfg, descr):
             LOG.warning(
                 ' * (8.0.0) %s -> %s - for X in:\n%s',
                 u.show_keys(['scheduling', 'dependencies', 'X', 'graph']),
-                u.show_keys(['scheduling', 'dependencies', 'X']),
+                u.show_keys(['scheduling', 'graph', 'X']),
                 '\n'.join(sorted(keys)),
             )
     except KeyError:

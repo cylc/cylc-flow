@@ -2,8 +2,8 @@
     UTC mode = True
     cycle point format = %Y
 [scheduling]
-    [[dependencies]]
-        graph = foo => bar
+    [[graph]]
+        R1 = foo => bar
 [runtime]
     [[foo]]
         script="""

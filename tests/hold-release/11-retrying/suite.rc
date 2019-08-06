@@ -8,8 +8,8 @@
         simulation mode suite timeout = PT1M30S
 
 [scheduling]
-    [[dependencies]]
-            graph = """
+    [[graph]]
+            R1 = """
 t-retry-able:submit => t-hold-release
 t-retry-able => t-analyse
 """

@@ -9,7 +9,7 @@
     max active cycle points = 1
     [[special tasks]]
         clock-trigger = foo(P0Y)
-    [[dependencies]]
+    [[graph]]
         P1Y = """
             foo => bar
             bar[-P1Y] => bar

@@ -5,8 +5,8 @@
 [scheduling]
     [[special tasks]]
         include at start-up = "include" # should be only task run
-    [[dependencies]]
-        graph = "include & exclude"
+    [[graph]]
+        R1 = "include & exclude"
 [runtime]
     [[include]]
         script = true

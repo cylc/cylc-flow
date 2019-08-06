@@ -2,5 +2,5 @@
     initial cycle point = 20100101T00
     [[special tasks]]
         start-up = cold_foo
-    [[dependencies]]
+    [[graph]]
         T12 = "cold_foo => foo"

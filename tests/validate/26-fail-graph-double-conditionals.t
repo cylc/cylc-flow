@@ -22,8 +22,8 @@ set_test_number 8
 #-------------------------------------------------------------------------------
 cat > suite.rc <<__END__
 [scheduling]
-    [[dependencies]]
-        graph = foo && bar => baz
+    [[graph]]
+        R1 = foo && bar => baz
 __END__
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-async-and
@@ -38,7 +38,7 @@ grep_ok "GraphParseError: the graph OR operator is '|': " $TEST_NAME.stderr
 cat > suite.rc <<__END__
 [scheduling]
     initial cycle point = 2015
-    [[dependencies]]
+    [[graph]]
         R1 = foo && bar => baz
 __END__
 #-------------------------------------------------------------------------------

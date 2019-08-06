@@ -3,8 +3,8 @@
       abort on timeout = True
       timeout = PT20S
 [scheduling]
-    [[dependencies]]
-        graph = "foo => stopper"
+    [[graph]]
+        R1 = "foo => stopper"
 [runtime]
     [[foo]]
         [[[events]]]

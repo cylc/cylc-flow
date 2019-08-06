@@ -4,8 +4,8 @@
        live mode suite timeout = PT30S
 
 [scheduling]
-    [[dependencies]]
-        graph = """FAM:succeed-all => foo"""
+    [[graph]]
+        R1 = """FAM:succeed-all => foo"""
 [runtime]
     [[FAM]]
         script = "true"

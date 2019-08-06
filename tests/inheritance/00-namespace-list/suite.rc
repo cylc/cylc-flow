@@ -1,6 +1,6 @@
 [scheduling]
-   [[dependencies]]
-       graph = FAMILY
+   [[graph]]
+       R1 = FAMILY
 [runtime]
    [[FAMILY]]
    [[m1,m2,m3]]

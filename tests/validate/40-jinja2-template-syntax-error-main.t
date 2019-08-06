@@ -29,7 +29,7 @@ Jinja was looking for the following tags: 'elif' or 'else' or 'endif'.
 The innermost block that needs to be closed is 'if'.
 Context lines:
         {% if true %}
-        graph = foo
+        R1 = foo
         {% end if %	<-- TemplateSyntaxError
 __ERROR__
 #-------------------------------------------------------------------------------

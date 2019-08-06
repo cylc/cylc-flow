@@ -7,8 +7,8 @@
         expected task failures = goodbye.1
 
 [scheduling]
-    [[dependencies]]
-        graph = """hello => goodbye
+    [[graph]]
+        R1 = """hello => goodbye
            goodbye:fail => really_goodbye
            goodbye => !really_goodbye
            really_goodbye => !goodbye"""

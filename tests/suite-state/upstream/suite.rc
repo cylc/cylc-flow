@@ -4,8 +4,8 @@
     [[reference test]]
         live mode suite timeout = PT10M
 [scheduling]
-    [[dependencies]]
-        graph = """
+    [[graph]]
+        R1 = """
              good-stuff & bad
           bad:fail => !bad
              messenger:x => done

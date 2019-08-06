@@ -7,7 +7,7 @@
 [scheduling]
     initial cycle point = 1970
     final cycle point = 2010
-    [[dependencies]]
+    [[graph]]
         P20Y = fixable
         R1/2010 = """
 fixable[1970]:fail & fixable[1990]:fail => fixer

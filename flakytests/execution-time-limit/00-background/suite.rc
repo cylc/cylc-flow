@@ -11,8 +11,8 @@
        expected task failures = foo.1
 
 [scheduling]
-    [[dependencies]]
-        graph = foo
+    [[graph]]
+        R1 = foo
 
 [runtime]
     [[foo]]

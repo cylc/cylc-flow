@@ -25,8 +25,8 @@ for GRAPH in 't1 => & t2' 't1 => t2 &' '& t1 => t2' 't1 & => t2' 't1 => => t2'
 do
     cat >'suite.rc' <<__SUITE_RC__
 [scheduling]
-    [[dependencies]]
-        graph = ${GRAPH}
+    [[graph]]
+        R1 = ${GRAPH}
 __SUITE_RC__
     run_fail "${TEST_NAME_BASE}" cylc validate 'suite.rc'
     grep_ok 'GraphParseError: null task name in graph: ' \

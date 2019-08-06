@@ -44,8 +44,8 @@ cmp_ok tmp.stdout << EOF
 continuation
 
 [scheduling]
-    [[dependencies]]
-        graph = """ {# generate ensemble dependencies #}
+    [[graph]]
+        R1 = """ {# generate ensemble dependencies #}
         {% for I in range( 0, N_MEMBERS ) %}
           foo => mem_{{ I }} => post_{{ I }} => bar
         {% endfor %}"""
@@ -64,8 +64,8 @@ cmp_ok tmp.stdout << EOF
 # line \\
 continuation
 [scheduling]
-    [[dependencies]]
-        graph = """
+    [[graph]]
+        R1 = """
           foo => mem_0 => post_0 => bar
           foo => mem_1 => post_1 => bar
           foo => mem_2 => post_2 => bar
@@ -91,8 +91,8 @@ cmp_ok tmp.stdout << EOF
 # line continuation
 
 [scheduling]
-    [[dependencies]]
-        graph = """ {# generate ensemble dependencies #}
+    [[graph]]
+        R1 = """ {# generate ensemble dependencies #}
         {% for I in range( 0, N_MEMBERS ) %}
           foo => mem_{{ I }} => post_{{ I }} => bar
         {% endfor %}"""
@@ -110,8 +110,8 @@ cmp_ok tmp.stdout << EOF
 # ensemble (which would be defined by inheritance under [runtime]).
 # line continuation
 [scheduling]
-    [[dependencies]]
-        graph = """
+    [[graph]]
+        R1 = """
           foo => mem_0 => post_0 => bar
           foo => mem_1 => post_1 => bar
           foo => mem_2 => post_2 => bar

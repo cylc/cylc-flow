@@ -6,7 +6,7 @@
 [scheduling]
     runahead limit = PT18H
     initial cycle point = 20100101T00
-    [[dependencies]]
+    [[graph]]
         PT6H = "foo => bar"
         T12 = "foo:fail => shutdown"
 [runtime]

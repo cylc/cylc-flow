@@ -43,7 +43,7 @@ cat >'suite.rc' <<'__SUITERC__'
 __SUITERC__
 run_ok "${TEST_NAME_BASE}-validate" cylc validate 'suite.rc'
 run_ok "${TEST_NAME_BASE}-dependencies" \
-    cylc get-config --item='[scheduling][dependencies]' 'suite.rc'
+    cylc get-config --item='[scheduling][graph]' 'suite.rc'
 cmp_ok "${TEST_NAME_BASE}-dependencies.stdout" <<'__OUT__'
 R1 = """
     r1

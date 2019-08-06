@@ -26,8 +26,8 @@ run_fail "$TEST_NAME" cylc validate suite.rc
 cmp_ok "$TEST_NAME.stderr" <<'__ERROR__'
 Jinja2Error: 'UNDEFINED_WHATEVER' is undefined
 Context lines:
-    [[dependencies]]
-        graph = foo
+    [[graph]]
+        R1 = foo
     [[[{{ UNDEFINED_WHATEVER }}]]]	<-- UndefinedError
 __ERROR__
 #-------------------------------------------------------------------------------

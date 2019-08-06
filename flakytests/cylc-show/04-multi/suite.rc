@@ -5,7 +5,7 @@
 [scheduling]
     initial cycle point = 2016
     final cycle point = 2018
-    [[dependencies]]
+    [[graph]]
         P1Y = t1[-P1Y]:start => t1
 [runtime]
     [[t1]]

@@ -7,8 +7,8 @@
        required run mode = live
        expected task failures = foo.1
 [scheduling]
-    [[dependencies]]
-        graph="foo:start => bar"
+    [[graph]]
+        R1="foo:start => bar"
 
 [runtime]
     [[bar]]

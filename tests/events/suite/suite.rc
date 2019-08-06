@@ -2,8 +2,8 @@
     [[reference test]]
         live mode suite timeout = PT1M
 [scheduling]
-    [[dependencies]]
-        graph = "startup => timeout => shutdown"
+    [[graph]]
+        R1 = "startup => timeout => shutdown"
 [runtime]
     [[common]]
         script = """

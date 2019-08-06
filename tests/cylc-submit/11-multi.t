@@ -28,7 +28,7 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
 [scheduling]
     initial cycle point = 2020
     final cycle point = 2021
-    [[dependencies]]
+    [[graph]]
         P1Y = FOO & bar
 [runtime]
     [[FOO]]

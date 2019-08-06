@@ -3,8 +3,8 @@
         inactivity = PT20S
         abort on inactivity = True
 [scheduling]
-    [[dependencies]]
-        graph = foo
+    [[graph]]
+        R1 = foo
 [runtime]
     [[foo]]
         script = echo "hello"

@@ -3,7 +3,7 @@
 [scheduling]
     initial cycle point = 00000101T00
     final cycle point = 00000101T00
-    [[dependencies]]
+    [[graph]]
         P1D = "foo[-P1Y] => foo"
 [runtime]
     [[root]]

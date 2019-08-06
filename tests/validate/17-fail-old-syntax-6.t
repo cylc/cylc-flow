@@ -16,16 +16,20 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test validation with a new-style cycle point and an async graph.
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 2
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE $TEST_NAME_BASE
+cat >'suite.rc' <<'__SUITERC__'
+[scheduling]
+    initial cycle point = 20100101T00
+    [[graph]]
+        R1 = "cold_foo"
+        12 = "cold_foo => foo"
+__SUITERC__
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE
-run_fail $TEST_NAME cylc validate -v $SUITE_NAME
-grep_ok "SuiteConfigError: Obsolete syntax: mixed integer \[dependencies\]graph with cycling \
-\[dependencies\]12" $TEST_NAME.stderr
+TEST_NAME="${TEST_NAME_BASE}"
+run_fail "${TEST_NAME}" cylc validate -v 'suite.rc'
+grep_ok 'SuiteConfigError: Cannot process recurrence 12' "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
 exit

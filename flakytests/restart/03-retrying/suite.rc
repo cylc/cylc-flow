@@ -10,7 +10,7 @@
 [scheduling]
     initial cycle point = 20130923T00
     final cycle point   = 20130923T00
-    [[dependencies]]
+    [[graph]]
         R1 = """
             retrying_task:start => shutdown
             shutdown => output_states

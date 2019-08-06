@@ -5,8 +5,8 @@
         inactivity = PT20S
         abort on inactivity = True
 [scheduling]
-    [[dependencies]]
-        graph = "foo:fail => !foo"
+    [[graph]]
+        R1 = "foo:fail => !foo"
 [runtime]
     [[foo]]
         script = """

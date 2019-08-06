@@ -2,8 +2,8 @@
     [[parameters]]
         i = 1..5
 [scheduling]
-    [[dependencies]]
-        graph = foo<i>
+    [[graph]]
+        R1 = foo<i>
 [runtime]
     [[foo<i>]]
         script = true

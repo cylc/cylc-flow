@@ -3,8 +3,8 @@
        required run mode = live
        live mode suite timeout = PT1M
 [scheduling]
-    [[dependencies]]
-        graph = "foo"
+    [[graph]]
+        R1 = "foo"
 [runtime]
     [[foo]]
         script = "((CYLC_TASK_TRY_NUMBER >= 4)) || exit 1"

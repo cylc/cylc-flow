@@ -11,7 +11,7 @@ The ref test will fail if either operation fails to work properly."""
     initial cycle point = 1
     final cycle point = 2
     cycling mode = integer
-    [[dependencies]]
+    [[graph]]
         P1 = """
             remover => inserter => FAM-A & FAM-B
             FAM-A[-P1]:succeed-all => remover

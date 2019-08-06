@@ -7,8 +7,8 @@
         timeout = PT10S
         abort on timeout = True
 [scheduling]
-    [[dependencies]]
-        graph = victim & perpetrator
+    [[graph]]
+        R1 = victim & perpetrator
 [runtime]
     [[victim]]
         script = sleep 600

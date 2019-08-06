@@ -39,7 +39,7 @@ init_suite "${TEST_NAME_BASE}" <<< '
     UTC mode = True
 [scheduling]
     initial cycle point = 2000
-    [[dependencies]]
+    [[graph]]
         P1D = foo
 '
 

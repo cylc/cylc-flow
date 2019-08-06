@@ -19,5 +19,5 @@ spawn to max active cycle points =
     exclude at start-up = 
     include at start-up = 
 [[xtriggers]]
-[[dependencies]]
+[[graph]]
     R1 = OPS:finish-all => VAR

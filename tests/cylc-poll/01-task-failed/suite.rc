@@ -11,8 +11,8 @@ suicide via a :fail trigger, and the suite to shut down successfully."""
        expected task failures = a.1
 
 [scheduling]
-    [[dependencies]]
-        graph = """
+    [[graph]]
+        R1 = """
     a:start => b
     a:fail => !a"""
 

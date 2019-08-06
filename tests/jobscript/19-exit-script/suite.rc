@@ -7,8 +7,8 @@
     [[events]]
         abort on stalled = True
 [scheduling]
-    [[dependencies]]
-        graph = foo
+    [[graph]]
+        R1 = foo
 [runtime]
     [[foo]]
         exit-script = echo "Cheesy peas!"

@@ -1,7 +1,7 @@
 #!jinja2
 [scheduling]
-    [[dependencies]]
-        graph=t1=>t2
+    [[graph]]
+        R1=t1=>t2
 
 [runtime]
     [[t1]]

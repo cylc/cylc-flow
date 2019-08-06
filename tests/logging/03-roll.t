@@ -27,7 +27,7 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
     cycling mode = integer
     initial cycle point = 1
     final cycle point = 20
-    [[dependencies]]
+    [[graph]]
         P1 = t1 & t2 & t3
 [runtime]
     [[t1, t2, t3]]

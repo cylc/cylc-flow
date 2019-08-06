@@ -6,7 +6,7 @@
     final cycle point = 20140808T09
     [[special tasks]]
         clock-trigger = foo(PT5M)
-    [[dependencies]]
+    [[graph]]
         PT1H = """
             show => foo
             foo[-PT1H] => foo

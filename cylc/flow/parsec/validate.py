@@ -125,7 +125,7 @@ class ParsecValidator(object):
                         val_is_dict = isinstance(value, dict)
                         spc_is_dict = isinstance(spec['__MANY__'], dict)
                         if (
-                            keys != ['scheduling', 'dependencies'] and
+                            keys != ['scheduling', 'graph'] and
                             not val_is_dict and
                             '  ' in key
                         ):

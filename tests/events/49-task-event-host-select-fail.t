@@ -24,8 +24,8 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
     [[events]]
         abort on stalled = True
 [scheduling]
-    [[dependencies]]
-        graph = foo
+    [[graph]]
+        R1 = foo
 [runtime]
     [[foo]]
         script = true

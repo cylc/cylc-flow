@@ -21,8 +21,8 @@ set_test_number 2
 
 cat >'suite.rc' <<'__SUITE_RC__'
 [scheduling]
-    [[dependencies]]
-        graph = """!dont-kill-me => no-problem"""
+    [[graph]]
+        R1 = """!dont-kill-me => no-problem"""
 [runtime]
     [[dont-kill-me, no-problem]]
 __SUITE_RC__

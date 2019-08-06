@@ -4,8 +4,8 @@
        live mode suite timeout = PT30S
 
 [scheduling]
-    [[dependencies]]
-        graph = """FAM:finish-any => foo"""
+    [[graph]]
+        R1 = """FAM:finish-any => foo"""
 [runtime]
     [[FAM]]
         script = "sleep 10"

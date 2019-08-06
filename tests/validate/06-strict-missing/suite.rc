@@ -1,5 +1,5 @@
 [scheduling]
-    [[dependencies]]
-        graph = "Foo => bar"
+    [[graph]]
+        R1 = "Foo => bar"
 [runtime]
     [[foo]]

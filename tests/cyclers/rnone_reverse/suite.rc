@@ -3,7 +3,7 @@
 [scheduling]
     initial cycle point = 2015-02-21T00
     final cycle point = 2015-02-21T18
-    [[dependencies]]
+    [[graph]]
         PT6H = foo
         R1/P0D = foo => stop
         R/PT6H/-PT6H = foo => nonstop

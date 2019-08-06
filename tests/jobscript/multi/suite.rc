@@ -1,6 +1,6 @@
 [scheduling]
-    [[dependencies]]
-        graph = "foo => bar => baz => qux => bah => hum => bug => reg => exp"
+    [[graph]]
+        R1 = "foo => bar => baz => qux => bah => hum => bug => reg => exp"
 [runtime]
     [[FAM1]]
         pre-script = echo pre

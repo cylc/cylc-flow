@@ -1,6 +1,6 @@
 [scheduling]
     initial cycle point = 20130101T00
     final cycle point = 20130101T00
-    [[dependencies]]
+    [[graph]]
         R1 = foo => bar
         T00 = bar

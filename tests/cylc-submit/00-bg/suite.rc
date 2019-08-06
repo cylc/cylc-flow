@@ -1,7 +1,7 @@
 #!jinja2
 [scheduling]
-    [[dependencies]]
-        graph = foo
+    [[graph]]
+        R1 = foo
 [runtime]
     [[foo]]
         script = echo 'It is a good test.'

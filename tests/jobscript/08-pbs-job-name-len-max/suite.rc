@@ -3,8 +3,8 @@
     title = "Job script: test PBS job name maximum length"
 [cylc]
 [scheduling]
-    [[dependencies]]
-        graph = abcdefghijklmnopqrstuvwxyz_0123456789
+    [[graph]]
+        R1 = abcdefghijklmnopqrstuvwxyz_0123456789
 [runtime]
     [[abcdefghijklmnopqrstuvwxyz_0123456789]]
         [[[job]]]

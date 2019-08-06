@@ -3,7 +3,7 @@
 [scheduling]
     initial cycle point = 20160101T00Z
     final cycle point = 20160102T00Z
-    [[dependencies]]
+    [[graph]]
         R1 = foo
         R1/^ = bar
         R1/^+PT1H = baz

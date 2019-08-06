@@ -8,8 +8,8 @@ second task fixes and retriggers it with an edit-run."""
         abort on timeout = True
         timeout = PT20S
 [scheduling]
-    [[dependencies]]
-        graph = broken-task:fail => fixer-task
+    [[graph]]
+        R1 = broken-task:fail => fixer-task
 [runtime]
     [[broken-task]]
         script = /bin/false

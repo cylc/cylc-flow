@@ -5,8 +5,8 @@
         timeout = PT2M
         abort on timeout = True
 [scheduling]
-    [[dependencies]]
-            graph = """
+    [[graph]]
+            R1 = """
 t-remote:start => t-shutdown
 t-shutdown => t-remote-2
 t-shutdown => t-check-log

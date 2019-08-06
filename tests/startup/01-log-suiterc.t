@@ -28,8 +28,8 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
     [[events]]
         abort on stalled = True
 [scheduling]
-    [[dependencies]]
-        graph = reloader => whatever
+    [[graph]]
+        R1 = reloader => whatever
 [runtime]
     [[reloader]]
         script = cylc reload "${CYLC_SUITE_NAME}"

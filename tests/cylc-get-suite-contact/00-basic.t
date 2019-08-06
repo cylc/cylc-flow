@@ -23,7 +23,7 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
     cycle point format = %Y
 [scheduling]
     initial cycle point = 2016
-    [[dependencies]]
+    [[graph]]
         R1 = t1
 [runtime]
     [[t1]]

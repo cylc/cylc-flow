@@ -6,8 +6,8 @@
     [[reference test]]
         required run mode = dummy
 [scheduling]
-    [[dependencies]]
-        graph = foo:x => bar
+    [[graph]]
+        R1 = foo:x => bar
 [runtime]
     [[root]]
         [[[simulation]]]

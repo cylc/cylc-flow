@@ -31,9 +31,9 @@ def get_test_inheritance_quotes():
         major = 1..5
         minor = 10..20
 [scheduling]
-    [[dependencies]]
-        graph = """hello => MAINFAM<major, minor>
-                   hello => SOMEFAM
+    [[graph]]
+        R1 = """hello => MAINFAM<major, minor>
+                hello => SOMEFAM
         """
 [runtime]
     [[root]]
@@ -50,9 +50,9 @@ def get_test_inheritance_quotes():
         major = 1..5
         minor = 10..20
 [scheduling]
-    [[dependencies]]
-        graph = """hello => MAINFAM<major, minor>
-                   hello => SOMEFAM
+    [[graph]]
+        R1 = """hello => MAINFAM<major, minor>
+                hello => SOMEFAM
         """
 [runtime]
     [[root]]
@@ -69,9 +69,9 @@ def get_test_inheritance_quotes():
         major = 1..5
         minor = 10..20
 [scheduling]
-    [[dependencies]]
-        graph = """hello => MAINFAM<major, minor>
-                   hello => SOMEFAM
+    [[graph]]
+        R1 = """hello => MAINFAM<major, minor>
+                hello => SOMEFAM
         """
 [runtime]
     [[root]]
@@ -104,7 +104,7 @@ class TestSuiteConfig(object):
         initial cycle point = 2018-01-01
         [[xtriggers]]
             tree = name_a_tree()
-        [[dependencies]]
+        [[graph]]
             R1 = '@tree => qux'
                 """)
                 f.flush()
@@ -129,7 +129,7 @@ class TestSuiteConfig(object):
         initial cycle point = 2018-01-01
         [[xtriggers]]
             oopsie = piranha()
-        [[dependencies]]
+        [[graph]]
             R1 = '@oopsie => qux'
                 """)
                 f.flush()
@@ -154,7 +154,7 @@ class TestSuiteConfig(object):
         initial cycle point = 2018-01-01
         [[xtriggers]]
             oopsie = capybara()
-        [[dependencies]]
+        [[graph]]
             R1 = '@oopsie => qux'
                 """)
                 f.flush()
@@ -179,7 +179,7 @@ class TestSuiteConfig(object):
         initial cycle point = 2018-01-01
         [[xtriggers]]
             oopsie = not_callable()
-        [[dependencies]]
+        [[graph]]
             R1 = '@oopsie => qux'
                 """)
                 f.flush()

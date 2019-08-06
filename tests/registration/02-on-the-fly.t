@@ -29,8 +29,8 @@ cat >> "${TESTD}/suite.rc" <<'__SUITE_RC__'
 [meta]
     title = the quick brown fox
 [scheduling]
-    [[dependencies]]
-        graph = foo
+    [[graph]]
+        R1 = foo
 [runtime]
     [[foo]]
         script = true
@@ -55,8 +55,8 @@ cat >> "${CYLC_RUN_DIR}/${TESTD}/suite.rc" <<'__SUITE_RC__'
 [meta]
     title = the quick brown fox
 [scheduling]
-    [[dependencies]]
-        graph = foo
+    [[graph]]
+        R1 = foo
 [runtime]
     [[foo]]
         script = true
@@ -78,8 +78,8 @@ cat >> "${CYLC_RUN_DIR}/${TESTD}/suite.rc" <<'__SUITE_RC__'
 [meta]
     title = the quick brown fox
 [sched]
-    [[dependencies]]
-        graph = foo
+    [[graph]]
+        R1 = foo
 [runtime]
     [[foo]]
         script = true

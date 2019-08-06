@@ -1,6 +1,6 @@
 [scheduling]
-    [[dependencies]]
-                    graph = """
+    [[graph]]
+                    R1 = """
                         ( foo & bar => baz
                     """
 [runtime]

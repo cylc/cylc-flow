@@ -23,8 +23,8 @@ set_test_number 2
 TEST_NAME=${TEST_NAME_BASE}-val
 cat > suite.rc <<__END__
 [scheduling]
-    [[dependencies]]
-        graph = task1
+    [[graph]]
+        R1 = task1
  [runtime]
      [[HPC]]
         [[[job]]]

@@ -2,8 +2,8 @@
 @{ MYVAR = "this is a set variable" }@
 
 [scheduling]
-    [[dependencies]]
-        graph = "a => FAM"
+    [[graph]]
+        R1 = "a => FAM"
 [runtime]
     [[a]]
         script = echo @(MYVAR)

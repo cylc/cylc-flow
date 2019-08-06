@@ -9,7 +9,7 @@
     final cycle point   = {{START}}
     [[special tasks]]
         clock-trigger = clock{% if OFFSET is defined %}({{OFFSET}}){% endif %}
-    [[dependencies]]
+    [[graph]]
         T{{HOUR}} = "clock"
 [runtime]
     [[clock]]

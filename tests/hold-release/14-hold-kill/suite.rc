@@ -6,8 +6,8 @@
     [[reference test]]
         live mode suite timeout = PT30S
 [scheduling]
-    [[dependencies]]
-        graph = "sleeper:start => killer"
+    [[graph]]
+        R1 = "sleeper:start => killer"
 [runtime]
     [[killer]]
         script = """

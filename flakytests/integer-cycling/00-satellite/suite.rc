@@ -28,7 +28,7 @@
     final cycle point = {{N_DATASETS}}
     max active cycle points = 3
     #runahead limit = P3 # (alternative limiting method)
-    [[dependencies]]
+    [[graph]]
         R1 = prep => satsim & get_data
         P1 = """
             # Processing chain for each dataset

@@ -6,8 +6,8 @@
         allow task failures = true
         live mode suite timeout=PT1M
 [scheduling]
-    [[dependencies]]
-        graph = """foo => FAM
+    [[graph]]
+        R1 = """foo => FAM
             FAM:succeed-any => bar"""
 [runtime]
     [[foo]]

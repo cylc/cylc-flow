@@ -5,8 +5,8 @@
        expected task failures = t1.1, t2.1, t3.1, t4.1, stop2.1
        live mode suite timeout = PT1M
 [scheduling]
-    [[dependencies]]
-        graph="""
+    [[graph]]
+        R1="""
            t1:start & t2:start => stop1 =>
               t3:start & t4:start => stop2
            stop2:fail => shutdown"""

@@ -24,7 +24,7 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
 [cylc]
     UTC mode = True
 [scheduling]
-    [[dependencies]]
+    [[graph]]
         R1 = foo => bar
 [runtime]
     [[foo, bar]]

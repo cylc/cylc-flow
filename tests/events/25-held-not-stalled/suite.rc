@@ -5,8 +5,8 @@
         inactivity handler = cylc release '%(suite)s'
         inactivity = PT5S
 [scheduling]
-    [[dependencies]]
-        graph = t1
+    [[graph]]
+        R1 = t1
 [runtime]
     [[t1]]
         script = true

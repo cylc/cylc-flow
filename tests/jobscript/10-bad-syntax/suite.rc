@@ -4,8 +4,8 @@
     [[events]]
         abort on stalled = True
 [scheduling]
-    [[dependencies]]
-        graph = foo:submit-failed => bar
+    [[graph]]
+        R1 = foo:submit-failed => bar
 [runtime]
     [[foo]]
         env-script = LETTERS=("a" "b" "c")

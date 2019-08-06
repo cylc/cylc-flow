@@ -26,7 +26,7 @@ set_test_number 1
 cat >'suite.rc' <<'__SUITE_RC__'
 [scheduling]
     initial cycle point = 2010
-[[dependencies]]
+[[graph]]
     P1D = foo | foo[-P1D] => bar
 [runtime]
     [[root]]

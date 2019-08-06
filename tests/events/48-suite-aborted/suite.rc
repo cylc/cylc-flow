@@ -9,8 +9,8 @@
     [[reference test]]
         live mode suite timeout=PT1M
 [scheduling]
-    [[dependencies]]
-        graph = modify => t2
+    [[graph]]
+        R1 = modify => t2
 
 [runtime]
     [[modify]]

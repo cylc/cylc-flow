@@ -4,8 +4,8 @@
        abort on timeout = True
        timeout = PT1M
 [scheduling]
-    [[dependencies]]
-        graph = a-task
+    [[graph]]
+        R1 = a-task
 [runtime]
     [[a-task]]
         script = echo "the quick brown fox"

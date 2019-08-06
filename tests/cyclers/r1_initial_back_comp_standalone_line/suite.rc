@@ -5,7 +5,7 @@
     final cycle point = 20140104
     [[special tasks]]
         start-up = cold_foo
-    [[dependencies]]
+    [[graph]]
         0 = """
             cold_foo
             foo_midnight[T-24] & cold_foo => foo_midnight

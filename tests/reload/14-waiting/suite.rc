@@ -8,8 +8,8 @@
         simulation mode suite timeout = PT0.5M
 
 [scheduling]
-    [[dependencies]]
-        graph = """
+    [[graph]]
+        R1 = """
 sleeping-waiter => waiter
 sleeping-waiter:start => reloader
 """

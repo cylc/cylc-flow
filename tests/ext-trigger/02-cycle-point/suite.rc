@@ -13,7 +13,7 @@ cycling suite.  The suite will time out and abort if the ext trigger fails."""
     final cycle point = 2020
     [[special tasks]]
         external-trigger = ext("cheese on toast for $CYLC_TASK_CYCLE_POINT")
-    [[dependencies]]
+    [[graph]]
         P1Y = ext & trig
 [runtime]
     [[ext]]

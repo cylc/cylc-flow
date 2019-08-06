@@ -26,8 +26,8 @@ cat >'suite.rc' <<'__SUITE__'
         j = 1..5
         k = 1..10..4
 [scheduling]
-    [[dependencies]]
-        graph = """
+    [[graph]]
+        R1 = """
 foo<i> => bar<j>
 qux<j> => waz<k>
 """
@@ -48,8 +48,8 @@ cat >'suite.rc' <<'__SUITE__'
     [[parameters]]
         i = 25, 30..35, 1..5, 110
 [scheduling]
-    [[dependencies]]
-        graph = """
+    [[graph]]
+        R1 = """
 foo<i> => bar<i>
 """
 [runtime]
@@ -67,8 +67,8 @@ cat >'suite.rc' <<'__SUITE__'
     [[parameters]]
         i = a-t, c-g
 [scheduling]
-    [[dependencies]]
-        graph = """
+    [[graph]]
+        R1 = """
 foo<i> => bar<i>
 """
 [runtime]
@@ -86,8 +86,8 @@ cat >'suite.rc' <<'__SUITE__'
     [[parameters]]
         i = 100, hundred, one-hundred, 99+1
 [scheduling]
-    [[dependencies]]
-        graph = """
+    [[graph]]
+        R1 = """
 foo<i> => bar<i>
 """
 [runtime]
@@ -105,8 +105,8 @@ cat >'suite.rc' <<'__SUITE__'
     [[parameters]]
         i = space is dangerous
 [scheduling]
-    [[dependencies]]
-        graph = """
+    [[graph]]
+        R1 = """
 foo<i> => bar<i>
 """
 [runtime]
@@ -125,8 +125,8 @@ cat >'suite.rc' <<'__SUITE__'
     [[parameters]]
         i = mix, 1..10
 [scheduling]
-    [[dependencies]]
-        graph = """
+    [[graph]]
+        R1 = """
 foo<i> => bar<i>
 """
 [runtime]
@@ -145,8 +145,8 @@ cat >'suite.rc' <<'__SUITE__'
     [[parameters]]
         i = a, b #, c, d, e  # comment
 [scheduling]
-    [[dependencies]]
-        graph = """
+    [[graph]]
+        R1 = """
 foo<i> => bar<i>
 """
 [runtime]
@@ -164,8 +164,8 @@ cat >'suite.rc' <<'__SUITE__'
     [[parameters]]
         i = 1..2 3..4
 [scheduling]
-    [[dependencies]]
-        graph = """
+    [[graph]]
+        R1 = """
 foo<i> => bar<i>
 """
 [runtime]
@@ -184,8 +184,8 @@ cat >'suite.rc' <<'__SUITE__'
     [[parameters]]
         i =
 [scheduling]
-    [[dependencies]]
-        graph = """
+    [[graph]]
+        R1 = """
 foo<i> => bar<i>
 """
 [runtime]
@@ -201,8 +201,8 @@ __ERR__
 
 cat >'suite.rc' <<'__SUITE__'
 [scheduling]
-    [[dependencies]]
-        graph = """
+    [[graph]]
+        R1 = """
 foo<i> => bar<i>
 """
 [runtime]
@@ -223,8 +223,8 @@ cat >'suite.rc' <<'__SUITE__'
     [[parameter templates]]
         j = @%(j)03d
 [scheduling]
-    [[dependencies]]
-        graph = "foo<j> => bar<j>"
+    [[graph]]
+        R1 = "foo<j> => bar<j>"
 [runtime]
     [[root]]
         script = true
@@ -242,8 +242,8 @@ cat >'suite.rc' <<'__SUITE__'
     [[parameter templates]]
         j = +%%j%(j)03d
 [scheduling]
-    [[dependencies]]
-        graph = "foo<j> => bar<j>"
+    [[graph]]
+        R1 = "foo<j> => bar<j>"
 [runtime]
     [[root]]
         script = true
@@ -262,8 +262,8 @@ cat >'suite.rc' <<'__SUITE__'
     [[parameter templates]]
         p = %(p)s
 [scheduling]
-    [[dependencies]]
-        graph = "foo<p> => bar<p>"
+    [[graph]]
+        R1 = "foo<p> => bar<p>"
 [runtime]
     [[root]]
         script = true
@@ -284,8 +284,8 @@ cat >'suite.rc' <<'__SUITE__'
         i = i%(i)d
         s = %(s)s
 [scheduling]
-    [[dependencies]]
-        graph = """
+    [[graph]]
+        R1 = """
 foo => <i> => bar
 foo => <s> => bar
 """
@@ -303,8 +303,8 @@ cat >'suite.rc' <<'__SUITE__'
     [[parameters]]
         s = mercury, venus, earth, mars
 [scheduling]
-    [[dependencies]]
-        graph = X<s>Y
+    [[graph]]
+        R1 = X<s>Y
 [runtime]
     [[X<s>Y]]
         script = true
@@ -321,8 +321,8 @@ cat >'suite.rc' <<'__SUITE__'
     [[parameters]]
         m = cat, dog
 [scheduling]
-    [[dependencies]]
-        graph = "foo<m> => foo<m-1>"
+    [[graph]]
+        R1 = "foo<m> => foo<m-1>"
 [runtime]
     [[root]]
         script = true
@@ -338,8 +338,8 @@ cat >'suite.rc' <<'__SUITE__'
     [[parameters]]
         m = cat, dog
 [scheduling]
-    [[dependencies]]
-        graph = "foo<m> => foo<m+1>"
+    [[graph]]
+        R1 = "foo<m> => foo<m+1>"
 [runtime]
     [[root]]
         script = true
@@ -355,8 +355,8 @@ cat >'suite.rc' <<'__SUITE__'
     [[parameters]]
         m = -12..12..6
 [scheduling]
-    [[dependencies]]
-        graph = "foo<m>"
+    [[graph]]
+        R1 = "foo<m>"
 [runtime]
     [[root]]
         script = true
@@ -374,8 +374,8 @@ cat >'suite.rc' <<'__SUITE__'
     [[parameter templates]]
         lang = %(lang)s
 [scheduling]
-    [[dependencies]]
-        graph = "<lang=c++> => <lang = fortran-2008>"
+    [[graph]]
+        R1 = "<lang=c++> => <lang = fortran-2008>"
 [runtime]
     [[<lang>]]
         script = true
@@ -403,8 +403,8 @@ cmp_ok '19.rc' <<'__SUITERC__'
     cycling mode = integer
     initial cycle point = 1
     final cycle point = 1
-    [[dependencies]]
-        graph = <lang=c++> => <lang = fortran-2008>
+    [[graph]]
+        R1 = <lang=c++> => <lang = fortran-2008>
 [runtime]
     [[root]]
     [[c++]]

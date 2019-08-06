@@ -35,8 +35,8 @@ BASE_GLOBALRC="
 # test the force shutdown option (auto stop, no restart) in condemned hosts
 init_suite "${TEST_NAME_BASE}" <<< '
 [scheduling]
-    [[dependencies]]
-        graph = foo
+    [[graph]]
+        R1 = foo
 '
 
 create_test_globalrc '' "

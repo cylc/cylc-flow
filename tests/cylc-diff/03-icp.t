@@ -24,7 +24,7 @@ init_suite "${TEST_NAME_BASE}-1" <<'__SUITE_RC__'
 [cylc]
     UTC mode = True
 [scheduling]
-    [[dependencies]]
+    [[graph]]
         R1 = foo => bar
 [runtime]
     [[foo, bar]]
@@ -35,7 +35,7 @@ init_suite "${TEST_NAME_BASE}-2" <<'__SUITE_RC__'
 [cylc]
     UTC mode = True
 [scheduling]
-    [[dependencies]]
+    [[graph]]
         R1 = food => barley
 [runtime]
     [[food, barley]]
@@ -72,7 +72,7 @@ Suite definitions ${SUITE_NAME1} and ${SUITE_NAME2} differ
  <   members = ['foo', 'bar']
  >   members = ['food', 'barley']
 
-   [scheduling] [[dependencies]]
+   [scheduling] [[graph]]
  <   R1 = foo => bar
  >   R1 = food => barley
 

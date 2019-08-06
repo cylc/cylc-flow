@@ -6,8 +6,8 @@
         live mode suite timeout = PT1M
         expected task failures = local-fail-1.1, local-fail-2.1, remote-fail-1.1
 [scheduling]
-    [[dependencies]]
-        graph="""
+    [[graph]]
+        R1="""
 POLLABLE:start-all => poller
 """
 [runtime]

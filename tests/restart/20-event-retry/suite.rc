@@ -1,8 +1,8 @@
 [cylc]
    UTC mode = True
 [scheduling]
-    [[dependencies]]
-        graph = t01
+    [[graph]]
+        R1 = t01
 [runtime]
     [[t01]]
         script = true

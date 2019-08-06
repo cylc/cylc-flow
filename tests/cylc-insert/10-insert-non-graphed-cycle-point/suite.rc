@@ -4,7 +4,7 @@
     cycling mode = integer
     initial cycle point = 0
     final cycle point = 4
-    [[dependencies]]
+    [[graph]]
         R1 = start => bad & qux
         P5 = baz[-P5] => bad => ugly => good => baz
         P10 = qux[-P5] => qux

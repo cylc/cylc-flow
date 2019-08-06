@@ -16,15 +16,25 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test validation with initial and final cycle points in scheduling but no R1.
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 2
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE $TEST_NAME_BASE
+cat >'suite.rc' <<'__SUITERC__'
+[scheduling]
+    initial cycle point = 2015-01-01
+    final cycle point = 2015-01-01
+    [[graph]]
+        1 = foo
+
+[runtime]
+    [[foo]]
+    script = sleep 10
+__SUITERC__
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE
-run_fail $TEST_NAME cylc validate -v $SUITE_NAME
-grep_ok "Conflicting syntax: integer vs cycling suite" $TEST_NAME.stderr
+TEST_NAME="${TEST_NAME_BASE}"
+run_fail "${TEST_NAME}" cylc validate -v 'suite.rc'
+cat "${TEST_NAME}.stderr" >&2
+grep_ok "SuiteConfigError: Cannot process recurrence 1" "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
 exit

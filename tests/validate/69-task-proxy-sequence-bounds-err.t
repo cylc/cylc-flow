@@ -25,7 +25,7 @@ cat > suite.rc <<__END__
     UTC mode = True
 [scheduling]
     initial cycle point = 2000
-    [[dependencies]]
+    [[graph]]
         R1//1999 = t1
 [runtime]
     [[t1]]
@@ -48,7 +48,7 @@ cat > suite.rc <<__END__
     UTC mode = True
 [scheduling]
     initial cycle point = 2000
-    [[dependencies]]
+    [[graph]]
         R1//1996, R1//1997, R1//1998, R1//1999 = t1
 [runtime]
     [[t1]]

@@ -4,8 +4,8 @@
         required run mode = live
         live mode suite timeout = PT3M
 [scheduling]
-    [[dependencies]]
-        graph = a-task:echo => b-task
+    [[graph]]
+        R1 = a-task:echo => b-task
 [runtime]
     [[a-task]]
         script = """

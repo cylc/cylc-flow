@@ -1,7 +1,7 @@
 [scheduling]
     max active cycle points = 0
-    [[dependencies]]
-         graph = foo
+    [[graph]]
+         R1 = foo
 [runtime]
     [[foo]]
         script = echo "foo"

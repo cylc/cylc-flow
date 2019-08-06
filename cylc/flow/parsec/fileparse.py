@@ -146,7 +146,10 @@ def addict(cfig, key, val, parents, index):
     if key in cfig:
         oldval = cfig[key]
         # this item already exists
-        if parents[0:2] == ['scheduling', 'dependencies']:
+        if (
+            parents[0:2] == ['scheduling', 'graph'] or
+            parents[0:2] == ['scheduling', 'dependencies']  # back compat <=7.X
+        ):
             # append the new graph string to the existing one
             if not isinstance(cfig, list):
                 cfig[key] = [cfig[key]]

@@ -3,8 +3,8 @@
 [meta]
     title=Test validation of blank script in automatic suite polling task
 [scheduling]
-    [[dependencies]]
-        graph=eat<food::eat>=>full
+    [[graph]]
+        R1=eat<food::eat>=>full
 [runtime]
     [[root]]
         script=true

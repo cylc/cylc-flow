@@ -4,9 +4,9 @@
        live mode suite timeout=PT1M
 
 [scheduling]
-    [[dependencies]]
-        graph = """a | b => c & d
-                   c | d => e"""
+    [[graph]]
+        R1 = """a | b => c & d
+                c | d => e"""
 [runtime]
     [[b,c]]
         script = sleep 10

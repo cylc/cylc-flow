@@ -11,7 +11,7 @@ first cycle point of the suite.."""
         live mode suite timeout = PT1M
 [scheduling]
     initial cycle point = 20141009T00
-    [[dependencies]]
+    [[graph]]
         R1 = holdrelease => foo & unrelated
         P1D = foo => bar => stop
 [runtime]

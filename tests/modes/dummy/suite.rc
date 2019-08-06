@@ -4,8 +4,8 @@
         dummy mode suite timeout = PT1M
         allow task failures = True
 [scheduling]
-    [[dependencies]]
-        graph = """a:fail => b
+    [[graph]]
+        R1 = """a:fail => b
             b:fail => c
             c:fail => !a & !b & !c"""
 [runtime]
