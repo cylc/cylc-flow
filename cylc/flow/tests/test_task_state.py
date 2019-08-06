@@ -31,17 +31,17 @@ from cylc.flow.task_state import (
 
 class TestTaskState(unittest.TestCase):
 
-    def test_reset_state(self):
+    def test_reset(self):
         """Test instantiation and simple resets."""
         point = ISO8601Point('2020')
         taskdef = TaskDef('who-cares', {}, 'live', point, False)
         taskstate = TaskState(taskdef, point, TASK_STATUS_WAITING, False)
         self.assertIsNone(
-            taskstate.reset_state(TASK_STATUS_WAITING),
+            taskstate.reset(TASK_STATUS_WAITING),
             'same status returns None',
         )
         self.assertEqual(
-            taskstate.reset_state(TASK_STATUS_SUCCEEDED),
+            taskstate.reset(TASK_STATUS_SUCCEEDED),
             (TASK_STATUS_WAITING, False),
             'different status returns previous (status, hold_swap)',
         )
@@ -51,17 +51,17 @@ class TestTaskState(unittest.TestCase):
             'reset status OK',
         )
 
-    def test_reset_state_respect_hold_swap(self):
+    def test_reset_respect_hold_swap(self):
         point = ISO8601Point('2020')
         taskdef = TaskDef('who-cares', {}, 'live', point, False)
         taskstate = TaskState(
             taskdef, point, TASK_STATUS_RETRYING, is_held=True)
         self.assertIsNone(
-            taskstate.reset_state(TASK_STATUS_RETRYING),
+            taskstate.reset(TASK_STATUS_RETRYING),
             'same status returns None',
         )
         self.assertEqual(
-            taskstate.reset_state(TASK_STATUS_SUCCEEDED),
+            taskstate.reset(TASK_STATUS_SUCCEEDED),
             (TASK_STATUS_RETRYING, True),
             'different status returns previous (status, hold_swap)',
         )

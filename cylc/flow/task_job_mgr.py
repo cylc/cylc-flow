@@ -120,7 +120,7 @@ class TaskJobManager(object):
         to_kill_tasks = []
         for itask in itasks:
             if itask.state(*TASK_STATUSES_ACTIVE):
-                itask.state.set_held()
+                itask.state.reset(is_held=True)
                 to_kill_tasks.append(itask)
             else:
                 LOG.warning('skipping %s: task not killable' % itask.identity)
@@ -312,7 +312,7 @@ class TaskJobManager(object):
                     # write flag so that subsequent manual retrigger will
                     # generate a new job file.
                     itask.local_job_file_path = None
-                    itask.state.reset_state(TASK_STATUS_READY)
+                    itask.state.reset(TASK_STATUS_READY)
                     if itask.state.outputs.has_custom_triggers():
                         self.suite_db_mgr.put_update_task_outputs(itask)
                 self.proc_pool.put_command(

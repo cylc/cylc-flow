@@ -193,12 +193,12 @@ class TaskPool(object):
             LOG.info(
                 "[%s] -holding (beyond suite hold point) %s",
                 itask, self.hold_point)
-            itask.state.set_held()
+            itask.state.reset(is_held=True)
         elif (self.stop_point and itask.point <= self.stop_point and
                 self.task_has_future_trigger_overrun(itask)):
             LOG.info("[%s] -holding (future trigger beyond stop point)", itask)
             self.held_future_tasks.append(itask.identity)
-            itask.state.set_held()
+            itask.state.reset(is_held=True)
         elif (
                 self.is_held
                 and itask.state(
@@ -208,7 +208,7 @@ class TaskPool(object):
         ):
             # Hold newly-spawned tasks in a held suite (e.g. due to manual
             # triggering of a held task).
-            itask.state.set_held()
+            itask.state.reset(is_held=True)
 
         # add to the runahead pool
         self.runahead_pool.setdefault(itask.point, OrderedDict())
@@ -405,7 +405,7 @@ class TaskPool(object):
             ):
                 itask.state.set_prerequisites_all_satisfied()
 
-            itask.state.reset_state(status)
+            itask.state.reset(status)
 
             # Running or finished task can have completed custom outputs.
             if itask.state(
@@ -620,7 +620,7 @@ class TaskPool(object):
                     # only need to check that unqueued tasks are ready
                     if itask.is_ready(now):
                         # queue the task
-                        itask.state.reset_state(TASK_STATUS_QUEUED)
+                        itask.state.reset(TASK_STATUS_QUEUED)
                         itask.reset_manual_trigger()
                         # move the task to the back of the queue
                         self.queues[queue][itask.identity] = \
@@ -806,7 +806,7 @@ class TaskPool(object):
                     "[%s] -not running (beyond suite stop cycle) %s",
                     itask,
                     self.stop_point)
-                itask.state.set_held()
+                itask.state.reset(is_held=True)
         return self.stop_point
 
     def can_stop(self, stop_mode):
@@ -928,20 +928,20 @@ class TaskPool(object):
         if point is not None:
             for itask in self.get_all_tasks():
                 if itask.point > point:
-                    itask.state.set_held()
+                    itask.state.reset(is_held=True)
 
     def hold_tasks(self, items):
         """Hold tasks with IDs matching any item in "ids"."""
         itasks, bad_items = self.filter_task_proxies(items)
         for itask in itasks:
-            itask.state.set_held()
+            itask.state.reset(is_held=True)
         return len(bad_items)
 
     def release_tasks(self, items):
         """Release held tasks with IDs matching any item in "ids"."""
         itasks, bad_items = self.filter_task_proxies(items)
         for itask in itasks:
-            itask.state.unset_held()
+            itask.state.reset(is_held=False)
         return len(bad_items)
 
     def hold_all_tasks(self):
@@ -949,7 +949,7 @@ class TaskPool(object):
         LOG.info("Holding all waiting or queued tasks now")
         self.is_held = True
         for itask in self.get_all_tasks():
-            itask.state.set_held()
+            itask.state.reset(is_held=True)
 
     def release_all_tasks(self):
         """Release all held tasks."""
@@ -1138,7 +1138,7 @@ class TaskPool(object):
         for itask in itasks:
             if status and not itask.state(status, is_held=is_held):
                 LOG.info("[%s] -resetting state to %s", itask, status)
-                itask.state.reset_state(status, is_held=is_held)
+                itask.state.reset(status, is_held=is_held)
                 if status in [TASK_STATUS_FAILED, TASK_STATUS_SUCCEEDED]:
                     itask.set_summary_time('finished',
                                            get_current_time_string())
@@ -1212,7 +1212,7 @@ class TaskPool(object):
                     TASK_STATUS_QUEUED,
                     is_held=False
             ):
-                itask.state.reset_state(TASK_STATUS_READY, is_held=False)
+                itask.state.reset(TASK_STATUS_READY, is_held=False)
         return n_warnings
 
     def sim_time_check(self, message_queue):
@@ -1267,7 +1267,7 @@ class TaskPool(object):
             msg = 'Task expired (skipping job).'
             LOG.warning('[%s] -%s', itask, msg)
             self.task_events_mgr.setup_event_handlers(itask, "expired", msg)
-            itask.state.reset_state(TASK_STATUS_EXPIRED, is_held=False)
+            itask.state.reset(TASK_STATUS_EXPIRED, is_held=False)
             return True
         return False
 

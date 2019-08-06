@@ -425,7 +425,7 @@ class TaskEventsManager(object):
             itask.job_vacated = True
             # Believe this and change state without polling (could poll?).
             self.pflag = True
-            itask.state.reset_state(TASK_STATUS_SUBMITTED)
+            itask.state.reset(TASK_STATUS_SUBMITTED)
             self._reset_job_timers(itask)
             # We should really have a special 'vacated' handler, but given that
             # this feature can only be used on the deprecated loadleveler
@@ -656,12 +656,12 @@ class TaskEventsManager(object):
                 itask.try_timers[TASK_STATUS_RETRYING].next() is None):
             # No retry lined up: definitive failure.
             self.pflag = True
-            if itask.state.reset_state(TASK_STATUS_FAILED):
+            if itask.state.reset(TASK_STATUS_FAILED):
                 self.setup_event_handlers(itask, "failed", message)
                 self.job_pool.set_job_state(job_d, TASK_STATUS_FAILED)
             LOG.critical(
                 "[%s] -job(%02d) %s", itask, itask.submit_num, "failed")
-        elif itask.state.reset_state(TASK_STATUS_RETRYING):
+        elif itask.state.reset(TASK_STATUS_RETRYING):
             delay_msg = "retrying in %s" % (
                 itask.try_timers[TASK_STATUS_RETRYING].delay_timeout_as_str())
             if itask.state.is_held:
@@ -680,7 +680,7 @@ class TaskEventsManager(object):
             LOG.warning("[%s] -Vacated job restarted", itask)
         self.pflag = True
         job_d = get_task_job_id(itask.point, itask.tdef.name, itask.submit_num)
-        if itask.state.reset_state(TASK_STATUS_RUNNING):
+        if itask.state.reset(TASK_STATUS_RUNNING):
             self.setup_event_handlers(itask, 'started', 'job started')
             self.job_pool.set_job_state(job_d, TASK_STATUS_RUNNING)
         itask.set_summary_time('started', event_time)
@@ -719,7 +719,7 @@ class TaskEventsManager(object):
                 LOG.info(
                     "[%s] -Succeeded with outputs not completed: %s",
                     itask, msg)
-        if itask.state.reset_state(TASK_STATUS_SUCCEEDED):
+        if itask.state.reset(TASK_STATUS_SUCCEEDED):
             self.setup_event_handlers(itask, "succeeded", "job succeeded")
             self.job_pool.set_job_state(job_d, TASK_STATUS_SUCCEEDED)
         self._reset_job_timers(itask)
@@ -741,12 +741,12 @@ class TaskEventsManager(object):
                 itask.try_timers[TASK_STATUS_SUBMIT_RETRYING].next() is None):
             # No submission retry lined up: definitive failure.
             # See github #476.
-            if itask.state.reset_state(TASK_STATUS_SUBMIT_FAILED):
+            if itask.state.reset(TASK_STATUS_SUBMIT_FAILED):
                 self.setup_event_handlers(
                     itask, self.EVENT_SUBMIT_FAILED,
                     'job %s' % self.EVENT_SUBMIT_FAILED)
                 self.job_pool.set_job_state(job_d, TASK_STATUS_SUBMIT_FAILED)
-        elif itask.state.reset_state(
+        elif itask.state.reset(
             TASK_STATUS_SUBMIT_RETRYING,
         ):
             # There is a submission retry lined up.
@@ -784,7 +784,7 @@ class TaskEventsManager(object):
             # Simulate job execution at this point.
             itask.set_summary_time('submitted', event_time)
             itask.set_summary_time('started', event_time)
-            itask.state.reset_state(TASK_STATUS_RUNNING)
+            itask.state.reset(TASK_STATUS_RUNNING)
             itask.state.outputs.set_completion(TASK_OUTPUT_STARTED, True)
             return
 
@@ -800,7 +800,7 @@ class TaskEventsManager(object):
         if itask.state.status == TASK_STATUS_READY:
             # The job started message can (rarely) come in before the submit
             # command returns - in which case do not go back to 'submitted'.
-            if itask.state.reset_state(TASK_STATUS_SUBMITTED):
+            if itask.state.reset(TASK_STATUS_SUBMITTED):
                 self.setup_event_handlers(
                     itask, TASK_OUTPUT_SUBMITTED, 'job submitted')
                 self.job_pool.set_job_state(job_d, TASK_STATUS_SUBMITTED)
