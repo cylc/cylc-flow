@@ -85,9 +85,8 @@ contains_ok "${SUITE_LOG}" << __LOG_BROADCASTS__
 __LOG_BROADCASTS__
 # ... and 2) in the DB.
 TEST_NAME="${TEST_NAME_BASE}-check-broadcast-in-db"
-if ! which sqlite3 > /dev/null; then
-    skip 2 "sqlite3 not installed?"
-    exit 0
+if ! command -v 'sqlite3' >'/dev/null'; then
+    skip 1 "sqlite3 not installed?"
 fi
 DB_FILE="$(cylc get-global-config '--print-run-dir')/${SUITE_NAME}/log/db"
 NAME='db-broadcast-states.out'
