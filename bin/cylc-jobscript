@@ -24,13 +24,8 @@ Usage: cylc [prep] jobscript [OPTIONS] REG TASK
 
 Generate a task job script and print it to stdout.
 
-Here's how to capture the script in the vim editor:
-  % cylc jobscript REG TASK | vim -
-Emacs unfortunately cannot read from stdin:
-  % cylc jobscript REG TASK > tmp.sh; emacs tmp.sh
-
 This command wraps 'cylc [control] submit --dry-run'.
-Other options (e.g. for suite host and owner) are passed
+Other options (e.g. for workflow host and owner) are passed
 through to the submit command.
 
 Options:
@@ -41,7 +36,7 @@ Options:
  (see also 'cylc submit --help')
 
 Arguments:
-  REG          Registered suite name.
+  REG          Registered workflow name.
   TASK         Task ID (NAME.CYCLE_POINT)
 __END__
 }
@@ -75,7 +70,7 @@ for arg in "${@}"; do
 done
 
 # shellcheck disable=2086
-if CYLC_SUBMIT_OUT="$(cylc submit --dry-run ${SUBMIT_ARGS})"; then
+if CYLC_SUBMIT_OUT="$(cylc submit --color=never --dry-run ${SUBMIT_ARGS})"; then
     JOBSCRIPT="$(sed -n 's/^JOB SCRIPT=//p' <<<"${CYLC_SUBMIT_OUT}")"
     if ! "${PLAIN}"; then
         echo "Task Job Script Generated: ${JOBSCRIPT}" >&2
