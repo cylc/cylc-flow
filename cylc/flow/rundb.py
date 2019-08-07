@@ -836,3 +836,118 @@ class CylcSuiteDAO(object):
     def vacuum(self):
         """Vacuum to the database."""
         return self.connect().execute("VACUUM")
+
+    def remove_columns(self, table, to_drop):
+        conn = self.connect()
+
+        # get list of columns to keep
+        schema = conn.execute(
+            rf'''
+                PRAGMA table_info({table})
+            '''
+        )
+        new_cols = [
+            name
+            for _, name, *_ in schema
+            if name not in to_drop
+        ]
+
+        # copy table
+        conn.execute(
+            rf'''
+                CREATE TABLE {table}_new AS
+                SELECT {', '.join(new_cols)}
+                FROM {table}
+            '''
+        )
+
+        # remove original
+        conn.execute(
+            rf'''
+                DROP TABLE {table}
+            '''
+        )
+
+        # copy table
+        conn.execute(
+            rf'''
+                CREATE TABLE {table} AS
+                SELECT {', '.join(new_cols)}
+                FROM {table}_new
+            '''
+        )
+
+        # done
+        conn.commit()
+
+    def upgrade_is_held(self):
+        """Upgrade hold_swap => is_held.
+
+        * Add a is_held column.
+        * Set status and is_held as per the new schema.
+        * Set the swap_hold values to None
+          (bacause sqlite3 does not support DROP COLUMN)
+
+        From:
+            cylc<8
+        To:
+            cylc>=8
+        PR:
+            #3230
+
+        Returns:
+            bool - True if upgrade performed, False if upgrade skipped.
+
+        """
+        conn = self.connect()
+
+        # check if upgrade required
+        schema = conn.execute(rf'PRAGMA table_info({self.TABLE_TASK_POOL})')
+        for _, name, *_ in schema:
+            if name == 'is_held':
+                LOG.debug('is_held column present - skipping db upgrade')
+                return False
+
+        # perform upgrade
+        for table in [self.TABLE_TASK_POOL, self.TABLE_TASK_POOL_CHECKPOINTS]:
+            LOG.info('Upgrade hold_swap => is_held in %s', table)
+            conn.execute(
+                rf'''
+                    ALTER TABLE
+                        {table}
+                    ADD COLUMN
+                        is_held BOOL
+                '''
+            )
+            for cycle, name, status, hold_swap in conn.execute(rf'''
+                    SELECT
+                        cycle, name, status, hold_swap
+                    FROM
+                        {table}
+            '''):
+                if status == 'held':
+                    new_status = hold_swap
+                    is_held = True
+                elif hold_swap == 'held':
+                    new_status = status
+                    is_held = True
+                else:
+                    new_status = status
+                    is_held = False
+                conn.execute(
+                    rf'''
+                        UPDATE
+                            {table}
+                        SET
+                            status=?,
+                            is_held=?,
+                            hold_swap=?
+                        WHERE
+                            cycle==?
+                            AND name==?
+                    ''',
+                    (new_status, is_held, None, cycle, name)
+                )
+            self.remove_columns(table, ['hold_swap'])
+            conn.commit()
+        return True
