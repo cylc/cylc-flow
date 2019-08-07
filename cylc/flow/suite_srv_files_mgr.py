@@ -137,9 +137,9 @@ class SuiteSrvFilesManager(object):
             import shlex
             ssh_str = str(glbl_cfg().get_host_item("ssh command", old_host))
             cmd = shlex.split(ssh_str) + ["-n", old_host] + cmd
-        from subprocess import Popen, PIPE
+        from subprocess import Popen, PIPE, DEVNULL  # nosec
         from time import sleep, time
-        proc = Popen(cmd, stdin=open(os.devnull), stdout=PIPE, stderr=PIPE)
+        proc = Popen(cmd, stdin=DEVNULL, stdout=PIPE, stderr=PIPE)  # nosec
         # Terminate command after 10 seconds to prevent hanging SSH, etc.
         timeout = time() + 10.0
         while proc.poll() is None:
@@ -567,7 +567,8 @@ To start a new run, stop the old one first with one or more of these:
     def _load_local_item(item, path):
         """Load and return content of a file (item) in path."""
         try:
-            return open(os.path.join(path, item)).read()
+            with open(os.path.join(path, item)) as f:
+                return f.read()
         except IOError:
             return None
 
@@ -605,10 +606,10 @@ To start a new run, stop the old one first with one or more of these:
         command = shlex.split(
             glbl_cfg().get_host_item('ssh command', host, owner))
         command += ['-n', owner + '@' + host, script]
-        from subprocess import Popen, PIPE
+        from subprocess import Popen, PIPE, DEVNULL  # nosec
         try:
             proc = Popen(
-                command, stdin=open(os.devnull), stdout=PIPE, stderr=PIPE)
+                command, stdin=DEVNULL, stdout=PIPE, stderr=PIPE)  # nosec
         except OSError:
             if cylc.flow.flags.debug:
                 import traceback

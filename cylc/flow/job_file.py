@@ -20,7 +20,7 @@
 import os
 import re
 import stat
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, DEVNULL
 
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.batch_sys_manager import BatchSysManager
@@ -84,9 +84,13 @@ class JobFileWriter(object):
         # check syntax
         if check_syntax:
             try:
-                proc = Popen(
-                    ['/bin/bash', '-n', tmp_name],
-                    stderr=PIPE, stdin=open(os.devnull))
+                with Popen(
+                        ['/bin/bash', '-n', tmp_name],
+                        stderr=PIPE, stdin=DEVNULL) as proc:
+                    if proc.wait():
+                        # This will leave behind the temporary file,
+                        # which is useful for debugging syntax errors, etc.
+                        raise RuntimeError(proc.communicate()[1].decode())
             except OSError as exc:
                 # Popen has a bad habit of not telling you anything if it fails
                 # to run the executable.
@@ -98,11 +102,6 @@ class JobFileWriter(object):
                 except OSError:
                     pass
                 raise exc
-            else:
-                if proc.wait():
-                    # This will leave behind the temporary file,
-                    # which is useful for debugging syntax errors, etc.
-                    raise RuntimeError(proc.communicate()[1].decode())
         # Make job file executable
         mode = (
             os.stat(tmp_name).st_mode |

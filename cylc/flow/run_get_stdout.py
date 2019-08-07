@@ -18,7 +18,7 @@
 """Provide a utility function to get STDOUT from a shell command."""
 
 
-from os import devnull, killpg, setpgrp
+from os import killpg, setpgrp
 from signal import SIGTERM
 from time import sleep, time
 
@@ -46,7 +46,7 @@ def run_get_stdout(command, timeout=None, poll_delay=None):
     """
     try:
         proc = procopen(command, usesh=True, preexec_fn=setpgrp,
-                        stdin=open(devnull), stderrpipe=True, stdoutpipe=True)
+                        stderrpipe=True, stdoutpipe=True, stdindevnull=True)
         # calls to open a shell are aggregated in cylc_subproc.procopen()
         is_killed_after_timeout = False
         if timeout:

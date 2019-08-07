@@ -53,11 +53,18 @@ batch_sys.get_poll_many_cmd(job-id-list) => list
     * Return a list containing the shell command to poll the jobs in the
       argument list.
 
+batch_sys.get_submit_stdin(job_file_path: str, submit_opts: dict) => tuple
+    * Return a 2-element tuple `(proc_stdin_arg, proc_stdin_value)`.
+      Element 1 is suitable for the `stdin=...` argument of `subprocess.Popen`
+      so it can be a file handle, `subprocess.PIPE` or `None`. Element 2 is the
+      string content to pipe to STDIN of the submit command (relevant only if
+      `proc_stdin_arg` is `subprocess.PIPE`.
+
 batch_sys.get_vacation_signal(job_conf) => str
     * If relevant, return a string containing the name of the signal that
       indicates the job has been vacated by the batch system.
 
-batch_sys.submit(job_file_path) => ret_code, out, err
+batch_sys.submit(job_file_path, submit_opts) => ret_code, out, err
     * Submit a job and return an instance of the Popen object for the
       submission. This method is useful if the job submission requires logic
       beyond just running a system or shell command. See also
@@ -115,6 +122,7 @@ import sys
 import traceback
 from shutil import rmtree
 from signal import SIGKILL
+from subprocess import DEVNULL  # nosec
 
 from cylc.flow.task_message import (
     CYLC_JOB_PID, CYLC_JOB_INIT_TIME, CYLC_JOB_EXIT_TIME, CYLC_JOB_EXIT,
@@ -413,7 +421,7 @@ class BatchSysManager(object):
                     command = shlex.split(
                         batch_sys.KILL_CMD_TMPL % {"job_id": job_id})
                     try:
-                        proc = procopen(command, stdin=open(os.devnull),
+                        proc = procopen(command, stdindevnull=True,
                                         stderrpipe=True)
                     except OSError as exc:
                         # subprocess.Popen has a bad habit of not setting the
@@ -546,7 +554,7 @@ class BatchSysManager(object):
                 # Simple poll command that takes a list of job IDs
                 cmd = [batch_sys.POLL_CMD] + exp_ids
             try:
-                proc = procopen(cmd, stdin=open(os.devnull),
+                proc = procopen(cmd, stdindevnull=True,
                                 stderrpipe=True, stdoutpipe=True)
             except OSError as exc:
                 # subprocess.Popen has a bad habit of not setting the
@@ -633,19 +641,19 @@ class BatchSysManager(object):
 
         # Submit job
         batch_sys = self._get_sys(batch_sys_name)
-        proc_stdin_arg = None
-        proc_stdin_value = open(os.devnull)
-        if hasattr(batch_sys, "get_submit_stdin"):
-            proc_stdin_arg, proc_stdin_value = batch_sys.get_submit_stdin(
-                job_file_path, submit_opts)
-            if isinstance(proc_stdin_arg, str):
-                proc_stdin_arg = proc_stdin_arg.encode()
-            if isinstance(proc_stdin_value, str):
-                proc_stdin_value = proc_stdin_value.encode()
         if hasattr(batch_sys, "submit"):
             # batch_sys.submit should handle OSError, if relevant.
             ret_code, out, err = batch_sys.submit(job_file_path, submit_opts)
         else:
+            proc_stdin_arg = None
+            # Set command STDIN to DEVNULL by default to prevent leakage of
+            # STDIN from current environment.
+            proc_stdin_value = DEVNULL  # nosec
+            if hasattr(batch_sys, "get_submit_stdin"):
+                proc_stdin_arg, proc_stdin_value = batch_sys.get_submit_stdin(
+                    job_file_path, submit_opts)
+                if isinstance(proc_stdin_value, str):
+                    proc_stdin_value = proc_stdin_value.encode()
             env = None
             if hasattr(batch_sys, "SUBMIT_CMD_ENV"):
                 env = dict(os.environ)
@@ -675,6 +683,10 @@ class BatchSysManager(object):
                     return 1, "", str(exc), ""
             out, err = (f.decode() for f in proc.communicate(proc_stdin_value))
             ret_code = proc.wait()
+            try:
+                proc_stdin_arg.close()
+            except (AttributeError, IOError):
+                pass
 
         # Filter submit command output, if relevant
         # Get job ID, if possible

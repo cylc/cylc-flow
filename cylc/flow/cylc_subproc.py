@@ -23,7 +23,7 @@
     https://docs.openstack.org/developer/bandit/plugins/start_process_with_a_shell.html
 """
 from shlex import split
-from subprocess import PIPE, STDOUT, Popen  # nosec
+from subprocess import PIPE, STDOUT, DEVNULL, Popen  # nosec
 
 # pylint: disable=too-many-arguments
 # pylint: disable=too-many-locals
@@ -33,7 +33,8 @@ def procopen(cmd, bufsize=0, executable=None, stdin=None, stdout=None,
              stderr=None, preexec_fn=None, close_fds=False, usesh=False,
              cwd=None, env=None, universal_newlines=False, startupinfo=None,
              creationflags=0, splitcmd=False, stdoutpipe=False,
-             stdoutout=False, stderrpipe=False, stderrout=False):
+             stdoutout=False, stderrpipe=False, stderrout=False,
+             stdindevnull=DEVNULL):
 
     shell = usesh
 
@@ -45,6 +46,8 @@ def procopen(cmd, bufsize=0, executable=None, stdin=None, stdout=None,
         stderr = PIPE
     elif stderrout is True:
         stderr = STDOUT
+    if stdindevnull is True:
+        stdin = DEVNULL
 
     if splitcmd is True:
         command = split(cmd)

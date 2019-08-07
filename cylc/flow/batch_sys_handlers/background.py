@@ -20,7 +20,7 @@
 import errno
 import os
 import re
-from subprocess import Popen, STDOUT
+from subprocess import Popen, STDOUT, DEVNULL
 
 
 class BgCommandHandler(object):
@@ -58,6 +58,7 @@ class BgCommandHandler(object):
             # This is essentially a double fork to ensure that the child
             # process can detach as a process group leader and not subjected to
             # SIGHUP from the current process.
+            # TODO: close stdout? Maybe atexit?
             proc = Popen(
                 [
                     "nohup",
@@ -68,7 +69,7 @@ class BgCommandHandler(object):
                     job_file_path,
                 ],
                 preexec_fn=os.setpgrp,
-                stdin=open(os.devnull),
+                stdin=DEVNULL,
                 stdout=open(os.devnull, "wb"),
                 stderr=STDOUT)
         except OSError as exc:

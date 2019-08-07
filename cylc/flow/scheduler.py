@@ -25,7 +25,7 @@ import os
 from shlex import quote
 from queue import Empty, Queue
 from shutil import copytree, rmtree
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, DEVNULL
 import sys
 from time import sleep, time
 import traceback
@@ -886,7 +886,7 @@ see `COPYING' in the Cylc source distribution.
         pid_str = str(os.getpid())
         proc = Popen(
             ['ps', self.suite_srv_files_mgr.PS_OPTS, pid_str],
-            stdin=open(os.devnull), stdout=PIPE, stderr=PIPE)
+            stdin=DEVNULL, stdout=PIPE, stderr=PIPE)
         out, err = (f.decode() for f in proc.communicate())
         ret_code = proc.wait()
         process_str = None
@@ -1310,7 +1310,7 @@ see `COPYING' in the Cylc source distribution.
             # proc will start with current env (incl CYLC_HOME etc)
             proc = Popen(
                 cmd + ['--host=%s' % new_host],
-                stdin=open(os.devnull), stdout=PIPE, stderr=PIPE)
+                stdin=DEVNULL, stdout=PIPE, stderr=PIPE)
             if proc.wait():
                 msg = 'Could not restart suite'
                 if attempt_no < max_retries:
@@ -1932,7 +1932,7 @@ see `COPYING' in the Cylc source distribution.
         """Obtain CPU usage statistics."""
         proc = Popen(
             ["ps", "-o%cpu= ", str(os.getpid())],
-            stdin=open(os.devnull), stdout=PIPE)
+            stdin=DEVNULL, stdout=PIPE)
         try:
             cpu_frac = float(proc.communicate()[0])
         except (TypeError, OSError, IOError, ValueError) as exc:
