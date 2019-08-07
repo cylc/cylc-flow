@@ -22,18 +22,17 @@ usage() {
     cat <<__END__
 Usage: cylc [prep] jobscript [OPTIONS] REG TASK
 
-Generate a task job script and print it to stdout.
-
-This command wraps 'cylc [control] submit --dry-run'.
-Other options (e.g. for workflow host and owner) are passed
-through to the submit command.
+Generate a task job script and print it to stdout. Note you must give a valid
+task ID including the cycle point. "cylc list --points" can be used to see
+valid task IDs for a specific workflow cycle point range.
 
 Options:
   -h, --help   Print this usage message.
   -e --edit    Open the jobscript in a CLI text editor.
   -g --gedit   Open the jobscript in a GUI text editor.
   --plain      Don't print the "Task Job Script Generated message."
- (see also 'cylc submit --help')
+Any additional options will be passed through to the wrapped submit
+command; see "cylc submit --help".
 
 Arguments:
   REG          Registered workflow name.
