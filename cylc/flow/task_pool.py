@@ -759,7 +759,7 @@ class TaskPool(object):
                             TASK_STATUS_SUBMIT_RETRYING,
                             TASK_STATUS_RETRYING,
                         )
-                        or itask.state(is_held=True)
+                        or itask.state.is_held
                 ):
                     # Remove orphaned task if it hasn't started running yet.
                     LOG.warning("[%s] -(task orphaned by suite reload)", itask)
@@ -1031,7 +1031,7 @@ class TaskPool(object):
                     itask.tdef.spawn_ahead
                     or itask.state(TASK_STATUS_EXPIRED)
                     or (
-                        itask.state(is_held=False)
+                        not itask.state.is_held
                         and itask.state.is_gt(TASK_STATUS_READY)
                     )
                 )
@@ -1071,7 +1071,7 @@ class TaskPool(object):
             # ones that have just spawned and not been released yet.
             if (
                     itask.state(TASK_STATUS_WAITING)
-                    or itask.state(is_held=True)
+                    or itask.state.is_held
             ):
                 if cutoff is None or itask.point < cutoff:
                     cutoff = itask.point
