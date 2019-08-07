@@ -250,6 +250,9 @@ possible to disable auto shutdown on the command line.
 [#3236](https://github.com/cylc/cylc-flow/pull/3236) - Fix submit number
 increment logic on insert of family with tasks that were previously submitted.
 
+[#3276](https://github.com/cylc/cylc-flow/pull/3236) - Fix log & DB recording
+of broadcasts from xtriggers so they register all settings, not just one.
+
 ### Documentation
 
 [#3181](https://github.com/cylc/cylc-flow/pull/3181) - moved documentation to
