@@ -47,7 +47,8 @@ from cylc.flow.wallclock import get_time_string_from_unix_time
 
 
 SUITE_STATUS_SPLIT_REC = re.compile('^([a-z ]+ at )(.*)$')
-
+# NOTE: would use unicode here but terminal rendering has a lot to be desired
+HELD_SYMBOL = '(held)'
 
 class SuiteMonitor(object):
 
@@ -74,6 +75,7 @@ class SuiteMonitor(object):
         legend = ''
         for state in TASK_STATUSES_ORDERED:
             legend += get_status_prop(state, 'ascii_ctrl')
+        legend += f'{HELD_SYMBOL}'
         legend = legend.rstrip()
 
         len_header = sum(len(s) for s in TASK_STATUSES_ORDERED)
@@ -132,11 +134,16 @@ class SuiteMonitor(object):
                     name = task_summaries[task_id]['name']
                     point_string = task_summaries[task_id]['label']
                     state = task_summaries[task_id]['state']
+                    is_held = task_summaries[task_id]['is_held']
                     name_list.add(name)
+                    if is_held:
+                        text = f'{HELD_SYMBOL}{name}'
+                    else:
+                        text = name
                     if point_string not in task_info:
                         task_info[point_string] = {}
                     task_info[point_string][name] = get_status_prop(
-                        state, 'ascii_ctrl', subst=name)
+                        state, 'ascii_ctrl', subst=text)
 
                 # Sort the tasks in each cycle point.
                 if options.sort_order == "alphanumeric":
@@ -169,7 +176,6 @@ class SuiteMonitor(object):
 
                 updated_str = "updated: \033[1;38m%s\033[0m" % updated_at
                 blit.append(updated_str)
-
                 summary = 'state summary:'
                 state_totals = glbl['state totals']
                 for state, tot in state_totals.items():
