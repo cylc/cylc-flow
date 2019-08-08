@@ -18,13 +18,17 @@
 # Validate and run the task events suite.
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 2
+set_test_number 3
 #-------------------------------------------------------------------------------
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
+sort -u 'events.log' >'expected.events.log'
+sed 's/ (after .*)$//' "${SUITE_RUN_DIR}/log/suite/events.log" | sort -u \
+    >'actual.events.log'
+cmp_ok 'actual.events.log' 'expected.events.log'
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"
 exit

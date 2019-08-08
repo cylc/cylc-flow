@@ -11,9 +11,6 @@ generated reference version.
 
 [cylc]
     cycle point format = %Y%m%dT%H
-    [[reference test]]
-        live mode suite timeout = PT2M
-        suite shutdown event handler = complog.py
 
 [scheduling]
     initial cycle point = 20100808T00

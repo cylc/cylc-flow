@@ -1,7 +1,6 @@
 [cylc]
     cycle point format = %Y
     [[reference test]]
-        live mode suite timeout = PT1M
         expected task failures = get_obs.2010
 [scheduling]
     initial cycle point = 2010

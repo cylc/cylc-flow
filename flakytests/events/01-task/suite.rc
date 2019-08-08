@@ -9,18 +9,20 @@
 [cylc]
     [[environment]]
         EVNTLOG = {{ EVNTLOG }}
+    [[events]]
+        abort on stalled = True
+        abort on inactivity = True
+        inactivity = PT3M
     [[reference test]]
-        live mode suite timeout = PT1M
-        suite shutdown event handler = log-check.sh
         expected task failures = bar.1, baz.1
 
 [scheduling]
     [[graph]]
         R1 = """
-          prep => foo & bar & baz
-      bar:submit-fail & baz:fail & foo => done
-           done => !bar & !baz
-                """
+            prep => foo & bar & baz
+            bar:submit-fail & baz:fail & foo => done
+            done => !bar & !baz
+        """
 [runtime]
     [[root]]
         # make the event handler log available to gcylc:
@@ -28,17 +30,17 @@
         script = "true" # fast
 
     [[prep]]
-        script = """
-printf "%-20s %-8s %s\n" EVENT TASK MESSAGE > {{ EVNTLOG }}
-                            """
+        script = printf "%-20s %-8s %s\n" EVENT TASK MESSAGE > {{ EVNTLOG }}
     [[foo]]
         # timeout, retry, warning, succeeded
         script = """
-if [[ $CYLC_TASK_TRY_NUMBER == 1 ]]; then
-    false
-else
-    sleep 10; cylc task message -p WARNING 'this is a user-defined warning message'
-fi"""
+test "${CYLC_TASK_TRY_NUMBER}" -gt 1
+while ! grep -q 'execution timeout *foo\.1' "${CYLC_SUITE_LOG_DIR}/events.log"
+do
+    sleep 1
+done
+cylc task message -p WARNING 'this is a user-defined warning message'
+"""
         [[[job]]]
             execution retry delays = PT3S
         [[[events]]]
@@ -61,7 +63,12 @@ fi"""
 
      [[baz]]
         # submitted, submission timeout, started, failed
-        init-script = sleep 15
+        init-script = """
+while ! grep -q 'submission timeout *baz\.1' "${CYLC_SUITE_LOG_DIR}/events.log"
+do
+    sleep 1
+done
+"""
         script = false
         [[[events]]]
             submitted handler = {{ HANDLER }}

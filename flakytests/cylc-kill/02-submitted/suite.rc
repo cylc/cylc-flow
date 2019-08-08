@@ -2,8 +2,6 @@
 [cylc]
     UTC mode = True
     [[reference test]]
-        required run mode = live
-        live mode suite timeout = PT1M
         expected task failures = killable-1.1, killable-2.1, killable-3.1
 [scheduling]
     [[graph]]

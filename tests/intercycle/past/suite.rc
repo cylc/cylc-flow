@@ -6,8 +6,6 @@ Task A should only run at 0, 12 hours; Task B at 6, 18"""
 
 [cylc]
     UTC mode = True
-    [[reference test]]
-        live mode suite timeout = PT1M
 
 [scheduling]
     initial cycle point = 20120101T00

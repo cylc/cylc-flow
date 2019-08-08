@@ -1,13 +1,4 @@
 #!Jinja2
-[cylc]
-    UTC mode = True
-    [[events]]
-        abort on stalled = True
-        abort on inactivity = True
-        inactivity = PT1M
-    [[reference test]]
-        required run mode = live
-        live mode suite timeout = PT1M
 [scheduling]
     [[graph]]
         R1 = t1
@@ -16,5 +7,3 @@
         script = """
 grep -F -q "CYLC_SUITE_HOST={{MY_HOST_IP}}" "${CYLC_SUITE_RUN_DIR}/.service/contact"
 """
-        [[[job]]]
-            execution time limit = PT30S

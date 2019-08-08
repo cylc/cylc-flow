@@ -48,7 +48,7 @@ from cylc.flow.task_id import TaskID
 from cylc.flow.task_job_logs import get_task_job_id
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_state import (
-    TASK_STATUSES_ACTIVE, TASK_STATUSES_NOT_STALLED,
+    TASK_STATUSES_ACTIVE, TASK_STATUSES_FAILURE, TASK_STATUSES_NOT_STALLED,
     TASK_STATUS_WAITING, TASK_STATUS_EXPIRED,
     TASK_STATUS_QUEUED, TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
     TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_SUBMIT_RETRYING,
@@ -381,10 +381,7 @@ class TaskPool(object):
                 if timeout is not None:
                     itask.timeout = timeout
 
-            elif status in (
-                    TASK_STATUS_SUBMIT_FAILED,
-                    TASK_STATUS_FAILED
-            ):
+            elif status in TASK_STATUSES_FAILURE:
                 itask.state.set_prerequisites_all_satisfied()
 
             elif status in (
@@ -724,6 +721,18 @@ class TaskPool(object):
         self.max_num_active_cycle_points = (
             self.config.get_max_num_active_cycle_points())
 
+        # find any old tasks that have been removed from the suite
+        old_task_name_list = self.task_name_list
+        self.task_name_list = self.config.get_task_name_list()
+        for name in old_task_name_list:
+            if name not in self.task_name_list:
+                self.orphans.append(name)
+        for name in self.task_name_list:
+            if name in self.orphans:
+                self.orphans.remove(name)
+        # adjust the new suite config to handle the orphans
+        self.config.adopt_orphans(self.orphans)
+
         # reassign live tasks from the old queues to the new.
         # self.queues[queue][id_] = task
         self.assign_queues()
@@ -737,26 +746,15 @@ class TaskPool(object):
                 new_queues[key][id_] = itask
         self.queues = new_queues
 
-        # find any old tasks that have been removed from the suite
-        old_task_name_list = self.task_name_list
-        self.task_name_list = self.config.get_task_name_list()
-        for name in old_task_name_list:
-            if name not in self.task_name_list:
-                self.orphans.append(name)
-        for name in self.task_name_list:
-            if name in self.orphans:
-                self.orphans.remove(name)
-        # adjust the new suite config to handle the orphans
-        self.config.adopt_orphans(self.orphans)
-
     def reload_taskdefs(self):
         """Reload task definitions."""
         LOG.info("Reloading task definitions.")
+        tasks = self.get_all_tasks()
         # Log tasks orphaned by a reload that were not in the task pool.
-        for task in self.orphans:
-            if task not in (tsk.tdef.name for tsk in self.get_all_tasks()):
-                LOG.warning("Removed task: '%s'" % (task,))
-        for itask in self.get_all_tasks():
+        for name in self.orphans:
+            if name not in (itask.tdef.name for itask in tasks):
+                LOG.warning("Removed task: '%s'", name)
+        for itask in tasks:
             if itask.tdef.name in self.orphans:
                 if (
                         itask.state(
@@ -962,26 +960,22 @@ class TaskPool(object):
         self.is_held = False
         self.release_tasks(None)
 
-    def get_failed_tasks(self):
-        """Return failed and submission failed tasks."""
-        failed = []
-        for itask in self.get_tasks():
-            if itask.state(
-                    TASK_STATUS_FAILED,
-                    TASK_STATUS_SUBMIT_FAILED,
-            ):
-                failed.append(itask)
-        return failed
+    def check_abort_on_task_fails(self):
+        """Check whether suite should abort on task failure.
 
-    def any_task_failed(self):
-        """Return True if any tasks in the pool failed."""
-        for itask in self.get_tasks():
-            if itask.state(
-                    TASK_STATUS_FAILED,
-                    TASK_STATUS_SUBMIT_FAILED,
-            ):
-                return True
-        return False
+        Return True if:
+        * There are failed tasks and `abort if any task fails` is specified.
+        * There are unexpected failed tasks in a reference test.
+        """
+        expected_failed_tasks = self.config.get_expected_failed_tasks()
+        if expected_failed_tasks is None:
+            return False
+        return any(
+            (
+                itask.state.status in TASK_STATUSES_FAILURE
+                and itask.identity not in expected_failed_tasks
+            )
+            for itask in self.get_tasks())
 
     def match_dependencies(self):
         """Run time dependency negotiation.
@@ -1333,7 +1327,7 @@ class TaskPool(object):
             extras = {}
             if itask.tdef.clocktrigger_offset is not None:
                 extras['Clock trigger time reached'] = (
-                    not itask.is_waiting_clock(now))
+                    itask.is_waiting_clock_done(now))
                 extras['Triggers at'] = get_time_string_from_unix_time(
                     itask.clock_trigger_time)
             for trig, satisfied in itask.state.external_triggers.items():

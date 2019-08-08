@@ -1,8 +1,7 @@
 [cylc]
     force run mode = dummy
     [[reference test]]
-        dummy mode suite timeout = PT1M
-        allow task failures = True
+        expected task failures = a.1, b.1, c.1
 [scheduling]
     [[graph]]
         R1 = """a:fail => b

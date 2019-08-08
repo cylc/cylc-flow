@@ -2,10 +2,6 @@
 [meta]
   title = a test suite
   size = large
-[cylc]
-    [[events]]
-        inactivity = PT15S
-        abort on inactivity = True
 [scheduling]
     [[graph]]
         R1 = "foo"

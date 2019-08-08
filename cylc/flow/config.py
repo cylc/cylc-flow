@@ -2256,3 +2256,23 @@ class SuiteConfig(object):
     def describe(self, name):
         """Return title and description of the named task."""
         return self.taskdefs[name].describe()
+
+    def get_ref_log_name(self):
+        """Return path to reference log (for reference test)."""
+        return os.path.join(self.fdir, 'reference.log')
+
+    def get_expected_failed_tasks(self):
+        """Return list of expected failed tasks.
+
+        Return:
+        - An empty list if NO task is expected to fail.
+        - A list of NAME.CYCLE for the tasks that are expected to fail
+          in reference test mode.
+        - None if there is no expectation either way.
+        """
+        if self.options.reftest:
+            return self.cfg['cylc']['reference test']['expected task failures']
+        elif self.cfg['cylc']['events']['abort if any task fails']:
+            return []
+        else:
+            return None

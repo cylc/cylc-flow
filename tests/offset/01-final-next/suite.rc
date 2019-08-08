@@ -1,8 +1,9 @@
 [cylc]
     cycle point time zone = +01
-    [[reference test]]
-        required run mode = live
-        live mode suite timeout = PT1M
+    [[events]]
+        abort on stalled = True
+        abort on inactivity = True
+        inactivity = PT3M
 [scheduling]
     initial cycle point = 20100101T00
     final cycle point   = T06

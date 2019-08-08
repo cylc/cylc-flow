@@ -29,7 +29,7 @@ RUN_MODE="$(basename "$0" | sed "s/.*-ref-\(.*\).t/\1/g")"
 suite_run_fail "${TEST_NAME}" \
     cylc run --reference-test --mode="${RUN_MODE}" --debug --no-detach \
     "${SUITE_NAME}"
-grep_ok "WARNING - suite timed out after PT6S" "${TEST_NAME}.stderr"
+grep_ok "WARNING - suite timed out after PT1S" "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"
 exit

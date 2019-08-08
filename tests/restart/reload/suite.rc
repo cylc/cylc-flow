@@ -8,9 +8,6 @@ which should run to completion on restarting."""
 
 [cylc]
     UTC mode = True
-    [[reference test]]
-        required run mode = live
-        live mode suite timeout = PT2M
 [scheduling]
     initial cycle point = 20100808T00
     final cycle point = 20100809T00

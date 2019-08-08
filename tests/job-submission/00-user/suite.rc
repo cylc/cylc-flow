@@ -1,10 +1,4 @@
 # Test job submission modules in lib/python/ and python/ (deprecated).
-
-[cylc]
-   [[reference test]]
-       required run mode = live
-       live mode suite timeout = PT30S
-
 [scheduling]
     [[graph]]
         R1 = foo & bar

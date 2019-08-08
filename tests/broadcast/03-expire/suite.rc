@@ -3,9 +3,6 @@
     description=Test broadcast expire option
 [cylc]
     UTC mode = True
-    [[reference test]]
-        required run mode=live
-        live mode suite timeout=PT2M
 [scheduling]
     initial cycle point = 2020
     final cycle point = 2025

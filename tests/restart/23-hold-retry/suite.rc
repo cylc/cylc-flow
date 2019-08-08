@@ -1,32 +1,19 @@
-#!jinja2
 [cylc]
-    UTC mode=True
-    cycle point format = %Y
     [[events]]
         abort on stalled = True
         abort on inactivity = True
-        inactivity = P1M
+        inactivity = P3M
 [scheduling]
-    initial cycle point = 2016
-    final cycle point = 2017
     [[graph]]
-        P1Y = t1 & t2
+        R1 = t1
 [runtime]
     [[t1]]
         script = """
-if [[ "${CYLC_TASK_CYCLE_POINT}" != '2016' ]]; then
-    cylc release "${CYLC_SUITE_NAME}" 't2.2016'
-fi
-"""
-    [[t2]]
-        script = """
-if [[ "${CYLC_TASK_CYCLE_POINT}" == '2016' && "${CYLC_TASK_TRY_NUMBER}" == '1' ]]
-then
+if ((CYLC_TASK_TRY_NUMBER == 1)); then
     cylc stop "${CYLC_SUITE_NAME}"
-    sleep 5
     cylc kill "${CYLC_SUITE_NAME}" "${CYLC_TASK_ID}"
-    sleep 60
+    sleep 120  # Should not matter because the job will be killed
 fi
 """
         [[[job]]]
-            execution retry delays = PT4S
+            execution retry delays = PT0S

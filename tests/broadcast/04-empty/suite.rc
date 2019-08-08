@@ -1,10 +1,6 @@
 [meta]
     title=broadcast empty
     description=Test broadcast of an empty string
-[cylc]
-    [[reference test]]
-        required run mode=live
-        live mode suite timeout=PT1M
 [scheduling]
     [[graph]]
         R1="broadcast => t1"

@@ -1,12 +1,12 @@
 EVENT                TASK     MESSAGE
-retry                foo.1    job failed, retrying in PT3S
-submission retry     bar.1    job submission failed, submit-retrying in PT3S
-submitted            baz.1    job submitted
-submission timeout   baz.1    submission timeout after PT3S
-submission failed    bar.1    job submission failed
-execution timeout    foo.1    execution timeout after PT3S
-started              baz.1    job started
-failed               baz.1    job failed
-warning              foo.1    this is a user-defined warning message
 critical             foo.1    failed/EXIT
+execution timeout    foo.1    execution timeout after PT3S
+failed               baz.1    job failed
+retry                foo.1    job failed, retrying in PT3S
+started              baz.1    job started
+submission failed    bar.1    job submission failed
+submission retry     bar.1    job submission failed, submit-retrying in PT3S
+submission timeout   baz.1    submission timeout after PT3S
+submitted            baz.1    job submitted
 succeeded            foo.1    job succeeded
+warning              foo.1    this is a user-defined warning message

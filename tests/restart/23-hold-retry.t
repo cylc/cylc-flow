@@ -22,31 +22,23 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run "${SUITE_NAME}" --debug --no-detach --until=2016
-if ! which sqlite3 > /dev/null; then
-    skip 1 "sqlite3 not installed?"
-else
-    sqlite3 "${SUITE_RUN_DIR}/log/db" 'SELECT * FROM task_pool ORDER BY cycle, name' \
-        >'task-pool.out'
-    contains_ok 'task-pool.out' <<__OUT__
-2016|t2|1|retrying|1
-2017|t1|0|waiting|0
-2017|t2|0|waiting|0
+    cylc run --debug --no-detach "${SUITE_NAME}"
+sqlite3 "${SUITE_RUN_DIR}/log/db" \
+    'SELECT * FROM task_pool ORDER BY cycle, name' >'task-pool.out'
+cmp_ok 'task-pool.out' <<__OUT__
+1|t1|1|retrying|1
 __OUT__
-fi
-suite_run_ok "${TEST_NAME_BASE}-restart" \
-    cylc restart "${SUITE_NAME}" --debug --no-detach --until=2017
-grep_ok 'INFO - + t2\.2016 retrying (held)' "${SUITE_RUN_DIR}/log/suite/log"
-if ! which sqlite3 > /dev/null; then
-    skip 1 "sqlite3 not installed?"
-else
-    sqlite3 "${SUITE_RUN_DIR}/log/db" 'SELECT * FROM task_pool ORDER BY cycle, name' \
-        >'task-pool.out'
-    contains_ok 'task-pool.out' <<__OUT__
-2016|t2|1|succeeded|0
-2018|t1|0|waiting|0
-2018|t2|0|waiting|0
+suite_run_ok "${TEST_NAME_BASE}-restart" cylc restart "${SUITE_NAME}" --debug
+ls "${SUITE_RUN_DIR}/log/suite/" 1>'/dev/null' 2>&1
+poll "! grep -qF 'INFO - + t1.1 retrying (held)' '${SUITE_RUN_DIR}/log/suite/log'"
+run_ok "${TEST_NAME_BASE}-release" cylc release "${SUITE_NAME}"
+poll "! grep -qF 'INFO - DONE' '${SUITE_RUN_DIR}/log/suite/log'"
+poll "test -e '${SUITE_RUN_DIR}/.service/contact'"
+sqlite3 "${SUITE_RUN_DIR}/log/db" \
+    'SELECT * FROM task_pool ORDER BY cycle, name' >'task-pool.out'
+cmp_ok 'task-pool.out' <<__OUT__
+1|t1|1|succeeded|0
 __OUT__
-fi
+
 purge_suite "${SUITE_NAME}"
 exit

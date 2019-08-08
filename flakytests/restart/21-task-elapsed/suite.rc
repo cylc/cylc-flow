@@ -5,7 +5,7 @@
     [[events]]
         abort on stalled = True
         abort on inactivity = True
-        inactivity = P1M
+        inactivity = PT3M
         startup handler = cylc release '%(suite)s'
 [scheduling]
     initial cycle point = 2016

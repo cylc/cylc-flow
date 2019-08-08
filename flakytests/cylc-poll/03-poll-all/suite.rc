@@ -14,8 +14,6 @@ trigger, and the suite to shut down successfully."""
        abort on inactivity = True
        inactivity = PT2M
    [[reference test]]
-       required run mode = live
-       live mode suite timeout = PT2M # minutes
        expected task failures = run_kill.20141207T0000Z,\
                                 run_kill.20141208T0000Z,\
                                 submit_hold.20141207T0000Z,\

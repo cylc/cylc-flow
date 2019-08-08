@@ -18,7 +18,7 @@
 # Test "cylc cat-log" with a custom tail command.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 4
+set_test_number 3
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
@@ -39,7 +39,6 @@ TEST_NAME=$TEST_NAME_BASE-cat-log
 cylc cat-log $SUITE_NAME -f o -m t foo.1 > ${TEST_NAME}.out
 grep_ok "HELLO from foo 1" ${TEST_NAME}.out
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-stop
-run_ok $TEST_NAME cylc stop --kill --max-polls=10 --interval=1 $SUITE_NAME
+cylc stop --kill --max-polls=20 --interval=1 "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test suite graphql interface
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 4
 #-------------------------------------------------------------------------------
@@ -75,7 +75,7 @@ SUITE_LOG_DIR="$( cylc cat-log -m p "${SUITE_NAME}" \
     | xargs dirname )"
 
 # stop suite
-cylc stop "${SUITE_NAME}" --kill
+cylc stop --max-polls=10 --interval=2 --kill "${SUITE_NAME}"
 
 # compare to expectation
 cat > expected << __HERE__

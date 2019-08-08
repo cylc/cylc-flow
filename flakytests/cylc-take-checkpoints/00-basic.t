@@ -30,7 +30,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
 # Suite reloads+inserts new task to mess up prerequisites - suite should stall
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    timeout 120 cylc run --debug --no-detach --reference-test "${SUITE_NAME}"
+    cylc run --debug --no-detach --reference-test "${SUITE_NAME}"
 cylc ls-checkpoints "${SUITE_NAME}" | date-remove >'cylc-ls-checkpoints.out'
 contains_ok 'cylc-ls-checkpoints.out' <<'__OUT__'
 #######################################################################

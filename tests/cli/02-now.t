@@ -32,7 +32,7 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
         R1 = foo
 [runtime]
     [[foo]]
-        script = cylc stop --now --now "${CYLC_SUITE_NAME}"; sleep 5
+        script = wait; cylc stop --now --now "${CYLC_SUITE_NAME}"
 __SUITERC__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate --icp='now' "${SUITE_NAME}"

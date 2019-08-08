@@ -1,8 +1,5 @@
 [cylc]
     UTC mode=True
-    [[reference test]]
-        allow task failures = True
-        live mode suite timeout = PT1M
 [scheduling]
     initial cycle point=2020
     final cycle point=2020

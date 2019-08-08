@@ -17,10 +17,10 @@
 
 # Test authentication - privilege 'full-control' (with passphrase).
 
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 set_test_number 12
 
-install_suite "${TEST_NAME_BASE}" basic
+install_suite "${TEST_NAME_BASE}" 'basic'
 
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
@@ -168,20 +168,20 @@ __END__
 TEST_NAME="${TEST_NAME_BASE}-show1"
 run_ok "${TEST_NAME}" cylc show "${SUITE_NAME}"
 cylc log "${SUITE_NAME}" > suite.log1
-grep_ok "\[client-command\] get_suite_info ${USER}@.*:cylc-show" suite.log1
+grep_ok "\\[client-command\\] get_suite_info ${USER}@.*cylc-show" 'suite.log1'
 
 # "cylc show" (task info) OK.
 TEST_NAME="${TEST_NAME_BASE}-show2"
 run_ok "${TEST_NAME}" cylc show "${SUITE_NAME}" foo
 cylc log "${SUITE_NAME}" > suite.log2
-grep_ok "\[client-command\] get_task_info ${USER}@.*:cylc-show" suite.log2
+grep_ok "\\[client-command\\] get_task_info ${USER}@.*cylc-show" 'suite.log2'
 
 # Commands OK.
 # (Reset to same state).
 TEST_NAME="${TEST_NAME_BASE}-trigger"
 run_ok "${TEST_NAME}" cylc reset "${SUITE_NAME}" -s failed foo 1
 cylc log "${SUITE_NAME}" > suite.log3
-grep_ok "\[client-command\] reset_task_states ${USER}@.*:cylc-reset" suite.log3
+grep_ok "\\[client-command\\] reset_task_states ${USER}@.*cylc-reset" 'suite.log3'
 
 # Shutdown and purge.
 TEST_NAME="${TEST_NAME_BASE}-stop"

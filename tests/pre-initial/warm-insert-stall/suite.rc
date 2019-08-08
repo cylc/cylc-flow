@@ -4,8 +4,6 @@
         abort on inactivity = True
         abort on stalled = True
         inactivity = PT1M
-    [[reference test]]
-        live mode suite timeout = PT1M
 
 [scheduling]
     initial cycle point = 20100101T0000Z

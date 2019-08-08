@@ -1,8 +1,6 @@
 #!jinja2
 [cylc]
     UTC mode=True
-    [[reference test]]
-        live mode suite timeout = PT1M
 [scheduling]
     initial cycle point=1970
     final cycle point=1970

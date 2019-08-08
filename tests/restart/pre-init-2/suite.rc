@@ -9,11 +9,6 @@
 
 [cylc]
     cycle point format = %Y%m%dT%H
-    [[events]]
-        startup handler = cylc release '%(suite)s'
-    [[reference test]]
-        required run mode = live
-        live mode suite timeout = PT1M
 
 [scheduling]
     # DO NOT PUT AN INITIAL CYCLE TIME HERE,

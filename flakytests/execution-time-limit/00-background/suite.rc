@@ -1,13 +1,11 @@
 #!jinja2
 [cylc]
-   abort if any task fails = True
    [[events]]
+       abort if any task fails = True
        abort on inactivity = True
        abort on stalled = True
        inactivity = PT2M
    [[reference test]]
-       required run mode = live
-       live mode suite timeout = PT30S
        expected task failures = foo.1
 
 [scheduling]

@@ -32,21 +32,21 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --debug --no-detach "${SUITE_NAME}"
 
-cylc cat-log "${SUITE_NAME}" | \
-    grep -A 3 ERROR | sed -e 's/^.* \([EW]\)/\1/' > log
+sed -e 's/^.* \([EW]\)/\1/' "${SUITE_RUN_DIR}/log/suite/log" >'log'
 
-cmp_ok log <<__END__
+contains_ok 'log' <<__END__
 ERROR - [(('event-handler-00', 'started'), 1) cmd] sleeper.sh foo.1
 	[(('event-handler-00', 'started'), 1) ret_code] -9
 	[(('event-handler-00', 'started'), 1) err] killed on timeout (PT10S)
 WARNING - 1/foo/01 ('event-handler-00', 'started') failed
 __END__
 
-cylc suite-state "${SUITE_NAME}" > suite-state.log
+cylc suite-state "${SUITE_NAME}" >'suite-state.log'
 
-contains_ok suite-state.log << __END__
+contains_ok 'suite-state.log' << __END__
 stopper, 1, succeeded
 foo, 1, succeeded
 __END__
 
 purge_suite "${SUITE_NAME}"
+exit

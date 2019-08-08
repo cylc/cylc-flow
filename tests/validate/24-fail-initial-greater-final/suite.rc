@@ -6,9 +6,7 @@ error."""
 
 [cylc]
     UTC mode = True
-    [[reference test]]
-        required run mode = live
-       
+
 [scheduling]
     initial cycle point = 20141208T0000Z
     final cycle point   = 20141207T0000Z

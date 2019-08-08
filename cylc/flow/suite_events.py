@@ -25,6 +25,7 @@ from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import SuiteEventError
 from cylc.flow.hostuserutil import get_host, get_user
+from cylc.flow.log_diagnosis import run_reftest
 from cylc.flow.subprocctx import SubProcContext
 
 
@@ -33,7 +34,7 @@ SuiteEventContext = namedtuple(
     ["event", "reason", "suite", "uuid_str", "owner", "host", "port"])
 
 
-class SuiteEventHandler(object):
+class SuiteEventHandler():
     """Suite event handler."""
 
     EVENT_STARTUP = 'startup'
@@ -68,6 +69,8 @@ class SuiteEventHandler(object):
         """Handle a suite event."""
         self._run_event_mail(config, ctx)
         self._run_event_custom_handlers(config, ctx)
+        if config.options.reftest and ctx.event == self.EVENT_SHUTDOWN:
+            run_reftest(config, ctx)
 
     def _run_event_mail(self, config, ctx):
         """Helper for "run_event_handlers", do mail notification."""

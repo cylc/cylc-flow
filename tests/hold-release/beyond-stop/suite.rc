@@ -9,8 +9,6 @@ beyond the suite stop point."""
 
 [cylc]
     cycle point format = %Y%m%dT%H
-    [[reference test]]
-        live mode suite timeout = PT30S
 
 [scheduling]
     initial cycle point = 20140101T00

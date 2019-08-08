@@ -1,9 +1,5 @@
 [meta]
     title = cylc insert with wild card in task name string
-[cylc]
-    [[reference test]]
-        required run mode = live
-        live mode suite timeout = PT1M
 [scheduling]
     [[special tasks]]
         exclude at start-up = t1, t2

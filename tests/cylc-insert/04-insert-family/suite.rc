@@ -3,10 +3,6 @@
     description = """Two families are removed, then one is re-inserted.
 The ref test will fail if either operation fails to work properly."""
 
-[cylc]
-    [[reference test]]
-        required run mode = live
-        live mode suite timeout = PT1M
 [scheduling]
     initial cycle point = 1
     final cycle point = 2

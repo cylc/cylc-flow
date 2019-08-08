@@ -1,6 +1,6 @@
 [cylc]
-    abort if any task fails = True
     [[events]]
+        abort if any task fails = True
         abort on stalled = True
         abort on inactivity = True
         inactivity = PT2M

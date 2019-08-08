@@ -1,13 +1,13 @@
 [cylc]
-   [[reference test]]
-       required run mode = live
-       live mode suite timeout = PT1M
+   [[events]]
+       abort on stalled = True
+       abort on inactivity = True
+       inactivity = PT3M
 [scheduling]
     [[graph]]
-        R1 = "foo"
+        R1 = foo
 [runtime]
     [[foo]]
-        script = "((CYLC_TASK_TRY_NUMBER >= 4)) || exit 1"
-        # ( '|| exit 1' required to trigger error trap in bash 4.2.0)
+        script = test "${CYLC_TASK_TRY_NUMBER}" '-ge' '4'
         [[[job]]]
-            execution retry delays = 3*PT6S
+            execution retry delays = 3*PT0S

@@ -6,4 +6,4 @@
         PT1H = add => foo => boo => baz
 [runtime]
     [[root]]
-        script = sleep 1
+        script = true

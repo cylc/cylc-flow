@@ -18,13 +18,14 @@
 # play a game of Cylc suite ping pong bouncing a suite back and forth between
 # two servers by condemning them in turn in order to see if anything breaks
 . "$(dirname "$0")/test_header"
-export CLOWNS=$( \
+CLOWNS="$( \
     cylc get-global-config -i '[test battery]remote host with shared fs' \
-    2>'/dev/null')
+    2>'/dev/null')"
 if [[ -z "${CLOWNS}" ]]; then
     skip_all '"[test battery]remote host with shared fs": not defined'
 fi
-export JOKERS="$(hostname)"
+export CLOWNS
+export JOKERS="${HOSTNAME}"
 
 BASE_GLOBALRC='
 [cylc]
@@ -38,7 +39,8 @@ BASE_GLOBALRC='
 
 TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME_BASE}" <<< '
 [cylc]
-    abort if any task fails = True
+    [[events]]
+        abort if any task fails = True
 [scheduling]
     initial cycle point = 2000
     final cycle point = 9999  # test cylc/cylc-flow/issues/2799

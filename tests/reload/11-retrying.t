@@ -16,16 +16,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test that a reloaded retrying does does retry; ref github #945
-. $(dirname $0)/test_header
-#-------------------------------------------------------------------------------
+. "$(dirname "$0")/test_header"
 set_test_number 2
+install_suite "${TEST_NAME_BASE}" 'retrying'
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE retrying
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}-run" \
+    cylc run --debug --no-detach --reference-test "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --debug --no-detach --reference-test $SUITE_NAME
-#-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"
+exit

@@ -1,7 +1,5 @@
 [cylc]
     force run mode = simulation
-    [[reference test]]
-        simulation mode suite timeout = PT1M
 [scheduling]
     [[graph]]
         R1 = "a => b => c"

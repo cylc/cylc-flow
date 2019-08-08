@@ -2,8 +2,9 @@
 [cylc]
     UTC mode = True
     [[events]]
-        abort on timeout = True
-        timeout = PT1M
+        abort on stalled = True
+        abort on inactivity = True
+        inactivity = PT3M
 [scheduling]
     initial cycle point = 20100808T00
     final cycle point = 20100808T06

@@ -79,5 +79,13 @@ contains_ok 'log.edited' <<__LOG__
 Wall clock stop time reached: ${CLOCKTIMESTR}
 __LOG__
 
+for i in {01..10}; do
+    ST_FILE="${SUITE_RUN_DIR}/log/job/1/t_i${i}/01/job.status"
+    if [[ -e "${ST_FILE}" ]]; then
+        JOB_ID="$(awk -F= '$1 == "CYLC_BATCH_SYS_JOB_ID" {print $2}' "${ST_FILE}")"
+        poll ps "${JOB_ID}" 1>'/dev/null' 2>&1
+    fi
+done
+
 purge_suite "${SUITE_NAME}"
 exit

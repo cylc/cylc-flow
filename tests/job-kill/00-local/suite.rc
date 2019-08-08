@@ -1,9 +1,7 @@
 #!Jinja2
 [cylc]
    [[reference test]]
-       required run mode=live
        expected task failures = t1.1, t2.1, t3.1, t4.1, stop2.1
-       live mode suite timeout = PT1M
 [scheduling]
     [[graph]]
         R1="""

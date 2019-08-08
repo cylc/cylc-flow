@@ -1,0 +1,6 @@
+[scheduling]
+    [[graph]]
+        R1 = t1 => t2 => t3
+[runtime]
+    [[t1, t2, t3]]
+        script = true

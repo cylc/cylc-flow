@@ -2,22 +2,31 @@
     title = "test that a reloaded retrying task does retry"
     description = """this requires some state vars to be carried over to the
 new task proxy; ref github #945"""
-
-[cylc]
-   [[reference test]]
-       required run mode = live
-       live mode suite timeout = PT30S
 [scheduling]
     [[graph]]
-        R1 = "retrier & reloader"
+        R1 = retrier & reloader
 [runtime]
     [[retrier]]
-        script = "((CYLC_TASK_TRY_NUMBER >= 2)) || exit 1"
-        # ( '|| exit 1' required to trigger error trap in bash 4.2.0)
+        script = """
+wait
+sleep 1
+if ((CYLC_TASK_TRY_NUMBER == 1)); then
+    # Kill the job, so task will go into retrying (held)
+    cylc kill "${CYLC_SUITE_NAME}" 'retrier.1'
+    sleep 120  # Does not matter how long as the job will be killed
+fi
+"""
         [[[job]]]
-            execution retry delays = 1*PT6S
+            execution retry delays = PT0S
     [[reloader]]
         script = """
-cylc suite-state --max-polls=10 --interval=1 --task=retrier --point=1 \
-    --status=retrying $CYLC_SUITE_NAME
-cylc reload $CYLC_SUITE_NAME"""
+while ! grep -qF '[retrier.1] -running (held) => retrying (held)' "${CYLC_SUITE_LOG_DIR}/log"
+do
+    sleep 1
+done
+cylc reload "${CYLC_SUITE_NAME}"
+while ! grep -qF 'Reload completed.' "${CYLC_SUITE_LOG_DIR}/log"; do
+    sleep 1
+done
+cylc release "${CYLC_SUITE_NAME}" 'retrier.1'
+"""

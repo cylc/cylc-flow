@@ -15,32 +15,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 3
+set_test_number 4
 #-------------------------------------------------------------------------------
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
-while cylc ping "${SUITE_NAME}" 2>/dev/null; do
-    sleep 1
-done
-sleep 8
-suite_run_ok "${TEST_NAME_BASE}-restart" cylc restart "${SUITE_NAME}"
-while cylc ping "${SUITE_NAME}" 2>/dev/null; do
-    sleep 1
-done
-if [[ -e "${SUITE_RUN_DIR}/work/2/pub/test-succeeded" ]]; then
-    ok "${TEST_NAME_BASE}-check"
-else
-    fail "${TEST_NAME_BASE}-check"
-    echo 'OUT - Duplicated Entries:' >&2
-    cat "${SUITE_RUN_DIR}/work/2/pub/out-duplication" >&2
-    echo 'ERR - Duplicated Entries:' >&2
-    cat "${SUITE_RUN_DIR}/work/2/pub/err-duplication" >&2
-    echo 'LOG - Duplicated Entries:' >&2
-    cat "${SUITE_RUN_DIR}/work/2/pub/log-duplication" >&2
-fi
-
+suite_run_ok "${TEST_NAME_BASE}-run" cylc run --no-detach "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}-restart" \
+    cylc restart --no-detach "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-check" \
+    test -e "${SUITE_RUN_DIR}/work/2/pub/log-duplication"
+run_fail "${TEST_NAME_BASE}-check" \
+    test -s "${SUITE_RUN_DIR}/work/2/pub/log-duplication"
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"
 exit

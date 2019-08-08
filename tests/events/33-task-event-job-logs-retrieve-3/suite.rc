@@ -7,7 +7,6 @@
         abort on timeout = True
         timeout = PT1M
     [[reference test]]
-        live mode suite timeout=PT1M
         expected task failures = t1.1
 
 [scheduling]

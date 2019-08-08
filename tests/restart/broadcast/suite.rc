@@ -2,8 +2,8 @@
 {%- set TEST_DIR = environ['TEST_DIR'] %}
 [cylc]
     UTC mode = True
-    abort if any task fails = True
     [[events]]
+        abort if any task fails = True
         abort on timeout = True
         timeout = PT1M
 [scheduling]

@@ -5,8 +5,6 @@
         stalled handler = cylc trigger %(suite)s foo.20100101T1200Z
         abort on timeout = True
         timeout = PT2M
-    [[reference test]]
-        live mode suite timeout=PT2M
 
 [scheduling]
     initial cycle point = 20100101T0000Z

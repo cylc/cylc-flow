@@ -110,7 +110,6 @@
         <keyword>startup handler</keyword>
         <keyword>started handler</keyword>
         <keyword>stalled handler</keyword>
-        <keyword>simulation mode suite timeout</keyword>
         <keyword>disable suite event handlers</keyword>
         <keyword>default run length</keyword>
         <keyword>speedup factor</keyword>
@@ -143,8 +142,6 @@
         <keyword>mail retry delays</keyword>
         <keyword>mail from</keyword>
         <keyword>mail events</keyword>
-        <keyword>log resolved dependencies</keyword>
-        <keyword>live mode suite timeout</keyword>
         <keyword>limit</keyword>
         <keyword>interval</keyword>
         <keyword>initial cycle point constraints</keyword>
@@ -190,7 +187,6 @@
         <keyword>clock-expire</keyword>
         <keyword>batch system</keyword>
         <keyword>batch submit command template</keyword>
-        <keyword>allow task failures</keyword>
         <keyword>abort on timeout</keyword>
         <keyword>abort on stalled</keyword>
         <keyword>abort on inactivity</keyword>

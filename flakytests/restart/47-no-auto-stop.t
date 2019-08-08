@@ -41,7 +41,7 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
     [[events]]
         abort on stalled = True
         abort on inactivity = True
-        inactivity = PT10S
+        inactivity = PT3M
 [scheduling]
     [[graph]]
         R1 = t<i-1> => t<i>

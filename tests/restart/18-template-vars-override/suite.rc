@@ -3,9 +3,6 @@
    UTC mode = True
     [[events]]
         startup handler = cylc release '%(suite)s'
-    [[reference test]]
-        live mode suite timeout = PT1M
-        required run mode = live
 [scheduling]
     initial cycle point = 2016
     final cycle point = {{FINAL_CYCLE_POINT}}

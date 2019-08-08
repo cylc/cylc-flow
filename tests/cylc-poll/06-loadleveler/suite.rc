@@ -1,8 +1,4 @@
 #!Jinja2
-[cylc]
-   [[reference test]]
-       required run mode = live
-       live mode suite timeout = PT1M
 [scheduling]
     [[graph]]
         R1 = a:start => b

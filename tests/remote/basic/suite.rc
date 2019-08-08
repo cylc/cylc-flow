@@ -5,11 +5,6 @@
 
 # whether or not ssh messaging is used back from the remote host is
 # determined by the [hosts] section in site/user config files.
-
-[cylc]
-    [[reference test]]
-        live mode suite timeout = PT30S
-        suite shutdown event handler = cleanup.sh
 [scheduling]
     [[graph]]
         R1 = "foo => bar"

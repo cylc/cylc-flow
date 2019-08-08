@@ -3,8 +3,6 @@
 {% set SITE_DIRECTIVES = environ['CYLC_TEST_BATCH_SITE_DIRECTIVES'] %}
 [cylc]
    [[reference test]]
-       required run mode = live
-       live mode suite timeout = PT2.5M
        expected task failures = rem2.1
 [scheduling]
     [[graph]]

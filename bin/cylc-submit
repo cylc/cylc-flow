@@ -50,6 +50,7 @@ from cylc.flow.suite_db_mgr import SuiteDatabaseManager
 from cylc.flow.broadcast_mgr import BroadcastMgr
 from cylc.flow.hostuserutil import get_user
 from cylc.flow.job_pool import JobPool
+from cylc.flow.resources import extract_resources
 from cylc.flow.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_job_mgr import TaskJobManager
@@ -113,6 +114,10 @@ def main(parser, options, suite, *task_ids):
 
     # Initialise job submit environment
     make_suite_run_tree(suite)
+    # Extract job.sh from library, for use in job scripts.
+    extract_resources(
+        suite_srv_mgr.get_suite_srv_dir(suite),
+        ['etc/job.sh'])
     pool = SubProcPool()
     owner = get_user()
     job_pool = JobPool(suite, owner)

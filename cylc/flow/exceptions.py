@@ -38,10 +38,6 @@ class UserInputError(CylcError):
     """
 
 
-class LogAnalyserError(CylcError):
-    """Exception for issues scraping Cylc suite log files."""
-
-
 class CylcConfigError(CylcError):
     """Generic exception to handle an error in a Cylc configuration file.
 

@@ -1,8 +1,5 @@
 [cylc]
     UTC mode = True
-   [[reference test]]
-       required run mode = live
-       live mode suite timeout = PT0.5M
 
 [scheduling]
     initial cycle point = 20100101T0000Z

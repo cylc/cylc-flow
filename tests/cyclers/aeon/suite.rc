@@ -1,8 +1,6 @@
 [cylc]
     cycle point num expanded year digits = 7
     UTC mode = True
-    [[reference test]]
-        live mode suite timeout = PT2M
 [scheduling]
     initial cycle point = -13800000000-02-29T05:30  # Big Bang
     final cycle point = +05400000000-12-31T23:59    # Sun leaves main sequence

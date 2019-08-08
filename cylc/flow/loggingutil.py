@@ -207,8 +207,12 @@ class ReferenceLogFileHandler(logging.FileHandler):
     def __init__(self, filename):
         """Create the reference log file handler, specifying the file to
         write the reference log lines."""
+        try:
+            os.unlink(filename)
+        except OSError:
+            pass
         super().__init__(filename)
-        self.formatter = CylcLogFormatter()
+        self.formatter = logging.Formatter('%(message)s')
         self.addFilter(self._filter)
 
     def _filter(self, record):

@@ -1,12 +1,6 @@
 [meta]
     title = Test task retry - hold - release
 
-[cylc]
-    [[reference test]]
-        live mode suite timeout = PT1M30S
-        dummy mode suite timeout = PT1M30S
-        simulation mode suite timeout = PT1M30S
-
 [scheduling]
     [[graph]]
             R1 = """

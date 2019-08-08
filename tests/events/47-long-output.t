@@ -30,7 +30,6 @@ process pool timeout = PT10S" ""
 # Long STDOUT output
 
 init_suite "${TEST_NAME_BASE}" <<__SUITERC__
-[cylc]
 [scheduling]
     [[graph]]
         R1 = t1
@@ -40,11 +39,16 @@ init_suite "${TEST_NAME_BASE}" <<__SUITERC__
         [[[events]]]
             succeeded handler = cat "${CYLC_REPO_DIR}/COPYING" "${CYLC_REPO_DIR}/COPYING" "${CYLC_REPO_DIR}/COPYING" && echo
 __SUITERC__
+cat >'reference.log' <<'__REFLOG__'
+Initial point: 1
+Final point: 1
+[t1.1] -triggered off []
+__REFLOG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --debug --no-detach "${SUITE_NAME}"
+    cylc run --debug --no-detach --reference-test "${SUITE_NAME}"
 
 cylc cat-log "${SUITE_NAME}" >'log'
 sed -n 's/^.*\(GNU GENERAL PUBLIC LICENSE\)/\1/p' 'log' >'log-1'
@@ -63,7 +67,6 @@ purge_suite "${SUITE_NAME}"
 # REPEAT: Long STDERR output
 
 init_suite "${TEST_NAME_BASE}" <<__SUITERC__
-[cylc]
 [scheduling]
     [[graph]]
         R1 = t1
@@ -73,11 +76,16 @@ init_suite "${TEST_NAME_BASE}" <<__SUITERC__
         [[[events]]]
             succeeded handler = cat "${CYLC_REPO_DIR}/COPYING" "${CYLC_REPO_DIR}/COPYING" "${CYLC_REPO_DIR}/COPYING" >&2 && echo
 __SUITERC__
+cat >'reference.log' <<'__REFLOG__'
+Initial point: 1
+Final point: 1
+[t1.1] -triggered off []
+__REFLOG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --debug --no-detach "${SUITE_NAME}"
+    cylc run --debug --no-detach --reference-test "${SUITE_NAME}"
 
 cylc cat-log "${SUITE_NAME}" >'log'
 sed -n 's/^.*\(GNU GENERAL PUBLIC LICENSE\)/\1/p' 'log' >'log-1'
