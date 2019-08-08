@@ -39,7 +39,7 @@ Cylc CLI.
 [#2963](https://github.com/cylc/cylc-flow/pull/2963) - make suite context
 available before config parsing.
 
-[#3274](https://github.com/cylc/cylc-flow/pull/3274) - dissallow the use of
+[#3274](https://github.com/cylc/cylc-flow/pull/3274) - disallow the use of
 special characters in suite names.
 
 [#3001](https://github.com/cylc/cylc-flow/pull/3001) - simplify cylc version,
