@@ -17,12 +17,13 @@
 #-------------------------------------------------------------------------------
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-export CYLC_TEST_HOST=$( \
+CYLC_TEST_HOST="$( \
     cylc get-global-config -i '[test battery]remote host with shared fs' \
-    2>'/dev/null')
+    2>'/dev/null')"
 if [[ -z "${CYLC_TEST_HOST}" ]]; then
     skip_all '"[test battery]remote host with shared fs": not defined'
 fi
+export CYLC_TEST_HOST
 set_test_number 10
 #-------------------------------------------------------------------------------
 # test the failure recovery mechanism

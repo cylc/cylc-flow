@@ -16,14 +16,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test that one-line config print works
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 
 #-------------------------------------------------------------------------------
 set_test_number 1
 
-install_test $TEST_NAME_BASE
+install_test "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
-TEST_NAME=${TEST_NAME_BASE}
 one-line.py > foo.txt
 cmp_ok foo.txt << __END
 BAZ QUX

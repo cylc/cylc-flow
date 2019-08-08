@@ -16,28 +16,23 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test cylc insert command for a task that has already run.
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 5
 #-------------------------------------------------------------------------------
-install_suite "$TEST_NAME_BASE" "$TEST_NAME_BASE"
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-validate"
+run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run -v -v --reference-test --debug --no-detach $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-run"
+suite_run_ok "${TEST_NAME}" cylc run -v -v --reference-test --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-if ! which sqlite3 > /dev/null; then
-    skip 3 "sqlite3 not installed?"
-    purge_suite $SUITE_NAME
-    exit 0
-fi
-TEST_NAME=$TEST_NAME_BASE-db-end
+TEST_NAME=${TEST_NAME_BASE}-db-end
 RUN_DIR=$(cylc get-global-config --print-run-dir)
-run_ok "$TEST_NAME" sqlite3 "${RUN_DIR}/${SUITE_NAME}/log/db" \
+run_ok "${TEST_NAME}" sqlite3 "${RUN_DIR}/${SUITE_NAME}/log/db" \
     "select name, cycle, submit_num, status from task_states order by name, cycle"
-cmp_ok "$TEST_NAME.stdout" <<'__OUT__'
+cmp_ok "${TEST_NAME}.stdout" <<'__OUT__'
 foo|20140101T0000Z|1|succeeded
 foo|20140102T0000Z|1|succeeded
 foo|20140103T0000Z|1|succeeded
@@ -46,6 +41,6 @@ foo|20140105T0000Z|0|waiting
 foo_cold|20140101T0000Z|2|succeeded
 reinsert_foo|20140102T0000Z|1|succeeded
 __OUT__
-cmp_ok "$TEST_NAME.stderr" </dev/null
+cmp_ok "${TEST_NAME}.stderr" </dev/null
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"

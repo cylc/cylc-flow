@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Test remote job logs retrieval custom command, requires compatible version of
 # cylc on remote job host.
-CYLC_TEST_IS_GENERIC=false
+export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
 set_test_remote_host
 set_test_number 3
@@ -40,8 +40,10 @@ exec rsync -a "$@"
 __BASH__
 chmod +x "${TEST_DIR}/${SUITE_NAME}/bin/my-rsync"
 
+# shellcheck disable=SC2086
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate ${OPT_SET} -s "HOST=${CYLC_TEST_HOST}" "${SUITE_NAME}"
+# shellcheck disable=SC2086
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug --no-detach ${OPT_SET} \
        -s "HOST=${CYLC_TEST_HOST}" "${SUITE_NAME}"

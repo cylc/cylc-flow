@@ -23,25 +23,17 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_fail "${TEST_NAME_BASE}-run" cylc run --no-detach "${SUITE_NAME}"
-if which sqlite3 > '/dev/null'; then
-    sqlite3 "${SUITE_RUN_DIR}/log/db" 'SELECT outputs FROM task_outputs' \
-        >'sqlite3.out'
-    cmp_json 'sqlite3.out' 'sqlite3.out' <<<'{"hello": "hello"}'
-else
-    skip 1 'sqlite3 not installed?'
-fi
+sqlite3 "${SUITE_RUN_DIR}/log/db" 'SELECT outputs FROM task_outputs' \
+    >'sqlite3.out'
+cmp_json 'sqlite3.out' 'sqlite3.out' <<<'{"hello": "hello"}'
 suite_run_fail "${TEST_NAME_BASE}-restart-1" \
     cylc restart --no-detach "${SUITE_NAME}"
 sed -i 's/#\(stalled handler\)/\1/; s/\(abort on stalled\)/#\1/' 'suite.rc'
 suite_run_ok "${TEST_NAME_BASE}-restart-2" \
     cylc restart --debug --no-detach --reference-test "${SUITE_NAME}"
-if which sqlite3 > '/dev/null'; then
-    sqlite3 "${SUITE_RUN_DIR}/log/db" 'SELECT outputs FROM task_outputs' \
-        >'sqlite3.out'
-    cmp_json 'sqlite3.out' 'sqlite3.out' \
-        <<<'{"hello": "hello", "greet": "greeting"}'
-else
-    skip 1 'sqlite3 not installed?'
-fi
+sqlite3 "${SUITE_RUN_DIR}/log/db" 'SELECT outputs FROM task_outputs' \
+    >'sqlite3.out'
+cmp_json 'sqlite3.out' 'sqlite3.out' \
+    <<<'{"hello": "hello", "greet": "greeting"}'
 purge_suite "${SUITE_NAME}"
 exit

@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Suite database content, "task_jobs" table with a remote job.
-CYLC_TEST_IS_GENERIC=false
+export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
 set_test_remote_host
 set_test_number 3
@@ -25,12 +25,6 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --debug --no-detach --reference-test "${SUITE_NAME}"
-
-if ! which sqlite3 > /dev/null; then
-    skip 1 "sqlite3 not installed?"
-    purge_suite "${SUITE_NAME}"
-    exit 0
-fi
 
 DB_FILE="$(cylc get-global-config '--print-run-dir')/${SUITE_NAME}/log/db"
 

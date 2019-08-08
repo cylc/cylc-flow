@@ -19,23 +19,25 @@
 # gives the same result as
 #      graph = """a => c
 #                 b => c"""
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 3
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE multiline_and1
+install_suite "${TEST_NAME_BASE}" 'multiline_and1'
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-validate"
+run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --reference-test --debug --no-detach $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-run"
+suite_run_ok "${TEST_NAME}" \
+    cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-check-c
-cylc run $SUITE_NAME --hold
-sleep 5
-cylc show $SUITE_NAME c.1 | sed -n "/prerequisites/,/outputs/p" > c-prereqs
-contains_ok $TEST_SOURCE_DIR/multiline_and_refs/c-ref c-prereqs
-cylc shutdown $SUITE_NAME --now -f
+TEST_NAME="${TEST_NAME_BASE}-check-c"
+cylc run "${SUITE_NAME}" --hold 1>'out' 2>&1
+poll "! test -e '${SUITE_RUN_DIR}/log/suite/log'"
+poll "! grep -q 'Holding all waiting or queued tasks now' '${SUITE_RUN_DIR}/log/suite/log'"
+cylc show "${SUITE_NAME}" 'c.1' | sed -n "/prerequisites/,/outputs/p" > 'c-prereqs'
+contains_ok "${TEST_SOURCE_DIR}/multiline_and_refs/c-ref" 'c-prereqs'
+cylc shutdown "${SUITE_NAME}" --now -f
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"

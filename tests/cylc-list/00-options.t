@@ -16,25 +16,25 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #------------------------------------------------------------------------------
 # Test various uses of the cylc list command
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #------------------------------------------------------------------------------
 set_test_number 7
 #------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE $TEST_NAME_BASE
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-val
-run_ok $TEST_NAME cylc validate $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-val"
+run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-basic
-cylc list $SUITE_NAME > list.out
+TEST_NAME=${TEST_NAME_BASE}-basic
+cylc list "${SUITE_NAME}" > list.out
 cmp_ok list.out << __DONE__
 cujo
 fido
 manny
 __DONE__
 #------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-opt-a
-cylc ls -a $SUITE_NAME > list-a.out
+TEST_NAME=${TEST_NAME_BASE}-opt-a
+cylc ls -a "${SUITE_NAME}" > list-a.out
 cmp_ok list-a.out << __DONE__
 cujo
 fido
@@ -42,8 +42,8 @@ manny
 not-used
 __DONE__
 #------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-opt-n
-cylc list -n $SUITE_NAME > list-n.out
+TEST_NAME=${TEST_NAME_BASE}-opt-n
+cylc list -n "${SUITE_NAME}" > list-n.out
 cmp_ok list-n.out << __DONE__
 DOG
 FICTIONAL
@@ -56,8 +56,8 @@ not-used
 root
 __DONE__
 #------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-opt-nw
-cylc ls -nw $SUITE_NAME > list-nw.out
+TEST_NAME=${TEST_NAME_BASE}-opt-nw
+cylc ls -nw "${SUITE_NAME}" > list-nw.out
 cmp_ok list-nw.out << __DONE__
 DOG        a canid that is known as man's best friend
 FICTIONAL  something made-up
@@ -70,8 +70,8 @@ not-used   an unused namespace
 root       
 __DONE__
 #------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-opt-nm
-cylc list -nm $SUITE_NAME > list-nm.out
+TEST_NAME=${TEST_NAME_BASE}-opt-nm
+cylc list -nm "${SUITE_NAME}" > list-nm.out
 cmp_ok list-nm.out << __DONE__
 DOG        DOG MAMMAL root
 FICTIONAL  FICTIONAL root
@@ -84,8 +84,8 @@ not-used   not-used root
 root       root
 __DONE__
 #------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-opt-p
-cylc ls -p 20140808T00,20140812T00 $SUITE_NAME > list-p.out
+TEST_NAME=${TEST_NAME_BASE}-opt-p
+cylc ls -p 20140808T00,20140812T00 "${SUITE_NAME}" > list-p.out
 cmp_ok list-p.out << __DONE__
 cujo.20140808T0000Z
 cujo.20140809T0000Z
@@ -104,4 +104,4 @@ manny.20140811T0000Z
 manny.20140812T0000Z
 __DONE__
 #------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"

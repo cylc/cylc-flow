@@ -18,31 +18,31 @@
 # Test that message triggers (custom outputs) are actioned immediately even if
 # nothing else is happening at the time - GitHub #2548.
 
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 
 set_test_number 4
 
-install_suite $TEST_NAME_BASE $TEST_NAME_BASE
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-validate"
+run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 
 # The suite tests that two tasks suicide immediately on message triggers.
-TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --no-detach $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-run"
+suite_run_ok "${TEST_NAME}" cylc run --no-detach "${SUITE_NAME}"
 
 # Check that bar does nothing but suicide. 
-TEST_NAME=$TEST_NAME_BASE-cmp-bar
-cylc cat-log $SUITE_NAME | grep bar.1 | awk '{$1=""; print $0}' > bar.log
+TEST_NAME=${TEST_NAME_BASE}-cmp-bar
+cylc cat-log "${SUITE_NAME}" | grep bar.1 | awk '{$1=""; print $0}' > bar.log
 cmp_ok bar.log - << __END__
  INFO - [bar.1] -suiciding
 __END__
 
 # Check that baz does nothing but suicide. 
-TEST_NAME=$TEST_NAME_BASE-cmp-baz
-cylc cat-log $SUITE_NAME | grep baz.1 | awk '{$1=""; print $0}' > baz.log
+TEST_NAME=${TEST_NAME_BASE}-cmp-baz
+cylc cat-log "${SUITE_NAME}" | grep baz.1 | awk '{$1=""; print $0}' > baz.log
 cmp_ok baz.log - << __END__
  INFO - [baz.1] -suiciding
 __END__
 
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"

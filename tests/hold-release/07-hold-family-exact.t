@@ -16,17 +16,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test suite hold and family release, using an exact match for the family.
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 2
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE hold-family
+install_suite "${TEST_NAME_BASE}" hold-family
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-val
-run_ok $TEST_NAME cylc validate --set=HOLD_MATCH=STUFF $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-val"
+run_ok "${TEST_NAME}" cylc validate --set=HOLD_MATCH=STUFF "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --set=HOLD_MATCH=STUFF --reference-test \
-    --debug --no-detach $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-run"
+suite_run_ok "${TEST_NAME}" cylc run --set=HOLD_MATCH=STUFF --reference-test \
+    --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"

@@ -17,7 +17,7 @@
 
 # Test authentication - privilege 'state-totals'.
 
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 skip_all 'anon auth not supported'  # TODO
 set_test_number 10
 

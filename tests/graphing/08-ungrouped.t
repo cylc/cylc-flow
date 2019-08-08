@@ -16,20 +16,20 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test that ungrouped graphing works.
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 3
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE $TEST_NAME_BASE
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate "$SUITE_NAME"
+TEST_NAME="${TEST_NAME_BASE}-validate"
+run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-graph_suite $SUITE_NAME graph.plain
-cmp_ok graph.plain $TEST_SOURCE_DIR/$TEST_NAME_BASE/graph.plain.ref
+graph_suite "${SUITE_NAME}" 'graph.plain'
+cmp_ok graph.plain "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph.plain.ref"
 #-------------------------------------------------------------------------------
-graph_suite $SUITE_NAME graph.plain.suicide --ungrouped
+graph_suite "${SUITE_NAME}" 'graph.plain.suicide' --ungrouped
 cmp_ok graph.plain.suicide \
-    $TEST_SOURCE_DIR/$TEST_NAME_BASE/graph.plain.ungrouped.ref
+    "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph.plain.ungrouped.ref"
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"

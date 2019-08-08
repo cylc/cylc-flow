@@ -16,26 +16,21 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test runahead limit is being correctly reloaded
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 3
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE runahead
+install_suite "${TEST_NAME_BASE}" runahead
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-validate"
+run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-run_fail $TEST_NAME cylc run --debug --no-detach $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-run"
+run_fail "${TEST_NAME}" cylc run --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-if ! which sqlite3 > /dev/null; then
-    skip 1 "sqlite3 not installed?"
-    purge_suite "${SUITE_NAME}"
-    exit 0
-fi
-TEST_NAME=$TEST_NAME_BASE-check-fail
+TEST_NAME=${TEST_NAME_BASE}-check-fail
 DB_FILE="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/db"
 QUERY='SELECT COUNT(*) FROM task_states WHERE status == "failed"'
 run_ok "${TEST_NAME}" test "$(sqlite3 "${DB_FILE}" "${QUERY}")" -eq 4
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"

@@ -16,35 +16,33 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test cylc-get-site-config
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 10
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-get-config
-run_ok $TEST_NAME.validate cylc get-site-config
-run_ok $TEST_NAME.print-run-dir cylc get-site-config --print-run-dir
-run_ok $TEST_NAME.print-site-dir cylc get-site-config --print-site-dir
+TEST_NAME="${TEST_NAME_BASE}-get-config"
+run_ok "${TEST_NAME}.validate" cylc get-site-config
+run_ok "${TEST_NAME}.print-run-dir" cylc get-site-config --print-run-dir
+run_ok "${TEST_NAME}.print-site-dir" cylc get-site-config --print-site-dir
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-get-items
-run_ok $TEST_NAME.doc-section cylc get-site-config --item='[documentation]'
-run_ok $TEST_NAME.doc-section-python \
+TEST_NAME="${TEST_NAME_BASE}-get-items"
+run_ok "${TEST_NAME}.doc-section" cylc get-site-config --item='[documentation]'
+run_ok "${TEST_NAME}.doc-section-python" \
     cylc get-site-config --item='[documentation]' -p
-run_ok $TEST_NAME.multiple-secs \
+run_ok "${TEST_NAME}.multiple-secs" \
     cylc get-site-config --item='[documentation]' --item='[hosts]'
-run_ok $TEST_NAME.doc-entry \
+run_ok "${TEST_NAME}.doc-entry" \
     cylc get-site-config --item='[documentation]online'
-run_fail $TEST_NAME.non-existent \
+run_fail "${TEST_NAME}.non-existent" \
     cylc get-site-config --item='[this][doesnt]exist'
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run-dir
-run_ok $TEST_NAME cylc get-site-config --print-run-dir
+TEST_NAME="${TEST_NAME_BASE}-run-dir"
+run_ok "${TEST_NAME}" cylc get-site-config --print-run-dir
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-check-output
-VAL1=$(cylc get-site-config --item '[hosts][localhost]use login shell')
-VAL2=$(cylc get-site-config | sed -n '/\[\[localhost\]\]/,$p' | \
-    sed -n "0,/use login shell/s/^[ \t]*\(use login shell =.*\)/\1/p")
-echo use login shell = $VAL1 > testout
-echo $VAL2 > refout
-cmp_ok testout refout
+VAL1="$(cylc get-site-config --item '[hosts][localhost]use login shell')"
+VAL2="$(cylc get-site-config | sed -n '/\[\[localhost\]\]/,$p' | \
+    sed -n "0,/use login shell/s/^[ \t]*\(use login shell =.*\)/\1/p")"
+run_ok "${TEST_NAME_BASE}-check-output" \
+    test "use login shell = ${VAL1}" = "${VAL2}"
 #-------------------------------------------------------------------------------
 exit

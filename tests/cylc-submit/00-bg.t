@@ -16,8 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test "cylc submit" a background task.
-CYLC_TEST_IS_GENERIC=false
-. $(dirname $0)/test_header
+export CYLC_TEST_IS_GENERIC=false
+. "$(dirname "$0")/test_header"
 
 CYLC_TEST_HOST='localhost'
 if [[ "${TEST_NAME_BASE}" == *remote* ]]; then
@@ -52,8 +52,9 @@ if [[ -n "${CONFIGURED_SYS_NAME}" ]]; then
         skip_all "\"${ITEM_KEY}\" not set"
     fi
     ITEM_KEY="[test battery][batch systems][$CONFIGURED_SYS_NAME][directives]"
-    export CYLC_TEST_DIRECTIVES="$( \
+    CYLC_TEST_DIRECTIVES="$( \
         cylc get-global-config "--item=${ITEM_KEY}" 2>'/dev/null')"
+    export CYLC_TEST_DIRECTIVES
     CYLC_TEST_BATCH_SYS_NAME=$CONFIGURED_SYS_NAME
 fi
 SSH=
@@ -84,7 +85,9 @@ SUITE_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
 if [[ -n "${SSH}" ]]; then
     SUITE_DIR="${SUITE_DIR#"${HOME}/"}"
     ST_FILE="${SUITE_DIR}/log/job/1/foo/01/job.status"
+    # shellcheck disable=SC2086
     poll ! $SSH "grep -q 'CYLC_BATCH_SYS_JOB_ID=' \"${ST_FILE}\"" 2>/dev/null
+    # shellcheck disable=SC2086
     JOB_ID=$($SSH "cat \"${ST_FILE}\"" \
         | awk -F= '$1 == "CYLC_BATCH_SYS_JOB_ID" {print $2}')
 else
@@ -96,7 +99,9 @@ contains_ok "${TEST_NAME_BASE}.stdout" <<<"[foo.1] Job ID: ${JOB_ID}"
 cmp_ok "${TEST_NAME_BASE}.stderr" <'/dev/null'
 #-------------------------------------------------------------------------------
 if [[ -n "${SSH}" ]]; then
+    # shellcheck disable=SC2086
     poll ! $SSH "grep -q 'CYLC_JOB_INIT_TIME=' \"${ST_FILE}\"" 2>/dev/null
+    # shellcheck disable=SC2086
     poll ! $SSH "grep -q 'CYLC_JOB_EXIT=' \"${ST_FILE}\"" 2>/dev/null
     purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
 else

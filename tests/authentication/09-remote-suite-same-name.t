@@ -18,7 +18,7 @@
 # Test communication from a remote host (non-shared file system) when it has
 # a suite with the same name registered, but not running. (Obviously, it will
 # be very confused if it is running under its ~/cylc-run/SUITE as well.)
-CYLC_TEST_IS_GENERIC=false
+export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
 set_test_remote_host
 set_test_number 3
@@ -27,7 +27,9 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
 SSH_OPTS='-oBatchMode=yes -oConnectTimeout=5'
+# shellcheck disable=SC2029,SC2086
 ssh ${SSH_OPTS} "${CYLC_TEST_HOST}" mkdir -p "cylc-run/${SUITE_NAME}"
+# shellcheck disable=SC2086
 scp ${SSH_OPTS} -pqr "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/"* \
     "${CYLC_TEST_HOST}:cylc-run/${SUITE_NAME}"
 run_ok "${TEST_NAME_BASE}-register" \

@@ -16,13 +16,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test intercycle dependencies.
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 3
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-iso8601
-run_ok $TEST_NAME python $CYLC_REPO_DIR/cylc/flow/cycling/iso8601.py
-TEST_NAME=$TEST_NAME_BASE-integer
-run_ok $TEST_NAME python $CYLC_REPO_DIR/cylc/flow/cycling/integer.py
-TEST_NAME=$TEST_NAME_BASE-cycling
-run_ok $TEST_NAME python $CYLC_REPO_DIR/cylc/flow/cycling/__init__.py
+run_ok "${TEST_NAME_BASE}-cycling-iso8601" python3 -m 'cylc.flow.cycling.iso8601'
+run_ok "${TEST_NAME_BASE}-cycling-integer" python3 -m 'cylc.flow.cycling.integer'
+run_ok "${TEST_NAME_BASE}-cycling" python3 -c 'import cylc.flow.cycling'

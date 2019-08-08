@@ -20,9 +20,9 @@
 
 set_test_number 4
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-TEST_NAME=$TEST_NAME_BASE-validate
+TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}-validate" cylc validate "${SUITE_NAME}"
-TEST_NAME=$TEST_NAME_BASE-run
+TEST_NAME="${TEST_NAME_BASE}-run"
 suite_run_fail "${TEST_NAME_BASE}-run" \
     cylc run --no-detach --reference-test "${SUITE_NAME}"
 

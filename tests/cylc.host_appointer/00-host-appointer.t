@@ -66,13 +66,14 @@ grep_ok 'list item "foo bar" cannot contain a space character' \
     "${TEST_NAME_BASE}-invalid.stderr"
 
 create_test_globalrc '' ""  # reset global config before querying it
-export CYLC_TEST_HOST=$( \
+CYLC_TEST_HOST=$( \
     cylc get-global-config -i '[test battery]remote host with shared fs' \
     2>'/dev/null')
 if [[ -z "${CYLC_TEST_HOST}" ]]; then
     skip 5
     exit
 fi
+export CYLC_TEST_HOST
 
 # Condemned host in host list
 create_test_globalrc '' "

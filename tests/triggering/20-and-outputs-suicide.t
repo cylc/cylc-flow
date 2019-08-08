@@ -23,20 +23,16 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
-if which 'sqlite3' >'/dev/null'; then
-    DBFILE="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/db"
-    sqlite3 "${DBFILE}" 'SELECT * FROM task_pool ORDER BY cycle, name;' \
-        >'sqlite3.out'
-    cmp_ok 'sqlite3.out' <<'__OUT__'
+DBFILE="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/db"
+sqlite3 "${DBFILE}" 'SELECT * FROM task_pool ORDER BY cycle, name;' \
+    >'sqlite3.out'
+cmp_ok 'sqlite3.out' <<'__OUT__'
 2|fin|1|succeeded|0
 3|bad|1|succeeded|0
 3|fin|1|succeeded|0
 3|good|1|succeeded|0
 3|showdown|1|succeeded|0
 __OUT__
-else
-    skip 1 "sqlite3 not installed?"
-fi
 
 purge_suite "${SUITE_NAME}"
 exit

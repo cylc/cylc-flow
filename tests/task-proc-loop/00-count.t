@@ -21,7 +21,7 @@
 # response to task state changes.  It will need to be updated if that number
 # changes in the future.
 
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 
 set_test_number 3
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
@@ -30,7 +30,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 run_ok "${TEST_NAME_BASE}" cylc run --debug --no-detach "${SUITE_NAME}"
 
 SUITE_LOG_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/suite"
-count_ok "BEGIN TASK PROCESSING" $SUITE_LOG_DIR/log 6
+count_ok "BEGIN TASK PROCESSING" "${SUITE_LOG_DIR}/log" 6
 
 purge_suite "${SUITE_NAME}"
 exit

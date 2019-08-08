@@ -18,19 +18,19 @@
 # Test pre-initial cycling doesn't obliterate dependencies for tasks inserted
 # before the warm start point
 #-------------------------------------------------------------------------------
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 3
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE warm-insert-stall
+install_suite "${TEST_NAME_BASE}" warm-insert-stall
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-validate"
+run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-suite_run_fail $TEST_NAME cylc run --debug --no-detach $SUITE_NAME --warm 20100101T1800Z
+TEST_NAME="${TEST_NAME_BASE}-run"
+suite_run_fail "${TEST_NAME}" cylc run --debug --no-detach "${SUITE_NAME}" --warm 20100101T1800Z
 #-------------------------------------------------------------------------------
 grep_ok "WARNING - Unmet prerequisites for foo.20100101T1200Z:" \
     "${TEST_NAME_BASE}-run.stderr"
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"

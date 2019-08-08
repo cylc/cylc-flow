@@ -16,13 +16,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 . "$(dirname "$0")/test_header"
-export CYLC_TEST_HOST2=$( \
+CYLC_TEST_HOST2="$( \
     cylc get-global-config -i '[test battery]remote host with shared fs' \
-    2>'/dev/null')
+    2>'/dev/null')"
 if [[ -z "${CYLC_TEST_HOST2}" ]]; then
     skip_all '"[test battery]remote host with shared fs": not defined'
 fi
-export CYLC_TEST_HOST1="$(hostname)"
+export CYLC_TEST_HOST2
+export CYLC_TEST_HOST1="${HOSTNAME}"
 if ${CYLC_TEST_DEBUG:-false}; then ERR=2; else ERR=1; fi
 set_test_number 17
 
@@ -115,7 +116,7 @@ log_scan "${TEST_NAME}-stop" "${FILE}" 40 1 \
     'This suite will be shutdown as the suite host is unable to continue' \
     'Suite shutting down - REQUEST(NOW)' \
 
-run_ok "${TEST_NAME}-ps-2" ssh ${CYLC_TEST_HOST2} ps -fu "${USER}"
+run_ok "${TEST_NAME}-ps-2" ssh "${CYLC_TEST_HOST2}" ps -fu "${USER}"
 grep_ok "$(job-ps-line bar)" "${TEST_NAME}-ps-2.stdout"
 
 cylc stop "${SUITE_NAME}" --now --now 2>/dev/null

@@ -19,15 +19,15 @@
 # Test that spawning out to max active cycle points to allows tasks to run out
 # of order - see GitHub #1538, #1904.
 
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 set_test_number 2
 
-install_suite $TEST_NAME_BASE $TEST_NAME_BASE
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-validate"
+run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 
-TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --debug --no-detach --reference-test $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-run"
+suite_run_ok "${TEST_NAME}" cylc run --debug --no-detach --reference-test "${SUITE_NAME}"
 
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"

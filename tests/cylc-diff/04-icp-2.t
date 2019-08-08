@@ -30,6 +30,7 @@ init_suite "${TEST_NAME_BASE}-1" <<'__SUITE_RC__'
     [[foo, bar]]
         script = true
 __SUITE_RC__
+# shellcheck disable=SC2153
 SUITE_NAME1="${SUITE_NAME}"
 init_suite "${TEST_NAME_BASE}-2" <<'__SUITE_RC__'
 [cylc]
@@ -42,6 +43,7 @@ init_suite "${TEST_NAME_BASE}-2" <<'__SUITE_RC__'
     [[food, barley]]
         script = true
 __SUITE_RC__
+# shellcheck disable=SC2153
 SUITE_NAME2="${SUITE_NAME}"
 
 run_ok "${TEST_NAME_BASE}" \

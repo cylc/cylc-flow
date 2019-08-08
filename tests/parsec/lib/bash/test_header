@@ -58,111 +58,112 @@ set -eu
 FAILURES=0
 SIGNALS="EXIT INT"
 TEST_DIR=
-function FINALLY() {
-    for S in $SIGNALS; do
-        trap '' $S
+FINALLY() {
+    for S in ${SIGNALS}; do
+        trap '' "$S"
     done
-    if [[ -n $TEST_DIR ]]; then
+    if [[ -n "${TEST_DIR}" ]]; then
         cd ~
-        rm -rf $TEST_DIR
+        rm -rf "${TEST_DIR}"
     fi
-    if (($FAILURES > 0)); then
-        echo -e "\n    stdout and stderr stored in: $TEST_LOG_DIR" >&2
+    if ((FAILURES > 0)); then
+        echo -e "\n    stdout and stderr stored in: ${TEST_LOG_DIR}" >&2
     fi
 }
-for S in $SIGNALS; do
-    trap "FINALLY $S" $S
+for S in ${SIGNALS}; do
+    # shellcheck disable=SC2064
+    trap "FINALLY ${S}" "${S}"
 done
 
 TEST_NUMBER=0
 
-function set_test_number() {
+set_test_number() {
     echo "1..$1"
 }
 
-function ok() {
+ok() {
     echo "ok $((++TEST_NUMBER)) - $*"
 }
 
-function fail() {
+fail() {
     ((++FAILURES))
     echo "not ok $((++TEST_NUMBER)) - $*"
 }
 
-function run_ok() {
-    local TEST_NAME=$1
+run_ok() {
+    local TEST_NAME="$1"
     shift 1
-    if ! "$@" 1>$TEST_NAME.stdout 2>$TEST_NAME.stderr; then
-        fail $TEST_NAME
-        mkdir -p $TEST_LOG_DIR
-        cp $TEST_NAME.stdout $TEST_LOG_DIR/$TEST_NAME.stdout
-        cp $TEST_NAME.stderr $TEST_LOG_DIR/$TEST_NAME.stderr
+    if ! "$@" 1>"${TEST_NAME}.stdout" 2>"${TEST_NAME}.stderr"; then
+        fail "${TEST_NAME}"
+        mkdir -p "${TEST_LOG_DIR}"
+        cp "${TEST_NAME}.stdout" "${TEST_LOG_DIR}/${TEST_NAME}.stdout"
+        cp "${TEST_NAME}.stderr" "${TEST_LOG_DIR}/${TEST_NAME}.stderr"
         return
     fi
-    ok $TEST_NAME
+    ok "${TEST_NAME}"
 }
 
-function run_fail() {
-    local TEST_NAME=$1
+run_fail() {
+    local TEST_NAME="$1"
     shift 1
-    if "$@" 1>$TEST_NAME.stdout 2>$TEST_NAME.stderr; then
-        fail $TEST_NAME
-        mkdir -p $TEST_LOG_DIR
-        cp $TEST_NAME.stdout $TEST_LOG_DIR/$TEST_NAME.stdout
-        cp $TEST_NAME.stderr $TEST_LOG_DIR/$TEST_NAME.stderr
+    if "$@" 1>"${TEST_NAME}.stdout" 2>"${TEST_NAME}.stderr"; then
+        fail "${TEST_NAME}"
+        mkdir -p "${TEST_LOG_DIR}"
+        cp "${TEST_NAME}.stdout" "${TEST_LOG_DIR}/${TEST_NAME}.stdout"
+        cp "${TEST_NAME}.stderr" "${TEST_LOG_DIR}/${TEST_NAME}.stderr"
         return
     fi
-    ok $TEST_NAME
+    ok "${TEST_NAME}"
 }
 
-function cmp_ok() {
-    local FILE_TEST=$1
-    local FILE_CONTROL=${2:--}
-    local TEST_NAME=$(basename $FILE_TEST)-cmp-ok
-    local CMP_COMMAND="cmp"
-    if [[ -n ${TEST_DEBUG_CMP:-} ]]; then
-        CMP_COMMAND="xxdiff -D"
-    fi
-    if $CMP_COMMAND $FILE_TEST $FILE_CONTROL; then
-        ok $TEST_NAME
+cmp_ok() {
+    local FILE_TEST="$1"
+    local FILE_CONTROL="${2:--}"
+    local TEST_NAME
+    TEST_NAME="$(basename "${FILE_TEST}")-cmp-ok"
+    if diff -u "${FILE_TEST}" "${FILE_CONTROL}" >&2; then
+        ok "${TEST_NAME}"
         return
     fi
-    fail $TEST_NAME
+    fail "${TEST_NAME}"
 }
 
-function grep_ok() {
-    local BRE=$1
-    local FILE=$2
-    local TEST_NAME=$(basename $FILE)-grep-ok
-    if grep -q -e "$BRE" $FILE; then
-        ok $TEST_NAME
+grep_ok() {
+    local BRE="$1"
+    local FILE="$2"
+    local TEST_NAME
+    TEST_NAME="$(basename "${FILE}")-grep-ok"
+    if grep -q -e "${BRE}" "${FILE}"; then
+        ok "${TEST_NAME}"
         return
     fi
-    fail $TEST_NAME
+    fail "${TEST_NAME}"
 }
 
-function exists_ok() {
+exists_ok() {
+    local FILE="$1"
+    local TEST_NAME
+    TEST_NAME="$(basename "${FILE}")-file-exists-ok"
+    if [[ -a "${FILE}" ]]; then
+        ok "${TEST_NAME}"
+        return
+    fi
+    fail "${TEST_NAME}"
+}
+
+exists_fail() {
     local FILE=$1
-    local TEST_NAME=$(basename $FILE)-file-exists-ok
-    if [[ -a $FILE ]]; then
-        ok $TEST_NAME
+    local TEST_NAME
+    TEST_NAME="$(basename "${FILE}")-file-exists-fail"
+    if [[ ! -a "${FILE}" ]]; then
+        ok "${TEST_NAME}"
         return
     fi
-    fail $TEST_NAME
+    fail "${TEST_NAME}"
 }
 
-function exists_fail() {
-    local FILE=$1
-    local TEST_NAME=$(basename $FILE)-file-exists-fail
-    if [[ ! -a $FILE ]]; then
-        ok $TEST_NAME
-        return
-    fi
-    fail $TEST_NAME
-}
-
-function skip() {
-    local N_TO_SKIP=$1
+skip() {
+    local N_TO_SKIP="$1"
     shift 1
     local COUNT=0
     while ((COUNT++ < N_TO_SKIP)); do
@@ -170,25 +171,26 @@ function skip() {
     done
 }
 
-function install_test() {
-    ORIG_TEST_NAME=${2:-$TEST_NAME_BASE}
-    SNAME=$( echo ${TEST_SOURCE_DIR##*tests/} | tr '/' '_' )
-    NEW_TEST_NAME=$(date -u +%Y%m%d%H%M%S)_parse_test_${SNAME}_${1}
-    NTDIR=$TEST_DIR/$NEW_TEST_NAME/
-    mkdir $NTDIR
-    if [[ -d $TEST_SOURCE_DIR/$ORIG_TEST_NAME ]]; then
-        cp -r $TEST_SOURCE_DIR/$ORIG_TEST_NAME $NTDIR
+install_test() {
+    local ORIG_TEST_NAME SNAME NEW_TEST_NAME
+    ORIG_TEST_NAME="${2:-${TEST_NAME_BASE}}"
+    SNAME="$(tr '/' '_' <<<"${TEST_SOURCE_DIR##*tests/}")"
+    NEW_TEST_NAME="$(date -u +%Y%m%d%H%M%S)_parse_test_${SNAME}_${1}"
+    NTDIR="${TEST_DIR}/${NEW_TEST_NAME}/"
+    mkdir "${NTDIR}"
+    if [[ -d "${TEST_SOURCE_DIR}/${ORIG_TEST_NAME}" ]]; then
+        cp -r "${TEST_SOURCE_DIR}/${ORIG_TEST_NAME}" "${NTDIR}"
     else
-        mkdir $NTDIR/$ORIG_TEST_NAME
+        mkdir "${NTDIR}/${ORIG_TEST_NAME}"
     fi
-    cd $NTDIR/$ORIG_TEST_NAME
+    cd "${NTDIR}/${ORIG_TEST_NAME}"
 }
 
-TEST_NAME_BASE=$(basename $0 .t)
-TEST_SOURCE_DIR=$(cd $(dirname $0) && pwd)
-PATH=$TEST_SOURCE_DIR/bin:$PATH
-TEST_DIR=$(mktemp -d)
-cd $TEST_DIR
-TEST_LOG_DIR=${TMPDIR:-/tmp}/parsec-tests/$(basename $TEST_SOURCE_DIR)
+TEST_NAME_BASE="$(basename "$0" '.t')"
+TEST_SOURCE_DIR="$(cd "$(dirname "$0")" && pwd)"
+PATH="${TEST_SOURCE_DIR}/bin:${PATH}"
+TEST_DIR="$(mktemp -d)"
+cd "${TEST_DIR}"
+TEST_LOG_DIR="${TMPDIR:-/tmp}/parsec-tests/$(basename "${TEST_SOURCE_DIR}")"
 
 set +e

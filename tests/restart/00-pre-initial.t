@@ -24,11 +24,6 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run --debug --no-detach "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-restart" cylc restart --debug --no-detach "${SUITE_NAME}"
 
-if ! which sqlite3 > /dev/null; then
-    skip 1 "sqlite3 not installed?"
-    purge_suite "${SUITE_NAME}"
-    exit 0
-fi
 RUND="$(cylc get-global-config --print-run-dir)"
 sqlite3 "${RUND}/${SUITE_NAME}/log/db" \
     'SELECT name, cycle, status FROM task_states ORDER BY name, cycle' \

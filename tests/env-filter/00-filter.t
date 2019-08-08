@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test environment filtering
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 17 
 #-------------------------------------------------------------------------------
@@ -51,46 +51,46 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
 __SUITERC__
 #-------------------------------------------------------------------------------
 # check validation
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc val $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-validate"
+run_ok "${TEST_NAME}" cylc val "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 # check that get-config retrieves only the filtered environment
-TEST_NAME=$TEST_NAME_BASE-get-config
+TEST_NAME=${TEST_NAME_BASE}-get-config
 
-run_ok $TEST_NAME cylc get-config --item='[runtime][foo]environment' $SUITE_NAME
-cmp_ok $TEST_NAME.stdout - <<__OUT__
+run_ok "${TEST_NAME}" cylc get-config --item='[runtime][foo]environment' "${SUITE_NAME}"
+cmp_ok "${TEST_NAME}.stdout" - <<__OUT__
 FOO = foo
 BAR = bar
 __OUT__
-cmp_ok $TEST_NAME.stderr - </dev/null
+cmp_ok "${TEST_NAME}.stderr" - </dev/null
 
-run_ok $TEST_NAME cylc get-config --item='[runtime][bar]environment' $SUITE_NAME
-cmp_ok $TEST_NAME.stdout - <<__OUT__
+run_ok "${TEST_NAME}" cylc get-config --item='[runtime][bar]environment' "${SUITE_NAME}"
+cmp_ok "${TEST_NAME}.stdout" - <<__OUT__
 BAR = bar
 __OUT__
-cmp_ok $TEST_NAME.stderr - </dev/null
+cmp_ok "${TEST_NAME}.stderr" - </dev/null
 
-run_ok $TEST_NAME cylc get-config --item='[runtime][baz]environment' $SUITE_NAME
-cmp_ok $TEST_NAME.stdout - <<__OUT__
+run_ok "${TEST_NAME}" cylc get-config --item='[runtime][baz]environment' "${SUITE_NAME}"
+cmp_ok "${TEST_NAME}.stdout" - <<__OUT__
 BAZ = baz
 QUX = qux
 __OUT__
-cmp_ok $TEST_NAME.stderr - </dev/null
+cmp_ok "${TEST_NAME}.stderr" - </dev/null
 
-run_ok $TEST_NAME cylc get-config --item='[runtime][qux]environment' $SUITE_NAME
-cmp_ok $TEST_NAME.stdout - <<__OUT__
+run_ok "${TEST_NAME}" cylc get-config --item='[runtime][qux]environment' "${SUITE_NAME}"
+cmp_ok "${TEST_NAME}.stdout" - <<__OUT__
 FOO = foo
 BAR = bar
 BAZ = baz
 QUX = qux
 __OUT__
-cmp_ok $TEST_NAME.stderr - </dev/null
+cmp_ok "${TEST_NAME}.stderr" - </dev/null
 
 #-------------------------------------------------------------------------------
 # check that task job scripts contain only the filtered environment
-TEST_NAME=$TEST_NAME_BASE-jobscript
+TEST_NAME=${TEST_NAME_BASE}-jobscript
 
-cylc jobscript $SUITE_NAME foo.1 2> /dev/null | \
+cylc jobscript "${SUITE_NAME}" foo.1 2> /dev/null | \
     perl -0777 -ne 'print $1 if /# TASK RUNTIME ENVIRONMENT:\n(.*?)\}/s' \
     >'foo.1.stdout'
 cmp_ok 'foo.1.stdout' - <<__OUT__
@@ -99,7 +99,7 @@ cmp_ok 'foo.1.stdout' - <<__OUT__
     BAR="bar"
 __OUT__
 
-cylc jobscript $SUITE_NAME bar.1 2> /dev/null | \
+cylc jobscript "${SUITE_NAME}" bar.1 2> /dev/null | \
     perl -0777 -ne 'print $1 if /# TASK RUNTIME ENVIRONMENT:\n(.*?)\}/s' \
     >'bar.1.stdout'
 cmp_ok 'bar.1.stdout' - <<__OUT__
@@ -107,7 +107,7 @@ cmp_ok 'bar.1.stdout' - <<__OUT__
     BAR="bar"
 __OUT__
 
-cylc jobscript $SUITE_NAME baz.1 2> /dev/null | \
+cylc jobscript "${SUITE_NAME}" baz.1 2> /dev/null | \
     perl -0777 -ne 'print $1 if /# TASK RUNTIME ENVIRONMENT:\n(.*?)\}/s' \
     >'baz.1.stdout'
 cmp_ok 'baz.1.stdout' - <<__OUT__
@@ -116,7 +116,7 @@ cmp_ok 'baz.1.stdout' - <<__OUT__
     QUX="qux"
 __OUT__
 
-cylc jobscript $SUITE_NAME qux.1 2> /dev/null | \
+cylc jobscript "${SUITE_NAME}" qux.1 2> /dev/null | \
     perl -0777 -ne 'print $1 if /# TASK RUNTIME ENVIRONMENT:\n(.*?)\}/s' \
     >'qux.1.stdout'
 cmp_ok 'qux.1.stdout' - <<__OUT__

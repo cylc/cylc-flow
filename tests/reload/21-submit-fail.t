@@ -26,11 +26,6 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
     "${TEST_DIR}/${SUITE_NAME}/bin/mycylcrun" \
     --debug --no-detach --reference-test "${SUITE_NAME}"
-if ! which sqlite3 > /dev/null; then
-    skip 1 "sqlite3 not installed?"
-    purge_suite "${SUITE_NAME}"
-    exit 0
-fi
 sqlite3 "${SUITE_RUN_DIR}/.service/db" \
     'SELECT name,status FROM task_states WHERE name=="t1"' >'db.out'
 cmp_ok 'db.out' <<'__OUT__'

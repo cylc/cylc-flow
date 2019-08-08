@@ -16,18 +16,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test strict validation of suite for tasks with inherit = [blank]
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 3
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE $TEST_NAME_BASE
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-val
-run_ok $TEST_NAME cylc validate $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-val"
+run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-graph-check
-run_ok $TEST_NAME cylc graph --reference $SUITE_NAME
-cmp_ok "$TEST_NAME.stdout" <<'__OUT__'
+TEST_NAME=${TEST_NAME_BASE}-graph-check
+run_ok "${TEST_NAME}" cylc graph --reference "${SUITE_NAME}"
+cmp_ok "${TEST_NAME}.stdout" <<'__OUT__'
 edge "bar.1" "baz.1"
 edge "foo.1" "bar.1"
 edge "foo.1" "qux.1"
@@ -40,4 +40,4 @@ node "qux.1" "qux\n1"
 stop
 __OUT__
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"

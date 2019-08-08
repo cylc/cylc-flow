@@ -27,11 +27,6 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 sort 'broadcast.log' >'broadcast.log.sorted'
 cmp_ok 'broadcast.ref' 'broadcast.log.sorted'
 
-if ! which sqlite3 > /dev/null; then
-    skip 2 "sqlite3 not installed?"
-    exit 0
-fi
-
 DB_FILE="${SUITE_RUN_DIR}/log/db"
 NAME='select-broadcast-events.out'
 sqlite3 "${DB_FILE}" \

@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test that suite does not set remote job TZ when in local time.
-CYLC_TEST_IS_GENERIC=false
+export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
 
 set_test_remote_host

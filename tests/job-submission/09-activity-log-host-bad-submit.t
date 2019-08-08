@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Test bad job submission, activity log has original command and some stderr
 # with the host name written.
-CYLC_TEST_IS_GENERIC=false
+export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
 set_test_remote_host
 set_test_number 2

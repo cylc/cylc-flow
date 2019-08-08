@@ -16,18 +16,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test cylc insert command with an invalid cycle point
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 4
 #-------------------------------------------------------------------------------
-install_suite "$TEST_NAME_BASE" "$TEST_NAME_BASE"
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-validate"
+run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-suite_run_fail $TEST_NAME cylc run -v -v --reference-test --debug --no-detach $SUITE_NAME
-grep_ok "No matching tasks found: foo.teatime" $TEST_NAME.stderr
-grep_ok "Invalid ISO 8601 date representation: teatime" $TEST_NAME.stderr
+TEST_NAME="${TEST_NAME_BASE}-run"
+suite_run_fail "${TEST_NAME}" cylc run -v -v --reference-test --debug --no-detach "${SUITE_NAME}"
+grep_ok "No matching tasks found: foo.teatime" "${TEST_NAME}.stderr"
+grep_ok "Invalid ISO 8601 date representation: teatime" "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"

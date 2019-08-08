@@ -16,28 +16,29 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test killing of jobs submitted to loadleveler, slurm, pbs...
-CYLC_TEST_IS_GENERIC=false
-. $(dirname $0)/test_header
+export CYLC_TEST_IS_GENERIC=false
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 BATCH_SYS_NAME="${TEST_NAME_BASE##??-}"
 RC_PREF="[test battery][batch systems][$BATCH_SYS_NAME]"
-export CYLC_TEST_BATCH_TASK_HOST=$( \
-    cylc get-global-config -i "${RC_PREF}host" 2>'/dev/null')
-export CYLC_TEST_BATCH_SITE_DIRECTIVES=$( \
-    cylc get-global-config -i "${RC_PREF}[directives]" 2>'/dev/null')
+CYLC_TEST_BATCH_TASK_HOST="$( \
+    cylc get-global-config -i "${RC_PREF}host" 2>'/dev/null')"
+CYLC_TEST_BATCH_SITE_DIRECTIVES="$( \
+    cylc get-global-config -i "${RC_PREF}[directives]" 2>'/dev/null')"
 if [[ -z "${CYLC_TEST_BATCH_TASK_HOST}" || "${CYLC_TEST_BATCH_TASK_HOST}" == None ]]
 then
     skip_all "\"[test battery][batch systems][$BATCH_SYS_NAME]host\" not defined"
 fi
+export CYLC_TEST_BATCH_TASK_HOST CYLC_TEST_BATCH_SITE_DIRECTIVES
 set_test_number 2
 
-install_suite $TEST_NAME_BASE $TEST_NAME_BASE
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-validate"
+run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --reference-test --debug --no-detach $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-run"
+suite_run_ok "${TEST_NAME}" cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 if [[ $CYLC_TEST_BATCH_TASK_HOST != 'localhost' ]]; then
     purge_suite_remote "${CYLC_TEST_BATCH_TASK_HOST}" "${SUITE_NAME}"

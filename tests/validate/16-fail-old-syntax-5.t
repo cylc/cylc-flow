@@ -16,17 +16,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test validation with a new-style cycle point and start-up tasks.
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 2
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE $TEST_NAME_BASE
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE
-run_fail $TEST_NAME cylc validate $SUITE_NAME
-cmp_ok "$TEST_NAME.stderr" <<__END__
+TEST_NAME=${TEST_NAME_BASE}
+run_fail "${TEST_NAME}" cylc validate "${SUITE_NAME}"
+cmp_ok "${TEST_NAME}.stderr" <<__END__
 IllegalItemError: [scheduling][special tasks]start-up
 __END__
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"
 exit

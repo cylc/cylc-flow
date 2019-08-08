@@ -27,44 +27,44 @@ run_ok "${TEST_NAME}" cylc get-config "${SUITE_NAME}"
 run_ok "${TEST_NAME}-validate" cylc validate --strict "${TEST_NAME}.stdout"
 cmp_ok "${TEST_NAME}.stderr" <'/dev/null'
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-section1
-run_ok $TEST_NAME cylc get-config --item=[scheduling] $SUITE_NAME
-cmp_ok $TEST_NAME.stdout "$TEST_SOURCE_DIR/$TEST_NAME_BASE/section1.stdout"
-cmp_ok $TEST_NAME.stderr - </dev/null
+TEST_NAME=${TEST_NAME_BASE}-section1
+run_ok "${TEST_NAME}" cylc get-config --item=[scheduling] "${SUITE_NAME}"
+cmp_ok "${TEST_NAME}.stdout" "$TEST_SOURCE_DIR/${TEST_NAME_BASE}/section1.stdout"
+cmp_ok "${TEST_NAME}.stderr" - </dev/null
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-section1-section
-run_ok $TEST_NAME cylc get-config --item=[scheduling][graph] $SUITE_NAME
-cmp_ok $TEST_NAME.stdout - <<__OUT__
+TEST_NAME=${TEST_NAME_BASE}-section1-section
+run_ok "${TEST_NAME}" cylc get-config --item=[scheduling][graph] "${SUITE_NAME}"
+cmp_ok "${TEST_NAME}.stdout" - <<__OUT__
 R1 = OPS:finish-all => VAR
 __OUT__
-cmp_ok $TEST_NAME.stderr - </dev/null
+cmp_ok "${TEST_NAME}.stderr" - </dev/null
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-section1-section-option
-run_ok $TEST_NAME \
-    cylc get-config --item=[scheduling][graph]R1 $SUITE_NAME
-cmp_ok $TEST_NAME.stdout - <<__OUT__
+TEST_NAME=${TEST_NAME_BASE}-section1-section-option
+run_ok "${TEST_NAME}" \
+    cylc get-config --item=[scheduling][graph]R1 "${SUITE_NAME}"
+cmp_ok "${TEST_NAME}.stdout" - <<__OUT__
 OPS:finish-all => VAR
 __OUT__
-cmp_ok $TEST_NAME.stderr - </dev/null
+cmp_ok "${TEST_NAME}.stderr" - </dev/null
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-section2
-run_ok $TEST_NAME cylc get-config --item=[runtime] $SUITE_NAME
+TEST_NAME=${TEST_NAME_BASE}-section2
+run_ok "${TEST_NAME}" cylc get-config --item=[runtime] "${SUITE_NAME}"
 # Crude sorting to handle against change of dict order when new items added:
-sort ${TEST_NAME}.stdout > stdout.1
-sort "$TEST_SOURCE_DIR/$TEST_NAME_BASE/section2.stdout" > stdout.2
+sort "${TEST_NAME}.stdout" > stdout.1
+sort "$TEST_SOURCE_DIR/${TEST_NAME_BASE}/section2.stdout" > stdout.2
 cmp_ok stdout.1 stdout.2
-cmp_ok $TEST_NAME.stderr - </dev/null
+cmp_ok "${TEST_NAME}.stderr" - </dev/null
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-python
-run_ok $TEST_NAME cylc get-config --python --sparse $SUITE_NAME
-run_ok $TEST_NAME-parse-config python3 -c "
+TEST_NAME=${TEST_NAME_BASE}-python
+run_ok "${TEST_NAME}" cylc get-config --python --sparse "${SUITE_NAME}"
+run_ok "${TEST_NAME}-parse-config" python3 -c "
 import sys
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 with open(sys.argv[1], 'r') as file_:
     print(eval(file_.read()))
-" "$TEST_NAME.stdout"
-cmp_ok "$TEST_NAME-parse-config.stdout" "$TEST_NAME.stdout"
-cmp_ok "$TEST_NAME-parse-config.stderr" /dev/null
+" "${TEST_NAME}.stdout"
+cmp_ok "${TEST_NAME}-parse-config.stdout" "${TEST_NAME}.stdout"
+cmp_ok "${TEST_NAME}-parse-config.stderr" '/dev/null'
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"
 exit

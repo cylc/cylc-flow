@@ -28,19 +28,10 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 grep -A 3 -F 'WARNING - cannot execute database statement:' \
     "${TEST_NAME_BASE}-run.stderr" > "${TEST_NAME_BASE}-run.stderr.grep"
 # The following "sed" turns the value for "time_submit_exit" to "?"
-sed -i "s/, '[^T']*T[^Z']*Z',/, '?',/" \
-    "${TEST_NAME_BASE}-run.stderr.grep"
-JOB_PID="$(awk -F'=' '$1 == "CYLC_JOB_PID" {print $2}' \
-    "${SUITE_RUN_DIR}/log/job/1/locker/01/job.status")" >&2
+sed -i "s/, '[^T']*T[^Z']*Z',/, '?',/" "${TEST_NAME_BASE}-run.stderr.grep"
 # Cannot use cmp_ok as the error message is prefixed by a timestamp.
 grep_ok "WARNING - cannot execute database statement:" \
     "${TEST_NAME_BASE}-run.stderr.grep"
-
-if ! which sqlite3 > /dev/null; then
-    skip 1 "sqlite3 not installed?"
-    purge_suite "${SUITE_NAME}"
-    exit 0
-fi
 
 DB_FILE="$(cylc get-global-config '--print-run-dir')/${SUITE_NAME}/log/db"
 

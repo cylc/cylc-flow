@@ -16,12 +16,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test parsing of string items
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 
 #-------------------------------------------------------------------------------
 set_test_number 1
 
-install_test $TEST_NAME_BASE
+install_test "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE
-run_ok $TEST_NAME synonyms.py string
+TEST_NAME=${TEST_NAME_BASE}
+run_ok "${TEST_NAME}" synonyms.py string

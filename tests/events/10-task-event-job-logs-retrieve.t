@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Test remote job logs retrieval, requires compatible version of cylc on remote
 # job host.
-CYLC_TEST_IS_GENERIC=false
+export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
 set_test_remote
 set_test_number 4
@@ -33,9 +33,11 @@ fi
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
+# shellcheck disable=SC2086
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate ${OPT_SET} -s "HOST=${CYLC_TEST_HOST}" \
        -s "OWNER=${CYLC_TEST_OWNER}" "${SUITE_NAME}"
+# shellcheck disable=SC2086
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug --no-detach ${OPT_SET} \
        -s "HOST=${CYLC_TEST_HOST}" -s "OWNER=${CYLC_TEST_OWNER}" "${SUITE_NAME}"

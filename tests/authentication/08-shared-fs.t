@@ -17,12 +17,13 @@
 #-------------------------------------------------------------------------------
 # Test sending commands to a suite on a host with shared file system with
 # current host.
-CYLC_TEST_IS_GENERIC=false
+export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
 
-export CYLC_TEST_HOST=$( \
+CYLC_TEST_HOST="$( \
     cylc get-global-config -i '[test battery]remote host with shared fs' \
-    2>'/dev/null')
+    2>'/dev/null')"
+export CYLC_TEST_HOST
 if [[ -z "${CYLC_TEST_HOST}" ]]; then
     skip_all '"[test battery]remote host with shared fs": not defined'
 fi

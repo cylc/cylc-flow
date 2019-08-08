@@ -25,7 +25,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
 
-N_HOST_SELECT_CMDS="$(ls "${SUITE_RUN_DIR}/host-select-"* | wc -l)"
+N_HOST_SELECT_CMDS="$(find "${SUITE_RUN_DIR}" -name 'host-select-*' | wc -l)"
 run_ok "${TEST_NAME_BASE}-n-host-select-cmds" test "${N_HOST_SELECT_CMDS}" -eq 1
 purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"

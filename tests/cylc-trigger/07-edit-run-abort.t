@@ -19,7 +19,7 @@
 # Test that aborting an edit-run has no effect on the next run
 # (GitHub #2461, #2629)
 
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 
 set_test_number 2
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"

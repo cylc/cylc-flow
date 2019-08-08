@@ -16,20 +16,21 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test execution time limit setting, PBS job
-CYLC_TEST_IS_GENERIC=false
+export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 CYLC_TEST_BATCH_SYS="${TEST_NAME_BASE##??-}"
 RC_PREF="[test battery][batch systems][$CYLC_TEST_BATCH_SYS]"
-export CYLC_TEST_BATCH_TASK_HOST=$( \
-    cylc get-global-config -i "${RC_PREF}host" 2>'/dev/null')
-export CYLC_TEST_BATCH_SITE_DIRECTIVES=$( \
-    cylc get-global-config -i "${RC_PREF}[directives]" 2>'/dev/null')
+CYLC_TEST_BATCH_TASK_HOST="$( \
+    cylc get-global-config -i "${RC_PREF}host" 2>'/dev/null')"
+CYLC_TEST_BATCH_SITE_DIRECTIVES="$( \
+    cylc get-global-config -i "${RC_PREF}[directives]" 2>'/dev/null')"
 if [[ -z "${CYLC_TEST_BATCH_TASK_HOST}" || \
     "${CYLC_TEST_BATCH_TASK_HOST}" == None ]]
 then
     skip_all "\"[test battery][batch systems][$CYLC_TEST_BATCH_SYS]host\" not defined"
 fi
+export CYLC_TEST_BATCH_TASK_HOST CYLC_TEST_BATCH_SITE_DIRECTIVES
 set_test_number 3
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
@@ -41,7 +42,6 @@ run_ok "${TEST_NAME_BASE}-validate" \
     -s "CYLC_TEST_BATCH_SITE_DIRECTIVES=${CYLC_TEST_BATCH_SITE_DIRECTIVES}" \
     "${SUITE_NAME}"
 
-TEST_NAME=$TEST_NAME_BASE-run
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug --no-detach \
     -s "CYLC_TEST_BATCH_SYS=${CYLC_TEST_BATCH_SYS}" \

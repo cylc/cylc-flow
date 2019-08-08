@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Test "cylc message" in SSH mode, test needs to have compatible version
 # installed on the remote host.
-CYLC_TEST_IS_GENERIC=false
+export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_remote_host

@@ -17,16 +17,16 @@
 #-------------------------------------------------------------------------------
 # Test validation catches use of 'runahead limit' and 'max active cycle points'
 # which are mutually exclusive.
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 2
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE $TEST_NAME_BASE
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE
-run_fail $TEST_NAME cylc validate -v $SUITE_NAME
+TEST_NAME=${TEST_NAME_BASE}
+run_fail "${TEST_NAME}" cylc validate -v "${SUITE_NAME}"
 grep_ok "SuiteConfigError: use 'runahead limit' OR 'max active cycle points', not both" \
-  $TEST_NAME.stderr
+  "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"
 exit

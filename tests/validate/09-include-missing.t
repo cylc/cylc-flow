@@ -16,13 +16,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test validation missing include-file.
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 2
 echo '%include foo.rc' >suite.rc
 echo '%include bar.rc' >foo.rc
-run_fail "$TEST_NAME_BASE" cylc validate suite.rc
-cmp_ok "$TEST_NAME_BASE.stderr" <<__ERR__
+run_fail "${TEST_NAME_BASE}" cylc validate suite.rc
+cmp_ok "${TEST_NAME_BASE}.stderr" <<__ERR__
 IncludeFileNotFoundError: bar.rc via foo.rc from $PWD/suite.rc
 __ERR__
 #-------------------------------------------------------------------------------
