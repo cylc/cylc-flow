@@ -20,7 +20,7 @@
 # that stops once cycle short, so it should abort with waiting tasks.
 
 . $(dirname $0)/test_header
-set_test_number 6
+set_test_number 8
 
 install_suite ${TEST_NAME_BASE} ${TEST_NAME_BASE}
 
@@ -44,7 +44,7 @@ suite_run_fail ${TEST_NAME} \
 SUITE_LOG=$(cylc cat-log -m p $SUITE_NAME)
 grep_ok "WARNING - suite timed out after inactivity for PT10S" $SUITE_LOG
 
-# ... with 2016 tasks in the waiting state. 
+# ... with 2016 tasks in the waiting state.
 cylc suite-state -p 2016 $SUITE_NAME > suite_state.out
 contains_ok suite_state.out << __END__
 foo, 2016, succeeded
@@ -64,6 +64,48 @@ contains_ok "${JOB_LOG}" << __END__
     upstream_offset="None"
     upstream_suite="$SUITE_NAME_UPSTREAM"
 __END__
+
+# Check broadcast of xtrigger outputs is recorded: 1) in the suite log...
+#
+# Lines are those which should appear after a '<datetimestamp> INFO - Broadcast
+# set' ('+') and later '... INFO - Broadcast cancelled:' ('-') line, where we
+# use as a test case an arbitary task where such setting & cancellation occurs:
+contains_ok "${SUITE_LOG}" << __LOG_BROADCASTS__
+	+ [f1.2015] [environment]upstream_suite=${SUITE_NAME_UPSTREAM}
+	+ [f1.2015] [environment]upstream_task=foo
+	+ [f1.2015] [environment]upstream_point=2015
+	+ [f1.2015] [environment]upstream_offset=None
+	+ [f1.2015] [environment]upstream_status=succeeded
+	+ [f1.2015] [environment]upstream_message=data ready
+	- [f1.2015] [environment]upstream_suite=${SUITE_NAME_UPSTREAM}
+	- [f1.2015] [environment]upstream_task=foo
+	- [f1.2015] [environment]upstream_point=2015
+	- [f1.2015] [environment]upstream_status=succeeded
+	- [f1.2015] [environment]upstream_message=data ready
+__LOG_BROADCASTS__
+# ... and 2) in the DB.
+TEST_NAME="${TEST_NAME_BASE}-check-broadcast-in-db"
+if ! command -v 'sqlite3' >'/dev/null'; then
+    skip 1 "sqlite3 not installed?"
+fi
+DB_FILE="$(cylc get-global-config '--print-run-dir')/${SUITE_NAME}/log/db"
+NAME='db-broadcast-states.out'
+sqlite3 "${DB_FILE}" \
+    'SELECT change, point, namespace, key, value FROM broadcast_events
+     ORDER BY time, change, point, namespace, key' >"${NAME}"
+contains_ok "${NAME}" << __DB_BROADCASTS__
++|2015|f1|[environment]upstream_message|data ready
++|2015|f1|[environment]upstream_offset|None
++|2015|f1|[environment]upstream_point|2015
++|2015|f1|[environment]upstream_status|succeeded
++|2015|f1|[environment]upstream_suite|${SUITE_NAME_UPSTREAM}
++|2015|f1|[environment]upstream_task|foo
+-|2015|f1|[environment]upstream_message|data ready
+-|2015|f1|[environment]upstream_point|2015
+-|2015|f1|[environment]upstream_status|succeeded
+-|2015|f1|[environment]upstream_suite|${SUITE_NAME_UPSTREAM}
+-|2015|f1|[environment]upstream_task|foo
+__DB_BROADCASTS__
 
 purge_suite $SUITE_NAME
 

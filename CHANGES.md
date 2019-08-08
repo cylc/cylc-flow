@@ -53,6 +53,9 @@ to align with the new multi-component cylc-8 architecture).
 User Guide custom batch system handler example (`BATCH_SYSTEM_HANDLER` should
 be `BATCH_SYS_HANDLER`). 
 
+[#xxxx](https://github.com/cylc/cylc-flow/pull/xxxx) - Fix log & DB recording
+of broadcasts from xtriggers so they register all settings, not just one.
+
 -------------------------------------------------------------------------------
 ## __cylc-7.8.3 (2019-06-12)__
 
