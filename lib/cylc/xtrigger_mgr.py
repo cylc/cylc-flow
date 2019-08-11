@@ -25,6 +25,7 @@ from cylc import LOG
 import cylc.flags
 from cylc.hostuserutil import get_user
 from cylc.xtriggers.wall_clock import wall_clock
+from cylc.subprocpool import get_func
 
 
 # Templates for string replacement in function arg values.
@@ -97,18 +98,14 @@ class XtriggerManager(object):
         """Initialize the xtrigger manager."""
         # Suite function and clock triggers by label.
         self.functx_map = {}
-        self.clockx_map = {}
         # When next to call a function, by signature.
         self.t_next_call = {}
         # Satisfied triggers and their function results, by signature.
         self.sat_xtrig = {}
-        # Signatures of satisfied clock triggers.
-        self.sat_xclock = []
         # Signatures of active functions (waiting on callback).
         self.active = []
         # All trigger and clock signatures in the current task pool.
         self.all_xtrig = []
-        self.all_xclock = []
 
         self.pflag = False
 
@@ -125,12 +122,24 @@ class XtriggerManager(object):
         self.broadcast_mgr = broadcast_mgr
         self.suite_source_dir = suite_source_dir
 
-    def add_clock(self, label, fctx):
-        """Add a new clock xtrigger."""
-        self.clockx_map[label] = fctx
+    def add_trig(self, label, fctx, fdir):
+        """Add a new xtrigger function.
 
-    def add_trig(self, label, fctx):
-        """Add a new xtrigger."""
+        Check the xtrigger function exists here (e.g. during validation).
+        """
+        try:
+            func = get_func(fctx.func_name, fdir)
+        except ImportError:
+            raise ImportError(
+                "ERROR: xtrigger module '%s' not found" % fctx.func_name)
+        except AttributeError:
+            raise AttributeError(
+                "ERROR: attribute '%s' not found in xtrigger module '%s'" % (
+                    fctx.func_name, fctx.func_name))
+        if not callable(func):
+            raise ValueError(
+                "ERROR: '%s' in xtrigger module '%s' is not callable" % (
+                    fctx.func_name, fctx.func_name))
         self.functx_map[label] = fctx
         # Check any string templates in the function arg values (note this
         # won't catch bad task-specific values - which are added dynamically).
@@ -153,70 +162,18 @@ class XtriggerManager(object):
         self.sat_xtrig[sig] = json.loads(results)
 
     def housekeep(self):
-        """Delete satisfied xtriggers and xclocks no longer needed."""
+        """Delete satisfied xtriggers no longer needed."""
         for sig in list(self.sat_xtrig):
             if sig not in self.all_xtrig:
                 del self.sat_xtrig[sig]
-        self.sat_xclock = [
-            sig for sig in self.sat_xclock if sig in self.all_xclock]
 
-    def satisfy_xclock(self, itask):
-        """Attempt to satisfy itask's clock trigger, if it has one."""
-        label, sig, ctx, satisfied = self._get_xclock(itask)
-        if satisfied:
-            return
-        if wall_clock(*ctx.func_args, **ctx.func_kwargs):
-            satisfied = True
-            itask.state.xclock = (label, True)
-            self.sat_xclock.append(sig)
-            LOG.info('clock xtrigger satisfied: %s = %s' % (label, str(ctx)))
-
-    def _get_xclock(self, itask, sig_only=False):
-        """(Internal helper method.)"""
-        label, satisfied = itask.state.xclock
-        ctx = deepcopy(self.clockx_map[label])
-        ctx.func_kwargs.update(
-            {
-                'point_as_seconds': itask.get_point_as_seconds(),
-            }
-        )
-        sig = ctx.get_signature()
-        if sig_only:
-            return sig
-        else:
-            return (label, sig, ctx, satisfied)
-
-    def _get_xtrig(self, itask, unsat_only=False, sigs_only=False):
+    def _get_xtrigs(self, itask, unsat_only=False, sigs_only=False):
         """(Internal helper method.)"""
         res = []
-        farg_templ = {}
-        farg_templ[TMPL_TASK_CYCLE_POINT] = str(itask.point)
-        farg_templ[TMPL_TASK_NAME] = str(itask.tdef.name)
-        farg_templ[TMPL_TASK_IDENT] = str(itask.identity)
-        farg_templ.update(self.farg_templ)
         for label, satisfied in itask.state.xtriggers.items():
             if unsat_only and satisfied:
                 continue
-            ctx = deepcopy(self.functx_map[label])
-            ctx.point = itask.point
-            kwargs = {}
-            args = []
-            # Replace legal string templates in function arg values.
-            for val in ctx.func_args:
-                try:
-                    val = val % farg_templ
-                except TypeError:
-                    pass
-                args.append(val)
-            for key, val in ctx.func_kwargs.items():
-                try:
-                    val = val % farg_templ
-                except TypeError:
-                    pass
-                kwargs[key] = val
-            ctx.func_args = args
-            ctx.func_kwargs = kwargs
-            ctx.update_command(self.suite_source_dir)
+            ctx = self.get_xtrig_ctx(itask, label)
             sig = ctx.get_signature()
             if sigs_only:
                 res.append(sig)
@@ -224,18 +181,58 @@ class XtriggerManager(object):
                 res.append((label, sig, ctx, satisfied))
         return res
 
+    def get_xtrig_ctx(self, itask, label):
+        """Get a real function context from the template."""
+        farg_templ = {
+            TMPL_TASK_CYCLE_POINT: str(itask.point),
+            TMPL_TASK_NAME: str(itask.tdef.name),
+            TMPL_TASK_IDENT: str(itask.identity)
+        }
+        farg_templ.update(self.farg_templ)
+        ctx = deepcopy(self.functx_map[label])
+        ctx.point = itask.point
+        kwargs = {}
+        args = []
+        for val in ctx.func_args:
+            try:
+                val = val % farg_templ
+            except TypeError:
+                pass
+            args.append(val)
+        for key, val in ctx.func_kwargs.items():
+            try:
+                val = val % farg_templ
+            except TypeError:
+                pass
+            kwargs[key] = val
+        ctx.func_args = args
+        ctx.func_kwargs = kwargs
+        ctx.update_command(self.suite_source_dir)
+        return ctx
+
     def collate(self, itasks):
         """Get list of all current xtrigger sigs."""
         self.all_xtrig = []
-        self.all_xclock = []
         for itask in itasks:
-            self.all_xtrig += self._get_xtrig(itask, sigs_only=True)
-            if itask.state.xclock is not None:
-                self.all_xclock.append(self._get_xclock(itask, sig_only=True))
+            self.all_xtrig += self._get_xtrigs(itask, sigs_only=True)
 
     def satisfy_xtriggers(self, itask, proc_pool):
         """Attempt to satisfy itask's xtriggers."""
-        for label, sig, ctx, _ in self._get_xtrig(itask, unsat_only=True):
+        for label, sig, ctx, _ in self._get_xtrigs(itask, unsat_only=True):
+            if sig.startswith("wall_clock"):
+                # Special case: synchronous clock check.
+                ctx.func_kwargs.update(
+                    {
+                        'point_as_seconds': itask.get_point_as_seconds(),
+                    }
+                )
+                if wall_clock(*ctx.func_args, **ctx.func_kwargs):
+                    itask.state.xtriggers[label] = True
+                    self.sat_xtrig[sig] = {}
+                    LOG.info('clock xtrigger satisfied: %s = %s' % (
+                        label, str(ctx)))
+                continue
+            # General case: asynchronous xtrigger function call.
             if sig in self.sat_xtrig:
                 if not itask.state.xtriggers[label]:
                     itask.state.xtriggers[label] = True

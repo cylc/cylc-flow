@@ -1263,16 +1263,13 @@ class TaskPool(object):
                 else:
                     extras['External trigger "%s"' % trig] = 'NOT satisfied'
             for label, satisfied in itask.state.xtriggers.items():
+                extra = 'xtrigger "%s = %s"' % (
+                    label, self.xtrigger_mgr.get_xtrig_ctx(
+                        itask, label).get_signature())
                 if satisfied:
-                    extras['xtrigger "%s"' % label] = 'satisfied'
+                    extras[extra] = 'satisfied'
                 else:
-                    extras['xtrigger "%s"' % label] = 'NOT satisfied'
-            if itask.state.xclock is not None:
-                label, satisfied = itask.state.xclock
-                if satisfied:
-                    extras['xclock "%s"' % label] = 'satisfied'
-                else:
-                    extras['xclock "%s"' % label] = 'NOT satisfied'
+                    extras[extra] = 'NOT satisfied'
 
             outputs = []
             for _, msg, is_completed in itask.state.outputs.get_all():
@@ -1289,8 +1286,6 @@ class TaskPool(object):
         itasks = self.get_tasks()
         self.xtrigger_mgr.collate(itasks)
         for itask in itasks:
-            if itask.state.xclock is not None:
-                self.xtrigger_mgr.satisfy_xclock(itask)
             if itask.state.xtriggers:
                 self.xtrigger_mgr.satisfy_xtriggers(itask, self.proc_pool)
 
