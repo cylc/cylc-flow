@@ -110,7 +110,7 @@ class TestSuiteConfig(object):
                 f.flush()
                 suite_config = SuiteConfig(suite="name_a_tree", fpath=f.name)
                 config = suite_config
-                assert 'tree' in config.xtriggers['qux']
+                assert 'tree' in config.xtrigger_mgr.functx_map
 
     def test_xfunction_import_error(self):
         """Test for error when a xtrigger function cannot be imported."""
@@ -133,7 +133,7 @@ class TestSuiteConfig(object):
             R1 = '@oopsie => qux'
                 """)
                 f.flush()
-                with pytest.raises(SuiteConfigError) as excinfo:
+                with pytest.raises(ImportError) as excinfo:
                     SuiteConfig(suite="caiman_suite", fpath=f.name)
                 assert "not found" in str(excinfo.value)
 
@@ -158,7 +158,7 @@ class TestSuiteConfig(object):
             R1 = '@oopsie => qux'
                 """)
                 f.flush()
-                with pytest.raises(SuiteConfigError) as excinfo:
+                with pytest.raises(AttributeError) as excinfo:
                     SuiteConfig(suite="capybara_suite", fpath=f.name)
                 assert "not found" in str(excinfo.value)
 
@@ -183,7 +183,7 @@ class TestSuiteConfig(object):
             R1 = '@oopsie => qux'
                 """)
                 f.flush()
-                with pytest.raises(SuiteConfigError) as excinfo:
+                with pytest.raises(ValueError) as excinfo:
                     SuiteConfig(suite="suite_with_not_callable", fpath=f.name)
                 assert "callable" in str(excinfo.value)
 
