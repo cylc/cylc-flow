@@ -1744,7 +1744,8 @@ class SuiteConfig(object):
                 xtrig = self.cfg['scheduling']['xtriggers'][label]
             except KeyError:
                 if label == 'wall_clock':
-                    # Allow predefined zero-offset wall clock xtrigger.
+                    # Allow "@wall_clock" in the graph as an undeclared
+                    # zero-offset clock xtrigger.
                     xtrig = SubFuncContext(
                         'wall_clock', 'wall_clock', [], {})
                 else:
