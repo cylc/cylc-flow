@@ -38,6 +38,9 @@ with suite configurations that contain tasks with many task outputs.
 
 ### Fixes
 
+[#3285](https://github.com/cylc/cylc-flow/pull/3285) - fix xtrigger
+cycle-sequence specificity.
+
 [#3257](https://github.com/cylc/cylc-flow/pull/3257) - leave '%'-escaped string
 templates alone in xtrigger arguments.
 
