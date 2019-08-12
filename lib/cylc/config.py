@@ -1751,6 +1751,12 @@ class SuiteConfig(object):
                 else:
                     raise SuiteConfigError(
                         "ERROR, undefined xtrigger label: %s" % label)
+            if (xtrig.func_name == 'wall_clock' and
+                    self.cfg['scheduling']['cycling mode'] == (
+                        INTEGER_CYCLING_TYPE)):
+                raise SuiteConfigError("ERROR: clock triggers are not "
+                        "compatible with integer cycling.\n %s = %s" % (
+                            label, xtrig.get_signature()))
             self.xtrigger_mgr.add_trig(label, xtrig, self.fdir)
             self.taskdefs[right].add_xtrig_label(label, seq)
 
