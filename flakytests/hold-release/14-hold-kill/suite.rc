@@ -11,14 +11,27 @@
 [runtime]
     [[killer]]
         script = """
+            echo '# killing "sleeper"'
             cylc kill "${CYLC_SUITE_NAME}" "sleeper.${CYLC_TASK_CYCLE_POINT}"
+
+            echo '# waiting for "sleeper" to disappear'
             while grep -q '^sleeper, 1, running, spawned, unheld' \
                 <<<"$(cylc dump -t "${CYLC_SUITE_NAME}")"
             do
-                sleep 1
+                sleep 0.2  # cylc dump can be quite slow
             done
-            # The following line will fail the test unless "sleeper" is held.
-            grep -q '^sleeper, 1, retrying, spawned, held' <<<"$(cylc dump -t "${CYLC_SUITE_NAME}")"
+
+            echo '# waiting for "sleeper" to reappear'
+            while ! grep -q '^sleeper' \
+                <<<"$(cylc dump -t "${CYLC_SUITE_NAME}")"
+            do
+                sleep 0.2
+            done
+
+            echo '# testing that "sleeper" is held on re-insertion'
+            grep -q '^sleeper, 1, retrying, spawned, held' \
+                <<<"$(cylc dump -t "${CYLC_SUITE_NAME}")"
+
             cylc release "${CYLC_SUITE_NAME}" "sleeper.${CYLC_TASK_CYCLE_POINT}"
         """
     [[sleeper]]
