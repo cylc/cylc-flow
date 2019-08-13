@@ -86,7 +86,7 @@
 #         Tidy up test directories for SUITE_NAME.
 #     poll COMMAND
 #         Run COMMAND in 1 second intervals for a minute until COMMAND returns
-#         a non-zero value.
+#         a non-zero value, or exit 1 (abort test) with a timeout message.
 #     skip N SKIP_REASON
 #         echo "ok $((++T)) # skip SKIP_REASON" N times.
 #     skip_all SKIP_REASON
@@ -485,10 +485,20 @@ purge_suite() {
 }
 
 poll() {
-    local TIMEOUT="$(($(date +%s) + 60))" # wait 1 minute
-    while (($(date +%s) < TIMEOUT)) && eval "$@"; do
-        sleep 1
+    local TIMEOUT="$(($(date +%s) + 10))" # wait 1 minute
+    local TIMED_OUT=true
+    while (($(date +%s) < TIMEOUT)); do
+        if eval "$@"; then
+            sleep 1
+        else
+            TIMED_OUT=false
+            break
+        fi
     done
+    if $TIMED_OUT; then
+        >&2 echo "ERROR: poll timed out: $@"
+        exit 1
+    fi
 }
 
 skip() {
