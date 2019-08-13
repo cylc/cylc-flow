@@ -485,7 +485,7 @@ purge_suite() {
 }
 
 poll() {
-    local TIMEOUT="$(($(date +%s) + 10))" # wait 1 minute
+    local TIMEOUT="$(($(date +%s) + 60))" # wait 1 minute
     local TIMED_OUT=true
     while (($(date +%s) < TIMEOUT)); do
         if eval "$@"; then
