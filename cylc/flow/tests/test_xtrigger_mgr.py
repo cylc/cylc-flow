@@ -28,8 +28,6 @@ from cylc.flow.xtrigger_mgr import XtriggerManager, RE_STR_TMPL
 def test_constructor():
     """Test creating a XtriggerManager, and its initial state."""
     xtrigger_mgr = XtriggerManager(suite="suitea", user="john-foo")
-    # the dict with clock xtriggers starts empty
-    assert not xtrigger_mgr.clockx_map
     # the dict with normal xtriggers starts empty
     assert not xtrigger_mgr.functx_map
 
@@ -45,21 +43,6 @@ def test_extract_templates():
     )
 
 
-def test_add_clock_xtrigger():
-    """Test for adding a clock xtrigger. Clock xtriggers go to a different
-    dict than normal xtriggers. This is useful as the execution varies
-    for clock/non-clock xtriggers (e.g. sync vs. async)."""
-    xtrigger_mgr = XtriggerManager(suite="sample_suite", user="john-foo")
-    xtrig = SubFuncContext(
-        label="wall_clock",
-        func_name="wall_clock",
-        func_args=[],
-        func_kwargs={}
-    )
-    xtrigger_mgr.add_clock("xtrig", xtrig)
-    assert xtrig == xtrigger_mgr.clockx_map["xtrig"]
-
-
 def test_add_xtrigger():
     """Test for adding a xtrigger."""
     xtrigger_mgr = XtriggerManager(suite="sample_suite", user="john-foo")
@@ -69,7 +52,7 @@ def test_add_xtrigger():
         func_args=["name", "age"],
         func_kwargs={"location": "soweto"}
     )
-    xtrigger_mgr.add_trig("xtrig", xtrig)
+    xtrigger_mgr.add_trig("xtrig", xtrig, 'fdir')
     assert xtrig == xtrigger_mgr.functx_map["xtrig"]
 
 
@@ -82,7 +65,7 @@ def test_add_xtrigger_with_params():
         func_args=["name", "%(point)s"],
         func_kwargs={"%(location)s": "soweto"}  # no problem with the key!
     )
-    xtrigger_mgr.add_trig("xtrig", xtrig)
+    xtrigger_mgr.add_trig("xtrig", xtrig, 'fdir')
     assert xtrig == xtrigger_mgr.functx_map["xtrig"]
 
 
@@ -106,7 +89,7 @@ def test_add_xtrigger_with_unkonwn_params():
         func_kwargs={"location": "soweto"}
     )
     with pytest.raises(ValueError):
-        xtrigger_mgr.add_trig("xtrig", xtrig)
+        xtrigger_mgr.add_trig("xtrig", xtrig, 'fdir')
 
     # TODO: is it intentional? At the moment when we fail to validate the
     #       function parameters, we add it to the dict anyway.
@@ -142,9 +125,6 @@ def test_housekeeping_nothing_satisfied():
     row = "get_name", "{\"name\": \"function\"}"
     # now XtriggerManager#sat_xtrigger will contain the get_name xtrigger
     xtrigger_mgr.load_xtrigger_for_restart(row_idx=0, row=row)
-    # but we have nothing in the XtriggerManager#all_xclock, which means
-    # nothing was satisfied yet
-    xtrigger_mgr.all_xclock.clear()
     assert xtrigger_mgr.sat_xtrig
     xtrigger_mgr.housekeep()
     assert not xtrigger_mgr.sat_xtrig
@@ -180,122 +160,6 @@ def test_housekeeping_with_xtrigger_satisfied():
     xtrigger_mgr.housekeep()
     # here we still have the same number as before
     assert xtrigger_mgr.sat_xtrig
-    # however, we have no xclock trigger satisfied
-    assert not xtrigger_mgr.sat_xclock
-
-
-def test_housekeeping_with_xclock_satisfied():
-    """The housekeeping method makes sure only satisfied xclock function
-    are kept."""
-    xtrigger_mgr = XtriggerManager(suite="sample_suite", user="john-foo")
-    # the clock xtrigger
-    xtrig = SubFuncContext(
-        label="wall_clock",
-        func_name="wall_clock",
-        func_args=[],
-        func_kwargs={}
-    )
-    xtrig.out = "[\"True\", \"1\"]"
-    xtrigger_mgr.add_clock("wall_clock", xtrig)
-    # create a task
-    tdef = TaskDef(
-        name="foo",
-        rtcfg=None,
-        run_mode="live",
-        start_point=1,
-        spawn_ahead=False
-    )
-    tdef.xclock_label = "wall_clock"
-    # cycle point for task proxy
-    # TODO: we need to call init, before we can use ISO8601 points in Cylc,
-    #       why?
-    init()
-    start_point = ISO8601Point('20000101T0000+05')
-    # create task proxy
-    itask = TaskProxy(tdef=tdef, start_point=start_point)
-    itask.state.xclock = "wall_clock", False  # satisfied?
-    # satisfy xclock
-    xtrigger_mgr.satisfy_xclock(itask)
-    # tally
-    xtrigger_mgr.collate([itask])
-    assert xtrigger_mgr.sat_xclock
-    xtrigger_mgr.housekeep()
-    # here we still have the same number as before
-    assert xtrigger_mgr.sat_xclock
-
-
-def test_satisfy_xclock_satisfied_xclock():
-    """Test satisfy_xclock for a satisfied clock trigger."""
-    xtrigger_mgr = XtriggerManager(suite="sample_suite", user="john-foo")
-    # the clock xtrigger
-    xtrig = SubFuncContext(
-        label="wall_clock",
-        func_name="wall_clock",
-        func_args=[],
-        func_kwargs={}
-    )
-    xtrig.out = "[\"True\", \"1\"]"
-    xtrigger_mgr.add_clock("wall_clock", xtrig)
-    # create a task
-    tdef = TaskDef(
-        name="foo",
-        rtcfg=None,
-        run_mode="live",
-        start_point=1,
-        spawn_ahead=False
-    )
-    tdef.xclock_label = "wall_clock"
-    # cycle point for task proxy
-    init()
-    start_point = ISO8601Point('20000101T0000+05')
-    # create task proxy
-    itask = TaskProxy(tdef=tdef, start_point=start_point)
-    itask.state.xclock = "wall_clock", True  # satisfied?
-    # we are defining in the state of the TaskProxy. that its xclock trigger
-    # has been satisfied, without actually adding it to the right dict.
-    assert not xtrigger_mgr.sat_xclock
-    xtrigger_mgr.satisfy_xclock(itask)
-    # as it was already satisfied, the function should return immediately,
-    # without touching sat_xclock, therefore, it must remain empty
-    assert not xtrigger_mgr.sat_xclock
-
-
-def test_satisfy_xclock_unsatisfied_xclock():
-    """Test satisfy_xclock for an unsatisfied clock trigger."""
-    xtrigger_mgr = XtriggerManager(suite="sample_suite", user="john-foo")
-    # the clock xtrigger
-    xtrig = SubFuncContext(
-        label="wall_clock",
-        func_name="wall_clock",
-        func_args=[],
-        func_kwargs={}
-    )
-    xtrig.out = "[\"True\", \"1\"]"
-    xtrigger_mgr.add_clock("wall_clock", xtrig)
-    # create a task
-    tdef = TaskDef(
-        name="foo",
-        rtcfg=None,
-        run_mode="live",
-        start_point=1,
-        spawn_ahead=False
-    )
-    tdef.xclock_label = "wall_clock"
-    # cycle point for task proxy
-    init()
-    start_point = ISO8601Point('20000101T0000+05')
-    # create task proxy
-    itask = TaskProxy(tdef=tdef, start_point=start_point)
-    itask.state.xclock = "wall_clock", False  # satisfied?
-    # we are defining in the state of the TaskProxy. that its xclock trigger
-    # has **not** been satisfied.
-    assert not xtrigger_mgr.sat_xclock
-    xtrigger_mgr.satisfy_xclock(itask)
-    # as it was satisfied by the satisfy_clock function, we must have its
-    # signature in the dict. NB the signature is not the same as
-    # get_signature(), as it is actually the signature for that moment
-    # when it was satisfied.
-    assert xtrigger_mgr.sat_xclock
 
 
 class MockedProcPool(SubProcPool):
@@ -389,18 +253,17 @@ def test_collate():
         user="john-foo"
     )
     xtrigger_mgr.collate(itasks=[])
-    assert not xtrigger_mgr.all_xclock
     assert not xtrigger_mgr.all_xtrig
 
     # add a xtrigger
-    # that will cause all_xtrig to be populated, but not all_xclock
+    # that will cause all_xtrig to be populated
     get_name = SubFuncContext(
         label="get_name",
         func_name="get_name",
         func_args=[],
         func_kwargs={}
     )
-    xtrigger_mgr.add_trig("get_name", get_name)
+    xtrigger_mgr.add_trig("get_name", get_name, 'fdir')
     get_name.out = "[\"True\", {\"name\": \"Yossarian\"}]"
     tdef = TaskDef(
         name="foo",
@@ -415,7 +278,6 @@ def test_collate():
     itask.state.xtriggers["get_name"] = get_name
 
     xtrigger_mgr.collate([itask])
-    assert not xtrigger_mgr.all_xclock
     assert xtrigger_mgr.all_xtrig
 
     # add a clock xtrigger
@@ -528,7 +390,7 @@ def test_check_xtriggers():
         func_args=[],
         func_kwargs={}
     )
-    xtrigger_mgr.add_trig("get_name", get_name)
+    xtrigger_mgr.add_trig("get_name", get_name, 'fdir')
     get_name.out = "[\"True\", {\"name\": \"Yossarian\"}]"
     tdef1 = TaskDef(
         name="foo",
