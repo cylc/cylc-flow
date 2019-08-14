@@ -272,8 +272,7 @@ class XtriggerManager(object):
                 if wall_clock(*ctx.func_args, **ctx.func_kwargs):
                     itask.state.xtriggers[label] = True
                     self.sat_xtrig[sig] = {}
-                    LOG.info('clock xtrigger satisfied: %s = %s' % (
-                        label, str(ctx)))
+                    LOG.info('xtrigger satisfied: %s = %s', label, sig)
                 continue
             # General case: asynchronous xtrigger function call.
             if sig in self.sat_xtrig:
@@ -333,6 +332,7 @@ class XtriggerManager(object):
             return
         LOG.debug('%s: returned %s' % (sig, results))
         if satisfied:
+            LOG.info('xtrigger satisfied: %s = %s', ctx.label, sig)
             self.pflag = True
             self.sat_xtrig[sig] = results
 
