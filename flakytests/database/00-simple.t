@@ -59,7 +59,7 @@ sqlite3 "${DB_FILE}" \
 LOCALHOST="$(hostname -f)"
 # FIXME: recent Travis CI failure
 sed -i "s/localhost/${LOCALHOST}/" "${NAME}"
-cmp_ok - "${NAME}" <<__SELECT__
+cmp_ok "${NAME}" - <<__SELECT__
 1|bar|1|1|0|0|${LOCALHOST}|background
 1|baz|1|1|0|0|${LOCALHOST}|background
 1|foo|1|1|0|0|${LOCALHOST}|background
