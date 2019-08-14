@@ -31,7 +31,7 @@ else
     cmp_ok 'suite-is-held.out' <<<'1'
 fi
 T1_2016_PID="$(sed -n 's/CYLC_JOB_PID=//p' "${SUITE_RUN_DIR}/log/job/2016/t1/01/job.status")"
-poll ! ps "${T1_2016_PID}" 2>'/dev/null'
+poll ps "${T1_2016_PID}"
 cylc restart "${SUITE_NAME}" --debug --no-detach 1>"${TEST_NAME_BASE}-restart.out" 2>&1 &
 CYLC_RESTART_PID=$!
 # Ensure suite has started
