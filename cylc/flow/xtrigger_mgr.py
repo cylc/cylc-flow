@@ -151,19 +151,18 @@ class XtriggerManager(object):
             ValueError: if any string template in the function context
                 arguments are not present in the expected template values.
         """
+        fname = fctx.func_name
         try:
-            func = get_func(fctx.func_name, fdir)
+            func = get_func(fname, fdir)
         except ImportError:
             raise ImportError(
-                "ERROR: xtrigger module '%s' not found" % fctx.func_name)
+                f"ERROR: xtrigger module '{fname}' not found")
         except AttributeError:
             raise AttributeError(
-                "ERROR: attribute '%s' not found in xtrigger module '%s'" % (
-                    fctx.func_name, fctx.func_name))
+                f"ERROR: '{fname}' not found in xtrigger module '{fname}'")
         if not callable(func):
             raise ValueError(
-                "ERROR: '%s' in xtrigger module '%s' is not callable" % (
-                    fctx.func_name, fctx.func_name))
+                f"ERROR: '{fname}' not callable in xtrigger module '{fname}'")
         self.functx_map[label] = fctx
         # Check any string templates in the function arg values (note this
         # won't catch bad task-specific values - which are added dynamically).
@@ -172,8 +171,7 @@ class XtriggerManager(object):
                 for match in RE_STR_TMPL.findall(argv):
                     if match not in ARG_VAL_TEMPLATES:
                         raise ValueError(
-                            "Illegal template in xtrigger %s: %s" % (
-                                label, match))
+                            f"Illegal template in xtrigger {label}: {match}")
             except TypeError:
                 # Not a string arg.
                 pass
@@ -330,7 +328,7 @@ class XtriggerManager(object):
             satisfied, results = json.loads(ctx.out)
         except (ValueError, TypeError):
             return
-        LOG.debug('%s: returned %s' % (sig, results))
+        LOG.debug('%s: returned %s', sig, results)
         if satisfied:
             LOG.info('xtrigger satisfied: %s = %s', ctx.label, sig)
             self.pflag = True

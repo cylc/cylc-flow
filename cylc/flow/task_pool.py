@@ -1300,58 +1300,6 @@ class TaskPool(object):
         else:
             return False, "task not found"
 
-    def get_task_requisites(self, items, list_prereqs=False):
-        """Return task prerequisites.
-
-        Result in a dict of a dict:
-        {
-            "task_id": {
-                "meta": {key: value, ...},
-                "prerequisites": {key: value, ...},
-                "outputs": {key: value, ...},
-                "extras": {key: value, ...},
-            },
-            ...
-        }
-        """
-        itasks, bad_items = self.filter_task_proxies(items)
-        results = {}
-        now = time()
-        for itask in itasks:
-            if list_prereqs:
-                results[itask.identity] = {
-                    'prerequisites': itask.state.prerequisites_dump(
-                        list_prereqs=True)}
-                continue
-
-            extras = {}
-            if itask.tdef.clocktrigger_offset is not None:
-                extras['Clock trigger time reached'] = (
-                    itask.is_waiting_clock_done(now))
-                extras['Triggers at'] = get_time_string_from_unix_time(
-                    itask.clock_trigger_time)
-            for trig, satisfied in itask.state.external_triggers.items():
-                if satisfied:
-                    extras['External trigger "%s"' % trig] = 'satisfied'
-                else:
-                    extras['External trigger "%s"' % trig] = 'NOT satisfied'
-            for label, satisfied in itask.state.xtriggers.items():
-                extra = 'xtrigger "%s"' % label
-                if satisfied:
-                    extras[extra] = 'satisfied'
-                else:
-                    extras[extra] = 'NOT satisfied'
-
-            outputs = []
-            for _, msg, is_completed in itask.state.outputs.get_all():
-                outputs.append(["%s %s" % (itask.identity, msg), is_completed])
-            results[itask.identity] = {
-                "meta": itask.tdef.describe(),
-                "prerequisites": itask.state.prerequisites_dump(),
-                "outputs": outputs,
-                "extras": extras}
-        return results, bad_items
-
     def filter_task_proxies(self, items):
         """Return task proxies that match names, points, states in items.
 

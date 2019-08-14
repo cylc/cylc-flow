@@ -1690,14 +1690,13 @@ class SuiteConfig(object):
                     xtrig = SubFuncContext(
                         'wall_clock', 'wall_clock', [], {})
                 else:
-                    raise SuiteConfigError(
-                        "undefined xtrigger label: %s" % label)
+                    raise SuiteConfigError(f"xtrigger not defined: {label}")
             if (xtrig.func_name == 'wall_clock' and
                     self.cfg['scheduling']['cycling mode'] == (
                         INTEGER_CYCLING_TYPE)):
+                sig = xtrig.get_signature()
                 raise SuiteConfigError(
-                    "clock triggers are not compatible with integer "
-                    "cycling.\n %s = %s" % (label, xtrig.get_signature()))
+                    f"clock xtriggers need date-time cycling: {label} = {sig}")
             self.xtrigger_mgr.add_trig(label, xtrig, self.fdir)
             self.taskdefs[right].add_xtrig_label(label, seq)
 
