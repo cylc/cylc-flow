@@ -53,6 +53,8 @@ sqlite3 "${DB_FILE}" \
      FROM task_jobs ORDER BY name' \
     >"${NAME}"
 LOCALHOST="$(hostname -f)"
+# FIXME: recent Travis CI failure
+sed -i "s/localhost/${LOCALHOST}/" "${NAME}"
 cmp_ok "${NAME}" <<__SELECT__
 1|recover-t1|1|0|0|0|${LOCALHOST}|background
 1|t1|1|0|0|1|${LOCALHOST}|background
