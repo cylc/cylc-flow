@@ -62,14 +62,14 @@ suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" --no-detach
 dumpdbtables
 cmp_ok 'stoptask.out' <<<'stop_task|t_i5.1'
 cmp_ok 'taskpool.out' <<'__OUT__'
-1|t_i1|1|succeeded|
-1|t_i2|1|succeeded|
-1|t_i3|0|waiting|
-1|t_i4|0|waiting|
-1|t_i5|0|waiting|
-1|t_i6|0|waiting|
-1|t_i7|0|waiting|
-1|t_i8|0|waiting|
+1|t_i1|1|succeeded|0
+1|t_i2|1|succeeded|0
+1|t_i3|0|waiting|0
+1|t_i4|0|waiting|0
+1|t_i5|0|waiting|0
+1|t_i6|0|waiting|0
+1|t_i7|0|waiting|0
+1|t_i8|0|waiting|0
 __OUT__
 
 suite_run_ok "${TEST_NAME_BASE}-restart-1" \
@@ -77,14 +77,14 @@ suite_run_ok "${TEST_NAME_BASE}-restart-1" \
 dumpdbtables
 cmp_ok 'stoptask.out' <'/dev/null'
 cmp_ok 'taskpool.out' <<'__OUT__'
-1|t_i1|1|succeeded|
-1|t_i2|1|succeeded|
-1|t_i3|1|succeeded|
-1|t_i4|1|succeeded|
-1|t_i5|1|succeeded|
-1|t_i6|0|waiting|
-1|t_i7|0|waiting|
-1|t_i8|0|waiting|
+1|t_i1|1|succeeded|0
+1|t_i2|1|succeeded|0
+1|t_i3|1|succeeded|0
+1|t_i4|1|succeeded|0
+1|t_i5|1|succeeded|0
+1|t_i6|0|waiting|0
+1|t_i7|0|waiting|0
+1|t_i8|0|waiting|0
 __OUT__
 
 suite_run_ok "${TEST_NAME_BASE}-restart-2" \
@@ -92,14 +92,14 @@ suite_run_ok "${TEST_NAME_BASE}-restart-2" \
 dumpdbtables
 cmp_ok 'stoptask.out' <'/dev/null'
 cmp_ok 'taskpool.out' <<'__OUT__'
-1|t_i1|1|succeeded|
-1|t_i2|1|succeeded|
-1|t_i3|1|succeeded|
-1|t_i4|1|succeeded|
-1|t_i5|1|succeeded|
-1|t_i6|1|succeeded|
-1|t_i7|1|succeeded|
-1|t_i8|1|succeeded|
+1|t_i1|1|succeeded|0
+1|t_i2|1|succeeded|0
+1|t_i3|1|succeeded|0
+1|t_i4|1|succeeded|0
+1|t_i5|1|succeeded|0
+1|t_i6|1|succeeded|0
+1|t_i7|1|succeeded|0
+1|t_i8|1|succeeded|0
 __OUT__
 
 purge_suite "${SUITE_NAME}"

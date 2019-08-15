@@ -133,8 +133,8 @@ class TaskProxy(object):
             cycle point for subsequent tasks.
         status (str):
             Task state string.
-        hold_swap (str):
-            Original task state string, if task is held.
+        is_held (bool):
+            True if the task is held, else False.
         has_spawned (boolean):
             Has this task spawned its successor in the sequence.
         stop_point (cylc.flow.cycling.PointBase):
@@ -180,7 +180,7 @@ class TaskProxy(object):
 
     def __init__(
             self, tdef, start_point, status=TASK_STATUS_WAITING,
-            hold_swap=None, has_spawned=False, stop_point=None,
+            is_held=False, has_spawned=False, stop_point=None,
             is_startup=False, submit_num=0, is_late=False):
         self.tdef = tdef
         if submit_num is None:
@@ -248,7 +248,7 @@ class TaskProxy(object):
         self.late_time = None
         self.is_late = is_late
 
-        self.state = TaskState(tdef, self.point, status, hold_swap)
+        self.state = TaskState(tdef, self.point, status, is_held)
 
         if tdef.sequential:
             # Adjust clean-up cutoff.
@@ -329,6 +329,7 @@ class TaskProxy(object):
         ret['label'] = str(self.point)
         ret['submit_num'] = self.submit_num
         ret['state'] = self.state.status
+        ret['is_held'] = self.state.is_held
         ret['spawned'] = str(self.has_spawned)
         ntimes = len(self.tdef.elapsed_times)
         if ntimes:
@@ -372,7 +373,10 @@ class TaskProxy(object):
         waiting_retry = self.is_waiting_retry(now)
         if waiting_retry is not None:
             return not waiting_retry
-        if self.state.status != TASK_STATUS_WAITING:
+        if not self.state(
+                TASK_STATUS_WAITING,
+                is_held=False
+        ):
             return False
         return not (self.is_waiting_clock(now) or self.is_waiting_prereqs())
 

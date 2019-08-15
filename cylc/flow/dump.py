@@ -37,9 +37,21 @@ def dump_to_stdout(states, sort_by_cycle=False):
         else:
             spawned = 'unspawned'
         if sort_by_cycle:
-            values = [item['label'], item['name'], item['state'], spawned]
+            values = [
+                item['label'],
+                item['name'],
+                item['state'],
+                spawned,
+                'held' if item['is_held'] else 'unheld'
+            ]
         else:
-            values = [item['name'], item['label'], item['state'], spawned]
+            values = [
+                item['name'],
+                item['label'],
+                item['state'],
+                spawned,
+                'held' if item['is_held'] else 'unheld'
+            ]
         lines.append(', '.join(values))
 
     lines.sort()

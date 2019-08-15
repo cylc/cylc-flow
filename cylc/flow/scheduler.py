@@ -515,7 +515,7 @@ see `COPYING' in the Cylc source distribution.
         # Note: tasks should all be in the runahead pool at this point.
         auths = set()
         for itask in self.pool.get_rh_tasks():
-            if itask.state.status in TASK_STATUSES_ACTIVE:
+            if itask.state(*TASK_STATUSES_ACTIVE):
                 auths.add((itask.task_host, itask.task_owner))
         while auths:
             for host, owner in auths.copy():
@@ -779,8 +779,8 @@ see `COPYING' in the Cylc source distribution.
         itasks, bad_items = self.pool.filter_task_proxies(items)
         if self.config.run_mode('simulation'):
             for itask in itasks:
-                if itask.state.status in TASK_STATUSES_ACTIVE:
-                    itask.state.reset_state(TASK_STATUS_FAILED)
+                if itask.state(*TASK_STATUSES_ACTIVE):
+                    itask.state.reset(TASK_STATUS_FAILED)
             return len(bad_items)
         self.task_job_mgr.kill_task_jobs(self.suite, itasks)
         return len(bad_items)
@@ -1194,9 +1194,12 @@ see `COPYING' in the Cylc source distribution.
         """Report tasks that are never active and are late."""
         now = time()
         for itask in self.pool.get_tasks():
-            if (not itask.is_late and itask.get_late_time() and
-                    itask.state.status in TASK_STATUSES_NEVER_ACTIVE and
-                    now > itask.get_late_time()):
+            if (
+                    not itask.is_late
+                    and itask.get_late_time()
+                    and itask.state(*TASK_STATUSES_NEVER_ACTIVE)
+                    and now > itask.get_late_time()
+            ):
                 msg = '%s (late-time=%s)' % (
                     self.task_events_mgr.EVENT_LATE,
                     time2str(itask.get_late_time()))
@@ -1282,10 +1285,13 @@ see `COPYING' in the Cylc source distribution.
             #           * Ensure the host can be safely taken down once the
             #             suite has stopped running.
             for itask in self.pool.get_tasks():
-                if (itask.state.status in TASK_STATUSES_ACTIVE and
-                        itask.summary['batch_sys_name'] and
-                        self.task_job_mgr.batch_sys_mgr.is_job_local_to_host(
-                            itask.summary['batch_sys_name'])):
+                if (
+                        itask.state(*TASK_STATUSES_ACTIVE)
+                        and itask.summary['batch_sys_name']
+                        and self.task_job_mgr.batch_sys_mgr
+                        .is_job_local_to_host(
+                            itask.summary['batch_sys_name'])
+                ):
                     LOG.info('Waiting for jobs running on localhost to '
                              'complete before attempting restart')
                     break
@@ -1809,12 +1815,12 @@ see `COPYING' in the Cylc source distribution.
         for itask in self.pool.get_all_tasks():
             if self.pool.stop_point is None:
                 # Don't if any unsucceeded task exists.
-                if itask.state.status not in TASK_STATUSES_SUCCESS:
+                if not itask.state(*TASK_STATUSES_SUCCESS):
                     can_shutdown = False
                     break
             elif (
-                itask.point <= self.pool.stop_point and
-                itask.state.status not in TASK_STATUSES_SUCCESS
+                    itask.point <= self.pool.stop_point
+                    and not itask.state(*TASK_STATUSES_SUCCESS)
             ):
                 # Don't if any unsucceeded task exists < stop point...
                 if itask.identity not in self.pool.held_future_tasks:

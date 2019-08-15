@@ -15,11 +15,17 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+import contextlib
+import os
+import sqlite3
 import unittest
+
+from shutil import copyfile
+from pathlib import Path
+from tempfile import mktemp
 from unittest import mock
+
 from cylc.flow.rundb import CylcSuiteDAO
-from sqlite3 import DatabaseError
 
 
 class TestRunDb(unittest.TestCase):
@@ -53,10 +59,119 @@ class TestRunDb(unittest.TestCase):
         """Test that when the rundb CylcSuiteDAO select_task_job method raises
         a SQLite exception, the method returns None"""
 
-        self.mocked_connection.execute.side_effect = DatabaseError
+        self.mocked_connection.execute.side_effect = sqlite3.DatabaseError
 
         r = self.dao.select_task_job("it'll", "raise", "an error!")
         self.assertIsNone(r)
+
+
+@contextlib.contextmanager
+def create_temp_db():
+    """Create and tidy a temporary database for testing purposes."""
+    temp_db = mktemp()
+    conn = sqlite3.connect(temp_db)
+    yield (temp_db, conn)
+    os.remove(temp_db)
+    conn.close()  # doesn't raise error on re-invocation
+
+
+def test_remove_columns():
+    """Test workaround for dropping columns in sqlite3."""
+    with create_temp_db() as (temp_db, conn):
+        conn.execute(
+            rf'''
+                CREATE TABLE foo (
+                    bar,
+                    baz,
+                    pub
+                )
+            '''
+        )
+        conn.execute(
+            rf'''
+                INSERT INTO foo
+                VALUES (?,?,?)
+            ''',
+            ['BAR', 'BAZ', 'PUB']
+        )
+        conn.commit()
+        conn.close()
+
+        dao = CylcSuiteDAO(temp_db)
+        dao.remove_columns('foo', ['bar', 'baz'])
+
+        conn = dao.connect()
+        data = [row for row in conn.execute(rf'SELECT * from foo')]
+        assert data == [('PUB',)]
+
+
+def test_upgrade_hold_swap():
+    """Pre Cylc8 DB upgrade compatibility test."""
+    # test data
+    initial_data = [
+        # (name, cycle, status, hold_swap)
+        ('foo', '1', 'waiting', ''),
+        ('bar', '1', 'held', 'waiting'),
+        ('baz', '1', 'held', 'running'),
+        ('pub', '1', 'waiting', 'held')
+    ]
+    expected_data = [
+        # (name, cycle, status, hold_swap, is_held)
+        ('foo', '1', 'waiting', 0),
+        ('bar', '1', 'waiting', 1),
+        ('baz', '1', 'running', 1),
+        ('pub', '1', 'waiting', 1)
+    ]
+    tables = [
+        CylcSuiteDAO.TABLE_TASK_POOL,
+        CylcSuiteDAO.TABLE_TASK_POOL_CHECKPOINTS
+    ]
+
+    with create_temp_db() as (temp_db, conn):
+        # initialise tables
+        for table in tables:
+            conn.execute(
+                rf'''
+                    CREATE TABLE {table} (
+                        name varchar(255),
+                        cycle varchar(255),
+                        status varchar(255),
+                        hold_swap varchar(255)
+                    )
+                '''
+            )
+
+            conn.executemany(
+                rf'''
+                    INSERT INTO {table}
+                    VALUES (?,?,?,?)
+                ''',
+                initial_data
+            )
+
+        # close database
+        conn.commit()
+        conn.close()
+
+        # open database as cylc dao
+        dao = CylcSuiteDAO(temp_db)
+        conn = dao.connect()
+
+        # check the initial data was correctly inserted
+        for table in tables:
+            dump = [x for x in conn.execute(rf'SELECT * FROM {table}')]
+            assert dump == initial_data
+
+        # upgrade
+        assert dao.upgrade_is_held()
+
+        # check the data was correctly upgraded
+        for table in tables:
+            dump = [x for x in conn.execute(rf'SELECT * FROM task_pool')]
+            assert dump == expected_data
+
+        # make sure the upgrade is skipped on future runs
+        assert not dao.upgrade_is_held()
 
 
 if __name__ == '__main__':

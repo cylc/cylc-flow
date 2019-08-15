@@ -49,16 +49,16 @@ def get_test_extract_group_state_order():
 def get_test_get_status_prop():
     return [
         (
-            TASK_STATUS_HELD,
+            TASK_STATUS_WAITING,
             "ascii_ctrl",
             "ace",
             "ace"
         ),
         (
-            TASK_STATUS_HELD,
+            TASK_STATUS_WAITING,
             "ascii_ctrl",
             None,
-            TASK_STATUS_HELD
+            TASK_STATUS_WAITING
         )
     ]
 

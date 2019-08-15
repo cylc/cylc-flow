@@ -64,8 +64,8 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 dumpdbtables
 cmp_ok 'stopcp.out' <<<'stopcp|2018'
 cmp_ok 'taskpool.out' <<'__OUT__'
-2015|t1|1|succeeded|
-2016|t1|0|waiting|
+2015|t1|1|succeeded|0
+2016|t1|0|waiting|0
 __OUT__
 
 suite_run_ok "${TEST_NAME_BASE}-restart-1" \
@@ -73,8 +73,8 @@ suite_run_ok "${TEST_NAME_BASE}-restart-1" \
 dumpdbtables
 cmp_ok 'stopcp.out' <'/dev/null'
 cmp_ok 'taskpool.out' <<'__OUT__'
-2020|t1|1|succeeded|
-2021|t1|0|waiting|
+2020|t1|1|succeeded|0
+2021|t1|0|waiting|0
 __OUT__
 
 purge_suite "${SUITE_NAME}"

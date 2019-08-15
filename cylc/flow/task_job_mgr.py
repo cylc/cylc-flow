@@ -119,8 +119,8 @@ class TaskJobManager(object):
         """
         to_kill_tasks = []
         for itask in itasks:
-            if itask.state.status in TASK_STATUSES_ACTIVE:
-                itask.state.set_held()
+            if itask.state(*TASK_STATUSES_ACTIVE):
+                itask.state.reset(is_held=True)
                 to_kill_tasks.append(itask)
             else:
                 LOG.warning('skipping %s: task not killable' % itask.identity)
@@ -141,12 +141,13 @@ class TaskJobManager(object):
         _poll_task_job_callback() executes one specific job.
         """
         to_poll_tasks = []
-        pollable_statuses = set([
-            TASK_STATUS_SUBMITTED, TASK_STATUS_RUNNING, TASK_STATUS_FAILED])
+        pollable_statuses = {
+            TASK_STATUS_SUBMITTED, TASK_STATUS_RUNNING, TASK_STATUS_FAILED
+        }
         if poll_succ:
             pollable_statuses.add(TASK_STATUS_SUCCEEDED)
         for itask in itasks:
-            if itask.state.status in pollable_statuses:
+            if itask.state(*pollable_statuses):
                 to_poll_tasks.append(itask)
             else:
                 LOG.debug("skipping %s: not pollable, "
@@ -311,7 +312,7 @@ class TaskJobManager(object):
                     # write flag so that subsequent manual retrigger will
                     # generate a new job file.
                     itask.local_job_file_path = None
-                    itask.state.reset_state(TASK_STATUS_READY)
+                    itask.state.reset(TASK_STATUS_READY)
                     if itask.state.outputs.has_custom_triggers():
                         self.suite_db_mgr.put_update_task_outputs(itask)
                 self.proc_pool.put_command(
@@ -458,11 +459,11 @@ class TaskJobManager(object):
             log_lvl = WARNING
             log_msg = 'kill failed'
             itask.state.kill_failed = True
-        elif itask.state.status == TASK_STATUS_SUBMITTED:
+        elif itask.state(TASK_STATUS_SUBMITTED):
             self.task_events_mgr.process_message(
                 itask, CRITICAL, self.task_events_mgr.EVENT_SUBMIT_FAILED,
                 ctx.timestamp)
-        elif itask.state.status == TASK_STATUS_RUNNING:
+        elif itask.state(TASK_STATUS_RUNNING):
             self.task_events_mgr.process_message(
                 itask, CRITICAL, TASK_OUTPUT_FAILED)
         else:

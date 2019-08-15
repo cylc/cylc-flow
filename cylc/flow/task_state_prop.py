@@ -20,7 +20,6 @@
 from cylc.flow.task_state import (
     TASK_STATUS_RUNAHEAD,
     TASK_STATUS_WAITING,
-    TASK_STATUS_HELD,
     TASK_STATUS_QUEUED,
     TASK_STATUS_READY,
     TASK_STATUS_EXPIRED,
@@ -41,9 +40,6 @@ _STATUS_MAP = {
     },
     TASK_STATUS_WAITING: {
         "ascii_ctrl": Style.BRIGHT + Fore.CYAN + Back.RESET
-    },
-    TASK_STATUS_HELD: {
-        "ascii_ctrl": Style.BRIGHT + Fore.WHITE + Back.YELLOW
     },
     TASK_STATUS_QUEUED: {
         "ascii_ctrl": Style.BRIGHT + Fore.WHITE + Back.BLUE
@@ -85,7 +81,7 @@ def extract_group_state(child_states, is_stopped=False):
                       TASK_STATUS_RETRYING, TASK_STATUS_RUNNING,
                       TASK_STATUS_SUBMITTED, TASK_STATUS_READY,
                       TASK_STATUS_QUEUED, TASK_STATUS_WAITING,
-                      TASK_STATUS_HELD, TASK_STATUS_SUCCEEDED,
+                      TASK_STATUS_SUCCEEDED,
                       TASK_STATUS_RUNAHEAD]
     if is_stopped:
         ordered_states = [TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_FAILED,
@@ -93,7 +89,7 @@ def extract_group_state(child_states, is_stopped=False):
                           TASK_STATUS_EXPIRED, TASK_STATUS_READY,
                           TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING,
                           TASK_STATUS_SUCCEEDED, TASK_STATUS_QUEUED,
-                          TASK_STATUS_WAITING, TASK_STATUS_HELD,
+                          TASK_STATUS_WAITING,
                           TASK_STATUS_RUNAHEAD]
     for state in ordered_states:
         if state in child_states:

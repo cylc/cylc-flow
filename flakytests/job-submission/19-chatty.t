@@ -64,28 +64,28 @@ cylc ls-checkpoints "${SUITE_NAME}" '0' \
     | sort >'cylc-ls-checkpoints.out'
 
 cmp_ok 'cylc-ls-checkpoints.out' <<'__OUT__'
-1|h0|1|succeeded|
-1|h1|1|succeeded|
-1|h2|1|succeeded|
-1|h3|1|succeeded|
-1|h4|1|succeeded|
-1|h5|1|succeeded|
-1|h6|1|succeeded|
-1|h7|1|succeeded|
-1|h8|1|succeeded|
-1|h9|1|succeeded|
-1|nh0|0|submit-failed|
-1|nh1|0|submit-failed|
-1|nh2|0|submit-failed|
-1|nh3|0|submit-failed|
-1|nh4|0|submit-failed|
-1|nh5|0|submit-failed|
-1|nh6|0|submit-failed|
-1|nh7|0|submit-failed|
-1|nh8|0|submit-failed|
-1|nh9|0|submit-failed|
-1|starter|1|succeeded|
-1|stopper|1|succeeded|
+1|h0|1|succeeded|0
+1|h1|1|succeeded|0
+1|h2|1|succeeded|0
+1|h3|1|succeeded|0
+1|h4|1|succeeded|0
+1|h5|1|succeeded|0
+1|h6|1|succeeded|0
+1|h7|1|succeeded|0
+1|h8|1|succeeded|0
+1|h9|1|succeeded|0
+1|nh0|0|submit-failed|0
+1|nh1|0|submit-failed|0
+1|nh2|0|submit-failed|0
+1|nh3|0|submit-failed|0
+1|nh4|0|submit-failed|0
+1|nh5|0|submit-failed|0
+1|nh6|0|submit-failed|0
+1|nh7|0|submit-failed|0
+1|nh8|0|submit-failed|0
+1|nh9|0|submit-failed|0
+1|starter|1|succeeded|0
+1|stopper|1|succeeded|0
 __OUT__
 
 purge_suite "${SUITE_NAME}"

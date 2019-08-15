@@ -28,7 +28,8 @@ import sys
 
 data = ast.literal_eval(open(sys.argv[1]).read())
 keys = list(sorted(data[1].keys()))
-assert keys == ["t1.2031", "t2.2031"]
+if keys != ["t1.2031", "t1.2032", "t2.2031", "t2.2032"]:
+    sys.exit(keys)
 for datum in data[1].values():
     assert isinstance(datum["mean_elapsed_time"], float)
 __PYTHON__
@@ -59,6 +60,13 @@ LOADING task run times
 __OUT__
 suite_run_ok "${TEST_NAME_BASE}-restart-3" \
     timeout 120 cylc restart "${SUITE_NAME}" --until=2031 --hold
+# allow the task pool to settle before requesting a dump
+cylc suite-state "${SUITE_NAME}" \
+    --task=t1 \
+    --point=2031 \
+    --status=running \
+    --interval=1 \
+    --max-polls=10
 cylc dump -r "${SUITE_NAME}" >'cylc-dump.out'
 test_dump 'cylc-dump.out'
 

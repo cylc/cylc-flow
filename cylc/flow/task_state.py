@@ -34,8 +34,6 @@ from cylc.flow.wallclock import get_current_time_string
 TASK_STATUS_RUNAHEAD = "runahead"
 # Held back from job submission due to un-met prerequisites:
 TASK_STATUS_WAITING = "waiting"
-# Held back from job submission even if prerequisites are met:
-TASK_STATUS_HELD = "held"
 # Prerequisites met, but held back in a limited internal queue:
 TASK_STATUS_QUEUED = "queued"
 # Ready (prerequisites met) to be passed to job submission system:
@@ -61,7 +59,6 @@ TASK_STATUS_RETRYING = "retrying"
 TASK_STATUSES_ORDERED = [
     TASK_STATUS_RUNAHEAD,
     TASK_STATUS_WAITING,
-    TASK_STATUS_HELD,
     TASK_STATUS_QUEUED,
     TASK_STATUS_EXPIRED,
     TASK_STATUS_READY,
@@ -91,7 +88,6 @@ TASK_STATUSES_RESTRICTED = set([
 TASK_STATUSES_NO_JOB_FILE = set([
     TASK_STATUS_RUNAHEAD,
     TASK_STATUS_WAITING,
-    TASK_STATUS_HELD,
     TASK_STATUS_READY,
     TASK_STATUS_EXPIRED,
     TASK_STATUS_QUEUED
@@ -150,7 +146,6 @@ TASK_STATUSES_NOT_STALLED = TASK_STATUSES_ACTIVE | TASK_STATUSES_TO_BE_ACTIVE
 # Task statuses that can be manually triggered.
 TASK_STATUSES_TRIGGERABLE = set([
     TASK_STATUS_WAITING,
-    TASK_STATUS_HELD,
     TASK_STATUS_QUEUED,
     TASK_STATUS_EXPIRED,
     TASK_STATUS_SUBMIT_FAILED,
@@ -179,12 +174,8 @@ class TaskState(object):
     Attributes:
         .external_triggers (dict):
             External triggers as {trigger (str): satisfied (boolean), ...}.
-        .hold_swap (str):
-            While the task is in `held` status, this holds the actual status if
-            the task is not held. For tasks in `submitted` or `running`
-            statuses, setting this to `held` will cause the task to hold when
-            the task is reset to anything other than the `submitted` or
-            `running` statuses.
+        .is_held (bool):
+            True if the task is "held" else False.
         .identity (str):
             The task ID as `TASK.CYCLE` associated with this object.
         .is_updated (boolean):
@@ -216,7 +207,7 @@ class TaskState(object):
     # Memory optimization - constrain possible attributes to this list.
     __slots__ = [
         "external_triggers",
-        "hold_swap",
+        "is_held",
         "identity",
         "is_updated",
         "kill_failed",
@@ -231,10 +222,10 @@ class TaskState(object):
         "_suicide_is_satisfied",
     ]
 
-    def __init__(self, tdef, point, status, hold_swap):
+    def __init__(self, tdef, point, status, is_held):
         self.identity = TaskID.get(tdef.name, str(point))
         self.status = status
-        self.hold_swap = hold_swap
+        self.is_held = is_held
         self.is_updated = False
         self.time_updated = None
 
@@ -269,11 +260,39 @@ class TaskState(object):
         self.kill_failed = False
 
     def __str__(self):
-        """Print status (hold_swap)."""
+        """Print status (is_held)."""
         ret = self.status
-        if self.hold_swap:
-            ret += ' (%s)' % self.hold_swap
+        if self.is_held:
+            ret += ' (held)'
         return ret
+
+    def __call__(self, *status, is_held=None):
+        """Compare task state attributes.
+
+        Args:
+            status (str/list/None):
+                ``str``
+                    Check if the task status is the same as the one provided
+                ``list``
+                    Check if the task status is one of the ones provided
+                ``None``
+                    Do not check the task state.
+            is_held (bool):
+                ``bool``
+                    Check the task is_held attribute is the same as provided
+                ``None``
+                    Do not check the is_held attribute
+
+        """
+        return (
+            (
+                not status
+                or self.status in status
+            ) and (
+                is_held is None
+                or self.is_held == is_held
+            )
+        )
 
     def satisfy_me(self, all_task_outputs):
         """Attempt to get my prerequisites satisfied."""
@@ -352,43 +371,7 @@ class TaskState(object):
         return list(sorted(dep for prereq in self.prerequisites for dep in
                            prereq.get_resolved_dependencies()))
 
-    def set_held(self):
-        """Set state to TASK_STATUS_HELD, if possible.
-
-        If state can be held, set hold_swap to current state.
-        If state is active, set hold_swap to TASK_STATUS_HELD.
-        If state cannot be held, do nothing.
-
-        Return:
-            A 2-element tuple with the previous value of (status, hold_swap)
-            on change of status, or None if no change.
-        """
-        if self.status in TASK_STATUSES_ACTIVE:
-            self.hold_swap = TASK_STATUS_HELD
-            return (self.status, self.hold_swap)
-        elif self.status in [
-                TASK_STATUS_WAITING, TASK_STATUS_QUEUED,
-                TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING]:
-            return self._set_state(TASK_STATUS_HELD)
-
-    def unset_held(self):
-        """Reset to my pre-held state, if not beyond the stop point.
-
-        Return:
-            A 2-element tuple with the previous value of (status, hold_swap)
-            on change of status, or None if no change.
-        """
-        if self.status != TASK_STATUS_HELD:
-            return
-        elif self.hold_swap is None:
-            return self.reset_state(TASK_STATUS_WAITING)
-        elif self.hold_swap == TASK_STATUS_HELD:
-            self.hold_swap = None
-            return (self.status, self.hold_swap)
-        else:
-            return self.reset_state(self.hold_swap)
-
-    def reset_state(self, status, respect_hold_swap=False):
+    def reset(self, status=None, is_held=None):
         """Change status, and manipulate outputs and prerequisites accordingly.
 
         Outputs are manipulated on manual state reset to reflect the new task
@@ -402,26 +385,49 @@ class TaskState(object):
         Note this method could take an additional argument to distinguish
         internal and manually forced state changes, if needed.
 
-        The held state is handled in set/unset_held() for swap-state handling.
-
-        Return:
-            A 2-element tuple with the previous value of (status, hold_swap)
-            on change of status, or None if no change.
-
-        Arguments:
+        Args:
             status (str):
-                New status.
-            respect_hold_swap (boolean):
-                If True, take no action if either `.status` or `.hold_swap` is
-                equivalent to `status`.
+                Task status to reset to or None to leave the status unchanged.
+            is_held (bool):
+                Set the task to be held or not, or None to leave this property
+                unchanged.
+
+        Returns:
+            bool: True if state change, else False
+
         """
-        ret = self._set_state(status, respect_hold_swap)
-        if not ret:  # no change
-            return ret
+        current_status = (
+            self.status,
+            self.is_held
+        )
+        requested_status = (
+            status if status is not None else self.status,
+            is_held if is_held is not None else self.is_held
+        )
+        if current_status == requested_status:
+            # no change - do nothing
+            return False
+
+        prev_message = str(self)
+
+        # perform the actual state change
+        self.status, self.is_held = requested_status
+
+        self.time_updated = get_current_time_string()
+        self.is_updated = True
+        LOG.debug("[%s] -%s => %s", self.identity, prev_message, str(self))
+
+        if is_held:
+            # only reset task outputs if not setting task to held
+            # https://github.com/cylc/cylc-flow/pull/2116
+            return True
 
         self.kill_failed = False
 
         # Set standard outputs in accordance with task state.
+        if status is None:
+            # NOTE: status is None if the task is being released
+            status = self.status
         if status_leq(status, TASK_STATUS_SUBMITTED):
             self.outputs.set_all_incomplete()
         self.outputs.set_completion(
@@ -440,38 +446,7 @@ class TaskState(object):
         # Unset prerequisites on reset to waiting (see docstring).
         if status == TASK_STATUS_WAITING:
             self.set_prerequisites_not_satisfied()
-
-        return ret
-
-    def _set_state(self, status, respect_hold_swap=False):
-        """Set state to new status and log."""
-        if self.status == self.hold_swap:
-            self.hold_swap = None
-        if (self.status, self.hold_swap) == (status, None):
-            return
-        if (
-            respect_hold_swap
-            and (self.status, self.hold_swap) == (TASK_STATUS_HELD, status)
-        ):
-            return
-        prev_message = str(self)
-        prev_status, prev_hold_swap = self.status, self.hold_swap
-        if status == TASK_STATUS_HELD:
-            self.hold_swap = self.status
-        elif status in TASK_STATUSES_ACTIVE:
-            if self.status == TASK_STATUS_HELD:
-                self.hold_swap = TASK_STATUS_HELD
-        elif (self.hold_swap == TASK_STATUS_HELD and
-                status not in TASK_STATUSES_FINAL):
-            self.hold_swap = status
-            status = TASK_STATUS_HELD
-        elif self.hold_swap:
-            self.hold_swap = None
-        self.status = status
-        self.time_updated = get_current_time_string()
-        self.is_updated = True
-        LOG.debug("[%s] -%s => %s", self.identity, prev_message, str(self))
-        return (prev_status, prev_hold_swap)
+        return True
 
     def is_gt(self, status):
         """"Return True if self.status > status."""

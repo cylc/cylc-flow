@@ -53,9 +53,9 @@ is_held|1
 # BROADCAST STATES (POINT|NAMESPACE|KEY|VALUE)
 2017|t1|script|true
 
-# TASK POOL (CYCLE|NAME|SPAWNED|STATUS|HOLD_SWAP)
-2017|t1|1|running|held
-2018|t1|0|held|waiting
+# TASK POOL (CYCLE|NAME|SPAWNED|STATUS|IS_HELD)
+2017|t1|1|running|1
+2018|t1|0|waiting|1
 __OUT__
 cylc ls-checkpoints "${SUITE_NAME}" 2 | date-remove >'cylc-ls-checkpoints-2.out'
 contains_ok 'cylc-ls-checkpoints-2.out' <<'__OUT__'
@@ -69,9 +69,9 @@ is_held|1
 # BROADCAST STATES (POINT|NAMESPACE|KEY|VALUE)
 2017|t1|script|true
 
-# TASK POOL (CYCLE|NAME|SPAWNED|STATUS|HOLD_SWAP)
-2017|t1|1|running|held
-2018|t1|0|held|waiting
+# TASK POOL (CYCLE|NAME|SPAWNED|STATUS|IS_HELD)
+2017|t1|1|running|1
+2018|t1|0|waiting|1
 __OUT__
 cylc ls-checkpoints "${SUITE_NAME}" 0 | date-remove >'cylc-ls-checkpoints-0.out'
 contains_ok 'cylc-ls-checkpoints-0.out' <<'__OUT__'
@@ -84,10 +84,10 @@ contains_ok 'cylc-ls-checkpoints-0.out' <<'__OUT__'
 # BROADCAST STATES (POINT|NAMESPACE|KEY|VALUE)
 2017|t1|script|true
 
-# TASK POOL (CYCLE|NAME|SPAWNED|STATUS|HOLD_SWAP)
-2017|t2|1|failed|
-2018|t1|0|waiting|
-2018|t2|0|waiting|
+# TASK POOL (CYCLE|NAME|SPAWNED|STATUS|IS_HELD)
+2017|t2|1|failed|0
+2018|t1|0|waiting|0
+2018|t2|0|waiting|0
 __OUT__
 
 # Restart should stall in exactly the same way
