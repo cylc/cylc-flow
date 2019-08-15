@@ -31,7 +31,23 @@ will not be added to the pool if it catches up to another task with the
 same ID).
 
 See also 'cylc submit', for running tasks without the scheduler.
+
+TASK_GLOB is a pattern to match task proxies or task families,
+or groups of them, for a specific cycle point:
+* CYCLE-POINT/TASK-NAME-GLOB
+* CYCLE-POINT/FAMILY-NAME-GLOB
+* TASK-NAME-GLOB.CYCLE-POINT
+* FAMILY-NAME-GLOB.CYCLE-POINT
+
+For example, to match, within the given cycle point (e.g. '20200202T0000Z'):
+* all tasks: '20200202T0000Z/*' or '*.20200202T0000Z'
+* all tasks named model_N for some character N: '20200202T0000Z/model_?' or
+  'model_?.20200202T0000Z'
+* all tasks in 'BAR' family: '20200202T0000Z/BAR' or 'BAR.20200202T0000Z'
+* all tasks in 'BAR' or 'BAZ' families: '20200202T0000Z/BA[RZ]' or
+  'BA[RZ].20200202T0000Z'
 """
+
 
 import sys
 if '--use-ssh' in sys.argv[1:]:
@@ -49,7 +65,7 @@ from cylc.task_id import TaskID
 
 def main():
     parser = COP(
-        __doc__, comms=True, multitask=True,
+        __doc__, comms=True,
         argdoc=[
             ("REG", "Suite name"),
             ('TASKID [...]', 'Task identifier')])
