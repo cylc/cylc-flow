@@ -31,15 +31,24 @@ class CylcOptionParser(OptionParser):
 
     """Common options for all cylc CLI commands."""
 
-    MULTITASK_USAGE = """
+    # Shared text for commands which can, & cannot, glob on cycle points:
+    MULTI_USAGE_TEMPLATE = """
 TASK_GLOB is a pattern to match task proxies or task families,
-or groups of them:
+or groups of them{0}:{1}
+
+For example, to match{2}:{3}"""
+    # Help text either including or excluding globbing on cycle points:
+    WITH_CYCLE_GLOBS = """
 * [CYCLE-POINT-GLOB/]TASK-NAME-GLOB[:TASK-STATE]
 * [CYCLE-POINT-GLOB/]FAMILY-NAME-GLOB[:TASK-STATE]
 * TASK-NAME-GLOB[.CYCLE-POINT-GLOB][:TASK-STATE]
-* FAMILY-NAME-GLOB[.CYCLE-POINT-GLOB][:TASK-STATE]
-
-For example, to match:
+* FAMILY-NAME-GLOB[.CYCLE-POINT-GLOB][:TASK-STATE]"""
+    WITHOUT_CYCLE_GLOBS = """
+* CYCLE-POINT/TASK-NAME-GLOB
+* CYCLE-POINT/FAMILY-NAME-GLOB
+* TASK-NAME-GLOB.CYCLE-POINT
+* FAMILY-NAME-GLOB.CYCLE-POINT"""
+    WITH_CYCLE_EXAMPLES = """
 * all tasks in a cycle: '20200202T0000Z/*' or '*.20200202T0000Z'
 * all tasks in the submitted status: ':submitted'
 * retrying 'foo*' tasks in 0000Z cycles: 'foo*.*0000Z:retrying' or
@@ -47,10 +56,23 @@ For example, to match:
 * retrying tasks in 'BAR' family: '*/BAR:retrying' or 'BAR.*:retrying'
 * retrying tasks in 'BAR' or 'BAZ' families: '*/BA[RZ]:retrying' or
   'BA[RZ].*:retrying'"""
+    WITHOUT_CYCLE_EXAMPLES = """
+* all tasks: '20200202T0000Z/*' or '*.20200202T0000Z'
+* all tasks named model_N for some character N: '20200202T0000Z/model_?' or
+  'model_?.20200202T0000Z'
+* all tasks in 'BAR' family: '20200202T0000Z/BAR' or 'BAR.20200202T0000Z'
+* all tasks in 'BAR' or 'BAZ' families: '20200202T0000Z/BA[RZ]' or
+  'BA[RZ].20200202T0000Z'"""
+    MULTITASKCYCLE_USAGE = MULTI_USAGE_TEMPLATE.format(
+        "", WITH_CYCLE_GLOBS, "", WITH_CYCLE_EXAMPLES)
+    MULTITASK_USAGE = MULTI_USAGE_TEMPLATE.format(
+        ", for a specific cycle point", WITHOUT_CYCLE_GLOBS,
+        ", within the given cycle point (e.g. '20200202T0000Z')",
+        WITHOUT_CYCLE_EXAMPLES)
 
     def __init__(self, usage, argdoc=None, comms=False, noforce=False,
-                 jset=False, multitask=False, prep=False, auto_add=True,
-                 icp=False, color=True):
+                 jset=False, multitask=False, multitask_nocycles=False,
+                 prep=False, auto_add=True, icp=False, color=True):
 
         self.auto_add = auto_add
         if argdoc is None:
@@ -59,10 +81,11 @@ For example, to match:
             else:
                 argdoc = [('REG', 'Suite name')]
 
-        # noforce=True is for commands that don't use interactive prompts at
-        # all
+        # noforce=True is for commands not using interactive prompts at all
 
         if multitask:
+            usage += self.MULTITASKCYCLE_USAGE
+        elif multitask_nocycles:  # glob on task names but not cycle points
             usage += self.MULTITASK_USAGE
         args = ""
         self.n_compulsory_args = 0
