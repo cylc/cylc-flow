@@ -218,10 +218,6 @@ class TaskState(object):
             List of prerequisites that will cause the task to suicide.
         .time_updated (str):
             Time string of latest update time.
-        .xclock (tuple):
-            A tuple (clock_label (str), is_done (boolean)) to indicate if a
-            clock trigger is satisfied or not. Set to `None` if the task has no
-            clock trigger.
         .xtriggers (dict):
             xtriggers as {trigger (str): satisfied (boolean), ...}.
         ._is_satisfied (boolean):
@@ -242,7 +238,6 @@ class TaskState(object):
         "status",
         "suicide_prerequisites",
         "time_updated",
-        "xclock",
         "xtriggers",
         "_is_satisfied",
         "_suicide_is_satisfied",
@@ -274,12 +269,7 @@ class TaskState(object):
 
         # xtriggers (represented by labels) satisfied or not
         self.xtriggers = {}
-        for label in tdef.xtrig_labels:
-            self.xtriggers[label] = False
-        if tdef.xclock_label:
-            self.xclock = (tdef.xclock_label, False)
-        else:
-            self.xclock = None
+        self._add_xtriggers(point, tdef)
 
         # Message outputs.
         self.outputs = TaskOutputs(tdef)
@@ -301,9 +291,7 @@ class TaskState(object):
                     self._suicide_is_satisfied = None
 
     def xtriggers_all_satisfied(self):
-        """Return True if xclock and all xtriggers are satisfied."""
-        if self.xclock is not None and not self.xclock[1]:
-            return False
+        """Return True if all xtriggers are satisfied."""
         return all(self.xtriggers.values())
 
     def prerequisites_are_all_satisfied(self):
@@ -528,3 +516,16 @@ class TaskState(object):
                          p_prev < tdef.start_point)
                 cpre.set_condition(tdef.name)
                 self.prerequisites.append(cpre)
+
+    def _add_xtriggers(self, point, tdef):
+        """Add task xtriggers valid for the current sequence.
+
+        Initialize each one to unsatisfied.
+        """
+        # Triggers for sequence_i only used if my cycle point is a
+        # valid member of sequence_i's sequence of cycle points.
+        for sequence, xtrig_labels in tdef.xtrig_labels.items():
+            if not sequence.is_valid(point):
+                continue
+            for xtrig_label in xtrig_labels:
+                self.xtriggers[xtrig_label] = False

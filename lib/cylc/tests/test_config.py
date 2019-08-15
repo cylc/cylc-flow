@@ -50,7 +50,7 @@ class TestSuiteConfig(unittest.TestCase):
             f.flush()
             suite_config = SuiteConfig(suite="name_a_tree", fpath=f.name)
             config = suite_config
-            self.assertTrue('tree' in config.xtriggers['qux'])
+            self.assertTrue('tree' in config.xtrigger_mgr.functx_map)
         shutil.rmtree(temp_dir)
 
     def test_xfunction_import_error(self):
@@ -76,7 +76,7 @@ class TestSuiteConfig(unittest.TestCase):
             graph = '@oopsie => qux'
             """)
             f.flush()
-            with self.assertRaises(SuiteConfigError) as ex:
+            with self.assertRaises(ImportError) as ex:
                 SuiteConfig(suite="caiman_suite", fpath=f.name)
                 self.assertTrue("not found" in str(ex))
         shutil.rmtree(temp_dir)
@@ -104,7 +104,7 @@ class TestSuiteConfig(unittest.TestCase):
             graph = '@oopsie => qux'
             """)
             f.flush()
-            with self.assertRaises(SuiteConfigError) as ex:
+            with self.assertRaises(AttributeError) as ex:
                 SuiteConfig(suite="capybara_suite", fpath=f.name)
                 self.assertTrue("not found" in str(ex))
         shutil.rmtree(temp_dir)
@@ -132,7 +132,7 @@ class TestSuiteConfig(unittest.TestCase):
             graph = '@oopsie => qux'
             """)
             f.flush()
-            with self.assertRaises(SuiteConfigError) as ex:
+            with self.assertRaises(ValueError) as ex:
                 SuiteConfig(suite="suite_with_not_callable", fpath=f.name)
                 self.assertTrue("callable" in str(ex))
         shutil.rmtree(temp_dir)
