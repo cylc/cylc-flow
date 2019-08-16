@@ -292,6 +292,49 @@ SPEC = {
             },
         },
     },
+    'suite host self-identification': {
+        'method': [VDR.V_STRING, 'name', 'address', 'hardwired'],
+        'target': [VDR.V_STRING, 'google.com'],
+        'host': [VDR.V_STRING],
+    },
+    'suite platforms': {
+        'run hosts': [VDR.V_SPACELESS_STRING_LIST],
+        'run ports': [VDR.V_INTEGER_LIST, list(range(43001, 43101))],
+        'condemned hosts': [VDR.V_ABSOLUTE_HOST_LIST],
+        'auto restart delay': [VDR.V_INTERVAL],
+        'run host select': {
+            'rank': [VDR.V_STRING, 'random', 'load:1', 'load:5', 'load:15',
+                     'memory', 'disk-space'],
+            'thresholds': [VDR.V_STRING],
+        },
+    },
+    'task events': {
+        'execution timeout': [VDR.V_INTERVAL],
+        'handlers': [VDR.V_STRING_LIST],
+        'handler events': [VDR.V_STRING_LIST],
+        'handler retry delays': [VDR.V_INTERVAL_LIST, None],
+        'mail events': [VDR.V_STRING_LIST],
+        'mail from': [VDR.V_STRING],
+        'mail retry delays': [VDR.V_INTERVAL_LIST],
+        'mail smtp': [VDR.V_STRING],
+        'mail to': [VDR.V_STRING],
+        'submission timeout': [VDR.V_INTERVAL],
+    },
+    'test battery': {
+        'remote host with shared fs': [VDR.V_STRING],
+        'remote host': [VDR.V_STRING],
+        'remote owner': [VDR.V_STRING],
+        'batch systems': {
+            '__MANY__': {
+                'host': [VDR.V_STRING],
+                'out viewer': [VDR.V_STRING],
+                'err viewer': [VDR.V_STRING],
+                'directives': {
+                    '__MANY__': [VDR.V_STRING],
+                },
+            },
+        },
+    },
     'visualization': {
         'initial cycle point': [VDR.V_CYCLE_POINT],
         'final cycle point': [VDR.V_STRING],
