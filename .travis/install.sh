@@ -32,6 +32,9 @@ if grep 'unit-tests' <<< "${args[@]}"; then
     sudo apt-get install shellcheck
 fi
 
+# TODO: remove when Travis env comes with a version of six >=1.12 (graphene)
+pip install "six>=1.12"
+
 pip install -e ."[all]"
 
 # configure local SSH for Cylc jobs
