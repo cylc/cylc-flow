@@ -12,15 +12,18 @@
 
 [scheduling]
     initial cycle point = 20190101T00
-    [[special tasks]]
-        clock-trigger = foo(PT0H), qux(PT0H)
-        sequential = foo, bar, qux, baa, qaz
     [[graph]]
         P1M = """
+foo[-P1M] => foo
+qux[-P1M] => qux
+baa[-P1M] => baa
+qar[-P1M] => qar
+
+@wall_clock => foo & qux
+
 foo | qux => bar
 qux => qaz
 baa => qaz
-qar[-P1M] => qar
 """
 
 [runtime]

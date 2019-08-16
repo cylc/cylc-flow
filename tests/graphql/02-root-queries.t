@@ -185,6 +185,12 @@ cat > expected << __HERE__
     ],
     "edges": [
         {
+            "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}@wall_clock.20190101T00${ID_DELIM}foo.20190101T00"
+        },
+        {
+            "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}@wall_clock.20190101T00${ID_DELIM}qux.20190101T00"
+        },
+        {
             "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}baa.20190101T00${ID_DELIM}NoTargetNode"
         },
         {

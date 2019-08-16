@@ -468,7 +468,7 @@ class WsDataMgr(object):
         # No action if pool is not yet initiated.
         if not self.pool_points:
             return
-        # Increment egdes:
+        # Increment edges:
         # - Initially for each cycle point in the pool.
         # - For each new cycle point thereafter.
         # Using difference and pointwise allows for historical
@@ -483,10 +483,10 @@ class WsDataMgr(object):
         # Prune data store by cycle point for:
         # - Edge target cycle points are not in the pool
         #   and source cycle points are not greater than pool max.
-        # - Edge source cycle points where niether itself and
+        # - Edge source cycle points where neither itself and
         #   all it's corresponding target cycle points are not in the pool.
-        # This ensures a buffer of sources and targets infront and behind the
-        # task pool, while accomodating exceptions such as ICP dependencies.
+        # This ensures a buffer of sources and targets in front and behind the
+        # task pool, while accommodating exceptions such as ICP dependencies.
         # TODO: Turn nodes back to ghost if not in pool? (for suicide)
         prune_points = set()
         max_point = max(self.pool_points)

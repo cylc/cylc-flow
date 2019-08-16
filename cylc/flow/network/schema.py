@@ -223,7 +223,7 @@ all_edge_args = dict(
 # Here we define them outside the queries so they can be used with
 # multiple resolution calls, both at root query or object field level.
 #
-# The first argument has a namining convention;
+# The first argument has a naming convention;
 # https://docs.graphene-python.org/en/latest/types
 # /objecttypes/#naming-convention
 # with name 'root' used here, it provides context to the resolvers.
@@ -704,7 +704,7 @@ class GenericResponse(ObjectType):
 # Mutators are used to call the internals of the parent program in the
 # resolution of mutation requests (or can make external calls themselves).
 # Like query resolvers (read above), they are treated as implicit
-# static metthods, with object context pass in as the first argument.
+# static methods, with object context pass in as the first argument.
 
 # Mutators:
 
