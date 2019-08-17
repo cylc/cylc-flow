@@ -22,7 +22,7 @@ Insert task proxies into a running suite. Uses of insertion include:
  1) insert a task that was excluded by the suite definition at start-up.
  2) reinstate a task that was previously removed from a running suite.
  3) re-run an old task that cannot be retriggered because its task proxy
- is no longer live in the a suite.
+    is no longer live in the a suite.
 
 Be aware that inserted cycling tasks keep on cycling as normal, even if
 another instance of the same task exists at a later cycle (instances of
@@ -49,7 +49,7 @@ from cylc.flow.terminal import prompt, cli_function
 
 def get_option_parser():
     parser = COP(
-        __doc__, comms=True, multitask=True,
+        __doc__, comms=True, multitask_nocycles=True,
         argdoc=[
             ("REG", "Suite name"),
             ('TASKID [...]', 'Task identifier')])
