@@ -406,7 +406,7 @@ see `COPYING' in the Cylc source distribution.
 
         self.suite_db_mgr.on_suite_start(self.is_restart)
 
-        reqmode = self.config.cfg['cylc']['required run mode']
+        reqmode = self.config.cfg['general']['required run mode']
         if reqmode and not self.config.run_mode(reqmode):
             raise ValueError('this suite requires the %s run mode' % reqmode)
 
@@ -1057,11 +1057,11 @@ see `COPYING' in the Cylc source distribution.
     def configure_reftest(self, recon=False):
         """Configure the reference test."""
         if self.options.genref:
-            self.config.cfg['cylc']['log resolved dependencies'] = True
+            self.config.cfg['general']['log resolved dependencies'] = True
             reference_log = os.path.join(self.config.fdir, 'reference.log')
             LOG.addHandler(ReferenceLogFileHandler(reference_log))
         elif self.options.reftest:
-            rtc = self.config.cfg['cylc']['reference test']
+            rtc = self.config.cfg['general']['reference test']
             req = rtc['required run mode']
             if req and not self.config.run_mode(req):
                 raise SchedulerError(
@@ -1069,10 +1069,10 @@ see `COPYING' in the Cylc source distribution.
             handlers = self._get_events_conf('shutdown handler')
             if handlers:
                 LOG.warning('shutdown handlers replaced by reference test')
-            self.config.cfg['cylc']['events']['shutdown handler'] = [
+            self.config.cfg['general']['events']['shutdown handler'] = [
                 rtc['suite shutdown event handler']]
-            self.config.cfg['cylc']['log resolved dependencies'] = True
-            self.config.cfg['cylc']['events'][
+            self.config.cfg['general']['log resolved dependencies'] = True
+            self.config.cfg['general']['events'][
                 'abort if shutdown handler fails'] = True
             if not recon:
                 spec = LogSpec(os.path.join(self.config.fdir, 'reference.log'))
@@ -1085,14 +1085,14 @@ see `COPYING' in the Cylc source distribution.
             self.ref_test_allowed_failures = rtc['expected task failures']
             if (not rtc['allow task failures'] and
                     not self.ref_test_allowed_failures):
-                self.config.cfg['cylc']['abort if any task fails'] = True
-            self.config.cfg['cylc']['events']['abort on timeout'] = True
+                self.config.cfg['general']['abort if any task fails'] = True
+            self.config.cfg['general']['events']['abort on timeout'] = True
             timeout = rtc[self.config.run_mode() + ' mode suite timeout']
             if not timeout:
                 raise SchedulerError(
                     'timeout not defined for %s reference tests' % (
                         self.config.run_mode()))
-            self.config.cfg['cylc']['events'][self.EVENT_TIMEOUT] = (
+            self.config.cfg['general']['events'][self.EVENT_TIMEOUT] = (
                 timeout)
 
     def run_event_handlers(self, event, reason):
@@ -1104,7 +1104,7 @@ see `COPYING' in the Cylc source distribution.
         try:
             if (
                 conf.run_mode('simulation', 'dummy') and
-                conf.cfg['cylc']['simulation']['disable suite event handlers']
+                conf.cfg['general']['simulation']['disable suite event handlers']
             ):
                 return
         except KeyError:
@@ -1147,9 +1147,9 @@ see `COPYING' in the Cylc source distribution.
             self.count = 0
         if self.options.no_auto_shutdown is not None:
             self.can_auto_stop = not self.options.no_auto_shutdown
-        elif self.config.cfg['cylc']['disable automatic shutdown'] is not None:
+        elif self.config.cfg['general']['disable automatic shutdown'] is not None:
             self.can_auto_stop = (
-                not self.config.cfg['cylc']['disable automatic shutdown'])
+                not self.config.cfg['general']['disable automatic shutdown'])
 
     def process_task_pool(self):
         """Process ALL TASKS whenever something has changed that might
@@ -1165,7 +1165,7 @@ see `COPYING' in the Cylc source distribution.
                 self.is_updated = True
             done_tasks = self.task_job_mgr.submit_task_jobs(
                 self.suite, itasks, self.config.run_mode('simulation'))
-            if self.config.cfg['cylc']['log resolved dependencies']:
+            if self.config.cfg['general']['log resolved dependencies']:
                 for itask in done_tasks:
                     deps = itask.state.get_resolved_dependencies()
                     LOG.info('[%s] -triggered off %s', itask, deps)
@@ -1217,7 +1217,7 @@ see `COPYING' in the Cylc source distribution.
 
     def suite_shutdown(self):
         """Determines if the suite can be shutdown yet."""
-        if (self.config.cfg['cylc']['abort if any task fails'] and
+        if (self.config.cfg['general']['abort if any task fails'] and
                 self.pool.any_task_failed()):
             # Task failure + abort if any task fails
             self._set_stop(StopMode.AUTO_ON_TASK_FAILURE)
@@ -1942,7 +1942,7 @@ see `COPYING' in the Cylc source distribution.
 
     def _get_cylc_conf(self, key, default=None):
         """Return a named setting under [cylc] from suite.rc or flow.rc."""
-        for getter in [self.config.cfg['cylc'], glbl_cfg().get(['cylc'])]:
+        for getter in [self.config.cfg['general'], glbl_cfg().get(['cylc'])]:
             try:
                 value = getter[key]
             except TypeError:
