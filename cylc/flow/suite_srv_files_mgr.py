@@ -65,7 +65,6 @@ class SuiteSrvFilesManager(object):
     REC_TITLE = re.compile(r"^\s*title\s*=\s*(.*)\s*$")
 
     def __init__(self):
-        self.local_passphrases = set()
         self.cache = {self.FILE_BASE_PASSPHRASE: {}}
         self.can_disk_cache_passphrases = {}
         self.can_use_load_auths = {}
