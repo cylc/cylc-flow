@@ -238,12 +238,12 @@ class SuiteConfig(object):
             self.cfg['runtime']['root'] = OrderedDictWithDefaults()
 
         try:
-            parameter_values = self.cfg['cylc']['parameters']
+            parameter_values = self.cfg['general']['parameters']
         except KeyError:
             # (Suite config defaults not put in yet.)
             parameter_values = {}
         try:
-            parameter_templates = self.cfg['cylc']['parameter templates']
+            parameter_templates = self.cfg['general']['parameter templates']
         except KeyError:
             parameter_templates = {}
         # parameter values and templates are normally needed together.
@@ -316,10 +316,10 @@ class SuiteConfig(object):
         init_cyclers(self.cfg)
 
         # Running in UTC time? (else just use the system clock)
-        if self.cfg['cylc']['UTC mode'] is None:
+        if self.cfg['general']['UTC mode'] is None:
             set_utc_mode(glbl_cfg().get(['cylc', 'UTC mode']))
         else:
-            set_utc_mode(self.cfg['cylc']['UTC mode'])
+            set_utc_mode(self.cfg['general']['UTC mode'])
 
         # Initial point from suite definition (or CLI override above).
         orig_icp = self.cfg['scheduling']['initial cycle point']
@@ -1410,7 +1410,7 @@ class SuiteConfig(object):
         os.environ['CYLC_CYCLING_MODE'] = self.cfg['scheduling'][
             'cycling mode']
         #     (global config auto expands environment variables in local paths)
-        cenv = self.cfg['cylc']['environment'].copy()
+        cenv = self.cfg['general']['environment'].copy()
         for var, val in cenv.items():
             cenv[var] = os.path.expandvars(val)
         #     path to suite bin directory for suite and event handlers
@@ -1429,7 +1429,7 @@ class SuiteConfig(object):
         """
         mode = getattr(self.options, 'run_mode', None)
         if not mode:
-            mode = self.cfg['cylc']['force run mode']
+            mode = self.cfg['general']['force run mode']
         if not mode:
             mode = 'live'
         if reqmodes:

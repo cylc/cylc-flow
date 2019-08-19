@@ -783,11 +783,11 @@ def ingest_time(value, my_now=None):
 
 def init_from_cfg(cfg):
     """Initialise global variables (yuk) based on the configuration."""
-    num_expanded_year_digits = cfg['cylc'][
+    num_expanded_year_digits = cfg['general'][
         'cycle point num expanded year digits']
-    time_zone = cfg['cylc']['cycle point time zone']
-    custom_dump_format = cfg['cylc']['cycle point format']
-    assume_utc = cfg['cylc']['UTC mode']
+    time_zone = cfg['general']['cycle point time zone']
+    custom_dump_format = cfg['general']['cycle point format']
+    assume_utc = cfg['general']['UTC mode']
     cycling_mode = cfg['scheduling']['cycling mode']
 
     init(
