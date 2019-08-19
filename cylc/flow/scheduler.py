@@ -1589,7 +1589,9 @@ see `COPYING' in the Cylc source distribution.
         updated_tasks = [
             t for t in self.pool.get_all_tasks() if t.state.is_updated]
         has_updated = self.is_updated or updated_tasks
-        updated_nodes = updated_tasks + self.pool.get_pool_change_tasks()
+        # Add tasks that have moved moved from runahead to live pool.
+        updated_nodes = set(updated_tasks).union(
+            self.pool.get_pool_change_tasks())
         if has_updated:
             # WServer incemental data store update
             self.ws_data_mgr.increment_graph_elements()

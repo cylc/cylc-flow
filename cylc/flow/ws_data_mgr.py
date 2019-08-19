@@ -17,21 +17,24 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Manage the workflow data store.
 
-The data store is generated here in a Workflow Service (WS), and synced to the
+The data store is generated here, in a Workflow Service (WS), and synced to the
 User Interface Server (UIS) via protobuf messages. Used as resolving data with
 GraphQL, both in the WS and UIS, it is then provisioned to the CLI and GUI.
+
+This data store is comprised of Protobuf message objects (data elements),
+which are used as data containers for their respective type.
 
 Static data elements are generated on workflow start/restart/reload, which
 includes workflow, task, and family definition objects.
 
-Updates are triggered by changes in the task pool
-(i.e. migrations of task instances from runahead to live pool), and
+Updates are triggered by changes in the task pool;
+migrations of task instances from runahead to live pool, and
 changes in task state (itask.state.is_updated).
 - Graph edges are generated for new cycle points in the pool
 - Ghost nodes, task and family cycle point instances containing static data,
   are generated from the source & target of edges and pointwise respectively.
-- Cycle points that are removed/pruned if they are not in the pool and not
-  the source or target cycle point of the current edge set. The remove includes
+- Cycle points are removed/pruned if they are not in the pool and not
+  the source or target cycle point of the current edge set. The removed include
   edge, task, and family cycle point items and an update of the family,
   workflow, and manager aggregate attributes.
 
@@ -91,6 +94,10 @@ class WsDataMgr(object):
             cylc.flow.ws_messages_pb2.PbFamilyProxy by internal ID.
         .graph (cylc.flow.ws_messages_pb2.PbEdges):
             Graph message holding egdes meta data.
+        .max_point (cylc.flow.cycling.PointBase):
+            Maximum cycle point in the pool.
+        .min_point (cylc.flow.cycling.PointBase):
+            Minimum cycle point in the pool.
         .parents (dict):
             Local store of config.get_parent_lists()
         .pool_points (set):
@@ -124,6 +131,8 @@ class WsDataMgr(object):
         'families',
         'family_proxies',
         'graph',
+        'max_point',
+        'min_point',
         'parents',
         'pool_points',
         'schd',
@@ -140,6 +149,8 @@ class WsDataMgr(object):
         self.descendants = {}
         self.parents = {}
         self.pool_points = set()
+        self.max_point = None
+        self.min_point = None
         self.edge_points = {}
         self.all_states = []
         self.cycle_states = {}
@@ -155,7 +166,12 @@ class WsDataMgr(object):
         self.workflow = PbWorkflow()
 
     def generate_definition_elements(self):
-        """Generate static definition data elements"""
+        """Generate static definition data elements.
+
+        Populates the tasks, families, and workflow elements
+        with data from and/or derived from the workflow definition.
+
+        """
         config = self.schd.config
         update_time = time()
         tasks = {}
@@ -266,7 +282,18 @@ class WsDataMgr(object):
         self.workflow = workflow
 
     def generate_ghost_task(self, task_id):
-        """Create task instances populated with static data fields."""
+        """Create task-point element populated with static data.
+
+        Args:
+            task_id (str):
+                valid TaskID string.
+
+        Returns:
+
+            object: cylc.flow.ws_messages_pb2.PbTaskProxy
+                Populated task proxy data element.
+
+        """
         update_time = time()
 
         name, point_string = TaskID.split(task_id)
@@ -293,7 +320,18 @@ class WsDataMgr(object):
         return tproxy
 
     def generate_ghost_families(self, family_proxies=None, cycle_points=None):
-        """Generate the family proxies from tasks in cycle points."""
+        """Generate the family-point elements from tasks in cycle points.
+
+        Args:
+            task_id (str):
+                valid TaskID string.
+
+        Returns:
+
+            list: [cylc.flow.ws_messages_pb2.PbFamilyProxy]
+                list of populated family proxy data elements.
+
+        """
         update_time = time()
         if family_proxies is None:
             family_proxies = {}
@@ -355,7 +393,21 @@ class WsDataMgr(object):
     def generate_graph_elements(self, edges=None,
                                 task_proxies=None, family_proxies=None,
                                 start_point=None, stop_point=None):
-        """Generate edges and ghost nodes (proxy elements)."""
+        """Generate edges and [ghost] nodes (family and task proxy elements).
+
+        Args:
+            edges (dict, optional):
+                ID-PbEdge key-value mapping.
+            task_proxies (dict, optional):
+                ID-PbTaskProxy key-value mapping.
+            family_proxies (dict, optional):
+                ID-PbFamilyProxy key-value mapping.
+            start_point (cylc.flow.cycling.PointBase):
+                Edge generation start point.
+            stop_point (cylc.flow.cycling.PointBase):
+                Edge generation stop point.
+
+        """
         if not self.pool_points:
             return
         config = self.schd.config
@@ -457,230 +509,14 @@ class WsDataMgr(object):
         self.edges = edges
         self.graph = graph
 
-    def increment_graph_elements(self):
-        """Update graph elements if needed."""
-        has_updated = False
-        # Gather pool cycles.
-        old_pool_points = set()
-        if self.pool_points:
-            old_pool_points = self.pool_points.copy()
-        self.pool_points = set(list(self.schd.pool.pool))
-        # No action if pool is not yet initiated.
-        if not self.pool_points:
-            return
-        # Increment edges:
-        # - Initially for each cycle point in the pool.
-        # - For each new cycle point thereafter.
-        # Using difference and pointwise allows for historical
-        # task insertion (in gaps).
-        for point in self.pool_points.difference(old_pool_points):
-            # All family & task cycle instances are generated and
-            # populated with static data as 'ghost nodes'.
-            self.generate_graph_elements(
-                self.edges, self.task_proxies, self.family_proxies,
-                point, point)
-            has_updated = True
-        # Prune data store by cycle point for:
-        # - Edge target cycle points are not in the pool
-        #   and source cycle points are not greater than pool max.
-        # - Edge source cycle points where neither itself and
-        #   all it's corresponding target cycle points are not in the pool.
-        # This ensures a buffer of sources and targets in front and behind the
-        # task pool, while accommodating exceptions such as ICP dependencies.
-        # TODO: Turn nodes back to ghost if not in pool? (for suicide)
-        prune_points = set()
-        max_point = max(self.pool_points)
-        for s_point, t_points in list(self.edge_points.items()):
-            if s_point <= max_point:
-                if (s_point not in self.pool_points and
-                        t_points.isdisjoint(self.pool_points)):
-                    prune_points.add(str(s_point))
-                    prune_points.union((str(t_p) for t_p in t_points))
-                    del self.edge_points[s_point]
-                    continue
-                t_diffs = t_points.difference(self.pool_points)
-                if t_diffs:
-                    prune_points.union((str(t_p) for t_p in t_diffs))
-                    self.edge_points[s_point].difference_update(t_diffs)
-        # Action pruning if any eligible cycle points are found.
-        if prune_points:
-            self.prune_points(prune_points)
-            has_updated = True
-        if has_updated:
-            self.update_workflow()
-
-    def initiate_data_model(self, reload=False):
-        """Initiate or Update data model on start/restart/reload."""
-        # Reset attributes on reload:
-        if reload:
-            self.pool_points = set()
-            self.edge_points = {}
-            self.all_states = []
-            self.cycle_states = {}
-            self.state_count_cycles = {}
-            self.task_proxies = {}
-            self.family_proxies = {}
-            self.edges = {}
-            self.graph = PbEdges()
-        # Static elements
-        self.generate_definition_elements()
-        self.increment_graph_elements()
-
-    def update_task_proxies(self, updated_tasks=None):
-        """Update dynamic task instance fields"""
-        if not updated_tasks:
-            return
-        update_time = time()
-        task_defs = {}
-
-        # update task instance
-        for itask in updated_tasks:
-            name, point_string = TaskID.split(itask.identity)
-            tp_id = (
-                f'{self.workflow_id}{ID_DELIM}{point_string}{ID_DELIM}{name}')
-            if tp_id not in self.task_proxies:
-                continue
-            self.cycle_states.setdefault(point_string, {})[name] = (
-                itask.state.status)
-            # Gather task definitions for elapsed time recalculation.
-            if name not in task_defs:
-                task_defs[name] = itask.tdef
-            # Create new message and copy existing message content
-            tproxy = PbTaskProxy()
-            tproxy.CopyFrom(self.task_proxies[tp_id])
-            tproxy.stamp = f'{tp_id}@{update_time}'
-            tproxy.state = itask.state.status
-            tproxy.job_submits = itask.submit_num
-            tproxy.spawned = itask.has_spawned
-            tproxy.latest_message = itask.summary['latest_message']
-            tproxy.jobs[:] = self.schd.job_pool.task_jobs.get(tp_id, [])
-            tproxy.broadcasts[:] = [
-                f'{key}={val}' for key, val in
-                self.schd.task_events_mgr.broadcast_mgr.get_broadcast(
-                    itask.identity).items()]
-            prereq_list = []
-            for prereq in itask.state.prerequisites:
-                # Protobuf messages populated within
-                prereq_obj = prereq.api_dump(self.workflow_id)
-                if prereq_obj:
-                    prereq_list.append(prereq_obj)
-            del tproxy.prerequisites[:]
-            tproxy.prerequisites.extend(prereq_list)
-            tproxy.outputs[:] = [
-                f'{trigger}={is_completed}'
-                for trigger, _, is_completed in itask.state.outputs.get_all()
-            ]
-            # Replace the original
-            # (atomic update, for access from other threads).
-            self.task_proxies[tp_id] = tproxy
-
-        # Recalculate effected task def elements elapsed time.
-        for name, tdef in task_defs.items():
-            elapsed_time = task_mean_elapsed_time(tdef)
-            if elapsed_time:
-                t_id = f'{self.workflow_id}{ID_DELIM}{name}'
-                self.tasks[t_id].stamp = f'{t_id}@{update_time}'
-                self.tasks[t_id].mean_elapsed_time = elapsed_time
-
-    def update_family_proxies(self, cycle_points=None):
-        """Update state of family proxies."""
-        if cycle_points is None:
-            cycle_points = self.cycle_states.keys()
-        if not cycle_points:
-            return
-        update_time = time()
-
-        # Compute state_counts (total, and per cycle).
-        all_states = []
-        state_count_cycles = {}
-
-        for point_string in cycle_points:
-            # For each cycle point, construct a family state tree
-            # based on the first-parent single-inheritance tree
-            c_task_states = self.cycle_states.get(point_string, None)
-            if c_task_states is None:
-                continue
-            c_fam_task_states = {}
-            count = {}
-
-            for key in c_task_states:
-                state = c_task_states[key]
-                if state is None:
-                    continue
-                try:
-                    count[state] += 1
-                except KeyError:
-                    count[state] = 1
-
-                all_states.append(state)
-                for parent in self.ancestors.get(key, []):
-                    if parent == key:
-                        continue
-                    c_fam_task_states.setdefault(parent, set())
-                    c_fam_task_states[parent].add(state)
-
-            state_count_cycles[point_string] = count
-
-            for fam, child_states in c_fam_task_states.items():
-                state = extract_group_state(child_states)
-                fp_id = (
-                    f'{self.workflow_id}{ID_DELIM}'
-                    f'{point_string}{ID_DELIM}{fam}')
-                if state is None or fp_id not in self.family_proxies:
-                    continue
-                # Since two fields strings are reassigned,
-                # it should be safe without copy.
-                fproxy = self.family_proxies[fp_id]
-                fproxy.stamp = f'{fp_id}@{update_time}'
-                fproxy.state = state
-
-        self.all_states = all_states
-        self.state_count_cycles = state_count_cycles
-
-    def update_workflow(self):
-        """Update/populate dynamic content of workflow."""
-        update_time = time()
-        # Create new message and copy existing message content
-        workflow = PbWorkflow()
-        workflow.CopyFrom(self.workflow)
-        workflow.stamp = f'{self.workflow_id}@{update_time}'
-        state_count_totals = {}
-        for _, count in list(self.state_count_cycles.items()):
-            for state, state_count in count.items():
-                state_count_totals.setdefault(state, 0)
-                state_count_totals[state] += state_count
-        for state, count in state_count_totals.items():
-            setattr(workflow.state_totals,
-                    copy(state).replace('-', '_'), count)
-
-        for key, value in (
-                ('oldest_cycle_point', self.schd.pool.get_min_point()),
-                ('newest_cycle_point', self.schd.pool.get_max_point()),
-                ('newest_runahead_cycle_point',
-                    self.schd.pool.get_max_point_runahead())):
-            if value:
-                setattr(workflow, key, str(value))
-            else:
-                setattr(workflow, key, '')
-
-        workflow.last_updated = update_time
-        workflow.states.extend(list(set(self.all_states)).sort())
-        workflow.reloading = self.schd.pool.do_reload
-
-        # Construct a workflow status string for use by monitoring clients.
-        workflow.status, workflow.status_msg = map(
-            str, get_suite_status(self.schd))
-
-        workflow.task_proxies[:] = list(self.task_proxies)
-        workflow.family_proxies[:] = list(self.family_proxies)
-        workflow.ClearField('edges')
-        workflow.edges.CopyFrom(self.graph)
-
-        # Replace the original (atomic update, for access from other threads).
-        self.workflow = workflow
-
     def prune_points(self, point_strings):
-        """Remove old proxies and edges by cycle point."""
+        """Remove old nodes and edges by cycle point.
+
+        Args:
+            point_strings (list):
+                Iterable of valid cycle point strings.
+
+        """
         if not point_strings:
             return
         node_ids = set()
@@ -734,8 +570,256 @@ class WsDataMgr(object):
         self.all_states = all_states
         self.state_count_cycles = state_count_cycles
 
+    def initiate_data_model(self, reload=False):
+        """Initiate or Update data model on start/restart/reload.
+
+        Args:
+            reload (bool, optional):
+                Reset data-store before regenerating.
+
+        """
+        # Reset attributes/data-store on reload:
+        if reload:
+            self.__init__(self.schd)
+        # Static elements
+        self.generate_definition_elements()
+        self.increment_graph_elements()
+
+    def increment_graph_elements(self):
+        """Generate and/or prune graph elements if needed.
+
+        Use the task pool and edge source/target cycle points to find
+        new points to generate edges and/or old points to prune data-store.
+
+        """
+        # Gather task pool cycle points.
+        old_pool_points = self.pool_points.copy()
+        self.pool_points = set(list(self.schd.pool.pool))
+        # No action if pool is not yet initiated.
+        if not self.pool_points:
+            return
+        # Increment edges:
+        # - Initially for each cycle point in the pool.
+        # - For each new cycle point thereafter.
+        # Using difference and pointwise allows for historical
+        # task insertion (in gaps).
+        new_points = self.pool_points.difference(old_pool_points)
+        if new_points:
+            for point in new_points:
+                # All family & task cycle instances are generated and
+                # populated with static data as 'ghost nodes'.
+                self.generate_graph_elements(
+                    self.edges, self.task_proxies, self.family_proxies,
+                    point, point)
+            self.min_point = min(self.pool_points)
+            self.max_point = max(self.pool_points)
+        # Prune data store by cycle point where said point is:
+        # - Not in the set of pool points.
+        # - Not a source or target cycle point in the set of edges.
+        # This ensures a buffer of sources and targets in front and behind the
+        # task pool, while accommodating exceptions such as ICP dependencies.
+        # TODO: Turn nodes back to ghost if not in pool? (for suicide)
+        prune_points = set()
+        for s_point, t_points in list(self.edge_points.items()):
+            if (s_point not in self.pool_points and
+                    t_points.isdisjoint(self.pool_points)):
+                prune_points.add(str(s_point))
+                prune_points.union((str(t_p) for t_p in t_points))
+                del self.edge_points[s_point]
+                continue
+            t_diffs = t_points.difference(self.pool_points)
+            if t_diffs:
+                prune_points.union((str(t_p) for t_p in t_diffs))
+                self.edge_points[s_point].difference_update(t_diffs)
+        # Action pruning if any eligible cycle points are found.
+        if prune_points:
+            self.prune_points(prune_points)
+        if new_points or prune_points:
+            # Pruned and/or additional elements require
+            # state/status recalculation, and ID ref updates.
+            self.update_workflow()
+
+    def update_task_proxies(self, updated_tasks=None):
+        """Update dynamic fields of task nodes/proxies.
+
+        Args:
+            updated_tasks (list): [cylc.flow.task_proxy.TaskProxy]
+                Update task-node from corresponding given list of
+                task proxy objects from the workflow task pool.
+
+        """
+        if not updated_tasks:
+            return
+        update_time = time()
+        task_defs = {}
+
+        # update task instance
+        for itask in updated_tasks:
+            name, point_string = TaskID.split(itask.identity)
+            tp_id = (
+                f'{self.workflow_id}{ID_DELIM}{point_string}{ID_DELIM}{name}')
+            if tp_id not in self.task_proxies:
+                continue
+            self.cycle_states.setdefault(point_string, {})[name] = (
+                itask.state.status)
+            # Gather task definitions for elapsed time recalculation.
+            if name not in task_defs:
+                task_defs[name] = itask.tdef
+            # Create new message and copy existing message content.
+            tproxy = PbTaskProxy()
+            # to avoid modification while being read.
+            tproxy.CopyFrom(self.task_proxies[tp_id])
+            tproxy.stamp = f'{tp_id}@{update_time}'
+            tproxy.state = itask.state.status
+            tproxy.job_submits = itask.submit_num
+            tproxy.spawned = itask.has_spawned
+            tproxy.latest_message = itask.summary['latest_message']
+            tproxy.jobs[:] = self.schd.job_pool.task_jobs.get(tp_id, [])
+            tproxy.broadcasts[:] = [
+                f'{key}={val}' for key, val in
+                self.schd.task_events_mgr.broadcast_mgr.get_broadcast(
+                    itask.identity).items()]
+            prereq_list = []
+            for prereq in itask.state.prerequisites:
+                # Protobuf messages populated within
+                prereq_obj = prereq.api_dump(self.workflow_id)
+                if prereq_obj:
+                    prereq_list.append(prereq_obj)
+            # Unlike the following list comprehension repeated message
+            # fields cannot be directly assigned, so is cleared first.
+            del tproxy.prerequisites[:]
+            tproxy.prerequisites.extend(prereq_list)
+            tproxy.outputs[:] = [
+                f'{trigger}={is_completed}'
+                for trigger, _, is_completed in itask.state.outputs.get_all()
+            ]
+            # Replace the original
+            # (atomic update, for access from other threads).
+            self.task_proxies[tp_id] = tproxy
+
+        # Recalculate effected task def elements elapsed time.
+        for name, tdef in task_defs.items():
+            elapsed_time = task_mean_elapsed_time(tdef)
+            if elapsed_time:
+                t_id = f'{self.workflow_id}{ID_DELIM}{name}'
+                self.tasks[t_id].stamp = f'{t_id}@{update_time}'
+                self.tasks[t_id].mean_elapsed_time = elapsed_time
+
+    def update_family_proxies(self, cycle_points=None):
+        """Update state of family proxies.
+
+        Args:
+            cycle_points (list):
+                Update family-node state from given list of
+                valid cycle point strings.
+
+        """
+        if cycle_points is None:
+            cycle_points = self.cycle_states.keys()
+        if not cycle_points:
+            return
+        update_time = time()
+
+        # Compute state_counts (total, and per cycle).
+        all_states = []
+        state_count_cycles = {}
+
+        for point_string in cycle_points:
+            # For each cycle point, construct a family state tree
+            # based on the first-parent single-inheritance tree
+            c_task_states = self.cycle_states.get(point_string, None)
+            if c_task_states is None:
+                continue
+            c_fam_task_states = {}
+            count = {}
+
+            for key in c_task_states:
+                state = c_task_states[key]
+                if state is None:
+                    continue
+                try:
+                    count[state] += 1
+                except KeyError:
+                    count[state] = 1
+
+                all_states.append(state)
+                for parent in self.ancestors.get(key, []):
+                    if parent == key:
+                        continue
+                    c_fam_task_states.setdefault(parent, set())
+                    c_fam_task_states[parent].add(state)
+
+            state_count_cycles[point_string] = count
+
+            for fam, child_states in c_fam_task_states.items():
+                state = extract_group_state(child_states)
+                fp_id = (
+                    f'{self.workflow_id}{ID_DELIM}'
+                    f'{point_string}{ID_DELIM}{fam}')
+                if state is None or fp_id not in self.family_proxies:
+                    continue
+                # Since two fields strings are reassigned,
+                # it should be safe without copy.
+                fproxy = self.family_proxies[fp_id]
+                fproxy.stamp = f'{fp_id}@{update_time}'
+                fproxy.state = state
+
+        self.all_states = all_states
+        self.state_count_cycles = state_count_cycles
+
+    def update_workflow_statuses(self):
+        """Update workflow element status and state totals."""
+        # Create new message and copy existing message content
+        update_time = time()
+        workflow = PbWorkflow()
+        workflow.CopyFrom(self.workflow)
+        workflow.stamp = f'{self.workflow_id}@{update_time}'
+        workflow.last_updated = update_time
+
+        state_count_totals = {}
+        for _, count in list(self.state_count_cycles.items()):
+            for state, state_count in count.items():
+                state_count_totals.setdefault(state, 0)
+                state_count_totals[state] += state_count
+        for state, count in state_count_totals.items():
+            setattr(workflow.state_totals,
+                    copy(state).replace('-', '_'), count)
+
+        workflow.last_updated = update_time
+        workflow.states.extend(list(set(self.all_states)).sort())
+        workflow.reloading = self.schd.pool.do_reload
+
+        # Construct a workflow status string for use by monitoring clients.
+        workflow.status, workflow.status_msg = map(
+            str, get_suite_status(self.schd))
+
+        # Return workflow element for additional manipulation.
+        return workflow
+
+    def update_workflow(self):
+        """Update and populate dynamic fields of workflow element."""
+        workflow = self.update_workflow_statuses()
+
+        for key, value in (
+                ('oldest_cycle_point', self.min_point),
+                ('newest_cycle_point', self.max_point),
+                ('newest_runahead_cycle_point',
+                    self.schd.pool.get_max_point_runahead())):
+            if value:
+                setattr(workflow, key, str(value))
+            else:
+                setattr(workflow, key, '')
+
+        workflow.task_proxies[:] = list(self.task_proxies)
+        workflow.family_proxies[:] = list(self.family_proxies)
+        workflow.ClearField('edges')
+        workflow.edges.CopyFrom(self.graph)
+
+        # Replace the original (atomic update, for access from other threads).
+        self.workflow = workflow
+
     def update_dynamic_elements(self, updated_nodes=None):
-        """Update data elements containing dynamic fields."""
+        """Update data elements containing dynamic/live fields."""
         # If no tasks are given update all
         if updated_nodes is None:
             updated_nodes = self.schd.pool.get_all_tasks()
@@ -743,10 +827,11 @@ class WsDataMgr(object):
             return
         self.update_task_proxies(updated_nodes)
         self.update_family_proxies(set(str(t.point) for t in updated_nodes))
-        self.update_workflow()
+        self.workflow = self.update_workflow_statuses()
 
     # Message collation and dissemination methods:
     def get_entire_workflow(self):
+        """Gather data elements into single Protobuf message."""
         workflow_msg = PbEntireWorkflow()
         workflow_msg.workflow.CopyFrom(self.workflow)
         workflow_msg.tasks.extend(list(self.tasks.values()))
