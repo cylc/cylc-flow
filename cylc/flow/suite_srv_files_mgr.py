@@ -19,6 +19,7 @@
 
 # Note: Some modules are NOT imported in the header. Expensive modules are only
 # imported on demand.
+from functools import lru_cache
 import os
 import re
 from string import ascii_letters, digits
@@ -63,10 +64,6 @@ class SuiteSrvFilesManager(object):
     PASSPHRASE_LEN = 20
     PS_OPTS = '-opid,args'
     REC_TITLE = re.compile(r"^\s*title\s*=\s*(.*)\s*$")
-
-    def __init__(self):
-        self.can_disk_cache_passphrases = {}
-        self.can_use_load_auths = {}
 
     def detect_old_contact_file(self, reg, check_host_port=None):
         """Detect old suite contact file.
@@ -210,8 +207,6 @@ To start a new run, stop the old one first with one or more of these:
                 self.FILE_BASE_PASSPHRASE, self.FILE_BASE_CONTACT,
                 self.FILE_BASE_CONTACT2]:
             raise ValueError("%s: item not recognised" % item)
-        if item == self.FILE_BASE_PASSPHRASE:
-            self.can_disk_cache_passphrases[(reg, owner, host)] = False
 
         if reg == os.getenv('CYLC_SUITE_NAME'):
             env_keys = []
@@ -259,8 +254,6 @@ To start a new run, stop the old one first with one or more of these:
         if item != self.FILE_BASE_CONTACT2:
             value = self._load_remote_item(item, reg, owner, host)
             if value:
-                if item == self.FILE_BASE_PASSPHRASE:
-                    self.can_disk_cache_passphrases[(reg, owner, host)] = True
                 if not content:
                     path = self._get_cache_dir(reg, owner, host)
                     self._dump_item(path, item, value)
@@ -491,43 +484,41 @@ To start a new run, stop the old one first with one or more of these:
                 title = match.groups()[0].strip('"\'')
         return title
 
+    @lru_cache()
     def _is_local_auth_ok(self, reg, owner, host):
         """Return True if it is OK to use local passphrase file.
 
         Use values in ~/cylc-run/REG/.service/contact to make a judgement.
-        Cache results in self.can_use_load_auths.
         """
-        if (reg, owner, host) not in self.can_use_load_auths:
-            if is_remote(host, owner):
-                fname = os.path.join(
-                    self.get_suite_srv_dir(reg), self.FILE_BASE_CONTACT)
-                data = {}
-                try:
-                    for line in open(fname):
-                        key, value = (
-                            [item.strip() for item in line.split("=", 1)])
-                        data[key] = value
-                except (IOError, ValueError):
-                    # No contact file
-                    self.can_use_load_auths[(reg, owner, host)] = False
-                else:
-                    # Contact file exists, check values match
-                    if owner is None:
-                        owner = get_user()
-                    if host is None:
-                        host = get_host()
-                    host_value = data.get(self.KEY_HOST, "")
-                    self.can_use_load_auths[(reg, owner, host)] = (
-                        reg == data.get(self.KEY_NAME) and
-                        owner == data.get(self.KEY_OWNER) and
-                        (
-                            host == host_value or
-                            host == host_value.split(".", 1)[0]  # no domain
-                        )
-                    )
+        if is_remote(host, owner):
+            fname = os.path.join(
+                self.get_suite_srv_dir(reg), self.FILE_BASE_CONTACT)
+            data = {}
+            try:
+                for line in open(fname):
+                    key, value = (
+                        [item.strip() for item in line.split("=", 1)])
+                    data[key] = value
+            except (IOError, ValueError):
+                # No contact file
+                return False
             else:
-                self.can_use_load_auths[(reg, owner, host)] = True
-        return self.can_use_load_auths[(reg, owner, host)]
+                # Contact file exists, check values match
+                if owner is None:
+                    owner = get_user()
+                if host is None:
+                    host = get_host()
+                host_value = data.get(self.KEY_HOST, "")
+                return (
+                    reg == data.get(self.KEY_NAME) and
+                    owner == data.get(self.KEY_OWNER) and
+                    (
+                        host == host_value or
+                        host == host_value.split(".", 1)[0]  # no domain
+                    )
+                )
+        else:
+            return True
 
     @staticmethod
     def _load_local_item(item, path):
