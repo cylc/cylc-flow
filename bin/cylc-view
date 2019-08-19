@@ -40,7 +40,7 @@ from tempfile import NamedTemporaryFile
 import shlex
 from subprocess import call
 
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.config_schema import glbl_cfg
 from cylc.flow.exceptions import CylcError
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.parsec.fileparse import read_and_proc

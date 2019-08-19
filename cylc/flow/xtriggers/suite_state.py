@@ -23,7 +23,7 @@
 import os
 import sqlite3
 from cylc.flow.cycling.util import add_offset
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.config_schema import glbl_cfg
 from cylc.flow.dbstatecheck import CylcSuiteDBChecker
 from metomi.isodatetime.parsers import TimePointParser
 

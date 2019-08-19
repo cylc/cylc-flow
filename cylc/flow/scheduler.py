@@ -36,7 +36,7 @@ from cylc.flow.parsec.util import printcfg
 
 from cylc.flow import LOG
 from cylc.flow.broadcast_mgr import BroadcastMgr
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.config_schema import glbl_cfg
 from cylc.flow.config import SuiteConfig
 from cylc.flow.cycling.loader import get_point, standardise_point_string
 from cylc.flow.daemonize import daemonize

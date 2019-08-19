@@ -24,7 +24,7 @@ import re
 import sys
 import socket
 
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.config_schema import glbl_cfg
 import cylc.flow.flags
 from cylc.flow.hostuserutil import is_remote_host, get_host_ip_by_name
 from cylc.flow.network.client import (
