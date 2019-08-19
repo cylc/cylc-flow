@@ -65,33 +65,8 @@ class SuiteSrvFilesManager(object):
     REC_TITLE = re.compile(r"^\s*title\s*=\s*(.*)\s*$")
 
     def __init__(self):
-        self.cache = {self.FILE_BASE_PASSPHRASE: {}}
         self.can_disk_cache_passphrases = {}
         self.can_use_load_auths = {}
-
-    def cache_passphrase(self, reg, owner, host, value):
-        """Cache and dump passphrase for a remote suite in standard location.
-
-        Save passphrase to ~/.cylc/auth/owner@host/reg if possible.
-        This is normally called on a successful authentication, and will cache
-        the remote passphrase in memory as well.
-        """
-        if owner is None:
-            owner = get_user()
-        if host is None:
-            host = get_host()
-        path = self._get_cache_dir(reg, owner, host)
-        self.cache[self.FILE_BASE_PASSPHRASE][(reg, owner, host)] = value
-        # Dump to a file only for remote suites loaded via SSH.
-        if self.can_disk_cache_passphrases.get((reg, owner, host)):
-            # Although not desirable, failing to dump the passphrase to a file
-            # is not disastrous.
-            try:
-                self._dump_item(path, self.FILE_BASE_PASSPHRASE, value)
-            except (IOError, OSError):
-                if cylc.flow.flags.debug:
-                    import traceback
-                    traceback.print_exc()
 
     def detect_old_contact_file(self, reg, check_host_port=None):
         """Detect old suite contact file.
@@ -218,17 +193,14 @@ To start a new run, stop the old one first with one or more of these:
            b/ $CYLC_SUITE_RUN_DIR_ON_SUITE_HOST for local jobs or remote jobs
               with SSH messaging.
 
-        2/ (Passphrases only) From memory cache, for remote suite passphrases.
-           Don't use if content=False.
+        2/ For suite on local user@host. The suite service directory.
 
-        3/ For suite on local user@host. The suite service directory.
-
-        4/ Location under $HOME/.cylc/ for remote suite control from accounts
+        3/ Location under $HOME/.cylc/ for remote suite control from accounts
            that do not actually need the suite definition directory to be
            installed:
            $HOME/.cylc/auth/SUITE_OWNER@SUITE_HOST/SUITE_NAME/
 
-        5/ For remote suites, try locating the file from the suite service
+        4/ For remote suites, try locating the file from the suite service
            directory on remote owner@host via SSH. If content=False, the value
            of the located file will be dumped under:
            $HOME/.cylc/auth/SUITE_OWNER@SUITE_HOST/SUITE_NAME/
@@ -257,19 +229,7 @@ To start a new run, stop the old one first with one or more of these:
                     value = self._locate_item(item, path)
                 if value:
                     return value
-        # 2/ From memory cache
-        if item in self.cache:
-            my_owner = owner
-            my_host = host
-            if my_owner is None:
-                my_owner = get_user()
-            if my_host is None:
-                my_host = get_host()
-            try:
-                return self.cache[item][(reg, my_owner, my_host)]
-            except KeyError:
-                pass
-        # 3/ Local suite service directory
+        # 2/ Local suite service directory
         if self._is_local_auth_ok(reg, owner, host):
             path = self.get_suite_srv_dir(reg)
             if content:
@@ -278,7 +238,7 @@ To start a new run, stop the old one first with one or more of these:
                 value = self._locate_item(item, path)
             if value:
                 return value
-        # 4/ Disk cache for remote suites
+        # 3/ Disk cache for remote suites
         if owner is not None and host is not None:
             paths = [self._get_cache_dir(reg, owner, host)]
             short_host = host.split('.', 1)[0]
@@ -292,7 +252,7 @@ To start a new run, stop the old one first with one or more of these:
                 if value:
                     return value
 
-        # 5/ Use SSH to load content from remote owner@host
+        # 4/ Use SSH to load content from remote owner@host
         # Note: It is not possible to find ".service/contact2" on the suite
         # host, because it is installed on task host by "cylc remote-init" on
         # demand.
