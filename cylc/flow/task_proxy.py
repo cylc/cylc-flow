@@ -60,7 +60,7 @@ class TaskProxy(object):
             on trigger.
         .non_unique_events (dict):
             Count non-unique events (e.g. critical, warning, custom).
-        .point (cylc.flowcycling.PointBase):
+        .point (cylc.flow.cycling.PointBase):
             Cycle point of the task.
         .point_as_seconds (int):
             Cycle point as seconds since epoch.

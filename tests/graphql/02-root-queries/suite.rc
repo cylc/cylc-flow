@@ -1,0 +1,103 @@
+[meta]
+    title = BAZ
+    description = Some suite baz
+    URL = 'tcp://localhost:<port>/graphql'
+    group = round table
+    importance = critical
+    ranking = one
+
+[cylc]
+    cycle point format = CCYYMMDDThh
+    UTC mode = True
+
+[scheduling]
+    initial cycle point = 20190101T00
+    [[graph]]
+        P1M = """
+foo[-P1M] => foo
+qux[-P1M] => qux
+baa[-P1M] => baa
+qar[-P1M] => qar
+
+@wall_clock => foo & qux
+
+foo | qux => bar
+qux => qaz
+baa => qaz
+"""
+
+[runtime]
+    [[root]]
+        init-script = echo 'Me first'
+        env-script = echo "Hi first, I'm second"
+        script = sleep 5; echo "$GREETING"
+        exit-script = echo 'Yay!'
+        err-script = echo 'Boo!'
+
+    [[FAM]]
+        [[[meta]]]
+            title = "Some Top family"
+            URL = "https://github.com/cylc/cylc-flow"
+            importance = Critical
+            alerts = none
+
+    [[FAM2]]
+        inherit = FAM
+
+    [[FAM3]]
+        inherit = FAM2
+
+    [[FAM4]]
+        [[[meta]]]
+            title = "Some Top family"
+
+    [[FAM5]]
+        env-script = sleep 10; echo "Yawn, sleepy second here"
+        [[[meta]]]
+            title = "Some Top family"
+
+    [[foo]]
+        inherit = FAM3
+        [[[meta]]]
+            description = "some task foo"
+        [[[environment]]]
+            GREETING = "Hello from foo!"
+
+    [[bar]]
+        inherit = FAM3
+        [[[meta]]]
+            description = "some task bar"
+        [[[environment]]]
+            GREETING = "Hello from bar!"
+
+    [[qux]]
+        inherit = FAM4
+        [[[meta]]]
+            description = "some task qux"
+        [[[environment]]]
+            GREETING = "Hello from qux!"
+
+    [[qaz]]
+        inherit = FAM4, FAM
+        [[[meta]]]
+            description = "some task qaz"
+        [[[environment]]]
+            GREETING = "Hello from qaz!"
+        [[[outputs]]]
+            trigger1 = "data ready"
+
+    [[qar]]
+        inherit = FAM, FAM5, FAM4
+        [[[meta]]]
+            description = "some task qaz"
+        [[[environment]]]
+            GREETING = "Hello from qaz!"
+        [[[outputs]]]
+            trigger1 = "data ready"
+
+    [[baa]]
+        extra log files = $HOME/startrek/captains.log
+        [[[meta]]]
+            description = "some task baa"
+        [[[environment]]]
+            GREETING = "Hello from baa!"

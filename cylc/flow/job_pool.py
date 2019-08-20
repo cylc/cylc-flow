@@ -29,6 +29,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED,
     TASK_STATUS_FAILED)
 from cylc.flow.ws_messages_pb2 import PbJob
+from cylc.flow.ws_data_mgr import ID_DELIM
 
 JOB_STATUSES_ALL = [
     TASK_STATUS_READY,
@@ -51,20 +52,22 @@ class JobPool(object):
     def __init__(self, suite, owner):
         self.suite = suite
         self.owner = owner
+        self.workflow_id = f'{self.owner}{ID_DELIM}{self.suite}'
         self.pool = {}
+        self.task_jobs = {}
 
     def insert_job(self, job_conf):
         """Insert job into pool."""
         update_time = time()
-        int_id = job_conf['job_d']
         job_owner = job_conf['owner']
+        sub_num = job_conf['submit_num']
         name, point_string = TaskID.split(job_conf['task_id'])
-        t_id = f"{self.owner}/{self.suite}/{point_string}/{name}"
-        j_id = f"{self.owner}/{self.suite}/{int_id}"
+        t_id = f'{self.workflow_id}{ID_DELIM}{point_string}{ID_DELIM}{name}'
+        j_id = f'{t_id}{ID_DELIM}{sub_num}'
         j_buf = PbJob(
-            checksum=f"{int_id}@{update_time}",
+            stamp=f"{j_id}@{update_time}",
             id=j_id,
-            submit_num=job_conf['submit_num'],
+            submit_num=sub_num,
             state=JOB_STATUSES_ALL[0],
             task_proxy=t_id,
             batch_sys_name=job_conf['batch_system_name'],
@@ -80,6 +83,8 @@ class JobPool(object):
             pre_script=job_conf['pre-script'],
             script=job_conf['script'],
             work_sub_dir=job_conf['work_d'],
+            name=name,
+            cycle_point=point_string,
         )
         j_buf.batch_sys_conf.extend(
             [f"{key}={val}" for key, val in
@@ -97,35 +102,49 @@ class JobPool(object):
             [f"{key}={val}" for key, val in
                 job_conf['param_var'].items()])
         j_buf.extra_logs.extend(job_conf['logfiles'])
-        self.pool[int_id] = j_buf
+        self.pool[j_id] = j_buf
+        self.task_jobs.setdefault(t_id, []).append(j_id)
 
     def remove_job(self, job_d):
         """Remove job from pool."""
+        point, name, sub_num, _ = self.parse_job_item(job_d)
+        t_id = f'{self.workflow_id}{ID_DELIM}{point}{ID_DELIM}{name}'
+        j_id = f'{t_id}{ID_DELIM}{sub_num}'
         try:
-            del self.pool[job_d]
+            del self.pool[j_id]
+            self.task_jobs[t_id].remove(j_id)
         except KeyError:
             pass
 
     def remove_task_jobs(self, task_id):
-        """removed all jobs associated with a task from the pool."""
-        name, point_string = TaskID.split(task_id)
-        t_id = f"/{point_string}/{name}/"
-        for job_d in self.pool.keys():
-            if t_id in job_d:
-                del self.pool[job_d]
+        """Removed a task's jobs from the pool via task ID."""
+        try:
+            for j_id in self.task_jobs[task_id]:
+                del self.pool[j_id]
+            del self.task_jobs[task_id]
+        except KeyError:
+            pass
 
     def set_job_attr(self, job_d, attr_key, attr_val):
         """Set job attribute."""
+        point, name, sub_num, _ = self.parse_job_item(job_d)
+        j_id = (
+            f'{self.workflow_id}{ID_DELIM}{point}'
+            f'{ID_DELIM}{name}{ID_DELIM}{sub_num}')
         try:
-            setattr(self.pool[job_d], attr_key, attr_val)
+            setattr(self.pool[j_id], attr_key, attr_val)
         except (KeyError, TypeError):
             pass
 
     def set_job_state(self, job_d, status):
         """Set job state."""
+        point, name, sub_num, _ = self.parse_job_item(job_d)
+        j_id = (
+            f'{self.workflow_id}{ID_DELIM}{point}'
+            f'{ID_DELIM}{name}{ID_DELIM}{sub_num}')
         if status in JOB_STATUSES_ALL:
             try:
-                self.pool[job_d].state = status
+                self.pool[j_id].state = status
             except KeyError:
                 pass
 
@@ -134,14 +153,19 @@ class JobPool(object):
 
         Set values of both event_key + "_time" and event_key + "_time_string".
         """
+        point, name, sub_num, _ = self.parse_job_item(job_d)
+        j_id = (
+            f'{self.workflow_id}{ID_DELIM}{point}'
+            f'{ID_DELIM}{name}{ID_DELIM}{sub_num}')
         try:
-            setattr(self.pool[job_d], event_key + '_time', time_str)
+            setattr(self.pool[j_id], event_key + '_time', time_str)
         except KeyError:
             pass
 
     @staticmethod
     def parse_job_item(item):
-        """Parse point/name/submit_num:state
+        """Parse internal id
+        point/name/submit_num:state
         or name.point.submit_num:state syntax.
         """
         if ":" in item:
@@ -160,4 +184,6 @@ class JobPool(object):
             submit_num = None
         else:
             name_str, point_str, submit_num = (head, None, None)
-        return (point_str, name_str, submit_num, state_str)
+        if submit_num is not None:
+            sub_num = int(submit_num)
+        return (point_str, name_str, sub_num, state_str)

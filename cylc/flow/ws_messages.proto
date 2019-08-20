@@ -27,6 +27,9 @@ syntax = "proto3";
  * Command:
  * $ protoc -I=./ --python_out=./ ws_messages.proto
  *
+ * Pre-compiled protoc binary may be download from:
+ * https://github.com/protocolbuffers/protobuf/releases
+ *
  * */
 
 
@@ -63,7 +66,7 @@ message PbStateTotals {
 }
 
 message PbWorkflow {
-    string checksum = 1;
+    string stamp = 1;
     string id = 2;
     string name = 3;
     string status = 4;
@@ -75,7 +78,7 @@ message PbWorkflow {
     PbEdges edges = 10;
     int32 api_version = 11;
     string cylc_version = 12;
-    float last_updated = 13;
+    double last_updated = 13;
     PbMeta meta = 14;
     string newest_runahead_cycle_point = 15;
     string newest_cycle_point = 16;
@@ -96,7 +99,7 @@ message PbWorkflow {
 }
 
 message PbJob {
-    string checksum = 1;
+    string stamp = 1;
     string id = 2;
     int32 submit_num = 3;
     string state = 4;
@@ -125,10 +128,13 @@ message PbJob {
     repeated string param_env_tmpl = 27;
     repeated string param_var = 28;
     repeated string extra_logs = 29;
+    /* For filtering speed */
+    string name = 30;
+    string cycle_point = 31;
 }
 
 message PbTask {
-    string checksum = 1;
+    string stamp = 1;
     string id = 2;
     string name = 3;
     PbMeta meta = 4;
@@ -162,7 +168,7 @@ message PbPrerequisite {
 }
 
 message PbTaskProxy {
-    string checksum = 1;
+    string stamp = 1;
     string id = 2;
     string task = 3;
     string state = 4;
@@ -178,10 +184,12 @@ message PbTaskProxy {
     repeated string jobs = 14;
     repeated string parents = 15;
     string first_parent = 16;
+    /* For filtering speed */
+    string name = 17;
 }
 
 message PbFamily {
-    string checksum = 1;
+    string stamp = 1;
     string id = 2;
     string name = 3;
     PbMeta meta = 4;
@@ -193,7 +201,7 @@ message PbFamily {
 }
 
 message PbFamilyProxy {
-    string checksum = 1;
+    string stamp = 1;
     string id = 2;
     string cycle_point = 3;
     string name = 4;
@@ -207,7 +215,7 @@ message PbFamilyProxy {
 }
 
 message PbEdge {
-    string checksum = 1;
+    string stamp = 1;
     string id = 2;
     string source = 3;
     string target = 4;

@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\x11ws_messages.proto\"O\n\x06PbMeta\x12\r\n\x05title\x18\x01 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x02 \x01(\t\x12\x0b\n\x03URL\x18\x03 \x01(\t\x12\x14\n\x0cuser_defined\x18\x04 \x03(\t\"[\n\nPbTimeZone\x12\r\n\x05hours\x18\x01 \x01(\x05\x12\x0f\n\x07minutes\x18\x02 \x01(\x05\x12\x14\n\x0cstring_basic\x18\x03 \x01(\t\x12\x17\n\x0fstring_extended\x18\x04 \x01(\t\"\xf9\x01\n\rPbStateTotals\x12\x10\n\x08runahead\x18\x01 \x01(\x05\x12\x0f\n\x07waiting\x18\x02 \x01(\x05\x12\x0c\n\x04held\x18\x03 \x01(\x05\x12\x0e\n\x06queued\x18\x04 \x01(\x05\x12\x0f\n\x07\x65xpired\x18\x05 \x01(\x05\x12\r\n\x05ready\x18\x06 \x01(\x05\x12\x15\n\rsubmit_failed\x18\x07 \x01(\x05\x12\x17\n\x0fsubmit_retrying\x18\x08 \x01(\x05\x12\x11\n\tsubmitted\x18\t \x01(\x05\x12\x10\n\x08retrying\x18\n \x01(\x05\x12\x0f\n\x07running\x18\x0b \x01(\x05\x12\x0e\n\x06\x66\x61iled\x18\x0c \x01(\x05\x12\x11\n\tsucceeded\x18\r \x01(\x05\"\x96\x05\n\nPbWorkflow\x12\x10\n\x08\x63hecksum\x18\x01 \x01(\t\x12\n\n\x02id\x18\x02 \x01(\t\x12\x0c\n\x04name\x18\x03 \x01(\t\x12\x0e\n\x06status\x18\x04 \x01(\t\x12\x0c\n\x04host\x18\x05 \x01(\t\x12\x0c\n\x04port\x18\x06 \x01(\x05\x12\r\n\x05owner\x18\x07 \x01(\t\x12\r\n\x05tasks\x18\x08 \x03(\t\x12\x10\n\x08\x66\x61milies\x18\t \x03(\t\x12\x17\n\x05\x65\x64ges\x18\n \x01(\x0b\x32\x08.PbEdges\x12\x13\n\x0b\x61pi_version\x18\x0b \x01(\x05\x12\x14\n\x0c\x63ylc_version\x18\x0c \x01(\t\x12\x14\n\x0clast_updated\x18\r \x01(\x02\x12\x15\n\x04meta\x18\x0e \x01(\x0b\x32\x07.PbMeta\x12#\n\x1bnewest_runahead_cycle_point\x18\x0f \x01(\t\x12\x1a\n\x12newest_cycle_point\x18\x10 \x01(\t\x12\x1a\n\x12oldest_cycle_point\x18\x11 \x01(\t\x12\x11\n\treloading\x18\x12 \x01(\x08\x12\x10\n\x08run_mode\x18\x13 \x01(\t\x12\x14\n\x0c\x63ycling_mode\x18\x14 \x01(\t\x12$\n\x0cstate_totals\x18\x15 \x01(\x0b\x32\x0e.PbStateTotals\x12\x18\n\x10workflow_log_dir\x18\x16 \x01(\t\x12#\n\x0etime_zone_info\x18\x17 \x01(\x0b\x32\x0b.PbTimeZone\x12\x12\n\ntree_depth\x18\x18 \x01(\x05\x12\x15\n\rjob_log_names\x18\x19 \x03(\t\x12\x15\n\rns_defn_order\x18\x1a \x03(\t\x12\x0e\n\x06states\x18\x1b \x03(\t\x12\x14\n\x0ctask_proxies\x18\x1c \x03(\t\x12\x16\n\x0e\x66\x61mily_proxies\x18\x1d \x03(\t\x12\x12\n\nstatus_msg\x18\x1e \x01(\t\"\xd3\x04\n\x05PbJob\x12\x10\n\x08\x63hecksum\x18\x01 \x01(\t\x12\n\n\x02id\x18\x02 \x01(\t\x12\x12\n\nsubmit_num\x18\x03 \x01(\x05\x12\r\n\x05state\x18\x04 \x01(\t\x12\x12\n\ntask_proxy\x18\x05 \x01(\t\x12\x16\n\x0esubmitted_time\x18\x06 \x01(\t\x12\x14\n\x0cstarted_time\x18\x07 \x01(\t\x12\x15\n\rfinished_time\x18\x08 \x01(\t\x12\x18\n\x10\x62\x61tch_sys_job_id\x18\t \x01(\t\x12\x16\n\x0e\x62\x61tch_sys_name\x18\n \x01(\t\x12\x12\n\nenv_script\x18\x0b \x01(\t\x12\x12\n\nerr_script\x18\x0c \x01(\t\x12\x13\n\x0b\x65xit_script\x18\r \x01(\t\x12\x1c\n\x14\x65xecution_time_limit\x18\x0e \x01(\x02\x12\x0c\n\x04host\x18\x0f \x01(\t\x12\x13\n\x0binit_script\x18\x10 \x01(\t\x12\x13\n\x0bjob_log_dir\x18\x11 \x01(\t\x12\r\n\x05owner\x18\x12 \x01(\t\x12\x13\n\x0bpost_script\x18\x13 \x01(\t\x12\x12\n\npre_script\x18\x14 \x01(\t\x12\x0e\n\x06script\x18\x15 \x01(\t\x12\r\n\x05shell\x18\x16 \x01(\t\x12\x14\n\x0cwork_sub_dir\x18\x17 \x01(\t\x12\x16\n\x0e\x62\x61tch_sys_conf\x18\x18 \x03(\t\x12\x13\n\x0b\x65nvironment\x18\x19 \x03(\t\x12\x12\n\ndirectives\x18\x1a \x03(\t\x12\x16\n\x0eparam_env_tmpl\x18\x1b \x03(\t\x12\x11\n\tparam_var\x18\x1c \x03(\t\x12\x12\n\nextra_logs\x18\x1d \x03(\t\"\x99\x01\n\x06PbTask\x12\x10\n\x08\x63hecksum\x18\x01 \x01(\t\x12\n\n\x02id\x18\x02 \x01(\t\x12\x0c\n\x04name\x18\x03 \x01(\t\x12\x15\n\x04meta\x18\x04 \x01(\x0b\x32\x07.PbMeta\x12\x19\n\x11mean_elapsed_time\x18\x05 \x01(\x02\x12\r\n\x05\x64\x65pth\x18\x06 \x01(\x05\x12\x0f\n\x07proxies\x18\x07 \x03(\t\x12\x11\n\tnamespace\x18\x08 \x03(\t\"r\n\nPbPollTask\x12\x13\n\x0blocal_proxy\x18\x01 \x01(\t\x12\x10\n\x08workflow\x18\x02 \x01(\t\x12\x14\n\x0cremote_proxy\x18\x03 \x01(\t\x12\x11\n\treq_state\x18\x04 \x01(\t\x12\x14\n\x0cgraph_string\x18\x05 \x01(\t\"l\n\x0bPbCondition\x12\x12\n\ntask_proxy\x18\x01 \x01(\t\x12\x12\n\nexpr_alias\x18\x02 \x01(\t\x12\x11\n\treq_state\x18\x03 \x01(\t\x12\x11\n\tsatisfied\x18\x04 \x01(\x08\x12\x0f\n\x07message\x18\x05 \x01(\t\"o\n\x0ePbPrerequisite\x12\x12\n\nexpression\x18\x01 \x01(\t\x12 \n\nconditions\x18\x02 \x03(\x0b\x32\x0c.PbCondition\x12\x14\n\x0c\x63ycle_points\x18\x03 \x03(\t\x12\x11\n\tsatisfied\x18\x04 \x01(\x08\"\xbf\x02\n\x0bPbTaskProxy\x12\x10\n\x08\x63hecksum\x18\x01 \x01(\t\x12\n\n\x02id\x18\x02 \x01(\t\x12\x0c\n\x04task\x18\x03 \x01(\t\x12\r\n\x05state\x18\x04 \x01(\t\x12\x13\n\x0b\x63ycle_point\x18\x05 \x01(\t\x12\x0f\n\x07spawned\x18\x06 \x01(\x08\x12\r\n\x05\x64\x65pth\x18\x07 \x01(\x05\x12\x13\n\x0bjob_submits\x18\x08 \x01(\x05\x12\x16\n\x0elatest_message\x18\t \x01(\t\x12\x0f\n\x07outputs\x18\n \x03(\t\x12\x12\n\nbroadcasts\x18\x0b \x03(\t\x12\x11\n\tnamespace\x18\x0c \x03(\t\x12&\n\rprerequisites\x18\r \x03(\x0b\x32\x0f.PbPrerequisite\x12\x0c\n\x04jobs\x18\x0e \x03(\t\x12\x0f\n\x07parents\x18\x0f \x03(\t\x12\x14\n\x0c\x66irst_parent\x18\x10 \x01(\t\"\xab\x01\n\x08PbFamily\x12\x10\n\x08\x63hecksum\x18\x01 \x01(\t\x12\n\n\x02id\x18\x02 \x01(\t\x12\x0c\n\x04name\x18\x03 \x01(\t\x12\x15\n\x04meta\x18\x04 \x01(\x0b\x32\x07.PbMeta\x12\r\n\x05\x64\x65pth\x18\x05 \x01(\x05\x12\x0f\n\x07proxies\x18\x06 \x03(\t\x12\x0f\n\x07parents\x18\x07 \x03(\t\x12\x13\n\x0b\x63hild_tasks\x18\x08 \x03(\t\x12\x16\n\x0e\x63hild_families\x18\t \x03(\t\"\xd2\x01\n\rPbFamilyProxy\x12\x10\n\x08\x63hecksum\x18\x01 \x01(\t\x12\n\n\x02id\x18\x02 \x01(\t\x12\x13\n\x0b\x63ycle_point\x18\x03 \x01(\t\x12\x0c\n\x04name\x18\x04 \x01(\t\x12\x0e\n\x06\x66\x61mily\x18\x05 \x01(\t\x12\r\n\x05state\x18\x06 \x01(\t\x12\r\n\x05\x64\x65pth\x18\x07 \x01(\x05\x12\x14\n\x0c\x66irst_parent\x18\x08 \x01(\t\x12\x0f\n\x07parents\x18\t \x03(\t\x12\x13\n\x0b\x63hild_tasks\x18\n \x03(\t\x12\x16\n\x0e\x63hild_families\x18\x0b \x03(\t\"e\n\x06PbEdge\x12\x10\n\x08\x63hecksum\x18\x01 \x01(\t\x12\n\n\x02id\x18\x02 \x01(\t\x12\x0e\n\x06source\x18\x03 \x01(\t\x12\x0e\n\x06target\x18\x04 \x01(\t\x12\x0f\n\x07suicide\x18\x05 \x01(\x08\x12\x0c\n\x04\x63ond\x18\x06 \x01(\x08\"o\n\x07PbEdges\x12\n\n\x02id\x18\x01 \x01(\t\x12\r\n\x05\x65\x64ges\x18\x02 \x03(\t\x12+\n\x16workflow_polling_tasks\x18\x03 \x03(\x0b\x32\x0b.PbPollTask\x12\x0e\n\x06leaves\x18\x04 \x03(\t\x12\x0c\n\x04\x66\x65\x65t\x18\x05 \x03(\t\"\xe0\x01\n\x10PbEntireWorkflow\x12\x1d\n\x08workflow\x18\x01 \x01(\x0b\x32\x0b.PbWorkflow\x12\x16\n\x05tasks\x18\x02 \x03(\x0b\x32\x07.PbTask\x12\"\n\x0ctask_proxies\x18\x03 \x03(\x0b\x32\x0c.PbTaskProxy\x12\x14\n\x04jobs\x18\x04 \x03(\x0b\x32\x06.PbJob\x12\x1b\n\x08\x66\x61milies\x18\x05 \x03(\x0b\x32\t.PbFamily\x12&\n\x0e\x66\x61mily_proxies\x18\x06 \x03(\x0b\x32\x0e.PbFamilyProxy\x12\x16\n\x05\x65\x64ges\x18\x07 \x03(\x0b\x32\x07.PbEdgeb\x06proto3')
+  serialized_pb=_b('\n\x11ws_messages.proto\"O\n\x06PbMeta\x12\r\n\x05title\x18\x01 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x02 \x01(\t\x12\x0b\n\x03URL\x18\x03 \x01(\t\x12\x14\n\x0cuser_defined\x18\x04 \x03(\t\"[\n\nPbTimeZone\x12\r\n\x05hours\x18\x01 \x01(\x05\x12\x0f\n\x07minutes\x18\x02 \x01(\x05\x12\x14\n\x0cstring_basic\x18\x03 \x01(\t\x12\x17\n\x0fstring_extended\x18\x04 \x01(\t\"\xf9\x01\n\rPbStateTotals\x12\x10\n\x08runahead\x18\x01 \x01(\x05\x12\x0f\n\x07waiting\x18\x02 \x01(\x05\x12\x0c\n\x04held\x18\x03 \x01(\x05\x12\x0e\n\x06queued\x18\x04 \x01(\x05\x12\x0f\n\x07\x65xpired\x18\x05 \x01(\x05\x12\r\n\x05ready\x18\x06 \x01(\x05\x12\x15\n\rsubmit_failed\x18\x07 \x01(\x05\x12\x17\n\x0fsubmit_retrying\x18\x08 \x01(\x05\x12\x11\n\tsubmitted\x18\t \x01(\x05\x12\x10\n\x08retrying\x18\n \x01(\x05\x12\x0f\n\x07running\x18\x0b \x01(\x05\x12\x0e\n\x06\x66\x61iled\x18\x0c \x01(\x05\x12\x11\n\tsucceeded\x18\r \x01(\x05\"\x93\x05\n\nPbWorkflow\x12\r\n\x05stamp\x18\x01 \x01(\t\x12\n\n\x02id\x18\x02 \x01(\t\x12\x0c\n\x04name\x18\x03 \x01(\t\x12\x0e\n\x06status\x18\x04 \x01(\t\x12\x0c\n\x04host\x18\x05 \x01(\t\x12\x0c\n\x04port\x18\x06 \x01(\x05\x12\r\n\x05owner\x18\x07 \x01(\t\x12\r\n\x05tasks\x18\x08 \x03(\t\x12\x10\n\x08\x66\x61milies\x18\t \x03(\t\x12\x17\n\x05\x65\x64ges\x18\n \x01(\x0b\x32\x08.PbEdges\x12\x13\n\x0b\x61pi_version\x18\x0b \x01(\x05\x12\x14\n\x0c\x63ylc_version\x18\x0c \x01(\t\x12\x14\n\x0clast_updated\x18\r \x01(\x01\x12\x15\n\x04meta\x18\x0e \x01(\x0b\x32\x07.PbMeta\x12#\n\x1bnewest_runahead_cycle_point\x18\x0f \x01(\t\x12\x1a\n\x12newest_cycle_point\x18\x10 \x01(\t\x12\x1a\n\x12oldest_cycle_point\x18\x11 \x01(\t\x12\x11\n\treloading\x18\x12 \x01(\x08\x12\x10\n\x08run_mode\x18\x13 \x01(\t\x12\x14\n\x0c\x63ycling_mode\x18\x14 \x01(\t\x12$\n\x0cstate_totals\x18\x15 \x01(\x0b\x32\x0e.PbStateTotals\x12\x18\n\x10workflow_log_dir\x18\x16 \x01(\t\x12#\n\x0etime_zone_info\x18\x17 \x01(\x0b\x32\x0b.PbTimeZone\x12\x12\n\ntree_depth\x18\x18 \x01(\x05\x12\x15\n\rjob_log_names\x18\x19 \x03(\t\x12\x15\n\rns_defn_order\x18\x1a \x03(\t\x12\x0e\n\x06states\x18\x1b \x03(\t\x12\x14\n\x0ctask_proxies\x18\x1c \x03(\t\x12\x16\n\x0e\x66\x61mily_proxies\x18\x1d \x03(\t\x12\x12\n\nstatus_msg\x18\x1e \x01(\t\"\xf3\x04\n\x05PbJob\x12\r\n\x05stamp\x18\x01 \x01(\t\x12\n\n\x02id\x18\x02 \x01(\t\x12\x12\n\nsubmit_num\x18\x03 \x01(\x05\x12\r\n\x05state\x18\x04 \x01(\t\x12\x12\n\ntask_proxy\x18\x05 \x01(\t\x12\x16\n\x0esubmitted_time\x18\x06 \x01(\t\x12\x14\n\x0cstarted_time\x18\x07 \x01(\t\x12\x15\n\rfinished_time\x18\x08 \x01(\t\x12\x18\n\x10\x62\x61tch_sys_job_id\x18\t \x01(\t\x12\x16\n\x0e\x62\x61tch_sys_name\x18\n \x01(\t\x12\x12\n\nenv_script\x18\x0b \x01(\t\x12\x12\n\nerr_script\x18\x0c \x01(\t\x12\x13\n\x0b\x65xit_script\x18\r \x01(\t\x12\x1c\n\x14\x65xecution_time_limit\x18\x0e \x01(\x02\x12\x0c\n\x04host\x18\x0f \x01(\t\x12\x13\n\x0binit_script\x18\x10 \x01(\t\x12\x13\n\x0bjob_log_dir\x18\x11 \x01(\t\x12\r\n\x05owner\x18\x12 \x01(\t\x12\x13\n\x0bpost_script\x18\x13 \x01(\t\x12\x12\n\npre_script\x18\x14 \x01(\t\x12\x0e\n\x06script\x18\x15 \x01(\t\x12\r\n\x05shell\x18\x16 \x01(\t\x12\x14\n\x0cwork_sub_dir\x18\x17 \x01(\t\x12\x16\n\x0e\x62\x61tch_sys_conf\x18\x18 \x03(\t\x12\x13\n\x0b\x65nvironment\x18\x19 \x03(\t\x12\x12\n\ndirectives\x18\x1a \x03(\t\x12\x16\n\x0eparam_env_tmpl\x18\x1b \x03(\t\x12\x11\n\tparam_var\x18\x1c \x03(\t\x12\x12\n\nextra_logs\x18\x1d \x03(\t\x12\x0c\n\x04name\x18\x1e \x01(\t\x12\x13\n\x0b\x63ycle_point\x18\x1f \x01(\t\"\x96\x01\n\x06PbTask\x12\r\n\x05stamp\x18\x01 \x01(\t\x12\n\n\x02id\x18\x02 \x01(\t\x12\x0c\n\x04name\x18\x03 \x01(\t\x12\x15\n\x04meta\x18\x04 \x01(\x0b\x32\x07.PbMeta\x12\x19\n\x11mean_elapsed_time\x18\x05 \x01(\x02\x12\r\n\x05\x64\x65pth\x18\x06 \x01(\x05\x12\x0f\n\x07proxies\x18\x07 \x03(\t\x12\x11\n\tnamespace\x18\x08 \x03(\t\"r\n\nPbPollTask\x12\x13\n\x0blocal_proxy\x18\x01 \x01(\t\x12\x10\n\x08workflow\x18\x02 \x01(\t\x12\x14\n\x0cremote_proxy\x18\x03 \x01(\t\x12\x11\n\treq_state\x18\x04 \x01(\t\x12\x14\n\x0cgraph_string\x18\x05 \x01(\t\"l\n\x0bPbCondition\x12\x12\n\ntask_proxy\x18\x01 \x01(\t\x12\x12\n\nexpr_alias\x18\x02 \x01(\t\x12\x11\n\treq_state\x18\x03 \x01(\t\x12\x11\n\tsatisfied\x18\x04 \x01(\x08\x12\x0f\n\x07message\x18\x05 \x01(\t\"o\n\x0ePbPrerequisite\x12\x12\n\nexpression\x18\x01 \x01(\t\x12 \n\nconditions\x18\x02 \x03(\x0b\x32\x0c.PbCondition\x12\x14\n\x0c\x63ycle_points\x18\x03 \x03(\t\x12\x11\n\tsatisfied\x18\x04 \x01(\x08\"\xca\x02\n\x0bPbTaskProxy\x12\r\n\x05stamp\x18\x01 \x01(\t\x12\n\n\x02id\x18\x02 \x01(\t\x12\x0c\n\x04task\x18\x03 \x01(\t\x12\r\n\x05state\x18\x04 \x01(\t\x12\x13\n\x0b\x63ycle_point\x18\x05 \x01(\t\x12\x0f\n\x07spawned\x18\x06 \x01(\x08\x12\r\n\x05\x64\x65pth\x18\x07 \x01(\x05\x12\x13\n\x0bjob_submits\x18\x08 \x01(\x05\x12\x16\n\x0elatest_message\x18\t \x01(\t\x12\x0f\n\x07outputs\x18\n \x03(\t\x12\x12\n\nbroadcasts\x18\x0b \x03(\t\x12\x11\n\tnamespace\x18\x0c \x03(\t\x12&\n\rprerequisites\x18\r \x03(\x0b\x32\x0f.PbPrerequisite\x12\x0c\n\x04jobs\x18\x0e \x03(\t\x12\x0f\n\x07parents\x18\x0f \x03(\t\x12\x14\n\x0c\x66irst_parent\x18\x10 \x01(\t\x12\x0c\n\x04name\x18\x11 \x01(\t\"\xa8\x01\n\x08PbFamily\x12\r\n\x05stamp\x18\x01 \x01(\t\x12\n\n\x02id\x18\x02 \x01(\t\x12\x0c\n\x04name\x18\x03 \x01(\t\x12\x15\n\x04meta\x18\x04 \x01(\x0b\x32\x07.PbMeta\x12\r\n\x05\x64\x65pth\x18\x05 \x01(\x05\x12\x0f\n\x07proxies\x18\x06 \x03(\t\x12\x0f\n\x07parents\x18\x07 \x03(\t\x12\x13\n\x0b\x63hild_tasks\x18\x08 \x03(\t\x12\x16\n\x0e\x63hild_families\x18\t \x03(\t\"\xcf\x01\n\rPbFamilyProxy\x12\r\n\x05stamp\x18\x01 \x01(\t\x12\n\n\x02id\x18\x02 \x01(\t\x12\x13\n\x0b\x63ycle_point\x18\x03 \x01(\t\x12\x0c\n\x04name\x18\x04 \x01(\t\x12\x0e\n\x06\x66\x61mily\x18\x05 \x01(\t\x12\r\n\x05state\x18\x06 \x01(\t\x12\r\n\x05\x64\x65pth\x18\x07 \x01(\x05\x12\x14\n\x0c\x66irst_parent\x18\x08 \x01(\t\x12\x0f\n\x07parents\x18\t \x03(\t\x12\x13\n\x0b\x63hild_tasks\x18\n \x03(\t\x12\x16\n\x0e\x63hild_families\x18\x0b \x03(\t\"b\n\x06PbEdge\x12\r\n\x05stamp\x18\x01 \x01(\t\x12\n\n\x02id\x18\x02 \x01(\t\x12\x0e\n\x06source\x18\x03 \x01(\t\x12\x0e\n\x06target\x18\x04 \x01(\t\x12\x0f\n\x07suicide\x18\x05 \x01(\x08\x12\x0c\n\x04\x63ond\x18\x06 \x01(\x08\"o\n\x07PbEdges\x12\n\n\x02id\x18\x01 \x01(\t\x12\r\n\x05\x65\x64ges\x18\x02 \x03(\t\x12+\n\x16workflow_polling_tasks\x18\x03 \x03(\x0b\x32\x0b.PbPollTask\x12\x0e\n\x06leaves\x18\x04 \x03(\t\x12\x0c\n\x04\x66\x65\x65t\x18\x05 \x03(\t\"\xe0\x01\n\x10PbEntireWorkflow\x12\x1d\n\x08workflow\x18\x01 \x01(\x0b\x32\x0b.PbWorkflow\x12\x16\n\x05tasks\x18\x02 \x03(\x0b\x32\x07.PbTask\x12\"\n\x0ctask_proxies\x18\x03 \x03(\x0b\x32\x0c.PbTaskProxy\x12\x14\n\x04jobs\x18\x04 \x03(\x0b\x32\x06.PbJob\x12\x1b\n\x08\x66\x61milies\x18\x05 \x03(\x0b\x32\t.PbFamily\x12&\n\x0e\x66\x61mily_proxies\x18\x06 \x03(\x0b\x32\x0e.PbFamilyProxy\x12\x16\n\x05\x65\x64ges\x18\x07 \x03(\x0b\x32\x07.PbEdgeb\x06proto3')
 )
 
 
@@ -253,7 +253,7 @@ _PBWORKFLOW = _descriptor.Descriptor(
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='checksum', full_name='PbWorkflow.checksum', index=0,
+      name='stamp', full_name='PbWorkflow.stamp', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -338,7 +338,7 @@ _PBWORKFLOW = _descriptor.Descriptor(
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='last_updated', full_name='PbWorkflow.last_updated', index=12,
-      number=13, type=2, cpp_type=6, label=1,
+      number=13, type=1, cpp_type=5, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -475,7 +475,7 @@ _PBWORKFLOW = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=448,
-  serialized_end=1110,
+  serialized_end=1107,
 )
 
 
@@ -487,7 +487,7 @@ _PBJOB = _descriptor.Descriptor(
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='checksum', full_name='PbJob.checksum', index=0,
+      name='stamp', full_name='PbJob.stamp', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -689,6 +689,20 @@ _PBJOB = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='name', full_name='PbJob.name', index=29,
+      number=30, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='cycle_point', full_name='PbJob.cycle_point', index=30,
+      number=31, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -701,8 +715,8 @@ _PBJOB = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1113,
-  serialized_end=1708,
+  serialized_start=1110,
+  serialized_end=1737,
 )
 
 
@@ -714,7 +728,7 @@ _PBTASK = _descriptor.Descriptor(
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='checksum', full_name='PbTask.checksum', index=0,
+      name='stamp', full_name='PbTask.stamp', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -781,8 +795,8 @@ _PBTASK = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1711,
-  serialized_end=1864,
+  serialized_start=1740,
+  serialized_end=1890,
 )
 
 
@@ -840,8 +854,8 @@ _PBPOLLTASK = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1866,
-  serialized_end=1980,
+  serialized_start=1892,
+  serialized_end=2006,
 )
 
 
@@ -899,8 +913,8 @@ _PBCONDITION = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1982,
-  serialized_end=2090,
+  serialized_start=2008,
+  serialized_end=2116,
 )
 
 
@@ -951,8 +965,8 @@ _PBPREREQUISITE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2092,
-  serialized_end=2203,
+  serialized_start=2118,
+  serialized_end=2229,
 )
 
 
@@ -964,7 +978,7 @@ _PBTASKPROXY = _descriptor.Descriptor(
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='checksum', full_name='PbTaskProxy.checksum', index=0,
+      name='stamp', full_name='PbTaskProxy.stamp', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -1075,6 +1089,13 @@ _PBTASKPROXY = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='name', full_name='PbTaskProxy.name', index=16,
+      number=17, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -1087,8 +1108,8 @@ _PBTASKPROXY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2206,
-  serialized_end=2525,
+  serialized_start=2232,
+  serialized_end=2562,
 )
 
 
@@ -1100,7 +1121,7 @@ _PBFAMILY = _descriptor.Descriptor(
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='checksum', full_name='PbFamily.checksum', index=0,
+      name='stamp', full_name='PbFamily.stamp', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -1174,8 +1195,8 @@ _PBFAMILY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2528,
-  serialized_end=2699,
+  serialized_start=2565,
+  serialized_end=2733,
 )
 
 
@@ -1187,7 +1208,7 @@ _PBFAMILYPROXY = _descriptor.Descriptor(
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='checksum', full_name='PbFamilyProxy.checksum', index=0,
+      name='stamp', full_name='PbFamilyProxy.stamp', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -1275,8 +1296,8 @@ _PBFAMILYPROXY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2702,
-  serialized_end=2912,
+  serialized_start=2736,
+  serialized_end=2943,
 )
 
 
@@ -1288,7 +1309,7 @@ _PBEDGE = _descriptor.Descriptor(
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='checksum', full_name='PbEdge.checksum', index=0,
+      name='stamp', full_name='PbEdge.stamp', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -1341,8 +1362,8 @@ _PBEDGE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2914,
-  serialized_end=3015,
+  serialized_start=2945,
+  serialized_end=3043,
 )
 
 
@@ -1400,8 +1421,8 @@ _PBEDGES = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3017,
-  serialized_end=3128,
+  serialized_start=3045,
+  serialized_end=3156,
 )
 
 
@@ -1473,8 +1494,8 @@ _PBENTIREWORKFLOW = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3131,
-  serialized_end=3355,
+  serialized_start=3159,
+  serialized_end=3383,
 )
 
 _PBWORKFLOW.fields_by_name['edges'].message_type = _PBEDGES
@@ -1510,109 +1531,109 @@ DESCRIPTOR.message_types_by_name['PbEdges'] = _PBEDGES
 DESCRIPTOR.message_types_by_name['PbEntireWorkflow'] = _PBENTIREWORKFLOW
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
-PbMeta = _reflection.GeneratedProtocolMessageType('PbMeta', (_message.Message,), dict(
-  DESCRIPTOR = _PBMETA,
-  __module__ = 'ws_messages_pb2'
+PbMeta = _reflection.GeneratedProtocolMessageType('PbMeta', (_message.Message,), {
+  'DESCRIPTOR' : _PBMETA,
+  '__module__' : 'ws_messages_pb2'
   # @@protoc_insertion_point(class_scope:PbMeta)
-  ))
+  })
 _sym_db.RegisterMessage(PbMeta)
 
-PbTimeZone = _reflection.GeneratedProtocolMessageType('PbTimeZone', (_message.Message,), dict(
-  DESCRIPTOR = _PBTIMEZONE,
-  __module__ = 'ws_messages_pb2'
+PbTimeZone = _reflection.GeneratedProtocolMessageType('PbTimeZone', (_message.Message,), {
+  'DESCRIPTOR' : _PBTIMEZONE,
+  '__module__' : 'ws_messages_pb2'
   # @@protoc_insertion_point(class_scope:PbTimeZone)
-  ))
+  })
 _sym_db.RegisterMessage(PbTimeZone)
 
-PbStateTotals = _reflection.GeneratedProtocolMessageType('PbStateTotals', (_message.Message,), dict(
-  DESCRIPTOR = _PBSTATETOTALS,
-  __module__ = 'ws_messages_pb2'
+PbStateTotals = _reflection.GeneratedProtocolMessageType('PbStateTotals', (_message.Message,), {
+  'DESCRIPTOR' : _PBSTATETOTALS,
+  '__module__' : 'ws_messages_pb2'
   # @@protoc_insertion_point(class_scope:PbStateTotals)
-  ))
+  })
 _sym_db.RegisterMessage(PbStateTotals)
 
-PbWorkflow = _reflection.GeneratedProtocolMessageType('PbWorkflow', (_message.Message,), dict(
-  DESCRIPTOR = _PBWORKFLOW,
-  __module__ = 'ws_messages_pb2'
+PbWorkflow = _reflection.GeneratedProtocolMessageType('PbWorkflow', (_message.Message,), {
+  'DESCRIPTOR' : _PBWORKFLOW,
+  '__module__' : 'ws_messages_pb2'
   # @@protoc_insertion_point(class_scope:PbWorkflow)
-  ))
+  })
 _sym_db.RegisterMessage(PbWorkflow)
 
-PbJob = _reflection.GeneratedProtocolMessageType('PbJob', (_message.Message,), dict(
-  DESCRIPTOR = _PBJOB,
-  __module__ = 'ws_messages_pb2'
+PbJob = _reflection.GeneratedProtocolMessageType('PbJob', (_message.Message,), {
+  'DESCRIPTOR' : _PBJOB,
+  '__module__' : 'ws_messages_pb2'
   # @@protoc_insertion_point(class_scope:PbJob)
-  ))
+  })
 _sym_db.RegisterMessage(PbJob)
 
-PbTask = _reflection.GeneratedProtocolMessageType('PbTask', (_message.Message,), dict(
-  DESCRIPTOR = _PBTASK,
-  __module__ = 'ws_messages_pb2'
+PbTask = _reflection.GeneratedProtocolMessageType('PbTask', (_message.Message,), {
+  'DESCRIPTOR' : _PBTASK,
+  '__module__' : 'ws_messages_pb2'
   # @@protoc_insertion_point(class_scope:PbTask)
-  ))
+  })
 _sym_db.RegisterMessage(PbTask)
 
-PbPollTask = _reflection.GeneratedProtocolMessageType('PbPollTask', (_message.Message,), dict(
-  DESCRIPTOR = _PBPOLLTASK,
-  __module__ = 'ws_messages_pb2'
+PbPollTask = _reflection.GeneratedProtocolMessageType('PbPollTask', (_message.Message,), {
+  'DESCRIPTOR' : _PBPOLLTASK,
+  '__module__' : 'ws_messages_pb2'
   # @@protoc_insertion_point(class_scope:PbPollTask)
-  ))
+  })
 _sym_db.RegisterMessage(PbPollTask)
 
-PbCondition = _reflection.GeneratedProtocolMessageType('PbCondition', (_message.Message,), dict(
-  DESCRIPTOR = _PBCONDITION,
-  __module__ = 'ws_messages_pb2'
+PbCondition = _reflection.GeneratedProtocolMessageType('PbCondition', (_message.Message,), {
+  'DESCRIPTOR' : _PBCONDITION,
+  '__module__' : 'ws_messages_pb2'
   # @@protoc_insertion_point(class_scope:PbCondition)
-  ))
+  })
 _sym_db.RegisterMessage(PbCondition)
 
-PbPrerequisite = _reflection.GeneratedProtocolMessageType('PbPrerequisite', (_message.Message,), dict(
-  DESCRIPTOR = _PBPREREQUISITE,
-  __module__ = 'ws_messages_pb2'
+PbPrerequisite = _reflection.GeneratedProtocolMessageType('PbPrerequisite', (_message.Message,), {
+  'DESCRIPTOR' : _PBPREREQUISITE,
+  '__module__' : 'ws_messages_pb2'
   # @@protoc_insertion_point(class_scope:PbPrerequisite)
-  ))
+  })
 _sym_db.RegisterMessage(PbPrerequisite)
 
-PbTaskProxy = _reflection.GeneratedProtocolMessageType('PbTaskProxy', (_message.Message,), dict(
-  DESCRIPTOR = _PBTASKPROXY,
-  __module__ = 'ws_messages_pb2'
+PbTaskProxy = _reflection.GeneratedProtocolMessageType('PbTaskProxy', (_message.Message,), {
+  'DESCRIPTOR' : _PBTASKPROXY,
+  '__module__' : 'ws_messages_pb2'
   # @@protoc_insertion_point(class_scope:PbTaskProxy)
-  ))
+  })
 _sym_db.RegisterMessage(PbTaskProxy)
 
-PbFamily = _reflection.GeneratedProtocolMessageType('PbFamily', (_message.Message,), dict(
-  DESCRIPTOR = _PBFAMILY,
-  __module__ = 'ws_messages_pb2'
+PbFamily = _reflection.GeneratedProtocolMessageType('PbFamily', (_message.Message,), {
+  'DESCRIPTOR' : _PBFAMILY,
+  '__module__' : 'ws_messages_pb2'
   # @@protoc_insertion_point(class_scope:PbFamily)
-  ))
+  })
 _sym_db.RegisterMessage(PbFamily)
 
-PbFamilyProxy = _reflection.GeneratedProtocolMessageType('PbFamilyProxy', (_message.Message,), dict(
-  DESCRIPTOR = _PBFAMILYPROXY,
-  __module__ = 'ws_messages_pb2'
+PbFamilyProxy = _reflection.GeneratedProtocolMessageType('PbFamilyProxy', (_message.Message,), {
+  'DESCRIPTOR' : _PBFAMILYPROXY,
+  '__module__' : 'ws_messages_pb2'
   # @@protoc_insertion_point(class_scope:PbFamilyProxy)
-  ))
+  })
 _sym_db.RegisterMessage(PbFamilyProxy)
 
-PbEdge = _reflection.GeneratedProtocolMessageType('PbEdge', (_message.Message,), dict(
-  DESCRIPTOR = _PBEDGE,
-  __module__ = 'ws_messages_pb2'
+PbEdge = _reflection.GeneratedProtocolMessageType('PbEdge', (_message.Message,), {
+  'DESCRIPTOR' : _PBEDGE,
+  '__module__' : 'ws_messages_pb2'
   # @@protoc_insertion_point(class_scope:PbEdge)
-  ))
+  })
 _sym_db.RegisterMessage(PbEdge)
 
-PbEdges = _reflection.GeneratedProtocolMessageType('PbEdges', (_message.Message,), dict(
-  DESCRIPTOR = _PBEDGES,
-  __module__ = 'ws_messages_pb2'
+PbEdges = _reflection.GeneratedProtocolMessageType('PbEdges', (_message.Message,), {
+  'DESCRIPTOR' : _PBEDGES,
+  '__module__' : 'ws_messages_pb2'
   # @@protoc_insertion_point(class_scope:PbEdges)
-  ))
+  })
 _sym_db.RegisterMessage(PbEdges)
 
-PbEntireWorkflow = _reflection.GeneratedProtocolMessageType('PbEntireWorkflow', (_message.Message,), dict(
-  DESCRIPTOR = _PBENTIREWORKFLOW,
-  __module__ = 'ws_messages_pb2'
+PbEntireWorkflow = _reflection.GeneratedProtocolMessageType('PbEntireWorkflow', (_message.Message,), {
+  'DESCRIPTOR' : _PBENTIREWORKFLOW,
+  '__module__' : 'ws_messages_pb2'
   # @@protoc_insertion_point(class_scope:PbEntireWorkflow)
-  ))
+  })
 _sym_db.RegisterMessage(PbEntireWorkflow)
 
 

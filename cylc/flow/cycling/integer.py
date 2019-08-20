@@ -552,7 +552,7 @@ class IntegerSequence(SequenceBase):
             point = self._get_point_in_bounds(point)
         else:
             point = self.get_next_point(point)
-        if self.exclusions and point in self.exclusions:
+        if self.exclusions and point and point in self.exclusions:
             return self.get_next_point_on_sequence(point)
         return point
 

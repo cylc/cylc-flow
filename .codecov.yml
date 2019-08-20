@@ -41,6 +41,7 @@ coverage:
 # files to ignore
 ignore:
   - "tests/**/*.py"
+  - "ws_messages_pb2.py"
 
 # turn off comments to pull requests
 comment: off

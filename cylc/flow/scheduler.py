@@ -560,8 +560,6 @@ see `COPYING' in the Cylc source distribution.
                 cycle, task_name, submit_num, _ = (
                     self.job_pool.parse_job_item(task_job))
                 task_id = TaskID.get(task_name, cycle)
-                if submit_num:
-                    submit_num = int(submit_num, 10)
             else:  # back compat: task-name.cycle
                 task_id = task_job
                 submit_num = None
@@ -1516,13 +1514,16 @@ see `COPYING' in the Cylc source distribution.
     def run(self):
         """Main loop."""
         self.initialise_scheduler()
+        self.ws_data_mgr.initiate_data_model()
         while True:  # MAIN LOOP
             tinit = time()
+            has_reloaded = False
 
             if self.pool.do_reload:
                 self.pool.reload_taskdefs()
                 self.suite_db_mgr.checkpoint("reload-done")
                 self.is_updated = True
+                has_reloaded = True
 
             self.process_command_queue()
             if self.pool.release_runahead_tasks():
@@ -1540,6 +1541,9 @@ see `COPYING' in the Cylc source distribution.
             self.process_command_queue()
             self.task_events_mgr.process_events(self)
 
+            # Re-initialise data model on reload
+            if has_reloaded:
+                self.ws_data_mgr.initiate_data_model(reload=True)
             # Update state summary, database, and uifeed
             self.suite_db_mgr.put_task_event_timers(self.task_events_mgr)
             has_updated = self.update_data_structure()
@@ -1585,12 +1589,14 @@ see `COPYING' in the Cylc source distribution.
         updated_tasks = [
             t for t in self.pool.get_all_tasks() if t.state.is_updated]
         has_updated = self.is_updated or updated_tasks
+        # Add tasks that have moved moved from runahead to live pool.
+        updated_nodes = set(updated_tasks).union(
+            self.pool.get_pool_change_tasks())
         if has_updated:
-            # UI Server data update
-            # TODO: process the entire pool once with self.is_updated
-            # and update deltas here to be published
-            self.ws_data_mgr.initiate_data_model()
-            # TODO: deprecate state summary manager just use protobuf
+            # WServer incemental data store update
+            self.ws_data_mgr.increment_graph_elements()
+            self.ws_data_mgr.update_dynamic_elements(updated_nodes)
+            # TODO: deprecate after CLI GraphQL migration
             self.state_summary_mgr.update(self)
             # Database update
             self.suite_db_mgr.put_task_pool(self.pool)
