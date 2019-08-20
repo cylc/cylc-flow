@@ -33,8 +33,8 @@ class CylcOptionParser(OptionParser):
 
     # Shared text for commands which can, & cannot, glob on cycle points:
     MULTI_USAGE_TEMPLATE = """
-TASK_GLOB is a pattern to match task proxies or task families,
-or groups of them{0}:{1}
+TASK_GLOB is a pattern to match tasks, or families, or groups of them, in
+the task pool{0}:{1}
 
 For example, to match{2}:{3}"""
     # Help text either including or excluding globbing on cycle points:
@@ -42,12 +42,19 @@ For example, to match{2}:{3}"""
 * [CYCLE-POINT-GLOB/]TASK-NAME-GLOB[:TASK-STATE]
 * [CYCLE-POINT-GLOB/]FAMILY-NAME-GLOB[:TASK-STATE]
 * TASK-NAME-GLOB[.CYCLE-POINT-GLOB][:TASK-STATE]
-* FAMILY-NAME-GLOB[.CYCLE-POINT-GLOB][:TASK-STATE]"""
+* FAMILY-NAME-GLOB[.CYCLE-POINT-GLOB][:TASK-STATE]
+
+WARNING: this command matches and operates on task proxy instances in the
+scheduler task pool, NOT abstract tasks in the workflow. If a task is not
+currently represented in the pool you must use "cylc insert" to add it in."""
     WITHOUT_CYCLE_GLOBS = """
 * CYCLE-POINT/TASK-NAME-GLOB
 * CYCLE-POINT/FAMILY-NAME-GLOB
 * TASK-NAME-GLOB.CYCLE-POINT
-* FAMILY-NAME-GLOB.CYCLE-POINT"""
+* FAMILY-NAME-GLOB.CYCLE-POINT
+
+NOTE: this glob matches abstract task names, not task proxy instances in the
+scheduler task pool (it is for inserting new task proxies into the pool)."""
     WITH_CYCLE_EXAMPLES = """
 * all tasks in a cycle: '20200202T0000Z/*' or '*.20200202T0000Z'
 * all tasks in the submitted status: ':submitted'
@@ -66,7 +73,7 @@ For example, to match{2}:{3}"""
     MULTITASKCYCLE_USAGE = MULTI_USAGE_TEMPLATE.format(
         "", WITH_CYCLE_GLOBS, "", WITH_CYCLE_EXAMPLES)
     MULTITASK_USAGE = MULTI_USAGE_TEMPLATE.format(
-        ", for a specific cycle point", WITHOUT_CYCLE_GLOBS,
+        ",\nfor a specific cycle point", WITHOUT_CYCLE_GLOBS,
         ", within the given cycle point (e.g. '20200202T0000Z')",
         WITHOUT_CYCLE_EXAMPLES)
 
