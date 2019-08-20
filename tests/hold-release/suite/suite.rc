@@ -8,7 +8,7 @@
 
 # ref: bug-fix GitHub Pull Request #843 (5412d01)
 
-[cylc]
+[general]
     cycle point format = %Y%m%dT%H
     [[reference test]]
         live mode suite timeout = PT30S

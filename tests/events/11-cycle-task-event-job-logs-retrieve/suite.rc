@@ -2,7 +2,7 @@
 [meta]
     title=Task Event Job Log Retrieve
 
-[cylc]
+[general]
     UTC mode = True
     cycle point format=%Y-%m-%dT%H:%MZ
     [[reference test]]

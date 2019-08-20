@@ -2,7 +2,7 @@
 # task perpetrator must complete successfully, so that perpetrator succeeds and
 # the suite shuts down cleanly.
 
-[cylc]
+[general]
     [[events]]
         timeout = PT10S
         abort on timeout = True

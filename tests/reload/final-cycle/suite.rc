@@ -2,7 +2,7 @@
     title = final cycle reload test
     description = """change final cycle."""
 
-[cylc]
+[general]
    UTC mode = True
    [[reference test]]
        required run mode = live

@@ -1,4 +1,4 @@
-[cylc]
+[general]
    UTC mode = True
    [[reference test]]
        expected task failures = fixable-1a.1, fixable-1b.1, fixable-2a.1, fixable-2b.1, fixable-3.1, loser.1

@@ -1,4 +1,4 @@
-[cylc]
+[general]
     [[events]]
         abort on inactivity = True
         abort on stalled = True

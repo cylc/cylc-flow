@@ -1,7 +1,7 @@
 [meta]
     title=broadcast expire
     description=Test broadcast expire option
-[cylc]
+[general]
     UTC mode = True
     [[reference test]]
         required run mode=live

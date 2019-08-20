@@ -28,7 +28,7 @@ if ${CYLC_TEST_DEBUG:-false}; then ERR=2; else ERR=1; fi
 #-------------------------------------------------------------------------------
 # run through the shutdown - restart procedure
 BASE_GLOBALRC="
-[cylc]
+[general]
     health check interval = PT15S
     [[events]]
         abort on inactivity = True
@@ -40,7 +40,7 @@ BASE_GLOBALRC="
 
 TEST_NAME="${TEST_NAME_BASE}"
 TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME}" <<< '
-[cylc]
+[general]
     [[parameters]]
         foo = 1..25
 [scheduling]

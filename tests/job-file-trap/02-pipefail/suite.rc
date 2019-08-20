@@ -1,5 +1,5 @@
 #!jinja2
-[cylc]
+[general]
    abort if any task fails = True
    [[reference test]]
        required run mode = live

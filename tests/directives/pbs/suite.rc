@@ -1,7 +1,7 @@
 #!Jinja2
 {% set HOST = environ['CYLC_TEST_BATCH_TASK_HOST'] %}
 {% set SITE_DIRECTIVES = environ['CYLC_TEST_BATCH_SITE_DIRECTIVES'] %}
-[cylc]
+[general]
    [[reference test]]
        required run mode = live
        live mode suite timeout = PT3.5M

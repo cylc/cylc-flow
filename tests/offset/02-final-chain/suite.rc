@@ -1,4 +1,4 @@
-[cylc]
+[general]
     cycle point time zone = +01
     [[reference test]]
         required run mode = live

@@ -2,7 +2,7 @@
     title = foo
     description = bar
 
-[cylc]
+[general]
     UTC mode = True
 
 [scheduling]

@@ -1,4 +1,4 @@
-[cylc]
+[general]
    [[reference test]]
        live mode suite timeout = PT1M
        required run mode = live

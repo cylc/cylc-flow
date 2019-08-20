@@ -2,7 +2,7 @@
 [meta]
     title=Task Event Job Log Retrieve
 
-[cylc]
+[general]
     [[reference test]]
         live mode suite timeout=PT1M
 

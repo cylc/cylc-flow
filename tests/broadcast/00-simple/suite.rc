@@ -9,7 +9,7 @@ shutdown event handler compares the broadcast log file with a previously
 generated reference version.
               """
 
-[cylc]
+[general]
     cycle point format = %Y%m%dT%H
     [[reference test]]
         live mode suite timeout = PT2M

@@ -1,5 +1,5 @@
 #!jinja2
-[cylc]
+[general]
     UTC mode = True # Ignore DST
     [[reference test]]
         live mode suite timeout = PT1M

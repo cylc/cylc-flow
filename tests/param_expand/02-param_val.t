@@ -22,7 +22,7 @@ set_test_number 23
 
 #------------------------------------------------------------------------------
 cat >'suite.rc' <<'__SUITE__'
-[cylc]
+[general]
     [[parameters]]
         i = cat, dog, fish
         j = 1..5
@@ -55,7 +55,7 @@ cmp_ok "${TNAME}-graph-nam" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph-nam-1.re
 
 #------------------------------------------------------------------------------
 cat >'suite.rc' <<'__SUITE__'
-[cylc]
+[general]
     [[parameters]]
         i = cat, dog, fish
         j = 1..5
@@ -89,7 +89,7 @@ cmp_ok "${TNAME}-graph-nam" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph-nam-1.re
 #------------------------------------------------------------------------------
 # Same, with white space in the parameter syntax.
 cat >'suite.rc' <<'__SUITE__'
-[cylc]
+[general]
     [[parameters]]
         i = cat, dog, fish
         j = 1..5
@@ -122,7 +122,7 @@ cmp_ok "${TNAME}-graph-nam" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph-nam-1.re
 
 #------------------------------------------------------------------------------
 cat >'suite.rc' <<'__SUITE__'
-[cylc]
+[general]
     [[parameters]]
         i = cat, dog, fish
         j = 1..5
@@ -155,7 +155,7 @@ cmp_ok "${TNAME}-graph-nam" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph-nam-b.re
 
 #------------------------------------------------------------------------------
 cat >'suite.rc' <<'__SUITE__'
-[cylc]
+[general]
     [[parameters]]
         i = cat, dog, fish
         j = 1..5
@@ -179,7 +179,7 @@ run_ok "${TEST_NAME_BASE}-5" cylc validate "suite.rc"
 
 #------------------------------------------------------------------------------
 cat >'suite.rc' <<'__SUITE__'
-[cylc]
+[general]
     [[parameters]]
         i = cat, dog, fish
         j = 1..5
@@ -201,7 +201,7 @@ cmp_ok '06.graph' "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/06.graph.ref"
 
 #------------------------------------------------------------------------------
 cat >'suite.rc' <<'__SUITE__'
-[cylc]
+[general]
     [[parameters]]
         i = cat, dog, fish
         j = 1..5
@@ -227,7 +227,7 @@ __ERR__
 
 #------------------------------------------------------------------------------
 cat >'suite.rc' <<'__SUITE__'
-[cylc]
+[general]
     [[parameters]]
         i = cat, dog, fish
         j = 1..5

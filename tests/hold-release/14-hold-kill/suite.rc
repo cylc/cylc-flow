@@ -2,7 +2,7 @@
 [meta]
     title = Test: task should be held from retrying after a job kill
 
-[cylc]
+[general]
     [[reference test]]
         live mode suite timeout = PT30S
 [scheduling]

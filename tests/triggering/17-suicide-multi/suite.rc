@@ -1,4 +1,4 @@
-[cylc]
+[general]
     [[events]]
         timeout = PT1M
 

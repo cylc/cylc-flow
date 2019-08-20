@@ -3,7 +3,7 @@
     description = """Cycle-point specific external triggering in a date-time
 cycling suite.  The suite will time out and abort if the ext trigger fails."""
 
-[cylc]
+[general]
     cycle point format = %Y
     [[events]]
         abort on timeout = True

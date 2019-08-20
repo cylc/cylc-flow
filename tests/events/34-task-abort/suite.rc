@@ -1,6 +1,6 @@
 [meta]
     title = "Test job abort with retries and failed handler"
-[cylc]
+[general]
     [[events]]
         inactivity = PT20S
         abort on inactivity = True

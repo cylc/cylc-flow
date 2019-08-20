@@ -1,5 +1,5 @@
 #!jinja2
-[cylc]
+[general]
    [[reference test]]
        required run mode = live
        live mode suite timeout = PT1M

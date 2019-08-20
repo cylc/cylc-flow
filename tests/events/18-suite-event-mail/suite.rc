@@ -2,7 +2,7 @@
 [meta]
     title=Suite Event Mail
 
-[cylc]
+[general]
     [[events]]
 {% if GLOBALCFG is not defined %}
         mail events = startup, shutdown

@@ -1,4 +1,4 @@
-[cylc]
+[general]
     [[events]]
         inactivity = PT20S
         abort on inactivity = True

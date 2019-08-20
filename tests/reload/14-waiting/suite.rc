@@ -1,7 +1,7 @@
 [meta]
     title = Test reload waiting task integrity error
 
-[cylc]
+[general]
     [[reference test]]
         live mode suite timeout = PT0.5M
         dummy mode suite timeout = PT0.5M

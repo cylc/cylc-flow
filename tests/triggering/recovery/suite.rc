@@ -6,7 +6,7 @@
         Model post processing triggers off model or recovery tasks.
     """
 
-[cylc]
+[general]
     UTC mode = True
     [[reference test]]
         live mode suite timeout = PT50S

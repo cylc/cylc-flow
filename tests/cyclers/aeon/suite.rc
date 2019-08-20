@@ -1,4 +1,4 @@
-[cylc]
+[general]
     cycle point num expanded year digits = 7
     UTC mode = True
     [[reference test]]

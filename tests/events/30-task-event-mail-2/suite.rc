@@ -2,7 +2,7 @@
 [meta]
     title=Task Event Mail
 
-[cylc]
+[general]
     task event mail interval = PT15S
     [[events]]
         abort on timeout = True

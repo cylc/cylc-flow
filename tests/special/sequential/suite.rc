@@ -1,4 +1,4 @@
-[cylc]
+[general]
    cycle point format = %Y%m%dT%H
    [[reference test]]
        required run mode = live

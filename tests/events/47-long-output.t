@@ -30,7 +30,7 @@ process pool timeout = PT10S" ""
 # Long STDOUT output
 
 init_suite "${TEST_NAME_BASE}" <<__SUITERC__
-[cylc]
+[general]
 [scheduling]
     [[graph]]
         R1 = t1
@@ -63,7 +63,7 @@ purge_suite "${SUITE_NAME}"
 # REPEAT: Long STDERR output
 
 init_suite "${TEST_NAME_BASE}" <<__SUITERC__
-[cylc]
+[general]
 [scheduling]
     [[graph]]
         R1 = t1

@@ -6,7 +6,7 @@
     """
     custom_metadata = something_custom
     another_metadata = 1
-[cylc]
+[general]
     [[events]]
         timeout = PT1M
         abort on timeout = True

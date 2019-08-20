@@ -1,4 +1,4 @@
-[cylc]
+[general]
     UTC mode = True # Ignore DST
     [[events]]
         stalled handler = cylc reset %(suite)s bar -s succeeded

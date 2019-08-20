@@ -3,7 +3,7 @@
     description = """two tasks: the second will fail, causing the test to
 fail, unless the first reloads the suite definition after modifying it."""
 
-[cylc]
+[general]
    [[reference test]]
        required run mode = live
        live mode suite timeout = PT30S

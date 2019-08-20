@@ -1,4 +1,4 @@
-[cylc]
+[general]
 UTC mode = true
 [[reference test]]
 required run mode = live

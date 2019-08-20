@@ -1,4 +1,4 @@
-[cylc]
+[general]
     [[reference test]]
         allow task failures = True
         expected task failures = foo.1

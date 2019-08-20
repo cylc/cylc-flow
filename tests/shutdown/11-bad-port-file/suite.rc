@@ -1,4 +1,4 @@
-[cylc]
+[general]
     [[events]]
         abort on stalled = False
         abort on timeout = True

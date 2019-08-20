@@ -1,5 +1,5 @@
 #!jinja2
-[cylc]
+[general]
 [scheduling]
     initial cycle point = 20140808T09
     final cycle point = 20140808T09

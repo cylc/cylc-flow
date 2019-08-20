@@ -30,7 +30,7 @@ cylc register "${NAME1}" "${SUITE1_RUND}"
 SUITE2_RUND="${RUND}/${NAME2}"
 mkdir -p "${SUITE2_RUND}"
 cat >"${SUITE2_RUND}/suite.rc" <<__SUITERC__
-[cylc]
+[general]
     abort if any task fails=True
 [scheduling]
     [[graph]]

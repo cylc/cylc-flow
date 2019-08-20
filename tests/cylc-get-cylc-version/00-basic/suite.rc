@@ -3,7 +3,7 @@
     description = """A task compares its own cylc version to that running the
     test suite (should be the same)."""
 
-[cylc]
+[general]
     [[reference test]]
         required run mode = live
         live mode suite timeout = PT30S

@@ -127,7 +127,6 @@ class ParsecConfig(object):
                     raise ItemNotFoundError(itemstr(parents, key))
                 else:
                     parents.append(key)
-
         return cfg
 
     def idump(self, items=None, sparse=False, pnative=False, prefix='',

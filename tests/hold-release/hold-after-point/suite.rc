@@ -3,7 +3,7 @@
 
     description = """Define a hold after point in the suite.rc"""
 
-[cylc]
+[general]
     UTC mode = True
     [[reference test]]
         live mode suite timeout = PT1M

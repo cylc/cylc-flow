@@ -1,7 +1,7 @@
 [meta]
     title = Test: run task - hold suite - task job retry - release suite
 
-[cylc]
+[general]
     [[reference test]]
         live mode suite timeout = PT1M30S
         dummy mode suite timeout = PT1M30S

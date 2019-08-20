@@ -1,7 +1,7 @@
 [meta]
     description = This suite is supposed to time out
 
-[cylc]
+[general]
     [[reference test]]
         live mode suite timeout = PT0.5M
         dummy mode suite timeout = PT6S

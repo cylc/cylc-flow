@@ -1,4 +1,4 @@
-[cylc]
+[general]
     UTC mode = True
     [[reference test]]
         live mode suite timeout = PT50S

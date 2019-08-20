@@ -30,8 +30,8 @@ cylc validate -v "${SUITE_NAME}" 2>&1 \
     | sed  -n -e 's/^WARNING - \( \* (.*$\)/\1/p' > 'val.out'
 cmp_ok val.out <<__END__
  * (6.1.3) [visualization][enable live graph movie] - DELETED (OBSOLETE)
- * (7.2.2) [cylc][dummy mode] - DELETED (OBSOLETE)
- * (7.2.2) [cylc][simulation mode] - DELETED (OBSOLETE)
+ * (7.2.2) [general][dummy mode] - DELETED (OBSOLETE)
+ * (7.2.2) [general][simulation mode] - DELETED (OBSOLETE)
  * (7.2.2) [runtime][foo, cat, dog][dummy mode] - DELETED (OBSOLETE)
  * (7.2.2) [runtime][foo, cat, dog][simulation mode] - DELETED (OBSOLETE)
 __END__

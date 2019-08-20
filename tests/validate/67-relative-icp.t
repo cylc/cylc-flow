@@ -23,7 +23,7 @@
 set_test_number 2
 
 cat >'suite.rc' <<'__SUITE_RC__'
-[cylc]
+[general]
     UTC mode = true
 [scheduling]
     initial cycle point = previous(-17T1200Z; -18T1200Z) - P1D

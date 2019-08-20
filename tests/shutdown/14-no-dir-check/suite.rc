@@ -1,5 +1,5 @@
 #!Jinja2
-[cylc]
+[general]
     abort if any task fails = True
 {% if GLOBALCFG is not defined %}
     health check interval = PT10S

@@ -10,7 +10,7 @@ Task host is determined by a script in the suite bin directory; for this
 test suite it just returns the value of $CYLC_TEST_HOST as used
 by many of the other test suites (see "cylc test-battery --help")."""
 
-[cylc]
+[general]
     [[reference test]]
         live mode suite timeout = PT30S
         suite shutdown event handler = cleanup.sh

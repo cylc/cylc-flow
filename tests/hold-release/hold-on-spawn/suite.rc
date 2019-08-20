@@ -4,7 +4,7 @@
     first cycle point of the suite. The spawned successors to those tasks should
     still be in the held state and should not run."""
 
-[cylc]
+[general]
     UTC mode = True
     [[reference test]]
         live mode suite timeout = PT1M

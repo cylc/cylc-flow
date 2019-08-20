@@ -1,6 +1,6 @@
 [meta]
     title = A suite to test an aborted edit run has no subsequent effect.
-[cylc]
+[general]
     [[events]]
         abort on timeout = True
         timeout = PT20S

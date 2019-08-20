@@ -22,7 +22,7 @@
 set_test_number 1
 
 cat >'suite.rc' <<'__SUITE_RC__'
-[cylc]
+[general]
     cycle point format = %Y%m%d
 [scheduling]
     initial cycle point = "now"

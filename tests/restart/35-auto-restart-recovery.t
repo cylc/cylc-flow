@@ -27,7 +27,7 @@ set_test_number 10
 #-------------------------------------------------------------------------------
 # test the failure recovery mechanism
 BASE_GLOBALRC="
-[cylc]
+[general]
     health check interval = PT15S
     [[events]]
         abort on inactivity = True

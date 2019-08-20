@@ -1,7 +1,7 @@
 [meta]
     title = Job script: suite to environment test
 
-[cylc]
+[general]
     [[reference test]]
         live mode suite timeout = PT0.5M
         dummy mode suite timeout = PT0.5M

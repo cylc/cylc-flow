@@ -22,10 +22,10 @@ set_test_number 3
 
 create_test_globalrc '#!jinja2' '
 {% set UTC_MODE = True %}
-[cylc]
+[general]
     UTC mode = {{UTC_MODE}}'
 
-run_ok "${TEST_NAME_BASE}" cylc get-global-config --item='[cylc]UTC mode'
+run_ok "${TEST_NAME_BASE}" cylc get-global-config --item='[general]UTC mode'
 cmp_ok "${TEST_NAME_BASE}.stdout" <<<'True'
 cmp_ok "${TEST_NAME_BASE}.stderr" <'/dev/null'
 exit

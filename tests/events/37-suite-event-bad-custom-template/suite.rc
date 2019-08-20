@@ -1,5 +1,5 @@
 #!jinja2
-[cylc]
+[general]
     [[events]]
         handlers = echo %(rubbish)s
         handler events = startup

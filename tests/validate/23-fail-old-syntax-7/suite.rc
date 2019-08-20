@@ -1,4 +1,4 @@
-[cylc]
+[general]
     [[events]]
         timeout        = 4320
 [scheduling]

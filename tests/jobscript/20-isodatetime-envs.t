@@ -20,7 +20,7 @@
 set_test_number 2
 
 init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
-[cylc]
+[general]
     UTC mode = True
     [[events]]
         abort on stalled = True
@@ -42,7 +42,7 @@ suite_run_ok "${TEST_NAME_BASE}" cylc run --no-detach "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 
 init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
-[cylc]
+[general]
     UTC mode = True
     [[events]]
         abort on stalled = True

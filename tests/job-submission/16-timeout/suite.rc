@@ -1,4 +1,4 @@
-[cylc]
+[general]
    [[events]]
       abort on timeout = True
       timeout = PT20S

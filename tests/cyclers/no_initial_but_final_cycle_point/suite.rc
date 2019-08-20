@@ -1,4 +1,4 @@
-[cylc]
+[general]
     UTC mode = True
 [scheduling]
     final cycle point = 20140101T00

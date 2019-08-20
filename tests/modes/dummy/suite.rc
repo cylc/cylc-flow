@@ -1,4 +1,4 @@
-[cylc]
+[general]
     force run mode = dummy
     [[reference test]]
         dummy mode suite timeout = PT1M

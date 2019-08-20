@@ -2,7 +2,7 @@
 # [visualization]number of cycle points = 1" keeps it under the limit during
 # validation, but R3/PT1H puts it over the limit at run time.
 
-[cylc]
+[general]
     UTC mode = True
 [scheduling]
     initial cycle point = 99991231T2200

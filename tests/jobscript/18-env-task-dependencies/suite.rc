@@ -1,7 +1,7 @@
 [meta]
     title = "Job script: dependencies in environment tes"
 
-[cylc]
+[general]
 
 [scheduling]
     [[graph]]

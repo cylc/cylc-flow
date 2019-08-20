@@ -1,5 +1,5 @@
 #!Jinja2
-[cylc]
+[general]
    [[reference test]]
        required run mode=live
        expected task failures = t1.1

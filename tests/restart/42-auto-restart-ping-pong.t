@@ -27,7 +27,7 @@ fi
 export JOKERS="$(hostname)"
 
 BASE_GLOBALRC='
-[cylc]
+[general]
     health check interval = PT5S
     [[events]]
         abort on inactivity = True
@@ -37,7 +37,7 @@ BASE_GLOBALRC='
 '
 
 TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME_BASE}" <<< '
-[cylc]
+[general]
     abort if any task fails = True
 [scheduling]
     initial cycle point = 2000

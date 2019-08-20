@@ -1,5 +1,5 @@
 #!jinja2
-[cylc]
+[general]
     UTC mode=True
     [[events]]
         abort on inactivity = True

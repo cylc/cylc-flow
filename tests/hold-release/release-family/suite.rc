@@ -5,7 +5,7 @@
     description = """One task that holds then selectively releases a family in the
 first cycle point of the suite.."""
 
-[cylc]
+[general]
     UTC mode = True
     [[reference test]]
         live mode suite timeout = PT1M

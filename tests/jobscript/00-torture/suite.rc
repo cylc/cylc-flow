@@ -10,7 +10,7 @@ bin directory must go in PATH before the task runtime environment is
 defined because suite bin commands could be used in variable assignment
 expressions."""
 
-[cylc]
+[general]
     [[reference test]]
         live mode suite timeout = PT30S
         dummy mode suite timeout = PT30S

@@ -1,4 +1,4 @@
-[cylc]
+[general]
     UTC mode = true
     [[events]]
         # Trigger the pre-start foo inserted by the inserter task.

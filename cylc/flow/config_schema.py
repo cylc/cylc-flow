@@ -29,6 +29,7 @@ from cylc.flow.parsec.config import ParsecConfig
 from cylc.flow.parsec.upgrade import upgrader
 from cylc.flow.parsec.validate import (
     DurationFloat, CylcConfigValidator as VDR, cylc_config_validate)
+from cylc.flow.hostuserutil import get_user_home, is_remote_user
 
 # Nested dict of spec items.
 # Spec value is [value_type, default, allowed_2, allowed_3, ...]
@@ -128,14 +129,7 @@ SPEC = {
                    'http://cylc.github.io/doc/built-sphinx/index.html'],
         'cylc homepage': [VDR.V_STRING, 'http://cylc.github.io/'],
     },
-    'hosts': {
-        'defaulthost': {
-            'name': [VDR.V_STRING, 'defaulthost'],
-        },
-        '__MANY__': {
-            'name': [VDR.V_STRING, ''],
-        }
-    },
+
     'job platforms': {
         'default platform': {
             'run directory': [VDR.V_STRING, '$HOME/cylc-run'],
@@ -149,6 +143,8 @@ SPEC = {
             'ssh command': [
                 VDR.V_STRING, 'ssh -oBatchMode=yes -oConnectTimeout=10'],
             'use login shell': [VDR.V_BOOLEAN, True],
+            'login hosts': [VDR.V_STRING, ''],
+            'batch system': [VDR.V_STRING, ''],
             'cylc executable': [VDR.V_STRING, 'cylc'],
             'global init-script': [VDR.V_STRING],
             'copyable environment variables': [VDR.V_STRING_LIST],
@@ -425,6 +421,7 @@ def upg(cfg, descr):
     u.obsolete('7.8.1', ['cylc', 'events', 'reset inactivity timer'])
     u.obsolete('7.8.1', ['runtime', '__MANY__', 'events', 'reset timer'])
     u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'shell'])
+    u.obsolete('8.0.0', ['cylc'], ['general'])
     u.upgrade()
 
     # Upgrader cannot do this type of move.
@@ -470,7 +467,7 @@ class GlobalConfig(ParsecConfig):
 
     _DEFAULT = None
     _HOME = os.getenv('HOME') or get_user_home()
-    CONF_BASENAME = "flow.rc"
+    CONF_BASENAME = "cylc-flow.rc"
     SITE_CONF_DIR = os.path.join(os.sep, 'etc', 'cylc', 'flow', CYLC_VERSION)
     USER_CONF_DIR = os.path.join(_HOME, '.cylc', 'flow', CYLC_VERSION)
 
@@ -527,7 +524,7 @@ class GlobalConfig(ParsecConfig):
         # (OK if no flow.rc is found, just use system defaults).
         self._transform()
 
-    def get_host_item(self, item, host=None, owner=None, replace_home=False,
+    def get_host_item(self, item, platform=None, owner=None, replace_home=False,
                       owner_home=None):
         """This allows hosts with no matching entry in the config file
         to default to appropriately modified localhost settings."""
@@ -536,26 +533,26 @@ class GlobalConfig(ParsecConfig):
 
         # (this may be called with explicit None values for localhost
         # and owner, so we can't use proper defaults in the arg list)
-        if not host:
-            # if no host is given the caller is asking about localhost
-            host = 'localhost'
+        if not platform:
+            # if no platform is given the caller is asking about localhost
+            platform = 'default platform'
 
         # is there a matching host section?
-        host_key = None
-        if host in cfg['hosts']:
-            # there's an entry for this host
-            host_key = host
+        platform_key = None
+        if platform in cfg['job platforms']:
+            # there's an entry for this platform
+            platform_key = platform
         else:
             # try for a pattern match
-            for cfg_host in cfg['hosts']:
-                if re.match(cfg_host, host):
-                    host_key = cfg_host
+            for cfg_host in cfg['job platfroms']:
+                if re.match(cfg_host, platform):
+                    platform_key = cfg_host
                     break
         modify_dirs = False
-        if host_key is not None:
+        if platform_key is not None:
             # entry exists, any unset items under it have already
             # defaulted to modified localhost values (see site cfgspec)
-            value = cfg['hosts'][host_key][item]
+            value = cfg['job platforms'][platform_key][item]
         else:
             # no entry so default to localhost and modify appropriately
             value = cfg['job platforms']['default platform'][item]
@@ -584,22 +581,19 @@ class GlobalConfig(ParsecConfig):
         Ensure os.environ['HOME'] is defined with the correct value.
         """
         cfg = self.get()
-        import sys
-        print(f"A >>> {[x for x in cfg['hosts']]}", file=sys.stderr)
-        for host in cfg['hosts']:
-            print(f"B >>> {host}", file=sys.stderr)
-            if host == 'default platform':
+        for platform in cfg['job platforms']:
+            if platform == 'default platform':
                 continue
-            for item, value in cfg['hosts'][host].items():
+            for item, value in cfg['job platforms'][platform].items():
                 if value is not None:
-                #     newvalue = cfg['hosts']['localhost'][item]
-                # else:
+                    newvalue = cfg['job platforms']['default platform'][item]
+                else:
                     newvalue = value
                 if newvalue and 'directory' in item:
                     # replace local home dir with $HOME for evaluation on other
                     # host
                     newvalue = newvalue.replace(self._HOME, '$HOME')
-                cfg['hosts'][host][item] = newvalue
+                cfg['job platforms'][platform][item] = newvalue
 
         # Expand environment variables and ~user in LOCAL file paths.
         if 'HOME' not in os.environ:

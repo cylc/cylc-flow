@@ -3,7 +3,7 @@
     description = """this requires some state vars to be carried over to the
 new task proxy; ref github #945"""
 
-[cylc]
+[general]
    [[reference test]]
        required run mode = live
        live mode suite timeout = PT30S

@@ -22,7 +22,7 @@ CYLC_TEST_IS_GENERIC=false
 set_test_number 4
 
 init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
-[cylc]
+[general]
     UTC mode = True
     cycle point format = %Y
 [scheduling]

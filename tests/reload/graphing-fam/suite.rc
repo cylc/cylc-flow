@@ -2,7 +2,7 @@
     title = queue size reload test
     description = """change family triggering order via a reload."""
 
-[cylc]
+[general]
    [[reference test]]
        required run mode = live
        live mode suite timeout=PT1M

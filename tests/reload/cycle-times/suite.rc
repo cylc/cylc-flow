@@ -2,7 +2,7 @@
     title = cycling period change
     description = """change cycle points"""
 
-[cylc]
+[general]
    UTC mode = True
    [[reference test]]
        required run mode = live

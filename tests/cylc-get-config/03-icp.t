@@ -21,7 +21,7 @@
 set_test_number 3
 
 init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
-[cylc]
+[general]
     UTC mode = True
 [scheduling]
     [[graph]]

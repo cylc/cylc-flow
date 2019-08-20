@@ -52,9 +52,6 @@ import socket
 from contextlib import suppress
 from time import time
 
-from cylc.flow.config_schema import glbl_cfg
-
-
 class HostUtil(object):
     """host and user ID utility."""
 

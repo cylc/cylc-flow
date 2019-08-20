@@ -5,7 +5,7 @@
 line or else this test will fail to validate: TASKNAME and STEP. Also,
 to pass the test run their values must be 'foo' and '2', respectively."""
 
-[cylc]
+[general]
     UTC mode = True
     [[reference test]]
         required run mode = live

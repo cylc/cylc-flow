@@ -36,7 +36,7 @@ set_test_number 8
 # Restart, should retain auto shutdown enabled option
 # Suite runs to final task and shuts down normally
 init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
-[cylc]
+[general]
     disable automatic shutdown = True
     [[parameters]]
         i = 1..5

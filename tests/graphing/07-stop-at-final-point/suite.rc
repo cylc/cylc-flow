@@ -1,5 +1,5 @@
 #!Jinja2
-[cylc]
+[general]
     cycle point format = %Y-%m-%d
 [scheduling]
     initial cycle point = 2015-01-01

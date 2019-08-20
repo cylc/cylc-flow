@@ -1,4 +1,4 @@
-[cylc]
+[general]
     cycle point format = %Y
     [[events]]
         inactivity = PT1M

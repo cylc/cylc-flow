@@ -3,7 +3,7 @@
     title=Task Event Handler Retry
     URL = http://my-suites.com/${CYLC_SUITE_NAME}.html
 
-[cylc]
+[general]
     [[reference test]]
         live mode suite timeout=PT1M
 

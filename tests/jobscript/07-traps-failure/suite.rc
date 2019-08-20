@@ -1,7 +1,7 @@
 #!jinja2
 [meta]
     title = "Job script: test different failure traps based on batch system"
-[cylc]
+[general]
 [scheduling]
     [[graph]]
         R1 = root

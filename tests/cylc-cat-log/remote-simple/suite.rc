@@ -1,5 +1,5 @@
 #!Jinja2
-[cylc]
+[general]
    [[events]]
        abort on timeout = True
        timeout = PT1M

@@ -1,4 +1,4 @@
-[cylc]
+[general]
     [[reference test]]
         required run mode = live
         expected task failures = c.1

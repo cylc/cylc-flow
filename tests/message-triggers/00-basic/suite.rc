@@ -1,7 +1,7 @@
 [meta]
     title = "test suite for cylc-6 message triggers"
 
-[cylc]
+[general]
     UTC mode = True
 
 [scheduling]

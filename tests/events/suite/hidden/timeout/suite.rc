@@ -3,7 +3,7 @@
 This suite is supposed to time out and abort when the timeout handler
 deliberately fails."""
 
-[cylc]
+[general]
     [[events]]
         timeout = PT5S
         timeout handler = "/bin/false"

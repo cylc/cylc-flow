@@ -8,7 +8,7 @@ task processing occurs foo will submit and kill bar, allowing the suite
 to shutdown.  Otherwise, foo won't submit, bar will keep running, and the suite
 will time out."""
 
-[cylc]
+[general]
     [[events]]
         abort on timeout = True
         timeout = PT30S

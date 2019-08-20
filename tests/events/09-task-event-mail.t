@@ -25,7 +25,7 @@ mock_smtpd_init
 OPT_SET=
 if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
     create_test_globalrc "" "
-[cylc]
+[general]
     [[events]]
         mail footer = see: http://localhost/stuff/%(owner)s/%(suite)s/
 [task events]

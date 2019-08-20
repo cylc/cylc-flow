@@ -20,7 +20,7 @@
 set_test_number 39
 
 cat >'suite.rc' <<'__SUITE__'
-[cylc]
+[general]
     [[parameters]]
         i = cat, dog, fish
         j = 1..5
@@ -44,7 +44,7 @@ cylc graph --reference 'suite.rc' >'01.graph'
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/01.graph.ref" '01.graph'
 
 cat >'suite.rc' <<'__SUITE__'
-[cylc]
+[general]
     [[parameters]]
         i = 25, 30..35, 1..5, 110
 [scheduling]
@@ -63,7 +63,7 @@ cylc graph --reference 'suite.rc' >'02.graph'
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/02.graph.ref" '02.graph'
 
 cat >'suite.rc' <<'__SUITE__'
-[cylc]
+[general]
     [[parameters]]
         i = a-t, c-g
 [scheduling]
@@ -82,7 +82,7 @@ cylc graph --reference 'suite.rc' >'03.graph'
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/03.graph.ref" '03.graph'
 
 cat >'suite.rc' <<'__SUITE__'
-[cylc]
+[general]
     [[parameters]]
         i = 100, hundred, one-hundred, 99+1
 [scheduling]
@@ -101,7 +101,7 @@ cylc graph --reference 'suite.rc' >'04.graph'
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/04.graph.ref" '04.graph'
 
 cat >'suite.rc' <<'__SUITE__'
-[cylc]
+[general]
     [[parameters]]
         i = space is dangerous
 [scheduling]
@@ -117,11 +117,11 @@ foo<i> => bar<i>
 __SUITE__
 run_fail "${TEST_NAME_BASE}-05" cylc validate "suite.rc"
 cmp_ok "${TEST_NAME_BASE}-05.stderr" <<'__ERR__'
-IllegalValueError: (type=parameter) [cylc][parameters]i = space is dangerous - (space is dangerous: bad value)
+IllegalValueError: (type=parameter) [general][parameters]i = space is dangerous - (space is dangerous: bad value)
 __ERR__
 
 cat >'suite.rc' <<'__SUITE__'
-[cylc]
+[general]
     [[parameters]]
         i = mix, 1..10
 [scheduling]
@@ -137,11 +137,11 @@ foo<i> => bar<i>
 __SUITE__
 run_fail "${TEST_NAME_BASE}-06" cylc validate "suite.rc"
 cmp_ok "${TEST_NAME_BASE}-06.stderr" <<'__ERR__'
-IllegalValueError: (type=parameter) [cylc][parameters]i = mix, 1..10 - (mixing int range and str)
+IllegalValueError: (type=parameter) [general][parameters]i = mix, 1..10 - (mixing int range and str)
 __ERR__
 
 cat >'suite.rc' <<'__SUITE__'
-[cylc]
+[general]
     [[parameters]]
         i = a, b #, c, d, e  # comment
 [scheduling]
@@ -160,7 +160,7 @@ cylc graph --reference 'suite.rc' >'07.graph'
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/07.graph.ref" '07.graph'
 
 cat >'suite.rc' <<'__SUITE__'
-[cylc]
+[general]
     [[parameters]]
         i = 1..2 3..4
 [scheduling]
@@ -176,11 +176,11 @@ foo<i> => bar<i>
 __SUITE__
 run_fail "${TEST_NAME_BASE}-08" cylc validate "suite.rc"
 cmp_ok "${TEST_NAME_BASE}-08.stderr" <<'__ERR__'
-IllegalValueError: (type=parameter) [cylc][parameters]i = 1..2 3..4 - (1..2 3..4: bad value)
+IllegalValueError: (type=parameter) [general][parameters]i = 1..2 3..4 - (1..2 3..4: bad value)
 __ERR__
 
 cat >'suite.rc' <<'__SUITE__'
-[cylc]
+[general]
     [[parameters]]
         i =
 [scheduling]
@@ -217,7 +217,7 @@ ParamExpandError: parameter i is not defined in <i>: foo<i>=>bar<i>
 __ERR__
 
 cat >'suite.rc' <<'__SUITE__'
-[cylc]
+[general]
     [[parameters]]
         j = +1..+5
     [[parameter templates]]
@@ -236,7 +236,7 @@ cylc graph --reference 'suite.rc' >'11.graph'
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/11.graph.ref" '11.graph'
 
 cat >'suite.rc' <<'__SUITE__'
-[cylc]
+[general]
     [[parameters]]
         j = 1..5
     [[parameter templates]]
@@ -256,7 +256,7 @@ cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/12.graph.ref" '12.graph'
 
 # Parameter with various meta characters
 cat >'suite.rc' <<'__SUITE__'
-[cylc]
+[general]
     [[parameters]]
         p = -minus, +plus, @at, %percent
     [[parameter templates]]
@@ -276,7 +276,7 @@ cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/13.graph.ref" '13.graph'
 
 # Parameter as task name
 cat >'suite.rc' <<'__SUITE__'
-[cylc]
+[general]
     [[parameters]]
         i = 0..2
         s = mercury, venus, earth, mars
@@ -299,7 +299,7 @@ cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/14.graph.ref" '14.graph'
 
 # Parameter in middle of family name
 cat >'suite.rc' <<'__SUITE__'
-[cylc]
+[general]
     [[parameters]]
         s = mercury, venus, earth, mars
 [scheduling]
@@ -317,7 +317,7 @@ cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/15.graph.ref" '15.graph'
 
 # -ve offset on RHS
 cat >'suite.rc' <<'__SUITE__'
-[cylc]
+[general]
     [[parameters]]
         m = cat, dog
 [scheduling]
@@ -334,7 +334,7 @@ cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/16.graph.ref" '16.graph'
 
 # +ve offset
 cat >'suite.rc' <<'__SUITE__'
-[cylc]
+[general]
     [[parameters]]
         m = cat, dog
 [scheduling]
@@ -351,7 +351,7 @@ cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/17.graph.ref" '17.graph'
 
 # Negative integers
 cat >'suite.rc' <<'__SUITE__'
-[cylc]
+[general]
     [[parameters]]
         m = -12..12..6
 [scheduling]
@@ -368,7 +368,7 @@ cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/18.graph.ref" '18.graph'
 
 # Reference by value, with -+ meta characters
 cat >'suite.rc' <<'__SUITE__'
-[cylc]
+[general]
     [[parameters]]
         lang = c++, fortran-2008
     [[parameter templates]]
@@ -394,7 +394,7 @@ cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/19.graph.ref" '19.graph'
 #       Inconsistence between graph/runtime parameter expansion.
 cylc get-config --sparse 'suite.rc' >'19.rc'
 cmp_ok '19.rc' <<'__SUITERC__'
-[cylc]
+[general]
     [[parameters]]
         lang = c++, fortran-2008
     [[parameter templates]]

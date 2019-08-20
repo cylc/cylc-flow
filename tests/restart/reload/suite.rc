@@ -6,7 +6,7 @@ which should run to completion on restarting."""
 
 # The restart can be run as a reference test.
 
-[cylc]
+[general]
     UTC mode = True
     [[reference test]]
         required run mode = live

@@ -1,5 +1,5 @@
 #!Jinja2
-[cylc]
+[general]
    UTC mode = True
     [[events]]
         startup handler = cylc release '%(suite)s'
