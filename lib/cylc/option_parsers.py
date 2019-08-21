@@ -39,7 +39,7 @@ TASKID is a pattern to match task proxies, or families, or groups of them:
 * FAMILY-NAME-GLOB[.CYCLE-POINT-GLOB][:TASK-STATE]
 
 WARNING: this command matches and operates on task proxy instances in the
-scheduler task pool, NOT abstract tasks in the workflow. If a task is not
+scheduler task pool, NOT abstract tasks in the suite. If a task is not
 currently represented in the pool you must use "cylc insert" to add it in.
 
 For example, to match:
