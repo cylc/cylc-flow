@@ -32,11 +32,15 @@ class CylcOptionParser(OptionParser):
     """Common options for all cylc CLI commands."""
 
     MULTITASK_USAGE = """
-TASKID is a pattern to match task proxies or task families, or groups of them:
+TASKID is a pattern to match task proxies, or families, or groups of them:
 * [CYCLE-POINT-GLOB/]TASK-NAME-GLOB[:TASK-STATE]
 * [CYCLE-POINT-GLOB/]FAMILY-NAME-GLOB[:TASK-STATE]
 * TASK-NAME-GLOB[.CYCLE-POINT-GLOB][:TASK-STATE]
 * FAMILY-NAME-GLOB[.CYCLE-POINT-GLOB][:TASK-STATE]
+
+WARNING: this command matches and operates on task proxy instances in the
+scheduler task pool, NOT abstract tasks in the workflow. If a task is not
+currently represented in the pool you must use "cylc insert" to add it in.
 
 For example, to match:
 * all tasks in a cycle: '20200202T0000Z/*' or '*.20200202T0000Z'

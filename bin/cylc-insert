@@ -39,6 +39,9 @@ or groups of them, for a specific cycle point:
 * TASK-NAME-GLOB.CYCLE-POINT
 * FAMILY-NAME-GLOB.CYCLE-POINT
 
+NOTE: this glob matches abstract task names, not task proxy instances in the
+scheduler task pool (it is for inserting new task proxies into the pool).
+
 For example, to match, within the given cycle point (e.g. '20200202T0000Z'):
 * all tasks: '20200202T0000Z/*' or '*.20200202T0000Z'
 * all tasks named model_N for some character N: '20200202T0000Z/model_?' or
