@@ -188,8 +188,11 @@ def replicate(target, source):
             replicate(target[key], val)
         else:
             # remove existing key, if any, to keep the keys
-            # in the last assignment order
-            target.pop(key, None)
+            # in the order of last assignment
+            try:
+                del target[key]
+            except KeyError:
+                pass
             target[key] = val[:] if isinstance(val, list) else val
 
 

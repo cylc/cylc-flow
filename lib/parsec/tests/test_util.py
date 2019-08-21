@@ -107,19 +107,28 @@ class TestUtil(unittest.TestCase):
         source_3["name"]["value"] = "oil"
         source_3["name"]["key"] = 1
         source_3["name"].defaults_ = {"value": 1}
+        source_4 = OrderedDictWithDefaults()
+        source_4["one"] = 1
+        source_4["two"] = 2
 
         target_1 = OrderedDictWithDefaults()
         target_2 = OrderedDictWithDefaults()
         target_3 = OrderedDictWithDefaults()
+        target_4 = OrderedDictWithDefaults()
+        # test if source key order is kept for key overrides
+        target_4["two"] = 2
+        target_4["one"] = 1
 
         replicate(target_1, source_1)
         replicate(target_2, source_2)
         replicate(target_3, source_3)
+        replicate(target_4, source_4)
 
         # Note: assertDictEqual not available for Python 2.6
         self.assertEqual(str(source_1), str(target_1))
         self.assertEqual(str(source_2), str(target_2))
         self.assertEqual(str(source_3), str(target_3))
+        self.assertEqual(str(source_4), str(target_4))
 
     # --- pdeepcopy
 
