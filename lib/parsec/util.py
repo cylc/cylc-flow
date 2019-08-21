@@ -186,10 +186,11 @@ def replicate(target, source):
             if hasattr(val, 'defaults_'):
                 target[key].defaults_ = pdeepcopy(val.defaults_)
             replicate(target[key], val)
-        elif isinstance(val, list):
-            target[key] = val[:]
         else:
-            target[key] = val
+            # remove existing key, if any, to keep the keys
+            # in the last assignment order
+            target.pop(key, None)
+            target[key] = val[:] if isinstance(val, list) else val
 
 
 def pdeepcopy(source):
