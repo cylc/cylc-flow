@@ -30,7 +30,7 @@ Selected user-facing changes:
 
 ### Enhancements
 
-[#3303](https://github.com/cylc/cylc-flow/pull/3259) - improve CLI
+[#3303](https://github.com/cylc/cylc-flow/pull/3303) - improve CLI
 task-globbing help.
 
 [#3259](https://github.com/cylc/cylc-flow/pull/3259) - sped up suite validation
