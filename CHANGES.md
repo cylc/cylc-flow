@@ -30,6 +30,9 @@ Selected user-facing changes:
 
 ### Enhancements
 
+[#3303](https://github.com/cylc/cylc-flow/pull/3259) - improve CLI
+task-globbing help.
+
 [#3259](https://github.com/cylc/cylc-flow/pull/3259) - sped up suite validation
 (which also affects responsiveness of suite controllers during suite startup,
 restarts, and reloads).  Impact of the speedup is most noticeable when dealing
