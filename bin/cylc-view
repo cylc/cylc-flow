@@ -127,7 +127,8 @@ def main():
                'empy': options.empy or options.process,
                'jinja2': options.jinja2 or options.process,
                'contin': options.cat or options.process,
-               'inline': options.inline or options.jinja2 or options.empy or options.process,
+               'inline': (options.inline or options.jinja2 or
+                          options.empy or options.process),
                }
     lines = read_and_proc(
         suiterc,

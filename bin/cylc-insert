@@ -43,7 +43,7 @@ For example, to match, within the given cycle point (e.g. '20200202T0000Z'):
 * all tasks in 'BAR' family: '20200202T0000Z/BAR' or 'BAR.20200202T0000Z'
 * all tasks in 'BAR' or 'BAZ' families: '20200202T0000Z/BA[RZ]' or
   'BA[RZ].20200202T0000Z'
-  
+
 The old 'MATCH POINT' syntax will be automatically detected and supported. To
 avoid this, use the '--no-multitask-compat' option, or use the new syntax
 (with a '/' or a '.') when specifying 2 TASK_GLOB arguments."""

@@ -126,7 +126,7 @@ def main():
         # Suite or task documentation.
         if options.guides or options.www:
             print >> sys.stderr, ("(Note: --guides and --www are ignored for "
-                "suite documentation).")
+                                  "suite documentation).")
         suite = args[0]
         if options.task_name:
             # Task documentation.
