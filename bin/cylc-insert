@@ -42,8 +42,11 @@ For example, to match, within the given cycle point (e.g. '20200202T0000Z'):
   'model_?.20200202T0000Z'
 * all tasks in 'BAR' family: '20200202T0000Z/BAR' or 'BAR.20200202T0000Z'
 * all tasks in 'BAR' or 'BAZ' families: '20200202T0000Z/BA[RZ]' or
-  'BA[RZ].20200202T0000Z'"""
-
+  'BA[RZ].20200202T0000Z'
+  
+The old 'MATCH POINT' syntax will be automatically detected and supported. To
+avoid this, use the '--no-multitask-compat' option, or use the new syntax
+(with a '/' or a '.') when specifying 2 TASK_GLOB arguments."""
 
 import sys
 if '--use-ssh' in sys.argv[1:]:
@@ -74,15 +77,30 @@ def main():
         "--no-check", help="Add task even if the provided cycle point is not "
         "valid for the given task.", action="store_true", default=False)
 
+    parser.add_std_option(
+        "--no-multitask-compat",
+        help="Disallow backward compatible multitask interface.",
+        action="store_false", default=True,
+        dest="multitask_compat")
+
     options, args = parser.parse_args()
     suite = args.pop(0)
 
-    items = args
-    for i, item in enumerate(items):
-        if not TaskID.is_valid_id_2(item):
-            sys.exit('ERROR: "%s": invalid task ID (argument %d)' % (
-                item, i + 1))
-    prompt('Insert %s in %s' % (items, suite), options.force)
+    if (options.multitask_compat and len(args) in [2, 3] and
+            all("/" not in arg for arg in args) and
+            all("." not in arg for arg in args[1:])):
+        items = [(args[0] + "." + args[1])]
+        if len(args) == 3:
+            options.stop_point_string = args[2]
+        prompt(
+            'Insert %s in %s' % (items, suite), options.force)
+    else:
+        items = args
+        for i, item in enumerate(items):
+            if not TaskID.is_valid_id_2(item):
+                sys.exit('ERROR: "%s": invalid task ID (argument %d)' % (
+                    item, i + 1))
+        prompt('Insert %s in %s' % (items, suite), options.force)
 
     pclient = SuiteRuntimeServiceClient(
         suite, options.owner, options.host, options.port,
