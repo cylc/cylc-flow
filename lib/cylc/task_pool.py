@@ -696,6 +696,18 @@ class TaskPool(object):
         self.max_num_active_cycle_points = (
             self.config.get_max_num_active_cycle_points())
 
+        # find any old tasks that have been removed from the suite
+        old_task_name_list = self.task_name_list
+        self.task_name_list = self.config.get_task_name_list()
+        for name in old_task_name_list:
+            if name not in self.task_name_list:
+                self.orphans.append(name)
+        for name in self.task_name_list:
+            if name in self.orphans:
+                self.orphans.remove(name)
+        # adjust the new suite config to handle the orphans
+        self.config.adopt_orphans(self.orphans)
+
         # reassign live tasks from the old queues to the new.
         # self.queues[queue][id_] = task
         self.assign_queues()
@@ -708,18 +720,6 @@ class TaskPool(object):
                 new_queues.setdefault(key, OrderedDict())
                 new_queues[key][id_] = itask
         self.queues = new_queues
-
-        # find any old tasks that have been removed from the suite
-        old_task_name_list = self.task_name_list
-        self.task_name_list = self.config.get_task_name_list()
-        for name in old_task_name_list:
-            if name not in self.task_name_list:
-                self.orphans.append(name)
-        for name in self.task_name_list:
-            if name in self.orphans:
-                self.orphans.remove(name)
-        # adjust the new suite config to handle the orphans
-        self.config.adopt_orphans(self.orphans)
 
     def reload_taskdefs(self):
         """Reload task definitions."""
