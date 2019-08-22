@@ -16,31 +16,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc [control] insert [OPTIONS] ARGS
+"""cylc [control] insert [OPTIONS] TASK_GLOB [...]
 
-Insert task proxies into a running suite. Uses of insertion include:
- 1) insert a task that was excluded by the suite definition at start-up.
- 2) reinstate a task that was previously removed from a running suite.
- 3) re-run an old task that cannot be retriggered because its task proxy
- is no longer live in the a suite.
+Insert new task proxies into the task pool of a running suite, e.g. to allow
+re-triggering of an earlier task that has already been removed from the pool.
 
-Be aware that inserted cycling tasks keep on cycling as normal, even if
-another instance of the same task exists at a later cycle (instances of
-the same task at different cycles can coexist, but a newly spawned task
-will not be added to the pool if it catches up to another task with the
-same ID).
+NOTE: inserted cycling tasks cycle on as normal, even if another instance of
+the same task exists at a later cycle (instances of the same task at different
+cycles can coexist, but a newly spawned task will not be added to the pool if
+it catches up to another task with the same ID).
 
-See also 'cylc submit', for running tasks without the scheduler.
+See also 'cylc submit', for running tasks independently of the scheduler.
 
-TASK_GLOB is a pattern to match task proxies or task families,
-or groups of them, for a specific cycle point:
+TASK_GLOB matches task or family names, to insert task instances into the pool
+at a specific given cycle point. (NOTE this differs from other commands which
+match name and cycle point patterns against instances already in the pool).
 * CYCLE-POINT/TASK-NAME-GLOB
 * CYCLE-POINT/FAMILY-NAME-GLOB
 * TASK-NAME-GLOB.CYCLE-POINT
 * FAMILY-NAME-GLOB.CYCLE-POINT
-
-NOTE: this glob matches abstract task names, not task proxy instances in the
-scheduler task pool (it is for inserting new task proxies into the pool).
 
 For example, to match, within the given cycle point (e.g. '20200202T0000Z'):
 * all tasks: '20200202T0000Z/*' or '*.20200202T0000Z'
@@ -48,8 +42,7 @@ For example, to match, within the given cycle point (e.g. '20200202T0000Z'):
   'model_?.20200202T0000Z'
 * all tasks in 'BAR' family: '20200202T0000Z/BAR' or 'BAR.20200202T0000Z'
 * all tasks in 'BAR' or 'BAZ' families: '20200202T0000Z/BA[RZ]' or
-  'BA[RZ].20200202T0000Z'
-"""
+  'BA[RZ].20200202T0000Z'"""
 
 
 import sys
@@ -71,7 +64,7 @@ def main():
         __doc__, comms=True,
         argdoc=[
             ("REG", "Suite name"),
-            ('TASKID [...]', 'Task identifier')])
+            ('TASK_GLOB [...]', 'Task match pattern(s)')])
 
     parser.add_option(
         "--stop-point", "--remove-point",
@@ -84,24 +77,12 @@ def main():
     options, args = parser.parse_args()
     suite = args.pop(0)
 
-    # See "cop.parse_multitask_compat" for back compat discussion
-    # "cop.parse_multitask_compat" cannot be used here because argument 3
-    # (after suite argument) used to be "options.stop_point_string".
-    if (options.multitask_compat and len(args) in [2, 3] and
-            all("/" not in arg for arg in args) and
-            all("." not in arg for arg in args[1:])):
-        items = [(args[0] + "." + args[1])]
-        if len(args) == 3:
-            options.stop_point_string = args[2]
-        prompt(
-            'Insert %s in %s' % (items, suite), options.force)
-    else:
-        items = args
-        for i, item in enumerate(items):
-            if not TaskID.is_valid_id_2(item):
-                sys.exit('ERROR: "%s": invalid task ID (argument %d)' % (
-                    item, i + 1))
-        prompt('Insert %s in %s' % (items, suite), options.force)
+    items = args
+    for i, item in enumerate(items):
+        if not TaskID.is_valid_id_2(item):
+            sys.exit('ERROR: "%s": invalid task ID (argument %d)' % (
+                item, i + 1))
+    prompt('Insert %s in %s' % (items, suite), options.force)
 
     pclient = SuiteRuntimeServiceClient(
         suite, options.owner, options.host, options.port,

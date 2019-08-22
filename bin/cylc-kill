@@ -19,9 +19,8 @@
 """cylc [control] kill [OPTIONS] ARGS
 
 Kill jobs of active tasks and update their statuses accordingly.
-
-To kill one or more tasks, "cylc kill REG TASKID ..."; to kill all active
-tasks: "cylc kill REG".
+ cylc kill REG TASK_GLOB ... - kill one or more active tasks
+ cylc kill REG - kill all active tasks in the suite
 """
 
 import sys
@@ -43,7 +42,7 @@ def main():
         __doc__, comms=True, multitask=True,
         argdoc=[
             ('REG', 'Suite name'),
-            ('[TASKID ...]', 'Task identifiers')])
+            ('[TASK_GLOB ...]', 'Task match pattern(s)')])
 
     options, args = parser.parse_args()
 

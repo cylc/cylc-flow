@@ -18,10 +18,14 @@
 
 """cylc [control] trigger [OPTIONS] ARGS
 
-Manually trigger one or more tasks. Waiting tasks will be queued (cylc internal
-queues) and will submit as normal when released by the queue; queued tasks will
-submit immediately even if that violates the queue limit (so you may need to
-trigger a queue-limited task twice to get it to submit).
+Manually trigger tasks.
+  cylc trigger REG - trigger all tasks in a running suite
+  cylc trigger REG TASK_GLOB ... - trigger one or more tasks in a running suite
+
+NOTE waiting tasks that are queue-limited will be queued if triggered, to
+submit as normal when released by the queue; queued tasks will submit
+immediately if triggered, even if that violates the queue limit (so you may
+need to trigger a queue-limited task twice to get it to submit immediately).
 
 For single tasks you can use "--edit" to edit the generated job script before
 it submits, to apply one-off changes. A diff between the original and edited
@@ -62,7 +66,7 @@ def main():
         __doc__, comms=True, multitask=True,
         argdoc=[
             ('REG', 'Suite name'),
-            ('[TASKID ...]', 'Task identifiers')])
+            ('[TASK_GLOB ...]', 'Task match pattern(s)')])
 
     parser.add_option(
         "-e", "--edit",

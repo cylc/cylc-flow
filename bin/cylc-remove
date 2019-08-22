@@ -18,10 +18,10 @@
 
 """cylc [control] remove [OPTIONS] ARGS
 
-Remove one or more tasks (cylc remove REG TASKID), or all tasks with a
-given cycle point (cylc remove REG *.POINT) from a running suite.
+Remove one or more task instances from a running suite.
 
-Tasks will spawn successors first if they have not done so already.
+Tasks will be forced to spawn successors before removal if they have not done
+so already, unless you use '--no-spawn'.
 """
 
 import sys
@@ -42,7 +42,7 @@ def main():
         __doc__, comms=True, multitask=True,
         argdoc=[
             ("REG", "Suite name"),
-            ('TASKID [...]', 'Task identifiers')])
+            ('TASK_GLOB [...]', 'Task match pattern(s)')])
 
     parser.add_option(
         "--no-spawn",
