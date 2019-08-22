@@ -18,10 +18,10 @@
 
 """cylc [control] remove [OPTIONS] ARGS
 
-Remove one or more tasks (cylc remove REG TASK_GLOB), or all tasks with a
-given cycle point (cylc remove REG *.POINT) from a running suite.
+Remove one or more task instances from a running workflow.
 
-Tasks will spawn successors first if they have not done so already.
+Tasks will be forced to spawn successors before removal if they have not done
+so already, unless you use '--no-spawn'.
 """
 
 import sys

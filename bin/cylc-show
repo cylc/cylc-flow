@@ -18,9 +18,11 @@
 
 """cylc [info] show [OPTIONS] ARGS
 
-Interrogate a suite server program for the suite metadata; or for the metadata
-of one of its tasks; or for the current state of the prerequisites, outputs,
-and clock-triggering of a specific task instance."""
+Query a running workflow for:
+  cylc show REG - workflow metadata
+  cylc show REG TASK_NAME - task metadata
+  cylc show REG TASK_GLOB - prerequisites and outputs of matched task instances
+"""
 
 import sys
 if '--use-ssh' in sys.argv[1:]:
@@ -44,7 +46,7 @@ def get_option_parser():
         __doc__, comms=True, noforce=True, multitask=True,
         argdoc=[
             ('REG', 'Suite name'),
-            ('[TASKS ...]', 'Task names or ids (name.cycle)')])
+            ('[TASK_NAME or TASK_GLOB ...]', 'Task names or match patterns')])
 
     parser.add_option('--list-prereqs', action="store_true", default=False,
                       help="Print a task's pre-requisites as a list.")

@@ -18,9 +18,10 @@
 
 """cylc [control] release|unhold [OPTIONS] ARGS
 
-Release one or more held tasks (cylc release REG TASK_GLOB)
-or the whole suite (cylc release REG). Held tasks do not
-submit even if they are ready to run.
+Release a held workflow or tasks.
+  cylc release REG - release the workflow
+  cylc release REG TASK_GLOB ... - release one or more tasks
+Held tasks do not submit their jobs even if ready to run.
 
 See also 'cylc [control] hold'.
 """
