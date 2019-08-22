@@ -18,10 +18,11 @@
 
 """cylc [control] hold [OPTIONS] ARGS
 
-Hold one or more waiting tasks (cylc hold REG TASK_GLOB ...), or
-a whole suite (cylc hold REG).
+Hold a workflow or tasks:
+  cylc hold REG - hold a workflow
+  cylc hold REG TASK_GLOB ... - hold one or more tasks in a workflow
 
-Held tasks do not submit even if they are ready to run.
+Held tasks do not submit their jobs even if ready to run.
 
 See also 'cylc [control] release'.
 """

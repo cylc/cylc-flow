@@ -18,18 +18,17 @@
 
 """cylc [control] reset [OPTIONS] ARGS
 
-Force tasks to a specified state, and modify their prerequisites and outputs
-accordingly.
+Force task instances to a specified state.
+  cylc reset --state=xxx REG - reset all tasks to state xxx
+  cylc reset --state=xxx REG TASK_GLOB ... - reset one or more tasks to xxx
 
 Outputs are automatically updated to reflect the new task state, except for
-custom message outputs - which can be manipulated directly with "--output".
+custom message outputs which can be manipulated directly with "--output".
 
-Prerequisites reflect the state of other  tasks; they are not changed except
-to unset them on resetting the task state to 'waiting' or earlier.
+Prerequisites reflect the state of other tasks; they are not changed except
+to unset them on resetting state to 'waiting' or earlier.
 
-To hold and release tasks use "cylc hold" and "cylc release".
-"cylc reset --state=spawn" is deprecated: use "cylc spawn" instead.
-
+To hold and release tasks use "cylc hold" and "cylc release", not this command.
 """
 
 import os
