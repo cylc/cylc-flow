@@ -19,9 +19,8 @@
 """cylc [control] poll [OPTIONS] ARGS
 
 Poll (query) task jobs to verify and update their statuses.
-
-Use "cylc poll REG" to poll all active tasks, or "cylc poll REG TASKID" to poll
-individual tasks or families, or groups of them.
+  cylc poll REG - poll all active tasks
+  cylc poll REG TASK_GLOB ... - poll multiple active tasks or families
 """
 
 import sys
@@ -42,7 +41,7 @@ def main():
         __doc__, comms=True, multitask=True,
         argdoc=[
             ('REG', 'Suite name'),
-            ('[TASKID ...]', 'Task identifiers')])
+            ('[TASK_GLOB ...]', 'Task match pattern(s)')])
 
     parser.add_option(
         "-s", "--succeeded", help="Allow polling of succeeded tasks.",

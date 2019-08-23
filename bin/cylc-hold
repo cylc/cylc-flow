@@ -18,10 +18,11 @@
 
 """cylc [control] hold [OPTIONS] ARGS
 
-Hold one or more waiting tasks (cylc hold REG TASKID ...), or
-a whole suite (cylc hold REG).
+Hold a suite or tasks:
+  cylc hold REG - hold a suite
+  cylc hold REG TASK_GLOB ... - hold one or more tasks in a suite
 
-Held tasks do not submit even if they are ready to run.
+Held tasks do not submit their jobs even if ready to run.
 
 See also 'cylc [control] release'.
 """
@@ -44,7 +45,7 @@ def main():
         __doc__, comms=True, multitask=True,
         argdoc=[
             ("REG", "Suite name"),
-            ('[TASKID ...]', 'Task identifiers')])
+            ('[TASK_GLOB ...]', 'Task match pattern(s)')])
 
     parser.add_option(
         "--after",
