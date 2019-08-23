@@ -181,6 +181,7 @@ proxy_args = dict(
     exids=List(ID, default_value=[]),
     states=List(String, default_value=[]),
     exstates=List(String, default_value=[]),
+    is_held=Boolean(),
     mindepth=Int(default_value=-1),
     maxdepth=Int(default_value=-1),
     sort=SortArgs(default_value=None),
@@ -194,6 +195,7 @@ all_proxy_args = dict(
     exids=List(ID, default_value=[]),
     states=List(String, default_value=[]),
     exstates=List(String, default_value=[]),
+    is_held=Boolean(),
     mindepth=Int(default_value=-1),
     maxdepth=Int(default_value=-1),
     sort=SortArgs(default_value=None),
@@ -329,6 +331,11 @@ async def get_edges_by_ids(root, info, **args):
     return await resolvers.get_edges_by_ids(args)
 
 
+# Convert Protobuf map container to dictionary
+def resolve_map_container(root, info, **args):
+    return dict(getattr(root, to_snake_case(info.field_name), {}))
+
+
 # Types:
 class Meta(ObjectType):
     """Meta data fields, and custom fields generic userdefined dump"""
@@ -344,23 +351,6 @@ class TimeZone(ObjectType):
     minutes = Int()
     string_basic = String()
     string_extended = String()
-
-
-class StateTotals(ObjectType):
-    """State Totals."""
-    runahead = Int()
-    waiting = Int()
-    held = Int()
-    queued = Int()
-    expired = Int()
-    ready = Int()
-    submit_failed = Int()
-    submit_retrying = Int()
-    submitted = Int()
-    retrying = Int()
-    running = Int()
-    failed = Int()
-    succeeded = Int()
 
 
 class Workflow(ObjectType):
@@ -405,7 +395,8 @@ class Workflow(ObjectType):
     oldest_cycle_point = String()
     reloading = Boolean()
     run_mode = String()
-    state_totals = Field(StateTotals)
+    is_held_total = Int()
+    state_totals = GenericScalar(resolver=resolve_map_container)
     workflow_log_dir = String()
     time_zone_info = Field(TimeZone)
     tree_depth = Int()
@@ -508,6 +499,7 @@ class TaskProxy(ObjectType):
         resolver=get_node_by_id)
     state = String()
     cycle_point = String(required=True)
+    is_held = Boolean()
     spawned = Boolean()
     depth = Int()
     job_submits = Int()
@@ -576,6 +568,7 @@ class FamilyProxy(ObjectType):
         required=True,
         resolver=get_node_by_id)
     state = String()
+    is_held = Boolean()
     depth = Int()
     parents = List(
         lambda: FamilyProxy,

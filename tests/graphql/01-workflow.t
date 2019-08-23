@@ -48,11 +48,7 @@ run_graphql_ok "${TEST_NAME}" "${SUITE_NAME}" '
                 oldestCyclePoint
                 reloading
                 runMode
-                stateTotals {
-                    waiting
-                    held
-                    running
-                }
+                stateTotals
                 workflowLogDir
                 timeZoneInfo {
                     hours
@@ -99,9 +95,7 @@ cat > expected << __HERE__
             "reloading": false,
             "runMode": "live",
             "stateTotals": {
-                "waiting": 0,
-                "held": 0,
-                "running": 0
+                "ready": 1
             },
             "workflowLogDir": "${SUITE_LOG_DIR}",
             "timeZoneInfo": {
@@ -112,7 +106,9 @@ cat > expected << __HERE__
                 "foo",
                 "root"
             ],
-            "states": []
+            "states": [
+                "ready"
+            ]
         }
     ]
 }

@@ -45,8 +45,9 @@ Packaging methods are included for dissemination of protobuf messages.
 
 """
 
-from time import time
+from collections import Counter
 from copy import copy
+from time import time
 
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.task_id import TaskID
@@ -76,12 +77,11 @@ class WsDataMgr(object):
     """Manage the workflow data store.
 
     Attributes:
-        .all_states (list):
-            All task proxy states in the store.
         .ancestors (dict):
             Local store of config.get_first_parent_ancestors()
         .cycle_states (dict):
-            List of task states for point key.
+            Contains dict of task and tuple (state, is_held) pairs
+            for each cycle point key.
         .descendants (dict):
             Local store of config.get_first_parent_descendants()
         .edge_points (dict):
@@ -104,8 +104,6 @@ class WsDataMgr(object):
             Cycle point objects in the task pool.
         .schd (cylc.flow.scheduler.Scheduler):
             Workflow scheduler object.
-        .state_count_cycles (dict):
-            State totals (dict) per cycle point key.
         .tasks (dict):
             cylc.flow.ws_messages_pb2.PbTask by name (internal ID).
         .task_proxies (dict):
@@ -122,7 +120,6 @@ class WsDataMgr(object):
 
     # Memory optimization - constrain possible attributes to this list.
     __slots__ = [
-        'all_states',
         'ancestors',
         'cycle_states',
         'descendants',
@@ -136,7 +133,6 @@ class WsDataMgr(object):
         'parents',
         'pool_points',
         'schd',
-        'state_count_cycles',
         'task_proxies',
         'tasks',
         'workflow_id',
@@ -152,9 +148,7 @@ class WsDataMgr(object):
         self.max_point = None
         self.min_point = None
         self.edge_points = {}
-        self.all_states = []
         self.cycle_states = {}
-        self.state_count_cycles = {}
         # Managed data types
         self.tasks = {}
         self.task_proxies = {}
@@ -297,7 +291,7 @@ class WsDataMgr(object):
         update_time = time()
 
         name, point_string = TaskID.split(task_id)
-        self.cycle_states.setdefault(point_string, {})[name] = None
+        self.cycle_states.setdefault(point_string, {})[name] = (None, False)
         t_id = f'{self.workflow_id}{ID_DELIM}{name}'
         tp_id = f'{self.workflow_id}{ID_DELIM}{point_string}{ID_DELIM}{name}'
         tp_check = f'{tp_id}@{update_time}'
@@ -552,24 +546,10 @@ class WsDataMgr(object):
         self.graph.edges[:] = list(g_eids)
 
         for point_string in point_strings:
-            self.cycle_states.pop(point_string, None)
-            self.state_count_cycles.pop(point_string, None)
-        # Re-Compute state_counts (total, and per cycle).
-        all_states = []
-        state_count_cycles = {}
-        for point_string, c_task_states in self.cycle_states.items():
-            count = {}
-            for state in c_task_states.values():
-                if state is None:
-                    continue
-                try:
-                    count[state] += 1
-                except KeyError:
-                    count[state] = 1
-                all_states.append(state)
-            state_count_cycles[point_string] = count
-        self.all_states = all_states
-        self.state_count_cycles = state_count_cycles
+            try:
+                del self.cycle_states[point_string]
+            except KeyError:
+                continue
 
     def initiate_data_model(self, reload=False):
         """Initiate or Update data model on start/restart/reload.
@@ -662,7 +642,7 @@ class WsDataMgr(object):
             if tp_id not in self.task_proxies:
                 continue
             self.cycle_states.setdefault(point_string, {})[name] = (
-                itask.state.status)
+                itask.state.status, itask.state.is_held)
             # Gather task definitions for elapsed time recalculation.
             if name not in task_defs:
                 task_defs[name] = itask.tdef
@@ -672,6 +652,7 @@ class WsDataMgr(object):
             tproxy.CopyFrom(self.task_proxies[tp_id])
             tproxy.stamp = f'{tp_id}@{update_time}'
             tproxy.state = itask.state.status
+            tproxy.is_held = itask.state.is_held
             tproxy.job_submits = itask.submit_num
             tproxy.spawned = itask.has_spawned
             tproxy.latest_message = itask.summary['latest_message']
@@ -721,10 +702,6 @@ class WsDataMgr(object):
             return
         update_time = time()
 
-        # Compute state_counts (total, and per cycle).
-        all_states = []
-        state_count_cycles = {}
-
         for point_string in cycle_points:
             # For each cycle point, construct a family state tree
             # based on the first-parent single-inheritance tree
@@ -732,25 +709,21 @@ class WsDataMgr(object):
             if c_task_states is None:
                 continue
             c_fam_task_states = {}
-            count = {}
+            c_fam_task_is_held = {}
 
             for key in c_task_states:
-                state = c_task_states[key]
+                state, is_held = c_task_states[key]
                 if state is None:
                     continue
-                try:
-                    count[state] += 1
-                except KeyError:
-                    count[state] = 1
 
-                all_states.append(state)
                 for parent in self.ancestors.get(key, []):
                     if parent == key:
                         continue
                     c_fam_task_states.setdefault(parent, set())
                     c_fam_task_states[parent].add(state)
-
-            state_count_cycles[point_string] = count
+                    c_fam_task_is_held.setdefault(parent, False)
+                    if is_held:
+                        c_fam_task_is_held[parent] = is_held
 
             for fam, child_states in c_fam_task_states.items():
                 state = extract_group_state(child_states)
@@ -764,9 +737,7 @@ class WsDataMgr(object):
                 fproxy = self.family_proxies[fp_id]
                 fproxy.stamp = f'{fp_id}@{update_time}'
                 fproxy.state = state
-
-        self.all_states = all_states
-        self.state_count_cycles = state_count_cycles
+                fproxy.is_held = c_fam_task_is_held[fam]
 
     def update_workflow_statuses(self):
         """Update workflow element status and state totals."""
@@ -777,17 +748,23 @@ class WsDataMgr(object):
         workflow.stamp = f'{self.workflow_id}@{update_time}'
         workflow.last_updated = update_time
 
-        state_count_totals = {}
-        for _, count in list(self.state_count_cycles.items()):
-            for state, state_count in count.items():
-                state_count_totals.setdefault(state, 0)
-                state_count_totals[state] += state_count
-        for state, count in state_count_totals.items():
-            setattr(workflow.state_totals,
-                    copy(state).replace('-', '_'), count)
+        all_states = [
+            t.state
+            for t in self.task_proxies.values()
+            if t.state != ''
+        ]
 
-        workflow.last_updated = update_time
-        workflow.states.extend(list(set(self.all_states)).sort())
+        workflow.states[:] = set(all_states)
+
+        workflow.ClearField('state_totals')
+        for state, state_cnt in Counter(all_states).items():
+            workflow.state_totals[state] = state_cnt
+
+        workflow.is_held_total = len([
+            t.is_held
+            for t in self.task_proxies.values()
+            if t.is_held])
+
         workflow.reloading = self.schd.pool.do_reload
 
         # Construct a workflow status string for use by monitoring clients.
