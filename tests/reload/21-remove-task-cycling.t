@@ -16,14 +16,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #------------------------------------------------------------------------
-# Test orphaned tasks do not stall the suite after reload - GitHub #3303.
+# Test orphaned tasks do not stall the suite after reload - GitHub #3306.
 
 . $(dirname $0)/test_header
 
 set_test_number 3
 
 # A suite designed to orphan a single copy of a task 'bar' on self-reload,
-# or stall and abort if the orphaned task triggers the #3303 bug.
+# or stall and abort if the orphaned task triggers the #3306 bug.
 
 init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
 [cylc]

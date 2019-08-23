@@ -41,6 +41,10 @@ with suite configurations that contain tasks with many task outputs.
 
 ### Fixes
 
+[#3307](https://github.com/cylc/cylc-flow/pull/3307) - fix a long-standing bug
+causing suites to stall some time after reloading a suite definition that
+removed tasks from the graph.
+
 [#3285](https://github.com/cylc/cylc-flow/pull/3285) - fix xtrigger
 cycle-sequence specificity.
 
