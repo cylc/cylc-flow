@@ -172,6 +172,10 @@ Changed the `suite.rc` schema:
 
 ### Fixes
 
+[#3308](https://github.com/cylc/cylc-flow/pull/3308) - fix a long-standing bug
+causing suites to stall some time after reloading a suite definition that
+removed tasks from the graph.
+
 [#3258](https://github.com/cylc/cylc-flow/pull/3258) - leave '%'-escaped string
 templates alone in xtrigger arguments.
 
