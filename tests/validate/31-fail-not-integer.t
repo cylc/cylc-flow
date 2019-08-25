@@ -34,7 +34,6 @@ __SUITERC__
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}"
 run_fail "${TEST_NAME}" cylc validate -v 'suite.rc'
-cat "${TEST_NAME}.stderr" >&2
 grep_ok "SuiteConfigError: Cannot process recurrence 1" "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
 exit

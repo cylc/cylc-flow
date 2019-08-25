@@ -22,8 +22,8 @@ set_test_number 3
 init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
 [cylc]
     cycle point format = %Y
-    abort if any task fails = True
     [[events]]
+        abort if any task fails = True
         abort on stalled = True
 [scheduling]
     initial cycle point = 2018

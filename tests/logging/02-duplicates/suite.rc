@@ -1,3 +1,8 @@
+[cylc]
+    [[events]]
+        abort on stalled = True
+        abort on inactivity = True
+        inactivity = PT3M
 [scheduling]
     cycling mode = integer
     initial cycle point = 1
@@ -26,22 +31,6 @@ cylc stop "${CYLC_SUITE_NAME}"
         script = """
 # Extract timestamp lines from logs
 for file in $(find "${CYLC_SUITE_RUN_DIR}/log/suite/" -name '*.*'); do
-    if $(grep -q '.*-.*-.*' "${file}"); then
-        grep '.*-.*-.*' "${file}" | sort -u > $(basename $file)
-    else
-        touch $(basename $file)
-    fi
-done
-
-# Write out duplicate entries to *-duplication files.
-sort $(find . -name 'out*') | uniq -d > out-duplication
-sort $(find . -name 'err*') | uniq -d > err-duplication
-sort $(find . -name 'log*') | uniq -d > log-duplication
-
-# Fail if any of these files contain any content.
-if [[ -s out-duplication || -s err-duplication || -s log-duplication ]]; then
-    touch 'test-failed'
-else
-    touch 'test-succeeded'
-fi
+    grep '.*-.*-.*' "${file}" | sort -u || true
+done | sort | uniq -d > 'log-duplication'
 """

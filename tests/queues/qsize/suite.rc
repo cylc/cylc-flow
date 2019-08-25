@@ -1,8 +1,4 @@
 #!Jinja2
-[cylc]
-   [[reference test]]
-       required run mode = live
-       live mode suite timeout = PT2M
 [scheduling]
     [[ queues ]]
         [[[ q_fam ]]]
@@ -12,7 +8,7 @@
         R1 = monitor:start => FAM
 [runtime]
     [[FAM]]
-        script = sleep 10
+        script = true
     [[a,b,c,d,e,f,g,h,i,j,k,l]]
         inherit = FAM
     [[monitor]]

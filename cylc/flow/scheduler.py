@@ -32,7 +32,6 @@ import traceback
 from uuid import uuid4
 
 from metomi.isodatetime.parsers import TimePointParser
-from cylc.flow.parsec.util import printcfg
 
 from cylc.flow import LOG
 from cylc.flow.broadcast_mgr import BroadcastMgr
@@ -48,14 +47,16 @@ from cylc.flow.hostuserutil import get_host, get_user, get_fqdn_by_host
 from cylc.flow.job_pool import JobPool
 from cylc.flow.loggingutil import TimestampRotatingFileHandler,\
     ReferenceLogFileHandler
-from cylc.flow.log_diagnosis import LogSpec
 from cylc.flow.network.server import SuiteRuntimeServer
+from cylc.flow.parsec.util import printcfg
+from cylc.flow.parsec.validate import DurationFloat
 from cylc.flow.pathutil import (
     get_suite_run_dir,
     get_suite_run_log_dir,
     get_suite_run_rc_dir,
     get_suite_run_share_dir,
     get_suite_run_work_dir,
+    get_suite_test_log_name,
     make_suite_run_tree,
 )
 from cylc.flow.profiler import Profiler
@@ -217,7 +218,6 @@ class Scheduler(object):
         self.broadcast_mgr = BroadcastMgr(self.suite_db_mgr)
         self.xtrigger_mgr = None  # type: XtriggerManager
 
-        self.ref_test_allowed_failures = []
         # Last 10 durations (in seconds) of the main loop
         self.main_loop_intervals = deque(maxlen=10)
 
@@ -417,9 +417,12 @@ see `COPYING' in the Cylc source distribution.
         self.task_events_mgr.mail_footer = self._get_events_conf("mail footer")
         self.task_events_mgr.suite_url = self.config.cfg['meta']['URL']
         self.task_events_mgr.suite_cfg = self.config.cfg['meta']
-        if self.options.genref or self.options.reftest:
-            self.configure_reftest()
-
+        if self.options.genref:
+            LOG.addHandler(ReferenceLogFileHandler(
+                self.config.get_ref_log_name()))
+        elif self.options.reftest:
+            LOG.addHandler(ReferenceLogFileHandler(
+                get_suite_test_log_name(self.suite)))
         log_extra = {TimestampRotatingFileHandler.FILE_HEADER_FLAG: True}
         log_extra_num = {
             TimestampRotatingFileHandler.FILE_HEADER_FLAG: True,
@@ -455,6 +458,8 @@ see `COPYING' in the Cylc source distribution.
             self.load_tasks_for_restart()
         else:
             self.load_tasks_for_run()
+        if self.options.stopcp:
+            self.pool.set_stop_point(get_point(self.options.stopcp))
         self.profiler.log_memory("scheduler.py: after load_tasks")
 
         self.suite_db_mgr.put_suite_params(self)
@@ -464,8 +469,14 @@ see `COPYING' in the Cylc source distribution.
         self.already_timed_out = False
         self.set_suite_timer()
 
+        # Inactivity setting
         self.already_inactive = False
-        if self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT):
+        key = self.EVENT_INACTIVITY_TIMEOUT
+        if self.options.reftest:
+            self.config.cfg['cylc']['events'][f'abort on {key}'] = True
+            if not self.config.cfg['cylc']['events'][key]:
+                self.config.cfg['cylc']['events'][key] = DurationFloat(180)
+        if self._get_events_conf(key):
             self.set_suite_inactivity_timer()
 
         self.profiler.log_memory("scheduler.py: end configure")
@@ -527,8 +538,6 @@ see `COPYING' in the Cylc source distribution.
                 # Remote init is done via process pool
                 self.proc_pool.process()
         self.command_poll_tasks()
-        if self.options.stopcp:
-            self.pool.set_stop_point(get_point(self.options.stopcp))
 
     def _load_task_run_times(self, row_idx, row):
         """Load run times of previously succeeded task jobs."""
@@ -844,9 +853,6 @@ see `COPYING' in the Cylc source distribution.
         add = set(self.config.get_task_name_list()) - old_tasks
         for task in add:
             LOG.warning("Added task: '%s'" % (task,))
-
-        if self.options.genref or self.options.reftest:
-            self.configure_reftest(recon=True)
         self.suite_db_mgr.put_suite_template_vars(self.template_vars)
         self.suite_db_mgr.put_runtime_inheritance(self.config)
         self.suite_db_mgr.put_suite_params(self)
@@ -1052,47 +1058,6 @@ see `COPYING' in the Cylc source distribution.
         if key not in self.template_vars:
             self.template_vars[key] = value
 
-    def configure_reftest(self, recon=False):
-        """Configure the reference test."""
-        if self.options.genref:
-            self.config.cfg['cylc']['log resolved dependencies'] = True
-            reference_log = os.path.join(self.config.fdir, 'reference.log')
-            LOG.addHandler(ReferenceLogFileHandler(reference_log))
-        elif self.options.reftest:
-            rtc = self.config.cfg['cylc']['reference test']
-            req = rtc['required run mode']
-            if req and not self.config.run_mode(req):
-                raise SchedulerError(
-                    'suite allows only %s reference tests' % req)
-            handlers = self._get_events_conf('shutdown handler')
-            if handlers:
-                LOG.warning('shutdown handlers replaced by reference test')
-            self.config.cfg['cylc']['events']['shutdown handler'] = [
-                rtc['suite shutdown event handler']]
-            self.config.cfg['cylc']['log resolved dependencies'] = True
-            self.config.cfg['cylc']['events'][
-                'abort if shutdown handler fails'] = True
-            if not recon:
-                spec = LogSpec(os.path.join(self.config.fdir, 'reference.log'))
-                self.config.initial_point = get_point(
-                    spec.get_initial_point_string())
-                self.config.start_point = get_point(
-                    spec.get_start_point_string()) or self.config.initial_point
-                self.config.final_point = get_point(
-                    spec.get_final_point_string())
-            self.ref_test_allowed_failures = rtc['expected task failures']
-            if (not rtc['allow task failures'] and
-                    not self.ref_test_allowed_failures):
-                self.config.cfg['cylc']['abort if any task fails'] = True
-            self.config.cfg['cylc']['events']['abort on timeout'] = True
-            timeout = rtc[self.config.run_mode() + ' mode suite timeout']
-            if not timeout:
-                raise SchedulerError(
-                    'timeout not defined for %s reference tests' % (
-                        self.config.run_mode()))
-            self.config.cfg['cylc']['events'][self.EVENT_TIMEOUT] = (
-                timeout)
-
     def run_event_handlers(self, event, reason):
         """Run a suite event handler.
 
@@ -1107,17 +1072,9 @@ see `COPYING' in the Cylc source distribution.
                 return
         except KeyError:
             pass
-        try:
-            self.suite_event_handler.handle(self.config, SuiteEventContext(
-                event, str(reason), self.suite, self.uuid_str, self.owner,
-                self.host, self.server.port))
-        except SuiteEventError:
-            if event == self.EVENT_SHUTDOWN and self.options.reftest:
-                LOG.error('SUITE REFERENCE TEST FAILED')
-            raise
-        else:
-            if event == self.EVENT_SHUTDOWN and self.options.reftest:
-                LOG.info('SUITE REFERENCE TEST PASSED')
+        self.suite_event_handler.handle(conf, SuiteEventContext(
+            event, str(reason), self.suite, self.uuid_str, self.owner,
+            self.host, self.server.port))
 
     def initialise_scheduler(self):
         """Prelude to the main scheduler loop.
@@ -1161,12 +1118,12 @@ see `COPYING' in the Cylc source distribution.
             itasks = self.pool.get_ready_tasks()
             if itasks:
                 self.is_updated = True
-            done_tasks = self.task_job_mgr.submit_task_jobs(
-                self.suite, itasks, self.config.run_mode('simulation'))
-            if self.config.cfg['cylc']['log resolved dependencies']:
-                for itask in done_tasks:
-                    deps = itask.state.get_resolved_dependencies()
-                    LOG.info('[%s] -triggered off %s', itask, deps)
+            for itask in self.task_job_mgr.submit_task_jobs(
+                self.suite, itasks, self.config.run_mode('simulation')
+            ):
+                LOG.info(
+                    '[%s] -triggered off %s',
+                    itask, itask.state.get_resolved_dependencies())
         for meth in [
                 self.pool.spawn_all_tasks,
                 self.pool.remove_spent_tasks,
@@ -1218,21 +1175,8 @@ see `COPYING' in the Cylc source distribution.
 
     def suite_shutdown(self):
         """Determines if the suite can be shutdown yet."""
-        if (self.config.cfg['cylc']['abort if any task fails'] and
-                self.pool.any_task_failed()):
-            # Task failure + abort if any task fails
+        if self.pool.check_abort_on_task_fails():
             self._set_stop(StopMode.AUTO_ON_TASK_FAILURE)
-        elif self.options.reftest and self.ref_test_allowed_failures:
-            # In reference test mode and unexpected failures occurred
-            bad_tasks = []
-            for itask in self.pool.get_failed_tasks():
-                if itask.identity not in self.ref_test_allowed_failures:
-                    bad_tasks.append(itask)
-            if bad_tasks:
-                LOG.error(
-                    'Failed task(s) not in allowed failures list:\n%s',
-                    '\n'.join('\t%s' % itask.identity for itask in bad_tasks))
-                self._set_stop(StopMode.AUTO_ON_TASK_FAILURE)
 
         # Can suite shut down automatically?
         if self.stop_mode is None and (

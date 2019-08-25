@@ -53,7 +53,7 @@
         speedup factor = 
         disable task event handlers = True
         default run length = PT10S
-        time limit buffer = PT10S
+        time limit buffer = PT30S
     [[[suite state polling]]]
         interval = 
         host = 
@@ -131,7 +131,7 @@
         speedup factor = 
         disable task event handlers = True
         default run length = PT10S
-        time limit buffer = PT10S
+        time limit buffer = PT30S
     [[[suite state polling]]]
         interval = 
         host = 
@@ -210,7 +210,7 @@
         speedup factor = 
         disable task event handlers = True
         default run length = PT10S
-        time limit buffer = PT10S
+        time limit buffer = PT30S
     [[[suite state polling]]]
         interval = 
         host = 
@@ -289,7 +289,7 @@
         speedup factor = 
         disable task event handlers = True
         default run length = PT10S
-        time limit buffer = PT10S
+        time limit buffer = PT30S
     [[[suite state polling]]]
         interval = 
         host = 
@@ -368,7 +368,7 @@
         speedup factor = 
         disable task event handlers = True
         default run length = PT10S
-        time limit buffer = PT10S
+        time limit buffer = PT30S
     [[[suite state polling]]]
         interval = 
         host = 
@@ -447,7 +447,7 @@
         speedup factor = 
         disable task event handlers = True
         default run length = PT10S
-        time limit buffer = PT10S
+        time limit buffer = PT30S
     [[[suite state polling]]]
         interval = 
         host = 
@@ -526,7 +526,7 @@
         speedup factor = 
         disable task event handlers = True
         default run length = PT10S
-        time limit buffer = PT10S
+        time limit buffer = PT30S
     [[[suite state polling]]]
         interval = 
         host = 
@@ -604,7 +604,7 @@
         speedup factor = 
         disable task event handlers = True
         default run length = PT10S
-        time limit buffer = PT10S
+        time limit buffer = PT30S
     [[[suite state polling]]]
         interval = 
         host = 
@@ -683,7 +683,7 @@
         speedup factor = 
         disable task event handlers = True
         default run length = PT10S
-        time limit buffer = PT10S
+        time limit buffer = PT30S
     [[[suite state polling]]]
         interval = 
         host = 
@@ -762,7 +762,7 @@
         speedup factor = 
         disable task event handlers = True
         default run length = PT10S
-        time limit buffer = PT10S
+        time limit buffer = PT30S
     [[[suite state polling]]]
         interval = 
         host = 
@@ -840,7 +840,7 @@
         speedup factor = 
         disable task event handlers = True
         default run length = PT10S
-        time limit buffer = PT10S
+        time limit buffer = PT30S
     [[[suite state polling]]]
         interval = 
         host = 
@@ -919,7 +919,7 @@
         speedup factor = 
         disable task event handlers = True
         default run length = PT10S
-        time limit buffer = PT10S
+        time limit buffer = PT30S
     [[[suite state polling]]]
         interval = 
         host = 
@@ -998,7 +998,7 @@
         speedup factor = 
         disable task event handlers = True
         default run length = PT10S
-        time limit buffer = PT10S
+        time limit buffer = PT30S
     [[[suite state polling]]]
         interval = 
         host = 

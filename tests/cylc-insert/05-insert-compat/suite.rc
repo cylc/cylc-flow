@@ -8,9 +8,6 @@ duration of the suite; and the other is set to stop after two cycles."""
 
 [cylc]
     cycle point format = %Y%m%dT%H
-    [[reference test]]
-        required run mode = live
-        live mode suite timeout = PT1M
 
 [scheduling]
     initial cycle point = 20140101T00

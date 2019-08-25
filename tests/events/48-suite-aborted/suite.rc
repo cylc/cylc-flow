@@ -6,8 +6,6 @@
         abort on timeout = true
         timeout = PT1M
         aborted handler = echo %(event)s %(message)s >"${CYLC_SUITE_RUN_DIR}/handler.out"
-    [[reference test]]
-        live mode suite timeout=PT1M
 [scheduling]
     [[graph]]
         R1 = modify => t2

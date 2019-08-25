@@ -1,7 +1,3 @@
-[cylc]
-   [[events]]
-      abort on timeout = True
-      timeout = PT20S
 [scheduling]
     [[graph]]
         R1 = "foo:submit-fail => stopper"

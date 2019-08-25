@@ -2,8 +2,6 @@
     [[parameters]]
         num = 99..101..2
         stuff = this, that
-    [[reference test]]
-        live mode suite timeout = PT1M
 [scheduling]
     [[graph]]
         R1 = "t1<num,stuff> => t2<num,stuff>"

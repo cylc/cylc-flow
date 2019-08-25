@@ -27,9 +27,6 @@
 
 [cylc]
     UTC mode = True
-    [[reference test]]
-        required run mode = live
-        live mode suite timeout = PT2M
 
 [scheduling]
     cycling mode = integer

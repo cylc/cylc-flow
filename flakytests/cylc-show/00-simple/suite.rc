@@ -2,7 +2,7 @@
 [meta]
     title = a test suite
     description = the quick brown fox
-    custom = custard 
+    custom = custard
 [cylc]
     UTC mode = True
 [scheduling]
@@ -11,31 +11,45 @@
     [[graph]]
         PT1H = """
             bar => foo
-            foo:start => show-suite & show-task & show-taskinstance & \
-            show-suite-json & show-task-json & show-taskinstance-json
+            foo:start => SHOW
+            SHOW:finish-all => end
         """
 [runtime]
     [[foo]]
-        script = sleep 10
+        script = """
+touch 'foot'
+while [[ -e 'foot' ]]; do
+    sleep 1
+done
+"""
         [[[meta]]]
              title = a task
              description = jumped over the lazy dog
              baz = pub
-    [[bar,baz]]
+    [[bar]]
         script = true
+    [[end]]
+        script = rm -f '../foo/foot'
+    [[SHOW]]
     [[show-suite]]
+        inherit = SHOW
         script = cylc show "$CYLC_SUITE_NAME" >>{{ TEST_OUTPUT_PATH }}-suite
     [[show-task]]
+        inherit = SHOW
         script = cylc show "$CYLC_SUITE_NAME" foo >>{{ TEST_OUTPUT_PATH }}-task
     [[show-taskinstance]]
+        inherit = SHOW
         script = cylc show "$CYLC_SUITE_NAME" foo.20141106T0900Z \
             >>{{ TEST_OUTPUT_PATH }}-taskinstance
     [[show-suite-json]]
+        inherit = SHOW
         script = cylc show --json "$CYLC_SUITE_NAME" \
             >>{{ TEST_OUTPUT_PATH }}-json-suite
     [[show-task-json]]
+        inherit = SHOW
         script = cylc show --json "$CYLC_SUITE_NAME" foo \
             >>{{ TEST_OUTPUT_PATH }}-json-task
     [[show-taskinstance-json]]
+        inherit = SHOW
         script = cylc show --json "$CYLC_SUITE_NAME" foo.20141106T0900Z \
             >>{{ TEST_OUTPUT_PATH }}-json-taskinstance

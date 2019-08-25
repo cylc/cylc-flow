@@ -1,7 +1,7 @@
 #!jinja2
 [cylc]
-    abort if any task fails = True
     [[events]]
+        abort if any task fails = True
         timeout = PT2M
         abort on timeout = True
 [scheduling]

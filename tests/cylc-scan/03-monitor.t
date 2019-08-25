@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test cylc monitor USER_AT_HOST interface, using cylc scan output.
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 6
 #-------------------------------------------------------------------------------
@@ -33,6 +33,8 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
 
 TEST_NAME="${TEST_NAME_BASE}-monitor-1"
+# Need fields from "cylc scan", cannot quote
+# shellcheck disable=SC2046
 run_ok "${TEST_NAME}" cylc monitor \
     $(cylc scan --color=never -n "${SUITE_NAME}") --once
 grep_ok "${SUITE_NAME} - 1 task" "${TEST_NAME}.stdout"
@@ -40,9 +42,12 @@ grep_ok "${SUITE_NAME} - 1 task" "${TEST_NAME}.stdout"
 # Same again, but force a port scan instead of looking under ~/cylc-run.
 # (This also tests GitHub #2795 -"cylc scan -a" abort).
 TEST_NAME="${TEST_NAME_BASE}-monitor-2"
+# Need fields from "cylc scan", cannot quote
+# shellcheck disable=SC2046
 run_ok "${TEST_NAME}" cylc monitor \
     $(cylc scan --color=never -n "${SUITE_NAME}") --once
 grep_ok "${SUITE_NAME} - 1 task" "${TEST_NAME}.stdout"
 
-cylc stop --kill "${SUITE_NAME}"
+cylc stop --kill --max-polls=20 --interval=1 "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
+exit

@@ -3,11 +3,6 @@
 suite to environment test execution and submission polling intervals, task
 communication method, connection timeout and retry interval the in flow.rc"""
 
-[cylc]
-    [[reference test]]
-        live mode suite timeout = PT2M
-        simulation mode suite timeout = PT2M
-
 [scheduling]
     [[graph]]
         R1 = "foo & bar"

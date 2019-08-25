@@ -16,30 +16,27 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test execution retries are working
-. $(dirname $0)/test_header
-#-------------------------------------------------------------------------------
+. "$(dirname "$0")/test_header"
 set_test_number 3
+install_suite "${TEST_NAME_BASE}" 'submission'
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE submission
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}-run" \
+    cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --reference-test --debug --no-detach $SUITE_NAME
-#-------------------------------------------------------------------------------
-if ! which sqlite3 > /dev/null; then
-    skip 1 "sqlite3 not installed?"
-else
+if ! command -v 'sqlite3' >'/dev/null'; then
     sqlite3 \
         "$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/db" \
-        'select try_num, submit_num from task_jobs' >'select.out'
+        'SELECT try_num, submit_num FROM task_jobs' >'select.out'
     cmp_ok 'select.out' <<'__OUT__'
 1|1
 1|2
 1|3
 1|4
 __OUT__
+else
+    skip 1 'sqlite3 not installed?'
 fi
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"
+exit

@@ -1,10 +1,5 @@
 [meta]
     title = "test reloading after manually removing a task."
-
-[cylc]
-   [[reference test]]
-       required run mode = live
-       live mode suite timeout = PT30S
 [scheduling]
     [[graph]]
         R1 = """

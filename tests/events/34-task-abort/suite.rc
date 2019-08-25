@@ -1,9 +1,8 @@
 [meta]
     title = "Test job abort with retries and failed handler"
 [cylc]
-    [[events]]
-        inactivity = PT20S
-        abort on inactivity = True
+    [[reference test]]
+        expected task failures = foo.1
 [scheduling]
     [[graph]]
         R1 = "foo:fail => !foo"
@@ -14,6 +13,6 @@ echo ONE
 cylc__job_abort "ERROR: rust never sleeps"
 echo TWO"""
         [[[job]]]
-            execution retry delays = PT5S
+            execution retry delays = PT0S
         [[[events]]]
             failed handler = echo "!!!FAILED!!!" %(event)s %(id)s %(submit_num)s %(message)s

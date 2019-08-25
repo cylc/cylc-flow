@@ -37,7 +37,6 @@
         <RegExpr attribute='Keyword' String=' startup handler '/>
         <RegExpr attribute='Keyword' String=' started handler '/>
         <RegExpr attribute='Keyword' String=' stalled handler '/>
-        <RegExpr attribute='Keyword' String=' simulation mode suite timeout '/>
         <RegExpr attribute='Keyword' String=' disable suite event handlers '/>
         <RegExpr attribute='Keyword' String=' default run length '/>
         <RegExpr attribute='Keyword' String=' speedup factor '/>
@@ -70,8 +69,6 @@
         <RegExpr attribute='Keyword' String=' mail retry delays '/>
         <RegExpr attribute='Keyword' String=' mail from '/>
         <RegExpr attribute='Keyword' String=' mail events '/>
-        <RegExpr attribute='Keyword' String=' log resolved dependencies '/>
-        <RegExpr attribute='Keyword' String=' live mode suite timeout '/>
         <RegExpr attribute='Keyword' String=' limit '/>
         <RegExpr attribute='Keyword' String=' interval '/>
         <RegExpr attribute='Keyword' String=' initial cycle point constraints '/>
@@ -104,7 +101,6 @@
         <RegExpr attribute='Keyword' String=' exclude at start-up '/>
         <RegExpr attribute='Keyword' String=' exclude '/>
         <RegExpr attribute='Keyword' String=' env-script '/>
-        <RegExpr attribute='Keyword' String=' dummy mode suite timeout '/>
         <RegExpr attribute='Keyword' String=' disable automatic shutdown '/>
         <RegExpr attribute='Keyword' String=' description '/>
         <RegExpr attribute='Keyword' String=' default node attributes '/>
@@ -118,7 +114,6 @@
         <RegExpr attribute='Keyword' String=' clock-expire '/>
         <RegExpr attribute='Keyword' String=' batch system '/>
         <RegExpr attribute='Keyword' String=' batch submit command template '/>
-        <RegExpr attribute='Keyword' String=' allow task failures '/>
         <RegExpr attribute='Keyword' String=' abort on timeout '/>
         <RegExpr attribute='Keyword' String=' abort on stalled '/>
         <RegExpr attribute='Keyword' String=' abort on inactivity '/>

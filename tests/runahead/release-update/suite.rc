@@ -1,8 +1,5 @@
 [cylc]
     cycle point format = %Y
-    [[events]]
-        inactivity = PT1M
-        abort on inactivity = True
 [scheduling]
     initial cycle point = now
     final cycle point = +P1Y
@@ -16,4 +13,4 @@
         """ # (or sequential bar)
 [runtime]
     [[root]]
-        script = /bin/true
+        script = true

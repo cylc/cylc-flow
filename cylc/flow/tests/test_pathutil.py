@@ -32,6 +32,7 @@ from cylc.flow.pathutil import (
     get_suite_run_rc_dir,
     get_suite_run_share_dir,
     get_suite_run_work_dir,
+    get_suite_test_log_name,
     make_suite_run_tree,
 )
 
@@ -109,6 +110,8 @@ class TestPathutil(TestCase):
         for func, cfg, tail1 in (
             (get_suite_run_log_name, 'run directory', '/log/suite/log'),
             (get_suite_run_pub_db_name, 'run directory', '/log/db'),
+            (get_suite_test_log_name, 'run directory',
+             '/log/suite/reftest.log'),
         ):
             self.assertEqual(
                 f'/home/sweet/cylc-run/my-suite/dream{tail1}',

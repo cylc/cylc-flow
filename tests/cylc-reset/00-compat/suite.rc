@@ -2,8 +2,6 @@
    UTC mode = True
    [[reference test]]
        expected task failures = fixable.1
-       live mode suite timeout = PT1M
-       required run mode = live
 [scheduling]
     [[graph]]
         R1 = """

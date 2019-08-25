@@ -5,10 +5,6 @@
 
 [cylc]
     cycle point time zone = +13
-    [[reference test]]
-        live mode suite timeout = PT0.5M
-        dummy mode suite timeout = PT0.5M
-        simulation mode suite timeout = PT0.5M
 
 [scheduling]
     initial cycle point = 20140201T05

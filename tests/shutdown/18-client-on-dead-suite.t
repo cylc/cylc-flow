@@ -15,10 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test suite shuts down with error on missing port file
+# Test suite shuts down with error on missing contact file
+# And correct behaviour with client on the next 2 connection attempts.
 . "$(dirname "$0")/test_header"
 set_test_number 5
 init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
+[cylc]
+    [[events]]
+        abort on stalled = True
+        abort on inactivity = True
+        inactivity = PT3M
 [scheduling]
     [[graph]]
         R1 = t1
@@ -31,6 +37,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 cylc run --hold --no-detach "${SUITE_NAME}" 1>'cylc-run.out' 2>&1 &
 MYPID=$!
 RUND="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
+poll '!' test -d "${RUND}/.service"
 poll '!' test -f "${RUND}/.service/contact"
 kill "${MYPID}"  # Should leave behind the contact file
 wait "${MYPID}" 1>'/dev/null' 2>&1 || true

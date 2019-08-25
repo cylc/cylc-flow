@@ -2,8 +2,6 @@
     title = "Hello, Goodbye, Suicide"
 [cylc]
     [[reference test]]
-        required run mode = live
-        live mode suite timeout = PT1M
         expected task failures = goodbye.1
 
 [scheduling]

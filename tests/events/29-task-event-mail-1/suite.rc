@@ -5,8 +5,6 @@
 [cylc]
     [[events]]
         mail footer = see: http://localhost/stuff/%(owner)s/%(suite)s/
-    [[reference test]]
-        live mode suite timeout=PT1M
 
 [scheduling]
     [[graph]]

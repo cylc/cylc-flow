@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test suite graphql interface
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 4
 #-------------------------------------------------------------------------------
@@ -79,7 +79,7 @@ TEST_NAME="${TEST_NAME_BASE}-contact"
 run_ok "${TEST_NAME_BASE}-contact" cylc get-contact "${SUITE_NAME}"
 
 # stop suite
-cylc stop --kill "${SUITE_NAME}"
+cylc stop --max-polls=10 --interval=2 --kill "${SUITE_NAME}"
 
 # compare to expectation
 cat > expected << __HERE__

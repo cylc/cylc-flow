@@ -1,8 +1,6 @@
 #!jinja2
 [cylc]
     UTC mode = True # Ignore DST
-    [[reference test]]
-        live mode suite timeout = PT10M
 
 [scheduling]
     [[graph]]

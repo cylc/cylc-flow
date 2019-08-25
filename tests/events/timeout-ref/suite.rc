@@ -2,10 +2,9 @@
     description = This suite is supposed to time out
 
 [cylc]
-    [[reference test]]
-        live mode suite timeout = PT0.5M
-        dummy mode suite timeout = PT6S
-        simulation mode suite timeout = PT12S
+    [[events]]
+        abort on timeout = True
+        timeout = PT1S
 
 [scheduling]
     [[graph]]

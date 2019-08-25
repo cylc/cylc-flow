@@ -1,12 +1,6 @@
 [meta]
     title = Job script: suite to environment test
 
-[cylc]
-    [[reference test]]
-        live mode suite timeout = PT0.5M
-        dummy mode suite timeout = PT0.5M
-        simulation mode suite timeout = PT0.5M
-
 [scheduling]
     [[graph]]
         R1 = foo

@@ -7,9 +7,6 @@ to pass the test run their values must be 'foo' and '2', respectively."""
 
 [cylc]
     UTC mode = True
-    [[reference test]]
-        required run mode = live
-        live mode suite timeout = PT30S
 
 [scheduling]
     initial cycle point = 2010

@@ -1,6 +1,3 @@
-[cylc]
-    [[reference test]]
-        live mode suite timeout = PT3M
 [scheduling]
     initial cycle point = 1
     final cycle point = +P15  # = 16

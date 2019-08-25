@@ -88,6 +88,11 @@ def get_suite_run_work_dir(suite, *args):
         glbl_cfg().get_host_item('work directory'), suite, 'work', *args)
 
 
+def get_suite_test_log_name(suite):
+    """Return suite run ref test log file path."""
+    return get_suite_run_dir(suite, 'log', 'suite', 'reftest.log')
+
+
 def make_suite_run_tree(suite):
     """Create all top-level cylc-run output dirs on the suite host."""
     cfg = glbl_cfg().get()

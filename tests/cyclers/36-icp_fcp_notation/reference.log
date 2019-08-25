@@ -1,0 +1,7 @@
+Initial point: 20160101T0000Z
+Final point: 20160102T0000Z
+[foo.20160101T0000Z] -triggered off []
+[bar.20160101T0000Z] -triggered off []
+[baz.20160101T0100Z] -triggered off []
+[boo.20160101T2300Z] -triggered off []
+[bot.20160102T0000Z] -triggered off ['bar.20160101T0000Z', 'baz.20160101T0100Z', 'boo.20160101T2300Z', 'foo.20160101T0000Z']

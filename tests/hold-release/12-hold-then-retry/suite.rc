@@ -2,10 +2,10 @@
     title = Test: run task - hold suite - task job retry - release suite
 
 [cylc]
-    [[reference test]]
-        live mode suite timeout = PT1M30S
-        dummy mode suite timeout = PT1M30S
-        simulation mode suite timeout = PT1M30S
+    [[events]]
+        abort on stalled = True
+        abort on inactivity = True
+        inactivity = PT3M
 
 [scheduling]
     [[graph]]

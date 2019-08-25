@@ -8,3 +8,4 @@
 2017-12-12T17:43:38Z INFO - [show-taskinstance.20141106T0900Z] -triggered off ['foo.20141106T0900Z']
 2017-12-12T17:43:38Z INFO - [show-task.20141106T0900Z] -triggered off ['foo.20141106T0900Z']
 2017-12-12T17:43:38Z INFO - [show-suite.20141106T0900Z] -triggered off ['foo.20141106T0900Z']
+2017-12-12T17:43:38Z INFO - [end.20141106T0900Z] -triggered off ['show-suite-json.20141106T0900Z', 'show-suite.20141106T0900Z', 'show-task-json.20141106T0900Z', 'show-task.20141106T0900Z', 'show-taskinstance-json.20141106T0900Z', 'show-taskinstance.20141106T0900Z']

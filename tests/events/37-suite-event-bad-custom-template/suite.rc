@@ -6,8 +6,6 @@
 {% if ABORT is defined %}
         abort if startup handler fails = True
 {% endif %}
-    [[reference test]]
-        live mode suite timeout=PT1M
 
 [scheduling]
     [[graph]]

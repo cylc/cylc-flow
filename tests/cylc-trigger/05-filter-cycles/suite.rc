@@ -2,8 +2,6 @@
    UTC mode = True
    [[reference test]]
        expected task failures = fixable.19700101T0000Z, fixable.19900101T0000Z, fixable.20100101T0000Z
-       live mode suite timeout = PT2M
-       required run mode = live
 [scheduling]
     initial cycle point = 1970
     final cycle point = 2010

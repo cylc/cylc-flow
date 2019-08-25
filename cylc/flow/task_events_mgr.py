@@ -99,7 +99,7 @@ def log_task_job_activity(ctx, suite, point, name, submit_num=None):
         LOG.debug(ctx_str)
 
 
-class TaskEventsManager(object):
+class TaskEventsManager():
     """Task events manager.
 
     This class does the following:
@@ -123,6 +123,7 @@ class TaskEventsManager(object):
     FLAG_RECEIVED = "(received)"
     FLAG_RECEIVED_IGNORED = "(received-ignored)"
     FLAG_POLLED = "(polled)"
+    FLAG_POLLED_IGNORED = "(polled-ignored)"
     KEY_EXECUTE_TIME_LIMIT = 'execution_time_limit'
     LEVELS = {
         "INFO": INFO,
@@ -341,16 +342,9 @@ class TaskEventsManager(object):
             event_time = get_current_time_string()
         if submit_num is None:
             submit_num = itask.submit_num
-        logfmt = r'[%s] status=%s: %s%s at %s for job(%02d)'
-        if flag == self.FLAG_RECEIVED and submit_num != itask.submit_num:
-            LOG.warning(
-                logfmt + r' != current job(%02d)',
-                itask, itask.state, self.FLAG_RECEIVED_IGNORED, message,
-                event_time, submit_num, itask.submit_num)
-            return
-        LOG.log(
-            self.LEVELS.get(severity, INFO),
-            logfmt, itask, itask.state, flag, message, event_time, submit_num)
+        if not self._process_message_check(
+                itask, severity, message, event_time, flag, submit_num):
+            return None
 
         # always update the suite state summary for latest message
         if flag == self.FLAG_POLLED:
@@ -456,6 +450,44 @@ class TaskEventsManager(object):
             itask.non_unique_events.setdefault(lseverity, 0)
             itask.non_unique_events[lseverity] += 1
             self.setup_event_handlers(itask, lseverity, message)
+        return None
+
+    def _process_message_check(
+        self,
+        itask,
+        severity,
+        message,
+        event_time,
+        flag,
+        submit_num,
+    ):
+        """Helper for `.process_message`.
+
+        See `.process_message` for argument list
+        Check whether to process/skip message.
+        Return True if `.process_message` should contine, False otherwise.
+        """
+        logfmt = r'[%s] status=%s: %s%s at %s for job(%02d)'
+        if flag == self.FLAG_RECEIVED and submit_num != itask.submit_num:
+            # Ignore received messages from old jobs
+            LOG.warning(
+                logfmt + r' != current job(%02d)',
+                itask, itask.state, self.FLAG_RECEIVED_IGNORED, message,
+                event_time, submit_num, itask.submit_num)
+            return False
+        if itask.state.status in (
+            TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING
+        ):
+            # Ignore polled messages if task is already in retrying statuses
+            LOG.warning(
+                logfmt,
+                itask, itask.state, self.FLAG_POLLED_IGNORED, message,
+                event_time, submit_num)
+            return False
+        LOG.log(
+            self.LEVELS.get(severity, INFO),
+            logfmt, itask, itask.state, flag, message, event_time, submit_num)
+        return True
 
     def setup_event_handlers(self, itask, event, message):
         """Set up handlers for a task event."""

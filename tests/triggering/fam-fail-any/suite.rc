@@ -1,8 +1,5 @@
 [cylc]
    [[reference test]]
-       required run mode = live
-       live mode suite timeout = PT30S
-       allow task failures = True
        expected task failures = b.1
 
 [scheduling]

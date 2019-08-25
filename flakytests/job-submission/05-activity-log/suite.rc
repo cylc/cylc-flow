@@ -1,8 +1,6 @@
 [cylc]
    [[reference test]]
        expected task failures = t1.1
-       required run mode = live
-       live mode suite timeout = PT30S
 
 [scheduling]
     [[graph]]
@@ -28,4 +26,4 @@
             cylc shutdown "${CYLC_SUITE_NAME}"
         """
         [[[job]]]
-            execution time limit = PT25S
+            execution time limit = PT1M

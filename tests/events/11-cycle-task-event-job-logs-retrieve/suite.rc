@@ -5,8 +5,6 @@
 [cylc]
     UTC mode = True
     cycle point format=%Y-%m-%dT%H:%MZ
-    [[reference test]]
-        live mode suite timeout=PT1M
 
 [scheduling]
     initial cycle point=2020-02-02T02:02Z

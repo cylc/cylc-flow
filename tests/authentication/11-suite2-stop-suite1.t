@@ -31,7 +31,8 @@ SUITE2_RUND="${RUND}/${NAME2}"
 mkdir -p "${SUITE2_RUND}"
 cat >"${SUITE2_RUND}/suite.rc" <<__SUITERC__
 [cylc]
-    abort if any task fails=True
+    [[events]]
+        abort if any task fails=True
 [scheduling]
     [[graph]]
         R1=t1

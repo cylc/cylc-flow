@@ -285,6 +285,7 @@ class TaskProxy(object):
         reload_successor.poll_timer = self.poll_timer
         reload_successor.timeout = self.timeout
         reload_successor.state.outputs = self.state.outputs
+        reload_successor.state.is_held = self.state.is_held
         reload_successor.state.is_updated = self.state.is_updated
 
     @staticmethod
@@ -370,15 +371,14 @@ class TaskProxy(object):
         """
         if self.manual_trigger:
             return True
-        waiting_retry = self.is_waiting_retry(now)
-        if waiting_retry is not None:
-            return not waiting_retry
-        if not self.state(
-                TASK_STATUS_WAITING,
-                is_held=False
-        ):
+        if self.state.is_held:
             return False
-        return not (self.is_waiting_clock(now) or self.is_waiting_prereqs())
+        if self.state.status in self.try_timers:
+            return self.try_timers[self.state.status].is_delay_done(now)
+        return (
+            self.state(TASK_STATUS_WAITING)
+            and self.is_waiting_clock_done(now)
+            and self.is_waiting_prereqs_done())
 
     def reset_manual_trigger(self):
         """This is called immediately after manual trigger flag used."""
@@ -409,31 +409,23 @@ class TaskProxy(object):
             self.summary[event_key + '_time'] = float(str2time(time_str))
         self.summary[event_key + '_time_string'] = time_str
 
-    def is_waiting_clock(self, now):
-        """Is this task waiting for its clock trigger time?"""
+    def is_waiting_clock_done(self, now):
+        """Is this task done waiting for its clock trigger time?
+
+        Return True if there is no clock trigger or when clock trigger is done.
+        """
         if self.tdef.clocktrigger_offset is None:
-            return None
+            return True
         if self.clock_trigger_time is None:
             self.clock_trigger_time = (
                 self.get_point_as_seconds() +
                 self.get_offset_as_seconds(self.tdef.clocktrigger_offset))
-        return self.clock_trigger_time > now
+        return now >= self.clock_trigger_time
 
-    def is_waiting_prereqs(self):
+    def is_waiting_prereqs_done(self):
         """Is this task waiting for its prerequisites?"""
         return (
-            any(not pre.is_satisfied() for pre in self.state.prerequisites)
-            or any(not tri for tri in self.state.external_triggers.values())
-            or not self.state.xtriggers_all_satisfied()
+            all(pre.is_satisfied() for pre in self.state.prerequisites)
+            and all(tri for tri in self.state.external_triggers.values())
+            and self.state.xtriggers_all_satisfied()
         )
-
-    def is_waiting_retry(self, now):
-        """Is this task waiting for its latest (submission) retry delay time?
-
-        Return True if waiting for next retry delay time, False if not.
-        Return None if no retry lined up.
-        """
-        try:
-            return not self.try_timers[self.state.status].is_delay_done(now)
-        except KeyError:
-            return None

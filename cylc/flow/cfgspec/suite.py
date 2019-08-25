@@ -49,10 +49,8 @@ SPEC = {
             VDR.V_STRING, '', 'live', 'dummy', 'dummy-local', 'simulation'],
         'force run mode': [
             VDR.V_STRING, '', 'live', 'dummy', 'dummy-local', 'simulation'],
-        'abort if any task fails': [VDR.V_BOOLEAN],
         'health check interval': [VDR.V_INTERVAL],
         'task event mail interval': [VDR.V_INTERVAL],
-        'log resolved dependencies': [VDR.V_BOOLEAN],
         'disable automatic shutdown': [VDR.V_BOOLEAN],
         'simulation': {
             'disable suite event handlers': [VDR.V_BOOLEAN, True],
@@ -82,6 +80,7 @@ SPEC = {
             'abort if timeout handler fails': [VDR.V_BOOLEAN],
             'abort if inactivity handler fails': [VDR.V_BOOLEAN],
             'abort if stalled handler fails': [VDR.V_BOOLEAN],
+            'abort if any task fails': [VDR.V_BOOLEAN],
             'abort on stalled': [VDR.V_BOOLEAN],
             'abort on timeout': [VDR.V_BOOLEAN],
             'abort on inactivity': [VDR.V_BOOLEAN],
@@ -92,21 +91,7 @@ SPEC = {
             'mail footer': [VDR.V_STRING],
         },
         'reference test': {
-            'suite shutdown event handler': [
-                VDR.V_STRING, 'cylc hook check-triggering'],
-            'required run mode': [
-                VDR.V_STRING,
-                '', 'live', 'simulation', 'dummy-local', 'dummy'],
-            'allow task failures': [VDR.V_BOOLEAN],
             'expected task failures': [VDR.V_STRING_LIST],
-            'live mode suite timeout': [
-                VDR.V_INTERVAL, DurationFloat(60)],
-            'dummy mode suite timeout': [
-                VDR.V_INTERVAL, DurationFloat(60)],
-            'dummy-local mode suite timeout': [
-                VDR.V_INTERVAL, DurationFloat(60)],
-            'simulation mode suite timeout': [
-                VDR.V_INTERVAL, DurationFloat(60)],
         },
         'authentication': {
             # Allow owners to grant public shutdown rights at the most, not
@@ -176,7 +161,7 @@ SPEC = {
             'simulation': {
                 'default run length': [VDR.V_INTERVAL, DurationFloat(10)],
                 'speedup factor': [VDR.V_FLOAT],
-                'time limit buffer': [VDR.V_INTERVAL, DurationFloat(10)],
+                'time limit buffer': [VDR.V_INTERVAL, DurationFloat(30)],
                 'fail cycle points': [VDR.V_STRING_LIST],
                 'fail try 1 only': [VDR.V_BOOLEAN, True],
                 'disable task event handlers': [VDR.V_BOOLEAN, True],
@@ -285,11 +270,30 @@ def upg(cfg, descr):
     u.obsolete('7.2.2', ['runtime', '__MANY__', 'dummy mode'])
     u.obsolete('7.2.2', ['runtime', '__MANY__', 'simulation mode'])
     u.obsolete('7.6.0', ['runtime', '__MANY__', 'enable resurrection'])
-    u.obsolete('7.8.0', ['runtime', '__MANY__', 'suite state polling',
-                         'template'])
+    u.obsolete(
+        '7.8.0',
+        ['runtime', '__MANY__', 'suite state polling', 'template'])
     u.obsolete('7.8.1', ['cylc', 'events', 'reset timer'])
     u.obsolete('7.8.1', ['cylc', 'events', 'reset inactivity timer'])
     u.obsolete('7.8.1', ['runtime', '__MANY__', 'events', 'reset timer'])
+    u.obsolete('8.0.0', ['cylc', 'log resolved dependencies'])
+    u.obsolete('8.0.0', ['cylc', 'reference test', 'allow task failures'])
+    u.obsolete('8.0.0', ['cylc', 'reference test', 'live mode suite timeout'])
+    u.obsolete('8.0.0', ['cylc', 'reference test', 'dummy mode suite timeout'])
+    u.obsolete(
+        '8.0.0',
+        ['cylc', 'reference test', 'dummy-local mode suite timeout'])
+    u.obsolete(
+        '8.0.0',
+        ['cylc', 'reference test', 'simulation mode suite timeout'])
+    u.obsolete('8.0.0', ['cylc', 'reference test', 'required run mode'])
+    u.obsolete(
+        '8.0.0',
+        ['cylc', 'reference test', 'suite shutdown event handler'])
+    u.deprecate(
+        '8.0.0',
+        ['cylc', 'abort if any task fails'],
+        ['cylc', 'events', 'abort if any task fails'])
     u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'shell'])
     u.upgrade()
 

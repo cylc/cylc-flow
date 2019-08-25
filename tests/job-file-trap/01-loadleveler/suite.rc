@@ -1,9 +1,4 @@
 #!jinja2
-[cylc]
-   [[reference test]]
-       required run mode=live
-       live mode suite timeout=PT5M # minutes
-
 [scheduling]
     [[graph]]
         R1="""

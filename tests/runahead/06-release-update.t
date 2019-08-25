@@ -17,28 +17,32 @@
 #-------------------------------------------------------------------------------
 # Test that the state summary is updated when runahead tasks are released.
 # GitHub #1981
-. $(dirname $0)/test_header
-#-------------------------------------------------------------------------------
+. "$(dirname "$0")/test_header"
 set_test_number 3
+install_suite "${TEST_NAME_BASE}" 'release-update'
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE release-update
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-check-states
-cylc run $SUITE_NAME
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+cylc run --debug --no-detach "${SUITE_NAME}" 1>'out' 2>&1 &
+CYLC_RUN_PID="$!"
+poll "! test -e '${SUITE_RUN_DIR}/.service/contact'"
 LOG="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/suite/log"
-poll "! grep -q -F '[bar.2016] status=running: (received)succeeded' '${LOG}' 2>'/dev/null'"
+poll "! test -e '${LOG}'"
+YYYY="$(date +%Y)"
+poll "! grep -q -F '[bar.${YYYY}] -ready => submitted' '${LOG}' 2>'/dev/null'"
+poll "! grep -q -F '[bar.${YYYY}] -running => succeeded' \
+    '${LOG}' 2>'/dev/null'"
 sleep 1
-cylc dump -t $SUITE_NAME | awk '{print $1 $3}' > log
-cmp_ok log - << __END__
+cylc dump -t "${SUITE_NAME}" | awk '{print $1 $3}' >'log'
+cmp_ok 'log' - <<'__END__'
 bar,succeeded,
 bar,waiting,
 foo,waiting,
 __END__
+run_ok "${TEST_NAME_BASE}-stop" \
+    cylc stop --max-polls=10 --interval=6 "${SUITE_NAME}"
+if ! wait "${CYLC_RUN_PID}" 1>'/dev/null' 2>&1; then
+    cat 'out' >&2
+fi
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-stop
-run_ok $TEST_NAME cylc stop --max-polls=10 --interval=6 $SUITE_NAME
-#-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"
+exit

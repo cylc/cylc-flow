@@ -1,7 +1,5 @@
 [cylc]
     UTC mode = True
-    [[reference test]]
-        live mode suite timeout = PT1M
 [scheduling]
     [[graph]]
         R1 = "t1 => t2"

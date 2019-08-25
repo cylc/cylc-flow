@@ -71,7 +71,6 @@ def match_command(abbrev):
                 discovery_commands,
                 control_commands,
                 utility_commands,
-                hook_commands,
                 task_commands]:
         for com, aliases in dct.items():
             if any(alias == abbrev for alias in aliases):
@@ -262,9 +261,6 @@ utility_commands['ls-checkpoints'] = ['ls-checkpoints']
 utility_commands['report-timings'] = ['report-timings']
 utility_commands['function-run'] = ['function-run']
 
-hook_commands = {}
-hook_commands['check-triggering'] = ['check-triggering']
-
 admin_commands = {}
 admin_commands['check-software'] = ['check-software']
 
@@ -304,8 +300,7 @@ for dct in [
         control_commands,
         utility_commands,
         task_commands,
-        admin_commands,
-        hook_commands]:
+        admin_commands]:
     all_commands.update(dct)
 
 # topic summaries
@@ -393,9 +388,6 @@ comsum['suite-state'] = 'Query the task states in a suite'
 comsum['ls-checkpoints'] = 'Display task pool etc at given events'
 comsum['report-timings'] = 'Generate a report on task timing data'
 comsum['function-run'] = '(Internal) Run a function in the process pool'
-
-# hook
-comsum['check-triggering'] = 'A suite shutdown event hook for cylc testing'
 
 
 def help_func():

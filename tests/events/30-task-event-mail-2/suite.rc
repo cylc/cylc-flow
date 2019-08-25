@@ -10,7 +10,6 @@
         timeout = PT20S
     [[reference test]]
         expected task failures = t1.1, t2.1, t3.1, t4.1, t5.1
-        live mode suite timeout=PT3M
 
 [scheduling]
     [[graph]]

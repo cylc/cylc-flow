@@ -2,11 +2,6 @@
     title = "Test insertion of a task added by a reload."
 # Don't run this suite in-place: it modifies itself.
 
-[cylc]
-   [[reference test]]
-       required run mode = live
-       live mode suite timeout = PT30S
-
 [scheduling]
    [[graph]]
        R1 = reloader

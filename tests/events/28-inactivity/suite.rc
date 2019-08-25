@@ -4,8 +4,6 @@
         inactivity = PT10S
         abort on inactivity = True
         abort on timeout = True
-    [[reference test]]
-        live mode suite timeout=PT1M
 
 [scheduling]
     [[graph]]

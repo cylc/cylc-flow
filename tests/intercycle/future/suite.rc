@@ -1,9 +1,5 @@
-
 [cylc]
     cycle point format = %Y%m%dT%H
-    [[reference test]]
-        required run mode = live
-        live mode suite timeout = PT1M
 
 [scheduling]
     initial cycle point = 20120101T00

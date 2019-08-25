@@ -17,11 +17,6 @@
 {% set DATA_IN_DIR = "$CYLC_SUITE_SHARE_DIR/incoming" %}
 {% set PRODUCT_DIR = "$CYLC_SUITE_SHARE_DIR/products" %}
 
-[cylc]
-    [[reference test]]
-        required run mode = live
-        live mode suite timeout = PT1M
-
 [scheduling]
     cycling mode = integer
     initial cycle point = 1

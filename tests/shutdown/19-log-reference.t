@@ -17,11 +17,15 @@
 #-------------------------------------------------------------------------------
 # Test suite shuts down with reference log, specifically that there is no
 # issue in the shutdown method when the --reference-log option is used.
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 1
+set_test_number 3
 #-------------------------------------------------------------------------------
 init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
+[cylc]
+    [[events]]
+        abort on inactivity = True
+        inactivity = PT3M
 [scheduling]
     [[graph]]
         R1 = t1
@@ -30,7 +34,11 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
         script = true
 __SUITERC__
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME timeout 60s cylc run --debug --no-detach --reference-log $SUITE_NAME
+suite_run_ok "${TEST_NAME_BASE}-run-reflog" \
+    cylc run --debug --no-detach --reference-log "${SUITE_NAME}"
+exists_ok 'reference.log'
+suite_run_ok "${TEST_NAME_BASE}-run-reftest" \
+    cylc run --debug --no-detach --reference-test "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"
+exit

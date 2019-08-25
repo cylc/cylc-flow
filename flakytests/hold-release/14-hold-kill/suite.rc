@@ -1,10 +1,6 @@
 #!Jinja2
 [meta]
     title = Test: task should be held from retrying after a job kill
-
-[cylc]
-    [[reference test]]
-        live mode suite timeout = PT30S
 [scheduling]
     [[graph]]
         R1 = "sleeper:start => killer"
@@ -12,29 +8,29 @@
     [[killer]]
         script = """
             echo '# killing "sleeper"'
-            cylc kill "${CYLC_SUITE_NAME}" "sleeper.${CYLC_TASK_CYCLE_POINT}"
-
-            echo '# waiting for "sleeper" to disappear'
-            while grep -q '^sleeper, 1, running, spawned, unheld' \
-                <<<"$(cylc dump -t "${CYLC_SUITE_NAME}")"
+            cylc kill "${CYLC_SUITE_NAME}" "sleeper.1"
+            LOG="${CYLC_SUITE_LOG_DIR}/log"
+            while ! grep -q -F '[sleeper.1] -running => running (held)' "${LOG}"
             do
-                sleep 0.2  # cylc dump can be quite slow
+                sleep 1
             done
-
-            echo '# waiting for "sleeper" to reappear'
-            while ! grep -q '^sleeper' \
-                <<<"$(cylc dump -t "${CYLC_SUITE_NAME}")"
+            while ! grep -q -F '[sleeper.1] -running (held) => retrying (held)' "${LOG}"
             do
-                sleep 0.2
+                sleep 1
             done
-
-            echo '# testing that "sleeper" is held on re-insertion'
-            grep -q '^sleeper, 1, retrying, spawned, held' \
-                <<<"$(cylc dump -t "${CYLC_SUITE_NAME}")"
-
-            cylc release "${CYLC_SUITE_NAME}" "sleeper.${CYLC_TASK_CYCLE_POINT}"
+            sleep 10  # sleep should still be held after 10 seconds
+            cylc dump -s -t "${CYLC_SUITE_NAME}" >'cylc-dump.out'
+            diff -u 'cylc-dump.out' - <<'__OUT__'
+            1, killer, running, spawned, unheld
+            1, sleeper, retrying, spawned, held
+            __OUT__
+            cylc release "${CYLC_SUITE_NAME}" "sleeper.1"
         """
     [[sleeper]]
-        script = test "${CYLC_TASK_TRY_NUMBER}" -gt 1 || sleep 60
+        script = """
+        if ((CYLC_TASK_TRY_NUMBER == 1)); then
+            sleep 120
+        fi
+        """
         [[[job]]]
             execution retry delays = PT1S

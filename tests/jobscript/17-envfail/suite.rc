@@ -1,5 +1,6 @@
 [cylc]
-    abort if any task fails = True
+    [[events]]
+        abort if any task fails = True
 [scheduling]
     [[graph]]
         R1 = foo

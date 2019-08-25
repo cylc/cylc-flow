@@ -161,6 +161,15 @@ variable `ISODATETIMEREF` (reference time for the `isodatetime` command from
 [metomi-isodatetime](https://github.com/metomi/isodatetime/)) in task jobs to
 have the same value as `CYLC_TASK_CYCLE_POINT`.
 
+[#3286](https://github.com/cylc/cylc-flow/pull/3249) -
+Removed the `cylc check-triggering` command.
+Changed the `suite.rc` schema:
+* Removed `[cylc]log resolved dependencies`
+* Removed `[cylc][[reference test]]*` except `expected task failures`.
+* Moved `[cylc]abort if any task fails` to
+  `[cylc][[events]]abort if any task fails` so it lives with the other
+  `abort if/on ...` settings.
+
 ### Fixes
 
 [#3258](https://github.com/cylc/cylc-flow/pull/3258) - leave '%'-escaped string

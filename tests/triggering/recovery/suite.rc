@@ -9,7 +9,6 @@
 [cylc]
     UTC mode = True
     [[reference test]]
-        live mode suite timeout = PT50S
         expected task failures = model.20110101T1200Z
 
 [scheduling]

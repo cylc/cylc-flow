@@ -9,8 +9,9 @@
         mail footer = see: http://localhost/stuff/%(owner)s/%(suite)s/
         mail smtp = {{MAIL_SMTP}}
 {% endif %}{# not GLOBALCFG is not defined #}
-    [[reference test]]
-        live mode suite timeout=PT1M
+        abort on stalled = True
+        abort on inactivity = True
+        inactivity = PT3M
 
 [scheduling]
     [[graph]]

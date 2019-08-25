@@ -1,8 +1,9 @@
 [cylc]
+   [[events]]
+       abort on stalled = True
+       abort on inactivity = True
+       inactivity = PT3M
    [[reference test]]
-       required run mode = live
-       live mode suite timeout = PT1M # minutes
-       allow task failures = True
        expected task failures = foo.1
 [scheduling]
     [[graph]]
@@ -11,6 +12,6 @@
     [[foo]]
         script = true
         [[[job]]]
-            submission retry delays = PT4S, PT5S, PT7S # 3*0.1
+            submission retry delays = PT0S, PT0S, PT0S
         [[[remote]]]
             host = notahost
