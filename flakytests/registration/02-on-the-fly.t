@@ -36,7 +36,7 @@ cat >> "${TESTD}/suite.rc" <<'__SUITE_RC__'
         script = true
 __SUITE_RC__
 
-cd "${TESTD}"
+cd "${TESTD}" || exit 1
 run_ok "${TEST_NAME}-run" cylc run --hold
 contains_ok "${TEST_NAME}-run.stdout" <<__ERR__
 REGISTERED ${TESTD} -> ${PWD}
