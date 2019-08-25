@@ -206,7 +206,6 @@ categories['discovery'] = ['discovery']
 categories['control'] = ['control']
 categories['utility'] = ['utility']
 categories['task'] = ['task']
-categories['hook'] = ['hook']
 categories['admin'] = ['admin']
 
 information_commands = {}
@@ -312,7 +311,6 @@ catsum['preparation'] = "Suite editing, validation, visualization, etc."
 catsum['discovery'] = "Detect running suites."
 catsum['control'] = "Suite start up, monitoring, and control."
 catsum['task'] = "The task messaging interface."
-catsum['hook'] = "Suite and task event hook scripts."
 catsum['utility'] = "Cycle arithmetic and templating, etc."
 
 # Some commands and categories are aliased and
