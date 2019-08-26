@@ -662,6 +662,9 @@ class CylcSuiteDAO(object):
 
         task_ids should be specified as [(name-glob, cycle), ...]
 
+        Args:
+            task_ids (list): A list of tuples, with the name-glob and cycle
+                of a task.
         """
         # Ignore bandit false positive: B608: hardcoded_sql_expressions
         # Not an injection, simply putting the table name in the SQL query
@@ -671,9 +674,9 @@ class CylcSuiteDAO(object):
             r" WHERE name==? AND cycle==?"
         ) % {"name": self.TABLE_TASK_STATES}
         ret = {}
-        for name, cycle in task_ids:
+        for task_name, task_cycle in task_ids:
             for name, cycle, submit_num in self.connect().execute(
-                stmt, (name, cycle,)
+                stmt, (task_name, task_cycle,)
             ):
                 ret[(name, cycle)] = submit_num
         return ret
