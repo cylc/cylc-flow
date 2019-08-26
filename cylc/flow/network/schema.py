@@ -89,8 +89,8 @@ def parse_node_id(item, node_type=None):
 
     Args:
         item (str): A string representing a node ID. Jobs fill out
-            cycle%name%num first, cycle is irrelevant to Def
-            owner%workflow is always last.
+            cycle|name|num first, cycle is irrelevant to Def
+            owner|workflow is always last.
             For example:
 
             name
