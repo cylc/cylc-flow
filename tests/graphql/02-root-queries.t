@@ -50,7 +50,7 @@ query {
   taskProxy(id: \"${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}20190101T00${ID_DELIM}foo\") {
     id
   }
-  taskProxies(workflows: [\"*${ID_DELIM}*\"], ids: [\"*${ID_DELIM}*\"], sort: {keys: [\"id\"], reverse: false}) {
+  taskProxies(workflows: [\"*${ID_DELIM}*\"], ids: [\"*${ID_DELIM}*\"], isHeld: false, sort: {keys: [\"id\"], reverse: false}) {
     id
   }
   family(id: \"${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}FAM\") {

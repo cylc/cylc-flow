@@ -95,7 +95,18 @@ cat > expected << __HERE__
             "reloading": false,
             "runMode": "live",
             "stateTotals": {
-                "ready": 1
+                "runahead": 0,
+                "waiting": 0,
+                "queued": 0,
+                "expired": 0,
+                "ready": 1,
+                "submit-failed": 0,
+                "submit-retrying": 0,
+                "submitted": 0,
+                "retrying": 0,
+                "running": 0,
+                "failed": 0,
+                "succeeded": 0
             },
             "workflowLogDir": "${SUITE_LOG_DIR}",
             "timeZoneInfo": {

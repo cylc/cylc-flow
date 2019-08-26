@@ -23,6 +23,7 @@ from graphene import (
 from graphene.types.generic import GenericScalar
 from graphene.utils.str_converters import to_snake_case
 
+from cylc.flow.task_state import TASK_STATUSES_ORDERED
 from cylc.flow.ws_data_mgr import ID_DELIM
 
 
@@ -269,6 +270,7 @@ async def get_nodes_all(root, info, **args):
 
 async def get_nodes_by_ids(root, info, **args):
     """Resolver for returning job, task, family node"""
+    print(args)
     field_name = to_snake_case(info.field_name)
     field_ids = getattr(root, field_name, None)
     if hasattr(args, 'id'):
@@ -331,9 +333,12 @@ async def get_edges_by_ids(root, info, **args):
     return await resolvers.get_edges_by_ids(args)
 
 
-# Convert Protobuf map container to dictionary
-def resolve_map_container(root, info, **args):
-    return dict(getattr(root, to_snake_case(info.field_name), {}))
+def resolve_state_totals(root, info, **args):
+    state_totals = {state: 0 for state in TASK_STATUSES_ORDERED}
+    # Update with converted protobuf map container
+    state_totals.update(
+        dict(getattr(root, to_snake_case(info.field_name), {})))
+    return state_totals
 
 
 # Types:
@@ -396,7 +401,7 @@ class Workflow(ObjectType):
     reloading = Boolean()
     run_mode = String()
     is_held_total = Int()
-    state_totals = GenericScalar(resolver=resolve_map_container)
+    state_totals = GenericScalar(resolver=resolve_state_totals)
     workflow_log_dir = String()
     time_zone_info = Field(TimeZone)
     tree_depth = Int()
