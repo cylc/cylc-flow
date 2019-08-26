@@ -20,8 +20,6 @@ import os
 import sqlite3
 import unittest
 
-from shutil import copyfile
-from pathlib import Path
 from tempfile import mktemp
 from unittest import mock
 

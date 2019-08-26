@@ -64,7 +64,7 @@ from cylc.flow.state_summary_mgr import StateSummaryMgr
 from cylc.flow.subprocpool import SubProcPool
 from cylc.flow.suite_db_mgr import SuiteDatabaseManager
 from cylc.flow.suite_events import (
-    SuiteEventContext, SuiteEventError, SuiteEventHandler)
+    SuiteEventContext, SuiteEventHandler)
 from cylc.flow.suite_status import StopMode, AutoRestartMode
 from cylc.flow.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
