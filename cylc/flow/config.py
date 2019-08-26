@@ -168,7 +168,7 @@ class SuiteConfig(object):
             'parents': {},
             # lists of C3-linearized ancestor namespaces
             'linearized ancestors': {},
-            # lists of first-parent ancestor namepaces
+            # lists of first-parent ancestor namespaces
             'first-parent ancestors': {},
             # lists of all descendant namespaces
             # (not including the final tasks)
@@ -307,7 +307,7 @@ class SuiteConfig(object):
         self.filter_env()
 
         # Now add config defaults.  Items added prior to this ends up in the
-        # sparse dict (e.g. parameter-expanded namepaces).
+        # sparse dict (e.g. parameter-expanded namespaces).
         self.mem_log("config.py: before get(sparse=False)")
         self.cfg = self.pcfg.get(sparse=False)
         self.mem_log("config.py: after get(sparse=False)")
