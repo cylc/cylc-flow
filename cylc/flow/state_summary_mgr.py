@@ -26,7 +26,6 @@ from cylc.flow.task_state_prop import extract_group_state
 from cylc.flow.wallclock import (
     TIME_ZONE_LOCAL_INFO,
     TIME_ZONE_UTC_INFO,
-    get_time_string_from_unix_time as time2str,
     get_utc_mode,
 )
 

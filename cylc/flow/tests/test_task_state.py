@@ -17,13 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
-import unittest
 
-from cylc.flow.cycling.iso8601 import ISO8601Point
 from cylc.flow.taskdef import TaskDef
 from cylc.flow.task_state import (
     TaskState,
-    TASK_STATUS_RETRYING,
     TASK_STATUS_SUCCEEDED,
     TASK_STATUS_FAILED,
     TASK_STATUS_WAITING,
