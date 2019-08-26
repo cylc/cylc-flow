@@ -1537,7 +1537,7 @@ see `COPYING' in the Cylc source distribution.
         updated_nodes = set(updated_tasks).union(
             self.pool.get_pool_change_tasks())
         if has_updated:
-            # WServer incemental data store update
+            # WServer incremental data store update
             self.ws_data_mgr.increment_graph_elements()
             self.ws_data_mgr.update_dynamic_elements(updated_nodes)
             # TODO: deprecate after CLI GraphQL migration
