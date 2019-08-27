@@ -69,7 +69,7 @@ query {
     id
   }
 }",
-"variables": null
+  "variables": null
 }
 _args_
 run_graphql_ok "${TEST_NAME}" "${SUITE_NAME}" "${rootQueries}"

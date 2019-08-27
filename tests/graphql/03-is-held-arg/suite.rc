@@ -1,0 +1,16 @@
+[meta]
+    title = foo
+    description = bar
+
+[cylc]
+    UTC mode = True
+
+[scheduling]
+    [[graph]]
+        R1 = foo
+
+[runtime]
+    [[BAZ]]
+    [[foo]]
+        inherit = BAZ
+        script = sleep 60

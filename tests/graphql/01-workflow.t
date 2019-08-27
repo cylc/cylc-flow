@@ -27,40 +27,41 @@ run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
 
 # query suite
 TEST_NAME="${TEST_NAME_BASE}-workflows"
-run_graphql_ok "${TEST_NAME}" "${SUITE_NAME}" '
+read -r -d '' workflowQuery <<_args_
 {
-    "request_string": "
-        query {
-            workflows {
-                name
-                status
-                statusMsg
-                host
-                port
-                owner
-                cylcVersion
-                meta {
-                    title
-                    description
-                }
-                newestRunaheadCyclePoint
-                newestCyclePoint
-                oldestCyclePoint
-                reloading
-                runMode
-                stateTotals
-                workflowLogDir
-                timeZoneInfo {
-                    hours
-                    minutes
-                }
-                nsDefnOrder
-                states
-            }
-        }
-    "
+  "request_string": "
+query {
+  workflows {
+    name
+    status
+    statusMsg
+    host
+    port
+    owner
+    cylcVersion
+    meta {
+      title
+      description
+    }
+    newestRunaheadCyclePoint
+    newestCyclePoint
+    oldestCyclePoint
+    reloading
+    runMode
+    stateTotals
+    workflowLogDir
+    timeZoneInfo {
+      hours
+      minutes
+    }
+    nsDefnOrder
+    states
+  }
+}",
+  "variables": null
 }
-'
+_args_
+run_graphql_ok "${TEST_NAME}" "${SUITE_NAME}" "${workflowQuery}"
 
 # scrape suite info from contact file
 TEST_NAME="${TEST_NAME_BASE}-contact"

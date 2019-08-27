@@ -270,7 +270,6 @@ async def get_nodes_all(root, info, **args):
 
 async def get_nodes_by_ids(root, info, **args):
     """Resolver for returning job, task, family node"""
-    print(args)
     field_name = to_snake_case(info.field_name)
     field_ids = getattr(root, field_name, None)
     if hasattr(args, 'id'):

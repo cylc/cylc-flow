@@ -46,7 +46,6 @@ Packaging methods are included for dissemination of protobuf messages.
 """
 
 from collections import Counter
-from copy import copy
 from time import time
 
 from cylc.flow.cycling.loader import get_point
@@ -748,16 +747,13 @@ class WsDataMgr(object):
         workflow.stamp = f'{self.workflow_id}@{update_time}'
         workflow.last_updated = update_time
 
-        all_states = [
+        counter = Counter([
             t.state
             for t in self.task_proxies.values()
-            if t.state != ''
-        ]
-
-        workflow.states[:] = set(all_states)
-
+            if t.state])
+        workflow.states[:] = counter.keys()
         workflow.ClearField('state_totals')
-        for state, state_cnt in Counter(all_states).items():
+        for state, state_cnt in counter.items():
             workflow.state_totals[state] = state_cnt
 
         workflow.is_held_total = len([
