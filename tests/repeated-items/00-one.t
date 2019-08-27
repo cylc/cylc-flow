@@ -16,17 +16,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test repeated item override and repeated graph string merge 
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 7
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE one
+install_suite "${TEST_NAME_BASE}" one
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-validate"
+run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-a
-cylc get-config -i [meta]title $SUITE_NAME >a.txt 2>/dev/null
+TEST_NAME=${TEST_NAME_BASE}-a
+cylc get-config -i [meta]title "${SUITE_NAME}" >a.txt 2>/dev/null
 cmp_ok a.txt <<'__END'
 the quick brown fox
 __END
@@ -49,22 +49,22 @@ dbar => dbaz
 dfoo => dbar
 __END
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-d
-cylc get-config -i '[runtime][FOO][meta]title' $SUITE_NAME >d.txt 2>/dev/null
+TEST_NAME=${TEST_NAME_BASE}-d
+cylc get-config -i '[runtime][FOO][meta]title' "${SUITE_NAME}" >d.txt 2>/dev/null
 cmp_ok d.txt <<'__END'
 the quick brown fox
 __END
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-e
-cylc get-config -i '[runtime][FOO][meta]description' $SUITE_NAME >e.txt 2>/dev/null
+TEST_NAME=${TEST_NAME_BASE}-e
+cylc get-config -i '[runtime][FOO][meta]description' "${SUITE_NAME}" >e.txt 2>/dev/null
 cmp_ok e.txt <<'__END'
 jumped over the lazy dog
 __END
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-f
-cylc get-config -i '[runtime][FOO][environment]' $SUITE_NAME >f.txt 2>/dev/null
+TEST_NAME=${TEST_NAME_BASE}-f
+cylc get-config -i '[runtime][FOO][environment]' "${SUITE_NAME}" >f.txt 2>/dev/null
 cmp_ok f.txt <<'__END'
 VAR1 = the quick brown fox
 __END
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"

@@ -16,17 +16,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test fail validation of bad vis node attributes.
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 2
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE $TEST_NAME_BASE
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE
-run_fail $TEST_NAME cylc validate -v $SUITE_NAME
+TEST_NAME=${TEST_NAME_BASE}
+run_fail "${TEST_NAME}" cylc validate -v "${SUITE_NAME}"
 grep_ok \
     "Node attributes must be of the form 'key1=value1', 'key2=value2', etc." \
-    $TEST_NAME.stderr
+    "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"
 exit

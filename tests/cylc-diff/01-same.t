@@ -29,7 +29,9 @@ cat >'suite.rc' <<'__SUITE_RC__'
         script = true
 __SUITE_RC__
 init_suite "${TEST_NAME_BASE}-1" "${PWD}/suite.rc"
+# shellcheck disable=SC2153
 SUITE_NAME1="${SUITE_NAME}"
+# shellcheck disable=SC2153
 SUITE_NAME2="${SUITE_NAME1%1}2"
 cylc register "${SUITE_NAME2}" "${TEST_DIR}/${SUITE_NAME1}" 2>'/dev/null'
 

@@ -16,22 +16,22 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test correct expansion of (FOO:finish-all & FOO:fail-any)
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 4
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE fam-expansion
+install_suite "${TEST_NAME_BASE}" fam-expansion
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-validate"
+run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --hold $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-run"
+suite_run_ok "${TEST_NAME}" cylc run --hold "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-show
-run_ok $TEST_NAME cylc show $SUITE_NAME bar.1
+TEST_NAME=${TEST_NAME_BASE}-show
+run_ok "${TEST_NAME}" cylc show "${SUITE_NAME}" bar.1
 #-------------------------------------------------------------------------------
-contains_ok $TEST_NAME.stdout <<'__SHOW_DUMP__'
+contains_ok "${TEST_NAME}.stdout" <<'__SHOW_DUMP__'
   - (((1 | 0) & (3 | 2) & (5 | 4)) & (0 | 2 | 4))
   - 	0 = foo1.1 failed
   - 	1 = foo1.1 succeeded
@@ -41,6 +41,6 @@ contains_ok $TEST_NAME.stdout <<'__SHOW_DUMP__'
   - 	5 = foo3.1 succeeded
 __SHOW_DUMP__
 #-------------------------------------------------------------------------------
-cylc stop $SUITE_NAME
+cylc stop "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"

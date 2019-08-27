@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Test restarting a suite when the host of a submitted or running job is not
 # available. https://github.com/cylc/cylc-flow/issues/1327
-CYLC_TEST_IS_GENERIC=false
+export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
 set_test_remote_host
 set_test_number 4
@@ -27,11 +27,6 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run --debug --no-detach "${SUITE_NAME}"
 # Modify DB with garbage host
 CYLC_SUITE_RUN_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
-if ! which sqlite3 > /dev/null; then
-    skip 2 "sqlite3 not installed?"
-    purge_suite "${SUITE_NAME}"
-    exit 0
-fi
 for DB_NAME in 'log/db' '.service/db'; do
     sqlite3 "${CYLC_SUITE_RUN_DIR}/${DB_NAME}" \
         'UPDATE task_jobs SET user_at_host="garbage" WHERE name=="t-remote";'

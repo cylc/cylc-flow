@@ -16,14 +16,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test validation for a bad Jinja2 TemplateSyntaxError suite.
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 2
-install_suite $TEST_NAME_BASE $TEST_NAME_BASE
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-val
-run_fail "$TEST_NAME" cylc validate suite.rc
-cmp_ok "$TEST_NAME.stderr" <<'__ERROR__'
+TEST_NAME="${TEST_NAME_BASE}-val"
+run_fail "${TEST_NAME}" cylc validate suite.rc
+cmp_ok "${TEST_NAME}.stderr" <<'__ERROR__'
 Jinja2Error: Encountered unknown tag 'end'.
 Jinja was looking for the following tags: 'elif' or 'else' or 'endif'.
 The innermost block that needs to be closed is 'if'.
@@ -33,5 +33,5 @@ Context lines:
         {% end if %	<-- TemplateSyntaxError
 __ERROR__
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"
 exit

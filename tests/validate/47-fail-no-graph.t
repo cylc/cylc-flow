@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test validation fails if no graph is defined.
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 4
 #-------------------------------------------------------------------------------
@@ -26,8 +26,8 @@ cat > suite.rc <<__END__
     [[graph]]
         R1 = ""
 __END__
-run_fail $TEST_NAME cylc validate -v suite.rc
-grep_ok "No suite dependency graph defined." $TEST_NAME.stderr
+run_fail "${TEST_NAME}" cylc validate -v suite.rc
+grep_ok "No suite dependency graph defined." "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-no-graph
 cat > suite.rc <<__END__
@@ -35,5 +35,5 @@ cat > suite.rc <<__END__
     initial cycle point = 2015
     [[graph]]
 __END__
-run_fail $TEST_NAME cylc validate -v suite.rc
-grep_ok "No suite dependency graph defined." $TEST_NAME.stderr
+run_fail "${TEST_NAME}" cylc validate -v suite.rc
+grep_ok "No suite dependency graph defined." "${TEST_NAME}.stderr"

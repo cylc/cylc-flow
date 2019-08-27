@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test remote host job log NN link correctness.
-CYLC_TEST_IS_GENERIC=false
+export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
 set_test_remote_host
 set_test_number 2
@@ -30,5 +30,5 @@ suite_run_ok "${TEST_NAME_BASE}-restart" \
 if [[ "$CYLC_TEST_HOST" != 'localhost' ]]; then
     purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
 fi
-purge_suite "$SUITE_NAME"
+purge_suite "${SUITE_NAME}"
 exit

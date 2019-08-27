@@ -19,21 +19,22 @@
 #     This test requires an e.g. [test battery][batch systems][loadleveler]host
 #     entry in site/user config in order to run 'loadleveler' tests (same for
 #     slurm, pbs, etc), otherwise it will be bypassed.
-CYLC_TEST_IS_GENERIC=false
-. $(dirname $0)/test_header
+export CYLC_TEST_IS_GENERIC=false
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 # export an environment variable for this - allows a script to be used to 
 # select a compute node and have that same host used by the suite.
 BATCH_SYS_NAME="${TEST_NAME_BASE##??-}"
 RC_PREF="[test battery][batch systems][${BATCH_SYS_NAME}]"
-export CYLC_TEST_BATCH_TASK_HOST=$( \
+CYLC_TEST_BATCH_TASK_HOST=$( \
     cylc get-global-config -i "${RC_PREF}host" 2>'/dev/null')
-export CYLC_TEST_BATCH_SITE_DIRECTIVES=$( \
+CYLC_TEST_BATCH_SITE_DIRECTIVES=$( \
     cylc get-global-config -i "${RC_PREF}[directives]" 2>'/dev/null')
 if [[ -z "${CYLC_TEST_BATCH_TASK_HOST}" || "${CYLC_TEST_BATCH_TASK_HOST}" == None ]]
 then
     skip_all "\"[test battery][batch systems][$BATCH_SYS_NAME]host\" not defined"
 fi
+export CYLC_TEST_BATCH_TASK_HOST CYLC_TEST_BATCH_SITE_DIRECTIVES
 
 set_test_number 2
 install_suite "${TEST_NAME_BASE}" "${BATCH_SYS_NAME}"

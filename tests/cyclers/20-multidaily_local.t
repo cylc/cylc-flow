@@ -16,30 +16,30 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test intercycle dependencies, local time.
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 3
 #-------------------------------------------------------------------------------
-CHOSEN_SUITE=$(basename $0 | sed "s/^.*-\(.*\)\.t/\1/g")
-install_suite $TEST_NAME_BASE $CHOSEN_SUITE
-CURRENT_TZ_UTC_OFFSET=$(date +%z)
+CHOSEN_SUITE="$(basename "$0" | sed "s/^.*-\(.*\)\.t/\1/g")"
+install_suite "${TEST_NAME_BASE}" "${CHOSEN_SUITE}"
+CURRENT_TZ_UTC_OFFSET="$(date +%z)"
 if [[ $CURRENT_TZ_UTC_OFFSET == '+0000' ]]; then
     CURRENT_TZ_UTC_OFFSET="Z"
 else
-    CURRENT_TZ_UTC_OFFSET=${CURRENT_TZ_UTC_OFFSET%00}
+    CURRENT_TZ_UTC_OFFSET="${CURRENT_TZ_UTC_OFFSET%00}"
 fi
-sed -i "s/Z/$CURRENT_TZ_UTC_OFFSET/g" reference.log
+sed -i "s/Z/$CURRENT_TZ_UTC_OFFSET/g" 'reference.log'
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-validate"
+run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-graph
-graph_suite "$SUITE_NAME" "$SUITE_NAME.graph.plain"
+TEST_NAME="${TEST_NAME_BASE}-graph"
+graph_suite "${SUITE_NAME}" "${SUITE_NAME}.graph.plain"
 sed "s/Z/$CURRENT_TZ_UTC_OFFSET/g" \
-    "$TEST_SOURCE_DIR/$CHOSEN_SUITE/graph.plain.ref" > graph.plain.local.ref
-cmp_ok "$SUITE_NAME.graph.plain" graph.plain.local.ref
+    "$TEST_SOURCE_DIR/$CHOSEN_SUITE/graph.plain.ref" > 'graph.plain.local.ref'
+cmp_ok "${SUITE_NAME}.graph.plain" 'graph.plain.local.ref'
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --reference-test --debug --no-detach $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-run"
+suite_run_ok "${TEST_NAME}" cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"

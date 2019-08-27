@@ -16,24 +16,24 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test restarting after a reload has been done (ref bug fix 64e3b040).
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 3
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE reload
+install_suite "${TEST_NAME_BASE}" reload
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc val $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-validate"
+run_ok "${TEST_NAME}" cylc val "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --debug --no-detach $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-run"
+suite_run_ok "${TEST_NAME}" cylc run --debug --no-detach "${SUITE_NAME}"
 # make sure the suite has shut down`
 while true; do
-    cylc ping $SUITE_NAME > /dev/null 2>&1 || break
+    cylc ping "${SUITE_NAME}" > /dev/null 2>&1 || break
     sleep 1
 done
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-restart
-suite_run_ok $TEST_NAME cylc restart --debug --no-detach --reference-test $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-restart"
+suite_run_ok "${TEST_NAME}" cylc restart --debug --no-detach --reference-test "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"

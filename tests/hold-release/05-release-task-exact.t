@@ -16,17 +16,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test suite hold and task release, using an exact match for the task name.
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 2
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE release-task
+install_suite "${TEST_NAME_BASE}" release-task
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-val
-run_ok $TEST_NAME cylc validate --set=RELEASE_MATCH='stop' $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-val"
+run_ok "${TEST_NAME}" cylc validate --set=RELEASE_MATCH='stop' "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --set=RELEASE_MATCH='stop' --reference-test \
-    --debug --no-detach $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-run"
+suite_run_ok "${TEST_NAME}" cylc run --set=RELEASE_MATCH='stop' --reference-test \
+    --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"

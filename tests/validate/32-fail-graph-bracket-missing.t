@@ -17,15 +17,15 @@
 #-------------------------------------------------------------------------------
 # Test validation with either ( foo & bar or ( foo | bar => baz in the graph.
 # Missing right handside bracket.
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 2
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE $TEST_NAME_BASE
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE
-run_fail $TEST_NAME cylc validate -v $SUITE_NAME
-grep_ok "GraphParseError: parenthesis mismatch in: " $TEST_NAME.stderr
+TEST_NAME=${TEST_NAME_BASE}
+run_fail "${TEST_NAME}" cylc validate -v "${SUITE_NAME}"
+grep_ok "GraphParseError: parenthesis mismatch in: " "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"
 exit

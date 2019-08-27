@@ -28,11 +28,13 @@ if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
     OPT_SET='-s GLOBALCFG=True'
 fi
 
+# shellcheck disable=SC2086
 run_ok "${TEST_NAME_BASE}-validate" cylc validate ${OPT_SET} "${SUITE_NAME}"
 # Suite run directory is now a symbolic link, so we can easily delete it.
 SYM_SUITE_RUND="${SUITE_RUN_DIR}-sym"
 SYM_SUITE_NAME="${SUITE_NAME}-sym"
 ln -s "$(basename "${SUITE_NAME}")" "${SYM_SUITE_RUND}"
+# shellcheck disable=SC2086
 suite_run_fail "${TEST_NAME_BASE}-run" \
     cylc run --no-detach ${OPT_SET} "${SYM_SUITE_NAME}"
 grep_ok "No such file or directory: '${SYM_SUITE_RUND}'" \

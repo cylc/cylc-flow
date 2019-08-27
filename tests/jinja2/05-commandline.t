@@ -16,20 +16,21 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # jinja2 command line variables test
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 3
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE commandline-set
+install_suite "${TEST_NAME_BASE}" commandline-set
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate1
-run_ok $TEST_NAME cylc validate --set=TASKNAME=foo --set=STEP=2 $SUITE_NAME
+TEST_NAME=${TEST_NAME_BASE}-validate1
+run_ok "${TEST_NAME}" cylc validate --set=TASKNAME=foo --set=STEP=2 "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate2
-run_ok $TEST_NAME cylc validate --set-file=$TEST_DIR/$SUITE_NAME/vars.txt $SUITE_NAME
+TEST_NAME=${TEST_NAME_BASE}-validate2
+run_ok "${TEST_NAME}" cylc validate \
+    --set-file="${TEST_DIR}/${SUITE_NAME}/vars.txt" "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --no-detach --reference-test \
-    --set-file=$TEST_DIR/$SUITE_NAME/vars.txt $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-run"
+suite_run_ok "${TEST_NAME}" cylc run --no-detach --reference-test \
+    --set-file="${TEST_DIR}/${SUITE_NAME}/vars.txt" "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"

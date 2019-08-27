@@ -17,17 +17,17 @@
 #-------------------------------------------------------------------------------
 # Test cat-view with a Jinja2 variable defined in a single cylc include-file
 # TODO - another test for nested file inclusion
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 5
-install_suite $TEST_NAME_BASE $TEST_NAME_BASE
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-validate"
+run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 # Just inline
-TEST_NAME=$TEST_NAME_BASE-inline
-cylc view -i --stdout $SUITE_NAME > tmp.stdout
+TEST_NAME=${TEST_NAME_BASE}-inline
+cylc view -i --stdout "${SUITE_NAME}" > tmp.stdout
 cmp_ok tmp.stdout << EOF
 #!jinja2
 [meta]
@@ -52,8 +52,8 @@ continuation
 EOF
 #-------------------------------------------------------------------------------
 # "cylc view -j/--jinja2" should imply "-i/inline" too:
-TEST_NAME=$TEST_NAME_BASE-jinja2
-cylc view -j --stdout $SUITE_NAME > tmp.stdout
+TEST_NAME=${TEST_NAME_BASE}-jinja2
+cylc view -j --stdout "${SUITE_NAME}" > tmp.stdout
 cmp_ok tmp.stdout << EOF
 [meta]
     title = "Jinja2 simple ensemble example"
@@ -74,8 +74,8 @@ continuation
 EOF
 #-------------------------------------------------------------------------------
 # line continuation joining
-TEST_NAME=$TEST_NAME_BASE-continuation
-cylc view -c --stdout $SUITE_NAME > tmp.stdout
+TEST_NAME=${TEST_NAME_BASE}-continuation
+cylc view -c --stdout "${SUITE_NAME}" > tmp.stdout
 cmp_ok tmp.stdout << EOF
 #!jinja2
 [meta]
@@ -99,8 +99,8 @@ cmp_ok tmp.stdout << EOF
 EOF
 #-------------------------------------------------------------------------------
 # all processing
-TEST_NAME=$TEST_NAME_BASE-process
-cylc view -p --stdout $SUITE_NAME > tmp.stdout
+TEST_NAME=${TEST_NAME_BASE}-process
+cylc view -p --stdout "${SUITE_NAME}" > tmp.stdout
 cmp_ok tmp.stdout << EOF
 [meta]
     title = "Jinja2 simple ensemble example"
@@ -119,5 +119,5 @@ cmp_ok tmp.stdout << EOF
         """
 EOF
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"
 exit

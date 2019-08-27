@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test an edit-run (cylc trigger --edit).
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 4
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
@@ -32,10 +32,10 @@ TEST_NAME="${TEST_NAME_BASE}-run"
 run_ok "${TEST_NAME}" cylc run --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-diff"
-DIFF_LOG=$(cylc cat-log -m p -f d $SUITE_NAME broken-task.1)
+DIFF_LOG="$(cylc cat-log -m p -f d "${SUITE_NAME}" 'broken-task.1')"
 # Python 2.6 difflib adds an extra space after the filename,
 # but Python 2.7 does not. Remove it if it exists.
-sed -i 's/^\(--- original\|+++ edited\) $/\1/; /^@@/d' $DIFF_LOG
+sed -i 's/^\(--- original\|+++ edited\) $/\1/; /^@@/d' "${DIFF_LOG}"
 cmp_ok "${DIFF_LOG}" - <<__END__
 --- original
 +++ edited
@@ -50,10 +50,10 @@ cmp_ok "${DIFF_LOG}" - <<__END__
 __END__
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-diff2"
-DIFF_LOG=$(cylc cat-log -m p -f d $SUITE_NAME syntax_errored_task.1)
+DIFF_LOG="$(cylc cat-log -m p -f d "${SUITE_NAME}" 'syntax_errored_task.1')"
 # Python 2.6 difflib adds an extra space after the filename,
 # but Python 2.7 does not. Remove it if it exists.
-sed -i 's/^\(--- original\|+++ edited\) $/\1/; /^@@/d' $DIFF_LOG
+sed -i 's/^\(--- original\|+++ edited\) $/\1/; /^@@/d' "${DIFF_LOG}"
 cmp_ok "${DIFF_LOG}" - <<__END__
 --- original
 +++ edited

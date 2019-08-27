@@ -16,17 +16,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test intercycle dependencies.
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 3
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE 9999_rollover
+install_suite "${TEST_NAME_BASE}" 9999_rollover
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate --debug $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-validate"
+run_ok "${TEST_NAME}" cylc validate --debug "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-suite_run_fail $TEST_NAME cylc run --debug --no-detach $SUITE_NAME
-grep_ok "Cannot dump TimePoint year: 10000 not in bounds 0 to 9999" $TEST_NAME.stderr
+TEST_NAME="${TEST_NAME_BASE}-run"
+suite_run_fail "${TEST_NAME}" cylc run --debug --no-detach "${SUITE_NAME}"
+grep_ok "Cannot dump TimePoint year: 10000 not in bounds 0 to 9999" "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"

@@ -17,19 +17,19 @@
 
 # Test suite-state message query on a waiting task - GitHub #2440.
 
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 set_test_number 4
 
-install_suite $TEST_NAME_BASE $TEST_NAME_BASE
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-run_ok ${TEST_NAME_BASE}-val cylc validate $SUITE_NAME
+run_ok "${TEST_NAME_BASE}-val" cylc validate "${SUITE_NAME}"
 
-suite_run_ok ${TEST_NAME_BASE}-run cylc run --debug --no-detach $SUITE_NAME
+suite_run_ok "${TEST_NAME_BASE}-run" cylc run --debug --no-detach "${SUITE_NAME}"
 
 TEST_NAME=${TEST_NAME_BASE}-query
-run_fail ${TEST_NAME} cylc suite-state \
-  $SUITE_NAME -p 2013 -t foo --max-polls=1 -m "the quick brown fox"
+run_fail "${TEST_NAME}" cylc suite-state \
+  "${SUITE_NAME}" -p 2013 -t foo --max-polls=1 -m "the quick brown fox"
 
-grep_ok "ERROR: condition not satisfied" ${TEST_NAME}.stderr
+grep_ok "ERROR: condition not satisfied" "${TEST_NAME}.stderr"
 
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"

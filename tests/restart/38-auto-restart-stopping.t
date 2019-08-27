@@ -17,12 +17,13 @@
 #-------------------------------------------------------------------------------
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-export CYLC_TEST_HOST=$( \
+CYLC_TEST_HOST="$( \
     cylc get-global-config -i '[test battery]remote host with shared fs' \
-    2>'/dev/null')
+    2>'/dev/null')"
 if [[ -z "${CYLC_TEST_HOST}" ]]; then
     skip_all '"[test battery]remote host with shared fs": not defined'
 fi
+export CYLC_TEST_HOST
 set_test_number 2
 if ${CYLC_TEST_DEBUG:-false}; then ERR=2; else ERR=1; fi
 #-------------------------------------------------------------------------------
@@ -40,14 +41,14 @@ BASE_GLOBALRC="
 
 TEST_NAME="${TEST_NAME_BASE}"
 
-init_suite "${TEST_NAME}" <<< '
+init_suite "${TEST_NAME}" - <<'__SUITERC__'
 [scheduling]
     [[graph]]
         R1 = foo => bar
 [runtime]
     [[foo]]
         script = cylc stop "${CYLC_SUITE_NAME}"; sleep 15
-' # note change TEST_DIR to force local installation in suite run dir
+__SUITERC__
 
 create_test_globalrc '' "
 ${BASE_GLOBALRC}

@@ -19,7 +19,7 @@
 # Test cylc-doc on suite and task URLs: old back-compat form with pseudo
 # environment vars rather than string templating. (c.f. 02-suite-urls.t).
 
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 3
 #-------------------------------------------------------------------------------
@@ -30,22 +30,22 @@ create_test_globalrc "" "
     local = ${LOCAL}
     online = ${ONLINE}"
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE $TEST_NAME_BASE
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
-TEST_NAME=${TEST_NAME_BASE}-validate
-run_ok $TEST_NAME cylc validate "$SUITE_NAME"
+TEST_NAME="${TEST_NAME_BASE}-validate"
+run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-suite-url
-cylc doc -s $SUITE_NAME > stdout1.txt
+cylc doc -s "${SUITE_NAME}" > stdout1.txt
 cmp_ok stdout1.txt <<__END__
 http://localhost/suite-docs/${SUITE_NAME}.html
 __END__
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-task-url
-cylc doc -s -t bar $SUITE_NAME > stdout2.txt
+cylc doc -s -t bar "${SUITE_NAME}" > stdout2.txt
 cmp_ok stdout2.txt <<__END__
 http://localhost/suite-docs/${SUITE_NAME}.html#bar
 __END__
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"
 #-------------------------------------------------------------------------------

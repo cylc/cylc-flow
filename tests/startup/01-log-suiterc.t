@@ -47,6 +47,7 @@ suite_run_ok "${TEST_NAME_BASE}-restart" \
 
 # Check for 3 generated *.rc files
 LOGD="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/suiterc"
+# shellcheck disable=SC2012
 ls "${LOGD}" | sed -e 's/.*-//g' | sort >'ls.out'
 cmp_ok 'ls.out' <<'__OUT__'
 reload.rc

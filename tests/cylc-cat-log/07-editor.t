@@ -17,9 +17,9 @@
 
 # Test "cylc cat-log" open local logs in editor.
 
-. "$(dirname $0)"/test_header
-. "${TEST_SOURCE_DIR}"/editor/bin/run_tests.sh
-export PATH="${TEST_SOURCE_DIR}/editor/bin/":"${PATH}"
+. "$(dirname "$0")/test_header"
+. "${TEST_SOURCE_DIR}/editor/bin/run_tests.sh"
+export PATH="${TEST_SOURCE_DIR}/editor/bin/:${PATH}"
 
 install_suite "${TEST_NAME_BASE}" "editor"
 run_tests localhost ""

@@ -16,18 +16,20 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Validate and run the suite reference test live timeout suite
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 3
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE timeout-ref
+install_suite "${TEST_NAME_BASE}" 'timeout-ref'
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-validate"
+run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-RUN_MODE=$(basename $0 | sed "s/.*-ref-\(.*\).t/\1/g")
-suite_run_fail $TEST_NAME cylc run --reference-test --mode=$RUN_MODE --debug --no-detach $SUITE_NAME
-grep_ok "WARNING - suite timed out after PT1S" "$TEST_NAME.stderr"
+TEST_NAME="${TEST_NAME_BASE}-run"
+RUN_MODE="$(basename "$0" | sed "s/.*-ref-\(.*\).t/\1/g")"
+suite_run_fail "${TEST_NAME}" \
+    cylc run --reference-test --mode="${RUN_MODE}" --debug --no-detach \
+    "${SUITE_NAME}"
+grep_ok "WARNING - suite timed out after PT1S" "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"

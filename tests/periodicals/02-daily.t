@@ -16,15 +16,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test Daily cycling
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 1
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE Daily
+install_suite "${TEST_NAME_BASE}" Daily
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
+TEST_NAME="${TEST_NAME_BASE}-run"
 perl -pi -e 's/(Initial point: ).*$/${1}20140105T06/' \
     "${TEST_DIR}/${SUITE_NAME}/reference.log"
-suite_run_ok $TEST_NAME cylc run --reference-test --debug --no-detach $SUITE_NAME
+suite_run_ok "${TEST_NAME}" cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"

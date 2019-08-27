@@ -16,16 +16,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test ${CYLC_SUITE_DIR} in task PYTHONPATH.
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 set_test_number 2
 #-------------------------------------------------------------------------------
 CHOSEN_SUITE="$(basename "$0" | sed 's/\..*//')"
-install_suite "$TEST_NAME_BASE" "$CHOSEN_SUITE"
+install_suite "${TEST_NAME_BASE}" "$CHOSEN_SUITE"
 #-------------------------------------------------------------------------------
-TEST_NAME="$TEST_NAME_BASE-validate"
-run_ok "$TEST_NAME" cylc validate "$SUITE_NAME"
+TEST_NAME="${TEST_NAME_BASE}-validate"
+run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME="$TEST_NAME_BASE-run"
-suite_run_ok "$TEST_NAME" cylc run --no-detach "$SUITE_NAME"
+TEST_NAME="${TEST_NAME_BASE}-run"
+suite_run_ok "${TEST_NAME}" cylc run --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"

@@ -19,7 +19,6 @@
 . "$(dirname "$0")/test_header"
 set_test_number 4
 
-OPT_SET=
 if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
     create_test_globalrc '' ''
 fi

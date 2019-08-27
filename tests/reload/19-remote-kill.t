@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test reload then kill remote running task.
-CYLC_TEST_IS_GENERIC=false
+export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
 set_test_remote_host
 set_test_number 3
@@ -28,11 +28,6 @@ suite_run_fail "${TEST_NAME_BASE}-run" \
     cylc run --debug --no-detach --reference-test \
     --set="CYLC_TEST_HOST=${CYLC_TEST_HOST}" \
      "${SUITE_NAME}"
-if ! which sqlite3 > /dev/null; then
-    skip 1 "sqlite3 not installed?"
-    purge_suite "${SUITE_NAME}"
-    exit 0
-fi
 sqlite3 "${SUITE_RUN_DIR}/.service/db" \
     'SELECT cycle,name,run_status FROM task_jobs' >'db.out'
 cmp_ok 'db.out' <<'__OUT__'

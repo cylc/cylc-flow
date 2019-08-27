@@ -16,11 +16,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test "cylc cat-log" for viewing PBS runtime STDOUT/STDERR by a custom command
-CYLC_TEST_IS_GENERIC=false
+export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
 
 RC_PREF='[test battery][batch systems][pbs]'
-export CYLC_TEST_HOST="$( \
+CYLC_TEST_HOST="$( \
     cylc get-global-config -i "${RC_PREF}host" 2>'/dev/null')"
 if [[ -z "${CYLC_TEST_HOST}" ]]; then
     skip_all '"[test battery][batch systems][pbs]host": not defined'
@@ -30,8 +30,9 @@ OUT_VIEWER="$(cylc get-global-config -i "${RC_PREF}out viewer" 2>'/dev/null')"
 if [[ -z "${ERR_VIEWER}" || -z "${OUT_VIEWER}" ]]; then
     skip_all '"[test battery][pbs]* viewer": not defined'
 fi
-export CYLC_TEST_DIRECTIVES="$( \
+CYLC_TEST_DIRECTIVES="$( \
     cylc get-global-config -i "${RC_PREF}[directives]" 2>'/dev/null')"
+export CYLC_TEST_HOST CYLC_TEST_DIRECTIVES
 set_test_number 2
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"

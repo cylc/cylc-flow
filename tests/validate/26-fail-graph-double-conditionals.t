@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test validation fails '&&' and '||' in the graph.
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 8
 #-------------------------------------------------------------------------------
@@ -27,13 +27,13 @@ cat > suite.rc <<__END__
 __END__
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-async-and
-run_fail $TEST_NAME cylc validate -v suite.rc
-grep_ok "GraphParseError: the graph AND operator is '&': " $TEST_NAME.stderr
+run_fail "${TEST_NAME}" cylc validate -v suite.rc
+grep_ok "GraphParseError: the graph AND operator is '&': " "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-async-or
 sed -i -e 's/&&/||/' suite.rc
-run_fail $TEST_NAME cylc validate -v suite.rc
-grep_ok "GraphParseError: the graph OR operator is '|': " $TEST_NAME.stderr
+run_fail "${TEST_NAME}" cylc validate -v suite.rc
+grep_ok "GraphParseError: the graph OR operator is '|': " "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
 cat > suite.rc <<__END__
 [scheduling]
@@ -43,10 +43,10 @@ cat > suite.rc <<__END__
 __END__
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-cycling-and
-run_fail $TEST_NAME cylc validate -v suite.rc
-grep_ok "GraphParseError: the graph AND operator is '&': " $TEST_NAME.stderr
+run_fail "${TEST_NAME}" cylc validate -v suite.rc
+grep_ok "GraphParseError: the graph AND operator is '&': " "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-cycling-or
 sed -i -e 's/&&/||/' suite.rc
-run_fail $TEST_NAME cylc validate -v suite.rc
-grep_ok "GraphParseError: the graph OR operator is '|': " $TEST_NAME.stderr
+run_fail "${TEST_NAME}" cylc validate -v suite.rc
+grep_ok "GraphParseError: the graph OR operator is '|': " "${TEST_NAME}.stderr"

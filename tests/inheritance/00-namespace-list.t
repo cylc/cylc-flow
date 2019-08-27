@@ -18,16 +18,16 @@
 # Test that members of namespace lists [[n1,n2,...]] are inserted into the
 # [runtime] ordered dict in the correct order. If just appended, they break
 # repeat-section override for the member.
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 2
-install_suite $TEST_NAME_BASE $TEST_NAME_BASE
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok "$TEST_NAME" cylc validate $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-validate"
+run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-get-config
-cylc get-config --sparse -i runtime $SUITE_NAME > runtime.out
+TEST_NAME=${TEST_NAME_BASE}-get-config
+cylc get-config --sparse -i runtime "${SUITE_NAME}" > runtime.out
 cmp_ok runtime.out <<'__DONE__'
 [[root]]
 [[FAMILY]]
@@ -45,5 +45,5 @@ cmp_ok runtime.out <<'__DONE__'
         FOO = foo
 __DONE__
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"
 exit

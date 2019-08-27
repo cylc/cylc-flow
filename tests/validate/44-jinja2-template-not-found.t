@@ -16,14 +16,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test validation for a template-not-found, no-line-number Jinja2 error.
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 2
-install_suite $TEST_NAME_BASE $TEST_NAME_BASE
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-val
-run_fail "$TEST_NAME" cylc validate suite.rc
-cmp_ok "$TEST_NAME.stderr" <<'__ERROR__'
+TEST_NAME="${TEST_NAME_BASE}-val"
+run_fail "${TEST_NAME}" cylc validate suite.rc
+cmp_ok "${TEST_NAME}.stderr" <<'__ERROR__'
 Jinja2Error: suite-foo.rc
 Context lines:
         R1 = foo
@@ -31,5 +31,5 @@ Context lines:
 {% include 'suite-foo.rc' %}	<-- TemplateNotFound
 __ERROR__
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"
 exit

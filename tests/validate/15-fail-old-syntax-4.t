@@ -16,17 +16,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test validation with a prev-style cycle point and a new-style cycling section
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 2
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE $TEST_NAME_BASE
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE
-run_fail $TEST_NAME cylc validate -v $SUITE_NAME
+TEST_NAME=${TEST_NAME_BASE}
+run_fail "${TEST_NAME}" cylc validate -v "${SUITE_NAME}"
 grep_ok "Incompatible value for <class 'cylc.flow.cycling.iso8601.\
 ISO8601Point'>: 2010010100: Invalid ISO 8601 date representation: 2010010100" \
-$TEST_NAME.stderr
+"${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"
 exit

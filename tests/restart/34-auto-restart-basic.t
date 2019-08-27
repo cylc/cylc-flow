@@ -17,12 +17,13 @@
 #-------------------------------------------------------------------------------
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-export CYLC_TEST_HOST=$( \
+CYLC_TEST_HOST="$( \
     cylc get-global-config -i '[test battery]remote host with shared fs' \
-    2>'/dev/null')
+    2>'/dev/null')"
 if [[ -z "${CYLC_TEST_HOST}" ]]; then
     skip_all '"[test battery]remote host with shared fs": not defined'
 fi
+export CYLC_TEST_HOST
 set_test_number 9
 if ${CYLC_TEST_DEBUG:-false}; then ERR=2; else ERR=1; fi
 #-------------------------------------------------------------------------------
@@ -39,14 +40,14 @@ BASE_GLOBALRC="
     run hosts = localhost, ${CYLC_TEST_HOST}"
 
 TEST_NAME="${TEST_NAME_BASE}"
-TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME}" <<< '
+TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME}" - <<'__SUITERC__'
 [cylc]
     [[parameters]]
         foo = 1..25
 [scheduling]
     [[graph]]
         R1 = "task<foo> => task<foo+1>"
-' # note change TEST_DIR to force local installation in suite run dir
+__SUITERC__
 # run suite on localhost normally
 create_test_globalrc '' "${BASE_GLOBALRC}"
 run_ok "${TEST_NAME}-suite-start" \
@@ -76,7 +77,7 @@ FILE=$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)
 log_scan "${TEST_NAME}-restart" "${FILE}" 20 1 \
     "Suite server: url=tcp://$(ssh "${CYLC_TEST_HOST}" hostname -f)"
 run_ok "${TEST_NAME}-restart-success" cylc suite-state "${SUITE_NAME}" \
-    --task=$(printf 'task_foo%02d' $(( LATEST_TASK + 3 ))) \
+    --task="$(printf 'task_foo%02d' $(( LATEST_TASK + 3 )))" \
     --status='succeeded' --point=1 --interval=1 --max-polls=20
 
 # check the command the suite has been restarted with

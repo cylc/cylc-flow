@@ -17,25 +17,25 @@
 #-------------------------------------------------------------------------------
 # Test restarting a suite after its log directory tree has been removed.
 # (the suite run tree should be created if necessary on restart).
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 3
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE deleted-logs
+install_suite "${TEST_NAME_BASE}" 'deleted-logs'
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-validate"
+run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --debug --no-detach $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-run"
+suite_run_ok "${TEST_NAME}" cylc run --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-restart
-if [[ -z $SUITE_NAME ]]; then
+TEST_NAME="${TEST_NAME_BASE}-restart"
+if [[ -z "${SUITE_NAME}" ]]; then
     # For safety, abort before attempting log tree removal.
-    echo "ERROR: \$SUITE_NAME does not exist" >&2
+    echo "ERROR: \${SUITE_NAME} does not exist" >&2
     exit 1
 fi
-rm -r $(cylc get-global-config --print-run-dir)/$SUITE_NAME/log
-suite_run_ok $TEST_NAME cylc restart --debug --no-detach $SUITE_NAME
+rm -r "${SUITE_RUN_DIR}/log"
+suite_run_ok "${TEST_NAME}" cylc restart --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"

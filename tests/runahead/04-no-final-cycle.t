@@ -16,31 +16,26 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test runahead limit is being enforced and doesn't break with no final cycle
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 3
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE no_final
+install_suite "${TEST_NAME_BASE}" no_final
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-validate"
+run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-run_ok $TEST_NAME cylc run --debug --no-detach $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-run"
+run_ok "${TEST_NAME}" cylc run --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-if ! which sqlite3 > /dev/null; then
-    skip 1 "sqlite3 not installed?"
-    purge_suite "${SUITE_NAME}"
-    exit 0
-fi
-TEST_NAME=$TEST_NAME_BASE-check-fail
+TEST_NAME=${TEST_NAME_BASE}-check-fail
 DB="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/db"
-TASKS=$(sqlite3 $DB 'select count(*) from task_states where status is "failed"')
+TASKS=$(sqlite3 "${DB}" 'select count(*) from task_states where status=="failed"')
 # manual comparison for the test
-if (($TASKS==4)); then 
-    ok $TEST_NAME
+if ((TASKS==4)); then 
+    ok "${TEST_NAME}" 
 else 
-    fail $TEST_NAME
+    fail "${TEST_NAME}" 
 fi
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"

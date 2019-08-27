@@ -17,12 +17,12 @@
 #-------------------------------------------------------------------------------
 # Test reload a waiting task does not cause DB integrity error.
 # cylc/cylc-flow#1221
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 set_test_number 3
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-TEST_NAME=$TEST_NAME_BASE-run
+TEST_NAME="${TEST_NAME_BASE}-run"
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --debug --no-detach --reference-test "${SUITE_NAME}"
 run_fail "${TEST_NAME_BASE}-database-integrity-error" \

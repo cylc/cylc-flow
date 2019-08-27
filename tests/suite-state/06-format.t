@@ -16,28 +16,28 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test cylc suite-state "template" option
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 5
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE format
+install_suite "${TEST_NAME_BASE}" format
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --debug --no-detach $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-run"
+suite_run_ok "${TEST_NAME}" cylc run --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-cli-template-poll
-run_ok $TEST_NAME cylc suite-state $SUITE_NAME -p 20100101T0000Z \
+TEST_NAME=${TEST_NAME_BASE}-cli-template-poll
+run_ok "${TEST_NAME}" cylc suite-state "${SUITE_NAME}" -p 20100101T0000Z \
         --task=foo --status=succeeded
-contains_ok $TEST_NAME.stdout <<__OUT__
+contains_ok "${TEST_NAME}.stdout" <<__OUT__
 polling for 'succeeded': satisfied
 __OUT__
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-cli-template-dump
-run_ok $TEST_NAME cylc suite-state $SUITE_NAME -p 20100101T0000Z
-contains_ok $TEST_NAME.stdout <<__OUT__
+TEST_NAME=${TEST_NAME_BASE}-cli-template-dump
+run_ok "${TEST_NAME}" cylc suite-state "${SUITE_NAME}" -p 20100101T0000Z
+contains_ok "${TEST_NAME}.stdout" <<__OUT__
 foo, 2010-01-01, succeeded
 __OUT__
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 exit 0

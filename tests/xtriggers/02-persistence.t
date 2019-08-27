@@ -25,38 +25,38 @@
 # Also test the correct result is broadcast to the dependent task before and
 # after suite restart.
 
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 set_test_number 6
 
-install_suite ${TEST_NAME_BASE} ${TEST_NAME_BASE}
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 # Install the succeeding xtrigger function.
-mkdir -p lib/python
-cp ${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/faker_succ.py lib/python/faker.py
+mkdir -p 'lib/python'
+cp "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/faker_succ.py" 'lib/python/faker.py'
 
 # Validate the test suite.
-run_ok ${TEST_NAME_BASE}-val cylc val --debug $SUITE_NAME
+run_ok "${TEST_NAME_BASE}-val" cylc val --debug "${SUITE_NAME}"
 
 # Run the first cycle, till auto shutdown by task.
-TEST_NAME=${TEST_NAME_BASE}-run
-suite_run_ok ${TEST_NAME} cylc run --no-detach --debug $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-run"
+suite_run_ok "${TEST_NAME}" cylc run --no-detach --debug "${SUITE_NAME}"
 
 # Check the broadcast result of xtrigger.
-cylc cat-log ${SUITE_NAME} foo.2010 > foo.2010.out
-grep_ok "NAME is bob" foo.2010.out
+cylc cat-log "${SUITE_NAME}" 'foo.2010' >'foo.2010.out'
+grep_ok 'NAME is bob' 'foo.2010.out'
 
 # Replace the xtrigger function with one that will fail if called again.
-cp ${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/faker_fail.py lib/python/faker.py
+cp "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/faker_fail.py" 'lib/python/faker.py'
 
 # Validate again (with the new xtrigger function).
-run_ok ${TEST_NAME_BASE}-val2 cylc val --debug $SUITE_NAME
+run_ok "${TEST_NAME_BASE}-val2" cylc val --debug "${SUITE_NAME}"
 
 # Restart the suite, to run the final cycle point.
-TEST_NAME=${TEST_NAME_BASE}-restart
-suite_run_ok ${TEST_NAME} cylc restart --no-detach $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-restart"
+suite_run_ok "${TEST_NAME}" cylc restart --no-detach "${SUITE_NAME}"
 
 # Check the broadcast result has persisted from first run.
-cylc cat-log ${SUITE_NAME} foo.2011 > foo.2011.out
-grep_ok "NAME is bob" foo.2011.out
+cylc cat-log "${SUITE_NAME}" 'foo.2011' >'foo.2011.out'
+grep_ok 'NAME is bob' 'foo.2011.out'
 
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"

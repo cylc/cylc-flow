@@ -41,7 +41,7 @@ __OUT__
 
 # Filter out errors from 'bad' suites in the 'cylc-run' directory
 NONSPECIFIC_ERR2='\[Errno 2\] No such file or directory:'
-SPECIFIC_ERR2="$NONSPECIFIC_ERR2 '$HOME/cylc-run/$SUITE_NAME/suite.rc'"
+SPECIFIC_ERR2="$NONSPECIFIC_ERR2 '$HOME/cylc-run/${SUITE_NAME}/suite.rc'"
 ERR2_COUNT=$(grep -c "$SPECIFIC_ERR2" "${TEST_NAME_BASE}-print.stderr")
 if [ "$ERR2_COUNT" -eq "0" ]; then
     grep -v -s "$NONSPECIFIC_ERR2" "${TEST_NAME_BASE}-print.stderr" > "${TEST_NAME_BASE}-print-filtered.stderr"

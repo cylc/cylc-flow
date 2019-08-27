@@ -18,7 +18,7 @@
 #------------------------------------------------------------------------
 # Test orphaned tasks do not stall the suite after reload - GitHub #3306.
 
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 
 set_test_number 3
 

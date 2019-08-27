@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Test remote job logs retrieval, requires compatible version of cylc on remote
 # job host.
-CYLC_TEST_IS_GENERIC=false
+export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
 set_test_remote_host
 set_test_number 3

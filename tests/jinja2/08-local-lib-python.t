@@ -16,16 +16,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test that a custom Jinja2 filter can load a local python module in lib/python.
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 2
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE $TEST_NAME_BASE
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate -o 'suite.rc.processed' "${SUITE_NAME}"
+TEST_NAME="${TEST_NAME_BASE}-validate"
+run_ok "${TEST_NAME}" cylc validate -o 'suite.rc.processed' "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-check-expansion
-cmp_ok 'suite.rc.processed' $TEST_SOURCE_DIR/$TEST_NAME_BASE/suite.rc.jproc
+TEST_NAME=${TEST_NAME_BASE}-check-expansion
+cmp_ok 'suite.rc.processed' "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/suite.rc.jproc"
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"

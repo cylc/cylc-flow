@@ -16,13 +16,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Unit test parts of lib/isodatetime/wallclock.py.
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 7
 
 # Arguments: TEST_NAME TIME_STRING EXPECTED_UNIX_TIME CALENDAR_IS_360
 function test_get_unix_time_from_time_string () {
-    run_ok $1 python <<__PYTHON__
+    run_ok "$1" python3 <<__PYTHON__
 from cylc.flow.wallclock import get_unix_time_from_time_string
 
 if $4:
@@ -32,24 +32,24 @@ assert(get_unix_time_from_time_string('$2') == $3)
 __PYTHON__
 }
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-get_unix_time_from_time_string-greg-1
-test_get_unix_time_from_time_string $TEST_NAME '2016-09-08T09:09:00+01' 1473322140 False
+TEST_NAME=${TEST_NAME_BASE}-get_unix_time_from_time_string-greg-1
+test_get_unix_time_from_time_string "${TEST_NAME}" '2016-09-08T09:09:00+01' 1473322140 False
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-get_unix_time_from_time_string-greg-2
-test_get_unix_time_from_time_string $TEST_NAME '2016-09-08T08:09:00Z' 1473322140 False
+TEST_NAME=${TEST_NAME_BASE}-get_unix_time_from_time_string-greg-2
+test_get_unix_time_from_time_string "${TEST_NAME}" '2016-09-08T08:09:00Z' 1473322140 False
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-get_unix_time_from_time_string-greg-3
-test_get_unix_time_from_time_string $TEST_NAME '2016-09-07T20:09:00-12' 1473322140 False
+TEST_NAME=${TEST_NAME_BASE}-get_unix_time_from_time_string-greg-3
+test_get_unix_time_from_time_string "${TEST_NAME}" '2016-09-07T20:09:00-12' 1473322140 False
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-get_unix_time_from_time_string-360-1
-test_get_unix_time_from_time_string $TEST_NAME '2016-09-08T09:09:00+01' 1473322140 True
+TEST_NAME=${TEST_NAME_BASE}-get_unix_time_from_time_string-360-1
+test_get_unix_time_from_time_string "${TEST_NAME}" '2016-09-08T09:09:00+01' 1473322140 True
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-get_unix_time_from_time_string-360-2
-test_get_unix_time_from_time_string $TEST_NAME '2016-09-08T08:09:00Z' 1473322140 True
+TEST_NAME=${TEST_NAME_BASE}-get_unix_time_from_time_string-360-2
+test_get_unix_time_from_time_string "${TEST_NAME}" '2016-09-08T08:09:00Z' 1473322140 True
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-get_unix_time_from_time_string-360-3
-test_get_unix_time_from_time_string $TEST_NAME '2016-09-07T20:09:00-12' 1473322140 True
+TEST_NAME=${TEST_NAME_BASE}-get_unix_time_from_time_string-360-3
+test_get_unix_time_from_time_string "${TEST_NAME}" '2016-09-07T20:09:00-12' 1473322140 True
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-get_unix_time_from_time_string-360-31-1
-test_get_unix_time_from_time_string $TEST_NAME '2016-08-31T18:09:00+01' 1472663340 True
+TEST_NAME=${TEST_NAME_BASE}-get_unix_time_from_time_string-360-31-1
+test_get_unix_time_from_time_string "${TEST_NAME}" '2016-08-31T18:09:00+01' 1472663340 True
 exit

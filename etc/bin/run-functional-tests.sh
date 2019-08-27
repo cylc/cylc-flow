@@ -59,15 +59,6 @@ Some platform-specific tests are automatically skipped, depending on platform.
 Platform-specific tests must set "CYLC_TEST_IS_GENERIC=false" before sourcing
 the test_header.
 
-Tests requiring the sqlite3 CLI must be skipped if sqlite3 is not installed (it
-is not otherwise a Cylc software prerequisite):
-| if ! which sqlite3 > /dev/null; then
-|     # Skip the remaining 3 tests.
-|     skip 3 "sqlite3 not installed?"
-|     purge_suite \$SUITE_NAME
-|     exit 0
-| fi
-
 Options:
   -h, --help       Print this help message and exit.
 

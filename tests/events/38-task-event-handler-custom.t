@@ -28,7 +28,7 @@ SUITE_LOG="${SUITE_RUN_DIR}/log/suite/log"
 grep_ok \
 "\[(('event-handler-00', 'custom-1'), 1) out\] !!CUSTOM!! foo.1 fugu Data ready for barring" \
     "${FOO_ACTIVITY_LOG}"
-grep_ok "\[foo.1\].*Data ready for barring" $SUITE_LOG
-grep_ok "\[foo.1\].*Data ready for bazzing" $SUITE_LOG
-grep_ok "\[foo.1\].*Aren't the hydrangeas nice?" $SUITE_LOG
+grep_ok "\[foo.1\].*Data ready for barring" "${SUITE_LOG}"
+grep_ok "\[foo.1\].*Data ready for bazzing" "${SUITE_LOG}"
+grep_ok "\[foo.1\].*Aren't the hydrangeas nice?" "${SUITE_LOG}"
 purge_suite "${SUITE_NAME}"

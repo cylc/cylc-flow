@@ -16,20 +16,21 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # job script torture test and check jobscript is generated correctly
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 4
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE cycling
+install_suite "${TEST_NAME_BASE}" 'cycling'
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-validate"
+run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --reference-test --debug --no-detach $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-run"
+suite_run_ok "${TEST_NAME}" \
+    cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-foo-jobscript-match
-run_ok $TEST_NAME cylc jobscript $SUITE_NAME foo.20140203T00+13
-sed -n '/_POINT=/p;/CYLC_TASK_JOB/p' $TEST_NAME.stdout > jobfile
-cmp_ok jobfile $TEST_SOURCE_DIR/cycling/foo.ref-jobfile
-purge_suite $SUITE_NAME
+TEST_NAME="${TEST_NAME_BASE}-foo-jobscript-match"
+run_ok "${TEST_NAME}" cylc jobscript "${SUITE_NAME}" 'foo.20140203T00+13'
+sed -n '/_POINT=/p;/CYLC_TASK_JOB/p' "${TEST_NAME}.stdout" > 'jobfile'
+cmp_ok 'jobfile' "${TEST_SOURCE_DIR}/cycling/foo.ref-jobfile"
+purge_suite "${SUITE_NAME}"

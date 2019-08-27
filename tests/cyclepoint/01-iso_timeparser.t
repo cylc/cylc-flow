@@ -16,9 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Run the time_parser.py tests
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 1
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-timeparse
-run_ok $TEST_NAME python $CYLC_REPO_DIR/cylc/flow/time_parser.py
+run_ok "${TEST_NAME_BASE}" python3 -m 'cylc.flow.time_parser'

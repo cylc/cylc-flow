@@ -18,14 +18,14 @@
 # Test validation with a lot of whitespace added - trailing, around
 # section headings, around list item delimiters, in include-files, and
 # added by jinja2.
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 1
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE $TEST_NAME_BASE
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE
-run_ok $TEST_NAME cylc validate -v $SUITE_NAME
+TEST_NAME=${TEST_NAME_BASE}
+run_ok "${TEST_NAME}" cylc validate -v "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"
 exit

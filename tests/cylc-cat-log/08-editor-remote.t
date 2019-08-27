@@ -17,11 +17,11 @@
 
 # Test "cylc cat-log" open local logs in editor.
 
-. "$(dirname $0)"/test_header
+. "$(dirname "$0")/test_header"
 set_test_remote
 
-. "${TEST_SOURCE_DIR}"/editor/bin/run_tests.sh
-export PATH="${TEST_SOURCE_DIR}/editor/bin/":"${PATH}"
+. "${TEST_SOURCE_DIR}/editor/bin/run_tests.sh"
+export PATH="${TEST_SOURCE_DIR}/editor/bin/:${PATH}"
 
 install_suite "${TEST_NAME_BASE}" "editor"
 run_tests "${CYLC_TEST_HOST}" "${CYLC_TEST_OWNER}"
