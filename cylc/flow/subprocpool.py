@@ -150,11 +150,13 @@ class SubProcPool(object):
         return self.queuings or self.runnings
 
     def _is_stopping(self):
-        """Return True if .stopping is True."""
-        stopping = False
+        """Return whether .stopping is True or not.
+
+        Returns:
+            bool: Whether the pool is stopping or not.
+        """
         with self.stopping_lock:
-            stopping = self.stopping
-        return stopping
+            return self.stopping
 
     def _proc_exit(self, proc, err_xtra, ctx, callback, callback_args):
         """Get ret_code, out, err of exited command, and call its callback."""
