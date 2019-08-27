@@ -48,10 +48,18 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
 if (( CYLC_TASK_CYCLE_POINT == CYLC_SUITE_INITIAL_CYCLE_POINT )); then
    sed -i 's/^.*remove*$//g' $CYLC_SUITE_DEF_PATH/suite.rc
    cylc reload $CYLC_SUITE_NAME
+   poll "! grep 'Reload complete' $CYLC_SUITE_RUN_DIR/log/suite/log"
+   # kill the long-running orphaned bar task.
+   kill $(cat $CYLC_SUITE_RUN_DIR/work/1/bar/pid)
 fi
 """
    [[bar]]
-      script = sleep 10
+      script = """
+# Long sleep to ensure that bar does not finish before the reload.
+# Store long sleep PID to enable kill after the reload.
+sleep 1000 &
+echo $! > pid
+wait"""
 __SUITE_RC__
 
 TEST_NAME="${TEST_NAME_BASE}-validate"
