@@ -37,7 +37,7 @@ for arg in sys.argv[1:]:
 import os
 from subprocess import check_call, CalledProcessError
 
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.config_schema import glbl_cfg
 from cylc.flow.exceptions import UserInputError
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.run_get_stdout import run_get_stdout
