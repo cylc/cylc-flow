@@ -225,11 +225,19 @@ Custom Trigger Functions
 Trigger functions are just normal Python functions, with a few special
 properties:
 
-- they must be defined in a module with the same name as the function
+- they must:
+
+  - be defined in a module with the same name as the function;
+  - be compatible with the same Python version that runs the Cylc workflow
+    server program (see :ref:`Requirements` for the latest version
+    specification).
+
 - they can be located in:
-  - ``<cylc-dir>/lib/cylc/xtriggers/``
-  - ``<suite-dir>/lib/python/``
-  - (or anywhere in your Python library path)
+
+  - ``<cylc-dir>/lib/cylc/xtriggers/``;
+  - ``<suite-dir>/lib/python/``;
+  - or anywhere in your Python library path.
+
 - they can take arbitrary positional and keyword arguments
 - suite and task identity, and cycle point, can be passed to trigger
   functions by using string templates in function arguments (see below)
