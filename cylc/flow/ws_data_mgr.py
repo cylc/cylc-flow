@@ -323,11 +323,12 @@ class WsDataMgr(object):
         """Generate the family-point elements from tasks in cycle points.
 
         Args:
-            task_id (str):
-                valid TaskID string.
+            family_proxies (dict):
+                a dictionary (family id, proxy) with the family proxies.
+            cycle_points (set):
+                a set of cycle points.
 
         Returns:
-
             list: [cylc.flow.ws_messages_pb2.PbFamilyProxy]
                 list of populated family proxy data elements.
 
