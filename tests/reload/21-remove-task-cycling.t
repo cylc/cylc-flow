@@ -44,6 +44,24 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
 [runtime]
    [[foo]]
       script = """
+# Use poll function from test_header.
+poll() {
+    local TIMEOUT="$(($(date +%s) + 60))" # wait 1 minute
+    local TIMED_OUT=true
+    while (($(date +%s) < TIMEOUT)); do
+        if eval "$@"; then
+            sleep 1
+        else
+            TIMED_OUT=false
+            break
+        fi
+    done
+    if $TIMED_OUT; then
+        >&2 echo "ERROR: poll timed out: $*"
+        exit 1
+    fi
+}
+
 # Remove bar and tell the server to reload.
 if (( CYLC_TASK_CYCLE_POINT == CYLC_SUITE_INITIAL_CYCLE_POINT )); then
    sed -i 's/^.*remove*$//g' $CYLC_SUITE_DEF_PATH/suite.rc
