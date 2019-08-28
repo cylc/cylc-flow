@@ -37,16 +37,18 @@ from cylc.flow.unicode_rules import SuiteNameValidator
 class SuiteFiles:
     """Files and directories located in the suite directory."""
 
-    SERVICE_DIR = ".service"
-    CONTACT = "contact"
-    CONTACT2 = "contact2"
-    PASSPHRASE = "passphrase"
-    SOURCE = "source"
     SUITE_RC = "suite.rc"
+    SERVICE_DIR = ".service"
+
+    class Service:
+        CONTACT = "contact"
+        CONTACT2 = "contact2"
+        PASSPHRASE = "passphrase"
+        SOURCE = "source"
 
 
 class ContactFileFields:
-    """Field names present in ``SuiteFiles.CONTACT``."""
+    """Field names present in ``SuiteFiles.Service.CONTACT``."""
 
     API = "CYLC_API"
     COMMS_PROTOCOL_2 = "CYLC_COMMS_PROTOCOL_2"  # indirect comms
@@ -194,7 +196,7 @@ def dump_contact_file(reg, data):
 def get_contact_file(reg):
     """Return name of contact file."""
     return os.path.join(
-        get_suite_srv_dir(reg), SuiteFiles.CONTACT)
+        get_suite_srv_dir(reg), SuiteFiles.Service.CONTACT)
 
 
 def get_auth_item(item, reg, owner=None, host=None, content=False):
@@ -222,8 +224,8 @@ def get_auth_item(item, reg, owner=None, host=None, content=False):
 
     """
     if item not in [
-            SuiteFiles.PASSPHRASE, SuiteFiles.CONTACT,
-            SuiteFiles.CONTACT2]:
+            SuiteFiles.Service.PASSPHRASE, SuiteFiles.Service.CONTACT,
+            SuiteFiles.Service.CONTACT2]:
         raise ValueError("%s: item not recognised" % item)
 
     if reg == os.getenv('CYLC_SUITE_NAME'):
@@ -269,7 +271,7 @@ def get_auth_item(item, reg, owner=None, host=None, content=False):
     # Note: It is not possible to find ".service/contact2" on the suite
     # host, because it is installed on task host by "cylc remote-init" on
     # demand.
-    if item != SuiteFiles.CONTACT2:
+    if item != SuiteFiles.Service.CONTACT2:
         value = _load_remote_item(item, reg, owner, host)
         if value:
             if not content:
@@ -294,7 +296,7 @@ def get_suite_source_dir(reg, suite_owner=None):
     Will register un-registered suites located in the cylc run dir.
     """
     srv_d = get_suite_srv_dir(reg, suite_owner)
-    fname = os.path.join(srv_d, SuiteFiles.SOURCE)
+    fname = os.path.join(srv_d, SuiteFiles.Service.SOURCE)
     try:
         source = os.readlink(fname)
     except OSError:
@@ -326,7 +328,7 @@ def get_suite_srv_dir(reg, suite_owner=None):
 def load_contact_file(reg, owner=None, host=None, file_base=None):
     """Load contact file. Return data as key=value dict."""
     if not file_base:
-        file_base = SuiteFiles.CONTACT
+        file_base = SuiteFiles.Service.CONTACT
     file_content = get_auth_item(
         file_base, reg, owner, host, content=True)
     data = {}
@@ -411,7 +413,7 @@ def register(reg=None, source=None, redirect=False):
     # See if suite already has a source or not
     try:
         orig_source = os.readlink(
-            os.path.join(srv_d, SuiteFiles.SOURCE))
+            os.path.join(srv_d, SuiteFiles.Service.SOURCE))
     except OSError:
         orig_source = None
     else:
@@ -430,11 +432,11 @@ def register(reg=None, source=None, redirect=False):
             " directory will be overwritten.\n",
             {'reg': reg, 'old': orig_source, 'new': source})
         # Remove symlink to the original suite.
-        os.unlink(os.path.join(srv_d, SuiteFiles.SOURCE))
+        os.unlink(os.path.join(srv_d, SuiteFiles.Service.SOURCE))
 
     # Create symlink to the suite, if it doesn't already exist.
     if orig_source is None or source != orig_source:
-        target = os.path.join(srv_d, SuiteFiles.SOURCE)
+        target = os.path.join(srv_d, SuiteFiles.Service.SOURCE)
         if (os.path.abspath(source) ==
                 os.path.abspath(os.path.dirname(srv_d))):
             # If source happens to be the run directory,
@@ -455,9 +457,9 @@ def create_auth_files(reg):
     os.makedirs(srv_d, exist_ok=True)
 
     # Create a new passphrase for the suite if necessary.
-    if not _locate_item(SuiteFiles.PASSPHRASE, srv_d):
+    if not _locate_item(SuiteFiles.Service.PASSPHRASE, srv_d):
         import random
-        _dump_item(srv_d, SuiteFiles.PASSPHRASE, ''.join(
+        _dump_item(srv_d, SuiteFiles.Service.PASSPHRASE, ''.join(
             random.sample(PASSPHRASE_CHARSET, PASSPHRASE_LEN)))
 
 
@@ -520,7 +522,7 @@ def _is_local_auth_ok(reg, owner, host):
     """
     if is_remote(host, owner):
         fname = os.path.join(
-            get_suite_srv_dir(reg), SuiteFiles.CONTACT)
+            get_suite_srv_dir(reg), SuiteFiles.Service.CONTACT)
         data = {}
         try:
             for line in open(fname):
@@ -566,7 +568,7 @@ def _load_remote_item(item, reg, owner, host):
         host = 'localhost'
     if owner is None:
         owner = get_user()
-    if item == SuiteFiles.CONTACT and not is_remote_host(host):
+    if item == SuiteFiles.Service.CONTACT and not is_remote_host(host):
         # Attempt to read suite contact file via the local filesystem.
         path = r'%(run_d)s/%(srv_base)s' % {
             'run_d': get_remote_suite_run_dir('localhost', owner, reg),

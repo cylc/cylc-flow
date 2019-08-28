@@ -64,7 +64,7 @@ def remote_init(uuid_str, rund, indirect_comm=None):
     finally:
         os.chdir(oldcwd)
     if indirect_comm:
-        fname = os.path.join(srvd, SuiteFiles.CONTACT2)
+        fname = os.path.join(srvd, SuiteFiles.Service.CONTACT2)
         with open(fname, 'w') as handle:
             handle.write('%s=%s\n' % (
                 ContactFileFields.COMMS_PROTOCOL_2, indirect_comm))
@@ -81,8 +81,8 @@ def remote_tidy(rund):
     rund = os.path.expandvars(rund)
     srvd = os.path.join(rund, SuiteFiles.SERVICE_DIR)
     for name in [
-            SuiteFiles.CONTACT,
-            SuiteFiles.CONTACT2
+            SuiteFiles.Service.CONTACT,
+            SuiteFiles.Service.CONTACT2
     ]:
         fname = os.path.join(srvd, name)
         try:

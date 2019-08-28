@@ -37,7 +37,7 @@ def get_secret(suite):
 
     """
     return get_auth_item(
-        SuiteFiles.PASSPHRASE,
+        SuiteFiles.Service.PASSPHRASE,
         suite, content=True
     )
 

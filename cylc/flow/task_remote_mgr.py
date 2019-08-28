@@ -321,14 +321,14 @@ class TaskRemoteMgr(object):
                 get_contact_file(self.suite),
                 os.path.join(
                     SuiteFiles.SERVICE_DIR,
-                    SuiteFiles.CONTACT)))
+                    SuiteFiles.Service.CONTACT)))
         if comm_meth in ['zmq']:
             # Passphrase file
             items.append((
                 get_auth_item(
-                    SuiteFiles.PASSPHRASE,
+                    SuiteFiles.Service.PASSPHRASE,
                     self.suite),
                 os.path.join(
                     SuiteFiles.SERVICE_DIR,
-                    SuiteFiles.PASSPHRASE)))
+                    SuiteFiles.Service.PASSPHRASE)))
         return items
