@@ -34,6 +34,5 @@ __SUITE_RC__
 run_fail "${TEST_NAME_BASE}-val" cylc validate 'suite.rc'
 
 contains_ok "${TEST_NAME_BASE}-val.stderr" <<'__END__'
-SuiteConfigError: clock triggers are not compatible with integer cycling.
- c1 = wall_clock(offset=P0Y)
+SuiteConfigError: clock xtriggers need date-time cycling: c1 = wall_clock(offset=P0Y)
 __END__

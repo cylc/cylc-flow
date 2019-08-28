@@ -66,7 +66,7 @@ def test_add_xtrigger_with_params(xtrigger_mgr):
     assert xtrig == xtrigger_mgr.functx_map["xtrig"]
 
 
-def test_add_xtrigger_with_unkonwn_params(xtrigger_mgr):
+def test_add_xtrigger_with_unknown_params(xtrigger_mgr):
     """Test for adding a xtrigger with an unknown parameter.
 
     The XTriggerManager contains a list of specific parameters that are
@@ -142,9 +142,9 @@ def test_housekeeping_with_xtrigger_satisfied(xtrigger_mgr):
         spawn_ahead=False
     )
     init()
-    sequence = ISO8601Sequence('T-00!(T00, T06, T12, T18)', '20000101T00Z')
-    tdef.xtrig_labels[sequence] = "get_name"
-    start_point = ISO8601Point('20000101T0000+05')
+    sequence = ISO8601Sequence('P1D', '2019')
+    tdef.xtrig_labels[sequence] = ["get_name"]
+    start_point = ISO8601Point('2019')
     itask = TaskProxy(tdef=tdef, start_point=start_point)
     xtrigger_mgr.collate([itask])
     # pretend the function has been activated
@@ -165,6 +165,7 @@ def test_satisfy_xtrigger(xtrigger_mgr_procpool_broadcast):
         func_args=[],
         func_kwargs={}
     )
+
     echo1_xtrig.out = "[\"True\", {\"name\": \"herminia\"}]"
     xtrigger_mgr_procpool_broadcast.add_trig("echo1", echo1_xtrig, "fdir")
     # the echo2 xtrig (satisfied through callback later)
@@ -185,12 +186,11 @@ def test_satisfy_xtrigger(xtrigger_mgr_procpool_broadcast):
         spawn_ahead=False
     )
     init()
-    sequence = ISO8601Sequence('T-00!(T00, T06, T12, T18)', '20000101T00Z')
-    tdef.xtrig_labels[sequence] = "echo1"
-    tdef.xtrig_labels[sequence] = "echo2"
+    sequence = ISO8601Sequence('P1D', '2000')
+    tdef.xtrig_labels[sequence] = ["echo1", "echo2"]
     # cycle point for task proxy
     init()
-    start_point = ISO8601Point('20000101T00Z')
+    start_point = ISO8601Point('2019')
     # create task proxy
     itask = TaskProxy(tdef=tdef, start_point=start_point)
 
@@ -245,9 +245,9 @@ def test_collate(xtrigger_mgr):
         spawn_ahead=False
     )
     init()
-    sequence = ISO8601Sequence('T-00!(T00, T06, T12, T18)', '20000101T00Z')
-    tdef.xtrig_labels[sequence] = "get_name"
-    start_point = ISO8601Point('20000101T0000+05')
+    sequence = ISO8601Sequence('P1D', '20190101T00Z')
+    tdef.xtrig_labels[sequence] = ["get_name"]
+    start_point = ISO8601Point('2019')
     itask = TaskProxy(tdef=tdef, start_point=start_point)
     itask.state.xtriggers["get_name"] = get_name
 
@@ -272,7 +272,7 @@ def test_collate(xtrigger_mgr):
         start_point=1,
         spawn_ahead=False
     )
-    tdef.xtrig_labels[sequence] = "wall_clock"
+    tdef.xtrig_labels[sequence] = ["wall_clock"]
     start_point = ISO8601Point('20000101T0000+05')
     # create task proxy
     itask = TaskProxy(tdef=tdef, start_point=start_point)
@@ -354,9 +354,9 @@ def test_check_xtriggers(xtrigger_mgr_procpool):
         spawn_ahead=False
     )
     init()
-    sequence = ISO8601Sequence('T-00!(T00, T06, T12, T18)', '20000101T00Z')
-    tdef1.xtrig_labels[sequence] = "get_name"
-    start_point = ISO8601Point('20000101T0000+05')
+    sequence = ISO8601Sequence('P1D', '2019')
+    tdef1.xtrig_labels[sequence] = ["get_name"]
+    start_point = ISO8601Point('2019')
     itask1 = TaskProxy(tdef=tdef1, start_point=start_point)
     itask1.state.xtriggers["get_name"] = False  # satisfied?
 
@@ -378,7 +378,7 @@ def test_check_xtriggers(xtrigger_mgr_procpool):
         start_point=1,
         spawn_ahead=False
     )
-    tdef2.xtrig_labels[sequence] = "wall_clock"
+    tdef2.xtrig_labels[sequence] = ["wall_clock"]
     init()
     start_point = ISO8601Point('20000101T0000+05')
     # create task proxy
@@ -405,6 +405,7 @@ class MockedBroadcastMgr(BroadcastMgr):
         return True
 
 # fixtures
+
 
 @pytest.fixture
 def xtrigger_mgr() -> XtriggerManager:
@@ -455,5 +456,3 @@ def xtrigger_mgr_procpool_broadcast() -> XtriggerManager:
     )
     xtrigger_mgr.validate_xtrigger = lambda fn, fdir: True
     return xtrigger_mgr
-
-

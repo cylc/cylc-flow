@@ -733,8 +733,8 @@ see `COPYING' in the Cylc source distribution.
             extras = {}
             if itask.tdef.clocktrigger_offset is not None:
                 extras['Clock trigger time reached'] = (
-                    not itask.is_waiting_clock(now))
-                extras['Triggers at'] = get_time_string_from_unix_time(
+                    itask.is_waiting_clock_done(now))
+                extras['Triggers at'] = time2str(
                     itask.clock_trigger_time)
             for trig, satisfied in itask.state.external_triggers.items():
                 key = f'External trigger "{trig}"'
@@ -753,7 +753,7 @@ see `COPYING' in the Cylc source distribution.
             outputs = []
             for _, msg, is_completed in itask.state.outputs.get_all():
                 outputs.append(
-                    [f"{itask.identity} {msg})", is_completed])
+                    [f"{itask.identity} {msg}", is_completed])
             results[itask.identity] = {
                 "meta": itask.tdef.describe(),
                 "prerequisites": itask.state.prerequisites_dump(),

@@ -82,10 +82,7 @@ class TaskDef(object):
                 this dependency applies.
 
         """
-        try:
-            self.dependencies[sequence].append(dependency)
-        except KeyError:
-            self.dependencies[sequence] = [dependency]
+        self.dependencies.setdefault(sequence, []).append(dependency)
 
     def add_xtrig_label(self, xtrig_label, sequence):
         """Add an xtrigger to a named sequence.
@@ -96,10 +93,7 @@ class TaskDef(object):
                 xtrigger applies.
 
         """
-        try:
-            self.xtrig_labels[sequence].append(xtrig_label)
-        except KeyError:
-            self.xtrig_labels[sequence] = [xtrig_label]
+        self.xtrig_labels.setdefault(sequence, []).append(xtrig_label)
 
     def add_sequence(self, sequence):
         """Add a sequence."""

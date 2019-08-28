@@ -90,6 +90,31 @@ class XtriggerManager(object):
 
     """
 
+    @staticmethod
+    def validate_xtrigger(fname: str, fdir: str):
+        """Validate an Xtrigger function.
+
+        Args:
+            fname (str): function name
+            fdir(str): function directory
+        Raises:
+            ImportError: if the function module was not found
+            AttributeError: if the function was not found in the xtrigger
+                module
+            ValueError: if the function is not callable
+        """
+        try:
+            func = get_func(fname, fdir)
+        except ImportError:
+            raise ImportError(
+                f"ERROR: xtrigger module '{fname}' not found")
+        except AttributeError:
+            raise AttributeError(
+                f"ERROR: '{fname}' not found in xtrigger module '{fname}'")
+        if not callable(func):
+            raise ValueError(
+                f"ERROR: '{fname}' not callable in xtrigger module '{fname}'")
+
     def __init__(
         self,
         suite: str,
@@ -147,6 +172,7 @@ class XtriggerManager(object):
         Args:
             label (str): xtrigger label
             fctx (SubFuncContext): function context
+            fdir (str): function module directory
         Raises:
             ValueError: if any string template in the function context
                 arguments are not present in the expected template values.
@@ -164,30 +190,6 @@ class XtriggerManager(object):
             except TypeError:
                 # Not a string arg.
                 pass
-
-    def validate_xtrigger(self, fname: str, fdir: str):
-        """Validate an Xtrigger function.
-
-        Args:
-            fname (str): function name
-            fdir(str): function directory
-        Raises:
-            ImportError: if the function module was not found
-            AttributeError: if the function was not found in the xtrigger
-                module
-            ValueError: if the function is not callable
-        """
-        try:
-            func = get_func(fname, fdir)
-        except ImportError:
-            raise ImportError(
-                f"ERROR: xtrigger module '{fname}' not found")
-        except AttributeError:
-            raise AttributeError(
-                f"ERROR: '{fname}' not found in xtrigger module '{fname}'")
-        if not callable(func):
-            raise ValueError(
-                f"ERROR: '{fname}' not callable in xtrigger module '{fname}'")
 
     def load_xtrigger_for_restart(self, row_idx: int, row: Tuple[str, str]):
         """Load satisfied xtrigger results from suite DB.
@@ -236,9 +238,15 @@ class XtriggerManager(object):
                 res.append((label, sig, ctx, satisfied))
         return res
 
-    # TODO TYPE HINTS
-    def get_xtrig_ctx(self, itask, label):
-        """Get a real function context from the template."""
+    def get_xtrig_ctx(self, itask: TaskProxy, label: str) -> SubFuncContext:
+        """Get a real function context from the template.
+
+        Args:
+            itask (TaskProxy): task proxy
+            label (str): xtrigger label
+        Returns:
+            SubFuncContext: function context
+        """
         farg_templ = {
             TMPL_TASK_CYCLE_POINT: str(itask.point),
             TMPL_TASK_NAME: str(itask.tdef.name),

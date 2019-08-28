@@ -47,17 +47,17 @@ cylc run "${SUITE_NAME}"
 
 sleep 5
 
-cylc show "${SUITE_NAME}" foo.2025 | egrep '^  o' > foo.2025.log
-cylc show "${SUITE_NAME}" foo.2026 | egrep '^  o' > foo.2026.log
+cylc show "${SUITE_NAME}" foo.2025 | grep -E '^  o' > foo.2025.log
+cylc show "${SUITE_NAME}" foo.2026 | grep -E '^  o' > foo.2026.log
 
 # foo.2025 should get only xtrigger e1.
 cmp_ok foo.2025.log - <<__END__
-  o  xtrigger "e1" ... NOT satisfied
+  o  xtrigger "e1 = echo(name=bob)" ... NOT satisfied
 __END__
 
 # foo.2026 should get only xtrigger e2.
 cmp_ok foo.2026.log - <<__END__
-  o  xtrigger "e2" ... NOT satisfied
+  o  xtrigger "e2 = echo(name=alice)" ... NOT satisfied
 __END__
 
 cylc stop --now "${SUITE_NAME}"

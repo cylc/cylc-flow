@@ -18,7 +18,7 @@ import os
 import pytest
 from tempfile import TemporaryDirectory, NamedTemporaryFile
 from pathlib import Path
-from cylc.flow.config import SuiteConfig, SuiteConfigError
+from cylc.flow.config import SuiteConfig
 
 
 def get_test_inheritance_quotes():

@@ -64,7 +64,6 @@ from cylc.flow.pathutil import (
 )
 from cylc.flow.print_tree import print_tree
 from cylc.flow.subprocctx import SubFuncContext
-from cylc.flow.subprocpool import get_func
 from cylc.flow.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.flow.taskdef import TaskDef
 from cylc.flow.task_id import TaskID
