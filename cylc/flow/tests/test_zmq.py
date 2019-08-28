@@ -29,8 +29,7 @@ def test_single_port():
     serv1.start(*PORT_RANGE)
     port = serv1.port
 
-    with pytest.raises(CylcError) as exc:
+    with pytest.raises(CylcError, match=r"Address already in use") as exc:
         serv2.start(port, port)
-    assert 'Address already in use' in str(exc)
 
     serv1.stop()
