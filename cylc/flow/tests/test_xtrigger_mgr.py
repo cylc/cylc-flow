@@ -17,7 +17,7 @@
 import pytest
 
 from cylc.flow.broadcast_mgr import BroadcastMgr
-from cylc.flow.cycling.iso8601 import ISO8601Point, init
+from cylc.flow.cycling.iso8601 import ISO8601Point, ISO8601Sequence, init
 from cylc.flow.subprocctx import SubFuncContext
 from cylc.flow.subprocpool import SubProcPool
 from cylc.flow.task_proxy import TaskProxy
@@ -25,9 +25,8 @@ from cylc.flow.taskdef import TaskDef
 from cylc.flow.xtrigger_mgr import XtriggerManager, RE_STR_TMPL
 
 
-def test_constructor():
+def test_constructor(xtrigger_mgr):
     """Test creating a XtriggerManager, and its initial state."""
-    xtrigger_mgr = XtriggerManager(suite="suitea", user="john-foo")
     # the dict with normal xtriggers starts empty
     assert not xtrigger_mgr.functx_map
 
@@ -43,9 +42,8 @@ def test_extract_templates():
     )
 
 
-def test_add_xtrigger():
+def test_add_xtrigger(xtrigger_mgr):
     """Test for adding a xtrigger."""
-    xtrigger_mgr = XtriggerManager(suite="sample_suite", user="john-foo")
     xtrig = SubFuncContext(
         label="echo",
         func_name="echo",
@@ -56,9 +54,8 @@ def test_add_xtrigger():
     assert xtrig == xtrigger_mgr.functx_map["xtrig"]
 
 
-def test_add_xtrigger_with_params():
+def test_add_xtrigger_with_params(xtrigger_mgr):
     """Test for adding a xtrigger."""
-    xtrigger_mgr = XtriggerManager(suite="sample_suite", user="john-foo")
     xtrig = SubFuncContext(
         label="echo",
         func_name="echo",
@@ -69,7 +66,7 @@ def test_add_xtrigger_with_params():
     assert xtrig == xtrigger_mgr.functx_map["xtrig"]
 
 
-def test_add_xtrigger_with_unkonwn_params():
+def test_add_xtrigger_with_unkonwn_params(xtrigger_mgr):
     """Test for adding a xtrigger with an unknown parameter.
 
     The XTriggerManager contains a list of specific parameters that are
@@ -81,7 +78,6 @@ def test_add_xtrigger_with_unkonwn_params():
     If a value in the format %(foo)s appears in the parameters, and 'foo'
     is not in this list of parameters, then a ValueError is expected.
     """
-    xtrigger_mgr = XtriggerManager(suite="sample_suite", user="john-foo")
     xtrig = SubFuncContext(
         label="echo",
         func_name="echo",
@@ -96,32 +92,29 @@ def test_add_xtrigger_with_unkonwn_params():
     assert xtrigger_mgr.functx_map["xtrig"] == xtrig
 
 
-def test_load_xtrigger_for_restart():
+def test_load_xtrigger_for_restart(xtrigger_mgr):
     """Test loading a xtrigger for restart.
 
     The function is loaded from database, where the value is formatted
     as JSON."""
-    xtrigger_mgr = XtriggerManager(suite="sample_suite", user="john-foo")
     row = "get_name", "{\"name\": \"function\"}"
     xtrigger_mgr.load_xtrigger_for_restart(row_idx=0, row=row)
     assert xtrigger_mgr.sat_xtrig["get_name"]["name"] == "function"
 
 
-def test_load_invalid_xtrigger_for_restart():
+def test_load_invalid_xtrigger_for_restart(xtrigger_mgr):
     """Test loading an invalid xtrigger for restart.
 
     It simulates that the DB has a value that is not valid JSON.
     """
-    xtrigger_mgr = XtriggerManager(suite="sample_suite", user="john-foo")
     row = "get_name", "{name: \"function\"}"  # missing double quotes
     with pytest.raises(ValueError):
         xtrigger_mgr.load_xtrigger_for_restart(row_idx=0, row=row)
 
 
-def test_housekeeping_nothing_satisfied():
+def test_housekeeping_nothing_satisfied(xtrigger_mgr):
     """The housekeeping method makes sure only satisfied xtrigger function
     are kept."""
-    xtrigger_mgr = XtriggerManager(suite="sample_suite", user="john-foo")
     row = "get_name", "{\"name\": \"function\"}"
     # now XtriggerManager#sat_xtrigger will contain the get_name xtrigger
     xtrigger_mgr.load_xtrigger_for_restart(row_idx=0, row=row)
@@ -130,17 +123,16 @@ def test_housekeeping_nothing_satisfied():
     assert not xtrigger_mgr.sat_xtrig
 
 
-def test_housekeeping_with_xtrigger_satisfied():
+def test_housekeeping_with_xtrigger_satisfied(xtrigger_mgr):
     """The housekeeping method makes sure only satisfied xtrigger function
     are kept."""
-    xtrigger_mgr = XtriggerManager(suite="sample_suite", user="john-foo")
     xtrig = SubFuncContext(
         label="get_name",
         func_name="get_name",
         func_args=[],
         func_kwargs={}
     )
-    xtrigger_mgr.add_trig("get_name", xtrig)
+    xtrigger_mgr.add_trig("get_name", xtrig, 'fdir')
     xtrig.out = "[\"True\", {\"name\": \"Yossarian\"}]"
     tdef = TaskDef(
         name="foo",
@@ -149,7 +141,9 @@ def test_housekeeping_with_xtrigger_satisfied():
         start_point=1,
         spawn_ahead=False
     )
-    tdef.xtrig_labels.add("get_name")
+    init()
+    sequence = ISO8601Sequence('T-00!(T00, T06, T12, T18)', '20000101T00Z')
+    tdef.xtrig_labels[sequence] = "get_name"
     start_point = ISO8601Point('20000101T0000+05')
     itask = TaskProxy(tdef=tdef, start_point=start_point)
     xtrigger_mgr.collate([itask])
@@ -162,28 +156,8 @@ def test_housekeeping_with_xtrigger_satisfied():
     assert xtrigger_mgr.sat_xtrig
 
 
-class MockedProcPool(SubProcPool):
-
-    def put_command(self, ctx, callback=None, callback_args=None):
-        return True
-
-
-class MockedBroadcastMgr(BroadcastMgr):
-
-    def put_broadcast(
-            self, point_strings=None, namespaces=None, settings=None):
-        return True
-
-
-def test_satisfy_xtrigger():
+def test_satisfy_xtrigger(xtrigger_mgr_procpool_broadcast):
     """Test satisfy_xtriggers"""
-    # the XtriggerManager instance
-    xtrigger_mgr = XtriggerManager(
-        suite="sample_suite",
-        user="john-foo",
-        proc_pool=MockedProcPool(),
-        broadcast_mgr=MockedBroadcastMgr(suite_db_mgr=None)
-    )
     # the echo1 xtrig (not satisfied)
     echo1_xtrig = SubFuncContext(
         label="echo1",
@@ -192,7 +166,7 @@ def test_satisfy_xtrigger():
         func_kwargs={}
     )
     echo1_xtrig.out = "[\"True\", {\"name\": \"herminia\"}]"
-    xtrigger_mgr.add_trig("echo1", echo1_xtrig)
+    xtrigger_mgr_procpool_broadcast.add_trig("echo1", echo1_xtrig, "fdir")
     # the echo2 xtrig (satisfied through callback later)
     echo2_xtrig = SubFuncContext(
         label="echo2",
@@ -201,7 +175,7 @@ def test_satisfy_xtrigger():
         func_kwargs={}
     )
     echo2_xtrig.out = "[\"True\", {\"name\": \"herminia\"}]"
-    xtrigger_mgr.add_trig("echo2", echo2_xtrig)
+    xtrigger_mgr_procpool_broadcast.add_trig("echo2", echo2_xtrig, "fdir")
     # create a task
     tdef = TaskDef(
         name="foo",
@@ -210,48 +184,46 @@ def test_satisfy_xtrigger():
         start_point=1,
         spawn_ahead=False
     )
-    tdef.xtrig_labels.add("echo1")
-    tdef.xtrig_labels.add("echo2")
+    init()
+    sequence = ISO8601Sequence('T-00!(T00, T06, T12, T18)', '20000101T00Z')
+    tdef.xtrig_labels[sequence] = "echo1"
+    tdef.xtrig_labels[sequence] = "echo2"
     # cycle point for task proxy
     init()
-    start_point = ISO8601Point('20000101T0000+05')
+    start_point = ISO8601Point('20000101T00Z')
     # create task proxy
     itask = TaskProxy(tdef=tdef, start_point=start_point)
 
     # we start with no satisfied xtriggers, and nothing active
-    assert len(xtrigger_mgr.sat_xtrig) == 0
-    assert len(xtrigger_mgr.active) == 0
+    assert len(xtrigger_mgr_procpool_broadcast.sat_xtrig) == 0
+    assert len(xtrigger_mgr_procpool_broadcast.active) == 0
 
     # after calling satisfy_xtriggers the first time, we get two active
-    xtrigger_mgr.satisfy_xtriggers(itask)
-    assert len(xtrigger_mgr.sat_xtrig) == 0
-    assert len(xtrigger_mgr.active) == 2
+    xtrigger_mgr_procpool_broadcast.satisfy_xtriggers(itask)
+    assert len(xtrigger_mgr_procpool_broadcast.sat_xtrig) == 0
+    assert len(xtrigger_mgr_procpool_broadcast.active) == 2
 
     # calling satisfy_xtriggers again does not change anything
-    xtrigger_mgr.satisfy_xtriggers(itask)
-    assert len(xtrigger_mgr.sat_xtrig) == 0
-    assert len(xtrigger_mgr.active) == 2
+    xtrigger_mgr_procpool_broadcast.satisfy_xtriggers(itask)
+    assert len(xtrigger_mgr_procpool_broadcast.sat_xtrig) == 0
+    assert len(xtrigger_mgr_procpool_broadcast.active) == 2
 
     # now we call callback manually as the proc_pool we passed is a mock
     # then both should be satisfied
-    xtrigger_mgr.callback(echo1_xtrig)
-    xtrigger_mgr.callback(echo2_xtrig)
+    xtrigger_mgr_procpool_broadcast.callback(echo1_xtrig)
+    xtrigger_mgr_procpool_broadcast.callback(echo2_xtrig)
     # so both were satisfied, and nothing is active
-    assert len(xtrigger_mgr.sat_xtrig) == 2
-    assert len(xtrigger_mgr.active) == 0
+    assert len(xtrigger_mgr_procpool_broadcast.sat_xtrig) == 2
+    assert len(xtrigger_mgr_procpool_broadcast.active) == 0
 
     # calling satisfy_xtriggers again still does not change anything
-    xtrigger_mgr.satisfy_xtriggers(itask)
-    assert len(xtrigger_mgr.sat_xtrig) == 2
-    assert len(xtrigger_mgr.active) == 0
+    xtrigger_mgr_procpool_broadcast.satisfy_xtriggers(itask)
+    assert len(xtrigger_mgr_procpool_broadcast.sat_xtrig) == 2
+    assert len(xtrigger_mgr_procpool_broadcast.active) == 0
 
 
-def test_collate():
+def test_collate(xtrigger_mgr):
     """Test that collate properly tallies the totals of current xtriggers."""
-    xtrigger_mgr = XtriggerManager(
-        suite="sample_suite",
-        user="john-foo"
-    )
     xtrigger_mgr.collate(itasks=[])
     assert not xtrigger_mgr.all_xtrig
 
@@ -272,7 +244,9 @@ def test_collate():
         start_point=1,
         spawn_ahead=False
     )
-    tdef.xtrig_labels.add("get_name")
+    init()
+    sequence = ISO8601Sequence('T-00!(T00, T06, T12, T18)', '20000101T00Z')
+    tdef.xtrig_labels[sequence] = "get_name"
     start_point = ISO8601Point('20000101T0000+05')
     itask = TaskProxy(tdef=tdef, start_point=start_point)
     itask.state.xtriggers["get_name"] = get_name
@@ -289,7 +263,7 @@ def test_collate():
         func_kwargs={}
     )
     wall_clock.out = "[\"True\", \"1\"]"
-    xtrigger_mgr.add_clock("wall_clock", wall_clock)
+    xtrigger_mgr.add_trig("wall_clock", wall_clock, "fdir")
     # create a task
     tdef = TaskDef(
         name="foo",
@@ -298,24 +272,17 @@ def test_collate():
         start_point=1,
         spawn_ahead=False
     )
-    tdef.xclock_label = "wall_clock"
-    init()
+    tdef.xtrig_labels[sequence] = "wall_clock"
     start_point = ISO8601Point('20000101T0000+05')
     # create task proxy
     itask = TaskProxy(tdef=tdef, start_point=start_point)
-    itask.state.xclock = "wall_clock", True
 
     xtrigger_mgr.collate([itask])
-    assert xtrigger_mgr.all_xclock
     assert not xtrigger_mgr.all_xtrig
 
 
-def test_callback_not_active():
+def test_callback_not_active(xtrigger_mgr):
     """Test callback with no active contexts."""
-    xtrigger_mgr = XtriggerManager(
-        suite="sample_suite",
-        user="john-foo"
-    )
     # calling callback with a SubFuncContext with none active
     # results in a ValueError
 
@@ -329,12 +296,8 @@ def test_callback_not_active():
         xtrigger_mgr.callback(get_name)
 
 
-def test_callback_invalid_json():
+def test_callback_invalid_json(xtrigger_mgr):
     """Test callback with invalid JSON."""
-    xtrigger_mgr = XtriggerManager(
-        suite="sample_suite",
-        user="john-foo"
-    )
     get_name = SubFuncContext(
         label="get_name",
         func_name="get_name",
@@ -350,12 +313,8 @@ def test_callback_invalid_json():
     assert not xtrigger_mgr.sat_xtrig
 
 
-def test_callback():
+def test_callback(xtrigger_mgr):
     """Test callback."""
-    xtrigger_mgr = XtriggerManager(
-        suite="sample_suite",
-        user="john-foo"
-    )
     get_name = SubFuncContext(
         label="get_name",
         func_name="get_name",
@@ -369,18 +328,13 @@ def test_callback():
     assert xtrigger_mgr.sat_xtrig
 
 
-def test_check_xtriggers():
+def test_check_xtriggers(xtrigger_mgr_procpool):
     """Test check_xtriggers call.
 
     check_xtriggers does pretty much the same as collate. The
     difference is that besides tallying on all the xtriggers and
     clock xtriggers available, it then proceeds to trying to
     satisfy them."""
-    xtrigger_mgr = XtriggerManager(
-        suite="sample_suite",
-        user="john-foo",
-        proc_pool=MockedProcPool()
-    )
 
     # add a xtrigger
     # that will cause all_xtrig to be populated, but not all_xclock
@@ -390,7 +344,7 @@ def test_check_xtriggers():
         func_args=[],
         func_kwargs={}
     )
-    xtrigger_mgr.add_trig("get_name", get_name, 'fdir')
+    xtrigger_mgr_procpool.add_trig("get_name", get_name, 'fdir')
     get_name.out = "[\"True\", {\"name\": \"Yossarian\"}]"
     tdef1 = TaskDef(
         name="foo",
@@ -399,7 +353,9 @@ def test_check_xtriggers():
         start_point=1,
         spawn_ahead=False
     )
-    tdef1.xtrig_labels.add("get_name")
+    init()
+    sequence = ISO8601Sequence('T-00!(T00, T06, T12, T18)', '20000101T00Z')
+    tdef1.xtrig_labels[sequence] = "get_name"
     start_point = ISO8601Point('20000101T0000+05')
     itask1 = TaskProxy(tdef=tdef1, start_point=start_point)
     itask1.state.xtriggers["get_name"] = False  # satisfied?
@@ -413,7 +369,7 @@ def test_check_xtriggers():
         func_kwargs={}
     )
     wall_clock.out = "[\"True\", \"1\"]"
-    xtrigger_mgr.add_clock("wall_clock", wall_clock)
+    xtrigger_mgr_procpool.add_trig("wall_clock", wall_clock, "fdir")
     # create a task
     tdef2 = TaskDef(
         name="foo",
@@ -422,16 +378,82 @@ def test_check_xtriggers():
         start_point=1,
         spawn_ahead=False
     )
-    tdef2.xclock_label = "wall_clock"
+    tdef2.xtrig_labels[sequence] = "wall_clock"
     init()
     start_point = ISO8601Point('20000101T0000+05')
     # create task proxy
     itask2 = TaskProxy(tdef=tdef2, start_point=start_point)
-    itask2.state.xclock = "wall_clock", False  # satisfied?
 
-    xtrigger_mgr.check_xtriggers([itask1, itask2])
-    assert xtrigger_mgr.sat_xclock
-    assert xtrigger_mgr.all_xclock
+    xtrigger_mgr_procpool.check_xtriggers([itask1, itask2])
     # won't be satisfied, as it is async, we are are not calling callback
-    assert not xtrigger_mgr.sat_xtrig
-    assert xtrigger_mgr.all_xtrig
+    assert not xtrigger_mgr_procpool.sat_xtrig
+    assert xtrigger_mgr_procpool.all_xtrig
+
+
+# mock objects
+
+class MockedProcPool(SubProcPool):
+
+    def put_command(self, ctx, callback=None, callback_args=None):
+        return True
+
+
+class MockedBroadcastMgr(BroadcastMgr):
+
+    def put_broadcast(
+            self, point_strings=None, namespaces=None, settings=None):
+        return True
+
+# fixtures
+
+@pytest.fixture
+def xtrigger_mgr() -> XtriggerManager:
+    """A fixture to build an XtriggerManager that ignores validation.
+
+    Returns:
+        XtriggerManager: an XtriggerManager that ignores validation
+    """
+    xtrigger_mgr = XtriggerManager(
+        suite="suitea",
+        user="john-foo")
+    xtrigger_mgr.validate_xtrigger = lambda fn, fdir: True
+    return xtrigger_mgr
+
+
+@pytest.fixture
+def xtrigger_mgr_procpool() -> XtriggerManager:
+    """A fixture to build an XtriggerManager that ignores validation,
+    and uses a mocked proc_pool.
+
+    Returns:
+        XtriggerManager: an XtriggerManager that ignores validation and
+            uses a mocked proc_pool
+    """
+    xtrigger_mgr = XtriggerManager(
+        suite="suitea",
+        user="john-foo",
+        proc_pool=MockedProcPool()
+    )
+    xtrigger_mgr.validate_xtrigger = lambda fn, fdir: True
+    return xtrigger_mgr
+
+
+@pytest.fixture
+def xtrigger_mgr_procpool_broadcast() -> XtriggerManager:
+    """A fixture to build an XtriggerManager that ignores validation,
+    uses a mocked proc_pool, and uses a mocked broadacast_mgr.
+
+    Returns:
+        XtriggerManager: an XtriggerManager that ignores validation,
+            uses a mocked proc_pool, and uses a mocked broadacast_mgr
+    """
+    xtrigger_mgr = XtriggerManager(
+        suite="sample_suite",
+        user="john-foo",
+        proc_pool=MockedProcPool(),
+        broadcast_mgr=MockedBroadcastMgr(suite_db_mgr=None)
+    )
+    xtrigger_mgr.validate_xtrigger = lambda fn, fdir: True
+    return xtrigger_mgr
+
+

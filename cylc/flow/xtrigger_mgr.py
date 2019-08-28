@@ -151,18 +151,7 @@ class XtriggerManager(object):
             ValueError: if any string template in the function context
                 arguments are not present in the expected template values.
         """
-        fname = fctx.func_name
-        try:
-            func = get_func(fname, fdir)
-        except ImportError:
-            raise ImportError(
-                f"ERROR: xtrigger module '{fname}' not found")
-        except AttributeError:
-            raise AttributeError(
-                f"ERROR: '{fname}' not found in xtrigger module '{fname}'")
-        if not callable(func):
-            raise ValueError(
-                f"ERROR: '{fname}' not callable in xtrigger module '{fname}'")
+        self.validate_xtrigger(fctx.func_name, fdir)
         self.functx_map[label] = fctx
         # Check any string templates in the function arg values (note this
         # won't catch bad task-specific values - which are added dynamically).
@@ -175,6 +164,30 @@ class XtriggerManager(object):
             except TypeError:
                 # Not a string arg.
                 pass
+
+    def validate_xtrigger(self, fname: str, fdir: str):
+        """Validate an Xtrigger function.
+
+        Args:
+            fname (str): function name
+            fdir(str): function directory
+        Raises:
+            ImportError: if the function module was not found
+            AttributeError: if the function was not found in the xtrigger
+                module
+            ValueError: if the function is not callable
+        """
+        try:
+            func = get_func(fname, fdir)
+        except ImportError:
+            raise ImportError(
+                f"ERROR: xtrigger module '{fname}' not found")
+        except AttributeError:
+            raise AttributeError(
+                f"ERROR: '{fname}' not found in xtrigger module '{fname}'")
+        if not callable(func):
+            raise ValueError(
+                f"ERROR: '{fname}' not callable in xtrigger module '{fname}'")
 
     def load_xtrigger_for_restart(self, row_idx: int, row: Tuple[str, str]):
         """Load satisfied xtrigger results from suite DB.
