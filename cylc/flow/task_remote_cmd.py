@@ -22,7 +22,10 @@ import sys
 import tarfile
 
 import cylc.flow.flags
-from cylc.flow.suite_srv_files_mgr import SuiteSrvFilesManager
+from cylc.flow.suite_srv_files_mgr import (
+    ContactFileFields,
+    SuiteFiles
+)
 from cylc.flow.resources import extract_resources
 
 
@@ -40,7 +43,7 @@ def remote_init(uuid_str, rund, indirect_comm=None):
         *indirect_comm (str): use indirect communication via e.g. 'ssh'
     """
     rund = os.path.expandvars(rund)
-    srvd = os.path.join(rund, SuiteSrvFilesManager.DIR_BASE_SRV)
+    srvd = os.path.join(rund, SuiteFiles.SERVICE_DIR)
     try:
         orig_uuid_str = open(os.path.join(srvd, FILE_BASE_UUID)).read()
     except IOError:
@@ -53,7 +56,7 @@ def remote_init(uuid_str, rund, indirect_comm=None):
     oldcwd = os.getcwd()
     os.chdir(rund)
     # Extract job.sh from library, for use in job scripts.
-    extract_resources(SuiteSrvFilesManager.DIR_BASE_SRV, ['etc/job.sh'])
+    extract_resources(SuiteFiles.SERVICE_DIR, ['etc/job.sh'])
     try:
         tarhandle = tarfile.open(fileobj=sys.stdin.buffer, mode='r|')
         tarhandle.extractall()
@@ -61,10 +64,10 @@ def remote_init(uuid_str, rund, indirect_comm=None):
     finally:
         os.chdir(oldcwd)
     if indirect_comm:
-        fname = os.path.join(srvd, SuiteSrvFilesManager.FILE_BASE_CONTACT2)
+        fname = os.path.join(srvd, SuiteFiles.CONTACT2)
         with open(fname, 'w') as handle:
             handle.write('%s=%s\n' % (
-                SuiteSrvFilesManager.KEY_COMMS_PROTOCOL_2, indirect_comm))
+                ContactFileFields.COMMS_PROTOCOL_2, indirect_comm))
     print(REMOTE_INIT_DONE)
     return
 
@@ -76,10 +79,11 @@ def remote_tidy(rund):
         rund (str): suite run directory
     """
     rund = os.path.expandvars(rund)
-    srvd = os.path.join(rund, SuiteSrvFilesManager.DIR_BASE_SRV)
+    srvd = os.path.join(rund, SuiteFiles.SERVICE_DIR)
     for name in [
-            SuiteSrvFilesManager.FILE_BASE_CONTACT,
-            SuiteSrvFilesManager.FILE_BASE_CONTACT2]:
+            SuiteFiles.CONTACT,
+            SuiteFiles.CONTACT2
+    ]:
         fname = os.path.join(srvd, name)
         try:
             os.unlink(fname)

@@ -21,8 +21,7 @@ import unittest
 
 from unittest import mock
 
-from cylc.flow.suite_srv_files_mgr import (
-    SuiteSrvFilesManager, SuiteServiceFileError)
+from cylc.flow import suite_srv_files_mgr
 
 
 def get_register_test_cases():
@@ -86,7 +85,7 @@ def get_register_test_cases():
          "/home/user/cylc-run/suite4",  # readlink
          None,  # expected symlink
          "suite4",  # expected return value
-         SuiteServiceFileError,  # expected exception
+         suite_srv_files_mgr.SuiteServiceFileError,  # expected exception
          "no suite.rc"  # expected part of exception message
          ),
         # 5 the source directory and the resolved symlink for $SOURCE in
@@ -102,7 +101,7 @@ def get_register_test_cases():
          "/home/hercules/cylc-run/suite5",  # readlink
          "/home/user/cylc-run/suite5",  # expected symlink
          "suite5",  # expected return value
-         SuiteServiceFileError,  # expected exception
+         suite_srv_files_mgr.SuiteServiceFileError,  # expected exception
          "already points to"  # expected part of exception message
          ),
         # 6 the source directory and the resolved symlink for $SOURCE in
@@ -163,7 +162,7 @@ def get_register_test_cases():
          None,  # readlink
          None,  # expected symlink
          None,  # expected return value
-         SuiteServiceFileError,  # expected exception
+         suite_srv_files_mgr.SuiteServiceFileError,  # expected exception
          "cannot be an absolute path"  # expected part of exception message
          ),
         # 10 invalid suite name
@@ -177,7 +176,7 @@ def get_register_test_cases():
          None,  # readlink
          None,  # expected symlink
          None,  # expected return value
-         SuiteServiceFileError,  # expected exception
+         suite_srv_files_mgr.SuiteServiceFileError,  # expected exception
          "can not start with: ., -"  # expected part of exception message
          )
     ]
@@ -185,12 +184,10 @@ def get_register_test_cases():
 
 class TestSuiteSrvFilesManager(unittest.TestCase):
 
-    def setUp(self):
-        self.suite_srv_files_mgr = SuiteSrvFilesManager()
-
     @mock.patch('cylc.flow.suite_srv_files_mgr.os')
-    def test_register(self, mocked_os):
-        """Test the SuiteSrvFilesManager register function."""
+    @mock.patch('cylc.flow.suite_srv_files_mgr.get_suite_srv_dir')
+    def test_register(self, mocked_os, mocked_get_suite_srv_dir):
+        """Test the register function."""
         def mkdirs_standin(_, exist_ok=False):
             return True
 
@@ -210,16 +207,17 @@ class TestSuiteSrvFilesManager(unittest.TestCase):
             mocked_os.path.isabs = lambda x: isabs
 
             mocked_os.path.isfile = lambda x: isfile
-            self.suite_srv_files_mgr.get_suite_srv_dir = mock.MagicMock(
-                return_value=suite_srv_dir
-            )
+            mocked_get_suite_srv_dir.return_value = str(suite_srv_dir)
+            # suite_srv_files_mgr.get_suite_srv_dir = mock.MagicMock(
+            #     return_value=suite_srv_dir
+            # )
             if readlink == OSError:
                 mocked_os.readlink.side_effect = readlink
             else:
                 mocked_os.readlink.side_effect = lambda x: readlink
 
             if e_expected is None:
-                reg = self.suite_srv_files_mgr.register(reg, source, redirect)
+                reg = suite_srv_files_mgr.register(reg, source, redirect)
                 self.assertEqual(expected, reg)
                 if mocked_os.symlink.call_count > 0:
                     # first argument, of the first call
@@ -227,7 +225,7 @@ class TestSuiteSrvFilesManager(unittest.TestCase):
                     self.assertEqual(expected_symlink, arg0)
             else:
                 with self.assertRaises(e_expected) as cm:
-                    self.suite_srv_files_mgr.register(reg, source, redirect)
+                    suite_srv_files_mgr.register(reg, source, redirect)
                 if e_message is not None:
                     the_exception = cm.exception
                     self.assertTrue(e_message in str(the_exception),

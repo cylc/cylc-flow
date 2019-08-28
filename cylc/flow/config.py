@@ -64,7 +64,7 @@ from cylc.flow.pathutil import (
 )
 from cylc.flow.print_tree import print_tree
 from cylc.flow.subprocctx import SubFuncContext
-from cylc.flow.suite_srv_files_mgr import SuiteSrvFilesManager
+from cylc.flow.suite_srv_files_mgr import NO_TITLE
 from cylc.flow.taskdef import TaskDef
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
@@ -1324,7 +1324,7 @@ class SuiteConfig(object):
                 if 'title' in self.cfg['runtime'][key]['meta']:
                     tree[key] = self.cfg['runtime'][key]['meta']['title']
                 else:
-                    tree[key] = SuiteSrvFilesManager.NO_TITLE
+                    tree[key] = NO_TITLE
             elif isinstance(val, dict):
                 self.add_tree_titles(val)
 
@@ -1348,7 +1348,7 @@ class SuiteConfig(object):
                 result[ns] = self.cfg['runtime'][ns]['meta']['title']
             else:
                 # no need to flesh out the full runtime just for title
-                result[ns] = SuiteSrvFilesManager.NO_TITLE
+                result[ns] = NO_TITLE
 
         return result
 

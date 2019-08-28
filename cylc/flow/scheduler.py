@@ -66,8 +66,7 @@ from cylc.flow.suite_db_mgr import SuiteDatabaseManager
 from cylc.flow.suite_events import (
     SuiteEventContext, SuiteEventHandler)
 from cylc.flow.suite_status import StopMode, AutoRestartMode
-from cylc.flow.suite_srv_files_mgr import (
-    SuiteSrvFilesManager, SuiteServiceFileError)
+from cylc.flow import suite_srv_files_mgr
 from cylc.flow.taskdef import TaskDef
 from cylc.flow.task_events_mgr import TaskEventsManager
 from cylc.flow.task_id import TaskID
@@ -150,12 +149,11 @@ class Scheduler(object):
     def __init__(self, is_restart, options, args):
         self.options = options
         self.profiler = Profiler(self.options.profile_mode)
-        self.suite_srv_files_mgr = SuiteSrvFilesManager()
         self.suite = args[0]
         self.uuid_str = SchedulerUUID()
-        self.suite_dir = self.suite_srv_files_mgr.get_suite_source_dir(
+        self.suite_dir = suite_srv_files_mgr.get_suite_source_dir(
             self.suite)
-        self.suiterc = self.suite_srv_files_mgr.get_suite_rc(self.suite)
+        self.suiterc = suite_srv_files_mgr.get_suite_rc(self.suite)
         self.suiterc_update_time = None
         # For user-defined batch system handlers
         sys.path.append(os.path.join(self.suite_dir, 'python'))
@@ -213,7 +211,7 @@ class Scheduler(object):
         self.already_timed_out = False
 
         self.suite_db_mgr = SuiteDatabaseManager(
-            self.suite_srv_files_mgr.get_suite_srv_dir(self.suite),  # pri_d
+            suite_srv_files_mgr.get_suite_srv_dir(self.suite),  # pri_d
             os.path.join(self.suite_run_dir, 'log'))                 # pub_d
         self.broadcast_mgr = BroadcastMgr(self.suite_db_mgr)
         self.xtrigger_mgr = None  # type: XtriggerManager
@@ -358,7 +356,7 @@ see `COPYING' in the Cylc source distribution.
         self.task_events_mgr.uuid_str = self.uuid_str
         self.task_job_mgr = TaskJobManager(
             self.suite, self.proc_pool, self.suite_db_mgr,
-            self.suite_srv_files_mgr, self.task_events_mgr, self.job_pool)
+            self.task_events_mgr, self.job_pool)
         self.task_job_mgr.task_remote_mgr.uuid_str = self.uuid_str
 
         self.xtrigger_mgr = XtriggerManager(
@@ -935,11 +933,11 @@ see `COPYING' in the Cylc source distribution.
         """Create contact file."""
         # Make sure another suite of the same name has not started while this
         # one is starting
-        self.suite_srv_files_mgr.detect_old_contact_file(self.suite)
+        suite_srv_files_mgr.detect_old_contact_file(self.suite)
         # Get "pid,args" process string with "ps"
         pid_str = str(os.getpid())
         proc = Popen(
-            ['ps', self.suite_srv_files_mgr.PS_OPTS, pid_str],
+            ['ps', suite_srv_files_mgr.PS_OPTS, pid_str],
             stdin=DEVNULL, stdout=PIPE, stderr=PIPE)
         out, err = (f.decode() for f in proc.communicate())
         ret_code = proc.wait()
@@ -953,26 +951,45 @@ see `COPYING' in the Cylc source distribution.
                 'cannot get process "args" from "ps": %s' % err)
         # Write suite contact file.
         # Preserve contact data in memory, for regular health check.
-        mgr = self.suite_srv_files_mgr
+        fields = suite_srv_files_mgr.ContactFileFields
         contact_data = {
-            mgr.KEY_API: str(self.server.API),
-            mgr.KEY_HOST: self.host,
-            mgr.KEY_NAME: self.suite,
-            mgr.KEY_OWNER: self.owner,
-            mgr.KEY_PORT: str(self.server.port),
-            mgr.KEY_PROCESS: process_str,
-            mgr.KEY_SSH_USE_LOGIN_SHELL: str(glbl_cfg().get_host_item(
-                'use login shell')),
-            mgr.KEY_SUITE_RUN_DIR_ON_SUITE_HOST: self.suite_run_dir,
-            mgr.KEY_TASK_MSG_MAX_TRIES: str(glbl_cfg().get(
-                ['task messaging', 'maximum number of tries'])),
-            mgr.KEY_TASK_MSG_RETRY_INTVL: str(float(glbl_cfg().get(
-                ['task messaging', 'retry interval']))),
-            mgr.KEY_TASK_MSG_TIMEOUT: str(float(glbl_cfg().get(
-                ['task messaging', 'connection timeout']))),
-            mgr.KEY_UUID: self.uuid_str.value,
-            mgr.KEY_VERSION: CYLC_VERSION}
-        mgr.dump_contact_file(self.suite, contact_data)
+            fields.API:
+                str(self.server.API),
+            fields.HOST:
+                self.host,
+            fields.NAME:
+                self.suite,
+            fields.OWNER:
+                self.owner,
+            fields.PORT:
+                str(self.server.port),
+            fields.PROCESS:
+                process_str,
+            fields.SSH_USE_LOGIN_SHELL:
+                str(glbl_cfg().get_host_item('use login shell')),
+            fields.SUITE_RUN_DIR_ON_SUITE_HOST:
+                self.suite_run_dir,
+            fields.TASK_MSG_MAX_TRIES:
+                str(glbl_cfg().get([
+                    'task messaging',
+                    'maximum number of tries'
+                ])),
+            fields.TASK_MSG_RETRY_INTVL:
+                str(float(glbl_cfg().get([
+                    'task messaging',
+                    'retry interval'
+                ]))),
+            fields.TASK_MSG_TIMEOUT:
+                str(float(glbl_cfg().get([
+                    'task messaging',
+                    'connection timeout'
+                ]))),
+            fields.UUID:
+                self.uuid_str.value,
+            fields.VERSION:
+                CYLC_VERSION
+        }
+        suite_srv_files_mgr.dump_contact_file(self.suite, contact_data)
         self.contact_data = contact_data
 
     def load_suiterc(self, is_reload=False):
@@ -988,7 +1005,7 @@ see `COPYING' in the Cylc source distribution.
             mem_log_func=self.profiler.log_memory,
             output_fname=os.path.join(
                 self.suite_run_dir,
-                self.suite_srv_files_mgr.FILE_BASE_SUITE_RC + '.processed'),
+                suite_srv_files_mgr.SuiteFiles.SUITE_RC + '.processed'),
             run_dir=self.suite_run_dir,
             log_dir=self.suite_log_dir,
             work_dir=self.suite_work_dir,
@@ -1479,15 +1496,15 @@ see `COPYING' in the Cylc source distribution.
             # 4. check if contact file consistent with current start - if not
             #    shutdown.
             try:
-                contact_data = self.suite_srv_files_mgr.load_contact_file(
+                contact_data = suite_srv_files_mgr.load_contact_file(
                     self.suite)
                 if contact_data != self.contact_data:
                     raise AssertionError('contact file modified')
             except (AssertionError, IOError, ValueError,
-                    SuiteServiceFileError) as exc:
+                    suite_srv_files_mgr.SuiteServiceFileError) as exc:
                 LOG.error(
                     "%s: contact file corrupted/modified and may be left",
-                    self.suite_srv_files_mgr.get_contact_file(self.suite))
+                    suite_srv_files_mgr.get_contact_file(self.suite))
                 raise exc
             self.time_next_health_check = (
                 now + self._get_cylc_conf('health check interval'))
@@ -1736,7 +1753,7 @@ see `COPYING' in the Cylc source distribution.
         sys.stderr.flush()
 
         if self.contact_data:
-            fname = self.suite_srv_files_mgr.get_contact_file(self.suite)
+            fname = suite_srv_files_mgr.get_contact_file(self.suite)
             try:
                 os.unlink(fname)
             except OSError as exc:

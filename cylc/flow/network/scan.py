@@ -30,7 +30,13 @@ from cylc.flow.hostuserutil import is_remote_host, get_host_ip_by_name
 from cylc.flow.network.client import (
     SuiteRuntimeClient, ClientError, ClientTimeout)
 from cylc.flow.suite_srv_files_mgr import (
-    SuiteSrvFilesManager, SuiteServiceFileError)
+    ContactFileFields,
+    SuiteFiles,
+    SuiteServiceFileError,
+    load_contact_file,
+    get_suite_title,
+    get_suite_source_dir
+)
 
 DEBUG_DELIM = '\n' + ' ' * 4
 INACTIVITY_TIMEOUT = 10.0
@@ -207,7 +213,6 @@ def get_scan_items_from_fs(
         tuple - (reg, host, port)
 
     """
-    srv_files_mgr = SuiteSrvFilesManager()
     if owner_pattern is None:
         # Run directory of current user only
         run_dirs = [(glbl_cfg().get_host_item('run directory'), None)]
@@ -235,7 +240,8 @@ def get_scan_items_from_fs(
             # Always descend for top directory, but
             # don't descend further if it has a .service/ or log/ dir
             if dirpath != run_d and (
-                    srv_files_mgr.DIR_BASE_SRV in dnames or 'log' in dnames):
+                    SuiteFiles.SERVICE_DIR
+                    in dnames or 'log' in dnames):
                 dnames[:] = []
 
             # Filter suites by name
@@ -246,18 +252,19 @@ def get_scan_items_from_fs(
             # Choose only suites with .service and matching filter
             if active_only:
                 try:
-                    contact_data = srv_files_mgr.load_contact_file(reg, owner)
+                    contact_data = load_contact_file(
+                        reg, owner)
                 except (SuiteServiceFileError, IOError, TypeError, ValueError):
                     continue
                 yield (
                     reg,
-                    contact_data[srv_files_mgr.KEY_HOST],
-                    contact_data[srv_files_mgr.KEY_PORT]
+                    contact_data[ContactFileFields.HOST],
+                    contact_data[ContactFileFields.PORT]
                 )
             else:
                 try:
-                    source_dir = srv_files_mgr.get_suite_source_dir(reg)
-                    title = srv_files_mgr.get_suite_title(reg)
+                    source_dir = get_suite_source_dir(reg)
+                    title = get_suite_title(reg)
                 except (SuiteServiceFileError, IOError):
                     continue
                 yield (

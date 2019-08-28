@@ -46,7 +46,7 @@ from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.loggingutil import CylcLogFormatter
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.suite_srv_files_mgr import SuiteSrvFilesManager
+from cylc.flow import suite_srv_files_mgr
 
 
 def parse_args():
@@ -92,7 +92,7 @@ def main(_, options, reg):
             if isinstance(handler.formatter, CylcLogFormatter):
                 handler.formatter.configure(timestamp=False)
 
-    suite, suiterc = SuiteSrvFilesManager().parse_suite_arg(options, reg)
+    suite, suiterc = suite_srv_files_mgr.parse_suite_arg(options, reg)
     cfg = SuiteConfig(
         suite,
         suiterc,

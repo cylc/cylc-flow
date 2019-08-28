@@ -28,8 +28,7 @@ from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.pathutil import get_suite_run_dir
 from cylc.flow.remote import remrun, remote_cylc_cmd
 from cylc.flow.scheduler import Scheduler
-from cylc.flow.suite_srv_files_mgr import (
-    SuiteSrvFilesManager, SuiteServiceFileError)
+from cylc.flow import suite_srv_files_mgr
 from cylc.flow.resources import extract_resources
 from cylc.flow.terminal import cli_function
 
@@ -218,8 +217,8 @@ def get_option_parser(is_restart):
 def _auto_register():
     """Register a suite installed in the cylc-run directory."""
     try:
-        reg = SuiteSrvFilesManager().register()
-    except SuiteServiceFileError as exc:
+        reg = suite_srv_files_mgr.register()
+    except suite_srv_files_mgr.SuiteServiceFileError as exc:
         sys.exit(exc)
     # Replace this process with "cylc run REG ..." for 'ps -f'.
     os.execv(sys.argv[0], [sys.argv[0]] + [reg] + sys.argv[1:])
@@ -230,16 +229,16 @@ def scheduler_cli(parser, options, args, is_restart=False):
     reg = args[0]
     # Check suite is not already running before start of host selection.
     try:
-        SuiteSrvFilesManager().detect_old_contact_file(reg)
-    except SuiteServiceFileError as exc:
+        suite_srv_files_mgr.detect_old_contact_file(reg)
+    except suite_srv_files_mgr.SuiteServiceFileError as exc:
         sys.exit(exc)
 
     # Create auth files if needed.
-    SuiteSrvFilesManager().create_auth_files(reg)
+    suite_srv_files_mgr.create_auth_files(reg)
 
     # Extract job.sh from library, for use in job scripts.
     extract_resources(
-        SuiteSrvFilesManager().get_suite_srv_dir(reg),
+        suite_srv_files_mgr.get_suite_srv_dir(reg),
         ['etc/job.sh'])
 
     # Check whether a run host is explicitly specified, else select one.
@@ -263,14 +262,14 @@ def scheduler_cli(parser, options, args, is_restart=False):
         sys.exit()
 
     try:
-        SuiteSrvFilesManager().get_suite_source_dir(args[0], options.owner)
-    except SuiteServiceFileError:
+        suite_srv_files_mgr.get_suite_source_dir(args[0], options.owner)
+    except suite_srv_files_mgr.SuiteServiceFileError:
         # Source path is assumed to be the run directory
-        SuiteSrvFilesManager().register(args[0], get_suite_run_dir(args[0]))
+        suite_srv_files_mgr.register(args[0], get_suite_run_dir(args[0]))
 
     try:
         scheduler = Scheduler(is_restart, options, args)
-    except SuiteServiceFileError as exc:
+    except suite_srv_files_mgr.SuiteServiceFileError as exc:
         sys.exit(exc)
     scheduler.start()
 

@@ -28,7 +28,7 @@ if remrun():
     sys.exit(0)
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.suite_srv_files_mgr import SuiteSrvFilesManager
+from cylc.flow import suite_srv_files_mgr
 from cylc.flow.terminal import cli_function
 
 
@@ -39,7 +39,7 @@ def get_option_parser():
 @cli_function(get_option_parser)
 def main(parser, options, suite):
     """Implement "cylc get-directory"."""
-    print(SuiteSrvFilesManager().get_suite_source_dir(
+    print(suite_srv_files_mgr.get_suite_source_dir(
         suite, options.suite_owner))
 
 

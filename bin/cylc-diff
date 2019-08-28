@@ -35,7 +35,7 @@ if remrun():
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.config import SuiteConfig
-from cylc.flow.suite_srv_files_mgr import SuiteSrvFilesManager
+from cylc.flow import suite_srv_files_mgr
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow.terminal import cli_function
 
@@ -128,9 +128,8 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser, options, *args):
-    srv_files_manager = SuiteSrvFilesManager()
-    suite1, suite1rc = srv_files_manager.parse_suite_arg(options, args[0])
-    suite2, suite2rc = srv_files_manager.parse_suite_arg(options, args[1])
+    suite1, suite1rc = suite_srv_files_mgr.parse_suite_arg(options, args[0])
+    suite2, suite2rc = suite_srv_files_mgr.parse_suite_arg(options, args[1])
     if suite1 == suite2:
         parser.error("You can't diff a single suite.")
     print("Parsing %s (%s)" % (suite1, suite1rc))

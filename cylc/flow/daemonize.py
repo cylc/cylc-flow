@@ -23,6 +23,7 @@ import sys
 from time import sleep, time
 
 from cylc.flow.pathutil import get_suite_run_log_name
+from cylc.flow.suite_srv_files_mgr import PS_OPTS
 
 
 SUITE_SCAN_INFO_TMPL = r"""
@@ -101,7 +102,7 @@ def daemonize(server):
                 "suite": server.suite,
                 "host": server.host,
                 "url": suite_url,
-                "ps_opts": server.suite_srv_files_mgr.PS_OPTS,
+                "ps_opts": PS_OPTS,
                 "pid": suite_pid,
             })
             # exit parent 1

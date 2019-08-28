@@ -38,14 +38,14 @@ import re
 from cylc.flow.network.scan import get_scan_items_from_fs
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.print_tree import print_tree
-from cylc.flow.suite_srv_files_mgr import SuiteSrvFilesManager
+from cylc.flow.suite_srv_files_mgr import REG_DELIM
 from cylc.flow.terminal import cli_function
 
 
 def get_padding(reglist):
     maxlen = 0
     for reg in reglist:
-        items = reg[0].split(SuiteSrvFilesManager.DELIM)
+        items = reg[0].split(REG_DELIM)
         for i in range(0, len(items)):
             if i == 0:
                 tmp = len(items[i])
@@ -137,7 +137,7 @@ def main(parser, options, regfilter=None):
             dir_ = re.sub('^' + os.environ['HOME'], '~', dir_)
             if options.align:
                 title = title + spacer_title[len(title):]
-            regpath = suite.split(SuiteSrvFilesManager.DELIM)
+            regpath = suite.split(REG_DELIM)
             sub = tree
             for key in regpath[:-1]:
                 if key not in sub:

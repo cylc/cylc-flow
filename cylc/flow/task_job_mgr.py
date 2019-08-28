@@ -81,7 +81,7 @@ class TaskJobManager(object):
     REMOTE_INIT_MSG = 'remote host initialising'
     KEY_EXECUTE_TIME_LIMIT = TaskEventsManager.KEY_EXECUTE_TIME_LIMIT
 
-    def __init__(self, suite, proc_pool, suite_db_mgr, suite_srv_files_mgr,
+    def __init__(self, suite, proc_pool, suite_db_mgr,
                  task_events_mgr, job_pool):
         self.suite = suite
         self.proc_pool = proc_pool
@@ -90,9 +90,7 @@ class TaskJobManager(object):
         self.job_pool = job_pool
         self.job_file_writer = JobFileWriter()
         self.batch_sys_mgr = self.job_file_writer.batch_sys_mgr
-        self.suite_srv_files_mgr = suite_srv_files_mgr
-        self.task_remote_mgr = TaskRemoteMgr(
-            suite, proc_pool, suite_srv_files_mgr)
+        self.task_remote_mgr = TaskRemoteMgr(suite, proc_pool)
 
     def check_task_jobs(self, suite, task_pool):
         """Check submission and execution timeout and polling timers.

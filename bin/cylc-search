@@ -40,7 +40,7 @@ import os
 import re
 from collections import deque
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.suite_srv_files_mgr import SuiteSrvFilesManager
+from cylc.flow import suite_srv_files_mgr
 from cylc.flow.terminal import cli_function
 from cylc.flow.parsec.include import inline
 
@@ -77,7 +77,7 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser, options, reg, *patterns):
-    suite, suiterc = SuiteSrvFilesManager().parse_suite_arg(options, reg)
+    suite, suiterc = suite_srv_files_mgr.parse_suite_arg(options, reg)
 
     # cylc search SUITE PATTERN
     pattern = '|'.join(patterns)

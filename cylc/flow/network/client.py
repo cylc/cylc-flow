@@ -37,7 +37,11 @@ from cylc.flow.hostuserutil import get_fqdn_by_host
 from cylc.flow.network.authentication import encrypt, decrypt, get_secret
 from cylc.flow.network.server import PB_METHOD_MAP
 from cylc.flow.suite_srv_files_mgr import (
-    SuiteSrvFilesManager, SuiteServiceFileError)
+    ContactFileFields,
+    SuiteServiceFileError,
+    detect_old_contact_file,
+    load_contact_file
+)
 
 # we should only have one ZMQ context per-process
 CONTEXT = zmq.asyncio.Context()
@@ -131,7 +135,7 @@ class ZMQClient(object):
         # assumes secret won't change during the request
         try:
             secret = self.secret()
-        except cylc.flow.suite_srv_files_mgr.SuiteServiceFileError:
+        except SuiteServiceFileError:
             raise ClientError('could not read suite passphrase')
 
         # send message
@@ -300,7 +304,7 @@ class SuiteRuntimeClient(ZMQClient):
         # Cannot connect, perhaps suite is no longer running and is leaving
         # behind a contact file?
         try:
-            SuiteSrvFilesManager().detect_old_contact_file(suite, (host, port))
+            detect_old_contact_file(suite, (host, port))
         except (AssertionError, SuiteServiceFileError):
             # * contact file not have matching (host, port) to suite proc
             # * old contact file exists and the suite process still alive
@@ -325,15 +329,15 @@ class SuiteRuntimeClient(ZMQClient):
             ClientError: if the suite is not running.
         """
         try:
-            contact = SuiteSrvFilesManager().load_contact_file(
+            contact = load_contact_file(
                 suite, owner, host)
         except SuiteServiceFileError:
             raise ClientError(f'Contact info not found for suite '
                               f'"{suite}", suite not running?')
 
         if not host:
-            host = contact[SuiteSrvFilesManager.KEY_HOST]
+            host = contact[ContactFileFields.HOST]
         host = get_fqdn_by_host(host)
 
-        port = int(contact[SuiteSrvFilesManager.KEY_PORT])
+        port = int(contact[ContactFileFields.PORT])
         return host, port

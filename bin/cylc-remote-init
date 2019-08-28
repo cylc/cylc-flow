@@ -27,9 +27,9 @@ Content of items to install from a tar file read from STDIN.
 Return:
     0:
         On success or if initialisation not required:
-        - Print SuiteSrvFilesManager.REMOTE_INIT_NOT_REQUIRED if initialisation
+        - Print task_remote_cmd.REMOTE_INIT_NOT_REQUIRED if initialisation
           not required (e.g. remote has shared file system with suite host).
-        - Print SuiteSrvFilesManager.REMOTE_INIT_DONE on success.
+        - Print task_remote_cmd.REMOTE_INIT_DONE on success.
     1:
         On failure.
 

@@ -74,7 +74,7 @@ from cylc.flow.parsec.include import inline, \
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.suite_srv_files_mgr import SuiteSrvFilesManager
+from cylc.flow import suite_srv_files_mgr
 from cylc.flow.terminal import cli_function
 from cylc.flow.wallclock import get_current_time_string
 
@@ -101,7 +101,7 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser, options, *args):
-    suiterc = SuiteSrvFilesManager().parse_suite_arg(options, args[0])[1]
+    suiterc = suite_srv_files_mgr.parse_suite_arg(options, args[0])[1]
 
     if options.geditor:
         editor = glbl_cfg().get(['editors', 'gui'])

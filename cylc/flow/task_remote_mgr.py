@@ -38,6 +38,12 @@ import cylc.flow.flags
 from cylc.flow.hostuserutil import is_remote, is_remote_host, is_remote_user
 from cylc.flow.pathutil import get_remote_suite_run_dir
 from cylc.flow.subprocctx import SubProcContext
+from cylc.flow.suite_srv_files_mgr import (
+    SuiteFiles,
+    get_suite_srv_dir,
+    get_contact_file,
+    get_auth_item
+)
 from cylc.flow.task_remote_cmd import (
     FILE_BASE_UUID, REMOTE_INIT_DONE, REMOTE_INIT_NOT_REQUIRED)
 
@@ -49,10 +55,9 @@ REMOTE_INIT_FAILED = 'REMOTE INIT FAILED'
 class TaskRemoteMgr(object):
     """Manage task job remote initialisation, tidy, selection."""
 
-    def __init__(self, suite, proc_pool, suite_srv_files_mgr):
+    def __init__(self, suite, proc_pool):
         self.suite = suite
         self.proc_pool = proc_pool
-        self.suite_srv_files_mgr = suite_srv_files_mgr
         # self.remote_host_str_map = {host_str: host|TaskRemoteMgmtError|None}
         self.remote_host_str_map = {}
         # self.remote_init_map = {(host, owner): status, ...}
@@ -181,8 +186,9 @@ class TaskRemoteMgr(object):
         tmphandle.seek(0)
         # UUID file - for remote to identify shared file system with suite host
         uuid_fname = os.path.join(
-            self.suite_srv_files_mgr.get_suite_srv_dir(self.suite),
-            FILE_BASE_UUID)
+            get_suite_srv_dir(self.suite),
+            FILE_BASE_UUID
+        )
         if not os.path.exists(uuid_fname):
             open(uuid_fname, 'wb').write(str(self.uuid_str).encode())
         # Build the command
@@ -216,8 +222,8 @@ class TaskRemoteMgr(object):
         """
         # Remove UUID file
         uuid_fname = os.path.join(
-            self.suite_srv_files_mgr.get_suite_srv_dir(self.suite),
-            FILE_BASE_UUID)
+            get_suite_srv_dir(self.suite), FILE_BASE_UUID
+        )
         try:
             os.unlink(uuid_fname)
         except OSError:
@@ -312,17 +318,17 @@ class TaskRemoteMgr(object):
         if comm_meth in ['ssh', 'zmq']:
             # Contact file
             items.append((
-                self.suite_srv_files_mgr.get_contact_file(self.suite),
+                get_contact_file(self.suite),
                 os.path.join(
-                    self.suite_srv_files_mgr.DIR_BASE_SRV,
-                    self.suite_srv_files_mgr.FILE_BASE_CONTACT)))
+                    SuiteFiles.SERVICE_DIR,
+                    SuiteFiles.CONTACT)))
         if comm_meth in ['zmq']:
             # Passphrase file
             items.append((
-                self.suite_srv_files_mgr.get_auth_item(
-                    self.suite_srv_files_mgr.FILE_BASE_PASSPHRASE,
+                get_auth_item(
+                    SuiteFiles.PASSPHRASE,
                     self.suite),
                 os.path.join(
-                    self.suite_srv_files_mgr.DIR_BASE_SRV,
-                    self.suite_srv_files_mgr.FILE_BASE_PASSPHRASE)))
+                    SuiteFiles.SERVICE_DIR,
+                    SuiteFiles.PASSPHRASE)))
         return items

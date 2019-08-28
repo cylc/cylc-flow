@@ -44,7 +44,7 @@ from cylc.flow.cylc_subproc import procopen
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.config import SuiteConfig
 from cylc.flow.subprocpool import SubProcPool
-from cylc.flow.suite_srv_files_mgr import SuiteSrvFilesManager
+from cylc.flow.suite_srv_files_mgr import parse_suite_arg
 from cylc.flow.task_remote_mgr import TaskRemoteMgr
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow.terminal import cli_function
@@ -64,8 +64,7 @@ def get_option_parser():
 @cli_function(get_option_parser, remove_opts=['--host', '--user'])
 def main(_, options, *args):
     # suite name or file path
-    suite_srv_files_mgr = SuiteSrvFilesManager()
-    suite, suiterc = suite_srv_files_mgr.parse_suite_arg(options, args[0])
+    suite, suiterc = parse_suite_arg(options, args[0])
 
     # extract task host accounts from the suite
     config = SuiteConfig(
@@ -78,8 +77,7 @@ def main(_, options, *args):
         account_set.add((
             config.get_config(['runtime', name, 'remote', 'owner']),
             config.get_config(['runtime', name, 'remote', 'host'])))
-    task_remote_mgr = TaskRemoteMgr(
-        suite, SubProcPool(), suite_srv_files_mgr)
+    task_remote_mgr = TaskRemoteMgr(suite, SubProcPool())
     for _, host_str in account_set:
         task_remote_mgr.remote_host_select(host_str)
     accounts = []

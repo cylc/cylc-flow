@@ -21,7 +21,7 @@ import getpass
 
 from jose import jwt
 
-from cylc.flow.suite_srv_files_mgr import SuiteSrvFilesManager
+from cylc.flow.suite_srv_files_mgr import SuiteFiles, get_auth_item
 
 
 HASH = 'HS256'  # Encoding for JWT
@@ -36,8 +36,8 @@ def get_secret(suite):
     TODO: Upgrade the secret to add foreword security.
 
     """
-    return SuiteSrvFilesManager().get_auth_item(
-        SuiteSrvFilesManager.FILE_BASE_PASSPHRASE,
+    return get_auth_item(
+        SuiteFiles.PASSPHRASE,
         suite, content=True
     )
 
