@@ -66,32 +66,6 @@ safety measure, however, so command prompts are disabled by default.
 - *default*: True
 
 
-enable run directory housekeeping
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The suite run directory tree is created anew with every suite start
-(not restart) but output from the most recent previous runs can be
-retained in a rolling archive. Set length to 0 to keep no backups.
-**This is incompatible with current Rose suite housekeeping** (see
-:ref:`SuiteStorageEtc` for more on Rose) so it is disabled by
-default, in which case new suite run files will overwrite existing ones
-in the same run directory tree. Rarely, this can result in incorrect
-polling results due to the presence of old task status files.
-
-- *type*: boolean
-- *default*: False
-
-
-run directory rolling archive length
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The number of old run directory trees to retain if run directory
-housekeeping is enabled.
-
-- *type*: integer
-- *default*: 2
-
-
 task host select command timeout
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
