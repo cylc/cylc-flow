@@ -400,6 +400,8 @@ def upg(cfg, descr):
     u.obsolete('7.8.1', ['runtime', '__MANY__', 'events', 'reset timer'])
     u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'shell'])
     u.obsolete('8.0.0', ['runtime', '__MANY__', 'remote'], ['runtime', '__MANY__', 'job'])
+    u.obsolete('8.0.0', ['general', 'authentication'], ['general', 'authorization'])
+    u.obsolete('8.0.0', ['cylc', 'authentication'], ['cylc', 'authorization'])
     u.obsolete('8.0.0', ['cylc'], ['general'])
     u.upgrade()
 
