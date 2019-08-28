@@ -19,13 +19,6 @@
 . "$(dirname "$0")/test_header"
 set_test_remote
 set_test_number 2
-
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}" \
-    cylc run --debug --no-detach "${SUITE_NAME}"
-
+reftest
 purge_suite_remote "${CYLC_TEST_OWNER}@${CYLC_TEST_HOST}" "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
 exit

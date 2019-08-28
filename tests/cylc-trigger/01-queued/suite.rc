@@ -10,11 +10,9 @@
     [[foo]]
         inherit = METASYNTACTIC
         script = """
-            sleep 10
+            wait
             cylc trigger $CYLC_SUITE_NAME bar 1
-            sleep 10
-            cylc stop $CYLC_SUITE_NAME
-            sleep 10
         """
     [[bar]]
         inherit = METASYNTACTIC
+        script = true

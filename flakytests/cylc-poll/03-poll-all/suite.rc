@@ -46,7 +46,7 @@ pat2="[run_kill.${CYLC_TASK_CYCLE_POINT}] -suiciding"
 log="${CYLC_SUITE_LOG_DIR}/log"
 while (($(grep -c -F -e "${pat1}" -e "${pat2}" "${log}") != 2))
 do
-    sleep 2
+    sleep 1
 done
 
 st_file="${CYLC_SUITE_RUN_DIR}/log/job/${CYLC_TASK_CYCLE_POINT}/submit_hold/NN/job.status"

@@ -1,0 +1,26 @@
+[meta]
+    title = final cycle reload test
+    description = """change final cycle."""
+
+[cylc]
+   UTC mode = True
+
+[scheduling]
+    initial cycle point = 20100101T00
+    final cycle point = 20100102T00 # marker
+    [[graph]]
+        R1 = "reloader => a"
+        PT6H = "a[-PT6H] => a"
+[runtime]
+    [[reloader]]
+        script = """
+# change the final cycle:
+perl -pi -e 's/(final cycle point = )20100102T00( # marker)/\1 20100101T12\2/' $CYLC_SUITE_DEF_PATH/suite.rc
+# reload
+cylc reload -f $CYLC_SUITE_NAME
+while ! grep -qF 'Reload completed' "${CYLC_SUITE_LOG_DIR}/log"; do
+    sleep 1
+done
+"""
+    [[a]]
+        script = true

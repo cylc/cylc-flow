@@ -1,0 +1,19 @@
+[cylc]
+    cycle point format = "%Y%m%dT%H"
+[scheduling]
+    initial cycle point = 20100101T00
+    final cycle point = 20100102T00
+    [[graph]]
+        R1 = "start => a"
+        T00, T06 = "c[-PT6H] => a => b => c"
+        T18 = "c"
+[runtime]
+    [[a,c,start]]
+        script = true
+    [[b]]
+        script = """
+cylc reload "${CYLC_SUITE_NAME}" -f
+while ! grep -qF 'Reload completed' "${CYLC_SUITE_LOG_DIR}/log"; do
+    sleep 1
+done
+"""

@@ -1,11 +1,8 @@
 [scheduling]
     [[graph]]
-        R1 = "foo => bar"
+        R1 = foo => bar
 [runtime]
     [[foo]]
-        script = """
-            cylc trigger $CYLC_SUITE_NAME bar 1
-            sleep 10
-            cylc stop $CYLC_SUITE_NAME
-            sleep 10
-        """
+        script = cylc trigger "${CYLC_SUITE_NAME}" 'bar.1'
+    [[bar]]
+        script = true

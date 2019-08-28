@@ -8,5 +8,5 @@
         T00 = a & b & (c | (d & e)) & f[-P1D] => f
 [runtime]
     [[root]]
-        script = sleep 1
+        script = true
     [[a, b, c, d, e, f]]

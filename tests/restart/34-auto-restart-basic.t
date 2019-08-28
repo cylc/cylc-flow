@@ -86,8 +86,7 @@ grep_ok "cylc-restart ${SUITE_NAME} --host=localhost" \
     "${TEST_NAME}-contact.stdout"
 
 # stop suite
-cylc stop "${SUITE_NAME}" --kill 2>/dev/null
-sleep 2
+cylc stop "${SUITE_NAME}" --kill --max-polls=10 --interval=2 2>'/dev/null'
 purge_suite "${SUITE_NAME}"
 
 exit

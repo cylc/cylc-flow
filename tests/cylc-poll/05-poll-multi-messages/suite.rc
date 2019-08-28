@@ -18,7 +18,13 @@ wait
     echo "CYLC_MESSAGE=$(date +%FT%H:%M:%SZ)|INFO|hello1"
     echo "CYLC_MESSAGE=$(date +%FT%H:%M:%SZ)|INFO|hello2"
 } >>"${CYLC_TASK_LOG_ROOT}.status"
-sleep 30
+LOG="${CYLC_SUITE_LOG_DIR}/log"
+while ! grep -qF '[speaker1.1] status=running: (polled)hello1' "${LOG}"; do
+    sleep 1
+done
+while ! grep -qF '[speaker1.1] status=running: (polled)hello2' "${LOG}"; do
+    sleep 1
+done
 """
         [[[outputs]]]
             hello1 = "hello1"
@@ -32,7 +38,10 @@ wait
 {
     echo "CYLC_MESSAGE=$(date +%FT%H:%M:%SZ)|INFO|greet"
 } >>"${CYLC_TASK_LOG_ROOT}.status"
-sleep 30
+LOG="${CYLC_SUITE_LOG_DIR}/log"
+while ! grep -qF '[speaker2.1] status=running: (polled)greet' "${LOG}"; do
+    sleep 1
+done
 """
         [[[outputs]]]
             greet = "greet"

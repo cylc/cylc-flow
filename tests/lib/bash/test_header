@@ -97,6 +97,10 @@
 #         echo "1..0 # SKIP SKIP_REASON" and exit.
 #     ssh_install_cylc HOST
 #         Install cylc on a remote host.
+#     reftest [TEST_NAME [SOURCE]]
+#         Install a reference suite using `install_suite`, run a validation
+#         test on the suite and run the reference suite with `suite_run_ok`.
+#         Run `purge_suite` on success. Expect 2 OK tests.
 #     create_test_globalrc [PRE [POST]]
 #         Create a new global config file $PWD/etc from site global-tests.rc
 #         with PRE and POST pre- and ap-pended (PRE for top level items with no
@@ -398,8 +402,8 @@ init_suite() {
 }
 
 install_suite() {
-    local TEST_NAME="$1"
-    local TEST_SOURCE_BASE="$2"
+    local TEST_NAME="${1:-${TEST_NAME_BASE}}"
+    local TEST_SOURCE_BASE="${2:-${TEST_NAME}}"
     SUITE_NAME="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME}"
     SUITE_RUN_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
     mkdir -p "${TEST_DIR}/${SUITE_NAME}/"
@@ -578,6 +582,15 @@ mock_smtpd_kill() {  # Logic borrowed from Rose
         wait "${TEST_SMTPD_PID}" 2>/dev/null || true
         unset TEST_SMTPD_HOST TEST_SMTPD_LOG TEST_SMTPD_PID
     fi
+}
+
+reftest() {
+    local TEST_NAME="${1:-${TEST_NAME_BASE}}"
+    install_suite "$@"
+    run_ok "${TEST_NAME}-validate" cylc validate "${SUITE_NAME}"
+    suite_run_ok "${TEST_NAME}-run" \
+        cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
+    purge_suite "${SUITE_NAME}"
 }
 
 create_test_globalrc() {

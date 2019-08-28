@@ -1,0 +1,28 @@
+[meta]
+    title = queue size reload test
+    description = """change family triggering order via a reload."""
+
+[scheduling]
+    [[graph]]
+        R1 = """
+                   reloader => BAR # marker1
+                   BAR:finish-all => FOO # marker2
+                """
+[runtime]
+    [[reloader]]
+        script = """
+# change the order of FOO and BAR in the graphing section:
+perl -pi -e 's/(reloader => )BAR( # marker1)/\1FOO\2/' $CYLC_SUITE_DEF_PATH/suite.rc
+perl -pi -e 's/( )BAR:finish-all => FOO( # marker2)/\1FOO:finish-all => BAR\2/' $CYLC_SUITE_DEF_PATH/suite.rc
+# reload
+cylc reload -f "${CYLC_SUITE_NAME}"
+while ! grep -qF 'Reload completed' "${CYLC_SUITE_LOG_DIR}/log"; do
+    sleep 1
+done
+"""
+    [[FOO, BAR]]
+        script = true
+    [[a,b,c,d]]
+        inherit = FOO
+    [[e,f,g,h]]
+        inherit = BAR

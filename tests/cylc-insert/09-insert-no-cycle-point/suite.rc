@@ -17,7 +17,7 @@
 
 [runtime]
     [[root]]
-        script = "sleep 1" # quick
+        script = true
     [[prep]]
         # Insert the task with a bad cycle point
         script = cylc insert "${CYLC_SUITE_NAME}" 'foo'

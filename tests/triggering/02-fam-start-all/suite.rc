@@ -1,0 +1,10 @@
+[scheduling]
+    [[graph]]
+        R1 = """FAM:start-all => foo"""
+[runtime]
+    [[FAM]]
+        script = wait
+    [[a,b,c]]
+        inherit = FAM
+    [[foo]]
+        script = "true"

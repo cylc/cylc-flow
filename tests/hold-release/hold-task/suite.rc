@@ -15,11 +15,14 @@ point of the suite."""
 [runtime]
     [[holdrelease]]
         script = """
-sleep 5
 cylc hold "$CYLC_SUITE_NAME" '{{HOLD_MATCH}}.20141009T0000Z'
-sleep 5
+while ! grep -qF "[foo.20141009T0000Z] -waiting => waiting (held)" \
+    "${CYLC_SUITE_LOG_DIR}/log"
+do
+    sleep 1
+done
 """
     [[foo]]
         script = true
     [[stop]]
-        script = sleep 5; cylc stop $CYLC_SUITE_NAME
+        script = cylc stop "${CYLC_SUITE_NAME}"

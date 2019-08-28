@@ -1,0 +1,16 @@
+[cylc]
+    [[reference test]]
+        expected task failures = b.1, c.1
+[scheduling]
+    [[graph]]
+        R1 = """
+            a | b => c & d
+            c | d => e
+            b:failed => !b
+            c:failed => !c
+        """
+[runtime]
+    [[b,c]]
+        script = false
+    [[a,d, e]]
+        script = true

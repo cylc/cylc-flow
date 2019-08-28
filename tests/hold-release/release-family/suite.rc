@@ -15,9 +15,13 @@ first cycle point of the suite.."""
 [runtime]
     [[holdrelease]]
         script = """
-sleep 5
-cylc hold $CYLC_SUITE_NAME
-sleep 5
+wait
+cylc hold "${CYLC_SUITE_NAME}"
+while ! grep -qF 'INFO - Command succeeded: hold_suite()' \
+    "${CYLC_SUITE_LOG_DIR}/log"
+do
+    sleep 1
+done
 # Release a family in the first cycle point.
 cylc release "$CYLC_SUITE_NAME" '{{RELEASE_MATCH}}.20141009T0000Z'
 """
@@ -28,7 +32,7 @@ cylc release "$CYLC_SUITE_NAME" '{{RELEASE_MATCH}}.20141009T0000Z'
         script = true
     [[stop]]
         inherit = STUFF
-        script = cylc stop $CYLC_SUITE_NAME
+        script = cylc stop "${CYLC_SUITE_NAME}"
     [[unrelated]]
         inherit = UNRELATED
         script = true

@@ -1,7 +1,8 @@
 [cylc]
    [[events]]
-       abort on timeout = True
-       timeout = PT20S
+       abort on stalled = True
+       abort on inactivity = True
+       inactivity = PT3M
 [scheduling]
     [[graph]]
         R1 = a-task

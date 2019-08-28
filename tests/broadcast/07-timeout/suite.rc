@@ -1,0 +1,27 @@
+[meta]
+    title = "test suite for broadcast timeout functionality"
+
+[cylc]
+    UTC mode = True
+
+[scheduling]
+    initial cycle point = 20100808T0000Z
+    final cycle point   = 20100808T0000Z
+    [[graph]]
+        R1 = send_broadcast => timeout
+
+[runtime]
+    [[send_broadcast]]
+        script = """
+            cylc broadcast -n timeout --point=20100808T0000Z --set='[events]execution timeout=PT1S' $CYLC_SUITE_NAME
+        """
+    [[timeout]]
+        script = """
+while ! grep -qF "[${CYLC_TASK_ID}] -execution timeout after PT1S" \
+    "${CYLC_SUITE_LOG_DIR}/log"
+do
+    sleep 1
+done
+"""
+        [[[events]]]
+            execution timeout = PT1M

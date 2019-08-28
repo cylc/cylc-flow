@@ -14,7 +14,11 @@
     [[t0]]
         # https://github.com/cylc/cylc-flow/issues/2655
         # "t2.1" should not suicide on "t1.1:failed"
-        script = sleep 10
+        script = """
+while ! grep -q '\[t1\.1\].*failed' "${CYLC_SUITE_LOG_DIR}/log"; do
+    sleep 1
+done
+"""
     [[t1]]
         script = false
     [[t2]]
