@@ -168,7 +168,7 @@ class SuiteConfig(object):
             'parents': {},
             # lists of C3-linearized ancestor namespaces
             'linearized ancestors': {},
-            # lists of first-parent ancestor namepaces
+            # lists of first-parent ancestor namespaces
             'first-parent ancestors': {},
             # lists of all descendant namespaces
             # (not including the final tasks)
@@ -307,7 +307,7 @@ class SuiteConfig(object):
         self.filter_env()
 
         # Now add config defaults.  Items added prior to this ends up in the
-        # sparse dict (e.g. parameter-expanded namepaces).
+        # sparse dict (e.g. parameter-expanded namespaces).
         self.mem_log("config.py: before get(sparse=False)")
         self.cfg = self.pcfg.get(sparse=False)
         self.mem_log("config.py: after get(sparse=False)")
@@ -317,7 +317,7 @@ class SuiteConfig(object):
 
         # Running in UTC time? (else just use the system clock)
         if self.cfg['general']['UTC mode'] is None:
-            set_utc_mode(glbl_cfg().get(['cylc', 'UTC mode']))
+            set_utc_mode(glbl_cfg().get(['general', 'UTC mode']))
         else:
             set_utc_mode(self.cfg['general']['UTC mode'])
 
@@ -1890,41 +1890,44 @@ class SuiteConfig(object):
             # Flatten nested list.
             graph_raw_edges = (
                 [i for sublist in gr_edges.values() for i in sublist])
-        graph_raw_edges.sort(key=lambda x: [y if y else '' for y in x])
+        graph_raw_edges.sort(key=lambda x: [y if y else '' for y in x[:2]])
         self._last_graph_raw_edges = graph_raw_edges
         return graph_raw_edges
 
-    def get_graph_edges(self, start_point_string, stop_point_string):
+    def get_graph_edges(self, start_point, stop_point):
         """Convert the abstract graph edges (self.edges, etc) to actual edges
 
-        (This method differs from the get_graph_raw; class attributes are not
-        used to hold information from previous method calls.)
+        This method differs from the get_graph_raw; class attributes are not
+        used to hold information from previous method calls, and only ungrouped
+        edges are returned.
 
-        Actual edges have concrete ranges of cycle points.
-
+        Args:
+            start_point (cylc.flow.cycling.*Point):
+                Start Integer or ISO8601 Point.
+            stop_point (cylc.flow.cycling.*Point):
+                Stop Integer or ISO8601 Point.
         """
 
-        # Now define the concrete graph edges (pairs of nodes) for plotting.
-        if start_point_string in [None, '']:
-            return []
-        start_point = get_point(start_point_string)
-        actual_first_point = self.get_actual_first_point(start_point)
-
+        if start_point is None:
+            raise TypeError(
+                "get_graph_edges() start_point argument must be a"
+                " valid cycle point, not 'NoneType'")
+        # Avoid infinite edge generation
+        if stop_point is None:
+            raise TypeError(
+                "get_graph_edges() stop_point argument must be a"
+                " valid cycle point, not 'NoneType'")
         suite_final_point = get_point(
             self.cfg['scheduling']['final cycle point'])
 
-        # Require a stop point determined by the data manager
-        if stop_point_string in [None, '']:
-            return []
-        stop_point = get_point(stop_point_string)
-        if not stop_point:
-            return []
+        # Get ICP on-sequence point
+        actual_first_point = self.get_actual_first_point(self.start_point)
 
         gr_edges = {}
         start_point_offset_cache = {}
         point_offset_cache = None
         for sequence, edges in self.edges.items():
-            # Get initial cycle point for this sequence
+            # Get first cycle point for this sequence
             point = sequence.get_first_point(start_point)
             while point is not None:
                 if point > stop_point:
@@ -1950,7 +1953,8 @@ class SuiteConfig(object):
                     if offset:
                         if offset_is_from_icp:
                             cache = start_point_offset_cache
-                            rel_point = start_point
+                            # use actual ICP first point
+                            rel_point = actual_first_point
                         else:
                             cache = point_offset_cache
                             rel_point = point
@@ -1967,8 +1971,6 @@ class SuiteConfig(object):
                         continue
                     if l_id is not None and actual_first_point > l_id[1]:
                         # Check that l_id is not earlier than start time.
-                        # NOTE BUG GITHUB #919
-                        # sct = start_point
                         if r_id is None or r_id[1] < actual_first_point:
                             continue
                         # Pre-initial dependency;
@@ -1987,10 +1989,7 @@ class SuiteConfig(object):
         del point_offset_cache
         GraphNodeParser.get_inst().clear()
         # Flatten nested list.
-        graph_raw_edges = (
-            [i for sublist in gr_edges.values() for i in sublist])
-        graph_raw_edges.sort(key=lambda x: [y if y else '' for y in x])
-        return graph_raw_edges
+        return [i for sublist in gr_edges.values() for i in sublist]
 
     def get_node_labels(self, start_point_string, stop_point_string=None):
         """Return dependency graph node labels."""
@@ -2257,3 +2256,23 @@ class SuiteConfig(object):
     def describe(self, name):
         """Return title and description of the named task."""
         return self.taskdefs[name].describe()
+
+    def get_ref_log_name(self):
+        """Return path to reference log (for reference test)."""
+        return os.path.join(self.fdir, 'reference.log')
+
+    def get_expected_failed_tasks(self):
+        """Return list of expected failed tasks.
+
+        Return:
+        - An empty list if NO task is expected to fail.
+        - A list of NAME.CYCLE for the tasks that are expected to fail
+          in reference test mode.
+        - None if there is no expectation either way.
+        """
+        if self.options.reftest:
+            return self.cfg['general']['reference test']['expected task failures']
+        elif self.cfg['general']['events']['abort if any task fails']:
+            return []
+        else:
+            return None
