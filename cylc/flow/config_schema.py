@@ -236,9 +236,6 @@ SPEC = {
             '__MANY__': [VDR.V_STRING],
         },
     },
-    # 'suite platforms': {
-    #     '__MANY__': None
-    # },
     'runtime': {
         '__MANY__': {
             'inherit': [VDR.V_STRING_LIST],
@@ -277,13 +274,9 @@ SPEC = {
                 'execution time limit': [VDR.V_INTERVAL],
                 'submission polling intervals': [VDR.V_INTERVAL_LIST, None],
                 'submission retry delays': [VDR.V_INTERVAL_LIST, None],
-            },
-            'platform': {
-                'platform': [VDR.V_STRING],
-            },
-            'remote': {
                 'host': [VDR.V_STRING],
                 'owner': [VDR.V_STRING],
+                'platform': [VDR.V_STRING],
                 'suite definition directory': [VDR.V_STRING],
                 'retrieve job logs': [VDR.V_BOOLEAN],
                 'retrieve job logs max size': [VDR.V_STRING],
@@ -368,21 +361,6 @@ SPEC = {
         'mail to': [VDR.V_STRING],
         'submission timeout': [VDR.V_INTERVAL],
     },
-    'test battery': {
-        'remote host with shared fs': [VDR.V_STRING],
-        'remote host': [VDR.V_STRING],
-        'remote owner': [VDR.V_STRING],
-        'batch systems': {
-            '__MANY__': {
-                'host': [VDR.V_STRING],
-                'out viewer': [VDR.V_STRING],
-                'err viewer': [VDR.V_STRING],
-                'directives': {
-                    '__MANY__': [VDR.V_STRING],
-                },
-            },
-        },
-    },
     'visualization': {
         'initial cycle point': [VDR.V_CYCLE_POINT],
         'final cycle point': [VDR.V_STRING],
@@ -421,6 +399,7 @@ def upg(cfg, descr):
     u.obsolete('7.8.1', ['cylc', 'events', 'reset inactivity timer'])
     u.obsolete('7.8.1', ['runtime', '__MANY__', 'events', 'reset timer'])
     u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'shell'])
+    u.obsolete('8.0.0', ['runtime', '__MANY__', 'remote'], ['runtime', '__MANY__', 'job'])
     u.obsolete('8.0.0', ['cylc'], ['general'])
     u.upgrade()
 
