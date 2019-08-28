@@ -128,7 +128,7 @@ def main(parser, options, suite, *task_ids):
             job_pool), job_pool)
     task_job_mgr.task_remote_mgr.single_task_mode = True
     task_job_mgr.job_file_writer.set_suite_env({
-        'CYLC_UTC': str(config.cfg['cylc']['UTC mode']),
+        'CYLC_UTC': str(config.cfg['general']['UTC mode']),
         'CYLC_DEBUG': str(cylc.flow.flags.debug).lower(),
         'CYLC_VERBOSE': str(cylc.flow.flags.verbose).lower(),
         'CYLC_SUITE_NAME': suite,

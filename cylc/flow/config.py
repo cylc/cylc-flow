@@ -1272,8 +1272,8 @@ class SuiteConfig(object):
 
             if tdef.run_mode == 'dummy-local':
                 # Run all dummy tasks on the suite host.
-                rtc['remote']['host'] = None
-                rtc['remote']['owner'] = None
+                rtc['job']['host'] = None
+                rtc['job']['owner'] = None
 
             # Simulation mode tasks should fail in which cycle points?
             f_pts = []
@@ -2272,7 +2272,7 @@ class SuiteConfig(object):
         """
         if self.options.reftest:
             return self.cfg['general']['reference test']['expected task failures']
-        elif self.cfg['general']['events']['abort if any task fails']:
+        elif self.cfg['general']['abort if any task fails']:
             return []
         else:
             return None

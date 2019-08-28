@@ -244,7 +244,7 @@ class Scheduler(object):
                 daemonize(self)
             self._setup_suite_logger()
             self.server = SuiteRuntimeServer(self)
-            port_range = glbl_cfg().get(['suite servers', 'run ports'])
+            port_range = glbl_cfg().get(['suite run platforms', 'run ports'])
             self.server.start(port_range[0], port_range[-1])
             self.port = self.server.port
             self.configure()
@@ -406,7 +406,7 @@ see `COPYING' in the Cylc source distribution.
 
         self.suite_db_mgr.on_suite_start(self.is_restart)
 
-        reqmode = self.config.cfg['cylc']['required run mode']
+        reqmode = self.config.cfg['general']['required run mode']
         if reqmode and not self.config.run_mode(reqmode):
             raise ValueError('this suite requires the %s run mode' % reqmode)
 
@@ -473,9 +473,9 @@ see `COPYING' in the Cylc source distribution.
         self.already_inactive = False
         key = self.EVENT_INACTIVITY_TIMEOUT
         if self.options.reftest:
-            self.config.cfg['cylc']['events'][f'abort on {key}'] = True
-            if not self.config.cfg['cylc']['events'][key]:
-                self.config.cfg['cylc']['events'][key] = DurationFloat(180)
+            self.config.cfg['general']['events'][f'abort on {key}'] = True
+            if not self.config.cfg['general']['events'][key]:
+                self.config.cfg['general']['events'][key] = DurationFloat(180)
         if self._get_events_conf(key):
             self.set_suite_inactivity_timer()
 
@@ -1067,7 +1067,7 @@ see `COPYING' in the Cylc source distribution.
         try:
             if (
                 conf.run_mode('simulation', 'dummy') and
-                conf.cfg['cylc']['simulation']['disable suite event handlers']
+                conf.cfg['general']['simulation']['disable suite event handlers']
             ):
                 return
         except KeyError:
@@ -1102,9 +1102,9 @@ see `COPYING' in the Cylc source distribution.
             self.count = 0
         if self.options.no_auto_shutdown is not None:
             self.can_auto_stop = not self.options.no_auto_shutdown
-        elif self.config.cfg['cylc']['disable automatic shutdown'] is not None:
+        elif self.config.cfg['general']['disable automatic shutdown'] is not None:
             self.can_auto_stop = (
-                not self.config.cfg['cylc']['disable automatic shutdown'])
+                not self.config.cfg['general']['disable automatic shutdown'])
 
     def process_task_pool(self):
         """Process ALL TASKS whenever something has changed that might
@@ -1385,7 +1385,7 @@ see `COPYING' in the Cylc source distribution.
             # 2. check if suite host is condemned - if so auto restart.
             if self.stop_mode is None:
                 current_glbl_cfg = glbl_cfg(cached=False)
-                for host in current_glbl_cfg.get(['suite servers',
+                for host in current_glbl_cfg.get(['suite run platforms',
                                                   'condemned hosts']):
                     if host.endswith('!'):
                         # host ends in an `!` -> force shutdown mode
@@ -1415,7 +1415,7 @@ see `COPYING' in the Cylc source distribution.
                             if self.set_auto_restart(mode=mode):
                                 return  # skip remaining health checks
                         elif (self.set_auto_restart(current_glbl_cfg.get(
-                                ['suite servers', 'auto restart delay']))):
+                                ['suite run platforms', 'auto restart delay']))):
                             # server is condemned -> configure the suite to
                             # auto stop-restart if possible, else, report the
                             # issue preventing this
@@ -1898,7 +1898,7 @@ see `COPYING' in the Cylc source distribution.
 
     def _get_cylc_conf(self, key, default=None):
         """Return a named setting under [cylc] from suite.rc or flow.rc."""
-        for getter in [self.config.cfg['cylc'], glbl_cfg().get(['cylc'])]:
+        for getter in [self.config.cfg['general'], glbl_cfg().get(['general'])]:
             try:
                 value = getter[key]
             except TypeError:

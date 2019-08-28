@@ -589,9 +589,10 @@ class TaskEventsManager():
     def _get_events_conf(self, itask, key, default=None):
         """Return an events setting from suite then global configuration."""
         for getter in [
-                self.broadcast_mgr.get_broadcast(itask.identity).get("events"),
-                itask.tdef.rtconfig["events"],
-                glbl_cfg().get()["task events"]]:
+            self.broadcast_mgr.get_broadcast(itask.identity).get("events"),
+            itask.tdef.rtconfig["events"],
+            glbl_cfg().get(['runtime', 'root', 'events'])
+        ]:
             try:
                 value = getter.get(key)
             except (AttributeError, ItemNotFoundError, KeyError):

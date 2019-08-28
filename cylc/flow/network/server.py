@@ -273,9 +273,9 @@ class SuiteRuntimeServer(ZMQServer):
 
     def _get_public_priv(self):
         """Return the public privilege level of this suite."""
-        if self.schd.config.cfg['cylc']['authentication']['public']:
+        if self.schd.config.cfg['general']['authentication']['public']:
             return Priv.parse(
-                self.schd.config.cfg['cylc']['authentication']['public'])
+                self.schd.config.cfg['general']['authentication']['public'])
         return Priv.parse(glbl_cfg().get(['authentication', 'public']))
 
     def _get_priv_level(self, user):

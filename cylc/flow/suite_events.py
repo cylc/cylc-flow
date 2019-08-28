@@ -54,8 +54,8 @@ class SuiteEventHandler():
     def get_events_conf(config, key, default=None):
         """Return a named [cylc][[events]] configuration."""
         for getter in [
-                config.cfg['cylc']['events'],
-                glbl_cfg().get(['cylc', 'events'])]:
+                config.cfg['general']['events'],
+                glbl_cfg().get(['general', 'events'])]:
             try:
                 value = getter[key]
             except KeyError:

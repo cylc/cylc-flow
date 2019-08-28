@@ -116,7 +116,7 @@ class TimestampRotatingFileHandler(logging.FileHandler):
 
     FILE_HEADER_FLAG = 'cylc_log_file_header'
     FILE_NUM = 'cylc_log_num'
-    GLBL_KEY = 'suite logging'
+    GLBL_KEY = 'roll over at start-up'
     MIN_BYTES = 1024
 
     def __init__(self, suite, no_detach=False):

@@ -299,10 +299,10 @@ class SuiteDatabaseManager(object):
             {"key": "cylc_version", "value": CYLC_VERSION},
             {"key": "UTC_mode", "value": get_utc_mode()},
         ])
-        if schd.config.cfg['cylc']['cycle point format']:
+        if schd.config.cfg['general']['cycle point format']:
             self.db_inserts_map[self.TABLE_SUITE_PARAMS].append({
                 "key": "cycle_point_format",
-                "value": schd.config.cfg['cylc']['cycle point format']})
+                "value": schd.config.cfg['general']['cycle point format']})
         if schd.pool.is_held:
             self.db_inserts_map[self.TABLE_SUITE_PARAMS].append({
                 "key": self.KEY_HOLD, "value": 1})

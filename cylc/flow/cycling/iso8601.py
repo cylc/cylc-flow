@@ -826,7 +826,7 @@ def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None,
         if "+X" not in custom_dump_format and num_expanded_year_digits:
             raise IllegalValueError(
                 'cycle point format',
-                ('cylc', 'cycle point format'),
+                ('general', 'cycle point format'),
                 SuiteSpecifics.DUMP_FORMAT
             )
 

@@ -38,6 +38,19 @@ from cylc.flow.hostuserutil import get_user_home, is_remote_user
 # - default: the default value (optional).
 # - allowed_2, ...: the only other allowed values of this setting (optional).
 SPEC = {
+    # suite
+    'process pool size': [VDR.V_INTEGER, 4],
+    'process pool timeout': [VDR.V_INTERVAL, DurationFloat(600)],
+    # client
+    'disable interactive command prompts': [VDR.V_BOOLEAN, True],
+    # suite
+    'run directory rolling archive length': [VDR.V_INTEGER, -1],
+    # suite-task communication
+    'task messaging': {
+        'retry interval': [VDR.V_INTERVAL, DurationFloat(5)],
+        'maximum number of tries': [VDR.V_INTEGER, 7],
+        'connection timeout': [VDR.V_INTERVAL, DurationFloat(30)],
+    },
     'meta': {
         'description': [VDR.V_STRING, ''],
         'group': [VDR.V_STRING, ''],
@@ -54,9 +67,9 @@ SPEC = {
             VDR.V_STRING, '', 'live', 'dummy', 'dummy-local', 'simulation'],
         'force run mode': [
             VDR.V_STRING, '', 'live', 'dummy', 'dummy-local', 'simulation'],
-        'abort if any task fails': [VDR.V_BOOLEAN],
-        'health check interval': [VDR.V_INTERVAL],
-        'task event mail interval': [VDR.V_INTERVAL],
+        'abort if any task fails': [VDR.V_BOOLEAN, False],
+        'health check interval': [VDR.V_INTERVAL, 1500],
+        'task event mail interval': [VDR.V_INTERVAL, 300],
         'log resolved dependencies': [VDR.V_BOOLEAN],
         'disable automatic shutdown': [VDR.V_BOOLEAN],
         'simulation': {
@@ -343,7 +356,7 @@ SPEC = {
             },
         },
     },
-    'suite platforms': {
+    'suite run platforms': {
         'run hosts': [VDR.V_SPACELESS_STRING_LIST],
         'run ports': [VDR.V_INTEGER_LIST, list(range(43001, 43101))],
         'condemned hosts': [VDR.V_ABSOLUTE_HOST_LIST],
@@ -403,8 +416,32 @@ def upg(cfg, descr):
     u.obsolete('8.0.0', ['cylc'], ['general'])
     u.obsolete('8.0.0', ['suite servers'], ['suite run platforms'])
     u.obsolete('8.0.0', ['test battery'])
-    u.obsolete('8.0.0', ['suite host self-identification'], ['suite platforms', 'suite host self-identification'])
+    u.obsolete('8.0.0', ['suite host self-identification'], ['suite run platforms', 'suite host self-identification'])
     u.obsolete('8.0.0', ['task events'], ['runtime', 'root', 'events'])
+    u.obsolete('6.4.1', ['test battery', 'directives'])
+    u.obsolete('6.11.0', ['state dump rolling archive length'])
+    # Roll over is always done.
+    u.obsolete('7.8.0', ['suite logging', 'roll over at start-up'])
+    u.obsolete('7.8.1', ['documentation', 'local index'])
+    u.obsolete('7.8.1', ['documentation', 'files', 'pdf user guide'])
+    u.obsolete('7.8.1', ['documentation', 'files',
+                         'single-page html user guide'])
+    u.deprecate('7.8.1',
+                ['documentation', 'files', 'multi-page html user guide'],
+                ['documentation', 'local'])
+    u.deprecate('8.0.0',
+                ['documentation', 'files', 'html index'],
+                ['documentation', 'local'])
+    u.deprecate('8.0.0',
+                ['documentation', 'urls', 'internet homepage'],
+                ['documentation', 'cylc homepage'])
+    u.obsolete('8.0.0', ['suite servers', 'scan hosts'])
+    u.obsolete('8.0.0', ['suite servers', 'scan ports'])
+    u.obsolete('8.0.0', ['communication'])
+    u.obsolete('8.0.0', ['temporary directory'])
+    u.obsolete('8.0.0', ['task host select command timeout'])
+    u.obsolete('8.0.0', ['xtrigger function timeout'])
+    u.obsolete('8.0.0', ['enable run directory housekeeping'])
     u.upgrade()
 
     # Upgrader cannot do this type of move.
@@ -527,7 +564,7 @@ class GlobalConfig(ParsecConfig):
             platform_key = platform
         else:
             # try for a pattern match
-            for cfg_host in cfg['job platfroms']:
+            for cfg_host in cfg['job platforms']:
                 if re.match(cfg_host, platform):
                     platform_key = cfg_host
                     break
