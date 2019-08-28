@@ -45,10 +45,7 @@ SPEC = {
     'process pool size': [VDR.V_INTEGER, 4],
     'process pool timeout': [VDR.V_INTERVAL, DurationFloat(600)],
     'temporary directory': [VDR.V_STRING],
-    'state dump rolling archive length': [VDR.V_INTEGER, 10],
     'disable interactive command prompts': [VDR.V_BOOLEAN, True],
-    'enable run directory housekeeping': [VDR.V_BOOLEAN],
-    'run directory rolling archive length': [VDR.V_INTEGER, 2],
     'task host select command timeout': [VDR.V_INTERVAL, DurationFloat(10)],
     'xtrigger function timeout': [VDR.V_INTERVAL, DurationFloat(10)],
     'task messaging': {
@@ -346,6 +343,8 @@ def upg(cfg, descr):
     # Roll over is always done.
     u.obsolete('7.8.0', ['suite logging', 'roll over at start-up'])
     u.obsolete('7.8.1', ['cylc', 'events', 'reset timer'])
+    u.obsolete('7.8.3', ['enable run directory housekeeping'])
+    u.obsolete('7.8.3', ['run directory rolling archive length'])
     u.upgrade()
 
 
@@ -565,9 +564,6 @@ class GlobalConfig(ParsecConfig):
         item = 'suite run directory'
         idir = self.get_derived_host_item(suite, item)
         LOG.debug('creating %s: %s', item, idir)
-        if cfg['enable run directory housekeeping']:
-            self.roll_directory(
-                idir, item, cfg['run directory rolling archive length'])
 
         for item in [
                 'suite log directory',
