@@ -208,9 +208,6 @@ class TestSuiteSrvFilesManager(unittest.TestCase):
 
             mocked_os.path.isfile = lambda x: isfile
             mocked_get_suite_srv_dir.return_value = str(suite_srv_dir)
-            # suite_srv_files_mgr.get_suite_srv_dir = mock.MagicMock(
-            #     return_value=suite_srv_dir
-            # )
             if readlink == OSError:
                 mocked_os.readlink.side_effect = readlink
             else:

@@ -102,15 +102,25 @@ class TestScan(TestCase):
         list(get_scan_items_from_fs(owner_pattern=owner_pattern))
         self.assertTrue(len(mocked_sys.stderr.lines) > 0)
 
-    @patch("cylc.flow.network.scan.SuiteSrvFilesManager")
+    @patch("cylc.flow.network.scan.get_suite_source_dir")
+    @patch("cylc.flow.network.scan.get_suite_title")
     @patch("cylc.flow.network.scan.getpwall")
     def test_get_scan_items_from_fs_with_owner_do_not_descend(
-            self, mocked_getpwall, mocked_srv_files_mgr):
+            self,
+            mocked_getpwall,
+            mocked_get_suite_title,
+            mocked_get_suite_src_dir
+    ):
         """Test that it does not descend when it finds a directory called
         "log".
+
         Args:
-            mocked_getpwall (object): mocked pwd.getpwall
-            mocked_srv_files_mgr (object): mocked SuiteSrvFilesManager
+            mocked_getpwall (object):
+                Mocked pwd.getpwall
+            mocked_get_suite_src_dir (oject):
+                Mocked suite_srv_files_mgr.get_suite_src_dir
+            mocked_get_suite_title (oject):
+                Mocked suite_srv_files_mgr.get_suite_title
         """
         with TemporaryDirectory() as homedir:
             # mock pwd.getpwall
@@ -120,11 +130,8 @@ class TestScan(TestCase):
             suite_directory = Path(homedir, 'cylc-run', 'blog', 'five', 'log',
                                    'five')
             suite_directory.mkdir(parents=True)
-            # mock srv_files_mgr.load_contact_file
-            mocked_srv_files_mgr.return_value.get_suite_source_dir \
-                .return_value = 'DIR'
-            mocked_srv_files_mgr.return_value.get_suite_title \
-                .return_value = 'TITLE'
+            mocked_get_suite_src_dir.return_value = 'DIR'
+            mocked_get_suite_title.return_value = 'TITLE'
             owner_pattern = re.compile(pattern="^.oo.$")
             reg_pattern = re.compile(pattern="^.*five$")
             suites = list(get_scan_items_from_fs(
