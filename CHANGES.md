@@ -36,6 +36,9 @@ Jinja filters were moved from its `Jinja2Filters` folder to within the
 [#3302](https://github.com/cylc/cylc-flow/pull/3302) - improve CLI
 task-globbing help.
 
+[#2935](https://github.com/cylc/cylc-flow/pull/2935) - support alternate run
+directories, particularly for sub-suites.
+
 [#3096](https://github.com/cylc/cylc-flow/pull/3096) - add colour to the
 Cylc CLI.
 
