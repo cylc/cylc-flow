@@ -591,7 +591,7 @@ class TaskEventsManager():
         for getter in [
             self.broadcast_mgr.get_broadcast(itask.identity).get("events"),
             itask.tdef.rtconfig["events"],
-            glbl_cfg().get(['runtime', 'root', 'events'])
+            glbl_cfg().get()['runtime']
         ]:
             try:
                 value = getter.get(key)

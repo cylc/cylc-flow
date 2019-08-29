@@ -249,6 +249,10 @@ SPEC = {
             '__MANY__': [VDR.V_STRING],
         },
     },
+    'suite logging': {
+        'rolling archive length': [VDR.V_INTEGER, 5],
+        'maximum size in bytes': [VDR.V_INTEGER, 1000000],
+    },
     'suite run platforms': {
             'run hosts': [VDR.V_SPACELESS_STRING_LIST],
             'run ports': [VDR.V_INTEGER_LIST, list(range(43001, 43101))],

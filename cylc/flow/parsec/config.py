@@ -95,6 +95,7 @@ class ParsecConfig(object):
                         try:
                             defs[key] = spec[key][1]
                         except IndexError:
+
                             if spec[key][0].endswith('_LIST'):
                                 defs[key] = []
                             else:
