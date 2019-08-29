@@ -171,7 +171,7 @@ run_fail "${TEST_NAME}" cylc register --run-dir="${ALT_RUN_DIR}" "${REG}" "${SRC
 contains_ok "${TEST_NAME}.stderr" <<__OUT__
 SuiteServiceFileError: Run directory '${RUN_DIR}' already exists.
 __OUT__
-rm -r $SRC_DIR ${RUN_DIR}
+rm -r "${SRC_DIR}" "${RUN_DIR}"
 
 # Test alternate run dir.
 # 3. If reg already exists (as a valid symlink).
