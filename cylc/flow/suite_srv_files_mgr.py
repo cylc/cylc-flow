@@ -37,37 +37,106 @@ from cylc.flow.unicode_rules import SuiteNameValidator
 class SuiteFiles:
     """Files and directories located in the suite directory."""
 
-    SUITE_RC = "suite.rc"
-    SERVICE_DIR = ".service"
+    SUITE_RC = 'suite.rc'
+    """The suite configuration file."""
 
     class Service:
-        CONTACT = "contact"
-        CONTACT2 = "contact2"
-        PASSPHRASE = "passphrase"
-        SOURCE = "source"
+        """The directory containing Cylc system files."""
+
+        DIRNAME = '.service'
+        """The name of this directory."""
+
+        CONTACT = 'contact'
+        """Contains settings for the running suite.
+
+        For details of the fields see ``ContactFileFields``.
+        """
+
+        CONTACT2 = 'contact2'
+        """Same as ``CONTACT``, installed on remote platforms."""
+
+        PASSPHRASE = 'passphrase'
+        """The suite authentication token."""
+
+        SOURCE = 'source'
+        """Symlink to the suite definition (suite dir)."""
 
 
 class ContactFileFields:
-    """Field names present in ``SuiteFiles.Service.CONTACT``."""
+    """Field names present in ``SuiteFiles.Service.CONTACT``.
 
-    API = "CYLC_API"
-    COMMS_PROTOCOL_2 = "CYLC_COMMS_PROTOCOL_2"  # indirect comms
-    HOST = "CYLC_SUITE_HOST"
-    NAME = "CYLC_SUITE_NAME"
-    OWNER = "CYLC_SUITE_OWNER"
-    PROCESS = "CYLC_SUITE_PROCESS"
-    PORT = "CYLC_SUITE_PORT"
-    SSH_USE_LOGIN_SHELL = "CYLC_SSH_USE_LOGIN_SHELL"
-    SUITE_RUN_DIR_ON_SUITE_HOST = "CYLC_SUITE_RUN_DIR_ON_SUITE_HOST"
-    TASK_MSG_MAX_TRIES = "CYLC_TASK_MSG_MAX_TRIES"
-    TASK_MSG_RETRY_INTVL = "CYLC_TASK_MSG_RETRY_INTVL"
-    TASK_MSG_TIMEOUT = "CYLC_TASK_MSG_TIMEOUT"
-    UUID = "CYLC_SUITE_UUID"
-    VERSION = "CYLC_VERSION"
+    These describe properties of a running suite.
+
+    .. note::
+
+       The presence of this file indicates that the suite is running as it is
+       removed when a suite shuts-down, however, in exceptional circumstances,
+       if a suite is not properly shut-down this file may be left behind.
+
+    """
+
+    API = 'CYLC_API'
+    """The Suite API version string."""
+
+    COMMS_PROTOCOL_2 = 'CYLC_COMMS_PROTOCOL_2'  # indirect comms
+
+    HOST = 'CYLC_SUITE_HOST'
+    """The name of the host the suite server process is running on."""
+
+    NAME = 'CYLC_SUITE_NAME'
+    """The name of the suite."""
+
+    OWNER = 'CYLC_SUITE_OWNER'
+    """The user account under which the suite server process is running."""
+
+    PROCESS = 'CYLC_SUITE_PROCESS'
+    """The process ID of the running suite on ``CYLC_SUITE_HOST``."""
+
+    PORT = 'CYLC_SUITE_PORT'
+    """The port Cylc uses to communicate with this suite."""
+
+    SSH_USE_LOGIN_SHELL = 'CYLC_SSH_USE_LOGIN_SHELL'
+    """TODO: Unused at present, waiting on #2975."""
+
+    SUITE_RUN_DIR_ON_SUITE_HOST = 'CYLC_SUITE_RUN_DIR_ON_SUITE_HOST'
+    """The path to the suite run directory as seen from ``HOST``."""
+
+    TASK_MSG_MAX_TRIES = 'CYLC_TASK_MSG_MAX_TRIES'
+    """TODO: Unused at present, waiting on #3331."""
+
+    TASK_MSG_RETRY_INTVL = 'CYLC_TASK_MSG_RETRY_INTVL'
+    """TODO: Unused at present, waiting on #3331."""
+
+    TASK_MSG_TIMEOUT = 'CYLC_TASK_MSG_TIMEOUT'
+    """TODO: Unused at present, waiting on #3331."""
+
+    UUID = 'CYLC_SUITE_UUID'
+    """Unique ID for this run of the suite."""
+
+    VERSION = 'CYLC_VERSION'
+    """The Cylc version under which the suite is running."""
 
 
 class UserFiles:
-    AUTH_DIR = "auth"
+    """Directory containing config and auth files for a user."""
+
+    DIRNAME = '.cylc'
+    """The name of this directory."""
+
+    class Auth:
+        """Cache for remote service files."""
+
+        DIRNAME = 'auth'
+        """The name of this directory."""
+
+    @classmethod
+    def get_path(cls):
+        """Return the path to this directory for the current user."""
+        return os.path.join(
+            os.path.expanduser("~"),
+            cls.DIRNAME,
+            cls.Auth.DIRNAME,
+        )
 
 
 REG_DELIM = "/"
@@ -237,7 +306,7 @@ def get_auth_item(item, reg, owner=None, host=None, content=False):
             # 1(b)/ Task messaging call via ssh messaging.
             env_keys.append(ContactFileFields.SUITE_RUN_DIR_ON_SUITE_HOST)
         for key in env_keys:
-            path = os.path.join(os.environ[key], SuiteFiles.SERVICE_DIR)
+            path = os.path.join(os.environ[key], SuiteFiles.Service.DIRNAME)
             if content:
                 value = _load_local_item(item, path)
             else:
@@ -322,7 +391,7 @@ def get_suite_srv_dir(reg, suite_owner=None):
     if (not run_d or os.getenv("CYLC_SUITE_NAME") != reg or
             os.getenv("CYLC_SUITE_OWNER") != suite_owner):
         run_d = get_suite_run_dir(reg)
-    return os.path.join(run_d, SuiteFiles.SERVICE_DIR)
+    return os.path.join(run_d, SuiteFiles.Service.DIRNAME)
 
 
 def load_contact_file(reg, owner=None, host=None, file_base=None):
@@ -488,8 +557,9 @@ def _dump_item(path, item, value):
 def _get_cache_dir(reg, owner, host):
     """Return the cache directory for remote suite service files."""
     return os.path.join(
-        os.path.expanduser("~"), ".cylc", UserFiles.AUTH_DIR,
-        "%s@%s" % (owner, host), reg)
+        UserFiles.get_path(),
+        "%s@%s" % (owner, host), reg
+    )
 
 
 def get_suite_title(reg):
@@ -572,7 +642,7 @@ def _load_remote_item(item, reg, owner, host):
         # Attempt to read suite contact file via the local filesystem.
         path = r'%(run_d)s/%(srv_base)s' % {
             'run_d': get_remote_suite_run_dir('localhost', owner, reg),
-            'srv_base': SuiteFiles.SERVICE_DIR,
+            'srv_base': SuiteFiles.Service.DIRNAME,
         }
         content = _load_local_item(item, path)
         if content is not None:
@@ -587,7 +657,7 @@ def _load_remote_item(item, reg, owner, host):
     ) % {
         'prefix': prefix,
         'run_d': get_remote_suite_run_dir(host, owner, reg),
-        'srv_base': SuiteFiles.SERVICE_DIR,
+        'srv_base': SuiteFiles.Service.DIRNAME,
         'item': item
     }
     import shlex

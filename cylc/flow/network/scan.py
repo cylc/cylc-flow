@@ -240,7 +240,7 @@ def get_scan_items_from_fs(
             # Always descend for top directory, but
             # don't descend further if it has a .service/ or log/ dir
             if dirpath != run_d and (
-                    SuiteFiles.SERVICE_DIR
+                    SuiteFiles.Service.DIRNAME
                     in dnames or 'log' in dnames):
                 dnames[:] = []
 
