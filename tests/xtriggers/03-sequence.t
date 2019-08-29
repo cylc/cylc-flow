@@ -34,10 +34,15 @@ init_suite "${TEST_NAME_BASE}" << '__SUITE_RC__'
        e1 = echo(name='bob')
        e2 = echo(name='alice')
    [[dependencies]]
+      [[[R1]]]
+          graph = "start"
       [[[R/^/P2Y]]]
           graph = "@e1 => foo"
       [[[R/^+P1Y/P2Y]]]
           graph = "@e2 => foo"
+[runtime]
+   [[start]]
+   [[foo]]
 __SUITE_RC__
 
 run_ok "${TEST_NAME_BASE}-val" cylc validate 'suite.rc'
@@ -45,7 +50,7 @@ run_ok "${TEST_NAME_BASE}-val" cylc validate 'suite.rc'
 # Run suite; it will stall waiting on the never-satisfied xtriggers.
 cylc run "${SUITE_NAME}"
 
-sleep 5
+poll "! grep -q 'start.2025.*succeeded' '${SUITE_RUN_DIR}/log/suite/log'"
 
 cylc show "${SUITE_NAME}" foo.2025 | grep -E '^  o' > foo.2025.log
 cylc show "${SUITE_NAME}" foo.2026 | grep -E '^  o' > foo.2026.log
@@ -61,3 +66,4 @@ cmp_ok foo.2026.log - <<__END__
 __END__
 
 cylc stop --now "${SUITE_NAME}"
+purge_suite "${SUITE_NAME}"
