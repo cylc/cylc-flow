@@ -30,6 +30,10 @@ Selected user-facing changes:
 
 ### Enhancements
 
+[#3203](https://github.com/cylc/cylc-flow/pull/3203) - support alternate run
+directories, particularly for sub-suites.
+
+
 [#3303](https://github.com/cylc/cylc-flow/pull/3303) - improve CLI
 task-globbing help.
 
