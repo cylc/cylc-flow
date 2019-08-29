@@ -64,7 +64,6 @@ from cylc.flow.pathutil import (
 )
 from cylc.flow.print_tree import print_tree
 from cylc.flow.subprocctx import SubFuncContext
-from cylc.flow.subprocpool import get_func
 from cylc.flow.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.flow.taskdef import TaskDef
 from cylc.flow.task_id import TaskID
@@ -149,7 +148,6 @@ class SuiteConfig(object):
             self.xtrigger_mgr = XtriggerManager(self.suite)
         else:
             self.xtrigger_mgr = xtrigger_mgr
-        self.xtriggers = {}
         self.suite_polling_tasks = {}
         self._last_graph_raw_id = None
         self._last_graph_raw_edges = []
@@ -1681,11 +1679,25 @@ class SuiteConfig(object):
             dependency = Dependency(expr_list, set(triggers.values()), suicide)
             self.taskdefs[right].add_dependency(dependency, seq)
 
-        # Record xtrigger labels for each task name.
-        if right not in self.xtriggers:
-            self.xtriggers[right] = xtrig_labels
-        else:
-            self.xtriggers[right] = self.xtriggers[right].union(xtrig_labels)
+        for label in xtrig_labels:
+            try:
+                xtrig = self.cfg['scheduling']['xtriggers'][label]
+            except KeyError:
+                if label == 'wall_clock':
+                    # Allow "@wall_clock" in the graph as an undeclared
+                    # zero-offset clock xtrigger.
+                    xtrig = SubFuncContext(
+                        'wall_clock', 'wall_clock', [], {})
+                else:
+                    raise SuiteConfigError(f"xtrigger not defined: {label}")
+            if (xtrig.func_name == 'wall_clock' and
+                    self.cfg['scheduling']['cycling mode'] == (
+                        INTEGER_CYCLING_TYPE)):
+                sig = xtrig.get_signature()
+                raise SuiteConfigError(
+                    f"clock xtriggers need date-time cycling: {label} = {sig}")
+            self.xtrigger_mgr.add_trig(label, xtrig, self.fdir)
+            self.taskdefs[right].add_xtrig_label(label, seq)
 
     def get_actual_first_point(self, start_point):
         """Get actual first cycle point for the suite
@@ -2114,48 +2126,6 @@ class SuiteConfig(object):
             self.suite_polling_tasks.update(parser.suite_state_polling_tasks)
             self._proc_triggers(
                 parser.triggers, parser.original, seq, task_triggers)
-
-        xtcfg = self.cfg['scheduling']['xtriggers']
-        # Taskdefs just know xtrigger labels.
-        for task_name, xt_labels in self.xtriggers.items():
-            for label in xt_labels:
-                try:
-                    xtrig = xtcfg[label]
-                except KeyError:
-                    if label == 'wall_clock':
-                        # Allow predefined zero-offset wall clock xtrigger.
-                        xtrig = SubFuncContext(
-                            'wall_clock', 'wall_clock', [], {})
-                    else:
-                        raise SuiteConfigError(
-                            "undefined xtrigger label: %s" % label)
-                if xtrig.func_name.startswith('wall_clock'):
-                    self.xtrigger_mgr.add_clock(label, xtrig)
-                    # Replace existing xclock if the new offset is larger.
-                    try:
-                        offset = get_interval(xtrig.func_kwargs['offset'])
-                    except KeyError:
-                        offset = 0
-                    old_label = self.taskdefs[task_name].xclock_label
-                    if old_label is None:
-                        self.taskdefs[task_name].xclock_label = label
-                    else:
-                        old_xtrig = self.xtrigger_mgr.clockx_map[old_label]
-                        old_offset = get_interval(
-                            old_xtrig.func_kwargs['offset'])
-                        if offset > old_offset:
-                            self.taskdefs[task_name].xclock_label = label
-                else:
-                    try:
-                        if not callable(get_func(xtrig.func_name, self.fdir)):
-                            raise SuiteConfigError(
-                                f"xtrigger function not callable: "
-                                f"{xtrig.func_name}")
-                    except (ModuleNotFoundError, AttributeError):
-                        raise SuiteConfigError(
-                            f"xtrigger function not found: {xtrig.func_name}")
-                    self.xtrigger_mgr.add_trig(label, xtrig)
-                    self.taskdefs[task_name].xtrig_labels.add(label)
 
         # Detect use of xtrigger names with '@' prefix (creates a task).
         overlap = set(self.taskdefs.keys()).intersection(

@@ -37,8 +37,7 @@ class TaskDef(object):
         "intercycle_offsets", "sequential", "is_coldstart",
         "suite_polling_cfg", "clocktrigger_offset", "expiration_offset",
         "namespace_hierarchy", "dependencies", "outputs", "param_var",
-        "external_triggers", "xtrig_labels", "xclock_label",
-        "name", "elapsed_times"]
+        "external_triggers", "xtrig_labels", "name", "elapsed_times"]
 
     # Store the elapsed times for a maximum of 10 cycles
     MAX_LEN_ELAPSED_TIMES = 10
@@ -68,12 +67,7 @@ class TaskDef(object):
         self.outputs = []
         self.param_var = {}
         self.external_triggers = []
-        self.xtrig_labels = set()
-        self.xclock_label = None
-        # Note a task can only have one clock xtrigger - if it depends on
-        # several we just keep the label of the one with the largest offset
-        # (this is determined and set during suite config parsing, to avoid
-        # storing the offset here in the taskdef).
+        self.xtrig_labels = {}  # {sequence: [labels]}
 
         self.name = name
         self.elapsed_times = deque(maxlen=self.MAX_LEN_ELAPSED_TIMES)
@@ -88,9 +82,18 @@ class TaskDef(object):
                 this dependency applies.
 
         """
-        if sequence not in self.dependencies:
-            self.dependencies[sequence] = []
-        self.dependencies[sequence].append(dependency)
+        self.dependencies.setdefault(sequence, []).append(dependency)
+
+    def add_xtrig_label(self, xtrig_label, sequence):
+        """Add an xtrigger to a named sequence.
+
+        Args:
+            xtrig_label: The xtrigger label to add.
+            sequence (cylc.cycling.SequenceBase): The sequence for which this
+                xtrigger applies.
+
+        """
+        self.xtrig_labels.setdefault(sequence, []).append(xtrig_label)
 
     def add_sequence(self, sequence):
         """Add a sequence."""

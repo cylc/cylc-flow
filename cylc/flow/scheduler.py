@@ -708,8 +708,58 @@ see `COPYING' in the Cylc source distribution.
             self.config.feet)
 
     def info_get_task_requisites(self, items, list_prereqs=False):
-        """Return prerequisites of a task."""
-        return self.pool.get_task_requisites(items, list_prereqs=list_prereqs)
+        """Return prerequisites and outputs etc. of a task.
+
+        Result in a dict of a dict:
+        {
+            "task_id": {
+                "meta": {key: value, ...},
+                "prerequisites": {key: value, ...},
+                "outputs": {key: value, ...},
+                "extras": {key: value, ...},
+            },
+            ...
+        }
+        """
+        itasks, bad_items = self.pool.filter_task_proxies(items)
+        results = {}
+        now = time()
+        for itask in itasks:
+            if list_prereqs:
+                results[itask.identity] = {
+                    'prerequisites': itask.state.prerequisites_dump(
+                        list_prereqs=True)}
+                continue
+            extras = {}
+            if itask.tdef.clocktrigger_offset is not None:
+                extras['Clock trigger time reached'] = (
+                    itask.is_waiting_clock_done(now))
+                extras['Triggers at'] = time2str(
+                    itask.clock_trigger_time)
+            for trig, satisfied in itask.state.external_triggers.items():
+                key = f'External trigger "{trig}"'
+                if satisfied:
+                    extras[key] = 'satisfied'
+                else:
+                    extras[key] = 'NOT satisfied'
+            for label, satisfied in itask.state.xtriggers.items():
+                sig = self.xtrigger_mgr.get_xtrig_ctx(
+                    itask, label).get_signature()
+                extra = f'xtrigger "{label} = {sig}"'
+                if satisfied:
+                    extras[extra] = 'satisfied'
+                else:
+                    extras[extra] = 'NOT satisfied'
+            outputs = []
+            for _, msg, is_completed in itask.state.outputs.get_all():
+                outputs.append(
+                    [f"{itask.identity} {msg}", is_completed])
+            results[itask.identity] = {
+                "meta": itask.tdef.describe(),
+                "prerequisites": itask.state.prerequisites_dump(),
+                "outputs": outputs,
+                "extras": extras}
+        return results, bad_items
 
     def info_ping_task(self, task_id, exists_only=False):
         """Return True if task exists and running."""
