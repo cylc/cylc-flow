@@ -23,10 +23,11 @@ program can then be started, stopped, and targeted by name REG. (Note that
 "cylc run" can also register suites on the fly).
 
 Registration creates a suite run directory "~/cylc-run/REG/" containing a
-".service/source" symlink to the suite definition PATH. The .service directory
-will also be used for server authentication files at run time.
+".service/source" symlink to the suite definition location. The .service
+directory is also used for server authentication files at runtime. With the
+"--run-dir" option "~/cylc-run/REG" can be symlinked to another location.
 
-Suite names can be hierarchical, corresponding to the path under ~/cylc-run.
+Suite names can be hierarchical, corresponding to path under the run directory.
 
   % cylc register dogs/fido PATH
 Register PATH/suite.rc as dogs/fido, with run directory ~/cylc-run/dogs/fido.
