@@ -140,14 +140,17 @@ class TestScan(TestCase):
             # will match blog/five, but will stop once it finds the log dir
             self.assertEqual([('blog/five', 'DIR', 'TITLE')], suites)
 
-    @patch("cylc.flow.network.scan.SuiteSrvFilesManager")
+    @patch("cylc.flow.network.scan.load_contact_file")
+    @patch("cylc.flow.network.scan.ContactFileFields")
     @patch("cylc.flow.network.scan.getpwall")
     def test_get_scan_items_from_fs_with_owner_active_only(
-            self, mocked_getpwall, mocked_srv_files_mgr):
+            self, mocked_getpwall, mocked_contact_file_fields,
+            mocked_load_contact_file):
         """Test that only active suites are returned if so requested.
         Args:
             mocked_getpwall (object): mocked pwd.getpwall
-            mocked_srv_files_mgr (object): mocked SuiteSrvFilesManager
+            mocked_contact_file_fields (object): mocked ContactFileFields
+            mocked_load_contact_file (function): mocked load_contact_file
         """
         # mock sr
         with TemporaryDirectory() as homedir:
@@ -155,11 +158,11 @@ class TestScan(TestCase):
             mocked_getpwall.return_value = [
                 self.pwentry('/bin/bash', 'root', homedir),
             ]
-            mocked_srv_files_mgr.return_value.KEY_HOST = 'host'
-            mocked_srv_files_mgr.return_value.KEY_PORT = 'port'
+            mocked_contact_file_fields.HOST = 'host'
+            mocked_contact_file_fields.PORT = 'port'
 
             # mock srv_files_mgr.load_contact_file
-            def mocked_load_contact_file(reg, _):
+            def my_load_contact_file(reg, _):
                 if reg == 'good':
                     return {
                         'host': 'localhost',
@@ -168,8 +171,7 @@ class TestScan(TestCase):
                 else:
                     raise SuiteServiceFileError(reg)
 
-            mocked_srv_files_mgr.return_value.load_contact_file = \
-                mocked_load_contact_file
+            mocked_load_contact_file.side_effect = my_load_contact_file
             for suite_name in ["good", "bad", "ugly"]:
                 suite_directory = Path(homedir, 'cylc-run', suite_name)
                 suite_directory.mkdir(parents=True)

@@ -184,41 +184,55 @@ def get_register_test_cases():
 
 class TestSuiteSrvFilesManager(unittest.TestCase):
 
-    @mock.patch('cylc.flow.suite_srv_files_mgr.os')
+    @mock.patch('os.unlink')
+    @mock.patch('os.makedirs')
+    @mock.patch('os.symlink')
+    @mock.patch('os.readlink')
+    @mock.patch('os.path.isfile')
+    @mock.patch('os.path.isabs')
+    @mock.patch('os.getcwd')
+    @mock.patch('os.path.abspath')
     @mock.patch('cylc.flow.suite_srv_files_mgr.get_suite_srv_dir')
-    def test_register(self, mocked_os, mocked_get_suite_srv_dir):
+    def test_register(
+            self,
+            mocked_get_suite_srv_dir,
+            mocked_abspath,
+            mocked_getcwd,
+            mocked_isabs,
+            mocked_isfile,
+            mocked_readlink,
+            mocked_symlink,
+            mocked_makedirs,
+            mocked_unlink
+    ):
         """Test the register function."""
         def mkdirs_standin(_, exist_ok=False):
             return True
 
-        # we do not need to mock these functions
-        mocked_os.path.basename = os.path.basename
-        mocked_os.path.join = os.path.join
-        mocked_os.path.normpath = os.path.normpath
-        mocked_os.path.dirname = os.path.dirname
-        mocked_os.makedirs = mkdirs_standin
-        mocked_os.path.abspath = lambda x: x
+        mocked_abspath.side_effect = lambda x: x
 
         for reg, source, redirect, cwd, isabs, isfile, \
             suite_srv_dir, readlink, expected_symlink, \
             expected, e_expected, e_message \
                 in get_register_test_cases():
-            mocked_os.getcwd = lambda: cwd
-            mocked_os.path.isabs = lambda x: isabs
+            mocked_getcwd.side_effect = lambda: cwd
+            mocked_isabs.side_effect = lambda x: isabs
 
-            mocked_os.path.isfile = lambda x: isfile
+            mocked_isfile.side_effect = lambda x: isfile
             mocked_get_suite_srv_dir.return_value = str(suite_srv_dir)
+            mocked_makedirs.return_value = True
+            mocked_unlink.return_value = True
             if readlink == OSError:
-                mocked_os.readlink.side_effect = readlink
+                mocked_readlink.side_effect = readlink
             else:
-                mocked_os.readlink.side_effect = lambda x: readlink
+                mocked_readlink.side_effect = lambda x: readlink
 
             if e_expected is None:
                 reg = suite_srv_files_mgr.register(reg, source, redirect)
                 self.assertEqual(expected, reg)
-                if mocked_os.symlink.call_count > 0:
+                if mocked_symlink.call_count > 0:
                     # first argument, of the first call
-                    arg0 = mocked_os.symlink.call_args[0][0]
+                    arg0 = mocked_symlink.call_args[0][0]
                     self.assertEqual(expected_symlink, arg0)
             else:
                 with self.assertRaises(e_expected) as cm:
