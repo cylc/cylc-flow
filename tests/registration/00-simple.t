@@ -183,7 +183,7 @@ run_fail "${TEST_NAME}" cylc register --run-dir="${ALT_RUN_DIR}" "${REG}" "${SRC
 contains_ok "${TEST_NAME}.stderr" <<__OUT__
 SuiteServiceFileError: Symlink '${RUN_DIR}' already points to ${PWD}/target.
 __OUT__
-rm -r "${SRC_DIR}" "${PWD}/target" "${CYLC_RUN_DIR}/${PRE}"
+rm -r "${SRC_DIR}" "${PWD}/target" "${CYLC_RUN_DIR:?}/${PRE}"
 
 purge_suite "${SUITE_NAME}"
 exit
