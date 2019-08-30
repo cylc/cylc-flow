@@ -23,10 +23,11 @@ program can then be started, stopped, and targeted by name REG. (Note that
 "cylc run" can also register suites on the fly).
 
 Registration creates a suite run directory "~/cylc-run/REG/" containing a
-".service/source" symlink to the suite definition PATH. The .service directory
-will also be used for server authentication files at run time.
+".service/source" symlink to the suite definition location. The .service
+directory is also used for server authentication files at runtime. With the
+"--run-dir" option "~/cylc-run/REG" can be symlinked to another location.
 
-Suite names can be hierarchical, corresponding to the path under ~/cylc-run.
+Suite names can be hierarchical, corresponding to path under the run directory.
 
   % cylc register dogs/fido PATH
 Register PATH/suite.rc as dogs/fido, with run directory ~/cylc-run/dogs/fido.
@@ -67,9 +68,13 @@ def main():
                 ("[PATH]", "Suite definition directory (defaults to $PWD)")])
 
     parser.add_option(
-        "--redirect", help="Allow an existing suite name and run directory "
-                           "to be used with another suite.",
+        "--redirect", help="Allow an existing suite name and run directory"
+                           " to be used with another suite.",
         action="store_true", default=False, dest="redirect")
+
+    parser.add_option(
+        "--run-dir", help="Symlink $HOME/cylc-run/REG to RUNDIR/REG.",
+        action="store", metavar="RUNDIR", default=None, dest="rundir")
 
     opts, args = parser.parse_args()
     if len(args) == 2:
@@ -79,7 +84,9 @@ def main():
         src = None
     else:
         reg = src = None
-    SuiteSrvFilesManager().register(reg, src, redirect=opts.redirect)
+
+    SuiteSrvFilesManager().register(
+        reg, src, redirect=opts.redirect, rundir=opts.rundir)
 
 
 if __name__ == "__main__":

@@ -14,119 +14,213 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 #------------------------------------------------------------------------------
 # Test suite registration
 
+export RND_SUITE_NAME
+export RND_SUITE_SOURCE
+export RND_SUITE_RUNDIR
+export CYLC_RUN_DIR
+
+CYLC_RUN_DIR="$(cylc get-global-config --print-run-dir)"
+
+function make_rnd_suite() {
+    # Create a randomly-named suite source directory.
+    # Define its run directory.
+    RND_SUITE_NAME=x$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c6)
+    RND_SUITE_SOURCE="$PWD/${RND_SUITE_NAME}"
+    mkdir -p "${RND_SUITE_SOURCE}"
+    touch "${RND_SUITE_SOURCE}/suite.rc"
+    RND_SUITE_RUNDIR="${CYLC_RUN_DIR}/${RND_SUITE_NAME}"
+}
+
+function purge_rnd_suite() {
+    # Remove the suite source created by make_rnd_suite().
+    # And remove its run-directory too.
+    RND_SUITE_SOURCE=${1:-$RND_SUITE_SOURCE}
+    RND_SUITE_RUNDIR=${2:-$RND_SUITE_RUNDIR}
+    rm -rf "${RND_SUITE_SOURCE}"
+    rm -rf "${RND_SUITE_RUNDIR}"
+}
+
 . "$(dirname "$0")/test_header"
-set_test_number 25
+set_test_number 37
+
+# Use $SUITE_NAME and $SUITE_RUN_DIR defined by test_header
+
+#------------------------------
+# Test fail no suite source dir
+TEST_NAME="${TEST_NAME_BASE}-nodir"
+make_rnd_suite
+rm -rf "${RND_SUITE_SOURCE}"
+run_fail "${TEST_NAME}" cylc register "${RND_SUITE_NAME}" "${RND_SUITE_SOURCE}"
+contains_ok "${TEST_NAME}.stderr" <<__ERR__
+ERROR: no suite.rc in ${RND_SUITE_SOURCE}
+__ERR__
+purge_rnd_suite
+
+#---------------------------
+# Test fail no suite.rc file
+TEST_NAME="${TEST_NAME_BASE}-nodir"
+make_rnd_suite
+rm -f "${RND_SUITE_SOURCE}/suite.rc"
+run_fail "${TEST_NAME}" cylc register "${RND_SUITE_NAME}" "${RND_SUITE_SOURCE}"
+contains_ok "${TEST_NAME}.stderr" <<__ERR__
+ERROR: no suite.rc in ${RND_SUITE_SOURCE}
+__ERR__
+purge_rnd_suite
+
+#-------------------------------------------------------
+# Test default name: "cylc reg" (suite in $PWD, no args)
+TEST_NAME="${TEST_NAME_BASE}-pwd1"
+make_rnd_suite
+pushd "${RND_SUITE_SOURCE}" || exit 1
+run_ok "${TEST_NAME}" cylc register
+contains_ok "${TEST_NAME}.stdout" <<__OUT__
+REGISTERED $RND_SUITE_NAME -> ${RND_SUITE_SOURCE}
+__OUT__
+popd || exit 1
+purge_rnd_suite
+
+#--------------------------------------------------
+# Test default path: "cylc reg REG" (suite in $PWD)
+TEST_NAME="${TEST_NAME_BASE}-pwd2"
+make_rnd_suite
+pushd "${RND_SUITE_SOURCE}" || exit 1
+run_ok "${TEST_NAME}" cylc register "${RND_SUITE_NAME}"
+contains_ok "${TEST_NAME}.stdout" <<__OUT__
+REGISTERED ${RND_SUITE_NAME} -> ${RND_SUITE_SOURCE}
+__OUT__
+popd || exit 1
+purge_rnd_suite
+
+#-------------------------
+# Test "cylc reg REG PATH"
+TEST_NAME="${TEST_NAME_BASE}-normal"
+make_rnd_suite
+run_ok "${TEST_NAME}" cylc register "${RND_SUITE_NAME}" "${RND_SUITE_SOURCE}"
+contains_ok "${TEST_NAME}.stdout" <<__OUT__
+REGISTERED ${RND_SUITE_NAME} -> ${RND_SUITE_SOURCE}
+__OUT__
+purge_rnd_suite
+
+#--------------------------------------------------------------------
+# Test register existing run directory: "cylc reg REG ~/cylc-run/REG"
+TEST_NAME="${TEST_NAME_BASE}-reg-run-dir"
+make_rnd_suite
+mkdir -p "${RND_SUITE_RUNDIR}"
+cp "${RND_SUITE_SOURCE}/suite.rc" "${RND_SUITE_RUNDIR}"
+run_ok "${TEST_NAME}" cylc register "${RND_SUITE_NAME}" "${RND_SUITE_RUNDIR}"
+contains_ok "${TEST_NAME}.stdout" <<__OUT__
+REGISTERED ${RND_SUITE_NAME} -> ${RND_SUITE_RUNDIR}
+__OUT__
+SOURCE="$(readlink "${RND_SUITE_RUNDIR}/.service/source")"
+run_ok "${TEST_NAME}-source" test '..' = "${SOURCE}"
+# Run it twice
+run_ok "${TEST_NAME}-2" cylc register "${RND_SUITE_NAME}" "${RND_SUITE_RUNDIR}"
+contains_ok "${TEST_NAME}-2.stdout" <<__OUT__
+REGISTERED ${RND_SUITE_NAME} -> ${RND_SUITE_RUNDIR}
+__OUT__
+SOURCE="$(readlink "${RND_SUITE_RUNDIR}/.service/source")"
+run_ok "${TEST_NAME}-source" test '..' = "${SOURCE}"
+purge_rnd_suite
+
+#----------------------------------------------------------------
+# Test fail "cylc reg REG PATH" where REG already points to PATH2
+TEST_NAME="${TEST_NAME_BASE}-dup1"
+make_rnd_suite
+run_ok "${TEST_NAME}" cylc register "${RND_SUITE_NAME}" "${RND_SUITE_SOURCE}"
+RND_SUITE_NAME1="${RND_SUITE_NAME}"
+RND_SUITE_SOURCE1="${RND_SUITE_SOURCE}"
+RND_SUITE_RUNDIR1="${RND_SUITE_RUNDIR}"
+make_rnd_suite
+TEST_NAME="${TEST_NAME_BASE}-dup2"
+run_fail "${TEST_NAME}" cylc register "${RND_SUITE_NAME1}" "${RND_SUITE_SOURCE}"
+contains_ok "${TEST_NAME}.stderr" <<__ERR__
+ERROR: the name '${RND_SUITE_NAME1}' already points to ${RND_SUITE_SOURCE1}.
+Use --redirect to re-use an existing name and run directory.
+__ERR__
+# Now force it
+TEST_NAME="${TEST_NAME_BASE}-dup3"
+run_ok "${TEST_NAME}" cylc register --redirect "${RND_SUITE_NAME1}" "${RND_SUITE_SOURCE}"
+sed -i 's/^\t//; s/^.* WARNING - /WARNING - /' "${TEST_NAME}.stderr"
+contains_ok "${TEST_NAME}.stderr" <<__ERR__
+WARNING - the name '${RND_SUITE_NAME1}' points to ${RND_SUITE_SOURCE1}.
+It will now be redirected to ${RND_SUITE_SOURCE}.
+Files in the existing ${RND_SUITE_NAME1} run directory will be overwritten.
+__ERR__
+contains_ok "${TEST_NAME}.stdout" <<__OUT__
+REGISTERED ${RND_SUITE_NAME1} -> ${RND_SUITE_SOURCE}
+__OUT__
+
+TEST_NAME="${TEST_NAME_BASE}-get-dir"
+run_ok "${TEST_NAME}" cylc get-directory "${RND_SUITE_NAME1}"
+contains_ok "${TEST_NAME}.stdout" <<__ERR__
+${RND_SUITE_SOURCE}
+__ERR__
+
+purge_rnd_suite
+purge_rnd_suite "${RND_SUITE_SOURCE1}" "${RND_SUITE_RUNDIR1}"
+
+#-----------------------
+# Test alternate run dir
+# 1. Normal case.
+TEST_NAME="${TEST_NAME_BASE}-alt-run-dir"
+make_rnd_suite
+ALT_RUN_DIR="${PWD}/alt"
+run_ok "${TEST_NAME}" \
+    cylc register --run-dir="${ALT_RUN_DIR}" "${RND_SUITE_NAME}" "${RND_SUITE_SOURCE}"
+contains_ok "${TEST_NAME}.stdout" <<__OUT__
+REGISTERED ${RND_SUITE_NAME} -> ${RND_SUITE_SOURCE}
+__OUT__
+run_ok "${TEST_NAME}-check-link" test -L "${RND_SUITE_RUNDIR}"
+run_ok "${TEST_NAME}-rm-link" rm "${RND_SUITE_RUNDIR}"
+run_ok "${TEST_NAME}-rm-alt-run-dir" rm -r "${ALT_RUN_DIR}"
+purge_rnd_suite
+
+# 2. If reg already exists (as a directory).
+TEST_NAME="${TEST_NAME_BASE}-alt-exists1"
+make_rnd_suite
+ALT_RUN_DIR="${PWD}/alt"
+mkdir -p "${RND_SUITE_RUNDIR}"
+run_fail "${TEST_NAME}" \
+   cylc register --run-dir="${ALT_RUN_DIR}" "${RND_SUITE_NAME}" "${RND_SUITE_SOURCE}"
+contains_ok "${TEST_NAME}.stderr" <<__OUT__
+Run directory '${RND_SUITE_RUNDIR}' already exists.
+__OUT__
+purge_rnd_suite
+
+# 3. If reg already exists (as a valid symlink).
+TEST_NAME="${TEST_NAME_BASE}-alt-exists2"
+make_rnd_suite
+ALT_RUN_DIR="${PWD}/alt"
+TDIR=$(mktemp -d)
+mkdir -p "$(dirname "${RND_SUITE_RUNDIR}")"
+ln -s "${TDIR}" "${RND_SUITE_RUNDIR}"
+run_fail "${TEST_NAME}" \
+    cylc register --run-dir="${ALT_RUN_DIR}" "${RND_SUITE_NAME}" "${RND_SUITE_SOURCE}"
+contains_ok "${TEST_NAME}.stderr" <<__OUT__
+Symlink '${RND_SUITE_RUNDIR}' already points to ${TDIR}.
+__OUT__
+purge_rnd_suite
+rm -rf "${TDIR}"
+
+#-----------------------------------------------------------------------------
+# Now use a real suite
 
 init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
 [meta]
     title = the quick brown fox
 [scheduling]
     [[dependencies]]
-        graph = a => b => c
+         graph = a => b => c
 [runtime]
     [[a,b,c]]
         script = true
 __SUITE_RC__
 
-# Unique suite run-dir prefix to avoid messing with real suites.
-PRE=cylctb-reg-${CYLC_TEST_TIME_INIT}
-
-# Test fail no suite.rc file.
-CYLC_RUN_DIR=$(cylc get-global --print-run-dir)
-TEST_NAME="${TEST_NAME_BASE}-noreg"
-run_fail "${TEST_NAME}" cylc register "${SUITE_NAME}" "${PWD}/zilch"
-contains_ok "${TEST_NAME}.stderr" <<__ERR__
-ERROR: no suite.rc in ${PWD}/zilch
-__ERR__
-
-CHEESE=${PRE}-cheese
-# Test default name: "cylc reg" (suite in $PWD, no args)
-TEST_NAME="${TEST_NAME_BASE}-cheese"
-mkdir $CHEESE
-cd $CHEESE
-touch suite.rc
-run_ok "${TEST_NAME}" cylc register
-contains_ok "${TEST_NAME}.stdout" <<__OUT__
-REGISTERED $CHEESE -> ${PWD}
-__OUT__
-cd ..
-rm -rf "${CYLC_RUN_DIR}/$CHEESE"
-
-# Test default name: "cylc reg REG" (suite in $PWD)
-TEST_NAME="${TEST_NAME_BASE}-toast"
-cd $CHEESE
-TOAST=${PRE}-toast
-run_ok "${TEST_NAME}" cylc register $TOAST
-contains_ok "${TEST_NAME}.stdout" <<__OUT__
-REGISTERED $TOAST -> ${PWD}
-__OUT__
-cd ..
-rm -rf "${CYLC_RUN_DIR}/$TOAST"
-
-# Test "cylc reg REG PATH"
-TEST_NAME="${TEST_NAME_BASE}-bagels"
-BAGELS=${PRE}-bagels
-run_ok "${TEST_NAME}" cylc register $BAGELS $CHEESE
-contains_ok "${TEST_NAME}.stdout" <<__OUT__
-REGISTERED $BAGELS -> ${PWD}/$CHEESE
-__OUT__
-rm -rf "${CYLC_RUN_DIR}/$BAGELS"
-
-# Test "cylc reg REG ~/cylc-run/REG"
-TEST_NAME="${TEST_NAME_BASE}-onion"
-ONION="${PRE}-onion"
-mkdir -p "${CYLC_RUN_DIR}/${ONION}"
-cp -p "${PWD}/suite.rc" "${CYLC_RUN_DIR}/${ONION}/"
-run_ok "${TEST_NAME}" cylc register "${ONION}" "${CYLC_RUN_DIR}/${ONION}"
-contains_ok "${TEST_NAME}.stdout" <<__OUT__
-REGISTERED ${ONION} -> ${CYLC_RUN_DIR}/${ONION}
-__OUT__
-SOURCE="$(readlink "${CYLC_RUN_DIR}/${ONION}/.service/source")"
-run_ok "${TEST_NAME}-source" test '..' = "${SOURCE}"
-# Run it twice
-run_ok "${TEST_NAME}-2" cylc register "${ONION}" "${CYLC_RUN_DIR}/${ONION}"
-contains_ok "${TEST_NAME}-2.stdout" <<__OUT__
-REGISTERED ${ONION} -> ${CYLC_RUN_DIR}/${ONION}
-__OUT__
-SOURCE="$(readlink "${CYLC_RUN_DIR}/${ONION}/.service/source")"
-run_ok "${TEST_NAME}-2-source" test '..' = "${SOURCE}"
-rm -rf "${CYLC_RUN_DIR}/${ONION}"
-
-# Test fail "cylc reg REG PATH" where REG already points to PATH2
-YOGHURT=${PRE}-YOGHURT
-cp -r $CHEESE $YOGHURT
-TEST_NAME="${TEST_NAME_BASE}-cheese"
-run_ok "${TEST_NAME}" cylc register $CHEESE $CHEESE
-TEST_NAME="${TEST_NAME_BASE}-repurpose1"
-run_fail "${TEST_NAME}" cylc register $CHEESE $YOGHURT
-contains_ok "${TEST_NAME}.stderr" <<__ERR__
-ERROR: the name '$CHEESE' already points to ${PWD}/$CHEESE.
-Use --redirect to re-use an existing name and run directory.
-__ERR__
-
-# Test succeed "cylc reg REG PATH" where REG already points to PATH2
-TEST_NAME="${TEST_NAME_BASE}-repurpose2"
-cp -r $CHEESE $YOGHURT
-run_ok "${TEST_NAME}" cylc register --redirect $CHEESE $YOGHURT
-sed -i 's/^\t//; s/^.* WARNING - /WARNING - /' "${TEST_NAME}.stderr"
-contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WARNING - the name '$CHEESE' points to ${PWD}/$CHEESE.
-It will now be redirected to ${PWD}/$YOGHURT.
-Files in the existing $CHEESE run directory will be overwritten.
-__ERR__
-contains_ok "${TEST_NAME}.stdout" <<__OUT__
-REGISTERED $CHEESE -> ${PWD}/$YOGHURT
-__OUT__
-rm -rf "${CYLC_RUN_DIR}/$CHEESE"
-
-run_ok "${TEST_NAME_BASE}-get-dir" cylc get-directory "${SUITE_NAME}"
-
-cd .. # necessary so the suite is being validated via the database not filepath
 run_ok "${TEST_NAME_BASE}-val" cylc validate "${SUITE_NAME}"
-cd "${OLDPWD}"
 
 run_ok "${TEST_NAME_BASE}-print" cylc print
 contains_ok "${TEST_NAME_BASE}-print.stdout" <<__OUT__
@@ -135,9 +229,9 @@ __OUT__
 
 # Filter out errors from 'bad' suites in the 'cylc-run' directory
 NONSPECIFIC_ERR2='\[Errno 2\] No such file or directory:'
-SPECIFIC_ERR2="$NONSPECIFIC_ERR2 '$HOME/cylc-run/$SUITE_NAME/suite.rc'"
-ERR2_COUNT=$(grep -c "$SPECIFIC_ERR2" "${TEST_NAME_BASE}-print.stderr")
-if [ "$ERR2_COUNT" -eq "0" ]; then
+SPECIFIC_ERR2="$NONSPECIFIC_ERR2 '$HOME/cylc-run/${SUITE_NAME}/suite.rc'"
+ERR2_COUNT="$(grep -c "$SPECIFIC_ERR2" "${TEST_NAME_BASE}-print.stderr")"
+if ((ERR2_COUNT == 0)); then
     grep -v -s "$NONSPECIFIC_ERR2" "${TEST_NAME_BASE}-print.stderr" > "${TEST_NAME_BASE}-print-filtered.stderr"
     cmp_ok "${TEST_NAME_BASE}-print-filtered.stderr" <'/dev/null'
 else
