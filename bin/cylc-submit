@@ -115,7 +115,7 @@ def main(parser, options, suite, *task_ids):
     make_suite_run_tree(suite)
     # Extract job.sh from library, for use in job scripts.
     extract_resources(
-        suite_srv_mgr.get_suite_srv_dir(suite),
+        suite_srv_files_mgr.get_suite_srv_dir(suite),
         ['etc/job.sh'])
     pool = SubProcPool()
     owner = get_user()
