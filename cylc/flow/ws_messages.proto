@@ -49,22 +49,6 @@ message PbTimeZone {
     string string_extended = 4;
 }
 
-message PbStateTotals {
-    int32 runahead = 1;
-    int32 waiting = 2;
-    int32 held = 3;
-    int32 queued = 4;
-    int32 expired = 5;
-    int32 ready = 6;
-    int32 submit_failed = 7;
-    int32 submit_retrying = 8;
-    int32 submitted = 9;
-    int32 retrying = 10;
-    int32 running = 11;
-    int32 failed = 12;
-    int32 succeeded = 13;
-}
-
 message PbWorkflow {
     string stamp = 1;
     string id = 2;
@@ -86,7 +70,7 @@ message PbWorkflow {
     bool reloading = 18;
     string run_mode = 19;
     string cycling_mode = 20;
-    PbStateTotals state_totals = 21;
+    map<string, int32> state_totals = 21;
     string workflow_log_dir = 22;
     PbTimeZone time_zone_info = 23;
     int32 tree_depth = 24;
@@ -96,6 +80,7 @@ message PbWorkflow {
     repeated string task_proxies = 28;
     repeated string family_proxies = 29;
     string status_msg = 30;
+    int32 is_held_total = 31;
 }
 
 message PbJob {
@@ -128,9 +113,8 @@ message PbJob {
     repeated string param_env_tmpl = 27;
     repeated string param_var = 28;
     repeated string extra_logs = 29;
-    /* For filtering speed */
-    string name = 30;
-    string cycle_point = 31;
+    string name = 30; /* filter item */
+    string cycle_point = 31; /* filter item */
 }
 
 message PbTask {
@@ -184,8 +168,8 @@ message PbTaskProxy {
     repeated string jobs = 14;
     repeated string parents = 15;
     string first_parent = 16;
-    /* For filtering speed */
-    string name = 17;
+    string name = 17; /* filter item */
+    bool is_held = 18;
 }
 
 message PbFamily {
@@ -204,7 +188,7 @@ message PbFamilyProxy {
     string stamp = 1;
     string id = 2;
     string cycle_point = 3;
-    string name = 4;
+    string name = 4; /* filter item */
     string family = 5;
     string state = 6;
     int32 depth = 7;
@@ -212,6 +196,7 @@ message PbFamilyProxy {
     repeated string parents = 9;
     repeated string child_tasks = 10;
     repeated string child_families = 11;
+    bool is_held = 12;
 }
 
 message PbEdge {

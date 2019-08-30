@@ -104,6 +104,8 @@ def node_filter(node, args):
         (args.get('ghosts') or n_atts[5] != '') and
         (not args.get('states') or n_atts[5] in args['states']) and
         not (args.get('exstates') and n_atts[5] in args['exstates']) and
+        (args.get('is_held') is None
+         or (node.is_held == args['is_held'])) and
         (args.get('mindepth', -1) < 0 or node.depth >= args['mindepth']) and
         (args.get('maxdepth', -1) < 0 or node.depth <= args['maxdepth']) and
         # Now filter node against id arg lists

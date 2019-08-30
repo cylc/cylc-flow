@@ -27,44 +27,41 @@ run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
 
 # query suite
 TEST_NAME="${TEST_NAME_BASE}-workflows"
-run_graphql_ok "${TEST_NAME}" "${SUITE_NAME}" '
+read -r -d '' workflowQuery <<_args_
 {
-    "request_string": "
-        query {
-            workflows {
-                name
-                status
-                statusMsg
-                host
-                port
-                owner
-                cylcVersion
-                meta {
-                    title
-                    description
-                }
-                newestRunaheadCyclePoint
-                newestCyclePoint
-                oldestCyclePoint
-                reloading
-                runMode
-                stateTotals {
-                    waiting
-                    held
-                    running
-                }
-                workflowLogDir
-                timeZoneInfo {
-                    hours
-                    minutes
-                }
-                nsDefnOrder
-                states
-            }
-        }
-    "
+  "request_string": "
+query {
+  workflows {
+    name
+    status
+    statusMsg
+    host
+    port
+    owner
+    cylcVersion
+    meta {
+      title
+      description
+    }
+    newestRunaheadCyclePoint
+    newestCyclePoint
+    oldestCyclePoint
+    reloading
+    runMode
+    stateTotals
+    workflowLogDir
+    timeZoneInfo {
+      hours
+      minutes
+    }
+    nsDefnOrder
+    states
+  }
+}",
+  "variables": null
 }
-'
+_args_
+run_graphql_ok "${TEST_NAME}" "${SUITE_NAME}" "${workflowQuery}"
 
 # scrape suite info from contact file
 TEST_NAME="${TEST_NAME_BASE}-contact"
@@ -99,9 +96,18 @@ cat > expected << __HERE__
             "reloading": false,
             "runMode": "live",
             "stateTotals": {
+                "runahead": 0,
                 "waiting": 0,
-                "held": 0,
-                "running": 0
+                "queued": 0,
+                "expired": 0,
+                "ready": 1,
+                "submit-failed": 0,
+                "submit-retrying": 0,
+                "submitted": 0,
+                "retrying": 0,
+                "running": 0,
+                "failed": 0,
+                "succeeded": 0
             },
             "workflowLogDir": "${SUITE_LOG_DIR}",
             "timeZoneInfo": {
@@ -112,7 +118,9 @@ cat > expected << __HERE__
                 "foo",
                 "root"
             ],
-            "states": []
+            "states": [
+                "ready"
+            ]
         }
     ]
 }
