@@ -385,7 +385,7 @@ To start a new run, stop the old one first with one or more of these:
                 name = os.path.basename(os.path.dirname(arg))
         return name, path
 
-    def register(self, reg=None, source=None, redirect=False):
+    def register(self, reg=None, source=None, redirect=False, rundir=None):
         """Register a suite, or renew its registration.
 
         Create suite service directory and symlink to suite source location.
@@ -430,7 +430,27 @@ To start a new run, stop the old one first with one or more of these:
 
         # Create service dir if necessary.
         srv_d = self.get_suite_srv_dir(reg)
-        os.makedirs(srv_d, exist_ok=True)
+        if rundir is None:
+            os.makedirs(srv_d, exist_ok=True)
+        else:
+            suite_run_d, srv_d_name = os.path.split(srv_d)
+            alt_suite_run_d = os.path.join(rundir, reg)
+            alt_srv_d = os.path.join(rundir, reg, srv_d_name)
+            os.makedirs(alt_srv_d, exist_ok=True)
+            os.makedirs(os.path.dirname(suite_run_d), exist_ok=True)
+            if os.path.islink(suite_run_d) and not os.path.exists(suite_run_d):
+                # Remove a bad symlink.
+                os.unlink(suite_run_d)
+            if not os.path.exists(suite_run_d):
+                os.symlink(alt_suite_run_d, suite_run_d)
+            elif not os.path.islink(suite_run_d):
+                raise SuiteServiceFileError(
+                    f"Run directory '{suite_run_d}' already exists.")
+            elif alt_suite_run_d != os.readlink(suite_run_d):
+                target = os.readlink(suite_run_d)
+                raise SuiteServiceFileError(
+                    f"Symlink '{suite_run_d}' already points to {target}.")
+            # (else already the right symlink)
 
         # See if suite already has a source or not
         try:

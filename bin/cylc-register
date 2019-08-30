@@ -67,16 +67,21 @@ def get_option_parser():
                 ("[PATH]", "Suite definition directory (defaults to $PWD)")])
 
     parser.add_option(
-        "--redirect", help="Allow an existing suite name and run directory "
-                           "to be used with another suite.",
+        "--redirect", help="Allow an existing suite name and run directory"
+                           " to be used with another suite.",
         action="store_true", default=False, dest="redirect")
+
+    parser.add_option(
+        "--run-dir", help="Symlink $HOME/cylc-run/REG to RUNDIR/REG.",
+        action="store", metavar="RUNDIR", default=None, dest="rundir")
 
     return parser
 
 
 @cli_function(get_option_parser)
 def main(parser, opts, reg=None, src=None):
-    SuiteSrvFilesManager().register(reg, src, redirect=opts.redirect)
+    SuiteSrvFilesManager().register(
+        reg, src, redirect=opts.redirect, rundir=opts.rundir)
 
 
 if __name__ == "__main__":
