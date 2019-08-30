@@ -68,6 +68,14 @@ query {
   edges(workflows: [\"${USER}${ID_DELIM}${SUITE_NAME}\"], sort: {keys: [\"id\"], reverse: false}) {
     id
   }
+  nodesEdges(workflows: [\"*${ID_DELIM}*\"], ids: [\"foo\"], distance: 1) {
+    nodes(sort: {keys: [\"id\"], reverse: false}) {
+      id
+    }
+    edges(sort: {keys: [\"id\"], reverse: false}) {
+      id
+    }
+  }
 }",
   "variables": null
 }
@@ -191,22 +199,10 @@ cat > expected << __HERE__
             "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}@wall_clock.20190101T00${ID_DELIM}qux.20190101T00"
         },
         {
-            "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}baa.20190101T00${ID_DELIM}NoTargetNode"
-        },
-        {
             "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}baa.20190101T00${ID_DELIM}qaz.20190101T00"
         },
         {
-            "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}foo.20190101T00${ID_DELIM}NoTargetNode"
-        },
-        {
             "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}foo.20190101T00${ID_DELIM}bar.20190101T00"
-        },
-        {
-            "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}qar.20190101T00${ID_DELIM}NoTargetNode"
-        },
-        {
-            "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}qux.20190101T00${ID_DELIM}NoTargetNode"
         },
         {
             "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}qux.20190101T00${ID_DELIM}bar.20190101T00"
@@ -214,7 +210,25 @@ cat > expected << __HERE__
         {
             "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}qux.20190101T00${ID_DELIM}qaz.20190101T00"
         }
-    ]
+    ],
+    "nodesEdges": {
+        "nodes": [
+            {
+                "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}20190101T00${ID_DELIM}bar"
+            },
+            {
+                "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}20190101T00${ID_DELIM}foo"
+            }
+        ],
+        "edges": [
+            {
+                "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}@wall_clock.20190101T00${ID_DELIM}foo.20190101T00"
+            },
+            {
+                "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}foo.20190101T00${ID_DELIM}bar.20190101T00"
+            }
+        ]
+    }
 }
 __HERE__
 cmp_json "${TEST_NAME}-out" \

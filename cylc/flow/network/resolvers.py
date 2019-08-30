@@ -20,6 +20,7 @@ from operator import attrgetter
 from fnmatch import fnmatchcase
 
 from cylc.flow.ws_data_mgr import ID_DELIM
+from cylc.flow.network.schema import NodesEdges
 
 
 # Message Filters
@@ -212,6 +213,30 @@ class Resolvers(object):
              for edge in edges
              if edge.id in nat_ids],
             args)
+
+    async def get_nodes_edges(self, root_nodes, args):
+        """Return nodes and edges within a specified distance of root nodes."""
+        node_ids = set(n.id for n in root_nodes)
+        edge_ids = set()
+        search_edge_ids = set(self.schd.ws_data_mgr.edges)
+        for _ in range(args['distance']):
+            if not search_edge_ids:
+                continue
+            new_node_ids = set()
+            new_edge_ids = set()
+            for edge in (
+                    self.schd.ws_data_mgr.edges[e_id]
+                    for e_id in search_edge_ids):
+                if edge.source in node_ids:
+                    new_node_ids.add(edge.target)
+                    new_edge_ids.add(edge.id)
+                elif edge.target in node_ids:
+                    new_node_ids.add(edge.source)
+                    new_edge_ids.add(edge.id)
+            search_edge_ids.difference_update(new_edge_ids)
+            edge_ids.update(new_edge_ids)
+            node_ids.update(new_node_ids)
+        return NodesEdges(nodes=node_ids, edges=edge_ids)
 
     # Mutations
     async def mutator(self, info, command, w_args, args):

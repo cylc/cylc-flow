@@ -174,6 +174,17 @@ class WsDataMgr(object):
             id=self.workflow_id,
         )
 
+        self.graph.leaves[:] = config.leaves
+        self.graph.feet[:] = config.feet
+        for key, info in config.suite_polling_tasks.items():
+            self.graph.workflow_polling_tasks.add(
+                local_proxy=key,
+                workflow=info[0],
+                remote_proxy=info[1],
+                req_state=info[2],
+                graph_string=info[3],
+            )
+
         ancestors = config.get_first_parent_ancestors()
         descendants = config.get_first_parent_descendants()
         parents = config.get_parent_lists()
@@ -445,19 +456,10 @@ class WsDataMgr(object):
             # are in the task pool.
             if not s_pool_point and not t_pool_point:
                 continue
-            # Initiate edge element.
-            e_id = s_node + ID_DELIM + (t_node or 'NoTargetNode')
-            edges[e_id] = PbEdge(
-                id=f'{self.workflow_id}{ID_DELIM}{e_id}',
-                suicide=edge[3],
-                cond=edge[4],
-            )
-            # Evaluate whether source/target is a task or xtrigger
-            # then add/create the corresponding id and items.
+            # If source/target is valid add/create the corresponding items.
             # TODO: if xtrigger is suite_state create remote ID
             source_id = (
                 f'{self.workflow_id}{ID_DELIM}{s_point}{ID_DELIM}{s_name}')
-            edges[e_id].source = source_id
             if s_valid:
                 s_task_id = f'{self.workflow_id}{ID_DELIM}{s_name}'
                 new_points.add(s_point)
@@ -467,8 +469,19 @@ class WsDataMgr(object):
                     task_proxies[source_id] = self.generate_ghost_task(s_node)
                 if source_id not in self.tasks[s_task_id].proxies:
                     self.tasks[s_task_id].proxies.append(source_id)
+            # Add valid source before checking for no target,
+            # as source may be an isolate (hence no edges).
             # At present targets can't be xtriggers.
             if t_valid:
+                # Initiate edge element.
+                e_id = (
+                    f'{self.workflow_id}{ID_DELIM}{s_node}{ID_DELIM}{t_node}')
+                edges[e_id] = PbEdge(
+                    id=e_id,
+                    suicide=edge[3],
+                    cond=edge[4],
+                )
+                edges[e_id].source = source_id
                 target_id = (
                     f'{self.workflow_id}{ID_DELIM}{t_point}{ID_DELIM}{t_name}')
                 t_task_id = f'{self.workflow_id}{ID_DELIM}{t_name}'
@@ -482,22 +495,11 @@ class WsDataMgr(object):
                     self.tasks[t_task_id].proxies.append(target_id)
                 edges[e_id].target = target_id
 
-        # If no edges were created (i.e. no source/target met criteria).
-        if not edges:
-            return
-        graph.edges.extend([e.id for e in edges.values()])
-        graph.leaves.extend(config.leaves)
-        graph.feet.extend(config.feet)
-        for key, info in config.suite_polling_tasks.items():
-            graph.workflow_polling_tasks.add(
-                local_proxy=key,
-                workflow=info[0],
-                remote_proxy=info[1],
-                req_state=info[2],
-                graph_string=info[3],
-            )
+        graph.edges.extend(edges.keys())
 
-        self.generate_ghost_families(family_proxies, new_points)
+        if new_points:
+            self.generate_ghost_families(family_proxies, new_points)
+
         # Replace the originals (atomic update, for access from other threads).
         self.task_proxies = task_proxies
         self.edges = edges

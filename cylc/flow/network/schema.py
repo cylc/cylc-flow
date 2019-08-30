@@ -218,6 +218,31 @@ all_edge_args = dict(
     sort=SortArgs(default_value=None),
 )
 
+nodes_edges_args = dict(
+    ghosts=Boolean(default_value=False),
+    ids=List(ID, default_value=[]),
+    exids=List(ID, default_value=[]),
+    states=List(String, default_value=[]),
+    exstates=List(String, default_value=[]),
+    is_held=Boolean(),
+    distance=Int(default_value=1),
+    mindepth=Int(default_value=-1),
+    maxdepth=Int(default_value=-1),
+)
+
+nodes_edges_args_all = dict(
+    ghosts=Boolean(default_value=False),
+    workflows=List(ID, default_value=[]),
+    exworkflows=List(ID, default_value=[]),
+    ids=List(ID, default_value=[]),
+    exids=List(ID, default_value=[]),
+    states=List(String, default_value=[]),
+    exstates=List(String, default_value=[]),
+    is_held=Boolean(),
+    distance=Int(default_value=1),
+    mindepth=Int(default_value=-1),
+    maxdepth=Int(default_value=-1),
+)
 
 # Resolvers are used to collate data needed for query resolution.
 # Treated as implicit static methods;
@@ -234,6 +259,7 @@ all_edge_args = dict(
 # with name 'root' used here, it provides context to the resolvers.
 
 # Resolvers:
+
 
 async def get_workflows(root, info, **args):
     args['workflows'] = [parse_workflow_id(w_id) for w_id in args['ids']]
@@ -332,6 +358,25 @@ async def get_edges_by_ids(root, info, **args):
     return await resolvers.get_edges_by_ids(args)
 
 
+async def get_nodes_edges(root, info, **args):
+    """Resolver for returning job, task, family nodes"""
+    node_type = NODE_MAP['TaskProxy']
+    workflow = getattr(root, 'id', None)
+    if workflow:
+        args['workflows'] = [parse_workflow_id(workflow)]
+        args['exworkflows'] = []
+    else:
+        args['workflows'] = [
+            parse_workflow_id(w_id) for w_id in args['workflows']]
+        args['exworkflows'] = [
+            parse_workflow_id(w_id) for w_id in args['exworkflows']]
+    args['ids'] = [parse_node_id(n_id, node_type) for n_id in args['ids']]
+    args['exids'] = [parse_node_id(n_id, node_type) for n_id in args['exids']]
+    resolvers = info.context.get('resolvers')
+    root_nodes = await resolvers.get_nodes_all(node_type, args)
+    return await resolvers.get_nodes_edges(root_nodes, args)
+
+
 def resolve_state_totals(root, info, **args):
     state_totals = {state: 0 for state in TASK_STATUSES_ORDERED}
     # Update with converted protobuf map container
@@ -390,6 +435,10 @@ class Workflow(ObjectType):
         lambda: Edges,
         args=edge_args,
         description="""Graph edges""")
+    nodes_edges = Field(
+        lambda: NodesEdges,
+        args=nodes_edges_args,
+        resolver=get_nodes_edges)
     api_version = Int()
     cylc_version = String()
     last_updated = Float()
@@ -502,7 +551,7 @@ class TaskProxy(ObjectType):
         required=True,
         resolver=get_node_by_id)
     state = String()
-    cycle_point = String(required=True)
+    cycle_point = String()
     is_held = Boolean()
     spawned = Boolean()
     depth = Int()
@@ -636,6 +685,21 @@ class Edges(ObjectType):
     feet = List(String)
 
 
+class NodesEdges(ObjectType):
+    class Meta:
+        decription = """Related Nodes & Edges."""
+    nodes = List(
+        TaskProxy,
+        description="""Task nodes from and including root.""",
+        args=proxy_args,
+        resolver=get_nodes_by_ids)
+    edges = List(
+        Edge,
+        description="""Edges associated with the nodes.""",
+        args=edge_args,
+        resolver=get_edges_by_ids)
+
+
 # Query declaration
 class Queries(ObjectType):
     workflows = List(
@@ -687,6 +751,10 @@ class Queries(ObjectType):
         Edge,
         args=all_edge_args,
         resolver=get_edges_all)
+    nodes_edges = Field(
+        NodesEdges,
+        args=nodes_edges_args_all,
+        resolver=get_nodes_edges)
 
 
 # ** Mutation Related ** #
