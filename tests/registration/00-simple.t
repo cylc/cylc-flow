@@ -21,9 +21,13 @@
 export RND_SUITE_NAME
 export RND_SUITE_SOURCE
 export RND_SUITE_RUNDIR
-export CYLC_RUN_DIR="$(cylc get-global-config --print-run-dir)"
+export CYLC_RUN_DIR
+
+CYLC_RUN_DIR="$(cylc get-global-config --print-run-dir)"
 
 function make_rnd_suite() {
+    # Create a randomly-named suite source directory.
+    # Define its run directory.
     RND_SUITE_NAME=x$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c6)
     RND_SUITE_SOURCE="$PWD/${RND_SUITE_NAME}"
     mkdir -p "${RND_SUITE_SOURCE}"
@@ -32,6 +36,8 @@ function make_rnd_suite() {
 }
 
 function purge_rnd_suite() {
+    # Remove the suite source created by make_rnd_suite().
+    # And remove its run-directory too.
     RND_SUITE_SOURCE=${1:-$RND_SUITE_SOURCE}
     RND_SUITE_RUNDIR=${2:-$RND_SUITE_RUNDIR}
     rm -rf "${RND_SUITE_SOURCE}"
@@ -69,24 +75,24 @@ purge_rnd_suite
 # Test default name: "cylc reg" (suite in $PWD, no args)
 TEST_NAME="${TEST_NAME_BASE}-pwd1"
 make_rnd_suite
-pushd "${RND_SUITE_SOURCE}"
+pushd "${RND_SUITE_SOURCE}" || exit 1
 run_ok "${TEST_NAME}" cylc register
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
 REGISTERED $RND_SUITE_NAME -> ${RND_SUITE_SOURCE}
 __OUT__
-popd
+popd || exit 1
 purge_rnd_suite
 
 #--------------------------------------------------
 # Test default path: "cylc reg REG" (suite in $PWD)
 TEST_NAME="${TEST_NAME_BASE}-pwd2"
 make_rnd_suite
-pushd "${RND_SUITE_SOURCE}"
+pushd "${RND_SUITE_SOURCE}" || exit 1
 run_ok "${TEST_NAME}" cylc register "${RND_SUITE_NAME}"
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
 REGISTERED ${RND_SUITE_NAME} -> ${RND_SUITE_SOURCE}
 __OUT__
-popd
+popd || exit 1
 purge_rnd_suite
 
 #-------------------------
@@ -190,7 +196,7 @@ TEST_NAME="${TEST_NAME_BASE}-alt-exists2"
 make_rnd_suite
 ALT_RUN_DIR="${PWD}/alt"
 TDIR=$(mktemp -d)
-mkdir -p $(dirname "${RND_SUITE_RUNDIR}")
+mkdir -p "$(dirname "${RND_SUITE_RUNDIR}")"
 ln -s "${TDIR}" "${RND_SUITE_RUNDIR}"
 run_fail "${TEST_NAME}" \
     cylc register --run-dir="${ALT_RUN_DIR}" "${RND_SUITE_NAME}" "${RND_SUITE_SOURCE}"
