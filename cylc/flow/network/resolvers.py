@@ -50,7 +50,7 @@ def workflow_ids_filter(w_atts, items):
 
 def workflow_filter(flow, args):
     """Filter workflows based on attribute arguments"""
-    w_atts = collate_workflow_atts(flow.workflow)
+    w_atts = collate_workflow_atts(flow['workflow'])
     # The w_atts (workflow attributes) list contains ordered workflow values
     # or defaults (see collate function for index item).
     return ((not args.get('workflows') or
@@ -117,34 +117,41 @@ def node_filter(node, args):
 
 def sort_elements(elements, args):
     sort_args = args.get('sort')
-    if sort_args:
+    if sort_args and elements:
         elements.sort(
             key=attrgetter(*sort_args.keys),
             reverse=sort_args.reverse)
     return elements
 
 
-class Resolvers(object):
-    """Data access methods for resolving GraphQL queries in the workflow."""
+class BaseResolvers(object):
+    """Data access methods for resolving GraphQL queries."""
 
-    def __init__(self, schd):
-        self.schd = schd
+    def __init__(self, data):
+        self.data = data
 
     # Query resolvers
-    async def get_workflow_msgs(self, args):
-        """Return list of workflows."""
-        flow_msg = self.schd.ws_data_mgr.get_entire_workflow()
-        if workflow_filter(flow_msg, args):
-            return [flow_msg]
-        return []
+    async def get_workflows_data(self, args):
+        """Return list of data from workflows."""
+        return [
+            flow
+            for flow in self.data.values()
+            if workflow_filter(flow, args)]
+
+    async def get_workflows(self, args):
+        """Return workflow elements."""
+        return sort_elements(
+            [flow['workflow']
+             for flow in await self.get_workflows_data(args)],
+            args)
 
     # nodes
     async def get_nodes_all(self, node_type, args):
         """Return nodes from all workflows, filter by args."""
         return sort_elements(
             [n
-             for k in await self.get_workflow_msgs(args)
-             for n in getattr(k, node_type)
+             for flow in await self.get_workflows_data(args)
+             for n in flow.get(node_type).values()
              if node_filter(n, args)],
             args)
 
@@ -154,19 +161,29 @@ class Resolvers(object):
         w_ids = set()
         for nat_id in nat_ids:
             o_name, w_name, _ = nat_id.split(ID_DELIM, 2)
-            w_ids.add(f'{o_name}{ID_DELIM}{w_name}')
-        if self.schd.ws_data_mgr.workflow.id not in w_ids:
-            return []
-        flow_msg = self.schd.ws_data_mgr.get_entire_workflow()
+            flow_id = f'{o_name}{ID_DELIM}{w_name}'
+            if flow_id in self.data:
+                w_ids.add(flow_id)
         if node_type == 'proxy_nodes':
-            nodes = (list(getattr(flow_msg, 'task_proxies', []))
-                     + list(getattr(flow_msg, 'family_proxies', [])))
-        else:
-            nodes = list(getattr(flow_msg, node_type, []))
+            return sort_elements(
+                [node
+                 for flow in [self.data[w_id] for w_id in w_ids]
+                 for node in (
+                     [flow['task_proxies'][n_id]
+                      for n_id in nat_ids
+                      if n_id in flow['task_proxies']] +
+                     [flow['family_proxies'][n_id]
+                      for n_id in nat_ids
+                      if n_id in flow['family_proxies']])
+                 if node_filter(node, args)],
+                args)
         return sort_elements(
             [node
-             for node in nodes
-             if node.id in nat_ids and node_filter(node, args)],
+             for flow in [self.data[w_id] for w_id in w_ids]
+             for node in [flow[node_type][n_id]
+                          for n_id in nat_ids
+                          if n_id in flow[node_type]]
+             if node_filter(node, args)],
             args)
 
     async def get_node_by_id(self, node_type, args):
@@ -174,27 +191,22 @@ class Resolvers(object):
         n_id = args.get('id')
         o_name, w_name, _ = n_id.split(ID_DELIM, 2)
         w_id = f'{o_name}{ID_DELIM}{w_name}'
-        if self.schd.ws_data_mgr.workflow.id != w_id:
+        flow = self.data.get(w_id)
+        if not flow:
             return None
-        flow_msg = self.schd.ws_data_mgr.get_entire_workflow()
         if node_type == 'proxy_nodes':
-            nodes = (
-                list(getattr(flow_msg, 'task_proxies', []))
-                + list(getattr(flow_msg, 'family_proxies', [])))
-        else:
-            nodes = getattr(flow_msg, node_type, [])
-        for node in nodes:
-            if node.id == n_id:
-                return node
-        return None
+            return (
+                flow['task_proxies'].get(n_id) or
+                flow['family_proxies'].get(n_id))
+        return flow[node_type].get(n_id)
 
     # edges
     async def get_edges_all(self, args):
         """Return edges from all workflows, filter by args."""
         return sort_elements(
             [e
-             for w in await self.get_workflow_msgs(args)
-             for e in getattr(w, 'edges')],
+             for flow in await self.get_workflows_data(args)
+             for e in flow.get('edges').values()],
             args)
 
     async def get_edges_by_ids(self, args):
@@ -205,44 +217,85 @@ class Resolvers(object):
         for nat_id in nat_ids:
             oname, wname, _ = nat_id.split(ID_DELIM, 2)
             w_ids.add(f'{oname}{ID_DELIM}{wname}')
-        if self.schd.ws_data_mgr.workflow.id not in w_ids:
-            return []
-        edges = getattr(self.schd.ws_data_mgr.get_entire_workflow(), 'edges')
         return sort_elements(
             [edge
-             for edge in edges
-             if edge.id in nat_ids],
+             for flow in [self.data[w_id] for w_id in w_ids]
+             for edge in [flow['edges'][e_id]
+                          for e_id in nat_ids
+                          if e_id in flow['edges']]],
             args)
 
     async def get_nodes_edges(self, root_nodes, args):
         """Return nodes and edges within a specified distance of root nodes."""
+        # Initial root node selection.
         node_ids = set(n.id for n in root_nodes)
         edge_ids = set()
-        search_edge_ids = set(self.schd.ws_data_mgr.edges)
+        # Setup for edgewise search.
+        new_nodes = root_nodes
+        new_node_ids = node_ids
         for _ in range(args['distance']):
-            if not search_edge_ids:
-                continue
-            new_node_ids = set()
-            new_edge_ids = set()
-            for edge in (
-                    self.schd.ws_data_mgr.edges[e_id]
-                    for e_id in search_edge_ids):
-                if edge.source in node_ids:
-                    new_node_ids.add(edge.target)
-                    new_edge_ids.add(edge.id)
-                elif edge.target in node_ids:
-                    new_node_ids.add(edge.source)
-                    new_edge_ids.add(edge.id)
-            search_edge_ids.difference_update(new_edge_ids)
+            # Gather edges.
+            # Edges should be unique (graph not circular),
+            # but duplicates will be presant as node holds all associated.
+            new_edge_ids = set(
+                e_id
+                for n in new_nodes
+                for e_id in n.edges).difference(edge_ids)
             edge_ids.update(new_edge_ids)
+            w_ids = set()
+            for edge_id in new_edge_ids:
+                o_name, w_name, _ = edge_id.split(ID_DELIM, 2)
+                w_ids.add(f'{o_name}{ID_DELIM}{w_name}')
+            new_edges = [
+                edge
+                for flow in [self.data[w_id] for w_id in w_ids]
+                for edge in [
+                    flow['edges'][e_id]
+                    for e_id in new_edge_ids
+                    if e_id in flow['edges']]
+            ]
+            # Gather nodes.
+            # One of source or target will be in current set of nodes.
+            new_node_ids = set(
+                [e.source for e in new_edges]
+                + [e.target for e in new_edges]).difference(node_ids)
+            # Stop searching on no new nodes
+            if not new_node_ids:
+                break
             node_ids.update(new_node_ids)
+            w_ids = set()
+            for node_id in new_node_ids:
+                o_name, w_name, _ = node_id.split(ID_DELIM, 2)
+                w_ids.add(f'{o_name}{ID_DELIM}{w_name}')
+            new_nodes = [
+                node
+                for flow in [self.data[w_id] for w_id in w_ids]
+                for node in [
+                    flow['task_proxies'][n_id]
+                    for n_id in new_node_ids
+                    if n_id in flow['task_proxies']]
+            ]
         return NodesEdges(nodes=node_ids, edges=edge_ids)
+
+
+class Resolvers(BaseResolvers):
+    """Workflow Service context GraphQL query and mutation resolvers."""
+
+    schd = None
+
+    def __init__(self, data, **kwargs):
+        super().__init__(data)
+
+        # Set extra attributes
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
 
     # Mutations
     async def mutator(self, info, command, w_args, args):
         """Mutate workflow."""
-        w_ids = [flow.workflow.id
-                 for flow in await self.get_workflow_msgs(w_args)]
+        w_ids = [flow['workflow'].id
+                 for flow in await self.get_workflows_data(w_args)]
         if not w_ids:
             return 'Error: No matching Workflow'
         w_id = w_ids[0]
@@ -253,8 +306,8 @@ class Resolvers(object):
 
     async def nodes_mutator(self, info, command, ids, w_args, args):
         """Mutate node items of associated workflows."""
-        w_ids = [flow.workflow.id
-                 for flow in await self.get_workflow_msgs(w_args)]
+        w_ids = [flow['workflow'].id
+                 for flow in await self.get_workflows_data(w_args)]
         if not w_ids:
             return 'Error: No matching Workflow'
         w_id = w_ids[0]

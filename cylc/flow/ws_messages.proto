@@ -170,6 +170,7 @@ message PbTaskProxy {
     string first_parent = 16;
     string name = 17; /* filter item */
     bool is_held = 18;
+    repeated string edges = 19;
 }
 
 message PbFamily {

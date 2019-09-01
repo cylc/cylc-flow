@@ -49,10 +49,6 @@ NODE_ARGS = {
 }
 
 
-class FakeMsg:
-    workflow = None
-
-
 class FakeFlow:
     owner = 'qux'
     name = 'baz'
@@ -60,13 +56,12 @@ class FakeFlow:
 
 
 def test_workflow_filter():
-    msg = FakeMsg()
-    msg.workflow = FakeFlow()
+    data = {'workflow': FakeFlow()}
     args = deepcopy(FLOW_ARGS)
     args['workflows'].append(('*', 'jin', None))
-    assert not workflow_filter(msg, args)
+    assert not workflow_filter(data, args)
     args['workflows'].append(('qux', 'baz', 'running'))
-    assert workflow_filter(msg, args)
+    assert workflow_filter(data, args)
 
 
 class FakeNode:
@@ -130,22 +125,25 @@ class TestResolvers(CylcWorkflowTestCase):
         self.task_pool.release_runahead_tasks()
         self.scheduler.ws_data_mgr.initiate_data_model()
         self.workflow_id = self.scheduler.ws_data_mgr.workflow_id
+        self.data = self.scheduler.ws_data_mgr.data[self.workflow_id]
         self.node_ids = [
             node.id
-            for node in self.scheduler.ws_data_mgr.task_proxies.values()]
+            for node in self.data['task_proxies'].values()]
         self.edge_ids = [
             edge.id
-            for edge in self.scheduler.ws_data_mgr.edges.values()]
-        self.resolvers = Resolvers(self.scheduler)
+            for edge in self.data['edges'].values()]
+        self.resolvers = Resolvers(
+            self.scheduler.ws_data_mgr.data,
+            schd=self.scheduler)
 
     def test_constructor(self):
         self.assertIsNotNone(self.resolvers.schd)
 
-    def test_get_workflow_msgs(self):
+    def test_get_workflows(self):
         """Test method returning workflow messages satisfying filter args."""
         args = deepcopy(FLOW_ARGS)
         args['workflows'].append((self.owner, self.suite_name, None))
-        flow_msgs = _run_coroutine(self.resolvers.get_workflow_msgs(args))
+        flow_msgs = _run_coroutine(self.resolvers.get_workflows(args))
         self.assertEqual(1, len(flow_msgs))
 
     def test_get_nodes_all(self):
@@ -164,7 +162,7 @@ class TestResolvers(CylcWorkflowTestCase):
             n
             for n in _run_coroutine(
                 self.resolvers.get_nodes_all('task_proxies', args))
-            if n in self.resolvers.schd.ws_data_mgr.task_proxies.values()]
+            if n in self.data['task_proxies'].values()]
         self.assertEqual(1, len(nodes))
 
     def test_get_nodes_by_ids(self):
@@ -181,7 +179,7 @@ class TestResolvers(CylcWorkflowTestCase):
             n
             for n in _run_coroutine(
                 self.resolvers.get_nodes_by_ids('task_proxies', args))
-            if n in self.resolvers.schd.ws_data_mgr.task_proxies.values()]
+            if n in self.data['task_proxies'].values()]
         self.assertTrue(len(nodes) > 0)
 
     def test_get_node_by_id(self):
@@ -197,14 +195,14 @@ class TestResolvers(CylcWorkflowTestCase):
         node = _run_coroutine(
             self.resolvers.get_node_by_id('task_proxies', args))
         self.assertTrue(
-            node in self.resolvers.schd.ws_data_mgr.task_proxies.values())
+            node in self.data['task_proxies'].values())
 
     def test_get_edges_all(self):
         """Test method returning all workflow(s) edges."""
         edges = [
             e
             for e in _run_coroutine(self.resolvers.get_edges_all(FLOW_ARGS))
-            if e in self.resolvers.schd.ws_data_mgr.edges.values()]
+            if e in self.data['edges'].values()]
         self.assertTrue(len(edges) > 0)
 
     def test_get_edges_by_ids(self):
@@ -217,7 +215,7 @@ class TestResolvers(CylcWorkflowTestCase):
         edges = [
             e
             for e in _run_coroutine(self.resolvers.get_edges_by_ids(args))
-            if e in self.resolvers.schd.ws_data_mgr.edges.values()]
+            if e in self.data['edges'].values()]
         self.assertTrue(len(edges) > 0)
 
     def test_mutator(self):

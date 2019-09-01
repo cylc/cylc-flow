@@ -265,7 +265,9 @@ class SuiteRuntimeServer(ZMQServer):
         )
         self.schd = schd
         self.public_priv = None  # update in get_public_priv()
-        self.resolvers = Resolvers(self.schd)
+        self.resolvers = Resolvers(
+            self.schd.ws_data_mgr.data,
+            schd=self.schd)
 
     def _get_public_priv(self):
         """Return the public privilege level of this suite."""
@@ -1248,13 +1250,15 @@ class SuiteRuntimeServer(ZMQServer):
     @authorise(Priv.READ)
     @ZMQServer.expose
     def pb_entire_workflow(self):
-        """Get data elements of entire workflow.
+        """Send the entire data-store in a single Protobuf message.
 
         Returns:
-            Protobuf encoded message
+            bytes
+                Protobuf encoded message
 
         """
         pb_msg = self.schd.ws_data_mgr.get_entire_workflow()
         # Use google.protobuf.json_format.MessageToJson
-        # to jump through security hoop on response
+        # to send response through JWT authorisation
+        # (Request still requires/uses JWT anyway).
         return pb_msg.SerializeToString()

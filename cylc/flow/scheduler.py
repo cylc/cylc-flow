@@ -243,6 +243,7 @@ class Scheduler(object):
             if not self.options.no_detach:
                 daemonize(self)
             self._setup_suite_logger()
+            self.ws_data_mgr = WsDataMgr(self)
             self.server = SuiteRuntimeServer(self)
             port_range = glbl_cfg().get(['suite servers', 'run ports'])
             self.server.start(port_range[0], port_range[-1])
@@ -346,7 +347,6 @@ see `COPYING' in the Cylc source distribution.
         # Start up essential services
         self.proc_pool = SubProcPool()
         self.state_summary_mgr = StateSummaryMgr()
-        self.ws_data_mgr = WsDataMgr(self)
         self.command_queue = Queue()
         self.message_queue = Queue()
         self.ext_trigger_queue = Queue()

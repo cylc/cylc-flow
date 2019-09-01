@@ -265,8 +265,7 @@ async def get_workflows(root, info, **args):
     args['workflows'] = [parse_workflow_id(w_id) for w_id in args['ids']]
     args['exworkflows'] = [parse_workflow_id(w_id) for w_id in args['exids']]
     resolvers = info.context.get('resolvers')
-    flows = await resolvers.get_workflow_msgs(args)
-    return [flow.workflow for flow in flows]
+    return await resolvers.get_workflows(args)
 
 
 async def get_nodes_all(root, info, **args):
