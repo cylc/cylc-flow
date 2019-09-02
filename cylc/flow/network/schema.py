@@ -228,6 +228,7 @@ nodes_edges_args = dict(
     distance=Int(default_value=1),
     mindepth=Int(default_value=-1),
     maxdepth=Int(default_value=-1),
+    sort=SortArgs(default_value=None),
 )
 
 nodes_edges_args_all = dict(
@@ -242,6 +243,7 @@ nodes_edges_args_all = dict(
     distance=Int(default_value=1),
     mindepth=Int(default_value=-1),
     maxdepth=Int(default_value=-1),
+    sort=SortArgs(default_value=None),
 )
 
 # Resolvers are used to collate data needed for query resolution.
@@ -385,8 +387,11 @@ def resolve_state_totals(root, info, **args):
 
 
 # Types:
-class Meta(ObjectType):
-    """Meta data fields, and custom fields generic userdefined dump"""
+class DefMeta(ObjectType):
+    class Meta:
+        description = """
+Meta data fields,
+including custom fields in a generic userdefined dump"""
     title = String(default_value=None)
     description = String(default_value=None)
     URL = String(default_value=None)
@@ -394,7 +399,8 @@ class Meta(ObjectType):
 
 
 class TimeZone(ObjectType):
-    """Time zone info."""
+    class Meta:
+        description = """Time zone info."""
     hours = Int()
     minutes = Int()
     string_basic = String()
@@ -402,7 +408,8 @@ class TimeZone(ObjectType):
 
 
 class Workflow(ObjectType):
-    """Global workflow info."""
+    class Meta:
+        description = """Global workflow info."""
     id = ID(required=True)
     name = String()
     status = String()
@@ -441,7 +448,7 @@ class Workflow(ObjectType):
     api_version = Int()
     cylc_version = String()
     last_updated = Float()
-    meta = Field(Meta)
+    meta = Field(DefMeta)
     newest_runahead_cycle_point = String()
     newest_cycle_point = String()
     oldest_cycle_point = String()
@@ -458,7 +465,8 @@ class Workflow(ObjectType):
 
 
 class Job(ObjectType):
-    """Jobs."""
+    class Meta:
+        description = """Jobs."""
     id = ID(required=True)
     submit_num = Int()
     state = String()
@@ -496,10 +504,11 @@ class Job(ObjectType):
 
 
 class Task(ObjectType):
-    """Task definition, static fields"""
+    class Meta:
+        description = """Task definition, static fields"""
     id = ID(required=True)
     name = String(required=True)
-    meta = Field(Meta)
+    meta = Field(DefMeta)
     mean_elapsed_time = Float()
     depth = Int()
     proxies = List(
@@ -511,7 +520,8 @@ class Task(ObjectType):
 
 
 class PollTask(ObjectType):
-    """Polling task edge"""
+    class Meta:
+        description = """Polling task edge"""
     local_proxy = ID(required=True)
     workflow = String()
     remote_proxy = ID(required=True)
@@ -520,7 +530,8 @@ class PollTask(ObjectType):
 
 
 class Condition(ObjectType):
-    """Prerequisite conditions."""
+    class Meta:
+        description = """Prerequisite conditions."""
     task_proxy = Field(
         lambda: TaskProxy,
         description="""Associated Task Proxy""",
@@ -532,7 +543,8 @@ class Condition(ObjectType):
 
 
 class Prerequisite(ObjectType):
-    """Task prerequisite."""
+    class Meta:
+        description = """Task prerequisite."""
     expression = String()
     conditions = List(
         Condition,
@@ -542,7 +554,8 @@ class Prerequisite(ObjectType):
 
 
 class TaskProxy(ObjectType):
-    """Task Cycle Specific info"""
+    class Meta:
+        description = """Task cycle instance."""
     id = ID(required=True)
     task = Field(
         Task,
@@ -580,10 +593,11 @@ class TaskProxy(ObjectType):
 
 
 class Family(ObjectType):
-    """Task definition, static fields"""
+    class Meta:
+        description = """Task definition, static fields"""
     id = ID(required=True)
     name = String(required=True)
-    meta = Field(Meta)
+    meta = Field(DefMeta)
     depth = Int()
     proxies = List(
         lambda: FamilyProxy,
@@ -686,72 +700,83 @@ class Edges(ObjectType):
 
 class NodesEdges(ObjectType):
     class Meta:
-        decription = """Related Nodes & Edges."""
+        description = """Related Nodes & Edges."""
     nodes = List(
         TaskProxy,
-        description="""Task nodes from and including root.""",
-        args=proxy_args,
-        resolver=get_nodes_by_ids)
+        description="""Task nodes from and including root.""")
     edges = List(
         Edge,
-        description="""Edges associated with the nodes.""",
-        args=edge_args,
-        resolver=get_edges_by_ids)
+        description="""Edges associated with the nodes.""")
 
 
 # Query declaration
 class Queries(ObjectType):
+    class Meta:
+        description = """Multi-Workflow root level queries."""
     workflows = List(
         Workflow,
+        description=Workflow._meta.description,
         ids=List(ID, default_value=[]),
         exids=List(ID, default_value=[]),
         resolver=get_workflows)
     job = Field(
         Job,
+        description=Job._meta.description,
         id=ID(required=True),
         resolver=get_node_by_id)
     jobs = List(
         Job,
+        description=Job._meta.description,
         args=all_jobs_args,
         resolver=get_nodes_all)
     task = Field(
         Task,
+        description=Task._meta.description,
         id=ID(required=True),
         resolver=get_node_by_id)
     tasks = List(
         Task,
+        description=Task._meta.description,
         args=all_def_args,
         resolver=get_nodes_all)
     task_proxy = Field(
         TaskProxy,
+        description=TaskProxy._meta.description,
         id=ID(required=True),
         resolver=get_node_by_id)
     task_proxies = List(
         TaskProxy,
+        description=TaskProxy._meta.description,
         args=all_proxy_args,
         resolver=get_nodes_all)
     family = Field(
         Family,
+        description=Family._meta.description,
         id=ID(required=True),
         resolver=get_node_by_id)
     families = List(
         Family,
+        description=Family._meta.description,
         args=all_def_args,
         resolver=get_nodes_all)
     family_proxy = Field(
         FamilyProxy,
+        description=FamilyProxy._meta.description,
         id=ID(required=True),
         resolver=get_node_by_id)
     family_proxies = List(
         FamilyProxy,
+        description=FamilyProxy._meta.description,
         args=all_proxy_args,
         resolver=get_nodes_all)
     edges = List(
         Edge,
+        description=Edge._meta.description,
         args=all_edge_args,
         resolver=get_edges_all)
     nodes_edges = Field(
         NodesEdges,
+        description=NodesEdges._meta.description,
         args=nodes_edges_args_all,
         resolver=get_nodes_edges)
 

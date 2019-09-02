@@ -68,11 +68,11 @@ query {
   edges(workflows: [\"${USER}${ID_DELIM}${SUITE_NAME}\"], sort: {keys: [\"id\"], reverse: false}) {
     id
   }
-  nodesEdges(workflows: [\"*${ID_DELIM}*\"], ids: [\"foo\"], distance: 1) {
-    nodes(sort: {keys: [\"id\"], reverse: false}) {
+  nodesEdges(workflows: [\"*${ID_DELIM}*\"], ids: [\"foo\"], distance: 1, sort: {keys: [\"id\"], reverse: false}) {
+    nodes {
       id
     }
-    edges(sort: {keys: [\"id\"], reverse: false}) {
+    edges {
       id
     }
   }

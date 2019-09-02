@@ -118,9 +118,15 @@ def node_filter(node, args):
 def sort_elements(elements, args):
     sort_args = args.get('sort')
     if sort_args and elements:
-        elements.sort(
-            key=attrgetter(*sort_args.keys),
-            reverse=sort_args.reverse)
+        sort_keys = [
+            key
+            for key in sort_args.keys
+            if hasattr(elements[0], key)
+        ]
+        if sort_keys:
+            elements.sort(
+                key=attrgetter(*sort_keys),
+                reverse=sort_args.reverse)
     return elements
 
 
@@ -228,15 +234,16 @@ class BaseResolvers(object):
     async def get_nodes_edges(self, root_nodes, args):
         """Return nodes and edges within a specified distance of root nodes."""
         # Initial root node selection.
+        nodes = root_nodes
         node_ids = set(n.id for n in root_nodes)
+        edges = []
         edge_ids = set()
         # Setup for edgewise search.
         new_nodes = root_nodes
-        new_node_ids = node_ids
         for _ in range(args['distance']):
             # Gather edges.
             # Edges should be unique (graph not circular),
-            # but duplicates will be presant as node holds all associated.
+            # but duplicates will be present as node holds all associated.
             new_edge_ids = set(
                 e_id
                 for n in new_nodes
@@ -254,6 +261,7 @@ class BaseResolvers(object):
                     for e_id in new_edge_ids
                     if e_id in flow['edges']]
             ]
+            edges += new_edges
             # Gather nodes.
             # One of source or target will be in current set of nodes.
             new_node_ids = set(
@@ -275,7 +283,11 @@ class BaseResolvers(object):
                     for n_id in new_node_ids
                     if n_id in flow['task_proxies']]
             ]
-        return NodesEdges(nodes=node_ids, edges=edge_ids)
+            nodes += new_nodes
+
+        return NodesEdges(
+            nodes=sort_elements(nodes, args),
+            edges=sort_elements(edges, args))
 
 
 class Resolvers(BaseResolvers):
