@@ -15,8 +15,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-CATEGORIES=('control' 'con' 'information' 'info' 'all' 'task' 'license' \
-            'GPL' 'admin' 'prep' 'preparation' 'discovery' 'utility' \
+CATEGORIES=('control' 'con' 'information' 'info' 'all' 'task' \
+            'admin' 'prep' 'preparation' 'discovery' 'utility' \
             'util')
                 
 HELP_OPTS=('help' '--help' '-h' 'h' '?')
@@ -181,7 +181,7 @@ fi
 # Check for help or version options.
 case "${UTIL}" in
 # Deal with categories
-control|information|all|task|license|GPL|admin|preparation|discovery\
+control|information|all|task|admin|preparation|discovery\
         |utility|util|prep|con|info)
     if (( $# == 0 )); then
         help_util "${UTIL}"
