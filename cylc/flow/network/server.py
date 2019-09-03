@@ -173,13 +173,11 @@ class ZMQServer(object):
                     'message': str(exc), 'traceback': traceback.format_exc()}}
             else:
                 # success case - serve the request
-                LOG.debug('zmq:recv %s', message)
                 res = self._receiver(message)
                 if message['command'] in PB_METHOD_MAP:
                     response = res['data']
                 else:
                     response = self.encode(res, self.secret()).encode()
-                LOG.debug('zmq:send %s', res)
                 # send back the string to bytes response
                 self.socket.send(response)
 
