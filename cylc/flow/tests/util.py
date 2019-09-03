@@ -20,7 +20,7 @@ from pathlib import Path
 from shutil import rmtree
 from tempfile import mkdtemp
 from unittest import TestCase
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 from cylc.flow.config import SuiteConfig
 from cylc.flow.scheduler import Scheduler
@@ -99,6 +99,8 @@ class CylcWorkflowTestCase(TestCase):
 
         # Scheduler
         self.scheduler = mocked_scheduler
+        self.scheduler.server = MagicMock()
+        self.scheduler.server.API = 1
         self.scheduler.suite = self.suite_name
         self.scheduler.owner = self.owner
         self.scheduler.config = self.suite_config
