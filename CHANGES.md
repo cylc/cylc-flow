@@ -18,7 +18,8 @@ with `{{INJECTION COMMANDS}}` in a URI*
 that cannot be updated because the new Jinja2 requires Python 3. However **this
 CVE does not impact cylc-7 because Cylc workflow definitions are not web
 pages**.
-- cylc-8 (master branch, written in Python 3) does not bundle Jinja2, and uses the fixed version 2.10.1.
+- cylc-8 (master branch, Python 3 - not yet released) does not bundle Jinja2,
+  and uses the fixed version 2.10.1.
 
 -------------------------------------------------------------------------------
 ## __cylc-7.8.4 (2019-Q3?)__
