@@ -16,57 +16,6 @@ Currently in the source code repository:
 The first official Cylc-8 release (with a new web UI) is not expected until late 2019.
 Until then we recommend the latest cylc-7.8 release for production use.
 
-**THIS IS THE master (PYTHON 3) INSTALL.md**
-
-### Third-party Software Packages
-
-Install the packages listed in the **Installation** section of the User Guide.
-See also *Check Software Installation* below.
-
-### Installing Cylc
-
-Download the latest tarball from [Cylc
-Releases](https://github.com/cylc/cylc-flow/releases).
-
-Successive Cylc releases should be installed side-by-side under a location
-such as `/opt`:
-
-```bash
-cd /opt
-tar xzf cylc-7.8.1.tar.gz
-# DO NOT CHANGE THE NAME OF THE UNPACKED CYLC SOURCE DIRECTORY.
-cd cylc-7.8.1
-export PATH=$PWD/bin:$PATH
-make
-```
-
-Then make (or update) a symlink to the latest installed version:
-```bash
-ln -s /opt/cylc-7.8.1 /opt/cylc
-```
-
-When you type `make`:
-  * The Cylc User Guide is generated from source (if you have sphinx-doc installed).
-
-If this is the first installed version of Cylc, copy the wrapper script
-`usr/bin/cylc` to a location in the system executable path, such as
-`/usr/bin/` or `/usr/local/bin/`, and edit it - as per the in-file
-instructions - to point to the Cylc install location:
-
-```bash
-cp /opt/cylc-7.8.1/usr/bin/cylc /usr/local/bin/
-# (and EDIT /usr/local/bin/cylc as instructed)
-```
-
-The wrapper is designed invoke the latest (symlinked) version of Cylc by
-default, or else a particular version determined by `$CYLC_VERSION` or
-`$CYLC_HOME` in your environment. This is how a long-running suite server
-program ensures that the jobs it manages invoke clients at the right cylc
-version.
-
-### Check Software Installation
-
-```
-$ cylc check-software
-Checking your software...
-...
+See INSTALL.md in the 7.8.x repository branch, or in your unpacked 7.8.x
+release, for how to install Cylc 7. You can download the latest cylc-7 release
+tarball from [Cylc Releases](https://github.com/cylc/cylc-flow/releases).
