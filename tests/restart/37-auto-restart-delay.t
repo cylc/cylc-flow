@@ -63,8 +63,7 @@ ${BASE_GLOBALRC}
 
 # Run suite.
 cylc run "${SUITE_NAME}" --hold
-poll ! test -f "${SUITE_RUN_DIR}/.service/contact"
-sleep 1
+poll_suite_running
 
 # Condemn host - trigger stop-restart.
 create_test_globalrc '' "

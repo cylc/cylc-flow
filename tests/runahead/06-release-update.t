@@ -24,14 +24,10 @@ install_suite "${TEST_NAME_BASE}" 'release-update'
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 cylc run --debug --no-detach "${SUITE_NAME}" 1>'out' 2>&1 &
 CYLC_RUN_PID="$!"
-poll "! test -e '${SUITE_RUN_DIR}/.service/contact'"
-LOG="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/suite/log"
-poll "! test -e '${LOG}'"
+poll_suite_running
 YYYY="$(date +%Y)"
-poll "! grep -q -F '[bar.${YYYY}] -ready => submitted' '${LOG}' 2>'/dev/null'"
-poll "! grep -q -F '[bar.${YYYY}] -running => succeeded' \
-    '${LOG}' 2>'/dev/null'"
-sleep 1
+poll_grep_suite_log -F "[bar.${YYYY}] -ready => submitted"
+poll_grep_suite_log -F "[bar.${YYYY}] -running => succeeded"
 cylc dump -t "${SUITE_NAME}" | awk '{print $1 $3}' >'log'
 cmp_ok 'log' - <<'__END__'
 bar,succeeded,

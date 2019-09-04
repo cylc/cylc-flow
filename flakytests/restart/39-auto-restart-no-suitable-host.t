@@ -50,8 +50,7 @@ ${BASE_GLOBALRC}
 "
 
 cylc run "${SUITE_NAME}"
-poll ! test -f "${SUITE_RUN_DIR}/.service/contact"
-sleep 1
+poll_suite_running
 
 create_test_globalrc '' "
 ${BASE_GLOBALRC}
@@ -68,8 +67,6 @@ log_scan "${TEST_NAME_BASE}-no-auto-restart" "${FILE}" 20 1 \
     'Suite cannot automatically restart because:' \
     'No alternative host to restart suite on.'
 
-cylc stop "${SUITE_NAME}" --kill
-poll test -f "${SUITE_RUN_DIR}/.service/contact"
-sleep 1
+cylc stop --kill --max-polls=10 --interval=2 "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

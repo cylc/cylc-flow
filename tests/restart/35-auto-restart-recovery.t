@@ -47,8 +47,7 @@ TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME}" <<< '
 create_test_globalrc '' "${BASE_GLOBALRC}"
 run_ok "${TEST_NAME}-suite-start" \
     cylc run "${SUITE_NAME}" --host=localhost --hold
-poll ! test -f "${SUITE_RUN_DIR}/.service/contact"
-sleep 1
+poll_suite_running
 
 # corrupt suite
 rm "${SUITE_RUN_DIR}/suite.rc"
@@ -73,9 +72,7 @@ log_scan "${TEST_NAME}-shutdown" "${FILE}" 20 1 \
     'Suite unable to automatically restart after 3 tries'
 
 # stop suite - suite should already by stopped but just to be safe
-cylc stop "${SUITE_NAME}" --kill 2>/dev/null
-poll test -f "${SUITE_RUN_DIR}/.service/contact"
-sleep 1
+cylc stop --max-polls=10 --interval=2 -kill "${SUITE_NAME}" 2>'/dev/null'
 purge_suite "${SUITE_NAME}"
 
 exit

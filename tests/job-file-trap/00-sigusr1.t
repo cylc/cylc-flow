@@ -32,8 +32,7 @@ run_tests() {
     # Make sure t1.1.1's status file is in place
     T1_STATUS_FILE=$SUITE_RUN_DIR/log/job/1/t1/01/job.status
 
-    poll '!' test -e "${T1_STATUS_FILE}"
-    poll '!' grep 'CYLC_JOB_PID=' "${T1_STATUS_FILE}"
+    poll_grep 'CYLC_JOB_PID=' "${T1_STATUS_FILE}"
 
     # Kill the job and see what happens
     T1_PID="$(awk -F= '$1=="CYLC_JOB_PID" {print $2}' "${T1_STATUS_FILE}")"

@@ -72,7 +72,7 @@ LATEST_TASK=$(cylc suite-state "${SUITE_NAME}" -S succeeded \
     | cut -d ',' -f 1 | sort | tail -n 1 | sed 's/task_foo//')
 
 # test restart procedure  - scan the second log file created on restart
-poll test -f "${SUITE_RUN_DIR}/.service/contact"
+poll_suite_stopped
 FILE=$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)
 log_scan "${TEST_NAME}-restart" "${FILE}" 20 1 \
     "Suite server: url=tcp://$(ssh "${CYLC_TEST_HOST}" hostname -f)"

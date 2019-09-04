@@ -50,7 +50,7 @@ run_ok "${TEST_NAME_BASE}-val" cylc validate 'suite.rc'
 # Run suite; it will stall waiting on the never-satisfied xtriggers.
 cylc run "${SUITE_NAME}"
 
-poll "! grep -q 'start.2025.*succeeded' '${SUITE_RUN_DIR}/log/suite/log'"
+poll_grep_suite_log 'start.2025.*succeeded'
 
 cylc show "${SUITE_NAME}" foo.2025 | grep -E '^  o' > foo.2025.log
 cylc show "${SUITE_NAME}" foo.2026 | grep -E '^  o' > foo.2026.log
@@ -65,5 +65,6 @@ cmp_ok foo.2026.log - <<__END__
   o  xtrigger "e2 = echo(name=alice)" ... NOT satisfied
 __END__
 
-cylc stop --now "${SUITE_NAME}"
+cylc stop --now --max-polls=10 --interval=2 "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
+exit

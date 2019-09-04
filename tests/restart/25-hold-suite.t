@@ -27,14 +27,13 @@ sqlite3 "${SUITE_RUN_DIR}/log/db" \
     'SELECT value FROM suite_params WHERE key=="is_held"' >'suite-is-held.out'
 cmp_ok 'suite-is-held.out' <<<'1'
 T1_2016_PID="$(sed -n 's/CYLC_JOB_PID=//p' "${SUITE_RUN_DIR}/log/job/2016/t1/01/job.status")"
-poll ps "${T1_2016_PID}" 2>'/dev/null'
+poll_pid_done "${T1_2016_PID}"
 cylc restart "${SUITE_NAME}" --debug --no-detach 1>"${TEST_NAME_BASE}-restart.out" 2>&1 &
 CYLC_RESTART_PID=$!
 # Ensure suite has started
-poll ! test -f "${SUITE_RUN_DIR}/.service/contact"
+poll_suite_running
 cylc trigger "${SUITE_NAME}" 't2.2016'
-poll ! test -f "${SUITE_RUN_DIR}/log/job/2016/t2/01/job.status"
-poll ! grep -q 'CYLC_JOB_EXIT' "${SUITE_RUN_DIR}/log/job/2016/t2/01/job.status"
+poll_grep 'CYLC_JOB_EXIT' "${SUITE_RUN_DIR}/log/job/2016/t2/01/job.status"
 sleep 1
 
 cylc checkpoint "${SUITE_NAME}" 'before-release'

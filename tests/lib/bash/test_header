@@ -90,7 +90,17 @@
 #         Tidy up test directories for SUITE_NAME.
 #     poll COMMAND
 #         Run COMMAND in 1 second intervals for a minute until COMMAND returns
-#         a non-zero value, or exit 1 (abort test) with a timeout message.
+#         a zero value, or exit 1 (abort test) with a timeout message.
+#     poll_grep ...
+#         Shorthand for 'poll grep -s ...'.
+#     poll_grep_suite_log ...
+#         Shorthand for 'poll_grep ... "${SUITE_RUN_DIR}/log/suite/log"'
+#     poll_pid_done PID
+#         Poll until process with PID is done.
+#     poll_suite_running
+#         Shorthand for 'poll test -e "${SUITE_RUN_DIR}/.service/contact"'
+#     poll_suite_stopped
+#         Shorthand for 'poll "!" test -e "${SUITE_RUN_DIR}/.service/contact"'
 #     skip N SKIP_REASON
 #         echo "ok $((++T)) # skip SKIP_REASON" N times.
 #     skip_all SKIP_REASON
@@ -495,19 +505,40 @@ purge_suite() {
 
 poll() {
     local TIMEOUT="$(($(date +%s) + 60))" # wait 1 minute
-    local TIMED_OUT=true
-    while (($(date +%s) < TIMEOUT)); do
-        if eval "$@"; then
-            sleep 1
-        else
-            TIMED_OUT=false
-            break
+    while ! "$@"; do
+        sleep 1
+        if (($(date +%s) > TIMEOUT)); then
+            echo "ERROR: poll timed out: $*" >&2
+            exit 1
         fi
     done
-    if $TIMED_OUT; then
-        >&2 echo "ERROR: poll timed out: $*"
-        exit 1
-    fi
+}
+
+poll_grep() {
+    poll grep -s "$@"
+}
+
+poll_grep_suite_log() {
+    poll grep -s "$@" "${SUITE_RUN_DIR}/log/suite/log"
+}
+
+poll_pid_done() {
+    local TIMEOUT="$(($(date +%s) + 60))" # wait 1 minute
+    while ps --no-headers "$@" 1>'/dev/null' 2>&1; do
+        sleep 1
+        if (($(date +%s) > TIMEOUT)); then
+            echo "ERROR: poll timed out: ! ps --no-headers $*" >&2
+            exit 1
+        fi
+    done
+}
+
+poll_suite_running() {
+    poll test -e "${SUITE_RUN_DIR}/.service/contact"
+}
+
+poll_suite_stopped() {
+    poll test '!' -e "${SUITE_RUN_DIR}/.service/contact"
 }
 
 skip() {

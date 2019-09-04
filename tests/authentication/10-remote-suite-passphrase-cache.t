@@ -41,7 +41,7 @@ cylc run --debug --no-detach --host="${CYLC_TEST_HOST}" --reference-test "${SUIT
 SUITE_PID=$!
 
 # Wait until the task failed
-poll '!' grep -q 't1.19700101T0000Z.*failed' 'err' 2>'/dev/null'
+poll_grep_suite_log 't1.19700101T0000Z.*failed'
 
 run_ok "${TEST_NAME_BASE}-broadcast" \
     cylc broadcast --host="${CYLC_TEST_HOST}" "${SUITE_NAME}" \

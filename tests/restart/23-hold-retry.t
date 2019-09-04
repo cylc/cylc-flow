@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Test restart with held (retrying) task
 . "$(dirname "$0")/test_header"
-set_test_number 6
+set_test_number 5
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
@@ -28,12 +28,14 @@ sqlite3 "${SUITE_RUN_DIR}/log/db" \
 cmp_ok 'task-pool.out' <<__OUT__
 1|t1|1|retrying|1
 __OUT__
-suite_run_ok "${TEST_NAME_BASE}-restart" cylc restart "${SUITE_NAME}" --debug
-ls "${SUITE_RUN_DIR}/log/suite/" 1>'/dev/null' 2>&1
-poll "! grep -qF 'INFO - + t1.1 retrying (held)' '${SUITE_RUN_DIR}/log/suite/log'"
+cylc restart "${SUITE_NAME}" --debug --no-detach 1>'out' 2>&1 &
+SUITE_PID=$!
+poll_grep_suite_log -F 'INFO - + t1.1 retrying (held)'
 run_ok "${TEST_NAME_BASE}-release" cylc release "${SUITE_NAME}"
-poll "! grep -qF 'INFO - DONE' '${SUITE_RUN_DIR}/log/suite/log'"
-poll "test -e '${SUITE_RUN_DIR}/.service/contact'"
+poll_grep_suite_log -F 'INFO - DONE'
+if ! wait "${SUITE_PID}"; then
+    cat 'out' >&2
+fi
 sqlite3 "${SUITE_RUN_DIR}/log/db" \
     'SELECT * FROM task_pool ORDER BY cycle, name' >'task-pool.out'
 cmp_ok 'task-pool.out' <<__OUT__

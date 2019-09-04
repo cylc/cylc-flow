@@ -86,13 +86,13 @@ if [[ -n "${SSH}" ]]; then
     SUITE_DIR="${SUITE_DIR#"${HOME}/"}"
     ST_FILE="${SUITE_DIR}/log/job/1/foo/01/job.status"
     # shellcheck disable=SC2086
-    poll ! $SSH "grep -q 'CYLC_BATCH_SYS_JOB_ID=' \"${ST_FILE}\"" 2>/dev/null
+    poll $SSH "grep -q 'CYLC_BATCH_SYS_JOB_ID=' \"${ST_FILE}\"" 2>'/dev/null'
     # shellcheck disable=SC2086
     JOB_ID=$($SSH "cat \"${ST_FILE}\"" \
         | awk -F= '$1 == "CYLC_BATCH_SYS_JOB_ID" {print $2}')
 else
     ST_FILE="${SUITE_DIR}/log/job/1/foo/01/job.status"
-    poll ! grep -q 'CYLC_BATCH_SYS_JOB_ID=' "${ST_FILE}" 2>/dev/null
+    poll_grep 'CYLC_BATCH_SYS_JOB_ID=' "${ST_FILE}"
     JOB_ID=$(awk -F= '$1 == "CYLC_BATCH_SYS_JOB_ID" {print $2}' "${ST_FILE}")
 fi
 contains_ok "${TEST_NAME_BASE}.stdout" <<<"[foo.1] Job ID: ${JOB_ID}"
@@ -100,13 +100,13 @@ cmp_ok "${TEST_NAME_BASE}.stderr" <'/dev/null'
 #-------------------------------------------------------------------------------
 if [[ -n "${SSH}" ]]; then
     # shellcheck disable=SC2086
-    poll ! $SSH "grep -q 'CYLC_JOB_INIT_TIME=' \"${ST_FILE}\"" 2>/dev/null
+    poll $SSH "grep -q 'CYLC_JOB_INIT_TIME=' \"${ST_FILE}\"" 2>'/dev/null'
     # shellcheck disable=SC2086
-    poll ! $SSH "grep -q 'CYLC_JOB_EXIT=' \"${ST_FILE}\"" 2>/dev/null
+    poll $SSH "grep -q 'CYLC_JOB_EXIT=' \"${ST_FILE}\"" 2>'/dev/null'
     purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
 else
-    poll ! grep -q 'CYLC_JOB_INIT_TIME=' "${ST_FILE}" 2>/dev/null
-    poll ! grep -q 'CYLC_JOB_EXIT=' "${ST_FILE}" 2>/dev/null
+    poll_grep 'CYLC_JOB_INIT_TIME=' "${ST_FILE}"
+    poll_grep 'CYLC_JOB_EXIT=' "${ST_FILE}"
 fi
 purge_suite "${SUITE_NAME}"
 exit
