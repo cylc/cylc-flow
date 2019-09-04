@@ -75,6 +75,10 @@ help_util() {
         local COMMAND="${CYLC_HOME_BIN}/cylc-graph"
         exec "${COMMAND}" "--help"
     fi
+    if [[ "$@" == "ref-graph" ]]; then
+        local COMMAND="${CYLC_HOME_BIN}/cylc-ref-graph"
+        exec "${COMMAND}" "--help"
+    fi
     # For help command/option with no args
     if [[ $# == 0 && "${HELP_OPTS[*]} " == *"$UTIL"* ]]; then
         exec "${CYLC_HOME_BIN}/cylc-help"
