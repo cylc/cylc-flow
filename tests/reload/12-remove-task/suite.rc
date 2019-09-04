@@ -10,10 +10,7 @@
         script = """
             sed -i "s/remove_me =>//g" $CYLC_SUITE_DEF_PATH/suite.rc
             cylc reload $CYLC_SUITE_NAME
-            while ! grep -q 'Reload completed' "${CYLC_SUITE_LOG_DIR}/log"
-            do
-                sleep 1  # make sure reload completes
-            done
+            cylc__job__poll_grep_suite_log -F 'Reload completed'
         """
     [[remove_me]]
         script = false

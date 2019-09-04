@@ -18,9 +18,7 @@
 perl -pi -e 's/(final cycle point = )20100102T00( # marker)/\1 20100101T12\2/' $CYLC_SUITE_DEF_PATH/suite.rc
 # reload
 cylc reload -f $CYLC_SUITE_NAME
-while ! grep -qF 'Reload completed' "${CYLC_SUITE_LOG_DIR}/log"; do
-    sleep 1
-done
+cylc__job__poll_grep_suite_log -F 'Reload completed'
 """
     [[a]]
         script = true

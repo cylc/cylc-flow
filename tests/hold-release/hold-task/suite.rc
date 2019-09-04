@@ -16,11 +16,7 @@ point of the suite."""
     [[holdrelease]]
         script = """
 cylc hold "$CYLC_SUITE_NAME" '{{HOLD_MATCH}}.20141009T0000Z'
-while ! grep -qF "[foo.20141009T0000Z] -waiting => waiting (held)" \
-    "${CYLC_SUITE_LOG_DIR}/log"
-do
-    sleep 1
-done
+cylc__job__poll_grep_suite_log -F "[foo.20141009T0000Z] -waiting => waiting (held)"
 """
     [[foo]]
         script = true

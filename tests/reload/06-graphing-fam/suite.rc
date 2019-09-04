@@ -16,9 +16,7 @@ perl -pi -e 's/(reloader => )BAR( # marker1)/\1FOO\2/' $CYLC_SUITE_DEF_PATH/suit
 perl -pi -e 's/( )BAR:finish-all => FOO( # marker2)/\1FOO:finish-all => BAR\2/' $CYLC_SUITE_DEF_PATH/suite.rc
 # reload
 cylc reload -f "${CYLC_SUITE_NAME}"
-while ! grep -qF 'Reload completed' "${CYLC_SUITE_LOG_DIR}/log"; do
-    sleep 1
-done
+cylc__job__poll_grep_suite_log -F 'Reload completed'
 """
     [[FOO, BAR]]
         script = true

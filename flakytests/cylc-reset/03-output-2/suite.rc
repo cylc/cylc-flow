@@ -15,14 +15,9 @@
             greet = Greet World
     [[t2]]
         script = """
-LOG="${CYLC_SUITE_LOG_DIR}/log"
 cylc reset --output='!hello' --output='!Greet World' "${CYLC_SUITE_NAME}" 't1.1'
-while ! grep -qF -e '[t1.1] -reset output to incomplete: hello' "${LOG}"; do
-    sleep 1  # make sure reset completes
-done
-while ! grep -qF '[t1.1] -reset output to incomplete: Greet World' "${LOG}"; do
-    sleep 1  # make sure reset completes
-done
+cylc__job__poll_grep_suite_log -F '[t1.1] -reset output to incomplete: hello'
+cylc__job__poll_grep_suite_log -F '[t1.1] -reset output to incomplete: Greet World'
 cylc show "${CYLC_SUITE_NAME}" 't1.1' >"${CYLC_SUITE_RUN_DIR}/cylc-show.out"
 """
         [[[job]]]

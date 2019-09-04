@@ -17,11 +17,7 @@
         """
     [[timeout]]
         script = """
-while ! grep -qF "[${CYLC_TASK_ID}] -execution timeout after PT1S" \
-    "${CYLC_SUITE_LOG_DIR}/log"
-do
-    sleep 1
-done
+cylc__job__poll_grep_suite_log -F "[${CYLC_TASK_ID}] -execution timeout after PT1S"
 """
         [[[events]]]
             execution timeout = PT1M

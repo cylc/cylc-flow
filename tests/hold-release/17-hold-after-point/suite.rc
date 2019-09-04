@@ -16,11 +16,7 @@
 [runtime]
     [[stopper]]
         script = """
-while ! grep -qF 'holding (beyond suite hold point) 20100102T00Z' \
-    "${CYLC_SUITE_LOG_DIR}/log"
-do
-    sleep 1
-done
+cylc__job__poll_grep_suite_log -F 'holding (beyond suite hold point) 20100102T00Z'
 cylc stop "${CYLC_SUITE_NAME}"
 """
     [[foo]]

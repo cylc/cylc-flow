@@ -13,7 +13,5 @@
     [[b]]
         script = """
 cylc reload "${CYLC_SUITE_NAME}" -f
-while ! grep -qF 'Reload completed' "${CYLC_SUITE_LOG_DIR}/log"; do
-    sleep 1
-done
+cylc__job__poll_grep_suite_log -F 'Reload completed'
 """

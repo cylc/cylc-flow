@@ -18,9 +18,7 @@
 sed -i 's/T00,T12 = a\[-PT12H\]/T00,T06,T12,T18 = a[-PT6H]/' "${CYLC_SUITE_DEF_PATH}/suite.rc"
 # reload
 cylc reload -f "${CYLC_SUITE_NAME}"
-while ! grep -qF 'Reload completed' "${CYLC_SUITE_LOG_DIR}/log"; do
-    sleep 1
-done
+cylc__job__poll_grep_suite_log -F 'Reload completed'
 """
     [[a]]
         script = true

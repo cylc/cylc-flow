@@ -48,7 +48,7 @@ SUITE_PID="$!"
 SUITE_LOG="${SUITE_RUN_DIR}/log/suite/log"
 # Note: double poll existence of suite log on suite host and then localhost to
 # avoid any issues with unstable mounting of the shared file system.
-poll ssh -oBatchMode=yes -n '${CYLC_TEST_HOST}' test -e "${SUITE_LOG}"
+poll ssh -oBatchMode=yes -n "${CYLC_TEST_HOST}" test -e "${SUITE_LOG}"
 poll_grep_suite_log -F '[t1.19700101T0000Z] -submitted => running'
 poll_grep_suite_log -F '[t1.19700101T0000Z] -running => failed'
 

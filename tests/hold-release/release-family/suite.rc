@@ -17,11 +17,7 @@ first cycle point of the suite.."""
         script = """
 wait
 cylc hold "${CYLC_SUITE_NAME}"
-while ! grep -qF 'INFO - Command succeeded: hold_suite()' \
-    "${CYLC_SUITE_LOG_DIR}/log"
-do
-    sleep 1
-done
+cylc__job__poll_grep_suite_log -F 'INFO - Command succeeded: hold_suite()'
 # Release a family in the first cycle point.
 cylc release "$CYLC_SUITE_NAME" '{{RELEASE_MATCH}}.20141009T0000Z'
 """

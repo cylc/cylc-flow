@@ -11,24 +11,14 @@
     [[t1]]
         script = """
             cylc hold "${CYLC_SUITE_NAME}"
-            LOG="${CYLC_SUITE_LOG_DIR}/log"
-            while ! grep -qF 'INFO - Command succeeded: hold_suite()' "${LOG}"; do
-                sleep 1  # make sure hold completes
-            done
+            cylc__job__poll_grep_suite_log -F \
+                'INFO - Command succeeded: hold_suite()'
             cylc reset --state='succeeded' "${CYLC_SUITE_NAME}" 't2.1'
-            while ! grep -q \
-                "INFO - Command succeeded: reset_task_states(\\['t2.1'\\],.*state=succeeded" \
-                "${LOG}"
-            do
-                sleep 1  # make sure reset succeeded completes
-            done
+            cylc__job__poll_grep_suite_log \
+                "INFO - Command succeeded: reset_task_states(\\['t2.1'\\],.*state=succeeded"
             cylc reset --state='waiting' "${CYLC_SUITE_NAME}" 't2.1'
-            while ! grep -q \
-                "INFO - Command succeeded: reset_task_states(\\['t2.1'\\],.*state=waiting" \
-                "${LOG}"
-            do
-                sleep 1  # make sure reset waiting completes
-            done
+            cylc__job__poll_grep_suite_log \
+                "INFO - Command succeeded: reset_task_states(\\['t2.1'\\],.*state=waiting"
             cylc release "${CYLC_SUITE_NAME}"
         """
         [[[job]]]
@@ -37,7 +27,7 @@
             failed handler = cylc release '%(suite)s'
 
     [[t2]]
-        script = sleep 10; touch "${CYLC_SUITE_RUN_DIR}/t2.done"
+        script = touch "${CYLC_SUITE_RUN_DIR}/t2.done"
     [[t3]]
         # This will fail if t3.1 starts together with t2.1
         script = test -e "${CYLC_SUITE_RUN_DIR}/t2.done"

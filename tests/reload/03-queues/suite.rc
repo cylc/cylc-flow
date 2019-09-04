@@ -21,10 +21,7 @@
 perl -pi -e 's/(limit = )5( # marker)/\1 3 \2/' $CYLC_SUITE_DEF_PATH/suite.rc
 # reload
 cylc reload -f "${CYLC_SUITE_NAME}"
-while ! grep -qF 'Reload completed' "${CYLC_SUITE_LOG_DIR}/log"
-do
-    sleep 1
-done
+cylc__job__poll_grep_suite_log 'Reload completed'
 """
     [[monitor]]
         script = """

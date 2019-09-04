@@ -38,7 +38,8 @@ bar
 
             # Restart the suite on hold.
             cylc restart --hold "${CYLC_SUITE_NAME}"
-            timeout 1m my-log-grepper 'Held on start-up (no tasks will be submitted)'
+            cylc__job__poll_grep_suite_log \
+                'Held on start-up (no tasks will be submitted)'
 
             # Modify the job submission command template for "foo-1".
             cylc broadcast "${CYLC_SUITE_NAME}" \

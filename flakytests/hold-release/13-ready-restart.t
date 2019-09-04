@@ -18,7 +18,7 @@
 # Test restart with a "ready" task. See GitHub #958 (update: and #2610).
 . "$(dirname "$0")/test_header"
 
-set_test_number 4
+set_test_number 3
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
@@ -29,8 +29,7 @@ export PATH="${TEST_DIR}/${SUITE_NAME}/bin:$PATH"
 LOG="$(find "${CYLC_SUITE_LOG_DIR}/" -type f -name 'log.*' | sort | head -n 1)"
 run_ok "${TEST_NAME_BASE}-restart" timeout 1m my-file-poll "${LOG}"
 # foo-1 should run when the suite is released
-run_ok "${TEST_NAME_BASE}-foo-1" \
-    timeout 1m my-log-grepper 'foo-1\.1.*succeeded'
-timeout 1m my-log-grepper 'Suite shutting down'
+poll_grep_suite_log 'foo-1\.1.*succeeded'
+poll_suite_stopped
 purge_suite "${SUITE_NAME}"
 exit
