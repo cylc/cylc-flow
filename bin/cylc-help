@@ -311,6 +311,7 @@ preparation_commands['5to6'] = ['5to6']
 preparation_commands['list'] = ['list', 'ls']
 preparation_commands['search'] = ['search', 'grep']
 preparation_commands['graph'] = ['graph']
+preparation_commands['ref-graph'] = ['ref-graph']
 preparation_commands['graph-diff'] = ['graph-diff']
 preparation_commands['diff'] = ['diff', 'compare']
 preparation_commands['jobscript'] = ['jobscript']
@@ -380,6 +381,7 @@ comsum['validate'] = 'Parse and validate suite definitions'
 comsum['5to6'] = 'Improve the cylc 6 compatibility of a cylc 5 suite file'
 comsum['search'] = 'Search in suite definitions'
 comsum['graph'] = 'Plot suite dependency graphs and runtime hierarchies'
+comsum['ref-graph'] = 'Print text-format "reference graphs" without GTK'
 comsum['graph-diff'] = 'Compare two suite dependencies or runtime hierarchies'
 comsum['diff'] = 'Compare two suite definitions and print differences'
 # information

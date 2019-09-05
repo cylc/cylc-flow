@@ -22,6 +22,17 @@ pages**.
   and uses the fixed version 2.10.1.
 
 -------------------------------------------------------------------------------
+## __cylc-7.8.5 (2019-Q4?)__
+
+
+### Enhancements
+
+[#3349](https://github.com/cylc/cylc-flow/pull/3349) - new command `cylc
+ref-graph` to generate text-format "reference graphs" without PyGTK (back-port
+from Python 3 master for Cylc 8).
+
+
+-------------------------------------------------------------------------------
 ## __cylc-7.8.4 (2019-09-04)__
 
 Bug fix release.

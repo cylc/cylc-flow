@@ -26,7 +26,11 @@
      Plot SUITE dependencies to a file FILE with a extension-derived format.
      If FILE endswith ".png", output in PNG format, etc.
 
-Plot suite dependency graphs in an interactive graph viewer.
+Plot suite dependency graphs in an interactive graph viewer, or (with
+"--output-file") directly to image file.
+
+See also "cylc ref-graph" to generate the plain text "reference" graph format
+without the need for PyGTK to be installed.
 
 If START is given it overrides "[visualization] initial cycle point" to
 determine the start point of the graph, which defaults to the suite initial

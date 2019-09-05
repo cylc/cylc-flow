@@ -18,7 +18,7 @@
 # Test cylc graph-diff for two suites.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 24
+set_test_number 27
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE-control $TEST_NAME_BASE-control
 CONTROL_SUITE_NAME=$SUITE_NAME
@@ -160,6 +160,18 @@ node "foo.20140810T0000Z" "foo\n20140810T0000Z"
 stop
 __OUT__
 cmp_ok "$TEST_NAME.stderr" </dev/null
+
+#-------------------------------------------------------------------------------
+# Check that the GTK-free "cylc ref-graph" command generates the same result as
+# the original "cylc graph --reference" command.
+TEST_NAME="${TEST_NAME_BASE}-ref1"
+run_ok "${TEST_NAME}" cylc graph --reference "${CONTROL_SUITE_NAME}"
+ref1="${TEST_NAME}.stdout"
+TEST_NAME="${TEST_NAME_BASE}-ref2"
+run_ok "${TEST_NAME}" cylc ref-graph "${CONTROL_SUITE_NAME}"
+ref2="${TEST_NAME}.stdout"
+cmp_ok "${ref1}" "${ref2}"
+
 #-------------------------------------------------------------------------------
 purge_suite $DIFF_SUITE_NAME
 purge_suite $SAME_SUITE_NAME

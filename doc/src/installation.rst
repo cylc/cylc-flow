@@ -25,12 +25,21 @@ The following packages are highly recommended, but are technically optional as
 you can construct and run suites without dependency graph visualisation or
 the Cylc GUIs:
 
-- `PyGTK <http://www.pygtk.org>`_ - GUI toolkit.
+- `PyGTK <http://www.pygtk.org>`_ - Python bindings for the GTK+ GUI toolkit.
 
   .. note::
 
-     PyGTK typically comes with your system Python. It is allegedly quite
-     difficult to install if you need to do so for another Python version.
+     PyGTK typically comes with your system Python 2 version. It is allegedly
+     quite difficult to install if you need to do so for another Python
+     version. At time of writing, for instance, there are no functional PyGTK 
+     conda packages available.
+
+     Note that **we need to do ``import gtk`` in Python, not ``import pygtk``**.
+
+     In Centos 7.6, for example, the Cylc GUIs run "out of the box" with the
+     system-installed Python 2.7.5. Under the hood, the Python “gtk” package is
+     provided by the “pygtk2” yum package. (The “pygtk” Python module, which we
+     don't need, is supplied by the “pygobject2” yum package).
 
 - `Graphviz <http://www.graphviz.org>`_ - graph layout engine (tested 2.36.0)
 - `Pygraphviz <http://pygraphviz.github.io/>`_ - Python Graphviz interface
@@ -38,6 +47,12 @@ the Cylc GUIs:
   
   - python-devel
   - graphviz-devel
+
+  .. note::
+
+     The ``cylc graph`` command for static workflow visualization requires
+     PyGTK, but we provide a separate ``cylc ref-graph`` command to print
+     out a simple text-format "reference graph" without PyGTK.
 
 The Cylc Review service does not need any additional packages.
 
