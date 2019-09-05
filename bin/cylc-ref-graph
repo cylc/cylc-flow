@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Usage:
-    cylc graph SUITE [START] [STOP]
+    cylc ref-graph SUITE [START] [STOP]
 
 Implement the old ``cylc graph --reference command`` for producing a
 text-format representation of a suite graph.
