@@ -21,6 +21,8 @@
 Implement the old ``cylc graph --reference command`` for producing a
 text-format representation of a suite graph.
 
+The `--reference` flag is optional here.
+
 THIS IS A BACK-PORT OF the Python 3 bin/cylc-graph FOR CYLC 8, TO GENERATE
 TEXT-FORMAT "REFERENCE GRAPHS" WITHOUT THE NEED FOR PYGTK TO BE INSTALLED."""
 
@@ -88,10 +90,6 @@ def get_cycling_bounds(config, start_point=None, stop_point=None):
             # NOTE: we need to cast with get_point for this comparison due to
             #       ISO8061 extended datetime formats
             stop_point = start_point
-        else:
-            stop_point = stop_point
-    else:
-        stop_point = None
 
     return start_point, stop_point
 
