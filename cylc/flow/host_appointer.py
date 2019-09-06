@@ -45,7 +45,7 @@ class EmptyHostList(CylcError):
         suite_server_cfg_items = (['run hosts'], ['run host select', 'rank'],
                                   ['run host select', 'thresholds'])
         for cfg_end_ref in suite_server_cfg_items:
-            cfg_end_ref.insert(0, 'suite servers')
+            cfg_end_ref.insert(0, 'suite run platforms')
             # Add 2-space indentation for clarity in distinction of items.
             msg = '\n  '.join([msg, ' -> '.join(cfg_end_ref) + ':',
                                '  ' + str(glbl_cfg().get(cfg_end_ref))])
@@ -74,13 +74,13 @@ class HostAppointer(object):
         # list the condemned hosts, hosts may be suffixed with `!`
         condemned_hosts = [
             get_fqdn_by_host(host.split('!')[0]) for host in
-            global_config.get(['suite servers', 'condemned hosts'])]
+            global_config.get(['suite run platforms', 'condemned hosts'])]
 
         # list configured run hosts eliminating any which cannot be contacted
         # or which are condemned
         self.hosts = []
         for host in (
-                global_config.get(['suite servers', 'run hosts']) or
+                global_config.get(['suite run platforms', 'run hosts']) or
                 ['localhost']):
             try:
                 if get_fqdn_by_host(host) not in condemned_hosts:
@@ -90,9 +90,9 @@ class HostAppointer(object):
 
         # determine the server ranking and acceptance thresholds if configured
         self.rank_method = global_config.get(
-            ['suite servers', 'run host select', 'rank'])
+            ['suite run platforms', 'run host select', 'rank'])
         self.parsed_thresholds = self.parse_thresholds(global_config.get(
-            ['suite servers', 'run host select', 'thresholds']))
+            ['suite run platforms', 'run host select', 'thresholds']))
 
     @staticmethod
     def parse_thresholds(raw_thresholds_spec):

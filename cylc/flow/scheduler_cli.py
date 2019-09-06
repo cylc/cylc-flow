@@ -204,7 +204,7 @@ def get_option_parser(is_restart):
         help=(
             "Specify the host on which to start-up the suite. "
             "If not specified, a host will be selected using "
-            "the 'suite servers' global config."
+            "the 'suite run platforms' global config."
         ),
         metavar="HOST", action="store", dest="host")
 

@@ -243,7 +243,7 @@ class Scheduler(object):
             self._setup_suite_logger()
             self.ws_data_mgr = WsDataMgr(self)
             self.server = SuiteRuntimeServer(self)
-            port_range = glbl_cfg().get(['suite servers', 'run ports'])
+            port_range = glbl_cfg().get(['suite run platforms', 'run ports'])
             self.server.start(port_range[0], port_range[-1])
             self.port = self.server.port
             self.configure()
@@ -1429,7 +1429,7 @@ see `COPYING' in the Cylc source distribution.
             # 2. check if suite host is condemned - if so auto restart.
             if self.stop_mode is None:
                 current_glbl_cfg = glbl_cfg(cached=False)
-                for host in current_glbl_cfg.get(['suite servers',
+                for host in current_glbl_cfg.get(['suite run platforms',
                                                   'condemned hosts']):
                     if host.endswith('!'):
                         # host ends in an `!` -> force shutdown mode
@@ -1459,7 +1459,7 @@ see `COPYING' in the Cylc source distribution.
                             if self.set_auto_restart(mode=mode):
                                 return  # skip remaining health checks
                         elif (self.set_auto_restart(current_glbl_cfg.get(
-                                ['suite servers', 'auto restart delay']))):
+                                ['suite run platforms', 'auto restart delay']))):
                             # server is condemned -> configure the suite to
                             # auto stop-restart if possible, else, report the
                             # issue preventing this

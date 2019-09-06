@@ -25,7 +25,7 @@ from cylc.flow.network.server import ZMQServer
 
 
 def get_port_range():
-    ports = glbl_cfg().get(['suite servers', 'run ports'])
+    ports = glbl_cfg().get(['suite run platforms', 'run ports'])
     return min(ports), max(ports)
 
 
