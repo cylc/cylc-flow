@@ -126,7 +126,7 @@ class HostUtil(object):
     def _get_identification_cfg(key):
         """Return the [suite host self-identification]key global conf."""
         return cylc.flow.config_schema.glbl_cfg().get(
-            ['suite host self-identification', key]
+            ['suite run platforms', 'suite host self-identification', key]
         )
 
     def get_host(self):
