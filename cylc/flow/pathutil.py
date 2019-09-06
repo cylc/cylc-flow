@@ -20,7 +20,7 @@ from shutil import rmtree
 
 
 from cylc.flow import LOG
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.config_schema import glbl_cfg
 
 
 def get_remote_suite_run_dir(host, owner, suite, *args):

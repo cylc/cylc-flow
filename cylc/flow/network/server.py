@@ -27,7 +27,7 @@ from graphql.execution.executors.asyncio import AsyncioExecutor
 import zmq
 
 from cylc.flow import LOG
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.config_schema import glbl_cfg
 from cylc.flow.exceptions import CylcError
 from cylc.flow.network.authorisation import Priv, authorise
 from cylc.flow.network.authentication import encrypt, decrypt, get_secret
