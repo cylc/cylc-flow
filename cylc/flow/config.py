@@ -46,7 +46,7 @@ from cylc.flow.exceptions import (
 from cylc.flow.graph_parser import GraphParser
 from cylc.flow.param_expand import NameExpander
 from cylc.flow.config_schema import glbl_cfg
-from cylc.flow.config_schema.suite import RawSuiteConfig
+from cylc.flow.config_schema import RawSuiteConfig
 from cylc.flow.cycling.loader import (
     get_point, get_point_relative, get_interval, get_interval_cls,
     get_sequence, get_sequence_cls, init_cyclers, INTEGER_CYCLING_TYPE,
