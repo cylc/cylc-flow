@@ -62,7 +62,7 @@ def main(parser, options, suite, severity_str):
     try:
         severity = LOGGING_LVL_OF[severity_str]
     except KeyError:
-        parser.error("Illegal logging level, %s" % severity)
+        parser.error("Illegal logging level, %s" % severity_str)
 
     prompt("Set logging level to %s in %s" % (severity_str, suite),
            options.force)
