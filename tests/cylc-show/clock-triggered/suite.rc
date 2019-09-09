@@ -14,7 +14,7 @@
         """
 [runtime]
     [[foo]]
-        script = sleep 10
+        script = true
     [[bar,baz]]
         script = true
     [[show]]

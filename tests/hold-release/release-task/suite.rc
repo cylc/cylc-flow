@@ -15,13 +15,13 @@ first cycle point of the suite."""
 [runtime]
     [[holdrelease]]
         script = """
-sleep 5
-cylc hold $CYLC_SUITE_NAME
-sleep 5
+wait
+cylc hold "${CYLC_SUITE_NAME}"
+cylc__job__poll_grep_suite_log -F 'INFO - Command succeeded: hold_suite()'
 # Release tasks in the first cycle point.
 cylc release "$CYLC_SUITE_NAME" '{{RELEASE_MATCH}}.20141009T0000Z'
 """
     [[foo,bar]]
         script = true
     [[stop]]
-        script = cylc stop $CYLC_SUITE_NAME
+        script = cylc stop "${CYLC_SUITE_NAME}"

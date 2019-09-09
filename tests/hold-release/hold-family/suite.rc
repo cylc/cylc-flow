@@ -15,9 +15,9 @@ point of the suite."""
 [runtime]
     [[holdrelease]]
         script = """
-sleep 5
+wait
 cylc hold "$CYLC_SUITE_NAME" '{{HOLD_MATCH}}.20141009T0000Z'
-sleep 5
+cylc__job__poll_grep_suite_log -F "[foo.20141009T0000Z] -waiting => waiting (held)"
 """
     [[STUFF]]
     [[STOP]]
@@ -26,4 +26,4 @@ sleep 5
         script = true
     [[stop]]
         inherit = STOP
-        script = sleep 5; cylc stop $CYLC_SUITE_NAME
+        script = cylc stop "${CYLC_SUITE_NAME}"

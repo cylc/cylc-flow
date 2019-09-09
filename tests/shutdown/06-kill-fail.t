@@ -25,8 +25,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
 LOGD="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/job"
 JLOGD="${LOGD}/1/t1/01"
-poll test '!' -f "${JLOGD}/job.status"
-poll '!' grep -q 'CYLC_JOB_INIT_TIME' "${JLOGD}/job.status" 2>'/dev/null'
+poll_grep 'CYLC_JOB_INIT_TIME' "${JLOGD}/job.status"
 mv "${JLOGD}/job.status" "${JLOGD}/job.status.old"
 run_ok "${TEST_NAME_BASE}-shutdown" \
     cylc shutdown --kill --max-polls=10 --interval=2 "${SUITE_NAME}"

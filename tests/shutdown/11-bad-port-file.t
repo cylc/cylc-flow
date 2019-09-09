@@ -23,9 +23,8 @@ set_test_number 5
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
-LOGD="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log"
-poll "! grep -q 'WARNING - suite stalled' '${LOGD}/suite/log'"
-SRVD="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/.service"
+poll_grep_suite_log 'WARNING - suite stalled'
+SRVD="${SUITE_RUN_DIR}/.service"
 # Read host & port from contact file before removing it
 HOST="$(awk -F= '$1 ~ /CYLC_SUITE_HOST/ {print $2}' "${SRVD}/contact")"
 PORT="$(awk -F= '$1 ~ /CYLC_SUITE_PORT/ {print $2}' "${SRVD}/contact")"
@@ -38,6 +37,6 @@ __ERR__
 #   attempts to parse "garbage"
 run_ok "${TEST_NAME_BASE}-stop-2" \
     cylc stop --host="${HOST}" --port="${PORT}" "${SUITE_NAME}" \
-    --max-polls='5' --interval='2'
+    --max-polls='10' --interval='2'
 purge_suite "${SUITE_NAME}"
 exit

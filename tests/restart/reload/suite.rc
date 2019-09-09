@@ -22,7 +22,7 @@ which should run to completion on restarting."""
     [[foo]]
         script = """
 if [[ "$CYLC_TASK_CYCLE_POINT" == "$CYLC_SUITE_INITIAL_CYCLE_POINT" ]]; then
-    cylc reload $CYLC_SUITE_NAME
-    cylc stop $CYLC_SUITE_NAME
-    sleep 5
+    cylc reload "${CYLC_SUITE_NAME}"
+    cylc__job__poll_grep_suite_log -F 'Reload completed'
+    cylc stop "${CYLC_SUITE_NAME}"
 fi"""

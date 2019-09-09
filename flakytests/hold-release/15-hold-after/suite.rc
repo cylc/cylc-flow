@@ -22,11 +22,8 @@
         script = cylc hold --after '20140101T12' "${CYLC_SUITE_NAME}"
     [[stopper]]
         script = """
-            while ! grep -qF '[bar.20140102T0000Z] -waiting => waiting (held)' \
-                "${CYLC_SUITE_LOG_DIR}/log"
-            do
-                sleep 1
-            done
+            cylc__job__poll_grep_suite_log -F \
+                '[bar.20140102T0000Z] -waiting => waiting (held)'
             cylc stop "${CYLC_SUITE_NAME}"
         """
         [[[job]]]

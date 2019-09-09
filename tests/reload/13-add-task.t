@@ -17,15 +17,6 @@
 #-------------------------------------------------------------------------------
 # Test that adding a task to the graph works OK.
 . "$(dirname "$0")/test_header"
-#-------------------------------------------------------------------------------
 set_test_number 2
-#-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" add-task
-#-------------------------------------------------------------------------------
-TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
-#-------------------------------------------------------------------------------
-TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_ok "${TEST_NAME}" cylc run --debug --no-detach --reference-test "${SUITE_NAME}"
-#-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+reftest
+exit

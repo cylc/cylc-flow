@@ -9,7 +9,7 @@
         20140110T06/P3D = "a"
 [runtime]
     [[a]]
-        script = "sleep 1"
+        script = true
 
 [visualization]
     initial cycle point = 20140107

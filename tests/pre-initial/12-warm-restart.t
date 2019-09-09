@@ -33,7 +33,7 @@ cylc stop --max-polls=10 --interval=2 "${SUITE_NAME}"
 TEST_NAME=${TEST_NAME_BASE}-run-hold-restart
 suite_run_ok "${TEST_NAME}" cylc restart "${SUITE_NAME}"
 # Ensure suite has started
-poll ! test -f "${SUITE_RUN_DIR}/.service/contact"
+poll_suite_running
 #-------------------------------------------------------------------------------
 # Check pre-reqs
 TEST_NAME=${TEST_NAME_BASE}-check-prereq

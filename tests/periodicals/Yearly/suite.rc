@@ -8,4 +8,4 @@
         2010/P3Y = "a"
 [runtime]
     [[a]]
-        script = "sleep 1"
+        script = true

@@ -10,7 +10,7 @@
 
 [runtime]
     [[t1]]
-        script = sleep 1 && cylc stop --now "${CYLC_SUITE_NAME}"
+        script = wait; cylc stop --now "${CYLC_SUITE_NAME}"
         [[[events]]]
             started handler = sleep 10 && echo 'Hello %(id)s %(event)s'
             succeeded handler = echo 'Well done %(id)s %(event)s'

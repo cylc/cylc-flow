@@ -1,7 +1,8 @@
 [cylc]
     [[events]]
-        timeout = PT1M
-        abort on timeout = True
+        abort on stalled = True
+        abort on inactivity = True
+        inactivity = PT3M
 [scheduling]
     [[queues]]
         [[[default]]]
@@ -10,4 +11,4 @@
         R1 = m1 & m2
 [runtime]
     [[m1, m2]]
-        script = sleep 10
+        script = true

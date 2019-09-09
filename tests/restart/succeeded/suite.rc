@@ -16,9 +16,7 @@
         """
 [runtime]
     [[succeeded_task]]
-        script = """
-            sleep 1
-        """
+        script = true
         [[[meta]]]
             description = "Succeeded task (runs before restart)"
 {% include 'suite-runtime-restart.rc' %}

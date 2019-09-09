@@ -1,0 +1,20 @@
+[meta]
+    title = "Hello, Goodbye, Suicide"
+[cylc]
+    [[reference test]]
+        expected task failures = goodbye.1
+
+[scheduling]
+    [[graph]]
+        R1 = """hello => goodbye
+           goodbye:fail => really_goodbye
+           goodbye => !really_goodbye
+           really_goodbye => !goodbye"""
+[runtime]
+    [[hello]]
+        script = echo Hello World!
+    [[goodbye]]
+        script = """
+echo Goodbye ... oops!
+false
+"""

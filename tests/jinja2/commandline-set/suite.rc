@@ -15,4 +15,4 @@ to pass the test run their values must be 'foo' and '2', respectively."""
         P{{STEP}}Y = {{TASKNAME}}
 [runtime]
     [[ {{TASKNAME}} ]]
-        script = "sleep 1"
+        script = true

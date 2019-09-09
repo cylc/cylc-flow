@@ -31,16 +31,8 @@ then
 fi
 export CYLC_TEST_BATCH_TASK_HOST CYLC_TEST_BATCH_SITE_DIRECTIVES
 set_test_number 2
-#-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-#-------------------------------------------------------------------------------
-TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
-#-------------------------------------------------------------------------------
-TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_ok "${TEST_NAME}" cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
-#-------------------------------------------------------------------------------
+reftest
 if [[ "${CYLC_TEST_BATCH_TASK_HOST}" != 'localhost' ]]; then
     purge_suite_remote "${CYLC_TEST_BATCH_TASK_HOST}" "${SUITE_NAME}"
 fi
-purge_suite "${SUITE_NAME}"
+exit

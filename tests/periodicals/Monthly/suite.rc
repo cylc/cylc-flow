@@ -8,4 +8,4 @@
         2010-01/P3M = "a"
 [runtime]
     [[a]]
-        script = "sleep 1"
+        script = true

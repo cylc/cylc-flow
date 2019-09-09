@@ -20,7 +20,7 @@ duration of the suite; and the other is set to stop after two cycles."""
 
 [runtime]
     [[root]]
-        script = "sleep 1" # quick
+        script = true
     [[prep]]
         script = """
             cylc insert $CYLC_SUITE_NAME 'bar.20140101T00'

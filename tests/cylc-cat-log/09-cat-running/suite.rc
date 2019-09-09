@@ -1,18 +1,20 @@
 #!Jinja2
 [cylc]
     [[events]]
-        abort on timeout = True
-        timeout = PT90S
+        abort on stalled = True
+        abort on inactivity = True
+        inactivity = PT3M
 [scheduling]
     [[graph]]
         R1 = local-task:echo & remote-task:echo => cat-log
 [runtime]
     [[ECHO]]
         script = """
+wait
 echo rubbish
 echo garbage >&2
 cylc message 'echo done'
-sleep 60"""
+"""
         [[[outputs]]]
             echo = "echo done"
     [[local-task]]
@@ -24,7 +26,7 @@ sleep 60"""
             owner={{environ["CYLC_TEST_OWNER"]}}
     [[cat-log]]
         script = """
-sleep 10  # wait for messages for other tasks
+wait
 for TASK in local-task.1 remote-task.1; do
   cylc cat-log --debug -f o "${CYLC_SUITE_NAME}" $TASK | grep 'rubbish'
   cylc cat-log --debug -f e "${CYLC_SUITE_NAME}" $TASK | grep 'garbage'

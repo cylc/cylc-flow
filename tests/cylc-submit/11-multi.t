@@ -53,7 +53,7 @@ for TASK_ID in 'food.2020' 'fool.2020' 'foot.2020' 'bar.2021'; do
     ST_FILE="${SUITE_RUN_DIR}/log/job/${POINT}/${NAME}/01/job.status"
     JOB_ID="$(awk -F= '$1 == "CYLC_BATCH_SYS_JOB_ID" {print $2}' "${ST_FILE}")"
     echo "[${TASK_ID}] Job ID: ${JOB_ID}"
-    poll ps "${JOB_ID}" 1>'/dev/null' 2>&1
+    poll_pid_done "${JOB_ID}"
 done >'expected.out'
 contains_ok "${TEST_NAME_BASE}.stdout" 'expected.out'
 cmp_ok "${TEST_NAME_BASE}.stderr" <'/dev/null'

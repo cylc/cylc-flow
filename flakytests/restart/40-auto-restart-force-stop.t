@@ -46,8 +46,7 @@ ${BASE_GLOBALRC}
 "
 
 cylc run "${SUITE_NAME}" --hold
-poll ! test -f "${SUITE_RUN_DIR}/.service/contact"
-sleep 1
+poll_suite_running
 
 create_test_globalrc '' "
 ${BASE_GLOBALRC}
@@ -63,8 +62,6 @@ log_scan "${TEST_NAME_BASE}-no-auto-restart" "${FILE}" 20 1 \
     'When another suite host becomes available the suite can' \
     'Suite shutting down - REQUEST(NOW)'
 
-cylc stop "${SUITE_NAME}" --kill 2>/dev/null # in-case test fails
-poll test -f "${SUITE_RUN_DIR}/.service/contact"
-sleep 1
+cylc stop --kill --max-polls=10 --interval=2 "${SUITE_NAME}" 2>'/dev/null'
 purge_suite "${SUITE_NAME}"
 exit

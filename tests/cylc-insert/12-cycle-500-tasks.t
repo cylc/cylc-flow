@@ -22,12 +22,11 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 run_ok "${TEST_NAME_BASE}" cylc run --hold "${SUITE_NAME}"
-LOG="${SUITE_RUN_DIR}/log/suite/log"
-poll "! grep -q -F 'Held on start-up' '${LOG}' 2>'/dev/null'"
+poll_grep_suite_log -F 'Held on start-up'
 run_ok "${TEST_NAME_BASE}-insert" cylc insert "${SUITE_NAME}" '2008/*'
-poll "! grep -q -F 'Command succeeded: insert_tasks' '${LOG}' 2>'/dev/null'"
+poll_grep_suite_log -F 'Command succeeded: insert_tasks'
 cylc stop --max-polls=10 --interval=6 "${SUITE_NAME}" 2>'/dev/null'
-cut -d' ' -f 2- "${LOG}" >'trimmed-log'
+cut -d' ' -f 2- "${SUITE_RUN_DIR}/log/suite/log" >'trimmed-log'
 {
     for I in {001..500}; do
         echo "INFO - [v_i${I}.2008] -submit-num=00, inserted"

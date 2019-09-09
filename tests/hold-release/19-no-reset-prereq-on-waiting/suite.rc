@@ -17,6 +17,9 @@ t1[-P1Y] => t1
     [[t1]]
         script = true
     [[holder]]
-        script = cylc hold "${CYLC_SUITE_NAME}" 't1.2016'; sleep 1
+        script = """
+cylc hold "${CYLC_SUITE_NAME}" 't1.2016'
+cylc__job__poll_grep_suite_log -F '[t1.20160101T0000Z] -waiting => waiting (held)'
+"""
     [[releaser]]
-        script = sleep 1; cylc release "${CYLC_SUITE_NAME}" 't1.2016'
+        script = wait; cylc release "${CYLC_SUITE_NAME}" 't1.2016'

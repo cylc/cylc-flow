@@ -35,8 +35,6 @@ CYLC_TEST_DIRECTIVES="$( \
 export CYLC_TEST_HOST CYLC_TEST_DIRECTIVES
 set_test_number 2
 
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-
 create_test_globalrc "" "
 [hosts]
     [[${CYLC_TEST_HOST}]]
@@ -44,10 +42,6 @@ create_test_globalrc "" "
             [[[[pbs]]]]
                 err viewer = ${ERR_VIEWER}
                 out viewer = ${OUT_VIEWER}"
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}" \
-    cylc run --debug --no-detach --reference-test "${SUITE_NAME}"
-
+reftest
 purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
 exit

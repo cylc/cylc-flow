@@ -30,10 +30,10 @@ sqlite3 "${SUITE_RUN_DIR}/log/db" \
 cmp_ok 't1-status.out' <<<'running'
 run_ok "${TEST_NAME_BASE}-restart" cylc restart "${SUITE_NAME}"
 # Ensure suite has started
-poll ! test -f "${SUITE_RUN_DIR}/.service/contact"
+poll_suite_running
 cylc kill "${SUITE_NAME}" 't1.1'
 # Ensure suite has completed
-poll test -f "${SUITE_RUN_DIR}/.service/contact"
+poll_suite_stopped
 
 sqlite3 "${SUITE_RUN_DIR}/log/db" \
     'SELECT status FROM task_pool WHERE cycle=="1" AND NAME=="t1"' \
