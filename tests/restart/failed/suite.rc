@@ -3,8 +3,9 @@
 [cylc]
     UTC mode = True
     [[events]]
-        abort on timeout = True
-        timeout = PT3M
+        abort on stalled = True
+        abort on inactivity = True
+        inactivity = PT3M
 [scheduling]
     initial cycle point = 20130923T00
     final cycle point   = 20130923T00
@@ -17,7 +18,6 @@
 [runtime]
     [[failed_task]]
         script = """
-            sleep 10
             exit 1
         """
         [[[meta]]]

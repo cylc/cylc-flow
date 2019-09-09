@@ -14,7 +14,7 @@
     [[t0]]
         # https://github.com/cylc/cylc-flow/issues/2655
         # "t2.1" should not suicide on "t1.1:failed"
-        script = sleep 10
+        script = cylc__job__poll_grep_suite_log '\[t1\.1\].*failed'
     [[t1]]
         script = false
     [[t2]]

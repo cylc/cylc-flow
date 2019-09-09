@@ -66,7 +66,7 @@ ${BASE_GLOBALRC}
 "
 
 # wait for suite to die of natural causes
-poll test -f "${SUITE_RUN_DIR}/.service/contact"
+poll_suite_stopped
 grep_ok 'Suite shutting down - REQUEST(CLEAN)' \
     "$(cylc cat-log "${SUITE_NAME}" -m p)"
 

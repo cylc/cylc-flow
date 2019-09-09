@@ -91,7 +91,7 @@ run_ok "${TEST_NAME}-ps-2" ps -fu "${USER}"
 grep_fail "$(job-ps-line foo)" "${TEST_NAME}-ps-2.stdout"
 grep_fail "$(job-ps-line bar)" "${TEST_NAME}-ps-2.stdout"
 
-poll test -f "${SUITE_RUN_DIR}/.service/contact"
+poll_suite_stopped
 FILE=$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)
 log_scan "${TEST_NAME}-restart" "${FILE}" 20 1 \
     "Suite server: url=tcp://$(ssh "${CYLC_TEST_HOST2}" hostname -f)"
@@ -120,6 +120,6 @@ run_ok "${TEST_NAME}-ps-2" ssh "${CYLC_TEST_HOST2}" ps -fu "${USER}"
 grep_ok "$(job-ps-line bar)" "${TEST_NAME}-ps-2.stdout"
 
 cylc stop "${SUITE_NAME}" --now --now 2>/dev/null
-poll test -f "${SUITE_RUN_DIR}/.service/contact"
+poll_suite_stopped
 sleep 1
 purge_suite "${SUITE_NAME}"

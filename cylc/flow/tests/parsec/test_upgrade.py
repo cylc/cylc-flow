@@ -78,7 +78,6 @@ class TestUpgrade(unittest.TestCase):
         self.u.obsolete(
             vn='entry',
             oldkeys=['section', 'b'],
-            newkeys=['section', 'c'],
             silent=False)
         self.assertEqual(True, self.u.upgrades['entry'][0]['silent'])
         self.assertEqual(False, self.u.upgrades['entry'][1]['silent'])

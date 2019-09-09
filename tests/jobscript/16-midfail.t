@@ -18,10 +18,5 @@
 # Test error trapping of internal commands in job script. GitHub #2218
 . "$(dirname "${0}")/test_header"
 set_test_number 2
-
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" --reference-test --debug --no-detach
-
-purge_suite "${SUITE_NAME}"
+reftest
 exit

@@ -15,11 +15,10 @@
 [runtime]
     [[foo]]
         script = """
-sleep 2
+wait
 cylc message -- "${CYLC_SUITE_NAME} "${CYLC_TASK_JOB} "file 1 done"
-sleep 2
 cylc message -- "${CYLC_SUITE_NAME} "${CYLC_TASK_JOB} "file 2 done"
-sleep 2"""
+"""
         [[[outputs]]]
             out1 = "file 1 done"
             out2 = "file 2 done"

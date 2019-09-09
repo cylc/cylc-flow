@@ -1,6 +1,6 @@
     [[OUTPUT]]
         script = """
-            sleep 5
+            wait
             # Handle db locks.
             for i in {0..10}; do
                 ctb-select-task-states \
@@ -11,19 +11,14 @@
         """
     [[shutdown]]
         inherit = OUTPUT
-        post-script = """
-            cylc shutdown $CYLC_SUITE_NAME
-            sleep 5
-        """
+        post-script = cylc shutdown "${CYLC_SUITE_NAME}"
         [[[meta]]]
             description = "Force a shutdown of the suite"
         [[[environment]]]
             OUTPUT_SUFFIX=pre-restart
     [[output_states]]
         inherit = OUTPUT
-        pre-script = """
-            sleep 5
-        """
+        pre-script = wait
         [[[meta]]]
             description = "Wait for the restart to complete, then output states"
         [[[environment]]]

@@ -10,7 +10,6 @@ cylc broadcast -n 't2' \
     -F "${CYLC_SUITE_DEF_PATH}/broadcast-1.rc" \
     -F "${CYLC_SUITE_DEF_PATH}/broadcast-2.rc" \
     "${CYLC_SUITE_NAME}"
-sleep 1
 """
     [[t2]]
         script = false

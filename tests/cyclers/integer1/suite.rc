@@ -27,13 +27,13 @@
         R1/^ = nang
         R/+P1/P6!14 = nong
 [runtime]
+    [[root]]
+        script = true
     [[foo]]
         script = """
-sleep 5
-cylc task message "the cheese is ready"
-sleep 5
-touch typing
-                            """
+wait
+cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" "the cheese is ready"
+"""
         [[[outputs]]]
             out1 = "the cheese is ready"
 

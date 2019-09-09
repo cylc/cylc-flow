@@ -56,7 +56,7 @@ set_test_number 7
 #-------------------------------------------------------------------------------
 # run suite
 cylc run "${SUITE_NAME}"
-poll ! test -f "${SUITE_RUN_DIR}/.service/contact"
+poll_suite_running
 sleep 1
 FILE=$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)
 
@@ -85,8 +85,7 @@ log_scan "${TEST_NAME_BASE}-stop" "${FILE}" 40 1 \
     'Suite shutting down - REQUEST(NOW)' \
     'DONE'
 
-cylc stop --now --now 2>/dev/null  # incase test fails
-poll test -f "${SUITE_RUN_DIR}/.service/contact"
+cylc stop --now --now--max-polls=20 --interval=2 "${SUITE_NAME}" 2>'/dev/null'
 purge_suite "${SUITE_NAME}"
 
 exit

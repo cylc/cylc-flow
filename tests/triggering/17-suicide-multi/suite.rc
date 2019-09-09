@@ -1,6 +1,6 @@
 [cylc]
     [[events]]
-        timeout = PT1M
+        abort on stalled = True
 
 [scheduling]
     cycling mode = integer

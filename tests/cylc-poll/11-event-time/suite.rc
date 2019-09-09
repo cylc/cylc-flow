@@ -17,4 +17,4 @@ __STATUS__
 exit
 """
     [[w2]]
-        script=sleep 10; cylc poll "${CYLC_SUITE_NAME}" 'w1.1'
+        script=wait; cylc poll "${CYLC_SUITE_NAME}" 'w1.1'

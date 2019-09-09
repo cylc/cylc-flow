@@ -164,7 +164,7 @@ variable `ISODATETIMEREF` (reference time for the `isodatetime` command from
 [metomi-isodatetime](https://github.com/metomi/isodatetime/)) in task jobs to
 have the same value as `CYLC_TASK_CYCLE_POINT`.
 
-[#3286](https://github.com/cylc/cylc-flow/pull/3249) -
+[#3286](https://github.com/cylc/cylc-flow/pull/3286) -
 Removed the `cylc check-triggering` command.
 Changed the `suite.rc` schema:
 * Removed `[cylc]log resolved dependencies`
@@ -172,6 +172,11 @@ Changed the `suite.rc` schema:
 * Moved `[cylc]abort if any task fails` to
   `[cylc][[events]]abort if any task fails` so it lives with the other
   `abort if/on ...` settings.
+
+[#3351](https://github.com/cylc/cylc-flow/pull/3351) - sped up suite validation
+(which also affects responsiveness of suite controllers during suite startup,
+restarts, and reloads).  Impact of the speedup is most noticeable when dealing
+with suite configurations that contain tasks with many task outputs.
 
 ### Fixes
 

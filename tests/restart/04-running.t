@@ -32,12 +32,7 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
         script = """
             wait
             cylc stop --now "${CYLC_SUITE_NAME}"
-            while ! grep -q 'Run: (re)start=1' "${CYLC_SUITE_LOG_DIR}/log"; do
-                sleep 1
-            done
-            while [[ ! -s "${CYLC_SUITE_RUN_DIR}/.service/contact" ]]; do
-                sleep 1
-            done
+            cylc__job__poll_grep_suite_log -F 'Run: (re)start=1'
             # Should be good to send succeeded message at this point
         """
 __SUITERC__

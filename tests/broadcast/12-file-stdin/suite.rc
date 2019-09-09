@@ -8,7 +8,6 @@
         script = """
 cylc broadcast -n 't2' -F - "${CYLC_SUITE_NAME}" \
     <"${CYLC_SUITE_DEF_PATH}/broadcast.rc"
-sleep 1
 """
     [[t2]]
         script = false

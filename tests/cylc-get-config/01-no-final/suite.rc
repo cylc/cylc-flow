@@ -8,5 +8,5 @@
         T06 = foo
 [runtime]
     [[foo]]
-        script = sleep 5
+        script = true
 

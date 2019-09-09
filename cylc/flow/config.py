@@ -1590,8 +1590,7 @@ class SuiteConfig(object):
 
             # Record custom message outputs.
             for item in self.cfg['runtime'][name]['outputs'].items():
-                if item not in taskdef.outputs:
-                    taskdef.outputs.append(item)
+                taskdef.outputs.add(item)
 
     def generate_triggers(self, lexpression, left_nodes, right, seq,
                           suicide, task_triggers):

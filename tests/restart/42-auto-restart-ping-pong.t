@@ -64,8 +64,7 @@ stuck_in_the_middle() {
 }
 
 kill_suite() {
-    cylc stop "${SUITE_NAME}" --now --now 2>/dev/null
-    poll ! test -f "${SUITE_RUN_DIR}/.service/contact"
+    cylc stop --now --now --max-polls=10 --interval=2 "${SUITE_NAME}" 2>'/dev/null'
     purge_suite "${SUITE_NAME}"
 }
 
@@ -86,7 +85,7 @@ set_test_number "${NO_TESTS}"
 # run the suite
 stuck_in_the_middle
 cylc run "${SUITE_NAME}" --host="${JOKERS}"
-poll test -f "${SUITE_RUN_DIR}/.service/contact"
+poll_suite_running
 sleep 1
 
 # get the log file
@@ -102,8 +101,7 @@ for ear in $(seq 1 "${EARS}"); do
         "Attempting to restart on \"${JOKERS}\"" \
         "Suite now running on \"${JOKERS}\"" \
 
-    poll test -f "${SUITE_RUN_DIR}/.service/contact"
-    sleep 1
+    poll_suite_stopped
 
     # test the restart procedure
     FILE=$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)

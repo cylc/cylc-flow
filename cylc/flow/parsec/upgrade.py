@@ -52,6 +52,20 @@ class upgrader(object):
         self.upgrades = OrderedDict()
 
     def deprecate(self, vn, oldkeys, newkeys=None, cvtr=None, silent=False):
+        """Replace a deprecated key from a config
+        Args:
+            vn (str):
+                Version at which this deprecation occurs.
+            oldkeys (list):
+                Path within config to be changed.
+            newkeys (list):
+                New location in the config for the item in "oldkeys".
+            cvtr (cylc.flow.parsec.upgrade.Converter):
+                Converter object containing a conversion function and a
+                description of that function.
+            silent:
+                Set silent mode for this upgrade.
+        """
         if vn not in self.upgrades:
             self.upgrades[vn] = []
         if cvtr is None:
@@ -59,12 +73,21 @@ class upgrader(object):
         self.upgrades[vn].append(
             {'old': oldkeys, 'new': newkeys, 'cvt': cvtr, 'silent': silent})
 
-    def obsolete(self, vn, oldkeys, newkeys=None, silent=False):
+    def obsolete(self, vn, oldkeys, silent=False):
+        """Remove an obsolete key from a config
+        Args:
+            vn (str):
+                Version at which this obsoletion occurs.
+            oldkeys (list):
+                Path within config to be removed.
+            silent:
+                Set silent mode for this upgrade.
+        """
         if vn not in self.upgrades:
             self.upgrades[vn] = []
         cvtr = converter(lambda x: x, "DELETED (OBSOLETE)")  # identity
         self.upgrades[vn].append(
-            {'old': oldkeys, 'new': newkeys, 'cvt': cvtr, 'silent': silent})
+            {'old': oldkeys, 'new': None, 'cvt': cvtr, 'silent': silent})
 
     def get_item(self, keys):
         item = self.cfg

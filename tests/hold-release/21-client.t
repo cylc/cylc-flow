@@ -24,7 +24,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 cylc run --reference-test --hold --debug --no-detach "${SUITE_NAME}" \
     1>"${TEST_NAME_BASE}.out" 2>&1 &
 CYLC_RUN_PID=$!
-poll ! test -f "${SUITE_RUN_DIR}/.service/contact"
+poll_suite_running
 run_ok "${TEST_NAME_BASE}-client" \
     cylc client "${SUITE_NAME}" 'release_suite' -n
 run_ok "${TEST_NAME_BASE}-run" wait "${CYLC_RUN_PID}"

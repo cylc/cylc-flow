@@ -13,4 +13,4 @@
         R/01T/P1M = "dummy => monthly" # marker2
 [runtime]
     [[root]]
-        script = "sleep 1"
+        script = true

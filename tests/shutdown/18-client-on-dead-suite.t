@@ -36,9 +36,7 @@ __SUITERC__
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 cylc run --hold --no-detach "${SUITE_NAME}" 1>'cylc-run.out' 2>&1 &
 MYPID=$!
-RUND="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
-poll '!' test -d "${RUND}/.service"
-poll '!' test -f "${RUND}/.service/contact"
+poll_suite_running
 kill "${MYPID}"  # Should leave behind the contact file
 wait "${MYPID}" 1>'/dev/null' 2>&1 || true
 run_fail "${TEST_NAME_BASE}-1" cylc ping "${SUITE_NAME}"

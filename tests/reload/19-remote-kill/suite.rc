@@ -13,14 +13,9 @@
         script="""
 wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
 cylc reload "${CYLC_SUITE_NAME}"
-LOG="${CYLC_SUITE_LOG_DIR}/log"
-while ! grep -q 'Reload completed' "${LOG}"; do
-    sleep 1  # make sure reload completes
-done
+cylc__job__poll_grep_suite_log -F 'Reload completed'
 cylc kill "${CYLC_SUITE_NAME}" 'foo.1'
-while ! grep -qF '[foo.1] -job(01) killed' "${LOG}"; do
-    sleep 1  # make sure reload completes
-done
+cylc__job__poll_grep_suite_log -F '[foo.1] -job(01) killed'
 """
         [[[job]]]
             execution time limit = PT1M

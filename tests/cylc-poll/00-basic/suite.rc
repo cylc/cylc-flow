@@ -3,6 +3,11 @@
         R1 = a:start => b
 [runtime]
     [[a]]
-        script = sleep 20
+        script = """
+while ! grep -qF 'CYLC_JOB_EXIT' "${CYLC_SUITE_RUN_DIR}/log/job/1/b/NN/job.status"
+do
+    sleep 1
+done
+"""
     [[b]]
         script = cylc poll "$CYLC_SUITE_NAME" 'a.1'

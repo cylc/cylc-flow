@@ -152,6 +152,19 @@ cylc__job__main() {
 }
 
 ###############################################################################
+# Poll existence of pattern from suite log for up to a minute.
+cylc__job__poll_grep_suite_log() {
+    local TIMEOUT="$(($(date +%s) + 60))" # wait 1 minute
+    while ! grep -s "$@" "${CYLC_SUITE_LOG_DIR}/log"; do
+        sleep 1
+        if (($(date +%s) > TIMEOUT)); then
+            echo "ERROR: poll timed out: grep -s $* ${CYLC_SUITE_LOG_DIR}/log" >&2
+            exit 1
+        fi
+    done
+}
+
+###############################################################################
 # Run a function in the task job instance file, if possible.
 # Arguments:
 #   func_name: name of function without the "cylc__job__inst__" prefix

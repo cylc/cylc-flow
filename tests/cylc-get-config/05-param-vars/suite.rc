@@ -7,7 +7,7 @@
         R1 = foo<t,u>
 [runtime]
     [[root]]
-        script = sleep 1
+        script = true
         [[[environment]]]
             PARAM1 = 'something'
     [[foo<t,u>]]

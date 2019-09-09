@@ -17,4 +17,4 @@
     [[killer]]
         script = cylc kill "${CYLC_SUITE_NAME}" sleeper.1999
     [[releaser]]
-        script = sleep 5; cylc release "${CYLC_SUITE_NAME}" sleeper.1999
+        script = wait; cylc release "${CYLC_SUITE_NAME}" sleeper.1999

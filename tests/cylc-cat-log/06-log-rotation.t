@@ -24,18 +24,12 @@ init_suite "${TEST_NAME_BASE}" '/dev/null'
 LOG_DIR="$(dirname "$(cylc cat-log -m p "${SUITE_NAME}")")"
 mkdir -p "${LOG_DIR}"
 # Note: .0 .1 .2: back compatibility to old log rotation system
-# (short sleeps to get different file mtimes)
-touch "${LOG_DIR}/log.20000103T00Z"
-sleep 1
-touch  "${LOG_DIR}/log.20000102T00Z"
-sleep 1
-touch "${LOG_DIR}/log.20000101T00Z"
-sleep 1
-touch "${LOG_DIR}/log.0"
-sleep 1
-touch "${LOG_DIR}/log.1"
-sleep 1
-touch "${LOG_DIR}/log.2"
+touch -t '201001011200.00' "${LOG_DIR}/log.20000103T00Z"
+touch -t '201001011200.01' "${LOG_DIR}/log.20000102T00Z"
+touch -t '201001011200.02' "${LOG_DIR}/log.20000101T00Z"
+touch -t '201001011200.03' "${LOG_DIR}/log.0"
+touch -t '201001011200.04' "${LOG_DIR}/log.1"
+touch -t '201001011200.05' "${LOG_DIR}/log.2"
 
 # Test log rotation.
 for I in {0..5}; do

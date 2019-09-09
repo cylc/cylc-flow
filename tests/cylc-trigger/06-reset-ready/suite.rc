@@ -11,10 +11,8 @@ t2:failed => t3
     [[t1]]
         script = """
 if ((${CYLC_TASK_SUBMIT_NUMBER} >= 2)); then
-    cylc reset --state='waiting' "${CYLC_SUITE_NAME}" 't2.1'
-    sleep 5
     cylc broadcast "${CYLC_SUITE_NAME}" -s '[environment]CYLC_TEST_VAR_X=x'
-    sleep 5
+    cylc reset --state='waiting' "${CYLC_SUITE_NAME}" 't2.1'
 fi
 """
     [[t2]]

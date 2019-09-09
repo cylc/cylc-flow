@@ -3,10 +3,12 @@
 
 [cylc]
     cycle point time zone = +01
+    [[events]]
+        abort on stalled = True
 
 [scheduling]
     initial cycle point = 20140101T00
-    final cycle point   = 20140101T00 # 3 cycles
+    final cycle point   = 20140101T00
     [[special tasks]]
         exclude at start-up = foo
     [[graph]]
@@ -17,7 +19,7 @@
 
 [runtime]
     [[root]]
-        script = "sleep 1" # quick
+        script = true
     [[prep]]
         # Insert the task with a bad cycle point
         script = """
