@@ -62,17 +62,24 @@ from cylc.flow.ws_messages_pb2 import (
 
 
 ID_DELIM = '|'
+EDGES = 'edges'
+FAMILIES = 'families'
+FAMILY_PROXIES = 'family_proxies'
+GRAPH = 'graph'
+JOBS = 'jobs'
+TASKS = 'tasks'
+TASK_PROXIES = 'task_proxies'
+WORKFLOW = 'workflow'
 
 
 def task_mean_elapsed_time(tdef):
     """Calculate task mean elapsed time."""
     if tdef.elapsed_times:
         return sum(tdef.elapsed_times) / len(tdef.elapsed_times)
-    elif tdef.rtconfig['job']['execution time limit']:
-        return tdef.rtconfig['job']['execution time limit']
+    return tdef.rtconfig['job'].get('execution time limit', None)
 
 
-class WsDataMgr(object):
+class WsDataMgr:
     """Manage the workflow data store.
 
     Attributes:
@@ -150,14 +157,14 @@ class WsDataMgr(object):
         # Managed data types
         self.data = {
             self.workflow_id: {
-                'tasks': {},
-                'task_proxies': {},
-                'families': {},
-                'family_proxies': {},
-                'jobs': {},
-                'edges': {},
-                'graph': PbEdges(),
-                'workflow': PbWorkflow(),
+                TASKS: {},
+                TASK_PROXIES: {},
+                FAMILIES: {},
+                FAMILY_PROXIES: {},
+                JOBS: {},
+                EDGES: {},
+                GRAPH: PbEdges(),
+                WORKFLOW: PbWorkflow(),
             }
         }
 
@@ -177,7 +184,7 @@ class WsDataMgr(object):
             id=self.workflow_id,
         )
 
-        graph = self.data[self.workflow_id]['graph']
+        graph = self.data[self.workflow_id][GRAPH]
         graph.leaves[:] = config.leaves
         graph.feet[:] = config.feet
         for key, info in config.suite_polling_tasks.items():
@@ -234,7 +241,7 @@ class WsDataMgr(object):
                     family.meta.user_defined.append(f'{key}={val}')
             family.parents.extend(
                 [f'{self.workflow_id}{ID_DELIM}{p_name}'
-                    for p_name in parents[name]])
+                 for p_name in parents[name]])
             families[f_id] = family
 
         for name, parent_list in parents.items():
@@ -285,9 +292,9 @@ class WsDataMgr(object):
         self.ancestors = ancestors
         self.descendants = descendants
         self.parents = parents
-        self.data[self.workflow_id]['tasks'] = tasks
-        self.data[self.workflow_id]['families'] = families
-        self.data[self.workflow_id]['workflow'] = workflow
+        self.data[self.workflow_id][TASKS] = tasks
+        self.data[self.workflow_id][FAMILIES] = families
+        self.data[self.workflow_id][WORKFLOW] = workflow
 
     def generate_ghost_task(self, task_id):
         """Create task-point element populated with static data.
@@ -309,7 +316,7 @@ class WsDataMgr(object):
         t_id = f'{self.workflow_id}{ID_DELIM}{name}'
         tp_id = f'{self.workflow_id}{ID_DELIM}{point_string}{ID_DELIM}{name}'
         tp_check = f'{tp_id}@{update_time}'
-        taskdef = self.data[self.workflow_id]['tasks'][t_id]
+        taskdef = self.data[self.workflow_id][TASKS][t_id]
         tproxy = PbTaskProxy(
             stamp=tp_check,
             id=tp_id,
@@ -342,7 +349,7 @@ class WsDataMgr(object):
 
         """
         update_time = time()
-        families = self.data[self.workflow_id]['families']
+        families = self.data[self.workflow_id][FAMILIES]
         if family_proxies is None:
             family_proxies = {}
         fam_proxy_ids = {}
@@ -389,14 +396,14 @@ class WsDataMgr(object):
                     fproxy.parents.extend(
                         [f'{self.workflow_id}{ID_DELIM}'
                          f'{point_string}{ID_DELIM}{p_name}'
-                            for p_name in self.parents[fam]])
+                         for p_name in self.parents[fam]])
                     p1_name = self.parents[fam][0]
                     fproxy.first_parent = (
                         f'{self.workflow_id}{ID_DELIM}'
                         f'{point_string}{ID_DELIM}{p1_name}')
                 family_proxies[fp_id] = fproxy
                 fam_proxy_ids.setdefault(f_id, []).append(fp_id)
-        self.data[self.workflow_id]['family_proxies'] = family_proxies
+        self.data[self.workflow_id][FAMILY_PROXIES] = family_proxies
         for f_id, fp_ids in fam_proxy_ids.items():
             families[f_id].proxies[:] = fp_ids
 
@@ -421,7 +428,7 @@ class WsDataMgr(object):
         if not self.pool_points:
             return
         config = self.schd.config
-        tasks = self.data[self.workflow_id]['tasks']
+        tasks = self.data[self.workflow_id][TASKS]
         graph = PbEdges()
         if edges is None:
             edges = {}
@@ -513,9 +520,9 @@ class WsDataMgr(object):
             self.generate_ghost_families(family_proxies, new_points)
 
         # Replace the originals (atomic update, for access from other threads).
-        self.data[self.workflow_id]['task_proxies'] = task_proxies
-        self.data[self.workflow_id]['edges'] = edges
-        self.data[self.workflow_id]['graph'] = graph
+        self.data[self.workflow_id][TASK_PROXIES] = task_proxies
+        self.data[self.workflow_id][EDGES] = edges
+        self.data[self.workflow_id][GRAPH] = graph
 
     def prune_points(self, point_strings):
         """Remove old nodes and edges by cycle point.
@@ -530,35 +537,35 @@ class WsDataMgr(object):
             return
         node_ids = set()
         tasks_proxies = {}
-        for tp_id, tproxy in list(flow_data['task_proxies'].items()):
+        for tp_id, tproxy in list(flow_data[TASK_PROXIES].items()):
             if tproxy.cycle_point in point_strings:
                 node_ids.add(tp_id)
                 tasks_proxies.setdefault(tproxy.task, set()).add(tp_id)
-                del flow_data['task_proxies'][tp_id]
+                del flow_data[TASK_PROXIES][tp_id]
         for t_id, tp_ids in tasks_proxies.items():
-            flow_data['tasks'][t_id].proxies[:] = (
-                set(flow_data['tasks'][t_id].proxies).difference(tp_ids))
+            flow_data[TASKS][t_id].proxies[:] = (
+                set(flow_data[TASKS][t_id].proxies).difference(tp_ids))
 
         for t_id in set(self.schd.job_pool.task_jobs).difference(
-                set(flow_data['task_proxies'])):
+                set(flow_data[TASK_PROXIES])):
             self.schd.job_pool.remove_task_jobs(t_id)
 
         families_proxies = {}
-        for fp_id, fproxy in list(flow_data['family_proxies'].items()):
+        for fp_id, fproxy in list(flow_data[FAMILY_PROXIES].items()):
             if fproxy.cycle_point in point_strings:
                 families_proxies.setdefault(fproxy.family, set()).add(fp_id)
-                del flow_data['family_proxies'][fp_id]
+                del flow_data[FAMILY_PROXIES][fp_id]
         for f_id, fp_ids in families_proxies.items():
-            flow_data['families'][f_id].proxies[:] = set(
-                flow_data['families'][f_id].proxies).difference(fp_ids)
+            flow_data[FAMILIES][f_id].proxies[:] = set(
+                flow_data[FAMILIES][f_id].proxies).difference(fp_ids)
 
         g_eids = set()
-        for e_id, edge in list(flow_data['edges'].items()):
+        for e_id, edge in list(flow_data[EDGES].items()):
             if edge.source in node_ids or edge.target in node_ids:
-                del flow_data['edges'][e_id]
+                del flow_data[EDGES][e_id]
                 continue
             g_eids.add(edge.id)
-        flow_data['graph'].edges[:] = g_eids
+        flow_data[GRAPH].edges[:] = g_eids
 
         for point_string in point_strings:
             try:
@@ -578,7 +585,7 @@ class WsDataMgr(object):
         if reload:
             self.__init__(self.schd)
         # Set jobs ref
-        self.data[self.workflow_id]['jobs'] = self.schd.job_pool.pool
+        self.data[self.workflow_id][JOBS] = self.schd.job_pool.pool
         # Static elements
         self.generate_definition_elements()
         self.increment_graph_elements()
@@ -608,8 +615,8 @@ class WsDataMgr(object):
                 # All family & task cycle instances are generated and
                 # populated with static data as 'ghost nodes'.
                 self.generate_graph_elements(
-                    flow_data['edges'], flow_data['task_proxies'],
-                    flow_data['family_proxies'], point, point)
+                    flow_data[EDGES], flow_data[TASK_PROXIES],
+                    flow_data[FAMILY_PROXIES], point, point)
             self.min_point = min(self.pool_points)
             self.max_point = max(self.pool_points)
         # Prune data store by cycle point where said point is:
@@ -649,8 +656,8 @@ class WsDataMgr(object):
         """
         if not updated_tasks:
             return
-        tasks = self.data[self.workflow_id]['tasks']
-        task_proxies = self.data[self.workflow_id]['task_proxies']
+        tasks = self.data[self.workflow_id][TASKS]
+        task_proxies = self.data[self.workflow_id][TASK_PROXIES]
         update_time = time()
         task_defs = {}
 
@@ -716,7 +723,7 @@ class WsDataMgr(object):
                 valid cycle point strings.
 
         """
-        family_proxies = self.data[self.workflow_id]['family_proxies']
+        family_proxies = self.data[self.workflow_id][FAMILY_PROXIES]
         if cycle_points is None:
             cycle_points = self.cycle_states.keys()
         if not cycle_points:
@@ -766,13 +773,13 @@ class WsDataMgr(object):
         update_time = time()
         flow_data = self.data[self.workflow_id]
         workflow = PbWorkflow()
-        workflow.CopyFrom(flow_data['workflow'])
+        workflow.CopyFrom(flow_data[WORKFLOW])
         workflow.stamp = f'{self.workflow_id}@{update_time}'
         workflow.last_updated = update_time
 
         counter = Counter([
             t.state
-            for t in flow_data['task_proxies'].values()
+            for t in flow_data[TASK_PROXIES].values()
             if t.state])
         workflow.states[:] = counter.keys()
         workflow.ClearField('state_totals')
@@ -781,7 +788,7 @@ class WsDataMgr(object):
 
         workflow.is_held_total = len([
             t.is_held
-            for t in flow_data['task_proxies'].values()
+            for t in flow_data[TASK_PROXIES].values()
             if t.is_held])
 
         workflow.reloading = self.schd.pool.do_reload
@@ -802,19 +809,19 @@ class WsDataMgr(object):
                 ('oldest_cycle_point', self.min_point),
                 ('newest_cycle_point', self.max_point),
                 ('newest_runahead_cycle_point',
-                    self.schd.pool.get_max_point_runahead())):
+                 self.schd.pool.get_max_point_runahead())):
             if value:
                 setattr(workflow, key, str(value))
             else:
                 setattr(workflow, key, '')
 
-        workflow.task_proxies[:] = flow_data['task_proxies'].keys()
-        workflow.family_proxies[:] = flow_data['family_proxies'].keys()
-        workflow.ClearField('edges')
-        workflow.edges.CopyFrom(flow_data['graph'])
+        workflow.task_proxies[:] = flow_data[TASK_PROXIES].keys()
+        workflow.family_proxies[:] = flow_data[FAMILY_PROXIES].keys()
+        workflow.ClearField(EDGES)
+        workflow.edges.CopyFrom(flow_data[GRAPH])
 
         # Replace the original (atomic update, for access from other threads).
-        flow_data['workflow'] = workflow
+        flow_data[WORKFLOW] = workflow
 
     def update_dynamic_elements(self, updated_nodes=None):
         """Update data elements containing dynamic/live fields."""
@@ -825,7 +832,7 @@ class WsDataMgr(object):
             return
         self.update_task_proxies(updated_nodes)
         self.update_family_proxies(set(str(t.point) for t in updated_nodes))
-        self.data[self.workflow_id]['workflow'] = (
+        self.data[self.workflow_id][WORKFLOW] = (
             self.update_workflow_statuses())
 
     # Message collation and dissemination methods:
@@ -840,12 +847,12 @@ class WsDataMgr(object):
         data = self.data[self.workflow_id]
 
         workflow_msg = PbEntireWorkflow()
-        workflow_msg.workflow.CopyFrom(data['workflow'])
-        workflow_msg.tasks.extend(data['tasks'].values())
-        workflow_msg.task_proxies.extend(data['task_proxies'].values())
-        workflow_msg.jobs.extend(data['jobs'].values())
-        workflow_msg.families.extend(data['families'].values())
-        workflow_msg.family_proxies.extend(data['family_proxies'].values())
-        workflow_msg.edges.extend(data['edges'].values())
+        workflow_msg.workflow.CopyFrom(data[WORKFLOW])
+        workflow_msg.tasks.extend(data[TASKS].values())
+        workflow_msg.task_proxies.extend(data[TASK_PROXIES].values())
+        workflow_msg.jobs.extend(data[JOBS].values())
+        workflow_msg.families.extend(data[FAMILIES].values())
+        workflow_msg.family_proxies.extend(data[FAMILY_PROXIES].values())
+        workflow_msg.edges.extend(data[EDGES].values())
 
         return workflow_msg

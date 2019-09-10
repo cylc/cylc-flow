@@ -24,16 +24,22 @@ from graphene.types.generic import GenericScalar
 from graphene.utils.str_converters import to_snake_case
 
 from cylc.flow.task_state import TASK_STATUSES_ORDERED
-from cylc.flow.ws_data_mgr import ID_DELIM
+from cylc.flow.ws_data_mgr import (
+    ID_DELIM, FAMILIES, FAMILY_PROXIES,
+    JOBS, TASKS, TASK_PROXIES
+)
+
+
+PROXY_NODES = 'proxy_nodes'
 
 
 NODE_MAP = {
-    'Task': 'tasks',
-    'TaskProxy': 'task_proxies',
-    'Family': 'families',
-    'FamilyProxy': 'family_proxies',
-    'Job': 'jobs',
-    'Node': 'proxy_nodes',
+    'Task': TASKS,
+    'TaskProxy': TASK_PROXIES,
+    'Family': FAMILIES,
+    'FamilyProxy': FAMILY_PROXIES,
+    'Job': JOBS,
+    'Node': PROXY_NODES,
 }
 
 CYCLING_TYPES = [
