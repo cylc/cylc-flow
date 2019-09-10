@@ -17,6 +17,7 @@
 
 from functools import partial
 import getpass
+import os
 from queue import Queue
 from textwrap import dedent
 from time import sleep
@@ -30,7 +31,9 @@ from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import CylcError
 from cylc.flow.network.authorisation import Priv, authorise
-from cylc.flow.network.authentication import encrypt, decrypt, get_secret
+from cylc.flow.network.authentication import (
+    generate_key_store, key_store_exists, AUTH_KEY_STORE_DIR,
+    PRIVATE_KEY_DIR_NAME, PUBLIC_KEY_DIR_NAME, STORE_DIR_NAME)
 from cylc.flow.network.resolvers import Resolvers
 from cylc.flow.network.schema import schema
 from cylc.flow.suite_status import (
@@ -50,16 +53,6 @@ class ZMQServer(object):
 
     This class contains the logic for the ZMQ message interface and client -
     server communication.
-
-    NOTE: Security to be provided via the encode / decode interface.
-
-    Args:
-        encode_method (function): Translates outgoing messages into strings
-            to be sent over the network. ``encode_method(json, secret) -> str``
-        decode_method (function): Translates incoming message strings into
-            digestible data. ``encode_method(str, secret) -> dict``
-        secret_method (function): Return the secret for use with the
-            encode/decode methods. Called for each encode / decode.
 
     Usage:
         * Define endpoints using the ``expose`` decorator.
@@ -83,16 +76,13 @@ class ZMQServer(object):
 
     """
 
-    def __init__(self, encode_method, decode_method, secret_method):
+    def __init__(self):
         self.port = None
         self.context = zmq.Context()
         self.socket = None
         self.endpoints = None
         self.thread = None
         self.queue = None
-        self.encode = encode_method  # SADIE TAG
-        self.decode = decode_method
-        self.secret = secret_method
 
     def start(self, min_port, max_port):
         """Start the server running.
@@ -103,10 +93,29 @@ class ZMQServer(object):
             min_port (int): minimum socket port number
             max_port (int): maximum socket port number
         """
+        # create & configure an authenticator for the ZMQ context.
+        self.curve_auth = ThreadAuthenticator(self.context)
+        self.curve_auth.start()  # start the authentication thread
+        self.curve_auth.allow(NULL)
+        self.curve_auth.configure_curve(
+            domain='*', location=zmq.auth.CURVE_ALLOW_ANY)
+
         # create socket
         self.socket = self.context.socket(zmq.REP)
         self.socket.RCVTIMEO = int(self.RECV_TIMEOUT) * 1000
 
+        # create & register server keys for authentication
+        generate_key_store(AUTH_KEY_STORE_DIR, "server")
+        if not key_store_exists:
+            raise RuntimeError("Server keys not found.")
+        server_public_key, server_private_key = zmq.auth.load_certificate(
+            os.path.join(server_keystore, STORE_DIR_NAME,
+                         PRIVATE_KEY_DIR_NAME, "server.key_secret"))
+        self.socket.curve_publickey = server_public_key
+        self.socket.curve_secretkey = server_private_key
+        self.socket.curve_server = True
+
+        # bind server to port
         try:
             if min_port == max_port:
                 self.port = min_port
@@ -133,6 +142,7 @@ class ZMQServer(object):
         self.thread.join()  # wait for the listener to return
         self.socket.close()
         LOG.debug('...stopped')
+        self.curve_auth.stop()  # stop the authentication thread
 
     def register_endpoints(self):
         """Register all exposed methods."""
@@ -162,23 +172,14 @@ class ZMQServer(object):
                 LOG.exception(f'unexpected error: {str(exc)}')
                 continue
 
-            # attempt to decode the message, authenticating the user in the
-            # process
-            try:
-                message = self.decode(msg, self.secret())
-            except Exception as exc:  # purposefully catch generic exception
-                # failed to decode message, possibly resulting from failed
-                # authentication
-                LOG.exception(f'failed to decode message: {str(exc)}')
+            # success case - serve the request
+            res = self._receiver(msg)
+            if msg['command'] in PB_METHOD_MAP:
+                response = res['data']
             else:
-                # success case - serve the request
-                res = self._receiver(message)
-                if message['command'] in PB_METHOD_MAP:
-                    response = res['data']
-                else:
-                    response = self.encode(res, self.secret()).encode()
-                # send back the string to bytes response
-                self.socket.send(response)
+                response = res.encode()
+            # send back the string to bytes response
+            self.socket.send(response)
 
             sleep(0)  # yield control to other threads
 
@@ -258,12 +259,7 @@ class SuiteRuntimeServer(ZMQServer):
     API = 4  # cylc API version
 
     def __init__(self, schd):
-        ZMQServer.__init__(
-            self,
-            encrypt,
-            decrypt,
-            partial(get_secret, schd.suite)
-        )
+        ZMQServer.__init__(self)
         self.schd = schd
         self.public_priv = None  # update in get_public_priv()
         self.resolvers = Resolvers(

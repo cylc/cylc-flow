@@ -16,75 +16,51 @@
 """Network authentication layer."""
 
 import getpass
+import os
+import shutil
 
-from cylc.flow.suite_srv_files_mgr import SuiteSrvFilesManager
-
-
-def get_secret(suite):
-    """Return the secret used for encrypting messages.
-
-    Currently this is the suite passphrase. This means we are sending
-    many messages all encrypted with the same hash which isn't great.
-
-    TODO: Upgrade the secret to add foreword security.
-
-    """
-    return get_auth_item(
-        SuiteFiles.Service.PASSPHRASE,
-        suite, content=True
-    )
+import zmq.auth
 
 
-def decrypt(message, secret):
-    """Make a message readable.
+# Names for directories to hold suite keys, in structure under '.service':
+STORE_DIR_NAME = "auth_keys"
+PUBLIC_KEY_DIR_NAME = "public_key"
+PRIVATE_KEY_DIR_NAME = "private_key"
 
-    Args:
-        message (str): The message to decode - str.
-        secret (str): The decrypt key.
-
-    Return:
-        dict - The received message plus a `user` field.
-
-    """
-    # TODO
-    return {"message":"PASS", "user": "ANON"}
+# Directory to hold sub-directory for authentication keys (good choice?):
+AUTH_KEY_STORE_DIR = os.path.join(os.path.expanduser("~"), ".cylc")
 
 
-def encrypt(message, secret):
-    """Make a message unreadable.
+def generate_key_store(store_parent_dir, keys_tag):
+    """Generate two sub-directories each containing a file with a CURVE key."""
+    # Define the directory structure to store the CURVE keys in:
+    store_dir = os.path.join(store_parent_dir, STORE_DIR_NAME)
+    public_key_location = os.path.join(store_dir, PUBLIC_KEY_DIR_NAME)
+    private_key_location = os.path.join(store_dir, PRIVATE_KEY_DIR_NAME)
 
-    Args:
-        message (dict): The message to send, must be serializable .
-        secret (str): The encrypt key.
+    # Create, or wipe, that directory structure:
+    for directory in [store_dir, public_key_location, private_key_location]:
+        if os.path.exists(directory):
+            shutil.rmtree(directory)
+        os.mkdir(directory)
 
-    Return:
-        str
+    # Make a new public-private CURVE key pair:
+    private_key_file, public_key_file = zmq.auth.create_certificates(
+      store_dir, keys_tag)
 
-    """
-    # TODO
-    return "PASS"
+    # Move the pair of keys to the appropriate directories:
+    for key_file in os.listdir(store_dir):
+        if key_file.endswith(".key"):
+            shutil.move(os.path.join(store_dir, key_file),
+                        os.path.join(public_key_location, '.'))
+        elif key_file.endswith(".key_secret"):
+            shutil.move(os.path.join(store_dir, key_file),
+                        os.path.join(private_key_location, '.'))
 
 
-# Note on TODOs: at this state, can run a suite fine, but the jobs will hang in
-# submitted state etc. & will give the error message (see job.err) of:
-#
-#  "ClientTimeout: Timeout waiting for server response."
-#
-# & the same error message is returned on attempt to 'cylc stop <suite>'.
-#
-# The suite log will show, e.g:
-#
-# ...
-#2019-09-10T22:20:16+01:00 INFO - [hello.20190910T2320+01] -triggered off []
-# Exception in thread Thread-1:
-# Traceback (most recent call last):
-#   File "/home/h06/sbarth/miniconda3/lib/python3.7/threading.py", line 917, in _bootstrap_inner
-#    self.run()
-#  File "/home/h06/sbarth/miniconda3/lib/python3.7/threading.py", line 865, in run
-#    self._target(*self._args, **self._kwargs)
-#  File "/net/home/h06/sbarth/cylc.git/cylc/flow/network/server.py", line 177, in _listener
-#    if message['command'] in PB_METHOD_MAP:
-#KeyError: 'command'
-# [0m
-# [0m2019-09-10T22:20:18+01:00 INFO - [hello.20190910T2320+01] status=ready: ...
-#
+def key_store_exists(store_dir_path):
+    """ Check a valid key store directory exists at the given location. """
+    public_key_location = os.path.join(store_dir_path, PUBLIC_KEY_DIR_NAME)
+    private_key_location = os.path.join(store_dir_path, PRIVATE_KEY_DIR_NAME)
+    return (os.path.exists(public_key_location) and
+            os.path.exists(private_key_location))

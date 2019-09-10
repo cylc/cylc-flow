@@ -23,6 +23,7 @@ from functools import partial
 from typing import Union
 
 import zmq
+from zmq.auth.thread import ThreadAuthenticator
 import zmq.asyncio
 
 from shutil import which
@@ -35,7 +36,9 @@ from cylc.flow.exceptions import (
     SuiteServiceFileError
 )
 from cylc.flow.hostuserutil import get_fqdn_by_host
-from cylc.flow.network.authentication import encrypt, decrypt, get_secret
+from cylc.flow.network.authentication import (
+    generate_key_store, key_store_exists, AUTH_KEY_STORE_DIR,
+    PRIVATE_KEY_DIR_NAME, PUBLIC_KEY_DIR_NAME, STORE_DIR_NAME)
 from cylc.flow.network.server import PB_METHOD_MAP
 from cylc.flow.suite_files import (
     ContactFileFields,
@@ -53,22 +56,13 @@ class ZMQClient(object):
     This class contains the logic for the ZMQ message interface and client -
     server communication.
 
-    NOTE: Security to be provided via the encode / decode interface.
-
     Args:
         host (str):
             The host to connect to.
         port (int):
-            The port on the aforementioned host to connect to.
-        encode_method (function):
-            Translates outgoing messages into strings to be sent over the
-            network. ``encode_method(json, secret) -> str``
-        decode_method (function):
-            Translates incoming message strings into digestible data.
-            ``encode_method(str, secret) -> dict``
-        secret_method (function):
-            Return the secret for use with the encode/decode methods.
-            Called for each encode / decode.
+            The port on the aforementioned host to connect to
+        client_keystore (path):
+            SADIE path to the location of directory holding the auth keys.
         timeout (float):
             Set the default timeout in seconds. The default is
             ``ZMQClient.DEFAULT_TIMEOUT``.
@@ -92,12 +86,8 @@ class ZMQClient(object):
 
     DEFAULT_TIMEOUT = 5.  # 5 seconds
 
-    def __init__(self, host, port, encode_method, decode_method, secret_method,
+    def __init__(self, host, port, client_keystore=None,
                  timeout=None, timeout_handler=None, header=None):
-        # SADIE TAG
-        self.encode = encode_method
-        self.decode = decode_method
-        self.secret = secret_method
         if timeout is None:
             timeout = self.DEFAULT_TIMEOUT
         else:
@@ -107,7 +97,27 @@ class ZMQClient(object):
 
         # open the ZMQ socket
         self.socket = CONTEXT.socket(zmq.REQ)
+
+        # create client keys for authentication:
+        generate_key_store(client_keystore, "client")
+        if not key_store_exists:
+            raise ClientError("Keys not found.")
+
+        # register client keys for authentication.
+        client_public_key, client_private_key = zmq.auth.load_certificate(
+            os.path.join(client_keystore, STORE_DIR_NAME, PRIVATE_KEY_DIR_NAME,
+                         "client.key_secret"))
+        self.socket.curve_publickey = client_public_key
+        self.socket.curve_secretkey = client_private_key
+
+        # in the elliptic curve security model, the client needs to know the
+        # server's (permanent) public key to initiate a connection with it,
+        # so we load that and ask curve to validate it to allow the connection:
+        client.curve_serverkey = zmq.auth.load_certificate(
+            os.path.join(AUTH_KEY_STORE_DIR, STORE_DIR_NAME,
+                         PUBLIC_KEY_DIR_NAME, "server.key"))[0]
         self.socket.connect('tcp://%s:%d' % (host, port))
+
         # if there is no server don't keep the client hanging around
         self.socket.setsockopt(zmq.LINGER, int(self.DEFAULT_TIMEOUT))
 
@@ -132,19 +142,11 @@ class ZMQClient(object):
         if not args:
             args = {}
 
-        # get secret for this request
-        # assumes secret won't change during the request
-        try:
-            secret = self.secret()
-        except SuiteServiceFileError:
-            raise ClientError('could not read suite passphrase')
-
         # send message
         msg = {'command': command, 'args': args}
         msg.update(self.header)
         LOG.debug('zmq:send %s' % msg)
-        message = encrypt(msg, secret)
-        self.socket.send_string(message)
+        self.socket.send_string(msg)
 
         # receive response
         if self.poller.poll(timeout):
@@ -157,11 +159,7 @@ class ZMQClient(object):
         if msg['command'] in PB_METHOD_MAP:
             response = {'data': res}
         else:
-            try:
-                response = decrypt(res.decode(), secret)
-            except:
-                raise ClientError(
-                    'Could not decrypt response. Has the passphrase changed?')
+            response = res.decode()
         LOG.debug('zmq:recv %s' % response)
 
         try:
@@ -218,6 +216,7 @@ class SuiteRuntimeClient(ZMQClient):
             owner: str = None,
             host: str = None,
             port: Union[int, str] = None,
+            client_keystore: str = None,
             timeout: Union[float, str] = None
     ):
         """Initiate a client to the suite runtime API.
@@ -250,13 +249,14 @@ class SuiteRuntimeClient(ZMQClient):
             port = int(port)
         if not (host and port):
             host, port = self.get_location(suite, owner, host)
-        # SADIE TAG
+
+        # We will store the auth keys for a suite in '.service/auth_keys':
+        suite_srv_dir = SuiteSrvFilesManager().get_suite_srv_dir(suite, owner)
+
         super().__init__(
             host=host,
             port=port,
-            encode_method=encrypt,
-            decode_method=decrypt,
-            secret_method=partial(get_secret, suite),
+            client_keystore=suite_srv_dir,
             timeout=timeout,
             header=self.get_header(),
             timeout_handler=partial(self._timeout_handler, suite, host, port)
