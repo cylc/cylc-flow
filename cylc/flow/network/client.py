@@ -22,7 +22,6 @@ import sys
 from functools import partial
 from typing import Union
 
-import jose.exceptions
 import zmq
 import zmq.asyncio
 
@@ -95,6 +94,7 @@ class ZMQClient(object):
 
     def __init__(self, host, port, encode_method, decode_method, secret_method,
                  timeout=None, timeout_handler=None, header=None):
+        # SADIE TAG
         self.encode = encode_method
         self.decode = decode_method
         self.secret = secret_method
@@ -159,7 +159,7 @@ class ZMQClient(object):
         else:
             try:
                 response = decrypt(res.decode(), secret)
-            except jose.exceptions.JWTError:
+            except:
                 raise ClientError(
                     'Could not decrypt response. Has the passphrase changed?')
         LOG.debug('zmq:recv %s' % response)
@@ -250,6 +250,7 @@ class SuiteRuntimeClient(ZMQClient):
             port = int(port)
         if not (host and port):
             host, port = self.get_location(suite, owner, host)
+        # SADIE TAG
         super().__init__(
             host=host,
             port=port,

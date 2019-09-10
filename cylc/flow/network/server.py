@@ -90,7 +90,7 @@ class ZMQServer(object):
         self.endpoints = None
         self.thread = None
         self.queue = None
-        self.encode = encode_method
+        self.encode = encode_method  # SADIE TAG
         self.decode = decode_method
         self.secret = secret_method
 
