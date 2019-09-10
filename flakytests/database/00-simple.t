@@ -34,7 +34,12 @@ DB_FILE="$(cylc get-global-config '--print-run-dir')/${SUITE_NAME}/log/db"
 NAME='schema.out'
 ORIG="${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}"
 SORTED_ORIG="sorted-${NAME}"
-sqlite3 "${DB_FILE}" ".schema" | env LANG='C' sort >"${NAME}"
+# The sqlite schema output depends on how the commands are executed. The .schema output will be
+# exactly what was typed. This test should test whether the tables and columns exist. Not whether
+# there is an extra newline or space before a column name. So we remove newlines, remove extra
+# spaces, then add a newline after each semi-colon, which should give us a more stable test, using
+# similar output, regardless of how the SQL command was formatted by the user.
+sqlite3 "${DB_FILE}" ".schema" | tr -d '\n' | awk '$1=$1' | sed 's/;/;\n/g' | awk '$1=$1' | env LANG='C' sort >"${NAME}"
 env LANG='C' sort "${ORIG}" > "${SORTED_ORIG}"
 cmp_ok "${SORTED_ORIG}" "${NAME}"
 

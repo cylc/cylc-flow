@@ -57,6 +57,7 @@ from cylc.flow.task_outputs import (
     TASK_OUTPUT_FAILED, TASK_OUTPUT_SUBMIT_FAILED, TASK_OUTPUT_EXPIRED)
 from cylc.flow.wallclock import (
     get_current_time_string, get_seconds_as_interval_string as intvl_as_str)
+from cylc.flow.suite_db_mgr import SuiteDatabaseManager
 
 CustomTaskEventHandlerContext = namedtuple(
     "CustomTaskEventHandlerContext",
@@ -133,7 +134,7 @@ class TaskEventsManager():
     }
     NON_UNIQUE_EVENTS = ('warning', 'critical', 'custom')
 
-    def __init__(self, suite, proc_pool, suite_db_mgr,
+    def __init__(self, suite, proc_pool, suite_db_mgr: SuiteDatabaseManager,
                  broadcast_mgr, job_pool):
         self.suite = suite
         self.suite_url = None

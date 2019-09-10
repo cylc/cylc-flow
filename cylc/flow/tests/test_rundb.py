@@ -13,18 +13,15 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 import contextlib
 import os
 import sqlite3
 import unittest
-
 from tempfile import mktemp
 from unittest import mock
-
-from cylc.flow.rundb import CylcSuiteDAO
 from cylc.flow.tests.util import set_up_globalrc
 
+from cylc.flow.rundb import *
 
 GLOBALRC = """
 [job platforms]
@@ -53,9 +50,14 @@ GLOBALRC = """
 class TestRunDb(unittest.TestCase):
 
     def setUp(self):
-        self.dao = CylcSuiteDAO(':memory:')
         self.mocked_connection = mock.Mock()
-        self.dao.connect = mock.MagicMock(return_value=self.mocked_connection)
+        self.mocked_connection_cmgr = mock.Mock()
+        self.mocked_connection_cmgr.__enter__ = mock.Mock(return_value=(
+            self.mocked_connection))
+        self.mocked_connection_cmgr.__exit__ = mock.Mock(return_value=None)
+        self.dao = CylcSuiteDAO('')
+        self.dao.connect = mock.Mock()
+        self.dao.connect.return_value = self.mocked_connection_cmgr
 
     get_select_task_job = [
         ["cycle", "name", "NN"],
@@ -65,17 +67,31 @@ class TestRunDb(unittest.TestCase):
 
     def test_select_task_job(self):
         """Test the rundb CylcSuiteDAO select_task_job method"""
-        columns = self.dao.tables[CylcSuiteDAO.TABLE_TASK_JOBS].columns[3:]
+        columns = [
+            task_jobs.c.is_manual_submit,
+            task_jobs.c.try_num,
+            task_jobs.c.time_submit,
+            task_jobs.c.time_submit_exit,
+            task_jobs.c.submit_status,
+            task_jobs.c.time_run,
+            task_jobs.c.time_run_exit,
+            task_jobs.c.run_signal,
+            task_jobs.c.run_status,
+            task_jobs.c.user_at_host,
+            task_jobs.c.batch_sys_name,
+            task_jobs.c.batch_sys_job_id
+        ]
         expected_values = [[2 for _ in columns]]
 
-        self.mocked_connection.execute.return_value = expected_values
+        mocked_execute = mock.Mock()
+        mocked_execute.fetchall.return_value = expected_values
+        self.mocked_connection.execute.return_value = mocked_execute
 
         # parameterized test
         for cycle, name, submit_num in self.get_select_task_job:
-            returned_values = self.dao.select_task_job(cycle, name, submit_num)
-
+            values = self.dao.select_task_job(cycle, name, submit_num)
             for column in columns:
-                self.assertEqual(2, returned_values[column.name])
+                self.assertEqual(2, values[column.name])
 
     def test_select_task_job_sqlite_error(self):
         """Test that when the rundb CylcSuiteDAO select_task_job method raises
@@ -119,12 +135,11 @@ def test_remove_columns():
         conn.commit()
         conn.close()
 
-        dao = CylcSuiteDAO(temp_db)
-        dao.remove_columns('foo', ['bar', 'baz'])
-
-        conn = dao.connect()
-        data = [row for row in conn.execute(rf'SELECT * from foo')]
-        assert data == [('PUB',)]
+        dao = CylcSuiteDAO(temp_db, is_public=True)
+        with dao.connect() as conn2:
+            dao.remove_columns('foo', ['bar', 'baz'])
+            data = [row for row in conn2.execute(rf'SELECT * from foo')]
+            assert data == [('PUB',)]
 
 
 def test_upgrade_hold_swap():
@@ -145,8 +160,8 @@ def test_upgrade_hold_swap():
         ('pub', '1', 'waiting', 1)
     ]
     tables = [
-        CylcSuiteDAO.TABLE_TASK_POOL,
-        CylcSuiteDAO.TABLE_TASK_POOL_CHECKPOINTS
+        task_pool,
+        task_pool_checkpoints
     ]
 
     with create_temp_db() as (temp_db, conn):
@@ -177,20 +192,20 @@ def test_upgrade_hold_swap():
 
         # open database as cylc dao
         dao = CylcSuiteDAO(temp_db)
-        conn = dao.connect()
-
-        # check the initial data was correctly inserted
-        for table in tables:
-            dump = [x for x in conn.execute(rf'SELECT * FROM {table}')]
-            assert dump == initial_data
+        with dao.connect() as conn:
+            # check the initial data was correctly inserted
+            for table in tables:
+                dump = [x for x in conn.execute(rf'SELECT * FROM {table}')]
+                assert dump == initial_data
 
         # upgrade
         assert dao.upgrade_is_held()
 
-        # check the data was correctly upgraded
-        for table in tables:
-            dump = [x for x in conn.execute(rf'SELECT * FROM task_pool')]
-            assert dump == expected_data
+        with dao.connect() as conn:
+            # check the data was correctly upgraded
+            for _ in tables:
+                dump = [x for x in conn.execute(rf'SELECT * FROM task_pool')]
+                assert dump == expected_data
 
         # make sure the upgrade is skipped on future runs
         assert not dao.upgrade_is_held()
@@ -221,7 +236,7 @@ def test_upgrade_to_platforms(set_up_globalrc):
     with create_temp_db() as (temp_db, conn):
         conn.execute(
             rf'''
-                CREATE TABLE {CylcSuiteDAO.TABLE_TASK_JOBS} (
+                CREATE TABLE {task_jobs.name} (
                     name varchar(255),
                     cycle varchar(255),
                     user_at_host varchar(255),
@@ -231,7 +246,7 @@ def test_upgrade_to_platforms(set_up_globalrc):
         )
         conn.executemany(
             rf'''
-                INSERT INTO {CylcSuiteDAO.TABLE_TASK_JOBS}
+                INSERT INTO {task_jobs.name}
                 VALUES (?,?,?,?)
             ''',
             initial_data
@@ -242,29 +257,29 @@ def test_upgrade_to_platforms(set_up_globalrc):
 
         # open database as cylc dao
         dao = CylcSuiteDAO(temp_db)
-        conn = dao.connect()
-
-        # check the initial data was correctly inserted
-        dump = [
-            x for x in conn.execute(
-                rf'SELECT * FROM {CylcSuiteDAO.TABLE_TASK_JOBS}'
-            )
-        ]
-        assert dump == initial_data
+        with dao.connect() as conn:
+            # check the initial data was correctly inserted
+            dump = [
+                x for x in conn.execute(
+                    rf'SELECT * FROM {task_jobs.name}'
+                )
+            ]
+            assert dump == initial_data
 
         # Upgrade function returns True?
         assert dao.upgrade_to_platforms()
 
-        # check the data was correctly upgraded
-        dump = [
-            x for x in conn.execute(
-                rf'SELECT name, cycle, user, platform FROM task_jobs'
-            )
-        ]
-        assert dump == expected_data
+        with dao.connect() as conn:
+            # check the data was correctly upgraded
+            dump = [
+                x for x in conn.execute(
+                    rf'SELECT name, cycle, user, platform FROM task_jobs'
+                )
+            ]
+            assert dump == expected_data
 
-        # make sure the upgrade is skipped on future runs
-        assert not dao.upgrade_to_platforms()
+            # make sure the upgrade is skipped on future runs
+            assert not dao.upgrade_to_platforms()
 
 
 if __name__ == '__main__':

@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import sqlite3
+from sqlalchemy.exc import SQLAlchemyError
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.cycling.util import add_offset
@@ -76,7 +76,7 @@ def suite_state(suite, task, point, offset=None, status='succeeded',
         point = str(add_offset(point, offset))
     try:
         checker = CylcSuiteDBChecker(cylc_run_dir, suite)
-    except (OSError, sqlite3.Error):
+    except (OSError, SQLAlchemyError):
         # Failed to connect to DB; target suite may not be started.
         return (False, None)
     fmt = checker.get_remote_point_format()
