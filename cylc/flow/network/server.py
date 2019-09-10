@@ -168,9 +168,7 @@ class ZMQServer(object):
             except Exception as exc:  # purposefully catch generic exception
                 # failed to decode message, possibly resulting from failed
                 # authentication
-                import traceback
-                return {'error': {
-                    'message': str(exc), 'traceback': traceback.format_exc()}}
+                LOG.exception(f'failed to decode message: {str(exc)}')
             else:
                 # success case - serve the request
                 res = self._receiver(message)
