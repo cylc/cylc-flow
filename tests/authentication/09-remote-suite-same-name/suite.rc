@@ -1,5 +1,5 @@
 #!jinja2
-[cylc]
+[general]
     UTC mode=True
 [scheduling]
     initial cycle point=1970

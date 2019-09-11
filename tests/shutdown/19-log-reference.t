@@ -22,7 +22,7 @@
 set_test_number 3
 #-------------------------------------------------------------------------------
 init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
-[cylc]
+[general]
     [[events]]
         abort on inactivity = True
         inactivity = PT3M

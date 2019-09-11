@@ -4,7 +4,7 @@
 unless polled. Task B then polls A to find it has failed, allowing A to
 suicide via a :fail trigger, and the suite to shut down successfully."""
 
-[cylc]
+[general]
    [[reference test]]
        expected task failures = a.1
 

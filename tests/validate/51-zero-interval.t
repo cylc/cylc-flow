@@ -21,7 +21,7 @@
 set_test_number 2
 
 cat >'suite.rc' <<'__SUITE_RC__'
-[cylc]
+[general]
     UTC mode = True
 [scheduling]
     initial cycle point = 2010

@@ -3,7 +3,7 @@
 
     description = """Define a hold after point in the suite.rc"""
 
-[cylc]
+[general]
     UTC mode = True
 
 [scheduling]

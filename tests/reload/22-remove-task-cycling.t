@@ -25,8 +25,8 @@ set_test_number 3
 # A suite designed to orphan a single copy of a task 'bar' on self-reload,
 # or stall and abort if the orphaned task triggers the #3306 bug.
 
-init_suite "${TEST_NAME_BASE}" <<__SUITE_RC__
-[cylc]
+init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
+[general]
    [[events]]
       inactivity = PT25S
       abort on inactivity = True

@@ -20,7 +20,7 @@
 
 set_test_number 3
 init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
-[cylc]
+[general]
     cycle point format = %Y
     [[events]]
         abort if any task fails = True

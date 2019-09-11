@@ -4,7 +4,7 @@
     description = """
 Task A should only run at 0, 12 hours; Task B at 6, 18"""
 
-[cylc]
+[general]
     UTC mode = True
 
 [scheduling]

@@ -1,4 +1,4 @@
-[cylc]
+[general]
     force run mode = dummy
     [[reference test]]
         expected task failures = a.1, b.1, c.1

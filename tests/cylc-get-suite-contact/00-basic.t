@@ -19,7 +19,7 @@
 . "$(dirname "$0")/test_header"
 set_test_number 6
 init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
-[cylc]
+[general]
     cycle point format = %Y
 [scheduling]
     initial cycle point = 2016

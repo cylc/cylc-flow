@@ -1,4 +1,4 @@
-[cylc]
+[general]
     UTC mode = True
     [[events]]
         timeout = PT0.1M

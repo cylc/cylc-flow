@@ -1,7 +1,7 @@
 [meta]
     title = "override this"
     title = "the quick brown fox"
-[cylc]
+[general]
     UTC mode = True
 [scheduling]
     initial cycle point = 20130101T0000Z

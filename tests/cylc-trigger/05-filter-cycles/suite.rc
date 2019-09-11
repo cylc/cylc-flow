@@ -1,4 +1,4 @@
-[cylc]
+[general]
    UTC mode = True
    [[reference test]]
        expected task failures = fixable.19700101T0000Z, fixable.19900101T0000Z, fixable.20100101T0000Z

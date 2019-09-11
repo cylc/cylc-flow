@@ -1,4 +1,4 @@
-[cylc]
+[general]
     cycle point time zone = Z
     [[events]]
         abort on stalled = True

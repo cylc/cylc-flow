@@ -37,7 +37,7 @@ set_test_number 10
 # Restart
 # Suite stops normally at t8.1
 init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
-[cylc]
+[general]
     [[parameters]]
         i = 1..8
     [[events]]

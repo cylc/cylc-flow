@@ -1,4 +1,4 @@
-[cylc]
+[general]
 UTC mode = true
 [scheduling]
 initial cycle point = 20100101T03

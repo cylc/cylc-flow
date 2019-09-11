@@ -40,7 +40,7 @@ set_test_number 16
 # Restart, should run to 2021, reset stop point before stop
 # Restart, should run to final cycle point == 2025
 init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
-[cylc]
+[general]
     UTC mode=True
     cycle point format = %Y
     [[events]]

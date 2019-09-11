@@ -1,4 +1,4 @@
-[cylc]
+[general]
     [[events]]
         abort if any task fails = True
 

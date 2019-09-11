@@ -1,5 +1,5 @@
 #!Jinja2
-[cylc]
+[general]
     UTC mode = True
    [[reference test]]
        expected task failures = bad-submitter.19990101T0000Z

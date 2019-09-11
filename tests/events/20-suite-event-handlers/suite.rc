@@ -4,7 +4,7 @@
     URL = http://mysuites.com/${CYLC_SUITE_NAME}.html
     suite-priority = HIGH
 
-[cylc]
+[general]
     [[events]]
 {% if GLOBALCFG is not defined %}
         handlers = echo 'Your %(suite)s suite has a %(event)s event and URL %(suite_url)s and suite-priority as %(suite-priority)s and suite-UUID as %(suite_uuid)s.'

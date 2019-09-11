@@ -1,5 +1,5 @@
 #!Jinja2
-[cylc]
+[general]
     [[events]]
         abort on stalled = True
         abort on inactivity = True

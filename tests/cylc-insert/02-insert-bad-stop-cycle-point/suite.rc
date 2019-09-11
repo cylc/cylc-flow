@@ -1,7 +1,7 @@
 [meta]
     title = "test insertion of a task with a bad cycle point."
 
-[cylc]
+[general]
     cycle point time zone = +01
 
 [scheduling]

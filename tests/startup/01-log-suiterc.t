@@ -24,7 +24,7 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
 [meta]
     title = a suite that logs run, reload, and restart configs
     description = the weather is {{WEATHER | default("bad")}}
-[cylc]
+[general]
     [[events]]
         abort on stalled = True
 [scheduling]

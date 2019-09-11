@@ -1,7 +1,7 @@
 # Test automatic deprecation and deletion of config items as specified
 # in cylc/flow/cfgspec/suite.py.
 
-[cylc]
+[general]
     [[dummy mode]]
     [[simulation mode]]
     [[events]]

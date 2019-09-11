@@ -6,7 +6,7 @@ three tasks are excluded at start-up but are inserted manually by the
 initial prep task. One is inserted with no stop cycle, to run for the
 duration of the suite; and the other is set to stop after two cycles."""
 
-[cylc]
+[general]
     cycle point format = %Y%m%dT%H
 
 [scheduling]

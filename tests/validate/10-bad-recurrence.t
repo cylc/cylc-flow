@@ -22,7 +22,7 @@ set_test_number 10
 
 TEST_NAME="${TEST_NAME_BASE}-interval"
 cat >'suite.rc' <<'__SUITE__'
-[cylc]
+[general]
     cycle point time zone = +01
 [scheduling]
     initial cycle point = 20140101T00
@@ -41,7 +41,7 @@ __ERR__
 
 TEST_NAME="${TEST_NAME_BASE}-old-icp"
 cat >'suite.rc' <<'__SUITE__'
-[cylc]
+[general]
     UTC mode = True
 [scheduling]
     initial cycle point = 20140101
@@ -58,7 +58,7 @@ __ERR__
 
 TEST_NAME="${TEST_NAME_BASE}-2-digit-century"
 cat >'suite.rc' <<'__SUITE__'
-[cylc]
+[general]
     cycle point time zone = +01
 [scheduling]
     initial cycle point = 20140101T00
@@ -78,7 +78,7 @@ __ERR__
 
 TEST_NAME="${TEST_NAME_BASE}-old-recurrences"
 cat >'suite.rc' <<'__SUITE__'
-[cylc]
+[general]
     cycle point time zone = +01
 [scheduling]
     initial cycle point = 20100101T00
@@ -92,7 +92,7 @@ __ERR__
 
 TEST_NAME="${TEST_NAME_BASE}-old-cycle-point-format"
 cat >'suite.rc' <<'__SUITE__'
-[cylc]
+[general]
     cycle point format = %Y%m%d%H
 [scheduling]
     initial cycle point = 2010010101

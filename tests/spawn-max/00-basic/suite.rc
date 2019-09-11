@@ -1,4 +1,4 @@
-[cylc]
+[general]
     cycle point format = %Y
     [[reference test]]
         expected task failures = get_obs.2010

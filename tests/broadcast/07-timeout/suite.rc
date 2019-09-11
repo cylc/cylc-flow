@@ -1,7 +1,7 @@
 [meta]
     title = "test suite for broadcast timeout functionality"
 
-[cylc]
+[general]
     UTC mode = True
 
 [scheduling]

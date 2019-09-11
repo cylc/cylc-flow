@@ -1,6 +1,6 @@
 #!Jinja2
 
-[cylc]
+[general]
     disable automatic shutdown = {{environ['SUITE_DISABLE_AUTO_SHUTDOWN'] | default(false)}}
     [[events]]
         timeout = PT2M

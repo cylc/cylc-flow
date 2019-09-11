@@ -1,6 +1,6 @@
 [meta]
     title = Test cylc hold/release remembers satisfied dependencies
-[cylc]
+[general]
     UTC mode = True
     [[events]]
         abort on stalled = True

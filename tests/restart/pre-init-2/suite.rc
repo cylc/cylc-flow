@@ -7,7 +7,7 @@
 # 2) the restart as reference test:
 #      cylc restart --debug --reference-test SUITE
 
-[cylc]
+[general]
     cycle point format = %Y%m%dT%H
 
 [scheduling]

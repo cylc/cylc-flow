@@ -1,4 +1,4 @@
-[cylc]
+[general]
     UTC mode = true
     [[events]]
         abort on timeout = true

@@ -28,7 +28,7 @@ export CLOWNS
 export JOKERS="${HOSTNAME}"
 
 BASE_GLOBALRC='
-[cylc]
+[general]
     health check interval = PT5S
     [[events]]
         abort on inactivity = True
@@ -38,7 +38,7 @@ BASE_GLOBALRC='
 '
 
 TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME_BASE}" <<< '
-[cylc]
+[general]
     [[events]]
         abort if any task fails = True
 [scheduling]

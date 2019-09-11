@@ -1,7 +1,7 @@
 [meta]
     title = "Test insertion of a task that has previously run"
 
-[cylc]
+[general]
     UTC mode = True
 
 [scheduling]

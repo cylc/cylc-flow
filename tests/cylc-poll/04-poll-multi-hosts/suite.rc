@@ -1,5 +1,5 @@
 #!Jinja2
-[cylc]
+[general]
     UTC mode = True
     [[reference test]]
         expected task failures = local-fail-1.1, local-fail-2.1, remote-fail-1.1

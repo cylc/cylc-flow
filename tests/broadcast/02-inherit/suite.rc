@@ -2,7 +2,7 @@
 [meta]
     title=broadcast
     description=Test Broadcast Inheritance
-[cylc]
+[general]
     cycle point format = %Y%m%dT%H
 [scheduling]
     initial cycle point = 20140101T00

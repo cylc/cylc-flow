@@ -3,7 +3,7 @@
 
     description = """Test running with a hold-after cycle point."""
 
-[cylc]
+[general]
     UTC mode = True
 
 [scheduling]

@@ -1,7 +1,7 @@
 [meta]
     description = This suite is supposed to time out
 
-[cylc]
+[general]
     [[events]]
         timeout = PT6S
         abort on timeout = True

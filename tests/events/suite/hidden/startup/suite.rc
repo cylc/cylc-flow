@@ -1,4 +1,4 @@
-[cylc]
+[general]
     [[events]]
         startup handler = "/bin/false"
         abort if startup handler fails = True

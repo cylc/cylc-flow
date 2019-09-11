@@ -21,7 +21,7 @@
 set_test_number 3
 
 init_suite "${TEST_NAME_BASE}-1" <<'__SUITE_RC__'
-[cylc]
+[general]
     UTC mode = True
 [scheduling]
     [[graph]]
@@ -33,7 +33,7 @@ __SUITE_RC__
 # shellcheck disable=SC2153
 SUITE_NAME1="${SUITE_NAME}"
 init_suite "${TEST_NAME_BASE}-2" <<'__SUITE_RC__'
-[cylc]
+[general]
     UTC mode = True
 [scheduling]
     initial cycle point = 2016

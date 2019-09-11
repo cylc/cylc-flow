@@ -1,4 +1,4 @@
-[cylc]
+[general]
     [[reference test]]
         expected task failures = t2.1
 [scheduling]

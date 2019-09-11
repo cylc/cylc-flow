@@ -1,4 +1,4 @@
-[cylc]
+[general]
     [[reference test]]
         expected task failures = c.1
 

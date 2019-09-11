@@ -1,0 +1,15 @@
+#!Jinja2
+[meta]
+    title = Test task host selection with a bad command
+
+[general]
+    [[reference test]]
+        expected task failures = foo.1
+[scheduling]
+    [[graph]]
+        R1 = "foo:submit-fail => !foo"
+[runtime]
+    [[foo]]
+        script = true
+        [[[remote]]]
+            host = $(sleep 2; echo 'localhost')

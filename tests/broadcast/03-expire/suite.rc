@@ -1,7 +1,7 @@
 [meta]
     title=broadcast expire
     description=Test broadcast expire option
-[cylc]
+[general]
     UTC mode = True
 [scheduling]
     initial cycle point = 2020

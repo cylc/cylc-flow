@@ -3,7 +3,7 @@
 {% set NSLEEP = NSLEEP | default(1) %}
 {% set EXIT = EXIT | default("false") %}
 
-[cylc]
+[general]
     [[events]]
         abort on stalled = True
 [scheduling]

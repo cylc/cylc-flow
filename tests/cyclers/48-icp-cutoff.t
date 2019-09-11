@@ -20,7 +20,7 @@
 set_test_number 1
 
 init_suite "${TEST_NAME_BASE}" <<'__SUITE__'
-[cylc]
+[general]
     cycle point time zone = Z
     [[events]]
         abort on stalled = True

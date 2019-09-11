@@ -28,7 +28,7 @@ if ${CYLC_TEST_DEBUG:-false}; then ERR=2; else ERR=1; fi
 set_test_number 17
 
 BASE_GLOBALRC="
-[cylc]
+[general]
     health check interval = PT5S
     [[events]]
         abort on inactivity = True

@@ -1,4 +1,4 @@
-[cylc]
+[general]
     cycle point format = %Y
 [scheduling]
     initial cycle point = 2018

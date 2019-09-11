@@ -24,7 +24,7 @@ set_test_number 3
 
 # Test suite uses built-in 'echo' xtrigger.
 init_suite "${TEST_NAME_BASE}" << '__SUITE_RC__'
-[cylc]
+[general]
    cycle point format = %Y
 [scheduling]
    initial cycle point = 2025

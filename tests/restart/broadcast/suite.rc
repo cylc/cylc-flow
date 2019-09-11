@@ -1,6 +1,6 @@
 #!jinja2
 {%- set TEST_DIR = environ['TEST_DIR'] %}
-[cylc]
+[general]
     UTC mode = True
     [[events]]
         abort if any task fails = True

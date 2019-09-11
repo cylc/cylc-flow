@@ -25,7 +25,7 @@
 {% set DATA_IN_DIR = "$CYLC_SUITE_SHARE_DIR/incoming" %}
 {% set PRODUCT_DIR = "$CYLC_SUITE_SHARE_DIR/products" %}
 
-[cylc]
+[general]
     UTC mode = True
 
 [scheduling]

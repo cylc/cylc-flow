@@ -1,4 +1,4 @@
-[cylc]
+[general]
     [[parameters]]
         num = 99..101..2
         stuff = this, that

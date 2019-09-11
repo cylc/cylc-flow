@@ -1,6 +1,6 @@
 [meta]
     title = "Hello, Goodbye, Suicide"
-[cylc]
+[general]
     [[reference test]]
         expected task failures = goodbye.1
 

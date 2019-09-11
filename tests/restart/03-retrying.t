@@ -19,7 +19,7 @@
 . "$(dirname "$0")/test_header"
 set_test_number 5
 init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
-[cylc]
+[general]
     [[events]]
         abort on stalled = True
         abort on inactivity = True

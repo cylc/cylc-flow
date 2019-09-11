@@ -1,7 +1,7 @@
 [meta]
     title = Test: run task - hold suite - task job retry - release suite
 
-[cylc]
+[general]
     [[events]]
         abort on stalled = True
         abort on inactivity = True

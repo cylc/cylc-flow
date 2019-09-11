@@ -1,7 +1,7 @@
 [meta]
     title=broadcast section-space-key
     description=Test broadcast set section-space-key syntax
-[cylc]
+[general]
     UTC mode = True
     [[events]]
         abort if any task fails = True

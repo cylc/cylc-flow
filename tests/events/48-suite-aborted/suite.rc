@@ -1,4 +1,4 @@
-[cylc]
+[general]
     health check interval = PT1S
     [[events]]
         abort on inactivity = true

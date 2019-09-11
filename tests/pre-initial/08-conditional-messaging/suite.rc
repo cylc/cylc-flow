@@ -1,4 +1,4 @@
-[cylc]
+[general]
    UTC mode = True
    [[reference test]]
        expected task failures = bar.20100809T0000Z

@@ -1,6 +1,6 @@
 [meta]
     title = A suite that should only succeed in dummy mode.
-[cylc]
+[general]
     [[events]]
         abort on stalled = True
         abort on inactivity = True

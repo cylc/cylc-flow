@@ -6,7 +6,7 @@
     importance = critical
     ranking = one
 
-[cylc]
+[general]
     cycle point format = CCYYMMDDThh
     UTC mode = True
 

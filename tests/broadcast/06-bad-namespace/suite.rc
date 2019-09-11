@@ -1,7 +1,7 @@
 [meta]
     title=broadcast bad namespace
     description=Test broadcast to an undefined namespace fails.
-[cylc]
+[general]
     [[events]]
         abort if any task fails = True
         abort on timeout = True

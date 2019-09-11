@@ -1,0 +1,31 @@
+[meta]
+    title = "Test reloading of a task removed then added by a reload."
+# Don't run this suite in-place: it modifies itself.
+
+[general]
+    UTC mode = True
+
+[scheduling]
+    [[graph]]
+        R1 = reloader => remove_add_alter_me
+
+[runtime]
+   [[remove_add_alter_me]]
+      script = false
+   [[reloader]]
+      script = """
+sed -i "12s/\(graph = reloader\).*/\1/" $CYLC_SUITE_DEF_PATH/suite.rc
+cylc reload $CYLC_SUITE_NAME
+sleep 5
+sed -i "12s/\(graph = reloader\)/\1 => remove_add_alter_me/" $CYLC_SUITE_DEF_PATH/suite.rc
+cylc reload $CYLC_SUITE_NAME
+sleep 5
+cylc insert $CYLC_SUITE_NAME remove_add_alter_me.1
+sleep 5
+cat >>$CYLC_SUITE_DEF_PATH/suite.rc <<'__RUNTIME__'
+[[remove_add_alter_me]]
+    script = true
+__RUNTIME__
+cylc reload $CYLC_SUITE_NAME
+sleep 5
+        """
