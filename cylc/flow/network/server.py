@@ -25,15 +25,17 @@ from threading import Thread
 import asyncio
 from graphql.execution.executors.asyncio import AsyncioExecutor
 
+import json
 import zmq
+from zmq.auth.thread import ThreadAuthenticator
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import CylcError
 from cylc.flow.network.authorisation import Priv, authorise
 from cylc.flow.network.authentication import (
-    generate_key_store, key_store_exists, AUTH_KEY_STORE_DIR,
-    PRIVATE_KEY_DIR_NAME, PUBLIC_KEY_DIR_NAME, STORE_DIR_NAME)
+    generate_key_store, key_store_exists,
+    PRIVATE_KEY_DIR_NAME, STORE_DIR_NAME)
 from cylc.flow.network.resolvers import Resolvers
 from cylc.flow.network.schema import schema
 from cylc.flow.suite_status import (
@@ -46,6 +48,9 @@ from cylc.flow import __version__ as CYLC_VERSION
 PB_METHOD_MAP = {
     'pb_entire_workflow': PbEntireWorkflow
 }
+
+# directory to contain the sub-directories holding server authentication keys:
+SERVER_KEYS_PARENT_DIR = os.path.join(os.path.expanduser("~"), ".cylc")
 
 
 class ZMQServer(object):
@@ -96,20 +101,19 @@ class ZMQServer(object):
         # create & configure an authenticator for the ZMQ context.
         self.curve_auth = ThreadAuthenticator(self.context)
         self.curve_auth.start()  # start the authentication thread
-        self.curve_auth.allow(NULL)
         self.curve_auth.configure_curve(
-            domain='*', location=zmq.auth.CURVE_ALLOW_ANY)
+            domain='*', location=zmq.auth.CURVE_ALLOW_ANY)  # TODO: change loc
 
         # create socket
         self.socket = self.context.socket(zmq.REP)
         self.socket.RCVTIMEO = int(self.RECV_TIMEOUT) * 1000
 
         # create & register server keys for authentication
-        generate_key_store(AUTH_KEY_STORE_DIR, "server")
+        generate_key_store(SERVER_KEYS_PARENT_DIR, "server")
         if not key_store_exists:
-            raise RuntimeError("Server keys not found.")
+            raise ClientError("Unable to generate or store server keys.")
         server_public_key, server_private_key = zmq.auth.load_certificate(
-            os.path.join(server_keystore, STORE_DIR_NAME,
+            os.path.join(SERVER_KEYS_PARENT_DIR, STORE_DIR_NAME,
                          PRIVATE_KEY_DIR_NAME, "server.key_secret"))
         self.socket.curve_publickey = server_public_key
         self.socket.curve_secretkey = server_private_key
@@ -172,8 +176,16 @@ class ZMQServer(object):
                 LOG.exception(f'unexpected error: {str(exc)}')
                 continue
 
+            ### --- TODO (MAIN): set client public key, goes here? --- ###
+            ### --- e.g. self.socket.curve_clientkey = ... --- ###
+
+            # Note: the ZeroMQ messaging API is unchanged; send and receive
+            # messages as before. CURVE secures the messages by setting up
+            # public-key cryptography via the ZMQ messaging and the sockets,
+            # so there is no need to manually encrypt the messages (?)
+
             # success case - serve the request
-            res = self._receiver(msg)
+            res = self._receiver(json.load(msg))
             if msg['command'] in PB_METHOD_MAP:
                 response = res['data']
             else:

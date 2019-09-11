@@ -22,33 +22,30 @@ import shutil
 import zmq.auth
 
 
-# Names for directories to hold suite keys, in structure under '.service':
-STORE_DIR_NAME = "auth_keys"
-PUBLIC_KEY_DIR_NAME = "public_key"
-PRIVATE_KEY_DIR_NAME = "private_key"
-
-# Directory to hold sub-directory for authentication keys (good choice?):
-AUTH_KEY_STORE_DIR = os.path.join(os.path.expanduser("~"), ".cylc")
+# Names for directories (topmost holding the following two) to store auth keys:
+STORE_DIR_NAME = ".curve"
+PUBLIC_KEY_DIR_NAME = "public_key"  # dirname <root>/STORE_DIR_NAME/
+PRIVATE_KEY_DIR_NAME = "private_key"  # dirname <root>/STORE_DIR_NAME/
 
 
 def generate_key_store(store_parent_dir, keys_tag):
-    """Generate two sub-directories each containing a file with a CURVE key."""
-    # Define the directory structure to store the CURVE keys in:
+    """ Generate two sub-directories, each holding a file with a CURVE key. """
+    # Define the directory structure to store the CURVE keys in
     store_dir = os.path.join(store_parent_dir, STORE_DIR_NAME)
     public_key_location = os.path.join(store_dir, PUBLIC_KEY_DIR_NAME)
     private_key_location = os.path.join(store_dir, PRIVATE_KEY_DIR_NAME)
 
-    # Create, or wipe, that directory structure:
+    # Create, or wipe, that directory structure
     for directory in [store_dir, public_key_location, private_key_location]:
         if os.path.exists(directory):
             shutil.rmtree(directory)
         os.mkdir(directory)
 
-    # Make a new public-private CURVE key pair:
+    # Make a new public-private CURVE key pair
     private_key_file, public_key_file = zmq.auth.create_certificates(
-      store_dir, keys_tag)
+        store_dir, keys_tag)
 
-    # Move the pair of keys to the appropriate directories:
+    # Move the pair of keys to the appropriate directories
     for key_file in os.listdir(store_dir):
         if key_file.endswith(".key"):
             shutil.move(os.path.join(store_dir, key_file),

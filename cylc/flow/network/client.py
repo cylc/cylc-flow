@@ -22,8 +22,8 @@ import sys
 from functools import partial
 from typing import Union
 
+import json
 import zmq
-from zmq.auth.thread import ThreadAuthenticator
 import zmq.asyncio
 
 from shutil import which
@@ -37,8 +37,8 @@ from cylc.flow.exceptions import (
 )
 from cylc.flow.hostuserutil import get_fqdn_by_host
 from cylc.flow.network.authentication import (
-    generate_key_store, key_store_exists, AUTH_KEY_STORE_DIR,
-    PRIVATE_KEY_DIR_NAME, PUBLIC_KEY_DIR_NAME, STORE_DIR_NAME)
+    generate_key_store, key_store_exists,
+    PRIVATE_KEY_DIR_NAME, STORE_DIR_NAME)
 from cylc.flow.network.server import PB_METHOD_MAP
 from cylc.flow.suite_files import (
     ContactFileFields,
@@ -60,9 +60,9 @@ class ZMQClient(object):
         host (str):
             The host to connect to.
         port (int):
-            The port on the aforementioned host to connect to
+            The port on the aforementioned host to connect to.
         client_keystore (path):
-            SADIE path to the location of directory holding the auth keys.
+            The path to the directory to house the auth keys (sub-directory).
         timeout (float):
             Set the default timeout in seconds. The default is
             ``ZMQClient.DEFAULT_TIMEOUT``.
@@ -86,7 +86,7 @@ class ZMQClient(object):
 
     DEFAULT_TIMEOUT = 5.  # 5 seconds
 
-    def __init__(self, host, port, client_keystore=None,
+    def __init__(self, host, port, client_keystore,
                  timeout=None, timeout_handler=None, header=None):
         if timeout is None:
             timeout = self.DEFAULT_TIMEOUT
@@ -98,26 +98,19 @@ class ZMQClient(object):
         # open the ZMQ socket
         self.socket = CONTEXT.socket(zmq.REQ)
 
-        # create client keys for authentication:
+        # create client keys for authentication
         generate_key_store(client_keystore, "client")
         if not key_store_exists:
-            raise ClientError("Keys not found.")
+            raise ClientError("Unable to generate or store client keys.")
 
-        # register client keys for authentication.
+        # register client keys for authentication
         client_public_key, client_private_key = zmq.auth.load_certificate(
             os.path.join(client_keystore, STORE_DIR_NAME, PRIVATE_KEY_DIR_NAME,
                          "client.key_secret"))
         self.socket.curve_publickey = client_public_key
         self.socket.curve_secretkey = client_private_key
 
-        # in the elliptic curve security model, the client needs to know the
-        # server's (permanent) public key to initiate a connection with it,
-        # so we load that and ask curve to validate it to allow the connection:
-        client.curve_serverkey = zmq.auth.load_certificate(
-            os.path.join(AUTH_KEY_STORE_DIR, STORE_DIR_NAME,
-                         PUBLIC_KEY_DIR_NAME, "server.key"))[0]
         self.socket.connect('tcp://%s:%d' % (host, port))
-
         # if there is no server don't keep the client hanging around
         self.socket.setsockopt(zmq.LINGER, int(self.DEFAULT_TIMEOUT))
 
@@ -142,11 +135,19 @@ class ZMQClient(object):
         if not args:
             args = {}
 
+        ### --- TODO (MAIN): set server public key, goes here? --- ###
+        ### --- e.g. self.socket.curve_serverkey = ... --- ###
+
+        # Note: the ZeroMQ messaging API is unchanged; send and receive
+        # messages as before. CURVE secures the messages by setting up
+        # public-key cryptography via the ZMQ messaging and the sockets,
+        # so there is no need to manually encrypt the messages (?)
+
         # send message
         msg = {'command': command, 'args': args}
         msg.update(self.header)
         LOG.debug('zmq:send %s' % msg)
-        self.socket.send_string(msg)
+        self.socket.send_string(json.dumps(msg))
 
         # receive response
         if self.poller.poll(timeout):
@@ -250,7 +251,7 @@ class SuiteRuntimeClient(ZMQClient):
         if not (host and port):
             host, port = self.get_location(suite, owner, host)
 
-        # We will store the auth keys for a suite in '.service/auth_keys':
+        # a suite's service directory will hold its auth keys sub-directory
         suite_srv_dir = SuiteSrvFilesManager().get_suite_srv_dir(suite, owner)
 
         super().__init__(
