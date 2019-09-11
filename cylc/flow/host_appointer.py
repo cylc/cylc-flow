@@ -181,7 +181,7 @@ class HostAppointer(object):
             else:
                 # 1st instance of localhost
                 host_proc_map['localhost'] = run_cmd(
-                    ['general'] + cmd, capture_process=True)
+                    ['cylc'] + cmd, capture_process=True)
         # Collect results from commands
         while host_proc_map:
             for host, proc in list(host_proc_map.copy().items()):
