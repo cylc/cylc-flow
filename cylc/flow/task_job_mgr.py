@@ -773,7 +773,7 @@ class TaskJobManager(object):
         # because dynamic host selection may be used.
         try:
             task_host = self.task_remote_mgr.remote_host_select(
-                rtconfig['remote']['host'])
+                rtconfig['job']['host'])
         except TaskRemoteMgmtError as exc:
             # Submit number not yet incremented
             itask.submit_num += 1
@@ -843,7 +843,7 @@ class TaskJobManager(object):
 
     def _prep_submit_task_job_impl(self, suite, itask, rtconfig):
         """Helper for self._prep_submit_task_job."""
-        itask.task_owner = rtconfig['remote']['owner']
+        itask.task_owner = rtconfig['job']['owner']
         if itask.task_owner:
             owner_at_host = itask.task_owner + "@" + itask.task_host
         else:
@@ -896,7 +896,7 @@ class TaskJobManager(object):
             'param_var': itask.tdef.param_var,
             'post-script': scripts[2],
             'pre-script': scripts[0],
-            'remote_suite_d': rtconfig['remote']['suite definition directory'],
+            'remote_suite_d': rtconfig['job']['suite definition directory'],
             'script': scripts[1],
             'submit_num': itask.submit_num,
             'suite_name': suite,

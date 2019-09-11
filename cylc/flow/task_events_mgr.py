@@ -593,7 +593,7 @@ class TaskEventsManager():
         for getter in [
                 self.broadcast_mgr.get_broadcast(itask.identity).get("events"),
                 itask.tdef.rtconfig["events"],
-                glbl_cfg().get()["task events"]]:
+                glbl_cfg().get(["runtime", "root", "events"])]:
             try:
                 value = getter.get(key)
             except (AttributeError, ItemNotFoundError, KeyError):

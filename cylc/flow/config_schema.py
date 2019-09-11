@@ -75,6 +75,7 @@ SPEC = {
             '__MANY__': [VDR.V_STRING],
         },
         'events': {
+            'abort if any task fails': [VDR.V_BOOLEAN, False],
             'handlers': [VDR.V_STRING_LIST, None],
             'handler events': [VDR.V_STRING_LIST, None],
             'startup handler': [VDR.V_STRING_LIST, None],
