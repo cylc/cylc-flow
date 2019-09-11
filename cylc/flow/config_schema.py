@@ -602,8 +602,3 @@ class GlobalConfig(ParsecConfig):
             if val and 'directory' in key:
                 cfg['job platforms']['default platform'][key] =\
                     os.path.expandvars(val)
-
-
-def glbl_cfg(cached=True):
-    """Load and return the global configuration singleton instance."""
-    return GlobalConfig.get_inst(cached=cached)

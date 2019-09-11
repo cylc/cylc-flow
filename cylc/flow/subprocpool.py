@@ -27,7 +27,7 @@ from time import time
 from subprocess import DEVNULL  # nosec
 
 from cylc.flow import LOG
-from cylc.flow.config_schema import glbl_cfg
+from cylc.flow.glbl_cfg import glbl_cfg
 from cylc.flow.cylc_subproc import procopen
 from cylc.flow.wallclock import get_current_time_string
 

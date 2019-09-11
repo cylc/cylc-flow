@@ -23,7 +23,7 @@ import socket
 from time import sleep
 
 from cylc.flow import LOG
-from cylc.flow.config_schema import glbl_cfg
+from cylc.flow.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import CylcError
 from cylc.flow.hostuserutil import is_remote_host, get_fqdn_by_host
 from cylc.flow.remote import remote_cylc_cmd, run_cmd

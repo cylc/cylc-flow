@@ -30,7 +30,7 @@ import cylc.flow.flags
 
 from cylc.flow.exceptions import CylcError
 from cylc.flow.loggingutil import CylcLogFormatter
-from cylc.flow.config_schema import glbl_cfg
+from cylc.flow.glbl_cfg import glbl_cfg
 from cylc.flow.parsec.exceptions import ParsecError
 
 
