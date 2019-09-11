@@ -23,7 +23,7 @@ import re
 from subprocess import PIPE
 
 
-class AtCommandHandler(object):
+class AtCommandHandler():
     """Logic to submit jobs to the "at" batch system.
 
     Submit the task job script to the simple 'at' scheduler. Note that
@@ -97,19 +97,6 @@ class AtCommandHandler(object):
                 else:
                     new_err += line
         return out, new_err
-
-    @classmethod
-    def filter_poll_output(cls, out, job_id):
-        """Return True if job_id is in the queueing system."""
-        # "atq" returns something like this:
-        #     5347	2013-11-22 10:24 a daisy
-        #     499	2013-12-22 16:26 a daisy
-        # "jid" is in queue if it matches column 1 of a row.
-        for line in out.splitlines():
-            items = line.strip().split(None, 1)
-            if items and items[0] == job_id:
-                return True
-        return False
 
     @classmethod
     def get_submit_stdin(cls, job_file_path, submit_opts):
