@@ -2238,7 +2238,8 @@ class SuiteConfig(object):
         - None if there is no expectation either way.
         """
         if self.options.reftest:
-            return self.cfg['general']['reference test']['expected task failures']
+            return self.cfg[
+                'general']['reference test']['expected task failures']
         elif self.cfg['general']['events']['abort if any task fails']:
             return []
         else:

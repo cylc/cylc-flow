@@ -72,7 +72,7 @@ from cylc.flow.parsec.include import inline, \
     split_file, backup, backups, newfiles, cleanup, modtimes
 
 
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.glbl_cfg import glbl_cfg
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.flow.terminal import cli_function

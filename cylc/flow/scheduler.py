@@ -1111,7 +1111,8 @@ see `COPYING' in the Cylc source distribution.
         try:
             if (
                 conf.run_mode('simulation', 'dummy') and
-                conf.cfg['general']['simulation']['disable suite event handlers']
+                conf.cfg[
+                    'general']['simulation']['disable suite event handlers']
             ):
                 return
         except KeyError:
@@ -1146,7 +1147,10 @@ see `COPYING' in the Cylc source distribution.
             self.count = 0
         if self.options.no_auto_shutdown is not None:
             self.can_auto_stop = not self.options.no_auto_shutdown
-        elif self.config.cfg['general']['disable automatic shutdown'] is not None:
+        elif (
+            self.config.cfg['general']['disable automatic shutdown']
+            is not None
+        ):
             self.can_auto_stop = (
                 not self.config.cfg['general']['disable automatic shutdown'])
 
@@ -1459,7 +1463,8 @@ see `COPYING' in the Cylc source distribution.
                             if self.set_auto_restart(mode=mode):
                                 return  # skip remaining health checks
                         elif (self.set_auto_restart(current_glbl_cfg.get(
-                                ['suite run platforms', 'auto restart delay']))):
+                            ['suite run platforms', 'auto restart delay']))
+                        ):
                             # server is condemned -> configure the suite to
                             # auto stop-restart if possible, else, report the
                             # issue preventing this
@@ -1942,7 +1947,9 @@ see `COPYING' in the Cylc source distribution.
 
     def _get_cylc_conf(self, key, default=None):
         """Return a named setting under [cylc] from suite.rc or flow.rc."""
-        for getter in [self.config.cfg['general'], glbl_cfg().get(['general'])]:
+        for getter in (
+            [self.config.cfg['general'], glbl_cfg().get(['general'])]
+        ):
             try:
                 value = getter[key]
             except TypeError:

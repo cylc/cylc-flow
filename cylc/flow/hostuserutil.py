@@ -50,7 +50,7 @@ import socket
 from contextlib import suppress
 from time import time
 
-import cylc.flow.config_schema
+from cylc.flow.glbl_cfg import glbl_cfg
 
 
 class HostUtil(object):
@@ -125,7 +125,7 @@ class HostUtil(object):
     @staticmethod
     def _get_identification_cfg(key):
         """Return the [suite host self-identification]key global conf."""
-        return cylc.flow.config_schema.glbl_cfg().get(
+        return glbl_cfg().get(
             ['suite run platforms', 'suite host self-identification', key]
         )
 
