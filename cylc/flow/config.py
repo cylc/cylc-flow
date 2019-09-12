@@ -1268,8 +1268,8 @@ class SuiteConfig(object):
 
             if tdef.run_mode == 'dummy-local':
                 # Run all dummy tasks on the suite host.
-                rtc['remote']['host'] = None
-                rtc['remote']['owner'] = None
+                rtc['job']['host'] = None
+                rtc['job']['owner'] = None
 
             # Simulation mode tasks should fail in which cycle points?
             f_pts = []
