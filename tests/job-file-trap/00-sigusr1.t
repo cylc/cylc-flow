@@ -21,7 +21,7 @@
 . "$(dirname "$0")/test_header"
 
 run_tests() {
-    set_test_number 6
+    set_test_number 5
     install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
     TEST_NAME="${TEST_NAME_BASE}-validate"
     run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
@@ -30,19 +30,17 @@ run_tests() {
     suite_run_ok "${TEST_NAME}" cylc run --reference-test "${SUITE_NAME}"
 
     # Make sure t1.1.1's status file is in place
-    T1_STATUS_FILE=$SUITE_RUN_DIR/log/job/1/t1/01/job.status
+    T1_STATUS_FILE="${SUITE_RUN_DIR}/log/job/1/t1/01/job.status"
 
-    poll_grep 'CYLC_JOB_PID=' "${T1_STATUS_FILE}"
+    poll_grep -E 'CYLC_BATCH_SYS_JOB_ID=' "${T1_STATUS_FILE}"
+    poll_grep -E 'CYLC_JOB_INIT_TIME=' "${T1_STATUS_FILE}"
 
     # Kill the job and see what happens
-    T1_PID="$(awk -F= '$1=="CYLC_JOB_PID" {print $2}' "${T1_STATUS_FILE}")"
+    T1_PID="$(awk -F= '$1=="CYLC_BATCH_SYS_JOB_ID" {print $2}' "${T1_STATUS_FILE}")"
     kill -s 'USR1' "${T1_PID}"
-    while ps "${T1_PID}" 1>'/dev/null' 2>&1; do
-        sleep 1
-    done
-    run_fail "${TEST_NAME_BASE}-t1-status" grep -q '^CYLC_JOB' "${T1_STATUS_FILE}"
+    poll_grep -E 'WARNING|vacated/USR1' "${T1_STATUS_FILE}"
     poll_grep_suite_log 'vacated/USR1'
-    poll sqlite3 "${SUITE_RUN_DIR}/log/db" \
+    sqlite3 "${SUITE_RUN_DIR}/log/db" \
         'SELECT status FROM task_states WHERE name=="t1";' \
         >"${TEST_NAME}-db-t1" 2>'/dev/null'
     grep_ok "^\(submitted\|running\)$" "${TEST_NAME}-db-t1"
