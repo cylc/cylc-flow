@@ -111,7 +111,7 @@ class ZMQServer(object):
         # create & register server keys for authentication
         generate_key_store(SERVER_KEYS_PARENT_DIR, "server")
         if not key_store_exists:
-            raise ClientError("Unable to generate or store server keys.")
+            raise CylcError("Unable to generate Cylc ZMQ server keys.")
         server_public_key, server_private_key = zmq.auth.load_certificate(
             os.path.join(SERVER_KEYS_PARENT_DIR, STORE_DIR_NAME,
                          PRIVATE_KEY_DIR_NAME, "server.key_secret"))

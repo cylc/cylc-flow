@@ -18,6 +18,7 @@
 import getpass
 import os
 import shutil
+import stat
 
 import zmq.auth
 
@@ -45,14 +46,21 @@ def generate_key_store(store_parent_dir, keys_tag):
     private_key_file, public_key_file = zmq.auth.create_certificates(
         store_dir, keys_tag)
 
-    # Move the pair of keys to the appropriate directories
+    # Move the pair of keys to appropriate directories, & lock private key file
     for key_file in os.listdir(store_dir):
         if key_file.endswith(".key"):
             shutil.move(os.path.join(store_dir, key_file),
                         os.path.join(public_key_location, '.'))
+            # The public key keeps standard '-rw-r--r--.' file permissions
         elif key_file.endswith(".key_secret"):
-            shutil.move(os.path.join(store_dir, key_file),
-                        os.path.join(private_key_location, '.'))
+            loc = shutil.move(os.path.join(store_dir, key_file),
+                              os.path.join(private_key_location, '.'))
+            # Now lock the prviate key in its permanent location
+            try:
+                lockdown_private_keys(loc)
+            except Exception:  # catch anything; private keys must get locked
+                raise OSError(
+                    "Unable to lock private keys for authentication. Abort.")
 
 
 def key_store_exists(store_dir_path):
@@ -61,3 +69,13 @@ def key_store_exists(store_dir_path):
     private_key_location = os.path.join(store_dir_path, PRIVATE_KEY_DIR_NAME)
     return (os.path.exists(public_key_location) and
             os.path.exists(private_key_location))
+
+
+def lockdown_private_keys(private_key_file_path):
+    """ Change private key file permissions to lock from other users. """
+    # This means that the owner can read & write, but others (including group)
+    # cannot do anything, to the file, i.e. '-rw-------.' file permissions.
+    if not os.path.exists(private_key_file_path):
+        raise FileNotFoundError(
+            "Private key not found at location '%s'." % private_key_file_path)
+    os.chmod(private_key_file_path, stat.S_IRUSR | stat.S_IWUSR)
