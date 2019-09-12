@@ -35,7 +35,6 @@ cmp_ok val.out <<__END__
  * (8.0.0) [runtime][Dai][remote] -> [runtime][Dai][job] - value unchanged
  * (8.0.0) [suite host self-identification] -> [suite run platforms][suite host self-identification] - value unchanged
  * (8.0.0) [suite servers] -> [suite run platforms] - value unchanged
- * (8.0.0) [test battery] - DELETED (OBSOLETE)
  * (8.0.0) [cylc] -> [general] - value unchanged
  * (8.0.0) [scheduling][dependencies][X][graph] -> [scheduling][graph][X] - for X in:
 __END__

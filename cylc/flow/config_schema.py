@@ -225,6 +225,105 @@ SPEC = {
         },
     },
     'runtime': {
+        # This section should probably be removed before go live
+        # forcing site admins to add it to the site.rc
+        'root': {
+            'inherit': [VDR.V_STRING_LIST],
+            'init-script': [VDR.V_STRING],
+            'env-script': [VDR.V_STRING],
+            'err-script': [VDR.V_STRING],
+            'exit-script': [VDR.V_STRING],
+            'pre-script': [VDR.V_STRING],
+            'script': [VDR.V_STRING],
+            'post-script': [VDR.V_STRING],
+            'extra log files': [VDR.V_STRING_LIST],
+            'work sub-directory': [VDR.V_STRING],
+            'meta': {
+                'title': [VDR.V_STRING, ''],
+                'description': [VDR.V_STRING, ''],
+                'URL': [VDR.V_STRING, ''],
+                '__MANY__': [VDR.V_STRING, ''],
+            },
+            'simulation': {
+                'default run length': [VDR.V_INTERVAL, DurationFloat(10)],
+                'speedup factor': [VDR.V_FLOAT],
+                'time limit buffer': [VDR.V_INTERVAL, DurationFloat(30)],
+                'fail cycle points': [VDR.V_STRING_LIST],
+                'fail try 1 only': [VDR.V_BOOLEAN, True],
+                'disable task event handlers': [VDR.V_BOOLEAN, True],
+            },
+            'environment filter': {
+                'include': [VDR.V_STRING_LIST],
+                'exclude': [VDR.V_STRING_LIST],
+            },
+            'job': {
+                'batch system': [VDR.V_STRING, 'background'],
+                'batch submit command template': [VDR.V_STRING],
+                'execution polling intervals': [VDR.V_INTERVAL_LIST, None],
+                'execution retry delays': [VDR.V_INTERVAL_LIST, None],
+                'execution time limit': [VDR.V_INTERVAL],
+                'submission polling intervals': [
+                    VDR.V_INTERVAL_LIST, None
+                ],
+                'submission retry delays': [VDR.V_INTERVAL_LIST, None],
+                'host': [VDR.V_STRING],
+                'owner': [VDR.V_STRING],
+                'platform': [VDR.V_STRING],
+                'suite definition directory': [VDR.V_STRING],
+                'retrieve job logs': [VDR.V_BOOLEAN],
+                'retrieve job logs max size': [VDR.V_STRING],
+                'retrieve job logs retry delays': [
+                    VDR.V_INTERVAL_LIST, None],
+            },
+            'events': {
+                'execution timeout': [VDR.V_INTERVAL],
+                'handlers': [VDR.V_STRING_LIST, None],
+                'handler events': [VDR.V_STRING_LIST, None],
+                'handler retry delays': [VDR.V_INTERVAL_LIST, None],
+                'mail events': [VDR.V_STRING_LIST, None],
+                'mail from': [VDR.V_STRING],
+                'mail retry delays': [VDR.V_INTERVAL_LIST, None],
+                'mail smtp': [VDR.V_STRING],
+                'mail to': [VDR.V_STRING],
+                'submission timeout': [VDR.V_INTERVAL],
+                'expired handler': [VDR.V_STRING_LIST, None],
+                'late offset': [VDR.V_INTERVAL, None],
+                'late handler': [VDR.V_STRING_LIST, None],
+                'submitted handler': [VDR.V_STRING_LIST, None],
+                'started handler': [VDR.V_STRING_LIST, None],
+                'succeeded handler': [VDR.V_STRING_LIST, None],
+                'failed handler': [VDR.V_STRING_LIST, None],
+                'submission failed handler': [VDR.V_STRING_LIST, None],
+                'warning handler': [VDR.V_STRING_LIST, None],
+                'critical handler': [VDR.V_STRING_LIST, None],
+                'retry handler': [VDR.V_STRING_LIST, None],
+                'submission retry handler': [VDR.V_STRING_LIST, None],
+                'execution timeout handler': [VDR.V_STRING_LIST, None],
+                'submission timeout handler': [VDR.V_STRING_LIST, None],
+                'custom handler': [VDR.V_STRING_LIST, None],
+            },
+            'suite state polling': {
+                'user': [VDR.V_STRING],
+                'host': [VDR.V_STRING],
+                'interval': [VDR.V_INTERVAL],
+                'max-polls': [VDR.V_INTEGER],
+                'message': [VDR.V_STRING],
+                'run-dir': [VDR.V_STRING],
+                'verbose mode': [VDR.V_BOOLEAN],
+            },
+            'environment': {
+                '__MANY__': [VDR.V_STRING],
+            },
+            'directives': {
+                '__MANY__': [VDR.V_STRING],
+            },
+            'outputs': {
+                '__MANY__': [VDR.V_STRING],
+            },
+            'parameter environment templates': {
+                '__MANY__': [VDR.V_STRING],
+            },
+        },
         '__MANY__': {
             'inherit': [VDR.V_STRING_LIST],
             'init-script': [VDR.V_STRING],
@@ -398,7 +497,11 @@ def upg(cfg, descr):
     u.deprecate('8.0.0', ['suite definition directory'])
     u.obsolete('8.0.0', ['communication'])
     u.deprecate('8.0.0', ['cylc', 'authentication'], ['cylc', 'authorization'])
-    u.deprecate('8.0.0', ['cylc'], ['general'])
+    u.deprecate(
+        '8.0.0',
+        ['general', 'authentication'],
+        ['general', 'authorization']
+    )
     u.obsolete('8.0.0', ['enable run directory housekeeping'])
 
     u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'shell'])
@@ -415,11 +518,7 @@ def upg(cfg, descr):
     u.obsolete('8.0.0', ['test battery'])
     u.obsolete('8.0.0', ['task host select command timeout'])
     u.obsolete('8.0.0', ['xtrigger function timeout'])
-    u.deprecate(
-        '8.0.0',
-        ['general', 'authentication'],
-        ['general', 'authorization']
-    )
+    u.deprecate('8.0.0', ['cylc'], ['general'])
     u.upgrade()
 
     # Upgrader cannot do this type of move.

@@ -8,8 +8,6 @@
 
 [suite servers]
 
-[test battery]
-
 [scheduling]
     initial cycle point = 19831213T0600Z
     final cycle point = 19831213T1200Z
