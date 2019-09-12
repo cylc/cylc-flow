@@ -10,6 +10,8 @@
 
 [test battery]
 
+[task events]
+
 [scheduling]
     initial cycle point = 19831213T0600Z
     final cycle point = 19831213T1200Z

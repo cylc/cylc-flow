@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test all current non-silent suite obsoletions and deprecations.
+# Test all suite obsoletions and deprecations related to change to cylc8
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 2
@@ -29,12 +29,14 @@ TEST_NAME=${TEST_NAME_BASE}-cmp
 cylc validate -v "${SUITE_NAME}" 2>&1 \
     | sed  -n -e 's/^WARNING - \( \* (.*$\)/\1/p' > 'val.out'
 cmp_ok val.out <<__END__
+ * (8.0.0) [documentation][urls][internet homepage] -> [documentation][cylc homepage] - value unchanged
  * (8.0.0) [cylc][authentication] -> [cylc][authorization] - value unchanged
  * (8.0.0) [runtime][Bob][remote] -> [runtime][Bob][job] - value unchanged
  * (8.0.0) [runtime][Charlie][remote] -> [runtime][Charlie][job] - value unchanged
  * (8.0.0) [runtime][Dai][remote] -> [runtime][Dai][job] - value unchanged
  * (8.0.0) [suite host self-identification] -> [suite run platforms][suite host self-identification] - value unchanged
  * (8.0.0) [suite servers] -> [suite run platforms] - value unchanged
+ * (8.0.0) [task events] -> [runtime][root][events] - value unchanged
  * (8.0.0) [test battery] - DELETED (OBSOLETE)
  * (8.0.0) [cylc] -> [general] - value unchanged
  * (8.0.0) [scheduling][dependencies][X][graph] -> [scheduling][graph][X] - for X in:
