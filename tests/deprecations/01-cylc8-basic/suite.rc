@@ -1,0 +1,28 @@
+# Test automatic deprecation and deletion of config items as specified
+# in cylc/flow/cfgspec/suite.py.
+
+[cylc]
+    log resolved dependencies =
+    abort if any task fails =
+    [[reference test]]
+        allow task failures =
+        live mode suite timeout =
+        dummy mode suite timeout =
+        dummy-local mode suite timeout =
+        simulation mode suite timeout =
+        required run mode =
+        suite shutdown event handler =
+
+
+[scheduling]
+    initial cycle point = 20150808T00
+    final cycle point = 20150808T00
+    [[graph]]
+        P1D = foo => cat & dog
+
+[runtime]
+    [[foo, cat, dog]]
+        [[[job]]]
+            shell = fish
+
+
