@@ -362,7 +362,6 @@ def main(parser, options, *args, color=False):
         # Cat suite logs, local only.
         if options.filename is not None:
             raise UserInputError("The '-f' option is for job logs only.")
-        tail_tmpl = str(glbl_cfg().get_host_item("tail command template"))
 
         logpath = get_suite_run_log_name(suite_name)
         if options.rotation_num:
