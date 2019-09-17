@@ -43,12 +43,6 @@ batch_sys.format_directives(job_conf) => lines
       job file directives are relevant for the batch system. The argument
       "job_conf" is a dict containing the job configuration.
 
-batch_sys.get_fail_signals(job_conf) => list of strings
-    * Return a list of names of signals to trap for reporting errors. Default
-      is ["EXIT", "ERR", "TERM", "XCPU"]. ERR and EXIT are always recommended.
-      EXIT is used to report premature stopping of the job script, and its trap
-      is unset at the end of the script.
-
 batch_sys.get_poll_many_cmd(job-id-list) => list
     * Return a list containing the shell command to poll the jobs in the
       argument list.
@@ -72,6 +66,12 @@ batch_sys.submit(job_file_path, submit_opts) => ret_code, out, err
 
 batch_sys.manip_job_id(job_id) => job_id
     * Modify the job ID that is returned by the job submit command.
+
+batch_sys.FAIL_SIGNALS => tuple<str>
+    * A tuple containing the names of signals to trap for reporting errors.
+      Default is ("EXIT", "ERR", "TERM", "XCPU"). ERR and EXIT are always
+      recommended.  EXIT is used to report premature stopping of the job
+      script, and its trap is unset at the end of the script.
 
 batch_sys.KILL_CMD_TMPL
     *  A Python string template for getting the batch system command to remove
@@ -135,7 +135,7 @@ from cylc.flow.wallclock import get_current_time_string
 from cylc.flow.parsec.OrderedDict import OrderedDict
 
 
-class JobPollContext(object):
+class JobPollContext():
     """Context object for a job poll."""
     CONTEXT_ATTRIBUTES = (
         'job_log_dir',  # cycle/task/submit_num
@@ -187,7 +187,7 @@ class JobPollContext(object):
         return '%s|%s' % (self.job_log_dir, json.dumps(ret))
 
 
-class BatchSysManager(object):
+class BatchSysManager():
     """Job submission, poll and kill.
 
     Manage the importing of job submission method modules.
@@ -198,6 +198,7 @@ class BatchSysManager(object):
     CYLC_BATCH_SYS_JOB_ID = "CYLC_BATCH_SYS_JOB_ID"
     CYLC_BATCH_SYS_JOB_SUBMIT_TIME = "CYLC_BATCH_SYS_JOB_SUBMIT_TIME"
     CYLC_BATCH_SYS_EXIT_POLLED = "CYLC_BATCH_SYS_EXIT_POLLED"
+    FAIL_SIGNALS = ("EXIT", "ERR", "TERM", "XCPU")
     LINE_PREFIX_BATCH_SYS_NAME = "# Job submit method: "
     LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL = "# Job submit command template: "
     LINE_PREFIX_EXECUTION_TIME_LIMIT = "# Execution time limit: "
@@ -243,9 +244,7 @@ class BatchSysManager(object):
     def get_fail_signals(self, job_conf):
         """Return a list of failure signal names to trap in the job file."""
         batch_sys = self._get_sys(job_conf['batch_system_name'])
-        if hasattr(batch_sys, "get_fail_signals"):
-            return batch_sys.get_fail_signals(job_conf)
-        return ["EXIT", "ERR", "TERM", "XCPU"]
+        return getattr(batch_sys, "FAIL_SIGNALS", self.FAIL_SIGNALS)
 
     def get_vacation_signal(self, job_conf):
         """Return the vacation signal name for a job file."""

@@ -27,7 +27,7 @@ run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 TEST_NAME="${TEST_NAME_BASE}-script"
 TASK_LOG_PATH="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/job/1/foo/01"
 run_ok "${TEST_NAME}" cylc jobscript "${SUITE_NAME}" foo.1
-grep_ok "^#SBATCH --job-name=${SUITE_NAME}.foo.1" "${TEST_NAME}.stdout"
+grep_ok "^#SBATCH --job-name=foo.1.${SUITE_NAME}" "${TEST_NAME}.stdout"
 grep_ok "^#SBATCH --output=${TASK_LOG_PATH}/job.out" "${TEST_NAME}.stdout"
 grep_ok "^#SBATCH --error=${TASK_LOG_PATH}/job.err" "${TEST_NAME}.stdout"
 #-------------------------------------------------------------------------------

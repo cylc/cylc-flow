@@ -178,6 +178,10 @@ Changed the `suite.rc` schema:
 restarts, and reloads).  Impact of the speedup is most noticeable when dealing
 with suite configurations that contain tasks with many task outputs.
 
+[#3358](https://github.com/cylc/cylc-flow/pull/3358) - on submitting jobs to
+SLURM or LSF, the job names will now follow the pattern `task.cycle.suite`
+(instead of `suite.task.cycle`), for consistency with jobs on PBS.
+
 [#3356](https://github.com/cylc/cylc-flow/pull/3356) - default job name length
 maximum for PBS is now 236 characters (i.e. assuming PBS 13 or newer). If you
 are still using PBS 12 or older, you should add a site configuration to
