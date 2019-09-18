@@ -18,6 +18,7 @@
 
 from operator import attrgetter
 from fnmatch import fnmatchcase
+from graphene.utils.str_converters import to_snake_case
 
 from cylc.flow.ws_data_mgr import (
     ID_DELIM, EDGES, FAMILY_PROXIES, TASK_PROXIES, WORKFLOW)
@@ -145,7 +146,7 @@ def sort_elements(elements, args):
     if sort_args and elements:
         sort_keys = [
             key
-            for key in sort_args.keys
+            for key in [to_snake_case(k) for k in sort_args.keys]
             if hasattr(elements[0], key)
         ]
         if sort_keys:

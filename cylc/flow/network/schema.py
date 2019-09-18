@@ -143,7 +143,7 @@ def parse_node_id(item, node_type=None):
 # Field args (i.e. for queries etc):
 class SortArgs(InputObjectType):
     keys = List(String, default_value=['id'])
-    reverse = Boolean()
+    reverse = Boolean(default_value=False)
 
 
 jobs_args = dict(
