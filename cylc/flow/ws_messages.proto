@@ -115,6 +115,7 @@ message PbJob {
     repeated string extra_logs = 29;
     string name = 30; /* filter item */
     string cycle_point = 31; /* filter item */
+    repeated string messages = 32;
 }
 
 message PbTask {

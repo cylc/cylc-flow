@@ -565,13 +565,9 @@ see `COPYING' in the Cylc source distribution.
             except Empty:
                 break
             self.message_queue.task_done()
-            if '/' in task_job:  # cycle/task-name/submit-num
-                cycle, task_name, submit_num, _ = (
-                    self.job_pool.parse_job_item(task_job))
-                task_id = TaskID.get(task_name, cycle)
-            else:  # back compat: task-name.cycle
-                task_id = task_job
-                submit_num = None
+            cycle, task_name, submit_num = (
+                self.job_pool.parse_job_item(task_job))
+            task_id = TaskID.get(task_name, cycle)
             messages.setdefault(task_id, [])
             messages[task_id].append(
                 (submit_num, event_time, severity, message))
