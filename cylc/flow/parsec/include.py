@@ -22,7 +22,8 @@ import re
 import sys
 from shutil import copy as shcopy
 
-from cylc.flow.parsec.exceptions import ParsecError, IncludeFileNotFoundError
+from cylc.flow.parsec.exceptions import (
+    FileParseError, IncludeFileNotFoundError)
 
 
 done = []
@@ -91,7 +92,11 @@ def inline(lines, dir_, filename, for_grep=False, for_edit=False, viewcfg=None,
         if m:
             q1, match, q2 = m.groups()
             if q1 and (q1 != q2):
-                raise ParsecError("mismatched quotes: " + line)
+                raise FileParseError(
+                    "mismatched quotes",
+                    line=line,
+                    fpath=filename,
+                )
             inc = os.path.join(dir_, match)
             if inc not in done:
                 if single or for_edit:
