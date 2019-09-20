@@ -38,7 +38,7 @@ from cylc.flow.exceptions import (
 from cylc.flow.hostuserutil import get_fqdn_by_host
 from cylc.flow.network.authentication import (
     generate_key_store, key_store_exists,
-    PRIVATE_KEY_DIR_NAME, STORE_DIR_NAME)
+    SERVER_KEYS_PARENT_DIR, STORE_DIR_NAME, PRIVATE_KEY_DIR_NAME)
 from cylc.flow.network.server import PB_METHOD_MAP
 from cylc.flow.suite_files import (
     ContactFileFields,
@@ -110,6 +110,22 @@ class ZMQClient(object):
         self.socket.curve_publickey = client_public_key
         self.socket.curve_secretkey = client_private_key
 
+        # A client can only connect to the server if it knows its public key,
+        # so we grab this from the location it was created on the filesystem:
+        try:
+            server_public_keyfile = os.path.join(
+                SERVER_KEYS_PARENT_DIR, STORE_DIR_NAME, PRIVATE_KEY_DIR_NAME,
+                "server.key_secret")
+            # 'load_certificate' will try to load both public & private keys
+            # from a provided file but will return None, not throw an error,
+            # for the latter item if not there (as for all public key files) so
+            # it is OK to use; there is no method to load only the public key.
+            server_public_keyfile = zmq.auth.load_certificate(
+                server_public_keyfile)[0]
+            self.socket.curve_serverkey = server_public_keyfile
+        except:  # temp, make more relevant & less shouty.
+            raise Exception("CAN'T LOCATE OR READ THE SERVER KEYS")
+
         self.socket.connect('tcp://%s:%d' % (host, port))
         # if there is no server don't keep the client hanging around
         self.socket.setsockopt(zmq.LINGER, int(self.DEFAULT_TIMEOUT))
@@ -135,13 +151,10 @@ class ZMQClient(object):
         if not args:
             args = {}
 
-        ### --- TODO (MAIN): set server public key, goes here? --- ###
-        ### --- e.g. self.socket.curve_serverkey = ... --- ###
-
-        # Note: the ZeroMQ messaging API is unchanged; send and receive
-        # messages as before. CURVE secures the messages by setting up
-        # public-key cryptography via the ZMQ messaging and the sockets,
-        # so there is no need to manually encrypt the messages (?)
+        # Note: we are using CurveZMQ to secure the messages (see
+        # self.curve_auth, self.socket.curve_...key etc.). We have set up
+        # public-key cryptography on the ZMQ messaging and sockets, so
+        # there is no need to encrypt messages ourselves before sending.
 
         # send message
         msg = {'command': command, 'args': args}

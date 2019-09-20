@@ -28,6 +28,9 @@ STORE_DIR_NAME = ".curve"
 PUBLIC_KEY_DIR_NAME = "public_key"  # dirname <root>/STORE_DIR_NAME/
 PRIVATE_KEY_DIR_NAME = "private_key"  # dirname <root>/STORE_DIR_NAME/
 
+# Directory to contain the sub-directories holding server authentication keys:
+SERVER_KEYS_PARENT_DIR = os.path.join(os.path.expanduser("~"), ".cylc")
+
 
 def generate_key_store(store_parent_dir, keys_tag):
     """ Generate two sub-directories, each holding a file with a CURVE key. """

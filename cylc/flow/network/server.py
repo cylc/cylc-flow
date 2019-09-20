@@ -35,7 +35,7 @@ from cylc.flow.exceptions import CylcError
 from cylc.flow.network.authorisation import Priv, authorise
 from cylc.flow.network.authentication import (
     generate_key_store, key_store_exists,
-    PRIVATE_KEY_DIR_NAME, STORE_DIR_NAME)
+    SERVER_KEYS_PARENT_DIR, STORE_DIR_NAME, PRIVATE_KEY_DIR_NAME)
 from cylc.flow.network.resolvers import Resolvers
 from cylc.flow.network.schema import schema
 from cylc.flow.suite_status import (
@@ -48,9 +48,6 @@ from cylc.flow import __version__ as CYLC_VERSION
 PB_METHOD_MAP = {
     'pb_entire_workflow': PbEntireWorkflow
 }
-
-# directory to contain the sub-directories holding server authentication keys:
-SERVER_KEYS_PARENT_DIR = os.path.join(os.path.expanduser("~"), ".cylc")
 
 
 class ZMQServer(object):
@@ -176,13 +173,10 @@ class ZMQServer(object):
                 LOG.exception(f'unexpected error: {str(exc)}')
                 continue
 
-            ### --- TODO (MAIN): set client public key, goes here? --- ###
-            ### --- e.g. self.socket.curve_clientkey = ... --- ###
-
-            # Note: the ZeroMQ messaging API is unchanged; send and receive
-            # messages as before. CURVE secures the messages by setting up
-            # public-key cryptography via the ZMQ messaging and the sockets,
-            # so there is no need to manually encrypt the messages (?)
+            # Note: we are using CurveZMQ to secure the messages (see
+            # self.curve_auth, self.socket.curve_...key etc.). We have set up
+            # public-key cryptography on the ZMQ messaging and sockets, so
+            # there is no need to encrypt messages ourselves before sending.
 
             # success case - serve the request
             res = self._receiver(json.load(msg))
