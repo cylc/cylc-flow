@@ -127,6 +127,12 @@ class UserFiles:
         DIRNAME = 'auth'
         """The name of this directory."""
 
+        PUBLIC_KEY = 'public_key'
+        """The name of the public key certificate file."""
+
+        PRIVATE_KEY = 'private_key'
+        """The name of the private (secret) key certificate file."""
+
     @classmethod
     def get_path(cls):
         """Return the path to this directory for the current user."""
@@ -135,6 +141,14 @@ class UserFiles:
             cls.DIRNAME,
             cls.Auth.DIRNAME,
         )
+
+    @classmethod
+    def get_certificate_name(cls, private=False):
+        """Return the tail of the path to an authentication certificate."""
+        if private:
+            return cls.Auth.PRIVATE_KEY
+        else:
+            return cls.Auth.PUBLIC_KEY
 
 
 REG_DELIM = "/"
