@@ -53,8 +53,11 @@ class ParsecConfig(object):
                     stack.append([value, pars])
                 elif not isinstance(value, list):
                     raise ParsecError(
-                        "Illegal file spec item: %s" % itemstr(
-                            pars, repr(value)))
+                        "Illegal file spec item: "
+                        + itemstr(pars, repr(value))
+                        + " "
+                        + repr(value)
+                    )
 
     def loadcfg(self, rcfile, title=""):
         """Parse a config file, upgrade or deprecate items if necessary,

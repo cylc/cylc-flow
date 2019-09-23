@@ -24,6 +24,7 @@ tests. So this suite of unit tests should not cover all the module features.
 import tempfile
 import unittest
 
+from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.parsec.include import *
 
 

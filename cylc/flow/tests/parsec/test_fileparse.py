@@ -36,7 +36,10 @@ def get_multiline():
             0,
             0,
             FileParseError,
-            "Multiline string not closed:\n   '''single line"
+            {
+                'reason': 'Multiline string not closed',
+                'line': "'''single line"
+            }
         ),
         (
             ["'''", "single line"],
@@ -44,7 +47,10 @@ def get_multiline():
             0,
             0,
             FileParseError,
-            "Invalid line:\n   '''"
+            {
+                'reason': 'Invalid line',
+                'line': "'''"
+            }
         ),
         (
             ["", "another value"],  # multiline, but we forgot to close quotes
@@ -52,7 +58,9 @@ def get_multiline():
             0,
             1,
             FileParseError,
-            "Multiline string not closed"
+            {
+                'reason': "Multiline string not closed"
+            }
         ),
         (
             ["", "c'''"],
@@ -76,7 +84,9 @@ def get_multiline():
             0,
             3,
             FileParseError,
-            "Multiline string not closed"
+            {
+                'reason': "Multiline string not closed"
+            }
         ),
         (
             ["", "c", "hello", ""],
@@ -92,7 +102,10 @@ def get_multiline():
             0,
             3,
             FileParseError,
-            "Invalid line:\n   a'''c"
+            {
+                'reason': 'Invalid line',
+                'line': "a'''c"
+            }
         )
     ]
     return r
@@ -224,7 +237,9 @@ class TestFileparse(unittest.TestCase):
                 with self.assertRaises(exc) as cm:
                     multiline(flines, value, index, maxline)
                 if isinstance(cm.exception, FileParseError):
-                    self.assertEqual(expected, str(cm.exception))
+                    exc = cm.exception
+                    for key, attr in expected.items():
+                        assert getattr(exc, key) == attr
             else:
                 r = multiline(flines, value, index, maxline)
                 self.assertEqual(expected, r)
@@ -397,7 +412,10 @@ class TestFileparse(unittest.TestCase):
                 with self.assertRaises(FileParseError) as cm:
                     parse(fpath=fpath, output_fname=of.name,
                           template_vars=template_vars)
-                self.assertIn("Invalid line 1: Cylc", str(cm.exception))
+                exc = cm.exception
+                assert exc.reason == 'Invalid line'
+                assert exc.line_num == 1
+                assert exc.line == 'Cylc'
 
     def test_parse_comments(self):
         with tempfile.NamedTemporaryFile() as of:
@@ -459,8 +477,9 @@ class TestFileparse(unittest.TestCase):
             with self.assertRaises(FileParseError) as cm:
                 parse(fpath=fpath, output_fname="",
                       template_vars=template_vars)
-            self.assertEqual("bracket mismatch:\n   [[section1]",
-                             str(cm.exception))
+            exc = cm.exception
+            assert exc.reason == 'bracket mismatch'
+            assert exc.line == '[[section1]'
 
     def test_parse_with_sections_error_wrong_level(self):
         with tempfile.NamedTemporaryFile() as of:
@@ -477,9 +496,9 @@ class TestFileparse(unittest.TestCase):
                 with self.assertRaises(FileParseError) as cm:
                     parse(fpath=fpath, output_fname=of.name,
                           template_vars=template_vars)
-                self.assertEqual(
-                    "Error line 4: [[[subsection1]]]",
-                    str(cm.exception))
+                exc = cm.exception
+                assert exc.line_num == 4
+                assert exc.line == '[[[subsection1]]]'
 
 
 if __name__ == '__main__':

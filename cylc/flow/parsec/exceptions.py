@@ -29,44 +29,61 @@ TRACEBACK_WRAPPER = textwrap.TextWrapper()
 class ParsecError(Exception):
     """Generic exception for Parsec errors."""
 
-    def __str__(self):
-        return ' '.join(self.args)
-
 
 class ItemNotFoundError(ParsecError, KeyError):
     """Error raised for missing configuration items."""
 
-    def __init__(self, msg):
-        ParsecError.__init__(self, 'item not found: %s' % msg)
+    def __init__(self, item):
+        self.item = item
+
+    def __str__(self):
+        return f'item not found: {self.item}'
 
 
 class NotSingleItemError(ParsecError, TypeError):
     """Error raised if an iterable is given where an item is expected."""
 
-    def __init__(self, msg):
-        ParsecError.__init__(self, 'not a singular item: %s' % msg)
+    def __init__(self, item):
+        self.item = item
+
+    def __str__(self):
+        return f'not a singular item: {self.item}'
 
 
 class FileParseError(ParsecError):
     """Error raised when attempting to read in the config file(s)."""
 
     def __init__(self, reason, index=None, line=None, lines=None,
-                 err_type=None):
+                 err_type=None, fpath=None):
+        self.reason = reason
+        self.line_num = index + 1 if index is not None else None
+        self.line = line
+        self.lines = lines
+        self.err_type = err_type
+        self.fpath = fpath
+
+    def __str__(self):
         msg = ''
-        msg += reason
-        if index:
-            msg += " (line " + str(index + 1) + ")"
-        if line:
-            msg += ":\n   " + line.strip()
-        if lines:
-            msg += "\nContext lines:\n" + "\n".join(lines)
+        msg += self.reason
+
+        if self.line_num is not None or self.fpath:
+            temp = []
+            if self.fpath:
+                temp.append(f'in {self.fpath}')
+            if self.line_num is not None:
+                temp.append(f'line {self.line_num}')
+            msg += f' ({" ".join(temp)})'
+        if self.line:
+            msg += ":\n   " + self.line.strip()
+        if self.lines:
+            msg += "\nContext lines:\n" + "\n".join(self.lines)
             msg += "\t<--"
-            if err_type:
-                msg += ' %s' % err_type
-        if index:
+            if self.err_type:
+                msg += ' %s' % self.err_type
+        if self.line_num:
             # TODO - make 'view' function independent of cylc:
             msg += "\n(line numbers match 'cylc view -p')"
-        ParsecError.__init__(self, msg)
+        return msg
 
 
 class EmPyError(FileParseError):
