@@ -45,8 +45,8 @@ class JobPool(object):
     """Pool of protobuf job messages."""
     # TODO: description, args, and types
 
-    ERR_PREFIX_JOBID_MATCH = "No matching jobs found: "
-    ERR_PREFIX_JOB_NOT_ON_SEQUENCE = "Invalid cycle point for job: "
+    ERR_PREFIX_JOBID_MATCH = 'No matching jobs found: '
+    ERR_PREFIX_JOB_NOT_ON_SEQUENCE = 'Invalid cycle point for job: '
 
     def __init__(self, suite, owner):
         self.suite = suite
@@ -64,7 +64,7 @@ class JobPool(object):
         t_id = f'{self.workflow_id}{ID_DELIM}{point_string}{ID_DELIM}{name}'
         j_id = f'{t_id}{ID_DELIM}{sub_num}'
         j_buf = PbJob(
-            stamp=f"{j_id}@{update_time}",
+            stamp=f'{j_id}@{update_time}',
             id=j_id,
             submit_num=sub_num,
             state=JOB_STATUSES_ALL[0],
@@ -86,26 +86,26 @@ class JobPool(object):
             cycle_point=point_string,
         )
         j_buf.batch_sys_conf.extend(
-            [f"{key}={val}" for key, val in
+            [f'{key}={val}' for key, val in
                 job_conf['batch_system_conf'].items()])
         j_buf.directives.extend(
-            [f"{key}={val}" for key, val in
+            [f'{key}={val}' for key, val in
                 job_conf['directives'].items()])
         j_buf.environment.extend(
-            [f"{key}={val}" for key, val in
+            [f'{key}={val}' for key, val in
                 job_conf['environment'].items()])
         j_buf.param_env_tmpl.extend(
-            [f"{key}={val}" for key, val in
+            [f'{key}={val}' for key, val in
                 job_conf['param_env_tmpl'].items()])
         j_buf.param_var.extend(
-            [f"{key}={val}" for key, val in
+            [f'{key}={val}' for key, val in
                 job_conf['param_var'].items()])
         j_buf.extra_logs.extend(job_conf['logfiles'])
         self.pool[j_id] = j_buf
         self.task_jobs.setdefault(t_id, []).append(j_id)
 
     def add_job_msg(self, job_d, msg):
-        """Set job attribute."""
+        """Add message to job."""
         update_time = time()
         point, name, sub_num = self.parse_job_item(job_d)
         j_id = (
@@ -113,7 +113,7 @@ class JobPool(object):
             f'{ID_DELIM}{name}{ID_DELIM}{sub_num}')
         try:
             self.pool[j_id].messages.append(msg)
-            self.pool[j_id].stamp = f"{j_id}@{update_time}"
+            self.pool[j_id].stamp = f'{j_id}@{update_time}'
         except (KeyError, TypeError):
             pass
 
@@ -146,8 +146,8 @@ class JobPool(object):
             f'{ID_DELIM}{name}{ID_DELIM}{sub_num}')
         try:
             setattr(self.pool[j_id], attr_key, attr_val)
-            self.pool[j_id].stamp = f"{j_id}@{update_time}"
-        except (KeyError, TypeError):
+            self.pool[j_id].stamp = f'{j_id}@{update_time}'
+        except (KeyError, TypeError, AttributeError):
             pass
 
     def set_job_state(self, job_d, status):
@@ -160,14 +160,14 @@ class JobPool(object):
         if status in JOB_STATUSES_ALL:
             try:
                 self.pool[j_id].state = status
-                self.pool[j_id].stamp = f"{j_id}@{update_time}"
+                self.pool[j_id].stamp = f'{j_id}@{update_time}'
             except KeyError:
                 pass
 
     def set_job_time(self, job_d, event_key, time_str=None):
         """Set an event time in job pool object.
 
-        Set values of both event_key + "_time" and event_key + "_time_string".
+        Set values of both event_key + '_time' and event_key + '_time_string'.
         """
         update_time = time()
         point, name, sub_num = self.parse_job_item(job_d)
@@ -176,8 +176,8 @@ class JobPool(object):
             f'{ID_DELIM}{name}{ID_DELIM}{sub_num}')
         try:
             setattr(self.pool[j_id], event_key + '_time', time_str)
-            self.pool[j_id].stamp = f"{j_id}@{update_time}"
-        except KeyError:
+            self.pool[j_id].stamp = f'{j_id}@{update_time}'
+        except (KeyError, TypeError, AttributeError):
             pass
 
     @staticmethod
@@ -187,14 +187,14 @@ class JobPool(object):
         or name.point.submit_num syntax (back compat).
         """
         submit_num = None
-        if item.count("/") > 1:
-            point_str, name_str, submit_num = item.split("/", 2)
-        elif "/" in item:
-            point_str, name_str = item.split("/", 1)
-        elif item.count(".") > 1:
-            name_str, point_str, submit_num = item.split(".", 2)
-        elif "." in item:
-            name_str, point_str = item.split(".", 1)
+        if item.count('/') > 1:
+            point_str, name_str, submit_num = item.split('/', 2)
+        elif '/' in item:
+            point_str, name_str = item.split('/', 1)
+        elif item.count('.') > 1:
+            name_str, point_str, submit_num = item.split('.', 2)
+        elif '.' in item:
+            name_str, point_str = item.split('.', 1)
         else:
             name_str, point_str = (item, None)
         try:
