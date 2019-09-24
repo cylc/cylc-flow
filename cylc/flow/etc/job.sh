@@ -36,16 +36,6 @@ cylc__job__main() {
         set -x
     fi
     # Prelude
-    typeset JOB_INIT_ENV=
-    # conf/job-init-env.sh for back-compat pre 7.7.0.
-    JOB_INIT_ENV="${HOME}/.cylc/job-init-env.sh"
-    if [[ -f "${JOB_INIT_ENV}" ]]; then
-        if "${CYLC_DEBUG:-false}"; then
-            . "${JOB_INIT_ENV}"
-        else
-            . "${JOB_INIT_ENV}" 1>'/dev/null' 2>&1
-        fi
-    fi
     # Init-Script
     cylc__job__run_inst_func 'global_init_script'
     cylc__job__run_inst_func 'init_script'
