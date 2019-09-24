@@ -507,6 +507,7 @@ class Job(ObjectType):
     param_env_tmpl = List(String)
     param_var = List(String)
     extra_logs = List(String)
+    messages = List(String)
 
 
 class Task(ObjectType):
