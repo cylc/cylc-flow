@@ -6,7 +6,7 @@ milestones](https://github.com/cylc/cylc-flow/milestones?state=closed) for each
 release.
 
 -------------------------------------------------------------------------------
-## __cylc-8.0a1 (2019-??-??)__
+## __cylc-8.0a1 (2019-09-18)__
 
 Second alpha release of Cylc 8.
 
