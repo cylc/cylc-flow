@@ -35,7 +35,6 @@ cylc__job__main() {
         fi
         set -x
     fi
-    # Prelude
     # Init-Script
     cylc__job__run_inst_func 'global_init_script'
     cylc__job__run_inst_func 'init_script'
