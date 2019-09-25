@@ -136,7 +136,8 @@ def scan_many(items, methods=None, timeout=None, ordered=False):
         list: [(host, port, identify_result), ...]
 
     """
-    args = ((reg, host, port, timeout, methods) for reg, host, port in items)
+    args = ((reg, host, port, timeout, methods)
+            for reg, host, port, _ in items)
 
     if ordered:
         yield from async_map(scan_one, args)
@@ -211,7 +212,7 @@ def get_scan_items_from_fs(
     active, or all (active plus registered but dormant), suites.
 
     Yields:
-        tuple - (reg, host, port)
+        tuple - (reg, host, port, pub_port)
 
     """
     if owner_pattern is None:
@@ -260,7 +261,8 @@ def get_scan_items_from_fs(
                 yield (
                     reg,
                     contact_data[ContactFileFields.HOST],
-                    contact_data[ContactFileFields.PORT]
+                    contact_data[ContactFileFields.PORT],
+                    contact_data[ContactFileFields.PUBLISH_PORT]
                 )
             else:
                 try:

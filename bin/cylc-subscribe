@@ -1,0 +1,97 @@
+#!/usr/bin/env python3
+
+# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+"""cylc subscribe [OPTIONS] ARGS
+
+(This command is for internal use.)
+Invoke suite subscriber to receive published workflow output.
+"""
+
+import asyncio
+import json
+import sys
+if '--use-ssh' in sys.argv[1:]:
+    sys.argv.remove('--use-ssh')
+    from cylc.flow.remote import remrun
+    if remrun():
+        sys.exit(0)
+import time
+
+import zmq
+import zmq.asyncio
+from google.protobuf.json_format import MessageToDict
+
+from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.network.scan import get_scan_items_from_fs, re_compile_filters
+from cylc.flow.network.subscriber import WorkflowSubscriber
+from cylc.flow.terminal import cli_function
+from cylc.flow.ws_messages_pb2 import PbWorkflow
+
+
+def print_workflow(msg):
+    data = PbWorkflow()
+    data.ParseFromString(msg)
+    sys.stdout.write(
+        json.dumps(MessageToDict(data), indent=4) + '\n')
+
+
+def get_option_parser():
+    parser = COP(__doc__, comms=True, argdoc=[
+        ('REG', 'Suite name'),
+        ('[SUBTYPE]', 'Subscription Feed Name')])
+
+    parser.add_option(
+        '-n', '--no-input',
+        help='Do not read from STDIN, assume null input',
+        action='store_true', dest='no_input')
+
+    return parser
+
+
+@cli_function(get_option_parser)
+def main(_, options, suite, subtype=None):
+    host = None
+    port = None
+    cre_owner, cre_name = re_compile_filters(None, ['.*'])
+    while True:
+        for s_reg, s_host, s_port, s_pub_port in get_scan_items_from_fs(
+                cre_owner, cre_name):
+            if s_reg == suite:
+                host = s_host
+                port = int(s_pub_port)
+                break
+        if host and port:
+            break
+        time.sleep(5)
+
+    print(f'Connecting to tcp://{host}:{port}')
+    subscriber = WorkflowSubscriber(host, port)
+
+    asyncio.ensure_future(subscriber.subscribe(print_workflow))
+
+    # run Python run
+    try:
+        asyncio.get_event_loop().run_forever()
+    except KeyboardInterrupt:
+        print('Disconnecting')
+        subscriber.stop()
+        exit()
+
+
+if __name__ == '__main__':
+    main()

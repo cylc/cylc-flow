@@ -158,13 +158,15 @@ class TestScan(TestCase):
             ]
             mocked_contact_file_fields.HOST = 'host'
             mocked_contact_file_fields.PORT = 'port'
+            mocked_contact_file_fields.PUBLISH_PORT = 'pub_port'
 
             # mock srv_files_mgr.load_contact_file
             def my_load_contact_file(reg, _):
                 if reg == 'good':
                     return {
                         'host': 'localhost',
-                        'port': 9999
+                        'port': 9999,
+                        'pub_port': 1234
                     }
                 else:
                     raise SuiteServiceFileError(reg)
@@ -178,7 +180,7 @@ class TestScan(TestCase):
                 suites = list(get_scan_items_from_fs(
                     owner_pattern=owner_pattern, active_only=True))
                 # will match blog/five but will stop once it finds log
-                self.assertEqual([('good', 'localhost', 9999)], suites)
+                self.assertEqual([('good', 'localhost', 9999, 1234)], suites)
 
     # --- tests for re_compile_filters()
 

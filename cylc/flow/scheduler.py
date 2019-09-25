@@ -52,6 +52,7 @@ from cylc.flow.loggingutil import (
     ReferenceLogFileHandler
 )
 from cylc.flow.network.server import SuiteRuntimeServer
+from cylc.flow.network.publisher import WorkflowPublisher
 from cylc.flow.parsec.util import printcfg
 from cylc.flow.parsec.validate import DurationFloat
 from cylc.flow.pathutil import (
@@ -136,6 +137,10 @@ class Scheduler(object):
     START_MESSAGE_TMPL = (
         START_MESSAGE_PREFIX +
         'url=%(comms_method)s://%(host)s:%(port)s/ pid=%(pid)s')
+    START_PUB_MESSAGE_PREFIX = 'Suite publisher: '
+    START_PUB_MESSAGE_TMPL = (
+        START_PUB_MESSAGE_PREFIX +
+        'url=%(comms_method)s://%(host)s:%(port)s')
 
     # Dependency negotiation etc. will run after these commands
     PROC_CMDS = (
@@ -191,6 +196,8 @@ class Scheduler(object):
         self.suite_event_handler = None
         self.server = None
         self.port = None
+        self.publisher = None
+        self.sub_port = None
         self.command_queue = None
         self.message_queue = None
         self.ext_trigger_queue = None
@@ -246,10 +253,13 @@ class Scheduler(object):
                 daemonize(self)
             self._setup_suite_logger()
             self.ws_data_mgr = WsDataMgr(self)
-            self.server = SuiteRuntimeServer(self)
             port_range = glbl_cfg().get(['suite servers', 'run ports'])
+            self.server = SuiteRuntimeServer(self)
             self.server.start(port_range[0], port_range[-1])
             self.port = self.server.port
+            self.publisher = WorkflowPublisher(self.server.context)
+            self.publisher.start(port_range[0], port_range[-1])
+            self.pub_port = self.publisher.port
             self.configure()
             self.profiler.start()
             self.run()
@@ -433,8 +443,15 @@ see `COPYING' in the Cylc source distribution.
             self.START_MESSAGE_TMPL % {
                 'comms_method': 'tcp',
                 'host': self.host,
-                'port': self.server.port,
+                'port': self.port,
                 'pid': os.getpid()},
+            extra=log_extra,
+        )
+        LOG.info(
+            self.START_PUB_MESSAGE_TMPL % {
+                'comms_method': 'tcp',
+                'host': self.host,
+                'port': self.pub_port},
             extra=log_extra,
         )
         LOG.info('Run: (re)start=%d log=%d', n_restart, 1, extra=log_extra_num)
@@ -965,6 +982,8 @@ see `COPYING' in the Cylc source distribution.
                 str(self.server.port),
             fields.PROCESS:
                 process_str,
+            fields.PUBLISH_PORT:
+                str(self.publisher.port),
             fields.SSH_USE_LOGIN_SHELL:
                 str(glbl_cfg().get_host_item('use login shell')),
             fields.SUITE_RUN_DIR_ON_SUITE_HOST:
@@ -1592,6 +1611,9 @@ see `COPYING' in the Cylc source distribution.
             # WServer incremental data store update
             self.ws_data_mgr.increment_graph_elements()
             self.ws_data_mgr.update_dynamic_elements(updated_nodes)
+            # Publish updates:
+            flow_data = self.ws_data_mgr.data[f'{self.owner}|{self.suite}']
+            self.publisher.publish(flow_data['workflow'], 'SerializeToString')
             # TODO: deprecate after CLI GraphQL migration
             self.state_summary_mgr.update(self)
             # Database update
@@ -1732,6 +1754,8 @@ see `COPYING' in the Cylc source distribution.
 
         if self.server:
             self.server.stop()
+        if self.publisher:
+            self.publisher.stop()
 
         # Flush errors and info before removing suite contact file
         sys.stdout.flush()

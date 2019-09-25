@@ -249,6 +249,7 @@ control_commands['broadcast'] = ['broadcast', 'bcast']
 control_commands['ext-trigger'] = ['ext-trigger', 'external-trigger']
 control_commands['checkpoint'] = ['checkpoint']
 control_commands['client'] = ['client']
+control_commands['subscribe'] = ['subscribe']
 
 utility_commands = {}
 utility_commands['cycle-point'] = [
@@ -363,6 +364,7 @@ comsum['broadcast'] = 'Change suite [runtime] settings on the fly'
 comsum['ext-trigger'] = 'Report an external trigger event to a suite'
 comsum['checkpoint'] = 'Tell suite to checkpoint its current state'
 comsum['client'] = '(Internal) Invoke suite runtime client, expect JSON input'
+comsum['subscribe'] = '(Internal) Invoke suite subscriber'
 # discovery
 comsum['ping'] = 'Check that a suite is running'
 comsum['scan'] = 'Scan a host for running suites'
