@@ -22,8 +22,7 @@ from tempfile import TemporaryDirectory
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import CylcError
-from cylc.flow.network.authentication import (
-    encode_, decode_, generate_key_store)
+from cylc.flow.network.authentication import encode_, decode_
 from cylc.flow.network.server import ZMQServer
 from cylc.flow.suite_srv_files_mgr import SuiteSrvFilesManager
 
@@ -38,20 +37,28 @@ PORT_RANGE = get_port_range()
 
 def test_single_port():
     """Test server on a single port and port in use exception."""
-    # Create a mock '.cylc' directory to allow the sever keys to be stored in
-    # the usual location, under '~/.cylc/.curve'.
-    with TemporaryDirectory() as homedir:
-        curve_directory = Path(homedir, SuiteSrvFilesManager.DIR_BASE_ETC,
-                               SuiteSrvFilesManager.DIR_BASE_AUTH_KEYS)
-        curve_directory.mkdir(parents=True)
+
+    with TemporaryDirectory() as server_keys_parent_dir:
+
+        # Create two temporary directories for holding the server keys.
+        server_keys_dir_1 = os.path.join(
+            server_keys_parent_dir, "server_keys_dir_1")
+        server_keys_dir_2 = os.path.join(
+            server_keys_parent_dir, "server_keys_dir_2")
+        for keys_dir in (server_keys_dir_1, server_keys_dir_2):
+            if not os.path.exists(keys_dir):
+                os.makedirs(keys_dir)
 
         serv1 = ZMQServer(encode_, decode_)
+        serv1.srv_files_mgr.SERVER_KEYS_PARENT_DIR = server_keys_dir_1
         serv2 = ZMQServer(encode_, decode_)
+        serv2.srv_files_mgr.SERVER_KEYS_PARENT_DIR = server_keys_dir_2
 
         serv1.start(*PORT_RANGE)
         port = serv1.port
 
-        with pytest.raises(CylcError, match=r"Address already in use") as exc:
+        with pytest.raises(
+                CylcError, match=r"Address already in use") as exc:
             serv2.start(port, port)
 
         serv1.stop()

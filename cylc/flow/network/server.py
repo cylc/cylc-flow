@@ -15,6 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Server for suite runtime API."""
 
+from functools import partial
+
 import getpass
 import os
 from queue import Queue
@@ -32,10 +34,13 @@ from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import CylcError
 from cylc.flow.network.authorisation import Priv, authorise
 from cylc.flow.network.authentication import (
-    generate_key_store, key_store_exists, encode_, decode_,
-    SERVER_KEYS_PARENT_DIR, PRIVATE_KEY_LOC)
+    encode_, decode_, get_server_private_key_location)
 from cylc.flow.network.resolvers import Resolvers
 from cylc.flow.network.schema import schema
+from cylc.flow.suite_files import (
+    UserFiles,
+    generate_key_store
+)
 from cylc.flow.suite_status import (
     KEY_META, KEY_NAME, KEY_OWNER, KEY_STATES,
     KEY_TASKS_BY_STATE, KEY_UPDATE_TIME, KEY_VERSION)
@@ -106,12 +111,16 @@ class ZMQServer(object):
         self.socket.RCVTIMEO = int(self.RECV_TIMEOUT) * 1000
 
         # create & register server keys for authentication
-        generate_key_store(SERVER_KEYS_PARENT_DIR, "server")
-        if not key_store_exists:
+        generate_key_store(UserFiles.get_user_certificate_full_path(),
+                           "server", parent=False)
+        if not key_store_exists(UserFiles.get_path()):
             raise CylcError("Unable to generate Cylc ZMQ server keys.")
         server_public_key, server_private_key = zmq.auth.load_certificate(
             os.path.join(
-                SERVER_KEYS_PARENT_DIR, PRIVATE_KEY_LOC, "server.key_secret"))
+                UserFiles.Auth.get_user_certificate_full_path(private=True),
+                UserFiles.Auth.SERVER_PRIVATE_KEY_CERTIFICATE
+            )
+        )
         self.socket.curve_publickey = server_public_key
         self.socket.curve_secretkey = server_private_key
         self.socket.curve_server = True
@@ -1262,7 +1271,6 @@ class SuiteRuntimeServer(ZMQServer):
         return (True, 'Command queued')
 
     # UIServer Data Commands
-    #
     @authorise(Priv.READ)
     @ZMQServer.expose
     def pb_entire_workflow(self):

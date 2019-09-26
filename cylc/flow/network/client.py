@@ -16,10 +16,10 @@
 """Client for suite runtime API."""
 
 import asyncio
+from functools import partial
 import os
 import socket
 import sys
-from functools import partial
 from typing import Union
 
 import zmq
@@ -35,11 +35,11 @@ from cylc.flow.exceptions import (
 )
 from cylc.flow.hostuserutil import get_fqdn_by_host
 from cylc.flow.network.authentication import (
-    generate_key_store, key_store_exists, encode_, decode_,
-    SERVER_KEYS_PARENT_DIR, PRIVATE_KEY_LOC)
+    encode_, decode_, get_client_private_key_location)
 from cylc.flow.network.server import PB_METHOD_MAP
 from cylc.flow.suite_files import (
     ContactFileFields,
+    UserFiles,
     detect_old_contact_file,
     load_contact_file
 )
@@ -65,8 +65,8 @@ class ZMQClient(object):
         decode_method (function):
             Translates incoming message strings into digestible data.
             ``decode_method(str) -> json``
-        client_keystore (path):
-            The path to the directory to house the auth keys (sub-directory).
+        secret_key_loc (function):
+            Return path of suite's secret keyfile for server communication.
         timeout (float):
             Set the default timeout in seconds. The default is
             ``ZMQClient.DEFAULT_TIMEOUT``.
@@ -91,7 +91,7 @@ class ZMQClient(object):
     DEFAULT_TIMEOUT = 5.  # 5 seconds
 
     def __init__(
-            self, host, port, encode_method, decode_method, client_keystore,
+            self, host, port, encode_method, decode_method, secret_key_loc,
             timeout=None, timeout_handler=None, header=None):
         if timeout is None:
             timeout = self.DEFAULT_TIMEOUT
@@ -100,26 +100,34 @@ class ZMQClient(object):
         self.timeout = timeout * 1000
         self.timeout_handler = timeout_handler
 
+        self.secret_key = secret_key_loc
+        try:
+            secret = self.secret_key()
+        # there is no need to encrypt messages ourselves before sending.
+        except SuiteServiceFileError:
+            raise ClientError("Could not read suite's private key file.")
+
         # open the ZMQ socket
         self.socket = CONTEXT.socket(zmq.REQ)
 
-        # create client keys for authentication
-        generate_key_store(client_keystore, "client")
-        if not key_store_exists:
-            raise ClientError("Unable to generate or store client keys.")
-
-        # register client keys for authentication
-        client_public_key, client_private_key = zmq.auth.load_certificate(
-            os.path.join(
-                client_keystore, PRIVATE_KEY_LOC, "client.key_secret"))
+        # Fetch client keys, generated at registration, for authentication
+        error_msg = "Failed to find suite's public key, so cannot connect."
+        try:
+            client_public_key, client_private_key = zmq.auth.load_certificate(
+                secret)
+        except (OSError, ValueError):
+            raise ClientError(error_msg)
+        if client_private_key is None:  # this cannot be caught by exception
+            raise ClientError(error_msg)
         self.socket.curve_publickey = client_public_key
         self.socket.curve_secretkey = client_private_key
 
         # A client can only connect to the server if it knows its public key,
         # so we grab this from the location it was created on the filesystem:
+        server_public_keyfile = os.path.join(
+            UserFiles.get_user_certificate_full_path(),
+            UserFiles.Auth.SERVER_PUBLIC_KEY_CERTIFICATE)
         try:
-            server_public_keyfile = os.path.join(
-                SERVER_KEYS_PARENT_DIR, PRIVATE_KEY_LOC, "server.key_secret")
             # 'load_certificate' will try to load both public & private keys
             # from a provided file but will return None, not throw an error,
             # for the latter item if not there (as for all public key files) so
@@ -236,7 +244,6 @@ class SuiteRuntimeClient(ZMQClient):
             owner: str = None,
             host: str = None,
             port: Union[int, str] = None,
-            client_keystore: str = None,
             timeout: Union[float, str] = None
     ):
         """Initiate a client to the suite runtime API.
@@ -270,15 +277,12 @@ class SuiteRuntimeClient(ZMQClient):
         if not (host and port):
             host, port = self.get_location(suite, owner, host)
 
-        # a suite's service directory will hold its auth keys sub-directory
-        suite_srv_dir = SuiteSrvFilesManager().get_suite_srv_dir(suite, owner)
-
         super().__init__(
             host=host,
             port=port,
             encode_method=encode_,
             decode_method=decode_,
-            client_keystore=suite_srv_dir,
+            secret_key_loc=partial(get_client_private_key_location, suite),
             timeout=timeout,
             header=self.get_header(),
             timeout_handler=partial(self._timeout_handler, suite, host, port)

@@ -20,7 +20,10 @@
 from functools import lru_cache
 import os
 import re
+import shutil
+import stat
 from string import ascii_letters, digits
+import zmq.auth
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
@@ -127,11 +130,23 @@ class UserFiles:
         DIRNAME = 'auth'
         """The name of this directory."""
 
-        PUBLIC_KEY = 'public_key'
-        """The name of the public key certificate file."""
+        PUBLIC_KEY_DIRNAME = 'public_key'
+        """The name of the directory holding the public key certificate."""
 
-        PRIVATE_KEY = 'private_key'
-        """The name of the private (secret) key certificate file."""
+        PRIVATE_KEY_DIRNAME = 'private_key'
+        """The name of the directory holding the private key certificate."""
+
+        SERVER_PRIVATE_KEY_CERTIFICATE = "server.key_secret"
+        """The name of the server's private key certificate."""
+
+        CLIENT_PRIVATE_KEY_CERTIFICATE = "client.key_secret"
+        """The name of a client's private key certificate."""
+
+        SERVER_PUBLIC_KEY_CERTIFICATE = "server.key"
+        """The name of the server's public key certificate."""
+
+        CLIENT_PUBLIC_KEY_CERTIFICATE = "client.key"
+        """The name of a client's public key certificate."""
 
     @classmethod
     def get_path(cls):
@@ -143,12 +158,28 @@ class UserFiles:
         )
 
     @classmethod
-    def get_certificate_name(cls, private=False):
-        """Return the tail of the path to an authentication certificate."""
+    def get_user_certificate_full_path(cls, private=False):
+        """Return the directory path of a certificate for the current user."""
         if private:
-            return cls.Auth.PRIVATE_KEY
+            certificate_dirname = cls.Auth.PRIVATE_KEY_DIRNAME
         else:
-            return cls.Auth.PUBLIC_KEY
+            certificate_dirname = cls.Auth.PUBLIC_KEY_DIRNAME
+        return os.path.join(
+            cls.get_path(),
+            certificate_dirname
+        )
+
+    @classmethod
+    def get_certificate_path_tail(cls, private=False):
+        """Return the directory path of a certificate for the current user."""
+        if private:
+            certificate_dirname = cls.Auth.PRIVATE_KEY_DIRNAME
+        else:
+            certificate_dirname = cls.Auth.PUBLIC_KEY_DIRNAME
+        return os.path.join(
+            cls.Auth.DIRNAME,
+            certificate_dirname
+        )
 
 
 REG_DELIM = "/"
@@ -306,8 +337,22 @@ def get_auth_item(item, reg, owner=None, host=None, content=False):
     """
     if item not in [
             SuiteFiles.Service.PASSPHRASE, SuiteFiles.Service.CONTACT,
-            SuiteFiles.Service.CONTACT2]:
+            SuiteFiles.Service.CONTACT2,
+            UserFiles.CLIENT_PRIVATE_KEY_CERTIFICATE]:
         raise ValueError("%s: item not recognised" % item)
+
+    # For the FILE_BASE_SUITE_PRIVATE_KEY, i.e. CurveZMQ key, case, we only
+    # need to check Case 3/ (treat as content=False), so check this first.
+    #
+    # TODO: apply these auth keys for remote, not just local, cases.
+    if item == UserFiles.CLIENT_PRIVATE_KEY_CERTIFICATE:
+        path = os.path.join(
+            get_suite_srv_dir(reg),
+            UserFiles.get_certificate_path_tail(private=True)
+        )
+        value = self._locate_item(item, path)
+        if value:
+            return value
 
     if reg == os.getenv('CYLC_SUITE_NAME'):
         env_keys = []
@@ -558,6 +603,11 @@ def create_auth_files(reg):
     srv_d = get_suite_srv_dir(reg)
     os.makedirs(srv_d, exist_ok=True)
 
+    # If necessary, generate directory with sub-directories holding
+    # separately the public and private keys for authentication:
+    if not key_store_exists(srv_d):
+        generate_key_store(srv_d, "client")
+
     # Create a new passphrase for the suite if necessary.
     if not _locate_item(SuiteFiles.Service.PASSPHRASE, srv_d):
         import random
@@ -736,3 +786,68 @@ def _locate_item(item, path):
     fname = os.path.join(path, item)
     if os.path.exists(fname):
         return fname
+
+
+ def return_key_locations(store_dir):
+        """Return the paths to a directory's key files: (public, private)."""
+        return (
+            os.path.join(store_dir, UserFiles.Auth.PUBLIC_KEY_DIRNAME),
+            os.path.join(store_dir, UserFiles.Auth.PRIVATE_KEY_DIRNAME)
+        )
+
+
+def generate_key_store(store_dir, keys_tag, parent=True):
+    """Generate two sub-directories, each having a file with a CURVE key.
+    WARNING: be careful testing this. It uses 'shutil.rmtree' which will
+    wipe the whole store_dir/UserFiles.Auth.DIRNAME directory if it exists.
+    """
+
+    # Define the directory structure to store the CURVE keys in
+    if parent:
+        store_dir = os.path.join(store_dir, UserFiles.Auth.DIRNAME)
+    public_key_loc, private_key_loc = return_key_locations(store_dir)
+
+    # Create, or wipe, that directory structure
+    for directory in [store_dir, public_key_loc, private_key_loc]:
+        if os.path.exists(directory):
+            shutil.rmtree(directory)
+        os.mkdir(directory)
+
+    # Make a new public-private CURVE key pair
+    zmq.auth.create_certificates(store_dir, keys_tag)
+
+    # Move key pair to appropriate directories & lock private key file
+    for key_file in os.listdir(store_dir):
+        if key_file.endswith(".key"):
+            shutil.move(os.path.join(store_dir, key_file),
+                        os.path.join(public_key_loc, '.'))
+            # The public key keeps standard '-rw-r--r--.' file permissions
+        elif key_file.endswith(".key_secret"):
+            loc = shutil.move(os.path.join(store_dir, key_file),
+                              os.path.join(private_key_loc, '.'))
+            # Now lock the prviate key in its permanent location
+            try:
+                lockdown_private_keys(loc)
+            # Catch any and all errors here, since private keys must be
+            # locked for the security (asymmetric cryptography) to work.
+            except Exception:
+                raise OSError("Unable to lock permissions of private " +
+                              "keys for authentication. Abort.")
+
+
+def key_store_exists(store_dir_path):
+    """Check a valid key store directory exists at the given location."""
+    public_key_location, private_key_location = return_key_locations(
+        store_dir_path)
+    return (os.path.exists(public_key_location) and
+            os.path.exists(private_key_location))
+
+
+def lockdown_private_keys(key_file_path):
+    """Change key file permissions to lock from other users."""
+    # This means that the owner can read & write, but all others cannot
+    # do anything, to the file, i.e. '-rw-------.' file permissions.
+    if not os.path.exists(key_file_path):
+        raise FileNotFoundError(
+            "Private key not found at location '%s'." % key_file_path)
+    os.chmod(key_file_path, stat.S_IRUSR | stat.S_IWUSR)
