@@ -28,9 +28,11 @@ Options and arguments are appended to "prove -j \$NPROC -s -r \${@:-tests}".
 NPROC is the number of concurrent processes to run, which defaults to the
 global config "process pool size" setting.
 
-The tests ignore normal site/user global config and instead use the file:
-   \$CYLC_REPO_DIR/tests/global-tests.rc
-This should specify test job hosts under the [test battery] section, plus any
+The tests ignore normal site/user global config and instead use:
+   <site-global-config>/flow-tests.rc
+   <user-global-config>/flow-tests.rc
+   (See "cylc get-global --print-site-dir/--print-user-dir for locations).
+These should specify test job hosts under the [test battery] section, plus any
 other critical settings settings, including [hosts] configuration for test job
 hosts (and special batchview commands like qcat if available). Additional
 global config items can be added on the fly using the create_test_globalrc

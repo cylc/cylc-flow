@@ -1,8 +1,18 @@
 #------------------------------------------------------------------------------
-# Global configuration for the cylc test battery: etc/global-tests.rc
+# Global configuration settings for the Cylc functional test battery.
 #------------------------------------------------------------------------------
-# Some cylc tests need to mess with, or ignore, certain global configuration
-# values. To enable this, they ignore the standard site and user global config
-# files and start from global-tests.rc instead. This should contain the minimal
-# essential settings (e.g. for host names) needed to run cylc at your site.
+# Some functional tests need to modify or ignore installed global configuration
+# values; they therefore ignore the standard site and user global config files
+# and start from a special flow-tests.rc file instead. These should contain the
+# minimal essential settings (e.g. for host names) needed to run at your site.
+#
+# See documentation in flow.rc.eg
+#
+#------------------------------------------------------------------------------
+## GLOBAL flow-tests.rc FILE LOCATIONS:
+#----------------
+# SITE:
+#   /etc/cylc/flow/<CYLC-VERSION>/flow-tests.rc
+# USER:
+#   $HOME/.cylc/flow/<CYLC-VERSION>/flow-tests.rc
 #------------------------------------------------------------------------------
