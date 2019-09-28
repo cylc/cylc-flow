@@ -48,7 +48,9 @@ class WorkflowSubscriber:
 
     DEFAULT_TIMEOUT = 300.  # 5 min
 
-    def __init__(self, host, port, timeout=None):
+    def __init__(self, host, port, topics=None, timeout=None):
+        if topics is None:
+            topics = [b'']
         if timeout is None:
             timeout = self.DEFAULT_TIMEOUT
         else:
@@ -60,15 +62,15 @@ class WorkflowSubscriber:
         self.socket.connect(f'tcp://{host}:{port}')
         # if there is no server don't keep the subscriber hanging around
         self.socket.setsockopt(zmq.LINGER, int(timeout))
+        for topic in set(topics):
+            self.socket.setsockopt(zmq.SUBSCRIBE, topic)
 
-        self.socket.setsockopt(zmq.SUBSCRIBE, b'')
-
-    async def subscribe(self, msg_handler=None):
+    async def subscribe(self, topics, msg_handler=None):
         """Subscribe to updates from the provided socket."""
         while True:
-            msg = await self.socket.recv()
+            [topic, msg] = await self.socket.recv_multipart()
             if callable(msg_handler):
-                msg_handler(msg)
+                msg_handler(topic, msg)
             else:
                 data = json.loads(msg)
                 sys.stdout.write(

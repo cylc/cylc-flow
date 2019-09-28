@@ -17,6 +17,8 @@
 
 from enum import Enum
 
+from cylc.flow.wallclock import get_time_string_from_unix_time as time2str
+
 # Keys for identify API call
 KEY_GROUP = "group"
 KEY_META = "meta"
@@ -128,7 +130,7 @@ def get_suite_status(schd):
     elif schd.stop_clock_time is not None:
         status_msg = (
             SUITE_STATUS_RUNNING_TO_STOP %
-            schd.stop_clock_time_string)
+            time2str(schd.stop_clock_time))
     elif schd.stop_task:
         status_msg = (
             SUITE_STATUS_RUNNING_TO_STOP %

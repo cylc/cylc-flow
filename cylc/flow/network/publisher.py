@@ -17,19 +17,34 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Publisher for suite runtime API."""
 
+import asyncio
 from threading import Thread
 
 import zmq
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import CylcError
-from cylc.flow.ws_messages_pb2 import PbEntireWorkflow
 from cylc.flow import __version__ as CYLC_VERSION
 
-# maps server methods to the protobuf message (for client/UIS import)
-PB_METHOD_MAP = {
-    'pb_entire_workflow': PbEntireWorkflow
-}
+
+async def gather_coros(coro_func, items):
+    """Gather multi-part send coroutines"""
+    try:
+        gathers = ()
+        for item in items:
+            gathers += (coro_func(*item),)
+        await asyncio.gather(*gathers)
+    except Exception as exc:
+        LOG.error('publisher: gather_sends: %s' % str(exc))
+
+
+def serialize_data(data, serializer):
+    """Serialize by specified method."""
+    if callable(serializer):
+        return serializer(data)
+    elif isinstance(serializer, str):
+        return getattr(data, serializer)()
+    return data
 
 
 class WorkflowPublisher:
@@ -54,6 +69,8 @@ class WorkflowPublisher:
         self.socket = None
         self.endpoints = None
         self.thread = None
+        self.loop = None
+        self.topics = set()
 
     def start(self, min_port, max_port):
         """Start the ZeroMQ publisher.
@@ -90,6 +107,11 @@ class WorkflowPublisher:
             self.socket.close()
             raise CylcError(
                 'could not start Cylc ZMQ publisher: %s' % str(exc))
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            self.loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(self.loop)
 
     def stop(self):
         """Stop the publisher socket."""
@@ -98,14 +120,18 @@ class WorkflowPublisher:
         self.socket.close()
         LOG.debug('...stopped')
 
-    def publish(self, data, serializer=None):
-        """Publish data."""
+    async def send_multi(self, topic, data, serializer=None):
+        """Send multi part message."""
         try:
-            if callable(serializer):
-                self.socket.send(serializer(data))
-            elif isinstance(serializer, str):
-                self.socket.send(getattr(data, serializer)())
-            else:
-                self.socket.send(data)
+            self.socket.send_multipart(
+                [topic, serialize_data(data, serializer)]
+            )
+        except Exception as exc:
+            LOG.error('publisher: send_multi: %s' % str(exc))
+
+    def publish(self, items):
+        """Publish topics"""
+        try:
+            self.loop.run_until_complete(gather_coros(self.send_multi, items))
         except Exception as exc:
             LOG.error('publisher: %s' % str(exc))

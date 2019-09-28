@@ -32,8 +32,6 @@ if '--use-ssh' in sys.argv[1:]:
         sys.exit(0)
 import time
 
-import zmq
-import zmq.asyncio
 from google.protobuf.json_format import MessageToDict
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
@@ -43,9 +41,10 @@ from cylc.flow.terminal import cli_function
 from cylc.flow.ws_messages_pb2 import PbWorkflow
 
 
-def print_workflow(msg):
+def print_workflow(topic, msg):
     data = PbWorkflow()
     data.ParseFromString(msg)
+    print('Received: ', topic.decode())
     sys.stdout.write(
         json.dumps(MessageToDict(data), indent=4) + '\n')
 
@@ -53,18 +52,13 @@ def print_workflow(msg):
 def get_option_parser():
     parser = COP(__doc__, comms=True, argdoc=[
         ('REG', 'Suite name'),
-        ('[SUBTYPE]', 'Subscription Feed Name')])
-
-    parser.add_option(
-        '-n', '--no-input',
-        help='Do not read from STDIN, assume null input',
-        action='store_true', dest='no_input')
+        ('[TOPIC]', 'Subscription topic to receive')])
 
     return parser
 
 
 @cli_function(get_option_parser)
-def main(_, options, suite, subtype=None):
+def main(_, options, suite, topic=None):
     host = None
     port = None
     cre_owner, cre_name = re_compile_filters(None, ['.*'])
@@ -80,15 +74,19 @@ def main(_, options, suite, subtype=None):
         time.sleep(5)
 
     print(f'Connecting to tcp://{host}:{port}')
-    subscriber = WorkflowSubscriber(host, port)
+    if topic is None:
+        topic = b'workflow'
+    else:
+        topic = topic.encode()
+    subscriber = WorkflowSubscriber(host, port, [topic])
 
-    asyncio.ensure_future(subscriber.subscribe(print_workflow))
+    asyncio.ensure_future(subscriber.subscribe([topic], print_workflow))
 
     # run Python run
     try:
         asyncio.get_event_loop().run_forever()
     except KeyboardInterrupt:
-        print('Disconnecting')
+        print('\nDisconnecting')
         subscriber.stop()
         exit()
 

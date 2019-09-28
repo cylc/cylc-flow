@@ -197,7 +197,7 @@ class Scheduler(object):
         self.server = None
         self.port = None
         self.publisher = None
-        self.sub_port = None
+        self.pub_port = None
         self.command_queue = None
         self.message_queue = None
         self.ext_trigger_queue = None
@@ -1613,7 +1613,9 @@ see `COPYING' in the Cylc source distribution.
             self.ws_data_mgr.update_dynamic_elements(updated_nodes)
             # Publish updates:
             flow_data = self.ws_data_mgr.data[f'{self.owner}|{self.suite}']
-            self.publisher.publish(flow_data['workflow'], 'SerializeToString')
+            self.publisher.publish(
+                [(b'workflow', flow_data['workflow'], 'SerializeToString')]
+            )
             # TODO: deprecate after CLI GraphQL migration
             self.state_summary_mgr.update(self)
             # Database update
