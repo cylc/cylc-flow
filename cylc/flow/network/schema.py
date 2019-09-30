@@ -285,7 +285,7 @@ async def subscribe_workflows(root, info, **args):
                                args['exids']]
         resolvers = info.context.get('resolvers')
         yield await resolvers.get_workflows(args)
-        await asyncio.sleep(1.)
+        await asyncio.sleep(5.)
 
 
 async def get_nodes_all(root, info, **args):
