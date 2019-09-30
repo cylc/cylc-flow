@@ -284,7 +284,7 @@ async def subscribe_workflows(root, info, **args):
         args['exworkflows'] = [parse_workflow_id(w_id) for w_id in
                                args['exids']]
         resolvers = info.context.get('resolvers')
-        yield resolvers.get_workflows(args)
+        yield await resolvers.get_workflows(args)
         await asyncio.sleep(1.)
 
 
