@@ -16,6 +16,8 @@
 
 """GraphQL API schema via Graphene implementation."""
 
+import asyncio
+
 from graphene import (
     Boolean, Field, Float, ID, InputObjectType, Int,
     List, Mutation, ObjectType, Schema, String, Union
@@ -274,6 +276,16 @@ async def get_workflows(root, info, **args):
     args['exworkflows'] = [parse_workflow_id(w_id) for w_id in args['exids']]
     resolvers = info.context.get('resolvers')
     return await resolvers.get_workflows(args)
+
+
+async def subscribe_workflows(root, info, **args):
+    while True:
+        args['workflows'] = [parse_workflow_id(w_id) for w_id in args['ids']]
+        args['exworkflows'] = [parse_workflow_id(w_id) for w_id in
+                               args['exids']]
+        resolvers = info.context.get('resolvers')
+        yield resolvers.get_workflows(args)
+        await asyncio.sleep(1.)
 
 
 async def get_nodes_all(root, info, **args):
@@ -1182,4 +1194,17 @@ class Mutations(ObjectType):
         description=TaskActions._meta.description)
 
 
-schema = Schema(query=Queries, mutation=Mutations)
+# ** Subscription Related ** #
+
+class Subscriptions(ObjectType):
+    class Meta:
+        description = """Multi-Workflow root level subscriptions."""
+    workflows = List(
+        Workflow,
+        description=Workflow._meta.description,
+        ids=List(ID, default_value=[]),
+        exids=List(ID, default_value=[]),
+        resolver=subscribe_workflows)
+
+
+schema = Schema(query=Queries, subscription=Subscriptions, mutation=Mutations)
