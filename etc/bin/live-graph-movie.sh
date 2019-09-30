@@ -1,5 +1,21 @@
 #!/bin/bash
 
+# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 set -eu
 
 usage() {
@@ -53,7 +69,7 @@ echo
 echo "[INFO] Zero-padding frame numbers to $DIGITS digits."
 FORMAT="%0${DIGITS}d"
 PADDED=false
-for DOT_ORIG in $(ls -v frame-*.dot); do 
+for DOT_ORIG in $(ls -v frame-*.dot); do
     TMP=${DOT_ORIG%.dot}
     N_OLD=${TMP#frame-}
     printf -v N_NEW "$FORMAT" $(( 10#$N_OLD ))
@@ -75,7 +91,7 @@ for DOT in $(ls -v frame-*.dot); do
     PNG=${DOT%dot}png
     echo -ne \\r
     echo -n $PNG
-    dot -Tpng -Gsize=9,9\! -o $PNG $DOT # -Nfontsize=50 -Estyle=bold 
+    dot -Tpng -Gsize=9,9\! -o $PNG $DOT # -Nfontsize=50 -Estyle=bold
 done
 echo
 
