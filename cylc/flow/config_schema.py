@@ -485,6 +485,30 @@ def upg(cfg, descr):
         ['documentation', 'files', 'multi-page html user guide'],
         ['documentation', 'local']
     )
+    u.obsolete('8.0.0', ['cylc', 'log resolved dependencies'])
+    u.obsolete('8.0.0', ['cylc', 'reference test', 'allow task failures'])
+    u.obsolete('8.0.0', ['cylc', 'reference test', 'live mode suite timeout'])
+    u.obsolete('8.0.0', ['cylc', 'reference test', 'dummy mode suite timeout'])
+    u.obsolete(
+        '8.0.0',
+        ['cylc', 'reference test', 'dummy-local mode suite timeout'])
+    u.obsolete(
+        '8.0.0',
+        ['cylc', 'reference test', 'simulation mode suite timeout'])
+    u.obsolete('8.0.0', ['cylc', 'reference test', 'required run mode'])
+    u.obsolete(
+        '8.0.0',
+        ['cylc', 'reference test', 'suite shutdown event handler'])
+    u.deprecate(
+        '8.0.0',
+        ['cylc', 'abort if any task fails'],
+        ['cylc', 'events', 'abort if any task fails'])
+    # All mail ____ items moved from [cylc][events] to [email]
+    for key in [
+        'mail from', 'mail events', 'mail footer', 'mail smtp', 'mail to'
+    ]:
+        u.deprecate('8.0.0', ['cylc', 'events', key], ['email', key])
+
     u.deprecate('8.0.0',
                 ['documentation', 'files', 'html index'],
                 ['documentation', 'local']
@@ -695,8 +719,6 @@ class GlobalConfig(ParsecConfig):
         # Expand environment variables and ~user in LOCAL file paths.
         if 'HOME' not in os.environ:
             os.environ['HOME'] = self._HOME
-        cfg['documentation']['local'] = os.path.expandvars(
-            cfg['documentation']['local'])
         for key, val in cfg['job platforms']['default platform'].items():
             if val and 'directory' in key:
                 cfg['job platforms']['default platform'][key] =\

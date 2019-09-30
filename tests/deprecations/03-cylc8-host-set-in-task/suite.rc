@@ -1,16 +1,10 @@
 # Test automatic deprecation and deletion of config items as specified
 # in cylc/flow/config_schema
 [cylc]
-    UTC mode = True
-    [[authentication]]
 
 [suite host self-identification]
 
 [suite servers]
-
-[test battery]
-
-[task events]
 
 [scheduling]
     initial cycle point = 19831213T0600Z
@@ -42,12 +36,18 @@
                echo "Charlie\'s script is boring"
                """
         [[[job]]]
+            # Unclear how we want this to behave
             batch system = slurm
         [[[directives]]]
             --mem=5
             --ntasks=1
         [[[remote]]]
             host=abc123
+            suite definition directory =
+            retrieve job logs =
+            retrieve job logs max size =
+            retrieve job logs retry delays =
+            owner = fprefect
 
     [[Dai]]
         script="""

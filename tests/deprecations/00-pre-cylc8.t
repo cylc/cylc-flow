@@ -39,6 +39,7 @@ cmp_ok val.out <<__END__
  * (7.8.1) [cylc][events][reset timer] - DELETED (OBSOLETE)
  * (7.8.1) [cylc][events][reset inactivity timer] - DELETED (OBSOLETE)
  * (7.8.1) [runtime][foo, cat, dog][events][reset timer] - DELETED (OBSOLETE)
+ * (8.0.0) [cylc] -> [general] - value unchanged
 __END__
 
 purge_suite "${SUITE_NAME}"
