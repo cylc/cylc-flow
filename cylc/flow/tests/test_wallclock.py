@@ -48,3 +48,15 @@ def test_get_unix_time_from_time_string_360(time_str, time_sec):
         assert get_unix_time_from_time_string(time_str) == time_sec
     finally:
         CALENDAR.set_mode(mode)
+
+
+@pytest.mark.parametrize(
+    'value,error',
+    [
+        (None, TypeError),
+        (42, TypeError)
+    ]
+)
+def test_get_unix_time_from_time_string_error(value, error):
+    with pytest.raises(error):
+        get_unix_time_from_time_string(value)
