@@ -397,7 +397,7 @@ class DefMeta(ObjectType):
     class Meta:
         description = """
 Meta data fields,
-including custom fields in a generic userdefined dump"""
+including custom fields in a generic user-defined dump"""
     title = String(default_value=None)
     description = String(default_value=None)
     URL = String(default_value=None)
@@ -618,12 +618,12 @@ class Family(ObjectType):
         resolver=get_nodes_by_ids)
     child_tasks = List(
         Task,
-        description="""Descendedant definition tasks.""",
+        description="""Descendant definition tasks.""",
         args=def_args,
         resolver=get_nodes_by_ids)
     child_families = List(
         lambda: Family,
-        description="""Descendedant desc families.""",
+        description="""Descendant desc families.""",
         args=def_args,
         resolver=get_nodes_by_ids)
 
@@ -650,12 +650,12 @@ class FamilyProxy(ObjectType):
         resolver=get_nodes_by_ids)
     child_tasks = List(
         TaskProxy,
-        description="""Descendedant task proxies.""",
+        description="""Descendant task proxies.""",
         args=proxy_args,
         resolver=get_nodes_by_ids)
     child_families = List(
         lambda: FamilyProxy,
-        description="""Descendedant family proxies.""",
+        description="""Descendant family proxies.""",
         args=proxy_args,
         resolver=get_nodes_by_ids)
     first_parent = Field(
@@ -877,7 +877,7 @@ earlier than cutoff."""
         cancel_settings = List(
             GenericScalar,
             description="""
-settings: `[{envronment: {ENVKEY: "env_val"}}, ...]`""",)
+settings: `[{environment: {ENVKEY: "env_val"}}, ...]`""",)
 
     result = GenericScalar()
 
@@ -946,7 +946,7 @@ class PutBroadcast(Mutation):
         settings = List(
             GenericScalar,
             description="""
-settings: `[{envronment: {ENVKEY: "env_val"}}, ...]`""",)
+settings: `[{environment: {ENVKEY: "env_val"}}, ...]`""",)
 
     result = GenericScalar()
 
@@ -1017,7 +1017,7 @@ class SetVerbosity(Mutation):
 class StopWorkflowArgs(InputObjectType):
     datetime_string = String(description="""ISO 8601 compatible or
 `YYYY/MM/DD-HH:mm` of wallclock/real-world date-time""")
-    point_string = String(description="""Workflow formated point string""")
+    point_string = String(description="""Workflow formatted point string""")
     task_id = String()
     kill_active_tasks = Boolean(description="""Use with: set_stop_cleanly""")
     terminate = Boolean(description="""Use with: `stop_now`""")
@@ -1115,7 +1115,7 @@ A list of identifiers (family%glob%id) for matching task proxies, i.e.
 ```
 (where % is the delimiter)
 
-Splits argument into componnents, creates workflows argument if non-existent.
+Splits argument into components, creates workflows argument if non-existent.
 """,
             required=True)
         args = TaskArgs()
