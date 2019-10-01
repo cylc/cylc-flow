@@ -61,7 +61,7 @@ def encrypt(message, secret):
     """Make a message unreadable.
 
     Args:
-        message (dict): The message to send, must be serialiseable .
+        message (dict): The message to send, must be serializable .
         secret (str): The encrypt key.
 
     Return:
