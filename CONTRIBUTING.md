@@ -67,6 +67,7 @@ requests_).
  - Tim Pillinger
  - Samuel Gaist
  - Dima Veselov
+ - Gilliano Menezes
  - Mel Hall
 
 (All contributors are identifiable with email addresses in the git version
