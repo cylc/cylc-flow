@@ -1,48 +1,76 @@
 # Test automatic deprecation and deletion of config items as specified
 # in cylc/flow/config_schema
-[cylc]
+[general]
 
-[suite host self-identification]
+[job platform]
+    [[cinnamon]]
+        login hosts = cnm001, cnm002, cnm003
+        batch system = slurm
+        suite definition directory =
+        retrieve job logs = True
+        retrieve job logs max size =
+        retrieve job logs retry delays =
 
-[suite servers]
+
 
 [scheduling]
     initial cycle point = 19831213T0600Z
     final cycle point = 19831213T1200Z
-    [[dependencies]]
+    [[graph]]
         [[[PT3H]]]
             graph="""Alice => Bob
                   Alice => Charlie
+                  Alice => Dai
+                  Dai => Emma
+                  Charlie => Emma
+                  Charlie => Fingal
                   """
 [runtime]
     [[Alice]]
+    # Test that a task parses nicely with no infomation
+    # other than "platform"
         script="""
                sleep 5
                echo "Alice\'s script is boring"
                """
+        platform = cinnamon
+
 
     [[Bob]]
+    # Test that a task parses sensibly when both [platform] and
+    # [remote][host] are provided.
+    # Unclear what desirable behaviour here is:
+    # * Have 'host' over-ride [job platforms][login hosts] completely.
+    # * Have 'host' over-ride [job platforms][login hosts] if 'host' is in
+    #   [job platforms][login hosts] else return warning.
+    # * Have 'host' ignored and return a warning explaining that the user that
+    #   they need to write their own job platform.
         script="""
                sleep 5
                echo "Bob\'s script is boring"
                """
+        platform = cinnamon
         [[[remote]]]
-            host=abc123
+            host=cnm001
 
 
     [[Charlie]]
+    # Platform is not defined but lots of deprecated items in job and remote
+    # are. Options:
+    # * Create a job platform from the infomation given
+    # * Pick a sensible job platform from host and bin everything else, leaving
+    #   a user warning.
         script="""
                sleep 5
                echo "Charlie\'s script is boring"
                """
         [[[job]]]
-            # Unclear how we want this to behave
             batch system = slurm
         [[[directives]]]
             --mem=5
             --ntasks=1
         [[[remote]]]
-            host=abc123
+            host=cnm001
             suite definition directory =
             retrieve job logs =
             retrieve job logs max size =
@@ -50,11 +78,29 @@
             owner = fprefect
 
     [[Dai]]
+    # A very simple test to upgrade host to job platform. Logic is to be:
+    # for job platform in job platforms:
+    #   if host in job platform > login hosts:
+    #       use job platform
         script="""
                sleep 5
                echo "Dai\'s script is boring"
                """
         [[[remote]]]
-            host = xcel00
+            host = abc123
+
+    [[Emma]]
+    # Run the task on the suite host platform
+        script="""
+               sleep 5
+               echo "Emma\'s script is boring"
+               """
 
 
+    [[Fingal]]
+    # Run the task on the cylc-go (?) invocation platform
+        script="""
+               sleep 5
+               echo "Fingal\'s script is boring"
+               """
+        platform = dev host

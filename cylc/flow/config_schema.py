@@ -122,7 +122,7 @@ SPEC = {
             'ssh command': [
                 VDR.V_STRING, 'ssh -oBatchMode=yes -oConnectTimeout=10'],
             'use login shell': [VDR.V_BOOLEAN, True],
-            'login hosts': [VDR.V_STRING, None],
+            'login hosts': [VDR.V_INTERVAL_LIST],
             'batch system': [VDR.V_STRING, None],
             'cylc executable': [VDR.V_STRING, 'cylc'],
             'global init-script': [VDR.V_STRING],
@@ -133,7 +133,7 @@ SPEC = {
             'task event handler retry delays': [VDR.V_INTERVAL_LIST],
             'tail command template': [
                 VDR.V_STRING, 'tail -n +1 -F %(filename)s'],
-            'batch systems': {
+            'batch system info': {
                 'err tailer': [VDR.V_STRING],
                 'out tailer': [VDR.V_STRING],
                 'err viewer': [VDR.V_STRING],
@@ -163,17 +163,16 @@ SPEC = {
             'retrieve job logs retry delays': [VDR.V_STRING, ''],
             'task event handler retry delays': [VDR.V_STRING, ''],
             'tail command template': [VDR.V_STRING, ''],
-            'batch systems': {
-                '__MANY__': {
-                    'err tailer': [VDR.V_STRING, ''],
-                    'out tailer': [VDR.V_STRING, ''],
-                    'err viewer': [VDR.V_STRING, ''],
-                    'out viewer': [VDR.V_STRING, ''],
-                    'job name length maximum': [VDR.V_STRING, ''],
-                    'execution time limit polling intervals': [
-                        VDR.V_STRING, ''
-                    ],
-                }
+            'batch system': {
+                'name': [VDR.V_STRING, ''],
+                'err tailer': [VDR.V_STRING, ''],
+                'out tailer': [VDR.V_STRING, ''],
+                'err viewer': [VDR.V_STRING, ''],
+                'out viewer': [VDR.V_STRING, ''],
+                'job name length maximum': [VDR.V_STRING, ''],
+                'execution time limit polling intervals': [
+                    VDR.V_STRING, ''
+                ],
             }
         },
     },
