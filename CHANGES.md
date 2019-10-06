@@ -6,6 +6,37 @@ milestones](https://github.com/cylc/cylc-flow/milestones?state=closed) for each
 release.
 
 -------------------------------------------------------------------------------
+## __cylc-8.0a2 (2019-Q4?)__
+
+Third alpha release of Cylc 8.
+
+### Backward incompatible changes
+
+The Cylc server program and CLI codebase is now a Python package that can be
+installed with `pip` (see #2990), and has been renamed to `cylc-flow`. The name
+`cylc` is now used as a native Python package namespace to allow other projects
+to re-use it and extend Cylc with plug-ins.
+
+Cylc 8.0a2 is not compatible with Cylc 7 or with Cylc 8.0a1, as the API is
+still under heavy development.
+
+The commands `cylc-profile-battery`, `cylc-test-battery`, `cylc-license`
+were removed in this version. `cylc graph` is only retained for text output
+used in tests; it will be re-implemented in the new web UI. 
+
+The xtrigger examples were moved to a separate `cylc/cylc-xtriggers` project
+(see #3123).
+
+Jinja filters were moved from its `Jinja2Filters` folder to within the `cylc`
+namespace, under `cylc.jinja.filters`.
+
+### Enhancements
+
+[#](https://github.com/cylc/cylc-flow/pull/) - removed automatic task job
+status message retries (problems that prevent message transmission are almost
+never transient, and in practice job polling is the only way to recover).
+
+-------------------------------------------------------------------------------
 ## __cylc-8.0a1 (2019-09-18)__
 
 Second alpha release of Cylc 8.

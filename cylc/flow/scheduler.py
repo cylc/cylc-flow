@@ -958,12 +958,6 @@ see `COPYING' in the Cylc source distribution.
             mgr.KEY_SSH_USE_LOGIN_SHELL: str(glbl_cfg().get_host_item(
                 'use login shell')),
             mgr.KEY_SUITE_RUN_DIR_ON_SUITE_HOST: self.suite_run_dir,
-            mgr.KEY_TASK_MSG_MAX_TRIES: str(glbl_cfg().get(
-                ['task messaging', 'maximum number of tries'])),
-            mgr.KEY_TASK_MSG_RETRY_INTVL: str(float(glbl_cfg().get(
-                ['task messaging', 'retry interval']))),
-            mgr.KEY_TASK_MSG_TIMEOUT: str(float(glbl_cfg().get(
-                ['task messaging', 'connection timeout']))),
             mgr.KEY_UUID: self.uuid_str.value,
             mgr.KEY_VERSION: CYLC_VERSION}
         mgr.dump_contact_file(self.suite, contact_data)
