@@ -32,7 +32,7 @@ namespace, under `cylc.jinja.filters`.
 
 ### Enhancements
 
-[#](https://github.com/cylc/cylc-flow/pull/) - removed automatic task job
+[#3402](https://github.com/cylc/cylc-flow/pull/3402) - removed automatic task job
 status message retries (problems that prevent message transmission are almost
 never transient, and in practice job polling is the only way to recover).
 
