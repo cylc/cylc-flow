@@ -36,7 +36,7 @@ import cylc.flow.flags
 from cylc.flow.hostuserutil import is_remote, is_remote_host, is_remote_user
 from cylc.flow.pathutil import get_remote_suite_run_dir
 from cylc.flow.subprocctx import SubProcContext
-from cylc.flow.suite_srv_files_mgr import (
+from cylc.flow.suite_files import (
     SuiteFiles,
     get_suite_srv_dir,
     get_contact_file,

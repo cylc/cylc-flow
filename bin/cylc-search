@@ -40,7 +40,7 @@ import os
 import re
 from collections import deque
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.suite_srv_files_mgr import parse_suite_arg
+from cylc.flow.suite_files import parse_suite_arg
 from cylc.flow.terminal import cli_function
 from cylc.flow.parsec.include import inline
 

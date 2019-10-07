@@ -38,7 +38,7 @@ from cylc.flow.exceptions import (
 from cylc.flow.hostuserutil import get_fqdn_by_host
 from cylc.flow.network.authentication import encrypt, decrypt, get_secret
 from cylc.flow.network.server import PB_METHOD_MAP
-from cylc.flow.suite_srv_files_mgr import (
+from cylc.flow.suite_files import (
     ContactFileFields,
     detect_old_contact_file,
     load_contact_file

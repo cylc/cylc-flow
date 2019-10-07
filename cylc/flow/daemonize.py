@@ -21,7 +21,7 @@ import sys
 from time import sleep, time
 
 from cylc.flow.pathutil import get_suite_run_log_name
-from cylc.flow.suite_srv_files_mgr import PS_OPTS
+from cylc.flow.suite_files import PS_OPTS
 
 
 SUITE_SCAN_INFO_TMPL = r"""

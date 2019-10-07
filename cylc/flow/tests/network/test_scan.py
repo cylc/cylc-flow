@@ -116,9 +116,9 @@ class TestScan(TestCase):
             mocked_getpwall (object):
                 Mocked pwd.getpwall
             mocked_get_suite_src_dir (oject):
-                Mocked suite_srv_files_mgr.get_suite_src_dir
+                Mocked suite_files.get_suite_src_dir
             mocked_get_suite_title (oject):
-                Mocked suite_srv_files_mgr.get_suite_title
+                Mocked suite_files.get_suite_title
         """
         with TemporaryDirectory() as homedir:
             # mock pwd.getpwall

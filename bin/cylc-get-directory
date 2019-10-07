@@ -28,7 +28,7 @@ if remrun():
     sys.exit(0)
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.suite_srv_files_mgr import get_suite_source_dir
+from cylc.flow.suite_files import get_suite_source_dir
 from cylc.flow.terminal import cli_function
 
 

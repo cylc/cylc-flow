@@ -38,7 +38,7 @@ import re
 from cylc.flow.network.scan import get_scan_items_from_fs
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.print_tree import print_tree
-from cylc.flow.suite_srv_files_mgr import REG_DELIM
+from cylc.flow.suite_files import REG_DELIM
 from cylc.flow.terminal import cli_function
 
 

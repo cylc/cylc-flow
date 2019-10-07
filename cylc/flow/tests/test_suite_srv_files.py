@@ -19,12 +19,12 @@ import unittest
 
 from unittest import mock
 
-from cylc.flow import suite_srv_files_mgr
+from cylc.flow import suite_files
 from cylc.flow.exceptions import SuiteServiceFileError
 
 
 def get_register_test_cases():
-    """Test cases for suite_srv_files_mgr.register function."""
+    """Test cases for suite_files.register function."""
     return [
         # 1 no parameters provided, current directory is not a symlink,
         # and contains a valid suite.rc
@@ -191,7 +191,7 @@ class TestSuiteSrvFilesManager(unittest.TestCase):
     @mock.patch('os.path.isabs')
     @mock.patch('os.getcwd')
     @mock.patch('os.path.abspath')
-    @mock.patch('cylc.flow.suite_srv_files_mgr.get_suite_srv_dir')
+    @mock.patch('cylc.flow.suite_files.get_suite_srv_dir')
     def test_register(
             self,
             mocked_get_suite_srv_dir,
@@ -227,7 +227,7 @@ class TestSuiteSrvFilesManager(unittest.TestCase):
                 mocked_readlink.side_effect = lambda x: readlink
 
             if e_expected is None:
-                reg = suite_srv_files_mgr.register(reg, source, redirect)
+                reg = suite_files.register(reg, source, redirect)
                 self.assertEqual(expected, reg)
                 if mocked_symlink.call_count > 0:
                     # first argument, of the first call
@@ -235,7 +235,7 @@ class TestSuiteSrvFilesManager(unittest.TestCase):
                     self.assertEqual(expected_symlink, arg0)
             else:
                 with self.assertRaises(e_expected) as cm:
-                    suite_srv_files_mgr.register(reg, source, redirect)
+                    suite_files.register(reg, source, redirect)
                 if e_message is not None:
                     the_exception = cm.exception
                     self.assertTrue(e_message in str(the_exception),

@@ -19,7 +19,7 @@ import getpass
 
 from jose import jwt
 
-from cylc.flow.suite_srv_files_mgr import SuiteFiles, get_auth_item
+from cylc.flow.suite_files import SuiteFiles, get_auth_item
 
 
 HASH = 'HS256'  # Encoding for JWT

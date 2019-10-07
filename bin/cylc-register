@@ -56,7 +56,7 @@ if remrun():
     sys.exit(0)
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.suite_srv_files_mgr import register
+from cylc.flow.suite_files import register
 from cylc.flow.terminal import cli_function
 
 

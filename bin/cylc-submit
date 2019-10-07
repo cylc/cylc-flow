@@ -51,7 +51,7 @@ from cylc.flow.broadcast_mgr import BroadcastMgr
 from cylc.flow.hostuserutil import get_user
 from cylc.flow.job_pool import JobPool
 from cylc.flow.resources import extract_resources
-from cylc.flow.suite_srv_files_mgr import get_suite_rc, get_suite_srv_dir
+from cylc.flow.suite_files import get_suite_rc, get_suite_srv_dir
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_job_mgr import TaskJobManager
 from cylc.flow.task_events_mgr import TaskEventsManager

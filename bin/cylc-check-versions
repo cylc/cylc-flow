@@ -44,7 +44,7 @@ from cylc.flow.cylc_subproc import procopen
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.config import SuiteConfig
 from cylc.flow.subprocpool import SubProcPool
-from cylc.flow.suite_srv_files_mgr import parse_suite_arg
+from cylc.flow.suite_files import parse_suite_arg
 from cylc.flow.task_remote_mgr import TaskRemoteMgr
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow.terminal import cli_function

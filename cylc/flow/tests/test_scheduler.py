@@ -35,11 +35,12 @@ class Options(object):
 
 class TestScheduler(unittest.TestCase):
 
-    @mock.patch("cylc.flow.scheduler.BroadcastMgr")
-    @mock.patch("cylc.flow.scheduler.SuiteDatabaseManager")
-    @mock.patch("cylc.flow.scheduler.suite_srv_files_mgr.get_suite_source_dir")
+    @mock.patch("cylc.flow.scheduler.suite_srv_files.get_suite_source_dir")
     def test_ioerror_is_ignored(self, mocked_get_suite_source_dir,
                                 mocked_suite_db_mgr, mocked_broadcast_mgr):
+
+    @mock.patch("cylc.flow.scheduler.suite_files.get_suite_source_dir")
+    def test_ioerror_is_ignored(self, mocked_get_suite_source_dir):
         """Test that IOError's are ignored when closing Scheduler logs.
         When a disk errors occurs, the scheduler.close_logs method may
         result in an IOError. This, combined with other variables, may cause

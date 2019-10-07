@@ -62,7 +62,7 @@ from cylc.flow.pathutil import (
 )
 from cylc.flow.print_tree import print_tree
 from cylc.flow.subprocctx import SubFuncContext
-from cylc.flow.suite_srv_files_mgr import NO_TITLE
+from cylc.flow.suite_files import NO_TITLE
 from cylc.flow.taskdef import TaskDef
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
