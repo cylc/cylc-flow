@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
@@ -19,7 +17,10 @@
 from unittest import main
 
 from cylc.flow.tests.util import CylcWorkflowTestCase, create_task_proxy
-from cylc.flow.ws_data_mgr import WsDataMgr, task_mean_elapsed_time, ID_DELIM
+from cylc.flow.ws_data_mgr import (
+    WsDataMgr, task_mean_elapsed_time, ID_DELIM,
+    EDGES, FAMILY_PROXIES, TASKS, TASK_PROXIES, WORKFLOW
+)
 
 
 class FakeTDef:
@@ -72,6 +73,7 @@ class TestWsDataMgr(CylcWorkflowTestCase):
             )
             assert 0 == warnings
         self.task_pool.release_runahead_tasks()
+        self.data = self.ws_data_mgr.data[self.ws_data_mgr.workflow_id]
 
     def test_constructor(self):
         self.assertEqual(
@@ -79,6 +81,27 @@ class TestWsDataMgr(CylcWorkflowTestCase):
             self.ws_data_mgr.workflow_id
         )
         self.assertFalse(self.ws_data_mgr.pool_points)
+
+    def test_generate_definition_elements(self):
+        """Test method that generates all definition elements."""
+        task_defs = self.scheduler.config.taskdefs.keys()
+        self.assertEqual(0, len(self.data[TASKS]))
+        self.ws_data_mgr.generate_definition_elements()
+        self.assertEqual(len(task_defs), len(self.data[TASKS]))
+
+    def test_generate_graph_elements(self):
+        """Test method that generates edge and ghost node elements
+        by cycle point."""
+        self.ws_data_mgr.generate_definition_elements()
+        self.ws_data_mgr.pool_points = set(list(self.scheduler.pool.pool))
+        tasks_proxies_generated = self.data[TASK_PROXIES]
+        self.assertEqual(0, len(tasks_proxies_generated))
+        self.ws_data_mgr.generate_graph_elements(
+            self.data[EDGES],
+            self.data[TASK_PROXIES],
+            self.data[FAMILY_PROXIES]
+        )
+        self.assertEqual(3, len(tasks_proxies_generated))
 
     def test_get_entire_workflow(self):
         """Test method that populates the entire workflow protobuf message."""
@@ -88,43 +111,22 @@ class TestWsDataMgr(CylcWorkflowTestCase):
         flow_msg = self.ws_data_mgr.get_entire_workflow()
         self.assertEqual(
             len(flow_msg.task_proxies),
-            len(self.ws_data_mgr.task_proxies))
-
-    def test_generate_definition_elements(self):
-        """Test method that generates all definition elements."""
-        task_defs = self.scheduler.config.taskdefs.keys()
-        self.assertEqual(0, len(self.ws_data_mgr.tasks))
-        self.ws_data_mgr.generate_definition_elements()
-        self.assertEqual(len(task_defs), len(self.ws_data_mgr.tasks))
-
-    def test_generate_graph_elements(self):
-        """Test method that generates edge and ghost node elements
-        by cycle point."""
-        self.ws_data_mgr.generate_definition_elements()
-        self.ws_data_mgr.pool_points = set(list(self.scheduler.pool.pool))
-        tasks_proxies_generated = self.ws_data_mgr.task_proxies
-        self.assertEqual(0, len(tasks_proxies_generated))
-        self.ws_data_mgr.generate_graph_elements(
-            self.ws_data_mgr.edges,
-            self.ws_data_mgr.task_proxies,
-            self.ws_data_mgr.family_proxies
-        )
-        self.assertEqual(3, len(tasks_proxies_generated))
+            len(self.data[TASK_PROXIES]))
 
     def test_increment_graph_elements(self):
         """Test method that adds and removes elements by cycle point."""
         self.assertFalse(self.ws_data_mgr.pool_points)
-        self.assertEqual(0, len(self.ws_data_mgr.task_proxies))
+        self.assertEqual(0, len(self.data[TASK_PROXIES]))
         self.ws_data_mgr.generate_definition_elements()
         self.ws_data_mgr.increment_graph_elements()
         self.assertTrue(self.ws_data_mgr.pool_points)
-        self.assertEqual(3, len(self.ws_data_mgr.task_proxies))
+        self.assertEqual(3, len(self.data[TASK_PROXIES]))
 
     def test_initiate_data_model(self):
         """Test method that generates all data elements in order."""
-        self.assertEqual(0, len(self.ws_data_mgr.workflow.task_proxies))
+        self.assertEqual(0, len(self.data[WORKFLOW].task_proxies))
         self.ws_data_mgr.initiate_data_model()
-        self.assertEqual(3, len(self.ws_data_mgr.workflow.task_proxies))
+        self.assertEqual(3, len(self.data[WORKFLOW].task_proxies))
 
     def test_prune_points(self):
         """Test method that removes data elements by cycle point."""
@@ -138,10 +140,10 @@ class TestWsDataMgr(CylcWorkflowTestCase):
 
     def test_update_family_proxies(self):
         """Test update_family_proxies. This method will update all
-        WsDataMgr.task_proxies of given cycle point strings."""
+        WsDataMgr task_proxies of given cycle point strings."""
         self.ws_data_mgr.generate_definition_elements()
         self.ws_data_mgr.increment_graph_elements()
-        self.assertEqual(0, len(self._collect_states('family_proxies')))
+        self.assertEqual(0, len(self._collect_states(FAMILY_PROXIES)))
         update_tasks = self.task_pool.get_all_tasks()
         update_points = set((str(t.point) for t in update_tasks))
         self.ws_data_mgr.update_task_proxies(update_tasks)
@@ -149,37 +151,37 @@ class TestWsDataMgr(CylcWorkflowTestCase):
         # Find families in updated cycle points
         point_fams = [
             f.id
-            for f in self.ws_data_mgr.family_proxies.values()
+            for f in self.data[FAMILY_PROXIES].values()
             if f.cycle_point in update_points]
         self.assertTrue(len(point_fams) > 0)
         self.assertEqual(
-            len(point_fams), len(self._collect_states('family_proxies')))
+            len(point_fams), len(self._collect_states(FAMILY_PROXIES)))
 
     def test_update_task_proxies(self):
         """Test update_task_proxies. This method will iterate over given
         task instances (TaskProxy), and update any corresponding
-        WsDataMgr.task_proxies."""
+        WsDataMgr task_proxies."""
         self.ws_data_mgr.generate_definition_elements()
         self.ws_data_mgr.increment_graph_elements()
-        self.assertEqual(0, len(self._collect_states('task_proxies')))
+        self.assertEqual(0, len(self._collect_states(TASK_PROXIES)))
         update_tasks = self.task_pool.get_all_tasks()
         self.ws_data_mgr.update_task_proxies(update_tasks)
         self.assertTrue(len(update_tasks) > 0)
         self.assertEqual(
-            len(update_tasks), len(self._collect_states('task_proxies')))
+            len(update_tasks), len(self._collect_states(TASK_PROXIES)))
 
     def test_update_workflow(self):
         """Test method that updates the dynamic fields of the workflow msg."""
         self.ws_data_mgr.generate_definition_elements()
-        old_time = self.ws_data_mgr.workflow.last_updated
+        old_time = self.data[WORKFLOW].last_updated
         self.ws_data_mgr.update_workflow()
-        new_time = self.ws_data_mgr.workflow.last_updated
+        new_time = self.data[WORKFLOW].last_updated
         self.assertTrue(new_time > old_time)
 
     def _collect_states(self, node_type):
         return [
             t.state
-            for t in getattr(self.ws_data_mgr, node_type).values()
+            for t in self.data[node_type].values()
             if t.state != ''
         ]
 

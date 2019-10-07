@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
@@ -60,4 +58,4 @@ def environ_path_add(dirs, key='PATH'):
 
 environ_init()
 
-__version__ = "8.0a0"
+__version__ = "8.0a1"

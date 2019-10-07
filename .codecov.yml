@@ -19,13 +19,13 @@ coverage:
     project:
       default:
         # commits below this threshold will be marked as failed
-        target: '58%'
+        target: '85%'
         # how much we allow the coverage to drop
-        threshold: '5%'
+        threshold: '2%'
     patch:
       default:
         # basic
-        target: '58%'
+        target: '95%'
         threshold: '5%'
         base: auto
         # advanced

@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
@@ -53,8 +51,11 @@ class ParsecConfig(object):
                     stack.append([value, pars])
                 elif not isinstance(value, list):
                     raise ParsecError(
-                        "Illegal file spec item: %s" % itemstr(
-                            pars, repr(value)))
+                        "Illegal file spec item: "
+                        + itemstr(pars, repr(value))
+                        + " "
+                        + repr(value)
+                    )
 
     def loadcfg(self, rcfile, title=""):
         """Parse a config file, upgrade or deprecate items if necessary,

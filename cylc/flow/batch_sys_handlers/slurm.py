@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
@@ -21,10 +19,20 @@ import re
 import shlex
 
 
-class SLURMHandler(object):
+class SLURMHandler():
     """SLURM job submission and manipulation."""
 
     DIRECTIVE_PREFIX = "#SBATCH "
+    # Do not include SIGTERM trapping, as SLURM tries to kill the
+    # parent script directly with SIGTERM rather than the process
+    # group as a whole. In these circumstances, this signal does
+    # not get handled. Bash waits for the (unsignalled) child to
+    # complete. This does not apply to jobs with proper 'steps'
+    # (e.g. using srun within an sbatch script), which are properly
+    # signalled.
+    # XCPU isn't used by SLURM at the moment, but it's a valid way
+    # to manually signal jobs using scancel or sbatch --signal.
+    FAIL_SIGNALS = ("EXIT", "ERR", "XCPU")
     KILL_CMD_TMPL = "scancel '%(job_id)s'"
     # N.B. The "squeue -j JOB_ID" command returns 1 if JOB_ID is no longer in
     # the system, so there is no need to filter its output.
@@ -34,19 +42,12 @@ class SLURMHandler(object):
     SUBMIT_CMD_TMPL = "sbatch '%(job)s'"
 
     @classmethod
-    def filter_poll_output(cls, out, _):
-        """Return True if job_id is in the queueing system."""
-        # squeue -h -j JOB_ID when JOB_ID has stopped can either exit with
-        # non-zero exit code or return blank text.
-        return out.strip()
-
-    @classmethod
     def format_directives(cls, job_conf):
         """Format the job directives for a job file."""
         job_file_path = re.sub(r'\$HOME/', '', job_conf['job_file_path'])
         directives = job_conf['directives'].__class__()
         directives['--job-name'] = (
-            job_conf['suite_name'] + '.' + job_conf['task_id'])
+            job_conf['task_id'] + '.' + job_conf['suite_name'])
         directives['--output'] = job_file_path + ".out"
         directives['--error'] = job_file_path + ".err"
         if (job_conf["execution_time_limit"] and
@@ -63,24 +64,6 @@ class SLURMHandler(object):
             else:
                 lines.append("%s%s" % (cls.DIRECTIVE_PREFIX, key))
         return lines
-
-    @staticmethod
-    def get_fail_signals(_):
-        """Return a list of failure signal names to trap.
-
-        Do not include SIGTERM trapping, as SLURM tries to kill the
-        parent script directly with SIGTERM rather than the process
-        group as a whole. In these circumstances, this signal does
-        not get handled. Bash waits for the (unsignalled) child to
-        complete. This does not apply to jobs with proper 'steps'
-        (e.g. using srun within an sbatch script), which are properly
-        signalled.
-
-        XCPU isn't used by SLURM at the moment, but it's a valid way
-        to manually signal jobs using scancel or sbatch --signal.
-
-        """
-        return ["EXIT", "ERR", "XCPU"]
 
     @classmethod
     def get_poll_many_cmd(cls, job_ids):

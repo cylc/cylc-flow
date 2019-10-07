@@ -26,8 +26,9 @@ cat >'suite.rc' <<'__SUITE_RC__'
 __SUITE_RC__
 
 run_fail "${TEST_NAME_BASE}" cylc validate 'suite.rc'
-cmp_ok "${TEST_NAME_BASE}.stderr" <<'__ERR__'
-ParsecError: mismatched quotes: %include 'foo.rc
+cmp_ok "${TEST_NAME_BASE}.stderr" <<__ERR__
+FileParseError: mismatched quotes (in $PWD/suite.rc):
+   %include 'foo.rc
 __ERR__
 
 exit

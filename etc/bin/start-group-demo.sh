@@ -1,5 +1,21 @@
 #!/bin/bash
 
+# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 cd "$(mktemp -d)" || exit 1
 
 cat > suite.rc <<__EOF__
@@ -84,7 +100,7 @@ for GROUP in nwp tst opr; do
     mkdir -p $DEST/$SUITE
     cp -r suite.rc $DEST/$SUITE
     perl -pi -e "s/\[cylc\]/title = $GROUP suite $N\ngroup = $GROUP\n[cylc]/" $DEST/$SUITE/suite.rc
-    cylc reg $DEST/$SUITE $DEST/$SUITE 
+    cylc reg $DEST/$SUITE $DEST/$SUITE
     cylc run $DEST/$SUITE > /dev/null &
   done
 done

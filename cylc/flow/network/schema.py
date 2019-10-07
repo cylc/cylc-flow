@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
-# Copyright (C) 2019 NIWA & British Crown (Met Office) & Contributors.
+# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,16 +24,22 @@ from graphene.types.generic import GenericScalar
 from graphene.utils.str_converters import to_snake_case
 
 from cylc.flow.task_state import TASK_STATUSES_ORDERED
-from cylc.flow.ws_data_mgr import ID_DELIM
+from cylc.flow.ws_data_mgr import (
+    ID_DELIM, FAMILIES, FAMILY_PROXIES,
+    JOBS, TASKS, TASK_PROXIES
+)
+
+
+PROXY_NODES = 'proxy_nodes'
 
 
 NODE_MAP = {
-    'Task': 'tasks',
-    'TaskProxy': 'task_proxies',
-    'Family': 'families',
-    'FamilyProxy': 'family_proxies',
-    'Job': 'jobs',
-    'Node': 'proxy_nodes',
+    'Task': TASKS,
+    'TaskProxy': TASK_PROXIES,
+    'Family': FAMILIES,
+    'FamilyProxy': FAMILY_PROXIES,
+    'Job': JOBS,
+    'Node': PROXY_NODES,
 }
 
 CYCLING_TYPES = [
@@ -137,7 +143,7 @@ def parse_node_id(item, node_type=None):
 # Field args (i.e. for queries etc):
 class SortArgs(InputObjectType):
     keys = List(String, default_value=['id'])
-    reverse = Boolean()
+    reverse = Boolean(default_value=False)
 
 
 jobs_args = dict(
@@ -218,6 +224,33 @@ all_edge_args = dict(
     sort=SortArgs(default_value=None),
 )
 
+nodes_edges_args = dict(
+    ghosts=Boolean(default_value=False),
+    ids=List(ID, default_value=[]),
+    exids=List(ID, default_value=[]),
+    states=List(String, default_value=[]),
+    exstates=List(String, default_value=[]),
+    is_held=Boolean(),
+    distance=Int(default_value=1),
+    mindepth=Int(default_value=-1),
+    maxdepth=Int(default_value=-1),
+    sort=SortArgs(default_value=None),
+)
+
+nodes_edges_args_all = dict(
+    ghosts=Boolean(default_value=False),
+    workflows=List(ID, default_value=[]),
+    exworkflows=List(ID, default_value=[]),
+    ids=List(ID, default_value=[]),
+    exids=List(ID, default_value=[]),
+    states=List(String, default_value=[]),
+    exstates=List(String, default_value=[]),
+    is_held=Boolean(),
+    distance=Int(default_value=1),
+    mindepth=Int(default_value=-1),
+    maxdepth=Int(default_value=-1),
+    sort=SortArgs(default_value=None),
+)
 
 # Resolvers are used to collate data needed for query resolution.
 # Treated as implicit static methods;
@@ -235,12 +268,12 @@ all_edge_args = dict(
 
 # Resolvers:
 
+
 async def get_workflows(root, info, **args):
     args['workflows'] = [parse_workflow_id(w_id) for w_id in args['ids']]
     args['exworkflows'] = [parse_workflow_id(w_id) for w_id in args['exids']]
     resolvers = info.context.get('resolvers')
-    flows = await resolvers.get_workflow_msgs(args)
-    return [flow.workflow for flow in flows]
+    return await resolvers.get_workflows(args)
 
 
 async def get_nodes_all(root, info, **args):
@@ -332,6 +365,25 @@ async def get_edges_by_ids(root, info, **args):
     return await resolvers.get_edges_by_ids(args)
 
 
+async def get_nodes_edges(root, info, **args):
+    """Resolver for returning job, task, family nodes"""
+    node_type = NODE_MAP['TaskProxy']
+    workflow = getattr(root, 'id', None)
+    if workflow:
+        args['workflows'] = [parse_workflow_id(workflow)]
+        args['exworkflows'] = []
+    else:
+        args['workflows'] = [
+            parse_workflow_id(w_id) for w_id in args['workflows']]
+        args['exworkflows'] = [
+            parse_workflow_id(w_id) for w_id in args['exworkflows']]
+    args['ids'] = [parse_node_id(n_id, node_type) for n_id in args['ids']]
+    args['exids'] = [parse_node_id(n_id, node_type) for n_id in args['exids']]
+    resolvers = info.context.get('resolvers')
+    root_nodes = await resolvers.get_nodes_all(node_type, args)
+    return await resolvers.get_nodes_edges(root_nodes, args)
+
+
 def resolve_state_totals(root, info, **args):
     state_totals = {state: 0 for state in TASK_STATUSES_ORDERED}
     # Update with converted protobuf map container
@@ -341,8 +393,11 @@ def resolve_state_totals(root, info, **args):
 
 
 # Types:
-class Meta(ObjectType):
-    """Meta data fields, and custom fields generic userdefined dump"""
+class DefMeta(ObjectType):
+    class Meta:
+        description = """
+Meta data fields,
+including custom fields in a generic user-defined dump"""
     title = String(default_value=None)
     description = String(default_value=None)
     URL = String(default_value=None)
@@ -350,7 +405,8 @@ class Meta(ObjectType):
 
 
 class TimeZone(ObjectType):
-    """Time zone info."""
+    class Meta:
+        description = """Time zone info."""
     hours = Int()
     minutes = Int()
     string_basic = String()
@@ -358,7 +414,8 @@ class TimeZone(ObjectType):
 
 
 class Workflow(ObjectType):
-    """Global workflow info."""
+    class Meta:
+        description = """Global workflow info."""
     id = ID(required=True)
     name = String()
     status = String()
@@ -390,10 +447,14 @@ class Workflow(ObjectType):
         lambda: Edges,
         args=edge_args,
         description="""Graph edges""")
+    nodes_edges = Field(
+        lambda: NodesEdges,
+        args=nodes_edges_args,
+        resolver=get_nodes_edges)
     api_version = Int()
     cylc_version = String()
     last_updated = Float()
-    meta = Field(Meta)
+    meta = Field(DefMeta)
     newest_runahead_cycle_point = String()
     newest_cycle_point = String()
     oldest_cycle_point = String()
@@ -410,7 +471,8 @@ class Workflow(ObjectType):
 
 
 class Job(ObjectType):
-    """Jobs."""
+    class Meta:
+        description = """Jobs."""
     id = ID(required=True)
     submit_num = Int()
     state = String()
@@ -445,13 +507,15 @@ class Job(ObjectType):
     param_env_tmpl = List(String)
     param_var = List(String)
     extra_logs = List(String)
+    messages = List(String)
 
 
 class Task(ObjectType):
-    """Task definition, static fields"""
+    class Meta:
+        description = """Task definition, static fields"""
     id = ID(required=True)
     name = String(required=True)
-    meta = Field(Meta)
+    meta = Field(DefMeta)
     mean_elapsed_time = Float()
     depth = Int()
     proxies = List(
@@ -463,7 +527,8 @@ class Task(ObjectType):
 
 
 class PollTask(ObjectType):
-    """Polling task edge"""
+    class Meta:
+        description = """Polling task edge"""
     local_proxy = ID(required=True)
     workflow = String()
     remote_proxy = ID(required=True)
@@ -472,7 +537,8 @@ class PollTask(ObjectType):
 
 
 class Condition(ObjectType):
-    """Prerequisite conditions."""
+    class Meta:
+        description = """Prerequisite conditions."""
     task_proxy = Field(
         lambda: TaskProxy,
         description="""Associated Task Proxy""",
@@ -484,7 +550,8 @@ class Condition(ObjectType):
 
 
 class Prerequisite(ObjectType):
-    """Task prerequisite."""
+    class Meta:
+        description = """Task prerequisite."""
     expression = String()
     conditions = List(
         Condition,
@@ -494,7 +561,8 @@ class Prerequisite(ObjectType):
 
 
 class TaskProxy(ObjectType):
-    """Task Cycle Specific info"""
+    class Meta:
+        description = """Task cycle instance."""
     id = ID(required=True)
     task = Field(
         Task,
@@ -502,7 +570,7 @@ class TaskProxy(ObjectType):
         required=True,
         resolver=get_node_by_id)
     state = String()
-    cycle_point = String(required=True)
+    cycle_point = String()
     is_held = Boolean()
     spawned = Boolean()
     depth = Int()
@@ -532,10 +600,11 @@ class TaskProxy(ObjectType):
 
 
 class Family(ObjectType):
-    """Task definition, static fields"""
+    class Meta:
+        description = """Task definition, static fields"""
     id = ID(required=True)
     name = String(required=True)
-    meta = Field(Meta)
+    meta = Field(DefMeta)
     depth = Int()
     proxies = List(
         lambda: FamilyProxy,
@@ -549,12 +618,12 @@ class Family(ObjectType):
         resolver=get_nodes_by_ids)
     child_tasks = List(
         Task,
-        description="""Descendedant definition tasks.""",
+        description="""Descendant definition tasks.""",
         args=def_args,
         resolver=get_nodes_by_ids)
     child_families = List(
         lambda: Family,
-        description="""Descendedant desc families.""",
+        description="""Descendant desc families.""",
         args=def_args,
         resolver=get_nodes_by_ids)
 
@@ -581,12 +650,12 @@ class FamilyProxy(ObjectType):
         resolver=get_nodes_by_ids)
     child_tasks = List(
         TaskProxy,
-        description="""Descendedant task proxies.""",
+        description="""Descendant task proxies.""",
         args=proxy_args,
         resolver=get_nodes_by_ids)
     child_families = List(
         lambda: FamilyProxy,
-        description="""Descendedant family proxies.""",
+        description="""Descendant family proxies.""",
         args=proxy_args,
         resolver=get_nodes_by_ids)
     first_parent = Field(
@@ -636,57 +705,87 @@ class Edges(ObjectType):
     feet = List(String)
 
 
+class NodesEdges(ObjectType):
+    class Meta:
+        description = """Related Nodes & Edges."""
+    nodes = List(
+        TaskProxy,
+        description="""Task nodes from and including root.""")
+    edges = List(
+        Edge,
+        description="""Edges associated with the nodes.""")
+
+
 # Query declaration
 class Queries(ObjectType):
+    class Meta:
+        description = """Multi-Workflow root level queries."""
     workflows = List(
         Workflow,
+        description=Workflow._meta.description,
         ids=List(ID, default_value=[]),
         exids=List(ID, default_value=[]),
         resolver=get_workflows)
     job = Field(
         Job,
+        description=Job._meta.description,
         id=ID(required=True),
         resolver=get_node_by_id)
     jobs = List(
         Job,
+        description=Job._meta.description,
         args=all_jobs_args,
         resolver=get_nodes_all)
     task = Field(
         Task,
+        description=Task._meta.description,
         id=ID(required=True),
         resolver=get_node_by_id)
     tasks = List(
         Task,
+        description=Task._meta.description,
         args=all_def_args,
         resolver=get_nodes_all)
     task_proxy = Field(
         TaskProxy,
+        description=TaskProxy._meta.description,
         id=ID(required=True),
         resolver=get_node_by_id)
     task_proxies = List(
         TaskProxy,
+        description=TaskProxy._meta.description,
         args=all_proxy_args,
         resolver=get_nodes_all)
     family = Field(
         Family,
+        description=Family._meta.description,
         id=ID(required=True),
         resolver=get_node_by_id)
     families = List(
         Family,
+        description=Family._meta.description,
         args=all_def_args,
         resolver=get_nodes_all)
     family_proxy = Field(
         FamilyProxy,
+        description=FamilyProxy._meta.description,
         id=ID(required=True),
         resolver=get_node_by_id)
     family_proxies = List(
         FamilyProxy,
+        description=FamilyProxy._meta.description,
         args=all_proxy_args,
         resolver=get_nodes_all)
     edges = List(
         Edge,
+        description=Edge._meta.description,
         args=all_edge_args,
         resolver=get_edges_all)
+    nodes_edges = Field(
+        NodesEdges,
+        description=NodesEdges._meta.description,
+        args=nodes_edges_args_all,
+        resolver=get_nodes_edges)
 
 
 # ** Mutation Related ** #
@@ -778,7 +877,7 @@ earlier than cutoff."""
         cancel_settings = List(
             GenericScalar,
             description="""
-settings: `[{envronment: {ENVKEY: "env_val"}}, ...]`""",)
+settings: `[{environment: {ENVKEY: "env_val"}}, ...]`""",)
 
     result = GenericScalar()
 
@@ -847,7 +946,7 @@ class PutBroadcast(Mutation):
         settings = List(
             GenericScalar,
             description="""
-settings: `[{envronment: {ENVKEY: "env_val"}}, ...]`""",)
+settings: `[{environment: {ENVKEY: "env_val"}}, ...]`""",)
 
     result = GenericScalar()
 
@@ -918,7 +1017,7 @@ class SetVerbosity(Mutation):
 class StopWorkflowArgs(InputObjectType):
     datetime_string = String(description="""ISO 8601 compatible or
 `YYYY/MM/DD-HH:mm` of wallclock/real-world date-time""")
-    point_string = String(description="""Workflow formated point string""")
+    point_string = String(description="""Workflow formatted point string""")
     task_id = String()
     kill_active_tasks = Boolean(description="""Use with: set_stop_cleanly""")
     terminate = Boolean(description="""Use with: `stop_now`""")
@@ -1016,7 +1115,7 @@ A list of identifiers (family%glob%id) for matching task proxies, i.e.
 ```
 (where % is the delimiter)
 
-Splits argument into componnents, creates workflows argument if non-existent.
+Splits argument into components, creates workflows argument if non-existent.
 """,
             required=True)
         args = TaskArgs()

@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
@@ -348,9 +346,13 @@ class TaskEventsManager():
 
         # always update the suite state summary for latest message
         if flag == self.FLAG_POLLED:
-            itask.set_summary_message('%s %s' % (message, self.FLAG_POLLED))
+            new_msg = f'{message} {self.FLAG_POLLED}'
         else:
-            itask.set_summary_message(message)
+            new_msg = message
+        itask.set_summary_message(new_msg)
+        self.job_pool.add_job_msg(
+            get_task_job_id(itask.point, itask.tdef.name, submit_num),
+            new_msg)
 
         # Satisfy my output, if possible, and record the result.
         completed_trigger = itask.state.outputs.set_msg_trg_completion(

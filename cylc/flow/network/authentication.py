@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
@@ -63,7 +61,7 @@ def encrypt(message, secret):
     """Make a message unreadable.
 
     Args:
-        message (dict): The message to send, must be serialiseable .
+        message (dict): The message to send, must be serializable .
         secret (str): The encrypt key.
 
     Return:

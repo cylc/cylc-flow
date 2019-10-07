@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
@@ -19,6 +17,65 @@
 import unittest
 
 from cylc.flow.parsec.upgrade import *
+
+
+def test_simple():
+    """A quick test of overall functionality."""
+    cfg = {
+        'item one': 1,
+        'item two': 'move me up',
+        'section A': {
+            'abc': 5,
+            'cde': 'foo',
+        },
+        'hostnames': {
+            'host 1': {
+                'work dir': '/a/b/c',
+                'running dir': '/a/b/c/d'
+            },
+            'host 2': {
+                'work dir': '/x/b/c',
+                'running dir': '/x/b/c/d'
+            },
+        }
+    }
+    x2 = converter(lambda x: 2 * x, 'value x 2')
+
+    upg = upgrader(cfg, 'test file')
+    # successive upgrades are incremental - at least until I think of a
+    # good way to remember what items have already been translated...
+    upg.deprecate('1.3', ['item one'], ['item ONE'], x2)
+    upg.deprecate('1.3', ['section A'], ['Heading A'])
+    # NOTE change to new item keys here!
+    upg.deprecate('1.3', ['Heading A', 'cde'], ['Heading A', 'CDE'])
+    upg.deprecate('1.4', ['Heading A', 'abc'], cvtr=x2, silent=True)
+    upg.deprecate(
+        '1.4.1', ['item two'], ['Heading A', 'item two'], silent=True)
+    upg.deprecate('1.5', ['hostnames'], ['hosts'])
+    upg.deprecate(
+        '1.5',
+        ['hosts', '__MANY__', 'running dir'], ['hosts', '__MANY__', 'run dir'])
+
+    upg.upgrade()
+
+    assert cfg == {
+        'item ONE': 2,
+        'Heading A': {
+            'CDE': 'foo',
+            'abc': 10,
+            'item two': 'move me up'
+        },
+        'hosts': {
+            'host 1': {
+                'work dir': '/a/b/c',
+                'run dir': '/a/b/c/d'
+            },
+            'host 2': {
+                'work dir': '/x/b/c',
+                'run dir': '/x/b/c/d'
+            }
+        }
+    }
 
 
 class TestUpgrade(unittest.TestCase):

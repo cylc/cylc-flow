@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
@@ -20,7 +18,7 @@
 import re
 
 
-class LoadlevelerHandler(object):
+class LoadlevelerHandler():
 
     """Loadleveler job submission"""
 
@@ -67,27 +65,6 @@ class LoadlevelerHandler(object):
                     continue
                 new_err += line + "\n"
         return out, new_err
-
-    @classmethod
-    def filter_poll_output(cls, out, job_id):
-        """Return True if job_id is in the queueing system."""
-        # "llq -f%id JOB_ID" returns 0 whether JOB_ID is in the system or not.
-        # Therefore, we need to parse its output.
-        # "llq -f%id JOB_ID" returns EITHER something like:
-        #     Step Id
-        #     ------------------------
-        #     a001.3274552.0
-        #
-        #     1 job step(s) in query, ...
-        # OR:
-        #     llq: There is currently no job status to report.
-        # "jid" is in queue if it matches a stripped row.
-        for line in out.splitlines():
-            items = line.strip().split(None, 1)
-            if (items and
-                    (items[0] == job_id or items[0].startswith(job_id + "."))):
-                return True
-        return False
 
     @classmethod
     def filter_poll_many_output(cls, out):

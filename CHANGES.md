@@ -6,7 +6,7 @@ milestones](https://github.com/cylc/cylc-flow/milestones?state=closed) for each
 release.
 
 -------------------------------------------------------------------------------
-## __cylc-8.0a1 (2019-??-??)__
+## __cylc-8.0a1 (2019-09-18)__
 
 Second alpha release of Cylc 8.
 
@@ -32,6 +32,9 @@ Jinja filters were moved from its `Jinja2Filters` folder to within the
 `cylc` namespace, under `cylc.jinja.filters`.
 
 ### Enhancements
+
+[#3377](https://github.com/cylc/cylc-flow/pull/3377) - removed support for
+sourcing `job-init-env.sh` in task job scripts. Use bash login scripts instead.
 
 [#3302](https://github.com/cylc/cylc-flow/pull/3302) - improve CLI
 task-globbing help.
@@ -177,6 +180,15 @@ Changed the `suite.rc` schema:
 (which also affects responsiveness of suite controllers during suite startup,
 restarts, and reloads).  Impact of the speedup is most noticeable when dealing
 with suite configurations that contain tasks with many task outputs.
+
+[#3358](https://github.com/cylc/cylc-flow/pull/3358) - on submitting jobs to
+SLURM or LSF, the job names will now follow the pattern `task.cycle.suite`
+(instead of `suite.task.cycle`), for consistency with jobs on PBS.
+
+[#3356](https://github.com/cylc/cylc-flow/pull/3356) - default job name length
+maximum for PBS is now 236 characters (i.e. assuming PBS 13 or newer). If you
+are still using PBS 12 or older, you should add a site configuration to
+restrict it to 15 characters.
 
 ### Fixes
 

@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
@@ -79,6 +77,7 @@ class TaskJobManager(object):
     POLL_FAIL = 'poll failed'
     REMOTE_SELECT_MSG = 'waiting for remote host selection'
     REMOTE_INIT_MSG = 'remote host initialising'
+    DRY_RUN_MSG = 'job file written (edit/dry-run)'
     KEY_EXECUTE_TIME_LIMIT = TaskEventsManager.KEY_EXECUTE_TIME_LIMIT
 
     def __init__(self, suite, proc_pool, suite_db_mgr,
@@ -216,6 +215,10 @@ class TaskJobManager(object):
                 # Remote is waiting to be initialised
                 for itask in itasks:
                     itask.set_summary_message(self.REMOTE_INIT_MSG)
+                    self.job_pool.add_job_msg(
+                        get_task_job_id(
+                            itask.point, itask.tdef.name, itask.submit_num),
+                        self.REMOTE_INIT_MSG)
                 continue
             # Ensure that localhost background/at jobs are recorded as running
             # on the host name of the current suite host, rather than just
@@ -470,6 +473,9 @@ class TaskJobManager(object):
                 'ignoring job kill result, unexpected task state: %s' %
                 itask.state.status)
         itask.set_summary_message(log_msg)
+        self.job_pool.add_job_msg(
+            get_task_job_id(itask.point, itask.tdef.name, itask.submit_num),
+            log_msg)
         LOG.log(log_lvl, "[%s] -job(%02d) %s" % (
             itask.identity, itask.submit_num, log_msg))
 
@@ -545,12 +551,14 @@ class TaskJobManager(object):
         ctx.ret_code = 0
 
         # See cylc.flow.batch_sys_manager.JobPollContext
+        job_d = get_task_job_id(itask.point, itask.tdef.name, itask.submit_num)
         try:
             job_log_dir, context = line.split('|')[1:3]
             items = json.loads(context)
             jp_ctx = JobPollContext(job_log_dir, **items)
         except TypeError:
             itask.set_summary_message(self.POLL_FAIL)
+            self.job_pool.add_job_msg(job_d, self.POLL_FAIL)
             ctx.cmd = cmd_ctx.cmd  # print original command on failure
             return
         except ValueError:
@@ -563,6 +571,7 @@ class TaskJobManager(object):
                 job_log_dir = items.pop('job_log_dir')
             except (ValueError, IndexError):
                 itask.set_summary_message(self.POLL_FAIL)
+                self.job_pool.add_job_msg(job_d, self.POLL_FAIL)
                 ctx.cmd = cmd_ctx.cmd  # print original command on failure
                 return
         finally:
@@ -795,16 +804,18 @@ class TaskJobManager(object):
             return False
         itask.local_job_file_path = local_job_file_path
 
-        if dry_run:
-            itask.set_summary_message('job file written (edit/dry-run)')
-            LOG.debug('[%s] -%s', itask, itask.summary['latest_message'])
-
         job_config = deepcopy(job_conf)
         job_config['logfiles'] = deepcopy(itask.summary['logfiles'])
         job_config['job_log_dir'] = get_task_job_log(
             suite, itask.point, itask.tdef.name, itask.submit_num)
         itask.jobs.append(job_config['job_d'])
         self.job_pool.insert_job(job_config)
+
+        if dry_run:
+            itask.set_summary_message(self.DRY_RUN_MSG)
+            self.job_pool.add_job_msg(job_config['job_d'], self.DRY_RUN_MSG)
+            LOG.debug(f'[{itask}] -{self.DRY_RUN_MSG}')
+
         # Return value used by "cylc submit" and "cylc jobscript":
         return itask
 

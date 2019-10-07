@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
@@ -319,8 +317,7 @@ def parse(fpath, output_fname=None, template_vars=None):
                 ndif = nesting_level - nb
                 parents = parents[:-ndif - 1] + [sect_name]
             else:
-                raise FileParseError(
-                    'Error line ' + str(index + 1) + ': ' + line)
+                raise FileParseError('Error line', index=index, line=line)
             nesting_level = nb
             addsect(config, sect_name, parents[:-1])
 
@@ -336,6 +333,6 @@ def parse(fpath, output_fname=None, template_vars=None):
             else:
                 # no match
                 raise FileParseError(
-                    'Invalid line ' + str(index + 1) + ': ' + line)
+                    'Invalid line', index=index, line=line)
 
     return config

@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
@@ -338,29 +336,3 @@ def itemstr(parents=None, item=None, value=None):
         text = str(value)
 
     return text
-
-
-if __name__ == "__main__":
-    print('Item strings:')
-    print('  ', itemstr(['sec1', 'sec2'], 'item', 'value'))
-    print('  ', itemstr(['sec1', 'sec2'], 'item'))
-    print('  ', itemstr(['sec1', 'sec2']))
-    print('  ', itemstr(['sec1']))
-    print('  ', itemstr(item='item', value='value'))
-    print('  ', itemstr(item='item'))
-    print('  ', itemstr(value='value'))
-    # error or useful?
-    print('  ', itemstr(parents=['sec1', 'sec2'], value='value'))
-
-    print('Configs:')
-    printcfg('foo', prefix=' > ')
-    printcfg(['foo', 'bar'], prefix=' > ')
-    printcfg({}, prefix=' > ')
-    printcfg({'foo': 1}, prefix=' > ')
-    printcfg({'foo': None}, prefix=' > ')
-    printcfg({'foo': None}, none_str='(none)', prefix=' > ')
-    printcfg({'foo': {'bar': 1}}, prefix=' > ')
-    printcfg({'foo': {'bar': None}}, prefix=' > ')
-    printcfg({'foo': {'bar': None}}, none_str='(none)', prefix=' > ')
-    printcfg({'foo': {'bar': 1, 'baz': 2, 'qux': {'boo': None}}},
-             none_str='(none)', prefix=' > ')

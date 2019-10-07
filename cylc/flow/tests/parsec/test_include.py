@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
@@ -24,6 +22,7 @@ tests. So this suite of unit tests should not cover all the module features.
 import tempfile
 import unittest
 
+from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.parsec.include import *
 
 

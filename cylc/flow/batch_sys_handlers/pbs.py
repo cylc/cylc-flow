@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
@@ -32,9 +30,9 @@ class PBSHandler(object):
     #     [[the-name-of-my-pbs-host]]
     #         [[[batch systems]]]
     #             [[[[pbs]]]]
-    #                # E.g.: PBS 13
-    #                job name length maximum = 236
-    JOB_NAME_LEN_MAX = 15
+    #                # E.g.: PBS 11
+    #                job name length maximum = 15
+    JOB_NAME_LEN_MAX = 236
     KILL_CMD_TMPL = "qdel '%(job_id)s'"
     # N.B. The "qstat JOB_ID" command returns 1 if JOB_ID is no longer in the
     # system, so there is no need to filter its output.

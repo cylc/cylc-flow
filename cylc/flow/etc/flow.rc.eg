@@ -1,5 +1,5 @@
 #------------------------------------------------------------------------------
-# How to create a site or user flow.rc config file.
+# How to create a site or user flow.rc global config file.
 #------------------------------------------------------------------------------
 # The "cylc get-global-config" command prints global config defaults,
 # overridden by site global settings (if any), overridden by user global
@@ -11,12 +11,13 @@
 # Delete or comment out any seeting you do not need (to avoid inadvertently
 # overriding defaults or site settings that may change in the future).
 #
-# For all legal items, see the User Guide's global flow.rc reference appendix.
+# For available configuration items, see the global flow.rc reference in the
+# User Guide.
 #
-# FILE LOCATIONS:
+# GLOBAL flow.rc FILE LOCATIONS:
 #----------------
 # SITE:
-#   /etc/cylc/flow/$CYLC_VERSION/flow.rc
+#   /etc/cylc/flow/<CYLC-VERSION>/flow.rc
 # USER:
-#   $HOME/.cylc/flow/$CYLC_VERSION/flow.rc
+#   $HOME/.cylc/flow/<CYLC-VERSION>/flow.rc
 #------------------------------------------------------------------------------

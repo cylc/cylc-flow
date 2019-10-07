@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
@@ -34,7 +32,6 @@ resource_names = [
     'etc/syntax/cylc.vim',
     'etc/syntax/cylc.xml',
     'etc/cylc-bash-completion',
-    'etc/conda-environment.yaml',
     'etc/job.sh'
 ]
 

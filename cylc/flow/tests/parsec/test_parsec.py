@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
@@ -28,8 +26,6 @@ class TestParsec(unittest.TestCase):
         self.assertEqual('', str(parsec_error))
         parsec_error = ParsecError('foo')
         self.assertEqual('foo', str(parsec_error))
-        parsec_error = ParsecError('foo', 'bar', 'baz')
-        self.assertEqual('foo bar baz', str(parsec_error))
 
     def test_parsec_error_str(self):
         msg = 'Turbulence!'

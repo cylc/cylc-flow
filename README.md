@@ -13,8 +13,8 @@
 
 Cylc ("silk") orchestrates complex distributed suites of interdependent cycling
 (or non-cycling) tasks. It was originally designed to automate environmental
-forecasting systems at [NIWA](https://www.niwa.co.nz). Cylc is a general
-workflow engine, however it is not specialized to forecasting in any way.
+forecasting systems at [NIWA](https://www.niwa.co.nz), however Cylc is a
+general workflow engine; it is not specialized to forecasting in any way.
 
 ### Python 2 or Python 3 ?
 

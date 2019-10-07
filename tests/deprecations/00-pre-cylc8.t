@@ -34,6 +34,11 @@ cmp_ok val.out <<__END__
  * (7.2.2) [cylc][simulation mode] - DELETED (OBSOLETE)
  * (7.2.2) [runtime][foo, cat, dog][dummy mode] - DELETED (OBSOLETE)
  * (7.2.2) [runtime][foo, cat, dog][simulation mode] - DELETED (OBSOLETE)
+ * (7.6.0) [runtime][foo, cat, dog][enable resurrection] - DELETED (OBSOLETE)
+ * (7.8.0) [runtime][foo, cat, dog][suite state polling][template] - DELETED (OBSOLETE)
+ * (7.8.1) [cylc][events][reset timer] - DELETED (OBSOLETE)
+ * (7.8.1) [cylc][events][reset inactivity timer] - DELETED (OBSOLETE)
+ * (7.8.1) [runtime][foo, cat, dog][events][reset timer] - DELETED (OBSOLETE)
 __END__
-#-------------------------------------------------------------------------------
+
 purge_suite "${SUITE_NAME}"

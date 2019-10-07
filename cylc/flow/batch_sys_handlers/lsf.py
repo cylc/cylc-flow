@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
@@ -17,36 +15,31 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """IBM Platform LSF bsub job submission"""
 
+import math
 import re
 
 
-class LSFHandler(object):
+class LSFHandler():
     """IBM Platform LSF bsub job submission"""
 
     DIRECTIVE_PREFIX = "#BSUB "
+    FAIL_SIGNALS = ("EXIT", "ERR", "XCPU", "TERM", "INT", "SIGUSR2")
     KILL_CMD_TMPL = "bkill '%(job_id)s'"
     POLL_CMD = "bjobs"
     REC_ID_FROM_SUBMIT_OUT = re.compile(r"^Job <(?P<id>\d+)>")
     SUBMIT_CMD_TMPL = "bsub"
 
     @classmethod
-    def filter_poll_output(cls, out, job_id):
-        """Return True if job_id is in the queueing system."""
-        entries = out.strip().split()
-        return (len(entries) >= 3 and entries[0] == job_id and
-                entries[2] not in ["DONE", "EXIT"])
-
-    @classmethod
     def format_directives(cls, job_conf):
         """Format the job directives for a job file."""
         job_file_path = re.sub(r"\$HOME/", "", job_conf["job_file_path"])
         directives = job_conf["directives"].__class__()
-        directives["-J"] = job_conf["suite_name"] + "." + job_conf["task_id"]
+        directives["-J"] = job_conf["task_id"] + "." + job_conf["suite_name"]
         directives["-o"] = job_file_path + ".out"
         directives["-e"] = job_file_path + ".err"
-        if (job_conf["execution_time_limit"] and
-                directives.get("-W") is None):
-            directives["-W"] = "%d" % (job_conf["execution_time_limit"] / 60)
+        if job_conf["execution_time_limit"] and directives.get("-W") is None:
+            directives["-W"] = str(math.ceil(
+                job_conf["execution_time_limit"] / 60))
         for key, value in list(job_conf["directives"].items()):
             directives[key] = value
         lines = []
@@ -56,11 +49,6 @@ class LSFHandler(object):
             else:
                 lines.append("%s%s" % (cls.DIRECTIVE_PREFIX, key))
         return lines
-
-    @classmethod
-    def get_fail_signals(cls, _):
-        """Return a list of failure signal names to trap."""
-        return ["EXIT", "ERR", "XCPU", "TERM", "INT", "SIGUSR2"]
 
     @classmethod
     def get_submit_stdin(cls, job_file_path, _):

@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
@@ -45,8 +43,8 @@ class JobPool(object):
     """Pool of protobuf job messages."""
     # TODO: description, args, and types
 
-    ERR_PREFIX_JOBID_MATCH = "No matching jobs found: "
-    ERR_PREFIX_JOB_NOT_ON_SEQUENCE = "Invalid cycle point for job: "
+    ERR_PREFIX_JOBID_MATCH = 'No matching jobs found: '
+    ERR_PREFIX_JOB_NOT_ON_SEQUENCE = 'Invalid cycle point for job: '
 
     def __init__(self, suite, owner):
         self.suite = suite
@@ -64,7 +62,7 @@ class JobPool(object):
         t_id = f'{self.workflow_id}{ID_DELIM}{point_string}{ID_DELIM}{name}'
         j_id = f'{t_id}{ID_DELIM}{sub_num}'
         j_buf = PbJob(
-            stamp=f"{j_id}@{update_time}",
+            stamp=f'{j_id}@{update_time}',
             id=j_id,
             submit_num=sub_num,
             state=JOB_STATUSES_ALL[0],
@@ -86,27 +84,40 @@ class JobPool(object):
             cycle_point=point_string,
         )
         j_buf.batch_sys_conf.extend(
-            [f"{key}={val}" for key, val in
+            [f'{key}={val}' for key, val in
                 job_conf['batch_system_conf'].items()])
         j_buf.directives.extend(
-            [f"{key}={val}" for key, val in
+            [f'{key}={val}' for key, val in
                 job_conf['directives'].items()])
         j_buf.environment.extend(
-            [f"{key}={val}" for key, val in
+            [f'{key}={val}' for key, val in
                 job_conf['environment'].items()])
         j_buf.param_env_tmpl.extend(
-            [f"{key}={val}" for key, val in
+            [f'{key}={val}' for key, val in
                 job_conf['param_env_tmpl'].items()])
         j_buf.param_var.extend(
-            [f"{key}={val}" for key, val in
+            [f'{key}={val}' for key, val in
                 job_conf['param_var'].items()])
         j_buf.extra_logs.extend(job_conf['logfiles'])
         self.pool[j_id] = j_buf
         self.task_jobs.setdefault(t_id, []).append(j_id)
 
+    def add_job_msg(self, job_d, msg):
+        """Add message to job."""
+        update_time = time()
+        point, name, sub_num = self.parse_job_item(job_d)
+        j_id = (
+            f'{self.workflow_id}{ID_DELIM}{point}'
+            f'{ID_DELIM}{name}{ID_DELIM}{sub_num}')
+        try:
+            self.pool[j_id].messages.append(msg)
+            self.pool[j_id].stamp = f'{j_id}@{update_time}'
+        except (KeyError, TypeError):
+            pass
+
     def remove_job(self, job_d):
         """Remove job from pool."""
-        point, name, sub_num, _ = self.parse_job_item(job_d)
+        point, name, sub_num = self.parse_job_item(job_d)
         t_id = f'{self.workflow_id}{ID_DELIM}{point}{ID_DELIM}{name}'
         j_id = f'{t_id}{ID_DELIM}{sub_num}'
         try:
@@ -126,63 +137,66 @@ class JobPool(object):
 
     def set_job_attr(self, job_d, attr_key, attr_val):
         """Set job attribute."""
-        point, name, sub_num, _ = self.parse_job_item(job_d)
+        update_time = time()
+        point, name, sub_num = self.parse_job_item(job_d)
         j_id = (
             f'{self.workflow_id}{ID_DELIM}{point}'
             f'{ID_DELIM}{name}{ID_DELIM}{sub_num}')
         try:
             setattr(self.pool[j_id], attr_key, attr_val)
-        except (KeyError, TypeError):
+            self.pool[j_id].stamp = f'{j_id}@{update_time}'
+        except (KeyError, TypeError, AttributeError):
             pass
 
     def set_job_state(self, job_d, status):
         """Set job state."""
-        point, name, sub_num, _ = self.parse_job_item(job_d)
+        update_time = time()
+        point, name, sub_num = self.parse_job_item(job_d)
         j_id = (
             f'{self.workflow_id}{ID_DELIM}{point}'
             f'{ID_DELIM}{name}{ID_DELIM}{sub_num}')
         if status in JOB_STATUSES_ALL:
             try:
                 self.pool[j_id].state = status
+                self.pool[j_id].stamp = f'{j_id}@{update_time}'
             except KeyError:
                 pass
 
     def set_job_time(self, job_d, event_key, time_str=None):
         """Set an event time in job pool object.
 
-        Set values of both event_key + "_time" and event_key + "_time_string".
+        Set values of both event_key + '_time' and event_key + '_time_string'.
         """
-        point, name, sub_num, _ = self.parse_job_item(job_d)
+        update_time = time()
+        point, name, sub_num = self.parse_job_item(job_d)
         j_id = (
             f'{self.workflow_id}{ID_DELIM}{point}'
             f'{ID_DELIM}{name}{ID_DELIM}{sub_num}')
         try:
             setattr(self.pool[j_id], event_key + '_time', time_str)
-        except KeyError:
+            self.pool[j_id].stamp = f'{j_id}@{update_time}'
+        except (KeyError, TypeError, AttributeError):
             pass
 
     @staticmethod
     def parse_job_item(item):
         """Parse internal id
-        point/name/submit_num:state
-        or name.point.submit_num:state syntax.
+        point/name/submit_num
+        or name.point.submit_num syntax (back compat).
         """
-        if ":" in item:
-            head, state_str = item.rsplit(":", 1)
+        submit_num = None
+        if item.count('/') > 1:
+            point_str, name_str, submit_num = item.split('/', 2)
+        elif '/' in item:
+            point_str, name_str = item.split('/', 1)
+        elif item.count('.') > 1:
+            name_str, point_str, submit_num = item.split('.', 2)
+        elif '.' in item:
+            name_str, point_str = item.split('.', 1)
         else:
-            head, state_str = (item, None)
-        if head.count("/") > 1:
-            point_str, name_str, submit_num = head.split("/", 2)
-        elif "/" in head:
-            point_str, name_str = head.split("/", 1)
-            submit_num = None
-        elif head.count(".") > 1:
-            name_str, point_str, submit_num = head.split(".", 2)
-        elif "." in head:
-            name_str, point_str = head.split(".", 1)
-            submit_num = None
-        else:
-            name_str, point_str, submit_num = (head, None, None)
-        if submit_num is not None:
+            name_str, point_str = (item, None)
+        try:
             sub_num = int(submit_num)
-        return (point_str, name_str, sub_num, state_str)
+        except (TypeError, ValueError):
+            sub_num = None
+        return (point_str, name_str, sub_num)
