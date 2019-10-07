@@ -26,6 +26,7 @@ job files from STDIN.
 
 from cylc.flow.remote import remrun
 from cylc.flow.terminal import cli_function
+from cylc.flow.option_parsers import CylcOptionParser as COP
 
 
 def get_option_parser():
@@ -45,8 +46,10 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(parser, opts, job_log_root, *job_log_dirs):
+def main_cli(parser, opts, job_log_root, *job_log_dirs):
     """CLI main."""
+    from cylc.flow.batch_sys_manager import BatchSysManager
+
     BatchSysManager().jobs_submit(
         job_log_root, job_log_dirs, remote_mode=opts.remote_mode,
         utc_mode=opts.utc_mode)
