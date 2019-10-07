@@ -52,7 +52,10 @@ def main(parser, opts, job_log_root, *job_log_dirs):
         utc_mode=opts.utc_mode)
 
 
-if __name__ == "__main__" and not remrun():
-    from cylc.flow.option_parsers import CylcOptionParser as COP
-    from cylc.flow.batch_sys_manager import BatchSysManager
+def main():
+    if not remrun():
+        main_cli()
+
+
+if __name__ == "__main__":
     main()

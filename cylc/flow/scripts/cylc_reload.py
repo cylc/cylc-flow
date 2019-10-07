@@ -57,7 +57,6 @@ def get_option_parser():
     return parser
 
 
-
 @cli_function(get_option_parser)
 def main(parser, options, suite):
     prompt('Reload %s' % suite, options.force)

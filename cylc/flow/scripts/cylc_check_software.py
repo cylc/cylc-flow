@@ -50,7 +50,7 @@ latter grouped as Python or 'other'. 'opt_spec' item format:
 <MODULE>: [<MIN VER OR 'None'>, <FUNC TAG>, <GROUP>, <'OTHER' TUPLE>] with
 <'OTHER' TUPLE> = ([<BASE CMD(S)>], <VER OPT>, <REGEX>, <OUTFILE ARG>).
 """
-req_py_ver_range = ((3,7),)
+req_py_ver_range = ((3, 7),)
 opt_spec = {
     'EmPy': [(3, 3, 4), 'TEMPLATING', 'PY'],
 }
@@ -135,7 +135,8 @@ def check_py_ver(min_ver, max_ver=None, write=True):
     ret = (version >= min_ver and (not max_ver or version < max_ver))
     if write:
         shell_align_write('.', msg, '%s (%s)' % (MINVER_MET_MSG if ret else
-                          MINVER_NOTMET_MSG, string_ver(version)))
+                                                 MINVER_NOTMET_MSG,
+                                                 string_ver(version)))
     return ret
 
 
@@ -283,7 +284,7 @@ def main():
         and check_py_module_ver('graphene', None)
         and check_py_module_ver('colorama', None)
         and check_py_module_ver('ansimarkup', None)
-        and check_py_module_ver('protobuf', (3,7,0))
+        and check_py_module_ver('protobuf', (3, 7, 0))
     )
     for tag, text in func_tags_and_text.items():
         shell_centre_write(True, '*OPTIONAL SOFTWARE for the ' + text + '*')

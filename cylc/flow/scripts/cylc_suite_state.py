@@ -199,7 +199,8 @@ def main(parser, options, suite):
             "You must target a cycle point to use an offset")
 
     if options.template:
-        print("WARNING: ignoring --template (no longer needed)", file=sys.stderr)
+        print("WARNING: ignoring --template (no longer needed)",
+              file=sys.stderr)
 
     # Attempt to apply specified offset to the targeted cycle
     if options.offset:

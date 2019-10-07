@@ -344,7 +344,7 @@ def main(_, options, suite):
             {'point_strings': point_strings,
              'namespaces': namespaces,
              'settings': settings
-            }
+             }
         )
         print(get_broadcast_change_report(modified_settings))
         sys.exit(report_bad_options(bad_options, is_set=True))

@@ -50,6 +50,7 @@ SUITE_STATUS_SPLIT_REC = re.compile('^([a-z ]+ at )(.*)$')
 # NOTE: would use unicode here but terminal rendering has a lot to be desired
 HELD_SYMBOL = '(held)'
 
+
 class SuiteMonitor(object):
 
     def reset(self, suite, owner, host, port, timeout):
@@ -65,7 +66,7 @@ class SuiteMonitor(object):
                 options.owner, options.host = user_at_host.split('@')
             except ValueError:
                 print(('USER_AT_HOST must take the form '
-                                      '"user@host:port"'), file=sys.stderr)
+                       '"user@host:port"'), file=sys.stderr)
                 sys.exit(1)
 
         client_name = os.path.basename(sys.argv[0])
@@ -101,7 +102,8 @@ class SuiteMonitor(object):
             else:
                 if not glbl:
                     print((
-                        "\033[1;37;41mWARNING\033[0m suite initialising"), file=sys.stderr)
+                        "\033[1;37;41mWARNING\033[0m suite initialising"),
+                        file=sys.stderr)
                     continue
                 states = [t["state"] for t in task_summaries.values() if (
                           "state" in t)]

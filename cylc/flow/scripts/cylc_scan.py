@@ -119,12 +119,18 @@ def get_option_parser():
              "to each running suite. The default is 5 seconds.",
         action="store", default=5.0, dest="comms_timeout")
 
-    parser.add_option('-t', '--format', default='plain', action='store',
-        dest='format', help=(
-            'Set output format:\n'
-            ' * plain (default) - text format for interactive use\n'
-            ' * raw - parsable format (suite|owner|host|property|value)\n'
-            ' * json - JSON format ({suite: {owner: OWNER, host: HOST ...)'))
+    parser.add_option(
+        '-t',
+        '--format',
+        default='plain',
+        action='store',
+        dest='format',
+        help=(
+             'Set output format:\n'
+             ' * plain (default) - text format for interactive use\n'
+             ' * raw - parsable format (suite|owner|host|property|value)\n'
+             ' * json - JSON format ({suite: {owner: OWNER, host: HOST ...)')
+    )
 
     return parser
 
@@ -197,7 +203,8 @@ def main(parser, options):
         if isinstance(info, str):
             print(ERROR_STYLE + ' '.join([reg, host, port, info]))
         elif info is None:
-            print(ERROR_STYLE + ' '.join([reg, host, port, 'Error Connecting']))
+            print(ERROR_STYLE +
+                  ' '.join([reg, host, port, 'Error Connecting']))
         elif info[KEY_NAME] != reg:
             # TODO - should we do anything here, is this likely?
             print(ERROR_STYLE + 'Warning: suite has changed name %s => %s' % (
