@@ -38,13 +38,19 @@ from cylc.flow.config import SuiteConfig
 from cylc.flow.cycling.loader import get_point, standardise_point_string
 from cylc.flow.daemonize import daemonize
 from cylc.flow.exceptions import (
-    CylcError, PointParsingError, TaskProxySequenceBoundsError)
+    CylcError,
+    PointParsingError,
+    SuiteServiceFileError,
+    TaskProxySequenceBoundsError
+)
 import cylc.flow.flags
 from cylc.flow.host_appointer import HostAppointer, EmptyHostList
 from cylc.flow.hostuserutil import get_host, get_user, get_fqdn_by_host
 from cylc.flow.job_pool import JobPool
-from cylc.flow.loggingutil import TimestampRotatingFileHandler,\
+from cylc.flow.loggingutil import (
+    TimestampRotatingFileHandler,
     ReferenceLogFileHandler
+)
 from cylc.flow.network.server import SuiteRuntimeServer
 from cylc.flow.parsec.util import printcfg
 from cylc.flow.parsec.validate import DurationFloat
@@ -1495,7 +1501,7 @@ see `COPYING' in the Cylc source distribution.
                 if contact_data != self.contact_data:
                     raise AssertionError('contact file modified')
             except (AssertionError, IOError, ValueError,
-                    suite_srv_files_mgr.SuiteServiceFileError) as exc:
+                    SuiteServiceFileError) as exc:
                 LOG.error(
                     "%s: contact file corrupted/modified and may be left",
                     suite_srv_files_mgr.get_contact_file(self.suite))

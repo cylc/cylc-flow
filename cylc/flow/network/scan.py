@@ -23,6 +23,7 @@ import sys
 import socket
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.exceptions import SuiteServiceFileError
 import cylc.flow.flags
 from cylc.flow.hostuserutil import is_remote_host, get_host_ip_by_name
 from cylc.flow.network.client import (
@@ -30,7 +31,6 @@ from cylc.flow.network.client import (
 from cylc.flow.suite_srv_files_mgr import (
     ContactFileFields,
     SuiteFiles,
-    SuiteServiceFileError,
     load_contact_file,
     get_suite_title,
     get_suite_source_dir

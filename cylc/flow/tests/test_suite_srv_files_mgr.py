@@ -20,6 +20,7 @@ import unittest
 from unittest import mock
 
 from cylc.flow import suite_srv_files_mgr
+from cylc.flow.exceptions import SuiteServiceFileError
 
 
 def get_register_test_cases():
@@ -83,7 +84,7 @@ def get_register_test_cases():
          "/home/user/cylc-run/suite4",  # readlink
          None,  # expected symlink
          "suite4",  # expected return value
-         suite_srv_files_mgr.SuiteServiceFileError,  # expected exception
+         SuiteServiceFileError,  # expected exception
          "no suite.rc"  # expected part of exception message
          ),
         # 5 the source directory and the resolved symlink for $SOURCE in
@@ -99,7 +100,7 @@ def get_register_test_cases():
          "/home/hercules/cylc-run/suite5",  # readlink
          "/home/user/cylc-run/suite5",  # expected symlink
          "suite5",  # expected return value
-         suite_srv_files_mgr.SuiteServiceFileError,  # expected exception
+         SuiteServiceFileError,  # expected exception
          "already points to"  # expected part of exception message
          ),
         # 6 the source directory and the resolved symlink for $SOURCE in
@@ -160,7 +161,7 @@ def get_register_test_cases():
          None,  # readlink
          None,  # expected symlink
          None,  # expected return value
-         suite_srv_files_mgr.SuiteServiceFileError,  # expected exception
+         SuiteServiceFileError,  # expected exception
          "cannot be an absolute path"  # expected part of exception message
          ),
         # 10 invalid suite name
@@ -174,7 +175,7 @@ def get_register_test_cases():
          None,  # readlink
          None,  # expected symlink
          None,  # expected return value
-         suite_srv_files_mgr.SuiteServiceFileError,  # expected exception
+         SuiteServiceFileError,  # expected exception
          "can not start with: ., -"  # expected part of exception message
          )
     ]

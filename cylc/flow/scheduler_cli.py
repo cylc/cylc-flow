@@ -20,6 +20,7 @@ import os
 import sys
 
 import cylc.flow.flags
+from cylc.flow.exceptions import SuiteServiceFileError
 from cylc.flow.host_appointer import HostAppointer, EmptyHostList
 from cylc.flow.hostuserutil import is_remote_host
 from cylc.flow.option_parsers import CylcOptionParser as COP
@@ -216,7 +217,7 @@ def _auto_register():
     """Register a suite installed in the cylc-run directory."""
     try:
         reg = suite_srv_files_mgr.register()
-    except suite_srv_files_mgr.SuiteServiceFileError as exc:
+    except SuiteServiceFileError as exc:
         sys.exit(exc)
     # Replace this process with "cylc run REG ..." for 'ps -f'.
     os.execv(sys.argv[0], [sys.argv[0]] + [reg] + sys.argv[1:])
@@ -228,7 +229,7 @@ def scheduler_cli(parser, options, args, is_restart=False):
     # Check suite is not already running before start of host selection.
     try:
         suite_srv_files_mgr.detect_old_contact_file(reg)
-    except suite_srv_files_mgr.SuiteServiceFileError as exc:
+    except SuiteServiceFileError as exc:
         sys.exit(exc)
 
     # Create auth files if needed.
@@ -261,13 +262,13 @@ def scheduler_cli(parser, options, args, is_restart=False):
 
     try:
         suite_srv_files_mgr.get_suite_source_dir(args[0], options.owner)
-    except suite_srv_files_mgr.SuiteServiceFileError:
+    except SuiteServiceFileError:
         # Source path is assumed to be the run directory
         suite_srv_files_mgr.register(args[0], get_suite_run_dir(args[0]))
 
     try:
         scheduler = Scheduler(is_restart, options, args)
-    except suite_srv_files_mgr.SuiteServiceFileError as exc:
+    except SuiteServiceFileError as exc:
         sys.exit(exc)
     scheduler.start()
 

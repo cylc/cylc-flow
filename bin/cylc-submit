@@ -51,7 +51,7 @@ from cylc.flow.broadcast_mgr import BroadcastMgr
 from cylc.flow.hostuserutil import get_user
 from cylc.flow.job_pool import JobPool
 from cylc.flow.resources import extract_resources
-from cylc.flow import suite_srv_files_mgr
+from cylc.flow.suite_srv_files_mgr import get_suite_rc, get_suite_srv_dir
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_job_mgr import TaskJobManager
 from cylc.flow.task_events_mgr import TaskEventsManager
@@ -90,7 +90,7 @@ def main(parser, options, suite, *task_ids):
     for task_id in task_ids:
         if not TaskID.is_valid_id(task_id):
             raise UserInputError("Invalid task ID %s" % task_id)
-    suiterc = suite_srv_files_mgr.get_suite_rc(suite)
+    suiterc = get_suite_rc(suite)
     suite_dir = os.path.dirname(suiterc)
     # For user-defined batch system handlers
     sys.path.append(os.path.join(suite_dir, 'python'))
@@ -115,7 +115,7 @@ def main(parser, options, suite, *task_ids):
     make_suite_run_tree(suite)
     # Extract job.sh from library, for use in job scripts.
     extract_resources(
-        suite_srv_files_mgr.get_suite_srv_dir(suite),
+        get_suite_srv_dir(suite),
         ['etc/job.sh'])
     pool = SubProcPool()
     owner = get_user()
