@@ -12,8 +12,8 @@ installed with `pip` (see #2990), and has been renamed to `cylc-flow`. The name
 `cylc` is now used as a native Python package namespace to allow other projects
 to re-use it and extend Cylc with plug-ins.
 
-Cylc 8.0a (alpha) releases are not compatible with Cylc 7 or with Cylc 8.0a1,
-as the API is still under heavy development.
+Cylc 8.0aX (alpha) releases are not compatible with Cylc 7 or with previous
+8.0aX releases, as the API is still under heavy development.
 
 The commands `cylc-profile-battery`, `cylc-test-battery`, `cylc-license`
 have been removed, and `cylc graph` is only retained for text output
