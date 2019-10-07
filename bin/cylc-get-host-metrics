@@ -42,9 +42,8 @@ if '--use-ssh' in sys.argv[1:]:
     if remrun():
         sys.exit(0)
 
-import os
 import re
-from subprocess import Popen, PIPE, CalledProcessError
+from subprocess import Popen, PIPE, CalledProcessError, DEVNULL
 import json
 
 from cylc.flow.option_parsers import OptionParser
@@ -59,32 +58,14 @@ LOAD_TEMPLATES:
     $ uptime
     17:52:58 up  8:08,  2 users,  load average: *0.13*, *0.09*, *0.07*
 
-MEMORY_TEMPLATES
-    ('free -k' command inconsistent across Linux distros, see e.g.
-     'https://access.redhat.com/solutions/406773', so check '/proc' directly)
-    $ cat /proc/meminfo
-    MemTotal:        6116852 kB
-    MemFree:        *670856* kB
-    [MemAvailable:    3765092 kB]
-    Buffers:        *315808* kB
-    Cached:        *1497064* kB
-    SwapCached:            0 kB
-    Active:          3417432 kB
-    ...
-    ...
-    where [] encloses fields on RHEL7 only.
-
 DISK_TEMPLATES, e.g. for mount directory path option '--disk-space=/boot':
     $ df -Pk /boot
     Filesystem            1024-blocks      Used Available Capacity Mounted on
     /dev/md0                    96978     33904   *57856*      37% /boot.
 """
-LOAD_TEMPLATES = ['uptime', (1, 5, 15), re.compile(
+LOAD_TEMPLATES = [['uptime'], (1, 5, 15), re.compile(
                   r'load average:\s([\d.]+),\s([\d.]+),\s([\d.]+)')]
-MEMORY_TEMPLATES = ['cat /proc/meminfo', re.compile(
-                    (r'MemFree:\s*(\d+)\skB\n.*\n*Buffers:\s*(\d+)\skB'
-                     r'\n.*\n*Cached:\s*(\d+)\skB'))]
-DISK_TEMPLATES = ['df -Pk', re.compile(
+DISK_TEMPLATES = [['df', '-Pk'], re.compile(
                   r'Mounted on\n\S+\s+\d+\s+\d+\s+(\d+)\s+')]
 
 
@@ -116,22 +97,23 @@ def main(parser, options):
     sys.exit()
 
 
-def run_command_string(command_string):
+def run_command(cmd):
     """Return the result from running a command string in a local shell.
 
     Return stdout if command successful, else raise CalledProcessError.
     """
-    command_sequence = command_string.split()
     # Note: can replace function w/ 'subprocess.check_output()' when drop v2.6.
-    process = Popen(command_sequence, stdin=open(os.devnull), stdout=PIPE,
-                    stderr=PIPE)
-    stdoutput = process.communicate()[0].decode()
-    process.wait()
+    process = Popen(cmd, stdin=DEVNULL, stdout=PIPE, stderr=PIPE)
+    stdout, stderr = [f.decode() for f in process.communicate()]
     return_code = process.returncode
     if return_code:
-        raise CalledProcessError(return_code, command_sequence)
+        raise CalledProcessError(
+            return_code,
+            ' '.join(cmd),
+            stderr=stderr
+        )
     else:
-        return str(stdoutput)
+        return stdout
 
 
 def extract_pattern(data_pattern, raw_string):
@@ -154,19 +136,41 @@ def process_load():
     String keys e.g. 'load:1' give minutes average was measured over.
     """
     cmd, av_times, patt = LOAD_TEMPLATES
-    av_raw_tuple = extract_pattern(patt, run_command_string(cmd))
+    av_raw_tuple = extract_pattern(patt, run_command(cmd))
     av_floats_tuple = [float(av_raw) for av_raw in av_raw_tuple]
     return dict(zip(
         ["load:" + str(time) for time in av_times], av_floats_tuple))
 
 
 def process_memory():
-    """Return dict with integer usable memory value from '/proc/meminfo'."""
-    cmd, patt = MEMORY_TEMPLATES
-    mem_tuple = extract_pattern(patt, run_command_string(cmd))
-    # Sum free, buffer and cache memory values (free plus/minus buffer/cache).
-    usable_memory = sum([int(mem_val) for mem_val in mem_tuple])
-    return {"memory": usable_memory}
+    """Return available memory.
+
+    Note the `free` command is inconsistent accross Linux distros.
+
+    Extracts the `MemAvailable` field from `/proc/meminfo` if present else
+    returns the sum of `MemFree`, `Buffers` and `Cached`.
+
+    ('free -k' command inconsistent across Linux distros, see e.g.
+     'https://access.redhat.com/solutions/406773', so check '/proc' directly)
+
+    """
+    stdout = run_command(['cat', '/proc/meminfo'])
+    fields = dict((
+        line.split()[:2]
+        for line in stdout.splitlines()
+    ))
+    try:
+        mem = int(fields['MemAvailable:'])
+    except KeyError:
+        # fallback for older kernels - provide our own estimate
+        # see: https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/
+        #      linux.git/commit/?id=34e431b0ae398fc54ea69ff85ec700722c9da773
+        mem = sum((
+            int(fields['MemFree:']),
+            int(fields['Buffers:']),
+            int(fields['Cached:'])
+        ))
+    return {'memory': mem}
 
 
 def process_disk(paths_list):
@@ -175,12 +179,12 @@ def process_disk(paths_list):
     Disk space data, from 'df -Pk' command, stored as float values under
     associated path string keys.
     """
-    partial_cmd, patt = DISK_TEMPLATES
+    cmd, patt = DISK_TEMPLATES
     path_dict = {}
     for path in paths_list:
         # Invoke 'df' for each path/file separately; safer for extracting the
         # correct data; not as efficient but the command is not intensive.
-        cmd_output = run_command_string(partial_cmd + ' ' + path)
+        cmd_output = run_command(cmd + [path])
         free_space_str, = extract_pattern(patt, cmd_output)
         if free_space_str:
             path_dict["disk-space:" + path] = int(free_space_str)

@@ -80,7 +80,7 @@ __OUTPUT_FORMAT__
 # Disk space option, including a bad path.
 run_fail "${TEST_NAME_BASE}-get-host-metric-disk-bad" cylc get-host-metric \
 --disk-space=nonsense
-MESSAGE="subprocess\.CalledProcessError: Command '\['df', '-Pk', 'nonsense'\]'"
+MESSAGE="subprocess\.CalledProcessError: Command 'df -Pk nonsense'"
 MESSAGE+=" returned non-zero exit status 1"
 grep_ok "$MESSAGE" "${TEST_NAME_BASE}-get-host-metric-disk-bad.stderr"
 #-------------------------------------------------------------------------------
