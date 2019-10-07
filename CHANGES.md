@@ -7,10 +7,18 @@ release.
 
 ## Backward-incompatible changes in Cylc-8.x
 
-The Cylc server program and CLI codebase is now a Python package that can be
-installed with `pip` (see #2990), and has been renamed to `cylc-flow`. The name
-`cylc` is now used as a native Python package namespace to allow other projects
-to re-use it and extend Cylc with plug-ins.
+Cylc Review was also removed in this version.
+
+The Cylc server program and CLI codebase is now a Python 3 package that can be
+installed from PyPI with `pip` (see #2990), and has been renamed to
+`cylc-flow`. The name `cylc` is now used as a native Python package namespace
+to allow other projects to re-use it and extend Cylc with plug-ins.
+
+The old PyGTK GUI is being replaced by a Web UI, with development managed in
+the cylc/cylc-ui repository (and see also cylc/cylc-uiserver).
+
+The User Guide an other documention has been removed from the Python package to
+the cylc/cylc-doc repository.
 
 Cylc 8.0aX (alpha) releases are not compatible with Cylc 7 or with previous
 8.0aX releases, as the API is still under heavy development.
@@ -350,14 +358,7 @@ listing with current incident reports.
 First alpha release of Cylc 8. Also first release of Cylc uploaded
 to PYPI: https://pypi.org/project/cylc-flow/.
 
-### Backward incompatible changes
-
-Cylc 8.0a0 API is not backward compatible with Cylc 7. The main changes are
-Python 3 and dropping the old PyGTK GUI, which was replaced by a Web GUI.
-Other changes include dependency management via Setuptools, and code being
-broken up into separate projects.
-
-Cylc Review was also removed in this version.
+(See note on cylc-8 backward-incompatible changes, above)
 
 ### Enhancements
 
