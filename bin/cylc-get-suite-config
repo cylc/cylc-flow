@@ -118,7 +118,7 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser, options, reg):
-    suite, suiterc = suite_files.parse_suite_arg(options, reg)
+    suite, suiterc = parse_suite_arg(options, reg)
 
     if options.markup:
         prefix = '!cylc!'

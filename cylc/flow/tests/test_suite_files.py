@@ -181,7 +181,7 @@ def get_register_test_cases():
     ]
 
 
-class TestSuiteSrvFilesManager(unittest.TestCase):
+class TestSuiteFiles(unittest.TestCase):
 
     @mock.patch('os.unlink')
     @mock.patch('os.makedirs')

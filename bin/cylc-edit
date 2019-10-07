@@ -74,7 +74,7 @@ from cylc.flow.parsec.include import inline, \
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from suite_files import parse_suite_arg
+from cylc.flow.suite_files import parse_suite_arg
 from cylc.flow.terminal import cli_function
 from cylc.flow.wallclock import get_current_time_string
 

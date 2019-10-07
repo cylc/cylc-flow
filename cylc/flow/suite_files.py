@@ -94,7 +94,7 @@ class ContactFileFields:
     """The port Cylc uses to communicate with this suite."""
 
     SSH_USE_LOGIN_SHELL = 'CYLC_SSH_USE_LOGIN_SHELL'
-    """TODO: Unused at present, waiting on #2975."""
+    """TODO: Unused at present, waiting on #2975 (#3327)."""
 
     SUITE_RUN_DIR_ON_SUITE_HOST = 'CYLC_SUITE_RUN_DIR_ON_SUITE_HOST'
     """The path to the suite run directory as seen from ``HOST``."""
@@ -439,6 +439,7 @@ def register(reg=None, source=None, redirect=False, rundir=None):
         reg (str): suite name, default basename($PWD).
         source (str): directory location of suite.rc file, default $PWD.
         redirect (bool): allow reuse of existing name and run directory.
+        rundir (str): for overriding the default cylc-run directory.
 
     Return:
         str: The registered suite name (which may be computed here).
