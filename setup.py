@@ -63,7 +63,8 @@ tests_require = [
 
 extra_requires = {
     'empy': ['EmPy==3.3.*'],
-    'all': []
+    'all': [],
+    'pandas': ['pandas==0.25.*']
 }
 extra_requires['all'] += extra_requires['empy']
 extra_requires['all'] += tests_require
