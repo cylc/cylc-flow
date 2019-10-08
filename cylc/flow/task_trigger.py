@@ -97,7 +97,7 @@ class TaskTrigger(object):
             if trigger_name == standard_name or trigger_name in alt_names:
                 return standard_name
         raise TriggerExpressionError(
-            "Illegal task trigger name: %s" % trigger_name)
+            f"Illegal task trigger name: {trigger_name}")
 
 
 class Dependency(object):
