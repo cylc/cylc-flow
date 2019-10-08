@@ -165,7 +165,7 @@ async def scan_one(reg, host, port, timeout=None, methods=None):
         try:
             msg = await client.async_request(method)
         except ClientTimeout as exc:
-            LOG.exception("ClientTimeout")
+            LOG.exception("ClientTimeout - reg: {reg}, host: {host}, port: {port}".format(reg=reg, host=host, port=port))
             return (reg, host, port, MSG_TIMEOUT)
         except ClientError as exc:
             LOG.exception("ClientError")
