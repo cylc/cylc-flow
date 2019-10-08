@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Test "cylc scan" on suite suspended with SIGSTOP
 . "$(dirname "$0")/test_header"
-set_test_number 4
+set_test_number 5
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
@@ -32,7 +32,8 @@ kill -SIGSTOP "${SUITE_PID}"
 sleep 1
 run_ok "${TEST_NAME_BASE}-scan" cylc scan
 # ensure there is no traceback
-cmp_ok "${TEST_NAME_BASE}-scan.stderr" /dev/null
+grep_ok "TIMEOUT" "${TEST_NAME_BASE}-scan.stdout"
+grep_ok "Timeout waiting for server response" "${TEST_NAME_BASE}-scan.stderr"
 # Tell the suite to continue
 kill -SIGCONT "${SUITE_PID}"
 sleep 1
