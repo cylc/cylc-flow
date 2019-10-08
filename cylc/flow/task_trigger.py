@@ -15,11 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from cylc.flow.cycling.loader import get_point_relative
+from cylc.flow.exceptions import TriggerExpressionError
 from cylc.flow.prerequisite import Prerequisite
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_EXPIRED, TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_SUBMIT_FAILED,
     TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED)
-
 
 # Task trigger names (e.g. foo:fail => bar).
 # Can use "foo:fail => bar" or "foo:failed => bar", etc.
@@ -31,16 +31,6 @@ _ALT_TRIGGER_NAMES = {
     TASK_OUTPUT_SUCCEEDED: ["succeed"],
     TASK_OUTPUT_FAILED: ["fail"],
 }
-
-
-class TaskTriggerError(ValueError):
-    """Illegal task trigger name."""
-
-    def __init__(self, msg):
-        self.msg = msg
-
-    def __str__(self):
-        return repr(self.msg)
 
 
 class TaskTrigger(object):
@@ -106,7 +96,8 @@ class TaskTrigger(object):
         for standard_name, alt_names in _ALT_TRIGGER_NAMES.items():
             if trigger_name == standard_name or trigger_name in alt_names:
                 return standard_name
-        raise TaskTriggerError("Illegal task trigger name: %s" % trigger_name)
+        raise TriggerExpressionError(
+            f"Illegal task trigger name: {trigger_name}")
 
 
 class Dependency(object):
