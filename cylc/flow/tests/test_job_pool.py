@@ -60,15 +60,15 @@ class TestJobPool(unittest.TestCase):
 
     def test_insert_job(self):
         """Test method that adds a new job to the pool."""
-        self.assertEqual(0, len(self.job_pool.pool))
+        self.assertEqual(0, len(self.job_pool.updates))
         self.job_pool.insert_job(JOB_CONFIG)
-        self.assertEqual(1, len(self.job_pool.pool))
-        self.assertTrue(self.ext_id in self.job_pool.pool)
+        self.assertEqual(1, len(self.job_pool.updates))
+        self.assertTrue(self.ext_id in self.job_pool.updates)
 
     def test_add_job_msg(self):
         """Test method adding messages to job element."""
         self.job_pool.insert_job(JOB_CONFIG)
-        job = self.job_pool.pool[self.ext_id]
+        job = self.job_pool.updates[self.ext_id]
         old_stamp = copy(job.stamp)
         self.assertEqual(0, len(job.messages))
         self.job_pool.add_job_msg('NotJobID', 'The Atomic Age')
@@ -80,28 +80,28 @@ class TestJobPool(unittest.TestCase):
     def test_remove_job(self):
         """Test method removing a job from the pool via internal job id."""
         self.job_pool.insert_job(JOB_CONFIG)
-        jobs = self.job_pool.pool
-        self.assertEqual(1, len(jobs))
+        pruned = self.job_pool.deltas.pruned
+        self.assertEqual(0, len(pruned))
         self.job_pool.remove_job('NotJobID')
-        self.assertEqual(1, len(jobs))
+        self.assertEqual(0, len(pruned))
         self.job_pool.remove_job(self.int_id)
-        self.assertEqual(0, len(jobs))
+        self.assertEqual(1, len(pruned))
 
     def test_remove_task_jobs(self):
         """Test method removing jobs from the pool via internal task ID."""
         self.job_pool.insert_job(JOB_CONFIG)
-        jobs = self.job_pool.pool
-        self.assertEqual(1, len(jobs))
+        pruned = self.job_pool.deltas.pruned
+        self.assertEqual(0, len(pruned))
         self.job_pool.remove_task_jobs('NotTaskID')
-        self.assertEqual(1, len(jobs))
-        task_id = self.job_pool.pool[self.ext_id].task_proxy
+        self.assertEqual(0, len(pruned))
+        task_id = self.job_pool.updates[self.ext_id].task_proxy
         self.job_pool.remove_task_jobs(task_id)
-        self.assertEqual(0, len(jobs))
+        self.assertEqual(1, len(pruned))
 
     def test_set_job_attr(self):
         """Test method setting job attribute value."""
         self.job_pool.insert_job(JOB_CONFIG)
-        job = self.job_pool.pool[self.ext_id]
+        job = self.job_pool.updates[self.ext_id]
         old_exit_script = copy(job.exit_script)
         self.job_pool.set_job_attr(self.int_id, 'leave_scripting', 'rm -v *')
         self.assertEqual(old_exit_script, job.exit_script)
@@ -113,7 +113,7 @@ class TestJobPool(unittest.TestCase):
     def test_set_job_state(self):
         """Test method setting the job state."""
         self.job_pool.insert_job(JOB_CONFIG)
-        job = self.job_pool.pool[self.ext_id]
+        job = self.job_pool.updates[self.ext_id]
         old_state = copy(job.state)
         self.job_pool.set_job_state(self.int_id, 'waiting')
         self.assertEqual(old_state, job.state)
@@ -126,7 +126,7 @@ class TestJobPool(unittest.TestCase):
         """Test method setting event time."""
         event_time = get_current_time_string()
         self.job_pool.insert_job(JOB_CONFIG)
-        job = self.job_pool.pool[self.ext_id]
+        job = self.job_pool.updates[self.ext_id]
         old_time = copy(job.submitted_time)
         self.job_pool.set_job_time(self.int_id, 'jumped', event_time)
         self.assertEqual(old_time, job.submitted_time)

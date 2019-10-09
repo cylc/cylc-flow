@@ -1609,13 +1609,10 @@ see `COPYING' in the Cylc source distribution.
             self.pool.get_pool_change_tasks())
         if has_updated:
             # WServer incremental data store update
-            self.ws_data_mgr.increment_graph_elements()
-            self.ws_data_mgr.update_dynamic_elements(updated_nodes)
+            self.ws_data_mgr.update_data_structure(updated_nodes)
             # Publish updates:
-            flow_data = self.ws_data_mgr.data[f'{self.owner}|{self.suite}']
             self.publisher.publish(
-                [(b'workflow', flow_data['workflow'], 'SerializeToString')]
-            )
+                self.ws_data_mgr.get_publish_deltas())
             # TODO: deprecate after CLI GraphQL migration
             self.state_summary_mgr.update(self)
             # Database update

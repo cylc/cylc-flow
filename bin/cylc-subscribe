@@ -38,13 +38,17 @@ from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.scan import get_scan_items_from_fs, re_compile_filters
 from cylc.flow.network.subscriber import WorkflowSubscriber
 from cylc.flow.terminal import cli_function
-from cylc.flow.ws_messages_pb2 import PbWorkflow
+from cylc.flow.ws_data_mgr import DELTAS_MAP
 
 
 def print_workflow(topic, msg):
-    data = PbWorkflow()
+    msg_type = topic.decode('utf-8')
+    try:
+        data = DELTAS_MAP[msg_type]()
+    except KeyError:
+        return
     data.ParseFromString(msg)
-    print('Received: ', topic.decode())
+    print('Received: ', msg_type)
     sys.stdout.write(
         json.dumps(MessageToDict(data), indent=4) + '\n')
 
@@ -77,7 +81,7 @@ def main(_, options, suite, topic=None):
     if topic is None:
         topic = b'workflow'
     else:
-        topic = topic.encode()
+        topic = topic.encode('utf-8')
     subscriber = WorkflowSubscriber(host, port, [topic])
 
     asyncio.ensure_future(subscriber.subscribe([topic], print_workflow))

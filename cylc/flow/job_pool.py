@@ -26,7 +26,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_READY, TASK_STATUS_SUBMITTED, TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED,
     TASK_STATUS_FAILED)
-from cylc.flow.ws_messages_pb2 import PbJob
+from cylc.flow.ws_messages_pb2 import PbJob, JDeltas
 from cylc.flow.ws_data_mgr import ID_DELIM
 
 JOB_STATUSES_ALL = [
@@ -39,7 +39,7 @@ JOB_STATUSES_ALL = [
 ]
 
 
-class JobPool(object):
+class JobPool:
     """Pool of protobuf job messages."""
     # TODO: description, args, and types
 
@@ -52,6 +52,9 @@ class JobPool(object):
         self.workflow_id = f'{self.owner}{ID_DELIM}{self.suite}'
         self.pool = {}
         self.task_jobs = {}
+        self.deltas = JDeltas()
+        self.updates = {}
+        self.updates_pending = False
 
     def insert_job(self, job_conf):
         """Insert job into pool."""
@@ -84,23 +87,24 @@ class JobPool(object):
             cycle_point=point_string,
         )
         j_buf.batch_sys_conf.extend(
-            [f'{key}={val}' for key, val in
-                job_conf['batch_system_conf'].items()])
+            [f'{key}={val}'
+             for key, val in job_conf['batch_system_conf'].items()])
         j_buf.directives.extend(
-            [f'{key}={val}' for key, val in
-                job_conf['directives'].items()])
+            [f'{key}={val}'
+             for key, val in job_conf['directives'].items()])
         j_buf.environment.extend(
-            [f'{key}={val}' for key, val in
-                job_conf['environment'].items()])
+            [f'{key}={val}'
+             for key, val in job_conf['environment'].items()])
         j_buf.param_env_tmpl.extend(
-            [f'{key}={val}' for key, val in
-                job_conf['param_env_tmpl'].items()])
+            [f'{key}={val}'
+             for key, val in job_conf['param_env_tmpl'].items()])
         j_buf.param_var.extend(
-            [f'{key}={val}' for key, val in
-                job_conf['param_var'].items()])
+            [f'{key}={val}'
+             for key, val in job_conf['param_var'].items()])
         j_buf.extra_logs.extend(job_conf['logfiles'])
-        self.pool[j_id] = j_buf
-        self.task_jobs.setdefault(t_id, []).append(j_id)
+        self.updates[j_id] = j_buf
+        self.task_jobs.setdefault(t_id, set()).add(j_id)
+        self.updates_pending = True
 
     def add_job_msg(self, job_d, msg):
         """Add message to job."""
@@ -110,8 +114,10 @@ class JobPool(object):
             f'{self.workflow_id}{ID_DELIM}{point}'
             f'{ID_DELIM}{name}{ID_DELIM}{sub_num}')
         try:
-            self.pool[j_id].messages.append(msg)
-            self.pool[j_id].stamp = f'{j_id}@{update_time}'
+            j_delta = PbJob(stamp=f'{j_id}@{update_time}')
+            j_delta.messages.append(msg)
+            self.updates.setdefault(j_id, PbJob(id=j_id)).MergeFrom(j_delta)
+            self.updates_pending = True
         except (KeyError, TypeError):
             pass
 
@@ -121,8 +127,9 @@ class JobPool(object):
         t_id = f'{self.workflow_id}{ID_DELIM}{point}{ID_DELIM}{name}'
         j_id = f'{t_id}{ID_DELIM}{sub_num}'
         try:
-            del self.pool[j_id]
-            self.task_jobs[t_id].remove(j_id)
+            self.task_jobs[t_id].discard(j_id)
+            self.deltas.pruned.append(j_id)
+            self.updates_pending = True
         except KeyError:
             pass
 
@@ -130,8 +137,9 @@ class JobPool(object):
         """Removed a task's jobs from the pool via task ID."""
         try:
             for j_id in self.task_jobs[task_id]:
-                del self.pool[j_id]
+                self.deltas.pruned.append(j_id)
             del self.task_jobs[task_id]
+            self.updates_pending = True
         except KeyError:
             pass
 
@@ -143,8 +151,10 @@ class JobPool(object):
             f'{self.workflow_id}{ID_DELIM}{point}'
             f'{ID_DELIM}{name}{ID_DELIM}{sub_num}')
         try:
-            setattr(self.pool[j_id], attr_key, attr_val)
-            self.pool[j_id].stamp = f'{j_id}@{update_time}'
+            j_delta = PbJob(stamp=f'{j_id}@{update_time}')
+            setattr(j_delta, attr_key, attr_val)
+            self.updates.setdefault(j_id, PbJob(id=j_id)).MergeFrom(j_delta)
+            self.updates_pending = True
         except (KeyError, TypeError, AttributeError):
             pass
 
@@ -157,8 +167,13 @@ class JobPool(object):
             f'{ID_DELIM}{name}{ID_DELIM}{sub_num}')
         if status in JOB_STATUSES_ALL:
             try:
-                self.pool[j_id].state = status
-                self.pool[j_id].stamp = f'{j_id}@{update_time}'
+                j_delta = PbJob(
+                    stamp=f'{j_id}@{update_time}',
+                    state=status
+                )
+                self.updates.setdefault(
+                    j_id, PbJob(id=j_id)).MergeFrom(j_delta)
+                self.updates_pending = True
             except KeyError:
                 pass
 
@@ -173,8 +188,10 @@ class JobPool(object):
             f'{self.workflow_id}{ID_DELIM}{point}'
             f'{ID_DELIM}{name}{ID_DELIM}{sub_num}')
         try:
-            setattr(self.pool[j_id], event_key + '_time', time_str)
-            self.pool[j_id].stamp = f'{j_id}@{update_time}'
+            j_delta = PbJob(stamp=f'{j_id}@{update_time}')
+            setattr(j_delta, event_key + '_time', time_str)
+            self.updates.setdefault(j_id, PbJob(id=j_id)).MergeFrom(j_delta)
+            self.updates_pending = True
         except (KeyError, TypeError, AttributeError):
             pass
 
