@@ -63,10 +63,13 @@ tests_require = [
 
 extra_requires = {
     'empy': ['EmPy==3.3.*'],
-    'all': []
+    'all': [],
+    'report-timings': ['pandas==0.25.*']
 }
 extra_requires['all'] += extra_requires['empy']
 extra_requires['all'] += tests_require
+extra_requires['all'] += extra_requires['report-timings']
+
 
 setup(
     version=find_version("cylc", "flow", "__init__.py"),

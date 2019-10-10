@@ -42,13 +42,6 @@ SPEC = {
     'disable interactive command prompts': [VDR.V_BOOLEAN, True],
     # suite
     'run directory rolling archive length': [VDR.V_INTEGER, -1],
-    # suite-task communication
-    'task messaging': {
-        'retry interval': [VDR.V_INTERVAL, DurationFloat(5)],
-        'maximum number of tries': [VDR.V_INTEGER, 7],
-        'connection timeout': [VDR.V_INTERVAL, DurationFloat(30)],
-    },
-
     # suite
     'cylc': {
         'UTC mode': [VDR.V_BOOLEAN],
@@ -267,6 +260,7 @@ def upg(cfg, descr):
     u.obsolete('8.0.0', ['task host select command timeout'])
     u.obsolete('8.0.0', ['xtrigger function timeout'])
     u.obsolete('8.0.0', ['enable run directory housekeeping'])
+    u.obsolete('8.0.0', ['task messaging'])
 
     u.upgrade()
 

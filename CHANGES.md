@@ -5,31 +5,53 @@ all changes see the [closed
 milestones](https://github.com/cylc/cylc-flow/milestones?state=closed) for each
 release.
 
+## Backward-incompatible changes in Cylc-8.x
+
+Cylc Review was also removed in this version.
+
+The Cylc server program and CLI codebase is now a Python 3 package that can be
+installed from PyPI with `pip` (see #2990), and has been renamed to
+`cylc-flow`. The name `cylc` is now used as a native Python package namespace
+to allow other projects to re-use it and extend Cylc with plug-ins.
+
+The old PyGTK GUI is being replaced by a Web UI, with development managed in
+the cylc/cylc-ui repository (and see also cylc/cylc-uiserver).
+
+The User Guide an other documention has been removed from the Python package to
+the cylc/cylc-doc repository.
+
+Cylc 8.0aX (alpha) releases are not compatible with Cylc 7 or with previous
+8.0aX releases, as the API is still under heavy development.
+
+The commands `cylc-profile-battery`, `cylc-test-battery`, `cylc-license`
+have been removed, and `cylc graph` is only retained for text output
+used in tests (it will be re-implemented in the new web UI).
+
+The xtrigger examples were moved to a separate `cylc/cylc-xtriggers` project
+(see #3123).
+
+Jinja filters were moved from its `Jinja2Filters` folder to within the `cylc`
+namespace, under `cylc.jinja.filters`.
+
+-------------------------------------------------------------------------------
+## __cylc-8.0a2 (2019-Q4?)__
+
+Third alpha release of Cylc 8.
+
+(See note on cylc-8 backward-incompatible changes, above)
+
+### Enhancements
+
+[#3402](https://github.com/cylc/cylc-flow/pull/3402) - removed automatic task job
+status message retries (problems that prevent message transmission are almost
+never transient, and in practice job polling is the only way to recover).
+
 -------------------------------------------------------------------------------
 ## __cylc-8.0a1 (2019-09-18)__
 
 Second alpha release of Cylc 8.
 
-### Backward incompatible changes
-
-Cylc 8.0a1 is not compatible with Cylc 7 or with Cylc 8.0a0, as the API is
-still under heavy development.
-
-The commands `cylc-profile-battery`, `cylc-test-battery`, `cylc-license`
-were removed in this version.
-
-The xtriggers examples were moved to a separate `cylc/cylc-xtriggers`
-project (see #3123).
-
-In this version Cylc got a `setup.py` file, and became a Python package
-with modules, that could be installed with `pip` (see #2990).
-
-Cylc also was renamed in this version to `cylc-flow`, and `cylc`
-started being used as a native namespace, to allow other projects to
-re-use it to extend Cylc with plug-ins.
-
-Jinja filters were moved from its `Jinja2Filters` folder to within the
-`cylc` namespace, under `cylc.jinja.filters`.
+(See note on cylc-8 backward-incompatible changes, above)
 
 ### Enhancements
 
@@ -336,14 +358,7 @@ listing with current incident reports.
 First alpha release of Cylc 8. Also first release of Cylc uploaded
 to PYPI: https://pypi.org/project/cylc-flow/.
 
-### Backward incompatible changes
-
-Cylc 8.0a0 API is not backward compatible with Cylc 7. The main changes are
-Python 3 and dropping the old PyGTK GUI, which was replaced by a Web GUI.
-Other changes include dependency management via Setuptools, and code being
-broken up into separate projects.
-
-Cylc Review was also removed in this version.
+(See note on cylc-8 backward-incompatible changes, above)
 
 ### Enhancements
 

@@ -969,21 +969,6 @@ see `COPYING' in the Cylc source distribution.
                 str(glbl_cfg().get_host_item('use login shell')),
             fields.SUITE_RUN_DIR_ON_SUITE_HOST:
                 self.suite_run_dir,
-            fields.TASK_MSG_MAX_TRIES:
-                str(glbl_cfg().get([
-                    'task messaging',
-                    'maximum number of tries'
-                ])),
-            fields.TASK_MSG_RETRY_INTVL:
-                str(float(glbl_cfg().get([
-                    'task messaging',
-                    'retry interval'
-                ]))),
-            fields.TASK_MSG_TIMEOUT:
-                str(float(glbl_cfg().get([
-                    'task messaging',
-                    'connection timeout'
-                ]))),
             fields.UUID:
                 self.uuid_str.value,
             fields.VERSION:

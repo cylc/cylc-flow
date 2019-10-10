@@ -12,6 +12,9 @@ doc/src/appendices/command-ref.rst
 # emacs backup files
 *~
 
+# vscode
+.vscode
+
 # ordereddict-0.4.5 build 
 ext/ordereddict-0.4.5/build
 

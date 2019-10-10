@@ -16,11 +16,6 @@ deliberately fails."""
 
 [runtime]
     [[foo]]
-        # succeed instantly so that we don't orphan a live task when the
-        # suite aborts on timing out - else if the test suite is executed
-        # multiple times in succession this orphaned task message retry
-        # may occasionally succeed in messaging the next run of this
-        # suite on the same port .
         script = "/bin/true"
     [[bar]]
         # this task is never meant to run (thanks to the fail trigger),

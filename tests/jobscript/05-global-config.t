@@ -23,9 +23,6 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 create_test_globalrc '
-[task messaging]
-   connection timeout = PT20S
-   retry interval = PT9S
 [hosts]
    [[localhost]]
         task communication method = poll
