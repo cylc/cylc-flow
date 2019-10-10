@@ -18,8 +18,8 @@
 
 # Define all legal items and values for cylc local client definitions.
 
-from cylc.flow.parsec.validate import DurationFloat as VDR
-
+from cylc.flow.parsec.validate import (
+    DurationFloat, CylcConfigValidator as VDR, cylc_config_validate)
 
 SPEC = {
     'disable interactive command prompts': [VDR.V_BOOLEAN, True],
