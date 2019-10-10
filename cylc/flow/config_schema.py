@@ -17,14 +17,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Define all legal items and values for cylc suite definition files."""
 
+import os
+import re
+
 from metomi.isodatetime.data import Calendar
 
 from cylc.flow import LOG
+from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.network.authorisation import Priv
 from cylc.flow.parsec.config import ParsecConfig
 from cylc.flow.parsec.upgrade import upgrader
 from cylc.flow.parsec.validate import (
     DurationFloat, CylcConfigValidator as VDR, cylc_config_validate)
+from cylc.flow.hostuserutil import get_user_home, is_remote_user
 
 # Nested dict of spec items.
 # Spec value is [value_type, default, allowed_2, allowed_3, ...]
@@ -40,60 +45,24 @@ SPEC = {
         'URL': [VDR.V_STRING, ''],
         '__MANY__': [VDR.V_STRING, ''],
     },
-    'cylc': {
+    'general': {
         'UTC mode': [VDR.V_BOOLEAN, False],
         'cycle point format': [VDR.V_CYCLE_POINT_FORMAT],
         'cycle point num expanded year digits': [VDR.V_INTEGER, 0],
-        'cycle point time zone': [VDR.V_CYCLE_POINT_TIME_ZONE],
-        'required run mode': [
-            VDR.V_STRING, '', 'live', 'dummy', 'dummy-local', 'simulation'],
-        'force run mode': [
-            VDR.V_STRING, '', 'live', 'dummy', 'dummy-local', 'simulation'],
+        'cycle point time zone': [VDR.V_CYCLE_POINT_TIME_ZONE, 'Z'],
+        'maximum size in bytes': [VDR.V_INTEGER, 1000000],
+        'process pool size': [VDR.V_INTEGER, 4],
+        'process pool timeout': [VDR.V_INTERVAL, DurationFloat(600)],
+        'rolling archive length': [VDR.V_INTEGER, 5],
+        'run directory rolling archive length': [VDR.V_INTEGER, -1],
         'health check interval': [VDR.V_INTERVAL],
-        'task event mail interval': [VDR.V_INTERVAL],
-        'disable automatic shutdown': [VDR.V_BOOLEAN],
         'simulation': {
             'disable suite event handlers': [VDR.V_BOOLEAN, True],
         },
         'environment': {
             '__MANY__': [VDR.V_STRING],
         },
-        'parameters': {
-            '__MANY__': [VDR.V_PARAMETER_LIST],
-        },
-        'parameter templates': {
-            '__MANY__': [VDR.V_STRING],
-        },
-        'events': {
-            'handlers': [VDR.V_STRING_LIST, None],
-            'handler events': [VDR.V_STRING_LIST, None],
-            'startup handler': [VDR.V_STRING_LIST, None],
-            'timeout handler': [VDR.V_STRING_LIST, None],
-            'inactivity handler': [VDR.V_STRING_LIST, None],
-            'shutdown handler': [VDR.V_STRING_LIST, None],
-            'aborted handler': [VDR.V_STRING_LIST, None],
-            'stalled handler': [VDR.V_STRING_LIST, None],
-            'timeout': [VDR.V_INTERVAL],
-            'inactivity': [VDR.V_INTERVAL],
-            'abort if startup handler fails': [VDR.V_BOOLEAN],
-            'abort if shutdown handler fails': [VDR.V_BOOLEAN],
-            'abort if timeout handler fails': [VDR.V_BOOLEAN],
-            'abort if inactivity handler fails': [VDR.V_BOOLEAN],
-            'abort if stalled handler fails': [VDR.V_BOOLEAN],
-            'abort if any task fails': [VDR.V_BOOLEAN],
-            'abort on stalled': [VDR.V_BOOLEAN],
-            'abort on timeout': [VDR.V_BOOLEAN],
-            'abort on inactivity': [VDR.V_BOOLEAN],
-            'mail events': [VDR.V_STRING_LIST, None],
-            'mail from': [VDR.V_STRING],
-            'mail smtp': [VDR.V_STRING],
-            'mail to': [VDR.V_STRING],
-            'mail footer': [VDR.V_STRING],
-        },
-        'reference test': {
-            'expected task failures': [VDR.V_STRING_LIST],
-        },
-        'authentication': {
+        'authorization': {
             # Allow owners to grant public shutdown rights at the most, not
             # full control.
             'public': (
@@ -103,12 +72,99 @@ SPEC = {
                     Priv.READ, Priv.SHUTDOWN]])
         },
     },
+    'job platforms': {
+        'default platform': {
+            'run directory': [VDR.V_STRING, '$HOME/cylc-run'],
+            'work directory': [VDR.V_STRING, '$HOME/cylc-run'],
+            'communication method': [
+                VDR.V_STRING, 'zmq', 'ssh+zmq', 'poll'],
+            'submission polling intervals': [VDR.V_INTERVAL_LIST],
+            'submission retry delays': [VDR.V_INTERVAL_LIST, None],
+            'execution polling intervals': [VDR.V_INTERVAL_LIST],
+            'scp command': [
+                VDR.V_STRING, 'scp -oBatchMode=yes -oConnectTimeout=10'],
+            'ssh command': [
+                VDR.V_STRING, 'ssh -oBatchMode=yes -oConnectTimeout=10'],
+            'use login shell': [VDR.V_BOOLEAN, True],
+            'login hosts': [VDR.V_INTERVAL_LIST],
+            'cylc executable': [VDR.V_STRING, 'cylc'],
+            'global init-script': [VDR.V_STRING],
+            'retrieve job logs': [VDR.V_BOOLEAN],
+            'retrieve job logs command': [VDR.V_STRING, 'rsync -a'],
+            'retrieve job logs max size': [VDR.V_STRING],
+            'retrieve job logs retry delays': [VDR.V_INTERVAL_LIST],
+            'task event handler retry delays': [VDR.V_INTERVAL_LIST],
+            'tail command template': [
+                VDR.V_STRING, 'tail -n +1 -F %(filename)s'],
+            'owner': [VDR.V_STRING_LIST],
+            'batch system': {
+                'name': [VDR.V_STRING, None],
+                'err tailer': [VDR.V_STRING],
+                'out tailer': [VDR.V_STRING],
+                'err viewer': [VDR.V_STRING],
+                'out viewer': [VDR.V_STRING],
+                'job name length maximum': [VDR.V_INTEGER],
+                'execution time limit': [VDR.V_INTERVAL_LIST],
+                'execution polling intervals': [VDR.V_INTERVAL_LIST],
+                'execution retry delays': [VDR.V_INTERVAL_LIST],
+                'batch submit command template': [VDR.V_STRING]
+            },
+            'default directives': {
+                '__MANY__': [VDR.V_STRING],
+            },
+        },
+        '__MANY__': {
+            'run directory': [VDR.V_STRING, ''],
+            'work directory': [VDR.V_STRING, ''],
+            'task communication method': [VDR.V_STRING, ''],
+            'submission polling intervals': [VDR.V_STRING, ''],
+            'submission retry delays': [VDR.V_INTERVAL_LIST, None],
+            'execution polling intervals': [VDR.V_STRING, ''],
+            'scp command': [VDR.V_STRING, ''],
+            'ssh command': [VDR.V_STRING, ''],
+            'use login shell': [VDR.V_STRING, ''],
+            'login hosts': [VDR.V_STRING, ''],
+            'batch system': [VDR.V_STRING, ''],
+            'cylc executable': [VDR.V_STRING, ''],
+            'global init-script': [VDR.V_STRING, ''],
+            'copyable environment variables': [VDR.V_STRING, ''],
+            'retrieve job logs': [VDR.V_STRING, ''],
+            'retrieve job logs command': [VDR.V_STRING, ''],
+            'retrieve job logs max size': [VDR.V_STRING, ''],
+            'retrieve job logs retry delays': [VDR.V_STRING, ''],
+            'task event handler retry delays': [VDR.V_STRING, ''],
+            'tail command template': [VDR.V_STRING, ''],
+            'owner': [VDR.V_STRING_LIST],
+            'batch systems': {
+                'err tailer': [VDR.V_STRING, ''],
+                'out tailer': [VDR.V_STRING, ''],
+                'err viewer': [VDR.V_STRING, ''],
+                'out viewer': [VDR.V_STRING, ''],
+                'job name length maximum': [VDR.V_STRING, ''],
+                'execution time limit': [VDR.V_INTERVAL_LIST],
+                'execution polling intervals': [VDR.V_INTERVAL_LIST],
+                'execution retry delays': [VDR.V_INTERVAL_LIST],
+                'batch submit command template': [VDR.V_STRING]
+            },
+            'default directives': {
+                '__MANY__': [VDR.V_STRING],
+            },
+        },
+    },
+    'mail': {
+        'events': [VDR.V_STRING_LIST, None],
+        'from': [VDR.V_STRING],
+        'smtp': [VDR.V_STRING],
+        'to': [VDR.V_STRING],
+        'footer': [VDR.V_STRING],
+        'task event interval': [VDR.V_INTERVAL],
+    },
     'scheduling': {
         'initial cycle point': [VDR.V_CYCLE_POINT],
         'final cycle point': [VDR.V_STRING],
         'initial cycle point constraints': [VDR.V_STRING_LIST],
         'final cycle point constraints': [VDR.V_STRING_LIST],
-        'hold after point': [VDR.V_CYCLE_POINT],
+        'hold after cycle point': [VDR.V_CYCLE_POINT],
         'cycling mode': (
             [VDR.V_STRING, Calendar.MODE_GREGORIAN] +
             list(Calendar.MODES) + ["integer"]),
@@ -146,6 +202,8 @@ SPEC = {
             'init-script': [VDR.V_STRING],
             'env-script': [VDR.V_STRING],
             'err-script': [VDR.V_STRING],
+            'execution retry delays': [VDR.V_INTERVAL_LIST, None],
+            'execution time limit': [VDR.V_INTERVAL],
             'exit-script': [VDR.V_STRING],
             'pre-script': [VDR.V_STRING],
             'script': [VDR.V_STRING],
@@ -170,24 +228,8 @@ SPEC = {
                 'include': [VDR.V_STRING_LIST],
                 'exclude': [VDR.V_STRING_LIST],
             },
-            'job': {
-                'batch system': [VDR.V_STRING, 'background'],
-                'batch submit command template': [VDR.V_STRING],
-                'execution polling intervals': [VDR.V_INTERVAL_LIST, None],
-                'execution retry delays': [VDR.V_INTERVAL_LIST, None],
-                'execution time limit': [VDR.V_INTERVAL],
-                'submission polling intervals': [VDR.V_INTERVAL_LIST, None],
-                'submission retry delays': [VDR.V_INTERVAL_LIST, None],
-            },
-            'remote': {
-                'host': [VDR.V_STRING],
-                'owner': [VDR.V_STRING],
-                'suite definition directory': [VDR.V_STRING],
-                'retrieve job logs': [VDR.V_BOOLEAN],
-                'retrieve job logs max size': [VDR.V_STRING],
-                'retrieve job logs retry delays': [VDR.V_INTERVAL_LIST, None],
-            },
-            'events': {
+            'platform': [VDR.V_STRING],
+            'task events': {
                 'execution timeout': [VDR.V_INTERVAL],
                 'handlers': [VDR.V_STRING_LIST, None],
                 'handler events': [VDR.V_STRING_LIST, None],
@@ -224,10 +266,10 @@ SPEC = {
                 'run-dir': [VDR.V_STRING],
                 'verbose mode': [VDR.V_BOOLEAN],
             },
-            'environment': {
+            'job environment': {
                 '__MANY__': [VDR.V_STRING],
             },
-            'directives': {
+            'batch system directives': {
                 '__MANY__': [VDR.V_STRING],
             },
             'outputs': {
@@ -238,55 +280,101 @@ SPEC = {
             },
         },
     },
-    'visualization': {
-        'initial cycle point': [VDR.V_CYCLE_POINT],
-        'final cycle point': [VDR.V_STRING],
-        'number of cycle points': [VDR.V_INTEGER, 3],
-        'collapsed families': [VDR.V_STRING_LIST],
-        'use node color for edges': [VDR.V_BOOLEAN],
-        'use node fillcolor for edges': [VDR.V_BOOLEAN],
-        'use node color for labels': [VDR.V_BOOLEAN],
-        'node penwidth': [VDR.V_INTEGER, 2],
-        'edge penwidth': [VDR.V_INTEGER, 2],
-        'default node attributes': [
-            VDR.V_STRING_LIST, ['style=unfilled', 'shape=ellipse']],
-        'default edge attributes': [VDR.V_STRING_LIST],
-        'node groups': {
-            '__MANY__': [VDR.V_STRING_LIST],
+    'server events': {
+        'expected task failures': [VDR.V_STRING_LIST],
+        'handlers': [VDR.V_STRING_LIST, None],
+        'handler events': [VDR.V_STRING_LIST, None],
+        'startup handler': [VDR.V_STRING_LIST, None],
+        'timeout handler': [VDR.V_STRING_LIST, None],
+        'inactivity handler': [VDR.V_STRING_LIST, None],
+        'shutdown handler': [VDR.V_STRING_LIST, None],
+        'aborted handler': [VDR.V_STRING_LIST, None],
+        'stalled handler': [VDR.V_STRING_LIST, None],
+        'timeout': [VDR.V_INTERVAL],
+        'inactivity': [VDR.V_INTERVAL],
+        'abort if startup handler fails': [VDR.V_BOOLEAN],
+        'abort if shutdown handler fails': [VDR.V_BOOLEAN],
+        'abort if timeout handler fails': [VDR.V_BOOLEAN],
+        'abort if inactivity handler fails': [VDR.V_BOOLEAN],
+        'abort if stalled handler fails': [VDR.V_BOOLEAN],
+        'abort if any task fails': [VDR.V_BOOLEAN],
+        'abort on stalled': [VDR.V_BOOLEAN],
+        'abort on timeout': [VDR.V_BOOLEAN],
+        'abort on inactivity': [VDR.V_BOOLEAN],
+    },
+    'workflow server platforms': {
+        'hosts': [VDR.V_SPACELESS_STRING_LIST],
+        'ports': [VDR.V_INTEGER_LIST, list(range(43001, 43101))],
+        'condemned hosts': [VDR.V_ABSOLUTE_HOST_LIST],
+        'auto restart delay': [VDR.V_INTERVAL],
+        'host select': {
+            'rank': [VDR.V_STRING, 'random', 'load:1', 'load:5', 'load:15',
+                     'memory', 'disk-space'],
+            'thresholds': [VDR.V_STRING],
         },
-        'node attributes': {
-            '__MANY__': [VDR.V_STRING_LIST],
+        'host self-identification': {
+            'method': [VDR.V_STRING, 'name', 'address', 'hardwired'],
+            'target': [VDR.V_STRING, 'google.com'],
+            'host': [VDR.V_STRING],
         },
+    },
+    'task parameters': {
+        '__MANY__': [VDR.V_PARAMETER_LIST],
+    },
+    'task parameter templates': {
+        '__MANY__': [VDR.V_STRING],
     },
 }
 
 
 def upg(cfg, descr):
-    """Upgrade old suite configuration."""
+    # Upgrade older suite configurations.
     u = upgrader(cfg, descr)
     u.obsolete('6.1.3', ['visualization', 'enable live graph movie'])
+    u.obsolete('6.4.1', ['test battery', 'directives'])
+    u.obsolete('6.11.0', ['state dump rolling archive length'])
     u.obsolete('7.2.2', ['cylc', 'dummy mode'])
     u.obsolete('7.2.2', ['cylc', 'simulation mode'])
     u.obsolete('7.2.2', ['runtime', '__MANY__', 'dummy mode'])
     u.obsolete('7.2.2', ['runtime', '__MANY__', 'simulation mode'])
     u.obsolete('7.6.0', ['runtime', '__MANY__', 'enable resurrection'])
-    u.obsolete(
-        '7.8.0',
-        ['runtime', '__MANY__', 'suite state polling', 'template'])
+    u.obsolete('7.8.0', ['runtime', '__MANY__', 'suite state polling',
+                         'template'])
+    u.obsolete('7.8.0', ['suite logging', 'roll over at start-up'])
     u.obsolete('7.8.1', ['cylc', 'events', 'reset timer'])
     u.obsolete('7.8.1', ['cylc', 'events', 'reset inactivity timer'])
     u.obsolete('7.8.1', ['runtime', '__MANY__', 'events', 'reset timer'])
+    u.obsolete('7.8.1', ['documentation', 'local index'])
+    u.obsolete('7.8.1', ['documentation', 'files', 'pdf user guide'])
+    u.obsolete(
+        '7.8.1',
+        ['documentation', 'files', 'single-page html user guide']
+    )
+    u.deprecate(
+        '7.8.1',
+        ['documentation', 'files', 'multi-page html user guide'],
+        ['documentation', 'local']
+    )
     u.obsolete('8.0.0', ['cylc', 'log resolved dependencies'])
     u.obsolete('8.0.0', ['cylc', 'reference test', 'allow task failures'])
     u.obsolete('8.0.0', ['cylc', 'reference test', 'live mode suite timeout'])
     u.obsolete('8.0.0', ['cylc', 'reference test', 'dummy mode suite timeout'])
-    u.obsolete(
+    u.obsolete('8.0.0', ['cylc', 'required run mode'])
+    u.obsolete('8.0.0', ['cylc', 'force run mode'])
+    u.obsolete('8.0.0', ['cylc', 'disable automatic shutdown'])
+    u.deprecate(
         '8.0.0',
-        ['cylc', 'reference test', 'dummy-local mode suite timeout'])
-    u.obsolete(
+        ['cylc', 'task event mail interval'],
+        ['mail', 'task event interval']
+    )
+    u.deprecate('8.0.0', ['cylc', 'parameters'], ['task parameters'])
+    u.deprecate(
         '8.0.0',
-        ['cylc', 'reference test', 'simulation mode suite timeout'])
-    u.obsolete('8.0.0', ['cylc', 'reference test', 'required run mode'])
+        ['cylc', 'parameter templates'],
+        ['task parameter templates']
+    )
+    u.deprecate('8.0.0', ['cylc', 'events'], ['server events'])
+    u.obsolete('8.0.0', ['cylc', 'reference test'])
     u.obsolete(
         '8.0.0',
         ['cylc', 'reference test', 'suite shutdown event handler'])
@@ -294,7 +382,71 @@ def upg(cfg, descr):
         '8.0.0',
         ['cylc', 'abort if any task fails'],
         ['cylc', 'events', 'abort if any task fails'])
+    # All mail ____ items moved from [cylc][events] to [email]
+    for key in [
+        'mail from', 'mail events', 'mail footer', 'mail smtp', 'mail to'
+    ]:
+        u.deprecate(
+            '8.0.0',
+            ['cylc', 'events', key],
+            ['mail', key.replace('mail ', '')]
+        )
+
+    u.deprecate('8.0.0',
+                ['documentation', 'files', 'html index'],
+                ['documentation', 'local']
+                )
+    u.deprecate(
+        '8.0.0',
+        ['documentation', 'urls', 'internet homepage'],
+        ['documentation', 'cylc homepage']
+    )
+    u.obsolete('8.0.0', ['suite definition directory'])
+    u.obsolete('8.0.0', ['communication'])
+    u.deprecate('8.0.0', ['cylc', 'authentication'], ['cylc', 'authorization'])
+    u.deprecate(
+        '8.0.0',
+        ['general', 'authentication'],
+        ['general', 'authorization']
+    )
+    u.obsolete('8.0.0', ['enable run directory housekeeping'])
+
     u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'shell'])
+    u.deprecate(
+        '8.0.0',
+        ['runtime', '__MANY__', 'job', 'execution retry delays'],
+        ['runtime', '__MANY__', 'execution retry delays']
+    )
+    u.deprecate(
+        '8.0.0',
+        ['runtime', '__MANY__', 'job', 'execution time limit'],
+        ['runtime', '__MANY__', 'execution time limit']
+    )
+    u.deprecate(
+        '8.0.0',
+        ['suite host self-identification'],
+        ['suite run platforms', 'suite host self-identification']
+    )
+    u.deprecate(
+        '8.0.0',
+        ['runtime', '__MANY__', 'events'],
+        ['runtime', '__MANY__', 'task events']
+    )
+    u.obsolete('8.0.0', ['suite servers', 'scan hosts'])
+    u.obsolete('8.0.0', ['suite servers', 'scan ports'])
+    u.deprecate('8.0.0', ['suite servers'], ['suite run platforms'])
+    u.deprecate(
+        '8.0.0',
+        ['scheduling', 'hold after point'],
+        ['scheduling', 'hold after cycle point']
+    )
+    u.deprecate('8.0.0', ['task events'], ['runtime', 'root', 'events'])
+    u.obsolete('8.0.0', ['temporary directory'])
+    u.obsolete('8.0.0', ['test battery'])
+    u.obsolete('8.0.0', ['task host select command timeout'])
+    u.obsolete('8.0.0', ['xtrigger function timeout'])
+    u.deprecate('8.0.0', ['cylc'], ['general'])
+    u.obsolete('8.0.0', ['vizualization'])
     u.upgrade()
 
     # Upgrader cannot do this type of move.
@@ -330,3 +482,148 @@ class RawSuiteConfig(ParsecConfig):
         ParsecConfig.__init__(
             self, SPEC, upg, output_fname, tvars, cylc_config_validate)
         self.loadcfg(fpath, "suite definition")
+
+
+class GlobalConfig(ParsecConfig):
+    """
+    Handle global (all suites) site and user configuration for cylc.
+    User file values override site file values.
+    """
+
+    _DEFAULT = None
+    _HOME = os.getenv('HOME') or get_user_home()
+    CONF_BASENAME = "cylc-flow.rc"
+    SITE_CONF_DIR = os.path.join(os.sep, 'etc', 'cylc', 'flow', CYLC_VERSION)
+    USER_CONF_DIR = os.path.join(_HOME, '.cylc', 'flow', CYLC_VERSION)
+
+    @classmethod
+    def get_inst(cls, cached=True):
+        """Return a GlobalConfig instance.
+
+        Args:
+            cached (bool):
+                If cached create if necessary and return the singleton
+                instance, else return a new instance.
+        """
+        if not cached:
+            # Return an up-to-date global config without affecting the
+            # singleton.
+            new_instance = cls(SPEC, upg, validator=cylc_config_validate)
+            new_instance.load()
+            return new_instance
+        elif not cls._DEFAULT:
+            cls._DEFAULT = cls(SPEC, upg, validator=cylc_config_validate)
+            cls._DEFAULT.load()
+        return cls._DEFAULT
+
+    def load(self):
+        """Load or reload configuration from files."""
+        self.sparse.clear()
+        self.dense.clear()
+        LOG.debug("Loading site/user config files")
+        conf_path_str = os.getenv("CYLC_CONF_PATH")
+        if conf_path_str:
+            # Explicit config file override.
+            fname = os.path.join(conf_path_str, self.CONF_BASENAME)
+            if os.access(fname, os.F_OK | os.R_OK):
+                self.loadcfg(fname, upgrader.USER_CONFIG)
+        elif conf_path_str is None:
+            # Use default locations.
+            for conf_dir, conf_type in [
+                    (self.SITE_CONF_DIR, upgrader.SITE_CONFIG),
+                    (self.USER_CONF_DIR, upgrader.USER_CONFIG)]:
+                fname = os.path.join(conf_dir, self.CONF_BASENAME)
+                if not os.access(fname, os.F_OK | os.R_OK):
+                    continue
+                try:
+                    self.loadcfg(fname, conf_type)
+                except ParsecError as exc:
+                    if conf_type == upgrader.SITE_CONFIG:
+                        # Warn on bad site file (users can't fix it).
+                        LOG.warning(
+                            'ignoring bad %s %s:\n%s', conf_type, fname, exc)
+                    else:
+                        # Abort on bad user file (users can fix it).
+                        LOG.error('bad %s %s', conf_type, fname)
+                        raise
+        # (OK if no flow.rc is found, just use system defaults).
+        self._transform()
+
+    def get_host_item(self, item, platform=None, owner=None,
+                      replace_home=False, owner_home=None):
+        """This allows hosts with no matching entry in the config file
+        to default to appropriately modified localhost settings."""
+
+        cfg = self.get()
+
+        # (this may be called with explicit None values for localhost
+        # and owner, so we can't use proper defaults in the arg list)
+        if not platform:
+            # if no platform is given the caller is asking about localhost
+            platform = 'default platform'
+
+        # is there a matching host section?
+        platform_key = None
+        if platform in cfg['job platforms']:
+            # there's an entry for this platform
+            platform_key = platform
+        else:
+            # try for a pattern match
+            for cfg_host in cfg['job platforms']:
+                if re.match(cfg_host, platform):
+                    platform_key = cfg_host
+                    break
+        modify_dirs = False
+        if platform_key is not None:
+            # entry exists, any unset items under it have already
+            # defaulted to modified localhost values (see site cfgspec)
+            value = cfg['job platforms'][platform_key][item]
+        else:
+            # no entry so default to localhost and modify appropriately
+            value = cfg['job platforms']['default platform'][item]
+            modify_dirs = True
+        if value and 'directory' in item:
+            if replace_home or modify_dirs:
+                # Replace local home dir with $HOME for eval'n on other host.
+                value = value.replace(self._HOME, '$HOME')
+            elif is_remote_user(owner):
+                # Replace with ~owner for direct access via local filesys
+                # (works for standard cylc-run directory location).
+                if owner_home is None:
+                    owner_home = os.path.expanduser('~%s' % owner)
+                value = value.replace(self._HOME, owner_home)
+        if item == "communication method" and value == "default":
+            # Translate "default" to client-server comms: "zmq"
+            value = 'zmq'
+        return value
+
+    def _transform(self):
+        """Transform various settings.
+
+        Host item values of None default to modified localhost values.
+        Expand environment variables and ~ notations.
+
+        Ensure os.environ['HOME'] is defined with the correct value.
+        """
+        cfg = self.get()
+        for platform in cfg['job platforms']:
+            if platform == 'default platform':
+                continue
+            for item, value in cfg['job platforms'][platform].items():
+                if value is not None:
+                    newvalue = cfg['job platforms']['default platform'][item]
+                else:
+                    newvalue = value
+                if newvalue and 'directory' in item:
+                    # replace local home dir with $HOME for evaluation on other
+                    # host
+                    newvalue = newvalue.replace(self._HOME, '$HOME')
+                cfg['job platforms'][platform][item] = newvalue
+
+        # Expand environment variables and ~user in LOCAL file paths.
+        if 'HOME' not in os.environ:
+            os.environ['HOME'] = self._HOME
+        for key, val in cfg['job platforms']['default platform'].items():
+            if val and 'directory' in key:
+                cfg['job platforms']['default platform'][key] =\
+                    os.path.expandvars(val)
