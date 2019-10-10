@@ -16,645 +16,73 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import re
-import sys
-
-
-def prelude():
-    """Ensure cylc library is at the front of "sys.path"."""
-    lib = os.path.normpath(os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), '..', 'lib'))
-    if sys.path[0:1] != [lib]:
-        if lib in sys.path:
-            sys.path.remove(lib)
-        sys.path.insert(0, lib)
-
-
-prelude()
-
-
-try:
-    os.getcwd()
-except OSError as exc:
-    # The current working directory has been deleted (or filesystem
-    # problems of some kind...). This results in cherrypy not being found,
-    # immediately below. We cannot just chdir to $HOME as gcylc does
-    # because that would break relative directory path command arguments
-    # (cylc reg SUITE PATH).
-    sys.exit(str(exc))
-
-# Import cylc to initialise CYLC_DIR and the path for python (__init__.py).
-import cylc
-from collections import OrderedDict
-
-
-class CommandError(Exception):
-
-    def __init__(self, msg):
-        self.msg = msg
-
-    def __str__(self):
-        return repr(self.msg)
-
-
-class CommandNotFoundError(CommandError):
-    pass
-
-
-class CommandNotUniqueError(CommandError):
-    pass
-
-
-def is_help(arg):
-    """Return True if arg looks like a "help" command."""
-    return (arg in ('-h', '--help', '--hlep', 'help', 'hlep', '?'))
-
-
-def match_dict(abbrev, categories, title):
-    """Allow any unique abbreviation to cylc categories"""
-    matches = set()
-    for cat, aliases in categories.items():
-        if any([alias == abbrev for alias in aliases]):
-            # Exact match, don't look for more
-            matches.clear()
-            matches.add(cat)
-            break
-        if any([alias.startswith(abbrev) for alias in aliases]):
-            # Partial match
-            matches.add(cat)
-    if not matches:
-        raise CommandNotFoundError(title + ' not found: ' + abbrev)
-    if len(matches) > 1:
-        # multiple matches
-        raise CommandNotUniqueError('%s "%s" not unique: %s' % (
-            title, abbrev,
-            ' '.join(['|'.join(categories[cat]) for cat in matches])))
-    return matches.pop()
-
-
-def match_command(abbrev):
-    """Allow any unique abbrev to commands when no category is specified"""
-    matches = set()
-    finished_matching = False
-    for dct in [admin_commands,
-                license_commands,
-                preparation_commands,
-                information_commands,
-                discovery_commands,
-                control_commands,
-                utility_commands,
-                hook_commands,
-                task_commands]:
-        for com, aliases in dct.items():
-            if any([alias == abbrev for alias in aliases]):
-                matches.clear()
-                matches.add(com)
-                finished_matching = True
-                break
-            if any([alias.startswith(abbrev) for alias in aliases]):
-                matches.add(com)
-        if finished_matching:
-            break
-    if not matches:
-        raise CommandNotFoundError('COMMAND not found: ' + abbrev)
-    if len(matches) > 1:
-        # multiple matches
-        raise CommandNotUniqueError('COMMAND "%s" not unique: %s' % (
-            abbrev,
-            ' '.join(['|'.join(all_commands[com]) for com in matches])))
-    return matches.pop()
-
-
-def pretty_print(incom, choose_dict, indent=True, numbered=False, sort=False):
-    # pretty print commands or topics from a dict:
-    # (com[item] = description)
-
-    if indent:
-        spacer = ' '
-    else:
-        spacer = ''
-
-    label = {}
-    choose = []
-    longest = 0
-    for item in choose_dict:
-        choose.append(item)
-        lbl = '|'.join(choose_dict[item])
-        label[item] = lbl
-        if len(lbl) > longest:
-            longest = len(lbl)
-
-    count = 0
-    pad = False
-    if len(choose) > 9:
-        pad = True
-
-    if sort:
-        choose.sort()
-    for item in choose:
-        if item not in incom:
-            raise SystemExit("ERROR: summary for '" + item + "' not found")
-
-        print(spacer,)
-        if numbered:
-            count += 1
-            if pad and count < 10:
-                digit = ' ' + str(count)
-            else:
-                digit = str(count)
-            print(digit + '/',)
-        print("%s %s %s" % (
-            label[item],
-            '.' * (longest - len(label[item])) + '...',
-            incom[item]))
-
-# BEGIN MAIN
-
-# categories[category] = [aliases]
-categories = OrderedDict()
-categories['all'] = ['all']
-categories['preparation'] = ['preparation']
-categories['information'] = ['information']
-categories['discovery'] = ['discovery']
-categories['control'] = ['control']
-categories['utility'] = ['utility']
-categories['task'] = ['task']
-categories['hook'] = ['hook']
-categories['admin'] = ['admin']
-categories['license'] = ['license', 'GPL']
-
-information_commands = OrderedDict()
-
-information_commands['gscan'] = ['gscan', 'gsummary']
-information_commands['gpanel'] = ['gpanel']
-information_commands['gui'] = ['gui', 'gcylc']
-information_commands['list'] = ['list', 'ls']
-information_commands['dump'] = ['dump']
-information_commands['cat-state'] = ['cat-state']
-information_commands['show'] = ['show']
-information_commands['cat-log'] = ['cat-log', 'log']
-information_commands['get-suite-contact'] = [
-    'get-suite-contact', 'get-contact', 'print-contact']
-information_commands['get-suite-version'] = [
-    'get-suite-version', 'get-cylc-version']
-information_commands['version'] = ['version']
-
-information_commands['documentation'] = ['documentation', 'browse']
-information_commands['monitor'] = ['monitor']
-information_commands['get-suite-config'] = ['get-suite-config', 'get-config']
-information_commands['get-site-config'] = [
-    'get-site-config', 'get-global-config']
-information_commands['get-gui-config'] = ['get-gui-config']
-
-control_commands = OrderedDict()
-control_commands['gui'] = ['gui']
-# NOTE: don't change 'run' to 'start' or the category [control]
-# becomes compulsory to disambiguate from 'cylc [task] started'.
-# Keeping 'start' as an alias however: 'cylc con start'.
-control_commands['run'] = ['run', 'start']
-control_commands['stop'] = ['stop', 'shutdown']
-control_commands['restart'] = ['restart']
-control_commands['trigger'] = ['trigger']
-control_commands['insert'] = ['insert']
-control_commands['remove'] = ['remove']
-control_commands['poll'] = ['poll']
-control_commands['kill'] = ['kill']
-control_commands['hold'] = ['hold']
-control_commands['release'] = ['release', 'unhold']
-control_commands['reset'] = ['reset']
-control_commands['spawn'] = ['spawn']
-control_commands['nudge'] = ['nudge']
-control_commands['reload'] = ['reload']
-control_commands['set-runahead'] = ['set-runahead']
-control_commands['set-verbosity'] = ['set-verbosity']
-control_commands['broadcast'] = ['broadcast', 'bcast']
-control_commands['ext-trigger'] = ['ext-trigger', 'external-trigger']
-control_commands['checkpoint'] = ['checkpoint']
-
-utility_commands = OrderedDict()
-utility_commands['cycle-point'] = [
-    'cycle-point', 'cyclepoint', 'datetime', 'cycletime']
-utility_commands['scp-transfer'] = ['scp-transfer']
-utility_commands['suite-state'] = ['suite-state']
-utility_commands['ls-checkpoints'] = ['ls-checkpoints']
-utility_commands['report-timings'] = ['report-timings']
-
-hook_commands = OrderedDict()
-hook_commands['email-suite'] = ['email-suite']
-hook_commands['email-task'] = ['email-task']
-hook_commands['check-triggering'] = ['check-triggering']
-
-admin_commands = OrderedDict()
-admin_commands['test-battery'] = ['test-battery']
-admin_commands['profile-battery'] = ['profile-battery']
-admin_commands['import-examples'] = ['import-examples']
-admin_commands['upgrade-run-dir'] = ['upgrade-run-dir']
-admin_commands['check-software'] = ['check-software']
-
-license_commands = OrderedDict()
-license_commands['warranty'] = ['warranty']
-license_commands['conditions'] = ['conditions']
-
-preparation_commands = OrderedDict()
-preparation_commands['register'] = ['register']
-preparation_commands['print'] = ['print']
-preparation_commands['get-directory'] = ['get-directory']
-preparation_commands['edit'] = ['edit']
-preparation_commands['view'] = ['view']
-preparation_commands['validate'] = ['validate']
-preparation_commands['5to6'] = ['5to6']
-preparation_commands['list'] = ['list', 'ls']
-preparation_commands['search'] = ['search', 'grep']
-preparation_commands['graph'] = ['graph']
-preparation_commands['graph-diff'] = ['graph-diff']
-preparation_commands['diff'] = ['diff', 'compare']
-preparation_commands['jobscript'] = ['jobscript']
-
-discovery_commands = OrderedDict()
-discovery_commands['ping'] = ['ping']
-discovery_commands['scan'] = ['scan']
-discovery_commands['check-versions'] = ['check-versions']
-
-task_commands = OrderedDict()
-task_commands['submit'] = ['submit', 'single']
-task_commands['message'] = ['message', 'task-message']
-task_commands['jobs-kill'] = ['jobs-kill']
-task_commands['jobs-poll'] = ['jobs-poll']
-task_commands['jobs-submit'] = ['jobs-submit']
-
-all_commands = OrderedDict()
-for dct in [
-        preparation_commands,
-        information_commands,
-        discovery_commands,
-        control_commands,
-        utility_commands,
-        task_commands,
-        admin_commands,
-        hook_commands,
-        license_commands]:
-    for com in dct.keys():
-        all_commands[com] = dct[com]
-
-general_usage = """
-Cylc ("silk") is a suite engine and metascheduler that specializes in
-cycling weather and climate forecasting suites and related processing
-(but it can also be used for one-off workflows of non-cycling tasks).
-For detailed documentation see the Cylc User Guide (cylc doc --help).
-
-Version __CYLC_VERSION__
-
-The graphical user interface for cylc is "gcylc" (a.k.a. "cylc gui").
-
-USAGE:
-  % cylc -v,--version                   # print cylc version
-  % cylc version                        # (ditto, by command)
-  % cylc help,--help,-h,?               # print this help page
-
-  % cylc help CATEGORY                  # print help by category
-  % cylc CATEGORY help                  # (ditto)
-
-  % cylc help [CATEGORY] COMMAND        # print command help
-  % cylc [CATEGORY] COMMAND help,--help # (ditto)
-
-  % cylc [CATEGORY] COMMAND [options] SUITE [arguments]
-  % cylc [CATEGORY] COMMAND [options] SUITE TASK [arguments]"""
-
-# topic summaries
-catsum = OrderedDict()
-catsum['all'] = "The complete command set."
-catsum['admin'] = "Cylc installation, testing, and example suites."
-catsum['license'] = "Software licensing information (GPL v3.0)."
-catsum['information'] = "Interrogate suite definitions and running suites."
-catsum['preparation'] = "Suite editing, validation, visualization, etc."
-catsum['discovery'] = "Detect running suites."
-catsum['control'] = "Suite start up, monitoring, and control."
-catsum['task'] = "The task messaging interface."
-catsum['hook'] = "Suite and task event hook scripts."
-catsum['utility'] = "Cycle arithmetic and templating, etc."
-
-usage = general_usage + """
-
-Commands and categories can both be abbreviated. Use of categories is
-optional, but they organize help and disambiguate abbreviated commands:
-  % cylc control trigger SUITE TASK     # trigger TASK in SUITE
-  % cylc trigger SUITE TASK             # ditto
-  % cylc con trig SUITE TASK            # ditto
-  % cylc c t SUITE TASK                 # ditto
-
-TASK IDENTIFICATION IN CYLC SUITES
-  Tasks are identified by NAME.CYCLE_POINT where POINT is either a
-  date-time or an integer.
-  Date-time cycle points are in an ISO 8601 date-time format, typically
-  CCYYMMDDThhmm followed by a time zone - e.g. 20101225T0600Z.
-  Integer cycle points (including those for one-off suites) are integers
-  - just '1' for one-off suites.
-
-HOW TO DRILL DOWN TO COMMAND USAGE HELP:
-  % cylc help           # list all available categories (this page)
-  % cylc help prep      # list commands in category 'preparation'
-  % cylc help prep edit # command usage help for 'cylc [prep] edit'
-
-Command CATEGORIES:"""
-
-# Some commands and categories are aliased and
-# some common typographical errors are corrected (e.g. cycl => cylc).
-
-# command summaries
-comsum = OrderedDict()
-# admin
-comsum['test-battery'] = 'Run a battery of self-diagnosing test suites'
-comsum['profile-battery'] = 'Run a battery of profiling tests'
-comsum['import-examples'] = 'Import example suites your suite run directory'
-comsum['upgrade-run-dir'] = 'Upgrade a pre-cylc-6 suite run directory'
-comsum['check-software'] = 'Check required software is installed.'
-# license
-comsum['warranty'] = 'Print the GPLv3 disclaimer of warranty'
-comsum['conditions'] = 'Print the GNU General Public License v3.0'
-# preparation
-comsum['register'] = 'Register a suite for use'
-comsum['print'] = 'Print registered suites'
-comsum['get-directory'] = 'Retrieve suite source directory paths'
-comsum['edit'] = 'Edit suite definitions, optionally inlined'
-comsum['view'] = 'View suite definitions, inlined and Jinja2 processed'
-comsum['validate'] = 'Parse and validate suite definitions'
-comsum['5to6'] = 'Improve the cylc 6 compatibility of a cylc 5 suite file'
-comsum['search'] = 'Search in suite definitions'
-comsum['graph'] = 'Plot suite dependency graphs and runtime hierarchies'
-comsum['graph-diff'] = 'Compare two suite dependencies or runtime hierarchies'
-comsum['diff'] = 'Compare two suite definitions and print differences'
-# information
-comsum['list'] = 'List suite tasks and family namespaces'
-comsum['dump'] = 'Print the state of tasks in a running suite'
-comsum['cat-state'] = 'Print the state of tasks from the state dump'
-comsum['show'] = 'Print task state (prerequisites and outputs etc.)'
-comsum['cat-log'] = 'Print various suite and task log files'
-comsum['documentation'] = 'Display cylc documentation (User Guide etc.)'
-comsum['monitor'] = 'An in-terminal suite monitor (see also gcylc)'
-comsum['get-suite-config'] = 'Print suite configuration items'
-comsum['get-site-config'] = 'Print site/user configuration items'
-comsum['get-gui-config'] = 'Print gcylc configuration items'
-comsum['get-suite-contact'] = 'Print the contact information of a suite daemon'
-comsum['get-suite-version'] = 'Print the cylc version of a suite daemon'
-comsum['version'] = 'Print the cylc release version'
-comsum['gscan'] = 'Scan GUI for monitoring multiple suites'
-comsum['gpanel'] = 'Internal interface for GNOME 2 panel applet'
-# control
-comsum['gui'] = '(a.k.a. gcylc) cylc GUI for suite control etc.'
-comsum['run'] = 'Start a suite at a given cycle point'
-comsum['stop'] = 'Shut down running suites'
-comsum['restart'] = 'Restart a suite from a previous state'
-comsum['trigger'] = 'Manually trigger or re-trigger a task'
-comsum['insert'] = 'Insert tasks into a running suite'
-comsum['remove'] = 'Remove tasks from a running suite'
-comsum['poll'] = 'Poll submitted or running tasks'
-comsum['kill'] = 'Kill submitted or running tasks'
-comsum['hold'] = 'Hold (pause) suites or individual tasks'
-comsum['release'] = 'Release (unpause) suites or individual tasks'
-comsum['reset'] = 'Force one or more tasks to change state.'
-comsum['spawn'] = 'Force one or more tasks to spawn their successors.'
-comsum['nudge'] = 'Cause the cylc task processing loop to be invoked'
-comsum['reload'] = 'Reload the suite definition at run time'
-comsum['set-runahead'] = 'Change the runahead limit in a running suite.'
-comsum['set-verbosity'] = 'Change a running suite\'s logging verbosity'
-comsum['ext-trigger'] = 'Report an external trigger event to a suite'
-comsum['checkpoint'] = 'Tell suite to checkpoint its current state'
-# discovery
-comsum['ping'] = 'Check that a suite is running'
-comsum['scan'] = 'Scan a host for running suites'
-comsum['check-versions'] = 'Compare cylc versions on task host accounts'
-# task
-comsum['submit'] = 'Run a single task just as its parent suite would'
-comsum['message'] = '(task messaging) Report task messages'
-comsum['broadcast'] = 'Change suite [runtime] settings on the fly'
-comsum['jobs-kill'] = '(Internal) Kill task jobs'
-comsum['jobs-poll'] = '(Internal) Retrieve status for task jobs'
-comsum['jobs-submit'] = '(Internal) Submit task jobs'
-
-# utility
-comsum['cycle-point'] = 'Cycle point arithmetic and filename templating'
-comsum['jobscript'] = 'Generate a task job script and print it to stdout'
-comsum['scp-transfer'] = 'Scp-based file transfer for cylc suites'
-comsum['suite-state'] = 'Query the task states in a suite'
-comsum['ls-checkpoints'] = 'Display task pool etc at given events'
-comsum['report-timings'] = 'Display table of task timing information'
-
-# hook
-comsum['email-task'] = 'A task event hook script that sends email alerts'
-comsum['email-suite'] = 'A suite event hook script that sends email alerts'
-comsum['check-triggering'] = 'A suite shutdown event hook for cylc testing'
-
-
-def typo(str):
-    corrected = str
-    if str == 'gcycl':
-        corrected = 'gcylc'
-    return corrected
-
-
-def category_help(category):
-    coms = eval(category + '_commands')
-    alts = '|'.join(categories[category])
-    print('CATEGORY: ' + alts + ' - ' + catsum[category])
-    print()
-    print('HELP: cylc [' + alts + '] COMMAND help,--help')
-    print('  You can abbreviate ' + alts + ' and COMMAND.')
-    print('  The category ' + alts + ' may be omitted.')
-    print()
-    print('COMMANDS:')
-    pretty_print(comsum, coms, sort=True)
-
-
-def set_environment_vars(args):
-    """
-    Set --env=key=val arguments as environment variables & remove
-    from argument list
-    """
-    regex = re.compile('\A--env=(\S+)=(\S+)\Z')
-    for arg in args:
-        match = regex.match(arg)
-        if match is None:
-            continue
-        os.environ[match.group(1)] = match.group(2)
-    return list(filter(lambda i: not regex.search(i), args))
-
-def main():
-    # no arguments: print help and exit
-    if len(sys.argv) == 1:
-        from cylc.flow import __version__ as CYLC_VERSION
-        print(usage.replace("__CYLC_VERSION__", CYLC_VERSION))
-        pretty_print(catsum, categories)
-        sys.exit(1)
-
-    args = sys.argv[1:]
-
-    # Set environment variables from arguments like --env=key=val
-    args = set_environment_vars(args)
-
-    if len(args) == 1:
-        if args[0] == 'categories':
-            # secret argument for document processing
-            keys = catsum.keys()
-            keys.sort()
-            for key in keys:
-                print(key)
-            sys.exit(0)
-        if args[0] == 'commands':
-            # secret argument for document processing
-            keys = comsum.keys()
-            keys.sort()
-            for key in keys:
-                print(key)
-            sys.exit(0)
-        if args[0].startswith('category='):
-            # secret argument for gcylc
-            category = args[0][9:]
-            commands = eval(category + '_commands')
-            for command in commands:
-                print(command)
-            sys.exit(0)
-        if is_help(args[0]):
-            # cylc help
-            from cylc.version import CYLC_VERSION
-            print(usage.replace("__CYLC_VERSION__", CYLC_VERSION))
-            pretty_print(catsum, categories)
-            sys.exit(0)
-        if (args[0] == '-v' or args[0] == '--version'):
-            from cylc.version import CYLC_VERSION
-            print(CYLC_VERSION)
-            sys.exit(0)
-
-        # cylc CATEGORY with no args => category help
-        try:
-            category = match_dict(args[0], categories, 'CATEGORY')
-        except CommandError as x:
-            # No matching category
-            # (no need to print this, the exception will recur below)
-            # Carry on in case of a no-argument command (e.g. 'cylc scan')
-            pass
-        else:
-            category_help(category)
-            sys.exit(0)
-
-    command_args = []
-
-    if len(args) == 2 and (is_help(args[0]) or is_help(args[1])):
-        # TWO ARGUMENTS, one help
-        # cylc help CATEGORY
-        # cylc CATEGORY help
-        # cylc help COMMAND
-        # cylc COMMAND help
-        if is_help(args[1]):
-            item = args[0]
-        else:
-            item = args[1]
-        try:
-            category = match_dict(item, categories, 'CATEGORY')
-        except CommandError as x:
-            # no matching category, try command
-            try:
-                command = match_command(typo(item))
-            except CommandError as y:
-                print(sys.stderr, x)
-                raise SystemExit(y)
-            else:
-                # cylc COMMAND --help
-                command_args = ['--help']
-        else:
-            # cylc help CATEGORY
-            category_help(category)
-            sys.exit(0)
-
-    elif len(args) == 3 and (is_help(args[0]) or is_help(args[2])):
-        # cylc help CATEGORY COMMAND
-        # cylc CATEGORY COMMAND help
-        if is_help(args[2]):
-            category = args[0]
-            command = args[1]
-        else:
-            category = args[1]
-            command = args[2]
-        try:
-            category = match_dict(category, categories, 'CATEGORY')
-        except CommandError as x:
-            raise SystemExit(x)
-
-        coms = eval(category + '_commands')
-        try:
-            command = match_dict(command, coms, category + ' COMMAND')
-        except CommandNotUniqueError as y:
-            print(y)
-            sys.exit(1)
-        except CommandNotFoundError as y:
-            print(y)
-            print('COMMANDS available in CATEGORY "' + category + '":')
-            print(coms.keys())
-            sys.exit(1)
-
-        # cylc COMMAND --help
-        command_args = ['--help']
-
-    else:
-        # two or more args, neither of first two are help
-        # cylc CATEGORY COMMAND [ARGS]
-        # cylc COMMAND [ARGS]
-        try:
-            category = args[0]
-            category = match_dict(category, categories, 'CATEGORY')
-        except CommandError as x:
-            # no matching category, try command
-            try:
-                command = args[0]
-                command = match_command(typo(command))
-            except CommandError as y:
-                print(sys.stderr, x)
-                raise SystemExit(y)
-            else:
-                # cylc COMMAND [ARGS]
-                command_args = args[1:]
-        else:
-            # cylc CATEGORY COMMAND [ARGS]
-            coms = eval(category + '_commands')
-            command = args[1]
-            try:
-                command = match_dict(command, coms, category + ' COMMAND')
-            except CommandNotUniqueError as y:
-                print(y)
-                sys.exit(1)
-            except CommandNotFoundError as y:
-                print(y)
-                print('COMMANDS available in CATEGORY "' + category + '":')
-                print(coms.keys())
-                sys.exit(1)
-
-            else:
-                # cylc COMMAND [ARGS]
-                if len(args) > 1:
-                    command_args = args[2:]
-                else:
-                    command_args = []
-
-    args_new = []
-    for item in command_args:
-        if is_help(item):
-            # transform all legal help options to '--help'
-            args_new.append('--help')
-        elif item.startswith('--owner'):
-            # deprecate '--owner' to '--user'
-            args_new.append(item.replace('--owner', '--user'))
-        else:
-            args_new.append(item)
-    args = args_new
-
-    cmd = sys.argv[0] + '-' + command
-
+import click
+import pkg_resources
+
+command_list = (
+    pkg_resources.get_entry_map("cylc-flow").get("console_scripts").keys()
+)
+category_list = [
+    "control",
+    "information",
+    "all",
+    "task",
+    "admin",
+    "preparation",
+    "discovery",
+    "utility",
+    "util",
+    "prep",
+    "con",
+    "info",
+]
+
+
+def execute_cmd(cmd, *args):
     # Replace the current process with that of the sub-command.
     try:
-        os.execvp(cmd, [cmd] + args)
+        os.execvp(cmd, [cmd] + list(args))  # nosec
     except OSError as exc:
         if exc.filename is None:
             exc.filename = cmd
         raise SystemExit(exc)
+
+
+@click.command(context_settings={"ignore_unknown_options": True})
+@click.option("--help", "-h", "help_", is_flag=True)
+@click.argument("command")
+@click.argument("cmd-args", nargs=-1)
+@click.version_option()
+def main(command, cmd_args, help_):
+    if command in ["categories", "commands"] + category_list:
+        execute_cmd("cylc-help", command)
+    elif command:
+        cylc_cmd = f"cylc-{command}"
+
+        possible_cmds = [
+            cmd for cmd in command_list if cmd.startswith(cylc_cmd)
+        ]
+        if len(possible_cmds) == 0:
+            click.echo(f"cylc {command}: unknown utility. Abort.")
+            click.echo('Type "cylc help all" for a list of utilities.')
+            return -1
+        elif len(possible_cmds) > 1:
+            click.echo(
+                "cylc $1: is ambiguous for: {}".format(
+                    [cmd[5:] for cmd in possible_cmds]
+                )
+            )
+            return -1
+        else:
+            cylc_cmd = possible_cmds[0]
+
+        if help_:
+            execute_cmd(cylc_cmd, "--help")
+        else:
+            execute_cmd(cylc_cmd, *list(cmd_args))
+    elif help_:
+        execute_cmd("cylc-help")
+
 
 if __name__ == "__main__":
     main()

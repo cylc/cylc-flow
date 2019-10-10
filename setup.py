@@ -49,7 +49,8 @@ install_requires = [
     'jinja2>=2.10.1, <2.11.0',
     'markupsafe==1.1.*',
     'protobuf==3.11.*',
-    'pyzmq==18.0.*'
+    'pyzmq==18.0.*',
+    'click>=7.0'
 ]
 tests_require = [
     'codecov==2.0.*',
