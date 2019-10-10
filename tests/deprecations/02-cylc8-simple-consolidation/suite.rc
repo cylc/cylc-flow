@@ -1,0 +1,42 @@
+# Test automatic deprecation and deletion of config items as specified
+# in cylc/flow/config_schema
+[cylc]
+    UTC mode = True
+
+    [[events]]
+        mail from =
+        mail events =
+        mail footer =
+        mail smtp =
+        mail to =
+    [[authentication]]
+
+[suite host self-identification]
+
+[suite servers]
+
+[test battery]
+
+[task events]
+
+[scheduling]
+    initial cycle point = 19831213T0600Z
+    final cycle point = 19831213T1200Z
+    [[dependencies]]
+        [[[PT3H]]]
+            graph="""Alice => Bob
+                  Alice => Charlie
+                  """
+[runtime]
+    [[Alice]]
+        script="""
+               sleep 5
+               echo "Alice\'s script is boring"
+               """
+
+    [[Bob]]
+        script="""
+               sleep 5
+               echo "Bob\'s script is boring "
+               """
+        [[[remote]]]

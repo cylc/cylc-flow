@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test all current non-silent suite obsoletions and deprecations.
+# Test all suite obsoletions and deprecations related to change to cylc8
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 2
@@ -29,20 +29,18 @@ TEST_NAME=${TEST_NAME_BASE}-cmp
 cylc validate -v "${SUITE_NAME}" 2>&1 \
     | sed  -n -e 's/^WARNING - \( \* (.*$\)/\1/p' > 'val.out'
 cmp_ok val.out <<__END__
- * (6.1.3) [visualization][enable live graph movie] - DELETED (OBSOLETE)
- * (7.2.2) [cylc][dummy mode] - DELETED (OBSOLETE)
- * (7.2.2) [cylc][simulation mode] - DELETED (OBSOLETE)
- * (7.2.2) [runtime][foo, cat, dog][dummy mode] - DELETED (OBSOLETE)
- * (7.2.2) [runtime][foo, cat, dog][simulation mode] - DELETED (OBSOLETE)
- * (7.6.0) [runtime][foo, cat, dog][enable resurrection] - DELETED (OBSOLETE)
- * (7.8.0) [runtime][foo, cat, dog][suite state polling][template] - DELETED (OBSOLETE)
- * (7.8.1) [cylc][events][reset timer] - DELETED (OBSOLETE)
- * (7.8.1) [cylc][events][reset inactivity timer] - DELETED (OBSOLETE)
- * (7.8.1) [runtime][foo, cat, dog][events][reset timer] - DELETED (OBSOLETE)
- * (8.0.0) [cylc][events] -> [server events] - value unchanged
- * (8.0.0) [runtime][foo, cat, dog][events] -> [runtime][foo, cat, dog][task events] - value unchanged
+ * (8.0.0) [cylc][events][mail from] -> [email][mail from] - value unchanged
+ * (8.0.0) [cylc][events][mail events] -> [email][mail events] - value unchanged
+ * (8.0.0) [cylc][events][mail footer] -> [email][mail footer] - value unchanged
+ * (8.0.0) [cylc][events][mail smtp] -> [email][mail smtp] - value unchanged
+ * (8.0.0) [cylc][events][mail to] -> [email][mail to] - value unchanged
+ * (8.0.0) [cylc][authentication] -> [cylc][authorization] - value unchanged
+ * (8.0.0) [suite host self-identification] -> [suite run platforms][suite host self-identification] - value unchanged
+ * (8.0.0) [suite servers] -> [suite run platforms] - value unchanged
+ * (8.0.0) [task events] -> [runtime][root][events] - value unchanged
+ * (8.0.0) [test battery] - DELETED (OBSOLETE)
  * (8.0.0) [cylc] -> [general] - value unchanged
- * (8.0.0) [visualization] - DELETED (OBSOLETE)
+ * (8.0.0) [scheduling][dependencies][X][graph] -> [scheduling][graph][X] - for X in:
 __END__
-
+#-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"

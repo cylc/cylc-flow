@@ -1,0 +1,82 @@
+# Test automatic deprecation and deletion of config items as specified
+# in cylc/flow/config_schema
+[general]
+
+[job platforms]
+    [[cinnamon]]
+        login hosts = dune001, dune002, dune003
+        batch system = slurm
+        #suite definition directory =
+        retrieve job logs = True
+        retrieve job logs max size =
+        retrieve job logs retry delays =
+        submission polling intervals =
+        [[[default directives]]]
+            --mem=10
+            --ntasks=2
+
+[scheduling]
+    initial cycle point = 19831213T0600Z
+    final cycle point = 19831213T1200Z
+    [[dependencies]]
+        [[[PT3H]]]
+            graph="""Alice => Bob => Charlie => Dai => Emma
+                  """
+[runtime]
+    [[Alice]]
+    # Test that a task parses nicely with a pre-set job platform
+        script="""
+               sleep 5
+               """
+        platform = cinnamon
+
+
+    [[Bob]]
+    # Test that a task parses sensibly with only legacy information
+        script="""
+               sleep 5
+               """
+        [[[job]]]
+            host = dune001
+            batch system = slurm
+            batch submit command template =
+            submission retry delays =
+        [[[directives]]]
+            --mem=5
+            --ntasks=1
+        [[[remote]]]
+            host=dune001
+            suite definition directory =
+            retrieve job logs =
+            retrieve job logs max size =
+            retrieve job logs retry delays =
+            owner = fprefect
+
+
+    [[charlie]]
+    # Test that a task parses sensibly when both [platform] and
+    # [remote][host] are provided.
+    # This probably implies that a new job platform is created with
+    # the given values over-riding the specified platform.
+        script="""
+               sleep 5
+               """
+        platform = cinnamon
+        [[[job]]]
+            host = host001
+            batch system = pbs
+            batch submit command template =
+            submission retry delays =
+        [[[directives]]]
+            --mem=5
+            --ntasks=1
+        [[[remote]]]
+            host=dune001
+            suite definition directory =
+            retrieve job logs =
+            retrieve job logs max size =
+            retrieve job logs retry delays =
+            owner = fprefect
+
+
+

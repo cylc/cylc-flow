@@ -29,20 +29,10 @@ TEST_NAME=${TEST_NAME_BASE}-cmp
 cylc validate -v "${SUITE_NAME}" 2>&1 \
     | sed  -n -e 's/^WARNING - \( \* (.*$\)/\1/p' > 'val.out'
 cmp_ok val.out <<__END__
- * (6.1.3) [visualization][enable live graph movie] - DELETED (OBSOLETE)
- * (7.2.2) [cylc][dummy mode] - DELETED (OBSOLETE)
- * (7.2.2) [cylc][simulation mode] - DELETED (OBSOLETE)
- * (7.2.2) [runtime][foo, cat, dog][dummy mode] - DELETED (OBSOLETE)
- * (7.2.2) [runtime][foo, cat, dog][simulation mode] - DELETED (OBSOLETE)
- * (7.6.0) [runtime][foo, cat, dog][enable resurrection] - DELETED (OBSOLETE)
- * (7.8.0) [runtime][foo, cat, dog][suite state polling][template] - DELETED (OBSOLETE)
- * (7.8.1) [cylc][events][reset timer] - DELETED (OBSOLETE)
- * (7.8.1) [cylc][events][reset inactivity timer] - DELETED (OBSOLETE)
- * (7.8.1) [runtime][foo, cat, dog][events][reset timer] - DELETED (OBSOLETE)
- * (8.0.0) [cylc][events] -> [server events] - value unchanged
- * (8.0.0) [runtime][foo, cat, dog][events] -> [runtime][foo, cat, dog][task events] - value unchanged
+ * (8.0.0) [suite host self-identification] -> [suite run platforms][suite host self-identification] - value unchanged
+ * (8.0.0) [suite servers] -> [suite run platforms] - value unchanged
  * (8.0.0) [cylc] -> [general] - value unchanged
- * (8.0.0) [visualization] - DELETED (OBSOLETE)
+ * (8.0.0) [scheduling][dependencies][X][graph] -> [scheduling][graph][X] - for X in:
 __END__
-
+#-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"

@@ -446,7 +446,7 @@ def upg(cfg, descr):
     u.obsolete('8.0.0', ['task host select command timeout'])
     u.obsolete('8.0.0', ['xtrigger function timeout'])
     u.deprecate('8.0.0', ['cylc'], ['general'])
-    u.obsolete('8.0.0', ['vizualization'])
+    u.obsolete('8.0.0', ['visualization'])
     u.upgrade()
 
     # Upgrader cannot do this type of move.
