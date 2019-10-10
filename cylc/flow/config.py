@@ -234,12 +234,12 @@ class SuiteConfig(object):
             self.cfg['runtime']['root'] = OrderedDictWithDefaults()
 
         try:
-            parameter_values = self.cfg['cylc']['parameters']
+            parameter_values = self.cfg['general']['parameters']
         except KeyError:
             # (Suite config defaults not put in yet.)
             parameter_values = {}
         try:
-            parameter_templates = self.cfg['cylc']['parameter templates']
+            parameter_templates = self.cfg['general']['parameter templates']
         except KeyError:
             parameter_templates = {}
         # parameter values and templates are normally needed together.
@@ -312,10 +312,10 @@ class SuiteConfig(object):
         init_cyclers(self.cfg)
 
         # Running in UTC time? (else just use the system clock)
-        if self.cfg['cylc']['UTC mode'] is None:
-            set_utc_mode(glbl_cfg().get(['cylc', 'UTC mode']))
+        if self.cfg['general']['UTC mode'] is None:
+            set_utc_mode(glbl_cfg().get(['general', 'UTC mode']))
         else:
-            set_utc_mode(self.cfg['cylc']['UTC mode'])
+            set_utc_mode(self.cfg['general']['UTC mode'])
 
         # Initial point from suite definition (or CLI override above).
         orig_icp = self.cfg['scheduling']['initial cycle point']
@@ -492,29 +492,6 @@ class SuiteConfig(object):
 
             self.cfg['scheduling']['special tasks'][s_type] = result
 
-        self.collapsed_families_rc = (
-            self.cfg['visualization']['collapsed families'])
-        for fam in self.collapsed_families_rc:
-            if fam not in self.runtime['first-parent descendants']:
-                raise SuiteConfigError(
-                    '[visualization]collapsed families: '
-                    '%s is not a first parent' % fam)
-
-        if getattr(options, 'collapsed', None):
-            # (used by the "cylc graph" viewer)
-            self.closed_families = getattr(self.options, 'collapsed', None)
-        elif is_reload:
-            self.closed_families = []
-        else:
-            self.closed_families = self.collapsed_families_rc
-        for cfam in self.closed_families:
-            if cfam not in self.runtime['descendants']:
-                self.closed_families.remove(cfam)
-                if not is_reload and cylc.flow.flags.verbose:
-                    LOG.warning(
-                        '[visualization][collapsed families]: ' +
-                        'family ' + cfam + ' not defined')
-
         self.process_config_env()
 
         self.mem_log("config.py: before load_graph()")
@@ -563,70 +540,6 @@ class SuiteConfig(object):
                     raise SuiteConfigError(
                         "external triggers must be used only once.")
 
-        ngs = self.cfg['visualization']['node groups']
-        # If a node group member is a family, include its descendants too.
-        replace = {}
-        for ng, mems in ngs.items():
-            replace[ng] = []
-            for mem in mems:
-                replace[ng] += [mem]
-                if mem in self.runtime['descendants']:
-                    replace[ng] += self.runtime['descendants'][mem]
-        for ng in replace:
-            ngs[ng] = replace[ng]
-
-        # Define family node groups automatically so that family and
-        # member nodes can be styled together using the family name.
-        # Users can override this for individual nodes or sub-groups.
-        for fam in self.runtime['descendants']:
-            if fam not in ngs:
-                ngs[fam] = [fam] + self.runtime['descendants'][fam]
-
-        if cylc.flow.flags.verbose:
-            LOG.debug("Checking [visualization] node attributes")
-            # TODO - these should probably be done in non-verbose mode too.
-            # 1. node groups should contain valid namespace names
-            nspaces = list(self.cfg['runtime'])
-            bad = {}
-            for ng, mems in ngs.items():
-                n_bad = []
-                for mem in mems:
-                    if mem not in nspaces:
-                        n_bad.append(mem)
-                if n_bad:
-                    bad[ng] = n_bad
-            if bad:
-                err_msg = "undefined node group members"
-                for ng, mems in bad.items():
-                    err_msg += "\n+ " + ng + ":\t,".join(mems)
-                LOG.warning(err_msg)
-
-            # 2. node attributes must refer to node groups or namespaces
-            bad = []
-            for na in self.cfg['visualization']['node attributes']:
-                if na not in ngs and na not in nspaces:
-                    bad.append(na)
-            if bad:
-                err_msg = "undefined node attribute targets"
-                for na in bad:
-                    err_msg += "\n+ " + str(na)
-                LOG.warning(err_msg)
-
-        # 3. node attributes must be lists of quoted "key=value" pairs.
-        fail = False
-        for node, attrs in (
-                self.cfg['visualization']['node attributes'].items()):
-            for attr in attrs:
-                # Check form is 'name = attr'.
-                if attr.count('=') != 1:
-                    fail = True
-                    LOG.error(
-                        "[visualization][node attributes]%s = %s" % (
-                            node, attr))
-        if fail:
-            raise SuiteConfigError("Node attributes must be of the form "
-                                   "'key1=value1', 'key2=value2', etc.")
-
         # (Note that we're retaining 'default node attributes' even
         # though this could now be achieved by styling the root family,
         # because putting default attributes for root in the suite.rc spec
@@ -646,44 +559,6 @@ class SuiteConfig(object):
                 if foot not in self.feet:
                     self.feet.append(foot)
 
-        # CLI override for visualization settings.
-        for key in ('initial', 'final'):
-            vis_str = getattr(self.options, 'vis_' + key, None)
-            if vis_str:
-                self.cfg['visualization'][key + ' cycle point'] = vis_str
-
-        # For static visualization, start point defaults to suite initial
-        # point; stop point must be explicit with initial point, or None.
-        if self.cfg['visualization']['initial cycle point'] is None:
-            self.cfg['visualization']['initial cycle point'] = (
-                self.cfg['scheduling']['initial cycle point'])
-            # If viz initial point is None don't accept a final point.
-            if self.cfg['visualization']['final cycle point'] is not None:
-                if cylc.flow.flags.verbose:
-                    LOG.warning(
-                        "ignoring [visualization]final cycle point\n"
-                        "(it must be defined with an initial cycle point)")
-                self.cfg['visualization']['final cycle point'] = None
-
-        vfcp = self.cfg['visualization']['final cycle point']
-        if vfcp:
-            try:
-                vfcp = get_point_relative(
-                    self.cfg['visualization']['final cycle point'],
-                    self.initial_point).standardise()
-            except ValueError:
-                vfcp = get_point(
-                    self.cfg['visualization']['final cycle point']
-                ).standardise()
-        else:
-            vfcp = None
-
-        # A viz final point can't be beyond the suite final point.
-        if vfcp is not None and self.final_point is not None:
-            if vfcp > self.final_point:
-                self.cfg['visualization']['final cycle point'] = str(
-                    self.final_point)
-
         # Replace suite and task name in suite and task URLs.
         self.cfg['meta']['URL'] = self.cfg['meta']['URL'] % {
             'suite_name': self.suite}
@@ -701,38 +576,11 @@ class SuiteConfig(object):
 
         if self._is_validate():
             self.mem_log("config.py: before _check_circular()")
-            self._check_circular()
+            # self._check_circular()
             self.mem_log("config.py: after _check_circular()")
 
         self.mem_log("config.py: end init config")
 
-    def _check_circular(self):
-        """Check for circular dependence in graph."""
-        start_point_string = (
-            self.cfg['visualization']['initial cycle point'])
-        lhs2rhss = {}  # left hand side to right hand sides
-        rhs2lhss = {}  # right hand side to left hand sides
-        for lhs, rhs in self.get_graph_raw(
-            start_point_string,
-            stop_point_string=None,
-        ):
-            lhs2rhss.setdefault(lhs, set())
-            lhs2rhss[lhs].add(rhs)
-            rhs2lhss.setdefault(rhs, set())
-            rhs2lhss[rhs].add(lhs)
-        self._check_circular_helper(lhs2rhss, rhs2lhss)
-        if rhs2lhss:
-            # Before reporting circular dependence, pick out all the edges with
-            # no outgoings.
-            self._check_circular_helper(rhs2lhss, lhs2rhss)
-            err_msg = ''
-            for rhs, lhss in sorted(rhs2lhss.items()):
-                for lhs in sorted(lhss):
-                    err_msg += '  %s => %s' % (
-                        TaskID.get(*lhs), TaskID.get(*rhs))
-            if err_msg:
-                raise SuiteConfigError(
-                    'circular edges detected:' + err_msg)
 
     @staticmethod
     def _check_circular_helper(x2ys, y2xs):
@@ -815,19 +663,6 @@ class SuiteConfig(object):
                     newruntime[name]['inherit'] = repl_parents
         self.cfg['runtime'] = newruntime
 
-        # Parameter expansion of visualization node attributes. TODO - do vis
-        # 'node groups' too, or deprecate them (use families in 'node attrs').
-        name_expander = NameExpander(self.parameters)
-        expanded_node_attrs = OrderedDictWithDefaults()
-        if 'visualization' not in self.cfg:
-            self.cfg['visualization'] = OrderedDictWithDefaults()
-        if 'node attributes' not in self.cfg['visualization']:
-            self.cfg['visualization']['node attributes'] = (
-                OrderedDictWithDefaults())
-        for node, val in self.cfg['visualization']['node attributes'].items():
-            for name, _ in name_expander.expand(node):
-                expanded_node_attrs[name] = val
-        self.cfg['visualization']['node attributes'] = expanded_node_attrs
 
     def _is_validate(self, is_strict=False):
         """Return whether we are in (strict) validate mode."""
@@ -1406,7 +1241,7 @@ class SuiteConfig(object):
         os.environ['CYLC_CYCLING_MODE'] = self.cfg['scheduling'][
             'cycling mode']
         #     (global config auto expands environment variables in local paths)
-        cenv = self.cfg['cylc']['environment'].copy()
+        cenv = self.cfg['general']['environment'].copy()
         for var, val in cenv.items():
             cenv[var] = os.path.expandvars(val)
         #     path to suite bin directory for suite and event handlers
@@ -1425,7 +1260,7 @@ class SuiteConfig(object):
         """
         mode = getattr(self.options, 'run_mode', None)
         if not mode:
-            mode = self.cfg['cylc']['force run mode']
+            mode = self.cfg['general']['force run mode']
         if not mode:
             mode = 'live'
         if reqmodes:
@@ -1453,7 +1288,7 @@ class SuiteConfig(object):
         for taskdef in self.taskdefs.values():
             taskdef.check_for_explicit_cycling()
             # Check custom event handler templates compat with task meta
-            if taskdef.rtconfig['events']:
+            if taskdef.rtconfig['task events']:
                 subs = dict((key, key) for key in self.TASK_EVENT_TMPL_KEYS)
                 for key, value in self.cfg['meta'].items():
                     subs['suite_' + key.lower()] = value
@@ -1463,7 +1298,7 @@ class SuiteConfig(object):
                     subs['task_url'] = subs['URL']
                 except KeyError:
                     pass
-                for key, values in taskdef.rtconfig['events'].items():
+                for key, values in taskdef.rtconfig['task events'].items():
                     if values and (
                             key == 'handlers' or key.endswith(' handler')):
                         for value in values:
@@ -1777,7 +1612,7 @@ class SuiteConfig(object):
                         if fam in first_parent_descendants[node]:
                             self.closed_families.remove(fam)
 
-        n_points = self.cfg['visualization']['number of cycle points']
+        # n_points = self.cfg['visualization']['number of cycle points']
 
         graph_raw_id = (
             start_point_string, stop_point_string, tuple(group_nodes),
@@ -2004,7 +1839,7 @@ class SuiteConfig(object):
         """Return dependency graph node labels."""
         stop_point = None
         if stop_point_string is None:
-            vfcp = self.cfg['visualization']['final cycle point']
+            # vfcp = self.cfg['visualization']['final cycle point']
             if vfcp:
                 try:
                     stop_point = get_point_relative(
@@ -2238,8 +2073,8 @@ class SuiteConfig(object):
         - None if there is no expectation either way.
         """
         if self.options.reftest:
-            return self.cfg['cylc']['reference test']['expected task failures']
-        elif self.cfg['cylc']['events']['abort if any task fails']:
+            return self.cfg['general']['reference test']['expected task failures']
+        elif self.cfg['server events']['abort if any task fails']:
             return []
         else:
             return None

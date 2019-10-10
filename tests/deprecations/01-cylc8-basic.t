@@ -30,16 +30,10 @@ cylc validate -v "${SUITE_NAME}" 2>&1 \
     | sed  -n -e 's/^WARNING - \( \* (.*$\)/\1/p' > 'val.out'
 cmp_ok val.out <<__END__
  * (8.0.0) [cylc][log resolved dependencies] - DELETED (OBSOLETE)
- * (8.0.0) [cylc][reference test][allow task failures] - DELETED (OBSOLETE)
- * (8.0.0) [cylc][reference test][live mode suite timeout] - DELETED (OBSOLETE)
- * (8.0.0) [cylc][reference test][dummy mode suite timeout] - DELETED (OBSOLETE)
- * (8.0.0) [cylc][reference test][dummy-local mode suite timeout] - DELETED (OBSOLETE)
- * (8.0.0) [cylc][reference test][simulation mode suite timeout] - DELETED (OBSOLETE)
- * (8.0.0) [cylc][reference test][required run mode] - DELETED (OBSOLETE)
- * (8.0.0) [cylc][reference test][suite shutdown event handler] - DELETED (OBSOLETE)
+ * (8.0.0) [cylc][reference test] - DELETED (OBSOLETE)
  * (8.0.0) [cylc][abort if any task fails] -> [cylc][events][abort if any task fails] - value unchanged
- * (8.0.0) [runtime][foo, cat, dog][job][shell] - DELETED (OBSOLETE)
  * (8.0.0) [cylc] -> [general] - value unchanged
+ * (8.0.0) [general][events] -> [server events] - value unchanged
 __END__
 
 purge_suite "${SUITE_NAME}"

@@ -29,17 +29,28 @@ TEST_NAME=${TEST_NAME_BASE}-cmp
 cylc validate -v "${SUITE_NAME}" 2>&1 \
     | sed  -n -e 's/^WARNING - \( \* (.*$\)/\1/p' > 'val.out'
 cmp_ok val.out <<__END__
- * (8.0.0) [cylc][events][mail from] -> [email][mail from] - value unchanged
- * (8.0.0) [cylc][events][mail events] -> [email][mail events] - value unchanged
- * (8.0.0) [cylc][events][mail footer] -> [email][mail footer] - value unchanged
- * (8.0.0) [cylc][events][mail smtp] -> [email][mail smtp] - value unchanged
- * (8.0.0) [cylc][events][mail to] -> [email][mail to] - value unchanged
+ * (8.0.0) [cylc][required run mode] - DELETED (OBSOLETE)
+ * (8.0.0) [cylc][force run mode] - DELETED (OBSOLETE)
+ * (8.0.0) [cylc][disable automatic shutdown] - DELETED (OBSOLETE)
+ * (8.0.0) [runtime][Alice][environment] -> [runtime][Alice][job environment] - value unchanged
+ * (8.0.0) [runtime][Alice][directives] -> [runtime][Alice][batch system directives] - value unchanged
+ * (8.0.0) [cylc][task event mail interval] -> [mail][task event interval] - value unchanged
+ * (8.0.0) [cylc][parameters] -> [task parameters] - value unchanged
+ * (8.0.0) [cylc][parameter templates] -> [task parameter templates] - value unchanged
+ * (8.0.0) [cylc][events][mail from] -> [mail][from] - value unchanged
+ * (8.0.0) [cylc][events][mail events] -> [mail][events] - value unchanged
+ * (8.0.0) [cylc][events][mail footer] -> [mail][footer] - value unchanged
+ * (8.0.0) [cylc][events][mail smtp] -> [mail][smtp] - value unchanged
+ * (8.0.0) [cylc][events][mail to] -> [mail][to] - value unchanged
+ * (8.0.0) [cylc][events] -> [server events] - value unchanged
+ * (8.0.0) [cylc][reference test] - DELETED (OBSOLETE)
  * (8.0.0) [cylc][authentication] -> [cylc][authorization] - value unchanged
- * (8.0.0) [suite host self-identification] -> [suite run platforms][suite host self-identification] - value unchanged
- * (8.0.0) [suite servers] -> [suite run platforms] - value unchanged
- * (8.0.0) [task events] -> [runtime][root][events] - value unchanged
+ * (8.0.0) [suite host self-identification] -> [workflow server platforms][suite host self-identification] - value unchanged
+ * (8.0.0) [runtime][Alice][events] -> [runtime][Alice][task events] - value unchanged
+ * (8.0.0) [suite servers] -> [workflow server platforms] - value unchanged
  * (8.0.0) [test battery] - DELETED (OBSOLETE)
  * (8.0.0) [cylc] -> [general] - value unchanged
+ * (8.0.0) [visualization] - DELETED (OBSOLETE)
  * (8.0.0) [scheduling][dependencies][X][graph] -> [scheduling][graph][X] - for X in:
 __END__
 #-------------------------------------------------------------------------------

@@ -22,7 +22,5 @@
 
 [runtime]
     [[foo, cat, dog]]
-        [[[job]]]
-            shell = fish
 
 

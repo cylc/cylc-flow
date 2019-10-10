@@ -2,7 +2,10 @@
 # in cylc/flow/config_schema
 [cylc]
     UTC mode = True
-
+    required run mode = live
+    force run mode = dummy
+    task event mail interval = PT5M
+    disable automatic shutdown = true
     [[events]]
         mail from =
         mail events =
@@ -11,13 +14,21 @@
         mail to =
     [[authentication]]
 
+    [[parameters]]
+
+    [[parameter templates]]
+
+    [[reference test]]
+
+    [[events]]
+
+[visualization]
+
 [suite host self-identification]
 
 [suite servers]
 
 [test battery]
-
-[task events]
 
 [scheduling]
     initial cycle point = 19831213T0600Z
@@ -33,10 +44,15 @@
                sleep 5
                echo "Alice\'s script is boring"
                """
+        [[[events]]]
+
+        [[[environment]]]
+
+        [[[directives]]]
 
     [[Bob]]
         script="""
                sleep 5
                echo "Bob\'s script is boring "
                """
-        [[[remote]]]
+
