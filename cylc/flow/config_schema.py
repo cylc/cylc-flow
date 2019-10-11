@@ -355,31 +355,26 @@ def upg(cfg, descr):
         ['documentation', 'files', 'multi-page html user guide'],
         ['documentation', 'local']
     )
+    # Cylc 8 Obseletions
     u.obsolete('8.0.0', ['cylc', 'log resolved dependencies'])
     u.obsolete('8.0.0', ['cylc', 'required run mode'])
     u.obsolete('8.0.0', ['cylc', 'force run mode'])
     u.obsolete('8.0.0', ['cylc', 'disable automatic shutdown'])
-    u.deprecate(
-        '8.0.0',
-        ['runtime', '__MANY__', 'environment'],
-        ['runtime', '__MANY__', 'job environment']
-    )
-    u.deprecate(
-        '8.0.0',
-        ['runtime', '__MANY__', 'directives'],
-        ['runtime', '__MANY__', 'batch system directives']
-    )
-    u.deprecate(
-        '8.0.0',
-        ['cylc', 'task event mail interval'],
-        ['mail', 'task event interval']
-    )
-    u.deprecate('8.0.0', ['cylc', 'parameters'], ['task parameters'])
-    u.deprecate(
-        '8.0.0',
-        ['cylc', 'parameter templates'],
-        ['task parameter templates']
-    )
+    u.obsolete('8.0.0', ['enable run directory housekeeping'])
+    u.obsolete('8.0.0', ['cylc', 'reference test'])
+    u.obsolete('8.0.0', ['suite definition directory'])
+    u.obsolete('8.0.0', ['communication'])
+    u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'shell'])
+    u.obsolete('8.0.0', ['suite servers', 'scan hosts'])
+    u.obsolete('8.0.0', ['suite servers', 'scan ports'])
+    u.obsolete('8.0.0', ['temporary directory'])
+    u.obsolete('8.0.0', ['test battery'])
+    u.obsolete('8.0.0', ['task host select command timeout'])
+    u.obsolete('8.0.0', ['xtrigger function timeout'])
+    u.obsolete('8.0.0', ['visualization'])
+    u.obsolete('8.0.0', ['documentation'])
+    # Cylc 8 Deprecations
+    # All mail ____ items moved from [cylc][events] to [email]
     for key in [
         'mail from', 'mail events', 'mail footer', 'mail smtp', 'mail to'
     ]:
@@ -388,35 +383,51 @@ def upg(cfg, descr):
             ['cylc', 'events', key],
             ['mail', key.replace('mail ', '')]
         )
-    u.deprecate('8.0.0', ['cylc', 'events'], ['server events'])
-    u.obsolete('8.0.0', ['cylc', 'reference test'])
     u.deprecate(
         '8.0.0',
         ['cylc', 'abort if any task fails'],
-        ['cylc', 'events', 'abort if any task fails'])
-    # All mail ____ items moved from [cylc][events] to [email]
-
-
-    u.deprecate('8.0.0',
-                ['documentation', 'files', 'html index'],
-                ['documentation', 'local']
-                )
+        ['cylc', 'events', 'abort if any task fails']
+    )
     u.deprecate(
         '8.0.0',
-        ['documentation', 'urls', 'internet homepage'],
-        ['documentation', 'cylc homepage']
+        ['cylc', 'authentication'],
+        ['cylc', 'authorization']
     )
-    u.obsolete('8.0.0', ['suite definition directory'])
-    u.obsolete('8.0.0', ['communication'])
-    u.deprecate('8.0.0', ['cylc', 'authentication'], ['cylc', 'authorization'])
     u.deprecate(
         '8.0.0',
-        ['general', 'authentication'],
-        ['general', 'authorization']
+        ['cylc', 'events'],
+        ['server events']
     )
-    u.obsolete('8.0.0', ['enable run directory housekeeping'])
-
-    u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'shell'])
+    u.deprecate(
+        '8.0.0',
+        ['cylc', 'parameters'],
+        ['task parameters']
+    )
+    u.deprecate(
+        '8.0.0',
+        ['cylc', 'parameter templates'],
+        ['task parameter templates']
+    )
+    u.deprecate(
+        '8.0.0',
+        ['cylc', 'task event mail interval'],
+        ['mail', 'task event interval']
+    )
+    u.deprecate(
+        '8.0.0',
+        ['runtime', '__MANY__', 'directives'],
+        ['runtime', '__MANY__', 'batch system directives']
+    )
+    u.deprecate(
+        '8.0.0',
+        ['runtime', '__MANY__', 'environment'],
+        ['runtime', '__MANY__', 'job environment']
+    )
+    u.deprecate(
+        '8.0.0',
+        ['runtime', '__MANY__', 'events'],
+        ['runtime', '__MANY__', 'task events']
+    )
     u.deprecate(
         '8.0.0',
         ['runtime', '__MANY__', 'job', 'execution retry delays'],
@@ -429,30 +440,25 @@ def upg(cfg, descr):
     )
     u.deprecate(
         '8.0.0',
+        ['scheduling', 'hold after point'],
+        ['scheduling', 'hold after cycle point']
+    )
+    u.deprecate(
+        '8.0.0',
         ['suite host self-identification'],
         ['workflow server platforms', 'suite host self-identification']
     )
     u.deprecate(
         '8.0.0',
-        ['runtime', '__MANY__', 'events'],
-        ['runtime', '__MANY__', 'task events']
+        ['suite servers'],
+        ['workflow server platforms']
     )
-    u.obsolete('8.0.0', ['suite servers', 'scan hosts'])
-    u.obsolete('8.0.0', ['suite servers', 'scan ports'])
-    u.deprecate('8.0.0', ['suite servers'], ['workflow server platforms'])
     u.deprecate(
         '8.0.0',
-        ['scheduling', 'hold after point'],
-        ['scheduling', 'hold after cycle point']
+        ['task events'],
+        ['runtime', 'root', 'events']
     )
-    u.deprecate('8.0.0', ['task events'], ['runtime', 'root', 'events'])
-    u.obsolete('8.0.0', ['temporary directory'])
-    u.obsolete('8.0.0', ['test battery'])
-    u.obsolete('8.0.0', ['task host select command timeout'])
-    u.obsolete('8.0.0', ['xtrigger function timeout'])
     u.deprecate('8.0.0', ['cylc'], ['general'])
-    u.obsolete('8.0.0', ['visualization'])
-    u.deprecate('8.0.0', ['general', 'events'], ['server events'])
     u.upgrade()
 
     # Upgrader cannot do this type of move.
