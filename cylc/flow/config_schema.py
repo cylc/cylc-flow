@@ -356,12 +356,19 @@ def upg(cfg, descr):
         ['documentation', 'local']
     )
     u.obsolete('8.0.0', ['cylc', 'log resolved dependencies'])
-    u.obsolete('8.0.0', ['cylc', 'reference test', 'allow task failures'])
-    u.obsolete('8.0.0', ['cylc', 'reference test', 'live mode suite timeout'])
-    u.obsolete('8.0.0', ['cylc', 'reference test', 'dummy mode suite timeout'])
     u.obsolete('8.0.0', ['cylc', 'required run mode'])
     u.obsolete('8.0.0', ['cylc', 'force run mode'])
     u.obsolete('8.0.0', ['cylc', 'disable automatic shutdown'])
+    u.deprecate(
+        '8.0.0',
+        ['runtime', '__MANY__', 'environment'],
+        ['runtime', '__MANY__', 'job environment']
+    )
+    u.deprecate(
+        '8.0.0',
+        ['runtime', '__MANY__', 'directives'],
+        ['runtime', '__MANY__', 'batch system directives']
+    )
     u.deprecate(
         '8.0.0',
         ['cylc', 'task event mail interval'],
@@ -373,16 +380,6 @@ def upg(cfg, descr):
         ['cylc', 'parameter templates'],
         ['task parameter templates']
     )
-    u.deprecate('8.0.0', ['cylc', 'events'], ['server events'])
-    u.obsolete('8.0.0', ['cylc', 'reference test'])
-    u.obsolete(
-        '8.0.0',
-        ['cylc', 'reference test', 'suite shutdown event handler'])
-    u.deprecate(
-        '8.0.0',
-        ['cylc', 'abort if any task fails'],
-        ['cylc', 'events', 'abort if any task fails'])
-    # All mail ____ items moved from [cylc][events] to [email]
     for key in [
         'mail from', 'mail events', 'mail footer', 'mail smtp', 'mail to'
     ]:
@@ -391,6 +388,14 @@ def upg(cfg, descr):
             ['cylc', 'events', key],
             ['mail', key.replace('mail ', '')]
         )
+    u.deprecate('8.0.0', ['cylc', 'events'], ['server events'])
+    u.obsolete('8.0.0', ['cylc', 'reference test'])
+    u.deprecate(
+        '8.0.0',
+        ['cylc', 'abort if any task fails'],
+        ['cylc', 'events', 'abort if any task fails'])
+    # All mail ____ items moved from [cylc][events] to [email]
+
 
     u.deprecate('8.0.0',
                 ['documentation', 'files', 'html index'],
@@ -425,7 +430,7 @@ def upg(cfg, descr):
     u.deprecate(
         '8.0.0',
         ['suite host self-identification'],
-        ['suite run platforms', 'suite host self-identification']
+        ['workflow server platforms', 'suite host self-identification']
     )
     u.deprecate(
         '8.0.0',
@@ -434,7 +439,7 @@ def upg(cfg, descr):
     )
     u.obsolete('8.0.0', ['suite servers', 'scan hosts'])
     u.obsolete('8.0.0', ['suite servers', 'scan ports'])
-    u.deprecate('8.0.0', ['suite servers'], ['suite run platforms'])
+    u.deprecate('8.0.0', ['suite servers'], ['workflow server platforms'])
     u.deprecate(
         '8.0.0',
         ['scheduling', 'hold after point'],
@@ -446,7 +451,8 @@ def upg(cfg, descr):
     u.obsolete('8.0.0', ['task host select command timeout'])
     u.obsolete('8.0.0', ['xtrigger function timeout'])
     u.deprecate('8.0.0', ['cylc'], ['general'])
-    u.obsolete('8.0.0', ['vizualization'])
+    u.obsolete('8.0.0', ['visualization'])
+    u.deprecate('8.0.0', ['general', 'events'], ['server events'])
     u.upgrade()
 
     # Upgrader cannot do this type of move.
