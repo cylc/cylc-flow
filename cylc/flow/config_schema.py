@@ -45,7 +45,7 @@ SPEC = {
         'URL': [VDR.V_STRING, ''],
         '__MANY__': [VDR.V_STRING, ''],
     },
-    'general': {
+    'misc': {
         'UTC mode': [VDR.V_BOOLEAN, False],
         'cycle point format': [VDR.V_CYCLE_POINT_FORMAT],
         'cycle point num expanded year digits': [VDR.V_INTEGER, 0],
@@ -275,7 +275,7 @@ SPEC = {
             'outputs': {
                 '__MANY__': [VDR.V_STRING],
             },
-            'parameter environment templates': {
+            'task parameter environment templates': {
                 '__MANY__': [VDR.V_STRING],
             },
         },
@@ -440,6 +440,11 @@ def upg(cfg, descr):
     )
     u.deprecate(
         '8.0.0',
+        ['runtime', '__MANY__', 'parameter environment templates'],
+        ['runtime', '__MANY__', 'task parameter environment templates']
+    )
+    u.deprecate(
+        '8.0.0',
         ['scheduling', 'hold after point'],
         ['scheduling', 'hold after cycle point']
     )
@@ -458,7 +463,7 @@ def upg(cfg, descr):
         ['task events'],
         ['runtime', 'root', 'events']
     )
-    u.deprecate('8.0.0', ['cylc'], ['general'])
+    u.deprecate('8.0.0', ['cylc'], ['misc'])
     u.upgrade()
 
     # Upgrader cannot do this type of move.
