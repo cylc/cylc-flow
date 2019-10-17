@@ -46,6 +46,11 @@ Third alpha release of Cylc 8.
 status message retries (problems that prevent message transmission are almost
 never transient, and in practice job polling is the only way to recover).
 
+### Fixes
+
+[#3409](https://github.com/cylc/cylc-flow/pull/3409) - prevent cylc-run from
+creating directories when executed for suites that do not exist.
+
 -------------------------------------------------------------------------------
 ## __cylc-8.0a1 (2019-09-18)__
 
