@@ -21,6 +21,7 @@ from pwd import getpwall
 import re
 import sys
 import socket
+from cylc.flow import LOG
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import SuiteServiceFileError
@@ -170,8 +171,10 @@ async def scan_one(reg, host, port, timeout=None, methods=None):
         try:
             msg = await client.async_request(method)
         except ClientTimeout as exc:
+            LOG.exception(f"Timeout: name:{reg}, host:{host}, port:{port}")
             return (reg, host, port, MSG_TIMEOUT)
         except ClientError as exc:
+            LOG.exception("ClientError")
             return (reg, host, port, result or None)
         else:
             result.update(msg)
