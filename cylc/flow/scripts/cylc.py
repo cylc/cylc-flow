@@ -61,6 +61,10 @@ def main(command, cmd_args, help_):
     if command in ["categories", "commands"] + category_list:
         execute_cmd("cylc-help", command)
     elif command:
+        # to match bash script behavior
+        if command == "h":
+            command = "help"
+
         cylc_cmd = f"cylc-{command}"
 
         if cylc_cmd not in command_list:
@@ -87,7 +91,6 @@ def main(command, cmd_args, help_):
             execute_cmd(cylc_cmd, *list(cmd_args))
     elif help_:
         execute_cmd("cylc-help")
-
 
 if __name__ == "__main__":
     main()
