@@ -18,6 +18,8 @@ import os
 import click
 import pkg_resources
 
+from cylc.flow import __version__
+
 # These will be ported to python as click commands
 bash_commands = ["cylc-graph-diff", "cylc-jobscript", "cylc-scp-transfer"]
 
@@ -52,14 +54,35 @@ def execute_cmd(cmd, *args):
         raise SystemExit(exc)
 
 
-@click.command(context_settings={"ignore_unknown_options": True})
-@click.option("--help", "-h", "help_", is_flag=True)
+def print_version(ctx, param, value):
+    if not value or ctx.resilient_parsing:
+        return
+    click.echo(__version__)
+    ctx.exit()
+
+
+CONTEXT_SETTINGS = dict(
+    token_normalize_func=lambda x: x.lower(), ignore_unknown_options=True
+)
+
+
+@click.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("command")
 @click.argument("cmd-args", nargs=-1)
-@click.version_option()
+@click.option("--help", "-h", "help_", is_flag=True)
+@click.option(
+    "--version",
+    "-v",
+    is_flag=True,
+    callback=print_version,
+    expose_value=False,
+    is_eager=True,
+)
 def main(command, cmd_args, help_):
     if command in ["categories", "commands"] + category_list:
         execute_cmd("cylc-help", command)
+    elif command == "version":
+        click.echo(__version__)
     elif command:
         # to match bash script behavior
         if command == "h":
@@ -91,6 +114,7 @@ def main(command, cmd_args, help_):
             execute_cmd(cylc_cmd, *list(cmd_args))
     elif help_:
         execute_cmd("cylc-help")
+
 
 if __name__ == "__main__":
     main()
