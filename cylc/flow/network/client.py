@@ -44,11 +44,10 @@ from cylc.flow.suite_files import (
     UserFiles
 )
 
-# we should only have one ZMQ context per-process
 CONTEXT = zmq.asyncio.Context()
 
 
-class ZMQClient(object):
+class ZMQClient:
     """Initiate the REQ part of a ZMQ REQ-REP pair.
 
     This class contains the logic for the ZMQ message interface and client -
@@ -84,9 +83,14 @@ class ZMQClient(object):
 
     DEFAULT_TIMEOUT = 5.  # 5 seconds
 
-    def __init__(
-            self, host, port, srv_public_key_loc, timeout=None,
-            timeout_handler=None, header=None):
+    def __init__(self, host, port, srv_public_key_loc, context=None,
+                 timeout=None, timeout_handler=None, header=None):
+        # we should only have one ZMQ context per-process/app
+        # don't instantiate a client unless none passed in
+        if context is None:
+            self.context = zmq.asyncio.Context()
+        else:
+            self.context = context
         if timeout is None:
             timeout = self.DEFAULT_TIMEOUT
         else:
@@ -95,7 +99,7 @@ class ZMQClient(object):
         self.timeout_handler = timeout_handler
 
         # open the ZMQ socket
-        self.socket = CONTEXT.socket(zmq.REQ)
+        self.socket = self.context.socket(zmq.REQ)
 
         # check for, & create if nonexistent, user keys in the right location
         if not ensure_user_keys_exist():
@@ -235,6 +239,7 @@ class SuiteRuntimeClient(ZMQClient):
             owner: str = None,
             host: str = None,
             port: Union[int, str] = None,
+            context=None,
             timeout: Union[float, str] = None
     ):
         """Initiate a client to the suite runtime API.
@@ -275,9 +280,10 @@ class SuiteRuntimeClient(ZMQClient):
                 UserFiles.Auth.SERVER_PUBLIC_KEY_CERTIFICATE, suite,
                 content=False
             ),
+            context=context,
             timeout=timeout,
-            header=self.get_header(),
-            timeout_handler=partial(self._timeout_handler, suite, host, port)
+            timeout_handler=partial(self._timeout_handler, suite, host, port),
+            header=self.get_header()
         )
 
     @staticmethod

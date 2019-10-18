@@ -15,15 +15,25 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Subscriber for published suite output."""
 
+import asyncio
 import sys
 import json
 
 import zmq
 import zmq.asyncio
 
+from cylc.flow.ws_data_mgr import DELTAS_MAP
 
-# we should only have one ZMQ context per-process
-CONTEXT = zmq.asyncio.Context()
+
+def process_delta_msg(btopic, delta_msg, func, *args, **kwargs):
+    """Utility for processing serialised data-store deltas."""
+    topic = btopic.decode('utf-8')
+    try:
+        delta = DELTAS_MAP[topic]()
+    except KeyError:
+        return
+    delta.ParseFromString(delta_msg)
+    func(topic, delta, *args, **kwargs)
 
 
 class WorkflowSubscriber:
@@ -46,7 +56,19 @@ class WorkflowSubscriber:
 
     DEFAULT_TIMEOUT = 300.  # 5 min
 
-    def __init__(self, host, port, topics=None, timeout=None):
+    def __init__(self, host, port, context=None, topics=None, timeout=None):
+        # we should only have one ZMQ context per-process
+        # don't instantiate a client unless none passed in
+        try:
+            self.loop = asyncio.get_running_loop()
+        except RuntimeError:
+            self.loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(self.loop)
+
+        if context is None:
+            self.context = zmq.asyncio.Context()
+        else:
+            self.context = context
         if topics is None:
             topics = [b'']
         if timeout is None:
@@ -56,23 +78,29 @@ class WorkflowSubscriber:
         self.timeout = timeout * 1000
 
         # open the ZMQ socket
-        self.socket = CONTEXT.socket(zmq.SUB)
+        self.socket = self.context.socket(zmq.SUB)
         self.socket.connect(f'tcp://{host}:{port}')
         # if there is no server don't keep the subscriber hanging around
         self.socket.setsockopt(zmq.LINGER, int(timeout))
         for topic in set(topics):
             self.socket.setsockopt(zmq.SUBSCRIBE, topic)
 
-    async def subscribe(self, topics, msg_handler=None):
+    async def subscribe(self, msg_handler, *args, **kwargs):
         """Subscribe to updates from the provided socket."""
         while True:
-            [topic, msg] = await self.socket.recv_multipart()
+            if self.socket.closed:
+                break
+            try:
+                [topic, msg] = await self.socket.recv_multipart()
+            except zmq.error.ZMQError:
+                continue
             if callable(msg_handler):
-                msg_handler(topic, msg)
+                msg_handler(topic, msg, *args, **kwargs)
             else:
                 data = json.loads(msg)
                 sys.stdout.write(
                     json.dumps(data, indent=4) + '\n')
+        sleep(0)
 
     def stop(self):
         """Close subscriber socket."""

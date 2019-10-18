@@ -19,7 +19,7 @@ from unittest import main
 from cylc.flow.tests.util import CylcWorkflowTestCase, create_task_proxy
 from cylc.flow.ws_data_mgr import (
     WsDataMgr, task_mean_elapsed_time, ID_DELIM,
-    EDGES, FAMILY_PROXIES, TASKS, TASK_PROXIES, WORKFLOW
+    FAMILY_PROXIES, TASKS, TASK_PROXIES, WORKFLOW
 )
 
 
@@ -102,6 +102,19 @@ class TestWsDataMgr(CylcWorkflowTestCase):
         self.ws_data_mgr.generate_graph_elements()
         self.ws_data_mgr.apply_deltas()
         self.assertEqual(3, len(tasks_proxies_generated))
+
+    def test_get_data_elements(self):
+        """Test method that returns data elements by specified type."""
+        flow_msg = self.ws_data_mgr.get_data_elements(TASK_PROXIES)
+        self.assertEqual(0, len(flow_msg.deltas))
+        self.ws_data_mgr.initiate_data_model()
+        flow_msg = self.ws_data_mgr.get_data_elements(TASK_PROXIES)
+        self.assertEqual(
+            len(flow_msg.deltas),
+            len(self.data[TASK_PROXIES]))
+        flow_msg = self.ws_data_mgr.get_data_elements(WORKFLOW)
+        self.assertEqual(
+            flow_msg.last_updated, self.data[WORKFLOW].last_updated)
 
     def test_get_entire_workflow(self):
         """Test method that populates the entire workflow protobuf message."""

@@ -22,6 +22,7 @@ import pytest
 import random
 import shutil
 from tempfile import TemporaryDirectory, NamedTemporaryFile
+
 import zmq
 import zmq.auth
 

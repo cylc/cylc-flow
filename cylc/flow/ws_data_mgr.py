@@ -105,7 +105,7 @@ def task_mean_elapsed_time(tdef):
     return tdef.rtconfig['job'].get('execution time limit', None)
 
 
-def apply_workflow_delta(key, data, delta):
+def apply_workflow_delta(key, delta, data):
     """Apply delta to specific data-store workflow and type."""
     # Merge in updated fields
     if key == WORKFLOW:
@@ -979,7 +979,7 @@ class WsDataMgr:
         # Apply deltas to local data-store
         data = self.data[self.workflow_id]
         for key, delta in self.deltas.items():
-            apply_workflow_delta(key, data, delta)
+            apply_workflow_delta(key, delta, data)
 
         # Construct checksum on deltas for export
         update_time = time()
@@ -1026,3 +1026,27 @@ class WsDataMgr:
             for key, delta in self.deltas.items()
             if delta.ListFields()
         ]
+
+    def get_data_elements(self, element_type):
+        """Get elements of a given type in the form of a delta.
+
+        Args:
+            element_type (str):
+                Key from DELTAS_MAP dictionary.
+
+        Returns:
+            object
+                protobuf (DELTAS_MAP[element_type]) message.
+
+        """
+        if element_type not in DELTAS_MAP:
+            return None
+        data = self.data[self.workflow_id]
+        pb_msg = DELTAS_MAP[element_type]()
+        if element_type == WORKFLOW:
+            pb_msg.CopyFrom(data[WORKFLOW])
+        else:
+            pb_msg.time = data[WORKFLOW].last_updated
+            pb_msg.deltas.extend(data[element_type].values())
+
+        return pb_msg

@@ -25,49 +25,44 @@ Invoke suite subscriber to receive published workflow output.
 import asyncio
 import json
 import sys
-if '--use-ssh' in sys.argv[1:]:
-    sys.argv.remove('--use-ssh')
-    from cylc.flow.remote import remrun
-    if remrun():
-        sys.exit(0)
 import time
 
 from google.protobuf.json_format import MessageToDict
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.scan import get_scan_items_from_fs, re_compile_filters
-from cylc.flow.network.subscriber import WorkflowSubscriber
+from cylc.flow.network.subscriber import WorkflowSubscriber, process_delta_msg
 from cylc.flow.terminal import cli_function
-from cylc.flow.ws_data_mgr import DELTAS_MAP
+
+if '--use-ssh' in sys.argv[1:]:
+    sys.argv.remove('--use-ssh')
+    from cylc.flow.remote import remrun
+    if remrun():
+        sys.exit(0)
 
 
-def print_workflow(topic, msg):
-    msg_type = topic.decode('utf-8')
-    try:
-        data = DELTAS_MAP[msg_type]()
-    except KeyError:
-        return
-    data.ParseFromString(msg)
-    print('Received: ', msg_type)
+def print_message(_, data):
+    """Print protobuf message."""
     sys.stdout.write(
         json.dumps(MessageToDict(data), indent=4) + '\n')
 
 
 def get_option_parser():
+    """Augment options parser to current context."""
     parser = COP(__doc__, comms=True, argdoc=[
         ('REG', 'Suite name'),
-        ('[TOPIC]', 'Subscription topic to receive')])
+        ('[TOPICS]', 'Subscription topics to receive')])
 
     return parser
 
 
 @cli_function(get_option_parser)
-def main(_, options, suite, topic=None):
+def main(_, options, suite, topics=None):
     host = None
     port = None
     cre_owner, cre_name = re_compile_filters(None, ['.*'])
     while True:
-        for s_reg, s_host, s_port, s_pub_port in get_scan_items_from_fs(
+        for s_reg, s_host, _, s_pub_port in get_scan_items_from_fs(
                 cre_owner, cre_name):
             if s_reg == suite:
                 host = s_host
@@ -78,13 +73,20 @@ def main(_, options, suite, topic=None):
         time.sleep(5)
 
     print(f'Connecting to tcp://{host}:{port}')
-    if topic is None:
-        topic = b'workflow'
+    topic_set = set()
+    if topics is None:
+        topic_set.add(b'workflow')
     else:
-        topic = topic.encode('utf-8')
-    subscriber = WorkflowSubscriber(host, port, [topic])
+        for topic in topics.split(','):
+            topic_set.add(topic.encode('utf-8'))
+    subscriber = WorkflowSubscriber(host, port, topics=topic_set)
 
-    asyncio.ensure_future(subscriber.subscribe([topic], print_workflow))
+    asyncio.ensure_future(
+        subscriber.subscribe(
+            process_delta_msg,
+            func=print_message
+        )
+    )
 
     # run Python run
     try:

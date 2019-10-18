@@ -17,11 +17,12 @@
 
 import asyncio
 import getpass
-from graphql.execution.executors.asyncio import AsyncioExecutor
 from queue import Queue
 from textwrap import dedent
 from threading import Thread
 from time import sleep
+
+from graphql.execution.executors.asyncio import AsyncioExecutor
 import zmq
 from zmq.auth.thread import ThreadAuthenticator
 
@@ -41,16 +42,18 @@ from cylc.flow.suite_status import (
     KEY_META, KEY_NAME, KEY_OWNER, KEY_STATES,
     KEY_TASKS_BY_STATE, KEY_UPDATE_TIME, KEY_VERSION
 )
+from cylc.flow.ws_data_mgr import DELTAS_MAP
 from cylc.flow.ws_messages_pb2 import PbEntireWorkflow
 from cylc.flow import __version__ as CYLC_VERSION
 
 # maps server methods to the protobuf message (for client/UIS import)
 PB_METHOD_MAP = {
-    'pb_entire_workflow': PbEntireWorkflow
+    'pb_entire_workflow': PbEntireWorkflow,
+    'pb_data_elements': DELTAS_MAP
 }
 
 
-class ZMQServer(object):
+class ZMQServer:
     """Initiate the REP part of a ZMQ REQ-REP pair.
 
     This class contains the logic for the ZMQ message interface and client -
@@ -79,8 +82,13 @@ class ZMQServer(object):
     """
 
     def __init__(self, private_key_location):
+                 context=None, barrier=None):
+        if context is None:
+            self.context = zmq.Context()
+        else:
+            self.context = context
+        self.barrier = barrier
         self.port = None
-        self.context = zmq.Context()
         self.socket = None
         self.endpoints = None
         self.thread = None
@@ -89,6 +97,25 @@ class ZMQServer(object):
 
     def start(self, min_port, max_port):
         """Start the server running.
+
+        Port range passed to socket creation in server thread.
+
+        Args:
+            min_port (int): minimum socket port number
+            max_port (int): maximum socket port number
+
+        """
+        # TODO: this in asyncio?
+        # Requires the Cylc main loop in asyncio first
+        # And use of concurrent.futures.ThreadPoolExecutor?
+        self.thread = Thread(
+            target=self._start_server,
+            args=(min_port, max_port)
+        )
+        self.thread.start()
+
+    def _start_server(self, min_port, max_port):
+        """Create the thread async loop, and run listener.
 
         Will use a port range provided to select random ports.
 
@@ -133,13 +160,14 @@ class ZMQServer(object):
             self.socket.close()
             raise CylcError('could not start Cylc ZMQ server: %s' % str(exc))
 
-        # start accepting requests
-        self.register_endpoints()
+        if self.barrier is not None:
+            sleep(0)  # yield control to other threads
+            self.barrier.wait()
 
+        # start accepting requests
         self.queue = Queue()
-        # TODO: this in asyncio? Requires the Cylc main loop in asyncio first
-        self.thread = Thread(target=self._listener)
-        self.thread.start()
+        self.register_endpoints()
+        self._listener()
 
     def stop(self):
         """Finish serving the current request then stop the server."""
@@ -163,9 +191,9 @@ class ZMQServer(object):
             if self.queue.qsize():
                 command = self.queue.get()
                 if command == 'STOP':
+                    self.stop()
                     break
-                else:
-                    raise ValueError('Unknown command "%s"' % command)
+                raise ValueError('Unknown command "%s"' % command)
 
             try:
                 # wait RECV_TIMEOUT for a message
@@ -185,7 +213,7 @@ class ZMQServer(object):
             except Exception as exc:  # purposefully catch generic exception
                 # failed to decode message, possibly resulting from failed
                 # authentication
-                LOG.exception(f'failed to decode message: {str(exc)}')
+                LOG.exception('failed to decode message: "%s"' % str(exc))
             else:
                 # success case - serve the request
                 res = self._receiver(message)
@@ -278,11 +306,13 @@ class SuiteRuntimeServer(ZMQServer):
 
     API = 4  # cylc API version
 
-    def __init__(self, schd):
+    def __init__(self, schd, context=None, barrier=None):
         ZMQServer.__init__(
             self,
             get_auth_item(UserFiles.Auth.SERVER_PRIVATE_KEY_CERTIFICATE,
-                          schd.suite)
+                          schd.suite),
+            context=context,
+            barrier=barrier
         )
         self.schd = schd
         self.public_priv = None  # update in get_public_priv()
@@ -441,7 +471,7 @@ class SuiteRuntimeServer(ZMQServer):
 
         """
         self.schd.command_queue.put(('dry_run_tasks', (task_globs,),
-                                    {'check_syntax': check_syntax}))
+                                     {'check_syntax': check_syntax}))
         return (True, 'Command queued')
 
     @authorise(Priv.CONTROL)
@@ -1274,9 +1304,27 @@ class SuiteRuntimeServer(ZMQServer):
 
         Returns:
             bytes
-                Protobuf encoded message
+                Serialised Protobuf message
 
         """
         pb_msg = self.schd.ws_data_mgr.get_entire_workflow()
-        # Use google.protobuf.json_format.MessageToJson
+        return pb_msg.SerializeToString()
+
+    @authorise(Priv.READ)
+    @ZMQServer.expose
+    def pb_data_elements(self, element_type):
+        """Send the specified data elements in delta form.
+
+        Args:
+            element_type (str):
+                Key from DELTAS_MAP dictionary.
+
+        Returns:
+            bytes
+                Serialised Protobuf message
+
+        """
+        pb_msg = self.schd.ws_data_mgr.get_data_elements(element_type)
+        if pb_msg is None:
+            return f'No elements of type "{element_type}"'
         return pb_msg.SerializeToString()

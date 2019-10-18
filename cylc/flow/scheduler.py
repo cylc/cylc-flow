@@ -25,9 +25,11 @@ from queue import Empty, Queue
 from shutil import copytree, rmtree
 from subprocess import Popen, PIPE, DEVNULL
 import sys
+from threading import Barrier
 from time import sleep, time
 import traceback
 from uuid import uuid4
+import zmq
 
 from metomi.isodatetime.parsers import TimePointParser
 
@@ -194,6 +196,7 @@ class Scheduler(object):
         self.task_job_mgr = None
         self.task_events_mgr = None
         self.suite_event_handler = None
+        self.zmq_context = None
         self.server = None
         self.port = None
         self.publisher = None
@@ -253,12 +256,19 @@ class Scheduler(object):
                 daemonize(self)
             self._setup_suite_logger()
             self.ws_data_mgr = WsDataMgr(self)
+            self.zmq_context = zmq.Context()
+            # create thread sync barrier for setup
+            barrier = Barrier(3, timeout=10)
             port_range = glbl_cfg().get(['suite servers', 'run ports'])
-            self.server = SuiteRuntimeServer(self)
+            self.server = SuiteRuntimeServer(
+                self, context=self.zmq_context, barrier=barrier)
             self.server.start(port_range[0], port_range[-1])
-            self.port = self.server.port
-            self.publisher = WorkflowPublisher(self.server.context)
+            self.publisher = WorkflowPublisher(
+                context=self.zmq_context, barrier=barrier)
             self.publisher.start(port_range[0], port_range[-1])
+            # wait for threads to setup socket ports before continuing
+            barrier.wait()
+            self.port = self.server.port
             self.pub_port = self.publisher.port
             self.configure()
             self.profiler.start()

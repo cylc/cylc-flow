@@ -17,6 +17,7 @@
 
 import asyncio
 from threading import Thread
+from time import sleep
 
 import zmq
 
@@ -40,7 +41,7 @@ def serialize_data(data, serializer):
     """Serialize by specified method."""
     if callable(serializer):
         return serializer(data)
-    elif isinstance(serializer, str):
+    if isinstance(serializer, str):
         return getattr(data, serializer)()
     return data
 
@@ -58,11 +59,12 @@ class WorkflowPublisher:
     """
     # TODO: Security will be provided by zmq.auth (post PR #3359)
 
-    def __init__(self, context=None):
+    def __init__(self, context=None, barrier=None):
         if context is None:
             self.context = zmq.Context()
         else:
             self.context = context
+        self.barrier = barrier
         self.port = None
         self.socket = None
         self.endpoints = None
@@ -73,7 +75,7 @@ class WorkflowPublisher:
     def start(self, min_port, max_port):
         """Start the ZeroMQ publisher.
 
-        Will use a port range provided to select random ports.
+        Sockets created in alternate thread, port range forwarded.
 
         Args:
             min_port (int): minimum socket port number
@@ -82,13 +84,20 @@ class WorkflowPublisher:
         # Context are thread safe, but Sockets are not so if multiple
         # sockets then they need be created on their own thread.
         self.thread = Thread(
-            target=self._create_socket,
+            target=self._start_publisher,
             args=(min_port, max_port)
         )
         self.thread.start()
 
-    def _create_socket(self, min_port, max_port):
-        """Create ZeroMQ Publish socket."""
+    def _start_publisher(self, min_port, max_port):
+        """Create ZeroMQ Publish socket.
+
+        Will use a port range provided to select random ports.
+
+        Args:
+            min_port (int): minimum socket port number
+            max_port (int): maximum socket port number
+        """
         self.socket = self.context.socket(zmq.PUB)
         # this limit on messages in queue is more than enough,
         # as messages correspond to scheduler loops (*messages/loop):
@@ -105,8 +114,13 @@ class WorkflowPublisher:
             self.socket.close()
             raise CylcError(
                 'could not start Cylc ZMQ publisher: %s' % str(exc))
+
+        if self.barrier is not None:
+            sleep(0)  # yield control to other threads
+            self.barrier.wait()
+
         try:
-            asyncio.get_running_loop()
+            self.loop = asyncio.get_running_loop()
         except RuntimeError:
             self.loop = asyncio.new_event_loop()
             asyncio.set_event_loop(self.loop)
