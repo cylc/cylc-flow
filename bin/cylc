@@ -165,6 +165,16 @@ run_cylc_command() {
     exec "${CYLC_HOME_BIN}/cylc-${UTIL}" "$@"
 }
 
+pager () {
+    if [[ -n $PAGER ]]; then
+        echo "$PAGER"
+    elif command -v less; then
+        echo less
+    else
+        echo cat
+    fi
+}
+
 init_cylc
 
 UTIL="help"
@@ -195,7 +205,8 @@ control|information|all|task|admin|preparation|discovery\
     shift 1
     :;;
 help|h|\?|--help|-h)
-    help_util "$@" | ${PAGER:-less}
+    # shellcheck disable=SC2091
+    help_util "$@" | $(pager)
     exit 0
     :;;
 version|--version|-V)
