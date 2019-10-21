@@ -158,6 +158,9 @@ class ZMQServer(object):
                 # timeout, continue with the loop, this allows the listener
                 # thread to stop
                 continue
+            except zmq.error.ZMQError as exc:
+                LOG.exception(f'unexpected error: {str(exc)}')
+                continue
 
             # attempt to decode the message, authenticating the user in the
             # process
