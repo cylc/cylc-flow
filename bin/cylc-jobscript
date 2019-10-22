@@ -51,6 +51,16 @@ elif sys.argv[1] in ['-e', '--edit']:
 " "$1"
 }
 
+pager () {
+    if [[ -n ${PAGER:-} ]]; then
+        echo "$PAGER"
+    elif command -v less > /dev/null; then
+        echo less
+    else
+        echo cat
+    fi
+}
+
 PLAIN=false
 EDITOR_CMD=
 SUBMIT_ARGS=
@@ -74,12 +84,11 @@ if CYLC_SUBMIT_OUT="$(cylc submit --color=never --dry-run ${SUBMIT_ARGS})"; then
     if ! "${PLAIN}"; then
         echo "Task Job Script Generated: ${JOBSCRIPT}" >&2
     fi
-    if [[ -n ${EDITOR_CMD} ]]; then
-        # shellcheck disable=2086
-        exec $EDITOR_CMD "${JOBSCRIPT}"
-    else
-        exec less "${JOBSCRIPT}"
+    if [[ -z ${EDITOR_CMD} ]]; then
+        EDITOR_CMD="$(pager)"
     fi
+    # shellcheck disable=2086
+    exec $EDITOR_CMD "${JOBSCRIPT}"
 else
     echo "${CYLC_SUBMIT_OUT}" >&2
     echo "ERROR: no jobscript generated" >&2
