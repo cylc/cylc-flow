@@ -52,9 +52,9 @@ elif sys.argv[1] in ['-e', '--edit']:
 }
 
 pager () {
-    if [[ -n $PAGER ]]; then
+    if [[ -n ${PAGER:-} ]]; then
         echo "$PAGER"
-    elif command -v less; then
+    elif command -v less > /dev/null; then
         echo less
     else
         echo cat
