@@ -15,8 +15,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Define all legal items and values for cylc suite definition files."""
 
+import os
+import re
+
 from metomi.isodatetime.data import Calendar
 
+from cylc.flow import __version__ as CYLC_VERSION
+from cylc.flow.hostuserutil import get_user_home, is_remote_user
 from cylc.flow import LOG
 from cylc.flow.network.authorisation import Priv
 from cylc.flow.parsec.config import ParsecConfig
@@ -31,6 +36,10 @@ from cylc.flow.parsec.validate import (
 # - default: the default value (optional).
 # - allowed_2, ...: the only other allowed values of this setting (optional).
 SPEC = {
+    'process pool size': [VDR.V_INTEGER, 4],
+    'process pool timeout': [VDR.V_INTERVAL, DurationFloat(600)],
+    'disable interactive command prompts': [VDR.V_BOOLEAN, True],
+    'run directory rolling archive length': [VDR.V_INTEGER, -1],
     'meta': {
         'description': [VDR.V_STRING, ''],
         'group': [VDR.V_STRING, ''],
@@ -43,6 +52,11 @@ SPEC = {
         'cycle point format': [VDR.V_CYCLE_POINT_FORMAT],
         'cycle point num expanded year digits': [VDR.V_INTEGER, 0],
         'cycle point time zone': [VDR.V_CYCLE_POINT_TIME_ZONE],
+        'maximum size in bytes': [VDR.V_INTEGER, 1000000],
+        'process pool size': [VDR.V_INTEGER, 4],
+        'process pool timeout': [VDR.V_INTERVAL, DurationFloat(600)],
+        'rolling archive length': [VDR.V_INTEGER, 5],
+        'run directory rolling archive length': [VDR.V_INTEGER, -1],
         'required run mode': [
             VDR.V_STRING, '', 'live', 'dummy', 'dummy-local', 'simulation'],
         'force run mode': [
@@ -99,6 +113,93 @@ SPEC = {
                 + [level.name.lower().replace('_', '-') for level in [
                     Priv.IDENTITY, Priv.DESCRIPTION, Priv.STATE_TOTALS,
                     Priv.READ, Priv.SHUTDOWN]])
+        },
+    },
+    'documentation': {
+        'local': [VDR.V_STRING, ''],
+        'online': [VDR.V_STRING,
+                   'http://cylc.github.io/doc/built-sphinx/index.html'],
+        'cylc homepage': [VDR.V_STRING, 'http://cylc.github.io/'],
+    },
+    'document viewers': {
+        'html': [VDR.V_STRING, 'firefox'],
+    },
+
+    # client
+    'editors': {
+        'terminal': [VDR.V_STRING, 'vim'],
+        'gui': [VDR.V_STRING, 'gvim -f'],
+    },
+
+    # client
+    'monitor': {
+        'sort order': [VDR.V_STRING, 'definition', 'alphanumeric'],
+    },
+'hosts': {
+        'localhost': {
+            'run directory': [VDR.V_STRING, '$HOME/cylc-run'],
+            'work directory': [VDR.V_STRING, '$HOME/cylc-run'],
+            'task communication method': [
+                VDR.V_STRING, 'default', 'ssh', 'poll'],
+            'submission polling intervals': [VDR.V_INTERVAL_LIST],
+            'execution polling intervals': [VDR.V_INTERVAL_LIST],
+            'scp command': [
+                VDR.V_STRING, 'scp -oBatchMode=yes -oConnectTimeout=10'],
+            'ssh command': [
+                VDR.V_STRING, 'ssh -oBatchMode=yes -oConnectTimeout=10'],
+            'use login shell': [VDR.V_BOOLEAN, True],
+            'cylc executable': [VDR.V_STRING, 'cylc'],
+            'global init-script': [VDR.V_STRING],
+            'copyable environment variables': [VDR.V_STRING_LIST],
+            'retrieve job logs': [VDR.V_BOOLEAN],
+            'retrieve job logs command': [VDR.V_STRING, 'rsync -a'],
+            'retrieve job logs max size': [VDR.V_STRING],
+            'retrieve job logs retry delays': [VDR.V_INTERVAL_LIST],
+            'task event handler retry delays': [VDR.V_INTERVAL_LIST],
+            'tail command template': [
+                VDR.V_STRING, 'tail -n +1 -F %(filename)s'],
+            'batch systems': {
+                '__MANY__': {
+                    'err tailer': [VDR.V_STRING],
+                    'out tailer': [VDR.V_STRING],
+                    'err viewer': [VDR.V_STRING],
+                    'out viewer': [VDR.V_STRING],
+                    'job name length maximum': [VDR.V_INTEGER],
+                    'execution time limit polling intervals': [
+                        VDR.V_INTERVAL_LIST],
+                },
+            },
+        },
+        '__MANY__': {
+            'run directory': [VDR.V_STRING],
+            'work directory': [VDR.V_STRING],
+            'task communication method': [
+                VDR.V_STRING, 'default', 'ssh', 'poll'],
+            'submission polling intervals': [VDR.V_INTERVAL_LIST],
+            'execution polling intervals': [VDR.V_INTERVAL_LIST],
+            'scp command': [VDR.V_STRING],
+            'ssh command': [VDR.V_STRING],
+            'use login shell': [VDR.V_BOOLEAN],
+            'cylc executable': [VDR.V_STRING],
+            'global init-script': [VDR.V_STRING],
+            'copyable environment variables': [VDR.V_STRING_LIST],
+            'retrieve job logs': [VDR.V_BOOLEAN],
+            'retrieve job logs command': [VDR.V_STRING],
+            'retrieve job logs max size': [VDR.V_STRING],
+            'retrieve job logs retry delays': [VDR.V_INTERVAL_LIST],
+            'task event handler retry delays': [VDR.V_INTERVAL_LIST],
+            'tail command template': [VDR.V_STRING],
+            'batch systems': {
+                '__MANY__': {
+                    'err tailer': [VDR.V_STRING],
+                    'out tailer': [VDR.V_STRING],
+                    'out viewer': [VDR.V_STRING],
+                    'err viewer': [VDR.V_STRING],
+                    'job name length maximum': [VDR.V_INTEGER],
+                    'execution time limit polling intervals': [
+                        VDR.V_INTERVAL_LIST],
+                },
+            },
         },
     },
     'scheduling': {
@@ -213,6 +314,10 @@ SPEC = {
                 'submission timeout handler': [VDR.V_STRING_LIST, None],
                 'custom handler': [VDR.V_STRING_LIST, None],
             },
+            'suite logging': {
+                'rolling archive length': [VDR.V_INTEGER, 5],
+                'maximum size in bytes': [VDR.V_INTEGER, 1000000],
+            },
             'suite state polling': {
                 'user': [VDR.V_STRING],
                 'host': [VDR.V_STRING],
@@ -236,6 +341,34 @@ SPEC = {
             },
         },
     },
+    'task events': {
+        'execution timeout': [VDR.V_INTERVAL],
+        'handlers': [VDR.V_STRING_LIST],
+        'handler events': [VDR.V_STRING_LIST],
+        'handler retry delays': [VDR.V_INTERVAL_LIST, None],
+        'mail events': [VDR.V_STRING_LIST],
+        'mail from': [VDR.V_STRING],
+        'mail retry delays': [VDR.V_INTERVAL_LIST],
+        'mail smtp': [VDR.V_STRING],
+        'mail to': [VDR.V_STRING],
+        'submission timeout': [VDR.V_INTERVAL],
+    },
+    # client
+    'test battery': {
+        'remote host with shared fs': [VDR.V_STRING],
+        'remote host': [VDR.V_STRING],
+        'remote owner': [VDR.V_STRING],
+        'batch systems': {
+            '__MANY__': {
+                'host': [VDR.V_STRING],
+                'out viewer': [VDR.V_STRING],
+                'err viewer': [VDR.V_STRING],
+                'directives': {
+                    '__MANY__': [VDR.V_STRING],
+                },
+            },
+        },
+    },
     'visualization': {
         'initial cycle point': [VDR.V_CYCLE_POINT],
         'final cycle point': [VDR.V_STRING],
@@ -254,6 +387,34 @@ SPEC = {
         },
         'node attributes': {
             '__MANY__': [VDR.V_STRING_LIST],
+        },
+    },
+    # suite
+    'suite host self-identification': {
+        'method': [VDR.V_STRING, 'name', 'address', 'hardwired'],
+        'target': [VDR.V_STRING, 'google.com'],
+        'host': [VDR.V_STRING],
+    },
+    # suite
+    'authentication': {
+        # Allow owners to grant public shutdown rights at the most, not full
+        # control.
+        'public': (
+                [VDR.V_STRING]
+                + [level.name.lower().replace('_', '-') for level in [
+            Priv.STATE_TOTALS, Priv.IDENTITY, Priv.DESCRIPTION,
+            Priv.STATE_TOTALS, Priv.READ, Priv.SHUTDOWN]])
+    },
+    # suite
+    'suite servers': {
+        'run hosts': [VDR.V_SPACELESS_STRING_LIST],
+        'run ports': [VDR.V_INTEGER_LIST, list(range(43001, 43101))],
+        'condemned hosts': [VDR.V_ABSOLUTE_HOST_LIST],
+        'auto restart delay': [VDR.V_INTERVAL],
+        'run host select': {
+            'rank': [VDR.V_STRING, 'random', 'load:1', 'load:5', 'load:15',
+                     'memory', 'disk-space'],
+            'thresholds': [VDR.V_STRING],
         },
     },
 }
@@ -328,3 +489,150 @@ class RawSuiteConfig(ParsecConfig):
         ParsecConfig.__init__(
             self, SPEC, upg, output_fname, tvars, cylc_config_validate)
         self.loadcfg(fpath, "suite definition")
+
+
+class GlobalConfig(ParsecConfig):
+    """
+    Handle global (all suites) site and user configuration for cylc.
+    User file values override site file values.
+    """
+
+    _DEFAULT = None
+    _HOME = os.getenv('HOME') or get_user_home()
+    CONF_BASENAME = "flow.rc"
+    SITE_CONF_DIR = os.path.join(os.sep, 'etc', 'cylc', 'flow', CYLC_VERSION)
+    USER_CONF_DIR = os.path.join(_HOME, '.cylc', 'flow', CYLC_VERSION)
+
+    @classmethod
+    def get_inst(cls, cached=True):
+        """Return a GlobalConfig instance.
+
+        Args:
+            cached (bool):
+                If cached create if necessary and return the singleton
+                instance, else return a new instance.
+        """
+        if not cached:
+            # Return an up-to-date global config without affecting the
+            # singleton.
+            new_instance = cls(SPEC, upg, validator=cylc_config_validate)
+            new_instance.load()
+            return new_instance
+        elif not cls._DEFAULT:
+            cls._DEFAULT = cls(SPEC, upg, validator=cylc_config_validate)
+            cls._DEFAULT.load()
+        return cls._DEFAULT
+
+    def load(self):
+        """Load or reload configuration from files."""
+        self.sparse.clear()
+        self.dense.clear()
+        LOG.debug("Loading site/user config files")
+        conf_path_str = os.getenv("CYLC_CONF_PATH")
+        if conf_path_str:
+            # Explicit config file override.
+            fname = os.path.join(conf_path_str, self.CONF_BASENAME)
+            if os.access(fname, os.F_OK | os.R_OK):
+                self.loadcfg(fname, upgrader.USER_CONFIG)
+        elif conf_path_str is None:
+            # Use default locations.
+            for conf_dir, conf_type in [
+                    (self.SITE_CONF_DIR, upgrader.SITE_CONFIG),
+                    (self.USER_CONF_DIR, upgrader.USER_CONFIG)]:
+                fname = os.path.join(conf_dir, self.CONF_BASENAME)
+                if not os.access(fname, os.F_OK | os.R_OK):
+                    continue
+                try:
+                    self.loadcfg(fname, conf_type)
+                except ParsecError as exc:
+                    if conf_type == upgrader.SITE_CONFIG:
+                        # Warn on bad site file (users can't fix it).
+                        LOG.warning(
+                            'ignoring bad %s %s:\n%s', conf_type, fname, exc)
+                    else:
+                        # Abort on bad user file (users can fix it).
+                        LOG.error('bad %s %s', conf_type, fname)
+                        raise
+        # (OK if no flow.rc is found, just use system defaults).
+        self._transform()
+
+    def get_host_item(self, item, host=None, owner=None, replace_home=False,
+                      owner_home=None):
+        """This allows hosts with no matching entry in the config file
+        to default to appropriately modified localhost settings."""
+
+        cfg = self.get()
+
+        # (this may be called with explicit None values for localhost
+        # and owner, so we can't use proper defaults in the arg list)
+        if not host:
+            # if no host is given the caller is asking about localhost
+            host = 'localhost'
+
+        # is there a matching host section?
+        host_key = None
+        if host in cfg['hosts']:
+            # there's an entry for this host
+            host_key = host
+        else:
+            # try for a pattern match
+            for cfg_host in cfg['hosts']:
+                if re.match(cfg_host, host):
+                    host_key = cfg_host
+                    break
+        modify_dirs = False
+        if host_key is not None:
+            # entry exists, any unset items under it have already
+            # defaulted to modified localhost values (see site cfgspec)
+            value = cfg['hosts'][host_key][item]
+        else:
+            # no entry so default to localhost and modify appropriately
+            value = cfg['hosts']['localhost'][item]
+            modify_dirs = True
+        if value is not None and 'directory' in item:
+            if replace_home or modify_dirs:
+                # Replace local home dir with $HOME for eval'n on other host.
+                value = value.replace(self._HOME, '$HOME')
+            elif is_remote_user(owner):
+                # Replace with ~owner for direct access via local filesys
+                # (works for standard cylc-run directory location).
+                if owner_home is None:
+                    owner_home = os.path.expanduser('~%s' % owner)
+                value = value.replace(self._HOME, owner_home)
+        if item == "task communication method" and value == "default":
+            # Translate "default" to client-server comms: "zmq"
+            value = 'zmq'
+        return value
+
+    def _transform(self):
+        """Transform various settings.
+
+        Host item values of None default to modified localhost values.
+        Expand environment variables and ~ notations.
+
+        Ensure os.environ['HOME'] is defined with the correct value.
+        """
+        cfg = self.get()
+
+        for host in cfg['hosts']:
+            if host == 'localhost':
+                continue
+            for item, value in cfg['hosts'][host].items():
+                if value is None:
+                    newvalue = cfg['hosts']['localhost'][item]
+                else:
+                    newvalue = value
+                if newvalue and 'directory' in item:
+                    # replace local home dir with $HOME for evaluation on other
+                    # host
+                    newvalue = newvalue.replace(self._HOME, '$HOME')
+                cfg['hosts'][host][item] = newvalue
+
+        # Expand environment variables and ~user in LOCAL file paths.
+        if 'HOME' not in os.environ:
+            os.environ['HOME'] = self._HOME
+        cfg['documentation']['local'] = os.path.expandvars(
+            cfg['documentation']['local'])
+        for key, val in cfg['hosts']['localhost'].items():
+            if val and 'directory' in key:
+                cfg['hosts']['localhost'][key] = os.path.expandvars(val)
