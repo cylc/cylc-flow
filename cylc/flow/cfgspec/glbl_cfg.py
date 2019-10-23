@@ -1,1 +1,0 @@
-glbl_cfg_lazy.py
