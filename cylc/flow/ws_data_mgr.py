@@ -22,6 +22,12 @@ GraphQL, both in the WS and UIS, it is then provisioned to the CLI and GUI.
 This data store is comprised of Protobuf message objects (data elements),
 which are used as data containers for their respective type.
 
+Changes to the data store are accumulated a main loop iteration as deltas
+in the form of protobuf messages, and then applied. These deltas are populated
+with the minimal information; only the elements and only the fields of those
+elements that have changed. It is done this way for the efficient transport and
+consistent application to remotely synced data-stores.
+
 Static data elements are generated on workflow start/restart/reload, which
 includes workflow, task, and family definition objects.
 

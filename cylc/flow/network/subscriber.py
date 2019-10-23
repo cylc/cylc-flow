@@ -15,13 +15,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Subscriber for published suite output."""
 
-import asyncio
-import sys
 import json
+import sys
+from time import sleep
+from typing import Iterable, Union
 
 import zmq
-import zmq.asyncio
 
+from cylc.flow.network import ZMQSocketBase, get_location
 from cylc.flow.ws_data_mgr import DELTAS_MAP
 
 
@@ -30,13 +31,15 @@ def process_delta_msg(btopic, delta_msg, func, *args, **kwargs):
     topic = btopic.decode('utf-8')
     try:
         delta = DELTAS_MAP[topic]()
+        delta.ParseFromString(delta_msg)
     except KeyError:
-        return
-    delta.ParseFromString(delta_msg)
-    func(topic, delta, *args, **kwargs)
+        delta = delta_msg
+    if callable(func):
+        return func(topic, delta, *args, **kwargs)
+    return (topic, delta)
 
 
-class WorkflowSubscriber:
+class WorkflowSubscriber(ZMQSocketBase):
     """Initiate the SUB part of a ZMQ PUB-SUB pair.
 
     This class contains the logic for the ZMQ message Subscriber.
@@ -54,41 +57,42 @@ class WorkflowSubscriber:
 
     """
 
-    DEFAULT_TIMEOUT = 300.  # 5 min
-
-    def __init__(self, host, port, context=None, topics=None, timeout=None):
-        # we should only have one ZMQ context per-process
-        # don't instantiate a client unless none passed in
-        try:
-            self.loop = asyncio.get_running_loop()
-        except RuntimeError:
-            self.loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(self.loop)
-
-        if context is None:
-            self.context = zmq.asyncio.Context()
-        else:
-            self.context = context
+    def __init__(
+            self,
+            suite: str,
+            owner: str = None,
+            host: str = None,
+            port: Union[int, str] = None,
+            context: object = None,
+            srv_public_key_loc: str = None,
+            topics: Iterable[bytes] = None
+    ):
+        super().__init__(zmq.SUB, context=context)
+        self.suite = suite
+        if port:
+            port = int(port)
+        if not (host and port):
+            host, _, port = get_location(suite, owner, host)
         if topics is None:
-            topics = [b'']
-        if timeout is None:
-            timeout = self.DEFAULT_TIMEOUT
-        else:
-            timeout = float(timeout)
-        self.timeout = timeout * 1000
+            self.topics = set(b'')
+        self.topics = topics
+        # Connect the ZMQ socket on instantiation
+        self.start(host, port, srv_public_key_loc)
 
-        # open the ZMQ socket
-        self.socket = self.context.socket(zmq.SUB)
-        self.socket.connect(f'tcp://{host}:{port}')
-        # if there is no server don't keep the subscriber hanging around
-        self.socket.setsockopt(zmq.LINGER, int(timeout))
-        for topic in set(topics):
+    def _socket_options(self):
+        """Set options after socket instantiation and before connect.
+
+        Overwrites Base method.
+
+        """
+        # setup topics to receive.
+        for topic in set(self.topics):
             self.socket.setsockopt(zmq.SUBSCRIBE, topic)
 
     async def subscribe(self, msg_handler, *args, **kwargs):
         """Subscribe to updates from the provided socket."""
         while True:
-            if self.socket.closed:
+            if self.stopping:
                 break
             try:
                 [topic, msg] = await self.socket.recv_multipart()
@@ -101,7 +105,3 @@ class WorkflowSubscriber:
                 sys.stdout.write(
                     json.dumps(data, indent=4) + '\n')
         sleep(0)
-
-    def stop(self):
-        """Close subscriber socket."""
-        self.socket.close()

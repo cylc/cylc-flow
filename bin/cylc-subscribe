@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc subscribe [OPTIONS] ARGS
+"""cylc subscribe [OPTIONS] REG
 
 (This command is for internal use.)
 Invoke suite subscriber to receive published workflow output.
@@ -33,6 +33,7 @@ from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.scan import get_scan_items_from_fs, re_compile_filters
 from cylc.flow.network.subscriber import WorkflowSubscriber, process_delta_msg
 from cylc.flow.terminal import cli_function
+from cylc.flow.ws_data_mgr import DELTAS_MAP
 
 if '--use-ssh' in sys.argv[1:]:
     sys.argv.remove('--use-ssh')
@@ -41,56 +42,83 @@ if '--use-ssh' in sys.argv[1:]:
         sys.exit(0)
 
 
-def print_message(_, data):
+def print_message(topic, data, subscriber=None, once=False):
     """Print protobuf message."""
+    print(f'Received: {topic}')
     sys.stdout.write(
         json.dumps(MessageToDict(data), indent=4) + '\n')
+    if once and subscriber is not None:
+        subscriber.stop()
 
 
 def get_option_parser():
     """Augment options parser to current context."""
-    parser = COP(__doc__, comms=True, argdoc=[
-        ('REG', 'Suite name'),
-        ('[TOPICS]', 'Subscription topics to receive')])
+    parser = COP(__doc__, comms=True)
+
+    delta_keys = list(DELTAS_MAP)
+    pb_topics = ("Directly published data-store topics include: '" +
+              ("', '").join(delta_keys[:-1]) +
+              "' and '" + delta_keys[-1] + "'.")
+
+    parser.add_option(
+        "-T", "--topics",
+        help="Specify a comma delimited list of subscription topics. "
+             + pb_topics,
+        action="store", dest="topics", default='workflow')
+
+    parser.add_option(
+        "-o", "--once",
+        help="Show a single publish then exit.",
+        action="store_true", default=False, dest="once")
+
 
     return parser
 
 
 @cli_function(get_option_parser)
-def main(_, options, suite, topics=None):
+def main(_, options, suite):
+    cre_owner, cre_name = re_compile_filters(None, ['.*'])
     host = None
     port = None
-    cre_owner, cre_name = re_compile_filters(None, ['.*'])
-    while True:
-        for s_reg, s_host, _, s_pub_port in get_scan_items_from_fs(
-                cre_owner, cre_name):
-            if s_reg == suite:
-                host = s_host
-                port = int(s_pub_port)
+    if options.host is None or options.port is None:
+        while True:
+            for s_reg, s_host, _, s_pub_port in get_scan_items_from_fs(
+                    cre_owner, cre_name):
+                if s_reg == suite:
+                    host = s_host
+                    port = int(s_pub_port)
+                    break
+            if host and port:
                 break
-        if host and port:
-            break
-        time.sleep(5)
+            time.sleep(5)
+    else:
+        host = options.host
+        port = options.port
 
     print(f'Connecting to tcp://{host}:{port}')
     topic_set = set()
-    if topics is None:
-        topic_set.add(b'workflow')
-    else:
-        for topic in topics.split(','):
-            topic_set.add(topic.encode('utf-8'))
-    subscriber = WorkflowSubscriber(host, port, topics=topic_set)
+    for topic in options.topics.split(','):
+        topic_set.add(topic.encode('utf-8'))
 
-    asyncio.ensure_future(
+    subscriber = WorkflowSubscriber(
+        suite,
+        host=host,
+        port=port,
+        topics=topic_set
+    )
+
+    subscriber.loop.create_task(
         subscriber.subscribe(
             process_delta_msg,
-            func=print_message
+            func=print_message,
+            subscriber=subscriber,
+            once=options.once
         )
     )
 
     # run Python run
     try:
-        asyncio.get_event_loop().run_forever()
+        subscriber.loop.run_forever()
     except KeyboardInterrupt:
         print('\nDisconnecting')
         subscriber.stop()

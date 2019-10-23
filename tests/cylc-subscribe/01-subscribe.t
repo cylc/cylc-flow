@@ -1,7 +1,7 @@
 #!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
-#
+# 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -14,25 +14,28 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-# Test that presence of queued tasks does not cause dependency matching etc. in
-# the absence of other activity - GitHub #1787. WARNING: this test is sensitive
-# to the number of times the task pool gets processed as the suite runs, in
-# response to task state changes.  It will need to be updated if that number
-# changes in the future.
-
+#-------------------------------------------------------------------------------
+# Test cylc monitor USER_AT_HOST interface, using cylc scan output.
 . "$(dirname "$0")/test_header"
-
-set_test_number 3
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+#-------------------------------------------------------------------------------
+set_test_number 4
+#-------------------------------------------------------------------------------
+init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
+[scheduling]
+    [[graph]]
+        R1 = foo
+[runtime]
+    [[foo]]
+        script = sleep 3
+__SUITE_RC__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-run_ok "${TEST_NAME_BASE}" cylc run --debug --no-detach "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
 
-sleep 3
+TEST_NAME="${TEST_NAME_BASE}-subscribe-1"
+run_ok "${TEST_NAME}" cylc subscribe --once --topics="workflow" "${SUITE_NAME}"
+grep_ok "running" "${TEST_NAME}.stdout"
 
-SUITE_LOG_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/suite"
-count_ok "BEGIN TASK PROCESSING" "${SUITE_LOG_DIR}/log" 6
-
+cylc stop --kill --max-polls=20 --interval=1 "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

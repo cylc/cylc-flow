@@ -13,23 +13,31 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Test the client module components."""
 
-import asyncio
+from threading import Barrier
+from time import sleep
+
 from unittest import main
-
 import zmq
 
-from cylc.flow.network.authorisation import Priv
-from cylc.flow.network.server import SuiteRuntimeServer
-from cylc.flow.suite_files import create_auth_files
+from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.network.server import SuiteRuntimeServer, PB_METHOD_MAP
+from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.tests.util import CylcWorkflowTestCase, create_task_proxy
 from cylc.flow.ws_data_mgr import WsDataMgr
 
-
 SERVER_CONTEXT = zmq.Context()
+SECRET = 'TheQuickBrownFox'
 
 
-class TestSuiteRuntimeServer(CylcWorkflowTestCase):
+def get_secret():
+    """Return string in place of passphrase."""
+    return SECRET
+
+
+class TestSuiteRuntimeClient(CylcWorkflowTestCase):
+    """Test the workflow runtime client."""
 
     suite_name = "five"
     suiterc = """
@@ -54,7 +62,7 @@ class TestSuiteRuntimeServer(CylcWorkflowTestCase):
     """
 
     def setUp(self) -> None:
-        super(TestSuiteRuntimeServer, self).setUp()
+        super(TestSuiteRuntimeClient, self).setUp()
         self.scheduler.ws_data_mgr = WsDataMgr(self.scheduler)
         for name in self.scheduler.config.taskdefs:
             task_proxy = create_task_proxy(
@@ -67,33 +75,40 @@ class TestSuiteRuntimeServer(CylcWorkflowTestCase):
                 stopcp=None,
                 no_check=False
             )
-            assert 0 == warnings
+            assert warnings == 0
         self.task_pool.release_runahead_tasks()
         self.scheduler.ws_data_mgr.initiate_data_model()
         self.workflow_id = self.scheduler.ws_data_mgr.workflow_id
-        create_auth_files(self.suite_name)  # auth keys are required for comms
+        barrier = Barrier(2, timeout=20)
         self.server = SuiteRuntimeServer(
             self.scheduler,
             context=SERVER_CONTEXT,
-            daemon=True
-        )
-        self.server.public_priv = Priv.CONTROL
+            threaded=True,
+            barrier=barrier,
+            daemon=True)
+        port_range = glbl_cfg().get(['suite servers', 'run ports'])
+        self.server.start(port_range[0], port_range[-1])
+        # barrier.wait() doesn't seem to work properly here
+        # so this workaround will do
+        while barrier.n_waiting < 1:
+            sleep(0.2)
+        barrier.wait()
+        self.client = SuiteRuntimeClient(
+            self.scheduler.suite,
+            host=self.scheduler.host,
+            port=self.server.port)
+        self.client.secret = get_secret
 
     def tearDown(self):
         self.server.stop()
+        self.client.stop()
 
     def test_constructor(self):
-        self.assertIsNotNone(self.server.schd)
-        self.assertIsNotNone(self.server.resolvers)
+        self.assertIsNotNone(self.client.secret)
+        self.assertFalse(self.client.socket.closed)
 
-    def test_graphql(self):
+    def test_serial_request(self):
         """Test GraphQL endpoint method."""
-        try:
-            self.server.loop = asyncio.get_running_loop()
-        except RuntimeError:
-            self.server.loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(self.server.loop)
-
         request_string = f'''
 query {{
   workflows(ids: ["{self.workflow_id}"]) {{
@@ -102,8 +117,14 @@ query {{
 }}
 '''
 
-        data = self.server.graphql(request_string)
+        data = self.client.serial_request(
+            'graphql',
+            args={'request_string': request_string})
         self.assertEqual(data['workflows'][0]['id'], self.workflow_id)
+        pb_msg = self.client.serial_request('pb_entire_workflow')
+        pb_data = PB_METHOD_MAP['pb_entire_workflow']()
+        pb_data.ParseFromString(pb_msg)
+        self.assertEqual(pb_data.workflow.id, self.workflow_id)
 
 
 if __name__ == '__main__':

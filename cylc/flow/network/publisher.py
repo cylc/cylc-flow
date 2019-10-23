@@ -16,37 +16,31 @@
 """Publisher for suite runtime API."""
 
 import asyncio
-from threading import Thread
-from time import sleep
 
 import zmq
 
 from cylc.flow import LOG
-from cylc.flow.exceptions import CylcError
-from cylc.flow import __version__ as CYLC_VERSION
+from cylc.flow.network import ZMQSocketBase
 
 
 async def gather_coros(coro_func, items):
     """Gather multi-part send coroutines"""
-    try:
-        gathers = ()
-        for item in items:
-            gathers += (coro_func(*item),)
-        await asyncio.gather(*gathers)
-    except Exception as exc:
-        LOG.error('publisher: gather_sends: %s' % str(exc))
+    gathers = ()
+    for item in items:
+        gathers += (coro_func(*item),)
+    await asyncio.gather(*gathers)
 
 
-def serialize_data(data, serializer):
+def serialize_data(data, serializer, *args, **kwargs):
     """Serialize by specified method."""
     if callable(serializer):
-        return serializer(data)
+        return serializer(data, *args, **kwargs)
     if isinstance(serializer, str):
-        return getattr(data, serializer)()
+        return getattr(data, serializer)(*args, **kwargs)
     return data
 
 
-class WorkflowPublisher:
+class WorkflowPublisher(ZMQSocketBase):
     """Initiate the PUB part of a ZMQ PUB-SUB pair.
 
     This class contains the logic for the ZMQ message Publisher.
@@ -57,93 +51,50 @@ class WorkflowPublisher:
         * Define ...
 
     """
-    # TODO: Security will be provided by zmq.auth (post PR #3359)
 
-    def __init__(self, context=None, barrier=None):
-        if context is None:
-            self.context = zmq.Context()
-        else:
-            self.context = context
-        self.barrier = barrier
-        self.port = None
-        self.socket = None
-        self.endpoints = None
-        self.thread = None
-        self.loop = None
+    def __init__(self, suite, context=None, barrier=None,
+                 threaded=True, daemon=False):
+        super().__init__(zmq.PUB, bind=True, context=context,
+                         barrier=barrier, threaded=threaded, daemon=daemon)
+        self.suite = suite
         self.topics = set()
 
-    def start(self, min_port, max_port):
-        """Start the ZeroMQ publisher.
+    def _socket_options(self):
+        """Set socket options after socket instantiation and before bind.
 
-        Sockets created in alternate thread, port range forwarded.
+        Overwrites Base method.
 
-        Args:
-            min_port (int): minimum socket port number
-            max_port (int): maximum socket port number
         """
-        # Context are thread safe, but Sockets are not so if multiple
-        # sockets then they need be created on their own thread.
-        self.thread = Thread(
-            target=self._start_publisher,
-            args=(min_port, max_port)
-        )
-        self.thread.start()
-
-    def _start_publisher(self, min_port, max_port):
-        """Create ZeroMQ Publish socket.
-
-        Will use a port range provided to select random ports.
-
-        Args:
-            min_port (int): minimum socket port number
-            max_port (int): maximum socket port number
-        """
-        self.socket = self.context.socket(zmq.PUB)
         # this limit on messages in queue is more than enough,
         # as messages correspond to scheduler loops (*messages/loop):
         self.socket.sndhwm = 1000
 
-        try:
-            if min_port == max_port:
-                self.port = min_port
-                self.socket.bind('tcp://*:%d' % min_port)
-            else:
-                self.port = self.socket.bind_to_random_port(
-                    'tcp://*', min_port, max_port)
-        except (zmq.error.ZMQError, zmq.error.ZMQBindError) as exc:
-            self.socket.close()
-            raise CylcError(
-                'could not start Cylc ZMQ publisher: %s' % str(exc))
-
-        if self.barrier is not None:
-            sleep(0)  # yield control to other threads
-            self.barrier.wait()
-
-        try:
-            self.loop = asyncio.get_running_loop()
-        except RuntimeError:
-            self.loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(self.loop)
-
-    def stop(self):
-        """Stop the publisher socket."""
+    def _bespoke_stop(self):
+        """Bespoke stop items."""
         LOG.debug('stopping zmq publisher...')
-        self.thread.join()
-        self.socket.close()
-        LOG.debug('...stopped')
+        self.stopping = True
 
     async def send_multi(self, topic, data, serializer=None):
         """Send multi part message."""
-        try:
-            self.socket.send_multipart(
-                [topic, serialize_data(data, serializer)]
-            )
-        except Exception as exc:
-            LOG.error('publisher: send_multi: %s' % str(exc))
+        self.topics.add(topic)
+        self.socket.send_multipart(
+            [topic, serialize_data(data, serializer)]
+        )
 
     def publish(self, items):
-        """Publish topics"""
+        """Publish topics.
+
+        Args:
+            items (iterable): [(topic, data, serializer)]
+
+            topic (bytes): The topic of the message.
+
+            data (object): Data element/message to serialise and send.
+
+            serializer (object, optional): string or func object.
+
+        """
         try:
             self.loop.run_until_complete(gather_coros(self.send_multi, items))
         except Exception as exc:
-            LOG.error('publisher: %s' % str(exc))
+            LOG.error('publish: %s', exc)

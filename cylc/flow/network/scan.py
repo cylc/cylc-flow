@@ -147,6 +147,19 @@ def scan_many(items, methods=None, timeout=None, ordered=False):
 
 
 async def scan_one(reg, host, port, timeout=None, methods=None):
+    """Connect to and identify workflow server if possible.
+
+    Args:
+        reg (str): Registered name of workflow.
+        host (str): Workflow host.
+        port (int): Workflow server port.
+        timeout (float, optional): Client socket receiver timeout.
+        methods (list): List of methods/endpoints to request.
+
+    Returns:
+        tuple: (reg, host, port, result)
+
+    """
     if not methods:
         methods = ['identify']
 
@@ -172,7 +185,8 @@ async def scan_one(reg, host, port, timeout=None, methods=None):
         try:
             msg = await client.async_request(method)
         except ClientTimeout as exc:
-            LOG.exception(f"Timeout: name:{reg}, host:{host}, port:{port}")
+            LOG.exception(
+                "Timeout: name:%s, host:%s, port:%s", reg, host, port)
             return (reg, host, port, MSG_TIMEOUT)
         except ClientError as exc:
             LOG.exception("ClientError")
@@ -224,7 +238,7 @@ def get_scan_items_from_fs(
         run_dirs = []
         skips = ('/false', '/nologin')
         for pwent in getpwall():
-            if any(pwent.pw_shell.endswith(s) for s in (skips)):
+            if any(pwent.pw_shell.endswith(s) for s in skips):
                 continue
             if owner_pattern.match(pwent.pw_name):
                 run_dirs.append((

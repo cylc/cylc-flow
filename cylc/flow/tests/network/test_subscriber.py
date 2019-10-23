@@ -13,23 +13,29 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Test subsciber module components."""
 
-import asyncio
 from unittest import main
+from time import sleep
 
-import zmq
-
-from cylc.flow.network.authorisation import Priv
-from cylc.flow.network.server import SuiteRuntimeServer
-from cylc.flow.suite_files import create_auth_files
+from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.tests.util import CylcWorkflowTestCase, create_task_proxy
 from cylc.flow.ws_data_mgr import WsDataMgr
+from cylc.flow.network.publisher import WorkflowPublisher
+from cylc.flow.network.subscriber import WorkflowSubscriber, process_delta_msg
 
 
-SERVER_CONTEXT = zmq.Context()
+def get_port_range():
+    """Fetch global config port range."""
+    ports = glbl_cfg().get(['suite servers', 'run ports'])
+    return min(ports), max(ports)
 
 
-class TestSuiteRuntimeServer(CylcWorkflowTestCase):
+PORT_RANGE = get_port_range()
+
+
+class TestWorkflowSubscriber(CylcWorkflowTestCase):
+    """Test the subscriber class components."""
 
     suite_name = "five"
     suiterc = """
@@ -54,7 +60,7 @@ class TestSuiteRuntimeServer(CylcWorkflowTestCase):
     """
 
     def setUp(self) -> None:
-        super(TestSuiteRuntimeServer, self).setUp()
+        super(TestWorkflowSubscriber, self).setUp()
         self.scheduler.ws_data_mgr = WsDataMgr(self.scheduler)
         for name in self.scheduler.config.taskdefs:
             task_proxy = create_task_proxy(
@@ -67,43 +73,39 @@ class TestSuiteRuntimeServer(CylcWorkflowTestCase):
                 stopcp=None,
                 no_check=False
             )
-            assert 0 == warnings
+            assert warnings == 0
         self.task_pool.release_runahead_tasks()
         self.scheduler.ws_data_mgr.initiate_data_model()
         self.workflow_id = self.scheduler.ws_data_mgr.workflow_id
-        create_auth_files(self.suite_name)  # auth keys are required for comms
-        self.server = SuiteRuntimeServer(
-            self.scheduler,
-            context=SERVER_CONTEXT,
-            daemon=True
-        )
-        self.server.public_priv = Priv.CONTROL
+        self.publisher = WorkflowPublisher(
+            self.suite_name, threaded=False, daemon=True)
+        self.publisher.start(*PORT_RANGE)
+        self.subscriber = WorkflowSubscriber(
+            self.suite_name,
+            host=self.scheduler.host,
+            port=self.publisher.port,
+            topics=[b'workflow'])
+        # delay to allow subscriber to connection,
+        # otherwise it misses the first message
+        sleep(1.0)
 
     def tearDown(self):
-        self.server.stop()
+        self.subscriber.stop()
+        self.publisher.stop()
 
     def test_constructor(self):
-        self.assertIsNotNone(self.server.schd)
-        self.assertIsNotNone(self.server.resolvers)
+        """Test class constructor result."""
+        self.assertIsNotNone(self.subscriber.context)
+        self.assertFalse(self.subscriber.socket.closed)
 
-    def test_graphql(self):
-        """Test GraphQL endpoint method."""
-        try:
-            self.server.loop = asyncio.get_running_loop()
-        except RuntimeError:
-            self.server.loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(self.server.loop)
-
-        request_string = f'''
-query {{
-  workflows(ids: ["{self.workflow_id}"]) {{
-    id
-  }}
-}}
-'''
-
-        data = self.server.graphql(request_string)
-        self.assertEqual(data['workflows'][0]['id'], self.workflow_id)
+    def test_subscribe(self):
+        """Test publishing data."""
+        pub_data = self.scheduler.ws_data_mgr.get_publish_deltas()
+        self.publisher.publish(pub_data)
+        btopic, msg = self.subscriber.loop.run_until_complete(
+            self.subscriber.socket.recv_multipart())
+        topic, delta = process_delta_msg(btopic, msg, None)
+        self.assertEqual(delta.id, self.workflow_id)
 
 
 if __name__ == '__main__':
