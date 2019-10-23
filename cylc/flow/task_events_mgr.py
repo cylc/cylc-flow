@@ -35,7 +35,7 @@ from time import time
 from cylc.flow.parsec.config import ItemNotFoundError
 
 from cylc.flow import LOG
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.glbl_cfg_lazy import glbl_cfg
 from cylc.flow.hostuserutil import get_host, get_user
 from cylc.flow.pathutil import (
     get_remote_suite_run_job_dir,

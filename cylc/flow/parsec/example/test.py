@@ -18,7 +18,7 @@
 import os
 import sys
 
-from cylc.flow.cfgspec.globalcfg import SPEC
+from cylc.flow.config_schema.py import SPEC
 from cylc.flow.parsec.config import ParsecConfig
 import cylc.flow.flags
 

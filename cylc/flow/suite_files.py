@@ -23,7 +23,7 @@ import re
 from string import ascii_letters, digits
 
 from cylc.flow import LOG
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.glbl_cfg_lazy import glbl_cfg
 from cylc.flow.exceptions import SuiteServiceFileError
 from cylc.flow.pathutil import get_remote_suite_run_dir, get_suite_run_dir
 import cylc.flow.flags

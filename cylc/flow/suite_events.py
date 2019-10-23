@@ -20,7 +20,7 @@ import os
 from shlex import quote
 
 from cylc.flow import LOG
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.glbl_cfg_lazy import glbl_cfg
 from cylc.flow.exceptions import SuiteEventError
 from cylc.flow.hostuserutil import get_host, get_user
 from cylc.flow.log_diagnosis import run_reftest

@@ -50,7 +50,7 @@ import socket
 from contextlib import suppress
 from time import time
 
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.glbl_cfg_lazy import glbl_cfg
 
 
 class HostUtil(object):

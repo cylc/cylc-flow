@@ -34,7 +34,7 @@ from ansimarkup import parse as cparse
 
 from cylc.flow.wallclock import (get_current_time_string,
                                  get_time_string_from_unix_time)
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.glbl_cfg_lazy import glbl_cfg
 from cylc.flow.pathutil import get_suite_run_log_name
 
 

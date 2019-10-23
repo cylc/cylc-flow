@@ -43,7 +43,7 @@ __END__
 editor () {
     python3 -c "
 import sys
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.glbl_cfg_lazy import glbl_cfg
 if sys.argv[1] in ['-g', '--gedit']:
     print(glbl_cfg().get(['editors', 'gui']))
 elif sys.argv[1] in ['-e', '--edit']:

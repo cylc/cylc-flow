@@ -30,7 +30,7 @@ import tarfile
 from time import time
 
 from cylc.flow import LOG
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.glbl_cfg_lazy import glbl_cfg
 from cylc.flow.exceptions import TaskRemoteMgmtError
 import cylc.flow.flags
 from cylc.flow.hostuserutil import is_remote, is_remote_host, is_remote_user

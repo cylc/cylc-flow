@@ -23,7 +23,7 @@ import sys
 import socket
 from cylc.flow import LOG
 
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.glbl_cfg_lazy import glbl_cfg
 from cylc.flow.exceptions import SuiteServiceFileError
 import cylc.flow.flags
 from cylc.flow.hostuserutil import is_remote_host, get_host_ip_by_name

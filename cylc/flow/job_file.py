@@ -22,7 +22,7 @@ from subprocess import Popen, PIPE, DEVNULL
 
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.batch_sys_manager import BatchSysManager
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.glbl_cfg_lazy import glbl_cfg
 import cylc.flow.flags
 from cylc.flow.pathutil import (
     get_remote_suite_run_dir,

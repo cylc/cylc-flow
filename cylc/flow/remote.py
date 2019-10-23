@@ -29,7 +29,7 @@ import sys
 from time import sleep
 
 from cylc.flow import LOG
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.glbl_cfg_lazy import glbl_cfg
 import cylc.flow.flags
 from cylc.flow.hostuserutil import is_remote
 from cylc.flow import __version__ as CYLC_VERSION
