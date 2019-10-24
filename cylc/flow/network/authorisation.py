@@ -95,8 +95,11 @@ def authorise(req_priv_level):
             LOG.info(
                 '[client-command] %s %s@%s:%s', fcn.__name__, user, host, prog)
             return fcn(self, *args, **kwargs)
-        _authorise.__doc__ += (  # add auth level to docstring
-            'Authentication:\n%s:py:obj:`cylc.flow.network.%s`\n' % (
-                ' ' * 12, req_priv_level))
+
+        # add authorisation level to docstring
+        _authorise.__doc__ += (
+            f'Authentication:\n{" " * 12}'
+            f':py:obj:`{__loader__.name}.{str(req_priv_level)}`\n'
+        )
         return _authorise
     return wrapper
