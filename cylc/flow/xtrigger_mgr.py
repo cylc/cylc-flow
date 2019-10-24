@@ -86,32 +86,17 @@ class XtriggerManager(object):
     (with same offset from cycle point) will be satisfied by the same function
     call.
 
+    Args:
+        suite (str): suite name
+        user (str): suite owner
+        broadcast_mgr (BroadcastMgr): the Broadcast Manager
+        proc_pool (SubProcPool): pool of Subprocesses
+        suite_run_dir (str): suite run directory
+        suite_share_dir (str): suite share directory
+        suite_work_dir (str): suite work directory
+        suite_source_dir (str): suite source directory
+
     """
-
-    @staticmethod
-    def validate_xtrigger(fname: str, fdir: str):
-        """Validate an Xtrigger function.
-
-        Args:
-            fname (str): function name
-            fdir(str): function directory
-        Raises:
-            ImportError: if the function module was not found
-            AttributeError: if the function was not found in the xtrigger
-                module
-            ValueError: if the function is not callable
-        """
-        try:
-            func = get_func(fname, fdir)
-        except ImportError:
-            raise ImportError(
-                f"ERROR: xtrigger module '{fname}' not found")
-        except AttributeError:
-            raise AttributeError(
-                f"ERROR: '{fname}' not found in xtrigger module '{fname}'")
-        if not callable(func):
-            raise ValueError(
-                f"ERROR: '{fname}' not callable in xtrigger module '{fname}'")
 
     def __init__(
         self,
@@ -125,17 +110,6 @@ class XtriggerManager(object):
         suite_work_dir: str = None,
         suite_source_dir: str = None,
     ):
-        """Initialize the xtrigger manager.
-
-        Args:
-            suite (str): suite name
-            user (str): suite owner
-            broadcast_mgr (BroadcastMgr): the Broadcast Manager
-            proc_pool (SubProcPool): pool of Subprocesses
-            suite_run_dir (str): suite run directory
-            suite_share_dir (str): suite share directory
-            suite_source_dir (str): suite source directory
-        """
         # Suite function and clock triggers by label.
         self.functx_map = {}
         # When next to call a function, by signature.
@@ -163,6 +137,31 @@ class XtriggerManager(object):
         self.broadcast_mgr = broadcast_mgr
         self.suite_source_dir = suite_source_dir
 
+    @staticmethod
+    def validate_xtrigger(fname: str, fdir: str):
+        """Validate an Xtrigger function.
+
+        Args:
+            fname (str): function name
+            fdir(str): function directory
+        Raises:
+            ImportError: if the function module was not found
+            AttributeError: if the function was not found in the xtrigger
+                module
+            ValueError: if the function is not callable
+        """
+        try:
+            func = get_func(fname, fdir)
+        except ImportError:
+            raise ImportError(
+                f"ERROR: xtrigger module '{fname}' not found")
+        except AttributeError:
+            raise AttributeError(
+                f"ERROR: '{fname}' not found in xtrigger module '{fname}'")
+        if not callable(func):
+            raise ValueError(
+                f"ERROR: '{fname}' not callable in xtrigger module '{fname}'")
+
     def add_trig(self, label: str, fctx: SubFuncContext, fdir: str):
         """Add a new xtrigger function.
 
@@ -188,6 +187,9 @@ class XtriggerManager(object):
             except TypeError:
                 # Not a string arg.
                 pass
+
+    def mutate_trig(self, label, kwargs):
+        self.functx_map[label].func_kwargs.update(kwargs)
 
     def load_xtrigger_for_restart(self, row_idx: int, row: Tuple[str, str]):
         """Load satisfied xtrigger results from suite DB.

@@ -686,8 +686,58 @@ class TaskEventsManager():
             except KeyError as exc:
                 LOG.exception(exc)
 
-    def _get_retry_xtrigger(self, unix_time, submit_retry=False):
-        label = f'{"submit_" if submit_retry else ""}retry'
+    def _retry_task(self, itask, timer, submit_retry=False):
+        """Retry a task.
+
+        Args:
+            itask (cylc.flow.task_proxy.TaskProxy):
+                The task to retry.
+            timer (cylc.flow.task_action_timer.TaskActionTimer):
+                The [retry] timer to which triggered this retry.
+            submit_retry (bool):
+                False if this is an execution retry.
+                True if this is a submission retry.
+
+        """
+        # devive an xtrigger label for this retry
+        label = '_'.join((
+            'cylc',
+            'submit_retry' if submit_retry else 'retry',
+            itask.identity
+        ))
+        kwargs = {
+            'absolute_as_seconds': timer.timeout
+        }
+
+        # if this isn't the first retry the xtrigger will already exist
+        if label in itask.state.xtriggers:
+            # retry xtrigger already exists from a previous retry, modify it
+            xtrig = itask.state.xtriggers[label]
+            self.xtrigger_mgr.mutate_trig(label, kwargs)
+            itask.state.xtriggers[label] = False
+        else:
+            # create a new retry xtrigger
+            xtrig = SubFuncContext(
+                label,
+                'wall_clock',
+                [],
+                kwargs
+            )
+            self.xtrigger_mgr.add_trig(
+                label,
+                xtrig,
+                os.getenv("CYLC_SUITE_RUN_DIR")
+            )
+            itask.state.add_xtrigger(label)
+        itask.state.reset(TASK_STATUS_WAITING)
+
+
+    def _get_retry_xtrigger(self, itask, unix_time, submit_retry=False):
+        label = (
+            'cylc',
+            'submit_retry' if submit_retry else 'retry',
+            itask.identity
+        ).join('_')
         xtrig = SubFuncContext(
             label,
             'wall_clock',
@@ -723,15 +773,7 @@ class TaskEventsManager():
         else:
             # There is an execution retry lined up.
             timer = itask.try_timers[TimerFlags.EXECUTION_RETRY]
-            label, xtrig = self._get_retry_xtrigger(timer.timeout)
-            self.xtrigger_mgr.add_trig(  # TODO centralise?
-                label,
-                xtrig,
-                os.getenv("CYLC_SUITE_RUN_DIR")  # TODO?
-            )
-            itask.state.add_xtrigger(label)
-            itask.state.reset(TASK_STATUS_WAITING)
-
+            self._retry_task(itask, timer)
             delay_msg = f"retrying in {timer.delay_timeout_as_str()}"
             if itask.state.is_held:
                 delay_msg = "held (%s)" % delay_msg
@@ -820,16 +862,7 @@ class TaskEventsManager():
         else:
             # There is a submission retry lined up.
             timer = itask.try_timers[TimerFlags.SUBMISSION_RETRY]
-            label, xtrig = self._get_retry_xtrigger(
-                timer.timeout, submit_retry=True)
-            self.xtrigger_mgr.add_trig(
-                label,
-                xtrig,
-                os.getenv("CYLC_SUITE_RUN_DIR")  # TODO?
-            )
-            itask.state.add_xtrigger(label)
-            itask.state.reset(TASK_STATUS_WAITING)
-
+            self._retry_task(itask, timer, submit_retry=True)
             delay_msg = f"submit-retrying in {timer.delay_timeout_as_str()}"
             if itask.state.is_held:
                 delay_msg = "held (%s)" % delay_msg

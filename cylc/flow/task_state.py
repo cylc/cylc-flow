@@ -466,6 +466,9 @@ class TaskState(object):
     def add_xtrigger(self, label, satisfied=False):
         self.xtriggers[label] = satisfied
 
+    def get_xtrigger(self, label):
+        return self.xtriggers[label]
+
     def _add_xtriggers(self, point, tdef):
         """Add task xtriggers valid for the current sequence.
 
