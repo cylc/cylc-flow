@@ -21,8 +21,11 @@ from metomi.isodatetime.timezone import get_local_time_zone
 import cylc.flow.cycling.iso8601
 from cylc.flow.exceptions import TaskProxySequenceBoundsError
 from cylc.flow.task_id import TaskID
+from cylc.flow.task_action_timer import TimerFlags
 from cylc.flow.task_state import (
-    TaskState, TASK_STATUS_WAITING, TASK_STATUS_RETRYING)
+    TaskState,
+    TASK_STATUS_WAITING
+)
 from cylc.flow.wallclock import get_unix_time_from_time_string as str2time
 
 
@@ -344,7 +347,7 @@ class TaskProxy(object):
     def get_try_num(self):
         """Return the number of automatic tries (try number)."""
         try:
-            return self.try_timers[TASK_STATUS_RETRYING].num + 1
+            return self.try_timers[TimerFlags.EXECUTION_RETRY].num + 1
         except (AttributeError, KeyError):
             return 0
 

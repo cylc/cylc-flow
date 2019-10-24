@@ -34,13 +34,15 @@
     [[foo]]
         # timeout, retry, warning, succeeded
         script = """
-test "${CYLC_TASK_TRY_NUMBER}" -gt 1
-while ! grep -q 'execution timeout *foo\.1' "${CYLC_SUITE_LOG_DIR}/events.log"
-do
-    sleep 1
-done
-cylc task message -p WARNING 'this is a user-defined warning message'
-"""
+            test "${CYLC_TASK_TRY_NUMBER}" -gt 1
+            while ! grep -q 'execution timeout *foo\.1' \
+                "${CYLC_SUITE_LOG_DIR}/events.log"
+            do
+                sleep 1
+            done
+            cylc task message -p WARNING \
+                'this is a user-defined warning message'
+        """
         [[[job]]]
             execution retry delays = PT3S
         [[[events]]]

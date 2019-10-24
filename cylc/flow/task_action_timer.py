@@ -22,6 +22,12 @@ from cylc.flow.wallclock import (
     get_seconds_as_interval_string, get_time_string_from_unix_time)
 
 
+class TimerFlags:
+
+    EXECUTION_RETRY = 'EXECUTION_RETRY'
+    SUBMISSION_RETRY = 'SUBMISSION_RETRY'
+
+
 class TaskActionTimer(object):
     """A timer with delays for task actions."""
 

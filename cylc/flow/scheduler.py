@@ -354,22 +354,35 @@ see `COPYING' in the Cylc source distribution.
         self.ext_trigger_queue = Queue()
         self.suite_event_handler = SuiteEventHandler(self.proc_pool)
         self.job_pool = JobPool(self.suite, self.owner)
-        self.task_events_mgr = TaskEventsManager(
-            self.suite, self.proc_pool, self.suite_db_mgr, self.broadcast_mgr,
-            self.job_pool)
-        self.task_events_mgr.uuid_str = self.uuid_str
-        self.task_job_mgr = TaskJobManager(
-            self.suite, self.proc_pool, self.suite_db_mgr,
-            self.task_events_mgr, self.job_pool)
-        self.task_job_mgr.task_remote_mgr.uuid_str = self.uuid_str
 
         self.xtrigger_mgr = XtriggerManager(
-            self.suite, self.owner,
+            self.suite,
+            self.owner,
             broadcast_mgr=self.broadcast_mgr,
             proc_pool=self.proc_pool,
             suite_run_dir=self.suite_run_dir,
             suite_share_dir=self.suite_share_dir,
-            suite_source_dir=self.suite_dir)
+            suite_source_dir=self.suite_dir
+        )
+
+        self.task_events_mgr = TaskEventsManager(
+            self.suite,
+            self.proc_pool,
+            self.suite_db_mgr,
+            self.broadcast_mgr,
+            self.xtrigger_mgr,
+            self.job_pool
+        )
+        self.task_events_mgr.uuid_str = self.uuid_str
+
+        self.task_job_mgr = TaskJobManager(
+            self.suite,
+            self.proc_pool,
+            self.suite_db_mgr,
+            self.task_events_mgr,
+            self.job_pool
+        )
+        self.task_job_mgr.task_remote_mgr.uuid_str = self.uuid_str
 
         if self.is_restart:
             # This logic handles the lack of initial cycle point in "suite.rc".

@@ -53,9 +53,14 @@ from cylc.flow.task_outputs import (
 from cylc.flow.task_remote_mgr import (
     REMOTE_INIT_FAILED, TaskRemoteMgmtError, TaskRemoteMgr)
 from cylc.flow.task_state import (
-    TASK_STATUSES_ACTIVE, TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
-    TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED,
-    TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING)
+    TASK_STATUSES_ACTIVE,
+    TASK_STATUS_READY,
+    TASK_STATUS_SUBMITTED,
+    TASK_STATUS_RUNNING,
+    TASK_STATUS_SUCCEEDED,
+    TASK_STATUS_FAILED
+)
+from cylc.flow.task_action_timer import TimerFlags
 from cylc.flow.wallclock import get_current_time_string, get_utc_mode
 
 
@@ -681,8 +686,8 @@ class TaskJobManager(object):
             no_retry = False
         if not no_retry:
             for key, cfg_key in [
-                    (TASK_STATUS_SUBMIT_RETRYING, 'submission retry delays'),
-                    (TASK_STATUS_RETRYING, 'execution retry delays')]:
+                    (TimerFlags.SUBMISSION_RETRY, 'submission retry delays'),
+                    (TimerFlags.EXECUTION_RETRY, 'execution retry delays')]:
                 delays = rtconfig['job'][cfg_key]
                 if delays is None:
                     delays = []

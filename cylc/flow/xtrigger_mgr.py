@@ -281,11 +281,12 @@ class XtriggerManager(object):
         for label, sig, ctx, _ in self._get_xtrigs(itask, unsat_only=True):
             if sig.startswith("wall_clock"):
                 # Special case: synchronous clock check.
-                ctx.func_kwargs.update(
-                    {
-                        'point_as_seconds': itask.get_point_as_seconds(),
-                    }
-                )
+                if 'absolute_as_seconds' not in ctx.func_kwargs:
+                    ctx.func_kwargs.update(
+                        {
+                            'point_as_seconds': itask.get_point_as_seconds()
+                        }
+                    )
                 if wall_clock(*ctx.func_args, **ctx.func_kwargs):
                     itask.state.xtriggers[label] = True
                     self.sat_xtrig[sig] = {}

@@ -20,7 +20,7 @@ fi
             execution retry delays = PT0S
     [[reloader]]
         script = """
-cylc__job__poll_grep_suite_log -F '[retrier.1] -running (held) => retrying (held)'
+cylc__job__poll_grep_suite_log -F '[retrier.1] -running (held) => waiting (held)'
 cylc reload "${CYLC_SUITE_NAME}"
 cylc reload -f "${CYLC_SUITE_NAME}"
 cylc__job__poll_grep_suite_log -F 'Reload completed'

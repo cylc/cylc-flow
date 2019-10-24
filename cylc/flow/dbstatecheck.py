@@ -21,24 +21,37 @@ import sqlite3
 import sys
 from cylc.flow.rundb import CylcSuiteDAO
 from cylc.flow.task_state import (
-    TASK_STATUS_SUBMITTED, TASK_STATUS_SUBMIT_RETRYING,
-    TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED,
-    TASK_STATUS_RETRYING)
+    TASK_STATUS_SUBMITTED,
+    TASK_STATUS_RUNNING,
+    TASK_STATUS_SUCCEEDED,
+    TASK_STATUS_FAILED
+)
 
 
 class CylcSuiteDBChecker(object):
     """Object for querying a suite database"""
     STATE_ALIASES = {
-        'finish': [TASK_STATUS_FAILED, TASK_STATUS_SUCCEEDED],
+        'finish': [
+            TASK_STATUS_FAILED,
+            TASK_STATUS_SUCCEEDED
+        ],
         'start': [
-            TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED,
-            TASK_STATUS_RETRYING],
+            TASK_STATUS_RUNNING,
+            TASK_STATUS_SUCCEEDED,
+            TASK_STATUS_FAILED
+        ],
         'submit': [
-            TASK_STATUS_SUBMITTED, TASK_STATUS_SUBMIT_RETRYING,
-            TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED,
-            TASK_STATUS_RETRYING],
-        'fail': [TASK_STATUS_FAILED],
-        'succeed': [TASK_STATUS_SUCCEEDED],
+            TASK_STATUS_SUBMITTED,
+            TASK_STATUS_RUNNING,
+            TASK_STATUS_SUCCEEDED,
+            TASK_STATUS_FAILED
+        ],
+        'fail': [
+            TASK_STATUS_FAILED
+        ],
+        'succeed': [
+            TASK_STATUS_SUCCEEDED
+        ],
     }
 
     def __init__(self, rund, suite):

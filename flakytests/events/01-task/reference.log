@@ -5,5 +5,5 @@
 2013/05/20 22:05:00 INFO - [bar.1] -triggered off ['prep.1']
 2013/05/20 22:05:00 INFO - [baz.1] -triggered off ['prep.1']
 2013/05/20 22:05:03 INFO - [foo.1] -triggered off ['prep.1']
-2013/05/20 22:05:03 INFO - [bar.1] -triggered off ['prep.1']
+2013/05/20 22:05:03 INFO - [bar.1] -triggered off []
 2013/05/20 22:05:07 INFO - [done.1] -triggered off ['bar.1', 'baz.1', 'foo.1']

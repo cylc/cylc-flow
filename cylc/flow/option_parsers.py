@@ -55,11 +55,11 @@ match name and cycle point patterns against instances already in the pool).
     WITH_CYCLE_EXAMPLES = """
 * all tasks in a cycle: '20200202T0000Z/*' or '*.20200202T0000Z'
 * all tasks in the submitted status: ':submitted'
-* retrying 'foo*' tasks in 0000Z cycles: 'foo*.*0000Z:retrying' or
-  '*0000Z/foo*:retrying'
-* retrying tasks in 'BAR' family: '*/BAR:retrying' or 'BAR.*:retrying'
-* retrying tasks in 'BAR' or 'BAZ' families: '*/BA[RZ]:retrying' or
-  'BA[RZ].*:retrying'"""
+* running 'foo*' tasks in 0000Z cycles: 'foo*.*0000Z:running' or
+  '*0000Z/foo*:running'
+* waiting tasks in 'BAR' family: '*/BAR:waiting' or 'BAR.*:waiting'
+* submitted tasks in 'BAR' or 'BAZ' families: '*/BA[RZ]:submitted' or
+  'BA[RZ].*:submitted'"""
     WITHOUT_CYCLE_EXAMPLES = """
 * all tasks: '20200202T0000Z/*' or '*.20200202T0000Z'
 * all tasks named model_N for some character N: '20200202T0000Z/model_?' or

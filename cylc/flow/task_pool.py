@@ -46,12 +46,19 @@ from cylc.flow.task_id import TaskID
 from cylc.flow.task_job_logs import get_task_job_id
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_state import (
-    TASK_STATUSES_ACTIVE, TASK_STATUSES_FAILURE, TASK_STATUSES_NOT_STALLED,
-    TASK_STATUS_WAITING, TASK_STATUS_EXPIRED,
-    TASK_STATUS_QUEUED, TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
-    TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_SUBMIT_RETRYING,
-    TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED,
-    TASK_STATUS_RETRYING)
+    TASK_STATUSES_ACTIVE,
+    TASK_STATUSES_FAILURE,
+    TASK_STATUSES_NOT_STALLED,
+    TASK_STATUS_WAITING,
+    TASK_STATUS_EXPIRED,
+    TASK_STATUS_QUEUED,
+    TASK_STATUS_READY,
+    TASK_STATUS_SUBMITTED,
+    TASK_STATUS_SUBMIT_FAILED,
+    TASK_STATUS_RUNNING,
+    TASK_STATUS_SUCCEEDED,
+    TASK_STATUS_FAILED,
+)
 from cylc.flow.wallclock import get_current_time_string
 
 
@@ -387,12 +394,6 @@ class TaskPool(object):
             ):
                 # reset to waiting as these had not been submitted yet.
                 status = TASK_STATUS_WAITING
-                itask.state.set_prerequisites_all_satisfied()
-
-            elif status in (
-                    TASK_STATUS_SUBMIT_RETRYING,
-                    TASK_STATUS_RETRYING,
-            ):
                 itask.state.set_prerequisites_all_satisfied()
 
             elif status in (
@@ -757,8 +758,6 @@ class TaskPool(object):
                         itask.state(
                             TASK_STATUS_WAITING,
                             TASK_STATUS_QUEUED,
-                            TASK_STATUS_SUBMIT_RETRYING,
-                            TASK_STATUS_RETRYING,
                         )
                         or itask.state.is_held
                 ):

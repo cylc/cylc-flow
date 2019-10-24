@@ -25,15 +25,15 @@ t-submit-retry-able:submit => t-hold
             # Allow t-retry-able to continue
             rm -f "${CYLC_SUITE_RUN_DIR}/file"
             cylc__job__poll_grep_suite_log -F \
-                '[t-retry-able.1] -running (held) => retrying (held)'
+                '[t-retry-able.1] -running (held) => waiting (held)'
             cylc__job__poll_grep_suite_log -F \
-                '[t-submit-retry-able.1] -submitted (held) => submit-retrying (held)'
+                '[t-submit-retry-able.1] -submitted (held) => waiting (held)'
             # Release the suite
             cylc release "${CYLC_SUITE_NAME}"
             cylc__job__poll_grep_suite_log -F \
-                '[t-retry-able.1] -retrying (held) => retrying'
+                '[t-retry-able.1] -waiting (held) => waiting'
             cylc__job__poll_grep_suite_log -F \
-                '[t-submit-retry-able.1] -submit-retrying (held) => submit-retrying'
+                '[t-submit-retry-able.1] -waiting (held) => waiting'
         """
     [[t-retry-able]]
         script = """

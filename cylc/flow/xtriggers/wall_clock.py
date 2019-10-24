@@ -22,10 +22,29 @@ from time import time
 from cylc.flow.cycling.iso8601 import interval_parse
 
 
-def wall_clock(offset=None, point_as_seconds=None):
-    """Return True if now > (point + offset) else False."""
-    if offset is None:
-        offset_as_seconds = 0
-    else:
+def wall_clock(offset=None, absolute_as_seconds=None, point_as_seconds=None):
+    """Return True if now > (point + offset) else False.
+
+    Either provide an offset from the current cycle point *or* a wall-clock
+    time.
+
+    Args:
+        offset (str):
+            Satisfy this xtrigger after an offset from the current cycle point.
+            Should be a duration in ISO8601 format.
+        absolute_as_seconds (int):
+            Satisfy this xtrigger after the specified time.
+            Should be a datetime in the unix time format.
+        point_as_seconds (int):
+            Provided by Cylc. The cycle point in unix time format.
+
+    """
+    offset_as_seconds = 0
+    if offset is not None:
         offset_as_seconds = int(interval_parse(offset).get_seconds())
-    return time() > (point_as_seconds + offset_as_seconds)
+    if absolute_as_seconds:
+        trigger_time = absolute_as_seconds
+    else:
+        trigger_time = point_as_seconds + offset_as_seconds
+
+    return time() > trigger_time

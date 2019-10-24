@@ -121,6 +121,7 @@ def main(parser, options, suite, *task_ids):
     owner = get_user()
     job_pool = JobPool(suite, owner)
     db_mgr = SuiteDatabaseManager()
+    bdcst_mgr = BroadcastMgr(db_mgr),
     task_job_mgr = TaskJobManager(
         suite,
         pool,
@@ -129,7 +130,13 @@ def main(parser, options, suite, *task_ids):
             suite,
             pool,
             db_mgr,
-            BroadcastMgr(db_mgr),
+            bdcst_mgr,
+            XtriggerManager(
+                suite,
+                owner,
+                bdcst_mgr,
+                proc_pool
+            ),
             job_pool
         ),
         job_pool
