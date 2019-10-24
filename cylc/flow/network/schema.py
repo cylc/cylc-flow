@@ -598,6 +598,11 @@ class TaskProxy(ObjectType):
         description="""Task first parent.""",
         args=proxy_args,
         resolver=get_node_by_id)
+    ancestors = List(
+        lambda: FamilyProxy,
+        description="""First parent ancestors.""",
+        args=proxy_args,
+        resolver=get_nodes_by_ids)
 
 
 class Family(ObjectType):
@@ -664,6 +669,11 @@ class FamilyProxy(ObjectType):
         description="""Task first parent.""",
         args=proxy_args,
         resolver=get_node_by_id)
+    ancestors = List(
+        lambda: FamilyProxy,
+        description="""First parent ancestors.""",
+        args=proxy_args,
+        resolver=get_nodes_by_ids)
 
 
 class Node(Union):
