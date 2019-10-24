@@ -61,8 +61,8 @@ SPEC = {
             VDR.V_STRING, '', 'live', 'dummy', 'dummy-local', 'simulation'],
         'force run mode': [
             VDR.V_STRING, '', 'live', 'dummy', 'dummy-local', 'simulation'],
-        'health check interval': [VDR.V_INTERVAL],
-        'task event mail interval': [VDR.V_INTERVAL],
+        'health check interval': [VDR.V_INTERVAL, 30],
+        'task event mail interval': [VDR.V_INTERVAL, 30],
         'disable automatic shutdown': [VDR.V_BOOLEAN],
         'simulation': {
             'disable suite event handlers': [VDR.V_BOOLEAN, True],
@@ -314,10 +314,7 @@ SPEC = {
                 'submission timeout handler': [VDR.V_STRING_LIST, None],
                 'custom handler': [VDR.V_STRING_LIST, None],
             },
-            'suite logging': {
-                'rolling archive length': [VDR.V_INTEGER, 5],
-                'maximum size in bytes': [VDR.V_INTEGER, 1000000],
-            },
+
             'suite state polling': {
                 'user': [VDR.V_STRING],
                 'host': [VDR.V_STRING],
@@ -340,6 +337,10 @@ SPEC = {
                 '__MANY__': [VDR.V_STRING],
             },
         },
+    },
+    'suite logging': {
+        'rolling archive length': [VDR.V_INTEGER, 5],
+        'maximum size in bytes': [VDR.V_INTEGER, 1000000],
     },
     'task events': {
         'execution timeout': [VDR.V_INTERVAL],
@@ -432,6 +433,7 @@ def upg(cfg, descr):
     u.obsolete(
         '7.8.0',
         ['runtime', '__MANY__', 'suite state polling', 'template'])
+    u.obsolete('7.8.0', ['suite logging', 'roll over at start-up'])
     u.obsolete('7.8.1', ['cylc', 'events', 'reset timer'])
     u.obsolete('7.8.1', ['cylc', 'events', 'reset inactivity timer'])
     u.obsolete('7.8.1', ['runtime', '__MANY__', 'events', 'reset timer'])
