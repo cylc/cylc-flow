@@ -1,7 +1,7 @@
 #!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -19,7 +19,7 @@
 
 . "$(dirname "$0")/test_header"
 # Number of tests depends on the number of 'cylc' commands.
-set_test_number $(( 34 + $(find "${CYLC_REPO_DIR}/bin" -name 'cylc-*' | wc -l) ))
+set_test_number $(( 32 + $(find "${CYLC_REPO_DIR}/bin" -name 'cylc-*' | wc -l) ))
 
 # Top help
 run_ok "${TEST_NAME_BASE}-0" cylc
@@ -70,14 +70,12 @@ run_ok "${TEST_NAME_BASE}-validate--help" cylc validate --help
 run_ok "${TEST_NAME_BASE}-validate-h" cylc validate -h
 run_ok "${TEST_NAME_BASE}-help-validate" cylc help validate
 run_ok "${TEST_NAME_BASE}-h-prep-validate" cylc h prep validate
-run_ok "${TEST_NAME_BASE}---help-prep-validate" cylc --help prep validate
 run_ok "${TEST_NAME_BASE}-help-va" cylc help va
 run_ok "${TEST_NAME_BASE}-prep-va" cylc help prep va
 for FILE in \
     "${TEST_NAME_BASE}-validate-h.stdout" \
     "${TEST_NAME_BASE}-help-validate.stdout" \
     "${TEST_NAME_BASE}-h-prep-validate.stdout" \
-    "${TEST_NAME_BASE}---help-prep-validate.stdout" \
     "${TEST_NAME_BASE}-help-va.stdout" \
     "${TEST_NAME_BASE}-prep-va.stdout"
 do
