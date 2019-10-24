@@ -172,6 +172,7 @@ message PbTaskProxy {
     string name = 17; /* filter item */
     bool is_held = 18;
     repeated string edges = 19;
+    repeated string ancestors = 20;
 }
 
 message PbFamily {
@@ -199,6 +200,7 @@ message PbFamilyProxy {
     repeated string child_tasks = 10;
     repeated string child_families = 11;
     bool is_held = 12;
+    repeated string ancestors = 13;
 }
 
 message PbEdge {

@@ -327,9 +327,11 @@ class WsDataMgr:
         tproxy.parents[:] = [
             f'{self.workflow_id}{ID_DELIM}{point_string}{ID_DELIM}{p_name}'
             for p_name in self.parents[name]]
-        p1_name = self.parents[name][0]
-        tproxy.first_parent = (
-            f'{self.workflow_id}{ID_DELIM}{point_string}{ID_DELIM}{p1_name}')
+        tproxy.ancestors[:] = [
+            f'{self.workflow_id}{ID_DELIM}{point_string}{ID_DELIM}{a_name}'
+            for a_name in self.ancestors[name]
+            if a_name != name]
+        tproxy.first_parent = tproxy.ancestors[0]
         return tproxy
 
     def generate_ghost_families(self, family_proxies=None, cycle_points=None):
@@ -364,10 +366,8 @@ class WsDataMgr:
                         continue
                     cycle_first_parents.add(parent)
 
-            for fam in cycle_first_parents:
-                f_id = f'{self.workflow_id}{ID_DELIM}{fam}'
-                if f_id not in families:
-                    continue
+            for f_id in families:
+                fam = families[f_id].name
                 fp_id = (
                     f'{self.workflow_id}{ID_DELIM}'
                     f'{point_string}{ID_DELIM}{fam}')
@@ -380,27 +380,31 @@ class WsDataMgr:
                     family=f'{self.workflow_id}{ID_DELIM}{fam}',
                     depth=families[f_id].depth,
                 )
-                for child_name in self.descendants[fam]:
-                    ch_id = (
-                        f'{self.workflow_id}{ID_DELIM}'
-                        f'{point_string}{ID_DELIM}{child_name}'
-                    )
-                    if self.parents[child_name][0] == fam:
-                        if child_name in cycle_first_parents:
-                            fproxy.child_families.append(ch_id)
-                        elif child_name in self.schd.config.taskdefs:
-                            fproxy.child_tasks.append(ch_id)
-                if self.parents[fam]:
-                    fproxy.parents.extend(
-                        [f'{self.workflow_id}{ID_DELIM}'
-                         f'{point_string}{ID_DELIM}{p_name}'
-                         for p_name in self.parents[fam]])
-                    p1_name = self.parents[fam][0]
-                    fproxy.first_parent = (
-                        f'{self.workflow_id}{ID_DELIM}'
-                        f'{point_string}{ID_DELIM}{p1_name}')
+                fproxy.parents[:] = [
+                    f'{self.workflow_id}{ID_DELIM}'
+                    f'{point_string}{ID_DELIM}{p_name}'
+                    for p_name in self.parents[fam]]
+                fproxy.ancestors[:] = [
+                    f'{self.workflow_id}{ID_DELIM}'
+                    f'{point_string}{ID_DELIM}{a_name}'
+                    for a_name in self.ancestors[fam]
+                    if a_name != fam]
+                if fproxy.ancestors:
+                    fproxy.first_parent = fproxy.ancestors[0]
+                if fam in cycle_first_parents:
+                    for child_name in self.descendants[fam]:
+                        ch_id = (
+                            f'{self.workflow_id}{ID_DELIM}'
+                            f'{point_string}{ID_DELIM}{child_name}'
+                        )
+                        if self.parents[child_name][0] == fam:
+                            if child_name in cycle_first_parents:
+                                fproxy.child_families.append(ch_id)
+                            elif child_name in self.schd.config.taskdefs:
+                                fproxy.child_tasks.append(ch_id)
                 family_proxies[fp_id] = fproxy
                 fam_proxy_ids.setdefault(f_id, []).append(fp_id)
+
         self.data[self.workflow_id][FAMILY_PROXIES] = family_proxies
         for f_id, fp_ids in fam_proxy_ids.items():
             families[f_id].proxies[:] = fp_ids
