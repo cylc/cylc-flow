@@ -44,7 +44,7 @@ for FILE in \
     "${TEST_NAME_BASE}-prep-aardvark.stderr"
 do
     cmp_ok "${FILE}" <<'__STDERR__'
-cylc aardvark: unknown utility. Abort.
+Error: cylc aardvark: unknown utility. Abort.
 Type "cylc help all" for a list of utilities.
 __STDERR__
 done
