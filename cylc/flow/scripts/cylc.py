@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
+import sys
 
 import click
 import pkg_resources
@@ -51,69 +52,83 @@ def execute_cmd(cmd, *args):
     except OSError as exc:
         if exc.filename is None:
             exc.filename = cmd
-        raise SystemExit(exc)
+        raise click.ClickException(exc)
+    else:
+        sys.exit()
 
 
-def print_version(ctx, param, value):
-    if not value or ctx.resilient_parsing:
-        return
-    click.echo(__version__)
-    ctx.exit()
-
-
-CONTEXT_SETTINGS = dict(
-    token_normalize_func=lambda x: x.lower(), ignore_unknown_options=True
-)
+CONTEXT_SETTINGS = dict(ignore_unknown_options=True)
 
 
 @click.command(context_settings=CONTEXT_SETTINGS)
-@click.argument("command")
+@click.option("--help", "-h", "help_", is_flag=True, is_eager=True)
+@click.option("--version", "-V", is_flag=True, is_eager=True)
 @click.argument("cmd-args", nargs=-1)
-@click.option("--help", "-h", "help_", is_flag=True)
-@click.option(
-    "--version",
-    "-v",
-    is_flag=True,
-    callback=print_version,
-    expose_value=False,
-    is_eager=True,
-)
-def main(command, cmd_args, help_):
-    if command in ["categories", "commands"] + category_list:
-        execute_cmd("cylc-help", command)
-    elif command == "version":
-        click.echo(__version__)
-    elif command:
-        # to match bash script behavior
-        if command == "h":
-            command = "help"
-
-        cylc_cmd = f"cylc-{command}"
-
-        if cylc_cmd not in command_list:
-            possible_cmds = [
-                cmd for cmd in command_list if cmd.startswith(cylc_cmd)
-            ]
-            if len(possible_cmds) == 0:
-                click.echo(f"cylc {command}: unknown utility. Abort.")
-                click.echo('Type "cylc help all" for a list of utilities.')
-                return -1
-            elif len(possible_cmds) > 1:
-                click.echo(
-                    "cylc {}: is ambiguous for: {}".format(
-                        command, [cmd[5:] for cmd in possible_cmds]
-                    )
-                )
-                return -1
-            else:
-                cylc_cmd = possible_cmds[0]
-
-        if help_:
-            execute_cmd(cylc_cmd, "--help")
+def main(cmd_args, version, help_):
+    if not cmd_args:
+        if version:
+            click.echo(__version__)
         else:
-            execute_cmd(cylc_cmd, *list(cmd_args))
-    elif help_:
-        execute_cmd("cylc-help")
+            execute_cmd("cylc-help")
+    else:
+        cmd_args = list(cmd_args)
+        command = cmd_args.pop(0)
+        if command in ["categories", "commands"] + category_list:
+            if not cmd_args:
+                execute_cmd("cylc-help", command)
+                sys.exit(0)
+            else:
+                command = cmd_args.pop(0)
+
+        if command == "version":
+            click.echo(__version__)
+        elif command:
+            # to match bash script behavior
+            if command == "h":
+                command = "help"
+
+            if command == "help" and len(cmd_args) >= 1:
+                command = cmd_args.pop(0)
+                if command in category_list:
+                    command = cmd_args.pop(0)
+                help_ = True
+
+            cylc_cmd = f"cylc-{command}"
+
+            if cylc_cmd not in command_list:
+                possible_cmds = [
+                    cmd for cmd in command_list if cmd.startswith(cylc_cmd)
+                ]
+                if len(possible_cmds) == 0:
+                    raise click.ClickException(
+                        f"cylc {command}: unknown utility. Abort.\n"
+                        'Type "cylc help all" for a list of utilities.'
+                    )
+                elif len(possible_cmds) > 1:
+                    click.echo(
+                        "cylc {}: is ambiguous for:\n{}".format(
+                            command,
+                            "\n".join(
+                                [
+                                    "    cylc {}".format(cmd[5:])
+                                    for cmd in possible_cmds
+                                ]
+                            ),
+                        ),
+                        err=True,
+                    )
+                    sys.exit(1)
+                else:
+                    cylc_cmd = possible_cmds[0]
+
+            if help_:
+                execute_cmd(cylc_cmd, "--help")
+            else:
+                if version:
+                    cmd_args.append("--version")
+                execute_cmd(cylc_cmd, *cmd_args)
+        elif help_:
+            execute_cmd("cylc-help")
 
 
 if __name__ == "__main__":
