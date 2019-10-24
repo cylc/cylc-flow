@@ -64,9 +64,6 @@
         execution timeout handler = 
         submission timeout handler = 
         custom handler = 
-    [[[suite logging]]]
-        rolling archive length = 5
-        maximum size in bytes = 1000000
     [[[suite state polling]]]
         user = 
         host = 
@@ -145,9 +142,6 @@
         execution timeout handler = 
         submission timeout handler = 
         custom handler = 
-    [[[suite logging]]]
-        rolling archive length = 5
-        maximum size in bytes = 1000000
     [[[suite state polling]]]
         user = 
         host = 
@@ -226,9 +220,6 @@
         execution timeout handler = 
         submission timeout handler = 
         custom handler = 
-    [[[suite logging]]]
-        rolling archive length = 5
-        maximum size in bytes = 1000000
     [[[suite state polling]]]
         user = 
         host = 
@@ -309,9 +300,6 @@
         execution timeout handler = 
         submission timeout handler = 
         custom handler = 
-    [[[suite logging]]]
-        rolling archive length = 5
-        maximum size in bytes = 1000000
     [[[suite state polling]]]
         user = 
         host = 
@@ -391,9 +379,6 @@
         execution timeout handler = 
         submission timeout handler = 
         custom handler = 
-    [[[suite logging]]]
-        rolling archive length = 5
-        maximum size in bytes = 1000000
     [[[suite state polling]]]
         user = 
         host = 
@@ -473,9 +458,6 @@
         execution timeout handler = 
         submission timeout handler = 
         custom handler = 
-    [[[suite logging]]]
-        rolling archive length = 5
-        maximum size in bytes = 1000000
     [[[suite state polling]]]
         user = 
         host = 
@@ -555,9 +537,6 @@
         execution timeout handler = 
         submission timeout handler = 
         custom handler = 
-    [[[suite logging]]]
-        rolling archive length = 5
-        maximum size in bytes = 1000000
     [[[suite state polling]]]
         user = 
         host = 
@@ -637,9 +616,6 @@
         execution timeout handler = 
         submission timeout handler = 
         custom handler = 
-    [[[suite logging]]]
-        rolling archive length = 5
-        maximum size in bytes = 1000000
     [[[suite state polling]]]
         user = 
         host = 
@@ -719,9 +695,6 @@
         execution timeout handler = 
         submission timeout handler = 
         custom handler = 
-    [[[suite logging]]]
-        rolling archive length = 5
-        maximum size in bytes = 1000000
     [[[suite state polling]]]
         user = 
         host = 
@@ -801,9 +774,6 @@
         execution timeout handler = 
         submission timeout handler = 
         custom handler = 
-    [[[suite logging]]]
-        rolling archive length = 5
-        maximum size in bytes = 1000000
     [[[suite state polling]]]
         user = 
         host = 
@@ -883,9 +853,6 @@
         execution timeout handler = 
         submission timeout handler = 
         custom handler = 
-    [[[suite logging]]]
-        rolling archive length = 5
-        maximum size in bytes = 1000000
     [[[suite state polling]]]
         user = 
         host = 
@@ -965,9 +932,6 @@
         execution timeout handler = 
         submission timeout handler = 
         custom handler = 
-    [[[suite logging]]]
-        rolling archive length = 5
-        maximum size in bytes = 1000000
     [[[suite state polling]]]
         user = 
         host = 
@@ -1047,9 +1011,6 @@
         execution timeout handler = 
         submission timeout handler = 
         custom handler = 
-    [[[suite logging]]]
-        rolling archive length = 5
-        maximum size in bytes = 1000000
     [[[suite state polling]]]
         user = 
         host = 
