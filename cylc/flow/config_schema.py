@@ -17,10 +17,13 @@
 
 import os
 import re
+import pathlib
 
 from metomi.isodatetime.data import Calendar
 
 from cylc.flow import __version__ as CYLC_VERSION
+from cylc.flow.parsec.exceptions import (
+    ParsecError)
 from cylc.flow.hostuserutil import get_user_home, is_remote_user
 from cylc.flow import LOG
 from cylc.flow.network.authorisation import Priv
@@ -511,9 +514,66 @@ def upg(cfg, descr):
         pass
 
 
+CACHE = {}
+def get_config(upg, output_fname, tvars, suite_fpath=None, user=True, site=True):
+    _HOME = pathlib.Path.home() or get_user_home()
+    SITE_CONF_DIR = pathlib.Path(_HOME, "mock_cylc_global")
+    USER_CONF_DIR = pathlib.Path(_HOME, ".cylc", "flow", CYLC_VERSION)
+    CONF_BASENAME = "flow.rc"
+
+    CONFIG_FILEPATHS = []
+    if site:
+        CONFIG_FILEPATHS.append(SITE_CONF_DIR / CONF_BASENAME)
+    if user:
+        CONFIG_FILEPATHS.append(USER_CONF_DIR / CONF_BASENAME)
+    if suite_fpath:
+        CONFIG_FILEPATHS.append(pathlib.Path(suite_fpath) / pathlib.path('suite.rc'))
+    print(f">>> {CONFIG_FILEPATHS}")
+    return CylcConfig(CONFIG_FILEPATHS, output_fname, tvars)
+
+
+class CylcConfig(ParsecConfig):
+    """Raw suite configuration.
+    Kwargs:
+        is_suite (bool):
+            Set whether the config is a suite config.
+        global_cached (bool):
+            Set whether the global config is loaded cached.
+
+    """
+
+    # (suite config) if requested
+    # user config
+    # site config
+
+    def __init__(self, filepaths, output_fname, tvars):
+        """Return the default instance."""
+        # if a suite config is present we need to combine it
+        ParsecConfig.__init__(
+            self, SPEC, upg, output_fname, tvars, cylc_config_validate
+        )
+        for fpath in filepaths:
+            print(fpath)
+            try:
+                if not os.access(fpath, os.F_OK | os.R_OK):
+                    continue
+                self.loadcfg(fpath, "cylc config definition")
+            except ParsecError as exc:
+                if conf_type == upgrader.SITE_CONFIG:
+                    # Warn on bad site file (users can't fix it).
+                    LOG.warning(
+                        "ignoring bad %s %s:\n%s", conf_type, fname, exc
+                    )
+                else:
+                    # Abort on bad user file (users can fix it).
+                    LOG.error("bad %s %s", conf_type, fname)
+                    raise
+
+
+
+
 class RawSuiteConfig(ParsecConfig):
     """Raw suite configuration."""
-
     def __init__(self, fpath, output_fname, tvars):
         """Return the default instance."""
         ParsecConfig.__init__(
@@ -529,7 +589,7 @@ class GlobalConfig(ParsecConfig):
     """
 
     _DEFAULT = None
-    _HOME = os.getenv("HOME") or get_user_home()
+    _HOME = pathlib.Path.home() or get_user_home()
     CONF_BASENAME = "flow.rc"
     SITE_CONF_DIR = os.path.join(os.sep, "etc", "cylc", "flow", CYLC_VERSION)
     USER_CONF_DIR = os.path.join(_HOME, ".cylc", "flow", CYLC_VERSION)
