@@ -39,23 +39,25 @@ from cylc.flow.hostuserutil import get_user_home, is_remote_user
 # - allowed_2, ...: the only other allowed values of this setting (optional).
 SPEC = {
     'meta': {
-        'description': [VDR.V_STRING, ''],
-        'group': [VDR.V_STRING, ''],
-        'title': [VDR.V_STRING, ''],
-        'URL': [VDR.V_STRING, ''],
-        '__MANY__': [VDR.V_STRING, ''],
+        'description': [VDR.V_STRING],
+        'group': [VDR.V_STRING],
+        'title': [VDR.V_STRING],
+        'URL': [VDR.V_STRING],
+        '__MANY__': [VDR.V_STRING],
     },
     'misc': {
         'UTC mode': [VDR.V_BOOLEAN, False],
         'cycle point format': [VDR.V_CYCLE_POINT_FORMAT],
         'cycle point num expanded year digits': [VDR.V_INTEGER, 0],
-        'cycle point time zone': [VDR.V_CYCLE_POINT_TIME_ZONE, 'Z'],
-        'maximum size in bytes': [VDR.V_INTEGER, 1000000],
+        'cycle point time zone': [VDR.V_CYCLE_POINT_TIME_ZONE],
+        'suite logging': {
+            'maximum size in bytes': [VDR.V_INTEGER, 1000000], # suite logging
+            'rolling archive length': [VDR.V_INTEGER, 5],  # suite logging
+        },
+        'run directory rolling archive length': [VDR.V_INTEGER, -1],  # suite logging
         'process pool size': [VDR.V_INTEGER, 4],
         'process pool timeout': [VDR.V_INTERVAL, DurationFloat(600)],
-        'rolling archive length': [VDR.V_INTEGER, 5],
-        'run directory rolling archive length': [VDR.V_INTEGER, -1],
-        'health check interval': [VDR.V_INTERVAL],
+        'health check interval': [VDR.V_INTERVAL, DurationFloat(600)],
         'simulation': {
             'disable suite event handlers': [VDR.V_BOOLEAN, True],
         },
@@ -66,7 +68,7 @@ SPEC = {
             # Allow owners to grant public shutdown rights at the most, not
             # full control.
             'public': (
-                [VDR.V_STRING, '']
+                [VDR.V_STRING]
                 + [level.name.lower().replace('_', '-') for level in [
                     Priv.IDENTITY, Priv.DESCRIPTION, Priv.STATE_TOTALS,
                     Priv.READ, Priv.SHUTDOWN]])
@@ -80,7 +82,6 @@ SPEC = {
                 VDR.V_STRING, 'zmq', 'ssh+zmq', 'poll'],
             'submission polling intervals': [VDR.V_INTERVAL_LIST],
             'submission retry delays': [VDR.V_INTERVAL_LIST, None],
-            'execution polling intervals': [VDR.V_INTERVAL_LIST],
             'scp command': [
                 VDR.V_STRING, 'scp -oBatchMode=yes -oConnectTimeout=10'],
             'ssh command': [
@@ -89,6 +90,7 @@ SPEC = {
             'login hosts': [VDR.V_INTERVAL_LIST],
             'cylc executable': [VDR.V_STRING, 'cylc'],
             'global init-script': [VDR.V_STRING],
+            'copyable environment variables': [VDR.V_STRING],
             'retrieve job logs': [VDR.V_BOOLEAN],
             'retrieve job logs command': [VDR.V_STRING, 'rsync -a'],
             'retrieve job logs max size': [VDR.V_STRING],
@@ -97,6 +99,7 @@ SPEC = {
             'tail command template': [
                 VDR.V_STRING, 'tail -n +1 -F %(filename)s'],
             'owner': [VDR.V_STRING_LIST],
+            'mail smtp': [VDR.V_STRING],
             'batch system': {
                 'name': [VDR.V_STRING, None],
                 'err tailer': [VDR.V_STRING],
@@ -104,8 +107,8 @@ SPEC = {
                 'err viewer': [VDR.V_STRING],
                 'out viewer': [VDR.V_STRING],
                 'job name length maximum': [VDR.V_INTEGER],
-                'execution time limit': [VDR.V_INTERVAL_LIST],
                 'execution polling intervals': [VDR.V_INTERVAL_LIST],
+                'execution time limit polling interval': [VDR.V_INTERVAL_LIST],
                 'execution retry delays': [VDR.V_INTERVAL_LIST],
                 'batch submit command template': [VDR.V_STRING]
             },
@@ -114,34 +117,35 @@ SPEC = {
             },
         },
         '__MANY__': {
-            'run directory': [VDR.V_STRING, ''],
-            'work directory': [VDR.V_STRING, ''],
-            'task communication method': [VDR.V_STRING, ''],
-            'submission polling intervals': [VDR.V_STRING, ''],
+            'run directory': [VDR.V_STRING],
+            'work directory': [VDR.V_STRING],
+            'task communication method': [VDR.V_STRING],
+            'submission polling intervals': [VDR.V_STRING],
             'submission retry delays': [VDR.V_INTERVAL_LIST, None],
-            'execution polling intervals': [VDR.V_STRING, ''],
-            'scp command': [VDR.V_STRING, ''],
-            'ssh command': [VDR.V_STRING, ''],
-            'use login shell': [VDR.V_STRING, ''],
-            'login hosts': [VDR.V_STRING, ''],
-            'batch system': [VDR.V_STRING, ''],
-            'cylc executable': [VDR.V_STRING, ''],
-            'global init-script': [VDR.V_STRING, ''],
-            'copyable environment variables': [VDR.V_STRING, ''],
-            'retrieve job logs': [VDR.V_STRING, ''],
-            'retrieve job logs command': [VDR.V_STRING, ''],
-            'retrieve job logs max size': [VDR.V_STRING, ''],
-            'retrieve job logs retry delays': [VDR.V_STRING, ''],
-            'task event handler retry delays': [VDR.V_STRING, ''],
-            'tail command template': [VDR.V_STRING, ''],
+            'scp command': [VDR.V_STRING],
+            'ssh command': [VDR.V_STRING],
+            'use login shell': [VDR.V_STRING],
+            'login hosts': [VDR.V_STRING],
+            'batch system': [VDR.V_STRING],
+            'cylc executable': [VDR.V_STRING],
+            'global init-script': [VDR.V_STRING],
+            'copyable environment variables': [VDR.V_STRING],
+            'retrieve job logs': [VDR.V_STRING],
+            'retrieve job logs command': [VDR.V_STRING],
+            'retrieve job logs max size': [VDR.V_STRING],
+            'retrieve job logs retry delays': [VDR.V_STRING],
+            'task event handler retry delays': [VDR.V_STRING],
+            'tail command template': [VDR.V_STRING],
             'owner': [VDR.V_STRING_LIST],
+            'mail smtp': [VDR.V_STRING],
             'batch systems': {
-                'err tailer': [VDR.V_STRING, ''],
-                'out tailer': [VDR.V_STRING, ''],
-                'err viewer': [VDR.V_STRING, ''],
-                'out viewer': [VDR.V_STRING, ''],
-                'job name length maximum': [VDR.V_STRING, ''],
-                'execution time limit': [VDR.V_INTERVAL_LIST],
+                'name': [VDR.V_STRING],
+                'err tailer': [VDR.V_STRING],
+                'out tailer': [VDR.V_STRING],
+                'err viewer': [VDR.V_STRING],
+                'out viewer': [VDR.V_STRING],
+                'job name length maximum': [VDR.V_STRING],
+                'execution time limit polling interval': [VDR.V_INTERVAL_LIST],
                 'execution polling intervals': [VDR.V_INTERVAL_LIST],
                 'execution retry delays': [VDR.V_INTERVAL_LIST],
                 'batch submit command template': [VDR.V_STRING]
@@ -157,7 +161,7 @@ SPEC = {
         'smtp': [VDR.V_STRING],
         'to': [VDR.V_STRING],
         'footer': [VDR.V_STRING],
-        'task event interval': [VDR.V_INTERVAL],
+        'task event interval': [VDR.V_INTERVAL, DurationFloat(300)],
     },
     'scheduling': {
         'initial cycle point': [VDR.V_CYCLE_POINT],
@@ -211,10 +215,10 @@ SPEC = {
             'extra log files': [VDR.V_STRING_LIST],
             'work sub-directory': [VDR.V_STRING],
             'meta': {
-                'title': [VDR.V_STRING, ''],
-                'description': [VDR.V_STRING, ''],
-                'URL': [VDR.V_STRING, ''],
-                '__MANY__': [VDR.V_STRING, ''],
+                'title': [VDR.V_STRING],
+                'description': [VDR.V_STRING],
+                'URL': [VDR.V_STRING],
+                '__MANY__': [VDR.V_STRING],
             },
             'simulation': {
                 'default run length': [VDR.V_INTERVAL, DurationFloat(10)],
@@ -237,10 +241,8 @@ SPEC = {
                 'mail events': [VDR.V_STRING_LIST, None],
                 'mail from': [VDR.V_STRING],
                 'mail retry delays': [VDR.V_INTERVAL_LIST, None],
-                'mail smtp': [VDR.V_STRING],
                 'mail to': [VDR.V_STRING],
                 'submission timeout': [VDR.V_INTERVAL],
-
                 'expired handler': [VDR.V_STRING_LIST, None],
                 'late offset': [VDR.V_INTERVAL, None],
                 'late handler': [VDR.V_STRING_LIST, None],
@@ -280,8 +282,9 @@ SPEC = {
             },
         },
     },
-    'server events': {
-        'expected task failures': [VDR.V_STRING_LIST],
+    'workflow server events': {
+        # add obsoletion event
+        'ref test expected task failures': [VDR.V_STRING_LIST],
         'handlers': [VDR.V_STRING_LIST, None],
         'handler events': [VDR.V_STRING_LIST, None],
         'startup handler': [VDR.V_STRING_LIST, None],
@@ -329,10 +332,9 @@ SPEC = {
 
 def upg(cfg, descr):
     # Upgrade older suite configurations.
+    # Reviews shgould consider whether deprecations are tested.
     u = upgrader(cfg, descr)
     u.obsolete('6.1.3', ['visualization', 'enable live graph movie'])
-    u.obsolete('6.4.1', ['test battery', 'directives'])
-    u.obsolete('6.11.0', ['state dump rolling archive length'])
     u.obsolete('7.2.2', ['cylc', 'dummy mode'])
     u.obsolete('7.2.2', ['cylc', 'simulation mode'])
     u.obsolete('7.2.2', ['runtime', '__MANY__', 'dummy mode'])
@@ -340,21 +342,9 @@ def upg(cfg, descr):
     u.obsolete('7.6.0', ['runtime', '__MANY__', 'enable resurrection'])
     u.obsolete('7.8.0', ['runtime', '__MANY__', 'suite state polling',
                          'template'])
-    u.obsolete('7.8.0', ['suite logging', 'roll over at start-up'])
     u.obsolete('7.8.1', ['cylc', 'events', 'reset timer'])
     u.obsolete('7.8.1', ['cylc', 'events', 'reset inactivity timer'])
     u.obsolete('7.8.1', ['runtime', '__MANY__', 'events', 'reset timer'])
-    u.obsolete('7.8.1', ['documentation', 'local index'])
-    u.obsolete('7.8.1', ['documentation', 'files', 'pdf user guide'])
-    u.obsolete(
-        '7.8.1',
-        ['documentation', 'files', 'single-page html user guide']
-    )
-    u.deprecate(
-        '7.8.1',
-        ['documentation', 'files', 'multi-page html user guide'],
-        ['documentation', 'local']
-    )
     # Cylc 8 Obseletions
     u.obsolete('8.0.0', ['cylc', 'log resolved dependencies'])
     u.obsolete('8.0.0', ['cylc', 'required run mode'])
@@ -365,8 +355,6 @@ def upg(cfg, descr):
     u.obsolete('8.0.0', ['suite definition directory'])
     u.obsolete('8.0.0', ['communication'])
     u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'shell'])
-    u.obsolete('8.0.0', ['suite servers', 'scan hosts'])
-    u.obsolete('8.0.0', ['suite servers', 'scan ports'])
     u.obsolete('8.0.0', ['temporary directory'])
     u.obsolete('8.0.0', ['test battery'])
     u.obsolete('8.0.0', ['task host select command timeout'])
@@ -374,24 +362,24 @@ def upg(cfg, descr):
     u.obsolete('8.0.0', ['visualization'])
     u.obsolete('8.0.0', ['documentation'])
     # Cylc 8 Deprecations
-    # All mail ____ items moved from [cylc][events] to [email]
+    # All mail ____ items moved from [cylc][events] to [mail]
     for key in [
         'mail from', 'mail events', 'mail footer', 'mail smtp', 'mail to'
     ]:
         u.deprecate(
             '8.0.0',
             ['cylc', 'events', key],
-            ['mail', key.replace('mail ', '')]
+            ['mail', key.replace('mail ')]
         )
     u.deprecate(
         '8.0.0',
         ['cylc', 'abort if any task fails'],
-        ['cylc', 'events', 'abort if any task fails']
+        ['server events', 'abort if any task fails']
     )
     u.deprecate(
         '8.0.0',
         ['cylc', 'authentication'],
-        ['cylc', 'authorization']
+        ['misc', 'authorization']
     )
     u.deprecate(
         '8.0.0',
@@ -451,17 +439,7 @@ def upg(cfg, descr):
     u.deprecate(
         '8.0.0',
         ['suite host self-identification'],
-        ['workflow server platforms', 'suite host self-identification']
-    )
-    u.deprecate(
-        '8.0.0',
-        ['suite servers'],
-        ['workflow server platforms']
-    )
-    u.deprecate(
-        '8.0.0',
-        ['task events'],
-        ['runtime', 'root', 'events']
+        ['workflow server platforms', 'host self-identification']
     )
     u.deprecate('8.0.0', ['cylc'], ['misc'])
     u.upgrade()
