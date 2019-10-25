@@ -33,13 +33,13 @@ from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import CylcError
 from cylc.flow.network.authorisation import Priv, authorise
-from cylc.flow.network.authentication import (
-    encode_, decode_, get_server_private_key_location)
+from cylc.flow.network.authentication import encode_, decode_
 from cylc.flow.network.resolvers import Resolvers
 from cylc.flow.network.schema import schema
 from cylc.flow.suite_files import (
     UserFiles,
-    generate_key_store
+    generate_key_store,
+    key_store_exists
 )
 from cylc.flow.suite_status import (
     KEY_META, KEY_NAME, KEY_OWNER, KEY_STATES,
@@ -111,13 +111,13 @@ class ZMQServer(object):
         self.socket.RCVTIMEO = int(self.RECV_TIMEOUT) * 1000
 
         # create & register server keys for authentication
-        generate_key_store(UserFiles.get_user_certificate_full_path(),
-                           "server", parent=False)
+        generate_key_store(UserFiles.get_path(include_auth_dirname=False),
+                           UserFiles.Auth.SERVER_TAG)
         if not key_store_exists(UserFiles.get_path()):
             raise CylcError("Unable to generate Cylc ZMQ server keys.")
         server_public_key, server_private_key = zmq.auth.load_certificate(
             os.path.join(
-                UserFiles.Auth.get_user_certificate_full_path(private=True),
+                UserFiles.get_user_certificate_full_path(private=True),
                 UserFiles.Auth.SERVER_PRIVATE_KEY_CERTIFICATE
             )
         )

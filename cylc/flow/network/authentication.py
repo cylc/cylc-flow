@@ -18,19 +18,13 @@
 import getpass
 import json
 
-from cylc.flow.suite_files import UserFiles
+from cylc.flow.suite_files import UserFiles, get_auth_item
 
 
 def get_client_private_key_location(suite):
     """ Return the secret used to encrypt messages sent by the client. """
-    return SuiteSrvFilesManager().get_auth_item(
-        UserFiles.Auth.PRIVATE_KEY_DIRNAME, suite, content=False
-    )
-
-
-def get_server_private_key_location(suite):
-    """ Return the secret used to decrypt messages sent by the client. """
-    return UserFiles.get_user_certificate_full_path(private=True)
+    return get_auth_item(
+        UserFiles.Auth.CLIENT_PRIVATE_KEY_CERTIFICATE, suite, content=False)
 
 
 def decode_(message):

@@ -136,26 +136,27 @@ class UserFiles:
         PRIVATE_KEY_DIRNAME = 'private_key'
         """The name of the directory holding the private key certificate."""
 
-        SERVER_PRIVATE_KEY_CERTIFICATE = "server.key_secret"
-        """The name of the server's private key certificate."""
+        SERVER_TAG = 'server'  # for server (i.e. user) keys
+        CLIENT_TAG = 'client'  # for client (i.e. suite) keys
+        PUBLIC_TAG = '.key'  # for public keys
+        PRIVATE_TAG = '.key_secret'  # for private keys
+        """Keyword identifiers used to form the certificate names, as below.
+           Note: the public/private tags are set (by default) by CurveZMQ.
+        """
 
-        CLIENT_PRIVATE_KEY_CERTIFICATE = "client.key_secret"
-        """The name of a client's private key certificate."""
-
-        SERVER_PUBLIC_KEY_CERTIFICATE = "server.key"
-        """The name of the server's public key certificate."""
-
-        CLIENT_PUBLIC_KEY_CERTIFICATE = "client.key"
-        """The name of a client's public key certificate."""
+        SERVER_PUBLIC_KEY_CERTIFICATE = SERVER_TAG + PUBLIC_TAG
+        CLIENT_PUBLIC_KEY_CERTIFICATE = CLIENT_TAG + PUBLIC_TAG
+        SERVER_PRIVATE_KEY_CERTIFICATE = SERVER_TAG + PRIVATE_TAG
+        CLIENT_PRIVATE_KEY_CERTIFICATE = CLIENT_TAG + PRIVATE_TAG
+        """The name of the authentication certificates."""
 
     @classmethod
-    def get_path(cls):
+    def get_path(cls, include_auth_dirname=True):
         """Return the path to this directory for the current user."""
-        return os.path.join(
-            os.path.expanduser("~"),
-            cls.DIRNAME,
-            cls.Auth.DIRNAME,
-        )
+        path_components = [os.path.expanduser("~"), cls.DIRNAME]
+        if include_auth_dirname:
+            path_components.append(cls.Auth.DIRNAME)
+        return os.path.join(*path_components)
 
     @classmethod
     def get_user_certificate_full_path(cls, private=False):
@@ -166,18 +167,6 @@ class UserFiles:
             certificate_dirname = cls.Auth.PUBLIC_KEY_DIRNAME
         return os.path.join(
             cls.get_path(),
-            certificate_dirname
-        )
-
-    @classmethod
-    def get_certificate_path_tail(cls, private=False):
-        """Return the directory path of a certificate for the current user."""
-        if private:
-            certificate_dirname = cls.Auth.PRIVATE_KEY_DIRNAME
-        else:
-            certificate_dirname = cls.Auth.PUBLIC_KEY_DIRNAME
-        return os.path.join(
-            cls.Auth.DIRNAME,
             certificate_dirname
         )
 
@@ -338,19 +327,20 @@ def get_auth_item(item, reg, owner=None, host=None, content=False):
     if item not in [
             SuiteFiles.Service.PASSPHRASE, SuiteFiles.Service.CONTACT,
             SuiteFiles.Service.CONTACT2,
-            UserFiles.CLIENT_PRIVATE_KEY_CERTIFICATE]:
+            UserFiles.Auth.CLIENT_PRIVATE_KEY_CERTIFICATE]:
         raise ValueError("%s: item not recognised" % item)
 
-    # For the FILE_BASE_SUITE_PRIVATE_KEY, i.e. CurveZMQ key, case, we only
-    # need to check Case 3/ (treat as content=False), so check this first.
+    # For UserFiles.Auth.CLIENT_PRIVATE_KEY_CERTIFICATE, we only need to
+    # check Case 3/ (treat as content=False), so test this first.
     #
     # TODO: apply these auth keys for remote, not just local, cases.
-    if item == UserFiles.CLIENT_PRIVATE_KEY_CERTIFICATE:
+    if item == UserFiles.Auth.CLIENT_PRIVATE_KEY_CERTIFICATE:
         path = os.path.join(
             get_suite_srv_dir(reg),
-            UserFiles.get_certificate_path_tail(private=True)
+            UserFiles.Auth.DIRNAME,
+            UserFiles.Auth.PRIVATE_KEY_DIRNAME
         )
-        value = self._locate_item(item, path)
+        value = _locate_item(item, path)
         if value:
             return value
 
@@ -606,7 +596,7 @@ def create_auth_files(reg):
     # If necessary, generate directory with sub-directories holding
     # separately the public and private keys for authentication:
     if not key_store_exists(srv_d):
-        generate_key_store(srv_d, "client")
+        generate_key_store(srv_d, UserFiles.Auth.CLIENT_TAG)
 
     # Create a new passphrase for the suite if necessary.
     if not _locate_item(SuiteFiles.Service.PASSPHRASE, srv_d):
@@ -788,23 +778,22 @@ def _locate_item(item, path):
         return fname
 
 
- def return_key_locations(store_dir):
-        """Return the paths to a directory's key files: (public, private)."""
-        return (
-            os.path.join(store_dir, UserFiles.Auth.PUBLIC_KEY_DIRNAME),
-            os.path.join(store_dir, UserFiles.Auth.PRIVATE_KEY_DIRNAME)
-        )
+def return_key_locations(store_dir):
+    """Return the paths to a directory's key files: (public, private)."""
+    return (
+        os.path.join(store_dir, UserFiles.Auth.PUBLIC_KEY_DIRNAME),
+        os.path.join(store_dir, UserFiles.Auth.PRIVATE_KEY_DIRNAME)
+    )
 
 
-def generate_key_store(store_dir, keys_tag, parent=True):
+def generate_key_store(store_parent_dir, keys_tag):
     """Generate two sub-directories, each having a file with a CURVE key.
     WARNING: be careful testing this. It uses 'shutil.rmtree' which will
     wipe the whole store_dir/UserFiles.Auth.DIRNAME directory if it exists.
     """
 
     # Define the directory structure to store the CURVE keys in
-    if parent:
-        store_dir = os.path.join(store_dir, UserFiles.Auth.DIRNAME)
+    store_dir = os.path.join(store_parent_dir, UserFiles.Auth.DIRNAME)
     public_key_loc, private_key_loc = return_key_locations(store_dir)
 
     # Create, or wipe, that directory structure
@@ -818,11 +807,11 @@ def generate_key_store(store_dir, keys_tag, parent=True):
 
     # Move key pair to appropriate directories & lock private key file
     for key_file in os.listdir(store_dir):
-        if key_file.endswith(".key"):
+        if key_file.endswith(UserFiles.Auth.PUBLIC_TAG):
             shutil.move(os.path.join(store_dir, key_file),
                         os.path.join(public_key_loc, '.'))
             # The public key keeps standard '-rw-r--r--.' file permissions
-        elif key_file.endswith(".key_secret"):
+        elif key_file.endswith(UserFiles.Auth.PRIVATE_TAG):
             loc = shutil.move(os.path.join(store_dir, key_file),
                               os.path.join(private_key_loc, '.'))
             # Now lock the prviate key in its permanent location
