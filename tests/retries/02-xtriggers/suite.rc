@@ -1,0 +1,49 @@
+[scheduling]
+    [[graph]]
+        R1 = retry => test
+
+
+[runtime]
+    [[retry]]
+        # capture task info - incl xtriggers
+        pre-script = """
+            cylc show "${CYLC_SUITE_NAME}" \
+                "${CYLC_TASK_NAME}.${CYLC_TASK_CYCLE_POINT}" \
+                > "${CYLC_TASK_LOG_ROOT}-show"
+        """
+
+        # fail four times then pass
+        script = test "${CYLC_TASK_SUBMIT_NUMBER}" -ge 5
+
+        # stagger retries every two seconds
+        [[[job]]]
+            execution retry delays = 5*PT3S
+
+
+    [[test]]
+        script = """
+            cylc cat-log "${CYLC_SUITE_NAME}" > log
+
+            # get a list of the times cylc says tasks will retry after
+            mapfile -t RETRY_TIMES \
+                < <(sed -n 's/.*retrying.*after \(.*\)).*/\1/p' log)
+
+            # get a list of the times when the xtriggers were actually
+            # satisfied
+            mapfile -t XTRIGGER_TIMES \
+                < <(sed -n 's/\(.*\) INFO.*xtrigger satisfied.*/\1/p' log)
+
+            test "${#RETRY_TIMES[@]}" -eq 4
+            test "${#XTRIGGER_TIMES[@]}" -eq 4
+
+            # make sure that tasks retried when they said they would
+            for N in $(seq 0 3); do
+                INTERVAL="$(isodatetime \
+                    "${RETRY_TIMES[$N]}" "${XTRIGGER_TIMES[$N]}" --as-total s)"
+
+                echo "RETRY=${RETRY_TIMES[$N]}"
+                echo "XTRIGGER=${XTRIGGER_TIMES[$N]}"
+                echo "INTERVAL=${INTERVAL}"
+                python3 -c "assert ${INTERVAL} >= 0.0"
+            done
+        """
