@@ -520,6 +520,9 @@ class SuiteDatabaseManager(object):
         """Vacuum/upgrade runtime DB on restart."""
         pri_dao = self.get_pri_dao()
         pri_dao.vacuum()
+
         # compat: <8.0
         pri_dao.upgrade_is_held()
+        pri_dao.upgrade_retry_state()
+
         pri_dao.close()

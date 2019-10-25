@@ -686,7 +686,7 @@ class TaskEventsManager():
             except KeyError as exc:
                 LOG.exception(exc)
 
-    def _retry_task(self, itask, timer, submit_retry=False):
+    def _retry_task(self, itask, wallclock_time, submit_retry=False):
         """Retry a task.
 
         Args:
@@ -706,7 +706,7 @@ class TaskEventsManager():
             itask.identity
         ))
         kwargs = {
-            'absolute_as_seconds': timer.timeout
+            'absolute_as_seconds': wallclock_time
         }
 
         # if this isn't the first retry the xtrigger will already exist
@@ -730,23 +730,6 @@ class TaskEventsManager():
             )
             itask.state.add_xtrigger(label)
         itask.state.reset(TASK_STATUS_WAITING)
-
-
-    def _get_retry_xtrigger(self, itask, unix_time, submit_retry=False):
-        label = (
-            'cylc',
-            'submit_retry' if submit_retry else 'retry',
-            itask.identity
-        ).join('_')
-        xtrig = SubFuncContext(
-            label,
-            'wall_clock',
-            [],
-            {
-                'absolute_as_seconds': unix_time
-            }
-        )
-        return label, xtrig
 
     def _process_message_failed(self, itask, event_time, message):
         """Helper for process_message, handle a failed message."""
@@ -773,7 +756,7 @@ class TaskEventsManager():
         else:
             # There is an execution retry lined up.
             timer = itask.try_timers[TimerFlags.EXECUTION_RETRY]
-            self._retry_task(itask, timer)
+            self._retry_task(itask, timer.timeout)
             delay_msg = f"retrying in {timer.delay_timeout_as_str()}"
             if itask.state.is_held:
                 delay_msg = "held (%s)" % delay_msg
@@ -862,7 +845,7 @@ class TaskEventsManager():
         else:
             # There is a submission retry lined up.
             timer = itask.try_timers[TimerFlags.SUBMISSION_RETRY]
-            self._retry_task(itask, timer, submit_retry=True)
+            self._retry_task(itask, timer.timeout, submit_retry=True)
             delay_msg = f"submit-retrying in {timer.delay_timeout_as_str()}"
             if itask.state.is_held:
                 delay_msg = "held (%s)" % delay_msg

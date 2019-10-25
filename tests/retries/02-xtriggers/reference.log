@@ -1,0 +1,8 @@
+Initial point: 1
+Final point: 1
+[retry.1] -triggered off []
+[retry.1] -triggered off []
+[retry.1] -triggered off []
+[retry.1] -triggered off []
+[retry.1] -triggered off []
+[test.1] -triggered off ['retry.1']

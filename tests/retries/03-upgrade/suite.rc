@@ -1,0 +1,19 @@
+[cylc]
+    [[events]]
+        abort on inactivity = True
+        abort on timeout = True
+        inactivity = PT1M
+        timeout = PT1M
+
+[scheduling]
+    [[dependencies]]
+        graph = """
+            a => b => c
+        """
+
+[runtime]
+    [[b]]
+        # fail four times then pass
+        script = test "$CYLC_TASK_SUBMIT_NUMBER" -ge 5;
+        [[[job]]]
+            execution retry delays = 3*PT2S

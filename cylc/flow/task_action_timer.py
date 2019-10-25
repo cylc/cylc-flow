@@ -24,8 +24,8 @@ from cylc.flow.wallclock import (
 
 class TimerFlags:
 
-    EXECUTION_RETRY = 'EXECUTION_RETRY'
-    SUBMISSION_RETRY = 'SUBMISSION_RETRY'
+    EXECUTION_RETRY = 'execution-retry'
+    SUBMISSION_RETRY = 'submission-retry'
 
 
 class TaskActionTimer(object):

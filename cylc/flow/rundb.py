@@ -21,6 +21,7 @@ import traceback
 
 from cylc.flow import LOG
 import cylc.flow.flags
+from cylc.flow.task_state import TASK_STATUS_WAITING
 from cylc.flow.wallclock import get_current_time_string
 
 
@@ -880,6 +881,58 @@ class CylcSuiteDAO(object):
 
         # done
         conn.commit()
+
+    def upgrade_retry_state(self):
+        """Replace the retry state with xtriggers.
+
+        * Change *retring tasks to waiting
+        * Add the required xtrigger
+
+        Note:
+            The retry status can be safely removed as this is really a display
+            state, the retry logic revolves around the TaskActionTimer.
+
+        From:
+            cylc<8
+        To:
+            cylc>=8
+        PR:
+            #3423
+
+        Returns:
+            list - (cycle, name, status) tuples of all retrying tasks.
+
+        """
+        conn = self.connect()
+
+        for table in [self.TABLE_TASK_POOL_CHECKPOINTS, self.TABLE_TASK_POOL]:
+            tasks = list(conn.execute(
+                rf'''
+                    SELECT
+                        cycle, name, status
+                    FROM
+                        {table}
+                    WHERE
+                        status IN ('retrying', 'submit-retrying')
+                '''
+            ))
+            if tasks:
+                LOG.info(f'Upgrade retrying tasks in table {table}')
+            conn.executemany(
+                rf'''
+                    UPDATE
+                        {table}
+                    SET
+                        status='{TASK_STATUS_WAITING}'
+                    WHERE
+                        cycle==?
+                        and name==?
+                        and status==?
+                ''',
+                tasks
+            )
+        conn.commit()
+        return tasks
 
     def upgrade_is_held(self):
         """Upgrade hold_swap => is_held.
