@@ -121,6 +121,13 @@ def main(cmd_args, version, help_):
                 else:
                     cylc_cmd = possible_cmds[0]
 
+            if cylc_cmd.endswith("graph-diff"):
+                if len(cmd_args) > 2:
+                    for arg in cmd_args[2:]:
+                        if arg.startswith("-"):
+                            cmd_args.insert(cmd_args.index(arg), "--")
+                            break
+
             if help_:
                 execute_cmd(cylc_cmd, "--help")
             else:
