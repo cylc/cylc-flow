@@ -515,7 +515,28 @@ def upg(cfg, descr):
 
 
 CACHE = {}
-def get_config(upg, output_fname, tvars, suite_fpath=None, user=True, site=True):
+def get_config(output_fname, tvars, suite_fpath=None, user=True, site=True):
+    """
+    Create a list of config file locations for CylcConfig to collect config
+    settings from.
+
+    Args:
+        output_fname:
+            pass to CylcConfig Object.
+        tvars:
+            pass to CylcConfig Object.
+        suite_fpath (str):
+            A string describing the location of the ``suite.rc`` file. If it is
+            set to ``None`` only global and user configs will be parsed.
+        user:
+
+        site:
+
+    Returns:
+        A CylcConfig object.
+    """
+
+
     _HOME = pathlib.Path.home() or get_user_home()
     SITE_CONF_DIR = pathlib.Path(_HOME, "mock_cylc_global")
     USER_CONF_DIR = pathlib.Path(_HOME, ".cylc", "flow", CYLC_VERSION)
@@ -527,8 +548,8 @@ def get_config(upg, output_fname, tvars, suite_fpath=None, user=True, site=True)
     if user:
         CONFIG_FILEPATHS.append(USER_CONF_DIR / CONF_BASENAME)
     if suite_fpath:
-        CONFIG_FILEPATHS.append(pathlib.Path(suite_fpath) / pathlib.path('suite.rc'))
-    print(f">>> {CONFIG_FILEPATHS}")
+        CONFIG_FILEPATHS.append(pathlib.Path(suite_fpath) / pathlib.Path(suite_fpath))
+    LOG.debug(f"CONFIG FILEPATHS are: {CONFIG_FILEPATHS}")
     return CylcConfig(CONFIG_FILEPATHS, output_fname, tvars)
 
 
@@ -541,7 +562,6 @@ class CylcConfig(ParsecConfig):
             Set whether the global config is loaded cached.
 
     """
-
     # (suite config) if requested
     # user config
     # site config
@@ -553,11 +573,13 @@ class CylcConfig(ParsecConfig):
             self, SPEC, upg, output_fname, tvars, cylc_config_validate
         )
         for fpath in filepaths:
-            print(fpath)
             try:
+                # Log a warning if global or user settings files do not exist.
                 if not os.access(fpath, os.F_OK | os.R_OK):
+                    LOG.warning(f"fpath {fpath} not a valid path")
                     continue
                 self.loadcfg(fpath, "cylc config definition")
+                LOG.info(f"fpath {fpath} sucessfully loaded")
             except ParsecError as exc:
                 if conf_type == upgrader.SITE_CONFIG:
                     # Warn on bad site file (users can't fix it).

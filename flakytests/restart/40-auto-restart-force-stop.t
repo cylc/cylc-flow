@@ -35,6 +35,7 @@ BASE_GLOBALRC="
 # test the force shutdown option (auto stop, no restart) in condemned hosts
 init_suite "${TEST_NAME_BASE}" <<< '
 [scheduling]
+    initial cycle point = 20190101T0000Z
     [[graph]]
         R1 = foo
 '

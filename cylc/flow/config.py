@@ -185,7 +185,7 @@ class SuiteConfig(object):
         # parse, upgrade, validate the suite, but don't expand with default
         # items
         self.mem_log("config.py: before CylcConfig init")
-        self.pcfg = get_config(fpath, output_fname, template_vars)
+        self.pcfg = get_config(output_fname, template_vars, suite_fpath=fpath)
         self.mem_log("config.py: after CylcConfig init")
         self.mem_log("config.py: before get(sparse=True")
         self.cfg = self.pcfg.get(sparse=True)
