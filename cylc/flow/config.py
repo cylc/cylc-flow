@@ -312,10 +312,7 @@ class SuiteConfig(object):
         init_cyclers(self.cfg)
 
         # Running in UTC time? (else just use the system clock)
-        if self.cfg['cylc']['UTC mode'] is None:
-            set_utc_mode(glbl_cfg().get(['cylc', 'UTC mode']))
-        else:
-            set_utc_mode(self.cfg['cylc']['UTC mode'])
+        set_utc_mode(self.cfg['cylc']['UTC mode'])
 
         # Initial point from suite definition (or CLI override above).
         orig_icp = self.cfg['scheduling']['initial cycle point']
