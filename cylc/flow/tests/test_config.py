@@ -31,7 +31,6 @@ def get_test_inheritance_quotes():
         major = 1..5
         minor = 10..20
 [scheduling]
-    initial cycle point = 20190101T0000Z
     [[graph]]
         R1 = """hello => MAINFAM<major, minor>
                 hello => SOMEFAM
@@ -51,7 +50,6 @@ def get_test_inheritance_quotes():
         major = 1..5
         minor = 10..20
 [scheduling]
-    initial cycle point = 20190101T0000Z
     [[graph]]
         R1 = """hello => MAINFAM<major, minor>
                 hello => SOMEFAM
@@ -71,7 +69,6 @@ def get_test_inheritance_quotes():
         major = 1..5
         minor = 10..20
 [scheduling]
-    initial cycle point = 20190101T0000Z
     [[graph]]
         R1 = """hello => MAINFAM<major, minor>
                 hello => SOMEFAM
