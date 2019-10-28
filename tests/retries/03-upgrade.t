@@ -19,7 +19,7 @@
 # Test the upgrade of the old *retrying states to the new xtrigger based
 # retry mechanism.
 . "$(dirname "$0")/test_header"
-set_test_number 7
+set_test_number 10
 install_suite
 
 # install the cylc7 restart database
@@ -35,8 +35,11 @@ log_scan "${TEST_NAME_BASE}-retries" "${FILE}" 30 0.5 \
     '\[b.1\] -submit-num=02' \
     '\[b.1\] status=running: (received)failed/EXIT.*job(02)' \
     '\[b.1\] -job(02) failed, retrying in PT2S' \
-    'xtrigger satisfied: cylc_retry_b.1'
+    'xtrigger satisfied: cylc_retry_b.1' \
+    '\[b.1\] -submit-num=03' \
+    '\[b.1] status=running: (received)succeeded' \
+    '\[c.1] status=running: (received)succeeded'
 
-poll_suite_stopped
+purge_suite "${SUITE_NAME}"
 
 exit

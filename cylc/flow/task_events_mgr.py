@@ -489,9 +489,28 @@ class TaskEventsManager():
                 itask, itask.state, self.FLAG_RECEIVED_IGNORED, message,
                 event_time, submit_num, itask.submit_num)
             return False
-        if itask.state(TASK_STATUS_WAITING):
-            # Ignore polled messages if waiting
-            # (this includes "retrying" states)
+
+        if (
+                itask.state(TASK_STATUS_WAITING)
+                and
+                (
+                    (
+                        # task has automatically submit-retried at least once
+                        TimerFlags.SUBMISSION_RETRY in itask.try_timers
+                        and itask.try_timers[
+                            TimerFlags.SUBMISSION_RETRY].num > 0
+                    )
+                    or
+                    (
+                        # task has automatically execn-retried at least once
+                        TimerFlags.EXECUTION_RETRY in itask.try_timers
+                        and itask.try_timers[
+                            TimerFlags.EXECUTION_RETRY].num > 0
+                    )
+                )
+
+        ):
+            # Ignore polled messages if task is already in retrying statuses
             LOG.warning(
                 logfmt,
                 itask, itask.state, self.FLAG_POLLED_IGNORED, message,
