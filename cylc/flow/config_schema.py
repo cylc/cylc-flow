@@ -514,7 +514,6 @@ def upg(cfg, descr):
         pass
 
 
-CACHE = {}
 def get_config(output_fname, tvars, suite_fpath=None, user=True, site=True):
     """
     Create a list of config file locations for CylcConfig to collect config
@@ -535,8 +534,6 @@ def get_config(output_fname, tvars, suite_fpath=None, user=True, site=True):
     Returns:
         A CylcConfig object.
     """
-
-
     _HOME = pathlib.Path.home() or get_user_home()
     SITE_CONF_DIR = pathlib.Path(_HOME, "mock_cylc_global")
     USER_CONF_DIR = pathlib.Path(_HOME, ".cylc", "flow", CYLC_VERSION)
@@ -548,7 +545,9 @@ def get_config(output_fname, tvars, suite_fpath=None, user=True, site=True):
     if user:
         CONFIG_FILEPATHS.append(USER_CONF_DIR / CONF_BASENAME)
     if suite_fpath:
-        CONFIG_FILEPATHS.append(pathlib.Path(suite_fpath) / pathlib.Path(suite_fpath))
+        CONFIG_FILEPATHS.append(
+            pathlib.Path(suite_fpath) / pathlib.Path(suite_fpath)
+        )
     LOG.debug(f"CONFIG FILEPATHS are: {CONFIG_FILEPATHS}")
     return CylcConfig(CONFIG_FILEPATHS, output_fname, tvars)
 
@@ -590,8 +589,6 @@ class CylcConfig(ParsecConfig):
                     # Abort on bad user file (users can fix it).
                     LOG.error("bad %s %s", conf_type, fname)
                     raise
-
-
 
 
 class RawSuiteConfig(ParsecConfig):
@@ -708,13 +705,13 @@ class GlobalConfig(ParsecConfig):
         if value is not None and "directory" in item:
             if replace_home or modify_dirs:
                 # Replace local home dir with $HOME for eval'n on other host.
-                value = value.replace(self._HOME, "$HOME")
+                value = value.replace(str(self._HOME), "$HOME")
             elif is_remote_user(owner):
                 # Replace with ~owner for direct access via local filesys
                 # (works for standard cylc-run directory location).
                 if owner_home is None:
                     owner_home = os.path.expanduser("~%s" % owner)
-                value = value.replace(self._HOME, owner_home)
+                value = value.replace(str(self._HOME), owner_home)
         if item == "task communication method" and value == "default":
             # Translate "default" to client-server comms: "zmq"
             value = "zmq"
@@ -741,7 +738,7 @@ class GlobalConfig(ParsecConfig):
                 if newvalue and "directory" in item:
                     # replace local home dir with $HOME for evaluation on other
                     # host
-                    newvalue = newvalue.replace(self._HOME, "$HOME")
+                    newvalue = newvalue.replace(str(self._HOME), "$HOME")
                 cfg["hosts"][host][item] = newvalue
 
         # Expand environment variables and ~user in LOCAL file paths.
