@@ -22,12 +22,11 @@ import pathlib
 from metomi.isodatetime.data import Calendar
 
 from cylc.flow import __version__ as CYLC_VERSION
-from cylc.flow.parsec.exceptions import (
-    ParsecError)
 from cylc.flow.hostuserutil import get_user_home, is_remote_user
 from cylc.flow import LOG
 from cylc.flow.network.authorisation import Priv
 from cylc.flow.parsec.config import ParsecConfig
+from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.parsec.upgrade import upgrader
 from cylc.flow.parsec.validate import (
     DurationFloat, CylcConfigValidator as VDR, cylc_config_validate)
@@ -55,17 +54,12 @@ SPEC = {
         'cycle point format': [VDR.V_CYCLE_POINT_FORMAT],
         'cycle point num expanded year digits': [VDR.V_INTEGER, 0],
         'cycle point time zone': [VDR.V_CYCLE_POINT_TIME_ZONE],
-        'maximum size in bytes': [VDR.V_INTEGER, 1000000],
-        'process pool size': [VDR.V_INTEGER, 4],
-        'process pool timeout': [VDR.V_INTERVAL, DurationFloat(600)],
-        'rolling archive length': [VDR.V_INTEGER, 5],
-        'run directory rolling archive length': [VDR.V_INTEGER, -1],
         'required run mode': [
             VDR.V_STRING, '', 'live', 'dummy', 'dummy-local', 'simulation'],
         'force run mode': [
             VDR.V_STRING, '', 'live', 'dummy', 'dummy-local', 'simulation'],
-        'health check interval': [VDR.V_INTERVAL, 30],
-        'task event mail interval': [VDR.V_INTERVAL, 30],
+        'health check interval': [VDR.V_INTERVAL, 600],
+        'task event mail interval': [VDR.V_INTERVAL, 300],
         'disable automatic shutdown': [VDR.V_BOOLEAN],
         'simulation': {
             'disable suite event handlers': [VDR.V_BOOLEAN, True],
@@ -317,7 +311,6 @@ SPEC = {
                 'submission timeout handler': [VDR.V_STRING_LIST, None],
                 'custom handler': [VDR.V_STRING_LIST, None],
             },
-
             'suite state polling': {
                 'user': [VDR.V_STRING],
                 'host': [VDR.V_STRING],
@@ -436,7 +429,6 @@ def upg(cfg, descr):
     u.obsolete(
         '7.8.0',
         ['runtime', '__MANY__', 'suite state polling', 'template'])
-    u.obsolete('7.8.0', ['suite logging', 'roll over at start-up'])
     u.obsolete('7.8.1', ['cylc', 'events', 'reset timer'])
     u.obsolete('7.8.1', ['cylc', 'events', 'reset inactivity timer'])
     u.obsolete('7.8.1', ['runtime', '__MANY__', 'events', 'reset timer'])
@@ -565,6 +557,7 @@ class CylcConfig(ParsecConfig):
 
 class RawSuiteConfig(ParsecConfig):
     """Raw suite configuration."""
+
     def __init__(self, fpath, output_fname, tvars):
         """Return the default instance."""
         ParsecConfig.__init__(
