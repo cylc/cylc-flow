@@ -622,16 +622,18 @@ class GlobalConfig(ParsecConfig):
                 If cached create if necessary and return the singleton
                 instance, else return a new instance.
         """
-        if not cached:
+        if cached:
+            if not cls._DEFAULT:
+                cls._DEFAULT = cls(SPEC, upg, validator=cylc_config_validate)
+                cls._DEFAULT.load()
+            return cls._DEFAULT
+        else:
             # Return an up-to-date global config without affecting the
             # singleton.
             new_instance = cls(SPEC, upg, validator=cylc_config_validate)
             new_instance.load()
             return new_instance
-        elif not cls._DEFAULT:
-            cls._DEFAULT = cls(SPEC, upg, validator=cylc_config_validate)
-            cls._DEFAULT.load()
-        return cls._DEFAULT
+
 
     def load(self):
         """Load or reload configuration from files."""
