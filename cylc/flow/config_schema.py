@@ -58,8 +58,8 @@ SPEC = {
             VDR.V_STRING, '', 'live', 'dummy', 'dummy-local', 'simulation'],
         'force run mode': [
             VDR.V_STRING, '', 'live', 'dummy', 'dummy-local', 'simulation'],
-        'health check interval': [VDR.V_INTERVAL, 600],
-        'task event mail interval': [VDR.V_INTERVAL, 300],
+        'health check interval': [VDR.V_INTERVAL, DurationFloat(600)],
+        'task event mail interval': [VDR.V_INTERVAL, DurationFloat(300)],
         'disable automatic shutdown': [VDR.V_BOOLEAN],
         'simulation': {
             'disable suite event handlers': [VDR.V_BOOLEAN, True],
@@ -111,6 +111,10 @@ SPEC = {
                     Priv.IDENTITY, Priv.DESCRIPTION, Priv.STATE_TOTALS,
                     Priv.READ, Priv.SHUTDOWN]])
         },
+    },
+    'suite logging': {
+        'rolling archive length': [VDR.V_INTEGER, 5],
+        'maximum size in bytes': [VDR.V_INTEGER, 1000000],
     },
     'documentation': {
         'local': [VDR.V_STRING, ''],
@@ -333,10 +337,6 @@ SPEC = {
                 '__MANY__': [VDR.V_STRING],
             },
         },
-    },
-    'suite logging': {
-        'rolling archive length': [VDR.V_INTEGER, 5],
-        'maximum size in bytes': [VDR.V_INTEGER, 1000000],
     },
     'task events': {
         'execution timeout': [VDR.V_INTERVAL],
