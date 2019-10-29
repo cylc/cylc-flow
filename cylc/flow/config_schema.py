@@ -138,7 +138,7 @@ SPEC = {
     'monitor': {
         'sort order': [VDR.V_STRING, 'definition', 'alphanumeric'],
     },
-'hosts': {
+    'hosts': {
         'localhost': {
             'run directory': [VDR.V_STRING, '$HOME/cylc-run'],
             'work directory': [VDR.V_STRING, '$HOME/cylc-run'],
@@ -404,10 +404,10 @@ SPEC = {
         # Allow owners to grant public shutdown rights at the most, not full
         # control.
         'public': (
-                [VDR.V_STRING]
-                + [level.name.lower().replace('_', '-') for level in [
-            Priv.STATE_TOTALS, Priv.IDENTITY, Priv.DESCRIPTION,
-            Priv.STATE_TOTALS, Priv.READ, Priv.SHUTDOWN]])
+            [VDR.V_STRING]
+            + [level.name.lower().replace('_', '-') for level in [
+                Priv.STATE_TOTALS, Priv.IDENTITY, Priv.DESCRIPTION,
+                Priv.STATE_TOTALS, Priv.READ, Priv.SHUTDOWN]])
     },
     # suite
     'suite servers': {
@@ -604,7 +604,6 @@ class GlobalConfig(ParsecConfig):
             new_instance = cls(SPEC, upg, validator=cylc_config_validate)
             new_instance.load()
             return new_instance
-
 
     def load(self):
         """Load or reload configuration from files."""
