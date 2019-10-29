@@ -136,10 +136,10 @@ class UserFiles:
         PRIVATE_KEY_DIRNAME = 'private_key'
         """The name of the directory holding the private key certificate."""
 
-        SERVER_TAG = 'server'  # for server (i.e. user) keys
-        CLIENT_TAG = 'client'  # for client (i.e. suite) keys
+        SERVER_TAG = 'server'  # for server, i.e. suite, keys
+        CLIENT_TAG = 'client'  # for client, i.e. user, keys
         PUBLIC_TAG = '.key'  # for public keys
-        PRIVATE_TAG = '.key_secret'  # for private keys
+        PRIVATE_TAG = '.key_secret'  # for private ('secret') keys
         """Keyword identifiers used to form the certificate names, as below.
            Note: the public/private tags are set (by default) by CurveZMQ.
         """
@@ -327,19 +327,21 @@ def get_auth_item(item, reg, owner=None, host=None, content=False):
     if item not in [
             SuiteFiles.Service.PASSPHRASE, SuiteFiles.Service.CONTACT,
             SuiteFiles.Service.CONTACT2,
-            UserFiles.Auth.CLIENT_PRIVATE_KEY_CERTIFICATE]:
+            UserFiles.Auth.SERVER_PRIVATE_KEY_CERTIFICATE,
+            UserFiles.Auth.SERVER_PUBLIC_KEY_CERTIFICATE]:
         raise ValueError("%s: item not recognised" % item)
 
-    # For UserFiles.Auth.CLIENT_PRIVATE_KEY_CERTIFICATE, we only need to
-    # check Case 3/ (treat as content=False), so test this first.
-    #
-    # TODO: apply these auth keys for remote, not just local, cases.
-    if item == UserFiles.Auth.CLIENT_PRIVATE_KEY_CERTIFICATE:
-        path = os.path.join(
-            get_suite_srv_dir(reg),
-            UserFiles.Auth.DIRNAME,
-            UserFiles.Auth.PRIVATE_KEY_DIRNAME
-        )
+    # For a UserFiles.Auth.SERVER_..._KEY_CERTIFICATE, only need to check Case
+    # '3/' (always ignore content i.e. content=False), so check these first:
+    if item in (UserFiles.Auth.SERVER_PRIVATE_KEY_CERTIFICATE,
+                UserFiles.Auth.SERVER_PUBLIC_KEY_CERTIFICATE):
+        auth_path = os.path.join(
+            get_suite_srv_dir(reg), UserFiles.Auth.DIRNAME)
+        public_key_dir, private_key_dir = return_key_locations(auth_path)
+        if item == UserFiles.Auth.SERVER_PRIVATE_KEY_CERTIFICATE:
+            path = private_key_dir
+        else:
+            path = public_key_dir
         value = _locate_item(item, path)
         if value:
             return value
@@ -596,7 +598,7 @@ def create_auth_files(reg):
     # If necessary, generate directory with sub-directories holding
     # separately the public and private keys for authentication:
     if not key_store_exists(srv_d):
-        generate_key_store(srv_d, UserFiles.Auth.CLIENT_TAG)
+        generate_key_store(srv_d, UserFiles.Auth.SERVER_TAG)
 
     # Create a new passphrase for the suite if necessary.
     if not _locate_item(SuiteFiles.Service.PASSPHRASE, srv_d):
@@ -788,8 +790,9 @@ def return_key_locations(store_dir):
 
 def generate_key_store(store_parent_dir, keys_tag):
     """Generate two sub-directories, each having a file with a CURVE key.
+
     WARNING: be careful testing this. It uses 'shutil.rmtree' which will
-    wipe the whole store_dir/UserFiles.Auth.DIRNAME directory if it exists.
+    wipe the whole 'store_dir/UserFiles.Auth.DIRNAME' directory if it exists.
     """
 
     # Define the directory structure to store the CURVE keys in
@@ -799,7 +802,7 @@ def generate_key_store(store_parent_dir, keys_tag):
     # Create, or wipe, that directory structure
     for directory in [store_dir, public_key_loc, private_key_loc]:
         if os.path.exists(directory):
-            shutil.rmtree(directory)
+            shutil.rmtree(directory)  # WARNING: destructive, so take care
         os.mkdir(directory)
 
     # Make a new public-private CURVE key pair
@@ -810,13 +813,13 @@ def generate_key_store(store_parent_dir, keys_tag):
         if key_file.endswith(UserFiles.Auth.PUBLIC_TAG):
             shutil.move(os.path.join(store_dir, key_file),
                         os.path.join(public_key_loc, '.'))
-            # The public key keeps standard '-rw-r--r--.' file permissions
+            # The public key keeps standard 644 ('-rw-r--r--') file permission
         elif key_file.endswith(UserFiles.Auth.PRIVATE_TAG):
             loc = shutil.move(os.path.join(store_dir, key_file),
                               os.path.join(private_key_loc, '.'))
             # Now lock the prviate key in its permanent location
             try:
-                lockdown_private_keys(loc)
+                lockdown_private_keys(loc)  # Linux File Permission now 600
             # Catch any and all errors here, since private keys must be
             # locked for the security (asymmetric cryptography) to work.
             except Exception:
@@ -834,9 +837,26 @@ def key_store_exists(store_dir_path):
 
 def lockdown_private_keys(key_file_path):
     """Change key file permissions to lock from other users."""
-    # This means that the owner can read & write, but all others cannot
-    # do anything, to the file, i.e. '-rw-------.' file permissions.
+    # This means that the owner can read & write, but all others cannot do
+    # anything, to the file, i.e. 600 ('-rw-------.') Linux file permission.
     if not os.path.exists(key_file_path):
         raise FileNotFoundError(
             "Private key not found at location '%s'." % key_file_path)
     os.chmod(key_file_path, stat.S_IRUSR | stat.S_IWUSR)
+
+
+def ensure_user_keys_exist():
+    """Check if client (user) keys exist and if not, create them."""
+    if key_store_exists(UserFiles.get_path()):
+        return True
+    else:
+        try:
+            generate_key_store(
+                UserFiles.get_path(include_auth_dirname=False),
+                UserFiles.Auth.CLIENT_TAG
+            )
+            return True
+        # Catch anything so we can otherwise be sure the key store exists.
+        except Exception as exc:
+            LOG.exception("Failed to create user authentication keys.")
+            return False

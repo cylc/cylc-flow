@@ -34,14 +34,15 @@ from cylc.flow.exceptions import (
     SuiteServiceFileError
 )
 from cylc.flow.hostuserutil import get_fqdn_by_host
-from cylc.flow.network.authentication import (
-    encode_, decode_, get_client_private_key_location)
+from cylc.flow.network.authentication import encode_, decode_
 from cylc.flow.network.server import PB_METHOD_MAP
 from cylc.flow.suite_files import (
     ContactFileFields,
-    UserFiles,
     detect_old_contact_file,
-    load_contact_file
+    ensure_user_keys_exist,
+    get_auth_item,
+    load_contact_file,
+    UserFiles
 )
 
 # we should only have one ZMQ context per-process
@@ -65,8 +66,8 @@ class ZMQClient(object):
         decode_method (function):
             Translates incoming message strings into digestible data.
             ``decode_method(str) -> json``
-        secret_key_loc (function):
-            Return path of suite's secret keyfile for server communication.
+        srv_public_key_loc (function):
+            Return path of server's public key for server communication.
         timeout (float):
             Set the default timeout in seconds. The default is
             ``ZMQClient.DEFAULT_TIMEOUT``.
@@ -91,8 +92,9 @@ class ZMQClient(object):
     DEFAULT_TIMEOUT = 5.  # 5 seconds
 
     def __init__(
-            self, host, port, encode_method, decode_method, secret_key_loc,
-            timeout=None, timeout_handler=None, header=None):
+            self, host, port, encode_method, decode_method,
+            srv_public_key_loc, timeout=None, timeout_handler=None,
+            header=None):
         if timeout is None:
             timeout = self.DEFAULT_TIMEOUT
         else:
@@ -100,44 +102,41 @@ class ZMQClient(object):
         self.timeout = timeout * 1000
         self.timeout_handler = timeout_handler
 
-        self.secret_key = secret_key_loc
-        try:
-            secret = self.secret_key()
-        # there is no need to encrypt messages ourselves before sending.
-        except SuiteServiceFileError:
-            raise ClientError("Could not read suite's private key file.")
-
         # open the ZMQ socket
         self.socket = CONTEXT.socket(zmq.REQ)
 
-        # Fetch client keys, generated at registration, for authentication
-        error_msg = "Failed to find suite's public key, so cannot connect."
+        # check for, & create if nonexistent, user keys in the right location
+        if not ensure_user_keys_exist():
+            raise ClientError("Unable to generate user authentication keys.")
+
+        client_priv_keyfile = os.path.join(
+            UserFiles.get_user_certificate_full_path(private=True),
+            UserFiles.Auth.CLIENT_PRIVATE_KEY_CERTIFICATE)
+        error_msg = "Failed to find user's private key, so cannot connect."
         try:
-            client_public_key, client_private_key = zmq.auth.load_certificate(
-                secret)
+            client_public_key, client_priv_key = zmq.auth.load_certificate(
+                client_priv_keyfile)
         except (OSError, ValueError):
             raise ClientError(error_msg)
-        if client_private_key is None:  # this cannot be caught by exception
+        if client_priv_key is None:  # this can't be caught by exception
             raise ClientError(error_msg)
         self.socket.curve_publickey = client_public_key
-        self.socket.curve_secretkey = client_private_key
+        self.socket.curve_secretkey = client_priv_key
 
         # A client can only connect to the server if it knows its public key,
         # so we grab this from the location it was created on the filesystem:
-        server_public_keyfile = os.path.join(
-            UserFiles.get_user_certificate_full_path(),
-            UserFiles.Auth.SERVER_PUBLIC_KEY_CERTIFICATE)
         try:
             # 'load_certificate' will try to load both public & private keys
             # from a provided file but will return None, not throw an error,
-            # for the latter item if not there (as for all public key files) so
-            # it is OK to use; there is no method to load only the public key.
+            # for the latter item if not there (as for all public key files)
+            # so it is OK to use; there is no method to load only the
+            # public key.
             server_public_key = zmq.auth.load_certificate(
-                server_public_keyfile)[0]  # ValueError raised w/ no public key
+                srv_public_key_loc)[0]
             self.socket.curve_serverkey = server_public_key
-        except (OSError, ValueError):
+        except (OSError, ValueError):  # ValueError raised w/ no public key
             raise ClientError(
-                "Failed to load server public key, so cannot connect.")
+                "Failed to load the suite's public key, so cannot connect.")
 
         self.socket.connect('tcp://%s:%d' % (host, port))
         # if there is no server don't keep the client hanging around
@@ -282,7 +281,10 @@ class SuiteRuntimeClient(ZMQClient):
             port=port,
             encode_method=encode_,
             decode_method=decode_,
-            secret_key_loc=partial(get_client_private_key_location, suite),
+            srv_public_key_loc=get_auth_item(
+                UserFiles.Auth.SERVER_PUBLIC_KEY_CERTIFICATE, suite,
+                content=False
+            ),
             timeout=timeout,
             header=self.get_header(),
             timeout_handler=partial(self._timeout_handler, suite, host, port)

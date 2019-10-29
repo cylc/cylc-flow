@@ -18,13 +18,10 @@
 import getpass
 import json
 
-from cylc.flow.suite_files import UserFiles, get_auth_item
 
-
-def get_client_private_key_location(suite):
-    """ Return the secret used to encrypt messages sent by the client. """
-    return get_auth_item(
-        UserFiles.Auth.CLIENT_PRIVATE_KEY_CERTIFICATE, suite, content=False)
+def encode_(message):
+    """ Encode a message from JSON format to a string. """
+    return json.dumps(message)
 
 
 def decode_(message):
@@ -33,8 +30,3 @@ def decode_(message):
     # if able to decode assume this is the user
     msg['user'] = getpass.getuser()
     return msg
-
-
-def encode_(message):
-    """ Encode a message from JSON format to a string. """
-    return json.dumps(message)
