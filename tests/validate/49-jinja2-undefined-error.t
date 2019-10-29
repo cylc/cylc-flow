@@ -23,7 +23,8 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-val"
 run_fail "${TEST_NAME}" cylc validate suite.rc
-cmp_ok "${TEST_NAME}.stderr" <<'__ERROR__'
+cmp_ok "${TEST_NAME}.stderr" <<__ERROR__
+ERROR - bad Suite Config $PWD/suite.rc
 Jinja2Error: 'UNDEFINED_WHATEVER' is undefined
 Context lines:
     [[graph]]

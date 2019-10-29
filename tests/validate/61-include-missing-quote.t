@@ -27,6 +27,7 @@ __SUITE_RC__
 
 run_fail "${TEST_NAME_BASE}" cylc validate 'suite.rc'
 cmp_ok "${TEST_NAME_BASE}.stderr" <<__ERR__
+ERROR - bad Suite Config $PWD/suite.rc
 FileParseError: mismatched quotes (in $PWD/suite.rc):
    %include 'foo.rc
 __ERR__

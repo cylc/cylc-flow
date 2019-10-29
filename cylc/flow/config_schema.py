@@ -505,12 +505,17 @@ def get_config(output_fname, tvars, suite_fpath=None, user=True, site=True):
 
     CONFIG_FILEPATHS = []
     if site:
-        CONFIG_FILEPATHS.append(SITE_CONF_DIR / CONF_BASENAME)
-    if user:
-        CONFIG_FILEPATHS.append(USER_CONF_DIR / CONF_BASENAME)
-    if suite_fpath:
         CONFIG_FILEPATHS.append(
-            pathlib.Path(suite_fpath) / pathlib.Path(suite_fpath)
+            (SITE_CONF_DIR / CONF_BASENAME, upgrader.SITE_CONFIG)
+        )
+    if user:
+        CONFIG_FILEPATHS.append(
+            (USER_CONF_DIR / CONF_BASENAME, upgrader.USER_CONFIG)
+        )
+    if suite_fpath:
+        CONFIG_FILEPATHS.append((
+            pathlib.Path(suite_fpath),
+            "Suite Config")
         )
     LOG.debug(f"CONFIG FILEPATHS are: {CONFIG_FILEPATHS}")
     return CylcConfig(CONFIG_FILEPATHS, output_fname, tvars)
@@ -535,23 +540,24 @@ class CylcConfig(ParsecConfig):
         ParsecConfig.__init__(
             self, SPEC, upg, output_fname, tvars, cylc_config_validate
         )
-        for fpath in filepaths:
+        for fpath, title in filepaths:
+            LOG.debug(f"Parsing {fpath} of {title}")
             try:
                 # Log a warning if global or user settings files do not exist.
                 if not os.access(fpath, os.F_OK | os.R_OK):
                     LOG.warning(f"fpath {fpath} not a valid path")
                     continue
-                self.loadcfg(fpath, "cylc config definition")
-                LOG.info(f"fpath {fpath} sucessfully loaded")
+                self.loadcfg(fpath, title)
+                LOG.debug(f"fpath {fpath} sucessfully loaded")
             except ParsecError as exc:
-                if conf_type == upgrader.SITE_CONFIG:
+                if title == upgrader.SITE_CONFIG:
                     # Warn on bad site file (users can't fix it).
                     LOG.warning(
-                        "ignoring bad %s %s:\n%s", conf_type, fname, exc
+                        "ignoring bad %s %s:\n%s", title, fpath, exc
                     )
                 else:
                     # Abort on bad user file (users can fix it).
-                    LOG.error("bad %s %s", conf_type, fname)
+                    LOG.error("bad %s %s", title, fpath)
                     raise
 
 

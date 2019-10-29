@@ -38,5 +38,6 @@ cat > suite.rc <<__END__
 __END__
 run_fail "${TEST_NAME}" cylc validate suite.rc
 cmp_ok "${TEST_NAME}.stderr" <<__END__
+ERROR - bad Suite Config $PWD/suite.rc
 IllegalItemError: [runtime][task1][directives]-l  select - (consecutive spaces)
 __END__

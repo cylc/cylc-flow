@@ -38,7 +38,8 @@ cat >'suite.rc' <<'__SUITE_RC__'
 __SUITE_RC__
 
 run_fail "${TEST_NAME_BASE}-simple-fail" cylc validate 'suite.rc'
-cmp_ok "${TEST_NAME_BASE}-simple-fail.stderr" <<'__ERR__'
+cmp_ok "${TEST_NAME_BASE}-simple-fail.stderr" <<__ERR__
+ERROR - bad Suite Config $PWD/suite.rc
 FileParseError: Syntax error line 6: Whitespace after the line continuation character (\).
 __ERR__
 

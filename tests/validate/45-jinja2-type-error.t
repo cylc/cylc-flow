@@ -30,7 +30,8 @@ cat >'suite.rc' <<'__SUITERC__'
 {{ 1 / 'foo' }}
 __SUITERC__
 run_fail "${TEST_NAME}" cylc validate 'suite.rc'
-cmp_ok "${TEST_NAME}.stderr" <<'__ERROR__'
+cmp_ok "${TEST_NAME}.stderr" <<__ERROR__
+ERROR - bad Suite Config $PWD/suite.rc
 Jinja2Error: unsupported operand type(s) for /: 'int' and 'str'
 Context lines:
     [[graph]]
@@ -45,7 +46,8 @@ cat >'suite.rc' <<'__SUITERC__'
 {% set a, b, c = foo %}
 __SUITERC__
 run_fail "${TEST_NAME}" cylc validate 'suite.rc'
-cmp_ok "${TEST_NAME}.stderr" <<'__ERROR__'
+cmp_ok "${TEST_NAME}.stderr" <<__ERROR__
+ERROR - bad Suite Config $PWD/suite.rc
 Jinja2Error: not enough values to unpack (expected 3, got 2)
 Context lines:
 #!Jinja2

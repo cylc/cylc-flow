@@ -25,6 +25,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 TEST_NAME="${TEST_NAME_BASE}"
 run_fail "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 cmp_ok "${TEST_NAME}.stderr" <<__END__
+ERROR - bad Suite Config $PWD/suite.rc
 IllegalItemError: [scheduling]initial cycle time
 __END__
 #-------------------------------------------------------------------------------
