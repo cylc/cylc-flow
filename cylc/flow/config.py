@@ -45,7 +45,7 @@ from cylc.flow.exceptions import (
     CylcError, SuiteConfigError, IntervalParsingError, TaskDefError)
 from cylc.flow.graph_parser import GraphParser
 from cylc.flow.param_expand import NameExpander
-from cylc.flow.config_schema import get_config
+from cylc.flow.config_schema import config_getter
 from cylc.flow.cycling.loader import (
     get_point, get_point_relative, get_interval, get_interval_cls,
     get_sequence, get_sequence_cls, init_cyclers, INTEGER_CYCLING_TYPE,
@@ -184,7 +184,9 @@ class SuiteConfig(object):
         # parse, upgrade, validate the suite, but don't expand with default
         # items
         self.mem_log("config.py: before CylcConfig init")
-        self.pcfg = get_config(output_fname, template_vars, suite_fpath=fpath)
+        self.pcfg = config_getter(
+            output_fname, template_vars, suite_fpath=fpath
+        )
         self.mem_log("config.py: after CylcConfig init")
         self.mem_log("config.py: before get(sparse=True")
         self.cfg = self.pcfg.get(sparse=True)

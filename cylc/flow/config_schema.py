@@ -31,6 +31,12 @@ from cylc.flow.parsec.upgrade import upgrader
 from cylc.flow.parsec.validate import (
     DurationFloat, CylcConfigValidator as VDR, cylc_config_validate)
 
+
+# This dictionary stores config objects created to save re-making them
+# if the same one is asked for again.
+CONFIG_MEMORY = {}
+
+
 # Nested dict of spec items.
 # Spec value is [value_type, default, allowed_2, allowed_3, ...]
 # where:
@@ -478,7 +484,7 @@ def upg(cfg, descr):
         pass
 
 
-def get_config(output_fname, tvars, suite_fpath=None, user=True, site=True):
+def config_getter(output_fname, tvars, suite_fpath=None, user=True, site=True):
     """
     Create a list of config file locations for CylcConfig to collect config
     settings from.
@@ -499,7 +505,7 @@ def get_config(output_fname, tvars, suite_fpath=None, user=True, site=True):
         A CylcConfig object.
     """
     _HOME = pathlib.Path.home() or get_user_home()
-    SITE_CONF_DIR = pathlib.Path(_HOME, "mock_cylc_global")
+    SITE_CONF_DIR = pathlib.Path(os.sep, 'etc', 'cylc', 'flow', CYLC_VERSION)
     USER_CONF_DIR = pathlib.Path(_HOME, ".cylc", "flow", CYLC_VERSION)
     CONF_BASENAME = "flow.rc"
 
@@ -518,7 +524,15 @@ def get_config(output_fname, tvars, suite_fpath=None, user=True, site=True):
             "Suite Config")
         )
     LOG.debug(f"CONFIG FILEPATHS are: {CONFIG_FILEPATHS}")
-    return CylcConfig(CONFIG_FILEPATHS, output_fname, tvars)
+
+    # If these variables have not been passed before add the resulting
+    # CylcConfig object to the cache dictionary.
+    key = str((output_fname, tvars, suite_fpath, user, site))
+    if key not in CONFIG_MEMORY.keys():
+        CONFIG_MEMORY[key] =\
+            CylcConfig(CONFIG_FILEPATHS, output_fname, tvars)
+
+    return CONFIG_MEMORY[key]
 
 
 class CylcConfig(ParsecConfig):
@@ -559,16 +573,6 @@ class CylcConfig(ParsecConfig):
                     # Abort on bad user file (users can fix it).
                     LOG.error("bad %s %s", title, fpath)
                     raise
-
-
-class RawSuiteConfig(ParsecConfig):
-    """Raw suite configuration."""
-
-    def __init__(self, fpath, output_fname, tvars):
-        """Return the default instance."""
-        ParsecConfig.__init__(
-            self, SPEC, upg, output_fname, tvars, cylc_config_validate)
-        self.loadcfg(fpath, "suite definition")
 
 
 class GlobalConfig(ParsecConfig):
