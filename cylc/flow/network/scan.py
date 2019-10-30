@@ -136,8 +136,8 @@ def scan_many(items, methods=None, timeout=None, ordered=False):
         list: [(host, port, identify_result), ...]
 
     """
-    args = ((reg, host, port, timeout, methods)
-            for reg, host, port, _ in items)
+    args = ((reg, host, port, pub_port, timeout, methods)
+            for reg, host, port, pub_port in items)
 
     if ordered:
         yield from async_map(scan_one, args)
@@ -146,13 +146,14 @@ def scan_many(items, methods=None, timeout=None, ordered=False):
             result for _, result in async_unordered_map(scan_one, args))
 
 
-async def scan_one(reg, host, port, timeout=None, methods=None):
+async def scan_one(reg, host, port, pub_port, timeout=None, methods=None):
     """Connect to and identify workflow server if possible.
 
     Args:
         reg (str): Registered name of workflow.
         host (str): Workflow host.
         port (int): Workflow server port.
+        pub_port (int): Workflow publisher port.
         timeout (float, optional): Client socket receiver timeout.
         methods (list): List of methods/endpoints to request.
 
@@ -170,7 +171,7 @@ async def scan_one(reg, host, port, timeout=None, methods=None):
             if cylc.flow.flags.debug:
                 raise
             sys.stderr.write("ERROR: %s: %s\n" % (exc, host))
-            return (reg, host, port, None)
+            return (reg, host, port, pub_port, None)
 
     # NOTE: Connect to the suite by host:port, this was the
     #       SuiteRuntimeClient will not attempt to check the contact file
@@ -187,13 +188,13 @@ async def scan_one(reg, host, port, timeout=None, methods=None):
         except ClientTimeout as exc:
             LOG.exception(
                 "Timeout: name:%s, host:%s, port:%s", reg, host, port)
-            return (reg, host, port, MSG_TIMEOUT)
+            return (reg, host, port, pub_port, MSG_TIMEOUT)
         except ClientError as exc:
             LOG.exception("ClientError")
-            return (reg, host, port, result or None)
+            return (reg, host, port, pub_port, result or None)
         else:
             result.update(msg)
-    return (reg, host, port, result)
+    return (reg, host, port, pub_port, result)
 
 
 def re_compile_filters(patterns_owner=None, patterns_name=None):

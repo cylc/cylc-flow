@@ -17,18 +17,19 @@
 
 from threading import Barrier
 from time import sleep
-
 from unittest import main
+
 import zmq
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.network.server import SuiteRuntimeServer, PB_METHOD_MAP
 from cylc.flow.network.client import SuiteRuntimeClient
+from cylc.flow.suite_files import create_auth_files
 from cylc.flow.tests.util import CylcWorkflowTestCase, create_task_proxy
 from cylc.flow.ws_data_mgr import WsDataMgr
 
+
 SERVER_CONTEXT = zmq.Context()
-SECRET = 'TheQuickBrownFox'
 
 
 def get_secret():
@@ -79,6 +80,7 @@ class TestSuiteRuntimeClient(CylcWorkflowTestCase):
         self.task_pool.release_runahead_tasks()
         self.scheduler.ws_data_mgr.initiate_data_model()
         self.workflow_id = self.scheduler.ws_data_mgr.workflow_id
+        create_auth_files(self.suite_name)  # auth keys are required for comms
         barrier = Barrier(2, timeout=20)
         self.server = SuiteRuntimeServer(
             self.scheduler,
@@ -93,18 +95,18 @@ class TestSuiteRuntimeClient(CylcWorkflowTestCase):
         while barrier.n_waiting < 1:
             sleep(0.2)
         barrier.wait()
+        sleep(0.5)
         self.client = SuiteRuntimeClient(
             self.scheduler.suite,
             host=self.scheduler.host,
             port=self.server.port)
-        self.client.secret = get_secret
+        sleep(0.5)
 
     def tearDown(self):
         self.server.stop()
         self.client.stop()
 
     def test_constructor(self):
-        self.assertIsNotNone(self.client.secret)
         self.assertFalse(self.client.socket.closed)
 
     def test_serial_request(self):

@@ -1592,7 +1592,7 @@ see `COPYING' in the Cylc source distribution.
 
             # Re-initialise data model on reload
             if has_reloaded:
-                self.ws_data_mgr.initiate_data_model(reload=True)
+                self.ws_data_mgr.initiate_data_model(reloaded=True)
                 self.publisher.publish(
                     self.ws_data_mgr.get_publish_deltas())
             # Update state summary, database, and uifeed

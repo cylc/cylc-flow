@@ -18,6 +18,8 @@
 from unittest import main
 from time import sleep
 
+import pytest
+
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.tests.util import CylcWorkflowTestCase, create_task_proxy
 from cylc.flow.ws_data_mgr import WsDataMgr
@@ -32,6 +34,14 @@ def get_port_range():
 
 
 PORT_RANGE = get_port_range()
+
+
+def test_process_delta_msg():
+    """Test delta message processing."""
+    # test non-key
+    not_topic, not_delta = process_delta_msg(b'foo', b'bar', None)
+    assert not_topic == 'foo'
+    assert not_delta is None
 
 
 class TestWorkflowSubscriber(CylcWorkflowTestCase):
@@ -88,6 +98,8 @@ class TestWorkflowSubscriber(CylcWorkflowTestCase):
         # delay to allow subscriber to connection,
         # otherwise it misses the first message
         sleep(1.0)
+        self.topic = None
+        self.data = None
 
     def tearDown(self):
         self.subscriber.stop()
@@ -102,10 +114,13 @@ class TestWorkflowSubscriber(CylcWorkflowTestCase):
         """Test publishing data."""
         pub_data = self.scheduler.ws_data_mgr.get_publish_deltas()
         self.publisher.publish(pub_data)
-        btopic, msg = self.subscriber.loop.run_until_complete(
-            self.subscriber.socket.recv_multipart())
-        topic, delta = process_delta_msg(btopic, msg, None)
-        self.assertEqual(delta.id, self.workflow_id)
+
+        def msg_process(btopic, msg):
+            self.subscriber.stopping = True
+            self.topic, self.data = process_delta_msg(btopic, msg, None)
+        self.subscriber.loop.run_until_complete(
+            self.subscriber.subscribe(msg_process))
+        self.assertEqual(self.data.id, self.workflow_id)
 
 
 if __name__ == '__main__':

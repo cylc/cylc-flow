@@ -22,11 +22,12 @@ GraphQL, both in the WS and UIS, it is then provisioned to the CLI and GUI.
 This data store is comprised of Protobuf message objects (data elements),
 which are used as data containers for their respective type.
 
-Changes to the data store are accumulated a main loop iteration as deltas
-in the form of protobuf messages, and then applied. These deltas are populated
-with the minimal information; only the elements and only the fields of those
-elements that have changed. It is done this way for the efficient transport and
-consistent application to remotely synced data-stores.
+Changes to the data store are accumulated on a main loop iteration as deltas
+in the form of protobuf messages, and then applied to the local data-store.
+These deltas are populated with the minimal information; only the elements
+and only the fields of those elements that have changed. It is done this way
+for the efficient transport and consistent application to remotely synced
+data-stores.
 
 Static data elements are generated on workflow start/restart/reload, which
 includes workflow, task, and family definition objects.
@@ -111,7 +112,7 @@ def task_mean_elapsed_time(tdef):
     return tdef.rtconfig['job'].get('execution time limit', None)
 
 
-def apply_workflow_delta(key, delta, data):
+def apply_delta(key, delta, data):
     """Apply delta to specific data-store workflow and type."""
     # Merge in updated fields
     if key == WORKFLOW:
@@ -257,6 +258,45 @@ class WsDataMgr:
         }
         self.updates_pending = False
 
+    def initiate_data_model(self, reloaded=False):
+        """Initiate or Update data model on start/restart/reload.
+
+        Args:
+            reloaded (bool, optional):
+                Reset data-store before regenerating.
+
+        """
+        # Reset attributes/data-store on reload:
+        if reloaded:
+            self.__init__(self.schd)
+
+        # Static elements
+        self.generate_definition_elements()
+        self.increment_graph_elements()
+
+        # Tidy and reassign task jobs after reload
+        if reloaded:
+            new_tasks = set(self.updates[TASK_PROXIES])
+            job_tasks = set(self.schd.job_pool.pool)
+            for tp_id in job_tasks.difference(new_tasks):
+                self.schd.job_pool.remove_task_jobs(tp_id)
+            for tp_id, tp_delta in self.updates[TASK_PROXIES].items():
+                tp_delta.jobs[:] = [
+                    j_id
+                    for j_id in self.schd.job_pool.task_jobs.get(tp_id, [])
+                ]
+            self.schd.job_pool.reload_deltas()
+
+        # Set jobs ref
+        self.data[self.workflow_id][JOBS] = self.schd.job_pool.pool
+
+        # Update workflow statuses and totals (assume needed)
+        self.update_workflow()
+        # Apply current deltas
+        self.apply_deltas(reloaded)
+        self.updates_pending = False
+        self.schd.job_pool.updates_pending = False
+
     def generate_definition_elements(self):
         """Generate static definition data elements.
 
@@ -378,8 +418,6 @@ class WsDataMgr:
         self.ancestors = ancestors
         self.descendants = descendants
         self.parents = parents
-
-        self.updates_pending = True
 
     def generate_ghost_task(self, task_id):
         """Create task-point element populated with static data.
@@ -635,60 +673,15 @@ class WsDataMgr:
         if new_points:
             self.generate_ghost_families(new_points)
 
-    def prune_points(self, point_strings):
-        """Remove old nodes and edges by cycle point.
+    def update_data_structure(self, updated_nodes=None):
+        """Reflect workflow changes in the data structure."""
+        # Clear previous deltas
+        self.clear_deltas()
 
-        Args:
-            point_strings (list):
-                Iterable of valid cycle point strings.
-
-        """
-        flow_data = self.data[self.workflow_id]
-        if not point_strings:
-            return
-        node_ids = set()
-        for tp_id, tproxy in list(flow_data[TASK_PROXIES].items()):
-            if tproxy.cycle_point in point_strings:
-                node_ids.add(tp_id)
-                self.deltas[TASK_PROXIES].pruned.append(tp_id)
-                self.deltas[JOBS].pruned.extend(tproxy.jobs)
-                try:
-                    del self.schd.job_pool.task_jobs[tp_id]
-                except KeyError:
-                    pass
-
-        for fp_id, fproxy in list(flow_data[FAMILY_PROXIES].items()):
-            if fproxy.cycle_point in point_strings:
-                self.deltas[FAMILY_PROXIES].pruned.append(fp_id)
-
-        for e_id, edge in list(flow_data[EDGES].items()):
-            if edge.source in node_ids or edge.target in node_ids:
-                self.deltas[EDGES].pruned.append(e_id)
-
-        for point_string in point_strings:
-            try:
-                del self.cycle_states[point_string]
-            except KeyError:
-                continue
-
-    def initiate_data_model(self, reload=False):
-        """Initiate or Update data model on start/restart/reload.
-
-        Args:
-            reload (bool, optional):
-                Reset data-store before regenerating.
-
-        """
-        # Reset attributes/data-store on reload:
-        if reload:
-            self.__init__(self.schd)
-
-        # Set jobs ref
-        self.data[self.workflow_id][JOBS] = self.schd.job_pool.pool
-
-        # Static elements
-        self.generate_definition_elements()
+        # Update edges & node set
         self.increment_graph_elements()
+        # update states and other dynamic fields
+        self.update_dynamic_elements(updated_nodes)
 
         # Update workflow statuses and totals if needed
         if self.updates_pending:
@@ -751,6 +744,42 @@ class WsDataMgr:
             # Pruned and/or additional elements require
             # state/status recalculation, and ID ref updates.
             self.updates_pending = True
+
+    def prune_points(self, point_strings):
+        """Remove old nodes and edges by cycle point.
+
+        Args:
+            point_strings (iterable):
+                Iterable of valid cycle point strings.
+
+        """
+        flow_data = self.data[self.workflow_id]
+        if not point_strings:
+            return
+        node_ids = set()
+        for tp_id, tproxy in list(flow_data[TASK_PROXIES].items()):
+            if tproxy.cycle_point in point_strings:
+                node_ids.add(tp_id)
+                self.deltas[TASK_PROXIES].pruned.append(tp_id)
+                self.deltas[JOBS].pruned.extend(tproxy.jobs)
+                try:
+                    del self.schd.job_pool.task_jobs[tp_id]
+                except KeyError:
+                    pass
+
+        for fp_id, fproxy in list(flow_data[FAMILY_PROXIES].items()):
+            if fproxy.cycle_point in point_strings:
+                self.deltas[FAMILY_PROXIES].pruned.append(fp_id)
+
+        for e_id, edge in list(flow_data[EDGES].items()):
+            if edge.source in node_ids or edge.target in node_ids:
+                self.deltas[EDGES].pruned.append(e_id)
+
+        for point_string in point_strings:
+            try:
+                del self.cycle_states[point_string]
+            except KeyError:
+                continue
 
     def update_task_proxies(self, updated_tasks=None):
         """Update dynamic fields of task nodes/proxies.
@@ -917,8 +946,6 @@ class WsDataMgr:
              if t.is_held]
         )
 
-        workflow.reloading = self.schd.pool.do_reload
-
         # Construct a workflow status string for use by monitoring clients.
         workflow.status, workflow.status_msg = map(
             str, get_suite_status(self.schd))
@@ -944,26 +971,6 @@ class WsDataMgr:
         self.update_family_proxies(set(str(t.point) for t in updated_nodes))
         self.updates_pending = True
 
-    def update_data_structure(self, updated_nodes=None):
-        """Reflect workflow changes in the data structure."""
-        # Clear previous deltas
-        self.clear_deltas()
-
-        # Update edges & node set
-        self.increment_graph_elements()
-        # update states and other dynamic fields
-        self.update_dynamic_elements(updated_nodes)
-
-        # Update workflow statuses and totals if needed
-        if self.updates_pending:
-            self.update_workflow()
-
-        if self.updates_pending or self.schd.job_pool.updates_pending:
-            # Apply current deltas
-            self.apply_deltas()
-            self.updates_pending = False
-            self.schd.job_pool.updates_pending = False
-
     def clear_deltas(self):
         """Clear current deltas."""
         for key in self.deltas:
@@ -972,7 +979,7 @@ class WsDataMgr:
             if key in self.updates:
                 self.updates[key].clear()
 
-    def apply_deltas(self):
+    def apply_deltas(self, reloaded=False):
         """Gather and apply deltas."""
         # Copy in job deltas
         self.deltas[JOBS].CopyFrom(self.schd.job_pool.deltas)
@@ -985,7 +992,8 @@ class WsDataMgr:
         # Apply deltas to local data-store
         data = self.data[self.workflow_id]
         for key, delta in self.deltas.items():
-            apply_workflow_delta(key, delta, data)
+            delta.reloaded = reloaded
+            apply_delta(key, delta, data)
 
         # Construct checksum on deltas for export
         update_time = time()
@@ -1046,7 +1054,7 @@ class WsDataMgr:
 
         """
         if element_type not in DELTAS_MAP:
-            return None
+            return DELTAS_MAP[WORKFLOW]()
         data = self.data[self.workflow_id]
         pb_msg = DELTAS_MAP[element_type]()
         if element_type == WORKFLOW:
@@ -1054,5 +1062,4 @@ class WsDataMgr:
         else:
             pb_msg.time = data[WORKFLOW].last_updated
             pb_msg.deltas.extend(data[element_type].values())
-
         return pb_msg

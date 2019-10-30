@@ -1243,6 +1243,4 @@ class SuiteRuntimeServer(ZMQSocketBase):
 
         """
         pb_msg = self.schd.ws_data_mgr.get_data_elements(element_type)
-        if pb_msg is None:
-            return f'No elements of type "{element_type}"'
         return pb_msg.SerializeToString()

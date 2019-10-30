@@ -15,17 +15,27 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import asyncio
+from threading import Barrier
+from time import sleep
 from unittest import main
 
 import zmq
 
+from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.network.authorisation import Priv
-from cylc.flow.network.server import SuiteRuntimeServer
+from cylc.flow.network.server import SuiteRuntimeServer, PB_METHOD_MAP
 from cylc.flow.suite_files import create_auth_files
 from cylc.flow.tests.util import CylcWorkflowTestCase, create_task_proxy
 from cylc.flow.ws_data_mgr import WsDataMgr
 
 
+def get_port_range():
+    """Fetch global config port range."""
+    ports = glbl_cfg().get(['suite servers', 'run ports'])
+    return min(ports), max(ports)
+
+
+PORT_RANGE = get_port_range()
 SERVER_CONTEXT = zmq.Context()
 
 
@@ -72,28 +82,33 @@ class TestSuiteRuntimeServer(CylcWorkflowTestCase):
         self.scheduler.ws_data_mgr.initiate_data_model()
         self.workflow_id = self.scheduler.ws_data_mgr.workflow_id
         create_auth_files(self.suite_name)  # auth keys are required for comms
+        barrier = Barrier(2, timeout=10)
         self.server = SuiteRuntimeServer(
             self.scheduler,
             context=SERVER_CONTEXT,
+            threaded=True,
+            barrier=barrier,
             daemon=True
         )
         self.server.public_priv = Priv.CONTROL
+        self.server.start(*PORT_RANGE)
+        # barrier.wait() doesn't seem to work properly here
+        # so this workaround will do
+        while barrier.n_waiting < 1:
+            sleep(0.2)
+        barrier.wait()
+        sleep(0.5)
 
     def tearDown(self):
         self.server.stop()
 
     def test_constructor(self):
+        self.assertFalse(self.server.socket.closed)
         self.assertIsNotNone(self.server.schd)
         self.assertIsNotNone(self.server.resolvers)
 
     def test_graphql(self):
         """Test GraphQL endpoint method."""
-        try:
-            self.server.loop = asyncio.get_running_loop()
-        except RuntimeError:
-            self.server.loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(self.server.loop)
-
         request_string = f'''
 query {{
   workflows(ids: ["{self.workflow_id}"]) {{
@@ -101,9 +116,41 @@ query {{
   }}
 }}
 '''
-
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
         data = self.server.graphql(request_string)
         self.assertEqual(data['workflows'][0]['id'], self.workflow_id)
+
+    def test_pb_data_elements(self):
+        """Test Protobuf elements endpoint method."""
+        element_type = 'workflow'
+        data = PB_METHOD_MAP['pb_data_elements'][element_type]()
+        data.ParseFromString(self.server.pb_data_elements(element_type))
+        self.assertEqual(data.id, self.workflow_id)
+
+    def test_pb_entire_workflow(self):
+        """Test Protobuf entire workflow endpoint method."""
+        data = PB_METHOD_MAP['pb_entire_workflow']()
+        data.ParseFromString(self.server.pb_entire_workflow())
+        self.assertEqual(data.workflow.id, self.workflow_id)
+
+    def test_listener(self):
+        """Test listener."""
+        self.server.queue.put('STOP')
+        sleep(2.0)
+        self.server.queue.put('foobar')
+        with self.assertRaises(ValueError):
+            self.server._listener()
+
+    def test_receiver(self):
+        """Test receiver."""
+        msg_in = {'not_command': 'foobar', 'args': {}}
+        self.assertIn('error', self.server._receiver(msg_in))
+        msg_in = {'command': 'foobar', 'args': {}}
+        self.assertIn('error', self.server._receiver(msg_in))
 
 
 if __name__ == '__main__':

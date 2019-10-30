@@ -115,6 +115,8 @@ class TestWsDataMgr(CylcWorkflowTestCase):
         flow_msg = self.ws_data_mgr.get_data_elements(WORKFLOW)
         self.assertEqual(
             flow_msg.last_updated, self.data[WORKFLOW].last_updated)
+        none_msg = self.ws_data_mgr.get_data_elements('fraggle')
+        self.assertEqual(0, len(none_msg.ListFields()))
 
     def test_get_entire_workflow(self):
         """Test method that populates the entire workflow protobuf message."""
@@ -140,6 +142,8 @@ class TestWsDataMgr(CylcWorkflowTestCase):
         """Test method that generates all data elements in order."""
         self.assertEqual(0, len(self.data[WORKFLOW].task_proxies))
         self.ws_data_mgr.initiate_data_model()
+        self.assertEqual(3, len(self.data[WORKFLOW].task_proxies))
+        self.ws_data_mgr.initiate_data_model(reloaded=True)
         self.assertEqual(3, len(self.data[WORKFLOW].task_proxies))
 
     def test_prune_points(self):

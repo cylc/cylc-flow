@@ -42,9 +42,10 @@ cylc suite-state "${SUITE_NAME}" --task=foo --status=failed --point=1 \
 SRV_D="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/.service"
 HOST="$(sed -n 's/^CYLC_SUITE_HOST=//p' "${SRV_D}/contact")"
 PORT="$(sed -n 's/^CYLC_SUITE_PORT=//p' "${SRV_D}/contact")"
+PUBLISH_PORT="$(sed -n 's/^CYLC_SUITE_PUBLISH_PORT=//p' "${SRV_D}/contact")"
 cylc scan --comms-timeout=10 -f --color=never -n "${SUITE_NAME}" >'scan-f.out'
 cmp_ok 'scan-f.out' <<__END__
-${SUITE_NAME} ${USER}@${HOST}:${PORT}
+${SUITE_NAME} ${USER}@${HOST}:${PORT} ${USER}@${HOST}:${PUBLISH_PORT}
    Title:
       Authentication test suite.
    Description:
@@ -87,7 +88,7 @@ __END__
 cylc scan --comms-timeout=10 -f -t raw --color=never -n "${SUITE_NAME}" \
     >'scan-r.out'
 cmp_ok 'scan-r.out' <<__END__
-${SUITE_NAME}|${USER}|${HOST}|port|${PORT}
+${SUITE_NAME}|${USER}|${HOST}|port|${PORT}|publish-port|${PUBLISH_PORT}
 ${SUITE_NAME}|${USER}|${HOST}|title|Authentication test suite.
 ${SUITE_NAME}|${USER}|${HOST}|description|Stalls when the first task fails. Here we test out a multi-line description!
 ${SUITE_NAME}|${USER}|${HOST}|group|
@@ -109,6 +110,7 @@ cmp_json 'scan-j.out' 'scan-j.out' <<__END__
         "${SUITE_NAME}",
         "${HOST}",
         "${PORT}",
+        "${PUBLISH_PORT}",
         {
             "version":"$(cylc version)",
             "states":[

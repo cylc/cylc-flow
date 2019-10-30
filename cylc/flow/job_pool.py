@@ -20,7 +20,9 @@ their jobs, and is feed-to/used-by the UI Server in resolving queries.
 
 """
 from time import time
+from copy import deepcopy
 
+from cylc.flow import LOG
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_state import (
     TASK_STATUS_READY, TASK_STATUS_SUBMITTED, TASK_STATUS_SUBMIT_FAILED,
@@ -118,8 +120,15 @@ class JobPool:
             j_delta.messages.append(msg)
             self.updates.setdefault(j_id, PbJob(id=j_id)).MergeFrom(j_delta)
             self.updates_pending = True
-        except (KeyError, TypeError):
-            pass
+        except TypeError as exc:
+            LOG.error(f'Unable to append to {j_id} message field: {str(exc)}')
+
+    def reload_deltas(self):
+        """Gather all current jobs as deltas after reload."""
+        self.updates = deepcopy(self.pool)
+        self.pool = {}
+        if self.updates:
+            self.updates_pending = True
 
     def remove_job(self, job_d):
         """Remove job from pool."""
@@ -155,8 +164,8 @@ class JobPool:
             setattr(j_delta, attr_key, attr_val)
             self.updates.setdefault(j_id, PbJob(id=j_id)).MergeFrom(j_delta)
             self.updates_pending = True
-        except (KeyError, TypeError, AttributeError):
-            pass
+        except (TypeError, AttributeError) as exc:
+            LOG.error(f'Unable to set {j_id} data field: {str(exc)}')
 
     def set_job_state(self, job_d, status):
         """Set job state."""
@@ -166,16 +175,15 @@ class JobPool:
             f'{self.workflow_id}{ID_DELIM}{point}'
             f'{ID_DELIM}{name}{ID_DELIM}{sub_num}')
         if status in JOB_STATUSES_ALL:
-            try:
-                j_delta = PbJob(
-                    stamp=f'{j_id}@{update_time}',
-                    state=status
-                )
-                self.updates.setdefault(
-                    j_id, PbJob(id=j_id)).MergeFrom(j_delta)
-                self.updates_pending = True
-            except KeyError:
-                pass
+            j_delta = PbJob(
+                stamp=f'{j_id}@{update_time}',
+                state=status
+            )
+            self.updates.setdefault(
+                j_id, PbJob(id=j_id)).MergeFrom(j_delta)
+            self.updates_pending = True
+        else:
+            LOG.error(f'Unable to set {j_id} state field to {status}')
 
     def set_job_time(self, job_d, event_key, time_str=None):
         """Set an event time in job pool object.
@@ -189,11 +197,12 @@ class JobPool:
             f'{ID_DELIM}{name}{ID_DELIM}{sub_num}')
         try:
             j_delta = PbJob(stamp=f'{j_id}@{update_time}')
-            setattr(j_delta, event_key + '_time', time_str)
+            time_attr = f'{event_key}_time'
+            setattr(j_delta, time_attr, time_str)
             self.updates.setdefault(j_id, PbJob(id=j_id)).MergeFrom(j_delta)
             self.updates_pending = True
-        except (KeyError, TypeError, AttributeError):
-            pass
+        except (TypeError, AttributeError) as exc:
+            LOG.error(f'Unable to set {j_id} {time_attr} field: {str(exc)}')
 
     @staticmethod
     def parse_job_item(item):

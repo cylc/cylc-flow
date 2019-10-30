@@ -459,7 +459,7 @@ class Workflow(ObjectType):
     newest_runahead_cycle_point = String()
     newest_cycle_point = String()
     oldest_cycle_point = String()
-    reloading = Boolean()
+    reloaded = Boolean()
     run_mode = String()
     is_held_total = Int()
     state_totals = GenericScalar(resolver=resolve_state_totals)

@@ -100,6 +100,11 @@ def get_option_parser():
         action="store_true", default=False, dest="state_totals")
 
     parser.add_option(
+        "--publisher",
+        help="Append the suite publisher information to output.",
+        action="store_true", default=False, dest="publisher")
+
+    parser.add_option(
         "-f", "--full",
         help="Print all available information about each suite.",
         action="store_true", default=False, dest="full")
@@ -128,7 +133,7 @@ def get_option_parser():
 def main(parser, options):
     """Implement "cylc scan"."""
     if options.full:
-        options.describe = options.state_totals = True
+        options.describe = options.state_totals = options.publisher = True
     if options.format in ['raw', 'json']:
         options.color = False
 
@@ -188,7 +193,7 @@ def main(parser, options):
         print(state_legend.rstrip() + "\n")
 
     # work through scan results one by one
-    for reg, host, port, info in suites:
+    for reg, host, port, pub_port, info in suites:
         if isinstance(info, str):
             print(ERROR_STYLE + ' '.join([reg, host, port, info]))
         elif info is None:
@@ -198,7 +203,7 @@ def main(parser, options):
             print(ERROR_STYLE + 'Warning: suite has changed name %s => %s' % (
                 reg, info[KEY_NAME]))
         else:
-            formatter(reg, host, port, info, options)
+            formatter(reg, host, port, pub_port, info, options)
 
 
 def sort_meta(item):
@@ -209,12 +214,17 @@ def sort_meta(item):
     return key
 
 
-def format_plain(name, host, port, info, options):
+def format_plain(name, host, port, pub_port, info, options):
     """Print a scan result, implements --format=plain"""
     owner = info[KEY_OWNER]
 
-    print(Style.BRIGHT + name + Style.NORMAL
-          + ' %s@%s:%s' % (owner, host, port))
+    if options.publisher:
+        print(Style.BRIGHT + name + Style.NORMAL
+              + ' %s@%s:%s' % (owner, host, port)
+              + ' %s@%s:%s' % (owner, host, pub_port))
+    else:
+        print(Style.BRIGHT + name + Style.NORMAL
+              + ' %s@%s:%s' % (owner, host, port))
 
     if options.describe:
         meta_items = info.get(KEY_META)
@@ -244,11 +254,14 @@ def format_plain(name, host, port, info, options):
             print(INDENT * 2 + "%s%s" % (point_prefix, state_line))
 
 
-def format_raw(name, host, port, info, options):
+def format_raw(name, host, port, pub_port, info, options):
     """Print a scan result, implements --format=raw"""
     owner = info[KEY_OWNER]
 
-    print("%s|%s|%s|port|%s" % (name, owner, host, port))
+    if options.publisher:
+        print("%s|%s|%s|port|%s|publish-port|%s" % (name, owner, host, port, pub_port))
+    else:
+        print("%s|%s|%s|port|%s" % (name, owner, host, port))
 
     if options.describe:
         # Extracting required data for these options before processing

@@ -30,6 +30,9 @@ syntax = "proto3";
  * Pre-compiled protoc binary may be download from:
  * https://github.com/protocolbuffers/protobuf/releases
  *
+ * If merge/rebase conflicts arise, then regenerate the module.
+ * (DO NOT manually resolve conflicts)
+ *
  * */
 
 
@@ -67,7 +70,7 @@ message PbWorkflow {
     string newest_runahead_cycle_point = 15;
     string newest_cycle_point = 16;
     string oldest_cycle_point = 17;
-    bool reloading = 18;
+    bool reloaded = 18;
     string run_mode = 19;
     string cycling_mode = 20;
     map<string, int32> state_totals = 21;
@@ -237,6 +240,7 @@ message EDeltas {
     int64 checksum = 2;
     repeated string pruned = 3;
     repeated PbEdge deltas = 4;
+    bool reloaded = 5;
 }
 
 message FDeltas {
@@ -244,6 +248,7 @@ message FDeltas {
     int64 checksum = 2;
     repeated string pruned = 3;
     repeated PbFamily deltas = 4;
+    bool reloaded = 5;
 }
 
 message FPDeltas {
@@ -251,6 +256,7 @@ message FPDeltas {
     int64 checksum = 2;
     repeated string pruned = 3;
     repeated PbFamilyProxy deltas = 4;
+    bool reloaded = 5;
 }
 
 message JDeltas {
@@ -258,6 +264,7 @@ message JDeltas {
     int64 checksum = 2;
     repeated string pruned = 3;
     repeated PbJob deltas = 4;
+    bool reloaded = 5;
 }
 
 message TDeltas {
@@ -265,6 +272,7 @@ message TDeltas {
     int64 checksum = 2;
     repeated string pruned = 3;
     repeated PbTask deltas = 4;
+    bool reloaded = 5;
 }
 
 message TPDeltas {
@@ -272,4 +280,5 @@ message TPDeltas {
     int64 checksum = 2;
     repeated string pruned = 3;
     repeated PbTaskProxy deltas = 4;
+    bool reloaded = 5;
 }

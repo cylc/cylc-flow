@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc subscribe [OPTIONS] REG
+"""cylc subscribe [OPTIONS] ARGS
 
 (This command is for internal use.)
 Invoke suite subscriber to receive published workflow output.
@@ -53,13 +53,20 @@ def print_message(topic, data, subscriber=None, once=False):
 
 def get_option_parser():
     """Augment options parser to current context."""
-    parser = COP(__doc__, comms=True)
+    parser = COP(
+        __doc__,
+        argdoc=[
+            ('REG', 'Suite name'),
+            ('[USER_AT_HOST]', 'user@host:port, shorthand for --user, '
+             '--host & --port.')],
+        comms=True,
+        noforce=True
+    )
 
     delta_keys = list(DELTAS_MAP)
     pb_topics = ("Directly published data-store topics include: '" +
               ("', '").join(delta_keys[:-1]) +
               "' and '" + delta_keys[-1] + "'.")
-
     parser.add_option(
         "-T", "--topics",
         help="Specify a comma delimited list of subscription topics. "
@@ -76,36 +83,42 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(_, options, suite):
-    cre_owner, cre_name = re_compile_filters(None, ['.*'])
-    host = None
-    port = None
-    if options.host is None or options.port is None:
+def main(_, options, *args):
+    suite = args[0]
+
+    if len(args) > 1:
+        try:
+            user_at_host, options.port = args[1].split(':')
+            options.owner, options.host = user_at_host.split('@')
+        except ValueError:
+            print(('USER_AT_HOST must take the form '
+                   '"user@host:port"'), file=sys.stderr)
+            sys.exit(1)
+    elif options.host is None or options.port is None:
+        cre_owner, cre_name = re_compile_filters(None, ['.*'])
         while True:
-            for s_reg, s_host, _, s_pub_port in get_scan_items_from_fs(
+            for reg, host, _, pub_port in get_scan_items_from_fs(
                     cre_owner, cre_name):
-                if s_reg == suite:
-                    host = s_host
-                    port = int(s_pub_port)
+                if reg == suite:
+                    if options.host is None:
+                        options.host = host
+                    if options.port is None:
+                        options.port = int(pub_port)
                     break
-            if host and port:
+            if options.host and options.port:
                 break
             time.sleep(5)
-    else:
-        host = options.host
-        port = options.port
 
-    print(f'Connecting to tcp://{host}:{port}')
+    print(f'Connecting to tcp://{options.host}:{options.port}')
     topic_set = set()
     for topic in options.topics.split(','):
         topic_set.add(topic.encode('utf-8'))
 
     subscriber = WorkflowSubscriber(
         suite,
-        host=host,
-        port=port,
-        topics=topic_set
-    )
+        host=options.host,
+        port=options.port,
+        topics=topic_set)
 
     subscriber.loop.create_task(
         subscriber.subscribe(

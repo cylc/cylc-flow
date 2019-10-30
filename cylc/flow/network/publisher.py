@@ -87,11 +87,11 @@ class WorkflowPublisher(ZMQSocketBase):
         Args:
             items (iterable): [(topic, data, serializer)]
 
-            topic (bytes): The topic of the message.
+                topic (bytes): The topic of the message.
 
-            data (object): Data element/message to serialise and send.
+                data (object): Data element/message to serialise and send.
 
-            serializer (object, optional): string or func object.
+                serializer (object, optional): string or func object.
 
         """
         try:

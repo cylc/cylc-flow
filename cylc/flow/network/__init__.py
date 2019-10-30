@@ -125,14 +125,9 @@ class ZMQSocketBase:
         self.stopping = False
 
     def start(self, *args, **kwargs):
-        """Start the server.
+        """Start the server/network-component.
 
-        Port range passed to socket creation in server thread.
-
-        Args:
-            min_port (int): minimum socket port number
-            max_port (int): maximum socket port number
-
+        Pass arguments to _start_
         """
         if self.threaded:
             self.thread = Thread(
@@ -256,12 +251,24 @@ class ZMQSocketBase:
         self.stopping = False
         sleep(0)  # yield control to other threads
 
-    def stop(self):
-        """Stop the server."""
+    def stop(self, stop_loop=True):
+        """Stop the server.
+
+        Args:
+            stop_loop (Boolean): Stop running IOLoop of current thread.
+
+        """
         self._bespoke_stop()
-        if self.loop:
-            if not self.loop.is_running():
-                self.loop.run_until_complete(self.loop.shutdown_asyncgens())
+        if stop_loop and self.loop:
+            if self.loop.is_running():
+                future = asyncio.run_coroutine_threadsafe(
+                    self.loop.shutdown_asyncgens(),
+                    self.loop
+                )
+                try:
+                    future.result(2.0)
+                except asyncio.TimeoutError:
+                    pass
             self.loop.stop()
         if self.thread and self.thread.is_alive():
             self.thread.join()  # Wait for processes to return
