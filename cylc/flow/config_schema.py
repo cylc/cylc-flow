@@ -508,16 +508,24 @@ def config_getter(output_fname, tvars, suite_fpath=None, user=True, site=True):
     SITE_CONF_DIR = pathlib.Path(os.sep, 'etc', 'cylc', 'flow', CYLC_VERSION)
     USER_CONF_DIR = pathlib.Path(_HOME, ".cylc", "flow", CYLC_VERSION)
     CONF_BASENAME = "flow.rc"
-
     CONFIG_FILEPATHS = []
-    if site:
-        CONFIG_FILEPATHS.append(
-            (SITE_CONF_DIR / CONF_BASENAME, upgrader.SITE_CONFIG)
-        )
-    if user:
-        CONFIG_FILEPATHS.append(
-            (USER_CONF_DIR / CONF_BASENAME, upgrader.USER_CONFIG)
-        )
+    conf_path_str = os.getenv("CYLC_CONF_PATH")
+    if conf_path_str:
+        # Explicit config file override.
+        fname = os.path.join(conf_path_str, CONF_BASENAME)
+        if os.access(fname, os.F_OK | os.R_OK):
+            CONFIG_FILEPATHS.append(
+                (fname, upgrader.USER_CONFIG)
+            )
+    else:
+        if site:
+            CONFIG_FILEPATHS.append(
+                (SITE_CONF_DIR / CONF_BASENAME, upgrader.SITE_CONFIG)
+            )
+        if user:
+            CONFIG_FILEPATHS.append(
+                (USER_CONF_DIR / CONF_BASENAME, upgrader.USER_CONFIG)
+            )
     if suite_fpath:
         CONFIG_FILEPATHS.append((
             pathlib.Path(suite_fpath),
