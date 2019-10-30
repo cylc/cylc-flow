@@ -45,7 +45,6 @@ from cylc.flow.exceptions import (
     CylcError, SuiteConfigError, IntervalParsingError, TaskDefError)
 from cylc.flow.graph_parser import GraphParser
 from cylc.flow.param_expand import NameExpander
-from cylc.flow.glbl_cfg_lazy import glbl_cfg
 from cylc.flow.config_schema import get_config
 from cylc.flow.cycling.loader import (
     get_point, get_point_relative, get_interval, get_interval_cls,
@@ -312,10 +311,7 @@ class SuiteConfig(object):
         init_cyclers(self.cfg)
 
         # Running in UTC time? (else just use the system clock)
-        if self.cfg['cylc']['UTC mode'] is None:
-            set_utc_mode(glbl_cfg().get(['cylc', 'UTC mode']))
-        else:
-            set_utc_mode(self.cfg['cylc']['UTC mode'])
+        set_utc_mode(self.cfg['cylc']['UTC mode'])
 
         # Initial point from suite definition (or CLI override above).
         orig_icp = self.cfg['scheduling']['initial cycle point']
