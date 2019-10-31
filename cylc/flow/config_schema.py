@@ -726,7 +726,7 @@ class GlobalConfig(ParsecConfig):
 
         # Expand environment variables and ~user in LOCAL file paths.
         if 'HOME' not in os.environ:
-            os.environ['HOME'] = self._HOME
+            os.environ['HOME'] = str(self._HOME)
         cfg['documentation']['local'] = os.path.expandvars(
             cfg['documentation']['local'])
         for key, val in cfg['hosts']['localhost'].items():
