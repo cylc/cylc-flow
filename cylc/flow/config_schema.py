@@ -527,20 +527,23 @@ def config_getter(output_fname, tvars, suite_fpath=None, user=True, site=True):
                 (USER_CONF_DIR / CONF_BASENAME, upgrader.USER_CONFIG)
             )
     if suite_fpath:
+        # If a suite is reloaded we need to reload the definition...
         CONFIG_FILEPATHS.append((
             pathlib.Path(suite_fpath),
             "Suite Config")
         )
-    LOG.debug(f"CONFIG FILEPATHS are: {CONFIG_FILEPATHS}")
+        LOG.debug(f"CONFIG FILEPATHS are: {CONFIG_FILEPATHS}")
+        return CylcConfig(CONFIG_FILEPATHS, output_fname, tvars)
+    else:
+        # ...but if we just want the global and user configs we can use
+        # memoization   
+        LOG.debug(f"CONFIG FILEPATHS are: {CONFIG_FILEPATHS}")
+        key = str((output_fname, tvars, suite_fpath, user, site))
+        if key not in CONFIG_MEMORY.keys():
+            CONFIG_MEMORY[key] =\
+                CylcConfig(CONFIG_FILEPATHS, output_fname, tvars)
 
-    # If these variables have not been passed before add the resulting
-    # CylcConfig object to the cache dictionary.
-    key = str((output_fname, tvars, suite_fpath, user, site))
-    if key not in CONFIG_MEMORY.keys():
-        CONFIG_MEMORY[key] =\
-            CylcConfig(CONFIG_FILEPATHS, output_fname, tvars)
-
-    return CONFIG_MEMORY[key]
+        return CONFIG_MEMORY[key]
 
 
 class CylcConfig(ParsecConfig):
@@ -567,7 +570,7 @@ class CylcConfig(ParsecConfig):
             try:
                 # Log a warning if global or user settings files do not exist.
                 if not os.access(fpath, os.F_OK | os.R_OK):
-                    LOG.warning(f"fpath {fpath} not a valid path")
+                    LOG.info(f"fpath {fpath} not a valid path")
                     continue
                 self.loadcfg(fpath, title)
                 LOG.debug(f"fpath {fpath} sucessfully loaded")

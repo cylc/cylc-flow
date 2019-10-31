@@ -501,6 +501,7 @@ class SuiteConfig(object):
         if getattr(options, 'collapsed', None):
             # (used by the "cylc graph" viewer)
             self.closed_families = getattr(self.options, 'collapsed', None)
+
         elif is_reload:
             self.closed_families = []
         else:
