@@ -536,7 +536,7 @@ def config_getter(output_fname, tvars, suite_fpath=None, user=True, site=True):
         return CylcConfig(CONFIG_FILEPATHS, output_fname, tvars)
     else:
         # ...but if we just want the global and user configs we can use
-        # memoization   
+        # memoization
         LOG.debug(f"CONFIG FILEPATHS are: {CONFIG_FILEPATHS}")
         key = str((output_fname, tvars, suite_fpath, user, site))
         if key not in CONFIG_MEMORY.keys():
