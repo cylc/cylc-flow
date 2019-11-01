@@ -46,6 +46,10 @@ Third alpha release of Cylc 8.
 status message retries (problems that prevent message transmission are almost
 never transient, and in practice job polling is the only way to recover).
 
+[#3423](https://github.com/cylc/cylc-flow/pull/3423) - automatic task retries
+re-implemented using xtriggers. Retrying tasks will now be in the "waiting"
+state with a wall_clock xtrigger set for the retry time.
+
 ### Fixes
 
 [#3409](https://github.com/cylc/cylc-flow/pull/3409) - prevent cylc-run from
