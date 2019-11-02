@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
@@ -15,16 +14,15 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 """
 Display the state of live task proxies in a running suite.
 
 For color terminal ASCII escape codes, see
 http://ascii-table.com/ansi-escape-sequences.php
 """
-
 import sys
-if '--use-ssh' in sys.argv[1:]:
+
+if "--use-ssh" in sys.argv[1:]:
     # requires local terminal
     sys.exit("No '--use-ssh': this command requires a local terminal.")
 
@@ -39,50 +37,57 @@ from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.task_state import (
-    TASK_STATUS_RUNAHEAD, TASK_STATUSES_ORDERED,
-    TASK_STATUSES_RESTRICTED)
+    TASK_STATUS_RUNAHEAD,
+    TASK_STATUSES_ORDERED,
+    TASK_STATUSES_RESTRICTED,
+)
 from cylc.flow.task_state_prop import get_status_prop
 from cylc.flow.terminal import cli_function
 from cylc.flow.wallclock import get_time_string_from_unix_time
 
 
-SUITE_STATUS_SPLIT_REC = re.compile('^([a-z ]+ at )(.*)$')
+SUITE_STATUS_SPLIT_REC = re.compile("^([a-z ]+ at )(.*)$")
 # NOTE: would use unicode here but terminal rendering has a lot to be desired
-HELD_SYMBOL = '(held)'
+HELD_SYMBOL = "(held)"
 
 
 class SuiteMonitor(object):
-
     def reset(self, suite, owner, host, port, timeout):
-        self.pclient = SuiteRuntimeClient(
-            suite, owner, host, port, timeout)
+        self.pclient = SuiteRuntimeClient(suite, owner, host, port, timeout)
 
     def run(self, options, *args):
         suite = args[0]
 
         if len(args) > 1:
             try:
-                user_at_host, options.port = args[1].split(':')
-                options.owner, options.host = user_at_host.split('@')
+                user_at_host, options.port = args[1].split(":")
+                options.owner, options.host = user_at_host.split("@")
             except ValueError:
-                print(('USER_AT_HOST must take the form '
-                       '"user@host:port"'), file=sys.stderr)
+                print(
+                    ("USER_AT_HOST must take the form " '"user@host:port"'),
+                    file=sys.stderr,
+                )
                 sys.exit(1)
 
         client_name = os.path.basename(sys.argv[0])
         if options.restricted:
             client_name += " -r"
 
-        legend = ''
+        legend = ""
         for state in TASK_STATUSES_ORDERED:
-            legend += get_status_prop(state, 'ascii_ctrl')
-        legend += f'{HELD_SYMBOL}'
+            legend += get_status_prop(state, "ascii_ctrl")
+        legend += f"{HELD_SYMBOL}"
         legend = legend.rstrip()
 
         len_header = sum(len(s) for s in TASK_STATUSES_ORDERED)
 
-        self.reset(suite, options.owner, options.host, options.port,
-                   options.comms_timeout)
+        self.reset(
+            suite,
+            options.owner,
+            options.host,
+            options.port,
+            options.comms_timeout,
+        )
 
         is_cont = False
         while True:
@@ -93,59 +98,75 @@ class SuiteMonitor(object):
                     sleep(float(options.update_interval))
             is_cont = True
             try:
-                glbl, task_summaries = (
-                    self.pclient('get_suite_state_summary')[0:2])
+                glbl, task_summaries = self.pclient("get_suite_state_summary")[
+                    0:2
+                ]
             except ClientError as exc:
                 print("\033[1;37;41mERROR\033[0m", str(exc), file=sys.stderr)
-                self.reset(suite, options.owner, options.host, options.port,
-                           options.comms_timeout)
+                self.reset(
+                    suite,
+                    options.owner,
+                    options.host,
+                    options.port,
+                    options.comms_timeout,
+                )
             else:
                 if not glbl:
-                    print((
-                        "\033[1;37;41mWARNING\033[0m suite initialising"),
-                        file=sys.stderr)
+                    print(
+                        ("\033[1;37;41mWARNING\033[0m suite initialising"),
+                        file=sys.stderr,
+                    )
                     continue
-                states = [t["state"] for t in task_summaries.values() if (
-                          "state" in t)]
+                states = [
+                    t["state"]
+                    for t in task_summaries.values()
+                    if ("state" in t)
+                ]
                 n_tasks_total = len(states)
                 if options.restricted:
                     task_summaries = dict(
-                        (i, j) for i, j in task_summaries.items() if (
-                            j['state'] in TASK_STATUSES_RESTRICTED))
+                        (i, j)
+                        for i, j in task_summaries.items()
+                        if (j["state"] in TASK_STATUSES_RESTRICTED)
+                    )
                 if not options.display_runahead:
                     task_summaries = dict(
-                        (i, j) for i, j in task_summaries.items() if (
-                            j['state'] != TASK_STATUS_RUNAHEAD))
+                        (i, j)
+                        for i, j in task_summaries.items()
+                        if (j["state"] != TASK_STATUS_RUNAHEAD)
+                    )
                 try:
                     updated_at = get_time_string_from_unix_time(
-                        glbl['last_updated'])
+                        glbl["last_updated"]
+                    )
                 except KeyError:
                     updated_at = time()
                 except (TypeError, ValueError):
                     # Older suite.
-                    updated_at = glbl['last_updated'].isoformat()
+                    updated_at = glbl["last_updated"].isoformat()
 
-                run_mode = glbl['run_mode']
-                ns_defn_order = glbl['namespace definition order']
-                status_string = glbl['status_string']
+                run_mode = glbl["run_mode"]
+                ns_defn_order = glbl["namespace definition order"]
+                status_string = glbl["status_string"]
 
                 task_info = {}
                 name_list = set()
                 task_ids = list(task_summaries)
                 for task_id in task_ids:
-                    name = task_summaries[task_id]['name']
-                    point_string = task_summaries[task_id]['label']
-                    state = task_summaries[task_id]['state']
-                    is_held = task_summaries[task_id]['is_held']
+                    name = task_summaries[task_id]["name"]
+                    point_string = task_summaries[task_id]["label"]
+                    state = task_summaries[task_id]["state"]
+                    is_held = task_summaries[task_id]["is_held"]
                     name_list.add(name)
                     if is_held:
-                        text = f'{HELD_SYMBOL}{name}'
+                        text = f"{HELD_SYMBOL}{name}"
                     else:
                         text = name
                     if point_string not in task_info:
                         task_info[point_string] = {}
                     task_info[point_string][name] = get_status_prop(
-                        state, 'ascii_ctrl', subst=text)
+                        state, "ascii_ctrl", subst=text
+                    )
 
                 # Sort the tasks in each cycle point.
                 if options.sort_order == "alphanumeric":
@@ -169,33 +190,38 @@ class SuiteMonitor(object):
                     suite_name += " (%s)" % run_mode
                 prefix = "%s - %d tasks" % (suite_name, int(n_tasks_total))
                 suffix = "%s" % client_name
-                title_str = ' ' * len_header
+                title_str = " " * len_header
                 title_str = prefix + title_str[len(prefix):]
-                title_str = '\033[1;37;44m%s%s\033[0m' % (
-                    title_str[:-len(suffix)], suffix)
+                title_str = "\033[1;37;44m%s%s\033[0m" % (
+                    title_str[: -len(suffix)],
+                    suffix,
+                )
                 blit.append(title_str)
                 blit.append(legend)
 
                 updated_str = "updated: \033[1;38m%s\033[0m" % updated_at
                 blit.append(updated_str)
-                summary = 'state summary:'
-                state_totals = glbl['state totals']
+                summary = "state summary:"
+                state_totals = glbl["state totals"]
                 for state, tot in state_totals.items():
                     subst = " %d " % tot
-                    summary += get_status_prop(state, 'ascii_ctrl', subst)
+                    summary += get_status_prop(state, "ascii_ctrl", subst)
                 blit.append(summary)
 
                 # Print a divider line containing the suite status string.
                 try:
                     status1, status2 = (
-                        SUITE_STATUS_SPLIT_REC.match(status_string)).groups()
+                        SUITE_STATUS_SPLIT_REC.match(status_string)
+                    ).groups()
                 except AttributeError:
                     status1 = status_string
-                    status2 = ''
-                suffix = '_'.join(list(status1.replace(' ', '_'))) + status2
-                divider_str = '_' * len_header
+                    status2 = ""
+                suffix = "_".join(list(status1.replace(" ", "_"))) + status2
+                divider_str = "_" * len_header
                 divider_str = "\033[1;31m%s%s\033[0m" % (
-                    divider_str[:-len(suffix)], suffix)
+                    divider_str[: -len(suffix)],
+                    suffix,
+                )
                 blit.append(divider_str)
 
                 blitlines = {}
@@ -206,12 +232,12 @@ class SuiteMonitor(object):
                         if info is not None:
                             line += " %s" % info
                         elif options.align_columns:
-                            line += " %s" % (' ' * len(name))
+                            line += " %s" % (" " * len(name))
                     blitlines[indx] = line
 
                 if not options.once:
                     os.system("clear")
-                print('\n'.join(blit))
+                print("\n".join(blit))
                 indxs = list(blitlines)
                 try:
                     int(indxs[1])
@@ -232,59 +258,92 @@ A terminal-based live suite monitor.  Exit with 'Ctrl-C'.
 The USER_AT_HOST argument allows suite selection by 'cylc scan' output:
 cylc monitor $(cylc scan | grep <suite_name>)
 """,
-        argdoc=[('REG', 'Suite name'),
-                ('[USER_AT_HOST]', 'user@host:port, shorthand for --user, '
-                 '--host & --port.')], comms=True, noforce=True, color=True)
+        argdoc=[
+            ("REG", "Suite name"),
+            (
+                "[USER_AT_HOST]",
+                "user@host:port, shorthand for --user, " "--host & --port.",
+            ),
+        ],
+        comms=True,
+        noforce=True,
+        color=True,
+    )
 
     parser.add_option(
-        "-a", "--align",
+        "-a",
+        "--align",
         help="Align task names. Only useful for small suites.",
-        action="store_true", default=False, dest="align_columns")
+        action="store_true",
+        default=False,
+        dest="align_columns",
+    )
 
     parser.add_option(
-        "-r", "--restricted",
+        "-r",
+        "--restricted",
         help="Restrict display to active task states. "
         "This may be useful for monitoring very large suites. "
         "The state summary line still reflects all task proxies.",
-        action="store_true", default=False, dest="restricted")
+        action="store_true",
+        default=False,
+        dest="restricted",
+    )
 
     def_sort_order = glbl_cfg().get(["monitor", "sort order"])
 
     parser.add_option(
-        "-s", "--sort", metavar="ORDER",
-        help="Task sort order: \"definition\" or \"alphanumeric\"."
+        "-s",
+        "--sort",
+        metavar="ORDER",
+        help='Task sort order: "definition" or "alphanumeric".'
         "The default is " + def_sort_order + " order, as determined by "
         "global config. (Definition order is the order that tasks appear "
         "under [runtime] in the suite definition).",
-        action="store", default=def_sort_order, dest="sort_order")
+        action="store",
+        default=def_sort_order,
+        dest="sort_order",
+    )
 
     parser.add_option(
-        "-o", "--once",
+        "-o",
+        "--once",
         help="Show a single view then exit.",
-        action="store_true", default=False, dest="once")
+        action="store_true",
+        default=False,
+        dest="once",
+    )
 
     parser.add_option(
-        "-u", "--runahead",
+        "-u",
+        "--runahead",
         help="Display task proxies in the runahead pool (off by default).",
-        action="store_true", default=False, dest="display_runahead")
+        action="store_true",
+        default=False,
+        dest="display_runahead",
+    )
 
     parser.add_option(
-        "-i", "--interval",
+        "-i",
+        "--interval",
         help="Interval between suite state retrievals, "
-             "in seconds (default 1).",
-        metavar="SECONDS", action="store", default=1,
-        dest="update_interval")
+        "in seconds (default 1).",
+        metavar="SECONDS",
+        action="store",
+        default=1,
+        dest="update_interval",
+    )
 
     return parser
 
 
 @cli_function(parse_args)
 def main(_, options, *args):
-    SuiteMonitor().run(options, *args)
+    try:
+        SuiteMonitor().run(options, *args)
+    except KeyboardInterrupt:
+        pass
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        pass
+    main()
