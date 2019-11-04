@@ -129,6 +129,12 @@ def main(cmd_args, version, help_):
                         if arg.startswith("-"):
                             cmd_args.insert(cmd_args.index(arg), "--")
                             break
+            elif cylc_cmd.endswith("jobs-submit"):
+                if len(cmd_args) > 1:
+                    for arg in cmd_args:
+                        if not arg.startswith("-"):
+                            cmd_args.insert(cmd_args.index(arg) + 1, "--")
+                            break
 
             if help_:
                 execute_cmd(cylc_cmd, "--help")
