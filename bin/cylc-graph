@@ -227,7 +227,6 @@ def main(parser, opts, suite=None, start=None, stop=None):
 
     template_vars = load_template_vars(
         opts.templatevars, opts.templatevars_file)
-
     config = get_config(suite, opts, template_vars=template_vars)
     if opts.namespaces:
         graph_inheritance(config)

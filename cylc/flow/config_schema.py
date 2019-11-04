@@ -484,6 +484,11 @@ def upg(cfg, descr):
         pass
 
 
+def glbl_cfg():
+    # Alias for config_getter() with global only settings:
+    return config_getter(None, None)
+
+
 def config_getter(output_fname, tvars, suite_fpath=None, user=True, site=True):
     """
     Create a list of config file locations for CylcConfig to collect config
@@ -532,12 +537,16 @@ def config_getter(output_fname, tvars, suite_fpath=None, user=True, site=True):
             pathlib.Path(suite_fpath),
             "Suite Config")
         )
-        LOG.debug(f"CONFIG FILEPATHS are: {CONFIG_FILEPATHS}")
+        LOG.debug(f"CONFIG FILEPATHS are:")
+        for item in CONFIG_FILEPATHS:
+            LOG.debug('\t' + str(item))
         return CylcConfig(CONFIG_FILEPATHS, output_fname, tvars)
     else:
         # ...but if we just want the global and user configs we can use
         # memoization
-        LOG.debug(f"CONFIG FILEPATHS are: {CONFIG_FILEPATHS}")
+        LOG.debug(f"CONFIG FILEPATHS are:")
+        for item in CONFIG_FILEPATHS:
+            LOG.debug('\t' + str(item))
         key = str((output_fname, tvars, suite_fpath, user, site))
         if key not in CONFIG_MEMORY.keys():
             CONFIG_MEMORY[key] =\

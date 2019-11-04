@@ -20,7 +20,7 @@ from shutil import rmtree
 
 
 from cylc.flow import LOG
-from cylc.flow.glbl_cfg_lazy import glbl_cfg
+from cylc.flow.config_schema import glbl_cfg
 
 
 def get_remote_suite_run_dir(host, owner, suite, *args):
@@ -41,7 +41,6 @@ def get_remote_suite_work_dir(host, owner, suite, *args):
         glbl_cfg().get_host_item('work directory', host, owner),
         suite,
         *args)
-
 
 def get_suite_run_dir(suite, *args):
     """Return local suite run directory, join any extra args."""
