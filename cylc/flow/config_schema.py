@@ -484,11 +484,6 @@ def upg(cfg, descr):
         pass
 
 
-def glbl_cfg():
-    # Alias for config_getter() with global only settings:
-    return config_getter(None, None)
-
-
 def config_getter(output_fname, tvars, suite_fpath=None, user=True, site=True):
     """
     Create a list of config file locations for CylcConfig to collect config
@@ -510,7 +505,8 @@ def config_getter(output_fname, tvars, suite_fpath=None, user=True, site=True):
         A CylcConfig object.
     """
     _HOME = pathlib.Path.home() or get_user_home()
-    SITE_CONF_DIR = pathlib.Path(os.sep, 'etc', 'cylc', 'flow', CYLC_VERSION)
+    SITE_CONF_DIR = pathlib.Path(_HOME, 'mock_cylc_global')
+    # SITE_CONF_DIR = pathlib.Path(os.sep, 'etc', 'cylc', 'flow', CYLC_VERSION)
     USER_CONF_DIR = pathlib.Path(_HOME, ".cylc", "flow", CYLC_VERSION)
     CONF_BASENAME = "flow.rc"
     CONFIG_FILEPATHS = []
@@ -568,10 +564,10 @@ class CylcConfig(ParsecConfig):
     # user config
     # site config
     _HOME = pathlib.Path.home() or get_user_home()
-    SITE_CONF_DIR = pathlib.Path(os.sep, 'etc', 'cylc', 'flow', CYLC_VERSION)
+    SITE_CONF_DIR = pathlib.Path(_HOME, 'mock_cylc_global')
+    # SITE_CONF_DIR = pathlib.Path(os.sep, 'etc', 'cylc', 'flow', CYLC_VERSION)
     USER_CONF_DIR = pathlib.Path(_HOME, ".cylc", "flow", CYLC_VERSION)
     CONF_BASENAME = "flow.rc"
-
 
     def __init__(self, filepaths, output_fname, tvars):
         """Return the default instance."""
@@ -598,7 +594,6 @@ class CylcConfig(ParsecConfig):
                     # Abort on bad user file (users can fix it).
                     LOG.warning("bad %s %s", title, fpath)
                     raise
-
 
     def get_host_item(self, item, host=None, owner=None, replace_home=False,
                       owner_home=None):
@@ -736,7 +731,7 @@ class CylcConfig(ParsecConfig):
 #                 else:
 #                     newvalue = value
 #                 if newvalue and 'directory' in item:
-#                     # replace local home dir with $HOME for evaluation on other
+#                     # replace local home dir with $HOME for evaluationnother
 #                     # host
 #                     newvalue = newvalue.replace(str(self._HOME), "$HOME")
 #                 cfg["hosts"][host][item] = newvalue

@@ -42,6 +42,7 @@ def get_remote_suite_work_dir(host, owner, suite, *args):
         suite,
         *args)
 
+
 def get_suite_run_dir(suite, *args):
     """Return local suite run directory, join any extra args."""
     return os.path.join(
