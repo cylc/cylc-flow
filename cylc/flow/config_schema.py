@@ -586,6 +586,55 @@ class CylcConfig(ParsecConfig):
                     raise
 
 
+    def get_host_item(self, item, host=None, owner=None, replace_home=False,
+                      owner_home=None):
+        """This allows hosts with no matching entry in the config file
+        to default to appropriately modified localhost settings."""
+
+        cfg = self.get()
+
+        # (this may be called with explicit None values for localhost
+        # and owner, so we can't use proper defaults in the arg list)
+        if not host:
+            # if no host is given the caller is asking about localhost
+            host = 'localhost'
+
+        # is there a matching host section?
+        host_key = None
+        if host in cfg['hosts']:
+            # there's an entry for this host
+            host_key = host
+        else:
+            # try for a pattern match
+            for cfg_host in cfg['hosts']:
+                if re.match(cfg_host, host):
+                    host_key = cfg_host
+                    break
+        modify_dirs = False
+        if host_key is not None:
+            # entry exists, any unset items under it have already
+            # defaulted to modified localhost values (see site cfgspec)
+            value = cfg['hosts'][host_key][item]
+        else:
+            # no entry so default to localhost and modify appropriately
+            value = cfg['hosts']['localhost'][item]
+            modify_dirs = True
+        if value is not None and 'directory' in item:
+            if replace_home or modify_dirs:
+                # Replace local home dir with $HOME for eval'n on other host.
+                value = value.replace(str(self._HOME), "$HOME")
+            elif is_remote_user(owner):
+                # Replace with ~owner for direct access via local filesys
+                # (works for standard cylc-run directory location).
+                if owner_home is None:
+                    owner_home = os.path.expanduser("~%s" % owner)
+                value = value.replace(str(self._HOME), owner_home)
+        if item == "task communication method" and value == "default":
+            # Translate "default" to client-server comms: "zmq"
+            value = 'zmq'
+        return value
+
+
 class GlobalConfig(ParsecConfig):
     """
     Handle global (all suites) site and user configuration for cylc.
