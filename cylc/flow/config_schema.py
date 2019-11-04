@@ -591,7 +591,7 @@ class CylcConfig(ParsecConfig):
                     )
                 else:
                     # Abort on bad user file (users can fix it).
-                    LOG.error("bad %s %s", title, fpath)
+                    LOG.warning("bad %s %s", title, fpath)
                     raise
 
 
