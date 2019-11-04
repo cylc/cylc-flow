@@ -90,8 +90,10 @@ def main(cmd_args, version, help_):
                 command = "help"
 
             if command == "help" and len(cmd_args) >= 1:
-                command = cmd_args.pop(0)
+                command = cmd_args[0]
                 if command in category_list:
+                    execute_cmd("cylc-help", *cmd_args)
+                else:
                     command = cmd_args.pop(0)
                 help_ = True
 
