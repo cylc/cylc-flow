@@ -18,5 +18,5 @@
 
 def glbl_cfg(cached=True):
     """Load and return the global configuration singleton instance."""
-    from cylc.flow.config_schema import GlobalConfig
-    return GlobalConfig.get_inst(cached=cached)
+    from cylc.flow.config_schema import config_getter
+    return config_getter(None, None)

@@ -567,6 +567,11 @@ class CylcConfig(ParsecConfig):
     # (suite config) if requested
     # user config
     # site config
+    _HOME = pathlib.Path.home() or get_user_home()
+    SITE_CONF_DIR = pathlib.Path(os.sep, 'etc', 'cylc', 'flow', CYLC_VERSION)
+    USER_CONF_DIR = pathlib.Path(_HOME, ".cylc", "flow", CYLC_VERSION)
+    CONF_BASENAME = "flow.rc"
+
 
     def __init__(self, filepaths, output_fname, tvars):
         """Return the default instance."""
@@ -644,149 +649,103 @@ class CylcConfig(ParsecConfig):
         return value
 
 
-class GlobalConfig(ParsecConfig):
-    """
-    Handle global (all suites) site and user configuration for cylc.
-    User file values override site file values.
-    """
-
-    _DEFAULT = None
-    _HOME = pathlib.Path.home() or get_user_home()
-    CONF_BASENAME = "flow.rc"
-    SITE_CONF_DIR = os.path.join(os.sep, 'etc', 'cylc', 'flow', CYLC_VERSION)
-    USER_CONF_DIR = os.path.join(_HOME, '.cylc', 'flow', CYLC_VERSION)
-
-    @classmethod
-    def get_inst(cls, cached=True):
-        """Return a GlobalConfig instance.
-
-        Args:
-            cached (bool):
-                If cached create if necessary and return the singleton
-                instance, else return a new instance.
-        """
-        if cached:
-            if not cls._DEFAULT:
-                cls._DEFAULT = cls(SPEC, upg, validator=cylc_config_validate)
-                cls._DEFAULT.load()
-            return cls._DEFAULT
-        else:
-            # Return an up-to-date global config without affecting the
-            # singleton.
-            new_instance = cls(SPEC, upg, validator=cylc_config_validate)
-            new_instance.load()
-            return new_instance
-
-    def load(self):
-        """Load or reload configuration from files."""
-        self.sparse.clear()
-        self.dense.clear()
-        LOG.debug("Loading site/user config files")
-        conf_path_str = os.getenv("CYLC_CONF_PATH")
-        if conf_path_str:
-            # Explicit config file override.
-            fname = os.path.join(conf_path_str, self.CONF_BASENAME)
-            if os.access(fname, os.F_OK | os.R_OK):
-                self.loadcfg(fname, upgrader.USER_CONFIG)
-        elif conf_path_str is None:
-            # Use default locations.
-            for conf_dir, conf_type in [
-                    (self.SITE_CONF_DIR, upgrader.SITE_CONFIG),
-                    (self.USER_CONF_DIR, upgrader.USER_CONFIG)]:
-                fname = os.path.join(conf_dir, self.CONF_BASENAME)
-                if not os.access(fname, os.F_OK | os.R_OK):
-                    continue
-                try:
-                    self.loadcfg(fname, conf_type)
-                except ParsecError as exc:
-                    if conf_type == upgrader.SITE_CONFIG:
-                        # Warn on bad site file (users can't fix it).
-                        LOG.warning(
-                            'ignoring bad %s %s:\n%s', conf_type, fname, exc)
-                    else:
-                        # Abort on bad user file (users can fix it).
-                        LOG.error('bad %s %s', conf_type, fname)
-                        raise
-        # (OK if no flow.rc is found, just use system defaults).
-        self._transform()
-
-    def get_host_item(self, item, host=None, owner=None, replace_home=False,
-                      owner_home=None):
-        """This allows hosts with no matching entry in the config file
-        to default to appropriately modified localhost settings."""
-
-        cfg = self.get()
-
-        # (this may be called with explicit None values for localhost
-        # and owner, so we can't use proper defaults in the arg list)
-        if not host:
-            # if no host is given the caller is asking about localhost
-            host = 'localhost'
-
-        # is there a matching host section?
-        host_key = None
-        if host in cfg['hosts']:
-            # there's an entry for this host
-            host_key = host
-        else:
-            # try for a pattern match
-            for cfg_host in cfg['hosts']:
-                if re.match(cfg_host, host):
-                    host_key = cfg_host
-                    break
-        modify_dirs = False
-        if host_key is not None:
-            # entry exists, any unset items under it have already
-            # defaulted to modified localhost values (see site cfgspec)
-            value = cfg['hosts'][host_key][item]
-        else:
-            # no entry so default to localhost and modify appropriately
-            value = cfg['hosts']['localhost'][item]
-            modify_dirs = True
-        if value is not None and 'directory' in item:
-            if replace_home or modify_dirs:
-                # Replace local home dir with $HOME for eval'n on other host.
-                value = value.replace(str(self._HOME), "$HOME")
-            elif is_remote_user(owner):
-                # Replace with ~owner for direct access via local filesys
-                # (works for standard cylc-run directory location).
-                if owner_home is None:
-                    owner_home = os.path.expanduser("~%s" % owner)
-                value = value.replace(str(self._HOME), owner_home)
-        if item == "task communication method" and value == "default":
-            # Translate "default" to client-server comms: "zmq"
-            value = 'zmq'
-        return value
-
-    def _transform(self):
-        """Transform various settings.
-
-        Host item values of None default to modified localhost values.
-        Expand environment variables and ~ notations.
-
-        Ensure os.environ['HOME'] is defined with the correct value.
-        """
-        cfg = self.get()
-
-        for host in cfg['hosts']:
-            if host == 'localhost':
-                continue
-            for item, value in cfg['hosts'][host].items():
-                if value is None:
-                    newvalue = cfg['hosts']['localhost'][item]
-                else:
-                    newvalue = value
-                if newvalue and 'directory' in item:
-                    # replace local home dir with $HOME for evaluation on other
-                    # host
-                    newvalue = newvalue.replace(str(self._HOME), "$HOME")
-                cfg["hosts"][host][item] = newvalue
-
-        # Expand environment variables and ~user in LOCAL file paths.
-        if 'HOME' not in os.environ:
-            os.environ['HOME'] = str(self._HOME)
-        cfg['documentation']['local'] = os.path.expandvars(
-            cfg['documentation']['local'])
-        for key, val in cfg['hosts']['localhost'].items():
-            if val and 'directory' in key:
-                cfg['hosts']['localhost'][key] = os.path.expandvars(val)
+# class GlobalConfig(ParsecConfig):
+#     """
+#     Handle global (all suites) site and user configuration for cylc.
+#     User file values override site file values.
+#     """
+#
+#     _DEFAULT = None
+#     _HOME = pathlib.Path.home() or get_user_home()
+#     CONF_BASENAME = "flow.rc"
+#     SITE_CONF_DIR = os.path.join(os.sep, 'etc', 'cylc', 'flow', CYLC_VERSION)
+#     USER_CONF_DIR = os.path.join(_HOME, '.cylc', 'flow', CYLC_VERSION)
+#
+#     @classmethod
+#     def get_inst(cls, cached=True):
+#         """Return a GlobalConfig instance.
+#
+#         Args:
+#             cached (bool):
+#                 If cached create if necessary and return the singleton
+#                 instance, else return a new instance.
+#         """
+#         if cached:
+#             if not cls._DEFAULT:
+#                 cls._DEFAULT = cls(SPEC, upg, validator=cylc_config_validate)
+#                 cls._DEFAULT.load()
+#             return cls._DEFAULT
+#         else:
+#             # Return an up-to-date global config without affecting the
+#             # singleton.
+#             new_instance = cls(SPEC, upg, validator=cylc_config_validate)
+#             new_instance.load()
+#             return new_instance
+#
+#     def load(self):
+#         """Load or reload configuration from files."""
+#         self.sparse.clear()
+#         self.dense.clear()
+#         LOG.debug("Loading site/user config files")
+#         conf_path_str = os.getenv("CYLC_CONF_PATH")
+#         if conf_path_str:
+#             # Explicit config file override.
+#             fname = os.path.join(conf_path_str, self.CONF_BASENAME)
+#             if os.access(fname, os.F_OK | os.R_OK):
+#                 self.loadcfg(fname, upgrader.USER_CONFIG)
+#         elif conf_path_str is None:
+#             # Use default locations.
+#             for conf_dir, conf_type in [
+#                     (self.SITE_CONF_DIR, upgrader.SITE_CONFIG),
+#                     (self.USER_CONF_DIR, upgrader.USER_CONFIG)]:
+#                 fname = os.path.join(conf_dir, self.CONF_BASENAME)
+#                 if not os.access(fname, os.F_OK | os.R_OK):
+#                     continue
+#                 try:
+#                     self.loadcfg(fname, conf_type)
+#                 except ParsecError as exc:
+#                     if conf_type == upgrader.SITE_CONFIG:
+#                         # Warn on bad site file (users can't fix it).
+#                         LOG.warning(
+#                             'ignoring bad %s %s:\n%s', conf_type, fname, exc)
+#                     else:
+#                         # Abort on bad user file (users can fix it).
+#                         LOG.error('bad %s %s', conf_type, fname)
+#                         raise
+#         # (OK if no flow.rc is found, just use system defaults).
+#         self._transform()
+#
+#
+#
+#     def _transform(self):
+#         """Transform various settings.
+#
+#         Host item values of None default to modified localhost values.
+#         Expand environment variables and ~ notations.
+#
+#         Ensure os.environ['HOME'] is defined with the correct value.
+#         """
+#         cfg = self.get()
+#
+#         for host in cfg['hosts']:
+#             if host == 'localhost':
+#                 continue
+#             for item, value in cfg['hosts'][host].items():
+#                 if value is None:
+#                     newvalue = cfg['hosts']['localhost'][item]
+#                 else:
+#                     newvalue = value
+#                 if newvalue and 'directory' in item:
+#                     # replace local home dir with $HOME for evaluation on other
+#                     # host
+#                     newvalue = newvalue.replace(str(self._HOME), "$HOME")
+#                 cfg["hosts"][host][item] = newvalue
+#
+#         # Expand environment variables and ~user in LOCAL file paths.
+#         if 'HOME' not in os.environ:
+#             os.environ['HOME'] = str(self._HOME)
+#         cfg['documentation']['local'] = os.path.expandvars(
+#             cfg['documentation']['local'])
+#         for key, val in cfg['hosts']['localhost'].items():
+#             if val and 'directory' in key:
+#                 cfg['hosts']['localhost'][key] = os.path.expandvars(val)
