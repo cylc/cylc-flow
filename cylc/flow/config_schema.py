@@ -637,7 +637,7 @@ class CylcConfig(ParsecConfig):
                 # (works for standard cylc-run directory location).
                 if owner_home is None:
                     owner_home = os.path.expanduser("~%s" % owner)
-                value = value.replace(str(self._HOME), owner_home)
+                value = value.replace('$HOME', owner_home)
         if item == "task communication method" and value == "default":
             # Translate "default" to client-server comms: "zmq"
             value = 'zmq'
