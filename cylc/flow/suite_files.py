@@ -857,6 +857,6 @@ def ensure_user_keys_exist():
             )
             return True
         # Catch anything so we can otherwise be sure the key store exists.
-        except Exception as exc:
+        except Exception:
             LOG.exception("Failed to create user authentication keys.")
             return False

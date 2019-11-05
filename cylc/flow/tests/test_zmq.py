@@ -16,6 +16,7 @@
 
 """Test abstract ZMQ interface."""
 
+import os
 import pytest
 from tempfile import TemporaryDirectory
 

@@ -15,9 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Server for suite runtime API."""
 
-from functools import partial
 import getpass
-import os
 from queue import Queue
 from textwrap import dedent
 from time import sleep
