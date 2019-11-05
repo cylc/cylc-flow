@@ -484,6 +484,12 @@ def upg(cfg, descr):
         pass
 
 
+_HOME = os.getenv('HOME') or get_user_home()
+SITE_CONF_DIR = os.path.join(_HOME, 'mock_cylc_global')
+#SITE_CONF_DIR = pathlib.Path(os.sep, 'etc', 'cylc', 'flow', CYLC_VERSION)
+USER_CONF_DIR = os.path.join(_HOME, ".cylc", "flow", CYLC_VERSION)
+CONF_BASENAME = "flow.rc"
+
 def config_getter(output_fname, tvars, suite_fpath=None, user=True, site=True):
     """
     Create a list of config file locations for CylcConfig to collect config
@@ -504,11 +510,6 @@ def config_getter(output_fname, tvars, suite_fpath=None, user=True, site=True):
     Returns:
         A CylcConfig object.
     """
-    _HOME = pathlib.Path.home() or get_user_home()
-    # SITE_CONF_DIR = pathlib.Path(_HOME, 'mock_cylc_global')
-    SITE_CONF_DIR = pathlib.Path(os.sep, 'etc', 'cylc', 'flow', CYLC_VERSION)
-    USER_CONF_DIR = pathlib.Path(_HOME, ".cylc", "flow", CYLC_VERSION)
-    CONF_BASENAME = "flow.rc"
     CONFIG_FILEPATHS = []
     conf_path_str = os.getenv("CYLC_CONF_PATH")
     if conf_path_str:
@@ -520,13 +521,15 @@ def config_getter(output_fname, tvars, suite_fpath=None, user=True, site=True):
             )
     else:
         if site:
-            CONFIG_FILEPATHS.append(
-                (SITE_CONF_DIR / CONF_BASENAME, upgrader.SITE_CONFIG)
-            )
+            CONFIG_FILEPATHS.append((
+                os.path.join(SITE_CONF_DIR, CONF_BASENAME),
+                upgrader.SITE_CONFIG
+            ))
         if user:
-            CONFIG_FILEPATHS.append(
-                (USER_CONF_DIR / CONF_BASENAME, upgrader.USER_CONFIG)
-            )
+            CONFIG_FILEPATHS.append((
+                os.path.join(USER_CONF_DIR, CONF_BASENAME),
+                upgrader.USER_CONFIG
+            ))
     if suite_fpath:
         # If a suite is reloaded we need to reload the definition...
         CONFIG_FILEPATHS.append((
@@ -563,11 +566,6 @@ class CylcConfig(ParsecConfig):
     # (suite config) if requested
     # user config
     # site config
-    _HOME = pathlib.Path.home() or get_user_home()
-    #SITE_CONF_DIR = pathlib.Path(os.sep, '/etc', 'cylc', 'flow', CYLC_VERSION)
-    SITE_CONF_DIR = pathlib.Path(os.sep, 'etc', 'cylc', 'flow', CYLC_VERSION)
-    USER_CONF_DIR = pathlib.Path(_HOME, ".cylc", "flow", CYLC_VERSION)
-    CONF_BASENAME = "flow.rc"
 
     def __init__(self, filepaths, output_fname, tvars):
         """Return the default instance."""
@@ -631,13 +629,13 @@ class CylcConfig(ParsecConfig):
         if value is not None and 'directory' in item:
             if replace_home or modify_dirs:
                 # Replace local home dir with $HOME for eval'n on other host.
-                value = value.replace(str(self._HOME), "$HOME")
+                value = value.replace(self._HOME, "$HOME")
             elif is_remote_user(owner):
                 # Replace with ~owner for direct access via local filesys
                 # (works for standard cylc-run directory location).
                 if owner_home is None:
                     owner_home = os.path.expanduser("~%s" % owner)
-                value = value.replace('$HOME', owner_home)
+                value = value.replace(self._HOME, owner_home)
         if item == "task communication method" and value == "default":
             # Translate "default" to client-server comms: "zmq"
             value = 'zmq'
