@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Network authentication layer."""
+"""Standard encode and decode methods for the network authentication layer."""
 
 import getpass
 import json
@@ -27,6 +27,5 @@ def encode_(message):
 def decode_(message):
     """ Decode a message from a string to JSON, with an added 'user' field. """
     msg = json.loads(message)
-    # if able to decode assume this is the user
-    msg['user'] = getpass.getuser()
+    msg['user'] = getpass.getuser()  # assume this is the user
     return msg

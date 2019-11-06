@@ -18,14 +18,13 @@
 import asyncio
 from functools import partial
 import os
+from shutil import which
 import socket
 import sys
 from typing import Union
 
 import zmq
 import zmq.asyncio
-
-from shutil import which
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import (

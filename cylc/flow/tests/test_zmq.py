@@ -16,15 +16,25 @@
 
 """Test abstract ZMQ interface."""
 
+import json
 import os
 import pytest
-from tempfile import TemporaryDirectory
+import random
+import shutil
+from tempfile import TemporaryDirectory, NamedTemporaryFile
+import zmq
+import zmq.auth
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
-from cylc.flow.exceptions import CylcError
+from cylc.flow.exceptions import CylcError, ClientError
 from cylc.flow.network.authentication import encode_, decode_
+from cylc.flow.network.client import ZMQClient
 from cylc.flow.network.server import ZMQServer
-from cylc.flow.suite_files import UserFiles
+from cylc.flow.suite_files import (
+    ensure_suite_keys_exist,
+    ensure_user_keys_exist,
+    UserFiles
+)
 
 
 def get_port_range():
@@ -33,36 +43,59 @@ def get_port_range():
 
 
 PORT_RANGE = get_port_range()
+HOST = "127.0.0.1"
+
+
+def test_server_requires_valid_keys():
+    """Server should not be able to connect to host/port without valid keys."""
+
+    with TemporaryDirectory() as keys, NamedTemporaryFile(dir=keys) as fake:
+        # Assign a blank file masquerading as a CurveZMQ certificate
+        server = ZMQServer(encode_, decode_, fake.name)
+
+        with pytest.raises(ValueError, match=r"No public key found in "):
+            server.start(*PORT_RANGE)
+
+        try:  # in case the test fails such that the server did start
+            server.stop()
+        except Exception:
+            pass
+
+
+def test_client_requires_valid_keys():
+    """Client should not be able to connect to host/port without valid keys."""
+    with TemporaryDirectory() as keys, NamedTemporaryFile(dir=keys) as fake:
+        port = random.choice(PORT_RANGE)
+
+        with pytest.raises(
+            ClientError, match=r"Failed to load the suite's public "
+                "key, so cannot connect."):
+            # Assign a blank file masquerading as a CurveZMQ certificate
+            ZMQClient(HOST, port, encode_, decode_, fake.name)
 
 
 def test_single_port():
     """Test server on a single port and port in use exception."""
+    with TemporaryDirectory() as s_keys:
+        _, servs_private_key = zmq.auth.create_certificates(s_keys, "servers")
 
-    with TemporaryDirectory() as client_keys_parent_dir:
-
-        # Create two temporary directories for holding the server keys.
-        client_keys_dir_1 = os.path.join(
-            client_keys_parent_dir, "client_keys_dir_1")
-        client_keys_dir_2 = os.path.join(
-            client_keys_parent_dir, "client_keys_dir_2")
-        for keys_dir in (client_keys_dir_1, client_keys_dir_2):
-            if not os.path.exists(keys_dir):
-                os.makedirs(keys_dir)
-
-        UserFiles.DIRNAME = client_keys_parent_dir
-        UserFiles.Auth.DIRNAME = client_keys_dir_1
-        serv1 = ZMQServer(encode_, decode_)
-
-        # SBTODO: is the below (dir change) necessary?
-        # Change the directory where the keys are stored for server 2:
-        UserFiles.Auth.DIRNAME = client_keys_dir_2
-        serv2 = ZMQServer(encode_, decode_)
+        serv1 = ZMQServer(encode_, decode_, servs_private_key)
+        serv2 = ZMQServer(encode_, decode_, servs_private_key)
 
         serv1.start(*PORT_RANGE)
         port = serv1.port
-
         with pytest.raises(
                 CylcError, match=r"Address already in use") as exc:
             serv2.start(port, port)
 
         serv1.stop()
+
+
+def test_client_server_connection_requires_consistent_keys():
+    """Client-server connection must be blocked without consistent keys.
+
+       Bodge a certificate to change the key, which must prevent connection."""
+    pass  # TODO? Or is this tested via other tests?
+
+
+# TODO: check connections & sockets are being stopped & cleaned up properly

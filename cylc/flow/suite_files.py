@@ -595,10 +595,9 @@ def create_auth_files(reg):
     srv_d = get_suite_srv_dir(reg)
     os.makedirs(srv_d, exist_ok=True)
 
-    # If necessary, generate directory with sub-directories holding
-    # separately the public and private keys for authentication:
-    if not key_store_exists(srv_d):
-        generate_key_store(srv_d, UserFiles.Auth.SERVER_TAG)
+    # If necessary, generate directory holding (in separate sub-dirs) the
+    # server (suite) public and private keys for authentication:
+    ensure_suite_keys_exist(srv_d)
 
     # Create a new passphrase for the suite if necessary.
     if not _locate_item(SuiteFiles.Service.PASSPHRASE, srv_d):
@@ -788,6 +787,16 @@ def return_key_locations(store_dir):
     )
 
 
+def lockdown_private_keys(key_file_path):
+    """Change key file permissions to lock from other users."""
+    # This means that the owner can read & write, but all others cannot do
+    # anything, to the file, i.e. 600 ('-rw-------.') Linux file permission.
+    if not os.path.exists(key_file_path):
+        raise FileNotFoundError(
+            "Private key not found at location '%s'." % key_file_path)
+    os.chmod(key_file_path, stat.S_IRUSR | stat.S_IWUSR)
+
+
 def generate_key_store(store_parent_dir, keys_tag):
     """Generate two sub-directories, each having a file with a CURVE key.
 
@@ -827,36 +836,36 @@ def generate_key_store(store_parent_dir, keys_tag):
                               "keys for authentication. Abort.")
 
 
-def key_store_exists(store_dir_path):
-    """Check a valid key store directory exists at the given location."""
+def ensure_keypair_exists(auth_parent_dir, auth_child_dir, tag):
+    """Check if a set of public/private keys exist and if not, create them."""
     public_key_location, private_key_location = return_key_locations(
-        store_dir_path)
-    return (os.path.exists(public_key_location) and
-            os.path.exists(private_key_location))
-
-
-def lockdown_private_keys(key_file_path):
-    """Change key file permissions to lock from other users."""
-    # This means that the owner can read & write, but all others cannot do
-    # anything, to the file, i.e. 600 ('-rw-------.') Linux file permission.
-    if not os.path.exists(key_file_path):
-        raise FileNotFoundError(
-            "Private key not found at location '%s'." % key_file_path)
-    os.chmod(key_file_path, stat.S_IRUSR | stat.S_IWUSR)
-
-
-def ensure_user_keys_exist():
-    """Check if client (user) keys exist and if not, create them."""
-    if key_store_exists(UserFiles.get_path()):
+        auth_parent_dir)
+    if (os.path.exists(public_key_location) and
+            os.path.exists(private_key_location)):
         return True
     else:
         try:
-            generate_key_store(
-                UserFiles.get_path(include_auth_dirname=False),
-                UserFiles.Auth.CLIENT_TAG
-            )
+            generate_key_store(auth_child_dir, tag)
             return True
         # Catch anything so we can otherwise be sure the key store exists.
         except Exception:
-            LOG.exception("Failed to create user authentication keys.")
+            LOG.exception("Failed to create %s authentication keys." % tag)
             return False
+
+
+def ensure_user_keys_exist():
+    """Make sure the user (client) public/private keys exist."""
+    return ensure_keypair_exists(
+        UserFiles.get_path(),
+        UserFiles.get_path(include_auth_dirname=False),
+        UserFiles.Auth.CLIENT_TAG
+    )
+
+
+def ensure_suite_keys_exist(suite_service_directory):
+    """Make sure the suite (server) public/private keys exist."""
+    return ensure_keypair_exists(
+        os.path.join(suite_service_directory, UserFiles.Auth.DIRNAME),
+        suite_service_directory,
+        UserFiles.Auth.SERVER_TAG
+    )

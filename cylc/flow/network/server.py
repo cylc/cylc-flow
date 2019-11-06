@@ -15,26 +15,27 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Server for suite runtime API."""
 
+import asyncio
 import getpass
+from graphql.execution.executors.asyncio import AsyncioExecutor
 from queue import Queue
 from textwrap import dedent
-from time import sleep
 from threading import Thread
-import asyncio
-from graphql.execution.executors.asyncio import AsyncioExecutor
-
+from time import sleep
 import zmq
 from zmq.auth.thread import ThreadAuthenticator
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import CylcError
-from cylc.flow.network.authorisation import Priv, authorise
 from cylc.flow.network.authentication import encode_, decode_
+from cylc.flow.network.authorisation import Priv, authorise
 from cylc.flow.network.resolvers import Resolvers
 from cylc.flow.network.schema import schema
 from cylc.flow.suite_files import (
-    ensure_user_keys_exist, get_auth_item, UserFiles
+    ensure_user_keys_exist,
+    get_auth_item,
+    UserFiles
 )
 from cylc.flow.suite_status import (
     KEY_META, KEY_NAME, KEY_OWNER, KEY_STATES,
@@ -248,7 +249,7 @@ class ZMQServer(object):
 
     @staticmethod
     def expose(func=None):
-        """Expose a method on the sever."""
+        """Expose a method on the server."""
         func.exposed = True
         return func
 
