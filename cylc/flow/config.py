@@ -187,6 +187,7 @@ class SuiteConfig(object):
         self.pcfg = config_getter(
             output_fname, template_vars, suite_fpath=fpath
         )
+
         self.mem_log("config.py: after CylcConfig init")
         self.mem_log("config.py: before get(sparse=True")
         self.cfg = self.pcfg.get(sparse=True)
@@ -221,12 +222,12 @@ class SuiteConfig(object):
             self.cfg['scheduling'].get('initial cycle point', '1') == '1' and
             all(item in ['graph', '1', 'R1'] for item in graphdict)
         ):
+            # LOG.error('Hello')
             # Pure async graph, assume integer cycling mode with '1' cycle
             self.cfg['scheduling']['cycling mode'] = INTEGER_CYCLING_TYPE
             for key in ('initial cycle point', 'final cycle point'):
                 if key not in self.cfg['scheduling']:
                     self.cfg['scheduling'][key] = '1'
-
         # allow test suites with no [runtime]:
         if 'runtime' not in self.cfg:
             self.cfg['runtime'] = OrderedDictWithDefaults()

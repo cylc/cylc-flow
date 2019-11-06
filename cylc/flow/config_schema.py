@@ -484,11 +484,6 @@ def upg(cfg, descr):
         pass
 
 
-_HOME = os.getenv('HOME') or get_user_home()
-SITE_CONF_DIR = os.path.join(_HOME, 'mock_cylc_global')
-#SITE_CONF_DIR = pathlib.Path(os.sep, 'etc', 'cylc', 'flow', CYLC_VERSION)
-USER_CONF_DIR = os.path.join(_HOME, ".cylc", "flow", CYLC_VERSION)
-CONF_BASENAME = "flow.rc"
 
 def config_getter(output_fname, tvars, suite_fpath=None, user=True, site=True):
     """
@@ -510,6 +505,11 @@ def config_getter(output_fname, tvars, suite_fpath=None, user=True, site=True):
     Returns:
         A CylcConfig object.
     """
+    _HOME = os.getenv('HOME') or get_user_home()
+    SITE_CONF_DIR = os.path.join(_HOME, 'mock_cylc_global')
+    # SITE_CONF_DIR = pathlib.Path(os.sep, 'etc', 'cylc', 'flow', CYLC_VERSION)
+    USER_CONF_DIR = os.path.join(_HOME, ".cylc", "flow", CYLC_VERSION)
+    CONF_BASENAME = "flow.rc"
     CONFIG_FILEPATHS = []
     conf_path_str = os.getenv("CYLC_CONF_PATH")
     if conf_path_str:
@@ -566,7 +566,11 @@ class CylcConfig(ParsecConfig):
     # (suite config) if requested
     # user config
     # site config
-
+    _HOME = os.getenv('HOME') or get_user_home()
+    SITE_CONF_DIR = os.path.join(_HOME, 'mock_cylc_global')
+    # SITE_CONF_DIR = pathlib.Path(os.sep, 'etc', 'cylc', 'flow', CYLC_VERSION)
+    USER_CONF_DIR = os.path.join(_HOME, ".cylc", "flow", CYLC_VERSION)
+    CONF_BASENAME = "flow.rc"
     def __init__(self, filepaths, output_fname, tvars):
         """Return the default instance."""
         # if a suite config is present we need to combine it
@@ -577,6 +581,7 @@ class CylcConfig(ParsecConfig):
             LOG.debug(f"Parsing {fpath} of {title}")
             try:
                 # Log a warning if global or user settings files do not exist.
+                # Make sure that you can't ask for a suite cfg c-out a suite.rc file
                 if not os.access(fpath, os.F_OK | os.R_OK):
                     LOG.info(f"fpath {fpath} not a valid path")
                     continue
@@ -592,6 +597,7 @@ class CylcConfig(ParsecConfig):
                     # Abort on bad user file (users can fix it).
                     LOG.warning("bad %s %s", title, fpath)
                     raise
+        self._transform()
 
     def get_host_item(self, item, host=None, owner=None, replace_home=False,
                       owner_home=None):
@@ -636,6 +642,8 @@ class CylcConfig(ParsecConfig):
                 if owner_home is None:
                     owner_home = os.path.expanduser("~%s" % owner)
                 value = value.replace(self._HOME, owner_home)
+            else:
+                value = value.replace("$HOME", self._HOME)
         if item == "task communication method" and value == "default":
             # Translate "default" to client-server comms: "zmq"
             value = 'zmq'
@@ -710,35 +718,46 @@ class CylcConfig(ParsecConfig):
 #
 #
 #
-#     def _transform(self):
-#         """Transform various settings.
-#
-#         Host item values of None default to modified localhost values.
-#         Expand environment variables and ~ notations.
-#
-#         Ensure os.environ['HOME'] is defined with the correct value.
-#         """
-#         cfg = self.get()
-#
-#         for host in cfg['hosts']:
-#             if host == 'localhost':
-#                 continue
-#             for item, value in cfg['hosts'][host].items():
-#                 if value is None:
-#                     newvalue = cfg['hosts']['localhost'][item]
-#                 else:
-#                     newvalue = value
-#                 if newvalue and 'directory' in item:
-#                     # replace local home dir with $HOME for evaluationnother
-#                     # host
-#                     newvalue = newvalue.replace(str(self._HOME), "$HOME")
-#                 cfg["hosts"][host][item] = newvalue
-#
-#         # Expand environment variables and ~user in LOCAL file paths.
-#         if 'HOME' not in os.environ:
-#             os.environ['HOME'] = str(self._HOME)
-#         cfg['documentation']['local'] = os.path.expandvars(
-#             cfg['documentation']['local'])
-#         for key, val in cfg['hosts']['localhost'].items():
-#             if val and 'directory' in key:
-#                 cfg['hosts']['localhost'][key] = os.path.expandvars(val)
+    def _transform(self):
+        """Transform various settings.
+
+        Host item values of None default to modified localhost values.
+        Expand environment variables and ~ notations.
+
+        Ensure os.environ['HOME'] is defined with the correct value.
+        """
+        cfg = self.get(sparse=True)
+
+        for host in cfg.get('hosts', {}):
+            if host == 'localhost':
+                continue
+            for item, value in cfg['hosts'][host].items():
+                if value is None:
+                    newvalue = cfg['hosts']['localhost'][item]
+                else:
+                    newvalue = value
+                if newvalue and 'directory' in item:
+                    # replace local home dir with $HOME for evaluationnother
+                    # host
+                    newvalue = newvalue.replace(str(self._HOME), "$HOME")
+                cfg["hosts"][host][item] = newvalue
+
+        # Need to skip this logic if keys it relies on are not defined.
+        # Expand environment variables and ~user in LOCAL file paths.
+
+        # @TODO Replace this - it's horrid
+        if 'HOME' not in os.environ:
+            os.environ['HOME'] = str(self._HOME)
+
+        try:
+            cfg['documentation']['local'] = os.path.expandvars(
+                cfg['documentation']['local'])
+        except:
+            pass
+
+        try:
+            for key, val in cfg['hosts']['localhost'].items():
+                if val and 'directory' in key:
+                    cfg['hosts']['localhost'][key] = os.path.expandvars(val)
+        except:
+            pass
