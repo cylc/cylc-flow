@@ -214,7 +214,8 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
     if os.path.isdir(suite_lib_python) and suite_lib_python not in sys.path:
         sys.path.append(suite_lib_python)
 
-    LOG.debug('Reading file %s', fpath)
+    # @TODO - re-add this debug and add it's output to the relevant test.
+    # LOG.debug('Reading file %s', fpath)
 
     # read the file into a list, stripping newlines
     with open(fpath) as f:

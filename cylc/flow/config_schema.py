@@ -536,16 +536,16 @@ def config_getter(output_fname, tvars, suite_fpath=None, user=True, site=True):
             pathlib.Path(suite_fpath),
             "Suite Config")
         )
-        LOG.debug(f"CONFIG FILEPATHS are:")
-        for item in CONFIG_FILEPATHS:
-            LOG.debug('\t' + str(item))
+        # LOG.debug(f"CONFIG FILEPATHS are:")
+        # for item in CONFIG_FILEPATHS:
+        #     LOG.debug('\t' + str(item))
         return CylcConfig(CONFIG_FILEPATHS, output_fname, tvars)
     else:
         # ...but if we just want the global and user configs we can use
         # memoization
-        LOG.debug(f"CONFIG FILEPATHS are:")
-        for item in CONFIG_FILEPATHS:
-            LOG.debug('\t' + str(item))
+        # LOG.debug(f"CONFIG FILEPATHS are:")
+        # for item in CONFIG_FILEPATHS:
+            # LOG.debug('\t' + str(item))
         key = str((output_fname, tvars, suite_fpath, user, site))
         if key not in CONFIG_MEMORY.keys():
             CONFIG_MEMORY[key] =\
@@ -578,15 +578,16 @@ class CylcConfig(ParsecConfig):
             self, SPEC, upg, output_fname, tvars, cylc_config_validate
         )
         for fpath, title in filepaths:
-            LOG.debug(f"Parsing {fpath} of {title}")
+            # LOG.debug(f"Parsing {fpath} of {title}")
             try:
                 # Log a warning if global or user settings files do not exist.
                 # Make sure that you can't ask for a suite cfg c-out a suite.rc file
                 if not os.access(fpath, os.F_OK | os.R_OK):
-                    LOG.info(f"fpath {fpath} not a valid path")
+                    # LOG.info(f"fpath {fpath} not a valid path")
+                    # LOG.info(f"fpath {fpath} not a valid path")
                     continue
                 self.loadcfg(fpath, title)
-                LOG.debug(f"fpath {fpath} sucessfully loaded")
+                # LOG.debug(f"fpath {fpath} sucessfully loaded")
             except ParsecError as exc:
                 if title == upgrader.SITE_CONFIG:
                     # Warn on bad site file (users can't fix it).
@@ -595,9 +596,10 @@ class CylcConfig(ParsecConfig):
                     )
                 else:
                     # Abort on bad user file (users can fix it).
-                    LOG.warning("bad %s %s", title, fpath)
+                    LOG.error("bad %s %s", title, fpath)
                     raise
         self._transform()
+        breakpoint()
 
     def get_host_item(self, item, host=None, owner=None, replace_home=False,
                       owner_home=None):
@@ -642,8 +644,8 @@ class CylcConfig(ParsecConfig):
                 if owner_home is None:
                     owner_home = os.path.expanduser("~%s" % owner)
                 value = value.replace(self._HOME, owner_home)
-            else:
-                value = value.replace("$HOME", self._HOME)
+            # else:
+            #     value = value.replace("$HOME", self._HOME)
         if item == "task communication method" and value == "default":
             # Translate "default" to client-server comms: "zmq"
             value = 'zmq'
