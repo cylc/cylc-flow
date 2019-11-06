@@ -227,6 +227,7 @@ class SuiteConfig(object):
             self.cfg['scheduling']['cycling mode'] = INTEGER_CYCLING_TYPE
             for key in ('initial cycle point', 'final cycle point'):
                 if key not in self.cfg['scheduling']:
+                    LOG.debug("Setting ICP = '1'")
                     self.cfg['scheduling'][key] = '1'
         # allow test suites with no [runtime]:
         if 'runtime' not in self.cfg:
@@ -307,7 +308,10 @@ class SuiteConfig(object):
         # Now add config defaults.  Items added prior to this ends up in the
         # sparse dict (e.g. parameter-expanded namespaces).
         self.mem_log("config.py: before get(sparse=False)")
+        LOG.debug(f"self.cfg['scheduling']['initial cycle point'] is {self.cfg['scheduling']['initial cycle point']}")
+        # breakpoint(header="above self.pcfg")
         self.cfg = self.pcfg.get(sparse=False)
+        LOG.debug(f"self.cfg['scheduling']['initial cycle point'] is {self.cfg['scheduling']['initial cycle point']}")
         self.mem_log("config.py: after get(sparse=False)")
 
         # after the call to init_cyclers, we can start getting proper points.

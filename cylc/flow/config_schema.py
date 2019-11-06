@@ -534,6 +534,7 @@ def config_getter(output_fname, tvars, suite_fpath=None, user=True, site=True):
         # If a suite is reloaded we need to reload the definition...
         CONFIG_FILEPATHS.append((
             pathlib.Path(suite_fpath),
+            # TODO Make this a constant!
             "Suite Config")
         )
         # LOG.debug(f"CONFIG FILEPATHS are:")
@@ -577,8 +578,13 @@ class CylcConfig(ParsecConfig):
         ParsecConfig.__init__(
             self, SPEC, upg, output_fname, tvars, cylc_config_validate
         )
-        for fpath, title in filepaths:
-            # LOG.debug(f"Parsing {fpath} of {title}")
+        global_config_filepaths = [f for f in filepaths if f[1]!='Suite Config']
+        suite_config_filepath = [f for f in filepaths if f[1]=='Suite Config']
+        # breakpoint(header='play with filepaths')
+
+        # Load up global configs
+        for fpath, title in global_config_filepaths:
+            LOG.debug(f"Parsing {fpath} of {title}")
             try:
                 # Log a warning if global or user settings files do not exist.
                 # Make sure that you can't ask for a suite cfg c-out a suite.rc file
@@ -586,7 +592,12 @@ class CylcConfig(ParsecConfig):
                     # LOG.info(f"fpath {fpath} not a valid path")
                     # LOG.info(f"fpath {fpath} not a valid path")
                     continue
+                # if title == "Suite Config":
+                #     LOG.debug('Running self._transform')
+                #     self._transform()
                 self.loadcfg(fpath, title)
+                # breakpoint(header=f"{'='*79}\nBreakpoint 1")
+
                 # LOG.debug(f"fpath {fpath} sucessfully loaded")
             except ParsecError as exc:
                 if title == upgrader.SITE_CONFIG:
@@ -598,8 +609,18 @@ class CylcConfig(ParsecConfig):
                     # Abort on bad user file (users can fix it).
                     LOG.error("bad %s %s", title, fpath)
                     raise
+        LOG.debug('Before loading self._transform')
         self._transform()
-        breakpoint()
+        LOG.debug('After loading self._transform')
+
+        # Load up suite configs
+        if suite_config_filepath:
+            LOG.debug(f'loading suite config {suite_config_filepath[0][0]}')
+            breakpoint()
+            self.loadcfg(*suite_config_filepath[0])
+
+
+
 
     def get_host_item(self, item, host=None, owner=None, replace_home=False,
                       owner_home=None):
@@ -747,7 +768,7 @@ class CylcConfig(ParsecConfig):
         # Need to skip this logic if keys it relies on are not defined.
         # Expand environment variables and ~user in LOCAL file paths.
 
-        # @TODO Replace this - it's horrid
+        # TODO Replace this - it's horrid
         if 'HOME' not in os.environ:
             os.environ['HOME'] = str(self._HOME)
 
@@ -757,9 +778,6 @@ class CylcConfig(ParsecConfig):
         except:
             pass
 
-        try:
-            for key, val in cfg['hosts']['localhost'].items():
-                if val and 'directory' in key:
-                    cfg['hosts']['localhost'][key] = os.path.expandvars(val)
-        except:
-            pass
+        for key, val in self.get(['hosts', 'localhost']).items():
+            if val and 'directory' in key:
+                self.dense['hosts']['localhost'][key] = os.path.expandvars(val)
