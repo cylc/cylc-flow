@@ -616,7 +616,7 @@ class CylcConfig(ParsecConfig):
         # Load up suite configs
         if suite_config_filepath:
             LOG.debug(f'loading suite config {suite_config_filepath[0][0]}')
-            breakpoint()
+            # breakpoint()
             self.loadcfg(*suite_config_filepath[0])
 
 
@@ -749,7 +749,7 @@ class CylcConfig(ParsecConfig):
 
         Ensure os.environ['HOME'] is defined with the correct value.
         """
-        cfg = self.get(sparse=True)
+        cfg = self.get(sparse=False)
 
         for host in cfg.get('hosts', {}):
             if host == 'localhost':
@@ -772,12 +772,11 @@ class CylcConfig(ParsecConfig):
         if 'HOME' not in os.environ:
             os.environ['HOME'] = str(self._HOME)
 
-        try:
-            cfg['documentation']['local'] = os.path.expandvars(
-                cfg['documentation']['local'])
-        except:
-            pass
+        cfg['documentation']['local'] = os.path.expandvars(
+            cfg['documentation']['local'])
 
         for key, val in self.get(['hosts', 'localhost']).items():
             if val and 'directory' in key:
                 self.dense['hosts']['localhost'][key] = os.path.expandvars(val)
+
+        self.dense.clear()
