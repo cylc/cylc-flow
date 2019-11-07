@@ -584,7 +584,7 @@ class CylcConfig(ParsecConfig):
 
         # Load up global configs
         for fpath, title in global_config_filepaths:
-            LOG.debug(f"Parsing {fpath} of {title}")
+            # LOG.debug(f"Parsing {fpath} of {title}")
             try:
                 # Log a warning if global or user settings files do not exist.
                 # Make sure that you can't ask for a suite cfg c-out a suite.rc file
@@ -609,13 +609,13 @@ class CylcConfig(ParsecConfig):
                     # Abort on bad user file (users can fix it).
                     LOG.error("bad %s %s", title, fpath)
                     raise
-        LOG.debug('Before loading self._transform')
+        # LOG.debug('Before loading self._transform')
         self._transform()
-        LOG.debug('After loading self._transform')
+        # LOG.debug('After loading self._transform')
 
         # Load up suite configs
         if suite_config_filepath:
-            LOG.debug(f'loading suite config {suite_config_filepath[0][0]}')
+            # LOG.debug(f'loading suite config {suite_config_filepath[0][0]}')
             # breakpoint()
             self.loadcfg(*suite_config_filepath[0])
 
@@ -656,6 +656,7 @@ class CylcConfig(ParsecConfig):
             value = cfg['hosts']['localhost'][item]
             modify_dirs = True
         if value is not None and 'directory' in item:
+            # breakpoint()
             if replace_home or modify_dirs:
                 # Replace local home dir with $HOME for eval'n on other host.
                 value = value.replace(self._HOME, "$HOME")
@@ -664,9 +665,9 @@ class CylcConfig(ParsecConfig):
                 # (works for standard cylc-run directory location).
                 if owner_home is None:
                     owner_home = os.path.expanduser("~%s" % owner)
-                value = value.replace(self._HOME, owner_home)
-            # else:
-            #     value = value.replace("$HOME", self._HOME)
+                value = value.replace("$HOME", owner_home)
+            else:
+                value = value.replace("$HOME", self._HOME)
         if item == "task communication method" and value == "default":
             # Translate "default" to client-server comms: "zmq"
             value = 'zmq'
