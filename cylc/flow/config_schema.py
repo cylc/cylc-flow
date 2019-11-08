@@ -505,8 +505,8 @@ def config_getter(output_fname, tvars, suite_fpath=None, user=True, site=True):
         A CylcConfig object.
     """
     _HOME = os.getenv('HOME') or get_user_home()
-    SITE_CONF_DIR = os.path.join(_HOME, 'mock_cylc_global')
-    # SITE_CONF_DIR = pathlib.Path(os.sep, 'etc', 'cylc', 'flow', CYLC_VERSION)
+    #SITE_CONF_DIR = os.path.join(_HOME, 'mock_cylc_global')
+    SITE_CONF_DIR = pathlib.Path(os.sep, 'etc', 'cylc', 'flow', CYLC_VERSION)
     USER_CONF_DIR = os.path.join(_HOME, ".cylc", "flow", CYLC_VERSION)
     CONF_BASENAME = "flow.rc"
     CONFIG_FILEPATHS = []
@@ -567,8 +567,8 @@ class CylcConfig(ParsecConfig):
     # user config
     # site config
     _HOME = os.getenv('HOME') or get_user_home()
-    SITE_CONF_DIR = os.path.join(_HOME, 'mock_cylc_global')
-    # SITE_CONF_DIR = pathlib.Path(os.sep, 'etc', 'cylc', 'flow', CYLC_VERSION)
+    # SITE_CONF_DIR = os.path.join(_HOME, 'mock_cylc_global')
+    SITE_CONF_DIR = pathlib.Path(os.sep, 'etc', 'cylc', 'flow', CYLC_VERSION)
     USER_CONF_DIR = os.path.join(_HOME, ".cylc", "flow", CYLC_VERSION)
     CONF_BASENAME = "flow.rc"
 
