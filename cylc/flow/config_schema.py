@@ -484,7 +484,6 @@ def upg(cfg, descr):
         pass
 
 
-
 def config_getter(output_fname, tvars, suite_fpath=None, user=True, site=True):
     """
     Create a list of config file locations for CylcConfig to collect config
@@ -546,7 +545,7 @@ def config_getter(output_fname, tvars, suite_fpath=None, user=True, site=True):
         # memoization
         # LOG.debug(f"CONFIG FILEPATHS are:")
         # for item in CONFIG_FILEPATHS:
-            # LOG.debug('\t' + str(item))
+        #     LOG.debug('\t' + str(item))
         key = str((output_fname, tvars, suite_fpath, user, site))
         if key not in CONFIG_MEMORY.keys():
             CONFIG_MEMORY[key] =\
@@ -572,14 +571,19 @@ class CylcConfig(ParsecConfig):
     # SITE_CONF_DIR = pathlib.Path(os.sep, 'etc', 'cylc', 'flow', CYLC_VERSION)
     USER_CONF_DIR = os.path.join(_HOME, ".cylc", "flow", CYLC_VERSION)
     CONF_BASENAME = "flow.rc"
+
     def __init__(self, filepaths, output_fname, tvars):
         """Return the default instance."""
         # if a suite config is present we need to combine it
         ParsecConfig.__init__(
             self, SPEC, upg, output_fname, tvars, cylc_config_validate
         )
-        global_config_filepaths = [f for f in filepaths if f[1]!='Suite Config']
-        suite_config_filepath = [f for f in filepaths if f[1]=='Suite Config']
+        global_config_filepaths = [
+            f for f in filepaths if f[1] != 'Suite Config'
+        ]
+        suite_config_filepath = [
+            f for f in filepaths if f[1] == 'Suite Config'
+        ]
         # breakpoint(header='play with filepaths')
 
         # Load up global configs
@@ -587,7 +591,8 @@ class CylcConfig(ParsecConfig):
             # LOG.debug(f"Parsing {fpath} of {title}")
             try:
                 # Log a warning if global or user settings files do not exist.
-                # Make sure that you can't ask for a suite cfg c-out a suite.rc file
+                # Make sure that you can't ask for a suite cfg c-out a suite.rc
+                # file
                 if not os.access(fpath, os.F_OK | os.R_OK):
                     # LOG.info(f"fpath {fpath} not a valid path")
                     # LOG.info(f"fpath {fpath} not a valid path")
@@ -618,9 +623,6 @@ class CylcConfig(ParsecConfig):
             # LOG.debug(f'loading suite config {suite_config_filepath[0][0]}')
             # breakpoint()
             self.loadcfg(*suite_config_filepath[0])
-
-
-
 
     def get_host_item(self, item, host=None, owner=None, replace_home=False,
                       owner_home=None):
@@ -673,75 +675,6 @@ class CylcConfig(ParsecConfig):
             value = 'zmq'
         return value
 
-
-# class GlobalConfig(ParsecConfig):
-#     """
-#     Handle global (all suites) site and user configuration for cylc.
-#     User file values override site file values.
-#     """
-#
-#     _DEFAULT = None
-#     _HOME = pathlib.Path.home() or get_user_home()
-#     CONF_BASENAME = "flow.rc"
-#     SITE_CONF_DIR = os.path.join(os.sep, 'etc', 'cylc', 'flow', CYLC_VERSION)
-#     USER_CONF_DIR = os.path.join(_HOME, '.cylc', 'flow', CYLC_VERSION)
-#
-#     @classmethod
-#     def get_inst(cls, cached=True):
-#         """Return a GlobalConfig instance.
-#
-#         Args:
-#             cached (bool):
-#                 If cached create if necessary and return the singleton
-#                 instance, else return a new instance.
-#         """
-#         if cached:
-#             if not cls._DEFAULT:
-#                 cls._DEFAULT = cls(SPEC, upg, validator=cylc_config_validate)
-#                 cls._DEFAULT.load()
-#             return cls._DEFAULT
-#         else:
-#             # Return an up-to-date global config without affecting the
-#             # singleton.
-#             new_instance = cls(SPEC, upg, validator=cylc_config_validate)
-#             new_instance.load()
-#             return new_instance
-#
-#     def load(self):
-#         """Load or reload configuration from files."""
-#         self.sparse.clear()
-#         self.dense.clear()
-#         LOG.debug("Loading site/user config files")
-#         conf_path_str = os.getenv("CYLC_CONF_PATH")
-#         if conf_path_str:
-#             # Explicit config file override.
-#             fname = os.path.join(conf_path_str, self.CONF_BASENAME)
-#             if os.access(fname, os.F_OK | os.R_OK):
-#                 self.loadcfg(fname, upgrader.USER_CONFIG)
-#         elif conf_path_str is None:
-#             # Use default locations.
-#             for conf_dir, conf_type in [
-#                     (self.SITE_CONF_DIR, upgrader.SITE_CONFIG),
-#                     (self.USER_CONF_DIR, upgrader.USER_CONFIG)]:
-#                 fname = os.path.join(conf_dir, self.CONF_BASENAME)
-#                 if not os.access(fname, os.F_OK | os.R_OK):
-#                     continue
-#                 try:
-#                     self.loadcfg(fname, conf_type)
-#                 except ParsecError as exc:
-#                     if conf_type == upgrader.SITE_CONFIG:
-#                         # Warn on bad site file (users can't fix it).
-#                         LOG.warning(
-#                             'ignoring bad %s %s:\n%s', conf_type, fname, exc)
-#                     else:
-#                         # Abort on bad user file (users can fix it).
-#                         LOG.error('bad %s %s', conf_type, fname)
-#                         raise
-#         # (OK if no flow.rc is found, just use system defaults).
-#         self._transform()
-#
-#
-#
     def _transform(self):
         """Transform various settings.
 
