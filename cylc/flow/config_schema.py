@@ -622,7 +622,11 @@ class CylcConfig(ParsecConfig):
         if suite_config_filepath:
             # LOG.debug(f'loading suite config {suite_config_filepath[0][0]}')
             # breakpoint()
-            self.loadcfg(*suite_config_filepath[0])
+            try:
+                self.loadcfg(*suite_config_filepath[0])
+            except ParsecError as exc:
+                LOG.error("bad %s %s", title, fpath)
+                raise
 
     def get_host_item(self, item, host=None, owner=None, replace_home=False,
                       owner_home=None):
