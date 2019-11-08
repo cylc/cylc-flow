@@ -505,7 +505,6 @@ def config_getter(output_fname, tvars, suite_fpath=None, user=True, site=True):
         A CylcConfig object.
     """
     _HOME = os.getenv('HOME') or get_user_home()
-    #SITE_CONF_DIR = os.path.join(_HOME, 'mock_cylc_global')
     SITE_CONF_DIR = pathlib.Path(os.sep, 'etc', 'cylc', 'flow', CYLC_VERSION)
     USER_CONF_DIR = os.path.join(_HOME, ".cylc", "flow", CYLC_VERSION)
     CONF_BASENAME = "flow.rc"
@@ -567,8 +566,7 @@ class CylcConfig(ParsecConfig):
     # user config
     # site config
     _HOME = os.getenv('HOME') or get_user_home()
-    # SITE_CONF_DIR = os.path.join(_HOME, 'mock_cylc_global')
-    SITE_CONF_DIR = pathlib.Path(os.sep, 'etc', 'cylc', 'flow', CYLC_VERSION)
+    SITE_CONF_DIR = os.path.join(os.sep, 'etc', 'cylc', 'flow', CYLC_VERSION)
     USER_CONF_DIR = os.path.join(_HOME, ".cylc", "flow", CYLC_VERSION)
     CONF_BASENAME = "flow.rc"
 
@@ -581,9 +579,11 @@ class CylcConfig(ParsecConfig):
         global_config_filepaths = [
             f for f in filepaths if f[1] != 'Suite Config'
         ]
+        # LOG.debug(f"global_config_filepaths={global_config_filepaths}")
         suite_config_filepath = [
             f for f in filepaths if f[1] == 'Suite Config'
         ]
+        # LOG.debug(f"suite_config_filepath={suite_config_filepath}")
         # breakpoint(header='play with filepaths')
 
         # Load up global configs
@@ -619,8 +619,8 @@ class CylcConfig(ParsecConfig):
         # LOG.debug('After loading self._transform')
 
         # Load up suite configs
-        if suite_config_filepath:
-            # LOG.debug(f'loading suite config {suite_config_filepath[0][0]}')
+        for fpath, title in suite_config_filepath:
+            # LOG.debug(f'loading suite config {suite_config_filepath[0]}')
             # breakpoint()
             try:
                 self.loadcfg(*suite_config_filepath[0])
