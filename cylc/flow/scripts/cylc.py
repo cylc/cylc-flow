@@ -89,13 +89,21 @@ def main(cmd_args, version, help_):
             if command == "h":
                 command = "help"
 
-            if command == "help" and len(cmd_args) >= 1:
-                command = cmd_args[0]
-                if command in category_list:
-                    execute_cmd("cylc-help", *cmd_args)
-                else:
-                    command = cmd_args.pop(0)
+            if command == "help":
                 help_ = True
+                if not len(cmd_args):
+                    execute_cmd("cylc-help")
+                    sys.exit(0)
+                else:
+                    cmd = cmd_args.pop(0)
+                    if cmd in category_list:
+                        if len(cmd_args) == 0:
+                            execute_cmd("cylc-help", cmd)
+                            sys.exit(0)
+                        else:
+                            command = cmd_args.pop(0)
+                    else:
+                        command = cmd
 
             cylc_cmd = f"cylc-{command}"
 
