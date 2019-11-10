@@ -51,6 +51,9 @@ never transient, and in practice job polling is the only way to recover).
 [#3409](https://github.com/cylc/cylc-flow/pull/3409) - prevent cylc-run from
 creating directories when executed for suites that do not exist.
 
+[#3433](https://github.com/cylc/cylc-flow/pull/3433) - fix server abort at
+shutdown during remote run dir tidy (introduced during Cylc 8 development).
+
 -------------------------------------------------------------------------------
 ## __cylc-8.0a1 (2019-09-18)__
 
