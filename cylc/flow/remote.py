@@ -70,7 +70,7 @@ def run_cmd(command, stdin=None, capture_process=False, capture_status=False,
             command inclusive of all opts and args required to run via ssh.
         stdin (file):
             If specified, it should be a readable file object.
-            If None, `open(DEVNULL)` is set if output is to be captured.
+            If None, DEVNULL is set if output is to be captured.
         capture_process (boolean):
             If True, set stdout=PIPE and return the Popen object.
         capture_status (boolean):
