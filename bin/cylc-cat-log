@@ -60,6 +60,7 @@ if remrun(abort_if='edit', forward_x11=True):
 
 import os
 import shlex
+from contextlib import suppress
 from glob import glob
 from shlex import quote
 from stat import S_IRUSR
@@ -221,7 +222,8 @@ def view_log(logpath, mode, tailer_tmpl, batchview_cmd=None, remote=False,
         else:
             cmd = tailer_tmpl % {"filename": logpath}
         proc = Popen(shlex.split(cmd), stdin=open(os.devnull))
-        watch_and_kill(proc)
+        with suppress(KeyboardInterrupt):
+            watch_and_kill(proc)
         return proc.wait()
 
 
