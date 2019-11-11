@@ -116,7 +116,8 @@ foo<i> => bar<i>
     [[bar<i>]]
 __SUITE__
 run_fail "${TEST_NAME_BASE}-05" cylc validate "suite.rc"
-cmp_ok "${TEST_NAME_BASE}-05.stderr" <<'__ERR__'
+cmp_ok "${TEST_NAME_BASE}-05.stderr" <<__ERR__
+ERROR - bad Suite Config $PWD/suite.rc
 IllegalValueError: (type=parameter) [cylc][parameters]i = space is dangerous - (space is dangerous: bad value)
 __ERR__
 
@@ -136,7 +137,8 @@ foo<i> => bar<i>
     [[bar<i>]]
 __SUITE__
 run_fail "${TEST_NAME_BASE}-06" cylc validate "suite.rc"
-cmp_ok "${TEST_NAME_BASE}-06.stderr" <<'__ERR__'
+cmp_ok "${TEST_NAME_BASE}-06.stderr" <<__ERR__
+ERROR - bad Suite Config $PWD/suite.rc
 IllegalValueError: (type=parameter) [cylc][parameters]i = mix, 1..10 - (mixing int range and str)
 __ERR__
 
@@ -175,7 +177,8 @@ foo<i> => bar<i>
     [[bar<i>]]
 __SUITE__
 run_fail "${TEST_NAME_BASE}-08" cylc validate "suite.rc"
-cmp_ok "${TEST_NAME_BASE}-08.stderr" <<'__ERR__'
+cmp_ok "${TEST_NAME_BASE}-08.stderr" <<__ERR__
+ERROR - bad Suite Config $PWD/suite.rc
 IllegalValueError: (type=parameter) [cylc][parameters]i = 1..2 3..4 - (1..2 3..4: bad value)
 __ERR__
 
