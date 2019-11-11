@@ -61,7 +61,7 @@ foo_m1=>bar_m1_n2
 import re
 
 from cylc.task_id import TaskID
-from parsec.OrderedDict import OrderedDictWithDefaults
+from parsec.OrderedDict import OrderedDictWithDefaults, OrderedDict
 
 # To split runtime heading name lists.
 REC_NAMES = re.compile(r'(?:[^,<]|\<[^>]*\>)+')
@@ -222,7 +222,7 @@ class NameExpander(object):
         head, p_list_str, tail = REC_P_ALL.match(parent).groups()
         if not p_list_str:
             return head
-        used = {}
+        used = OrderedDict()
         for item in (i.strip() for i in p_list_str.split(',')):
             if '-' in item or '+' in item:
                 raise ParamExpandError(
