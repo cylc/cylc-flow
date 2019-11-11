@@ -628,13 +628,6 @@ class CylcConfig(ParsecConfig):
                 raise
         self._transform()
 
-        # cfg = self.get(sparse=False)
-        # for key, _ in cfg['hosts']['localhost'].items():
-        #     if 'directory' in key:
-        #         cfg['hosts']['localhost'][key] = self.get_host_item('run directory')
-        # breakpoint()
-
-
     def get_host_item(self, item, host=None, owner=None, replace_home=False,
                       owner_home=None):
         """This allows hosts with no matching entry in the config file
