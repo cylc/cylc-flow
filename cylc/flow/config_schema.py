@@ -615,9 +615,8 @@ class CylcConfig(ParsecConfig):
                     LOG.error("bad %s %s", title, fpath)
                     raise
         # LOG.debug('Before loading self._transform')
-        self._transform()
+        # self._transform()
         # LOG.debug('After loading self._transform')
-
         # Load up suite configs
         for fpath, title in suite_config_filepath:
             # LOG.debug(f'loading suite config {suite_config_filepath[0]}')
@@ -627,6 +626,14 @@ class CylcConfig(ParsecConfig):
             except ParsecError as exc:
                 LOG.error("bad %s %s", title, fpath)
                 raise
+        self._transform()
+
+        # cfg = self.get(sparse=False)
+        # for key, _ in cfg['hosts']['localhost'].items():
+        #     if 'directory' in key:
+        #         cfg['hosts']['localhost'][key] = self.get_host_item('run directory')
+        # breakpoint()
+
 
     def get_host_item(self, item, host=None, owner=None, replace_home=False,
                       owner_home=None):
@@ -688,6 +695,7 @@ class CylcConfig(ParsecConfig):
         Ensure os.environ['HOME'] is defined with the correct value.
         """
         cfg = self.get(sparse=False)
+        cfgsparse = self.get(sparse=True)
 
         for host in cfg.get('hosts', {}):
             if host == 'localhost':
@@ -706,15 +714,19 @@ class CylcConfig(ParsecConfig):
         # Need to skip this logic if keys it relies on are not defined.
         # Expand environment variables and ~user in LOCAL file paths.
 
-        # TODO Replace this - it's horrid
+        # TODO Replace this - it's horrid, and also quite possibly circular
+        # TODO     since self._HOME defaults to os.genenv('HOME')
         if 'HOME' not in os.environ:
             os.environ['HOME'] = str(self._HOME)
 
         cfg['documentation']['local'] = os.path.expandvars(
             cfg['documentation']['local'])
-
         for key, val in self.get(['hosts', 'localhost']).items():
             if val and 'directory' in key:
-                self.dense['hosts']['localhost'][key] = os.path.expandvars(val)
-
+                cfg['hosts']['localhost'][key] = os.path.expandvars(val)
+                # These items need to be added to the self.sparse, else they
+                # Will simply dissapear when we clear self.dense.
+                cfgsparse.update(
+                    {'hosts': {'localhost': {key: os.path.expandvars(val)}}}
+                )
         self.dense.clear()
