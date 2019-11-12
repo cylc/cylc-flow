@@ -16,10 +16,11 @@
 
 from unittest import main
 
-from cylc.flow.tests.util import CylcWorkflowTestCase, create_task_proxy
-from cylc.flow.ws_data_mgr import WsDataMgr
 from cylc.flow.network.authorisation import Priv
 from cylc.flow.network.server import SuiteRuntimeServer
+from cylc.flow.suite_files import create_auth_files
+from cylc.flow.tests.util import CylcWorkflowTestCase, create_task_proxy
+from cylc.flow.ws_data_mgr import WsDataMgr
 
 
 class TestSuiteRuntimeServer(CylcWorkflowTestCase):
@@ -64,6 +65,8 @@ class TestSuiteRuntimeServer(CylcWorkflowTestCase):
         self.task_pool.release_runahead_tasks()
         self.scheduler.ws_data_mgr.initiate_data_model()
         self.workflow_id = self.scheduler.ws_data_mgr.workflow_id
+
+        create_auth_files(self.suite_name)  # auth keys are required for comms
         self.server = SuiteRuntimeServer(self.scheduler)
         self.server.public_priv = Priv.CONTROL
 

@@ -802,6 +802,8 @@ def generate_key_store(store_parent_dir, keys_tag):
 
     WARNING: be careful testing this. It uses 'shutil.rmtree' which will
     wipe the whole 'store_dir/UserFiles.Auth.DIRNAME' directory if it exists.
+
+    Note: store_parent_dir must already exist as a valid directory.
     """
 
     # Define the directory structure to store the CURVE keys in
@@ -836,16 +838,24 @@ def generate_key_store(store_parent_dir, keys_tag):
                               "keys for authentication. Abort.")
 
 
+def ensure_dir_exists(dir_path):
+    """Check for a directory at a path and create it if it does not exist."""
+    if not os.path.exists(dir_path):
+        os.mkdir(dir_path)
+
+
 def ensure_keypair_exists(auth_parent_dir, auth_child_dir, tag):
     """Check if a set of public/private keys exist and if not, create them."""
     public_key_location, private_key_location = return_key_locations(
-        auth_parent_dir)
+        auth_child_dir)  # where the keys should be, else where to create them
     if (os.path.exists(public_key_location) and
             os.path.exists(private_key_location)):
         return True
     else:
+        # Ensure parent dir exists (child dir will be created if it does not)
+        ensure_dir_exists(auth_parent_dir)
         try:
-            generate_key_store(auth_child_dir, tag)
+            generate_key_store(auth_parent_dir, tag)
             return True
         # Catch anything so we can otherwise be sure the key store exists.
         except Exception:
@@ -856,8 +866,8 @@ def ensure_keypair_exists(auth_parent_dir, auth_child_dir, tag):
 def ensure_user_keys_exist():
     """Make sure the user (client) public/private keys exist."""
     return ensure_keypair_exists(
-        UserFiles.get_path(),
         UserFiles.get_path(include_auth_dirname=False),
+        UserFiles.get_path(),
         UserFiles.Auth.CLIENT_TAG
     )
 
@@ -865,7 +875,7 @@ def ensure_user_keys_exist():
 def ensure_suite_keys_exist(suite_service_directory):
     """Make sure the suite (server) public/private keys exist."""
     return ensure_keypair_exists(
-        os.path.join(suite_service_directory, UserFiles.Auth.DIRNAME),
         suite_service_directory,
+        os.path.join(suite_service_directory, UserFiles.Auth.DIRNAME),
         UserFiles.Auth.SERVER_TAG
     )
