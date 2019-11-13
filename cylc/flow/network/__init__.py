@@ -26,7 +26,7 @@ import zmq
 import zmq.asyncio
 
 from cylc.flow import LOG
-from cylc.flow.exceptions import CylcError, ClientError, SuiteServiceFileError
+from cylc.flow.exceptions import ClientError, CylcError, SuiteServiceFileError
 from cylc.flow.hostuserutil import get_fqdn_by_host
 from cylc.flow.suite_files import (
     ContactFileFields,

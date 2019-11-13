@@ -33,7 +33,7 @@ def process_delta_msg(btopic, delta_msg, func, *args, **kwargs):
         delta = DELTAS_MAP[topic]()
         delta.ParseFromString(delta_msg)
     except KeyError:
-        return (topic, None)
+        delta = delta_msg
     if callable(func):
         return func(topic, delta, *args, **kwargs)
     return (topic, delta)

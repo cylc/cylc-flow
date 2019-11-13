@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Publisher for suite runtime API."""
+"""Publisher for workflow runtime API."""
 
 import asyncio
 
@@ -75,7 +75,14 @@ class WorkflowPublisher(ZMQSocketBase):
         self.stopping = True
 
     async def send_multi(self, topic, data, serializer=None):
-        """Send multi part message."""
+        """Send multi part message.
+
+        Args:
+            topic (bytes): The topic of the message.
+            data (object): Data element/message to serialise and send.
+            serializer (object, optional): string/func for encoding.
+
+        """
         self.topics.add(topic)
         self.socket.send_multipart(
             [topic, serialize_data(data, serializer)]
@@ -86,12 +93,6 @@ class WorkflowPublisher(ZMQSocketBase):
 
         Args:
             items (iterable): [(topic, data, serializer)]
-
-                topic (bytes): The topic of the message.
-
-                data (object): Data element/message to serialise and send.
-
-                serializer (object, optional): string or func object.
 
         """
         try:

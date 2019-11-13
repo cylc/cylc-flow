@@ -1790,6 +1790,8 @@ see `COPYING' in the Cylc source distribution.
         if self.server:
             self.server.stop()
         if self.publisher:
+            self.publisher.publish(
+                [(b'shutdown', f'{str(reason)}'.encode('utf-8'))])
             self.publisher.stop()
         self.curve_auth.stop()  # stop the authentication thread
 

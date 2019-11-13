@@ -41,7 +41,7 @@ def test_process_delta_msg():
     # test non-key
     not_topic, not_delta = process_delta_msg(b'foo', b'bar', None)
     assert not_topic == 'foo'
-    assert not_delta is None
+    assert not_delta == b'bar'
 
 
 class TestWorkflowSubscriber(CylcWorkflowTestCase):
