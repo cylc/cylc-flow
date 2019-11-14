@@ -145,6 +145,12 @@ def main(cmd_args, version, help_):
                         if not arg.startswith("-"):
                             cmd_args.insert(cmd_args.index(arg) + 1, "--")
                             break
+            elif cylc_cmd.endswith("message"):
+                if cmd_args[0] in ['-s', '--severity', '-p', '--priority']:
+                    dd_index = 2
+                else:
+                    dd_index = 0
+                cmd_args.insert(dd_index, "--")
 
             if help_:
                 execute_cmd(cylc_cmd, "--help")
