@@ -20,12 +20,12 @@ import json
 
 
 def encode_(message):
-    """ Encode a message from JSON format to a string. """
+    """Convert the structure holding a message field from JSON to a string."""
     return json.dumps(message)
 
 
 def decode_(message):
-    """ Decode a message from a string to JSON, with an added 'user' field. """
+    """Convert an encoded message string to JSON with an added 'user' field."""
     msg = json.loads(message)
     msg['user'] = getpass.getuser()  # assume this is the user
     return msg

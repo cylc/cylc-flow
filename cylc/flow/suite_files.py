@@ -141,7 +141,9 @@ class UserFiles:
         PUBLIC_TAG = '.key'  # for public keys
         PRIVATE_TAG = '.key_secret'  # for private ('secret') keys
         """Keyword identifiers used to form the certificate names, as below.
-           Note: the public/private tags are set (by default) by CurveZMQ.
+
+        Note: the public & private identifiers are set by CurveZMQ, so cannot
+        be renamed, but we hard-code them since they can't be extracted easily.
         """
 
         SERVER_PUBLIC_KEY_CERTIFICATE = SERVER_TAG + PUBLIC_TAG
@@ -828,7 +830,7 @@ def generate_key_store(store_parent_dir, keys_tag):
         elif key_file.endswith(UserFiles.Auth.PRIVATE_TAG):
             loc = shutil.move(os.path.join(store_dir, key_file),
                               os.path.join(private_key_loc, '.'))
-            # Now lock the prviate key in its permanent location
+            # Now lock the private key in its permanent location
             try:
                 lockdown_private_keys(loc)  # Linux File Permission now 600
             # Catch any and all errors here, since private keys must be

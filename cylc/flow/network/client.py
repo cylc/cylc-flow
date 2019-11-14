@@ -59,12 +59,6 @@ class ZMQClient(object):
             The host to connect to.
         port (int):
             The port on the aforementioned host to connect to.
-        encode_method (function):
-            Translates outgoing messages into strings to be sent over the
-            network. ``encode_method(json) -> str``
-        decode_method (function):
-            Translates incoming message strings into digestible data.
-            ``decode_method(str) -> json``
         srv_public_key_loc (function):
             Return path of server's public key for server communication.
         timeout (float):
@@ -91,9 +85,8 @@ class ZMQClient(object):
     DEFAULT_TIMEOUT = 5.  # 5 seconds
 
     def __init__(
-            self, host, port, encode_method, decode_method,
-            srv_public_key_loc, timeout=None, timeout_handler=None,
-            header=None):
+            self, host, port, srv_public_key_loc, timeout=None,
+            timeout_handler=None, header=None):
         if timeout is None:
             timeout = self.DEFAULT_TIMEOUT
         else:
@@ -278,8 +271,6 @@ class SuiteRuntimeClient(ZMQClient):
         super().__init__(
             host=host,
             port=port,
-            encode_method=encode_,
-            decode_method=decode_,
             srv_public_key_loc=get_auth_item(
                 UserFiles.Auth.SERVER_PUBLIC_KEY_CERTIFICATE, suite,
                 content=False

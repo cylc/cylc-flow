@@ -56,14 +56,6 @@ class ZMQServer(object):
     This class contains the logic for the ZMQ message interface and client -
     server communication.
 
-    Args:
-        encode_method (function):
-            Translates outgoing messages into strings to be sent over the
-            network. ``encode_method(json) -> str``
-        decode_method (function):
-            Translates incoming message strings into digestible data.
-            ``decode_method(str) -> json``
-
     Usage:
         * Define endpoints using the ``expose`` decorator.
         * Call endpoints using the function name.
@@ -86,15 +78,13 @@ class ZMQServer(object):
 
     """
 
-    def __init__(self, encode_method, decode_method, private_key_location):
+    def __init__(self, private_key_location):
         self.port = None
         self.context = zmq.Context()
         self.socket = None
         self.endpoints = None
         self.thread = None
         self.queue = None
-        self.encode = encode_method
-        self.decode = decode_method
         self.private_key_location = private_key_location
 
     def start(self, min_port, max_port):
@@ -124,7 +114,7 @@ class ZMQServer(object):
         self.socket = self.context.socket(zmq.REP)
         self.socket.RCVTIMEO = int(self.RECV_TIMEOUT) * 1000
 
-        # fetch server keys, generated at sutie registration, for auth
+        # fetch server keys, generated at suite registration, for auth
         server_public_key, server_private_key = zmq.auth.load_certificate(
             self.private_key_location)
         self.socket.curve_publickey = server_public_key
@@ -191,7 +181,7 @@ class ZMQServer(object):
             # attempt to decode the message, authenticating the user in the
             # process
             try:
-                message = self.decode(msg)
+                message = decode_(msg)
             except Exception as exc:  # purposefully catch generic exception
                 # failed to decode message, possibly resulting from failed
                 # authentication
@@ -202,9 +192,9 @@ class ZMQServer(object):
                 if message['command'] in PB_METHOD_MAP:
                     response = res['data']
                 else:
-                    response = self.encode(res).encode()
+                    response = encode_(res).encode()
                 # send back the string to bytes response
-            self.socket.send(response)
+                self.socket.send(response)
 
             # Note: we are using CurveZMQ to secure the messages (see
             # self.curve_auth, self.socket.curve_...key etc.). We have set up
@@ -291,8 +281,6 @@ class SuiteRuntimeServer(ZMQServer):
     def __init__(self, schd):
         ZMQServer.__init__(
             self,
-            encode_,
-            decode_,
             get_auth_item(UserFiles.Auth.SERVER_PRIVATE_KEY_CERTIFICATE,
                           schd.suite)
         )

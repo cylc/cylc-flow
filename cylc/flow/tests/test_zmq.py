@@ -51,7 +51,7 @@ def test_server_requires_valid_keys():
 
     with TemporaryDirectory() as keys, NamedTemporaryFile(dir=keys) as fake:
         # Assign a blank file masquerading as a CurveZMQ certificate
-        server = ZMQServer(encode_, decode_, fake.name)
+        server = ZMQServer(fake.name)
 
         with pytest.raises(ValueError, match=r"No public key found in "):
             server.start(*PORT_RANGE)
@@ -71,7 +71,7 @@ def test_client_requires_valid_keys():
             ClientError, match=r"Failed to load the suite's public "
                 "key, so cannot connect."):
             # Assign a blank file masquerading as a CurveZMQ certificate
-            ZMQClient(HOST, port, encode_, decode_, fake.name)
+            ZMQClient(HOST, port, fake.name)
 
 
 def test_single_port():
@@ -79,8 +79,8 @@ def test_single_port():
     with TemporaryDirectory() as s_keys:
         _, servs_private_key = zmq.auth.create_certificates(s_keys, "servers")
 
-        serv1 = ZMQServer(encode_, decode_, servs_private_key)
-        serv2 = ZMQServer(encode_, decode_, servs_private_key)
+        serv1 = ZMQServer(servs_private_key)
+        serv2 = ZMQServer(servs_private_key)
 
         serv1.start(*PORT_RANGE)
         port = serv1.port
