@@ -83,6 +83,57 @@ class ParsecValidator(object):
     V_SPACELESS_STRING_LIST = 'V_SPACELESS_STRING_LIST'
     V_ABSOLUTE_HOST_LIST = 'V_ABSOLUTE_HOST_LIST'
 
+    V_TYPE_HELP = {
+        # V_TYPE: (quick_name, help_string, examples_list, see_also)
+        V_BOOLEAN: (
+            'boolean',
+            'A boolean in Python format',
+            ['True', 'False']
+        ),
+        V_FLOAT: (
+            'float',
+            'A number in integer, decimal or exponential format',
+            ['1', '1.1', '1.1e11']
+        ),
+        V_FLOAT_LIST: (
+            'float list',
+            'A comma separated list of floats.',
+            ['1, 1.1, 1.1e11']
+        ),
+        V_INTEGER: (
+            'integer',
+            'An integer.',
+            ['1', '2', '3']
+        ),
+        V_INTEGER_LIST: (
+            'integer list',
+            'A comma separated list of integers.',
+            ['1, 2, 3']
+        ),
+        V_STRING: (
+            'string',
+            'Plain text.',
+            ['Hello World!']
+        ),
+        V_STRING_LIST: (
+            'list',
+            'A comma separated list of strings.',
+            ['a, b c, d']
+        ),
+        V_SPACELESS_STRING_LIST: (
+            'spaceless list',
+            'A comma separated list of strings which cannot contain spaces.',
+            ['a, b, c']
+        ),
+        V_ABSOLUTE_HOST_LIST: (
+            'absolute host list',
+            'A comma separated list of hostnames which does not contain '
+            'any self references '
+            f'(i.e. does not contain {", ".join(SELF_REFERENCE_PATTERNS)})',
+            ['foo', 'bar', 'baz']
+        )
+    }
+
     def __init__(self):
         self.coercers = {
             self.V_BOOLEAN: self.coerce_boolean,
@@ -159,7 +210,15 @@ class ParsecValidator(object):
 
     @classmethod
     def coerce_boolean(cls, value, keys):
-        """Coerce value to a boolean."""
+        """Coerce value to a boolean.
+
+        Examples:
+            >>> ParsecValidator.coerce_boolean('True', None)
+            True
+            >>> ParsecValidator.coerce_boolean('true', None)
+            True
+
+        """
         value = cls.strip_and_unquote(keys, value)
         if value in ['True', 'true']:
             return True
@@ -172,7 +231,17 @@ class ParsecValidator(object):
 
     @classmethod
     def coerce_float(cls, value, keys):
-        """Coerce value to a float."""
+        """Coerce value to a float.
+
+        Examples:
+            >>> ParsecValidator.coerce_float('1', None)
+            1.0
+            >>> ParsecValidator.coerce_float('1.1', None)
+            1.1
+            >>> ParsecValidator.coerce_float('1.1e1', None)
+            11.0
+
+        """
         value = cls.strip_and_unquote(keys, value)
         if value in ['', None]:
             return None
@@ -183,13 +252,25 @@ class ParsecValidator(object):
 
     @classmethod
     def coerce_float_list(cls, value, keys):
-        """Coerce list values with optional multipliers to float."""
+        """Coerce list values with optional multipliers to float.
+
+        Examples:
+            >>> ParsecValidator.coerce_float_list('1, 1.1, 1.1e1', None)
+            [1.0, 1.1, 11.0]
+
+        """
         values = cls.strip_and_unquote_list(keys, value)
         return cls.expand_list(values, keys, float)
 
     @classmethod
     def coerce_int(cls, value, keys):
-        """Coerce value to an integer."""
+        """Coerce value to an integer.
+
+        Examples:
+            >>> ParsecValidator.coerce_int('1', None)
+            1
+
+        """
         value = cls.strip_and_unquote(keys, value)
         if value in ['', None]:
             return None
@@ -200,7 +281,13 @@ class ParsecValidator(object):
 
     @classmethod
     def coerce_int_list(cls, value, keys):
-        """Coerce list values with optional multipliers to integer."""
+        """Coerce list values with optional multipliers to integer.
+
+        Examples:
+            >>> ParsecValidator.coerce_int_list('1, 2, 3', None)
+            [1, 2, 3]
+
+        """
         items = []
         for item in cls.strip_and_unquote_list(keys, value):
             values = cls.parse_int_range(item)
@@ -212,7 +299,15 @@ class ParsecValidator(object):
 
     @classmethod
     def coerce_str(cls, value, keys):
-        """Coerce value to a string."""
+        """Coerce value to a string.
+
+        Examples:
+            >>> ParsecValidator.coerce_str('abc', None)
+            'abc'
+            >>> ParsecValidator.coerce_str(['abc', 'def'], None)
+            'abc\\ndef'
+
+        """
         if isinstance(value, list):
             # handle graph string merging
             vraw = []
@@ -230,7 +325,14 @@ class ParsecValidator(object):
 
     @classmethod
     def coerce_str_list(cls, value, keys):
-        """Coerce value to a list of strings."""
+        """Coerce value to a list of strings.
+
+        >>> ParsecValidator.coerce_str_list('a, b, c', None)
+        ['a', 'b', 'c']
+        >>> ParsecValidator.coerce_str_list('a, b c ,   d', None)
+        ['a', 'b c', 'd']
+
+        """
         return cls.strip_and_unquote_list(keys, value)
 
     @classmethod
@@ -238,6 +340,10 @@ class ParsecValidator(object):
         """Coerce value to a list of strings ensuring no values contain spaces.
 
         Examples:
+            >>> ParsecValidator.coerce_spaceless_str_list(
+            ...     'a, b, c', None)
+            ['a', 'b', 'c']
+
             >>> ParsecValidator.coerce_spaceless_str_list(
             ...     'a, b c, d', ['foo'])  # doctest: +NORMALIZE_WHITESPACE
             Traceback (most recent call last):
@@ -259,7 +365,11 @@ class ParsecValidator(object):
     def coerce_absolute_host_list(cls, value, keys):
         """Do not permit self reference in host names.
 
-        Example:
+        Examples:
+            >>> ParsecValidator.coerce_absolute_host_list(
+            ...     'foo, bar, baz', None)
+            ['foo', 'bar', 'baz']
+
             >>> ParsecValidator.coerce_absolute_host_list(
             ...     'foo, bar, 127.0.0.1:8080, baz', ['pub']
             ... )  # doctest: +NORMALIZE_WHITESPACE
@@ -279,7 +389,13 @@ class ParsecValidator(object):
 
     @classmethod
     def expand_list(cls, values, keys, type_):
-        """Handle multiplier syntax N*VALUE in a list."""
+        """Handle multiplier syntax N*VALUE in a list.
+
+        Examples:
+            >>> ParsecValidator.expand_list(['1', '2*3'], None, int)
+            [1, 3, 3]
+
+        """
         lvalues = []
         for item in values:
             try:
@@ -305,6 +421,11 @@ class ParsecValidator(object):
         Return (list):
             A list containing the integer values in range,
             or None if value does not contain an integer range.
+
+        Examples:
+            >>> ParsecValidator.parse_int_range('1..3')
+            [1, 2, 3]
+
         """
         match = cls._REC_INT_RANGE.match(value)
         if match:
@@ -327,6 +448,11 @@ class ParsecValidator(object):
 
         Return (str):
             Processed value.
+
+        Examples:
+            >>> ParsecValidator.strip_and_unquote(None, '" foo "')
+            'foo'
+
         """
         for substr, rec in [
                 ["'''", cls._REC_MULTI_LINE_SINGLE],
@@ -361,6 +487,14 @@ class ParsecValidator(object):
 
         Return (list):
             Processed value as a list.
+
+        Examples:
+            >>> ParsecValidator.strip_and_unquote_list(None, ' 1 , "2", 3')
+            ['1', '"2"', '3']
+
+            >>> ParsecValidator.strip_and_unquote_list(None, '" 1 , 2", 3')
+            ['1 , 2', '3']
+
         """
         if value.startswith('"') or value.startswith("'"):
             lexer = shlex.shlex(value, posix=True, punctuation_chars=",")
@@ -388,7 +522,13 @@ class ParsecValidator(object):
 
     @classmethod
     def _unquoted_list_parse(cls, keys, value):
-        """Split comma separated list, and unquote each value."""
+        """Split comma separated list, and unquote each value.
+
+        Examples:
+            >>> list(ParsecValidator._unquoted_list_parse(None, '"1", 2'))
+            ['1', '2']
+
+        """
         # http://stackoverflow.com/questions/4982531/
         # how-do-i-split-a-comma-delimited-string-in-python-except-
         # for-the-commas-that-are
@@ -442,6 +582,84 @@ class CylcConfigValidator(ParsecValidator):
     V_PARAMETER_LIST = 'V_PARAMETER_LIST'
     V_XTRIGGER = 'V_XTRIGGER'
 
+    V_TYPE_HELP = {
+        # V_TYPE: (quick_name, help_string, examples_list, see_also)
+        V_CYCLE_POINT: (
+            'cycle point',
+            'An integer or date-time cycle point as appropriate.',
+            {
+                '1': 'An integer cycle point.',
+                '2000-01-01T00:00Z': 'A date-time cycle point.',
+                'now': 'The current date-time.',
+                'next(T-00)':
+                    'The current date-time rounded up to the nearest'
+                    ' whole hour.'
+            },
+            [
+                ('std:term', 'cycle point'),
+                ('std:term', 'ISO8601 duration')
+            ]
+        ),
+        V_CYCLE_POINT_FORMAT: (
+            'cycle point format',
+            'An time format for date-time cycle points in ``isodatetime`` '
+            '"print" or "parse" format. '
+            'See ``isodatetime --help`` for more information.',
+            {
+                'CCYYMM': '``isodatetime`` print format.',
+                '%Y%m': '``isodatetime`` parse format.'
+            }
+        ),
+        V_CYCLE_POINT_TIME_ZONE: (
+            'cycle point time zone',
+            'A time zone for date-time cycle points in ISO8601 format.',
+            {
+                'Z': 'UTC / GMT.',
+                '+13': 'UTC plus 13 hours.',
+                '-0830': 'UTC minus 8 hours and 30 minutes.'
+            }
+        ),
+        V_INTERVAL: (
+            'time interval',
+            'An ISO8601 duration.',
+            {
+                'P1Y': 'Every year.',
+                'PT6H': 'Every six hours.'
+            },
+            [('std:term', 'ISO8601 duration')]
+        ),
+        V_INTERVAL_LIST: (
+            'time interval list',
+            'A comma separated list of time intervals',
+            ['P1Y, P2Y, P3Y'],
+            [('std:term', 'ISO8601 duration')]
+        ),
+        V_PARAMETER_LIST: (
+            'parameter list',
+            'A comma separated list of Cylc parameter values. '
+            'This can include strings, integers and integer ranges.',
+            {
+                'foo, bar, baz': 'List of string parameters.',
+                '1, 2, 3': 'List of integer parameters.',
+                '1..3': 'The same as 1, 2, 3.',
+                '1..5..2': 'The same as 1, 3, 5.',
+                '1..5..2, 8': 'Range and integers can be mixed.',
+            },
+            [('ref', 'Parameterized Tasks Label')]
+        ),
+        V_XTRIGGER: (
+            'xtrigger function signature',
+            'A function signature similar to how it would be written in '
+            'Python.\n'
+            '``<function>(<arg>, <kwarg>=<value>):<interval>``',
+            {
+                'mytrigger(42, cycle_point=%(point)):PT10S':
+                    'Run function ``mytrigger`` every 10 seconds.'
+            },
+            [('ref', 'Section External Triggers')]
+        )
+    }
+
     def __init__(self):
         ParsecValidator.__init__(self)
         self.coercers.update({
@@ -456,7 +674,17 @@ class CylcConfigValidator(ParsecValidator):
 
     @classmethod
     def coerce_cycle_point(cls, value, keys):
-        """Coerce value to a cycle point."""
+        """Coerce value to a cycle point.
+
+        Examples:
+            >>> CylcConfigValidator.coerce_cycle_point('2000', None)
+            '2000'
+            >>> CylcConfigValidator.coerce_cycle_point('now', None)
+            'now'
+            >>> CylcConfigValidator.coerce_cycle_point('next(T-00)', None)
+            'next(T-00)'
+
+        """
         if not value:
             return None
         value = cls.strip_and_unquote(keys, value)
@@ -499,7 +727,17 @@ class CylcConfigValidator(ParsecValidator):
 
     @classmethod
     def coerce_cycle_point_format(cls, value, keys):
-        """Coerce to a cycle point format (either CCYYMM... or %Y%m...)."""
+        """Coerce to a cycle point format.
+
+        Examples:
+            >>> CylcConfigValidator.coerce_cycle_point_format(
+            ...     'CCYYMM', None)
+            'CCYYMM'
+            >>> CylcConfigValidator.coerce_cycle_point_format(
+            ...     '%Y%m', None)
+            '%Y%m'
+
+        """
         value = cls.strip_and_unquote(keys, value)
         if not value:
             return None
@@ -532,7 +770,20 @@ class CylcConfigValidator(ParsecValidator):
 
     @classmethod
     def coerce_cycle_point_time_zone(cls, value, keys):
-        """Coerce value to a cycle point time zone format - Z, +13, -0800..."""
+        """Coerce value to a cycle point time zone format.
+
+        Examples:
+            >>> CylcConfigValidator.coerce_cycle_point_time_zone(
+            ...     'Z', None)
+            'Z'
+            >>> CylcConfigValidator.coerce_cycle_point_time_zone(
+            ...     '+13', None)
+            '+13'
+            >>> CylcConfigValidator.coerce_cycle_point_time_zone(
+            ...     '-0800', None)
+            '-0800'
+
+        """
         value = cls.strip_and_unquote(keys, value)
         if not value:
             return None
@@ -550,9 +801,16 @@ class CylcConfigValidator(ParsecValidator):
                 'cycle point time zone format', keys, value)
         return value
 
-    def coerce_interval(self, value, keys):
-        """Coerce an ISO 8601 interval (or number: back-comp) into seconds."""
-        value = self.strip_and_unquote(keys, value)
+    @classmethod
+    def coerce_interval(cls, value, keys):
+        """Coerce an ISO 8601 interval into seconds.
+
+        Examples:
+            >>> CylcConfigValidator.coerce_interval('PT1H', None)
+            3600.0
+
+        """
+        value = cls.strip_and_unquote(keys, value)
         if not value:
             # Allow explicit empty values.
             return None
@@ -564,12 +822,19 @@ class CylcConfigValidator(ParsecValidator):
         return DurationFloat(
             days * Calendar.default().SECONDS_IN_DAY + seconds)
 
-    def coerce_interval_list(self, value, keys):
-        """Coerce a list of intervals (or numbers: back-comp) into seconds."""
-        return self.expand_list(
-            self.strip_and_unquote_list(keys, value),
+    @classmethod
+    def coerce_interval_list(cls, value, keys):
+        """Coerce a list of intervals into seconds.
+
+        Examples:
+            >>> CylcConfigValidator.coerce_interval_list('PT1H, PT2H', None)
+            [3600.0, 7200.0]
+
+        """
+        return cls.expand_list(
+            cls.strip_and_unquote_list(keys, value),
             keys,
-            lambda v: self.coerce_interval(v, keys))
+            lambda v: cls.coerce_interval(v, keys))
 
     @classmethod
     def coerce_parameter_list(cls, value, keys):
@@ -590,6 +855,14 @@ class CylcConfigValidator(ParsecValidator):
             IllegalValueError:
                 If value has both str and int range or if a str value breaks
                 the task name restriction.
+
+        Examples:
+            >>> CylcConfigValidator.coerce_parameter_list('1..4, 6', None)
+            [1, 2, 3, 4, 6]
+
+            >>> CylcConfigValidator.coerce_parameter_list('a, b, c', None)
+            ['a', 'b', 'c']
+
         """
         items = []
         can_only_be = None   # A flag to prevent mixing str and int range
@@ -619,27 +892,32 @@ class CylcConfigValidator(ParsecValidator):
         except ValueError:
             return items
 
-    def coerce_xtrigger(self, value, keys):
+    @classmethod
+    def coerce_xtrigger(cls, value, keys):
         """Coerce a string into an xtrigger function context object.
 
         func_name(*func_args, **func_kwargs)
         Checks for legal string templates in arg values too.
 
+        Examples:
+            >>> CylcConfigValidator.coerce_xtrigger('a(b, c):PT1M', [None])
+            a(b, c):60.0
+
         """
 
         label = keys[-1]
-        value = self.strip_and_unquote(keys, value)
+        value = cls.strip_and_unquote(keys, value)
         if not value:
             raise IllegalValueError("xtrigger", keys, value)
         fname = None
         args = []
         kwargs = {}
-        match = self._REC_TRIG_FUNC.match(value)
+        match = cls._REC_TRIG_FUNC.match(value)
         if match is None:
             raise IllegalValueError("xtrigger", keys, value)
         fname, fargs, intvl = match.groups()
         if intvl:
-            intvl = self.coerce_interval(intvl, keys)
+            intvl = cls.coerce_interval(intvl, keys)
 
         if fargs:
             # Extract function args and kwargs.
@@ -647,15 +925,27 @@ class CylcConfigValidator(ParsecValidator):
                 try:
                     key, val = farg.strip().split(r'=', 1)
                 except ValueError:
-                    args.append(self._coerce_type(farg.strip()))
+                    args.append(cls._coerce_type(farg.strip()))
                 else:
-                    kwargs[key.strip()] = self._coerce_type(val.strip())
+                    kwargs[key.strip()] = cls._coerce_type(val.strip())
 
         return SubFuncContext(label, fname, args, kwargs, intvl)
 
     @classmethod
     def _coerce_type(cls, value):
-        """Convert value to int, float, or bool, if possible."""
+        """Convert value to int, float, or bool, if possible.
+
+        Examples:
+            >>> CylcConfigValidator._coerce_type('1')
+            1
+            >>> CylcConfigValidator._coerce_type('1.1')
+            1.1
+            >>> CylcConfigValidator._coerce_type('True')
+            True
+            >>> CylcConfigValidator._coerce_type('abc')
+            'abc'
+
+        """
         try:
             val = int(value)
         except ValueError:
