@@ -122,13 +122,15 @@ cylc__job__main() {
     mkdir -p "${CYLC_TASK_WORK_DIR}"
     cd "${CYLC_TASK_WORK_DIR}"
     # Env-Script, User Environment, Pre-Script, Script and Post-Script
-    # (subshell execution to protect job script environment from interferance)
+    # Execute in the subshell to protect job script environment from
+    # interferance and put in the background to allow signal traps to trigger.
     (
         typeset func_name=
         for func_name in 'env_script' 'user_env' 'pre_script' 'script' 'post_script'; do
             cylc__job__run_inst_func "${func_name}"
         done
-    )
+    ) &
+    wait $!
     # Empty work directory remove
     cd
     rmdir "${CYLC_TASK_WORK_DIR}" 2>'/dev/null' || true
@@ -192,9 +194,11 @@ cylc__job_finish_err() {
     # (Ignore shellcheck "globbing and word splitting" warning here).
     # shellcheck disable=SC2086
     trap '' ${CYLC_VACATION_SIGNALS:-} ${CYLC_FAIL_SIGNALS}
-    if [[ -n "${CYLC_TASK_MESSAGE_STARTED_PID:-}" ]]; then
-        wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>'/dev/null' || true
+    # Propagate signal to current process group
+    if [[ "${signal}" != 'ERR' ]] && [[ "${signal}" != 'EXIT' ]]; then
+        kill -s "${signal}" 0
     fi
+    wait
     cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" "$@" || true
     if "${run_err_script}"; then
         cylc__job__run_inst_func 'err_script' "${signal}" >&2
