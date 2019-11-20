@@ -35,7 +35,7 @@ fi
 # TODO: remove when Travis env comes with a version of six >=1.12 (graphene)
 pip install "six>=1.12"
 
-pip install -e ."[all]"
+pip install ."[all]"
 
 # configure local SSH for Cylc jobs
 ssh-keygen -t rsa -f ~/.ssh/id_rsa -N "" -q
