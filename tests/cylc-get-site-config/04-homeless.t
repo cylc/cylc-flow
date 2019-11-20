@@ -24,7 +24,7 @@ create_test_globalrc '' ''
 
 run_ok "${TEST_NAME_BASE}" \
     env -u HOME \
-    cylc get-global-config --item='[hosts][localhost]work directory'
+    cylc get-global-config --item='[job platforms][localhost]work directory'
 cmp_ok "${TEST_NAME_BASE}.stdout" <<<"${HOME}/cylc-run"
 cmp_ok "${TEST_NAME_BASE}.stderr" <'/dev/null'
 exit

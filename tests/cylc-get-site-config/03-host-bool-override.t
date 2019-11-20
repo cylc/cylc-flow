@@ -16,19 +16,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Test site-config host item boolean override (GitHub #2282).
-
+# TODO Consider what happens if localhost is deprecated
 . "$(dirname "$0")/test_header"
 set_test_number 3
 
 create_test_globalrc '' '
-[hosts]
+[job platforms]
     [[localhost]]
         use login shell = True
-    [[mytesthost]]
+    [[mytestplatform]]
         use login shell = False'
 
 run_ok "${TEST_NAME_BASE}" \
-    cylc get-global-config --item='[hosts][mytesthost]use login shell'
+    cylc get-global-config --item='[job platforms][mytestplatform]use login shell'
 cmp_ok "${TEST_NAME_BASE}.stdout" <<<'False'
 cmp_ok "${TEST_NAME_BASE}.stderr" <'/dev/null'
 exit
