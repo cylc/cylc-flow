@@ -181,7 +181,7 @@ REC_TITLE = re.compile(r"^\s*title\s*=\s*(.*)\s*$")
 PASSPHRASE_CHARSET = ascii_letters + digits
 PASSPHRASE_LEN = 20
 
-PS_OPTS = '-opid,args'
+PS_OPTS = '-wopid,args'
 
 CONTACT_FILE_EXISTS_MSG = r"""suite contact file exists: %(fname)s
 
@@ -303,7 +303,7 @@ def get_contact_file(reg):
 
 
 def get_auth_item(item, reg, owner=None, host=None, content=False):
-    """Locate/load passphrase, SSL private key, SSL certificate, etc.
+    """Locate/load passphrase, Curve private-key/certificate ...etc.
 
     Return file name, or content of file if content=True is set.
     Files are searched from these locations in order:
@@ -789,16 +789,6 @@ def return_key_locations(store_dir):
     )
 
 
-def lockdown_private_keys(key_file_path):
-    """Change key file permissions to lock from other users."""
-    # This means that the owner can read & write, but all others cannot do
-    # anything, to the file, i.e. 600 ('-rw-------.') Linux file permission.
-    if not os.path.exists(key_file_path):
-        raise FileNotFoundError(
-            "Private key not found at location '%s'." % key_file_path)
-    os.chmod(key_file_path, stat.S_IRUSR | stat.S_IWUSR)
-
-
 def generate_key_store(store_parent_dir, keys_tag):
     """Generate two sub-directories, each having a file with a CURVE key.
 
@@ -818,6 +808,18 @@ def generate_key_store(store_parent_dir, keys_tag):
             shutil.rmtree(directory)  # WARNING: destructive, so take care
         os.mkdir(directory)
 
+    # lock the parent auth directory
+    try:
+        # Set Linux file permission 0700 ('drwx------.')
+        # This means that the owner can read & write.
+        # All others cannot do anything to the key-store and it's contents.
+        os.chmod(store_dir, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+    except Exception:
+        # Catch any and all errors here, since key store must be
+        # locked for the security (asymmetric cryptography) to work.
+        raise OSError("Unable to lock permissions of auth " +
+                      "key store directory for authentication. Abort.")
+
     # Make a new public-private CURVE key pair
     zmq.auth.create_certificates(store_dir, keys_tag)
 
@@ -826,43 +828,41 @@ def generate_key_store(store_parent_dir, keys_tag):
         if key_file.endswith(UserFiles.Auth.PUBLIC_TAG):
             shutil.move(os.path.join(store_dir, key_file),
                         os.path.join(public_key_loc, '.'))
-            # The public key keeps standard 644 ('-rw-r--r--') file permission
         elif key_file.endswith(UserFiles.Auth.PRIVATE_TAG):
-            loc = shutil.move(os.path.join(store_dir, key_file),
-                              os.path.join(private_key_loc, '.'))
-            # Now lock the private key in its permanent location
-            try:
-                lockdown_private_keys(loc)  # Linux File Permission now 600
-            # Catch any and all errors here, since private keys must be
-            # locked for the security (asymmetric cryptography) to work.
-            except Exception:
-                raise OSError("Unable to lock permissions of private " +
-                              "keys for authentication. Abort.")
-
-
-def ensure_dir_exists(dir_path):
-    """Check for a directory at a path and create it if it does not exist."""
-    if not os.path.exists(dir_path):
-        os.mkdir(dir_path)
+            shutil.move(os.path.join(store_dir, key_file),
+                        os.path.join(private_key_loc, '.'))
 
 
 def ensure_keypair_exists(auth_parent_dir, auth_child_dir, tag):
-    """Check if a set of public/private keys exist and if not, create them."""
+    """Check if a set of public/private keys exist and if not, create them.
+
+    Args:
+        auth_parent_dir (str):
+            Parent containing public/private key directories (auth_child_dir).
+        auth_child_dir (str):
+            Child containing public/private keys.
+        tag (str): Filename/Basename of key.
+
+    Returns:
+        bool: True if the keypair (now) exists.
+
+    """
     public_key_location, private_key_location = return_key_locations(
         auth_child_dir)  # where the keys should be, else where to create them
     if (os.path.exists(public_key_location) and
             os.path.exists(private_key_location)):
         return True
-    else:
-        # Ensure parent dir exists (child dir will be created if it does not)
-        ensure_dir_exists(auth_parent_dir)
-        try:
-            generate_key_store(auth_parent_dir, tag)
-            return True
+
+    # Ensure parent dir exists (child dir will be created if it does not)
+    if not os.path.exists(auth_parent_dir):
+        os.mkdir(auth_parent_dir)
+    try:
+        generate_key_store(auth_parent_dir, tag)
+        return True
+    except Exception:
         # Catch anything so we can otherwise be sure the key store exists.
-        except Exception:
-            LOG.exception("Failed to create %s authentication keys." % tag)
-            return False
+        LOG.exception("Failed to create %s authentication keys." % tag)
+        return False
 
 
 def ensure_user_keys_exist():

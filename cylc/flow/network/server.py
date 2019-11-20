@@ -97,7 +97,7 @@ class ZMQServer(object):
             max_port (int): maximum socket port number
         """
         # create & configure an authenticator for the ZMQ context
-        self.curve_auth = ThreadAuthenticator(self.context)
+        self.curve_auth = ThreadAuthenticator(self.context, log=LOG)
         self.curve_auth.start()  # start the authentication thread
 
         # check for, & create if nonexistent, user keys in the right location
