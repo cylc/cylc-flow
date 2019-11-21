@@ -122,15 +122,7 @@ cylc__job__main() {
     mkdir -p "${CYLC_TASK_WORK_DIR}"
     cd "${CYLC_TASK_WORK_DIR}"
     # Env-Script, User Environment, Pre-Script, Script and Post-Script
-    # Execute in the subshell to protect job script environment from
-    # interferance and put in the background to allow signal traps to trigger.
-    (
-        typeset func_name=
-        for func_name in 'env_script' 'user_env' 'pre_script' 'script' 'post_script'; do
-            cylc__job__run_inst_func "${func_name}"
-        done
-    ) &
-    wait $!
+    cylc__job__run_user_scripts
     # Empty work directory remove
     cd
     rmdir "${CYLC_TASK_WORK_DIR}" 2>'/dev/null' || true
@@ -143,6 +135,20 @@ cylc__job__main() {
     # Execute success exit script
     cylc__job__run_inst_func 'exit_script'
     exit 0
+}
+
+###############################################################################
+# Run user scripts in subshell to protect cylc job script from interference.
+# Getting signal traps to run immediately requires waiting on a background
+# process inside a function (not sure why function is needed for this, but
+# without it tests/job-file-trap/00-sigusr1.t fails).
+cylc__job__run_user_scripts() {
+    typeset func_name=
+    for func_name in 'env_script' 'user_env' 'pre_script' 'script' 'post_script'; do
+        cylc__job__run_inst_func "${func_name}"
+    done &
+    CYLC_TASK_SCRIPT_PID=$!
+    wait ${CYLC_TASK_SCRIPT_PID} 2>'/dev/null'
 }
 
 ###############################################################################
@@ -177,6 +183,7 @@ cylc__job__run_inst_func() {
 # Globals:
 #   CYLC_FAIL_SIGNALS
 #   CYLC_TASK_MESSAGE_STARTED_PID
+#   CYLC_TASK_SCRIPT_PID
 #   CYLC_VACATION_SIGNALS
 # Arguments:
 #   signal: trapped or given signal
@@ -194,12 +201,16 @@ cylc__job_finish_err() {
     # (Ignore shellcheck "globbing and word splitting" warning here).
     # shellcheck disable=SC2086
     trap '' ${CYLC_VACATION_SIGNALS:-} ${CYLC_FAIL_SIGNALS}
-    # Propagate signal to current process group
-    if [[ "${signal}" != 'ERR' ]] && [[ "${signal}" != 'EXIT' ]]; then
-        kill -s "${signal}" 0
+    if [[ -n "${CYLC_TASK_MESSAGE_STARTED_PID:-}" ]]; then
+        wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>'/dev/null' || true
     fi
-    wait
     cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" "$@" || true
+    # Propagate real signals to backgrounded user script
+    if [[ -n "${CYLC_TASK_SCRIPT_PID:-}" ]] &&
+       [[ ":DEBUG:ERR:EXIT:RETURN:" != *":${signal}:"* ]]; then
+        kill -s "${signal}" ${CYLC_TASK_SCRIPT_PID} 2>'/dev/null' || true
+        wait  # in case child user script traps the signal
+    fi
     if "${run_err_script}"; then
         cylc__job__run_inst_func 'err_script' "${signal}" >&2
     fi
