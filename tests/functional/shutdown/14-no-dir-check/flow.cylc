@@ -16,11 +16,13 @@
 
 [runtime]
     [[t1]]
+        init-script = """
+# Disable error trap to allow early exit
+CYLC_FAIL_SIGNALS=${CYLC_FAIL_SIGNALS/ERR/}
+"""
         script = """
-wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
 sleep 5
 # Remove suite run directory and don't report back to suite
 rm -f "${CYLC_SUITE_RUN_DIR}"
-trap '' EXIT
-exit
+exit 1
 """
