@@ -4,17 +4,20 @@
 
 [runtime]
     [[w1]]
-        script="""
+        init-script="""
 # Turn off trap
-wait "${CYLC_TASK_MESSAGE_STARTED_PID}"
-trap '' EXIT
+CYLC_FAIL_SIGNALS=${CYLC_FAIL_SIGNALS/ERR/}
+CYLC_FAIL_SIGNALS=${CYLC_FAIL_SIGNALS/EXIT/}
+trap 'wait' EXIT ERR
+"""
+        script="""
 # Append to job.status
 cat >>"${CYLC_TASK_LOG_ROOT}.status" <<__STATUS__
 CYLC_JOB_EXIT=SUCCEEDED
 CYLC_JOB_EXIT_TIME=$(date -u +'%FT%H:%M:%SZ')
 __STATUS__
 # Exit without trap
-exit
+exit 1
 """
     [[w2]]
         script=wait; cylc poll "${CYLC_SUITE_NAME}" 'w1.1'

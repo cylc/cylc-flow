@@ -17,7 +17,6 @@
 [runtime]
     [[p1]]
         script = """
-wait "${CYLC_TASK_MESSAGE_STARTED_PID}"
 sleep 1
 cylc shutdown --now --max-polls=30 --interval=1 "${CYLC_SUITE_NAME}"
 """

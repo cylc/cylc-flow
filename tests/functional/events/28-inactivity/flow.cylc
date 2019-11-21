@@ -11,7 +11,7 @@
 
 [runtime]
     [[foo]]
-        script = """
+        init-script = """
 trap '' EXIT
 exit
 """
