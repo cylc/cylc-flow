@@ -32,9 +32,12 @@ trigger, and the suite to shut down successfully."""
 
 [runtime]
     [[run_kill]]
+    init-script = """
+CYLC_FAIL_SIGNALS=${CYLC_FAIL_SIGNALS/ERR/}
+CYLC_FAIL_SIGNALS=${CYLC_FAIL_SIGNALS/EXIT/}
+"""
         script = """
-trap '' EXIT
-exit 0
+exit 1
 """
     [[poll_check_kill]]
         script = """

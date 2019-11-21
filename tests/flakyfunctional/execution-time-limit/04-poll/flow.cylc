@@ -10,11 +10,12 @@
 
 [runtime]
     [[foo]]
+        init-script = """
+CYLC_FAIL_SIGNALS=${CYLC_FAIL_SIGNALS/ERR/}
+CYLC_FAIL_SIGNALS=${CYLC_FAIL_SIGNALS/EXIT/}
+trap 'wait' EXIT
+"""
         script = """
-# Remove traps
-wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
-trap '' EXIT
-trap '' ERR
 if [[ "${CYLC_TASK_SUBMIT_NUMBER}" == '1' ]]; then
     # Will be killed after PT5S
     sleep 40
@@ -25,7 +26,7 @@ CYLC_JOB_EXIT=SUCCEEDED
 CYLC_JOB_EXIT_TIME=$(date -u '+%FT%H:%M:%SZ')
 __STATUS__
 fi
-exit
+exit 1
 """
         [[[job]]]
             execution time limit = PT10S

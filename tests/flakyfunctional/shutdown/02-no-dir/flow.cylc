@@ -3,11 +3,14 @@
         R1 = bar
 [runtime]
     [[bar]]
+        init-script = """
+CYLC_FAIL_SIGNALS=${CYLC_FAIL_SIGNALS/ERR/}
+CYLC_FAIL_SIGNALS=${CYLC_FAIL_SIGNALS/EXIT/}
+trap 'wait' EXIT
+"""
         script = """
-wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
 sleep 2
 cylc shutdown "${CYLC_SUITE_NAME}"
 rm -f "${CYLC_SUITE_RUN_DIR}"
-trap '' EXIT
-exit
+exit 1
 """

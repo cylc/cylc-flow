@@ -12,12 +12,10 @@
         """
 [runtime]
     [[foo]]
-        platform = {{ environ['CYLC_TEST_PLATFORM'] }}
-        script = """
-            wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
-            trap '' EXIT
-            trap '' ERR
-            exit 1
-        """
+        init-script = """
+CYLC_FAIL_SIGNALS=${CYLC_FAIL_SIGNALS/ERR/}
+CYLC_FAIL_SIGNALS=${CYLC_FAIL_SIGNALS/EXIT/}
+"""
+        script = exit 1
         [[[job]]]
             execution time limit = PT5S
