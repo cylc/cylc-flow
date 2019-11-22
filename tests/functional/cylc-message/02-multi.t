@@ -30,7 +30,7 @@ init_suite "${TEST_NAME_BASE}" <<__FLOW__
     [[foo]]
         platform = $CYLC_TEST_PLATFORM
         script = """
-            wait "\${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
+            cylc__job__wait_cylc_message_started
             cylc message -p WARNING "\${CYLC_SUITE_NAME}" "\${CYLC_TASK_JOB}" \
                 "Warn this" "INFO: Greeting" - <<'__MESSAGES__'
             Warn that

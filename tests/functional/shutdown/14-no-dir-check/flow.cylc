@@ -19,8 +19,10 @@
         init-script = """
 # Disable error trap to allow early exit
 CYLC_FAIL_SIGNALS=${CYLC_FAIL_SIGNALS/ERR/}
+CYLC_FAIL_SIGNALS=${CYLC_FAIL_SIGNALS/EXIT/}
 """
         script = """
+cylc__job__wait_cylc_message_started
 sleep 5
 # Remove suite run directory and don't report back to suite
 rm -f "${CYLC_SUITE_RUN_DIR}"

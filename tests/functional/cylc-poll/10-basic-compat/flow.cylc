@@ -5,4 +5,4 @@
     [[a]]
         script = sleep 20
     [[b]]
-        script = sleep 1; cylc poll "$CYLC_SUITE_NAME" 'a' '1'
+        script = cylc__job__wait_cylc_message_started; cylc poll "$CYLC_SUITE_NAME" 'a' '1'

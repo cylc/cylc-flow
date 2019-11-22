@@ -16,6 +16,6 @@
 CYLC_FAIL_SIGNALS=${CYLC_FAIL_SIGNALS/ERR/}
 CYLC_FAIL_SIGNALS=${CYLC_FAIL_SIGNALS/EXIT/}
 """
-        script = exit 1
+        script = cylc__job__wait_cylc_message_started; exit 1
         [[[job]]]
             execution time limit = PT5S

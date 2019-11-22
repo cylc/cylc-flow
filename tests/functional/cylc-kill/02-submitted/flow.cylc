@@ -20,7 +20,7 @@ sleep 60
         inherit=KILLABLE
     [[killer]]
         script="""
-wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
+cylc__job__wait_cylc_message_started
 cylc__job__poll_grep_suite_log -F '[killable-1.1] -triggered'
 cylc__job__poll_grep_suite_log -F '[killable-2.1] -triggered'
 cylc__job__poll_grep_suite_log -F '[killable-3.1] -triggered'

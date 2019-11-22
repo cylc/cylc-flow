@@ -14,6 +14,7 @@ CYLC_FAIL_SIGNALS=${CYLC_FAIL_SIGNALS/ERR/}
 trap 'wait' EXIT ERR
 """
         script = """
+cylc__job__wait_cylc_message_started
 ST_FNAME="${CYLC_TASK_LOG_ROOT}.status"
 sed -i '/\(CYLC_JOB_RUNNER_NAME\|CYLC_JOB_ID\)/d' "${ST_FNAME}"
 #echo 'CYLC_JOB_EXIT=SUCCEEDED' >>"${ST_FNAME}"

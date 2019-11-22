@@ -18,4 +18,4 @@
     [[killer]]
         script = cylc kill "${CYLC_SUITE_NAME}" sleeper.1999
     [[releaser]]
-        script = wait; cylc release "${CYLC_SUITE_NAME}" sleeper.1999
+        script = cylc__job__wait_cylc_message_started; cylc release "${CYLC_SUITE_NAME}" sleeper.1999
