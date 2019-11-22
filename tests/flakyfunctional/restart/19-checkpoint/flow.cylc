@@ -15,7 +15,7 @@
 [runtime]
     [[t1]]
         script = """
-wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
+cylc__job__wait_cylc_message_started
 if [[ "${CYLC_TASK_CYCLE_POINT}" == '2017' ]]; then
     cylc__job__poll_grep_suite_log -F \
         '[t1.2017] status=submitted: (received)started'

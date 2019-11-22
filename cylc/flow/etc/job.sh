@@ -127,7 +127,7 @@ cylc__job__main() {
     cd
     rmdir "${CYLC_TASK_WORK_DIR}" 2>'/dev/null' || true
     # Send task succeeded message
-    wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>'/dev/null' || true
+    cylc__job__wait_cylc_message_started || true
     cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" 'succeeded' || true
     # (Ignore shellcheck "globbing and word splitting" warning here).
     # shellcheck disable=SC2086
@@ -135,6 +135,25 @@ cylc__job__main() {
     # Execute success exit script
     cylc__job__run_inst_func 'exit_script'
     exit 0
+}
+
+###############################################################################
+# Wait for background `cylc message started` command to finish.
+# Globals:
+#   CYLC_TASK_MESSAGE_STARTED_PID
+# Returns:
+#   exit code from the process waited for if run in the shell that spawned it
+#   otherwise returns 0
+cylc__job__wait_cylc_message_started() {
+    if [[ -z "${CYLC_TASK_MESSAGE_STARTED_PID:-}" ]]; then
+        return
+    elif [[ "$BASHPID" == $$ ]]; then
+        wait "${CYLC_TASK_MESSAGE_STARTED_PID}"
+    else
+        while kill -s 0 "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null; do
+            sleep 1
+        done
+    fi
 }
 
 ###############################################################################
@@ -182,7 +201,6 @@ cylc__job__run_inst_func() {
 # Send message (and possibly run err script) before job exit.
 # Globals:
 #   CYLC_FAIL_SIGNALS
-#   CYLC_TASK_MESSAGE_STARTED_PID
 #   CYLC_TASK_SCRIPT_PID
 #   CYLC_VACATION_SIGNALS
 # Arguments:
@@ -201,9 +219,7 @@ cylc__job_finish_err() {
     # (Ignore shellcheck "globbing and word splitting" warning here).
     # shellcheck disable=SC2086
     trap '' ${CYLC_VACATION_SIGNALS:-} ${CYLC_FAIL_SIGNALS}
-    if [[ -n "${CYLC_TASK_MESSAGE_STARTED_PID:-}" ]]; then
-        wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>'/dev/null' || true
-    fi
+    cylc__job__wait_cylc_message_started || true
     cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" "$@" || true
     # Propagate real signals to backgrounded user script
     if [[ -n "${CYLC_TASK_SCRIPT_PID:-}" ]] &&

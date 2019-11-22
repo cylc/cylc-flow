@@ -8,7 +8,7 @@ TRUES:succeed-all => done
 """
 [runtime]
     [[locker]]
-        script = wait; timeout 60 cylc-db-lock
+        script = cylc__job__wait_cylc_message_started; timeout 60 cylc-db-lock
         [[[outputs]]]
             lock = "I have locked the public database file"
     [[TRUES]]

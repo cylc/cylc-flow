@@ -15,7 +15,7 @@
     [[foo]]
         platform = {{ environ['CYLC_TEST_PLATFORM'] }}
     [[poll_foo]]
-        script = wait; cylc poll "$CYLC_SUITE_NAME" 'foo'
+        script = cylc__job__wait_cylc_message_started; cylc poll "$CYLC_SUITE_NAME" 'foo'
     [[stop]]
         script = cylc stop $CYLC_SUITE_NAME
     [[kill_foo_submit]]

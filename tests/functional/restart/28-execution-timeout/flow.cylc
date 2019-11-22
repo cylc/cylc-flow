@@ -7,7 +7,7 @@
 [runtime]
     [[foo]]
         script="""
-wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2'>/dev/null' || true
+cylc__job__wait_cylc_message_started
 sleep 1
 cylc stop --now --now "${CYLC_SUITE_NAME}"
 sleep 60
