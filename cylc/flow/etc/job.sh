@@ -167,7 +167,7 @@ cylc__job__run_user_scripts() {
         cylc__job__run_inst_func "${func_name}"
     done &
     CYLC_TASK_SCRIPT_PID=$!
-    wait ${CYLC_TASK_SCRIPT_PID} 2>'/dev/null'
+    wait "${CYLC_TASK_SCRIPT_PID}" 2>'/dev/null'
 }
 
 ###############################################################################
@@ -221,10 +221,12 @@ cylc__job_finish_err() {
     trap '' ${CYLC_VACATION_SIGNALS:-} ${CYLC_FAIL_SIGNALS}
     cylc__job__wait_cylc_message_started || true
     cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" "$@" || true
-    # Propagate real signals to backgrounded user script
+    # Propagate real signals to entire process group, if we are a group leader,
+    # otherwise just to the backgrounded user script.
     if [[ -n "${CYLC_TASK_SCRIPT_PID:-}" ]] &&
        [[ ":DEBUG:ERR:EXIT:RETURN:" != *":${signal}:"* ]]; then
-        kill -s "${signal}" ${CYLC_TASK_SCRIPT_PID} 2>'/dev/null' || true
+        kill -s "${signal}" "-$$" 2>'/dev/null' ||
+        kill -s "${signal}" "${CYLC_TASK_SCRIPT_PID}" 2>'/dev/null' || true
         wait  # in case child user script traps the signal
     fi
     if "${run_err_script}"; then
