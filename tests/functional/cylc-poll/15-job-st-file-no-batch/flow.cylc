@@ -11,7 +11,6 @@
 # Disable cylc traps
 CYLC_FAIL_SIGNALS=${CYLC_FAIL_SIGNALS/EXIT/}
 CYLC_FAIL_SIGNALS=${CYLC_FAIL_SIGNALS/ERR/}
-trap 'wait' EXIT ERR
 """
         script = """
 cylc__job__wait_cylc_message_started

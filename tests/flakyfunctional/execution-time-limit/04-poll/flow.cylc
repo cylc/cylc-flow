@@ -13,9 +13,9 @@
         init-script = """
 CYLC_FAIL_SIGNALS=${CYLC_FAIL_SIGNALS/ERR/}
 CYLC_FAIL_SIGNALS=${CYLC_FAIL_SIGNALS/EXIT/}
-trap 'wait' EXIT
 """
         script = """
+cylc__job__wait_cylc_message_started
 if [[ "${CYLC_TASK_SUBMIT_NUMBER}" == '1' ]]; then
     # Will be killed after PT5S
     sleep 40

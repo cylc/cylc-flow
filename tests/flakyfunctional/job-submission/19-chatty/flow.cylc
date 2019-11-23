@@ -26,7 +26,7 @@
 
 [runtime]
     [[starter]]
-        script = cylc__job__wait_cylc_message_started && sleep 5
+        script = cylc__job__wait_cylc_message_started; sleep 5
     [[HOPEFUL]]
         script = true
     [[NOHOPE]]
