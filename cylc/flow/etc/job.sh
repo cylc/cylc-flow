@@ -127,7 +127,7 @@ cylc__job__main() {
     cd
     rmdir "${CYLC_TASK_WORK_DIR}" 2>'/dev/null' || true
     # Send task succeeded message
-    cylc__job__wait_cylc_message_started || true
+    wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>'/dev/null' || true
     cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" 'succeeded' || true
     # (Ignore shellcheck "globbing and word splitting" warning here).
     # shellcheck disable=SC2086
@@ -135,25 +135,6 @@ cylc__job__main() {
     # Execute success exit script
     cylc__job__run_inst_func 'exit_script'
     exit 0
-}
-
-###############################################################################
-# Wait for background `cylc message started` command to finish.
-# Globals:
-#   CYLC_TASK_MESSAGE_STARTED_PID
-# Returns:
-#   exit code from the process waited for if run in the shell that spawned it
-#   otherwise returns 0
-cylc__job__wait_cylc_message_started() {
-    if [[ -z "${CYLC_TASK_MESSAGE_STARTED_PID:-}" ]]; then
-        return
-    elif [[ "$BASHPID" == "$$" ]]; then
-        wait "${CYLC_TASK_MESSAGE_STARTED_PID}"
-    else
-        while kill -s 0 "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null; do
-            sleep 1
-        done
-    fi
 }
 
 ###############################################################################
@@ -167,7 +148,21 @@ cylc__job__run_user_scripts() {
         cylc__job__run_inst_func "${func_name}"
     done &
     CYLC_TASK_SCRIPT_PID=$!
-    wait "${CYLC_TASK_SCRIPT_PID}" 2>'/dev/null'
+    wait "${CYLC_TASK_SCRIPT_PID}"
+}
+
+###############################################################################
+# Wait for background `cylc message started` command to finish.
+# Globals:
+#   CYLC_TASK_MESSAGE_STARTED_PID
+# Returns:
+#   0 (always success)
+cylc__job__wait_cylc_message_started() {
+    if [[ -n "${CYLC_TASK_MESSAGE_STARTED_PID:-}" ]]; then
+        while kill -s 0 -- "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>'/dev/null'; do
+            sleep 1
+        done
+    fi
 }
 
 ###############################################################################
@@ -219,13 +214,15 @@ cylc__job_finish_err() {
     # (Ignore shellcheck "globbing and word splitting" warning here).
     # shellcheck disable=SC2086
     trap '' ${CYLC_VACATION_SIGNALS:-} ${CYLC_FAIL_SIGNALS}
-    cylc__job__wait_cylc_message_started || true
+    if [[ -n "${CYLC_TASK_MESSAGE_STARTED_PID:-}" ]]; then
+        wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>'/dev/null' || true
+    fi
     cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" "$@" || true
     # Propagate real signals to entire process group, if we are a group leader,
     # otherwise just to the backgrounded user script.
     if [[ -n "${CYLC_TASK_SCRIPT_PID:-}" ]] &&
        [[ ":DEBUG:ERR:EXIT:RETURN:" != *":${signal}:"* ]]; then
-        kill -s "${signal}" "-$$" 2>'/dev/null' ||
+        kill -s "${signal}" -- "-$$" 2>'/dev/null' ||
         kill -s "${signal}" "${CYLC_TASK_SCRIPT_PID}" 2>'/dev/null' || true
         wait  # in case child user script traps the signal
     fi
