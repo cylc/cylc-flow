@@ -30,7 +30,7 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [runtime]
     [[t1]]
         script = """
-            wait
+            cylc__job__wait_cylc_message_started
             cylc stop --now "${CYLC_SUITE_NAME}"
             cylc__job__poll_grep_suite_log -F 'Run: (re)start=1'
             # Should be good to send succeeded message at this point
