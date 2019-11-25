@@ -13,59 +13,19 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Network authentication layer."""
+"""Standard encode and decode methods for the network authentication layer."""
 
 import getpass
-
-from jose import jwt
-
-from cylc.flow.suite_files import SuiteFiles, get_auth_item
+import json
 
 
-HASH = 'HS256'  # Encoding for JWT
+def encode_(message):
+    """Convert the structure holding a message field from JSON to a string."""
+    return json.dumps(message)
 
 
-def get_secret(suite):
-    """Return the secret used for encrypting messages.
-
-    Currently this is the suite passphrase. This means we are sending
-    many messages all encrypted with the same hash which isn't great.
-
-    TODO: Upgrade the secret to add foreword security.
-
-    """
-    return get_auth_item(
-        SuiteFiles.Service.PASSPHRASE,
-        suite, content=True
-    )
-
-
-def decrypt(message, secret):
-    """Make a message readable.
-
-    Args:
-        message (str): The message to decode - JWT str.
-        secret (str): The decrypt key.
-
-    Return:
-        dict - The received message plus a `user` field.
-
-    """
-    message = jwt.decode(message, secret, algorithms=[HASH])
-    # if able to decode assume this is the user
-    message['user'] = getpass.getuser()
-    return message
-
-
-def encrypt(message, secret):
-    """Make a message unreadable.
-
-    Args:
-        message (dict): The message to send, must be serializable .
-        secret (str): The encrypt key.
-
-    Return:
-        str - JWT str.
-
-    """
-    return jwt.encode(message, secret, algorithm=HASH)
+def decode_(message):
+    """Convert an encoded message string to JSON with an added 'user' field."""
+    msg = json.loads(message)
+    msg['user'] = getpass.getuser()  # assume this is the user
+    return msg

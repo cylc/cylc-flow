@@ -49,7 +49,6 @@ install_requires = [
     'jinja2>=2.10.1, <2.11.0',
     'markupsafe==1.1.*',
     'protobuf==3.9.*',
-    'python-jose==3.0.*',
     'pyzmq==18.0.*'
 ]
 tests_require = [
