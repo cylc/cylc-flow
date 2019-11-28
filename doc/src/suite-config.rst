@@ -2608,13 +2608,13 @@ configuration. For the values above, this parameterized name:
 
 .. code-block:: none
 
-   model<run>  # for run = 1..2
+   model<run>  # for run = 1..5
 
 expands to these concrete task names:
 
 .. code-block:: none
 
-   model_run1, model_run2
+   model_run1, model_run2, model_run3, model_run4, model_run5
 
 and this parameterized name:
 
