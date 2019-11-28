@@ -99,6 +99,41 @@ SPEC = {
         'sort order': [VDR.V_STRING, 'definition', 'alphanumeric'],
     },
 
+    # job platforms
+    'job platforms': {
+        '__MANY__': {
+            'run directory': [VDR.V_STRING],
+            'work directory': [VDR.V_STRING],
+            'task communication method': [
+                VDR.V_STRING, 'default', 'ssh', 'poll'],
+            'submission polling intervals': [VDR.V_INTERVAL_LIST],
+            'execution polling intervals': [VDR.V_INTERVAL_LIST],  # *******
+            'scp command': [VDR.V_STRING],
+            'ssh command': [VDR.V_STRING],
+            'use login shell': [VDR.V_BOOLEAN],
+            'login hosts': [VDR.V_STRING_LIST],
+            'cylc executable': [VDR.V_STRING],
+            'global init-script': [VDR.V_STRING],
+            'copyable environment variables': [VDR.V_STRING_LIST],
+            'retrieve job logs': [VDR.V_BOOLEAN],
+            'retrieve job logs command': [VDR.V_STRING],
+            'retrieve job logs max size': [VDR.V_STRING],
+            'retrieve job logs retry delays': [VDR.V_INTERVAL_LIST],
+            'task event handler retry delays': [VDR.V_INTERVAL_LIST],
+            'tail command template': [VDR.V_STRING],
+            'batch system': {
+                'name': [VDR.V_STRING],
+                'err tailer': [VDR.V_STRING],
+                'out tailer': [VDR.V_STRING],
+                'out viewer': [VDR.V_STRING],
+                'err viewer': [VDR.V_STRING],
+                'job name length maximum': [VDR.V_INTEGER],
+                'execution time limit polling intervals': [
+                    VDR.V_INTERVAL_LIST],
+            },
+        },
+    },
+
     # task
     'hosts': {
         'localhost': {

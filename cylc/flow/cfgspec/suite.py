@@ -140,6 +140,7 @@ SPEC = {
     },
     'runtime': {
         '__MANY__': {
+            'platform': [VDR.V_STRING],
             'inherit': [VDR.V_STRING_LIST],
             'init-script': [VDR.V_STRING],
             'env-script': [VDR.V_STRING],
