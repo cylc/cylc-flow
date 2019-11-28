@@ -10,10 +10,7 @@
 
 [runtime]
     [[t1]]
-        init-script = """
-# Disable error trap to allow early exit
-CYLC_FAIL_SIGNALS=${CYLC_FAIL_SIGNALS/ERR/}
-"""
+        init-script = cylc__job__disable_fail_signals ERR
         script = """
 sleep 1
 cylc stop --now --now "${CYLC_SUITE_NAME}"

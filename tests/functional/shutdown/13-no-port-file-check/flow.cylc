@@ -16,10 +16,7 @@
 
 [runtime]
     [[t1]]
-        init-script = """
-CYLC_FAIL_SIGNALS=${CYLC_FAIL_SIGNALS/ERR/}
-CYLC_FAIL_SIGNALS=${CYLC_FAIL_SIGNALS/EXIT/}
-"""
+        init-script = cylc__job__disable_fail_signals ERR EXIT
         script = """
 cylc__job__wait_cylc_message_started
 # Remove contact file and don't report back to suite
