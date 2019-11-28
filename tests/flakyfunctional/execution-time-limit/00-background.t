@@ -30,7 +30,7 @@ suite_run_fail "${TEST_NAME_BASE}-run" \
 
 LOGD="${RUN_DIR}/${SUITE_NAME}/log/job/1/foo"
 grep_ok '# Execution time limit: 5.0' "${LOGD}/01/job"
-grep_ok 'CYLC_JOB_EXIT=\(ERR\|XCPU\)' "${LOGD}/01/job.status"
+grep_ok 'CYLC_JOB_EXIT=XCPU' "${LOGD}/01/job.status"
 
 purge
 exit
