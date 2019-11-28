@@ -123,8 +123,8 @@ cylc__job__main() {
     cd "${CYLC_TASK_WORK_DIR}"
     # Env-Script, User Environment, Pre-Script, Script and Post-Script
     cylc__job__run_user_scripts &
-    CYLC_TASK_USER_SCRIPTS_PID=$!
-    wait "${CYLC_TASK_USER_SCRIPTS_PID}" || {
+    CYLC_TASK_USER_SCRIPT_PID=$!
+    wait "${CYLC_TASK_USER_SCRIPT_PID}" || {
         # Check return code for signals (value greater than 128).
         typeset ret_code="$?"
         if ((ret_code > 128)); then
@@ -223,8 +223,8 @@ cylc__job__run_inst_func() {
 # Send message (and possibly run err script) before job exit.
 # Globals:
 #   CYLC_FAIL_SIGNALS
-#   CYLC_TASK_USER_SCRIPTS_PID
-#   CYLC_TASK_USER_SCRIPTS_EXITCODE
+#   CYLC_TASK_USER_SCRIPT_PID
+#   CYLC_TASK_USER_SCRIPT_EXITCODE
 #   CYLC_VACATION_SIGNALS
 # Arguments:
 #   signal: trapped or given signal
@@ -235,7 +235,7 @@ cylc__job__run_inst_func() {
 # Returns:
 #   exit 1
 cylc__job_finish_err() {
-    CYLC_TASK_USER_SCRIPTS_EXITCODE="${CYLC_TASK_USER_SCRIPTS_EXITCODE:-$?}"
+    CYLC_TASK_USER_SCRIPT_EXITCODE="${CYLC_TASK_USER_SCRIPT_EXITCODE:-$?}"
     typeset signal="$1"
     typeset run_err_script="$2"
     shift 2
@@ -247,25 +247,29 @@ cylc__job_finish_err() {
     fi
     # Propagate real signals to entire process group, if we are a group leader,
     # otherwise just to the backgrounded user script.
-    if [[ -n "${CYLC_TASK_USER_SCRIPTS_PID:-}" ]] &&
+    if [[ -n "${CYLC_TASK_USER_SCRIPT_PID:-}" ]] &&
        [[ ":DEBUG:ERR:EXIT:RETURN:" != *":${signal}:"* ]]; then
         kill -s "${signal}" -- "-$$" 2>'/dev/null' ||
-        kill -s "${signal}" -- "${CYLC_TASK_USER_SCRIPTS_PID}" 2>'/dev/null' || true
+        kill -s "${signal}" -- "${CYLC_TASK_USER_SCRIPT_PID}" 2>'/dev/null' || true
     fi
-    cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" "$@" || true
-    wait  # in case user script traps the signal
+    cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" "$@" &
     if "${run_err_script}"; then
+        if [[ -n "${CYLC_TASK_USER_SCRIPT_PID:-}" ]]; then
+            # User script might trap the signal, wait for it before err-script
+            wait  "${CYLC_TASK_USER_SCRIPT_PID:-}" 2>'/dev/null' || true
+        fi
         cylc__job__run_inst_func 'err_script' "${signal}" >&2
     fi
-    exit "${CYLC_TASK_USER_SCRIPTS_EXITCODE}"
+    wait  # For cylc message and/or user script.
+    exit "${CYLC_TASK_USER_SCRIPT_EXITCODE}"
 }
 
 ###############################################################################
 # Wrap cylc__job_finish_err to abort with a user-defined error message.
 # Globals:
-#   CYLC_TASK_USER_SCRIPTS_EXITCODE
+#   CYLC_TASK_USER_SCRIPT_EXITCODE
 cylc__job_abort() {
-    CYLC_TASK_USER_SCRIPTS_EXITCODE="1"
+    CYLC_TASK_USER_SCRIPT_EXITCODE="1"
     cylc__job_finish_err "EXIT" true "CRITICAL: aborted/\"${1}\""
 }
 
