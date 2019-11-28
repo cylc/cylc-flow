@@ -7,11 +7,7 @@
         R1 = t1
 [runtime]
     [[t1]]
-        init-script = """
-# Disable cylc traps
-CYLC_FAIL_SIGNALS=${CYLC_FAIL_SIGNALS/EXIT/}
-CYLC_FAIL_SIGNALS=${CYLC_FAIL_SIGNALS/ERR/}
-"""
+        init-script = cylc__job__disable_fail_signals ERR EXIT
         script = """
 cylc__job__wait_cylc_message_started
 ST_FNAME="${CYLC_TASK_LOG_ROOT}.status"

@@ -152,6 +152,21 @@ cylc__job__run_user_scripts() {
 }
 
 ###############################################################################
+# Disable selected or all (if no arguments given) fail traps.
+# Globals:
+#   CYLC_FAIL_SIGNALS
+cylc__job__disable_fail_signals() {
+    if [[ "$#" == '0' ]]; then
+        CYLC_FAIL_SIGNALS=
+    else
+        typeset signal=
+        for signal in "$@"; do
+            CYLC_FAIL_SIGNALS="${CYLC_FAIL_SIGNALS/${signal}/}"
+        done
+    fi
+}
+
+###############################################################################
 # Wait for background `cylc message started` command to finish.
 # Globals:
 #   CYLC_TASK_MESSAGE_STARTED_PID
