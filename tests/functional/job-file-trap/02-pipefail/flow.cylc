@@ -2,12 +2,15 @@
 [scheduler]
    [[events]]
        abort on stalled = True
-       expected task failures = t1.1
+       expected task failures = t1.1, t2.1
 
 [scheduling]
     [[graph]]
-        R1=t1
+        R1=t1 & t2
 
 [runtime]
     [[t1]]
-        script=echo "${CYLC_HAS_NO_SUCH_VARIABLE}" | tee 'no-such-variable.txt'
+        script=false|cat
+    [[t2]]
+        # Trigger SIGPIPE signal exit.
+        script=yes|true
