@@ -29,8 +29,11 @@ bar
 
             # Kill the suite (cylc stop --now --now also kills the foo-1 job submit process
             # and may result in foo-1 going to the submit-failed state instead of ready).
-            SUITE_PROC=$(cylc get-suite-contact $CYLC_SUITE_NAME | grep PROCESS)
-            SUITE_PID=$(expr "$SUITE_PROC" : '.*=\([0-9].*\) python.*')
+            SUITE_PID="$(
+                cylc get-suite-contact "${CYLC_SUITE_NAME}" \
+                | sed -n 's/CYLC_SUITE_PROCESS=\([0-9]*\).*/\1/p'
+            )"
+
             kill -9 $SUITE_PID
 
             # Let the old job submit process finish.
