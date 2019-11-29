@@ -17,8 +17,8 @@
 from unittest import main
 
 from cylc.flow.tests.util import CylcWorkflowTestCase, create_task_proxy
-from cylc.flow.ws_data_mgr import (
-    WsDataMgr, task_mean_elapsed_time, ID_DELIM,
+from cylc.flow.data_store_mgr import (
+    DataStoreMgr, task_mean_elapsed_time, ID_DELIM,
     FAMILY_PROXIES, TASKS, TASK_PROXIES, WORKFLOW
 )
 
@@ -33,7 +33,7 @@ def test_task_mean_elapsed_time():
     assert result == 5.0
 
 
-class TestWsDataMgr(CylcWorkflowTestCase):
+class TestDataStoreMgr(CylcWorkflowTestCase):
 
     suite_name = "five"
     suiterc = """
@@ -58,8 +58,8 @@ class TestWsDataMgr(CylcWorkflowTestCase):
     """
 
     def setUp(self) -> None:
-        super(TestWsDataMgr, self).setUp()
-        self.ws_data_mgr = WsDataMgr(self.scheduler)
+        super(TestDataStoreMgr, self).setUp()
+        self.ws_data_mgr = DataStoreMgr(self.scheduler)
         for name in self.scheduler.config.taskdefs:
             task_proxy = create_task_proxy(
                 task_name=name,
@@ -170,7 +170,7 @@ class TestWsDataMgr(CylcWorkflowTestCase):
 
     def test_update_family_proxies(self):
         """Test update_family_proxies. This method will update all
-        WsDataMgr task_proxies of given cycle point strings."""
+        DataStoreMgr task_proxies of given cycle point strings."""
         self.ws_data_mgr.initiate_data_model()
         self.assertEqual(0, len(self._collect_states(FAMILY_PROXIES)))
         update_tasks = self.task_pool.get_all_tasks()
@@ -191,7 +191,7 @@ class TestWsDataMgr(CylcWorkflowTestCase):
     def test_update_task_proxies(self):
         """Test update_task_proxies. This method will iterate over given
         task instances (TaskProxy), and update any corresponding
-        WsDataMgr task_proxies."""
+        DataStoreMgr task_proxies."""
         self.ws_data_mgr.initiate_data_model()
         self.assertEqual(0, len(self._collect_states(TASK_PROXIES)))
         update_tasks = self.task_pool.get_all_tasks()

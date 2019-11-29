@@ -19,7 +19,7 @@ from copy import copy
 
 from cylc.flow import LOG
 from cylc.flow.job_pool import JobPool, JOB_STATUSES_ALL
-from cylc.flow.ws_data_mgr import ID_DELIM
+from cylc.flow.data_store_mgr import ID_DELIM
 from cylc.flow.wallclock import get_current_time_string
 
 

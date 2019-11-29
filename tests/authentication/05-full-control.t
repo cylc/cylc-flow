@@ -20,6 +20,8 @@
 . "$(dirname "$0")/test_header"
 set_test_number 12
 
+API_VERSION="$(python -c 'from cylc.flow.network import API; print(API)')"
+
 install_suite "${TEST_NAME_BASE}" 'basic'
 
 TEST_NAME="${TEST_NAME_BASE}-validate"
@@ -53,6 +55,8 @@ ${SUITE_NAME} ${USER}@${HOST}:${PORT} ${USER}@${HOST}:${PUBLISH_PORT}
       Here we test out a multi-line description!
    Group:
       (no Group)
+   API:
+      ${API_VERSION}
    URL:
       (no URL)
    another_metadata:
@@ -76,6 +80,8 @@ ${SUITE_NAME} ${USER}@${HOST}:${PORT}
       Here we test out a multi-line description!
    Group:
       (no Group)
+   API:
+      ${API_VERSION}
    URL:
       (no URL)
    another_metadata:
@@ -92,6 +98,7 @@ ${SUITE_NAME}|${USER}|${HOST}|port|${PORT}|publish-port|${PUBLISH_PORT}
 ${SUITE_NAME}|${USER}|${HOST}|title|Authentication test suite.
 ${SUITE_NAME}|${USER}|${HOST}|description|Stalls when the first task fails. Here we test out a multi-line description!
 ${SUITE_NAME}|${USER}|${HOST}|group|
+${SUITE_NAME}|${USER}|${HOST}|API|${API_VERSION}
 ${SUITE_NAME}|${USER}|${HOST}|URL|
 ${SUITE_NAME}|${USER}|${HOST}|another_metadata|1
 ${SUITE_NAME}|${USER}|${HOST}|custom_metadata|something_custom
@@ -111,6 +118,7 @@ cmp_json 'scan-j.out' 'scan-j.out' <<__END__
         "${HOST}",
         "${PORT}",
         "${PUBLISH_PORT}",
+        "${API_VERSION}",
         {
             "version":"$(cylc version)",
             "states":[

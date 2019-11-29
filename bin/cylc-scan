@@ -193,7 +193,7 @@ def main(parser, options):
         print(state_legend.rstrip() + "\n")
 
     # work through scan results one by one
-    for reg, host, port, pub_port, info in suites:
+    for reg, host, port, pub_port, api, info in suites:
         if isinstance(info, str):
             print(ERROR_STYLE + ' '.join([reg, host, port, info]))
         elif info is None:
@@ -203,7 +203,7 @@ def main(parser, options):
             print(ERROR_STYLE + 'Warning: suite has changed name %s => %s' % (
                 reg, info[KEY_NAME]))
         else:
-            formatter(reg, host, port, pub_port, info, options)
+            formatter(reg, host, port, pub_port, api, info, options)
 
 
 def sort_meta(item):
@@ -214,7 +214,7 @@ def sort_meta(item):
     return key
 
 
-def format_plain(name, host, port, pub_port, info, options):
+def format_plain(name, host, port, pub_port, api, info, options):
     """Print a scan result, implements --format=plain"""
     owner = info[KEY_OWNER]
 
@@ -228,6 +228,7 @@ def format_plain(name, host, port, pub_port, info, options):
 
     if options.describe:
         meta_items = info.get(KEY_META)
+        meta_items['API'] = api
         if meta_items is None:
             print(INDENT + MISSING_STYLE + "(description withheld)")
             return
@@ -254,7 +255,7 @@ def format_plain(name, host, port, pub_port, info, options):
             print(INDENT * 2 + "%s%s" % (point_prefix, state_line))
 
 
-def format_raw(name, host, port, pub_port, info, options):
+def format_raw(name, host, port, pub_port, api, info, options):
     """Print a scan result, implements --format=raw"""
     owner = info[KEY_OWNER]
 
@@ -266,6 +267,7 @@ def format_raw(name, host, port, pub_port, info, options):
     if options.describe:
         # Extracting required data for these options before processing
         meta_items = info.get(KEY_META)
+        meta_items['API'] = api
 
         # clean_meta_items = {}
         # for key, value in meta_items.items():

@@ -26,7 +26,7 @@ from cylc.flow.network.authorisation import Priv
 from cylc.flow.network.server import SuiteRuntimeServer, PB_METHOD_MAP
 from cylc.flow.suite_files import create_auth_files
 from cylc.flow.tests.util import CylcWorkflowTestCase, create_task_proxy
-from cylc.flow.ws_data_mgr import WsDataMgr
+from cylc.flow.data_store_mgr import DataStoreMgr
 
 
 def get_port_range():
@@ -65,7 +65,7 @@ class TestSuiteRuntimeServer(CylcWorkflowTestCase):
 
     def setUp(self) -> None:
         super(TestSuiteRuntimeServer, self).setUp()
-        self.scheduler.ws_data_mgr = WsDataMgr(self.scheduler)
+        self.scheduler.ws_data_mgr = DataStoreMgr(self.scheduler)
         for name in self.scheduler.config.taskdefs:
             task_proxy = create_task_proxy(
                 task_name=name,

@@ -21,7 +21,7 @@ import math
 from cylc.flow.conditional_simplifier import ConditionalSimplifier
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.exceptions import TriggerExpressionError
-from cylc.flow.ws_messages_pb2 import PbPrerequisite, PbCondition
+from cylc.flow.data_messages_pb2 import PbPrerequisite, PbCondition
 
 
 class Prerequisite(object):

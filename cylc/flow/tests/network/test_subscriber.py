@@ -22,7 +22,7 @@ import pytest
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.tests.util import CylcWorkflowTestCase, create_task_proxy
-from cylc.flow.ws_data_mgr import WsDataMgr
+from cylc.flow.data_store_mgr import DataStoreMgr
 from cylc.flow.network.publisher import WorkflowPublisher
 from cylc.flow.network.subscriber import WorkflowSubscriber, process_delta_msg
 
@@ -71,7 +71,7 @@ class TestWorkflowSubscriber(CylcWorkflowTestCase):
 
     def setUp(self) -> None:
         super(TestWorkflowSubscriber, self).setUp()
-        self.scheduler.ws_data_mgr = WsDataMgr(self.scheduler)
+        self.scheduler.ws_data_mgr = DataStoreMgr(self.scheduler)
         for name in self.scheduler.config.taskdefs:
             task_proxy = create_task_proxy(
                 task_name=name,

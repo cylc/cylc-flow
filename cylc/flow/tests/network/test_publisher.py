@@ -20,7 +20,7 @@ from time import sleep
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.tests.util import CylcWorkflowTestCase, create_task_proxy
-from cylc.flow.ws_data_mgr import WsDataMgr, DELTAS_MAP
+from cylc.flow.data_store_mgr import DataStoreMgr, DELTAS_MAP
 from cylc.flow.network.publisher import WorkflowPublisher, serialize_data
 from cylc.flow.network.subscriber import WorkflowSubscriber
 
@@ -66,7 +66,7 @@ class TestWorkflowPublisher(CylcWorkflowTestCase):
 
     def setUp(self) -> None:
         super(TestWorkflowPublisher, self).setUp()
-        self.scheduler.ws_data_mgr = WsDataMgr(self.scheduler)
+        self.scheduler.ws_data_mgr = DataStoreMgr(self.scheduler)
         for name in self.scheduler.config.taskdefs:
             task_proxy = create_task_proxy(
                 task_name=name,

@@ -20,7 +20,7 @@ import asyncio
 from typing import Callable, AsyncGenerator, Any
 
 from cylc.flow.task_state import TASK_STATUSES_ORDERED
-from cylc.flow.ws_data_mgr import (
+from cylc.flow.data_store_mgr import (
     ID_DELIM, FAMILIES, FAMILY_PROXIES,
     JOBS, TASKS, TASK_PROXIES
 )

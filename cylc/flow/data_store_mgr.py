@@ -55,18 +55,19 @@ from copy import deepcopy
 from time import time
 import zlib
 
-from cylc.flow.cycling.loader import get_point
-from cylc.flow.task_id import TaskID
-from cylc.flow.suite_status import get_suite_status
-from cylc.flow.task_state_prop import extract_group_state
-from cylc.flow.wallclock import (
-    TIME_ZONE_LOCAL_INFO, TIME_ZONE_UTC_INFO, get_utc_mode)
-from cylc.flow.task_job_logs import JOB_LOG_OPTS
 from cylc.flow import __version__ as CYLC_VERSION
-from cylc.flow.ws_messages_pb2 import (
+from cylc.flow.cycling.loader import get_point
+from cylc.flow.data_messages_pb2 import (
     PbEdge, PbEntireWorkflow, PbFamily, PbFamilyProxy,
     PbJob, PbTask, PbTaskProxy, PbWorkflow,
     EDeltas, FDeltas, FPDeltas, JDeltas, TDeltas, TPDeltas)
+from cylc.flow.network import API
+from cylc.flow.suite_status import get_suite_status
+from cylc.flow.task_id import TaskID
+from cylc.flow.task_job_logs import JOB_LOG_OPTS
+from cylc.flow.task_state_prop import extract_group_state
+from cylc.flow.wallclock import (
+    TIME_ZONE_LOCAL_INFO, TIME_ZONE_UTC_INFO, get_utc_mode)
 
 
 ID_DELIM = '|'
@@ -151,7 +152,7 @@ def apply_delta(key, delta, data):
         del data[key][del_id]
 
 
-class WsDataMgr:
+class DataStoreMgr:
     """Manage the workflow data store.
 
     Attributes:
@@ -162,19 +163,19 @@ class WsDataMgr:
             for each cycle point key.
         .data (dict):
             .edges (dict):
-                cylc.flow.ws_messages_pb2.PbEdge by internal ID.
+                cylc.flow.data_messages_pb2.PbEdge by internal ID.
             .families (dict):
-                cylc.flow.ws_messages_pb2.PbFamily by name (internal ID).
+                cylc.flow.data_messages_pb2.PbFamily by name (internal ID).
             .family_proxies (dict):
-                cylc.flow.ws_messages_pb2.PbFamilyProxy by internal ID.
+                cylc.flow.data_messages_pb2.PbFamilyProxy by internal ID.
             .jobs (dict):
-                cylc.flow.ws_messages_pb2.PbJob by internal ID, managed by
+                cylc.flow.data_messages_pb2.PbJob by internal ID, managed by
                 cylc.flow.job_pool.JobPool
             .tasks (dict):
-                cylc.flow.ws_messages_pb2.PbTask by name (internal ID).
+                cylc.flow.data_messages_pb2.PbTask by name (internal ID).
             .task_proxies (dict):
-                cylc.flow.ws_messages_pb2.PbTaskProxy by internal ID.
-            .workflow (cylc.flow.ws_messages_pb2.PbWorkflow)
+                cylc.flow.data_messages_pb2.PbTaskProxy by internal ID.
+            .workflow (cylc.flow.data_messages_pb2.PbWorkflow)
                 Message containing the global information of the workflow.
         .descendants (dict):
             Local store of config.get_first_parent_descendants()
@@ -385,7 +386,7 @@ class WsDataMgr:
                     families[f_id].child_families.append(ch_id)
 
         # Populate static fields of workflow
-        workflow.api_version = self.schd.server.API
+        workflow.api_version = API
         workflow.cylc_version = CYLC_VERSION
         workflow.name = self.schd.suite
         workflow.owner = self.schd.owner
@@ -428,7 +429,7 @@ class WsDataMgr:
 
         Returns:
 
-            object: cylc.flow.ws_messages_pb2.PbTaskProxy
+            object: cylc.flow.data_messages_pb2.PbTaskProxy
                 Populated task proxy data element.
 
         """
@@ -470,7 +471,7 @@ class WsDataMgr:
                 a set of cycle points.
 
         Returns:
-            list: [cylc.flow.ws_messages_pb2.PbFamilyProxy]
+            list: [cylc.flow.data_messages_pb2.PbFamilyProxy]
                 list of populated family proxy data elements.
 
         """
@@ -1016,7 +1017,7 @@ class WsDataMgr:
         """Gather data elements into single Protobuf message.
 
         Returns:
-            cylc.flow.ws_messages_pb2.PbEntireWorkflow
+            cylc.flow.data_messages_pb2.PbEntireWorkflow
 
         """
 

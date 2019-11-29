@@ -28,8 +28,8 @@ from cylc.flow.task_state import (
     TASK_STATUS_READY, TASK_STATUS_SUBMITTED, TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED,
     TASK_STATUS_FAILED)
-from cylc.flow.ws_messages_pb2 import PbJob, JDeltas
-from cylc.flow.ws_data_mgr import ID_DELIM
+from cylc.flow.data_messages_pb2 import PbJob, JDeltas
+from cylc.flow.data_store_mgr import ID_DELIM
 
 JOB_STATUSES_ALL = [
     TASK_STATUS_READY,

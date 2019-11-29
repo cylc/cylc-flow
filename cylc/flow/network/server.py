@@ -33,8 +33,8 @@ from cylc.flow.suite_status import (
     KEY_META, KEY_NAME, KEY_OWNER, KEY_STATES,
     KEY_TASKS_BY_STATE, KEY_UPDATE_TIME, KEY_VERSION
 )
-from cylc.flow.ws_data_mgr import DELTAS_MAP
-from cylc.flow.ws_messages_pb2 import PbEntireWorkflow
+from cylc.flow.data_store_mgr import DELTAS_MAP
+from cylc.flow.data_messages_pb2 import PbEntireWorkflow
 from cylc.flow import __version__ as CYLC_VERSION
 
 # maps server methods to the protobuf message (for client/UIS import)
@@ -98,8 +98,6 @@ class SuiteRuntimeServer(ZMQSocketBase):
                 Matches all failed tasks.
 
     """
-
-    API = 4  # cylc API version
 
     RECV_TIMEOUT = 1
     """Max time the SuiteRuntimeServer will wait for an incoming

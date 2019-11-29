@@ -23,6 +23,7 @@ from unittest.mock import patch
 
 from cylc.flow import flags
 from cylc.flow.exceptions import SuiteServiceFileError
+from cylc.flow.network import API
 from cylc.flow.network.scan import get_scan_items_from_fs, re_compile_filters
 
 
@@ -156,6 +157,7 @@ class TestScan(TestCase):
             mocked_getpwall.return_value = [
                 self.pwentry('/bin/bash', 'root', homedir),
             ]
+            mocked_contact_file_fields.API = 'api'
             mocked_contact_file_fields.HOST = 'host'
             mocked_contact_file_fields.PORT = 'port'
             mocked_contact_file_fields.PUBLISH_PORT = 'pub_port'
@@ -166,7 +168,8 @@ class TestScan(TestCase):
                     return {
                         'host': 'localhost',
                         'port': 9999,
-                        'pub_port': 1234
+                        'pub_port': 1234,
+                        'api': str(API),
                     }
                 else:
                     raise SuiteServiceFileError(reg)
@@ -180,7 +183,8 @@ class TestScan(TestCase):
                 suites = list(get_scan_items_from_fs(
                     owner_pattern=owner_pattern, active_only=True))
                 # will match blog/five but will stop once it finds log
-                self.assertEqual([('good', 'localhost', 9999, 1234)], suites)
+                self.assertEqual(
+                    [('good', 'localhost', 9999, 1234, str(API))], suites)
 
     # --- tests for re_compile_filters()
 

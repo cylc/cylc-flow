@@ -127,7 +127,9 @@ def scan_many(items, methods=None, timeout=None, ordered=False):
     """Call "identify" method of suites on many host:port.
 
     Args:
-        items (list): list of 'host' string or ('host', port) tuple to scan.
+        items (list):
+            list of 'host' string or ('host', port, pub_port, api)
+            tuple to scan.
         methods (list): list of 'method' string to be executed when scanning.
         timeout (float): connection timeout, default is CONNECT_TIMEOUT.
         ordered (bool): whether to scan items in order or not (default).
@@ -136,8 +138,8 @@ def scan_many(items, methods=None, timeout=None, ordered=False):
         list: [(host, port, identify_result), ...]
 
     """
-    args = ((reg, host, port, pub_port, timeout, methods)
-            for reg, host, port, pub_port in items)
+    args = ((reg, host, port, pub_port, api, timeout, methods)
+            for reg, host, port, pub_port, api in items)
 
     if ordered:
         yield from async_map(scan_one, args)
@@ -146,7 +148,7 @@ def scan_many(items, methods=None, timeout=None, ordered=False):
             result for _, result in async_unordered_map(scan_one, args))
 
 
-async def scan_one(reg, host, port, pub_port, timeout=None, methods=None):
+async def scan_one(reg, host, port, pub_port, api, timeout=None, methods=None):
     """Connect to and identify workflow server if possible.
 
     Args:
@@ -154,11 +156,12 @@ async def scan_one(reg, host, port, pub_port, timeout=None, methods=None):
         host (str): Workflow host.
         port (int): Workflow server port.
         pub_port (int): Workflow publisher port.
+        api (str): Workflow API version.
         timeout (float, optional): Client socket receiver timeout.
         methods (list): List of methods/endpoints to request.
 
     Returns:
-        tuple: (reg, host, port, result)
+        tuple: (reg, host, port, pub_port, result)
 
     """
     if not methods:
@@ -171,7 +174,7 @@ async def scan_one(reg, host, port, pub_port, timeout=None, methods=None):
             if cylc.flow.flags.debug:
                 raise
             sys.stderr.write("ERROR: %s: %s\n" % (exc, host))
-            return (reg, host, port, pub_port, None)
+            return (reg, host, port, pub_port, api, None)
 
     # NOTE: Connect to the suite by host:port, this was the
     #       SuiteRuntimeClient will not attempt to check the contact file
@@ -188,13 +191,13 @@ async def scan_one(reg, host, port, pub_port, timeout=None, methods=None):
         except ClientTimeout as exc:
             LOG.exception(
                 "Timeout: name:%s, host:%s, port:%s", reg, host, port)
-            return (reg, host, port, pub_port, MSG_TIMEOUT)
+            return (reg, host, port, pub_port, api, MSG_TIMEOUT)
         except ClientError as exc:
             LOG.exception("ClientError")
-            return (reg, host, port, pub_port, result or None)
+            return (reg, host, port, pub_port, api, result or None)
         else:
             result.update(msg)
-    return (reg, host, port, pub_port, result)
+    return (reg, host, port, pub_port, api, result)
 
 
 def re_compile_filters(patterns_owner=None, patterns_name=None):
@@ -227,7 +230,7 @@ def get_scan_items_from_fs(
     active, or all (active plus registered but dormant), suites.
 
     Yields:
-        tuple - (reg, host, port, pub_port)
+        tuple - (reg, host, port, pub_port, api)
 
     """
     if owner_pattern is None:
@@ -277,7 +280,8 @@ def get_scan_items_from_fs(
                     reg,
                     contact_data[ContactFileFields.HOST],
                     contact_data[ContactFileFields.PORT],
-                    contact_data[ContactFileFields.PUBLISH_PORT]
+                    contact_data[ContactFileFields.PUBLISH_PORT],
+                    contact_data[ContactFileFields.API]
                 )
             else:
                 try:

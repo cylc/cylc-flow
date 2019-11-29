@@ -54,6 +54,7 @@ from cylc.flow.loggingutil import (
     TimestampRotatingFileHandler,
     ReferenceLogFileHandler
 )
+from cylc.flow.network import API
 from cylc.flow.network.server import SuiteRuntimeServer
 from cylc.flow.network.publisher import WorkflowPublisher
 from cylc.flow.parsec.util import printcfg
@@ -89,7 +90,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_FAILED)
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow import __version__ as CYLC_VERSION
-from cylc.flow.ws_data_mgr import WsDataMgr
+from cylc.flow.data_store_mgr import DataStoreMgr
 from cylc.flow.wallclock import (
     get_current_time_string,
     get_seconds_as_interval_string,
@@ -256,7 +257,7 @@ class Scheduler(object):
             if not self.options.no_detach:
                 daemonize(self)
             self._setup_suite_logger()
-            self.ws_data_mgr = WsDataMgr(self)
+            self.ws_data_mgr = DataStoreMgr(self)
 
             # *** Network Related ***
             # TODO: this in zmq asyncio context?
@@ -1004,7 +1005,7 @@ see `COPYING' in the Cylc source distribution.
         fields = suite_files.ContactFileFields
         contact_data = {
             fields.API:
-                str(self.server.API),
+                str(API),
             fields.HOST:
                 self.host,
             fields.NAME:

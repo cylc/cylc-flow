@@ -36,6 +36,8 @@ from cylc.flow.suite_files import (
     UserFiles
 )
 
+API = 5  # cylc API version
+
 
 def encode_(message):
     """Convert the structure holding a message field from JSON to a string."""
@@ -259,16 +261,7 @@ class ZMQSocketBase:
 
         """
         self._bespoke_stop()
-        if stop_loop and self.loop:
-            if self.loop.is_running():
-                future = asyncio.run_coroutine_threadsafe(
-                    self.loop.shutdown_asyncgens(),
-                    self.loop
-                )
-                try:
-                    future.result(2.0)
-                except asyncio.TimeoutError:
-                    pass
+        if stop_loop and self.loop and self.loop.is_running():
             self.loop.stop()
         if self.thread and self.thread.is_alive():
             self.thread.join()  # Wait for processes to return

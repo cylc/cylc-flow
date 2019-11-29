@@ -23,7 +23,7 @@ from typing import Iterable, Union
 import zmq
 
 from cylc.flow.network import ZMQSocketBase, get_location
-from cylc.flow.ws_data_mgr import DELTAS_MAP
+from cylc.flow.data_store_mgr import DELTAS_MAP
 
 
 def process_delta_msg(btopic, delta_msg, func, *args, **kwargs):
