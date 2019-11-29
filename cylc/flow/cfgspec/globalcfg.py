@@ -106,8 +106,9 @@ SPEC = {
             'work directory': [VDR.V_STRING],
             'task communication method': [
                 VDR.V_STRING, 'default', 'ssh', 'poll'],
-            'submission polling intervals': [VDR.V_INTERVAL_LIST],
             'execution polling intervals': [VDR.V_INTERVAL_LIST],  # *******
+            'execution retry delays': [VDR.V_INTERVAL_LIST, None],
+            'execution time limit': [VDR.V_INTERVAL],
             'scp command': [VDR.V_STRING],
             'ssh command': [VDR.V_STRING],
             'use login shell': [VDR.V_BOOLEAN],
@@ -119,10 +120,12 @@ SPEC = {
             'retrieve job logs command': [VDR.V_STRING],
             'retrieve job logs max size': [VDR.V_STRING],
             'retrieve job logs retry delays': [VDR.V_INTERVAL_LIST],
+            'submission polling intervals': [VDR.V_INTERVAL_LIST, None],
+            'submission retry delays': [VDR.V_INTERVAL_LIST, None],
             'task event handler retry delays': [VDR.V_INTERVAL_LIST],
             'tail command template': [VDR.V_STRING],
             'batch system': {
-                'name': [VDR.V_STRING],
+                'name': [VDR.V_STRING, 'background'],
                 'err tailer': [VDR.V_STRING],
                 'out tailer': [VDR.V_STRING],
                 'out viewer': [VDR.V_STRING],
@@ -130,6 +133,7 @@ SPEC = {
                 'job name length maximum': [VDR.V_INTEGER],
                 'execution time limit polling intervals': [
                     VDR.V_INTERVAL_LIST],
+                'submit command template': [VDR.V_STRING],
             },
         },
     },
