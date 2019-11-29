@@ -14,15 +14,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""An xtrigger function that prints its arguments and never succeeds.
-
-This may be a useful aid to understanding how xtriggers work. Try returning
-True (success) and some results dict to pass on to dependent tasks.
-
-"""
-
 
 def echo(*args, **kwargs):
+    """An xtrigger function that prints its arguments and never succeeds.
+
+    This may be a useful aid to understanding how xtriggers work. Try returning
+    True (success) and some results dict to pass on to dependent tasks.
+
+    Returns
+        tuple: (False, {})
+
+    """
     print("echo: ARGS:", args)
     print("echo: KWARGS:", kwargs)
-    return (False, {})
+    return False, {}
