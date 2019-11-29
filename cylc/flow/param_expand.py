@@ -261,7 +261,7 @@ class GraphExpander:
 
     _REMOVE = -32768
     _REMOVE_REC = re.compile(
-        r'(?:^|\s*=>).*' + str(_REMOVE) + r'.*?(?:$|=>\s*?)')
+        r'(?:^|\s*=>).*' + str(_REMOVE) + r'.*?(?:$|=>\s*?|&\s*)')
 
     def __init__(self, parameters):
         """Initialize the parameterized task name expander.

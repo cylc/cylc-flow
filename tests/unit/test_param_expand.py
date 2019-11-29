@@ -203,6 +203,18 @@ class TestParamExpand(unittest.TestCase):
         self.assertRaises(
             ParamExpandError, self.graph_expander.expand, 'foo<k>')
 
+    def test_parameter_graph_mixing_offset_and_conditional(self):
+        """Test for bug reported in issue #2608 on GitHub:
+        https://github.com/cylc/cylc-flow/issues/2608"""
+        params_map = {'m': ["cat", "dog"]}
+        templates = {'m': '_%(m)s'}
+        graph_expander = GraphExpander((params_map, templates))
+        expanded = graph_expander.expand("foo<m-1> & baz => foo<m>")
+        # no m-1 when m=cat
+        self.assertTrue('baz => foo_cat' in expanded)
+        # m-1 is foo_cat when m=dog
+        self.assertTrue('foo_cat & baz => foo_dog' in expanded)
+
 
 if __name__ == "__main__":
     unittest.main()

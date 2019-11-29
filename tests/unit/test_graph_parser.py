@@ -461,6 +461,36 @@ class TestGraphParser(unittest.TestCase):
         self.assertRaises(
             GraphParseError, gp.parse_graph, "FOO:custom - trigger => baz")
 
+    def test_parameter_graph_mixing_offset_and_conditional(self):
+        """Test for bug reported in issue #2608 on GitHub:
+        https://github.com/cylc/cylc-flow/issues/2608"""
+        params = {'m': ["cat", "dog"]}
+        templates = {'m': '_%(m)s'}
+        gp = GraphParser(parameters=(params, templates))
+        gp.parse_graph("foo<m-1> & baz => foo<m>")
+        triggers = {
+            'foo_cat': {
+                '': (
+                    [], False
+                ),
+                'baz:succeed': (
+                    ['baz:succeed'], False
+                )
+            },
+            'foo_dog': {
+                'foo_cat:succeed': (
+                    ['foo_cat:succeed'], False
+                ),
+                'baz:succeed': (
+                    ['baz:succeed'], False
+                )
+            },
+            'baz': {
+                '': ([], False)
+            }
+        }
+        self.assertEqual(gp.triggers, triggers)
+
 
 if __name__ == "__main__":
     unittest.main()
