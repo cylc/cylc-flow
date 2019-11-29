@@ -170,6 +170,10 @@ SPEC = {
                 'exclude': [VDR.V_STRING_LIST],
             },
             'job': {
+                # TODO This section should have been removed by the end of the
+                # job platforms work, although upgraders should have been
+                # devised such that end users will be able to continue using
+                # them.
                 'batch system': [VDR.V_STRING, 'background'],
                 'batch submit command template': [VDR.V_STRING],
                 'execution polling intervals': [VDR.V_INTERVAL_LIST, None],
@@ -179,6 +183,13 @@ SPEC = {
                 'submission retry delays': [VDR.V_INTERVAL_LIST, None],
             },
             'remote': {
+                # TODO This section should have been removed by the end of the
+                # job platforms work, although upgraders should have been
+                # devised such that end users will be able to continue using
+                # them.
+                # The only items to keep are owner and suite definition
+                # directory and these can probably be at the top level rather
+                # Than in the [[[remote]]] sub-section.
                 'host': [VDR.V_STRING],
                 'owner': [VDR.V_STRING],
                 'suite definition directory': [VDR.V_STRING],
