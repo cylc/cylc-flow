@@ -627,5 +627,24 @@ class TestValidate(unittest.TestCase):
                 validator.coerce_xtrigger, value, ['whatever'])
 
 
+def test_type_help_examples():
+    types = {
+        **ParsecValidator.V_TYPE_HELP,
+        **VDR.V_TYPE_HELP
+    }
+
+    validator = VDR()
+
+    for vdr, info in types.items():
+        coercer = validator.coercers[vdr]
+        if len(info) > 2:
+            for example in info[2]:
+                try:
+                    coercer(example, [None])
+                except Exception:
+                    raise Exception(
+                        f'Example "{example}" failed for type "{vdr}"')
+
+
 if __name__ == '__main__':
     unittest.main()
