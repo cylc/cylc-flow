@@ -18,6 +18,46 @@
 
 from cylc.flow.platform_lookup import forward_lookup, reverse_lookup
 
+# The platforms list for testing is set as a constant
+# [platforms]
+#     [[desktop\d\d|laptop\d\d]]
+#         # hosts = platform name (default)
+#         # Note: "desktop01" and "desktop02" are both valid and distinct platforms
+#     [[sugar]]
+#         hosts = localhost
+#         batch system = slurm
+#     [[hpc]]
+#         hosts = hpcl1, hpcl2
+#         retrieve job logs = True
+#         batch system = pbs
+#     [[hpcl1-bg]]
+#         hosts = hpcl1
+#         retrieve job logs = True
+#         batch system = background
+#     [[hpcl2-bg]]
+#         hosts = hpcl2
+#         retrieve job logs = True
+#         batch system = background
+PLATFORMS = {
+    'desktop\d\d|laptop\d\d': None,
+    'sugar': {
+        'hosts': 'localhost',
+        'batch system': 'slurm',
+    },
+    'hpc': {
+        'hosts': ['hpc1', 'hpc2'],
+        'batch system': 'pbs',
+    },
+    'hpc1-bg': {
+        'hosts': 'hpc1',
+        'batch system': 'background',
+    },
+    'hpc2-bg': {
+        'hosts': 'hpc2',
+        'batch system': 'background'
+    }
+}
+
 
 class TestForwardLookup():
     """
@@ -31,5 +71,6 @@ class TestReversLookup():
     """
     Tests to ensure that job platform reverse lookup works as intended.
     """
+
     def test_basic(self):
         assert 'Hello' == 'Hello'
