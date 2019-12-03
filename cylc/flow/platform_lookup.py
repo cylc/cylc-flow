@@ -17,6 +17,7 @@
 # Tests for the platform lookup.
 
 import re
+from cylc.flow.exceptions import PlatformLookupError
 
 def forward_lookup(task_platform, platforms):
     """

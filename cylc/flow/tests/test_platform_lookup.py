@@ -59,6 +59,19 @@ PLATFORMS = {
 }
 
 
+PLATFORMS_NO_UNIQUE = {
+    'sugar': {
+        'login hosts': 'localhost',
+        'batch system': 'slurm',
+    },
+    'pepper': {
+        'login hosts': ['hpc1', 'hpc2'],
+        'batch system': 'slurm',
+    },
+
+}
+
+
 class TestForwardLookup():
     """
     Tests to ensure that the job platform forward lookup works as intended.
@@ -67,10 +80,76 @@ class TestForwardLookup():
         assert 1 == 1
 
 
-class TestReversLookup():
+class TestReverseLookup():
     """
     Tests to ensure that job platform reverse lookup works as intended.
     """
 
-    def test_basic(self):
+    def test_reverse_lookup(self):
         assert 'Hello' == 'Hello'
+
+    CASES = [
+        # Settings left blank - should select suite host
+        (
+            {'batch system': None},
+            {'host': None},
+            'suite host',
+            'ok'
+        ),
+        # # Host set, batch system unset - desktop machines, hpc background
+        # (
+        #     {'batch system': None},
+        #     {'host': 'laptop42'},
+        #     'laptop42',
+        #     'ok'
+        # ),
+        # (
+        #     {'batch system': None},
+        #     {'host': 'hpc1'},
+        #     'hpc1-bg',
+        #     'ok'
+        # ),
+        # # Host unset, batch system set
+        # # Should infer a host from the batch system, but only if the batch
+        # # system is unique to one platform
+        # # TODO write a test with an alternative platfroms set to show the
+        # # failure case where multiple systems have the same batch system
+        # (
+        #     {'batch system': 'slurm'},
+        #     {'host': None},
+        #     'sugar',
+        #     'ok'
+        # ),
+        # (
+        #     {'batch system': 'pbs'},
+        #     {'host': None},
+        #     'hpc',
+        #     'ok'
+        # ),
+        # # Host Set, Batch system set
+        # # Batch system should match platfrom __and__ host should be in the
+        # # list of login hosts for the platform
+        # (
+        #     {'batch system': 'pbs'},
+        #     {'host': 'hpc'},
+        #     'desktop42',
+        #     'ok'
+        # ),
+        # (
+        #     {'batch system': 'pbs'},
+        #     {'host': 'hpc1'},
+        #     'desktop42',
+        #     'ok'
+        # ),
+    ]
+    @pytest.mark.parametrize('task_job, task_remote, selected_platform, result',
+                             CASES)
+    def test_ok(self, task_job, task_remote, selected_platform, result):
+        if result == 'ok':
+            assert reverse_lookup(task_job, task_remote, PLATFORMS) == selected_platform
+        elif result == 'error':
+            with pytest.raises(PlatformLookupError):
+                reverse_lookup(task_job, task_remote, PLATFORMS)
+        elif result == 'not ok':
+            assert reverse_lookup(task_job, task_remote, PLATFORMS) != selected_platform
+
