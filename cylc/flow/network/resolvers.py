@@ -20,7 +20,7 @@ from operator import attrgetter
 from fnmatch import fnmatchcase
 from graphene.utils.str_converters import to_snake_case
 
-from cylc.flow.ws_data_mgr import (
+from cylc.flow.data_store_mgr import (
     ID_DELIM, EDGES, FAMILY_PROXIES, TASK_PROXIES, WORKFLOW)
 from cylc.flow.network.schema import NodesEdges, PROXY_NODES
 

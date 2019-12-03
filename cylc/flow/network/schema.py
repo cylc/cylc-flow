@@ -20,7 +20,7 @@ import asyncio
 from typing import Callable, AsyncGenerator, Any
 
 from cylc.flow.task_state import TASK_STATUSES_ORDERED
-from cylc.flow.ws_data_mgr import (
+from cylc.flow.data_store_mgr import (
     ID_DELIM, FAMILIES, FAMILY_PROXIES,
     JOBS, TASKS, TASK_PROXIES
 )
@@ -459,7 +459,7 @@ class Workflow(ObjectType):
     newest_runahead_cycle_point = String()
     newest_cycle_point = String()
     oldest_cycle_point = String()
-    reloading = Boolean()
+    reloaded = Boolean()
     run_mode = String()
     is_held_total = Int()
     state_totals = GenericScalar(resolver=resolve_state_totals)

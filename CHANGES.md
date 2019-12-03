@@ -42,9 +42,15 @@ Third alpha release of Cylc 8.
 
 ### Enhancements
 
-[#3402](https://github.com/cylc/cylc-flow/pull/3402) - removed automatic task job
-status message retries (problems that prevent message transmission are almost
-never transient, and in practice job polling is the only way to recover).
+[#3389](https://github.com/cylc/cylc-flow/pull/3389) - Publisher/Subscriber
+network components added (0MQ PUB/SUB pattern). Used to publish fine-grained
+data-store updates for the purposes of UI Server data sync, this change also
+includes CLI utility: `cylc subscribe`.
+
+[#3402](https://github.com/cylc/cylc-flow/pull/3402) - removed automatic task
+job status message retries (problems that prevent message transmission are
+almost never transient, and in practice job polling is the only way to
+recover).
 
 ### Fixes
 

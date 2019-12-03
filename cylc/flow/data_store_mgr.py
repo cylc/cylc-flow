@@ -22,6 +22,13 @@ GraphQL, both in the WS and UIS, it is then provisioned to the CLI and GUI.
 This data store is comprised of Protobuf message objects (data elements),
 which are used as data containers for their respective type.
 
+Changes to the data store are accumulated on a main loop iteration as deltas
+in the form of protobuf messages, and then applied to the local data-store.
+These deltas are populated with the minimal information; only the elements
+and only the fields of those elements that have changed. It is done this way
+for the efficient transport and consistent application to remotely synced
+data-stores.
+
 Static data elements are generated on workflow start/restart/reload, which
 includes workflow, task, and family definition objects.
 
@@ -44,30 +51,59 @@ Packaging methods are included for dissemination of protobuf messages.
 """
 
 from collections import Counter
+from copy import deepcopy
 from time import time
+import zlib
 
+from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.cycling.loader import get_point
-from cylc.flow.task_id import TaskID
+from cylc.flow.data_messages_pb2 import (
+    PbEdge, PbEntireWorkflow, PbFamily, PbFamilyProxy,
+    PbJob, PbTask, PbTaskProxy, PbWorkflow,
+    EDeltas, FDeltas, FPDeltas, JDeltas, TDeltas, TPDeltas)
+from cylc.flow.network import API
 from cylc.flow.suite_status import get_suite_status
+from cylc.flow.task_id import TaskID
+from cylc.flow.task_job_logs import JOB_LOG_OPTS
 from cylc.flow.task_state_prop import extract_group_state
 from cylc.flow.wallclock import (
     TIME_ZONE_LOCAL_INFO, TIME_ZONE_UTC_INFO, get_utc_mode)
-from cylc.flow.task_job_logs import JOB_LOG_OPTS
-from cylc.flow import __version__ as CYLC_VERSION
-from cylc.flow.ws_messages_pb2 import (
-    PbFamily, PbFamilyProxy, PbTask, PbTaskProxy,
-    PbWorkflow, PbEdge, PbEdges, PbEntireWorkflow)
 
 
 ID_DELIM = '|'
 EDGES = 'edges'
 FAMILIES = 'families'
 FAMILY_PROXIES = 'family_proxies'
-GRAPH = 'graph'
 JOBS = 'jobs'
 TASKS = 'tasks'
 TASK_PROXIES = 'task_proxies'
 WORKFLOW = 'workflow'
+
+MESSAGE_MAP = {
+    EDGES: PbEdge,
+    FAMILIES: PbFamily,
+    FAMILY_PROXIES: PbFamilyProxy,
+    JOBS: PbJob,
+    TASKS: PbTask,
+    TASK_PROXIES: PbTaskProxy,
+    WORKFLOW: PbWorkflow,
+}
+
+DELTAS_MAP = {
+    EDGES: EDeltas,
+    FAMILIES: FDeltas,
+    FAMILY_PROXIES: FPDeltas,
+    JOBS: JDeltas,
+    TASKS: TDeltas,
+    TASK_PROXIES: TPDeltas,
+    WORKFLOW: PbWorkflow,
+}
+
+
+def generate_checksum(in_strings):
+    """Generate cross platform & python checksum from strings."""
+    # can't use hash(), it's not the same across 32-64bit or python invocations
+    return zlib.adler32(''.join(sorted(in_strings)).encode()) & 0xffffffff
 
 
 def task_mean_elapsed_time(tdef):
@@ -77,7 +113,46 @@ def task_mean_elapsed_time(tdef):
     return tdef.rtconfig['job'].get('execution time limit', None)
 
 
-class WsDataMgr:
+def apply_delta(key, delta, data):
+    """Apply delta to specific data-store workflow and type."""
+    # Merge in updated fields
+    if key == WORKFLOW:
+        new_data = PbWorkflow()
+        new_data.CopyFrom(data[key])
+        new_data.ClearField('state_totals')
+        new_data.ClearField('states')
+        new_data.MergeFrom(delta)
+        # fields that are set to empty kinds aren't carried
+        if not delta.is_held_total:
+            new_data.is_held_total = 0
+        # For thread safe update
+        data[key] = new_data
+        return
+    for element in delta.deltas:
+        if key in (TASK_PROXIES, FAMILY_PROXIES) and element.id in data[key]:
+            # fields cannot be directly assigned, so is cleared first.
+            if hasattr(element, 'prerequisites') and element.prerequisites:
+                del data[key][element.id].prerequisites[:]
+            # fields that are set to empty kinds aren't carried
+            if not element.is_held:
+                data[key][element.id].is_held = False
+        data[key].setdefault(element.id, MESSAGE_MAP[key]()).MergeFrom(element)
+    # Prune data elements by id
+    for del_id in delta.pruned:
+        if del_id not in data[key]:
+            continue
+        if key == TASK_PROXIES:
+            data[TASKS][data[key][del_id].task].proxies.remove(del_id)
+            getattr(data[WORKFLOW], key).remove(del_id)
+        elif key == FAMILY_PROXIES:
+            data[FAMILIES][data[key][del_id].family].proxies.remove(del_id)
+            getattr(data[WORKFLOW], key).remove(del_id)
+        elif key == EDGES:
+            getattr(data[WORKFLOW], key).edges.remove(del_id)
+        del data[key][del_id]
+
+
+class DataStoreMgr:
     """Manage the workflow data store.
 
     Attributes:
@@ -88,21 +163,19 @@ class WsDataMgr:
             for each cycle point key.
         .data (dict):
             .edges (dict):
-                cylc.flow.ws_messages_pb2.PbEdge by internal ID.
+                cylc.flow.data_messages_pb2.PbEdge by internal ID.
             .families (dict):
-                cylc.flow.ws_messages_pb2.PbFamily by name (internal ID).
+                cylc.flow.data_messages_pb2.PbFamily by name (internal ID).
             .family_proxies (dict):
-                cylc.flow.ws_messages_pb2.PbFamilyProxy by internal ID.
-            .graph (cylc.flow.ws_messages_pb2.PbEdges):
-                Graph message holding egdes meta data.
+                cylc.flow.data_messages_pb2.PbFamilyProxy by internal ID.
             .jobs (dict):
-                cylc.flow.ws_messages_pb2.PbJob by internal ID, managed by
+                cylc.flow.data_messages_pb2.PbJob by internal ID, managed by
                 cylc.flow.job_pool.JobPool
             .tasks (dict):
-                cylc.flow.ws_messages_pb2.PbTask by name (internal ID).
+                cylc.flow.data_messages_pb2.PbTask by name (internal ID).
             .task_proxies (dict):
-                cylc.flow.ws_messages_pb2.PbTaskProxy by internal ID.
-            .workflow (cylc.flow.ws_messages_pb2.PbWorkflow)
+                cylc.flow.data_messages_pb2.PbTaskProxy by internal ID.
+            .workflow (cylc.flow.data_messages_pb2.PbWorkflow)
                 Message containing the global information of the workflow.
         .descendants (dict):
             Local store of config.get_first_parent_descendants()
@@ -131,6 +204,7 @@ class WsDataMgr:
         'ancestors',
         'cycle_states',
         'data',
+        'deltas',
         'descendants',
         'edge_points',
         'max_point',
@@ -138,6 +212,8 @@ class WsDataMgr:
         'parents',
         'pool_points',
         'schd',
+        'updates',
+        'updates_pending',
         'workflow_id',
     ]
 
@@ -155,16 +231,72 @@ class WsDataMgr:
         # Managed data types
         self.data = {
             self.workflow_id: {
-                TASKS: {},
-                TASK_PROXIES: {},
+                EDGES: {},
                 FAMILIES: {},
                 FAMILY_PROXIES: {},
                 JOBS: {},
-                EDGES: {},
-                GRAPH: PbEdges(),
+                TASKS: {},
+                TASK_PROXIES: {},
                 WORKFLOW: PbWorkflow(),
             }
         }
+        self.deltas = {
+            EDGES: EDeltas(),
+            FAMILIES: FDeltas(),
+            FAMILY_PROXIES: FPDeltas(),
+            JOBS: JDeltas(),
+            TASKS: TDeltas(),
+            TASK_PROXIES: TPDeltas(),
+            WORKFLOW: PbWorkflow(),
+        }
+        self.updates = {
+            EDGES: {},
+            FAMILIES: {},
+            FAMILY_PROXIES: {},
+            JOBS: {},
+            TASKS: {},
+            TASK_PROXIES: {},
+        }
+        self.updates_pending = False
+
+    def initiate_data_model(self, reloaded=False):
+        """Initiate or Update data model on start/restart/reload.
+
+        Args:
+            reloaded (bool, optional):
+                Reset data-store before regenerating.
+
+        """
+        # Reset attributes/data-store on reload:
+        if reloaded:
+            self.__init__(self.schd)
+
+        # Static elements
+        self.generate_definition_elements()
+        self.increment_graph_elements()
+
+        # Tidy and reassign task jobs after reload
+        if reloaded:
+            new_tasks = set(self.updates[TASK_PROXIES])
+            job_tasks = set(self.schd.job_pool.pool)
+            for tp_id in job_tasks.difference(new_tasks):
+                self.schd.job_pool.remove_task_jobs(tp_id)
+            for tp_id, tp_delta in self.updates[TASK_PROXIES].items():
+                tp_delta.jobs[:] = [
+                    j_id
+                    for j_id in self.schd.job_pool.task_jobs.get(tp_id, [])
+                ]
+            self.schd.job_pool.reload_deltas()
+
+        # Set jobs ref
+        self.data[self.workflow_id][JOBS] = self.schd.job_pool.pool
+
+        # Update workflow statuses and totals (assume needed)
+        self.update_workflow()
+        # Apply current deltas
+        self.apply_deltas(reloaded)
+        self.updates_pending = False
+        self.schd.job_pool.updates_pending = False
 
     def generate_definition_elements(self):
         """Generate static definition data elements.
@@ -175,14 +307,13 @@ class WsDataMgr:
         """
         config = self.schd.config
         update_time = time()
-        tasks = {}
-        families = {}
-        workflow = PbWorkflow(
-            stamp=f'{self.workflow_id}@{update_time}',
-            id=self.workflow_id,
-        )
+        tasks = self.updates[TASKS]
+        families = self.updates[FAMILIES]
+        workflow = self.deltas[WORKFLOW]
+        workflow.id = self.workflow_id
+        workflow.last_updated = update_time
 
-        graph = self.data[self.workflow_id][GRAPH]
+        graph = workflow.edges
         graph.leaves[:] = config.leaves
         graph.feet[:] = config.feet
         for key, info in config.suite_polling_tasks.items():
@@ -201,16 +332,16 @@ class WsDataMgr:
         # Create task definition elements.
         for name, tdef in config.taskdefs.items():
             t_id = f'{self.workflow_id}{ID_DELIM}{name}'
-            t_check = f'{t_id}@{update_time}'
+            t_stamp = f'{t_id}@{update_time}'
             task = PbTask(
-                stamp=t_check,
+                stamp=t_stamp,
                 id=t_id,
                 name=name,
                 depth=len(ancestors[name]) - 1,
             )
             task.namespace[:] = tdef.namespace_hierarchy
             for key, val in dict(tdef.describe()).items():
-                if key in ['title', 'description', 'url']:
+                if key in ['title', 'description', 'URL']:
                     setattr(task.meta, key, val)
                 else:
                     task.meta.user_defined.append(f'{key}={val}')
@@ -224,16 +355,16 @@ class WsDataMgr:
             if name in config.taskdefs.keys():
                 continue
             f_id = f'{self.workflow_id}{ID_DELIM}{name}'
-            f_check = f'{f_id}@{update_time}'
+            f_stamp = f'{f_id}@{update_time}'
             family = PbFamily(
-                stamp=f_check,
+                stamp=f_stamp,
                 id=f_id,
                 name=name,
                 depth=len(ancestors[name]) - 1,
             )
             famcfg = config.cfg['runtime'][name]
             for key, val in famcfg.get('meta', {}).items():
-                if key in ['title', 'description', 'url']:
+                if key in ['title', 'description', 'URL']:
                     setattr(family.meta, key, val)
                 else:
                     family.meta.user_defined.append(f'{key}={val}')
@@ -255,7 +386,7 @@ class WsDataMgr:
                     families[f_id].child_families.append(ch_id)
 
         # Populate static fields of workflow
-        workflow.api_version = self.schd.server.API
+        workflow.api_version = API
         workflow.cylc_version = CYLC_VERSION
         workflow.name = self.schd.suite
         workflow.owner = self.schd.owner
@@ -276,7 +407,6 @@ class WsDataMgr:
         for key, val in time_zone_info.items():
             setattr(workflow.time_zone_info, key, val)
 
-        workflow.last_updated = update_time
         workflow.run_mode = config.run_mode()
         workflow.cycling_mode = config.cfg['scheduling']['cycling mode']
         workflow.workflow_log_dir = self.schd.suite_log_dir
@@ -286,13 +416,9 @@ class WsDataMgr:
         workflow.tasks.extend(list(tasks))
         workflow.families.extend(list(families))
 
-        # replace the originals (atomic update, for access from other threads).
         self.ancestors = ancestors
         self.descendants = descendants
         self.parents = parents
-        self.data[self.workflow_id][TASKS] = tasks
-        self.data[self.workflow_id][FAMILIES] = families
-        self.data[self.workflow_id][WORKFLOW] = workflow
 
     def generate_ghost_task(self, task_id):
         """Create task-point element populated with static data.
@@ -303,7 +429,7 @@ class WsDataMgr:
 
         Returns:
 
-            object: cylc.flow.ws_messages_pb2.PbTaskProxy
+            object: cylc.flow.data_messages_pb2.PbTaskProxy
                 Populated task proxy data element.
 
         """
@@ -313,10 +439,13 @@ class WsDataMgr:
         self.cycle_states.setdefault(point_string, {})[name] = (None, False)
         t_id = f'{self.workflow_id}{ID_DELIM}{name}'
         tp_id = f'{self.workflow_id}{ID_DELIM}{point_string}{ID_DELIM}{name}'
-        tp_check = f'{tp_id}@{update_time}'
-        taskdef = self.data[self.workflow_id][TASKS][t_id]
+        tp_stamp = f'{tp_id}@{update_time}'
+        taskdef = self.data[self.workflow_id][TASKS].get(
+            t_id,
+            self.updates[TASKS].get(t_id, MESSAGE_MAP[TASKS])
+        )
         tproxy = PbTaskProxy(
-            stamp=tp_check,
+            stamp=tp_stamp,
             id=tp_id,
             task=taskdef.id,
             cycle_point=point_string,
@@ -334,25 +463,23 @@ class WsDataMgr:
         tproxy.first_parent = tproxy.ancestors[0]
         return tproxy
 
-    def generate_ghost_families(self, family_proxies=None, cycle_points=None):
+    def generate_ghost_families(self, cycle_points=None):
         """Generate the family-point elements from tasks in cycle points.
 
         Args:
-            family_proxies (dict):
-                a dictionary (family id, proxy) with the family proxies.
             cycle_points (set):
                 a set of cycle points.
 
         Returns:
-            list: [cylc.flow.ws_messages_pb2.PbFamilyProxy]
+            list: [cylc.flow.data_messages_pb2.PbFamilyProxy]
                 list of populated family proxy data elements.
 
         """
         update_time = time()
         families = self.data[self.workflow_id][FAMILIES]
-        if family_proxies is None:
-            family_proxies = {}
-        fam_proxy_ids = {}
+        if not families:
+            families = self.updates[FAMILIES]
+        family_proxies = self.data[self.workflow_id][FAMILY_PROXIES]
         for point_string, tasks in self.cycle_states.items():
             # construct family tree based on the
             # first-parent single-inheritance tree
@@ -371,26 +498,28 @@ class WsDataMgr:
                 fp_id = (
                     f'{self.workflow_id}{ID_DELIM}'
                     f'{point_string}{ID_DELIM}{fam}')
-                fp_check = f'{fp_id}@{update_time}'
-                fproxy = PbFamilyProxy(
-                    stamp=fp_check,
+                if (fp_id in family_proxies or
+                        fp_id in self.updates[FAMILY_PROXIES]):
+                    continue
+                fp_delta = PbFamilyProxy(
+                    stamp=f'{fp_id}@{update_time}',
                     id=fp_id,
                     cycle_point=point_string,
                     name=fam,
                     family=f'{self.workflow_id}{ID_DELIM}{fam}',
                     depth=families[f_id].depth,
                 )
-                fproxy.parents[:] = [
+                fp_delta.parents[:] = [
                     f'{self.workflow_id}{ID_DELIM}'
                     f'{point_string}{ID_DELIM}{p_name}'
                     for p_name in self.parents[fam]]
-                fproxy.ancestors[:] = [
+                fp_delta.ancestors[:] = [
                     f'{self.workflow_id}{ID_DELIM}'
                     f'{point_string}{ID_DELIM}{a_name}'
                     for a_name in self.ancestors[fam]
                     if a_name != fam]
-                if fproxy.ancestors:
-                    fproxy.first_parent = fproxy.ancestors[0]
+                if fp_delta.ancestors:
+                    fp_delta.first_parent = fp_delta.ancestors[0]
                 if fam in cycle_first_parents:
                     for child_name in self.descendants[fam]:
                         ch_id = (
@@ -399,28 +528,26 @@ class WsDataMgr:
                         )
                         if self.parents[child_name][0] == fam:
                             if child_name in cycle_first_parents:
-                                fproxy.child_families.append(ch_id)
+                                fp_delta.child_families.append(ch_id)
                             elif child_name in self.schd.config.taskdefs:
-                                fproxy.child_tasks.append(ch_id)
-                family_proxies[fp_id] = fproxy
-                fam_proxy_ids.setdefault(f_id, []).append(fp_id)
+                                fp_delta.child_tasks.append(ch_id)
+                self.updates[FAMILY_PROXIES][fp_id] = fp_delta
 
-        self.data[self.workflow_id][FAMILY_PROXIES] = family_proxies
-        for f_id, fp_ids in fam_proxy_ids.items():
-            families[f_id].proxies[:] = fp_ids
+                # Add ref ID to family element
+                f_delta = PbFamily(
+                    id=f_id,
+                    stamp=f'{f_id}@{update_time}')
+                f_delta.proxies.append(fp_id)
+                self.updates[FAMILIES].setdefault(
+                    f_id, PbFamily(id=f_id)).MergeFrom(f_delta)
 
-    def generate_graph_elements(self, edges=None,
-                                task_proxies=None, family_proxies=None,
-                                start_point=None, stop_point=None):
+                # Add ref ID to workflow element
+                getattr(self.deltas[WORKFLOW], FAMILY_PROXIES).append(fp_id)
+
+    def generate_graph_elements(self, start_point=None, stop_point=None):
         """Generate edges and [ghost] nodes (family and task proxy elements).
 
         Args:
-            edges (dict, optional):
-                ID-PbEdge key-value mapping.
-            task_proxies (dict, optional):
-                ID-PbTaskProxy key-value mapping.
-            family_proxies (dict, optional):
-                ID-PbFamilyProxy key-value mapping.
             start_point (cylc.flow.cycling.PointBase):
                 Edge generation start point.
             stop_point (cylc.flow.cycling.PointBase):
@@ -431,13 +558,9 @@ class WsDataMgr:
             return
         config = self.schd.config
         tasks = self.data[self.workflow_id][TASKS]
-        graph = PbEdges()
-        if edges is None:
-            edges = {}
-        if task_proxies is None:
-            task_proxies = {}
-        if family_proxies is None:
-            family_proxies = {}
+        if not tasks:
+            tasks = self.updates[TASKS]
+        task_proxies = self.data[self.workflow_id][TASK_PROXIES]
         if start_point is None:
             start_point = min(self.pool_points)
         if stop_point is None:
@@ -480,10 +603,23 @@ class WsDataMgr:
                 new_points.add(s_point)
                 # Add source points for pruning.
                 self.edge_points.setdefault(s_point_cls, set())
-                if source_id not in task_proxies:
-                    task_proxies[source_id] = self.generate_ghost_task(s_node)
-                if source_id not in tasks[s_task_id].proxies:
-                    tasks[s_task_id].proxies.append(source_id)
+                if (source_id not in task_proxies and
+                        source_id not in self.updates[TASK_PROXIES]):
+                    self.updates[TASK_PROXIES][source_id] = (
+                        self.generate_ghost_task(s_node))
+                    getattr(
+                        self.deltas[WORKFLOW], TASK_PROXIES).append(source_id)
+                if (source_id not in tasks[s_task_id].proxies and
+                        source_id not in self.updates[TASKS].get(
+                            s_task_id, PbTask()).proxies):
+                    self.updates[TASKS].setdefault(
+                        s_task_id,
+                        PbTask(
+                            stamp='f{s_task_id}@{update_time}',
+                            id=s_task_id,
+                        )).proxies.append(source_id)
+                    getattr(self.deltas[WORKFLOW], TASKS).append(
+                        s_task_id)
             # Add valid source before checking for no target,
             # as source may be an isolate (hence no edges).
             # At present targets can't be xtriggers.
@@ -495,102 +631,68 @@ class WsDataMgr:
                 # Add target points to associated source points for pruning.
                 self.edge_points.setdefault(s_point_cls, set())
                 self.edge_points[s_point_cls].add(t_point_cls)
-                if target_id not in task_proxies:
-                    task_proxies[target_id] = self.generate_ghost_task(t_node)
-                if target_id not in tasks[t_task_id].proxies:
-                    tasks[t_task_id].proxies.append(target_id)
+                if (target_id not in task_proxies and
+                        target_id not in self.updates[TASK_PROXIES]):
+                    self.updates[TASK_PROXIES][target_id] = (
+                        self.generate_ghost_task(t_node))
+                    getattr(self.deltas[WORKFLOW], TASK_PROXIES).append(
+                        target_id)
+                if (target_id not in tasks[t_task_id].proxies and
+                        target_id not in self.updates[TASKS].get(
+                            t_task_id, PbTask()).proxies):
+                    self.updates[TASKS].setdefault(
+                        t_task_id,
+                        PbTask(
+                            stamp='f{t_task_id}@{update_time}',
+                            id=t_task_id,
+                        )).proxies.append(target_id)
+                    getattr(self.deltas[WORKFLOW], TASKS).append(t_task_id)
 
                 # Initiate edge element.
                 e_id = (
                     f'{self.workflow_id}{ID_DELIM}{s_node}{ID_DELIM}{t_node}')
-                edges[e_id] = PbEdge(
+                self.updates[EDGES][e_id] = PbEdge(
                     id=e_id,
                     suicide=edge[3],
                     cond=edge[4],
+                    source=source_id,
+                    target=target_id,
                 )
-                edges[e_id].source = source_id
-                edges[e_id].target = target_id
 
                 # Add edge id to node field for resolver reference
-                task_proxies[target_id].edges.append(e_id)
+                self.updates[TASK_PROXIES].setdefault(
+                    target_id,
+                    PbTaskProxy(id=target_id)).edges.append(e_id)
                 if s_valid:
-                    task_proxies[source_id].edges.append(e_id)
+                    self.updates[TASK_PROXIES].setdefault(
+                        source_id,
+                        PbTaskProxy(id=source_id)).edges.append(e_id)
 
-        graph.edges.extend(edges.keys())
-
+        getattr(
+            self.deltas.setdefault(WORKFLOW, PbWorkflow()),
+            EDGES).edges.extend(self.updates[EDGES].keys())
         if new_points:
-            self.generate_ghost_families(family_proxies, new_points)
+            self.generate_ghost_families(new_points)
 
-        # Replace the originals (atomic update, for access from other threads).
-        self.data[self.workflow_id][TASK_PROXIES] = task_proxies
-        self.data[self.workflow_id][EDGES] = edges
-        self.data[self.workflow_id][GRAPH] = graph
+    def update_data_structure(self, updated_nodes=None):
+        """Reflect workflow changes in the data structure."""
+        # Clear previous deltas
+        self.clear_deltas()
 
-    def prune_points(self, point_strings):
-        """Remove old nodes and edges by cycle point.
-
-        Args:
-            point_strings (list):
-                Iterable of valid cycle point strings.
-
-        """
-        flow_data = self.data[self.workflow_id]
-        if not point_strings:
-            return
-        node_ids = set()
-        tasks_proxies = {}
-        for tp_id, tproxy in list(flow_data[TASK_PROXIES].items()):
-            if tproxy.cycle_point in point_strings:
-                node_ids.add(tp_id)
-                tasks_proxies.setdefault(tproxy.task, set()).add(tp_id)
-                del flow_data[TASK_PROXIES][tp_id]
-        for t_id, tp_ids in tasks_proxies.items():
-            flow_data[TASKS][t_id].proxies[:] = (
-                set(flow_data[TASKS][t_id].proxies).difference(tp_ids))
-
-        for t_id in set(self.schd.job_pool.task_jobs).difference(
-                set(flow_data[TASK_PROXIES])):
-            self.schd.job_pool.remove_task_jobs(t_id)
-
-        families_proxies = {}
-        for fp_id, fproxy in list(flow_data[FAMILY_PROXIES].items()):
-            if fproxy.cycle_point in point_strings:
-                families_proxies.setdefault(fproxy.family, set()).add(fp_id)
-                del flow_data[FAMILY_PROXIES][fp_id]
-        for f_id, fp_ids in families_proxies.items():
-            flow_data[FAMILIES][f_id].proxies[:] = set(
-                flow_data[FAMILIES][f_id].proxies).difference(fp_ids)
-
-        g_eids = set()
-        for e_id, edge in list(flow_data[EDGES].items()):
-            if edge.source in node_ids or edge.target in node_ids:
-                del flow_data[EDGES][e_id]
-                continue
-            g_eids.add(edge.id)
-        flow_data[GRAPH].edges[:] = g_eids
-
-        for point_string in point_strings:
-            try:
-                del self.cycle_states[point_string]
-            except KeyError:
-                continue
-
-    def initiate_data_model(self, reload=False):
-        """Initiate or Update data model on start/restart/reload.
-
-        Args:
-            reload (bool, optional):
-                Reset data-store before regenerating.
-
-        """
-        # Reset attributes/data-store on reload:
-        if reload:
-            self.__init__(self.schd)
-        # Set jobs ref
-        self.data[self.workflow_id][JOBS] = self.schd.job_pool.pool
-        # Static elements
-        self.generate_definition_elements()
+        # Update edges & node set
         self.increment_graph_elements()
+        # update states and other dynamic fields
+        self.update_dynamic_elements(updated_nodes)
+
+        # Update workflow statuses and totals if needed
+        if self.updates_pending:
+            self.update_workflow()
+
+        if self.updates_pending or self.schd.job_pool.updates_pending:
+            # Apply current deltas
+            self.apply_deltas()
+            self.updates_pending = False
+            self.schd.job_pool.updates_pending = False
 
     def increment_graph_elements(self):
         """Generate and/or prune graph elements if needed.
@@ -601,7 +703,7 @@ class WsDataMgr:
         """
         # Gather task pool cycle points.
         old_pool_points = self.pool_points.copy()
-        self.pool_points = set(list(self.schd.pool.pool))
+        self.pool_points = set(self.schd.pool.pool)
         # No action if pool is not yet initiated.
         if not self.pool_points:
             return
@@ -612,13 +714,10 @@ class WsDataMgr:
         # task insertion (in gaps).
         new_points = self.pool_points.difference(old_pool_points)
         if new_points:
-            flow_data = self.data[self.workflow_id]
             for point in new_points:
                 # All family & task cycle instances are generated and
                 # populated with static data as 'ghost nodes'.
-                self.generate_graph_elements(
-                    flow_data[EDGES], flow_data[TASK_PROXIES],
-                    flow_data[FAMILY_PROXIES], point, point)
+                self.generate_graph_elements(point, point)
             self.min_point = min(self.pool_points)
             self.max_point = max(self.pool_points)
         # Prune data store by cycle point where said point is:
@@ -645,7 +744,43 @@ class WsDataMgr:
         if new_points or prune_points:
             # Pruned and/or additional elements require
             # state/status recalculation, and ID ref updates.
-            self.update_workflow()
+            self.updates_pending = True
+
+    def prune_points(self, point_strings):
+        """Remove old nodes and edges by cycle point.
+
+        Args:
+            point_strings (iterable):
+                Iterable of valid cycle point strings.
+
+        """
+        flow_data = self.data[self.workflow_id]
+        if not point_strings:
+            return
+        node_ids = set()
+        for tp_id, tproxy in list(flow_data[TASK_PROXIES].items()):
+            if tproxy.cycle_point in point_strings:
+                node_ids.add(tp_id)
+                self.deltas[TASK_PROXIES].pruned.append(tp_id)
+                self.deltas[JOBS].pruned.extend(tproxy.jobs)
+                try:
+                    del self.schd.job_pool.task_jobs[tp_id]
+                except KeyError:
+                    pass
+
+        for fp_id, fproxy in list(flow_data[FAMILY_PROXIES].items()):
+            if fproxy.cycle_point in point_strings:
+                self.deltas[FAMILY_PROXIES].pruned.append(fp_id)
+
+        for e_id, edge in list(flow_data[EDGES].items()):
+            if edge.source in node_ids or edge.target in node_ids:
+                self.deltas[EDGES].pruned.append(e_id)
+
+        for point_string in point_strings:
+            try:
+                del self.cycle_states[point_string]
+            except KeyError:
+                continue
 
     def update_task_proxies(self, updated_tasks=None):
         """Update dynamic fields of task nodes/proxies.
@@ -668,7 +803,8 @@ class WsDataMgr:
             name, point_string = TaskID.split(itask.identity)
             tp_id = (
                 f'{self.workflow_id}{ID_DELIM}{point_string}{ID_DELIM}{name}')
-            if tp_id not in task_proxies:
+            if (tp_id not in task_proxies and
+                    tp_id not in self.updates[TASK_PROXIES]):
                 continue
             self.cycle_states.setdefault(point_string, {})[name] = (
                 itask.state.status, itask.state.is_held)
@@ -676,17 +812,20 @@ class WsDataMgr:
             if name not in task_defs:
                 task_defs[name] = itask.tdef
             # Create new message and copy existing message content.
-            tproxy = PbTaskProxy()
-            # to avoid modification while being read.
-            tproxy.CopyFrom(task_proxies[tp_id])
-            tproxy.stamp = f'{tp_id}@{update_time}'
-            tproxy.state = itask.state.status
-            tproxy.is_held = itask.state.is_held
-            tproxy.job_submits = itask.submit_num
-            tproxy.spawned = itask.has_spawned
-            tproxy.latest_message = itask.summary['latest_message']
-            tproxy.jobs[:] = self.schd.job_pool.task_jobs.get(tp_id, [])
-            tproxy.broadcasts[:] = [
+            tp_delta = self.updates[TASK_PROXIES].setdefault(
+                tp_id, PbTaskProxy(id=tp_id))
+            tp_delta.stamp = f'{tp_id}@{update_time}'
+            tp_delta.state = itask.state.status
+            tp_delta.is_held = itask.state.is_held
+            tp_delta.job_submits = itask.submit_num
+            tp_delta.spawned = itask.has_spawned
+            tp_delta.latest_message = itask.summary['latest_message']
+            tp_delta.jobs[:] = [
+                j_id
+                for j_id in self.schd.job_pool.task_jobs.get(tp_id, [])
+                if j_id not in task_proxies.get(tp_id, PbTaskProxy()).jobs
+            ]
+            tp_delta.broadcasts[:] = [
                 f'{key}={val}' for key, val in
                 self.schd.task_events_mgr.broadcast_mgr.get_broadcast(
                     itask.identity).items()]
@@ -696,25 +835,25 @@ class WsDataMgr:
                 prereq_obj = prereq.api_dump(self.workflow_id)
                 if prereq_obj:
                     prereq_list.append(prereq_obj)
-            # Unlike the following list comprehension repeated message
-            # fields cannot be directly assigned, so is cleared first.
-            del tproxy.prerequisites[:]
-            tproxy.prerequisites.extend(prereq_list)
-            tproxy.outputs[:] = [
+            tp_delta.prerequisites.extend(prereq_list)
+            tp_delta.outputs[:] = [
                 f'{trigger}={is_completed}'
                 for trigger, _, is_completed in itask.state.outputs.get_all()
             ]
-            # Replace the original
-            # (atomic update, for access from other threads).
-            task_proxies[tp_id] = tproxy
 
         # Recalculate effected task def elements elapsed time.
         for name, tdef in task_defs.items():
             elapsed_time = task_mean_elapsed_time(tdef)
             if elapsed_time:
                 t_id = f'{self.workflow_id}{ID_DELIM}{name}'
-                tasks[t_id].stamp = f'{t_id}@{update_time}'
-                tasks[t_id].mean_elapsed_time = elapsed_time
+                t_delta = PbTask(
+                    stamp=f'{t_id}@{update_time}',
+                    mean_elapsed_time=elapsed_time
+                )
+                self.updates[TASKS].setdefault(
+                    t_id,
+                    PbTask(id=t_id)).MergeFrom(t_delta)
+                tasks[t_id].MergeFrom(t_delta)
 
     def update_family_proxies(self, cycle_points=None):
         """Update state of family proxies.
@@ -760,52 +899,57 @@ class WsDataMgr:
                 fp_id = (
                     f'{self.workflow_id}{ID_DELIM}'
                     f'{point_string}{ID_DELIM}{fam}')
-                if state is None or fp_id not in family_proxies:
+                if state is None or (
+                        fp_id not in family_proxies and
+                        fp_id not in self.updates[FAMILY_PROXIES]):
                     continue
                 # Since two fields strings are reassigned,
                 # it should be safe without copy.
-                fproxy = family_proxies[fp_id]
-                fproxy.stamp = f'{fp_id}@{update_time}'
-                fproxy.state = state
-                fproxy.is_held = c_fam_task_is_held[fam]
+                fp_delta = PbFamilyProxy(
+                    id=fp_id,
+                    stamp=f'{fp_id}@{update_time}',
+                    state=state,
+                    is_held=c_fam_task_is_held[fam]
+                )
+                self.updates[FAMILY_PROXIES].setdefault(
+                    fp_id, PbFamilyProxy()).MergeFrom(fp_delta)
 
-    def update_workflow_statuses(self):
+    def update_workflow(self):
         """Update workflow element status and state totals."""
         # Create new message and copy existing message content
         update_time = time()
-        flow_data = self.data[self.workflow_id]
-        workflow = PbWorkflow()
-        workflow.CopyFrom(flow_data[WORKFLOW])
-        workflow.stamp = f'{self.workflow_id}@{update_time}'
+        workflow = self.deltas[WORKFLOW]
         workflow.last_updated = update_time
 
-        counter = Counter([
-            t.state
-            for t in flow_data[TASK_PROXIES].values()
-            if t.state])
+        data = self.data[self.workflow_id]
+
+        # new updates/deltas not applied yet
+        # so need to search/use updated states if available.
+        counter = Counter(
+            [t.state
+             for t in data[TASK_PROXIES].values()
+             if t.state and t.id not in self.updates[TASK_PROXIES]] +
+            [t.state
+             for t in self.updates[TASK_PROXIES].values()
+             if t.state]
+        )
+
         workflow.states[:] = counter.keys()
-        workflow.ClearField('state_totals')
         for state, state_cnt in counter.items():
             workflow.state_totals[state] = state_cnt
 
-        workflow.is_held_total = len([
-            t.is_held
-            for t in flow_data[TASK_PROXIES].values()
-            if t.is_held])
-
-        workflow.reloading = self.schd.pool.do_reload
+        workflow.is_held_total = len(
+            [t.is_held
+             for t in data[TASK_PROXIES].values()
+             if t.is_held and t.id not in self.updates[TASK_PROXIES]] +
+            [t.is_held
+             for t in self.updates[TASK_PROXIES].values()
+             if t.is_held]
+        )
 
         # Construct a workflow status string for use by monitoring clients.
         workflow.status, workflow.status_msg = map(
             str, get_suite_status(self.schd))
-
-        # Return workflow element for additional manipulation.
-        return workflow
-
-    def update_workflow(self):
-        """Update and populate dynamic fields of workflow element."""
-        workflow = self.update_workflow_statuses()
-        flow_data = self.data[self.workflow_id]
 
         for key, value in (
                 ('oldest_cycle_point', self.min_point),
@@ -817,14 +961,6 @@ class WsDataMgr:
             else:
                 setattr(workflow, key, '')
 
-        workflow.task_proxies[:] = flow_data[TASK_PROXIES].keys()
-        workflow.family_proxies[:] = flow_data[FAMILY_PROXIES].keys()
-        workflow.ClearField(EDGES)
-        workflow.edges.CopyFrom(flow_data[GRAPH])
-
-        # Replace the original (atomic update, for access from other threads).
-        flow_data[WORKFLOW] = workflow
-
     def update_dynamic_elements(self, updated_nodes=None):
         """Update data elements containing dynamic/live fields."""
         # If no tasks are given update all
@@ -834,15 +970,54 @@ class WsDataMgr:
             return
         self.update_task_proxies(updated_nodes)
         self.update_family_proxies(set(str(t.point) for t in updated_nodes))
-        self.data[self.workflow_id][WORKFLOW] = (
-            self.update_workflow_statuses())
+        self.updates_pending = True
+
+    def clear_deltas(self):
+        """Clear current deltas."""
+        for key in self.deltas:
+            if key in self.deltas:
+                self.deltas[key].Clear()
+            if key in self.updates:
+                self.updates[key].clear()
+
+    def apply_deltas(self, reloaded=False):
+        """Gather and apply deltas."""
+        # Copy in job deltas
+        self.deltas[JOBS].CopyFrom(self.schd.job_pool.deltas)
+        self.updates[JOBS] = deepcopy(self.schd.job_pool.updates)
+
+        # Gather cumulative update elements
+        for key, elements in self.updates.items():
+            self.deltas[key].deltas.extend(elements.values())
+
+        # Apply deltas to local data-store
+        data = self.data[self.workflow_id]
+        for key, delta in self.deltas.items():
+            delta.reloaded = reloaded
+            apply_delta(key, delta, data)
+
+        # Construct checksum on deltas for export
+        update_time = time()
+        for key, delta in self.deltas.items():
+            if delta.ListFields() and hasattr(delta, 'checksum'):
+                delta.time = update_time
+                if key == EDGES:
+                    s_att = 'id'
+                else:
+                    s_att = 'stamp'
+                delta.checksum = generate_checksum(
+                    [getattr(e, s_att) for e in data[key].values()])
+
+        # Clear job pool changes after their application
+        self.schd.job_pool.deltas.Clear()
+        self.schd.job_pool.updates.clear()
 
     # Message collation and dissemination methods:
     def get_entire_workflow(self):
         """Gather data elements into single Protobuf message.
 
         Returns:
-            cylc.flow.ws_messages_pb2.PbEntireWorkflow
+            cylc.flow.data_messages_pb2.PbEntireWorkflow
 
         """
 
@@ -858,3 +1033,34 @@ class WsDataMgr:
         workflow_msg.edges.extend(data[EDGES].values())
 
         return workflow_msg
+
+    def get_publish_deltas(self):
+        """Return deltas for publishing."""
+        return [
+            (key.encode('utf-8'), delta, 'SerializeToString')
+            for key, delta in self.deltas.items()
+            if delta.ListFields()
+        ]
+
+    def get_data_elements(self, element_type):
+        """Get elements of a given type in the form of a delta.
+
+        Args:
+            element_type (str):
+                Key from DELTAS_MAP dictionary.
+
+        Returns:
+            object
+                protobuf (DELTAS_MAP[element_type]) message.
+
+        """
+        if element_type not in DELTAS_MAP:
+            return DELTAS_MAP[WORKFLOW]()
+        data = self.data[self.workflow_id]
+        pb_msg = DELTAS_MAP[element_type]()
+        if element_type == WORKFLOW:
+            pb_msg.CopyFrom(data[WORKFLOW])
+        else:
+            pb_msg.time = data[WORKFLOW].last_updated
+            pb_msg.deltas.extend(data[element_type].values())
+        return pb_msg

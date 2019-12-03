@@ -21,6 +21,7 @@ from unittest import TestCase
 from unittest.mock import patch, MagicMock
 
 from cylc.flow.config import SuiteConfig
+from cylc.flow.job_pool import JobPool
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.suite_db_mgr import SuiteDatabaseManager
 from cylc.flow.task_pool import TaskPool
@@ -62,6 +63,7 @@ class CylcWorkflowTestCase(TestCase):
         self.port = 42000
         self.task_pool = None
         self.suite_db_mgr = None
+        self.job_pool = None
 
     def setUp(self) -> None:
         """Create base objects for the tests."""
@@ -98,7 +100,6 @@ class CylcWorkflowTestCase(TestCase):
         # Scheduler
         self.scheduler = mocked_scheduler
         self.scheduler.server = MagicMock()
-        self.scheduler.server.API = 1
         self.scheduler.suite = self.suite_name
         self.scheduler.owner = self.owner
         self.scheduler.config = self.suite_config
@@ -112,12 +113,16 @@ class CylcWorkflowTestCase(TestCase):
             pub_d=self.public_database_directory.resolve())
         self.suite_db_mgr.on_suite_start(is_restart=False)
 
+        # JobPool
+        self.job_pool = JobPool(self.suite_name, self.owner)
+        self.scheduler.job_pool = self.job_pool
+
         # TaskPool
         self.task_pool = TaskPool(
             self.suite_config,
             suite_db_mgr=self.suite_db_mgr,
             task_events_mgr=None,
-            job_pool=None)
+            job_pool=self.job_pool)
         self.scheduler.pool = self.task_pool
 
 

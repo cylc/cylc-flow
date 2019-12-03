@@ -20,6 +20,8 @@
 . "$(dirname "$0")/test_header"
 set_test_number 12
 
+API_VERSION="$(python -c 'from cylc.flow.network import API; print(API)')"
+
 install_suite "${TEST_NAME_BASE}" 'basic'
 
 TEST_NAME="${TEST_NAME_BASE}-validate"
@@ -42,9 +44,10 @@ cylc suite-state "${SUITE_NAME}" --task=foo --status=failed --point=1 \
 SRV_D="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/.service"
 HOST="$(sed -n 's/^CYLC_SUITE_HOST=//p' "${SRV_D}/contact")"
 PORT="$(sed -n 's/^CYLC_SUITE_PORT=//p' "${SRV_D}/contact")"
+PUBLISH_PORT="$(sed -n 's/^CYLC_SUITE_PUBLISH_PORT=//p' "${SRV_D}/contact")"
 cylc scan --comms-timeout=10 -f --color=never -n "${SUITE_NAME}" >'scan-f.out'
 cmp_ok 'scan-f.out' <<__END__
-${SUITE_NAME} ${USER}@${HOST}:${PORT}
+${SUITE_NAME} ${USER}@${HOST}:${PORT} ${USER}@${HOST}:${PUBLISH_PORT}
    Title:
       Authentication test suite.
    Description:
@@ -52,6 +55,8 @@ ${SUITE_NAME} ${USER}@${HOST}:${PORT}
       Here we test out a multi-line description!
    Group:
       (no Group)
+   API:
+      ${API_VERSION}
    URL:
       (no URL)
    another_metadata:
@@ -75,6 +80,8 @@ ${SUITE_NAME} ${USER}@${HOST}:${PORT}
       Here we test out a multi-line description!
    Group:
       (no Group)
+   API:
+      ${API_VERSION}
    URL:
       (no URL)
    another_metadata:
@@ -87,10 +94,11 @@ __END__
 cylc scan --comms-timeout=10 -f -t raw --color=never -n "${SUITE_NAME}" \
     >'scan-r.out'
 cmp_ok 'scan-r.out' <<__END__
-${SUITE_NAME}|${USER}|${HOST}|port|${PORT}
+${SUITE_NAME}|${USER}|${HOST}|port|${PORT}|publish-port|${PUBLISH_PORT}
 ${SUITE_NAME}|${USER}|${HOST}|title|Authentication test suite.
 ${SUITE_NAME}|${USER}|${HOST}|description|Stalls when the first task fails. Here we test out a multi-line description!
 ${SUITE_NAME}|${USER}|${HOST}|group|
+${SUITE_NAME}|${USER}|${HOST}|API|${API_VERSION}
 ${SUITE_NAME}|${USER}|${HOST}|URL|
 ${SUITE_NAME}|${USER}|${HOST}|another_metadata|1
 ${SUITE_NAME}|${USER}|${HOST}|custom_metadata|something_custom
@@ -109,6 +117,8 @@ cmp_json 'scan-j.out' 'scan-j.out' <<__END__
         "${SUITE_NAME}",
         "${HOST}",
         "${PORT}",
+        "${PUBLISH_PORT}",
+        "${API_VERSION}",
         {
             "version":"$(cylc version)",
             "states":[

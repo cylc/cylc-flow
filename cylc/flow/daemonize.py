@@ -37,7 +37,9 @@ Other ways to see if the suite is still running:
 """
 
 _INFO_TMPL = r"""
-*** listening on %(url)s ***""" + SUITE_SCAN_INFO_TMPL
+*** listening on %(url)s ***
+*** publishing on %(pub_url)s ***""" + SUITE_SCAN_INFO_TMPL
+
 
 _TIMEOUT = 300.0  # 5 minutes
 
@@ -64,9 +66,12 @@ def daemonize(server):
             # Poll for suite log to be populated
             suite_pid = None
             suite_url = None
+            pub_url = None
             timeout = time() + _TIMEOUT
             while time() <= timeout and (
-                    suite_pid is None or suite_url is None):
+                    suite_pid is None or
+                    suite_url is None or
+                    pub_url is None):
                 sleep(0.1)
                 try:
                     # First INFO line of suite log should contain
@@ -83,6 +88,9 @@ def daemonize(server):
                             suite_url, suite_pid = (
                                 item.rsplit("=", 1)[-1]
                                 for item in line.rsplit()[-2:])
+                        if server.START_PUB_MESSAGE_PREFIX in line:
+                            pub_url = line.rsplit("=", 1)[-1].rstrip()
+                        if suite_url and pub_url:
                             break
                         elif ' ERROR -' in line or ' CRITICAL -' in line:
                             # ERROR and CRITICAL before suite starts
@@ -100,6 +108,7 @@ def daemonize(server):
                 "suite": server.suite,
                 "host": server.host,
                 "url": suite_url,
+                "pub_url": pub_url,
                 "ps_opts": PS_OPTS,
                 "pid": suite_pid,
             })

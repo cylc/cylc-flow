@@ -19,8 +19,8 @@ from copy import deepcopy
 import asyncio
 
 from cylc.flow.tests.util import CylcWorkflowTestCase, create_task_proxy
-from cylc.flow.ws_data_mgr import (
-    WsDataMgr, ID_DELIM, EDGES, TASK_PROXIES, WORKFLOW
+from cylc.flow.data_store_mgr import (
+    DataStoreMgr, ID_DELIM, EDGES, TASK_PROXIES, WORKFLOW
 )
 from cylc.flow.network.schema import parse_node_id
 from cylc.flow.network.resolvers import workflow_filter, node_filter, Resolvers
@@ -109,7 +109,7 @@ class TestResolvers(CylcWorkflowTestCase):
 
     def setUp(self) -> None:
         super(TestResolvers, self).setUp()
-        self.scheduler.ws_data_mgr = WsDataMgr(self.scheduler)
+        self.scheduler.ws_data_mgr = DataStoreMgr(self.scheduler)
         for name in self.scheduler.config.taskdefs:
             task_proxy = create_task_proxy(
                 task_name=name,

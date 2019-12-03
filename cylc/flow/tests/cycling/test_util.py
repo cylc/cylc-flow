@@ -13,19 +13,21 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Standard encode and decode methods for the network authentication layer."""
 
-import getpass
-import json
+"""Test cycling utils."""
+import pytest
 
-
-def encode_(message):
-    """Convert the structure holding a message field from JSON to a string."""
-    return json.dumps(message)
+from cylc.flow.cycling.util import add_offset
 
 
-def decode_(message):
-    """Convert an encoded message string to JSON with an added 'user' field."""
-    msg = json.loads(message)
-    msg['user'] = getpass.getuser()  # assume this is the user
-    return msg
+def test_add_offset():
+    """Test socket start."""
+    orig_point = '20200202T0000Z'
+    plus_offset = '+PT02H02M'
+    print(add_offset(orig_point, plus_offset))
+    assert str(add_offset(orig_point, plus_offset)) == '20200202T0202Z'
+    minus_offset = '-P1MT22H59M'
+    assert str(add_offset(orig_point, minus_offset)) == '20200101T0101Z'
+    bad_offset = '+foo'
+    with pytest.raises(ValueError, match=r'ERROR, bad offset format') as exc:
+        bad_point = add_offset(orig_point, bad_offset)

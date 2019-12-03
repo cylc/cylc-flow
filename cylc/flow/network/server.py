@@ -15,46 +15,53 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Server for suite runtime API."""
 
-import asyncio
 import getpass
-from graphql.execution.executors.asyncio import AsyncioExecutor
 from queue import Queue
 from textwrap import dedent
-from threading import Thread
 from time import sleep
+
+from graphql.execution.executors.asyncio import AsyncioExecutor
 import zmq
-from zmq.auth.thread import ThreadAuthenticator
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
-from cylc.flow.exceptions import CylcError
-from cylc.flow.network.authentication import encode_, decode_
+from cylc.flow.network import encode_, decode_, ZMQSocketBase
 from cylc.flow.network.authorisation import Priv, authorise
 from cylc.flow.network.resolvers import Resolvers
 from cylc.flow.network.schema import schema
-from cylc.flow.suite_files import (
-    ensure_user_keys_exist,
-    get_auth_item,
-    UserFiles
-)
 from cylc.flow.suite_status import (
     KEY_META, KEY_NAME, KEY_OWNER, KEY_STATES,
     KEY_TASKS_BY_STATE, KEY_UPDATE_TIME, KEY_VERSION
 )
-from cylc.flow.ws_messages_pb2 import PbEntireWorkflow
+from cylc.flow.data_store_mgr import DELTAS_MAP
+from cylc.flow.data_messages_pb2 import PbEntireWorkflow
 from cylc.flow import __version__ as CYLC_VERSION
 
 # maps server methods to the protobuf message (for client/UIS import)
 PB_METHOD_MAP = {
-    'pb_entire_workflow': PbEntireWorkflow
+    'pb_entire_workflow': PbEntireWorkflow,
+    'pb_data_elements': DELTAS_MAP
 }
 
 
-class ZMQServer(object):
-    """Initiate the REP part of a ZMQ REQ-REP pair.
+def expose(func=None):
+    """Expose a method on the sever."""
+    func.exposed = True
+    return func
 
-    This class contains the logic for the ZMQ message interface and client -
-    server communication.
+
+class SuiteRuntimeServer(ZMQSocketBase):
+    """Suite runtime service API facade exposed via zmq.
+
+    This class contains the Cylc endpoints.
+
+    Args:
+        schd (object): The parent object instantiating the server. In
+            this case, the workflow scheduler.
+        context (object): The instantiated ZeroMQ context (i.e. zmq.Context())
+            passed in from the application.
+        barrier (object): Threading Barrier object used to sync threads, for
+            the main thread to ensure socket setup has finished.
 
     Usage:
         * Define endpoints using the ``expose`` decorator.
@@ -65,10 +72,36 @@ class ZMQServer(object):
         * Returns responses of the format: {"data": {...}}
         * Returns error in the format: {"error": {"message": MSG}}
 
+    Common Arguments:
+        Arguments which are shared between multiple commands.
+
+        .. _task identifier:
+
+        task identifier (str):
+            A task identifier in the format ``task.cycle-point``
+            e.g. ``foo.1`` or ``bar.20000101T0000Z``.
+
+        .. _task globs:
+
+        task globs (list):
+            A list of strings in the format
+            ``name[.cycle_point][:task_state]`` where ``name`` could be a
+            task or family name.
+
+             Glob-like patterns may be used to match multiple items e.g.
+
+             ``*``
+                Matches everything.
+             ``*.1``
+                Matches everything in cycle ``1``.
+             ``*.*:failed``
+                Matches all failed tasks.
+
     """
 
     RECV_TIMEOUT = 1
-    """Max time the ZMQServer will wait for an incoming message in seconds.
+    """Max time the SuiteRuntimeServer will wait for an incoming
+    message in seconds.
 
     We use a timeout here so as to give the _listener a chance to respond to
     requests (i.e. stop) from its spawner (the scheduler).
@@ -78,83 +111,49 @@ class ZMQServer(object):
 
     """
 
-    def __init__(self, private_key_location):
-        self.port = None
-        self.context = zmq.Context()
-        self.socket = None
+    def __init__(self, schd, context=None, barrier=None,
+                 threaded=True, daemon=False):
+        super().__init__(zmq.REP, bind=True, context=context,
+                         barrier=barrier, threaded=threaded, daemon=daemon)
+        self.schd = schd
+        self.suite = schd.suite
+        self.public_priv = None  # update in get_public_priv()
         self.endpoints = None
-        self.thread = None
         self.queue = None
-        self.private_key_location = private_key_location
+        self.resolvers = Resolvers(
+            self.schd.ws_data_mgr.data,
+            schd=self.schd)
 
-    def start(self, min_port, max_port):
-        """Start the server running.
+    def _socket_options(self):
+        """Set socket options.
 
-        Will use a port range provided to select random ports.
+        Overwrites Base method.
 
-        Args:
-            min_port (int): minimum socket port number
-            max_port (int): maximum socket port number
         """
-        # create & configure an authenticator for the ZMQ context
-        self.curve_auth = ThreadAuthenticator(self.context, log=LOG)
-        self.curve_auth.start()  # start the authentication thread
-
-        # check for, & create if nonexistent, user keys in the right location
-        if not ensure_user_keys_exist():
-            raise CylcError("Unable to generate user authentication keys.")
-
-        # Setting the location means that the CurveZMQ auth will only accept
-        # public client certificates from the given directory, as generated by
-        # a user when they initiate a ZMQ socket ready to connect to a server.
-        self.curve_auth.configure_curve(
-            domain='*', location=UserFiles.get_user_certificate_full_path())
-
         # create socket
-        self.socket = self.context.socket(zmq.REP)
         self.socket.RCVTIMEO = int(self.RECV_TIMEOUT) * 1000
 
-        # fetch server keys, generated at suite registration, for auth
-        server_public_key, server_private_key = zmq.auth.load_certificate(
-            self.private_key_location)
-        self.socket.curve_publickey = server_public_key
-        self.socket.curve_secretkey = server_private_key
-        self.socket.curve_server = True
+    def _bespoke_start(self):
+        """Setup start items, and run listener.
 
-        # bind server to port
-        try:
-            if min_port == max_port:
-                self.port = min_port
-                self.socket.bind('tcp://*:%d' % min_port)
-            else:
-                self.port = self.socket.bind_to_random_port(
-                    'tcp://*', min_port, max_port)
-        except (zmq.error.ZMQError, zmq.error.ZMQBindError) as exc:
-            self.socket.close()
-            raise CylcError('could not start Cylc ZMQ server: %s' % str(exc))
+        Overwrites Base method.
 
+        """
         # start accepting requests
-        self.register_endpoints()
-
         self.queue = Queue()
-        # TODO: this in asyncio? Requires the Cylc main loop in asyncio first
-        self.thread = Thread(target=self._listener)
-        self.thread.start()
+        self.register_endpoints()
+        self._listener()
 
-    def stop(self):
-        """Finish serving the current request then stop the server."""
+    def _bespoke_stop(self):
+        """Stop the listener and Authenticator.
+
+        Overwrites Base method.
+
+        """
         LOG.debug('stopping zmq server...')
-        self.queue.put('STOP')
-        self.thread.join()  # wait for the listener to return
-        self.socket.close()
-        LOG.debug('...stopped')
-        self.curve_auth.stop()  # stop the authentication thread
-
-    def register_endpoints(self):
-        """Register all exposed methods."""
-        self.endpoints = {name: obj
-                          for name, obj in self.__class__.__dict__.items()
-                          if hasattr(obj, 'exposed')}
+        self.stopping = True
+        if self.queue is not None:
+            self.queue.put('STOP')
 
     def _listener(self):
         """The server main loop, listen for and serve requests."""
@@ -164,8 +163,7 @@ class ZMQServer(object):
                 command = self.queue.get()
                 if command == 'STOP':
                     break
-                else:
-                    raise ValueError('Unknown command "%s"' % command)
+                raise ValueError('Unknown command "%s"' % command)
 
             try:
                 # wait RECV_TIMEOUT for a message
@@ -175,7 +173,7 @@ class ZMQServer(object):
                 # thread to stop
                 continue
             except zmq.error.ZMQError as exc:
-                LOG.exception(f'unexpected error: {str(exc)}')
+                LOG.exception('unexpected error: %s', exc)
                 continue
 
             # attempt to decode the message, authenticating the user in the
@@ -185,7 +183,7 @@ class ZMQServer(object):
             except Exception as exc:  # purposefully catch generic exception
                 # failed to decode message, possibly resulting from failed
                 # authentication
-                LOG.exception(f'failed to decode message: {str(exc)}')
+                LOG.exception('failed to decode message: "%s"', exc)
             else:
                 # success case - serve the request
                 res = self._receiver(message)
@@ -237,59 +235,6 @@ class ZMQServer(object):
 
         return {'data': response}
 
-    @staticmethod
-    def expose(func=None):
-        """Expose a method on the server."""
-        func.exposed = True
-        return func
-
-
-class SuiteRuntimeServer(ZMQServer):
-    """Suite runtime service API facade exposed via zmq.
-
-    This class contains the Cylc endpoints.
-
-    Common Arguments:
-        Arguments which are shared between multiple commands.
-
-        .. _task identifier:
-
-        task identifier (str):
-            A task identifier in the format ``task.cycle-point``
-            e.g. ``foo.1`` or ``bar.20000101T0000Z``.
-
-        .. _task globs:
-
-        task globs (list):
-            A list of strings in the format
-            ``name[.cycle_point][:task_state]`` where ``name`` could be a
-            task or family name.
-
-             Glob-like patterns may be used to match multiple items e.g.
-
-             ``*``
-                Matches everything.
-             ``*.1``
-                Matches everything in cycle ``1``.
-             ``*.*:failed``
-                Matches all failed tasks.
-
-    """
-
-    API = 4  # cylc API version
-
-    def __init__(self, schd):
-        ZMQServer.__init__(
-            self,
-            get_auth_item(UserFiles.Auth.SERVER_PRIVATE_KEY_CERTIFICATE,
-                          schd.suite)
-        )
-        self.schd = schd
-        self.public_priv = None  # update in get_public_priv()
-        self.resolvers = Resolvers(
-            self.schd.ws_data_mgr.data,
-            schd=self.schd)
-
     def _get_public_priv(self):
         """Return the public privilege level of this suite."""
         if self.schd.config.cfg['cylc']['authentication']['public']:
@@ -307,8 +252,14 @@ class SuiteRuntimeServer(ZMQServer):
             self.public_priv = self._get_public_priv()
         return self.public_priv
 
+    def register_endpoints(self):
+        """Register all exposed methods."""
+        self.endpoints = {name: obj
+                          for name, obj in self.__class__.__dict__.items()
+                          if hasattr(obj, 'exposed')}
+
     @authorise(Priv.IDENTITY)
-    @ZMQServer.expose
+    @expose
     def api(self, endpoint=None):
         """Return information about this API.
 
@@ -341,7 +292,7 @@ class SuiteRuntimeServer(ZMQServer):
         return 'No method by name "%s"' % endpoint
 
     @authorise(Priv.READ)
-    @ZMQServer.expose
+    @expose
     def graphql(self, request_string=None, variables=None):
         """Return the GraphQL scheme execution result.
 
@@ -354,11 +305,6 @@ class SuiteRuntimeServer(ZMQServer):
         Returns:
             object: Execution result, or a list with errors.
         """
-        try:
-            asyncio.get_running_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
         try:
             executed = schema.execute(
                 request_string,
@@ -386,7 +332,7 @@ class SuiteRuntimeServer(ZMQServer):
         return executed.data
 
     @authorise(Priv.CONTROL)
-    @ZMQServer.expose
+    @expose
     def clear_broadcast(
             self, point_strings=None, namespaces=None, cancel_settings=None):
         """Clear settings globally, or for listed namespaces and/or points.
@@ -423,7 +369,7 @@ class SuiteRuntimeServer(ZMQServer):
             point_strings, namespaces, cancel_settings)
 
     @authorise(Priv.CONTROL)
-    @ZMQServer.expose
+    @expose
     def dry_run_tasks(self, task_globs, check_syntax=True):
         """Prepare job file for a task.
 
@@ -441,11 +387,11 @@ class SuiteRuntimeServer(ZMQServer):
 
         """
         self.schd.command_queue.put(('dry_run_tasks', (task_globs,),
-                                    {'check_syntax': check_syntax}))
+                                     {'check_syntax': check_syntax}))
         return (True, 'Command queued')
 
     @authorise(Priv.CONTROL)
-    @ZMQServer.expose
+    @expose
     def expire_broadcast(self, cutoff=None):
         """Clear all settings targeting cycle points earlier than cutoff.
 
@@ -458,7 +404,7 @@ class SuiteRuntimeServer(ZMQServer):
         return self.schd.task_events_mgr.broadcast_mgr.expire_broadcast(cutoff)
 
     @authorise(Priv.READ)
-    @ZMQServer.expose
+    @expose
     def get_broadcast(self, task_id=None):
         """Retrieve all broadcast variables that target a given task ID.
 
@@ -472,13 +418,13 @@ class SuiteRuntimeServer(ZMQServer):
         return self.schd.task_events_mgr.broadcast_mgr.get_broadcast(task_id)
 
     @authorise(Priv.IDENTITY)
-    @ZMQServer.expose
+    @expose
     def get_cylc_version(self):
         """Return the cylc version running this suite."""
         return CYLC_VERSION
 
     @authorise(Priv.READ)
-    @ZMQServer.expose
+    @expose
     def get_graph_raw(self, start_point_string, stop_point_string,
                       group_nodes=None, ungroup_nodes=None,
                       ungroup_recursive=False, group_all=False,
@@ -542,7 +488,7 @@ class SuiteRuntimeServer(ZMQServer):
             ungroup_all=ungroup_all)
 
     @authorise(Priv.DESCRIPTION)
-    @ZMQServer.expose
+    @expose
     def get_suite_info(self):
         """Return a dictionary containing the suite title and description.
 
@@ -553,7 +499,7 @@ class SuiteRuntimeServer(ZMQServer):
         return self.schd.info_get_suite_info()
 
     @authorise(Priv.READ)
-    @ZMQServer.expose
+    @expose
     def get_suite_state_summary(self):
         """Return the global, task, and family summary data summaries.
 
@@ -573,7 +519,7 @@ class SuiteRuntimeServer(ZMQServer):
         return self.schd.info_get_suite_state_summary()
 
     @authorise(Priv.READ)
-    @ZMQServer.expose
+    @expose
     def get_task_info(self, names):
         """Return the configurations for the provided tasks.
 
@@ -587,7 +533,7 @@ class SuiteRuntimeServer(ZMQServer):
         return self.schd.info_get_task_info(names)
 
     @authorise(Priv.READ)
-    @ZMQServer.expose
+    @expose
     def get_task_jobfile_path(self, task_id):
         """Return task job file path.
 
@@ -601,7 +547,7 @@ class SuiteRuntimeServer(ZMQServer):
         return self.schd.info_get_task_jobfile_path(task_id)
 
     @authorise(Priv.READ)
-    @ZMQServer.expose
+    @expose
     def get_task_requisites(self, task_globs=None, list_prereqs=False):
         """Return prerequisites of a task.
 
@@ -620,7 +566,7 @@ class SuiteRuntimeServer(ZMQServer):
             task_globs, list_prereqs=list_prereqs)
 
     @authorise(Priv.CONTROL)
-    @ZMQServer.expose
+    @expose
     def hold_after_point_string(self, point_string):
         """Set hold point of suite.
 
@@ -641,7 +587,7 @@ class SuiteRuntimeServer(ZMQServer):
         return (True, 'Command queued')
 
     @authorise(Priv.CONTROL)
-    @ZMQServer.expose
+    @expose
     def hold_suite(self):
         """Hold the suite.
 
@@ -658,7 +604,7 @@ class SuiteRuntimeServer(ZMQServer):
         return (True, 'Command queued')
 
     @authorise(Priv.CONTROL)
-    @ZMQServer.expose
+    @expose
     def hold_tasks(self, task_globs):
         """Hold tasks.
 
@@ -678,7 +624,7 @@ class SuiteRuntimeServer(ZMQServer):
         return (True, 'Command queued')
 
     @authorise(Priv.IDENTITY)
-    @ZMQServer.expose
+    @expose
     def identify(self):
         """Return basic information about the suite.
 
@@ -700,7 +646,7 @@ class SuiteRuntimeServer(ZMQServer):
         }
 
     @authorise(Priv.DESCRIPTION)
-    @ZMQServer.expose
+    @expose
     def describe(self):
         """Return the suite metadata.]
 
@@ -711,7 +657,7 @@ class SuiteRuntimeServer(ZMQServer):
         return {KEY_META: self.schd.config.cfg[KEY_META]}
 
     @authorise(Priv.STATE_TOTALS)
-    @ZMQServer.expose
+    @expose
     def state_totals(self):
         """Returns counts of the task states present in the suite.
 
@@ -741,7 +687,7 @@ class SuiteRuntimeServer(ZMQServer):
         }
 
     @authorise(Priv.CONTROL)
-    @ZMQServer.expose
+    @expose
     def insert_tasks(self, items, stop_point_string=None, no_check=False):
         """Insert task proxies.
 
@@ -770,7 +716,7 @@ class SuiteRuntimeServer(ZMQServer):
         return (True, 'Command queued')
 
     @authorise(Priv.CONTROL)
-    @ZMQServer.expose
+    @expose
     def kill_tasks(self, task_globs):
         """Kill task jobs.
 
@@ -790,7 +736,7 @@ class SuiteRuntimeServer(ZMQServer):
         return (True, 'Command queued')
 
     @authorise(Priv.CONTROL)
-    @ZMQServer.expose
+    @expose
     def nudge(self):
         """Tell suite to try task processing.
 
@@ -807,7 +753,7 @@ class SuiteRuntimeServer(ZMQServer):
         return (True, 'Command queued')
 
     @authorise(Priv.IDENTITY)
-    @ZMQServer.expose
+    @expose
     def ping_suite(self):
         """Return True.
 
@@ -825,7 +771,7 @@ class SuiteRuntimeServer(ZMQServer):
         return True
 
     @authorise(Priv.READ)
-    @ZMQServer.expose
+    @expose
     def ping_task(self, task_id, exists_only=False):
         """Return True if task_id exists (and is running).
 
@@ -848,7 +794,7 @@ class SuiteRuntimeServer(ZMQServer):
         return self.schd.info_ping_task(task_id, exists_only=exists_only)
 
     @authorise(Priv.CONTROL)
-    @ZMQServer.expose
+    @expose
     def poll_tasks(self, task_globs=None, poll_succ=False):
         """Request the suite to poll task jobs.
 
@@ -872,7 +818,7 @@ class SuiteRuntimeServer(ZMQServer):
         return (True, 'Command queued')
 
     @authorise(Priv.CONTROL)
-    @ZMQServer.expose
+    @expose
     def put_broadcast(
             self, point_strings=None, namespaces=None, settings=None):
         """Add new broadcast settings (server side interface).
@@ -911,7 +857,7 @@ class SuiteRuntimeServer(ZMQServer):
             point_strings, namespaces, settings)
 
     @authorise(Priv.CONTROL)
-    @ZMQServer.expose
+    @expose
     def put_ext_trigger(self, event_message, event_id):
         """Server-side external event trigger interface.
 
@@ -932,7 +878,7 @@ class SuiteRuntimeServer(ZMQServer):
         return (True, 'Event queued')
 
     @authorise(Priv.CONTROL)
-    @ZMQServer.expose
+    @expose
     def put_messages(self, task_job=None, event_time=None, messages=None):
         """Put task messages in queue for processing later by the main loop.
 
@@ -961,7 +907,7 @@ class SuiteRuntimeServer(ZMQServer):
         return (True, 'Messages queued: %d' % len(messages))
 
     @authorise(Priv.CONTROL)
-    @ZMQServer.expose
+    @expose
     def reload_suite(self):
         """Tell suite to reload the suite definition.
 
@@ -978,7 +924,7 @@ class SuiteRuntimeServer(ZMQServer):
         return (True, 'Command queued')
 
     @authorise(Priv.CONTROL)
-    @ZMQServer.expose
+    @expose
     def release_suite(self):
         """Unhold suite.
 
@@ -995,7 +941,7 @@ class SuiteRuntimeServer(ZMQServer):
         return (True, 'Command queued')
 
     @authorise(Priv.CONTROL)
-    @ZMQServer.expose
+    @expose
     def release_tasks(self, task_globs):
         """Unhold tasks.
 
@@ -1015,7 +961,7 @@ class SuiteRuntimeServer(ZMQServer):
         return (True, 'Command queued')
 
     @authorise(Priv.CONTROL)
-    @ZMQServer.expose
+    @expose
     def remove_tasks(self, task_globs, spawn=False):
         """Remove tasks from task pool.
 
@@ -1039,7 +985,7 @@ class SuiteRuntimeServer(ZMQServer):
         return (True, 'Command queued')
 
     @authorise(Priv.CONTROL)
-    @ZMQServer.expose
+    @expose
     def reset_task_states(self, task_globs, state=None, outputs=None):
         """Reset statuses tasks.
 
@@ -1069,7 +1015,7 @@ class SuiteRuntimeServer(ZMQServer):
         return (True, 'Command queued')
 
     @authorise(Priv.SHUTDOWN)
-    @ZMQServer.expose
+    @expose
     def set_stop_after_clock_time(self, datetime_string):
         """Set suite to stop after wallclock time.
 
@@ -1093,7 +1039,7 @@ class SuiteRuntimeServer(ZMQServer):
         return (True, 'Command queued')
 
     @authorise(Priv.SHUTDOWN)
-    @ZMQServer.expose
+    @expose
     def set_stop_after_point(self, point_string):
         """Set suite to stop after cycle point.
 
@@ -1115,7 +1061,7 @@ class SuiteRuntimeServer(ZMQServer):
         return (True, 'Command queued')
 
     @authorise(Priv.SHUTDOWN)
-    @ZMQServer.expose
+    @expose
     def set_stop_after_task(self, task_id):
         """Set suite to stop after an instance of a task.
 
@@ -1136,7 +1082,7 @@ class SuiteRuntimeServer(ZMQServer):
         return (True, 'Command queued')
 
     @authorise(Priv.SHUTDOWN)
-    @ZMQServer.expose
+    @expose
     def set_stop_cleanly(self, kill_active_tasks=False):
         """Set suite to stop cleanly or after kill active tasks.
 
@@ -1162,7 +1108,7 @@ class SuiteRuntimeServer(ZMQServer):
         return (True, 'Command queued')
 
     @authorise(Priv.CONTROL)
-    @ZMQServer.expose
+    @expose
     def set_verbosity(self, level):
         """Set suite verbosity to new level (for suite logs).
 
@@ -1182,7 +1128,7 @@ class SuiteRuntimeServer(ZMQServer):
         return (True, 'Command queued')
 
     @authorise(Priv.CONTROL)
-    @ZMQServer.expose
+    @expose
     def spawn_tasks(self, task_globs):
         """Spawn tasks.
 
@@ -1202,7 +1148,7 @@ class SuiteRuntimeServer(ZMQServer):
         return (True, 'Command queued')
 
     @authorise(Priv.SHUTDOWN)
-    @ZMQServer.expose
+    @expose
     def stop_now(self, terminate=False):
         """Stop suite on event handler completion, or terminate right away.
 
@@ -1223,7 +1169,7 @@ class SuiteRuntimeServer(ZMQServer):
         return (True, 'Command queued')
 
     @authorise(Priv.CONTROL)
-    @ZMQServer.expose
+    @expose
     def take_checkpoints(self, name):
         """Checkpoint current task pool.
 
@@ -1243,7 +1189,7 @@ class SuiteRuntimeServer(ZMQServer):
         return (True, 'Command queued')
 
     @authorise(Priv.CONTROL)
-    @ZMQServer.expose
+    @expose
     def trigger_tasks(self, task_globs, back_out=False):
         """Trigger submission of task jobs where possible.
 
@@ -1268,15 +1214,31 @@ class SuiteRuntimeServer(ZMQServer):
 
     # UIServer Data Commands
     @authorise(Priv.READ)
-    @ZMQServer.expose
+    @expose
     def pb_entire_workflow(self):
         """Send the entire data-store in a single Protobuf message.
 
         Returns:
             bytes
-                Protobuf encoded message
+                Serialised Protobuf message
 
         """
         pb_msg = self.schd.ws_data_mgr.get_entire_workflow()
-        # Use google.protobuf.json_format.MessageToJson
+        return pb_msg.SerializeToString()
+
+    @authorise(Priv.READ)
+    @expose
+    def pb_data_elements(self, element_type):
+        """Send the specified data elements in delta form.
+
+        Args:
+            element_type (str):
+                Key from DELTAS_MAP dictionary.
+
+        Returns:
+            bytes
+                Serialised Protobuf message
+
+        """
+        pb_msg = self.schd.ws_data_mgr.get_data_elements(element_type)
         return pb_msg.SerializeToString()
