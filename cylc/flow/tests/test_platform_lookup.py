@@ -16,7 +16,9 @@
 #
 # Tests for the platform lookup.
 
+import pytest
 from cylc.flow.platform_lookup import forward_lookup, reverse_lookup
+from cylc.flow.exceptions import PlatformLookupError
 
 # The platforms list for testing is set as a constant
 # [platforms]
@@ -39,23 +41,41 @@ from cylc.flow.platform_lookup import forward_lookup, reverse_lookup
 #         retrieve job logs = True
 #         batch system = background
 PLATFORMS = {
+    'suite server platform': None,
     'desktop\d\d|laptop\d\d': None,
     'sugar': {
-        'hosts': 'localhost',
+        'login hosts': 'localhost',
         'batch system': 'slurm',
     },
     'hpc': {
-        'hosts': ['hpc1', 'hpc2'],
+        'login hosts': ['hpc1', 'hpc2'],
         'batch system': 'pbs',
     },
     'hpc1-bg': {
-        'hosts': 'hpc1',
+        'login hosts': 'hpc1',
         'batch system': 'background',
     },
     'hpc2-bg': {
-        'hosts': 'hpc2',
+        'login hosts': 'hpc2',
         'batch system': 'background'
     }
+}
+
+PLATFORMS_NO_UNIQUE = {
+    'sugar': {
+        'login hosts': 'localhost',
+        'batch system': 'slurm',
+    },
+    'pepper': {
+        'login hosts': ['hpc1', 'hpc2'],
+        'batch system': 'slurm',
+    },
+
+}
+
+
+PLATFORMS_WITH_RE = {
+    # Mel - make up some amusing platforms doing wierd stuff with regexes
 }
 
 
@@ -67,10 +87,7 @@ class TestForwardLookup():
         assert 1 == 1
 
 
-class TestReversLookup():
+class TestReverseLookup():
     """
     Tests to ensure that job platform reverse lookup works as intended.
     """
-
-    def test_basic(self):
-        assert 'Hello' == 'Hello'

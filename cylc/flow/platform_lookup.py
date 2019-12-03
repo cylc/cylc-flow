@@ -17,6 +17,7 @@
 # Tests for the platform lookup.
 
 import re
+from cylc.flow.exceptions import PlatformLookupError
 
 def forward_lookup(task_platform, platforms):
     """
@@ -36,8 +37,7 @@ def forward_lookup(task_platform, platforms):
     Examples:
         Mel - write some doctests here...
     """
-    platform = "to be implemented"
-    return platform
+    raise NotImplementedError
 
 
 def reverse_lookup(task_job, task_remote, platforms):
@@ -61,5 +61,4 @@ def reverse_lookup(task_job, task_remote, platforms):
         Tim - write some doctests here...
 
     """
-    platform = "to be implemented"
-    return platform
+    raise NotImplementedError
