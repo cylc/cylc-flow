@@ -138,8 +138,13 @@ SPEC = {
             'out viewer': [VDR.V_STRING],
             'job name length maximum': [VDR.V_INTEGER],
             'owner': [VDR.V_STRING],
-            },
         },
+    },
+
+    # Platform Aliases
+    'platform aliases': {
+        '__MANY__': [VDR.V_STRING_LIST]
+    },
 
     # task
     'hosts': {
