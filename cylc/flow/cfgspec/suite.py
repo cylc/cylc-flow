@@ -170,12 +170,10 @@ SPEC = {
                 'exclude': [VDR.V_STRING_LIST],
             },
             'job': {
-                # TODO This section should have been removed by the end of the
-                # job platforms work, although upgraders should have been
-                # devised such that end users will be able to continue using
-                # them.
                 'batch system': [VDR.V_STRING, 'background'],
                 'batch submit command template': [VDR.V_STRING],
+                # TODO All the remaining items to be moved to top level of TASK
+                # When platforms work is completed.
                 'execution polling intervals': [VDR.V_INTERVAL_LIST, None],
                 'execution retry delays': [VDR.V_INTERVAL_LIST, None],
                 'execution time limit': [VDR.V_INTERVAL],
@@ -183,13 +181,6 @@ SPEC = {
                 'submission retry delays': [VDR.V_INTERVAL_LIST, None],
             },
             'remote': {
-                # TODO This section should have been removed by the end of the
-                # job platforms work, although upgraders should have been
-                # devised such that end users will be able to continue using
-                # them.
-                # The only items to keep are owner and suite definition
-                # directory and these can probably be at the top level rather
-                # Than in the [[[remote]]] sub-section.
                 'host': [VDR.V_STRING],
                 'owner': [VDR.V_STRING],
                 'suite definition directory': [VDR.V_STRING],
@@ -305,6 +296,22 @@ def upg(cfg, descr):
         ['cylc', 'abort if any task fails'],
         ['cylc', 'events', 'abort if any task fails'])
     u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'shell'])
+
+    # TODO uncomment these deprecations when ready - see todo in
+    # [runtime][__MANY__] section.
+    # for job_setting in [
+    #     'execution polling intervals',
+    #     'execution retry delays',
+    #     'execution time limit',
+    #     'submission polling intervals',
+    #     'submission retry delays'
+    # ]:
+    #     u.deprecate(
+    #         '8.0.0',
+    #         ['runtime', '__MANY__', 'job', job_setting],
+    #         ['runtime', '__MANY__', job_setting]
+    #     )
+
     u.upgrade()
 
     # Upgrader cannot do this type of move.
