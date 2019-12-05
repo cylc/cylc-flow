@@ -24,7 +24,8 @@ from cylc.flow.exceptions import PlatformLookupError
 # [platforms]
 #     [[desktop\d\d|laptop\d\d]]
 #         # hosts = platform name (default)
-#         # Note: "desktop01" and "desktop02" are both valid and distinct platforms
+#         # Note: "desktop01" and "desktop02" are both valid and distinct
+#                  platforms
 #     [[sugar]]
 #         hosts = localhost
 #         batch system = slurm
@@ -40,20 +41,21 @@ from cylc.flow.exceptions import PlatformLookupError
 #         hosts = hpcl2
 #         retrieve job logs = True
 #         batch system = background
-PLATFORMS = {
+
+PLATFORMS_STANDARD = {
     'suite server platform': None,
-    'desktop\d\d|laptop\d\d': None,
+    'desktop[0-9][0-9]|laptop[0-9][0-9]': None,
     'sugar': {
         'login hosts': 'localhost',
-        'batch system': 'slurm',
+        'batch system': 'slurm'
     },
     'hpc': {
         'login hosts': ['hpc1', 'hpc2'],
-        'batch system': 'pbs',
+        'batch system': 'pbs'
     },
     'hpc1-bg': {
         'login hosts': 'hpc1',
-        'batch system': 'background',
+        'batch system': 'background'
     },
     'hpc2-bg': {
         'login hosts': 'hpc2',
@@ -64,30 +66,44 @@ PLATFORMS = {
 PLATFORMS_NO_UNIQUE = {
     'sugar': {
         'login hosts': 'localhost',
-        'batch system': 'slurm',
+        'batch system': 'slurm'
     },
     'pepper': {
         'login hosts': ['hpc1', 'hpc2'],
-        'batch system': 'slurm',
+        'batch system': 'slurm'
     },
 
 }
 
-
 PLATFORMS_WITH_RE = {
-    # Mel - make up some amusing platforms doing wierd stuff with regexes
+    'hpc.*': {'login hosts': 'hpc1', 'batch system': 'background'},
+    'h.*': {'login hosts': 'hpc3'},
+    r'vld\d{3}|vld\d{2}': None,
+    'nu.*': {'batch system': 'slurm'}
 }
 
 
-class TestForwardLookup():
-    """
-    Tests to ensure that the job platform forward lookup works as intended.
-    """
-    def test_basic(self):
-        assert 1 == 1
+@pytest.mark.parametrize(
+    "PLATFORMS, platform, expected",
+    [(PLATFORMS_WITH_RE, 'nutmeg', 'nutmeg'),
+     (PLATFORMS_WITH_RE, 'vld798', 'vld798'),
+     (PLATFORMS_WITH_RE, 'vld56', 'vld56'),
+     (PLATFORMS_NO_UNIQUE, 'sugar', 'sugar'),
+     (PLATFORMS_STANDARD, None, 'localhost'),
+     (PLATFORMS_STANDARD, 'laptop22', 'laptop22'),
+     (PLATFORMS_STANDARD, 'hpc1-bg', 'hpc1-bg'),
+     (PLATFORMS_WITH_RE, 'hpc2', 'hpc2')
+     ]
+)
+def test_basic(PLATFORMS, platform, expected):
+    assert forward_lookup(PLATFORMS, platform) == expected
 
 
-class TestReverseLookup():
-    """
-    Tests to ensure that job platform reverse lookup works as intended.
-    """
+def test_platform_not_there():
+    with pytest.raises(PlatformLookupError):
+        forward_lookup(PLATFORMS_STANDARD, 'moooo')
+
+
+def test_similar_but_not_exact_match():
+    with pytest.raises(PlatformLookupError):
+        forward_lookup(PLATFORMS_WITH_RE, 'vld1')
