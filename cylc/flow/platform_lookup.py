@@ -17,7 +17,9 @@
 # Tests for the platform lookup.
 
 import re
+import itertools
 from cylc.flow.exceptions import PlatformLookupError
+
 
 def forward_lookup(task_platform, platforms):
     """
@@ -37,19 +39,60 @@ def forward_lookup(task_platform, platforms):
     Examples:
         Mel - write some doctests here...
     """
-    platform = "to be implemented"
-    return platform
+    raise NotImplementedError
 
 
-def reverse_lookup(task_job, task_remote, platforms):
+def reverse_lookup(platforms, job, remote):
     """
     Find out which job platform to use given a list of possible platforms
     and the task dictionary with cylc 7 definitions in it.
 
+          +------------+ Yes    +-----------------------+
+    +-----> Tried all  +------->+ RAISE                 |
+    |     | platforms? |        | PlatformNotFoundError |
+    |     +------------+        +-----------------------+
+    |              No|
+    |     +----------v---+
+    |     | Examine next |
+    |     | platform     |
+    |     +--------------+
+    |                |
+    |     +----------v----------------+
+    |     | Do all items other than   |
+    +<----+ "host" and "batch system" |
+    |   No| match for this plaform    |
+    |     +---------------------------+
+    |                           |Yes
+    |                +----------v----------------+ No
+    |                | Task host is 'localhost'? +--+
+    |                +---------------------------+  |
+    |                           |Yes                |
+    |              No+----------v----------------+  |
+    |            +---+ Task batch system is      |  |
+    |            |   | 'background'?             |  |
+    |            |   +---------------------------+  |
+    |            |              |Yes                |
+    |            |   +----------v----------------+  |
+    |            |   | RETURN 'localhost'        |  |
+    |            |   +---------------------------+  |
+    |            |                                  |
+    |    +-------v-------------+     +--------------v-------+
+    |  No| batch systems match |  Yes| batch system and     |
+    +<---+ and 'localhost' in  |  +--+ host both match      |
+    |    | platform hosts?     |  |  +----------------------+
+         +---------------------+  |                 |No
+    |            |Yes             |  +--------------v-------+
+    |    +-------v--------------+ |  | batch system match   |
+    |    | RETURN this platform <-+--+ and regex of platform|
+    |    +----------------------+ Yes| name matches host    |
+    |                                +----------------------+
+    |                                  |No
+    +<---------------------------------+
+
     Args:
-        task_job (dict):
+        job (dict):
             Suite config [runtime][TASK][job] section
-        task_remote (dict):
+        remote (dict):
             Suite config [runtime][TASK][remote] section
         platforms (dict):
             Dictionary containing platfrom definitions.
@@ -58,9 +101,82 @@ def reverse_lookup(task_job, task_remote, platforms):
         platfrom (str):
             string representing a platform from the global config.
 
-    Examples:
-        Tim - write some doctests here...
+    Raises:
+        PlatformLookupError:
+            If no matching platform can be a found an error is raised.
 
+    Example:
+        >>> platforms = {
+        ...         'desktop[0-9][0-9]|laptop[0-9][0-9]': {},
+        ...         'sugar': {
+        ...             'login hosts': 'localhost',
+        ...             'batch system': 'slurm'
+        ...         }
+        ... }
+        >>> job = {'batch system': 'slurm'}
+        >>> remote = {'host': 'sugar'}
+        >>> reverse_lookup(platforms, job, remote)
+        'sugar'
+        >>> remote = {}
+        >>> reverse_lookup(platforms, job, remote)
+        'localhost'
     """
-    platform = "to be implemented"
-    return platform
+    # These settings are removed from the incoming dictionaries for special
+    # handling later - we want more than a simple match:
+    #   - In the case of host we also want a regex match to the platform name
+    #   - In the case of batch system we want to match the name of the system
+    #     to a platform when host is localhost.
+    if 'host' in remote.keys():
+        task_host = remote.pop('host')
+    else:
+        task_host = 'localhost'
+    if 'batch system' in job.keys():
+        task_batch_system = job.pop('batch system')
+    else:
+        task_batch_system = 'background'
+
+    # Riffle through the platforms looking for a match to our task settings.
+    for platform_name, platform_spec in platforms.items():
+        # Handle all the items requiring an exact match.
+        generic_items_match = True
+        for task_section in [job, remote]:
+            shared_items = set(
+                task_section.keys()).intersection(set(platform_spec.keys()))
+            for shared_item in shared_items:
+                # breakpoint()
+                if platform_spec[shared_item] != task_section[shared_item]:
+                    generic_items_match = False
+
+        # All items other than batch system and host must be an exact match
+        if not generic_items_match:
+            continue
+
+        # We have some special logic to identify whether task host and task
+        # batch system match the platform in question.
+        if task_host == 'localhost':
+            if task_batch_system == 'background':
+                return 'localhost'
+            elif (
+                task_batch_system == platform_spec['batch system'] and
+                'hosts' in platform_spec.keys() and
+                'localhost' in platform_spec['hosts']
+            ):
+                # If we have localhost with a non-background batch system we
+                # use the batch system to give a sensible guess at the platform
+                return platform_name
+
+        else:
+            if (
+                'hosts' in platform_spec.keys() and
+                task_host in platform_spec['hosts'] and
+                task_batch_system == platform_spec['batch system']
+            ):
+                return platform_name
+
+            elif (
+                re.fullmatch(platform_name, task_host) and
+                task_batch_system == platform_spec['batch system']
+            ):
+                return task_host
+
+    raise PlatformLookupError('No platform found matching your task')

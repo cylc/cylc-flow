@@ -167,3 +167,7 @@ class CylcMissingContextPointError(CyclingError):
 
 class CylcMissingFinalCyclePointError(CyclingError):
     """An error denoting a missing (but required) final cycle point."""
+
+
+class PlatformLookupError(CylcConfigError):
+    """An error dealing with platform lookup"""
