@@ -41,29 +41,29 @@ def forward_lookup(platforms, task_platform):
 
     Example:
     Example Input:
-    platforms = {
-            'suite server platform': None,
-            'desktop[0-9][0-9]|laptop[0-9][0-9]': None,
-            'sugar': {
-                'login hosts': 'localhost',
-                'batch system': 'slurm'
-            },
-            'hpc': {
-                'login hosts': ['hpc1', 'hpc2'],
-                'batch system': 'pbs'
-            },
-            'hpc1-bg': {
-                'login hosts': 'hpc1',
-                'batch system': 'background'
-            },
-            'hpc2-bg': {
-                'login hosts': 'hpc2',
-                'batch system': 'background'
-            }
-        }
-    task_platform = desktop22
-
-    Example Output: desktop22
+    >>> platforms = {
+    ...     'suite server platform': None,
+    ...     'desktop[0-9][0-9]|laptop[0-9][0-9]': None,
+    ...     'sugar': {
+    ...         'login hosts': 'localhost',
+    ...         'batch system': 'slurm'
+    ...     },
+    ...     'hpc': {
+    ...         'login hosts': ['hpc1', 'hpc2'],
+    ...         'batch system': 'pbs'
+    ...     },
+    ...     'hpc1-bg': {
+    ...         'login hosts': 'hpc1',
+    ...         'batch system': 'background'
+    ...     },
+    ...     'hpc2-bg': {
+    ...         'login hosts': 'hpc2',
+    ...         'batch system': 'background'
+    ...     }
+    ... }
+    >>> task_platform = 'desktop22'
+    >>> forward_lookup(platforms, task_platform)
+    'desktop22'
     """
     if task_platform is None:
         return 'localhost'
