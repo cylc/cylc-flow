@@ -16,30 +16,16 @@
 #
 # Tests for the platform lookup.
 
-from cylc.flow.platform_lookup import forward_lookup, reverse_lookup
+import pytest
+from cylc.flow.platform_lookup import reverse_lookup
+from cylc.flow.exceptions import PlatformLookupError
 
-# The platforms list for testing is set as a constant
-# [platforms]
-#     [[desktop\d\d|laptop\d\d]]
-#         # hosts = platform name (default)
-#         # Note: "desktop01" and "desktop02" are both valid and distinct platforms
-#     [[sugar]]
-#         hosts = localhost
-#         batch system = slurm
-#     [[hpc]]
-#         hosts = hpcl1, hpcl2
-#         retrieve job logs = True
-#         batch system = pbs
-#     [[hpcl1-bg]]
-#         hosts = hpcl1
-#         retrieve job logs = True
-#         batch system = background
-#     [[hpcl2-bg]]
-#         hosts = hpcl2
-#         retrieve job logs = True
-#         batch system = background
+# Platforms setup designed to look like what we might expect for a major
+# Cylc user.
 PLATFORMS = {
-    'desktop\d\d|laptop\d\d': None,
+    'desktop[0-9]{2}|laptop[0-9]{2}': {
+        'batch system': 'background'
+    },
     'sugar': {
         'hosts': 'localhost',
         'batch system': 'slurm',
@@ -59,97 +45,145 @@ PLATFORMS = {
 }
 
 
-PLATFORMS_NO_UNIQUE = {
-    'sugar': {
-        'login hosts': 'localhost',
-        'batch system': 'slurm',
-    },
-    'pepper': {
-        'login hosts': ['hpc1', 'hpc2'],
-        'batch system': 'slurm',
-    },
-
-}
-
-
-class TestForwardLookup():
-    """
-    Tests to ensure that the job platform forward lookup works as intended.
-    """
-    def test_basic(self):
-        assert 1 == 1
-
-
-class TestReverseLookup():
-    """
-    Tests to ensure that job platform reverse lookup works as intended.
-    """
-
-    def test_reverse_lookup(self):
-        assert 'Hello' == 'Hello'
-
-    CASES = [
-        # Settings left blank - should select suite host
+# Basic tests that we can select sensible platforms
+@pytest.mark.parametrize(
+    'job, remote, returns',
+    [
+        # Basic test where the user hasn't sumbitted anything and the task
+        # returns to default, i.e. localhost.
         (
-            {'batch system': None},
-            {'host': None},
-            'suite host',
-            'ok'
+            {'batch system': 'background'},
+            {'retrieve job logs retry delays': 'None'},
+            'localhost'
         ),
-        # # Host set, batch system unset - desktop machines, hpc background
-        # (
-        #     {'batch system': None},
-        #     {'host': 'laptop42'},
-        #     'laptop42',
-        #     'ok'
-        # ),
-        # (
-        #     {'batch system': None},
-        #     {'host': 'hpc1'},
-        #     'hpc1-bg',
-        #     'ok'
-        # ),
-        # # Host unset, batch system set
-        # # Should infer a host from the batch system, but only if the batch
-        # # system is unique to one platform
-        # # TODO write a test with an alternative platfroms set to show the
-        # # failure case where multiple systems have the same batch system
-        # (
-        #     {'batch system': 'slurm'},
-        #     {'host': None},
-        #     'sugar',
-        #     'ok'
-        # ),
-        # (
-        #     {'batch system': 'pbs'},
-        #     {'host': None},
-        #     'hpc',
-        #     'ok'
-        # ),
-        # # Host Set, Batch system set
-        # # Batch system should match platfrom __and__ host should be in the
-        # # list of login hosts for the platform
-        # (
-        #     {'batch system': 'pbs'},
-        #     {'host': 'hpc'},
-        #     'desktop42',
-        #     'ok'
-        # ),
-        # (
-        #     {'batch system': 'pbs'},
-        #     {'host': 'hpc1'},
-        #     'desktop42',
-        #     'ok'
-        # ),
+        # Check that when the user asks for batch system = slurm alone
+        # they get system = sugar
+        (
+            {'batch system': 'slurm'},
+            {'host': ''},
+            'sugar'
+        ),
+        # Check that when users asks for hpc1 and pbs they get a platform
+        # with hpc1 in its list of login hosts
+        (
+            {'batch system': 'pbs'},
+            {'host': 'hpc1'},
+            'hpc'
+        ),
+        # When the user asks for hpc1 without specifying pbs user gets platform
+        # hpc bg1
+        (
+            {'batch system': 'background'},
+            {'host': 'hpc1'},
+            'hpc1-bg'
+        ),
     ]
-    @pytest.mark.parametrize('task_job, task_remote, selected_platform, result',
-                             CASES)
-    def test_ok(self, task_job, task_remote, selected_platform, result):
-        if result == 'ok':
-            assert reverse_lookup(task_job, task_remote, PLATFORMS) == selected_platform
-        elif result == 'error':
-            with pytest.raises(PlatformLookupError):
-                reverse_lookup(task_job, task_remote, PLATFORMS)
-        elif result == 'not ok':
-            assert reverse_lookup(task_job, task_remote, PLATFORMS) != selected_platform
+)
+def test_reverse_lookup_basic(job, remote, returns):
+    assert reverse_lookup(PLATFORMS, job, remote) == returns
 
+
+# Cases where the error ought to be raised because no matching platform should
+# be found.
+@pytest.mark.parametrize(
+    'job, remote',
+    [
+        # Check for error when the user asks for slurm on host desktop01
+        (
+            {'batch system': 'slurm'},
+            {'host': 'desktop01'},
+        ),
+        # ('hpc1', 'slurm', 'error'),
+        (
+            {'batch system': 'slurm'},
+            {'host': 'hpc1'},
+        ),
+        # Localhost doesn't support pbs
+        (
+            {'batch system': 'pbs'},
+            {},
+        ),
+    ]
+)
+def test_reverse_PlatformLookupError(job, remote):
+    with pytest.raises(PlatformLookupError):
+        reverse_lookup(PLATFORMS, job, remote)
+
+
+# An example of a global config with two Spice systems available
+@pytest.mark.parametrize(
+    'job, remote, returns',
+    [
+        (
+            {'batch system': 'slurm'},
+            {'host': 'sugar'},
+            'sugar'
+        ),
+        (
+            {'batch system': 'slurm'},
+            {},
+            'sugar'
+        ),
+        (
+            {'batch system': 'slurm'},
+            {'host': 'pepper'},
+            'pepper'
+        )
+    ]
+)
+def test_reverse_lookup_two_spices(
+    job, remote, returns
+):
+    platforms = {
+        'sugar': {
+            'hosts': ['sugar', 'localhost'],
+            'batch system': 'slurm',
+        },
+        'pepper': {
+            'batch system': 'slurm',
+            'hosts': 'pepper'
+        },
+
+    }
+    assert reverse_lookup(platforms, job, remote) == returns
+
+
+# An example of two platforms with the same hosts and batch system settings
+# but some other setting different
+@pytest.mark.parametrize(
+    'job, remote, returns',
+    [
+        (
+            {
+                'batch system': 'background',
+                'batch submit command template': '',
+                'shell': '/bin/fish'
+            },
+            {
+                'host': 'desktop01',
+                'owner': '',
+                'suite definition directory': '',
+                'retrieve job logs': '',
+                'retrieve job logs max size': '',
+                'retrieve job logs retry delays': 'None'
+            },
+            'my-platform-with-fish'
+        ),
+    ]
+)
+def test_reverse_lookup_similar_platforms(
+    job, remote, returns
+):
+    platforms = {
+        'my-platform-with-bash': {
+            'hosts': 'desktop01',
+            'shell': '/bin/bash',
+            'batch system': 'background'
+        },
+        'my-platform-with-fish': {
+            'hosts': 'desktop01',
+            'shell': '/bin/fish',
+            'batch system': 'background'
+        },
+    }
+    assert reverse_lookup(platforms, job, remote) == returns
