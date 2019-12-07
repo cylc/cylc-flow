@@ -267,7 +267,9 @@ def format_raw(name, host, port, pub_port, api, info, options):
     owner = info[KEY_OWNER]
 
     if options.publisher:
-        print("%s|%s|%s|port|%s|publish-port|%s" % (name, owner, host, port, pub_port))
+        print("%s|%s|%s|port|%s|publish-port|%s" % (
+            name, owner, host, port, pub_port)
+        )
     else:
         print("%s|%s|%s|port|%s" % (name, owner, host, port))
 
