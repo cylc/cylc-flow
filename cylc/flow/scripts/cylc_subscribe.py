@@ -82,7 +82,6 @@ def get_option_parser():
         help="Show a single publish then exit.",
         action="store_true", default=False, dest="once")
 
-
     return parser
 
 
