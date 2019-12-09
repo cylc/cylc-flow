@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
@@ -15,11 +14,26 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""cylc [task] remote-tidy RUND
 
-"""CLI of "cylc restart". See cylc.flow.scheduler_cli for detail."""
+(This command is for internal use.)
+Remove ".service/contact" from a task remote (i.e. a [owner@]host).
+Remove ".service" directory on the remote if emptied.
 
-from cylc.flow.scheduler_cli import main
+"""
+from cylc.flow.remote import remrun
 
 
-if __name__ == '__main__':
-    main(is_restart=True)
+def main():
+    if not remrun():
+        from cylc.flow.option_parsers import CylcOptionParser as COP
+        from cylc.flow.task_remote_cmd import remote_tidy
+
+        parser = COP(
+            __doc__, argdoc=[("RUND", "The run directory of the suite")]
+        )
+        remote_tidy(parser.parse_args()[1][0])  # position argument 1, rund
+
+
+if __name__ == "__main__":
+    main()

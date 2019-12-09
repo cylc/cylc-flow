@@ -1,5 +1,5 @@
-#!/bin/bash
-#
+#!/usr/bin/env python3
+# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -14,4 +14,13 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-exec "$(dirname "$0")/cylc-list" "$@"
+"""CLI of "cylc restart". See cylc.flow.scheduler_cli for detail."""
+from cylc.flow.scheduler_cli import main as scheduler_main
+
+
+def main():
+    scheduler_main(is_restart=True)
+
+
+if __name__ == "__main__":
+    main()

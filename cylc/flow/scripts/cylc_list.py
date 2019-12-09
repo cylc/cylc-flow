@@ -113,7 +113,8 @@ def main(parser, options, reg):
 
     if options.tree and any(
             [options.all_tasks, options.all_namespaces, options.mro]):
-        print("WARNING: -t chosen, ignoring non-tree options.", file=sys.stderr)
+        print("WARNING: -t chosen, ignoring non-tree options.",
+              file=sys.stderr)
     config = SuiteConfig(
         suite,
         suiterc,

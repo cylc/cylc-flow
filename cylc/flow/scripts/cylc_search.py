@@ -102,7 +102,8 @@ def main(parser, options, reg, *patterns):
 
     for line in lines:
 
-        m = re.match(r'^#\+\+\+\+ START INLINED INCLUDE FILE ([\w/\.\-]+)', line)
+        m = re.match(
+            r'^#\+\+\+\+ START INLINED INCLUDE FILE ([\w/\.\-]+)', line)
         if m:
             inc_file = m.groups()[0]
             in_include_file = True
@@ -113,7 +114,8 @@ def main(parser, options, reg, *patterns):
             line_count += 1
         else:
             inc_line_count += 1
-            m = re.match(r'^#\+\+\+\+ END INLINED INCLUDE FILE ' + inc_file, line)
+            m = re.match(
+                r'^#\+\+\+\+ END INLINED INCLUDE FILE ' + inc_file, line)
             if m:
                 in_include_file = False
                 inc_file = None

@@ -1,5 +1,3 @@
-#!/bin/bash
-
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
@@ -15,5 +13,3 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-exec "$(dirname "$0")/cylc-get-suite-contact" "$@"

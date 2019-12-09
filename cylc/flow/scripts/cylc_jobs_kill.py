@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
@@ -15,23 +14,27 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""cylc [control] jobs-poll JOB-LOG-ROOT [JOB-LOG-DIR ...]
+"""cylc [control] jobs-kill JOB-LOG-ROOT [JOB-LOG-DIR ...]
 
-(This command is for internal use. Users should use "cylc poll".) Read job
-status files to obtain the statuses of the jobs. If necessary, Invoke the
-relevant batch system commands to ask the batch systems for more statuses.
+(This command is for internal use. Users should use "cylc kill".) Read job
+status files to obtain the names of the batch systems and the job IDs in the
+systems. Invoke the relevant batch system commands to ask the batch systems to
+terminate the jobs.
 
 """
-
-
+from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.remote import remrun
 from cylc.flow.terminal import cli_function
 
 
 def get_option_parser():
-    parser = COP(__doc__, argdoc=[
-        ("JOB-LOG-ROOT", "The log/job sub-directory for the suite"),
-        ("[JOB-LOG-DIR ...]", "A point/name/submit_num sub-directory")])
+    parser = COP(
+        __doc__,
+        argdoc=[
+            ("JOB-LOG-ROOT", "The log/job sub-directory for the suite"),
+            ("[JOB-LOG-DIR ...]", "A point/name/submit_num sub-directory"),
+        ],
+    )
 
     return parser
 
@@ -39,10 +42,11 @@ def get_option_parser():
 @cli_function(get_option_parser)
 def main(parser, options, job_log_root, *job_log_dirs):
     """CLI main."""
-    BatchSysManager().jobs_poll(job_log_root, job_log_dirs)
+    if not remrun():
+        from cylc.flow.batch_sys_manager import BatchSysManager
+
+        BatchSysManager().jobs_kill(job_log_root, job_log_dirs)
 
 
-if __name__ == "__main__" and not remrun():
-    from cylc.flow.option_parsers import CylcOptionParser as COP
-    from cylc.flow.batch_sys_manager import BatchSysManager
+if __name__ == "__main__":
     main()

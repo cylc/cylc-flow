@@ -150,9 +150,9 @@ def category_help(category):
 
 
 # BEGIN MAIN
-general_usage = f"""Cylc ("silk") is a workflow engine for orchestrating complex
-*suites* of inter-dependent distributed cycling (repeating) tasks, as well as
-ordinary non-cycling workflows.
+general_usage = f"""Cylc ("silk") is a workflow engine for orchestrating
+complex *suites* of inter-dependent distributed cycling (repeating) tasks, as
+well as ordinary non-cycling workflows.
 For detailed documentation see the Cylc User Guide (cylc doc --help).
 
 Version {CYLC_VERSION}

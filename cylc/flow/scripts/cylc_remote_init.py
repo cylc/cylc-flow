@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
@@ -34,21 +33,34 @@ Return:
         On failure.
 
 """
-
-
 from cylc.flow.remote import remrun
 
 
-if __name__ == '__main__' and not remrun():
-    from cylc.flow.option_parsers import CylcOptionParser as COP
-    from cylc.flow.task_remote_cmd import remote_init
-    parser = COP(__doc__, argdoc=[
-        ('UUID', 'UUID of current suite server process'),
-        ('RUND', 'The run directory of the suite')])
-    parser.add_option(
-        '--indirect-comm', metavar='METHOD', type='choice',
-        choices=['ssh'],
-        help='specify use of indirect communication via e.g. ssh',
-        action='store', dest='indirect_comm', default=None)
-    options, (uuid_str, rund) = parser.parse_args()
-    remote_init(uuid_str, rund, indirect_comm=options.indirect_comm)
+def main():
+    if not remrun():
+        from cylc.flow.option_parsers import CylcOptionParser as COP
+        from cylc.flow.task_remote_cmd import remote_init
+
+        parser = COP(
+            __doc__,
+            argdoc=[
+                ("UUID", "UUID of current suite server process"),
+                ("RUND", "The run directory of the suite"),
+            ],
+        )
+        parser.add_option(
+            "--indirect-comm",
+            metavar="METHOD",
+            type="choice",
+            choices=["ssh"],
+            help="specify use of indirect communication via e.g. ssh",
+            action="store",
+            dest="indirect_comm",
+            default=None,
+        )
+        options, (uuid_str, rund) = parser.parse_args()
+        remote_init(uuid_str, rund, indirect_comm=options.indirect_comm)
+
+
+if __name__ == "__main__":
+    main()
