@@ -9,6 +9,7 @@ FLOWS = json.load(open('data.json','r'))['data']['workflows']
 
 TASK_ICONS = {
     'waiting': '\u25cb',
+    'ready': '\u25cb',  # TODO: remove
     'submitted': '\u2299',
     'running:0': '\u2299',
     'running:25': '\u25D4',
@@ -21,26 +22,19 @@ TASK_ICONS = {
 JOB_ICON = '\u25A0'
 
 JOB_COLOURS = {
-    'submitted': '7DCFD4',
-    'submitted': '8DD',
-    'running': '6AA4F1',
-    'running': '7AF',
-    'succeeded': '51AF51',
-    'succeeded': '5B5',
-    'failed': 'CF4848',
-    'failed': 'D55',
-    'submit-failed': 'BE6AC0',
-    'submit-failed': 'C7C'
+    'submitted': 'dark cyan',
+    'running': 'light blue',
+    'succeeded': 'dark green',
+    'failed': 'light red',
+    'submit-failed': 'light magenta',
+    'ready': 'brown'
 }
-
 
 
 class ExampleTreeWidget(urwid.TreeWidget):
     """ Display widget for leaf nodes """
 
     def get_display_text(self):
-        #return self.get_node().get_value()['name']
-        # return self.get_node().get_value()['data']['id'].rsplit('|', 1)[-1]
         node = self.get_node().get_value()
         type_ = node['type_']
         if type_ == 'task':
@@ -51,9 +45,12 @@ class ExampleTreeWidget(urwid.TreeWidget):
             )
         elif type_ == 'job':
             return (
-                f'#{node["data"]["submitNum"]:02d}'
-                ' '
-                f'{JOB_ICON}'
+                f'job_{node["data"]["state"]}',
+                (
+                    f'#{node["data"]["submitNum"]:02d}'
+                    ' '
+                    f'{JOB_ICON}'
+                )
             )
         else:
             return node['data']['id'].rsplit('|', 1)[-1]
@@ -87,18 +84,20 @@ class ExampleParentNode(urwid.ParentNode):
         return childclass(childdata, parent=self, key=key, depth=childdepth)
 
 
+FORE = 'default'
+BACK = 'default'
+
+
 class ExampleTreeBrowser:
     palette = [
-        ('body', 'black', 'light gray'),
-        ('focus', 'light gray', 'dark blue', 'standout'),
-        ('head', 'yellow', 'black', 'standout'),
-        ('foot', 'light gray', 'black'),
-        ('key', 'light cyan', 'black', 'underline'),
-        ('title', 'white', 'black', 'bold'),
-        ('flag', 'dark gray', 'light gray'),
-        ('error', 'dark red', 'light gray')
+        ('body', FORE, BACK),
+        ('focus', BACK, 'dark blue', 'standout'),
+        ('head', 'yellow', FORE, 'standout'),
+        ('foot', BACK, FORE),
+        ('key', 'dark cyan', FORE, 'underline'),
+        ('title', FORE, BACK, 'bold'),
     ] + [
-        (f'job_{state}', '', '', '', f'#{colour}', '')
+        (f'job_{state}', colour, BACK)
         for state, colour in JOB_COLOURS.items()
     ]
 
@@ -195,7 +194,8 @@ def iter_flows():
                 }
                 cycle_node = add_node(
                     'cycle', family['cyclePoint'], cycle_data, nodes)
-                flow_node['children'].append(cycle_node)
+                if cycle_node not in flow_node['children']:
+                    flow_node['children'].append(cycle_node)
                 family_node = add_node('family', family['id'], family, nodes)
         # create cycle/family tree
         for family_ in flow['families']:
