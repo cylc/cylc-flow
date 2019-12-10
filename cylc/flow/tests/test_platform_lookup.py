@@ -78,7 +78,7 @@ PLATFORMS_NO_UNIQUE = {
 PLATFORMS_WITH_RE = {
     'hpc.*': {'login hosts': 'hpc1', 'batch system': 'background'},
     'h.*': {'login hosts': 'hpc3'},
-    r'vld\d{3}|vld\d{2}': None,
+    r'vld\d{2,3}': None,
     'nu.*': {'batch system': 'slurm'}
 }
 
