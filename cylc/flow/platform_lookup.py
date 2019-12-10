@@ -17,29 +17,7 @@
 # Tests for the platform lookup.
 
 import re
-import itertools
 from cylc.flow.exceptions import PlatformLookupError
-
-
-def forward_lookup(task_platform, platforms):
-    """
-    Find out which job platform to use given a list of possible platforms and
-    a task platform string.
-
-    Args:
-        task_platform (str):
-            platform item from config [runtime][TASK][platform]
-        platforms (list):
-            list of possible platforms defined by global.rc
-
-    Returns:
-        platform (str):
-            string representing a platform from the global config.
-
-    Examples:
-        Mel - write some doctests here...
-    """
-    raise NotImplementedError
 
 
 def reverse_lookup(platforms, job, remote):
@@ -133,9 +111,15 @@ def reverse_lookup(platforms, job, remote):
     if 'batch system' in job.keys():
         task_batch_system = job.pop('batch system')
     else:
+        # Necessary? Perhaps not if batch system default is 'background'
         task_batch_system = 'background'
 
     # Riffle through the platforms looking for a match to our task settings.
+    # reverse dict order
+    platforms = {
+        key: platforms[key] for key in reversed(list(platforms.keys()))
+    }
+
     for platform_name, platform_spec in platforms.items():
         # Handle all the items requiring an exact match.
         generic_items_match = True

@@ -49,6 +49,13 @@ PLATFORMS = {
 @pytest.mark.parametrize(
     'job, remote, returns',
     [
+        # Can we return a sensible platform for desktop 42
+        (
+            {},
+            {'host': 'desktop42'},
+            'desktop42'
+        ),
+
         # Basic test where the user hasn't sumbitted anything and the task
         # returns to default, i.e. localhost.
         (
@@ -178,6 +185,12 @@ def test_reverse_lookup_similar_platforms(
         'my-platform-with-bash': {
             'hosts': 'desktop01',
             'shell': '/bin/bash',
+            'batch system': 'background'
+        },
+        # An extra platform to check that we only pick up the first match
+        'my-platform-with-fish-not-this-one': {
+            'hosts': 'desktop01',
+            'shell': '/bin/fish',
             'batch system': 'background'
         },
         'my-platform-with-fish': {
