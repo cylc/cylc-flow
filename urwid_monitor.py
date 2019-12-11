@@ -49,20 +49,21 @@ class ExampleTreeWidget(urwid.TreeWidget):
         node = self.get_node().get_value()
         type_ = node['type_']
         if type_ == 'task':
-            return (
-                f'{TASK_ICONS[node["data"]["state"]]}'
-                ' '
-                f'{node["data"]["name"]}'
-            )
+            ret = [f'{TASK_ICONS[node["data"]["state"]]} ']
+
+            try:
+                state = self.get_node().get_child_node(0).get_value()['data']['state']
+                ret += [(f'job_{state}', f'{JOB_ICON} ')]
+            except IndexError:
+                pass
+
+            ret += [f'{node["data"]["name"]}']
+            return ret
         elif type_ == 'job':
-            return (
-                f'job_{node["data"]["state"]}',
-                (
-                    f'#{node["data"]["submitNum"]:02d}'
-                    ' '
-                    f'{JOB_ICON}'
-                )
-            )
+            return [
+                f'#{node["data"]["submitNum"]:02d} ',
+                (f'job_{node["data"]["state"]}', f'{JOB_ICON}')
+            ]
         else:
             return node['data']['id'].rsplit('|', 1)[-1]
 
@@ -194,7 +195,7 @@ class ExampleTreeBrowser:
         if k in ('q','Q'):
             raise urwid.ExitMainLoop()
         if k in ('u', 'U'):
-            self.update()
+            return self.update()
 
 
 def get_example_tree():
