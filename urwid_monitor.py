@@ -2,9 +2,10 @@ import urwid
 import os
 import json
 
-urwid.set_encoding('utf8')
+from cylc.flow.exceptions import ClientError
+from cylc.flow.network.client import SuiteRuntimeClient
 
-FLOWS = json.load(open('data.json','r'))['data']['workflows']
+urwid.set_encoding('utf8')  # required for unicode task icons
 
 
 TASK_ICONS = {
@@ -35,7 +36,7 @@ JOB_COLOURS = {
 class ExampleTreeWidget(urwid.TreeWidget):
     """ Display widget for leaf nodes """
 
-    def __init__(self, node, max_depth=3): 
+    def __init__(self, node, max_depth=2): 
         # NOTE: copy of urwid.TreeWidget.__init__, the only difference
         #       being the self.expanded logic
         self._node = node 
@@ -101,6 +102,9 @@ BACK = 'default'
 
 
 class ExampleTreeBrowser:
+
+    UPDATE_INTERVAL = 1
+
     palette = [
         ('body', FORE, BACK),
         ('focus', BACK, 'dark blue', 'standout'),
@@ -131,7 +135,7 @@ class ExampleTreeBrowser:
         self.topnode = ExampleParentNode(self.get_snapshot())
         self.listbox = urwid.TreeListBox(urwid.TreeWalker(self.topnode))
         self.listbox.offset_rows = 1
-        self.header = urwid.Text( "" )
+        self.header = urwid.Text( "header" )
         self.footer = urwid.AttrWrap( urwid.Text( self.footer_text ),
             'foot')
         self.view = urwid.Frame(
@@ -146,15 +150,25 @@ class ExampleTreeBrowser:
             self.palette,
             unhandled_input=self.unhandled_input
         )
+        self.loop.set_alarm_in(self.UPDATE_INTERVAL, self.update)
         self.loop.run()
 
     def get_snapshot(self):
-        data = poll(self.client)
-        return iter_flows(data)
+        try:
+            data = self.client(
+                'graphql',
+                {
+                    'request_string': QUERY,
+                    'variables': {}
+                }
+            )
+        except ClientError:
+            pass
+            # TODO: raise warning
+        assert len(data['workflows']) == 1
+        return iter_flow(data['workflows'][0])
 
-    def find_closest_focus(self, old_focus, new_focus):
-        _, old_node = old_focus
-        xyz, new_node = new_focus
+    def find_closest_focus(self, old_node, new_node):
 
         def get_key(node):
             node_data = node.get_value()
@@ -167,7 +181,7 @@ class ExampleTreeBrowser:
             node = stack.pop()
             key = get_key(node)
             if key == old_key:
-                return (xyz, node)
+                return node
             else:
                 stack.extend([
                     node.get_child_node(index)
@@ -178,7 +192,7 @@ class ExampleTreeBrowser:
             raise IndexError()
 
         return self.find_closest_focus(
-            (xyz, old_node._parent),
+            old_node._parent,
             new_focus
         )
 
@@ -214,50 +228,48 @@ class ExampleTreeBrowser:
                     node.get_widget().expanded = expanded
                     node.get_widget().update_expanded_icon()
 
-    def update(self):
-        snapshot = self.get_snapshot()
-        self.topnode = ExampleParentNode(self.get_snapshot())
-        old_focus = self.listbox._body.get_focus()
-        self.listbox._set_body(urwid.TreeWalker(self.topnode))
-        new_focus = self.listbox._body.get_focus()
-        closest_focus = self.find_closest_focus(old_focus, new_focus)
-        self.listbox._body.set_focus(closest_focus[1])
+    def set_header(self, message):
+        self.view.header = urwid.Text(message)
 
-        self.translate_collapsing(
-            old_focus[1],
-            new_focus[1]
-        )
+    def update(self, *args):
+        # update the data store
+        # TODO: this can be done incrementally using deltas
+        #       once this interface is available
+        snapshot = self.get_snapshot()
+
+        # global update - the nuclear option - slow but simple
+        # TODO: this can be done incrementally by adding and
+        #       removing nodes from the existing tree
+        self.topnode = ExampleParentNode(snapshot)
+
+        # NOTE: because we are nuking the tree we need to manually
+        # preserve the focus and collapse status of tree nodes
+
+        # record the old focus
+        _, old_node = self.listbox._body.get_focus()
+
+        # nuke the tree
+        self.listbox._set_body(urwid.TreeWalker(self.topnode))
+
+        # get the new focus
+        _, new_node = self.listbox._body.get_focus()
+
+        # preserve the focus or walk to the nearest parent
+        closest_focus = self.find_closest_focus(old_node, new_node)
+        self.listbox._body.set_focus(closest_focus)
+
+        # preserve the collapse/expand status of all nodes
+        self.translate_collapsing(old_node, new_node)
+
+        # schedule the next run of this update method
+        self.loop.set_alarm_in(self.UPDATE_INTERVAL, self.update)
 
     def unhandled_input(self, k):
         if k in ('q','Q'):
             raise urwid.ExitMainLoop()
-        if k in ('u', 'U'):
-            return self.update()
-
-
-def get_example_tree():
-    """ generate a quick 100 leaf tree for demo purposes """
-    retval = {"name":"parent","children":[]}
-    for i in range(10):
-        retval['children'].append({"name":"child " + str(i)})
-        retval['children'][i]['children']=[]
-        for j in range(10):
-            retval['children'][i]['children'].append({"name":"grandchild " +
-                                                      str(i) + "." + str(j)})
-    return retval
-
-def get_example_tree2():
-    ret = {
-        'name': 'parent',
-        'children': []
-    }
-    for flow in FLOWS:
-        flow_node = {
-            'name': flow['name'],
-            'children': []
-        }
-        ret['children'].append(flow_node)
-    return ret
+        # manual update
+        #if k in ('u', 'U'):
+        #    return self.update()
 
 
 def add_node(type_, id_, data, nodes):
@@ -271,22 +283,15 @@ def add_node(type_, id_, data, nodes):
     return nodes[(type_, id_)]
 
 
-def iter_flows(data):
-    root = {  # TODO: generate this via add_node
-        'children': [],
-        'type_': None,
-        'id_': 'root',
-        'data': {
-            'id': 'Workflows'
-        }
-    }
+def iter_flow(flow):
     nodes = {}
-    for flow in data:
-        flow_node = add_node(
-            'workflow', flow['id'], flow, nodes)
-        # create nodes
-        for family_ in flow['families']:
-            for family in family_['proxies']:
+    flow_node = add_node(
+        'workflow', flow['id'], flow, nodes)
+
+    # create nodes
+    for family_ in flow['families']:
+        for family in family_['proxies']:
+            if family['name'] != 'root':
                 cycle_data = {
                     'name': family['cyclePoint'],
                     'id': f"{flow['id']}|{family['cyclePoint']}"
@@ -296,13 +301,17 @@ def iter_flows(data):
                 if cycle_node not in flow_node['children']:
                     flow_node['children'].append(cycle_node)
                 family_node = add_node('family', family['id'], family, nodes)
-        # create cycle/family tree
-        for family_ in flow['families']:
-            for family in family_['proxies']:
+    # create cycle/family tree
+    for family_ in flow['families']:
+        for family in family_['proxies']:
+            if family['name'] != 'root':
                 family_node = add_node(
                     'family', family['id'], None, nodes)
                 first_parent = family['firstParent']
-                if first_parent:
+                if (
+                    first_parent
+                    and first_parent['name'] != 'root'
+                ):
                     parent_node = add_node(
                         'family', first_parent['id'], None, nodes)
                     parent_node['children'].append(family_node)
@@ -310,36 +319,27 @@ def iter_flows(data):
                     cycle_node = add_node(
                         'cycle', family['cyclePoint'], None, nodes)
                     cycle_node['children'].append(family_node)
-        # add leaves
-        for task in flow['taskProxies']:
-            parents = task['parents'] or [{'id': 'root'}]
-            task_node = add_node(
-                'task', task['id'], task, nodes)
+    # add leaves
+    for task in flow['taskProxies']:
+        parents = task['parents']
+        task_node = add_node(
+            'task', task['id'], task, nodes)
+        if parents[0]['name'] == 'root':
+            family_node = add_node(
+                'cycle', task['cyclePoint'], None, nodes)
+        else:
             family_node = add_node(
                 'family', parents[0]['id'], None, nodes)
-            family_node['children'].append(task_node)
-            for job in task['jobs']:
-                job_node = add_node(
-                    'job', job['id'], job, nodes)
-                task_node['children'].append(job_node)
+        family_node['children'].append(task_node)
+        for job in task['jobs']:
+            job_node = add_node(
+                'job', job['id'], job, nodes)
+            task_node['children'].append(job_node)
 
-        root['children'].append(flow_node)
+    return flow_node
 
-    return root
-
-
-from cylc.flow.network.client import SuiteRuntimeClient
 
 QUERY = open('query.ql', 'r').read()
-
-def poll(client):
-    return client(
-        'graphql',
-        {
-            'request_string': QUERY,
-            'variables': {}
-        }
-    )['workflows']
 
 
 def main(suite):

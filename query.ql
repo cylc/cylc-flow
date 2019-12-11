@@ -2,6 +2,7 @@ query {
   workflows {
     id
     name
+    status
     taskProxies {
       id
       name
@@ -10,6 +11,7 @@ query {
       isHeld
       parents {
         id
+        name
       }
       jobs {
         id
@@ -24,6 +26,7 @@ query {
         cyclePoint
         firstParent {
           id
+          name
         }
       }
     }
