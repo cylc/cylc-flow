@@ -8,11 +8,15 @@ from cylc.flow.network.client import SuiteRuntimeClient
 urwid.set_encoding('utf8')  # required for unicode task icons
 
 
+FORE = 'default'
+BACK = 'default'
+
+
 SUITE_COLOURS = {
-    'running': 'light blue',
-    'held': 'brown',
-    'stopping': 'light magenta',
-    'error': 'light red'
+    'running': ('light blue', BACK),
+    'held': ('brown', BACK),
+    'stopping': ('light magenta', BACK),
+    'error': ('light red', BACK, 'bold')
 }
 
 TASK_ICONS = {
@@ -40,8 +44,8 @@ JOB_COLOURS = {
 }
 
 
-class ExampleTreeWidget(urwid.TreeWidget):
-    """ Display widget for leaf nodes """
+class MonitorWidget(urwid.TreeWidget):
+    """Display widget for leaf nodes."""
 
     def __init__(self, node, max_depth=2): 
         # NOTE: copy of urwid.TreeWidget.__init__, the only difference
@@ -54,117 +58,150 @@ class ExampleTreeWidget(urwid.TreeWidget):
         urwid.WidgetWrap.__init__(self, widget) 
 
     def get_display_text(self):
-        node = self.get_node().get_value()
-        type_ = node['type_']
-        if type_ == 'task':
-            ret = [f'{TASK_ICONS[node["data"]["state"]]} ']
+        """Compute the text to display for a given node.
 
+        Returns:
+            (object) - Text content for the urwid.Text widget,
+            may be a string, tuple or list, see urwid docs.
+
+        """
+        node = self.get_node()
+        value = node.get_value()
+        type_ = value['type_']
+        if type_ == 'task':
+            # the task icon
+            ret = [f'{TASK_ICONS[value["data"]["state"]]} ']
+            # the most recent job status
             try:
-                state = self.get_node().get_child_node(0).get_value()['data']['state']
+                state = node.get_child_node(0).get_value()['data']['state']
                 ret += [(f'job_{state}', f'{JOB_ICON} ')]
             except IndexError:
                 pass
-
-            ret += [f'{node["data"]["name"]}']
+            # the task name
+            ret += [f'{value["data"]["name"]}']
             return ret
         elif type_ == 'job':
             return [
-                f'#{node["data"]["submitNum"]:02d} ',
-                (f'job_{node["data"]["state"]}', f'{JOB_ICON}')
+                f'#{value["data"]["submitNum"]:02d} ',
+                (f'job_{value["data"]["state"]}', f'{JOB_ICON}')
             ]
         else:
-            return node['data']['id'].rsplit('|', 1)[-1]
+            return value['data']['id'].rsplit('|', 1)[-1]
 
 
-class ExampleNode(urwid.TreeNode):
-    """ Data storage object for leaf nodes """
-
-    def load_widget(self):
-        return ExampleTreeWidget(self)
-
-
-class ExampleParentNode(urwid.ParentNode):
-    """ Data storage object for interior/parent nodes """
+class MonitorNode(urwid.TreeNode):
+    """Data storage object for leaf nodes."""
 
     def load_widget(self):
-        return ExampleTreeWidget(self)
+        return MonitorWidget(self)
+
+
+class MonitorParentNode(urwid.ParentNode):
+    """Data storage object for interior/parent nodes."""
+
+    def load_widget(self):
+        return MonitorWidget(self)
 
     def load_child_keys(self):
+        # Note: keys are really indices.
         data = self.get_value()
         return range(len(data['children']))
 
     def load_child_node(self, key):
-        """Return either an ExampleNode or ExampleParentNode"""
+        """Return either an MonitorNode or MonitorParentNode"""
         childdata = self.get_value()['children'][key]
-        childdepth = self.get_depth() + 1
         if 'children' in childdata:
-            childclass = ExampleParentNode
+            childclass = MonitorParentNode
         else:
-            childclass = ExampleNode
-        return childclass(childdata, parent=self, key=key, depth=childdepth)
+            childclass = MonitorNode
+        return childclass(
+            childdata,
+            parent=self,
+            key=key,
+            depth=self.get_depth() + 1
+        )
 
 
-FORE = 'default'
-BACK = 'default'
-
-
-class ExampleTreeBrowser:
+class MonitorTreeBrowser:
 
     UPDATE_INTERVAL = 1
 
     palette = [
         ('body', FORE, BACK),
-        ('focus', BACK, 'dark blue', 'standout'),
-        ('head', 'yellow', FORE, 'standout'),
-        ('foot', BACK, FORE),
-        ('key', 'dark cyan', FORE, 'underline'),
+        ('foot', 'white', 'dark blue'),
+        ('key', 'light cyan', 'dark blue'),
         ('title', FORE, BACK, 'bold'),
     ] + [
         (f'job_{status}', colour, BACK)
         for status, colour in JOB_COLOURS.items()
     ] + [
-        (f'suite_{status}', colour, BACK)
-        for status, colour in SUITE_COLOURS.items()
+        (f'suite_{status}',) + spec
+        for status, spec in SUITE_COLOURS.items()
     ]
 
-    footer_text = [
-        ('title', "Example Data Browser"), "    ",
-        ('key', "UP"), ",", ('key', "DOWN"), ",",
-        ('key', "PAGE UP"), ",", ('key', "PAGE DOWN"),
-        "  ",
-        ('key', "+"), ",",
-        ('key', "-"), "  ",
-        ('key', "LEFT"), "  ",
-        ('key', "HOME"), "  ",
-        ('key', "END"), "  ",
-        ('key', "Q"),
-        ]
+    FOOTER_TEXT = [
+        'navigation: ',
+        ('key', 'UP'),
+        ',',
+        ('key', 'DOWN'),
+        ',',
+        ('key', 'LEFT'),
+        ',',
+        ('key', 'PAGE-UP'),
+        ',',
+        ('key', 'PAGE-DOWN'),
+        ',',
+        ('key', 'HOME'),
+        ',',
+        ('key', 'END'),
+        ' ',
+        '  expand: ',
+        ('key', '+'),
+        ',',
+        ('key', '-'),
+        '  exit: ',
+        ('key', 'Q'),
+    ]
 
     def __init__(self, client):
+        # the cylc data client
         self.client = client
-        self.topnode = ExampleParentNode(self.get_snapshot())
-        self.listbox = urwid.TreeListBox(urwid.TreeWalker(self.topnode))
-        #self.listbox.offset_rows = 1
-        self.header = urwid.Text("header")
-        self.footer = urwid.AttrWrap( urwid.Text( self.footer_text ),
-            'foot')
+
+        # create the template
+        topnode = MonitorParentNode(dummy_flow())
+        self.listbox = urwid.TreeListBox(urwid.TreeWalker(topnode))
+        header = urwid.Text("\n")
+        footer = urwid.AttrWrap(
+            urwid.Text(self.FOOTER_TEXT),
+            'foot'
+        )
         self.view = urwid.Frame(
             urwid.AttrWrap( self.listbox, 'body'),
-            header=urwid.AttrWrap(self.header, 'head'),
-            footer=self.footer
+            header=urwid.AttrWrap(header, 'head'),
+            footer=footer
         )
 
     def main(self):
-        """Run the program."""
+        """Start the event loop."""
         self.loop = urwid.MainLoop(
             self.view,
             self.palette,
             unhandled_input=self.unhandled_input
         )
-        self.loop.set_alarm_in(self.UPDATE_INTERVAL, self.update)
+        # schedule the first update
+        self.loop.set_alarm_in(0, self.update)
         self.loop.run()
 
     def get_snapshot(self):
+        """Contact the workflow, return a tree structure
+
+        In the event of error contacting the suite the
+        message is written to this Widget's header.
+
+        Returns:
+            dict if successful, else False
+
+        """
         try:
             data = self.client(
                 'graphql',
@@ -174,15 +211,34 @@ class ExampleTreeBrowser:
                 }
             )
         except ClientError as exc:
+            # cannot get data - present exception to user
             self.set_header(('suite_error', str(exc)))
             return False
-            # TODO: raise warning
+
         assert len(data['workflows']) == 1
         return iter_flow(data['workflows'][0])
 
     def find_closest_focus(self, old_node, new_node):
+        """Return the position of the old node in the new tree.
+
+        1. Attempts to find the old node in the new tree.
+        2. Otherwise it walks up the old tree until it
+           finds a node which is present in the new tree.
+        3. Otherwise it returns the root node of the new tree.
+
+        Arguments:
+            old_node (urwid.TreeNode):
+                The in-focus node from the deceased tree.
+            new_node (urwid.TreeNode):
+                The root node from the new tree.
+
+        Returns
+            urwid.TreeNode - The closest node.
+
+        """
 
         def get_key(node):
+            # TODO: this
             node_data = node.get_value()
             return (node_data['id_'], node_data['type_'])
 
@@ -201,15 +257,26 @@ class ExampleTreeBrowser:
                 ])
 
         if not old_node._parent:
-            raise IndexError()
+            # new tree is unrelated to the old one - reset focus
+            return new_node
 
         return self.find_closest_focus(
             old_node._parent,
-            new_focus
+            new_node
         )
 
     @staticmethod
     def walk_tree(node):
+        """Yield nodes in order.
+
+        Arguments:
+            node (urwid.TreeNode):
+                Yield this node and all nodes beneath it.
+
+        Yields:
+            urwid.TreeNode
+
+        """
         stack = [node]
         while stack:
             node = stack.pop()
@@ -220,6 +287,17 @@ class ExampleTreeBrowser:
             ])
 
     def translate_collapsing(self, old_node, new_node):
+        """Transfer the collapse state from one tree to another.
+
+        Arguments:
+            old_node (urwid.TreeNode):
+                Any node in the tree you want to copy the
+                collapse/expand state from.
+            new_node (urwid.TreeNode):
+                Any node in the tree you want to copy the
+                collapse/expand state to.
+
+        """
         def get_key(node):  # TODO: can just use the ID
             node_data = node.get_value()
             return (node_data['id_'], node_data['type_'])
@@ -242,9 +320,22 @@ class ExampleTreeBrowser:
 
     @staticmethod
     def get_status_str(flow):
+        """Return a suite status string for the header.
+
+        Arguments:
+            flow (dict):
+                GraphQL JSON response for this workflow.
+
+        Returns:
+            list - Text list for the urwid.Text widget.
+
+        """
         status = flow['status']
         return [
-            flow['name'],
+            (
+                'title',
+                flow['name'],
+            ),
             ' - ',
             (
                 f'suite_{status}',
@@ -253,6 +344,14 @@ class ExampleTreeBrowser:
         ]
 
     def set_header(self, message):
+        """Set the header message for this widget.
+
+        Arguments:
+            message (object):
+                Text content for the urwid.Text widget,
+                may be a string, tuple or list, see urwid docs.
+
+        """
         # put in a one line gap
         if isinstance(message, list):
             message.append('\n')
@@ -263,6 +362,11 @@ class ExampleTreeBrowser:
         self.view.header = urwid.Text(message)
 
     def update(self, *args):
+        """Refresh the data and redraw this widget.
+
+        Preserves the current focus and collapse/expand state.
+
+        """
         # update the data store
         # TODO: this can be done incrementally using deltas
         #       once this interface is available
@@ -276,7 +380,7 @@ class ExampleTreeBrowser:
         # global update - the nuclear option - slow but simple
         # TODO: this can be done incrementally by adding and
         #       removing nodes from the existing tree
-        self.topnode = ExampleParentNode(snapshot)
+        topnode = MonitorParentNode(snapshot)
 
         # NOTE: because we are nuking the tree we need to manually
         # preserve the focus and collapse status of tree nodes
@@ -285,7 +389,7 @@ class ExampleTreeBrowser:
         _, old_node = self.listbox._body.get_focus()
 
         # nuke the tree
-        self.listbox._set_body(urwid.TreeWalker(self.topnode))
+        self.listbox._set_body(urwid.TreeWalker(topnode))
 
         # get the new focus
         _, new_node = self.listbox._body.get_focus()
@@ -319,6 +423,17 @@ def add_node(type_, id_, data, nodes):
             'type_': type_
         }
     return nodes[(type_, id_)]
+
+
+def dummy_flow():
+    return add_node(
+        'worflow',
+        '',
+        {
+            'id': 'Loading...'
+        },
+        {}
+    )
 
 
 def iter_flow(flow):
@@ -382,7 +497,7 @@ QUERY = open('query.ql', 'r').read()
 
 def main(suite):
     client = SuiteRuntimeClient(suite)
-    ExampleTreeBrowser(client).main()
+    MonitorTreeBrowser(client).main()
 
 
 if __name__=="__main__":
