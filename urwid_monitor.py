@@ -139,6 +139,16 @@ class MonitorWidget(urwid.TreeWidget):
                 ' ',
                 value['data']['id'].rsplit('|', 1)[-1]
             ]
+        elif type_ == 'job_info':
+            key_len = max(len(key) for key in value['data'])
+
+            ret = [
+                f'{key} {" " * (key_len - len(key))} {value}\n'
+                for key, value in value['data'].items()
+            ]
+            ret[-1] = ret[-1][:-1]  # strip trailing newline
+
+            return ret
         else:
             return value['data']['id'].rsplit('|', 1)[-1]
 
@@ -265,8 +275,17 @@ class MonitorTreeBrowser:
                 }
             )
         except ClientError as exc:
-            # cannot get data - present exception to user
+            # catch network / client errors
             self.set_header(('suite_error', str(exc)))
+            return False
+
+        if isinstance(data, list):
+            # catch GraphQL errors
+            try:
+                message = data[0]['error']['message']
+            except (IndexError, KeyError):
+                message = str(data)
+            self.set_header(('suite_error', message))
             return False
 
         assert len(data['workflows']) == 1
@@ -541,6 +560,9 @@ def iter_flow(flow):
         for job in task['jobs']:
             job_node = add_node(
                 'job', job['id'], job, nodes)
+            job_info_node = add_node(
+                'job_info', job['id'], job, nodes)
+            job_node['children'] = [job_info_node]
             task_node['children'].append(job_node)
 
     # sort

@@ -17,6 +17,9 @@ query {
         id
         submitNum
         state
+        host
+        batchSysName
+        batchSysJobId
       }
     }
     families {
