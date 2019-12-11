@@ -11,10 +11,11 @@ TASK_ICONS = {
     'waiting': '\u25cb',
     'ready': '\u25cb',  # TODO: remove
     'submitted': '\u2299',
-    'running:0': '\u2299',
-    'running:25': '\u25D4',
-    'running:50': '\u25D1',
-    'running:75': '\u25D5',
+    'running': '\u2299',
+    #'running:0': '\u2299',
+    #'running:25': '\u25D4',
+    #'running:50': '\u25D1',
+    #'running:75': '\u25D5',
     'succeeded': '\u25CB',
     'failed': '\u2297'
 }
@@ -114,8 +115,9 @@ class ExampleTreeBrowser:
         ('key', "Q"),
         ]
 
-    def __init__(self, data=None):
-        self.topnode = ExampleParentNode(data)
+    def __init__(self, client):
+        self.client = client
+        self.topnode = ExampleParentNode(self.get_snapshot())
         self.listbox = urwid.TreeListBox(urwid.TreeWalker(self.topnode))
         self.listbox.offset_rows = 1
         self.header = urwid.Text( "" )
@@ -128,14 +130,61 @@ class ExampleTreeBrowser:
 
     def main(self):
         """Run the program."""
-
-        self.loop = urwid.MainLoop(self.view, self.palette,
-            unhandled_input=self.unhandled_input)
+        self.loop = urwid.MainLoop(
+            self.view,
+            self.palette,
+            unhandled_input=self.unhandled_input
+        )
         self.loop.run()
+
+    def get_snapshot(self):
+        data = poll(self.client)
+        return iter_flows(data)
+
+    def find_closest_focus(self, old_focus, new_focus):
+        _, old_node = old_focus
+        xyz, new_node = new_focus
+
+        def get_key(node):
+            node_data = node.get_value()
+            return (node_data['id_'], node_data['type_'])
+
+        old_key = get_key(old_node)
+
+        stack = [new_node]
+        while stack:
+            node = stack.pop()
+            key = get_key(node)
+            if key == old_key:
+                return (xyz, node)
+            else:
+                stack.extend([
+                    node.get_child_node(index)
+                    for index in node.get_child_keys()
+                ])
+
+        if not old_node._parent:
+            raise IndexError()
+
+        return self.find_closest_focus(
+            (xyz, old_node._parent),
+            new_focus
+        )
+
+    def update(self):
+        snapshot = self.get_snapshot()
+        self.topnode = ExampleParentNode(self.get_snapshot())
+        old_focus = self.listbox._body.get_focus()
+        self.listbox._set_body(urwid.TreeWalker(self.topnode))
+        new_focus = self.listbox._body.get_focus()
+        closest_focus = self.find_closest_focus(old_focus, new_focus)
+        self.listbox._body.set_focus(closest_focus[1])
 
     def unhandled_input(self, k):
         if k in ('q','Q'):
             raise urwid.ExitMainLoop()
+        if k in ('u', 'U'):
+            self.update()
 
 
 def get_example_tree():
@@ -167,22 +216,24 @@ def add_node(type_, id_, data, nodes):
     if (type_, id_) not in nodes:
         nodes[(type_, id_)] = {
             'children': [],
+            'id_': id_,
             'data': data,
             'type_': type_
         }
     return nodes[(type_, id_)]
 
 
-def iter_flows():
-    root = {
+def iter_flows(data):
+    root = {  # TODO: generate this via add_node
         'children': [],
         'type_': None,
+        'id_': 'root',
         'data': {
             'id': 'Workflows'
         }
     }
     nodes = {}
-    for flow in FLOWS:
+    for flow in data:
         flow_node = add_node(
             'workflow', flow['id'], flow, nodes)
         # create nodes
@@ -228,13 +279,25 @@ def iter_flows():
 
     return root
 
-def main():
-    #for node in iter_flows():
-    #    import pdb; pdb.set_trace()
-    #sample = get_example_tree()
-    sample = iter_flows()
-    ExampleTreeBrowser(sample).main()
+
+from cylc.flow.network.client import SuiteRuntimeClient
+
+QUERY = open('query.ql', 'r').read()
+
+def poll(client):
+    return client(
+        'graphql',
+        {
+            'request_string': QUERY,
+            'variables': {}
+        }
+    )['workflows']
+
+
+def main(suite):
+    client = SuiteRuntimeClient(suite)
+    ExampleTreeBrowser(client).main()
 
 
 if __name__=="__main__":
-    main()
+    main('generic')
