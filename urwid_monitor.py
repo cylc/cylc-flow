@@ -182,6 +182,38 @@ class ExampleTreeBrowser:
             new_focus
         )
 
+    @staticmethod
+    def walk_tree(node):
+        stack = [node]
+        while stack:
+            node = stack.pop()
+            yield node
+            stack.extend([
+                node.get_child_node(index)
+                for index in node.get_child_keys()
+            ])
+
+    def translate_collapsing(self, old_node, new_node):
+        def get_key(node):  # TODO: can just use the ID
+            node_data = node.get_value()
+            return (node_data['id_'], node_data['type_'])
+
+        old_root = old_node.get_root()
+        new_root = new_node.get_root()
+
+        old_tree = {
+            get_key(node): node.get_widget().expanded
+            for node in self.walk_tree(old_root)
+        }
+
+        for node in self.walk_tree(new_root):
+            key = get_key(node)
+            if key in old_tree:
+                expanded = old_tree.get(key)
+                if node.get_widget().expanded != expanded:
+                    node.get_widget().expanded = expanded
+                    node.get_widget().update_expanded_icon()
+
     def update(self):
         snapshot = self.get_snapshot()
         self.topnode = ExampleParentNode(self.get_snapshot())
@@ -190,6 +222,11 @@ class ExampleTreeBrowser:
         new_focus = self.listbox._body.get_focus()
         closest_focus = self.find_closest_focus(old_focus, new_focus)
         self.listbox._body.set_focus(closest_focus[1])
+
+        self.translate_collapsing(
+            old_focus[1],
+            new_focus[1]
+        )
 
     def unhandled_input(self, k):
         if k in ('q','Q'):
