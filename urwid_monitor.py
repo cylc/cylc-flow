@@ -4,6 +4,7 @@ import json
 
 from cylc.flow.exceptions import ClientError
 from cylc.flow.network.client import SuiteRuntimeClient
+from cylc.flow.task_state import TASK_STATUSES_ORDERED
 
 urwid.set_encoding('utf8')  # required for unicode task icons
 
@@ -28,7 +29,7 @@ TASK_ICONS = {
     #'running:25': '\u25D4',
     #'running:50': '\u25D1',
     #'running:75': '\u25D5',
-    'succeeded': '\u25CB',
+    'succeeded': '\u25CF',
     'failed': '\u2297'
 }
 
@@ -46,6 +47,39 @@ JOB_COLOURS = {
     'submit-failed': 'light magenta',
     'ready': 'brown'
 }
+
+
+def get_group_state(states):
+    for state in TASK_STATUSES_ORDERED:
+        if state in states:
+            return state
+
+def get_group_state(nodes):
+    states = [
+        node.get_value()['data']['state']
+        for node in nodes
+    ]
+    isHeld = any((
+        node.get_value()['data'].get('isHeld')
+        for node in nodes
+    ))
+    for state in TASK_STATUSES_ORDERED:
+        if state in states:
+            return state, isHeld
+
+
+def get_task_icon(status, is_held):
+    ret = []
+    if is_held:
+        ret.append(TASK_MODIFIERS['held'])
+    ret.append(TASK_ICONS[status])
+    return ret
+
+
+def get_job_icon(status):
+    return [
+        (f'job_{status}', JOB_ICON)
+    ]
 
 
 class MonitorWidget(urwid.TreeWidget):
@@ -73,12 +107,12 @@ class MonitorWidget(urwid.TreeWidget):
         value = node.get_value()
         type_ = value['type_']
         if type_ == 'task':
-            ret = []
-            # the held icon
-            if value['data']['isHeld']:
-                ret.append(TASK_MODIFIERS['held'])
-            # the task icon
-            ret.append(f'{TASK_ICONS[value["data"]["state"]]} ')
+            ret = get_task_icon(
+                value['data']['state'],
+                value['data']['isHeld']
+            )
+
+            ret.append(' ')
 
             # the most recent job status
             try:
@@ -92,7 +126,18 @@ class MonitorWidget(urwid.TreeWidget):
         elif type_ == 'job':
             return [
                 f'#{value["data"]["submitNum"]:02d} ',
-                (f'job_{value["data"]["state"]}', f'{JOB_ICON}')
+                get_job_icon(value["data"]["state"])
+            ]
+        elif type_ == 'family':
+            children = [
+                node.get_child_node(index) # .get_value()['data']['state']
+                for index in node.load_child_keys()
+            ]
+            group_status, group_isheld = get_group_state(children)
+            return [
+                get_task_icon(group_status, group_isheld),
+                ' ',
+                value['data']['id'].rsplit('|', 1)[-1]
             ]
         else:
             return value['data']['id'].rsplit('|', 1)[-1]
@@ -156,9 +201,9 @@ class MonitorTreeBrowser:
         ',',
         ('key', 'LEFT'),
         ',',
-        ('key', 'PAGE-UP'),
+        ('key', 'PG-UP'),
         ',',
-        ('key', 'PAGE-DOWN'),
+        ('key', 'PG-DOWN'),
         ',',
         ('key', 'HOME'),
         ',',
@@ -169,7 +214,7 @@ class MonitorTreeBrowser:
         ',',
         ('key', '-'),
         '  exit: ',
-        ('key', 'Q'),
+        ('key', 'q'),
     ]
 
     def __init__(self, client):
