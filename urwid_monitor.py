@@ -32,6 +32,10 @@ TASK_ICONS = {
     'failed': '\u2297'
 }
 
+TASK_MODIFIERS = {
+    'held': '\u030E'
+}
+
 JOB_ICON = '\u25A0'
 
 JOB_COLOURS = {
@@ -69,8 +73,13 @@ class MonitorWidget(urwid.TreeWidget):
         value = node.get_value()
         type_ = value['type_']
         if type_ == 'task':
+            ret = []
+            # the held icon
+            if value['data']['isHeld']:
+                ret.append(TASK_MODIFIERS['held'])
             # the task icon
-            ret = [f'{TASK_ICONS[value["data"]["state"]]} ']
+            ret.append(f'{TASK_ICONS[value["data"]["state"]]} ')
+
             # the most recent job status
             try:
                 state = node.get_child_node(0).get_value()['data']['state']
