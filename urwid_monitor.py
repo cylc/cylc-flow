@@ -35,6 +35,16 @@ JOB_COLOURS = {
 class ExampleTreeWidget(urwid.TreeWidget):
     """ Display widget for leaf nodes """
 
+    def __init__(self, node, max_depth=3): 
+        # NOTE: copy of urwid.TreeWidget.__init__, the only difference
+        #       being the self.expanded logic
+        self._node = node 
+        self._innerwidget = None 
+        self.is_leaf = not hasattr(node, 'get_first_child') 
+        self.expanded = node.get_depth() < max_depth
+        widget = self.get_indented_widget() 
+        urwid.WidgetWrap.__init__(self, widget) 
+
     def get_display_text(self):
         node = self.get_node().get_value()
         type_ = node['type_']
