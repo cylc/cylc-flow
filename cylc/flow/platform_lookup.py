@@ -115,22 +115,17 @@ def reverse_lookup(platforms, job, remote):
         task_batch_system = 'background'
 
     # Riffle through the platforms looking for a match to our task settings.
-    # reverse dict order
-    platforms = {
-        key: platforms[key] for key in reversed(list(platforms.keys()))
-    }
-
-    for platform_name, platform_spec in platforms.items():
+    # reverse dict order so that user config platforms added last are examined
+    # before site config platforms.
+    for platform_name, platform_spec in reversed(list(platforms.items())):
         # Handle all the items requiring an exact match.
-        generic_items_match = True
         for task_section in [job, remote]:
             shared_items = set(
-                task_section.keys()).intersection(set(platform_spec.keys()))
-            for shared_item in shared_items:
-                # breakpoint()
-                if platform_spec[shared_item] != task_section[shared_item]:
-                    generic_items_match = False
-
+                task_section).intersection(set(platform_spec.keys()))
+            generic_items_match = all((
+                platform_spec[item] == task_section[item]
+                for item in shared_items
+            ))
         # All items other than batch system and host must be an exact match
         if not generic_items_match:
             continue
