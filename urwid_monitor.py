@@ -489,6 +489,19 @@ def iter_flow(flow):
                 'job', job['id'], job, nodes)
             task_node['children'].append(job_node)
 
+    # sort
+    for (type_, _), node in nodes.items():
+        if type_ == 'task':
+            node['children'].sort(
+                key=lambda x: x['data']['submitNum'],
+                reverse=True
+            )
+        else:
+            node['children'].sort(
+                key=lambda x: x['id_'],
+                reverse=True
+            )
+
     return flow_node
 
 
