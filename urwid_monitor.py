@@ -8,6 +8,13 @@ from cylc.flow.network.client import SuiteRuntimeClient
 urwid.set_encoding('utf8')  # required for unicode task icons
 
 
+SUITE_COLOURS = {
+    'running': 'light blue',
+    'held': 'brown',
+    'stopping': 'light magenta',
+    'error': 'light red'
+}
+
 TASK_ICONS = {
     'waiting': '\u25cb',
     'ready': '\u25cb',  # TODO: remove
@@ -113,8 +120,11 @@ class ExampleTreeBrowser:
         ('key', 'dark cyan', FORE, 'underline'),
         ('title', FORE, BACK, 'bold'),
     ] + [
-        (f'job_{state}', colour, BACK)
-        for state, colour in JOB_COLOURS.items()
+        (f'job_{status}', colour, BACK)
+        for status, colour in JOB_COLOURS.items()
+    ] + [
+        (f'suite_{status}', colour, BACK)
+        for status, colour in SUITE_COLOURS.items()
     ]
 
     footer_text = [
@@ -134,14 +144,15 @@ class ExampleTreeBrowser:
         self.client = client
         self.topnode = ExampleParentNode(self.get_snapshot())
         self.listbox = urwid.TreeListBox(urwid.TreeWalker(self.topnode))
-        self.listbox.offset_rows = 1
-        self.header = urwid.Text( "header" )
+        #self.listbox.offset_rows = 1
+        self.header = urwid.Text("header")
         self.footer = urwid.AttrWrap( urwid.Text( self.footer_text ),
             'foot')
         self.view = urwid.Frame(
-            urwid.AttrWrap( self.listbox, 'body' ),
-            header=urwid.AttrWrap(self.header, 'head' ),
-            footer=self.footer )
+            urwid.AttrWrap( self.listbox, 'body'),
+            header=urwid.AttrWrap(self.header, 'head'),
+            footer=self.footer
+        )
 
     def main(self):
         """Run the program."""
@@ -162,8 +173,9 @@ class ExampleTreeBrowser:
                     'variables': {}
                 }
             )
-        except ClientError:
-            pass
+        except ClientError as exc:
+            self.set_header(('suite_error', str(exc)))
+            return False
             # TODO: raise warning
         assert len(data['workflows']) == 1
         return iter_flow(data['workflows'][0])
@@ -228,7 +240,26 @@ class ExampleTreeBrowser:
                     node.get_widget().expanded = expanded
                     node.get_widget().update_expanded_icon()
 
+    @staticmethod
+    def get_status_str(flow):
+        status = flow['status']
+        return [
+            flow['name'],
+            ' - ',
+            (
+                f'suite_{status}',
+                status
+            )
+        ]
+
     def set_header(self, message):
+        # put in a one line gap
+        if isinstance(message, list):
+            message.append('\n')
+        elif isinstance(message, tuple):
+            message = (message[0], message[1] + '\n')
+        else:
+            message += '\n'
         self.view.header = urwid.Text(message)
 
     def update(self, *args):
@@ -236,6 +267,11 @@ class ExampleTreeBrowser:
         # TODO: this can be done incrementally using deltas
         #       once this interface is available
         snapshot = self.get_snapshot()
+        if snapshot is False:
+            return False
+
+        # update the suite status message
+        self.set_header(self.get_status_str(snapshot['data']))
 
         # global update - the nuclear option - slow but simple
         # TODO: this can be done incrementally by adding and
@@ -263,6 +299,8 @@ class ExampleTreeBrowser:
 
         # schedule the next run of this update method
         self.loop.set_alarm_in(self.UPDATE_INTERVAL, self.update)
+
+        return True
 
     def unhandled_input(self, k):
         if k in ('q','Q'):
