@@ -20,28 +20,6 @@ import pytest
 from cylc.flow.platform_lookup import forward_lookup, reverse_lookup
 from cylc.flow.exceptions import PlatformLookupError
 
-# The platforms list for testing is set as a constant
-# [platforms]
-#     [[desktop\d\d|laptop\d\d]]
-#         # hosts = platform name (default)
-#         # Note: "desktop01" and "desktop02" are both valid and distinct
-#                  platforms
-#     [[sugar]]
-#         hosts = localhost
-#         batch system = slurm
-#     [[hpc]]
-#         hosts = hpcl1, hpcl2
-#         retrieve job logs = True
-#         batch system = pbs
-#     [[hpcl1-bg]]
-#         hosts = hpcl1
-#         retrieve job logs = True
-#         batch system = background
-#     [[hpcl2-bg]]
-#         hosts = hpcl2
-#         retrieve job logs = True
-#         batch system = background
-
 PLATFORMS_STANDARD = {
     'suite server platform': None,
     'desktop[0-9][0-9]|laptop[0-9][0-9]': None,
