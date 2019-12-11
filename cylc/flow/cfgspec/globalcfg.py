@@ -121,7 +121,7 @@ SPEC = {
             'ssh command': [
                 VDR.V_STRING, 'ssh -oBatchMode=yes -oConnectTimeout=10'],
             'use login shell': [VDR.V_BOOLEAN, True],
-            'remote hosts': [VDR.V_INTERVAL_LIST],
+            'remote hosts': [VDR.V_STRING_LIST],
             'cylc executable': [VDR.V_STRING, 'cylc'],
             'global init-script': [VDR.V_STRING],
             'copyable environment variables': [VDR.V_STRING_LIST, ''],
@@ -141,9 +141,9 @@ SPEC = {
         },
     },
 
-    # Platform Aliases
-    'platform aliases': {
-        '__MANY__': [VDR.V_STRING_LIST]
+    # Platform Groups
+    'platform groups': {
+        '__MANY__': {}
     },
 
     # task
