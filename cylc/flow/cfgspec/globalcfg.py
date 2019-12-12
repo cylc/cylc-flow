@@ -143,7 +143,9 @@ SPEC = {
 
     # Platform Groups
     'platform groups': {
-        '__MANY__': {}
+        '__MANY__': {
+            'platforms': [VDR.V_STRING_LIST]
+        }
     },
 
     # task
