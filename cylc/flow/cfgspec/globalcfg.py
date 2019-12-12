@@ -99,6 +99,55 @@ SPEC = {
         'sort order': [VDR.V_STRING, 'definition', 'alphanumeric'],
     },
 
+    # job platforms
+    'job platforms': {
+        '__MANY__': {
+            'batch system': [VDR.V_STRING, 'background'],
+            'batch submit command template': [VDR.V_STRING],
+            'shell': [VDR.V_STRING, '/bin/bash'],
+            'run directory': [VDR.V_STRING, '$HOME/cylc-run'],
+            'work directory': [VDR.V_STRING, '$HOME/cylc-run'],
+            'suite definition directory': [VDR.V_STRING],
+            'task communication method': [
+                VDR.V_STRING, 'zmq', 'poll'],
+            # TODO ensure that it is possible to over-ride the following three
+            # settings in suite config.
+            'submission polling intervals': [VDR.V_INTERVAL_LIST],
+            'submission retry delays': [VDR.V_INTERVAL_LIST, None],
+            'execution polling intervals': [VDR.V_INTERVAL_LIST],
+            'execution time limit polling intervals': [VDR.V_INTERVAL_LIST],
+            'scp command': [
+                VDR.V_STRING, 'scp -oBatchMode=yes -oConnectTimeout=10'],
+            'ssh command': [
+                VDR.V_STRING, 'ssh -oBatchMode=yes -oConnectTimeout=10'],
+            'use login shell': [VDR.V_BOOLEAN, True],
+            'remote hosts': [VDR.V_STRING_LIST],
+            'cylc executable': [VDR.V_STRING, 'cylc'],
+            'global init-script': [VDR.V_STRING],
+            'copyable environment variables': [VDR.V_STRING_LIST, ''],
+            'retrieve job logs': [VDR.V_BOOLEAN],
+            'retrieve job logs command': [VDR.V_STRING, 'rsync -a'],
+            'retrieve job logs max size': [VDR.V_STRING],
+            'retrieve job logs retry delays': [VDR.V_INTERVAL_LIST],
+            'task event handler retry delays': [VDR.V_INTERVAL_LIST],
+            'tail command template': [
+                VDR.V_STRING, 'tail -n +1 -F %(filename)s'],
+            'err tailer': [VDR.V_STRING],
+            'out tailer': [VDR.V_STRING],
+            'err viewer': [VDR.V_STRING],
+            'out viewer': [VDR.V_STRING],
+            'job name length maximum': [VDR.V_INTEGER],
+            'owner': [VDR.V_STRING],
+        },
+    },
+
+    # Platform Groups
+    'platform groups': {
+        '__MANY__': {
+            'platforms': [VDR.V_STRING_LIST]
+        }
+    },
+
     # task
     'hosts': {
         'localhost': {

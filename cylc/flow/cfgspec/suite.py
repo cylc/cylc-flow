@@ -140,6 +140,7 @@ SPEC = {
     },
     'runtime': {
         '__MANY__': {
+            'platform': [VDR.V_STRING],
             'inherit': [VDR.V_STRING_LIST],
             'init-script': [VDR.V_STRING],
             'env-script': [VDR.V_STRING],
@@ -171,6 +172,8 @@ SPEC = {
             'job': {
                 'batch system': [VDR.V_STRING, 'background'],
                 'batch submit command template': [VDR.V_STRING],
+                # TODO All the remaining items to be moved to top level of TASK
+                # When platforms work is completed.
                 'execution polling intervals': [VDR.V_INTERVAL_LIST, None],
                 'execution retry delays': [VDR.V_INTERVAL_LIST, None],
                 'execution time limit': [VDR.V_INTERVAL],
@@ -293,6 +296,22 @@ def upg(cfg, descr):
         ['cylc', 'abort if any task fails'],
         ['cylc', 'events', 'abort if any task fails'])
     u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'shell'])
+
+    # TODO uncomment these deprecations when ready - see todo in
+    # [runtime][__MANY__] section.
+    # for job_setting in [
+    #     'execution polling intervals',
+    #     'execution retry delays',
+    #     'execution time limit',
+    #     'submission polling intervals',
+    #     'submission retry delays'
+    # ]:
+    #     u.deprecate(
+    #         '8.0.0',
+    #         ['runtime', '__MANY__', 'job', job_setting],
+    #         ['runtime', '__MANY__', job_setting]
+    #     )
+
     u.upgrade()
 
     # Upgrader cannot do this type of move.
