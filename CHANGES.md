@@ -52,6 +52,10 @@ job status message retries (problems that prevent message transmission are
 almost never transient, and in practice job polling is the only way to
 recover).
 
+[#3463](https://github.com/cylc/cylc-flow/pull/3463) - cylc monitor:
+Ground-up re-write to match the cylc-ui tree-view interface. Now an
+interactive collapsible tree with job information.
+
 ### Fixes
 
 [#3409](https://github.com/cylc/cylc-flow/pull/3409) - prevent cylc-run from

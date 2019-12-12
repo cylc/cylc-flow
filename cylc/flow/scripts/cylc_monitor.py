@@ -42,7 +42,6 @@ from cylc.flow.task_state import (
     TASK_STATUS_SUCCEEDED
 )
 from cylc.flow.terminal import cli_function
-from cylc.flow.wallclock import now
 
 
 if "--use-ssh" in sys.argv[1:]:
@@ -360,7 +359,6 @@ class MonitorTreeBrowser:
         self.loop.run()
 
     def unhandled_input(self, key):
-        print('#', key, str(key), repr(key))
         if key in ('q', 'Q', 'ctrl d'):
             raise urwid.ExitMainLoop()
 
@@ -396,7 +394,10 @@ class MonitorTreeBrowser:
             self.set_header(('suite_error', message))
             return False
 
-        assert len(data['workflows']) == 1
+        if len(data['workflows']) != 1:
+            # multiple workflows in returned data - shouldn't happen
+            raise ValueError()
+
         return compute_tree(data['workflows'][0])
 
     @staticmethod
@@ -492,9 +493,10 @@ class MonitorTreeBrowser:
             key = self.get_node_id(node)
             if key in old_tree:
                 expanded = old_tree.get(key)
-                if node.get_widget().expanded != expanded:
-                    node.get_widget().expanded = expanded
-                    node.get_widget().update_expanded_icon()
+                widget = node.get_widget()
+                if widget.expanded != expanded:
+                    widget.expanded = expanded
+                    widget.update_expanded_icon()
 
     @staticmethod
     def get_status_str(flow):
