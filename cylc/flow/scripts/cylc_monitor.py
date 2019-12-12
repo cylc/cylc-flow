@@ -19,6 +19,7 @@
 Display the live status of a workflow in the terminal.
 """
 
+from datetime import datetime, timedelta
 import sys
 
 import urwid
@@ -26,8 +27,22 @@ import urwid
 from cylc.flow.exceptions import ClientError
 from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.task_state import TASK_STATUSES_ORDERED
+from cylc.flow.task_state import (
+    TASK_STATUSES_ORDERED,
+    TASK_STATUS_WAITING,
+    TASK_STATUS_QUEUED,
+    TASK_STATUS_EXPIRED,
+    TASK_STATUS_READY,
+    TASK_STATUS_SUBMIT_FAILED,
+    TASK_STATUS_SUBMIT_RETRYING,
+    TASK_STATUS_SUBMITTED,
+    TASK_STATUS_RETRYING,
+    TASK_STATUS_RUNNING,
+    TASK_STATUS_FAILED,
+    TASK_STATUS_SUCCEEDED
+)
 from cylc.flow.terminal import cli_function
+from cylc.flow.wallclock import now
 
 
 if "--use-ssh" in sys.argv[1:]:
@@ -36,6 +51,8 @@ if "--use-ssh" in sys.argv[1:]:
 
 urwid.set_encoding('utf8')  # required for unicode task icons
 
+# default foreground and background colours
+# NOTE: set to default to allow user defined terminal theming
 FORE = 'default'
 BACK = 'default'
 
@@ -47,16 +64,25 @@ SUITE_COLOURS = {
 }
 
 TASK_ICONS = {
-    'waiting': '\u25cb',
-    'ready': '\u25cb',  # TODO: remove
-    'submitted': '\u2299',
-    'running': '\u2299',
-    #'running:0': '\u2299',
-    #'running:25': '\u25D4',
-    #'running:50': '\u25D1',
-    #'running:75': '\u25D5',
-    'succeeded': '\u25CF',
-    'failed': '\u2297'
+    f'{TASK_STATUS_WAITING}': '\u25cb',
+
+    # TODO: remove with https://github.com/cylc/cylc-admin/pull/47
+    f'{TASK_STATUS_READY}': '\u25cb',
+    f'{TASK_STATUS_QUEUED}': '\u25cb',
+    f'{TASK_STATUS_RETRYING}': '\u25cb',
+    f'{TASK_STATUS_SUBMIT_RETRYING}': '\u25cb',
+    # TODO: remove with https://github.com/cylc/cylc-admin/pull/47
+
+    f'{TASK_STATUS_SUBMITTED}': '\u2299',
+    f'{TASK_STATUS_RUNNING}': '\u2299',
+    f'{TASK_STATUS_RUNNING}:0': '\u2299',
+    f'{TASK_STATUS_RUNNING}:25': '\u25D4',
+    f'{TASK_STATUS_RUNNING}:50': '\u25D1',
+    f'{TASK_STATUS_RUNNING}:75': '\u25D5',
+    f'{TASK_STATUS_SUCCEEDED}': '\u25CF',
+    f'{TASK_STATUS_EXPIRED}': '\u25CF',
+    f'{TASK_STATUS_SUBMIT_FAILED}': '\u2297',
+    f'{TASK_STATUS_FAILED}': '\u2297'
 }
 
 TASK_MODIFIERS = {
@@ -97,12 +123,16 @@ QUERY = '''
           host
           batchSysName
           batchSysJobId
+          startedTime
+        }
+        task {
+          meanElapsedTime
         }
       }
       families {
         proxies {
           id
-        	name
+          name
           cyclePoint
           firstParent {
             id
@@ -147,51 +177,70 @@ class MonitorWidget(urwid.TreeWidget):
         """
         node = self.get_node()
         value = node.get_value()
+        data = value['data']
         type_ = value['type_']
         if type_ == 'task':
+            start_time = None
+            mean_time = None
+            try:
+                # due to sorting this is the most recent job
+                first_child = node.get_child_node(0)
+            except IndexError:
+                first_child = None
+
+            # progress information
+            if data['state'] == TASK_STATUS_RUNNING:
+                start_time = first_child.get_value()['data']['startedTime']
+                mean_time = data['task']['meanElapsedTime']
+
+            # the task icon
             ret = get_task_icon(
-                value['data']['state'],
-                value['data']['isHeld']
+                data['state'],
+                data['isHeld'],
+                start_time=start_time,
+                mean_time=mean_time
             )
 
-            ret.append(' ')
-
             # the most recent job status
-            try:
-                state = node.get_child_node(0).get_value()['data']['state']
-                ret += [(f'job_{state}', f'{JOB_ICON} ')]
-            except IndexError:
-                pass
+            ret.append(' ')
+            if first_child:
+                state = first_child.get_value()['data']['state']
+                ret += [(f'job_{state}', f'{JOB_ICON}'), ' ']
+
             # the task name
-            ret += [f'{value["data"]["name"]}']
+            ret.append(f'{data["name"]}')
             return ret
+
         if type_ == 'job':
             return [
-                f'#{value["data"]["submitNum"]:02d} ',
-                get_job_icon(value['data']['state'])
+                f'#{data["submitNum"]:02d} ',
+                get_job_icon(data['state'])
             ]
+
         if type_ == 'family':
             children = [
-                node.get_child_node(index) # .get_value()['data']['state']
+                node.get_child_node(index)
                 for index in node.load_child_keys()
             ]
             group_status, group_isheld = get_group_state(children)
             return [
                 get_task_icon(group_status, group_isheld),
                 ' ',
-                value['data']['id'].rsplit('|', 1)[-1]
+                data['id'].rsplit('|', 1)[-1]
             ]
+
         if type_ == 'job_info':
-            key_len = max(len(key) for key in value['data'])
+            key_len = max(len(key) for key in data)
 
             ret = [
                 f'{key} {" " * (key_len - len(key))} {value}\n'
-                for key, value in value['data'].items()
+                for key, value in data.items()
             ]
             ret[-1] = ret[-1][:-1]  # strip trailing newline
 
             return ret
-        return value['data']['id'].rsplit('|', 1)[-1]
+
+        return data['id'].rsplit('|', 1)[-1]
 
 
 class MonitorNode(urwid.TreeNode):
@@ -310,6 +359,11 @@ class MonitorTreeBrowser:
         self.loop.set_alarm_in(0, self.update)
         self.loop.run()
 
+    def unhandled_input(self, key):
+        print('#', key, str(key), repr(key))
+        if key in ('q', 'Q', 'ctrl d'):
+            raise urwid.ExitMainLoop()
+
     def get_snapshot(self):
         """Contact the workflow, return a tree structure
 
@@ -378,21 +432,16 @@ class MonitorTreeBrowser:
         """
         old_key = self.get_node_id(old_node)
 
-        stack = [new_node]
-        while stack:
-            node = stack.pop()
-            key = self.get_node_id(node)
-            if key == old_key:
+        for node in self.walk_tree(new_node):
+            if old_key == self.get_node_id(node):
+                # (1)
                 return node
-            stack.extend([
-                node.get_child_node(index)
-                for index in node.get_child_keys()
-            ])
 
         if not old_node._parent:
-            # new tree is unrelated to the old one - reset focus
+            # (3) reset focus
             return new_node
 
+        # (2)
         return self.find_closest_focus(
             old_node._parent,
             new_node
@@ -535,10 +584,6 @@ class MonitorTreeBrowser:
 
         return True
 
-    def unhandled_input(self, key):
-        if key in ('q', 'Q'):
-            raise urwid.ExitMainLoop()
-
 
 def add_node(type_, id_, nodes, data=None):
     """Create a node add it to the store and return it.
@@ -607,7 +652,8 @@ def compute_tree(flow):
                     'cycle', family['cyclePoint'], nodes, data=cycle_data)
                 if cycle_node not in flow_node['children']:
                     flow_node['children'].append(cycle_node)
-                family_node = add_node('family', family['id'], nodes, data=family)
+                family_node = add_node(
+                    'family', family['id'], nodes, data=family)
     # create cycle/family tree
     for family_ in flow['families']:
         for family in family_['proxies']:
@@ -690,7 +736,7 @@ def get_group_state(nodes):
     raise ValueError()
 
 
-def get_task_icon(status, is_held):
+def get_task_icon(status, is_held, start_time=None, mean_time=None):
     """Return a Unicode string to represent a task.
 
     Arguments:
@@ -707,6 +753,23 @@ def get_task_icon(status, is_held):
     ret = []
     if is_held:
         ret.append(TASK_MODIFIERS['held'])
+    if (
+            status == TASK_STATUS_RUNNING
+            and start_time
+            and mean_time
+    ):
+        start_time = datetime.strptime(start_time, '%Y-%m-%dT%H:%M:%SZ')
+        now_time = datetime.utcnow()
+        mean_time = timedelta(seconds=mean_time)
+        progress = (now_time - start_time) / mean_time
+        if progress >= 0.75:
+            status = f'{TASK_STATUS_RUNNING}:75'
+        elif progress >= 0.5:
+            status = f'{TASK_STATUS_RUNNING}:50'
+        elif progress >= 0.25:
+            status = f'{TASK_STATUS_RUNNING}:25'
+        else:
+            status = f'{TASK_STATUS_RUNNING}:0'
     ret.append(TASK_ICONS[status])
     return ret
 
