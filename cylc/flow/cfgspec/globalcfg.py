@@ -144,7 +144,7 @@ SPEC = {
     # Platform Aliases
     'platform aliases': {
         '__MANY__': {
-            'name': [VDR.V_STRING]
+            'platforms': [VDR.V_STRING_LIST]
         }
     },
 
