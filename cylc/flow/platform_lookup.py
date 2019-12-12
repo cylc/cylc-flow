@@ -132,30 +132,25 @@ def reverse_lookup(platforms, job, remote):
 
         # We have some special logic to identify whether task host and task
         # batch system match the platform in question.
-        if task_host == 'localhost':
-            if task_batch_system == 'background':
-                return 'localhost'
-            elif (
-                task_batch_system == platform_spec['batch system'] and
-                'hosts' in platform_spec.keys() and
-                'localhost' in platform_spec['hosts']
-            ):
-                # If we have localhost with a non-background batch system we
-                # use the batch system to give a sensible guess at the platform
-                return platform_name
+        if (
+            task_host == 'localhost' and
+            task_batch_system == 'background'
+        ):
+            return 'localhost'
 
-        else:
-            if (
-                'hosts' in platform_spec.keys() and
-                task_host in platform_spec['hosts'] and
-                task_batch_system == platform_spec['batch system']
-            ):
-                return platform_name
+        elif (
+            'hosts' in platform_spec.keys() and
+            task_host in platform_spec['hosts'] and
+            task_batch_system == platform_spec['batch system']
+        ):
+            # If we have localhost with a non-background batch system we
+            # use the batch system to give a sensible guess at the platform
+            return platform_name
 
-            elif (
-                re.fullmatch(platform_name, task_host) and
-                task_batch_system == platform_spec['batch system']
-            ):
-                return task_host
+        elif (
+            re.fullmatch(platform_name, task_host) and
+            task_batch_system == platform_spec['batch system']
+        ):
+            return task_host
 
     raise PlatformLookupError('No platform found matching your task')
