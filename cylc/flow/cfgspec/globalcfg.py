@@ -143,7 +143,9 @@ SPEC = {
 
     # Platform Aliases
     'platform aliases': {
-        '__MANY__': [VDR.V_STRING_LIST]
+        '__MANY__': {
+            'name': [VDR.V_STRING]
+        }
     },
 
     # task
