@@ -20,23 +20,24 @@ import pytest
 from cylc.flow.platform_lookup import forward_lookup, reverse_lookup
 from cylc.flow.exceptions import PlatformLookupError
 
-PLATFORMS_STANDARD = {
-    'suite server platform': None,
-    'desktop[0-9][0-9]|laptop[0-9][0-9]': None,
-    'sugar': {
-        'login hosts': 'localhost',
-        'batch system': 'slurm'
-    },
-    'hpc': {
-        'login hosts': ['hpc1', 'hpc2'],
-        'batch system': 'pbs'
-    },
-    'hpc1-bg': {
-        'login hosts': 'hpc1',
+PLATFORMS = {
+    'desktop[0-9]{2}|laptop[0-9]{2}': {
         'batch system': 'background'
     },
+    'sugar': {
+        'hosts': 'localhost',
+        'batch system': 'slurm',
+    },
+    'hpc': {
+        'hosts': ['hpc1', 'hpc2'],
+        'batch system': 'pbs',
+    },
+    'hpc1-bg': {
+        'hosts': 'hpc1',
+        'batch system': 'background',
+    },
     'hpc2-bg': {
-        'login hosts': 'hpc2',
+        'hosts': 'hpc2',
         'batch system': 'background'
     }
 }
@@ -67,9 +68,9 @@ PLATFORMS_WITH_RE = {
      (PLATFORMS_WITH_RE, 'vld798', 'vld798'),
      (PLATFORMS_WITH_RE, 'vld56', 'vld56'),
      (PLATFORMS_NO_UNIQUE, 'sugar', 'sugar'),
-     (PLATFORMS_STANDARD, None, 'localhost'),
-     (PLATFORMS_STANDARD, 'laptop22', 'laptop22'),
-     (PLATFORMS_STANDARD, 'hpc1-bg', 'hpc1-bg'),
+     (PLATFORMS, None, 'localhost'),
+     (PLATFORMS, 'laptop22', 'laptop22'),
+     (PLATFORMS, 'hpc1-bg', 'hpc1-bg'),
      (PLATFORMS_WITH_RE, 'hpc2', 'hpc2')
      ]
 )
@@ -79,37 +80,12 @@ def test_basic(PLATFORMS, platform, expected):
 
 def test_platform_not_there():
     with pytest.raises(PlatformLookupError):
-        forward_lookup(PLATFORMS_STANDARD, 'moooo')
+        forward_lookup(PLATFORMS, 'moooo')
 
 
 def test_similar_but_not_exact_match():
     with pytest.raises(PlatformLookupError):
         forward_lookup(PLATFORMS_WITH_RE, 'vld1')
-
-
-# Platforms setup designed to look like what we might expect for a major
-# Cylc user.
-PLATFORMS = {
-    'desktop[0-9]{2}|laptop[0-9]{2}': {
-        'batch system': 'background'
-    },
-    'sugar': {
-        'hosts': 'localhost',
-        'batch system': 'slurm',
-    },
-    'hpc': {
-        'hosts': ['hpc1', 'hpc2'],
-        'batch system': 'pbs',
-    },
-    'hpc1-bg': {
-        'hosts': 'hpc1',
-        'batch system': 'background',
-    },
-    'hpc2-bg': {
-        'hosts': 'hpc2',
-        'batch system': 'background'
-    }
-}
 
 
 # Basic tests that we can select sensible platforms
