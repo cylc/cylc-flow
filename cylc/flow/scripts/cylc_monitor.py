@@ -844,7 +844,6 @@ def get_option_parser():
         action='store',
         choices=['raw', 'html'],
         default='raw',
-        #type='choices'
     )
     parser.add_option(
         '--v-term-size',
@@ -878,6 +877,7 @@ def main(_, options, reg):
     if options.display == 'html':
         for fragment in html_fragment.screenshot_collect():
             print(fragment)
+
 
 if __name__ == '__main__':
     main('generic')

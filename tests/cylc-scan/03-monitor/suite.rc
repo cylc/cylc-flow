@@ -1,0 +1,84 @@
+[cylc]
+    cycle point format = CCYY
+    [[parameters]]
+        state = waiting_held, waiting, queued, expired, submit-failed, submitted, failed, succeeded, running
+    [[events]]
+        inactivity = PT10S
+        timeout = PT10S
+        abort on inactivity = True
+        abort on timeout = True
+
+[scheduling]
+    initial cycle point = 2000
+    [[queues]]
+        [[[myq]]]
+            members = task<state=queued>
+    [[graph]]
+        P1Y = """
+            task<state=failed>[-P1Y] => reset => task<state>
+            reset:fail => monitor
+            task<state=failed>:fail => monitor
+            task<state=succeeded> => monitor
+            task<state=running>:started => monitor
+        """
+[runtime]
+    [[task<state=failed>]]
+        script = false
+        [[[job]]]
+            execution retry delays = 2*PT0S
+    [[task<state=succeeded>]]
+        # run two jobs to make sure the most recent job is chosen
+        # for the icon in the task node
+        script = test $CYLC_TASK_SUBMIT_NUMBER -ge 1
+        [[[job]]]
+            execution retry delays = 2*PT0S
+    [[task<state=running>]]
+        script = sleep 100
+
+    [[A]]
+        # test simple family with nested family
+    [[task<state=queued>]]
+        inherit = A
+
+    [[B]]
+        # task status grouping
+        inherit = A
+    [[task<state=running>, task<state=succeeded>, task<state=waiting_held>]]
+        inherit = B
+
+
+    [[C]]
+        # test multiple familes in one level of the tree
+    [[task<state=submit-failed>]]
+        inherit = C
+
+    [[D]]
+        # test empty family (shouldnt show)
+
+
+    [[reset]]
+        script = """
+            cylc hold "$CYLC_SUITE_NAME" task_waiting_held.2000
+
+            cylc reset "$CYLC_SUITE_NAME" task_expired.2000 -s expired
+            cylc reset "$CYLC_SUITE_NAME" task_submitted.2000 -s submitted
+            cylc reset "$CYLC_SUITE_NAME" task_submit-failed.2000 -s submit-failed
+
+            cylc trigger "$CYLC_SUITE_NAME" task_failed.2000
+            cylc trigger "$CYLC_SUITE_NAME" task_running.2000
+            cylc trigger "$CYLC_SUITE_NAME" task_succeeded.2000
+
+            exit 1  # prevent waiting from running
+        """
+    [[monitor]]
+        script = """
+            # dump cylc monitor output on a 80x200 virtual terminal as HTML
+            cylc__job__poll_grep_suite_log -F '[monitor.2000] status=submitted: (received)started'
+            cylc monitor \
+                --display=html \
+                --v-term-size 80,200 \
+                "$CYLC_SUITE_NAME" \
+                > "${CYLC_TASK_LOG_ROOT}-html"
+            cylc kill "$CYLC_SUITE_NAME" task_running.2000
+            cylc stop "$CYLC_SUITE_NAME" --now
+        """
