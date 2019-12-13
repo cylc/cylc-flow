@@ -23,6 +23,8 @@ from cylc.flow.parsec.config import ParsecConfig
 from cylc.flow.parsec.upgrade import upgrader
 from cylc.flow.parsec.validate import (
     DurationFloat, CylcConfigValidator as VDR, cylc_config_validate)
+from cylc.flow.platform_lookup import reverse_lookup
+from cylc.flow.exceptions import PlatformLookupError
 
 # Nested dict of spec items.
 # Spec value is [value_type, default, allowed_2, allowed_3, ...]
@@ -296,7 +298,6 @@ def upg(cfg, descr):
         ['cylc', 'abort if any task fails'],
         ['cylc', 'events', 'abort if any task fails'])
     u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'shell'])
-
     # TODO uncomment these deprecations when ready - see todo in
     # [runtime][__MANY__] section.
     # for job_setting in [
@@ -311,7 +312,8 @@ def upg(cfg, descr):
     #         ['runtime', '__MANY__', 'job', job_setting],
     #         ['runtime', '__MANY__', job_setting]
     #     )
-
+    # TODO - there are some simple changes to the config (items from [remote]
+    # and [job] moved up 1 level for example) which should be upgraded here.
     u.upgrade()
 
     # Upgrader cannot do this type of move.
@@ -335,8 +337,93 @@ def upg(cfg, descr):
                 u.show_keys(['scheduling', 'graph', 'X']),
                 '\n'.join(sorted(keys)),
             )
+
     except KeyError:
         pass
+
+    # TODO - uncomment this fn so that we actually use the host to platform
+    # upgrader
+    # cfg = host_to_platform(cfg)
+
+
+def host_to_platform_upgrader(cfg):
+    """Upgrade a config with host settings to a config with platform settings
+    if it is appropriate to do so.
+
+                       +-------------------------------+
+                       | Is platforms set in this      |
+                       | [runtime][TASK]?              |
+                       +-------------------------------+
+                          |YES                      |NO
+                          |                         |
+    +---------------------v---------+      +--------v----------------------+
+    | Are any forbidden items set   |      | * Run reverse_lookup()        |
+    | in any [runtime][TASK]        |      | * handle reverse lookup fail  |
+    | [job] or [remote] section     |      | * add platform                |
+    |                               |      | * delete forbidden settings   |
+    +-------------------------------+      +-------------------------------+
+              |YES            |NO
+              |               +-------------------------+
+              |                                         |
+    +---------v---------------------+      +------------v------------------+
+    | Fail Loudly                   |      | Return without changes        |
+    +-------------------------------+      +-------------------------------+
+
+
+    Args (cfg):
+        config object to be upgraded
+
+    Returns (cfg):
+        upgraded config object
+    """
+    # If platform and old settings are set fail
+    # TODO look at the updated platforms spec and work out what items in job
+    # and remote should be added to this forbidden list
+    forbidden_with_platform = ['host', 'batch system']
+
+    for task_name, task_spec in cfg['runtime'].items():
+        if (
+            'platforms' in task_spec and
+            any(forbidden_with_platform == cfg['job']) or
+            any(forbidden_with_platform == cfg['remote'])
+        ):
+            # Fail Loudly and Horribly
+            LOG.error(
+                f"A mixture of Cylc 7 (host) and Cylc 8 (platform logic) should"
+                f"not be used. Task {task_name} set platform and and item in"
+                f"{forbidden_with_platform}"
+            )
+        elif 'platforms' in task_spec:
+            # Return config unchanged
+            return cfg
+        else:
+            try:
+                # Use the reverse lookup
+                platform = reverse_lookup(
+                    glbl_cfg().get(['job platforms']),
+                    task_spec['job'],
+                    task_spec['remote']
+                )
+            except PlatformLookupError as exc:
+                LOG.error('Unable to determine platform')
+                LOG.debug(f'Exception was {exc}')
+            else:
+                # Set platform in config
+                cfg[task_name]['platform'] = platform
+                # Remove deprecated items from config
+                for old_spec_item in forbidden_with_platform:
+                    for task_section in [
+                        cfg[task_name]['job'], cfg[task_name]['remote']
+                    ]:
+                        if old_spec_item in task_section:
+                            cfg.pop(cfg[task_name][[old_spec_item]])
+                            LOG.warning(
+                                f"Platform {platform} auto selected from Cylc 7"
+                                f"{old_spec_item} removed."
+                            )
+                cfg[task_name]['platform']
+
+                return cfg
 
 
 class RawSuiteConfig(ParsecConfig):
