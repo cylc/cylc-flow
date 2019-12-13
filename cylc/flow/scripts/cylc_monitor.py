@@ -23,6 +23,7 @@ from datetime import datetime, timedelta
 import sys
 
 import urwid
+from urwid import html_fragment
 
 from cylc.flow.exceptions import ClientError
 from cylc.flow.network.client import SuiteRuntimeClient
@@ -99,6 +100,8 @@ JOB_COLOURS = {
     'ready': 'brown'
 }
 
+TREE_EXPAND_DEPTH = [2]
+
 QUERY = '''
   query {
     workflows {
@@ -156,13 +159,18 @@ class MonitorWidget(urwid.TreeWidget):
 
     """
 
-    def __init__(self, node, max_depth=2):
+    def __init__(self, node, max_depth=None):
         # NOTE: copy of urwid.TreeWidget.__init__, the only difference
         #       being the self.expanded logic
+        if not max_depth:
+            max_depth = TREE_EXPAND_DEPTH[0]
         self._node = node
         self._innerwidget = None
         self.is_leaf = not hasattr(node, 'get_first_child')
-        self.expanded = node.get_depth() < max_depth
+        if max_depth > 0:
+            self.expanded = node.get_depth() < max_depth
+        else:
+            self.expanded = True
         widget = self.get_indented_widget()
         urwid.WidgetWrap.__init__(self, widget)
 
@@ -221,9 +229,15 @@ class MonitorWidget(urwid.TreeWidget):
                 node.get_child_node(index)
                 for index in node.load_child_keys()
             ]
-            group_status, group_isheld = get_group_state(children)
+            try:
+                group_status, group_isheld = get_group_state(children)
+                task_icon = get_task_icon(group_status, group_isheld)
+            except KeyError:
+                # TODO: computing group states for nested families is
+                #       not supported
+                task_icon = ' '
             return [
-                get_task_icon(group_status, group_isheld),
+                task_icon,
                 ' ',
                 data['id'].rsplit('|', 1)[-1]
             ]
@@ -292,6 +306,7 @@ class MonitorTreeBrowser:
     UPDATE_INTERVAL = 1
 
     palette = [
+        ('head', FORE, BACK),
         ('body', FORE, BACK),
         ('foot', 'white', 'dark blue'),
         ('key', 'light cyan', 'dark blue'),
@@ -328,10 +343,11 @@ class MonitorTreeBrowser:
         ('key', 'q'),
     ]
 
-    def __init__(self, client):
+    def __init__(self, client, screen=None):
         # the cylc data client
         self.client = client
         self.loop = None
+        self.screen = None
 
         # create the template
         topnode = MonitorParentNode(dummy_flow())
@@ -346,13 +362,19 @@ class MonitorTreeBrowser:
             header=urwid.AttrWrap(header, 'head'),
             footer=footer
         )
+        if isinstance(screen, html_fragment.HtmlGenerator):
+            # the HtmlGenerator only captures one frame
+            # so we need to pre-populate the GUI before
+            # starting the event loop
+            self.update()
 
     def main(self):
         """Start the event loop."""
         self.loop = urwid.MainLoop(
             self.view,
             self.palette,
-            unhandled_input=self.unhandled_input
+            unhandled_input=self.unhandled_input,
+            screen=self.screen
         )
         # schedule the first update
         self.loop.set_alarm_in(0, self.update)
@@ -582,7 +604,8 @@ class MonitorTreeBrowser:
         self.translate_collapsing(old_node, new_node)
 
         # schedule the next run of this update method
-        self.loop.set_alarm_in(self.UPDATE_INTERVAL, self.update)
+        if self.loop:
+            self.loop.set_alarm_in(self.UPDATE_INTERVAL, self.update)
 
         return True
 
@@ -646,16 +669,17 @@ def compute_tree(flow):
     for family_ in flow['families']:
         for family in family_['proxies']:
             if family['name'] != 'root':
-                cycle_data = {
-                    'name': family['cyclePoint'],
-                    'id': f"{flow['id']}|{family['cyclePoint']}"
-                }
-                cycle_node = add_node(
-                    'cycle', family['cyclePoint'], nodes, data=cycle_data)
-                if cycle_node not in flow_node['children']:
-                    flow_node['children'].append(cycle_node)
                 family_node = add_node(
                     'family', family['id'], nodes, data=family)
+            cycle_data = {
+                'name': family['cyclePoint'],
+                'id': f"{flow['id']}|{family['cyclePoint']}"
+            }
+            cycle_node = add_node(
+                'cycle', family['cyclePoint'], nodes, data=cycle_data)
+            if cycle_node not in flow_node['children']:
+                flow_node['children'].append(cycle_node)
+
     # create cycle/family tree
     for family_ in flow['families']:
         for family in family_['proxies']:
@@ -722,6 +746,14 @@ def get_group_state(nodes):
 
         status (str): A Cylc task status.
         is_held (bool): True if the task is is a held state.
+
+    Raises:
+        KeyError:
+            If any node does not have the key "state" in its
+            data. E.G. a nested family.
+        ValueError:
+            If no matching states are found. E.G. empty nodes
+            list.
 
     """
     states = [
@@ -796,9 +828,32 @@ def get_option_parser():
     parser = COP(
         __doc__,
         argdoc=[
-            ('[REG]', 'Suite name'),
-            ('[TASK-JOB]', 'Task job identifier CYCLE/TASK_NAME/SUBMIT_NUM'),
-        ]
+            ('REG', 'Suite name')
+        ],
+        # auto_add=False,  NOTE: at present auto_add can not be turned off
+        color=False
+    )
+
+    parser.add_option(
+        '--display',
+        help=(
+            'Specify the display technology to use.'
+            ' "raw" for interactive in-terminal display.'
+            ' "html" for non-interactive html output.'
+        ),
+        action='store',
+        choices=['raw', 'html'],
+        default='raw',
+        #type='choices'
+    )
+    parser.add_option(
+        '--v-term-size',
+        help=(
+            'The virtual terminal size for non-interactive'
+            '--display options.'
+        ),
+        action='store',
+        default='80,24'
     )
 
     return parser
@@ -806,9 +861,23 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(_, options, reg):
-    client = SuiteRuntimeClient(reg)
-    MonitorTreeBrowser(client).main()
+    screen = None
+    if options.display == 'html':
+        TREE_EXPAND_DEPTH[0] = -1  # expand tree fully
+        screen = html_fragment.HtmlGenerator()
+        screen.set_terminal_properties(256)
+        screen.register_palette(MonitorTreeBrowser.palette)
+        html_fragment.screenshot_init(
+            [tuple(map(int, options.v_term_size.split(',')))],
+            []
+        )
 
+    client = SuiteRuntimeClient(reg)
+    MonitorTreeBrowser(client, screen=screen).main()
+
+    if options.display == 'html':
+        for fragment in html_fragment.screenshot_collect():
+            print(fragment)
 
 if __name__ == '__main__':
     main('generic')
