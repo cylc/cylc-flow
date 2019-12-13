@@ -77,9 +77,9 @@ PLATFORMS_WITH_RE = {
 def test_basic(PLATFORMS, platform, expected):
     assert forward_lookup(PLATFORMS, platform) == expected
 
-
 def test_platform_not_there():
     with pytest.raises(PlatformLookupError):
+
         forward_lookup(PLATFORMS, 'moooo')
 
 
