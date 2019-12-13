@@ -170,4 +170,5 @@ class CylcMissingFinalCyclePointError(CyclingError):
 
 
 class PlatformLookupError(CylcConfigError):
-    """An error dealing with platform lookup"""
+    """Unable to determine the correct job platform from the information
+    given"""

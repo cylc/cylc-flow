@@ -20,6 +20,60 @@ import re
 from cylc.flow.exceptions import PlatformLookupError
 
 
+def forward_lookup(platforms, job_platform):
+    """
+    Find out which job platform to use given a list of possible platforms and
+    a task platform string.
+
+    Verifies selected platform is present in global.rc file and returns it,
+    raises error if platfrom is not in global.rc or returns 'localhost' if
+    no platform is initally selected.
+
+    Args:
+        job_platform (str):
+            platform item from config [runtime][TASK]platform
+        platforms (dictionary):
+            list of possible platforms defined by global.rc
+
+    Returns:
+        platform (str):
+            string representing a platform from the global config.
+
+    Example:
+    >>> platforms = {
+    ...     'suite server platform': None,
+    ...     'desktop[0-9][0-9]|laptop[0-9][0-9]': None,
+    ...     'sugar': {
+    ...         'login hosts': 'localhost',
+    ...         'batch system': 'slurm'
+    ...     },
+    ...     'hpc': {
+    ...         'login hosts': ['hpc1', 'hpc2'],
+    ...         'batch system': 'pbs'
+    ...     },
+    ...     'hpc1-bg': {
+    ...         'login hosts': 'hpc1',
+    ...         'batch system': 'background'
+    ...     },
+    ...     'hpc2-bg': {
+    ...         'login hosts': 'hpc2',
+    ...         'batch system': 'background'
+    ...     }
+    ... }
+    >>> job_platform = 'desktop22'
+    >>> forward_lookup(platforms, job_platform)
+    'desktop22'
+    """
+    if job_platform is None:
+        return 'localhost'
+    for platform in reversed(list(platforms)):
+        if re.fullmatch(platform, job_platform):
+            return job_platform
+
+    raise PlatformLookupError(
+        f"No matching platform \"{job_platform}\" found")
+
+
 def reverse_lookup(platforms, job, remote):
     """
     Find out which job platform to use given a list of possible platforms
