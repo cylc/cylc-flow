@@ -229,13 +229,17 @@ class MonitorWidget(urwid.TreeWidget):
                 node.get_child_node(index)
                 for index in node.load_child_keys()
             ]
-            try:
-                group_status, group_isheld = get_group_state(children)
-                task_icon = get_task_icon(group_status, group_isheld)
-            except KeyError:
-                # TODO: computing group states for nested families is
-                #       not supported
-                task_icon = ' '
+            task_icon = ' '
+            if children:
+                # if there are no children we cannot compute the group state
+                try:
+                    group_status, group_isheld = get_group_state(children)
+                    task_icon = get_task_icon(group_status, group_isheld)
+                except KeyError:
+                    # TODO: computing group states for nested families is
+                    #       not supported
+                    pass
+                
             return [
                 task_icon,
                 ' ',
