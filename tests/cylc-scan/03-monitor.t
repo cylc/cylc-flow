@@ -20,14 +20,33 @@
 # compare it to known good output (KGO)
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 1
+set_test_number 3
 #-------------------------------------------------------------------------------
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-if ${CYLC_TEST_DEBUG:-false}; then ERR=2; else ERR=1; fi
-cylc run "${SUITE_NAME}" --no-detach 2>& $ERR
-snapshot="$(cylc cat-log "${SUITE_NAME}" monitor.2000 -f job-html -m p)"
+# TODO: replace this with the resultant database file
+TEST_NAME="${TEST_NAME_BASE}-run"
+run_ok "${TEST_NAME}" \
+    cylc run "${SUITE_NAME}" --no-detach
 
+TEST_NAME="${TEST_NAME_BASE}-restart"
+run_ok "${TEST_NAME}" \
+    cylc restart "${SUITE_NAME}" --no-detach
+
+TEST_NAME="${TEST_NAME_BASE}-monitor"
+run_ok "${TEST_NAME}" \
+    cylc monitor "${SUITE_NAME}" \
+    --display=html \
+    --v-term-size=80,200
+snapshot="${TEST_NAME}.stdout"
+
+
+
+exit
+
+#if ${CYLC_TEST_DEBUG:-false}; then ERR=2; else ERR=1; fi
+
+#snapshot="$(cylc cat-log "${SUITE_NAME}" monitor.2000 -f job-html -m p)"
 
 KGO="$(dirname "${snapshot}")/kgo.html"
 cp "$TEST_SOURCE_DIR/$TEST_NAME_BASE/monitor.html" "${KGO}"

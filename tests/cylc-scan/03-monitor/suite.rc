@@ -16,10 +16,10 @@
     [[graph]]
         P1Y = """
             task<state=failed>[-P1Y] => reset => task<state>
-            reset:fail => monitor
-            task<state=failed>:fail => monitor
-            task<state=succeeded> => monitor
-            task<state=running>:started => monitor
+            reset:fail => stop
+            task<state=failed>:fail => stop
+            task<state=succeeded> => stop
+            task<state=running>:started => stop
         """
 [runtime]
     [[task<state=failed>]]
@@ -70,15 +70,8 @@
 
             exit 1  # prevent waiting from running
         """
-    [[monitor]]
+    [[stop]]
         script = """
-            # dump cylc monitor output on a 80x200 virtual terminal as HTML
-            cylc__job__poll_grep_suite_log -F '[monitor.2000] status=submitted: (received)started'
-            cylc monitor \
-                --display=html \
-                --v-term-size 80,200 \
-                "$CYLC_SUITE_NAME" \
-                > "${CYLC_TASK_LOG_ROOT}-html"
-            cylc kill "$CYLC_SUITE_NAME" task_running.2000
-            cylc stop "$CYLC_SUITE_NAME" --now
+            cylc__job__poll_grep_suite_log -F '[stop.2000] status=submitted: (received)started'
+            cylc stop "$CYLC_SUITE_NAME" --now --now
         """
