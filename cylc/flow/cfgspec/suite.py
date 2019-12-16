@@ -17,6 +17,7 @@
 
 from metomi.isodatetime.data import Calendar
 
+
 from cylc.flow import LOG
 from cylc.flow.network.authorisation import Priv
 from cylc.flow.parsec.config import ParsecConfig
@@ -25,6 +26,7 @@ from cylc.flow.parsec.validate import (
     DurationFloat, CylcConfigValidator as VDR, cylc_config_validate)
 from cylc.flow.platform_lookup import reverse_lookup
 from cylc.flow.exceptions import PlatformLookupError
+from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 
 # Nested dict of spec items.
 # Spec value is [value_type, default, allowed_2, allowed_3, ...]
@@ -383,47 +385,62 @@ def host_to_platform_upgrader(cfg):
 
     for task_name, task_spec in cfg['runtime'].items():
         if (
-            'platforms' in task_spec and
-            any(forbidden_with_platform == cfg['job']) or
-            any(forbidden_with_platform == cfg['remote'])
+            'platform' in task_spec and 'job' in task_spec or
+            'platform' in task_spec and 'remote' in task_spec
         ):
-            # Fail Loudly and Horribly
-            LOG.error(
-                f"A mixture of Cylc 7 (host) and Cylc 8 (platform logic) should"
-                f"not be used. Task {task_name} set platform and and item in"
-                f"{forbidden_with_platform}"
-            )
-        elif 'platforms' in task_spec:
+            if (
+                'platform' in task_spec and
+                any(forbidden_with_platform == task_spec['job']) or
+                any(forbidden_with_platform == task_spec['remote'])
+            ):
+                # Fail Loudly and Horribly
+                LOG.error(
+                    f"A mixture of Cylc 7 (host) and Cylc 8 (platform logic) "
+                    f"should not be used. Task {task_name} set platform and "
+                    f"item in {forbidden_with_platform}"
+                )
+        elif 'platform' in task_spec:
             # Return config unchanged
-            return cfg
+            continue
         else:
+
+            # Add empty dicts if appropriate sections not present.
+            if 'job' in task_spec:
+                task_spec_job = task_spec['job']
+            else:
+                task_spec_job = {}
+            if 'remote' in task_spec:
+                task_spec_remote = task_spec['remote']
+            else:
+                task_spec_remote = {}
+
+            # Attempt to use the reverse lookup
             try:
-                # Use the reverse lookup
                 platform = reverse_lookup(
                     glbl_cfg().get(['job platforms']),
-                    task_spec['job'],
-                    task_spec['remote']
+                    task_spec_job,
+                    task_spec_remote
                 )
             except PlatformLookupError as exc:
                 LOG.error('Unable to determine platform')
                 LOG.debug(f'Exception was {exc}')
             else:
                 # Set platform in config
-                cfg[task_name]['platform'] = platform
+                cfg['runtime'][task_name].update({'platform': platform})
                 # Remove deprecated items from config
                 for old_spec_item in forbidden_with_platform:
-                    for task_section in [
-                        cfg[task_name]['job'], cfg[task_name]['remote']
-                    ]:
+                    for task_section in ['job', 'remote']:
                         if old_spec_item in task_section:
-                            cfg.pop(cfg[task_name][[old_spec_item]])
+                            cfg['runtime'][task_name][task_section].update(
+                                cfg.pop(
+                                    cfg['runtime'][task_name][task_section]\
+                                        [old_spec_item])
+                                )
                             LOG.warning(
                                 f"Platform {platform} auto selected from Cylc 7"
                                 f"{old_spec_item} removed."
                             )
-                cfg[task_name]['platform']
-
-                return cfg
+        return cfg
 
 
 class RawSuiteConfig(ParsecConfig):
