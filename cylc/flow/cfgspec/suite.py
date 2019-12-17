@@ -358,19 +358,26 @@ def host_to_platform_upgrader(cfg):
                        +-------------------------------+
                           |YES                      |NO
                           |                         |
-    +---------------------v---------+      +--------v----------------------+
-    | Are any forbidden items set   |      | * Run reverse_lookup()        |
-    | in any [runtime][TASK]        |      | * handle reverse lookup fail  |
-    | [job] or [remote] section     |      | * add platform                |
-    |                               |      | * delete forbidden settings   |
-    +-------------------------------+      +-------------------------------+
-              |YES            |NO
-              |               +-------------------------+
-              |                                         |
-    +---------v---------------------+      +------------v------------------+
-    | Fail Loudly                   |      | Return without changes        |
-    +-------------------------------+      +-------------------------------+
-
+    +---------------------v---------+      +--------+--------------+
+    | Are any forbidden items set   |      | host == $(function)?  |
+    | in any [runtime][TASK]        |      +-+---------------------+
+    | [job] or [remote] section     |     NO |          |YES
+    |                               |        |  +-----+-v------------------+
+    +-------------------------------+        |  | Log - evaluate at task   |
+              |YES            |NO            |  | submit                   |
+              |               +-------+      |  |                          |
+              |                       |      |  +--------------------------+
+    +---------v---------------------+ |      |
+    | Fail Loudly                   | |    +-v------v----------------------+
+    +-------------------------------+ |    | * Run reverse_lookup()        |
+                                      |    | * handle reverse lookup fail  |
+                                      |    | * add platform                |
+                                      |    | * delete forbidden settings   |
+                                      |    +-------------------------------+
+                                      |
+                                      |    +------------v------------------+
+                                      +----> Return without changes        |
+                                           +-------------------------------+
 
     Args (cfg):
         config object to be upgraded
@@ -384,6 +391,9 @@ def host_to_platform_upgrader(cfg):
     forbidden_with_platform = ['host', 'batch system']
 
     for task_name, task_spec in cfg['runtime'].items():
+        # if task_name == 'delta':
+        #     breakpoint(header=f"task_name = {task_name}")
+
         if (
             'platform' in task_spec and 'job' in task_spec or
             'platform' in task_spec and 'remote' in task_spec
@@ -402,6 +412,8 @@ def host_to_platform_upgrader(cfg):
         elif 'platform' in task_spec:
             # Return config unchanged
             continue
+        # elif (host == function):
+        #     # TODO return "not now" message if host == $(func)
         else:
 
             # Add empty dicts if appropriate sections not present.
@@ -422,9 +434,12 @@ def host_to_platform_upgrader(cfg):
                     task_spec_remote
                 )
             except PlatformLookupError as exc:
-                LOG.error('Unable to determine platform')
+                LOG.error(f'Unable to determine platform for {task_name}')
+                # TODO discuss whether we want to log this in the error,
+                # lest the error be a bit obtuse
                 LOG.debug(f'Exception was {exc}')
             else:
+
                 # Set platform in config
                 cfg['runtime'][task_name].update({'platform': platform})
                 # Remove deprecated items from config
@@ -440,7 +455,7 @@ def host_to_platform_upgrader(cfg):
                                 f"Platform {platform} auto selected from Cylc 7"
                                 f"{old_spec_item} removed."
                             )
-        return cfg
+    return cfg
 
 
 class RawSuiteConfig(ParsecConfig):
