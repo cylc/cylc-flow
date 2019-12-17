@@ -80,9 +80,10 @@ FUNC_SUITERC = """
 # like those on a major Cylc user site.
 GLOBALRC = """
 [job platforms]
-    [[desktop\d\d|laptop\d\d]]
+    [[desktop[0-9]{2}|laptop[0-9]{2}]]
         # hosts = platform name (default)
-        # Note: "desktop01" and "desktop02" are both valid and distinct platforms
+        # Note: "desktop01" and "desktop02" are both valid and distinct
+        # platforms
     [[sugar]]
         remote hosts = localhost
         batch system = slurm
@@ -155,7 +156,7 @@ def test_upgrader_failures(tmp_path, caplog):
     ]
     messages = [record.msg for record in caplog.records]
     # TODO ask MH if this is too simplistic - we could have a sort here?
-    assert failed_tasks_messages==messages
+    assert failed_tasks_messages == messages
 
 
 def test_upgrader_where_host_is_function(tmp_path, caplog):
@@ -163,14 +164,15 @@ def test_upgrader_where_host_is_function(tmp_path, caplog):
     returns the config unchanged, with a debug message
     The reverse lookup to be used at job-submission instead.
     """
+    import logging
+    caplog.set_level(logging.INFO)
     set_up(GLOBALRC, FUNC_SUITERC, tmp_path)
     debug_tasks_messages = [
-        f"Unable to upgrade task '{name}' to platform at validation because" \
-        f"the host setting contains a function. Cylc will attempt to " \
-        f"upgrade this task on job submission." \
+        f"Unable to upgrade task '{name}' to platform at validation because "
+        f"the host setting contains a function. Cylc will attempt to "
+        f"upgrade this task on job submission."
         for name in ['delta', 'epsilon']
     ]
     messages = [record.msg for record in caplog.records]
     # TODO ask MH if this is too simplistic - we could have a sort here?
-    assert debug_tasks_messages==messages
-
+    assert debug_tasks_messages == messages

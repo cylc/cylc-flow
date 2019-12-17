@@ -15,6 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Define all legal items and values for cylc suite definition files."""
 
+import re
+
 from metomi.isodatetime.data import Calendar
 
 
@@ -27,6 +29,9 @@ from cylc.flow.parsec.validate import (
 from cylc.flow.platform_lookup import reverse_lookup
 from cylc.flow.exceptions import PlatformLookupError
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+
+# Regex to check whether a string is a command
+REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
 
 # Nested dict of spec items.
 # Spec value is [value_type, default, allowed_2, allowed_3, ...]
@@ -362,20 +367,20 @@ def host_to_platform_upgrader(cfg):
     | Are any forbidden items set   |      | host == $(function)?  |
     | in any [runtime][TASK]        |      +-+---------------------+
     | [job] or [remote] section     |     NO |          |YES
-    |                               |        |  +-----+-v------------------+
+    |                               |        |  +-------v------------------+
     +-------------------------------+        |  | Log - evaluate at task   |
               |YES            |NO            |  | submit                   |
               |               +-------+      |  |                          |
               |                       |      |  +--------------------------+
     +---------v---------------------+ |      |
-    | Fail Loudly                   | |    +-v------v----------------------+
+    | Fail Loudly                   | |    +-v-----------------------------+
     +-------------------------------+ |    | * Run reverse_lookup()        |
                                       |    | * handle reverse lookup fail  |
                                       |    | * add platform                |
                                       |    | * delete forbidden settings   |
                                       |    +-------------------------------+
                                       |
-                                      |    +------------v------------------+
+                                      |    +-------------------------------+
                                       +----> Return without changes        |
                                            +-------------------------------+
 
@@ -405,17 +410,15 @@ def host_to_platform_upgrader(cfg):
             ):
                 # Fail Loudly and Horribly
                 LOG.error(
-                    f"A mixture of Cylc 7 (host) and Cylc 8 (platform logic) "
-                    f"should not be used. Task {task_name} set platform and "
-                    f"item in {forbidden_with_platform}"
+                    f"A mixture of Cylc 7 (host) and Cylc 8 (platform logic)"
+                    f" should not be used. Task {task_name} set platform "
+                    f"and item in {forbidden_with_platform}"
                 )
         elif 'platform' in task_spec:
             # Return config unchanged
             continue
-        # elif (host == function):
-        #     # TODO return "not now" message if host == $(func)
-        else:
 
+        else:
             # Add empty dicts if appropriate sections not present.
             if 'job' in task_spec:
                 task_spec_job = task_spec['job']
@@ -426,10 +429,24 @@ def host_to_platform_upgrader(cfg):
             else:
                 task_spec_remote = {}
 
+            # Deal with case where host is a function and we cannot auto
+            # upgrade at the time of loading the config.
+            if (
+                'host' in task_spec_remote and
+                REC_COMMAND.match(task_spec['remote']['host'])
+            ):
+                LOG.info(
+                    f"Unable to upgrade task '{task_name}' to platform at "
+                    f"validation because the host setting contains a "
+                    f"function. Cylc will attempt to upgrade this task on"
+                    f" job submission."
+                )
+                continue
+
             # Attempt to use the reverse lookup
             try:
                 platform = reverse_lookup(
-                    glbl_cfg().get(['job platforms']),
+                    glbl_cfg(cached=False).get(['job platforms']),
                     task_spec_job,
                     task_spec_remote
                 )
@@ -448,12 +465,12 @@ def host_to_platform_upgrader(cfg):
                         if old_spec_item in task_section:
                             cfg['runtime'][task_name][task_section].update(
                                 cfg.pop(
-                                    cfg['runtime'][task_name][task_section]\
-                                        [old_spec_item])
-                                )
+                                    cfg['runtime'][task_name][task_section]
+                                    [old_spec_item])
+                            )
                             LOG.warning(
-                                f"Platform {platform} auto selected from Cylc 7"
-                                f"{old_spec_item} removed."
+                                f"Platform {platform} auto selected from "
+                                f"Cylc 7 {old_spec_item} removed."
                             )
     return cfg
 
