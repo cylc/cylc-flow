@@ -34,6 +34,77 @@ from cylc.flow.hostuserutil import (
     get_host, get_user, is_remote, is_remote_host, is_remote_user)
 from cylc.flow.unicode_rules import SuiteNameValidator
 
+from enum import Enum
+
+
+class KeyType(Enum):
+    """Used for authentication keys - public or private"""
+
+    PRIVATE = "private"
+    PUBLIC = "public"
+
+
+class KeyOwner(Enum):
+    """Used for authentication keys - server or client"""
+
+    SERVER = "server"
+    CLIENT = "client"
+
+
+class KeyInfo():
+    """Represents a server or client key file, which can private or public.
+
+    Attributes:
+        file_name:       The file name of this key object.
+        key_type:        public or private
+        key_owner:       server or client
+        key_path:        The absolute path, not including filename,
+                         for this key object.
+        full_key_path:   The absolute path, including filename,
+                         for this key object.
+
+
+    """
+
+    def __init__(self, key_type, key_owner, **kwargs):
+        self.key_type = key_type
+        self.key_owner = key_owner
+
+        if 'full_key_path' in kwargs:
+            self.key_path, self.file_name = os.path.split(
+                kwargs.get("full_key_path"))
+        elif 'suite_srv_dir' in kwargs:
+            # Build key filename
+
+            file_name = key_owner.value
+
+            # Add optional platform name (supports future multiple client keys)
+            if key_owner is KeyOwner.CLIENT and 'platform' in kwargs:
+                file_name = file_name + "f_{platform}"
+
+            if key_type == KeyType.PRIVATE:
+                file_extension = SuiteFiles.Service.PRIVATE_FILE_EXTENSION
+            elif key_type == KeyType.PUBLIC:
+                file_extension = SuiteFiles.Service.PUBLIC_FILE_EXTENSION
+
+            self.file_name = f"{file_name}{file_extension}"
+
+            # Build key path (without filename)
+
+            temp = f"{key_owner.value}_keys"
+            self.key_path = os.path.join(
+                os.path.expanduser("~"),
+                kwargs.get("suite_srv_dir"),
+                temp,
+                key_type.value)
+        else:
+            raise ValueError(
+                "Cannot create KeyInfo without the suite path or full path.")
+
+        # Build full key path (including file name)
+
+        self.full_key_path = os.path.join(self.key_path, self.file_name)
+
 
 class SuiteFiles:
     """Files and directories located in the suite directory."""
@@ -61,6 +132,13 @@ class SuiteFiles:
 
         SOURCE = 'source'
         """Symlink to the suite definition (suite dir)."""
+
+        PUBLIC_FILE_EXTENSION = '.key'
+        PRIVATE_FILE_EXTENSION = '.key_secret'
+        """Keyword identifiers used to form the certificate names.
+        Note: the public & private identifiers are set by CurveZMQ, so cannot
+        be renamed, but we hard-code them since they can't be extracted easily.
+        """
 
 
 class ContactFileFields:
@@ -120,6 +198,8 @@ class ContactFileFields:
     VERSION = 'CYLC_VERSION'
     """The Cylc version under which the suite is running."""
 
+# TODO: THIS CLASS (UserFiles) IS PROBABLY NOW REDUNDANT. Delete in future (?)
+
 
 class UserFiles:
     """Directory containing config and auth files for a user."""
@@ -133,28 +213,6 @@ class UserFiles:
         DIRNAME = 'auth'
         """The name of this directory."""
 
-        PUBLIC_KEY_DIRNAME = 'public_key'
-        """The name of the directory holding the public key certificate."""
-
-        PRIVATE_KEY_DIRNAME = 'private_key'
-        """The name of the directory holding the private key certificate."""
-
-        SERVER_TAG = 'server'  # for server, i.e. suite, keys
-        CLIENT_TAG = 'client'  # for client, i.e. user, keys
-        PUBLIC_TAG = '.key'  # for public keys
-        PRIVATE_TAG = '.key_secret'  # for private ('secret') keys
-        """Keyword identifiers used to form the certificate names, as below.
-
-        Note: the public & private identifiers are set by CurveZMQ, so cannot
-        be renamed, but we hard-code them since they can't be extracted easily.
-        """
-
-        SERVER_PUBLIC_KEY_CERTIFICATE = SERVER_TAG + PUBLIC_TAG
-        CLIENT_PUBLIC_KEY_CERTIFICATE = CLIENT_TAG + PUBLIC_TAG
-        SERVER_PRIVATE_KEY_CERTIFICATE = SERVER_TAG + PRIVATE_TAG
-        CLIENT_PRIVATE_KEY_CERTIFICATE = CLIENT_TAG + PRIVATE_TAG
-        """The name of the authentication certificates."""
-
     @classmethod
     def get_path(cls, include_auth_dirname=True):
         """Return the path to this directory for the current user."""
@@ -162,18 +220,6 @@ class UserFiles:
         if include_auth_dirname:
             path_components.append(cls.Auth.DIRNAME)
         return os.path.join(*path_components)
-
-    @classmethod
-    def get_user_certificate_full_path(cls, private=False):
-        """Return the directory path of a certificate for the current user."""
-        if private:
-            certificate_dirname = cls.Auth.PRIVATE_KEY_DIRNAME
-        else:
-            certificate_dirname = cls.Auth.PUBLIC_KEY_DIRNAME
-        return os.path.join(
-            cls.get_path(),
-            certificate_dirname
-        )
 
 
 REG_DELIM = "/"
@@ -306,58 +352,61 @@ def get_contact_file(reg):
 
 
 def get_auth_item(item, reg, owner=None, host=None, content=False):
-    """Locate/load passphrase, Curve private-key/certificate ...etc.
+    """Locate/load Curve private-key/ ...etc.
 
     Return file name, or content of file if content=True is set.
     Files are searched from these locations in order:
 
-    1/ For running task jobs, service directory under:
+    1/  a/ Server Curve ZMQ keys located in:
+            suite service directory/server_keys/private
+            suite service directory/server_keys/public
+
+        b/ Client Curve ZMQ keys located in:
+            suite service directory/client_keys/private
+            suite service directory/client_keys/public
+
+    2/ For running task jobs, service directory under:
        a/ $CYLC_SUITE_RUN_DIR for remote jobs.
        b/ $CYLC_SUITE_RUN_DIR_ON_SUITE_HOST for local jobs or remote jobs
           with SSH messaging.
 
-    2/ For suite on local user@host. The suite service directory.
+    3/ For suite on local user@host. The suite service directory.
 
-    3/ Location under $HOME/.cylc/ for remote suite control from accounts
+    4/ Location under $HOME/.cylc/ for remote suite control from accounts
        that do not actually need the suite definition directory to be
        installed:
        $HOME/.cylc/auth/SUITE_OWNER@SUITE_HOST/SUITE_NAME/
 
-    4/ For remote suites, try locating the file from the suite service
+    5/ For remote suites, try locating the file from the suite service
        directory on remote owner@host via SSH. If content=False, the value
        of the located file will be dumped under:
        $HOME/.cylc/auth/SUITE_OWNER@SUITE_HOST/SUITE_NAME/
 
     """
     if item not in [
-            SuiteFiles.Service.PASSPHRASE, SuiteFiles.Service.CONTACT,
-            SuiteFiles.Service.CONTACT2,
-            UserFiles.Auth.SERVER_PRIVATE_KEY_CERTIFICATE,
-            UserFiles.Auth.SERVER_PUBLIC_KEY_CERTIFICATE]:
-        raise ValueError("%s: item not recognised" % item)
+            SuiteFiles.Service.CONTACT,
+            SuiteFiles.Service.CONTACT2] and not isinstance(item, KeyInfo):
+        raise ValueError(f"{item}: item not recognised")
 
-    # For a UserFiles.Auth.SERVER_..._KEY_CERTIFICATE, only need to check Case
-    # '3/' (always ignore content i.e. content=False), so check these first:
-    if item in (UserFiles.Auth.SERVER_PRIVATE_KEY_CERTIFICATE,
-                UserFiles.Auth.SERVER_PUBLIC_KEY_CERTIFICATE):
-        auth_path = os.path.join(
-            get_suite_srv_dir(reg), UserFiles.Auth.DIRNAME)
-        public_key_dir, private_key_dir = return_key_locations(auth_path)
-        if item == UserFiles.Auth.SERVER_PRIVATE_KEY_CERTIFICATE:
-            path = private_key_dir
-        else:
-            path = public_key_dir
-        value = _locate_item(item, path)
-        if value:
-            return value
+        # 1 (a)
+    if isinstance(item, KeyInfo):
+
+        item_location = _locate_item(item.file_name, item.key_path)
+
+        # Temporary hack until we can separate key file 'get' into own function
+        # Additional searches below need a file name, not a complex object
+        item = item.file_name
+
+        if item_location:
+            return item_location
 
     if reg == os.getenv('CYLC_SUITE_NAME'):
         env_keys = []
         if 'CYLC_SUITE_RUN_DIR' in os.environ:
-            # 1(a)/ Task messaging call.
+            # 2(a)/ Task messaging call.
             env_keys.append('CYLC_SUITE_RUN_DIR')
         elif ContactFileFields.SUITE_RUN_DIR_ON_SUITE_HOST in os.environ:
-            # 1(b)/ Task messaging call via ssh messaging.
+            # 2(b)/ Task messaging call via ssh messaging.
             env_keys.append(ContactFileFields.SUITE_RUN_DIR_ON_SUITE_HOST)
         for key in env_keys:
             path = os.path.join(os.environ[key], SuiteFiles.Service.DIRNAME)
@@ -367,7 +416,7 @@ def get_auth_item(item, reg, owner=None, host=None, content=False):
                 value = _locate_item(item, path)
             if value:
                 return value
-    # 2/ Local suite service directory
+    # 3/ Local suite service directory
     if _is_local_auth_ok(reg, owner, host):
         path = get_suite_srv_dir(reg)
         if content:
@@ -376,7 +425,7 @@ def get_auth_item(item, reg, owner=None, host=None, content=False):
             value = _locate_item(item, path)
         if value:
             return value
-    # 3/ Disk cache for remote suites
+    # 4/ Disk cache for remote suites
     if owner is not None and host is not None:
         paths = [_get_cache_dir(reg, owner, host)]
         short_host = host.split('.', 1)[0]
@@ -390,7 +439,7 @@ def get_auth_item(item, reg, owner=None, host=None, content=False):
             if value:
                 return value
 
-    # 4/ Use SSH to load content from remote owner@host
+    # 5/ Use SSH to load content from remote owner@host
     # Note: It is not possible to find ".service/contact2" on the suite
     # host, because it is installed on task host by "cylc remote-init" on
     # demand.
@@ -595,20 +644,70 @@ def register(reg=None, source=None, redirect=False, rundir=None):
 
 
 def create_auth_files(reg):
-    """Create or renew passphrase and SSL files for suite 'reg'."""
-    # Suite service directory.
-    srv_d = get_suite_srv_dir(reg)
-    os.makedirs(srv_d, exist_ok=True)
+    """Create or renew authentication keys for suite 'reg' in the .service
+     directory."""
 
-    # If necessary, generate directory holding (in separate sub-dirs) the
-    # server (suite) public and private keys for authentication:
-    ensure_suite_keys_exist(srv_d)
+    suite_srv_dir = get_suite_srv_dir(reg)
 
-    # Create a new passphrase for the suite if necessary.
-    if not _locate_item(SuiteFiles.Service.PASSPHRASE, srv_d):
-        import random
-        _dump_item(srv_d, SuiteFiles.Service.PASSPHRASE, ''.join(
-            random.sample(PASSPHRASE_CHARSET, PASSPHRASE_LEN)))
+    keys = {"client_public_key": KeyInfo(
+            KeyType.PUBLIC,
+            KeyOwner.CLIENT,
+            suite_srv_dir=suite_srv_dir),
+            "client_private_key": KeyInfo(
+            KeyType.PRIVATE,
+            KeyOwner.CLIENT,
+            suite_srv_dir=suite_srv_dir),
+            "server_public_key": KeyInfo(
+            KeyType.PUBLIC,
+            KeyOwner.SERVER,
+            suite_srv_dir=suite_srv_dir),
+            "server_private_key": KeyInfo(
+            KeyType.PRIVATE,
+            KeyOwner.SERVER,
+            suite_srv_dir=suite_srv_dir)
+            }
+
+    # WARNING, DESTRUCTIVE. Removes old key folders if they already exist.
+    for k in keys.values():
+        if os.path.exists(k.key_path):
+            shutil.rmtree(k.key_path)
+        os.makedirs(k.key_path, exist_ok=True)
+        os.chmod(k.key_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+
+    temp_keys_dir = os.path.join(suite_srv_dir, 'keys')
+    os.mkdir(temp_keys_dir)
+
+    # ZMQ generates keys in a temporary directory.
+    # Move these to .service directory.
+    temp_client_public_key_path, temp_client_private_key_path = (
+        zmq.auth.create_certificates(temp_keys_dir, KeyOwner.CLIENT.value))
+    client_public_keys_path = shutil.move(
+        temp_client_public_key_path,
+        keys["client_public_key"].key_path)
+    os.chmod(client_public_keys_path, stat.S_IRUSR |
+             stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH)
+    client_private_key_path = shutil.move(
+        temp_client_private_key_path,
+        keys["client_private_key"].key_path)
+    os.chmod(client_private_key_path, stat.S_IRUSR | stat.S_IWUSR)
+
+    temp_server_public_key_path, temp_server_private_key_path = (
+        zmq.auth.create_certificates(
+            temp_keys_dir, KeyOwner.SERVER.value))
+    server_public_keys_path = shutil.move(
+        temp_server_public_key_path,
+        keys["server_public_key"].key_path)
+    os.chmod(server_public_keys_path, stat.S_IRUSR |
+             stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH)
+    server_private_key_path = shutil.move(
+        temp_server_private_key_path,
+        keys["server_private_key"].key_path)
+
+    os.chmod(server_private_key_path, stat.S_IRUSR | stat.S_IWUSR)
+
+    # Delete temporary directory where keys were generated.
+
+    shutil.rmtree(temp_keys_dir)
 
 
 def _dump_item(path, item, value):
@@ -782,105 +881,3 @@ def _locate_item(item, path):
     fname = os.path.join(path, item)
     if os.path.exists(fname):
         return fname
-
-
-def return_key_locations(store_dir):
-    """Return the paths to a directory's key files: (public, private)."""
-    return (
-        os.path.join(store_dir, UserFiles.Auth.PUBLIC_KEY_DIRNAME),
-        os.path.join(store_dir, UserFiles.Auth.PRIVATE_KEY_DIRNAME)
-    )
-
-
-def generate_key_store(store_parent_dir, keys_tag):
-    """Generate two sub-directories, each having a file with a CURVE key.
-
-    WARNING: be careful testing this. It uses 'shutil.rmtree' which will
-    wipe the whole 'store_dir/UserFiles.Auth.DIRNAME' directory if it exists.
-
-    Note: store_parent_dir must already exist as a valid directory.
-    """
-
-    # Define the directory structure to store the CURVE keys in
-    store_dir = os.path.join(store_parent_dir, UserFiles.Auth.DIRNAME)
-    public_key_loc, private_key_loc = return_key_locations(store_dir)
-
-    # Create, or wipe, that directory structure
-    for directory in [store_dir, public_key_loc, private_key_loc]:
-        if os.path.exists(directory):
-            shutil.rmtree(directory)  # WARNING: destructive, so take care
-        os.mkdir(directory)
-
-    # lock the parent auth directory
-    try:
-        # Set Linux file permission 0700 ('drwx------.')
-        # This means that the owner can read & write.
-        # All others cannot do anything to the key-store and it's contents.
-        os.chmod(store_dir, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
-    except Exception:
-        # Catch any and all errors here, since key store must be
-        # locked for the security (asymmetric cryptography) to work.
-        raise OSError("Unable to lock permissions of auth " +
-                      "key store directory for authentication. Abort.")
-
-    # Make a new public-private CURVE key pair
-    zmq.auth.create_certificates(store_dir, keys_tag)
-
-    # Move key pair to appropriate directories & lock private key file
-    for key_file in os.listdir(store_dir):
-        if key_file.endswith(UserFiles.Auth.PUBLIC_TAG):
-            shutil.move(os.path.join(store_dir, key_file),
-                        os.path.join(public_key_loc, '.'))
-        elif key_file.endswith(UserFiles.Auth.PRIVATE_TAG):
-            shutil.move(os.path.join(store_dir, key_file),
-                        os.path.join(private_key_loc, '.'))
-
-
-def ensure_keypair_exists(auth_parent_dir, auth_child_dir, tag):
-    """Check if a set of public/private keys exist and if not, create them.
-
-    Args:
-        auth_parent_dir (str):
-            Parent containing public/private key directories (auth_child_dir).
-        auth_child_dir (str):
-            Child containing public/private keys.
-        tag (str): Filename/Basename of key.
-
-    Returns:
-        bool: True if the keypair (now) exists.
-
-    """
-    public_key_location, private_key_location = return_key_locations(
-        auth_child_dir)  # where the keys should be, else where to create them
-    if (os.path.exists(public_key_location) and
-            os.path.exists(private_key_location)):
-        return True
-
-    # Ensure parent dir exists (child dir will be created if it does not)
-    if not os.path.exists(auth_parent_dir):
-        os.mkdir(auth_parent_dir)
-    try:
-        generate_key_store(auth_parent_dir, tag)
-        return True
-    except Exception:
-        # Catch anything so we can otherwise be sure the key store exists.
-        LOG.exception("Failed to create %s authentication keys." % tag)
-        return False
-
-
-def ensure_user_keys_exist():
-    """Make sure the user (client) public/private keys exist."""
-    return ensure_keypair_exists(
-        UserFiles.get_path(include_auth_dirname=False),
-        UserFiles.get_path(),
-        UserFiles.Auth.CLIENT_TAG
-    )
-
-
-def ensure_suite_keys_exist(suite_service_directory):
-    """Make sure the suite (server) public/private keys exist."""
-    return ensure_keypair_exists(
-        suite_service_directory,
-        os.path.join(suite_service_directory, UserFiles.Auth.DIRNAME),
-        UserFiles.Auth.SERVER_TAG
-    )

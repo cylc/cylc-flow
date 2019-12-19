@@ -320,13 +320,16 @@ class TaskRemoteMgr(object):
                 os.path.join(
                     SuiteFiles.Service.DIRNAME,
                     SuiteFiles.Service.CONTACT)))
-        if comm_meth in ['zmq']:
-            # Passphrase file
-            items.append((
-                get_auth_item(
-                    SuiteFiles.Service.PASSPHRASE,
-                    self.suite),
-                os.path.join(
-                    SuiteFiles.Service.DIRNAME,
-                    SuiteFiles.Service.PASSPHRASE)))
+        # TODO: This will be removed in the passphrase cleanup
+        #       Commented out for now as breaking functional tests
+        #
+        # if comm_meth in ['zmq']:
+        #     # Passphrase file
+        #     items.append((
+        #         get_auth_item(
+        #             SuiteFiles.Service.PASSPHRASE,
+        #             self.suite),
+        #         os.path.join(
+        #             SuiteFiles.Service.DIRNAME,
+        #             SuiteFiles.Service.PASSPHRASE)))
         return items
