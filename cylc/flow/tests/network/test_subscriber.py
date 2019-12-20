@@ -89,7 +89,7 @@ class TestWorkflowSubscriber(CylcWorkflowTestCase):
         self.workflow_id = self.scheduler.ws_data_mgr.workflow_id
         self.publisher = WorkflowPublisher(
             self.suite_name, threaded=False, daemon=True)
-        self.publisher.start(*PORT_RANGE)
+        self.publisher.start_(*PORT_RANGE)
         self.subscriber = WorkflowSubscriber(
             self.suite_name,
             host=self.scheduler.host,
@@ -102,8 +102,8 @@ class TestWorkflowSubscriber(CylcWorkflowTestCase):
         self.data = None
 
     def tearDown(self):
-        self.subscriber.stop()
-        self.publisher.stop()
+        self.subscriber.stop_()
+        self.publisher.stop_()
 
     def test_constructor(self):
         """Test class constructor result."""

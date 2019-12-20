@@ -126,7 +126,7 @@ class ZMQSocketBase:
         self.loop = None
         self.stopping = False
 
-    def start(self, *args, **kwargs):
+    def start_(self, *args, **kwargs):
         """Start the server/network-component.
 
         Pass arguments to _start_
@@ -253,7 +253,7 @@ class ZMQSocketBase:
         self.stopping = False
         sleep(0)  # yield control to other threads
 
-    def stop(self, stop_loop=True):
+    def stop_(self, stop_loop=True):
         """Stop the server.
 
         Args:

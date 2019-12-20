@@ -47,9 +47,9 @@ def test_server_requires_valid_keys():
         server = ZMQSocketBase(zmq.REQ, bind=True, daemon=True)
 
         with pytest.raises(ValueError, match=r"No public key found in "):
-            server.start(*PORT_RANGE, private_key_location=fake.name)
+            server.start_(*PORT_RANGE, private_key_location=fake.name)
 
-        server.stop()
+        server.stop_()
 
 
 def test_client_requires_valid_keys():
@@ -62,7 +62,7 @@ def test_client_requires_valid_keys():
                 ClientError, match=r"Failed to load the suite's public "
                 "key, so cannot connect."):
             # Assign a blank file masquerading as a CurveZMQ certificate
-            client.start(HOST, port, srv_public_key_loc=fake.name)
+            client.start_(HOST, port, srv_public_key_loc=fake.name)
 
 
 def test_single_port():
@@ -80,8 +80,8 @@ def test_single_port():
     with pytest.raises(CylcError, match=r"Address already in use") as exc:
         serv2._socket_bind(port, port)
 
-    serv2.stop()
-    serv1.stop()
+    serv2.stop_()
+    serv1.stop_()
     context.destroy()
 
 
@@ -94,7 +94,7 @@ def test_start():
     assert publisher.barrier.n_waiting == 0
     assert publisher.loop is None
     assert publisher.port is None
-    publisher.start(*PORT_RANGE)
+    publisher.start_(*PORT_RANGE)
     # barrier.wait() doesn't seem to work properly here
     # so this workaround will do
     while publisher.barrier.n_waiting < 1:
@@ -102,7 +102,7 @@ def test_start():
     assert barrier.wait() == 1
     assert publisher.loop is not None
     assert publisher.port is not None
-    publisher.stop()
+    publisher.stop_()
 
 
 def test_stop():
@@ -111,7 +111,7 @@ def test_stop():
     barrier = Barrier(2, timeout=20)
     publisher = ZMQSocketBase(zmq.PUB, suite='test_zmq_stop', bind=True,
                               barrier=barrier, threaded=True, daemon=True)
-    publisher.start(*PORT_RANGE)
+    publisher.start_(*PORT_RANGE)
     # barrier.wait() doesn't seem to work properly here
     # so this workaround will do
     while publisher.barrier.n_waiting < 1:
@@ -119,7 +119,7 @@ def test_stop():
     barrier.wait()
     assert not publisher.socket.closed
     assert publisher.thread.is_alive()
-    publisher.stop()
+    publisher.stop_()
     assert publisher.socket.closed
     assert not publisher.thread.is_alive()
 

@@ -91,7 +91,7 @@ class TestSuiteRuntimeServer(CylcWorkflowTestCase):
             daemon=True
         )
         self.server.public_priv = Priv.CONTROL
-        self.server.start(*PORT_RANGE)
+        self.server.start_(*PORT_RANGE)
         # barrier.wait() doesn't seem to work properly here
         # so this workaround will do
         while barrier.n_waiting < 1:
@@ -100,7 +100,7 @@ class TestSuiteRuntimeServer(CylcWorkflowTestCase):
         sleep(0.5)
 
     def tearDown(self):
-        self.server.stop()
+        self.server.stop_()
 
     def test_constructor(self):
         self.assertFalse(self.server.socket.closed)

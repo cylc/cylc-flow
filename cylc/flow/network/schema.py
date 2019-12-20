@@ -22,7 +22,22 @@ import logging
 from textwrap import dedent
 from typing import Callable, AsyncGenerator, Any
 
-from cylc.flow.task_state import TASK_STATUSES_ORDERED
+from cylc.flow.task_state import (
+    TASK_STATUSES_ORDERED,
+    TASK_STATUS_DESC,
+    TASK_STATUS_RUNAHEAD,
+    TASK_STATUS_WAITING,
+    TASK_STATUS_QUEUED,
+    TASK_STATUS_EXPIRED,
+    TASK_STATUS_READY,
+    TASK_STATUS_SUBMIT_FAILED,
+    TASK_STATUS_SUBMIT_RETRYING,
+    TASK_STATUS_SUBMITTED,
+    TASK_STATUS_RETRYING,
+    TASK_STATUS_RUNNING,
+    TASK_STATUS_FAILED,
+    TASK_STATUS_SUCCEEDED
+)
 from cylc.flow.data_store_mgr import (
     ID_DELIM, FAMILIES, FAMILY_PROXIES,
     JOBS, TASKS, TASK_PROXIES
@@ -878,20 +893,11 @@ async def nodes_mutator(root, info, command, ids, workflows=None,
     res = await resolvers.nodes_mutator(info, command, ids, w_args, args)
     return GenericResponse(result=res)
 
-
-class WorkflowName(String):
-    """a"""
+# Input types:
 
 
-class User(String):
-    """a"""
-
-
-# Mutations defined:
-class WorkflowID(InputObjectType):
-    """A workflow identifier of the form `user|workflow_name`."""
-    name = WorkflowName(required=True)
-    user = User()
+class WorkflowID(String):
+    """A registered workflow."""
 
 
 class CyclePoint(String):
@@ -899,21 +905,73 @@ class CyclePoint(String):
 
 
 class CyclePointGlob(String):
-    """An integer or date-time cyclepoint."""
+    """A glob for integer or date-time cyclepoints.
+
+    The wildcard character (`*`) can be used to perform globbing.
+    For example `2000*` might match `2000-01-01T00:00Z`.
+
+    """
 
 
-TaskStatus = Enum(
-    'TaskStatus',
-    [
-        (status, status)
-        for status in TASK_STATUSES_ALL
-    ]
-    #description='The status of ac task e.g. waiting, running, succeeded.'
-)
+class RuntimeConfiguration(String):
+    """A configuration item for a task or family e.g. `script`."""
+
+
+class BroadcastSetting(InputObjectType):
+    """A task/family runtime setting as a key, value pair."""
+
+    key = RuntimeConfiguration(
+        description=sstrip('''
+            The cylc namespace for the setting to modify.
+            e.g. `[environment]variable_name`.
+        '''),
+        required=True
+    )
+    value = String(
+        description='The value of the modification'
+    )
+
+
+class BroadcastMode(Enum):
+    Set = 'put_broadcast'
+    Clear = 'clear_broadcast'
+
+    @property
+    def description(self):
+        if self == BroadcastMode.Set:
+            return 'Create a new broadcast.'
+        if self == BroadcastMode.Clear:
+            return 'Revoke an existing broadcast.'
+        return ''
+
+
+class TaskStatus(Enum):
+    """The status of a task in a workflow."""
+
+    # NOTE: this is an enumeration purely for the GraphQL schema
+    # TODO: the task statuses should be formally declared in a Python
+    #       enumeration rendering this class unnecessary
+    # NOTE: runahead purposefully omitted to hide users from the task pool
+    # Runahead = TASK_STATUS_RUNAHEAD
+    Waiting = TASK_STATUS_WAITING
+    Queued = TASK_STATUS_QUEUED
+    Expired = TASK_STATUS_EXPIRED
+    Ready = TASK_STATUS_READY
+    SubmitFailed = TASK_STATUS_SUBMIT_FAILED
+    SubmitRetrying = TASK_STATUS_SUBMIT_RETRYING
+    Submitted = TASK_STATUS_SUBMITTED
+    Retrying = TASK_STATUS_RETRYING
+    Running = TASK_STATUS_RUNNING
+    Failed = TASK_STATUS_FAILED
+    Succeeded = TASK_STATUS_SUCCEEDED
+
+    @property
+    def description(self):
+        return TASK_STATUS_DESC.get(self.value, '')
 
 
 class TaskState(InputObjectType):
-    """The state of a task, a combination of status and other field."""
+    """The state of a task, a combination of status and other fields."""
 
     status = TaskStatus()
     is_held = Boolean(description=sstrip('''
@@ -935,74 +993,144 @@ class NamespaceName(String):
 
 
 class NamespaceIDGlob(String):
-    """A glob search for an active task or family."""
+    """A glob search for an active task or family.
 
-    cycle = CyclePointGlob()
-    namespace = NamespaceName()
-    status = TaskState()
+    Can use the wildcard character (`*`), e.g `foo*` might match `foot`.
+    """
+
+    # cycle = CyclePointGlob()
+    # namespace = NamespaceName()
+    # status = TaskState()
 
 
-class TaskID(InputObjectType):
+class TaskID(String):
     """The name of an active task."""
 
-    cycle = CyclePoint(required=True)
-    name = TaskName(required=True)
+    # cycle = CyclePoint(required=True)
+    # name = TaskName(required=True)
 
 
-class JobID(InputObjectType):
+class JobID(String):
     """A job submission from an active task."""
 
-    task = TaskID(required=None)
-    submission_number = Int(default=-1)
+    # task = TaskID(required=None)
+    # submission_number = Int(default=-1)
 
 
 class TimePoint(String):
     """A date-time in the ISO8601 format."""
 
 
-class ClearBroadcast(Mutation):
+LogLevels = Enum(
+    'LogLevels',
+    list(logging._nameToLevel.items()),
+    description=lambda x: f'Python logging level: {x.name} = {x.value}.'
+    if x else ''
+)
+
+
+class SuiteStopMode(Enum):
+    """The mode used to stop a running workflow."""
+
+    # Note: contains only the REQUEST_* values from StopMode
+    Clean = StopMode.REQUEST_CLEAN
+    Now = StopMode.REQUEST_NOW
+    NowNow = StopMode.REQUEST_NOW_NOW
+
+    @property
+    def description(self):
+        return StopMode(self.value).describe()
+
+
+# Mutations:
+
+# TODO: re-instate:
+# - get-broadcast (can just use GraphQL query BUT needs CLI access too)
+# - expire-broadcast
+
+class Broadcast(Mutation):
     class Meta:
-        description = """Expire all settings targeting cycle points
-earlier than cutoff."""
-        resolver = partial(mutator, command='clear_broadcast')
+        description = sstrip('''
+            Override or add new [runtime] config in targeted namespaces in
+            a running suite.
+
+            Uses for broadcast include making temporary changes to task
+            behaviour, and task-to-downstream-task communication via
+            environment variables.
+
+            A broadcast can target any [runtime] namespace for all cycles or
+            for a specific cycle. If a task is affected by specific-cycle and
+            all-cycle broadcasts at once, the specific takes precedence. If
+            a task is affected by broadcasts to multiple ancestor
+            namespaces, the result is determined by normal [runtime]
+            inheritance. In other words, it follows this order:
+
+            `all:root -> all:FAM -> all:task -> tag:root -> tag:FAM ->
+            tag:task`
+
+            Broadcasts persist, even across suite restarts, until they expire
+            when their target cycle point is older than the oldest current in
+            the suite, or until they are explicitly cancelled with this
+            command.  All-cycle broadcasts do not expire.
+
+            For each task the final effect of all broadcasts to all namespaces
+            is computed on the fly just prior to job submission.  The
+            `--cancel` and `--clear` options simply cancel (remove) active
+            broadcasts, they do not act directly on the final task-level
+            result. Consequently, for example, you cannot broadcast to "all
+            cycles except Tn" with an all-cycle broadcast followed by a cancel
+            to Tn (there is no direct broadcast to Tn to cancel); and you
+            cannot broadcast to "all members of FAMILY except member_n" with a
+            general broadcast to FAMILY followed by a cancel to member_n (there
+            is no direct broadcast to member_n to cancel).
+        ''')
+        resolver = partial(mutator, command='broadcast')
 
     class Arguments:
         workflows = List(WorkflowID, required=True)
-        point_strings = List(
+        mode = BroadcastMode(
+            default_value=1,
+            required=True
+        )
+        cycle_points = List(
             CyclePoint,
-            description="""`["*"]`""",
+            description=sstrip('''
+                List of cycle points to target or `*` to cancel all all-cycle
+                broadcasts without canceling all specific-cycle broadcasts.
+            '''),
             default_value=['*'])
         namespaces = List(
             NamespaceName,
-            description="""namespaces: `["foo", "BAZ"]`""",)
-        cancel_settings = List(
-            GenericScalar,
-            description="""
-settings: `[{environment: {ENVKEY: "env_val"}}, ...]`""",)
+            description='Target namespaces.',
+            default_value=['root']
+        )
+        settings = List(
+            BroadcastSetting,
+            description='Target settings.'
+        )
+        files = List(
+            String,
+            description=sstrip('''
+                File with config to broadcast. Can be used multiple times
+            ''')
+        )
 
     result = GenericScalar()
 
 
-class ExpireBroadcast(Mutation):
+class Hold(Mutation):
     class Meta:
-        description = """Clear settings globally,
-or for listed namespaces and/or points."""
-        resolver = partial(mutator, command='expire_broadcast')
+        description = sstrip('''
+            Hold a workflow or tasks within it.
+        ''')
+        resolver = partial(mutator, command='hold')
 
     class Arguments:
         workflows = List(WorkflowID, required=True)
-        cutoff = String(description="""String""")
-
-    result = GenericScalar()
-
-
-class HoldWorkflow(Mutation):
-    class Meta:
-        description = 'Hold workflow.'
-        resolver = partial(mutator, command='hold_workflow')
-
-    class Arguments:
-        workflows = List(WorkflowID, required=True)
+        ids = List(
+            NamespaceIDGlob,
+            description='Hold the specified tasks rather than the workflow.'
+        )
         time = TimePoint(description=sstrip('''
             Get the workflow to hold after the specified wallclock time
             has passed.
@@ -1011,9 +1139,16 @@ class HoldWorkflow(Mutation):
     result = GenericScalar()
 
 
-class NudgeWorkflow(Mutation):
+class Nudge(Mutation):
     class Meta:
-        description = """Tell workflow to try task processing."""
+        description = sstrip('''
+            Cause the Cylc task processing loop to be invoked on a running
+            suite.
+
+            This happens automatically when the state of any task changes
+            such that task processing (dependency negotiation etc.)
+            is required, or if a clock-trigger task is ready to run.
+        ''')
         resolver = partial(mutator, command='nudge')
 
     class Arguments:
@@ -1022,33 +1157,33 @@ class NudgeWorkflow(Mutation):
     result = GenericScalar()
 
 
-class PutBroadcast(Mutation):
+class Ping(Mutation):
     class Meta:
-        description = """Put up new broadcast settings
-(server side interface)."""
-        resolver = partial(mutator, command='put_broadcast')
+        description = sstrip('''
+            Send a test message to a running suite.
+        ''')
+        resolver = partial(mutator, command='ping_suite')
 
     class Arguments:
         workflows = List(WorkflowID, required=True)
-        point_strings = List(
-            CyclePointGlob,
-            description="""`["*"]`""",
-            default_value=['*'])
-        namespaces = List(
-            NamespaceName,
-            description="""namespaces: `["foo", "BAZ"]`""",)
-        settings = List(
-            GenericScalar,
-            description="""
-settings: `[{environment: {ENVKEY: "env_val"}}, ...]`""",)
 
     result = GenericScalar()
 
 
-class PutMessages(Mutation):
+class Message(Mutation):
     class Meta:
         description = sstrip('''
-            Put task messages in queue for processing later by the main loop.
+            Record task job messages.
+
+            Send task job messages to:
+            - The job stdout/stderr.
+            - The job status file, if there is one.
+            - The suite server program, if communication is possible.
+
+            Task jobs use this to record and report status such
+            as success and failure. Applications run by task jobs can use
+            this command to report messages and to report registered task
+            outputs.
         ''')
         resolver = partial(nodes_mutator, command='put_messages')
 
@@ -1059,25 +1194,60 @@ class PutMessages(Mutation):
         messages = List(
             List(String),
             description="""List in the form `[[severity, message], ...]`.""",
-            default_value=None)
+            default_value=None
+        )
 
     result = GenericScalar()
 
 
-class ReleaseWorkflow(Mutation):
+class Release(Mutation):
     class Meta:
-        description = """Reload workflow definitions."""
-        resolver = partial(mutator, command='release_suite')
+        description = sstrip('''
+            Release a held workflow or tasks within it.
+
+            See also the opposite command `hold`.
+        ''')
+        resolver = partial(mutator, command='release')
 
     class Arguments:
         workflows = List(WorkflowID, required=True)
+        ids = List(
+            NamespaceIDGlob,
+            description=sstrip('''
+                Release matching tasks rather than the workflow as whole.
+            ''')
+        )
 
     result = GenericScalar()
 
 
-class ReloadWorkflow(Mutation):
+class Reload(Mutation):
     class Meta:
-        description = """Tell workflow to reload the workflow definition."""
+        description = sstrip('''
+            Tell a suite to reload its definition at run time.
+
+            All settings including task definitions, with the
+            exception of suite log configuration, can be changed on reload.
+            Note that defined tasks can be be added to or removed from a
+            running suite using "insert" and "remove" without reloading.  This
+            command also allows addition and removal of actual task
+            definitions, and therefore insertion of tasks that were not defined
+            at all when the suite started (you will still need to manually
+            insert a particular instance of a newly defined task). Live task
+            proxies that are orphaned by a reload (i.e. their task definitions
+            have been removed) will be removed from the task pool if they have
+            not started running yet. Changes to task definitions take effect
+            immediately, unless a task is already running at reload time.
+
+            If the suite was started with Jinja2 template variables
+            set on the command line (cylc run --set FOO=bar REG) the same
+            template settings apply to the reload (only changes to the suite.rc
+            file itself are reloaded).
+
+            If the modified suite definition does not parse,
+            failure to reload will be reported but no harm will be done to the
+            running suite.
+        ''')
         resolver = partial(mutator, command='reload_suite')
 
     class Arguments:
@@ -1086,16 +1256,15 @@ class ReloadWorkflow(Mutation):
     result = GenericScalar()
 
 
-LogLevels = Enum(
-    'LogLevels',
-    list(logging._nameToLevel.items())
-    #description='Logging severity level.'
-)
-
-
 class SetVerbosity(Mutation):
     class Meta:
-        description = """Set workflow verbosity to new level."""
+        description = sstrip('''
+            Change the logging severity level of a running suite.
+
+            Only messages at or above the chosen severity level will be logged;
+            for example, if you choose `WARNING`, only warnings and critical
+            messages will be logged.
+        ''')
         resolver = partial(mutator, command='set_verbosity')
 
     class Arguments:
@@ -1105,48 +1274,90 @@ class SetVerbosity(Mutation):
     result = GenericScalar()
 
 
-class StopWorkflow(Mutation):
+class Stop(Mutation):
     class Meta:
-        description = 'Stop a running workflow'
+        description = sstrip(f'''
+            Tell a suite server program to shut down.
+
+            In order to prevent failures going unnoticed, suites only shut down
+            automatically at a final cycle point if no failed tasks are
+            present. There are several shutdown methods:
+
+            Tasks that become ready after the shutdown is ordered will be
+            submitted immediately if the suite is restarted.  Remaining task
+            event handlers and job poll and kill commands, however, will be
+            executed prior to shutdown, unless the stop mode is
+            `{StopMode.REQUEST_NOW}`.
+        ''')
         resolver = partial(mutator, command='stop_workflow')
 
     class Arguments:
         workflows = List(WorkflowID, required=True)
-        mode = Enum.from_enum(
-            StopMode,
-            # TODO: this isn't working
-            # description=StopMode.description
-        )()
-        cycle_point = CyclePoint()
-        clock_time = TimePoint()
-        task = TaskID()
+        mode = SuiteStopMode(
+            # TODO default
+        )
+        cycle_point = CyclePoint(
+            description='Stop after the suite reaches this cycle.'
+        )
+        clock_time = TimePoint(
+            description='Stop after wall-clock time passes this point.'
+        )
+        task = TaskID(
+            description='Stop after this task succeeds.'
+        )
 
     result = GenericScalar()
 
 
 class TakeCheckpoint(Mutation):
     class Meta:
-        description = """Checkpoint current task pool."""
+        description = 'Tell the suite to checkpoint its current state.'
         resolver = partial(mutator, command='take_checkpoints')
 
     class Arguments:
         workflows = List(WorkflowID, required=True)
         name = String(
-            description="""The checkpoint name""",
+            description='The checkpoint name.',
             required=True)
 
     result = GenericScalar()
 
 
-class ExternalTrigger(Mutation):
+class ExtTrigger(Mutation):
     class Meta:
-        description = """Server-side external event trigger interface."""
-        resolver = partial(mutator, command='put_external_trigger')
+        description = sstrip('''
+            Report an external event message to a suite server program.
+
+            It is expected that a task in the suite has registered the same
+            message as an external trigger - a special prerequisite to be
+            satisfied by an external system, via this command, rather than by
+            triggering off other tasks.
+
+            The ID argument should uniquely distinguish one external trigger
+            event from the next. When a task's external trigger is satisfied by
+            an incoming message, the message ID is broadcast to all downstream
+            tasks in the cycle point as `$CYLC_EXT_TRIGGER_ID` so that they can
+            use it - e.g. to identify a new data file that the external
+            triggering system is responding to.
+
+            Use the retry options in case the target suite is down or out of
+            contact.
+
+            Note: To manually trigger a task use "Trigger" not
+            "ExtTrigger".
+        ''')
+        resolver = partial(mutator, command='put_ext_trigger')
 
     class Arguments:
         workflows = List(WorkflowID, required=True)
-        event_message = String(required=True)
-        event_id = String(required=True)
+        message = String(
+            description='External trigger message.',
+            required=True
+        )
+        id = String(
+            description='Unique trigger ID.',
+            required=True
+        )
 
     result = GenericScalar()
 
@@ -1159,127 +1370,196 @@ class TaskMutation:
     result = GenericScalar()
 
 
-class DryRunTasks(Mutation, TaskMutation):
-    class Arguments(TaskMutation.Arguments):
-        check_syntax = Boolean()
-
+class DryRun(Mutation, TaskMutation):
     class Meta:
-        description = ''
+        description = sstrip('''
+            [For internal use] Prepare the job file for a task.
+        ''')
         resolver = partial(mutator, command='dry_run_tasks')
 
-
-class HoldTasks(Mutation, TaskMutation):
-    class Meta:
-        description = ''
-        resolver = partial(mutator, command='hold_tasks')
-
-
-class InsertTasks(Mutation, TaskMutation):
     class Arguments(TaskMutation.Arguments):
-        no_check = Boolean()
-        stop_point_string = String()
+        check_syntax = Boolean(
+            description='Check shell syntax.',
+            default_value=True
+        )
 
+
+class Insert(Mutation, TaskMutation):
     class Meta:
-        description = ''
+        description = sstrip('''
+            Insert new task proxies into the task pool of a running workflow.
+
+            For example to enable re-triggering earlier tasks already removed
+            from the pool.
+
+            Note: inserted cycling tasks cycle on as normal, even if another
+            instance of the same task exists at a later cycle (instances of the
+            same task at different cycles can coexist, but a newly spawned task
+            will not be added to the pool if it catches up to another task with
+            the same ID).
+
+            See also "Submit", for running tasks without the scheduler.
+        ''')
         resolver = partial(mutator, command='insert_tasks')
 
+    class Arguments(TaskMutation.Arguments):
+        no_check = Boolean(
+            description=sstrip('''
+                Add task even if the provided cycle point is not valid for
+                the given task.
+            ''')
+        )
+        stop_point = CyclePoint(
+            description='hold/stop cycle point for inserted task.'
+        )
 
-class KillTaskJobs(Mutation, TaskMutation):
+
+class Kill(Mutation, TaskMutation):
     # TODO: This should be a job mutation?
     class Meta:
-        description = ''
-        # TODO: rename tasks=>jobs ???
+        description = sstrip('''
+            Kill jobs of active tasks and update their statuses accordingly.
+        ''')
         resolver = partial(mutator, command='kill_tasks')
 
 
-class PollTasks(Mutation, TaskMutation):
-    class Arguments(TaskMutation.Arguments):
-        poll_succ = Boolean()
-
+class Poll(Mutation, TaskMutation):
     class Meta:
-        description = ''
+        description = sstrip('''
+            Poll (query) task jobs to verify and update their statuses.
+        ''')
         resolver = partial(mutator, command='poll_tasks')
 
-
-class ReleaseTasks(Mutation, TaskMutation):
-    class Meta:
-        description = ''
-        resolver = partial(mutator, command='release_tasks')
-
-
-class RemoveTasks(Mutation, TaskMutation):
     class Arguments(TaskMutation.Arguments):
-        spawn = Boolean()
+        poll_succ = Boolean(
+            description='Allow polling of succeeded tasks.'
+        )
 
+
+class Remove(Mutation, TaskMutation):
     class Meta:
-        description = ''
+        description = sstrip('''
+            Remove one or more task instances from a running workflow.
+
+            Tasks will be forced to spawn successors before removal if they
+            have not done so already, unless you use `no_spawn`.
+        ''')
         resolver = partial(mutator, command='remove_tasks')
 
-
-class ResetTaskStates(Mutation, TaskMutation):
     class Arguments(TaskMutation.Arguments):
-        state = String()
-        outputs = List(String)
+        spawn = Boolean(
+            description='Spawn successors before removal.',
+            default_value=True
+        )
 
+
+class Reset(Mutation, TaskMutation):
     class Meta:
-        description = ''
+        description = sstrip(f'''
+            Force task instances to a specified state.
+
+            Outputs are automatically updated to reflect the new task state,
+            except for custom message outputs which can be manipulated directly
+            with `output`.
+
+            Prerequisites reflect the state of other tasks; they are not
+            changed except to unset them on resetting state to
+            `{TASK_STATUS_WAITING}` or earlier.
+
+            Note: To hold and release tasks use "Hold" and "Release", not this
+            command.
+        ''')
         resolver = partial(mutator, command='reset_task_states')
 
+    class Arguments(TaskMutation.Arguments):
+        state = TaskStatus(
+            description='Reset the task status to this.'
+        )
+        outputs = List(
+            String,
+            description=sstrip('''
+                Find task output by message string or trigger string, set
+                complete or incomplete with `!OUTPUT`, `*` to set all
+                complete, `!*` to set all incomplete.
+            ''')
+        )
 
-class SpawnTasks(Mutation, TaskMutation):
+
+class Spawn(Mutation, TaskMutation):
     class Meta:
-        description = ''
+        description = sstrip(f'''
+            Force task proxies to spawn successors at their own next cycle
+            point.
+
+            Tasks normally spawn on reaching the {TASK_STATUS_SUBMITTED}
+            status. Spawning them early allows running successive instances of
+            the same task out of order.  See also the `spawn to max active
+            cycle points` workflow configuration.
+
+            Note this command does not operate on tasks at any arbitrary point
+            in the abstract workflow graph - tasks not already in the pool must
+            be inserted first with "Insert".
+        ''')
         resolver = partial(mutator, command='spawn_tasks')
 
 
-class TriggerTasks(Mutation, TaskMutation):
-    class Arguments(TaskMutation.Arguments):
-        back_out = Boolean()
-
+class Trigger(Mutation, TaskMutation):
     class Meta:
-        description = ''
+        description = sstrip('''
+            Manually trigger tasks.
+
+            TODO: re-implement edit funtionality!
+
+            For single tasks you can use `edit` to edit the generated job
+            script before it submits, to apply one-off changes. A diff between
+            the original and edited job script will be saved to the task job
+            log directory.
+
+            Warning: waiting tasks that are queue-limited will be queued if
+            triggered, to submit as normal when released by the queue; queued
+            tasks will submit immediately if triggered, even if that violates
+            the queue limit (so you may need to trigger a queue-limited task
+            twice to get it to submit immediately).
+
+            Note: tasks not already in the pool must be inserted first with
+            "Insert" in order to be matched.
+        ''')
         resolver = partial(mutator, command='trigger_tasks')
+
+    class Arguments(TaskMutation.Arguments):
+        # back_out = Boolean()
+        # TODO: remove or re-implement?
+        pass
 
 
 # Mutation declarations
+
 class Mutations(ObjectType):
     # workflow actions
-    clear_broadcast = ClearBroadcast.Field(
-        description=ClearBroadcast._meta.description)
-    expire_broadcast = ExpireBroadcast.Field(
-        description=ExpireBroadcast._meta.description)
-    put_broadcast = PutBroadcast.Field(
-        description=PutBroadcast._meta.description)
-    ext_trigger = ExternalTrigger.Field(
-        description=ExternalTrigger._meta.description)
-    hold_workflow = HoldWorkflow.Field(
-        description=HoldWorkflow._meta.description)
-    nudge_workflow = NudgeWorkflow.Field(
-        description=NudgeWorkflow._meta.description)
-    put_messages = PutMessages.Field(
-        description=PutMessages._meta.description)
-    release_workflow = ReleaseWorkflow.Field(
-        description=ReleaseWorkflow._meta.description)
-    reload_workflow = ReloadWorkflow.Field(
-        description=ReloadWorkflow._meta.description)
+    broadcast = Broadcast.Field(description=Message._meta.description)
+    ext_trigger = ExtTrigger.Field(
+        description=ExtTrigger._meta.description)
+    hold = Hold.Field(description=Hold._meta.description)
+    nudge = Nudge.Field(description=Nudge._meta.description)
+    message = Message.Field(description=Message._meta.description)
+    ping = Ping.Field(description=Ping._meta.description)
+    release = Release.Field(description=Release._meta.description)
+    reload = Reload.Field(description=Reload._meta.description)
     set_verbosity = SetVerbosity.Field(
         description=SetVerbosity._meta.description)
-    stop_workflow = StopWorkflow.Field(
-        description=StopWorkflow._meta.description)
+    stop = Stop.Field(description=Stop._meta.description)
     take_checkpoint = TakeCheckpoint.Field(
         description=TakeCheckpoint._meta.description)
 
     # task actions
-    dry_run_tasks = DryRunTasks.Field()
-    hold_tasks = HoldTasks.Field()
-    insert_tasks = InsertTasks.Field()
-    kill_task_jobs = KillTaskJobs.Field()
-    poll_tasks = PollTasks.Field()
-    release_tasks = ReleaseTasks.Field()
-    remove_tasks = RemoveTasks.Field()
-    reset_task_states = ResetTaskStates.Field()
-    spawn_tasks = SpawnTasks.Field()
-    trigger_tasks = TriggerTasks.Field()
+    dry_run = DryRun.Field(description=DryRun._meta.description)
+    insert = Insert.Field(description=Insert._meta.description)
+    kill = Kill.Field(description=Kill._meta.description)
+    poll = Poll.Field(description=Poll._meta.description)
+    remove = Remove.Field(description=Remove._meta.description)
+    reset = Reset.Field(description=Reset._meta.description)
+    spawn = Spawn.Field(description=Spawn._meta.description)
+    trigger = Trigger.Field(description=Trigger._meta.description)
 
     # job actions
     # TODO

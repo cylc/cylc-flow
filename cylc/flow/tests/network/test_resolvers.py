@@ -23,7 +23,7 @@ from cylc.flow.data_store_mgr import (
     DataStoreMgr, ID_DELIM, EDGES, TASK_PROXIES, WORKFLOW
 )
 from cylc.flow.network.schema import parse_node_id
-from cylc.flow.network.resolvers import workflow_filter, node_filter, Resolvers
+from cylc.flow.network.resolvers import node_filter, Resolvers
 
 
 def _run_coroutine(coro):
@@ -53,15 +53,6 @@ class FakeFlow:
     owner = 'qux'
     name = 'baz'
     status = 'running'
-
-
-def test_workflow_filter():
-    data = {WORKFLOW: FakeFlow()}
-    args = deepcopy(FLOW_ARGS)
-    args['workflows'].append(('*', 'jin', None))
-    assert not workflow_filter(data, args)
-    args['workflows'].append(('qux', 'baz', 'running'))
-    assert workflow_filter(data, args)
 
 
 class FakeNode:

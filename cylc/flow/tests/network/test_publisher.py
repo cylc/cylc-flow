@@ -87,7 +87,7 @@ class TestWorkflowPublisher(CylcWorkflowTestCase):
         self.pub_data = self.scheduler.ws_data_mgr.get_publish_deltas()
 
     def tearDown(self):
-        self.publisher.stop()
+        self.publisher.stop_()
 
     def test_constructor(self):
         self.assertFalse(self.publisher.threaded)
@@ -95,7 +95,7 @@ class TestWorkflowPublisher(CylcWorkflowTestCase):
 
     def test_publish(self):
         """Test publishing data."""
-        self.publisher.start(*PORT_RANGE)
+        self.publisher.start_(*PORT_RANGE)
         subscriber = WorkflowSubscriber(
             self.suite_name,
             host=self.scheduler.host,
@@ -110,7 +110,7 @@ class TestWorkflowPublisher(CylcWorkflowTestCase):
         delta = DELTAS_MAP[btopic.decode('utf-8')]()
         delta.ParseFromString(msg)
         self.assertEqual(delta.id, self.workflow_id)
-        subscriber.stop()
+        subscriber.stop_()
         with self.assertLogs(LOG, level='ERROR') as cm:
             self.publisher.publish(None)
         self.assertIn('publish: ', cm.output[0])
@@ -119,16 +119,16 @@ class TestWorkflowPublisher(CylcWorkflowTestCase):
         """Test publisher start."""
         self.assertIsNone(self.publisher.loop)
         self.assertIsNone(self.publisher.port)
-        self.publisher.start(*PORT_RANGE)
+        self.publisher.start_(*PORT_RANGE)
         self.assertIsNotNone(self.publisher.loop)
         self.assertIsNotNone(self.publisher.port)
-        self.publisher.stop()
+        self.publisher.stop_()
 
     def test_stop(self):
         """Test publisher stop."""
-        self.publisher.start(*PORT_RANGE)
+        self.publisher.start_(*PORT_RANGE)
         self.assertFalse(self.publisher.socket.closed)
-        self.publisher.stop()
+        self.publisher.stop_()
         self.assertTrue(self.publisher.socket.closed)
 
 

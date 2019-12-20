@@ -89,7 +89,7 @@ class TestSuiteRuntimeClient(CylcWorkflowTestCase):
             barrier=barrier,
             daemon=True)
         port_range = glbl_cfg().get(['suite servers', 'run ports'])
-        self.server.start(port_range[0], port_range[-1])
+        self.server.start_(port_range[0], port_range[-1])
         # barrier.wait() doesn't seem to work properly here
         # so this workaround will do
         while barrier.n_waiting < 1:
@@ -103,8 +103,8 @@ class TestSuiteRuntimeClient(CylcWorkflowTestCase):
         sleep(0.5)
 
     def tearDown(self):
-        self.server.stop()
-        self.client.stop()
+        self.server.stop_()
+        self.client.stop_()
 
     def test_constructor(self):
         self.assertFalse(self.client.socket.closed)

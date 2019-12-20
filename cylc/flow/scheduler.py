@@ -285,10 +285,10 @@ class Scheduler(object):
             port_range = glbl_cfg().get(['suite servers', 'run ports'])
             self.server = SuiteRuntimeServer(
                 self, context=self.zmq_context, barrier=barrier)
-            self.server.start(port_range[0], port_range[-1])
+            self.server.start_(port_range[0], port_range[-1])
             self.publisher = WorkflowPublisher(
                 self.suite, context=self.zmq_context, barrier=barrier)
-            self.publisher.start(port_range[0], port_range[-1])
+            self.publisher.start_(port_range[0], port_range[-1])
             # wait for threads to setup socket ports before continuing
             barrier.wait()
             self.port = self.server.port
@@ -815,7 +815,7 @@ see `COPYING' in the Cylc source distribution.
         task_id = self.get_standardised_taskid(task_id)
         return self.pool.ping_task(task_id, exists_only)
 
-    def command_stop_workflow(
+    def command_stop(
         self,
         stop_mode=None,
         cycle_point=None,
@@ -832,7 +832,7 @@ see `COPYING' in the Cylc source distribution.
 
         # schedule shutdown after tasks pass provided cycle point
         if cycle_point:
-            point = self.get-standardised_point(cycle_point)
+            point = self.get_standardised_point(cycle_point)
             if self.pool.set_stop_point(point):
                 self.options.stopcp = str(point)
                 self.suite_db_mgr.put_suite_stop_cycle_point(
@@ -845,7 +845,8 @@ see `COPYING' in the Cylc source distribution.
         if clock_time:
             parser = TimePointParser()
             time = parser.parse(clock_time)
-            self.set_stop_clock(int(stop_time.get("seconds_since_unix_epoch")))
+            self.set_stop_clock(
+                int(stop_time.get("seconds_since_unix_epoch")))
 
         # schedule shutdown after task succeeds
         if task:
@@ -858,14 +859,14 @@ see `COPYING' in the Cylc source distribution.
 
     def command_set_stop_cleanly(self, kill_active_tasks=False):
         """Stop job submission and set the flag for clean shutdown."""
-        # TODO: deprecate
+        # TODO: deprecated by command_stop()
         self._set_stop()
         if kill_active_tasks:
             self.time_next_kill = time()
 
     def command_stop_now(self, terminate=False):
         """Shutdown immediately."""
-        # TODO: deprecate
+        # TODO: deprecated by command_stop()
         if terminate:
             self._set_stop(StopMode.REQUEST_NOW_NOW)
         else:
@@ -880,7 +881,7 @@ see `COPYING' in the Cylc source distribution.
 
     def command_set_stop_after_point(self, point_string):
         """Set stop after ... point."""
-        # TODO: deprecate
+        # TODO: deprecated by command_stop()
         stop_point = self.get_standardised_point(point_string)
         if self.pool.set_stop_point(stop_point):
             self.options.stopcp = str(stop_point)
@@ -909,8 +910,14 @@ see `COPYING' in the Cylc source distribution.
         if TaskID.is_valid_id(task_id):
             self.set_stop_task(task_id)
 
+    def command_release(self, ids=None):
+        if ids:
+            return self.pool.release_tasks(ids)
+        self.release_suite()
+
     def command_release_tasks(self, items):
         """Release tasks."""
+        # TODO: deprecated by command_release()
         return self.pool.release_tasks(items)
 
     def command_poll_tasks(self, items=None, poll_succ=False):
@@ -939,23 +946,33 @@ see `COPYING' in the Cylc source distribution.
 
     def command_release_suite(self):
         """Release all task proxies in the suite."""
+        # TODO: deprecated by command_release()
         self.release_suite()
+
+    def command_hold(self, ids=None, time=None):
+        if ids:
+            self.pool.hold_tasks(ids)
+        if time:
+            point = self.get_standardised_point(time)
+            self.hold_suite(point)
+            LOG.info(
+                'The suite will pause when all tasks have passed %s', point)
+        if not (ids or time):
+            self.hold_suite()
 
     def command_hold_tasks(self, items):
         """Hold selected task proxies in the suite."""
+        # TODO: deprecated by command_hold()
         return self.pool.hold_tasks(items)
-
-    def command_hold_workflow(self, point_string=None):
-        self.hold_suite(point_string)
 
     def command_hold_suite(self):
         """Hold all task proxies in the suite."""
-        # TODO: deprecate
+        # TODO: deprecated by command_hold()
         self.hold_suite()
 
     def command_hold_after_point_string(self, point_string):
         """Hold tasks AFTER this point (itask.point > point)."""
-        # TODO: deprecate
+        # TODO: deprecated by command_hold()
         point = self.get_standardised_point(point_string)
         self.hold_suite(point)
         LOG.info(
@@ -1839,11 +1856,11 @@ see `COPYING' in the Cylc source distribution.
                 LOG.exception(exc)
 
         if self.server:
-            self.server.stop()
+            self.server.stop_()
         if self.publisher:
             self.publisher.publish(
                 [(b'shutdown', f'{str(reason)}'.encode('utf-8'))])
-            self.publisher.stop()
+            self.publisher.stop_()
         self.curve_auth.stop()  # stop the authentication thread
 
         # Flush errors and info before removing suite contact file

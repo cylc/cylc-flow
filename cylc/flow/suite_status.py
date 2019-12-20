@@ -74,23 +74,16 @@ class StopMode(Enum):
     def describe(self):
         """Return a user-friendly description of this state."""
         if self == self.AUTO:
-            return 'wait until suite has completed'
+            return 'Wait until suite has completed.'
         if self == self.AUTO_ON_TASK_FAILURE:
-            return 'wait until the first task fails'
+            return 'Wait until the first task fails.'
         if self == self.REQUEST_CLEAN:
-            return 'wait for active jobs to complete'
+            return 'Wait for active jobs to complete.'
         if self == self.REQUEST_NOW:
-            return 'immediate shutdown, wait for event handlers to complete'
+            return 'Immediate shutdown, wait for event handlers to complete.'
         if self == self.REQUEST_NOW_NOW:
-            return 'immediate shutdown'
+            return 'Immediate shutdown.'
         return ''
-
-    @classmethod
-    def description(cls, value):
-        try:
-            cls(value).describe()
-        except ValueError:
-            pass
 
 
 class AutoRestartMode(Enum):
