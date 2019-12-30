@@ -1,7 +1,7 @@
 #!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -22,7 +22,7 @@ run_suite() {
   cylc run --no-detach --debug $1 -s START=$2 -s HOUR=$3 -s OFFSET=$4
 }
 
-set_test_number 5
+set_test_number 6
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 
 NOW="$(date +%Y%m%dT%H)"
@@ -54,5 +54,14 @@ TEST_NAME=$TEST_NAME_BASE-future
 run_fail "$TEST_NAME" run_suite "$SUITE_NAME" "$START" "$HOUR" "$OFFSET"
 LOG=$(cylc cat-log -m p "${SUITE_NAME}")
 grep_ok "suite timed out after inactivity" $LOG
+
+# Run with an adjusted time zone for the trigger
+TEST_NAME=$TEST_NAME_BASE-time_zone
+sed -i 's@offset=@time_zone="Pacific/Auckland", offset=@' suite.rc
+START="$(TZ=Pacific/Auckland date +%Y%m%dT%H)"
+HOUR="${START: -2}"
+OFFSET="PT0S"
+# Only works with UTC cycle points
+TZ="UTC0" run_ok "$TEST_NAME" run_suite "$SUITE_NAME" "$START" "$HOUR" "$OFFSET"
 
 purge_suite $SUITE_NAME
