@@ -61,11 +61,24 @@ the main process. The clock trigger function signature looks like this:
 
 .. code-block:: python
 
-   wall_clock(offset=None)
+   wall_clock(offset=None, time_zone=None)
 
 The ``offset`` argument is a date-time duration (``PT1H`` is 1
 hour) relative to the dependent task's cycle point (automatically passed to the
-function via a second argument not shown above).
+function via a third argument not shown above).
+
+The ``time_zone`` argument is a time zone string which matches a system
+time zone as defined by the ``timedatectl list-timezones`` command. For
+example, ``"America/New_York"`` or ``"Australia/Melbourne"``. When the
+``time_zone`` option is used, the cycle point will be treated as if it were
+actually for the provided time zone. This way, you could have a suite whose
+cycle points are from one time zone (e.g. UTC), but the suite starts running
+based on the local time. A cycle point of ``20200101T1200Z`` with no offset,
+and time zone ``Australia/Melbourne`` will succeed at 12PM Melbourne time
+(or 01UTC). If the cycle point was ``20200601T1200Z``, then the trigger will
+still be satisfied at 12PM Melbourne time (now 02UTC). Please note that the
+time zone functionality only works when the suite cycles with UTC cycle points.
+It will not work when the suite has non-UTC cycling.
 
 In the following suite, task ``foo`` has a daily cycle point sequence,
 and each task instance can trigger once the wall clock time has passed its

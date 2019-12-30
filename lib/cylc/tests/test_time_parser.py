@@ -26,7 +26,7 @@ class TestRecurrenceSuite(unittest.TestCase):
 
     def setUp(self):
         self._start_point = "19991226T0930Z"
-        # Note: the following timezone will be Z-ified *after* truncation
+        # Note: the following time zone will be Z-ified *after* truncation
         # or offsets are applied.
         self._end_point = "20010506T1200+0200"
         self._parsers = {

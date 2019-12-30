@@ -11,10 +11,10 @@ writing any suite. More advanced topics are covered later:
 UTC Mode
 --------
 
-Cylc has full timezone support if needed, but real time NWP suites should use
+Cylc has full time zone support if needed, but real time NWP suites should use
 UTC mode to avoid problems at the transition between local standard time and
 daylight saving time, and to enable the same suite to run the same way in
-different timezones.
+different time zones.
 
 .. code-block:: cylc
 

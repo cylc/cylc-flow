@@ -130,7 +130,7 @@ this can be set at the site level (see :ref:`SiteUTCMode`).
 [cylc] ``->`` cycle point format
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To just alter the timezone used in the date-time cycle point format, see
+To just alter the time zone used in the date-time cycle point format, see
 :ref:`cycle-point-time-zone`. To just alter the number of expanded year digits
 (for years below 0 or above 9999), see
 :ref:`cycle-point-num-expanded-year-digits`.
@@ -140,9 +140,9 @@ case of UTC) or ``CCYYMMDDThhmm+hhmm`` format (``+`` standing
 for ``+`` or ``-`` here) for writing down date-time cycle
 points, which follows one of the basic formats outlined in the ISO 8601
 standard. For example, a cycle point on the 3rd of February 2001 at 4:50 in
-the morning, UTC (+0000 timezone), would be written
+the morning, UTC (+0000 time zone), would be written
 ``20010203T0450Z``. Similarly, for the 3rd of February 2001 at
-4:50 in the morning, +1300 timezone, cylc would write
+4:50 in the morning, +1300 time zone, cylc would write
 ``20010203T0450+1300``.
 
 You may use the isodatetime library's syntax to write dates and times in ISO
@@ -201,8 +201,8 @@ This number defaults to 0 (no sign or extra digits used).
 
 If you set UTC mode to True (:ref:`UTC-mode`) then this will default to
 ``Z``. If you use a custom cycle point format
-(:ref:`cycle-point-format`), you should specify the timezone choice (or null
-timezone choice) here as well.
+(:ref:`cycle-point-format`), you should specify the time zone choice (or null
+time zone choice) here as well.
 
 You may set your own time zone choice here, which will be used for all
 date-time cycle point dumping. Time zones should be expressed as ISO 8601 time
