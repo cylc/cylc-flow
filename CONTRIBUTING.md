@@ -2,7 +2,7 @@
 
 ## Report Bugs
 
-Report bugs by opening an issue at [Cylc Issues on 
+Report bugs by opening an issue at [Cylc Issues on
 Github](https://github.com/cylc/cylc-flow/issues). Give the Cylc version
 affected by the bug (you should test the latest release if possible) and a
 recipe to reproduce the problem.
@@ -22,7 +22,7 @@ Issue](https://github.com/cylc/cylc-flow/issues) as the team may not be able to
 consider large changes that appear out of the blue. New contributors should
 add their details to the [Code Contributors](#code-contributors) section of
 this file as part of their first Pull Request, and reviewers are responsible
-for checking this before merging the new branch into *master*. 
+for checking this before merging the new branch into *master*.
 
 ## Code Contributors
 
@@ -47,7 +47,7 @@ requests_).
  - Tim Whitcomb
  - (Scott Wales)
  - Tomek Trzeciak
- - (Thomas Coleman)
+ - Thomas Coleman
  - Bruno Kinoshita
  - (Annette Osprey)
  - (Jonathan Thomas)
