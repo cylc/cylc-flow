@@ -102,6 +102,19 @@ GLOBALRC = """
 """
 
 
+def memoize(func):
+    cache = {}
+    def memoized_func(*args):
+        if args in cache:
+            return cache[args]
+        result = func(*args)
+        cache[args] = result
+        return result
+
+    return memoized_func
+
+
+@memoize
 def set_up(global_rc_str, suite_rc_str, tmp_path):
     """Set up configs before and after the upgrader has been run on them,
     and return these to the test function
@@ -113,7 +126,6 @@ def set_up(global_rc_str, suite_rc_str, tmp_path):
             String of a `suite.rc` file
         tmp_path (path object):
             A path to a temporary location to put some files.
-
     """
     # Set Up Config File
     globalrc = tmp_path / 'flow.rc'
@@ -122,9 +134,7 @@ def set_up(global_rc_str, suite_rc_str, tmp_path):
         file_handle.write(global_rc_str)
     with open(str(suiterc), 'w') as file_handle:
         file_handle.write(suite_rc_str)
-
     os.environ['CYLC_CONF_PATH'] = str(tmp_path)
-
     suite_config = RawSuiteConfig(str(suiterc), None, None)
     upgraded_suite_config = host_to_platform_upgrader(suite_config.sparse)
     return (suite_config, upgraded_suite_config)
@@ -140,10 +150,15 @@ def set_up(global_rc_str, suite_rc_str, tmp_path):
 )
 def test_upgrader_function(tmp_path, task, output):
     # Check that upgradable configs are returned with platform settings added
-    # TODO ... and [task][job] / [remote] settings removed.
-    if output != 'error':
-        before, after = set_up(GLOBALRC, SUITERC, tmp_path)
-        assert after['runtime'][task]['platform'] == output
+    before, after = set_up(GLOBALRC, SUITERC, tmp_path)
+    assert after['runtime'][task]['platform'] == output
+    assert after['runtime'][task]['job'].items() == []
+    try:
+        after['runtime'][task]['remote']
+    except KeyError:
+        pass
+    else:
+        assert after['runtime'][task]['remote'].items() == []
 
 
 def test_upgrader_failures(tmp_path, caplog):
@@ -155,7 +170,7 @@ def test_upgrader_failures(tmp_path, caplog):
         for name in ['beta']
     ]
     messages = [record.msg for record in caplog.records]
-    # TODO ask MH if this is too simplistic - we could have a sort here?
+    # We may in future wish to add a sort here.
     assert failed_tasks_messages == messages
 
 
@@ -174,5 +189,4 @@ def test_upgrader_where_host_is_function(tmp_path, caplog):
         for name in ['delta', 'epsilon']
     ]
     messages = [record.msg for record in caplog.records]
-    # TODO ask MH if this is too simplistic - we could have a sort here?
     assert debug_tasks_messages == messages

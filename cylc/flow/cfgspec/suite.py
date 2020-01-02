@@ -358,7 +358,7 @@ def host_to_platform_upgrader(cfg):
     if it is appropriate to do so.
 
                        +-------------------------------+
-                       | Is platforms set in this      |
+                       | Is platform set in this       |
                        | [runtime][TASK]?              |
                        +-------------------------------+
                           |YES                      |NO
@@ -391,9 +391,10 @@ def host_to_platform_upgrader(cfg):
         upgraded config object
     """
     # If platform and old settings are set fail
-    # TODO look at the updated platforms spec and work out what items in job
     # and remote should be added to this forbidden list
-    forbidden_with_platform = ['host', 'batch system']
+    forbidden_with_platform = [
+        'host', 'batch system', 'batch submit command template'
+    ]
 
     for task_name, task_spec in cfg['runtime'].items():
         # if task_name == 'delta':
@@ -452,8 +453,6 @@ def host_to_platform_upgrader(cfg):
                 )
             except PlatformLookupError as exc:
                 LOG.error(f'Unable to determine platform for {task_name}')
-                # TODO discuss whether we want to log this in the error,
-                # lest the error be a bit obtuse
                 LOG.debug(f'Exception was {exc}')
             else:
 
