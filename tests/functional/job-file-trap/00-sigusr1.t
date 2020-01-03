@@ -42,6 +42,7 @@ run_tests() {
     kill -s 'USR1' "${T1_PID}"
     poll_grep -E 'WARNING|vacated/USR1' "${T1_STATUS_FILE}"
     poll_grep_suite_log 'vacated/USR1'
+    sleep 1  # a bit of extra time for suite db update to complete
     sqlite3 "${SUITE_RUN_DIR}/log/db" \
         'SELECT status FROM task_states WHERE name=="t1";' \
         >"${TEST_NAME}-db-t1" 2>'/dev/null'
