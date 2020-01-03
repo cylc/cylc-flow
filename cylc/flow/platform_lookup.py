@@ -183,27 +183,27 @@ def reverse_lookup(platforms, job, remote):
         # All items other than batch system and host must be an exact match
         if not generic_items_match:
             continue
-
+        breakpoint(header=f"{platform_name}")
         # We have some special logic to identify whether task host and task
         # batch system match the platform in question.
         if (
-            task_host == 'localhost' and
-            task_batch_system == 'background'
+                task_host == 'localhost' and
+                task_batch_system == 'background'
         ):
             return 'localhost'
 
         elif (
-            'hosts' in platform_spec.keys() and
-            task_host in platform_spec['hosts'] and
-            task_batch_system == platform_spec['batch system']
+                'hosts' in platform_spec.keys() and
+                task_host in platform_spec['remote hosts'] and
+                task_batch_system == platform_spec['batch system']
         ):
             # If we have localhost with a non-background batch system we
             # use the batch system to give a sensible guess at the platform
             return platform_name
 
         elif (
-            re.fullmatch(platform_name, task_host) and
-            task_batch_system == platform_spec['batch system']
+                re.fullmatch(platform_name, task_host) and
+                task_batch_system == platform_spec['batch system']
         ):
             return task_host
 

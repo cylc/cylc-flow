@@ -24,6 +24,30 @@ from unittest import mock
 from cylc.flow.rundb import CylcSuiteDAO
 
 
+GLOBALRC = """
+[job platforms]
+    [[desktop[0-9]{2}|laptop[0-9]{2}]]
+        # hosts = platform name (default)
+        # Note: "desktop01" and "desktop02" are both valid and distinct
+        # platforms
+    [[sugar]]
+        remote hosts = localhost
+        batch system = slurm
+    [[hpc]]
+        remote hosts = hpcl1, hpcl2
+        retrieve job logs = True
+        batch system = pbs
+    [[hpcl1-bg]]
+        remote hosts = hpcl1
+        retrieve job logs = True
+        batch system = background
+    [[hpcl2-bg]]
+        remote hosts = hpcl2
+        retrieve job logs = True
+        batch system = background
+"""
+
+
 class TestRunDb(unittest.TestCase):
 
     def setUp(self):
@@ -170,5 +194,87 @@ def test_upgrade_hold_swap():
         assert not dao.upgrade_is_held()
 
 
+def set_up_globalrc(rc_string, tmp_path):
+    # Set up a globalrc file
+    globalrc = tmp_path / 'flow.rc'
+    with open(str(globalrc), 'w') as file_handle:
+        file_handle.write(rc_string)
+    os.environ['CYLC_CONF_PATH'] = str(tmp_path)
+    return tmp_path
+
+
+def test_upgrade_to_platforms(tmp_path):
+    """Test upgrader logic for platforms
+
+
+    Returns:
+
+    """
+    # Set up the globalrc
+    set_up_globalrc(GLOBALRC, tmp_path)
+
+    # user_at_host,'batch_system'
+    initial_data = [
+        ('foo', '1', 'hpcl1','pbs'),
+        ('foo', '1', 'desktop01', 'background'),
+        ('foo', '1', '', 'slurm'),
+        ('foo', '1', 'hpcl1', 'background'),
+    ]
+    # user, platform
+    expected_data = [
+        ('foo', '1', '', 'hpc'),
+        ('foo', '1', '', 'desktop01'),
+        ('foo', '1', '', 'sugar'),
+        ('foo', '1', '', 'hpcl1-bg')
+    ]
+    with create_temp_db() as (temp_db, conn):
+        conn.execute(
+            rf'''
+                CREATE TABLE {CylcSuiteDAO.TABLE_TASK_JOBS} (
+                    name varchar(255),
+                    cycle varchar(255),
+                    user_at_host varchar(255),
+                    batch_system varchar(255)
+                )
+            '''
+        )
+        conn.executemany(
+            rf'''
+                INSERT INTO {CylcSuiteDAO.TABLE_TASK_JOBS}
+                VALUES (?,?,?,?)
+            ''',
+            initial_data
+        )
+        # close database
+        conn.commit()
+        conn.close()
+
+        # open database as cylc dao
+        dao = CylcSuiteDAO(temp_db)
+        conn = dao.connect()
+
+        # check the initial data was correctly inserted
+        dump = [
+            x for x in conn.execute(
+                rf'SELECT * FROM {CylcSuiteDAO.TABLE_TASK_JOBS}'
+            )
+        ]
+        assert dump == initial_data
+
+        # Upgrade function returns True?
+        assert dao.upgrade_to_platforms()
+
+        # check the data was correctly upgraded
+        dump = [
+            x for x in conn.execute(
+                rf'SELECT user, platform FROM task_jobs'
+            )
+        ]
+        assert dump == expected_data
+
+        # make sure the upgrade is skipped on future runs
+        assert not dao.upgrade_to_platforms()
+
 if __name__ == '__main__':
     unittest.main()
+
