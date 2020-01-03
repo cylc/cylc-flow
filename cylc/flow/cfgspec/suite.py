@@ -392,9 +392,9 @@ def host_to_platform_upgrader(cfg):
     """
     # If platform and old settings are set fail
     # and remote should be added to this forbidden list
-    forbidden_with_platform = [
+    forbidden_with_platform = {
         'host', 'batch system', 'batch submit command template'
-    ]
+    }
 
     for task_name, task_spec in cfg['runtime'].items():
         # if task_name == 'delta':
@@ -406,8 +406,9 @@ def host_to_platform_upgrader(cfg):
         ):
             if (
                 'platform' in task_spec and
-                any(forbidden_with_platform == task_spec['job']) or
-                any(forbidden_with_platform == task_spec['remote'])
+                forbidden_with_platform & {
+                    *task_spec['job'], *task_spec['remote']
+                }
             ):
                 # Fail Loudly and Horribly
                 LOG.error(

@@ -19,9 +19,8 @@
 
 import pytest
 import os
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+import re
 from cylc.flow.cfgspec.suite import RawSuiteConfig, host_to_platform_upgrader
-from cylc.flow.parsec.config import ParsecConfig
 
 # A set of tasks the host_to_platform_upgrader should be able to deal with
 # without hiccuping.
@@ -56,6 +55,13 @@ BADSUITERC = """
         [[[job]]]
             batch system = slurm
         # => validation failure (no matching platform)
+
+    [[kappa]]
+        platform = sugar
+        [[[remote]]]
+            host = desktop01
+        [[[job]]]
+            batch system = slurm
 """
 
 FUNC_SUITERC = """
@@ -104,6 +110,7 @@ GLOBALRC = """
 
 def memoize(func):
     cache = {}
+
     def memoized_func(*args):
         if args in cache:
             return cache[args]
@@ -166,12 +173,12 @@ def test_upgrader_failures(tmp_path, caplog):
     """
     set_up(GLOBALRC, BADSUITERC, tmp_path)
     failed_tasks_messages = [
-        f"Unable to determine platform for {name}"
-        for name in ['beta']
+        "Unable to determine platform for beta",
+        "A mixture of Cylc 7 \\(host\\) and Cylc 8 \\(platform logic\\)"
     ]
-    messages = [record.msg for record in caplog.records]
-    # We may in future wish to add a sort here.
-    assert failed_tasks_messages == messages
+    errors = [record.msg for record in caplog.records]
+    for msg in failed_tasks_messages:
+        assert any([re.match(msg, error) for error in errors])
 
 
 def test_upgrader_where_host_is_function(tmp_path, caplog):
