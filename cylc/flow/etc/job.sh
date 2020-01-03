@@ -122,6 +122,8 @@ cylc__job__main() {
     mkdir -p "${CYLC_TASK_WORK_DIR}"
     cd "${CYLC_TASK_WORK_DIR}"
     # Env-Script, User Environment, Pre-Script, Script and Post-Script
+    # Run user scripts in subshell to protect cylc job script from interference.
+    # Waiting on background process allows signal traps to trigger immediately.
     cylc__job__run_user_scripts &
     CYLC_TASK_USER_SCRIPT_PID=$!
     wait "${CYLC_TASK_USER_SCRIPT_PID}" || {
@@ -133,9 +135,10 @@ cylc__job__main() {
             # a signal, e.g. SIGPIPE in a command pipeline).
             exit "$ret_code"
         else
-            # Trigger ERR trap while preserving the exit code (return won't do).
-            (exit "$ret_code")
-            return
+            # Trigger ERR trap while preserving the exit code
+            # (NB: bash versions are buggy and neither return statement nor
+            # subshelled exit won't do and we need to spawn another shell).
+            /bin/sh -c "exit $ret_code"
         fi
     }
     # Empty work directory remove
@@ -153,9 +156,7 @@ cylc__job__main() {
 }
 
 ###############################################################################
-# Run user scripts in subshell to protect cylc job script from interference.
-# Getting signal traps to run immediately requires waiting on a background
-# process.
+# Run user scripts.
 cylc__job__run_user_scripts() {
     typeset func_name=
     for func_name in 'env_script' 'user_env' 'pre_script' 'script' 'post_script'; do
@@ -256,7 +257,7 @@ cylc__job_finish_err() {
     if "${run_err_script}"; then
         if [[ -n "${CYLC_TASK_USER_SCRIPT_PID:-}" ]]; then
             # User script might trap the signal, wait for it before err-script
-            wait  "${CYLC_TASK_USER_SCRIPT_PID:-}" 2>'/dev/null' || true
+            wait "${CYLC_TASK_USER_SCRIPT_PID}" 2>'/dev/null' || true
         fi
         cylc__job__run_inst_func 'err_script' "${signal}" >&2
     fi
