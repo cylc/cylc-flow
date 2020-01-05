@@ -161,7 +161,6 @@ message PbTaskProxy {
     string task = 3;
     string state = 4;
     string cycle_point = 5;
-    bool spawned = 6;
     int32 depth = 7;
     int32 job_submits = 8;
     string latest_message = 9;

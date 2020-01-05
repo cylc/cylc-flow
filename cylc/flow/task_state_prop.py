@@ -40,7 +40,7 @@ _STATUS_MAP = {
         "ascii_ctrl": Style.BRIGHT + Fore.CYAN + Back.RESET
     },
     TASK_STATUS_QUEUED: {
-        "ascii_ctrl": Style.BRIGHT + Fore.WHITE + Back.BLUE
+        "ascii_ctrl": Style.BRIGHT + Fore.YELLOW + Back.BLUE
     },
     TASK_STATUS_READY: {
         "ascii_ctrl": Style.BRIGHT + Fore.GREEN + Back.RESET
@@ -52,7 +52,7 @@ _STATUS_MAP = {
         "ascii_ctrl": Style.BRIGHT + Fore.YELLOW + Back.RESET
     },
     TASK_STATUS_SUBMIT_FAILED: {
-        "ascii_ctrl": Style.BRIGHT + Fore.BLUE + Back.RESET
+        "ascii_ctrl": Style.BRIGHT + Fore.RED + Back.RESET
     },
     TASK_STATUS_SUBMIT_RETRYING: {
         "ascii_ctrl": Style.BRIGHT + Fore.BLUE + Back.RESET

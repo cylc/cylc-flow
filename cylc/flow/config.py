@@ -1627,15 +1627,15 @@ class SuiteConfig(object):
                 abs_cycle_point = first_point
                 if last_point is None:
                     # This dependency persists for the whole suite run.
-                    ltaskdef.intercycle_offsets.add((None, seq))
+                    ltaskdef.intercycle_offsets.add((None, seq, name))
                 else:
                     ltaskdef.intercycle_offsets.add(
-                        (str(-(last_point - first_point)), seq))
+                        (str(-(last_point - first_point)), seq, name))
             elif offset:
                 if offset_is_irregular:
-                    offset_tuple = (offset, seq)
+                    offset_tuple = (offset, seq, name)
                 else:
-                    offset_tuple = (offset, None)
+                    offset_tuple = (offset, None, name)
                 ltaskdef.intercycle_offsets.add(offset_tuple)
                 cycle_point_offset = offset
 
@@ -1660,6 +1660,9 @@ class SuiteConfig(object):
                 task_triggers[key] = task_trigger
 
             triggers[left] = task_trigger
+
+            # (name is left name)
+            self.taskdefs[name].add_downstreams(task_trigger, right, seq)
 
         # Walk down "expr_list" depth first, and replace any items matching a
         # key in "triggers" ("left" values) with the trigger.
@@ -2062,6 +2065,7 @@ class SuiteConfig(object):
 
     def load_graph(self):
         """Parse and load dependency graph."""
+
         LOG.debug("Parsing the dependency graph")
 
         # Generate a map of *task* members of each family.
@@ -2104,6 +2108,7 @@ class SuiteConfig(object):
                 sections.append((section, value))
 
         # Parse and process each graph section.
+
         task_triggers = {}
         for section, graph in sections:
             try:
@@ -2133,6 +2138,7 @@ class SuiteConfig(object):
 
     def _proc_triggers(self, triggers, original, seq, task_triggers):
         """Define graph edges, taskdefs, and triggers, from graph sections."""
+
         for right, val in triggers.items():
             for expr, trigs in val.items():
                 lefts, suicide = trigs
@@ -2141,6 +2147,7 @@ class SuiteConfig(object):
                 self.generate_taskdefs(orig, lefts, right, seq)
                 self.generate_triggers(
                     expr, lefts, right, seq, suicide, task_triggers)
+
 
     def find_taskdefs(self, name):
         """Find TaskDef objects in family "name" or matching "name".

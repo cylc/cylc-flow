@@ -283,7 +283,6 @@ class CylcSuiteDAO(object):
         TABLE_TASK_POOL: [
             ["cycle", {"is_primary_key": True}],
             ["name", {"is_primary_key": True}],
-            ["spawned", {"datatype": "INTEGER"}],
             ["status"],
             ["is_held", {"datatype": "INTEGER"}],
         ],
@@ -295,7 +294,6 @@ class CylcSuiteDAO(object):
             ["id", {"datatype": "INTEGER", "is_primary_key": True}],
             ["cycle", {"is_primary_key": True}],
             ["name", {"is_primary_key": True}],
-            ["spawned", {"datatype": "INTEGER"}],
             ["status"],
             ["is_held", {"datatype": "INTEGER"}],
         ],
@@ -661,13 +659,13 @@ class CylcSuiteDAO(object):
         """Select from task_pool or task_pool_checkpoints.
 
         Invoke callback(row_idx, row) on each row, where each row contains:
-            [cycle, name, spawned, status]
+            [cycle, name, status]
 
         If id_key is specified,
         select from task_pool table if id_key == CHECKPOINT_LATEST_ID.
         Otherwise select from task_pool_checkpoints where id == id_key.
         """
-        form_stmt = r"SELECT cycle,name,spawned,status,is_held FROM %s"
+        form_stmt = r"SELECT cycle,name,status,is_held FROM %s"
         if id_key is None or id_key == self.CHECKPOINT_LATEST_ID:
             stmt = form_stmt % self.TABLE_TASK_POOL
             stmt_args = []
@@ -682,7 +680,7 @@ class CylcSuiteDAO(object):
         """Select from task_pool+task_states+task_jobs for restart.
 
         Invoke callback(row_idx, row) on each row, where each row contains:
-            [cycle, name, spawned, is_late, status, is_held, submit_num,
+            [cycle, name, is_late, status, is_held, submit_num,
              try_num, user_at_host, time_submit, time_run, timeout, outputs]
 
         If id_key is specified,
@@ -693,7 +691,6 @@ class CylcSuiteDAO(object):
             SELECT
                 %(task_pool)s.cycle,
                 %(task_pool)s.name,
-                %(task_pool)s.spawned,
                 %(task_late_flags)s.value,
                 %(task_pool)s.status,
                 %(task_pool)s.is_held,

@@ -1038,14 +1038,12 @@ class SuiteRuntimeServer(ZMQSocketBase):
 
     @authorise(Priv.CONTROL)
     @expose
-    def remove_tasks(self, tasks, spawn=False):
+    def remove_tasks(self, tasks):
         """Remove tasks from task pool.
 
         Args:
             tasks (list):
                 List of identifiers, see `task globs`_
-            spawn (bool, optional):
-                If True ensure task has spawned before removal.
 
         Returns:
             tuple: (outcome, message)
@@ -1057,7 +1055,7 @@ class SuiteRuntimeServer(ZMQSocketBase):
 
         """
         self.schd.command_queue.put(
-            ("remove_tasks", (tasks,), {"spawn": spawn}))
+            ("remove_tasks", (tasks,)))
         return (True, 'Command queued')
 
     @authorise(Priv.CONTROL)
@@ -1205,26 +1203,6 @@ class SuiteRuntimeServer(ZMQSocketBase):
 
         """
         self.schd.command_queue.put(("set_verbosity", (level,), {}))
-        return (True, 'Command queued')
-
-    @authorise(Priv.CONTROL)
-    @expose
-    def spawn_tasks(self, tasks):
-        """Spawn tasks.
-
-        Args:
-            tasks (list): List of identifiers, see `task globs`_
-
-        Returns:
-            tuple: (outcome, message)
-
-            outcome (bool)
-                True if command successfully queued.
-            message (str)
-                Information about outcome.
-
-        """
-        self.schd.command_queue.put(("spawn_tasks", (tasks,), {}))
         return (True, 'Command queued')
 
     @authorise(Priv.SHUTDOWN)

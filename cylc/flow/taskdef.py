@@ -34,7 +34,7 @@ class TaskDef(object):
         "used_in_offset_trigger", "max_future_prereq_offset",
         "intercycle_offsets", "sequential", "is_coldstart",
         "suite_polling_cfg", "clocktrigger_offset", "expiration_offset",
-        "namespace_hierarchy", "dependencies", "outputs", "param_var",
+        "namespace_hierarchy", "dependencies", "downstreams", "outputs", "param_var",
         "external_triggers", "xtrig_labels", "name", "elapsed_times"]
 
     # Store the elapsed times for a maximum of 10 cycles
@@ -63,12 +63,25 @@ class TaskDef(object):
         self.namespace_hierarchy = []
         self.dependencies = {}
         self.outputs = set()
+        self.downstreams = {}  # SoD
         self.param_var = {}
         self.external_triggers = []
         self.xtrig_labels = {}  # {sequence: [labels]}
 
         self.name = name
         self.elapsed_times = deque(maxlen=self.MAX_LEN_ELAPSED_TIMES)
+
+    def add_downstreams(self, trigger, downstream, sequence):
+        """Map task outputs to downstream tasks that depend on them.
+
+          {sequence:
+              {
+                 output: [(a,o1), (b,o2)]  # (name, offset)
+              }}
+        """
+        name = downstream
+        offset = trigger.cycle_point_offset
+        self.downstreams.setdefault(sequence, {}).setdefault(trigger, []).append((name, offset))
 
     def add_dependency(self, dependency, sequence):
         """Add a dependency to a named sequence.
@@ -111,55 +124,26 @@ class TaskDef(object):
             raise TaskDefError(
                 "No cycling sequences defined for %s" % self.name)
 
-    def get_cleanup_cutoff_point(self, point):
-        """Extract the max dependent cycle point for this point."""
-        if not self.intercycle_offsets:
-            # This task does not have dependent tasks at other cycles.
-            return point
-        cutoff_points = []
-        for offset_string, sequence in self.intercycle_offsets:
-            if offset_string is None:
-                # This indicates a dependency that lasts for the whole run.
-                return None
-            if sequence is None:
-                # This indicates a simple offset interval such as [-PT6H].
-                cutoff_points.append(point - get_interval(offset_string))
+    def get_parent_points(self, point):
+        """Return the cycle points of my parents, at point.
+
+        TODO is SoS "cleanup_cutoff" point still needed?
+        ("Extract the max dependent cycle point for this point.")
+        ("cycle point beyond which this task can be removed from the pool.")
+
+        """
+        # TODO can we avoid this computation sometimes? (where it is used)
+        parent_points = set()
+        for seq in self.sequences:
+            if not seq.is_on_sequence(point):
                 continue
-            if is_offset_absolute(offset_string):
-                stop_point = sequence.get_stop_point()
-                if stop_point:
-                    # Stop point of the sequence is a good cutoff point for an
-                    # absolute "offset"
-                    cutoff_points.append(stop_point)
-                    continue
-                else:
-                    # The dependency lasts for the whole run.
-                    return None
-
-            # This is a complicated offset like [02T00-P1W].
-            dependent_point = sequence.get_start_point()
-
-            my_cutoff_point = None
-            while dependent_point is not None:
-                # TODO: Is it realistically possible to hang in this loop?
-                target_point = (
-                    get_point_relative(offset_string, dependent_point))
-                if target_point > point:
-                    # Assume monotonic (target_point can never jump back).
-                    break
-                if target_point == point:
-                    # We have found a dependent_point for point.
-                    my_cutoff_point = dependent_point
-                dependent_point = sequence.get_next_point_on_sequence(
-                    dependent_point)
-            if my_cutoff_point:
-                # Choose the largest of the dependent points.
-                cutoff_points.append(my_cutoff_point)
-        if cutoff_points:
-            max_cutoff_point = max(cutoff_points)
-            if max_cutoff_point < point:
-                # This is caused by future triggers - default to point.
-                return point
-            return max_cutoff_point
-        # There aren't any dependent tasks in other cycles for point.
-        return point
+            if seq in self.dependencies:
+                # task has prereqs in this sequence
+                for dep in self.dependencies[seq]:
+                   for trig in dep.task_triggers:
+                       # (None for no offset)
+                       if trig.cycle_point_offset is None:
+                          parent_points.add(point)
+                       else:
+                          parent_points.add(point + get_interval(trig.cycle_point_offset))
+        return parent_points

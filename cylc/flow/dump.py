@@ -24,22 +24,16 @@ def dump_to_stdout(states, sort_by_cycle=False):
             "name": name,
             "label": point,
             "state": state,
-            "spawned": True|False},
         # ...
     }
     """
     lines = []
     for item in states.values():
-        if item['spawned'] in [True, "True", "true"]:
-            spawned = 'spawned'
-        else:
-            spawned = 'unspawned'
         if sort_by_cycle:
             values = [
                 item['label'],
                 item['name'],
                 item['state'],
-                spawned,
                 'held' if item['is_held'] else 'unheld'
             ]
         else:
@@ -47,7 +41,6 @@ def dump_to_stdout(states, sort_by_cycle=False):
                 item['name'],
                 item['label'],
                 item['state'],
-                spawned,
                 'held' if item['is_held'] else 'unheld'
             ]
         lines.append(', '.join(values))

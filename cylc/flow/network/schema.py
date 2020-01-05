@@ -1458,10 +1458,7 @@ class Remove(Mutation, TaskMutation):
         resolver = partial(mutator, command='remove_tasks')
 
     class Arguments(TaskMutation.Arguments):
-        spawn = Boolean(
-            description='Spawn successors before removal.',
-            default_value=True
-        )
+       pass
 
 
 class Reset(Mutation, TaskMutation):
@@ -1494,24 +1491,6 @@ class Reset(Mutation, TaskMutation):
                 complete, `!*` to set all incomplete.
             ''')
         )
-
-
-class Spawn(Mutation, TaskMutation):
-    class Meta:
-        description = sstrip(f'''
-            Force task proxies to spawn successors at their own next cycle
-            point.
-
-            Tasks normally spawn on reaching the {TASK_STATUS_SUBMITTED}
-            status. Spawning them early allows running successive instances of
-            the same task out of order.  See also the `spawn to max active
-            cycle points` workflow configuration.
-
-            Note this command does not operate on tasks at any arbitrary point
-            in the abstract workflow graph - tasks not already in the pool must
-            be inserted first with "Insert".
-        ''')
-        resolver = partial(mutator, command='spawn_tasks')
 
 
 class Trigger(Mutation, TaskMutation):
@@ -1569,7 +1548,6 @@ class Mutations(ObjectType):
     poll = Poll.Field(description=Poll._meta.description)
     remove = Remove.Field(description=Remove._meta.description)
     reset = Reset.Field(description=Reset._meta.description)
-    spawn = Spawn.Field(description=Spawn._meta.description)
     trigger = Trigger.Field(description=Trigger._meta.description)
 
     # job actions

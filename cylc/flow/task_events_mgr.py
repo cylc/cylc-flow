@@ -292,6 +292,8 @@ class TaskEventsManager():
         event_time=None,
         flag=FLAG_INTERNAL,
         submit_num=None,
+        spawn=None,
+        finished_tasks_queue=None,
     ):
         """Parse an task message and update task state.
 
@@ -354,9 +356,23 @@ class TaskEventsManager():
             get_task_job_id(itask.point, itask.tdef.name, submit_num),
             new_msg)
 
-        # Satisfy my output, if possible, and record the result.
+        # Satisfy my output, if possible, and spawn children.
+        # (first remove signal: failed/EXIT -> failed)
+
+        msg0 = message.split('/')[0]
         completed_trigger = itask.state.outputs.set_msg_trg_completion(
-            message=message, is_completed=True)
+            message=msg0, is_completed=True)
+        if completed_trigger is not None:
+           # Spawn downstream tasks that depend on this output.
+           try:
+              children = itask.children[msg0]
+           except KeyError:
+              pass
+           else:
+                self.pflag = True
+                for child_name, child_point in children:
+                   spawn(itask.tdef.name, itask.point,
+                         child_name, child_point, msg0)
 
         if message == TASK_OUTPUT_STARTED:
             if (
@@ -452,6 +468,12 @@ class TaskEventsManager():
             itask.non_unique_events.setdefault(lseverity, 0)
             itask.non_unique_events[lseverity] += 1
             self.setup_event_handlers(itask, lseverity, message)
+
+        # (first remove signal: failed/EXIT -> failed)
+        # TODO - signal already removed above
+        msg0 = message.split('/')[0]
+        if msg0 in (TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED):
+           finished_tasks_queue.put(itask)
         return None
 
     def _process_message_check(

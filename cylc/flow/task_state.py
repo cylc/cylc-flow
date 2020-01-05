@@ -364,6 +364,13 @@ class TaskState(object):
             prereq.set_not_satisfied()
         self._is_satisfied = None
 
+    def prereq_is_conditional(self):
+        """Is this conditional? SOD."""
+        for prereq in self.prerequisites:
+            if prereq.conditional_expression is not None:
+                return True
+        return False
+
     def prerequisites_dump(self, list_prereqs=False):
         """Dump prerequisites."""
         if list_prereqs:

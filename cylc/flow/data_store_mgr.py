@@ -829,7 +829,6 @@ class DataStoreMgr:
             tp_delta.state = itask.state.status
             tp_delta.is_held = itask.state.is_held
             tp_delta.job_submits = itask.submit_num
-            tp_delta.spawned = itask.has_spawned
             tp_delta.latest_message = itask.summary['latest_message']
             tp_delta.jobs[:] = [
                 j_id

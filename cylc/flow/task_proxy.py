@@ -24,20 +24,16 @@ from cylc.flow.task_id import TaskID
 from cylc.flow.task_state import (
     TaskState, TASK_STATUS_WAITING, TASK_STATUS_RETRYING)
 from cylc.flow.wallclock import get_unix_time_from_time_string as str2time
-
+from cylc.flow.cycling.loader import get_interval
 
 class TaskProxy(object):
     """Represent an instance of a cycling task in a running suite.
 
     Attributes:
-        .cleanup_cutoff (cylc.flow.cycling.PointBase):
-            Cycle point beyond which this task can be removed from the pool.
         .clock_trigger_time (float):
             Clock trigger time in seconds since epoch.
         .expire_time (float):
             Time in seconds since epoch when this task is considered expired.
-        .has_spawned (boolean):
-            Has this task spawned its successor in the sequence?
         .identity (str):
             Task ID in NAME.POINT syntax.
         .is_late (boolean):
@@ -122,6 +118,8 @@ class TaskProxy(object):
         .try_timers (dict)
             Retry schedules as cylc.flow.task_action_timer.TaskActionTimer
             objects.
+        .children (dict)
+            graph descendents
 
     Arguments:
         tdef (cylc.flow.taskdef.TaskDef):
@@ -133,8 +131,6 @@ class TaskProxy(object):
             Task state string.
         is_held (bool):
             True if the task is held, else False.
-        has_spawned (boolean):
-            Has this task spawned its successor in the sequence.
         stop_point (cylc.flow.cycling.PointBase):
             Do not spawn successor beyond this point.
         is_startup (boolean):
@@ -148,10 +144,8 @@ class TaskProxy(object):
 
     # Memory optimization - constrain possible attributes to this list.
     __slots__ = [
-        'cleanup_cutoff',
         'clock_trigger_time',
         'expire_time',
-        'has_spawned',
         'identity',
         'is_late',
         'is_manual_submit',
@@ -174,11 +168,12 @@ class TaskProxy(object):
         'task_owner',
         'timeout',
         'try_timers',
+        'children',
     ]
 
     def __init__(
             self, tdef, start_point, status=TASK_STATUS_WAITING,
-            is_held=False, has_spawned=False, stop_point=None,
+            is_held=False, stop_point=None,
             is_startup=False, submit_num=0, is_late=False):
         self.tdef = tdef
         if submit_num is None:
@@ -201,10 +196,8 @@ class TaskProxy(object):
             self.late_time = None
         else:
             self.point = start_point
-        self.cleanup_cutoff = self.tdef.get_cleanup_cutoff_point(self.point)
         self.identity = TaskID.get(self.tdef.name, self.point)
 
-        self.has_spawned = has_spawned
         self.reload_successor = None
         self.point_as_seconds = None
 
@@ -248,20 +241,23 @@ class TaskProxy(object):
 
         self.state = TaskState(tdef, self.point, status, is_held)
 
-        if tdef.sequential:
-            # Adjust clean-up cutoff.
-            p_next = None
-            adjusted = []
-            for seq in tdef.sequences:
-                nxt = seq.get_next_point(self.point)
-                if nxt:
-                    # may be None if beyond the sequence bounds
-                    adjusted.append(nxt)
-            if adjusted:
-                p_next = min(adjusted)
-                if (self.cleanup_cutoff is not None and
-                        self.cleanup_cutoff < p_next):
-                    self.cleanup_cutoff = p_next
+        # Store children by task output, for spawn-on-demand.
+        # Only spawn if on-sequence. Example:
+        #   T06 = "waz[-PT6H] => foo"
+        #   PT6H = "waz"
+        # waz should trigger foo only if foo is on the T06 sequence
+        self.children = {}
+        for seq, dout in tdef.downstreams.items():
+            for out, downs in dout.items():
+                if out.output not in self.children:
+                   self.children[out.output] = []
+                for name, offset in downs:
+                    if offset is not None:
+                        point = self.point - get_interval(offset)
+                    else:
+                        point = self.point
+                    if seq.is_on_sequence(point):
+                        self.children[out.output].append((name, point))
 
     def __str__(self):
         """Stringify using "self.identity"."""
@@ -271,7 +267,6 @@ class TaskProxy(object):
         """Copy attributes to successor on reload of this task proxy."""
         self.reload_successor = reload_successor
         reload_successor.submit_num = self.submit_num
-        reload_successor.has_spawned = self.has_spawned
         reload_successor.manual_trigger = self.manual_trigger
         reload_successor.is_manual_submit = self.is_manual_submit
         reload_successor.summary = self.summary
@@ -329,7 +324,6 @@ class TaskProxy(object):
         ret['submit_num'] = self.submit_num
         ret['state'] = self.state.status
         ret['is_held'] = self.state.is_held
-        ret['spawned'] = str(self.has_spawned)
         ntimes = len(self.tdef.elapsed_times)
         if ntimes:
             ret['mean_elapsed_time'] = (

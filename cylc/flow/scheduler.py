@@ -38,7 +38,8 @@ from cylc.flow import LOG
 from cylc.flow.broadcast_mgr import BroadcastMgr
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.config import SuiteConfig
-from cylc.flow.cycling.loader import get_point, standardise_point_string
+from cylc.flow.cycling.loader import (get_point, standardise_point_string,
+                                      get_interval)
 from cylc.flow.daemonize import daemonize
 from cylc.flow.exceptions import (
     CylcError,
@@ -152,7 +153,6 @@ class Scheduler(object):
         'release_tasks',
         'kill_tasks',
         'reset_task_states',
-        'spawn_tasks',
         'trigger_tasks',
         'nudge',
         'insert_tasks',
@@ -547,17 +547,31 @@ see `COPYING' in the Cylc source distribution.
         task_list = self.filter_initial_task_list(
             self.config.get_task_name_list())
 
+        #from cylc.flow import patch_pudb; import pudb; pudb.set_trace()
+        # TODO HOW TO ADD INITIAL INSTANCES OF ALL SELF-SPAWNERS?
+        # THE FOLLOWING IS NOT RIGHT YET.
         for name in task_list:
             if self.config.start_point is None:
                 # No start cycle point at which to load cycling tasks.
+                # TODO - check the consequences of this
                 continue
-            try:
-                self.pool.add_to_runahead_pool(TaskProxy(
-                    self.config.get_taskdef(name), self.config.start_point,
-                    is_startup=True))
-            except TaskProxySequenceBoundsError as exc:
-                LOG.debug(str(exc))
-                continue
+            # Add tasks with no prereqs, or pre-initial only.
+            tdef = self.config.get_taskdef(name)
+            for seq in tdef.sequences:
+                point = seq.get_start_point()
+                parent_points = tdef.get_parent_points(point)
+                spawn = True
+                for pp in parent_points:
+                   if pp > self.config.start_point:
+                      # TODO what if all sequence starts are offset from ICP?
+                      spawn = False
+                if spawn:
+                    try:
+                        self.pool.add_to_runahead_pool(
+                            TaskProxy(tdef, point, is_startup=True))
+                    except TaskProxySequenceBoundsError as exc:
+                        # TODO is this needed?
+                        LOG.debug(str(exc))
 
     def load_tasks_for_restart(self):
         """Load tasks for restart."""
@@ -638,7 +652,8 @@ see `COPYING' in the Cylc source distribution.
             for submit_num, event_time, severity, message in message_items:
                 if self.task_events_mgr.process_message(
                         itask, severity, message, event_time,
-                        self.task_events_mgr.FLAG_RECEIVED, submit_num):
+                        self.task_events_mgr.FLAG_RECEIVED, submit_num,
+                        self.pool.spawn, self.pool.finished_tasks_queue):
                     should_poll = True
             if should_poll:
                 to_poll_tasks.append(itask)
@@ -991,9 +1006,9 @@ see `COPYING' in the Cylc source distribution.
         cylc.flow.flags.debug = bool(LOG.isEnabledFor(logging.DEBUG))
         return True, 'OK'
 
-    def command_remove_tasks(self, items, spawn=False):
+    def command_remove_tasks(self, items):
         """Remove tasks."""
-        return self.pool.remove_tasks(items, spawn)
+        return self.pool.remove_tasks(items)
 
     def command_insert_tasks(self, items, stop_point_string=None,
                              check_point=True):
@@ -1288,7 +1303,6 @@ see `COPYING' in the Cylc source distribution.
         time0 = time()
         if self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT):
             self.set_suite_inactivity_timer()
-        self.pool.match_dependencies()
         if self.stop_mode is None and self.auto_restart_time is None:
             itasks = self.pool.get_ready_tasks()
             if itasks:
@@ -1299,13 +1313,10 @@ see `COPYING' in the Cylc source distribution.
                 LOG.info(
                     '[%s] -triggered off %s',
                     itask, itask.state.get_resolved_dependencies())
-        for meth in [
-                self.pool.spawn_all_tasks,
-                self.pool.remove_spent_tasks,
-                self.pool.remove_suiciding_tasks]:
-            if meth():
-                self.is_updated = True
 
+        if (self.pool.remove_suiciding_tasks() or
+                self.pool.remove_finished_tasks()):
+            self.is_updated = True
         self.broadcast_mgr.expire_broadcast(self.pool.get_min_point())
         self.xtrigger_mgr.housekeep()
         self.suite_db_mgr.put_xtriggers(self.xtrigger_mgr.sat_xtrig)
@@ -1943,6 +1954,10 @@ see `COPYING' in the Cylc source distribution.
 
     def check_auto_shutdown(self):
         """Check if we should do a normal automatic shutdown."""
+
+        # SoD: Disable auto-shutdown for the moment
+        return False
+
         if not self.can_auto_stop:
             return False
         can_shutdown = True
@@ -2020,10 +2035,6 @@ see `COPYING' in the Cylc source distribution.
     def command_reset_task_states(self, items, state=None, outputs=None):
         """Reset the state of tasks."""
         return self.pool.reset_task_states(items, state, outputs)
-
-    def command_spawn_tasks(self, items):
-        """Force spawn task successors."""
-        return self.pool.spawn_tasks(items)
 
     def command_take_checkpoints(self, name):
         """Insert current task_pool, etc to checkpoints tables."""
