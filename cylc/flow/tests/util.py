@@ -184,4 +184,3 @@ def set_up_globalrc(rc_string, tmp_path):
         file_handle.write(rc_string)
     os.environ['CYLC_CONF_PATH'] = str(tmp_path)
     return True
-

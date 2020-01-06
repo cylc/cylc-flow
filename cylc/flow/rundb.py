@@ -15,9 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Provide data access object for the suite runtime database."""
 
+import re
 import sqlite3
 import traceback
-
 
 from cylc.flow import LOG
 import cylc.flow.flags
@@ -994,15 +994,19 @@ class CylcSuiteDAO(object):
             '''
         )
         job_platforms = glbl_cfg(cached=False).get(['job platforms'])
-        for cycle, name, host, batch_system in conn.execute(rf'''
+        for cycle, name, user_at_host, batch_system in conn.execute(rf'''
                 SELECT
                     cycle, name, user_at_host, batch_system
                 FROM
                     {table}
         '''):
-            # TODO implement handling of user@host
-            user = ''
-            # breakpoint()
+            match = re.match(r"(?P<user>\S+)@(?P<host>\S+)", user_at_host)
+            if match:
+                user = match.group('user')
+                host = match.group('host')
+            else:
+                user = ''
+                host = user_at_host
             platform = reverse_lookup(
                 job_platforms,
                 {'batch system': batch_system},
@@ -1021,4 +1025,5 @@ class CylcSuiteDAO(object):
                 ''',
                 (user, platform, cycle, name)
             )
+        conn.commit()
         return True

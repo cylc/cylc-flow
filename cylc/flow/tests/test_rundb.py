@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import contextlib
 import os
 import sqlite3
@@ -22,6 +23,7 @@ from tempfile import mktemp
 from unittest import mock
 
 from cylc.flow.rundb import CylcSuiteDAO
+from cylc.flow.tests.util import set_up_globalrc
 
 
 GLOBALRC = """
@@ -194,38 +196,27 @@ def test_upgrade_hold_swap():
         assert not dao.upgrade_is_held()
 
 
-def set_up_globalrc(rc_string, tmp_path):
-    # Set up a globalrc file
-    globalrc = tmp_path / 'flow.rc'
-    with open(str(globalrc), 'w') as file_handle:
-        file_handle.write(rc_string)
-    os.environ['CYLC_CONF_PATH'] = str(tmp_path)
-    return tmp_path
-
-
 def test_upgrade_to_platforms(tmp_path):
-    """Test upgrader logic for platforms
-
-
-    Returns:
-
+    """Test upgrader logic for platforms in the database.
     """
     # Set up the globalrc
     set_up_globalrc(GLOBALRC, tmp_path)
 
-    # user_at_host,'batch_system'
+    # task name, cycle, user_at_host, batch_system
     initial_data = [
-        ('foo', '1', 'hpcl1','pbs'),
-        ('foo', '1', 'desktop01', 'background'),
-        ('foo', '1', '', 'slurm'),
-        ('foo', '1', 'hpcl1', 'background'),
+        ('hpc_with_pbs', '1', 'hpcl1', 'pbs'),
+        ('desktop_with_bg', '1', 'desktop01', 'background'),
+        ('slurm_no_host', '1', '', 'slurm'),
+        ('hpc_bg', '1', 'hpcl1', 'background'),
+        ('username_given', '1', 'slartibartfast@hpcl1', 'pbs')
     ]
-    # user, platform
+    # task name, cycle, user, platform
     expected_data = [
-        ('foo', '1', '', 'hpc'),
-        ('foo', '1', '', 'desktop01'),
-        ('foo', '1', '', 'sugar'),
-        ('foo', '1', '', 'hpcl1-bg')
+        ('hpc_with_pbs', '1', '', 'hpc'),
+        ('desktop_with_bg', '1', '', 'desktop01'),
+        ('slurm_no_host', '1', '', 'sugar'),
+        ('hpc_bg', '1', '', 'hpcl1-bg'),
+        ('username_given', '1', 'slartibartfast', 'hpc'),
     ]
     with create_temp_db() as (temp_db, conn):
         conn.execute(
@@ -267,7 +258,7 @@ def test_upgrade_to_platforms(tmp_path):
         # check the data was correctly upgraded
         dump = [
             x for x in conn.execute(
-                rf'SELECT user, platform FROM task_jobs'
+                rf'SELECT name, cycle, user, platform FROM task_jobs'
             )
         ]
         assert dump == expected_data
@@ -275,6 +266,6 @@ def test_upgrade_to_platforms(tmp_path):
         # make sure the upgrade is skipped on future runs
         assert not dao.upgrade_to_platforms()
 
+
 if __name__ == '__main__':
     unittest.main()
-
