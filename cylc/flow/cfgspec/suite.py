@@ -453,8 +453,7 @@ def host_to_platform_upgrader(cfg):
                     task_spec_remote
                 )
             except PlatformLookupError as exc:
-                LOG.error(f'Unable to determine platform for {task_name}')
-                LOG.debug(f'Exception was {exc}')
+                raise PlatformLookupError(f"for task {task_name}: {exc}")
             else:
 
                 # Set platform in config

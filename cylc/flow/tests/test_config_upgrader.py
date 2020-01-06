@@ -21,6 +21,7 @@ import pytest
 import os
 import re
 from cylc.flow.cfgspec.suite import RawSuiteConfig, host_to_platform_upgrader
+from cylc.flow.exceptions import PlatformLookupError
 
 # A set of tasks the host_to_platform_upgrader should be able to deal with
 # without hiccuping.
@@ -46,16 +47,22 @@ SUITERC = """
         # => platform = hpcl1-bg (set at load time)
 """
 
-# A set of hosts which should return a logged error message on upgrade.
-BADSUITERC = """
+# A set of tasks which should return a validation failure because no
+# matching platform can be found.
+NOPLATFORM_SUITERC = """
 [runtime]
     [[beta]]
+    # => validation failure (no matching platform)
         [[[remote]]]
             host = desktop01
         [[[job]]]
             batch system = slurm
-        # => validation failure (no matching platform)
+"""
 
+# A set of tasks which should return a python error because Cylc 7 & 8
+# Settings have both been used.
+BADSUITERC = """
+[runtime]
     [[kappa]]
         platform = sugar
         [[[remote]]]
@@ -168,17 +175,23 @@ def test_upgrader_function(tmp_path, task, output):
         assert after['runtime'][task]['remote'].items() == []
 
 
-def test_upgrader_failures(tmp_path, caplog):
-    """Check that non-upgradable configs return error messages.
+def test_upgrader_fails_mixed_syntax(tmp_path, caplog):
+    """Check that mixed Cylc 7/8 configs return error messages.
     """
     set_up(GLOBALRC, BADSUITERC, tmp_path)
     failed_tasks_messages = [
-        "Unable to determine platform for beta",
         "A mixture of Cylc 7 \\(host\\) and Cylc 8 \\(platform logic\\)"
     ]
     errors = [record.msg for record in caplog.records]
     for msg in failed_tasks_messages:
         assert any([re.match(msg, error) for error in errors])
+
+
+def test_upgrader_fails_noplatform(tmp_path):
+    """Check that an error is raised if no matchin Platfrom is found
+    """
+    with pytest.raises(PlatformLookupError):
+        set_up(GLOBALRC, NOPLATFORM_SUITERC, tmp_path)
 
 
 def test_upgrader_where_host_is_function(tmp_path, caplog):
