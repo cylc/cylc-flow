@@ -14,6 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+import pytest
+
 from pathlib import Path
 from shutil import rmtree
 from tempfile import mkdtemp
@@ -157,3 +160,19 @@ def create_task_proxy(task_name: str, suite_config: SuiteConfig,
         tdef=task_def,
         start_point=suite_config.start_point,
         is_startup=is_startup)
+
+
+@pytest.fixture()
+def set_up_globalrc(tmp_path_factory):
+    """A Pytest fixture to help set up a globalrc file in a test temporary
+    directory and add CYLC_CONF_PATH to the environment.
+    """
+    def _inner_func(rc_string):
+        tempdir = tmp_path_factory.getbasetemp()
+        globalrc = tempdir / 'flow.rc'
+        with open(str(globalrc), 'w') as file_handle:
+            file_handle.write(rc_string)
+        os.environ['CYLC_CONF_PATH'] = str(tempdir)
+        return globalrc
+
+    return _inner_func

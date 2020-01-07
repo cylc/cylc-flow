@@ -25,19 +25,19 @@ PLATFORMS = {
         'batch system': 'background'
     },
     'sugar': {
-        'hosts': 'localhost',
+        'remote hosts': 'localhost',
         'batch system': 'slurm',
     },
     'hpc': {
-        'hosts': ['hpc1', 'hpc2'],
+        'remote hosts': ['hpc1', 'hpc2'],
         'batch system': 'pbs',
     },
     'hpc1-bg': {
-        'hosts': 'hpc1',
+        'remote hosts': 'hpc1',
         'batch system': 'background',
     },
     'hpc2-bg': {
-        'hosts': 'hpc2',
+        'remote hosts': 'hpc2',
         'batch system': 'background'
     }
 }
@@ -76,6 +76,7 @@ PLATFORMS_WITH_RE = {
 )
 def test_basic(PLATFORMS, platform, expected):
     assert forward_lookup(PLATFORMS, platform) == expected
+
 
 def test_platform_not_there():
     with pytest.raises(PlatformLookupError):
@@ -186,12 +187,12 @@ def test_reverse_lookup_two_spices(
 ):
     platforms = {
         'sugar': {
-            'hosts': ['sugar', 'localhost'],
+            'remote hosts': ['sugar', 'localhost'],
             'batch system': 'slurm',
         },
         'pepper': {
             'batch system': 'slurm',
-            'hosts': 'pepper'
+            'remote hosts': 'pepper'
         },
 
     }
@@ -226,18 +227,18 @@ def test_reverse_lookup_similar_platforms(
 ):
     platforms = {
         'my-platform-with-bash': {
-            'hosts': 'desktop01',
+            'remote hosts': 'desktop01',
             'shell': '/bin/bash',
             'batch system': 'background'
         },
         # An extra platform to check that we only pick up the first match
         'my-platform-with-fish-not-this-one': {
-            'hosts': 'desktop01',
+            'remote hosts': 'desktop01',
             'shell': '/bin/fish',
             'batch system': 'background'
         },
         'my-platform-with-fish': {
-            'hosts': 'desktop01',
+            'remote hosts': 'desktop01',
             'shell': '/bin/fish',
             'batch system': 'background'
         },

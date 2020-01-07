@@ -15,13 +15,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Provide data access object for the suite runtime database."""
 
+import re
 import sqlite3
 import traceback
-
 
 from cylc.flow import LOG
 import cylc.flow.flags
 from cylc.flow.wallclock import get_current_time_string
+from cylc.flow.platform_lookup import reverse_lookup
+from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 
 
 class CylcSuiteDAOTableColumn(object):
@@ -951,4 +953,77 @@ class CylcSuiteDAO(object):
                 )
             self.remove_columns(table, ['hold_swap'])
             conn.commit()
+        return True
+
+    def upgrade_to_platforms(self):
+        """upgrade [job]batch system and [remote]host to platform
+
+        * Add 'platform' and 'user' columns to table task_jobs.
+        * Remove 'user_at_host' and 'batch_sys_name' columns
+
+
+        Returns:
+            bool - True if upgrade performed, False if upgrade skipped.
+        """
+        conn = self.connect()
+
+        # check if upgrade required
+        schema = conn.execute(rf'PRAGMA table_info({self.TABLE_TASK_JOBS})')
+        for _, name, *_ in schema:
+            if name == 'platform':
+                LOG.debug('platform column present - skipping db upgrade')
+                return False
+
+        # Perform upgrade:
+        table = self.TABLE_TASK_JOBS
+        LOG.info('Upgrade to Cylc 8 platforms syntax')
+        conn.execute(
+            rf'''
+                ALTER TABLE
+                    {table}
+                ADD COLUMN
+                    user TEXT
+            '''
+        )
+        conn.execute(
+            rf'''
+                ALTER TABLE
+                    {table}
+                ADD COLUMN
+                    platform TEXT
+            '''
+        )
+        job_platforms = glbl_cfg(cached=False).get(['job platforms'])
+        for cycle, name, user_at_host, batch_system in conn.execute(rf'''
+                SELECT
+                    cycle, name, user_at_host, batch_system
+                FROM
+                    {table}
+        '''):
+            match = re.match(r"(?P<user>\S+)@(?P<host>\S+)", user_at_host)
+            if match:
+                user = match.group('user')
+                host = match.group('host')
+            else:
+                user = ''
+                host = user_at_host
+            platform = reverse_lookup(
+                job_platforms,
+                {'batch system': batch_system},
+                {'host': host}
+            )
+            conn.execute(
+                rf'''
+                    UPDATE
+                        {table}
+                    SET
+                        user=?,
+                        platform=?
+                    WHERE
+                        cycle==?
+                        AND name==?
+                ''',
+                (user, platform, cycle, name)
+            )
+        conn.commit()
         return True
