@@ -455,22 +455,22 @@ def host_to_platform_upgrader(cfg):
             except PlatformLookupError as exc:
                 raise PlatformLookupError(f"for task {task_name}: {exc}")
             else:
-
                 # Set platform in config
                 cfg['runtime'][task_name].update({'platform': platform})
+                LOG.warning(f"Platform {platform} auto selected from ")
                 # Remove deprecated items from config
                 for old_spec_item in forbidden_with_platform:
                     for task_section in ['job', 'remote']:
-                        if old_spec_item in task_section:
-                            cfg['runtime'][task_name][task_section].update(
-                                cfg.pop(
-                                    cfg['runtime'][task_name][task_section]
-                                    [old_spec_item])
-                            )
-                            LOG.warning(
-                                f"Platform {platform} auto selected from "
-                                f"Cylc 7 {old_spec_item} removed."
-                            )
+                        if (
+                            task_section in cfg['runtime'][task_name] and
+                            old_spec_item in
+                                cfg['runtime'][task_name][task_section].keys()
+                        ):
+                            poppable = cfg['runtime'][task_name][task_section]
+                            poppable.pop(old_spec_item)
+                    LOG.warning(
+                        f"Cylc 7 {old_spec_item} removed."
+                    )
     return cfg
 
 

@@ -39,12 +39,25 @@ SUITERC = """
             batch system = slurm
         # => platform = sugar (set at load time)
 
+    [[mu]]
+        [[[remote]]]
+            host = localhost
+
     [[zeta]]
         [[[remote]]]
             host = hpcl1
         [[[job]]]
             batch system = background
         # => platform = hpcl1-bg (set at load time)
+    [[omicron]]
+        [[[remote]]]
+            host = hpcl1
+        [[[job]]]
+            batch system = background
+            batch submit command template = qsub
+        # => platform = hpcl1-bg (set at load time)
+    [[nu]]
+         platform = desktop42
 """
 
 # A set of tasks which should return a validation failure because no
@@ -154,25 +167,35 @@ def set_up(global_rc_str, suite_rc_str, tmp_path):
     return (suite_config, upgraded_suite_config)
 
 
+def test_upgrader_fn_not_used(tmp_path):
+    # Check that nothing happens if nothing needs to.
+    before, after = set_up(GLOBALRC, SUITERC, tmp_path)
+    assert after['runtime']['nu'] == before.get(['runtime', 'nu'])
+
+
 @pytest.mark.parametrize(
     'task, output',
     [
         ('alpha', 'localhost'),
         ('gamma', 'sugar'),
-        ('zeta', 'hpcl1-bg')
+        ('zeta', 'hpcl1-bg'),
+        ('mu', 'localhost'),
+        ('omicron', 'hpcl1-bg')
     ]
 )
 def test_upgrader_function(tmp_path, task, output):
     # Check that upgradable configs are returned with platform settings added
     before, after = set_up(GLOBALRC, SUITERC, tmp_path)
     assert after['runtime'][task]['platform'] == output
-    assert after['runtime'][task]['job'].items() == []
-    try:
-        after['runtime'][task]['remote']
-    except KeyError:
-        pass
-    else:
-        assert after['runtime'][task]['remote'].items() == []
+
+    # Assure ourselves that the old items have been removed
+    if 'remote' in after['runtime'][task].keys():
+        assert 'host' not in after['runtime'][task]['remote'].keys()
+    if 'job' in after['runtime'][task].keys():
+        assert 'batch sytem' not in after['runtime'][task]['job'].keys()
+    if 'job' in after['runtime'][task].keys():
+        assert 'batch submit command template' not in \
+               after['runtime'][task]['job'].keys()
 
 
 def test_upgrader_fails_mixed_syntax(tmp_path, caplog):
