@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import pytest
 
 from pathlib import Path
 from shutil import rmtree
@@ -161,26 +162,17 @@ def create_task_proxy(task_name: str, suite_config: SuiteConfig,
         is_startup=is_startup)
 
 
-def set_up_globalrc(rc_string, tmp_path):
-    """Set up a globalrc file in a test temporary directory and add
-    CYLC_CONF_PATH to the environment.
-
-    N.B Use the Pytest tmp_path argument in the test definition to create a
-    tmp_path which can be passed to this function.
-
-    Args:
-        rc_string (string):
-            A global.rc file string. Define in your test or load from
-            a file.
-        tmp_path (pathlib.path):
-            An object defining the location into which a temporary global.rc
-            can be placed.
-
-    Returns:
-        True
+@pytest.fixture()
+def set_up_globalrc(tmp_path_factory):
+    """A Pytest fixture to help set up a globalrc file in a test temporary
+    directory and add CYLC_CONF_PATH to the environment.
     """
-    globalrc = tmp_path / 'flow.rc'
-    with open(str(globalrc), 'w') as file_handle:
-        file_handle.write(rc_string)
-    os.environ['CYLC_CONF_PATH'] = str(tmp_path)
-    return True
+    def _inner_func(rc_string):
+        tempdir = tmp_path_factory.getbasetemp()
+        globalrc = tempdir / 'flow.rc'
+        with open(str(globalrc), 'w') as file_handle:
+            file_handle.write(rc_string)
+        os.environ['CYLC_CONF_PATH'] = str(tempdir)
+        return globalrc
+
+    return _inner_func

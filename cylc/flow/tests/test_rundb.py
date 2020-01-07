@@ -196,11 +196,11 @@ def test_upgrade_hold_swap():
         assert not dao.upgrade_is_held()
 
 
-def test_upgrade_to_platforms(tmp_path):
+def test_upgrade_to_platforms(set_up_globalrc):
     """Test upgrader logic for platforms in the database.
     """
     # Set up the globalrc
-    set_up_globalrc(GLOBALRC, tmp_path)
+    set_up_globalrc(GLOBALRC)
 
     # task name, cycle, user_at_host, batch_system
     initial_data = [
