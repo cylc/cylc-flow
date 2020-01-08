@@ -198,16 +198,11 @@ def test_upgrader_function(tmp_path, task, output):
                after['runtime'][task]['job'].keys()
 
 
-def test_upgrader_fails_mixed_syntax(tmp_path, caplog):
+def test_upgrader_fails_mixed_syntax(tmp_path):
     """Check that mixed Cylc 7/8 configs return error messages.
     """
-    set_up(GLOBALRC, BADSUITERC, tmp_path)
-    failed_tasks_messages = [
-        "A mixture of Cylc 7 \\(host\\) and Cylc 8 \\(platform logic\\)"
-    ]
-    errors = [record.msg for record in caplog.records]
-    for msg in failed_tasks_messages:
-        assert any([re.match(msg, error) for error in errors])
+    with pytest.raises(PlatformLookupError):
+        set_up(GLOBALRC, BADSUITERC, tmp_path)
 
 
 def test_upgrader_fails_noplatform(tmp_path):
@@ -223,13 +218,13 @@ def test_upgrader_where_host_is_function(tmp_path, caplog):
     The reverse lookup to be used at job-submission instead.
     """
     import logging
-    caplog.set_level(logging.INFO)
+    caplog.set_level(logging.DEBUG)
     set_up(GLOBALRC, FUNC_SUITERC, tmp_path)
     debug_tasks_messages = [
-        f"Unable to upgrade task '{name}' to platform at validation because "
-        f"the host setting contains a function. Cylc will attempt to "
-        f"upgrade this task on job submission."
+        (f"The host setting of '{name}' is a function: "
+         f"Cylc will try to upgrade this task on job submission.")
         for name in ['delta', 'epsilon']
     ]
     messages = [record.msg for record in caplog.records]
-    assert debug_tasks_messages == messages
+    for message in debug_tasks_messages:
+        assert message in messages
