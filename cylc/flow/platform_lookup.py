@@ -158,7 +158,7 @@ def reverse_lookup(platforms, job, remote):
     #   - In the case of host we also want a regex match to the platform name
     #   - In the case of batch system we want to match the name of the system
     #     to a platform when host is localhost.
-    if 'host' in remote.keys():
+    if 'host' in remote.keys() and remote['host']:
         task_host = remote.pop('host')
     else:
         task_host = 'localhost'
@@ -183,12 +183,11 @@ def reverse_lookup(platforms, job, remote):
         # All items other than batch system and host must be an exact match
         if not generic_items_match:
             continue
-
         # We have some special logic to identify whether task host and task
         # batch system match the platform in question.
         if (
-            task_host == 'localhost' and
-            task_batch_system == 'background'
+                task_host == 'localhost' and
+                task_batch_system == 'background'
         ):
             return 'localhost'
 
@@ -202,8 +201,8 @@ def reverse_lookup(platforms, job, remote):
             return platform_name
 
         elif (
-            re.fullmatch(platform_name, task_host) and
-            task_batch_system == platform_spec['batch system']
+                re.fullmatch(platform_name, task_host) and
+                task_batch_system == platform_spec['batch system']
         ):
             return task_host
 

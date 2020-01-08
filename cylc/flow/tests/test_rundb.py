@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import contextlib
 import os
 import sqlite3
@@ -22,6 +23,31 @@ from tempfile import mktemp
 from unittest import mock
 
 from cylc.flow.rundb import CylcSuiteDAO
+from cylc.flow.tests.util import set_up_globalrc
+
+
+GLOBALRC = """
+[job platforms]
+    [[desktop[0-9]{2}|laptop[0-9]{2}]]
+        # hosts = platform name (default)
+        # Note: "desktop01" and "desktop02" are both valid and distinct
+        # platforms
+    [[sugar]]
+        remote hosts = localhost
+        batch system = slurm
+    [[hpc]]
+        remote hosts = hpcl1, hpcl2
+        retrieve job logs = True
+        batch system = pbs
+    [[hpcl1-bg]]
+        remote hosts = hpcl1
+        retrieve job logs = True
+        batch system = background
+    [[hpcl2-bg]]
+        remote hosts = hpcl2
+        retrieve job logs = True
+        batch system = background
+"""
 
 
 class TestRunDb(unittest.TestCase):
@@ -168,6 +194,77 @@ def test_upgrade_hold_swap():
 
         # make sure the upgrade is skipped on future runs
         assert not dao.upgrade_is_held()
+
+
+def test_upgrade_to_platforms(set_up_globalrc):
+    """Test upgrader logic for platforms in the database.
+    """
+    # Set up the globalrc
+    set_up_globalrc(GLOBALRC)
+
+    # task name, cycle, user_at_host, batch_system
+    initial_data = [
+        ('hpc_with_pbs', '1', 'hpcl1', 'pbs'),
+        ('desktop_with_bg', '1', 'desktop01', 'background'),
+        ('slurm_no_host', '1', '', 'slurm'),
+        ('hpc_bg', '1', 'hpcl1', 'background'),
+        ('username_given', '1', 'slartibartfast@hpcl1', 'pbs')
+    ]
+    # task name, cycle, user, platform
+    expected_data = [
+        ('hpc_with_pbs', '1', '', 'hpc'),
+        ('desktop_with_bg', '1', '', 'desktop01'),
+        ('slurm_no_host', '1', '', 'sugar'),
+        ('hpc_bg', '1', '', 'hpcl1-bg'),
+        ('username_given', '1', 'slartibartfast', 'hpc'),
+    ]
+    with create_temp_db() as (temp_db, conn):
+        conn.execute(
+            rf'''
+                CREATE TABLE {CylcSuiteDAO.TABLE_TASK_JOBS} (
+                    name varchar(255),
+                    cycle varchar(255),
+                    user_at_host varchar(255),
+                    batch_system varchar(255)
+                )
+            '''
+        )
+        conn.executemany(
+            rf'''
+                INSERT INTO {CylcSuiteDAO.TABLE_TASK_JOBS}
+                VALUES (?,?,?,?)
+            ''',
+            initial_data
+        )
+        # close database
+        conn.commit()
+        conn.close()
+
+        # open database as cylc dao
+        dao = CylcSuiteDAO(temp_db)
+        conn = dao.connect()
+
+        # check the initial data was correctly inserted
+        dump = [
+            x for x in conn.execute(
+                rf'SELECT * FROM {CylcSuiteDAO.TABLE_TASK_JOBS}'
+            )
+        ]
+        assert dump == initial_data
+
+        # Upgrade function returns True?
+        assert dao.upgrade_to_platforms()
+
+        # check the data was correctly upgraded
+        dump = [
+            x for x in conn.execute(
+                rf'SELECT name, cycle, user, platform FROM task_jobs'
+            )
+        ]
+        assert dump == expected_data
+
+        # make sure the upgrade is skipped on future runs
+        assert not dao.upgrade_to_platforms()
 
 
 if __name__ == '__main__':
