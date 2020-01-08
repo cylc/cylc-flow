@@ -411,11 +411,12 @@ def host_to_platform_upgrader(cfg):
                 }
             ):
                 # Fail Loudly and Horribly
-                LOG.error(
+                raise PlatformLookupError(
                     f"A mixture of Cylc 7 (host) and Cylc 8 (platform logic)"
                     f" should not be used. Task {task_name} set platform "
                     f"and item in {forbidden_with_platform}"
                 )
+
         elif 'platform' in task_spec:
             # Return config unchanged
             continue
@@ -437,11 +438,9 @@ def host_to_platform_upgrader(cfg):
                 'host' in task_spec_remote and
                 REC_COMMAND.match(task_spec['remote']['host'])
             ):
-                LOG.info(
-                    f"Unable to upgrade task '{task_name}' to platform at "
-                    f"validation because the host setting contains a "
-                    f"function. Cylc will attempt to upgrade this task on"
-                    f" job submission."
+                LOG.debug(
+                    f"The host setting of '{task_name}' is a function: "
+                    f"Cylc will try to upgrade this task on job submission."
                 )
                 continue
 
