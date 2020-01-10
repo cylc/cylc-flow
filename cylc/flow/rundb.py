@@ -433,7 +433,7 @@ class CylcSuiteDAO(object):
             # Clear the queues
             for table in self.tables.values():
                 table.delete_queues.clear()
-                del table.insert_queue[:]  # list.clear avail from Python 3.3
+                table.insert_queue.clear()
                 table.update_queues.clear()
             # Report public database retry recovery if necessary
             if self.n_tries:
