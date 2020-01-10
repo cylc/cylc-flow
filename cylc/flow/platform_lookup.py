@@ -68,7 +68,7 @@ def forward_lookup(platforms, job_platform):
         return 'localhost'
     for platform in reversed(list(platforms)):
         if re.fullmatch(platform, job_platform):
-            return job_platform
+            return job_platform, platform
 
     raise PlatformLookupError(
         f"No matching platform \"{job_platform}\" found")
