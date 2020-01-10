@@ -75,7 +75,10 @@ PLATFORMS_WITH_RE = {
      ]
 )
 def test_basic(PLATFORMS, platform, expected):
-    assert forward_lookup(PLATFORMS, platform) == expected
+    try:
+        assert forward_lookup(PLATFORMS, platform)[0] == expected
+    except AssertionError:
+        assert forward_lookup(PLATFORMS, platform) == expected
 
 
 def test_platform_not_there():

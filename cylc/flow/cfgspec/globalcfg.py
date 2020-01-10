@@ -27,6 +27,7 @@ from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.parsec.upgrade import upgrader
 from cylc.flow.parsec.validate import (
     DurationFloat, CylcConfigValidator as VDR, cylc_config_validate)
+from cylc.flow.platform_lookup import forward_lookup
 
 # Nested dict of spec items.
 # Spec value is [value_type, default, allowed_2, allowed_3, ...]
@@ -378,6 +379,83 @@ class GlobalConfig(ParsecConfig):
                         raise
         # (OK if no flow.rc is found, just use system defaults).
         self._transform()
+
+    def get_platform_item_for_job(self, job_conf, item):
+        # Returns platfrom item job from the job config and item
+        return get_platform_item(item, job_conf['platform'])
+
+    def get_platfrom_item(
+        self, item, platform=None, owner=None, replace_home=False,
+        owner_home=None
+    ):
+        """
+        Allows us to access platform items. If platform items have not
+        been set these are filled in from defaults
+
+        Args:
+            item (str):
+                The item from the spec we want to get.
+
+        Kwargs:
+            platform (str):
+                The name of the platform we are interested in getting
+                information about. Defaults to None.
+            owner (str):
+                If set this method will attempt to discover if this owner
+                is a remote user. If they are then ...
+                Defaults to None.
+            replace_home (bool):
+                If True this method will attempt to replace explicit
+                references to self._HOME with "$HOME" in any config item
+                whose key contains the word "directory".
+                Defaults to False.
+            owner_home (str):
+                If set this value will replace self._HOME in any config item
+                whose key contains the word "directory".
+                Defaults to None.
+
+        Returns:
+            A value assigned to an item in the config. Can be almost any
+            type.
+
+        Todo:
+            Convert all strings representing paths to using pathlib.Path
+            objects.
+
+        Chart:
+
+        """
+        msg = (f"args are \"{item}\", kwargs are"
+               f"{platform, owner, replace_home, owner_home}")
+        # Check for the existence of the item we want in the platform specified
+        # Or use default values.
+        modify_dirs = False
+        if platform:
+            platform, raw_platform = forward_lookup(
+                self.get(['job platforms']), platform
+            )
+            if (item in self.get(['job platforms', raw_platform])):
+                value = self.get(['job platforms', raw_platform, item])
+        else:
+            value = self.spec['job platforms']['__MANY__'][item][1]
+            modify_dirs = True
+
+        # Deal with cases where the setting is a directory.
+        if value is not None and 'directory' in item:
+            if replace_home:
+                # Replace local home dir with $HOME for eval'n on other host.
+                value = value.replace(self._HOME, '$HOME')
+            elif is_remote_user(owner) or modify_dirs:
+                # Replace with ~owner for direct access via local filesys
+                # (works for standard cylc-run directory location).
+                if owner_home is None:
+                    if owner:
+                        owner_home = os.path.expanduser('~%s' % owner)
+                    else:
+                        owner_home = os.path.expanduser('~')
+                value = value.replace(self._HOME, owner_home)
+                value = value.replace("$HOME", owner_home)
+        return value
 
     def get_host_item(self, item, host=None, owner=None, replace_home=False,
                       owner_home=None):
