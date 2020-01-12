@@ -224,6 +224,7 @@ cylc__job__run_inst_func() {
 # Send message (and possibly run err script) before job exit.
 # Globals:
 #   CYLC_FAIL_SIGNALS
+#   CYLC_TASK_LOG_ROOT
 #   CYLC_TASK_USER_SCRIPT_PID
 #   CYLC_TASK_USER_SCRIPT_EXITCODE
 #   CYLC_VACATION_SIGNALS
@@ -253,6 +254,7 @@ cylc__job_finish_err() {
         kill -s "${signal}" -- "-$$" 2>'/dev/null' ||
         kill -s "${signal}" -- "${CYLC_TASK_USER_SCRIPT_PID}" 2>'/dev/null' || true
     fi
+    grep -q "^CYLC_JOB_EXIT=" "${CYLC_TASK_LOG_ROOT}.status" ||
     cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" "$@" &
     if "${run_err_script}"; then
         if [[ -n "${CYLC_TASK_USER_SCRIPT_PID:-}" ]]; then
@@ -271,7 +273,7 @@ cylc__job_finish_err() {
 #   CYLC_TASK_USER_SCRIPT_EXITCODE
 cylc__job_abort() {
     CYLC_TASK_USER_SCRIPT_EXITCODE="1"
-    cylc__job_finish_err "EXIT" true "CRITICAL: aborted/\"${1}\""
+    cylc__job_finish_err "EXIT" false "CRITICAL: aborted/\"${1}\""
 }
 
 ###############################################################################
