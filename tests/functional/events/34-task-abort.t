@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Test job abort-with-message and interaction with failed handler.
 . "$(dirname "$0")/test_header"
-set_test_number 5
+set_test_number 6
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
@@ -40,6 +40,11 @@ LOG="${SUITE_RUN_DIR}/log/job/1/foo/NN/job.out"
 grep_ok 'ONE' "${LOG}"
 # ...after abort
 grep_fail 'TWO' "${LOG}"
+#-------------------------------------------------------------------------------
+# Check only one CYLC_JOB_EXIT message written.
+JOB_STATUS="${SUITE_RUN_DIR}/log/job/1/foo/NN/job.status"
+run_ok "${TEST_NAME_BASE}-message-count" \
+    test "$(grep -c '^CYLC_JOB_EXIT=' "$JOB_STATUS")" -eq '1'
 #-------------------------------------------------------------------------------
 purge
 exit
