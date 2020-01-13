@@ -1767,7 +1767,6 @@ see `COPYING' in the Cylc source distribution.
         if isinstance(reason, SchedulerStop):
             LOG.info('Suite shutting down - %s', reason.args[0])
         elif isinstance(reason, SchedulerError):
-            LOG.exception(reason)
             LOG.error('Suite shutting down - %s', reason)
         else:
             LOG.exception(reason)
