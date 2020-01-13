@@ -44,19 +44,19 @@ def forward_lookup(platforms, job_platform):
     ...     'suite server platform': None,
     ...     'desktop[0-9][0-9]|laptop[0-9][0-9]': None,
     ...     'sugar': {
-    ...         'login hosts': 'localhost',
+    ...         'remote hosts': 'localhost',
     ...         'batch system': 'slurm'
     ...     },
     ...     'hpc': {
-    ...         'login hosts': ['hpc1', 'hpc2'],
+    ...         'remote hosts': ['hpc1', 'hpc2'],
     ...         'batch system': 'pbs'
     ...     },
     ...     'hpc1-bg': {
-    ...         'login hosts': 'hpc1',
+    ...         'remote hosts': 'hpc1',
     ...         'batch system': 'background'
     ...     },
     ...     'hpc2-bg': {
-    ...         'login hosts': 'hpc2',
+    ...         'remote hosts': 'hpc2',
     ...         'batch system': 'background'
     ...     }
     ... }
@@ -141,7 +141,7 @@ def reverse_lookup(platforms, job, remote):
         >>> platforms = {
         ...         'desktop[0-9][0-9]|laptop[0-9][0-9]': {},
         ...         'sugar': {
-        ...             'login hosts': 'localhost',
+        ...             'remote hosts': 'localhost',
         ...             'batch system': 'slurm'
         ...         }
         ... }
@@ -192,9 +192,9 @@ def reverse_lookup(platforms, job, remote):
             return 'localhost'
 
         elif (
-                'remote hosts' in platform_spec.keys() and
-                task_host in platform_spec['remote hosts'] and
-                task_batch_system == platform_spec['batch system']
+            'remote hosts' in platform_spec.keys() and
+            task_host in platform_spec['remote hosts'] and
+            task_batch_system == platform_spec['batch system']
         ):
             # If we have localhost with a non-background batch system we
             # use the batch system to give a sensible guess at the platform
