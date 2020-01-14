@@ -380,7 +380,8 @@ class GlobalConfig(ParsecConfig):
         # (OK if no flow.rc is found, just use system defaults).
         self._transform()
 
-    def get_platform_item_for_job(self, job_conf, item):
+    @staticmethod
+    def get_platform_item_for_job(job_conf, item):
         # Returns platfrom item job from the job config and item
         return get_platform_item(item, job_conf['platform'])
 
@@ -425,8 +426,6 @@ class GlobalConfig(ParsecConfig):
         Chart:
 
         """
-        msg = (f"args are \"{item}\", kwargs are"
-               f"{platform, owner, replace_home, owner_home}")
         # Check for the existence of the item we want in the platform specified
         # Or use default values.
         modify_dirs = False
