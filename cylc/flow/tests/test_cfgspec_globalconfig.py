@@ -79,7 +79,7 @@ def test_get_host_item(set_up_globalrc, inputs, outputs):
     # set_up_globalrc(RCSTRING=None) and using the GLOBALRC string as a
     # default.
     set_up_globalrc(GLOBALRC_WITH_HOSTS)
-    conf = glbl_cfg()
+    conf = glbl_cfg(cached=False)
     assert conf.get_host_item(*inputs) == outputs
 
 
@@ -134,5 +134,5 @@ def test_get_platform_item(set_up_globalrc, inputs, outputs):
     Ensure that get_platform item works in the desired way.
     """
     set_up_globalrc(GLOBALRC)
-    conf = glbl_cfg()
+    conf = glbl_cfg(cached=False)
     assert conf.get_platfrom_item(*inputs) == outputs
