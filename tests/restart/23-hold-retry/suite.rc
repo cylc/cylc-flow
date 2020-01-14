@@ -15,5 +15,4 @@ if ((CYLC_TASK_TRY_NUMBER == 1)); then
     sleep 120  # Should not matter because the job will be killed
 fi
 """
-        [[[job]]]
-            execution retry delays = PT0S
+        execution retry delays = PT0S

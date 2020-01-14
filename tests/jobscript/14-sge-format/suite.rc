@@ -5,9 +5,9 @@
         R1 = foo
 [runtime]
     [[foo]]
+        execution time limit = PT10M
         [[[job]]]
             batch system = sge
-            execution time limit = PT10M
         [[[directives]]]
             -V =
             -q = queuename

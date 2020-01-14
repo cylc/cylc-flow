@@ -7,7 +7,6 @@
 [runtime]
     [[foo<i>]]
         script = true
-        [[[job]]]
-            submission retry delays = PT10S
+        submission retry delays = PT10S
         [[[remote]]]
             host = $(my-host-select)

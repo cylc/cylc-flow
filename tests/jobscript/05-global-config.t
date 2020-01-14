@@ -17,6 +17,9 @@
 #-------------------------------------------------------------------------------
 # Test that global config is used search for poll
 . "$(dirname "${0}")/test_header"
+
+# TODO - replace this with a Cylc 8 test
+skip_all "This test is broken pending full implementation of platforms"
 #-------------------------------------------------------------------------------
 set_test_number 6
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"

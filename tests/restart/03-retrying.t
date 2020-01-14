@@ -36,8 +36,7 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
                 exit 1
             fi
         """
-        [[[job]]]
-            execution retry delays = PT0S
+        execution retry delays = PT0S
 __SUITERC__
 #-------------------------------------------------------------------------------
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"

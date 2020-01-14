@@ -11,8 +11,8 @@ communication method"""
     [[foo]]
     [[bar]]
         script = "sleep 10"
+        submission polling intervals = PT0.1M
+        execution polling intervals = PT0.3M, 2*PT0.2M, PT0.1M
         [[[job]]]
             batch system = at
             batch submit command template = at now + 1 minutes
-            submission polling intervals = PT0.1M
-            execution polling intervals = PT0.3M, 2*PT0.2M, PT0.1M

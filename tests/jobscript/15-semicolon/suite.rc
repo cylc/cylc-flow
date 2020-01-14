@@ -13,5 +13,4 @@ if ((${CYLC_TASK_SUBMIT_NUMBER} == 1)); then
     false; true
 fi
 """
-        [[[job]]]
-            execution retry delays = PT0S
+        execution retry delays = PT0S

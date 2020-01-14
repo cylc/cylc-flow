@@ -15,8 +15,7 @@
 [runtime]
     [[t1]]
         script=test "${CYLC_TASK_TRY_NUMBER}" -eq 2
-        [[[job]]]
-            execution retry delays = PT5S
+        execution retry delays = PT5S
 {% if GLOBALCFG is not defined %}
         [[[events]]]
             mail events = failed, retry, succeeded

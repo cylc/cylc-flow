@@ -16,8 +16,7 @@ if ((CYLC_TASK_TRY_NUMBER == 1)); then
     sleep 120  # Does not matter how long as the job will be killed
 fi
 """
-        [[[job]]]
-            execution retry delays = PT0S
+        execution retry delays = PT0S
     [[reloader]]
         script = """
 cylc__job__poll_grep_suite_log -F '[retrier.1] -running (held) => retrying (held)'
