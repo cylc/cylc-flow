@@ -38,7 +38,6 @@ REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
 # where:
 # - value_type: value type (compulsory).
 # - default: the default value (optional).
-# - allowed_2, ...: the only other allowed values of this setting (optional).
 SPEC = {
     'meta': {
         'description': [VDR.V_STRING, ''],
@@ -149,6 +148,9 @@ SPEC = {
     },
     'runtime': {
         '__MANY__': {
+            'execution polling intervals': [VDR.V_INTERVAL_LIST, None],
+            'execution retry delays': [VDR.V_INTERVAL_LIST, None],
+            'execution time limit': [VDR.V_INTERVAL],
             'platform': [VDR.V_STRING],
             'inherit': [VDR.V_STRING_LIST],
             'init-script': [VDR.V_STRING],
@@ -157,6 +159,8 @@ SPEC = {
             'exit-script': [VDR.V_STRING],
             'pre-script': [VDR.V_STRING],
             'script': [VDR.V_STRING],
+            'submission polling intervals': [VDR.V_INTERVAL_LIST, None],
+            'submission retry delays': [VDR.V_INTERVAL_LIST, None],
             'post-script': [VDR.V_STRING],
             'extra log files': [VDR.V_STRING_LIST],
             'work sub-directory': [VDR.V_STRING],
@@ -181,13 +185,6 @@ SPEC = {
             'job': {
                 'batch system': [VDR.V_STRING, 'background'],
                 'batch submit command template': [VDR.V_STRING],
-                # TODO All the remaining items to be moved to top level of TASK
-                # When platforms work is completed.
-                'execution polling intervals': [VDR.V_INTERVAL_LIST, None],
-                'execution retry delays': [VDR.V_INTERVAL_LIST, None],
-                'execution time limit': [VDR.V_INTERVAL],
-                'submission polling intervals': [VDR.V_INTERVAL_LIST, None],
-                'submission retry delays': [VDR.V_INTERVAL_LIST, None],
             },
             'remote': {
                 'host': [VDR.V_STRING],
@@ -208,7 +205,6 @@ SPEC = {
                 'mail smtp': [VDR.V_STRING],
                 'mail to': [VDR.V_STRING],
                 'submission timeout': [VDR.V_INTERVAL],
-
                 'expired handler': [VDR.V_STRING_LIST, None],
                 'late offset': [VDR.V_INTERVAL, None],
                 'late handler': [VDR.V_STRING_LIST, None],
@@ -269,6 +265,7 @@ SPEC = {
         },
     },
 }
+# - allowed_2, ...: the only other allowed values of this setting (optional).
 
 
 def upg(cfg, descr):
@@ -307,18 +304,18 @@ def upg(cfg, descr):
     u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'shell'])
     # TODO uncomment these deprecations when ready - see todo in
     # [runtime][__MANY__] section.
-    # for job_setting in [
-    #     'execution polling intervals',
-    #     'execution retry delays',
-    #     'execution time limit',
-    #     'submission polling intervals',
-    #     'submission retry delays'
-    # ]:
-    #     u.deprecate(
-    #         '8.0.0',
-    #         ['runtime', '__MANY__', 'job', job_setting],
-    #         ['runtime', '__MANY__', job_setting]
-    #     )
+    for job_setting in [
+        'execution polling intervals',
+        'execution retry delays',
+        'execution time limit',
+        'submission polling intervals',
+        'submission retry delays'
+    ]:
+        u.deprecate(
+            '8.0.0',
+            ['runtime', '__MANY__', 'job', job_setting],
+            ['runtime', '__MANY__', job_setting]
+        )
     # TODO - there are some simple changes to the config (items from [remote]
     # and [job] moved up 1 level for example) which should be upgraded here.
     u.upgrade()

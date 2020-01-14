@@ -683,7 +683,7 @@ class TaskJobManager(object):
             for key, cfg_key in [
                     (TASK_STATUS_SUBMIT_RETRYING, 'submission retry delays'),
                     (TASK_STATUS_RETRYING, 'execution retry delays')]:
-                delays = rtconfig['job'][cfg_key]
+                delays = rtconfig[cfg_key]
                 if delays is None:
                     delays = []
                 try:
@@ -860,7 +860,7 @@ class TaskJobManager(object):
             batch_sys_conf = {}
         try:
             itask.summary[self.KEY_EXECUTE_TIME_LIMIT] = float(
-                rtconfig['job']['execution time limit'])
+                rtconfig['execution time limit'])
         except TypeError:
             pass
 
