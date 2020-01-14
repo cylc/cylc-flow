@@ -13,7 +13,6 @@
         required run mode =
         suite shutdown event handler =
 
-
 [scheduling]
     initial cycle point = 20150808T00
     final cycle point = 20150808T00
@@ -24,5 +23,8 @@
     [[foo, cat, dog]]
         [[[job]]]
             shell = fish
-
-
+            execution polling intervals =
+            execution retry delays =
+            execution time limit =
+            submission polling intervals =
+            submission retry delays =

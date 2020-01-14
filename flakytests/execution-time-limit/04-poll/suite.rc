@@ -28,6 +28,5 @@ __STATUS__
 fi
 exit
 """
-        [[[job]]]
-            execution time limit = PT10S
-            execution retry delays = PT0S
+        execution time limit = PT10S
+        execution retry delays = PT0S

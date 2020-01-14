@@ -27,5 +27,4 @@
             sleep 120
         fi
         """
-        [[[job]]]
-            execution retry delays = PT1S
+        execution retry delays = PT1S

@@ -265,7 +265,6 @@ SPEC = {
         },
     },
 }
-# - allowed_2, ...: the only other allowed values of this setting (optional).
 
 
 def upg(cfg, descr):
@@ -302,8 +301,6 @@ def upg(cfg, descr):
         ['cylc', 'abort if any task fails'],
         ['cylc', 'events', 'abort if any task fails'])
     u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'shell'])
-    # TODO uncomment these deprecations when ready - see todo in
-    # [runtime][__MANY__] section.
     for job_setting in [
         'execution polling intervals',
         'execution retry delays',
@@ -316,8 +313,6 @@ def upg(cfg, descr):
             ['runtime', '__MANY__', 'job', job_setting],
             ['runtime', '__MANY__', job_setting]
         )
-    # TODO - there are some simple changes to the config (items from [remote]
-    # and [job] moved up 1 level for example) which should be upgraded here.
     u.upgrade()
 
     # Upgrader cannot do this type of move.

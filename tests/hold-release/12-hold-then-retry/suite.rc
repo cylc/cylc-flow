@@ -45,8 +45,7 @@ t-submit-retry-able:submit => t-hold
                 false
             fi
         """
-        [[[job]]]
-            execution retry delays = PT5S
+        execution retry delays = PT5S
     [[t-submit-retry-able]]
         env-script = """
             if ((CYLC_TASK_SUBMIT_NUMBER == 1)); then

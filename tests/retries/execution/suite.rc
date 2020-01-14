@@ -9,5 +9,4 @@
 [runtime]
     [[foo]]
         script = test "${CYLC_TASK_TRY_NUMBER}" '-ge' '4'
-        [[[job]]]
-            execution retry delays = 3*PT0S
+        execution retry delays = 3*PT0S

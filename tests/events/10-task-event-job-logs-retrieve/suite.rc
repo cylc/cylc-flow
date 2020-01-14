@@ -9,8 +9,7 @@
 [runtime]
     [[t1]]
         script=test "${CYLC_TASK_TRY_NUMBER}" -eq 3
-        [[[job]]]
-            execution retry delays=PT0S, 2*PT1S
+        execution retry delays=PT0S, 2*PT1S
         [[[remote]]]
             host = {{HOST}}
 {% if GLOBALCFG is not defined %}

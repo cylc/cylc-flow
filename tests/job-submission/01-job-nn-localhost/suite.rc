@@ -20,5 +20,4 @@ NN_VALUE="$(readlink "${JOB_LOG_DIR}/NN")"
 test "${CYLC_TASK_SUBMIT_NUMBER}" -eq "100"
 test "${NN_VALUE}" -eq "100"
 """
-        [[[job]]]
-            execution retry delays=99*PT0S
+        execution retry delays=99*PT0S

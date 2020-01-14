@@ -18,8 +18,7 @@
 [runtime]
     [[t1, t2, t3, t4, t5]]
         script=false
-        [[[job]]]
-            execution retry delays = 2*PT20S
+        execution retry delays = 2*PT20S
         [[[events]]]
             mail events = failed, retry
             mail smtp = {{MAIL_SMTP}}

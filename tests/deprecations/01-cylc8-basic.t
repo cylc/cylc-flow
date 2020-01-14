@@ -39,6 +39,11 @@ cmp_ok val.out <<__END__
  * (8.0.0) [cylc][reference test][suite shutdown event handler] - DELETED (OBSOLETE)
  * (8.0.0) [cylc][abort if any task fails] -> [cylc][events][abort if any task fails] - value unchanged
  * (8.0.0) [runtime][foo, cat, dog][job][shell] - DELETED (OBSOLETE)
+ * (8.0.0) [runtime][foo, cat, dog][job][execution polling intervals] -> [runtime][foo, cat, dog][execution polling intervals] - value unchanged
+ * (8.0.0) [runtime][foo, cat, dog][job][execution retry delays] -> [runtime][foo, cat, dog][execution retry delays] - value unchanged
+ * (8.0.0) [runtime][foo, cat, dog][job][execution time limit] -> [runtime][foo, cat, dog][execution time limit] - value unchanged
+ * (8.0.0) [runtime][foo, cat, dog][job][submission polling intervals] -> [runtime][foo, cat, dog][submission polling intervals] - value unchanged
+ * (8.0.0) [runtime][foo, cat, dog][job][submission retry delays] -> [runtime][foo, cat, dog][submission retry delays] - value unchanged
 __END__
 
 purge_suite "${SUITE_NAME}"
