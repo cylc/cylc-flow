@@ -61,7 +61,7 @@ def forward_lookup(platforms, job_platform):
     ...     }
     ... }
     >>> job_platform = 'desktop22'
-    >>> forward_lookup(platforms, job_platform)[0]
+    >>> forward_lookup(platforms, job_platform)
 ('desktop22', 'desktop[0-9][0-9]|laptop[0-9][0-9]')
     """
     if job_platform is None:
