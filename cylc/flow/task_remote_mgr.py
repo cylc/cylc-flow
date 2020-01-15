@@ -38,10 +38,11 @@ from cylc.flow.pathutil import get_remote_suite_run_dir
 from cylc.flow.subprocctx import SubProcContext
 from cylc.flow.suite_files import (
     SuiteFiles,
+    KeyInfo,
+    KeyOwner,
+    KeyType,
     get_suite_srv_dir,
-    get_contact_file,
-    get_auth_item
-)
+    get_contact_file)
 from cylc.flow.task_remote_cmd import (
     FILE_BASE_UUID, REMOTE_INIT_DONE, REMOTE_INIT_NOT_REQUIRED)
 
@@ -308,9 +309,10 @@ class TaskRemoteMgr(object):
         """Return list of items to install based on communication method.
 
         Return (list):
-            Each item is (path, name) where:
-            - path is the path to the source file to install.
-            - name is relative path under suite run directory at target remote.
+            Each item is (source_path, dest_path) where:
+            - source_path is the path to the source file to install.
+            - dest_path is relative path under suite run directory
+              at target remote.
         """
         items = []
         if comm_meth in ['ssh', 'zmq']:
@@ -320,16 +322,26 @@ class TaskRemoteMgr(object):
                 os.path.join(
                     SuiteFiles.Service.DIRNAME,
                     SuiteFiles.Service.CONTACT)))
-        # TODO: This will be removed in the passphrase cleanup
-        #       Commented out for now as breaking functional tests
-        #
-        # if comm_meth in ['zmq']:
-        #     # Passphrase file
-        #     items.append((
-        #         get_auth_item(
-        #             SuiteFiles.Service.PASSPHRASE,
-        #             self.suite),
-        #         os.path.join(
-        #             SuiteFiles.Service.DIRNAME,
-        #             SuiteFiles.Service.PASSPHRASE)))
+
+        if comm_meth in ['zmq']:
+
+            suite_srv_dir = get_suite_srv_dir(self.suite)
+            server_pub_keyinfo = KeyInfo(
+                KeyType.PUBLIC,
+                KeyOwner.SERVER,
+                suite_srv_dir=suite_srv_dir)
+            client_pri_keyinfo = KeyInfo(
+                KeyType.PRIVATE,
+                KeyOwner.CLIENT,
+                suite_srv_dir=suite_srv_dir)
+            dest_path_srvr_public_key = os.path.join(
+                SuiteFiles.Service.DIRNAME, server_pub_keyinfo.file_name)
+            items.append(
+                (server_pub_keyinfo.full_key_path,
+                 dest_path_srvr_public_key))
+            dest_path_cli_pri_key = os.path.join(
+                SuiteFiles.Service.DIRNAME, client_pri_keyinfo.file_name)
+            items.append(
+                (client_pri_keyinfo.full_key_path,
+                 dest_path_cli_pri_key))
         return items

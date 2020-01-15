@@ -52,7 +52,7 @@ class KeyOwner(Enum):
 
 
 class KeyInfo():
-    """Represents a server or client key file, which can private or public.
+    """Represents a server or client key file, which can be private or public.
 
     Attributes:
         file_name:       The file name of this key object.
@@ -80,7 +80,8 @@ class KeyInfo():
 
             # Add optional platform name (supports future multiple client keys)
             if key_owner is KeyOwner.CLIENT and 'platform' in kwargs:
-                file_name = file_name + "f_{platform}"
+                self.platform = kwargs['platform']
+                file_name = file_name + f"_{self.platform}"
 
             if key_type == KeyType.PRIVATE:
                 file_extension = SuiteFiles.Service.PRIVATE_FILE_EXTENSION
@@ -89,14 +90,23 @@ class KeyInfo():
 
             self.file_name = f"{file_name}{file_extension}"
 
-            # Build key path (without filename)
+            # Build key path (without filename) for client public keys
+            if key_owner is KeyOwner.CLIENT and key_type is KeyType.PUBLIC:
+                temp = f"{key_owner.value}_{key_type.value}_keys"
+                self.key_path = os.path.join(
+                    os.path.expanduser("~"),
+                    kwargs.get("suite_srv_dir"),
+                    temp)
+            elif (
+                (key_owner is KeyOwner.SERVER
+                 and key_type is KeyType.PRIVATE)
+                or (key_owner is KeyOwner.CLIENT
+                    and key_type is KeyType.PRIVATE)
+                or (key_owner is KeyOwner.SERVER
+                    and key_type is KeyType.PUBLIC)):
+                self.key_path = os.path.join(
+                    os.path.expanduser("~"), kwargs.get("suite_srv_dir"))
 
-            temp = f"{key_owner.value}_keys"
-            self.key_path = os.path.join(
-                os.path.expanduser("~"),
-                kwargs.get("suite_srv_dir"),
-                temp,
-                key_type.value)
         else:
             raise ValueError(
                 "Cannot create KeyInfo without the suite path or full path.")
@@ -197,29 +207,6 @@ class ContactFileFields:
 
     VERSION = 'CYLC_VERSION'
     """The Cylc version under which the suite is running."""
-
-# TODO: THIS CLASS (UserFiles) IS PROBABLY NOW REDUNDANT. Delete in future (?)
-
-
-class UserFiles:
-    """Directory containing config and auth files for a user."""
-
-    DIRNAME = '.cylc'
-    """The name of this directory."""
-
-    class Auth:
-        """Cache for remote service files."""
-
-        DIRNAME = 'auth'
-        """The name of this directory."""
-
-    @classmethod
-    def get_path(cls, include_auth_dirname=True):
-        """Return the path to this directory for the current user."""
-        path_components = [os.path.expanduser("~"), cls.DIRNAME]
-        if include_auth_dirname:
-            path_components.append(cls.Auth.DIRNAME)
-        return os.path.join(*path_components)
 
 
 REG_DELIM = "/"
@@ -649,65 +636,54 @@ def create_auth_files(reg):
 
     suite_srv_dir = get_suite_srv_dir(reg)
 
-    keys = {"client_public_key": KeyInfo(
+    keys = {
+        "client_public_key": KeyInfo(
             KeyType.PUBLIC,
             KeyOwner.CLIENT,
             suite_srv_dir=suite_srv_dir),
-            "client_private_key": KeyInfo(
+        "client_private_key": KeyInfo(
             KeyType.PRIVATE,
             KeyOwner.CLIENT,
             suite_srv_dir=suite_srv_dir),
-            "server_public_key": KeyInfo(
+        "server_public_key": KeyInfo(
             KeyType.PUBLIC,
             KeyOwner.SERVER,
             suite_srv_dir=suite_srv_dir),
-            "server_private_key": KeyInfo(
+        "server_private_key": KeyInfo(
             KeyType.PRIVATE,
             KeyOwner.SERVER,
             suite_srv_dir=suite_srv_dir)
-            }
+    }
 
-    # WARNING, DESTRUCTIVE. Removes old key folders if they already exist.
+    # WARNING, DESTRUCTIVE. Removes old keys if they already exist.
     for k in keys.values():
-        if os.path.exists(k.key_path):
-            shutil.rmtree(k.key_path)
-        os.makedirs(k.key_path, exist_ok=True)
-        os.chmod(k.key_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+        if os.path.exists(k.full_key_path):
+            os.remove(k.full_key_path)
 
-    temp_keys_dir = os.path.join(suite_srv_dir, 'keys')
-    os.mkdir(temp_keys_dir)
+    # WARNING, DESTRUCTIVE.
+    # Removes old client public key folder if it already exists.
+    # Create directory and set file permissions.
+    if os.path.exists(keys["client_public_key"].key_path):
+        shutil.rmtree(keys["client_public_key"].key_path)
+    os.makedirs(keys["client_public_key"].key_path, exist_ok=True)
+    os.chmod(keys["client_public_key"].key_path, 0o700)
 
-    # ZMQ generates keys in a temporary directory.
-    # Move these to .service directory.
-    temp_client_public_key_path, temp_client_private_key_path = (
-        zmq.auth.create_certificates(temp_keys_dir, KeyOwner.CLIENT.value))
-    client_public_keys_path = shutil.move(
-        temp_client_public_key_path,
+    # ZMQ keys generated in .service directory.
+    # Move client public keys to a sub-directory: .service/client_public_keys.
+    # Set file permissions.
+    client_public_full_key_path, client_private_full_key_path = (
+        zmq.auth.create_certificates(suite_srv_dir, KeyOwner.CLIENT.value))
+    os.chmod(client_private_full_key_path, stat.S_IRUSR | stat.S_IWUSR)
+    os.chmod(client_public_full_key_path, stat.S_IRUSR |
+             stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH)
+    shutil.move(
+        client_public_full_key_path,
         keys["client_public_key"].key_path)
-    os.chmod(client_public_keys_path, stat.S_IRUSR |
+    server_public_full_key_path, server_private_full_key_path = (
+        zmq.auth.create_certificates(suite_srv_dir, KeyOwner.SERVER.value))
+    os.chmod(server_private_full_key_path, stat.S_IRUSR | stat.S_IWUSR)
+    os.chmod(server_public_full_key_path, stat.S_IRUSR |
              stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH)
-    client_private_key_path = shutil.move(
-        temp_client_private_key_path,
-        keys["client_private_key"].key_path)
-    os.chmod(client_private_key_path, stat.S_IRUSR | stat.S_IWUSR)
-
-    temp_server_public_key_path, temp_server_private_key_path = (
-        zmq.auth.create_certificates(
-            temp_keys_dir, KeyOwner.SERVER.value))
-    server_public_keys_path = shutil.move(
-        temp_server_public_key_path,
-        keys["server_public_key"].key_path)
-    os.chmod(server_public_keys_path, stat.S_IRUSR |
-             stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH)
-    server_private_key_path = shutil.move(
-        temp_server_private_key_path,
-        keys["server_private_key"].key_path)
-
-    os.chmod(server_private_key_path, stat.S_IRUSR | stat.S_IWUSR)
-
-    # Delete temporary directory where keys were generated.
-
-    shutil.rmtree(temp_keys_dir)
 
 
 def _dump_item(path, item, value):
@@ -735,7 +711,7 @@ def _dump_item(path, item, value):
 def _get_cache_dir(reg, owner, host):
     """Return the cache directory for remote suite service files."""
     return os.path.join(
-        UserFiles.get_path(),
+        os.path.expanduser("~"), ".cylc", "auth"
         "%s@%s" % (owner, host), reg
     )
 

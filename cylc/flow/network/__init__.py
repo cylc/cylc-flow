@@ -30,13 +30,11 @@ from cylc.flow.exceptions import ClientError, CylcError, SuiteServiceFileError
 from cylc.flow.hostuserutil import get_fqdn_by_host
 from cylc.flow.suite_files import (
     ContactFileFields,
-    get_auth_item,
     KeyType,
     KeyOwner,
     KeyInfo,
     load_contact_file,
     SuiteFiles,
-    UserFiles,
     get_suite_srv_dir
 )
 
