@@ -8,8 +8,8 @@
         R1 = foo
 [runtime]
     [[foo]]
+        execution retry delays = PT0S
         err-script = echo "$1 ${FOO}"
         script = test "${CYLC_TASK_SUBMIT_NUMBER}" -ge 2
         [[[environment]]]
             FOO = foo bar baz qux
-        execution retry delays = PT0S
