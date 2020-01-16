@@ -101,7 +101,7 @@ class TaskPool(object):
         for queue, qconfig in self.config.cfg['scheduling']['queues'].items():
             self.myq.update((name, queue) for name in qconfig['members'])
 
-    def insert_tasks(self, items, stopcp, no_check=False):
+    def insert_tasks(self, items, stopcp, check_point=True):
         """Insert tasks."""
         n_warnings = 0
         task_items = {}
@@ -144,7 +144,7 @@ class TaskPool(object):
 
             # Check that the cycle point is on one of the tasks sequences.
             point = get_point(key[1])
-            if not no_check:  # Check if cycle point is on the tasks sequence.
+            if check_point:  # Check if cycle point is on the tasks sequence.
                 for sequence in taskdef.sequences:
                     if sequence.is_on_sequence(point):
                         break

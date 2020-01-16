@@ -22,10 +22,17 @@ import logging
 from textwrap import dedent
 from typing import Callable, AsyncGenerator, Any
 
+from graphene import (
+    Boolean, Field, Float, ID, InputObjectType, Int,
+    List, Mutation, ObjectType, Schema, String, Union, Enum
+)
+from graphene.types.generic import GenericScalar
+from graphene.utils.str_converters import to_snake_case
+
 from cylc.flow.task_state import (
     TASK_STATUSES_ORDERED,
     TASK_STATUS_DESC,
-    TASK_STATUS_RUNAHEAD,
+    # TASK_STATUS_RUNAHEAD,
     TASK_STATUS_WAITING,
     TASK_STATUS_QUEUED,
     TASK_STATUS_EXPIRED,
@@ -43,17 +50,22 @@ from cylc.flow.data_store_mgr import (
     JOBS, TASKS, TASK_PROXIES
 )
 from cylc.flow.suite_status import StopMode
-from cylc.flow.task_state import TASK_STATUSES_ALL
-
-from graphene import (
-    Boolean, Field, Float, ID, InputObjectType, Int,
-    List, Mutation, ObjectType, Schema, String, Union, Enum
-)
-from graphene.types.generic import GenericScalar
-from graphene.utils.str_converters import to_snake_case
 
 
 def sstrip(text):
+    """Simple function to dedent and strip text.
+
+    Examples:
+        >>> print(sstrip('''
+        ...     foo
+        ...       bar
+        ...     baz
+        ... '''))
+        foo
+          bar
+        baz
+
+    """
     return dedent(text).strip()
 
 
@@ -928,7 +940,8 @@ class BroadcastSetting(InputObjectType):
         required=True
     )
     value = String(
-        description='The value of the modification'
+        description='The value of the modification',
+        required=True
     )
 
 
@@ -998,23 +1011,13 @@ class NamespaceIDGlob(String):
     Can use the wildcard character (`*`), e.g `foo*` might match `foot`.
     """
 
-    # cycle = CyclePointGlob()
-    # namespace = NamespaceName()
-    # status = TaskState()
-
 
 class TaskID(String):
     """The name of an active task."""
 
-    # cycle = CyclePoint(required=True)
-    # name = TaskName(required=True)
-
 
 class JobID(String):
     """A job submission from an active task."""
-
-    # task = TaskID(required=None)
-    # submission_number = Int(default=-1)
 
 
 class TimePoint(String):
@@ -1099,7 +1102,7 @@ class Broadcast(Mutation):
                 broadcasts without canceling all specific-cycle broadcasts.
             '''),
             default_value=['*'])
-        namespaces = List(
+        tasks = List(
             NamespaceName,
             description='Target namespaces.',
             default_value=['root']
@@ -1127,7 +1130,7 @@ class Hold(Mutation):
 
     class Arguments:
         workflows = List(WorkflowID, required=True)
-        ids = List(
+        tasks = List(
             NamespaceIDGlob,
             description='Hold the specified tasks rather than the workflow.'
         )
@@ -1189,7 +1192,7 @@ class Message(Mutation):
 
     class Arguments:
         workflows = List(WorkflowID, required=True)
-        ids = List(JobID, required=True)
+        task_job = String(required=True)
         event_time = String(default_value=None)
         messages = List(
             List(String),
@@ -1211,7 +1214,7 @@ class Release(Mutation):
 
     class Arguments:
         workflows = List(WorkflowID, required=True)
-        ids = List(
+        tasks = List(
             NamespaceIDGlob,
             description=sstrip('''
                 Release matching tasks rather than the workflow as whole.
@@ -1309,7 +1312,7 @@ class Stop(Mutation):
     result = GenericScalar()
 
 
-class TakeCheckpoint(Mutation):
+class Checkpoint(Mutation):
     class Meta:
         description = 'Tell the suite to checkpoint its current state.'
         resolver = partial(mutator, command='take_checkpoints')
@@ -1318,7 +1321,8 @@ class TakeCheckpoint(Mutation):
         workflows = List(WorkflowID, required=True)
         name = String(
             description='The checkpoint name.',
-            required=True)
+            required=True
+        )
 
     result = GenericScalar()
 
@@ -1364,8 +1368,14 @@ class ExtTrigger(Mutation):
 
 class TaskMutation:
     class Arguments:
-        workflows = List(WorkflowID)
-        ids = List(NamespaceIDGlob, required=True)
+        workflows = List(
+            WorkflowID,
+            required=True
+        )
+        tasks = List(
+            NamespaceIDGlob,
+            required=True
+        )
 
     result = GenericScalar()
 
@@ -1403,11 +1413,13 @@ class Insert(Mutation, TaskMutation):
         resolver = partial(mutator, command='insert_tasks')
 
     class Arguments(TaskMutation.Arguments):
-        no_check = Boolean(
+        check_point = Boolean(
             description=sstrip('''
-                Add task even if the provided cycle point is not valid for
-                the given task.
-            ''')
+                Check that the provided cycle point is on one of the task's
+                recurrences as defined in the suite configuration before
+                inserting.
+            '''),
+            default_value=True
         )
         stop_point = CyclePoint(
             description='hold/stop cycle point for inserted task.'
@@ -1431,8 +1443,9 @@ class Poll(Mutation, TaskMutation):
         resolver = partial(mutator, command='poll_tasks')
 
     class Arguments(TaskMutation.Arguments):
-        poll_succ = Boolean(
-            description='Allow polling of succeeded tasks.'
+        poll_succeeded = Boolean(
+            description='Allow polling of succeeded tasks.',
+            default_value=False
         )
 
 
@@ -1548,8 +1561,8 @@ class Mutations(ObjectType):
     set_verbosity = SetVerbosity.Field(
         description=SetVerbosity._meta.description)
     stop = Stop.Field(description=Stop._meta.description)
-    take_checkpoint = TakeCheckpoint.Field(
-        description=TakeCheckpoint._meta.description)
+    checkpoint = Checkpoint.Field(
+        description=Checkpoint._meta.description)
 
     # task actions
     dry_run = DryRun.Field(description=DryRun._meta.description)

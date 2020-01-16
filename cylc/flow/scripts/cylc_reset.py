@@ -97,7 +97,7 @@ def main(parser, options, suite, *task_globs):
         options.comms_timeout)
     pclient(
         'reset_task_states',
-        {'task_globs': task_globs, 'state': options.state,
+        {'tasks': task_globs, 'state': options.state,
          'outputs': options.outputs}
     )
 

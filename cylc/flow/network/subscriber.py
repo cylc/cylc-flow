@@ -77,7 +77,7 @@ class WorkflowSubscriber(ZMQSocketBase):
             self.topics = set(b'')
         self.topics = topics
         # Connect the ZMQ socket on instantiation
-        self.start_(host, port, srv_public_key_loc)
+        self.start(host, port, srv_public_key_loc)
 
     def _socket_options(self):
         """Set options after socket instantiation and before connect.

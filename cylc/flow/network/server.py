@@ -51,6 +51,17 @@ def expose(func=None):
 
 
 def filter_none(dictionary):
+    """Filter out `None` items from a dictionary:
+
+    Examples:
+        >>> filter_none({
+        ...     'a': 0,
+        ...     'b': '',
+        ...     'c': None
+        ... })
+        {'a': 0, 'b': ''}
+
+    """
     return {
         key: value
         for key, value in dictionary.items()
@@ -303,19 +314,19 @@ class SuiteRuntimeServer(ZMQSocketBase):
     @expose
     def broadcast(
             self,
+            mode,
             cycle_points=None,
-            namespaces=None,
+            tasks=None,
             settings=None
     ):
         """Put or clear broadcasts."""
         if mode == 'put_broadcast':
             return self.schd.task_events_mgr.broadcast_mgr.put_broadcast(
-                cycle_points, namespaces, settings)
+                cycle_points, tasks, settings)
         if mode == 'clear_broadcast':
             return self.schd.task_events_mgr.broadcast_mgr.clear_broadcast(
-                cycle_points, namespaces, cancel_settings)
-        else:
-            raise ValueError('TEMP: TODO: FixMe!')
+                cycle_points, tasks, settings)
+        raise ValueError('TEMP: TODO: FixMe!')
 
     @authorise(Priv.READ)
     @expose
@@ -397,7 +408,7 @@ class SuiteRuntimeServer(ZMQSocketBase):
 
     @authorise(Priv.CONTROL)
     @expose
-    def dry_run_tasks(self, task_globs, check_syntax=True):
+    def dry_run_tasks(self, tasks, check_syntax=True):
         """Prepare job file for a task.
 
         Args:
@@ -413,8 +424,11 @@ class SuiteRuntimeServer(ZMQSocketBase):
                 Information about outcome.
 
         """
-        self.schd.command_queue.put(('dry_run_tasks', (task_globs,),
-                                     {'check_syntax': check_syntax}))
+        self.schd.command_queue.put((
+            'dry_run_tasks',
+            (tasks,),
+            {'check_syntax': check_syntax}
+        ))
         return (True, 'Command queued')
 
     @authorise(Priv.CONTROL)
@@ -594,13 +608,13 @@ class SuiteRuntimeServer(ZMQSocketBase):
 
     @authorise(Priv.CONTROL)
     @expose
-    def hold(self, ids=None, time=None):
+    def hold(self, tasks=None, time=None):
         """Hold the workflow."""
         self.schd.command_queue.put((
             'hold',
             tuple(),
             filter_none({
-                'ids': ids,
+                'tasks': tasks,
                 'time': time
             })
         ))
@@ -732,14 +746,14 @@ class SuiteRuntimeServer(ZMQSocketBase):
 
     @authorise(Priv.CONTROL)
     @expose
-    def insert_tasks(self, items, stop_point_string=None, no_check=False):
+    def insert_tasks(self, tasks, stop_point=None, check_point=True):
         """Insert task proxies.
 
         Args:
-            items (list):
+            tasks (list):
                 A list of `task globs`_ (strings) which *cannot* contain
                 any glob characters (``*``).
-            stop_point_string (str, optional):
+            stop_point (str, optional):
                 Optional hold/stop cycle point for inserted task.
             no_check (bool, optional):
                 Add task even if the provided cycle point is not valid
@@ -755,17 +769,21 @@ class SuiteRuntimeServer(ZMQSocketBase):
         """
         self.schd.command_queue.put((
             "insert_tasks",
-            (items,),
-            {"stop_point_string": stop_point_string, "no_check": no_check}))
+            (tasks,),
+            {
+                "stop_point_string": stop_point,
+                "check_point": check_point
+            }
+        ))
         return (True, 'Command queued')
 
     @authorise(Priv.CONTROL)
     @expose
-    def kill_tasks(self, task_globs):
+    def kill_tasks(self, tasks):
         """Kill task jobs.
 
         Args:
-            task_globs (list): List of identifiers, see `task globs`_
+            tasks (list): List of identifiers, see `task globs`_
 
         Returns:
             tuple: (outcome, message)
@@ -776,7 +794,7 @@ class SuiteRuntimeServer(ZMQSocketBase):
                 Information about outcome.
 
         """
-        self.schd.command_queue.put(("kill_tasks", (task_globs,), {}))
+        self.schd.command_queue.put(("kill_tasks", (tasks,), {}))
         return (True, 'Command queued')
 
     @authorise(Priv.CONTROL)
@@ -839,11 +857,11 @@ class SuiteRuntimeServer(ZMQSocketBase):
 
     @authorise(Priv.CONTROL)
     @expose
-    def poll_tasks(self, task_globs=None, poll_succ=False):
+    def poll_tasks(self, tasks=None, poll_succeeded=False):
         """Request the suite to poll task jobs.
 
         Args:
-            task_globs (list, optional):
+            tasks (list, optional):
                 List of identifiers, see `task globs`_
             poll_succ (bool, optional):
                 Allow polling of remote tasks if True.
@@ -858,7 +876,7 @@ class SuiteRuntimeServer(ZMQSocketBase):
 
         """
         self.schd.command_queue.put(
-            ("poll_tasks", (task_globs,), {"poll_succ": poll_succ}))
+            ("poll_tasks", (tasks,), {"poll_succ": poll_succeeded}))
         return (True, 'Command queued')
 
     # TODO: deprecated by broadcast()
@@ -903,12 +921,12 @@ class SuiteRuntimeServer(ZMQSocketBase):
 
     @authorise(Priv.CONTROL)
     @expose
-    def put_ext_trigger(self, event_message, event_id):
+    def put_ext_trigger(self, message, id):
         """Server-side external event trigger interface.
 
         Args:
-            event_message (str): The external trigger message.
-            event_id (str): The unique trigger ID.
+            message (str): The external trigger message.
+            id (str): The unique trigger ID.
 
         Returns:
             tuple: (outcome, message)
@@ -919,7 +937,7 @@ class SuiteRuntimeServer(ZMQSocketBase):
                 Information about outcome.
 
         """
-        self.schd.ext_trigger_queue.put((event_message, event_id))
+        self.schd.ext_trigger_queue.put((message, id))
         return (True, 'Event queued')
 
     @authorise(Priv.CONTROL)
@@ -970,10 +988,10 @@ class SuiteRuntimeServer(ZMQSocketBase):
 
     @authorise(Priv.CONTROL)
     @expose
-    def release(self, ids=None):
+    def release(self, tasks=None):
         """Release (un-hold) the workflow."""
-        if ids:
-            self.schd.command_queue.put(("release_tasks", (ids,), {}))
+        if tasks:
+            self.schd.command_queue.put(("release_tasks", (tasks,), {}))
         else:
             self.schd.command_queue.put(("release_suite", (), {}))
         return (True, 'Command queued')
@@ -1019,11 +1037,11 @@ class SuiteRuntimeServer(ZMQSocketBase):
 
     @authorise(Priv.CONTROL)
     @expose
-    def remove_tasks(self, task_globs, spawn=False):
+    def remove_tasks(self, tasks, spawn=False):
         """Remove tasks from task pool.
 
         Args:
-            task_globs (list):
+            tasks (list):
                 List of identifiers, see `task globs`_
             spawn (bool, optional):
                 If True ensure task has spawned before removal.
@@ -1038,16 +1056,16 @@ class SuiteRuntimeServer(ZMQSocketBase):
 
         """
         self.schd.command_queue.put(
-            ("remove_tasks", (task_globs,), {"spawn": spawn}))
+            ("remove_tasks", (tasks,), {"spawn": spawn}))
         return (True, 'Command queued')
 
     @authorise(Priv.CONTROL)
     @expose
-    def reset_task_states(self, task_globs, state=None, outputs=None):
+    def reset_task_states(self, tasks, state=None, outputs=None):
         """Reset statuses tasks.
 
         Args:
-            task_globs (list):
+            tasks (list):
                 List of identifiers, see `task globs`_
             state (str, optional):
                 Task state to reset task to.
@@ -1068,7 +1086,7 @@ class SuiteRuntimeServer(ZMQSocketBase):
         """
         self.schd.command_queue.put((
             "reset_task_states",
-            (task_globs,), {"state": state, "outputs": outputs}))
+            (tasks,), {"state": state, "outputs": outputs}))
         return (True, 'Command queued')
 
     # TODO: deprecated by stop()
@@ -1190,11 +1208,11 @@ class SuiteRuntimeServer(ZMQSocketBase):
 
     @authorise(Priv.CONTROL)
     @expose
-    def spawn_tasks(self, task_globs):
+    def spawn_tasks(self, tasks):
         """Spawn tasks.
 
         Args:
-            task_globs (list): List of identifiers, see `task globs`_
+            tasks (list): List of identifiers, see `task globs`_
 
         Returns:
             tuple: (outcome, message)
@@ -1205,12 +1223,12 @@ class SuiteRuntimeServer(ZMQSocketBase):
                 Information about outcome.
 
         """
-        self.schd.command_queue.put(("spawn_tasks", (task_globs,), {}))
+        self.schd.command_queue.put(("spawn_tasks", (tasks,), {}))
         return (True, 'Command queued')
 
     @authorise(Priv.SHUTDOWN)
     @expose
-    def stop(
+    def stop_workflow(
             self,
             mode=None,
             cycle_point=None,
@@ -1223,10 +1241,10 @@ class SuiteRuntimeServer(ZMQSocketBase):
             "stop",
             (),
             filter_none({
-                mode: mode,
-                cycle_point: cycle_point,
-                clock_time: clock_time,
-                task: task
+                'mode': mode,
+                'cycle_point': cycle_point,
+                'clock_time': clock_time,
+                'task': task
             })
         ))
         return (True, 'Command queued')
@@ -1275,11 +1293,11 @@ class SuiteRuntimeServer(ZMQSocketBase):
 
     @authorise(Priv.CONTROL)
     @expose
-    def trigger_tasks(self, task_globs, back_out=False):
+    def trigger_tasks(self, tasks, back_out=False):
         """Trigger submission of task jobs where possible.
 
         Args:
-            task_globs (list):
+            tasks (list):
                 List of identifiers, see `task globs`_
             back_out (bool, optional):
                 Abort e.g. in the event of a rejected trigger-edit.
@@ -1294,7 +1312,7 @@ class SuiteRuntimeServer(ZMQSocketBase):
 
         """
         self.schd.command_queue.put(
-            ("trigger_tasks", (task_globs,), {"back_out": back_out}))
+            ("trigger_tasks", (tasks,), {"back_out": back_out}))
         return (True, 'Command queued')
 
     # UIServer Data Commands

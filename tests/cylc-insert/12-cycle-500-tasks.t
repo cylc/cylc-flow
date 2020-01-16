@@ -31,7 +31,7 @@ cut -d' ' -f 2- "${SUITE_RUN_DIR}/log/suite/log" >'trimmed-log'
     for I in {001..500}; do
         echo "INFO - [v_i${I}.2008] -submit-num=00, inserted"
     done
-    echo "INFO - Command succeeded: insert_tasks(['2008/*'], stop_point_string=None, no_check=False)"
+    echo "INFO - Command succeeded: insert_tasks(['2008/*'], stop_point_string=None, check_point=True)"
 } >'expected-log'
 contains_ok 'trimmed-log' 'expected-log'
 

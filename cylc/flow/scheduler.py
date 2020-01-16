@@ -285,10 +285,10 @@ class Scheduler(object):
             port_range = glbl_cfg().get(['suite servers', 'run ports'])
             self.server = SuiteRuntimeServer(
                 self, context=self.zmq_context, barrier=barrier)
-            self.server.start_(port_range[0], port_range[-1])
+            self.server.start(port_range[0], port_range[-1])
             self.publisher = WorkflowPublisher(
                 self.suite, context=self.zmq_context, barrier=barrier)
-            self.publisher.start_(port_range[0], port_range[-1])
+            self.publisher.start(port_range[0], port_range[-1])
             # wait for threads to setup socket ports before continuing
             barrier.wait()
             self.port = self.server.port
@@ -816,17 +816,17 @@ see `COPYING' in the Cylc source distribution.
         return self.pool.ping_task(task_id, exists_only)
 
     def command_stop(
-        self,
-        stop_mode=None,
-        cycle_point=None,
-        # NOTE clock_time YYYY/MM/DD-HH:mm back-compat removed
-        clock_time=None,
-        task=None
+            self,
+            mode=None,
+            cycle_point=None,
+            # NOTE clock_time YYYY/MM/DD-HH:mm back-compat removed
+            clock_time=None,
+            task=None
     ):
         # immediate shutdown
-        if stop_mode:
-            self._set_stop(stop_mode)
-        elif not any([stop_mode, cycle_point, clock_time, task]):
+        if mode:
+            self._set_stop(mode)
+        elif not any([mode, cycle_point, clock_time, task]):
             # if no arguments provided do a standard clean shutdown
             self._set_stop(StopMode.REQUEST_CLEAN)
 
@@ -844,13 +844,13 @@ see `COPYING' in the Cylc source distribution.
         # schedule shutdown after wallclock time passes provided time
         if clock_time:
             parser = TimePointParser()
-            time = parser.parse(clock_time)
+            clock_time = parser.parse(clock_time)
             self.set_stop_clock(
-                int(stop_time.get("seconds_since_unix_epoch")))
+                int(clock_time.get("seconds_since_unix_epoch")))
 
         # schedule shutdown after task succeeds
         if task:
-            task_id = self.get_standardised_taskid(task_id)
+            task_id = self.get_standardised_taskid(task)
             if TaskID.is_valid_id(task_id):
                 self.set_stop_task(task_id)
             else:
@@ -949,15 +949,15 @@ see `COPYING' in the Cylc source distribution.
         # TODO: deprecated by command_release()
         self.release_suite()
 
-    def command_hold(self, ids=None, time=None):
-        if ids:
-            self.pool.hold_tasks(ids)
+    def command_hold(self, tasks=None, time=None):
+        if tasks:
+            self.pool.hold_tasks(tasks)
         if time:
             point = self.get_standardised_point(time)
             self.hold_suite(point)
             LOG.info(
                 'The suite will pause when all tasks have passed %s', point)
-        if not (ids or time):
+        if not (tasks or time):
             self.hold_suite()
 
     def command_hold_tasks(self, items):
@@ -994,9 +994,9 @@ see `COPYING' in the Cylc source distribution.
         return self.pool.remove_tasks(items, spawn)
 
     def command_insert_tasks(self, items, stop_point_string=None,
-                             no_check=False):
+                             check_point=True):
         """Insert tasks."""
-        return self.pool.insert_tasks(items, stop_point_string, no_check)
+        return self.pool.insert_tasks(items, stop_point_string, check_point)
 
     def command_nudge(self):
         """Cause the task processing loop to be invoked"""
@@ -1856,11 +1856,11 @@ see `COPYING' in the Cylc source distribution.
                 LOG.exception(exc)
 
         if self.server:
-            self.server.stop_()
+            self.server.stop()
         if self.publisher:
             self.publisher.publish(
                 [(b'shutdown', f'{str(reason)}'.encode('utf-8'))])
-            self.publisher.stop_()
+            self.publisher.stop()
         self.curve_auth.stop()  # stop the authentication thread
 
         # Flush errors and info before removing suite contact file

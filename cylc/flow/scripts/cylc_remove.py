@@ -59,7 +59,7 @@ def main(parser, options, suite, *task_globs):
         options.comms_timeout)
     pclient(
         'remove_tasks',
-        {'task_globs': task_globs, 'spawn': (not options.no_spawn)}
+        {'tasks': task_globs, 'spawn': (not options.no_spawn)}
     )
 
 
