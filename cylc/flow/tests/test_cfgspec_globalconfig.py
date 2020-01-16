@@ -99,7 +99,7 @@ def test_get_host_item(set_up_globalrc, inputs, outputs):
         # Get a users local directory.
         (
             ('run directory',),
-            f"{os.getenv('HOME')}/cylc-run"
+            f"$HOME/cylc-run"
         ),
         # Run directory for any other platform returns the value with $HOME
         # in place.

@@ -428,7 +428,6 @@ class GlobalConfig(ParsecConfig):
         """
         # Check for the existence of the item we want in the platform specified
         # Or use default values.
-        modify_dirs = False
         if platform:
             platform, raw_platform = forward_lookup(
                 self.get(['job platforms']), platform
@@ -437,23 +436,20 @@ class GlobalConfig(ParsecConfig):
                 value = self.get(['job platforms', raw_platform, item])
         else:
             value = self.spec['job platforms']['__MANY__'][item][1]
-            modify_dirs = True
-
+        breakpoint()
         # Deal with cases where the setting is a directory.
-        if value is not None and 'directory' in item:
+        if value and 'directory' in item:
             if replace_home:
                 # Replace local home dir with $HOME for eval'n on other host.
                 value = value.replace(self._HOME, '$HOME')
-            elif is_remote_user(owner) or modify_dirs:
+            elif is_remote_user(owner):
                 # Replace with ~owner for direct access via local filesys
                 # (works for standard cylc-run directory location).
-                if owner_home is None:
-                    if owner:
-                        owner_home = os.path.expanduser('~%s' % owner)
-                    else:
-                        owner_home = os.path.expanduser('~')
+                if owner and not owner_home:
+                    owner_home = os.path.expanduser('~%s' % owner)
+                elif not (owner_home and owner):
+                    owner_home = os.path.expanduser('~')
                 value = value.replace(self._HOME, owner_home)
-                value = value.replace("$HOME", owner_home)
         return value
 
     def get_host_item(self, item, host=None, owner=None, replace_home=False,
