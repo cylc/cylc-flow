@@ -172,3 +172,19 @@ class CylcMissingFinalCyclePointError(CyclingError):
 class PlatformLookupError(CylcConfigError):
     """Unable to determine the correct job platform from the information
     given"""
+
+
+class HostSelectException(CylcError):
+    """No hosts could be selected from the provided configuration."""
+
+    def __init__(self, data):
+        self.data = data
+        CylcError.__init__(self)
+
+    def __str__(self):
+        ret = f'Could not select host from:'
+        for host, data in sorted(self.data.items()):
+            ret += f'\n    {host}:'
+            for key, value in data.items():
+                ret += f'\n        {key}: {value}'
+        return ret

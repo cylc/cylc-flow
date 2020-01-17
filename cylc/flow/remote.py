@@ -61,8 +61,14 @@ def watch_and_kill(proc):
             break
 
 
-def run_cmd(command, stdin=None, capture_process=False, capture_status=False,
-            manage=False):
+def run_cmd(
+        command,
+        stdin=None,
+        stdin_str=None,
+        capture_process=False,
+        capture_status=False,
+        manage=False
+):
     """Run a given cylc command on another account and/or host.
 
     Arguments:
@@ -71,6 +77,9 @@ def run_cmd(command, stdin=None, capture_process=False, capture_status=False,
         stdin (file):
             If specified, it should be a readable file object.
             If None, DEVNULL is set if output is to be captured.
+        stdin_str (str):
+            A string to be passed to stdin.
+            Implies `stdin=PIPE`.
         capture_process (boolean):
             If True, set stdout=PIPE and return the Popen object.
         capture_status (boolean):
@@ -99,14 +108,21 @@ def run_cmd(command, stdin=None, capture_process=False, capture_status=False,
         stderr = PIPE
         if stdin is None:
             stdin = DEVNULL
-    if isinstance(stdin, str):
-        stdin = stdin.encode()
+    if stdin_str:
+        read, write = os.pipe()
+        os.write(write, stdin_str.encode())
+        os.close(write)
+        stdin = read
 
     try:
         proc = Popen(command, stdin=stdin, stdout=stdout, stderr=stderr)
     except OSError as exc:
         sys.exit(r'ERROR: %s: %s' % (
             exc, ' '.join(quote(item) for item in command)))
+
+    # if stdin_str:
+    #     proc.stdin.write(stdin_str.encode())
+    #     proc.stdin.close()
 
     if capture_process:
         return proc
@@ -221,8 +237,16 @@ def construct_ssh_cmd(raw_cmd, user=None, host=None, forward_x11=False,
 
 
 def remote_cylc_cmd(
-        cmd, user=None, host=None, stdin=None, ssh_login_shell=None,
-        ssh_cylc=None, capture_process=False, manage=False):
+        cmd,
+        user=None,
+        host=None,
+        stdin=None,
+        stdin_str=None,
+        ssh_login_shell=None,
+        ssh_cylc=None,
+        capture_process=False,
+        manage=False
+):
     """Run a given cylc command on another account and/or host.
 
     Arguments:
@@ -245,10 +269,19 @@ def remote_cylc_cmd(
     """
     return run_cmd(
         construct_ssh_cmd(
-            cmd, user=user, host=host, stdin=stdin,
-            ssh_login_shell=ssh_login_shell, ssh_cylc=ssh_cylc),
-        stdin=stdin, capture_process=capture_process,
-        capture_status=True, manage=manage)
+            cmd,
+            user=user,
+            host=host,
+            stdin=True if stdin_str else stdin,
+            ssh_login_shell=ssh_login_shell,
+            ssh_cylc=ssh_cylc
+        ),
+        stdin=stdin,
+        stdin_str=stdin_str,
+        capture_process=capture_process,
+        capture_status=True,
+        manage=manage
+    )
 
 
 def remrun(dry_run=False, forward_x11=False, abort_if=None,
