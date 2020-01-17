@@ -52,10 +52,10 @@ cylc task message -p WARNING 'this is a user-defined warning message'
 
     [[bar]]
         # submission retry and submission failed
+        submission retry delays = PT3S
         [[[events]]]
             submission failed handler = {{ HANDLER }}
             submission retry handler = {{ HANDLER }}
-        submission retry delays = PT3S
         [[[remote]]]
             host = NOHOST.NODOMAIN
 
