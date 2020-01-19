@@ -24,6 +24,17 @@ add their details to the [Code Contributors](#code-contributors) section of
 this file as part of their first Pull Request, and reviewers are responsible
 for checking this before merging the new branch into *master*.
 
+In order to start modifying cylc-flow and test these changes, the first step is
+to call `pip install -e .[all]`. This will install the package in development
+mode along all needed dependencies.
+
+Before the first commit care should be taken to call `pre-commit install` in
+order for the git pre-commit hooks to be run on commit. [pre-commit
+](https://pre-commit.com) is used for code style consistency. It can also be run
+manually when developing with the `pre-commit run` command. To run the hooks on
+a reduced set of files, cal `pre-commit run --files` followed by one of more
+files to process.
+
 ## Code Contributors
 
 The following people have contributed to this code under the terms of
