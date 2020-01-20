@@ -47,7 +47,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_SUCCEEDED
 )
 from cylc.flow.data_store_mgr import (
-    FAMILIES, FAMILY_PROXIES, JOBS, TASKS, TASK_PROXIES
+    FAMILIES, FAMILY_PROXIES, JOBS, TASKS, TASK_PROXIES, ALL_DELTAS
 )
 from cylc.flow.suite_status import StopMode
 
@@ -553,7 +553,7 @@ class Task(ObjectType):
     class Meta:
         description = """Task definition, static fields"""
     id = ID(required=True)
-    name = String(required=True)
+    name = String()
     meta = Field(DefMeta)
     mean_elapsed_time = Float()
     depth = Int()
@@ -1578,6 +1578,12 @@ class Mutations(ObjectType):
 
 # ** Subscription Related ** #
 
+delta_args = dict(
+    id=ID(required=True, description="Full ID, i.e. `owner|name`"),
+    topic=String(default_value=ALL_DELTAS),
+)
+
+
 def to_subscription(func: Callable, sleep_seconds: float = 5.) -> Callable:
     """Wraps a function in a while-true-sleep, transforming
     the function into an async-generator, used by the
@@ -1598,16 +1604,153 @@ def to_subscription(func: Callable, sleep_seconds: float = 5.) -> Callable:
             AsyncGenerator[Any, None]: an async generator that will
                 yield values from resolvers.
         """
-        while True:
-            yield await func(*args, **kwargs)
-            await asyncio.sleep(sleep_seconds)
+        try:
+            while True:
+                yield await func(*args, **kwargs)
+                await asyncio.sleep(sleep_seconds)
+        finally:
+            yield None
     return gen
+
+
+def delta_subs(root, info, **args) -> AsyncGenerator[Any, None]:
+    return info.context.get('resolvers').subscribe_delta(args)
+
+
+# The following inheritance is to avoid using the query resolvers
+# of the ObjectType fields.
+# TODO:- Create resolvers that work with the null-stripping.
+class JobDelta(Job):
+    task_proxy = Field(
+        lambda: TaskProxyDelta,
+        description="""Associated Task Proxy""")
+
+
+class TaskDelta(Task):
+    proxies = List(
+        lambda: TaskProxyDelta,
+        description="""Associated cycle point proxies""")
+
+
+class TaskProxyDelta(TaskProxy):
+    task = Field(
+        TaskDelta,
+        description="""Task definition""")
+    jobs = List(
+        JobDelta,
+        description="""Task jobs.""")
+    parents = List(
+        lambda: FamilyProxyDelta,
+        description="""Task parents.""")
+    first_parent = Field(
+        lambda: FamilyProxyDelta,
+        description="""Task first parent.""")
+    ancestors = List(
+        lambda: FamilyProxyDelta,
+        description="""First parent ancestors.""")
+
+
+class FamilyDelta(Family):
+    proxies = List(
+        lambda: FamilyProxyDelta,
+        description="""Associated cycle point proxies""")
+    parents = List(
+        lambda: FamilyDelta,
+        description="""Family definition parent.""")
+    child_tasks = List(
+        TaskDelta,
+        description="""Descendant definition tasks.""")
+    child_families = List(
+        lambda: FamilyDelta,
+        description="""Descendant desc families.""")
+
+
+class FamilyProxyDelta(FamilyProxy):
+    family = Field(
+        FamilyDelta,
+        description="""Family definition""")
+    parents = List(
+        lambda: FamilyProxyDelta,
+        description="""Family parent proxies.""")
+    child_tasks = List(
+        TaskProxyDelta,
+        description="""Descendant task proxies.""")
+    child_families = List(
+        lambda: FamilyProxyDelta,
+        description="""Descendant family proxies.""")
+    first_parent = Field(
+        lambda: FamilyProxyDelta,
+        description="""Task first parent.""")
+    ancestors = List(
+        lambda: FamilyProxyDelta,
+        description="""First parent ancestors.""")
+
+
+class EdgeDelta(Edge):
+    source_node = Field(Node)
+    target_node = Field(Node)
+
+
+class WorkflowDeltas(Workflow):
+    families = List(
+        FamilyDelta,
+        description="""Family definitions.""",
+        args=def_args)
+    family_proxies = List(
+        FamilyProxyDelta,
+        description="""Family cycle instances.""",
+        args=proxy_args)
+    jobs = List(
+        JobDelta,
+        description="""Task jobs.""",
+        args=jobs_args)
+    tasks = List(
+        TaskDelta,
+        description="""Task definitions.""",
+        args=def_args)
+    task_proxies = List(
+        TaskProxyDelta,
+        description="""Task cycle instances.""",
+        args=proxy_args)
+    edges = List(
+        EdgeDelta,
+        description="""Graph edges""",
+        args=edge_args)
+
+
+class Pruned(ObjectType):
+    class Meta:
+        description = """WFS Nodes/Edges that have been removed."""
+    families = List(String)
+    family_proxies = List(String)
+    jobs = List(String)
+    tasks = List(String)
+    task_proxies = List(String)
+    edges = List(String)
+
+
+class Deltas(ObjectType):
+    class Meta:
+        description = """Grouped deltas of the WFS publish"""
+    workflow = Field(
+        WorkflowDeltas,
+        description=WorkflowDeltas._meta.description,
+    )
+    pruned = Field(
+        Pruned,
+        description=Pruned._meta.description,
+    )
 
 
 class Subscriptions(ObjectType):
     """Defines the subscriptions available in the schema."""
     class Meta:
         description = """Multi-Workflow root level subscriptions."""
+    deltas = Field(
+        Deltas,
+        description=Deltas._meta.description,
+        args=delta_args,
+        resolver=delta_subs)
     workflows = List(
         Workflow,
         description=Workflow._meta.description,

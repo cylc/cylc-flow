@@ -48,7 +48,10 @@ API = 5  # cylc API version
 
 def encode_(message):
     """Convert the structure holding a message field from JSON to a string."""
-    return json.dumps(message)
+    try:
+        return json.dumps(message)
+    except TypeError as exc:
+        return json.dumps({'errors': [{'message': str(exc)}]})
 
 
 def decode_(message):

@@ -125,11 +125,12 @@ class TestResolvers(CylcWorkflowTestCase):
             edge.id
             for edge in self.data[EDGES].values()]
         self.resolvers = Resolvers(
-            self.scheduler.data_store_mgr.data,
-            schd=self.scheduler)
+            self.scheduler.data_store_mgr,
+            schd=self.scheduler,
+        )
 
     def test_constructor(self):
-        self.assertIsNotNone(self.resolvers.schd)
+        self.assertIsNotNone(self.resolvers.data_store_mgr)
 
     def test_get_workflows(self):
         """Test method returning workflow messages satisfying filter args."""

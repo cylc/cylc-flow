@@ -16,16 +16,28 @@
 
 """GraphQL resolvers for use in data accessing and mutation of workflows."""
 
+import asyncio
+from concurrent.futures._base import CancelledError
 from fnmatch import fnmatchcase
 from getpass import getuser
+import logging
 from operator import attrgetter
+import queue
+from uuid import uuid4
+
 from graphene.utils.str_converters import to_snake_case
 
 from cylc.flow import ID_DELIM
 from cylc.flow.data_store_mgr import (
     EDGES, FAMILY_PROXIES, TASK_PROXIES, WORKFLOW
 )
-from cylc.flow.network.schema import NodesEdges, PROXY_NODES
+from cylc.flow.network.schema import (
+    NodesEdges, PROXY_NODES, Deltas, WorkflowDeltas, Pruned
+)
+
+logger = logging.getLogger(__name__)
+
+DELTA_SLEEP_INTERVAL = 0.5
 
 
 # Message Filters
@@ -53,9 +65,10 @@ def workflow_ids_filter(w_atts, items):
     return False
 
 
-def workflow_filter(flow, args):
+def workflow_filter(flow, args, w_atts=None):
     """Filter workflows based on attribute arguments"""
-    w_atts = collate_workflow_atts(flow[WORKFLOW])
+    if w_atts is None:
+        w_atts = collate_workflow_atts(flow[WORKFLOW])
     # The w_atts (workflow attributes) list contains ordered workflow values
     # or defaults (see collate function for index item).
     return ((not args.get('workflows') or
@@ -162,15 +175,15 @@ def sort_elements(elements, args):
 class BaseResolvers:
     """Data access methods for resolving GraphQL queries."""
 
-    def __init__(self, data):
-        self.data = data
+    def __init__(self, data_store_mgr):
+        self.data_store_mgr = data_store_mgr
 
     # Query resolvers
     async def get_workflows_data(self, args):
         """Return list of data from workflows."""
         return [
             flow
-            for flow in self.data.values()
+            for flow in self.data_store_mgr.data.values()
             if workflow_filter(flow, args)]
 
     async def get_workflows(self, args):
@@ -199,7 +212,8 @@ class BaseResolvers:
             node_types = [node_type]
         return sort_elements(
             [node
-             for flow in get_flow_data_from_ids(self.data, nat_ids)
+             for flow in get_flow_data_from_ids(
+                 self.data_store_mgr.data, nat_ids)
              for node_type in node_types
              for node in get_data_elements(flow, nat_ids, node_type)
              if node_filter(node, args)],
@@ -210,8 +224,8 @@ class BaseResolvers:
         n_id = args.get('id')
         o_name, w_name, _ = n_id.split(ID_DELIM, 2)
         w_id = f'{o_name}{ID_DELIM}{w_name}'
-        flow = self.data.get(w_id)
-        if not flow:
+        flow = self.data_store_mgr.data.get(w_id)
+        if flow is None:
             return None
         if node_type == PROXY_NODES:
             return (
@@ -234,7 +248,8 @@ class BaseResolvers:
         nat_ids = set(args.get('native_ids', []))
         return sort_elements(
             [edge
-             for flow in get_flow_data_from_ids(self.data, nat_ids)
+             for flow in get_flow_data_from_ids(
+                 self.data_store_mgr.data, nat_ids)
              for edge in get_data_elements(flow, nat_ids, EDGES)],
             args)
 
@@ -258,7 +273,8 @@ class BaseResolvers:
             edge_ids.update(new_edge_ids)
             new_edges = [
                 edge
-                for flow in get_flow_data_from_ids(self.data, new_edge_ids)
+                for flow in get_flow_data_from_ids(
+                    self.data_store_mgr.data, new_edge_ids)
                 for edge in get_data_elements(flow, new_edge_ids, EDGES)
             ]
             edges += new_edges
@@ -273,7 +289,8 @@ class BaseResolvers:
             node_ids.update(new_node_ids)
             new_nodes = [
                 node
-                for flow in get_flow_data_from_ids(self.data, new_node_ids)
+                for flow in get_flow_data_from_ids(
+                    self.data_store_mgr.data, new_node_ids)
                 for node in get_data_elements(flow, new_node_ids, TASK_PROXIES)
             ]
             nodes += new_nodes
@@ -281,6 +298,55 @@ class BaseResolvers:
         return NodesEdges(
             nodes=sort_elements(nodes, args),
             edges=sort_elements(edges, args))
+
+    async def subscribe_delta(self, args):
+        """Delta subscription async generator.
+
+        Async generator mapping the incomming protobuf deltas to
+        yielded GraphQL subscription objects.
+
+        """
+        w_id = args['id']
+        sub_id = uuid4()
+        delta_queues = self.data_store_mgr.delta_queues
+        if delta_queues.get(w_id) is not None:
+            delta_queues[w_id][sub_id] = queue.Queue()
+        try:
+            while True:
+                if not delta_queues.get(w_id, {}).get(sub_id):
+                    break
+                try:
+                    _, topic, delta = delta_queues[w_id][sub_id].get(False)
+                except queue.Empty:
+                    await asyncio.sleep(DELTA_SLEEP_INTERVAL)
+                    continue
+                result = Deltas(
+                    workflow=WorkflowDeltas(id=w_id),
+                    pruned=Pruned()
+                )
+                if topic == 'shutdown':
+                    result.workflow.status = 'stopped'
+                elif not args.get('topic') or args['topic'] != topic:
+                    continue
+                else:
+                    for field, value in delta.workflow.ListFields():
+                        setattr(result.workflow, field.name, value)
+                    for field, sub_value in delta.ListFields():
+                        if field.name != 'workflow':
+                            setattr(
+                                result.workflow, field.name, sub_value.deltas)
+                            setattr(
+                                result.pruned, field.name, sub_value.pruned)
+                yield result
+        except CancelledError:
+            pass
+        except Exception:
+            import traceback
+            logger.warn(traceback.format_exc())
+        finally:
+            if delta_queues.get(w_id, {}).get(sub_id):
+                del delta_queues[w_id][sub_id]
+            yield None
 
 
 class Resolvers(BaseResolvers):

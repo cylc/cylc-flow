@@ -282,3 +282,13 @@ message TPDeltas {
     repeated PbTaskProxy deltas = 4;
     optional bool reloaded = 5;
 }
+
+message AllDeltas {
+    PbWorkflow workflow = 1;
+    EDeltas edges = 2;
+    FDeltas families = 3;
+    FPDeltas family_proxies = 4;
+    JDeltas jobs = 5;
+    TDeltas tasks = 6;
+    TPDeltas task_proxies = 7;
+}

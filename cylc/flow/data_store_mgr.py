@@ -60,7 +60,7 @@ from cylc.flow.cycling.loader import get_point
 from cylc.flow.data_messages_pb2 import (
     PbEdge, PbEntireWorkflow, PbFamily, PbFamilyProxy,
     PbJob, PbTask, PbTaskProxy, PbWorkflow,
-    EDeltas, FDeltas, FPDeltas, JDeltas, TDeltas, TPDeltas)
+    AllDeltas, EDeltas, FDeltas, FPDeltas, JDeltas, TDeltas, TPDeltas)
 from cylc.flow.network import API
 from cylc.flow.suite_status import get_suite_status
 from cylc.flow.task_id import TaskID
@@ -77,6 +77,7 @@ JOBS = 'jobs'
 TASKS = 'tasks'
 TASK_PROXIES = 'task_proxies'
 WORKFLOW = 'workflow'
+ALL_DELTAS = 'all'
 
 MESSAGE_MAP = {
     EDGES: PbEdge,
@@ -96,6 +97,7 @@ DELTAS_MAP = {
     TASKS: TDeltas,
     TASK_PROXIES: TPDeltas,
     WORKFLOW: PbWorkflow,
+    ALL_DELTAS: AllDeltas,
 }
 
 # Protobuf message merging appends repeated field results on merge,
@@ -213,6 +215,7 @@ class DataStoreMgr:
         'cycle_states',
         'data',
         'deltas',
+        'delta_queues',
         'descendants',
         'edge_points',
         'max_point',
@@ -266,6 +269,7 @@ class DataStoreMgr:
             TASK_PROXIES: {},
         }
         self.updates_pending = False
+        self.delta_queues = {self.workflow_id: {}}
 
     def initiate_data_model(self, reloaded=False):
         """Initiate or Update data model on start/restart/reload.
@@ -1035,11 +1039,18 @@ class DataStoreMgr:
 
     def get_publish_deltas(self):
         """Return deltas for publishing."""
-        return [
-            (key.encode('utf-8'), delta, 'SerializeToString')
-            for key, delta in self.deltas.items()
-            if delta.ListFields()
-        ]
+        all_deltas = DELTAS_MAP[ALL_DELTAS]()
+        result = []
+        for key, delta in self.deltas.items():
+            if delta.ListFields():
+                result.append(
+                    (key.encode('utf-8'), delta, 'SerializeToString'))
+                getattr(all_deltas, key).CopyFrom(delta)
+        all_deltas.workflow.id = self.workflow_id
+        result.append(
+            (ALL_DELTAS.encode('utf-8'), all_deltas, 'SerializeToString')
+        )
+        return result
 
     def get_data_elements(self, element_type):
         """Get elements of a given type in the form of a delta.
