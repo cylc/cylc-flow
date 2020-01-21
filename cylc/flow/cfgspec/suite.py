@@ -397,9 +397,6 @@ def host_to_platform_upgrader(cfg):
     }
 
     for task_name, task_spec in cfg['runtime'].items():
-        # if task_name == 'delta':
-        #     breakpoint(header=f"task_name = {task_name}")
-
         if (
             'platform' in task_spec and 'job' in task_spec or
             'platform' in task_spec and 'remote' in task_spec
