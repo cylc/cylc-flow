@@ -22,6 +22,7 @@ import pytest
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.tests.util import set_up_globalrc
 from cylc.flow.tests.test_config_upgrader import GLOBALRC
+from cylc.flow.exceptions import PlatformLookupError
 
 GLOBALRC_WITH_HOSTS = GLOBALRC + \
     "\n[hosts]\n[[ze]]\nrun directory = $DATADIR/cylc-run"
@@ -135,4 +136,11 @@ def test_get_platform_item(set_up_globalrc, inputs, outputs):
     """
     set_up_globalrc(GLOBALRC)
     conf = glbl_cfg(cached=False)
-    assert conf.get_platfrom_item(*inputs) == outputs
+    assert conf.get_platform_item(*inputs) == outputs
+
+
+def test_no_default_platform_item(set_up_globalrc):
+    set_up_globalrc(GLOBALRC)
+    conf = glbl_cfg(cached=False)
+    with pytest.raises(PlatformLookupError):
+        conf.get_platform_item('submission polling intervals',)

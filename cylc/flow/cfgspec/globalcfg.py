@@ -28,6 +28,7 @@ from cylc.flow.parsec.upgrade import upgrader
 from cylc.flow.parsec.validate import (
     DurationFloat, CylcConfigValidator as VDR, cylc_config_validate)
 from cylc.flow.platform_lookup import forward_lookup
+from cylc.flow.exceptions import PlatformLookupError
 
 # Nested dict of spec items.
 # Spec value is [value_type, default, allowed_2, allowed_3, ...]
@@ -382,10 +383,10 @@ class GlobalConfig(ParsecConfig):
 
     @staticmethod
     def get_platform_item_for_job(job_conf, item):
-        # Returns platfrom item job from the job config and item
+        # Returns platform item job from the job config and item
         return get_platform_item(item, job_conf['platform'])
 
-    def get_platfrom_item(
+    def get_platform_item(
         self, item, platform=None, owner=None, replace_home=False,
         owner_home=None
     ):
@@ -435,21 +436,24 @@ class GlobalConfig(ParsecConfig):
             if (item in self.get(['job platforms', raw_platform])):
                 value = self.get(['job platforms', raw_platform, item])
         else:
-            value = self.spec['job platforms']['__MANY__'][item][1]
-        breakpoint()
+            try:
+                value = self.spec['job platforms']['__MANY__'][item][1]
+            except IndexError as exc:
+                msg = (f"Cannot get platform item because '{item}' has "
+                       f"no default value.")
+                raise PlatformLookupError(msg)
         # Deal with cases where the setting is a directory.
-        if value and 'directory' in item:
+        if 'directory' in item and value:
             if replace_home:
                 # Replace local home dir with $HOME for eval'n on other host.
                 value = value.replace(self._HOME, '$HOME')
             elif is_remote_user(owner):
                 # Replace with ~owner for direct access via local filesys
                 # (works for standard cylc-run directory location).
-                if owner and not owner_home:
+                if owner_home is None:
                     owner_home = os.path.expanduser('~%s' % owner)
-                elif not (owner_home and owner):
-                    owner_home = os.path.expanduser('~')
                 value = value.replace(self._HOME, owner_home)
+                value = value.replace('$HOME', owner_home)
         return value
 
     def get_host_item(self, item, host=None, owner=None, replace_home=False,
