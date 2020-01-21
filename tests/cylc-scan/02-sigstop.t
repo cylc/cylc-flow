@@ -31,6 +31,7 @@ sleep 1
 kill -SIGSTOP "${SUITE_PID}"
 sleep 1
 run_ok "${TEST_NAME_BASE}-scan" cylc scan
+cat "${TEST_NAME_BASE}-scan.stderr" >&2
 # ensure there is no traceback
 grep_ok "TIMEOUT" "${TEST_NAME_BASE}-scan.stdout"
 grep_ok "Timeout waiting for server response" "${TEST_NAME_BASE}-scan.stderr"
