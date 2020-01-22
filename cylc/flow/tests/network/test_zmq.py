@@ -19,7 +19,7 @@ import random
 from shutil import rmtree
 from tempfile import TemporaryDirectory, NamedTemporaryFile
 from threading import Barrier
-from time import sleep
+from time import sleep, time
 from unittest.mock import MagicMock
 import os
 
@@ -51,8 +51,11 @@ HOST = "127.0.0.1"
 def test_server_cannot_start_when_server_private_key_cannot_be_loaded():
     """Server should not be able to start when its private key file
     cannot be opened."""
-
-    server = ZMQSocketBase(zmq.REQ, suite="test_suite", bind=True, daemon=True)
+    server = ZMQSocketBase(
+        zmq.REQ,
+        suite=f"test_suite-{time()}",
+        bind=True,
+        daemon=True)
 
     with pytest.raises(
         SuiteServiceFileError,
@@ -105,17 +108,17 @@ def test_server_cannot_start_when_public_key_not_found_in_certificate_file():
 def test_client_requires_valid_server_public_key_in_private_key_file():
     """Client should not be able to connect to host/port without
     server public key."""
-
+    suite_name = f"test_suite-{time()}"
     port = random.choice(PORT_RANGE)
-    client = ZMQSocketBase(zmq.REP, suite="fake_suite")
+    client = ZMQSocketBase(zmq.REP, suite=suite_name)
 
-    test_suite_srv_dir = get_suite_srv_dir(reg="fake_suite")
+    test_suite_srv_dir = get_suite_srv_dir(reg=suite_name)
     key_info = KeyInfo(
         KeyType.PRIVATE,
         KeyOwner.CLIENT,
         suite_srv_dir=test_suite_srv_dir)
     directory = os.path.expanduser("~/cylc-run")
-    tmpdir = os.path.join(directory, "fake_suite")
+    tmpdir = os.path.join(directory, suite_name)
     os.makedirs(key_info.key_path, exist_ok=True)
 
     _pub, _priv = zmq.auth.create_certificates(key_info.key_path, "client")
@@ -131,9 +134,8 @@ def test_client_requires_valid_server_public_key_in_private_key_file():
 def test_client_requires_valid_client_private_key():
     """Client should not be able to connect to host/port
     without client private key."""
-
     port = random.choice(PORT_RANGE)
-    client = ZMQSocketBase(zmq.REP, suite="fake_suite")
+    client = ZMQSocketBase(zmq.REP, suite=f"test_suite-{time()}")
 
     with pytest.raises(ClientError, match=r"Failed to find user's private "
                                           r"key, so cannot connect."):

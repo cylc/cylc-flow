@@ -66,21 +66,22 @@ class KeyInfo():
 
     """
 
-    def __init__(self, key_type, key_owner, **kwargs):
+    def __init__(self, key_type, key_owner, full_key_path=None,
+                 suite_srv_dir=None, platform=None):
         self.key_type = key_type
         self.key_owner = key_owner
+        self.full_key_path = full_key_path
+        self.suite_srv_dir = suite_srv_dir
+        self.platform = platform
 
-        if 'full_key_path' in kwargs:
-            self.key_path, self.file_name = os.path.split(
-                kwargs.get("full_key_path"))
-        elif 'suite_srv_dir' in kwargs:
+        if self.full_key_path is not None:
+            self.key_path, self.file_name = os.path.split(self.full_key_path)
+        elif self.suite_srv_dir is not None:
             # Build key filename
-
             file_name = key_owner.value
 
             # Add optional platform name (supports future multiple client keys)
-            if key_owner is KeyOwner.CLIENT and 'platform' in kwargs:
-                self.platform = kwargs['platform']
+            if key_owner is KeyOwner.CLIENT and self.platform is not None:
                 file_name = file_name + f"_{self.platform}"
 
             if key_type == KeyType.PRIVATE:
@@ -95,7 +96,7 @@ class KeyInfo():
                 temp = f"{key_owner.value}_{key_type.value}_keys"
                 self.key_path = os.path.join(
                     os.path.expanduser("~"),
-                    kwargs.get("suite_srv_dir"),
+                    self.suite_srv_dir,
                     temp)
             elif (
                 (key_owner is KeyOwner.SERVER
@@ -105,7 +106,7 @@ class KeyInfo():
                 or (key_owner is KeyOwner.SERVER
                     and key_type is KeyType.PUBLIC)):
                 self.key_path = os.path.join(
-                    os.path.expanduser("~"), kwargs.get("suite_srv_dir"))
+                    os.path.expanduser("~"), self.suite_srv_dir)
 
         else:
             raise ValueError(
@@ -344,13 +345,10 @@ def get_auth_item(item, reg, owner=None, host=None, content=False):
     Return file name, or content of file if content=True is set.
     Files are searched from these locations in order:
 
-    1/  a/ Server Curve ZMQ keys located in:
-            suite service directory/server_keys/private
-            suite service directory/server_keys/public
-
-        b/ Client Curve ZMQ keys located in:
-            suite service directory/client_keys/private
-            suite service directory/client_keys/public
+    1/  Server Curve ZMQ keys located in suite service directory
+        Client Curve ZMQ keys located in
+            suite service directory (private keys)
+            suite service directory/client_public_keys (public keys)
 
     2/ For running task jobs, service directory under:
        a/ $CYLC_SUITE_RUN_DIR for remote jobs.
@@ -380,7 +378,7 @@ def get_auth_item(item, reg, owner=None, host=None, content=False):
 
         item_location = _locate_item(item.file_name, item.key_path)
 
-        # Temporary hack until we can separate key file 'get' into own function
+        # TODO: separate key file 'get' into own function
         # Additional searches below need a file name, not a complex object
         item = item.file_name
 
@@ -661,29 +659,26 @@ def create_auth_files(reg):
             os.remove(k.full_key_path)
 
     # WARNING, DESTRUCTIVE.
-    # Removes old client public key folder if it already exists.
-    # Create directory and set file permissions.
+    # Removes old client public key folder if it already exists, makes
+    # fresh directory.
     if os.path.exists(keys["client_public_key"].key_path):
         shutil.rmtree(keys["client_public_key"].key_path)
     os.makedirs(keys["client_public_key"].key_path, exist_ok=True)
-    os.chmod(keys["client_public_key"].key_path, 0o700)
 
     # ZMQ keys generated in .service directory.
     # Move client public keys to a sub-directory: .service/client_public_keys.
-    # Set file permissions.
-    client_public_full_key_path, client_private_full_key_path = (
+    # ZMQ keys need to be created with stricter file permissions, changing
+    # umask default denials.
+    old_umask = os.umask(0o177)  # u=rw only set as default for file creation
+    client_public_full_key_path, _client_private_full_key_path = (
         zmq.auth.create_certificates(suite_srv_dir, KeyOwner.CLIENT.value))
-    os.chmod(client_private_full_key_path, stat.S_IRUSR | stat.S_IWUSR)
-    os.chmod(client_public_full_key_path, stat.S_IRUSR |
-             stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH)
     shutil.move(
         client_public_full_key_path,
         keys["client_public_key"].key_path)
-    server_public_full_key_path, server_private_full_key_path = (
+    _server_public_full_key_path, _server_private_full_key_path = (
         zmq.auth.create_certificates(suite_srv_dir, KeyOwner.SERVER.value))
-    os.chmod(server_private_full_key_path, stat.S_IRUSR | stat.S_IWUSR)
-    os.chmod(server_public_full_key_path, stat.S_IRUSR |
-             stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH)
+    # Return file permissions to default settings.
+    os.umask(old_umask)
 
 
 def _dump_item(path, item, value):
