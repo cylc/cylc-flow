@@ -99,6 +99,21 @@ DELTAS_MAP = {
     WORKFLOW: PbWorkflow,
 }
 
+# Protobuf message merging appends repeated field results on merge,
+# unlike singular fields which are overwritten. This behaviour is
+# desirable in many cases, but there are exceptions.
+# The following is used to flag which fields require clearing before
+# merging from respective deltas messages.
+CLEAR_FIELD_MAP = {
+    EDGES: set(),
+    FAMILIES: set(),
+    FAMILY_PROXIES: set(),
+    JOBS: set(),
+    TASKS: set(),
+    TASK_PROXIES: {'prerequisites', 'outputs'},
+    WORKFLOW: {'state_totals', 'states'},
+}
+
 
 def generate_checksum(in_strings):
     """Generate cross platform & python checksum from strings."""
@@ -119,24 +134,29 @@ def apply_delta(key, delta, data):
     if key == WORKFLOW:
         new_data = PbWorkflow()
         new_data.CopyFrom(data[key])
-        new_data.ClearField('state_totals')
-        new_data.ClearField('states')
+        # Clear fields the require overwrite with delta
+        for field in CLEAR_FIELD_MAP[key]:
+            new_data.ClearField(field)
         new_data.MergeFrom(delta)
         # fields that are set to empty kinds aren't carried
         if not delta.is_held_total:
             new_data.is_held_total = 0
+        if not delta.reloaded:
+            data[key].reloaded = False
         # For thread safe update
         data[key] = new_data
         return
     for element in delta.deltas:
-        if key in (TASK_PROXIES, FAMILY_PROXIES) and element.id in data[key]:
-            # fields cannot be directly assigned, so is cleared first.
-            if hasattr(element, 'prerequisites') and element.prerequisites:
-                del data[key][element.id].prerequisites[:]
-            # fields that are set to empty kinds aren't carried
+        data_ele = data[key].setdefault(element.id, MESSAGE_MAP[key]())
+        # Clear fields the require overwrite with delta
+        for field, _ in element.ListFields():
+            if field.name in CLEAR_FIELD_MAP[key]:
+                data_ele.ClearField(field.name)
+        # fields that are set to empty kinds aren't carried
+        if key in (TASK_PROXIES, FAMILY_PROXIES):
             if not element.is_held:
                 data[key][element.id].is_held = False
-        data[key].setdefault(element.id, MESSAGE_MAP[key]()).MergeFrom(element)
+        data_ele.MergeFrom(element)
     # Prune data elements by id
     for del_id in delta.pruned:
         if del_id not in data[key]:
@@ -618,8 +638,6 @@ class DataStoreMgr:
                             stamp='f{s_task_id}@{update_time}',
                             id=s_task_id,
                         )).proxies.append(source_id)
-                    getattr(self.deltas[WORKFLOW], TASKS).append(
-                        s_task_id)
             # Add valid source before checking for no target,
             # as source may be an isolate (hence no edges).
             # At present targets can't be xtriggers.
@@ -646,7 +664,6 @@ class DataStoreMgr:
                             stamp='f{t_task_id}@{update_time}',
                             id=t_task_id,
                         )).proxies.append(target_id)
-                    getattr(self.deltas[WORKFLOW], TASKS).append(t_task_id)
 
                 # Initiate edge element.
                 e_id = (
@@ -762,11 +779,7 @@ class DataStoreMgr:
             if tproxy.cycle_point in point_strings:
                 node_ids.add(tp_id)
                 self.deltas[TASK_PROXIES].pruned.append(tp_id)
-                self.deltas[JOBS].pruned.extend(tproxy.jobs)
-                try:
-                    del self.schd.job_pool.task_jobs[tp_id]
-                except KeyError:
-                    pass
+                self.schd.job_pool.remove_task_jobs(tp_id)
 
         for fp_id, fproxy in list(flow_data[FAMILY_PROXIES].items()):
             if fproxy.cycle_point in point_strings:

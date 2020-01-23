@@ -206,7 +206,7 @@ class Scheduler(object):
         self.command_queue = None
         self.message_queue = None
         self.ext_trigger_queue = None
-        self.ws_data_mgr = None
+        self.data_store_mgr = None
         self.job_pool = None
 
         self._profile_amounts = {}
@@ -257,7 +257,7 @@ class Scheduler(object):
             if not self.options.no_detach:
                 daemonize(self)
             self._setup_suite_logger()
-            self.ws_data_mgr = DataStoreMgr(self)
+            self.data_store_mgr = DataStoreMgr(self)
 
             # *** Network Related ***
             # TODO: this in zmq asyncio context?
@@ -1563,8 +1563,8 @@ see `COPYING' in the Cylc source distribution.
     def run(self):
         """Main loop."""
         self.initialise_scheduler()
-        self.ws_data_mgr.initiate_data_model()
-        self.publisher.publish(self.ws_data_mgr.get_publish_deltas())
+        self.data_store_mgr.initiate_data_model()
+        self.publisher.publish(self.data_store_mgr.get_publish_deltas())
         while True:  # MAIN LOOP
             tinit = time()
             has_reloaded = False
@@ -1593,9 +1593,9 @@ see `COPYING' in the Cylc source distribution.
 
             # Re-initialise data model on reload
             if has_reloaded:
-                self.ws_data_mgr.initiate_data_model(reloaded=True)
+                self.data_store_mgr.initiate_data_model(reloaded=True)
                 self.publisher.publish(
-                    self.ws_data_mgr.get_publish_deltas())
+                    self.data_store_mgr.get_publish_deltas())
             # Update state summary, database, and uifeed
             self.suite_db_mgr.put_task_event_timers(self.task_events_mgr)
             has_updated = self.update_data_structure()
@@ -1646,10 +1646,10 @@ see `COPYING' in the Cylc source distribution.
             self.pool.get_pool_change_tasks())
         if has_updated:
             # WServer incremental data store update
-            self.ws_data_mgr.update_data_structure(updated_nodes)
+            self.data_store_mgr.update_data_structure(updated_nodes)
             # Publish updates:
             self.publisher.publish(
-                self.ws_data_mgr.get_publish_deltas())
+                self.data_store_mgr.get_publish_deltas())
             # TODO: deprecate after CLI GraphQL migration
             self.state_summary_mgr.update(self)
             # Database update

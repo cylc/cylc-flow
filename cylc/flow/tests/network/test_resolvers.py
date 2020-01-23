@@ -109,7 +109,7 @@ class TestResolvers(CylcWorkflowTestCase):
 
     def setUp(self) -> None:
         super(TestResolvers, self).setUp()
-        self.scheduler.ws_data_mgr = DataStoreMgr(self.scheduler)
+        self.scheduler.data_store_mgr = DataStoreMgr(self.scheduler)
         for name in self.scheduler.config.taskdefs:
             task_proxy = create_task_proxy(
                 task_name=name,
@@ -123,9 +123,9 @@ class TestResolvers(CylcWorkflowTestCase):
             )
             assert 0 == warnings
         self.task_pool.release_runahead_tasks()
-        self.scheduler.ws_data_mgr.initiate_data_model()
-        self.workflow_id = self.scheduler.ws_data_mgr.workflow_id
-        self.data = self.scheduler.ws_data_mgr.data[self.workflow_id]
+        self.scheduler.data_store_mgr.initiate_data_model()
+        self.workflow_id = self.scheduler.data_store_mgr.workflow_id
+        self.data = self.scheduler.data_store_mgr.data[self.workflow_id]
         self.node_ids = [
             node.id
             for node in self.data[TASK_PROXIES].values()]
@@ -133,7 +133,7 @@ class TestResolvers(CylcWorkflowTestCase):
             edge.id
             for edge in self.data[EDGES].values()]
         self.resolvers = Resolvers(
-            self.scheduler.ws_data_mgr.data,
+            self.scheduler.data_store_mgr.data,
             schd=self.scheduler)
 
     def test_constructor(self):
