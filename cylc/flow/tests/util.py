@@ -23,8 +23,10 @@ from tempfile import mkdtemp
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
 
+from cylc.flow.cfgspec.globalcfg import SPEC
 from cylc.flow.config import SuiteConfig
 from cylc.flow.job_pool import JobPool
+from cylc.flow.parsec.config import ParsecConfig
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.suite_db_mgr import SuiteDatabaseManager
 from cylc.flow.task_pool import TaskPool
@@ -164,8 +166,15 @@ def create_task_proxy(task_name: str, suite_config: SuiteConfig,
 
 @pytest.fixture()
 def set_up_globalrc(tmp_path_factory):
-    """A Pytest fixture to help set up a globalrc file in a test temporary
-    directory and add CYLC_CONF_PATH to the environment.
+    """A Pytest fixture for fiddling globalrc values.
+
+    Creates a globalrc file and modifies CYLC_CONF_PATH to point at it.
+
+    Use for:
+
+    * Functional tests which call out to other scripts.
+    * Integration tests which span multiple modules.
+
     """
     def _inner_func(rc_string):
         tempdir = tmp_path_factory.getbasetemp()
@@ -176,3 +185,32 @@ def set_up_globalrc(tmp_path_factory):
         return globalrc
 
     return _inner_func
+
+
+@pytest.fixture
+def mock_glbl_cfg(tmp_path, monkeypatch):
+    """A Pytest fixture for fiddling globalrc values.
+
+    Hacks the specified `glbl_cfg` object.
+
+    Use for:
+
+    * Isolated unit tests within one module.
+
+    # TODO: modify Parsec so we can use StringIO rather than a temp file.
+
+    """
+    def _mock(pypath, global_rc):
+        nonlocal tmp_path, monkeypatch
+        tmp_path = tmp_path / 'flow.rc'
+        tmp_path.write_text(global_rc)
+        glbl_cfg = ParsecConfig(SPEC)
+        glbl_cfg.loadcfg(tmp_path)
+
+        def _inner(cached=False):
+            nonlocal glbl_cfg
+            return glbl_cfg
+
+        monkeypatch.setattr(pypath, _inner)
+
+    return _mock

@@ -44,22 +44,20 @@ def select_suite_host(cached=True):
         # list of suite hosts
         global_config.get(['suite servers', 'run hosts']) or ['localhost'],
         # thresholds / ranking to apply
-        threshold_string=global_config.get(
-            ['suite servers', 'run host select', 'thresholds']
-        ),
+        threshold_string=global_config.get(['suite servers', 'thresholds']),
         # list of condemned hosts
-        filtered_hosts=global_config.get(
+        blacklist=global_config.get(
             ['suite servers', 'condemned hosts']
         ),
-        filter_string='condemned host'
+        blacklist_name='condemned host'
     )
 
 
 def select_host(
         hosts,
         threshold_string=None,
-        filtered_hosts=None,
-        filter_string=None
+        blacklist=None,
+        blacklist_name=None
 ):
     """Select a host from the provided list.
 
@@ -84,11 +82,11 @@ def select_host(
                getloadavg()
 
             Comments are allowed using `#` but not inline comments.
-        filtered_hosts (list):
+        blacklist (list):
             List of host names to filter out.
             Can be short host names (do not have to be fqdn values)
-        filter_string (str):
-            Used with `filtered_hosts` in error messages.
+        blacklist_name (str):
+            Used with `blacklist` in error messages.
 
     Returns:
         tuple - (hostname, fqdn) the chosen host
@@ -105,8 +103,8 @@ def select_host(
         for host in hosts
     }
     hosts = list(hostname_map)
-    if filtered_hosts:
-        filtered_hosts = list(set(map(get_fqdn_by_host, filtered_hosts)))
+    if blacklist:
+        blacklist = list(set(map(get_fqdn_by_host, blacklist)))
 
     # dict of conditions and whether they have been met (for error reporting)
     data = {
@@ -115,11 +113,11 @@ def select_host(
     }
 
     # filter out `filter_hosts` if provided
-    if filtered_hosts:
+    if blacklist:
         hosts, data = _filter_by_hostname(
             hosts,
-            filtered_hosts,
-            filter_string,
+            blacklist,
+            blacklist_name,
             data=data
         )
 
@@ -134,11 +132,8 @@ def select_host(
 
     if not thresholds:
         # no metrics or ranking required, pick host at random
-        hosts = [random.choice(list(hosts))]
+        hosts = [random.choice(list(hosts))]  # nosec
 
-    if not hosts:
-        # no hosts provided / left after filtering
-        raise HostSelectException(data)
     if not thresholds and len(hosts) == 1:
         return hostname_map[hosts[0]], hosts[0]
 
@@ -172,18 +167,18 @@ def select_host(
 
 def _filter_by_hostname(
         hosts,
-        filtered_hosts,
-        filter_string=None,
+        blacklist,
+        blacklist_name=None,
         data=None
 ):
-    """Filter out any hosts present in `filtered_hosts`.
+    """Filter out any hosts present in `blacklist`.
 
     Args:
         hosts (list):
             List of host fqdns.
-        filtered_hosts (list):
+        blacklist (list):
             List of blacklisted host fqdns.
-        filter_string (str):
+        blacklist_name (str):
             The reason for blacklisting these hosts
             (used for exceptions).
         data (dict):
@@ -201,9 +196,9 @@ def _filter_by_hostname(
         data = {host: dict() for host in hosts}
     for host in list(hosts):
         key = 'blacklisted'
-        if filter_string:
-            key = f'{key}({filter_string})'
-        if host in filtered_hosts:
+        if blacklist_name:
+            key = f'{key}({blacklist_name})'
+        if host in blacklist:
             hosts.remove(host)
             data[host][key] = True
         else:
@@ -402,8 +397,6 @@ def _get_thresholds(string):
                 # end of positional arguments
                 in_args = False
                 break
-            elif item.string == ',':
-                pass
             elif in_args:
                 # literal eval each argument
                 query.append(ast.literal_eval(item.string))
@@ -463,6 +456,11 @@ def _get_metrics(hosts, metrics, data=None):
             List in the form [(function, arg1, arg2, ...), ...]
         data (dict):
             Used for logging success/fail outcomes of the form {host: {}}
+
+    Examples:
+        Command failure:
+        >>> _get_metrics(['localhost'], [['elephant']])
+        ({}, {'localhost': {'get_metrics': 'Command failed (exit: 1)'}})
 
     Returns:
         dict - {host: {(function, arg1, arg2, ...): result}}
@@ -532,27 +530,3 @@ def _reformat_expr(key, expression):
         'RESULT',
         f'{key[0]}({", ".join(map(repr, key[1:]))})'
     )
-
-
-# def main():
-#     return select_host(
-#         [
-#             'localhost'
-#             # 'niwa-1019144l.niwa.local'
-#         ],
-#         '''
-#             # rank items, lower is better
-#             cpu_times().user
-
-#             # threshold items, accept hosts which eval to `True`
-#             virtual_memory().available > 123456789
-#             getloadavg()[0] < 5
-#             cpu_count() > 1
-#             disk_usage('/').free > 123
-#         '''
-#     )
-
-
-# print(
-#     main()
-# )
