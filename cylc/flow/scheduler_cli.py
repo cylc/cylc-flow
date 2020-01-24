@@ -21,7 +21,7 @@ import sys
 
 import cylc.flow.flags
 from cylc.flow.exceptions import SuiteServiceFileError
-from cylc.flow.host_appointer import HostAppointer, EmptyHostList
+from cylc.flow.host_select import select_suite_host
 from cylc.flow.hostuserutil import is_remote_host
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.pathutil import get_suite_run_dir
@@ -249,13 +249,7 @@ def scheduler_cli(parser, options, args, is_restart=False):
 
     # Check whether a run host is explicitly specified, else select one.
     if not options.host:
-        try:
-            host = HostAppointer().appoint_host()
-        except EmptyHostList as exc:
-            if cylc.flow.flags.debug:
-                raise
-            else:
-                sys.exit(str(exc))
+        host = select_suite_host()[1]
         if is_remote_host(host):
             if is_restart:
                 base_cmd = ["restart"] + sys.argv[1:]

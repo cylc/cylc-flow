@@ -224,7 +224,6 @@ information_commands['monitor'] = ['monitor']
 information_commands['get-suite-config'] = ['get-suite-config', 'get-config']
 information_commands['get-site-config'] = [
     'get-site-config', 'get-global-config']
-information_commands['get-host-metrics'] = ['get-host-metrics']
 
 control_commands = {}
 # NOTE: don't change 'run' to 'start' or the category [control]
@@ -259,6 +258,7 @@ utility_commands['suite-state'] = ['suite-state']
 utility_commands['ls-checkpoints'] = ['ls-checkpoints']
 utility_commands['report-timings'] = ['report-timings']
 utility_commands['function-run'] = ['function-run']
+utility_commands['psutil'] = ['psutil']
 
 admin_commands = {}
 admin_commands['check-software'] = ['check-software']
@@ -340,7 +340,6 @@ comsum['extract-resources'] = 'Extract cylc.flow library package resources'
 comsum['monitor'] = 'An in-terminal suite monitor'
 comsum['get-suite-config'] = 'Print suite configuration items'
 comsum['get-site-config'] = 'Print site/user configuration items'
-comsum['get-host-metrics'] = 'Print localhost metric data'
 comsum['get-suite-contact'] = (
     'Print contact information of a suite server program')
 comsum['get-suite-version'] = 'Print cylc version of a suite server program'
@@ -386,6 +385,7 @@ comsum['suite-state'] = 'Query the task states in a suite'
 comsum['ls-checkpoints'] = 'Display task pool etc at given events'
 comsum['report-timings'] = 'Generate a report on task timing data'
 comsum['function-run'] = '(Internal) Run a function in the process pool'
+comsum['psutil'] = '(Internal) Report information about the usage of a host'
 
 
 def help_func():
