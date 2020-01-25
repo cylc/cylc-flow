@@ -132,31 +132,29 @@ def apply_delta(key, delta, data):
     """Apply delta to specific data-store workflow and type."""
     # Merge in updated fields
     if key == WORKFLOW:
-        new_data = PbWorkflow()
-        new_data.CopyFrom(data[key])
         # Clear fields the require overwrite with delta
         for field in CLEAR_FIELD_MAP[key]:
-            new_data.ClearField(field)
-        new_data.MergeFrom(delta)
+            data[key].ClearField(field)
+        data[key].MergeFrom(delta)
         # fields that are set to empty kinds aren't carried
         if not delta.is_held_total:
-            new_data.is_held_total = 0
+            data[key].is_held_total = 0
         if not delta.reloaded:
             data[key].reloaded = False
-        # For thread safe update
-        data[key] = new_data
         return
     for element in delta.deltas:
-        data_ele = data[key].setdefault(element.id, MESSAGE_MAP[key]())
-        # Clear fields the require overwrite with delta
-        for field, _ in element.ListFields():
-            if field.name in CLEAR_FIELD_MAP[key]:
-                data_ele.ClearField(field.name)
+        if element.id not in data[key]:
+            data[key][element.id] = MESSAGE_MAP[key]()
+        else:
+            # Clear fields the require overwrite with delta
+            for field, _ in element.ListFields():
+                if field.name in CLEAR_FIELD_MAP[key]:
+                    data[key][element.id].ClearField(field.name)
         # fields that are set to empty kinds aren't carried
         if key in (TASK_PROXIES, FAMILY_PROXIES):
             if not element.is_held:
                 data[key][element.id].is_held = False
-        data_ele.MergeFrom(element)
+        data[key][element.id].MergeFrom(element)
     # Prune data elements by id
     for del_id in delta.pruned:
         if del_id not in data[key]:
