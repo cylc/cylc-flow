@@ -26,7 +26,7 @@ from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 def get_remote_suite_run_dir(host, owner, suite, *args):
     """Return remote suite run directory, join any extra args."""
     return os.path.join(
-        glbl_cfg().get_host_item('run directory', host, owner), suite, *args)
+        glbl_cfg().get_platform_item('run directory', host, owner), suite, *args)
 
 
 def get_remote_suite_run_job_dir(host, owner, suite, *args):
@@ -38,7 +38,7 @@ def get_remote_suite_run_job_dir(host, owner, suite, *args):
 def get_remote_suite_work_dir(host, owner, suite, *args):
     """Return remote suite work directory root, join any extra args."""
     return os.path.join(
-        glbl_cfg().get_host_item('work directory', host, owner),
+        glbl_cfg().get_platform_item('work directory', host, owner),
         suite,
         *args)
 
@@ -46,7 +46,7 @@ def get_remote_suite_work_dir(host, owner, suite, *args):
 def get_suite_run_dir(suite, *args):
     """Return local suite run directory, join any extra args."""
     return os.path.join(
-        glbl_cfg().get_host_item('run directory'), suite, *args)
+        glbl_cfg().get_platform_item('run directory'), suite, *args)
 
 
 def get_suite_run_job_dir(suite, *args):
@@ -77,13 +77,13 @@ def get_suite_run_pub_db_name(suite):
 def get_suite_run_share_dir(suite, *args):
     """Return local suite work/share directory, join any extra args."""
     return os.path.join(
-        glbl_cfg().get_host_item('work directory'), suite, 'share', *args)
+        glbl_cfg().get_platform_item('work directory'), suite, 'share', *args)
 
 
 def get_suite_run_work_dir(suite, *args):
     """Return local suite work/work directory, join any extra args."""
     return os.path.join(
-        glbl_cfg().get_host_item('work directory'), suite, 'work', *args)
+        glbl_cfg().get_platform_item('work directory'), suite, 'work', *args)
 
 
 def get_suite_test_log_name(suite):
