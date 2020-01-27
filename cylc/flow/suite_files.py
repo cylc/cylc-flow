@@ -276,7 +276,7 @@ def detect_old_contact_file(reg, check_host_port=None):
     cmd = ["timeout", "10", "ps", PS_OPTS, str(old_pid_str)]
     if is_remote_host(old_host):
         import shlex
-        ssh_str = str(glbl_cfg().get_host_item("ssh command", old_host))
+        ssh_str = str(glbl_cfg().get_platform_item("ssh command", old_host))
         cmd = shlex.split(ssh_str) + ["-n", old_host] + cmd
     from subprocess import Popen, PIPE, DEVNULL  # nosec
     from time import sleep, time
@@ -429,7 +429,7 @@ def get_auth_item(item, reg, owner=None, host=None, content=False):
     # host, because it is installed on task host by "cylc remote-init" on
     # demand.
     if item != SuiteFiles.Service.CONTACT2:
-        value = _load_remote_item(item, reg, owner, host)
+        value = _load_remote_item(item, reg, host)
         if value:
             if not content:
                 path = _get_cache_dir(reg, owner, host)
@@ -779,8 +779,12 @@ def _load_local_item(item, path):
         return None
 
 
-def _load_remote_item(item, reg, owner, host):
+def _load_remote_item(item, reg, platform):
     """Load content of service item from remote [owner@]host via SSH."""
+    # TODO consider get a random member of 'remote hosts'
+    host = glbl_cfg().get_platform_item('remote hosts', platform)[0]
+    owner = glbl_cfg().get_platform_item('owner', platform)
+
     if not is_remote(host, owner):
         return
     if host is None:
@@ -811,7 +815,8 @@ def _load_remote_item(item, reg, owner, host):
     }
     import shlex
     command = shlex.split(
-        glbl_cfg().get_host_item('ssh command', host, owner))
+        glbl_cfg().get_platform_item('ssh command', platform=platform)
+    )
     command += ['-n', owner + '@' + host, script]
     from subprocess import Popen, PIPE, DEVNULL  # nosec
     try:
