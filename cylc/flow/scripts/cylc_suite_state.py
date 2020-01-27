@@ -223,7 +223,7 @@ def main(parser, options, suite):
     # re-invocation).
     run_dir = os.path.expandvars(
         os.path.expanduser(
-            options.run_dir or glbl_cfg().get_host_item('run directory')))
+            options.run_dir or glbl_cfg().get_platform_item('run directory')))
 
     pollargs = {'suite': suite,
                 'run_dir': run_dir,
