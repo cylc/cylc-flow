@@ -118,10 +118,10 @@ class JobFileWriter(object):
         return False
 
     @staticmethod
-    def _get_host_item(job_conf, key):
+    def _get_platform_item(job_conf, key):
         """Return host item from glbl_cfg()."""
-        return glbl_cfg().get_host_item(
-            key, job_conf["host"], job_conf["owner"])
+        return glbl_cfg().get_platform_item(
+            key, job_conf["host"])
 
     @staticmethod
     def _write_header(handle, job_conf):
@@ -158,7 +158,9 @@ class JobFileWriter(object):
         if vacation_signals_str:
             handle.write("\nCYLC_VACATION_SIGNALS='%s'" % vacation_signals_str)
         # Path to cylc executable, if defined.
-        cylc_exec = glbl_cfg().get_host_item(
+        # TODO: Consider what to do with job_conf["owner"]
+        # breakpoint()
+        cylc_exec = glbl_cfg().get_platform_item(
             'cylc executable', job_conf["host"], job_conf["owner"])
         if not cylc_exec.endswith('cylc'):
             raise ValueError(
@@ -170,7 +172,7 @@ class JobFileWriter(object):
         if cylc.flow.flags.debug:
             handle.write("\nexport CYLC_DEBUG=true")
         handle.write("\nexport CYLC_VERSION='%s'" % CYLC_VERSION)
-        for key in self._get_host_item(
+        for key in self._get_platform_item(
                 job_conf, 'copyable environment variables'):
             if key in os.environ:
                 handle.write("\nexport %s='%s'" % (key, os.environ[key]))
@@ -299,7 +301,7 @@ class JobFileWriter(object):
     @classmethod
     def _write_global_init_script(cls, handle, job_conf):
         """Global Init-script."""
-        global_init_script = cls._get_host_item(
+        global_init_script = cls._get_platform_item(
             job_conf, 'global init-script')
         if cls._check_script_value(global_init_script):
             handle.write("\n\ncylc__job__inst__global_init_script() {")
