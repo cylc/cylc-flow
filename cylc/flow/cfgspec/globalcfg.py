@@ -125,7 +125,7 @@ SPEC = {
             'use login shell': [VDR.V_BOOLEAN, True],
             'remote hosts': [VDR.V_STRING_LIST, ['localhost']],
             'cylc executable': [VDR.V_STRING, 'cylc'],
-            'global init-script': [VDR.V_STRING],
+            'global init-script': [VDR.V_STRING, ''],
             'copyable environment variables': [VDR.V_STRING_LIST, ''],
             'retrieve job logs': [VDR.V_BOOLEAN],
             'retrieve job logs command': [VDR.V_STRING, 'rsync -a'],
