@@ -25,7 +25,10 @@ import sys
 import urwid
 from urwid import html_fragment
 
-from cylc.flow.exceptions import ClientError
+from cylc.flow.exceptions import (
+    ClientError,
+    ClientTimeout
+)
 from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.task_state import (
@@ -406,7 +409,7 @@ class MonitorTreeBrowser:
                     'variables': {}
                 }
             )
-        except ClientError as exc:
+        except (ClientError, ClientTimeout) as exc:
             # catch network / client errors
             self.set_header(('suite_error', str(exc)))
             return False
