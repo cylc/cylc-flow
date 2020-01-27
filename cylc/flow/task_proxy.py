@@ -170,6 +170,7 @@ class TaskProxy(object):
         'state',
         'stop_point',
         'summary',
+        'task_platform',
         'task_host',
         'task_owner',
         'timeout',
@@ -229,7 +230,8 @@ class TaskProxy(object):
         }
 
         self.local_job_file_path = None
-
+        # TODO: Double check this task.platform is correct.
+        self.task_platform = 'localhost'
         self.task_host = 'localhost'
         self.task_owner = None
 
