@@ -114,9 +114,9 @@ SPEC = {
                 VDR.V_STRING, 'zmq', 'poll'],
             # TODO ensure that it is possible to over-ride the following three
             # settings in suite config.
-            'submission polling intervals': [VDR.V_INTERVAL_LIST],
+            'submission polling intervals': [VDR.V_INTERVAL_LIST, [3]],
             'submission retry delays': [VDR.V_INTERVAL_LIST, None],
-            'execution polling intervals': [VDR.V_INTERVAL_LIST],
+            'execution polling intervals': [VDR.V_INTERVAL_LIST, [3]],
             'execution time limit polling intervals': [VDR.V_INTERVAL_LIST],
             'scp command': [
                 VDR.V_STRING, 'scp -oBatchMode=yes -oConnectTimeout=10'],
@@ -428,6 +428,9 @@ class GlobalConfig(ParsecConfig):
         """
         # Check for the existence of the item we want in the platform specified
         # Or use default values.
+        if platform and platform == 'localhost':
+            platform = None
+
         if platform:
             platform, raw_platform = forward_lookup(
                 self.get(['job platforms']), platform
