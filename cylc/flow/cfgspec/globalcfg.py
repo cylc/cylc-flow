@@ -105,11 +105,11 @@ SPEC = {
     'job platforms': {
         '__MANY__': {
             'batch system': [VDR.V_STRING, 'background'],
-            'batch submit command template': [VDR.V_STRING],
+            'batch submit command template': [VDR.V_STRING, None],
             'shell': [VDR.V_STRING, '/bin/bash'],
             'run directory': [VDR.V_STRING, '$HOME/cylc-run'],
             'work directory': [VDR.V_STRING, '$HOME/cylc-run'],
-            'suite definition directory': [VDR.V_STRING],
+            'suite definition directory': [VDR.V_STRING, None],
             'task communication method': [
                 VDR.V_STRING, 'zmq', 'poll'],
             # TODO ensure that it is possible to over-ride the following three
@@ -123,7 +123,7 @@ SPEC = {
             'ssh command': [
                 VDR.V_STRING, 'ssh -oBatchMode=yes -oConnectTimeout=10'],
             'use login shell': [VDR.V_BOOLEAN, True],
-            'remote hosts': [VDR.V_STRING_LIST],
+            'remote hosts': [VDR.V_STRING_LIST, ['localhost']],
             'cylc executable': [VDR.V_STRING, 'cylc'],
             'global init-script': [VDR.V_STRING],
             'copyable environment variables': [VDR.V_STRING_LIST, ''],
@@ -139,7 +139,7 @@ SPEC = {
             'err viewer': [VDR.V_STRING],
             'out viewer': [VDR.V_STRING],
             'job name length maximum': [VDR.V_INTEGER],
-            'owner': [VDR.V_STRING],
+            'owner': [VDR.V_STRING, None],
         },
     },
 
@@ -381,10 +381,9 @@ class GlobalConfig(ParsecConfig):
         # (OK if no flow.rc is found, just use system defaults).
         self._transform()
 
-    @staticmethod
-    def get_platform_item_for_job(job_conf, item):
+    def get_platform_item_for_job(self, job_conf, item):
         # Returns platform item job from the job config and item
-        return get_platform_item(item, job_conf['platform'])
+        return self.get_platform_item(item, job_conf['platform'])
 
     def get_platform_item(
         self, item, platform=None, owner=None, replace_home=False,

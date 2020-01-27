@@ -57,6 +57,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED,
     TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING)
 from cylc.flow.wallclock import get_current_time_string, get_utc_mode
+from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 
 
 class TaskJobManager(object):
@@ -770,8 +771,8 @@ class TaskJobManager(object):
         # Determine task host settings now, just before job submission,
         # because dynamic host selection may be used.
         try:
-            task_host = self.task_remote_mgr.remote_host_select(
-                rtconfig['remote']['host'])
+            host_, = glbl_cfg().get_platform_item_for_job(rtconfig, 'remote hosts')
+            task_host = self.task_remote_mgr.remote_host_select(host_)
         except TaskRemoteMgmtError as exc:
             # Submit number not yet incremented
             itask.submit_num += 1
@@ -841,15 +842,19 @@ class TaskJobManager(object):
 
     def _prep_submit_task_job_impl(self, suite, itask, rtconfig):
         """Helper for self._prep_submit_task_job."""
-        itask.task_owner = rtconfig['remote']['owner']
+        itask.task_owner = glbl_cfg().get_platform_item_for_job(
+            rtconfig, 'owner'
+        )
         if itask.task_owner:
             owner_at_host = itask.task_owner + "@" + itask.task_host
         else:
             owner_at_host = itask.task_host
         itask.summary['host'] = owner_at_host
         itask.summary['job_hosts'][itask.submit_num] = owner_at_host
-
-        itask.summary['batch_sys_name'] = rtconfig['job']['batch system']
+        batch_sys_name = glbl_cfg().get_platform_item_for_job(
+            rtconfig, 'batch system'
+        )
+        itask.summary['batch_sys_name'] = batch_sys_name
         for name in rtconfig['extra log files']:
             itask.summary['logfiles'].append(
                 os.path.expanduser(os.path.expandvars(name)))
@@ -873,9 +878,13 @@ class TaskJobManager(object):
         job_file_path = get_remote_suite_run_job_dir(
             itask.task_host, itask.task_owner, suite, job_d, JOB_LOG_JOB)
         return {
-            'batch_system_name': rtconfig['job']['batch system'],
+            'batch_system_name': batch_sys_name,
             'batch_submit_command_template': (
-                rtconfig['job']['batch submit command template']),
+                glbl_cfg().get_platform_item_for_job(
+                    rtconfig,
+                    'batch submit command template'
+                )
+            ),
             'batch_system_conf': batch_sys_conf,
             'dependencies': itask.state.get_resolved_dependencies(),
             'directives': rtconfig['directives'],
@@ -894,7 +903,12 @@ class TaskJobManager(object):
             'param_var': itask.tdef.param_var,
             'post-script': scripts[2],
             'pre-script': scripts[0],
-            'remote_suite_d': rtconfig['remote']['suite definition directory'],
+            'remote_suite_d': (
+                glbl_cfg().get_platform_item_for_job(
+                    rtconfig,
+                    'suite definition directory'
+                )
+            ),
             'script': scripts[1],
             'submit_num': itask.submit_num,
             'suite_name': suite,
