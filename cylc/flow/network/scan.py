@@ -235,7 +235,7 @@ def get_scan_items_from_fs(
     """
     if owner_pattern is None:
         # Run directory of current user only
-        run_dirs = [(glbl_cfg().get_host_item('run directory'), None)]
+        run_dirs = [(glbl_cfg().get_platform_item('run directory'), None)]
     else:
         # Run directory of all users matching "owner_pattern".
         # But skip those with /nologin or /false shells
@@ -246,7 +246,7 @@ def get_scan_items_from_fs(
                 continue
             if owner_pattern.match(pwent.pw_name):
                 run_dirs.append((
-                    glbl_cfg().get_host_item(
+                    glbl_cfg().get_platform_item(
                         'run directory',
                         owner=pwent.pw_name,
                         owner_home=pwent.pw_dir),

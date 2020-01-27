@@ -70,7 +70,7 @@ def get_option_parser():
 @cli_function(get_option_parser, remove_opts=['--host', '--user'])
 def main(parser, options):
     if options.run_dir:
-        print(glbl_cfg().get_host_item('run directory'))
+        print(glbl_cfg().get_platform_item('run directory'))
     elif options.site_dir:
         print(glbl_cfg().SITE_CONF_DIR)
     elif options.user_dir:

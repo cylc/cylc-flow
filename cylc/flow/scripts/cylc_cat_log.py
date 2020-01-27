@@ -374,7 +374,7 @@ def main(parser, options, *args, color=False):
             except IndexError:
                 raise UserInputError(
                     "max rotation %d" % (len(logs) - 1))
-        tail_tmpl = str(glbl_cfg().get_host_item("tail command template"))
+        tail_tmpl = str(glbl_cfg().get_platform_item("tail command template"))
         out = view_log(logpath, mode, tail_tmpl, color=color)
         if out == 1:
             sys.exit(1)
@@ -425,7 +425,9 @@ def main(parser, options, *args, color=False):
                 elif mode == 'tail':
                     conf_key = "err tailer"
             if conf_key is not None:
-                conf = glbl_cfg().get_host_item("batch systems", host, user)
+                conf = glbl_cfg().get_platform_item(
+                    "batch systems", host, user
+                )
                 batchview_cmd_tmpl = None
                 try:
                     batchview_cmd_tmpl = conf[batch_sys_name][conf_key]
@@ -437,13 +439,15 @@ def main(parser, options, *args, color=False):
 
         log_is_remote = (is_remote(host, user)
                          and (options.filename not in JOB_LOGS_LOCAL))
-        log_is_retrieved = (glbl_cfg().get_host_item('retrieve job logs', host)
-                            and live_job_id is None)
+        log_is_retrieved = (
+            glbl_cfg().get_platform_item('retrieve job logs', host) and
+            live_job_id is None
+        )
         if log_is_remote and (not log_is_retrieved or options.force_remote):
             logpath = os.path.normpath(get_remote_suite_run_job_dir(
                 host, user,
                 suite_name, point, task, options.submit_num, options.filename))
-            tail_tmpl = str(glbl_cfg().get_host_item(
+            tail_tmpl = str(glbl_cfg().get_platform_item(
                 "tail command template", host, user))
             # Reinvoke the cat-log command on the remote account.
             cmd = ['cat-log']
@@ -477,7 +481,9 @@ def main(parser, options, *args, color=False):
             # Local task job or local job log.
             logpath = os.path.normpath(get_suite_run_job_dir(
                 suite_name, point, task, options.submit_num, options.filename))
-            tail_tmpl = str(glbl_cfg().get_host_item("tail command template"))
+            tail_tmpl = str(
+                glbl_cfg().get_platform_item("tail command template")
+            )
             out = view_log(logpath, mode, tail_tmpl, batchview_cmd,
                            color=color)
             if mode != 'edit':

@@ -582,12 +582,12 @@ see `COPYING' in the Cylc source distribution.
         auths = set()
         for itask in self.pool.get_rh_tasks():
             if itask.state(*TASK_STATUSES_ACTIVE):
-                auths.add((itask.task_host, itask.task_owner))
+                auths.add(task.platform)
         while auths:
-            for host, owner in auths.copy():
+            for platform in auths.copy():
                 if self.task_job_mgr.task_remote_mgr.remote_init(
-                        host, owner) is not None:
-                    auths.remove((host, owner))
+                        platform) is not None:
+                    auths.remove(platform)
             if auths:
                 sleep(1.0)
                 # Remote init is done via process pool
@@ -1021,7 +1021,7 @@ see `COPYING' in the Cylc source distribution.
             fields.PUBLISH_PORT:
                 str(self.publisher.port),
             fields.SSH_USE_LOGIN_SHELL:
-                str(glbl_cfg().get_host_item('use login shell')),
+                str(glbl_cfg().get_platform_item('use login shell')),
             fields.SUITE_RUN_DIR_ON_SUITE_HOST:
                 self.suite_run_dir,
             fields.UUID:
