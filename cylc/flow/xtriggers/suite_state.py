@@ -71,7 +71,7 @@ def suite_state(suite, task, point, offset=None, status='succeeded',
     """
     cylc_run_dir = os.path.expandvars(
         os.path.expanduser(
-            cylc_run_dir or glbl_cfg().get_host_item('run directory')))
+            cylc_run_dir or glbl_cfg().get_platform_item('run directory')))
     if offset is not None:
         point = str(add_offset(point, offset))
     try:
