@@ -705,6 +705,9 @@ def compute_tree(flow):
     # add leaves
     for task in flow['taskProxies']:
         parents = task['parents']
+        if not parents:
+            # handle inherit none by defaulting to root
+            parents = [{'name': 'root'}]
         task_node = add_node(
             'task', task['id'], nodes, data=task)
         if parents[0]['name'] == 'root':
