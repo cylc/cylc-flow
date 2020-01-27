@@ -126,7 +126,7 @@ def run_cmd(command, stdin=None, capture_process=False, capture_status=False,
             return True
 
 
-def construct_ssh_cmd(raw_cmd, user=None, host=None, forward_x11=False,
+def construct_ssh_cmd(raw_cmd, platform=None, forward_x11=False,
                       stdin=False, ssh_login_shell=None, ssh_cylc=None,
                       set_UTC=False, allow_flag_opts=False):
     """Append a bare command with further options required to run via ssh.
@@ -152,8 +152,19 @@ def construct_ssh_cmd(raw_cmd, user=None, host=None, forward_x11=False,
     Return:
         A list containing a chosen command including all arguments and options
         necessary to directly execute the bare command on a given host via ssh.
+
+    TODO:
+        Consider given the use of "owner" elsewhere in the codebase, whether
+        "user" should be changed to "owner" for consistency.
     """
-    command = shlex.split(glbl_cfg().get_host_item('ssh command', host, user))
+    # Get hosts from platform
+    # TODO consider get a random member of 'remote hosts'
+    host = glbl_cfg().get_platform_item(platform, 'remote hosts')[0]
+    user = glbl_cfg().get_platform_item(platform, 'owner')
+
+    command = shlex.split(
+        glbl_cfg().get_platform_item('ssh command', platform)
+    )
 
     if forward_x11:
         command.append('-Y')
@@ -182,8 +193,8 @@ def construct_ssh_cmd(raw_cmd, user=None, host=None, forward_x11=False,
 
     # Use bash -l?
     if ssh_login_shell is None:
-        ssh_login_shell = glbl_cfg().get_host_item(
-            'use login shell', host, user)
+        ssh_login_shell = glbl_cfg().get_platform_item(
+            'use login shell', platform)
     if ssh_login_shell:
         # A login shell will always source /etc/profile and the user's bash
         # profile file. To avoid having to quote the entire remote command
@@ -194,7 +205,7 @@ def construct_ssh_cmd(raw_cmd, user=None, host=None, forward_x11=False,
     if ssh_cylc:
         command.append(ssh_cylc)
     else:
-        ssh_cylc = glbl_cfg().get_host_item('cylc executable', host, user)
+        ssh_cylc = glbl_cfg().get_platform_item('cylc executable', platform)
         if ssh_cylc.endswith('cylc'):
             command.append(ssh_cylc)
         else:
