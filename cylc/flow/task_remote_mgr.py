@@ -161,7 +161,7 @@ class TaskRemoteMgr(object):
             return status
 
         # Determine what items to install
-        comm_meth = glbl_cfg().get_host_item(
+        comm_meth = glbl_cfg().get_platform_item(
             'task communication method', host, owner)
         owner_at_host = 'localhost'
         if host:

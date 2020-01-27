@@ -214,7 +214,7 @@ class TaskEventsManager():
             return itask.tdef.rtconfig[skey][key]
         else:
             try:
-                return glbl_cfg().get_host_item(
+                return glbl_cfg().get_platform_item(
                     key, itask.task_host, itask.task_owner)
             except (KeyError, ItemNotFoundError):
                 pass
@@ -609,8 +609,8 @@ class TaskEventsManager():
             s_user, s_host = ctx.user_at_host.split("@", 1)
         else:
             s_user, s_host = (None, ctx.user_at_host)
-        ssh_str = str(glbl_cfg().get_host_item("ssh command", s_host, s_user))
-        rsync_str = str(glbl_cfg().get_host_item(
+        ssh_str = str(glbl_cfg().get_platform_item("ssh command", s_host, s_user))
+        rsync_str = str(glbl_cfg().get_platform_item(
             "retrieve job logs command", s_host, s_user))
 
         cmd = shlex.split(rsync_str) + ["--rsh=" + ssh_str]
