@@ -445,7 +445,7 @@ class GlobalConfig(ParsecConfig):
                        f"no default value.")
                 raise PlatformLookupError(msg)
         # Deal with cases where the setting is a directory.
-        if 'directory' in item and value:
+        if 'directory' in item and value is not None:
             if replace_home:
                 # Replace local home dir with $HOME for eval'n on other host.
                 value = value.replace(self._HOME, '$HOME')
@@ -456,6 +456,8 @@ class GlobalConfig(ParsecConfig):
                     owner_home = os.path.expanduser('~%s' % owner)
                 value = value.replace(self._HOME, owner_home)
                 value = value.replace('$HOME', owner_home)
+            else:
+                value = value.replace('$HOME', self._HOME)
         return value
 
     def get_host_item(self, item, host=None, owner=None, replace_home=False,
