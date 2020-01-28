@@ -1111,12 +1111,16 @@ class Broadcast(Mutation):
             BroadcastSetting,
             description='Target settings.'
         )
-        files = List(
-            String,
-            description=sstrip('''
-                File with config to broadcast. Can be used multiple times
-            ''')
-        )
+        # TODO: work out how to implement this feature, it needs to be
+        #       handled client-side which makes it slightly awkward in
+        #       api-on-the-fly land
+
+        # files = List(
+        #    String,
+        #    description=sstrip('''
+        #        File with config to broadcast. Can be used multiple times
+        #    ''')
+        # )
 
     result = GenericScalar()
 
