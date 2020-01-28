@@ -206,11 +206,19 @@ class TaskJobManager(object):
         # Group task jobs by (host, owner)
         auth_itasks = {}  # {(host, owner): [itask, ...], ...}
         for itask in prepared_tasks:
-            auth_itasks.setdefault((itask.task_host, itask.task_owner), [])
-            auth_itasks[(itask.task_host, itask.task_owner)].append(itask)
+            # TODO decide whether we can get rid of refs to host and owner
+            # and use platforms insteat
+            auth_itasks.setdefault(itask.task_platform, [])
+            auth_itasks[itask.task_platform].append(itask)
         # Submit task jobs for each (host, owner) group
         done_tasks = bad_tasks
-        for (host, owner), itasks in sorted(auth_itasks.items()):
+        for platform, itasks in sorted(auth_itasks.items()):
+            host = glbl_cfg().get_platform_item(
+                'remote hosts', itask.task_platform
+            )[0]
+            owner = glbl_cfg().get_platform_item(
+                'owner', itask.task_platform
+            )
             is_init = self.task_remote_mgr.remote_init(host, owner)
             if is_init is None:
                 # Remote is waiting to be initialised
