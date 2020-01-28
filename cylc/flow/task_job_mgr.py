@@ -214,7 +214,7 @@ class TaskJobManager(object):
         done_tasks = bad_tasks
         for platform, itasks in sorted(auth_itasks.items()):
             host = glbl_cfg().get_platform_item(
-                'remote hosts', itask.task_platform
+                'remote hosts', platform
             )[0]
             owner = glbl_cfg().get_platform_item(
                 'owner', itask.task_platform

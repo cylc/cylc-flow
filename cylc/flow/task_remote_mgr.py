@@ -82,6 +82,7 @@ class TaskRemoteMgr(object):
         Raise TaskRemoteMgmtError on error.
 
         """
+        # TODO: Refactor this use platform rather than host terminology
         if not host_str:
             return 'localhost'
 
