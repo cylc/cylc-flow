@@ -66,7 +66,7 @@ class TestWorkflowPublisher(CylcWorkflowTestCase):
 
     def setUp(self) -> None:
         super(TestWorkflowPublisher, self).setUp()
-        self.scheduler.ws_data_mgr = DataStoreMgr(self.scheduler)
+        self.scheduler.data_store_mgr = DataStoreMgr(self.scheduler)
         for name in self.scheduler.config.taskdefs:
             task_proxy = create_task_proxy(
                 task_name=name,
@@ -80,11 +80,11 @@ class TestWorkflowPublisher(CylcWorkflowTestCase):
             )
             assert 0 == warnings
         self.task_pool.release_runahead_tasks()
-        self.scheduler.ws_data_mgr.initiate_data_model()
-        self.workflow_id = self.scheduler.ws_data_mgr.workflow_id
+        self.scheduler.data_store_mgr.initiate_data_model()
+        self.workflow_id = self.scheduler.data_store_mgr.workflow_id
         self.publisher = WorkflowPublisher(
             self.suite_name, threaded=False, daemon=True)
-        self.pub_data = self.scheduler.ws_data_mgr.get_publish_deltas()
+        self.pub_data = self.scheduler.data_store_mgr.get_publish_deltas()
 
     def tearDown(self):
         self.publisher.stop()

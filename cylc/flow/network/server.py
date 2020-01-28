@@ -121,7 +121,7 @@ class SuiteRuntimeServer(ZMQSocketBase):
         self.endpoints = None
         self.queue = None
         self.resolvers = Resolvers(
-            self.schd.ws_data_mgr.data,
+            self.schd.data_store_mgr.data,
             schd=self.schd)
 
     def _socket_options(self):
@@ -1223,7 +1223,7 @@ class SuiteRuntimeServer(ZMQSocketBase):
                 Serialised Protobuf message
 
         """
-        pb_msg = self.schd.ws_data_mgr.get_entire_workflow()
+        pb_msg = self.schd.data_store_mgr.get_entire_workflow()
         return pb_msg.SerializeToString()
 
     @authorise(Priv.READ)
@@ -1240,5 +1240,5 @@ class SuiteRuntimeServer(ZMQSocketBase):
                 Serialised Protobuf message
 
         """
-        pb_msg = self.schd.ws_data_mgr.get_data_elements(element_type)
+        pb_msg = self.schd.data_store_mgr.get_data_elements(element_type)
         return pb_msg.SerializeToString()

@@ -65,7 +65,7 @@ class TestSuiteRuntimeServer(CylcWorkflowTestCase):
 
     def setUp(self) -> None:
         super(TestSuiteRuntimeServer, self).setUp()
-        self.scheduler.ws_data_mgr = DataStoreMgr(self.scheduler)
+        self.scheduler.data_store_mgr = DataStoreMgr(self.scheduler)
         for name in self.scheduler.config.taskdefs:
             task_proxy = create_task_proxy(
                 task_name=name,
@@ -79,8 +79,8 @@ class TestSuiteRuntimeServer(CylcWorkflowTestCase):
             )
             assert 0 == warnings
         self.task_pool.release_runahead_tasks()
-        self.scheduler.ws_data_mgr.initiate_data_model()
-        self.workflow_id = self.scheduler.ws_data_mgr.workflow_id
+        self.scheduler.data_store_mgr.initiate_data_model()
+        self.workflow_id = self.scheduler.data_store_mgr.workflow_id
         create_auth_files(self.suite_name)  # auth keys are required for comms
         barrier = Barrier(2, timeout=10)
         self.server = SuiteRuntimeServer(
