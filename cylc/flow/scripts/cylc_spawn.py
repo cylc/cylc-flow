@@ -58,7 +58,7 @@ def main(parser, options, suite, *task_globs):
 
     pclient(
         'spawn_tasks',
-        {'task_globs': task_globs}
+        {'tasks': task_globs}
     )
 
 

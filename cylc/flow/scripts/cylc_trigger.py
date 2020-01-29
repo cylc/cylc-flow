@@ -119,7 +119,7 @@ def main(parser, options, suite, *task_globs):
         # Tell the suite server program to generate the job file.
         pclient(
             'dry_run_tasks',
-            {'task_globs': [task_id], 'check_syntax': False}
+            {'tasks': [task_id], 'check_syntax': False}
         )
 
         # Wait for the new job file to be written. Use mtime because the same
@@ -198,7 +198,7 @@ def main(parser, options, suite, *task_globs):
     # Trigger the task proxy(s).
     pclient(
         'trigger_tasks',
-        {'task_globs': task_globs, 'back_out': aborted}
+        {'tasks': task_globs, 'back_out': aborted}
     )
 
 

@@ -53,6 +53,33 @@ TASK_STATUS_FAILED = "failed"
 # Job execution failed, but will try again soon:
 TASK_STATUS_RETRYING = "retrying"
 
+TASK_STATUS_DESC = {
+    TASK_STATUS_RUNAHEAD:
+        'Waiting for dependencies to be satisfied.',
+    TASK_STATUS_WAITING:
+        'Waiting for dependencies to be satisfied.',
+    TASK_STATUS_QUEUED:
+        'Depencies are satisfied, placed in internal queue.',
+    TASK_STATUS_EXPIRED:
+        'Execution skipped.',
+    TASK_STATUS_READY:
+        'Cylc is preparing a job for submission.',
+    TASK_STATUS_SUBMIT_FAILED:
+        'Job submission has failed.',
+    TASK_STATUS_SUBMIT_RETRYING:
+        'Atempting to re-submit job after previous failed attempt.',
+    TASK_STATUS_SUBMITTED:
+        'Job has been submitted.',
+    TASK_STATUS_RETRYING:
+        'Attempting to re-run job after previous failed attempt.',
+    TASK_STATUS_RUNNING:
+        'Job is running.',
+    TASK_STATUS_FAILED:
+        'Job has returned non-zero exit code.',
+    TASK_STATUS_SUCCEEDED:
+        'Job has returned zero exit code.'
+}
+
 # Tasks statuses ordered according to task runtime progression.
 TASK_STATUSES_ORDERED = [
     TASK_STATUS_RUNAHEAD,

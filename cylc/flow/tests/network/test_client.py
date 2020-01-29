@@ -74,7 +74,7 @@ class TestSuiteRuntimeClient(CylcWorkflowTestCase):
             warnings = self.task_pool.insert_tasks(
                 items=[task_proxy.identity],
                 stopcp=None,
-                no_check=False
+                check_point=True
             )
             assert warnings == 0
         self.task_pool.release_runahead_tasks()

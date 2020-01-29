@@ -16,8 +16,9 @@
 
 """GraphQL resolvers for use in data accessing and mutation of workflows."""
 
-from operator import attrgetter
 from fnmatch import fnmatchcase
+from getpass import getuser
+from operator import attrgetter
 from graphene.utils.str_converters import to_snake_case
 
 from cylc.flow.data_store_mgr import (
@@ -342,38 +343,7 @@ class Resolvers(BaseResolvers):
             result = (True, 'Command queued')
         return [{'id': w_id, 'response': result}]
 
-    async def _mutation_mapper(self, command, args):
+    async def _mutation_mapper(self, command, kwargs):
         """Map between GraphQL resolvers and internal command interface."""
-        if command in ['clear_broadcast',
-                       'expire_broadcast',
-                       'put_broadcast']:
-            return getattr(self.schd.task_events_mgr.broadcast_mgr,
-                           command, None)(**args)
-        if command == 'put_ext_trigger':
-            return self.schd.ext_trigger_queue.put((
-                args.get('event_message'),
-                args.get('event_id')))
-        if command == 'put_messages':
-            messages = args.get('messages', [])
-            for severity, message in messages:
-                self.schd.message_queue.put((
-                    args.get('task_job', None),
-                    args.get('event_time', None),
-                    severity, message))
-            return (True, 'Messages queued: %d' % len(messages))
-        if command in ['set_stop_after_clock_time',
-                       'set_stop_after_point',
-                       'set_stop_after_task']:
-            mutate_args = [command, (), {}]
-            for val in args.values():
-                mutate_args[1] = (val,)
-            return self.schd.command_queue.put(tuple(mutate_args))
-        mutate_args = [command, (), {}]
-        for key, val in args.items():
-            if isinstance(val, list):
-                mutate_args[1] = (val,)
-            elif isinstance(val, dict):
-                mutate_args[2] = val
-            else:
-                mutate_args[2][key] = val
-        return self.schd.command_queue.put(tuple(mutate_args))
+        method = getattr(self.schd.server, command)
+        return method(user=getuser(), **kwargs)

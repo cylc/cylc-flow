@@ -74,15 +74,27 @@ class StopMode(Enum):
     def describe(self):
         """Return a user-friendly description of this state."""
         if self == self.AUTO:
-            return 'suite has completed'
+            return 'Wait until suite has completed.'
         if self == self.AUTO_ON_TASK_FAILURE:
-            return 'a task has finished'
+            return 'Wait until the first task fails.'
         if self == self.REQUEST_CLEAN:
-            return 'waiting for active jobs to complete'
+            return (
+                'Regular shutdown:\n'
+                '* Wait for all active jobs to complete.\n'
+                '* Run suite event handlers and wait for them to complete.'
+            )
         if self == self.REQUEST_NOW:
-            return 'waiting for event handlers to complete'
+            return (
+                'Immediate shutdown\n'
+                "* Don't kill submitted or running jobs.\n"
+                '* Run suite event handlers and wait for them to complete.'
+            )
         if self == self.REQUEST_NOW_NOW:
-            return 'immediate shutdown'
+            return (
+                'Immediate shutdown\n'
+                "* Don't kill submitted or running jobs.\n"
+                "* Don't run event handlers."
+            )
         return ''
 
 

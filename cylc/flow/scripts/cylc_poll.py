@@ -60,7 +60,7 @@ def main(parser, options, suite, *task_globs):
         options.comms_timeout)
     pclient(
         'poll_tasks',
-        {'task_globs': task_globs, 'poll_succ': options.poll_succ}
+        {'tasks': task_globs, 'poll_succeeded': options.poll_succ}
     )
 
 

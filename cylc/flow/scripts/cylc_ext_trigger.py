@@ -86,7 +86,7 @@ def main(parser, options, suite, event_msg, event_id):
         try:
             pclient(
                 'put_ext_trigger',
-                {'event_message': event_msg, 'event_id': event_id},
+                {'message': event_msg, 'id': event_id},
                 timeout=options.comms_timeout
             )
         except ClientError as exc:

@@ -74,8 +74,8 @@ def main(parser, options, suite, *items):
 
     pclient(
         'insert_tasks',
-        {'items': items, 'no_check': options.no_check,
-         'stop_point_string': options.stop_point_string},
+        {'tasks': items, 'check_point': not options.no_check,
+         'stop_point': options.stop_point_string},
         timeout=options.comms_timeout
     )
 
