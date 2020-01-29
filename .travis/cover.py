@@ -29,7 +29,7 @@ def main():
             '..',
             'etc',
             'bin',
-            'run-functional-tests.sh',
+            'run-functional-tests',
         ),
     ]
     flakytests = os.getenv('FLAKYTESTS')

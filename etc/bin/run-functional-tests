@@ -20,7 +20,7 @@ set -u
 
 usage() {
   cat <<eof
-Usage: run-functional-tests.sh [...]
+Usage: run-functional-tests [...]
 
 Run the Cylc test battery, in <CYLC_REPO_DIR>/tests.
 
@@ -67,21 +67,21 @@ Options:
 Examples:
 
 Run the full test suite with the default options.
-  run-functional-tests.sh
+  run-functional-tests
 Run the full test suite with 12 processes
-  run-functional-tests.sh -j 12
+  run-functional-tests -j 12
 Run only tests under "tests/cyclers/"
-  run-functional-tests.sh tests/cyclers
+  run-functional-tests tests/cyclers
 Run only "tests/cyclers/16-weekly.t" in verbose mode
-  run-functional-tests.sh -v tests/cyclers/16-weekly.t
+  run-functional-tests -v tests/cyclers/16-weekly.t
 Run only tests under "tests/cyclers/", and skip 00-daily.t
   export CYLC_TEST_SKIP=tests/cyclers/00-daily.t
-  run-functional-tests.sh tests/cyclers
+  run-functional-tests tests/cyclers
 Run the first quarter of the test battery
-  CHUNK=1/4 run-functional-tests.sh
+  CHUNK=1/4 run-functional-tests
 Re-run failed tests
-  run-functional-tests.sh --state=save
-  run-functional-tests.sh --state=failed
+  run-functional-tests --state=save
+  run-functional-tests --state=failed
 eof
 }
 for ARG in "$@"; do

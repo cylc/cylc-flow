@@ -1,2 +1,2 @@
 Cylc functional test battery. See:
-   etc/bin/run-functional-tests.sh --help
+   etc/bin/run-functional-tests --help
