@@ -326,7 +326,8 @@ class SuiteRuntimeServer(ZMQSocketBase):
         if mode == 'clear_broadcast':
             return self.schd.task_events_mgr.broadcast_mgr.clear_broadcast(
                 cycle_points, tasks, settings)
-        raise ValueError('TEMP: TODO: FixMe!')
+        # TODO implement other broadcast interfaces (i.e. expire, display)
+        raise ValueError('Unsupported broadcast mode')
 
     @authorise(Priv.READ)
     @expose
@@ -412,7 +413,7 @@ class SuiteRuntimeServer(ZMQSocketBase):
         """Prepare job file for a task.
 
         Args:
-            task_globs (list): List of identifiers, see `task globs`_
+            task (list): List of identifiers, see `task globs`_
             check_syntax (bool, optional): Check shell syntax.
 
         Returns:
@@ -755,9 +756,9 @@ class SuiteRuntimeServer(ZMQSocketBase):
                 any glob characters (``*``).
             stop_point (str, optional):
                 Optional hold/stop cycle point for inserted task.
-            no_check (bool, optional):
-                Add task even if the provided cycle point is not valid
-                for the given task.
+            check_point (bool, optional):
+                If True check that the cycle point is valid for the
+                given task and fail if it is not.
         Returns:
             tuple: (outcome, message)
 
@@ -863,7 +864,7 @@ class SuiteRuntimeServer(ZMQSocketBase):
         Args:
             tasks (list, optional):
                 List of identifiers, see `task globs`_
-            poll_succ (bool, optional):
+            poll_succeeded (bool, optional):
                 Allow polling of remote tasks if True.
 
         Returns:

@@ -78,11 +78,23 @@ class StopMode(Enum):
         if self == self.AUTO_ON_TASK_FAILURE:
             return 'Wait until the first task fails.'
         if self == self.REQUEST_CLEAN:
-            return 'Wait for active jobs to complete.'
+            return (
+                'Regular shutdown:\n'
+                '* Wait for all active jobs to complete.\n'
+                '* Run suite event handlers and wait for them to complete.'
+            )
         if self == self.REQUEST_NOW:
-            return 'Immediate shutdown, wait for event handlers to complete.'
+            return (
+                'Immediate shutdown\n'
+                "* Don't kill submitted or running jobs.\n"
+                '* Run suite event handlers and wait for them to complete.'
+            )
         if self == self.REQUEST_NOW_NOW:
-            return 'Immediate shutdown.'
+            return (
+                'Immediate shutdown\n'
+                "* Don't kill submitted or running jobs.\n"
+                "* Don't run event handlers."
+            )
         return ''
 
 

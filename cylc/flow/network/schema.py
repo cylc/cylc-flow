@@ -1286,15 +1286,9 @@ class Stop(Mutation):
         description = sstrip(f'''
             Tell a suite server program to shut down.
 
-            In order to prevent failures going unnoticed, suites only shut down
-            automatically at a final cycle point if no failed tasks are
-            present. There are several shutdown methods:
-
-            Tasks that become ready after the shutdown is ordered will be
-            submitted immediately if the suite is restarted.  Remaining task
-            event handlers and job poll and kill commands, however, will be
-            executed prior to shutdown, unless the stop mode is
-            `{StopMode.REQUEST_NOW}`.
+            By default suites wait for all submitted and running tasks to
+            complete before shutting down. You can change this behaviour
+            with the "mode" option.
         ''')
         resolver = partial(mutator, command='stop_workflow')
 
@@ -1459,7 +1453,7 @@ class Remove(Mutation, TaskMutation):
             Remove one or more task instances from a running workflow.
 
             Tasks will be forced to spawn successors before removal if they
-            have not done so already, unless you use `no_spawn`.
+            have not done so already, unless you change the `spawn` option.
         ''')
         resolver = partial(mutator, command='remove_tasks')
 
@@ -1477,7 +1471,7 @@ class Reset(Mutation, TaskMutation):
 
             Outputs are automatically updated to reflect the new task state,
             except for custom message outputs which can be manipulated directly
-            with `output`.
+            with `outputs`.
 
             Prerequisites reflect the state of other tasks; they are not
             changed except to unset them on resetting state to
