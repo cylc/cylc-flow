@@ -15,11 +15,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
+from textwrap import dedent
+
+from cylc.flow.context_node import ContextNode
 from cylc.flow.parsec.exceptions import (
     ParsecError, ItemNotFoundError, NotSingleItemError)
 from cylc.flow.parsec.fileparse import parse
 from cylc.flow.parsec.util import printcfg
-from cylc.flow.parsec.validate import parsec_validate
+from cylc.flow.parsec.validate import parsec_validate, ParsecValidator as VDR
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.util import itemstr, m_override, replicate, un_many
 
@@ -69,19 +72,30 @@ class ParsecConfig(object):
             stack = [[dense, self.spec]]
             while stack:
                 defs, spec = stack.pop()
-                for key, val in spec.items():
-                    if isinstance(val, dict):
-                        if key not in defs:
-                            defs[key] = OrderedDictWithDefaults()
-                        stack.append((defs[key], spec[key]))
+                # for key, val in spec.items():
+                for node in spec:
+                    # if isinstance(val, dict):
+                    if not node.is_leaf():
+                        # if key not in defs:
+                        if node.name not in defs:
+                            defs[node.name] = OrderedDictWithDefaults()
+                        # stack.append((defs[key], spec[key]))
+                        stack.append((defs[node.name], node))
                     else:
-                        try:
-                            defs[key] = spec[key][1]
-                        except IndexError:
-                            if spec[key][0].endswith('_LIST'):
-                                defs[key] = []
+                        # try:
+                        #     defs[key] = spec[key][1]
+                        # except IndexError:
+                        #     if spec[key][0].endswith('_LIST'):
+                        #         defs[key] = []
+                        #     else:
+                        #         defs[key] = None
+                        if node.default is None:
+                            if node.vdr and node.vdr.endswith('_LIST'):
+                                defs[node.name] = []
                             else:
-                                defs[key] = None
+                                defs[node.name] = None
+                        else:
+                            defs[node.name] = node.default
             # override defaults with sparse values
             m_override(dense, self.sparse)
             un_many(dense)
@@ -159,3 +173,33 @@ class ParsecConfig(object):
             print(cfg)
         else:
             printcfg(cfg, prefix=prefix, level=len(keys), none_str=none_str)
+
+
+class ConfigNode(ContextNode):
+
+    ROOT_NAME_FMT = ''
+    NODE_NAME_FMT = '[{name}]'
+    LEAF_NAME_FMT = '{name}'
+    SEP = ''
+
+    __slots__ = ContextNode.__slots__ + (
+        'vdr', 'options', 'default', 'desc', 'help'
+    )
+
+    def __init__(self, name, vdr=VDR.V_STRING, default=None, options=None, desc=None, help=None):
+        ContextNode.__init__(self, name)
+        if not isinstance(vdr, str):
+            breakpoint()
+        self.vdr = vdr
+        self.default = default
+        self.options = options
+        self.desc = dedent(desc).strip() if desc else None
+        self.help = help
+
+
+    # def __exit__(self, *args):
+    #     ContextNode.__exit__(self, *args)
+    #     if not self.is_leaf():
+    #         for attr in ('vdr', 'options', 'default'):
+    #             if getattr(self, attr):
+    #                 raise Exception(f'Attribute {attr} set on configuration node')

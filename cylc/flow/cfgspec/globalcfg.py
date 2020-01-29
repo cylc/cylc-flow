@@ -22,7 +22,7 @@ from cylc.flow import LOG
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.hostuserutil import get_user_home, is_remote_user
 from cylc.flow.network.authorisation import Priv
-from cylc.flow.parsec.config import ParsecConfig
+from cylc.flow.parsec.config import ParsecConfig, ConfigNode as Conf
 from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.parsec.upgrade import upgrader
 from cylc.flow.parsec.validate import (
@@ -34,250 +34,231 @@ from cylc.flow.parsec.validate import (
 # - value_type: value type (compulsory).
 # - default: the default value (optional).
 # - allowed_2, ...: the only other allowed values of this setting (optional).
-SPEC = {
+with Conf('/') as SPEC:
     # suite
-    'process pool size': [VDR.V_INTEGER, 4],
-    'process pool timeout': [VDR.V_INTERVAL, DurationFloat(600)],
+    Conf('process pool size', VDR.V_INTEGER, 4)
+    Conf('process pool timeout', VDR.V_INTERVAL, DurationFloat(600))
     # client
-    'disable interactive command prompts': [VDR.V_BOOLEAN, True],
+    Conf('disable interactive command prompts', VDR.V_BOOLEAN, True)
     # suite
-    'run directory rolling archive length': [VDR.V_INTEGER, -1],
+    Conf('run directory rolling archive length', VDR.V_INTEGER, -1)
     # suite
-    'cylc': {
-        'UTC mode': [VDR.V_BOOLEAN],
-        'task event mail interval': [VDR.V_INTERVAL, DurationFloat(300)],
-        'events': {
-            'handlers': [VDR.V_STRING_LIST],
-            'handler events': [VDR.V_STRING_LIST],
-            'mail events': [VDR.V_STRING_LIST],
-            'mail from': [VDR.V_STRING],
-            'mail smtp': [VDR.V_STRING],
-            'mail to': [VDR.V_STRING],
-            'mail footer': [VDR.V_STRING],
-            'startup handler': [VDR.V_STRING_LIST],
-            'timeout handler': [VDR.V_STRING_LIST],
-            'inactivity handler': [VDR.V_STRING_LIST],
-            'shutdown handler': [VDR.V_STRING_LIST],
-            'aborted handler': [VDR.V_STRING_LIST],
-            'stalled handler': [VDR.V_STRING_LIST],
-            'timeout': [VDR.V_INTERVAL],
-            'inactivity': [VDR.V_INTERVAL],
-            'abort on timeout': [VDR.V_BOOLEAN],
-            'abort on inactivity': [VDR.V_BOOLEAN],
-            'abort on stalled': [VDR.V_BOOLEAN],
-        },
-        'main loop': {
-            'plugins': [VDR.V_STRING_LIST, ['health check']],
-            'health check': {
-                'interval': [VDR.V_INTERVAL, DurationFloat(600)]
-            },
-            '__MANY__': {
-                'interval': [VDR.V_INTERVAL]
-            }
-        }
-    },
+    with Conf('cylc'):
+        Conf('UTC mode', VDR.V_BOOLEAN)
+        Conf('task event mail interval', VDR.V_INTERVAL, DurationFloat(300))
+        with Conf('events'):
+            Conf('handlers', VDR.V_STRING_LIST)
+            Conf('handler events', VDR.V_STRING_LIST)
+            Conf('mail events', VDR.V_STRING_LIST)
+            Conf('mail from', VDR.V_STRING)
+            Conf('mail smtp', VDR.V_STRING)
+            Conf('mail to', VDR.V_STRING)
+            Conf('mail footer', VDR.V_STRING)
+            Conf('startup handler', VDR.V_STRING_LIST)
+            Conf('timeout handler', VDR.V_STRING_LIST)
+            Conf('inactivity handler', VDR.V_STRING_LIST)
+            Conf('shutdown handler', VDR.V_STRING_LIST)
+            Conf('aborted handler', VDR.V_STRING_LIST)
+            Conf('stalled handler', VDR.V_STRING_LIST)
+            Conf('timeout', VDR.V_INTERVAL)
+            Conf('inactivity', VDR.V_INTERVAL)
+            Conf('abort on timeout', VDR.V_BOOLEAN)
+            Conf('abort on inactivity', VDR.V_BOOLEAN)
+            Conf('abort on stalled', VDR.V_BOOLEAN)
+
+        with Conf('main loop'):
+            Conf('plugins', VDR.V_STRING_LIST, ['health check'])
+            with Conf('health check'):
+                Conf('interval', VDR.V_INTERVAL, DurationFloat(600))
+            with Conf('__MANY__'):
+                Conf('interval', VDR.V_INTERVAL)
 
     # suite
-    'suite logging': {
-        'rolling archive length': [VDR.V_INTEGER, 5],
-        'maximum size in bytes': [VDR.V_INTEGER, 1000000],
-    },
+    with Conf('suite logging'):
+        Conf('rolling archive length', VDR.V_INTEGER, 5)
+        Conf('maximum size in bytes', VDR.V_INTEGER, 1000000)
 
     # general
-    'documentation': {
-        'local': [VDR.V_STRING, ''],
-        'online': [VDR.V_STRING,
-                   'http://cylc.github.io/doc/built-sphinx/index.html'],
-        'cylc homepage': [VDR.V_STRING, 'http://cylc.github.io/'],
-    },
+    with Conf('documentation'):
+        Conf('local', VDR.V_STRING, '')
+        Conf('online', VDR.V_STRING,
+             'http://cylc.github.io/doc/built-sphinx/index.html')
+        Conf('cylc homepage', VDR.V_STRING, 'http://cylc.github.io/')
 
     # general
-    'document viewers': {
-        'html': [VDR.V_STRING, 'firefox'],
-    },
+    with Conf('document viewers'):
+        Conf('html', VDR.V_STRING, 'firefox')
 
     # client
-    'editors': {
-        'terminal': [VDR.V_STRING, 'vim'],
-        'gui': [VDR.V_STRING, 'gvim -f'],
-    },
+    with Conf('editors'):
+        Conf('terminal', VDR.V_STRING, 'vim')
+        Conf('gui', VDR.V_STRING, 'gvim -f')
 
     # job platforms
-    'job platforms': {
-        '__MANY__': {
-            'batch system': [VDR.V_STRING, 'background'],
-            'batch submit command template': [VDR.V_STRING],
-            'shell': [VDR.V_STRING, '/bin/bash'],
-            'run directory': [VDR.V_STRING, '$HOME/cylc-run'],
-            'work directory': [VDR.V_STRING, '$HOME/cylc-run'],
-            'suite definition directory': [VDR.V_STRING],
-            'task communication method': [
-                VDR.V_STRING, 'zmq', 'poll'],
+    with Conf('job platforms'):
+        with Conf('__MANY__'):
+            Conf('batch system', VDR.V_STRING, 'background')
+            Conf('batch submit command template', VDR.V_STRING)
+            Conf('shell', VDR.V_STRING, '/bin/bash')
+            Conf('run directory', VDR.V_STRING, '$HOME/cylc-run')
+            Conf('work directory', VDR.V_STRING, '$HOME/cylc-run')
+            Conf('suite definition directory', VDR.V_STRING)
+            Conf('task communication method',
+                 VDR.V_STRING, 'zmq', options=['zmq', 'poll'])
             # TODO ensure that it is possible to over-ride the following three
             # settings in suite config.
-            'submission polling intervals': [VDR.V_INTERVAL_LIST],
-            'submission retry delays': [VDR.V_INTERVAL_LIST, None],
-            'execution polling intervals': [VDR.V_INTERVAL_LIST],
-            'execution time limit polling intervals': [VDR.V_INTERVAL_LIST],
-            'scp command': [
-                VDR.V_STRING, 'scp -oBatchMode=yes -oConnectTimeout=10'],
-            'ssh command': [
-                VDR.V_STRING, 'ssh -oBatchMode=yes -oConnectTimeout=10'],
-            'use login shell': [VDR.V_BOOLEAN, True],
-            'remote hosts': [VDR.V_STRING_LIST],
-            'cylc executable': [VDR.V_STRING, 'cylc'],
-            'global init-script': [VDR.V_STRING],
-            'copyable environment variables': [VDR.V_STRING_LIST, ''],
-            'retrieve job logs': [VDR.V_BOOLEAN],
-            'retrieve job logs command': [VDR.V_STRING, 'rsync -a'],
-            'retrieve job logs max size': [VDR.V_STRING],
-            'retrieve job logs retry delays': [VDR.V_INTERVAL_LIST],
-            'task event handler retry delays': [VDR.V_INTERVAL_LIST],
-            'tail command template': [
-                VDR.V_STRING, 'tail -n +1 -F %(filename)s'],
-            'err tailer': [VDR.V_STRING],
-            'out tailer': [VDR.V_STRING],
-            'err viewer': [VDR.V_STRING],
-            'out viewer': [VDR.V_STRING],
-            'job name length maximum': [VDR.V_INTEGER],
-            'owner': [VDR.V_STRING],
-        },
-    },
+            Conf('submission polling intervals', VDR.V_INTERVAL_LIST)
+            Conf('submission retry delays', VDR.V_INTERVAL_LIST, None)
+            Conf('execution polling intervals', VDR.V_INTERVAL_LIST)
+            Conf('execution time limit polling intervals', VDR.V_INTERVAL_LIST)
+            Conf('scp command',
+                 VDR.V_STRING, 'scp -oBatchMode=yes -oConnectTimeout=10')
+            Conf('ssh command',
+                 VDR.V_STRING, 'ssh -oBatchMode=yes -oConnectTimeout=10')
+            Conf('use login shell', VDR.V_BOOLEAN, True)
+            Conf('remote hosts', VDR.V_STRING_LIST)
+            Conf('cylc executable', VDR.V_STRING, 'cylc')
+            Conf('global init-script', VDR.V_STRING)
+            Conf('copyable environment variables', VDR.V_STRING_LIST, '')
+            Conf('retrieve job logs', VDR.V_BOOLEAN)
+            Conf('retrieve job logs command', VDR.V_STRING, 'rsync -a')
+            Conf('retrieve job logs max size', VDR.V_STRING)
+            Conf('retrieve job logs retry delays', VDR.V_INTERVAL_LIST)
+            Conf('task event handler retry delays', VDR.V_INTERVAL_LIST)
+            Conf('tail command template',
+                 VDR.V_STRING, 'tail -n +1 -F %(filename)s')
+            Conf('err tailer', VDR.V_STRING)
+            Conf('out tailer', VDR.V_STRING)
+            Conf('err viewer', VDR.V_STRING)
+            Conf('out viewer', VDR.V_STRING)
+            Conf('job name length maximum', VDR.V_INTEGER)
+            Conf('owner', VDR.V_STRING)
 
     # Platform Groups
-    'platform groups': {
-        '__MANY__': {
-            'platforms': [VDR.V_STRING_LIST]
-        }
-    },
+    with Conf('platform groups'):
+        with Conf('__MANY__'):
+            Conf('platforms', VDR.V_STRING_LIST)
 
     # task
-    'hosts': {
-        'localhost': {
-            'run directory': [VDR.V_STRING, '$HOME/cylc-run'],
-            'work directory': [VDR.V_STRING, '$HOME/cylc-run'],
-            'task communication method': [
-                VDR.V_STRING, 'default', 'ssh', 'poll'],
-            'submission polling intervals': [VDR.V_INTERVAL_LIST],
-            'execution polling intervals': [VDR.V_INTERVAL_LIST],
-            'scp command': [
-                VDR.V_STRING, 'scp -oBatchMode=yes -oConnectTimeout=10'],
-            'ssh command': [
-                VDR.V_STRING, 'ssh -oBatchMode=yes -oConnectTimeout=10'],
-            'use login shell': [VDR.V_BOOLEAN, True],
-            'cylc executable': [VDR.V_STRING, 'cylc'],
-            'global init-script': [VDR.V_STRING],
-            'copyable environment variables': [VDR.V_STRING_LIST],
-            'retrieve job logs': [VDR.V_BOOLEAN],
-            'retrieve job logs command': [VDR.V_STRING, 'rsync -a'],
-            'retrieve job logs max size': [VDR.V_STRING],
-            'retrieve job logs retry delays': [VDR.V_INTERVAL_LIST],
-            'task event handler retry delays': [VDR.V_INTERVAL_LIST],
-            'tail command template': [
-                VDR.V_STRING, 'tail -n +1 -F %(filename)s'],
-            'batch systems': {
-                '__MANY__': {
-                    'err tailer': [VDR.V_STRING],
-                    'out tailer': [VDR.V_STRING],
-                    'err viewer': [VDR.V_STRING],
-                    'out viewer': [VDR.V_STRING],
-                    'job name length maximum': [VDR.V_INTEGER],
-                    'execution time limit polling intervals': [
-                        VDR.V_INTERVAL_LIST],
-                },
-            },
-        },
-        '__MANY__': {
-            'run directory': [VDR.V_STRING],
-            'work directory': [VDR.V_STRING],
-            'task communication method': [
-                VDR.V_STRING, 'default', 'ssh', 'poll'],
-            'submission polling intervals': [VDR.V_INTERVAL_LIST],
-            'execution polling intervals': [VDR.V_INTERVAL_LIST],
-            'scp command': [VDR.V_STRING],
-            'ssh command': [VDR.V_STRING],
-            'use login shell': [VDR.V_BOOLEAN],
-            'cylc executable': [VDR.V_STRING],
-            'global init-script': [VDR.V_STRING],
-            'copyable environment variables': [VDR.V_STRING_LIST],
-            'retrieve job logs': [VDR.V_BOOLEAN],
-            'retrieve job logs command': [VDR.V_STRING],
-            'retrieve job logs max size': [VDR.V_STRING],
-            'retrieve job logs retry delays': [VDR.V_INTERVAL_LIST],
-            'task event handler retry delays': [VDR.V_INTERVAL_LIST],
-            'tail command template': [VDR.V_STRING],
-            'batch systems': {
-                '__MANY__': {
-                    'err tailer': [VDR.V_STRING],
-                    'out tailer': [VDR.V_STRING],
-                    'out viewer': [VDR.V_STRING],
-                    'err viewer': [VDR.V_STRING],
-                    'job name length maximum': [VDR.V_INTEGER],
-                    'execution time limit polling intervals': [
-                        VDR.V_INTERVAL_LIST],
-                },
-            },
-        },
-    },
+    with Conf('hosts'):
+        with Conf('localhost'):
+            Conf('run directory', VDR.V_STRING, '$HOME/cylc-run')
+            Conf('work directory', VDR.V_STRING, '$HOME/cylc-run')
+            Conf('task communication method',
+                 VDR.V_STRING, 'default', 'ssh', 'poll')
+            Conf('submission polling intervals', VDR.V_INTERVAL_LIST)
+            Conf('execution polling intervals', VDR.V_INTERVAL_LIST)
+            Conf('scp command',
+                 VDR.V_STRING, 'scp -oBatchMode=yes -oConnectTimeout=10')
+            Conf('ssh command',
+                 VDR.V_STRING, 'ssh -oBatchMode=yes -oConnectTimeout=10')
+            Conf('use login shell', VDR.V_BOOLEAN, True)
+            Conf('cylc executable', VDR.V_STRING, 'cylc')
+            Conf('global init-script', VDR.V_STRING)
+            Conf('copyable environment variables', VDR.V_STRING_LIST)
+            Conf('retrieve job logs', VDR.V_BOOLEAN)
+            Conf('retrieve job logs command', VDR.V_STRING, 'rsync -a')
+            Conf('retrieve job logs max size', VDR.V_STRING)
+            Conf('retrieve job logs retry delays', VDR.V_INTERVAL_LIST)
+            Conf('task event handler retry delays', VDR.V_INTERVAL_LIST)
+            Conf('tail command template',
+                 VDR.V_STRING, 'tail -n +1 -F %(filename)s')
+            with Conf('batch systems'):
+                with Conf('__MANY__'):
+                    Conf('err tailer', VDR.V_STRING)
+                    Conf('out tailer', VDR.V_STRING)
+                    Conf('err viewer', VDR.V_STRING)
+                    Conf('out viewer', VDR.V_STRING)
+                    Conf('job name length maximum', VDR.V_INTEGER)
+                    Conf('execution time limit polling intervals',
+                         VDR.V_INTERVAL_LIST)
+
+        with Conf('__MANY__'):
+            Conf('run directory', VDR.V_STRING)
+            Conf('work directory', VDR.V_STRING)
+            Conf('task communication method',
+                 VDR.V_STRING, 'default', 'ssh', 'poll')
+            Conf('submission polling intervals', VDR.V_INTERVAL_LIST)
+            Conf('execution polling intervals', VDR.V_INTERVAL_LIST)
+            Conf('scp command', VDR.V_STRING)
+            Conf('ssh command', VDR.V_STRING)
+            Conf('use login shell', VDR.V_BOOLEAN)
+            Conf('cylc executable', VDR.V_STRING)
+            Conf('global init-script', VDR.V_STRING)
+            Conf('copyable environment variables', VDR.V_STRING_LIST)
+            Conf('retrieve job logs', VDR.V_BOOLEAN)
+            Conf('retrieve job logs command', VDR.V_STRING)
+            Conf('retrieve job logs max size', VDR.V_STRING)
+            Conf('retrieve job logs retry delays', VDR.V_INTERVAL_LIST)
+            Conf('task event handler retry delays', VDR.V_INTERVAL_LIST)
+            Conf('tail command template', VDR.V_STRING)
+            with Conf('batch systems'):
+                with Conf('__MANY__'):
+                    Conf('err tailer', VDR.V_STRING)
+                    Conf('out tailer', VDR.V_STRING)
+                    Conf('out viewer', VDR.V_STRING)
+                    Conf('err viewer', VDR.V_STRING)
+                    Conf('job name length maximum', VDR.V_INTEGER)
+                    Conf('execution time limit polling intervals',
+                         VDR.V_INTERVAL_LIST)
 
     # task
-    'task events': {
-        'execution timeout': [VDR.V_INTERVAL],
-        'handlers': [VDR.V_STRING_LIST],
-        'handler events': [VDR.V_STRING_LIST],
-        'handler retry delays': [VDR.V_INTERVAL_LIST, None],
-        'mail events': [VDR.V_STRING_LIST],
-        'mail from': [VDR.V_STRING],
-        'mail retry delays': [VDR.V_INTERVAL_LIST],
-        'mail smtp': [VDR.V_STRING],
-        'mail to': [VDR.V_STRING],
-        'submission timeout': [VDR.V_INTERVAL],
-    },
+    with Conf('task events'):
+        Conf('execution timeout', VDR.V_INTERVAL)
+        Conf('handlers', VDR.V_STRING_LIST)
+        Conf('handler events', VDR.V_STRING_LIST)
+        Conf('handler retry delays', VDR.V_INTERVAL_LIST, None)
+        Conf('mail events', VDR.V_STRING_LIST)
+        Conf('mail from', VDR.V_STRING)
+        Conf('mail retry delays', VDR.V_INTERVAL_LIST)
+        Conf('mail smtp', VDR.V_STRING)
+        Conf('mail to', VDR.V_STRING)
+        Conf('submission timeout', VDR.V_INTERVAL)
 
     # client
-    'test battery': {
-        'remote host with shared fs': [VDR.V_STRING],
-        'remote host': [VDR.V_STRING],
-        'remote owner': [VDR.V_STRING],
-        'batch systems': {
-            '__MANY__': {
-                'host': [VDR.V_STRING],
-                'out viewer': [VDR.V_STRING],
-                'err viewer': [VDR.V_STRING],
-                'directives': {
-                    '__MANY__': [VDR.V_STRING],
-                },
-            },
-        },
-    },
+    with Conf('test battery'):
+        Conf('remote host with shared fs', VDR.V_STRING)
+        Conf('remote host', VDR.V_STRING)
+        Conf('remote owner', VDR.V_STRING)
+        with Conf('batch systems'):
+            with Conf('__MANY__'):
+                Conf('host', VDR.V_STRING)
+                Conf('out viewer', VDR.V_STRING)
+                Conf('err viewer', VDR.V_STRING)
+                with Conf('directives'):
+                    Conf('__MANY__', VDR.V_STRING)
 
     # suite
-    'suite host self-identification': {
-        'method': [VDR.V_STRING, 'name', 'address', 'hardwired'],
-        'target': [VDR.V_STRING, 'google.com'],
-        'host': [VDR.V_STRING],
-    },
+    with Conf('suite host self-identification'):
+        Conf('method', VDR.V_STRING, 'name',
+             options=['name', 'address', 'hardwired'])
+        Conf('target', VDR.V_STRING, 'google.com')
+        Conf('host', VDR.V_STRING)
 
     # suite
-    'authentication': {
+    with Conf('authentication'):
         # Allow owners to grant public shutdown rights at the most, not full
         # control.
-        'public': (
-            [VDR.V_STRING]
-            + [level.name.lower().replace('_', '-') for level in [
-                Priv.STATE_TOTALS, Priv.IDENTITY, Priv.DESCRIPTION,
-                Priv.STATE_TOTALS, Priv.READ, Priv.SHUTDOWN]])
-    },
+        Conf(
+            'public',
+            VDR.V_STRING,
+            default=Priv.STATE_TOTALS.name.lower().replace('_', '-'),
+            options=[
+                level.name.lower().replace('_', '-')
+                for level in [
+                    Priv.IDENTITY, Priv.DESCRIPTION,
+                    Priv.STATE_TOTALS, Priv.READ, Priv.SHUTDOWN
+                ]
+            ]
+        )
 
     # suite
-    'suite servers': {
-        'run hosts': [VDR.V_SPACELESS_STRING_LIST],
-        'run ports': [VDR.V_INTEGER_LIST, list(range(43001, 43101))],
-        'condemned hosts': [VDR.V_ABSOLUTE_HOST_LIST],
-        'auto restart delay': [VDR.V_INTERVAL],
-        'ranking': [VDR.V_STRING]
-    },
-}
+    with Conf('suite servers'):
+        Conf('run hosts', VDR.V_SPACELESS_STRING_LIST)
+        Conf('run ports', VDR.V_INTEGER_LIST, list(range(43001, 43101)))
+        Conf('condemned hosts', VDR.V_ABSOLUTE_HOST_LIST)
+        Conf('auto restart delay', VDR.V_INTERVAL)
+        Conf('ranking', VDR.V_STRING)
 
 
 def upg(cfg, descr):
