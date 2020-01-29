@@ -19,7 +19,7 @@
 # Wrapper for running `shellcheck` over projects.
 
 set -e
-cd "$(dirname "$0")/../"
+cd "$(dirname "$0")/../../"
 
 # find shell files under the specified directory
 find_files () {

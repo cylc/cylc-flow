@@ -25,13 +25,13 @@ Regression (functional) Tests
    Execution
       .. code-block:: console
 
-         $ bin/run-functional-tests.sh
+         $ bin/run-functional-tests
 
    .. note::
 
       Some test failures can be expected to result from suites timing out,
       even if nothing is wrong, if you run too many tests in parallel. See
-      ``bin/run-functional-tests.sh --help``.
+      ``bin/run-functional-tests --help``.
 
 Code Style Tests
    Tests to ensure the codebase conforms to code style.
