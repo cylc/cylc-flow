@@ -88,7 +88,7 @@ class WorkflowPublisher(ZMQSocketBase):
             [topic, serialize_data(data, serializer)]
         )
 
-    def publish(self, items):
+    async def publish(self, items):
         """Publish topics.
 
         Args:
@@ -96,6 +96,6 @@ class WorkflowPublisher(ZMQSocketBase):
 
         """
         try:
-            self.loop.run_until_complete(gather_coros(self.send_multi, items))
+            await gather_coros(self.send_multi, items)
         except Exception as exc:
             LOG.error('publish: %s', exc)

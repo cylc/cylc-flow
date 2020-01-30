@@ -19,7 +19,8 @@ import os
 import logging
 
 
-LOG = logging.getLogger('cylc')  # Acceptable?
+CYLC_LOG = 'cylc'
+LOG = logging.getLogger(CYLC_LOG)
 LOG.addHandler(logging.NullHandler())  # Start with a null handler
 
 

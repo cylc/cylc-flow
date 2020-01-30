@@ -69,9 +69,14 @@ extra_requires = {
     'all': [],
     'report-timings': ['pandas==0.25.*']
 }
-extra_requires['all'] += extra_requires['empy']
-extra_requires['all'] += tests_require
-extra_requires['all'] += extra_requires['report-timings']
+extra_requires['all'] = (
+    tests_require
+    + list({
+        req
+        for reqs in extra_requires.values()
+        for req in reqs
+    })
+)
 
 
 setup(

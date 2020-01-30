@@ -56,9 +56,13 @@ SPEC = {
             VDR.V_STRING, '', 'live', 'dummy', 'dummy-local', 'simulation'],
         'force run mode': [
             VDR.V_STRING, '', 'live', 'dummy', 'dummy-local', 'simulation'],
-        'health check interval': [VDR.V_INTERVAL],
         'task event mail interval': [VDR.V_INTERVAL],
         'disable automatic shutdown': [VDR.V_BOOLEAN],
+        'main loop': {
+            '__MANY__': {
+                'interval': [VDR.V_INTERVAL],
+            }
+        },
         'simulation': {
             'disable suite event handlers': [VDR.V_BOOLEAN, True],
         },
@@ -300,6 +304,9 @@ def upg(cfg, descr):
     u.obsolete(
         '8.0.0',
         ['cylc', 'reference test', 'suite shutdown event handler'])
+    u.obsolete(
+        '8.0.0',
+        ['cylc', 'health check interval'])
     u.deprecate(
         '8.0.0',
         ['cylc', 'abort if any task fails'],

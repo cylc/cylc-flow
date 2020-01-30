@@ -216,6 +216,16 @@ def get_option_parser(is_restart):
         default="plain"
     )
 
+    parser.add_option(
+        "--main-loop",
+        help=(
+            "Specify an additional plugin to run in the main loop."
+            " These are used in combination with those specified in"
+            " [cylc][main loop]plugins. Can be used multiple times"
+        ),
+        metavar="PLUGIN_NAME", action="append", dest="main_loop"
+    )
+
     parser.set_defaults(stop_point_string=None)
 
     return parser

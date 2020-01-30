@@ -1,0 +1,203 @@
+# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Periodic functions which run in Cylc's main scheduling loop.
+
+For health check, diagnostic and devlopment purposes.
+
+Plugins are modules which provide one or more of the following functions:
+
+``async before(scheduler: Scheduler, state: dict) -> None``
+   Called before entring the main loop, use this function set the initial
+   state.
+``async during(scheduler: Scheduler, state: dict) -> None``
+   Called with each main loop iteration.
+``async on_change(scheduler, state) -> None``
+   Called with main loop iterations when changes have occurred in the task
+   pool during the current iteration.
+``async after(scheduler: Scheduler, state: dict) -> None``
+   Called after the main loop has completed in the event of a controlled
+   shutdown (e.g. ``cylc stop <suite>``).
+
+The ``during`` and ``on_change`` functions should be fast running. To
+reduce the impact on the running suite specify the minimum interval
+between calls using the ``[cylc][main loop][PLUGIN]interval`` setting.
+
+Plugins are registered using the `main_loop` entry point, for examples see
+the built-in plugins in the :py:mod:`cylc.flow.main_loop` module which
+are registered in the Cylc Flow ``setup.cfg`` file.
+
+Plugins shouldn't meddle with the state of the scheduler and should be
+parallel-safe with other plugins.
+
+"""
+import asyncio
+from time import time
+
+import pkg_resources
+
+from cylc.flow import LOG
+from cylc.flow.exceptions import CylcError, UserInputError
+
+
+def load_plugins(config, additional_plugins=None):
+    """Load main loop plugins from the suite/global configuration.
+
+    Args:
+        config (dict):
+            The ``[cylc][main loop]`` section of the configuration.
+
+    Returns:
+        dict
+
+    """
+    if not additional_plugins:
+        additional_plugins = []
+    plugins = {
+        'before': {},
+        'during': {},
+        'on_change': {},
+        'after': {},
+        'state': {}
+    }
+    entry_points = pkg_resources.get_entry_map(
+        'cylc-flow').get('main_loop', {})
+    for name in config['plugins'] + additional_plugins:
+        mod_name = name.replace(' ', '_')
+        # get plugin
+        try:
+            module_name = entry_points[mod_name]
+        except KeyError:
+            raise UserInputError(f'No main-loop plugin: "{name}"')
+        # load plugin
+        try:
+            module = module_name.load()
+        except Exception:
+            raise CylcError(f'Could not load plugin: "{name}"')
+        # load coroutines
+        for key in plugins:
+            coro = getattr(module, key, None)
+            if coro:
+                plugins[key][name] = coro
+        # set initial conditions
+        plugins['state'][name] = {'last run at': 0}
+    # make a note of the config here for ease of reference
+    plugins['config'] = config
+    return plugins
+
+
+async def _wrapper(fcn, args):
+    """Wrapper for all plugin functions.
+
+    * Logs the function's execution.
+    * Times the function.
+    * Catches any exceptions which aren't subclasses of CylcError.
+
+    """
+    sig = f'{fcn.__module__}:{fcn.__name__}'
+    LOG.debug(f'main_loop [run] {sig}')
+    start_time = time()
+    try:
+        await fcn(*args)
+    except Exception as exc:
+        if isinstance(exc, CylcError):
+            # allow CylcErrors through (e.g. SchedulerStop)
+            raise
+        LOG.error(f'Error in main loop plugin {sig}')
+        LOG.exception(exc)
+    else:
+        LOG.debug(f'main_loop [end] {sig} ({time() - start_time:.3f}s)')
+
+
+async def before(plugins, scheduler):
+    """Call all ``before`` plugin functions.
+
+    Args:
+        plugins (dict):
+            Plugins dictionary as returned by
+            :py:meth:`cylc.flow.main_loop.load_plugins`
+        scheduler (cylc.flow.scheduler.Scheduler):
+            Cylc Scheduler instance.
+
+    """
+    await asyncio.gather(
+        *[
+            _wrapper(
+                coro,
+                (scheduler, plugins['state'][name])
+            )
+            for name, coro in plugins['before'].items()
+        ]
+    )
+
+
+async def during(plugins, scheduler, has_changed):
+    """Call all ``during`` and ``on_changed`` plugin functions.
+
+    Args:
+        plugins (dict):
+            Plugins dictionary as returned by
+            :py:meth:`cylc.flow.main_loop.load_plugins`
+        scheduler (cylc.flow.scheduler.Scheduler):
+            Cylc Scheduler instance.
+
+    """
+    coros = []
+    now = time()
+    items = list(plugins['during'].items())
+    if has_changed:
+        items.extend(plugins['on_change'].items())
+    to_run = []
+    for name, coro in items:
+        interval = plugins['config'][name]['interval']
+        state = plugins['state'][name]
+        if (
+                name in to_run  # allow both on_change and during to run
+                or (
+                    not interval
+                    or now - state['last run at'] > interval
+                )
+        ):
+            to_run.append(name)
+            coros.append(
+                _wrapper(
+                    coro,
+                    (scheduler, state)
+                )
+            )
+            state['last run at'] = now
+    await asyncio.gather(*coros)
+
+
+async def after(plugins, scheduler):
+    """Call all ``before`` plugin functions.
+
+    Args:
+        plugins (dict):
+            Plugins dictionary as returned by
+            :py:meth:`cylc.flow.main_loop.load_plugins`
+        scheduler (cylc.flow.scheduler.Scheduler):
+            Cylc Scheduler instance.
+
+    """
+    await asyncio.gather(
+        *[
+            _wrapper(
+                coro,
+                (scheduler, plugins['state'][name])
+            )
+            for name, coro in plugins['after'].items()
+        ]
+    )
