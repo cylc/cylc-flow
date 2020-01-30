@@ -127,7 +127,7 @@ SPEC = {
             'cylc executable': [VDR.V_STRING, 'cylc'],
             'global init-script': [VDR.V_STRING, ''],
             'copyable environment variables': [VDR.V_STRING_LIST, ''],
-            'retrieve job logs': [VDR.V_BOOLEAN],
+            'retrieve job logs': [VDR.V_BOOLEAN, None],
             'retrieve job logs command': [VDR.V_STRING, 'rsync -a'],
             'retrieve job logs max size': [VDR.V_STRING],
             'retrieve job logs retry delays': [VDR.V_INTERVAL_LIST],
@@ -428,6 +428,7 @@ class GlobalConfig(ParsecConfig):
         """
         # Check for the existence of the item we want in the platform specified
         # Or use default values.
+        value = None
         if platform and platform == 'localhost':
             platform = None
 
@@ -437,7 +438,7 @@ class GlobalConfig(ParsecConfig):
             )
             if (item in self.get(['job platforms', raw_platform])):
                 value = self.get(['job platforms', raw_platform, item])
-        else:
+        if not value:
             try:
                 value = self.spec['job platforms']['__MANY__'][item][1]
             except IndexError as exc:
