@@ -65,9 +65,17 @@ tests_require = [
 ]
 
 extra_requires = {
-    'empy': ['EmPy==3.3.*'],
+    'empy': [
+        'EmPy==3.3.*'
+    ],
     'all': [],
-    'report-timings': ['pandas==0.25.*']
+    'report-timings': [
+        'pandas==0.25.*'
+    ],
+    'main_loop-log_data_store': [
+        'pympler',
+        'matplotlib'
+    ]
 }
 extra_requires['all'] = (
     tests_require
