@@ -22,6 +22,19 @@ cylc-7.9.x (which requires Python 2.7) bundles Jinja2 2.11.
 cylc-8 (master branch, Python 3 - not yet released) uses proper Python package
 management and does not bundle Jinja2.
 
+## __cylc-7.9.6 (2022-03-07)__
+
+**Requires Python 2.7**
+
+This release is cylc-7.8.11 with Jinja2 upgraded to 2.11.1.
+
+### Fixes
+
+[#3502](https://github.com/cylc/cylc-flow/pull/3502) - Update to jinja2
+2.11.1, fixing Jinja2 error where validation shows incorrect context.
+**This requires Python 2.7**
+
+
 ## __cylc-7.8.11 (2022-03-07)__
 
 ### Fixes
@@ -87,7 +100,6 @@ restarts using the same time zone as the last `cylc run`.
 [#4134](https://github.com/cylc/cylc-flow/pull/4134) - Allow Cylc Review
 to display information about Cylc 8 workflows.
 
-
 -------------------------------------------------------------------------------
 ## __cylc-7.8.7 (2020-12-04)__
 
@@ -120,6 +132,8 @@ on *any* host to complete before restarting.
 
 -------------------------------------------------------------------------------
 ## __cylc-7.8.6 (2020-05-14)__
+
+Requires Python 2.6 or 2.7.
 
 ### Fixes
 
