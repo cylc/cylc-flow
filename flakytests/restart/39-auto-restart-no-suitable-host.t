@@ -20,7 +20,10 @@ set_test_number 5
 
 BASE_GLOBALRC="
 [cylc]
-    health check interval = PT5S
+    [[main loop]]
+        plugins = health check, auto restart
+        [[[auto restart]]]
+            interval = PT5S
     [[events]]
         abort on inactivity = True
         abort on timeout = True
@@ -49,7 +52,7 @@ ${BASE_GLOBALRC}
     run hosts = localhost
 "
 
-cylc run "${SUITE_NAME}"
+cylc run "${SUITE_NAME}" --debug
 poll_suite_running
 
 create_test_globalrc '' "

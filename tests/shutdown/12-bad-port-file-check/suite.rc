@@ -1,7 +1,9 @@
 #!Jinja2
 [cylc]
 {% if GLOBALCFG is not defined %}
-    health check interval = PT10S
+    [[main loop]]
+        [[[health check]]]
+            interval = PT10S
 {% endif %}{# not GLOBALCFG is not defined #}
     [[events]]
         abort if any task fails = True
