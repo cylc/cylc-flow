@@ -23,7 +23,22 @@ cylc-8 (master branch, Python 3 - not yet released) uses proper Python package
 management and does not bundle Jinja2.
 
 -------------------------------------------------------------------------------
+## __cylc-7.9.0 (2020-04-22)__
+
+**Requires Python 2.7**
+
+This release is the same as cylc-7.8.5 with Jinja2 upgraded to 2.11.1.
+
+### Fixes
+
+[#3502](https://github.com/cylc/cylc-flow/pull/3502) - Update to jinja2
+2.11.1, fixing Jinja2 error where validation shows incorrect context.
+**This requires Python 2.7**
+
+-------------------------------------------------------------------------------
 ## __cylc-7.8.5 (2020-04-22)__
+
+Requires Python 2.6 or 2.7.
 
 ### Enhancements
 
