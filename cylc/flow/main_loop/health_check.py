@@ -27,6 +27,7 @@ import os
 from cylc.flow import suite_files
 from cylc.flow.exceptions import CylcError, SuiteServiceFileError
 
+
 async def during(scheduler, _):
     """Perform suite health checks."""
     # 1. check if suite run dir still present - if not shutdown.
@@ -47,8 +48,7 @@ def _check_contact_file(scheduler):
             scheduler.suite)
         if contact_data != scheduler.contact_data:
             raise AssertionError('contact file modified')
-    except (AssertionError, IOError, ValueError,
-            SuiteServiceFileError) as exc:
+    except (AssertionError, IOError, ValueError, SuiteServiceFileError):
         raise CylcError(
             '%s: contact file corrupted/modified and may be left'
             % suite_files.get_contact_file(scheduler.suite)

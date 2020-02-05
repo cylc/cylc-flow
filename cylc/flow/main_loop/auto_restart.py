@@ -69,11 +69,12 @@ Suites will wait for a random period of time between zero and
 
 Suites that are started up in no-detach mode cannot auto stop-restart on a
 different host - as it will still end up attached to the condemned host.
-Therefore, a suite in no-detach mode running on a condemned host will abort with
-a non-zero return code. The parent process should manually handle the restart of
-the suite if desired.
+Therefore, a suite in no-detach mode running on a condemned host will abort
+with a non-zero return code. The parent process should manually handle the
+restart of the suite if desired.
 
 See the ``[suite servers]`` configuration section
+
 (:ref:`global-suite-servers`) for more details.
 
 """
@@ -214,7 +215,7 @@ def _set_auto_restart(
         if restart_delay > 0:
             # Delay shutdown by a random interval to avoid many
             # suites restarting simultaneously.
-            shutdown_delay = int(random() * restart_delay)
+            shutdown_delay = int(random() * restart_delay)  # nosec
         else:
             # Un-documented feature, schedule exact restart interval for
             # testing purposes.

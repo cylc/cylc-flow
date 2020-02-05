@@ -179,10 +179,12 @@ def test_set_auto_restart_no_detach(caplog):
 def test_set_auto_restart_unable_to_restart(monkeypatch):
     """Ensure returns False if suite is unable to restart"""
     called = False
+
     def suite_select_fail(**_):
         nonlocal called
         called = True  # prevent this becoming a placebo
         return False
+
     monkeypatch.setattr(
         'cylc.flow.main_loop.auto_restart._can_auto_restart',
         suite_select_fail
@@ -201,10 +203,12 @@ def test_set_auto_restart_unable_to_restart(monkeypatch):
 def test_set_auto_restart_with_delay(monkeypatch, caplog):
     """Ensure suites wait for a period before auto-restarting."""
     called = False
+
     def suite_select_pass(**_):
         nonlocal called
         called = True  # prevent this becoming a placebo
         return True
+
     monkeypatch.setattr(
         'cylc.flow.main_loop.auto_restart._can_auto_restart',
         suite_select_pass
@@ -233,10 +237,12 @@ def test_set_auto_restart_with_delay(monkeypatch, caplog):
 def test_set_auto_restart_without_delay(monkeypatch, caplog):
     """Ensure suites auto-restart when no delay is provided."""
     called = False
+
     def suite_select_pass(**_):
         nonlocal called
         called = True  # prevent this becoming a placebo
         return True
+
     monkeypatch.setattr(
         'cylc.flow.main_loop.auto_restart._can_auto_restart',
         suite_select_pass

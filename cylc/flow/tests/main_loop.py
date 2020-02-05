@@ -59,11 +59,13 @@ def test_load_plugins():
 def test_wrapper_calls_function():
     """Ensure the wrapper calls coroutines."""
     flag = False
+
     async def test_coro(arg1, arg2):
         assert arg1 == 'arg1'
         assert arg2 == 'arg2'
         nonlocal flag
         flag = True
+
     coro = _wrapper(
         test_coro,
         ('arg1', 'arg2')
@@ -132,9 +134,11 @@ def test_wrapper_passes_cylc_error():
 def test_before():
     """Ensure the before function calls all before coros."""
     calls = []
+
     def capture(*stuff):
         nonlocal calls
         calls.append(stuff)
+
     plugins = {
         'before': {
             'foo': capture,
@@ -153,6 +157,7 @@ def test_before():
         (42, {'b': 2}),
         (42, {'c': 3}),
     ]
+
 
 @pytest.fixture
 def test_plugins():
@@ -191,14 +196,17 @@ def test_plugins():
 def test_during(test_plugins):
     """Ensure the during function calls all during and on_change coros."""
     calls = []
+
     def capture_during(_, state):
         nonlocal calls
         state['calls'].append(f'during_{state["name"]}')
         calls.append(list(state['calls']))
+
     def capture_on_change(_, state):
         nonlocal calls
         state['calls'].append(f'on_change_{state["name"]}')
         calls.append(list(state['calls']))
+
     test_plugins.update({
         'during': {
             'foo': capture_during,
@@ -221,10 +229,13 @@ def test_during(test_plugins):
 
 
 def test_during_interval(test_plugins):
+
     def capture_during(_, state):
         state['calls'].append(f'during_{state["name"]}')
+
     def capture_on_change(_, state):
         state['calls'].append(f'on_change_{state["name"]}')
+
     test_plugins.update({
         'during': {
             'foo': capture_during,
@@ -278,9 +289,11 @@ def test_during_interval(test_plugins):
 def test_after():
     """Ensure the after function calls all after coros."""
     calls = []
+
     def capture(*stuff):
         nonlocal calls
         calls.append(stuff)
+
     plugins = {
         'after': {
             'foo': capture,

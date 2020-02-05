@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import json
-import math
 from pathlib import Path
 from time import time
 
@@ -87,7 +86,7 @@ def _transpose(data):
     all_keys = list(all_keys)
     all_keys.sort(key=lambda x: data[-1][1].get(x, 0), reverse=True)
 
-    # extract data for each field, if not present 
+    # extract data for each field, if not present
     fields = {}
     for key in all_keys:
         fields[key] = [

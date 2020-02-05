@@ -541,7 +541,7 @@ see `COPYING' in the Cylc source distribution.
                 self.config.cfg['cylc']['events'][key] = DurationFloat(180)
         if self._get_events_conf(key):
             self.set_suite_inactivity_timer()
-        
+
         # Main loop plugins
         self.main_loop_plugins = main_loop.load_plugins(
             self._get_cylc_conf('main loop', {}),
@@ -1465,7 +1465,6 @@ see `COPYING' in the Cylc source distribution.
             'Suite unable to automatically restart after %s tries - '
             'manual restart required.', max_retries)
         return False
-
 
     def update_profiler_logs(self, tinit):
         """Update info for profiler."""
