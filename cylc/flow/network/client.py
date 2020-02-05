@@ -72,29 +72,27 @@ class SuiteRuntimeClient(ZMQSocketBase):
             Optional function which runs before ClientTimeout is raised.
             This provides an interface for raising more specific exceptions in
             the event of a communication timeout.
-        header (dict): Request "header" data to attach to each request.
+        header (dict):
+            Request "header" data to attach to each request.
 
     Usage:
-        * Call endpoints using ``ZMQClient.__call__``.
+        Call endpoints using ``ZMQClient.__call__``.
 
     Message interface:
         * Accepts responses of the format: {"data": {...}}
         * Accepts error in the format: {"error": {"message": MSG}}
         * Returns requests of the format: {"command": CMD,
-        "args": {...}}
+          "args": {...}}
 
     Raises:
         ClientError: if the suite is not running.
 
     Call server "endpoints" using:
-
         ``__call__``, ``serial_request``
-
             .. automethod::
                 cylc.flow.network.client.SuiteRuntimeClient.serial_request
 
         ``async_request``
-
             .. automethod::
                 cylc.flow.network.client.SuiteRuntimeClient.async_request
 
