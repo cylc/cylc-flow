@@ -75,6 +75,10 @@ extra_requires = {
     'main_loop-log_data_store': [
         'pympler',
         'matplotlib'
+    ],
+    'main_loop-log_memory': [
+        'pympler',
+        'matplotlib'
     ]
 }
 extra_requires['all'] = (
