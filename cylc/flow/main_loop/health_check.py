@@ -17,11 +17,11 @@
 
 * Ensures suite run directory is still present.
 * Ensures contact file is present and consistent with the running suite.
+* Unstick the public database if locked.
 
 Shuts down the suite in the enent of inconsistency or error.
 
 """
-from errno import ENOENT
 import os
 
 from cylc.flow import suite_files
@@ -35,11 +35,14 @@ async def during(scheduler, _):
     # 2. check if contact file consistent with current start - if not
     #    shutdown.
     _check_contact_file(scheduler)
+    # 3. If public database is stuck, blast it away by copying the content
+    #    of the private database into it.
+    _check_database(scheduler)
 
 
 def _check_suite_run_dir(scheduler):
     if not os.path.exists(scheduler.suite_run_dir):
-        raise OSError(ENOENT, os.strerror(ENOENT), scheduler.suite_run_dir)
+        raise CylcError('Suite run directory cannot be accessed.')
 
 
 def _check_contact_file(scheduler):
@@ -53,3 +56,7 @@ def _check_contact_file(scheduler):
             '%s: contact file corrupted/modified and may be left'
             % suite_files.get_contact_file(scheduler.suite)
         )
+
+
+def _check_database(scheduler):
+    scheduler.suite_db_mgr.recover_pub_from_pri()

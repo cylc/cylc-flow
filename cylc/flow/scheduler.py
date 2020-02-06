@@ -1331,11 +1331,6 @@ see `COPYING' in the Cylc source distribution.
         """Update suite DB."""
         self.suite_db_mgr.process_queued_ops()
 
-    def database_health_check(self):
-        """If public database is stuck, blast it away by copying the content
-        of the private database into it."""
-        self.suite_db_mgr.recover_pub_from_pri()
-
     def late_tasks_check(self):
         """Report tasks that are never active and are late."""
         now = time()
@@ -1526,10 +1521,6 @@ see `COPYING' in the Cylc source distribution.
             has_updated = await self.update_data_structure()
 
             self.process_suite_db_queue()
-
-            # If public database is stuck, blast it away by copying the content
-            # of the private database into it.
-            self.database_health_check()
 
             # Shutdown suite if timeouts have occurred
             self.timeout_check()
