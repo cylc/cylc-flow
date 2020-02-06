@@ -76,6 +76,9 @@ extra_requires = {
         'pympler',
         'matplotlib'
     ],
+    'main_loop-log_main_loop': [
+        'matplotlib'
+    ],
     'main_loop-log_memory': [
         'pympler',
         'matplotlib'

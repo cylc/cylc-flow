@@ -167,7 +167,7 @@ async def during(plugins, scheduler, has_changed):
         items.extend(plugins['on_change'].items())
     to_run = []
     for name, coro in items:
-        interval = plugins['config'][name]['interval']
+        interval = plugins['config'].get(name, {}).get('interval', None)
         state = plugins['state'][name]
         last_run_at = 0
         if state['timings']:
