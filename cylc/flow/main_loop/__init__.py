@@ -44,6 +44,7 @@ parallel-safe with other plugins.
 
 """
 import asyncio
+from collections import deque
 from time import time
 
 import pkg_resources
@@ -92,13 +93,13 @@ def load_plugins(config, additional_plugins=None):
             if coro:
                 plugins[key][name] = coro
         # set initial conditions
-        plugins['state'][name] = {'last run at': 0}
+        plugins['state'][name] = {'timings': deque(maxlen=1)}
     # make a note of the config here for ease of reference
     plugins['config'] = config
     return plugins
 
 
-async def _wrapper(fcn, args):
+async def _wrapper(fcn, scheduler, state, timings=False):
     """Wrapper for all plugin functions.
 
     * Logs the function's execution.
@@ -110,7 +111,7 @@ async def _wrapper(fcn, args):
     LOG.debug(f'main_loop [run] {sig}')
     start_time = time()
     try:
-        await fcn(*args)
+        await fcn(scheduler, state)
     except Exception as exc:
         if isinstance(exc, CylcError):
             # allow CylcErrors through (e.g. SchedulerStop)
@@ -118,7 +119,10 @@ async def _wrapper(fcn, args):
         LOG.error(f'Error in main loop plugin {sig}')
         LOG.exception(exc)
     else:
-        LOG.debug(f'main_loop [end] {sig} ({time() - start_time:.3f}s)')
+        duration = time() - start_time
+        LOG.debug(f'main_loop [end] {sig} ({duration:.3f}s)')
+        if timings:
+            state['timings'].append((start_time, duration))
 
 
 async def before(plugins, scheduler):
@@ -136,7 +140,9 @@ async def before(plugins, scheduler):
         *[
             _wrapper(
                 coro,
-                (scheduler, plugins['state'][name])
+                scheduler,
+                plugins['state'][name],
+                timings=False
             )
             for name, coro in plugins['before'].items()
         ]
@@ -163,21 +169,25 @@ async def during(plugins, scheduler, has_changed):
     for name, coro in items:
         interval = plugins['config'][name]['interval']
         state = plugins['state'][name]
+        last_run_at = 0
+        if state['timings']:
+            last_run_at = state['timings'][-1][0]
         if (
                 name in to_run  # allow both on_change and during to run
                 or (
                     not interval
-                    or now - state['last run at'] > interval
+                    or now - last_run_at > interval
                 )
         ):
             to_run.append(name)
             coros.append(
                 _wrapper(
                     coro,
-                    (scheduler, state)
+                    scheduler,
+                    state,
+                    timings=True
                 )
             )
-            state['last run at'] = now
     await asyncio.gather(*coros)
 
 
@@ -196,7 +206,9 @@ async def after(plugins, scheduler):
         *[
             _wrapper(
                 coro,
-                (scheduler, plugins['state'][name])
+                scheduler,
+                plugins['state'][name],
+                timings=False
             )
             for name, coro in plugins['after'].items()
         ]

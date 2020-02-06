@@ -1,4 +1,5 @@
 import asyncio
+from collections import deque
 from functools import partial
 import logging
 from time import sleep
@@ -49,7 +50,7 @@ def test_load_plugins():
         'after': {},
         'state': {
             'health check': {
-                'last run at': 0
+                'timings': deque()
             }
         },
         'config': conf
@@ -68,7 +69,8 @@ def test_wrapper_calls_function():
 
     coro = _wrapper(
         test_coro,
-        ('arg1', 'arg2')
+        'arg1',
+        'arg2'
     )
     asyncio.run(coro)
     assert flag
@@ -76,11 +78,12 @@ def test_wrapper_calls_function():
 
 def test_wrapper_logging(caplog):
     """Ensure the wrapper logs each coroutine call."""
-    async def test_coro():
+    async def test_coro(*_):
         pass
     coro = _wrapper(
         test_coro,
-        tuple()
+        None,
+        None
     )
     with caplog.at_level(logging.DEBUG, logger=CYLC_LOG):
         asyncio.run(coro)
@@ -103,11 +106,12 @@ def test_wrapper_logging(caplog):
 
 def test_wrapper_catches_exceptions(caplog):
     """Ensure the wrapper catches Exception instances and logs them."""
-    async def test_coro():
+    async def test_coro(*_):
         raise Exception('foo')
     coro = _wrapper(
         test_coro,
-        tuple()
+        None,
+        None
     )
     with caplog.at_level(logging.DEBUG, logger=CYLC_LOG):
         asyncio.run(coro)
@@ -121,11 +125,12 @@ def test_wrapper_catches_exceptions(caplog):
 
 def test_wrapper_passes_cylc_error():
     """Ensure the wrapper does not catch CylcError instances."""
-    async def test_coro():
+    async def test_coro(*_):
         raise CylcError('foo')
     coro = _wrapper(
         test_coro,
-        tuple()
+        None,
+        None
     )
     with pytest.raises(CylcError):
         asyncio.run(coro)
@@ -166,17 +171,17 @@ def test_plugins():
             'foo': {
                 'calls': [],
                 'name': 'foo',
-                'last run at': 0
+                'timings': deque()
             },
             'bar': {
                 'calls': [],
                 'name': 'bar',
-                'last run at': 0
+                'timings': deque()
             },
             'baz': {
                 'calls': [],
                 'name': 'baz',
-                'last run at': 0
+                'timings': deque()
             }
         },
         'config': {
@@ -230,10 +235,10 @@ def test_during(test_plugins):
 
 def test_during_interval(test_plugins):
 
-    def capture_during(_, state):
+    async def capture_during(_, state):
         state['calls'].append(f'during_{state["name"]}')
 
-    def capture_on_change(_, state):
+    async def capture_on_change(_, state):
         state['calls'].append(f'on_change_{state["name"]}')
 
     test_plugins.update({
@@ -262,7 +267,7 @@ def test_during_interval(test_plugins):
 
     # now re-wind the clock 0.5 seconds
     for state in test_plugins['state'].values():
-        state['last run at'] = state['last run at'] - 0.5
+        state['timings'][-1] = (state['timings'][-1][0] - 0.5, None)
 
     # the config runs the plugins every 1 second so they shouldn't run
     asyncio.run(during(test_plugins, 42, True))
@@ -273,7 +278,7 @@ def test_during_interval(test_plugins):
 
     # now re-wind the clock another 0.5 seconds
     for state in test_plugins['state'].values():
-        state['last run at'] = state['last run at'] - 0.6
+        state['timings'][-1] = (state['timings'][-1][0] - 0.6, None)
 
     # the config runs the plugins every 1 second so they should now run
     for lst in calls.values():
