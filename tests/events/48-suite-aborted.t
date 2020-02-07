@@ -27,7 +27,7 @@ suite_run_fail "${TEST_NAME_BASE}-run" \
 cylc cat-log "${SUITE_NAME}" >'log'
 grep_ok 'CRITICAL - Suite shutting down - contact file modified' 'log'
 cmp_ok "${SUITE_RUN_DIR}/handler.out" <<'__OUT__'
-aborted contact file modified
+contact file modified
 __OUT__
 
 purge_suite "${SUITE_NAME}"
