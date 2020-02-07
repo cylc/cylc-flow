@@ -58,6 +58,7 @@ from cylc.flow.loggingutil import (
 from cylc.flow.network import API
 from cylc.flow.network.server import SuiteRuntimeServer
 from cylc.flow.network.publisher import WorkflowPublisher
+from cylc.flow.parsec.OrderedDict import DictTree
 from cylc.flow.parsec.util import printcfg
 from cylc.flow.parsec.validate import DurationFloat
 from cylc.flow.pathutil import (
@@ -181,6 +182,7 @@ class Scheduler(object):
         self.suite_log_dir = get_suite_run_log_dir(self.suite)
 
         self.config = None
+        self.cylc_config = None
 
         self.is_restart = is_restart
         self.template_vars = load_template_vars(
@@ -468,8 +470,8 @@ see `COPYING' in the Cylc source distribution.
 
         self.broadcast_mgr.linearized_ancestors.update(
             self.config.get_linearized_ancestors())
-        self.task_events_mgr.mail_interval = self._get_cylc_conf(
-            "task event mail interval")
+        self.task_events_mgr.mail_interval = self.cylc_config[
+            "task event mail interval"]
         self.task_events_mgr.mail_footer = self._get_events_conf("mail footer")
         self.task_events_mgr.suite_url = self.config.cfg['meta']['URL']
         self.task_events_mgr.suite_cfg = self.config.cfg['meta']
@@ -544,9 +546,11 @@ see `COPYING' in the Cylc source distribution.
 
         # Main loop plugins
         self.main_loop_plugins = main_loop.load_plugins(
-            self._get_cylc_conf('main loop', {}),
+            # TODO: this doesn't work, we need to merge the two configs
+            self.cylc_config.get('main loop', {}),
             self.options.main_loop
         )
+
         asyncio.get_event_loop().run_until_complete(
             main_loop.before(self.main_loop_plugins, self)
         )
@@ -1030,8 +1034,8 @@ see `COPYING' in the Cylc source distribution.
         self.broadcast_mgr.linearized_ancestors = (
             self.config.get_linearized_ancestors())
         self.pool.set_do_reload(self.config)
-        self.task_events_mgr.mail_interval = self._get_cylc_conf(
-            "task event mail interval")
+        self.task_events_mgr.mail_interval = self.cylc_config[
+            'task event mail interval']
         self.task_events_mgr.mail_footer = self._get_events_conf("mail footer")
 
         # Log tasks that have been added by the reload, removed tasks are
@@ -1135,6 +1139,10 @@ see `COPYING' in the Cylc source distribution.
             log_dir=self.suite_log_dir,
             work_dir=self.suite_work_dir,
             share_dir=self.suite_share_dir,
+        )
+        self.cylc_config = DictTree(
+            self.config.cfg['cylc'],
+            glbl_cfg().get(['cylc'])
         )
         self.suiterc_update_time = time()
         # Dump the loaded suiterc for future reference.
@@ -1941,24 +1949,6 @@ see `COPYING' in the Cylc source distribution.
             LOG.warning("Cannot get CPU % statistics: %s" % exc)
             return
         self._update_profile_info("CPU %", cpu_frac, amount_format="%.1f")
-
-    def _get_cylc_conf(self, key, default=None):
-        """Return a named setting under [cylc] from suite.rc or flow.rc."""
-        for getter in [self.config.cfg['cylc'], glbl_cfg().get(['cylc'])]:
-            try:
-                value = getter[key]
-            except TypeError:
-                continue
-            except KeyError:
-                pass
-            else:
-                if isinstance(value, dict):
-                    if value:
-                        return value
-                    continue
-                if value is not None:
-                    return value
-        return default
 
     def _get_events_conf(self, key, default=None):
         """Return a named [cylc][[events]] configuration."""
