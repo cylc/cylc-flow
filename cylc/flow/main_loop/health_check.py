@@ -42,7 +42,10 @@ async def during(scheduler, _):
 
 def _check_suite_run_dir(scheduler):
     if not os.path.exists(scheduler.suite_run_dir):
-        raise CylcError('Suite run directory cannot be accessed.')
+        raise CylcError(
+            'Suite run directory does not exist:'
+            f' {scheduler.suite_run_dir}'
+        )
 
 
 def _check_contact_file(scheduler):
@@ -50,7 +53,7 @@ def _check_contact_file(scheduler):
         contact_data = suite_files.load_contact_file(
             scheduler.suite)
         if contact_data != scheduler.contact_data:
-            raise AssertionError('contact file modified')
+            raise CylcError('contact file modified')
     except (AssertionError, IOError, ValueError, SuiteServiceFileError):
         raise CylcError(
             '%s: contact file corrupted/modified and may be left'

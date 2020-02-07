@@ -53,6 +53,17 @@ from cylc.flow import LOG
 from cylc.flow.exceptions import CylcError, UserInputError
 
 
+class MainLoopPluginException(Exception):
+    """Raised in-place of CylcError exceptions.
+    
+    Note:
+        * Not an instace of CylcError as that is used for controlled
+          shutdown e.g. SchedulerStop.
+
+    """
+
+
+
 def load_plugins(config, additional_plugins=None):
     """Load main loop plugins from the suite/global configuration.
 
@@ -112,10 +123,12 @@ async def _wrapper(fcn, scheduler, state, timings=False):
     start_time = time()
     try:
         await fcn(scheduler, state)
+    except CylcError as exc:
+        # allow CylcErrors through (e.g. SchedulerStop)
+        # NOTE: the `from None` bit gets rid of this gunk:
+        # > During handling of the above exception another exception
+        raise MainLoopPluginException(exc) from None
     except Exception as exc:
-        if isinstance(exc, CylcError):
-            # allow CylcErrors through (e.g. SchedulerStop)
-            raise
         LOG.error(f'Error in main loop plugin {sig}')
         LOG.exception(exc)
     else:
