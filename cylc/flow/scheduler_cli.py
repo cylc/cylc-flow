@@ -249,7 +249,7 @@ def scheduler_cli(parser, options, args, is_restart=False):
 
     # Check whether a run host is explicitly specified, else select one.
     if not options.host:
-        host = select_suite_host()[1]
+        host = select_suite_host()[0]
         if is_remote_host(host):
             if is_restart:
                 base_cmd = ["restart"] + sys.argv[1:]

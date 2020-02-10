@@ -1428,7 +1428,7 @@ see `COPYING' in the Cylc source distribution.
         cmd = ['cylc', 'restart', quote(self.suite)]
 
         for attempt_no in range(max_retries):
-            new_host = select_suite_host(cached=False)[1]
+            new_host = select_suite_host(cached=False)[0]
             LOG.info('Attempting to restart on "%s"', new_host)
 
             # proc will start with current env (incl CYLC_HOME etc)
