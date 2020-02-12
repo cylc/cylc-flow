@@ -9,5 +9,5 @@
          script = """
 eval $(cylc cat-log -f j "${CYLC_SUITE_NAME}" foo.1 | grep CYLC_TASK_FLOW_LABEL)
 cylc stop --flow=${CYLC_TASK_FLOW_LABEL} ${CYLC_SUITE_NAME}
-cylc__job__poll_grep_suite_log 'Command succeeded: stop_flow'
+cylc__job__poll_grep_suite_log 'Command succeeded: stop'
          """

@@ -453,7 +453,8 @@ def xtrigger_mgr_procpool_broadcast() -> XtriggerManager:
         suite="sample_suite",
         user="john-foo",
         proc_pool=MockedProcPool(),
-        broadcast_mgr=MockedBroadcastMgr(suite_db_mgr=None)
+        broadcast_mgr=MockedBroadcastMgr(
+            suite_db_mgr=None, data_store_mgr=None)
     )
     xtrigger_mgr.validate_xtrigger = lambda fn, fdir: True
     return xtrigger_mgr

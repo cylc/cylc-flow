@@ -334,9 +334,9 @@ class Scheduler:
         self.suite_db_mgr = SuiteDatabaseManager(
             suite_files.get_suite_srv_dir(self.suite),  # pri_d
             os.path.join(self.suite_run_dir, 'log'))  # pub_d
-        self.broadcast_mgr = BroadcastMgr(self.suite_db_mgr)
-
         self.data_store_mgr = DataStoreMgr(self)
+        self.broadcast_mgr = BroadcastMgr(
+            self.suite_db_mgr, self.data_store_mgr)
 
         # *** Network Related ***
         # TODO: this in zmq asyncio context?
@@ -595,9 +595,7 @@ class Scheduler:
                     self
                 )
             )
-            await self.publisher.publish(
-                self.data_store_mgr.get_publish_deltas()
-            )
+            await self.publisher.publish(self.data_store_mgr.publish_deltas)
             self.profiler.start()
             await self.main_loop()
 
@@ -962,26 +960,21 @@ class Scheduler:
         task_id = TaskID.get_standardised_taskid(task_id)
         return self.pool.ping_task(task_id, exists_only)
 
-    def command_stop_flow(self, flow_label):
-        self.pool.stop_flow(flow_label)
-
     def command_stop(
             self,
             mode=None,
             cycle_point=None,
             # NOTE clock_time YYYY/MM/DD-HH:mm back-compat removed
             clock_time=None,
-            task=None
+            task=None,
+            flow_label=None
     ):
-        # immediate shutdown
-        if mode:
-            self._set_stop(mode)
-        elif not any([mode, cycle_point, clock_time, task]):
-            # if no arguments provided do a standard clean shutdown
-            self._set_stop(StopMode.REQUEST_CLEAN)
+        if flow_label:
+            self.pool.stop_flow(flow_label)
+            return
 
-        # schedule shutdown after tasks pass provided cycle point
         if cycle_point:
+            # schedule shutdown after tasks pass provided cycle point
             point = TaskID.get_standardised_point(cycle_point)
             if self.pool.set_stop_point(point):
                 self.options.stopcp = str(point)
@@ -990,22 +983,25 @@ class Scheduler:
             else:
                 # TODO: yield warning
                 pass
-
-        # schedule shutdown after wallclock time passes provided time
-        if clock_time:
+        elif clock_time:
+            # schedule shutdown after wallclock time passes provided time
             parser = TimePointParser()
             clock_time = parser.parse(clock_time)
             self.set_stop_clock(
                 int(clock_time.get("seconds_since_unix_epoch")))
-
-        # schedule shutdown after task succeeds
-        if task:
+        elif task:
+            # schedule shutdown after task succeeds
             task_id = TaskID.get_standardised_taskid(task)
             if TaskID.is_valid_id(task_id):
                 self.pool.set_stop_task(task_id)
             else:
                 # TODO: yield warning
                 pass
+        else:
+            # immediate shutdown
+            self._set_stop(mode)
+            if mode is StopMode.REQUEST_KILL:
+                self.time_next_kill = time()
 
     def command_set_stop_cleanly(self, kill_active_tasks=False):
         """Stop job submission and set the flag for clean shutdown."""
@@ -1025,8 +1021,6 @@ class Scheduler:
     def _set_stop(self, stop_mode=None):
         """Set shutdown mode."""
         self.proc_pool.set_stopping()
-        if stop_mode is None:
-            stop_mode = StopMode.REQUEST_CLEAN
         self.stop_mode = stop_mode
 
     def command_set_stop_after_point(self, point_string):
@@ -1632,7 +1626,8 @@ class Scheduler:
             if has_reloaded:
                 self.data_store_mgr.initiate_data_model(reloaded=True)
                 await self.publisher.publish(
-                    self.data_store_mgr.get_publish_deltas())
+                    self.data_store_mgr.publish_deltas
+                )
             # Update state summary, database, and uifeed
             self.suite_db_mgr.put_task_event_timers(self.task_events_mgr)
             has_updated = await self.update_data_structure()
@@ -1692,12 +1687,16 @@ class Scheduler:
         # Add tasks that have moved moved from runahead to live pool.
         updated_nodes = set(updated_tasks).union(
             self.pool.get_pool_change_tasks())
-        if has_updated:
+        if (
+                has_updated or
+                self.data_store_mgr.updates_pending or
+                self.job_pool.updates_pending
+        ):
             # WServer incremental data store update
             self.data_store_mgr.update_data_structure(updated_nodes)
             # Publish updates:
-            await self.publisher.publish(
-                self.data_store_mgr.get_publish_deltas())
+            await self.publisher.publish(self.data_store_mgr.publish_deltas)
+        if has_updated:
             # TODO: deprecate after CLI GraphQL migration
             self.state_summary_mgr.update(self)
             # Database update

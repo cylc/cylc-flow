@@ -44,8 +44,8 @@ cylc reload "${SUITE_NAME}"
 sleep 5
 cylc dump "${SUITE_NAME}" > dump.out
 TEST_NAME=${TEST_NAME_BASE}-grep
-# State summary should not say "reloading = True"
-grep_ok "reloading=False" dump.out
+# State summary should not say "reloaded = True"
+grep_ok "reloaded=False" dump.out
 #-------------------------------------------------------------------------------
 cylc stop --max-polls=10 --interval=2 "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"

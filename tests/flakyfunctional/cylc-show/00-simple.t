@@ -69,77 +69,69 @@ __SHOW_OUTPUT__
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-show-json"
 cmp_json "${TEST_NAME}-suite" "${TEST_NAME}-suite" <<'__SHOW_OUTPUT__'
-[
-    {
-        "URL": "", 
-        "custom": "custard", 
-        "group": "", 
-        "description": "the quick brown fox", 
-        "title": "a test suite"
-    }
-]
+{
+    "title": "a test suite",
+    "description": "the quick brown fox", 
+    "URL": "", 
+    "custom": "custard", 
+    "group": ""
+}
 __SHOW_OUTPUT__
 
 cmp_json "${TEST_NAME}-task" "${TEST_NAME}-task" <<'__SHOW_OUTPUT__'
-[
-    {
-        "foo": {
-            "URL": "", 
-            "baz": "pub", 
-            "description": "jumped over the lazy dog", 
-            "title": "a task"
-        }
+{
+    "foo": {
+        "title": "a task", 
+        "description": "jumped over the lazy dog", 
+        "URL": "", 
+        "baz": "pub"
     }
-]
+}
 __SHOW_OUTPUT__
 
+ID_DELIM="$(python -c 'from cylc.flow import ID_DELIM;print(ID_DELIM)')"
 cmp_json "${TEST_NAME}-taskinstance" "${TEST_NAME}-taskinstance" \
-    <<'__SHOW_OUTPUT__'
-[
-    {
-        "foo.20141106T0900Z": {
-            "prerequisites": [
-                [
-                    "bar.20141106T0900Z succeeded", 
-                    "satisfied naturally"
-                ]
-            ], 
-            "outputs": [
-                [
-                    "foo.20141106T0900Z expired", 
-                    false
-                ], 
-                [
-                    "foo.20141106T0900Z submitted", 
-                    true
-                ], 
-                [
-                    "foo.20141106T0900Z submit-failed", 
-                    false
-                ], 
-                [
-                    "foo.20141106T0900Z started", 
-                    true
-                ], 
-                [
-                    "foo.20141106T0900Z succeeded", 
-                    false
-                ],
-                [
-                    "foo.20141106T0900Z failed", 
-                    false
-                ]
-            ], 
+    <<__SHOW_OUTPUT__
+{
+    "foo.20141106T0900Z": {
+        "name": "foo",
+        "cyclePoint": "20141106T0900Z",
+        "task": {
             "meta": {
-                "URL": "", 
-                "baz": "pub", 
-                "description": "jumped over the lazy dog", 
-                "title": "a task"
-            }, 
-            "extras": {}
-        }
+                "title": "a task",
+                "description": "jumped over the lazy dog",
+                "URL": "",
+                "userDefined": {
+                    "baz": "pub"
+                }
+            }
+        },
+        "prerequisites": [
+            {
+                "expression": "c0",
+                "conditions": [
+                    {
+                        "exprAlias": "c0",
+                        "taskId": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}20141106T0900Z${ID_DELIM}bar",
+                        "reqState": "succeeded",
+                        "message": "satisfied naturally",
+                        "satisfied": true
+                    }
+                ],
+                "satisfied": true
+            }
+        ],
+        "outputs": {
+            "expired": false,
+            "submitted": true,
+            "submit-failed": false,
+            "started": true,
+            "succeeded": false,
+            "failed": false
+        },
+        "extras": {}
     }
-]
+}
 __SHOW_OUTPUT__
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"

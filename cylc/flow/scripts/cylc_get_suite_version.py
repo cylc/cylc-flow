@@ -20,20 +20,44 @@
 
 Interrogate running suite REG to find what version of cylc is running it.
 
-To find the version you've invoked at the command line see "cylc version"."""
+To find the version you've invoked at the command line see "cylc version".
+"""
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import SuiteRuntimeClient
+from cylc.flow.terminal import cli_function
+
+QUERY = '''
+query ($wFlows: [ID]) {
+  workflows(ids: $wFlows) {
+    id
+    name
+    owner
+    cylcVersion
+  }
+}
+'''
 
 
-def main():
-    parser = COP(__doc__, comms=True, argdoc=[('REG', 'Suite name')])
+def get_option_parser():
+    parser = COP(__doc__, comms=True)
 
-    (options, args) = parser.parse_args()
-    suite = args[0]
+    return parser
 
+
+@cli_function(get_option_parser)
+def main(parser, options, suite):
     pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
-    print(pclient('get_cylc_version'))
+
+    query_kwargs = {
+        'request_string': QUERY,
+        'variables': {'wFlows': [suite]}
+    }
+
+    result = pclient('graphql', query_kwargs)
+
+    for workflow in result['workflows']:
+        print(workflow['cylcVersion'])
 
 
 if __name__ == "__main__":

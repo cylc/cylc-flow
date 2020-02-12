@@ -20,6 +20,7 @@ their jobs, and is feed-to/used-by the UI Server in resolving queries.
 
 """
 from copy import deepcopy
+import json
 import os
 from time import time
 
@@ -98,19 +99,11 @@ class JobPool:
             work_sub_dir=job_conf['work_d'],
             name=name,
             cycle_point=point_string,
+            batch_sys_conf=json.dumps(job_conf['batch_system_conf']),
+            directives=json.dumps(job_conf['directives']),
+            environment=json.dumps(job_conf['environment']),
+            param_var=json.dumps(job_conf['param_var'])
         )
-        j_buf.batch_sys_conf.extend(
-            [f'{key}={val}'
-             for key, val in job_conf['batch_system_conf'].items()])
-        j_buf.directives.extend(
-            [f'{key}={val}'
-             for key, val in job_conf['directives'].items()])
-        j_buf.environment.extend(
-            [f'{key}={val}'
-             for key, val in job_conf['environment'].items()])
-        j_buf.param_var.extend(
-            [f'{key}={val}'
-             for key, val in job_conf['param_var'].items()])
 
         # Add in log files.
         j_buf.job_log_dir = get_task_job_log(

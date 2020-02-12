@@ -52,6 +52,7 @@ Packaging methods are included for dissemination of protobuf messages.
 
 from collections import Counter
 from copy import deepcopy
+import json
 from time import time
 import zlib
 
@@ -67,7 +68,11 @@ from cylc.flow.task_id import TaskID
 from cylc.flow.task_job_logs import JOB_LOG_OPTS
 from cylc.flow.task_state_prop import extract_group_state
 from cylc.flow.wallclock import (
-    TIME_ZONE_LOCAL_INFO, TIME_ZONE_UTC_INFO, get_utc_mode)
+    TIME_ZONE_LOCAL_INFO,
+    TIME_ZONE_UTC_INFO,
+    get_utc_mode,
+    get_time_string_from_unix_time as time2str
+)
 
 
 EDGES = 'edges'
@@ -276,6 +281,8 @@ class DataStoreMgr:
             Local store of config.get_parent_lists()
         .pool_points (set):
             Cycle point objects in the task pool.
+        .publish_deltas (list):
+            Collection of the latest applied deltas for publishing.
         .schd (cylc.flow.scheduler.Scheduler):
             Workflow scheduler object.
         .workflow_id (str):
@@ -299,6 +306,7 @@ class DataStoreMgr:
         'min_point',
         'parents',
         'pool_points',
+        'publish_deltas',
         'schd',
         'state_update_families',
         'updated_state_families',
@@ -336,6 +344,7 @@ class DataStoreMgr:
         }
         self.updates_pending = False
         self.delta_queues = {self.workflow_id: {}}
+        self.publish_deltas = []
 
     def initiate_data_model(self, reloaded=False):
         """Initiate or Update data model on start/restart/reload.
@@ -375,6 +384,11 @@ class DataStoreMgr:
         self.apply_deltas(reloaded)
         self.updates_pending = False
         self.schd.job_pool.updates_pending = False
+
+        self.publish_deltas = self.get_publish_deltas()
+
+        # Clear deltas after application and publishing
+        self.clear_deltas()
 
     def generate_definition_elements(self):
         """Generate static definition data elements.
@@ -419,11 +433,15 @@ class DataStoreMgr:
                 depth=len(ancestors[name]) - 1,
             )
             task.namespace[:] = tdef.namespace_hierarchy
+            task.first_parent = (
+                f'{self.workflow_id}{ID_DELIM}{ancestors[name][1]}')
+            user_defined_meta = {}
             for key, val in dict(tdef.describe()).items():
                 if key in ['title', 'description', 'URL']:
                     setattr(task.meta, key, val)
                 else:
-                    task.meta.user_defined.append(f'{key}={val}')
+                    user_defined_meta[key] = val
+            task.meta.user_defined = json.dumps(user_defined_meta)
             elapsed_time = task_mean_elapsed_time(tdef)
             if elapsed_time:
                 task.mean_elapsed_time = elapsed_time
@@ -450,14 +468,21 @@ class DataStoreMgr:
                     depth=len(ancestors[name]) - 1,
                 )
                 famcfg = config.cfg['runtime'][name]
+                user_defined_meta = {}
                 for key, val in famcfg.get('meta', {}).items():
                     if key in ['title', 'description', 'URL']:
                         setattr(family.meta, key, val)
                     else:
-                        family.meta.user_defined.append(f'{key}={val}')
+                        user_defined_meta[key] = val
+                family.meta.user_defined = json.dumps(user_defined_meta)
                 family.parents.extend(
                     [f'{self.workflow_id}{ID_DELIM}{p_name}'
                      for p_name in parents[name]])
+                try:
+                    family.first_parent = (
+                        f'{self.workflow_id}{ID_DELIM}{ancestors[name][1]}')
+                except IndexError:
+                    pass
                 families[f_id] = family
 
         for name, parent_list in parents.items():
@@ -479,11 +504,14 @@ class DataStoreMgr:
         workflow.owner = self.schd.owner
         workflow.host = self.schd.host
         workflow.port = self.schd.port or -1
+        workflow.pub_port = self.schd.pub_port or -1
+        user_defined_meta = {}
         for key, val in config.cfg['meta'].items():
             if key in ['title', 'description', 'URL']:
                 setattr(workflow.meta, key, val)
             else:
-                workflow.meta.user_defined.append(f'{key}={val}')
+                user_defined_meta[key] = val
+        workflow.meta.user_defined = json.dumps(user_defined_meta)
         workflow.tree_depth = max([
             len(val)
             for val in config.get_first_parent_ancestors(pruned=True).values()
@@ -500,7 +528,9 @@ class DataStoreMgr:
         workflow.cycling_mode = config.cfg['scheduling']['cycling mode']
         workflow.workflow_log_dir = self.schd.suite_log_dir
         workflow.job_log_names.extend(list(JOB_LOG_OPTS.values()))
-        workflow.ns_defn_order.extend(config.ns_defn_order)
+        workflow.ns_def_order.extend(config.ns_defn_order)
+
+        workflow.broadcasts = json.dumps(self.schd.broadcast_mgr.broadcasts)
 
         workflow.tasks.extend(list(tasks))
         workflow.families.extend(list(families))
@@ -722,9 +752,6 @@ class DataStoreMgr:
 
     def update_data_structure(self, updated_nodes=None):
         """Reflect workflow changes in the data structure."""
-        # Clear previous deltas
-        self.clear_deltas()
-
         # Update edges & node set
         self.increment_graph_elements()
         # update states and other dynamic fields
@@ -739,6 +766,11 @@ class DataStoreMgr:
             self.apply_deltas()
             self.updates_pending = False
             self.schd.job_pool.updates_pending = False
+
+        self.publish_deltas = self.get_publish_deltas()
+
+        # Clear deltas after application and publishing
+        self.clear_deltas()
 
     def increment_graph_elements(self):
         """Generate and/or prune graph elements if needed.
@@ -857,6 +889,7 @@ class DataStoreMgr:
                 self.state_update_families.add(
                     self.added[TASK_PROXIES][tp_id].first_parent)
             tp_delta.is_held = itask.state.is_held
+            tp_delta.flow_label = itask.flow_label
             tp_delta.job_submits = itask.submit_num
             tp_delta.latest_message = itask.summary['latest_message']
             tp_delta.jobs[:] = [
@@ -864,10 +897,6 @@ class DataStoreMgr:
                 for j_id in self.schd.job_pool.task_jobs.get(tp_id, [])
                 if j_id not in task_proxies.get(tp_id, PbTaskProxy()).jobs
             ]
-            tp_delta.broadcasts[:] = [
-                f'{key}={val}' for key, val in
-                self.schd.task_events_mgr.broadcast_mgr.get_broadcast(
-                    itask.identity).items()]
             prereq_list = []
             for prereq in itask.state.prerequisites:
                 # Protobuf messages populated within
@@ -875,10 +904,30 @@ class DataStoreMgr:
                 if prereq_obj:
                     prereq_list.append(prereq_obj)
             tp_delta.prerequisites.extend(prereq_list)
-            tp_delta.outputs[:] = [
-                f'{trigger}={is_completed}'
+            tp_delta.outputs = json.dumps({
+                trigger: is_completed
                 for trigger, _, is_completed in itask.state.outputs.get_all()
-            ]
+            })
+            extras = {}
+            if itask.tdef.clocktrigger_offset is not None:
+                extras['Clock trigger time reached'] = (
+                    itask.is_waiting_clock_done())
+                extras['Triggers at'] = time2str(itask.clock_trigger_time)
+            for trig, satisfied in itask.state.external_triggers.items():
+                key = f'External trigger "{trig}"'
+                if satisfied:
+                    extras[key] = 'satisfied'
+                else:
+                    extras[key] = 'NOT satisfied'
+            for label, satisfied in itask.state.xtriggers.items():
+                sig = self.schd.xtrigger_mgr.get_xtrig_ctx(
+                    itask, label).get_signature()
+                extra = f'xtrigger "{label} = {sig}"'
+                if satisfied:
+                    extras[extra] = 'satisfied'
+                else:
+                    extras[extra] = 'NOT satisfied'
+            tp_delta.extras = json.dumps(extras)
 
         # Recalculate effected task def elements elapsed time.
         for name, tdef in task_defs.items():
@@ -1032,6 +1081,13 @@ class DataStoreMgr:
         self.update_family_proxies()
         self.updates_pending = True
 
+    # TODO: Make the other deltas/updates event driven like this one.
+    def delta_broadcast(self):
+        """Collects broadcasts on change event."""
+        workflow = self.updated[WORKFLOW]
+        workflow.broadcasts = json.dumps(self.schd.broadcast_mgr.broadcasts)
+        self.updates_pending = True
+
     def clear_deltas(self):
         """Clear current deltas."""
         for key in self.deltas:
@@ -1049,19 +1105,23 @@ class DataStoreMgr:
         self.deltas[JOBS].CopyFrom(self.schd.job_pool.deltas)
         self.added[JOBS] = deepcopy(self.schd.job_pool.added)
         self.updated[JOBS] = deepcopy(self.schd.job_pool.updated)
-        getattr(self.updated[WORKFLOW], JOBS).extend(self.added[JOBS].keys())
+        if self.added[JOBS]:
+            getattr(self.updated[WORKFLOW], JOBS).extend(
+                self.added[JOBS].keys())
 
         # Gather cumulative update element
         for key, elements in self.added.items():
             if elements:
                 if key == WORKFLOW:
-                    self.deltas[WORKFLOW].added.CopyFrom(elements)
+                    if elements.ListFields():
+                        self.deltas[WORKFLOW].added.CopyFrom(elements)
                     continue
                 self.deltas[key].added.extend(elements.values())
         for key, elements in self.updated.items():
             if elements:
                 if key == WORKFLOW:
-                    self.deltas[WORKFLOW].updated.CopyFrom(elements)
+                    if elements.ListFields():
+                        self.deltas[WORKFLOW].updated.CopyFrom(elements)
                     continue
                 self.deltas[key].updated.extend(elements.values())
 
@@ -1126,7 +1186,7 @@ class DataStoreMgr:
         result.append(
             (ALL_DELTAS.encode('utf-8'), all_deltas, 'SerializeToString')
         )
-        return result
+        return deepcopy(result)
 
     def get_data_elements(self, element_type):
         """Get elements of a given type in the form of a delta.

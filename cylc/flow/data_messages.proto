@@ -52,8 +52,7 @@ message PbMeta {
     optional string title = 1;
     optional string description = 2;
     optional string URL = 3;
-    /*map<string, string> user_defined = 4;*/
-    repeated string user_defined = 4;
+    optional string user_defined = 4;
 }
 
 message PbTimeZone {
@@ -89,13 +88,15 @@ message PbWorkflow {
     optional PbTimeZone time_zone_info = 23;
     optional int32 tree_depth = 24;
     repeated string job_log_names = 25;
-    repeated string ns_defn_order = 26;
+    repeated string ns_def_order = 26;
     repeated string states = 27;
     repeated string task_proxies = 28;
     repeated string family_proxies = 29;
     optional string status_msg = 30;
     optional int32 is_held_total = 31;
     repeated string jobs = 32;
+    optional int32 pub_port = 33;
+    optional string broadcasts = 34;
 }
 
 message PbJob {
@@ -122,10 +123,10 @@ message PbJob {
     optional string script = 21;
     optional string shell = 22;
     optional string work_sub_dir = 23;
-    repeated string batch_sys_conf = 24;
-    repeated string environment = 25;
-    repeated string directives = 26;
-    repeated string param_var = 28;
+    optional string batch_sys_conf = 24;
+    optional string environment = 25;
+    optional string directives = 26;
+    optional string param_var = 28;
     repeated string extra_logs = 29;
     optional string name = 30; /* filter item */
     optional string cycle_point = 31; /* filter item */
@@ -142,6 +143,7 @@ message PbTask {
     repeated string proxies = 7;
     repeated string namespace = 8;
     repeated string parents = 9;
+    optional string first_parent = 10;
 }
 
 message PbPollTask {
@@ -176,8 +178,7 @@ message PbTaskProxy {
     optional int32 depth = 6;
     optional int32 job_submits = 7;
     optional string latest_message = 8;
-    repeated string outputs = 9;
-    repeated string broadcasts = 10;
+    optional string outputs = 9;
     repeated string namespace = 11;
     repeated PbPrerequisite prerequisites = 12;
     repeated string jobs = 13;
@@ -186,6 +187,8 @@ message PbTaskProxy {
     optional bool is_held = 17;
     repeated string edges = 18;
     repeated string ancestors = 19;
+    optional string flow_label = 20;
+    optional string extras = 21;
 }
 
 message PbFamily {
@@ -198,6 +201,7 @@ message PbFamily {
     repeated string parents = 7;
     repeated string child_tasks = 8;
     repeated string child_families = 9;
+    optional string first_parent = 10;
 }
 
 message PbFamilyProxy {

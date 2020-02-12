@@ -321,17 +321,20 @@ class SuiteRuntimeServer(ZMQSocketBase):
             self,
             mode,
             cycle_points=None,
-            tasks=None,
-            settings=None
+            namespaces=None,
+            settings=None,
+            cutoff=None
     ):
         """Put or clear broadcasts."""
         if mode == 'put_broadcast':
             return self.schd.task_events_mgr.broadcast_mgr.put_broadcast(
-                cycle_points, tasks, settings)
+                cycle_points, namespaces, settings)
         if mode == 'clear_broadcast':
             return self.schd.task_events_mgr.broadcast_mgr.clear_broadcast(
-                cycle_points, tasks, settings)
-        # TODO implement other broadcast interfaces (i.e. expire, display)
+                cycle_points, namespaces, settings)
+        if mode == 'expire_broadcast':
+            return self.schd.task_events_mgr.broadcast_mgr.expire_broadcast(
+                cutoff)
         raise ValueError('Unsupported broadcast mode')
 
     @authorise(Priv.READ)
@@ -1192,6 +1195,7 @@ class SuiteRuntimeServer(ZMQSocketBase):
         self.schd.command_queue.put(("stop_now", (), {"terminate": terminate}))
         return (True, 'Command queued')
 
+    # TODO: deprecated by stop()
     @authorise(Priv.CONTROL)
     @expose
     def stop_flow(self, flow_label):

@@ -34,6 +34,18 @@ from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.terminal import cli_function
 
+MUTATION = '''
+mutation (
+  $wFlows: [WorkflowID]!
+) {
+  reload (
+    workflows: $wFlows
+  ) {
+    result
+  }
+}
+'''
+
 
 def get_option_parser():
     parser = COP(__doc__, comms=True)
@@ -44,7 +56,15 @@ def get_option_parser():
 @cli_function(get_option_parser)
 def main(parser, options, suite):
     pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
-    pclient('reload_suite')
+
+    mutation_kwargs = {
+        'request_string': MUTATION,
+        'variables': {
+            'wFlows': [suite],
+        }
+    }
+
+    pclient('graphql', mutation_kwargs)
 
 
 if __name__ == "__main__":

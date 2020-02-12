@@ -54,7 +54,7 @@ query {
       hours
       minutes
     }
-    nsDefnOrder
+    nsDefOrder
     states
   }
 }",
@@ -114,7 +114,7 @@ cat > expected << __HERE__
                 "hours": 0,
                 "minutes": 0
             },
-            "nsDefnOrder": [
+            "nsDefOrder": [
                 "foo",
                 "root"
             ],

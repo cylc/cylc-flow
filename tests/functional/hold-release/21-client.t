@@ -25,8 +25,21 @@ cylc run --reference-test --hold --debug --no-detach "${SUITE_NAME}" \
     1>"${TEST_NAME_BASE}.out" 2>&1 &
 CYLC_RUN_PID=$!
 poll_suite_running
+
+read -r -d '' release <<_args_
+{"request_string": "
+mutation {
+  release(workflows: [\"${SUITE_NAME}\"]){
+    result
+  }
+}
+",
+"variables": null}
+_args_
+
+# shellcheck disable=SC2086
 run_ok "${TEST_NAME_BASE}-client" \
-    cylc client "${SUITE_NAME}" 'release_suite' -n
+    cylc client "${SUITE_NAME}" 'graphql' < <(echo ${release})
 run_ok "${TEST_NAME_BASE}-run" wait "${CYLC_RUN_PID}"
 purge_suite "${SUITE_NAME}"
 exit

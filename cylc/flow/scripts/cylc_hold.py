@@ -31,6 +31,22 @@ from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.terminal import cli_function
 
+MUTATION = '''
+mutation (
+  $wFlows: [WorkflowID]!,
+  $tasks: [NamespaceIDGlob],
+  $time: TimePoint
+) {
+  hold (
+    workflows: $wFlows,
+    tasks: $tasks,
+    time: $time
+  ) {
+    result
+  }
+}
+'''
+
 
 def get_option_parser():
     parser = COP(
@@ -51,20 +67,16 @@ def get_option_parser():
 def main(parser, options, suite, *task_globs):
     pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
 
-    if task_globs:
-        pclient(
-            'hold_tasks',
-            {'task_globs': task_globs}
-        )
-    elif options.hold_point_string:
-        pclient(
-            'hold_after_point_string',
-            {'point_string': options.hold_point_string}
-        )
-    else:
-        pclient(
-            'hold_suite'
-        )
+    mutation_kwargs = {
+        'request_string': MUTATION,
+        'variables': {
+            'wFlows': [suite],
+            'tasks': list(task_globs),
+            'time': options.hold_point_string,
+        }
+    }
+
+    pclient('graphql', mutation_kwargs)
 
 
 if __name__ == "__main__":

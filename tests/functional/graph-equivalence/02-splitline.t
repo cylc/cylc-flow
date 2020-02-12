@@ -26,25 +26,21 @@ set_test_number 5
 install_suite "${TEST_NAME_BASE}" test3
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc validate \
+    --set=TEST_OUTPUT_PATH="${PWD}" "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_ok "${TEST_NAME}" \
-    cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME}" cylc run --reference-test --debug --no-detach \
+    --set=TEST_OUTPUT_PATH="${PWD}" "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-check-a"
-cylc run "${SUITE_NAME}" --hold 1>'out' 2>&1
-poll_grep_suite_log 'Holding all waiting or queued tasks now'
-cylc show "${SUITE_NAME}" 'a.1' | sed -n "/prerequisites/,/outputs/p" > 'a-prereqs'
 cmp_ok "${TEST_SOURCE_DIR}/splitline_refs/a-ref" 'a-prereqs'
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-check-b"
-cylc show "${SUITE_NAME}" 'b.1' | sed -n "/prerequisites/,/outputs/p" > 'b-prereqs'
 cmp_ok "${TEST_SOURCE_DIR}/splitline_refs/b-ref" 'b-prereqs'
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-check-c"
-cylc show "${SUITE_NAME}" 'c.1' | sed -n "/prerequisites/,/outputs/p" > 'c-prereqs'
 cmp_ok "${TEST_SOURCE_DIR}/splitline_refs/c-ref" 'c-prereqs'
 #-------------------------------------------------------------------------------
-cylc shutdown "${SUITE_NAME}" --now
+#cylc shutdown "${SUITE_NAME}" --now
 purge_suite "${SUITE_NAME}"

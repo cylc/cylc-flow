@@ -27,6 +27,20 @@ from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.terminal import cli_function
 
+MUTATION = '''
+mutation (
+  $wFlows: [WorkflowID]!,
+  $level: LogLevels!,
+) {
+  setVerbosity (
+    workflows: $wFlows,
+    level: $level,
+  ) {
+    result
+  }
+}
+'''
+
 
 def get_option_parser():
     parser = COP(
@@ -48,7 +62,16 @@ def main(parser, options, suite, severity_str):
         parser.error("Illegal logging level, %s" % severity_str)
 
     pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
-    pclient('set_verbosity', {'level': severity})
+
+    mutation_kwargs = {
+        'request_string': MUTATION,
+        'variables': {
+            'wFlows': [suite],
+            'level': severity,
+        }
+    }
+
+    pclient('graphql', mutation_kwargs)
 
 
 if __name__ == "__main__":

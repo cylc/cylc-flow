@@ -32,6 +32,14 @@ from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.terminal import cli_function
 
+MUTATION = '''
+mutation ($wflows: [WorkflowID]!) {
+  nudge (workflows: $wflows) {
+    result
+  }
+}
+'''
+
 
 def get_option_parser():
     parser = COP(__doc__, comms=True)
@@ -43,7 +51,12 @@ def get_option_parser():
 def main(parser, options, suite):
     pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
 
-    success, msg = pclient('nudge')
+    mutation_kwargs = {
+        'request_string': MUTATION,
+        'variables': {'wflows': [suite]}
+    }
+
+    pclient('graphql', mutation_kwargs)
 
 
 if __name__ == "__main__":
