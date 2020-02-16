@@ -499,25 +499,6 @@ class CylcSuiteDAO(object):
         for row_idx, row in enumerate(self.connect().execute(stmt, stmt_args)):
             callback(row_idx, list(row))
 
-    def pre_select_broadcast_events(self, order=None):
-        """Query statement and args formation for select_broadcast_events."""
-        form_stmt = r"SELECT time,change,point,namespace,key,value FROM %s"
-        if order == "DESC":
-            ordering = (" ORDER BY " +
-                        "time DESC, point DESC, namespace DESC, key DESC")
-            form_stmt = form_stmt + ordering
-        return form_stmt % self.TABLE_BROADCAST_EVENTS, []
-
-    def select_broadcast_events(self, callback, id_key=None, sort=None):
-        """Select from broadcast_events.
-
-        Invoke callback(row_idx, row) on each row, where each row contains:
-            [time, change, point, namespace, key, value]
-        """
-        stmt, stmt_args = self.pre_select_broadcast_events(order=sort)
-        for row_idx, row in enumerate(self.connect().execute(stmt, stmt_args)):
-            callback(row_idx, list(row))
-
     def select_checkpoint_id(self, callback, id_key=None):
         """Select from checkpoint_id.
 
@@ -573,16 +554,6 @@ class CylcSuiteDAO(object):
         for row_idx, row in enumerate(self.connect().execute(
                 r"SELECT key,value FROM %s" % self.TABLE_SUITE_TEMPLATE_VARS)):
             callback(row_idx, list(row))
-
-    def select_table_schema(self, my_type, my_name):
-        """Select from task_action_timers for restart.
-
-        Invoke callback(row_idx, row) on each row.
-        """
-        for sql, in self.connect().execute(
-                r"SELECT sql FROM sqlite_master where type==? and name==?",
-                [my_type, my_name]):
-            return sql
 
     def select_task_action_timers(self, callback):
         """Select from task_action_timers for restart.
