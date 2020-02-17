@@ -60,6 +60,10 @@ creating directories when executed for suites that do not exist.
 [#3433](https://github.com/cylc/cylc-flow/pull/3433) - fix server abort at
 shutdown during remote run dir tidy (introduced during Cylc 8 development).
 
+[#3493](https://github.com/cylc/cylc-flow/pull/3493) - Update jinja2 and
+pyzmq, as well as some test/dev dependencies. Fixes Jinja2 error where
+validation shows incorrect context.
+
 -------------------------------------------------------------------------------
 ## __cylc-8.0a1 (2019-09-18)__
 
