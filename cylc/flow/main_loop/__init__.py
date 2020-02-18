@@ -55,13 +55,12 @@ from cylc.flow.exceptions import CylcError, UserInputError
 
 class MainLoopPluginException(Exception):
     """Raised in-place of CylcError exceptions.
-    
+
     Note:
         * Not an instace of CylcError as that is used for controlled
           shutdown e.g. SchedulerStop.
 
     """
-
 
 
 def load_plugins(config, additional_plugins=None):

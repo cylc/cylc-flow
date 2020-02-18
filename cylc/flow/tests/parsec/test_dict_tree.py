@@ -94,7 +94,7 @@ def test_get():
     assert a.get('b') == 2
     assert a.get('b', 42) == 2
     # key does not exist
-    assert a.get('e') == None
+    assert a.get('e') is None
     assert a.get('e', 42) == 42
 
 

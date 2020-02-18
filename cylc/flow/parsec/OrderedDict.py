@@ -145,7 +145,6 @@ class DictTree:
     def __init__(self, *tree):
         self._tree = tree
 
-
     def __getitem__(self, key):
         values = []
         defaults = []
