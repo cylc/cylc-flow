@@ -10,7 +10,7 @@ including Apple OS X, but they are not officially tested and supported.
 Third-Party Software Packages
 -----------------------------
 
-**Python 2** ``>=`` **2.6** is required. **Python 2** ``>=`` **2.7.9** is
+**Python 2** ``>=`` **2.7** is required. **Python 2** ``>=`` **2.7.9** is
 recommended for the best security. `Python <https://python.org/>`_ 2 should
 already be installed in your Linux system.
 
@@ -80,7 +80,7 @@ are installed properly:
    Package (version requirements)                          Outcome (version found)
    ===============================================================================
                                  *REQUIRED SOFTWARE*
-   Python (2.6+, <3).....................FOUND & min. version MET (2.7.12.final.0)
+   Python (2.7+, <3).....................FOUND & min. version MET (2.7.12.final.0)
 
           *OPTIONAL SOFTWARE for the GUI & dependency graph visualisation*
    Python:pygraphviz (any)...........................................NOT FOUND (-)

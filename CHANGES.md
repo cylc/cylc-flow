@@ -28,6 +28,7 @@ pages**.
 
 [#3502](https://github.com/cylc/cylc-flow/pull/3502) - Update to jinja2
 2.11.1, fixing Jinja2 error where validation shows incorrect context.
+**This requires Python 2.7**
 
 -------------------------------------------------------------------------------
 ## __cylc-7.8.5 (2019-Q4?)__
