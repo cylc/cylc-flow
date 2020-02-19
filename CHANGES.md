@@ -22,6 +22,14 @@ pages**.
   and uses the fixed version 2.10.1.
 
 -------------------------------------------------------------------------------
+## __cylc-7.9.0 (2020-Q4?)__
+
+### Fixes
+
+[#3502](https://github.com/cylc/cylc-flow/pull/3502) - Update to jinja2
+2.11.1, fixing Jinja2 error where validation shows incorrect context.
+
+-------------------------------------------------------------------------------
 ## __cylc-7.8.5 (2019-Q4?)__
 
 
@@ -30,7 +38,6 @@ pages**.
 [#3349](https://github.com/cylc/cylc-flow/pull/3349) - new command `cylc
 ref-graph` to generate text-format "reference graphs" without PyGTK (back-port
 from Python 3 master for Cylc 8).
-
 
 -------------------------------------------------------------------------------
 ## __cylc-7.8.4 (2019-09-04)__
