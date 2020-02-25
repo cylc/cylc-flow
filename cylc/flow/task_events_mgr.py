@@ -342,8 +342,7 @@ class TaskEventsManager():
             event_time = get_current_time_string()
         if submit_num is None:
             submit_num = itask.submit_num
-        if not self._process_message_check(
-                itask, severity, message, event_time, flag, submit_num):
+        if not self._process_message_check(itask, severity, message, event_time, flag, submit_num):
             return None
 
         # always update the suite state summary for latest message
@@ -383,13 +382,14 @@ class TaskEventsManager():
             self._process_message_started(itask, event_time)
         elif message == TASK_OUTPUT_SUCCEEDED:
             self._process_message_succeeded(itask, event_time)
+            finished_tasks_queue.put(itask)
         elif message == TASK_OUTPUT_FAILED:
             if (
                     flag == self.FLAG_RECEIVED
                     and itask.state.is_gt(TASK_STATUS_FAILED)
             ):
                 return True
-            self._process_message_failed(itask, event_time, self.JOB_FAILED)
+            self._process_message_failed(itask, event_time, self.JOB_FAILED, finished_tasks_queue)
         elif message == self.EVENT_SUBMIT_FAILED:
             if (
                     flag == self.FLAG_RECEIVED
@@ -415,7 +415,7 @@ class TaskEventsManager():
             self._db_events_insert(itask, "signaled", signal)
             self.suite_db_mgr.put_update_task_jobs(
                 itask, {"run_signal": signal})
-            self._process_message_failed(itask, event_time, self.JOB_FAILED)
+            self._process_message_failed(itask, event_time, self.JOB_FAILED, finished_tasks_queue)
         elif message.startswith(ABORT_MESSAGE_PREFIX):
             # Task aborted with message
             if (
@@ -427,7 +427,7 @@ class TaskEventsManager():
             self._db_events_insert(itask, "aborted", message)
             self.suite_db_mgr.put_update_task_jobs(
                 itask, {"run_signal": aborted_with})
-            self._process_message_failed(itask, event_time, aborted_with)
+            self._process_message_failed(itask, event_time, aborted_with, finished_tasks_queue)
         elif message.startswith(VACATION_MESSAGE_PREFIX):
             # Task job pre-empted into a vacation state
             self._db_events_insert(itask, "vacated", message)
@@ -468,13 +468,6 @@ class TaskEventsManager():
             itask.non_unique_events.setdefault(lseverity, 0)
             itask.non_unique_events[lseverity] += 1
             self.setup_event_handlers(itask, lseverity, message)
-
-        # (first remove signal: failed/EXIT -> failed)
-        # TODO - signal already removed above
-        msg0 = message.split('/')[0]
-        if msg0 in (TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED):
-           finished_tasks_queue.put(itask)
-        return None
 
     def _process_message_check(
         self,
@@ -697,8 +690,9 @@ class TaskEventsManager():
             except KeyError as exc:
                 LOG.exception(exc)
 
-    def _process_message_failed(self, itask, event_time, message):
+    def _process_message_failed(self, itask, event_time, message, finished_tasks_queue):
         """Helper for process_message, handle a failed message."""
+        # TODO finished tasks nueue via object init?
         if event_time is None:
             event_time = get_current_time_string()
         itask.set_summary_time('finished', event_time)
@@ -717,6 +711,7 @@ class TaskEventsManager():
                 self.setup_event_handlers(itask, "failed", message)
             LOG.critical(
                 "[%s] -job(%02d) %s", itask, itask.submit_num, "failed")
+            finished_tasks_queue.put(itask)
         elif itask.state.reset(TASK_STATUS_RETRYING):
             delay_msg = "retrying in %s" % (
                 itask.try_timers[TASK_STATUS_RETRYING].delay_timeout_as_str())

@@ -526,12 +526,12 @@ class TaskPool(object):
         stalled = True
         for itask in self.get_tasks():
            if itask.state(
-              TASK_STATUS_QUEUED,
-              TASK_STATUS_READY,
-              TASK_STATUS_SUBMITTED,
-              TASK_STATUS_RUNNING,
-              TASK_STATUS_RETRYING,
-              TASK_STATUS_SUBMIT_RETRYING):
+                 TASK_STATUS_QUEUED,
+                 TASK_STATUS_READY,
+                 TASK_STATUS_SUBMITTED,
+                 TASK_STATUS_RUNNING,
+                 TASK_STATUS_RETRYING,
+                 TASK_STATUS_SUBMIT_RETRYING):
               stalled = False
               break
         if stalled:

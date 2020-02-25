@@ -562,10 +562,11 @@ see `COPYING' in the Cylc source distribution.
                 parent_points = tdef.get_parent_points(point)
                 spawn = True
                 for pp in parent_points:
-                   if pp > self.config.start_point:
+                   if pp >= self.config.start_point:
                       # TODO what if all sequence starts are offset from ICP?
                       spawn = False
                 if spawn:
+                    print('SPAWNING', tdef.name, point)
                     try:
                         self.pool.add_to_runahead_pool(
                             TaskProxy(tdef, point, is_startup=True))
