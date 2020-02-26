@@ -488,9 +488,9 @@ class TaskPool(object):
 
     def release_runahead_task(self, itask):
         """Release itask to the appropriate queue in the active pool."""
-        if not itask.state.prerequisites_are_all_satisfied():
-           # SoD: spawn on ouputs, but keep in rh pool until ready.
-           return
+        # SoD: to keep partially satisfied tasks in the rh pool:
+        #if not itask.state.prerequisites_are_all_satisfied():
+        #   return
         try:
             queue = self.myq[itask.tdef.name]
         except KeyError:
@@ -541,17 +541,21 @@ class TaskPool(object):
         removed = False
         while True:
            try:
-              self.remove(self.finished_tasks_queue.get(block=False))
+              itask = self.finished_tasks_queue.get(block=False)
            except Empty:
               break
            else:
-              removed = True
+              # Remove if the finished task has not just been re-triggered.
+              if itask.state(TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED):
+                  self.remove(itask)
+                  removed = True
         return removed
  
     def remove(self, itask, reason=None):
         """Remove finished task proxies.
         
         """
+        print('REMOVING', itask.identity)
         try:
             del self.runahead_pool[itask.point][itask.identity]
         except KeyError:
@@ -1018,7 +1022,7 @@ class TaskPool(object):
             )
             for itask in self.get_tasks())
 
-    def spawn(self, up_name, up_point, name, point, message=None):
+    def spawn(self, up_name, up_point, name, point, message=None, go=False):
         """Spawn a new tasks proxy."""
         LOG.info('[%s.%s] spawning %s.%s (%s)',
                  up_name, up_point, name, point, message)
@@ -1035,7 +1039,9 @@ class TaskPool(object):
                    self.add_to_runahead_pool(itask)
                    break
         # TODO itask not found? (shouldn't happen)
-        if message is not None:
+        if go:
+           itask.state.set_prerequisites_all_satisfied()
+        elif message is not None:
            outputs = set([])
            outputs.add((up_name, str(up_point), message))
            itask.state.satisfy_me(outputs)
@@ -1116,6 +1122,15 @@ class TaskPool(object):
 
     def trigger_tasks(self, items, back_out=False):
         """Operator-forced task triggering."""
+        #------
+        # SoD COUP
+        for item in items:
+            name, str_point = TaskID.split(item)
+            self.spawn('None', 'None', name, get_point(str_point), go=True)
+        return
+
+        # ------
+
         itasks, bad_items = self.filter_task_proxies(items)
         n_warnings = len(bad_items)
         for itask in itasks:

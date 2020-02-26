@@ -547,7 +547,7 @@ see `COPYING' in the Cylc source distribution.
         task_list = self.filter_initial_task_list(
             self.config.get_task_name_list())
 
-        #from cylc.flow import patch_pudb; import pudb; pudb.set_trace()
+        #from cylc.flow import cylc_pudb; cylc_pudb.set_trace()
         # TODO HOW TO ADD INITIAL INSTANCES OF ALL SELF-SPAWNERS?
         # THE FOLLOWING IS NOT RIGHT YET.
         for name in task_list:
