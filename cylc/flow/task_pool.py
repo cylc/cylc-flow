@@ -280,7 +280,7 @@ class TaskPool(object):
         """
         if row_idx == 0:
             LOG.info("LOADING task proxies")
-        (cycle, name, spawned, is_late, status, is_held, submit_num, _,
+        (cycle, name, is_late, status, is_held, submit_num, _,
          user_at_host, time_submit, time_run, timeout,
          outputs_str) = row
         try:

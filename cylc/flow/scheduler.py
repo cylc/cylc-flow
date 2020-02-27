@@ -574,6 +574,10 @@ see `COPYING' in the Cylc source distribution.
 
     def load_tasks_for_restart(self):
         """Load tasks for restart."""
+
+        #from cylc.flow import cylc_pudb; cylc_pudb.set_trace()
+        #from cylc.flow import patch_pudb; import pudb; pudb.set_trace()
+
         if self.options.startcp:
             self.config.start_point = self.get_standardised_point(
                 self.options.startcp)
