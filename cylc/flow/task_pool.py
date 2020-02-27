@@ -96,66 +96,6 @@ class TaskPool(object):
         for queue, qconfig in self.config.cfg['scheduling']['queues'].items():
             self.myq.update((name, queue) for name in qconfig['members'])
 
-    def insert_tasks(self, items, stopcp, check_point=True):
-        """Insert tasks."""
-        n_warnings = 0
-        task_items = {}
-        select_args = []
-        for item in items:
-            point_str, name_str = self._parse_task_item(item)[:2]
-            if point_str is None:
-                LOG.warning(
-                    "%s: task ID for insert must contain cycle point" % (item))
-                n_warnings += 1
-                continue
-            try:
-                point_str = standardise_point_string(point_str)
-            except PointParsingError as exc:
-                LOG.warning(
-                    self.ERR_PREFIX_TASKID_MATCH + ("%s (%s)" % (item, exc)))
-                n_warnings += 1
-                continue
-            taskdefs = self.config.find_taskdefs(name_str)
-            if not taskdefs:
-                LOG.warning(self.ERR_PREFIX_TASKID_MATCH + item)
-                n_warnings += 1
-                continue
-            for taskdef in taskdefs:
-                task_items[(taskdef.name, point_str)] = taskdef
-                select_args.append((taskdef.name, point_str))
-        if stopcp is None:
-            stop_point = None
-        else:
-            try:
-                stop_point = get_point(standardise_point_string(stopcp))
-            except (PointParsingError, ValueError) as exc:
-                LOG.warning("Invalid stop point: %s (%s)", stopcp, exc)
-                n_warnings += 1
-                return n_warnings
-        submit_nums = self.suite_db_mgr.pri_dao.select_submit_nums_for_insert(
-            select_args)
-        for key, taskdef in sorted(task_items.items()):
-            # TODO - insertion of start-up tasks? (startup=False assumed here)
-
-            # Check that the cycle point is on one of the tasks sequences.
-            point = get_point(key[1])
-            if check_point:  # Check if cycle point is on the tasks sequence.
-                for sequence in taskdef.sequences:
-                    if sequence.is_on_sequence(point):
-                        break
-                else:
-                    LOG.warning("%s%s, %s" % (
-                        self.ERR_PREFIX_TASK_NOT_ON_SEQUENCE, taskdef.name,
-                        key[1]))
-                    continue
-
-            submit_num = submit_nums.get(key, 0)
-            itask = self.add_to_runahead_pool(TaskProxy(
-                taskdef, point, stop_point=stop_point, submit_num=submit_num))
-            if itask:
-                LOG.info("[%s] -submit-num=%02d, inserted", itask, submit_num)
-        return n_warnings
-
     def add_to_runahead_pool(self, itask, is_new=True):
         """Add a new task to the runahead pool if possible.
 
@@ -166,7 +106,6 @@ class TaskPool(object):
         """
 
         # do not add if a task with the same ID already exists
-        # e.g. an inserted task caught up with an existing one
         if self.get_task_by_id(itask.identity) is not None:
             LOG.warning(
                 '%s cannot be added to pool: task ID already exists' %
@@ -1067,58 +1006,6 @@ class TaskPool(object):
                 self.remove(itask, 'suicide')
                 num_removed += 1
         return num_removed
-
-    def reset_task_states(self, items, status, outputs):
-        """Operator-forced task status reset and output manipulation."""
-        is_held = None
-        itasks, bad_items = self.filter_task_proxies(items)
-        for itask in itasks:
-            if status and not itask.state(status, is_held=is_held):
-                LOG.info("[%s] -resetting state to %s", itask, status)
-                itask.state.reset(status, is_held=is_held)
-                if status in [TASK_STATUS_FAILED, TASK_STATUS_SUCCEEDED]:
-                    itask.set_summary_time('finished',
-                                           get_current_time_string())
-            if outputs:
-                for output in outputs:
-                    is_completed = True
-                    if output.startswith('!'):
-                        is_completed = False
-                        output = output[1:]
-                    if output == '*' and is_completed:
-                        itask.state.outputs.set_all_completed()
-                        LOG.info("[%s] -reset all outputs to completed",
-                                 itask)
-                    elif output == '*':
-                        itask.state.outputs.set_all_incomplete()
-                        LOG.info("[%s] -reset all outputs to incomplete",
-                                 itask)
-                    else:
-                        ret = itask.state.outputs.set_msg_trg_completion(
-                            message=output, is_completed=is_completed)
-                        if ret is None:
-                            ret = itask.state.outputs.set_msg_trg_completion(
-                                trigger=output, is_completed=is_completed)
-                        if ret is None:
-                            LOG.warning(
-                                "[%s] -cannot reset output: %s", itask, output)
-                        elif ret:
-                            LOG.info(
-                                "[%s] -reset output to complete: %s",
-                                itask, output)
-                        else:
-                            LOG.info(
-                                "[%s] -reset output to incomplete: %s",
-                                itask, output)
-                self.suite_db_mgr.put_update_task_outputs(itask)
-        return len(bad_items)
-
-    def remove_tasks(self, items):
-        """Remove tasks from pool."""
-        itasks, bad_items = self.filter_task_proxies(items)
-        for itask in itasks:
-            self.remove(itask, 'by request')
-        return len(bad_items)
 
     def trigger_tasks(self, items, back_out=False):
         """Operator-forced task triggering."""

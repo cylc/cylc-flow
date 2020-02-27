@@ -152,10 +152,8 @@ class Scheduler(object):
         'release_suite',
         'release_tasks',
         'kill_tasks',
-        'reset_task_states',
         'trigger_tasks',
         'nudge',
-        'insert_tasks',
         'reload_suite'
     )
 
@@ -1006,15 +1004,6 @@ see `COPYING' in the Cylc source distribution.
         cylc.flow.flags.verbose = bool(LOG.isEnabledFor(logging.INFO))
         cylc.flow.flags.debug = bool(LOG.isEnabledFor(logging.DEBUG))
         return True, 'OK'
-
-    def command_remove_tasks(self, items):
-        """Remove tasks."""
-        return self.pool.remove_tasks(items)
-
-    def command_insert_tasks(self, items, stop_point_string=None,
-                             check_point=True):
-        """Insert tasks."""
-        return self.pool.insert_tasks(items, stop_point_string, check_point)
 
     def command_nudge(self):
         """Cause the task processing loop to be invoked"""
@@ -2032,10 +2021,6 @@ see `COPYING' in the Cylc source distribution.
             else:
                 self.proc_pool.process()
                 sleep(self.INTERVAL_MAIN_LOOP_QUICK)
-
-    def command_reset_task_states(self, items, state=None, outputs=None):
-        """Reset the state of tasks."""
-        return self.pool.reset_task_states(items, state, outputs)
 
     def command_take_checkpoints(self, name):
         """Insert current task_pool, etc to checkpoints tables."""

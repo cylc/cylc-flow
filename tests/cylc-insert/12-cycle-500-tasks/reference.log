@@ -1,5 +1,0 @@
-2016-05-23T12:22:35+01 INFO - Initial point: 1
-2016-05-23T12:22:35+01 INFO - Final point: 1
-2016-05-23T12:22:35+01 INFO - [i1.1] -triggered off []
-2016-05-23T12:22:39+01 INFO - [t1.1] -triggered off ['i1.1']
-2016-05-23T12:22:43+01 INFO - [t2.1] -triggered off ['i1.1']

@@ -1233,27 +1233,18 @@ class Reload(Mutation):
         description = sstrip('''
             Tell a suite to reload its definition at run time.
 
-            All settings including task definitions, with the
-            exception of suite log configuration, can be changed on reload.
-            Note that defined tasks can be be added to or removed from a
-            running suite using "insert" and "remove" without reloading.  This
-            command also allows addition and removal of actual task
-            definitions, and therefore insertion of tasks that were not defined
-            at all when the suite started (you will still need to manually
-            insert a particular instance of a newly defined task). Live task
-            proxies that are orphaned by a reload (i.e. their task definitions
-            have been removed) will be removed from the task pool if they have
-            not started running yet. Changes to task definitions take effect
-            immediately, unless a task is already running at reload time.
+            All settings including task definitions, with the exception of
+            suite log configuration, can be changed on reload. Changes to task
+            definitions take effect immediately, unless a task is already
+            running at reload time.
 
-            If the suite was started with Jinja2 template variables
-            set on the command line (cylc run --set FOO=bar REG) the same
-            template settings apply to the reload (only changes to the suite.rc
+            If the suite was started with Jinja2 template variables set on the
+            command line (cylc run --set FOO=bar REG) the same template
+            settings apply to the reload (only changes to the suite.rc
             file itself are reloaded).
 
-            If the modified suite definition does not parse,
-            failure to reload will be reported but no harm will be done to the
-            running suite.
+            If the modified suite definition does not parse, failure to reload
+            will be reported but no harm will be done to the running suite.
         ''')
         resolver = partial(mutator, command='reload_suite')
 
@@ -1392,38 +1383,6 @@ class DryRun(Mutation, TaskMutation):
         )
 
 
-class Insert(Mutation, TaskMutation):
-    class Meta:
-        description = sstrip('''
-            Insert new task proxies into the task pool of a running workflow.
-
-            For example to enable re-triggering earlier tasks already removed
-            from the pool.
-
-            Note: inserted cycling tasks cycle on as normal, even if another
-            instance of the same task exists at a later cycle (instances of the
-            same task at different cycles can coexist, but a newly spawned task
-            will not be added to the pool if it catches up to another task with
-            the same ID).
-
-            See also "Submit", for running tasks without the scheduler.
-        ''')
-        resolver = partial(mutator, command='insert_tasks')
-
-    class Arguments(TaskMutation.Arguments):
-        check_point = Boolean(
-            description=sstrip('''
-                Check that the provided cycle point is on one of the task's
-                recurrences as defined in the suite configuration before
-                inserting.
-            '''),
-            default_value=True
-        )
-        stop_point = CyclePoint(
-            description='hold/stop cycle point for inserted task.'
-        )
-
-
 class Kill(Mutation, TaskMutation):
     # TODO: This should be a job mutation?
     class Meta:
@@ -1447,51 +1406,6 @@ class Poll(Mutation, TaskMutation):
         )
 
 
-class Remove(Mutation, TaskMutation):
-    class Meta:
-        description = sstrip('''
-            Remove one or more task instances from a running workflow.
-
-            Tasks will be forced to spawn successors before removal if they
-            have not done so already, unless you change the `spawn` option.
-        ''')
-        resolver = partial(mutator, command='remove_tasks')
-
-    class Arguments(TaskMutation.Arguments):
-       pass
-
-
-class Reset(Mutation, TaskMutation):
-    class Meta:
-        description = sstrip(f'''
-            Force task instances to a specified state.
-
-            Outputs are automatically updated to reflect the new task state,
-            except for custom message outputs which can be manipulated directly
-            with `outputs`.
-
-            Prerequisites reflect the state of other tasks; they are not
-            changed except to unset them on resetting state to
-            `{TASK_STATUS_WAITING}` or earlier.
-
-            Note: To hold and release tasks use "Hold" and "Release", not this
-            command.
-        ''')
-        resolver = partial(mutator, command='reset_task_states')
-
-    class Arguments(TaskMutation.Arguments):
-        state = TaskStatus(
-            description='Reset the task status to this.'
-        )
-        outputs = List(
-            String,
-            description=sstrip('''
-                Find task output by message string or trigger string, set
-                complete or incomplete with `!OUTPUT`, `*` to set all
-                complete, `!*` to set all incomplete.
-            ''')
-        )
-
 
 class Trigger(Mutation, TaskMutation):
     class Meta:
@@ -1510,9 +1424,6 @@ class Trigger(Mutation, TaskMutation):
             tasks will submit immediately if triggered, even if that violates
             the queue limit (so you may need to trigger a queue-limited task
             twice to get it to submit immediately).
-
-            Note: tasks not already in the pool must be inserted first with
-            "Insert" in order to be matched.
         ''')
         resolver = partial(mutator, command='trigger_tasks')
 
@@ -1543,11 +1454,8 @@ class Mutations(ObjectType):
 
     # task actions
     dry_run = DryRun.Field(description=DryRun._meta.description)
-    insert = Insert.Field(description=Insert._meta.description)
     kill = Kill.Field(description=Kill._meta.description)
     poll = Poll.Field(description=Poll._meta.description)
-    remove = Remove.Field(description=Remove._meta.description)
-    reset = Reset.Field(description=Reset._meta.description)
     trigger = Trigger.Field(description=Trigger._meta.description)
 
     # job actions

@@ -747,39 +747,6 @@ class SuiteRuntimeServer(ZMQSocketBase):
 
     @authorise(Priv.CONTROL)
     @expose
-    def insert_tasks(self, tasks, stop_point=None, check_point=True):
-        """Insert task proxies.
-
-        Args:
-            tasks (list):
-                A list of `task globs`_ (strings) which *cannot* contain
-                any glob characters (``*``).
-            stop_point (str, optional):
-                Optional hold/stop cycle point for inserted task.
-            check_point (bool, optional):
-                If True check that the cycle point is valid for the
-                given task and fail if it is not.
-        Returns:
-            tuple: (outcome, message)
-
-            outcome (bool)
-                True if command successfully queued.
-            message (str)
-                Information about outcome.
-
-        """
-        self.schd.command_queue.put((
-            "insert_tasks",
-            (tasks,),
-            {
-                "stop_point_string": stop_point,
-                "check_point": check_point
-            }
-        ))
-        return (True, 'Command queued')
-
-    @authorise(Priv.CONTROL)
-    @expose
     def kill_tasks(self, tasks):
         """Kill task jobs.
 
@@ -1034,58 +1001,6 @@ class SuiteRuntimeServer(ZMQSocketBase):
 
         """
         self.schd.command_queue.put(("release_tasks", (task_globs,), {}))
-        return (True, 'Command queued')
-
-    @authorise(Priv.CONTROL)
-    @expose
-    def remove_tasks(self, tasks):
-        """Remove tasks from task pool.
-
-        Args:
-            tasks (list):
-                List of identifiers, see `task globs`_
-
-        Returns:
-            tuple: (outcome, message)
-
-            outcome (bool)
-                True if command successfully queued.
-            message (str)
-                Information about outcome.
-
-        """
-        self.schd.command_queue.put(
-            ("remove_tasks", (tasks,)))
-        return (True, 'Command queued')
-
-    @authorise(Priv.CONTROL)
-    @expose
-    def reset_task_states(self, tasks, state=None, outputs=None):
-        """Reset statuses tasks.
-
-        Args:
-            tasks (list):
-                List of identifiers, see `task globs`_
-            state (str, optional):
-                Task state to reset task to.
-                See ``cylc.flow.task_state.TASK_STATUSES_CAN_RESET_TO``.
-            outputs (list, optional):
-                Find task output by message string or trigger string
-                set complete or incomplete with !OUTPUT
-                ``*`` to set all complete, ``!*`` to set all incomplete.
-
-        Returns:
-            tuple: (outcome, message)
-
-            outcome (bool)
-                True if command successfully queued.
-            message (str)
-                Information about outcome.
-
-        """
-        self.schd.command_queue.put((
-            "reset_task_states",
-            (tasks,), {"state": state, "outputs": outputs}))
         return (True, 'Command queued')
 
     # TODO: deprecated by stop()

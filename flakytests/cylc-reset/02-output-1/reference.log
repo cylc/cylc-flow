@@ -1,6 +1,0 @@
-2016-01-14T11:55:10Z INFO - Initial point: 1
-2016-01-14T11:55:10Z INFO - Final point: 1
-2016-01-14T11:55:10Z INFO - [t1.1] -triggered off []
-2016-01-14T11:55:10Z INFO - [t2.1] -triggered off []
-2016-01-14T11:55:10Z INFO - [t3.1] -triggered off ['t1.1', 't2.1']
-2016-01-14T11:55:13Z INFO - [t4.1] -triggered off ['t1.1', 't2.1']
