@@ -152,6 +152,7 @@ class Scheduler(object):
         'release_suite',
         'release_tasks',
         'kill_tasks',
+        'spawn_tasks',
         'trigger_tasks',
         'nudge',
         'reload_suite'
@@ -792,7 +793,6 @@ see `COPYING' in the Cylc source distribution.
         """
         itasks, bad_items = self.pool.filter_task_proxies(items)
         results = {}
-        now = time()
         for itask in itasks:
             if list_prereqs:
                 # TODO: does this need to be handled separately like this?
@@ -2038,6 +2038,10 @@ see `COPYING' in the Cylc source distribution.
             else:
                 self.proc_pool.process()
                 sleep(self.INTERVAL_MAIN_LOOP_QUICK)
+
+    def command_spawn_tasks(self, items):
+        """Force spawn task successors."""
+        return self.pool.spawn_tasks(items)
 
     def command_take_checkpoints(self, name):
         """Insert current task_pool, etc to checkpoints tables."""

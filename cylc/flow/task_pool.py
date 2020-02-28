@@ -1007,6 +1007,38 @@ class TaskPool(object):
                 num_removed += 1
         return num_removed
 
+    def spawn_tasks(self, items):
+        """Spawn downstream children of given task outputs on user command.
+
+        Currently using all handled outputs except *failed and expired.
+        TODO allow user-specified specific outputs.
+        """
+        # No need to find and use in-pool tasks here?
+        itasks = []
+        for task_id in items:
+            # TODO: currently assuming items_other is a list of task IDs at
+            # valid cycle points.
+            name, point = TaskID.split(task_id)
+            for tname in self.config.get_task_name_list():
+                if tname == name:
+                   itasks.append(TaskProxy(
+                       self.config.get_taskdef(name), get_point(point)))
+
+        for itask in itasks:
+            LOG.info("[%s] - forced spawning", itask)
+            for trig, msg, status in itask.state.outputs.get_all():
+                if trig in ["submit-failed", "failed", "expired"]:
+                    # TODO: skipping these could be the default?
+                    continue
+                try:
+                    children = itask.children[msg]
+                except KeyError:
+                    pass
+                else:
+                    for child_name, child_point in children:
+                        self.spawn(itask.tdef.name, itask.point,
+                                   child_name, child_point, msg)
+
     def trigger_tasks(self, items, back_out=False):
         """Operator-forced task triggering."""
         #------
@@ -1015,7 +1047,6 @@ class TaskPool(object):
             name, str_point = TaskID.split(item)
             self.spawn('None', 'None', name, get_point(str_point), go=True)
         return
-
         # ------
 
         itasks, bad_items = self.filter_task_proxies(items)

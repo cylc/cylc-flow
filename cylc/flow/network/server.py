@@ -1120,6 +1120,26 @@ class SuiteRuntimeServer(ZMQSocketBase):
         self.schd.command_queue.put(("set_verbosity", (level,), {}))
         return (True, 'Command queued')
 
+    @authorise(Priv.CONTROL)
+    @expose
+    def spawn_tasks(self, tasks):
+        """Spawn tasks.
+
+        Args:
+            tasks (list): List of identifiers, see `task globs`_
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool)
+                True if command successfully queued.
+            message (str)
+                Information about outcome.
+
+        """
+        self.schd.command_queue.put(("spawn_tasks", (tasks,), {}))
+        return (True, 'Command queued')
+
     @authorise(Priv.SHUTDOWN)
     @expose
     def stop_workflow(

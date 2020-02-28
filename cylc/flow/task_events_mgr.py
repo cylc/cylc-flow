@@ -362,12 +362,12 @@ class TaskEventsManager():
         completed_trigger = itask.state.outputs.set_msg_trg_completion(
             message=msg0, is_completed=True)
         if completed_trigger is not None:
-           # Spawn downstream tasks that depend on this output.
-           try:
-              children = itask.children[msg0]
-           except KeyError:
-              pass
-           else:
+            # Spawn downstream tasks that depend on this output.
+            try:
+                children = itask.children[msg0]
+            except KeyError:
+                pass
+            else:
                 self.pflag = True
                 for child_name, child_point in children:
                    spawn(itask.tdef.name, itask.point,
