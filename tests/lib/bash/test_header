@@ -116,12 +116,7 @@
 #         with PRE and POST pre- and ap-pended (PRE for top level items with no
 #         section heading).
 #     set_test_remote_host
-#         set CYLC_TEST_HOST from global config, for remote job tests.
-#         (Remote job tests should really use set_test_remote, below, however).
-#     set_test_remote
-#         set CYLC_TEST_HOST and CYLC_TEST_OWNER for remote job tests.
-#     set_test_remote_host
-#         set CYLC_TEST_HOST from global config, for remote job tests.
+#         set CYLC_TEST_HOST from flow-tests.rc, for remote job tests.
 #         (Remote job tests should really use set_test_remote, below, however).
 #     set_test_remote
 #         set CYLC_TEST_HOST and CYLC_TEST_OWNER for remote job tests.
