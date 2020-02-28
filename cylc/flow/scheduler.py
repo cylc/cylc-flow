@@ -791,40 +791,53 @@ see `COPYING' in the Cylc source distribution.
         now = time()
         for itask in itasks:
             if list_prereqs:
+                # TODO: does this need to be handled separately like this?
                 results[itask.identity] = {
                     'prerequisites': itask.state.prerequisites_dump(
                         list_prereqs=True)}
                 continue
-            extras = {}
-            if itask.tdef.clocktrigger_offset is not None:
-                extras['Clock trigger time reached'] = (
-                    itask.is_waiting_clock_done(now))
-                extras['Triggers at'] = time2str(
-                    itask.clock_trigger_time)
-            for trig, satisfied in itask.state.external_triggers.items():
-                key = f'External trigger "{trig}"'
-                if satisfied:
-                    extras[key] = 'satisfied'
-                else:
-                    extras[key] = 'NOT satisfied'
-            for label, satisfied in itask.state.xtriggers.items():
-                sig = self.xtrigger_mgr.get_xtrig_ctx(
-                    itask, label).get_signature()
-                extra = f'xtrigger "{label} = {sig}"'
-                if satisfied:
-                    extras[extra] = 'satisfied'
-                else:
-                    extras[extra] = 'NOT satisfied'
-            outputs = []
-            for _, msg, is_completed in itask.state.outputs.get_all():
-                outputs.append(
-                    [f"{itask.identity} {msg}", is_completed])
-            results[itask.identity] = {
-                "meta": itask.tdef.describe(),
-                "prerequisites": itask.state.prerequisites_dump(),
-                "outputs": outputs,
-                "extras": extras}
+            results[itask.identity] = self._info_get_task_requisites(itask, list_prereqs=False)
+        for task_id in bad_items:
+            # TODO: currently assuming bad_items is a list of task IDs at valid cycle points.
+            # TODO: make it clear that these are not live tasks.
+            name, point = TaskID.split(task_id)
+            for tname in self.config.get_task_name_list():
+                if tname == name:
+                   itask = TaskProxy(
+                       self.config.get_taskdef(name), get_point(point))
+                   results[itask.identity] = self._info_get_task_requisites(itask, list_prereqs=False)
         return results, bad_items
+ 
+    def _info_get_task_requisites(self, itask, list_prereqs):
+        extras = {}
+        if itask.tdef.clocktrigger_offset is not None:
+            extras['Clock trigger time reached'] = (
+                itask.is_waiting_clock_done(now))
+            extras['Triggers at'] = time2str(
+                itask.clock_trigger_time)
+        for trig, satisfied in itask.state.external_triggers.items():
+            key = f'External trigger "{trig}"'
+            if satisfied:
+                extras[key] = 'satisfied'
+            else:
+                extras[key] = 'NOT satisfied'
+        for label, satisfied in itask.state.xtriggers.items():
+            sig = self.xtrigger_mgr.get_xtrig_ctx(
+                itask, label).get_signature()
+            extra = f'xtrigger "{label} = {sig}"'
+            if satisfied:
+                extras[extra] = 'satisfied'
+            else:
+                extras[extra] = 'NOT satisfied'
+        outputs = []
+        for _, msg, is_completed in itask.state.outputs.get_all():
+            outputs.append(
+                [f"{itask.identity} {msg}", is_completed])
+        return {
+            "meta": itask.tdef.describe(),
+            "prerequisites": itask.state.prerequisites_dump(),
+            "outputs": outputs,
+            "extras": extras}
 
     def info_ping_task(self, task_id, exists_only=False):
         """Return True if task exists and running."""
