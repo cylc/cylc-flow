@@ -2039,9 +2039,9 @@ see `COPYING' in the Cylc source distribution.
                 self.proc_pool.process()
                 sleep(self.INTERVAL_MAIN_LOOP_QUICK)
 
-    def command_spawn_tasks(self, items):
+    def command_spawn_tasks(self, items, failed, non_failed):
         """Force spawn task successors."""
-        return self.pool.spawn_tasks(items)
+        return self.pool.spawn_tasks(items, failed, non_failed)
 
     def command_take_checkpoints(self, name):
         """Insert current task_pool, etc to checkpoints tables."""

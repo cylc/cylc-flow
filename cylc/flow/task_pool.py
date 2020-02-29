@@ -1007,29 +1007,70 @@ class TaskPool(object):
                 num_removed += 1
         return num_removed
 
-    def spawn_tasks(self, items):
+    def spawn_tasks(self, items, failed, non_failed):
         """Spawn downstream children of given task outputs on user command.
 
-        Currently using all handled outputs except *failed and expired.
         TODO allow user-specified specific outputs.
         """
-        # No need to find and use in-pool tasks here?
-        itasks = []
-        for task_id in items:
-            # TODO: currently assuming items_other is a list of task IDs at
-            # valid cycle points.
-            name, point = TaskID.split(task_id)
-            for tname in self.config.get_task_name_list():
-                if tname == name:
-                   itasks.append(TaskProxy(
-                       self.config.get_taskdef(name), get_point(point)))
+        n_warnings = 0
+        task_items = {}
+        select_args = []
+        for item in items:
+            point_str, name_str = self._parse_task_item(item)[:2]
+            if point_str is None:
+                LOG.warning(
+                    "%s: task ID for insert must contain cycle point" % (item))
+                n_warnings += 1
+                continue
+            try:
+                point_str = standardise_point_string(point_str)
+            except PointParsingError as exc:
+                LOG.warning(
+                    self.ERR_PREFIX_TASKID_MATCH + ("%s (%s)" % (item, exc)))
+                n_warnings += 1
+                continue
+            taskdefs = self.config.find_taskdefs(name_str)
+            if not taskdefs:
+                LOG.warning(self.ERR_PREFIX_TASKID_MATCH + item)
+                n_warnings += 1
+                continue
+            for taskdef in taskdefs:
+                task_items[(taskdef.name, point_str)] = taskdef
+                select_args.append((taskdef.name, point_str))
+        # TODO - this only works for the initial spawning!
+        submit_nums = self.suite_db_mgr.pri_dao.select_submit_nums_for_insert(
+            select_args)
+        for key, taskdef in sorted(task_items.items()):
+            # Check that the cycle point is on one of the tasks sequences.
+            point = get_point(key[1])
+            # Check if cycle point is on the tasks sequence.
+            for sequence in taskdef.sequences:
+                if sequence.is_on_sequence(point):
+                    break
+            else:
+                LOG.warning("%s%s, %s" % (
+                    self.ERR_PREFIX_TASK_NOT_ON_SEQUENCE, taskdef.name,
+                    key[1]))
+                continue
+            submit_num = submit_nums.get(key, 0)
 
-        for itask in itasks:
+            # This the upstream target task:
+            itask = TaskProxy(taskdef, get_point(point))
+
             LOG.info("[%s] - forced spawning", itask)
-            for trig, msg, status in itask.state.outputs.get_all():
-                if trig in ["submit-failed", "failed", "expired"]:
-                    # TODO: skipping these could be the default?
-                    continue
+
+            msgs = []
+            if failed:
+                msgs.append('failed')
+            elif non_failed:
+                for trig, msg, status in itask.state.outputs.get_all(): 
+                    if trig not in ["submit-failed", "failed", "expired"]:
+                        msgs.append(msg)
+            else:
+                 msgs.append('succeeded')
+
+            # Now spawn downstream on chosen outputs.
+            for msg in msgs:
                 try:
                     children = itask.children[msg]
                 except KeyError:

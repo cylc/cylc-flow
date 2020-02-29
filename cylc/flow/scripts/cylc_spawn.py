@@ -16,15 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc [control] spawn [OPTIONS] ARGS
+"""cylc [control] spawn [OPTIONS] TASK_GLOB [...]
 
-Force task proxies to spawn successors at their own next cycle point.
-  cylc spawn REG - force spawn all tasks in a workflow
-  cylc spawn REG TASK_GLOB ... - force spawn one or more tasks in a workflow
+Force spawning (and prerequisite update) downstream of target task ouputs.
 
-Tasks normally spawn on reaching the "submitted" status. Spawning them early
-allows running successive instances of the same task out of order. See also
-the "spawn to max active cycle points" workflow configuration.
+Default is spawn on <target-tasks>:succeed.
+
 """
 
 import sys
@@ -41,16 +38,29 @@ from cylc.flow.terminal import prompt, cli_function
 
 def get_option_parser():
     parser = COP(
-        __doc__, comms=True, multitask=True,
+        __doc__, comms=True, multitask_nocycles=True,
         argdoc=[
-            ('REG', 'Suite name'),
-            ('[TASK_GLOB ...]', 'Task matching patterns')])
+            ("REG", "Suite name"),
+            ('TASK-GLOB [...]', 'Task match pattern')])
+
+    parser.add_option(
+        "--failed",
+        help="Spawn on <target-tasks>:fail.",
+        action="store_true", default=False, dest="failed")
+
+    parser.add_option(
+        "--non-failed",
+        help="Spawn on all non-failure outputs.",
+        action="store_true", default=False, dest="non_failed")
 
     return parser
 
 
 @cli_function(get_option_parser)
 def main(parser, options, suite, *task_globs):
+    if options.failed and options.non_failed:
+        sys.exit("--failed and --non-failed are mutually exclusive")
+
     prompt('Spawn task(s) %s in %s' % (task_globs, suite), options.force)
     pclient = SuiteRuntimeClient(
         suite, options.owner, options.host, options.port,
@@ -58,7 +68,10 @@ def main(parser, options, suite, *task_globs):
 
     pclient(
         'spawn_tasks',
-        {'tasks': task_globs}
+        {'tasks': task_globs,
+         'failed': options.failed,
+         'non_failed': options.non_failed
+        }
     )
 
 

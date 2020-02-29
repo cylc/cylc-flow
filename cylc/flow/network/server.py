@@ -1122,7 +1122,7 @@ class SuiteRuntimeServer(ZMQSocketBase):
 
     @authorise(Priv.CONTROL)
     @expose
-    def spawn_tasks(self, tasks):
+    def spawn_tasks(self, tasks, failed, non_failed):
         """Spawn tasks.
 
         Args:
@@ -1137,7 +1137,7 @@ class SuiteRuntimeServer(ZMQSocketBase):
                 Information about outcome.
 
         """
-        self.schd.command_queue.put(("spawn_tasks", (tasks,), {}))
+        self.schd.command_queue.put(("spawn_tasks", (tasks,), {'failed': failed, 'non_failed': non_failed}))
         return (True, 'Command queued')
 
     @authorise(Priv.SHUTDOWN)
