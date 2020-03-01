@@ -187,27 +187,31 @@ class TaskPool(object):
 
         limit = self.max_num_active_cycle_points
 
-        # If the main pool is empty, implies start-up; release tasks with no
-        # prerequisites.
-        if not self.pool:
-            for itask in self.get_rh_tasks():
-                if not itask.state.prerequisites:
-                    released = True
-                    self.release_runahead_task(itask)
-            return released
-
-        # Otherwise, base on oldest non-waiting task in the pool.
         points = []
-        for point, itasks in sorted(self.get_tasks_by_point(incl_runahead=False).items()):
-            found = False
-            for itask in itasks:
-                if not itask.state(TASK_STATUS_WAITING):
-                    found = True
-                    break
-            if not points and not found:
-                # We need to begin with an unfinished cycle point.
-                continue
-            points.append(point)
+        if not self.pool:
+            # Main pool empty implies start-up: base runahead on waiting tasks.
+            for point, itasks in sorted(self.get_tasks_by_point(incl_runahead=True).items()):
+                found = False
+                for itask in itasks:
+                    if itask.state(TASK_STATUS_WAITING):
+                        found = True
+                        break
+                if not points and not found:
+                    # We need to begin with an unfinished cycle point.
+                    continue
+                points.append(point)
+        else:
+            # Otherwise, base on oldest non-waiting task in the main pool.
+            for point, itasks in sorted(self.get_tasks_by_point(incl_runahead=False).items()):
+                found = False
+                for itask in itasks:
+                    if not itask.state(TASK_STATUS_WAITING):
+                        found = True
+                        break
+                if not points and not found:
+                    # We need to begin with an unfinished cycle point.
+                    continue
+                points.append(point)
 
         if not points:
             return False
@@ -217,6 +221,7 @@ class TaskPool(object):
 
         # TODO SoD: how much of the following is still needed?
         # TODO SoD: can we obsolete the old-style runahead limit?
+
         # Get all cycling points possible after the runahead base point.
         if (self._prev_runahead_base_point is not None and
                 runahead_base_point == self._prev_runahead_base_point):
@@ -1063,7 +1068,7 @@ class TaskPool(object):
             submit_num = submit_nums.get(key, 0)
 
             # This the upstream target task:
-            itask = TaskProxy(taskdef, get_point(point))
+            itask = TaskProxy(taskdef, point)
 
             LOG.info("[%s] - forced spawning", itask)
 
