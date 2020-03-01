@@ -29,8 +29,7 @@ class TaskDef(object):
 
     # Memory optimization - constrain possible attributes to this list.
     __slots__ = [
-        "run_mode", "rtconfig", "start_point",
-        "spawn_ahead", "sequences",
+        "run_mode", "rtconfig", "start_point", "sequences",
         "used_in_offset_trigger", "max_future_prereq_offset",
         "intercycle_offsets", "sequential", "is_coldstart",
         "suite_polling_cfg", "clocktrigger_offset", "expiration_offset",
@@ -40,14 +39,13 @@ class TaskDef(object):
     # Store the elapsed times for a maximum of 10 cycles
     MAX_LEN_ELAPSED_TIMES = 10
 
-    def __init__(self, name, rtcfg, run_mode, start_point, spawn_ahead):
+    def __init__(self, name, rtcfg, run_mode, start_point):
         if not TaskID.is_valid_name(name):
             raise TaskDefError("Illegal task name: %s" % name)
 
         self.run_mode = run_mode
         self.rtconfig = rtcfg
         self.start_point = start_point
-        self.spawn_ahead = spawn_ahead
 
         self.sequences = []
         self.used_in_offset_trigger = False
@@ -76,7 +74,7 @@ class TaskDef(object):
 
           {sequence:
               {
-                 output: [(a,o1), (b,o2)]  # (name, offset)
+                 output: [(a,o1), (b,o2)]  # (task-name, offset)
               }}
         """
         name = downstream

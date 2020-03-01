@@ -2204,8 +2204,7 @@ class SuiteConfig(object):
 
         # Get the taskdef object for generating the task proxy class
         taskd = TaskDef(
-            name, rtcfg, self.run_mode(), self.start_point,
-            self.cfg['scheduling']['spawn to max active cycle points'])
+            name, rtcfg, self.run_mode(), self.start_point)
 
         # TODO - put all taskd.foo items in a single config dict
 
