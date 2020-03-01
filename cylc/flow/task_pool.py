@@ -166,6 +166,7 @@ class TaskPool(object):
     def release_runahead_tasks(self):
         """Release tasks from the runahead pool to the main pool.
 
+        SoD: runahead based on active tasks, not stuck waiting ones.
         Return True if any tasks are released, else False.
         """
         released = False
@@ -186,19 +187,24 @@ class TaskPool(object):
 
         limit = self.max_num_active_cycle_points
 
+        # If the main pool is empty, implies start-up; release tasks with no
+        # prerequisites.
+        if not self.pool:
+            for itask in self.get_rh_tasks():
+                if not itask.state.prerequisites:
+                    released = True
+                    self.release_runahead_task(itask)
+            return released
+
+        # Otherwise, base on oldest non-waiting task in the pool.
         points = []
-        for point, itasks in sorted(
-                self.get_tasks_by_point(incl_runahead=True).items()):
-            has_unfinished_itasks = False
+        for point, itasks in sorted(self.get_tasks_by_point(incl_runahead=False).items()):
+            found = False
             for itask in itasks:
-                if not itask.state(
-                    TASK_STATUS_FAILED,
-                    TASK_STATUS_SUCCEEDED,
-                    TASK_STATUS_EXPIRED
-                ):
-                    has_unfinished_itasks = True
+                if not itask.state(TASK_STATUS_WAITING):
+                    found = True
                     break
-            if not points and not has_unfinished_itasks:
+            if not points and not found:
                 # We need to begin with an unfinished cycle point.
                 continue
             points.append(point)
@@ -209,6 +215,8 @@ class TaskPool(object):
         # Get the earliest point with unfinished tasks.
         runahead_base_point = min(points)
 
+        # TODO SoD: how much of the following is still needed?
+        # TODO SoD: can we obsolete the old-style runahead limit?
         # Get all cycling points possible after the runahead base point.
         if (self._prev_runahead_base_point is not None and
                 runahead_base_point == self._prev_runahead_base_point):
