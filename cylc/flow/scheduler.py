@@ -657,7 +657,7 @@ see `COPYING' in the Cylc source distribution.
                 if self.task_events_mgr.process_message(
                         itask, severity, message, event_time,
                         self.task_events_mgr.FLAG_RECEIVED, submit_num,
-                        self.pool.spawn, self.pool.finished_tasks_queue):
+                        self.pool.spawn):
                     should_poll = True
             if should_poll:
                 to_poll_tasks.append(itask)
@@ -1323,7 +1323,7 @@ see `COPYING' in the Cylc source distribution.
 
         if self.pool.remove_suiciding_tasks():
             self.is_updated = True
-        if self.pool.remove_finished_tasks():
+        if self.pool.remove_tasks():
             self.is_updated = True
         self.broadcast_mgr.expire_broadcast(self.pool.get_min_point())
         self.xtrigger_mgr.housekeep()

@@ -293,7 +293,6 @@ class TaskEventsManager():
         flag=FLAG_INTERNAL,
         submit_num=None,
         spawn=None,
-        finished_tasks_queue=None,
     ):
         """Parse an task message and update task state.
 
@@ -363,15 +362,28 @@ class TaskEventsManager():
             message=msg0, is_completed=True)
         if completed_trigger is not None:
             # Spawn downstream tasks that depend on this output.
+            # TODO SoD - choosing children logic should go in task_pool?
+            # TODO SoD - do we need msg0 here?
             try:
                 children = itask.children[msg0]
             except KeyError:
                 pass
             else:
                 self.pflag = True
-                for child_name, child_point in children:
-                   spawn(itask.tdef.name, itask.point,
-                         child_name, child_point, msg0)
+                for c_name, c_point in children:
+                    if (c_name, c_point) not in itask.children_spawned:
+                        itask.children_spawned.append((c_name, c_point))
+                        spawn(itask.tdef.name, itask.point,
+                              c_name, c_point, msg0)
+
+        if msg0 in [TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED]:
+            # Spawn any remaining children to update parent finished status.
+            for children in itask.children.values():
+                for c_name, c_point in children:
+                    if (c_name, c_point) not in itask.children_spawned:
+                        itask.children_spawned.append((c_name, c_point))
+                        spawn(itask.tdef.name, itask.point,
+                              c_name, c_point, msg0)
 
         if message == TASK_OUTPUT_STARTED:
             if (
@@ -382,14 +394,13 @@ class TaskEventsManager():
             self._process_message_started(itask, event_time)
         elif message == TASK_OUTPUT_SUCCEEDED:
             self._process_message_succeeded(itask, event_time)
-            finished_tasks_queue.put(itask)
         elif message == TASK_OUTPUT_FAILED:
             if (
                     flag == self.FLAG_RECEIVED
                     and itask.state.is_gt(TASK_STATUS_FAILED)
             ):
                 return True
-            self._process_message_failed(itask, event_time, self.JOB_FAILED, finished_tasks_queue)
+            self._process_message_failed(itask, event_time, self.JOB_FAILED)
         elif message == self.EVENT_SUBMIT_FAILED:
             if (
                     flag == self.FLAG_RECEIVED
@@ -415,7 +426,7 @@ class TaskEventsManager():
             self._db_events_insert(itask, "signaled", signal)
             self.suite_db_mgr.put_update_task_jobs(
                 itask, {"run_signal": signal})
-            self._process_message_failed(itask, event_time, self.JOB_FAILED, finished_tasks_queue)
+            self._process_message_failed(itask, event_time, self.JOB_FAILED)
         elif message.startswith(ABORT_MESSAGE_PREFIX):
             # Task aborted with message
             if (
@@ -427,7 +438,7 @@ class TaskEventsManager():
             self._db_events_insert(itask, "aborted", message)
             self.suite_db_mgr.put_update_task_jobs(
                 itask, {"run_signal": aborted_with})
-            self._process_message_failed(itask, event_time, aborted_with, finished_tasks_queue)
+            self._process_message_failed(itask, event_time, aborted_with)
         elif message.startswith(VACATION_MESSAGE_PREFIX):
             # Task job pre-empted into a vacation state
             self._db_events_insert(itask, "vacated", message)
@@ -690,7 +701,7 @@ class TaskEventsManager():
             except KeyError as exc:
                 LOG.exception(exc)
 
-    def _process_message_failed(self, itask, event_time, message, finished_tasks_queue):
+    def _process_message_failed(self, itask, event_time, message):
         """Helper for process_message, handle a failed message."""
         # TODO finished tasks nueue via object init?
         if event_time is None:
@@ -711,7 +722,6 @@ class TaskEventsManager():
                 self.setup_event_handlers(itask, "failed", message)
             LOG.critical(
                 "[%s] -job(%02d) %s", itask, itask.submit_num, "failed")
-            finished_tasks_queue.put(itask)
         elif itask.state.reset(TASK_STATUS_RETRYING):
             delay_msg = "retrying in %s" % (
                 itask.try_timers[TASK_STATUS_RETRYING].delay_timeout_as_str())

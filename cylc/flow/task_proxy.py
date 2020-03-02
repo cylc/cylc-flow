@@ -119,7 +119,9 @@ class TaskProxy(object):
             Retry schedules as cylc.flow.task_action_timer.TaskActionTimer
             objects.
         .children (dict)
-            graph children: {msg: (name, point), }
+            graph children: {msg: [(name, point), ...]}
+        .children_spawned (list)
+            children spawned already
         .parents (dict)
             graph parents: {(name, point): finished(T/F)}
 
@@ -172,6 +174,7 @@ class TaskProxy(object):
         'timeout',
         'try_timers',
         'children',
+        'children_spawned',
         'parents',
     ]
 
@@ -250,6 +253,7 @@ class TaskProxy(object):
         #   T06 = "waz[-PT6H] => foo"
         #   PT6H = "waz"
         # waz should trigger foo only if foo is on the T06 sequence
+        self.children_spawned = []
         self.children = {}
         for seq, dout in tdef.downstreams.items():
             for out, downs in dout.items():
@@ -426,6 +430,11 @@ class TaskProxy(object):
                 self.get_point_as_seconds() +
                 self.get_offset_as_seconds(self.tdef.clocktrigger_offset))
         return now >= self.clock_trigger_time
+
+    def is_task_prereqs_not_done(self):
+        """Is this task waiting on other-task prerequisites?"""
+        return (len(self.state.prerequisites) > 0 and
+                not all(pre.is_satisfied() for pre in self.state.prerequisites))
 
     def is_waiting_prereqs_done(self):
         """Is this task waiting for its prerequisites?"""

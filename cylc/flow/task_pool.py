@@ -22,6 +22,7 @@ from fnmatch import fnmatchcase
 import json
 from time import time
 from queue import Queue, Empty
+from itertools import chain
 
 from cylc.flow.parsec.OrderedDict import OrderedDict
 
@@ -42,7 +43,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_QUEUED, TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
     TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_SUBMIT_RETRYING,
     TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED,
-    TASK_STATUS_RETRYING)
+    TASK_STATUS_RETRYING, TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED)
 from cylc.flow.wallclock import get_current_time_string
 
 
@@ -85,8 +86,6 @@ class TaskPool(object):
 
         self.orphans = []
         self.task_name_list = self.config.get_task_name_list()
-
-        self.finished_tasks_queue = Queue()
 
     def assign_queues(self):
         """self.myq[taskname] = qfoo"""
@@ -458,12 +457,13 @@ class TaskPool(object):
             if not itask.tdef.get_parent_points(next_point):
                 self.spawn(itask.tdef.name, itask.point, itask.tdef.name, next_point)
 
-    def remove_finished_tasks(self):
-        """Remove finished tasks if there are any active ones.
-
+    def remove_tasks(self):
+        """Remove tasks no longer need.
+        
+        Including:
+        - waiting tasks whose prerequisites cannot be met (parents finished).
+        - finished tasks whose parents have all finished
         """
-        if self.finished_tasks_queue.empty():
-           return
 
         stalled = True
         for itask in self.get_tasks():
@@ -477,47 +477,25 @@ class TaskPool(object):
               stalled = False
               break
         if stalled:
-           LOG.warning("Not removed finished tasks: workflow stalled")
-           return
-        
+           LOG.warning("Not removing tasks, workflow stalled")
+           return False
+
+        waiting = []
+        finished = []
+        for itask in self.get_tasks():
+            LOG.warning("%s: %s %s", itask.identity, itask.state.status, itask.parents)
+            if (itask.state(TASK_STATUS_WAITING) and
+                    len(itask.state.prerequisites) > 0):
+                waiting.append(itask)
+            elif itask.state(TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED):
+                finished.append(itask)
+
         removed = False
-        finished_tasks = []
-        while True:
-           try:
-              itask = self.finished_tasks_queue.get(block=False)
-           except Empty:
-              break
-           else:
-               finished_tasks.append(itask)
-
-        # Iterate over finished tasks twice: once to update downstreams'
-        # list of parents; then again to remove if parents are finished.
-
-        # TODO SoD - can we avoid updating children and doing the "parents
-        # finished?" check, for tasks that don't need it?
-        # (It's only for conditional reflow prevention).
-        for itask in finished_tasks:
-              # Tell my children (if they exist) I've finished (conditional
-              # housekeeping).
-              for msg, children in itask.children.items():
-                  for name, point in children:
-                      # TODO SoD - this iterates over the task pool.
-                      # Only update children if they exist in the pool.
-                      # 
-                      ctask = self.get_task_by_id(TaskID.get(name, point))
-                      if ctask:
-                          ctask.parents[(itask.tdef.name, itask.point)] = True
-
-        put_back = []
-        for itask in finished_tasks:
-            # Remove if all my parents have finished.
+        for itask in chain(finished, waiting):
             if all(itask.parents.values()):
                 self.remove(itask)
                 removed = True
-            else:
-                put_back.append(itask)
-        for itask in put_back:
-            self.finished_tasks_queue.put(itask)
+
         return removed
  
     def remove(self, itask, reason=None):
@@ -992,9 +970,10 @@ class TaskPool(object):
             for itask in self.get_tasks())
 
     def spawn(self, up_name, up_point, name, point, message=None, go=False):
-        """Spawn a new tasks proxy."""
+        """Spawn a new task proxy and update its prerequisites."""
         LOG.info('[%s.%s] spawning %s.%s (%s)',
                  up_name, up_point, name, point, message)
+        # Check not already spawned by another task.
         itask = None
         for jtask in self.get_all_tasks():
             if jtask.tdef.name == name and jtask.point == point:
@@ -1011,9 +990,9 @@ class TaskPool(object):
         if go:
            itask.state.set_prerequisites_all_satisfied()
         elif message is not None:
-           outputs = set([])
-           outputs.add((up_name, str(up_point), message))
-           itask.state.satisfy_me(outputs)
+           itask.state.satisfy_me(set([(up_name, str(up_point), message)]))
+           if message in [TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED]:
+               itask.parents[(up_name, up_point)] = True
 
     def remove_suiciding_tasks(self):
         """Remove any tasks that have suicide-triggered.
