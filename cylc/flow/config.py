@@ -1663,6 +1663,7 @@ class SuiteConfig(object):
 
             # (name is left name)
             self.taskdefs[name].add_downstreams(task_trigger, right, seq)
+            self.taskdefs[right].add_upstreams(task_trigger.cycle_point_offset, name, seq)
 
         # Walk down "expr_list" depth first, and replace any items matching a
         # key in "triggers" ("left" values) with the trigger.

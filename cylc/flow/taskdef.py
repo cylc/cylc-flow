@@ -33,7 +33,8 @@ class TaskDef(object):
         "used_in_offset_trigger", "max_future_prereq_offset",
         "intercycle_offsets", "sequential", "is_coldstart",
         "suite_polling_cfg", "clocktrigger_offset", "expiration_offset",
-        "namespace_hierarchy", "dependencies", "downstreams", "outputs", "param_var",
+        "namespace_hierarchy", "dependencies", "downstreams", "upstreams",
+        "outputs", "param_var",
         "external_triggers", "xtrig_labels", "name", "elapsed_times"]
 
     # Store the elapsed times for a maximum of 10 cycles
@@ -60,8 +61,9 @@ class TaskDef(object):
         self.expiration_offset = None
         self.namespace_hierarchy = []
         self.dependencies = {}
-        self.outputs = set()
+        self.outputs = {}
         self.downstreams = {}  # SoD
+        self.upstreams = {}  # SoD
         self.param_var = {}
         self.external_triggers = []
         self.xtrig_labels = {}  # {sequence: [labels]}
@@ -74,12 +76,23 @@ class TaskDef(object):
 
           {sequence:
               {
-                 output: [(a,o1), (b,o2)]  # (task-name, offset)
-              }}
+                 output: [(a,o1), (b,o2), ...]  # (task-name, offset)
+              }
+          }
         """
-        name = downstream
         offset = trigger.cycle_point_offset
-        self.downstreams.setdefault(sequence, {}).setdefault(trigger, []).append((name, offset))
+        self.downstreams.setdefault(sequence, {}).setdefault(trigger, []).append((downstream, offset))
+
+    def add_upstreams(self, offset, upstream, sequence):
+        """Record tasks that I depend on.
+
+          {
+             sequence: set([(a,o1), (b,o2), ...])  # (task-name, offset)
+          }
+        """
+        if sequence not in self.upstreams:
+            self.upstreams[sequence] = set()
+        self.upstreams[sequence].add((upstream, offset))
 
     def add_dependency(self, dependency, sequence):
         """Add a dependency to a named sequence.

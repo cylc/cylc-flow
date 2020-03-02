@@ -79,8 +79,6 @@ class TaskPool(object):
         self.rhpool_changed = False
         self.pool_changes = []
 
-        self.conditional_done = set([])  # SoD
-
         self.is_held = False
         self.hold_point = None
         self.held_future_tasks = []
@@ -110,12 +108,6 @@ class TaskPool(object):
             LOG.warning(
                 '%s cannot be added to pool: task ID already exists' %
                 itask.identity)
-            return
-
-        if itask.identity in self.conditional_done:
-            LOG.warning(
-                '%s not adding to pool: task previously ran' %
-                itask.identity)  # SoD
             return
 
         # do not add if an inserted task is beyond its own stop point
@@ -454,8 +446,6 @@ class TaskPool(object):
         self.pool_changed = True
         self.pool_changes.append(itask)
         LOG.debug("[%s] -released to the task pool", itask)
-        if itask.state.prereq_is_conditional():
-            self.conditional_done.add(itask.identity)
         del self.runahead_pool[itask.point][itask.identity]
         if not self.runahead_pool[itask.point]:
             del self.runahead_pool[itask.point]
@@ -491,16 +481,43 @@ class TaskPool(object):
            return
         
         removed = False
+        finished_tasks = []
         while True:
            try:
               itask = self.finished_tasks_queue.get(block=False)
            except Empty:
               break
            else:
-              # Remove if the finished task has not just been re-triggered.
-              if itask.state(TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED):
-                  self.remove(itask)
-                  removed = True
+               finished_tasks.append(itask)
+
+        # Iterate over finished tasks twice: once to update downstreams'
+        # list of parents; then again to remove if parents are finished.
+
+        # TODO SoD - can we avoid updating children and doing the "parents
+        # finished?" check, for tasks that don't need it?
+        # (It's only for conditional reflow prevention).
+        for itask in finished_tasks:
+              # Tell my children (if they exist) I've finished (conditional
+              # housekeeping).
+              for msg, children in itask.children.items():
+                  for name, point in children:
+                      # TODO SoD - this iterates over the task pool.
+                      # Only update children if they exist in the pool.
+                      # 
+                      ctask = self.get_task_by_id(TaskID.get(name, point))
+                      if ctask:
+                          ctask.parents[(itask.tdef.name, itask.point)] = True
+
+        put_back = []
+        for itask in finished_tasks:
+            # Remove if all my parents have finished.
+            if all(itask.parents.values()):
+                self.remove(itask)
+                removed = True
+            else:
+                put_back.append(itask)
+        for itask in put_back:
+            self.finished_tasks_queue.put(itask)
         return removed
  
     def remove(self, itask, reason=None):

@@ -119,7 +119,10 @@ class TaskProxy(object):
             Retry schedules as cylc.flow.task_action_timer.TaskActionTimer
             objects.
         .children (dict)
-            graph descendents
+            graph children: {msg: (name, point), }
+        .parents (dict)
+            graph parents: {(name, point): finished(T/F)}
+
 
     Arguments:
         tdef (cylc.flow.taskdef.TaskDef):
@@ -169,6 +172,7 @@ class TaskProxy(object):
         'timeout',
         'try_timers',
         'children',
+        'parents',
     ]
 
     def __init__(
@@ -258,6 +262,15 @@ class TaskProxy(object):
                         point = self.point
                     if seq.is_on_sequence(point):
                         self.children[out.output].append((name, point))
+        self.parents = {}
+        for seq, ups in tdef.upstreams.items():
+            for name, offset in ups:
+                if offset is not None:
+                    point = self.point + get_interval(offset)
+                else:
+                    point = self.point
+                if seq.is_on_sequence(point):
+                    self.parents[(name, point)] = False
 
     def __str__(self):
         """Stringify using "self.identity"."""

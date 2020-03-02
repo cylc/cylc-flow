@@ -1321,8 +1321,9 @@ see `COPYING' in the Cylc source distribution.
                     '[%s] -triggered off %s',
                     itask, itask.state.get_resolved_dependencies())
 
-        if (self.pool.remove_suiciding_tasks() or
-                self.pool.remove_finished_tasks()):
+        if self.pool.remove_suiciding_tasks():
+            self.is_updated = True
+        if self.pool.remove_finished_tasks():
             self.is_updated = True
         self.broadcast_mgr.expire_broadcast(self.pool.get_min_point())
         self.xtrigger_mgr.housekeep()
@@ -1653,6 +1654,7 @@ see `COPYING' in the Cylc source distribution.
         self.initialise_scheduler()
         self.data_store_mgr.initiate_data_model()
         self.publisher.publish(self.data_store_mgr.get_publish_deltas())
+        #from cylc.flow import cylc_pudb; cylc_pudb.set_trace()
         while True:  # MAIN LOOP
             tinit = time()
             has_reloaded = False
