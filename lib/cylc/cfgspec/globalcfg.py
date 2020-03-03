@@ -41,6 +41,9 @@ from cylc.version import CYLC_VERSION
 # - value_type: value type (compulsory).
 # - default: the default value (optional).
 # - allowed_2, ...: the only other allowed values of this setting (optional).
+
+# List-valued items under hosts need to default to None, not empty list, for
+# default-to-localhost to work.
 SPEC = {
     'process pool size': [VDR.V_INTEGER, 4],
     'process pool timeout': [VDR.V_INTERVAL, DurationFloat(600)],
@@ -155,19 +158,19 @@ SPEC = {
             'work directory': [VDR.V_STRING],
             'task communication method': [
                 VDR.V_STRING, 'default', 'ssh', 'poll'],
-            'submission polling intervals': [VDR.V_INTERVAL_LIST],
-            'execution polling intervals': [VDR.V_INTERVAL_LIST],
+            'submission polling intervals': [VDR.V_INTERVAL_LIST, None],
+            'execution polling intervals': [VDR.V_INTERVAL_LIST, None],
             'scp command': [VDR.V_STRING],
             'ssh command': [VDR.V_STRING],
             'use login shell': [VDR.V_BOOLEAN],
             'cylc executable': [VDR.V_STRING],
             'global init-script': [VDR.V_STRING],
-            'copyable environment variables': [VDR.V_STRING_LIST],
+            'copyable environment variables': [VDR.V_STRING_LIST, None],
             'retrieve job logs': [VDR.V_BOOLEAN],
             'retrieve job logs command': [VDR.V_STRING],
             'retrieve job logs max size': [VDR.V_STRING],
-            'retrieve job logs retry delays': [VDR.V_INTERVAL_LIST],
-            'task event handler retry delays': [VDR.V_INTERVAL_LIST],
+            'retrieve job logs retry delays': [VDR.V_INTERVAL_LIST, None],
+            'task event handler retry delays': [VDR.V_INTERVAL_LIST, None],
             'tail command template': [VDR.V_STRING],
             'batch systems': {
                 '__MANY__': {
@@ -177,7 +180,7 @@ SPEC = {
                     'err viewer': [VDR.V_STRING],
                     'job name length maximum': [VDR.V_INTEGER],
                     'execution time limit polling intervals': [
-                        VDR.V_INTERVAL_LIST],
+                        VDR.V_INTERVAL_LIST, None],
                 },
             },
         },
