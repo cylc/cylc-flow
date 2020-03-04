@@ -61,12 +61,9 @@ class TaskPool(object):
         self.job_pool = job_pool
 
         self.do_reload = False
-        self.custom_runahead_limit = self.config.get_custom_runahead_limit()
         self.max_future_offset = None
-        self._prev_runahead_base_point = None
         self.max_num_active_cycle_points = (
             self.config.get_max_num_active_cycle_points())
-        self._prev_runahead_sequence_points = None
 
         self.pool = {}
         self.runahead_pool = {}
@@ -155,6 +152,17 @@ class TaskPool(object):
         return itask
 
     def release_runahead_tasks(self):
+        """Restrict the number of active cycle points.
+
+        Return True if any runahead tasks released, else False.
+
+        If the number active points in the main pool nA is less than the active
+        point limit nL, release tasks from the next N = nL - nA points in the
+        runhead pool. (Note this is the next N points present, not the closest
+        N points possible - so the pool can widen if tasks skip cycles and
+        others fill in the gap (but this doesn't really matter).
+
+        """
         released = False
         if not self.runahead_pool:
             return released
@@ -171,34 +179,28 @@ class TaskPool(object):
                     self.release_runahead_task(itask)
                     released = True
 
-        limit = self.max_num_active_cycle_points
-
-        # count active points in main pool
-        points = set() 
+        main_points = []
+        active_points = []
+        active = False
+        # Count active points in the main pool.
         for point, itasks in sorted(self.get_main_tasks_by_point().items()):
-            found = False
-            for itask in itasks:
-                # (Don't count waiting and finished with unfinished parents.)
-                if itask.state(TASK_STATUS_READY, TASK_STATUS_SUBMITTED, TASK_STATUS_RUNNING):
-                    found = True
-                    break
-            if not points and not found:
-                continue
-            points.add(point)
+            main_points.append(point)
+            if not active:
+                # Find the first active point.
+                for itask in itasks:
+                    # (Don't count waiting and finished with unfinished parents.)
+                    if itask.state(TASK_STATUS_READY, TASK_STATUS_SUBMITTED, TASK_STATUS_RUNNING):
+                        active = True
+                        break
+            if active:
+                active_points.append(point)
         
-        LOG.warning("POINTS in MAIN %s", sorted(points))
-
-        # count points in runahead pool
-        rh_points = set(self.get_rh_tasks_by_point().keys())
-        LOG.warning("POINTS in RH %s", sorted(rh_points))
-
-        all_points = sorted(list(points.union(rh_points)))
-        release_points = all_points[:limit]
-
-        LOG.warning("POINTS to RELEASE %s", release_points)
+        n_active_points = len(active_points)
+        n_headroom = self.max_num_active_cycle_points - n_active_points
+        release_points = sorted(self.get_rh_tasks_by_point().keys())[:n_headroom]
 
         for point, itask_id_map in self.runahead_pool.copy().items():
-            if point in release_points:
+            if point in main_points or point in release_points:
                 for itask in itask_id_map.copy().values():
                     self.release_runahead_task(itask)
                     released = True

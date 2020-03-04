@@ -119,7 +119,6 @@ SPEC = {
         'cycling mode': (
             [VDR.V_STRING, Calendar.MODE_GREGORIAN] +
             list(Calendar.MODES) + ["integer"]),
-        'runahead limit': [VDR.V_STRING],
         'max active cycle points': [VDR.V_INTEGER, 3],
         'queues': {
             'default': {

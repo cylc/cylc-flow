@@ -155,7 +155,6 @@ class SuiteConfig(object):
         self._start_point_for_actual_first_point = None
 
         self.task_param_vars = {}
-        self.custom_runahead_limit = None
         self.max_num_active_cycle_points = None
 
         # runtime hierarchy dicts keyed by namespace name:
@@ -197,13 +196,6 @@ class SuiteConfig(object):
         if 'graph' not in self.cfg['scheduling']:
             raise SuiteConfigError("missing [scheduling][[graph]] section.")
         # (The check that 'graph' is defined is below).
-        # The two runahead limiting schemes are mutually exclusive.
-        rlim = self.cfg['scheduling'].get('runahead limit')
-        mact = self.cfg['scheduling'].get('max active cycle points')
-        if rlim and mact:
-            raise SuiteConfigError(
-                "use 'runahead limit' OR "
-                "'max active cycle points', not both")
 
         # Override the suite defn with an initial point from the CLI.
         icp_str = getattr(self.options, 'icp', None)
@@ -523,8 +515,7 @@ class SuiteConfig(object):
             GraphNodeParser.get_inst().clear()
         self.mem_log("config.py: after load_graph()")
 
-        self.compute_runahead_limits()
-
+        self.compute_runahead_limit()
         self.configure_queues()
 
         if self.run_mode('simulation', 'dummy', 'dummy-local'):
@@ -1056,8 +1047,8 @@ class SuiteConfig(object):
     #             log_msg += '\t\t' + item + '\t' + val
     #         LOG.info(log_msg)
 
-    def compute_runahead_limits(self):
-        """Extract the runahead limits information."""
+    def compute_runahead_limit(self):
+        """Extract runahead limit config."""
         max_cycles = self.cfg['scheduling']['max active cycle points']
         if max_cycles == 0:
             raise SuiteConfigError(
@@ -1066,21 +1057,6 @@ class SuiteConfig(object):
             )
         self.max_num_active_cycle_points = self.cfg['scheduling'][
             'max active cycle points']
-
-        limit = self.cfg['scheduling']['runahead limit']
-        if not limit:
-            limit = None
-        if (limit is not None and limit.isdigit() and
-                get_interval_cls().get_null().TYPE == ISO8601_CYCLING_TYPE):
-            # Backwards-compatibility for raw number of hours.
-            limit = "PT%sH" % limit
-
-        # The custom runahead limit is None if not user-configured.
-        self.custom_runahead_limit = get_interval(limit)
-
-    def get_custom_runahead_limit(self):
-        """Return the custom runahead limit (may be None)."""
-        return self.custom_runahead_limit
 
     def get_max_num_active_cycle_points(self):
         """Return the maximum allowed number of pool cycle points."""
