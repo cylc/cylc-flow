@@ -275,6 +275,9 @@ class TaskProxy(object):
                     point = self.point + get_interval(offset)
                 else:
                     point = self.point
+                if is_startup and point < start_point:
+                    # pre-initial dependence
+                    continue
                 self.parents[(name, point)] = False
 
     def __str__(self):
