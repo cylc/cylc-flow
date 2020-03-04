@@ -423,7 +423,6 @@ class TaskPool(object):
         waiting = []
         finished = []
         for itask in self.get_tasks():
-            LOG.warning("%s: %s %s", itask.identity, itask.state.status, itask.parents)
             if not all(itask.parents.values()):
                 continue
             if (itask.state(TASK_STATUS_WAITING) and
@@ -431,21 +430,18 @@ class TaskPool(object):
                 waiting.append(itask)
             elif itask.state(TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED):
                 finished.append(itask)
-            else:
-                LOG.warning("NOT REMOVING %s", itask.identity)
+            # else not removing
 
         removed = False
         for itask in chain(finished, waiting):
             self.remove(itask)
             removed = True
-
         return removed
  
     def remove(self, itask, reason=None):
         """Remove finished task proxies.
         
         """
-        print('REMOVING', itask.identity)
         try:
             del self.runahead_pool[itask.point][itask.identity]
         except KeyError:

@@ -564,7 +564,6 @@ see `COPYING' in the Cylc source distribution.
                       # TODO what if all sequence starts are offset from ICP?
                       spawn = False
                 if spawn:
-                    print('SPAWNING', tdef.name, point)
                     try:
                         self.pool.add_to_runahead_pool(
                             TaskProxy(tdef, point, is_startup=True))
@@ -1650,8 +1649,6 @@ see `COPYING' in the Cylc source distribution.
         self.initialise_scheduler()
         self.data_store_mgr.initiate_data_model()
         self.publisher.publish(self.data_store_mgr.get_publish_deltas())
-        #from cylc.flow import cylc_pudb; cylc_pudb.set_trace()
-        #from cylc.flow import patch_pudb; import pudb; pudb.set_trace()
         while True:  # MAIN LOOP
             tinit = time()
             has_reloaded = False
