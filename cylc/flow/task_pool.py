@@ -188,8 +188,8 @@ class TaskPool(object):
             if not active:
                 # Find the first active point.
                 for itask in itasks:
-                    # (Don't count waiting and finished with unfinished parents.)
-                    if itask.state(TASK_STATUS_READY, TASK_STATUS_SUBMITTED, TASK_STATUS_RUNNING):
+                    if itask.state(TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
+                                   TASK_STATUS_RUNNING):
                         active = True
                         break
             if active:
@@ -200,6 +200,10 @@ class TaskPool(object):
         release_points = sorted(self.get_rh_tasks_by_point().keys())[:n_headroom]
 
         for point, itask_id_map in self.runahead_pool.copy().items():
+            if point > self.stop_point:
+                LOG.info('Not releasing tasks in %s (final point is %s)',
+                         point, self.stop_point)
+                continue
             if point in main_points or point in release_points:
                 for itask in itask_id_map.copy().values():
                     self.release_runahead_task(itask)
@@ -428,12 +432,12 @@ class TaskPool(object):
             if (itask.state(TASK_STATUS_WAITING) and
                     len(itask.state.prerequisites) > 0):
                 waiting.append(itask)
-                LOG.info("Removing waiting task %s", itask.identity)
+                LOG.info("Removing redundant waiting task %s", itask.identity)
             elif itask.state(TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED):
                 finished.append(itask)
                 LOG.info("Removing finished task %s", itask.identity)
             else:
-                LOG.info("Not Removing task %s", itask.identity)
+                LOG.debug("Not removing task %s", itask.identity)
 
         removed = False
         for itask in chain(finished, waiting):
@@ -927,11 +931,6 @@ class TaskPool(object):
 
     def spawn(self, up_name, up_point, name, point, message=None, go=False):
         """Spawn a new task proxy and update its prerequisites."""
-        if point > self.stop_point:
-            LOG.info('[%s.%s] Not spawning %s.%s (%s) - beyond stop point',
-                 up_name, up_point, name, point, message)
-            return
-
         itask = None
         for jtask in self.get_all_tasks():
             if jtask.tdef.name == name and jtask.point == point:
