@@ -546,7 +546,6 @@ see `COPYING' in the Cylc source distribution.
         task_list = self.filter_initial_task_list(
             self.config.get_task_name_list())
 
-        #from cylc.flow import cylc_pudb; cylc_pudb.set_trace()
         # TODO HOW TO ADD INITIAL INSTANCES OF ALL SELF-SPAWNERS?
         # THE FOLLOWING IS NOT RIGHT YET.
         for name in task_list:
@@ -575,9 +574,6 @@ see `COPYING' in the Cylc source distribution.
 
     def load_tasks_for_restart(self):
         """Load tasks for restart."""
-
-        #from cylc.flow import cylc_pudb; cylc_pudb.set_trace()
-        #from cylc.flow import patch_pudb; import pudb; pudb.set_trace()
 
         if self.options.startcp:
             self.config.start_point = self.get_standardised_point(
@@ -1655,6 +1651,7 @@ see `COPYING' in the Cylc source distribution.
         self.data_store_mgr.initiate_data_model()
         self.publisher.publish(self.data_store_mgr.get_publish_deltas())
         #from cylc.flow import cylc_pudb; cylc_pudb.set_trace()
+        #from cylc.flow import patch_pudb; import pudb; pudb.set_trace()
         while True:  # MAIN LOOP
             tinit = time()
             has_reloaded = False

@@ -155,11 +155,6 @@ class TaskPool(object):
         return itask
 
     def release_runahead_tasks(self):
-        """Release tasks from the runahead pool to the main pool.
-
-        SoD: runahead based on active tasks, not stuck waiting ones.
-        Return True if any tasks are released, else False.
-        """
         released = False
         if not self.runahead_pool:
             return released
@@ -178,90 +173,32 @@ class TaskPool(object):
 
         limit = self.max_num_active_cycle_points
 
-        points = []
-        if not self.pool:
-            # Main pool empty implies start-up: base runahead on waiting tasks.
-            for point, itasks in sorted(self.get_tasks_by_point(incl_runahead=True).items()):
-                found = False
-                for itask in itasks:
-                    if itask.state(TASK_STATUS_WAITING):
-                        found = True
-                        break
-                if not points and not found:
-                    # We need to begin with an unfinished cycle point.
-                    continue
-                points.append(point)
-        else:
-            # Otherwise, base on oldest non-waiting task in the main pool.
-            for point, itasks in sorted(self.get_tasks_by_point(incl_runahead=False).items()):
-                found = False
-                for itask in itasks:
-                    if not itask.state(TASK_STATUS_WAITING):
-                        found = True
-                        break
-                if not points and not found:
-                    # We need to begin with an unfinished cycle point.
-                    continue
-                points.append(point)
+        # count active points in main pool
+        points = set() 
+        for point, itasks in sorted(self.get_main_tasks_by_point().items()):
+            found = False
+            for itask in itasks:
+                # (Don't count waiting and finished with unfinished parents.)
+                if itask.state(TASK_STATUS_READY, TASK_STATUS_SUBMITTED, TASK_STATUS_RUNNING):
+                    found = True
+                    break
+            if not points and not found:
+                continue
+            points.add(point)
+        
+        LOG.warning("POINTS in MAIN %s", sorted(points))
 
-        if not points:
-            return False
+        # count points in runahead pool
+        rh_points = set(self.get_rh_tasks_by_point().keys())
+        LOG.warning("POINTS in RH %s", sorted(rh_points))
 
-        # Get the earliest point with unfinished tasks.
-        runahead_base_point = min(points)
+        all_points = sorted(list(points.union(rh_points)))
+        release_points = all_points[:limit]
 
-        # TODO SoD: how much of the following is still needed?
-        # TODO SoD: can we obsolete the old-style runahead limit?
-
-        # Get all cycling points possible after the runahead base point.
-        if (self._prev_runahead_base_point is not None and
-                runahead_base_point == self._prev_runahead_base_point):
-            # Cache for speed.
-            sequence_points = self._prev_runahead_sequence_points
-        else:
-            sequence_points = []
-            for sequence in self.config.sequences:
-                point = runahead_base_point
-                for _ in range(limit):
-                    point = sequence.get_next_point(point)
-                    if point is None:
-                        break
-                    sequence_points.append(point)
-            sequence_points = set(sequence_points)
-            self._prev_runahead_sequence_points = sequence_points
-            self._prev_runahead_base_point = runahead_base_point
-
-        points = set(points).union(sequence_points)
-
-        if self.custom_runahead_limit is None:
-            # Calculate which tasks to release based on a maximum number of
-            # active cycle points (active meaning non-finished tasks).
-            latest_allowed_point = sorted(points)[:limit][-1]
-            if self.max_future_offset is not None:
-                # For the first N points, release their future trigger tasks.
-                latest_allowed_point += self.max_future_offset
-        else:
-            # Calculate which tasks to release based on a maximum duration
-            # measured from the oldest non-finished task.
-            latest_allowed_point = (
-                runahead_base_point + self.custom_runahead_limit)
-
-            if (self._prev_runahead_base_point is None or
-                    self._prev_runahead_base_point != runahead_base_point):
-                if self.custom_runahead_limit < self.max_future_offset:
-                    LOG.warning(
-                        ('custom runahead limit of %s is less than ' +
-                         'future triggering offset %s: suite may stall.') % (
-                            self.custom_runahead_limit,
-                            self.max_future_offset
-                        )
-                    )
-            self._prev_runahead_base_point = runahead_base_point
-        if self.stop_point and latest_allowed_point > self.stop_point:
-            latest_allowed_point = self.stop_point
+        LOG.warning("POINTS to RELEASE %s", release_points)
 
         for point, itask_id_map in self.runahead_pool.copy().items():
-            if point <= latest_allowed_point:
+            if point in release_points:
                 for itask in itask_id_map.copy().values():
                     self.release_runahead_task(itask)
                     released = True
@@ -477,6 +414,7 @@ class TaskPool(object):
               stalled = False
               break
         if stalled:
+           # TODO - can still removing useless waiting.
            LOG.warning("Not removing tasks, workflow stalled")
            return False
 
@@ -484,17 +422,20 @@ class TaskPool(object):
         finished = []
         for itask in self.get_tasks():
             LOG.warning("%s: %s %s", itask.identity, itask.state.status, itask.parents)
+            if not all(itask.parents.values()):
+                continue
             if (itask.state(TASK_STATUS_WAITING) and
                     len(itask.state.prerequisites) > 0):
                 waiting.append(itask)
             elif itask.state(TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED):
                 finished.append(itask)
+            else:
+                LOG.warning("NOT REMOVING %s", itask.identity)
 
         removed = False
         for itask in chain(finished, waiting):
-            if all(itask.parents.values()):
-                self.remove(itask)
-                removed = True
+            self.remove(itask)
+            removed = True
 
         return removed
  
@@ -555,6 +496,20 @@ class TaskPool(object):
         results = self.pool_changes
         self.pool_changes = []
         return results
+
+    def get_main_tasks_by_point(self):
+        """Return a map of main pool tasks by cycle point."""
+        point_itasks = {}
+        for point, itask_id_map in self.pool.items():
+            point_itasks[point] = list(itask_id_map.values())
+        return point_itasks
+
+    def get_rh_tasks_by_point(self):
+        """Return a map of runahead pool tasks by cycle point."""
+        point_itasks = {}
+        for point, itask_id_map in self.runahead_pool.items():
+            point_itasks[point] = list(itask_id_map.values())
+        return point_itasks
 
     def get_tasks_by_point(self, incl_runahead):
         """Return a map of task proxies by cycle point."""
