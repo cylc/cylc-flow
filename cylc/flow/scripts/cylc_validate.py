@@ -125,7 +125,7 @@ def main(_, options, reg):
         print('Instantiating tasks to check trigger expressions')
     for name, taskdef in cfg.taskdefs.items():
         try:
-            itask = TaskProxy(taskdef, cfg.start_point, is_startup=True)
+            itask = TaskProxy(taskdef, cfg.start_point, cfg.start_point, is_startup=True)
         except TaskProxySequenceBoundsError:
             # Should already failed above in strict mode.
             mesg = 'Task out of bounds for %s: %s\n' % (cfg.start_point, name)

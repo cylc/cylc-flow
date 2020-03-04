@@ -233,6 +233,7 @@ class TaskPool(object):
         try:
             itask = TaskProxy(
                 self.config.get_taskdef(name),
+                self.config.initial_point,
                 get_point(cycle),
                 is_held=is_held,
                 submit_num=submit_num,
@@ -401,43 +402,56 @@ class TaskPool(object):
                 self.spawn(itask.tdef.name, itask.point, itask.tdef.name, next_point)
 
     def remove_tasks(self):
-        """Remove tasks no longer need.
+        """Remove tasks that can no longer be affected without intervention.
         
-        Including:
-        - waiting tasks whose prerequisites cannot be met (parents finished).
-        - finished tasks whose parents have all finished
+        - Waiting tasks whose prerequisites cannot be met because their parents
+          have finished (e.g. in "A & B => C" with A finished: C must be kept 
+          until B finishes, in case it succeeds; but if B fails C can be
+          removed because B is not going to succeed later)
+        - Finished tasks whose parents have all finished (e.g. in "A | B =>
+          C" with A finished and B unfinished: C must be kept until B finishes
+          to prevent reflow if B finishes later once C has moved on).
+        - Waiting or finished tasks (with unfinished parents) that have fallen
+          behind the active pool. This catches waiting whose parents will never
+          execute (e.g. C in "A & B => C" with B never spawned) and finished
+          tasks whose parents will never execute (e.g. C in "A | B => C" with B
+          never spawned because it is on an unused alternate path).
         """
 
-        stalled = True
-        for itask in self.get_tasks():
-           if itask.state(
-                 TASK_STATUS_QUEUED,
-                 TASK_STATUS_READY,
-                 TASK_STATUS_SUBMITTED,
-                 TASK_STATUS_RUNNING,
-                 TASK_STATUS_RETRYING,
-                 TASK_STATUS_SUBMIT_RETRYING):
-              stalled = False
-              break
-        if stalled:
-           # TODO - can still removing useless waiting.
+        active_points = []
+        for point, itasks in sorted(self.get_main_tasks_by_point().items()):
+             for itask in itasks:
+                 if itask.state(
+                     TASK_STATUS_QUEUED,
+                     TASK_STATUS_READY,
+                     TASK_STATUS_SUBMITTED,
+                     TASK_STATUS_RUNNING,
+                     TASK_STATUS_RETRYING,
+                     TASK_STATUS_SUBMIT_RETRYING
+                 ):
+                     active_points.append(point)
+                     break
+ 
+        if active_points:
+            oldest_active_point = active_points[0]
+        else:
+           # TODO - can still removing useless waiting?
            LOG.warning("Not removing tasks, workflow stalled")
            return False
 
+        # TODO - adjust "fallen behind" test for inter-cycle triggers"
         waiting = []
         finished = []
         for itask in self.get_tasks():
-            if not all(itask.parents.values()):
-                continue
             if (itask.state(TASK_STATUS_WAITING) and
                     len(itask.state.prerequisites) > 0):
-                waiting.append(itask)
-                LOG.info("Removing redundant waiting task %s", itask.identity)
+                if itask.point < oldest_active_point or all(itask.parents.values()):
+                   LOG.info("Removing redundant waiting task %s (parents %s)", itask.identity, itask.parents)
+                   waiting.append(itask)
             elif itask.state(TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED):
-                finished.append(itask)
-                LOG.info("Removing finished task %s", itask.identity)
-            else:
-                LOG.debug("Not removing task %s", itask.identity)
+                if itask.point < oldest_active_point or all(itask.parents.values()):
+                   LOG.info("Removing finished task %s (parents %s)", itask.identity, itask.parents)
+                   finished.append(itask)
 
         removed = False
         for itask in chain(finished, waiting):
@@ -728,7 +742,8 @@ class TaskPool(object):
             else:
                 self.remove(itask, '(suite definition reload)')
                 new_task = self.add_to_runahead_pool(TaskProxy(
-                    self.config.get_taskdef(itask.tdef.name), itask.point,
+                    self.config.get_taskdef(itask.tdef.name),
+                    self.config.initial_point, itask.point,
                     itask.state.status, stop_point=itask.stop_point,
                     submit_num=itask.submit_num))
                 itask.copy_to_reload_successor(new_task)
@@ -931,6 +946,7 @@ class TaskPool(object):
 
     def spawn(self, up_name, up_point, name, point, message=None, go=False):
         """Spawn a new task proxy and update its prerequisites."""
+
         itask = None
         for jtask in self.get_all_tasks():
             if jtask.tdef.name == name and jtask.point == point:
@@ -941,20 +957,20 @@ class TaskPool(object):
             for tname in self.config.get_task_name_list():
                 if tname == name:
                    itask = TaskProxy(
-                       self.config.get_taskdef(tname), point)
+                       self.config.get_taskdef(tname), self.config.initial_point, point)
                    self.add_to_runahead_pool(itask)
-                   LOG.info('[%s.%s] spawned %s.%s (%s)',
+                   LOG.info('[%s.%s] downstream spawned %s.%s (%s)',
                              up_name, up_point, name, point, message)
                    break
-        # TODO itask not found? (shouldn't happen)
         if go:
            itask.state.set_prerequisites_all_satisfied()
         elif message is not None:
            itask.state.satisfy_me(set([(up_name, str(up_point), message)]))
-           LOG.info('[%s.%s] updated prereq %s.%s (%s)',
+           LOG.info('[%s.%s] downstream updated %s.%s (%s)',
                     up_name, up_point, name, point, message)
-
            if message in [TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED]:
+               LOG.info('[%s.%s] parent %s.%s finished (%s)',
+                    name, point, up_name, up_point, message)
                itask.parents[(up_name, up_point)] = True
 
     def remove_suiciding_tasks(self):
@@ -1027,7 +1043,7 @@ class TaskPool(object):
             submit_num = submit_nums.get(key, 0)
 
             # This the upstream target task:
-            itask = TaskProxy(taskdef, point)
+            itask = TaskProxy(taskdef, point, self.config.initial_point)
 
             LOG.info("[%s] - forced spawning", itask)
 

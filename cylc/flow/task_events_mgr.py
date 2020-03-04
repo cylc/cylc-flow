@@ -26,6 +26,7 @@ This module provides logic to:
 """
 
 from collections import namedtuple
+from itertools import chain
 from logging import getLevelName, CRITICAL, ERROR, WARNING, INFO, DEBUG
 import os
 from shlex import quote
@@ -284,22 +285,20 @@ class TaskEventsManager():
             elif ctx.ctx_type == self.HANDLER_JOB_LOGS_RETRIEVE:
                 self._process_job_logs_retrieval(schd_ctx, ctx, id_keys)
 
-    def _spawn_children(self, itask, spawn, output=None):
+    def _spawn_children(self, itask, spawn, output, all=False):
         """Specific children of output, or all children"""
-        if output:
-           try:
-              children = itask.children[output]
-           except KeyError:
-              # No children depend on this ouput
-              children = []
+        if all:
+            childrens = itask.children.values()
+            children = list(chain(*childrens))
         else:
-            children = itask.children.values()
+            try:
+               children = itask.children[output]
+            except KeyError:
+               # No children depend on this ouput
+               children = []
         self.pflag = True
         for c_name, c_point in children:
-            if (c_name, c_point) not in itask.children_spawned:
-                itask.children_spawned.append((c_name, c_point))
-                spawn(itask.tdef.name, itask.point,
-                      c_name, c_point, output)
+            spawn(itask.tdef.name, itask.point, c_name, c_point, output)
 
     def process_message(
         self,
@@ -392,14 +391,16 @@ class TaskEventsManager():
             self._process_message_started(itask, event_time)
         elif message == TASK_OUTPUT_SUCCEEDED:
             self._process_message_succeeded(itask, event_time)
-            self._spawn_children(itask, spawn, message)
+            # Spawn and update all children
+            self._spawn_children(itask, spawn, message, all=True)
         elif message == TASK_OUTPUT_FAILED:
             if (
                     flag == self.FLAG_RECEIVED
                     and itask.state.is_gt(TASK_STATUS_FAILED)
             ):
                 return True
-            self._process_message_failed(itask, event_time, self.JOB_FAILED)
+            # Spawn and update all children
+            self._process_message_failed(itask, event_time, self.JOB_FAILED, spawn=spawn)
         elif message == self.EVENT_SUBMIT_FAILED:
             if (
                     flag == self.FLAG_RECEIVED
@@ -425,7 +426,7 @@ class TaskEventsManager():
             self._db_events_insert(itask, "signaled", signal)
             self.suite_db_mgr.put_update_task_jobs(
                 itask, {"run_signal": signal})
-            self._process_message_failed(itask, event_time, self.JOB_FAILED)
+            self._process_message_failed(itask, event_time, self.JOB_FAILED, spawn=spawn)
         elif message.startswith(ABORT_MESSAGE_PREFIX):
             # Task aborted with message
             if (
@@ -700,7 +701,7 @@ class TaskEventsManager():
             except KeyError as exc:
                 LOG.exception(exc)
 
-    def _process_message_failed(self, itask, event_time, message):
+    def _process_message_failed(self, itask, event_time, message, spawn=None):
         """Helper for process_message, handle a failed message."""
         # TODO finished tasks nueue via object init?
         if event_time is None:
@@ -721,7 +722,9 @@ class TaskEventsManager():
                 self.setup_event_handlers(itask, "failed", message)
             LOG.critical(
                 "[%s] -job(%02d) %s", itask, itask.submit_num, "failed")
-            self._spawn_children(itask, spawn, TASK_OUTPUT_FAILED)
+            if spawn is not None:
+                # spawn and update all children
+                self._spawn_children(itask, spawn, TASK_OUTPUT_FAILED, all=True)
  
         elif itask.state.reset(TASK_STATUS_RETRYING):
             delay_msg = "retrying in %s" % (

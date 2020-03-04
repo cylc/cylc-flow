@@ -566,7 +566,7 @@ see `COPYING' in the Cylc source distribution.
                 if spawn:
                     try:
                         self.pool.add_to_runahead_pool(
-                            TaskProxy(tdef, point, is_startup=True))
+                            TaskProxy(tdef, self.config.initial_point, point, is_startup=True))
                     except TaskProxySequenceBoundsError as exc:
                         # TODO is this needed?
                         LOG.debug(str(exc))
@@ -803,7 +803,8 @@ see `COPYING' in the Cylc source distribution.
             for tname in self.config.get_task_name_list():
                 if tname == name:
                    itask = TaskProxy(
-                       self.config.get_taskdef(name), get_point(point))
+                       self.config.get_taskdef(name), self.config.initial_point,
+                       get_point(point))
                    results[itask.identity] = self._info_get_task_requisites(itask, list_prereqs=False)
         return results, bad_items
  

@@ -120,11 +120,8 @@ class TaskProxy(object):
             objects.
         .children (dict)
             graph children: {msg: [(name, point), ...]}
-        .children_spawned (list)
-            children spawned already
         .parents (dict)
             graph parents: {(name, point): finished(T/F)}
-
 
     Arguments:
         tdef (cylc.flow.taskdef.TaskDef):
@@ -174,12 +171,11 @@ class TaskProxy(object):
         'timeout',
         'try_timers',
         'children',
-        'children_spawned',
         'parents',
     ]
 
     def __init__(
-            self, tdef, start_point, status=TASK_STATUS_WAITING,
+            self, tdef, initial_point, start_point, status=TASK_STATUS_WAITING,
             is_held=False, stop_point=None,
             is_startup=False, submit_num=0, is_late=False):
         self.tdef = tdef
@@ -253,7 +249,6 @@ class TaskProxy(object):
         #   T06 = "waz[-PT6H] => foo"
         #   PT6H = "waz"
         # waz should trigger foo only if foo is on the T06 sequence
-        self.children_spawned = []
         self.children = {}
         for seq, dout in tdef.downstreams.items():
             for out, downs in dout.items():
@@ -275,7 +270,7 @@ class TaskProxy(object):
                     point = self.point + get_interval(offset)
                 else:
                     point = self.point
-                if is_startup and point < start_point:
+                if point < initial_point:
                     # pre-initial dependence
                     continue
                 self.parents[(name, point)] = False
