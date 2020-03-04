@@ -928,13 +928,18 @@ class TaskPool(object):
 
     def spawn(self, up_name, up_point, name, point, message=None, go=False):
         """Spawn a new task proxy and update its prerequisites."""
+        if point > self.stop_point:
+            LOG.info('[%s.%s] Not spawning %s.%s (%s) - beyond stop point',
+                 up_name, up_point, name, point, message)
+            return
+
         LOG.info('[%s.%s] spawning %s.%s (%s)',
                  up_name, up_point, name, point, message)
-        # Check not already spawned by another task.
         itask = None
         for jtask in self.get_all_tasks():
             if jtask.tdef.name == name and jtask.point == point:
                 itask = jtask
+                # Already spawned.
                 break
         if itask is None:
             for tname in self.config.get_task_name_list():
