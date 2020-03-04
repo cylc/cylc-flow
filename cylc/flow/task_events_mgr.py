@@ -284,6 +284,23 @@ class TaskEventsManager():
             elif ctx.ctx_type == self.HANDLER_JOB_LOGS_RETRIEVE:
                 self._process_job_logs_retrieval(schd_ctx, ctx, id_keys)
 
+    def _spawn_children(self, itask, spawn, output=None):
+        """Specific children of output, or all children"""
+        if output:
+           try:
+              children = itask.children[output]
+           except KeyError:
+              # No children depend on this ouput
+              children = []
+        else:
+            children = itask.children.values()
+        self.pflag = True
+        for c_name, c_point in children:
+            if (c_name, c_point) not in itask.children_spawned:
+                itask.children_spawned.append((c_name, c_point))
+                spawn(itask.tdef.name, itask.point,
+                      c_name, c_point, output)
+
     def process_message(
         self,
         itask,
@@ -364,26 +381,7 @@ class TaskEventsManager():
             # Spawn downstream tasks that depend on this output.
             # TODO SoD - choosing children logic should go in task_pool?
             # TODO SoD - do we need msg0 here?
-            try:
-                children = itask.children[msg0]
-            except KeyError:
-                pass
-            else:
-                self.pflag = True
-                for c_name, c_point in children:
-                    if (c_name, c_point) not in itask.children_spawned:
-                        itask.children_spawned.append((c_name, c_point))
-                        spawn(itask.tdef.name, itask.point,
-                              c_name, c_point, msg0)
-
-        if msg0 in [TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED]:
-            # Spawn any remaining children to update parent finished status.
-            for children in itask.children.values():
-                for c_name, c_point in children:
-                    if (c_name, c_point) not in itask.children_spawned:
-                        itask.children_spawned.append((c_name, c_point))
-                        spawn(itask.tdef.name, itask.point,
-                              c_name, c_point, msg0)
+            self._spawn_children(itask, spawn, msg0)
 
         if message == TASK_OUTPUT_STARTED:
             if (
@@ -394,6 +392,7 @@ class TaskEventsManager():
             self._process_message_started(itask, event_time)
         elif message == TASK_OUTPUT_SUCCEEDED:
             self._process_message_succeeded(itask, event_time)
+            self._spawn_children(itask, spawn, message)
         elif message == TASK_OUTPUT_FAILED:
             if (
                     flag == self.FLAG_RECEIVED
@@ -722,6 +721,8 @@ class TaskEventsManager():
                 self.setup_event_handlers(itask, "failed", message)
             LOG.critical(
                 "[%s] -job(%02d) %s", itask, itask.submit_num, "failed")
+            self._spawn_children(itask, spawn, TASK_OUTPUT_FAILED)
+ 
         elif itask.state.reset(TASK_STATUS_RETRYING):
             delay_msg = "retrying in %s" % (
                 itask.try_timers[TASK_STATUS_RETRYING].delay_timeout_as_str())

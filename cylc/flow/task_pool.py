@@ -383,7 +383,7 @@ class TaskPool(object):
         self.pool[itask.point][itask.identity] = itask
         self.pool_changed = True
         self.pool_changes.append(itask)
-        LOG.debug("[%s] -released to the task pool", itask)
+        LOG.info("[%s] - released to the task pool", itask)
         del self.runahead_pool[itask.point][itask.identity]
         if not self.runahead_pool[itask.point]:
             del self.runahead_pool[itask.point]
@@ -428,9 +428,12 @@ class TaskPool(object):
             if (itask.state(TASK_STATUS_WAITING) and
                     len(itask.state.prerequisites) > 0):
                 waiting.append(itask)
+                LOG.info("Removing waiting task %s", itask.identity)
             elif itask.state(TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED):
                 finished.append(itask)
-            # else not removing
+                LOG.info("Removing finished task %s", itask.identity)
+            else:
+                LOG.info("Not Removing task %s", itask.identity)
 
         removed = False
         for itask in chain(finished, waiting):
@@ -929,8 +932,6 @@ class TaskPool(object):
                  up_name, up_point, name, point, message)
             return
 
-        LOG.info('[%s.%s] spawning %s.%s (%s)',
-                 up_name, up_point, name, point, message)
         itask = None
         for jtask in self.get_all_tasks():
             if jtask.tdef.name == name and jtask.point == point:
@@ -943,12 +944,17 @@ class TaskPool(object):
                    itask = TaskProxy(
                        self.config.get_taskdef(tname), point)
                    self.add_to_runahead_pool(itask)
+                   LOG.info('[%s.%s] spawned %s.%s (%s)',
+                             up_name, up_point, name, point, message)
                    break
         # TODO itask not found? (shouldn't happen)
         if go:
            itask.state.set_prerequisites_all_satisfied()
         elif message is not None:
            itask.state.satisfy_me(set([(up_name, str(up_point), message)]))
+           LOG.info('[%s.%s] updated prereq %s.%s (%s)',
+                    up_name, up_point, name, point, message)
+
            if message in [TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED]:
                itask.parents[(up_name, up_point)] = True
 

@@ -1318,6 +1318,7 @@ see `COPYING' in the Cylc source distribution.
 
         if self.pool.remove_suiciding_tasks():
             self.is_updated = True
+
         if self.pool.remove_tasks():
             self.is_updated = True
         self.broadcast_mgr.expire_broadcast(self.pool.get_min_point())
@@ -1665,8 +1666,6 @@ see `COPYING' in the Cylc source distribution.
                 self.task_events_mgr.pflag = True
             self.proc_pool.process()
 
-            # PROCESS ALL TASKS whenever something has changed that might
-            # require renegotiation of dependencies, etc.
             if self.should_process_tasks():
                 self.process_task_pool()
             self.late_tasks_check()
