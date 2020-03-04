@@ -258,7 +258,7 @@ class TaskProxy(object):
         for seq, dout in tdef.downstreams.items():
             for out, downs in dout.items():
                 if out.output not in self.children:
-                   self.children[out.output] = []
+                    self.children[out.output] = []
                 for name, offset in downs:
                     if offset is not None:
                         point = self.point - get_interval(offset)
@@ -268,13 +268,14 @@ class TaskProxy(object):
                         self.children[out.output].append((name, point))
         self.parents = {}
         for seq, ups in tdef.upstreams.items():
+            if not seq.is_on_sequence(self.point):
+               continue
             for name, offset in ups:
                 if offset is not None:
                     point = self.point + get_interval(offset)
                 else:
                     point = self.point
-                if seq.is_on_sequence(point):
-                    self.parents[(name, point)] = False
+                self.parents[(name, point)] = False
 
     def __str__(self):
         """Stringify using "self.identity"."""
