@@ -1579,7 +1579,7 @@ class Mutations(ObjectType):
 # ** Subscription Related ** #
 
 delta_args = dict(
-    id=ID(required=True, description="Full ID, i.e. `owner|name`"),
+    ids=List(ID, description="List of full ID, i.e. `owner|name`"),
     topic=String(default_value=ALL_DELTAS),
 )
 
@@ -1729,16 +1729,54 @@ class Pruned(ObjectType):
     edges = List(String)
 
 
-class Deltas(ObjectType):
+class AddedUpdated(ObjectType):
     class Meta:
-        description = """Grouped deltas of the WFS publish"""
+        description = """WFS Nodes/Edges that have been removed."""
+    families = List(
+        FamilyDelta,
+        description="""Family definitions.""",
+        args=def_args)
+    family_proxies = List(
+        FamilyProxyDelta,
+        description="""Family cycle instances.""",
+        args=proxy_args)
+    jobs = List(
+        JobDelta,
+        description="""Task jobs.""",
+        args=jobs_args)
+    tasks = List(
+        TaskDelta,
+        description="""Task definitions.""",
+        args=def_args)
+    task_proxies = List(
+        TaskProxyDelta,
+        description="""Task cycle instances.""",
+        args=proxy_args)
+    edges = List(
+        EdgeDelta,
+        description="""Graph edges""",
+        args=edge_args)
     workflow = Field(
         WorkflowDeltas,
         description=WorkflowDeltas._meta.description,
     )
+
+
+class Deltas(ObjectType):
+    class Meta:
+        description = """Grouped deltas of the WFS publish"""
+    id = ID(required=True)
+    added = Field(
+        AddedUpdated,
+        description=AddedUpdated._meta.description
+    )
+    updated = Field(
+        AddedUpdated,
+        description=AddedUpdated._meta.description
+    )
     pruned = Field(
         Pruned,
-        description=Pruned._meta.description,
+        description=Pruned._meta.description
     )
 
 

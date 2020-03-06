@@ -123,7 +123,7 @@ class TestWorkflowSubscriber(CylcWorkflowTestCase):
             self.topic, self.data = process_delta_msg(btopic, msg, None)
         self.subscriber.loop.run_until_complete(
             self.subscriber.subscribe(msg_process))
-        self.assertEqual(self.data.id, self.workflow_id)
+        self.assertEqual(self.data.added.id, self.workflow_id)
 
 
 if __name__ == '__main__':

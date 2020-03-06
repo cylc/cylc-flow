@@ -32,7 +32,7 @@ from cylc.flow.data_store_mgr import (
     EDGES, FAMILY_PROXIES, TASK_PROXIES, WORKFLOW
 )
 from cylc.flow.network.schema import (
-    NodesEdges, PROXY_NODES, Deltas, WorkflowDeltas, Pruned
+    NodesEdges, PROXY_NODES, Deltas, Pruned, AddedUpdated
 )
 
 logger = logging.getLogger(__name__)
@@ -177,6 +177,7 @@ class BaseResolvers:
 
     def __init__(self, data_store_mgr):
         self.data_store_mgr = data_store_mgr
+        self.delta_store = {}
 
     # Query resolvers
     async def get_workflows_data(self, args):
@@ -306,22 +307,29 @@ class BaseResolvers:
         yielded GraphQL subscription objects.
 
         """
-        w_id = args['id']
+        w_ids = args['ids']
         sub_id = uuid4()
         delta_queues = self.data_store_mgr.delta_queues
-        if delta_queues.get(w_id) is not None:
-            delta_queues[w_id][sub_id] = queue.Queue()
+        deltas_queue = queue.Queue()
+        for w_id in w_ids:
+            if delta_queues.get(w_id) is not None:
+                delta_queues[w_id][sub_id] = deltas_queue
+        sub_fields = {'added', 'updated', 'pruned'}
         try:
             while True:
-                if not delta_queues.get(w_id, {}).get(sub_id):
+                if not any(
+                        delta_queues.get(w_id, {}).get(sub_id)
+                        for w_id in w_ids):
                     break
                 try:
-                    _, topic, delta = delta_queues[w_id][sub_id].get(False)
+                    w_id, topic, delta = deltas_queue.get(False)
                 except queue.Empty:
                     await asyncio.sleep(DELTA_SLEEP_INTERVAL)
                     continue
                 result = Deltas(
-                    workflow=WorkflowDeltas(id=w_id),
+                    id=w_id,
+                    added=AddedUpdated(),
+                    updated=AddedUpdated(),
                     pruned=Pruned()
                 )
                 if topic == 'shutdown':
@@ -329,14 +337,14 @@ class BaseResolvers:
                 elif not args.get('topic') or args['topic'] != topic:
                     continue
                 else:
-                    for field, value in delta.workflow.ListFields():
-                        setattr(result.workflow, field.name, value)
-                    for field, sub_value in delta.ListFields():
-                        if field.name != 'workflow':
-                            setattr(
-                                result.workflow, field.name, sub_value.deltas)
-                            setattr(
-                                result.pruned, field.name, sub_value.pruned)
+                    for field, value in delta.ListFields():
+                        for sub_field, sub_value in value.ListFields():
+                            if sub_field.name in sub_fields:
+                                setattr(
+                                    getattr(result, sub_field.name),
+                                    field.name,
+                                    sub_value
+                                )
                 yield result
         except CancelledError:
             pass
@@ -344,8 +352,9 @@ class BaseResolvers:
             import traceback
             logger.warn(traceback.format_exc())
         finally:
-            if delta_queues.get(w_id, {}).get(sub_id):
-                del delta_queues[w_id][sub_id]
+            for w_id in w_ids:
+                if delta_queues.get(w_id, {}).get(sub_id):
+                    del delta_queues[w_id][sub_id]
             yield None
 
 
