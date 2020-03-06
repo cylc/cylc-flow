@@ -32,11 +32,6 @@ from cylc.flow.data_store_mgr import DataStoreMgr
 SERVER_CONTEXT = zmq.Context()
 
 
-def get_secret():
-    """Return string in place of passphrase."""
-    return SECRET
-
-
 class TestSuiteRuntimeClient(CylcWorkflowTestCase):
     """Test the workflow runtime client."""
 

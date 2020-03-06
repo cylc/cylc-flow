@@ -134,7 +134,6 @@ class TaskRemoteMgr(object):
 
         Call "cylc remote-init" to install suite items to remote:
             ".service/contact": For TCP task communication
-            ".service/passphrase": For TCP task communication
             "python/": if source exists
 
         Return:

@@ -31,8 +31,6 @@ that the external triggering system is responding to.
 
 Use the retry options in case the target suite is down or out of contact.
 
-The suite passphrase must be installed in $HOME/.cylc/<SUITE>/.
-
 Note: to manually trigger a task use 'cylc trigger', not this command."""
 
 from time import sleep

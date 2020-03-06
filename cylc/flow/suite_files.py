@@ -138,9 +138,6 @@ class SuiteFiles:
         CONTACT2 = 'contact2'
         """Same as ``CONTACT``, installed on remote platforms."""
 
-        PASSPHRASE = 'passphrase'
-        """The suite authentication token."""
-
         SOURCE = 'source'
         """Symlink to the suite definition (suite dir)."""
 
@@ -214,9 +211,6 @@ REG_DELIM = "/"
 
 NO_TITLE = "No title provided"
 REC_TITLE = re.compile(r"^\s*title\s*=\s*(.*)\s*$")
-
-PASSPHRASE_CHARSET = ascii_letters + digits
-PASSPHRASE_LEN = 20
 
 PS_OPTS = '-wopid,args'
 
