@@ -30,6 +30,10 @@ pages**.
 2.11.1, fixing Jinja2 error where validation shows incorrect context.
 **This requires Python 2.7**
 
+[#3513](https://github.com/cylc/cylc-flow/pull/3513) - Fix expanded ids
+for GScan, preventing that all suites are expanded after a single suite
+was expanded in GScan.
+
 -------------------------------------------------------------------------------
 ## __cylc-7.8.5 (2019-Q4?)__
 
