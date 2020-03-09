@@ -32,6 +32,13 @@ ref-graph` to generate text-format "reference graphs" without PyGTK (back-port
 from Python 3 master for Cylc 8).
 
 
+## Fixes
+
+[#3514](https://github.com/cylc/cylc-flow/pull/3514) - Fix expanded ids
+for GScan, preventing that all suites are expanded after a single suite
+was expanded in GScan.
+
+
 -------------------------------------------------------------------------------
 ## __cylc-7.8.4 (2019-09-04)__
 
