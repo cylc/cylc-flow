@@ -794,13 +794,16 @@ class ScanAppUpdater(threading.Thread):
         expanded."""
         model = view.get_model()
         row_iter = model.get_iter(rpath)
-        row_id = model.get(row_iter, 0, 1)
+        row_id = model.get(row_iter, ScanApp.HOST_COLUMN,
+                           ScanApp.OWNER_COLUMN, ScanApp.SUITE_COLUMN)
         row_ids.append(row_id)
         return False
 
     def _expand_row(self, model, rpath, row_iter, row_ids):
         """Expand a row if it matches rose_ids suite and host."""
-        point_string_name_tuple = model.get(row_iter, 0, 1)
+        point_string_name_tuple = model.get(
+            row_iter, ScanApp.HOST_COLUMN, ScanApp.OWNER_COLUMN,
+            ScanApp.SUITE_COLUMN)
         if point_string_name_tuple in row_ids:
             self.treeview.expand_to_path(rpath)
         return False
