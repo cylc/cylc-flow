@@ -789,21 +789,26 @@ class ScanAppUpdater(threading.Thread):
         super(ScanAppUpdater, self).__init__()
 
     @staticmethod
-    def _add_expanded_row(view, rpath, row_ids):
+    def _get_row_id(model, row_iter):
+        return model.get(
+            row_iter,
+            ScanApp.GROUP_COLUMN,
+            ScanApp.HOST_COLUMN,
+            ScanApp.OWNER_COLUMN,
+            ScanApp.SUITE_COLUMN)
+
+    def _add_expanded_row(self, view, rpath, row_ids):
         """Add user-expanded rows to a list of suite and hosts to be
         expanded."""
         model = view.get_model()
         row_iter = model.get_iter(rpath)
-        row_id = model.get(row_iter, ScanApp.HOST_COLUMN,
-                           ScanApp.OWNER_COLUMN, ScanApp.SUITE_COLUMN)
+        row_id = self._get_row_id(model, row_iter)
         row_ids.append(row_id)
         return False
 
     def _expand_row(self, model, rpath, row_iter, row_ids):
         """Expand a row if it matches rose_ids suite and host."""
-        point_string_name_tuple = model.get(
-            row_iter, ScanApp.HOST_COLUMN, ScanApp.OWNER_COLUMN,
-            ScanApp.SUITE_COLUMN)
+        point_string_name_tuple = self._get_row_id(model, row_iter)
         if point_string_name_tuple in row_ids:
             self.treeview.expand_to_path(rpath)
         return False
