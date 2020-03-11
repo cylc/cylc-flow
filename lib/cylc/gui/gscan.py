@@ -790,6 +790,8 @@ class ScanAppUpdater(threading.Thread):
 
     @staticmethod
     def _get_row_id(model, row_iter):
+        """Get the unique row ID, composed of group, host, owner,
+        and suite name."""
         return model.get(
             row_iter,
             ScanApp.GROUP_COLUMN,
@@ -807,7 +809,7 @@ class ScanAppUpdater(threading.Thread):
         return False
 
     def _expand_row(self, model, rpath, row_iter, row_ids):
-        """Expand a row if it matches rose_ids suite and host."""
+        """Expand a row if it matches group, host, owner, and suite name."""
         point_string_name_tuple = self._get_row_id(model, row_iter)
         if point_string_name_tuple in row_ids:
             self.treeview.expand_to_path(rpath)
