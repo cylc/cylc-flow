@@ -276,8 +276,8 @@ def get_scan_items_from_fs(
                 try:
                     contact_data = load_contact_file(reg, owner)
                     cylc_version = contact_data[ContactFileFields.VERSION]
-                    stripped_cylc_version = int(cylc_version[:1])
-                    if (stripped_cylc_version < 8):
+                    major_version = int(cylc_version.split(".", 1)[0])
+                    if (major_version < 8):
                         LOG.debug(
                             f"Suite \"{reg}\" is running in Cylc version "
                             f"{cylc_version}, not Cylc 8 and will not be "
