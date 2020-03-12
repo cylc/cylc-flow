@@ -3,7 +3,7 @@ Building
 
 ```bash
 $ docker build -t slurm:test .
-$ docker run --name slurm --hostname docker --rm -d slurm:test
+$ docker run --name slurm --hostname docker -v $(realpath ../../):/root/cylc-flow --rm -d slurm:test
 ```
 
 Accessing

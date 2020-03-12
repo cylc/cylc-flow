@@ -11,7 +11,10 @@ RUN apt-get update && apt-get install -y \
     munge \
     slurm-wlm \
     supervisor \
- && rm -rf /var/lib/apt/lists/*
+    python3 \
+    python3-pip \
+    && pip3 install -U pip setuptools \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN set -x \
     && mkdir /var/run/slurm-llnl/ \
@@ -41,6 +44,12 @@ COPY slurm.conf /etc/slurm-llnl/slurm.conf
 COPY supervisord.conf /etc/supervisord.conf
 
 COPY slurm.submit /root/slurm.submit
+
+VOLUME ["/root/cylc-flow"]
+
+WORKDIR /root/cylc-flow
+
+RUN pip3 install -e .[all]
 
 EXPOSE 10389 6817 6818
 CMD /usr/bin/supervisord
