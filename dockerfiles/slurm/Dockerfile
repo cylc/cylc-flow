@@ -47,6 +47,9 @@ COPY slurm.submit /root/slurm.submit
 
 VOLUME ["/root/cylc-flow"]
 
+ENV LC_ALL=C.UTF-8
+ENV LANG=C.UTF-8
+
 WORKDIR /
 
 EXPOSE 10389 6817 6818
