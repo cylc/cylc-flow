@@ -47,9 +47,7 @@ COPY slurm.submit /root/slurm.submit
 
 VOLUME ["/root/cylc-flow"]
 
-WORKDIR /root/cylc-flow
-
-RUN pip3 install -e .[all]
+WORKDIR /
 
 EXPOSE 10389 6817 6818
 CMD /usr/bin/supervisord
