@@ -8,6 +8,7 @@ ENV DEBIAN_FRONTEND noninteractive
 #  - https://stackoverflow.com/questions/46966876/installing-emulating-slurm-on-an-ubuntu-16-04-desktop-slurmd-fails-to-start
 
 RUN apt-get update && apt-get install -y \
+    lsof \
     munge \
     slurm-wlm \
     supervisor \
@@ -49,6 +50,7 @@ VOLUME ["/root/cylc-flow"]
 
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
+ENV USER=root
 
 WORKDIR /
 
