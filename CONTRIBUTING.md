@@ -64,6 +64,7 @@ requests_).
  - Alexander Paulsell
  - David Sutherland
  - Martin Ryan
+ - Mel Hall
 
 (All contributors are identifiable with email addresses in the git version
 control logs or otherwise.)
