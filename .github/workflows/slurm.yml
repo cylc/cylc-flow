@@ -1,0 +1,26 @@
+# Workflow for testing Cylc with a SLURM docker container
+name: bash
+
+on: [pull_request]
+
+jobs:
+  bash-docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Build Docker container
+        run: |
+          docker build -t slurm:test dockerfiles/slurm/
+          docker run --name slurm --hostname docker -v $(pwd -P):/root/cylc-flow --rm -d slurm:test
+          docker ps -a
+
+      - name: Install Cylc dependencies in the container
+        run: |
+          docker exec slurm python3.7 -m pip install six==1.12
+          docker exec -w /root/cylc-flow slurm python3.7 -m pip install -e .[all]
+
+      - name: Run functional tests that validate or are related to Cylc and SLURM
+        run: |
+          docker exec -e CYLC_TEST_RUN_GENERIC=false -w /root/cylc-flow slurm ./etc/bin/run-functional-tests.sh -v tests/
