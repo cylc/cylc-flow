@@ -27,6 +27,7 @@ import traceback
 import socket
 from uuid import uuid4
 
+from cylc import LOG
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
 from cylc.hostuserutil import is_remote_host, get_host_ip_by_name
@@ -308,6 +309,13 @@ def get_scan_items_from_fs(owner_pattern=None, updater=None):
             reg = os.path.relpath(dirpath, run_d)
             try:
                 contact_data = srv_files_mgr.load_contact_file(reg, owner)
+                cylc_ver = contact_data[srv_files_mgr.KEY_VERSION]
+                major_ver = int(cylc_ver.split(".", 1)[0])
+                if (major_ver > 7):
+                    LOG.debug("Suite %s is running in Cylc version %s "
+                              "and will not be displayed." % (reg, cylc_ver)
+                              )
+                    continue
             except (SuiteServiceFileError, IOError, TypeError, ValueError):
                 continue
             else:
