@@ -1,0 +1,16 @@
+
+# Test automatic deprecation and deletion of config items as specified
+# in lib/cylc/cfgspec/suite.py.
+
+[scheduling]
+    initial cycle point = 20150808T00
+    final cycle point = 20150808T00
+    [[dependencies]]
+        [[[P1D]]]
+            graph = foo => cat & dog
+[runtime]
+    [[foo, cat, dog]]
+        [[[event hooks]]]
+            retry handler = echo "retrying..."
+        [[[events]]]
+            mail events = submit
