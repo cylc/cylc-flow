@@ -1,0 +1,9 @@
+[scheduling]
+[[dependencies]]
+graph = "hello"
+
+[runtime]
+[[hello]]
+script = "sleep 2; echo Hello World!"
+[[[job]]]
+batch system = slurm
