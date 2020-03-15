@@ -45,6 +45,7 @@ if '--use-ssh' in sys.argv[1:]:
 import re
 from subprocess import Popen, PIPE, CalledProcessError, DEVNULL
 import json
+from typing import Pattern
 
 from cylc.flow.option_parsers import OptionParser
 from cylc.flow.terminal import cli_function
@@ -116,14 +117,11 @@ def run_command(cmd):
         return stdout
 
 
-def extract_pattern(data_pattern, raw_string):
+def extract_pattern(data_pattern: Pattern, raw_string):
     """Try to return first parenthesized subgroup of a regex string search."""
     error_msg = "No 're.search' matches for:\n  %s\non the string:\n  %s" % (
         data_pattern.pattern, raw_string)
-    try:
-        matches = re.search(data_pattern, raw_string)
-    except re.error:
-        sys.stderr.write(error_msg)
+    matches = re.search(data_pattern, raw_string)
     if matches:
         return matches.groups()
     else:
