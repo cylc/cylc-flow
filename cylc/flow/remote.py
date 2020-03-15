@@ -120,10 +120,6 @@ def run_cmd(
         sys.exit(r'ERROR: %s: %s' % (
             exc, ' '.join(quote(item) for item in command)))
 
-    # if stdin_str:
-    #     proc.stdin.write(stdin_str.encode())
-    #     proc.stdin.close()
-
     if capture_process:
         return proc
     else:

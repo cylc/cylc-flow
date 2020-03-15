@@ -65,6 +65,10 @@ def select_host(
     is used.
 
     Args:
+        hosts (list):
+            List of host names to choose from.
+            NOTE: Host names must be identifyable from the host where the
+            call is executed.
         threshold_string (str):
             A multiline string containing Python expressions to fileter
             hosts by e.g::
@@ -86,7 +90,8 @@ def select_host(
             List of host names to filter out.
             Can be short host names (do not have to be fqdn values)
         blacklist_name (str):
-            Used with `blacklist` in error messages.
+            The reason for blacklisting these hosts
+            (used for exceptions).
 
     Returns:
         tuple - (hostname, fqdn) the chosen host
@@ -98,7 +103,7 @@ def select_host(
 
     """
     # standardise host names - remove duplicate items
-    hostname_map = {  # note dictionary keys filer out duplicates
+    hostname_map = {  # note dictionary keys filter out duplicates
         get_fqdn_by_host(host): host
         for host in hosts
     }
@@ -208,6 +213,19 @@ def _filter_by_hostname(
 
 def _filter_by_threshold(hosts, thresholds, results, data=None):
     """Filter and rank by the provided thresholds.
+
+    Args:
+        hosts (list):
+            List of host fqdns.
+        thresholds (list):
+            Thresholds which must be met.
+            List of thresholds as returned by `get_thresholds`.
+        results (dict):
+            Nested dictionary as returned by `get_metrics` of the form:
+            `{host: {value: result, ...}, ...}`.
+        data (dict):
+            Dict of the form {host: {}}
+            (used for exceptions).
 
     Examples:
         # ranking
@@ -410,7 +428,7 @@ def _get_thresholds(string):
 
 @lru_cache()
 def _tuple_factory(name, params):
-    """Wrapper to namedtuple which cashes results to prevent duplicates."""
+    """Wrapper to namedtuple which caches results to prevent duplicates."""
     return namedtuple(name, params)
 
 
