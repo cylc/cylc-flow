@@ -119,12 +119,12 @@ def run_command(cmd):
 
 def extract_pattern(data_pattern: Pattern, raw_string):
     """Try to return first parenthesized subgroup of a regex string search."""
-    error_msg = "No 're.search' matches for:\n  %s\non the string:\n  %s" % (
-        data_pattern.pattern, raw_string)
     matches = re.search(data_pattern, raw_string)
     if matches:
         return matches.groups()
     else:
+        error_msg = "No 're.search' matches for:\n  %s\non the string:\n  %s" \
+                    % (data_pattern.pattern, raw_string)
         raise AttributeError(error_msg)
 
 
