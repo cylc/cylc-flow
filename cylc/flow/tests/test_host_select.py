@@ -22,6 +22,17 @@ localhost, localhost_aliases, _ = socket.gethostbyname_ex('localhost')
 localhost_fqdn = get_fqdn_by_host(localhost)
 
 
+# NOTE: ensure that all localhost aliases are actually alises of localhost,
+#       it would appear that this is not always the case
+#       on Travis-CI on of the alises has a different fqdn from the fqdn
+#       of the host it is an alias of
+localhost_aliases = [
+    alias
+    for alias in localhost_aliases
+    if get_fqdn_by_host(alias) == localhost_fqdn
+]
+
+
 def test_hostname_checking():
     """Check that unknown hosts raise an error"""
     with pytest.raises(socket.gaierror):
@@ -38,12 +49,11 @@ def test_localhost():
 
 def test_unique():
     """Basic test choosing from multiple forms of localhost"""
-    assert select_host(
+    name, fqdn = select_host(
         localhost_aliases + [localhost]
-    ) == (
-        localhost,
-        localhost_fqdn
     )
+    assert name in localhost_aliases + [localhost]
+    assert fqdn == localhost_fqdn
 
 
 def test_filter():
@@ -153,6 +163,11 @@ def test_suite_host_select_default(mock_glbl_cfg):
     assert host_fqdn == localhost_fqdn
 
 
+# NOTE: on Travis-CI the fqdn of `localhost` is `localhost`
+@pytest.mark.skipif(
+    localhost == localhost_fqdn,
+    reason='Cannot condemn a host unless is has a safe unique fqdn.'
+)
 def test_suite_host_select_condemned(mock_glbl_cfg):
     """Ensure condemned hosts are filtered out."""
     mock_glbl_cfg(
