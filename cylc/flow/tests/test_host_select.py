@@ -58,14 +58,14 @@ def test_filter():
     assert message in str(excinfo.value)
 
 
-def test_thresholds():
-    """Positive test that thresholds are evaluated.
+def test_rankings():
+    """Positive test that rankings are evaluated.
 
-    (doesn't prove anything by itself hence test_unreasonable_thresholds)
+    (doesn't prove anything by itself hence test_unreasonable_rankings)
     """
     assert select_host(
         [localhost],
-        threshold_string='''
+        ranking_string='''
             # if this test fails due to race conditions
             # then you have bigger issues than a test failure
             virtual_memory().available > 1
@@ -76,15 +76,15 @@ def test_thresholds():
     ) == (localhost, localhost_fqdn)
 
 
-def test_unreasonable_thresholds():
-    """Negative test that thresholds are evaluated.
+def test_unreasonable_rankings():
+    """Negative test that rankings are evaluated.
 
-    (doesn't prove anything by itself hence test_thresholds)
+    (doesn't prove anything by itself hence test_rankings)
     """
     with pytest.raises(HostSelectException) as excinfo:
         select_host(
             [localhost],
-            threshold_string='''
+            ranking_string='''
                 # if this test fails due to race conditions
                 # then you are very lucky
                 virtual_memory().available > 123456789123456789
@@ -103,7 +103,7 @@ def test_metric_command_failure():
     with pytest.raises(HostSelectException) as excinfo:
         select_host(
             [localhost],
-            threshold_string='''
+            ranking_string='''
                 # elephant is not a psutil attribute
                 # so will cause the command to fail
                 elephant

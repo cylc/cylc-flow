@@ -272,7 +272,7 @@ SPEC = {
         'run ports': [VDR.V_INTEGER_LIST, list(range(43001, 43101))],
         'condemned hosts': [VDR.V_ABSOLUTE_HOST_LIST],
         'auto restart delay': [VDR.V_INTERVAL],
-        'thresholds': [VDR.V_STRING]
+        'ranking': [VDR.V_STRING]
     },
 }
 

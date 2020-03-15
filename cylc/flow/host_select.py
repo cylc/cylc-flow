@@ -21,8 +21,8 @@ def select_suite_host(cached=True):
     """Return a host as specified in `[suite hosts]`.
 
     * Condemned hosts are filtered out.
-    * Filters by thresholds (if defined).
-    * Ranks by thresholds (if defined).
+    * Filters out hosts excluded by ranking (if defined).
+    * Ranks by ranking (if defined).
 
     Args:
         cached (bool):
@@ -43,8 +43,8 @@ def select_suite_host(cached=True):
     return select_host(
         # list of suite hosts
         global_config.get(['suite servers', 'run hosts']) or ['localhost'],
-        # thresholds / ranking to apply
-        threshold_string=global_config.get(['suite servers', 'thresholds']),
+        # rankings to apply
+        ranking_string=global_config.get(['suite servers', 'ranking']),
         # list of condemned hosts
         blacklist=global_config.get(
             ['suite servers', 'condemned hosts']
@@ -55,13 +55,13 @@ def select_suite_host(cached=True):
 
 def select_host(
         hosts,
-        threshold_string=None,
+        ranking_string=None,
         blacklist=None,
         blacklist_name=None
 ):
     """Select a host from the provided list.
 
-    If no ranking is provided (in `threshold_string`) then random selection
+    If no ranking is provided (in `ranking_string`) then random selection
     is used.
 
     Args:
@@ -69,7 +69,7 @@ def select_host(
             List of host names to choose from.
             NOTE: Host names must be identifyable from the host where the
             call is executed.
-        threshold_string (str):
+        ranking_string (str):
             A multiline string containing Python expressions to fileter
             hosts by e.g::
 
@@ -130,20 +130,20 @@ def select_host(
         # no hosts provided / left after filtering
         raise HostSelectException(data)
 
-    thresholds = []
-    if threshold_string:
-        # parse thresholds
-        thresholds = list(_get_thresholds(threshold_string))
+    rankings = []
+    if ranking_string:
+        # parse rankings
+        rankings = list(_get_rankings(ranking_string))
 
-    if not thresholds:
+    if not rankings:
         # no metrics or ranking required, pick host at random
         hosts = [random.choice(list(hosts))]  # nosec
 
-    if not thresholds and len(hosts) == 1:
+    if not rankings and len(hosts) == 1:
         return hostname_map[hosts[0]], hosts[0]
 
-    # filter and sort by thresholds
-    metrics = list({x for x, _ in thresholds})  # required metrics
+    # filter and sort by rankings
+    metrics = list({x for x, _ in rankings})  # required metrics
     results, data = _get_metrics(  # get data from each host
         hosts, metrics, data)
     hosts = list(results)  # some hosts might not be contactable
@@ -152,13 +152,13 @@ def select_host(
     if not hosts:
         # no hosts provided / left after filtering
         raise HostSelectException(data)
-    if not thresholds and len(hosts) == 1:
+    if not rankings and len(hosts) == 1:
         return hostname_map[hosts[0]], hosts[0]
 
-    hosts, data = _filter_by_threshold(
-        # filter by thresholds, sort by ranking
+    hosts, data = _filter_by_ranking(
+        # filter by rankings, sort by ranking
         hosts,
-        thresholds,
+        rankings,
         results,
         data=data
     )
@@ -211,15 +211,15 @@ def _filter_by_hostname(
     return hosts, data
 
 
-def _filter_by_threshold(hosts, thresholds, results, data=None):
-    """Filter and rank by the provided thresholds.
+def _filter_by_ranking(hosts, rankings, results, data=None):
+    """Filter and rank by the provided rankings.
 
     Args:
         hosts (list):
             List of host fqdns.
-        thresholds (list):
+        rankings (list):
             Thresholds which must be met.
-            List of thresholds as returned by `get_thresholds`.
+            List of rankings as returned by `get_rankings`.
         results (dict):
             Nested dictionary as returned by `get_metrics` of the form:
             `{host: {value: result, ...}, ...}`.
@@ -229,15 +229,15 @@ def _filter_by_threshold(hosts, thresholds, results, data=None):
 
     Examples:
         # ranking
-        >>> _filter_by_threshold(
+        >>> _filter_by_ranking(
         ...     ['a', 'b'],
         ...     [('X', 'RESULT')],
         ...     {'a': {'X': 123}, 'b': {'X': 234}}
         ... )
         (['a', 'b'], {'a': {}, 'b': {}})
 
-        # thresholds
-        >>> _filter_by_threshold(
+        # rankings
+        >>> _filter_by_ranking(
         ...     ['a', 'b'],
         ...     [('X', 'RESULT < 200')],
         ...     {'a': {'X': 123}, 'b': {'X': 234}}
@@ -245,7 +245,7 @@ def _filter_by_threshold(hosts, thresholds, results, data=None):
         (['a'], {'a': {'X() < 200': True}, 'b': {'X() < 200': False}})
 
         # no matching hosts
-        >>> _filter_by_threshold(
+        >>> _filter_by_ranking(
         ...     ['a'],
         ...     [('X', 'RESULT > 1')],
         ...     {'a': {'X': 0}}
@@ -257,17 +257,17 @@ def _filter_by_threshold(hosts, thresholds, results, data=None):
         data = {host: {} for host in hosts}
     good = []
     for host in hosts:
-        host_thresholds = {}
+        host_rankings = {}
         host_rank = []
-        for key, expression in thresholds:
+        for key, expression in rankings:
             item = _reformat_expr(key, expression)
             result = _simple_eval(expression, RESULT=results[host][key])
             if isinstance(result, bool):
-                host_thresholds[item] = result
+                host_rankings[item] = result
                 data[host][item] = result
             else:
                 host_rank.append(result)
-        if all(host_thresholds.values()):
+        if all(host_rankings.values()):
             good.append((host_rank, host))
 
     if not good:
@@ -280,7 +280,7 @@ def _filter_by_threshold(hosts, thresholds, results, data=None):
         random.shuffle(good)
 
     return (
-        # list of all hosts which passed thresholds (sorted by ranking)
+        # list of all hosts which passed rankings (sorted by ranking)
         [host for _, host in good],
         # data
         data
@@ -352,24 +352,24 @@ def _simple_eval(expr, **variables):
         raise ValueError(expr)
 
 
-def _get_thresholds(string):
-    """Yield parsed threshold expressions.
+def _get_rankings(string):
+    """Yield parsed ranking expressions.
 
     Examples:
         The first ``token.NAME`` encountered is returned as the query:
-        >>> _get_thresholds('foo() == 123').__next__()
+        >>> _get_rankings('foo() == 123').__next__()
         (('foo',), 'RESULT == 123')
 
         If multiple are present they will not get parsed:
-        >>> _get_thresholds('foo() in bar()').__next__()
+        >>> _get_rankings('foo() in bar()').__next__()
         (('foo',), 'RESULT in bar()')
 
         Positional arguments are added to the query tuple:
-        >>> _get_thresholds('1 in foo("a")').__next__()
+        >>> _get_rankings('1 in foo("a")').__next__()
         (('foo', 'a'), '1 in RESULT')
 
         Comments (not in-line) and multi-line strings are permitted:
-        >>> _get_thresholds('''
+        >>> _get_rankings('''
         ...     # earl of sandwhich
         ...     foo() == 123
         ...     # beef wellington
@@ -534,13 +534,13 @@ def _get_metrics(hosts, metrics, data=None):
 
 
 def _reformat_expr(key, expression):
-    """Convert a threshold tuple back into an expression.
+    """Convert a ranking tuple back into an expression.
 
     Examples:
-        >>> threshold = 'a().b < c'
+        >>> ranking = 'a().b < c'
         >>> _reformat_expr(
-        ...     *[x for x in _get_thresholds(threshold)][0]
-        ... ) == threshold
+        ...     *[x for x in _get_rankings(ranking)][0]
+        ... ) == ranking
         True
 
     """

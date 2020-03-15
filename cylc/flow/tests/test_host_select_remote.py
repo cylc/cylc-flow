@@ -61,11 +61,11 @@ def test_remote_blacklict():
         ) == (local_host, local_host_fqdn)
 
 
-def test_remote_thresholds():
-    """Test that threshold evaluation works on remote hosts (via SSH)."""
+def test_remote_rankings():
+    """Test that ranking evaluation works on remote hosts (via SSH)."""
     assert select_host(
         [remote_host],
-        threshold_string='''
+        ranking_string='''
             # if this test fails due to race conditions
             # then you have bigger issues than a test failure
             virtual_memory().available > 1
@@ -77,7 +77,7 @@ def test_remote_thresholds():
 
 
 def test_remote_exclude(monkeypatch):
-    """Ensure that hosts get excluded if they don't meet the thresholds.
+    """Ensure that hosts get excluded if they don't meet the rankings.
 
     Already tested elsewhere but this double-checks that it works if more
     than one host is provided to choose from."""
@@ -93,7 +93,7 @@ def test_remote_exclude(monkeypatch):
     )
     assert select_host(
         [local_host, remote_host],
-        threshold_string='''
+        ranking_string='''
             cpu_count()
         '''
     ) == (local_host, local_host_fqdn)
@@ -125,14 +125,14 @@ def test_remote_suite_host_condemned(mock_glbl_cfg):
         assert select_suite_host() == (local_host, local_host_fqdn)
 
 
-def test_remote_suite_host_thresholds(mock_glbl_cfg):
-    """test [suite servers]thresholds"""
+def test_remote_suite_host_rankings(mock_glbl_cfg):
+    """test [suite servers]rankings"""
     mock_glbl_cfg(
         'cylc.flow.host_select.glbl_cfg',
         f'''
             [suite servers]
                 run hosts = {remote_host}
-                thresholds = """
+                rankings = """
                     # if this test fails due to race conditions
                     # then you are very lucky
                     virtual_memory().available > 123456789123456789
@@ -144,12 +144,12 @@ def test_remote_suite_host_thresholds(mock_glbl_cfg):
     )
     with pytest.raises(HostSelectException) as excinfo:
         select_suite_host()
-    # ensure that host selection actually evuluated thresholds
+    # ensure that host selection actually evuluated rankings
     assert set(excinfo.value.data[remote_host_fqdn]) == {
         'virtual_memory().available > 123456789123456789',
         'getloadavg()[0] < 1',
         'cpu_count() > 512',
         "disk_usage('/').free > 123456789123456789"
     }
-    # ensure that none of the thresholds passed
+    # ensure that none of the rankings passed
     assert not any(excinfo.value.data[remote_host_fqdn].values())
