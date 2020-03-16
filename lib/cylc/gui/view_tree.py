@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import gtk
+import re
 
 from isodatetime.parsers import DurationParser, ISO8601SyntaxError
 
@@ -227,6 +228,17 @@ class ControlTree(object):
             cols[col_no].set_sort_order(order)
             self.tmodelsort.set_sort_column_id(col_no - 1, order)
 
+    def _nat_convert(self, text):
+        return int(text) if text.isdigit() else text.lower()
+
+    def _nat_alpha_num_key(self, key):
+        return [self._nat_convert(c) for c in re.split('([0-9]+)', key)]
+
+    def _nat_cmp(self, left, right):
+        return cmp(
+            self._nat_alpha_num_key(left),
+            self._nat_alpha_num_key(right))
+
     def sort_column(self, model, iter1, iter2, col_num):
         cols = self.ttreeview.get_columns()
         point_string1 = model.get_value(iter1, 0)
@@ -234,8 +246,8 @@ class ControlTree(object):
         if point_string1 != point_string2:
             # TODO ISO: worth a proper comparison here?
             if cols[col_num].get_sort_order() == gtk.SORT_DESCENDING:
-                return cmp(point_string2, point_string1)
-            return cmp(point_string1, point_string2)
+                return self._nat_cmp(point_string2, point_string1)
+            return self._nat_cmp(point_string1, point_string2)
 
         # Columns do not include the cycle point (0th col), so add 1.
         prop1 = model.get_value(iter1, col_num + 1)
@@ -243,7 +255,7 @@ class ControlTree(object):
         if col_num == 8:  # dT-mean column, convert intervals to seconds
             prop1 = self._get_interval_in_seconds(prop1)
             prop2 = self._get_interval_in_seconds(prop2)
-        return cmp(prop1, prop2)
+        return self._nat_cmp(prop1, prop2)
 
     def _get_interval_in_seconds(self, val):
         """Convert the IOS 8601 date/time to seconds."""
