@@ -105,6 +105,7 @@ class ControlTree(object):
         # TODO - REMOVE FILTER HERE?
         self.tmodelfilter = self.ttreestore.filter_new()
         self.tmodelsort = gtk.TreeModelSort(self.tmodelfilter)
+        self.tmodelsort.set_default_sort_func(self.default_sort_column)
         self.ttreeview.set_model(self.tmodelsort)
 
         # multiple selection
@@ -256,6 +257,13 @@ class ControlTree(object):
             prop1 = self._get_interval_in_seconds(prop1)
             prop2 = self._get_interval_in_seconds(prop2)
         return self._nat_cmp(prop1, prop2)
+
+    def default_sort_column(self, model, iter1, iter2):
+        point_string1 = model.get_value(iter1, 0)
+        point_string2 = model.get_value(iter2, 0)
+        if point_string1 is None or point_string2 is None:
+            return cmp(point_string1, point_string2)
+        return self._nat_cmp(point_string1, point_string2)
 
     def _get_interval_in_seconds(self, val):
         """Convert the IOS 8601 date/time to seconds."""
