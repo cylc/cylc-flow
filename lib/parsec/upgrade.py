@@ -176,7 +176,21 @@ class upgrader(object):
                             warnings[vn].append(msg)
                         self.del_item(upg['old'])
                         if upg['cvt'].describe() != "DELETED (OBSOLETE)":
-                            self.put_item(upg['new'], upg['cvt'].convert(old))
+                            # check self.cfg does not already contain a
+                            # non-deprecated item matching upg['new']:
+                            try:
+                                self.get_item(upg['new'])
+                            except KeyError:
+                                self.put_item(upg['new'],
+                                              upg['cvt'].convert(old))
+                            else:
+                                errMsg = (
+                                    'ERROR: Cannot upgrade '
+                                    'deprecation "' + msg + '" because '
+                                    'deprecated section clashes with existing '
+                                    'non-deprecated section'
+                                )
+                                raise UpgradeError(errMsg)
         if warnings:
             level = WARNING
             if self.descr == self.SITE_CONFIG:
