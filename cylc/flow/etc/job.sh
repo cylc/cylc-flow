@@ -225,6 +225,7 @@ cylc__job__run_inst_func() {
 # Globals:
 #   CYLC_FAIL_SIGNALS
 #   CYLC_TASK_LOG_ROOT
+#   CYLC_TASK_MESSAGE_STARTED_PID
 #   CYLC_TASK_USER_SCRIPT_PID
 #   CYLC_TASK_USER_SCRIPT_EXITCODE
 #   CYLC_VACATION_SIGNALS
@@ -235,7 +236,7 @@ cylc__job__run_inst_func() {
 #     messages to send back to the suite server program,
 #     see "cylc help message" for format of messages.
 # Returns:
-#   exit 1
+#   exit ${CYLC_TASK_USER_SCRIPT_EXITCODE}
 cylc__job_finish_err() {
     CYLC_TASK_USER_SCRIPT_EXITCODE="${CYLC_TASK_USER_SCRIPT_EXITCODE:-$?}"
     typeset signal="$1"
