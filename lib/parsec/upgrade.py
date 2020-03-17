@@ -190,7 +190,7 @@ class upgrader(object):
                                     'deprecated section clashes with existing '
                                     'non-deprecated section'
                                 )
-                                LOG.error(errMsg)
+                                raise UpgradeError(errMsg)
         if warnings:
             level = WARNING
             if self.descr == self.SITE_CONFIG:
