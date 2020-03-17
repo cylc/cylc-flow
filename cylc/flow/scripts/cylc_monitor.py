@@ -111,6 +111,7 @@ QUERY = '''
       id
       name
       status
+      stateTotals
       taskProxies {
         id
         name
@@ -552,6 +553,29 @@ class MonitorTreeBrowser:
             )
         ]
 
+    @staticmethod
+    def get_task_status_summary(flow):
+        """Return a task status summary line for this workflow.
+
+        Arguments:
+            flow (dict):
+                GraphQL JSON response for this workflow.
+
+        Returns:
+            list - Text list for the urwid.Text widget.
+
+        """
+        state_totals = flow['stateTotals']
+        return [
+            [
+                ('', ' '),
+                (f'job_{state}', str(state_totals[state])),
+                (f'job_{state}', JOB_ICON)
+            ]
+            for state, colour in JOB_COLOURS.items()
+            if state_totals[state]
+        ]
+
     def set_header(self, message):
         """Set the header message for this widget.
 
@@ -584,7 +608,12 @@ class MonitorTreeBrowser:
             return False
 
         # update the suite status message
-        self.set_header(self.get_status_str(snapshot['data']))
+        self.set_header(
+            self.get_status_str(snapshot['data'])
+            + [' (']
+            + self.get_task_status_summary(snapshot['data'])
+            + [' )']
+        )
 
         # global update - the nuclear option - slow but simple
         # TODO: this can be done incrementally by adding and
