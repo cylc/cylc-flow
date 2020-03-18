@@ -80,7 +80,7 @@ TASK_STATUS_DESC = {
         'Job has returned zero exit code.'
 }
 
-# Tasks statuses ordered according to task runtime progression.
+# Task statuses ordered according to task runtime progression.
 TASK_STATUSES_ORDERED = [
     TASK_STATUS_RUNAHEAD,
     TASK_STATUS_WAITING,
@@ -94,6 +94,22 @@ TASK_STATUSES_ORDERED = [
     TASK_STATUS_RUNNING,
     TASK_STATUS_FAILED,
     TASK_STATUS_SUCCEEDED
+]
+
+# Task statuses ordered according to display importance
+TASK_STATUS_DISPLAY_ORDER = [
+    TASK_STATUS_SUBMIT_FAILED,
+    TASK_STATUS_FAILED,
+    TASK_STATUS_RUNNING,
+    TASK_STATUS_SUBMITTED,
+    TASK_STATUS_EXPIRED,
+    TASK_STATUS_READY,
+    TASK_STATUS_SUBMIT_RETRYING,
+    TASK_STATUS_RETRYING,
+    TASK_STATUS_SUCCEEDED,
+    TASK_STATUS_QUEUED,
+    TASK_STATUS_WAITING,
+    TASK_STATUS_RUNAHEAD
 ]
 
 TASK_STATUSES_ALL = set(TASK_STATUSES_ORDERED)

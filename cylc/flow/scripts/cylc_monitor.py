@@ -22,6 +22,7 @@ Display the live status of a workflow in the terminal.
 from datetime import datetime, timedelta
 from functools import partial
 import sys
+from time import time
 
 import urwid
 from urwid import html_fragment
@@ -34,6 +35,7 @@ from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.task_state import (
     TASK_STATUSES_ORDERED,
+    TASK_STATUS_DISPLAY_ORDER,
     TASK_STATUS_RUNAHEAD,
     TASK_STATUS_WAITING,
     TASK_STATUS_QUEUED,
@@ -48,6 +50,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_SUCCEEDED
 )
 from cylc.flow.terminal import cli_function
+from cylc.flow.wallclock import get_unix_time_from_time_string
 
 
 if "--use-ssh" in sys.argv[1:]:
@@ -169,6 +172,78 @@ def intersperse(lst, fill):
     return ret
 
 
+def _get_display_text(node, data, type_):
+    """Render a tree node as text.
+
+    Args:
+        node (MonitorNode):
+            The node to render.
+        data (dict):
+            Data associated with that node.
+        type_ (str):
+            The node type (e.g. `task`, `job`, `family`).
+
+    """
+    if type_ == 'job_info':
+        key_len = max(len(key) for key in data)
+        ret = [
+            f'{key} {" " * (key_len - len(key))} {value}\n'
+            for key, value in data.items()
+        ]
+        ret[-1] = ret[-1][:-1]  # strip trailing newline
+        return ret
+
+    if type_ == 'job':
+        return [
+            f'#{data["submitNum"]:02d} ',
+            get_job_icon(data['state'])
+        ]
+
+    if type_ == 'task':
+        start_time = None
+        mean_time = None
+        try:
+            # due to sorting this is the most recent job
+            first_child = node.get_child_node(0)
+        except IndexError:
+            first_child = None
+
+        # progress information
+        if data['state'] == TASK_STATUS_RUNNING:
+            start_time = first_child.get_value()['data']['startedTime']
+            mean_time = data['task']['meanElapsedTime']
+
+        # the task icon
+        ret = get_task_icon(
+            data['state'],
+            data['isHeld'],
+            start_time=start_time,
+            mean_time=mean_time
+        )
+
+        # the most recent job status
+        ret.append(' ')
+        if first_child:
+            state = first_child.get_value()['data']['state']
+            ret += [(f'job_{state}', f'{JOB_ICON}'), ' ']
+
+        # the task name
+        ret.append(f'{data["name"]}')
+        return ret
+
+    if type_ == 'family':
+        return [
+            get_task_icon(
+                data['state'],
+                data['isHeld']
+            ),
+            ' ',
+            data['id'].rsplit('|', 1)[-1]
+        ]
+
+    return data['id'].rsplit('|', 1)[-1]
+
+
 class MonitorWidget(urwid.TreeWidget):
     """Display widget for leaf nodes.
 
@@ -208,66 +283,7 @@ class MonitorWidget(urwid.TreeWidget):
         value = node.get_value()
         data = value['data']
         type_ = value['type_']
-        if type_ == 'task':
-            start_time = None
-            mean_time = None
-            try:
-                # due to sorting this is the most recent job
-                first_child = node.get_child_node(0)
-            except IndexError:
-                first_child = None
-
-            # progress information
-            if data['state'] == TASK_STATUS_RUNNING:
-                start_time = first_child.get_value()['data']['startedTime']
-                mean_time = data['task']['meanElapsedTime']
-
-            # the task icon
-            ret = get_task_icon(
-                data['state'],
-                data['isHeld'],
-                start_time=start_time,
-                mean_time=mean_time
-            )
-
-            # the most recent job status
-            ret.append(' ')
-            if first_child:
-                state = first_child.get_value()['data']['state']
-                ret += [(f'job_{state}', f'{JOB_ICON}'), ' ']
-
-            # the task name
-            ret.append(f'{data["name"]}')
-            return ret
-
-        if type_ == 'job':
-            return [
-                f'#{data["submitNum"]:02d} ',
-                get_job_icon(data['state'])
-            ]
-
-        if type_ == 'family':
-            return [
-                get_task_icon(
-                    data['state'],
-                    data['isHeld']
-                ),
-                ' ',
-                data['id'].rsplit('|', 1)[-1]
-            ]
-
-        if type_ == 'job_info':
-            key_len = max(len(key) for key in data)
-
-            ret = [
-                f'{key} {" " * (key_len - len(key))} {value}\n'
-                for key, value in data.items()
-            ]
-            ret[-1] = ret[-1][:-1]  # strip trailing newline
-
-            return ret
-
-        return data['id'].rsplit('|', 1)[-1]
+        return _get_display_text(node, data, type_)
 
 
 class MonitorNode(urwid.TreeNode):
@@ -403,10 +419,9 @@ class MonitorTreeBrowser:
         self.loop.run()
 
     def unhandled_input(self, key):
-        if key in ('q', 'Q'):
-            if isinstance(self.loop.widget, urwid.Overlay):
-                self.remove_overlay()
-                return
+        if key in ('q', 'Q') and isinstance(self.loop.widget, urwid.Overlay):
+            self.remove_overlay()
+            return
         if key in ('q', 'Q', 'ctrl d'):
             raise urwid.ExitMainLoop()
         if key in ('F',):
@@ -909,7 +924,7 @@ def get_group_state(nodes):
         node.get_value()['data'].get('isHeld')
         for node in nodes
     ))
-    for state in TASK_STATUSES_ORDERED:
+    for state in TASK_STATUS_DISPLAY_ORDER:
         if state in states:
             return state, is_held
     raise ValueError()
@@ -937,10 +952,8 @@ def get_task_icon(status, is_held, start_time=None, mean_time=None):
             and start_time
             and mean_time
     ):
-        start_time = datetime.strptime(start_time, '%Y-%m-%dT%H:%M:%SZ')
-        now_time = datetime.utcnow()
-        mean_time = timedelta(seconds=mean_time)
-        progress = (now_time - start_time) / mean_time
+        start_time = get_unix_time_from_time_string(start_time)
+        progress = (time() - start_time) / mean_time
         if progress >= 0.75:
             status = f'{TASK_STATUS_RUNNING}:75'
         elif progress >= 0.5:
