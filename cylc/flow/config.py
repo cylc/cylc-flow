@@ -991,6 +991,12 @@ class SuiteConfig(object):
     def compute_inheritance(self):
         LOG.debug("Parsing the runtime namespace hierarchy")
 
+        # TODO: Note an unused alternative mechanism was removed here
+        # (March 2020). It stored the result of each completed MRO and
+        # re-used these wherever possible. This could be more efficient
+        # for full namespaces in deep hierarchies. We should go back and
+        # look if inheritance computation becomes a problem.
+
         results = OrderedDictWithDefaults()
         # n_reps = 0
         already_done = {}  # to store already computed namespaces by mro
