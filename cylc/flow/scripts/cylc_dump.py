@@ -19,8 +19,11 @@
 """cylc [info] dump [OPTIONS] ARGS
 
 Print state information (e.g. the state of each task) from a running
-suite. For small suites 'watch cylc [info] dump SUITE' is an effective
-non-GUI real time monitor (but see also 'cylc monitor').
+suite.
+
+For command line monitoring:
+* `cylc tui`
+* `watch cylc dump SUITE` works for small simple suites
 
 For more information about a specific task, such as the current state of
 its prerequisites and outputs, see 'cylc [info] show'.

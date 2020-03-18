@@ -14,9 +14,37 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""cylc [task] monitor ARGS
+"""cylc [task] tui REG
 
-Display the live status of a workflow in the terminal.
+Open the terminal user interface (TUI) for the given suite.
+
+                               _,@@@@@@.
+                             <=@@@, `@@@@@.
+                                `-@@@@@@@@@@@'
+                                   :@@@@@@@@@@.
+                                    .@@@@@@@@@@@
+                                   '@@@@@@@@@@@@.
+                                ;.@@@@@@@@@@@@@@@
+                              '@@@@@@@@@@@@@@@@@@,
+                            ,@@@@@@@@@@@@@@@@@@@@'
+                          :.@@@@@@@@@@@@@@@@@@@@@.
+                        .@@@@@@@@@@@@@@@@@@@@@@@@.
+                      '@@@@@@@@@@@@@@@@@@@@@@@@@.
+                    ;@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                   .@@@@@@@@@@@@@@@@@@@@@@@@@@.
+                  .@@@@@@@@@@@@@@@@@@@@@@@@@@,
+                 .@@@@@@@@@@@@@@@@@@@@@@@@@'
+                .@@@@@@@@@@@@@@@@@@@@@@@@'     ,
+              :@@@@@@@@@@@@@@@@@@@@@..''';,,,;::-
+             '@@@@@@@@@@@@@@@@@@@.        `.   `
+            .@@@@@@.: ,.@@@@@@@.            `
+          :@@@@@@@,         ;.@,
+         '@@@@@@.              `@'
+        .@@@@@@;                ;-,
+     ;.@@@@@@.                    ...,
+    ,,; ,;;                      ;  ',
+                                      ;;
+
 """
 
 from functools import partial

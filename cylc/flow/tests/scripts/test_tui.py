@@ -6,7 +6,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from cylc.flow.scripts.cylc_monitor import (
+from cylc.flow.scripts.cylc_tui import (
     JOB_ICON,
     TASK_ICONS,
     _get_display_text,
