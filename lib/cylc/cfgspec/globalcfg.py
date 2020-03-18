@@ -107,8 +107,6 @@ SPEC = {
 
     'communication': {
         'method': [VDR.V_STRING, 'https', 'http'],
-        'base port': [VDR.V_INTEGER, 43001],
-        'maximum number of ports': [VDR.V_INTEGER, 100],
         'proxies on': [VDR.V_BOOLEAN],
         'options': [VDR.V_STRING_LIST],
     },
