@@ -988,8 +988,14 @@ class SuiteConfig(object):
                 if name not in self.runtime['first-parent descendants'][p]:
                     self.runtime['first-parent descendants'][p].append(name)
 
-    def compute_inheritance(self, use_simple_method=True):
+    def compute_inheritance(self):
         LOG.debug("Parsing the runtime namespace hierarchy")
+
+        # TODO: Note an unused alternative mechanism was removed here
+        # (March 2020). It stored the result of each completed MRO and
+        # re-used these wherever possible. This could be more efficient
+        # for full namespaces in deep hierarchies. We should go back and
+        # look if inheritance computation becomes a problem.
 
         results = OrderedDictWithDefaults()
         # n_reps = 0
@@ -1006,39 +1012,11 @@ class SuiteConfig(object):
 
             result = OrderedDictWithDefaults()
 
-            if use_simple_method:
-                # Go up the linearized MRO from root, replicating or
-                # overriding each namespace element as we go.
-                for name in hierarchy:
-                    replicate(result, self.cfg['runtime'][name])
-                    # n_reps += 1
-
-            else:
-                # As for the simple method, but store the result of each
-                # completed MRO (full or partial) as we go, and re-use
-                # these wherever possible. This ought to be a lot more
-                # efficient for big namespaces (e.g. lots of environment
-                # variables) in deep hierarchies, but results may vary...
-                prev_shortcut = False
-                mro = []
-                for name in hierarchy:
-                    mro.append(name)
-                    i_mro = '*'.join(mro)
-                    if i_mro in already_done:
-                        ad_result = already_done[i_mro]
-                        prev_shortcut = True
-                    else:
-                        if prev_shortcut:
-                            prev_shortcut = False
-                            # copy ad_result (to avoid altering already_done)
-                            result = OrderedDictWithDefaults()
-                            replicate(result, ad_result)  # ...and use stored
-                            # n_reps += 1
-                        # override name content into tmp
-                        replicate(result, self.cfg['runtime'][name])
-                        # n_reps += 1
-                        # record this mro as already done
-                        already_done[i_mro] = result
+            # Go up the linearized MRO from root, replicating or
+            # overriding each namespace element as we go.
+            for name in hierarchy:
+                replicate(result, self.cfg['runtime'][name])
+                # n_reps += 1
 
             results[ns] = result
 
