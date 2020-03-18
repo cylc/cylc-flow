@@ -19,7 +19,6 @@
 Display the live status of a workflow in the terminal.
 """
 
-from datetime import datetime, timedelta
 from functools import partial
 import sys
 from time import time
@@ -759,9 +758,9 @@ class MonitorTreeBrowser:
             ),
             self.loop.widget,
             align='center',
-            width=('relative', 35),
+            width=35,
             valign='middle',
-            height=('relative', 40)
+            height=18
         )
         self.loop.widget = overlay
 
@@ -1035,7 +1034,3 @@ def main(_, options, reg):
     if options.display == 'html':
         for fragment in html_fragment.screenshot_collect():
             print(fragment)
-
-
-if __name__ == '__main__':
-    main('generic')
