@@ -20,6 +20,7 @@ Display the live status of a workflow in the terminal.
 """
 
 from datetime import datetime, timedelta
+from functools import partial
 import sys
 
 import urwid
@@ -33,6 +34,7 @@ from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.task_state import (
     TASK_STATUSES_ORDERED,
+    TASK_STATUS_RUNAHEAD,
     TASK_STATUS_WAITING,
     TASK_STATUS_QUEUED,
     TASK_STATUS_EXPIRED,
@@ -100,19 +102,22 @@ JOB_COLOURS = {
     'succeeded': 'dark green',
     'failed': 'light red',
     'submit-failed': 'light magenta',
+
+    # TODO: update with https://github.com/cylc/cylc-admin/pull/47
     'ready': 'brown'
+    # TODO: update with https://github.com/cylc/cylc-admin/pull/47
 }
 
 TREE_EXPAND_DEPTH = [2]
 
 QUERY = '''
-  query {
+  query cli($taskStates: [String]){
     workflows {
       id
       name
       status
       stateTotals
-      taskProxies {
+      taskProxies(states: $taskStates) {
         id
         name
         cyclePoint
@@ -135,20 +140,33 @@ QUERY = '''
           meanElapsedTime
         }
       }
-      families {
-        proxies {
+      familyProxies(states: $taskStates) {
+        id
+        name
+        cyclePoint
+        state
+        isHeld
+        firstParent {
           id
           name
-          cyclePoint
-          firstParent {
-            id
-            name
-          }
         }
       }
     }
   }
 '''
+
+
+def intersperse(lst, fill):
+    """Return list with `fill` inbetween every item of `lst`.
+
+    Example:
+        >>> intersperse([1, 2, 3], 0)
+        [1, 0, 2, 0, 3]
+
+    """
+    ret = [fill] * (len(lst) * 2 - 1)
+    ret[0::2] = lst
+    return ret
 
 
 class MonitorWidget(urwid.TreeWidget):
@@ -229,23 +247,11 @@ class MonitorWidget(urwid.TreeWidget):
             ]
 
         if type_ == 'family':
-            children = [
-                node.get_child_node(index)
-                for index in node.load_child_keys()
-            ]
-            task_icon = ' '
-            if children:
-                # if there are no children we cannot compute the group state
-                try:
-                    group_status, group_isheld = get_group_state(children)
-                    task_icon = get_task_icon(group_status, group_isheld)
-                except KeyError:
-                    # TODO: computing group states for nested families is
-                    #       not supported
-                    pass
-                
             return [
-                task_icon,
+                get_task_icon(
+                    data['state'],
+                    data['isHeld']
+                ),
                 ' ',
                 data['id'].rsplit('|', 1)[-1]
             ]
@@ -319,6 +325,7 @@ class MonitorTreeBrowser:
         ('foot', 'white', 'dark blue'),
         ('key', 'light cyan', 'dark blue'),
         ('title', FORE, BACK, 'bold'),
+        ('overlay', 'black', 'light gray'),
     ] + [
         (f'job_{status}', colour, BACK)
         for status, colour in JOB_COLOURS.items()
@@ -327,29 +334,31 @@ class MonitorTreeBrowser:
         for status, spec in SUITE_COLOURS.items()
     ]
 
-    FOOTER_TEXT = [
-        'navigation: ',
-        ('key', 'UP'),
-        ',',
-        ('key', 'DOWN'),
-        ',',
-        ('key', 'LEFT'),
-        ',',
-        ('key', 'PG-UP'),
-        ',',
-        ('key', 'PG-DOWN'),
-        ',',
-        ('key', 'HOME'),
-        ',',
-        ('key', 'END'),
-        ' ',
-        '  expand: ',
-        ('key', '+'),
-        ',',
-        ('key', '-'),
-        '  exit: ',
-        ('key', 'q'),
-    ]
+    FOOTER_TEXT = intersperse(
+        [
+            'navigation:',
+            ('key', '\u2191'),
+            ('key', '\u2193'),
+            ('key', '\u2190'),
+            ('key', '\u21a5'),
+            ('key', '\u21a7'),
+            ('key', 'Home'),
+            ('key', 'End'),
+            ' expand:',
+            ('key', '+'),
+            ('key', '-'),
+            ' exit:',
+            ('key', 'q'),
+            ' filter: ',
+            ('key', 'F'),
+            ('key', 'R'),
+            ('key', 'f'),
+            ('key', 's'),
+            ('key', 'r'),
+        ],
+        # stick a space between every item in th preceding list
+        ' '
+    )
 
     def __init__(self, client, screen=None):
         # the cylc data client
@@ -370,6 +379,11 @@ class MonitorTreeBrowser:
             header=urwid.AttrWrap(header, 'head'),
             footer=footer
         )
+        self.filter_states = {
+            state: True
+            for state in TASK_STATUSES_ORDERED
+            if state is not TASK_STATUS_RUNAHEAD
+        }
         if isinstance(screen, html_fragment.HtmlGenerator):
             # the HtmlGenerator only captures one frame
             # so we need to pre-populate the GUI before
@@ -389,8 +403,35 @@ class MonitorTreeBrowser:
         self.loop.run()
 
     def unhandled_input(self, key):
+        if key in ('q', 'Q'):
+            if isinstance(self.loop.widget, urwid.Overlay):
+                self.remove_overlay()
+                return
         if key in ('q', 'Q', 'ctrl d'):
             raise urwid.ExitMainLoop()
+        if key in ('F',):
+            self.filter_menu()
+            return
+        if key in ('R',):
+            self.filter_states = {
+                state: True
+                for state in self.filter_states
+            }
+            return
+
+        filter_map = {
+            'f': TASK_STATUS_FAILED,
+            's': TASK_STATUS_SUBMITTED,
+            'r': TASK_STATUS_RUNNING
+        }
+
+        if key in filter_map:
+            filtered_state = filter_map[key]
+            self.filter_states = {
+                state: state == filtered_state
+                for state in self.filter_states
+            }
+            return
 
     def get_snapshot(self):
         """Contact the workflow, return a tree structure
@@ -407,7 +448,14 @@ class MonitorTreeBrowser:
                 'graphql',
                 {
                     'request_string': QUERY,
-                    'variables': {}
+                    'variables': {
+                        # list of task states we want to see
+                        'taskStates': [
+                            state
+                            for state, is_on in self.filter_states.items()
+                            if is_on
+                        ]
+                    }
                 }
             )
         except (ClientError, ClientTimeout) as exc:
@@ -609,10 +657,21 @@ class MonitorTreeBrowser:
 
         # update the suite status message
         self.set_header(
+            # suite name and status
             self.get_status_str(snapshot['data'])
+            # state totals
             + [' (']
             + self.get_task_status_summary(snapshot['data'])
             + [' )']
+            #  filtered message
+            + (
+                [' *filtered - "R" to reset*']
+                if any((
+                    not visible
+                    for visible in self.filter_states.values()
+                ))
+                else []
+            )
         )
 
         # global update - the nuclear option - slow but simple
@@ -644,6 +703,55 @@ class MonitorTreeBrowser:
             self.loop.set_alarm_in(self.UPDATE_INTERVAL, self.update)
 
         return True
+
+    def filter_menu(self):
+        def toggle(state, *_):
+            self.filter_states[state] = not self.filter_states[state]
+        checkboxes = [
+            urwid.CheckBox(
+                get_task_icon(state, False)
+                + [' ' + state],
+                state=is_on,
+                on_state_change=partial(toggle, state)
+            )
+            for state, is_on in self.filter_states.items()
+        ]
+
+        def invert(*_):
+            for checkbox in checkboxes:
+                checkbox.set_state(not checkbox.state)
+
+        overlay = urwid.Overlay(
+            urwid.AttrMap(
+                urwid.Padding(
+                    urwid.ListBox(
+                        urwid.SimpleFocusListWalker([
+                            urwid.Text('Filter Task States'),
+                            urwid.Divider(),
+                            urwid.Button(
+                                'Invert',
+                                on_press=invert
+                            )
+                        ] + checkboxes + [
+                            urwid.Divider(),
+                            urwid.Text('"q" to close')
+                        ])
+                    ),
+                    left=2,
+                    right=2
+                ),
+                'overlay',
+            ),
+            self.loop.widget,
+            align='center',
+            width=('relative', 35),
+            valign='middle',
+            height=('relative', 40)
+        )
+        self.loop.widget = overlay
+
+    def remove_overlay(self):
+        self.loop.widget = self.loop.widget[0]
 
 
 def add_node(type_, id_, nodes, data=None):
@@ -702,38 +810,36 @@ def compute_tree(flow):
         'workflow', flow['id'], nodes, data=flow)
 
     # create nodes
-    for family_ in flow['families']:
-        for family in family_['proxies']:
-            if family['name'] != 'root':
-                family_node = add_node(
-                    'family', family['id'], nodes, data=family)
-            cycle_data = {
-                'name': family['cyclePoint'],
-                'id': f"{flow['id']}|{family['cyclePoint']}"
-            }
-            cycle_node = add_node(
-                'cycle', family['cyclePoint'], nodes, data=cycle_data)
-            if cycle_node not in flow_node['children']:
-                flow_node['children'].append(cycle_node)
+    for family in flow['familyProxies']:
+        if family['name'] != 'root':
+            family_node = add_node(
+                'family', family['id'], nodes, data=family)
+        cycle_data = {
+            'name': family['cyclePoint'],
+            'id': f"{flow['id']}|{family['cyclePoint']}"
+        }
+        cycle_node = add_node(
+            'cycle', family['cyclePoint'], nodes, data=cycle_data)
+        if cycle_node not in flow_node['children']:
+            flow_node['children'].append(cycle_node)
 
     # create cycle/family tree
-    for family_ in flow['families']:
-        for family in family_['proxies']:
-            if family['name'] != 'root':
-                family_node = add_node(
-                    'family', family['id'], nodes)
-                first_parent = family['firstParent']
-                if (
-                        first_parent
-                        and first_parent['name'] != 'root'
-                ):
-                    parent_node = add_node(
-                        'family', first_parent['id'], nodes)
-                    parent_node['children'].append(family_node)
-                else:
-                    cycle_node = add_node(
-                        'cycle', family['cyclePoint'], nodes)
-                    cycle_node['children'].append(family_node)
+    for family in flow['familyProxies']:
+        if family['name'] != 'root':
+            family_node = add_node(
+                'family', family['id'], nodes)
+            first_parent = family['firstParent']
+            if (
+                    first_parent
+                    and first_parent['name'] != 'root'
+            ):
+                parent_node = add_node(
+                    'family', first_parent['id'], nodes)
+                parent_node['children'].append(family_node)
+            else:
+                cycle_node = add_node(
+                    'cycle', family['cyclePoint'], nodes)
+                cycle_node['children'].append(family_node)
     # add leaves
     for task in flow['taskProxies']:
         parents = task['parents']
