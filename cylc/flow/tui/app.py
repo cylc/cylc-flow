@@ -374,10 +374,7 @@ class TuiApp:
             #  filtered message
             + (
                 [' *filtered - "R" to reset*']
-                if any((
-                    not visible
-                    for visible in self.filter_states.values()
-                ))
+                if not all(self.filter_states.values())
                 else []
             )
         )
@@ -413,8 +410,15 @@ class TuiApp:
         return True
 
     def filter_by_task_state(self, filtered_state=None):
+        """Filter tasks.
+
+        Args:
+            filtered_state (str):
+                A task state to filter by or None.
+
+        """
         self.filter_states = {
-            state: state == filtered_state
+            state: (state == filtered_state) or not filtered_state
             for state in self.filter_states
         }
         return
