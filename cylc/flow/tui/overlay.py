@@ -83,9 +83,12 @@ def filter_task_state(app):
         urwid.SimpleFocusListWalker([
             urwid.Text('Filter Task States'),
             urwid.Divider(),
-            urwid.Button(
-                'Invert',
-                on_press=invert
+            urwid.Padding(
+                urwid.Button(
+                    'Invert',
+                    on_press=invert
+                ),
+                right=19
             )
         ] + checkboxes)
     )
@@ -100,18 +103,18 @@ def help_info(app):
     """Return a widget displaying help information."""
     # system title
     items = [
-        urwid.Text('''
-                   _        _         _ 
+        urwid.Text(r'''
+                   _        _         _
                   | |      | |       (_)
-         ___ _   _| | ___  | |_ _   _ _ 
+         ___ _   _| | ___  | |_ _   _ _
         / __| | | | |/ __| | __| | | | |
        | (__| |_| | | (__  | |_| |_| | |
         \___|\__, |_|\___|  \__|\__,_|_|
-                __/ |                     
-               |___/                      
+                __/ |
+               |___/
 
           ( scroll using arrow keys )
-  
+
         '''),
         urwid.Text(TUI)
     ]
