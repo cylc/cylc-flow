@@ -6,10 +6,10 @@ from unittest.mock import Mock
 
 import pytest
 
-from cylc.flow.scripts.cylc_tui import (
+from cylc.flow.tui.util import (
     JOB_ICON,
     TASK_ICONS,
-    _get_display_text,
+    render_node,
     compute_tree,
     get_group_state,
     get_task_icon
@@ -20,9 +20,9 @@ from cylc.flow.wallclock import (
 )
 
 
-def test_get_display_text__job_info():
+def testrender_node__job_info():
     """It renders job information nodes."""
-    assert _get_display_text(
+    assert render_node(
         None,
         {'a': 1, 'b': 2},
         'job_info'
@@ -32,9 +32,9 @@ def test_get_display_text__job_info():
     ]
 
 
-def test_get_display_text__job():
+def testrender_node__job():
     """It renders job nodes."""
-    assert _get_display_text(
+    assert render_node(
         None,
         {'state': 'succeeded', 'submitNum': 1},
         'job'
@@ -44,11 +44,11 @@ def test_get_display_text__job():
     ]
 
 
-def test_get_display_text__task__succeeded():
+def testrender_node__task__succeeded():
     """It renders tasks."""
     node = Mock()
     node.get_child_node = lambda _: None
-    assert _get_display_text(
+    assert render_node(
         node,
         {
             'name': 'foo',
@@ -63,7 +63,7 @@ def test_get_display_text__task__succeeded():
     ]
 
 
-def test_get_display_text__task__running():
+def testrender_node__task__running():
     """It renders running tasks."""
     child = Mock()
     child.get_value = lambda: {'data': {
@@ -72,7 +72,7 @@ def test_get_display_text__task__running():
     }}
     node = Mock()
     node.get_child_node = lambda _: child
-    assert _get_display_text(
+    assert render_node(
         node,
         {
             'name': 'foo',
@@ -90,9 +90,9 @@ def test_get_display_text__task__running():
     ]
 
 
-def test_get_display_text__family():
+def testrender_node__family():
     """It renders families."""
-    assert _get_display_text(
+    assert render_node(
         None,
         {'state': 'succeeded', 'isHeld': False, 'id': 'myid'},
         'family'
@@ -103,9 +103,9 @@ def test_get_display_text__family():
     ]
 
 
-def test_get_display_text__cycle_point():
+def testrender_node__cycle_point():
     """It renders cycle points."""
-    assert _get_display_text(
+    assert render_node(
         None,
         {'id': 'myid'},
         'cycle_point'

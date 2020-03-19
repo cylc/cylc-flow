@@ -41,6 +41,10 @@ from functools import partial
 
 import urwid
 
+from cylc.flow.tui import (
+    BINDINGS,
+    TUI
+)
 from cylc.flow.tui.util import (
     get_task_icon
 )
@@ -85,4 +89,48 @@ def filter_task_state(app):
     return (
         widget,
         {'width': 35, 'height': 23}
+    )
+
+
+def help_info(app):
+    items = [
+        urwid.Text(r'''
+                   _        _         _
+                  | |      | |       (_)
+         ___ _   _| | ___  | |_ _   _ _
+        / __| | | | |/ __| | __| | | | |
+       | (__| |_| | | (__  | |_| |_| | |
+        \___|\__, |_|\___|  \__|\__,_|_|
+                __/ |
+               |___/
+
+        '''),
+        urwid.Text(TUI)
+    ]
+    for group, bindings in BINDINGS.list_groups():
+        items.append(
+            urwid.Text([
+                f'{group["desc"]}:'
+            ])
+        )
+        for binding in bindings:
+            keystr = ' '.join(binding['keys'])
+            items.append(
+                urwid.Text([
+                    ('key', keystr),
+                    (' ' * (10 - len(keystr))),
+                    binding['desc']
+                ])
+            )
+        items.append(
+            urwid.Divider()
+        )
+
+    widget = urwid.ListBox(
+        urwid.SimpleFocusListWalker(items)
+    )
+
+    return (
+        widget,
+        {'width': 60, 'height': 40}
     )

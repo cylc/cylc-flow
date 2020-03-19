@@ -16,6 +16,35 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """The cylc terminal user interface (Tui)."""
 
+TUI = """
+                           _,@@@@@@.
+                         <=@@@, `@@@@@.
+                            `-@@@@@@@@@@@'
+                               :@@@@@@@@@@.
+                                .@@@@@@@@@@@
+                               '@@@@@@@@@@@@.
+                            ;.@@@@@@@@@@@@@@@
+                          '@@@@@@@@@@@@@@@@@@,
+                        ,@@@@@@@@@@@@@@@@@@@@'
+                      :.@@@@@@@@@@@@@@@@@@@@@.
+                    .@@@@@@@@@@@@@@@@@@@@@@@@.
+                  '@@@@@@@@@@@@@@@@@@@@@@@@@.
+                ;@@@@@@@@@@@@@@@@@@@@@@@@@@@
+               .@@@@@@@@@@@@@@@@@@@@@@@@@@.
+              .@@@@@@@@@@@@@@@@@@@@@@@@@@,
+             .@@@@@@@@@@@@@@@@@@@@@@@@@'
+            .@@@@@@@@@@@@@@@@@@@@@@@@'     ,
+          :@@@@@@@@@@@@@@@@@@@@@..''';,,,;::-
+         '@@@@@@@@@@@@@@@@@@@.        `.   `
+        .@@@@@@.: ,.@@@@@@@.            `
+      :@@@@@@@,         ;.@,
+     '@@@@@@.              `@'
+    .@@@@@@;                ;-,
+ ;.@@@@@@.                    ...,
+,,; ,;;                      ;  ',
+                                  ;;
+"""
+
 from cylc.flow.task_state import (
     TASK_STATUSES_ORDERED,
     TASK_STATUS_DISPLAY_ORDER,
@@ -89,3 +118,46 @@ JOB_COLOURS = {
     'ready': 'brown'
     # TODO: update with https://github.com/cylc/cylc-admin/pull/47
 }
+
+
+class Bindings:
+
+    def __init__(self):
+        self.bindings = []
+        self.groups = {}
+
+    def bind(self, keys, group, desc, callback):
+        if group not in self.groups:
+            raise ValueError(f'Group {group} not registered.')
+        binding = {
+            'keys': keys,
+            'group': group,
+            'desc': desc,
+            'callback': callback
+        }
+        self.bindings.append(binding)
+        self.groups[group]['bindings'].append(binding)
+
+    def add_group(self, group, desc):
+        self.groups[group] = {
+            'name': group,
+            'desc': desc,
+            'bindings': []
+        }
+
+    def __iter__(self):
+        return iter(self.bindings)
+
+    def list_groups(self):
+        for name, group in self.groups.items():
+            yield (
+                group,
+                [
+                    binding
+                    for binding in self.bindings
+                    if binding['group'] == name
+                ]
+            )
+
+
+BINDINGS = Bindings()

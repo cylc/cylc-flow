@@ -35,6 +35,7 @@ from cylc.flow.task_state import (
 )
 import cylc.flow.tui.overlay as overlay
 from cylc.flow.tui import (
+    BINDINGS,
     FORE,
     BACK,
     JOB_COLOURS,
@@ -52,7 +53,6 @@ from cylc.flow.tui.util import (
     get_task_icon,
     get_task_status_summary,
     get_workflow_status_str,
-    intersperse,
     render_node
 )
 
@@ -213,36 +213,6 @@ class TuiApp:
         for status, spec in SUITE_COLOURS.items()
     ]
 
-    FOOTER_TEXT = intersperse(
-        [
-            'navigation:',
-            ('key', '\u2191'),
-            ('key', '\u2193'),
-            ('key', '\u2190'),
-            ('key', '\u21a5'),
-            ('key', '\u21a7'),
-            ('key', 'Home'),
-            ('key', 'End'),
-            ' expand:',
-            ('key', '+'),
-            ('key', '-'),
-            ' exit:',
-            ('key', 'q'),
-            ' filter: ',
-            ('key', 'F'),
-            ('key', 'R'),
-            ('key', 'f'),
-            ('key', 's'),
-            ('key', 'r'),
-        ],
-        # stick a space between every item in th preceding list
-        ' '
-    )
-
-    OVERLAYS = {
-        (('F',), overlay.filter_task_state)
-    }
-
     def __init__(self, client, screen=None):
         # the cylc data client
         self.client = client
@@ -255,7 +225,8 @@ class TuiApp:
         self.listbox = urwid.TreeListBox(urwid.TreeWalker(topnode))
         header = urwid.Text('\n')
         footer = urwid.AttrWrap(
-            urwid.Text(self.FOOTER_TEXT),
+            # urwid.Text(self.FOOTER_TEXT),
+            urwid.Text(list_bindings()),
             'foot'
         )
         self.view = urwid.Frame(
@@ -287,35 +258,17 @@ class TuiApp:
         self.loop.run()
 
     def unhandled_input(self, key):
-        if key in ('q', 'Q') and isinstance(self.loop.widget, urwid.Overlay):
-            self.remove_overlay()
-            return
-        if key in ('q', 'Q', 'ctrl d'):
+        """Catch key presses, uncaught events are passed down the chain."""
+        if key in ('ctrl d',):
             raise urwid.ExitMainLoop()
-        if key in ('R',):
-            self.filter_states = {
-                state: True
-                for state in self.filter_states
-            }
-            return
-
-        filter_map = {
-            'f': TASK_STATUS_FAILED,
-            's': TASK_STATUS_SUBMITTED,
-            'r': TASK_STATUS_RUNNING
-        }
-
-        if key in filter_map:
-            filtered_state = filter_map[key]
-            self.filter_states = {
-                state: state == filtered_state
-                for state in self.filter_states
-            }
-            return
-
-        for group, overlay in self.OVERLAYS:
-            if key in group:
-                self.create_overlay(*overlay(self))
+        for binding in BINDINGS:
+            # iterate through key bindings in order
+            if key in binding['keys'] and binding['callback']:
+                # if we get a match execute the callback
+                # NOTE: if there is no callback then this binding is
+                #       for documentation purposes only so we ignore it
+                meth, *args = binding['callback']
+                meth(self, *args)
                 return
 
     def get_snapshot(self):
@@ -447,7 +400,7 @@ class TuiApp:
         closest_focus = find_closest_focus(self, old_node, new_node)
         self.listbox._body.set_focus(closest_focus)
 
-        # preserve the collapse/expand status of all nodes
+        #  preserve the collapse/expand status of all nodes
         translate_collapsing(self, old_node, new_node)
 
         # schedule the next run of this update method
@@ -455,6 +408,16 @@ class TuiApp:
             self.loop.set_alarm_in(self.UPDATE_INTERVAL, self.update)
 
         return True
+
+    def filter_by_task_state(self, filtered_state=None):
+        self.filter_states = {
+            state: state == filtered_state
+            for state in self.filter_states
+        }
+        return
+
+    def open_overlay(self, fcn):
+        self.create_overlay(*fcn(self))
 
     def create_overlay(self, widget, kwargs):
         """Open an overlay over the monitor.
@@ -465,7 +428,7 @@ class TuiApp:
             kwargs (dict):
                 Dictionary of arguments to pass to the `urwid.Overlay`
                 constructor.
-                
+
                 You will likely need to set `width` and `height` here.
 
                 See `urwid` docs for details.
@@ -493,8 +456,141 @@ class TuiApp:
         self.loop.widget = overlay
         self.stack += 1
 
-    def remove_overlay(self):
-        """Remove the topmost overlay."""
+    def close_topmost(self):
+        """Remove the topmost frame or uit the app if none present."""
         if self.stack > 0:
             self.loop.widget = self.loop.widget[0]
             self.stack -= 1
+        else:
+            raise urwid.ExitMainLoop()
+
+
+BINDINGS.add_group(
+    '',
+    'Application Controls'
+)
+BINDINGS.bind(
+    ('q',),
+    '',
+    'Quit',
+    (TuiApp.close_topmost,)
+)
+BINDINGS.bind(
+    ('h',),
+    '',
+    'Help',
+    (TuiApp.open_overlay, overlay.help_info)
+)
+
+BINDINGS.add_group(
+    'tree',
+    'Expand/Collapse nodes',
+)
+BINDINGS.bind(
+    ('-',),
+    'tree',
+    'Collapse',
+    None  # this binding is for documentation only - handled by urwid
+)
+BINDINGS.bind(
+    ('+', '\u2190'),
+    'tree',
+    'Expand',
+    None  # this binding is for documentation only - handled by urwid
+)
+
+BINDINGS.add_group(
+    'navigation',
+    'Move within the tree'
+)
+BINDINGS.bind(
+    ('\u2191',),
+    'navigation',
+    'Up',
+    None  # this binding is for documentation only - handled by urwid
+)
+BINDINGS.bind(
+    ('\u2193',),
+    'navigation',
+    'Down',
+    None  # this binding is for documentation only - handled by urwid
+)
+BINDINGS.bind(
+    ('\u21a5',),
+    'navigation',
+    'PageUp',
+    None  # this binding is for documentation only - handled by urwid
+)
+BINDINGS.bind(
+    ('\u21a7',),
+    'navigation',
+    'PageDown',
+    None  # this binding is for documentation only - handled by urwid
+)
+BINDINGS.bind(
+    ('Home',),
+    'navigation',
+    'Top',
+    None  # this binding is for documentation only - handled by urwid
+)
+BINDINGS.bind(
+    ('End',),
+    'navigation',
+    'Bottom',
+    None  # this binding is for documentation only - handled by urwid
+)
+
+BINDINGS.add_group(
+    'filter',
+    'Filter by task state'
+)
+BINDINGS.bind(
+    ('F',),
+    'filter',
+    'Select task states to filter by',
+    (TuiApp.open_overlay, overlay.filter_task_state)
+)
+BINDINGS.bind(
+    ('f',),
+    'filter',
+    'Show only failed tasks',
+    (TuiApp.filter_by_task_state, TASK_STATUS_FAILED)
+)
+BINDINGS.bind(
+    ('s',),
+    'filter',
+    'Show only submitted tasks',
+    (TuiApp.filter_by_task_state, TASK_STATUS_SUBMITTED)
+)
+BINDINGS.bind(
+    ('r',),
+    'filter',
+    'Show only running tasks',
+    (TuiApp.filter_by_task_state, TASK_STATUS_RUNNING)
+)
+BINDINGS.bind(
+    ('R',),
+    'filter',
+    'Reset task state filtering',
+    (TuiApp.filter_by_task_state,)
+)
+
+
+def list_bindings():
+    """Write out an in-line list of the key bindings."""
+    ret = []
+    for group, bindings in BINDINGS.list_groups():
+        if group['name']:
+            ret.append(f' {group["name"]}: ')
+            for binding in bindings:
+                for key in binding['keys']:
+                    ret.append(('key', f'{key} '))
+        else:
+            # list each option in the default group individually
+            for binding in bindings:
+                ret.append(f'{binding["desc"].lower()}: ')
+                ret.append(('key', binding["keys"][0]))
+                ret.append(' ')
+                ret.append(' ')
+            ret.pop()  # remove surplus space
+    return ret

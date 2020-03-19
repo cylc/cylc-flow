@@ -17,46 +17,25 @@
 """cylc [task] tui REG
 
 Open the terminal user interface (TUI) for the given suite.
-
-                               _,@@@@@@.
-                             <=@@@, `@@@@@.
-                                `-@@@@@@@@@@@'
-                                   :@@@@@@@@@@.
-                                    .@@@@@@@@@@@
-                                   '@@@@@@@@@@@@.
-                                ;.@@@@@@@@@@@@@@@
-                              '@@@@@@@@@@@@@@@@@@,
-                            ,@@@@@@@@@@@@@@@@@@@@'
-                          :.@@@@@@@@@@@@@@@@@@@@@.
-                        .@@@@@@@@@@@@@@@@@@@@@@@@.
-                      '@@@@@@@@@@@@@@@@@@@@@@@@@.
-                    ;@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                   .@@@@@@@@@@@@@@@@@@@@@@@@@@.
-                  .@@@@@@@@@@@@@@@@@@@@@@@@@@,
-                 .@@@@@@@@@@@@@@@@@@@@@@@@@'
-                .@@@@@@@@@@@@@@@@@@@@@@@@'     ,
-              :@@@@@@@@@@@@@@@@@@@@@..''';,,,;::-
-             '@@@@@@@@@@@@@@@@@@@.        `.   `
-            .@@@@@@.: ,.@@@@@@@.            `
-          :@@@@@@@,         ;.@,
-         '@@@@@@.              `@'
-        .@@@@@@;                ;-,
-     ;.@@@@@@.                    ...,
-    ,,; ,;;                      ;  ',
-                                      ;;
-
 """
+from textwrap import indent
 
 from urwid import html_fragment
 
 from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
+from cylc.flow.tui import (
+    TUI
+)
 from cylc.flow.tui.app import (
     TuiApp,
     TREE_EXPAND_DEPTH
     # ^ a nasty solution
 )
+
+
+__doc__ += indent(TUI, '           ')
 
 
 def get_option_parser():

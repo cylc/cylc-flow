@@ -304,19 +304,6 @@ def get_workflow_status_str(flow):
     ]
 
 
-def intersperse(lst, fill):
-    """Return list with `fill` inbetween every item of `lst`.
-
-    Example:
-        >>> intersperse([1, 2, 3], 0)
-        [1, 0, 2, 0, 3]
-
-    """
-    ret = [fill] * (len(lst) * 2 - 1)
-    ret[0::2] = lst
-    return ret
-
-
 def render_node(node, data, type_):
     """Render a tree node as text.
 
