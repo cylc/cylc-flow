@@ -39,24 +39,6 @@ class ParsecConfig(object):
             validator = parsec_validate
         self.validator = validator
 
-    @staticmethod
-    def checkspec(spec_root, parents=None):
-        """Check that the file spec is a nested dict of specifications"""
-        stack = [[spec_root, []]]
-        while stack:
-            spec, parents = stack.pop()
-            for key, value in spec.items():
-                pars = parents + [key]
-                if isinstance(value, dict):
-                    stack.append([value, pars])
-                elif not isinstance(value, list):
-                    raise ParsecError(
-                        "Illegal file spec item: "
-                        + itemstr(pars, repr(value))
-                        + " "
-                        + repr(value)
-                    )
-
     def loadcfg(self, rcfile, title=""):
         """Parse a config file, upgrade or deprecate items if necessary,
         validate it against the spec, and if this is not the first load,

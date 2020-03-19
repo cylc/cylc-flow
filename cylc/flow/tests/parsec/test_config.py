@@ -42,36 +42,7 @@ SAMPLE_SPEC_1 = {
 }
 
 
-def get_checkspec_params():
-    """Data provider for test_checkspec"""
-    spec1 = OrderedDictWithDefaults()
-    spec1['key'] = OrderedDictWithDefaults()
-    spec1['key']['values'] = ['a', 'b', 'c']
-
-    parents1 = []
-
-    spec2 = OrderedDictWithDefaults()
-    spec2['key'] = OrderedDictWithDefaults()
-    spec2['key']['values'] = ['a', 'b', 'c']
-    spec2['entry'] = "not a dict, not a list"
-
-    parents2 = []
-
-    return [
-        (spec1, parents1, None),
-        (spec2, parents2, ParsecError)
-    ]
-
-
 class TestConfig(unittest.TestCase):
-
-    def test_checkspec(self):
-        for spec, parents, exception in get_checkspec_params():
-            if exception:
-                with self.assertRaises(exception):
-                    config.ParsecConfig.checkspec(spec, parents)
-            else:
-                config.ParsecConfig.checkspec(spec, parents)
 
     def test_loadcfg(self):
         with tempfile.NamedTemporaryFile() as output_file_name:
