@@ -205,10 +205,13 @@ class TuiApp:
         ('key', 'light cyan', 'dark blue'),
         ('title', FORE, BACK, 'bold'),
         ('overlay', 'black', 'light gray'),
-    ] + [
+    ] + [  # job colours
         (f'job_{status}', colour, BACK)
         for status, colour in JOB_COLOURS.items()
-    ] + [
+    ] + [  # job colours for help screen
+        (f'overlay_job_{status}', colour, 'light gray')
+        for status, colour in JOB_COLOURS.items()
+    ] + [  # suite state colours
         (f'suite_{status}',) + spec
         for status, spec in SUITE_COLOURS.items()
     ]
@@ -438,10 +441,13 @@ class TuiApp:
         overlay = urwid.Overlay(
             urwid.LineBox(
                 urwid.AttrMap(
-                    urwid.Padding(
-                        widget,
-                        left=2,
-                        right=2
+                    urwid.Frame(
+                        urwid.Padding(
+                            widget,
+                            left=2,
+                            right=2
+                        ),
+                        footer=urwid.Text('\n q to close')
                     ),
                     'overlay',
                 )

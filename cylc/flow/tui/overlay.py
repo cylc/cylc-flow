@@ -41,8 +41,15 @@ from functools import partial
 
 import urwid
 
+from cylc.flow.task_state import (
+    TASK_STATUSES_ORDERED,
+    TASK_STATUS_RUNAHEAD,
+    TASK_STATUS_WAITING
+)
 from cylc.flow.tui import (
     BINDINGS,
+    JOB_COLOURS,
+    JOB_ICON,
     TUI
 )
 from cylc.flow.tui.util import (
@@ -80,10 +87,7 @@ def filter_task_state(app):
                 'Invert',
                 on_press=invert
             )
-        ] + checkboxes + [
-            urwid.Divider(),
-            urwid.Text('"q" to close')
-        ])
+        ] + checkboxes)
     )
 
     return (
@@ -93,20 +97,26 @@ def filter_task_state(app):
 
 
 def help_info(app):
+    """Return a widget displaying help information."""
+    # system title
     items = [
-        urwid.Text(r'''
-                   _        _         _
+        urwid.Text('''
+                   _        _         _ 
                   | |      | |       (_)
-         ___ _   _| | ___  | |_ _   _ _
+         ___ _   _| | ___  | |_ _   _ _ 
         / __| | | | |/ __| | __| | | | |
        | (__| |_| | | (__  | |_| |_| | |
         \___|\__, |_|\___|  \__|\__,_|_|
-                __/ |
-               |___/
+                __/ |                     
+               |___/                      
 
+          ( scroll using arrow keys )
+  
         '''),
         urwid.Text(TUI)
     ]
+
+    # list key bindings
     for group, bindings in BINDINGS.list_groups():
         items.append(
             urwid.Text([
@@ -124,6 +134,41 @@ def help_info(app):
             )
         items.append(
             urwid.Divider()
+        )
+
+    # list task states
+    items.append(urwid.Divider())
+    items.append(urwid.Text('Task Icons:'))
+    for state in TASK_STATUSES_ORDERED:
+        if state == TASK_STATUS_RUNAHEAD:
+            continue
+        items.append(
+            urwid.Text(
+                get_task_icon(state, is_held=False)
+                + [' ', state]
+            )
+        )
+    items.append(urwid.Divider())
+    items.append(urwid.Text('Special States:'))
+    items.append(
+        urwid.Text(
+            get_task_icon(TASK_STATUS_WAITING, is_held=True)
+            + [' ', 'held']
+        )
+    )
+
+    # list job states
+    items.append(urwid.Divider())
+    items.append(urwid.Text('Job Icons:'))
+    for state in JOB_COLOURS:
+        items.append(
+            urwid.Text(
+                [
+                    (f'overlay_job_{state}', JOB_ICON),
+                    ' ',
+                    state
+                ]
+            )
         )
 
     widget = urwid.ListBox(
