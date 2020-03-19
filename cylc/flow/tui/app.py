@@ -1,0 +1,500 @@
+#!/usr/bin/env python3
+# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""The application control logic for Tui."""
+
+import sys
+
+import urwid
+from urwid import html_fragment
+
+from cylc.flow.exceptions import (
+    ClientError,
+    ClientTimeout
+)
+from cylc.flow.task_state import (
+    TASK_STATUSES_ORDERED,
+    TASK_STATUS_RUNAHEAD,
+    TASK_STATUS_WAITING,
+    TASK_STATUS_SUBMITTED,
+    TASK_STATUS_RUNNING,
+    TASK_STATUS_FAILED,
+)
+import cylc.flow.tui.overlay as overlay
+from cylc.flow.tui import (
+    FORE,
+    BACK,
+    JOB_COLOURS,
+    SUITE_COLOURS,
+)
+from cylc.flow.tui.tree import (
+    find_closest_focus,
+    translate_collapsing
+)
+from cylc.flow.tui.util import (
+    compute_tree,
+    dummy_flow,
+    # get_group_state,
+    get_job_icon,
+    get_task_icon,
+    get_task_status_summary,
+    get_workflow_status_str,
+    intersperse,
+    render_node
+)
+
+
+urwid.set_encoding('utf8')  # required for unicode task icons
+
+TREE_EXPAND_DEPTH = [2]
+
+QUERY = '''
+  query cli($taskStates: [String]){
+    workflows {
+      id
+      name
+      status
+      stateTotals
+      taskProxies(states: $taskStates) {
+        id
+        name
+        cyclePoint
+        state
+        isHeld
+        parents {
+          id
+          name
+        }
+        jobs {
+          id
+          submitNum
+          state
+          host
+          batchSysName
+          batchSysJobId
+          startedTime
+        }
+        task {
+          meanElapsedTime
+        }
+      }
+      familyProxies(states: $taskStates) {
+        id
+        name
+        cyclePoint
+        state
+        isHeld
+        firstParent {
+          id
+          name
+        }
+      }
+    }
+  }
+'''
+
+
+class TuiWidget(urwid.TreeWidget):
+    """Display widget for leaf nodes.
+
+    Arguments:
+        node (TuiNode):
+            The root tree node.
+        max_depth (int):
+            Determines which nodes are unfolded by default.
+            The maximum tree depth to unfold.
+
+    """
+
+    def __init__(self, node, max_depth=None):
+        # NOTE: copy of urwid.TreeWidget.__init__, the only difference
+        #       being the self.expanded logic
+        if not max_depth:
+            max_depth = TREE_EXPAND_DEPTH[0]
+        self._node = node
+        self._innerwidget = None
+        self.is_leaf = not hasattr(node, 'get_first_child')
+        if max_depth > 0:
+            self.expanded = node.get_depth() < max_depth
+        else:
+            self.expanded = True
+        widget = self.get_indented_widget()
+        urwid.WidgetWrap.__init__(self, widget)
+
+    def get_display_text(self):
+        """Compute the text to display for a given node.
+
+        Returns:
+            (object) - Text content for the urwid.Text widget,
+            may be a string, tuple or list, see urwid docs.
+
+        """
+        node = self.get_node()
+        value = node.get_value()
+        data = value['data']
+        type_ = value['type_']
+        return render_node(node, data, type_)
+
+
+class TuiNode(urwid.TreeNode):
+    """Data storage object for leaf nodes."""
+
+    def load_widget(self):
+        return TuiWidget(self)
+
+
+class TuiParentNode(urwid.ParentNode):
+    """Data storage object for interior/parent nodes."""
+
+    def load_widget(self):
+        return TuiWidget(self)
+
+    def load_child_keys(self):
+        # Note: keys are really indices.
+        data = self.get_value()
+        return range(len(data['children']))
+
+    def load_child_node(self, key):
+        """Return either an TuiNode or TuiParentNode"""
+        childdata = self.get_value()['children'][key]
+        if 'children' in childdata:
+            childclass = TuiParentNode
+        else:
+            childclass = TuiNode
+        return childclass(
+            childdata,
+            parent=self,
+            key=key,
+            depth=self.get_depth() + 1
+        )
+
+
+class TuiApp:
+    """An application to display a single Cylc workflow.
+
+    This is a single workflow view component (purposefully).
+
+    Multi-suite functionality can be achieved via a GScan-esque
+    tab/selection panel.
+
+    Arguments:
+        client (cylc.network.client.SuiteRuntimeClient):
+            A suite client we can request data from.
+
+    """
+
+    UPDATE_INTERVAL = 1
+
+    palette = [
+        ('head', FORE, BACK),
+        ('body', FORE, BACK),
+        ('foot', 'white', 'dark blue'),
+        ('key', 'light cyan', 'dark blue'),
+        ('title', FORE, BACK, 'bold'),
+        ('overlay', 'black', 'light gray'),
+    ] + [
+        (f'job_{status}', colour, BACK)
+        for status, colour in JOB_COLOURS.items()
+    ] + [
+        (f'suite_{status}',) + spec
+        for status, spec in SUITE_COLOURS.items()
+    ]
+
+    FOOTER_TEXT = intersperse(
+        [
+            'navigation:',
+            ('key', '\u2191'),
+            ('key', '\u2193'),
+            ('key', '\u2190'),
+            ('key', '\u21a5'),
+            ('key', '\u21a7'),
+            ('key', 'Home'),
+            ('key', 'End'),
+            ' expand:',
+            ('key', '+'),
+            ('key', '-'),
+            ' exit:',
+            ('key', 'q'),
+            ' filter: ',
+            ('key', 'F'),
+            ('key', 'R'),
+            ('key', 'f'),
+            ('key', 's'),
+            ('key', 'r'),
+        ],
+        # stick a space between every item in th preceding list
+        ' '
+    )
+
+    OVERLAYS = {
+        (('F',), overlay.filter_task_state)
+    }
+
+    def __init__(self, client, screen=None):
+        # the cylc data client
+        self.client = client
+        self.loop = None
+        self.screen = None
+        self.stack = 0
+
+        # create the template
+        topnode = TuiParentNode(dummy_flow())
+        self.listbox = urwid.TreeListBox(urwid.TreeWalker(topnode))
+        header = urwid.Text('\n')
+        footer = urwid.AttrWrap(
+            urwid.Text(self.FOOTER_TEXT),
+            'foot'
+        )
+        self.view = urwid.Frame(
+            urwid.AttrWrap(self.listbox, 'body'),
+            header=urwid.AttrWrap(header, 'head'),
+            footer=footer
+        )
+        self.filter_states = {
+            state: True
+            for state in TASK_STATUSES_ORDERED
+            if state is not TASK_STATUS_RUNAHEAD
+        }
+        if isinstance(screen, html_fragment.HtmlGenerator):
+            # the HtmlGenerator only captures one frame
+            # so we need to pre-populate the GUI before
+            # starting the event loop
+            self.update()
+
+    def main(self):
+        """Start the event loop."""
+        self.loop = urwid.MainLoop(
+            self.view,
+            self.palette,
+            unhandled_input=self.unhandled_input,
+            screen=self.screen
+        )
+        # schedule the first update
+        self.loop.set_alarm_in(0, self.update)
+        self.loop.run()
+
+    def unhandled_input(self, key):
+        if key in ('q', 'Q') and isinstance(self.loop.widget, urwid.Overlay):
+            self.remove_overlay()
+            return
+        if key in ('q', 'Q', 'ctrl d'):
+            raise urwid.ExitMainLoop()
+        if key in ('R',):
+            self.filter_states = {
+                state: True
+                for state in self.filter_states
+            }
+            return
+
+        filter_map = {
+            'f': TASK_STATUS_FAILED,
+            's': TASK_STATUS_SUBMITTED,
+            'r': TASK_STATUS_RUNNING
+        }
+
+        if key in filter_map:
+            filtered_state = filter_map[key]
+            self.filter_states = {
+                state: state == filtered_state
+                for state in self.filter_states
+            }
+            return
+
+        for group, overlay in self.OVERLAYS:
+            if key in group:
+                self.create_overlay(*overlay(self))
+                return
+
+    def get_snapshot(self):
+        """Contact the workflow, return a tree structure
+
+        In the event of error contacting the suite the
+        message is written to this Widget's header.
+
+        Returns:
+            dict if successful, else False
+
+        """
+        try:
+            data = self.client(
+                'graphql',
+                {
+                    'request_string': QUERY,
+                    'variables': {
+                        # list of task states we want to see
+                        'taskStates': [
+                            state
+                            for state, is_on in self.filter_states.items()
+                            if is_on
+                        ]
+                    }
+                }
+            )
+        except (ClientError, ClientTimeout) as exc:
+            # catch network / client errors
+            self.set_header(('suite_error', str(exc)))
+            return False
+
+        if isinstance(data, list):
+            # catch GraphQL errors
+            try:
+                message = data[0]['error']['message']
+            except (IndexError, KeyError):
+                message = str(data)
+            self.set_header(('suite_error', message))
+            return False
+
+        if len(data['workflows']) != 1:
+            # multiple workflows in returned data - shouldn't happen
+            raise ValueError()
+
+        return compute_tree(data['workflows'][0])
+
+    @staticmethod
+    def get_node_id(node):
+        """Return a unique identifier for a node.
+
+        Arguments:
+            node (TuiNode): The node.
+
+        Returns:
+            str - Unique identifier
+
+        """
+        return node.get_value()['id_']
+
+    def set_header(self, message):
+        """Set the header message for this widget.
+
+        Arguments:
+            message (object):
+                Text content for the urwid.Text widget,
+                may be a string, tuple or list, see urwid docs.
+
+        """
+        # put in a one line gap
+        if isinstance(message, list):
+            message.append('\n')
+        elif isinstance(message, tuple):
+            message = (message[0], message[1] + '\n')
+        else:
+            message += '\n'
+        self.view.header = urwid.Text(message)
+
+    def update(self, *_):
+        """Refresh the data and redraw this widget.
+
+        Preserves the current focus and collapse/expand state.
+
+        """
+        # update the data store
+        # TODO: this can be done incrementally using deltas
+        #       once this interface is available
+        snapshot = self.get_snapshot()
+        if snapshot is False:
+            return False
+
+        # update the suite status message
+        self.set_header(
+            # suite name and status
+            get_workflow_status_str(snapshot['data'])
+            # state totals
+            + [' (']
+            + get_task_status_summary(snapshot['data'])
+            + [' )']
+            #  filtered message
+            + (
+                [' *filtered - "R" to reset*']
+                if any((
+                    not visible
+                    for visible in self.filter_states.values()
+                ))
+                else []
+            )
+        )
+
+        # global update - the nuclear option - slow but simple
+        # TODO: this can be done incrementally by adding and
+        #       removing nodes from the existing tree
+        topnode = TuiParentNode(snapshot)
+
+        # NOTE: because we are nuking the tree we need to manually
+        # preserve the focus and collapse status of tree nodes
+
+        # record the old focus
+        _, old_node = self.listbox._body.get_focus()
+
+        # nuke the tree
+        self.listbox._set_body(urwid.TreeWalker(topnode))
+
+        # get the new focus
+        _, new_node = self.listbox._body.get_focus()
+
+        # preserve the focus or walk to the nearest parent
+        closest_focus = find_closest_focus(self, old_node, new_node)
+        self.listbox._body.set_focus(closest_focus)
+
+        # preserve the collapse/expand status of all nodes
+        translate_collapsing(self, old_node, new_node)
+
+        # schedule the next run of this update method
+        if self.loop:
+            self.loop.set_alarm_in(self.UPDATE_INTERVAL, self.update)
+
+        return True
+
+    def create_overlay(self, widget, kwargs):
+        """Open an overlay over the monitor.
+
+        Args:
+            widget (urwid.Widget):
+                Widget to be placed inside the overlay.
+            kwargs (dict):
+                Dictionary of arguments to pass to the `urwid.Overlay`
+                constructor.
+                
+                You will likely need to set `width` and `height` here.
+
+                See `urwid` docs for details.
+
+        """
+        kwargs = {'width': 'pack', 'height': 'pack', **kwargs}
+        overlay = urwid.Overlay(
+            urwid.LineBox(
+                urwid.AttrMap(
+                    urwid.Padding(
+                        widget,
+                        left=2,
+                        right=2
+                    ),
+                    'overlay',
+                )
+            ),
+            self.loop.widget,
+            align='center',
+            valign='middle',
+            left=self.stack * 5,
+            top=self.stack * 5,
+            **kwargs,
+        )
+        self.loop.widget = overlay
+        self.stack += 1
+
+    def remove_overlay(self):
+        """Remove the topmost overlay."""
+        if self.stack > 0:
+            self.loop.widget = self.loop.widget[0]
+            self.stack -= 1
