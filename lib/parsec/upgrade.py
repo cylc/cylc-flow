@@ -185,10 +185,9 @@ class upgrader(object):
                                               upg['cvt'].convert(old))
                             else:
                                 errMsg = (
-                                    'ERROR: Cannot perform deprecation '
-                                    'upgrade "' + msg + '" because '
-                                    'deprecated item clashes with existing '
-                                    'non-deprecated item'
+                                    'ERROR: Cannot upgrade deprecated '
+                                    'item "' + msg + '" because the upgraded '
+                                    'item already exists'
                                 )
                                 raise UpgradeError(errMsg)
         if warnings:

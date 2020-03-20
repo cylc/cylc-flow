@@ -24,6 +24,6 @@ install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 cylc get-config --sparse -i '[runtime][foo][events]' suite.rc  2> val.out
 TEST_NAME=${TEST_NAME_BASE}-original-events-not-overwritten
-grep_ok "ERROR: Cannot perform deprecation upgrade" "val.out"
+grep_ok "upgraded item already exists" "val.out"
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
