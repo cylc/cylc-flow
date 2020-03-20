@@ -62,8 +62,8 @@ def remote_init(uuid_str, rund, indirect_comm=None):
     finally:
         os.chdir(oldcwd)
     if indirect_comm:
-        fname = os.path.join(srvd, SuiteFiles.Service.CONTACT2)
-        with open(fname, 'w') as handle:
+        fname = os.path.join(srvd, SuiteFiles.Service.CONTACT)
+        with open(fname, 'a') as handle:
             handle.write('%s=%s\n' % (
                 ContactFileFields.COMMS_PROTOCOL_2, indirect_comm))
     print(REMOTE_INIT_DONE)
