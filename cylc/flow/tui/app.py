@@ -148,6 +148,20 @@ class TuiWidget(urwid.TreeWidget):
         type_ = value['type_']
         return render_node(node, data, type_)
 
+    def keypress(self, size, key):
+        """Handle expand & collapse requests."""
+        # overridden from urwid.TreeWidget to change the behaviour
+        # of the left arrow key which urwid uses for natvigation
+        # but which we think should be used for collapsing
+        ret = self.__super.keypress(size, key)
+        if ret in ('left',):
+            self.expanded = False
+            self.update_expanded_icon()
+            # return None so that this keypress is not allowed to
+            # propagate up the tree
+            return
+        return key
+
 
 class TuiNode(urwid.TreeNode):
     """Data storage object for leaf nodes."""
@@ -497,13 +511,13 @@ BINDINGS.add_group(
     'Expand/Collapse nodes',
 )
 BINDINGS.bind(
-    ('-',),
+    ('-', '\u2190'),
     'tree',
     'Collapse',
     None  # this binding is for documentation only - handled by urwid
 )
 BINDINGS.bind(
-    ('+', '\u2190'),
+    ('+', '\u2192'),
     'tree',
     'Expand',
     None  # this binding is for documentation only - handled by urwid
