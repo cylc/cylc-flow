@@ -20,6 +20,7 @@ import sys
 
 import urwid
 from urwid import html_fragment
+from urwid.wimp import SelectableIcon
 
 from cylc.flow.exceptions import (
     ClientError,
@@ -108,7 +109,7 @@ QUERY = '''
 
 
 class TuiWidget(urwid.TreeWidget):
-    """Display widget for leaf nodes.
+    """Display widget for tree nodes.
 
     Arguments:
         node (TuiNode):
@@ -119,20 +120,42 @@ class TuiWidget(urwid.TreeWidget):
 
     """
 
+    # allows leaf nodes to be selectable, otherwise the cursor
+    # will skip rows when the user naviages
+    unexpandable_icon = SelectableIcon(' ', 0)
+
     def __init__(self, node, max_depth=None):
-        # NOTE: copy of urwid.TreeWidget.__init__, the only difference
-        #       being the self.expanded logic
         if not max_depth:
             max_depth = TREE_EXPAND_DEPTH[0]
         self._node = node
         self._innerwidget = None
-        self.is_leaf = not hasattr(node, 'get_first_child')
+        self.is_leaf = not node.get_child_keys()
         if max_depth > 0:
             self.expanded = node.get_depth() < max_depth
         else:
             self.expanded = True
         widget = self.get_indented_widget()
         urwid.WidgetWrap.__init__(self, widget)
+
+    def selectable(self):
+        """Return True if this node is selectable.
+
+        Allow all nodes to be selectable apart from job information nodes.
+
+        """
+        return self.get_node().get_value()['type_'] != 'job_info'
+
+    def _is_leaf(self):
+        """Return True if this node has no children
+
+        Note: the `is_leaf` attribute doesn't seem to give the right
+              answer.
+
+        """
+        return (
+            not hasattr(self, 'git_first_child')
+            or not self.get_first_child()
+        )
 
     def get_display_text(self):
         """Compute the text to display for a given node.
@@ -149,10 +172,13 @@ class TuiWidget(urwid.TreeWidget):
         return render_node(node, data, type_)
 
     def keypress(self, size, key):
-        """Handle expand & collapse requests."""
-        # overridden from urwid.TreeWidget to change the behaviour
-        # of the left arrow key which urwid uses for natvigation
-        # but which we think should be used for collapsing
+        """Handle expand & collapse requests.
+
+        Overridden from urwid.TreeWidget to change the behaviour
+        of the left arrow key which urwid uses for navigation
+        but which we think should be used for collapsing.
+
+        """
         ret = self.__super.keypress(size, key)
         if ret in ('left',):
             self.expanded = False
@@ -161,6 +187,18 @@ class TuiWidget(urwid.TreeWidget):
             # propagate up the tree
             return
         return key
+
+    def get_indented_widget(self):
+        if self.is_leaf:
+
+            self._innerwidget = urwid.Columns(
+                [
+                    ('fixed', 1, self.unexpandable_icon),
+                    self.get_inner_widget()
+                ],
+                dividechars=1
+            )
+        return self.__super.get_indented_widget()
 
 
 class TuiNode(urwid.TreeNode):
