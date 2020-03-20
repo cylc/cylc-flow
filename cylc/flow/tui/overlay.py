@@ -139,6 +139,12 @@ def help_info(app):
             urwid.Divider()
         )
 
+    # mouse interaction
+    items.extend([
+        urwid.Text('Shift+Click to select text'),
+        urwid.Divider()
+    ])
+
     # list task states
     items.append(urwid.Divider())
     items.append(urwid.Text('Task Icons:'))
