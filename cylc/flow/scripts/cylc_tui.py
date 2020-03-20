@@ -85,9 +85,12 @@ def main(_, options, reg):
             []
         )
 
-    client = SuiteRuntimeClient(reg)
-    TuiApp(client, screen=screen).main()
+    try:
+        client = SuiteRuntimeClient(reg)
+        TuiApp(client, screen=screen).main()
 
-    if options.display == 'html':
-        for fragment in html_fragment.screenshot_collect():
-            print(fragment)
+        if options.display == 'html':
+            for fragment in html_fragment.screenshot_collect():
+                print(fragment)
+    except KeyboardInterrupt:
+        pass
