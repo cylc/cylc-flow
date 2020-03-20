@@ -71,6 +71,7 @@ SUITE_COLOURS = {
     'running': ('light blue', BACK),
     'held': ('brown', BACK),
     'stopping': ('light magenta', BACK),
+    'stopped': ('light red', BACK),
     'error': ('light red', BACK, 'bold')
 }
 

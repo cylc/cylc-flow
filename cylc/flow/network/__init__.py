@@ -26,7 +26,12 @@ import zmq
 import zmq.asyncio
 
 from cylc.flow import LOG
-from cylc.flow.exceptions import ClientError, CylcError, SuiteServiceFileError
+from cylc.flow.exceptions import (
+    ClientError,
+    CylcError,
+    SuiteServiceFileError,
+    SuiteStopped
+)
 from cylc.flow.hostuserutil import get_fqdn_by_host
 from cylc.flow.suite_files import (
     ContactFileFields,
@@ -68,11 +73,9 @@ def get_location(suite: str, owner: str, host: str):
         ClientError: if the suite is not running.
     """
     try:
-        contact = load_contact_file(
-            suite, owner, host)
+        contact = load_contact_file(suite, owner, host)
     except SuiteServiceFileError:
-        raise ClientError(f'Contact info not found for suite '
-                          f'"{suite}", suite not running?')
+        raise SuiteStopped(suite)
 
     if not host:
         host = contact[ContactFileFields.HOST]

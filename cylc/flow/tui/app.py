@@ -22,9 +22,11 @@ import urwid
 from urwid import html_fragment
 from urwid.wimp import SelectableIcon
 
+from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.exceptions import (
     ClientError,
-    ClientTimeout
+    ClientTimeout,
+    SuiteStopped
 )
 from cylc.flow.task_state import (
     TASK_STATUSES_ORDERED,
@@ -243,8 +245,8 @@ class TuiApp:
     tab/selection panel.
 
     Arguments:
-        client (cylc.network.client.SuiteRuntimeClient):
-            A suite client we can request data from.
+        reg (str):
+            Suite registration
 
     """
 
@@ -268,15 +270,15 @@ class TuiApp:
         for status, spec in SUITE_COLOURS.items()
     ]
 
-    def __init__(self, client, screen=None):
-        # the cylc data client
-        self.client = client
+    def __init__(self, reg, screen=None):
+        self.reg = reg
+        self.client = None
         self.loop = None
         self.screen = None
         self.stack = 0
 
         # create the template
-        topnode = TuiParentNode(dummy_flow())
+        topnode = TuiParentNode(dummy_flow({'id': 'Loading...'}))
         self.listbox = urwid.TreeListBox(urwid.TreeWalker(topnode))
         header = urwid.Text('\n')
         footer = urwid.AttrWrap(
@@ -337,6 +339,8 @@ class TuiApp:
 
         """
         try:
+            if not self.client:
+                self.client = SuiteRuntimeClient(self.reg)
             data = self.client(
                 'graphql',
                 {
@@ -351,6 +355,14 @@ class TuiApp:
                     }
                 }
             )
+        except SuiteStopped as exc:
+            self.client = None
+            return dummy_flow({
+                'name': self.reg,
+                'id': self.reg,
+                'status': 'stopped',
+                'stateTotals': {}
+            })
         except (ClientError, ClientTimeout) as exc:
             # catch network / client errors
             self.set_header(('suite_error', str(exc)))
@@ -414,22 +426,16 @@ class TuiApp:
         snapshot = self.get_snapshot()
         if snapshot is False:
             return False
+        data = snapshot['data']
 
         # update the suite status message
-        self.set_header(
-            # suite name and status
-            get_workflow_status_str(snapshot['data'])
-            # state totals
-            + [' (']
-            + get_task_status_summary(snapshot['data'])
-            + [' )']
-            #  filtered message
-            + (
-                [' *filtered - "R" to reset*']
-                if not all(self.filter_states.values())
-                else []
-            )
-        )
+        header = [get_workflow_status_str(data)]
+        status_summary = get_task_status_summary(snapshot['data'])
+        if status_summary:
+            header.extend([' ('] + status_summary + [' )'])
+        if not all(self.filter_states.values()):
+            header.extend([' ', '*fitered* "R" to reset', ' '])
+        self.set_header(header)
 
         # global update - the nuclear option - slow but simple
         # TODO: this can be done incrementally by adding and

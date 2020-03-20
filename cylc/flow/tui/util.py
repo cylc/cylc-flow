@@ -176,6 +176,15 @@ def dummy_flow():
     )
 
 
+def dummy_flow(data):
+    return add_node(
+        'workflow',
+        '',
+        {},
+        data
+    )
+
+
 def add_node(type_, id_, nodes, data=None):
     """Create a node add it to the store and return it.
 
@@ -275,6 +284,7 @@ def get_task_status_summary(flow):
             (f'job_{state}', JOB_ICON)
         ]
         for state, colour in JOB_COLOURS.items()
+        if state in state_totals
         if state_totals[state]
     ]
 

@@ -22,7 +22,6 @@ from textwrap import indent
 
 from urwid import html_fragment
 
-from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
 from cylc.flow.tui import (
@@ -86,8 +85,7 @@ def main(_, options, reg):
         )
 
     try:
-        client = SuiteRuntimeClient(reg)
-        TuiApp(client, screen=screen).main()
+        TuiApp(reg, screen=screen).main()
 
         if options.display == 'html':
             for fragment in html_fragment.screenshot_collect():
