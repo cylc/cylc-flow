@@ -64,6 +64,9 @@ shutdown during remote run dir tidy (introduced during Cylc 8 development).
 pyzmq, as well as some test/dev dependencies. Fixes Jinja2 error where
 validation shows incorrect context.
 
+[#3531](https://github.com/cylc/cylc-flow/pull/3531) - Fix job submission to
+SLURM when task name has a percent `%` character.
+
 -------------------------------------------------------------------------------
 ## __cylc-8.0a1 (2019-09-18)__
 
