@@ -42,11 +42,13 @@ was expanded in GScan.
 tasks in the tree view. Uses natural order, so that it follows the
 order 1, 2, 10, 11, and not 1, 10, 11, 2.
 
+[#3532](https://github.com/cylc/cylc-flow/pull/3532) - Fix job submission to
+SLURM when task name has a percent `%` character.
+
 -------------------------------------------------------------------------------
 ## __cylc-7.8.4 (2019-09-04)__
 
 Bug fix release.
-=======
 
 Selected user-facing changes:
 
