@@ -236,6 +236,8 @@ class ControlTree(object):
         return [self._nat_convert(c) for c in re.split('([0-9]+)', key)]
 
     def _nat_cmp(self, left, right):
+        if left is None or right is None:
+            return cmp(left, right)
         return cmp(
             self._nat_alpha_num_key(left),
             self._nat_alpha_num_key(right))
