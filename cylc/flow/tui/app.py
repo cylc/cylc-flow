@@ -312,7 +312,7 @@ class TuiApp:
             screen=self.screen
         )
         # schedule the first update
-        self.loop.set_alarm_in(0, self.update)
+        self.loop.set_alarm_in(0, self._update)
         self.loop.run()
 
     def unhandled_input(self, key):
@@ -418,7 +418,13 @@ class TuiApp:
             message += '\n'
         self.view.header = urwid.Text(message)
 
-    def update(self, *_):
+    def _update(self, *_):
+        try:
+            self.update()
+        except Exception as exc:
+            sys.exit(exc)
+
+    def update(self):
         """Refresh the data and redraw this widget.
 
         Preserves the current focus and collapse/expand state.
@@ -467,7 +473,7 @@ class TuiApp:
 
         # schedule the next run of this update method
         if self.loop:
-            self.loop.set_alarm_in(self.UPDATE_INTERVAL, self.update)
+            self.loop.set_alarm_in(self.UPDATE_INTERVAL, self._update)
 
         return True
 
