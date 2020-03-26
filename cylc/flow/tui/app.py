@@ -251,6 +251,7 @@ class TuiApp:
     """
 
     UPDATE_INTERVAL = 1
+    CLIENT_TIMEOUT = 1
 
     palette = [
         ('head', FORE, BACK),
@@ -340,7 +341,10 @@ class TuiApp:
         """
         try:
             if not self.client:
-                self.client = SuiteRuntimeClient(self.reg)
+                self.client = SuiteRuntimeClient(
+                    self.reg,
+                    timeout=self.CLIENT_TIMEOUT
+                )
             data = self.client(
                 'graphql',
                 {
