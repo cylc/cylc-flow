@@ -232,11 +232,11 @@ class ControlTree(object):
             cols[col_no].set_sort_order(order)
             self.tmodelsort.set_sort_column_id(col_no - 1, order)
 
-    def _nat_convert(self, text):
-        return int(text) if text.isdigit() else text.lower()
-
     def _nat_alpha_num_key(self, key):
-        return [self._nat_convert(c) for c in re.split(RE_ALPHA_NUM, key)]
+        return [
+            int(c) if c.isdigit() else c.lower()
+            for c in re.split(RE_ALPHA_NUM, key)
+        ]
 
     def _nat_cmp(self, left, right):
         if left is None or right is None:
