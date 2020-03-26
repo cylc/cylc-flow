@@ -115,13 +115,10 @@ class JobPool:
         j_id = (
             f'{self.workflow_id}{ID_DELIM}{point}'
             f'{ID_DELIM}{name}{ID_DELIM}{sub_num}')
-        try:
-            j_delta = PbJob(stamp=f'{j_id}@{update_time}')
-            j_delta.messages.append(msg)
-            self.updates.setdefault(j_id, PbJob(id=j_id)).MergeFrom(j_delta)
-            self.updates_pending = True
-        except TypeError as exc:
-            LOG.error(f'Unable to append to {j_id} message field: {str(exc)}')
+        j_delta = PbJob(stamp=f'{j_id}@{update_time}')
+        j_delta.messages.append(msg)
+        self.updates.setdefault(j_id, PbJob(id=j_id)).MergeFrom(j_delta)
+        self.updates_pending = True
 
     def reload_deltas(self):
         """Gather all current jobs as deltas after reload."""
@@ -135,6 +132,7 @@ class JobPool:
         point, name, sub_num = self.parse_job_item(job_d)
         t_id = f'{self.workflow_id}{ID_DELIM}{point}{ID_DELIM}{name}'
         j_id = f'{t_id}{ID_DELIM}{sub_num}'
+        # Jobs may be missing post restart/reload
         try:
             self.task_jobs[t_id].discard(j_id)
             self.deltas.pruned.append(j_id)
@@ -144,6 +142,7 @@ class JobPool:
 
     def remove_task_jobs(self, task_id):
         """Removed a task's jobs from the pool via task ID."""
+        # Jobs/tasks may be missing post restart/reload
         try:
             for j_id in self.task_jobs[task_id]:
                 self.deltas.pruned.append(j_id)
@@ -159,13 +158,10 @@ class JobPool:
         j_id = (
             f'{self.workflow_id}{ID_DELIM}{point}'
             f'{ID_DELIM}{name}{ID_DELIM}{sub_num}')
-        try:
-            j_delta = PbJob(stamp=f'{j_id}@{update_time}')
-            setattr(j_delta, attr_key, attr_val)
-            self.updates.setdefault(j_id, PbJob(id=j_id)).MergeFrom(j_delta)
-            self.updates_pending = True
-        except (TypeError, AttributeError) as exc:
-            LOG.error(f'Unable to set {j_id} data field: {str(exc)}')
+        j_delta = PbJob(stamp=f'{j_id}@{update_time}')
+        setattr(j_delta, attr_key, attr_val)
+        self.updates.setdefault(j_id, PbJob(id=j_id)).MergeFrom(j_delta)
+        self.updates_pending = True
 
     def set_job_state(self, job_d, status):
         """Set job state."""
@@ -182,8 +178,6 @@ class JobPool:
             self.updates.setdefault(
                 j_id, PbJob(id=j_id)).MergeFrom(j_delta)
             self.updates_pending = True
-        else:
-            LOG.error(f'Unable to set {j_id} state field to {status}')
 
     def set_job_time(self, job_d, event_key, time_str=None):
         """Set an event time in job pool object.
@@ -195,14 +189,11 @@ class JobPool:
         j_id = (
             f'{self.workflow_id}{ID_DELIM}{point}'
             f'{ID_DELIM}{name}{ID_DELIM}{sub_num}')
-        try:
-            j_delta = PbJob(stamp=f'{j_id}@{update_time}')
-            time_attr = f'{event_key}_time'
-            setattr(j_delta, time_attr, time_str)
-            self.updates.setdefault(j_id, PbJob(id=j_id)).MergeFrom(j_delta)
-            self.updates_pending = True
-        except (TypeError, AttributeError) as exc:
-            LOG.error(f'Unable to set {j_id} {time_attr} field: {str(exc)}')
+        j_delta = PbJob(stamp=f'{j_id}@{update_time}')
+        time_attr = f'{event_key}_time'
+        setattr(j_delta, time_attr, time_str)
+        self.updates.setdefault(j_id, PbJob(id=j_id)).MergeFrom(j_delta)
+        self.updates_pending = True
 
     @staticmethod
     def parse_job_item(item):
