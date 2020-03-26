@@ -26,6 +26,9 @@ from cylc.gui.updater_tree import TreeUpdater
 from cylc.task_id import TaskID
 
 
+RE_ALPHA_NUM = re.compile('([0-9]+)')
+
+
 class ControlTree(object):
     """Text Treeview suite control interface."""
 
@@ -233,7 +236,7 @@ class ControlTree(object):
         return int(text) if text.isdigit() else text.lower()
 
     def _nat_alpha_num_key(self, key):
-        return [self._nat_convert(c) for c in re.split('([0-9]+)', key)]
+        return [self._nat_convert(c) for c in re.split(RE_ALPHA_NUM, key)]
 
     def _nat_cmp(self, left, right):
         if left is None or right is None:
