@@ -38,6 +38,9 @@ from Python 3 master for Cylc 8).
 for GScan, preventing that all suites are expanded after a single suite
 was expanded in GScan.
 
+[#3526](https://github.com/cylc/cylc-flow/pull/3526) - Fix sorting of
+tasks in the tree view. Uses natural order, so that it follows the
+order 1, 2, 10, 11, and not 1, 10, 11, 2.
 
 -------------------------------------------------------------------------------
 ## __cylc-7.8.4 (2019-09-04)__
