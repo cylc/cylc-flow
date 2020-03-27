@@ -68,10 +68,10 @@ def select_host(
     Args:
         hosts (list):
             List of host names to choose from.
-            NOTE: Host names must be identifyable from the host where the
+            NOTE: Host names must be identifiable from the host where the
             call is executed.
         ranking_string (str):
-            A multiline string containing Python expressions to fileter
+            A multiline string containing Python expressions to filter
             hosts by e.g::
 
                # only consider hosts with less than 70% cpu usage
@@ -387,7 +387,7 @@ def _get_rankings(string):
     """
     for line in string.splitlines():
         # parse the string one line at a time
-        # purposfully don't support multi-line expressions
+        # purposefully don't support multi-line expressions
         line = line.strip()
 
         if not line or line.startswith('#'):
