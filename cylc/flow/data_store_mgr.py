@@ -296,7 +296,7 @@ class DataStoreMgr:
         # Tidy and reassign task jobs after reload
         if reloaded:
             new_tasks = set(self.updates[TASK_PROXIES])
-            job_tasks = set(self.schd.job_pool.pool)
+            job_tasks = set(self.schd.job_pool.task_jobs)
             for tp_id in job_tasks.difference(new_tasks):
                 self.schd.job_pool.remove_task_jobs(tp_id)
             for tp_id, tp_delta in self.updates[TASK_PROXIES].items():

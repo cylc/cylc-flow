@@ -793,6 +793,15 @@ class TaskJobManager(object):
 
         try:
             job_conf = self._prep_submit_task_job_impl(suite, itask, rtconfig)
+
+            # Job pool insertion
+            job_config = deepcopy(job_conf)
+            job_config['logfiles'] = deepcopy(itask.summary['logfiles'])
+            job_config['job_log_dir'] = get_task_job_log(
+                suite, itask.point, itask.tdef.name, itask.submit_num)
+            itask.jobs.append(job_config['job_d'])
+            self.job_pool.insert_job(job_config)
+
             local_job_file_path = get_task_job_job_log(
                 suite, itask.point, itask.tdef.name, itask.submit_num)
             self.job_file_writer.write(local_job_file_path, job_conf,
@@ -803,13 +812,6 @@ class TaskJobManager(object):
                 suite, itask, dry_run, '(prepare job file)', exc)
             return False
         itask.local_job_file_path = local_job_file_path
-
-        job_config = deepcopy(job_conf)
-        job_config['logfiles'] = deepcopy(itask.summary['logfiles'])
-        job_config['job_log_dir'] = get_task_job_log(
-            suite, itask.point, itask.tdef.name, itask.submit_num)
-        itask.jobs.append(job_config['job_d'])
-        self.job_pool.insert_job(job_config)
 
         if dry_run:
             itask.set_summary_message(self.DRY_RUN_MSG)
