@@ -27,7 +27,10 @@ import psutil
 
 # from cylc.flow.host_select import _simple_eval
 from cylc.flow.option_parsers import OptionParser
-from cylc.flow.terminal import cli_function
+from cylc.flow.terminal import (
+    cli_function,
+    parse_dirty_json
+)
 
 
 def get_option_parser():
@@ -36,17 +39,7 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser, options):
-    # Users may have profile scripts that write to STDOUT.
-    # Drop all output lines until the the first character of a
-    # line is '['. Hopefully this is enough to find us the
-    # first line that denotes the beginning of the expected
-    # JSON data structure.
-    stdin = '\n'.join(dropwhile(
-        lambda s: not s.startswith('['),
-        sys.stdin.readlines()
-    ))
-
-    metrics = json.loads(stdin)
+    metrics = parse_dirty_json(sys.stdin.read())
 
     ret = [
         getattr(psutil, key[0])(*key[1:])

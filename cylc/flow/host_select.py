@@ -15,6 +15,7 @@ from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import HostSelectException
 from cylc.flow.hostuserutil import get_fqdn_by_host, is_remote_host
 from cylc.flow.remote import remote_cylc_cmd, run_cmd
+from cylc.flow.terminal import parse_dirty_json
 
 
 def select_suite_host(cached=True):
@@ -517,17 +518,10 @@ def _get_metrics(hosts, metrics, data=None):
                 data[host]['get_metrics'] = (
                     f'Command failed (exit: {proc.returncode})')
             else:
-                # filter out gunk from stdout by ignoring everything until
-                # the first line which starts with a `[`.
-                out = ''.join(dropwhile(
-                    lambda s: not s.startswith('['),
-                    out.splitlines(True)
-                ))
-
                 host_stats[host] = dict(zip(
                     metrics,
                     # convert JSON dicts -> namedtuples
-                    _deserialise(metrics, json.loads(out))
+                    _deserialise(metrics, parse_dirty_json(out))
                 ))
         sleep(0.01)
     return host_stats, data
