@@ -47,8 +47,8 @@ class SLURMHandler(object):
         directives = job_conf['directives'].__class__()
         directives['--job-name'] = (
             job_conf['suite_name'] + '.' + job_conf['task_id'])
-        directives['--output'] = job_file_path + ".out"
-        directives['--error'] = job_file_path + ".err"
+        directives['--output'] = job_file_path.replace('%', '%%') + ".out"
+        directives['--error'] = job_file_path.replace('%', '%%') + ".err"
         if (job_conf["execution_time_limit"] and
                 directives.get("--time") is None):
             directives["--time"] = "%d:%02d" % (

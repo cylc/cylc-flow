@@ -34,6 +34,9 @@ pages**.
 for GScan, preventing that all suites are expanded after a single suite
 was expanded in GScan.
 
+[#3538](https://github.com/cylc/cylc-flow/pull/3538) - Fix job submission to
+SLURM when task name has a percent `%` character.
+
 -------------------------------------------------------------------------------
 ## __cylc-7.8.5 (2019-Q4?)__
 
