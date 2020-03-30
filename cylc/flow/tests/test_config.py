@@ -16,9 +16,10 @@
 
 import os
 import pytest
-from tempfile import TemporaryDirectory, NamedTemporaryFile
+from tempfile import TemporaryDirectory, NamedTemporaryFile, mkdtemp
 from pathlib import Path
 from cylc.flow.config import SuiteConfig
+from cylc.flow.tests.util import CylcWorkflowTestCase
 
 
 def get_test_inheritance_quotes():
@@ -211,3 +212,32 @@ class TestSuiteConfig(object):
                         ['MAINFAM_major1_minor10'])
                 assert 'goodbye_0_major1_minor10' in \
                        config.runtime['descendants']['SOMEFAM']
+
+
+def test_queue_config(caplog):
+    suiterc_content = """
+[scheduling]
+   [[queues]]
+       [[[q1]]]
+           members = A, B
+       [[[q2]]]
+           members = x
+   [[dependencies]]
+       graph = "x => y"
+[runtime]
+   [[A]]
+   [[B]]
+   [[x]]
+       inherit = A, B
+   [[y]]
+    """
+    workflow_directory = Path(mkdtemp())
+    suite_rc = Path(workflow_directory, "suite.rc")
+    with suite_rc.open(mode="w") as f:
+        f.write(suiterc_content)
+        f.flush()
+    config = SuiteConfig(suite="qtest", fpath=f.name)
+    config.configure_queues()
+    log = caplog.messages[0].split('\n')
+    assert log[0] == "Queue configuration warnings:"
+    assert log[1] == "+ q2: ignoring x (already assigned to a queue)"
