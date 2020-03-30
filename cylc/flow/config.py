@@ -988,8 +988,14 @@ class SuiteConfig(object):
                 if name not in self.runtime['first-parent descendants'][p]:
                     self.runtime['first-parent descendants'][p].append(name)
 
-    def compute_inheritance(self, use_simple_method=True):
+    def compute_inheritance(self):
         LOG.debug("Parsing the runtime namespace hierarchy")
+
+        # TODO: Note an unused alternative mechanism was removed here
+        # (March 2020). It stored the result of each completed MRO and
+        # re-used these wherever possible. This could be more efficient
+        # for full namespaces in deep hierarchies. We should go back and
+        # look if inheritance computation becomes a problem.
 
         results = OrderedDictWithDefaults()
         # n_reps = 0
@@ -1006,39 +1012,11 @@ class SuiteConfig(object):
 
             result = OrderedDictWithDefaults()
 
-            if use_simple_method:
-                # Go up the linearized MRO from root, replicating or
-                # overriding each namespace element as we go.
-                for name in hierarchy:
-                    replicate(result, self.cfg['runtime'][name])
-                    # n_reps += 1
-
-            else:
-                # As for the simple method, but store the result of each
-                # completed MRO (full or partial) as we go, and re-use
-                # these wherever possible. This ought to be a lot more
-                # efficient for big namespaces (e.g. lots of environment
-                # variables) in deep hierarchies, but results may vary...
-                prev_shortcut = False
-                mro = []
-                for name in hierarchy:
-                    mro.append(name)
-                    i_mro = '*'.join(mro)
-                    if i_mro in already_done:
-                        ad_result = already_done[i_mro]
-                        prev_shortcut = True
-                    else:
-                        if prev_shortcut:
-                            prev_shortcut = False
-                            # copy ad_result (to avoid altering already_done)
-                            result = OrderedDictWithDefaults()
-                            replicate(result, ad_result)  # ...and use stored
-                            # n_reps += 1
-                        # override name content into tmp
-                        replicate(result, self.cfg['runtime'][name])
-                        # n_reps += 1
-                        # record this mro as already done
-                        already_done[i_mro] = result
+            # Go up the linearized MRO from root, replicating or
+            # overriding each namespace element as we go.
+            for name in hierarchy:
+                replicate(result, self.cfg['runtime'][name])
+                # n_reps += 1
 
             results[ns] = result
 
@@ -1114,9 +1092,11 @@ class SuiteConfig(object):
         # Then reassign to other queues as requested.
         warnings = []
         requeued = []
+        # Record non-default queues by task name, to avoid spurious warnings
+        # about tasks "already added to a queue", when the queue is the same.
+        myq = {}
         for key, queue in list(queues.copy().items()):
-            # queues.copy() is essential here to allow items to be removed from
-            # the queues dict.
+            myq[key] = []
             if key == self.Q_DEFAULT:
                 continue
             # Assign tasks to queue and remove them from default.
@@ -1131,7 +1111,7 @@ class SuiteConfig(object):
                             try:
                                 queues[self.Q_DEFAULT]['members'].remove(fmem)
                             except ValueError:
-                                if fmem in requeued:
+                                if fmem in requeued and fmem not in myq[key]:
                                     msg = "%s: ignoring %s from %s (%s)" % (
                                         key, fmem, qmember,
                                         'already assigned to a queue')
@@ -1140,6 +1120,7 @@ class SuiteConfig(object):
                                     # Ignore: task not used in the graph.
                                     pass
                             else:
+                                myq[key] = fmem
                                 qmembers.append(fmem)
                                 requeued.append(fmem)
                 else:
@@ -1149,30 +1130,31 @@ class SuiteConfig(object):
                             queues[self.Q_DEFAULT]['members'].remove(qmember)
                         except ValueError:
                             if qmember in requeued:
-                                msg = "%s: ignoring '%s' (%s)" % (
-                                    key, qmember, 'task already assigned')
+                                msg = "%s: ignoring %s (%s)" % (
+                                    key, qmember,
+                                    'already assigned to a queue')
                                 warnings.append(msg)
                             elif qmember not in all_task_names:
-                                msg = "%s: ignoring '%s' (%s)" % (
+                                msg = "%s: ignoring %s (%s)" % (
                                     key, qmember, 'task not defined')
                                 warnings.append(msg)
                             else:
                                 # Ignore: task not used in the graph.
                                 pass
                         else:
+                            myq[key] = qmember
                             qmembers.append(qmember)
                             requeued.append(qmember)
-
-            if warnings:
-                err_msg = "Queue configuration warnings:"
-                for msg in warnings:
-                    err_msg += "\n+ %s" % msg
-                LOG.warning(err_msg)
-
             if qmembers:
                 queue['members'] = qmembers
             else:
                 del queues[key]
+
+        if warnings:
+            err_msg = "Queue configuration warnings:"
+            for msg in warnings:
+                err_msg += "\n+ %s" % msg
+            LOG.warning(err_msg)
 
         if cylc.flow.flags.verbose and len(queues) > 1:
             log_msg = "Internal queues created:"

@@ -220,7 +220,7 @@ information_commands['get-suite-contact'] = [
 information_commands['get-suite-version'] = [
     'get-suite-version', 'get-cylc-version']
 
-information_commands['monitor'] = ['monitor']
+information_commands['tui'] = ['tui']
 information_commands['get-suite-config'] = ['get-suite-config', 'get-config']
 information_commands['get-site-config'] = [
     'get-site-config', 'get-global-config']
@@ -337,7 +337,7 @@ comsum['dump'] = 'Print the state of tasks in a running suite'
 comsum['show'] = 'Print task state (prerequisites and outputs etc.)'
 comsum['cat-log'] = 'Print various suite and task log files'
 comsum['extract-resources'] = 'Extract cylc.flow library package resources'
-comsum['monitor'] = 'An in-terminal suite monitor'
+comsum['tui'] = 'A terminal user interface for suites.'
 comsum['get-suite-config'] = 'Print suite configuration items'
 comsum['get-site-config'] = 'Print site/user configuration items'
 comsum['get-suite-contact'] = (

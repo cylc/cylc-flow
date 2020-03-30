@@ -768,7 +768,6 @@ class TaskEventsManager():
             "submit_status": 1,
         })
         job_d = get_task_job_id(itask.point, itask.tdef.name, itask.submit_num)
-        self.job_pool.set_job_attr(job_d, 'batch_sys_job_id', None)
         self.job_pool.set_job_state(job_d, TASK_STATUS_SUBMIT_FAILED)
         itask.summary['submit_method_id'] = None
         self.pflag = True

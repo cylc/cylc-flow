@@ -44,14 +44,16 @@ def find_version(*file_paths):
 install_requires = [
     'ansimarkup>=1.0.0',
     'colorama==0.4.*',
+    'click>=7.0',
     'graphene>=2.1,<3',
-    'metomi-isodatetime==1!2.0.*',
     'jinja2==2.11.*',
+    'metomi-isodatetime==1!2.0.*',
     'markupsafe==1.1.*',
     'protobuf==3.11.*',
     'pyzmq==18.1.*',
     'click>=7.0',
     'psutil>=5.6.0'
+    'urwid==2.*'
 ]
 tests_require = [
     'codecov==2.0.*',

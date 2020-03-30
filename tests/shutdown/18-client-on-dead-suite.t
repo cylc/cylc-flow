@@ -18,7 +18,7 @@
 # Test suite shuts down with error on missing contact file
 # And correct behaviour with client on the next 2 connection attempts.
 . "$(dirname "$0")/test_header"
-set_test_number 5
+set_test_number 3
 init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
 [cylc]
     [[events]]
@@ -41,12 +41,7 @@ kill "${MYPID}"  # Should leave behind the contact file
 wait "${MYPID}" 1>'/dev/null' 2>&1 || true
 run_fail "${TEST_NAME_BASE}-1" cylc ping "${SUITE_NAME}"
 contains_ok "${TEST_NAME_BASE}-1.stderr" <<__ERR__
-ClientError: Suite "${SUITE_NAME}" already stopped
-__ERR__
-run_fail "${TEST_NAME_BASE}-2" cylc ping "${SUITE_NAME}"
-contains_ok "${TEST_NAME_BASE}-2.stderr" <<__ERR__
-ClientError: Contact info not found for suite \
-"${SUITE_NAME}", suite not running?
+SuiteStopped: ${SUITE_NAME} is not running
 __ERR__
 purge_suite "${SUITE_NAME}"
 exit

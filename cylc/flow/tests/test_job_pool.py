@@ -72,12 +72,17 @@ class TestJobPool(unittest.TestCase):
         job = self.job_pool.updates[self.ext_id]
         old_stamp = copy(job.stamp)
         self.assertEqual(0, len(job.messages))
-        with self.assertLogs(LOG, level='ERROR') as cm:
-            self.job_pool.add_job_msg(self.int_id, True)
-        self.assertIn(f'Unable to append to {self.ext_id}', cm.output[0])
         self.job_pool.add_job_msg(self.int_id, 'The Atomic Age')
         self.assertNotEqual(old_stamp, job.stamp)
         self.assertEqual(1, len(job.messages))
+
+    def test_reload_deltas(self):
+        """Test method reinstatiating job pool on reload"""
+        self.assertFalse(self.job_pool.updates_pending)
+        self.job_pool.insert_job(JOB_CONFIG)
+        self.job_pool.pool = {e.id: e for e in self.job_pool.updates.values()}
+        self.job_pool.reload_deltas()
+        self.assertTrue(self.job_pool.updates_pending)
 
     def test_remove_job(self):
         """Test method removing a job from the pool via internal job id."""
@@ -105,12 +110,6 @@ class TestJobPool(unittest.TestCase):
         self.job_pool.insert_job(JOB_CONFIG)
         job = self.job_pool.updates[self.ext_id]
         old_exit_script = copy(job.exit_script)
-        with self.assertLogs(LOG, level='ERROR') as cm:
-            self.job_pool.set_job_attr(self.int_id, 'leave_scripting', 'rm *')
-        self.assertIn(f'Unable to set {self.ext_id}', cm.output[0])
-        with self.assertLogs(LOG, level='ERROR') as cm:
-            self.job_pool.set_job_attr(self.int_id, 'exit_script', 10.0)
-        self.assertIn(f'Unable to set {self.ext_id}', cm.output[0])
         self.assertEqual(old_exit_script, job.exit_script)
         self.job_pool.set_job_attr(self.int_id, 'exit_script', 'rm -v *')
         self.assertNotEqual(old_exit_script, job.exit_script)
@@ -124,9 +123,6 @@ class TestJobPool(unittest.TestCase):
         self.assertEqual(old_state, job.state)
         self.job_pool.set_job_state(self.int_id, JOB_STATUSES_ALL[-1])
         self.assertNotEqual(old_state, job.state)
-        with self.assertLogs(LOG, level='ERROR') as cm:
-            self.job_pool.set_job_state(self.int_id, 'sleepy')
-        self.assertIn(f'Unable to set {self.ext_id} state', cm.output[0])
 
     def test_set_job_time(self):
         """Test method setting event time."""
@@ -134,9 +130,6 @@ class TestJobPool(unittest.TestCase):
         self.job_pool.insert_job(JOB_CONFIG)
         job = self.job_pool.updates[self.ext_id]
         old_time = copy(job.submitted_time)
-        with self.assertLogs(LOG, level='ERROR') as cm:
-            self.job_pool.set_job_time(self.int_id, 'jumped', event_time)
-        self.assertIn(f'Unable to set {self.ext_id} jumped_time', cm.output[0])
         self.assertEqual(old_time, job.submitted_time)
         self.job_pool.set_job_time(self.int_id, 'submitted', event_time)
         self.assertNotEqual(old_time, job.submitted_time)

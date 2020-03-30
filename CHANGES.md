@@ -20,6 +20,8 @@ the cylc/cylc-ui repository (and see also cylc/cylc-uiserver).
 The User Guide an other documention has been removed from the Python package to
 the cylc/cylc-doc repository.
 
+### Fixes
+
 Cylc 8.0aX (alpha) releases are not compatible with Cylc 7 or with previous
 8.0aX releases, as the API is still under heavy development.
 
@@ -32,6 +34,9 @@ The xtrigger examples were moved to a separate `cylc/cylc-xtriggers` project
 
 Jinja filters were moved from its `Jinja2Filters` folder to within the `cylc`
 namespace, under `cylc.jinja.filters`.
+
+[#3541](https://github.com/cylc/cylc-flow/pull/3541) - Don't warn that a task
+was already added to an internal queue, if the queue is the same.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0a2 (2019-Q4?)__
@@ -52,6 +57,10 @@ job status message retries (problems that prevent message transmission are
 almost never transient, and in practice job polling is the only way to
 recover).
 
+[#3463](https://github.com/cylc/cylc-flow/pull/3463) - cylc tui:
+A new terminal user interface to replace the old `cylc monitor`.
+An interactive collapsible tree to match the new web interface.
+
 ### Fixes
 
 [#3409](https://github.com/cylc/cylc-flow/pull/3409) - prevent cylc-run from
@@ -63,6 +72,9 @@ shutdown during remote run dir tidy (introduced during Cylc 8 development).
 [#3493](https://github.com/cylc/cylc-flow/pull/3493) - Update jinja2 and
 pyzmq, as well as some test/dev dependencies. Fixes Jinja2 error where
 validation shows incorrect context.
+
+[#3531](https://github.com/cylc/cylc-flow/pull/3531) - Fix job submission to
+SLURM when task name has a percent `%` character.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0a1 (2019-09-18)__

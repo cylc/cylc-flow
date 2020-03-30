@@ -38,6 +38,30 @@ from cylc.flow.batch_sys_handlers.slurm import BATCH_SYS_HANDLER
                 '#SBATCH --time=3:00',
             ],
         ),
+        (  # task name with % character
+            {
+                'batch_system_conf': {},
+                'directives': {},
+                'execution_time_limit': 180,
+                'job_file_path': (
+                    '$HOME/cylc-run/chop/log/job/1/axe%40HEAD/01/job'
+                ),
+                'suite_name': 'chop',
+                'task_id': 'axe%40HEAD.1',
+            },
+            [
+                '#SBATCH --job-name=axe%40HEAD.1.chop',
+                (
+                    '#SBATCH --output'
+                    '=cylc-run/chop/log/job/1/axe%%40HEAD/01/job.out'
+                ),
+                (
+                    '#SBATCH --error'
+                    '=cylc-run/chop/log/job/1/axe%%40HEAD/01/job.err'
+                ),
+                '#SBATCH --time=3:00',
+            ],
+        ),
         (  # some useful directives
             {
                 'batch_system_conf': {},

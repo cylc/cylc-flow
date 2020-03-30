@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test cylc monitor USER_AT_HOST interface, using cylc scan output.
+# Test `cylc scan` output.
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 8
