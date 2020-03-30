@@ -76,6 +76,9 @@ validation shows incorrect context.
 [#3531](https://github.com/cylc/cylc-flow/pull/3531) - Fix job submission to
 SLURM when task name has a percent `%` character.
 
+[#3543](https://github.com/cylc/cylc-flow/pull/3403) - fixed pipe polling
+issue observed on darwin (BSD) which could cause Cylc to hang.
+
 -------------------------------------------------------------------------------
 ## __cylc-8.0a1 (2019-09-18)__
 
