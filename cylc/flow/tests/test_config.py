@@ -233,7 +233,6 @@ def test_queue_config(caplog, tmp_path):
     suite_rc = tmp_path / "suite.rc"
     suite_rc.write_text(suiterc_content)
     config = SuiteConfig(suite="qtest", fpath=suite_rc.absolute())
-    config.configure_queues()
     log = caplog.messages[0].split('\n')
     assert log[0] == "Queue configuration warnings:"
     assert log[1] == "+ q2: ignoring x (already assigned to a queue)"
