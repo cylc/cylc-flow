@@ -9,14 +9,13 @@ import pytest
 from cylc.flow import CYLC_LOG
 from cylc.flow.exceptions import CylcError
 from cylc.flow.main_loop import (
+    CoroTypes,
     MainLoopPluginException,
     _wrapper,
-    load_plugins,
-    before,
-    during,
-    after
+    get_runners,
+    load,
 )
-from cylc.flow.main_loop.health_check import during as hc_during
+from cylc.flow.main_loop.health_check import health_check as hc_during
 
 
 def test_load_plugins_blank():
@@ -24,13 +23,10 @@ def test_load_plugins_blank():
     conf = {
         'plugins': []
     }
-    assert load_plugins(conf) == {
-        'before': {},
-        'during': {},
-        'on_change': {},
-        'after': {},
+    assert load(conf) == {
+        'config': conf,
         'state': {},
-        'config': conf
+        'timings': {}
     }
 
 
@@ -42,19 +38,18 @@ def test_load_plugins():
             'interval': 1234
         }
     }
-    assert load_plugins(conf) == {
-        'before': {},
-        'during': {
-            'health check': hc_during
+    assert load(conf) == {
+        CoroTypes.Periodic: {
+            ('health check', 'health_check'): hc_during
         },
-        'on_change': {},
-        'after': {},
         'state': {
             'health check': {
-                'timings': deque()
             }
         },
-        'config': conf
+        'config': conf,
+        'timings': {
+            ('health check', 'health_check'): deque([], maxlen=1)
+        }
     }
 
 
@@ -116,12 +111,13 @@ def test_wrapper_catches_exceptions(caplog):
     )
     with caplog.at_level(logging.DEBUG, logger=CYLC_LOG):
         asyncio.run(coro)
-    assert len(caplog.record_tuples) == 3
-    run, error, traceback = caplog.record_tuples
+    assert len(caplog.record_tuples) == 4
+    run, error, traceback, completed = caplog.record_tuples
     assert 'run' in run[2]
     assert error[1] == logging.ERROR
     assert traceback[1] == logging.ERROR
     assert 'foo' in traceback[2]
+    assert completed[1] == logging.DEBUG
 
 
 def test_wrapper_passes_cylc_error():
@@ -137,184 +133,132 @@ def test_wrapper_passes_cylc_error():
         asyncio.run(coro)
 
 
-def test_before():
-    """Ensure the before function calls all before coros."""
+@pytest.fixture
+def basic_plugins():
     calls = []
 
-    def capture(*stuff):
+    def capture(*args):
         nonlocal calls
-        calls.append(stuff)
+        calls.append(args)
 
     plugins = {
-        'before': {
-            'foo': capture,
-            'bar': capture,
-            'baz': capture
-        },
-        'state': {
-            'foo': {'a': 1},
-            'bar': {'b': 2},
-            'baz': {'c': 3}
-        }
-    }
-    asyncio.run(before(plugins, 42))
-    assert calls == [
-        (42, {'a': 1}),
-        (42, {'b': 2}),
-        (42, {'c': 3}),
-    ]
-
-
-@pytest.fixture
-def test_plugins():
-    return {
-        'state': {
-            'foo': {
-                'calls': [],
-                'name': 'foo',
-                'timings': deque()
-            },
-            'bar': {
-                'calls': [],
-                'name': 'bar',
-                'timings': deque()
-            },
-            'baz': {
-                'calls': [],
-                'name': 'baz',
-                'timings': deque()
+        'config': {
+            'periodic plugin': {
+                'interval': 10
             }
         },
-        'config': {
-            'foo': {
-                'interval': 1
-            },
-            'bar': {
-                'interval': 1
-            },
-            'baz': {
-                'interval': 1
-            },
-        }
-    }
-
-
-def test_during(test_plugins):
-    """Ensure the during function calls all during and on_change coros."""
-    calls = []
-
-    def capture_during(_, state):
-        nonlocal calls
-        state['calls'].append(f'during_{state["name"]}')
-        calls.append(list(state['calls']))
-
-    def capture_on_change(_, state):
-        nonlocal calls
-        state['calls'].append(f'on_change_{state["name"]}')
-        calls.append(list(state['calls']))
-
-    test_plugins.update({
-        'during': {
-            'foo': capture_during,
-            'bar': capture_during,
-            'baz': capture_during
-        },
-        'on_change': {
-            'bar': capture_on_change,
-        }
-    })
-    asyncio.run(during(test_plugins, 42, True))
-    assert len(calls) == 4
-    assert calls == [
-        # ensure the functions were called in the correct order
-        ['during_foo'],
-        ['during_bar'],
-        ['during_baz'],
-        ['during_bar', 'on_change_bar']
-    ]
-
-
-def test_during_interval(test_plugins):
-
-    async def capture_during(_, state):
-        state['calls'].append(f'during_{state["name"]}')
-
-    async def capture_on_change(_, state):
-        state['calls'].append(f'on_change_{state["name"]}')
-
-    test_plugins.update({
-        'during': {
-            'foo': capture_during,
-            'bar': capture_during
-        },
-        'on_change': {
-            'foo': capture_on_change,
-            'baz': capture_on_change
-        }
-    })
-
-    calls = {
-        'bar': ['during_bar'],
-        'baz': ['on_change_baz'],
-        'foo': ['during_foo', 'on_change_foo']
-    }
-
-    # run the handlers for the first time
-    asyncio.run(during(test_plugins, 42, True))
-    assert {
-        name: state['calls']
-        for name, state in sorted(test_plugins['state'].items())
-    } == calls
-
-    # now re-wind the clock 0.5 seconds
-    for state in test_plugins['state'].values():
-        state['timings'][-1] = (state['timings'][-1][0] - 0.5, None)
-
-    # the config runs the plugins every 1 second so they shouldn't run
-    asyncio.run(during(test_plugins, 42, True))
-    assert {
-        name: state['calls']
-        for name, state in sorted(test_plugins['state'].items())
-    } == calls
-
-    # now re-wind the clock another 0.5 seconds
-    for state in test_plugins['state'].values():
-        state['timings'][-1] = (state['timings'][-1][0] - 0.6, None)
-
-    # the config runs the plugins every 1 second so they should now run
-    for lst in calls.values():
-        # the second run should be the same as the first
-        lst.extend(lst)
-    asyncio.run(during(test_plugins, 42, True))
-    assert {
-        name: state['calls']
-        for name, state in sorted(test_plugins['state'].items())
-    } == calls
-
-
-def test_after():
-    """Ensure the after function calls all after coros."""
-    calls = []
-
-    def capture(*stuff):
-        nonlocal calls
-        calls.append(stuff)
-
-    plugins = {
-        'after': {
-            'foo': capture,
-            'bar': capture,
-            'baz': capture
+        'timings': {
+            ('periodic plugin', 'periodic_coro'): [],
+            ('startup plugin', 'startup_coro'): [],
         },
         'state': {
-            'foo': {'a': 1},
-            'bar': {'b': 2},
-            'baz': {'c': 3}
+            'periodic plugin': {
+                'a': 1
+            },
+            'startup plugin': {
+                'b': 2
+            }
+        },
+        CoroTypes.Periodic: {
+            ('periodic plugin', 'periodic_coro'): capture
+        },
+        CoroTypes.StartUp: {
+            ('startup plugin', 'startup_coro'): capture
         }
     }
-    asyncio.run(after(plugins, 42))
-    assert calls == [
-        (42, {'a': 1}),
-        (42, {'b': 2}),
-        (42, {'c': 3}),
-    ]
+
+    return (plugins, calls, capture)
+
+
+def test_get_runners_startup(basic_plugins):
+    """IT should return runners for startup functions."""
+    plugins, calls, capture = basic_plugins
+    runners = get_runners(
+        plugins,
+        CoroTypes.StartUp,
+        'scheduler object'
+    )
+    assert len(runners) == 1
+    asyncio.run(runners[0])
+    assert calls == [('scheduler object', {'b': 2})]
+
+
+def test_get_runners_periodic(basic_plugins):
+    """It should return runners for periodic functions."""
+    plugins, calls, capture = basic_plugins
+    runners = get_runners(
+        plugins,
+        CoroTypes.Periodic,
+        'scheduler object'
+    )
+    assert len(runners) == 1
+    asyncio.run(runners[0])
+    assert calls == [('scheduler object', {'a': 1})]
+
+
+def test_get_runners_periodic_debounce(basic_plugins):
+    """It should run periodic functions based on the configured interval."""
+    plugins, calls, capture = basic_plugins
+
+    # we should start with a blank timings object
+    assert len(plugins['timings'][('periodic plugin', 'periodic_coro')]) == 0
+
+    runners = get_runners(
+        plugins,
+        CoroTypes.Periodic,
+        'scheduler object'
+    )
+    assert len(runners) == 1
+    asyncio.run(runners[0])
+    assert calls == [('scheduler object', {'a': 1})]
+
+    # the timings object should now contain the previous run
+    assert len(plugins['timings'][('periodic plugin', 'periodic_coro')]) == 1
+
+    # the next run should be skipped because of the interval
+    runners = get_runners(
+        plugins,
+        CoroTypes.Periodic,
+        'scheduler object'
+    )
+    assert len(runners) == 0
+
+    # if we remove the interval the next run will not get skipped
+    plugins['config']['periodic plugin']['interval'] = 0
+    runners = get_runners(
+        plugins,
+        CoroTypes.Periodic,
+        'scheduler object'
+    )
+    assert len(runners) == 1
+    assert calls[-1] == ('scheduler object', {'a': 1})
+
+
+def test_state(basic_plugins):
+    """It should pass the same state object with each function call.
+
+    * Run the same plugin function twice.
+    * Ensure that the state object recieved by each call is the same object.
+
+    """
+    plugins, calls, capture = basic_plugins
+    runners = get_runners(
+        plugins,
+        CoroTypes.StartUp,
+        'scheduler object'
+    )
+    assert len(runners) == 1
+    asyncio.run(*runners)
+    assert len(calls) == 1
+
+    runners = get_runners(
+        plugins,
+        CoroTypes.StartUp,
+        'scheduler object'
+    )
+    assert len(runners) == 1
+    asyncio.run(*runners)
+    assert len(calls) == 2
+
+    (_, state1), (_, state2) = calls
+    assert id(state1) == id(state2)

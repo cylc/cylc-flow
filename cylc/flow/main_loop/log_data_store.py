@@ -18,6 +18,9 @@ import json
 from pathlib import Path
 from time import time
 
+from cylc.flow.main_loop import (startup, shutdown, periodic)
+
+
 try:
     import matplotlib
     matplotlib.use('Agg')
@@ -29,7 +32,8 @@ except ModuleNotFoundError:
 from pympler.asizeof import asized
 
 
-async def before(scheduler, state):
+@startup
+async def init(scheduler, state):
     """Construct the initial state."""
     state['objects'] = {}
     state['size'] = {}
@@ -39,7 +43,8 @@ async def before(scheduler, state):
         state['size'][key] = []
 
 
-async def during(scheduler, state):
+@periodic
+async def log_data_store(scheduler, state):
     """Count the number of objects and the data store size."""
     state['times'].append(time())
     for key, value in _iter_data_store(scheduler.data_store_mgr.data):
@@ -51,7 +56,8 @@ async def during(scheduler, state):
         )
 
 
-async def after(scheduler, state):
+@shutdown
+async def report(scheduler, state):
     """Dump data to JSON, attempt to plot results."""
     _dump(state, scheduler.suite_run_dir)
     _plot(state, scheduler.suite_run_dir)

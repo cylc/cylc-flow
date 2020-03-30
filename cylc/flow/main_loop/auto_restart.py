@@ -87,13 +87,15 @@ from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import HostSelectException
 from cylc.flow.host_select import select_suite_host
 from cylc.flow.hostuserutil import get_fqdn_by_host
+from cylc.flow.main_loop import periodic
 from cylc.flow.suite_status import AutoRestartMode
 from cylc.flow.wallclock import (
     get_time_string_from_unix_time as time2str
 )
 
 
-async def during(scheduler, _):
+@periodic
+async def auto_restart(scheduler, _):
     current_glbl_cfg = glbl_cfg(cached=False)
     mode = _should_auto_restart(scheduler, current_glbl_cfg)
 

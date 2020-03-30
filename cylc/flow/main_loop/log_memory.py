@@ -17,6 +17,8 @@ import json
 from pathlib import Path
 from time import time
 
+from cylc.flow.main_loop import (startup, shutdown, periodic)
+
 try:
     import matplotlib
     matplotlib.use('Agg')
@@ -32,13 +34,15 @@ from pympler.asizeof import asized
 MIN_SIZE = 10000
 
 
-async def before(scheduler, state):
+@startup
+async def init(scheduler, state):
     """Take an initial memory snapshot."""
     state['data'] = []
-    await during(scheduler, state)
+    await take_snapshot(scheduler, state)
 
 
-async def during(scheduler, state):
+@periodic
+async def take_snapshot(scheduler, state):
     """Take a memory snapshot"""
     state['data'].append((
         time(),
@@ -46,9 +50,10 @@ async def during(scheduler, state):
     ))
 
 
-async def after(scheduler, state):
-    """Take a final memory snapshot."""
-    await during(scheduler, state)
+@shutdown
+async def report(scheduler, state):
+    """Take a final memory snapshot and dump the results."""
+    await take_snapshot(scheduler, state)
     _dump(state['data'], scheduler.suite_run_dir)
     fields, times = _transpose(state['data'])
     _plot(

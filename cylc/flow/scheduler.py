@@ -311,8 +311,15 @@ class Scheduler(object):
             self.shutdown(exc)
             if self.auto_restart_mode == AutoRestartMode.RESTART_NORMAL:
                 self.suite_auto_restart()
+            # run shutdown coros
             asyncio.get_event_loop().run_until_complete(
-                main_loop.after(self.main_loop_plugins, self)
+                asyncio.gather(
+                    *main_loop.get_runners(
+                        self.main_loop_plugins,
+                        main_loop.CoroTypes.ShutDown,
+                        self
+                    )
+                )
             )
             self.close_logs()
 
@@ -545,14 +552,20 @@ see `COPYING' in the Cylc source distribution.
             self.set_suite_inactivity_timer()
 
         # Main loop plugins
-        self.main_loop_plugins = main_loop.load_plugins(
+        self.main_loop_plugins = main_loop.load(
             # TODO: this doesn't work, we need to merge the two configs
             self.cylc_config.get('main loop', {}),
             self.options.main_loop
         )
 
         asyncio.get_event_loop().run_until_complete(
-            main_loop.before(self.main_loop_plugins, self)
+            asyncio.gather(
+                *main_loop.get_runners(
+                    self.main_loop_plugins,
+                    main_loop.CoroTypes.StartUp,
+                    self
+                )
+            )
         )
 
         self.profiler.log_memory("scheduler.py: end configure")
@@ -1549,10 +1562,12 @@ see `COPYING' in the Cylc source distribution.
                 self.update_profiler_logs(tinit)
 
             # Run plugin functions
-            await main_loop.during(
-                self.main_loop_plugins,
-                self,
-                has_updated
+            await asyncio.gather(
+                *main_loop.get_runners(
+                    self.main_loop_plugins,
+                    main_loop.CoroTypes.Periodic,
+                    self
+                )
             )
 
             if not has_updated and not self.stop_mode:

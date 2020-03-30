@@ -18,6 +18,8 @@ from collections import deque
 import json
 from pathlib import Path
 
+from cylc.flow.main_loop import (startup, shutdown)
+
 try:
     import matplotlib
     matplotlib.use('Agg')
@@ -27,13 +29,15 @@ except ModuleNotFoundError:
     PLT = False
 
 
-async def before(scheduler, _):
-    """Hack the timings for each plugin to use an unlimited deque."""
+@startup
+async def init(scheduler, _):
+    """Patch the timings for each plugin to use an unlimited deque."""
     for state in scheduler.main_loop_plugins['state'].values():
         state['timings'] = deque()
 
 
-async def after(scheduler, _):
+@shutdown
+async def report(scheduler, _):
     """Extract plugin function timings."""
     data = _transpose(scheduler.main_loop_plugins['state'])
     data = _normalise(data)

@@ -25,9 +25,11 @@ import os
 
 from cylc.flow import suite_files
 from cylc.flow.exceptions import CylcError, SuiteServiceFileError
+from cylc.flow.main_loop import periodic
 
 
-async def during(scheduler, _):
+@periodic
+async def health_check(scheduler, _):
     """Perform suite health checks."""
     # 1. check if suite run dir still present - if not shutdown.
     _check_suite_run_dir(scheduler)

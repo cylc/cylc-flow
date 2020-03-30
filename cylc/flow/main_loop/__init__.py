@@ -45,6 +45,10 @@ parallel-safe with other plugins.
 """
 import asyncio
 from collections import deque
+from inspect import (
+    getmembers,
+    isfunction
+)
 from time import time
 
 import pkg_resources
@@ -63,53 +67,7 @@ class MainLoopPluginException(Exception):
     """
 
 
-def load_plugins(config, additional_plugins=None):
-    """Load main loop plugins from the suite/global configuration.
-
-    Args:
-        config (dict):
-            The ``[cylc][main loop]`` section of the configuration.
-
-    Returns:
-        dict
-
-    """
-    if not additional_plugins:
-        additional_plugins = []
-    plugins = {
-        'before': {},
-        'during': {},
-        'on_change': {},
-        'after': {},
-        'state': {}
-    }
-    entry_points = pkg_resources.get_entry_map(
-        'cylc-flow').get('main_loop', {})
-    for name in config['plugins'] + additional_plugins:
-        mod_name = name.replace(' ', '_')
-        # get plugin
-        try:
-            module_name = entry_points[mod_name]
-        except KeyError:
-            raise UserInputError(f'No main-loop plugin: "{name}"')
-        # load plugin
-        try:
-            module = module_name.load()
-        except Exception:
-            raise CylcError(f'Could not load plugin: "{name}"')
-        # load coroutines
-        for key in plugins:
-            coro = getattr(module, key, None)
-            if coro:
-                plugins[key][name] = coro
-        # set initial conditions
-        plugins['state'][name] = {'timings': deque(maxlen=1)}
-    # make a note of the config here for ease of reference
-    plugins['config'] = config
-    return plugins
-
-
-async def _wrapper(fcn, scheduler, state, timings=False):
+async def _wrapper(fcn, scheduler, state, timings=None):
     """Wrapper for all plugin functions.
 
     * Logs the function's execution.
@@ -130,98 +88,129 @@ async def _wrapper(fcn, scheduler, state, timings=False):
     except Exception as exc:
         LOG.error(f'Error in main loop plugin {sig}')
         LOG.exception(exc)
-    else:
-        duration = time() - start_time
-        LOG.debug(f'main_loop [end] {sig} ({duration:.3f}s)')
-        if timings:
-            state['timings'].append((start_time, duration))
+    duration = time() - start_time
+    LOG.debug(f'main_loop [end] {sig} ({duration:.3f}s)')
+    if timings is not None:
+        timings.append((start_time, duration))
 
 
-async def before(plugins, scheduler):
-    """Call all ``before`` plugin functions.
+def _debounce(interval, timings):
+    """Rate limiter, returns True if the interval has elapsed.
 
-    Args:
-        plugins (dict):
-            Plugins dictionary as returned by
-            :py:meth:`cylc.flow.main_loop.load_plugins`
-        scheduler (cylc.flow.scheduler.Scheduler):
-            Cylc Scheduler instance.
+    Arguments:
+        interval (float):
+            Time interval in seconds as a float-type object.
+        timings (list):
+            List-list object of the timings of previous runs in the form
+            ``(completion_wallclock_time, run_duration)``.
+            Wallclock times are unix epoch times in seconds.
 
-    """
-    await asyncio.gather(
-        *[
-            _wrapper(
-                coro,
-                scheduler,
-                plugins['state'][name],
-                timings=False
-            )
-            for name, coro in plugins['before'].items()
-        ]
-    )
+    Examples:
+        >>> from time import time
 
+        No previous run (should always return True):
+        >>> _debounce(1., [(0, 0)])
+        True
 
-async def during(plugins, scheduler, has_changed):
-    """Call all ``during`` and ``on_changed`` plugin functions.
+        Interval not yet elapsed since previous run:
+        >>> _debounce(1., [(time(), 0)])
+        False
 
-    Args:
-        plugins (dict):
-            Plugins dictionary as returned by
-            :py:meth:`cylc.flow.main_loop.load_plugins`
-        scheduler (cylc.flow.scheduler.Scheduler):
-            Cylc Scheduler instance.
+        Interval has elapsed since previous run:
+        >>> _debounce(1., [(time() - 2, 0)])
+        True
 
     """
-    coros = []
-    now = time()
-    items = list(plugins['during'].items())
-    if has_changed:
-        items.extend(plugins['on_change'].items())
-    to_run = []
-    for name, coro in items:
-        interval = plugins['config'].get(name, {}).get('interval', None)
-        state = plugins['state'][name]
+    if not interval:
+        return True
+    try:
+        last_run_at = timings[-1][0]
+    except IndexError:
         last_run_at = 0
-        if state['timings']:
-            last_run_at = state['timings'][-1][0]
-        if (
-                name in to_run  # allow both on_change and during to run
-                or (
-                    not interval
-                    or now - last_run_at > interval
-                )
+    if (time() - last_run_at) > interval:
+        return True
+    return False
+
+
+def startup(fcn):
+    fcn.main_loop = CoroTypes.StartUp
+    return fcn
+
+
+def shutdown(fcn):
+    fcn.main_loop = CoroTypes.ShutDown
+    return fcn
+
+
+def periodic(fcn):
+    fcn.main_loop = CoroTypes.Periodic
+    return fcn
+
+
+class CoroTypes:
+    StartUp = startup
+    ShutDown = shutdown
+    Periodic = periodic
+
+
+def load(config, additional_plugins=None):
+    additional_plugins = additional_plugins or []
+    entry_points = pkg_resources.get_entry_map(
+        'cylc-flow'
+    ).get('main_loop', {})
+    plugins = {
+        'state': {},
+        'timings': {}
+    }
+    for plugin_name in config['plugins'] + additional_plugins:
+        # get plugin
+        try:
+            module_name = entry_points[plugin_name.replace(' ', '_')]
+        except KeyError:
+            raise UserInputError(f'No main-loop plugin: "{plugin_name}"')
+        # load plugin
+        try:
+            module = module_name.load()
+        except Exception:
+            raise CylcError(f'Could not load plugin: "{plugin_name}"')
+        # load coroutines
+        log = []
+        for coro_name, coro in (
+                (coro_name, coro)
+                for coro_name, coro in getmembers(module)
+                if isfunction(coro)
+                if hasattr(coro, 'main_loop')
         ):
-            to_run.append(name)
-            coros.append(
-                _wrapper(
-                    coro,
-                    scheduler,
-                    state,
-                    timings=True
-                )
-            )
-    await asyncio.gather(*coros)
+            log.append(coro_name)
+            plugins.setdefault(
+                coro.main_loop, {}
+            )[(plugin_name, coro_name)] = coro
+            plugins['timings'][(plugin_name, coro_name)] = deque(maxlen=1)
+        LOG.debug(
+            'Loaded main loop plugin "%s": %s',
+            plugin_name + '\n',
+            '\n'.join((f'* {x}' for x in log))
+        )
+        # set the initial state of the plugin
+        plugins['state'][plugin_name] = {}
+    # make a note of the config here for ease of reference
+    plugins['config'] = config
+    return plugins
 
 
-async def after(plugins, scheduler):
-    """Call all ``before`` plugin functions.
-
-    Args:
-        plugins (dict):
-            Plugins dictionary as returned by
-            :py:meth:`cylc.flow.main_loop.load_plugins`
-        scheduler (cylc.flow.scheduler.Scheduler):
-            Cylc Scheduler instance.
-
-    """
-    await asyncio.gather(
-        *[
-            _wrapper(
-                coro,
-                scheduler,
-                plugins['state'][name],
-                timings=False
-            )
-            for name, coro in plugins['after'].items()
-        ]
-    )
+def get_runners(plugins, coro_type, scheduler):
+    return [
+        _wrapper(
+            coro,
+            scheduler,
+            plugins['state'][plugin_name],
+            timings=plugins['timings'][(plugin_name, coro_name)]
+        )
+        for (plugin_name, coro_name), coro
+        in plugins.get(coro_type, {}).items()
+        if coro_type != CoroTypes.Periodic
+        or _debounce(
+            plugins['config'].get(plugin_name, {}).get('interval', None),
+            plugins['timings'][(plugin_name, coro_name)]
+        )
+    ]
