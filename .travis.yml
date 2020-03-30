@@ -124,7 +124,9 @@ jobs:
 
   - <<: *flakytest
     python: "3.7"
-    env: FLAKYTESTS="./flakytests"
+    env: 
+      FLAKYTESTS="./flakytests"
+      CYLC_TEST_DEBUG=true
 
   # TODO: run shortlist of regression tests with the
   #       least contemporary Python version

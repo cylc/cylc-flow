@@ -42,12 +42,13 @@ from cylc.flow.cycling.loader import get_point, standardise_point_string
 from cylc.flow.daemonize import daemonize
 from cylc.flow.exceptions import (
     CylcError,
+    HostSelectException,
     PointParsingError,
     SuiteServiceFileError,
     TaskProxySequenceBoundsError
 )
 import cylc.flow.flags
-from cylc.flow.host_appointer import HostAppointer, EmptyHostList
+from cylc.flow.host_select import select_suite_host
 from cylc.flow.hostuserutil import get_host, get_user, get_fqdn_by_host
 from cylc.flow.job_pool import JobPool
 from cylc.flow.loggingutil import (
@@ -1427,7 +1428,7 @@ see `COPYING' in the Cylc source distribution.
         cmd = ['cylc', 'restart', quote(self.suite)]
 
         for attempt_no in range(max_retries):
-            new_host = HostAppointer(cached=False).appoint_host()
+            new_host = select_suite_host(cached=False)[0]
             LOG.info('Attempting to restart on "%s"', new_host)
 
             # proc will start with current env (incl CYLC_HOME etc)
@@ -1520,8 +1521,8 @@ see `COPYING' in the Cylc source distribution.
         """Determine whether this suite can safely auto stop-restart."""
         # Check whether there is currently an available host to restart on.
         try:
-            HostAppointer(cached=False).appoint_host()
-        except EmptyHostList:
+            select_suite_host(cached=False)
+        except HostSelectException:
             LOG.critical(
                 'Suite cannot automatically restart because:\n' +
                 'No alternative host to restart suite on.')

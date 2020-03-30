@@ -58,7 +58,6 @@ cylc get: is ambiguous for:
     cylc get-cylc-version
     cylc get-directory
     cylc get-global-config
-    cylc get-host-metrics
     cylc get-site-config
     cylc get-suite-config
     cylc get-suite-contact

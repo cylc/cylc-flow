@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Functionality to assist working with terminals"""
+import json
 import os
 import sys
 import inspect
@@ -115,6 +116,61 @@ def ansi_log(name='cylc', stream='stderr'):
             and handler.stream.name == stream_name
         ):
             handler.formatter.configure(color=True, max_width=get_width())
+
+
+def parse_dirty_json(stdout):
+    """Parse JSON from a string from dirty output.
+
+    This is designed to handle cases where users have trash like this in their
+    shell profile files::
+
+        echo "[Hello $USER]"
+
+    Examples:
+        Prevents stdout trash from corrupting following json:
+        >>> parse_dirty_json('''
+        ...     some mess here
+        ...     ["some json here"]
+        ... ''')
+        ['some json here']
+
+        Ignores stdout trash which looks like json:
+        >>> parse_dirty_json('''
+        ...     ["something which isn't meant to be json here"]
+        ...     {"something": "which is intended to be json here"}
+        ... ''')
+        {'something': 'which is intended to be json here'}
+
+        Any stdout trash must be followed by a newline though:
+        >>> parse_dirty_json('''
+        ...     this approach can't handle everything [
+        ...         "nicely"
+        ...     ]
+        ... ''')
+        Traceback (most recent call last):
+        ValueError: this approach can't handle everything [
+                "nicely"
+            ]
+
+        Other:
+        >>> parse_dirty_json('')
+        Traceback (most recent call last):
+        ValueError
+
+
+    """
+    stdout = stdout.strip()
+    orig = stdout
+    while stdout:
+        try:
+            return json.loads(stdout)
+        except ValueError:
+            try:
+                stdout = stdout.split('\n', 1)[1]
+            except IndexError:
+                break
+    # raise ValueError(f'Invalid JSON: {orig}')
+    raise ValueError(orig)
 
 
 def cli_function(parser_function=None, **parser_kwargs):
