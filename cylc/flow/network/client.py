@@ -29,7 +29,8 @@ from cylc.flow import LOG
 from cylc.flow.exceptions import (
     ClientError,
     ClientTimeout,
-    SuiteServiceFileError
+    SuiteServiceFileError,
+    SuiteStopped
 )
 from cylc.flow.network import (
     encode_,
@@ -259,6 +260,6 @@ class SuiteRuntimeClient(ZMQSocketBase):
             return
         else:
             # the suite has stopped
-            raise ClientError('Suite "%s" already stopped' % suite)
+            raise SuiteStopped(suite)
 
     __call__ = serial_request

@@ -57,6 +57,10 @@ job status message retries (problems that prevent message transmission are
 almost never transient, and in practice job polling is the only way to
 recover).
 
+[#3463](https://github.com/cylc/cylc-flow/pull/3463) - cylc tui:
+A new terminal user interface to replace the old `cylc monitor`.
+An interactive collapsible tree to match the new web interface.
+
 ### Fixes
 
 [#3409](https://github.com/cylc/cylc-flow/pull/3409) - prevent cylc-run from

@@ -113,6 +113,16 @@ class ClientError(CylcError):
         return ret
 
 
+class SuiteStopped(ClientError):
+    """Special case of ClientError for a stopped suite."""
+
+    def __init__(self, suite):
+        self.suite = suite
+
+    def __str__(self):
+        return f'{self.suite} is not running'
+
+
 class ClientTimeout(CylcError):
     pass
 

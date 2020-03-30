@@ -94,11 +94,6 @@ SPEC = {
         'gui': [VDR.V_STRING, 'gvim -f'],
     },
 
-    # client
-    'monitor': {
-        'sort order': [VDR.V_STRING, 'definition', 'alphanumeric'],
-    },
-
     # job platforms
     'job platforms': {
         '__MANY__': {
