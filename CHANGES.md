@@ -20,6 +20,8 @@ the cylc/cylc-ui repository (and see also cylc/cylc-uiserver).
 The User Guide an other documention has been removed from the Python package to
 the cylc/cylc-doc repository.
 
+### Fixes
+
 Cylc 8.0aX (alpha) releases are not compatible with Cylc 7 or with previous
 8.0aX releases, as the API is still under heavy development.
 
@@ -32,6 +34,9 @@ The xtrigger examples were moved to a separate `cylc/cylc-xtriggers` project
 
 Jinja filters were moved from its `Jinja2Filters` folder to within the `cylc`
 namespace, under `cylc.jinja.filters`.
+
+[#3541](https://github.com/cylc/cylc-flow/pull/3541) - Don't warn that a task
+was already added to an internal queue, if the queue is the same.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0a2 (2019-Q4?)__
