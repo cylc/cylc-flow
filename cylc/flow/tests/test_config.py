@@ -211,3 +211,28 @@ class TestSuiteConfig(object):
                         ['MAINFAM_major1_minor10'])
                 assert 'goodbye_0_major1_minor10' in \
                        config.runtime['descendants']['SOMEFAM']
+
+
+def test_queue_config(caplog, tmp_path):
+    suiterc_content = """
+[scheduling]
+   [[queues]]
+       [[[q1]]]
+           members = A, B
+       [[[q2]]]
+           members = x
+   [[dependencies]]
+       graph = "x => y"
+[runtime]
+   [[A]]
+   [[B]]
+   [[x]]
+       inherit = A, B
+   [[y]]
+    """
+    suite_rc = tmp_path / "suite.rc"
+    suite_rc.write_text(suiterc_content)
+    config = SuiteConfig(suite="qtest", fpath=suite_rc.absolute())
+    log = caplog.messages[0].split('\n')
+    assert log[0] == "Queue configuration warnings:"
+    assert log[1] == "+ q2: ignoring x (already assigned to a queue)"
