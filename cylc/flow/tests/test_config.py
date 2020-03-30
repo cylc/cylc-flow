@@ -16,10 +16,9 @@
 
 import os
 import pytest
-from tempfile import TemporaryDirectory, NamedTemporaryFile, mkdtemp
+from tempfile import TemporaryDirectory, NamedTemporaryFile
 from pathlib import Path
 from cylc.flow.config import SuiteConfig
-from cylc.flow.tests.util import CylcWorkflowTestCase
 
 
 def get_test_inheritance_quotes():
@@ -214,7 +213,7 @@ class TestSuiteConfig(object):
                        config.runtime['descendants']['SOMEFAM']
 
 
-def test_queue_config(caplog):
+def test_queue_config(caplog, tmp_path):
     suiterc_content = """
 [scheduling]
    [[queues]]
@@ -231,12 +230,9 @@ def test_queue_config(caplog):
        inherit = A, B
    [[y]]
     """
-    workflow_directory = Path(mkdtemp())
-    suite_rc = Path(workflow_directory, "suite.rc")
-    with suite_rc.open(mode="w") as f:
-        f.write(suiterc_content)
-        f.flush()
-    config = SuiteConfig(suite="qtest", fpath=f.name)
+    suite_rc = tmp_path / "suite.rc"
+    suite_rc.write_text(suiterc_content)
+    config = SuiteConfig(suite="qtest", fpath=suite_rc.absolute())
     config.configure_queues()
     log = caplog.messages[0].split('\n')
     assert log[0] == "Queue configuration warnings:"
