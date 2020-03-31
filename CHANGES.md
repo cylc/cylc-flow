@@ -37,6 +37,10 @@ pages**.
 for GScan, preventing that all suites are expanded after a single suite
 was expanded in GScan.
 
+[#3537](https://github.com/cylc/cylc-flow/pull/3537) - Fix sorting of
+tasks in the tree view. Uses natural order, so that it follows the
+order 1, 2, 10, 11, and not 1, 10, 11, 2.
+
 [#3538](https://github.com/cylc/cylc-flow/pull/3538) - Fix job submission to
 SLURM when task name has a percent `%` character.
 
