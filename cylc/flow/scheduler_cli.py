@@ -208,6 +208,13 @@ def get_option_parser(is_restart):
         ),
         metavar="HOST", action="store", dest="host")
 
+    parser.add_option(
+        "--format",
+        help="The format of the output: 'plain'=human readable, 'json'",
+        choices=("plain", "json"),
+        default="plain"
+    )
+
     parser.set_defaults(stop_point_string=None)
 
     return parser

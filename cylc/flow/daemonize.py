@@ -16,6 +16,7 @@
 
 """Turn a cylc scheduler into a Unix daemon."""
 
+import json
 import os
 import sys
 from time import sleep, time
@@ -44,7 +45,7 @@ _INFO_TMPL = r"""
 _TIMEOUT = 300.0  # 5 minutes
 
 
-def daemonize(server):
+def daemonize(schd):
     """Turn a cylc scheduler into a Unix daemon.
 
     Do the UNIX double-fork magic, see Stevens' "Advanced Programming in the
@@ -54,7 +55,7 @@ def daemonize(server):
     http://code.activestate.com/recipes/66012-fork-a-daemon-process-on-unix/
 
     """
-    logfname = get_suite_run_log_name(server.suite)
+    logfname = get_suite_run_log_name(schd.suite)
     try:
         old_log_mtime = os.stat(logfname).st_mtime
     except OSError:
@@ -76,7 +77,7 @@ def daemonize(server):
                 try:
                     # First INFO line of suite log should contain
                     # start up message, URL and PID. Format is:
-                    #  LOG-PREFIX Suite server program: url=URL, pid=PID
+                    #  LOG-PREFIX Suite schd program: url=URL, pid=PID
                     # Otherwise, something has gone wrong, print the suite log
                     # and exit with an error.
                     log_stat = os.stat(logfname)
@@ -84,11 +85,11 @@ def daemonize(server):
                             log_stat.st_size == 0):
                         continue
                     for line in open(logfname):
-                        if server.START_MESSAGE_PREFIX in line:
+                        if schd.START_MESSAGE_PREFIX in line:
                             suite_url, suite_pid = (
                                 item.rsplit("=", 1)[-1]
                                 for item in line.rsplit()[-2:])
-                        if server.START_PUB_MESSAGE_PREFIX in line:
+                        if schd.START_PUB_MESSAGE_PREFIX in line:
                             pub_url = line.rsplit("=", 1)[-1].rstrip()
                         if suite_url and pub_url:
                             break
@@ -98,20 +99,24 @@ def daemonize(server):
                                 sys.stderr.write(open(logfname).read())
                                 sys.exit(1)
                             except IOError:
-                                sys.exit("Suite server program exited")
+                                sys.exit("Suite schd program exited")
                 except (IOError, OSError, ValueError):
                     pass
             if suite_pid is None or suite_url is None:
                 sys.exit("Suite not started after %ds" % _TIMEOUT)
             # Print suite information
-            sys.stdout.write(_INFO_TMPL % {
-                "suite": server.suite,
-                "host": server.host,
+            info = {
+                "suite": schd.suite,
+                "host": schd.host,
                 "url": suite_url,
                 "pub_url": pub_url,
                 "ps_opts": PS_OPTS,
-                "pid": suite_pid,
-            })
+                "pid": suite_pid
+            }
+            if schd.options.format == 'json':
+                sys.stdout.write(json.dumps(info, indent=4))
+            else:
+                sys.stdout.write(_INFO_TMPL % info)
             # exit parent 1
             sys.exit(0)
     except OSError as exc:

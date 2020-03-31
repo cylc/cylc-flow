@@ -18,6 +18,7 @@
 from collections import deque
 from errno import ENOENT
 from itertools import zip_longest
+import json
 import logging
 import os
 from shlex import quote
@@ -247,7 +248,8 @@ class Scheduler(object):
 
     def start(self):
         """Start the server."""
-        self._start_print_blurb()
+        if self.options.format == 'plain':
+            self._start_print_blurb()
 
         make_suite_run_tree(self.suite)
 
