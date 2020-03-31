@@ -52,7 +52,7 @@ install_requires = [
     'protobuf==3.11.*',
     'pyzmq==18.1.*',
     'click>=7.0',
-    'psutil>=5.6.0'
+    'psutil>=5.6.0',
     'urwid==2.*'
 ]
 tests_require = [
