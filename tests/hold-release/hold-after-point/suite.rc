@@ -23,7 +23,4 @@
     [[stopper]]
         script = sleep 30; cylc stop $CYLC_SUITE_NAME
     [[foo]]
-        script = true
-[runtime]
-    [[foo]]
-        command scripting = sleep 5
+        script = sleep 5
