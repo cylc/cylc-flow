@@ -1,0 +1,13 @@
+# Test automatic deprecation and deletion of config items as specified
+# in lib/cylc/cfgspec/suite.py.
+
+[scheduling]
+    initial cycle point = 20150808T00
+
+    # Deprecated:
+    [[dependencies]]
+        [[[P1D]]]
+            graph = bar => horse
+    # New in Cylc 8:
+    [[graph]]
+        P1D = foo => cat & dog
