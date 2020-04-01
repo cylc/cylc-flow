@@ -18,7 +18,6 @@
 from collections import deque
 from errno import ENOENT
 from itertools import zip_longest
-import json
 import logging
 import os
 from shlex import quote
@@ -163,6 +162,9 @@ class Scheduler(object):
 
     def __init__(self, is_restart, options, args):
         self.options = options
+        if self.options.no_detach:
+            self.options.format = 'plain'
+        self.options.format
         self.profiler = Profiler(self.options.profile_mode)
         self.suite = args[0]
         self.uuid_str = SchedulerUUID()

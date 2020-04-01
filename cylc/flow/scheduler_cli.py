@@ -89,7 +89,8 @@ def get_option_parser(is_restart):
             argdoc=[SUITE_NAME_ARG_DOC, START_POINT_ARG_DOC])
 
     parser.add_option(
-        "-n", "--no-detach", "--non-daemon", help="Do not daemonize the suite",
+        "-n", "--no-detach", "--non-daemon",
+        help="Do not daemonize the suite (infers --format=plain)",
         action="store_true", dest="no_detach")
 
     parser.add_option(
