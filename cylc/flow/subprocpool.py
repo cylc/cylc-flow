@@ -311,10 +311,13 @@ class SubProcPool(object):
                         ctx.err = ''
                     ctx.err += data
             if received_data and not all(received_data):
-                # if no data was pushed down the pipe exit the polling loop
-                # (this suppresses an infinite polling-loop observed
-                # on darwin) see
+                # if no data was pushed down the pipe exit the polling loop,
+                # we can always re-enter the polling loop later if there is
+                # more data
+                # NOTE: this suppresses an infinite polling-loop observed
+                # on darwin see:
                 # https://github.com/cylc/cylc-flow/issues/3535
+                # https://github.com/cylc/cylc-flow/pull/3543
                 return
         self.pipepoller.unregister(proc.stdout.fileno())
         self.pipepoller.unregister(proc.stderr.fileno())
