@@ -57,7 +57,10 @@ jobs:
           pip install ."[all]"
       - name: Test
         run: |
-          etc/bin/run-functional-tests -j 8
+          etc/bin/run-functional-tests -j 8 --state=save || (
+            echo '=== Re-running Failed Tests'
+            CHUNK= etc/bin/run-functional-tests -j 8 --state=save,failed
+          )
       - name: Debug
         if: failure()
         run: |
