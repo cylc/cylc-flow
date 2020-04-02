@@ -8,9 +8,6 @@
 
 **Development**: [![Contributors](https://img.shields.io/github/contributors/cylc/cylc-flow.svg?color=9cf)](https://github.com/cylc/cylc-flow/graphs/contributors) [![Commit activity](https://img.shields.io/github/commit-activity/m/cylc/cylc-flow.svg?color=yellowgreen)](https://github.com/cylc/cylc-flow/commits/master) [![Last commit](https://img.shields.io/github/last-commit/cylc/cylc-flow.svg?color=ff69b4)](https://github.com/cylc/cylc-flow/commits/master)
 
-**Testing**: [![Build Status](https://travis-ci.org/cylc/cylc-flow.svg?branch=master)](https://travis-ci.org/cylc/cylc-flow) [![Codecov](https://codecov.io/gh/cylc/cylc-flow/branch/master/graph/badge.svg)](https://codecov.io/gh/cylc/cylc-flow) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/1d6a97bf05114066ae30b63dcb0cdcf9)](https://www.codacy.com/app/Cylc/cylc?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=cylc/cylc&amp;utm_campaign=Badge_Grade)
-
-
 Cylc ("silk") orchestrates complex distributed suites of interdependent cycling
 (or non-cycling) tasks. It was originally designed to automate environmental
 forecasting systems at [NIWA](https://www.niwa.co.nz), however Cylc is a
