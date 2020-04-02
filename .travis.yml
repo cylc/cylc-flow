@@ -36,6 +36,9 @@ addons:
   apt:
     # instruct travis-ci to always run apt-get before each build
     update: true
+# disabling the shallow-cloning so that it works with Cylc 7 cylc version (uses git commit and tag)
+git:
+  depth: false
 
 stages:
 - unit-test
