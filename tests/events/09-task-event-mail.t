@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Test event mail, 2 different task events
 . "$(dirname "$0")/test_header"
-if ! mail -V 2>'/dev/null'; then
+if ! command -v mail 2>'/dev/null'; then
     skip_all '"mail" command not available'
 fi
 set_test_number 5
