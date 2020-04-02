@@ -21,6 +21,7 @@ from metomi.isodatetime.data import Calendar
 
 
 from cylc.flow import LOG
+from cylc.flow.parsec.exceptions import UpgradeError
 from cylc.flow.network.authorisation import Priv
 from cylc.flow.parsec.config import ParsecConfig
 from cylc.flow.parsec.upgrade import upgrader
@@ -323,30 +324,39 @@ def upg(cfg, descr):
     # and [job] moved up 1 level for example) which should be upgraded here.
     u.upgrade()
 
-    # Upgrader cannot do this type of move.
-    try:
-        keys = set()
-        cfg['scheduling'].setdefault('graph', {})
-        cfg['scheduling']['graph'].update(
-            cfg['scheduling'].pop('dependencies'))
-        graphdict = cfg['scheduling']['graph']
-        for key, value in graphdict.copy().items():
-            if isinstance(value, dict) and 'graph' in value:
-                graphdict[key] = value['graph']
-                keys.add(key)
-        if keys:
-            LOG.warning(
-                "deprecated graph items were automatically upgraded in '%s':",
-                descr)
-            LOG.warning(
-                ' * (8.0.0) %s -> %s - for X in:\n%s',
-                u.show_keys(['scheduling', 'dependencies', 'X', 'graph']),
-                u.show_keys(['scheduling', 'graph', 'X']),
-                '\n'.join(sorted(keys)),
+    # Upgrader cannot do this type of move:
+    if 'dependencies' in cfg['scheduling']:
+        msgOld = '[scheduling][dependencies][X]graph'
+        msgNew = '[scheduling][graph]X'
+        if 'graph' in cfg['scheduling']:
+            raise UpgradeError(
+                "Cannot upgrade deprecated item '{0} -> {1}' because "
+                "{2} already exists".format(msgOld, msgNew, msgNew[:-1])
             )
-
-    except KeyError:
-        pass
+        else:
+            try:  # Upgrade cfg['scheduling']['dependencies']['graph']
+                keys = set()
+                cfg['scheduling'].setdefault('graph', {})
+                cfg['scheduling']['graph'].update(
+                    cfg['scheduling'].pop('dependencies')
+                )
+                graphdict = cfg['scheduling']['graph']
+                for key, value in graphdict.copy().items():
+                    if isinstance(value, dict) and 'graph' in value:
+                        graphdict[key] = value['graph']
+                        keys.add(key)
+                if keys:
+                    LOG.warning(
+                        "deprecated graph items were automatically upgraded "
+                        "in '{0}':".format(descr)
+                    )
+                    LOG.warning(
+                        ' * (8.0.0) {0} -> {1} - for X in:\n{2}'.format(
+                            msgOld, msgNew, '\n'.join(sorted(keys))
+                        )
+                    )
+            except KeyError:
+                pass
 
     # TODO - uncomment this fn so that we actually use the host to platform
     # upgrader

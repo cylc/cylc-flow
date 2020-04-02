@@ -22,9 +22,8 @@ set_test_number 1
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
-cylc get-config --sparse -i '[scheduling]' suite.rc  2> val.out
+cylc validate $SUITE_NAME 2> val.out
 TEST_NAME=${TEST_NAME_BASE}-original-events-not-overwritten
-grep_ok "upgraded item already exists" "val.out"
-# Should probably check validation fails?
+grep_ok "UpgradeError" "val.out"
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
