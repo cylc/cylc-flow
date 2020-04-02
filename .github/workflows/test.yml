@@ -19,7 +19,7 @@ jobs:
       - name: Apt-Get
         run: |
           sudo apt-get update
-          sudo apt-get install -y shellcheck sqlite3 s-nail
+          sudo apt-get install -y shellcheck sqlite3
       - name: Install
         run: |
           pip install ."[all]"
@@ -51,7 +51,7 @@ jobs:
       - name: Apt-Get
         run: |
           sudo apt-get update
-          sudo apt-get install -y sqlite3 s-nail
+          sudo apt-get install -y sqlite3 bsd-mailx
       - name: Install
         run: |
           pip install ."[all]"
