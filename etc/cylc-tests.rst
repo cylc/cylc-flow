@@ -9,7 +9,7 @@ Unittests
    Fast to run Python unittests.
 
    Location
-      ``tests`` sub directories within the Python code library.
+      ``cylc/flow/tests``
    Configuration
       ``pytest.ini``
    Execution
@@ -21,11 +21,12 @@ Regression (functional) Tests
    Large scale integration tests of the whole Cylc machinary.
 
    Location
-      ``tests/``
+      * ``tests/``
+      * ``flakytests/``
    Execution
       .. code-block:: console
 
-         $ bin/run-functional-tests
+         $ bin/run-functional-tests DIR
 
    .. note::
 
@@ -42,3 +43,4 @@ Code Style Tests
          $ pycodestyle --ignore=E402,W503,W504 \
             cylc/flow \
             $(grep -l '#!.*\<python\>' bin/*)
+         $ etc/bin/shellchecker

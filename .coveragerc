@@ -1,4 +1,4 @@
-# This is the Coverage.py configuration file. This is used by Travis-CI when running
+# This is the Coverage.py configuration file. This is used by CI when running
 # the tests and collecting coverage
 
 [run]
