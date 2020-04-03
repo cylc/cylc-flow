@@ -52,7 +52,12 @@ from cylc.flow.tui import (
     JOB_ICON,
     TUI
 )
+from cylc.flow.tui.data import (
+    list_mutations,
+    mutate
+)
 from cylc.flow.tui.util import (
+    determine_type,
     get_task_icon
 )
 
@@ -187,4 +192,32 @@ def help_info(app):
     return (
         widget,
         {'width': 60, 'height': 40}
+    )
+
+
+def context(app):
+    value = app.tree_walker.get_focus()[0].get_node().get_value()
+    id_ = value['id_']
+    type_ = determine_type(id_)
+    selection = [id_]
+
+    def _mutate(mutation, _):
+        mutate(app.client, mutation, selection)
+        app.close_topmost()
+
+    widget = urwid.ListBox(
+        urwid.SimpleFocusListWalker(
+            [
+                urwid.Button(
+                    mutation,
+                    on_press=partial(_mutate, mutation)
+                )
+                for mutation in list_mutations(selection)
+            ]
+        )
+    )
+
+    return (
+        widget,
+        {'width': 30, 'height': 10}
     )

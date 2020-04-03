@@ -18,6 +18,7 @@
 
 from time import time
 
+from cylc.flow.data_store_mgr import ID_DELIM
 from cylc.flow.task_state import (
     TASK_STATUSES_ORDERED,
     TASK_STATUS_DISPLAY_ORDER,
@@ -101,7 +102,7 @@ def compute_tree(flow):
                 'family', family['id'], nodes, data=family)
         cycle_data = {
             'name': family['cyclePoint'],
-            'id': f"{flow['id']}|{family['cyclePoint']}"
+            'id': f"{flow['id']}{ID_DELIM}{family['cyclePoint']}"
         }
         cycle_node = add_node(
             'cycle', family['cyclePoint'], nodes, data=cycle_data)
@@ -380,7 +381,41 @@ def render_node(node, data, type_):
                 data['isHeld']
             ),
             ' ',
-            data['id'].rsplit('|', 1)[-1]
+            data['id'].rsplit(ID_DELIM, 1)[-1]
         ]
 
-    return data['id'].rsplit('|', 1)[-1]
+    return data['id'].rsplit(ID_DELIM, 1)[-1]
+
+
+def determine_type(id_):
+    items = id_.split(ID_DELIM)
+    if len(items) == 2:
+        return 'workflow'
+    return 'task'
+
+
+PARTS = [
+    'user',
+    'workflow',
+    'cycle_point',
+    'task',
+    'job'
+]
+
+
+def extract_context(selection):
+    """
+    Example:
+        >>> extract_context(['a|b', 'a|c'])
+        {'users': ['a'], 'workflows': ['b', 'c']}
+    """
+    context = {type_: set() for type_ in PARTS}
+    for item in selection:
+        parts = item.split(ID_DELIM)
+        for type_, part in zip(PARTS, parts):
+            context[type_].add(part)
+    return {
+        key: list(sorted(value))
+        for key, value in context.items()
+        if value
+    }
