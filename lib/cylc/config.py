@@ -1158,9 +1158,11 @@ class SuiteConfig(object):
         # Then reassign to other queues as requested.
         warnings = []
         requeued = []
+        # Record non-default queues by task name, to avoid spurious warnings
+        # about tasks "already added to a queue", when the queue is the same.
+        myq = {}
         for key, queue in queues.copy().items():
-            # queues.copy() is essential here to allow items to be removed from
-            # the queues dict.
+            myq[key] = []
             if key == self.Q_DEFAULT:
                 continue
             # Assign tasks to queue and remove them from default.
@@ -1175,7 +1177,7 @@ class SuiteConfig(object):
                             try:
                                 queues[self.Q_DEFAULT]['members'].remove(fmem)
                             except ValueError:
-                                if fmem in requeued:
+                                if fmem in requeued and fmem not in myq[key]:
                                     msg = "%s: ignoring %s from %s (%s)" % (
                                         key, fmem, qmember,
                                         'already assigned to a queue')
@@ -1184,6 +1186,7 @@ class SuiteConfig(object):
                                     # Ignore: task not used in the graph.
                                     pass
                             else:
+                                myq[key] = fmem
                                 qmembers.append(fmem)
                                 requeued.append(fmem)
                 else:
@@ -1193,30 +1196,31 @@ class SuiteConfig(object):
                             queues[self.Q_DEFAULT]['members'].remove(qmember)
                         except ValueError:
                             if qmember in requeued:
-                                msg = "%s: ignoring '%s' (%s)" % (
-                                    key, qmember, 'task already assigned')
+                                msg = "%s: ignoring %s (%s)" % (
+                                    key, qmember,
+                                    'already assigned to a queue')
                                 warnings.append(msg)
                             elif qmember not in all_task_names:
-                                msg = "%s: ignoring '%s' (%s)" % (
+                                msg = "%s: ignoring %s (%s)" % (
                                     key, qmember, 'task not defined')
                                 warnings.append(msg)
                             else:
                                 # Ignore: task not used in the graph.
                                 pass
                         else:
+                            myq[key] = qmember
                             qmembers.append(qmember)
                             requeued.append(qmember)
-
-            if warnings:
-                err_msg = "Queue configuration warnings:"
-                for msg in warnings:
-                    err_msg += "\n+ %s" % msg
-                LOG.warning(err_msg)
-
             if qmembers:
                 queue['members'] = qmembers
             else:
                 del queues[key]
+
+        if warnings:
+            err_msg = "Queue configuration warnings:"
+            for msg in warnings:
+                err_msg += "\n+ %s" % msg
+            LOG.warning(err_msg)
 
         if cylc.flags.verbose and len(queues) > 1:
             log_msg = "Internal queues created:"

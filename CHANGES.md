@@ -24,6 +24,9 @@ pages**.
 -------------------------------------------------------------------------------
 ## __cylc-7.9.0 (2020-Q4?)__
 
+**WARNING: this release bundles a new version of Jinja2 that requires Python
+2.7. If you're stuck with Python 2.6 use cylc-7.8.5.**
+
 ### Fixes
 
 [#3502](https://github.com/cylc/cylc-flow/pull/3502) - Update to jinja2
@@ -33,6 +36,16 @@ pages**.
 [#3513](https://github.com/cylc/cylc-flow/pull/3513) - Fix expanded ids
 for GScan, preventing that all suites are expanded after a single suite
 was expanded in GScan.
+
+[#3537](https://github.com/cylc/cylc-flow/pull/3537) - Fix sorting of
+tasks in the tree view. Uses natural order, so that it follows the
+order 1, 2, 10, 11, and not 1, 10, 11, 2.
+
+[#3538](https://github.com/cylc/cylc-flow/pull/3538) - Fix job submission to
+SLURM when task name has a percent `%` character.
+
+[#3540](https://github.com/cylc/cylc-flow/pull/3540) - Don't warn that a task
+was already added to an internal queue, if the queue is the same.
 
 -------------------------------------------------------------------------------
 ## __cylc-7.8.5 (2019-Q4?)__
