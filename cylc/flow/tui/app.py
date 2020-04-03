@@ -36,6 +36,9 @@ from cylc.flow.task_state import (
     TASK_STATUS_RUNNING,
     TASK_STATUS_FAILED,
 )
+from cylc.flow.tui.data import (
+    QUERY
+)
 import cylc.flow.tui.overlay as overlay
 from cylc.flow.tui import (
     BINDINGS,
@@ -63,51 +66,6 @@ from cylc.flow.tui.util import (
 urwid.set_encoding('utf8')  # required for unicode task icons
 
 TREE_EXPAND_DEPTH = [2]
-
-QUERY = '''
-  query cli($taskStates: [String]){
-    workflows {
-      id
-      name
-      status
-      stateTotals
-      taskProxies(states: $taskStates) {
-        id
-        name
-        cyclePoint
-        state
-        isHeld
-        parents {
-          id
-          name
-        }
-        jobs {
-          id
-          submitNum
-          state
-          host
-          batchSysName
-          batchSysJobId
-          startedTime
-        }
-        task {
-          meanElapsedTime
-        }
-      }
-      familyProxies(states: $taskStates) {
-        id
-        name
-        cyclePoint
-        state
-        isHeld
-        firstParent {
-          id
-          name
-        }
-      }
-    }
-  }
-'''
 
 
 class TuiWidget(urwid.TreeWidget):
@@ -277,6 +235,7 @@ class TuiApp:
         self.loop = None
         self.screen = None
         self.stack = 0
+        self.tree_walker = None
 
         # create the template
         topnode = TuiParentNode(dummy_flow({'id': 'Loading...'}))
@@ -459,7 +418,8 @@ class TuiApp:
         _, old_node = self.listbox._body.get_focus()
 
         # nuke the tree
-        self.listbox._set_body(urwid.TreeWalker(topnode))
+        self.tree_walker = urwid.TreeWalker(topnode)
+        self.listbox._set_body(self.tree_walker)
 
         # get the new focus
         _, new_node = self.listbox._body.get_focus()
@@ -558,6 +518,12 @@ BINDINGS.bind(
     '',
     'Help',
     (TuiApp.open_overlay, overlay.help_info)
+)
+BINDINGS.bind(
+    ('enter',),
+    '',
+    'Context',
+    (TuiApp.open_overlay, overlay.context)
 )
 
 BINDINGS.add_group(
