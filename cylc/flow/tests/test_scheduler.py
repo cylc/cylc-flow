@@ -28,6 +28,8 @@ class Options(object):
 
     def __init__(self):
         # Variables needed to create a Scheduler instance
+        self.format = 'plain'
+        self.no_detach = False
         self.profile_mode = False
         self.templatevars = {}
         self.templatevars_file = ""
