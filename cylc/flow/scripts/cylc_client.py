@@ -62,7 +62,10 @@ def main(_, options, suite, func):
     sys.stdin.close()
     res = pclient(func, kwargs, timeout=options.comms_timeout)
     if func in PB_METHOD_MAP:
-        pb_msg = PB_METHOD_MAP[func]()
+        if 'element_type' in kwargs:
+            pb_msg = PB_METHOD_MAP[func][kwargs['element_type']]()
+        else:
+            pb_msg = PB_METHOD_MAP[func]()
         pb_msg.ParseFromString(res)
         res_msg = MessageToDict(pb_msg)
     else:

@@ -75,6 +75,14 @@ def get_option_parser():
     return parser
 
 
+class Schd:
+    def __init__(self, suite, owner):
+        self.suite = suite
+        self.owner = owner
+        self.config = None
+        self.task_events_mgr = None
+
+
 @cli_function(get_option_parser)
 def main(parser, options, suite, *task_ids):
     """cylc submit CLI.
@@ -118,20 +126,22 @@ def main(parser, options, suite, *task_ids):
         get_suite_srv_dir(suite),
         ['etc/job.sh'])
     pool = SubProcPool()
-    owner = get_user()
-    job_pool = JobPool(suite, owner)
+    schd = Schd(suite, get_user())
+    schd.config = config
+    job_pool = JobPool(schd)
     db_mgr = SuiteDatabaseManager()
+    schd.task_events_mgr = TaskEventsManager(
+        suite,
+        pool,
+        db_mgr,
+        BroadcastMgr(db_mgr),
+        job_pool
+    )
     task_job_mgr = TaskJobManager(
         suite,
         pool,
         db_mgr,
-        TaskEventsManager(
-            suite,
-            pool,
-            db_mgr,
-            BroadcastMgr(db_mgr),
-            job_pool
-        ),
+        schd.task_events_mgr,
         job_pool
     )
     task_job_mgr.task_remote_mgr.single_task_mode = True

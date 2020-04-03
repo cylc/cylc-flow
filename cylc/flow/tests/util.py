@@ -119,7 +119,7 @@ class CylcWorkflowTestCase(TestCase):
         self.suite_db_mgr.on_suite_start(is_restart=False)
 
         # JobPool
-        self.job_pool = JobPool(self.suite_name, self.owner)
+        self.job_pool = JobPool(self.scheduler)
         self.scheduler.job_pool = self.job_pool
 
         # TaskPool
