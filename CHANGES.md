@@ -38,12 +38,20 @@ from Python 3 master for Cylc 8).
 for GScan, preventing that all suites are expanded after a single suite
 was expanded in GScan.
 
+[#3526](https://github.com/cylc/cylc-flow/pull/3526) - Fix sorting of
+tasks in the tree view. Uses natural order, so that it follows the
+order 1, 2, 10, 11, and not 1, 10, 11, 2.
+
+[#3532](https://github.com/cylc/cylc-flow/pull/3532) - Fix job submission to
+SLURM when task name has a percent `%` character.
+
+[#3539](https://github.com/cylc/cylc-flow/pull/3539) - Don't warn that a task
+was already added to an internal queue, if the queue is the same.
 
 -------------------------------------------------------------------------------
 ## __cylc-7.8.4 (2019-09-04)__
 
 Bug fix release.
-=======
 
 Selected user-facing changes:
 

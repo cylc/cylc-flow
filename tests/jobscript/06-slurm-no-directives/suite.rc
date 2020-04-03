@@ -5,10 +5,14 @@
 
 [scheduling]
     [[dependencies]]
-        graph = foo
+        graph = foo & bar%bar
 
 [runtime]
     [[foo]]
+        script = echo hello
+        [[[job]]]
+            batch system = slurm
+    [[bar%bar]]
         script = echo hello
         [[[job]]]
             batch system = slurm
