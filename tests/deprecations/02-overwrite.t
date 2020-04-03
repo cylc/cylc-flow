@@ -16,14 +16,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test that upgraded deprecations don't overwrite existing items
-. $(dirname $0)/test_header
+. "$(dirname $0)/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 1
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE $TEST_NAME_BASE
+install_suite "$TEST_NAME_BASE" "$TEST_NAME_BASE"
 #-------------------------------------------------------------------------------
-cylc validate $SUITE_NAME 2> val.out
-TEST_NAME=${TEST_NAME_BASE}-original-events-not-overwritten
+cylc validate "$SUITE_NAME" 2> val.out
 grep_ok "UpgradeError" "val.out"
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite "$SUITE_NAME"
