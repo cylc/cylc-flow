@@ -325,16 +325,16 @@ def upg(cfg, descr):
     u.upgrade()
 
     # Upgrader cannot do this type of move:
-    if 'dependencies' in cfg['scheduling']:
-        msgOld = '[scheduling][dependencies][X]graph'
-        msgNew = '[scheduling][graph]X'
-        if 'graph' in cfg['scheduling']:
-            raise UpgradeError(
-                "Cannot upgrade deprecated item '{0} -> {1}' because "
-                "{2} already exists".format(msgOld, msgNew, msgNew[:-1])
-            )
-        else:
-            try:  # Upgrade cfg['scheduling']['dependencies']['graph']
+    try:  # Upgrade cfg['scheduling']['dependencies']['graph']
+        if 'dependencies' in cfg['scheduling']:
+            msgOld = '[scheduling][dependencies][X]graph'
+            msgNew = '[scheduling][graph]X'
+            if 'graph' in cfg['scheduling']:
+                raise UpgradeError(
+                    "Cannot upgrade deprecated item '{0} -> {1}' because "
+                    "{2} already exists".format(msgOld, msgNew, msgNew[:-1])
+                )
+            else:
                 keys = set()
                 cfg['scheduling'].setdefault('graph', {})
                 cfg['scheduling']['graph'].update(
@@ -355,8 +355,8 @@ def upg(cfg, descr):
                             msgOld, msgNew, '\n'.join(sorted(keys))
                         )
                     )
-            except KeyError:
-                pass
+    except KeyError:
+        pass
 
     # TODO - uncomment this fn so that we actually use the host to platform
     # upgrader
