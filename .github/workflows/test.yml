@@ -4,7 +4,7 @@ on: [pull_request]
 
 
 jobs:
-  unit-test:
+  common-setup:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -20,6 +20,14 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y shellcheck sqlite3
+
+  unit-test:
+    runs-on: ubuntu-latest
+    needs: common-setup
+    strategy:
+      matrix:
+        python-version: ['3.7']
+    steps:
       - name: Install
         run: |
           pip install ."[all]"
@@ -35,6 +43,7 @@ jobs:
 
   functional_test:
     runs-on: ubuntu-latest
+    needs: common-setup
     strategy:
       matrix:
         python-version: ['3.7']
@@ -42,19 +51,6 @@ jobs:
     env:
       CHUNK: ${{ matrix.chunk }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v1
-      - name: Configure Python
-        uses: actions/setup-python@v1
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Apt-Get
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y sqlite3 bsd-mailx
-      - name: Install
-        run: |
-          pip install ."[all]"
       - name: Test
         run: |
           etc/bin/run-functional-tests -j 8 --state=save || (
