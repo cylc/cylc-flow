@@ -1,0 +1,26 @@
+[meta]
+    title = Cylc Scan test suite.
+    description = """
+        Stalls when the first task fails.        
+        Here we test out a multi-line description!
+    """
+    custom_metadata = something_custom
+    another_metadata = 1
+[cylc]
+    [[events]]
+        timeout = PT1M
+        abort on timeout = True
+[scheduling]
+    cycling mode = integer
+    initial cycle point = 1
+    final cycle point = 2
+    [[graph]]
+        R/1 = foo => bar
+        R/2 = bar[-P1] => pub
+[runtime]
+    [[foo]]
+        script = /bin/false
+    [[bar]]
+        script = /bin/true
+    [[pub]]
+        script = /bin/true

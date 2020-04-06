@@ -228,7 +228,8 @@ def get_scan_items_from_fs(
 
     Walk users' "~/cylc-run/" to get (host, port) from ".service/contact" for
     active, or all (active plus registered but dormant), suites.
-    Note when active_only, suites run in cylc 7 or less will not be returned.
+    Note suites run in cylc 7 or less will only be returned as LOG.info
+    statement.
 
     Yields:
         tuple - (reg, host, port, pub_port, api)
@@ -272,20 +273,24 @@ def get_scan_items_from_fs(
 
             # Choose only suites with .service and matching filter
             if active_only:
-                # Skip suites running with cylc version < 8
+                # Skip suites running with cylc version < 8 (these suites
+                # do not have PUBLISH_PORT field)
                 try:
                     contact_data = load_contact_file(reg, owner)
+                except (SuiteServiceFileError, IOError, TypeError) as exc:
+                    LOG.debug(f"Error loading contact file: {exc}")
+                    continue
+                try:
                     cylc_version = contact_data[ContactFileFields.VERSION]
                     major_version = int(cylc_version.split(".", 1)[0])
                     if (major_version < 8):
-                        LOG.debug(
-                            f"Suite \"{reg}\" is running in Cylc version "
-                            f"{cylc_version}, not Cylc 8 and will not be "
-                            f"displayed."
-                        )
+                        LOG.info(f"Suite \"{reg}\" is running in Cylc version"
+                                 f" {cylc_version}, not Cylc 8 and"
+                                 f" will not be displayed.")
                         continue
-
-                except (SuiteServiceFileError, IOError, TypeError, ValueError):
+                except Exception as exc:
+                    LOG.debug(
+                        f"Error getting version from contact file: {exc}")
                     continue
                 yield (
                     reg,
