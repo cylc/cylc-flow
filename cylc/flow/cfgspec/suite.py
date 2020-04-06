@@ -327,12 +327,12 @@ def upg(cfg, descr):
     # Upgrader cannot do this type of move:
     try:  # Upgrade cfg['scheduling']['dependencies']['graph']
         if 'dependencies' in cfg['scheduling']:
-            msgOld = '[scheduling][dependencies][X]graph'
-            msgNew = '[scheduling][graph]X'
+            msg_old = '[scheduling][dependencies][X]graph'
+            msg_new = '[scheduling][graph]X'
             if 'graph' in cfg['scheduling']:
                 raise UpgradeError(
                     "Cannot upgrade deprecated item '{0} -> {1}' because "
-                    "{2} already exists".format(msgOld, msgNew, msgNew[:-1])
+                    "{2} already exists".format(msg_old, msg_new, msg_new[:-1])
                 )
             else:
                 keys = set()
@@ -352,7 +352,7 @@ def upg(cfg, descr):
                     )
                     LOG.warning(
                         ' * (8.0.0) {0} -> {1} - for X in:\n{2}'.format(
-                            msgOld, msgNew, '\n'.join(sorted(keys))
+                            msg_old, msg_new, '\n'.join(sorted(keys))
                         )
                     )
     except KeyError:
