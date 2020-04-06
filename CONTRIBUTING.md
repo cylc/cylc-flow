@@ -69,6 +69,7 @@ requests_).
  - Dima Veselov
  - Gilliano Menezes
  - Mel Hall
+ - Ronnie Dutta
 
 (All contributors are identifiable with email addresses in the git version
 control logs or otherwise.)
