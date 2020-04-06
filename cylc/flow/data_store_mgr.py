@@ -746,12 +746,12 @@ class DataStoreMgr:
             if (s_point not in self.pool_points and
                     t_points.isdisjoint(self.pool_points)):
                 prune_points.add(str(s_point))
-                prune_points.union((str(t_p) for t_p in t_points))
+                prune_points.update((str(t_p) for t_p in t_points))
                 del self.edge_points[s_point]
                 continue
             t_diffs = t_points.difference(self.pool_points)
             if t_diffs:
-                prune_points.union((str(t_p) for t_p in t_diffs))
+                prune_points.update((str(t_p) for t_p in t_diffs))
                 self.edge_points[s_point].difference_update(t_diffs)
         # Action pruning if any eligible cycle points are found.
         if prune_points:
