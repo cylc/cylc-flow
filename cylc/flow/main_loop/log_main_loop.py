@@ -13,7 +13,13 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Main loop plugin for monitoring main loop plugins."""
+"""Main loop plugin for monitoring main loop plugins.
+
+.. note::
+
+   This plugin is for Cylc developers debugging main loop operations.
+
+"""
 from collections import deque
 import json
 from pathlib import Path

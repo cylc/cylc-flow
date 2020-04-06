@@ -96,6 +96,7 @@ from cylc.flow.wallclock import (
 
 @periodic
 async def auto_restart(scheduler, _):
+    """Automatically restart the suite if configured to do so."""
     current_glbl_cfg = glbl_cfg(cached=False)
     mode = _should_auto_restart(scheduler, current_glbl_cfg)
 

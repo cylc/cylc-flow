@@ -13,6 +13,37 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Log the memory usage of a running scheduler over time.
+
+.. note::
+
+   This plugin is for Cylc developers debugging cylc memory usage.
+
+   For general interest memory measurement try
+   ``/usr/bin/time -v cylc run`` or ``cylc run --profile``.
+
+.. note::
+
+   Pympler associates memory with the first object which references it.
+
+   In Cylc we have some objects (e.g. the configuration) which are references
+   from multiple places.
+
+   This can result in a certain amount of "jitter" in the results where
+   pympler has swapper from associating memory with one object to another.
+
+   Watch out for matching increase/decrease in reported memory in
+   different objects.
+
+.. warning::
+
+   This plugin can slow down a suite significantly due to the
+   complexity of memory calculations.
+
+   Set a sensible interval before running suites.
+
+"""
+
 import json
 from pathlib import Path
 from time import time

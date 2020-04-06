@@ -13,34 +13,143 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Periodic functions which run in Cylc's main scheduling loop.
+"""Plugins for running Python code inside of the Cylc scheduler.
 
-For health check, diagnostic and devlopment purposes.
+Built In Plugins
+----------------
 
-Plugins are modules which provide one or more of the following functions:
+Cylc Flow provides the following plugins:
 
-``async before(scheduler: Scheduler, state: dict) -> None``
-   Called before entring the main loop, use this function set the initial
-   state.
-``async during(scheduler: Scheduler, state: dict) -> None``
-   Called with each main loop iteration.
-``async on_change(scheduler, state) -> None``
-   Called with main loop iterations when changes have occurred in the task
-   pool during the current iteration.
-``async after(scheduler: Scheduler, state: dict) -> None``
-   Called after the main loop has completed in the event of a controlled
-   shutdown (e.g. ``cylc stop <suite>``).
+.. autosummary::
+   :toctree: built-in
+   :template: main_loop_plugin.rst
 
-The ``during`` and ``on_change`` functions should be fast running. To
-reduce the impact on the running suite specify the minimum interval
-between calls using the ``[cylc][main loop][PLUGIN]interval`` setting.
+   cylc.flow.main_loop.auto_restart
+   cylc.flow.main_loop.health_check
+   cylc.flow.main_loop.log_data_store
+   cylc.flow.main_loop.log_main_loop
+   cylc.flow.main_loop.log_memory
 
-Plugins are registered using the `main_loop` entry point, for examples see
-the built-in plugins in the :py:mod:`cylc.flow.main_loop` module which
-are registered in the Cylc Flow ``setup.cfg`` file.
+.. Note: Autosummary generates files in this directory, these are cleaned
+         up by `make clean`.
 
-Plugins shouldn't meddle with the state of the scheduler and should be
+
+Configuring
+-----------
+
+Main loop plugins can be activated either by:
+
+* Using the ``-main-loop`` option with ``cylc run`` or ``cylc restart`` e.g:
+
+  .. code-block:: console
+
+     $ # run a workflow using the "health check" and "auto restart" plugins:
+     $ cylc run my-workflow --main-loop 'health check' \
+       --main-loop 'auto restart'
+
+* Adding them to the default list of plugins in ``[cylc][main loop]plugins``
+  e.g:
+
+  .. code-block:: cylc
+
+     [cylc]
+         [[main loop]]
+             plugins = health check, auto restart
+
+Main loop plugins can be individually configured in their
+[cylc][main loop][__MANY__] section e.g:
+
+.. code-block:: cylc
+
+   [cylc]
+       [[main loop]]
+           [[[health check]]]
+               interval = PT5M  # perform check every 5 minutes
+
+
+Developing Main Loop Plugins
+----------------------------
+
+Main loop plugins are Python modules containing asynchronous function(s)
+(sometimes referred to as coroutines) which Cylc Flow executes within the
+scheduler.
+
+Hello World
+^^^^^^^^^^^
+
+Here is the "hello world" of main loop plugins:
+
+.. code-block:: python
+   :caption: my_plugin.py
+
+   from cylc.flow import LOG
+   from cylc.flow.main_loop import startup
+
+   @startup
+   async def my_startup_coroutine(schd, state):
+      # write Hello <suite name> to the Cylc log.
+      LOG.info(f'Hello {schd.suite}')
+
+Plugins are registered by registering them with the `cylc.main_loop`
+entry point:
+
+.. code-block:: python
+   :caption: setup.py
+
+   # plugins must be properly installed, in-place PYTHONPATH meddling will
+   # not work.
+   setup(
+       name='my-plugin',
+       version='1.0',
+       py_modules=['my_plugin'],
+       entry_points={
+          # register this plugin with Cylc
+          'cylc.main_loop': [
+            # name = python.namespace.of.module
+            'my_plugin=my_plugin.my_plugin'
+          ]
+       }
+
+Examples
+^^^^^^^^
+
+For examples see the built-in plugins in the :py:mod:`cylc.flow.main_loop`
+module which are registered in the Cylc Flow ``setup.cfg`` file.
+
+Registration
+^^^^^^^^^^^^
+
+Plugins must be registered using the `cylc.main_loop` entry point.
+
+Coroutines
+^^^^^^^^^^
+
+.. _coroutines: https://docs.python.org/3/library/asyncio-task.html#coroutines
+.. _aiofiles: https://github.com/Tinche/aiofiles
+
+Plugins provide asynchronous functions (`coroutines`_) which Cylc will
+then run inside the scheduler.
+
+Coroutines should be fast running (read as gentle on the scheduler)
+and perform IO asynchronously e.g. by using `aiofiles`_.
+
+Coroutines shouldn't meddle with the state of the scheduler and should be
 parallel-safe with other plugins.
+
+Event Types
+^^^^^^^^^^^
+
+Coroutines must be decorated using one of the main loop decorators. The
+choise of decorator effects when the coroutine is called and what
+arguments are provided to it.
+
+The available event types are:
+
+.. autofunction:: cylc.flow.main_loop.startup
+
+.. autofunction:: cylc.flow.main_loop.shutdown
+
+.. autofunction:: cylc.flow.main_loop.periodic
 
 """
 import asyncio
@@ -133,21 +242,69 @@ def _debounce(interval, timings):
 
 
 def startup(fcn):
+    """Decorates a coroutine which is run at suite startup.
+
+    The decorated coroutine should have the signature:
+
+        ``async coroutine(scheduler, plugin_state) -> None``
+
+    Exceptions:
+
+        * Regular Exceptions are caught and logged.
+        * Exceptions which subclass CylcError are re-raised as
+          MainLoopPluginException
+
+    """
     fcn.main_loop = CoroTypes.StartUp
     return fcn
 
 
 def shutdown(fcn):
+    """Decorates a coroutine which is run at suite shutdown.
+
+    Note shutdown refers to "clean" shutdown as opposed to suite abort.
+
+    The decorated coroutine should have the signature:
+
+        ``async coroutine(scheduler, plugin_state) -> None``
+
+    Exceptions:
+
+        * Regular Exceptions are caught and logged.
+        * Exceptions which subclass CylcError are re-raised as
+          MainLoopPluginException
+
+    """
     fcn.main_loop = CoroTypes.ShutDown
     return fcn
 
 
 def periodic(fcn):
+    """Decorates a coroutine which is run at a set interval.
+
+    The decorated coroutine should have the signature:
+
+        ``async coroutine(scheduler, plugin_state) -> None``
+
+    Exceptions:
+
+        * Regular Exceptions are caught and logged.
+        * Exceptions which subclass CylcError are re-raised as
+          MainLoopPluginException
+
+    Configuration:
+
+        * The interval of execution can be altered using the
+          `cylc[main loop][plugin name]interval` setting.
+
+    """
     fcn.main_loop = CoroTypes.Periodic
     return fcn
 
 
 class CoroTypes:
+    """Different types of coroutine which can be used with the main loop."""
+
     StartUp = startup
     ShutDown = shutdown
     Periodic = periodic

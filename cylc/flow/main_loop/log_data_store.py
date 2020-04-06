@@ -13,7 +13,13 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Log the number and size of each type of object in the data store."""
+"""Log the number and size of each type of object in the data store.
+
+.. note::
+
+   This plugin is for Cylc developers debugging the data store.
+
+"""
 import json
 from pathlib import Path
 from time import time
