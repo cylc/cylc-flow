@@ -164,7 +164,6 @@ class Scheduler(object):
         self.options = options
         if self.options.no_detach:
             self.options.format = 'plain'
-        self.options.format
         self.profiler = Profiler(self.options.profile_mode)
         self.suite = args[0]
         self.uuid_str = SchedulerUUID()
