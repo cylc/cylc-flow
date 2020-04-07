@@ -57,7 +57,6 @@ from cylc.flow.tui.data import (
     mutate
 )
 from cylc.flow.tui.util import (
-    determine_type,
     get_task_icon
 )
 
@@ -197,9 +196,7 @@ def help_info(app):
 
 def context(app):
     value = app.tree_walker.get_focus()[0].get_node().get_value()
-    id_ = value['id_']
-    type_ = determine_type(id_)
-    selection = [id_]
+    selection = [value['id_']]  # single selection ATM
 
     def _mutate(mutation, _):
         mutate(app.client, mutation, selection)
@@ -208,6 +205,9 @@ def context(app):
     widget = urwid.ListBox(
         urwid.SimpleFocusListWalker(
             [
+                urwid.Text('Action'),
+                urwid.Divider()
+            ] + [
                 urwid.Button(
                     mutation,
                     on_press=partial(_mutate, mutation)

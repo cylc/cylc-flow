@@ -44,22 +44,37 @@ QUERY = '''
           name
         }
       }
+      cyclePoints: familyProxies(ids: ["root"], states: $taskStates) {
+        id
+        cyclePoint
+        state
+        isHeld
+      }
     }
   }
 '''
-
 
 MUTATIONS = {
     'workflow': [
         'hold',
         'release',
+        'reload',
         'stop'
+    ],
+    'cycle_point':  [
+        'hold',
+        'release',
+        'kill',
+        'trigger'
     ],
     'task':  [
         'hold',
         'release',
         'kill',
         'trigger'
+    ],
+    'job':  [
+        'kill',
     ]
 }
 
@@ -67,7 +82,6 @@ ARGUMENT_TYPES = {
     'workflow': '[WorkflowID]!',
     'task': '[NamespaceIDGlob]!',
 }
-
 
 MUTATION_TEMPLATES = {
     'workflow': '''
@@ -109,7 +123,7 @@ def generate_mutation(mutation, arguments):
 def list_mutations(selection):
     context = extract_context(selection)
     selection_type = list(context)[-1]
-    return MUTATIONS[selection_type]
+    return MUTATIONS.get(selection_type, [])
 
 
 def fudge(context):
@@ -118,6 +132,8 @@ def fudge(context):
     args = {'workflow': context['workflow']}
     if 'task' in context:
         args['task'] = [f'{context["task"][0]}.{context["cycle_point"][0]}']
+    elif 'cycle_point' in context:
+        args['task'] = [f'*.{context["cycle_point"][0]}']
     return args
 
 

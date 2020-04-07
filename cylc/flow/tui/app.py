@@ -54,7 +54,6 @@ from cylc.flow.tui.tree import (
 from cylc.flow.tui.util import (
     compute_tree,
     dummy_flow,
-    # get_group_state,
     get_job_icon,
     get_task_icon,
     get_task_status_summary,
