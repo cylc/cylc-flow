@@ -797,8 +797,6 @@ class TaskJobManager(object):
             # Job pool insertion
             job_config = deepcopy(job_conf)
             job_config['logfiles'] = deepcopy(itask.summary['logfiles'])
-            job_config['job_log_dir'] = get_task_job_log(
-                suite, itask.point, itask.tdef.name, itask.submit_num)
             itask.jobs.append(job_config['job_d'])
             self.job_pool.insert_job(job_config)
 

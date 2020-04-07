@@ -19,10 +19,14 @@ At present this pool represents a pseudo separation of task proxies and
 their jobs, and is feed-to/used-by the UI Server in resolving queries.
 
 """
-from time import time
 from copy import deepcopy
+import os
+from time import time
 
 from cylc.flow import LOG
+from cylc.flow.exceptions import SuiteConfigError
+from cylc.flow.task_job_logs import get_task_job_log
+from cylc.flow.parsec.util import pdeepcopy, poverride
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_state import (
     TASK_STATUS_READY, TASK_STATUS_SUBMITTED, TASK_STATUS_SUBMIT_FAILED,
@@ -40,18 +44,26 @@ JOB_STATUSES_ALL = [
     TASK_STATUS_FAILED,
 ]
 
+# Faster lookup where order not needed.
+JOB_STATUS_SET = set(JOB_STATUSES_ALL)
+
 
 class JobPool:
-    """Pool of protobuf job messages."""
+    """Pool of protobuf job messages.
+
+    Manages the creation and update of data-store job elements.
+
+    """
     # TODO: description, args, and types
+    # TODO: Unify new and DB job additions as single data source for
+    # data-store and job file creation.
 
     ERR_PREFIX_JOBID_MATCH = 'No matching jobs found: '
     ERR_PREFIX_JOB_NOT_ON_SEQUENCE = 'Invalid cycle point for job: '
 
-    def __init__(self, suite, owner):
-        self.suite = suite
-        self.owner = owner
-        self.workflow_id = f'{self.owner}{ID_DELIM}{self.suite}'
+    def __init__(self, schd):
+        self.schd = schd
+        self.workflow_id = f'{self.schd.owner}{ID_DELIM}{self.schd.suite}'
         self.pool = {}
         self.task_jobs = {}
         self.deltas = JDeltas()
@@ -79,7 +91,6 @@ class JobPool:
             execution_time_limit=job_conf['execution_time_limit'],
             host=job_conf['host'],
             init_script=job_conf['init-script'],
-            job_log_dir=job_conf['job_log_dir'],
             owner=job_owner,
             post_script=job_conf['post-script'],
             pre_script=job_conf['pre-script'],
@@ -103,10 +114,78 @@ class JobPool:
         j_buf.param_var.extend(
             [f'{key}={val}'
              for key, val in job_conf['param_var'].items()])
+
+        # Add in log files.
+        j_buf.job_log_dir = get_task_job_log(
+            self.schd.suite, point_string, name, sub_num)
         j_buf.extra_logs.extend(job_conf['logfiles'])
+
         self.updates[j_id] = j_buf
         self.task_jobs.setdefault(t_id, set()).add(j_id)
         self.updates_pending = True
+
+    def insert_db_job(self, row_idx, row):
+        """Load job element from DB post restart."""
+        if row_idx == 0:
+            LOG.info("LOADING job data")
+        (point_string, name, status, submit_num, time_submit, time_run,
+         time_run_exit, batch_sys_name, batch_sys_job_id, user_at_host) = row
+        if status not in JOB_STATUS_SET:
+            return
+        t_id = f'{self.workflow_id}{ID_DELIM}{point_string}{ID_DELIM}{name}'
+        j_id = f'{t_id}{ID_DELIM}{submit_num}'
+        try:
+            tdef = self.schd.config.get_taskdef(name)
+            j_owner = self.schd.owner
+            if user_at_host:
+                if '@' in user_at_host:
+                    j_owner, j_host = user_at_host.split('@')
+                else:
+                    j_host = user_at_host
+            else:
+                j_host = self.schd.host
+            update_time = time()
+            j_buf = PbJob(
+                stamp=f'{j_id}@{update_time}',
+                id=j_id,
+                submit_num=submit_num,
+                state=status,
+                task_proxy=t_id,
+                submitted_time=time_submit,
+                started_time=time_run,
+                finished_time=time_run_exit,
+                batch_sys_name=batch_sys_name,
+                batch_sys_job_id=batch_sys_job_id,
+                host=j_host,
+                owner=j_owner,
+                name=name,
+                cycle_point=point_string,
+            )
+            # Add in log files.
+            j_buf.job_log_dir = get_task_job_log(
+                self.schd.suite, point_string, name, submit_num)
+            overrides = self.schd.task_events_mgr.broadcast_mgr.get_broadcast(
+                TaskID.get(name, point_string))
+            if overrides:
+                rtconfig = pdeepcopy(tdef.rtconfig)
+                poverride(rtconfig, overrides, prepend=True)
+            else:
+                rtconfig = tdef.rtconfig
+            j_buf.extra_logs.extend(
+                [os.path.expanduser(os.path.expandvars(log_file))
+                 for log_file in rtconfig['extra log files']]
+            )
+        except SuiteConfigError:
+            LOG.exception((
+                'ignoring job %s from the suite run database\n'
+                '(its task definition has probably been deleted).'
+            ) % j_id)
+        except Exception:
+            LOG.exception('could not load job %s' % j_id)
+        else:
+            self.updates[j_id] = j_buf
+            self.task_jobs.setdefault(t_id, set()).add(j_id)
+            self.updates_pending = True
 
     def add_job_msg(self, job_d, msg):
         """Add message to job."""
@@ -170,7 +249,7 @@ class JobPool:
         j_id = (
             f'{self.workflow_id}{ID_DELIM}{point}'
             f'{ID_DELIM}{name}{ID_DELIM}{sub_num}')
-        if status in JOB_STATUSES_ALL:
+        if status in JOB_STATUS_SET:
             j_delta = PbJob(
                 stamp=f'{j_id}@{update_time}',
                 state=status

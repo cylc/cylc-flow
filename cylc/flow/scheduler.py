@@ -414,7 +414,7 @@ see `COPYING' in the Cylc source distribution.
         self.message_queue = Queue()
         self.ext_trigger_queue = Queue()
         self.suite_event_handler = SuiteEventHandler(self.proc_pool)
-        self.job_pool = JobPool(self.suite, self.owner)
+        self.job_pool = JobPool(self)
         self.task_events_mgr = TaskEventsManager(
             self.suite, self.proc_pool, self.suite_db_mgr, self.broadcast_mgr,
             self.job_pool)
@@ -603,6 +603,8 @@ see `COPYING' in the Cylc source distribution.
             self._load_task_run_times)
         self.suite_db_mgr.pri_dao.select_task_pool_for_restart(
             self.pool.load_db_task_pool_for_restart, self.options.checkpoint)
+        self.suite_db_mgr.pri_dao.select_job_pool_for_restart(
+            self.job_pool.insert_db_job, self.options.checkpoint)
         self.suite_db_mgr.pri_dao.select_task_action_timers(
             self.pool.load_db_task_action_timers)
         self.suite_db_mgr.pri_dao.select_xtriggers_for_restart(

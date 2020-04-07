@@ -599,6 +599,56 @@ class CylcSuiteDAO(object):
         except sqlite3.DatabaseError:
             return None
 
+    def select_job_pool_for_restart(self, callback, id_key=None):
+        """Select from task_pool+task_states+task_jobs for restart.
+
+        Invoke callback(row_idx, row) on each row, where each row contains:
+            [cycle, name, status, submit_num, time_submit, time_run,
+             time_run_exit, batch_sys_name, batch_sys_job_id, user_at_host]
+
+        If id_key is specified,
+        select from task_pool table if id_key == CHECKPOINT_LATEST_ID.
+        Otherwise select from task_pool_checkpoints where id == id_key.
+        """
+        form_stmt = r"""
+            SELECT
+                %(task_pool)s.cycle,
+                %(task_pool)s.name,
+                %(task_pool)s.status,
+                %(task_states)s.submit_num,
+                %(task_jobs)s.time_submit,
+                %(task_jobs)s.time_run,
+                %(task_jobs)s.time_run_exit,
+                %(task_jobs)s.batch_sys_name,
+                %(task_jobs)s.batch_sys_job_id,
+                %(task_jobs)s.user_at_host
+            FROM
+                %(task_jobs)s
+            JOIN
+                %(task_pool)s
+            ON  %(task_jobs)s.cycle == %(task_pool)s.cycle AND
+                %(task_jobs)s.name == %(task_pool)s.name
+            JOIN
+                %(task_states)s
+            ON  %(task_jobs)s.cycle == %(task_states)s.cycle AND
+                %(task_jobs)s.name == %(task_states)s.name AND
+                %(task_jobs)s.submit_num == %(task_states)s.submit_num
+        """
+        form_data = {
+            "task_pool": self.TABLE_TASK_POOL,
+            "task_states": self.TABLE_TASK_STATES,
+            "task_jobs": self.TABLE_TASK_JOBS,
+        }
+        if id_key is None or id_key == self.CHECKPOINT_LATEST_ID:
+            stmt = form_stmt % form_data
+            stmt_args = []
+        else:
+            form_data["task_pool"] = self.TABLE_TASK_POOL_CHECKPOINTS
+            stmt = (form_stmt + r" WHERE %(task_pool)s.id==?") % form_data
+            stmt_args = [id_key]
+        for row_idx, row in enumerate(self.connect().execute(stmt, stmt_args)):
+            callback(row_idx, list(row))
+
     def select_task_job_run_times(self, callback):
         """Select run times of succeeded task jobs grouped by task names.
 

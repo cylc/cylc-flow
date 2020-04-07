@@ -14,26 +14,26 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import unittest
-from copy import copy
+from unittest import main
+from copy import copy, deepcopy
 
 from cylc.flow import LOG
 from cylc.flow.job_pool import JobPool, JOB_STATUSES_ALL
 from cylc.flow.data_store_mgr import ID_DELIM
+from cylc.flow.tests.util import CylcWorkflowTestCase, create_task_proxy
 from cylc.flow.wallclock import get_current_time_string
 
 
 JOB_CONFIG = {
-    'owner': 'captain',
+    'owner': '',
     'host': 'commet',
     'submit_num': 3,
-    'task_id': 'foo.30010101T01',
+    'task_id': 'foo.20130808T00',
     'batch_system_name': 'background',
     'env-script': None,
     'err-script': None,
     'exit-script': None,
     'execution_time_limit': None,
-    'job_log_dir': '/home/captain/cylc-run/baz/log/job/30010101T01/foo/03',
     'init-script': None,
     'post-script': None,
     'pre-script': None,
@@ -47,28 +47,72 @@ JOB_CONFIG = {
     'logfiles': [],
 }
 
+JOB_DB_ROW = [
+    '20130808T00',
+    'foo',
+    'running',
+    3,
+    '2020-04-03T13:40:18+13:00',
+    '2020-04-03T13:40:20+13:00',
+    '2020-04-03T13:40:30+13:00',
+    'background',
+    '20542',
+    'localhost',
+]
 
-class TestJobPool(unittest.TestCase):
+
+class TestJobPool(CylcWorkflowTestCase):
+
+    suite_name = "five"
+    suiterc = """
+[meta]
+    title = "Inter-cycle dependence + a cold-start task"
+[cylc]
+    UTC mode = True
+[scheduling]
+    #runahead limit = 120
+    initial cycle point = 20130808T00
+    final cycle point = 20130812T00
+    [[graph]]
+        R1 = "prep => foo"
+        PT12H = "foo[-PT12H] => foo => bar"
+[visualization]
+    initial cycle point = 20130808T00
+    final cycle point = 20130808T12
+    [[node attributes]]
+        foo = "color=red"
+        bar = "color=blue"
+
+    """
 
     def setUp(self) -> None:
         super(TestJobPool, self).setUp()
-        self.job_pool = JobPool('baz', 'captain')
+        self.job_pool = JobPool(self.scheduler)
+        self.job_conf = deepcopy(JOB_CONFIG)
+        self.job_conf['owner'] = self.scheduler.owner
         self.ext_id = (
-            f'captain{ID_DELIM}baz{ID_DELIM}'
-            f'30010101T01{ID_DELIM}foo{ID_DELIM}3'
+            f'{self.scheduler.owner}{ID_DELIM}five{ID_DELIM}'
+            f'20130808T00{ID_DELIM}foo{ID_DELIM}3'
         )
-        self.int_id = f'30010101T01/foo/03'
+        self.int_id = f'20130808T00/foo/03'
 
     def test_insert_job(self):
         """Test method that adds a new job to the pool."""
         self.assertEqual(0, len(self.job_pool.updates))
-        self.job_pool.insert_job(JOB_CONFIG)
+        self.job_pool.insert_job(self.job_conf)
+        self.assertEqual(1, len(self.job_pool.updates))
+        self.assertTrue(self.ext_id in self.job_pool.updates)
+
+    def test_insert_db_job(self):
+        """Test method that adds a new job to the pool."""
+        self.assertEqual(0, len(self.job_pool.updates))
+        self.job_pool.insert_db_job(0, JOB_DB_ROW)
         self.assertEqual(1, len(self.job_pool.updates))
         self.assertTrue(self.ext_id in self.job_pool.updates)
 
     def test_add_job_msg(self):
         """Test method adding messages to job element."""
-        self.job_pool.insert_job(JOB_CONFIG)
+        self.job_pool.insert_job(self.job_conf)
         job = self.job_pool.updates[self.ext_id]
         old_stamp = copy(job.stamp)
         self.assertEqual(0, len(job.messages))
@@ -79,14 +123,14 @@ class TestJobPool(unittest.TestCase):
     def test_reload_deltas(self):
         """Test method reinstatiating job pool on reload"""
         self.assertFalse(self.job_pool.updates_pending)
-        self.job_pool.insert_job(JOB_CONFIG)
+        self.job_pool.insert_job(self.job_conf)
         self.job_pool.pool = {e.id: e for e in self.job_pool.updates.values()}
         self.job_pool.reload_deltas()
         self.assertTrue(self.job_pool.updates_pending)
 
     def test_remove_job(self):
         """Test method removing a job from the pool via internal job id."""
-        self.job_pool.insert_job(JOB_CONFIG)
+        self.job_pool.insert_job(self.job_conf)
         pruned = self.job_pool.deltas.pruned
         self.assertEqual(0, len(pruned))
         self.job_pool.remove_job('NotJobID')
@@ -96,7 +140,7 @@ class TestJobPool(unittest.TestCase):
 
     def test_remove_task_jobs(self):
         """Test method removing jobs from the pool via internal task ID."""
-        self.job_pool.insert_job(JOB_CONFIG)
+        self.job_pool.insert_job(self.job_conf)
         pruned = self.job_pool.deltas.pruned
         self.assertEqual(0, len(pruned))
         self.job_pool.remove_task_jobs('NotTaskID')
@@ -107,7 +151,7 @@ class TestJobPool(unittest.TestCase):
 
     def test_set_job_attr(self):
         """Test method setting job attribute value."""
-        self.job_pool.insert_job(JOB_CONFIG)
+        self.job_pool.insert_job(self.job_conf)
         job = self.job_pool.updates[self.ext_id]
         old_exit_script = copy(job.exit_script)
         self.assertEqual(old_exit_script, job.exit_script)
@@ -116,7 +160,7 @@ class TestJobPool(unittest.TestCase):
 
     def test_set_job_state(self):
         """Test method setting the job state."""
-        self.job_pool.insert_job(JOB_CONFIG)
+        self.job_pool.insert_job(self.job_conf)
         job = self.job_pool.updates[self.ext_id]
         old_state = copy(job.state)
         self.job_pool.set_job_state(self.int_id, 'waiting')
@@ -127,7 +171,7 @@ class TestJobPool(unittest.TestCase):
     def test_set_job_time(self):
         """Test method setting event time."""
         event_time = get_current_time_string()
-        self.job_pool.insert_job(JOB_CONFIG)
+        self.job_pool.insert_job(self.job_conf)
         job = self.job_pool.updates[self.ext_id]
         old_time = copy(job.submitted_time)
         self.assertEqual(old_time, job.submitted_time)
@@ -158,4 +202,4 @@ class TestJobPool(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    main()
