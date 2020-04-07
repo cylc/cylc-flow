@@ -113,7 +113,7 @@ def compute_tree(flow):
         cycle_node = add_node('cycle', cycle['id'], nodes, data=cycle)
         flow_node['children'].append(cycle_node)
 
-    # populate family nodes
+    # populate family nodes
     for family in flow['familyProxies']:
         if family['name'] != 'root':
             family_node = add_node(

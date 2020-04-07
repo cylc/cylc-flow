@@ -61,19 +61,19 @@ MUTATIONS = {
         'reload',
         'stop'
     ],
-    'cycle_point':  [
+    'cycle_point': [
         'hold',
         'release',
         'kill',
         'trigger'
     ],
-    'task':  [
+    'task': [
         'hold',
         'release',
         'kill',
         'trigger'
     ],
-    'job':  [
+    'job': [
         'kill',
     ]
 }
@@ -126,20 +126,34 @@ def list_mutations(selection):
     return MUTATIONS.get(selection_type, [])
 
 
-def fudge(context):
-    # fudge because it can only handle single-selection ATM
+def context_to_variables(context):
+    """Derive multiple selection out of single selection.
+
+        >>> context_to_variables(extract_context(['a|b|c|d']))
+        {'workflow': ['b'], 'task': ['d.c']}
+
+        >>> context_to_variables(extract_context(['a|b|c']))
+        {'workflow': ['b'], 'task': ['*.c']}
+
+        >>> context_to_variables(extract_context(['a|b']))
+        {'workflow': ['b']}
+
+    """
+    # context_to_variables because it can only handle single-selection ATM
     selection_type = list(context)[-1]
-    args = {'workflow': context['workflow']}
+    variables = {'workflow': context['workflow']}
     if 'task' in context:
-        args['task'] = [f'{context["task"][0]}.{context["cycle_point"][0]}']
+        variables['task'] = [
+            f'{context["task"][0]}.{context["cycle_point"][0]}'
+        ]
     elif 'cycle_point' in context:
-        args['task'] = [f'*.{context["cycle_point"][0]}']
-    return args
+        variables['task'] = [f'*.{context["cycle_point"][0]}']
+    return variables
 
 
 def mutate(client, mutation, selection):
     context = extract_context(selection)
-    variables = fudge(context)
+    variables = context_to_variables(context)
     request_string = generate_mutation(mutation, variables)
     res = client(
         'graphql',
