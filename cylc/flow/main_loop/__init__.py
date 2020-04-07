@@ -152,7 +152,6 @@ The available event types are:
 .. autofunction:: cylc.flow.main_loop.periodic
 
 """
-import asyncio
 from collections import deque
 from inspect import (
     getmembers,

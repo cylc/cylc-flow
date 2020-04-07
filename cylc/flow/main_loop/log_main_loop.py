@@ -19,6 +19,9 @@
 
    This plugin is for Cylc developers debugging main loop operations.
 
+If ``matplotlib`` is installed this plugin will plot results as a PDF in
+the run directory when the suite is shut down (cleanly).
+
 """
 from collections import deque
 import json

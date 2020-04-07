@@ -19,6 +19,9 @@
 
    This plugin is for Cylc developers debugging the data store.
 
+If ``matplotlib`` is installed this plugin will plot results as a PDF in
+the run directory when the suite is shut down (cleanly).
+
 """
 import json
 from pathlib import Path
