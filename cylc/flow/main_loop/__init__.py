@@ -98,6 +98,9 @@ entry point:
 
    # plugins must be properly installed, in-place PYTHONPATH meddling will
    # not work.
+
+   from setuptools import setup
+
    setup(
        name='my-plugin',
        version='1.0',
@@ -109,17 +112,13 @@ entry point:
             'my_plugin=my_plugin.my_plugin'
           ]
        }
+   )
 
 Examples
 ^^^^^^^^
 
 For examples see the built-in plugins in the :py:mod:`cylc.flow.main_loop`
 module which are registered in the Cylc Flow ``setup.cfg`` file.
-
-Registration
-^^^^^^^^^^^^
-
-Plugins must be registered using the `cylc.main_loop` entry point.
 
 Coroutines
 ^^^^^^^^^^

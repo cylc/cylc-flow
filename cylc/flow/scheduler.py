@@ -43,7 +43,6 @@ from cylc.flow.cycling.loader import get_point, standardise_point_string
 from cylc.flow.daemonize import daemonize
 from cylc.flow.exceptions import (
     CylcError,
-    HostSelectException,
     PointParsingError,
     TaskProxySequenceBoundsError
 )
