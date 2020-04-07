@@ -158,6 +158,7 @@ from inspect import (
     getmembers,
     isfunction
 )
+from textwrap import indent
 from time import time
 
 import pkg_resources
@@ -324,7 +325,11 @@ def load(config, additional_plugins=None):
         try:
             module_name = entry_points[plugin_name.replace(' ', '_')]
         except KeyError:
-            raise UserInputError(f'No main-loop plugin: "{plugin_name}"')
+            raise UserInputError(
+                f'No main-loop plugin: "{plugin_name}"\n'
+                + '    Available plugins:\n'
+                + indent('\n'.join(sorted(entry_points)), '        ')
+            )
         # load plugin
         try:
             module = module_name.load()
