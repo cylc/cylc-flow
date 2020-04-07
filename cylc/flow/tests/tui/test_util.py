@@ -11,7 +11,6 @@ from cylc.flow.tui.util import (
     TASK_ICONS,
     render_node,
     compute_tree,
-    get_group_state,
     get_task_icon
 )
 from cylc.flow.wallclock import (
@@ -144,387 +143,185 @@ def test_get_task_icon(status, is_held, start_offset, mean_time, expected):
     ) == expected
 
 
-@pytest.mark.parametrize(
-    'nodes,expected',
-    [
-        (
-            [
-                ('waiting', False),
-                ('running', False)
-            ],
-            ('running', False)
-        ),
-        (
-            [
-                ('waiting', False),
-                ('running', True)
-            ],
-            ('running', True)
-        )
-    ]
-)
-def test_get_group_state(nodes, expected):
-
-    def make_node(data):
-        node = Mock()
-        node.get_value = lambda: {'data': data}
-        return node
-
-    nodes = [
-        make_node(
-            {'state': state, 'isHeld': is_held}
-        )
-        for state, is_held in nodes
-    ]
-    assert get_group_state(nodes) == expected
-
-
 def test_compute_tree():
     """It computes a tree in the right structure for urwid.
 
-    This is a pretty rough and ready test, describe cases to trigger all
-    branches in the method then record the result.
+    Note this test doesn't use full data or propper ids because it's
+    purpose is not to test the GraphQL interface but to ensure the
+    assumptions made by compute_tree check out.
 
     """
-    assert compute_tree({
+    tree = compute_tree({
         'id': 'workflow id',
+        'cyclePoints': [
+            {
+                'id': '1|family-suffix',
+                'cyclePoint': '1'
+            }
+        ],
         'familyProxies': [
             {  # root family node
                 'name': 'root',
-                'id': 'root.1',
+                'id': '1|root',
                 'cyclePoint': '1',
                 'firstParent': None
             },
             {  # top level family
                 'name': 'FOO',
-                'id': 'FOO.1',
+                'id': '1|FOO',
                 'cyclePoint': '1',
-                'firstParent': {'name': 'root', 'id': 'root.1'}
+                'firstParent': {'name': 'root', 'id': '1|root'}
             },
             {  # nested family
                 'name': 'FOOT',
-                'id': 'FOOT.1',
+                'id': '1|FOOT',
                 'cyclePoint': '1',
-                'firstParent': {'name': 'FOO', 'id': 'FOO.1'}
+                'firstParent': {'name': 'FOO', 'id': '1|FOO'}
             },
         ],
         'taskProxies': [
             {  # orphan task (belongs to no family)
                 'name': 'baz',
-                'id': 'baz.1',
+                'id': '1|baz',
                 'parents': [],
                 'cyclePoint': '1',
                 'jobs': []
             },
             {  # top level task
                 'name': 'pub',
-                'id': 'pub.1',
-                'parents': [{'name': 'root', 'id': 'root.1'}],
+                'id': '1|pub',
+                'parents': [{'name': 'root', 'id': '1|root'}],
                 'cyclePoint': '1',
                 'jobs': []
             },
             {  # child task (belongs to family)
                 'name': 'fan',
-                'id': 'fan.1',
-                'parents': [{'name': 'fan', 'id': 'fan.1'}],
+                'id': '1|fan',
+                'parents': [{'name': 'fan', 'id': '1|fan'}],
                 'cyclePoint': '1',
                 'jobs': []
             },
             {  # nested child task (belongs to incestuous family)
                 'name': 'fool',
-                'id': 'fool.1',
+                'id': '1|fool',
                 'parents': [
-                    {'name': 'FOO', 'id': 'FOO.1'},
-                    {'name': 'FOOT', 'id': 'FOOT.1'}
+                    {'name': 'FOOT', 'id': '1|FOOT'},
+                    {'name': 'FOO', 'id': '1|FOO'}
                 ],
                 'cyclePoint': '1',
                 'jobs': []
             },
             {  # a task which has jobs
                 'name': 'worker',
-                'id': 'worker.1',
+                'id': '1|worker',
                 'parents': [],
                 'cyclePoint': '1',
                 'jobs': [
+                    # mess up the order just for fun
+                    {'id': 'job3', 'submitNum': '3'},
                     {'id': 'job1', 'submitNum': '1'},
-                    {'id': 'job2', 'submitNum': '2'},
-                    {'id': 'job3', 'submitNum': '3'}
+                    {'id': 'job2', 'submitNum': '2'}
                 ]
             }
         ]
-    }) == {
-        "children": [
-            {
-                "children": [
-                    {
-                        "children": [
-                            {
-                                "children": [
-                                    {
-                                        "children": [],
-                                        "id_": "job3_info",
-                                        "data": {
-                                            "id": "job3",
-                                            "submitNum": "3"
-                                        },
-                                        "type_": "job_info"
-                                    }
-                                ],
-                                "id_": "job3",
-                                "data": {
-                                    "id": "job3",
-                                    "submitNum": "3"
-                                },
-                                "type_": "job"
-                            },
-                            {
-                                "children": [
-                                    {
-                                        "children": [],
-                                        "id_": "job2_info",
-                                        "data": {
-                                            "id": "job2",
-                                            "submitNum": "2"
-                                        },
-                                        "type_": "job_info"
-                                    }
-                                ],
-                                "id_": "job2",
-                                "data": {
-                                    "id": "job2",
-                                    "submitNum": "2"
-                                },
-                                "type_": "job"
-                            },
-                            {
-                                "children": [
-                                    {
-                                        "children": [],
-                                        "id_": "job1_info",
-                                        "data": {
-                                            "id": "job1",
-                                            "submitNum": "1"
-                                        },
-                                        "type_": "job_info"
-                                    }
-                                ],
-                                "id_": "job1",
-                                "data": {
-                                    "id": "job1",
-                                    "submitNum": "1"
-                                },
-                                "type_": "job"
-                            }
-                        ],
-                        "id_": "worker.1",
-                        "data": {
-                            "name": "worker",
-                            "id": "worker.1",
-                            "parents": [],
-                            "cyclePoint": "1",
-                            "jobs": [
-                                {
-                                    "id": "job1",
-                                    "submitNum": "1"
-                                },
-                                {
-                                    "id": "job2",
-                                    "submitNum": "2"
-                                },
-                                {
-                                    "id": "job3",
-                                    "submitNum": "3"
-                                }
-                            ]
-                        },
-                        "type_": "task"
-                    },
-                    {
-                        "children": [],
-                        "id_": "pub.1",
-                        "data": {
-                            "name": "pub",
-                            "id": "pub.1",
-                            "parents": [
-                                {
-                                    "name": "root",
-                                    "id": "root.1"
-                                }
-                            ],
-                            "cyclePoint": "1",
-                            "jobs": []
-                        },
-                        "type_": "task"
-                    },
-                    {
-                        "children": [],
-                        "id_": "baz.1",
-                        "data": {
-                            "name": "baz",
-                            "id": "baz.1",
-                            "parents": [],
-                            "cyclePoint": "1",
-                            "jobs": []
-                        },
-                        "type_": "task"
-                    },
-                    {
-                        "children": [
-                            {
-                                "children": [],
-                                "id_": "fool.1",
-                                "data": {
-                                    "name": "fool",
-                                    "id": "fool.1",
-                                    "parents": [
-                                        {
-                                            "name": "FOO",
-                                            "id": "FOO.1"
-                                        },
-                                        {
-                                            "name": "FOOT",
-                                            "id": "FOOT.1"
-                                        }
-                                    ],
-                                    "cyclePoint": "1",
-                                    "jobs": []
-                                },
-                                "type_": "task"
-                            },
-                            {
-                                "children": [],
-                                "id_": "FOOT.1",
-                                "data": {
-                                    "name": "FOOT",
-                                    "id": "FOOT.1",
-                                    "cyclePoint": "1",
-                                    "firstParent": {
-                                        "name": "FOO",
-                                        "id": "FOO.1"
-                                    }
-                                },
-                                "type_": "family"
-                            }
-                        ],
-                        "id_": "FOO.1",
-                        "data": {
-                            "name": "FOO",
-                            "id": "FOO.1",
-                            "cyclePoint": "1",
-                            "firstParent": {
-                                "name": "root",
-                                "id": "root.1"
-                            }
-                        },
-                        "type_": "family"
-                    }
-                ],
-                "id_": "1",
-                "data": {
-                    "name": "1",
-                    "id": "workflow id|1"
-                },
-                "type_": "cycle"
-            }
-        ],
-        "id_": "workflow id",
-        "data": {
-            "id": "workflow id",
-            "familyProxies": [
-                {
-                    "name": "root",
-                    "id": "root.1",
-                    "cyclePoint": "1",
-                    "firstParent": None
-                },
-                {
-                    "name": "FOO",
-                    "id": "FOO.1",
-                    "cyclePoint": "1",
-                    "firstParent": {
-                        "name": "root",
-                        "id": "root.1"
-                    }
-                },
-                {
-                    "name": "FOOT",
-                    "id": "FOOT.1",
-                    "cyclePoint": "1",
-                    "firstParent": {
-                        "name": "FOO",
-                        "id": "FOO.1"
-                    }
-                }
-            ],
-            "taskProxies": [
-                {
-                    "name": "baz",
-                    "id": "baz.1",
-                    "parents": [],
-                    "cyclePoint": "1",
-                    "jobs": []
-                },
-                {
-                    "name": "pub",
-                    "id": "pub.1",
-                    "parents": [
-                        {
-                            "name": "root",
-                            "id": "root.1"
-                        }
-                    ],
-                    "cyclePoint": "1",
-                    "jobs": []
-                },
-                {
-                    "name": "fan",
-                    "id": "fan.1",
-                    "parents": [
-                        {
-                            "name": "fan",
-                            "id": "fan.1"
-                        }
-                    ],
-                    "cyclePoint": "1",
-                    "jobs": []
-                },
-                {
-                    "name": "fool",
-                    "id": "fool.1",
-                    "parents": [
-                        {
-                            "name": "FOO",
-                            "id": "FOO.1"
-                        },
-                        {
-                            "name": "FOOT",
-                            "id": "FOOT.1"
-                        }
-                    ],
-                    "cyclePoint": "1",
-                    "jobs": []
-                },
-                {
-                    "name": "worker",
-                    "id": "worker.1",
-                    "parents": [],
-                    "cyclePoint": "1",
-                    "jobs": [
-                        {
-                            "id": "job1",
-                            "submitNum": "1"
-                        },
-                        {
-                            "id": "job2",
-                            "submitNum": "2"
-                        },
-                        {
-                            "id": "job3",
-                            "submitNum": "3"
-                        }
-                    ]
-                }
-            ]
-        },
-        "type_": "workflow"
-    }
+    })
+
+    # the workflow node
+    assert tree['type_'] == 'workflow'
+    assert tree['id_'] == 'workflow id'
+    assert list(tree['data']) == [
+        # whatever if present on the node should end up in data
+        'id',
+        'cyclePoints',
+        'familyProxies',
+        'taskProxies'
+    ]
+    assert len(tree['children']) == 1
+
+    # the cycle point node
+    cycle = tree['children'][0]
+    assert cycle['type_'] == 'cycle'
+    assert cycle['id_'] == '1'
+    assert list(cycle['data']) == [
+        'id',
+        'cyclePoint'
+    ]
+    assert len(cycle['children']) == 4
+    assert [
+        node['id_']
+        for node in cycle['children']
+    ] == [
+        # test alphabetical sorting
+        '1|FOO',
+        '1|baz',
+        '1|pub',
+        '1|worker'
+    ]
+
+    # test family node
+    family = cycle['children'][0]
+    assert family['type_'] == 'family'
+    assert family['id_'] == '1|FOO'
+    assert list(family['data']) == [
+        'name',
+        'id',
+        'cyclePoint',
+        'firstParent'
+    ]
+    assert len(family['children']) == 1
+
+    # test nested family
+    nested_family = family['children'][0]
+    assert nested_family['type_'] == 'family'
+    assert nested_family['id_'] == '1|FOOT'
+    assert list(nested_family['data']) == [
+        'name',
+        'id',
+        'cyclePoint',
+        'firstParent'
+    ]
+    assert len(nested_family['children']) == 1
+
+    # test task
+    task = nested_family['children'][0]
+    assert task['type_'] == 'task'
+    assert task['id_'] == '1|fool'
+    assert list(task['data']) == [
+        'name',
+        'id',
+        'parents',
+        'cyclePoint',
+        'jobs'
+    ]
+    assert len(task['children']) == 0
+
+    # test task with jobs
+    task = cycle['children'][-1]
+    assert [  # test sorting
+        job['id_']
+        for job in task['children']
+    ] == [
+        'job3',
+        'job2',
+        'job1'
+    ]
+
+    # test job
+    job = task['children'][0]
+    assert job['type_'] == 'job'
+    assert job['id_'] == 'job3'
+    assert list(job['data']) == [
+        'id',
+        'submitNum'
+    ]
+    assert len(job['children']) == 1
+
+    # test job info
+    job_info = job['children'][0]
+    assert job_info['type_'] == 'job_info'
+    assert job_info['id_'] == 'job3_info'
+    assert list(job_info['data']) == [
+        'id',
+        'submitNum'
+    ]
+    assert len(job_info['children']) == 0

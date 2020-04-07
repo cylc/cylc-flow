@@ -80,6 +80,18 @@ def get_task_icon(status, is_held, start_time=None, mean_time=None):
     return ret
 
 
+def idpop(id_):
+    """Remove the last element of a node id.
+
+    Example:
+        >>> id_ = ID_DELIM.join(['a', 'b', 'c'])
+        >>> idpop(id_).split(ID_DELIM)
+        ['a', 'b']
+
+    """
+    return id_.rsplit(ID_DELIM, 1)[0]
+
+
 def compute_tree(flow):
     """Digest GraphQL data to produce a tree.
 
@@ -95,19 +107,17 @@ def compute_tree(flow):
     flow_node = add_node(
         'workflow', flow['id'], nodes, data=flow)
 
-    # create nodes
+    # populate cycle nodes
+    for cycle in flow['cyclePoints']:
+        cycle['id'] = idpop(cycle['id'])  # strip the family off of the id
+        cycle_node = add_node('cycle', cycle['id'], nodes, data=cycle)
+        flow_node['children'].append(cycle_node)
+
+    # populate family nodes
     for family in flow['familyProxies']:
         if family['name'] != 'root':
             family_node = add_node(
                 'family', family['id'], nodes, data=family)
-        cycle_data = {
-            'name': family['cyclePoint'],
-            'id': f"{flow['id']}{ID_DELIM}{family['cyclePoint']}"
-        }
-        cycle_node = add_node(
-            'cycle', family['cyclePoint'], nodes, data=cycle_data)
-        if cycle_node not in flow_node['children']:
-            flow_node['children'].append(cycle_node)
 
     # create cycle/family tree
     for family in flow['familyProxies']:
@@ -123,9 +133,10 @@ def compute_tree(flow):
                     'family', first_parent['id'], nodes)
                 parent_node['children'].append(family_node)
             else:
-                cycle_node = add_node(
-                    'cycle', family['cyclePoint'], nodes)
-                cycle_node['children'].append(family_node)
+                add_node(
+                    'cycle', idpop(family['id']), nodes
+                )['children'].append(family_node)
+
     # add leaves
     for task in flow['taskProxies']:
         parents = task['parents']
@@ -136,7 +147,7 @@ def compute_tree(flow):
             'task', task['id'], nodes, data=task)
         if parents[0]['name'] == 'root':
             family_node = add_node(
-                'cycle', task['cyclePoint'], nodes)
+                'cycle', idpop(task['id']), nodes)
         else:
             family_node = add_node(
                 'family', parents[0]['id'], nodes)
@@ -158,8 +169,8 @@ def compute_tree(flow):
             )
         else:
             node['children'].sort(
-                key=lambda x: x['id_'],
-                reverse=True
+                key=lambda x: x['id_']
+                # reverse=True
             )
 
     return flow_node
@@ -228,42 +239,6 @@ def get_job_icon(status):
     return [
         (f'job_{status}', JOB_ICON)
     ]
-
-
-def get_group_state(nodes):
-    """Return a task state to represent a collection of tasks.
-
-    Arguments:
-        nodes (list):
-            List of urwid.TreeNode objects.
-
-    Returns:
-        tuple - (status, is_held)
-
-        status (str): A Cylc task status.
-        is_held (bool): True if the task is is a held state.
-
-    Raises:
-        KeyError:
-            If any node does not have the key "state" in its
-            data. E.G. a nested family.
-        ValueError:
-            If no matching states are found. E.G. empty nodes
-            list.
-
-    """
-    states = [
-        node.get_value()['data']['state']
-        for node in nodes
-    ]
-    is_held = any((
-        node.get_value()['data'].get('isHeld')
-        for node in nodes
-    ))
-    for state in TASK_STATUS_DISPLAY_ORDER:
-        if state in states:
-            return state, is_held
-    raise ValueError()
 
 
 def get_task_status_summary(flow):
@@ -374,7 +349,7 @@ def render_node(node, data, type_):
         ret.append(f'{data["name"]}')
         return ret
 
-    if type_ == 'family':
+    if type_ in ['family', 'cycle']:
         return [
             get_task_icon(
                 data['state'],
@@ -387,13 +362,6 @@ def render_node(node, data, type_):
     return data['id'].rsplit(ID_DELIM, 1)[-1]
 
 
-def determine_type(id_):
-    items = id_.split(ID_DELIM)
-    if len(items) == 2:
-        return 'workflow'
-    return 'task'
-
-
 PARTS = [
     'user',
     'workflow',
@@ -404,10 +372,21 @@ PARTS = [
 
 
 def extract_context(selection):
-    """
-    Example:
+    """Return a dictionary of all component types in the selection.
+
+    Args:
+        selection (list):
+            List of element id's as extracted from the data store / graphql.
+
+    Examples:
         >>> extract_context(['a|b', 'a|c'])
-        {'users': ['a'], 'workflows': ['b', 'c']}
+        {'user': ['a'], 'workflow': ['b', 'c']}
+
+        >>> extract_context(['a|b|c|d|e']
+        ... )  # doctest: +NORMALIZE_WHITESPACE
+        {'user': ['a'], 'workflow': ['b'], 'cycle_point': ['c'],
+        'task': ['d'], 'job': ['e']}
+
     """
     context = {type_: set() for type_ in PARTS}
     for item in selection:
