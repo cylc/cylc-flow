@@ -45,7 +45,6 @@ SPEC = {
     # suite
     'cylc': {
         'UTC mode': [VDR.V_BOOLEAN],
-        'health check interval': [VDR.V_INTERVAL, DurationFloat(600)],
         'task event mail interval': [VDR.V_INTERVAL, DurationFloat(300)],
         'events': {
             'handlers': [VDR.V_STRING_LIST],
@@ -67,6 +66,15 @@ SPEC = {
             'abort on inactivity': [VDR.V_BOOLEAN],
             'abort on stalled': [VDR.V_BOOLEAN],
         },
+        'main loop': {
+            'plugins': [VDR.V_STRING_LIST, ['health check']],
+            'health check': {
+                'interval': [VDR.V_INTERVAL, DurationFloat(600)]
+            },
+            '__MANY__': {
+                'interval': [VDR.V_INTERVAL]
+            }
+        }
     },
 
     # suite

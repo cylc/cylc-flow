@@ -30,7 +30,10 @@ if ${CYLC_TEST_DEBUG:-false}; then ERR=2; else ERR=1; fi
 # run through the shutdown - restart procedure
 BASE_GLOBALRC="
 [cylc]
-    health check interval = PT15S
+    [[main loop]]
+        plugins = health check, auto restart
+        [[[auto restart]]]
+            interval = PT15S
     [[events]]
         abort on inactivity = True
         abort on timeout = True

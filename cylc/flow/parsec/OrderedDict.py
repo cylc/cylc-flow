@@ -103,3 +103,110 @@ class OrderedDictWithDefaults(OrderedDict):
         """
         self[key] = value
         self.move_to_end(key, last=False)
+
+
+class DictTree:
+    """An object providing a single point of access to a tree of dicts.
+
+    * Allows easy extraction of values from a collection of dictionaries.
+    * Values from dictionaries earlier in the list will take priority over
+      values from dictionaries later in the list.
+    * If the dict objects provided provide a custom `get` interface this
+      will take priority over the `__getitem__` interface.
+
+    Args:
+        tree (list):
+            A list of dict-type objects.
+
+    Examples:
+        Regular usage:
+        >>> tree = DictTree(
+        ...     {'a': 1, 'b': 2},
+        ...     {'b': 3, 'c': 4}
+        ... )
+        >>> tree['a']
+        1
+        >>> tree['b']  # items from earlier entries are preferred
+        2
+        >>> tree['c']
+        4
+        >>> tree['d']
+        Traceback (most recent call last):
+        KeyError: 'd'
+
+        Quirk, None values result in KeyErrors:
+        >>> tree = DictTree({'a': None})
+        >>> tree['a']
+        Traceback (most recent call last):
+        KeyError: 'a'
+
+    """
+
+    def __init__(self, *tree):
+        self._tree = tree
+
+    def __getitem__(self, key):
+        values = []
+        defaults = []
+        for branch in self._tree:
+            # priority goes to the `get` method
+            value = branch.get(key)
+            if value is not None:
+                values.append(value)
+                defaults.append(None)
+            else:
+                try:
+                    # then falls back to the `__getitem__` method
+                    defaults.append(branch[key])
+                    values.append(None)
+                except KeyError:
+                    # okay, this key really isn't present here
+                    values.append(None)
+                    defaults.append(None)
+
+        # handle nested dictionaries
+        if any((isinstance(item, dict) for item in values + defaults)):
+            return DictTree(*(
+                item
+                for item in values
+                if item is not None
+            ))
+
+        # handle non-existent keys
+        if all((item is None for item in values + defaults)):
+            raise KeyError(key)
+
+        # return first value or default encountered
+        return next((
+            item
+            for item in values + defaults
+            if item is not None
+        ))
+
+    def __eq__(self, other):
+        if not isinstance(other, DictTree):
+            return False
+        return self._tree == other._tree
+
+    def __iter__(self):
+        def inner(tree):
+            # yield keys from all branches (but only once)
+            yield from {
+                key
+                for branch in tree
+                for key in branch
+            }
+        return inner(self._tree)
+
+    def get(self, key, default=None):
+        """Get an item from this tree or return `default` if not present.
+
+        Note:
+            Behaviour purposefully differers from OrderedDictWithDefaults,
+            this `get` method *will* return default values if present.
+
+        """
+        try:
+            return self[key]
+        except KeyError:
+            return default

@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import asyncio
 from unittest import main
 from time import sleep
 
@@ -93,7 +94,7 @@ class TestWorkflowPublisher(CylcWorkflowTestCase):
         self.assertFalse(self.publisher.threaded)
         self.assertIsNotNone(self.publisher.pattern)
 
-    def test_publish(self):
+    async def test_publish(self):
         """Test publishing data."""
         self.publisher.start(*PORT_RANGE)
         subscriber = WorkflowSubscriber(
@@ -104,7 +105,7 @@ class TestWorkflowPublisher(CylcWorkflowTestCase):
         # delay to allow subscriber to connection,
         # otherwise it misses the first message
         sleep(1.0)
-        self.publisher.publish(self.pub_data)
+        await self.publisher.publish(self.pub_data)
         btopic, msg = subscriber.loop.run_until_complete(
             subscriber.socket.recv_multipart())
         delta = DELTAS_MAP[btopic.decode('utf-8')]()
@@ -112,7 +113,9 @@ class TestWorkflowPublisher(CylcWorkflowTestCase):
         self.assertEqual(delta.id, self.workflow_id)
         subscriber.stop()
         with self.assertLogs(LOG, level='ERROR') as cm:
-            self.publisher.publish(None)
+            asyncio.run(
+                self.publisher.publish(None)
+            )
         self.assertIn('publish: ', cm.output[0])
 
     def test_start(self):

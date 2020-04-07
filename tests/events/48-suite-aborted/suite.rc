@@ -1,5 +1,7 @@
 [cylc]
-    health check interval = PT1S
+    [[main loop]]
+        [[[health check]]]
+            interval = PT1S
     [[events]]
         abort on inactivity = true
         inactivity = PT1M

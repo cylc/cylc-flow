@@ -20,13 +20,12 @@
 set_test_number 3
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-OPT_SET=
-if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
-    create_test_globalrc "" "
+create_test_globalrc "" "
 [cylc]
-    health check interval = PT10S"
-    OPT_SET='-s GLOBALCFG=True'
-fi
+    [[main loop]]
+        [[[health check]]]
+            interval = PT10S"
+OPT_SET='-s GLOBALCFG=True'
 
 # shellcheck disable=SC2086
 run_ok "${TEST_NAME_BASE}-validate" cylc validate ${OPT_SET} "${SUITE_NAME}"
@@ -37,7 +36,7 @@ ln -s "$(basename "${SUITE_NAME}")" "${SYM_SUITE_RUND}"
 # shellcheck disable=SC2086
 suite_run_fail "${TEST_NAME_BASE}-run" \
     cylc run --no-detach ${OPT_SET} "${SYM_SUITE_NAME}"
-grep_ok "No such file or directory: '${SYM_SUITE_RUND}'" \
+grep_ok "Suite run directory does not exist: ${SYM_SUITE_RUND}" \
     "${SUITE_RUN_DIR}/log/suite/log".*
 
 rm -f "${SYM_SUITE_RUND}"

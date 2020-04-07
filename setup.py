@@ -65,13 +65,33 @@ tests_require = [
 ]
 
 extra_requires = {
-    'empy': ['EmPy==3.3.*'],
+    'empy': [
+        'EmPy==3.3.*'
+    ],
     'all': [],
-    'report-timings': ['pandas==0.25.*']
+    'report-timings': [
+        'pandas==0.25.*'
+    ],
+    'main_loop-log_data_store': [
+        'pympler',
+        'matplotlib'
+    ],
+    'main_loop-log_main_loop': [
+        'matplotlib'
+    ],
+    'main_loop-log_memory': [
+        'pympler',
+        'matplotlib'
+    ]
 }
-extra_requires['all'] += extra_requires['empy']
-extra_requires['all'] += tests_require
-extra_requires['all'] += extra_requires['report-timings']
+extra_requires['all'] = (
+    tests_require
+    + list({
+        req
+        for reqs in extra_requires.values()
+        for req in reqs
+    })
+)
 
 
 setup(

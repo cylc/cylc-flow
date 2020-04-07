@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Test subsciber module components."""
 
+import asyncio
 from unittest import main
 from time import sleep
 
@@ -113,7 +114,9 @@ class TestWorkflowSubscriber(CylcWorkflowTestCase):
     def test_subscribe(self):
         """Test publishing data."""
         pub_data = self.scheduler.data_store_mgr.get_publish_deltas()
-        self.publisher.publish(pub_data)
+        asyncio.run(
+            self.publisher.publish(pub_data)
+        )
 
         def msg_process(btopic, msg):
             self.subscriber.stopping = True

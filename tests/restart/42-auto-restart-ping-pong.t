@@ -29,7 +29,10 @@ export JOKERS="${HOSTNAME}"
 
 BASE_GLOBALRC='
 [cylc]
-    health check interval = PT5S
+    [[main loop]]
+        plugins = health check, auto restart
+        [[[auto restart]]]
+            interval = PT5S
     [[events]]
         abort on inactivity = True
         abort on timeout = True

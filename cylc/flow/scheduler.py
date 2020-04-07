@@ -15,8 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Cylc scheduler server."""
 
+import asyncio
 from collections import deque
-from errno import ENOENT
 from itertools import zip_longest
 import logging
 import os
@@ -35,6 +35,7 @@ from zmq.auth.thread import ThreadAuthenticator
 from metomi.isodatetime.parsers import TimePointParser
 
 from cylc.flow import LOG
+from cylc.flow import main_loop
 from cylc.flow.broadcast_mgr import BroadcastMgr
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.config import SuiteConfig
@@ -42,14 +43,12 @@ from cylc.flow.cycling.loader import get_point, standardise_point_string
 from cylc.flow.daemonize import daemonize
 from cylc.flow.exceptions import (
     CylcError,
-    HostSelectException,
     PointParsingError,
-    SuiteServiceFileError,
     TaskProxySequenceBoundsError
 )
 import cylc.flow.flags
 from cylc.flow.host_select import select_suite_host
-from cylc.flow.hostuserutil import get_host, get_user, get_fqdn_by_host
+from cylc.flow.hostuserutil import get_host, get_user
 from cylc.flow.job_pool import JobPool
 from cylc.flow.loggingutil import (
     TimestampRotatingFileHandler,
@@ -58,6 +57,7 @@ from cylc.flow.loggingutil import (
 from cylc.flow.network import API
 from cylc.flow.network.server import SuiteRuntimeServer
 from cylc.flow.network.publisher import WorkflowPublisher
+from cylc.flow.parsec.OrderedDict import DictTree
 from cylc.flow.parsec.util import printcfg
 from cylc.flow.parsec.validate import DurationFloat
 from cylc.flow.pathutil import (
@@ -180,6 +180,7 @@ class Scheduler(object):
         self.suite_log_dir = get_suite_run_log_dir(self.suite)
 
         self.config = None
+        self.cylc_config = None
 
         self.is_restart = is_restart
         self.template_vars = load_template_vars(
@@ -242,10 +243,11 @@ class Scheduler(object):
         self.previous_profile_point = 0
         self.count = 0
 
-        # health check settings
-        self.time_next_health_check = None
+        # auto-restart settings
         self.auto_restart_mode = None
         self.auto_restart_time = None
+
+        self.main_loop_plugins = None
 
     def start(self):
         """Start the server."""
@@ -256,7 +258,6 @@ class Scheduler(object):
 
         if self.is_restart:
             self.suite_db_mgr.restart_upgrade()
-
         try:
             if not self.options.no_detach:
                 daemonize(self)
@@ -308,6 +309,16 @@ class Scheduler(object):
             self.shutdown(exc)
             if self.auto_restart_mode == AutoRestartMode.RESTART_NORMAL:
                 self.suite_auto_restart()
+            # run shutdown coros
+            asyncio.get_event_loop().run_until_complete(
+                asyncio.gather(
+                    *main_loop.get_runners(
+                        self.main_loop_plugins,
+                        main_loop.CoroTypes.ShutDown,
+                        self
+                    )
+                )
+            )
             self.close_logs()
 
         except SchedulerError as exc:
@@ -464,8 +475,8 @@ see `COPYING' in the Cylc source distribution.
 
         self.broadcast_mgr.linearized_ancestors.update(
             self.config.get_linearized_ancestors())
-        self.task_events_mgr.mail_interval = self._get_cylc_conf(
-            "task event mail interval")
+        self.task_events_mgr.mail_interval = self.cylc_config[
+            "task event mail interval"]
         self.task_events_mgr.mail_footer = self._get_events_conf("mail footer")
         self.task_events_mgr.suite_url = self.config.cfg['meta']['URL']
         self.task_events_mgr.suite_cfg = self.config.cfg['meta']
@@ -537,6 +548,23 @@ see `COPYING' in the Cylc source distribution.
                 self.config.cfg['cylc']['events'][key] = DurationFloat(180)
         if self._get_events_conf(key):
             self.set_suite_inactivity_timer()
+
+        # Main loop plugins
+        self.main_loop_plugins = main_loop.load(
+            # TODO: this doesn't work, we need to merge the two configs
+            self.cylc_config.get('main loop', {}),
+            self.options.main_loop
+        )
+
+        asyncio.get_event_loop().run_until_complete(
+            asyncio.gather(
+                *main_loop.get_runners(
+                    self.main_loop_plugins,
+                    main_loop.CoroTypes.StartUp,
+                    self
+                )
+            )
+        )
 
         self.profiler.log_memory("scheduler.py: end configure")
 
@@ -1017,8 +1045,8 @@ see `COPYING' in the Cylc source distribution.
         self.broadcast_mgr.linearized_ancestors = (
             self.config.get_linearized_ancestors())
         self.pool.set_do_reload(self.config)
-        self.task_events_mgr.mail_interval = self._get_cylc_conf(
-            "task event mail interval")
+        self.task_events_mgr.mail_interval = self.cylc_config[
+            'task event mail interval']
         self.task_events_mgr.mail_footer = self._get_events_conf("mail footer")
 
         # Log tasks that have been added by the reload, removed tasks are
@@ -1122,6 +1150,10 @@ see `COPYING' in the Cylc source distribution.
             log_dir=self.suite_log_dir,
             work_dir=self.suite_work_dir,
             share_dir=self.suite_share_dir,
+        )
+        self.cylc_config = DictTree(
+            self.config.cfg['cylc'],
+            glbl_cfg().get(['cylc'])
         )
         self.suiterc_update_time = time()
         # Dump the loaded suiterc for future reference.
@@ -1274,7 +1306,6 @@ see `COPYING' in the Cylc source distribution.
             self.hold_suite()
         self.run_event_handlers(self.EVENT_STARTUP, 'suite starting')
         self.profiler.log_memory("scheduler.py: begin run while loop")
-        self.time_next_health_check = None
         self.is_updated = True
         if self.options.profile_mode:
             self.previous_profile_point = 0
@@ -1352,7 +1383,7 @@ see `COPYING' in the Cylc source distribution.
         if not self.config.run_mode('simulation'):
             self.task_job_mgr.check_task_jobs(self.suite, self.pool)
 
-    def suite_shutdown(self):
+    async def suite_shutdown(self):
         """Determines if the suite can be shutdown yet."""
         if self.pool.check_abort_on_task_fails():
             self._set_stop(StopMode.AUTO_ON_TASK_FAILURE)
@@ -1367,7 +1398,7 @@ see `COPYING' in the Cylc source distribution.
 
         # Is the suite ready to shut down now?
         if self.pool.can_stop(self.stop_mode):
-            self.update_data_structure()
+            await self.update_data_structure()
             self.proc_pool.close()
             if self.stop_mode != StopMode.REQUEST_NOW_NOW:
                 # Wait for process pool to complete,
@@ -1454,173 +1485,6 @@ see `COPYING' in the Cylc source distribution.
             'manual restart required.', max_retries)
         return False
 
-    def set_auto_restart(self, restart_delay=None,
-                         mode=AutoRestartMode.RESTART_NORMAL):
-        """Configure the suite to automatically stop and restart.
-
-        Restart handled by `suite_auto_restart`.
-
-        Args:
-            restart_delay (cylc.flow.parsec.DurationFloat):
-                Suite will wait a random period between 0 and
-                `restart_delay` seconds before attempting to stop/restart in
-                order to avoid multiple suites restarting simultaneously.
-            mode (str): Auto stop-restart mode.
-
-        Return:
-            bool: False if it is not possible to automatically stop/restart
-            the suite due to its configuration/runtime state.
-        """
-        # Check that the suite isn't already shutting down.
-        if self.stop_mode:
-            return True
-
-        # Force mode, stop the suite now, don't restart it.
-        if mode == AutoRestartMode.FORCE_STOP:
-            if self.auto_restart_time:
-                LOG.info('Scheduled automatic restart canceled')
-            self.auto_restart_time = time()
-            self.auto_restart_mode = mode
-            return True
-
-        # Check suite isn't already scheduled to auto-stop.
-        if self.auto_restart_time is not None:
-            return True
-
-        # Suite host is condemned and suite running in no detach mode.
-        # Raise an error to cause the suite to abort.
-        # This should raise an "abort" event and return a non-zero code to the
-        # caller still attached to the suite process.
-        if self.options.no_detach:
-            raise RuntimeError('Suite host condemned in no detach mode')
-
-        # Check suite is able to be safely restarted.
-        if not self.can_auto_restart():
-            return False
-
-        LOG.info('Suite will automatically restart on a new host.')
-        if restart_delay is not None and restart_delay != 0:
-            if restart_delay > 0:
-                # Delay shutdown by a random interval to avoid many
-                # suites restarting simultaneously.
-                from random import random
-                shutdown_delay = int(random() * restart_delay)
-            else:
-                # Un-documented feature, schedule exact restart interval for
-                # testing purposes.
-                shutdown_delay = abs(int(restart_delay))
-            shutdown_time = time() + shutdown_delay
-            LOG.info('Suite will restart in %ss (at %s)', shutdown_delay,
-                     time2str(shutdown_time))
-            self.auto_restart_time = shutdown_time
-        else:
-            self.auto_restart_time = time()
-
-        self.auto_restart_mode = AutoRestartMode.RESTART_NORMAL
-
-        return True
-
-    def can_auto_restart(self):
-        """Determine whether this suite can safely auto stop-restart."""
-        # Check whether there is currently an available host to restart on.
-        try:
-            select_suite_host(cached=False)
-        except HostSelectException:
-            LOG.critical(
-                'Suite cannot automatically restart because:\n' +
-                'No alternative host to restart suite on.')
-            return False
-        except Exception:
-            # Any unexpected error in host selection shouldn't be able to take
-            # down the suite.
-            LOG.critical(
-                'Suite cannot automatically restart because:\n' +
-                'Error in host selection:\n' +
-                traceback.format_exc())
-            return False
-        else:
-            return True
-
-    def suite_health_check(self, has_changes):
-        """Detect issues with the suite or its environment and act accordingly.
-
-        Check if:
-
-        1. Suite is stalled?
-        2. Suite host is condemned?
-        3. Suite run directory still there?
-        4. Suite contact file has the right info?
-
-        """
-        # 1. check if suite is stalled - if so call handler if defined
-        if self.stop_mode is None and not has_changes:
-            self.check_suite_stalled()
-
-        now = time()
-        if (self.time_next_health_check is None or
-                now > self.time_next_health_check):
-            LOG.debug('Performing suite health check')
-
-            # 2. check if suite host is condemned - if so auto restart.
-            if self.stop_mode is None:
-                current_glbl_cfg = glbl_cfg(cached=False)
-                for host in current_glbl_cfg.get(['suite servers',
-                                                  'condemned hosts']):
-                    if host.endswith('!'):
-                        # host ends in an `!` -> force shutdown mode
-                        mode = AutoRestartMode.FORCE_STOP
-                        host = host[:-1]
-                    else:
-                        # normal mode (stop and restart the suite)
-                        mode = AutoRestartMode.RESTART_NORMAL
-                        if self.auto_restart_time is not None:
-                            # suite is already scheduled to stop-restart only
-                            # AutoRestartMode.FORCE_STOP can override this.
-                            continue
-
-                    if get_fqdn_by_host(host) == self.host:
-                        # this host is condemned, take the appropriate action
-                        LOG.info('The Cylc suite host will soon become '
-                                 'un-available.')
-                        if mode == AutoRestartMode.FORCE_STOP:
-                            # server is condemned in "force" mode -> stop
-                            # the suite, don't attempt to restart
-                            LOG.critical(
-                                'This suite will be shutdown as the suite '
-                                'host is unable to continue running it.\n'
-                                'When another suite host becomes available '
-                                'the suite can be restarted by:\n'
-                                '    $ cylc restart %s', self.suite)
-                            if self.set_auto_restart(mode=mode):
-                                return  # skip remaining health checks
-                        elif (self.set_auto_restart(current_glbl_cfg.get(
-                                ['suite servers', 'auto restart delay']))):
-                            # server is condemned -> configure the suite to
-                            # auto stop-restart if possible, else, report the
-                            # issue preventing this
-                            return  # skip remaining health checks
-                        break
-
-            # 3. check if suite run dir still present - if not shutdown.
-            if not os.path.exists(self.suite_run_dir):
-                raise OSError(ENOENT, os.strerror(ENOENT), self.suite_run_dir)
-
-            # 4. check if contact file consistent with current start - if not
-            #    shutdown.
-            try:
-                contact_data = suite_files.load_contact_file(
-                    self.suite)
-                if contact_data != self.contact_data:
-                    raise AssertionError('contact file modified')
-            except (AssertionError, IOError, ValueError,
-                    SuiteServiceFileError) as exc:
-                LOG.error(
-                    "%s: contact file corrupted/modified and may be left",
-                    suite_files.get_contact_file(self.suite))
-                raise exc
-            self.time_next_health_check = (
-                now + self._get_cylc_conf('health check interval'))
-
     def update_profiler_logs(self, tinit):
         """Update info for profiler."""
         now = time()
@@ -1635,10 +1499,16 @@ see `COPYING' in the Cylc source distribution.
         self.count += 1
 
     def run(self):
-        """Main loop."""
+        """Run the main loop."""
         self.initialise_scheduler()
         self.data_store_mgr.initiate_data_model()
-        self.publisher.publish(self.data_store_mgr.get_publish_deltas())
+        asyncio.get_event_loop().run_until_complete(
+            self.publisher.publish(self.data_store_mgr.get_publish_deltas())
+        )
+        asyncio.get_event_loop().run_until_complete(self.main_loop())
+
+    async def main_loop(self):
+        """The scheduler main loop."""
         while True:  # MAIN LOOP
             tinit = time()
             has_reloaded = False
@@ -1668,11 +1538,11 @@ see `COPYING' in the Cylc source distribution.
             # Re-initialise data model on reload
             if has_reloaded:
                 self.data_store_mgr.initiate_data_model(reloaded=True)
-                self.publisher.publish(
+                await self.publisher.publish(
                     self.data_store_mgr.get_publish_deltas())
             # Update state summary, database, and uifeed
             self.suite_db_mgr.put_task_event_timers(self.task_events_mgr)
-            has_updated = self.update_data_structure()
+            has_updated = await self.update_data_structure()
 
             self.process_suite_db_queue()
 
@@ -1684,13 +1554,23 @@ see `COPYING' in the Cylc source distribution.
             self.timeout_check()
 
             # Does the suite need to shutdown on task failure?
-            self.suite_shutdown()
-
-            # Suite health checks
-            self.suite_health_check(has_updated)
+            await self.suite_shutdown()
 
             if self.options.profile_mode:
                 self.update_profiler_logs(tinit)
+
+            # Run plugin functions
+            await asyncio.gather(
+                *main_loop.get_runners(
+                    self.main_loop_plugins,
+                    main_loop.CoroTypes.Periodic,
+                    self
+                )
+            )
+
+            if not has_updated and not self.stop_mode:
+                # Has the suite stalled?
+                self.check_suite_stalled()
 
             # Sleep a bit for things to catch up.
             # Quick sleep if there are items pending in process pool.
@@ -1701,16 +1581,17 @@ see `COPYING' in the Cylc source distribution.
                     quick_mode and elapsed >= self.INTERVAL_MAIN_LOOP_QUICK):
                 # Main loop has taken quite a bit to get through
                 # Still yield control to other threads by sleep(0.0)
-                sleep(0.0)
+                duration = 0
             elif quick_mode:
-                sleep(self.INTERVAL_MAIN_LOOP_QUICK - elapsed)
+                duration = self.INTERVAL_MAIN_LOOP_QUICK - elapsed
             else:
-                sleep(self.INTERVAL_MAIN_LOOP - elapsed)
+                duration = self.INTERVAL_MAIN_LOOP - elapsed
+            await asyncio.sleep(duration)
             # Record latest main loop interval
             self.main_loop_intervals.append(time() - tinit)
             # END MAIN LOOP
 
-    def update_data_structure(self):
+    async def update_data_structure(self):
         """Update DB, UIS, Summary data elements"""
         updated_tasks = [
             t for t in self.pool.get_all_tasks() if t.state.is_updated]
@@ -1722,7 +1603,7 @@ see `COPYING' in the Cylc source distribution.
             # WServer incremental data store update
             self.data_store_mgr.update_data_structure(updated_nodes)
             # Publish updates:
-            self.publisher.publish(
+            await self.publisher.publish(
                 self.data_store_mgr.get_publish_deltas())
             # TODO: deprecate after CLI GraphQL migration
             self.state_summary_mgr.update(self)
@@ -1864,8 +1745,11 @@ see `COPYING' in the Cylc source distribution.
         if self.server:
             self.server.stop()
         if self.publisher:
-            self.publisher.publish(
-                [(b'shutdown', f'{str(reason)}'.encode('utf-8'))])
+            asyncio.get_event_loop().run_until_complete(
+                self.publisher.publish(
+                    [(b'shutdown', f'{str(reason)}'.encode('utf-8'))]
+                )
+            )
             self.publisher.stop()
         self.curve_auth.stop()  # stop the authentication thread
 
@@ -2087,20 +1971,6 @@ see `COPYING' in the Cylc source distribution.
             LOG.warning("Cannot get CPU % statistics: %s" % exc)
             return
         self._update_profile_info("CPU %", cpu_frac, amount_format="%.1f")
-
-    def _get_cylc_conf(self, key, default=None):
-        """Return a named setting under [cylc] from suite.rc or flow.rc."""
-        for getter in [self.config.cfg['cylc'], glbl_cfg().get(['cylc'])]:
-            try:
-                value = getter[key]
-            except TypeError:
-                continue
-            except KeyError:
-                pass
-            else:
-                if value is not None:
-                    return value
-        return default
 
     def _get_events_conf(self, key, default=None):
         """Return a named [cylc][[events]] configuration."""
