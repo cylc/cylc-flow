@@ -196,7 +196,7 @@ def help_info(app):
 
 def context(app):
     value = app.tree_walker.get_focus()[0].get_node().get_value()
-    selection = [value['id_']]  # single selection ATM
+    selection = [value['id_']]  # single selection ATM
 
     def _mutate(mutation, _):
         mutate(app.client, mutation, selection)

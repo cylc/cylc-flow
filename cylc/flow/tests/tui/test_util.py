@@ -217,7 +217,7 @@ def test_compute_tree():
                 'parents': [],
                 'cyclePoint': '1',
                 'jobs': [
-                    # mess up the order just for fun
+                    # mess up the order just for fun
                     {'id': 'job3', 'submitNum': '3'},
                     {'id': 'job1', 'submitNum': '1'},
                     {'id': 'job2', 'submitNum': '2'}
@@ -230,7 +230,7 @@ def test_compute_tree():
     assert tree['type_'] == 'workflow'
     assert tree['id_'] == 'workflow id'
     assert list(tree['data']) == [
-        # whatever if present on the node should end up in data
+        # whatever if present on the node should end up in data
         'id',
         'cyclePoints',
         'familyProxies',
@@ -251,7 +251,7 @@ def test_compute_tree():
         node['id_']
         for node in cycle['children']
     ] == [
-        # test alphabetical sorting
+        # test alphabetical sorting
         '1|FOO',
         '1|baz',
         '1|pub',
@@ -270,7 +270,7 @@ def test_compute_tree():
     ]
     assert len(family['children']) == 1
 
-    # test nested family
+    # test nested family
     nested_family = family['children'][0]
     assert nested_family['type_'] == 'family'
     assert nested_family['id_'] == '1|FOOT'
@@ -295,9 +295,9 @@ def test_compute_tree():
     ]
     assert len(task['children']) == 0
 
-    # test task with jobs
+    # test task with jobs
     task = cycle['children'][-1]
-    assert [  # test sorting
+    assert [  # test sorting
         job['id_']
         for job in task['children']
     ] == [
@@ -306,7 +306,7 @@ def test_compute_tree():
         'job1'
     ]
 
-    # test job
+    # test job
     job = task['children'][0]
     assert job['type_'] == 'job'
     assert job['id_'] == 'job3'
@@ -316,7 +316,7 @@ def test_compute_tree():
     ]
     assert len(job['children']) == 1
 
-    # test job info
+    # test job info
     job_info = job['children'][0]
     assert job_info['type_'] == 'job_info'
     assert job_info['id_'] == 'job3_info'
