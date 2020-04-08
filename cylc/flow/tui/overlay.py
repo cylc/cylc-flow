@@ -206,6 +206,10 @@ def context(app):
         urwid.SimpleFocusListWalker(
             [
                 urwid.Text('Action'),
+                urwid.Button(
+                    '(cancel)',
+                    on_press=lambda *_: app.close_topmost()
+                ),
                 urwid.Divider()
             ] + [
                 urwid.Button(
@@ -219,5 +223,5 @@ def context(app):
 
     return (
         widget,
-        {'width': 30, 'height': 10}
+        {'width': 30, 'height': 12}
     )
