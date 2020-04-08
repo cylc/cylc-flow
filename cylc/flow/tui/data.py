@@ -158,7 +158,6 @@ def mutate(client, mutation, selection):
     res = client(
         'graphql',
         {
-            # 'request_string': MUTATION_TEMPLATES[selection_type],
             'request_string': request_string,
             'variables': variables
         }

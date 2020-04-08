@@ -170,7 +170,6 @@ def compute_tree(flow):
         else:
             node['children'].sort(
                 key=lambda x: x['id_']
-                # reverse=True
             )
 
     return flow_node
