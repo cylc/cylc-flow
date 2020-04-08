@@ -20,11 +20,17 @@
 # Ref:
 #  - https://slurm.schedmd.com/sbatch.html#lbAH
 #  - https://github.com/cylc/cylc-flow/pull/3531
+export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-if [[ -z "${CYLC_TEST_BATCH_SLURM+x}" || -z "${CYLC_TEST_BATCH_SLURM}" || "${CYLC_TEST_BATCH_SLURM}" == None ]]
+# export an environment variable for this - allows a script to be used to
+# select a compute node and have that same host used by the suite.
+BATCH_SYS_NAME="slurm"
+RC_PREF="[test battery][batch systems][${BATCH_SYS_NAME}]"
+CYLC_TEST_BATCH_TASK_HOST=$(cylc get-global-config -i "${RC_PREF}host" 2>'/dev/null')
+if [[ -z "${CYLC_TEST_BATCH_TASK_HOST}" || "${CYLC_TEST_BATCH_TASK_HOST}" == None ]]
 then
-    skip_all "no slurm installation"
+    skip_all "\"[test battery][batch systems][$BATCH_SYS_NAME]host\" not defined"
 fi
 #-------------------------------------------------------------------------------
 set_test_number 1
