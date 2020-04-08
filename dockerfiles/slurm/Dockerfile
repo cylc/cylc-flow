@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y \
     supervisor \
     python3.7 \
     python3-pip \
+    python3.7-dev \
     && python3.7 -m pip install -U pip setuptools \
     && rm -rf /var/lib/apt/lists/*
 
