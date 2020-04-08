@@ -311,9 +311,11 @@ class CoroTypes:
 
 def load(config, additional_plugins=None):
     additional_plugins = additional_plugins or []
-    entry_points = pkg_resources.get_entry_map(
-        'cylc-flow'
-    ).get('main_loop', {})
+    entry_points = {
+        entry_point.name: entry_point
+        for entry_point in
+        pkg_resources.iter_entry_points('main_loop')
+    }
     plugins = {
         'state': {},
         'timings': {}
