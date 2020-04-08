@@ -1,0 +1,4 @@
+[test battery]
+[[batch systems]]
+[[[slurm]]]
+host = docker
