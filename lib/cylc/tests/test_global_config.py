@@ -50,7 +50,7 @@ class TestGlobalConfig(unittest.TestCase):
             'retrieve job logs retry delays': 'PT10S, PT30S, PT1M, PT3M',
             'submission polling intervals': 'PT10S, PT30S',
             'execution polling intervals': 'PT10S, PT30S'
-            }
+        }
 
         globalrc_content = """
 [hosts]
