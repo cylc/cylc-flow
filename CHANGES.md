@@ -48,6 +48,9 @@ SLURM when task name has a percent `%` character.
 [#3539](https://github.com/cylc/cylc-flow/pull/3539) - Don't warn that a task
 was already added to an internal queue, if the queue is the same.
 
+[#3508](https://github.com/cylc/cylc-flow/pull/3508) - Fix list-valued global
+config items not defaulting to localhost values.
+
 -------------------------------------------------------------------------------
 ## __cylc-7.8.4 (2019-09-04)__
 
