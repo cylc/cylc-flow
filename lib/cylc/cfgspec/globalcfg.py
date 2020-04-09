@@ -496,6 +496,7 @@ class GlobalConfig(ParsecConfig):
 
         # is there a matching host section?
         host_key = None
+        print(host_key)
         if host in cfg['hosts']:
             # there's an entry for this host
             host_key = host
@@ -506,6 +507,7 @@ class GlobalConfig(ParsecConfig):
                     host_key = cfg_host
                     break
         modify_dirs = False
+        print(host_key)
         if host_key is not None:
             # entry exists, any unset items under it have already
             # defaulted to modified localhost values (see site cfgspec)
@@ -527,6 +529,7 @@ class GlobalConfig(ParsecConfig):
         if item == "task communication method" and value == "default":
             # Translate "default" to client-server comms: "https" or "http".
             value = cfg['communication']['method']
+        print(value)
         return value
 
     def roll_directory(self, dir_, name, archlen=0):
