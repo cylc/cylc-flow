@@ -55,3 +55,6 @@ lib/cherrypy/test/test.conf
 
 # pipenv
 Pipfile
+
+# distutils files
+*.egg-info
