@@ -60,7 +60,8 @@ class TestGlobalConfig(unittest.TestCase):
             globalrc_content += "%s = %s\n" % (key, val)
         globalrc_content += """
    [[foo]]
-      # (default to localhost!)"""
+      # (default to localhost!)
+"""
 
         # Write the global config file.
         with open(globalrc_file, mode="w") as f:
@@ -69,7 +70,7 @@ class TestGlobalConfig(unittest.TestCase):
 
         # Parse the global config file and check values for host "foo" have
         # inherited localhost values.
-        global_config = GlobalConfig.get_inst()
+        global_config = GlobalConfig.get_inst(cached=False)
         validator = CylcConfigValidator()
 
         for key in items.keys():
