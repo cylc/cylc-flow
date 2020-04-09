@@ -27,7 +27,7 @@ class TestGlobalConfig(unittest.TestCase):
     """Test class for the Cylc global config object."""
 
     def test_localhost_default_list_items(self):
-        """List items shold default to localhost values, like non-list items.
+        """List items should default to localhost values, like non-list items.
 
         See GitHub 3508
 
@@ -77,7 +77,7 @@ class TestGlobalConfig(unittest.TestCase):
                 coercer = validator.coerce_str_list
             else:
                 coercer = validator.coerce_interval_list
-            host_item = global_config.get_host_item(item=key, host='foo')
+            host_item = global_config.dense['hosts']['foo'][key]
             self.assertTrue(host_item == coercer(items[key], []))
 
         shutil.rmtree(conf_dir)
