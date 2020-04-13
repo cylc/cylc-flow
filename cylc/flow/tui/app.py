@@ -31,7 +31,6 @@ from cylc.flow.exceptions import (
 from cylc.flow.task_state import (
     TASK_STATUSES_ORDERED,
     TASK_STATUS_RUNAHEAD,
-    TASK_STATUS_WAITING,
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_RUNNING,
     TASK_STATUS_FAILED,
@@ -54,8 +53,6 @@ from cylc.flow.tui.tree import (
 from cylc.flow.tui.util import (
     compute_tree,
     dummy_flow,
-    get_job_icon,
-    get_task_icon,
     get_task_status_summary,
     get_workflow_status_str,
     render_node
