@@ -56,6 +56,7 @@ ENV USER=root
 WORKDIR /
 
 COPY flow-tests.rc /root/.cylc/flow/8.0a1/flow-tests.rc
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.7 1
 
 EXPOSE 10389 6817 6818
 CMD /usr/bin/supervisord
