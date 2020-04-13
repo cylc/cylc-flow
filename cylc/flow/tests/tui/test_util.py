@@ -160,12 +160,6 @@ def test_compute_tree():
             }
         ],
         'familyProxies': [
-            {  # root family node
-                'name': 'root',
-                'id': '1|root',
-                'cyclePoint': '1',
-                'firstParent': None
-            },
             {  # top level family
                 'name': 'FOO',
                 'id': '1|FOO',
@@ -217,10 +211,9 @@ def test_compute_tree():
                 'parents': [],
                 'cyclePoint': '1',
                 'jobs': [
-                    # mess up the order just for fun
                     {'id': 'job3', 'submitNum': '3'},
-                    {'id': 'job1', 'submitNum': '1'},
-                    {'id': 'job2', 'submitNum': '2'}
+                    {'id': 'job2', 'submitNum': '2'},
+                    {'id': 'job1', 'submitNum': '1'}
                 ]
             }
         ]
