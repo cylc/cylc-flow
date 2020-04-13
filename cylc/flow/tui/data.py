@@ -20,7 +20,7 @@ QUERY = '''
           id
           name
         }
-        jobs {
+        jobs(sort: { keys: ["submit_num"], reverse: true}) {
           id
           submitNum
           state

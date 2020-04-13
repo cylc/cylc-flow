@@ -150,12 +150,7 @@ def compute_tree(flow):
 
     # sort
     for (type_, _), node in nodes.items():
-        if type_ == 'task':
-            node['children'].sort(
-                key=lambda x: x['data']['submitNum'],
-                reverse=True
-            )
-        else:
+        if type_ != 'task':
             node['children'].sort(
                 key=lambda x: x['id_']
             )
