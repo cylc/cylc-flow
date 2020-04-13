@@ -33,7 +33,7 @@ QUERY = '''
           meanElapsedTime
         }
       }
-      familyProxies(states: $taskStates) {
+      familyProxies(exids: ["root"], states: $taskStates) {
         id
         name
         cyclePoint
