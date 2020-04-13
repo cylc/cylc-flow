@@ -58,6 +58,8 @@ def translate_collapsing(app, old_node, new_node):
     """Transfer the collapse state from one tree to another.
 
     Arguments:
+        app (TuiApp):
+            Tui app instance.
         old_node (MonitorNode):
             Any node in the tree you want to copy the
             collapse/expand state from.

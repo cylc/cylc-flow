@@ -52,6 +52,10 @@ def get_task_icon(status, is_held, start_time=None, mean_time=None):
             A Cylc task status string.
         is_held (bool):
             True if the task is in a held state.
+        start_time (str):
+            Start date time string.
+        mean_time (int):
+            Execution mean time.
 
     Returns:
         list - Text content for the urwid.Text widget,
