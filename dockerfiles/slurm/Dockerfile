@@ -8,6 +8,7 @@ ENV DEBIAN_FRONTEND noninteractive
 #  - https://stackoverflow.com/questions/46966876/installing-emulating-slurm-on-an-ubuntu-16-04-desktop-slurmd-fails-to-start
 
 RUN apt-get update && apt-get install -y \
+    at \
     lsof \
     munge \
     slurm-wlm \
