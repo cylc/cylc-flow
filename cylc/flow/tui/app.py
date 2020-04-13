@@ -314,7 +314,7 @@ class TuiApp:
                     }
                 }
             )
-        except SuiteStopped as exc:
+        except SuiteStopped:
             self.client = None
             return dummy_flow({
                 'name': self.reg,

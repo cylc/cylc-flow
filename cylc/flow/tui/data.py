@@ -140,7 +140,6 @@ def context_to_variables(context):
 
     """
     # context_to_variables because it can only handle single-selection ATM
-    selection_type = list(context)[-1]
     variables = {'workflow': context['workflow']}
     if 'task' in context:
         variables['task'] = [
@@ -155,7 +154,7 @@ def mutate(client, mutation, selection):
     context = extract_context(selection)
     variables = context_to_variables(context)
     request_string = generate_mutation(mutation, variables)
-    res = client(
+    client(
         'graphql',
         {
             'request_string': request_string,
