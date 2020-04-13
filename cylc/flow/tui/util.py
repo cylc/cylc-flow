@@ -106,27 +106,24 @@ def compute_tree(flow):
 
     # populate family nodes
     for family in flow['familyProxies']:
-        if family['name'] != 'root':
-            family_node = add_node(
-                'family', family['id'], nodes, data=family)
+        add_node('family', family['id'], nodes, data=family)
 
     # create cycle/family tree
     for family in flow['familyProxies']:
-        if family['name'] != 'root':
-            family_node = add_node(
-                'family', family['id'], nodes)
-            first_parent = family['firstParent']
-            if (
-                    first_parent
-                    and first_parent['name'] != 'root'
-            ):
-                parent_node = add_node(
-                    'family', first_parent['id'], nodes)
-                parent_node['children'].append(family_node)
-            else:
-                add_node(
-                    'cycle', idpop(family['id']), nodes
-                )['children'].append(family_node)
+        family_node = add_node(
+            'family', family['id'], nodes)
+        first_parent = family['firstParent']
+        if (
+                first_parent
+                and first_parent['name'] != 'root'
+        ):
+            parent_node = add_node(
+                'family', first_parent['id'], nodes)
+            parent_node['children'].append(family_node)
+        else:
+            add_node(
+                'cycle', idpop(family['id']), nodes
+            )['children'].append(family_node)
 
     # add leaves
     for task in flow['taskProxies']:
