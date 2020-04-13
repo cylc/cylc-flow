@@ -80,7 +80,7 @@ class TuiWidget(urwid.TreeWidget):
     """
 
     # allows leaf nodes to be selectable, otherwise the cursor
-    # will skip rows when the user naviages
+    # will skip rows when the user navigates
     unexpandable_icon = SelectableIcon(' ', 0)
 
     def __init__(self, node, max_depth=None):
