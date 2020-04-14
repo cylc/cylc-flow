@@ -1,4 +1,4 @@
 [test battery]
 [[batch systems]]
 [[[slurm]]]
-host = docker
+host = localhost
