@@ -314,7 +314,7 @@ def load(config, additional_plugins=None):
     entry_points = {
         entry_point.name: entry_point
         for entry_point in
-        pkg_resources.iter_entry_points('main_loop')
+        pkg_resources.iter_entry_points('cylc.main_loop')
     }
     plugins = {
         'state': {},
