@@ -76,7 +76,7 @@ validation shows incorrect context.
 [#3531](https://github.com/cylc/cylc-flow/pull/3531) - Fix job submission to
 SLURM when task name has a percent `%` character.
 
-[#3543](https://github.com/cylc/cylc-flow/pull/3403) - fixed pipe polling
+[#3543](https://github.com/cylc/cylc-flow/pull/3543) - fixed pipe polling
 issue observed on darwin (BSD) which could cause Cylc to hang.
 
 -------------------------------------------------------------------------------
@@ -347,7 +347,7 @@ possible to disable auto shutdown on the command line.
 [#3236](https://github.com/cylc/cylc-flow/pull/3236) - Fix submit number
 increment logic on insert of family with tasks that were previously submitted.
 
-[#3276](https://github.com/cylc/cylc-flow/pull/3236) - Fix log & DB recording
+[#3276](https://github.com/cylc/cylc-flow/pull/3276) - Fix log & DB recording
 of broadcasts from xtriggers so they register all settings, not just one.
 
 [#3325](https://github.com/cylc/cylc-flow/pull/3325) - Fix task event handler
@@ -740,7 +740,7 @@ execution timeout (configured pre-poll delays were being ignored).
 [#2656](https://github.com/cylc/cylc-flow/pull/2656) - fix suicide triggers with
 multiple prerequisites in the same graph line. 
 
-[#2638](https://github.com/cylc/cylc-flow/pull/2618) - fix duplicate "failed" task
+[#2638](https://github.com/cylc/cylc-flow/pull/2638) - fix duplicate "failed" task
 events after `cylc stop --kill`.
 
 [#2653](https://github.com/cylc/cylc-flow/pull/2653) - tidy and correct the main `cylc
@@ -1275,7 +1275,7 @@ reflect significant changes included in 7.1.1 - esp. job file refactoring).
 
 ### Highlighted Changes
 
-[#2189](https://github.com/cylc/cylc-flow/pull/2184): New `assert` and
+[#2189](https://github.com/cylc/cylc-flow/pull/2189): New `assert` and
 `raise` functions for handling Jinja2 errors in suites.
 
 ### Other Changes
@@ -1726,8 +1726,8 @@ intervals in cylc config files, e.g. `execution timeout = # (nothing)`.
 6.10.0) causing shutdown on reload of a suite after removing a task and its
 runtime definition.
 
-[#1864](https://github.com/cylc/cylc-flow/pull/): Stronger checks to prevent users 
-starting a second instance of a suite that is already running.
+[#1864](https://github.com/cylc/cylc-flow/pull/1864): Stronger checks to prevent
+users starting a second instance of a suite that is already running.
 
 [#1869](https://github.com/cylc/cylc-flow/pull/1869): Fixed day-of-week cycling.
 
@@ -1738,8 +1738,8 @@ its prerequisites were satisfied.
 [#1855](https://github.com/cylc/cylc-flow/pull/1855): Allow inserted tasks to be
 released to the `waiting` immediately, even if the suite is currently quiet.
 
-[#1854](https://github.com/cylc/cylc-flow/pull/): Restore wildcards to allow 
-insertion of multiple tasks at once (inadvertently disallowed at 6.10.0). 
+[#1854](https://github.com/cylc/cylc-flow/pull/1854): Restore wildcards to
+allow insertion of multiple tasks at once (inadvertently disallowed at 6.10.0).
 
 [#1853](https://github.com/cylc/cylc-flow/pull/1853): Fixed a recent bug (since
 6.10.1): reset task outputs to incomplete on manually retriggering or resetting
@@ -1854,7 +1854,7 @@ the same name.
 [#1762](https://github.com/cylc/cylc-flow/pull/1762): Fixed polling of jobs
 submitted to loadleveler (broken since 6.8.1).
 
-[#1816](https://github.com/cylc/cylc-flow/pull/1819),
+[#1816](https://github.com/cylc/cylc-flow/pull/1816),
 [#1779](https://github.com/cylc/cylc-flow/pull/1779): Allow task names that contain
 family names after a hyphen.
 
