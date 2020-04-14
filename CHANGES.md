@@ -160,6 +160,9 @@ task outputs/message triggers are now validated.
 workflow in a sub-directory of a run directory (as `cylc scan` would not be
 able to find it).
 
+[#3452](https://github.com/cylc/cylc-flow/pull/3452) - Fix param graph
+issue when mixing offset and conditional (e.g. foo<m-1> & baz => foo<m>).
+
 -------------------------------------------------------------------------------
 ## __cylc-8.0a2 (2020-07-03)__
 
