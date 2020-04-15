@@ -77,6 +77,7 @@ RE_EXT_TRIGGER = re.compile(r'(.*)\s*\(\s*(.+)\s*\)\s*')
 RE_SEC_MULTI_SEQ = re.compile(r'(?![^(]+\)),')
 RE_SUITE_NAME_VAR = re.compile(r'\${?CYLC_SUITE_(REG_)?NAME}?')
 RE_TASK_NAME_VAR = re.compile(r'\${?CYLC_TASK_NAME}?')
+RE_VARNAME = re.compile(r'^[a-zA-Z_][\w]*$')
 
 
 def check_varnames(env):
@@ -86,7 +87,7 @@ def check_varnames(env):
     """
     bad = []
     for varname in env:
-        if not re.match(r'^[a-zA-Z_][\w]*$', varname):
+        if not RE_VARNAME.match(varname):
             bad.append(varname)
     return bad
 
