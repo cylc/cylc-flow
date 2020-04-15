@@ -72,8 +72,8 @@ with Conf(
 
             ``http://my-site.com/suites/%(suite_name)s/index.html``
         ''')
-        Conf('__MANY__', VDR.V_STRING, '', desc='''
-            Replace ``__MANY__`` with any user-defined metadata item. These,
+        Conf('<custom metadata>', VDR.V_STRING, '', desc='''
+            Any user-defined metadata item. These,
             like title, URL, etc. can be passed to suite event handlers to be
             interpreted according to your needs. For example,
             "suite-priority".
@@ -92,20 +92,20 @@ with Conf(
         Conf('disable automatic shutdown', VDR.V_BOOLEAN)
 
         with Conf('main loop'):
-            with Conf('__MANY__'):
+            with Conf('<plugin name>'):
                 Conf('interval', VDR.V_INTERVAL)
 
         with Conf('simulation'):
             Conf('disable suite event handlers', VDR.V_BOOLEAN, True)
 
         with Conf('environment'):
-            Conf('__MANY__', VDR.V_STRING)
+            Conf('<variable>', VDR.V_STRING)
 
         with Conf('parameters'):
-            Conf('__MANY__', VDR.V_PARAMETER_LIST)
+            Conf('<parameter>', VDR.V_PARAMETER_LIST)
 
         with Conf('parameter templates'):
-            Conf('__MANY__', VDR.V_STRING)
+            Conf('<parameter>', VDR.V_STRING)
 
         with Conf('events'):
             Conf('handlers', VDR.V_STRING_LIST, None)
@@ -263,10 +263,8 @@ with Conf(
                 ''')
                 Conf('members', VDR.V_STRING_LIST, desc='All tasks.''')
 
-            with Conf('__MANY__', desc='''
-                Section heading for configuration of a single queue. Replace
-                ``__QUEUE__`` with a queue name, and repeat the section as
-                required.
+            with Conf('<queue name>', desc='''
+                Section heading for configuration of a single queue.
             '''):
                 Conf('limit', VDR.V_INTEGER, 0, desc='''
                     The maximum number of active tasks allowed at any one
@@ -359,10 +357,9 @@ with Conf(
                 This section is for *External Trigger* function declarations -
                 see :ref:`Section External Triggers`.
         '''):
-            Conf('__MANY__', VDR.V_XTRIGGER, desc='''
-                Replace ``__MANY__`` with any user-defined event trigger
-                function declarations and corresponding labels for use in the
-                graph.
+            Conf('<xtrigger name>', VDR.V_XTRIGGER, desc='''
+                Any user-defined event trigger function declarations and
+                corresponding labels for use in the graph.
 
                 See :ref:`Section External Triggers` for details.
 
@@ -375,8 +372,8 @@ with Conf(
             or by right clicking on the suite in the db viewer.  See also
             :ref:`ConfiguringScheduling`.
         '''):
-            Conf('__MANY__', VDR.V_STRING, desc='''
-                The ``__RECURRENCE__`` defines the sequence of cycle points
+            Conf('<recurrence>', VDR.V_STRING, desc='''
+                The recurrence defines the sequence of cycle points
                 for which the dependency graph is valid. These should be
                 specified in our ISO 8601 derived sequence syntax, or
                 similar for integer cycling:
@@ -445,11 +442,11 @@ with Conf(
         in Python language class hierarchies. For details and examples see
         :ref:`NIORP`.
     '''):
-        with Conf('__MANY__', desc='''
-            Replace ``__NAME__`` with a namespace name, or a comma-separated
-            list of names, and repeat as needed to define all tasks in the
-            suite. Names may contain letters, digits, underscores, and
-            hyphens. A namespace represents a group or family of tasks if
+        with Conf('<namespace>', desc='''
+            A namespace (i.e. task or family name) or a comma-separated list
+            of namespace names, and repeat as needed to define all tasks in
+            the suite. Names may contain letters, digits, underscores, and
+            hyphens.  A namespace represents a group or family of tasks if
             other namespaces inherit from it, or a task if no others inherit
             from it.
 
@@ -461,8 +458,8 @@ with Conf(
 
             legal values:
 
-            - ``[[foo]]``
-            - ``[[foo, bar, baz]]``
+            - ``[foo]``
+            - ``[foo, bar, baz]``
 
             If multiple names are listed the subsequent settings apply to
             each.
@@ -647,8 +644,8 @@ with Conf(
                     '''
                     + '   ``http://my-site.com/suites/%(suite_name)s/'
                     + '%(task_name)s.html``')
-                Conf('__MANY__', VDR.V_STRING, '', desc='''
-                    Replace ``__MANY__`` with any user-defined metadata item.
+                Conf('<custom metadata>', VDR.V_STRING, '', desc='''
+                    Any user-defined metadata item.
                     These, like title, URL, etc. can be passed to task event
                     handlers to be interpreted according to your needs. For
                     example, the value of an "importance" item could determine
@@ -978,9 +975,8 @@ with Conf(
                     earlier in the script.  See also
                     :ref:`TaskExecutionEnvironment`.
             '''):
-                Conf('__MANY__', VDR.V_STRING, desc='''
-                    Replace ``__VARIABLE__`` with any number of environment
-                    variable assignment expressions. Order of definition is
+                Conf('<variable>', VDR.V_STRING, desc='''
+                    The order of definition is
                     preserved so values can refer to previously defined
                     variables. Values are passed through to the task job
                     script without evaluation or manipulation by cylc, so any
@@ -1010,8 +1006,7 @@ with Conf(
                 use of default directives that can be individually overridden
                 at lower levels of the runtime namespace hierarchy.
             '''):
-                Conf('__MANY__', VDR.V_STRING, desc='''
-                    Replace ``__DIRECTIVE__`` with each directive assignment,
+                Conf('<directive>', VDR.V_STRING, desc='''
                     e.g. ``class = parallel``.
 
                     Example directives for the built-in batch system handlers
@@ -1022,8 +1017,8 @@ with Conf(
                 Register custom task outputs for use in message triggering in
                 this section (:ref:`MessageTriggers`)
             '''):
-                Conf('__MANY__', VDR.V_STRING, desc='''
-                    Replace ``__OUTPUT__`` with one or more custom task output
+                Conf('<output>', VDR.V_STRING, desc='''
+                    Task output
                     messages (:ref:`MessageTriggers`).  The item name is used
                     to select the custom output
                     message in graph trigger notation.
@@ -1041,8 +1036,8 @@ with Conf(
                 templates. This is only relevant for *parameterized tasks* -
                 see :ref:`Parameterized Tasks Label`.
             '''):
-                Conf('__MANY__', VDR.V_STRING, desc='''
-                    Replace ``__VARIABLE__`` with pairs of environment
+                Conf('<parameter>', VDR.V_STRING, desc='''
+                    Pairs of environment
                     variable name and Python string template for parameter
                     substitution. This is only relevant for *parameterized
                     tasks* - see :ref:`Parameterized Tasks Label`.
@@ -1074,10 +1069,10 @@ with Conf(
         Conf('default edge attributes', VDR.V_STRING_LIST)
 
         with Conf('node groups'):
-            Conf('__MANY__', VDR.V_STRING_LIST)
+            Conf('<group>', VDR.V_STRING_LIST)
 
         with Conf('node attributes'):
-            Conf('__MANY__', VDR.V_STRING_LIST)
+            Conf('<node>', VDR.V_STRING_LIST)
 
 
 def upg(cfg, descr):

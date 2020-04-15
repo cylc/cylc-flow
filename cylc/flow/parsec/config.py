@@ -176,25 +176,60 @@ class ParsecConfig(object):
 
 
 class ConfigNode(ContextNode):
+    """A Cylc configuration schema, section, or setting.
+
+    Attributes:
+        vdr (str):
+            The config type (i.e. parsec validator).
+        options (list):
+            List of possible options.
+            TODO: allow this to be a dict with help info
+        default (object):
+            The default value.
+        desc (str):
+            A description of the config.
+            Note this gets dedented and stripped.
+        display_name (str):
+            This is the user-facing name of the config.
+            Note the regular ``name`` might be ``__MANY__``.
+
+    """
 
     ROOT_NAME_FMT = ''
-    NODE_NAME_FMT = '[{name}]'
-    LEAF_NAME_FMT = '{name}'
+    NODE_NAME_FMT = '[{display_name}]'
+    LEAF_NAME_FMT = '{display_name}'
     SEP = ''
 
     __slots__ = ContextNode.__slots__ + (
-        'vdr', 'options', 'default', 'desc', 'help'
+        'vdr', 'options', 'default', 'desc', 'display_name'
     )
 
-    def __init__(self, name, vdr=VDR.V_STRING, default=None, options=None, desc=None, help=None):
+    def __init__(
+            self,
+            name,
+            vdr=VDR.V_STRING,
+            default=None,
+            options=None,
+            desc=None,
+    ):
+        display_name = name
+        if name.startswith('<'):
+            # if we use <...> as the name, this is a user-definable config
+            # * we set the name (for internal use) to __MANY__
+            # * we leave the display_name (for external use) unchanged
+            name = '__MANY__'
+
         ContextNode.__init__(self, name)
+
         if not isinstance(vdr, str):
             breakpoint()
+
+        self.display_name = display_name
         self.vdr = vdr
         self.default = default
         self.options = options
         self.desc = dedent(desc).strip() if desc else None
-        self.help = help
+
 
 
     # def __exit__(self, *args):

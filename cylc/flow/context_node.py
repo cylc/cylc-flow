@@ -117,8 +117,7 @@ class ContextNode():
             fmt = self.LEAF_NAME_FMT
         return fmt.format_map({
             key: getattr(self, key)
-            for key in dir(self)
-            if key in self.__slots__
+            for key in self.__slots__
         })
 
     def __repr__(self):

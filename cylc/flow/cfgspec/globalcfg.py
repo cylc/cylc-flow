@@ -127,7 +127,7 @@ with Conf('flow.rc', desc='''
                     The interval with which this plugin is run.
                 ''')
 
-            with Conf('__MANY__', desc='''
+            with Conf('<plugin name>', desc='''
                 Configure a main loop plugin.
             '''):
                 Conf('interval', VDR.V_INTERVAL, desc='''
@@ -195,7 +195,7 @@ with Conf('flow.rc', desc='''
 
     # job platforms
     with Conf('job platforms'):
-        with Conf('__MANY__'):
+        with Conf('<platform name>'):
             Conf('batch system', VDR.V_STRING, 'background')
             Conf('batch submit command template', VDR.V_STRING)
             Conf('shell', VDR.V_STRING, '/bin/bash')
@@ -422,7 +422,7 @@ with Conf('flow.rc', desc='''
 
     # Platform Groups
     with Conf('platform groups'):
-        with Conf('__MANY__'):
+        with Conf('<group>'):
             Conf('platforms', VDR.V_STRING_LIST)
 
     # task
@@ -450,7 +450,7 @@ with Conf('flow.rc', desc='''
             Conf('tail command template',
                  VDR.V_STRING, 'tail -n +1 -F %(filename)s')
             with Conf('batch systems'):
-                with Conf('__MANY__'):
+                with Conf('<batch system name>'):
                     Conf('err tailer', VDR.V_STRING)
                     Conf('out tailer', VDR.V_STRING)
                     Conf('err viewer', VDR.V_STRING)
@@ -459,7 +459,7 @@ with Conf('flow.rc', desc='''
                     Conf('execution time limit polling intervals',
                          VDR.V_INTERVAL_LIST)
 
-        with Conf('__MANY__'):
+        with Conf('<hostname glob>'):
             Conf('run directory', VDR.V_STRING)
             Conf('work directory', VDR.V_STRING)
             Conf('task communication method',
@@ -479,7 +479,7 @@ with Conf('flow.rc', desc='''
             Conf('task event handler retry delays', VDR.V_INTERVAL_LIST)
             Conf('tail command template', VDR.V_STRING)
             with Conf('batch systems'):
-                with Conf('__MANY__'):
+                with Conf('<batch system name>'):
                     Conf('err tailer', VDR.V_STRING)
                     Conf('out tailer', VDR.V_STRING)
                     Conf('out viewer', VDR.V_STRING)
@@ -533,7 +533,7 @@ with Conf('flow.rc', desc='''
             accessible via SSH from the test host.
         '''):
 
-            with Conf('__MANY__', desc='''
+            with Conf('<batch system name>', desc='''
                 SYSTEM is the name of a supported batch system with automated
                 tests.  This can currently be "loadleveler", "lsf", "pbs",
                 "sge" and/or "slurm".
@@ -560,7 +560,7 @@ with Conf('flow.rc', desc='''
                     The minimum set of directives that must be supplied to the
                     batch system on the site to initiate jobs for the tests.
                 '''):
-                    Conf('__MANY__', VDR.V_STRING)
+                    Conf('<directive>', VDR.V_STRING)
 
     # suite
     with Conf('suite host self-identification', desc='''
