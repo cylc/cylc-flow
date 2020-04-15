@@ -52,8 +52,7 @@ from cylc.task_message import FAIL_MESSAGE_PREFIX
 from cylc.task_outputs import (
     TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED,
     TASK_OUTPUT_FAILED)
-from cylc.task_remote_mgr import (
-    REMOTE_INIT_FAILED, TaskRemoteMgmtError, TaskRemoteMgr)
+from cylc.task_remote_mgr import TaskRemoteMgmtError, TaskRemoteMgr
 from cylc.task_state import (
     TASK_STATUSES_ACTIVE, TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
     TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED,
@@ -249,7 +248,7 @@ class TaskJobManager(object):
                     'batch_sys_name': itask.summary['batch_sys_name'],
                 })
                 itask.is_manual_submit = False
-            if is_init == REMOTE_INIT_FAILED:
+            if isinstance(is_init, TaskRemoteMgmtError):
                 # Remote has failed to initialise
                 # Set submit-failed for all affected tasks
                 for itask in itasks:
@@ -258,7 +257,7 @@ class TaskJobManager(object):
                         SubProcContext(
                             self.JOBS_SUBMIT,
                             '(init %s)' % owner_at_host,
-                            err=REMOTE_INIT_FAILED,
+                            err=is_init,
                             ret_code=1),
                         suite, itask.point, itask.tdef.name)
                     self.task_events_mgr.process_message(
@@ -798,7 +797,6 @@ class TaskJobManager(object):
         """Helper for self._prep_submit_task_job. On error."""
         LOG.debug("submit_num %s" % itask.submit_num)
         LOG.debug(traceback.format_exc())
-        LOG.error(exc)
         log_task_job_activity(
             SubProcContext(self.JOBS_SUBMIT, action, err=exc, ret_code=1),
             suite, itask.point, itask.tdef.name, submit_num=itask.submit_num)

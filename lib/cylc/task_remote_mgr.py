@@ -41,7 +41,6 @@ from cylc.task_remote_cmd import (
 
 
 REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*(`|\))$')
-REMOTE_INIT_FAILED = 'REMOTE INIT FAILED'
 
 
 class TaskRemoteMgmtError(Exception):
@@ -162,7 +161,7 @@ class TaskRemoteMgr(object):
                 If remote init is not required, e.g. not remote
             REMOTE_INIT_DONE:
                 If remote init done.
-            REMOTE_INIT_FAILED:
+            TaskRemoteMgmtError():
                 If init of the remote failed.
                 Note: this will reset to None to allow retry.
             None:
@@ -176,7 +175,7 @@ class TaskRemoteMgr(object):
         except KeyError:
             pass  # Not yet initialised
         else:
-            if status == REMOTE_INIT_FAILED:
+            if isinstance(status, TaskRemoteMgmtError):
                 del self.remote_init_map[(host, owner)]  # reset to allow retry
             return status
 
@@ -319,12 +318,11 @@ class TaskRemoteMgr(object):
                     self.remote_init_map[(host, owner)] = status
                     return
         # Bad status
-        LOG.error(TaskRemoteMgmtError(
+        LOG.error(proc_ctx)
+        self.remote_init_map[(host, owner)] = TaskRemoteMgmtError(
             TaskRemoteMgmtError.MSG_INIT,
             (host, owner), ' '.join(quote(item) for item in proc_ctx.cmd),
-            proc_ctx.ret_code, proc_ctx.out, proc_ctx.err))
-        LOG.error(proc_ctx)
-        self.remote_init_map[(host, owner)] = REMOTE_INIT_FAILED
+            proc_ctx.ret_code, proc_ctx.out, proc_ctx.err)
 
     def _remote_init_items(self, comm_meth):
         """Return list of items to install based on communication method.
