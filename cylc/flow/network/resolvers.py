@@ -29,10 +29,11 @@ from graphene.utils.str_converters import to_snake_case
 
 from cylc.flow import ID_DELIM
 from cylc.flow.data_store_mgr import (
-    EDGES, FAMILY_PROXIES, TASK_PROXIES, WORKFLOW
+    EDGES, FAMILY_PROXIES, TASK_PROXIES, WORKFLOW,
+    DELTA_ADDED, create_delta_store
 )
 from cylc.flow.network.schema import (
-    NodesEdges, PROXY_NODES, Deltas, Pruned, AddedUpdated
+    NodesEdges, PROXY_NODES, parse_node_id
 )
 
 logger = logging.getLogger(__name__)
@@ -114,9 +115,14 @@ def node_ids_filter(n_atts, items):
     return False
 
 
-def node_filter(node, args):
+def node_filter(node, node_type, args):
     """Filter nodes based on attribute arguments"""
-    n_atts = collate_node_atts(node)
+    # Updated delta nodes don't contain name but still need filter
+    if not node.name:
+        n_atts = list(parse_node_id(node.id, node_type))
+        n_atts[3] = [n_atts[3]]
+    else:
+        n_atts = collate_node_atts(node)
     # The n_atts (node attributes) list contains ordered node values
     # or defaults (see collate function for index item).
     return (
@@ -180,12 +186,30 @@ class BaseResolvers:
         self.delta_store = {}
 
     # Query resolvers
+    async def get_workflow_by_id(self, args):
+        """Return a workflow store by ID."""
+        try:
+            if 'sub_id' in args and args['delta_store']:
+                return self.delta_store[args['sub_id']][args['id']][
+                    args['delta_type']][WORKFLOW]
+            return self.data_store_mgr.data[args['id']][WORKFLOW]
+        except KeyError:
+            return None
+
     async def get_workflows_data(self, args):
         """Return list of data from workflows."""
+        # Both cases just as common so 'if' not 'try'
+        if 'sub_id' in args and args['delta_store']:
+            return [
+                delta[args['delta_type']]
+                for key, delta in self.delta_store[args['sub_id']].items()
+                if key in args['workflows'] and key not in args['exworkflows']
+            ]
         return [
             flow
             for flow in self.data_store_mgr.data.values()
-            if workflow_filter(flow, args)]
+            if workflow_filter(flow, args)
+        ]
 
     async def get_workflows(self, args):
         """Return workflow elements."""
@@ -201,23 +225,33 @@ class BaseResolvers:
             [n
              for flow in await self.get_workflows_data(args)
              for n in flow.get(node_type).values()
-             if node_filter(n, args)],
+             if node_filter(n, node_type, args)],
             args)
 
     async def get_nodes_by_ids(self, node_type, args):
         """Return protobuf node objects for given id."""
         nat_ids = set(args.get('native_ids', []))
+        # Both cases just as common so 'if' not 'try'
+        if 'sub_id' in args and args['delta_store']:
+            flow_data = [
+                delta[args['delta_type']]
+                for delta in get_flow_data_from_ids(
+                    self.delta_store[args['sub_id']], nat_ids)
+            ]
+        else:
+            flow_data = get_flow_data_from_ids(
+                self.data_store_mgr.data, nat_ids)
+
         if node_type == PROXY_NODES:
             node_types = [TASK_PROXIES, FAMILY_PROXIES]
         else:
             node_types = [node_type]
         return sort_elements(
             [node
-             for flow in get_flow_data_from_ids(
-                 self.data_store_mgr.data, nat_ids)
+             for flow in flow_data
              for node_type in node_types
              for node in get_data_elements(flow, nat_ids, node_type)
-             if node_filter(node, args)],
+             if node_filter(node, node_type, args)],
             args)
 
     async def get_node_by_id(self, node_type, args):
@@ -225,8 +259,14 @@ class BaseResolvers:
         n_id = args.get('id')
         o_name, w_name, _ = n_id.split(ID_DELIM, 2)
         w_id = f'{o_name}{ID_DELIM}{w_name}'
-        flow = self.data_store_mgr.data.get(w_id)
-        if flow is None:
+        # Both cases just as common so 'if' not 'try'
+        try:
+            if 'sub_id' in args and args.get('delta_store'):
+                flow = self.delta_store[
+                    args['sub_id']][w_id][args['delta_type']]
+            else:
+                flow = self.data_store_mgr.data[w_id]
+        except KeyError:
             return None
         if node_type == PROXY_NODES:
             return (
@@ -245,12 +285,20 @@ class BaseResolvers:
 
     async def get_edges_by_ids(self, args):
         """Return protobuf edge objects for given id."""
-        # TODO: Filter by given native ids.
         nat_ids = set(args.get('native_ids', []))
+        if 'sub_id' in args and args['delta_store']:
+            flow_data = [
+                delta[args['delta_type']]
+                for delta in get_flow_data_from_ids(
+                    self.delta_store[args['sub_id']], nat_ids)
+            ]
+        else:
+            flow_data = get_flow_data_from_ids(
+                self.data_store_mgr.data, nat_ids)
+
         return sort_elements(
             [edge
-             for flow in get_flow_data_from_ids(
-                 self.data_store_mgr.data, nat_ids)
+             for flow in flow_data
              for edge in get_data_elements(flow, nat_ids, EDGES)],
             args)
 
@@ -300,7 +348,7 @@ class BaseResolvers:
             nodes=sort_elements(nodes, args),
             edges=sort_elements(edges, args))
 
-    async def subscribe_delta(self, args):
+    async def subscribe_delta(self, info, args):
         """Delta subscription async generator.
 
         Async generator mapping the incomming protobuf deltas to
@@ -309,43 +357,38 @@ class BaseResolvers:
         """
         w_ids = args['ids']
         sub_id = uuid4()
+        info.context['sub_id'] = sub_id
+        self.delta_store[sub_id] = {}
         delta_queues = self.data_store_mgr.delta_queues
         deltas_queue = queue.Queue()
-        for w_id in w_ids:
-            if delta_queues.get(w_id) is not None:
-                delta_queues[w_id][sub_id] = deltas_queue
-        sub_fields = {'added', 'updated', 'pruned'}
         try:
+            # Iterate over the queue yielding deltas
             while True:
+                for w_id in w_ids:
+                    if (
+                            w_id in delta_queues
+                            and sub_id not in delta_queues[w_id]
+                    ):
+                        delta_queues[w_id][sub_id] = deltas_queue
+                        # On new yield workflow data-store as added delta
+                        if args['initial_burst']:
+                            delta_store = create_delta_store(workflow_id=w_id)
+                            delta_store[DELTA_ADDED] = (
+                                self.data_store_mgr.data[w_id]
+                            )
+                            self.delta_store[sub_id][w_id] = delta_store
+                            yield delta_store
                 if not any(
                         delta_queues.get(w_id, {}).get(sub_id)
-                        for w_id in w_ids):
+                        for w_id in w_ids
+                ):
                     break
                 try:
-                    w_id, topic, delta = deltas_queue.get(False)
+                    w_id, _, delta_store = deltas_queue.get(False)
+                    self.delta_store[sub_id][w_id] = delta_store
+                    yield delta_store
                 except queue.Empty:
                     await asyncio.sleep(DELTA_SLEEP_INTERVAL)
-                    continue
-                result = Deltas(
-                    id=w_id,
-                    added=AddedUpdated(),
-                    updated=AddedUpdated(),
-                    pruned=Pruned()
-                )
-                if topic == 'shutdown':
-                    result.workflow.status = 'stopped'
-                elif not args.get('topic') or args['topic'] != topic:
-                    continue
-                else:
-                    for field, value in delta.ListFields():
-                        for sub_field, sub_value in value.ListFields():
-                            if sub_field.name in sub_fields:
-                                setattr(
-                                    getattr(result, sub_field.name),
-                                    field.name,
-                                    sub_value
-                                )
-                yield result
         except CancelledError:
             pass
         except Exception:
@@ -355,6 +398,8 @@ class BaseResolvers:
             for w_id in w_ids:
                 if delta_queues.get(w_id, {}).get(sub_id):
                     del delta_queues[w_id][sub_id]
+            if sub_id in self.delta_store:
+                del self.delta_store[sub_id]
             yield None
 
 

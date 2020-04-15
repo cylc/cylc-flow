@@ -84,6 +84,7 @@ message PbWorkflow {
     repeated string family_proxies = 29;
     optional string status_msg = 30;
     optional int32 is_held_total = 31;
+    repeated string jobs = 32;
 }
 
 message PbJob {

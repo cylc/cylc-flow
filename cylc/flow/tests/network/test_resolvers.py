@@ -21,7 +21,7 @@ import asyncio
 from cylc.flow import ID_DELIM
 from cylc.flow.tests.util import CylcWorkflowTestCase, create_task_proxy
 from cylc.flow.data_store_mgr import (
-    DataStoreMgr, EDGES, TASK_PROXIES, WORKFLOW
+    DataStoreMgr, EDGES, JOBS, TASK_PROXIES, WORKFLOW
 )
 from cylc.flow.network.schema import parse_node_id
 from cylc.flow.network.resolvers import node_filter, Resolvers
@@ -69,10 +69,10 @@ def test_node_filter():
     node = FakeNode()
     args = deepcopy(NODE_ARGS)
     args['ids'].append(('*', '*', '*', 'foo', '01', 'failed'))
-    assert not node_filter(node, args)
+    assert not node_filter(node, JOBS, args)
     args['ids'].append(('*', '*', '*', 'foo', '01', 'running'))
     args['states'].append('running')
-    assert node_filter(node, args)
+    assert node_filter(node, JOBS, args)
 
 
 class TestResolvers(CylcWorkflowTestCase):

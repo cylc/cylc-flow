@@ -64,6 +64,7 @@ cat > expected << __HERE__
         {
             "name": "${SUITE_NAME}",
             "isHeldTotal": 1,
+            "taskProxies": [],
             "familyProxies": [
                 {
                     "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}1${ID_DELIM}BAZ"

@@ -47,7 +47,8 @@ from cylc.flow.task_state import (
     TASK_STATUS_SUCCEEDED
 )
 from cylc.flow.data_store_mgr import (
-    FAMILIES, FAMILY_PROXIES, JOBS, TASKS, TASK_PROXIES, ALL_DELTAS
+    FAMILIES, FAMILY_PROXIES, JOBS, TASKS, TASK_PROXIES,
+    ALL_DELTAS, DELTA_ADDED, DELTA_UPDATED
 )
 from cylc.flow.suite_status import StopMode
 
@@ -185,111 +186,130 @@ class SortArgs(InputObjectType):
     reverse = Boolean(default_value=False)
 
 
-jobs_args = dict(
-    ids=List(ID, default_value=[]),
-    exids=List(ID, default_value=[]),
-    states=List(String, default_value=[]),
-    exstates=List(String, default_value=[]),
-    sort=SortArgs(default_value=None),
-)
+JOB_ARGS = {
+    'ids': List(ID, default_value=[]),
+    'exids': List(ID, default_value=[]),
+    'states': List(String, default_value=[]),
+    'exstates': List(String, default_value=[]),
+    'sort': SortArgs(default_value=None),
+    'strip_null': Boolean(default_value=False),
+    'delta_store': Boolean(default_value=True),
+}
 
-all_jobs_args = dict(
-    workflows=List(ID, default_value=[]),
-    exworkflows=List(ID, default_value=[]),
-    ids=List(ID, default_value=[]),
-    exids=List(ID, default_value=[]),
-    states=List(String, default_value=[]),
-    exstates=List(String, default_value=[]),
-    sort=SortArgs(default_value=None),
-)
+ALL_JOB_ARGS = {
+    'workflows': List(ID, default_value=[]),
+    'exworkflows': List(ID, default_value=[]),
+    'ids': List(ID, default_value=[]),
+    'exids': List(ID, default_value=[]),
+    'states': List(String, default_value=[]),
+    'exstates': List(String, default_value=[]),
+    'sort': SortArgs(default_value=None),
+    'strip_null': Boolean(default_value=False),
+    'delta_store': Boolean(default_value=True),
+}
 
-def_args = dict(
-    ids=List(ID, default_value=[]),
-    exids=List(ID, default_value=[]),
-    mindepth=Int(default_value=-1),
-    maxdepth=Int(default_value=-1),
-    sort=SortArgs(default_value=None),
-)
+DEF_ARGS = {
+    'ids': List(ID, default_value=[]),
+    'exids': List(ID, default_value=[]),
+    'mindepth': Int(default_value=-1),
+    'maxdepth': Int(default_value=-1),
+    'sort': SortArgs(default_value=None),
+    'strip_null': Boolean(default_value=False),
+    'delta_store': Boolean(default_value=True),
+}
 
-all_def_args = dict(
-    workflows=List(ID, default_value=[]),
-    exworkflows=List(ID, default_value=[]),
-    ids=List(ID, default_value=[]),
-    exids=List(ID, default_value=[]),
-    mindepth=Int(default_value=-1),
-    maxdepth=Int(default_value=-1),
-    sort=SortArgs(default_value=None),
-)
+ALL_DEF_ARGS = {
+    'workflows': List(ID, default_value=[]),
+    'exworkflows': List(ID, default_value=[]),
+    'ids': List(ID, default_value=[]),
+    'exids': List(ID, default_value=[]),
+    'mindepth': Int(default_value=-1),
+    'maxdepth': Int(default_value=-1),
+    'sort': SortArgs(default_value=None),
+    'strip_null': Boolean(default_value=False),
+    'delta_store': Boolean(default_value=True),
+}
 
-proxy_args = dict(
-    ghosts=Boolean(default_value=False),
-    ids=List(ID, default_value=[]),
-    exids=List(ID, default_value=[]),
-    states=List(String, default_value=[]),
-    exstates=List(String, default_value=[]),
-    is_held=Boolean(),
-    mindepth=Int(default_value=-1),
-    maxdepth=Int(default_value=-1),
-    sort=SortArgs(default_value=None),
-)
+PROXY_ARGS = {
+    'ghosts': Boolean(default_value=False),
+    'ids': List(ID, default_value=[]),
+    'exids': List(ID, default_value=[]),
+    'states': List(String, default_value=[]),
+    'exstates': List(String, default_value=[]),
+    'is_held': Boolean(),
+    'mindepth': Int(default_value=-1),
+    'maxdepth': Int(default_value=-1),
+    'sort': SortArgs(default_value=None),
+    'strip_null': Boolean(default_value=False),
+    'delta_store': Boolean(default_value=True),
+}
 
-all_proxy_args = dict(
-    ghosts=Boolean(default_value=False),
-    workflows=List(ID, default_value=[]),
-    exworkflows=List(ID, default_value=[]),
-    ids=List(ID, default_value=[]),
-    exids=List(ID, default_value=[]),
-    states=List(String, default_value=[]),
-    exstates=List(String, default_value=[]),
-    is_held=Boolean(),
-    mindepth=Int(default_value=-1),
-    maxdepth=Int(default_value=-1),
-    sort=SortArgs(default_value=None),
-)
+ALL_PROXY_ARGS = {
+    'ghosts': Boolean(default_value=False),
+    'workflows': List(ID, default_value=[]),
+    'exworkflows': List(ID, default_value=[]),
+    'ids': List(ID, default_value=[]),
+    'exids': List(ID, default_value=[]),
+    'states': List(String, default_value=[]),
+    'exstates': List(String, default_value=[]),
+    'is_held': Boolean(),
+    'mindepth': Int(default_value=-1),
+    'maxdepth': Int(default_value=-1),
+    'sort': SortArgs(default_value=None),
+    'strip_null': Boolean(default_value=False),
+    'delta_store': Boolean(default_value=True),
+}
 
-edge_args = dict(
-    ids=List(ID, default_value=[]),
-    exids=List(ID, default_value=[]),
-    states=List(String, default_value=[]),
-    exstates=List(String, default_value=[]),
-    mindepth=Int(default_value=-1),
-    maxdepth=Int(default_value=-1),
-    sort=SortArgs(default_value=None),
-)
+EDGE_ARGS = {
+    'ids': List(ID, default_value=[]),
+    'exids': List(ID, default_value=[]),
+    'states': List(String, default_value=[]),
+    'exstates': List(String, default_value=[]),
+    'mindepth': Int(default_value=-1),
+    'maxdepth': Int(default_value=-1),
+    'sort': SortArgs(default_value=None),
+    'strip_null': Boolean(default_value=False),
+    'delta_store': Boolean(default_value=True),
+}
 
-all_edge_args = dict(
-    workflows=List(ID, default_value=[]),
-    exworkflows=List(ID, default_value=[]),
-    sort=SortArgs(default_value=None),
-)
+ALL_EDGE_ARGS = {
+    'workflows': List(ID, default_value=[]),
+    'exworkflows': List(ID, default_value=[]),
+    'sort': SortArgs(default_value=None),
+    'strip_null': Boolean(default_value=False),
+    'delta_store': Boolean(default_value=True),
+}
 
-nodes_edges_args = dict(
-    ghosts=Boolean(default_value=False),
-    ids=List(ID, default_value=[]),
-    exids=List(ID, default_value=[]),
-    states=List(String, default_value=[]),
-    exstates=List(String, default_value=[]),
-    is_held=Boolean(),
-    distance=Int(default_value=1),
-    mindepth=Int(default_value=-1),
-    maxdepth=Int(default_value=-1),
-    sort=SortArgs(default_value=None),
-)
+NODES_EDGES_ARGS = {
+    'ghosts': Boolean(default_value=False),
+    'ids': List(ID, default_value=[]),
+    'exids': List(ID, default_value=[]),
+    'states': List(String, default_value=[]),
+    'exstates': List(String, default_value=[]),
+    'is_held': Boolean(),
+    'distance': Int(default_value=1),
+    'mindepth': Int(default_value=-1),
+    'maxdepth': Int(default_value=-1),
+    'sort': SortArgs(default_value=None),
+    'strip_null': Boolean(default_value=False),
+}
 
-nodes_edges_args_all = dict(
-    ghosts=Boolean(default_value=False),
-    workflows=List(ID, default_value=[]),
-    exworkflows=List(ID, default_value=[]),
-    ids=List(ID, default_value=[]),
-    exids=List(ID, default_value=[]),
-    states=List(String, default_value=[]),
-    exstates=List(String, default_value=[]),
-    is_held=Boolean(),
-    distance=Int(default_value=1),
-    mindepth=Int(default_value=-1),
-    maxdepth=Int(default_value=-1),
-    sort=SortArgs(default_value=None),
-)
+NODES_EDGES_ARGS_ALL = {
+    'ghosts': Boolean(default_value=False),
+    'workflows': List(ID, default_value=[]),
+    'exworkflows': List(ID, default_value=[]),
+    'ids': List(ID, default_value=[]),
+    'exids': List(ID, default_value=[]),
+    'states': List(String, default_value=[]),
+    'exstates': List(String, default_value=[]),
+    'is_held': Boolean(),
+    'distance': Int(default_value=1),
+    'mindepth': Int(default_value=-1),
+    'maxdepth': Int(default_value=-1),
+    'sort': SortArgs(default_value=None),
+    'strip_null': Boolean(default_value=False),
+    'delta_store': Boolean(default_value=True),
+}
 
 # Resolvers are used to collate data needed for query resolution.
 # Treated as implicit static methods;
@@ -309,10 +329,28 @@ nodes_edges_args_all = dict(
 
 
 async def get_workflows(root, info, **args):
+    """Get filtered workflows."""
+    # Set subscription info
+    if 'sub_id' in info.context:
+        args['sub_id'] = info.context['sub_id']
+        field_name = to_snake_case(info.field_name)
+        args['ids'] = [root.get(field_name, None).id]
+
     args['workflows'] = [parse_workflow_id(w_id) for w_id in args['ids']]
     args['exworkflows'] = [parse_workflow_id(w_id) for w_id in args['exids']]
     resolvers = info.context.get('resolvers')
     return await resolvers.get_workflows(args)
+
+
+async def get_workflow_by_id(root, info, **args):
+    """Return single workflow element."""
+    if 'sub_id' in info.context:
+        args['sub_id'] = info.context['sub_id']
+        args['id'] = root.get(info.field_name, None).id
+
+    args['workflow'] = args['id']
+    resolvers = info.context.get('resolvers')
+    return await resolvers.get_workflow_by_id(args)
 
 
 async def get_nodes_all(root, info, **args):
@@ -343,20 +381,32 @@ async def get_nodes_all(root, info, **args):
 async def get_nodes_by_ids(root, info, **args):
     """Resolver for returning job, task, family node"""
     field_name = to_snake_case(info.field_name)
-    field_ids = getattr(root, field_name, None)
-    if hasattr(args, 'id'):
-        args['ids'] = [args.get('id')]
+    if isinstance(root, dict):
+        field_ids = root.get(field_name, None)
+    else:
+        field_ids = getattr(root, field_name, None)
+
     if field_ids:
         if isinstance(field_ids, str):
             field_ids = [field_ids]
+        elif isinstance(field_ids, dict):
+            field_ids = [f_id for f_id in field_ids]
         args['native_ids'] = field_ids
     elif field_ids == []:
         return []
+
     try:
         obj_type = str(info.return_type.of_type).replace('!', '')
     except AttributeError:
         obj_type = str(info.return_type)
     node_type = NODE_MAP[obj_type]
+
+    # Set subscription info
+    if 'sub_id' in info.context:
+        args['sub_id'] = info.context['sub_id']
+
+    if args.get('id'):
+        args['ids'] = [args.get('id')]
     args['ids'] = [parse_node_id(n_id, node_type) for n_id in args['ids']]
     args['exids'] = [parse_node_id(n_id, node_type) for n_id in args['exids']]
     resolvers = info.context.get('resolvers')
@@ -367,19 +417,25 @@ async def get_node_by_id(root, info, **args):
     """Resolver for returning job, task, family node"""
     field_name = to_snake_case(info.field_name)
     if field_name == 'source_node':
-        field_id = getattr(root, 'source', None)
+        field_name = 'source'
     elif field_name == 'target_node':
-        field_id = getattr(root, 'target', None)
-    else:
-        field_id = getattr(root, field_name, None)
+        field_name = 'target'
+
+    field_id = getattr(root, field_name, None)
     if field_id:
         args['id'] = field_id
     if args.get('id', None) is None:
         return None
+
     try:
         obj_type = str(info.return_type.of_type).replace('!', '')
     except AttributeError:
         obj_type = str(info.return_type)
+
+    # Set subscription info
+    if 'sub_id' in info.context:
+        args['sub_id'] = info.context['sub_id']
+
     resolvers = info.context.get('resolvers')
     return await resolvers.get_node_by_id(NODE_MAP[obj_type], args)
 
@@ -395,11 +451,20 @@ async def get_edges_all(root, info, **args):
 
 async def get_edges_by_ids(root, info, **args):
     field_name = to_snake_case(info.field_name)
-    field_ids = getattr(root, field_name, None)
+    if isinstance(root, dict):
+        field_ids = root.get(field_name, None)
+    else:
+        field_ids = getattr(root, field_name, None)
+
     if field_ids:
-        args['native_ids'] = list(field_ids)
+        if isinstance(field_ids, str):
+            field_ids = [field_ids]
+        elif isinstance(field_ids, dict):
+            field_ids = [f_id for f_id in field_ids]
+        args['native_ids'] = field_ids
     elif field_ids == []:
         return []
+
     resolvers = info.context.get('resolvers')
     return await resolvers.get_edges_by_ids(args)
 
@@ -465,30 +530,35 @@ class Workflow(ObjectType):
     tasks = List(
         lambda: Task,
         description="""Task definitions.""",
-        args=def_args,
+        args=DEF_ARGS,
         resolver=get_nodes_by_ids)
     families = List(
         lambda: Family,
         description="""Family definitions.""",
-        args=def_args,
+        args=DEF_ARGS,
         resolver=get_nodes_by_ids)
     task_proxies = List(
         lambda: TaskProxy,
         description="""Task cycle instances.""",
-        args=proxy_args,
+        args=PROXY_ARGS,
         resolver=get_nodes_by_ids)
     family_proxies = List(
         lambda: FamilyProxy,
         description="""Family cycle instances.""",
-        args=proxy_args,
+        args=PROXY_ARGS,
+        resolver=get_nodes_by_ids)
+    jobs = List(
+        lambda: Job,
+        description="""Task jobs.""",
+        args=JOB_ARGS,
         resolver=get_nodes_by_ids)
     edges = Field(
         lambda: Edges,
-        args=edge_args,
+        args=EDGE_ARGS,
         description="""Graph edges""")
     nodes_edges = Field(
         lambda: NodesEdges,
-        args=nodes_edges_args,
+        args=NODES_EDGES_ARGS,
         resolver=get_nodes_edges)
     api_version = Int()
     cylc_version = String()
@@ -560,7 +630,7 @@ class Task(ObjectType):
     proxies = List(
         lambda: TaskProxy,
         description="""Associated cycle point proxies""",
-        args=proxy_args,
+        args=PROXY_ARGS,
         resolver=get_nodes_by_ids)
     namespace = List(String, required=True)
 
@@ -624,22 +694,22 @@ class TaskProxy(ObjectType):
     jobs = List(
         Job,
         description="""Task jobs.""",
-        args=jobs_args,
+        args=JOB_ARGS,
         resolver=get_nodes_by_ids)
     parents = List(
         lambda: FamilyProxy,
         description="""Task parents.""",
-        args=proxy_args,
+        args=PROXY_ARGS,
         resolver=get_nodes_by_ids)
     first_parent = Field(
         lambda: FamilyProxy,
         description="""Task first parent.""",
-        args=proxy_args,
+        args=PROXY_ARGS,
         resolver=get_node_by_id)
     ancestors = List(
         lambda: FamilyProxy,
         description="""First parent ancestors.""",
-        args=proxy_args,
+        args=PROXY_ARGS,
         resolver=get_nodes_by_ids)
 
 
@@ -653,22 +723,22 @@ class Family(ObjectType):
     proxies = List(
         lambda: FamilyProxy,
         description="""Associated cycle point proxies""",
-        args=proxy_args,
+        args=PROXY_ARGS,
         resolver=get_nodes_by_ids)
     parents = List(
         lambda: Family,
         description="""Family definition parent.""",
-        args=def_args,
+        args=DEF_ARGS,
         resolver=get_nodes_by_ids)
     child_tasks = List(
         Task,
         description="""Descendant definition tasks.""",
-        args=def_args,
+        args=DEF_ARGS,
         resolver=get_nodes_by_ids)
     child_families = List(
         lambda: Family,
         description="""Descendant desc families.""",
-        args=def_args,
+        args=DEF_ARGS,
         resolver=get_nodes_by_ids)
 
 
@@ -690,27 +760,27 @@ class FamilyProxy(ObjectType):
     parents = List(
         lambda: FamilyProxy,
         description="""Family parent proxies.""",
-        args=proxy_args,
+        args=PROXY_ARGS,
         resolver=get_nodes_by_ids)
     child_tasks = List(
         TaskProxy,
         description="""Descendant task proxies.""",
-        args=proxy_args,
+        args=PROXY_ARGS,
         resolver=get_nodes_by_ids)
     child_families = List(
         lambda: FamilyProxy,
         description="""Descendant family proxies.""",
-        args=proxy_args,
+        args=PROXY_ARGS,
         resolver=get_nodes_by_ids)
     first_parent = Field(
         lambda: FamilyProxy,
         description="""Task first parent.""",
-        args=proxy_args,
+        args=PROXY_ARGS,
         resolver=get_node_by_id)
     ancestors = List(
         lambda: FamilyProxy,
         description="""First parent ancestors.""",
-        args=proxy_args,
+        args=PROXY_ARGS,
         resolver=get_nodes_by_ids)
 
 
@@ -747,7 +817,7 @@ class Edges(ObjectType):
     edges = List(
         Edge,
         required=True,
-        args=edge_args,
+        args=EDGE_ARGS,
         resolver=get_edges_by_ids)
     workflow_polling_tasks = List(PollTask)
     leaves = List(String)
@@ -774,66 +844,72 @@ class Queries(ObjectType):
         description=Workflow._meta.description,
         ids=List(ID, default_value=[]),
         exids=List(ID, default_value=[]),
+        strip_null=Boolean(default_value=False),
         resolver=get_workflows)
     job = Field(
         Job,
         description=Job._meta.description,
         id=ID(required=True),
+        strip_null=Boolean(default_value=False),
         resolver=get_node_by_id)
     jobs = List(
         Job,
         description=Job._meta.description,
-        args=all_jobs_args,
+        args=ALL_JOB_ARGS,
         resolver=get_nodes_all)
     task = Field(
         Task,
         description=Task._meta.description,
         id=ID(required=True),
+        strip_null=Boolean(default_value=False),
         resolver=get_node_by_id)
     tasks = List(
         Task,
         description=Task._meta.description,
-        args=all_def_args,
+        args=ALL_DEF_ARGS,
         resolver=get_nodes_all)
     task_proxy = Field(
         TaskProxy,
         description=TaskProxy._meta.description,
         id=ID(required=True),
+        strip_null=Boolean(default_value=False),
         resolver=get_node_by_id)
     task_proxies = List(
         TaskProxy,
         description=TaskProxy._meta.description,
-        args=all_proxy_args,
+        args=ALL_PROXY_ARGS,
         resolver=get_nodes_all)
     family = Field(
         Family,
         description=Family._meta.description,
         id=ID(required=True),
+        strip_null=Boolean(default_value=False),
         resolver=get_node_by_id)
     families = List(
         Family,
         description=Family._meta.description,
-        args=all_def_args,
+        args=ALL_DEF_ARGS,
         resolver=get_nodes_all)
     family_proxy = Field(
         FamilyProxy,
         description=FamilyProxy._meta.description,
         id=ID(required=True),
+        strip_null=Boolean(default_value=False),
         resolver=get_node_by_id)
     family_proxies = List(
         FamilyProxy,
         description=FamilyProxy._meta.description,
-        args=all_proxy_args,
+        args=ALL_PROXY_ARGS,
         resolver=get_nodes_all)
     edges = List(
         Edge,
         description=Edge._meta.description,
-        args=all_edge_args,
+        args=ALL_EDGE_ARGS,
         resolver=get_edges_all)
     nodes_edges = Field(
         NodesEdges,
         description=NodesEdges._meta.description,
-        args=nodes_edges_args_all,
+        args=NODES_EDGES_ARGS_ALL,
         resolver=get_nodes_edges)
 
 
@@ -1578,9 +1654,10 @@ class Mutations(ObjectType):
 
 # ** Subscription Related ** #
 
-delta_args = dict(
+DELTA_ARGS = dict(
     ids=List(ID, description="List of full ID, i.e. `owner|name`"),
     topic=String(default_value=ALL_DELTAS),
+    strip_null=Boolean(default_value=False),
 )
 
 
@@ -1614,151 +1691,129 @@ def to_subscription(func: Callable, sleep_seconds: float = 5.) -> Callable:
 
 
 def delta_subs(root, info, **args) -> AsyncGenerator[Any, None]:
-    return info.context.get('resolvers').subscribe_delta(args)
-
-
-# The following inheritance is to avoid using the query resolvers
-# of the ObjectType fields.
-# TODO:- Create resolvers that work with the null-stripping.
-class JobDelta(Job):
-    task_proxy = Field(
-        lambda: TaskProxyDelta,
-        description="""Associated Task Proxy""")
-
-
-class TaskDelta(Task):
-    proxies = List(
-        lambda: TaskProxyDelta,
-        description="""Associated cycle point proxies""")
-
-
-class TaskProxyDelta(TaskProxy):
-    task = Field(
-        TaskDelta,
-        description="""Task definition""")
-    jobs = List(
-        JobDelta,
-        description="""Task jobs.""")
-    parents = List(
-        lambda: FamilyProxyDelta,
-        description="""Task parents.""")
-    first_parent = Field(
-        lambda: FamilyProxyDelta,
-        description="""Task first parent.""")
-    ancestors = List(
-        lambda: FamilyProxyDelta,
-        description="""First parent ancestors.""")
-
-
-class FamilyDelta(Family):
-    proxies = List(
-        lambda: FamilyProxyDelta,
-        description="""Associated cycle point proxies""")
-    parents = List(
-        lambda: FamilyDelta,
-        description="""Family definition parent.""")
-    child_tasks = List(
-        TaskDelta,
-        description="""Descendant definition tasks.""")
-    child_families = List(
-        lambda: FamilyDelta,
-        description="""Descendant desc families.""")
-
-
-class FamilyProxyDelta(FamilyProxy):
-    family = Field(
-        FamilyDelta,
-        description="""Family definition""")
-    parents = List(
-        lambda: FamilyProxyDelta,
-        description="""Family parent proxies.""")
-    child_tasks = List(
-        TaskProxyDelta,
-        description="""Descendant task proxies.""")
-    child_families = List(
-        lambda: FamilyProxyDelta,
-        description="""Descendant family proxies.""")
-    first_parent = Field(
-        lambda: FamilyProxyDelta,
-        description="""Task first parent.""")
-    ancestors = List(
-        lambda: FamilyProxyDelta,
-        description="""First parent ancestors.""")
-
-
-class EdgeDelta(Edge):
-    source_node = Field(Node)
-    target_node = Field(Node)
-
-
-class WorkflowDeltas(Workflow):
-    families = List(
-        FamilyDelta,
-        description="""Family definitions.""",
-        args=def_args)
-    family_proxies = List(
-        FamilyProxyDelta,
-        description="""Family cycle instances.""",
-        args=proxy_args)
-    jobs = List(
-        JobDelta,
-        description="""Task jobs.""",
-        args=jobs_args)
-    tasks = List(
-        TaskDelta,
-        description="""Task definitions.""",
-        args=def_args)
-    task_proxies = List(
-        TaskProxyDelta,
-        description="""Task cycle instances.""",
-        args=proxy_args)
-    edges = List(
-        EdgeDelta,
-        description="""Graph edges""",
-        args=edge_args)
+    return info.context.get('resolvers').subscribe_delta(info, args)
 
 
 class Pruned(ObjectType):
     class Meta:
         description = """WFS Nodes/Edges that have been removed."""
-    families = List(String)
-    family_proxies = List(String)
-    jobs = List(String)
-    tasks = List(String)
-    task_proxies = List(String)
-    edges = List(String)
+    families = List(String, default_value=[])
+    family_proxies = List(String, default_value=[])
+    jobs = List(String, default_value=[])
+    tasks = List(String, default_value=[])
+    task_proxies = List(String, default_value=[])
+    edges = List(String, default_value=[])
 
 
-class AddedUpdated(ObjectType):
+class Added(ObjectType):
     class Meta:
-        description = """WFS Nodes/Edges that have been removed."""
+        description = """Added node/edge deltas."""
+
     families = List(
-        FamilyDelta,
+        Family,
         description="""Family definitions.""",
-        args=def_args)
+        args=DEF_ARGS,
+        delta_type=String(default_value=DELTA_ADDED),
+        resolver=get_nodes_by_ids
+    )
     family_proxies = List(
-        FamilyProxyDelta,
+        FamilyProxy,
         description="""Family cycle instances.""",
-        args=proxy_args)
+        args=PROXY_ARGS,
+        delta_type=String(default_value=DELTA_ADDED),
+        resolver=get_nodes_by_ids
+    )
     jobs = List(
-        JobDelta,
+        Job,
         description="""Task jobs.""",
-        args=jobs_args)
+        args=JOB_ARGS,
+        delta_type=String(default_value=DELTA_ADDED),
+        resolver=get_nodes_by_ids
+    )
     tasks = List(
-        TaskDelta,
+        Task,
         description="""Task definitions.""",
-        args=def_args)
+        args=DEF_ARGS,
+        delta_type=String(default_value=DELTA_ADDED),
+        resolver=get_nodes_by_ids
+    )
     task_proxies = List(
-        TaskProxyDelta,
+        TaskProxy,
         description="""Task cycle instances.""",
-        args=proxy_args)
+        args=PROXY_ARGS,
+        delta_type=String(default_value=DELTA_ADDED),
+        resolver=get_nodes_by_ids
+    )
     edges = List(
-        EdgeDelta,
+        Edge,
         description="""Graph edges""",
-        args=edge_args)
+        args=EDGE_ARGS,
+        delta_type=String(default_value=DELTA_ADDED),
+        resolver=get_edges_by_ids
+    )
     workflow = Field(
-        WorkflowDeltas,
-        description=WorkflowDeltas._meta.description,
+        Workflow,
+        description=Workflow._meta.description,
+        strip_null=Boolean(default_value=True),
+        delta_store=Boolean(default_value=False),
+        delta_type=String(default_value=DELTA_ADDED),
+        resolver=get_workflow_by_id
+    )
+
+
+class Updated(ObjectType):
+    class Meta:
+        description = """Updated node/edge deltas."""
+
+    families = List(
+        Family,
+        description="""Family definitions.""",
+        args=DEF_ARGS,
+        delta_type=String(default_value=DELTA_UPDATED),
+        resolver=get_nodes_by_ids
+    )
+    family_proxies = List(
+        FamilyProxy,
+        description="""Family cycle instances.""",
+        args=PROXY_ARGS,
+        delta_type=String(default_value=DELTA_UPDATED),
+        resolver=get_nodes_by_ids
+    )
+    jobs = List(
+        Job,
+        description="""Task jobs.""",
+        args=JOB_ARGS,
+        delta_type=String(default_value=DELTA_UPDATED),
+        resolver=get_nodes_by_ids
+    )
+    tasks = List(
+        Task,
+        description="""Task definitions.""",
+        args=DEF_ARGS,
+        delta_type=String(default_value=DELTA_UPDATED),
+        resolver=get_nodes_by_ids
+    )
+    task_proxies = List(
+        TaskProxy,
+        description="""Task cycle instances.""",
+        args=PROXY_ARGS,
+        delta_type=String(default_value=DELTA_UPDATED),
+        resolver=get_nodes_by_ids
+    )
+    edges = List(
+        Edge,
+        description="""Graph edges""",
+        args=EDGE_ARGS,
+        delta_type=String(default_value=DELTA_UPDATED),
+        resolver=get_edges_by_ids
+    )
+    workflow = Field(
+        Workflow,
+        description=Workflow._meta.description,
+        strip_null=Boolean(default_value=False),
+        delta_store=Boolean(default_value=True),
+        delta_type=String(default_value=DELTA_UPDATED),
+        resolver=get_workflow_by_id
     )
 
 
@@ -1767,16 +1822,19 @@ class Deltas(ObjectType):
         description = """Grouped deltas of the WFS publish"""
     id = ID(required=True)
     added = Field(
-        AddedUpdated,
-        description=AddedUpdated._meta.description
+        Added,
+        description=Added._meta.description,
+        strip_null=Boolean(default_value=False),
     )
     updated = Field(
-        AddedUpdated,
-        description=AddedUpdated._meta.description
+        Updated,
+        description=Updated._meta.description,
+        strip_null=Boolean(default_value=False),
     )
     pruned = Field(
         Pruned,
-        description=Pruned._meta.description
+        description=Pruned._meta.description,
+        strip_null=Boolean(default_value=False),
     )
 
 
@@ -1787,73 +1845,81 @@ class Subscriptions(ObjectType):
     deltas = Field(
         Deltas,
         description=Deltas._meta.description,
-        args=delta_args,
-        resolver=delta_subs)
+        args=DELTA_ARGS,
+        initial_burst=Boolean(default_value=False),
+        resolver=delta_subs
+    )
     workflows = List(
         Workflow,
         description=Workflow._meta.description,
         ids=List(ID, default_value=[]),
         exids=List(ID, default_value=[]),
+        strip_null=Boolean(default_value=False),
         resolver=to_subscription(get_workflows))
     job = Field(
         Job,
         description=Job._meta.description,
         id=ID(required=True),
+        strip_null=Boolean(default_value=False),
         resolver=to_subscription(get_node_by_id))
     jobs = List(
         Job,
         description=Job._meta.description,
-        args=all_jobs_args,
+        args=ALL_JOB_ARGS,
         resolver=to_subscription(get_nodes_all))
     task = Field(
         Task,
         description=Task._meta.description,
         id=ID(required=True),
+        strip_null=Boolean(default_value=False),
         resolver=to_subscription(get_node_by_id))
     tasks = List(
         Task,
         description=Task._meta.description,
-        args=all_def_args,
+        args=ALL_DEF_ARGS,
         resolver=to_subscription(get_nodes_all))
     task_proxy = Field(
         TaskProxy,
         description=TaskProxy._meta.description,
         id=ID(required=True),
+        strip_null=Boolean(default_value=False),
         resolver=to_subscription(get_node_by_id))
     task_proxies = List(
         TaskProxy,
         description=TaskProxy._meta.description,
-        args=all_proxy_args,
+        args=ALL_PROXY_ARGS,
         resolver=to_subscription(get_nodes_all))
     family = Field(
         Family,
         description=Family._meta.description,
         id=ID(required=True),
+        strip_null=Boolean(default_value=False),
         resolver=to_subscription(get_node_by_id))
     families = List(
         Family,
         description=Family._meta.description,
-        args=all_def_args,
+        args=ALL_DEF_ARGS,
         resolver=to_subscription(get_nodes_all))
     family_proxy = Field(
         FamilyProxy,
         description=FamilyProxy._meta.description,
         id=ID(required=True),
+        strip_null=Boolean(default_value=False),
         resolver=to_subscription(get_node_by_id))
     family_proxies = List(
         FamilyProxy,
         description=FamilyProxy._meta.description,
-        args=all_proxy_args,
+        args=ALL_PROXY_ARGS,
         resolver=to_subscription(get_nodes_all))
     edges = List(
         Edge,
         description=Edge._meta.description,
-        args=all_edge_args,
+        args=ALL_EDGE_ARGS,
         resolver=to_subscription(get_edges_all))
     nodes_edges = Field(
         NodesEdges,
         description=NodesEdges._meta.description,
-        args=nodes_edges_args_all,
+        args=NODES_EDGES_ARGS_ALL,
         resolver=to_subscription(get_nodes_edges))
 
 

@@ -78,6 +78,9 @@ TASKS = 'tasks'
 TASK_PROXIES = 'task_proxies'
 WORKFLOW = 'workflow'
 ALL_DELTAS = 'all'
+DELTA_ADDED = 'added'
+DELTA_UPDATED = 'updated'
+DELTA_PRUNED = 'pruned'
 
 MESSAGE_MAP = {
     EDGES: PbEdge,
@@ -109,6 +112,9 @@ DELTAS_MAP = {
     WORKFLOW: WDeltas,
     ALL_DELTAS: AllDeltas,
 }
+
+DELTA_FIELDS = {DELTA_ADDED, DELTA_UPDATED, DELTA_PRUNED}
+
 
 # Protobuf message merging appends repeated field results on merge,
 # unlike singular fields which are overwritten. This behaviour is
@@ -182,6 +188,51 @@ def apply_delta(key, delta, data):
             elif key == EDGES:
                 getattr(data[WORKFLOW], key).edges.remove(del_id)
             del data[key][del_id]
+
+
+def create_delta_store(delta=None, workflow_id=None):
+    """Create a mini data-store out of the all deltas message.
+
+    Args:
+        delta (cylc.flow.data_messages_pb2.AllDeltas):
+            The message of accumulated deltas for publish/push.
+
+    Returns:
+        dict
+
+    """
+    if delta is None:
+        delta = AllDeltas()
+    delta_store = {
+        DELTA_ADDED: deepcopy(DATA_TEMPLATE),
+        DELTA_UPDATED: deepcopy(DATA_TEMPLATE),
+        DELTA_PRUNED: {
+            key: []
+            for key in DATA_TEMPLATE.keys()
+            if key is not WORKFLOW
+        },
+    }
+    if workflow_id is not None:
+        delta_store['id'] = workflow_id
+        delta_store[DELTA_ADDED][WORKFLOW].id = workflow_id
+        delta_store[DELTA_UPDATED][WORKFLOW].id = workflow_id
+    # ListFields returns a list fields that have been set (not all).
+    for field, value in delta.ListFields():
+        for sub_field, sub_value in value.ListFields():
+            if sub_field.name in delta_store:
+                if sub_field.name in delta_store:
+                    if (
+                            field.name == WORKFLOW
+                            or sub_field.name == DELTA_PRUNED
+                    ):
+                        field_data = sub_value
+                    else:
+                        field_data = {
+                            s.id: s
+                            for s in sub_value
+                        }
+                    delta_store[sub_field.name][field.name] = field_data
+    return delta_store
 
 
 class DataStoreMgr:
@@ -985,6 +1036,7 @@ class DataStoreMgr:
         self.deltas[JOBS].CopyFrom(self.schd.job_pool.deltas)
         self.added[JOBS] = deepcopy(self.schd.job_pool.added)
         self.updated[JOBS] = deepcopy(self.schd.job_pool.updated)
+        getattr(self.updated[WORKFLOW], JOBS).extend(self.added[JOBS].keys())
 
         # Gather cumulative update element
         for key, elements in self.added.items():
