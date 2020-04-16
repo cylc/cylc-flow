@@ -200,8 +200,8 @@ def cli_function(parser_function=None, **parser_kwargs):
                 wrapped_kwargs['color'] = use_color
 
             # configure Cylc to use colour
-            color_init(autoreset=True, strip=not use_color)
             if use_color:
+                color_init(autoreset=True, strip=not use_color)
                 ansi_log()
 
             try:
