@@ -22,7 +22,6 @@ import os
 import re
 import shutil
 import stat
-from string import ascii_letters, digits
 import zmq.auth
 
 from cylc.flow import LOG
@@ -134,9 +133,6 @@ class SuiteFiles:
 
         For details of the fields see ``ContactFileFields``.
         """
-
-        CONTACT2 = 'contact2'
-        """Same as ``CONTACT``, installed on remote platforms."""
 
         SOURCE = 'source'
         """Symlink to the suite definition (suite dir)."""

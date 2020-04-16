@@ -9,8 +9,6 @@
 [runtime]
     [[t0]]
         script = """
-# Ensure that contact 2 is installed.
-test -f "${CYLC_SUITE_RUN_DIR}/.service/contact2"
 # A client command should not require --use-ssh option.
 cylc broadcast "${CYLC_SUITE_NAME}" '--name=t1' '--set=script=true'
 """

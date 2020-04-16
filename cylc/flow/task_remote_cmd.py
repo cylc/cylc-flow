@@ -78,19 +78,15 @@ def remote_tidy(rund):
     """
     rund = os.path.expandvars(rund)
     srvd = os.path.join(rund, SuiteFiles.Service.DIRNAME)
-    for name in [
-            SuiteFiles.Service.CONTACT,
-            SuiteFiles.Service.CONTACT2
-    ]:
-        fname = os.path.join(srvd, name)
-        try:
-            os.unlink(fname)
-        except OSError:
-            if os.path.exists(fname):
-                raise
-        else:
-            if cylc.flow.flags.debug:
-                print('Deleted: %s' % fname)
+    fname = os.path.join(srvd, SuiteFiles.Service.CONTACT)
+    try:
+        os.unlink(fname)
+    except OSError:
+        if os.path.exists(fname):
+            raise
+    else:
+        if cylc.flow.flags.debug:
+            print('Deleted: %s' % fname)
     try:
         os.rmdir(srvd)  # remove directory if empty
     except OSError:

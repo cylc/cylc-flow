@@ -278,15 +278,13 @@ def get_scan_items_from_fs(
                 try:
                     contact_data = load_contact_file(reg, owner)
                 except (SuiteServiceFileError, IOError, TypeError) as exc:
-                    LOG.debug(f"Error loading contact file: {exc}")
+                    LOG.debug(f"Error loading contact file for: {reg}")
                     continue
                 try:
                     cylc_version = contact_data[ContactFileFields.VERSION]
                     major_version = int(cylc_version.split(".", 1)[0])
                     if (major_version < 8):
-                        LOG.info(f"Suite \"{reg}\" is running in Cylc version"
-                                 f" {cylc_version}, not Cylc 8 and"
-                                 f" will not be displayed.")
+                        LOG.info(f"Omitting \"{reg}\" (cylc-{cylc_version})")
                         continue
                 except Exception as exc:
                     LOG.debug(
