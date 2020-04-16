@@ -32,7 +32,7 @@ cylc__job__main() {
             X_Y=${BASH_VERSION:0:3} # e.g. bash 4.2
             if (( ${X_Y:0:1} < 4 )); then
                 # bash-3 (old!)
-                >&2 echo "WARNING: can't send DEBUG MODE xtrace output to job.xtrace in bash-$X"
+                >&2 echo "WARNING: can't send DEBUG MODE xtrace output to job.xtrace in bash-$X_Y"
             else
                 >&2 echo "Sending DEBUG MODE xtrace output to job.xtrace"
                 if [[ "$X_Y" == "4.0" ]]; then
