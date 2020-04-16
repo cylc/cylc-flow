@@ -195,7 +195,7 @@ class ConfigNode(ContextNode):
 
     """
 
-    ROOT_NAME_FMT = ''
+    ROOT_NAME_FMT = '{display_name}:'
     NODE_NAME_FMT = '[{display_name}]'
     LEAF_NAME_FMT = '{display_name}'
     SEP = ''
