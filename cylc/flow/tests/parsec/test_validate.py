@@ -17,33 +17,37 @@
 
 import pytest
 
+from cylc.flow.parsec.config import ConfigNode as Conf
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.exceptions import IllegalValueError
 from cylc.flow.parsec.validate import (
     CylcConfigValidator as VDR, DurationFloat, ListValueError,
     IllegalItemError, ParsecValidator, parsec_validate)
 
-SAMPLE_SPEC_1 = {
-    'section1': {
-        'value1': [VDR.V_STRING, ''],
-        'value2': [VDR.V_STRING, 'what?']
-    },
-    'section2': {
-        'enabled': [VDR.V_BOOLEAN],
-    },
-    'section3': {
-        'title': [VDR.V_STRING, 'default', '1', '2'],
-        'amounts': [VDR.V_INTEGER_LIST, [1, 2, 3], 1, 2, 3],
-        'entries': {
-            'key': [VDR.V_STRING],
-            'value': [VDR.V_INTEGER_LIST]
-        }
-    },
-    '__MANY__': {
-        'section3000000': [VDR.V_STRING, ''],
-        'ids': [VDR.V_INTEGER_LIST]
-    }
-}
+
+@pytest.fixture
+def sample_spec():
+    with Conf('myconf') as myconf:
+        with Conf('section1'):
+            Conf('value1', default='')
+            Conf('value2', default='what?')
+        with Conf('section2'):
+            Conf('enabled', VDR.V_BOOLEAN)
+        with Conf('section3'):
+            Conf('title', default='default', options=['1', '2'])
+            Conf(
+                'amounts',
+                VDR.V_INTEGER_LIST,
+                default=[1, 2, 3],
+                # options=[[1, 2, 3]]
+            )
+            with Conf('entries'):
+                Conf('key')
+                Conf('value')
+        with Conf('<whatever>'):
+            Conf('section300000', default='')
+            Conf('ids', VDR.V_INTEGER_LIST)
+    return myconf
 
 
 @pytest.fixture
@@ -69,36 +73,32 @@ def validator_invalid_values():
     msg = None
 
     # set 1 (t, f, f, t)
-    spec = {
-        'value': [VDR.V_INTEGER_LIST, 1, 2, 3, 4]
-    }
+    with Conf('base') as spec:
+        Conf('value', VDR.V_INTEGER_LIST, default=1,  options=[1, 2, 3, 4])
     cfg = OrderedDictWithDefaults()
     cfg['value'] = "1, 2, 3"
     msg = None
     values.append((spec, cfg, msg))
 
     # set 2 (t, t, f, t)
-    spec = {
-        'value': [VDR.V_INTEGER_LIST, 1, 2, 3, 4]
-    }
+    with Conf('base') as spec:
+        Conf('value', VDR.V_INTEGER_LIST, default=1, options=[1, 2, 3, 4])
     cfg = OrderedDictWithDefaults()
     cfg['value'] = "1, 2, 5"
     msg = '(type=option) value = [1, 2, 5]'
     values.append((spec, cfg, msg))
 
     # set 3 (f, f, t, f)
-    spec = {
-        'value': [VDR.V_INTEGER, 1, 2, 3, 4]
-    }
+    with Conf('base') as spec:
+        Conf('value', VDR.V_INTEGER, default=1, options=[2, 3, 4])
     cfg = OrderedDictWithDefaults()
     cfg['value'] = "2"
     msg = None
     values.append((spec, cfg, msg))
 
     # set 4 (f, f, t, t)
-    spec = {
-        'value': [VDR.V_INTEGER, 1, 2, 3, 4]
-    }
+    with Conf('base') as spec:
+        Conf('value', VDR.V_INTEGER, default=1, options=[1, 2, 3, 4])
     cfg = OrderedDictWithDefaults()
     cfg['value'] = "5"
     msg = '(type=option) value = 5'
@@ -188,7 +188,7 @@ def test_illegal_item_error_message():
     assert expected == output
 
 
-def test_parsec_validator_invalid_key():
+def test_parsec_validator_invalid_key(sample_spec):
     parsec_validator = ParsecValidator()
     cfg = OrderedDictWithDefaults()
     cfg['section1'] = OrderedDictWithDefaults()
@@ -196,23 +196,27 @@ def test_parsec_validator_invalid_key():
     cfg['section1']['value2'] = '2'
     cfg['section22'] = 'abc'
     with pytest.raises(IllegalItemError):
-        parsec_validator.validate(cfg, SAMPLE_SPEC_1)
+        parsec_validator.validate(cfg, sample_spec)
 
 
-def test_parsec_validator_invalid_key_no_spec():
+def test_parsec_validator_invalid_key_no_spec(sample_spec):
     parsec_validator = ParsecValidator()
     cfg = OrderedDictWithDefaults()
     cfg['section1'] = OrderedDictWithDefaults()
     cfg['section1']['value1'] = '1'
     cfg['section1']['value2'] = '2'
     cfg['section22'] = 'abc'
-    spec = SAMPLE_SPEC_1.copy()
-    del (spec['__MANY__'])
+    # remove the user-defined section from the spec
+    sample_spec._children = {
+        key: value
+        for key, value in sample_spec._children.items()
+        if key != '__MANY__'
+    }
     with pytest.raises(IllegalItemError):
-        parsec_validator.validate(cfg, spec)
+        parsec_validator.validate(cfg, sample_spec)
 
 
-def test_parsec_validator_invalid_key_with_many_spaces():
+def test_parsec_validator_invalid_key_with_many_spaces(sample_spec):
     parsec_validator = ParsecValidator()
     cfg = OrderedDictWithDefaults()
     cfg['section1'] = OrderedDictWithDefaults()
@@ -220,19 +224,19 @@ def test_parsec_validator_invalid_key_with_many_spaces():
     cfg['section1']['value2'] = '2'
     cfg['section  3000000'] = 'test'
     with pytest.raises(IllegalItemError) as cm:
-        parsec_validator.validate(cfg, SAMPLE_SPEC_1)
-    assert "section  3000000 - (consecutive spaces)" == str(cm.exception)
+        parsec_validator.validate(cfg, sample_spec)
+        assert "section  3000000 - (consecutive spaces)" == str(cm.exception)
 
 
 def test_parsec_validator_invalid_key_with_many_invalid_values(
         validator_invalid_values
 ):
-    for spec, cfg, msg in validator_invalid_values():
+    for spec, cfg, msg in validator_invalid_values:
         parsec_validator = ParsecValidator()
         if msg is not None:
             with pytest.raises(IllegalValueError) as cm:
                 parsec_validator.validate(cfg, spec)
-            assert msg == str(cm.exception)
+            assert msg == str(cm.value)
         else:
             # cylc.flow.parsec_validator.validate(cfg, spec)
             # let's use the alias `parsec_validate` here
@@ -241,19 +245,19 @@ def test_parsec_validator_invalid_key_with_many_invalid_values(
             assert parsec_validator is not None
 
 
-def test_parsec_validator_invalid_key_with_many_1():
+def test_parsec_validator_invalid_key_with_many_1(sample_spec):
     parsec_validator = ParsecValidator()
     cfg = OrderedDictWithDefaults()
     cfg['section1'] = OrderedDictWithDefaults()
     cfg['section1']['value1'] = '1'
     cfg['section1']['value2'] = '2'
     cfg['section3000000'] = OrderedDictWithDefaults()
-    parsec_validator.validate(cfg, SAMPLE_SPEC_1)
+    parsec_validator.validate(cfg, sample_spec)
     # TBD assertIsNotNone when 2.6+
     assert parsec_validator is not None
 
 
-def test_parsec_validator_invalid_key_with_many_2():
+def test_parsec_validator_invalid_key_with_many_2(sample_spec):
     parsec_validator = ParsecValidator()
     cfg = OrderedDictWithDefaults()
     cfg['section3'] = OrderedDictWithDefaults()
@@ -261,12 +265,12 @@ def test_parsec_validator_invalid_key_with_many_2():
     cfg['section3']['entries'] = OrderedDictWithDefaults()
     cfg['section3']['entries']['key'] = 'name'
     cfg['section3']['entries']['value'] = "1, 2, 3, 4"
-    parsec_validator.validate(cfg, SAMPLE_SPEC_1)
+    parsec_validator.validate(cfg, sample_spec)
     # TBD assertIsNotNone when 2.6+
     assert parsec_validator is not None
 
 
-def test_parsec_validator():
+def test_parsec_validator(sample_spec):
     parsec_validator = ParsecValidator()
     cfg = OrderedDictWithDefaults()
     cfg['section1'] = OrderedDictWithDefaults()
@@ -274,7 +278,7 @@ def test_parsec_validator():
     cfg['section1']['value2'] = '2'
     cfg['section3'] = OrderedDictWithDefaults()
     cfg['section3']['title'] = None
-    parsec_validator.validate(cfg, SAMPLE_SPEC_1)
+    parsec_validator.validate(cfg, sample_spec)
     # TBD assertIsNotNone when 2.6+
     assert parsec_validator is not None
 
@@ -498,7 +502,7 @@ def test_strip_and_unquote_list_parsec():
 def test_strip_and_unquote_list_cylc(strip_and_unquote_list):
     """Test strip_and_unquote_list using CylcConfigValidator."""
     validator = VDR()
-    for values in strip_and_unquote_list():
+    for values in strip_and_unquote_list:
         value = values[0]
         expected = values[1]
         output = validator.strip_and_unquote_list(keys=[], value=value)

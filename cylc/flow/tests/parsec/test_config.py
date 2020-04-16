@@ -15,57 +15,57 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import tempfile
-import unittest
+
+import pytest
 
 from cylc.flow.parsec import config
+from cylc.flow.parsec.config import ConfigNode as Conf
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
-from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.parsec.upgrade import upgrader
 from cylc.flow.parsec.validate import (
-    cylc_config_validate, IllegalItemError, CylcConfigValidator as VDR)
+    cylc_config_validate,
+    IllegalItemError,
+    CylcConfigValidator as VDR
+)
 
 
 @pytest.fixture()
 def sample_spec():
-    return {
-        'section1': {
-            'value1': [VDR.V_STRING, ''],
-            'value2': [VDR.V_STRING, 'what?']
-        },
-        'section2': {
-            'enabled': [VDR.V_BOOLEAN, False]
-        },
-        'section3': {
-            'title': [VDR.V_STRING],
-            'entries': {
-                'key': [VDR.V_STRING],
-                'value': [VDR.V_INTEGER_LIST]
-            }
-        }
-    }
+    with Conf('myconf') as myconf:
+        with Conf('section1'):
+            Conf('value1', VDR.V_STRING, '')
+            Conf('value2', VDR.V_STRING, 'what?')
+        with Conf('section2'):
+            Conf('enabled', VDR.V_BOOLEAN, False)
+        with Conf('section3'):
+            Conf('title', VDR.V_STRING)
+            with Conf('entries'):
+                Conf('key', VDR.V_STRING)
+                Conf('value', VDR.V_INTEGER_LIST)
+    return myconf
 
 
 def test_loadcfg(sample_spec):
     with tempfile.NamedTemporaryFile() as output_file_name:
         with tempfile.NamedTemporaryFile() as rcfile:
             parsec_config = config.ParsecConfig(
-               spec=sample_spec,
+                spec=sample_spec,
                 upgrader=None,  # new spec
                 output_fname=output_file_name.name,
                 tvars=None,
                 validator=None  # use default
             )
             rcfile.write("""
-            [section1]
-            value1 = 'test'
-            value2 = 'test'
-            [section2]
-            enabled = True
-            [section3]
-            title = 'Ohm'
-            [[entries]]
-            key = 'product'
-            value = 1, 2, 3, 4
+                [section1]
+                    value1 = 'test'
+                    value2 = 'test'
+                [section2]
+                    enabled = True
+                [section3]
+                    title = 'Ohm'
+                    [[entries]]
+                        key = 'product'
+                        value = 1, 2, 3, 4
             """.encode())
             rcfile.seek(0)
             parsec_config.loadcfg(rcfile.name, "File test_loadcfg")
@@ -81,6 +81,7 @@ def test_loadcfg(sample_spec):
             sparse = parsec_config.sparse
             value = sparse['section3']['entries']['value']
             assert [1, 2, 3, 4] == value
+
 
 def test_loadcfg_with_upgrade(sample_spec):
     def upg(cfg, description):
@@ -116,6 +117,7 @@ def test_loadcfg_with_upgrade(sample_spec):
             # removed by the obsolete upgrade
             assert 'entries' not in sparse['section3']
 
+
 def test_validate():
     """
     An interesting aspect of the ParsecConfig.validate, is that if you
@@ -128,12 +130,10 @@ def test_validate():
     :return:
     """
 
-    spec = {
-        'section': {
-            'name': [VDR.V_STRING],
-            'address': [VDR.V_STRING],
-        }
-    }
+    with Conf('myconf') as spec:
+        with Conf('section'):
+            Conf('name', VDR.V_STRING)
+            Conf('address', VDR.V_STRING)
 
     parsec_config = config.ParsecConfig(
         spec=spec,
@@ -157,21 +157,23 @@ def test_validate():
     sparse['section']['address'] = 'Corner'
     parsec_config.validate(sparse)
 
-def test_expand():
-    spec = {
-        'section': {
-            'name': [VDR.V_STRING],
-            'address': [VDR.V_INTEGER_LIST]
-        },
-        'allow_many': {
-            '__MANY__': [VDR.V_STRING, '']
-        }
-    }
 
+@pytest.fixture
+def sample_spec_2():
+    with Conf('myconf') as spec:
+        with Conf('section'):
+            Conf('name', VDR.V_STRING)
+            Conf('address', VDR.V_INTEGER_LIST)
+        with Conf('allow_many'):
+            Conf('<user defined>', VDR.V_STRING, '')
+    return spec
+
+
+def test_expand(sample_spec_2):
     with tempfile.NamedTemporaryFile() as output_file_name:
         with tempfile.NamedTemporaryFile() as rcfile:
             parsec_config = config.ParsecConfig(
-                spec=spec,
+                spec=sample_spec_2,
                 upgrader=None,
                 output_fname=output_file_name.name,
                 tvars=None,
@@ -192,21 +194,12 @@ def test_expand():
             assert 'yup' == sparse['allow_many']['anything']
             assert '__MANY__' not in sparse['allow_many']
 
-def test_get_item():
-    spec = {
-        'section': {
-            'name': [VDR.V_STRING],
-            'address': [VDR.V_INTEGER_LIST]
-        },
-        'allow_many': {
-            '__MANY__': [VDR.V_STRING, '']
-        }
-    }
 
+def test_get_item(sample_spec_2):
     with tempfile.NamedTemporaryFile() as output_file_name:
         with tempfile.NamedTemporaryFile() as rcfile:
             parsec_config = config.ParsecConfig(
-                spec=spec,
+                spec=sample_spec_2,
                 upgrader=None,
                 output_fname=output_file_name.name,
                 tvars=None,
@@ -236,14 +229,12 @@ def test_get_item():
             with pytest.raises(config.ItemNotFoundError):
                 parsec_config.get(keys=['section', 'a'], sparse=True)
 
+
 def test_item_not_found_error():
     error = config.ItemNotFoundError("internal error")
     assert 'item not found: internal error' == str(error)
 
+
 def test_not_single_item_error():
     error = config.NotSingleItemError("internal error")
     assert 'not a singular item: internal error' == str(error)
-
-
-if __name__ == '__main__':
-unittest.main()
