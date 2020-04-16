@@ -29,9 +29,21 @@ cylc__job__main() {
     if "${CYLC_DEBUG:-false}"; then
         if [[ -n "${BASH:-}" ]]; then
             PS4='+[\D{%Y%m%dT%H%M%S%z}]\u@\h '
-            exec 19>>"${CYLC_SUITE_RUN_DIR}/log/job/${CYLC_TASK_JOB}/job.xtrace"
-            export BASH_XTRACEFD=19
-            >&2 echo "Sending DEBUG MODE xtrace to job.xtrace"
+            X_Y=${BASH_VERSION:0:3} # e.g. bash 4.2
+            if (( ${X_Y:0:1} < 4 )); then
+                # bash-3 (old!)
+                >&2 echo "WARNING: can't send DEBUG MODE xtrace output to job.xtrace in bash-$X"
+            else
+                >&2 echo "Sending DEBUG MODE xtrace output to job.xtrace"
+                if [[ "$X_Y" == "4.0" ]]; then
+                    exec 19>>"${CYLC_SUITE_RUN_DIR}/log/job/${CYLC_TASK_JOB}/job.xtrace"
+                    # This is an error in bash-4.1 or later:
+                    export BASH_XTRACEFD=19 
+                else
+                    # bash-4.1 or later
+                    exec {BASH_XTRACEFD}>>"${CYLC_SUITE_RUN_DIR}/log/job/${CYLC_TASK_JOB}/job.xtrace"
+                fi
+            fi
         fi
         set -x
     fi
