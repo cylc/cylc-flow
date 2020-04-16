@@ -357,9 +357,6 @@ class CylcTimeParser(object):
                     continue
                 split_expr = self.OFFSET_REGEX.split(item)
                 expr += split_expr.pop(0)
-                if split_expr[1] == "+":
-                    split_expr.pop(1)
-                expr_offset_item = "".join(split_expr[1:])
                 expr_offset_item = self.duration_parser.parse(item[1:])
                 if item[0] == "-":
                     expr_offset_item *= -1
