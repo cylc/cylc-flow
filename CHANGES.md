@@ -38,6 +38,9 @@ namespace, under `cylc.jinja.filters`.
 [#3541](https://github.com/cylc/cylc-flow/pull/3541) - Don't warn that a task
 was already added to an internal queue, if the queue is the same.
 
+[#3572](https://github.com/cylc/cylc-flow/pull/3572) - Fix debug mode
+redirection of job xtrace (`set -x`) output for bash-4.1 or greater.
+
 -------------------------------------------------------------------------------
 ## __cylc-8.0a2 (2019-Q4?)__
 
