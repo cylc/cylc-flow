@@ -64,6 +64,7 @@ from cylc.flow.command_polling import Poller
 from cylc.flow.task_state import TASK_STATUSES_ORDERED
 from cylc.flow.terminal import cli_function
 from cylc.flow.cycling.util import add_offset
+from cylc.flow.platform_lookup import forward_lookup
 
 from metomi.isodatetime.parsers import TimePointParser
 
@@ -223,7 +224,9 @@ def main(parser, options, suite):
     # re-invocation).
     run_dir = os.path.expandvars(
         os.path.expanduser(
-            options.run_dir or glbl_cfg().get_host_item('run directory')))
+            options.run_dir or forward_lookup()['run directory']
+        )
+    )
 
     pollargs = {'suite': suite,
                 'run_dir': run_dir,

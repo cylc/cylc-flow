@@ -28,6 +28,7 @@ import re
 from subprocess import Popen, PIPE, DEVNULL
 import tarfile
 from time import time
+from random import choice as randchoice
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
@@ -45,6 +46,7 @@ from cylc.flow.suite_files import (
     get_contact_file)
 from cylc.flow.task_remote_cmd import (
     FILE_BASE_UUID, REMOTE_INIT_DONE, REMOTE_INIT_NOT_REQUIRED)
+from cylc.flow.platform_lookup import forward_lookup
 
 
 REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
@@ -126,7 +128,7 @@ class TaskRemoteMgr(object):
             if value is not None:
                 del self.remote_host_str_map[key]
 
-    def remote_init(self, host, owner):
+    def remote_init(self, platform):
         """Initialise a remote [owner@]host if necessary.
 
         Create UUID file on suite host ".service/uuid" for remotes to identify
@@ -161,8 +163,10 @@ class TaskRemoteMgr(object):
             return status
 
         # Determine what items to install
-        comm_meth = glbl_cfg().get_host_item(
-            'task communication method', host, owner)
+        platform = forward_lookup(platform)
+        comm_meth = platform_cfg['task communication method']
+        # TODO pick a more elegant host picking method
+        host = randchoice(platform_cfg['remote hosts'])
         owner_at_host = 'localhost'
         if host:
             owner_at_host = host

@@ -98,6 +98,7 @@ from cylc.flow.wallclock import (
     get_time_string_from_unix_time as time2str,
     get_utc_mode)
 from cylc.flow.xtrigger_mgr import XtriggerManager
+from cylc.flow.platform_lookup import forward_lookup
 
 
 class SchedulerStop(CylcError):
@@ -1090,7 +1091,7 @@ see `COPYING' in the Cylc source distribution.
             fields.PUBLISH_PORT:
                 str(self.publisher.port),
             fields.SSH_USE_LOGIN_SHELL:
-                str(glbl_cfg().get_host_item('use login shell')),
+                str(forward_lookup()['use login shell']),
             fields.SUITE_RUN_DIR_ON_SUITE_HOST:
                 self.suite_run_dir,
             fields.UUID:

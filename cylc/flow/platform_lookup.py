@@ -18,9 +18,10 @@
 
 import re
 from cylc.flow.exceptions import PlatformLookupError
+from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 
 
-def forward_lookup(platforms, job_platform):
+def forward_lookup(platform_name=None):
     """
     Find out which job platform to use given a list of possible platforms and
     a task platform string.
@@ -30,48 +31,32 @@ def forward_lookup(platforms, job_platform):
     no platform is initally selected.
 
     Args:
-        job_platform (str):
-            platform item from config [runtime][TASK]platform
-        platforms (dictionary):
-            list of possible platforms defined by global.rc
+        platform_name (str):
+            name of platform to be retrieved.
 
     Returns:
-        platform (str):
-            string representing a platform from the global config.
+        platform (dict):
+            object containing settings for a platform, loaded from Global Config
 
-    Example:
-    >>> platforms = {
-    ...     'suite server platform': None,
-    ...     'desktop[0-9][0-9]|laptop[0-9][0-9]': None,
-    ...     'sugar': {
-    ...         'remote hosts': 'localhost',
-    ...         'batch system': 'slurm'
-    ...     },
-    ...     'hpc': {
-    ...         'remote hosts': ['hpc1', 'hpc2'],
-    ...         'batch system': 'pbs'
-    ...     },
-    ...     'hpc1-bg': {
-    ...         'remote hosts': 'hpc1',
-    ...         'batch system': 'background'
-    ...     },
-    ...     'hpc2-bg': {
-    ...         'remote hosts': 'hpc2',
-    ...         'batch system': 'background'
-    ...     }
-    ... }
-    >>> job_platform = 'desktop22'
-    >>> forward_lookup(platforms, job_platform)
-    'desktop22'
+    TODO: 
+        - Refactor testing for this method. Ideally including a method
+          example.
+        - Work out what to do with cases where localhost not set.
     """
-    if job_platform is None:
-        return 'localhost'
-    for platform in reversed(list(platforms)):
-        if re.fullmatch(platform, job_platform):
-            return job_platform
+    platforms = glbl_cfg().get(['job platforms'])
+
+    if platform_name is None:
+        return platforms['localhost']
+
+    # The list is reversed to allow user-set platforms (which are loaded
+    # later than site set platforms) to be matched first and override site
+    # defined platforms.
+    for platform_name_re in reversed(list(platforms)):
+        if re.fullmatch(platform_name_re, platform_name):
+            return platforms[platform]
 
     raise PlatformLookupError(
-        f"No matching platform \"{job_platform}\" found")
+        f"No matching platform \"{platform_name}\" found")
 
 
 def reverse_lookup(platforms, job, remote):

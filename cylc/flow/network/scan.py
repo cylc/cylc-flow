@@ -36,6 +36,7 @@ from cylc.flow.suite_files import (
     get_suite_title,
     get_suite_source_dir
 )
+from cylc.flow.platform_lookup import forward_lookup
 
 DEBUG_DELIM = '\n' + ' ' * 4
 INACTIVITY_TIMEOUT = 10.0
@@ -233,24 +234,25 @@ def get_scan_items_from_fs(
         tuple - (reg, host, port, pub_port, api)
 
     """
-    if owner_pattern is None:
+    # TODO RM after rebasing onto Oliver's Branch
+    # if owner_pattern is None:
         # Run directory of current user only
-        run_dirs = [(glbl_cfg().get_host_item('run directory'), None)]
-    else:
-        # Run directory of all users matching "owner_pattern".
-        # But skip those with /nologin or /false shells
-        run_dirs = []
-        skips = ('/false', '/nologin')
-        for pwent in getpwall():
-            if any(pwent.pw_shell.endswith(s) for s in skips):
-                continue
-            if owner_pattern.match(pwent.pw_name):
-                run_dirs.append((
-                    glbl_cfg().get_host_item(
-                        'run directory',
-                        owner=pwent.pw_name,
-                        owner_home=pwent.pw_dir),
-                    pwent.pw_name))
+    run_dirs = [forward_lookup()['run directory'], None]
+    # else:
+    #     # Run directory of all users matching "owner_pattern".
+    #     # But skip those with /nologin or /false shells
+    #     run_dirs = []
+    #     skips = ('/false', '/nologin')
+    #     for pwent in getpwall():
+    #         if any(pwent.pw_shell.endswith(s) for s in skips):
+    #             continue
+    #         if owner_pattern.match(pwent.pw_name):
+    #             run_dirs.append((
+    #                 glbl_cfg().get_host_item(
+    #                     'run directory',
+    #                     owner=pwent.pw_name,
+    #                     owner_home=pwent.pw_dir),
+    #                 pwent.pw_name))
     if cylc.flow.flags.debug:
         sys.stderr.write('Listing suites:%s%s\n' % (
             DEBUG_DELIM, DEBUG_DELIM.join(item[1] for item in run_dirs if

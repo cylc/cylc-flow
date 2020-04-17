@@ -110,10 +110,8 @@ class TaskProxy(object):
                 Same as the .tdef.rtconfig['meta']['title'] attribute.
         .state (cylc.flow.task_state.TaskState):
             Object representing the state of this task.
-        .task_host (str)
-            Name of host where latest job is submitted.
-        .task_owner (str)
-            Name of user (at task_host) where latest job is submitted.
+        .platform (dict)
+            Dict containing info for platform where latest job is submitted.
         .tdef (cylc.flow.taskdef.TaskDef):
             The definition object of this task.
         .timeout (float):
@@ -170,7 +168,7 @@ class TaskProxy(object):
         'state',
         'stop_point',
         'summary',
-        'task_host',
+        'platform',
         'task_owner',
         'timeout',
         'try_timers',
@@ -230,7 +228,7 @@ class TaskProxy(object):
 
         self.local_job_file_path = None
 
-        self.task_host = 'localhost'
+        self.platform = 'localhost'
         self.task_owner = None
 
         self.job_vacated = False

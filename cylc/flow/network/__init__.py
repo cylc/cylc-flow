@@ -155,7 +155,6 @@ class ZMQSocketBase:
         except RuntimeError:
             self.loop = asyncio.new_event_loop()
             asyncio.set_event_loop(self.loop)
-
         if self.bind:
             self._socket_bind(*args, **kwargs)
         else:
@@ -187,7 +186,6 @@ class ZMQSocketBase:
         # create socket
         self.socket = self.context.socket(self.pattern)
         self._socket_options()
-
         try:
             server_public_key, server_private_key = zmq.auth.load_certificate(
                 srv_prv_key_info.full_key_path)

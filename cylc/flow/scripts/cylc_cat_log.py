@@ -82,6 +82,7 @@ from cylc.flow.task_id import TaskID
 from cylc.flow.task_job_logs import (
     JOB_LOG_OUT, JOB_LOG_ERR, JOB_LOG_OPTS, NN, JOB_LOGS_LOCAL)
 from cylc.flow.terminal import cli_function
+from cylc.flow.platform_lookup import forward_lookup
 
 
 # Immortal tail-follow processes on job hosts can be cleaned up by killing
@@ -374,7 +375,9 @@ def main(parser, options, *args, color=False):
             except IndexError:
                 raise UserInputError(
                     "max rotation %d" % (len(logs) - 1))
-        tail_tmpl = str(glbl_cfg().get_host_item("tail command template"))
+        localhost_platform_cfg = forward_lookup()
+        remote_platform_cfg = forward_lookup(platform)
+        tail_tmpl = str(localhost_platform_cfg["tail command template"])
         out = view_log(logpath, mode, tail_tmpl, color=color)
         if out == 1:
             sys.exit(1)
@@ -406,7 +409,7 @@ def main(parser, options, *args, color=False):
             except KeyError:
                 # Is already long form (standard log, or custom).
                 pass
-        user_at_host, batch_sys_name, live_job_id = get_task_job_attrs(
+        platform, batch_sys_name, live_job_id = get_task_job_attrs(
             suite_name, point, task, options.submit_num)
         user, host = split_user_at_host(user_at_host)
         batchview_cmd = None
@@ -425,7 +428,7 @@ def main(parser, options, *args, color=False):
                 elif mode == 'tail':
                     conf_key = "err tailer"
             if conf_key is not None:
-                conf = glbl_cfg().get_host_item("batch systems", host, user)
+                conf = remote_platform_cfg["batch systems"]
                 batchview_cmd_tmpl = None
                 try:
                     batchview_cmd_tmpl = conf[batch_sys_name][conf_key]
@@ -435,16 +438,19 @@ def main(parser, options, *args, color=False):
                     batchview_cmd = batchview_cmd_tmpl % {
                         "job_id": str(live_job_id)}
 
-        log_is_remote = (is_remote(host, user)
-                         and (options.filename not in JOB_LOGS_LOCAL))
-        log_is_retrieved = (glbl_cfg().get_host_item('retrieve job logs', host)
-                            and live_job_id is None)
+        log_is_remote = (
+            is_remote(platform)
+            and (options.filename not in JOB_LOGS_LOCAL)
+        )
+        log_is_retrieved = (
+            remote_platform_cfg['retrieve job logs']
+            and live_job_id is None
+        )
         if log_is_remote and (not log_is_retrieved or options.force_remote):
             logpath = os.path.normpath(get_remote_suite_run_job_dir(
                 host, user,
                 suite_name, point, task, options.submit_num, options.filename))
-            tail_tmpl = str(glbl_cfg().get_host_item(
-                "tail command template", host, user))
+            tail_tmpl = str(remote_platform_cfg["tail command template"]
             # Reinvoke the cat-log command on the remote account.
             cmd = ['cat-log']
             if cylc.flow.flags.debug:
@@ -477,7 +483,7 @@ def main(parser, options, *args, color=False):
             # Local task job or local job log.
             logpath = os.path.normpath(get_suite_run_job_dir(
                 suite_name, point, task, options.submit_num, options.filename))
-            tail_tmpl = str(glbl_cfg().get_host_item("tail command template"))
+            tail_tmpl = str(localhost_platform_cfg["tail command template"])
             out = view_log(logpath, mode, tail_tmpl, batchview_cmd,
                            color=color)
             if mode != 'edit':

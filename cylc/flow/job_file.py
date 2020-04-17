@@ -27,6 +27,7 @@ import cylc.flow.flags
 from cylc.flow.pathutil import (
     get_remote_suite_run_dir,
     get_remote_suite_work_dir)
+from cylc.flow.platform_lookup import forward_lookup
 
 
 class JobFileWriter(object):
@@ -55,10 +56,9 @@ class JobFileWriter(object):
         # Access to cylc must be configured before user environment so
         # that cylc commands can be used in defining user environment
         # variables: NEXT_CYCLE=$( cylc cycle-point --offset-hours=6 )
-
+        platform = forward_lookup(job_conf['platform'])
         tmp_name = local_job_file_path + '.tmp'
-        run_d = get_remote_suite_run_dir(
-            job_conf['host'], job_conf['owner'], job_conf['suite_name'])
+        run_d = get_remote_suite_run_dir(platform, job_conf['suite_name'])
         try:
             with open(tmp_name, 'w') as handle:
                 self._write_header(handle, job_conf)
@@ -117,11 +117,6 @@ class JobFileWriter(object):
                     return True
         return False
 
-    @staticmethod
-    def _get_host_item(job_conf, key):
-        """Return host item from glbl_cfg()."""
-        return glbl_cfg().get_host_item(
-            key, job_conf["host"], job_conf["owner"])
 
     @staticmethod
     def _write_header(handle, job_conf):
@@ -149,7 +144,7 @@ class JobFileWriter(object):
             for line in lines:
                 handle.write('\n' + line)
 
-    def _write_prelude(self, handle, job_conf):
+    def _write_prelude(self, handle, job_conf, platform):
         """Job script prelude."""
         # Variables for traps
         handle.write("\nCYLC_FAIL_SIGNALS='%s'" % " ".join(
@@ -158,8 +153,7 @@ class JobFileWriter(object):
         if vacation_signals_str:
             handle.write("\nCYLC_VACATION_SIGNALS='%s'" % vacation_signals_str)
         # Path to cylc executable, if defined.
-        cylc_exec = glbl_cfg().get_host_item(
-            'cylc executable', job_conf["host"], job_conf["owner"])
+        cylc_exec = platform['cylc executable']
         if not cylc_exec.endswith('cylc'):
             raise ValueError(
                 f'ERROR: bad cylc executable in global config: {cylc_exec}')
@@ -170,8 +164,7 @@ class JobFileWriter(object):
         if cylc.flow.flags.debug:
             handle.write("\nexport CYLC_DEBUG=true")
         handle.write("\nexport CYLC_VERSION='%s'" % CYLC_VERSION)
-        for key in self._get_host_item(
-                job_conf, 'copyable environment variables'):
+        for key in platform['copyable environment variables']:
             if key in os.environ:
                 handle.write("\nexport %s='%s'" % (key, os.environ[key]))
 
@@ -299,7 +292,7 @@ class JobFileWriter(object):
     @classmethod
     def _write_global_init_script(cls, handle, job_conf):
         """Global Init-script."""
-        global_init_script = cls._get_host_item(
+        global_init_script = cls._get_platform_item(
             job_conf, 'global init-script')
         if cls._check_script_value(global_init_script):
             handle.write("\n\ncylc__job__inst__global_init_script() {")
