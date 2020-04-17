@@ -759,6 +759,8 @@ class TaskJobManager(object):
             itask.summary['job_hosts'][itask.submit_num] = ''
             # Retry delays, needed for the try_num
             self._set_retry_timers(itask, rtconfig)
+            # Create job dir now because we're about to return
+            self._create_job_log_path(suite, itask)
             self._prep_submit_task_job_error(
                 suite, itask, dry_run, '(remote host select)', exc)
             return False
