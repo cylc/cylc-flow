@@ -74,7 +74,7 @@ def validator_invalid_values():
 
     # set 1 (t, f, f, t)
     with Conf('base') as spec:
-        Conf('value', VDR.V_INTEGER_LIST, default=1,  options=[1, 2, 3, 4])
+        Conf('value', VDR.V_INTEGER_LIST, default=1, options=[1, 2, 3, 4])
     cfg = OrderedDictWithDefaults()
     cfg['value'] = "1, 2, 3"
     msg = None

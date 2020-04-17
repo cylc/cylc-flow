@@ -14,14 +14,14 @@ with ContextNode('a') as a:
 def test_context_node_tree():
     """Ensure parents and children are correctly organised."""
     assert a.name == 'a'
-    assert a._parent == None
+    assert a._parent is None
     assert a._children == {'b': b, 'd': d}
     assert b.name == 'b'
     assert b._parent == a
     assert b._children == {'c': c}
     assert c.name == 'c'
     assert c._parent == b
-    assert c._children == None
+    assert c._children is None
 
 
 def test_data_state():
@@ -48,7 +48,7 @@ def test_data_state():
     assert ContextNode.DATA == {a: set(), foo: {a}}
     assert list(foo.walk()) == [(0, foo), (1, bar)]
 
-    # finally clean up for niceness 
+    # finally clean up for niceness
     del ContextNode.DATA[a]
     del ContextNode.DATA[foo]
 
@@ -64,7 +64,7 @@ def test_context_contains():
     """Test `node.__contains__`."""
     assert 'b' in a
     assert 'c' in b
-    assert not 'c' in a
+    assert 'c' not in a
 
 
 def test_context_getitem():

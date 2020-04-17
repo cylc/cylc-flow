@@ -19,7 +19,9 @@ from textwrap import dedent
 
 from cylc.flow.context_node import ContextNode
 from cylc.flow.parsec.exceptions import (
-    ParsecError, ItemNotFoundError, NotSingleItemError)
+    ItemNotFoundError,
+    NotSingleItemError
+)
 from cylc.flow.parsec.fileparse import parse
 from cylc.flow.parsec.util import printcfg
 from cylc.flow.parsec.validate import parsec_validate, ParsecValidator as VDR
@@ -229,12 +231,3 @@ class ConfigNode(ContextNode):
         self.default = default
         self.options = options
         self.desc = dedent(desc).strip() if desc else None
-
-
-
-    # def __exit__(self, *args):
-    #     ContextNode.__exit__(self, *args)
-    #     if not self.is_leaf():
-    #         for attr in ('vdr', 'options', 'default'):
-    #             if getattr(self, attr):
-    #                 raise Exception(f'Attribute {attr} set on configuration node')
