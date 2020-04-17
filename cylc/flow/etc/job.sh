@@ -1,4 +1,6 @@
 #!/bin/bash
+# ^ NOTE: this scipt is not invoked directly so the shell is decided by
+#         the calling script, this just helps shellcheck lint the file
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
