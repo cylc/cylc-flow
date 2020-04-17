@@ -279,5 +279,5 @@ def test_mdump_oneline(parse_config, capsys):
 
 
 def test_get_none(parse_config):
-    cfg = parse_config(sample_spec, '')  # blank config
+    cfg = parse_config(sample_spec, '')  # blank config
     assert cfg.get(sparse=True) == {}
