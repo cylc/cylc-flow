@@ -31,7 +31,9 @@ from cylc.flow.exceptions import SuiteServiceFileError
 from cylc.flow.pathutil import get_remote_suite_run_dir, get_suite_run_dir
 import cylc.flow.flags
 from cylc.flow.hostuserutil import (
-    get_host, get_user, is_remote, is_remote_host, is_remote_user)
+    get_host, get_user, is_remote, is_remote_host, is_remote_user,
+    is_remote_platform
+)
 from cylc.flow.unicode_rules import SuiteNameValidator
 
 from enum import Enum
@@ -105,8 +107,8 @@ class KeyInfo():
                     and key_type is KeyType.PRIVATE)
                 or (key_owner is KeyOwner.SERVER
                     and key_type is KeyType.PUBLIC)):
-                self.key_path = os.path.join(
-                    os.path.expanduser("~"), self.suite_srv_dir)
+                # TODO- ??
+                self.key_path = os.path.expandvars(self.suite_srv_dir)
 
         else:
             raise ValueError(
@@ -339,7 +341,7 @@ def get_contact_file(reg):
         get_suite_srv_dir(reg), SuiteFiles.Service.CONTACT)
 
 
-def get_auth_item(item, reg, owner=None, host=None, content=False):
+def get_auth_item(item, reg, platform=None, content=False):
     """Locate/load Curve private-key/ ...etc.
 
     Return file name, or content of file if content=True is set.
@@ -368,6 +370,7 @@ def get_auth_item(item, reg, owner=None, host=None, content=False):
        $HOME/.cylc/auth/SUITE_OWNER@SUITE_HOST/SUITE_NAME/
 
     """
+
     if item not in [
             SuiteFiles.Service.CONTACT,
             SuiteFiles.Service.CONTACT2] and not isinstance(item, KeyInfo):
@@ -402,7 +405,7 @@ def get_auth_item(item, reg, owner=None, host=None, content=False):
             if value:
                 return value
     # 3/ Local suite service directory
-    if _is_local_auth_ok(reg, owner, host):
+    if _is_local_auth_ok(reg, platform):
         path = get_suite_srv_dir(reg)
         if content:
             value = _load_local_item(item, path)
@@ -411,8 +414,8 @@ def get_auth_item(item, reg, owner=None, host=None, content=False):
         if value:
             return value
     # 4/ Disk cache for remote suites
-    if owner is not None and host is not None:
-        paths = [_get_cache_dir(reg, owner, host)]
+    if platform is not None:
+        paths = [_get_cache_dir(reg, platform)]
         short_host = host.split('.', 1)[0]
         if short_host != host:
             paths.append(_get_cache_dir(reg, owner, short_host))
@@ -428,14 +431,15 @@ def get_auth_item(item, reg, owner=None, host=None, content=False):
     # Note: It is not possible to find ".service/contact2" on the suite
     # host, because it is installed on task host by "cylc remote-init" on
     # demand.
-    if item != SuiteFiles.Service.CONTACT2:
-        value = _load_remote_item(item, reg, owner, host)
-        if value:
-            if not content:
-                path = _get_cache_dir(reg, owner, host)
-                _dump_item(path, item, value)
-                value = os.path.join(path, item)
-            return value
+    # Commented out as part of platfroms work.
+    # if item != SuiteFiles.Service.CONTACT2:
+        # value = _load_remote_item(item, reg, platform)
+        # if value:
+        #     if not content:
+        #         path = _get_cache_dir(reg, owner, host)
+        #         _dump_item(path, item, value)
+        #         value = os.path.join(path, item)
+        #     return value
 
     raise SuiteServiceFileError("Couldn't get %s" % item)
 
@@ -476,18 +480,21 @@ def get_suite_srv_dir(reg, suite_owner=None):
     if not suite_owner:
         suite_owner = get_user()
     run_d = os.getenv("CYLC_SUITE_RUN_DIR")
-    if (not run_d or os.getenv("CYLC_SUITE_NAME") != reg or
-            os.getenv("CYLC_SUITE_OWNER") != suite_owner):
+    if (
+        not run_d or 
+        os.getenv("CYLC_SUITE_NAME") != reg or
+        os.getenv("CYLC_SUITE_OWNER") != suite_owner
+    ):
         run_d = get_suite_run_dir(reg)
     return os.path.join(run_d, SuiteFiles.Service.DIRNAME)
 
 
-def load_contact_file(reg, owner=None, host=None, file_base=None):
+def load_contact_file(reg, platform=None, file_base=None):
     """Load contact file. Return data as key=value dict."""
     if not file_base:
         file_base = SuiteFiles.Service.CONTACT
     file_content = get_auth_item(
-        file_base, reg, owner, host, content=True)
+        file_base, reg, platform, content=True)
     data = {}
     for line in file_content.splitlines():
         key, value = [item.strip() for item in line.split("=", 1)]
@@ -703,11 +710,11 @@ def _dump_item(path, item, value):
     LOG.debug('Generated %s', fname)
 
 
-def _get_cache_dir(reg, owner, host):
+def _get_cache_dir(reg, platform):
     """Return the cache directory for remote suite service files."""
     return os.path.join(
         os.path.expanduser("~"), ".cylc", "auth"
-        "%s@%s" % (owner, host), reg
+        "%s@%s" % (platform['owner'], platform['remote hosts'][0]), reg
     )
 
 
@@ -734,12 +741,12 @@ def get_suite_title(reg):
 
 
 @lru_cache()
-def _is_local_auth_ok(reg, owner, host):
+def _is_local_auth_ok(reg, platform):
     """Return True if it is OK to use local passphrase file.
 
     Use values in ~/cylc-run/REG/.service/contact to make a judgement.
     """
-    if is_remote(host, owner):
+    if is_remote_platform(platform):
         fname = os.path.join(
             get_suite_srv_dir(reg), SuiteFiles.Service.CONTACT)
         data = {}
@@ -753,9 +760,9 @@ def _is_local_auth_ok(reg, owner, host):
             return False
         else:
             # Contact file exists, check values match
-            if owner is None:
+            if platform['owner'] is None:
                 owner = get_user()
-            if host is None:
+            if platform['remote hosts'] is []:
                 host = get_host()
             host_value = data.get(ContactFileFields.HOST, "")
             return (
@@ -779,8 +786,14 @@ def _load_local_item(item, path):
         return None
 
 
-def _load_remote_item(item, reg, owner, host):
+def _load_remote_item(item, reg, platform):
     """Load content of service item from remote [owner@]host via SSH."""
+    if platform is None:
+        host, owner = None, None
+    else:
+        host = platform['remote hosts'][0]
+        owner = platfom['owner']
+    
     if not is_remote(host, owner):
         return
     if host is None:
@@ -810,8 +823,7 @@ def _load_remote_item(item, reg, owner, host):
         'item': item
     }
     import shlex
-    command = shlex.split(
-        glbl_cfg().get_host_item('ssh command', host, owner))
+    command = shlex.split(platform['ssh command'])
     command += ['-n', owner + '@' + host, script]
     from subprocess import Popen, PIPE, DEVNULL  # nosec
     try:
