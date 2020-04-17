@@ -229,7 +229,7 @@ def test_not_single_item_error():
     assert 'not a singular item: internal error' == str(error)
 
 
-def test_mdump_none(parse_config, capsys):
+def test_mdump_none(parse_config, sample_spec, capsys):
     cfg = parse_config(sample_spec, '''
         [section1]
             value1 = abc
@@ -241,7 +241,7 @@ def test_mdump_none(parse_config, capsys):
     assert std.err == ''
 
 
-def test_mdump_some(parse_config, capsys):
+def test_mdump_some(parse_config, sample_spec, capsys):
     cfg = parse_config(sample_spec, '''
         [section1]
             value1 = abc
@@ -259,7 +259,7 @@ def test_mdump_some(parse_config, capsys):
     assert std.err == ''
 
 
-def test_mdump_oneline(parse_config, capsys):
+def test_mdump_oneline(parse_config, sample_spec, capsys):
     cfg = parse_config(sample_spec, '''
         [section1]
             value1 = abc
