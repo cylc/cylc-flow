@@ -28,21 +28,10 @@ from cylc.flow.parsec.validate import (
     CylcConfigValidator as VDR
 )
 
-
-@pytest.fixture()
-def sample_spec():
-    with Conf('myconf') as myconf:
-        with Conf('section1'):
-            Conf('value1', VDR.V_STRING, '')
-            Conf('value2', VDR.V_STRING, 'what?')
-        with Conf('section2'):
-            Conf('enabled', VDR.V_BOOLEAN, False)
-        with Conf('section3'):
-            Conf('title', VDR.V_STRING)
-            with Conf('entries'):
-                Conf('key', VDR.V_STRING)
-                Conf('value', VDR.V_INTEGER_LIST)
-    return myconf
+from . import (
+    config as parse_config,
+    sample_spec,
+)
 
 
 def test_loadcfg(sample_spec):
@@ -238,3 +227,57 @@ def test_item_not_found_error():
 def test_not_single_item_error():
     error = config.NotSingleItemError("internal error")
     assert 'not a singular item: internal error' == str(error)
+
+
+def test_mdump_none(parse_config, capsys):
+    cfg = parse_config(sample_spec, '''
+        [section1]
+            value1 = abc
+            value2 = def
+    ''')
+    cfg.mdump(pnative=True)
+    std = capsys.readouterr()
+    assert std.out == ''
+    assert std.err == ''
+
+
+def test_mdump_some(parse_config, capsys):
+    cfg = parse_config(sample_spec, '''
+        [section1]
+            value1 = abc
+            value2 = def
+    ''')
+    cfg.mdump(
+        [
+            ['section1', 'value1'],
+            ['section1', 'value2'],
+        ],
+        pnative=True
+    )
+    std = capsys.readouterr()
+    assert std.out == 'abc\ndef\n'
+    assert std.err == ''
+
+
+def test_mdump_oneline(parse_config, capsys):
+    cfg = parse_config(sample_spec, '''
+        [section1]
+            value1 = abc
+            value2 = def
+    ''')
+    cfg.mdump(
+        [
+            ['section1', 'value1'],
+            ['section1', 'value2'],
+        ],
+        pnative=True,
+        oneline=True
+    )
+    std = capsys.readouterr()
+    assert std.out == 'abc def\n'
+    assert std.err == ''
+
+
+def test_get_none(parse_config):
+    cfg = parse_config(sample_spec, '')  # blank config
+    assert cfg.get(sparse=True) == {}
