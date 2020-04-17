@@ -27,6 +27,7 @@ import signal
 from subprocess import Popen, PIPE, DEVNULL
 import sys
 from time import sleep
+from random import choice as randomchoice
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
@@ -138,7 +139,7 @@ def run_cmd(
             return True
 
 
-def construct_ssh_cmd(raw_cmd, user=None, host=None, forward_x11=False,
+def construct_ssh_cmd(raw_cmd, platform=None, forward_x11=False,
                       stdin=False, ssh_login_shell=None, ssh_cylc=None,
                       set_UTC=False, allow_flag_opts=False):
     """Append a bare command with further options required to run via ssh.
@@ -165,8 +166,11 @@ def construct_ssh_cmd(raw_cmd, user=None, host=None, forward_x11=False,
         A list containing a chosen command including all arguments and options
         necessary to directly execute the bare command on a given host via ssh.
     """
-    command = shlex.split(glbl_cfg().get_host_item('ssh command', host, user))
-
+    command = platform['ssh command']
+    # TODO implement a nicer method for selecting a platform host
+    host = randomchoice(platform['remote hosts'])
+    # TODO refs to owner to dissapear after future merge
+    owner = platform['owner']
     if forward_x11:
         command.append('-Y')
     if stdin is None:
@@ -194,8 +198,7 @@ def construct_ssh_cmd(raw_cmd, user=None, host=None, forward_x11=False,
 
     # Use bash -l?
     if ssh_login_shell is None:
-        ssh_login_shell = glbl_cfg().get_host_item(
-            'use login shell', host, user)
+        ssh_login_shell = platform['use login shell']
     if ssh_login_shell:
         # A login shell will always source /etc/profile and the user's bash
         # profile file. To avoid having to quote the entire remote command
@@ -206,7 +209,7 @@ def construct_ssh_cmd(raw_cmd, user=None, host=None, forward_x11=False,
     if ssh_cylc:
         command.append(ssh_cylc)
     else:
-        ssh_cylc = glbl_cfg().get_host_item('cylc executable', host, user)
+        ssh_cylc = platform['cylc executable']
         if ssh_cylc.endswith('cylc'):
             command.append(ssh_cylc)
         else:

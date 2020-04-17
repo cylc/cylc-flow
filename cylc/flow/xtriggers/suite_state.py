@@ -20,6 +20,7 @@ import sqlite3
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.cycling.util import add_offset
 from cylc.flow.dbstatecheck import CylcSuiteDBChecker
+from cylc.flow.platform_lookup import forward_lookup
 from metomi.isodatetime.parsers import TimePointParser
 
 
@@ -71,7 +72,8 @@ def suite_state(suite, task, point, offset=None, status='succeeded',
     """
     cylc_run_dir = os.path.expandvars(
         os.path.expanduser(
-            cylc_run_dir or glbl_cfg().get_host_item('run directory')))
+            cylc_run_dir or forward_lookup()['run directory']
+        )
     if offset is not None:
         point = str(add_offset(point, offset))
     try:

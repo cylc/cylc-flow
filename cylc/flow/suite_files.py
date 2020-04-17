@@ -30,7 +30,9 @@ from cylc.flow.exceptions import SuiteServiceFileError
 from cylc.flow.pathutil import get_remote_suite_run_dir, get_suite_run_dir
 import cylc.flow.flags
 from cylc.flow.hostuserutil import (
-    get_host, get_user, is_remote, is_remote_host, is_remote_user)
+    get_host, get_user, is_remote, is_remote_host, is_remote_user,
+    is_remote_platform
+)
 from cylc.flow.unicode_rules import SuiteNameValidator
 
 from enum import Enum
@@ -108,8 +110,8 @@ class KeyInfo():
                     and key_type is KeyType.PRIVATE)
                 or (key_owner is KeyOwner.SERVER
                     and key_type is KeyType.PUBLIC)):
-                self.key_path = os.path.join(
-                    os.path.expanduser("~"), self.suite_srv_dir)
+                # TODO- ??
+                self.key_path = os.path.expandvars(self.suite_srv_dir)
 
         else:
             raise ValueError(
@@ -369,9 +371,12 @@ def get_suite_srv_dir(reg, suite_owner=None):
     if not suite_owner:
         suite_owner = get_user()
     run_d = os.getenv("CYLC_SUITE_RUN_DIR")
-    if (not run_d or os.getenv("CYLC_SUITE_NAME") != reg or
-            os.getenv("CYLC_SUITE_OWNER") != suite_owner):
-        run_d = get_suite_run_dir(reg)
+    if (
+        not run_d
+        or os.getenv("CYLC_SUITE_NAME") != reg
+        or os.getenv("CYLC_SUITE_OWNER") != suite_owner
+    ):
+        run_d = os.path.expandvars(get_suite_run_dir(reg))
     return os.path.join(run_d, SuiteFiles.Service.DIRNAME)
 
 

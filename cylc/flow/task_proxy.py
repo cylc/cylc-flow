@@ -19,6 +19,7 @@
 from metomi.isodatetime.timezone import get_local_time_zone
 
 import cylc.flow.cycling.iso8601
+from cylc.flow.platform_lookup import forward_lookup
 from cylc.flow.exceptions import TaskProxySequenceBoundsError
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_state import (
@@ -110,10 +111,8 @@ class TaskProxy(object):
                 Same as the .tdef.rtconfig['meta']['title'] attribute.
         .state (cylc.flow.task_state.TaskState):
             Object representing the state of this task.
-        .task_host (str)
-            Name of host where latest job is submitted.
-        .task_owner (str)
-            Name of user (at task_host) where latest job is submitted.
+        .platform (dict)
+            Dict containing info for platform where latest job is submitted.
         .tdef (cylc.flow.taskdef.TaskDef):
             The definition object of this task.
         .timeout (float):
@@ -170,7 +169,7 @@ class TaskProxy(object):
         'state',
         'stop_point',
         'summary',
-        'task_host',
+        'platform',
         'task_owner',
         'timeout',
         'try_timers',
@@ -230,7 +229,7 @@ class TaskProxy(object):
 
         self.local_job_file_path = None
 
-        self.task_host = 'localhost'
+        self.platform = forward_lookup('localhost')
         self.task_owner = None
 
         self.job_vacated = False
@@ -277,7 +276,7 @@ class TaskProxy(object):
         reload_successor.summary = self.summary
         reload_successor.local_job_file_path = self.local_job_file_path
         reload_successor.try_timers = self.try_timers
-        reload_successor.task_host = self.task_host
+        reload_successor.platform = self.platform
         reload_successor.task_owner = self.task_owner
         reload_successor.job_vacated = self.job_vacated
         reload_successor.poll_timer = self.poll_timer

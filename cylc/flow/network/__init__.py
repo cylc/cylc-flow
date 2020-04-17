@@ -76,7 +76,7 @@ def get_location(suite: str, owner: str, host: str):
         ClientError: if the suite is not running.
     """
     try:
-        contact = load_contact_file(suite, owner, host)
+        contact = load_contact_file(suite)
     except SuiteServiceFileError:
         raise SuiteStopped(suite)
 
@@ -158,7 +158,6 @@ class ZMQSocketBase:
         except RuntimeError:
             self.loop = asyncio.new_event_loop()
             asyncio.set_event_loop(self.loop)
-
         if self.bind:
             self._socket_bind(*args, **kwargs)
         else:
@@ -186,11 +185,10 @@ class ZMQSocketBase:
                 KeyType.PRIVATE,
                 KeyOwner.SERVER,
                 full_key_path=srv_prv_key_loc)
-
+        LOG.debug(f"full_key_path = {srv_prv_key_info.full_key_path}")
         # create socket
         self.socket = self.context.socket(self.pattern)
         self._socket_options()
-
         try:
             server_public_key, server_private_key = zmq.auth.load_certificate(
                 srv_prv_key_info.full_key_path)

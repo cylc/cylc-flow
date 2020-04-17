@@ -31,12 +31,13 @@ from shutil import rmtree
 from time import time
 import traceback
 from copy import deepcopy
+from random import choice as randomchoice
 
 from cylc.flow.parsec.util import pdeepcopy, poverride
 
 from cylc.flow import LOG
 from cylc.flow.batch_sys_manager import JobPollContext
-from cylc.flow.hostuserutil import get_host, is_remote_host, is_remote_user
+from cylc.flow.hostuserutil import get_host, is_remote_host, is_remote_user, is_remote_platform
 from cylc.flow.job_file import JobFileWriter
 from cylc.flow.pathutil import get_remote_suite_run_job_dir
 from cylc.flow.subprocpool import SubProcPool
@@ -50,6 +51,7 @@ from cylc.flow.task_job_logs import (
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED,
     TASK_OUTPUT_FAILED)
+from cylc.flow.platform_lookup import forward_lookup
 from cylc.flow.task_remote_mgr import (
     REMOTE_INIT_FAILED, TaskRemoteMgmtError, TaskRemoteMgr)
 from cylc.flow.task_state import (
@@ -57,6 +59,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED,
     TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING)
 from cylc.flow.wallclock import get_current_time_string, get_utc_mode
+
 
 
 class TaskJobManager(object):
@@ -204,15 +207,21 @@ class TaskJobManager(object):
             return bad_tasks
 
         # Group task jobs by (host, owner)
-        auth_itasks = {}  # {(host, owner): [itask, ...], ...}
+        # TODO - consider using itask.platform['name'] to reduce mem
+        # req'd
+        auth_itasks = {}  # {platform: [itask, ...], ...}
         for itask in prepared_tasks:
-            auth_itasks.setdefault((itask.task_host, itask.task_owner), [])
-            auth_itasks[(itask.task_host, itask.task_owner)].append(itask)
-        # Submit task jobs for each (host, owner) group
+            platform_name = itask.platform['name']
+            auth_itasks.setdefault(platform_name, [])
+            auth_itasks[platform_name].append(itask)
+        # Submit task jobs for each platform
         done_tasks = bad_tasks
-        for (host, owner), itasks in sorted(auth_itasks.items()):
+        for platform_name, itasks in sorted(auth_itasks.items()):
+            # Re-fetch a copy of platform
+            platform = itasks[0].platform
             is_init = self.task_remote_mgr.remote_init(
-                host, owner, curve_auth, client_pub_key_dir)
+                platform_name, curve_auth, client_pub_key_dir
+            )
             if is_init is None:
                 # Remote is waiting to be initialised
                 for itask in itasks:
@@ -228,10 +237,13 @@ class TaskJobManager(object):
             # allows the restart logic to correctly poll the status of the
             # background/at jobs that may still be running on the previous
             # suite host.
+            owner = platform['owner']
+            host = randomchoice(platform['remote hosts'])
             if (
                 self.batch_sys_mgr.is_job_local_to_host(
-                    itask.summary['batch_sys_name']) and
-                not is_remote_host(host)
+                    itask.summary['batch_sys_name']
+                ) and
+                not is_remote_platform(platform)
             ):
                 owner_at_host = get_host()
             else:
@@ -288,7 +300,13 @@ class TaskJobManager(object):
             if remote_mode:
                 cmd.append('--remote-mode')
             cmd.append('--')
-            cmd.append(get_remote_suite_run_job_dir(host, owner, suite))
+            cmd.append(
+                os.path.expandvars(
+                    get_remote_suite_run_job_dir(
+                        platform, suite
+                    )
+                )
+            )
             # Chop itasks into a series of shorter lists if it's very big
             # to prevent overloading of stdout and stderr pipes.
             itasks = sorted(itasks, key=lambda itask: itask.identity)
@@ -341,6 +359,7 @@ class TaskJobManager(object):
         """
         job_file_dir = get_task_job_log(
             suite, itask.point, itask.tdef.name, itask.submit_num)
+        job_file_dir = os.path.expandvars(job_file_dir)
         task_log_dir = os.path.dirname(job_file_dir)
         if itask.submit_num == 1:
             try:
@@ -355,7 +374,6 @@ class TaskJobManager(object):
                             ignore_errors=True)
         else:
             rmtree(job_file_dir, ignore_errors=True)
-
         os.makedirs(job_file_dir, exist_ok=True)
         target = os.path.join(task_log_dir, NN)
         source = os.path.basename(job_file_dir)
@@ -650,24 +668,27 @@ class TaskJobManager(object):
             return
         auth_itasks = {}
         for itask in itasks:
-            if (itask.task_host, itask.task_owner) not in auth_itasks:
-                auth_itasks[(itask.task_host, itask.task_owner)] = []
-            auth_itasks[(itask.task_host, itask.task_owner)].append(itask)
-        for (host, owner), itasks in sorted(auth_itasks.items()):
+            if itask.platform['name'] not in auth_itasks:
+                auth_itasks[itask.platform['name']] = []
+            auth_itasks[itask.platform['name']].append(itask)
+        for platform_name, itasks in sorted(auth_itasks.items()):
+            platform = itasks[0].platform
+            host = randomchoice(platform['remote hosts'])
+            owner = platform['owner']
             cmd = ["cylc", cmd_key]
             if LOG.isEnabledFor(DEBUG):
                 cmd.append("--debug")
             if is_remote_host(host):
-                cmd.append("--host=%s" % (host))
+                cmd.append("--host=%s" % host)
             if is_remote_user(owner):
-                cmd.append("--user=%s" % (owner))
+                cmd.append("--user=%s" % owner)
             cmd.append("--")
-            cmd.append(get_remote_suite_run_job_dir(host, owner, suite))
+            cmd.append(get_remote_suite_run_job_dir(platform, suite))
             job_log_dirs = []
             for itask in sorted(itasks, key=lambda itask: itask.identity):
                 job_log_dirs.append(get_task_job_id(
                     itask.point, itask.tdef.name, itask.submit_num))
-            cmd += job_log_dirs
+            cmd += [os.path.expandvars(path) for path in job_log_dirs]
             self.proc_pool.put_command(
                 SubProcContext(cmd_key, cmd), callback, [suite, itasks])
 
@@ -697,8 +718,7 @@ class TaskJobManager(object):
         """Simulation mode task jobs submission."""
         for itask in itasks:
             self._set_retry_timers(itask)
-            itask.task_host = 'SIMULATION'
-            itask.task_owner = 'SIMULATION'
+            itask.platform = 'SIMULATION'
             itask.summary['batch_sys_name'] = 'SIMULATION'
             itask.summary[self.KEY_EXECUTE_TIME_LIMIT] = (
                 itask.tdef.rtconfig['job']['simulated run length'])
@@ -771,32 +791,41 @@ class TaskJobManager(object):
 
         # Determine task host settings now, just before job submission,
         # because dynamic host selection may be used.
-        try:
-            task_host = self.task_remote_mgr.remote_host_select(
-                rtconfig['remote']['host'])
-        except TaskRemoteMgmtError as exc:
-            # Submit number not yet incremented
-            itask.submit_num += 1
-            itask.summary['job_hosts'][itask.submit_num] = ''
-            # Retry delays, needed for the try_num
-            self._set_retry_timers(itask, rtconfig)
-            self._prep_submit_task_job_error(
-                suite, itask, dry_run, '(remote host select)', exc)
-            return False
-        else:
-            if task_host is None:  # host select not ready
-                itask.set_summary_message(self.REMOTE_SELECT_MSG)
-                return
-            itask.task_host = task_host
-            # Submit number not yet incremented
-            itask.submit_num += 1
-            # Retry delays, needed for the try_num
-            self._set_retry_timers(itask, rtconfig)
+        # TODO remove these questions later
+        # - Should task host become task_platform?
+        # - What does remote_host_select do?
+        # Current Strategy - Replace task host here with one selected
+        # By forward lookup - later you need to re-add logic for 
+        # Dealing with platform = ``$(echo xcel00)``
+        # try:
+        platform = forward_lookup(rtconfig['platform'])
+            # @TODO rm after platforms complete - kept for reference
+            # task_host = self.task_remote_mgr.remote_host_select(
+            #     rtconfig['remote']['host'])
+        # except TaskRemoteMgmtError as exc:
+        #     # Submit number not yet incremented
+        #     itask.submit_num += 1
+        #     itask.summary['job_hosts'][itask.submit_num] = ''
+        #     # Retry delays, needed for the try_num
+        #     self._set_retry_timers(itask, rtconfig)
+        #     self._prep_submit_task_job_error(
+        #         suite, itask, dry_run, '(remote host select)', exc)
+            # return False
+        # else:
+            # if task_host is None:  # host select not ready
+            #     itask.set_summary_message(self.REMOTE_SELECT_MSG)
+            #     return
+        itask.platform = platform
+        # Submit number not yet incremented
+        itask.submit_num += 1
+        # Retry delays, needed for the try_num
+        self._set_retry_timers(itask, rtconfig)
 
         try:
             job_conf = self._prep_submit_task_job_impl(suite, itask, rtconfig)
 
             # Job pool insertion
+            # TODO get an explanation here of why the deepcopy is req'd
             job_config = deepcopy(job_conf)
             job_config['logfiles'] = deepcopy(itask.summary['logfiles'])
             itask.jobs.append(job_config['job_d'])
@@ -842,15 +871,21 @@ class TaskJobManager(object):
 
     def _prep_submit_task_job_impl(self, suite, itask, rtconfig):
         """Helper for self._prep_submit_task_job."""
-        itask.task_owner = rtconfig['remote']['owner']
-        if itask.task_owner:
-            owner_at_host = itask.task_owner + "@" + itask.task_host
+        # itask.platform is going to get boring...
+        platform = itask.platform
+        # TODO - use a better algorithm for picking host
+        host = randomchoice(platform['remote hosts'])
+        owner = platform['owner']
+
+        if owner:
+            owner_at_host = f"{owner}@{host}"
         else:
-            owner_at_host = itask.task_host
+            owner_at_host = host
+
         itask.summary['host'] = owner_at_host
         itask.summary['job_hosts'][itask.submit_num] = owner_at_host
 
-        itask.summary['batch_sys_name'] = rtconfig['job']['batch system']
+        itask.summary['batch_sys_name'] = platform['batch system']
         for name in rtconfig['extra log files']:
             itask.summary['logfiles'].append(
                 os.path.expanduser(os.path.expandvars(name)))
@@ -872,11 +907,12 @@ class TaskJobManager(object):
         job_d = get_task_job_id(
             itask.point, itask.tdef.name, itask.submit_num)
         job_file_path = get_remote_suite_run_job_dir(
-            itask.task_host, itask.task_owner, suite, job_d, JOB_LOG_JOB)
+            itask.platform, suite, job_d, JOB_LOG_JOB)
         return {
-            'batch_system_name': rtconfig['job']['batch system'],
+            'batch_system_name': platform['batch system'],
             'batch_submit_command_template': (
-                rtconfig['job']['batch submit command template']),
+                platform['batch submit command template']
+            ),
             'batch_system_conf': batch_sys_conf,
             'dependencies': itask.state.get_resolved_dependencies(),
             'directives': rtconfig['directives'],
@@ -885,7 +921,7 @@ class TaskJobManager(object):
             'env-script': rtconfig['env-script'],
             'err-script': rtconfig['err-script'],
             'exit-script': rtconfig['exit-script'],
-            'host': itask.task_host,
+            'platform': platform,
             'init-script': rtconfig['init-script'],
             'job_file_path': job_file_path,
             'job_d': job_d,
@@ -895,7 +931,7 @@ class TaskJobManager(object):
             'param_var': itask.tdef.param_var,
             'post-script': scripts[2],
             'pre-script': scripts[0],
-            'remote_suite_d': rtconfig['remote']['suite definition directory'],
+            'remote_suite_d': platform['suite definition directory'],
             'script': scripts[1],
             'submit_num': itask.submit_num,
             'suite_name': suite,

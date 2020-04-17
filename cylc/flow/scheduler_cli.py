@@ -253,7 +253,7 @@ def scheduler_cli(parser, options, args, is_restart=False):
 
     suite_run_dir = get_suite_run_dir(reg)
 
-    if not os.path.exists(suite_run_dir):
+    if not os.path.exists(os.path.expandvars(suite_run_dir)):
         sys.stderr.write(f'suite service directory not found '
                          f'at: {suite_run_dir}\n')
         sys.exit(1)

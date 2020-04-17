@@ -31,6 +31,7 @@ import os
 from shlex import quote
 import shlex
 from time import time
+from random import choice as randomchoice
 
 from cylc.flow.parsec.config import ItemNotFoundError
 
@@ -214,8 +215,7 @@ class TaskEventsManager():
             ret = itask.tdef.rtconfig[skey][key]
         else:
             try:
-                ret = glbl_cfg().get_host_item(
-                    key, itask.task_host, itask.task_owner)
+                ret = itask.platform[key]
             except (KeyError, ItemNotFoundError):
                 ret = default
         return ret
@@ -847,10 +847,12 @@ class TaskEventsManager():
         id_key = (
             (self.HANDLER_JOB_LOGS_RETRIEVE, event),
             str(itask.point), itask.tdef.name, itask.submit_num)
-        if itask.task_owner:
-            user_at_host = itask.task_owner + "@" + itask.task_host
+        host = randomchoice(itask.platform['remote hosts'])
+        owner = itask.platform['owner']
+        if owner:
+            user_at_host = owner + "@" + host
         else:
-            user_at_host = itask.task_host
+            user_at_host = host
         events = (self.EVENT_FAILED, self.EVENT_RETRY, self.EVENT_SUCCEEDED)
         if (event not in events or
                 user_at_host in [get_user() + '@localhost', 'localhost'] or
