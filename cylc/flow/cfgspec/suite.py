@@ -85,9 +85,9 @@ with Conf(
         Conf('cycle point num expanded year digits', VDR.V_INTEGER, 0)
         Conf('cycle point time zone', VDR.V_CYCLE_POINT_TIME_ZONE)
         Conf('required run mode', VDR.V_STRING, '',
-             options=['live', 'dummy', 'dummy-local', 'simulation'])
+             options=['', 'live', 'dummy', 'dummy-local', 'simulation'])
         Conf('force run mode', VDR.V_STRING, '',
-             options=['live', 'dummy', 'dummy-local', 'simulation'])
+             options=['', 'live', 'dummy', 'dummy-local', 'simulation'])
         Conf('task event mail interval', VDR.V_INTERVAL)
         Conf('disable automatic shutdown', VDR.V_BOOLEAN)
 
@@ -148,7 +148,7 @@ with Conf(
                         Priv.IDENTITY, Priv.DESCRIPTION, Priv.STATE_TOTALS,
                         Priv.READ, Priv.SHUTDOWN
                     ]
-                ]
+                ] + ['']
             )
 
     with Conf('scheduling', desc='''
