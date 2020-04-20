@@ -33,6 +33,7 @@ Other ways to see if the suite is still running:
  $ cylc scan -n '%(suite)s' %(host)s
  $ cylc ping -v --host=%(host)s %(suite)s
  $ ps %(ps_opts)s %(pid)s  # on %(host)s
+ $ cylc tui %(suite)s    # A terminal graphic UI
 
 """
 
