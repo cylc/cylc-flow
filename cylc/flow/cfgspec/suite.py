@@ -141,14 +141,15 @@ with Conf(
             # full control.
             Conf(
                 'public',
-                VDR.V_STRING, '',
+                VDR.V_STRING,
+                default=Priv.STATE_TOTALS.name.lower().replace('_', '-'),
                 options=[
                     level.name.lower().replace('_', '-')
                     for level in [
-                        Priv.IDENTITY, Priv.DESCRIPTION, Priv.STATE_TOTALS,
-                        Priv.READ, Priv.SHUTDOWN
+                        Priv.IDENTITY, Priv.DESCRIPTION,
+                        Priv.STATE_TOTALS, Priv.READ, Priv.SHUTDOWN
                     ]
-                ] + ['']
+                ]
             )
 
     with Conf('scheduling', desc='''

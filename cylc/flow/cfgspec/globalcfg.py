@@ -431,7 +431,7 @@ with Conf('flow.rc', desc='''
             Conf('run directory', VDR.V_STRING, '$HOME/cylc-run')
             Conf('work directory', VDR.V_STRING, '$HOME/cylc-run')
             Conf('task communication method',
-                 VDR.V_STRING, 'default', 'ssh', 'poll')
+                 VDR.V_STRING, 'default', options=['default', 'ssh', 'poll'])
             Conf('submission polling intervals', VDR.V_INTERVAL_LIST)
             Conf('execution polling intervals', VDR.V_INTERVAL_LIST)
             Conf('scp command',
@@ -463,7 +463,7 @@ with Conf('flow.rc', desc='''
             Conf('run directory', VDR.V_STRING)
             Conf('work directory', VDR.V_STRING)
             Conf('task communication method',
-                 VDR.V_STRING, 'default', 'ssh', 'poll')
+                 VDR.V_STRING, 'default', options=['default', 'ssh', 'poll'])
             Conf('submission polling intervals', VDR.V_INTERVAL_LIST)
             Conf('execution polling intervals', VDR.V_INTERVAL_LIST)
             Conf('scp command', VDR.V_STRING)
