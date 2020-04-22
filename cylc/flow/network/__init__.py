@@ -182,7 +182,7 @@ class ZMQSocketBase:
                 KeyType.PRIVATE,
                 KeyOwner.SERVER,
                 full_key_path=srv_prv_key_loc)
-
+        LOG.debug(f"full_key_path = {srv_prv_key_info.full_key_path}")
         # create socket
         self.socket = self.context.socket(self.pattern)
         self._socket_options()

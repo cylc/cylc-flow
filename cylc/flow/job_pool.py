@@ -77,7 +77,7 @@ class JobPool:
             err_script=job_conf['err-script'],
             exit_script=job_conf['exit-script'],
             execution_time_limit=job_conf['execution_time_limit'],
-            host=job_conf['host'],
+            host=job_conf['platform']['name'],
             init_script=job_conf['init-script'],
             job_log_dir=job_conf['job_log_dir'],
             owner=job_owner,

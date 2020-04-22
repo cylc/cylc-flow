@@ -56,9 +56,9 @@ class JobFileWriter(object):
         # Access to cylc must be configured before user environment so
         # that cylc commands can be used in defining user environment
         # variables: NEXT_CYCLE=$( cylc cycle-point --offset-hours=6 )
-        platform = forward_lookup(job_conf['platform'])
-        tmp_name = local_job_file_path + '.tmp'
-        run_d = get_remote_suite_run_dir(platform, job_conf['suite_name'])
+        platform = job_conf['platform']
+        tmp_name = os.path.expandvars(local_job_file_path + '.tmp')
+        run_d = os.path.expandvars(get_remote_suite_run_dir(platform, job_conf['suite_name']))
         try:
             with open(tmp_name, 'w') as handle:
                 self._write_header(handle, job_conf)
@@ -105,7 +105,7 @@ class JobFileWriter(object):
             os.stat(tmp_name).st_mode |
             stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
         os.chmod(tmp_name, mode)
-        os.rename(tmp_name, local_job_file_path)
+        os.rename(tmp_name, os.path.expandvars(local_job_file_path))
 
     @staticmethod
     def _check_script_value(value):
@@ -144,7 +144,7 @@ class JobFileWriter(object):
             for line in lines:
                 handle.write('\n' + line)
 
-    def _write_prelude(self, handle, job_conf, platform):
+    def _write_prelude(self, handle, job_conf):
         """Job script prelude."""
         # Variables for traps
         handle.write("\nCYLC_FAIL_SIGNALS='%s'" % " ".join(
@@ -153,7 +153,7 @@ class JobFileWriter(object):
         if vacation_signals_str:
             handle.write("\nCYLC_VACATION_SIGNALS='%s'" % vacation_signals_str)
         # Path to cylc executable, if defined.
-        cylc_exec = platform['cylc executable']
+        cylc_exec = job_conf['platform']['cylc executable']
         if not cylc_exec.endswith('cylc'):
             raise ValueError(
                 f'ERROR: bad cylc executable in global config: {cylc_exec}')
@@ -164,7 +164,7 @@ class JobFileWriter(object):
         if cylc.flow.flags.debug:
             handle.write("\nexport CYLC_DEBUG=true")
         handle.write("\nexport CYLC_VERSION='%s'" % CYLC_VERSION)
-        for key in platform['copyable environment variables']:
+        for key in job_conf['platform']['copyable environment variables']:
             if key in os.environ:
                 handle.write("\nexport %s='%s'" % (key, os.environ[key]))
 
@@ -183,7 +183,7 @@ class JobFileWriter(object):
         handle.write('\n')
         # override and write task-host-specific suite variables
         work_d = get_remote_suite_work_dir(
-            job_conf["host"], job_conf["owner"], job_conf['suite_name'])
+            job_conf["platform"], job_conf['suite_name'])
         handle.write('\n    export CYLC_SUITE_RUN_DIR="%s"' % run_d)
         if work_d != run_d:
             # Note: not an environment variable, but used by job.sh
@@ -292,8 +292,7 @@ class JobFileWriter(object):
     @classmethod
     def _write_global_init_script(cls, handle, job_conf):
         """Global Init-script."""
-        global_init_script = cls._get_platform_item(
-            job_conf, 'global init-script')
+        global_init_script = job_conf['platform']['global init-script']
         if cls._check_script_value(global_init_script):
             handle.write("\n\ncylc__job__inst__global_init_script() {")
             handle.write("\n# GLOBAL-INIT-SCRIPT:\n")

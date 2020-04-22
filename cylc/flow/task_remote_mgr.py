@@ -34,7 +34,7 @@ from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import TaskRemoteMgmtError
 import cylc.flow.flags
-from cylc.flow.hostuserutil import is_remote, is_remote_host, is_remote_user
+from cylc.flow.hostuserutil import is_remote, is_remote_host, is_remote_user, is_remote_platform
 from cylc.flow.pathutil import get_remote_suite_run_dir
 from cylc.flow.subprocctx import SubProcContext
 from cylc.flow.suite_files import (
@@ -151,19 +151,21 @@ class TaskRemoteMgr(object):
                 If waiting for remote init command to complete
 
         """
-        if self.single_task_mode or not is_remote(host, owner):
+        platform = forward_lookup(platform)
+
+        if self.single_task_mode or not is_remote_platform(platform):
             return REMOTE_INIT_NOT_REQUIRED
         try:
-            status = self.remote_init_map[(host, owner)]
+            status = self.remote_init_map[platform]
         except KeyError:
             pass  # Not yet initialised
         else:
             if status == REMOTE_INIT_FAILED:
-                del self.remote_init_map[(host, owner)]  # reset to allow retry
+                del self.remote_init_map[platform]  # reset to allow retry
             return status
 
         # Determine what items to install
-        platform = forward_lookup(platform)
+        
         comm_meth = platform_cfg['task communication method']
         # TODO pick a more elegant host picking method
         host = randchoice(platform_cfg['remote hosts'])
@@ -176,8 +178,8 @@ class TaskRemoteMgr(object):
         items = self._remote_init_items(comm_meth)
         # No item to install
         if not items:
-            self.remote_init_map[(host, owner)] = REMOTE_INIT_NOT_REQUIRED
-            return self.remote_init_map[(host, owner)]
+            self.remote_init_map[platform] = REMOTE_INIT_NOT_REQUIRED
+            return self.remote_init_map[platform]
 
         # Create a TAR archive with the service files,
         # so they can be sent later via SSH's STDIN to the task remote.
@@ -211,8 +213,8 @@ class TaskRemoteMgr(object):
             self._remote_init_callback,
             [host, owner, tmphandle])
         # None status: Waiting for command to finish
-        self.remote_init_map[(host, owner)] = None
-        return self.remote_init_map[(host, owner)]
+        self.remote_init_map[platform] = None
+        return self.remote_init_map[platform]
 
     def remote_tidy(self):
         """Remove suite contact files from initialised remotes.
@@ -233,14 +235,12 @@ class TaskRemoteMgr(object):
             pass
         # Issue all SSH commands in parallel
         procs = {}
-        for (host, owner), init_with_contact in self.remote_init_map.items():
+        for platform, init_with_contact in self.remote_init_map.items():
             if init_with_contact != REMOTE_INIT_DONE:
                 continue
             cmd = ['timeout', '10', 'cylc', 'remote-tidy']
-            if is_remote_host(host):
+            if is_remote_platform(platform):
                 cmd.append('--host=%s' % host)
-            if is_remote_user(owner):
-                cmd.append('--user=%s' % owner)
             if cylc.flow.flags.debug:
                 cmd.append('--debug')
             cmd.append(get_remote_suite_run_dir(host, owner, self.suite))
@@ -299,7 +299,7 @@ class TaskRemoteMgr(object):
                 if status in proc_ctx.out:
                     # Good status
                     LOG.debug(proc_ctx)
-                    self.remote_init_map[(host, owner)] = status
+                    self.remote_init_map[platform] = status
                     return
         # Bad status
         LOG.error(TaskRemoteMgmtError(
@@ -307,7 +307,7 @@ class TaskRemoteMgr(object):
             (host, owner), ' '.join(quote(item) for item in proc_ctx.cmd),
             proc_ctx.ret_code, proc_ctx.out, proc_ctx.err))
         LOG.error(proc_ctx)
-        self.remote_init_map[(host, owner)] = REMOTE_INIT_FAILED
+        self.remote_init_map[platform] = REMOTE_INIT_FAILED
 
     def _remote_init_items(self, comm_meth):
         """Return list of items to install based on communication method.

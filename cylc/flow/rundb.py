@@ -18,6 +18,7 @@
 import re
 import sqlite3
 import traceback
+from os.path import expandvars
 
 from cylc.flow import LOG
 import cylc.flow.flags
@@ -321,7 +322,7 @@ class CylcSuiteDAO(object):
         is_public - If True, allow retries, etc
 
         """
-        self.db_file_name = db_file_name
+        self.db_file_name = expandvars(db_file_name)
         self.is_public = is_public
         self.conn = None
         self.n_tries = 0

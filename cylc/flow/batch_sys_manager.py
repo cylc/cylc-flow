@@ -353,7 +353,12 @@ class BatchSysManager():
         if "$" in job_log_root:
             job_log_root = os.path.expandvars(job_log_root)
         self.configure_suite_run_dir(job_log_root.rsplit(os.sep, 2)[0])
-
+        for name, item in {
+            'remote mode': remote_mode,
+            'job_log_root': job_log_root,
+            'job_log_dirs': job_log_dirs
+        }.items():
+            print(f">>>{name} is {item}\n")
         if remote_mode:
             items = self._jobs_submit_prep_by_stdin(job_log_root, job_log_dirs)
         else:
@@ -712,6 +717,7 @@ class BatchSysManager():
         items = []
         for job_log_dir in job_log_dirs:
             job_file_path = os.path.join(job_log_root, job_log_dir, "job")
+            print(f"os.path.exists(job_file_path) is {os.path.exists(job_file_path)}")
             batch_sys_name = None
             submit_opts = {}
             for line in open(job_file_path):

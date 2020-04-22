@@ -584,12 +584,12 @@ see `COPYING' in the Cylc source distribution.
         auths = set()
         for itask in self.pool.get_rh_tasks():
             if itask.state(*TASK_STATUSES_ACTIVE):
-                auths.add((itask.task_host, itask.task_owner))
+                auths.add(itask.task_platform)
         while auths:
-            for host, owner in auths.copy():
+            for platform in auths.copy():
                 if self.task_job_mgr.task_remote_mgr.remote_init(
-                        host, owner) is not None:
-                    auths.remove((host, owner))
+                        platform) is not None:
+                    auths.remove(platform)
             if auths:
                 sleep(1.0)
                 # Remote init is done via process pool
@@ -1133,8 +1133,10 @@ see `COPYING' in the Cylc source distribution.
             load_type = "restart"
         else:
             load_type = "run"
-        file_name = get_suite_run_rc_dir(
+        file_name = os.path.expandvars(
+            get_suite_run_rc_dir(
             self.suite, f"{time_str}-{load_type}.rc")
+        )
         with open(file_name, "wb") as handle:
             handle.write(b"# cylc-version: %s\n" % CYLC_VERSION.encode())
             printcfg(self.config.cfg, none_str=None, handle=handle)

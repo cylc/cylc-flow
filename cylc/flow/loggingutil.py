@@ -66,7 +66,7 @@ class CylcLogFormatter(logging.Formatter):
         self.configure(timestamp, color, max_width)
         logging.Formatter.__init__(
             self,
-            '%(asctime)s %(levelname)-2s - %(message)s',
+            '%(asctime)s %(levelname)-2s %(pathname)s %(lineno)d - %(message)s',
             '%Y-%m-%dT%H:%M:%S%Z')
 
     def configure(self, timestamp=None, color=None, max_width=None):

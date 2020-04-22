@@ -46,14 +46,20 @@ def forward_lookup(platform_name=None):
     platforms = glbl_cfg().get(['job platforms'])
 
     if platform_name is None:
-        return platforms['localhost']
+        platform_data = platforms['localhost']
+        platform_data['name'] = 'localhost'
+        return platform_data
 
     # The list is reversed to allow user-set platforms (which are loaded
     # later than site set platforms) to be matched first and override site
     # defined platforms.
     for platform_name_re in reversed(list(platforms)):
         if re.fullmatch(platform_name_re, platform_name):
-            return platforms[platform]
+            platform_data = platforms[platform_name]
+            platform_data['name'] = platform_name
+            return platform_data
+
+    
 
     raise PlatformLookupError(
         f"No matching platform \"{platform_name}\" found")

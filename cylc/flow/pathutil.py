@@ -27,7 +27,7 @@ from cylc.flow.platform_lookup import forward_lookup
 def get_remote_suite_run_dir(platform, suite, *args):
     """Return remote suite run directory, join any extra args."""
     return os.path.join(
-        forward_lookup(platform)['run directory'], suite, *args)
+        platform['run directory'], suite, *args)
 
 
 def get_remote_suite_run_job_dir(platform, suite, *args):
@@ -39,7 +39,7 @@ def get_remote_suite_run_job_dir(platform, suite, *args):
 def get_remote_suite_work_dir(platform, suite, *args):
     """Return remote suite work directory root, join any extra args."""
     return os.path.join(
-        forward_lookup(platform)['work directory'],
+        platform['work directory'],
         suite,
         *args
     )
@@ -64,7 +64,8 @@ def get_suite_run_log_dir(suite, *args):
 
 def get_suite_run_log_name(suite):
     """Return suite run log file path."""
-    return get_suite_run_dir(suite, 'log', 'suite', 'log')
+    path = get_suite_run_dir(suite, 'log', 'suite', 'log')
+    return os.path.expandvars(path)
 
 
 def get_suite_run_rc_dir(suite, *args):
@@ -124,5 +125,6 @@ def make_suite_run_tree(suite):
         get_suite_run_work_dir(suite),
     ):
         if dir_:
+            dir_ = os.path.expandvars(dir_)
             os.makedirs(dir_, exist_ok=True)
             LOG.debug('%s: directory created', dir_)

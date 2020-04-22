@@ -485,7 +485,7 @@ def get_suite_srv_dir(reg, suite_owner=None):
         os.getenv("CYLC_SUITE_NAME") != reg or
         os.getenv("CYLC_SUITE_OWNER") != suite_owner
     ):
-        run_d = get_suite_run_dir(reg)
+        run_d = os.path.expandvars(get_suite_run_dir(reg))
     return os.path.join(run_d, SuiteFiles.Service.DIRNAME)
 
 

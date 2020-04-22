@@ -37,7 +37,7 @@ from cylc.flow.parsec.util import pdeepcopy, poverride
 
 from cylc.flow import LOG
 from cylc.flow.batch_sys_manager import JobPollContext
-from cylc.flow.hostuserutil import get_host, is_remote_host, is_remote_user
+from cylc.flow.hostuserutil import get_host, is_remote_host, is_remote_user, is_remote_platform
 from cylc.flow.job_file import JobFileWriter
 from cylc.flow.pathutil import get_remote_suite_run_job_dir
 from cylc.flow.subprocpool import SubProcPool
@@ -51,6 +51,7 @@ from cylc.flow.task_job_logs import (
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED,
     TASK_OUTPUT_FAILED)
+from cylc.flow.platform_lookup import forward_lookup
 from cylc.flow.task_remote_mgr import (
     REMOTE_INIT_FAILED, TaskRemoteMgmtError, TaskRemoteMgr)
 from cylc.flow.task_state import (
@@ -205,14 +206,19 @@ class TaskJobManager(object):
             return bad_tasks
 
         # Group task jobs by (host, owner)
-        auth_itasks = {}  # {(host, owner): [itask, ...], ...}
+        # TODO - consider using itask.platform['name'] to reduce mem
+        # req'd
+        auth_itasks = {}  # {platform: [itask, ...], ...}
         for itask in prepared_tasks:
-            auth_itasks.setdefault((itask.task_host, itask.task_owner), [])
-            auth_itasks[(itask.task_host, itask.task_owner)].append(itask)
-        # Submit task jobs for each (host, owner) group
+            platform_name = itask.platform['name']
+            auth_itasks.setdefault(platform_name, [])
+            auth_itasks[platform_name].append(itask)
+        # Submit task jobs for each platform
         done_tasks = bad_tasks
-        for (host, owner), itasks in sorted(auth_itasks.items()):
-            is_init = self.task_remote_mgr.remote_init(host, owner)
+        for platform_name, itasks in sorted(auth_itasks.items()):
+            # Re-fetch a copy of platform
+            platform = itasks[0].platform
+            is_init = self.task_remote_mgr.remote_init(platform_name)
             if is_init is None:
                 # Remote is waiting to be initialised
                 for itask in itasks:
@@ -228,10 +234,13 @@ class TaskJobManager(object):
             # allows the restart logic to correctly poll the status of the
             # background/at jobs that may still be running on the previous
             # suite host.
+            owner = platform['owner']
+            host = randomchoice(platform['remote hosts'])
             if (
                 self.batch_sys_mgr.is_job_local_to_host(
-                    itask.summary['batch_sys_name']) and
-                not is_remote_host(host)
+                    itask.summary['batch_sys_name']
+                ) and
+                not is_remote_platform(platform)
             ):
                 owner_at_host = get_host()
             else:
@@ -288,7 +297,7 @@ class TaskJobManager(object):
             if remote_mode:
                 cmd.append('--remote-mode')
             cmd.append('--')
-            cmd.append(get_remote_suite_run_job_dir(host, owner, suite))
+            cmd.append(get_remote_suite_run_job_dir(platform, suite))
             # Chop itasks into a series of shorter lists if it's very big
             # to prevent overloading of stdout and stderr pipes.
             itasks = sorted(itasks, key=lambda itask: itask.identity)
@@ -341,6 +350,7 @@ class TaskJobManager(object):
         """
         job_file_dir = get_task_job_log(
             suite, itask.point, itask.tdef.name, itask.submit_num)
+        job_file_dir = os.path.expandvars(job_file_dir)
         task_log_dir = os.path.dirname(job_file_dir)
         if itask.submit_num == 1:
             try:
@@ -355,7 +365,6 @@ class TaskJobManager(object):
                             ignore_errors=True)
         else:
             rmtree(job_file_dir, ignore_errors=True)
-
         os.makedirs(job_file_dir, exist_ok=True)
         target = os.path.join(task_log_dir, NN)
         source = os.path.basename(job_file_dir)
@@ -650,24 +659,26 @@ class TaskJobManager(object):
             return
         auth_itasks = {}
         for itask in itasks:
-            if (itask.task_host, itask.task_owner) not in auth_itasks:
-                auth_itasks[(itask.task_host, itask.task_owner)] = []
-            auth_itasks[(itask.task_host, itask.task_owner)].append(itask)
-        for (host, owner), itasks in sorted(auth_itasks.items()):
+            if itask.platform not in auth_itasks:
+                auth_itasks[task.platform] = []
+            auth_itasks[platform].append(itask)
+        for platform, itasks in sorted(auth_itasks.items()):
+            host = randomchoice(platform['remote hosts'])
+            owner = platform['owner']
             cmd = ["cylc", cmd_key]
             if LOG.isEnabledFor(DEBUG):
                 cmd.append("--debug")
             if is_remote_host(host):
-                cmd.append("--host=%s" % (host))
+                cmd.append("--host=%s" % host)
             if is_remote_user(owner):
-                cmd.append("--user=%s" % (owner))
+                cmd.append("--user=%s" % owner)
             cmd.append("--")
             cmd.append(get_remote_suite_run_job_dir(host, owner, suite))
             job_log_dirs = []
             for itask in sorted(itasks, key=lambda itask: itask.identity):
                 job_log_dirs.append(get_task_job_id(
                     itask.point, itask.tdef.name, itask.submit_num))
-            cmd += job_log_dirs
+            cmd += os.path.expandvars(job_log_dirs)
             self.proc_pool.put_command(
                 SubProcContext(cmd_key, cmd), callback, [suite, itasks])
 
@@ -889,7 +900,7 @@ class TaskJobManager(object):
         job_d = get_task_job_id(
             itask.point, itask.tdef.name, itask.submit_num)
         job_file_path = get_remote_suite_run_job_dir(
-            itask.task_host, itask.task_owner, suite, job_d, JOB_LOG_JOB)
+            itask.platform, suite, job_d, JOB_LOG_JOB)
         return {
             'batch_system_name': platform['batch system'],
             'batch_submit_command_template': (
