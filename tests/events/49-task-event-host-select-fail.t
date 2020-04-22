@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+# ------------------------------------------------------------------------------
 # Ensure that submission failed handler on task host-select failure runs OK.
 
 . "$(dirname "$0")/test_header"
@@ -40,8 +40,9 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_fail "${TEST_NAME_BASE}-run" cylc run --no-detach "${SUITE_NAME}"
 
 run_ok "log-handler-out" \
-    grep -qF '[(('"'"'event-handler-00'"'"', '"'"'submission failed'"'"'), 1) out] empty []?' \
-    "${SUITE_RUN_DIR}/log/suite/log"
+    grep -qF "[(('event-handler-00', 'submission failed'), 1) out] empty []?" \
+    "${SUITE_RUN_DIR}/log/job/1/foo/NN/job-activity.log"
+    # NB can't use grep_ok because it thinks [...] is a range
 
 purge_suite "${SUITE_NAME}"
 exit
