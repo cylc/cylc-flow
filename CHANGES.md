@@ -14,23 +14,22 @@ Server Side Template Injection (SSTI) where it takes the "source" parameter as
 a template object, renders it, and then returns it. The attacker can exploit it
 with `{{INJECTION COMMANDS}}` in a URI*
 
-- cylc-7 (7.8.x branch, written in Python 2) has a bundled copy of Jinja2 2.10
-that cannot be updated because the new Jinja2 requires Python 3. However **this
-CVE does not impact cylc-7 because Cylc workflow definitions are not web
-pages**.
-- cylc-8 (master branch, Python 3 - not yet released) does not bundle Jinja2,
-  and uses the fixed version 2.10.1.
+cylc-7.8.x (which supports Python 2.6 and 2.7 bundles Jinja2 2.10. But **this
+CVE does not impact cylc-7 because Cylc workflow definitions are not web pages**.
+
+cylc-7.9.x (which requires Python 2.7) bundles Jinja2 2.11.
+
+cylc-8 (master branch, Python 3 - not yet released) uses proper Python package
+management and does not bundle Jinja2.
 
 -------------------------------------------------------------------------------
-## __cylc-7.8.5 (2019-Q4?)__
-
+## __cylc-7.8.5 (2020-04-22)__
 
 ### Enhancements
 
 [#3349](https://github.com/cylc/cylc-flow/pull/3349) - new command `cylc
 ref-graph` to generate text-format "reference graphs" without PyGTK (back-port
 from Python 3 master for Cylc 8).
-
 
 ## Fixes
 

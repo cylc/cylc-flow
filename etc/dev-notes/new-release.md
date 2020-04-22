@@ -9,7 +9,7 @@ If all Issues assigned to the milestone are done:
 - check out the 7.8.x branch locally
 - make sure the test battery passes (Travis CI, and locally at NIWA and Met Office)
 - update `CHANGES.md` for the release and commit (to the 7.8.x branch)
-- tag the new release: `git tag -a x.y.z "Release x.y.z"`
+- tag the new release: `git tag -a -m "Release x.y.z" x.y.z`
 - push (new commit and tag) to the 7.8.x branch of `cylc/cylc-flow`
 - use the GH release page to make a release from the new tag
 
