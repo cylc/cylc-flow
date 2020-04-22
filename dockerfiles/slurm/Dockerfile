@@ -39,9 +39,9 @@ RUN set -x \
     && chown -R slurm:slurm /var/*/slurm* \
     && chown -R root:root /var/log/munge \
     && chown -R root:root /var/run/slurm-llnl \
-	&& chown -R root:root /var/lib/munge \
-	&& chown -R root:root /var/run/munge \
-	&& chown -R root:root /etc/munge
+    && chown -R root:root /var/lib/munge \
+    && chown -R root:root /var/run/munge \
+    && chown -R root:root /etc/munge
 
 COPY slurm.conf /etc/slurm-llnl/slurm.conf
 COPY supervisord.conf /etc/supervisord.conf
