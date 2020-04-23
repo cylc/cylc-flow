@@ -91,7 +91,7 @@ class ParsecConfig(object):
                         #         defs[key] = []
                         #     else:
                         #         defs[key] = None
-                        if node.default is None:
+                        if node.default is ConfigNode.UNSET:
                             if node.vdr and node.vdr.endswith('_LIST'):
                                 defs[node.name] = []
                             else:
@@ -202,6 +202,8 @@ class ConfigNode(ContextNode):
     LEAF_NAME_FMT = '{display_name}'
     SEP = ''
 
+    UNSET = '*value unset*'
+
     __slots__ = ContextNode.__slots__ + (
         'vdr', 'options', 'default', 'desc', 'display_name'
     )
@@ -210,7 +212,7 @@ class ConfigNode(ContextNode):
             self,
             name,
             vdr=VDR.V_STRING,
-            default=None,
+            default=UNSET,
             options=None,
             desc=None,
     ):
