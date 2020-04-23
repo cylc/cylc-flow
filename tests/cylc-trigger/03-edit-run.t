@@ -42,8 +42,8 @@ cmp_ok "${DIFF_LOG}" - <<__END__
  
  cylc__job__inst__script() {
  # SCRIPT:
--/usr/bin/false
-+/usr/bin/true
+-false
++true
  }
  
  . "${SUITE_RUN_DIR}/.service/etc/job.sh"
@@ -61,7 +61,7 @@ cmp_ok "${DIFF_LOG}" - <<__END__
  cylc__job__inst__script() {
  # SCRIPT:
 -\$(x
-+/usr/bin/true
++true
  }
  
  . "${SUITE_RUN_DIR}/.service/etc/job.sh"

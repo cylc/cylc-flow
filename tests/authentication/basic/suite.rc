@@ -19,8 +19,8 @@
         R/2 = bar[-P1] => pub
 [runtime]
     [[foo]]
-        script = /usr/bin/false
+        script = false
     [[bar]]
-        script = /usr/bin/true
+        script = true
     [[pub]]
-        script = /usr/bin/true
+        script = true

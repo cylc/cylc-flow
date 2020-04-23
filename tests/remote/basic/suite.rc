@@ -10,11 +10,11 @@
         R1 = "foo => bar"
 [runtime]
     [[foo]]
-        script = "/usr/bin/true" # fast
+        script = "true" # fast
         [[[remote]]]
             host = {{ HOST }}
             owner = {{ OWNER }}
     [[bar]]
-        script = "/usr/bin/true"
+        script = "true"
         [[[remote]]]
             host = {{ HOST }}
