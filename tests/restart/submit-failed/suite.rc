@@ -1,5 +1,7 @@
 #!jinja2
 {%- set TEST_DIR = environ['TEST_DIR'] %}
+# TODO SoD: added new "remove" tasks to get rid of submit-failed one and allow
+# shutdown, in lieu of suicidge triggers.  What's the best way to handle this?
 [cylc]
     UTC mode = True
     [[events]]
@@ -12,7 +14,7 @@
         R1 = """
             submit_failed_task:submit-fail => shutdown
             shutdown => output_states
-            output_states => finish => !submit_failed_task
+            output_states => remove => finish
         """
 [runtime]
     [[submit_failed_task]]
@@ -24,4 +26,8 @@
         [[[job]]]
             batch system = at
             batch submit command template = at oh-no
+     [[remove]]
+          script = """
+ cylc remove ${CYLC_SUITE_NAME} submit_failed_task.${CYLC_TASK_CYCLE_POINT}
+                   """
 {% include 'suite-runtime-restart.rc' %}

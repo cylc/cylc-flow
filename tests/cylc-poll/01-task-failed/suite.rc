@@ -11,9 +11,9 @@ suicide via a :fail trigger, and the suite to shut down successfully."""
 [scheduling]
     [[graph]]
         R1 = """
-    a:start => b
-    a:fail => !a"""
-
+           a:start => b
+           a:fail => handled
+           """
 [runtime]
     [[a]]
         script = """
@@ -21,3 +21,6 @@ trap '' EXIT # die silently
 exit 0"""
     [[b]]
         script = cylc poll "$CYLC_SUITE_NAME" 'a'
+    [[handled]]
+        # (allows a:fail to be removed as handled)
+        script = true

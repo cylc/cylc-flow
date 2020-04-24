@@ -269,24 +269,6 @@ with Conf(
             consecutive cycle points to be active at any time, adjusted up if
             necessary for any future triggering.
         ''')
-        Conf('spawn to max active cycle points', VDR.V_BOOLEAN, desc='''
-            Allows tasks to spawn out to
-            :cylc:conf:`[..]max active cycle points`,
-            removing restriction that a task
-            has to have submitted before its successor can be spawned.
-
-            .. warning::
-               This should be used with care given the potential impact of
-               additional task proxies in terms of memory and cpu for the
-               cylc server program. Also, use of the setting may highlight
-               any issues with suite design relying on the default behaviour
-               where downstream tasks would otherwise be waiting on ones
-               upstream submitting and the suite would have stalled e.g. a
-               housekeeping task at a later cycle deleting an earlier cycle's
-               data before that cycle has had chance to run where previously
-               the task would not have been spawned until its predecessor had
-               been submitted.
-        ''')
 
         with Conf('queues', desc='''
             Configuration of internal queues, by which the number of

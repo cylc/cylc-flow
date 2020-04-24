@@ -1,25 +1,28 @@
 [meta]
     title = Test cylc hold/release remembers satisfied dependencies
 [cylc]
-    UTC mode = True
     [[events]]
         abort on stalled = True
+        abort if any task fails = True
+        abort on timeout = True
+        timeout = PT1M
 [scheduling]
-    initial cycle point = 2016
-    final cycle point = 2016
     [[graph]]
-        P1Y = """
+        R1 = """
+spawner => t1
 holder => t1
 holder => releaser
-t1[-P1Y] => t1
 """
 [runtime]
-    [[t1]]
+    [[spawner, t1]]
         script = true
     [[holder]]
         script = """
-cylc hold "${CYLC_SUITE_NAME}" 't1.2016'
-cylc__job__poll_grep_suite_log -F '[t1.20160101T0000Z] -waiting => waiting (held)'
+cylc__job__poll_grep_suite_log -F 'spawned t1.1'
+cylc hold "${CYLC_SUITE_NAME}" 't1.1'
 """
     [[releaser]]
-        script = wait; cylc release "${CYLC_SUITE_NAME}" 't1.2016'
+        script = """
+wait
+cylc release "${CYLC_SUITE_NAME}" 't1.1'
+"""

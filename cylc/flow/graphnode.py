@@ -17,7 +17,8 @@
 
 import re
 
-from cylc.flow.cycling.loader import get_interval, get_interval_cls
+from cylc.flow.cycling.loader import (
+    get_interval, get_interval_cls, is_offset_absolute)
 from cylc.flow.exceptions import GraphParseError
 from cylc.flow.task_id import TaskID
 
@@ -36,7 +37,7 @@ class GraphNodeParser(object):
              ([^\]]*)      # Continue until next ']'
              \]            # Stop at next ']'
             )?             # End optional [offset] syntax]
-            (?::([\w-]+))? # Optional type (e.g. :succeed)
+            (?::([\w-]+))? # Optional output (e.g. :succeed)
             $
          """, re.X)
 
@@ -89,7 +90,8 @@ class GraphNodeParser(object):
 
         Return:
             tuple:
-            (name, offset_is_from_icp, offset_is_irregular, offset, output)
+            (name, offset, output,
+            offset_is_from_icp, offset_is_irregular, offset_is_absolute)
 
         Raise:
             GraphParseError: on illegal syntax.
@@ -102,11 +104,15 @@ class GraphNodeParser(object):
             if offset_is_from_icp and not offset:
                 offset = self._get_offset()
             offset_is_irregular = False
+            offset_is_absolute = False
             if offset:
+                if is_offset_absolute(offset):
+                    offset_is_absolute = True
                 if self.REC_IRREGULAR_OFFSET.search(offset):
                     offset_is_irregular = True
                 else:
                     offset = self._get_offset(offset)
             self._nodes[node] = (
-                name, offset_is_from_icp, offset_is_irregular, offset, output)
+                name, offset, output,
+                offset_is_from_icp, offset_is_irregular, offset_is_absolute)
         return self._nodes[node]

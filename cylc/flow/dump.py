@@ -16,40 +16,36 @@
 """Utility for "cylc dump"."""
 
 
-def dump_to_stdout(states, sort_by_cycle=False):
+def dump_to_stdout(states, sort_by_cycle=False, flow=False):
     """Print states in "cylc dump" format to STDOUT.
 
     states = {
         "task_id": {
             "name": name,
             "label": point,
+            "flow": flow_label,
             "state": state,
-            "spawned": True|False},
         # ...
     }
     """
     lines = []
     for item in states.values():
-        if item['spawned'] in [True, "True", "true"]:
-            spawned = 'spawned'
-        else:
-            spawned = 'unspawned'
         if sort_by_cycle:
             values = [
                 item['label'],
                 item['name'],
-                item['state'],
-                spawned,
-                'held' if item['is_held'] else 'unheld'
-            ]
+                item['state']]
+            if flow:
+                values.append(item['flow_label'])
+            values.append('held' if item['is_held'] else 'unheld')
         else:
             values = [
                 item['name'],
-                item['label'],
-                item['state'],
-                spawned,
-                'held' if item['is_held'] else 'unheld'
-            ]
+                item['label']]
+            if flow:
+                values.append(item['flow_label'])
+            values.append(item['state'])
+            values.append('held' if item['is_held'] else 'unheld')
         lines.append(', '.join(values))
 
     lines.sort()

@@ -9,5 +9,5 @@ cylc broadcast "${CYLC_SUITE_NAME}" -s '[environment]CYLC_TEST_VAR=1'
 cp -p "${CYLC_SUITE_DEF_PATH}/suite-2.rc" "${CYLC_SUITE_DEF_PATH}/suite.rc"
 cylc reload "${CYLC_SUITE_NAME}"
 sleep 5
-cylc insert "${CYLC_SUITE_NAME}" 'bar.1'
+cylc trigger "${CYLC_SUITE_NAME}" 'bar.1'
 """

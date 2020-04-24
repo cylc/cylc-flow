@@ -18,29 +18,26 @@
 # Test correct expansion of (FOO:finish-all & FOO:fail-any)
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 4
+set_test_number 3
 #-------------------------------------------------------------------------------
 install_suite "${TEST_NAME_BASE}" fam-expansion
+SHOW_OUT="$PWD/show.out"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc validate --set="SHOW_OUT=$SHOW_OUT" "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_ok "${TEST_NAME}" cylc run --hold "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME}" \
+    cylc run --debug --no-detach --set="SHOW_OUT=$SHOW_OUT" "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME=${TEST_NAME_BASE}-show
-run_ok "${TEST_NAME}" cylc show "${SUITE_NAME}" bar.1
-#-------------------------------------------------------------------------------
-contains_ok "${TEST_NAME}.stdout" <<'__SHOW_DUMP__'
-  - (((1 | 0) & (3 | 2) & (5 | 4)) & (0 | 2 | 4))
-  - 	0 = foo1.1 failed
+contains_ok "$SHOW_OUT" <<'__SHOW_DUMP__'
+  + (((1 | 0) & (3 | 2) & (5 | 4)) & (0 | 2 | 4))
+  + 	0 = foo1.1 failed
   - 	1 = foo1.1 succeeded
-  - 	2 = foo2.1 failed
+  + 	2 = foo2.1 failed
   - 	3 = foo2.1 succeeded
-  - 	4 = foo3.1 failed
+  + 	4 = foo3.1 failed
   - 	5 = foo3.1 succeeded
 __SHOW_DUMP__
-#-------------------------------------------------------------------------------
-cylc stop "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"

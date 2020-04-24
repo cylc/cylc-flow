@@ -6,23 +6,23 @@
     initial cycle point = 1970
     final cycle point = 2010
     [[graph]]
+# Unhandled failures stay around for retriggering by "fixer"
+# fixable in the first two cycles fail and get retriggered,
+# but is left as failed in the last cycle.
+# Putting fixer at an offset to avoid retriggering it as well by the '*' glob.
         P20Y = fixable
+        R1/2009 = fixer
         R1/2010 = """
-fixable[1970]:fail & fixable[1990]:fail => fixer
-fixable:fail & fixer => resetter
-fixable => z
-"""
+           fixer[-P1Y] & fixable:fail => z"""
 [runtime]
     [[fixable]]
         script = test "${CYLC_TASK_SUBMIT_NUMBER}" -eq 2
     [[fixer]]
         script = """
-cylc trigger "${CYLC_SUITE_NAME}" '19*/*'
-"""
-    [[resetter]]
-        script = """
-cylc reset --state='succeeded' \
-    "${CYLC_SUITE_NAME}" "*.${CYLC_TASK_CYCLE_POINT}:failed"
+wait
+cylc__job__poll_grep_suite_log '\[fixable\.19700101T0000Z\].* (received)failed'
+cylc__job__poll_grep_suite_log '\[fixable\.19900101T0000Z\].* (received)failed'
+cylc trigger "${CYLC_SUITE_NAME}" '19700101T0000Z/*' '19900101T0000Z/*'
 """
     [[z]]
         script = true

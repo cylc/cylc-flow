@@ -4,12 +4,12 @@
 
 [scheduling]
     [[graph]]
-        R1 = reloader => bar => foo # marker
+        R1 = reloader => inter => bar => foo # marker
 [runtime]
     [[reloader]]
         script = """
 # change the order of foo and bar in the graphing section:
-perl -pi -e 's/(R1 = reloader => )bar => foo( # marker)/\1foo => bar\2/' $CYLC_SUITE_DEF_PATH/suite.rc
+perl -pi -e 's/(R1 = reloader => inter => )bar => foo( # marker)/\1foo => bar\2/' $CYLC_SUITE_DEF_PATH/suite.rc
 # reload
 cylc reload -f "${CYLC_SUITE_NAME}"
 cylc__job__poll_grep_suite_log -F 'Reload completed'

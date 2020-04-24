@@ -1,8 +1,0 @@
-2017-01-10T18:00:13Z INFO - Initial point: 0
-2017-01-10T18:00:13Z INFO - Final point: 4
-2017-01-10T18:00:13Z INFO - [start.0] -triggered off []
-2017-01-10T18:00:17Z INFO - [bad.0] -triggered off ['start.0']
-2017-01-10T18:00:20Z INFO - [ugly.0] -triggered off ['bad.0']
-2017-01-10T18:00:21Z INFO - [qux.3] -triggered off []
-2017-01-10T18:00:23Z INFO - [good.0] -triggered off ['ugly.0']
-2017-01-10T18:00:26Z INFO - [baz.0] -triggered off ['good.0']

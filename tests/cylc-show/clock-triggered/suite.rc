@@ -7,17 +7,14 @@
     [[special tasks]]
         clock-trigger = foo(PT5M)
     [[graph]]
-        PT1H = """
-            show => foo
-            foo[-PT1H] => foo
-            foo:start => baz & bar
-        """
+        PT1H = "woo => foo & show"
 [runtime]
+    [[woo]]
+        script = true
     [[foo]]
-        script = true
-    [[bar,baz]]
-        script = true
+        script = sleep 10
     [[show]]
         script = """
+sleep 4
 cylc show "$CYLC_SUITE_NAME" foo.20141106T0900Z >{{ TEST_OUTPUT_PATH }}
 """

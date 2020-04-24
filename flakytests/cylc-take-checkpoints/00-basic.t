@@ -47,9 +47,8 @@ contains_ok 'cylc-ls-checkpoints-1.out' <<'__OUT__'
 
 # SUITE PARAMS (KEY|VALUE)
 
-# TASK POOL (CYCLE|NAME|SPAWNED|STATUS|IS_HELD)
-2017|t1|1|running|0
-2018|t1|0|waiting|0
+# TASK POOL (CYCLE|NAME|STATUS|IS_HELD)
+2017|t1|running|0
 __OUT__
 
 purge_suite "${SUITE_NAME}"

@@ -1,4 +1,4 @@
-#!jinja2
+# Designed to shutdown with a held task in the pool.
 [cylc]
     UTC mode=True
     cycle point format = %Y
@@ -10,16 +10,22 @@
     initial cycle point = 2016
     final cycle point = 2017
     [[graph]]
-        P1Y = t1[-P1Y] => t1 => t2
+        P1Y = """
+          t1[-P1Y] => t1
+          t1 & fast => t2
+          """
 [runtime]
     [[t1]]
         script = """
 if [[ "${CYLC_TASK_CYCLE_POINT}" == '2016' ]]; then
-    cylc hold "${CYLC_SUITE_NAME}" 't2.2016'
+    cylc__job__poll_grep_suite_log -F '[t2.2016] -released to the task pool'
+    cylc hold "${CYLC_SUITE_NAME}" t2.2016
     cylc stop "${CYLC_SUITE_NAME}"
 else
-    cylc release "${CYLC_SUITE_NAME}" 't2.2016'
+    cylc release "${CYLC_SUITE_NAME}" t2.2016
 fi
 """
-    [[t2]]
+    [[fast]]
         script = true
+    [[t2]]
+        script = sleep 2

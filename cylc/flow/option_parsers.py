@@ -155,6 +155,10 @@ match name and cycle point patterns against instances already in the pool).
             help="Output developer information and show exception tracebacks.",
             action="store_true", dest="debug",
             default=(os.getenv("CYLC_DEBUG", "false").lower() == "true"))
+        self.add_std_option(
+            "--no-timestamp",
+            help="Don't timestamp logged messages.",
+            action="store_false", dest="log_timestamp", default=True)
 
         if self.color:
             self.add_std_option(
@@ -296,7 +300,8 @@ match name and cycle point patterns against instances already in the pool).
             LOG.handlers[0].close()
             LOG.removeHandler(LOG.handlers[0])
         errhandler = logging.StreamHandler(sys.stderr)
-        errhandler.setFormatter(CylcLogFormatter())
+        errhandler.setFormatter(CylcLogFormatter(
+            timestamp=options.log_timestamp))
         LOG.addHandler(errhandler)
 
         return (options, args)

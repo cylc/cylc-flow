@@ -407,10 +407,6 @@ class TaskState(object):
         status, except for custom outputs on reset to succeeded or later -
         these can be completed if need be using "cylc reset --output".
 
-        Prerequisites, which reflect the state of *other tasks*, are not
-        manipulated, except to unset them on reset to waiting or earlier.
-        (TODO - we should not do this - see GitHub #2329).
-
         Note this method could take an additional argument to distinguish
         internal and manually forced state changes, if needed.
 
@@ -472,9 +468,6 @@ class TaskState(object):
         self.outputs.set_completion(
             TASK_OUTPUT_FAILED, status == TASK_STATUS_FAILED)
 
-        # Unset prerequisites on reset to waiting (see docstring).
-        if status == TASK_STATUS_WAITING:
-            self.set_prerequisites_not_satisfied()
         return True
 
     def is_gt(self, status):

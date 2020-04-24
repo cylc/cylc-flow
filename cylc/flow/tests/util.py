@@ -18,13 +18,13 @@ from pathlib import Path
 from shutil import rmtree
 from tempfile import mkdtemp
 from unittest import TestCase
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, Mock, MagicMock
 
 from cylc.flow.config import SuiteConfig
 from cylc.flow.job_pool import JobPool
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.suite_db_mgr import SuiteDatabaseManager
-from cylc.flow.task_pool import TaskPool
+from cylc.flow.task_pool import TaskPool, FlowLabelMgr
 from cylc.flow.task_proxy import TaskProxy
 
 """Set of utility methods and classes for writing tests for Cylc."""
@@ -96,6 +96,7 @@ class CylcWorkflowTestCase(TestCase):
         self.suite_config = create_suite_config(
             self.workflow_directory, self.suite_name, self.suiterc)
         assert self.suite_config
+        self.suite_config.get_expected_failed_tasks = lambda: None
 
         # Scheduler
         self.scheduler = mocked_scheduler
@@ -121,7 +122,7 @@ class CylcWorkflowTestCase(TestCase):
         self.task_pool = TaskPool(
             self.suite_config,
             suite_db_mgr=self.suite_db_mgr,
-            task_events_mgr=None,
+            task_events_mgr=MagicMock(),
             job_pool=self.job_pool)
         self.scheduler.pool = self.task_pool
 
@@ -142,19 +143,17 @@ def create_suite_config(workflow_directory: Path, suite_name: str,
         return SuiteConfig(suite=suite_name, fpath=f.name)
 
 
-def create_task_proxy(task_name: str, suite_config: SuiteConfig,
-                      is_startup=False) -> TaskProxy:
+def create_task_proxy(task_name: str, suite_config: SuiteConfig) -> TaskProxy:
     """Create a Task Proxy based on a TaskDef loaded from the SuiteConfig.
 
     Args:
         task_name (str): task name
         suite_config (SuiteConfig): SuiteConfig object that holds task
             definitions
-        is_startup (bool): whether we are starting the workflow or not
     """
     task_def = suite_config.get_taskdef(task_name)
     return TaskProxy(
-        tdef=task_def,
-        start_point=suite_config.start_point,
-        is_startup=is_startup
+        task_def,
+        suite_config.start_point,
+        FlowLabelMgr().get_new_label()
     )

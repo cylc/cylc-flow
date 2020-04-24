@@ -9,7 +9,7 @@
     [[graph]]
         T00 = """
             foo[-P1D]:restart1 | bar => foo
-            foo => !bar
+            bar:fail => handled
         """
 [runtime]
     [[foo]]

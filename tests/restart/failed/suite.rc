@@ -13,7 +13,7 @@
         R1 = """
             failed_task:fail => shutdown
             shutdown => output_states
-            output_states => finish => !failed_task
+            output_states => finish
         """
 [runtime]
     [[failed_task]]

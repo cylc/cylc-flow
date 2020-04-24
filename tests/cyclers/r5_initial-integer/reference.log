@@ -1,0 +1,14 @@
+Initial point: 1
+Final point: 7
+[xyzzy.1] -triggered off []
+[xyzzy.2] -triggered off []
+[xyzzy.3] -triggered off []
+[bar.1] -triggered off ['xyzzy.1']
+[bar.2] -triggered off ['xyzzy.2']
+[xyzzy.4] -triggered off []
+[bar.3] -triggered off ['xyzzy.3']
+[bar.4] -triggered off ['xyzzy.4']
+[xyzzy.5] -triggered off []
+[bar.5] -triggered off ['xyzzy.5']
+[xyzzy.6] -triggered off []
+[xyzzy.7] -triggered off []

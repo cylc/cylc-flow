@@ -6,8 +6,8 @@
 [scheduling]
     [[graph]]
         R1="""
-KILLABLE:submit-all & sleeper:start => killer
-KILLABLE:submit-fail-all & sleeper => stopper
+KILLABLE:submit-all => killer
+KILLABLE:submit-fail-all => stopper
 """
 [runtime]
     [[KILLABLE]]
@@ -21,10 +21,12 @@ sleep 60
     [[killer]]
         script="""
 wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
-sleep 5
+cylc__job__poll_grep_suite_log -F '[killable-1.1] -triggered'
+cylc__job__poll_grep_suite_log -F '[killable-2.1] -triggered'
+cylc__job__poll_grep_suite_log -F '[killable-3.1] -triggered'
 cylc kill "${CYLC_SUITE_NAME}" '*:submitted'
 """
-    [[sleeper]]
-        script=sleep 20
+    #[[sleeper]]
+    #    script=true
     [[stopper]]
         script=cylc stop "${CYLC_SUITE_NAME}"

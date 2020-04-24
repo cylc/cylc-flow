@@ -1,6 +1,7 @@
+# TODO this will become useful again once runahead limit is restored for SoD
 [scheduling]
     initial cycle point = 2015-01-01
-    runahead limit = P2D
+    #runahead limit = P2D
     max active cycle points = 2
     [[graph]]
         P1D = foo

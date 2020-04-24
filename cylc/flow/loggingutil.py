@@ -117,11 +117,11 @@ class TimestampRotatingFileHandler(logging.FileHandler):
     GLBL_KEY = 'suite logging'
     MIN_BYTES = 1024
 
-    def __init__(self, suite, no_detach=False):
+    def __init__(self, suite, no_detach=False, timestamp=True):
         logging.FileHandler.__init__(self, get_suite_run_log_name(suite))
         self.no_detach = no_detach
         self.stamp = None
-        self.formatter = CylcLogFormatter()
+        self.formatter = CylcLogFormatter(timestamp=timestamp)
         self.header_records = []
 
     def emit(self, record):

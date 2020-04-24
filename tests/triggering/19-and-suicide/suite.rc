@@ -1,5 +1,7 @@
+# This is an explicit test of suicide triggers.
+# Under SoD it isn't really a useful test.
+
 [cylc]
-    UTC mode = True
     [[events]]
         abort on stalled = True
     [[reference test]]
@@ -14,7 +16,7 @@
     [[t0]]
         # https://github.com/cylc/cylc-flow/issues/2655
         # "t2.1" should not suicide on "t1.1:failed"
-        script = cylc__job__poll_grep_suite_log '\[t1\.1\].*failed'
+        script = cylc__job__poll_grep_suite_log '\[t1\.1\].* (received)failed'
     [[t1]]
         script = false
     [[t2]]

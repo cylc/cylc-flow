@@ -34,22 +34,17 @@ cmp_ok "${TEST_NAME}.stderr" <'/dev/null'
 TEST_NAME="${TEST_NAME_BASE}-run"
 suite_run_ok "${TEST_NAME}" cylc run --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME="${TEST_NAME_BASE}-run"
+TEST_NAME="${TEST_NAME_BASE}-restart"
 suite_run_ok "${TEST_NAME}" cylc restart --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 grep_ok "submit_failed_task|20130923T0000Z|1|1|submit-failed" \
     "${TEST_DIR}/pre-restart-db"
 contains_ok "${TEST_DIR}/post-restart-db" <<'__DB_DUMP__'
-finish|20130923T0000Z|0||waiting
-shutdown|20130923T0000Z|1|1|succeeded
 submit_failed_task|20130923T0000Z|1|1|submit-failed
 __DB_DUMP__
 "${TEST_SOURCE_DIR}/bin/ctb-select-task-states" "${SUITE_RUN_DIR}" \
     > "${TEST_DIR}/db"
 contains_ok "${TEST_DIR}/db" <<'__DB_DUMP__'
-finish|20130923T0000Z|1|1|succeeded
-output_states|20130923T0000Z|1|1|succeeded
-shutdown|20130923T0000Z|1|1|succeeded
 submit_failed_task|20130923T0000Z|1|1|submit-failed
 __DB_DUMP__
 #-------------------------------------------------------------------------------

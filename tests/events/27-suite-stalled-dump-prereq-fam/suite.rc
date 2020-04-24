@@ -6,7 +6,9 @@
         expected task failures = foo.1
 [scheduling]
     [[graph]]
-        R1 = """foo => FAM
+        # Goo added to spawn waiting FAM and thereby cause a stall with
+        # unsatisfied waiting tasks.
+        R1 = """foo & goo => FAM
             FAM:succeed-any => bar"""
 [runtime]
     [[foo]]

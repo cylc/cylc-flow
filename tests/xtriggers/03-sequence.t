@@ -29,7 +29,6 @@ init_suite "${TEST_NAME_BASE}" << '__SUITE_RC__'
 [scheduling]
    initial cycle point = 2025
    final cycle point = +P1Y
-   spawn to max active cycle points = True
    [[xtriggers]]
        e1 = echo(name='bob')
        e2 = echo(name='alice')

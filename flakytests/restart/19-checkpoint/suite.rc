@@ -28,7 +28,7 @@ if [[ "${CYLC_TASK_CYCLE_POINT}" == '2017' ]]; then
     (cd "${CYLC_SUITE_DEF_PATH}"; cp -p 'suite2.rc' 'suite.rc')
     cylc reload "${CYLC_SUITE_NAME}"
     cylc__job__poll_grep_suite_log 'Reload completed'
-    cylc insert "${CYLC_SUITE_NAME}" 't2.2017'
+    cylc spawn "${CYLC_SUITE_NAME}" 't1.2017'
     while ! cylc show "${CYLC_SUITE_NAME}" 't2.2017' 1>'/dev/null' 2>&1; do
         sleep 1  # make sure insert completes
     done

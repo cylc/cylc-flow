@@ -22,8 +22,7 @@
         script = cylc hold --after '20140101T12' "${CYLC_SUITE_NAME}"
     [[stopper]]
         script = """
-            cylc__job__poll_grep_suite_log -F \
-                '[bar.20140102T0000Z] -waiting => waiting (held)'
+            cylc__job__poll_grep_suite_log '\[bar\.20140101T1200Z\].* (received)succeeded'
             cylc stop "${CYLC_SUITE_NAME}"
         """
         [[[job]]]

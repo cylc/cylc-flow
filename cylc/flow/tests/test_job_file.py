@@ -78,6 +78,7 @@ def test_write(mocked_get_remote_suite_run_dir):
                                "param_env_tmpl_2": "baa"},
             "job_d": "1/baa/01",
             "try_num": 1,
+            "flow_label": "aZ",
             "batch_system_name": "background",
             "param_var": {"duck": "quack",
                           "mouse": "squeak"},
@@ -99,7 +100,7 @@ def test_write(mocked_get_remote_suite_run_dir):
         assert (os.path.exists(local_job_file_path))
         size_of_file = os.stat(local_job_file_path).st_size
         print(size_of_file)
-        assert(size_of_file == 1715)
+        assert(size_of_file == 1750)
 
 
 def test_write_header():
@@ -393,8 +394,10 @@ def test_write_task_environment():
                 'export CYLC_TASK_JOB="1/moo/01"\n    export '
                 'CYLC_TASK_NAMESPACE_HIERARCHY="baa moo"\n    export '
                 'CYLC_TASK_DEPENDENCIES="moo neigh quack"\n    export '
-                'CYLC_TASK_TRY_NUMBER=1\n    export param_env_tmpl_1="moo"\n  '
-                '  export param_env_tmpl_2="baa"\n    export '
+                'CYLC_TASK_TRY_NUMBER=1\n    export '
+                'CYLC_TASK_FLOW_LABEL=aZ\n    export '
+                'param_env_tmpl_1="moo"\n    export '
+                'param_env_tmpl_2="baa"\n    export '
                 'CYLC_TASK_PARAM_duck="quack"\n    export '
                 'CYLC_TASK_PARAM_mouse="squeak"\n    '
                 'CYLC_TASK_WORK_DIR_BASE=\'farm_noises/work_d\'\n}')
@@ -403,6 +406,7 @@ def test_write_task_environment():
         "namespace_hierarchy": ["baa", "moo"],
         "dependencies": ['moo', 'neigh', 'quack'],
         "try_num": 1,
+        "flow_label": "aZ",
         "param_env_tmpl": {"param_env_tmpl_1": "moo",
                            "param_env_tmpl_2": "baa"},
         "param_var": {"duck": "quack",

@@ -2,19 +2,18 @@
     description = This suite is supposed to time out
 
 [cylc]
+    [[reference test]]
+        expected task failures = foo.1
     [[events]]
         abort on timeout = True
         timeout = PT1S
 
 [scheduling]
     [[graph]]
-        R1 = """foo
-                   foo:fail => bar"""
+        R1 = "foo"
 
 [runtime]
     [[foo]]
-        script = "true"
-    [[bar]]
-        # this task is never meant to run (thanks to the fail trigger),
-        # it is just present to keep the suite alive after foo finishes
-        # (preventing auto shutdown until the suite times out as intended).
+        script = false
+        [[[simulation]]]
+             fail cycle points = 1

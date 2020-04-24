@@ -276,11 +276,9 @@ def remote_cylc_cmd(
     )
 
 
-def remrun(dry_run=False, forward_x11=False, abort_if=None,
-           set_rel_local=False):
+def remrun(forward_x11=False, abort_if=None, set_rel_local=False):
     """Short for RemoteRunner().execute(...)"""
-    return RemoteRunner().execute(
-        dry_run, forward_x11, abort_if, set_rel_local)
+    return RemoteRunner().execute(forward_x11, abort_if, set_rel_local)
 
 
 class RemoteRunner(object):
@@ -329,8 +327,7 @@ class RemoteRunner(object):
         else:
             self.is_remote = is_remote(self.host, self.user)
 
-    def execute(self, dry_run=False, forward_x11=False, abort_if=None,
-                set_rel_local=False):
+    def execute(self, forward_x11=False, abort_if=None, set_rel_local=False):
         """Execute command on remote host.
 
         Returns False if remote re-invocation is not needed, True if it is
@@ -357,7 +354,4 @@ class RemoteRunner(object):
             ssh_login_shell=self.ssh_login_shell, ssh_cylc=self.ssh_cylc,
             set_UTC=True, allow_flag_opts=False)
 
-        if dry_run:
-            return command
-        else:
-            return run_cmd(command)
+        return run_cmd(command)

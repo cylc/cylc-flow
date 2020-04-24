@@ -102,18 +102,8 @@ class TestResolvers(CylcWorkflowTestCase):
     def setUp(self) -> None:
         super(TestResolvers, self).setUp()
         self.scheduler.data_store_mgr = DataStoreMgr(self.scheduler)
-        for name in self.scheduler.config.taskdefs:
-            task_proxy = create_task_proxy(
-                task_name=name,
-                suite_config=self.suite_config,
-                is_startup=True
-            )
-            warnings = self.task_pool.insert_tasks(
-                items=[task_proxy.identity],
-                stopcp=None,
-                check_point=True
-            )
-            assert 0 == warnings
+        prep = create_task_proxy('prep', self.suite_config)
+        self.task_pool.add_to_runahead_pool(prep)
         self.task_pool.release_runahead_tasks()
         self.scheduler.data_store_mgr.initiate_data_model()
         self.workflow_id = self.scheduler.data_store_mgr.workflow_id
@@ -228,7 +218,7 @@ class TestResolvers(CylcWorkflowTestCase):
         ids = [parse_node_id(n, TASK_PROXIES) for n in self.node_ids]
         response = _run_coroutine(
             self.resolvers.nodes_mutator(
-                None, 'trigger_tasks', ids, w_args, args))
+                None, 'force_trigger_tasks', ids, w_args, args))
         self.assertEqual(response[0]['id'], self.workflow_id)
 
     def test_mutation_mapper(self):

@@ -4,8 +4,7 @@
 
 [scheduling]
     [[graph]]
-        R1 = """FAM:fail-all => foo
-                   foo => !FAM"""
+        R1 = "FAM:fail-all => foo"
 [runtime]
     [[FAM]]
         script = "false"

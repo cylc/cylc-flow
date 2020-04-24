@@ -11,7 +11,7 @@
         PT6H = foo
 [runtime]
     [[foo]]
-        script = sleep 10
+        script = true
     [[monitor]]
         script = """
         while true; do

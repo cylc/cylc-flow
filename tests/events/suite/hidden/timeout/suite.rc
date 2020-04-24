@@ -11,13 +11,8 @@ deliberately fails."""
 
 [scheduling]
     [[graph]]
-        R1 = """foo
-                   foo:fail => bar"""
+        R1 = "foo"
 
 [runtime]
     [[foo]]
-        script = "true"
-    [[bar]]
-        # this task is never meant to run (thanks to the fail trigger),
-        # it is just present to keep the suite alive after foo finishes
-        # (preventing auto shutdown until the suite times out as intended).
+        script = false

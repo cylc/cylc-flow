@@ -1,8 +1,9 @@
+# Check that the dependency "foo => bar" is not wiped out by pre-initial
+# processing, when foo is inserted prior to warm start cycle point.
+# (Not sure if this is a useful test under SoD).
 [cylc]
     UTC mode = true
     [[events]]
-        # Trigger the pre-start foo inserted by the inserter task.
-        stalled handler = cylc trigger %(suite)s foo.20100101T1200Z
         abort on timeout = True
         timeout = PT2M
 
@@ -10,7 +11,12 @@
     initial cycle point = 20100101T0000Z
     final cycle point   = 20100102T0000Z
     [[graph]]
-        T00, T06, T12, T18 = bar[-PT6H] => foo => bar
+        # TODO SOD: original graph (and reference log) changed to remove the
+        # intercycle dependence. This could be restored now that we can trigger
+        # without reflow in SoD.
+        #   T00, T06, T12, T18 = bar[-PT6H] => foo => bar
+        #   T18 = inserter => bar
+        T00, T06, T12, T18 = foo => bar
         T18 = inserter => bar
 
 [runtime]
@@ -18,6 +24,5 @@
         script = true
     [[INSERT_FAM]]
     [[foo,bar]]
-        inherit = INSERT_FAM
     [[inserter]]
-        script = cylc insert $CYLC_SUITE_NAME INSERT_FAM.20100101T1200Z --stop-point=20100101T1200Z
+        script = cylc trigger --reflow $CYLC_SUITE_NAME foo.20100101T1200Z

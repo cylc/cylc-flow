@@ -16,21 +16,29 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test that the state summary updates immediately when a reload finishes.
+# (SoD: the original test contrived to get a succeeded and a failed task in the
+# pool, and no active tasks. That's not possible under SoD, and it seems to me
+# a trivial held suite should do to test that the state summary updates after a
+# reload when nothing else is happening).  
 # See https://github.com/cylc/cylc-flow/pull/1756
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 2
 #-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
+[scheduling]
+   [[graph]]
+      R1 = foo
+[runtime]
+   [[foo]]
+      script = true
+__SUITERC__
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 # Suite runs and shuts down with a failed task.
-cylc run --no-detach "${SUITE_NAME}" > /dev/null 2>&1
-# Restart with a failed task and a succeeded task (so reload finishes
-# immediately).
-cylc restart "${SUITE_NAME}"
+cylc run --hold "${SUITE_NAME}" > /dev/null 2>&1
 sleep 5
 cylc reload "${SUITE_NAME}"
 sleep 5

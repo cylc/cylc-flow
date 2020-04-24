@@ -5,7 +5,6 @@ group="test group 1"
 
 [scheduling]
     max active cycle points = 3
-    spawn to max active cycle points = False
     cycling mode = integer
     initial cycle point = 1
 [[graph]]

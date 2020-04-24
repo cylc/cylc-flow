@@ -6,7 +6,7 @@
 2016-01-14T11:55:10Z INFO - [fixable-2b.1] -triggered off []
 2016-01-14T11:55:10Z INFO - [fixable-3.1] -triggered off []
 2016-01-14T11:55:10Z INFO - [loser.1] -triggered off []
-2016-01-14T11:55:13Z INFO - [fixer.1] -triggered off ['fixable-1a.1', 'fixable-1b.1', 'fixable-2a.1', 'fixable-2b.1', 'fixable-3.1', 'loser.1']
+2016-01-14T11:55:13Z INFO - [fixer.1] -triggered off []
 2016-01-14T11:55:10Z INFO - [fixable-1a.1] -triggered off []
 2016-01-14T11:55:10Z INFO - [fixable-1b.1] -triggered off []
 2016-01-14T11:55:10Z INFO - [fixable-2a.1] -triggered off []
@@ -14,4 +14,3 @@
 2016-01-14T11:55:10Z INFO - [fixable-3.1] -triggered off []
 2016-01-14T11:55:13Z INFO - [z1.1] -triggered off ['fixable-1a.1', 'fixable-1b.1', 'fixable-2a.1', 'fixable-2b.1', 'fixable-3.1', 'loser.1']
 2016-01-14T11:55:18Z INFO - [z2.1] -triggered off ['fixable-1a.1', 'fixable-1b.1', 'fixable-2a.1', 'fixable-2b.1', 'fixable-3.1', 'loser.1']
-2016-01-14T11:55:20Z INFO - [resetter.1] -triggered off ['z1.1', 'z2.1']

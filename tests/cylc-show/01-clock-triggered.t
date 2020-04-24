@@ -36,14 +36,18 @@ TEST_NAME=${TEST_NAME_BASE}-show
 contains_ok "${TEST_NAME}.stdout" <<__SHOW_OUTPUT__
 title: (not given)
 description: (not given)
+URL: (not given)
 
 prerequisites (- => not satisfied):
-  - show.20141106T0900Z succeeded
+  + woo.20141106T0900Z succeeded
 
 outputs (- => not completed):
-  - foo.20141106T0900Z started
-  - foo.20141106T0900Z submitted
+  - foo.20141106T0900Z expired
+  + foo.20141106T0900Z submitted
+  - foo.20141106T0900Z submit-failed
+  + foo.20141106T0900Z started
   - foo.20141106T0900Z succeeded
+  - foo.20141106T0900Z failed
 
 other:
   o  Clock trigger time reached ... True
