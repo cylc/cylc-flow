@@ -17,6 +17,7 @@
 #-------------------------------------------------------------------------------
 # Test at submission
 . "$(dirname "$0")/test_header"
+skip_darwin 'atrun hard to configure on Mac OS'
 set_test_number 2
 reftest
 exit

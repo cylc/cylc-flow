@@ -18,6 +18,7 @@
 # Test that global config is used search for poll
 . "$(dirname "${0}")/test_header"
 #-------------------------------------------------------------------------------
+skip_darwin 'atrun hard to configure on Mac OS'
 set_test_number 6
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------

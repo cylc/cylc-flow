@@ -18,6 +18,8 @@
 # Test restart with a "ready" task. See GitHub #958 (update: and #2610).
 . "$(dirname "$0")/test_header"
 
+skip_darwin 'atrun hard to configure on Mac OS'
+
 set_test_number 3
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
