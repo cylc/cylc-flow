@@ -93,6 +93,11 @@ for ARG in "$@"; do
     esac
 done
 
+# ensure that TMPDIR is not a symlink
+# (we rely on path comparisons in many tests)
+TMPDIR="$(realpath "${TMPDIR:-/tmp}")"
+export TMPDIR
+
 # (Should be the same as $TRAVIS_BUILD_DIR, on Travis CI)
 cd "$(dirname "$0")/../.." || exit 1
 export CYLC_REPO_DIR="${PWD}"
