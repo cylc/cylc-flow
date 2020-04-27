@@ -20,6 +20,7 @@
 
 . "$(dirname "$0")/test_header"
 
+skip_darwin 'atrun hard to configure on Mac OS'
 set_test_number 4
 
 create_test_globalrc "

@@ -550,6 +550,12 @@ skip_all() {
     exit
 }
 
+skip_darwin() {
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        skip_all "Skipping (Mac OS/Darwin) $*"
+    fi
+}
+
 ssh_install_cylc() {
     local RHOST="$1"
     local RHOST_CYLC_DIR=

@@ -19,6 +19,7 @@
 # with the host name written.
 export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
+skip_darwin 'atrun hard to configure on Mac OS'
 set_test_remote_host
 set_test_number 2
 

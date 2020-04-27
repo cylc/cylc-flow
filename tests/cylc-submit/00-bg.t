@@ -43,6 +43,7 @@ elif [[ "${CONFIGURED_SYS_NAME}" == 'at' || "${CONFIGURED_SYS_NAME}" == *-at ]]
 then
     CONFIGURED_SYS_NAME=
     CYLC_TEST_BATCH_SYS_NAME='at'
+    skip_darwin 'atrun hard to configure on Mac OS'
 fi
 if [[ -n "${CONFIGURED_SYS_NAME}" ]]; then
     ITEM_KEY="[test battery][batch systems][$CONFIGURED_SYS_NAME]host"
