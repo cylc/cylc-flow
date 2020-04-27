@@ -15,4 +15,4 @@ Task A should only run at 0, 12 hours; Task B at 6, 18"""
         T06,T18 = "A[-PT6H] => B"
 [runtime]
     [[root]]
-        script = "/bin/true" # fast
+        script = "true" # fast

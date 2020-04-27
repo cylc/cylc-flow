@@ -23,4 +23,4 @@ cylc message -- "${CYLC_SUITE_NAME} "${CYLC_TASK_JOB} "file 2 done"
             out1 = "file 1 done"
             out2 = "file 2 done"
     [[bar, baz]]
-        script = /bin/true
+        script = true

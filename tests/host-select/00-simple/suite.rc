@@ -15,7 +15,7 @@ by many of the other test suites (see "cylc test-battery --help")."""
         R1 = "foo1 & foo2 & foo3 & bar"
 [runtime]
     [[root]]
-        script = "/bin/true" # fast
+        script = "true" # fast
     [[foo1, foo2, foo3]]
         [[[remote]]]
             # in suite bin directory:

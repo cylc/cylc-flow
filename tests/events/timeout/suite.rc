@@ -13,7 +13,7 @@
 
 [runtime]
     [[foo]]
-        script = "/bin/true"
+        script = "true"
     [[bar]]
         # this task is never meant to run (thanks to the fail trigger),
         # it is just present to keep the suite alive after foo finishes

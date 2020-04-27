@@ -10,4 +10,4 @@
         P1D = foo
 [runtime]
     [[foo]]
-        script = /bin/true
+        script = true

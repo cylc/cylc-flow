@@ -1,3 +1,3 @@
 #!/bin/bash
 
-sed -i 's@/bin/false@/bin/true@' "$@"
+sed -i 's@^false@true@' "$@"

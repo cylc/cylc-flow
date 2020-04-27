@@ -25,7 +25,7 @@ Skip a daily post-processing workflow if the 'copy' task has expired."""
         """
 [runtime]
     [[root]]
-        script = /bin/true
+        script = true
     [[copy]]
         script = """
 # Abort if I run in either of the first two cycle points.

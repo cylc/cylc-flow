@@ -12,7 +12,7 @@ second task fixes and retriggers it with an edit-run."""
         R1 = broken-task:fail => fixer-task
 [runtime]
     [[broken-task]]
-        script = /bin/false
+        script = false
         [[[remote]]]
             host = $(echo localhost)
     [[fixer-task]]

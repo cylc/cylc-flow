@@ -14,7 +14,7 @@ The ref test will fail if either operation fails to work properly."""
         """
 [runtime]
     [[root]]
-        script = /bin/true
+        script = true
     [[remover]]
         # Remove both families (also tests removal by pattern).
         script = """

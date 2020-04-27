@@ -9,4 +9,4 @@
         R/+PT6H/PT6H = a
 [runtime]
     [[a,b]]
-        script = "/bin/true" # fast
+        script = "true" # fast

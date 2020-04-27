@@ -21,6 +21,6 @@
         """
 [runtime]
     [[root]]
-        script = /bin/true
+        script = true
     [[foo]]
     [[bar]]

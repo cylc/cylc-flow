@@ -1,6 +1,6 @@
 [cylc]
     [[events]]
-        shutdown handler = "/bin/false"
+        shutdown handler = "false"
         abort if shutdown handler fails = True
 
 [scheduling]
@@ -9,4 +9,4 @@
 
 [runtime]
     [[root]]
-        script = "/bin/true" # no sleep
+        script = "true" # no sleep

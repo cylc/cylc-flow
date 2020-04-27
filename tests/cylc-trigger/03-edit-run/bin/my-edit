@@ -1,4 +1,5 @@
 #!/bin/bash
 
+sed -i 's|^false|true|' "$@"
 # shellcheck disable=SC2016
-sed -i 's@\(/bin/false\|$(x\)@/bin/true@' "$@"
+sed -i 's|$(x|true|' "$@"

@@ -13,7 +13,7 @@
     [[good-stuff]]
         script = "sleep 20"
     [[bad]]
-        script = "sleep 20; /bin/false"
+        script = "sleep 20; false"
     [[messenger]]
         script = """
           sleep 20
