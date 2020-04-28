@@ -16,7 +16,7 @@
 """Automatically restart suites if they are running on bad servers.
 
 Loads in the global configuration to check if the server a suite is running
-on is listed in ``[suite hosts]condemned hosts``.
+on is listed in :cylc:conf:`flow.rc[suite servers]condemned hosts`.
 
 This is useful if a host needs to be taken off-line e.g. for scheduled
 maintenance.
@@ -24,21 +24,25 @@ maintenance.
 This functionality is configured via the following site configuration
 settings:
 
-- ``[run hosts][suite servers]auto restart delay``
-- ``[run hosts][suite servers]condemned hosts``
-- ``[run hosts][suite servers]run hosts``
+.. cylc-scope:: flow.rc
+
+- :cylc:conf:`[suite servers]auto restart delay`
+- :cylc:conf:`[suite servers]condemned hosts`
+- :cylc:conf:`[suite servers]run hosts`
+
+.. cylc-scope:: flow.rc[suite servers]
 
 The auto stop-restart feature has two modes:
 
 - [Normal Mode]
 
-  - When a host is added to the ``condemned hosts`` list, any suites
+  - When a host is added to the :cylc:conf:`condemned hosts` list, any suites
     running on that host will automatically shutdown then restart selecting a
-    new host from ``run hosts``.
+    new host from :cylc:conf:`run hosts`.
   - For safety, before attempting to stop the suite cylc will first wait
     for any jobs running locally (under background or at) to complete.
   - *In order for Cylc to be able to successfully restart suites the
-    ``run hosts`` must all be on a shared filesystem.*
+    :cylc:conf:`run hosts` must all be on a shared filesystem.*
 
 - [Force Mode]
 
@@ -59,13 +63,13 @@ running on ``bar`` will stop immediately, making no attempt to restart.
 .. warning::
 
    Cylc will reject hosts with ambiguous names such as ``localhost`` or
-   ``127.0.0.1`` for this configuration as ``condemned hosts`` are evaluated
-   on the suite host server.
+   ``127.0.0.1`` for this configuration as `:cylc:conf:`condemned hosts`
+   are evaluated on the suite host server.
 
 To prevent large numbers of suites attempting to restart simultaneously the
-``auto restart delay`` setting defines a period of time in seconds.
+:cylc:conf:`auto restart delay` setting defines a period of time in seconds.
 Suites will wait for a random period of time between zero and
-``auto restart delay`` seconds before attempting to stop and restart.
+:cylc:conf:`auto restart delay` seconds before attempting to stop and restart.
 
 Suites that are started up in no-detach mode cannot auto stop-restart on a
 different host - as it will still end up attached to the condemned host.
@@ -73,9 +77,7 @@ Therefore, a suite in no-detach mode running on a condemned host will abort
 with a non-zero return code. The parent process should manually handle the
 restart of the suite if desired.
 
-See the ``[suite servers]`` configuration section
-
-(:ref:`global-suite-servers`) for more details.
+.. cylc-scope::
 
 """
 from random import random
