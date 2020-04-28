@@ -42,6 +42,16 @@ with Conf('flow.rc', desc='''
 
        $ cylc get-global-config --sparse
 
+    Cylc will look for ``flow.rc`` files in two locations:
+
+    Cylc will attempt to load the global configuration from two locations:
+
+    * ``/etc/cylc/flow/<CYLC_VERSION>/flow.rc``
+    * ``~/.cylc/flow/<CYLC_VERSION>/flow.rc``
+
+    If both files are present files will be loaded in this order so those
+    lower down the list may override settings from those higher up.
+
     To override the default configuration path use ``CYLC_CONF_PATH``.
 
     .. note::
