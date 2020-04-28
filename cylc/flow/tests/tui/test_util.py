@@ -119,7 +119,7 @@ def testrender_node__cycle_point():
         ('submitted', False, None, None, ['⊙']),
         ('running', False, None, None, ['⊙']),
         ('succeeded', False, None, None, ['●']),
-        ('submit-failed', False, None, None, ['⊗']),
+        ('submit-failed', False, None, None, ['⊘']),
         ('failed', False, None, None, ['⊗']),
         # progress indicator
         ('running', False, 0, 100, ['⊙']),
