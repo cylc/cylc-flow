@@ -66,7 +66,7 @@ with Conf(
             A web URL to suite documentation.  If present it can be browsed
             with the ``cylc doc`` command. The string template
             ``%(suite_name)s`` will be replaced with the actual suite name.
-            See also :ref:`TaskURL`.
+            See also :cylc:conf:`suite.rc[runtime][<namespace>][meta]URL`.
 
             Example:
 
@@ -157,20 +157,23 @@ with Conf(
     '''):
         Conf('initial cycle point', VDR.V_CYCLE_POINT, desc='''
             In a cold start each cycling task (unless specifically excluded
-            under ``[special tasks]``) will be loaded into the suite with this
+            under
+            :cylc:conf:`[..][special tasks]`) will be loaded into the suite
+            with this
             cycle point, or with the closest subsequent valid cycle point for
             the task.  This item can be overridden on the command line.
 
             In date-time cycling, if you do not provide time zone information
             for this, it will be assumed to be local time, or in UTC if
-            :ref:`UTC-mode` is set, or in the time zone determined by
-            :ref:`cycle-point-time-zone` if that is set.
+            :cylc:conf:`suite.rc[cylc]UTC mode`
+            is set, or in the time zone determined by
+            :cylc:conf`suite.rc[cylc][cycle point time zone]`.
 
-            The string i``now`` converts to the current date-time on the suite
+            The string ``now`` converts to the current date-time on the suite
             host (adjusted to UTC if the suite is in UTC mode but the host is
             not) to minute resolution.  Minutes (or hours, etc.) may be
-            ignored depending on your cycle point format
-            (:ref:`cycle-point-format`).
+            ignored depending on the value of
+            :cylc:conf:`suite.rc[cylc]cycle point format`.
         ''')
         Conf('final cycle point', VDR.V_STRING, desc='''
             Cycling tasks are held once they pass the final cycle point, if
@@ -180,8 +183,9 @@ with Conf(
 
             In date-time cycling, if you do not provide time zone information
             for this, it will be assumed to be local time, or in UTC if
-                :ref:`UTC-mode` is set, or in the :ref:`cycle-point-time-zone`
-                if that is set.
+            :cylc:conf:`suite.rc[cylc]UTC mode`
+            is set, or in the time zone determined by
+            :cylc:conf`suite.rc[cylc][cycle point time zone]`.
         ''')
         Conf('initial cycle point constraints', VDR.V_STRING_LIST, desc='''
             in a cycling suite it is possible to restrict the initial cycle
@@ -215,8 +219,8 @@ with Conf(
             :ref:`RunaheadLimit`.
 
             This config item specifies a hard limit as a cycle interval
-            between the slowest and fastest tasks. See also ``max active cycle
-            points`` (:ref:`max active cycle points`) which defines the limit
+            between the slowest and fastest tasks. See also
+            :cylc:conf:`[..]max active cycle points` which defines the limit
             as a number of cyles.
 
             Example: ``PT12H`` - for a 12 hour limit under ISO 8601 cycling.
@@ -226,27 +230,27 @@ with Conf(
             getting too far ahead of the slowest ones, as documented in
             :ref:`RunaheadLimit`.
 
-            This config item supersedes the deprecated hard ``runahead limit``
-            (:ref:`runahead limit`). It allows up to ``N`` (default 3)
+            It allows up to ``N`` (default 3)
             consecutive cycle points to be active at any time, adjusted up if
             necessary for any future triggering.
         ''')
         Conf('spawn to max active cycle points', VDR.V_BOOLEAN, desc='''
-            Allows tasks to spawn out to ``max active cycle points``
-            (:ref:`max active cycle points`), removing restriction that a task
+            Allows tasks to spawn out to
+            :cylc:conf:`[..]max active cycle points`,
+            removing restriction that a task
             has to have submitted before its successor can be spawned.
 
             .. warning::
-                This should be used with care given the potential impact of
-                additional task proxies in terms of memory and cpu for the
-                cylc server program. Also, use of the setting may highlight
-                any issues with suite design relying on the default behaviour
-                where downstream tasks would otherwise be waiting on ones
-                upstream submitting and the suite would have stalled e.g. a
-                housekeeping task at a later cycle deleting an earlier cycle's
-                data before that cycle has had chance to run where previously
-                the task would not have been spawned until its predecessor had
-                been submitted.
+               This should be used with care given the potential impact of
+               additional task proxies in terms of memory and cpu for the
+               cylc server program. Also, use of the setting may highlight
+               any issues with suite design relying on the default behaviour
+               where downstream tasks would otherwise be waiting on ones
+               upstream submitting and the suite would have stalled e.g. a
+               housekeeping task at a later cycle deleting an earlier cycle's
+               data before that cycle has had chance to run where previously
+               the task would not have been spawned until its predecessor had
+               been submitted.
         ''')
 
         with Conf('queues', desc='''
@@ -583,7 +587,7 @@ with Conf(
 
                 The top level share and work directory location can be changed
                 (e.g. to a large data area) by a global config setting (see
-                :ref:`workdirectory`).
+                :cylc:conf:`flow.rc[hosts][<hostname glob>]work directory`).
 
                 .. note::
 
@@ -638,7 +642,9 @@ with Conf(
                         present it can be browsed with the ``cylc doc``
                         command.  The string templates ``%(suite_name)s`` and
                         ``%(task_name)s`` will be replaced with the actual
-                        suite and task names.  See also :ref:`SuiteURL`.
+                        suite and task names.
+
+                        See also :cylc:conf:`[meta]URL <suite.rc[meta]URL>`.
 
                         Example:
 
@@ -659,9 +665,9 @@ with Conf(
             '''):
                 Conf('default run length', VDR.V_INTERVAL, DurationFloat(10),
                      desc='''
-                    The default simulated job run length, if ``[job]execution
-                    time limit`` and ``[simulation]speedup factor`` are not
-                    set.
+                    The default simulated job run length, if
+                    ``[job]execution time limit`` and
+                    ``[simulation]speedup factor`` are not set.
                 ''')
                 Conf('speedup factor', VDR.V_FLOAT, desc='''
                     If ``[job]execution time limit`` is set, the task
@@ -761,7 +767,8 @@ with Conf(
             with Conf('events', desc='''
                 Cylc can call nominated event handlers when certain task
                 events occur. This section configures specific task event
-                handlers; see :ref:`SuiteEventHandling` for suite events.
+                handlers; see :cylc:conf:`suite.rc[cylc][events]` for
+                suite event handlers.
 
                 Event handlers can be located in the suite ``bin/`` directory,
                 otherwise it is up to you to ensure their location is in
@@ -938,8 +945,8 @@ with Conf(
                     invoked on the remote account.
                 ''')
                 Conf('host', VDR.V_STRING, desc='''
-                    The hostname of the target suite. The polling ``cylc
-                    suite-state`` command will be invoked on the remote
+                    The hostname of the target suite. The polling
+                    ``cylc suite-state`` command will be invoked on the remote
                     account.
                 ''')
                 Conf('interval', VDR.V_INTERVAL, desc='''
