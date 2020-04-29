@@ -61,6 +61,9 @@ recover).
 A new terminal user interface to replace the old `cylc monitor`.
 An interactive collapsible tree to match the new web interface.
 
+[#3559](https://github.com/cylc/cylc-flow/pull/3559) - Cylc configuration
+files are now auto-documented from their definitions.
+
 ### Fixes
 
 [#3409](https://github.com/cylc/cylc-flow/pull/3409) - prevent cylc-run from
