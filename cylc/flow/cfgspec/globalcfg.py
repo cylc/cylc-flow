@@ -426,7 +426,7 @@ with Conf('flow.rc', desc='''
                 a given host.  Currently, this setting is only meaningful for
                 PBS jobs. For example, PBS 12 or older will fail a job submit
                 if the job name has more than 15 characters; whereas PBS 13
-                    accepts up to 236 characters.
+                accepts up to 236 characters.
             ''')
             Conf('owner', VDR.V_STRING)
 

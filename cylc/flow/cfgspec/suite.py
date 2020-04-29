@@ -294,7 +294,7 @@ with Conf(
             per queue. By default a single queue called *default* is defined,
             with all tasks assigned to it and no limit. To use a single queue
             for the whole suite just set the limit on the *default* queue as
-                required.  See also :ref:`InternalQueues`.
+            required. See also :ref:`InternalQueues`.
         '''):
             with Conf('default'):
                 Conf('limit', VDR.V_INTEGER, 0, desc='''
@@ -646,8 +646,8 @@ with Conf(
                 events.
 
                 Any suite meta item can now be passed to task event handlers
-                by prefixing the string template item name with "suite_", for
-                example:
+                by prefixing the string template item name with ``suite_``,
+                for example:
 
                 .. code-block:: cylc
 
