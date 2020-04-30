@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
+import os.path
 from collections import namedtuple
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -116,9 +117,9 @@ class TestScan(TestCase):
         Args:
             mocked_getpwall (object):
                 Mocked pwd.getpwall
-            mocked_get_suite_src_dir (oject):
+            mocked_get_suite_src_dir (object):
                 Mocked suite_files.get_suite_src_dir
-            mocked_get_suite_title (oject):
+            mocked_get_suite_title (object):
                 Mocked suite_files.get_suite_title
         """
         with TemporaryDirectory() as homedir:
@@ -151,7 +152,6 @@ class TestScan(TestCase):
             mocked_contact_file_fields (object): mocked ContactFileFields
             mocked_load_contact_file (function): mocked load_contact_file
         """
-        # mock sr
         with TemporaryDirectory() as homedir:
             # mock pwd.getpwall
             mocked_getpwall.return_value = [
@@ -161,8 +161,9 @@ class TestScan(TestCase):
             mocked_contact_file_fields.HOST = 'host'
             mocked_contact_file_fields.PORT = 'port'
             mocked_contact_file_fields.PUBLISH_PORT = 'pub_port'
+            mocked_contact_file_fields.VERSION = 'version'
 
-            # mock srv_files_mgr.load_contact_file
+            # mock suite_files.load_contact_file
             def my_load_contact_file(reg, _):
                 if reg == 'good':
                     return {
@@ -170,6 +171,7 @@ class TestScan(TestCase):
                         'port': 9999,
                         'pub_port': 1234,
                         'api': str(API),
+                        'version': '8'
                     }
                 else:
                     raise SuiteServiceFileError(reg)
@@ -178,16 +180,67 @@ class TestScan(TestCase):
             for suite_name in ["good", "bad", "ugly"]:
                 suite_directory = Path(homedir, 'cylc-run', suite_name)
                 suite_directory.mkdir(parents=True)
-                # mock srv_files_mgr.load_contact_file
-                owner_pattern = re.compile(pattern="^.oo.$")
-                suites = list(get_scan_items_from_fs(
-                    owner_pattern=owner_pattern, active_only=True))
-                # will match blog/five but will stop once it finds log
-                self.assertEqual(
-                    [('good', 'localhost', 9999, 1234, str(API))], suites)
+            owner_pattern = re.compile(pattern="^.oo.$")
+            suites = list(get_scan_items_from_fs(
+                owner_pattern=owner_pattern, active_only=True))
+            self.assertEqual(
+                [('good', 'localhost', 9999, 1234, str(API))], suites)
+
+    @patch("cylc.flow.network.scan.load_contact_file")
+    @patch("cylc.flow.network.scan.ContactFileFields")
+    @patch("cylc.flow.network.scan.getpwall")
+    def test_get_scan_items_from_fs_with_old_authentication(
+            self, mocked_getpwall,
+            mocked_contact_file_fields,
+            mocked_load_contact_file):
+        """Test that only active suites are returned if so requested.
+        Args:
+            mocked_getpwall (object): mocked pwd.getpwall
+            mocked_contact_file_fields (object): mocked ContactFileFields
+            mocked_load_contact_file (function): mocked load_contact_file
+        """
+        # mock sr
+        with TemporaryDirectory() as homedir:
+            # mock pwd.getpwall
+            mocked_getpwall.return_value = [
+                self.pwentry('/bin/bash', 'root', homedir), ]
+
+            mocked_contact_file_fields.API = 'api'
+            mocked_contact_file_fields.HOST = 'host'
+            mocked_contact_file_fields.PORT = 'port'
+            mocked_contact_file_fields.PUBLISH_PORT = 'pub_port'
+            mocked_contact_file_fields.VERSION = 'version'
+
+            # mock suite_files.load_contact_file
+            def my_load_contact_file(reg, _):
+                if reg == 'suite_cylc_version_7':
+                    return {
+                        'host': 'localhost',
+                        'port': 9999,
+                        'version': '7.8.4',
+                        'api': str(API),
+                    }
+                if reg == 'suite_cylc_version_8':
+                    return{
+                        'host': 'localhost',
+                        'port': 9999,
+                        'pub_port': 1234,
+                        'api': str(API),
+                        'version': '8.0a1'
+                    }
+                else:
+                    raise SuiteServiceFileError(reg)
+            mocked_load_contact_file.side_effect = my_load_contact_file
+            for suite_name in ['suite_cylc_version_7', 'suite_cylc_version_8']:
+                suite_directory = Path(homedir, 'cylc-run', suite_name)
+                suite_directory.mkdir(parents=True)
+            owner_pattern = re.compile(pattern="^.oo.$")
+            suites = list(get_scan_items_from_fs(owner_pattern=owner_pattern))
+            self.assertEqual(
+                [('suite_cylc_version_8', 'localhost', 9999, 1234, str(API))],
+                suites)
 
     # --- tests for re_compile_filters()
-
     def test_re_compile_filters_nones(self):
         """Test with no arguments provided."""
         self.assertEqual((None, None), re_compile_filters())
