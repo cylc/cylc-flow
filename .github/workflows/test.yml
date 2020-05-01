@@ -38,9 +38,16 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.7']
-        chunk: ['1/4', '2/4', '3/4', '4/4']
+        tests: [
+          ['tests', '1/4'],
+          ['tests', '2/4'],
+          ['tests', '3/4'],
+          ['tests', '4/4'],
+          ['flakytests', '']
+        ]
     env:
-      CHUNK: ${{ matrix.chunk }}
+      BASE: ${{ matrix.tests[0] }}
+      CHUNK: ${{ matrix.tests[1] }}
     steps:
       - name: Checkout
         uses: actions/checkout@v1
@@ -57,7 +64,7 @@ jobs:
           pip install ."[all]"
       - name: Test
         run: |
-          etc/bin/run-functional-tests -j 8 --state=save || (
+          etc/bin/run-functional-tests -j 8 --state=save "${BASE}" || (
             echo '=== Re-running Failed Tests'
             CHUNK= etc/bin/run-functional-tests -j 8 --state=save,failed
           )
