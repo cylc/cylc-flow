@@ -64,9 +64,14 @@ jobs:
           pip install ."[all]"
       - name: Test
         run: |
-          etc/bin/run-functional-tests -j 8 --state=save "${BASE}" || (
+          if [[ "${BASE}" == 'flakytests' ]]; then
+              NPROC=4
+          else
+              NPROC=8
+          fi
+          etc/bin/run-functional-tests -j "${NPROC}" --state=save "${BASE}" || (
             echo '=== Re-running Failed Tests'
-            CHUNK= etc/bin/run-functional-tests -j 8 --state=save,failed
+            CHUNK= etc/bin/run-functional-tests -j "${NPROC}" --state=save,failed
           )
       - name: Debug
         if: failure()
