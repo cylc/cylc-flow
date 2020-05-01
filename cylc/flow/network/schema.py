@@ -16,11 +16,10 @@
 
 """GraphQL API schema via Graphene implementation."""
 
-import asyncio
 from functools import partial
 import logging
 from textwrap import dedent
-from typing import Callable, AsyncGenerator, Any
+from typing import AsyncGenerator, Any
 
 from graphene import (
     Boolean, Field, Float, ID, InputObjectType, Int,
@@ -48,7 +47,7 @@ from cylc.flow.task_state import (
 )
 from cylc.flow.data_store_mgr import (
     FAMILIES, FAMILY_PROXIES, JOBS, TASKS, TASK_PROXIES,
-    ALL_DELTAS, DELTA_ADDED, DELTA_UPDATED
+    DELTA_ADDED, DELTA_UPDATED
 )
 from cylc.flow.suite_status import StopMode
 
@@ -186,14 +185,15 @@ class SortArgs(InputObjectType):
     reverse = Boolean(default_value=False)
 
 
+STRIP_NULL_DEFAULT = Boolean(default_value=False)
+DELTA_STORE_DEFAULT = Boolean(default_value=False)
+
 JOB_ARGS = {
     'ids': List(ID, default_value=[]),
     'exids': List(ID, default_value=[]),
     'states': List(String, default_value=[]),
     'exstates': List(String, default_value=[]),
     'sort': SortArgs(default_value=None),
-    'strip_null': Boolean(default_value=False),
-    'delta_store': Boolean(default_value=True),
 }
 
 ALL_JOB_ARGS = {
@@ -204,8 +204,6 @@ ALL_JOB_ARGS = {
     'states': List(String, default_value=[]),
     'exstates': List(String, default_value=[]),
     'sort': SortArgs(default_value=None),
-    'strip_null': Boolean(default_value=False),
-    'delta_store': Boolean(default_value=True),
 }
 
 DEF_ARGS = {
@@ -214,8 +212,6 @@ DEF_ARGS = {
     'mindepth': Int(default_value=-1),
     'maxdepth': Int(default_value=-1),
     'sort': SortArgs(default_value=None),
-    'strip_null': Boolean(default_value=False),
-    'delta_store': Boolean(default_value=True),
 }
 
 ALL_DEF_ARGS = {
@@ -226,8 +222,6 @@ ALL_DEF_ARGS = {
     'mindepth': Int(default_value=-1),
     'maxdepth': Int(default_value=-1),
     'sort': SortArgs(default_value=None),
-    'strip_null': Boolean(default_value=False),
-    'delta_store': Boolean(default_value=True),
 }
 
 PROXY_ARGS = {
@@ -240,8 +234,6 @@ PROXY_ARGS = {
     'mindepth': Int(default_value=-1),
     'maxdepth': Int(default_value=-1),
     'sort': SortArgs(default_value=None),
-    'strip_null': Boolean(default_value=False),
-    'delta_store': Boolean(default_value=True),
 }
 
 ALL_PROXY_ARGS = {
@@ -256,8 +248,6 @@ ALL_PROXY_ARGS = {
     'mindepth': Int(default_value=-1),
     'maxdepth': Int(default_value=-1),
     'sort': SortArgs(default_value=None),
-    'strip_null': Boolean(default_value=False),
-    'delta_store': Boolean(default_value=True),
 }
 
 EDGE_ARGS = {
@@ -268,16 +258,12 @@ EDGE_ARGS = {
     'mindepth': Int(default_value=-1),
     'maxdepth': Int(default_value=-1),
     'sort': SortArgs(default_value=None),
-    'strip_null': Boolean(default_value=False),
-    'delta_store': Boolean(default_value=True),
 }
 
 ALL_EDGE_ARGS = {
     'workflows': List(ID, default_value=[]),
     'exworkflows': List(ID, default_value=[]),
     'sort': SortArgs(default_value=None),
-    'strip_null': Boolean(default_value=False),
-    'delta_store': Boolean(default_value=True),
 }
 
 NODES_EDGES_ARGS = {
@@ -291,7 +277,6 @@ NODES_EDGES_ARGS = {
     'mindepth': Int(default_value=-1),
     'maxdepth': Int(default_value=-1),
     'sort': SortArgs(default_value=None),
-    'strip_null': Boolean(default_value=False),
 }
 
 NODES_EDGES_ARGS_ALL = {
@@ -307,8 +292,6 @@ NODES_EDGES_ARGS_ALL = {
     'mindepth': Int(default_value=-1),
     'maxdepth': Int(default_value=-1),
     'sort': SortArgs(default_value=None),
-    'strip_null': Boolean(default_value=False),
-    'delta_store': Boolean(default_value=True),
 }
 
 # Resolvers are used to collate data needed for query resolution.
@@ -333,8 +316,8 @@ async def get_workflows(root, info, **args):
     # Set subscription info
     if 'sub_id' in info.context:
         args['sub_id'] = info.context['sub_id']
-        field_name = to_snake_case(info.field_name)
-        args['ids'] = [root.get(field_name, None).id]
+        if root and field_name in root:
+            args['ids'] = [root[field_name].id]
 
     args['workflows'] = [parse_workflow_id(w_id) for w_id in args['ids']]
     args['exworkflows'] = [parse_workflow_id(w_id) for w_id in args['exids']]
@@ -346,7 +329,9 @@ async def get_workflow_by_id(root, info, **args):
     """Return single workflow element."""
     if 'sub_id' in info.context:
         args['sub_id'] = info.context['sub_id']
-        args['id'] = root.get(info.field_name, None).id
+        field_name = to_snake_case(info.field_name)
+        if root and field_name in root:
+            args['id'] = root[field_name].id
 
     args['workflow'] = args['id']
     resolvers = info.context.get('resolvers')
@@ -356,18 +341,32 @@ async def get_workflow_by_id(root, info, **args):
 async def get_nodes_all(root, info, **args):
     """Resolver for returning job, task, family nodes"""
     field_name = to_snake_case(info.field_name)
-    field_ids = getattr(root, field_name, None)
+    if isinstance(root, dict):
+        field_ids = root.get(field_name, None)
+    else:
+        field_ids = getattr(root, field_name, None)
+
     if hasattr(args, 'id'):
         args['ids'] = [args.get('id')]
     if field_ids:
+        if isinstance(field_ids, str):
+            field_ids = [field_ids]
+        elif isinstance(field_ids, dict):
+            field_ids = [f_id for f_id in field_ids]
         args['ids'] = field_ids
     elif field_ids == []:
         return []
+
     try:
         obj_type = str(info.return_type.of_type).replace('!', '')
     except AttributeError:
         obj_type = str(info.return_type)
     node_type = NODE_MAP[obj_type]
+
+    # Set subscription info
+    if 'sub_id' in info.context:
+        args['sub_id'] = info.context['sub_id']
+
     args['ids'] = [parse_node_id(n_id, node_type) for n_id in args['ids']]
     args['exids'] = [parse_node_id(n_id, node_type) for n_id in args['exids']]
     args['workflows'] = [
@@ -441,6 +440,10 @@ async def get_node_by_id(root, info, **args):
 
 
 async def get_edges_all(root, info, **args):
+    # Set subscription info
+    if 'sub_id' in info.context:
+        args['sub_id'] = info.context['sub_id']
+
     args['workflows'] = [
         parse_workflow_id(w_id) for w_id in args['workflows']]
     args['exworkflows'] = [
@@ -465,6 +468,9 @@ async def get_edges_by_ids(root, info, **args):
     elif field_ids == []:
         return []
 
+    if 'sub_id' in info.context:
+        args['sub_id'] = info.context['sub_id']
+
     resolvers = info.context.get('resolvers')
     return await resolvers.get_edges_by_ids(args)
 
@@ -483,6 +489,10 @@ async def get_nodes_edges(root, info, **args):
             parse_workflow_id(w_id) for w_id in args['exworkflows']]
     args['ids'] = [parse_node_id(n_id, node_type) for n_id in args['ids']]
     args['exids'] = [parse_node_id(n_id, node_type) for n_id in args['exids']]
+
+    if 'sub_id' in info.context:
+        args['sub_id'] = info.context['sub_id']
+
     resolvers = info.context.get('resolvers')
     root_nodes = await resolvers.get_nodes_all(node_type, args)
     return await resolvers.get_nodes_edges(root_nodes, args)
@@ -531,34 +541,48 @@ class Workflow(ObjectType):
         lambda: Task,
         description="""Task definitions.""",
         args=DEF_ARGS,
+        strip_null=STRIP_NULL_DEFAULT,
+        delta_store=DELTA_STORE_DEFAULT,
         resolver=get_nodes_by_ids)
     families = List(
         lambda: Family,
         description="""Family definitions.""",
         args=DEF_ARGS,
+        strip_null=STRIP_NULL_DEFAULT,
+        delta_store=DELTA_STORE_DEFAULT,
         resolver=get_nodes_by_ids)
     task_proxies = List(
         lambda: TaskProxy,
         description="""Task cycle instances.""",
         args=PROXY_ARGS,
+        strip_null=STRIP_NULL_DEFAULT,
+        delta_store=DELTA_STORE_DEFAULT,
         resolver=get_nodes_by_ids)
     family_proxies = List(
         lambda: FamilyProxy,
         description="""Family cycle instances.""",
         args=PROXY_ARGS,
+        strip_null=STRIP_NULL_DEFAULT,
+        delta_store=DELTA_STORE_DEFAULT,
         resolver=get_nodes_by_ids)
     jobs = List(
         lambda: Job,
         description="""Task jobs.""",
         args=JOB_ARGS,
+        strip_null=STRIP_NULL_DEFAULT,
+        delta_store=DELTA_STORE_DEFAULT,
         resolver=get_nodes_by_ids)
     edges = Field(
         lambda: Edges,
         args=EDGE_ARGS,
+        strip_null=STRIP_NULL_DEFAULT,
+        delta_store=DELTA_STORE_DEFAULT,
         description="""Graph edges""")
     nodes_edges = Field(
         lambda: NodesEdges,
         args=NODES_EDGES_ARGS,
+        strip_null=STRIP_NULL_DEFAULT,
+        delta_store=DELTA_STORE_DEFAULT,
         resolver=get_nodes_edges)
     api_version = Int()
     cylc_version = String()
@@ -592,6 +616,8 @@ class Job(ObjectType):
         lambda: TaskProxy,
         description="""Associated Task Proxy""",
         required=True,
+        strip_null=STRIP_NULL_DEFAULT,
+        delta_store=DELTA_STORE_DEFAULT,
         resolver=get_node_by_id)
     submitted_time = String()
     started_time = String()
@@ -631,6 +657,8 @@ class Task(ObjectType):
         lambda: TaskProxy,
         description="""Associated cycle point proxies""",
         args=PROXY_ARGS,
+        strip_null=STRIP_NULL_DEFAULT,
+        delta_store=DELTA_STORE_DEFAULT,
         resolver=get_nodes_by_ids)
     namespace = List(String, required=True)
 
@@ -677,6 +705,8 @@ class TaskProxy(ObjectType):
         Task,
         description="""Task definition""",
         required=True,
+        strip_null=STRIP_NULL_DEFAULT,
+        delta_store=DELTA_STORE_DEFAULT,
         resolver=get_node_by_id)
     state = String()
     cycle_point = String()
@@ -695,21 +725,29 @@ class TaskProxy(ObjectType):
         Job,
         description="""Task jobs.""",
         args=JOB_ARGS,
+        strip_null=STRIP_NULL_DEFAULT,
+        delta_store=DELTA_STORE_DEFAULT,
         resolver=get_nodes_by_ids)
     parents = List(
         lambda: FamilyProxy,
         description="""Task parents.""",
         args=PROXY_ARGS,
+        strip_null=STRIP_NULL_DEFAULT,
+        delta_store=DELTA_STORE_DEFAULT,
         resolver=get_nodes_by_ids)
     first_parent = Field(
         lambda: FamilyProxy,
         description="""Task first parent.""",
         args=PROXY_ARGS,
+        strip_null=STRIP_NULL_DEFAULT,
+        delta_store=DELTA_STORE_DEFAULT,
         resolver=get_node_by_id)
     ancestors = List(
         lambda: FamilyProxy,
         description="""First parent ancestors.""",
         args=PROXY_ARGS,
+        strip_null=STRIP_NULL_DEFAULT,
+        delta_store=DELTA_STORE_DEFAULT,
         resolver=get_nodes_by_ids)
 
 
@@ -724,21 +762,29 @@ class Family(ObjectType):
         lambda: FamilyProxy,
         description="""Associated cycle point proxies""",
         args=PROXY_ARGS,
+        strip_null=STRIP_NULL_DEFAULT,
+        delta_store=DELTA_STORE_DEFAULT,
         resolver=get_nodes_by_ids)
     parents = List(
         lambda: Family,
         description="""Family definition parent.""",
         args=DEF_ARGS,
+        strip_null=STRIP_NULL_DEFAULT,
+        delta_store=DELTA_STORE_DEFAULT,
         resolver=get_nodes_by_ids)
     child_tasks = List(
         Task,
         description="""Descendant definition tasks.""",
         args=DEF_ARGS,
+        strip_null=STRIP_NULL_DEFAULT,
+        delta_store=DELTA_STORE_DEFAULT,
         resolver=get_nodes_by_ids)
     child_families = List(
         lambda: Family,
         description="""Descendant desc families.""",
         args=DEF_ARGS,
+        strip_null=STRIP_NULL_DEFAULT,
+        delta_store=DELTA_STORE_DEFAULT,
         resolver=get_nodes_by_ids)
 
 
@@ -753,6 +799,8 @@ class FamilyProxy(ObjectType):
         Family,
         description="""Family definition""",
         required=True,
+        strip_null=STRIP_NULL_DEFAULT,
+        delta_store=DELTA_STORE_DEFAULT,
         resolver=get_node_by_id)
     state = String()
     is_held = Boolean()
@@ -761,26 +809,36 @@ class FamilyProxy(ObjectType):
         lambda: FamilyProxy,
         description="""Family parent proxies.""",
         args=PROXY_ARGS,
+        strip_null=STRIP_NULL_DEFAULT,
+        delta_store=DELTA_STORE_DEFAULT,
         resolver=get_nodes_by_ids)
     child_tasks = List(
         TaskProxy,
         description="""Descendant task proxies.""",
         args=PROXY_ARGS,
+        strip_null=STRIP_NULL_DEFAULT,
+        delta_store=DELTA_STORE_DEFAULT,
         resolver=get_nodes_by_ids)
     child_families = List(
         lambda: FamilyProxy,
         description="""Descendant family proxies.""",
         args=PROXY_ARGS,
+        strip_null=STRIP_NULL_DEFAULT,
+        delta_store=DELTA_STORE_DEFAULT,
         resolver=get_nodes_by_ids)
     first_parent = Field(
         lambda: FamilyProxy,
         description="""Task first parent.""",
         args=PROXY_ARGS,
+        strip_null=STRIP_NULL_DEFAULT,
+        delta_store=DELTA_STORE_DEFAULT,
         resolver=get_node_by_id)
     ancestors = List(
         lambda: FamilyProxy,
         description="""First parent ancestors.""",
         args=PROXY_ARGS,
+        strip_null=STRIP_NULL_DEFAULT,
+        delta_store=DELTA_STORE_DEFAULT,
         resolver=get_nodes_by_ids)
 
 
@@ -802,10 +860,14 @@ class Edge(ObjectType):
     source = ID()
     source_node = Field(
         Node,
+        strip_null=STRIP_NULL_DEFAULT,
+        delta_store=DELTA_STORE_DEFAULT,
         resolver=get_node_by_id)
     target = ID()
     target_node = Field(
         Node,
+        strip_null=STRIP_NULL_DEFAULT,
+        delta_store=DELTA_STORE_DEFAULT,
         resolver=get_node_by_id)
     suicide = Boolean()
     cond = Boolean()
@@ -818,6 +880,8 @@ class Edges(ObjectType):
         Edge,
         required=True,
         args=EDGE_ARGS,
+        strip_null=STRIP_NULL_DEFAULT,
+        delta_store=DELTA_STORE_DEFAULT,
         resolver=get_edges_by_ids)
     workflow_polling_tasks = List(PollTask)
     leaves = List(String)
@@ -844,72 +908,79 @@ class Queries(ObjectType):
         description=Workflow._meta.description,
         ids=List(ID, default_value=[]),
         exids=List(ID, default_value=[]),
-        strip_null=Boolean(default_value=False),
+        strip_null=STRIP_NULL_DEFAULT,
         resolver=get_workflows)
     job = Field(
         Job,
         description=Job._meta.description,
         id=ID(required=True),
-        strip_null=Boolean(default_value=False),
+        strip_null=STRIP_NULL_DEFAULT,
         resolver=get_node_by_id)
     jobs = List(
         Job,
         description=Job._meta.description,
         args=ALL_JOB_ARGS,
+        strip_null=STRIP_NULL_DEFAULT,
         resolver=get_nodes_all)
     task = Field(
         Task,
         description=Task._meta.description,
         id=ID(required=True),
-        strip_null=Boolean(default_value=False),
+        strip_null=STRIP_NULL_DEFAULT,
         resolver=get_node_by_id)
     tasks = List(
         Task,
         description=Task._meta.description,
         args=ALL_DEF_ARGS,
+        strip_null=STRIP_NULL_DEFAULT,
         resolver=get_nodes_all)
     task_proxy = Field(
         TaskProxy,
         description=TaskProxy._meta.description,
         id=ID(required=True),
-        strip_null=Boolean(default_value=False),
+        strip_null=STRIP_NULL_DEFAULT,
         resolver=get_node_by_id)
     task_proxies = List(
         TaskProxy,
         description=TaskProxy._meta.description,
         args=ALL_PROXY_ARGS,
+        strip_null=STRIP_NULL_DEFAULT,
         resolver=get_nodes_all)
     family = Field(
         Family,
         description=Family._meta.description,
         id=ID(required=True),
-        strip_null=Boolean(default_value=False),
+        strip_null=STRIP_NULL_DEFAULT,
         resolver=get_node_by_id)
     families = List(
         Family,
         description=Family._meta.description,
         args=ALL_DEF_ARGS,
+        strip_null=STRIP_NULL_DEFAULT,
         resolver=get_nodes_all)
     family_proxy = Field(
         FamilyProxy,
         description=FamilyProxy._meta.description,
         id=ID(required=True),
-        strip_null=Boolean(default_value=False),
+        strip_null=STRIP_NULL_DEFAULT,
         resolver=get_node_by_id)
     family_proxies = List(
         FamilyProxy,
         description=FamilyProxy._meta.description,
         args=ALL_PROXY_ARGS,
+        strip_null=STRIP_NULL_DEFAULT,
         resolver=get_nodes_all)
     edges = List(
         Edge,
         description=Edge._meta.description,
         args=ALL_EDGE_ARGS,
+        strip_null=STRIP_NULL_DEFAULT,
         resolver=get_edges_all)
     nodes_edges = Field(
         NodesEdges,
         description=NodesEdges._meta.description,
         args=NODES_EDGES_ARGS_ALL,
+        strip_null=STRIP_NULL_DEFAULT,
         resolver=get_nodes_edges)
 
 
@@ -1654,44 +1725,28 @@ class Mutations(ObjectType):
 
 # ** Subscription Related ** #
 
-DELTA_ARGS = dict(
-    ids=List(ID, description="List of full ID, i.e. `owner|name`"),
-    topic=String(default_value=ALL_DELTAS),
-    strip_null=Boolean(default_value=False),
-)
-
-
-def to_subscription(func: Callable, sleep_seconds: float = 5.) -> Callable:
-    """Wraps a function in a while-true-sleep, transforming
-    the function into an async-generator, used by the
-    websockets/subscriptions.
-
-    Args:
-        func (Callable): a callable.
-        sleep_seconds (float): asyncio sleep interval in seconds.
-    Returns:
-        Callable: a callable async-generator wrapping the original callable.
-    """
-    async def gen(*args: Any, **kwargs: Any) -> AsyncGenerator[Any, None]:
-        """
-        Args:
-            *args: Variable length argument list, varies as per schema.
-            **kwargs: Arbitrary keyword arguments, varies as per schema.
-        Returns:
-            AsyncGenerator[Any, None]: an async generator that will
-                yield values from resolvers.
-        """
-        try:
-            while True:
-                yield await func(*args, **kwargs)
-                await asyncio.sleep(sleep_seconds)
-        finally:
-            yield None
-    return gen
+# Used for the root entry points to yield the correct data
+# from within the subscription async gen resolver.
+SUB_RESOLVERS = {
+    'workflows': get_workflows,
+    'job': get_node_by_id,
+    'jobs': get_nodes_all,
+    'task': get_node_by_id,
+    'tasks': get_nodes_all,
+    'task_proxy': get_node_by_id,
+    'task_proxies': get_nodes_all,
+    'family': get_node_by_id,
+    'families': get_nodes_all,
+    'family_proxy': get_node_by_id,
+    'family_proxies': get_nodes_all,
+    'edges': get_edges_all,
+    'nodes_edges': get_nodes_edges,
+}
 
 
 def delta_subs(root, info, **args) -> AsyncGenerator[Any, None]:
-    return info.context.get('resolvers').subscribe_delta(info, args)
+    """Generates the root data from the async gen resolver."""
+    return info.context.get('resolvers').subscribe_delta(root, info, args)
 
 
 class Pruned(ObjectType):
@@ -1713,6 +1768,8 @@ class Added(ObjectType):
         Family,
         description="""Family definitions.""",
         args=DEF_ARGS,
+        strip_null=Boolean(default_value=True),
+        delta_store=Boolean(default_value=True),
         delta_type=String(default_value=DELTA_ADDED),
         resolver=get_nodes_by_ids
     )
@@ -1720,6 +1777,8 @@ class Added(ObjectType):
         FamilyProxy,
         description="""Family cycle instances.""",
         args=PROXY_ARGS,
+        strip_null=Boolean(default_value=True),
+        delta_store=Boolean(default_value=True),
         delta_type=String(default_value=DELTA_ADDED),
         resolver=get_nodes_by_ids
     )
@@ -1727,6 +1786,8 @@ class Added(ObjectType):
         Job,
         description="""Task jobs.""",
         args=JOB_ARGS,
+        strip_null=Boolean(default_value=True),
+        delta_store=Boolean(default_value=True),
         delta_type=String(default_value=DELTA_ADDED),
         resolver=get_nodes_by_ids
     )
@@ -1734,6 +1795,8 @@ class Added(ObjectType):
         Task,
         description="""Task definitions.""",
         args=DEF_ARGS,
+        strip_null=Boolean(default_value=True),
+        delta_store=Boolean(default_value=True),
         delta_type=String(default_value=DELTA_ADDED),
         resolver=get_nodes_by_ids
     )
@@ -1741,6 +1804,8 @@ class Added(ObjectType):
         TaskProxy,
         description="""Task cycle instances.""",
         args=PROXY_ARGS,
+        strip_null=Boolean(default_value=True),
+        delta_store=Boolean(default_value=True),
         delta_type=String(default_value=DELTA_ADDED),
         resolver=get_nodes_by_ids
     )
@@ -1748,6 +1813,8 @@ class Added(ObjectType):
         Edge,
         description="""Graph edges""",
         args=EDGE_ARGS,
+        strip_null=Boolean(default_value=True),
+        delta_store=Boolean(default_value=True),
         delta_type=String(default_value=DELTA_ADDED),
         resolver=get_edges_by_ids
     )
@@ -1755,7 +1822,7 @@ class Added(ObjectType):
         Workflow,
         description=Workflow._meta.description,
         strip_null=Boolean(default_value=True),
-        delta_store=Boolean(default_value=False),
+        delta_store=Boolean(default_value=True),
         delta_type=String(default_value=DELTA_ADDED),
         resolver=get_workflow_by_id
     )
@@ -1769,6 +1836,8 @@ class Updated(ObjectType):
         Family,
         description="""Family definitions.""",
         args=DEF_ARGS,
+        strip_null=Boolean(default_value=True),
+        delta_store=Boolean(default_value=True),
         delta_type=String(default_value=DELTA_UPDATED),
         resolver=get_nodes_by_ids
     )
@@ -1776,6 +1845,8 @@ class Updated(ObjectType):
         FamilyProxy,
         description="""Family cycle instances.""",
         args=PROXY_ARGS,
+        strip_null=Boolean(default_value=True),
+        delta_store=Boolean(default_value=True),
         delta_type=String(default_value=DELTA_UPDATED),
         resolver=get_nodes_by_ids
     )
@@ -1783,6 +1854,8 @@ class Updated(ObjectType):
         Job,
         description="""Task jobs.""",
         args=JOB_ARGS,
+        strip_null=Boolean(default_value=True),
+        delta_store=Boolean(default_value=True),
         delta_type=String(default_value=DELTA_UPDATED),
         resolver=get_nodes_by_ids
     )
@@ -1790,6 +1863,8 @@ class Updated(ObjectType):
         Task,
         description="""Task definitions.""",
         args=DEF_ARGS,
+        strip_null=Boolean(default_value=True),
+        delta_store=Boolean(default_value=True),
         delta_type=String(default_value=DELTA_UPDATED),
         resolver=get_nodes_by_ids
     )
@@ -1797,6 +1872,8 @@ class Updated(ObjectType):
         TaskProxy,
         description="""Task cycle instances.""",
         args=PROXY_ARGS,
+        strip_null=Boolean(default_value=True),
+        delta_store=Boolean(default_value=True),
         delta_type=String(default_value=DELTA_UPDATED),
         resolver=get_nodes_by_ids
     )
@@ -1804,13 +1881,15 @@ class Updated(ObjectType):
         Edge,
         description="""Graph edges""",
         args=EDGE_ARGS,
+        strip_null=Boolean(default_value=True),
+        delta_store=Boolean(default_value=True),
         delta_type=String(default_value=DELTA_UPDATED),
         resolver=get_edges_by_ids
     )
     workflow = Field(
         Workflow,
         description=Workflow._meta.description,
-        strip_null=Boolean(default_value=False),
+        strip_null=Boolean(default_value=True),
         delta_store=Boolean(default_value=True),
         delta_type=String(default_value=DELTA_UPDATED),
         resolver=get_workflow_by_id
@@ -1842,11 +1921,13 @@ class Subscriptions(ObjectType):
     """Defines the subscriptions available in the schema."""
     class Meta:
         description = """Multi-Workflow root level subscriptions."""
+
     deltas = Field(
         Deltas,
         description=Deltas._meta.description,
-        args=DELTA_ARGS,
-        initial_burst=Boolean(default_value=False),
+        workflows=List(ID, description="List of full ID, i.e. `owner|name`"),
+        strip_null=Boolean(default_value=False),
+        initial_burst=Boolean(default_value=True),
         resolver=delta_subs
     )
     workflows = List(
@@ -1854,73 +1935,133 @@ class Subscriptions(ObjectType):
         description=Workflow._meta.description,
         ids=List(ID, default_value=[]),
         exids=List(ID, default_value=[]),
+        # TODO: Change these defaults post #3500 in coordination with WUI
         strip_null=Boolean(default_value=False),
-        resolver=to_subscription(get_workflows))
+        delta_store=Boolean(default_value=False),
+        delta_type=String(default_value=DELTA_ADDED),
+        initial_burst=Boolean(default_value=True),
+        resolver=delta_subs
+    )
     job = Field(
         Job,
         description=Job._meta.description,
         id=ID(required=True),
-        strip_null=Boolean(default_value=False),
-        resolver=to_subscription(get_node_by_id))
+        strip_null=Boolean(default_value=True),
+        delta_store=Boolean(default_value=True),
+        delta_type=String(default_value=DELTA_ADDED),
+        initial_burst=Boolean(default_value=True),
+        resolver=delta_subs
+    )
     jobs = List(
         Job,
         description=Job._meta.description,
         args=ALL_JOB_ARGS,
-        resolver=to_subscription(get_nodes_all))
+        strip_null=Boolean(default_value=True),
+        delta_store=Boolean(default_value=True),
+        delta_type=String(default_value=DELTA_ADDED),
+        initial_burst=Boolean(default_value=True),
+        resolver=delta_subs
+    )
     task = Field(
         Task,
         description=Task._meta.description,
         id=ID(required=True),
-        strip_null=Boolean(default_value=False),
-        resolver=to_subscription(get_node_by_id))
+        strip_null=Boolean(default_value=True),
+        delta_store=Boolean(default_value=True),
+        delta_type=String(default_value=DELTA_ADDED),
+        initial_burst=Boolean(default_value=True),
+        resolver=delta_subs
+    )
     tasks = List(
         Task,
         description=Task._meta.description,
         args=ALL_DEF_ARGS,
-        resolver=to_subscription(get_nodes_all))
+        strip_null=Boolean(default_value=True),
+        delta_store=Boolean(default_value=True),
+        delta_type=String(default_value=DELTA_ADDED),
+        initial_burst=Boolean(default_value=True),
+        resolver=delta_subs
+    )
     task_proxy = Field(
         TaskProxy,
         description=TaskProxy._meta.description,
         id=ID(required=True),
-        strip_null=Boolean(default_value=False),
-        resolver=to_subscription(get_node_by_id))
+        strip_null=Boolean(default_value=True),
+        delta_store=Boolean(default_value=True),
+        delta_type=String(default_value=DELTA_ADDED),
+        initial_burst=Boolean(default_value=True),
+        resolver=delta_subs
+    )
     task_proxies = List(
         TaskProxy,
         description=TaskProxy._meta.description,
         args=ALL_PROXY_ARGS,
-        resolver=to_subscription(get_nodes_all))
+        strip_null=Boolean(default_value=True),
+        delta_store=Boolean(default_value=True),
+        delta_type=String(default_value=DELTA_ADDED),
+        initial_burst=Boolean(default_value=True),
+        resolver=delta_subs
+    )
     family = Field(
         Family,
         description=Family._meta.description,
         id=ID(required=True),
-        strip_null=Boolean(default_value=False),
-        resolver=to_subscription(get_node_by_id))
+        strip_null=Boolean(default_value=True),
+        delta_store=Boolean(default_value=True),
+        delta_type=String(default_value=DELTA_ADDED),
+        initial_burst=Boolean(default_value=True),
+        resolver=delta_subs
+    )
     families = List(
         Family,
         description=Family._meta.description,
         args=ALL_DEF_ARGS,
-        resolver=to_subscription(get_nodes_all))
+        strip_null=Boolean(default_value=True),
+        delta_store=Boolean(default_value=True),
+        delta_type=String(default_value=DELTA_ADDED),
+        initial_burst=Boolean(default_value=True),
+        resolver=delta_subs
+    )
     family_proxy = Field(
         FamilyProxy,
         description=FamilyProxy._meta.description,
         id=ID(required=True),
-        strip_null=Boolean(default_value=False),
-        resolver=to_subscription(get_node_by_id))
+        strip_null=Boolean(default_value=True),
+        delta_store=Boolean(default_value=True),
+        delta_type=String(default_value=DELTA_ADDED),
+        initial_burst=Boolean(default_value=True),
+        resolver=delta_subs
+    )
     family_proxies = List(
         FamilyProxy,
         description=FamilyProxy._meta.description,
         args=ALL_PROXY_ARGS,
-        resolver=to_subscription(get_nodes_all))
+        strip_null=Boolean(default_value=True),
+        delta_store=Boolean(default_value=True),
+        delta_type=String(default_value=DELTA_ADDED),
+        initial_burst=Boolean(default_value=True),
+        resolver=delta_subs
+    )
     edges = List(
         Edge,
         description=Edge._meta.description,
         args=ALL_EDGE_ARGS,
-        resolver=to_subscription(get_edges_all))
+        strip_null=Boolean(default_value=True),
+        delta_store=Boolean(default_value=True),
+        delta_type=String(default_value=DELTA_ADDED),
+        initial_burst=Boolean(default_value=True),
+        resolver=delta_subs
+    )
     nodes_edges = Field(
         NodesEdges,
         description=NodesEdges._meta.description,
         args=NODES_EDGES_ARGS_ALL,
-        resolver=to_subscription(get_nodes_edges))
+        strip_null=Boolean(default_value=True),
+        delta_store=Boolean(default_value=True),
+        delta_type=String(default_value=DELTA_ADDED),
+        initial_burst=Boolean(default_value=True),
+        resolver=delta_subs
+    )
 
 
 schema = Schema(query=Queries, subscription=Subscriptions, mutation=Mutations)

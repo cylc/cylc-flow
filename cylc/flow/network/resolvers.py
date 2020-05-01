@@ -33,7 +33,7 @@ from cylc.flow.data_store_mgr import (
     DELTA_ADDED, create_delta_store
 )
 from cylc.flow.network.schema import (
-    NodesEdges, PROXY_NODES, parse_node_id
+    NodesEdges, PROXY_NODES, SUB_RESOLVERS, parse_node_id
 )
 
 logger = logging.getLogger(__name__)
@@ -203,7 +203,7 @@ class BaseResolvers:
             return [
                 delta[args['delta_type']]
                 for key, delta in self.delta_store[args['sub_id']].items()
-                if key in args['workflows'] and key not in args['exworkflows']
+                if workflow_filter(self.data_store_mgr.data[key], args)
             ]
         return [
             flow
@@ -348,14 +348,14 @@ class BaseResolvers:
             nodes=sort_elements(nodes, args),
             edges=sort_elements(edges, args))
 
-    async def subscribe_delta(self, info, args):
+    async def subscribe_delta(self, root, info, args):
         """Delta subscription async generator.
 
         Async generator mapping the incomming protobuf deltas to
         yielded GraphQL subscription objects.
 
         """
-        w_ids = args['ids']
+        workflow_ids = set(args.get('workflows', args.get('ids', ())))
         sub_id = uuid4()
         info.context['sub_id'] = sub_id
         self.delta_store[sub_id] = {}
@@ -363,30 +363,53 @@ class BaseResolvers:
         deltas_queue = queue.Queue()
         try:
             # Iterate over the queue yielding deltas
+            w_ids = workflow_ids
+            sub_resolver = SUB_RESOLVERS.get(to_snake_case(info.field_name))
             while True:
+                if not workflow_ids:
+                    old_ids = w_ids
+                    w_ids = set(delta_queues.keys())
+                    for remove_id in old_ids.difference(w_ids):
+                        if remove_id in self.delta_store[sub_id]:
+                            del self.delta_store[sub_id][remove_id]
+                            if sub_resolver is None:
+                                yield create_delta_store(workflow_id=remove_id)
+                            else:
+                                yield await sub_resolver(root, info, **args)
                 for w_id in w_ids:
-                    if (
-                            w_id in delta_queues
-                            and sub_id not in delta_queues[w_id]
-                    ):
-                        delta_queues[w_id][sub_id] = deltas_queue
-                        # On new yield workflow data-store as added delta
-                        if args['initial_burst']:
-                            delta_store = create_delta_store(workflow_id=w_id)
-                            delta_store[DELTA_ADDED] = (
-                                self.data_store_mgr.data[w_id]
-                            )
-                            self.delta_store[sub_id][w_id] = delta_store
-                            yield delta_store
-                if not any(
-                        delta_queues.get(w_id, {}).get(sub_id)
-                        for w_id in w_ids
-                ):
-                    break
+                    if w_id in delta_queues:
+                        if sub_id not in delta_queues[w_id]:
+                            delta_queues[w_id][sub_id] = deltas_queue
+                            # On new yield workflow data-store as added delta
+                            if args.get('initial_burst'):
+                                delta_store = create_delta_store(
+                                    workflow_id=w_id)
+                                delta_store[DELTA_ADDED] = (
+                                    self.data_store_mgr.data[w_id]
+                                )
+                                self.delta_store[sub_id][w_id] = delta_store
+                                if sub_resolver is None:
+                                    yield delta_store
+                                else:
+                                    result = await sub_resolver(
+                                        root, info, **args)
+                                    if result:
+                                        yield result
+                    elif w_id in self.delta_store[sub_id]:
+                        del self.delta_store[sub_id][w_id]
+                        if sub_resolver is None:
+                            yield create_delta_store(workflow_id=w_id)
+                        else:
+                            yield await sub_resolver(root, info, **args)
                 try:
                     w_id, _, delta_store = deltas_queue.get(False)
                     self.delta_store[sub_id][w_id] = delta_store
-                    yield delta_store
+                    if sub_resolver is None:
+                        yield delta_store
+                    else:
+                        result = await sub_resolver(root, info, **args)
+                        if result:
+                            yield result
                 except queue.Empty:
                     await asyncio.sleep(DELTA_SLEEP_INTERVAL)
         except CancelledError:
