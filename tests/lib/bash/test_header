@@ -120,6 +120,8 @@
 #         (Remote job tests should really use set_test_remote, below, however).
 #     set_test_remote
 #         set CYLC_TEST_HOST and CYLC_TEST_OWNER for remote job tests.
+#     get_fqdn_by_host [TARGET]
+#         Get a host FQDN using the same mechanism Cylc uses.
 #-------------------------------------------------------------------------------
 set -eu
 
@@ -684,6 +686,18 @@ set_test_remote() {
   fi
   export CYLC_TEST_HOST=${CYLC_TEST_HOST:-"localhost"}
   export CYLC_TEST_OWNER=${CYLC_TEST_OWNER:-${USER}}
+}
+
+get_fqdn_by_host() {
+if [[ $# -eq 1 ]]; then
+    TARGET="'$1'"
+else
+    TARGET='None'
+fi
+python -c "
+from cylc.flow.hostuserutil import get_fqdn_by_host
+print(get_fqdn_by_host(${TARGET}))
+"
 }
 
 

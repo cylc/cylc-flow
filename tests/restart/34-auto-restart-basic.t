@@ -78,7 +78,7 @@ LATEST_TASK=$(cylc suite-state "${SUITE_NAME}" -S succeeded \
 poll_suite_stopped
 FILE=$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)
 log_scan "${TEST_NAME}-restart" "${FILE}" 20 1 \
-    "Suite server: url=tcp://$(ssh "${CYLC_TEST_HOST}" hostname -f)"
+    "Suite server: url=tcp://$(get_fqdn_by_host "${CYLC_TEST_HOST}")"
 run_ok "${TEST_NAME}-restart-success" cylc suite-state "${SUITE_NAME}" \
     --task="$(printf 'task_foo%02d' $(( LATEST_TASK + 3 )))" \
     --status='succeeded' --point=1 --interval=1 --max-polls=20

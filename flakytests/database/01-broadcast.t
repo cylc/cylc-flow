@@ -52,7 +52,7 @@ sqlite3 "${DB_FILE}" \
             user_at_host, batch_sys_name
      FROM task_jobs ORDER BY name' \
     >"${NAME}"
-LOCALHOST="$(hostname -f)"
+LOCALHOST="$(get_fqdn_by_host)"
 # FIXME: recent Travis CI failure
 sed -i "s/localhost/${LOCALHOST}/" "${NAME}"
 cmp_ok "${NAME}" <<__SELECT__
