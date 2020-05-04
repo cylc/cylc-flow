@@ -97,7 +97,7 @@ grep_fail "$(job-ps-line bar)" "${TEST_NAME}-ps-2.stdout"
 poll_suite_stopped
 FILE=$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)
 log_scan "${TEST_NAME}-restart" "${FILE}" 20 1 \
-    "Suite server: url=tcp://$(ssh "${CYLC_TEST_HOST2}" hostname -f)"
+    "Suite server: url=tcp://$(get_fqdn_by_host "${CYLC_TEST_HOST2}")"
 sleep 1
 #-------------------------------------------------------------------------------
 # auto stop-restart - force mode:
