@@ -458,6 +458,12 @@ log_scan () {
             if "${CYLC_TEST_DEBUG:-false}"; then
                 cat "${FILE}" >&2
             fi
+            mkdir -p "${TEST_LOG_DIR}"
+            ERR_FILE="${TEST_LOG_DIR}/${TEST_NAME}.stderr"
+            echo "ERR_FILE=$ERR_FILE" >&2
+            echo "Could not find: ${pattern}" > "${ERR_FILE}"
+            echo -e '\n=======================\n' >> "${ERR_FILE}"
+            cat "${FILE}" >> "${ERR_FILE}"
             skip "$#"
             return 1
         fi
