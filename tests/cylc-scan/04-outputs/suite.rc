@@ -1,13 +1,15 @@
 [meta]
-    title = Authentication test suite.
-    description = """Stalls when the first task fails.
-Suite overrides global authentication settings."""
+    title = Cylc Scan test suite.
+    description = """
+        Stalls when the first task fails.        
+        Here we test out a multi-line description!
+    """
+    custom_metadata = something_custom
+    another_metadata = 1
 [cylc]
     [[events]]
-        timeout = PT30S
+        timeout = PT1M
         abort on timeout = True
-    [[authentication]]
-        public = shutdown
 [scheduling]
     cycling mode = integer
     initial cycle point = 1

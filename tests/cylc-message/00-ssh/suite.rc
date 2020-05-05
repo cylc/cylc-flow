@@ -9,9 +9,6 @@
 [runtime]
     [[t0]]
         script = """
-# Ensure that contact 2 is installed, but passphrase isn't.
-test -f "${CYLC_SUITE_RUN_DIR}/.service/contact2"
-! test -f "${CYLC_SUITE_RUN_DIR}/.service/passphrase"
 # A client command should not require --use-ssh option.
 cylc broadcast "${CYLC_SUITE_NAME}" '--name=t1' '--set=script=true'
 """

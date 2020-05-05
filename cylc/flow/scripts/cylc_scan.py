@@ -23,10 +23,8 @@ Print information about running suites.
 Use the -o/--suite-owner option to get information of running suites for other
 users.
 
-Suite passphrases are not needed to get identity information (name and owner).
 Titles, descriptions, state totals, and cycle point state totals may also be
-revealed publicly, depending on global and suite authentication settings. Suite
-passphrases still grant full access regardless of what is revealed publicly.
+revealed publicly, depending on global and suite authentication settings.
 
 WARNING: a suite suspended with Ctrl-Z will cause port scans to hang until the
 connection times out (see --comms-timeout)."""

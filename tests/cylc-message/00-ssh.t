@@ -19,6 +19,9 @@
 # installed on the remote host.
 export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
+# TODO: Fix test once ssh task comms reinstated
+skip_all 'ssh task comm not currently functional'
+
 #-------------------------------------------------------------------------------
 set_test_remote_host
 set_test_number 3

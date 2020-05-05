@@ -62,8 +62,8 @@ def remote_init(uuid_str, rund, indirect_comm=None):
     finally:
         os.chdir(oldcwd)
     if indirect_comm:
-        fname = os.path.join(srvd, SuiteFiles.Service.CONTACT2)
-        with open(fname, 'w') as handle:
+        fname = os.path.join(srvd, SuiteFiles.Service.CONTACT)
+        with open(fname, 'a') as handle:
             handle.write('%s=%s\n' % (
                 ContactFileFields.COMMS_PROTOCOL_2, indirect_comm))
     print(REMOTE_INIT_DONE)
@@ -78,19 +78,15 @@ def remote_tidy(rund):
     """
     rund = os.path.expandvars(rund)
     srvd = os.path.join(rund, SuiteFiles.Service.DIRNAME)
-    for name in [
-            SuiteFiles.Service.CONTACT,
-            SuiteFiles.Service.CONTACT2
-    ]:
-        fname = os.path.join(srvd, name)
-        try:
-            os.unlink(fname)
-        except OSError:
-            if os.path.exists(fname):
-                raise
-        else:
-            if cylc.flow.flags.debug:
-                print('Deleted: %s' % fname)
+    fname = os.path.join(srvd, SuiteFiles.Service.CONTACT)
+    try:
+        os.unlink(fname)
+    except OSError:
+        if os.path.exists(fname):
+            raise
+    else:
+        if cylc.flow.flags.debug:
+            print('Deleted: %s' % fname)
     try:
         os.rmdir(srvd)  # remove directory if empty
     except OSError:

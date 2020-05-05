@@ -228,6 +228,8 @@ def get_scan_items_from_fs(
 
     Walk users' "~/cylc-run/" to get (host, port) from ".service/contact" for
     active, or all (active plus registered but dormant), suites.
+    Note suites run in cylc 7 or less will only be returned as LOG.info
+    statement.
 
     Yields:
         tuple - (reg, host, port, pub_port, api)
@@ -271,10 +273,22 @@ def get_scan_items_from_fs(
 
             # Choose only suites with .service and matching filter
             if active_only:
+                # Skip suites running with cylc version < 8 (these suites
+                # do not have PUBLISH_PORT field)
                 try:
-                    contact_data = load_contact_file(
-                        reg, owner)
-                except (SuiteServiceFileError, IOError, TypeError, ValueError):
+                    contact_data = load_contact_file(reg, owner)
+                except (SuiteServiceFileError, IOError, TypeError) as exc:
+                    LOG.debug(f"Error loading contact file for: {reg}")
+                    continue
+                try:
+                    cylc_version = contact_data[ContactFileFields.VERSION]
+                    major_version = int(cylc_version.split(".", 1)[0])
+                    if (major_version < 8):
+                        LOG.info(f"Omitting \"{reg}\" (cylc-{cylc_version})")
+                        continue
+                except Exception as exc:
+                    LOG.debug(
+                        f"Error getting version from contact file: {exc}")
                     continue
                 yield (
                     reg,
