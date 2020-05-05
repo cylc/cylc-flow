@@ -49,7 +49,7 @@ install_requires = [
     'jinja2==2.11.*',
     'metomi-isodatetime==1!2.0.*',
     'markupsafe==1.1.*',
-    'protobuf==3.11.*',
+    'protobuf==3.12.0rc1',
     'pyzmq==18.1.*',
     'click>=7.0',
     'psutil>=5.6.0',
