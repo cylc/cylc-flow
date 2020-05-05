@@ -136,11 +136,6 @@ def apply_delta(key, delta, data):
         for field in CLEAR_FIELD_MAP[key]:
             data[key].ClearField(field)
         data[key].MergeFrom(delta)
-        # fields that are set to empty kinds aren't carried
-        if not delta.is_held_total:
-            data[key].is_held_total = 0
-        if not delta.reloaded:
-            data[key].reloaded = False
         return
     for element in delta.deltas:
         if element.id not in data[key]:
@@ -150,10 +145,6 @@ def apply_delta(key, delta, data):
             for field, _ in element.ListFields():
                 if field.name in CLEAR_FIELD_MAP[key]:
                     data[key][element.id].ClearField(field.name)
-        # fields that are set to empty kinds aren't carried
-        if key in (TASK_PROXIES, FAMILY_PROXIES):
-            if not element.is_held:
-                data[key][element.id].is_held = False
         data[key][element.id].MergeFrom(element)
     # Prune data elements by id
     for del_id in delta.pruned:
@@ -969,8 +960,6 @@ class DataStoreMgr:
                  self.schd.pool.get_max_point_runahead())):
             if value:
                 setattr(workflow, key, str(value))
-            else:
-                setattr(workflow, key, '')
 
     def update_dynamic_elements(self, updated_nodes=None):
         """Update data elements containing dynamic/live fields."""
