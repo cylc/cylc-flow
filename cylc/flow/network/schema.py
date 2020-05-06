@@ -1928,6 +1928,7 @@ class Subscriptions(ObjectType):
         workflows=List(ID, description="List of full ID, i.e. `owner|name`"),
         strip_null=Boolean(default_value=False),
         initial_burst=Boolean(default_value=True),
+        ignore_interval=Float(default_value=0.0),
         resolver=delta_subs
     )
     workflows = List(
@@ -1940,6 +1941,7 @@ class Subscriptions(ObjectType):
         delta_store=Boolean(default_value=False),
         delta_type=String(default_value=DELTA_ADDED),
         initial_burst=Boolean(default_value=True),
+        ignore_interval=Float(default_value=2.5),
         resolver=delta_subs
     )
     job = Field(
@@ -1950,6 +1952,7 @@ class Subscriptions(ObjectType):
         delta_store=Boolean(default_value=True),
         delta_type=String(default_value=DELTA_ADDED),
         initial_burst=Boolean(default_value=True),
+        ignore_interval=Float(default_value=0.0),
         resolver=delta_subs
     )
     jobs = List(
@@ -1960,6 +1963,7 @@ class Subscriptions(ObjectType):
         delta_store=Boolean(default_value=True),
         delta_type=String(default_value=DELTA_ADDED),
         initial_burst=Boolean(default_value=True),
+        ignore_interval=Float(default_value=0.0),
         resolver=delta_subs
     )
     task = Field(
@@ -1970,6 +1974,7 @@ class Subscriptions(ObjectType):
         delta_store=Boolean(default_value=True),
         delta_type=String(default_value=DELTA_ADDED),
         initial_burst=Boolean(default_value=True),
+        ignore_interval=Float(default_value=0.0),
         resolver=delta_subs
     )
     tasks = List(
@@ -1980,6 +1985,7 @@ class Subscriptions(ObjectType):
         delta_store=Boolean(default_value=True),
         delta_type=String(default_value=DELTA_ADDED),
         initial_burst=Boolean(default_value=True),
+        ignore_interval=Float(default_value=0.0),
         resolver=delta_subs
     )
     task_proxy = Field(
@@ -1990,6 +1996,7 @@ class Subscriptions(ObjectType):
         delta_store=Boolean(default_value=True),
         delta_type=String(default_value=DELTA_ADDED),
         initial_burst=Boolean(default_value=True),
+        ignore_interval=Float(default_value=0.0),
         resolver=delta_subs
     )
     task_proxies = List(
@@ -2000,6 +2007,7 @@ class Subscriptions(ObjectType):
         delta_store=Boolean(default_value=True),
         delta_type=String(default_value=DELTA_ADDED),
         initial_burst=Boolean(default_value=True),
+        ignore_interval=Float(default_value=0.0),
         resolver=delta_subs
     )
     family = Field(
@@ -2010,6 +2018,7 @@ class Subscriptions(ObjectType):
         delta_store=Boolean(default_value=True),
         delta_type=String(default_value=DELTA_ADDED),
         initial_burst=Boolean(default_value=True),
+        ignore_interval=Float(default_value=0.0),
         resolver=delta_subs
     )
     families = List(
@@ -2020,6 +2029,7 @@ class Subscriptions(ObjectType):
         delta_store=Boolean(default_value=True),
         delta_type=String(default_value=DELTA_ADDED),
         initial_burst=Boolean(default_value=True),
+        ignore_interval=Float(default_value=0.0),
         resolver=delta_subs
     )
     family_proxy = Field(
@@ -2030,6 +2040,7 @@ class Subscriptions(ObjectType):
         delta_store=Boolean(default_value=True),
         delta_type=String(default_value=DELTA_ADDED),
         initial_burst=Boolean(default_value=True),
+        ignore_interval=Float(default_value=0.0),
         resolver=delta_subs
     )
     family_proxies = List(
@@ -2040,6 +2051,7 @@ class Subscriptions(ObjectType):
         delta_store=Boolean(default_value=True),
         delta_type=String(default_value=DELTA_ADDED),
         initial_burst=Boolean(default_value=True),
+        ignore_interval=Float(default_value=0.0),
         resolver=delta_subs
     )
     edges = List(
@@ -2050,6 +2062,7 @@ class Subscriptions(ObjectType):
         delta_store=Boolean(default_value=True),
         delta_type=String(default_value=DELTA_ADDED),
         initial_burst=Boolean(default_value=True),
+        ignore_interval=Float(default_value=0.0),
         resolver=delta_subs
     )
     nodes_edges = Field(
@@ -2060,6 +2073,7 @@ class Subscriptions(ObjectType):
         delta_store=Boolean(default_value=True),
         delta_type=String(default_value=DELTA_ADDED),
         initial_burst=Boolean(default_value=True),
+        ignore_interval=Float(default_value=0.0),
         resolver=delta_subs
     )
 

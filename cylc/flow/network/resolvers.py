@@ -23,6 +23,7 @@ from getpass import getuser
 import logging
 from operator import attrgetter
 import queue
+from time import time
 from uuid import uuid4
 
 from graphene.utils.str_converters import to_snake_case
@@ -365,6 +366,8 @@ class BaseResolvers:
             # Iterate over the queue yielding deltas
             w_ids = workflow_ids
             sub_resolver = SUB_RESOLVERS.get(to_snake_case(info.field_name))
+            interval = args['ignore_interval']
+            old_time = time()
             while True:
                 if not workflow_ids:
                     old_ids = w_ids
@@ -404,6 +407,12 @@ class BaseResolvers:
                 try:
                     w_id, _, delta_store = deltas_queue.get(False)
                     self.delta_store[sub_id][w_id] = delta_store
+                    new_time = time()
+                    elapsed = new_time - old_time
+                    # ignore deltas that are more frequent than interval.
+                    if elapsed <= interval:
+                        continue
+                    old_time = new_time
                     if sub_resolver is None:
                         yield delta_store
                     else:
