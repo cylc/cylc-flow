@@ -16,8 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-set -u
-
 usage() {
   cat <<eof
 Usage: run-functional-tests [...]
@@ -84,38 +82,69 @@ Re-run failed tests
   run-functional-tests --state=failed
 eof
 }
-for ARG in "$@"; do
-    case "${ARG}" in
+
+# parse args
+PROVE_ARGS=()
+TESTS=()
+while [[ $# -gt 0 ]]; do
+    case "$1" in
         --help|-h)
             usage
             exit 0
             ;;
+        -j|-a)
+            PROVE_ARGS+=("$1" "$2")
+            shift
+            shift
+            ;;
+        -*)
+            PROVE_ARGS+=("$1")
+            shift
+            ;;
+        *)
+            TESTS+=("$1")
+            shift
+            ;;
     esac
 done
+
+# base dir
+cd "$(dirname "$0")/../.." || exit 1
+export CYLC_REPO_DIR="${PWD}"
+
+# default test base
+if [[ ${#TESTS[@]} -eq 0 ]]; then
+    TESTS=('tests')
+fi
+
+# handle chunking
+if [[ -n "${CHUNK:-}" ]]; then
+    TEMP=("${TESTS[@]}")
+    TESTS=()
+    # would be a lot nicer with mapfile but we should keep bash3 support
+    while IFS='' read -r line; do TESTS+=("$line"); done < <(
+        prove "${TEMP[@]}" --dry --recurse | sort | split -n "r/${CHUNK}"
+    )
+fi
 
 # ensure that TMPDIR is not a symlink
 # (we rely on path comparisons in many tests)
 TMPDIR="$(realpath "${TMPDIR:-/tmp}")"
 export TMPDIR
 
-# (Should be the same as $TRAVIS_BUILD_DIR, on Travis CI)
-cd "$(dirname "$0")/../.." || exit 1
-export CYLC_REPO_DIR="${PWD}"
-# Defaults
+# test environment
 export CYLC_TEST_RUN_GENERIC=${CYLC_TEST_RUN_GENERIC:-true}
 export CYLC_TEST_RUN_PLATFORM=${CYLC_TEST_RUN_PLATFORM:-true}
 export CYLC_TEST_SKIP=${CYLC_TEST_SKIP:-}
 export CYLC_TEST_IS_GENERIC=true
 CYLC_TEST_TIME_INIT="$(date -u +'%Y%m%dT%H%M%SZ')"
 export CYLC_TEST_TIME_INIT
-# Normal run
+
+# get number of cores
 NPROC=$(cylc get-global-config '--item=process pool size')
 if [[ -z "${NPROC}" ]]; then
     NPROC=$(python3 -c 'import multiprocessing as mp; print(mp.cpu_count())')
 fi
-if [[ -n "${CHUNK:-}" ]]; then
-    exec env -u 'CHUNK' prove --timer -j "${NPROC}" -s -r "$@" - \
-        < <(prove --dry --recurse './tests' | sort | split -n "r/${CHUNK}")
-else
-    exec prove --timer -j "${NPROC}" -s -r "$@"
-fi
+
+# run tests run
+exec prove --timer -j "${NPROC}" -s -r "${PROVE_ARGS[@]}" "${TESTS[@]}"

@@ -17,27 +17,51 @@
 #-------------------------------------------------------------------------------
 # Test the run-functional-tests --chunk option
 . "$(dirname "$0")/test_header"
-N_CHUNKS=2
-set_test_number "$(( 2 + N_CHUNKS ))"
+set_test_number 16
 #-------------------------------------------------------------------------------
-# list all tests
-DRY_TEST_NAME="${TEST_NAME_BASE}-all"
+
 CTB="${CYLC_REPO_DIR}/etc/bin/run-functional-tests"
-run_ok "${DRY_TEST_NAME}" "${CTB}" --dry './tests'
+unset CHUNK
+
+# ensure that 'tests' is used as the default test base
+TEST_NAME="${TEST_NAME_BASE}-base"
+run_ok "${TEST_NAME}-1" "$CTB" --dry
+run_ok "${TEST_NAME}-2" "$CTB" --dry tests
+sort -o "${TEST_NAME}-1.stdout" "${TEST_NAME}-1.stdout"
+sort -o "${TEST_NAME}-2.stdout" "${TEST_NAME}-2.stdout"
+cmp_ok "${TEST_NAME}-1.stdout" "${TEST_NAME}-2.stdout"
+
+TEST_NAME="${TEST_NAME_BASE}-chunk-base"
+run_ok "${TEST_NAME}-1" env CHUNK="1/4" "$CTB" --dry
+run_ok "${TEST_NAME}-2" env CHUNK="1/4" "$CTB" --dry tests
+sort -o "${TEST_NAME}-1.stdout" "${TEST_NAME}-1.stdout"
+sort -o "${TEST_NAME}-2.stdout" "${TEST_NAME}-2.stdout"
+cmp_ok "${TEST_NAME}-1.stdout" "${TEST_NAME}-2.stdout"
+
+# ensure that mixing test bases works correctly
+TEST_NAME="${TEST_NAME_BASE}-testbase"
+run_ok "${TEST_NAME}-1" "$CTB" --dry tests
+run_ok "${TEST_NAME}-2" "$CTB" --dry flakytests
+run_ok "${TEST_NAME}-3" "$CTB" --dry tests flakytests
+cat "${TEST_NAME}-2.stdout" >> "${TEST_NAME}-1.stdout"
+sort -o "${TEST_NAME}-1.stdout" "${TEST_NAME}-1.stdout"
+sort -o "${TEST_NAME}-3.stdout" "${TEST_NAME}-3.stdout"
+cmp_ok "${TEST_NAME}-1.stdout" "${TEST_NAME}-3.stdout"
+
+# ensure that the whole is equal to the sum of its parts
+N_CHUNKS=4
+DRY_TEST_NAME="${TEST_NAME_BASE}-all"
+run_ok "${DRY_TEST_NAME}" "${CTB}" --dry 'tests' 'flakytests'
 # list tests for each chunk (from prove not run-functional-tests)
 for i_chunk in $(seq "${N_CHUNKS}"); do
-    TEST_NAME="${TEST_NAME_BASE}-chunk-${i_chunk}"
-    run_ok "${TEST_NAME}" env CHUNK="${i_chunk}/${N_CHUNKS}" "${CTB}" --dry
+    TEST_NAME="${TEST_NAME_BASE}-chunk_n-${i_chunk}"
+    run_ok "${TEST_NAME}" env CHUNK="${i_chunk}/${N_CHUNKS}" "${CTB}" --dry 'tests' 'flakytests'
     cat "${TEST_NAME}.stdout" >>'chunks.out'
 done
 # sort files ($CYLC_REPO_DIR/etc/bin/run-functional-tests uses --shuffle)
 sort -o "${DRY_TEST_NAME}.stdout" "${DRY_TEST_NAME}.stdout"
 sort -o 'chunks.out' 'chunks.out'
-# remove cd "$CYLC_HOME" lines
-sed -i '/^cd "/d' "${DRY_TEST_NAME}.stdout"
-sed -i '/^cd "/d' 'chunks.out'
-sed -i 's|^./||' "${DRY_TEST_NAME}.stdout"
-sed -i 's|^./||' "chunks.out"
 # compare test plan for the full and chunked versions
 cmp_ok "${DRY_TEST_NAME}.stdout" 'chunks.out'
+
 exit
