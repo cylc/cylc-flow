@@ -15,9 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-A modification of th GraphQL Core backend:
-https://github.com/graphql-python/graphql-core
-
 GraphQL Middleware defined here also.
 
 """
@@ -28,25 +25,28 @@ import logging
 from inspect import isclass, iscoroutinefunction
 
 from graphene.utils.str_converters import to_snake_case
-from graphql.execution import ExecutionResult, execute
+from graphql.execution import ExecutionResult
 from graphql.execution.utils import (
     get_operation_root_type, get_field_def
 )
 from graphql.execution.values import get_argument_values, get_variable_values
 from graphql.language.base import parse, print_ast
 from graphql.language import ast
-from graphql.validation import validate
 from graphql.backend.base import GraphQLBackend, GraphQLDocument
+from graphql.backend.core import execute_and_validate
 from graphql.utils.base import type_from_ast
 from graphql.type import get_named_type
 from promise import Promise
 from rx import Observable
+
+from cylc.flow.network.schema import NODE_MAP, get_type_str
 
 logger = logging.getLogger(__name__)
 
 STRIP_ARG = 'strip_null'
 NULL_VALUE = None
 EMPTY_VALUES = ([], {})
+STRIP_OPS = {'query', 'subscription'}
 
 
 def grow_tree(tree, path, leaves=None):
@@ -76,7 +76,7 @@ def grow_tree(tree, path, leaves=None):
         b_1 += 1
         b_2 += 1
     if leaves:
-        tree_loc[len(path) % 2].update(leaves)
+        tree_loc[len(path) % 2].update({'leaves': leaves})
 
 
 def instantiate_middleware(middlewares):
@@ -175,20 +175,22 @@ class AstDocArguments:
             Boolean
 
         """
-        try:
-            for components in self.operation_defs.values():
-                if self.args_selection_search(
-                        components['definition'].selection_set,
-                        components['variables'],
-                        components['parent_type'],
-                        arg_name,
-                        arg_value,
-                ):
-                    return True
-        except Exception as exc:
-            import traceback
-            logger.debug(traceback.format_exc())
-            logger.error(exc)
+        for components in self.operation_defs.values():
+            defn = components['definition']
+            if (
+                    defn.operation not in STRIP_OPS
+                    or getattr(
+                        defn.name, 'value', None) == 'IntrospectionQuery'
+            ):
+                continue
+            if self.args_selection_search(
+                    components['definition'].selection_set,
+                    components['variables'],
+                    components['parent_type'],
+                    arg_name,
+                    arg_value,
+            ):
+                return True
         return False
 
     def args_selection_search(
@@ -223,21 +225,14 @@ class AstDocArguments:
         return False
 
 
-def execute_and_validate(
+def execute_and_validate_and_strip(
         schema,  # type: GraphQLSchema
         document_ast,  # type: Document
         *args,  # type: Any
         **kwargs  # type: Any
 ):
     # type: (...) -> Union[ExecutionResult, Observable]
-    """Validate schema, and execute request doc against it."""
-    do_validation = kwargs.get("validate", True)
-    if do_validation:
-        validation_errors = validate(schema, document_ast)
-        if validation_errors:
-            return ExecutionResult(errors=validation_errors, invalid=True)
-
-    result = execute(schema, document_ast, *args, **kwargs)
+    result = execute_and_validate(schema, document_ast, *args, **kwargs)
 
     # Search request docuement to determine if 'stripNull: true' is set
     # as and argument. It can not be done in the middleware, as they
@@ -251,17 +246,41 @@ def execute_and_validate(
     return result
 
 
-class GraphQLCoreBackend(GraphQLBackend):
-    """GraphQLCoreBackend will return a document using the default
-    graphql executor"""
+class CylcGraphQLBackend(GraphQLBackend):
+    """Return a GraphQL document using the default
+    graphql executor with optional null-stripping of result.
+
+    The null value stripping of result is triggered by the presence
+    of argument & value "stripNull: true" in any field.
+
+    This is a modification of GraphQLCoreBackend found within:
+        https://github.com/graphql-python/graphql-core-legacy
+    (graphql-core==2.3.2)
+
+    Args:
+
+        executor (object): Executor used in evaluating the resolvers.
+
+    """
 
     def __init__(self, executor=None):
-        # type: (Optional[Any]) -> None
         self.execute_params = {"executor": executor}
 
     def document_from_string(self, schema, document_string):
-        # type: (GraphQLSchema, Union[Document, str]) -> GraphQLDocument
-        """Parse string and setup request docutment for execution."""
+        """Parse string and setup request docutment for execution.
+
+        Args:
+
+            schema (graphql.GraphQLSchema):
+                Schema definition object
+            document_string (str):
+                Request query/mutation/subscription document.
+
+        Returns:
+
+            graphql.GraphQLDocument
+
+        """
         if isinstance(document_string, ast.Document):
             document_ast = document_string
             document_string = print_ast(document_ast)
@@ -274,7 +293,7 @@ class GraphQLCoreBackend(GraphQLBackend):
             document_string=document_string,
             document_ast=document_ast,
             execute=partial(
-                execute_and_validate,
+                execute_and_validate_and_strip,
                 schema,
                 document_ast,
                 **self.execute_params
@@ -302,52 +321,70 @@ class IgnoreFieldMiddleware:
         if getattr(info.operation.name, 'value', None) == 'IntrospectionQuery':
             return next(root, info, **args)
 
-        path_string = f'{info.path}'
-        parent_path_string = f'{info.path[:-1:]}'
-        field_name = to_snake_case(info.field_name)
-        # Avoid using the protobuf default if field isn't set.
-        if (
-                parent_path_string not in self.field_sets
-                and hasattr(root, 'ListFields')
-        ):
-            self.field_sets[parent_path_string] = set(
-                field.name
-                for field, _ in root.ListFields()
-            )
-
-        # Needed for child fields that resolve without args.
-        # Store arguments of parents as leaves of schema tree from path
-        # to respective field.
-        if STRIP_ARG in args:
+        if info.operation.operation in STRIP_OPS:
+            path_string = f'{info.path}'
+            # Needed for child fields that resolve without args.
+            # Store arguments of parents as leaves of schema tree from path
+            # to respective field.
             # no need to regrow the tree on every subscription push/delta
-            if path_string not in self.tree_paths:
+            if args and path_string not in self.tree_paths:
                 grow_tree(self.args_tree, info.path, args)
                 self.tree_paths.add(path_string)
-        else:
-            args[STRIP_ARG] = False
-            branch = self.args_tree
-            for section in info.path:
-                branch = branch.get(section, {})
-                if not branch:
-                    break
-                # Only set if present on branch section
-                if STRIP_ARG in branch:
-                    args[STRIP_ARG] = branch[STRIP_ARG]
+            if STRIP_ARG not in args:
+                branch = self.args_tree
+                for section in info.path:
+                    if section not in branch:
+                        break
+                    branch = branch[section]
+                    # Only set if present on branch section
+                    if 'leaves' in branch and STRIP_ARG in branch['leaves']:
+                        args[STRIP_ARG] = branch['leaves'][STRIP_ARG]
 
-        # Now flag empty fields as 'null for stripping
-        if args[STRIP_ARG]:
-            if (
-                    hasattr(root, field_name)
-                    and field_name not in self.field_sets.get(
-                        parent_path_string, {field_name})
-            ):
-                return None
-            if (
-                    info.operation.operation in self.ASYNC_OPS
-                    or iscoroutinefunction(next)
-            ):
-                return self.async_null_setter(next, root, info, **args)
-            return null_setter(next(root, info, **args))
+            # Now flag empty fields as null for stripping
+            if args.get(STRIP_ARG, False):
+                field_name = to_snake_case(info.field_name)
+
+                # Clear field set so recreated via first child field,
+                # as path may be a parent.
+                # Done here as parent may be in NODE_MAP
+                if path_string in self.field_sets:
+                    del self.field_sets[path_string]
+
+                # Avoid using the protobuf default if field isn't set.
+                if (
+                        hasattr(root, 'ListFields')
+                        and hasattr(root, field_name)
+                        and get_type_str(info.return_type) not in NODE_MAP
+                ):
+
+                    # Gather fields set in root
+                    parent_path_string = f'{info.path[:-1:]}'
+                    stamp = getattr(root, 'stamp', '')
+                    if (
+                            parent_path_string not in self.field_sets
+                            or self.field_sets[
+                                parent_path_string]['stamp'] != stamp
+                    ):
+                        self.field_sets[parent_path_string] = {
+                            'stamp': stamp,
+                            'fields': set(
+                                field.name
+                                for field, _ in root.ListFields()
+                            )
+                        }
+
+                    if (
+                            parent_path_string in self.field_sets
+                            and field_name not in self.field_sets[
+                                parent_path_string]['fields']
+                    ):
+                        return None
+                if (
+                        info.operation.operation in self.ASYNC_OPS
+                        or iscoroutinefunction(next)
+                ):
+                    return self.async_null_setter(next, root, info, **args)
+                return null_setter(next(root, info, **args))
 
         if (
                 info.operation.operation in self.ASYNC_OPS

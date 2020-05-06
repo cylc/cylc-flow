@@ -28,7 +28,7 @@ from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.network import encode_, decode_, ZMQSocketBase
 from cylc.flow.network.authorisation import Priv, authorise
 from cylc.flow.network.graphql import (
-    GraphQLCoreBackend, IgnoreFieldMiddleware, instantiate_middleware
+    CylcGraphQLBackend, IgnoreFieldMiddleware, instantiate_middleware
 )
 from cylc.flow.network.resolvers import Resolvers
 from cylc.flow.network.schema import schema
@@ -357,7 +357,7 @@ class SuiteRuntimeServer(ZMQSocketBase):
                 context={
                     'resolvers': self.resolvers,
                 },
-                backend=GraphQLCoreBackend(),
+                backend=CylcGraphQLBackend(),
                 middleware=list(instantiate_middleware(self.middleware)),
                 executor=AsyncioExecutor(),
                 validate=True,  # validate schema (dev only? default is True)

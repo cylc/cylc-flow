@@ -17,7 +17,6 @@
 """GraphQL resolvers for use in data accessing and mutation of workflows."""
 
 import asyncio
-from concurrent.futures._base import CancelledError
 from fnmatch import fnmatchcase
 from getpass import getuser
 import logging
@@ -380,7 +379,7 @@ class BaseResolvers:
                             else:
                                 yield await sub_resolver(root, info, **args)
                 for w_id in w_ids:
-                    if w_id in delta_queues:
+                    if w_id in self.data_store_mgr.data:
                         if sub_id not in delta_queues[w_id]:
                             delta_queues[w_id][sub_id] = deltas_queue
                             # On new yield workflow data-store as added delta
@@ -388,8 +387,7 @@ class BaseResolvers:
                                 delta_store = create_delta_store(
                                     workflow_id=w_id)
                                 delta_store[DELTA_ADDED] = (
-                                    self.data_store_mgr.data[w_id]
-                                )
+                                    self.data_store_mgr.data[w_id])
                                 self.delta_store[sub_id][w_id] = delta_store
                                 if sub_resolver is None:
                                     yield delta_store
@@ -400,19 +398,18 @@ class BaseResolvers:
                                         yield result
                     elif w_id in self.delta_store[sub_id]:
                         del self.delta_store[sub_id][w_id]
-                        if sub_resolver is None:
-                            yield create_delta_store(workflow_id=w_id)
-                        else:
-                            yield await sub_resolver(root, info, **args)
                 try:
-                    w_id, _, delta_store = deltas_queue.get(False)
+                    w_id, topic, delta_store = deltas_queue.get(False)
+                    if topic != 'shutdown':
+                        new_time = time()
+                        elapsed = new_time - old_time
+                        # ignore deltas that are more frequent than interval.
+                        if elapsed <= interval:
+                            continue
+                        old_time = new_time
+                    else:
+                        delta_store['shutdown'] = True
                     self.delta_store[sub_id][w_id] = delta_store
-                    new_time = time()
-                    elapsed = new_time - old_time
-                    # ignore deltas that are more frequent than interval.
-                    if elapsed <= interval:
-                        continue
-                    old_time = new_time
                     if sub_resolver is None:
                         yield delta_store
                     else:
@@ -421,8 +418,8 @@ class BaseResolvers:
                             yield result
                 except queue.Empty:
                     await asyncio.sleep(DELTA_SLEEP_INTERVAL)
-        except CancelledError:
-            pass
+        except (GeneratorExit, asyncio.CancelledError):
+            raise
         except Exception:
             import traceback
             logger.warn(traceback.format_exc())
