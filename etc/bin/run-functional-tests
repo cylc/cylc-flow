@@ -86,11 +86,22 @@ eof
 # parse args
 PROVE_ARGS=()
 TESTS=()
+PROVIDE_TESTBASE=true
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --help|-h)
             usage
             exit 0
+            ;;
+        --state*)
+            STATES=${1/--state=/}
+            if [[ -n ${STATES/save/} ]]; then
+                # run tests from a previous saved state, don't provide a list
+                # of tests to run as prove does this for us
+                PROVIDE_TESTBASE=false
+            fi
+            PROVE_ARGS+=("$1")
+            shift
             ;;
         -j|-a)
             PROVE_ARGS+=("$1" "$2")
@@ -125,6 +136,10 @@ if [[ -n "${CHUNK:-}" ]]; then
     while IFS='' read -r line; do TESTS+=("$line"); done < <(
         prove "${TEMP[@]}" --dry --recurse | sort | split -n "r/${CHUNK}"
     )
+fi
+
+if ! $PROVIDE_TESTBASE; then
+    TESTS=()
 fi
 
 # ensure that TMPDIR is not a symlink
