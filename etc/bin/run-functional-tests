@@ -16,11 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-set -u
-
 usage() {
   cat <<eof
-Usage: run-functional-tests.sh [...]
+Usage: run-functional-tests [...]
 
 Run the Cylc test battery, in <CYLC_REPO_DIR>/tests.
 
@@ -47,8 +45,8 @@ To change the test file comparision command from "diff -u" do (for example):
 
 Some test suites submit jobs to the 'at' so atd must be up on the job hosts.
 
-Commits or Pull Requests to cylc/cylc-flow on GitHub will trigger Travis CI to
-run generic (non platform-specific) tests - see .travis.yml.
+Commits or Pull Requests to cylc/cylc-flow on GitHub will trigger
+GitHub Actions to run tests, see .github/workflows for details.
 
 By default all tests are executed.  To run just a subset of them:
   * list individual tests or test directories to run on the command line
@@ -67,55 +65,101 @@ Options:
 Examples:
 
 Run the full test suite with the default options.
-  run-functional-tests.sh
+  run-functional-tests
 Run the full test suite with 12 processes
-  run-functional-tests.sh -j 12
+  run-functional-tests -j 12
 Run only tests under "tests/cyclers/"
-  run-functional-tests.sh tests/cyclers
+  run-functional-tests tests/cyclers
 Run only "tests/cyclers/16-weekly.t" in verbose mode
-  run-functional-tests.sh -v tests/cyclers/16-weekly.t
+  run-functional-tests -v tests/cyclers/16-weekly.t
 Run only tests under "tests/cyclers/", and skip 00-daily.t
   export CYLC_TEST_SKIP=tests/cyclers/00-daily.t
-  run-functional-tests.sh tests/cyclers
+  run-functional-tests tests/cyclers
 Run the first quarter of the test battery
-  CHUNK=1/4 run-functional-tests.sh
+  CHUNK=1/4 run-functional-tests
 Re-run failed tests
-  run-functional-tests.sh --state=save
-  run-functional-tests.sh --state=failed
+  run-functional-tests --state=save
+  run-functional-tests --state=failed
 eof
 }
-for ARG in "$@"; do
-    case "${ARG}" in
+
+# parse args
+PROVE_ARGS=()
+TESTS=()
+PROVIDE_TESTBASE=true
+while [[ $# -gt 0 ]]; do
+    case "$1" in
         --help|-h)
             usage
             exit 0
             ;;
+        --state*)
+            STATES=${1/--state=/}
+            if [[ -n ${STATES/save/} ]]; then
+                # run tests from a previous saved state, don't provide a list
+                # of tests to run as prove does this for us
+                PROVIDE_TESTBASE=false
+            fi
+            PROVE_ARGS+=("$1")
+            shift
+            ;;
+        -j|-a)
+            PROVE_ARGS+=("$1" "$2")
+            shift
+            shift
+            ;;
+        -*)
+            PROVE_ARGS+=("$1")
+            shift
+            ;;
+        *)
+            TESTS+=("$1")
+            shift
+            ;;
     esac
 done
+
+# base dir
+cd "$(dirname "$0")/../.." || exit 1
+export CYLC_REPO_DIR="${PWD}"
+
+# default test base
+if [[ ${#TESTS[@]} -eq 0 ]]; then
+    TESTS=('tests')
+fi
+
+# handle chunking
+if [[ -n "${CHUNK:-}" ]]; then
+    TEMP=("${TESTS[@]}")
+    TESTS=()
+    # would be a lot nicer with mapfile but we should keep bash3 support
+    while IFS='' read -r line; do TESTS+=("$line"); done < <(
+        prove "${TEMP[@]}" --dry --recurse | sort | split -n "r/${CHUNK}"
+    )
+fi
+
+if ! $PROVIDE_TESTBASE; then
+    TESTS=()
+fi
 
 # ensure that TMPDIR is not a symlink
 # (we rely on path comparisons in many tests)
 TMPDIR="$(realpath "${TMPDIR:-/tmp}")"
 export TMPDIR
 
-# (Should be the same as $TRAVIS_BUILD_DIR, on Travis CI)
-cd "$(dirname "$0")/../.." || exit 1
-export CYLC_REPO_DIR="${PWD}"
-# Defaults
+# test environment
 export CYLC_TEST_RUN_GENERIC=${CYLC_TEST_RUN_GENERIC:-true}
 export CYLC_TEST_RUN_PLATFORM=${CYLC_TEST_RUN_PLATFORM:-true}
 export CYLC_TEST_SKIP=${CYLC_TEST_SKIP:-}
 export CYLC_TEST_IS_GENERIC=true
 CYLC_TEST_TIME_INIT="$(date -u +'%Y%m%dT%H%M%SZ')"
 export CYLC_TEST_TIME_INIT
-# Normal run
+
+# get number of cores
 NPROC=$(cylc get-global-config '--item=process pool size')
 if [[ -z "${NPROC}" ]]; then
     NPROC=$(python3 -c 'import multiprocessing as mp; print(mp.cpu_count())')
 fi
-if [[ -n "${CHUNK:-}" ]]; then
-    exec env -u 'CHUNK' prove --timer -j "${NPROC}" -s -r "$@" - \
-        < <(prove --dry --recurse './tests' | sort | split -n "r/${CHUNK}")
-else
-    exec prove --timer -j "${NPROC}" -s -r "$@"
-fi
+
+# run tests run
+exec prove --timer -j "${NPROC}" -s -r "${PROVE_ARGS[@]}" "${TESTS[@]}"

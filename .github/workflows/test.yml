@@ -1,0 +1,93 @@
+name: test
+
+on: [pull_request]
+
+
+jobs:
+  unit-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.7']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+
+      - name: Configure Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Apt-Get
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck sqlite3
+
+      - name: Install
+        run: |
+          pip install ."[all]"
+          pip install pytest-xdist
+
+      - name: Style
+        run: |
+          pycodestyle
+          etc/bin/shellchecker
+
+      - name: Unit Test
+        run: |
+          pytest -n 5
+
+
+  functional_test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.7']
+        tests: [
+          ['tests', '1/4'],
+          ['tests', '2/4'],
+          ['tests', '3/4'],
+          ['tests', '4/4'],
+          ['flakytests', '1/1']
+        ]
+    env:
+      BASE: ${{ matrix.tests[0] }}
+      CHUNK: ${{ matrix.tests[1] }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+
+      - name: Configure Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Apt-Get
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y sqlite3
+
+      - name: Install
+        run: |
+          pip install ."[all]"
+
+      - name: Test
+        run: |
+          if [[ "${BASE}" == 'flakytests' ]]; then
+              NPROC=4
+          else
+              NPROC=8
+          fi
+          etc/bin/run-functional-tests -j "${NPROC}" --state=save "${BASE}" || (
+              echo '=== Re-running Failed Tests ==='
+              CHUNK= etc/bin/run-functional-tests -j "${NPROC}" --state=save,failed
+          )
+
+      - name: Debug
+        if: failure()
+        run: |
+          cylc scan -f --color=never
+          find "$HOME/cylc-run" -name '*.err' -type f \
+              -exec echo '==== {} ====' \; -exec cat '{}' \;
+          find "${TMPDIR:-/tmp}/${USER}/cylctb-"* -type f \
+              -exec echo '==== {} ====' \; -exec cat '{}' \;

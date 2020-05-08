@@ -19,6 +19,7 @@
 . "$(dirname "$0")/test_header"
 
 set_test_number 4
+skip_darwin 'atrun hard to configure on Mac OS'
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 CYLC_TEST_BATCH_SYS=${TEST_NAME_BASE##??-}
