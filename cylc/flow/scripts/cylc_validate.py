@@ -82,7 +82,6 @@ def parse_args():
 @cli_function(parse_args)
 def main(_, options, reg):
     """cylc validate CLI."""
-    # import pdb; pdb.set_trace()
     profiler = Profiler(options.profile_mode)
     profiler.start()
 
