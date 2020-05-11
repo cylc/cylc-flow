@@ -55,6 +55,7 @@ run_ok "${TEST_NAME_BASE}-suite_params" \
     'SELECT key,value FROM suite_params WHERE key != "uuid_str" ORDER BY key'
 cmp_ok "${TEST_NAME_BASE}-suite_params.stdout" <<__OUT__
 UTC_mode|1
+cycle_point_format|CCYYMMDDThhmmZ
 cylc_version|$(cylc version)
 fcp|20050101T0000Z
 icp|20000101T0000Z
