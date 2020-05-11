@@ -38,6 +38,11 @@ namespace, under `cylc.jinja.filters`.
 [#3541](https://github.com/cylc/cylc-flow/pull/3541) - Don't warn that a task
 was already added to an internal queue, if the queue is the same.
 
+[#3602](https://github.com/cylc/cylc-flow/pull/3602) - Fix a bug that prevented
+cycle point format conversion by the `cylc suite-state` command and the
+`suite_state` xtrigger function, if the target suite used the default format
+but downstream command or suite did not.
+
 -------------------------------------------------------------------------------
 ## __cylc-8.0a2 (2019-Q4?)__
 
