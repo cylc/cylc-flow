@@ -9,7 +9,7 @@ Current release: |release|
 
 *Released Under the GNU GPL v3.0 Software License*
 
-*Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.*
+*Copyright (C) NIWA & British Crown (Met Office) & Contributors.*
 
 -----------
 
