@@ -19,6 +19,7 @@ import os
 import re
 import stat
 from subprocess import Popen, PIPE, DEVNULL
+from textwrap import dedent
 
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.batch_sys_manager import BatchSysManager
@@ -127,7 +128,7 @@ class JobFileWriter(object):
     @staticmethod
     def _write_header(handle, job_conf):
         """Write job script header."""
-        handle.write("#!/usr/bin/env bash -l\n")
+        handle.write("#!/bin/bash -l\n")
         handle.write("#\n# ++++ THIS IS A CYLC TASK JOB SCRIPT ++++")
         for prefix, value in [
                 ("# Suite: ", job_conf['suite_name']),
@@ -141,6 +142,18 @@ class JobFileWriter(object):
                  job_conf['execution_time_limit'])]:
             if value:
                 handle.write("\n%s%s" % (prefix, value))
+        # NOTE we cannot do /usr/bin/env bash because we need to use the -l
+        # option and GNU env doesn't support additional arguments (recent
+        # versions permit this with the -S option similar to BSD env but we
+        # cannot make the jump to this until is it more widely adopted
+        handle.write(dedent('''
+
+            if [[ $1 == 'noreinvoke' ]]; then
+                shift
+            else
+                exec "$(command -v bash)" -l "$0" noreinvoke "$@"
+            fi
+        '''))
 
     def _write_directives(self, handle, job_conf):
         """Job directives."""
