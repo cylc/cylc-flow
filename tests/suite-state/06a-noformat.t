@@ -16,7 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test "cylc suite-state" cycle point format conversion, when the target suite
-# sets an explicit cycle point format, and the CLI does not.
+# sets no explicit cycle point format, and the CLI does (the reverse of 06.t).
+
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 5
@@ -24,9 +25,9 @@ set_test_number 5
 init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
 [cylc]
     UTC mode = True
-    cycle point format = CCYY-MM-DD
+    # (Use default cycle point format)
 [scheduling]
-    initial cycle point = 20100101
+    initial cycle point = 20100101T0000Z
 [[graph]]
     R1 = foo
 [runtime]
@@ -38,16 +39,16 @@ TEST_NAME="${TEST_NAME_BASE}-run"
 suite_run_ok "${TEST_NAME}" cylc run --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-cli-poll
-run_ok "${TEST_NAME}" cylc suite-state "${SUITE_NAME}" -p 20100101T0000Z \
+run_ok "${TEST_NAME}" cylc suite-state "${SUITE_NAME}" -p 2010-01-01T00:00Z \
         --task=foo --status=succeeded
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
 polling for 'succeeded': satisfied
 __OUT__
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-cli-dump
-run_ok "${TEST_NAME}" cylc suite-state "${SUITE_NAME}" -p 20100101T0000Z
+run_ok "${TEST_NAME}" cylc suite-state "${SUITE_NAME}" -p 2010-01-01T00:00Z
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-foo, 2010-01-01, succeeded
+foo, 20100101T0000Z, succeeded
 __OUT__
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"

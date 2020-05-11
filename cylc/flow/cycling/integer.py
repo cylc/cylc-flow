@@ -595,6 +595,12 @@ def init_from_cfg(_):
     pass
 
 
+def get_dump_format(cycling_type=None):
+    """Return cycle point string dump format."""
+    # Not used for integer cycling.
+    return None
+
+
 def get_point_relative(point_expr, context_point):
     """Create a point from relative_string applied to base_point."""
     if REC_RELATIVE_POINT.search(point_expr):

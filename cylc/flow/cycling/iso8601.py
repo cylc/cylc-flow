@@ -843,6 +843,11 @@ def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None,
     )
 
 
+def get_dump_format():
+    """Return cycle point string dump format."""
+    return SuiteSpecifics.DUMP_FORMAT
+
+
 def get_point_relative(offset_string, base_point):
     """Create a point from offset_string applied to base_point."""
     try:

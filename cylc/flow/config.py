@@ -50,7 +50,7 @@ from cylc.flow.cfgspec.suite import RawSuiteConfig
 from cylc.flow.cycling.loader import (
     get_point, get_point_relative, get_interval, get_interval_cls,
     get_sequence, get_sequence_cls, init_cyclers, INTEGER_CYCLING_TYPE,
-    ISO8601_CYCLING_TYPE)
+    ISO8601_CYCLING_TYPE, get_dump_format)
 from cylc.flow.cycling.iso8601 import ingest_time
 import cylc.flow.flags
 from cylc.flow.graphnode import GraphNodeParser
@@ -311,6 +311,8 @@ class SuiteConfig(object):
 
         # after the call to init_cyclers, we can start getting proper points.
         init_cyclers(self.cfg)
+        self.cycling_type = get_interval_cls().get_null().TYPE
+        self.cycle_point_dump_format = get_dump_format(self.cycling_type)
 
         # Running in UTC time? (else just use the system clock)
         if self.cfg['cylc']['UTC mode'] is None:
@@ -374,7 +376,7 @@ class SuiteConfig(object):
             fcp_str = self.cfg['scheduling']['final cycle point']
         if fcp_str is not None:
             # Is the final "point"(/interval) relative to initial?
-            if get_interval_cls().get_null().TYPE == INTEGER_CYCLING_TYPE:
+            if self.cycling_type == INTEGER_CYCLING_TYPE:
                 if "P" in fcp_str:
                     # Relative, integer cycling.
                     self.final_point = get_point_relative(
@@ -1050,7 +1052,7 @@ class SuiteConfig(object):
         if not limit:
             limit = None
         if (limit is not None and limit.isdigit() and
-                get_interval_cls().get_null().TYPE == ISO8601_CYCLING_TYPE):
+                self.cycling_type == ISO8601_CYCLING_TYPE):
             # Backwards-compatibility for raw number of hours.
             limit = "PT%sH" % limit
 
