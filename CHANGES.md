@@ -22,6 +22,12 @@ cylc-7.9.x (which requires Python 2.7) bundles Jinja2 2.11.
 cylc-8 (master branch, Python 3 - not yet released) uses proper Python package
 management and does not bundle Jinja2.
 
+
+[#3603](https://github.com/cylc/cylc-flow/pull/3603) - Fix a bug that prevented
+cycle point format conversion by the `cylc suite-state` command and the
+`suite_state` xtrigger function, if the target suite used the default format
+but downstream command or suite did not.
+
 -------------------------------------------------------------------------------
 ## __cylc-7.8.5 (2020-04-22)__
 
