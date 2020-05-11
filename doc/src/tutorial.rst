@@ -263,7 +263,7 @@ that you can exit the terminal or even log out without killing the suite:
    $ cylc run tut/oneoff/basic
                ._.
                | |                 The Cylc Suite Engine [7.0.0]
-   ._____._. ._| |_____.           Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+   ._____._. ._| |_____.           Copyright (C) NIWA & British Crown (Met Office) & Contributors.
    | .___| | | | | .___|  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
    | !___| !_! | | !___.  This program comes with ABSOLUTELY NO WARRANTY;
    !_____!___. |_!_____!  see `cylc warranty`.  It is free software, you
