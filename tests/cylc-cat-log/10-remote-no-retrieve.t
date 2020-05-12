@@ -25,7 +25,7 @@ set_test_remote
 set_test_number 5
 
 create_test_globalrc "" "
-[hosts]
+[job platforms]
    [[${CYLC_TEST_HOST}]]
        retrieve job logs = False"
 install_suite "${TEST_NAME_BASE}" remote-simple

@@ -28,7 +28,7 @@ run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 create_test_globalrc "" "
-[hosts]
+[job platforms]
    [[localhost]]
         tail command template = $PWD/bin/my-tailer.sh %(filename)s"
 #-------------------------------------------------------------------------------

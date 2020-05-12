@@ -23,7 +23,7 @@ export RND_SUITE_SOURCE
 export RND_SUITE_RUNDIR
 export CYLC_RUN_DIR
 
-CYLC_RUN_DIR="$(cylc get-global-config --print-run-dir)"
+CYLC_RUN_DIR="$RUN_DIR"
 
 function make_rnd_suite() {
     # Create a randomly-named suite source directory.

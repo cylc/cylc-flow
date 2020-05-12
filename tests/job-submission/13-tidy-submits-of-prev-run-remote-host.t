@@ -28,8 +28,8 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
     -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}"
 RLOGD1="cylc-run/${SUITE_NAME}/log/job/1/t1/01"
 RLOGD2="cylc-run/${SUITE_NAME}/log/job/1/t1/02"
-LOGD1="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/job/1/t1/01"
-LOGD2="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/job/1/t1/02"
+LOGD1="$RUN_DIR/${SUITE_NAME}/log/job/1/t1/01"
+LOGD2="$RUN_DIR/${SUITE_NAME}/log/job/1/t1/02"
 
 SSH='ssh -n -oBatchMode=yes -oConnectTimeout=5'
 # shellcheck disable=SC2086

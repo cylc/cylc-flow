@@ -37,7 +37,9 @@ from cylc.flow.parsec.util import pdeepcopy, poverride
 
 from cylc.flow import LOG
 from cylc.flow.batch_sys_manager import JobPollContext
-from cylc.flow.hostuserutil import get_host, is_remote_host, is_remote_user, is_remote_platform
+from cylc.flow.hostuserutil import (
+    get_host, is_remote_host, is_remote_user, is_remote_platform
+)
 from cylc.flow.job_file import JobFileWriter
 from cylc.flow.pathutil import get_remote_suite_run_job_dir
 from cylc.flow.subprocpool import SubProcPool
@@ -59,7 +61,6 @@ from cylc.flow.task_state import (
     TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED,
     TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING)
 from cylc.flow.wallclock import get_current_time_string, get_utc_mode
-
 
 
 class TaskJobManager(object):
@@ -262,7 +263,7 @@ class TaskJobManager(object):
                     'is_manual_submit': itask.is_manual_submit,
                     'try_num': itask.get_try_num(),
                     'time_submit': now_str,
-                    'user_at_host': owner_at_host,
+                    'platform_name': platform['name'],
                     'batch_sys_name': itask.summary['batch_sys_name'],
                 })
                 itask.is_manual_submit = False
@@ -795,13 +796,13 @@ class TaskJobManager(object):
         # - Should task host become task_platform?
         # - What does remote_host_select do?
         # Current Strategy - Replace task host here with one selected
-        # By forward lookup - later you need to re-add logic for 
+        # By forward lookup - later you need to re-add logic for
         # Dealing with platform = ``$(echo xcel00)``
         # try:
         platform = forward_lookup(rtconfig['platform'])
-            # @TODO rm after platforms complete - kept for reference
-            # task_host = self.task_remote_mgr.remote_host_select(
-            #     rtconfig['remote']['host'])
+        # @TODO rm after platforms complete - kept for reference
+        # task_host = self.task_remote_mgr.remote_host_select(
+        #     rtconfig['remote']['host'])
         # except TaskRemoteMgmtError as exc:
         #     # Submit number not yet incremented
         #     itask.submit_num += 1
@@ -810,11 +811,11 @@ class TaskJobManager(object):
         #     self._set_retry_timers(itask, rtconfig)
         #     self._prep_submit_task_job_error(
         #         suite, itask, dry_run, '(remote host select)', exc)
-            # return False
+        # return False
         # else:
-            # if task_host is None:  # host select not ready
-            #     itask.set_summary_message(self.REMOTE_SELECT_MSG)
-            #     return
+        # if task_host is None:  # host select not ready
+        #     itask.set_summary_message(self.REMOTE_SELECT_MSG)
+        #     return
         itask.platform = platform
         # Submit number not yet incremented
         itask.submit_num += 1

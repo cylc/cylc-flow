@@ -29,7 +29,7 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --debug --no-detach --reference-test -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}" \
     "${SUITE_NAME}"
 
-RUN_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
+RUN_DIR="$RUN_DIR/${SUITE_NAME}"
 LOG="${RUN_DIR}/log/suite/log"
 sed -n 's/^.*\(cylc jobs-submit\)/\1/p' "${LOG}" | sort -u >'edited-suite-log'
 

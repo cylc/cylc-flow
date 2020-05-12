@@ -46,7 +46,7 @@ suite_run_ok "${TEST_NAME_BASE}-restart" \
     cylc restart --set 'WEATHER=good' --no-detach "${SUITE_NAME}"
 
 # Check for 3 generated *.rc files
-LOGD="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/suiterc"
+LOGD="$RUN_DIR/${SUITE_NAME}/log/suiterc"
 # shellcheck disable=SC2012
 ls "${LOGD}" | sed -e 's/.*-//g' | sort >'ls.out'
 cmp_ok 'ls.out' <<'__OUT__'
@@ -55,7 +55,7 @@ restart.rc
 run.rc
 __OUT__
 
-LOGD="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/suiterc"
+LOGD="$RUN_DIR/${SUITE_NAME}/log/suiterc"
 RUN_RC="$(ls "${LOGD}/"*-run.rc)"
 REL_RC="$(ls "${LOGD}/"*-reload.rc)"
 RES_RC="$(ls "${LOGD}/"*-restart.rc)"

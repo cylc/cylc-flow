@@ -26,7 +26,7 @@ TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 export PATH_TO_CYLC_BIN="/path/to/cylc/bin"
 create_test_globalrc '' "
-[hosts]
+[job platforms]
     [[localhost]]
         cylc executable = $PATH_TO_CYLC_BIN/cylc"
 #-------------------------------------------------------------------------------

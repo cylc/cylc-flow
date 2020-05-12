@@ -23,7 +23,7 @@ set_test_remote_host
 set_test_number 3
 
 create_test_globalrc "" "
-[hosts]
+[job platforms]
     [[${CYLC_TEST_HOST}]]
         retrieve job logs = True
         retrieve job logs command = my-rsync"
@@ -48,7 +48,7 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug --no-detach ${OPT_SET} \
        -s "HOST=${CYLC_TEST_HOST}" "${SUITE_NAME}"
 
-SUITE_LOG_D="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log"
+SUITE_LOG_D="$RUN_DIR/${SUITE_NAME}/log"
 sed 's/^.* -v //' "${SUITE_LOG_D}/suite/my-rsync.log" >'my-rsync.log.edited'
 
 OPT_HEAD='--include=/1 --include=/1/t1'

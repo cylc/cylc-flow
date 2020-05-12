@@ -49,7 +49,7 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
     -s "CYLC_TEST_BATCH_SITE_DIRECTIVES=${CYLC_TEST_BATCH_SITE_DIRECTIVES}" \
     "${SUITE_NAME}"
 
-LOGD="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/job/1/foo"
+LOGD="$RUN_DIR/${SUITE_NAME}/log/job/1/foo"
 grep_ok '#PBS -l walltime=70' "${LOGD}/01/job"
 
 if [[ "${CYLC_TEST_BATCH_TASK_HOST}" != 'localhost' ]]; then

@@ -30,7 +30,7 @@ run_ok "${TEST_NAME}.doc-section" cylc get-site-config --item='[documentation]'
 run_ok "${TEST_NAME}.doc-section-python" \
     cylc get-site-config --item='[documentation]' -p
 run_ok "${TEST_NAME}.multiple-secs" \
-    cylc get-site-config --item='[documentation]' --item='[hosts]'
+    cylc get-site-config --item='[documentation]' --item='[job platforms]'
 run_ok "${TEST_NAME}.doc-entry" \
     cylc get-site-config --item='[documentation]online'
 run_fail "${TEST_NAME}.non-existent" \
@@ -39,7 +39,7 @@ run_fail "${TEST_NAME}.non-existent" \
 TEST_NAME="${TEST_NAME_BASE}-run-dir"
 run_ok "${TEST_NAME}" cylc get-site-config --print-run-dir
 #-------------------------------------------------------------------------------
-VAL1="$(cylc get-site-config --item '[hosts][localhost]use login shell')"
+VAL1="$(cylc get-site-config --item '[job platforms][localhost]use login shell')"
 VAL2="$(cylc get-site-config | sed -n '/\[\[localhost\]\]/,$p' | \
     sed -n "0,/use login shell/s/^[ \t]*\(use login shell =.*\)/\1/p")"
 run_ok "${TEST_NAME_BASE}-check-output" \

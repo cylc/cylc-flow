@@ -22,7 +22,7 @@ set_test_remote_host
 set_test_number 4
 
 create_test_globalrc "" "
-[hosts]
+[job platforms]
     [[${CYLC_TEST_HOST}]]
         task event handler retry delays=3*PT1S
 [task events]

@@ -26,7 +26,7 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 #-------------------------------------------------------------------------------
 if ! command -v 'sqlite3' >'/dev/null'; then
     sqlite3 \
-        "$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/db" \
+        "$RUN_DIR/${SUITE_NAME}/log/db" \
         'SELECT try_num, submit_num FROM task_jobs' >'select.out'
     cmp_ok 'select.out' <<'__OUT__'
 1|1

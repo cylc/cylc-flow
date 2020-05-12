@@ -24,7 +24,7 @@ set_test_number 4
 OPT_SET=
 if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
     create_test_globalrc "" "
-[hosts]
+[job platforms]
     [[${CYLC_TEST_HOST}]]
         retrieve job logs = True
         retrieve job logs retry delays = PT5S"

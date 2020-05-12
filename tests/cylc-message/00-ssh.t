@@ -27,7 +27,7 @@ set_test_remote_host
 set_test_number 3
 
 create_test_globalrc '' "
-[hosts]
+[job platforms]
     [[${CYLC_TEST_HOST}]]
         task communication method = ssh"
 
@@ -41,7 +41,7 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 
 run_fail "${TEST_NAME_BASE}-grep-DENIED-suite-log" \
     grep -q "\\[client-connect\\] DENIED .*@${CYLC_TEST_HOST}:cylc-message" \
-    "$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/suite/log"
+    "$RUN_DIR/${SUITE_NAME}/log/suite/log"
 
 purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"

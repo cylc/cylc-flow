@@ -20,6 +20,8 @@
 # will no longer be poll-able after the kill.
 . "$(dirname "$0")/test_header"
 
+skip_all "TODO decide whether to re-instate this"
+
 run_tests() {
     set_test_number 5
     install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"

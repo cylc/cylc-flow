@@ -189,8 +189,8 @@ class SuiteConfig(object):
         if output_fname:
             output_fname = os.path.expandvars(output_fname)
         self.pcfg = RawSuiteConfig(
-            fpath, 
-            output_fname, 
+            fpath,
+            output_fname,
             template_vars
         )
         self.mem_log("config.py: after RawSuiteConfig init")

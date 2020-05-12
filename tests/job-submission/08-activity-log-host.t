@@ -29,7 +29,7 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --debug --no-detach --reference-test -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}" \
     "${SUITE_NAME}"
 
-RUN_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
+RUN_DIR="$RUN_DIR/${SUITE_NAME}"
 grep_ok "^(${CYLC_TEST_HOST}) .*\\[STDOUT\\]" \
     "${RUN_DIR}/log/job/19990101T0000Z/sleeper/01/job-activity.log"
 grep_ok "^(${CYLC_TEST_HOST}) .*\\[STDOUT\\]" \

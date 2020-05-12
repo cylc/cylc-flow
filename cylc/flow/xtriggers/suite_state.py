@@ -74,6 +74,7 @@ def suite_state(suite, task, point, offset=None, status='succeeded',
         os.path.expanduser(
             cylc_run_dir or forward_lookup()['run directory']
         )
+    )
     if offset is not None:
         point = str(add_offset(point, offset))
     try:

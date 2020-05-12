@@ -58,7 +58,9 @@ class JobFileWriter(object):
         # variables: NEXT_CYCLE=$( cylc cycle-point --offset-hours=6 )
         platform = job_conf['platform']
         tmp_name = os.path.expandvars(local_job_file_path + '.tmp')
-        run_d = os.path.expandvars(get_remote_suite_run_dir(platform, job_conf['suite_name']))
+        run_d = os.path.expandvars(
+            get_remote_suite_run_dir(platform, job_conf['suite_name'])
+        )
         try:
             with open(tmp_name, 'w') as handle:
                 self._write_header(handle, job_conf)
@@ -117,7 +119,6 @@ class JobFileWriter(object):
                 if line and not line.startswith("#"):
                     return True
         return False
-
 
     @staticmethod
     def _write_header(handle, job_conf):
@@ -186,7 +187,7 @@ class JobFileWriter(object):
         work_d = get_remote_suite_work_dir(
             job_conf["platform"], job_conf['suite_name'])
         handle.write('\n    export CYLC_SUITE_RUN_DIR="%s"' % run_d)
-        if work_d != run_d:
+        if os.path.expandvars(work_d) != run_d:
             # Note: not an environment variable, but used by job.sh
             handle.write('\n    CYLC_SUITE_WORK_DIR_ROOT="%s"' % work_d)
         if job_conf['remote_suite_d']:

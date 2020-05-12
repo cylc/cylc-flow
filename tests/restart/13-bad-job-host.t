@@ -26,7 +26,7 @@ install_suite "${TEST_NAME_BASE}" bad-job-host
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run --debug --no-detach "${SUITE_NAME}"
 # Modify DB with garbage host
-CYLC_SUITE_RUN_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
+CYLC_SUITE_RUN_DIR="$RUN_DIR/${SUITE_NAME}"
 for DB_NAME in 'log/db' '.service/db'; do
     sqlite3 "${CYLC_SUITE_RUN_DIR}/${DB_NAME}" \
         'UPDATE task_jobs SET user_at_host="garbage" WHERE name=="t-remote";'

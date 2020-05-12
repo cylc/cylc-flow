@@ -1019,7 +1019,7 @@ class TaskEventsManager():
             if itask.summary[self.KEY_EXECUTE_TIME_LIMIT]:
                 time_limit = itask.summary[self.KEY_EXECUTE_TIME_LIMIT]
                 try:
-                    host_conf = self.get_host_conf(itask, 'batch systems')
+                    host_conf = itask.platform['batch system']
                     batch_sys_conf = host_conf[itask.summary['batch_sys_name']]
                 except (TypeError, KeyError):
                     batch_sys_conf = {}

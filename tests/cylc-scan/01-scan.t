@@ -33,7 +33,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
 
 
-SRV_D="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/.service"
+SRV_D="$RUN_DIR/${SUITE_NAME}/.service"
 HOST="$(sed -n 's/^CYLC_SUITE_HOST=//p' "${SRV_D}/contact")"
 PORT="$(sed -n 's/^CYLC_SUITE_PORT=//p' "${SRV_D}/contact")"
 PUBLISH_PORT="$(sed -n 's/^CYLC_SUITE_PUBLISH_PORT=//p' "${SRV_D}/contact")"

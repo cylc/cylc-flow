@@ -621,19 +621,20 @@ see `COPYING' in the Cylc source distribution.
         auths = set()
         for itask in self.pool.get_rh_tasks():
             if itask.state(*TASK_STATUSES_ACTIVE):
-                auths.add(itask.task_platform)
+                auths.add(itask.platform['name'])
         while auths:
-            for host, owner in auths.copy():
+            for platform_name in auths.copy():
                 if (
                     self.task_job_mgr.task_remote_mgr.remote_init(
-                        host, owner, self.curve_auth, self.client_pub_key_dir)
-                ) is not None:
-                    auths.remove((host, owner))
-            for platform in auths.copy():
-                if self.task_job_mgr.task_remote_mgr.remote_init(
-                        platform) is not None:
+                        platform_nameself.curve_auth,
+                        self.client_pub_key_dir
+                    )
+                    is not None
+                ):
                     auths.remove(
-                        platform, self.curve_auth, self.client_pub_key_dir
+                        platform_name,
+                        self.curve_auth,
+                        self.client_pub_key_dir
                     )
             if auths:
                 sleep(1.0)
@@ -1184,7 +1185,8 @@ see `COPYING' in the Cylc source distribution.
             load_type = "run"
         file_name = os.path.expandvars(
             get_suite_run_rc_dir(
-            self.suite, f"{time_str}-{load_type}.rc")
+                self.suite, f"{time_str}-{load_type}.rc"
+            )
         )
         with open(file_name, "wb") as handle:
             handle.write(b"# cylc-version: %s\n" % CYLC_VERSION.encode())

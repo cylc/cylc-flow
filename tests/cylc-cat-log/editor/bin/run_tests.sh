@@ -36,7 +36,7 @@ function run_tests {
     run_ok "${TEST_NAME}" cylc run --set="CYLC_TEST_HOST=$HOST" \
        --set="CYLC_TEST_OWNER=$OWNER" --no-detach "${SUITE_NAME}"
 
-    LOG_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
+    LOG_DIR="$RUN_DIR/${SUITE_NAME}"
     JOB_LOG_DIR="${LOG_DIR}/log/job/1/foo/01"
 
     for JOBFILE in "job" "job.out" "job.err" "job.status" "job-activity.log" \

@@ -36,7 +36,7 @@ run_ok "${TEST_NAME_BASE}-validate" \
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug --no-detach ${OPT_SET} "${SUITE_NAME}"
 
-LOGD="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log"
+LOGD="$RUN_DIR/${SUITE_NAME}/log"
 SUITE_UUID="$(sqlite3 "${LOGD}/db" 'SELECT value FROM suite_params WHERE key=="uuid_str"')"
 LOG_FILE="${LOGD}/suite/log"
 grep_ok "\\[('suite-event-handler-00', 'startup') ret_code\\] 0" "${LOG_FILE}"

@@ -210,9 +210,9 @@ class HostUtil(object):
         return self.remote_users[name]
 
     def _is_remote_platform(self, platform):
-        """Return True if any job host in platform have different IP address 
+        """Return True if any job host in platform have different IP address
         to the current host.
-        
+
         Return False if name is None.
         Return True if host is unknown.
 
@@ -266,9 +266,11 @@ def is_remote(host, owner):
     """Shorthand for HostUtil.get_inst().is_remote(host, owner)."""
     return HostUtil.get_inst().is_remote(host, owner)
 
+
 def is_remote_platform(platform):
     """Shorthand for HostUtil.get_inst()._is_remote_platform(host, owner)."""
     return HostUtil.get_inst()._is_remote_platform(platform)
+
 
 def is_remote_host(name):
     """Shorthand for HostUtil.get_inst().is_remote_host(name)."""
@@ -278,6 +280,7 @@ def is_remote_host(name):
 def is_remote_user(name):
     """Return True if name is not a name of the current user."""
     return HostUtil.get_inst().is_remote_user(name)
+
 
 def get_host_from_platform(platform, method=None):
     """Placeholder for a more sophisticated function which returns a host
@@ -290,15 +293,15 @@ def get_host_from_platform(platform, method=None):
             Name a function to use when selecting hosts from list provided
             by platform.
             If unset then `[platform][remote hosts][0]` will be returned
-    
+
     Returns:
         hostname (str):
-    
+
     TODO:
         Make methods other than None work:
             - Random Selection
             - Random Selection with check for host availability
-    
+
     """
     if method is None:
         return istask.platform['remote hosts'][0]

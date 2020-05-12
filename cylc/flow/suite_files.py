@@ -616,3 +616,42 @@ def _load_local_item(item, path):
             return file_.read()
     except IOError:
         return None
+
+
+def _load_remote_item(item, reg, platform):
+    """Load content of service item from remote [owner@]host via SSH."""
+    if platform is None:
+        host, owner = None, None
+    else:
+        host = platform['remote hosts'][0]
+        owner = platfom['owner']
+
+    if not is_remote(host, owner):
+        return
+    if host is None:
+        host = 'localhost'
+    if owner is None:
+        owner = get_user()
+    if item == SuiteFiles.Service.CONTACT and not is_remote_host(host):
+        # Attempt to read suite contact file via the local filesystem.
+        path = r'%(run_d)s/%(srv_base)s' % {
+            'run_d': get_remote_suite_run_dir('localhost', owner, reg),
+            'srv_base': SuiteFiles.Service.DIRNAME,
+        }
+        content = _load_local_item(item, path)
+        if content is not None:
+            return content
+        # Else drop through and attempt via ssh to the suite account.
+    # Prefix STDOUT to ensure returned content is relevant
+    prefix = r'[CYLC-AUTH] %(suite)s' % {'suite': reg}
+    # Attempt to cat passphrase file under suite service directory
+    script = (
+        r"""echo '%(prefix)s'; """
+        r'''cat "%(run_d)s/%(srv_base)s/%(item)s"'''
+    ) % {
+        'prefix': prefix,
+        'run_d': get_remote_suite_run_dir(host, owner, reg),
+        'srv_base': SuiteFiles.Service.DIRNAME,
+        'item': item
+    }
+    import shlex

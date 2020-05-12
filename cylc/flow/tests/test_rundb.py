@@ -257,7 +257,7 @@ def test_upgrade_to_platforms(mock_glbl_cfg):
         # check the data was correctly upgraded
         dump = [
             x for x in conn.execute(
-                rf'SELECT name, cycle, user, platform FROM task_jobs'
+                rf'SELECT name, cycle, user, platform_name FROM task_jobs'
             )
         ]
         assert dump == expected_data

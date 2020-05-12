@@ -33,7 +33,7 @@ set_test_number 4
 # which is often on local file systems. We need to ensure that the suite
 # definition directory is on a shared file system.
 SUITE_NAME="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}"
-SUITE_RUN_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
+SUITE_RUN_DIR="$RUN_DIR/${SUITE_NAME}"
 mkdir -p "$(dirname "${SUITE_RUN_DIR}")"
 cp -r "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}" "${SUITE_RUN_DIR}"
 cylc register "${SUITE_NAME}" "${SUITE_RUN_DIR}" 2>'/dev/null'

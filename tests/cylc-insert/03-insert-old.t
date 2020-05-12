@@ -29,7 +29,7 @@ TEST_NAME="${TEST_NAME_BASE}-run"
 suite_run_ok "${TEST_NAME}" cylc run -v -v --reference-test --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-db-end
-RUN_DIR=$(cylc get-global-config --print-run-dir)
+RUN_DIR=$RUN_DIR
 run_ok "${TEST_NAME}" sqlite3 "${RUN_DIR}/${SUITE_NAME}/log/db" \
     "select name, cycle, submit_num, status from task_states order by name, cycle"
 cmp_ok "${TEST_NAME}.stdout" <<'__OUT__'

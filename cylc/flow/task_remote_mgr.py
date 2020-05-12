@@ -34,7 +34,9 @@ from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import TaskRemoteMgmtError
 import cylc.flow.flags
-from cylc.flow.hostuserutil import is_remote, is_remote_host, is_remote_user, is_remote_platform
+from cylc.flow.hostuserutil import (
+    is_remote, is_remote_host, is_remote_user, is_remote_platform
+)
 from cylc.flow.pathutil import get_remote_suite_run_dir
 from cylc.flow.subprocctx import SubProcContext
 from cylc.flow.suite_files import (
@@ -160,11 +162,11 @@ class TaskRemoteMgr(object):
             pass  # Not yet initialised
         else:
             if status == REMOTE_INIT_FAILED:
-                del self.remote_init_map[platform['name']]  # reset to allow retry
+                del self.remote_init_map[platform['name']]
             return status
 
         # Determine what items to install
-        
+
         comm_meth = platform['task communication method']
         # TODO pick a more elegant host picking method
         host = randchoice(platform['remote hosts'])

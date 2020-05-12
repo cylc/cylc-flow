@@ -238,7 +238,9 @@ def get_scan_items_from_fs(
     """
     if owner_pattern is None:
         # Run directory of current user only
-        run_dirs = [(os.path.expandvars(forward_lookup()['run directory']), None)]
+        run_dirs = [
+            (os.path.expandvars(forward_lookup()['run directory']), None)
+        ]
     else:
         # Run directory of all users matching "owner_pattern".
         # But skip those with /nologin or /false shells
@@ -248,7 +250,12 @@ def get_scan_items_from_fs(
             if any(pwent.pw_shell.endswith(s) for s in skips):
                 continue
             if owner_pattern.match(pwent.pw_name):
-                run_dirs.append((os.path.expandvars(forward_lookup()['run directory']), None))
+                run_dirs.append(
+                    (
+                        os.path.expandvars(forward_lookup()['run directory']),
+                        None
+                    )
+                )
     if cylc.flow.flags.debug:
         sys.stderr.write('Listing suites:%s%s\n' % (
             DEBUG_DELIM, DEBUG_DELIM.join(item[1] for item in run_dirs if

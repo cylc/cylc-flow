@@ -21,7 +21,7 @@ from cylc.flow.exceptions import PlatformLookupError
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 
 
-def forward_lookup(platform_name=None):
+def forward_lookup(platform_name=None, platforms=None):
     """
     Find out which job platform to use given a list of possible platforms and
     a task platform string.
@@ -33,17 +33,20 @@ def forward_lookup(platform_name=None):
     Args:
         platform_name (str):
             name of platform to be retrieved.
-
+        platforms ():
+            globalrc platforms given as a dict for logic testing purposes
     Returns:
         platform (dict):
-            object containing settings for a platform, loaded from Global Config
+            object containing settings for a platform, loaded from
+            Global Config.
 
-    TODO: 
+    TODO:
         - Refactor testing for this method. Ideally including a method
           example.
         - Work out what to do with cases where localhost not set.
     """
-    platforms = glbl_cfg().get(['job platforms'])
+    if platforms is None:
+        platforms = glbl_cfg().get(['job platforms'])
 
     if platform_name is None:
         platform_data = platforms['localhost']
@@ -55,11 +58,12 @@ def forward_lookup(platform_name=None):
     # defined platforms.
     for platform_name_re in reversed(list(platforms)):
         if re.fullmatch(platform_name_re, platform_name):
-            platform_data = platforms[platform_name]
+            platform_data = platforms[platform_name_re]
+            if not platform_data:
+                platform_data = forward_lookup('localhost').copy()
+                platform_data['remote hosts'] = platform_name
             platform_data['name'] = platform_name
             return platform_data
-
-    
 
     raise PlatformLookupError(
         f"No matching platform \"{platform_name}\" found")

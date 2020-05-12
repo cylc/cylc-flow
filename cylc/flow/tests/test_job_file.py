@@ -22,6 +22,7 @@ from unittest import mock
 
 import cylc.flow.flags
 from cylc.flow.job_file import JobFileWriter
+from cylc.flow.platform_lookup import forward_lookup
 
 # List of tilde variable inputs
 # input value, expected output value
@@ -42,10 +43,11 @@ def test_get_variable_value_definition():
 
 @mock.patch("cylc.flow.job_file.glbl_cfg")
 def test_write_prelude_invalid_cylc_command(mocked_glbl_cfg):
+    platform = forward_lookup()
+    platform['cylc executable'] = "bodge"
     job_conf = {
         "batch_system_name": "background",
-        "host": "localhost",
-        "owner": "me"
+        'platform': platform
     }
     mocked = mock.MagicMock()
     mocked_glbl_cfg.return_value = mocked

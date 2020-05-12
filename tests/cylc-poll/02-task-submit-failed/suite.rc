@@ -10,9 +10,7 @@
             
 [runtime]
     [[foo]]
-        [[[job]]] 
-            batch system = at
-            batch submit command template = at noon tomorrow
+        platform = local-at
     [[poll_foo]]
         script = wait; cylc poll "$CYLC_SUITE_NAME" 'foo'
     [[stop]]

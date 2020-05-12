@@ -23,7 +23,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 create_test_globalrc '' '
-[hosts]
+[job platforms]
     [[localhost]]
             global init-script = """
             export FOO=foo

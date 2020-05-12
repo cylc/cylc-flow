@@ -53,6 +53,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED,
     TASK_STATUS_RETRYING)
 from cylc.flow.wallclock import get_current_time_string
+from cylc.flow.platform_lookup import forward_lookup
 
 
 class TaskPool(object):
@@ -340,9 +341,10 @@ class TaskPool(object):
         """
         if row_idx == 0:
             LOG.info("LOADING task proxies")
-        (cycle, name, spawned, is_late, status, is_held, submit_num, _,
-         user_at_host, time_submit, time_run, timeout,
-         outputs_str) = row
+        (
+            cycle, name, spawned, is_late, status, is_held, submit_num, _,
+            platform_name, time_submit, time_run, timeout, outputs_str
+        ) = row
         try:
             itask = TaskProxy(
                 self.config.get_taskdef(name),
@@ -365,12 +367,8 @@ class TaskPool(object):
             ):
                 itask.state.set_prerequisites_all_satisfied()
                 # update the task proxy with user@host
-                try:
-                    itask.task_owner, itask.task_host = user_at_host.split(
-                        "@", 1)
-                except (AttributeError, ValueError):
-                    itask.task_owner = None
-                    itask.task_host = user_at_host
+                itask.platform = forward_lookup(platform_name)
+
                 if time_submit:
                     itask.set_summary_time('submitted', time_submit)
                 if time_run:
@@ -421,8 +419,8 @@ class TaskPool(object):
                     except AttributeError:
                         pass
 
-            if user_at_host:
-                itask.summary['job_hosts'][int(submit_num)] = user_at_host
+            if platform_name:
+                itask.summary['job_hosts'][int(submit_num)] = platform_name
             LOG.info("+ %s.%s %s%s" % (
                 name, cycle, status, ' (held)' if is_held else ''))
             self.add_to_runahead_pool(itask, is_new=False)

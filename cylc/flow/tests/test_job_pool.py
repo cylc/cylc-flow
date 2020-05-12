@@ -24,8 +24,11 @@ from cylc.flow.wallclock import get_current_time_string
 
 
 JOB_CONFIG = {
-    'owner': '',
-    'host': 'commet',
+    'platform': {
+        'remote hosts': 'localhost',
+        'name': 'localhost',
+        'batch system': 'background'
+    },
     'submit_num': 3,
     'task_id': 'foo.20130808T00',
     'batch_system_name': 'background',

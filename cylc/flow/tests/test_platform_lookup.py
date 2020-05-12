@@ -39,6 +39,10 @@ PLATFORMS = {
     'hpc2-bg': {
         'remote hosts': 'hpc2',
         'batch system': 'background'
+    },
+    'localhost': {
+        'remote hosts': 'localhost',
+        'batch system': 'background'
     }
 }
 
@@ -58,34 +62,73 @@ PLATFORMS_WITH_RE = {
     'hpc.*': {'login hosts': 'hpc1', 'batch system': 'background'},
     'h.*': {'login hosts': 'hpc3'},
     r'vld\d{2,3}': None,
-    'nu.*': {'batch system': 'slurm'}
+    'nu.*': {'batch system': 'slurm'},
+    'localhost': {
+        'remote hosts': 'localhost',
+        'batch system': 'background'
+    }
 }
 
 
 @pytest.mark.parametrize(
     "PLATFORMS, platform, expected",
-    [(PLATFORMS_WITH_RE, 'nutmeg', 'nutmeg'),
-     (PLATFORMS_WITH_RE, 'vld798', 'vld798'),
-     (PLATFORMS_WITH_RE, 'vld56', 'vld56'),
-     (PLATFORMS_NO_UNIQUE, 'sugar', 'sugar'),
-     (PLATFORMS, None, 'localhost'),
-     (PLATFORMS, 'laptop22', 'laptop22'),
-     (PLATFORMS, 'hpc1-bg', 'hpc1-bg'),
-     (PLATFORMS_WITH_RE, 'hpc2', 'hpc2')
-     ]
+    [
+        (PLATFORMS_WITH_RE, "nutmeg", {
+            "batch system": "slurm",
+            "name": "nutmeg"
+        }),
+        (PLATFORMS_WITH_RE, "vld798", "vld798"),
+        (PLATFORMS_WITH_RE, "vld56", "vld56"),
+        (
+            PLATFORMS_NO_UNIQUE,
+            "sugar",
+            {
+                "login hosts": "localhost",
+                "batch system": "slurm",
+                "name": "sugar"
+            },
+        ),
+        (
+            PLATFORMS,
+            None,
+            {
+                "remote hosts": "localhost",
+                "batch system": "background",
+                "name": "localhost",
+            },
+        ),
+        (PLATFORMS, "laptop22", {
+            "batch system": "background",
+            "name": "laptop22"
+        }),
+        (
+            PLATFORMS,
+            "hpc1-bg",
+            {
+                "remote hosts": "hpc1",
+                "batch system": "background",
+                "name": "hpc1-bg"
+            },
+        ),
+        (PLATFORMS_WITH_RE, "hpc2", {"login hosts": "hpc3", "name": "hpc2"}),
+    ],
 )
 def test_basic(PLATFORMS, platform, expected):
-    assert forward_lookup(PLATFORMS, platform) == expected
+    platform = forward_lookup(platform_name=platform, platforms=PLATFORMS)
+    if type(platform) == dict:
+        assert platform == expected
+    else:
+        assert platform["remote hosts"] == expected
 
 
 def test_platform_not_there():
     with pytest.raises(PlatformLookupError):
-        forward_lookup(PLATFORMS, 'moooo')
+        forward_lookup('moooo', PLATFORMS)
 
 
 def test_similar_but_not_exact_match():
     with pytest.raises(PlatformLookupError):
-        forward_lookup(PLATFORMS_WITH_RE, 'vld1')
+        forward_lookup('vld1', PLATFORMS_WITH_RE)
 
 
 # Basic tests that we can select sensible platforms

@@ -47,7 +47,7 @@ def get_remote_suite_work_dir(platform, suite, *args):
 
 def get_suite_run_dir(suite, *args):
     """Return local suite run directory, join any extra args."""
-    return os.path.expandvars( 
+    return os.path.expandvars(
         os.path.join(
             forward_lookup()['run directory'], suite, *args
         )
@@ -91,7 +91,7 @@ def get_suite_run_share_dir(suite, *args):
 
 def get_suite_run_work_dir(suite, *args):
     """Return local suite work/work directory, join any extra args."""
-    return os.path.expandvars( 
+    return os.path.expandvars(
         os.path.join(
             forward_lookup()['work directory'], suite, 'work', *args
         )

@@ -19,7 +19,7 @@
 . "$(dirname "$0")/test_header"
 set_test_number 4
 
-CYLC_RUN_DIR="$(cylc get-global-config --print-run-dir)"
+CYLC_RUN_DIR="$RUN_DIR"
 BAD_NAME="$(basename "$(mktemp -u "${CYLC_RUN_DIR}/XXXXXXXX")")"
 
 run_fail "${TEST_NAME_BASE}-suite" cylc cat-log -f l "${BAD_NAME}"
