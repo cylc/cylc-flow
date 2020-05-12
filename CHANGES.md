@@ -7,7 +7,8 @@ release.
 
 ## Backward-incompatible changes in Cylc-8.x
 
-Cylc Review was also removed in this version.
+Cylc 8.0aX (alpha) releases are not compatible with Cylc 7 or with previous
+8.0aX releases, as the API is still under heavy development.
 
 The Cylc server program and CLI codebase is now a Python 3 package that can be
 installed from PyPI with `pip` (see #2990), and has been renamed to
@@ -17,13 +18,8 @@ to allow other projects to re-use it and extend Cylc with plug-ins.
 The old PyGTK GUI is being replaced by a Web UI, with development managed in
 the cylc/cylc-ui repository (and see also cylc/cylc-uiserver).
 
-The User Guide an other documention has been removed from the Python package to
+The User Guide and other documention has been removed from the Python package to
 the cylc/cylc-doc repository.
-
-### Fixes
-
-Cylc 8.0aX (alpha) releases are not compatible with Cylc 7 or with previous
-8.0aX releases, as the API is still under heavy development.
 
 The commands `cylc-profile-battery`, `cylc-test-battery`, `cylc-license`
 have been removed, and `cylc graph` is only retained for text output
@@ -35,13 +31,7 @@ The xtrigger examples were moved to a separate `cylc/cylc-xtriggers` project
 Jinja filters were moved from its `Jinja2Filters` folder to within the `cylc`
 namespace, under `cylc.jinja.filters`.
 
-[#3541](https://github.com/cylc/cylc-flow/pull/3541) - Don't warn that a task
-was already added to an internal queue, if the queue is the same.
-
-[#3602](https://github.com/cylc/cylc-flow/pull/3602) - Fix a bug that prevented
-cycle point format conversion by the `cylc suite-state` command and the
-`suite_state` xtrigger function, if the target suite used the default format
-but downstream command or suite did not.
+Cylc Review was also removed in this version.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0a2 (2019-Q4?)__
@@ -67,6 +57,18 @@ A new terminal user interface to replace the old `cylc monitor`.
 An interactive collapsible tree to match the new web interface.
 
 ### Fixes
+
+[#3596](https://github.com/cylc/cylc-flow/pull/3596) - Fix a bug that could
+prevent housekeeping of the task_action_timers DB table and cause many warnings
+at restart.
+
+[#3602](https://github.com/cylc/cylc-flow/pull/3602) - Fix a bug that prevented
+cycle point format conversion by the `cylc suite-state` command and the
+`suite_state` xtrigger function, if the target suite used the default format
+but downstream command or suite did not.
+
+[#3541](https://github.com/cylc/cylc-flow/pull/3541) - Don't warn that a task
+was already added to an internal queue, if the queue is the same.
 
 [#3409](https://github.com/cylc/cylc-flow/pull/3409) - prevent cylc-run from
 creating directories when executed for suites that do not exist.
