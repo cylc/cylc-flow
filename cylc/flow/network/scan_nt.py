@@ -14,198 +14,234 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from contextlib import contextmanager
+import asyncio
+import functools
 from pathlib import Path
 import re
-import time
-from queue import Queue
 
-from watchdog.observers import Observer
-from watchdog.events import RegexMatchingEventHandler
+from pkg_resources import (
+    parse_requirements,
+    parse_version
+)
 
+from cylc.flow import LOG
+from cylc.flow.async_util import (
+    Pipe,
+    asyncqgen,
+    scandir
+)
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
-from cylc.flow.suite_files import SuiteFiles
-
-
-__all__ = ('scan', 'continuous_scan')
-
-
-class FlowScanner(RegexMatchingEventHandler):
-    """Continuous Cylc flow scanner, use via continuous_scan.
-
-    Uses filesystem events via the watchdog python library.
-
-    Args:
-        observer (watchdog.observers.Observer):
-            An observer instance to use for scanning.
-        started (queue.Queue):
-            The queue that newly started flows will be added to.
-        stopped (queue.Queue):
-            The queue that stopped flows will be added to.
-        flow (str):
-            For internal use.
-        service (bool):
-            for internal use.
-
-    """
-
-    def __init__(
-            self,
-            observer,
-            started,
-            stopped,
-            flow=None,
-            service=False,
-            **kwargs
-    ):
-        self.observer = observer
-        self.started = started
-        self.stopped = stopped
-        self.flow = flow
-        self.service = service
-        RegexMatchingEventHandler.__init__(self, **kwargs)
-
-    def on_created(self, event):
-        if not self.flow and event.is_directory:
-            flow = Path(event.src_path).name
-            self.observer.schedule(
-                FlowScanner(
-                    self.observer,
-                    self.started,
-                    self.stopped,
-                    flow=flow,
-                    regexes=['.*service']
-                ),
-                event.src_path
-            )
-        elif self.flow and not self.service:
-                self.observer.schedule(
-                    FlowScanner(
-                        self.observer,
-                        self.started,
-                        self.stopped,
-                        flow=self.flow,
-                        service=True,
-                        regexes=['.*contact']
-                    ),
-                    event.src_path
-                )
-        elif self.service:
-            self.started.put(self.flow)
-
-    def on_deleted(self, event):
-        flow = self.flow or Path(event.src_path).name
-        self.stopped.put(flow)
-        # stop the observer observing?
-
-
-@contextmanager
-def continuous_scan(path=None, patterns=None):
-    """
-    """
-    try:
-        started = Queue()
-        stopped = Queue()
-        kwargs = {}
-        if patterns:
-            kwargs['regexes'] = patterns
-        event_handler = FlowScanner(observer, started, stopped, **kwargs)
-        observer.schedule(event_handler, path)
-        observer.start()
-        print('# started')
-        yield started, stopped
-    finally:
-        observer.stop()
-        observer.join()
-        print('# stopped')
-
-
-# with cont_scan('.') as (started, stopped):
-#     time.sleep(10)
-#     print('started:')
-#     while not started.empty():
-#         print(started.get())
-#     print('stopped:')
-#     while not stopped.empty():
-#         print(stopped.get())
-
-
-
-def regex_combine(patterns):
-    """Join regex patterns.
-
-    Examples:
-        >>> regex_combine(['a', 'b', 'c'])
-        '(a|b|c)'
-
-    """
-    return rf'({"|".join(patterns)})'
-
-
-def scan(path=None, patterns=None, is_active=None):
-    if patterns:
-        patterns = re.compile(regex_combine(patterns))
-    service = Path(SuiteFiles.Service.DIRNAME)
-    contact = Path(SuiteFiles.Service.CONTACT)
-    run_dir = path or Path(
-        glbl_cfg().get_host_item('run directory').replace('$HOME', '~')
-    ).expanduser()
-    stack = [
-        subdir
-        for subdir in run_dir.iterdir()
-        if subdir.is_dir()
-    ]
-    for path in stack:
-        name = str(path.relative_to(run_dir))
-        if (path / service).exists():
-            # this is a flow directory
-
-            # check if it's name matches the patterns if provided
-            if patterns and not patterns.fullmatch(name):
-                continue
-
-            # check if the suite state matches is_active
-            if (
-                    is_active is not None
-                    and (path / service / contact).exists() != is_active
-            ):
-                continue
-
-            # we have a hit
-            yield name
-        else:
-            # we may have a nested flow, lets see...
-            stack.extend([
-                subdir
-                for subdir in path.iterdir()
-                if subdir.is_dir()
-            ])
-
-
-
-from textwrap import dedent
-
 from cylc.flow.network.client import (
     SuiteRuntimeClient, ClientError, ClientTimeout)
+from cylc.flow.suite_files import (
+    ContactFileFields,
+    SuiteFiles,
+    load_contact_file
+)
 
 
-# async def state_info(reg, fields):
-#     query = f'query {{ workflows(ids: ["{reg}"]) {{ {"\n".join(fields)} }} }}'
-#     client = SuiteRuntimeClient(reg)
-#     try:
-#         ret = await client(
-#             'graphql',
-#             {
-#                 'request_string': query,
-#                 'variables': {}
-#             }
-#         )
-#     except ClientTimeout as exc:
-#         LOG.exception(
-#             "Timeout: name:%s, host:%s, port:%s", reg, host, port)
-#         return {}
-#     except ClientError as exc:
-#         LOG.exception("ClientError")
-#         return {}
-#     else:
-#         return ret
+SERVICE = Path(SuiteFiles.Service.DIRNAME)
+CONTACT = Path(SuiteFiles.Service.CONTACT)
+SUITERC = Path(SuiteFiles.SUITE_RC)
+
+
+async def dir_is_flow(listing):
+    """Return True if a Path contains a flow at the top level.
+
+    Args:
+        listing (list):
+            A listing of the directory in question as a list of
+            ``pathlib.Path`` objects.
+
+    Returns:
+        bool - True if the listing indicates that this is a flow directory.
+
+    """
+    listing = {
+        path.name
+        for path in listing
+    }
+    return (
+        SERVICE.name in listing
+        or SUITERC.name in listing  # cylc7 flow definition file name
+        or 'flow.cylc' in listing  # cylc8 flow definition file name
+        or 'log' in listing
+    )
+
+
+@Pipe
+async def scan(run_dir=None):
+    """List flows installed on the filesystem.
+
+    This is an async generator so use and async for to extract results::
+
+        async for flow in scan(directory):
+            print(flow['name'])
+
+    Args:
+        directory (pathlib.Path):
+            The directory to scan, defaults to the cylc run directory.
+
+    Yields:
+        dict - Dictionary containing information about the flow.
+
+    """
+    if not run_dir:
+        run_dir = Path(
+            glbl_cfg().get_host_item('run directory').replace('$HOME', '~')
+        ).expanduser()
+    stack = asyncio.Queue()
+    for subdir in await scandir(run_dir):
+        if subdir.is_dir():
+            await stack.put(subdir)
+
+    # for path in stack:
+    async for path in asyncqgen(stack):
+        contents = await scandir(path)
+        if await dir_is_flow(contents):
+            # this is a flow directory
+            yield {
+                'name': str(path.relative_to(run_dir)),
+                'path': path,
+            }
+        else:
+            # we may have a nested flow, lets see...
+            for subdir in contents:
+                if subdir.is_dir():
+                    await stack.put(subdir)
+
+
+def regex_joiner(pipe):
+    """Pre process arguments for filter_name."""
+    @functools.wraps(pipe)
+    def _regex_joiner(*patterns):
+        pipe.args = (re.compile(rf'({"|".join(patterns)})'),)
+        return pipe
+    return _regex_joiner
+
+
+@regex_joiner
+@Pipe
+async def filter_name(flow, pattern):
+    """Filter flows by name.
+
+    Args:
+        flow (dict):
+            Flow information dictionary, provided by scan through the pipe.
+        *pattern (str):
+            One or more regex patterns as strings.
+            This will return True if any of the patterns match.
+
+    """
+    return bool(pattern.match(flow['name']))
+
+
+@Pipe
+async def is_active(flow, is_active):
+    """Filter flows by the presence of a contact file.
+
+    Args:
+        flow (dict):
+            Flow information dictionary, provided by scan through the pipe.
+        is_active (bool):
+            True to filter for running flows.
+            False to filter for stopped and unregistered flows.
+
+    """
+    flow['contact'] = flow['path'] / SERVICE / CONTACT
+    return flow['contact'].exists() == is_active
+
+
+@Pipe
+async def contact_info(flow):
+    """Read information from the contact file.
+
+    Requires:
+        * is_active(True)
+
+    Args:
+        flow (dict):
+            Flow information dictionary, provided by scan through the pipe.
+
+    """
+    flow.update(
+        load_contact_file(flow['name'], path=flow['path'])
+    )
+    return flow
+
+
+def requirement_parser(pipe):
+    """Pre-process arguments for cylc_version.
+
+    This way we parse the requirement once when we assemble the pipe
+    rather than for each call
+
+    """
+    @functools.wraps(pipe)
+    def _requirement_parser(req_string):
+        nonlocal pipe
+        for req in parse_requirements(f'cylc_flow {req_string}'):
+            pipe.args = (req,)
+        return pipe
+    return _requirement_parser
+
+
+@requirement_parser
+@Pipe
+async def cylc_version(flow, requirement):
+    """Filter by cylc version.
+
+    Requires:
+        * contact_info
+
+    Args:
+        flow (dict):
+            Flow information dictionary, provided by scan through the pipe.
+        requirement (str):
+            Requirement specifier in pkg_resources format e.g. > 8, < 9
+
+    """
+    return parse_version(flow[ContactFileFields.VERSION]) in requirement
+
+
+@Pipe
+async def query(flow, fields):
+    """Obtain information from a GraphQL request to the flow.
+
+    Args:
+        flow (dict):
+            Flow information dictionary, provided by scan through the pipe.
+        fields (list):
+            List of GraphQL fields on the `Workflow` object to request from
+            the flow.
+
+    """
+    field_str = '\n'.join(fields)
+    query = f'query {{ workflows(ids: ["{flow["name"]}"]) {{ {field_str} }} }}'
+    client = SuiteRuntimeClient(
+        flow['name'],
+        # use contact_info data if present for efficiency
+        host=flow.get('CYLC_SUITE_HOST'),
+        port=flow.get('CYLC_SUITE_PORT')
+    )
+    try:
+        ret = await client(
+            'graphql',
+            {
+                'request_string': query,
+                'variables': {}
+            }
+        )
+    except ClientTimeout:
+        LOG.exception(
+            f'Timeout: name: {flow["name"]}, '
+            f'host: {client.host}, '
+            f'port: {client.port}'
+        )
+        return False
+    except ClientError as exc:
+        LOG.exception(exc)
+        return False
+    else:
+        breakpoint()
+        return ret

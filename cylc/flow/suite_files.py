@@ -381,10 +381,13 @@ def get_suite_srv_dir(reg, suite_owner=None):
     return os.path.join(run_d, SuiteFiles.Service.DIRNAME)
 
 
-def load_contact_file(reg, owner=None, host=None):
+def load_contact_file(reg, path=None, owner=None, host=None):
     """Load contact file. Return data as key=value dict."""
     file_base = SuiteFiles.Service.CONTACT
-    path = get_suite_srv_dir(reg)
+    if path:
+        path = path / SuiteFiles.Service.DIRNAME
+    else:
+        path = get_suite_srv_dir(reg)
     file_content = _load_local_item(file_base, path)
     if file_content:
         data = {}
