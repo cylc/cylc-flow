@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test suite shuts down with error on missing port file
+# Test suite shuts down with error on missing run directory
 . "$(dirname "$0")/test_header"
 set_test_number 3
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
@@ -35,9 +35,13 @@ SYM_SUITE_NAME="${SUITE_NAME}-sym"
 ln -s "$(basename "${SUITE_NAME}")" "${SYM_SUITE_RUND}"
 suite_run_fail "${TEST_NAME_BASE}-run" \
     cylc run --no-detach ${OPT_SET} "${SYM_SUITE_NAME}"
-grep_ok "No such file or directory: '${SYM_SUITE_RUND}'" \
-    "${SUITE_RUN_DIR}/log/suite/log".*
-
+# Possible failure modes:
+# - health check detects missing run directory
+# - DB housekeeping cannot access DB because run directory missing
+# - (TODO: if other failure modes show up, add to the list here!)
+FAIL1="No such file or directory: ${SYM_SUITE_RUND}"
+FAIL2="OperationalError: unable to open database file"
+grep_ok "(${FAIL1}|${FAIL2})" "${SUITE_RUN_DIR}/log/suite/log".* -E
 rm -f "${SYM_SUITE_RUND}"
 purge_suite "${SUITE_NAME}"
 exit

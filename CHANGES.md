@@ -22,6 +22,14 @@ cylc-7.9.x (which requires Python 2.7) bundles Jinja2 2.11.
 cylc-8 (master branch, Python 3 - not yet released) uses proper Python package
 management and does not bundle Jinja2.
 
+-------------------------------------------------------------------------------
+## __cylc-7.8.6 (2020-05-??)__
+
+### Fixes
+
+[#3597](https://github.com/cylc/cylc-flow/pull/3597) - Fix a bug that could
+prevent housekeeping of the task_action_timers DB table and cause many warnings
+at restart.
 
 [#3603](https://github.com/cylc/cylc-flow/pull/3603) - Fix a bug that prevented
 cycle point format conversion by the `cylc suite-state` command and the
