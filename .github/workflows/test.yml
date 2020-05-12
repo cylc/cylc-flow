@@ -11,7 +11,7 @@ jobs:
         python-version: ['3.7']
     steps:
       - name: Checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
 
       - name: Configure Python
         uses: actions/setup-python@v1
@@ -55,7 +55,7 @@ jobs:
       CHUNK: ${{ matrix.tests[1] }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
 
       - name: Configure Python
         uses: actions/setup-python@v1

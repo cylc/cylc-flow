@@ -58,8 +58,9 @@
 #     contains_ok FILE_TEST [FILE_CONTROL]
 #         Make sure that each line in FILE_TEST is present in FILE_CONTROL
 #         (stdin if FILE_CONTROL is "-" or missing).
-#     grep_ok PATTERN FILE
-#         Run "grep -q -e PATTERN FILE".
+#     grep_ok PATTERN FILE [$OPTS]
+#         Run "grep [$OPTS] -q -e PATTERN FILE".
+#         OPTS: put grep options like '-E' (extended regex) at end of line.
 #     grep_fail PATTERN FILE
 #         Run "grep -q -e PATTERN FILE", expect no match.
 #     count_ok PATTERN FILE COUNT
@@ -324,11 +325,14 @@ count_ok() {
 }
 
 grep_ok() {
+    # (Put extra grep options like '-E' at end of the command line)
     local BRE="$1"
     local FILE="$2"
+    shift 2
+    OPTS="$*"
     local TEST_NAME
     TEST_NAME="$(basename "${FILE}")-grep-ok"
-    if grep -q -e "${BRE}" "${FILE}"; then
+    if grep "${OPTS}" -q -e "${BRE}" "${FILE}"; then
         ok "${TEST_NAME}"
         return
     fi
