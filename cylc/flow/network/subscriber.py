@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Subscriber for published suite output."""
 
+import asyncio
 import json
 import sys
 from time import sleep
@@ -24,6 +25,8 @@ import zmq
 
 from cylc.flow.network import ZMQSocketBase, get_location
 from cylc.flow.data_store_mgr import DELTAS_MAP
+
+NO_RECEIVE_INTERVAL = 0.5
 
 
 def process_delta_msg(btopic, delta_msg, func, *args, **kwargs):
@@ -95,8 +98,10 @@ class WorkflowSubscriber(ZMQSocketBase):
             if self.stopping:
                 break
             try:
-                [topic, msg] = await self.socket.recv_multipart()
-            except zmq.error.ZMQError:
+                [topic, msg] = await self.socket.recv_multipart(
+                    flags=zmq.NOBLOCK)
+            except zmq.ZMQError:
+                await asyncio.sleep(NO_RECEIVE_INTERVAL)
                 continue
             if callable(msg_handler):
                 msg_handler(topic, msg, *args, **kwargs)
