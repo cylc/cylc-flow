@@ -23,7 +23,7 @@ cylc-8 (master branch, Python 3 - not yet released) uses proper Python package
 management and does not bundle Jinja2.
 
 -------------------------------------------------------------------------------
-## __cylc-7.8.6 (2020-05-??)__
+## __cylc-7.8.6 (2020-05-14)__
 
 ### Fixes
 
