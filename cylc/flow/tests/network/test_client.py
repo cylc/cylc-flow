@@ -24,7 +24,7 @@ import zmq
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.network.server import SuiteRuntimeServer, PB_METHOD_MAP
 from cylc.flow.network.client import SuiteRuntimeClient
-from cylc.flow.suite_files import create_auth_files
+from cylc.flow.tests.network.key_setup import setup_keys
 from cylc.flow.tests.util import CylcWorkflowTestCase, create_task_proxy
 from cylc.flow.data_store_mgr import DataStoreMgr
 
@@ -75,7 +75,7 @@ class TestSuiteRuntimeClient(CylcWorkflowTestCase):
         self.task_pool.release_runahead_tasks()
         self.scheduler.data_store_mgr.initiate_data_model()
         self.workflow_id = self.scheduler.data_store_mgr.workflow_id
-        create_auth_files(self.suite_name)  # auth keys are required for comms
+        setup_keys(self.suite_name)
         barrier = Barrier(2, timeout=20)
         self.server = SuiteRuntimeServer(
             self.scheduler,

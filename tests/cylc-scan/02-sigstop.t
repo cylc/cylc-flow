@@ -33,7 +33,7 @@ sleep 1
 run_ok "${TEST_NAME_BASE}-scan" cylc scan
 # ensure there is no traceback
 grep_ok "TIMEOUT" "${TEST_NAME_BASE}-scan.stdout"
-grep_ok "Timeout waiting for server response" "${TEST_NAME_BASE}-scan.stderr"
+grep_ok "Timeout waiting for server response. This could be due to network or server issues. Check the suite log." "${TEST_NAME_BASE}-scan.stderr"
 # Tell the suite to continue
 kill -SIGCONT "${SUITE_PID}"
 sleep 1

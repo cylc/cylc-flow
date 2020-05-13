@@ -28,6 +28,7 @@ from cylc.flow.pathutil import get_suite_run_dir
 from cylc.flow.remote import remrun, remote_cylc_cmd
 from cylc.flow.scheduler import Scheduler
 from cylc.flow import suite_files
+from cylc.flow.suite_files import (KeyInfo, KeyOwner, KeyType)
 from cylc.flow.resources import extract_resources
 from cylc.flow.terminal import cli_function
 
@@ -257,9 +258,6 @@ def scheduler_cli(parser, options, args, is_restart=False):
                          f'at: {suite_run_dir}\n')
         sys.exit(1)
 
-    # Create auth files if needed.
-    suite_files.create_auth_files(reg)
-
     # Extract job.sh from library, for use in job scripts.
     extract_resources(
         suite_files.get_suite_srv_dir(reg),
@@ -276,6 +274,28 @@ def scheduler_cli(parser, options, args, is_restart=False):
             # Prevent recursive host selection
             base_cmd.append("--host=localhost")
             return remote_cylc_cmd(base_cmd, host=host)
+    suite_srv_dir = suite_files.get_suite_srv_dir(reg)
+    keys = {
+        "client_public_key": KeyInfo(
+            KeyType.PUBLIC,
+            KeyOwner.CLIENT,
+            suite_srv_dir=suite_srv_dir, platform=host),
+        "client_private_key": KeyInfo(
+            KeyType.PRIVATE,
+            KeyOwner.CLIENT,
+            suite_srv_dir=suite_srv_dir),
+        "server_public_key": KeyInfo(
+            KeyType.PUBLIC,
+            KeyOwner.SERVER,
+            suite_srv_dir=suite_srv_dir),
+        "server_private_key": KeyInfo(
+            KeyType.PRIVATE,
+            KeyOwner.SERVER,
+            suite_srv_dir=suite_srv_dir)
+    }
+    # Clean any existing authentication keys and create new ones.
+    suite_files.remove_keys_on_server(keys)
+    suite_files.create_server_keys(keys, suite_srv_dir)
     if remrun(set_rel_local=True):  # State localhost as above.
         sys.exit()
 
