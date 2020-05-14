@@ -15,21 +15,30 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Common logic for "cylc run" and "cylc restart" CLI."""
 
-from functools import partial
+import asyncio
+from collections import namedtuple
+from functools import partial, lru_cache
+from itertools import zip_longest
 import os
 import sys
 
-import cylc.flow.flags
+from cylc.flow import LOG, __version__ as CYLC_VERSION
+from cylc.flow.daemonize import daemonize
 from cylc.flow.exceptions import SuiteServiceFileError
 from cylc.flow.host_select import select_suite_host
 from cylc.flow.hostuserutil import is_remote_host
-from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.loggingutil import TimestampRotatingFileHandler
+from cylc.flow.option_parsers import (
+    CylcOptionParser as COP,
+    Options
+)
 from cylc.flow.pathutil import get_suite_run_dir
 from cylc.flow.remote import remrun, remote_cylc_cmd
 from cylc.flow.scheduler import Scheduler
 from cylc.flow import suite_files
-from cylc.flow.resources import extract_resources
 from cylc.flow.terminal import cli_function
+
+
 
 RUN_DOC = r"""cylc [control] run|start [OPTIONS] [ARGS]
 
@@ -77,6 +86,7 @@ START_POINT_ARG_DOC = (
     "overrides the suite definition.")
 
 
+@lru_cache()
 def get_option_parser(is_restart):
     """Parse CLI for "cylc run" or "cylc restart"."""
     if is_restart:
@@ -231,6 +241,25 @@ def get_option_parser(is_restart):
     return parser
 
 
+def optparse2namedtuple(parser, name, extras):
+    defaults = {**parser.defaults, **extras}
+    return namedtuple(name, defaults, defaults=defaults.values())
+    # name, parser.defaults, defaults=parser.defaults.values())
+
+
+# options we cannot simply extract from the parser
+DEFAULT_OPTS = {
+    'debug': False,
+    'verbose': False,
+    'templatevars': None,
+    'templatevars_file': None
+}
+
+
+RunOptions = Options(get_option_parser(False), DEFAULT_OPTS)
+RestartOptions = Options(get_option_parser(True), DEFAULT_OPTS)
+
+
 def _auto_register():
     """Register a suite installed in the cylc-run directory."""
     try:
@@ -239,6 +268,59 @@ def _auto_register():
         sys.exit(exc)
     # Replace this process with "cylc run REG ..." for 'ps -f'.
     os.execv(sys.argv[0], [sys.argv[0]] + [reg] + sys.argv[1:])
+
+
+def _open_logs(reg, no_detach):
+    """Open Cylc log handlers for a flow run."""
+    if not no_detach:
+        while LOG.handlers:
+            LOG.handlers[0].close()
+            LOG.removeHandler(LOG.handlers[0])
+    LOG.addHandler(TimestampRotatingFileHandler(reg, no_detach))
+
+
+def _close_logs():
+    """Close Cylc log handlers for a flow run."""
+    LOG.info("DONE")  # main thread exit
+    for handler in LOG.handlers:
+        try:
+            handler.close()
+        except IOError:
+            # suppress traceback which `logging` might try to write to the
+            # log we are trying to close
+            pass
+
+
+def _start_print_blurb():
+    """Print copyright and license information."""
+    logo = (
+        "            ._.       \n"
+        "            | |       \n"
+        "._____._. ._| |_____. \n"
+        "| .___| | | | | .___| \n"
+        "| !___| !_! | | !___. \n"
+        "!_____!___. |_!_____! \n"
+        "      .___! |         \n"
+        "      !_____!         \n"
+    )
+    cylc_license = """
+The Cylc Suite Engine [%s]
+Copyright (C) 2008-2019 NIWA
+& British Crown (Met Office) & Contributors.
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+This program comes with ABSOLUTELY NO WARRANTY.
+It is free software, you are welcome to
+redistribute it under certain conditions;
+see `COPYING' in the Cylc source distribution.
+""" % CYLC_VERSION
+
+    logo_lines = logo.splitlines()
+    license_lines = cylc_license.splitlines()
+    lmax = max(len(line) for line in license_lines)
+    print(('\n'.join((
+        ('{0} {1: ^%s}' % lmax).format(*x) for x in zip_longest(
+            logo_lines, license_lines, fillvalue=' ' * (
+                len(logo_lines[-1]) + 1))))))
 
 
 def scheduler_cli(parser, options, args, is_restart=False):
@@ -251,19 +333,10 @@ def scheduler_cli(parser, options, args, is_restart=False):
         sys.exit(exc)
 
     suite_run_dir = get_suite_run_dir(reg)
-
     if not os.path.exists(suite_run_dir):
         sys.stderr.write(f'suite service directory not found '
                          f'at: {suite_run_dir}\n')
         sys.exit(1)
-
-    # Create auth files if needed.
-    suite_files.create_auth_files(reg)
-
-    # Extract job.sh from library, for use in job scripts.
-    extract_resources(
-        suite_files.get_suite_srv_dir(reg),
-        ['etc/job.sh'])
 
     # Check whether a run host is explicitly specified, else select one.
     if not options.host:
@@ -279,17 +352,45 @@ def scheduler_cli(parser, options, args, is_restart=False):
     if remrun(set_rel_local=True):  # State localhost as above.
         sys.exit()
 
+    # initalise the scheduler
     try:
-        suite_files.get_suite_source_dir(args[0], options.owner)
-    except SuiteServiceFileError:
-        # Source path is assumed to be the run directory
-        suite_files.register(args[0], get_suite_run_dir(args[0]))
-
-    try:
-        scheduler = Scheduler(is_restart, options, args)
+        scheduler = Scheduler(reg, options, is_restart=is_restart)
     except SuiteServiceFileError as exc:
         sys.exit(exc)
-    scheduler.start()
+
+    # print the start message
+    if options.no_detach or options.format == 'plain':
+        _start_print_blurb()
+
+    # daemonise if requested
+    if not options.no_detach:
+        daemonize(scheduler)
+
+    # settup loggers
+    _open_logs(reg, options.no_detach)
+
+    # run cylc run
+    loop = asyncio.get_event_loop()
+    try:
+        loop.run_until_complete(
+            scheduler.start()
+        )
+
+    # stop cylc stop
+    except KeyboardInterrupt as exc:
+        try:
+            loop.run_until_complete(
+                scheduler.shutdown(exc)
+            )
+        except Exception as exc2:
+            # In case of exceptions in the shutdown method itself.
+            LOG.exception(exc2)
+            raise exc2 from None
+    except Exception:
+        # suppress the exception to prevent it appearing in the log
+        pass
+    finally:
+        _close_logs()
 
 
 def main(is_restart=False):

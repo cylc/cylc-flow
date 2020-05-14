@@ -16,7 +16,7 @@
 """Common options for all cylc commands."""
 
 import logging
-from optparse import OptionParser, OptionConflictError
+from optparse import OptionParser, OptionConflictError, Values
 import os
 import sys
 
@@ -300,3 +300,55 @@ match name and cycle point patterns against instances already in the pool).
         LOG.addHandler(errhandler)
 
         return (options, args)
+
+
+class Options(Values):
+    """Wrapper to allow Python API access to optparse CLI functionality.
+
+    Example:
+        Create an optparse parser as normal:
+        >>> import optparse
+        >>> parser = optparse.OptionParser()
+        >>> _ = parser.add_option('-a', default=1)
+        >>> _ = parser.add_option('-b', default=2)
+
+        Create an Options object from the parser:
+        >>> PythonOptions = Options(parser, overrides={'c': 3})
+
+        "Parse" options via Python API:
+        >>> opts = PythonOptions(a=4)
+
+        Access options as normal:
+        >>> opts.a
+        4
+        >>> opts.b
+        2
+        >>> opts.c
+        3
+
+        Optparse allows you to create new options on the fly:
+        >>> opts.d = 5
+        >>> opts.d
+        5
+
+        But you can't create new options at initiation, this gives us basic
+        input validation:
+        >>> opts(e=6)
+        Traceback (most recent call last):
+        ValueError: e
+
+    """
+
+    def __init__(self, parser, overrides=None):
+        if overrides is None:
+            overrides = {}
+        defaults = {**parser.defaults, **overrides}
+        Values.__init__(self, defaults)
+
+    def __call__(self, **kwargs):
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+            else:
+                raise ValueError(key)
+        return self

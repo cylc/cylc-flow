@@ -17,7 +17,6 @@
 
 import asyncio
 from collections import deque
-from itertools import zip_longest
 import logging
 import os
 from shlex import quote
@@ -70,11 +69,13 @@ from cylc.flow.pathutil import (
     make_suite_run_tree,
 )
 from cylc.flow.profiler import Profiler
+from cylc.flow.resources import extract_resources
 from cylc.flow.state_summary_mgr import StateSummaryMgr
 from cylc.flow.subprocpool import SubProcPool
 from cylc.flow.suite_db_mgr import SuiteDatabaseManager
 from cylc.flow.suite_events import (
     SuiteEventContext, SuiteEventHandler)
+from cylc.flow.exceptions import SuiteServiceFileError
 from cylc.flow.suite_status import StopMode, AutoRestartMode
 from cylc.flow import suite_files
 from cylc.flow.taskdef import TaskDef
@@ -91,7 +92,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_FAILED)
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow import __version__ as CYLC_VERSION
-from cylc.flow.data_store_mgr import DataStoreMgr
+from cylc.flow.data_store_mgr import DataStoreMgr, ID_DELIM
 from cylc.flow.wallclock import (
     get_current_time_string,
     get_seconds_as_interval_string,
@@ -121,7 +122,7 @@ class SchedulerUUID(object):
         return self.value
 
 
-class Scheduler(object):
+class Scheduler:
     """Cylc scheduler server."""
 
     EVENT_STARTUP = SuiteEventHandler.EVENT_STARTUP
@@ -160,12 +161,14 @@ class Scheduler(object):
         'reload_suite'
     )
 
-    def __init__(self, is_restart, options, args):
+    def __init__(self, reg, options, is_restart=False):
+        self.suite = reg
+        self.owner = get_user()
+        self.host = get_host()
+        self.id = f'{self.owner}{ID_DELIM}{self.suite}'
+
         self.options = options
-        if self.options.no_detach:
-            self.options.format = 'plain'
         self.profiler = Profiler(self.options.profile_mode)
-        self.suite = args[0]
         self.uuid_str = SchedulerUUID()
         self.suite_dir = suite_files.get_suite_source_dir(
             self.suite)
@@ -185,9 +188,6 @@ class Scheduler(object):
         self.is_restart = is_restart
         self.template_vars = load_template_vars(
             self.options.templatevars, self.options.templatevars_file)
-
-        self.owner = get_user()
-        self.host = get_host()
 
         self.is_updated = False
         self.is_stalled = False
@@ -249,19 +249,33 @@ class Scheduler(object):
 
         self.main_loop_plugins = None
 
-    def start(self):
-        """Start the server."""
-        if self.options.format == 'plain':
-            self._start_print_blurb()
+        self.prepare()
+        # create thread sync barrier for setup
+        self.barrier = Barrier(3, timeout=10)
 
         make_suite_run_tree(self.suite)
 
         if self.is_restart:
             self.suite_db_mgr.restart_upgrade()
+
+    def prepare(self):
         try:
-            if not self.options.no_detach:
-                daemonize(self)
-            self._setup_suite_logger()
+            suite_files.get_suite_source_dir(self.suite)  #, self.options.owner)
+        except SuiteServiceFileError:
+            # Source path is assumed to be the run directory
+            suite_files.register(self.suite, get_suite_run_dir(self.suite))
+
+        # Create auth files if needed.
+        suite_files.create_auth_files(self.suite)
+
+        # Extract job.sh from library, for use in job scripts.
+        extract_resources(
+            suite_files.get_suite_srv_dir(self.suite),
+            ['etc/job.sh'])
+
+    async def start(self):
+        """Start the server."""
+        try:
             self.data_store_mgr = DataStoreMgr(self)
 
             # *** Network Related ***
@@ -287,123 +301,62 @@ class Scheduler(object):
                 domain='*',
                 location=(client_pub_key_dir)
             )
-            # create thread sync barrier for setup
-            barrier = Barrier(3, timeout=10)
+
             port_range = glbl_cfg().get(['suite servers', 'run ports'])
             self.server = SuiteRuntimeServer(
-                self, context=self.zmq_context, barrier=barrier)
+                self, context=self.zmq_context, barrier=self.barrier)
             self.server.start(port_range[0], port_range[-1])
             self.publisher = WorkflowPublisher(
-                self.suite, context=self.zmq_context, barrier=barrier)
+                self.suite, context=self.zmq_context, barrier=self.barrier)
             self.publisher.start(port_range[0], port_range[-1])
             # wait for threads to setup socket ports before continuing
-            barrier.wait()
+            self.barrier.wait()
             self.port = self.server.port
             self.pub_port = self.publisher.port
 
-            self.configure()
+            await self.configure()
             self.profiler.start()
-            self.run()
+            self.initialise_scheduler()
+            self.data_store_mgr.initiate_data_model()
+            await self.publisher.publish(
+                self.data_store_mgr.get_publish_deltas()
+            )
+            await self.main_loop()
+
         except SchedulerStop as exc:
             # deliberate stop
-            self.shutdown(exc)
+            await self.shutdown(exc)
             if self.auto_restart_mode == AutoRestartMode.RESTART_NORMAL:
                 self.suite_auto_restart()
             # run shutdown coros
-            asyncio.get_event_loop().run_until_complete(
-                asyncio.gather(
-                    *main_loop.get_runners(
-                        self.main_loop_plugins,
-                        main_loop.CoroTypes.ShutDown,
-                        self
-                    )
+            await asyncio.gather(
+                *main_loop.get_runners(
+                    self.main_loop_plugins,
+                    main_loop.CoroTypes.ShutDown,
+                    self
                 )
             )
-            self.close_logs()
+            raise exc from None
 
         except SchedulerError as exc:
-            self.shutdown(exc)
-            self.close_logs()
-            sys.exit(1)
-
-        except KeyboardInterrupt as exc:
-            try:
-                self.shutdown(exc)
-            except Exception as exc2:
-                # In case of exceptions in the shutdown method itself.
-                LOG.exception(exc2)
-                sys.exit(1)
-            self.close_logs()
+            await self.shutdown(exc)
 
         except Exception as exc:
             try:
-                self.shutdown(exc)
+                await self.shutdown(exc)
             except Exception as exc2:
                 # In case of exceptions in the shutdown method itself
                 LOG.exception(exc2)
-            self.close_logs()
-            raise exc
+            raise exc from None
 
         else:
             # main loop ends (not used?)
-            self.shutdown(SchedulerStop(StopMode.AUTO.value))
-            self.close_logs()
+            await self.shutdown(SchedulerStop(StopMode.AUTO.value))
 
-    def close_logs(self):
-        """Close the Cylc logger."""
-        LOG.info("DONE")  # main thread exit
-        self.profiler.stop()
-        for handler in LOG.handlers:
-            try:
-                handler.close()
-            except IOError:
-                # suppress traceback which `logging` might try to write to the
-                # log we are trying to close
-                pass
+        finally:
+            self.profiler.stop()
 
-    @staticmethod
-    def _start_print_blurb():
-        """Print copyright and license information."""
-        logo = (
-            "            ._.       \n"
-            "            | |       \n"
-            "._____._. ._| |_____. \n"
-            "| .___| | | | | .___| \n"
-            "| !___| !_! | | !___. \n"
-            "!_____!___. |_!_____! \n"
-            "      .___! |         \n"
-            "      !_____!         \n"
-        )
-        cylc_license = """
-The Cylc Suite Engine [%s]
-Copyright (C) 2008-2019 NIWA
-& British Crown (Met Office) & Contributors.
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
-This program comes with ABSOLUTELY NO WARRANTY.
-It is free software, you are welcome to
-redistribute it under certain conditions;
-see `COPYING' in the Cylc source distribution.
-  """ % CYLC_VERSION
-
-        logo_lines = logo.splitlines()
-        license_lines = cylc_license.splitlines()
-        lmax = max(len(line) for line in license_lines)
-        print(('\n'.join((
-            ('{0} {1: ^%s}' % lmax).format(*x) for x in zip_longest(
-                logo_lines, license_lines, fillvalue=' ' * (
-                    len(logo_lines[-1]) + 1))))))
-
-    def _setup_suite_logger(self):
-        """Set up logger for suite."""
-        # Remove stream handlers in detach mode
-        if not self.options.no_detach:
-            while LOG.handlers:
-                LOG.handlers[0].close()
-                LOG.removeHandler(LOG.handlers[0])
-        LOG.addHandler(
-            TimestampRotatingFileHandler(self.suite, self.options.no_detach))
-
-    def configure(self):
+    async def configure(self):
         """Configure suite server program."""
         self.profiler.log_memory("scheduler.py: start configure")
 
@@ -556,13 +509,11 @@ see `COPYING' in the Cylc source distribution.
             self.options.main_loop
         )
 
-        asyncio.get_event_loop().run_until_complete(
-            asyncio.gather(
-                *main_loop.get_runners(
-                    self.main_loop_plugins,
-                    main_loop.CoroTypes.StartUp,
-                    self
-                )
+        await asyncio.gather(
+            *main_loop.get_runners(
+                self.main_loop_plugins,
+                main_loop.CoroTypes.StartUp,
+                self
             )
         )
 
@@ -1500,15 +1451,6 @@ see `COPYING' in the Cylc source distribution.
                 self.count, get_current_time_string()))
         self.count += 1
 
-    def run(self):
-        """Run the main loop."""
-        self.initialise_scheduler()
-        self.data_store_mgr.initiate_data_model()
-        asyncio.get_event_loop().run_until_complete(
-            self.publisher.publish(self.data_store_mgr.get_publish_deltas())
-        )
-        asyncio.get_event_loop().run_until_complete(self.main_loop())
-
     async def main_loop(self):
         """The scheduler main loop."""
         while True:  # MAIN LOOP
@@ -1719,7 +1661,7 @@ see `COPYING' in the Cylc source distribution.
 
         return process
 
-    def shutdown(self, reason):
+    async def shutdown(self, reason):
         """Shutdown the suite."""
         if isinstance(reason, SchedulerStop):
             LOG.info('Suite shutting down - %s', reason.args[0])
@@ -1747,10 +1689,8 @@ see `COPYING' in the Cylc source distribution.
         if self.server:
             self.server.stop()
         if self.publisher:
-            asyncio.get_event_loop().run_until_complete(
-                self.publisher.publish(
-                    [(b'shutdown', f'{str(reason)}'.encode('utf-8'))]
-                )
+            await self.publisher.publish(
+                [(b'shutdown', f'{str(reason)}'.encode('utf-8'))]
             )
             self.publisher.stop()
         self.curve_auth.stop()  # stop the authentication thread
