@@ -34,8 +34,8 @@ done
 sort -o "${DRY_TEST_NAME}.stdout" "${DRY_TEST_NAME}.stdout"
 sort -o 'chunks.out' 'chunks.out'
 # remove cd "$CYLC_HOME" lines
-sed -i '/^cd "/d' "${DRY_TEST_NAME}.stdout"
-sed -i '/^cd "/d' 'chunks.out'
+sed -i 's|^\./||' "${DRY_TEST_NAME}.stdout"
+sed -i 's|^\./||' 'chunks.out'
 # compare test plan for the full and chunked versions
 cmp_ok "${DRY_TEST_NAME}.stdout" 'chunks.out'
 exit
