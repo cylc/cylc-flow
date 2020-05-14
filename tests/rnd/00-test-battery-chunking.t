@@ -22,9 +22,9 @@ set_test_number "$(( 2 + N_CHUNKS ))"
 #-------------------------------------------------------------------------------
 # list all tests
 DRY_TEST_NAME="${TEST_NAME_BASE}-all"
-CTB="${CYLC_REPO_DIR}/etc/bin/run-functional-tests.sh"
+CTB="${CYLC_REPO_DIR}/etc/bin/run-functional-tests"
 run_ok "${DRY_TEST_NAME}" "${CTB}" --dry './tests'
-# list tests for each chunk (from prove not run-functional-tests.sh)
+# list tests for each chunk (from prove not run-functional-tests)
 for i_chunk in $(seq "${N_CHUNKS}"); do
     TEST_NAME="${TEST_NAME_BASE}-chunk-${i_chunk}"
     run_ok "${TEST_NAME}" env CHUNK="${i_chunk}/${N_CHUNKS}" "${CTB}" --dry
