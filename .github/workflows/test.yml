@@ -30,7 +30,7 @@ jobs:
 
       - name: Style
         run: |
-          pycodestyle
+          pycodestyle cylc/flow
           etc/bin/shellchecker
 
       - name: Unit Test
