@@ -26,7 +26,6 @@ jobs:
       - name: Install
         run: |
           pip install ."[all]"
-          pip install pytest-xdist
 
       - name: Style
         run: |
