@@ -48,7 +48,7 @@ def generate_config():
     def _inner(typ, value):
         """Return a sample config for the given data type.
 
-        The aim is to cover every facetious combination of quites
+        The aim is to cover every facetious combination of quotes
         newlines and comments.
 
         Args:
@@ -76,12 +76,12 @@ def generate_config():
                     plain1 = {value}  # comment
                     single quoted = '{value}'  # comment
                     double quoted = "{value}"  # comment
-                    tripple single quoted = \'\'\'{value}\'\'\'  # comment
-                    tripple double quoted = """{value}"""  # comment
-                    tripple single quoted multi = \'\'\'
+                    triple single quoted = \'\'\'{value}\'\'\'  # comment
+                    triple double quoted = """{value}"""  # comment
+                    triple single quoted multi = \'\'\'
                         {value}
                     \'\'\'  # comment
-                    tripple double quoted multi = """
+                    triple double quoted multi = """
                         {value}
                     """  # comment
             '''

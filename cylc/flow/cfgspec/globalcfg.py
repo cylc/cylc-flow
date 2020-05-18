@@ -42,9 +42,8 @@ with Conf('flow.rc', desc='''
 
        $ cylc get-global-config --sparse
 
-    Cylc will look for ``flow.rc`` files in two locations:
 
-    Cylc will attempt to load the global configuration from two locations:
+    Cylc will attempt to load the global configuration (flow.rc) from two locations:
 
     * ``/etc/cylc/flow/<CYLC_VERSION>/flow.rc``
     * ``~/.cylc/flow/<CYLC_VERSION>/flow.rc``

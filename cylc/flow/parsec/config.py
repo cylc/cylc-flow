@@ -74,14 +74,11 @@ class ParsecConfig(object):
             stack = [[dense, self.spec]]
             while stack:
                 defs, spec = stack.pop()
-                # for key, val in spec.items():
                 for node in spec:
-                    # if isinstance(val, dict):
                     if not node.is_leaf():
                         # if key not in defs:
                         if node.name not in defs:
                             defs[node.name] = OrderedDictWithDefaults()
-                        # stack.append((defs[key], spec[key]))
                         stack.append((defs[node.name], node))
                     else:
                         # try:

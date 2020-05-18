@@ -27,7 +27,7 @@ from cylc.flow.parsec.validate import (
 
 @pytest.fixture
 def config(tmp_path):
-    """Reutrns a function for parsing Parsec configurations."""
+    """Returns a function for parsing Parsec configurations."""
     def _inner(spec, conf):
         """Parse conf against spec and return the result.
 

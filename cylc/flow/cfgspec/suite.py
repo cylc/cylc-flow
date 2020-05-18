@@ -837,7 +837,7 @@ with Conf(
                 ``%(batch_sys_job_id)``
                    Batch system job ID
                 ``%(submit_time)s``
-                   Ddate-time when task job is submitted
+                   Date-time when task job is submitted
                 ``%(start_time)s``
                    Date-time when task job starts running
                 ``%(finish_time)s``
@@ -878,7 +878,7 @@ with Conf(
                 For an explanation of the substitution syntax, see
                 `String Formatting Operations in the Python
                 documentation
-                <https://docs.python.org/2/library/stdtypes.html
+                <https://docs.python.org/3/library/stdtypes.html
                 #string-formatting>`_.
 
                 Additional information can be passed to event handlers via the
