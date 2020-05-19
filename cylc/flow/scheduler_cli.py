@@ -241,12 +241,6 @@ def get_option_parser(is_restart):
     return parser
 
 
-def optparse2namedtuple(parser, name, extras):
-    defaults = {**parser.defaults, **extras}
-    return namedtuple(name, defaults, defaults=defaults.values())
-    # name, parser.defaults, defaults=parser.defaults.values())
-
-
 # options we cannot simply extract from the parser
 DEFAULT_OPTS = {
     'debug': False,
