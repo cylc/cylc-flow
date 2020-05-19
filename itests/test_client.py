@@ -1,22 +1,29 @@
-def test_suite(make_flow, run_flow):
-    foo = make_flow(
-        'foo',
-        {
-            'scheduling': {
-                'dependencies': {
-                    'graph': 'foo'
-                }
-            }
-        }
-    )
-    print('here we go')
-    with run_flow(foo, hold_start=True, no_detach=True) as (proc, client):
-        print('Attempting ping')
-        ret = client('ping_suite')
-        print(ret)
-        assert ret is True
-        print('Attempted ping')
+from cylc.flow.network.server import PB_METHOD_MAP
 
-        # from time import sleep
-        # sleep(2)
-        # assert False
+
+def test_ping(simple_flow):
+    """It should return True if running."""
+    reg, _, client = simple_flow
+    assert client('ping_suite')
+
+
+def test_graphql(simple_flow):
+    """It should return information about itself."""
+    reg, _, client = simple_flow
+    ret = client(
+        'graphql',
+        {'request_string': 'query { workflows { id } }'}
+    )
+    workflows = ret['workflows']
+    assert len(workflows) == 1
+    workflow = workflows[0]
+    assert reg in workflow['id']
+
+
+def test_protobuf(simple_flow):
+    """It should return information about itself."""
+    reg, _, client = simple_flow
+    ret = client('pb_entire_workflow')
+    pb_data = PB_METHOD_MAP['pb_entire_workflow']()
+    pb_data.ParseFromString(ret)
+    assert reg in pb_data.workflow.id
