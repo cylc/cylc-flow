@@ -15,11 +15,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
+from textwrap import dedent
+
+from cylc.flow.context_node import ContextNode
 from cylc.flow.parsec.exceptions import (
-    ParsecError, ItemNotFoundError, NotSingleItemError)
+    ItemNotFoundError,
+    NotSingleItemError
+)
 from cylc.flow.parsec.fileparse import parse
 from cylc.flow.parsec.util import printcfg
-from cylc.flow.parsec.validate import parsec_validate
+from cylc.flow.parsec.validate import parsec_validate, ParsecValidator as VDR
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.util import itemstr, m_override, replicate, un_many
 
@@ -69,19 +74,27 @@ class ParsecConfig(object):
             stack = [[dense, self.spec]]
             while stack:
                 defs, spec = stack.pop()
-                for key, val in spec.items():
-                    if isinstance(val, dict):
-                        if key not in defs:
-                            defs[key] = OrderedDictWithDefaults()
-                        stack.append((defs[key], spec[key]))
+                for node in spec:
+                    if not node.is_leaf():
+                        # if key not in defs:
+                        if node.name not in defs:
+                            defs[node.name] = OrderedDictWithDefaults()
+                        stack.append((defs[node.name], node))
                     else:
-                        try:
-                            defs[key] = spec[key][1]
-                        except IndexError:
-                            if spec[key][0].endswith('_LIST'):
-                                defs[key] = []
+                        # try:
+                        #     defs[key] = spec[key][1]
+                        # except IndexError:
+                        #     if spec[key][0].endswith('_LIST'):
+                        #         defs[key] = []
+                        #     else:
+                        #         defs[key] = None
+                        if node.default is ConfigNode.UNSET:
+                            if node.vdr and node.vdr.endswith('_LIST'):
+                                defs[node.name] = []
                             else:
-                                defs[key] = None
+                                defs[node.name] = None
+                        else:
+                            defs[node.name] = node.default
             # override defaults with sparse values
             m_override(dense, self.sparse)
             un_many(dense)
@@ -159,3 +172,61 @@ class ParsecConfig(object):
             print(cfg)
         else:
             printcfg(cfg, prefix=prefix, level=len(keys), none_str=none_str)
+
+
+class ConfigNode(ContextNode):
+    """A Cylc configuration schema, section, or setting.
+
+    Attributes:
+        vdr (str):
+            The config type (i.e. parsec validator).
+        options (list):
+            List of possible options.
+            TODO: allow this to be a dict with help info
+        default (object):
+            The default value.
+        desc (str):
+            A description of the config.
+            Note this gets dedented and stripped.
+        display_name (str):
+            This is the user-facing name of the config.
+            Note the regular ``name`` might be ``__MANY__``.
+
+    """
+
+    ROOT_NAME_FMT = '{display_name}:'
+    NODE_NAME_FMT = '[{display_name}]'
+    LEAF_NAME_FMT = '{display_name}'
+    SEP = ''
+
+    UNSET = '*value unset*'
+
+    __slots__ = ContextNode.__slots__ + (
+        'vdr', 'options', 'default', 'desc', 'display_name'
+    )
+
+    def __init__(
+            self,
+            name,
+            vdr=VDR.V_STRING,
+            default=UNSET,
+            options=None,
+            desc=None,
+    ):
+        display_name = name
+        if name.startswith('<'):
+            # if we use <...> as the name, this is a user-definable config
+            # * we set the name (for internal use) to __MANY__
+            # * we leave the display_name (for external use) unchanged
+            name = '__MANY__'
+
+        ContextNode.__init__(self, name)
+
+        if not isinstance(vdr, str):
+            breakpoint()
+
+        self.display_name = display_name
+        self.vdr = vdr
+        self.default = default
+        self.options = options
+        self.desc = dedent(desc).strip() if desc else None

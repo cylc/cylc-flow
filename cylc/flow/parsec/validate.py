@@ -172,7 +172,7 @@ class ParsecValidator(object):
                         # only accept the item if its value is of the same type
                         # as that of the __MANY__  item, i.e. dict or not-dict.
                         val_is_dict = isinstance(value, dict)
-                        spc_is_dict = isinstance(spec['__MANY__'], dict)
+                        spc_is_dict = not spec['__MANY__'].is_leaf()
                         if (
                             keys != ['scheduling', 'graph'] and
                             not val_is_dict and
@@ -190,15 +190,14 @@ class ParsecValidator(object):
                 else:
                     speckey = key
                 specval = spec[speckey]
-                if isinstance(value, dict) and isinstance(specval, dict):
+                if isinstance(value, dict) and not specval.is_leaf():
                     # Item is dict, push to queue
                     queue.append([value, specval, keys + [key]])
-                elif value is not None and not isinstance(specval, dict):
+                elif value is not None and specval.is_leaf():
                     # Item is value, coerce according to value type
-                    cfg[key] = self.coercers[specval[0]](value, keys + [key])
-                    # [vtype, option_default, option_2, option_3, ...]
-                    if len(specval) > 2:
-                        voptions = specval[1:]
+                    cfg[key] = self.coercers[specval.vdr](value, keys + [key])
+                    if specval.options:
+                        voptions = specval.options
                         if (isinstance(cfg[key], list) and
                                 any(val not in voptions for val in cfg[key]) or
                                 not isinstance(cfg[key], list) and
