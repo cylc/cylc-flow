@@ -248,7 +248,7 @@ def run_flow(run_dir):
             # yield control back to the test
             client = SuiteRuntimeClient(reg)
             print('Entering Test...')
-            yield proc, client
+            yield reg, proc, client
             print('Exited Test.')
         except Exception as exc:
             # something went wrong in the test
