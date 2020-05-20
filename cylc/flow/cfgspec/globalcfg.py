@@ -583,7 +583,7 @@ with Conf('flow.rc', desc='''
         to running tasks (via ``$CYLC_SUITE_HOST``) so that task messages can
         target the right suite on the right host.
 
-        .. todo::
+        .. todo
            Is it conceivable that different remote task hosts at the same site
            might see the suite host differently? If so we would need to be able
            to override the target in suite configurations.
