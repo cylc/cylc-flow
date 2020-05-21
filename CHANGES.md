@@ -61,6 +61,9 @@ files are now auto-documented from their definitions.
 
 ### Fixes
 
+[#3618](https://github.com/cylc/cylc-flow/pull/3618) - Clear queue configuration
+warnings for referencing undefined or unused tasks.
+
 [#3596](https://github.com/cylc/cylc-flow/pull/3596) - Fix a bug that could
 prevent housekeeping of the task_action_timers DB table and cause many warnings
 at restart.
