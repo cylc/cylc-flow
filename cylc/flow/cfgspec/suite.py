@@ -520,10 +520,19 @@ with Conf(
                 an external command or script, or inlined scripting. The
                 original intention for this item was to allow remote tasks to
                 source login scripts to configure their access to cylc, but
-                this should no longer be necessary (see
-                :ref:`HowTasksGetAccessToCylc`). See also ``env-script``,
-                ``pre-script``, ``script``, ``post-script``, ``err-script``,
-                ``exit-script``.
+                this should no longer be necessary.
+
+                See also :ref:`JobScripts`.
+
+                User-defined script items:
+
+                * :cylc:conf:`[..]init-script`
+                * :cylc:conf:`[..]env-script`
+                * :cylc:conf:`[..]pre-script`
+                * :cylc:conf:`[..]script`
+                * :cylc:conf:`[..]post-script`
+                * :cylc:conf:`[..]err-script`
+                * :cylc:conf:`[..]exit-script`
 
                 Example::
 
@@ -534,10 +543,20 @@ with Conf(
                 cylc-defined environment (suite and task identity, etc.) and
                 the user-defined task runtime environment - so it has access
                 to the cylc environment (and the task environment has access
-                to variables defined by this scripting). It can be an external
-                command or script, or inlined scripting. See also
-                ``init-script``, ``pre-script``, ``script``, ``post-script``,
-                ``err-script``, and ``exit-script``.
+                to variables defined by this scripting). It can be an
+                external command or script, or inlined scripting.
+
+                See also :ref:`JobScripts`.
+
+                User-defined script items:
+
+                * :cylc:conf:`[..]init-script`
+                * :cylc:conf:`[..]env-script`
+                * :cylc:conf:`[..]pre-script`
+                * :cylc:conf:`[..]script`
+                * :cylc:conf:`[..]post-script`
+                * :cylc:conf:`[..]err-script`
+                * :cylc:conf:`[..]exit-script`
 
                 Example::
 
@@ -552,9 +571,19 @@ with Conf(
                 very little system resource to ensure that the error trap can
                 return quickly.  Companion of ``exit-script``, which is
                 executed on job success.  It can be an external command or
-                script, or inlined scripting. See also ``init-script``,
-                ``env-script``, ``pre-script``, ``script``, ``post-script``,
-                and ``exit-script``.
+                script, or inlined scripting.
+
+                See also :ref:`JobScripts`.
+
+                User-defined script items:
+
+                * :cylc:conf:`[..]init-script`
+                * :cylc:conf:`[..]env-script`
+                * :cylc:conf:`[..]pre-script`
+                * :cylc:conf:`[..]script`
+                * :cylc:conf:`[..]post-script`
+                * :cylc:conf:`[..]err-script`
+                * :cylc:conf:`[..]exit-script`
 
                 Example::
 
@@ -562,12 +591,22 @@ with Conf(
             ''')
             Conf('exit-script', VDR.V_STRING, desc='''
                 Custom script invoked at the very end of *successful* job
-                execution, just before the job script exits. It should execute
-                very quickly. Companion of ``err-script``, which is executed
-                on job failure. It can be an external command or script, or
-                inlined scripting. See also ``init-script``, ``env-script``,
-                ``pre-script``, ``script``, ``post-script``, and
-                ``err-script``.
+                execution, just before the job script exits. It should
+                execute very quickly. Companion of ``err-script``, which is
+                executed on job failure. It can be an external command or
+                script, or inlined scripting.
+
+                See also :ref:`JobScripts`.
+
+                User-defined script items:
+
+                * :cylc:conf:`[..]init-script`
+                * :cylc:conf:`[..]env-script`
+                * :cylc:conf:`[..]pre-script`
+                * :cylc:conf:`[..]script`
+                * :cylc:conf:`[..]post-script`
+                * :cylc:conf:`[..]err-script`
+                * :cylc:conf:`[..]exit-script`
 
                 Example::
 
@@ -575,10 +614,20 @@ with Conf(
             ''')
             Conf('pre-script', VDR.V_STRING, desc='''
                 Custom script invoked by the task job script immediately
-                before the ``script`` item (just below). It can be an external
-                command or script, or inlined scripting.  See also
-                ``init-script``, ``env-script``, ``script``, ``post-script``,
-                ``err-script``, and ``exit-script``.
+                before the ``script`` item (just below). It can be an
+                external command or script, or inlined scripting.
+
+                See also :ref:`JobScripts`.
+
+                User-defined script items:
+
+                * :cylc:conf:`[..]init-script`
+                * :cylc:conf:`[..]env-script`
+                * :cylc:conf:`[..]pre-script`
+                * :cylc:conf:`[..]script`
+                * :cylc:conf:`[..]post-script`
+                * :cylc:conf:`[..]err-script`
+                * :cylc:conf:`[..]exit-script`
 
                 Example::
 
@@ -587,15 +636,37 @@ with Conf(
             Conf('script', VDR.V_STRING, desc='''
                 The main custom script invoked from the task job script. It
                 can be an external command or script, or inlined scripting.
-                See also ``init-script``, ``env-script``, ``pre-script``,
-                ``post-script``, ``err-script``, and ``exit-script``.
+
+                See also :ref:`JobScripts`.
+
+                User-defined script items:
+
+                * :cylc:conf:`[..]init-script`
+                * :cylc:conf:`[..]env-script`
+                * :cylc:conf:`[..]pre-script`
+                * :cylc:conf:`[..]script`
+                * :cylc:conf:`[..]post-script`
+                * :cylc:conf:`[..]err-script`
+                * :cylc:conf:`[..]exit-script`
+
             ''')
             Conf('post-script', VDR.V_STRING, desc='''
-                Custom script invoked by the task job script immediately after
-                the ``script`` item (just above). It can be an external
-                command or script, or inlined scripting.  See also
-                ``init-script``, ``env-script``, ``pre-script``, ``script``,
-                ``err-script``, and ``exit-script``.
+                Custom script invoked by the task job script immediately
+                after the ``script`` item (just above). It can be an external
+                command or script, or inlined scripting.
+
+                See also :ref:`JobScripts`.
+
+                User-defined script items:
+
+                * :cylc:conf:`[..]init-script`
+                * :cylc:conf:`[..]env-script`
+                * :cylc:conf:`[..]pre-script`
+                * :cylc:conf:`[..]script`
+                * :cylc:conf:`[..]post-script`
+                * :cylc:conf:`[..]err-script`
+                * :cylc:conf:`[..]exit-script`
+
             ''')
             Conf('extra log files', VDR.V_STRING_LIST, desc='''
                 A list of user-defined log files associated with a task. Log

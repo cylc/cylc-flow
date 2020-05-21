@@ -113,7 +113,7 @@ class HostUtil(object):
         """Return the extended info of the current host."""
         if target not in self._host_exs:
             if target is None:
-                target = socket.getfqdn()
+                target = socket.gethostname()
             try:
                 self._host_exs[target] = socket.gethostbyname_ex(target)
             except IOError as exc:
