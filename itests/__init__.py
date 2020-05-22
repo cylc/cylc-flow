@@ -16,21 +16,11 @@
 
 import asyncio
 from async_generator import asynccontextmanager
-import logging
 from pathlib import Path
-from shlex import quote
 from shutil import rmtree
-from subprocess import Popen, DEVNULL
 from textwrap import dedent
 from uuid import uuid1
 
-import pytest
-
-from cylc.flow import CYLC_LOG
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
-from cylc.flow.exceptions import (
-    SuiteServiceFileError
-)
 from cylc.flow.scheduler import (
     Scheduler,
     SchedulerStop
@@ -39,9 +29,7 @@ from cylc.flow.scheduler_cli import (
     RunOptions,
     RestartOptions
 )
-from cylc.flow.suite_files import ContactFileFields, load_contact_file
 from cylc.flow.suite_status import StopMode
-from cylc.flow.wallclock import get_current_time_string
 
 
 def _write_header(name, level):
@@ -153,108 +141,53 @@ def _expanduser(path):
     return path
 
 
-@pytest.fixture(scope='session')
-def run_dir(request):
-    """The cylc run directory for this host."""
-    path = _expanduser(
-        glbl_cfg().get_host_item('run directory')
-    )
-    path.mkdir(exist_ok=True)
-    yield path
+def _make_flow(run_dir, test_dir, conf, name=None):
+    """Construct a workflow on the filesystem."""
+    if not name:
+        name = str(uuid1())
+    flow_run_dir = (test_dir / name)
+    flow_run_dir.mkdir()
+    reg = str(flow_run_dir.relative_to(run_dir))
+    if isinstance(conf, dict):
+        conf = suiterc(conf)
+    with open((flow_run_dir / 'suite.rc'), 'w+') as suiterc_file:
+        suiterc_file.write(conf)
+    return reg
 
 
-@pytest.fixture(scope='session')
-def root_test_dir(request, run_dir):
-    """The root registration directory for test flows in this test session."""
-    timestamp = get_current_time_string(use_basic_format=True)
-    uuid = f'cit-{timestamp}'
-    path = Path(run_dir, uuid)
-    path.mkdir(exist_ok=True)
-    yield path
-    # remove the dir if empty
-    _rm_if_empty(path)
+def _make_scheduler(reg, is_restart=False, **opts):
+    """Return a scheduler object for a flow registration."""
+    # get options object
+    if is_restart:
+        options = RestartOptions(**opts)
+    else:
+        options = RunOptions(**opts)
+    # create workflow
+    return Scheduler(reg, options, is_restart=is_restart)
 
 
-@pytest.fixture(scope='function')
-def test_dir(request, root_test_dir):
-    """The root registration directory for flows in this test function."""
-    path = Path(
-        root_test_dir,
-        request.module.__name__,
-        request.function.__name__
-    )
-    path.mkdir(parents=True, exist_ok=True)
-    yield path
-    # remove the dir if empty
-    _rm_if_empty(path)
-    _rm_if_empty(path.parent)
+def _flow(make_flow, make_scheduler, conf, name=None, is_restart=False,
+          **opts):
+    """Make a flow and return a scheduler object."""
+    reg = make_flow(conf, name=name)
+    return make_scheduler(reg, is_restart=is_restart, **opts)
 
 
-@pytest.fixture
-def make_flow(run_dir, test_dir, request):
-    """A function for creating test flows on the filesystem."""
-    def _make_flow(conf, name=None):
-        nonlocal test_dir
-        if not name:
-            name = str(uuid1())
-        flow_run_dir = (test_dir / name)
-        flow_run_dir.mkdir()
-        reg = str(flow_run_dir.relative_to(run_dir))
-        if isinstance(conf, dict):
-            conf = suiterc(conf)
-        with open((flow_run_dir / 'suite.rc'), 'w+') as suiterc_file:
-            suiterc_file.write(conf)
-        return reg
-    yield _make_flow
-
-
-@pytest.fixture
-def make_scheduler(make_flow):
-    """Return a scheduler object for a flow."""
-    def _make_scheduler(reg, is_restart=False, **opts):
-        # get options object
-        if is_restart:
-            options = RestartOptions(**opts)
-        else:
-            options = RunOptions(**opts)
-        # create workflow
-        return Scheduler(reg, options, is_restart=is_restart)
-    return _make_scheduler
-
-
-@pytest.fixture
-def flow(make_flow, make_scheduler):
-    """Make a flow and return a scheduler object.
-
-    Equivalent to make_scheduler(make_flow).
-
-    """
-    def _flow(conf, name=None, is_restart=False, **opts):
-        reg = make_flow(conf, name=name)
-        return make_scheduler(reg, is_restart=is_restart, **opts)
-    return _flow
-
-
-@pytest.fixture
-def run_flow(run_dir, caplog):
-    """A function for running test flows from Python."""
-    caplog.set_level(logging.DEBUG, logger=CYLC_LOG)
-
-    @asynccontextmanager
-    async def _run_flow(scheduler):
-        success = True
-        contact = (run_dir / scheduler.suite / '.service' / 'contact')
-        try:
-            asyncio.get_event_loop().create_task(scheduler.start())
-            await _poll_file(contact)
-            yield caplog
-        except Exception as exc:
-            # something went wrong in the test
-            success = False
-            raise exc from None  # raise the exception so the test fails
-        finally:
-            await scheduler.shutdown(SchedulerStop(StopMode.AUTO.value))
-            if success:
-                # tidy up if the test was successful
-                rmtree(run_dir / scheduler.suite)
-    return _run_flow
+@asynccontextmanager
+async def _run_flow(run_dir, caplog, scheduler):
+    """Start a scheduler."""
+    success = True
+    contact = (run_dir / scheduler.suite / '.service' / 'contact')
+    try:
+        asyncio.get_event_loop().create_task(scheduler.start())
+        await _poll_file(contact)
+        yield caplog
+    except Exception as exc:
+        # something went wrong in the test
+        success = False
+        raise exc from None  # raise the exception so the test fails
+    finally:
+        await scheduler.shutdown(SchedulerStop(StopMode.AUTO.value))
+        if success:
+            # tidy up if the test was successful
+            rmtree(run_dir / scheduler.suite)
