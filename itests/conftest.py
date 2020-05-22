@@ -17,28 +17,23 @@
 
 from . import (
     run_dir,
+    root_test_dir,
     test_dir,
-    flow_dir,
     make_flow,
-    run_flow
+    make_scheduler,
+    run_flow,
+    flow
 )
-
 
 import pytest
 
 
 @pytest.fixture
-def simple_flow(make_flow, run_flow):
-    """A basic flow with one task."""
-    foo = make_flow(
-        'foo',
-        {
-            'scheduling': {
-                'dependencies': {
-                    'graph': 'foo'
-                }
+def simple_conf():
+    return {
+        'scheduling': {
+            'dependencies': {
+                'graph': 'foo'
             }
         }
-    )
-    with run_flow(foo, hold_start=True) as stuff:
-        yield stuff
+    }
