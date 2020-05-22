@@ -22,6 +22,8 @@ And yes, these are unit-tests inside a functional test framework thinggy.
 from pathlib import Path
 from textwrap import dedent
 
+import pytest
+
 from . import (
     _write_header,
     _write_setting,
@@ -50,6 +52,17 @@ def test_write_setting_singleline():
     ]
     assert _write_setting('key', 'value', 2) == [
         '    key = value'
+    ]
+
+
+def test_write_setting_script():
+    """It should preserve indentation for script items."""
+    assert _write_setting('script', 'a\nb\nc', 2) == [
+        '    script = """',
+        'a',
+        'b',
+        'c',
+        '    """'
     ]
 
 
@@ -120,12 +133,13 @@ def test_rm_if_empty(tmp_path):
     assert not path1.exists()
 
 
-def test_poll_file(tmp_path):
+@pytest.mark.asyncio
+async def test_poll_file(tmp_path):
     """It should return if the condition is met."""
     path = tmp_path / 'file'
-    _poll_file(path, exists=False)
+    await _poll_file(path, exists=False)
     path.touch()
-    _poll_file(path, exists=True)
+    await _poll_file(path, exists=True)
 
 
 def test_expanduser():
@@ -133,3 +147,12 @@ def test_expanduser():
     assert _expanduser('a/~/b') == Path('a/~/b').expanduser()
     assert _expanduser('a/$HOME/b') == Path('a/~/b').expanduser()
     assert _expanduser('a/${HOME}/b') == Path('a/~/b').expanduser()
+
+
+def test_make_flow(run_dir, make_flow, simple_conf):
+    """It should create a flow in the run directory."""
+    reg = make_flow(simple_conf)
+    assert Path(run_dir / reg).exists()
+    assert Path(run_dir / reg / 'suite.rc').exists()
+    with open(Path(run_dir / reg / 'suite.rc'), 'r') as suiterc:
+        assert 'scheduling' in suiterc.read()
