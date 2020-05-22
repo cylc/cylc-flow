@@ -14,29 +14,33 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from contextlib import contextmanager
-from multiprocessing import Process
+import asyncio
+from async_generator import asynccontextmanager
+import logging
 from pathlib import Path
 from shlex import quote
 from shutil import rmtree
 from subprocess import Popen, DEVNULL
-import sys
 from textwrap import dedent
-from time import sleep
+from uuid import uuid1
 
 import pytest
 
+from cylc.flow import CYLC_LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import (
     SuiteServiceFileError
 )
-from cylc.flow.network.client import SuiteRuntimeClient
-from cylc.flow.scheduler import Scheduler
+from cylc.flow.scheduler import (
+    Scheduler,
+    SchedulerStop
+)
 from cylc.flow.scheduler_cli import (
     RunOptions,
     RestartOptions
 )
 from cylc.flow.suite_files import ContactFileFields, load_contact_file
+from cylc.flow.suite_status import StopMode
 from cylc.flow.wallclock import get_current_time_string
 
 
@@ -111,7 +115,7 @@ def _rm_if_empty(path):
     return True
 
 
-def _poll_file(path, timeout=2, step=0.1, exists=True):
+async def _poll_file(path, timeout=2, step=0.1, exists=True):
     """Poll a file to wait for its creation or removal.
 
     Arguments:
@@ -129,26 +133,10 @@ def _poll_file(path, timeout=2, step=0.1, exists=True):
     """
     elapsed = 0
     while path.exists() != exists:
-        sleep(step)
+        await asyncio.sleep(step)
         elapsed += step
         if elapsed > timeout:
             raise Exception(f'Timeout waiting for file creation: {path}')
-
-
-def _kill_flow(reg):
-    """Kill a [remote] flow process."""
-    try:
-        contact = load_contact_file(str(reg))
-    except SuiteServiceFileError:
-        # flow has already shutdown
-        return
-    # host = contact[ContactFileFields.HOST]
-    pid = contact[ContactFileFields.PROCESS].split(' ')[0]
-    # Popen(
-    #     ['ssh', quote(host), 'kill', '-9', quote(pid)],
-    #     stdin=DEVNULL, stdout=DEVNULL
-    # ).wait()
-    Popen(['kill', '-9', quote(pid)], stdin=DEVNULL, stdout=DEVNULL).wait()
 
 
 def _expanduser(path):
@@ -176,7 +164,7 @@ def run_dir(request):
 
 
 @pytest.fixture(scope='session')
-def test_dir(request, run_dir):
+def root_test_dir(request, run_dir):
     """The root registration directory for test flows in this test session."""
     timestamp = get_current_time_string(use_basic_format=True)
     uuid = f'cit-{timestamp}'
@@ -188,10 +176,10 @@ def test_dir(request, run_dir):
 
 
 @pytest.fixture(scope='function')
-def flow_dir(request, test_dir):
+def test_dir(request, root_test_dir):
     """The root registration directory for flows in this test function."""
     path = Path(
-        test_dir,
+        root_test_dir,
         request.module.__name__,
         request.function.__name__
     )
@@ -203,78 +191,70 @@ def flow_dir(request, test_dir):
 
 
 @pytest.fixture
-def make_flow(run_dir, flow_dir, request):
+def make_flow(run_dir, test_dir, request):
     """A function for creating test flows on the filesystem."""
-    def _make_flow(name, conf):
-        reg = str(flow_dir.relative_to(run_dir))
+    def _make_flow(conf, name=None):
+        nonlocal test_dir
+        if not name:
+            name = str(uuid1())
+        flow_run_dir = (test_dir / name)
+        flow_run_dir.mkdir()
+        reg = str(flow_run_dir.relative_to(run_dir))
         if isinstance(conf, dict):
             conf = suiterc(conf)
-        with open((flow_dir / 'suite.rc'), 'w+') as suiterc_file:
+        with open((flow_run_dir / 'suite.rc'), 'w+') as suiterc_file:
             suiterc_file.write(conf)
         return reg
     yield _make_flow
 
 
 @pytest.fixture
-def run_flow(run_dir):
-    """A function for running test flows from Python."""
-    @contextmanager
-    def _run_flow(reg, is_restart=False, **opts):
-        # set default options
-        opts = {'no_detach': True, **opts}
+def make_scheduler(make_flow):
+    """Return a scheduler object for a flow."""
+    def _make_scheduler(reg, is_restart=False, **opts):
         # get options object
         if is_restart:
             options = RestartOptions(**opts)
         else:
             options = RunOptions(**opts)
         # create workflow
-        schd = Scheduler(reg, options, is_restart=is_restart)
-        proc = Process(target=schd.start)
+        return Scheduler(reg, options, is_restart=is_restart)
+    return _make_scheduler
 
-        client = None
+
+@pytest.fixture
+def flow(make_flow, make_scheduler):
+    """Make a flow and return a scheduler object.
+
+    Equivalent to make_scheduler(make_flow).
+
+    """
+    def _flow(conf, name=None, is_restart=False, **opts):
+        reg = make_flow(conf, name=name)
+        return make_scheduler(reg, is_restart=is_restart, **opts)
+    return _flow
+
+
+@pytest.fixture
+def run_flow(run_dir, caplog):
+    """A function for running test flows from Python."""
+    caplog.set_level(logging.DEBUG, logger=CYLC_LOG)
+
+    @asynccontextmanager
+    async def _run_flow(scheduler):
         success = True
-        contact = (run_dir / reg / '.service' / 'contact')
+        contact = (run_dir / scheduler.suite / '.service' / 'contact')
         try:
-            # start the flow process
-            print('Starting flow...')
-            proc.start()
-            print('Confirming startup...')
-            # wait for the flow to finish starting
-            if options.no_detach:
-                _poll_file(contact)
-            else:
-                proc.join()
-            print('Flow started.')
-            # yield control back to the test
-            client = SuiteRuntimeClient(reg)
-            print('Entering Test...')
-            yield reg, proc, client
-            print('Exited Test.')
+            asyncio.get_event_loop().create_task(scheduler.start())
+            await _poll_file(contact)
+            yield caplog
         except Exception as exc:
             # something went wrong in the test
             success = False
             raise exc from None  # raise the exception so the test fails
         finally:
-            if contact.exists():
-                # shutdown the flow
-                try:
-                    # make sure the flow goes through the shutdown process
-                    # even if it did not complete the startup process
-                    if client is None:
-                        raise ValueError('Failed to launch flow properly')
-                    # try asking the flow to stop nicely
-                    client('stop_now', {'terminate': True})
-                    if options.no_detach:
-                        proc.join()  # TODO: timeout
-                    else:
-                        _poll_file(contact, exists=False)
-                except Exception:  # purposefully vague exception
-                    # if asking nicely doesn't help try harsher measures
-                    if options.no_detach:
-                        proc.kill()
-                    else:
-                        _kill_flow(reg)
+            await scheduler.shutdown(SchedulerStop(StopMode.AUTO.value))
             if success:
                 # tidy up if the test was successful
-                rmtree(run_dir / reg)
+                rmtree(run_dir / scheduler.suite)
     return _run_flow
