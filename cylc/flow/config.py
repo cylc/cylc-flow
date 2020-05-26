@@ -1138,8 +1138,12 @@ class SuiteConfig(object):
                                     'already assigned to a queue')
                                 warnings.append(msg)
                             elif qmember not in all_task_names:
+                                if qmember not in self.cfg['runtime']:
+                                    err = 'task not defined'
+                                else:
+                                    err = 'task not used in the graph'
                                 msg = "%s: ignoring %s (%s)" % (
-                                    key, qmember, 'task not defined')
+                                    key, qmember, err)
                                 warnings.append(msg)
                             else:
                                 # Ignore: task not used in the graph.

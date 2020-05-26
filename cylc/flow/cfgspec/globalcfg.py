@@ -43,7 +43,8 @@ with Conf('flow.rc', desc='''
        $ cylc get-global-config --sparse
 
 
-    Cylc will attempt to load the global configuration (flow.rc) from two locations:
+    Cylc will attempt to load the global configuration (flow.rc) from two
+    locations:
 
     * ``/etc/cylc/flow/<CYLC_VERSION>/flow.rc``
     * ``~/.cylc/flow/<CYLC_VERSION>/flow.rc``
@@ -344,7 +345,8 @@ with Conf('flow.rc', desc='''
             ''')
             Conf('retrieve job logs', VDR.V_BOOLEAN, desc='''
                 Global default for
-                :cylc:conf:`suite.rc[runtime][<namespace>][remote]retrieve job logs`.
+                :cylc:conf:`suite.rc[runtime][<namespace>][remote]retrieve job
+                logs`.
             ''')
             Conf('retrieve job logs command', VDR.V_STRING, 'rsync -a',
                  desc='''
@@ -354,19 +356,22 @@ with Conf('flow.rc', desc='''
             ''')
             Conf('retrieve job logs max size', VDR.V_STRING, desc='''
                 Global default for the
-                :cylc:conf:`suite.rc[runtime][<namespace>][remote]retrieve job logs max size`.
+                :cylc:conf:`suite.rc[runtime][<namespace>][remote]retrieve job
+                logs max size`.
                 the specified host.
             ''')
             Conf('retrieve job logs retry delays', VDR.V_INTERVAL_LIST,
                  desc='''
                 Global default for the
-                :cylc:conf:`suite.rc[runtime][<namespace>][remote]retrieve job logs retry delays`.
+                :cylc:conf:`suite.rc[runtime][<namespace>][remote]retrieve job
+                logs retry delays`.
                 setting for the specified host.
             ''')
             Conf('task event handler retry delays', VDR.V_INTERVAL_LIST,
                  desc='''
                 Host specific default for
-                :cylc:conf:`suite.rc[runtime][<namespace>][events]handler retry delays`.
+                :cylc:conf:`suite.rc[runtime][<namespace>][events]handler retry
+                delays`.
             ''')
             Conf('tail command template',
                  VDR.V_STRING, 'tail -n +1 -F %(filename)s', desc='''
@@ -578,7 +583,7 @@ with Conf('flow.rc', desc='''
         to running tasks (via ``$CYLC_SUITE_HOST``) so that task messages can
         target the right suite on the right host.
 
-        .. todo::
+        .. todo
            Is it conceivable that different remote task hosts at the same site
            might see the suite host differently? If so we would need to be able
            to override the target in suite configurations.

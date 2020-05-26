@@ -213,7 +213,8 @@ class TestSuiteConfig(object):
                        config.runtime['descendants']['SOMEFAM']
 
 
-def test_queue_config(caplog, tmp_path):
+def test_queue_config_repeated(caplog, tmp_path):
+    """Test repeated assignment to same queue."""
     suiterc_content = """
 [scheduling]
    [[queues]]
@@ -236,3 +237,30 @@ def test_queue_config(caplog, tmp_path):
     log = caplog.messages[0].split('\n')
     assert log[0] == "Queue configuration warnings:"
     assert log[1] == "+ q2: ignoring x (already assigned to a queue)"
+
+
+def test_queue_config_not_used_not_defined(caplog, tmp_path):
+    """Test task not defined vs no used, in queue config."""
+    suiterc_content = """
+[scheduling]
+   [[queues]]
+       [[[q1]]]
+           members = foo
+       [[[q2]]]
+           members = bar
+   [[dependencies]]
+       # foo and bar not used
+       graph = "beef => wellington"
+[runtime]
+   [[beef]]
+   [[wellington]]
+   [[foo]]
+   # bar not even defined
+    """
+    suite_rc = tmp_path / "suite.rc"
+    suite_rc.write_text(suiterc_content)
+    config = SuiteConfig(suite="qtest", fpath=suite_rc.absolute())
+    log = caplog.messages[0].split('\n')
+    assert log[0] == "Queue configuration warnings:"
+    assert log[1] == "+ q1: ignoring foo (task not used in the graph)"
+    assert log[2] == "+ q2: ignoring bar (task not defined)"

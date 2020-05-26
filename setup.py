@@ -48,7 +48,7 @@ install_requires = [
     'graphene>=2.1,<3',
     'jinja2==2.11.*',
     'metomi-isodatetime==1!2.0.*',
-    'protobuf==3.12.0rc1',
+    'protobuf==3.12.1',
     'pyzmq==18.1.*',
     'psutil>=5.6.0',
     'urwid==2.*'
