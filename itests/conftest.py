@@ -129,13 +129,6 @@ def flow(make_flow, make_scheduler):
     return partial(_flow, make_flow, make_scheduler)
 
 
-@pytest.fixture(scope='session')
-def ses_run_flow(run_dir, caplog):
-    """Run a session-level flow."""
-    caplog.set_level(logging.DEBUG, logger=CYLC_LOG)
-    return partial(_run_flow, run_dir, caplog)
-
-
 @pytest.fixture(scope='module')
 def mod_run_flow(run_dir):
     """Run a module-level flow."""
@@ -143,9 +136,9 @@ def mod_run_flow(run_dir):
 
 
 @pytest.fixture
-def run_flow(run_dir):
+def run_flow(run_dir, caplog):
     """Run a function-level flow."""
-    return partial(_run_flow, run_dir, None)
+    return partial(_run_flow, run_dir, caplog)
 
 
 @pytest.fixture

@@ -16,11 +16,13 @@
 
 import asyncio
 from async_generator import asynccontextmanager
+import logging
 from pathlib import Path
 from shutil import rmtree
 from textwrap import dedent
 from uuid import uuid1
 
+from cylc.flow import CYLC_LOG
 from cylc.flow.scheduler import (
     Scheduler,
     SchedulerStop
@@ -174,10 +176,12 @@ def _flow(make_flow, make_scheduler, conf, name=None, is_restart=False,
 
 
 @asynccontextmanager
-async def _run_flow(run_dir, caplog, scheduler):
+async def _run_flow(run_dir, caplog, scheduler, level=logging.INFO):
     """Start a scheduler."""
     success = True
     contact = (run_dir / scheduler.suite / '.service' / 'contact')
+    if caplog:
+        caplog.set_level(level, CYLC_LOG)
     try:
         asyncio.get_event_loop().create_task(scheduler.start())
         await _poll_file(contact)
