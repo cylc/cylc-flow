@@ -151,7 +151,7 @@ def format_rows(header, rows):
             (len(h) for h in header)
         )
     ]
-    formatter = ' '.join('%%-%ds' % l for l in max_lengths) + '\n'
+    formatter = ' '.join('%%-%ds' % line for line in max_lengths) + '\n'
     sio.write(formatter % header)
     for r in rows:
         sio.write(formatter % r)

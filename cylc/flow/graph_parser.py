@@ -266,8 +266,8 @@ class GraphParser(object):
             if not self.__class__.REC_PARAMS.search(line):
                 line_set.add(line)
                 continue
-            for l in graph_expander.expand(line):
-                line_set.add(l)
+            for line_ in graph_expander.expand(line):
+                line_set.add(line_)
 
         # Process chains of dependencies as pairs: left => right.
         # Parameterization can duplicate some dependencies, so use a set.
