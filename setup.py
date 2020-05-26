@@ -48,20 +48,18 @@ install_requires = [
     'graphene>=2.1,<3',
     'jinja2==2.11.*',
     'metomi-isodatetime==1!2.0.*',
-    'markupsafe==1.1.*',
     'protobuf==3.12.1',
     'pyzmq==18.1.*',
-    'click>=7.0',
     'psutil>=5.6.0',
     'urwid==2.*'
 ]
 tests_require = [
-    'codecov==2.0.*',
-    'coverage==5.0.*',
-    'pytest-cov==2.8.*',
-    'pytest==5.3.*',
-    'pycodestyle==2.5.*',
-    'testfixtures==6.11.*'
+    'codecov>=2.0.0',
+    'coverage>=5.0.0',
+    'pytest-cov>=2.8.0',
+    'pytest>=5.3.0',
+    'pycodestyle>=2.5.0',
+    'testfixtures>=6.11.0'
 ]
 
 extra_requires = {
