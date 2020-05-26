@@ -64,7 +64,7 @@ class JobFileWriter(object):
             with open(tmp_name, 'w') as handle:
                 self._write_header(handle, job_conf)
                 self._write_directives(handle, job_conf)
-                self._write_reinvokcation(self, handle):
+                self._write_reinvocation(handle)
                 self._write_prelude(handle, job_conf)
                 self._write_suite_environment(handle, job_conf, run_d)
                 self._write_task_environment(handle, job_conf)
@@ -152,14 +152,14 @@ class JobFileWriter(object):
             for line in lines:
                 handle.write('\n' + line)
 
-    def _write_reinvokcation(self, handle):
+    def _write_reinvocation(self, handle):
         """Re-invoke using user determined bash interpreter."""
         # NOTE this must be done after the directives are written out
         # due to the way slurm reads directives
         # NOTE we cannot do /usr/bin/env bash because we need to use the -l
         # option and GNU env doesn't support additional arguments (recent
         # versions permit this with the -S option similar to BSD env but we
-        # cannot make the jump to this until is it more widely adopted
+        # cannot make the jump to this until is it more widely adopted)
         handle.write(dedent('''
             if [[ $1 == 'noreinvoke' ]]; then
                 shift
