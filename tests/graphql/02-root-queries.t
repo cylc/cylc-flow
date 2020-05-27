@@ -27,7 +27,7 @@ run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
 
 # query suite
 TEST_NAME="${TEST_NAME_BASE}-root-queries"
-ID_DELIM='|'
+ID_DELIM="$(python -c 'from cylc.flow import ID_DELIM;print(ID_DELIM)')"
 read -r -d '' rootQueries <<_args_
 {
   "request_string": "

@@ -29,7 +29,7 @@ sleep 1
 
 # query suite
 TEST_NAME="${TEST_NAME_BASE}-is-held-arg"
-ID_DELIM='|'
+ID_DELIM="$(python -c 'from cylc.flow import ID_DELIM;print(ID_DELIM)')"
 read -r -d '' isHeld <<_args_
 {
   "request_string": "

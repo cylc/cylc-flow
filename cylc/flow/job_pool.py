@@ -23,7 +23,7 @@ from copy import deepcopy
 import os
 from time import time
 
-from cylc.flow import LOG
+from cylc.flow import LOG, ID_DELIM
 from cylc.flow.exceptions import SuiteConfigError
 from cylc.flow.task_job_logs import get_task_job_log
 from cylc.flow.parsec.util import pdeepcopy, poverride
@@ -33,7 +33,6 @@ from cylc.flow.task_state import (
     TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED,
     TASK_STATUS_FAILED)
 from cylc.flow.data_messages_pb2 import PbJob, JDeltas
-from cylc.flow.data_store_mgr import ID_DELIM
 
 JOB_STATUSES_ALL = [
     TASK_STATUS_READY,

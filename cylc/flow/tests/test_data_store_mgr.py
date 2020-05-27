@@ -16,9 +16,10 @@
 
 from unittest import main
 
+from cylc.flow import ID_DELIM
 from cylc.flow.tests.util import CylcWorkflowTestCase, create_task_proxy
 from cylc.flow.data_store_mgr import (
-    DataStoreMgr, task_mean_elapsed_time, ID_DELIM,
+    DataStoreMgr, task_mean_elapsed_time,
     FAMILY_PROXIES, TASKS, TASK_PROXIES, WORKFLOW
 )
 
