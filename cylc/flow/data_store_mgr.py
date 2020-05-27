@@ -55,7 +55,7 @@ from copy import deepcopy
 from time import time
 import zlib
 
-from cylc.flow import __version__ as CYLC_VERSION
+from cylc.flow import __version__ as CYLC_VERSION, ID_DELIM
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.data_messages_pb2 import (
     PbEdge, PbEntireWorkflow, PbFamily, PbFamilyProxy,
@@ -70,7 +70,6 @@ from cylc.flow.wallclock import (
     TIME_ZONE_LOCAL_INFO, TIME_ZONE_UTC_INFO, get_utc_mode)
 
 
-ID_DELIM = '|'
 EDGES = 'edges'
 FAMILIES = 'families'
 FAMILY_PROXIES = 'family_proxies'

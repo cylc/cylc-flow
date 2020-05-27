@@ -18,6 +18,7 @@
 
 import math
 
+from cylc.flow import ID_DELIM
 from cylc.flow.conditional_simplifier import ConditionalSimplifier
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.exceptions import TriggerExpressionError
@@ -236,7 +237,7 @@ class Prerequisite(object):
         num_length = math.ceil(len(self.satisfied) / 10)
         for ind, message_tuple in enumerate(sorted(self.satisfied)):
             name, point = message_tuple[0:2]
-            t_id = f"{workflow_id}/{point}/{name}"
+            t_id = f"{workflow_id}{ID_DELIM}{point}{ID_DELIM}{name}"
             char = 'c%.{0}d'.format(num_length) % ind
             c_msg = self.MESSAGE_TEMPLATE % message_tuple
             c_val = self.satisfied[message_tuple]

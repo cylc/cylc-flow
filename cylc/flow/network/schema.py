@@ -29,6 +29,7 @@ from graphene import (
 from graphene.types.generic import GenericScalar
 from graphene.utils.str_converters import to_snake_case
 
+from cylc.flow import ID_DELIM
 from cylc.flow.task_state import (
     TASK_STATUSES_ORDERED,
     TASK_STATUS_DESC,
@@ -46,8 +47,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_SUCCEEDED
 )
 from cylc.flow.data_store_mgr import (
-    ID_DELIM, FAMILIES, FAMILY_PROXIES,
-    JOBS, TASKS, TASK_PROXIES
+    FAMILIES, FAMILY_PROXIES, JOBS, TASKS, TASK_PROXIES
 )
 from cylc.flow.suite_status import StopMode
 

@@ -18,9 +18,10 @@ from unittest import main
 from copy import deepcopy
 import asyncio
 
+from cylc.flow import ID_DELIM
 from cylc.flow.tests.util import CylcWorkflowTestCase, create_task_proxy
 from cylc.flow.data_store_mgr import (
-    DataStoreMgr, ID_DELIM, EDGES, TASK_PROXIES, WORKFLOW
+    DataStoreMgr, EDGES, TASK_PROXIES, WORKFLOW
 )
 from cylc.flow.network.schema import parse_node_id
 from cylc.flow.network.resolvers import node_filter, Resolvers

@@ -21,8 +21,10 @@ from getpass import getuser
 from operator import attrgetter
 from graphene.utils.str_converters import to_snake_case
 
+from cylc.flow import ID_DELIM
 from cylc.flow.data_store_mgr import (
-    ID_DELIM, EDGES, FAMILY_PROXIES, TASK_PROXIES, WORKFLOW)
+    EDGES, FAMILY_PROXIES, TASK_PROXIES, WORKFLOW
+)
 from cylc.flow.network.schema import NodesEdges, PROXY_NODES
 
 

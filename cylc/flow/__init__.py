@@ -23,6 +23,10 @@ CYLC_LOG = 'cylc'
 LOG = logging.getLogger(CYLC_LOG)
 LOG.addHandler(logging.NullHandler())  # Start with a null handler
 
+# Used widely with data element ID (internally and externally),
+# scope may widen further with internal and CLI adoption.
+ID_DELIM = '|'
+
 
 def environ_init():
     """Initialise cylc environment."""

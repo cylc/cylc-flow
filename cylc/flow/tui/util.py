@@ -18,7 +18,7 @@
 
 from time import time
 
-from cylc.flow.data_store_mgr import ID_DELIM
+from cylc.flow import ID_DELIM
 from cylc.flow.task_state import (
     TASK_STATUS_RUNNING
 )

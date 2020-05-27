@@ -17,9 +17,8 @@
 from unittest import main
 from copy import copy, deepcopy
 
-from cylc.flow import LOG
+from cylc.flow import LOG, ID_DELIM
 from cylc.flow.job_pool import JobPool, JOB_STATUSES_ALL
-from cylc.flow.data_store_mgr import ID_DELIM
 from cylc.flow.tests.util import CylcWorkflowTestCase, create_task_proxy
 from cylc.flow.wallclock import get_current_time_string
 
