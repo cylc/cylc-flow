@@ -1,6 +1,0 @@
-[scheduling]
-    [[graph]]
-        R1 = "foo => bar"
-[runtime]
-    [[root]]
-        script = true
