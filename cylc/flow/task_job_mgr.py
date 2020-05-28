@@ -816,7 +816,7 @@ class TaskJobManager(object):
             self.job_pool.add_job_msg(job_config['job_d'], self.DRY_RUN_MSG)
             LOG.debug(f'[{itask}] -{self.DRY_RUN_MSG}')
 
-        # Return value used by "cylc submit" and "cylc jobscript":
+        # Return value used by "cylc jobscript":
         return itask
 
     def _prep_submit_task_job_error(self, suite, itask, dry_run, action, exc):

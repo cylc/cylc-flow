@@ -26,7 +26,6 @@ the same task exists at a later cycle (instances of the same task at different
 cycles can coexist, but a newly spawned task will not be added to the pool if
 it catches up to another task with the same ID).
 
-See also 'cylc submit', for running tasks without the scheduler.
 """
 
 import sys

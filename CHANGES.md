@@ -18,8 +18,8 @@ to allow other projects to re-use it and extend Cylc with plug-ins.
 The old PyGTK GUI is being replaced by a Web UI, with development managed in
 the cylc/cylc-ui repository (and see also cylc/cylc-uiserver).
 
-The User Guide and other documention has been removed from the Python package to
-the cylc/cylc-doc repository.
+The User Guide and other documentation has been removed from the Python package
+to the cylc/cylc-doc repository.
 
 The commands `cylc-profile-battery`, `cylc-test-battery`, `cylc-license`
 have been removed, and `cylc graph` is only retained for text output
@@ -39,6 +39,8 @@ Cylc Review was also removed in this version.
 Third alpha release of Cylc 8.
 
 (See note on cylc-8 backward-incompatible changes, above)
+
+The command `cylc submit` has been removed.
 
 ### Enhancements
 
