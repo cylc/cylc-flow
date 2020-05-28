@@ -108,11 +108,10 @@ class SLURMHandler():
     """SLURM job submission and manipulation."""
 
     DIRECTIVE_PREFIX = "#SBATCH "
-    # Do not include SIGTERM trapping, as SLURM tries to kill the
-    # parent script directly with SIGTERM rather than the process
-    # group as a whole. In these circumstances, this signal does
-    # not get handled. Bash waits for the (unsignalled) child to
-    # complete. This does not apply to jobs with proper 'steps'
+    # SLURM tries to kill the parent script directly with SIGTERM rather than
+    # the process group as a whole. In these circumstances it is the jobscript
+    # that handles the signal propagation to children (fixed in #3440).
+    # This does not apply to jobs with proper 'steps'
     # (e.g. using srun within an sbatch script), which are properly
     # signalled.
     # XCPU isn't used by SLURM at the moment, but it's a valid way
