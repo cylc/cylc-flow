@@ -139,7 +139,7 @@ with Conf('flow.rc', desc='''
                 Conf('foo', VDR.V_STRING, default='X')
 
             with Conf('health check', meta=MainLoopPlugin, desc='''
-                Checks the intrigity of the suite run directory.
+                Checks the integrity of the suite run directory.
             '''):
                 Conf('interval', VDR.V_INTERVAL, DurationFloat(600), desc='''
                     The interval with which this plugin is run.
