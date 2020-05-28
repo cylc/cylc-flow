@@ -77,15 +77,21 @@ class ContextNode():
         return self
 
     def __exit__(self, *args):
+        # list the nodes already present on this node
+        older_siblings = self._children or {}
         # list the nodes which were created since we
         # __entered__ this node
-        self._children = {
+        new_borns = {
             value.name: value
             for value in self.DATA
             if value is not self
-            if value not in self.DATA[self]
+            if value not in self.DATA.get(self, {})
         }
-        for child in self._children.values():
+        self._children = {
+            **older_siblings,
+            **new_borns
+        }
+        for child in new_borns.values():
             # remove our children from self.DATA
             del self.DATA[child]
             # set our children to see us as their parent

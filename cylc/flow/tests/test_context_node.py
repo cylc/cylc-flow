@@ -152,3 +152,17 @@ def test_context_parents():
     assert list(a.parents()) == []
     assert list(b.parents()) == [a]
     assert list(c.parents()) == [b, a]
+
+
+def test_re_enter():
+    """It should be able to re __enter__ multiple times."""
+    # create a node with one child
+    with ContextNode('x') as x:
+        ContextNode('y')
+    assert 'y' in x
+
+    # go back and add another child retrospectively
+    with x:
+        ContextNode('z')
+    assert 'y' in x
+    assert 'z' in x
