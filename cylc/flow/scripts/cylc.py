@@ -24,7 +24,7 @@ import pkg_resources
 from cylc.flow import __version__
 
 # These will be ported to python as click commands
-bash_commands = ["cylc-graph-diff", "cylc-jobscript", "cylc-scp-transfer"]
+bash_commands = ["cylc-graph-diff", "cylc-jobscript"]
 
 # First step of the click port, the list won't be necessary after that
 command_list = bash_commands + list(

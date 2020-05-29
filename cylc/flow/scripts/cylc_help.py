@@ -253,7 +253,6 @@ control_commands['subscribe'] = ['subscribe']
 utility_commands = {}
 utility_commands['cycle-point'] = [
     'cycle-point', 'cyclepoint', 'datetime', 'cycletime']
-utility_commands['scp-transfer'] = ['scp-transfer']
 utility_commands['suite-state'] = ['suite-state']
 utility_commands['ls-checkpoints'] = ['ls-checkpoints']
 utility_commands['report-timings'] = ['report-timings']
@@ -380,7 +379,6 @@ comsum['remote-tidy'] = '(Internal) Tidy a task remote'
 # utility
 comsum['cycle-point'] = 'Cycle point arithmetic and filename templating'
 comsum['jobscript'] = 'Generate a task job script and print it to stdout'
-comsum['scp-transfer'] = 'Scp-based file transfer for cylc suites'
 comsum['suite-state'] = 'Query the task states in a suite'
 comsum['ls-checkpoints'] = 'Display task pool etc at given events'
 comsum['report-timings'] = 'Generate a report on task timing data'
