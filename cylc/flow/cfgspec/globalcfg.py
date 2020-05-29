@@ -206,7 +206,7 @@ with Conf('flow.rc', desc='''
 
     # job platforms
     with Conf('job platforms'):
-        with Conf('<platform name>'):
+        with Conf('<platform name>') as Platform:
             Conf('batch system', VDR.V_STRING, 'background')
             Conf('batch submit command template', VDR.V_STRING)
             Conf('shell', VDR.V_STRING, '/bin/bash')
@@ -434,6 +434,8 @@ with Conf('flow.rc', desc='''
                 accepts up to 236 characters.
             ''')
             Conf('owner', VDR.V_STRING)
+        with Conf('localhost', meta=Platform):
+            Conf('remote hosts', VDR.V_STRING_LIST, ['localhost'])
 
     # Platform Groups
     with Conf('platform groups'):
