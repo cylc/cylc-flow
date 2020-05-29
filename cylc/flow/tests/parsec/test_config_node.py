@@ -3,7 +3,7 @@ import pytest
 from cylc.flow.parsec.config import ConfigNode as Conf
 
 
-@pytest.fixture
+@pytest.fixture(scope='module')
 def basic_config():
     """A basic config with a file, section and setting."""
     with Conf('file.rc') as file_:
@@ -31,7 +31,7 @@ def test_config_node(basic_config):
 def test_config_str(basic_config):
     """A node should str as a relative path from its parent node.."""
     file_, section, setting = basic_config
-    assert str(file_) == 'file.rc:'
+    assert str(file_) == 'file.rc'
     assert str(section) == '[section]'
     assert str(setting) == 'setting'
 
@@ -39,12 +39,12 @@ def test_config_str(basic_config):
 def test_config_repr(basic_config):
     """A node should repr as a full path."""
     file_, section, setting = basic_config
-    assert repr(file_) == 'file.rc:'
-    assert repr(section) == 'file.rc:[section]'
-    assert repr(setting) == 'file.rc:[section]setting'
+    assert repr(file_) == 'file.rc'
+    assert repr(section) == 'file.rc[section]'
+    assert repr(setting) == 'file.rc[section]setting'
 
 
-@pytest.fixture
+@pytest.fixture(scope='module')
 def many_setting():
     """A config containing a user-definable setting."""
     with Conf('file.rc') as file_:
@@ -58,10 +58,10 @@ def test_many_setting(many_setting):
     assert setting.name == '__MANY__'
     assert setting.display_name == '<setting>'
     assert str(setting) == '<setting>'
-    assert repr(setting) == 'file.rc:<setting>'
+    assert repr(setting) == 'file.rc|<setting>'
 
 
-@pytest.fixture
+@pytest.fixture(scope='module')
 def many_section():
     """A config containing a user-definable section."""
     with Conf('file.rc') as file_:
@@ -76,7 +76,35 @@ def test_many_section(many_section):
     assert section.name == '__MANY__'
     assert section.display_name == '<section>'
     assert str(section) == '[<section>]'
-    assert repr(section) == 'file.rc:[<section>]'
+    assert repr(section) == 'file.rc[<section>]'
     setting = list(section)[0]
     assert str(setting) == 'setting'
-    assert repr(setting) == 'file.rc:[<section>]setting'
+    assert repr(setting) == 'file.rc[<section>]setting'
+
+
+@pytest.fixture(scope='module')
+def meta_conf():
+    """A config with an inherited section."""
+    with Conf('Foo') as spec:
+        with Conf('<X>') as template:
+            Conf('a', default='a')
+            Conf('b', default='b')
+        with Conf('y', meta=template) as copy:
+            Conf('a', default='c')
+    return spec, template, copy
+
+
+def test_meta(meta_conf):
+    """It should inherit sections using the meta kwarg."""
+    spec, template, copy = meta_conf
+    assert template.meta is None
+    assert copy.meta == template
+    # make sure the template is unaffected
+    assert template['a'].default == 'a'
+    assert template['b'].default == 'b'
+    # make sure the copy is affected
+    assert copy['a'].default == 'c'
+    assert copy['b'].default == 'b'
+    # make sure inherited configurations are marked accordingly
+    assert copy['a'].meta is None  # not inherited
+    assert copy['b'].meta is True  # inherited

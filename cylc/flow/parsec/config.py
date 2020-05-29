@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from copy import deepcopy
 import re
 from textwrap import dedent
 
@@ -76,18 +77,10 @@ class ParsecConfig(object):
                 defs, spec = stack.pop()
                 for node in spec:
                     if not node.is_leaf():
-                        # if key not in defs:
                         if node.name not in defs:
                             defs[node.name] = OrderedDictWithDefaults()
                         stack.append((defs[node.name], node))
                     else:
-                        # try:
-                        #     defs[key] = spec[key][1]
-                        # except IndexError:
-                        #     if spec[key][0].endswith('_LIST'):
-                        #         defs[key] = []
-                        #     else:
-                        #         defs[key] = None
                         if node.default is ConfigNode.UNSET:
                             if node.vdr and node.vdr.endswith('_LIST'):
                                 defs[node.name] = []
@@ -191,10 +184,18 @@ class ConfigNode(ContextNode):
         display_name (str):
             This is the user-facing name of the config.
             Note the regular ``name`` might be ``__MANY__``.
+        meta (ConfigNode):
+            Another ConfigNode to use as a template for this one.
+
+            This is useful if you want to create a specific instance of
+            a generic configuration e.g. ``[elephant]`` from ``[<animal>]``.
+
+            Leaf nodes inherited from the generic config wil have
+            ``meta=True``.
 
     """
 
-    ROOT_NAME_FMT = '{display_name}:'
+    ROOT_NAME_FMT = '{display_name}'
     NODE_NAME_FMT = '[{display_name}]'
     LEAF_NAME_FMT = '{display_name}'
     SEP = ''
@@ -202,7 +203,7 @@ class ConfigNode(ContextNode):
     UNSET = '*value unset*'
 
     __slots__ = ContextNode.__slots__ + (
-        'vdr', 'options', 'default', 'desc', 'display_name'
+        'vdr', 'options', 'default', 'desc', 'display_name', 'meta'
     )
 
     def __init__(
@@ -212,6 +213,7 @@ class ConfigNode(ContextNode):
             default=UNSET,
             options=None,
             desc=None,
+            meta=None
     ):
         display_name = name
         if name.startswith('<'):
@@ -222,11 +224,24 @@ class ConfigNode(ContextNode):
 
         ContextNode.__init__(self, name)
 
-        if not isinstance(vdr, str):
-            breakpoint()
+        if meta:
+            # inherit items from the template configuration
+            self._children = deepcopy(meta._children)
+            for child in self._children.values():
+                # record that these configurations have been inherited
+                # (this is used to prevent documenting settings twice)
+                child.meta = True
 
         self.display_name = display_name
         self.vdr = vdr
         self.default = default
         self.options = options
         self.desc = dedent(desc).strip() if desc else None
+        self.meta = meta
+
+    def __repr__(self):
+        parents = list(self.parents())
+        itr = list(reversed(list(parents))) + [self]
+        if len(parents) == 1 and self.is_leaf():
+            itr.insert(1, '|')
+        return ''.join(map(str, itr))
