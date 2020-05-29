@@ -1,8 +1,0 @@
-[cylc]
-    UTC mode = True
-[scheduling]
-    [[graph]]
-        P1D = "foo[-P1D] => foo => bar"
-[runtime]
-    [[root]]
-        script = true

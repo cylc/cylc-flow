@@ -16,9 +16,13 @@
 
 import os
 import pytest
+from unittest.mock import Mock
 from tempfile import TemporaryDirectory, NamedTemporaryFile
 from pathlib import Path
+
 from cylc.flow.config import SuiteConfig
+from cylc.flow.cycling import loader
+from cylc.flow.exceptions import SuiteConfigError
 
 
 def get_test_inheritance_quotes():
@@ -264,3 +268,34 @@ def test_queue_config_not_used_not_defined(caplog, tmp_path):
     assert log[0] == "Queue configuration warnings:"
     assert log[1] == "+ q1: ignoring foo (task not used in the graph)"
     assert log[2] == "+ q2: ignoring bar (task not defined)"
+
+
+def test_missing_initial_cycle_point():
+    """Test that validation fails when the initial cycle point is
+    missing for datetime cycling"""
+    mocked_config = Mock()
+    mocked_config.cfg = {
+        'scheduling': {
+            'cycling mode': None,
+            'initial cycle point': None
+        }
+    }
+    with pytest.raises(SuiteConfigError) as exc:
+        SuiteConfig.process_initial_cycle_point(mocked_config)
+    assert "This suite requires an initial cycle point" in str(exc.value)
+
+
+def test_integer_cycling_default_initial_point(cycling_mode):
+    """Test that the initial cycle point defaults to 1 for integer cycling
+    mode."""
+    cycling_mode()  # This is a pytest fixture; sets integer cycling mode
+    mocked_config = Mock()
+    mocked_config.cfg = {
+        'scheduling': {
+            'cycling mode': 'integer',
+            'initial cycle point': None
+        }
+    }
+    SuiteConfig.process_initial_cycle_point(mocked_config)
+    assert mocked_config.cfg['scheduling']['initial cycle point'] == '1'
+    assert mocked_config.initial_point == loader.get_point(1)

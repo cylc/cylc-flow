@@ -192,17 +192,17 @@ with Conf(
     '''):
         Conf('initial cycle point', VDR.V_CYCLE_POINT, desc='''
             In a cold start each cycling task (unless specifically excluded
-            under
-            :cylc:conf:`[..][special tasks]`) will be loaded into the suite
-            with this
-            cycle point, or with the closest subsequent valid cycle point for
-            the task.  This item can be overridden on the command line.
+            under :cylc:conf:`[..][special tasks]`) will be loaded into the
+            suite with this cycle point, or with the closest subsequent valid
+            cycle point for the task. This item can be overridden on the
+            command line.
+
+            In integer cycling, the default is ``1``.
 
             In date-time cycling, if you do not provide time zone information
             for this, it will be assumed to be local time, or in UTC if
-            :cylc:conf:`suite.rc[cylc]UTC mode`
-            is set, or in the time zone determined by
-            :cylc:conf`suite.rc[cylc][cycle point time zone]`.
+            :cylc:conf:`suite.rc[cylc]UTC mode` is set, or in the time zone
+            determined by :cylc:conf`suite.rc[cylc][cycle point time zone]`.
 
             The string ``now`` converts to the current date-time on the suite
             host (adjusted to UTC if the suite is in UTC mode but the host is
