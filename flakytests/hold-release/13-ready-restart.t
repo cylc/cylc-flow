@@ -25,7 +25,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
-SUITE_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
+SUITE_DIR="${RUN_DIR}/${SUITE_NAME}"
 export CYLC_SUITE_LOG_DIR="${SUITE_DIR}/log/suite"
 export PATH="${TEST_DIR}/${SUITE_NAME}/bin:$PATH"
 LOG="$(find "${CYLC_SUITE_LOG_DIR}/" -type f -name 'log.*' | sort | head -n 1)"

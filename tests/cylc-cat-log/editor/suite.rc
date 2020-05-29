@@ -17,7 +17,7 @@ jumped over
 the lazy dog
 __END__
 """
+        platform = test platform
         [[[remote]]]
             host = {{CYLC_TEST_HOST | default("localhost")}}
-            owner = {{CYLC_TEST_OWNER | default(environ["USER"])}}
             retrieve job logs = True

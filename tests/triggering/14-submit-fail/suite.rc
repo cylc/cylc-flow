@@ -9,7 +9,6 @@
 [runtime]
     [[foo]]
         script = "true"
-        [[[remote]]]
-            host=idontexist
+        platform = idontexist
     [[bar]]
         script = "true"

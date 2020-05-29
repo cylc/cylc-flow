@@ -21,9 +21,6 @@
 export RND_SUITE_NAME
 export RND_SUITE_SOURCE
 export RND_SUITE_RUNDIR
-export CYLC_RUN_DIR
-
-CYLC_RUN_DIR="$RUN_DIR"
 
 function make_rnd_suite() {
     # Create a randomly-named suite source directory.
@@ -32,7 +29,7 @@ function make_rnd_suite() {
     RND_SUITE_SOURCE="$PWD/${RND_SUITE_NAME}"
     mkdir -p "${RND_SUITE_SOURCE}"
     touch "${RND_SUITE_SOURCE}/suite.rc"
-    RND_SUITE_RUNDIR="${CYLC_RUN_DIR}/${RND_SUITE_NAME}"
+    RND_SUITE_RUNDIR="${RUN_DIR}/${RND_SUITE_NAME}"
 }
 
 function purge_rnd_suite() {

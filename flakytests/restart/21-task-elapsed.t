@@ -37,7 +37,7 @@ __PYTHON__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
-RUND="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
+RUND="${RUN_DIR}/${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run "${SUITE_NAME}" --debug --no-detach
 suite_run_ok "${TEST_NAME_BASE}-restart-1" \

@@ -84,7 +84,7 @@ def log_task_job_activity(ctx, suite, point, name, submit_num=None):
     job_activity_log = get_task_job_activity_log(
         suite, point, name, submit_num)
     try:
-        with open(job_activity_log, "ab") as handle:
+        with open(os.path.expandvars(job_activity_log), "ab") as handle:
             handle.write((ctx_str + '\n').encode())
     except IOError as exc:
         # This happens when there is no job directory, e.g. if job host
@@ -605,13 +605,10 @@ class TaskEventsManager():
 
     def _process_job_logs_retrieval(self, schd_ctx, ctx, id_keys):
         """Process retrieval of task job logs from remote user@host."""
-        if ctx.user_at_host and "@" in ctx.user_at_host:
-            s_user, s_host = ctx.user_at_host.split("@", 1)
-        else:
-            s_user, s_host = (None, ctx.user_at_host)
-        ssh_str = str(glbl_cfg().get_host_item("ssh command", s_host, s_user))
-        rsync_str = str(glbl_cfg().get_host_item(
-            "retrieve job logs command", s_host, s_user))
+        from cylc.flow.platform_lookup import forward_lookup
+        platform = forward_lookup(ctx.user_at_host)
+        ssh_str = str(platform["ssh command"])
+        rsync_str = str(platform["retrieve job logs command"])
 
         cmd = shlex.split(rsync_str) + ["--rsh=" + ssh_str]
         if LOG.isEnabledFor(DEBUG):
@@ -631,7 +628,7 @@ class TaskEventsManager():
         # Remote source
         cmd.append("%s:%s/" % (
             ctx.user_at_host,
-            get_remote_suite_run_job_dir(s_host, s_user, schd_ctx.suite)))
+            get_remote_suite_run_job_dir(platform, schd_ctx.suite)))
         # Local target
         cmd.append(get_suite_run_job_dir(schd_ctx.suite) + "/")
         self.proc_pool.put_command(
@@ -1018,13 +1015,10 @@ class TaskEventsManager():
                 default=[900]))  # Default 15 minute intervals
             if itask.summary[self.KEY_EXECUTE_TIME_LIMIT]:
                 time_limit = itask.summary[self.KEY_EXECUTE_TIME_LIMIT]
-                try:
-                    host_conf = itask.platform['batch system']
-                    batch_sys_conf = host_conf[itask.summary['batch_sys_name']]
-                except (TypeError, KeyError):
-                    batch_sys_conf = {}
-                time_limit_delays = batch_sys_conf.get(
-                    'execution time limit polling intervals', [60, 120, 420])
+                time_limit_delays = itask.platform.get(
+                    'execution time limit polling intervals')
+                if not time_limit_delays:
+                    time_limit_delays = [60, 120, 420]
                 timeout = time_limit + sum(time_limit_delays)
                 # Remove excessive polling before time limit
                 while sum(delays) > time_limit:

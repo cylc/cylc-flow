@@ -19,6 +19,17 @@
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 10
+skip_all "TODO fix after dealing with rmeote init"
+#-------------------------------------------------------------------------------
+create_test_globalrc '
+[job platfroms]
+[[platform at]]
+[[platform background]]
+[[platform loadleveler]]
+[[platform pbs]]
+[[platform sge]]
+[[platform slurm]]
+'
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"

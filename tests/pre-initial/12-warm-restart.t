@@ -44,7 +44,7 @@ __OUT__
 # Stop suite
 cylc stop --max-polls=10 --interval=2 "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-DB_FILE="$(cylc get-global-config '--print-run-dir')/${SUITE_NAME}/log/db"
+DB_FILE="${RUN_DIR}/${SUITE_NAME}/log/db"
 NAME='database-entry'
 sqlite3 "${DB_FILE}" \
     'SELECT value FROM suite_params WHERE key=="startcp"' >"${NAME}"

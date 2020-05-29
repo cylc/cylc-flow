@@ -88,7 +88,7 @@ TEST_NAME="${TEST_NAME_BASE}-check-broadcast-in-db"
 if ! command -v 'sqlite3' >'/dev/null'; then
     skip 1 "sqlite3 not installed?"
 fi
-DB_FILE="$(cylc get-global-config '--print-run-dir')/${SUITE_NAME}/log/db"
+DB_FILE="${RUN_DIR}/${SUITE_NAME}/log/db"
 NAME='db-broadcast-states.out'
 sqlite3 "${DB_FILE}" \
     'SELECT change, point, namespace, key, value FROM broadcast_events

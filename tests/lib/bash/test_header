@@ -509,7 +509,7 @@ purge_suite() {
         rm -fr "${SUITE_RUN_DIR}"
         # The || true is here to prevent setting off the error trap no matter
         # shellcheck disable=SC2015
-        (cd "${RUND}" && rmdir -p "$(dirname "${SUITE_RUN_DIR}")" 2>'/dev/null' || true)
+        (cd "${RUN_DIR}" && rmdir -p "$(dirname "${SUITE_RUN_DIR}")" 2>'/dev/null' || true)
     fi
     if [[ -n "${TEST_DIR:-}" && -n "${SUITE_NAME:-}" ]]; then
         rm -fr "${TEST_DIR:?}/${SUITE_NAME:?}"
@@ -755,6 +755,7 @@ print(get_fqdn_by_host(${TARGET}))
 PATH="${CYLC_REPO_DIR}/bin:${PATH}"
 
 RUN_DIR="$(eval echo "$(cylc get-global-config --print-run-dir --color=never)")"
+export RUN_DIR
 TEST_NAME_BASE="$(basename "$0" '.t')"
 TEST_SOURCE_DIR="$(cd "$(dirname "$0")" && pwd)"
 TEST_DIR="$(mktemp -d)"

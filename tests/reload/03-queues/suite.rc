@@ -5,7 +5,7 @@
 [scheduling]
     [[ queues ]]
         [[[ q_fam ]]]
-            limit = 5 # marker
+            limit =  3  # marker
             members = reloader, FAM
     [[graph]]
         R1 = """reloader:start => FAM

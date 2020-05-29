@@ -9,6 +9,5 @@
         [[[job]]]
             execution retry delays = P0Y
 {% if CYLC_TEST_HOST is defined %}
-        [[[remote]]]
-            host = {{CYLC_TEST_HOST}}
+        platform = test remote platform
 {% endif %}

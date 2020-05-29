@@ -175,7 +175,7 @@ class Scheduler(object):
         # For user-defined batch system handlers
         sys.path.append(os.path.join(self.suite_dir, 'python'))
         sys.path.append(os.path.join(self.suite_dir, 'lib', 'python'))
-        self.suite_run_dir = get_suite_run_dir(self.suite)
+        self.suite_run_dir = os.path.expandvars(get_suite_run_dir(self.suite))
         self.suite_work_dir = get_suite_run_work_dir(self.suite)
         self.suite_share_dir = get_suite_run_share_dir(self.suite)
         self.suite_log_dir = get_suite_run_log_dir(self.suite)

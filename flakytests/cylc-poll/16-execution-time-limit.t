@@ -20,14 +20,14 @@
 #-------------------------------------------------------------------------------
 set_test_number 4
 create_test_globalrc '
-[hosts]
+[job platforms]
    [[localhost]]
         task communication method = poll
         submission polling intervals = PT2S
         execution polling intervals = PT1M
-        [[[batch systems]]]
-            [[[[background]]]]
-                execution time limit polling intervals = PT5S'
+        batch system = background
+        execution time limit polling intervals = PT5S
+'
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"

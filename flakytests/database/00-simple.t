@@ -29,7 +29,7 @@ if ! command -v 'sqlite3' >'/dev/null'; then
     exit 0
 fi
 
-DB_FILE="$(cylc get-global-config '--print-run-dir')/${SUITE_NAME}/log/db"
+DB_FILE="${RUN_DIR}/${SUITE_NAME}/log/db"
 
 NAME='schema.out'
 ORIG="${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}"
@@ -53,7 +53,7 @@ cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}" "${NAME}"
 NAME='select-task-jobs.out'
 sqlite3 "${DB_FILE}" \
     'SELECT cycle, name, submit_num, try_num, submit_status, run_status,
-            user_at_host, batch_sys_name
+            platform_name, batch_sys_name
      FROM task_jobs ORDER BY name' \
     >"${NAME}"
 LOCALHOST="$(get_fqdn_by_host)"

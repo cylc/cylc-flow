@@ -65,8 +65,7 @@ def main_cli(parser, opts, job_log_root, *job_log_dirs):
 
 
 def main():
-    if not remrun():
-        main_cli()
+    main_cli()
 
 
 if __name__ == "__main__":

@@ -25,7 +25,7 @@
 set_test_number 9
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-SHARE="$(cylc get-site-config --print-run-dir)/${SUITE_NAME}/share"
+SHARE="${RUN_DIR}/${SUITE_NAME}/share"
 
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"

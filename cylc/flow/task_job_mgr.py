@@ -61,6 +61,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED,
     TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING)
 from cylc.flow.wallclock import get_current_time_string, get_utc_mode
+from cylc.flow.remote import construct_platform_ssh_cmd
 
 
 class TaskJobManager(object):
@@ -284,7 +285,7 @@ class TaskJobManager(object):
                         self.task_events_mgr.EVENT_SUBMIT_FAILED)
                 continue
             # Build the "cylc jobs-submit" command
-            cmd = ['cylc', self.JOBS_SUBMIT]
+            cmd = [self.JOBS_SUBMIT]
             if LOG.isEnabledFor(DEBUG):
                 cmd.append('--debug')
             if get_utc_mode():
@@ -295,17 +296,13 @@ class TaskJobManager(object):
                     ('host', host, is_remote_host),
                     ('user', owner, is_remote_user)]:
                 if test_func(value):
-                    cmd.append('--%s=%s' % (key, value))
                     remote_mode = True
-                    kwargs[key] = value
             if remote_mode:
                 cmd.append('--remote-mode')
             cmd.append('--')
             cmd.append(
-                os.path.expandvars(
-                    get_remote_suite_run_job_dir(
-                        platform, suite
-                    )
+                get_remote_suite_run_job_dir(
+                    platform, suite
                 )
             )
             # Chop itasks into a series of shorter lists if it's very big
@@ -330,6 +327,9 @@ class TaskJobManager(object):
                                 itask.submit_num))
                     job_log_dirs.append(get_task_job_id(
                         itask.point, itask.tdef.name, itask.submit_num))
+                    stdin_files = [
+                        os.path.expandvars(path) for path in stdin_files
+                    ]
                     # The job file is now (about to be) used: reset the file
                     # write flag so that subsequent manual retrigger will
                     # generate a new job file.
@@ -337,6 +337,14 @@ class TaskJobManager(object):
                     itask.state.reset(TASK_STATUS_READY)
                     if itask.state.outputs.has_custom_triggers():
                         self.suite_db_mgr.put_update_task_outputs(itask)
+                cmd = construct_platform_ssh_cmd(cmd, platform)
+                # TODO At the moment this is crudely replacing the host and
+                # sshing into localhost which seems crude and hack-y.
+                # We should be able to run this without the ssh but I have
+                # Been struggling.
+                if not remote_mode:
+                    cmd[3] = os.environ['HOSTNAME']
+                    LOG.critical(cmd[3])
                 self.proc_pool.put_command(
                     SubProcContext(
                         self.JOBS_SUBMIT,
@@ -676,13 +684,9 @@ class TaskJobManager(object):
             platform = itasks[0].platform
             host = randomchoice(platform['remote hosts'])
             owner = platform['owner']
-            cmd = ["cylc", cmd_key]
+            cmd = [cmd_key]
             if LOG.isEnabledFor(DEBUG):
                 cmd.append("--debug")
-            if is_remote_host(host):
-                cmd.append("--host=%s" % host)
-            if is_remote_user(owner):
-                cmd.append("--user=%s" % owner)
             cmd.append("--")
             cmd.append(get_remote_suite_run_job_dir(platform, suite))
             job_log_dirs = []
@@ -690,6 +694,7 @@ class TaskJobManager(object):
                 job_log_dirs.append(get_task_job_id(
                     itask.point, itask.tdef.name, itask.submit_num))
             cmd += [os.path.expandvars(path) for path in job_log_dirs]
+            cmd = construct_platform_ssh_cmd(cmd, platform)
             self.proc_pool.put_command(
                 SubProcContext(cmd_key, cmd), callback, [suite, itasks])
 

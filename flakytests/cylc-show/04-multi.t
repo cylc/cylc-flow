@@ -26,7 +26,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate  "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
 
-RUND="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
+RUND="${RUN_DIR}/${SUITE_NAME}"
 for FILE in "${RUND}/show1.txt" "${RUND}/show2.txt"; do
     contains_ok "${FILE}" <<'__TXT__'
 ----

@@ -9,8 +9,7 @@
 [runtime]
     [[t1]]
         script = true
-        [[[job]]]
-            batch system = bad
+        platform = bad
     [[t2]]
         script = """
 grep -q -F \

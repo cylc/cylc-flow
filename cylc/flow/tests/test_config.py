@@ -23,7 +23,7 @@ from pathlib import Path
 from cylc.flow.config import SuiteConfig
 from cylc.flow.cycling import loader
 from cylc.flow.exceptions import SuiteConfigError
-from cylc.flow.tests.util import mock_glbl_cfg
+from cylc.flow.tests.conftest import mock_glbl_cfg
 
 
 def get_test_inheritance_quotes():

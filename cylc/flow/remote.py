@@ -27,13 +27,14 @@ import signal
 from subprocess import Popen, PIPE, DEVNULL
 import sys
 from time import sleep
-from random import choice as randomchoice
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flow.flags
 from cylc.flow.hostuserutil import is_remote
 from cylc.flow import __version__ as CYLC_VERSION
+from cylc.flow.platform_lookup import forward_lookup
+from random import choice as randomchoice
 
 
 def get_proc_ancestors():
@@ -139,9 +140,33 @@ def run_cmd(
             return True
 
 
-def construct_ssh_cmd(raw_cmd, platform=None, forward_x11=False,
-                      stdin=False, ssh_login_shell=None, ssh_cylc=None,
-                      set_UTC=False, allow_flag_opts=False):
+def construct_platform_ssh_cmd(raw_cmd, platform, **kwargs):
+    """A wrapper around `construct_ssh_cmd` allowing us to pass a platform
+    object rather than a user and host.
+
+    Args:
+        All as `construct_ssh_cmd` except for user and host.
+    """
+    ret = construct_ssh_cmd(
+        raw_cmd,
+        user=platform['owner'],
+        host=randomchoice(platform['remote hosts']),
+        ssh_cmd=platform['ssh command'],
+        ssh_cylc=platform['cylc executable'],
+        ssh_login_shell=platform['use login shell'],
+        **kwargs
+    )
+
+    LOG.debug(f"SSH command constructed: {ret}")
+
+    return ret
+
+
+def construct_ssh_cmd(
+        raw_cmd, user=None, host=None, forward_x11=False, stdin=False,
+        ssh_cmd=None, ssh_login_shell=None, ssh_cylc=None, set_UTC=False,
+        allow_flag_opts=False
+):
     """Append a bare command with further options required to run via ssh.
 
     Arguments:
@@ -152,6 +177,8 @@ def construct_ssh_cmd(raw_cmd, platform=None, forward_x11=False,
             If True, use 'ssh -Y' to enable X11 forwarding, else just 'ssh'.
         stdin:
             If None, the `-n` option will be added to the SSH command line.
+        ssh_cmd (string):
+            ssh command to use: If unset defaults to localhost ssh cmd.
         ssh_login_shell (boolean):
             If True, launch remote command with `bash -l -c 'exec "$0" "$@"'`.
         ssh_cylc (string):
@@ -166,11 +193,13 @@ def construct_ssh_cmd(raw_cmd, platform=None, forward_x11=False,
         A list containing a chosen command including all arguments and options
         necessary to directly execute the bare command on a given host via ssh.
     """
-    command = platform['ssh command']
-    # TODO implement a nicer method for selecting a platform host
-    host = randomchoice(platform['remote hosts'])
-    # TODO refs to owner to dissapear after future merge
-    owner = platform['owner']
+    # If ssh cmd isn't given use the default from localhost settings.
+    # breakpoint()
+    if ssh_cmd is None:
+        command = shlex.split(forward_lookup()['ssh command'])
+    else:
+        command = shlex.split(ssh_cmd)
+
     if forward_x11:
         command.append('-Y')
     if stdin is None:
@@ -198,7 +227,8 @@ def construct_ssh_cmd(raw_cmd, platform=None, forward_x11=False,
 
     # Use bash -l?
     if ssh_login_shell is None:
-        ssh_login_shell = platform['use login shell']
+        ssh_login_shell = glbl_cfg().get_host_item(
+            'use login shell', host, user)
     if ssh_login_shell:
         # A login shell will always source /etc/profile and the user's bash
         # profile file. To avoid having to quote the entire remote command
@@ -209,7 +239,7 @@ def construct_ssh_cmd(raw_cmd, platform=None, forward_x11=False,
     if ssh_cylc:
         command.append(ssh_cylc)
     else:
-        ssh_cylc = platform['cylc executable']
+        ssh_cylc = glbl_cfg().get_host_item('cylc executable', host, user)
         if ssh_cylc.endswith('cylc'):
             command.append(ssh_cylc)
         else:
@@ -282,8 +312,7 @@ def remote_cylc_cmd(
 def remrun(dry_run=False, forward_x11=False, abort_if=None,
            set_rel_local=False):
     """Short for RemoteRunner().execute(...)"""
-    return RemoteRunner().execute(
-        dry_run, forward_x11, abort_if, set_rel_local)
+    return False
 
 
 class RemoteRunner(object):

@@ -131,6 +131,7 @@ from cylc.flow.task_job_logs import (
 from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.wallclock import get_current_time_string
 from cylc.flow.parsec.OrderedDict import OrderedDict
+from cylc.flow import LOG
 
 
 class JobPollContext():
@@ -350,8 +351,10 @@ class BatchSysManager():
         utc_mode -- is the suite running in UTC mode?
 
         """
+        LOG.debug(f"Job Running on HOSTNAME: {os.environ['HOSTNAME']}")
         if "$" in job_log_root:
             job_log_root = os.path.expandvars(job_log_root)
+            LOG.debug(f"$HOME was removed from job_log_root is {job_log_root}")
         self.configure_suite_run_dir(job_log_root.rsplit(os.sep, 2)[0])
         if remote_mode:
             items = self._jobs_submit_prep_by_stdin(job_log_root, job_log_dirs)

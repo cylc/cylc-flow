@@ -1,7 +1,7 @@
 #!/bin/bash
 set -eu
 SUITE="$1"
-OUT_FILE="$RUN_DIR/${SUITE}/file"
+OUT_FILE="$CYLC_SUITE_RUN_DIR/file"
 if grep -q -F '1' "${OUT_FILE}" 2>'/dev/null'; then
     echo '2' >>"${OUT_FILE}"
 else

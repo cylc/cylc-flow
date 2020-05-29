@@ -9,8 +9,7 @@
 [runtime]
 {% if "CYLC_TEST_HOST" in environ %}
     [[root]]
-        [[[remote]]]
-            host = {{environ["CYLC_TEST_HOST"]}}
+        platform = test remote platform
 {% endif %}
     [[foo]]
         script="""
