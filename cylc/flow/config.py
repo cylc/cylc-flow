@@ -321,22 +321,8 @@ class SuiteConfig(object):
             set_utc_mode(self.cfg['cylc']['UTC mode'])
 
         # Initial point from suite definition (or CLI override above).
-        orig_icp = self.cfg['scheduling']['initial cycle point']
-        if orig_icp is None:
-            raise SuiteConfigError(
-                "This suite requires an initial cycle point.")
-        if orig_icp == "now":
-            icp = get_current_time_string()
-        else:
-            try:
-                my_now = get_current_time_string()
-                icp = ingest_time(orig_icp, my_now)
-            except ValueError as exc:
-                raise SuiteConfigError(str(exc))
-        if orig_icp != icp:
-            self.options.icp = icp
-        self.initial_point = get_point(icp).standardise()
-        self.cfg['scheduling']['initial cycle point'] = str(self.initial_point)
+        self.process_initial_cycle_point()
+
         if getattr(self.options, 'startcp', None) is not None:
             # Warm start from a point later than initial point.
             if self.options.startcp == "now":
@@ -708,6 +694,36 @@ class SuiteConfig(object):
             self.mem_log("config.py: after _check_circular()")
 
         self.mem_log("config.py: end init config")
+
+    def process_initial_cycle_point(self):
+        """Validate and set initial cycle point from suiterc.
+
+        Sets:
+            self.initial_point
+            self.cfg['scheduling']['initial cycle point']
+            self.options.icp
+        Raises:
+            SuiteConfigError - if it fails to validate
+        """
+        orig_icp = self.cfg['scheduling']['initial cycle point']
+        if orig_icp is None:
+            if self.cfg['scheduling']['cycling mode'] == INTEGER_CYCLING_TYPE:
+                orig_icp = '1'
+            else:
+                raise SuiteConfigError(
+                    "This suite requires an initial cycle point.")
+        if orig_icp == "now":
+            icp = get_current_time_string()
+        else:
+            try:
+                my_now = get_current_time_string()
+                icp = ingest_time(orig_icp, my_now)
+            except ValueError as exc:
+                raise SuiteConfigError(str(exc))
+        if orig_icp != icp:
+            self.options.icp = icp
+        self.initial_point = get_point(icp).standardise()
+        self.cfg['scheduling']['initial cycle point'] = str(self.initial_point)
 
     def _check_circular(self):
         """Check for circular dependence in graph."""
