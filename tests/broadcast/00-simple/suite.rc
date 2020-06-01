@@ -74,6 +74,10 @@ set +x
 set -x
 sed -i '/DEBUG -/d' 'prep.out'
 sed -i '/\(DEBUG\|WARNING\|ERROR\) -/d' 'prep.err'
+
+# workaround for platforms affected by https://github.com/cylc/cylc-flow/issues/3585
+sed -i '/BASH_XTRACEFD/d' 'prep.err'
+
 diff -u "${CYLC_SUITE_DEF_PATH}/expected-prep.out" 'prep.out'
 diff -u "${CYLC_SUITE_DEF_PATH}/expected-prep.err" 'prep.err'
 """
