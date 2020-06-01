@@ -26,6 +26,7 @@ import os
 import sys
 
 
+from cylc.flow.exceptions import SuiteStopped
 import cylc.flow.flags
 from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.pathutil import get_suite_run_job_dir
@@ -74,6 +75,12 @@ def record_messages(suite, task_job, messages):
     # Send messages
     try:
         pclient = SuiteRuntimeClient(suite)
+    except SuiteStopped:
+        # on a remote host this means the contact file is not present
+        # either the suite is stopped or the contact file is not present
+        # on the job host (i.e. comms method is polling)
+        # eitherway don't try messaging
+        pass
     except Exception:
         # Backward communication not possible
         if cylc.flow.flags.debug:
