@@ -169,10 +169,6 @@ class TaskRemoteMgr(object):
             owner_at_host = owner + '@' + owner_at_host
         LOG.debug('comm_meth[%s]=%s' % (owner_at_host, comm_meth))
         items = self._remote_init_items(comm_meth)
-        # No item to install
-        if not items:
-            self.remote_init_map[(host, owner)] = REMOTE_INIT_NOT_REQUIRED
-            return self.remote_init_map[(host, owner)]
 
         # Create a TAR archive with the service files,
         # so they can be sent later via SSH's STDIN to the task remote.
@@ -314,6 +310,7 @@ class TaskRemoteMgr(object):
               at target remote.
         """
         items = []
+
         if comm_meth in ['ssh', 'zmq']:
             # Contact file
             items.append((
@@ -323,7 +320,6 @@ class TaskRemoteMgr(object):
                     SuiteFiles.Service.CONTACT)))
 
         if comm_meth in ['zmq']:
-
             suite_srv_dir = get_suite_srv_dir(self.suite)
             server_pub_keyinfo = KeyInfo(
                 KeyType.PUBLIC,
