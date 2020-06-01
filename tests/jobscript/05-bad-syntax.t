@@ -15,21 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test that SGE directives are formatted correctly. GitHub #2215
+# Test bad syntax in "script" value leads to submit fail.
 . "$(dirname "${0}")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 6
+set_test_number 2
+#-------------------------------------------------------------------------------
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-#-------------------------------------------------------------------------------
-TEST_NAME="${TEST_NAME_BASE}-validate"
+TEST_NAME="${TEST_NAME_BASE}-advanced-validate"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
-#-------------------------------------------------------------------------------
-TEST_NAME="${TEST_NAME_BASE}-script"
-run_ok "${TEST_NAME}" cylc jobscript "${SUITE_NAME}" foo.1
-grep_ok "^#\$ -l h_rt=0:10:00$" "${TEST_NAME}.stdout"
-grep_ok "^#\$ -l s_vmem=1G,s_cpu=60$" "${TEST_NAME}.stdout"
-grep_ok "^#\$ -V$" "${TEST_NAME}.stdout"
-grep_ok "^#\$ -q queuename$" "${TEST_NAME}.stdout"
+TEST_NAME="${TEST_NAME_BASE}-advanced-run"
+run_ok "${TEST_NAME}" cylc run "${SUITE_NAME}" --reference-test --debug --no-detach
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"
 exit

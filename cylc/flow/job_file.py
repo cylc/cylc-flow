@@ -64,12 +64,13 @@ class JobFileWriter(object):
                 self._write_header(handle, job_conf)
                 self._write_directives(handle, job_conf)
                 self._write_prelude(handle, job_conf)
-                self._write_environment_1(handle, job_conf, run_d)
+                self._write_suite_environment(handle, job_conf, run_d)
+                self._write_task_environment(handle, job_conf)
                 self._write_global_init_script(handle, job_conf)
                 # suite bin access must be before runtime environment
                 # because suite bin commands may be used in variable
                 # assignment expressions: FOO=$(command args).
-                self._write_environment_2(handle, job_conf)
+                self._write_runtime_environment(handle, job_conf)
                 self._write_script(handle, job_conf)
                 self._write_epilogue(handle, job_conf, run_d)
         except IOError as exc:
@@ -175,7 +176,7 @@ class JobFileWriter(object):
             if key in os.environ:
                 handle.write("\nexport %s='%s'" % (key, os.environ[key]))
 
-    def _write_environment_1(self, handle, job_conf, run_d):
+    def _write_suite_environment(self, handle, job_conf, run_d):
         """Suite and task environment."""
         handle.write("\n\ncylc__job__inst__cylc_env() {")
         handle.write("\n    # CYLC SUITE ENVIRONMENT:")
@@ -215,6 +216,7 @@ class JobFileWriter(object):
         handle.write(
             '\n    export CYLC_SUITE_UUID="%s"' % job_conf['uuid_str'])
 
+    def _write_task_environment(self, handle, job_conf):
         handle.write("\n\n    # CYLC TASK ENVIRONMENT:")
         handle.write('\n    export CYLC_TASK_JOB="%s"' % job_conf['job_d'])
         handle.write(
@@ -239,7 +241,7 @@ class JobFileWriter(object):
         handle.write("\n}")
 
     @staticmethod
-    def _write_environment_2(handle, job_conf):
+    def _write_runtime_environment(handle, job_conf):
         """Run time environment part 2."""
         if job_conf['environment']:
             handle.write("\n\ncylc__job__inst__user_env() {")

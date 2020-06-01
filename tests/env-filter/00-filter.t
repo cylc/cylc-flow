@@ -18,7 +18,7 @@
 # Test environment filtering
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 17 
+set_test_number 13 
 #-------------------------------------------------------------------------------
 # a test suite that uses environment filtering:
 init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
@@ -85,47 +85,6 @@ BAZ = baz
 QUX = qux
 __OUT__
 cmp_ok "${TEST_NAME}.stderr" - </dev/null
-
-#-------------------------------------------------------------------------------
-# check that task job scripts contain only the filtered environment
-TEST_NAME=${TEST_NAME_BASE}-jobscript
-
-cylc jobscript "${SUITE_NAME}" foo.1 2> /dev/null | \
-    perl -0777 -ne 'print $1 if /# TASK RUNTIME ENVIRONMENT:\n(.*?)\}/s' \
-    >'foo.1.stdout'
-cmp_ok 'foo.1.stdout' - <<__OUT__
-    export FOO BAR
-    FOO="foo"
-    BAR="bar"
-__OUT__
-
-cylc jobscript "${SUITE_NAME}" bar.1 2> /dev/null | \
-    perl -0777 -ne 'print $1 if /# TASK RUNTIME ENVIRONMENT:\n(.*?)\}/s' \
-    >'bar.1.stdout'
-cmp_ok 'bar.1.stdout' - <<__OUT__
-    export BAR
-    BAR="bar"
-__OUT__
-
-cylc jobscript "${SUITE_NAME}" baz.1 2> /dev/null | \
-    perl -0777 -ne 'print $1 if /# TASK RUNTIME ENVIRONMENT:\n(.*?)\}/s' \
-    >'baz.1.stdout'
-cmp_ok 'baz.1.stdout' - <<__OUT__
-    export BAZ QUX
-    BAZ="baz"
-    QUX="qux"
-__OUT__
-
-cylc jobscript "${SUITE_NAME}" qux.1 2> /dev/null | \
-    perl -0777 -ne 'print $1 if /# TASK RUNTIME ENVIRONMENT:\n(.*?)\}/s' \
-    >'qux.1.stdout'
-cmp_ok 'qux.1.stdout' - <<__OUT__
-    export FOO BAR BAZ QUX
-    FOO="foo"
-    BAR="bar"
-    BAZ="baz"
-    QUX="qux"
-__OUT__
 
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"

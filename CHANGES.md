@@ -40,7 +40,7 @@ Third alpha release of Cylc 8.
 
 (See note on cylc-8 backward-incompatible changes, above)
 
-The command `cylc submit` has been removed.
+The commands `cylc submit` and `cylc jobscript` have been removed.
 
 ### Enhancements
 
