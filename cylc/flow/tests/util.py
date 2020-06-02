@@ -175,6 +175,10 @@ def set_up_globalrc(tmp_path_factory):
     * Functional tests which call out to other scripts.
     * Integration tests which span multiple modules.
 
+    Args:
+        rc_string (str):
+            The globlal configuration as a multi-line string.
+
     """
     def _inner_func(rc_string):
         tempdir = tmp_path_factory.getbasetemp()
@@ -197,13 +201,35 @@ def mock_glbl_cfg(tmp_path, monkeypatch):
 
     * Isolated unit tests within one module.
 
-    # TODO: modify Parsec so we can use StringIO rather than a temp file.
+    Args:
+        pypath (str):
+            The python-like path to the global configuation object you want
+            to fiddle.
+            E.G. if you want to hack the `glbl_cfg` in
+            `cylc.flow.scheduler` you would provide
+            `cylc.flow.scheduler.glbl_cfg`
+        rc_string (str):
+            The globlal configuration as a multi-line string.
+
+    Example:
+        Change the value of `UTC mode` in the global config as seen from
+        `the scheduler` module.
+
+        def test_something(mock_glbl_cfg):
+            mock_glbl_cfg(
+                'cylc.flow.scheduler.glbl_cfg',
+                '''
+                    [cylc]
+                        UTC mode = True
+                '''
+            )
 
     """
-    def _mock(pypath, global_rc):
+    # TODO: modify Parsec so we can use StringIO rather than a temp file.
+    def _mock(pypath, rc_string):
         nonlocal tmp_path, monkeypatch
         tmp_path = tmp_path / 'flow.rc'
-        tmp_path.write_text(global_rc)
+        tmp_path.write_text(rc_string)
         glbl_cfg = ParsecConfig(SPEC)
         glbl_cfg.loadcfg(tmp_path)
 
