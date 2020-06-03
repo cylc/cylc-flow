@@ -164,42 +164,11 @@ def create_task_proxy(task_name: str, suite_config: SuiteConfig,
 
 
 @pytest.fixture
-def set_up_globalrc(tmp_path_factory):
-    """A Pytest fixture for fiddling globalrc values.
-
-    Creates a globalrc file and modifies CYLC_CONF_PATH to point at it.
-
-    Use for:
-
-    * Functional tests which call out to other scripts.
-    * Integration tests which span multiple modules.
-
-    Args:
-        rc_string (str):
-            The globlal configuration as a multi-line string.
-
-    """
-    def _inner_func(rc_string):
-        tempdir = tmp_path_factory.getbasetemp()
-        globalrc = tempdir / 'flow.rc'
-        with open(str(globalrc), 'w') as file_handle:
-            file_handle.write(rc_string)
-        os.environ['CYLC_CONF_PATH'] = str(tempdir)
-        return globalrc
-
-    return _inner_func
-
-
-@pytest.fixture
 def mock_glbl_cfg(tmp_path, monkeypatch):
     """A Pytest fixture for fiddling globalrc values.
 
     * Hacks the specified `glbl_cfg` object.
     * Can be called multuple times within a test function.
-
-    Use for:
-
-    * Isolated unit tests within one module.
 
     Args:
         pypath (str):

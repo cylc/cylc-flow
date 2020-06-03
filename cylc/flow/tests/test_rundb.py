@@ -23,7 +23,7 @@ from tempfile import mktemp
 from unittest import mock
 
 from cylc.flow.rundb import CylcSuiteDAO
-from cylc.flow.tests.util import set_up_globalrc
+from cylc.flow.tests.util import mock_glbl_cfg
 
 
 GLOBALRC = """
@@ -196,11 +196,11 @@ def test_upgrade_hold_swap():
         assert not dao.upgrade_is_held()
 
 
-def test_upgrade_to_platforms(set_up_globalrc):
+def test_upgrade_to_platforms(mock_glbl_cfg):
     """Test upgrader logic for platforms in the database.
     """
     # Set up the globalrc
-    set_up_globalrc(GLOBALRC)
+    mock_glbl_cfg('cylc.flow.rundb.glbl_cfg', GLOBALRC)
 
     # task name, cycle, user_at_host, batch_system
     initial_data = [
