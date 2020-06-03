@@ -418,7 +418,7 @@ see `COPYING' in the Cylc source distribution.
         self.job_pool = JobPool(self)
         self.task_events_mgr = TaskEventsManager(
             self.suite, self.proc_pool, self.suite_db_mgr, self.broadcast_mgr,
-            self.job_pool)
+            self.job_pool, timestamp=self.options.log_timestamp)
         self.task_events_mgr.uuid_str = self.uuid_str
         self.task_job_mgr = TaskJobManager(
             self.suite, self.proc_pool, self.suite_db_mgr,
