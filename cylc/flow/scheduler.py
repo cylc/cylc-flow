@@ -401,7 +401,8 @@ see `COPYING' in the Cylc source distribution.
                 LOG.handlers[0].close()
                 LOG.removeHandler(LOG.handlers[0])
         LOG.addHandler(
-            TimestampRotatingFileHandler(self.suite, self.options.no_detach))
+            TimestampRotatingFileHandler(self.suite, self.options.no_detach,
+                                         timestamp=self.options.log_timestamp))
 
     def configure(self):
         """Configure suite server program."""
