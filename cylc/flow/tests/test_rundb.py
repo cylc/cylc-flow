@@ -23,7 +23,6 @@ from tempfile import mktemp
 from unittest import mock
 
 from cylc.flow.rundb import CylcSuiteDAO
-from cylc.flow.tests.util import mock_glbl_cfg
 
 
 GLOBALRC = """

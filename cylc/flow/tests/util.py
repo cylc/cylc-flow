@@ -14,18 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 from pathlib import Path
-import pytest
 from shutil import rmtree
 from tempfile import mkdtemp
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
 
-from cylc.flow.cfgspec.globalcfg import SPEC
 from cylc.flow.config import SuiteConfig
 from cylc.flow.job_pool import JobPool
-from cylc.flow.parsec.config import ParsecConfig
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.suite_db_mgr import SuiteDatabaseManager
 from cylc.flow.task_pool import TaskPool
@@ -160,53 +156,5 @@ def create_task_proxy(task_name: str, suite_config: SuiteConfig,
     return TaskProxy(
         tdef=task_def,
         start_point=suite_config.start_point,
-        is_startup=is_startup)
-
-
-@pytest.fixture
-def mock_glbl_cfg(tmp_path, monkeypatch):
-    """A Pytest fixture for fiddling globalrc values.
-
-    * Hacks the specified `glbl_cfg` object.
-    * Can be called multuple times within a test function.
-
-    Args:
-        pypath (str):
-            The python-like path to the global configuation object you want
-            to fiddle.
-            E.G. if you want to hack the `glbl_cfg` in
-            `cylc.flow.scheduler` you would provide
-            `cylc.flow.scheduler.glbl_cfg`
-        rc_string (str):
-            The globlal configuration as a multi-line string.
-
-    Example:
-        Change the value of `UTC mode` in the global config as seen from
-        `the scheduler` module.
-
-        def test_something(mock_glbl_cfg):
-            mock_glbl_cfg(
-                'cylc.flow.scheduler.glbl_cfg',
-                '''
-                    [cylc]
-                        UTC mode = True
-                '''
-            )
-
-    """
-    # TODO: modify Parsec so we can use StringIO rather than a temp file.
-    def _mock(pypath, rc_string):
-        nonlocal tmp_path, monkeypatch
-        global_rc_path = tmp_path / 'flow.rc'
-        global_rc_path.write_text(rc_string)
-        glbl_cfg = ParsecConfig(SPEC)
-        glbl_cfg.loadcfg(global_rc_path)
-
-        def _inner(cached=False):
-            nonlocal glbl_cfg
-            return glbl_cfg
-
-        monkeypatch.setattr(pypath, _inner)
-
-    yield _mock
-    rmtree(tmp_path)
+        is_startup=is_startup
+    )
