@@ -41,7 +41,7 @@ def mock_glbl_cfg(tmp_path, monkeypatch):
     """A Pytest fixture for fiddling globalrc values.
 
     * Hacks the specified `glbl_cfg` object.
-    * Can be called multuple times within a test function.
+    * Can be called multiple times within a test function.
 
     Args:
         pypath (str):
