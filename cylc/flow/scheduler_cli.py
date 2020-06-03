@@ -39,7 +39,6 @@ from cylc.flow import suite_files
 from cylc.flow.terminal import cli_function
 
 
-
 RUN_DOC = r"""cylc [control] run|start [OPTIONS] [ARGS]
 
 Start a suite run from scratch, ignoring dependence prior to the start point.
@@ -275,7 +274,6 @@ def _open_logs(reg, no_detach):
 
 def _close_logs():
     """Close Cylc log handlers for a flow run."""
-    LOG.info("DONE")  # main thread exit
     for handler in LOG.handlers:
         try:
             handler.close()
@@ -346,31 +344,34 @@ def scheduler_cli(parser, options, args, is_restart=False):
     if remrun(set_rel_local=True):  # State localhost as above.
         sys.exit()
 
-    # initalise the scheduler
+    # initalise the scheduler
+    scheduler = Scheduler(reg, options, is_restart=is_restart)
     try:
-        scheduler = Scheduler(reg, options, is_restart=is_restart)
+        scheduler.install()
     except SuiteServiceFileError as exc:
         sys.exit(exc)
 
-    # print the start message
+    # print the start message
     if options.no_detach or options.format == 'plain':
         _start_print_blurb()
 
-    # daemonise if requested
+    # daemonise if requested
     if not options.no_detach:
         daemonize(scheduler)
 
     # settup loggers
     _open_logs(reg, options.no_detach)
 
+    # take the scheduler through the startup sequence
+
     # run cylc run
     loop = asyncio.get_event_loop()
     try:
         loop.run_until_complete(
-            scheduler.start()
+            scheduler.configure_and_start()
         )
 
-    # stop cylc stop
+    # stop cylc stop
     except KeyboardInterrupt as exc:
         try:
             loop.run_until_complete(
@@ -381,10 +382,12 @@ def scheduler_cli(parser, options, args, is_restart=False):
             LOG.exception(exc2)
             raise exc2 from None
     except Exception:
-        # suppress the exception to prevent it appearing in the log
+        # suppress the exception to prevent it appearing in the log
         pass
     finally:
+        LOG.info("DONE")
         _close_logs()
+        loop.close()
 
 
 def main(is_restart=False):
