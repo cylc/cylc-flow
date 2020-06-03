@@ -15,9 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import pytest
-
 from pathlib import Path
+import pytest
 from shutil import rmtree
 from tempfile import mkdtemp
 from unittest import TestCase
@@ -164,7 +163,7 @@ def create_task_proxy(task_name: str, suite_config: SuiteConfig,
         is_startup=is_startup)
 
 
-@pytest.fixture()
+@pytest.fixture
 def set_up_globalrc(tmp_path_factory):
     """A Pytest fixture for fiddling globalrc values.
 
@@ -195,7 +194,8 @@ def set_up_globalrc(tmp_path_factory):
 def mock_glbl_cfg(tmp_path, monkeypatch):
     """A Pytest fixture for fiddling globalrc values.
 
-    Hacks the specified `glbl_cfg` object.
+    * Hacks the specified `glbl_cfg` object.
+    * Can be called multuple times within a test function.
 
     Use for:
 
@@ -228,10 +228,10 @@ def mock_glbl_cfg(tmp_path, monkeypatch):
     # TODO: modify Parsec so we can use StringIO rather than a temp file.
     def _mock(pypath, rc_string):
         nonlocal tmp_path, monkeypatch
-        tmp_path = tmp_path / 'flow.rc'
-        tmp_path.write_text(rc_string)
+        global_rc_path = tmp_path / 'flow.rc'
+        global_rc_path.write_text(rc_string)
         glbl_cfg = ParsecConfig(SPEC)
-        glbl_cfg.loadcfg(tmp_path)
+        glbl_cfg.loadcfg(global_rc_path)
 
         def _inner(cached=False):
             nonlocal glbl_cfg
@@ -239,4 +239,5 @@ def mock_glbl_cfg(tmp_path, monkeypatch):
 
         monkeypatch.setattr(pypath, _inner)
 
-    return _mock
+    yield _mock
+    rmtree(tmp_path)
