@@ -224,10 +224,6 @@ def construct_ssh_cmd(raw_cmd, user=None, host=None, forward_x11=False,
         if (cylc.flow.flags.debug or os.getenv('CYLC_DEBUG') in
                 ["True", "true"]):
             command.append(r'--debug')
-    if LOG.handlers:
-        LOG.debug("$ %s", ' '.join(quote(c) for c in command))
-    elif cylc.flow.flags.debug:
-        sys.stderr.write("$ %s\n" % ' '.join(quote(c) for c in command))
 
     return command
 
