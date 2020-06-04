@@ -55,5 +55,5 @@ class Profiler(object):
         """Print a message to standard out with the current memory usage."""
         if not self.enabled:
             return
-        memory = psutil.Process(os.getpid()).memory_info().rss / 1000
+        memory = psutil.Process(os.getpid()).memory_info().rss / 1024
         print("PROFILE: Memory: %d KiB: %s" % (memory, message))
