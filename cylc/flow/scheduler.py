@@ -558,6 +558,7 @@ class Scheduler:
 
         except SchedulerError as exc:
             await self.shutdown(exc)
+            raise exc from None
 
         except Exception as exc:
             try:

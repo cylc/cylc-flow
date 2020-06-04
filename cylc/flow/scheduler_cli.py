@@ -240,7 +240,7 @@ def get_option_parser(is_restart):
     return parser
 
 
-# options we cannot simply extract from the parser
+# options we cannot simply extract from the parser
 DEFAULT_OPTS = {
     'debug': False,
     'verbose': False,
@@ -381,9 +381,10 @@ def scheduler_cli(parser, options, args, is_restart=False):
             # In case of exceptions in the shutdown method itself.
             LOG.exception(exc2)
             raise exc2 from None
+        sys.exit(1)
     except Exception:
         # suppress the exception to prevent it appearing in the log
-        pass
+        sys.exit(1)
     finally:
         LOG.info("DONE")
         _close_logs()
