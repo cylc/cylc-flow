@@ -102,6 +102,12 @@
 #         Shorthand for 'poll test -e "${SUITE_RUN_DIR}/.service/contact"'
 #     poll_suite_stopped
 #         Shorthand for 'poll "!" test -e "${SUITE_RUN_DIR}/.service/contact"'
+#     get_suite_uuid
+#         Extract the UUID from the contact file or echo '' if not present.
+#     poll_suite_restart [TIMEOUT [UUID]]
+#         Wait for the suite to restart.
+#         Provide the UUID from the current run if suite is not
+#         guaranteed to be running.
 #     skip N SKIP_REASON
 #         echo "ok $((++T)) # skip SKIP_REASON" N times.
 #     skip_all SKIP_REASON
@@ -547,6 +553,28 @@ poll_suite_running() {
 
 poll_suite_stopped() {
     poll test '!' -e "${SUITE_RUN_DIR}/.service/contact"
+}
+
+get_suite_uuid() {
+    sed -n 's|CYLC_SUITE_UUID=\(.*\)|\1|p' "${SUITE_RUN_DIR}/.service/contact" 2>/dev/null
+}
+
+poll_suite_restart() {
+    TIMEOUT="${1:-10}"
+    STEP=1
+    UUID="${2:-$(get_suite_uuid)}"
+    TIME=0
+    while true; do
+        if [[ ${TIME} -gt $TIMEOUT ]]; then
+            return 1
+        fi
+        if [[ $(get_suite_uuid) != "${UUID}" ]]; then
+            return 0
+        else
+            TIME=$(( TIME + STEP ))
+            sleep "${STEP}"
+        fi
+    done
 }
 
 skip() {
