@@ -1,0 +1,5 @@
+Initial point: 1
+Final point: 1
+[local-task.1] -triggered off []
+[remote-task.1] -triggered off []
+[cat-log.1] -triggered off ['local-task.1', 'remote-task.1']

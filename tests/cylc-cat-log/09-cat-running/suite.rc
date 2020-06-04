@@ -22,8 +22,7 @@ cylc message 'echo done'
     [[remote-task]]
         inherit = ECHO
         [[[remote]]]
-            host={{environ["CYLC_TEST_HOST"]}}
-            owner={{environ["CYLC_TEST_OWNER"]}}
+            host=${CYLC_TEST_HOST}
     [[cat-log]]
         script = """
 wait
