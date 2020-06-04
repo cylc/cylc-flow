@@ -316,7 +316,16 @@ see `COPYING' in the Cylc source distribution.
 
 
 def scheduler_cli(parser, options, args, is_restart=False):
-    """CLI main."""
+    """Implement cylc (run|restart).
+
+    This function should contain all of the command line facing
+    functionality of the Scheduler, exit codes, logging, etc.
+
+    The Scheduler itself should be a Python object you can import and
+    run in a regular Python session so cannot contain this kind of
+    functionality.
+
+    """
     reg = args[0]
     # Check suite is not already running before start of host selection.
     try:
@@ -344,16 +353,19 @@ def scheduler_cli(parser, options, args, is_restart=False):
     if remrun(set_rel_local=True):  # State localhost as above.
         sys.exit()
 
-    # initalise the scheduler
-    scheduler = Scheduler(reg, options, is_restart=is_restart)
-    try:
-        scheduler.install()
-    except SuiteServiceFileError as exc:
-        sys.exit(exc)
-
     # print the start message
     if options.no_detach or options.format == 'plain':
         _start_print_blurb()
+
+    # initalise the scheduler
+    loop = asyncio.get_event_loop()
+    scheduler = Scheduler(reg, options, is_restart=is_restart)
+    try:
+        loop.run_until_complete(
+            scheduler.install()
+        )
+    except SuiteServiceFileError as exc:
+        sys.exit(exc)
 
     # daemonise if requested
     if not options.no_detach:
@@ -362,14 +374,9 @@ def scheduler_cli(parser, options, args, is_restart=False):
     # settup loggers
     _open_logs(reg, options.no_detach)
 
-    # take the scheduler through the startup sequence
-
     # run cylc run
-    loop = asyncio.get_event_loop()
     try:
-        loop.run_until_complete(
-            scheduler.configure_and_start()
-        )
+        loop.run_until_complete(scheduler.run())
 
     # stop cylc stop
     except KeyboardInterrupt as exc:
@@ -385,6 +392,8 @@ def scheduler_cli(parser, options, args, is_restart=False):
     except Exception:
         # suppress the exception to prevent it appearing in the log
         sys.exit(1)
+
+    # kthxbye
     finally:
         LOG.info("DONE")
         _close_logs()

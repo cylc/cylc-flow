@@ -251,9 +251,7 @@ class Scheduler:
         # create thread sync barrier for setup
         self.barrier = Barrier(3, timeout=10)
 
-        # self.install()  # TODO ORDER
-
-    def install(self):
+    async def install(self):
         """Get the filesystem in the right state to run the flow.
 
         * Register.
@@ -325,13 +323,10 @@ class Scheduler:
             location=(client_pub_key_dir)
         )
 
-
         self.server = SuiteRuntimeServer(
             self, context=self.zmq_context, barrier=self.barrier)
         self.publisher = WorkflowPublisher(
             self.suite, context=self.zmq_context, barrier=self.barrier)
-
-
 
         self.proc_pool = SubProcPool()
         self.state_summary_mgr = StateSummaryMgr()
@@ -523,8 +518,8 @@ class Scheduler:
         self.port = self.server.port
         self.pub_port = self.publisher.port
 
-    async def start(self):
-        """Start the scheduler."""
+    async def start_scheduler(self):
+        """Start the scheduler main loop."""
         try:
             self.data_store_mgr.initiate_data_model()
             self._configure_contact()
@@ -575,13 +570,13 @@ class Scheduler:
         finally:
             self.profiler.stop()
 
-    async def configure_and_start(self):
+    async def run(self):
         """Run the startup sequence.
 
         * initialise
         * configure
         * start_servers
-        * start
+        * start_scheduler
 
         Lightweight wrapper for convenience.
 
