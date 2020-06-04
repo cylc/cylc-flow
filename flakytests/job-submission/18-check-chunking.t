@@ -20,9 +20,9 @@
 . "$(dirname "$0")/test_header"
 set_test_number 3
 
-create_test_globalrc '' '
+create_test_globalrc '
 process pool size = 1
-'
+' ''
 
 init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
 [cylc]
