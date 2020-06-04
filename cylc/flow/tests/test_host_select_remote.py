@@ -18,7 +18,6 @@ from cylc.flow.host_select import (
     select_suite_host
 )
 from cylc.flow.hostuserutil import get_fqdn_by_host
-from cylc.flow.tests.util import mock_glbl_cfg
 
 
 local_host, local_host_alises, _ = socket.gethostbyname_ex('localhost')

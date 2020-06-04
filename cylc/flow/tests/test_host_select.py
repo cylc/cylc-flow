@@ -15,7 +15,6 @@ from cylc.flow.host_select import (
 )
 from cylc.flow.hostuserutil import get_fqdn_by_host
 from cylc.flow.parsec.exceptions import ListValueError
-from cylc.flow.tests.util import mock_glbl_cfg
 
 
 localhost, localhost_aliases, _ = socket.gethostbyname_ex('localhost')
