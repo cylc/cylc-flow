@@ -16,6 +16,7 @@
 
 """Date-time cycling by point, interval, and sequence classes."""
 
+from functools import lru_cache
 import re
 
 from metomi.isodatetime.data import Calendar, Duration
@@ -34,8 +35,6 @@ from cylc.flow.parsec.validate import IllegalValueError
 
 CYCLER_TYPE_ISO8601 = "iso8601"
 CYCLER_TYPE_SORT_KEY_ISO8601 = "b"
-
-MEMOIZE_LIMIT = 10000
 
 DATE_TIME_FORMAT = "CCYYMMDDThhmm"
 EXPANDED_DATE_TIME_FORMAT = "+XCCYYMMDDThhmm"
@@ -56,32 +55,6 @@ class SuiteSpecifics(object):
     point_parser = None
     recurrence_parser = None
     iso8601_parsers = None
-
-
-def memoize(function):
-    """This stores results for a given set of inputs to a function.
-
-    The inputs and results of the function must be immutable.
-    Keyword arguments are not allowed.
-
-    To avoid memory leaks, only the first 10000 separate input
-    permutations are cached for a given function.
-
-    """
-    inputs_results = {}
-
-    def _wrapper(*args):
-        """Cache results for function(*args)."""
-        try:
-            return inputs_results[args]
-        except KeyError:
-            results = function(*args)
-            if len(inputs_results) > MEMOIZE_LIMIT:
-                # Full up, no more room.
-                inputs_results.popitem()
-            inputs_results[args] = results
-            return results
-    return _wrapper
 
 
 class ISO8601Point(PointBase):
@@ -137,7 +110,7 @@ class ISO8601Point(PointBase):
         return hash(self.value)
 
     @staticmethod
-    @memoize
+    @lru_cache(10000)
     def _iso_point_add(point_string, interval_string):
         """Add the parsed point_string to the parsed interval_string."""
         point = point_parse(point_string)
@@ -145,7 +118,7 @@ class ISO8601Point(PointBase):
         return str(point + interval)
 
     @staticmethod
-    @memoize
+    @lru_cache(10000)
     def _iso_point_cmp(point_string, other_point_string):
         """Compare the parsed point_string to the other one."""
         point = point_parse(point_string)
@@ -153,7 +126,7 @@ class ISO8601Point(PointBase):
         return cmp(point, other_point)
 
     @staticmethod
-    @memoize
+    @lru_cache(10000)
     def _iso_point_sub_interval(point_string, interval_string):
         """Return the parsed point_string minus the parsed interval_string."""
         point = point_parse(point_string)
@@ -161,7 +134,7 @@ class ISO8601Point(PointBase):
         return str(point - interval)
 
     @staticmethod
-    @memoize
+    @lru_cache(10000)
     def _iso_point_sub_point(point_string, other_point_string):
         """Return the difference between the two parsed point strings."""
         point = point_parse(point_string)
@@ -243,7 +216,7 @@ class ISO8601Interval(IntervalBase):
         return self._iso_interval_nonzero(self.value)
 
     @staticmethod
-    @memoize
+    @lru_cache(10000)
     def _iso_interval_abs(interval_string, other_interval_string):
         """Return the absolute (non-negative) value of an interval_string."""
         interval = interval_parse(interval_string)
@@ -253,7 +226,7 @@ class ISO8601Interval(IntervalBase):
         return interval_string
 
     @staticmethod
-    @memoize
+    @lru_cache(10000)
     def _iso_interval_add(interval_string, other_interval_string):
         """Return one parsed interval_string plus the other one."""
         interval = interval_parse(interval_string)
@@ -261,7 +234,7 @@ class ISO8601Interval(IntervalBase):
         return str(interval + other)
 
     @staticmethod
-    @memoize
+    @lru_cache(10000)
     def _iso_interval_cmp(interval_string, other_interval_string):
         """Compare one parsed interval_string with the other one."""
         interval = interval_parse(interval_string)
@@ -269,7 +242,7 @@ class ISO8601Interval(IntervalBase):
         return cmp(interval, other)
 
     @staticmethod
-    @memoize
+    @lru_cache(10000)
     def _iso_interval_sub(interval_string, other_interval_string):
         """Subtract one parsed interval_string from the other one."""
         interval = interval_parse(interval_string)
@@ -277,14 +250,14 @@ class ISO8601Interval(IntervalBase):
         return str(interval - other)
 
     @staticmethod
-    @memoize
+    @lru_cache(10000)
     def _iso_interval_mul(interval_string, factor):
         """Multiply one parsed interval_string's values by factor."""
         interval = interval_parse(interval_string)
         return str(interval * factor)
 
     @staticmethod
-    @memoize
+    @lru_cache(10000)
     def _iso_interval_nonzero(interval_string):
         """Return whether the parsed interval_string is a null interval."""
         interval = interval_parse(interval_string)
@@ -432,6 +405,7 @@ class ISO8601Sequence(SequenceBase):
         if self.exclusions:
             self.value += '!' + str(self.exclusions)
 
+    @lru_cache(100)
     def is_on_sequence(self, point):
         """Return True if point is on-sequence."""
         # Iterate starting at recent valid points, for speed.
@@ -884,7 +858,7 @@ def is_offset_absolute(offset_string):
         return False
 
 
-@memoize
+@lru_cache(10000)
 def _interval_parse(interval_string):
     """Parse an interval_string into a proper Duration object."""
     return SuiteSpecifics.interval_parser.parse(interval_string)
@@ -895,7 +869,7 @@ def point_parse(point_string):
     return _point_parse(point_string).copy()
 
 
-@memoize
+@lru_cache(10000)
 def _point_parse(point_string):
     """Parse a point_string into a proper TimePoint object."""
     if "%" in SuiteSpecifics.DUMP_FORMAT:
