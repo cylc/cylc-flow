@@ -39,7 +39,7 @@ BASE_GLOBALRC="
         inactivity = PT2M
         timeout = PT2M
 [suite servers]
-    run hosts = locahost, ${CYLC_TEST_HOST}"
+    run hosts = localhost, ${CYLC_TEST_HOST}"
 
 TEST_NAME="${TEST_NAME_BASE}"
 TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME}" <<< '

@@ -33,7 +33,7 @@ BASE_GLOBALRC="
     [[main loop]]
         plugins = health check, auto restart
         [[[auto restart]]]
-            interval = PT15S
+            interval = PT2S
     [[events]]
         abort on inactivity = True
         abort on timeout = True
@@ -75,7 +75,7 @@ LATEST_TASK=$(cylc suite-state "${SUITE_NAME}" -S succeeded \
     | cut -d ',' -f 1 | sort | tail -n 1 | sed 's/task_foo//')
 
 # test restart procedure  - scan the second log file created on restart
-poll_suite_stopped
+poll_suite_restart
 FILE=$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)
 log_scan "${TEST_NAME}-restart" "${FILE}" 20 1 \
     "Suite server: url=tcp://$(get_fqdn_by_host "${CYLC_TEST_HOST}")"

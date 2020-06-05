@@ -104,7 +104,7 @@ for ear in $(seq 1 "${EARS}"); do
         "Attempting to restart on \"${JOKERS}\"" \
         "Suite now running on \"${JOKERS}\"" \
 
-    poll_suite_stopped
+    poll_suite_restart
 
     # test the restart procedure
     FILE=$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)
