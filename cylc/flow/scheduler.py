@@ -17,10 +17,12 @@
 
 import asyncio
 from collections import deque
+from dataclasses import dataclass
 import logging
+from optparse import Values
 import os
-from shlex import quote
 from queue import Empty, Queue
+from shlex import quote
 from shutil import copytree, rmtree
 from subprocess import Popen, PIPE, DEVNULL
 import sys
@@ -121,6 +123,7 @@ class SchedulerUUID(object):
         return self.value
 
 
+@dataclass
 class Scheduler:
     """Cylc scheduler server."""
 
@@ -160,109 +163,103 @@ class Scheduler:
         'reload_suite'
     )
 
-    # list the scheduler attributes for documentation reasons
-    # rathern than performance ones
-    __slots__ = {
-        # flow information
-        'suite',
-        'owner',
-        'host',
-        'id',
-        'uuid_str',
-        'contact_data',
+    # flow information
+    suite: str = None
+    owner: str = None
+    host: str = None
+    id: str = None  # owner|suite
+    uuid_str: str = None
+    contact_data: dict = None
 
-        # run options
-        'is_restart',
-        'template_vars',
-        'options',
+    # run options
+    is_restart: bool = False
+    template_vars: dict = None
+    options: Values = None
 
-        # suite params
-        'can_auto_stop',
-        'stop_mode',
-        'stop_task',
-        'stop_clock_time',
+    # suite params
+    can_auto_stop: bool = True
+    stop_mode: StopMode = None
+    stop_task: str = None
+    stop_clock_time: int = None
 
-        # configuration
-        'config',  # flow config
-        'cylc_config',  # [cylc] config
-        'suiterc',
-        'suiterc_update_time',
+    # configuration
+    config: SuiteConfig = None  # flow config
+    cylc_config: DictTree = None  # [cylc] config
+    suiterc: str = None
+    suiterc_update_time: float = None
 
-        # directories
-        'suite_dir',
-        'suite_log_dir',
-        'suite_run_dir',
-        'suite_share_dir',
-        'suite_work_dir',
+    # directories
+    suite_dir: str = None
+    suite_log_dir: str = None
+    suite_run_dir: str = None
+    suite_share_dir: str = None
+    suite_work_dir: str = None
 
-        # task event loop
-        'is_updated',
-        'is_stalled',
+    # task event loop
+    is_updated: bool = None
+    is_stalled: bool = None
 
-        # main loop
-        'main_loop_intervals',
-        'main_loop_plugins',
-        'auto_restart_mode',
-        'auto_restart_time',
+    # main loop
+    main_loop_intervals: deque = deque(maxlen=10)
+    main_loop_plugins: dict = None
+    auto_restart_mode: AutoRestartMode = None
+    auto_restart_time: float = None
 
-        # tcp / zmq
-        'zmq_context',
-        'port',
-        'pub_port',
-        'server',
-        'publisher',
-        'barrier',
-        'curve_auth',
+    # tcp / zmq
+    zmq_context: zmq.Context = None
+    port: int = None
+    pub_port: int = None
+    server: SuiteRuntimeServer = None
+    publisher: WorkflowPublisher = None
+    barrier: Barrier = None
+    curve_auth: ThreadAuthenticator = None
 
-        # managers
-        'profiler',
-        'state_summary_mgr',
-        'pool',
-        'proc_pool',
-        'task_job_mgr',
-        'task_events_mgr',
-        'suite_event_handler',
-        'data_store_mgr',
-        'job_pool',
-        'suite_db_mgr',
-        'broadcast_mgr',
-        'xtrigger_mgr',
+    # managers
+    profiler: Profiler = None
+    state_summary_mgr: StateSummaryMgr = None
+    pool: TaskPool = None
+    proc_pool: SubProcPool = None
+    task_job_mgr: TaskJobManager = None
+    task_events_mgr: TaskEventsManager = None
+    suite_event_handler: SuiteEventHandler = None
+    data_store_mgr: DataStoreMgr = None
+    job_pool: JobPool = None
+    suite_db_mgr: SuiteDatabaseManager = None
+    broadcast_mgr: BroadcastMgr = None
+    xtrigger_mgr: XtriggerManager = None
 
-        # queues
-        'command_queue',
-        'message_queue',
-        'ext_trigger_queue',
+    # queues
+    command_queue: Queue = None
+    message_queue: Queue = None
+    ext_trigger_queue: Queue = None
 
-        # profiling
-        '_profile_amounts',
-        '_profile_update_times',
-        'previous_profile_point',
-        'count',
+    # profiling
+    _profile_amounts: dict = None
+    _profile_update_times: dict = None
+    previous_profile_point: float = 0
+    count: int = 0
 
-        # timeout
-        'suite_timer_timeout',
-        'suite_timer_active',
-        'suite_inactivity_timeout',
-        'already_inactive',
-        'time_next_kill',
-        'already_timed_out'
-    }
+    # timeout:
+    suite_timer_timeout: float = 0.0
+    suite_timer_active: bool = False
+    suite_inactivity_timeout: float = 0.0
+    already_inactive: bool = False
+    time_next_kill: float = False
+    already_timed_out: bool = False
 
     def __init__(self, reg, options, is_restart=False):
-        # set all attributes to None
-        for attr in self.__slots__:
-            setattr(self, attr, None)
-
         # flow information
         self.suite = reg
         self.owner = get_user()
         self.host = get_host()
         self.id = f'{self.owner}{ID_DELIM}{self.suite}'
+        self.uuid_str = SchedulerUUID()
         self.options = options
         self.is_restart = is_restart
         self.template_vars = load_template_vars(
-            self.options.templatevars, self.options.templatevars_file)
-        self.uuid_str = SchedulerUUID()
+            self.options.templatevars,
+            self.options.templatevars_file
+        )
 
         # directory information
         self.suite_dir = suite_files.get_suite_source_dir(self.suite)
@@ -272,19 +269,9 @@ class Scheduler:
         self.suite_share_dir = get_suite_run_share_dir(self.suite)
         self.suite_log_dir = get_suite_run_log_dir(self.suite)
 
-        # non-null defaults
+        # mutable defaults
         self._profile_amounts = {}
         self._profile_update_times = {}
-        self.suite_timer_timeout = 0.0
-        self.suite_timer_active = False
-        self.suite_inactivity_timeout = 0.0
-        self.already_inactive = False
-        self.already_timed_out = False
-        # Last 10 durations (in seconds) of the main loop
-        self.main_loop_intervals = deque(maxlen=10)
-        self.can_auto_stop = True
-        self.previous_profile_point = 0
-        self.count = 0
 
         # create thread sync barrier for setup
         self.barrier = Barrier(3, timeout=10)
@@ -333,6 +320,10 @@ class Scheduler:
 
     async def initialise(self):
         """Initialise the components and sub-systems required to run the flow.
+
+        * Initialise the network components.
+        * Initialise mangers.
+
         """
         self.suite_db_mgr = SuiteDatabaseManager(
             suite_files.get_suite_srv_dir(self.suite),  # pri_d
@@ -448,7 +439,8 @@ class Scheduler:
             self.config.get_linearized_ancestors())
         self.task_events_mgr.mail_interval = self.cylc_config[
             "task event mail interval"]
-        self.task_events_mgr.mail_footer = self._get_events_conf("mail footer")
+        self.task_events_mgr.mail_footer = self._get_events_conf(
+            "mail footer")
         self.task_events_mgr.suite_url = self.config.cfg['meta']['URL']
         self.task_events_mgr.suite_cfg = self.config.cfg['meta']
         if self.options.genref:
@@ -476,7 +468,8 @@ class Scheduler:
                 'port': self.pub_port},
             extra=log_extra,
         )
-        LOG.info('Run: (re)start=%d log=%d', n_restart, 1, extra=log_extra_num)
+        LOG.info(
+            'Run: (re)start=%d log=%d', n_restart, 1, extra=log_extra_num)
         LOG.info('Cylc version: %s', CYLC_VERSION, extra=log_extra)
         # Note that the following lines must be present at the top of
         # the suite log file for use in reference test runs:
@@ -547,7 +540,10 @@ class Scheduler:
             self.count = 0
         if self.options.no_auto_shutdown is not None:
             self.can_auto_stop = not self.options.no_auto_shutdown
-        elif self.config.cfg['cylc']['disable automatic shutdown'] is not None:
+        elif (
+                self.config.cfg['cylc']['disable automatic shutdown']
+                is not None
+        ):
             self.can_auto_stop = (
                 not self.config.cfg['cylc']['disable automatic shutdown'])
 
@@ -636,7 +632,6 @@ class Scheduler:
             raise
         else:
             await self.start_scheduler()
-
 
     def load_tasks_for_run(self):
         """Load tasks for a new run."""
