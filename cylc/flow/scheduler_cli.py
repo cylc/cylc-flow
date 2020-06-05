@@ -389,8 +389,9 @@ def scheduler_cli(parser, options, args, is_restart=False):
             LOG.exception(exc2)
             raise exc2 from None
         sys.exit(1)
-    except Exception:
+    except Exception as exc:
         # suppress the exception to prevent it appearing in the log
+        sys.exit(exc)
         sys.exit(1)
 
     # kthxbye
