@@ -160,93 +160,131 @@ class Scheduler:
         'reload_suite'
     )
 
+    # list the scheduler attributes for documentation reasons
+    # rathern than performance ones
+    __slots__ = {
+        # flow information
+        'suite',
+        'owner',
+        'host',
+        'id',
+        'uuid_str',
+        'contact_data',
+
+        # run options
+        'is_restart',
+        'template_vars',
+        'options',
+
+        # suite params
+        'can_auto_stop',
+        'stop_mode',
+        'stop_task',
+        'stop_clock_time',
+
+        # configuration
+        'config',  # flow config
+        'cylc_config',  # [cylc] config
+        'suiterc',
+        'suiterc_update_time',
+
+        # directories
+        'suite_dir',
+        'suite_log_dir',
+        'suite_run_dir',
+        'suite_share_dir',
+        'suite_work_dir',
+
+        # task event loop
+        'is_updated',
+        'is_stalled',
+
+        # main loop
+        'main_loop_intervals',
+        'main_loop_plugins',
+        'auto_restart_mode',
+        'auto_restart_time',
+
+        # tcp / zmq
+        'zmq_context',
+        'port',
+        'pub_port',
+        'server',
+        'publisher',
+        'barrier',
+        'curve_auth',
+
+        # managers
+        'profiler',
+        'state_summary_mgr',
+        'pool',
+        'proc_pool',
+        'task_job_mgr',
+        'task_events_mgr',
+        'suite_event_handler',
+        'data_store_mgr',
+        'job_pool',
+        'suite_db_mgr',
+        'broadcast_mgr',
+        'xtrigger_mgr',
+
+        # queues
+        'command_queue',
+        'message_queue',
+        'ext_trigger_queue',
+
+        # profiling
+        '_profile_amounts',
+        '_profile_update_times',
+        'previous_profile_point',
+        'count',
+
+        # timeout
+        'suite_timer_timeout',
+        'suite_timer_active',
+        'suite_inactivity_timeout',
+        'already_inactive',
+        'time_next_kill',
+        'already_timed_out'
+    }
+
     def __init__(self, reg, options, is_restart=False):
+        # set all attributes to None
+        for attr in self.__slots__:
+            setattr(self, attr, None)
+
+        # flow information
         self.suite = reg
         self.owner = get_user()
         self.host = get_host()
         self.id = f'{self.owner}{ID_DELIM}{self.suite}'
-
         self.options = options
-        self.profiler = Profiler(self.options.profile_mode)
+        self.is_restart = is_restart
+        self.template_vars = load_template_vars(
+            self.options.templatevars, self.options.templatevars_file)
         self.uuid_str = SchedulerUUID()
-        self.suite_dir = suite_files.get_suite_source_dir(
-            self.suite)
+
+        # directory information
+        self.suite_dir = suite_files.get_suite_source_dir(self.suite)
         self.suiterc = suite_files.get_suite_rc(self.suite)
-        self.suiterc_update_time = None
-        # For user-defined batch system handlers
-        sys.path.append(os.path.join(self.suite_dir, 'python'))
-        sys.path.append(os.path.join(self.suite_dir, 'lib', 'python'))
         self.suite_run_dir = get_suite_run_dir(self.suite)
         self.suite_work_dir = get_suite_run_work_dir(self.suite)
         self.suite_share_dir = get_suite_run_share_dir(self.suite)
         self.suite_log_dir = get_suite_run_log_dir(self.suite)
 
-        self.config = None
-        self.cylc_config = None
-
-        self.is_restart = is_restart
-        self.template_vars = load_template_vars(
-            self.options.templatevars, self.options.templatevars_file)
-
-        self.is_updated = False
-        self.is_stalled = False
-
-        self.contact_data = None
-
-        # initialize some items in case of early shutdown
-        # (required in the shutdown() method)
-        self.state_summary_mgr = None
-        self.pool = None
-        self.proc_pool = None
-        self.task_job_mgr = None
-        self.task_events_mgr = None
-        self.suite_event_handler = None
-        self.zmq_context = None
-        self.server = None
-        self.port = None
-        self.publisher = None
-        self.pub_port = None
-        self.command_queue = None
-        self.message_queue = None
-        self.ext_trigger_queue = None
-        self.data_store_mgr = None
-        self.job_pool = None
-
+        # non-null defaults
         self._profile_amounts = {}
         self._profile_update_times = {}
-
-        self.stop_mode = None
-
-        # TODO - stop task should be held by the task pool.
-        self.stop_task = None
-        self.stop_clock_time = None  # When not None, in Unix time
-
         self.suite_timer_timeout = 0.0
         self.suite_timer_active = False
         self.suite_inactivity_timeout = 0.0
         self.already_inactive = False
-
-        self.time_next_kill = None
         self.already_timed_out = False
-
-        self.suite_db_mgr = SuiteDatabaseManager(
-            suite_files.get_suite_srv_dir(self.suite),  # pri_d
-            os.path.join(self.suite_run_dir, 'log'))                 # pub_d
-        self.broadcast_mgr = BroadcastMgr(self.suite_db_mgr)
-        self.xtrigger_mgr = None  # type: XtriggerManager
-
         # Last 10 durations (in seconds) of the main loop
         self.main_loop_intervals = deque(maxlen=10)
-
         self.can_auto_stop = True
         self.previous_profile_point = 0
         self.count = 0
-
-        # auto-restart settings
-        self.auto_restart_mode = None
-        self.auto_restart_time = None
-
-        self.main_loop_plugins = None
 
         # create thread sync barrier for setup
         self.barrier = Barrier(3, timeout=10)
@@ -261,6 +299,7 @@ class Scheduler:
         * Copy Python files.
 
         """
+        # Register
         try:
             suite_files.get_suite_source_dir(self.suite)
         except SuiteServiceFileError:
@@ -277,9 +316,6 @@ class Scheduler:
 
         make_suite_run_tree(self.suite)
 
-        if self.is_restart:
-            self.suite_db_mgr.restart_upgrade()
-
         # Copy local python modules from source to run directory
         for sub_dir in ["python", os.path.join("lib", "python")]:
             # TODO - eventually drop the deprecated "python" sub-dir.
@@ -293,10 +329,16 @@ class Scheduler:
                 except OSError:
                     pass
                 copytree(suite_py, suite_run_py)
+            sys.path.append(os.path.join(self.suite_dir, sub_dir))
 
     async def initialise(self):
         """Initialise the components and sub-systems required to run the flow.
         """
+        self.suite_db_mgr = SuiteDatabaseManager(
+            suite_files.get_suite_srv_dir(self.suite),  # pri_d
+            os.path.join(self.suite_run_dir, 'log'))  # pub_d
+        self.broadcast_mgr = BroadcastMgr(self.suite_db_mgr)
+
         self.data_store_mgr = DataStoreMgr(self)
 
         # *** Network Related ***
@@ -352,6 +394,8 @@ class Scheduler:
             suite_share_dir=self.suite_share_dir,
             suite_source_dir=self.suite_dir)
 
+        self.profiler = Profiler(self.options.profile_mode)
+
     async def configure(self):
         """Configure the scheduler.
 
@@ -362,6 +406,7 @@ class Scheduler:
         """
         self.profiler.log_memory("scheduler.py: start configure")
         if self.is_restart:
+            self.suite_db_mgr.restart_upgrade()
             # This logic handles the lack of initial cycle point in "suite.rc".
             # Things that can't change on suite reload.
             pri_dao = self.suite_db_mgr.get_pri_dao()
@@ -508,7 +553,7 @@ class Scheduler:
 
         self.profiler.log_memory("scheduler.py: end configure")
 
-    def start_servers(self):
+    async def start_servers(self):
         """Start the TCP servers."""
         port_range = glbl_cfg().get(['suite servers', 'run ports'])
         self.server.start(port_range[0], port_range[-1])
@@ -582,14 +627,15 @@ class Scheduler:
 
         """
         try:
+            await self.install()
             await self.initialise()
             await self.configure()
-            self.start_servers()
+            await self.start_servers()
         except Exception as exc:
             LOG.exception(exc)
             raise
         else:
-            await self.start()
+            await self.start_scheduler()
 
 
     def load_tasks_for_run(self):
