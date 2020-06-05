@@ -54,6 +54,7 @@ install_requires = [
     'urwid==2.*'
 ]
 tests_require = [
+    'async-timeout>=3.0.0',
     'codecov>=2.0.0',
     'coverage>=5.0.0',
     'pytest>=5.3.0',

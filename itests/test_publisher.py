@@ -1,23 +1,31 @@
+from async_timeout import timeout
 import pytest
 
-from cylc.flow.data_store_mgr import DELTAS_MAP
-from cylc.flow.network.subscriber import WorkflowSubscriber
+from cylc.flow.network.subscriber import (
+    WorkflowSubscriber,
+    process_delta_msg
+)
 
 
 @pytest.mark.asyncio
-async def test_publisher(flow, run_flow, simple_conf, port_range):
+async def test_publisher(flow, scheduler, run, one_conf, port_range):
     """It should publish deltas when the flow starts."""
-    scheduler = flow(simple_conf)
-    async with run_flow(scheduler):
+    reg = flow(one_conf)
+    schd = scheduler(reg, hold_start=False)
+    async with run(schd):
         # create a subscriber
         subscriber = WorkflowSubscriber(
-            scheduler.suite,
-            host=scheduler.host,
-            port=scheduler.publisher.port,
+            schd.suite,
+            host=schd.host,
+            port=schd.publisher.port,
             topics=[b'workflow']
         )
-        # wait for the first delta from the workflow
-        btopic, msg = await subscriber.socket.recv_multipart()
-        delta = DELTAS_MAP[btopic.decode('utf-8')]()
-        delta.ParseFromString(msg)
-        # assert scheduler.suite in delta.id
+
+        async with timeout(2):
+            # wait for the first delta from the workflow
+            btopic, msg = await subscriber.socket.recv_multipart()
+
+        _, delta = process_delta_msg(btopic, msg, None)
+        # assert schd.id == delta.id
+        assert True  # TODO
+        # fix this test, the delta doesn't have the ID apparently

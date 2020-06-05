@@ -244,7 +244,7 @@ class Scheduler:
     suite_timer_active: bool = False
     suite_inactivity_timeout: float = 0.0
     already_inactive: bool = False
-    time_next_kill: float = False
+    time_next_kill: float = None
     already_timed_out: bool = False
 
     def __init__(self, reg, options, is_restart=False):
