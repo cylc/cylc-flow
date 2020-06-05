@@ -149,9 +149,9 @@ def test_expanduser():
     assert _expanduser('a/${HOME}/b') == Path('a/~/b').expanduser()
 
 
-def test_make_flow(run_dir, make_flow, simple_conf):
+def test_flow(run_dir, flow, one_conf):
     """It should create a flow in the run directory."""
-    reg = make_flow(simple_conf)
+    reg = flow(one_conf)
     assert Path(run_dir / reg).exists()
     assert Path(run_dir / reg / 'suite.rc').exists()
     with open(Path(run_dir / reg / 'suite.rc'), 'r') as suiterc:

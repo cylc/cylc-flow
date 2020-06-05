@@ -159,6 +159,7 @@ def _make_flow(run_dir, test_dir, conf, name=None):
 
 def _make_scheduler(reg, is_restart=False, **opts):
     """Return a scheduler object for a flow registration."""
+    opts = {'hold_start': True, **opts}
     # get options object
     if is_restart:
         options = RestartOptions(**opts)
@@ -166,13 +167,6 @@ def _make_scheduler(reg, is_restart=False, **opts):
         options = RunOptions(**opts)
     # create workflow
     return Scheduler(reg, options, is_restart=is_restart)
-
-
-def _flow(make_flow, make_scheduler, conf, name=None, is_restart=False,
-          **opts):
-    """Make a flow and return a scheduler object."""
-    reg = make_flow(conf, name=name)
-    return make_scheduler(reg, is_restart=is_restart, **opts)
 
 
 @asynccontextmanager
@@ -183,7 +177,7 @@ async def _run_flow(run_dir, caplog, scheduler, level=logging.INFO):
     if caplog:
         caplog.set_level(level, CYLC_LOG)
     try:
-        asyncio.get_event_loop().create_task(scheduler.start())
+        asyncio.get_event_loop().create_task(scheduler.run())
         await _poll_file(contact)
         yield caplog
     except Exception as exc:
