@@ -39,7 +39,7 @@ def test_start_stop(port_range):
     pub = WorkflowPublisher('beef')
     assert not pub.loop
     pub.start(*port_range)
-    sleep(1)  # TODO - remove this evil sleep
+    sleep(1)  # TODO - remove this evil sleep
     assert not pub.socket.closed
     assert pub.loop
     pub.stop()

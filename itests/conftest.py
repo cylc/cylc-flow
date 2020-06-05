@@ -156,3 +156,9 @@ def log_filter():
             and (regex is None or re.match(regex, log_message))
         ]
     return _log_filter
+
+
+@pytest.fixture(scope='session')
+def port_range():
+    ports = glbl_cfg().get(['suite servers', 'run ports'])
+    return min(ports), max(ports)
