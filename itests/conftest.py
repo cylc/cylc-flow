@@ -16,14 +16,12 @@
 """Default fixtures for functional tests."""
 
 from functools import partial
-import logging
 from pathlib import Path
+import re
 
 import pytest
 
-from cylc.flow import CYLC_LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
-from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.wallclock import get_current_time_string
 
 from . import (
@@ -31,7 +29,6 @@ from . import (
     _rm_if_empty,
     _make_flow,
     _make_scheduler,
-    _flow,
     _run_flow
 )
 
@@ -75,106 +72,87 @@ def test_dir(request, mod_test_dir):
     _rm_if_empty(path)
 
 
-@pytest.fixture(scope='session')
-def ses_make_flow(run_dir, ses_test_dir):
-    """A function for creating session-level flows."""
-    yield partial(_make_flow, run_dir, ses_test_dir)
-
-
 @pytest.fixture(scope='module')
-def mod_make_flow(run_dir, mod_test_dir):
+def mod_flow(run_dir, mod_test_dir):
     """A function for creating module-level flows."""
     yield partial(_make_flow, run_dir, mod_test_dir)
 
 
 @pytest.fixture
-def make_flow(run_dir, test_dir):
+def flow(run_dir, test_dir):
     """A function for creating function-level flows."""
     yield partial(_make_flow, run_dir, test_dir)
 
 
-@pytest.fixture(scope='session')
-def ses_make_scheduler():
-    """Return a scheduler object for a flow."""
-    return _make_scheduler
-
-
 @pytest.fixture(scope='module')
-def mod_make_scheduler():
+def mod_scheduler():
     """Return a scheduler object for a flow."""
     return _make_scheduler
 
 
 @pytest.fixture
-def make_scheduler():
+def scheduler():
     """Return a scheduler object for a flow."""
     return _make_scheduler
 
 
-@pytest.fixture(scope='session')
-def ses_flow(ses_make_flow, ses_make_scheduler):
-    """Make a session-level flow and return a scheduler object."""
-    return partial(_flow, ses_make_flow, ses_make_scheduler)
-
-
 @pytest.fixture(scope='module')
-def mod_flow(mod_make_flow, mod_make_scheduler):
-    """Make a module-level flow and return a scheduler object."""
-    return partial(_flow, mod_make_flow, mod_make_scheduler)
-
-
-@pytest.fixture
-def flow(make_flow, make_scheduler):
-    """Make a function-level flow and return a scheduler object."""
-    return partial(_flow, make_flow, make_scheduler)
-
-
-@pytest.fixture(scope='module')
-def mod_run_flow(run_dir):
+def mod_run(run_dir):
     """Run a module-level flow."""
     return partial(_run_flow, run_dir, None)
 
 
 @pytest.fixture
-def run_flow(run_dir, caplog):
+def run(run_dir, caplog):
     """Run a function-level flow."""
     return partial(_run_flow, run_dir, caplog)
 
 
 @pytest.fixture
-def simple_conf():
+def one_conf():
     return {
         'scheduling': {
-            'dependencies': {
-                'graph': 'foo'
+            'graph': {
+                'R1': 'one'
             }
         }
     }
 
 
 @pytest.fixture(scope='module')
-def mod_simple_conf():
+def mod_one_conf():
     return {
         'scheduling': {
-            'dependencies': {
-                'graph': 'foo'
+            'graph': {
+                'R1': 'one'
             }
         }
     }
 
 
-@pytest.fixture(scope='module')
-async def flow_a(mod_flow, mod_run_flow, mod_simple_conf):
-    """A simple workflow with module-level scoping."""
-    scheduler = mod_flow(mod_simple_conf, hold_start=True)
-    async with mod_run_flow(scheduler):
-        yield scheduler
+@pytest.fixture
+def one(one_conf, flow, scheduler):
+    reg = flow(one_conf)
+    schd = scheduler(reg)
+    return schd
 
 
 @pytest.fixture(scope='module')
-async def flow_a_w_client(mod_flow, mod_run_flow, mod_simple_conf):
-    """A simple workflow + runtime client with module-level scoping."""
-    scheduler = mod_flow(mod_simple_conf, hold_start=True)
-    async with mod_run_flow(scheduler):
-        client = SuiteRuntimeClient(scheduler.suite)
-        yield scheduler, client
+def mod_one(mod_one_conf, mod_flow, mod_scheduler):
+    reg = mod_flow(mod_one_conf)
+    schd = mod_scheduler(reg)
+    return schd
+
+
+@pytest.fixture
+def log_filter():
+    def _log_filter(log, name=None, level=None, contains=None, regex=None):
+        return [
+            (log_name, log_level, log_message)
+            for log_name, log_level, log_message in log.record_tuples
+            if (name is None or name == log_name)
+            and (level is None or level == log_level)
+            and (contains is None or contains in log_message)
+            and (regex is None or re.match(regex, log_message))
+        ]
+    return _log_filter
