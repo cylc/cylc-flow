@@ -19,7 +19,8 @@ import os
 import cProfile
 import io
 import pstats
-from subprocess import Popen, PIPE, DEVNULL
+
+import psutil
 
 
 class Profiler(object):
@@ -54,8 +55,5 @@ class Profiler(object):
         """Print a message to standard out with the current memory usage."""
         if not self.enabled:
             return
-        proc = Popen(
-            ["ps", "h", "-orss", str(os.getpid())],
-            stdin=DEVNULL, stdout=PIPE)
-        memory = int(proc.communicate()[0])
+        memory = psutil.Process(os.getpid()).memory_info().rss / 1024
         print("PROFILE: Memory: %d KiB: %s" % (memory, message))
