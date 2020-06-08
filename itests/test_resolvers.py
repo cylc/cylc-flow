@@ -33,41 +33,43 @@ def node_args():
 
 
 @pytest.fixture(scope='module')
-async def flow(mod_flow, mod_run_flow):
-    scheduler = mod_flow({
+async def flow(mod_flow, mod_scheduler, mod_run):
+    ret = Mock()
+    ret.reg = mod_flow({
         'scheduling': {
             'initial cycle point': '2000',
             'dependencies': {
                 'R1': 'prep => foo',
                 'PT12H': 'foo[-PT12H] => foo => bar'
             }
-        },
-        # 'visualization': {
-        #     'initial cycle point': '20130808T00',
-        #     'final cycle point': '20130808T12'
-        # }
-    }, hold_start=True)
-    ret = Mock()
-    async with mod_run_flow(scheduler):
-        ret.scheduler = scheduler
-        ret.owner = scheduler.owner
-        ret.name = scheduler.suite
-        ret.id = list(scheduler.data_store_mgr.data.keys())[0]
-        ret.resolvers = Resolvers(
-            scheduler.data_store_mgr.data,
-            schd=scheduler
-        )
-        ret.data = scheduler.data_store_mgr.data[ret.id]
-        ret.node_ids = [
-            node.id
-            for node in ret.data[TASK_PROXIES].values()
-        ]
-        ret.edge_ids = [
-            edge.id
-            for edge in ret.data[EDGES].values()
-        ]
+        }
+    })
 
-        yield ret
+    ret.schd = mod_scheduler(ret.reg, hold_start=True)
+    await ret.schd.install()
+    await ret.schd.initialise()
+    await ret.schd.configure()
+    ret.schd.release_tasks()
+    ret.schd.data_store_mgr.initiate_data_model()
+
+    ret.owner = ret.schd.owner
+    ret.name = ret.schd.suite
+    ret.id = list(ret.schd.data_store_mgr.data.keys())[0]
+    ret.resolvers = Resolvers(
+        ret.schd.data_store_mgr.data,
+        schd=ret.schd
+    )
+    ret.data = ret.schd.data_store_mgr.data[ret.id]
+    ret.node_ids = [
+        node.id
+        for node in ret.data[TASK_PROXIES].values()
+    ]
+    ret.edge_ids = [
+        edge.id
+        for edge in ret.data[EDGES].values()
+    ]
+
+    yield ret
 
 
 @pytest.mark.asyncio
@@ -85,19 +87,16 @@ async def test_get_nodes_all(flow, node_args):
     node_args['workflows'].append((flow.owner, flow.name, None))
     node_args['states'].append('failed')
     nodes = await flow.resolvers.get_nodes_all(TASK_PROXIES, node_args)
-    # assert len(nodes) == 0
-
-    # TODO - this results in traceback for some reason
-    # node_args['ghosts'] = True
-    # node_args['states'] = []
-    # node_args['ids'].append(parse_node_id(flow.node_ids, TASK_PROXIES))
-    # data = list(schd.data_store_mgr.data.values())[0]
-    # nodes = [
-    #     n
-    #     for n in await resolvers.get_nodes_all(TASK_PROXIES, node_args)
-    #     if n in data[TASK_PROXIES].values()
-    # ]
-    # assert len(nodes) == 1
+    assert len(nodes) == 0
+    node_args['ghosts'] = True
+    node_args['states'] = []
+    node_args['ids'].append(parse_node_id(flow.node_ids[0], TASK_PROXIES))
+    nodes = [
+        n
+        for n in await flow.resolvers.get_nodes_all(TASK_PROXIES, node_args)
+        if n in flow.data[TASK_PROXIES].values()
+    ]
+    assert len(nodes) == 1
 
 
 @pytest.mark.asyncio
@@ -108,7 +107,7 @@ async def test_get_nodes_by_ids(flow, node_args):
     nodes = await flow.resolvers.get_nodes_by_ids(TASK_PROXIES, node_args)
     assert len(nodes) == 0
 
-    assert flow.scheduler.data_store_mgr.data == None
+    # assert flow.scheduler.data_store_mgr.data == None
 
     node_args['ghosts'] = True
     node_args['native_ids'] = flow.node_ids
@@ -161,6 +160,37 @@ async def test_get_edges_by_ids(flow, node_args):
     assert len(edges) > 0
 
 
-# @pytest.mark.asyncio
-# async def test_zzz(flow):
-#     assert flow.data == []
+@pytest.mark.asyncio
+async def test_mutator(flow, flow_args):
+    """Test the mutation method."""
+    flow_args['workflows'].append((flow.owner, flow.name, None))
+    args = {}
+    response = await flow.resolvers.mutator(
+        None,
+        'hold_suite',
+        flow_args,
+        args
+    )
+    assert response[0]['id'] == flow.id
+
+
+@pytest.mark.skip(
+    reason='TODO: trigger_tasks is resultin in traceback due to '
+    'missing task_globs arg')
+@pytest.mark.asyncio
+async def test_nodes_mutator(flow, flow_args):
+    """Test the nodes mutation method."""
+    flow_args['workflows'].append((flow.owner, flow.name, None))
+    args = {}
+    ids = [parse_node_id(n, TASK_PROXIES) for n in flow.node_ids]
+    response = await flow.resolvers.nodes_mutator(
+        None, 'trigger_tasks', ids, flow_args, args
+    )
+    assert response[0]['id'] == flow.id
+
+
+@pytest.mark.asyncio
+async def test_mutation_mapper(flow):
+    """Test the mapping of mutations to internal command methods."""
+    response = await flow.resolvers._mutation_mapper('hold_suite', {})
+    assert response is not None
