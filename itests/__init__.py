@@ -172,7 +172,6 @@ def _make_scheduler(reg, is_restart=False, **opts):
 @asynccontextmanager
 async def _run_flow(run_dir, caplog, scheduler, level=logging.INFO):
     """Start a scheduler."""
-    success = True
     contact = (run_dir / scheduler.suite / '.service' / 'contact')
     if caplog:
         caplog.set_level(level, CYLC_LOG)
@@ -180,12 +179,5 @@ async def _run_flow(run_dir, caplog, scheduler, level=logging.INFO):
         asyncio.get_event_loop().create_task(scheduler.run())
         await _poll_file(contact)
         yield caplog
-    except Exception as exc:
-        # something went wrong in the test
-        success = False
-        raise exc from None  # raise the exception so the test fails
     finally:
         await scheduler.shutdown(SchedulerStop(StopMode.AUTO.value))
-        if success:
-            # tidy up if the test was successful
-            rmtree(run_dir / scheduler.suite)

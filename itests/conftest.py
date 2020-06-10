@@ -18,6 +18,7 @@
 from functools import partial
 from pathlib import Path
 import re
+from shutil import rmtree
 
 import pytest
 
@@ -31,6 +32,44 @@ from . import (
     _make_scheduler,
     _run_flow
 )
+
+
+@pytest.hookimpl(tryfirst=True, hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    """Expose the result of tests to their fixtures.
+
+    This will add a variable to the "node" object which differs depending on
+    the scope of the test.
+
+    scope=function
+        `_function_outcome` will be set to the result of the test function.
+    scope=module
+        `_module_outcome will be set to a list of all test results in
+        the module.
+
+    https://github.com/pytest-dev/pytest/issues/230#issuecomment-402580536
+
+    """
+    outcome = yield
+    rep = outcome.get_result()
+
+    # scope==function
+    item._function_outcome = rep
+
+    # scope==module
+    _module_outcomes = getattr(item.module, '_module_outcomes', {})
+    _module_outcomes[(item.nodeid, rep.when)] = rep
+    item.module._module_outcomes = _module_outcomes
+
+
+def _pytest_passed(request):
+    """Returns True if the test(s) a fixture was used in passed."""
+    if hasattr(request.node, '_function_outcome'):
+        return request.node._function_outcome in {'passed', 'skipped'}
+    return all((
+        report.outcome in {'passed', 'skipped'}
+        for report in request.node.obj._module_outcomes.values()
+    ))
 
 
 @pytest.fixture(scope='session')
@@ -60,7 +99,12 @@ def mod_test_dir(request, ses_test_dir):
     path = Path(ses_test_dir, request.module.__name__)
     path.mkdir(exist_ok=True)
     yield path
-    _rm_if_empty(path)
+    if _pytest_passed(request):
+        # test passed -> remove all files
+        rmtree(path)
+    else:
+        # test failed -> remove the test dir if empty
+        _rm_if_empty(path)
 
 
 @pytest.fixture
@@ -69,7 +113,13 @@ def test_dir(request, mod_test_dir):
     path = Path(mod_test_dir, request.function.__name__)
     path.mkdir(parents=True, exist_ok=True)
     yield path
-    _rm_if_empty(path)
+    if _pytest_passed(request):
+        # test passed -> remove all files
+        rmtree(path)
+    else:
+        # test failed -> remove the test dir if empty
+        _rm_if_empty(path)
+
 
 
 @pytest.fixture(scope='module')
