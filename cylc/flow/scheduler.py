@@ -1536,6 +1536,11 @@ class Scheduler:
                 self.count, get_current_time_string()))
         self.count += 1
 
+    def release_tasks(self):
+        if self.pool.release_runahead_tasks():
+            self.is_updated = True
+            self.task_events_mgr.pflag = True
+
     async def main_loop(self):
         """The scheduler main loop."""
         while True:  # MAIN LOOP
@@ -1549,9 +1554,7 @@ class Scheduler:
                 has_reloaded = True
 
             self.process_command_queue()
-            if self.pool.release_runahead_tasks():
-                self.is_updated = True
-                self.task_events_mgr.pflag = True
+            self.release_tasks()
             self.proc_pool.process()
 
             # PROCESS ALL TASKS whenever something has changed that might
