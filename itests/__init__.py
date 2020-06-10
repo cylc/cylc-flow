@@ -15,10 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import asyncio
+from async_timeout import timeout
 from async_generator import asynccontextmanager
 import logging
 from pathlib import Path
-from shutil import rmtree
 from textwrap import dedent
 from uuid import uuid1
 
@@ -175,9 +175,20 @@ async def _run_flow(run_dir, caplog, scheduler, level=logging.INFO):
     contact = (run_dir / scheduler.suite / '.service' / 'contact')
     if caplog:
         caplog.set_level(level, CYLC_LOG)
+    task = None
     try:
-        asyncio.get_event_loop().create_task(scheduler.run())
+        task = asyncio.get_event_loop().create_task(scheduler.run())
         await _poll_file(contact)
         yield caplog
     finally:
-        await scheduler.shutdown(SchedulerStop(StopMode.AUTO.value))
+        try:
+            # ask the scheduler to shut down nicely
+            if task:
+                async with timeout(5):
+                    await scheduler.shutdown(
+                        SchedulerStop(StopMode.AUTO.value)
+                    )
+        except asyncio.TimeoutError:
+            # but be prepared to use the nuclear option
+            if task:
+                task.cancel()
