@@ -144,65 +144,6 @@ def test_client_requires_valid_client_private_key():
     client.stop()
 
 
-def test_single_port():
-    """Test server on a single port and port in use exception."""
-    context = zmq.Context()
-    create_auth_files('test_zmq')  # auth keys are required for comms
-    serv1 = ZMQSocketBase(
-        zmq.REP, context=context, suite='test_zmq', bind=True)
-    serv2 = ZMQSocketBase(
-        zmq.REP, context=context, suite='test_zmq', bind=True)
-
-    serv1._socket_bind(*PORT_RANGE)
-    port = serv1.port
-
-    with pytest.raises(CylcError, match=r"Address already in use") as exc:
-        serv2._socket_bind(port, port)
-
-    serv2.stop()
-    serv1.stop()
-    context.destroy()
-
-
-def test_start():
-    """Test socket start."""
-    create_auth_files('test_zmq_start')  # auth keys are required for comms
-    barrier = Barrier(2, timeout=20)
-    publisher = ZMQSocketBase(zmq.PUB, suite='test_zmq_start', bind=True,
-                              barrier=barrier, threaded=True, daemon=True)
-    assert publisher.barrier.n_waiting == 0
-    assert publisher.loop is None
-    assert publisher.port is None
-    publisher.start(*PORT_RANGE)
-    # barrier.wait() doesn't seem to work properly here
-    # so this workaround will do
-    while publisher.barrier.n_waiting < 1:
-        sleep(0.2)
-    assert barrier.wait() == 1
-    assert publisher.loop is not None
-    assert publisher.port is not None
-    publisher.stop()
-
-
-def test_stop():
-    """Test socket/thread stop."""
-    create_auth_files('test_zmq_stop')  # auth keys are required for comms
-    barrier = Barrier(2, timeout=20)
-    publisher = ZMQSocketBase(zmq.PUB, suite='test_zmq_stop', bind=True,
-                              barrier=barrier, threaded=True, daemon=True)
-    publisher.start(*PORT_RANGE)
-    # barrier.wait() doesn't seem to work properly here
-    # so this workaround will do
-    while publisher.barrier.n_waiting < 1:
-        sleep(0.2)
-    barrier.wait()
-    assert not publisher.socket.closed
-    assert publisher.thread.is_alive()
-    publisher.stop()
-    assert publisher.socket.closed
-    assert not publisher.thread.is_alive()
-
-
 def test_client_server_connection_requires_consistent_keys():
     """Client-server connection must be blocked without consistent keys.
 
