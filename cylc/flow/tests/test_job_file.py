@@ -55,6 +55,7 @@ def test_write_prelude_invalid_cylc_command(mocked_glbl_cfg):
             JobFileWriter()._write_prelude(handle, job_conf)
         assert("bad cylc executable" in str(ex))
 
+
 @mock.patch.dict(
     "os.environ", {'CYLC_SUITE_DEF_PATH': 'cylc/suite/def/path'})
 @mock.patch("cylc.flow.job_file.get_remote_suite_run_dir")
@@ -258,6 +259,7 @@ def test_write_prelude(mocked_get_host_item, mocked_path):
         JobFileWriter()._write_prelude(fake_file, job_conf)
         assert(fake_file.getvalue() == expected)
 
+
 @mock.patch.dict(
     "os.environ", {'CYLC_SUITE_DEF_PATH': 'cylc/suite/def/path'})
 @mock.patch("cylc.flow.job_file.get_remote_suite_work_dir")
@@ -292,6 +294,7 @@ def test_write_suite_environment(mocked_get_remote_suite_work_dir):
     with io.StringIO() as fake_file:
         job_file_writer._write_suite_environment(fake_file, job_conf, rund)
         assert(fake_file.getvalue() == expected)
+
 
 @mock.patch.dict(
     "os.environ", {'CYLC_SUITE_DEF_PATH': 'cylc/suite/def/path'})
