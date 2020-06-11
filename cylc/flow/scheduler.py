@@ -407,9 +407,6 @@ class Scheduler:
             # copied to the public database.
             pri_dao.take_checkpoints("restart")
             pri_dao.execute_queued_items()
-            n_restart = pri_dao.select_checkpoint_id_restart_count()
-        else:
-            n_restart = 0
 
         # Copy local python modules from source to run directory
         for sub_dir in ["python", os.path.join("lib", "python")]:
@@ -449,37 +446,6 @@ class Scheduler:
         elif self.options.reftest:
             LOG.addHandler(ReferenceLogFileHandler(
                 get_suite_test_log_name(self.suite)))
-        log_extra = {TimestampRotatingFileHandler.FILE_HEADER_FLAG: True}
-        log_extra_num = {
-            TimestampRotatingFileHandler.FILE_HEADER_FLAG: True,
-            TimestampRotatingFileHandler.FILE_NUM: 1}
-        LOG.info(
-            self.START_MESSAGE_TMPL % {
-                'comms_method': 'tcp',
-                'host': self.host,
-                'port': self.port,
-                'pid': os.getpid()},
-            extra=log_extra,
-        )
-        LOG.info(
-            self.START_PUB_MESSAGE_TMPL % {
-                'comms_method': 'tcp',
-                'host': self.host,
-                'port': self.pub_port},
-            extra=log_extra,
-        )
-        LOG.info(
-            'Run: (re)start=%d log=%d', n_restart, 1, extra=log_extra_num)
-        LOG.info('Cylc version: %s', CYLC_VERSION, extra=log_extra)
-        # Note that the following lines must be present at the top of
-        # the suite log file for use in reference test runs:
-        LOG.info('Run mode: %s', self.config.run_mode(), extra=log_extra)
-        LOG.info(
-            'Initial point: %s', self.config.initial_point, extra=log_extra)
-        if self.config.start_point != self.config.initial_point:
-            LOG.info(
-                'Start point: %s', self.config.start_point, extra=log_extra)
-        LOG.info('Final point: %s', self.config.final_point, extra=log_extra)
 
         self.pool = TaskPool(
             self.config,
@@ -559,6 +525,46 @@ class Scheduler:
         self.port = self.server.port
         self.pub_port = self.publisher.port
 
+    async def log_start(self):
+        if self.is_restart:
+            pri_dao = self.suite_db_mgr.get_pri_dao()
+            n_restart = pri_dao.select_checkpoint_id_restart_count()
+        else:
+            n_restart = 0
+
+        log_extra = {TimestampRotatingFileHandler.FILE_HEADER_FLAG: True}
+        log_extra_num = {
+            TimestampRotatingFileHandler.FILE_HEADER_FLAG: True,
+            TimestampRotatingFileHandler.FILE_NUM: 1}
+        LOG.info(
+            # this is the signal daemonize is waiting for
+            self.START_MESSAGE_TMPL % {
+                'comms_method': 'tcp',
+                'host': self.host,
+                'port': self.port,
+                'pid': os.getpid()},
+            extra=log_extra,
+        )
+        LOG.info(
+            self.START_PUB_MESSAGE_TMPL % {
+                'comms_method': 'tcp',
+                'host': self.host,
+                'port': self.pub_port},
+            extra=log_extra,
+        )
+        LOG.info(
+            'Run: (re)start=%d log=%d', n_restart, 1, extra=log_extra_num)
+        LOG.info('Cylc version: %s', CYLC_VERSION, extra=log_extra)
+        # Note that the following lines must be present at the top of
+        # the suite log file for use in reference test runs:
+        LOG.info('Run mode: %s', self.config.run_mode(), extra=log_extra)
+        LOG.info(
+            'Initial point: %s', self.config.initial_point, extra=log_extra)
+        if self.config.start_point != self.config.initial_point:
+            LOG.info(
+                'Start point: %s', self.config.start_point, extra=log_extra)
+        LOG.info('Final point: %s', self.config.final_point, extra=log_extra)
+
     async def start_scheduler(self):
         """Start the scheduler main loop."""
         try:
@@ -590,7 +596,6 @@ class Scheduler:
                     self
                 )
             )
-            raise exc from None
 
         except SchedulerError as exc:
             await self.shutdown(exc)
@@ -611,7 +616,7 @@ class Scheduler:
         finally:
             self.profiler.stop()
 
-    async def run(self):
+    async def run(self, daemonize=False):
         """Run the startup sequence.
 
         * initialise
@@ -627,6 +632,7 @@ class Scheduler:
             await self.initialise()
             await self.configure()
             await self.start_servers()
+            await self.log_start()
         except Exception as exc:
             LOG.exception(exc)
             raise

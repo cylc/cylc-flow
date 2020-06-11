@@ -23,7 +23,6 @@ import os
 import sys
 
 from cylc.flow import LOG, __version__ as CYLC_VERSION
-from cylc.flow.daemonize import daemonize
 from cylc.flow.exceptions import SuiteServiceFileError
 from cylc.flow.host_select import select_suite_host
 from cylc.flow.hostuserutil import is_remote_host
@@ -34,7 +33,7 @@ from cylc.flow.option_parsers import (
 )
 from cylc.flow.pathutil import get_suite_run_dir
 from cylc.flow.remote import remrun, remote_cylc_cmd
-from cylc.flow.scheduler import Scheduler
+from cylc.flow.scheduler import Scheduler, SchedulerError
 from cylc.flow import suite_files
 from cylc.flow.terminal import cli_function
 
@@ -333,14 +332,53 @@ def scheduler_cli(parser, options, args, is_restart=False):
     except SuiteServiceFileError as exc:
         sys.exit(exc)
 
+    _check_registration(reg)
+
+    # re-execute on another host if required
+    _distribute(options.host, is_restart)
+
+    # print the start message
+    if options.no_detach or options.format == 'plain':
+        _start_print_blurb()
+
+    # setup the scheduler
+    scheduler = Scheduler(reg, options, is_restart=is_restart)
+    asyncio.run(
+        _setup(parser, options, reg, is_restart, scheduler)
+    )
+
+    # daemonise if requested
+    if not options.no_detach:
+        from cylc.flow.daemonize import daemonize
+        daemonize(scheduler)
+
+    # setup loggers
+    _open_logs(reg, options.no_detach)
+
+    # run the workflow
+    ret = asyncio.run(
+        _run(parser, options, reg, is_restart, scheduler)
+    )
+
+    # exit
+    LOG.info("DONE")
+    _close_logs()
+    os._exit(ret)  # sys.exit results in threading issues
+
+
+def _check_registration(reg):
+    """Ensure the flow is registered."""
     suite_run_dir = get_suite_run_dir(reg)
     if not os.path.exists(suite_run_dir):
         sys.stderr.write(f'suite service directory not found '
                          f'at: {suite_run_dir}\n')
         sys.exit(1)
 
+
+def _distribute(host, is_restart):
+    """Re-invoke this command on a different host if requested."""
     # Check whether a run host is explicitly specified, else select one.
-    if not options.host:
+    if not host:
         host = select_suite_host()[0]
         if is_remote_host(host):
             if is_restart:
@@ -353,52 +391,39 @@ def scheduler_cli(parser, options, args, is_restart=False):
     if remrun(set_rel_local=True):  # State localhost as above.
         sys.exit()
 
-    # print the start message
-    if options.no_detach or options.format == 'plain':
-        _start_print_blurb()
 
-    # initalise the scheduler
-    loop = asyncio.get_event_loop()
-    scheduler = Scheduler(reg, options, is_restart=is_restart)
+async def _setup(parser, options, reg, is_restart, scheduler):
+    """Initialise the scheduler."""
     try:
-        loop.run_until_complete(
-            scheduler.install()
-        )
+        await scheduler.install()
     except SuiteServiceFileError as exc:
         sys.exit(exc)
 
-    # daemonise if requested
-    if not options.no_detach:
-        daemonize(scheduler)
 
-    # settup loggers
-    _open_logs(reg, options.no_detach)
-
+async def _run(parser, options, reg, is_restart, scheduler):
+    """Run the workflow and handle exceptions."""
     # run cylc run
+    ret = 0
     try:
-        loop.run_until_complete(scheduler.run())
+        await scheduler.run()
 
     # stop cylc stop
+    except SchedulerError:
+        ret = 1
     except KeyboardInterrupt as exc:
         try:
-            loop.run_until_complete(
-                scheduler.shutdown(exc)
-            )
+            await scheduler.shutdown(exc)
         except Exception as exc2:
             # In case of exceptions in the shutdown method itself.
             LOG.exception(exc2)
             raise exc2 from None
-        sys.exit(1)
-    except Exception as exc:
-        # suppress the exception to prevent it appearing in the log
-        sys.exit(exc)
-        sys.exit(1)
+        ret = 2
+    except Exception:
+        ret = 3
 
     # kthxbye
     finally:
-        LOG.info("DONE")
-        _close_logs()
-        loop.close()
+        return ret
 
 
 def main(is_restart=False):
