@@ -55,6 +55,7 @@ install_requires = [
 ]
 tests_require = [
     'async-timeout>=3.0.0',
+    'async_generator',
     'codecov>=2.0.0',
     'coverage>=5.0.0',
     'pytest>=5.3.0',
