@@ -16,9 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """cylc [control] jobs-submit JOB-LOG-ROOT [JOB-LOG-DIR ...]
 
-(This command is for internal use. Users should use "cylc submit".) Submit task
-jobs to relevant batch systems. On a remote job host, this command reads the
-job files from STDIN.
+(This command is for internal use.) Submit task jobs to relevant batch systems.
+ On a remote job host, this command reads the job files from STDIN.
 
 """
 from cylc.flow.option_parsers import CylcOptionParser as COP

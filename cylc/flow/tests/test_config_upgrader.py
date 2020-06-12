@@ -192,7 +192,7 @@ def test_upgrader_function(tmp_path, task, output):
     if 'remote' in after['runtime'][task].keys():
         assert 'host' not in after['runtime'][task]['remote'].keys()
     if 'job' in after['runtime'][task].keys():
-        assert 'batch sytem' not in after['runtime'][task]['job'].keys()
+        assert 'batch system' not in after['runtime'][task]['job'].keys()
     if 'job' in after['runtime'][task].keys():
         assert 'batch submit command template' not in \
                after['runtime'][task]['job'].keys()

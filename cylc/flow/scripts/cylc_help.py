@@ -274,7 +274,6 @@ preparation_commands['search'] = ['search', 'grep']
 preparation_commands['graph'] = ['graph']
 preparation_commands['graph-diff'] = ['graph-diff']
 preparation_commands['diff'] = ['diff', 'compare']
-preparation_commands['jobscript'] = ['jobscript']
 
 discovery_commands = {}
 discovery_commands['ping'] = ['ping']
@@ -378,7 +377,6 @@ comsum['remote-tidy'] = '(Internal) Tidy a task remote'
 
 # utility
 comsum['cycle-point'] = 'Cycle point arithmetic and filename templating'
-comsum['jobscript'] = 'Generate a task job script and print it to stdout'
 comsum['suite-state'] = 'Query the task states in a suite'
 comsum['ls-checkpoints'] = 'Display task pool etc at given events'
 comsum['report-timings'] = 'Generate a report on task timing data'
