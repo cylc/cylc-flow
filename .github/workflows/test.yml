@@ -43,11 +43,11 @@ jobs:
       matrix:
         python-version: ['3.7']
         tests: [
-          ['tests', '1/4'],
-          ['tests', '2/4'],
-          ['tests', '3/4'],
-          ['tests', '4/4'],
-          ['flakytests', '1/1']
+          ['tests/f', '1/4'],
+          ['tests/f', '2/4'],
+          ['tests/f', '3/4'],
+          ['tests/f', '4/4'],
+          ['tests/k', '1/1']
         ]
     env:
       BASE: ${{ matrix.tests[0] }}
@@ -72,7 +72,7 @@ jobs:
 
       - name: Test
         run: |
-          if [[ "${BASE}" == 'flakytests' ]]; then
+          if [[ "${BASE}" == 'tests/k' ]]; then
               NPROC=4
           else
               NPROC=8

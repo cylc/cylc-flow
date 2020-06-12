@@ -107,13 +107,13 @@ class HostUtil(object):
     @staticmethod
     def get_host_ip_by_name(target):
         """Return internal IP address of target."""
-        return socket.gethostbyname(target)
+        return socket.getfqdn(target)
 
     def _get_host_info(self, target=None):
         """Return the extended info of the current host."""
         if target not in self._host_exs:
             if target is None:
-                target = socket.getfqdn()
+                target = socket.gethostname()
             try:
                 self._host_exs[target] = socket.gethostbyname_ex(target)
             except IOError as exc:
