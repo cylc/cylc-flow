@@ -212,6 +212,8 @@ class Scheduler(object):
         self.ext_trigger_queue = None
         self.data_store_mgr = None
         self.job_pool = None
+        self.curve_auth = None
+        self.client_pub_key_dir = None
 
         self._profile_amounts = {}
         self._profile_update_times = {}
@@ -621,8 +623,10 @@ see `COPYING' in the Cylc source distribution.
                 auths.add((itask.task_host, itask.task_owner))
         while auths:
             for host, owner in auths.copy():
-                if self.task_job_mgr.task_remote_mgr.remote_init(
-                        host, owner) is not None:
+                if (
+                    self.task_job_mgr.task_remote_mgr.remote_init(
+                        host, owner, self.curve_auth, self.client_pub_key_dir)
+                ) is not None:
                     auths.remove((host, owner))
             if auths:
                 sleep(1.0)
