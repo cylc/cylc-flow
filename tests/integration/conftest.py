@@ -121,7 +121,6 @@ def test_dir(request, mod_test_dir):
         _rm_if_empty(path)
 
 
-
 @pytest.fixture(scope='module')
 def mod_flow(run_dir, mod_test_dir):
     """A function for creating module-level flows."""

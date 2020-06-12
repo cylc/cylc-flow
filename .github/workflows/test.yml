@@ -4,7 +4,7 @@ on: [pull_request]
 
 
 jobs:
-  unit-test:
+  fast-tests:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -29,15 +29,19 @@ jobs:
 
       - name: Style
         run: |
-          pycodestyle cylc/flow
+          pycodestyle
           etc/bin/shellchecker
 
-      - name: Unit Test
+      - name: Unit Tests
         run: |
-          pytest -n 5
+          pytest -n 5 tests/unit
+
+      - name: Integration Tests
+        run: |
+          pytest -n 5 tests/interation
 
 
-  functional_test:
+  functional-tests:
     runs-on: ubuntu-latest
     strategy:
       matrix:
