@@ -76,7 +76,6 @@ default () {
     # run a strict check on all "functional" scripts
     main '.' \
         --exclude 'etc/bin/live-graph-movie.sh' \
-        --exclude 'tests/functional/jobscript/00-torture/foo.ref-jobfile' \
         -- -e SC1090
 }
 
