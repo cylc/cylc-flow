@@ -498,7 +498,6 @@ class Scheduler:
         if self.options.hold_start:
             LOG.info("Held on start-up (no tasks will be submitted)")
             self.hold_suite()
-        self.run_event_handlers(self.EVENT_STARTUP, 'suite starting')
         self.profiler.log_memory("scheduler.py: begin run while loop")
         self.is_updated = True
         if self.options.profile_mode:
@@ -570,6 +569,7 @@ class Scheduler:
         try:
             self.data_store_mgr.initiate_data_model()
             self._configure_contact()
+            self.run_event_handlers(self.EVENT_STARTUP, 'suite starting')
             await asyncio.gather(
                 *main_loop.get_runners(
                     self.main_loop_plugins,
