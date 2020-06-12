@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -13,18 +14,13 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""CLI of "cylc run". See cylc.flow.scheduler_cli for detail."""
+from cylc.flow.scheduler_cli import main as scheduler_main
 
-[pytest]
-addopts = --verbose
-    --doctest-modules
-    -n=1
-    --dist=loadscope
-    --ignore=cylc/flow/parsec/empysupport.py
-    --ignore=cylc/flow/parsec/validate.py
-    --ignore=cylc/flow/parsec/example
-    --ignore=tests/unit/parsec/getcfg/bin/one-line.py
-    --ignore=tests/unit/parsec/synonyms/bin/synonyms.py
-    --ignore=tests/unit/parsec/nullcfg/bin/empty.py
-    --ignore=cylc/flow/data_messages_pb2.py
-testpaths =
-    tests/unit/
+
+def main():
+    scheduler_main(is_restart=False)
+
+
+if __name__ == "__main__":
+    main()
