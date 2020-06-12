@@ -236,18 +236,18 @@ class BatchSysManager():
 
     def format_directives(self, job_conf):
         """Format the job directives for a job file, if relevant."""
-        batch_sys = self._get_sys(job_conf['batch_system_name'])
+        batch_sys = self._get_sys(job_conf['platform']['batch system'])
         if hasattr(batch_sys, "format_directives"):
             return batch_sys.format_directives(job_conf)
 
     def get_fail_signals(self, job_conf):
         """Return a list of failure signal names to trap in the job file."""
-        batch_sys = self._get_sys(job_conf['batch_system_name'])
+        batch_sys = self._get_sys(job_conf['platform']['batch system'])
         return getattr(batch_sys, "FAIL_SIGNALS", self.FAIL_SIGNALS)
 
     def get_vacation_signal(self, job_conf):
         """Return the vacation signal name for a job file."""
-        batch_sys = self._get_sys(job_conf['batch_system_name'])
+        batch_sys = self._get_sys(job_conf['platform']['batch system'])
         if hasattr(batch_sys, "get_vacation_signal"):
             return batch_sys.get_vacation_signal(job_conf)
 

@@ -337,14 +337,16 @@ class TaskJobManager(object):
                     itask.state.reset(TASK_STATUS_READY)
                     if itask.state.outputs.has_custom_triggers():
                         self.suite_db_mgr.put_update_task_outputs(itask)
-                cmd = construct_platform_ssh_cmd(cmd, platform)
+                # TODO work out why we needed to remove the 'cylc' when
+                # we used the remote command but not the local.
+                if remote_mode:
+                    cmd = construct_platform_ssh_cmd(cmd, platform)
+                else:
+                    cmd = ['cylc'] + cmd
                 # TODO At the moment this is crudely replacing the host and
                 # sshing into localhost which seems crude and hack-y.
                 # We should be able to run this without the ssh but I have
                 # Been struggling.
-                if not remote_mode:
-                    cmd[3] = os.environ['HOSTNAME']
-                    LOG.critical(cmd[3])
                 self.proc_pool.put_command(
                     SubProcContext(
                         self.JOBS_SUBMIT,
@@ -451,7 +453,7 @@ class TaskJobManager(object):
         job_activity_log = get_task_job_activity_log(
             suite, itask.point, itask.tdef.name)
         try:
-            with open(job_activity_log, "ab") as handle:
+            with open(os.path.expandvars(job_activity_log), "ab") as handle:
                 if not line.endswith("\n"):
                     line += "\n"
                 handle.write((owner_at_host + line).encode())
