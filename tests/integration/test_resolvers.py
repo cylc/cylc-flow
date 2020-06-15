@@ -1,11 +1,24 @@
+# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from unittest.mock import Mock
 
 import pytest
 
-from cylc.flow.data_store_mgr import (
-    DataStoreMgr, ID_DELIM, EDGES, TASK_PROXIES, WORKFLOW
-)
-from cylc.flow.network.resolvers import node_filter, Resolvers
+from cylc.flow.data_store_mgr import ID_DELIM, EDGES, TASK_PROXIES
+from cylc.flow.network.resolvers import Resolvers
 from cylc.flow.network.schema import parse_node_id
 
 
@@ -107,8 +120,6 @@ async def test_get_nodes_by_ids(flow, node_args):
     nodes = await flow.resolvers.get_nodes_by_ids(TASK_PROXIES, node_args)
     assert len(nodes) == 0
 
-    # assert flow.scheduler.data_store_mgr.data == None
-
     node_args['ghosts'] = True
     node_args['native_ids'] = flow.node_ids
     nodes = [
@@ -116,7 +127,7 @@ async def test_get_nodes_by_ids(flow, node_args):
         for n in await flow.resolvers.get_nodes_by_ids(
             TASK_PROXIES, node_args
         )
-        # if n in flow.data[TASK_PROXIES].values()
+        if n in flow.data[TASK_PROXIES].values()
     ]
     assert len(nodes) > 0
 
