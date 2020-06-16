@@ -127,6 +127,10 @@
 #         (Remote job tests should really use set_test_remote, below, however).
 #     set_test_remote
 #         set CYLC_TEST_HOST and CYLC_TEST_OWNER for remote job tests.
+#     set_test_platform
+#         set CYLC_TEST_PLATFORM for remote job tests
+#         # TODO delete set_test_remote once all it's tests are no longer used
+#         or skipped.
 #     get_fqdn_by_host [TARGET]
 #         Get a host FQDN using the same mechanism Cylc uses.
 #-------------------------------------------------------------------------------
@@ -481,6 +485,7 @@ log_scan () {
     done
 }
 
+# TODO -document this in the header
 purge_suite_remote() {
     local HOST="$1"  # or "owner@host"
     local NAME="$2"
@@ -490,6 +495,25 @@ purge_suite_remote() {
     if [[ "${DIRNAME}" != '.' ]]; then
         CMD="${CMD} && rmdir -p '${DIRNAME}'"
     fi
+    # CMD is part of this function
+    # shellcheck disable=SC2029
+    ssh -n -oBatchMode=yes -oConnectTimeout=5 "${HOST}" "${CMD}" \
+        2>'/dev/null' || true
+}
+
+# TODO -document this in the header
+purge_suite_platform() {
+    local PLATFORM="$1"  # or "owner@host"
+    local NAME="$2"
+    local CMD="cd 'cylc-run' && rm -fr '${NAME}'"
+    local DIRNAME
+    DIRNAME="$(dirname "${NAME}")"
+    if [[ "${DIRNAME}" != '.' ]]; then
+        CMD="${CMD} && rmdir -p '${DIRNAME}'"
+    fi
+    # Pick the first host from the platform
+    HOSTS=$(cylc get-global --item "[job platforms][${PLATFORM}]remote hosts")
+    HOST=$(echo "$HOSTS" | awk -F ',' '{print $1}')
     # CMD is part of this function
     # shellcheck disable=SC2029
     ssh -n -oBatchMode=yes -oConnectTimeout=5 "${HOST}" "${CMD}" \
@@ -733,6 +757,27 @@ set_test_remote() {
   if [[ -z "${CYLC_TEST_HOST}${CYLC_TEST_OWNER}" ]]; then
       skip_all '"[test battery]remote host/owner": not defined'
   fi
+  export CYLC_TEST_HOST=${CYLC_TEST_HOST:-"localhost"}
+  export CYLC_TEST_OWNER=${CYLC_TEST_OWNER:-${USER}}
+}
+
+set_test_platform() {
+  # For remote job tests, define CYLC_TEST_PLATFORM from global
+  # config '[test battery]remote platform', defaulting to localhost.
+  # Skip all tests if is not defined.
+  # Call immediately after sourcing the test header, for skip_all to work.
+  # TODO - esure that this platform exists and raise a sensible error if not.
+  CYLC_TEST_PLATFORM="$( \
+      cylc get-global-config -i '[test battery]remote platform' 2>'/dev/null')"
+  # This is ugly, but some tests require these variables for direct ssh-ing.
+  CYLC_TEST_HOST="$( \
+      cylc get-global --item "[job platforms][${CYLC_TEST_PLATFORM}]remote hosts" | awk -F ',' '{print $1}')"
+  CYLC_TEST_OWNER="$( \
+      cylc get-global --item "[job platforms][${CYLC_TEST_PLATFORM}]owner")"
+  if [[ -z "${CYLC_TEST_PLATFORM}" ]]; then
+      skip_all '"[test battery]remote platform": not defined'
+  fi
+  export CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM:-"localhost"}
   export CYLC_TEST_HOST=${CYLC_TEST_HOST:-"localhost"}
   export CYLC_TEST_OWNER=${CYLC_TEST_OWNER:-${USER}}
 }

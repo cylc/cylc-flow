@@ -18,7 +18,7 @@
 # Test "cylc cat-log" with a custom remote tail command.
 export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
-set_test_remote
+set_test_platform
 #-------------------------------------------------------------------------------
 set_test_number 4
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
@@ -34,10 +34,11 @@ run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 REMOTE_HOME="$($SSH -n "${CYLC_TEST_OWNER}@${CYLC_TEST_HOST}" 'echo $PWD')"
 create_test_globalrc "" "
 [job platforms]
-   [[$CYLC_TEST_HOST]]
+   [[$CYLC_TEST_PLATFORM]]
         tail command template = $REMOTE_HOME/cylc-run/.bin/my-tailer.sh %(filename)s"
 $SCP "${PWD}/bin/my-tailer.sh" \
-    "${CYLC_TEST_OWNER}@${CYLC_TEST_HOST}:cylc-run/.bin/my-tailer.sh"
+    "${CYLC_TEST_OWNER}@${CYLC_TEST_HOST}:cylc-run/.bin/my-tailer.sh
+"
 #-------------------------------------------------------------------------------
 # Run detached.
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
@@ -54,7 +55,7 @@ grep_ok "HELLO from foo 1" "${TEST_NAME}.out"
 TEST_NAME=${TEST_NAME_BASE}-stop
 run_ok "${TEST_NAME}" cylc stop --kill --max-polls=20 --interval=1 "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-purge_suite_remote "${CYLC_TEST_OWNER}@${CYLC_TEST_HOST}" "${SUITE_NAME}"
+purge_suite_platform "${CYLC_TEST_OWNER}@${CYLC_TEST_HOST}" "${SUITE_NAME}"
 $SSH -n "${CYLC_TEST_OWNER}@${CYLC_TEST_HOST}" "rm -rf cylc-run/.bin/"
 purge_suite "${SUITE_NAME}"
 exit

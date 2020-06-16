@@ -529,19 +529,13 @@ with Conf('flow.rc', desc='''
            The test battery reads ``flow-tests.rc`` instead of the normal
            site/user global config files (from the same locations, however).
     '''):
-        Conf('remote host with shared fs', VDR.V_STRING, desc='''
-            The name of a remote host that sees the same HOME file system as
-            the host running the test battery.
+        Conf('remote platform with shared fs', VDR.V_STRING, desc='''
+            The name of a remote platform that sees the same HOME file system
+            as the host running the test battery.
         ''')
-        Conf('remote host', VDR.V_STRING, desc='''
-            Host name of a remote account that does not see the same home
-            directory as the account running the test battery - see also
-            "remote owner" below).
-        ''')
-        Conf('remote owner', VDR.V_STRING, desc='''
-            User name of a remote account that does not see the same home
-            directory as the account running the test battery - see also
-            "remote host" above).
+        Conf('remote platform', VDR.V_STRING, desc='''
+            Platform name of a remote account that does not see the same home
+            directory as the account running the test battery.
         ''')
 
         with Conf('batch systems', desc='''

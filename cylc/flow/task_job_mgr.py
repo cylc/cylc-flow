@@ -61,7 +61,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED,
     TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING)
 from cylc.flow.wallclock import get_current_time_string, get_utc_mode
-from cylc.flow.remote import construct_platform_ssh_cmd
+from cylc.flow.remote import construct_platform_ssh_cmd, construct_ssh_cmd
 
 
 class TaskJobManager(object):
@@ -347,6 +347,7 @@ class TaskJobManager(object):
                 # sshing into localhost which seems crude and hack-y.
                 # We should be able to run this without the ssh but I have
                 # Been struggling.
+                # breakpoint()
                 self.proc_pool.put_command(
                     SubProcContext(
                         self.JOBS_SUBMIT,
@@ -674,29 +675,47 @@ class TaskJobManager(object):
         Group itasks with their user@host.
         Put a job command for each user@host to the multiprocess pool.
 
+        n.b. When doing tasks like kill we may want to use the same host.
+        so we get the host and owner back from the itask and keep this working
+        using hosts rather than platforms.
         """
         if not itasks:
             return
+
+        # sort itasks into lists based upon where they were run.
         auth_itasks = {}
         for itask in itasks:
-            if itask.platform['name'] not in auth_itasks:
-                auth_itasks[itask.platform['name']] = []
-            auth_itasks[itask.platform['name']].append(itask)
-        for platform_name, itasks in sorted(auth_itasks.items()):
-            platform = itasks[0].platform
-            host = randomchoice(platform['remote hosts'])
-            owner = platform['owner']
-            cmd = [cmd_key]
+            # retrieve owner and host used last time
+            host = itask.summary['job_hosts'][max(itask.summary['job_hosts'])]
+            owner = ''
+            if 'owner' in itask.summary:
+                owner = itask.summary['owner']
+            platform_name = itask.platform['name']
+            if (platform_name, host, owner) not in auth_itasks:
+                auth_itasks[(platform_name, host, owner)] = []
+            auth_itasks[(platform_name, host, owner)].append(itask)
+
+        # Go through each list of itasks and carry out commands as required.
+        for (platform_n, host, owner), itasks in sorted(auth_itasks.items()):
+            platform = forward_lookup(platform_n)
+            if platform['remote hosts'][0] == os.environ['HOSTNAME']:
+                remote_mode = True
+                cmd = [cmd_key]
+            else:
+                cmd = ["cylc", cmd_key]
+                remote_mode = False
             if LOG.isEnabledFor(DEBUG):
                 cmd.append("--debug")
             cmd.append("--")
             cmd.append(get_remote_suite_run_job_dir(platform, suite))
             job_log_dirs = []
+            if remote_mode:
+                cmd = construct_ssh_cmd(cmd, owner, host)
+            LOG.critical(f"submitting cmd = {cmd}")
             for itask in sorted(itasks, key=lambda itask: itask.identity):
                 job_log_dirs.append(get_task_job_id(
                     itask.point, itask.tdef.name, itask.submit_num))
-            cmd += [os.path.expandvars(path) for path in job_log_dirs]
-            cmd = construct_platform_ssh_cmd(cmd, platform)
+            cmd += job_log_dirs
             self.proc_pool.put_command(
                 SubProcContext(cmd_key, cmd), callback, [suite, itasks])
 

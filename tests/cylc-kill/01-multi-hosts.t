@@ -18,28 +18,28 @@
 # Test kill multiple jobs on localhost and a remote host
 export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
-set_test_remote_host
+set_test_platform
 set_test_number 3
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate "${SUITE_NAME}" -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}"
+    cylc validate "${SUITE_NAME}" -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}"
 
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug --no-detach "${SUITE_NAME}" \
-    -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}"
+    -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}"
 
 RUN_DIR="$RUN_DIR/${SUITE_NAME}"
 LOG="${RUN_DIR}/log/suite/log"
 sed -n 's/^.*\(cylc jobs-kill\)/\1/p' "${LOG}" | sort -u >'edited-suite-log'
 
 sort >'edited-suite-log-ref' <<__LOG__
-cylc jobs-kill --debug --host=${CYLC_TEST_HOST} -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 1/remote-1/01 1/remote-2/01
-cylc jobs-kill --debug -- ${RUN_DIR}/log/job 1/local-1/01 1/local-2/01 1/local-3/01
+cylc jobs-kill --debug -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 1/remote-1/01 1/remote-2/01
+cylc jobs-kill --debug -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 1/local-1/01 1/local-2/01 1/local-3/01
 __LOG__
 cmp_ok 'edited-suite-log' 'edited-suite-log-ref'
 
-purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
+purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

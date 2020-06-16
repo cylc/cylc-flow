@@ -1188,7 +1188,7 @@ see `COPYING' in the Cylc source distribution.
                 self.suite, f"{time_str}-{load_type}.rc"
             )
         )
-        with open(file_name, "wb") as handle:
+        with open(os.path.expandvars(file_name), "wb") as handle:
             handle.write(b"# cylc-version: %s\n" % CYLC_VERSION.encode())
             printcfg(self.config.cfg, none_str=None, handle=handle)
 

@@ -19,11 +19,11 @@
 export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_remote
+set_test_platform
 set_test_number 14
 create_test_globalrc "" "
 [job platforms]
-   [[${CYLC_TEST_HOST}]]
+   [[${CYLC_TEST_PLATFORM}]]
        retrieve job logs = False"
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
@@ -113,6 +113,6 @@ cylc cat-log -m p -f j "${SUITE_NAME}" a-task.1 >"${TEST_NAME}.out"
 grep_ok "${SUITE_NAME}/log/job/1/a-task/NN/job$" "${TEST_NAME}.out"
 #-------------------------------------------------------------------------------
 # Clean up the task host.
-purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
+purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

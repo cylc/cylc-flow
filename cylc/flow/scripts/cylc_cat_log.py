@@ -161,7 +161,6 @@ def view_log(logpath, mode, tailer_tmpl, batchview_cmd=None, remote=False,
 
     """
     # The log file path may contain '$USER' to be evaluated on the job host.
-    logpath = os.path.expandvars(logpath)
     if mode == 'print':
         # Print location even if the suite does not exist yet.
         print(logpath)
@@ -326,10 +325,6 @@ def main(parser, options, *args, color=False):
         # Invoked on job hosts for job logs only, as a wrapper to view_log().
         # Tail and batchview commands come from global config on suite host).
         logpath, mode, tail_tmpl = options.remote_args[0:3]
-        if logpath.startswith('$'):
-            logpath = os.path.expandvars(logpath)
-        elif logpath.startswith('~'):
-            logpath = os.path.expanduser(logpath)
         try:
             batchview_cmd = options.remote_args[3]
         except IndexError:

@@ -15,8 +15,7 @@ KILLABLE:start-all => killer
         inherit = KILLABLE
     [[remote-1, remote-2]]
         inherit = KILLABLE
-        [[[remote]]]
-            host={{CYLC_TEST_HOST}}
+        platform = {{ CYLC_TEST_PLATFORM }}
     [[killer]]
         script="""
 cylc kill "${CYLC_SUITE_NAME}" KILLABLE.1

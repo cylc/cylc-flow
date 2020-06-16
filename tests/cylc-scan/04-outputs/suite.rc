@@ -8,7 +8,7 @@
     another_metadata = 1
 [cylc]
     [[events]]
-        timeout = PT1M
+        timeout = PT10M
         abort on timeout = True
 [scheduling]
     cycling mode = integer

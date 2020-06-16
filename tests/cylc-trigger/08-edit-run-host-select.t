@@ -20,21 +20,19 @@
 #-------------------------------------------------------------------------------
 set_test_number 3
 
-skip_all "TODO fix after remote init"
-
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 # Configure a fake editor and run a suite with a task that does an edit run.
-create_test_globalrc '' '
+create_test_globalrc '' "
 [editors]
     terminal = my-edit
 [job platforms]
     [[localhost]]
         remote hosts = $(echo localhost)
-'
+"
 TEST_NAME="${TEST_NAME_BASE}-run"
 run_ok "${TEST_NAME}" cylc run --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
