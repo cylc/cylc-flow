@@ -265,21 +265,22 @@ def scheduler_cli(parser, options, args, is_restart=False):
 
     # Check whether a run host is explicitly specified, else select one.
     if not options.host:
-        host = select_suite_host()[0]
-        if is_remote_host(host):
+        options.host = select_suite_host()[0]
+        if is_remote_host(options.host):
             if is_restart:
                 base_cmd = ["restart"] + sys.argv[1:]
             else:
                 base_cmd = ["run"] + sys.argv[1:]
             # Prevent recursive host selection
             base_cmd.append("--host=localhost")
-            return remote_cylc_cmd(base_cmd, host=host)
+            return remote_cylc_cmd(base_cmd, host=options.host)
     suite_srv_dir = suite_files.get_suite_srv_dir(reg)
+    # Clean any existing authentication keys and create new ones.
     keys = {
         "client_public_key": KeyInfo(
             KeyType.PUBLIC,
             KeyOwner.CLIENT,
-            suite_srv_dir=suite_srv_dir, platform=host),
+            suite_srv_dir=suite_srv_dir, platform=options.host),
         "client_private_key": KeyInfo(
             KeyType.PRIVATE,
             KeyOwner.CLIENT,
@@ -293,7 +294,6 @@ def scheduler_cli(parser, options, args, is_restart=False):
             KeyOwner.SERVER,
             suite_srv_dir=suite_srv_dir)
     }
-    # Clean any existing authentication keys and create new ones.
     suite_files.remove_keys_on_server(keys)
     suite_files.create_server_keys(keys, suite_srv_dir)
     if remrun(set_rel_local=True):  # State localhost as above.
