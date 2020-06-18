@@ -97,13 +97,15 @@ def main(parser, options, suite, *task_globs):
             'ping_task',
             {'task_id': task_id, 'exists_only': True}
         )
+
         # Get the job filename from the suite server program - the task cycle
         # point may need standardising to the suite cycle point format.
         jobfile_path = pclient(
             'get_task_jobfile_path', {'task_id': task_id})
+        jobfile_path = os.path.expandvars(jobfile_path)
         if not jobfile_path:
             raise UserInputError('task not found')
-        jobfile_path = jobfile_path
+
         # Note: localhost time and file system time may be out of sync,
         #       so the safe way to detect whether a new file is modified
         #       or is to detect whether time stamp has changed or not.
@@ -114,18 +116,18 @@ def main(parser, options, suite, *task_globs):
             old_mtime = os.stat(jobfile_path).st_mtime
         except OSError:
             old_mtime = None
+
         # Tell the suite server program to generate the job file.
         pclient(
             'dry_run_tasks',
             {'tasks': [task_id], 'check_syntax': False}
         )
+
         # Wait for the new job file to be written. Use mtime because the same
         # file could potentially exist already, left from a previous run.
-        jobfile_path = os.path.expandvars(jobfile_path)
         count = 0
         MAX_TRIES = 10
         while True:
-
             count += 1
             try:
                 mtime = os.stat(jobfile_path).st_mtime
@@ -142,6 +144,7 @@ def main(parser, options, suite, *task_globs):
         # Make a pre-edit copy to allow a post-edit diff.
         jobfile_copy_path = "%s.ORIG" % jobfile_path
         shutil.copy(jobfile_path, jobfile_copy_path)
+
         # Edit the new job file.
         if options.geditor:
             editor = glbl_cfg().get(['editors', 'gui'])
@@ -168,8 +171,6 @@ def main(parser, options, suite, *task_globs):
 
         # Save a diff to record the changes made.
         difflog = os.path.join(os.path.dirname(jobfile_path), JOB_LOG_DIFF)
-        print(f'difflogg {difflog}')
-
         with open(difflog, 'wb') as diff_file:
             for line in difflib.unified_diff(
                     open(jobfile_copy_path).readlines(),
@@ -194,7 +195,7 @@ def main(parser, options, suite, *task_globs):
                 os.symlink(prev_nn, os.path.join(dirname, "NN"))
                 shutil.rmtree(real_log_dir)
             aborted = True
-    print("OI!!!YOU!!!")
+
     # Trigger the task proxy(s).
     pclient(
         'trigger_tasks',

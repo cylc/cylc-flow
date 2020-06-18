@@ -12,6 +12,8 @@
         script=true
         [[[meta]]]
             URL = http://my-suites.com/${CYLC_SUITE_NAME}/${CYLC_TASK_NAME}.html
+            # TODO: review comment: check this is still performing remote testing now
+            # that the [remote]host conf has been removed
 {% if GLOBALCFG is not defined %}
         [[[events]]]
             handlers = hello-event-handler %(name)s %(event)s %(suite_url)s %(suite_uuid)s %(task_url)s %(message)s %(point)s %(submit_num)s %(id)s

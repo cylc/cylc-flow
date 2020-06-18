@@ -156,9 +156,6 @@ def construct_platform_ssh_cmd(raw_cmd, platform, **kwargs):
         ssh_login_shell=platform['use login shell'],
         **kwargs
     )
-
-    LOG.debug(f"SSH command constructed: {ret}")
-
     return ret
 
 
@@ -194,7 +191,6 @@ def construct_ssh_cmd(
         necessary to directly execute the bare command on a given host via ssh.
     """
     # If ssh cmd isn't given use the default from localhost settings.
-    # breakpoint()
     if ssh_cmd is None:
         command = shlex.split(forward_lookup()['ssh command'])
     else:
@@ -312,7 +308,7 @@ def remote_cylc_cmd(
 def remrun(dry_run=False, forward_x11=False, abort_if=None,
            set_rel_local=False):
     """Short for RemoteRunner().execute(...)"""
-    return False
+    return False  # DISABLE remrun functionality - TODO remove
 
 
 class RemoteRunner(object):

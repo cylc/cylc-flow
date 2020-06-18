@@ -351,7 +351,6 @@ class BatchSysManager():
         utc_mode -- is the suite running in UTC mode?
 
         """
-        LOG.debug(f"Job Running on HOSTNAME: {os.environ['HOSTNAME']}")
         if "$" in job_log_root:
             job_log_root = os.path.expandvars(job_log_root)
             LOG.debug(f"$HOME was removed from job_log_root is {job_log_root}")

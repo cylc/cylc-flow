@@ -273,21 +273,41 @@ def get_scan_items_from_fs(
             reg = os.path.relpath(dirpath, run_d)
             if reg_pattern and not reg_pattern.match(reg):
                 continue
-            yield (
-                reg,
-                contact_data[ContactFileFields.HOST],
-                contact_data[ContactFileFields.PORT],
-                contact_data[ContactFileFields.PUBLISH_PORT],
-                contact_data[ContactFileFields.API]
-            )
-        else:
-            try:
-                source_dir = get_suite_source_dir(reg)
-                title = get_suite_title(reg)
-            except (SuiteServiceFileError, IOError):
-                continue
-            yield (
-                reg,
-                source_dir,
-                title
-            )
+
+            # Choose only suites with .service and matching filter
+            if active_only:
+                # Skip suites running with cylc version < 8 (these suites
+                # do not have PUBLISH_PORT field)
+                try:
+                    contact_data = load_contact_file(reg, owner)
+                except (SuiteServiceFileError, IOError, TypeError):
+                    LOG.debug(f"Error loading contact file for: {reg}")
+                    continue
+                try:
+                    cylc_version = contact_data[ContactFileFields.VERSION]
+                    major_version = int(cylc_version.split(".", 1)[0])
+                    if (major_version < 8):
+                        LOG.info(f"Omitting \"{reg}\" (cylc-{cylc_version})")
+                        continue
+                except Exception as exc:
+                    LOG.debug(
+                        f"Error getting version from contact file: {exc}")
+                    continue
+                yield (
+                    reg,
+                    contact_data[ContactFileFields.HOST],
+                    contact_data[ContactFileFields.PORT],
+                    contact_data[ContactFileFields.PUBLISH_PORT],
+                    contact_data[ContactFileFields.API]
+                )
+            else:
+                try:
+                    source_dir = get_suite_source_dir(reg)
+                    title = get_suite_title(reg)
+                except (SuiteServiceFileError, IOError):
+                    continue
+                yield (
+                    reg,
+                    source_dir,
+                    title
+                )

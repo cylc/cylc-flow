@@ -25,8 +25,6 @@ create_test_globalrc "" "
    [[localhost]]
         tail command template = $PWD/bin/my-tailer.sh %(filename)s
 "
-# set -x
-# cylc get-global --item "[job platforms][localhost]tail command template" >&2
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"

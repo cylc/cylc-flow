@@ -16,7 +16,9 @@
 #
 # Tests for the platform lookup.
 
+from copy import deepcopy
 import re
+
 from cylc.flow.exceptions import PlatformLookupError
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 
@@ -49,7 +51,7 @@ def forward_lookup(platform_name=None, platforms=None):
         platforms = glbl_cfg().get(['job platforms'])
 
     if platform_name is None:
-        platform_data = platforms['localhost']
+        platform_data = deepcopy(platforms['localhost'])
         platform_data['name'] = 'localhost'
         return platform_data
 
@@ -60,8 +62,10 @@ def forward_lookup(platform_name=None, platforms=None):
         if re.fullmatch(platform_name_re, platform_name):
             platform_data = platforms[platform_name_re]
             if not platform_data:
-                platform_data = forward_lookup('localhost').copy()
+                platform_data = deepcopy(platforms['localhost'])
                 platform_data['remote hosts'] = platform_name
+            else:
+                platform_data = deepcopy(platform_data)
             platform_data['name'] = platform_name
             return platform_data
 

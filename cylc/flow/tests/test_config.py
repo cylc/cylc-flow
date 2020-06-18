@@ -98,8 +98,8 @@ class TestSuiteConfig(object):
             'cylc.flow.platform_lookup.glbl_cfg',
             '''
             [job platforms]
-            [[localhost]]
-            remote hosts = localhost
+                [[localhost]]
+                    remote hosts = localhost
             '''
         )
         with TemporaryDirectory() as temp_dir:
@@ -131,8 +131,8 @@ class TestSuiteConfig(object):
             'cylc.flow.platform_lookup.glbl_cfg',
             '''
             [job platforms]
-            [[localhost]]
-            remote hosts = localhost
+                [[localhost]]
+                    remote hosts = localhost
             '''
         )
         with TemporaryDirectory() as temp_dir:
@@ -164,8 +164,8 @@ class TestSuiteConfig(object):
             'cylc.flow.platform_lookup.glbl_cfg',
             '''
             [job platforms]
-            [[localhost]]
-            remote hosts = localhost
+                [[localhost]]
+                    remote hosts = localhost
             '''
         )
         with TemporaryDirectory() as temp_dir:
@@ -197,8 +197,8 @@ class TestSuiteConfig(object):
             'cylc.flow.platform_lookup.glbl_cfg',
             '''
             [job platforms]
-            [[localhost]]
-            remote hosts = localhost
+                [[localhost]]
+                    remote hosts = localhost
             '''
         )
         with TemporaryDirectory() as temp_dir:
@@ -238,8 +238,8 @@ class TestSuiteConfig(object):
             'cylc.flow.platform_lookup.glbl_cfg',
             '''
             [job platforms]
-            [[localhost]]
-            remote hosts = localhost
+                [[localhost]]
+                    remote hosts = localhost
             '''
         )
         template_vars = {}

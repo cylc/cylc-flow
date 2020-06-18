@@ -712,6 +712,8 @@ create_test_globalrc() {
     if [[ -f "${SITE_TESTS_CONF_FILE}" ]]; then
         cat "${SITE_TESTS_CONF_FILE}" >>'etc/flow.rc'
     fi
+    # TODO: review comment: we shouldn't need a localhost platform right?
+    # TODO: review comment: defining a slurmtest platform here doesn't make much sense either
     # Add some standard platforms to flowtext
     cat <<__PLATFORMS__ >> 'etc/flow.rc'
 [job platforms]

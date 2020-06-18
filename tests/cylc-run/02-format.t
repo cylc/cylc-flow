@@ -30,6 +30,7 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
     [[foo]]
         script = cylc stop --now --now "${CYLC_SUITE_NAME}"
 __SUITE_RC__
+
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 

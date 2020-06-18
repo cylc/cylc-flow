@@ -175,7 +175,7 @@ class Scheduler(object):
         # For user-defined batch system handlers
         sys.path.append(os.path.join(self.suite_dir, 'python'))
         sys.path.append(os.path.join(self.suite_dir, 'lib', 'python'))
-        self.suite_run_dir = os.path.expandvars(get_suite_run_dir(self.suite))
+        self.suite_run_dir = get_suite_run_dir(self.suite)
         self.suite_work_dir = get_suite_run_work_dir(self.suite)
         self.suite_share_dir = get_suite_run_share_dir(self.suite)
         self.suite_log_dir = get_suite_run_log_dir(self.suite)
@@ -1183,12 +1183,9 @@ see `COPYING' in the Cylc source distribution.
             load_type = "restart"
         else:
             load_type = "run"
-        file_name = os.path.expandvars(
-            get_suite_run_rc_dir(
-                self.suite, f"{time_str}-{load_type}.rc"
-            )
-        )
-        with open(os.path.expandvars(file_name), "wb") as handle:
+        file_name = get_suite_run_rc_dir(
+            self.suite, f"{time_str}-{load_type}.rc")
+        with open(file_name, "wb") as handle:
             handle.write(b"# cylc-version: %s\n" % CYLC_VERSION.encode())
             printcfg(self.config.cfg, none_str=None, handle=handle)
 

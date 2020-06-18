@@ -115,7 +115,7 @@ PLATFORMS_WITH_RE = {
 )
 def test_basic(PLATFORMS, platform, expected):
     platform = forward_lookup(platform_name=platform, platforms=PLATFORMS)
-    if type(platform) == dict:
+    if isinstance(expected, dict):
         assert platform == expected
     else:
         assert platform["remote hosts"] == expected

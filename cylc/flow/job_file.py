@@ -58,9 +58,7 @@ class JobFileWriter(object):
         # variables: NEXT_CYCLE=$( cylc cycle-point --offset-hours=6 )
         platform = job_conf['platform']
         tmp_name = os.path.expandvars(local_job_file_path + '.tmp')
-        run_d = os.path.expandvars(
-            get_remote_suite_run_dir(platform, job_conf['suite_name'])
-        )
+        run_d = get_remote_suite_run_dir(platform, job_conf['suite_name'])
         try:
             with open(tmp_name, 'w') as handle:
                 self._write_header(handle, job_conf)

@@ -13,6 +13,8 @@ second task fixes and retriggers it with an edit-run."""
 [runtime]
     [[broken-task]]
         script = false
+        # TODO: review comment: was this testing host select type logic
+        # if so should it be converted to platform select type logic?
     [[fixer-task]]
         script = """
 cylc trigger --edit $CYLC_SUITE_NAME 'broken-task.1' << __END__

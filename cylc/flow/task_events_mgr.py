@@ -41,6 +41,7 @@ from cylc.flow.hostuserutil import get_host, get_user
 from cylc.flow.pathutil import (
     get_remote_suite_run_job_dir,
     get_suite_run_job_dir)
+from cylc.flow.platform_lookup import forward_lookup
 from cylc.flow.subprocctx import SubProcContext
 from cylc.flow.task_action_timer import TaskActionTimer
 from cylc.flow.task_job_logs import (
@@ -605,7 +606,6 @@ class TaskEventsManager():
 
     def _process_job_logs_retrieval(self, schd_ctx, ctx, id_keys):
         """Process retrieval of task job logs from remote user@host."""
-        from cylc.flow.platform_lookup import forward_lookup
         platform = forward_lookup(ctx.user_at_host)
         ssh_str = str(platform["ssh command"])
         rsync_str = str(platform["retrieve job logs command"])

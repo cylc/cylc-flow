@@ -250,9 +250,9 @@ def test_write_directives(fixture_get_platform, job_conf: dict, expected: str):
         assert(fake_file.getvalue() == expected)
 
 
-@pytest.mark.parametrize("batch_sys",
-                         ["at", "background", "loadleveler",
-                          "pbs", "sge", "slurm"])
+@pytest.mark.parametrize(
+    "batch_sys",
+    ["at", "background", "loadleveler", "pbs", "sge", "slurm"])
 def test_traps_for_each_batch_system(batch_sys: str):
     """Test traps for each batch system"""
     # TODO create a fixture to automate platform creation.
