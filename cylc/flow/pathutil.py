@@ -22,7 +22,7 @@ from shutil import rmtree
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
-from cylc.flow.platform_lookup import forward_lookup
+from cylc.flow.platforms import forward_lookup
 
 
 def get_remote_suite_run_dir(platform, suite, *args):

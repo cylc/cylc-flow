@@ -25,7 +25,7 @@ from unittest import mock
 
 import cylc.flow.flags
 from cylc.flow.job_file import JobFileWriter
-from cylc.flow.platform_lookup import forward_lookup
+from cylc.flow.platforms import forward_lookup
 
 # List of tilde variable inputs
 # input value, expected output value
@@ -63,10 +63,7 @@ def fixture_get_platform():
     yield inner_func
 
 
-@mock.patch("cylc.flow.job_file.glbl_cfg")
-def test_write_prelude_invalid_cylc_command(mocked_glbl_cfg):
-    platform = forward_lookup()
-    platform['cylc executable'] = "bodge"
+def test_write_prelude_invalid_cylc_command():
     job_conf = {
         "platform": {
             "batch system": "background",
@@ -75,9 +72,6 @@ def test_write_prelude_invalid_cylc_command(mocked_glbl_cfg):
             "cylc executable": "sl -a"
         }
     }
-    mocked = mock.MagicMock()
-    mocked_glbl_cfg.return_value = mocked
-    mocked.get_host_item.return_value = 'cylc-testing'
     with pytest.raises(ValueError) as ex:
         with TemporaryFile(mode="w+") as handle:
             JobFileWriter()._write_prelude(handle, job_conf)

@@ -17,10 +17,9 @@
 import os
 import sqlite3
 
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.cycling.util import add_offset
 from cylc.flow.dbstatecheck import CylcSuiteDBChecker
-from cylc.flow.platform_lookup import forward_lookup
+from cylc.flow.platforms import forward_lookup
 from metomi.isodatetime.parsers import TimePointParser
 
 

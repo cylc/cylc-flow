@@ -17,7 +17,8 @@
 #-------------------------------------------------------------------------------
 # Test host selection
 . "$(dirname "$0")/test_header"
-set_test_remote
+skip_all 'TODO: reinstate after host selection is reimplemented'
+require_remote_platform
 set_test_number 3
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
@@ -27,6 +28,6 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 
 N_HOST_SELECT_CMDS="$(find "${SUITE_RUN_DIR}" -name 'host-select-*' | wc -l)"
 run_ok "${TEST_NAME_BASE}-n-host-select-cmds" test "${N_HOST_SELECT_CMDS}" -eq 1
-purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
+purge_suite_remote "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

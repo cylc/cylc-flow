@@ -19,28 +19,27 @@
 # job host.
 export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
-set_test_remote
+require_remote_platform
 set_test_number 4
 OPT_SET=
-if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
-    create_test_globalrc "" "
-[job platforms]
-    [[${CYLC_TEST_HOST}]]
-        retrieve job logs = True
-        retrieve job logs retry delays = PT5S"
-    OPT_SET='-s GLOBALCFG=True'
-fi
+create_test_globalrc "" "
+    [job platforms]
+        [[${CYLC_REMOTE_PLATFORM}]]
+            retrieve job logs = True
+            retrieve job logs retry delays = PT5S
+"
+OPT_SET='-s GLOBALCFG=True'
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 # shellcheck disable=SC2086
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate ${OPT_SET} -s "HOST=${CYLC_TEST_HOST}" \
-       -s "OWNER=${CYLC_TEST_OWNER}" "${SUITE_NAME}"
+    cylc validate ${OPT_SET} \
+    -s "PLATFORM=${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
 # shellcheck disable=SC2086
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug --no-detach ${OPT_SET} \
-       -s "HOST=${CYLC_TEST_HOST}" -s "OWNER=${CYLC_TEST_OWNER}" "${SUITE_NAME}"
+       -s "PLATFORM=${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
 
 sed "/'job-logs-retrieve'/!d" \
     "${SUITE_RUN_DIR}/log/job/1/t1/"{01,02,03}"/job-activity.log" \
@@ -53,16 +52,12 @@ __LOG__
 
 grep -F 'will run after' "${SUITE_RUN_DIR}/log/suite/log" \
     | cut -d' ' -f 4-10 | sort >"edited-log"
-if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
-    cmp_ok 'edited-log' <<'__LOG__'
+cmp_ok 'edited-log' <<'__LOG__'
 1/t1/01 ('job-logs-retrieve', 'retry') will run after PT5S
 1/t1/02 ('job-logs-retrieve', 'retry') will run after PT5S
 1/t1/03 ('job-logs-retrieve', 'succeeded') will run after PT5S
 __LOG__
-else
-    cmp_ok 'edited-log' <'/dev/null'  # P0Y not displayed
-fi
 
-purge_suite_remote "${CYLC_TEST_OWNER}@${CYLC_TEST_HOST}" "${SUITE_NAME}"
+purge_suite_remote "${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

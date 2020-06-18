@@ -20,14 +20,6 @@
 
 set_test_number 7
 
-if [[ -v CYLC_TEST_HOST ]]; then
-  create_test_globalrc '
-    [job platforms]
-    [[test remote platform]]
-    remote hosts = ${CYLC_TEST_HOST}
-  '
-fi
-
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \

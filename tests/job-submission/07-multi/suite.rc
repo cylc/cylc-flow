@@ -14,5 +14,5 @@
         inherit = T
     [[t4,t5,t6]]
         inherit = T
-        [[[remote]]]
-            host = {{CYLC_TEST_HOST}}
+        platform = {{CYLC_REMOTE_PLATFORM}}
+

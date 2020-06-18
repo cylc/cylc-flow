@@ -12,6 +12,7 @@
         platform = badhost
     [[t2]]
         script = """
-cylc broadcast "${CYLC_SUITE_NAME}" -n 't1' -p '1' -s '[remote]host=localhost'
-cylc trigger "${CYLC_SUITE_NAME}" 't1.1'
-"""
+            cylc broadcast "${CYLC_SUITE_NAME}" \
+                -n 't1' -p '1' -s 'platform=localhost'
+            cylc trigger "${CYLC_SUITE_NAME}" 't1.1'
+        """

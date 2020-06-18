@@ -95,7 +95,7 @@ class TestSuiteConfig(object):
     def test_xfunction_imports(self, mock_glbl_cfg):
         """Test for a suite configuration with valid xtriggers"""
         mock_glbl_cfg(
-            'cylc.flow.platform_lookup.glbl_cfg',
+            'cylc.flow.platforms.glbl_cfg',
             '''
             [job platforms]
                 [[localhost]]
@@ -128,7 +128,7 @@ class TestSuiteConfig(object):
     def test_xfunction_import_error(self, mock_glbl_cfg):
         """Test for error when a xtrigger function cannot be imported."""
         mock_glbl_cfg(
-            'cylc.flow.platform_lookup.glbl_cfg',
+            'cylc.flow.platforms.glbl_cfg',
             '''
             [job platforms]
                 [[localhost]]
@@ -161,7 +161,7 @@ class TestSuiteConfig(object):
     def test_xfunction_attribute_error(self, mock_glbl_cfg):
         """Test for error when a xtrigger function cannot be imported."""
         mock_glbl_cfg(
-            'cylc.flow.platform_lookup.glbl_cfg',
+            'cylc.flow.platforms.glbl_cfg',
             '''
             [job platforms]
                 [[localhost]]
@@ -194,7 +194,7 @@ class TestSuiteConfig(object):
     def test_xfunction_not_callable(self, mock_glbl_cfg):
         """Test for error when a xtrigger function is not callable."""
         mock_glbl_cfg(
-            'cylc.flow.platform_lookup.glbl_cfg',
+            'cylc.flow.platforms.glbl_cfg',
             '''
             [job platforms]
                 [[localhost]]
@@ -235,7 +235,7 @@ class TestSuiteConfig(object):
         See bug #2700 for more/
         """
         mock_glbl_cfg(
-            'cylc.flow.platform_lookup.glbl_cfg',
+            'cylc.flow.platforms.glbl_cfg',
             '''
             [job platforms]
                 [[localhost]]

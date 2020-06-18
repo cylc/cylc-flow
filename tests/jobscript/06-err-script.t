@@ -26,18 +26,5 @@ grep_ok 'EXIT foo bar baz qux' "${SUITE_RUN_DIR}/log/job/1/foo/01/job.err"
 run_fail "${TEST_NAME_BASE}-grep-02" \
     grep -q -F 'ERR foo bar baz qux' "${SUITE_RUN_DIR}/log/job/1/foo/02/job.err"
 
-for I in 13 37 61; do
-    create_test_globalrc '' "
-[job platforms]
-    [[pbshost]]
-        remote hosts = localhost
-        batch system = pbs
-        job name length maximum = ${I}"
-    run_ok "${TEST_NAME_BASE}-${I}" cylc jobscript "${SUITE_NAME}" \
-        "abcdefghijklmnopqrstuvwxyz_0123456789.1"
-    contains_ok "${TEST_NAME_BASE}-${I}.stdout" <<__OUT__
-#PBS -N $(cut -c1-${I} <<<"abcdefghijklmnopqrstuvwxyz_0123456789.1.${SUITE_NAME}")
-__OUT__
-done
 purge_suite "${SUITE_NAME}"
 exit

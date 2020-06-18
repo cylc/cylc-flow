@@ -31,7 +31,6 @@ from shutil import rmtree
 from time import time
 import traceback
 from copy import deepcopy
-from random import choice as randomchoice
 
 from cylc.flow.parsec.util import pdeepcopy, poverride
 
@@ -53,9 +52,9 @@ from cylc.flow.task_job_logs import (
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED,
     TASK_OUTPUT_FAILED)
-from cylc.flow.platform_lookup import forward_lookup
+from cylc.flow.platforms import forward_lookup, get_host_from_platform
 from cylc.flow.task_remote_mgr import (
-    REMOTE_INIT_FAILED, TaskRemoteMgmtError, TaskRemoteMgr)
+    REMOTE_INIT_FAILED, TaskRemoteMgr)
 from cylc.flow.task_state import (
     TASK_STATUSES_ACTIVE, TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
     TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED,
@@ -239,7 +238,7 @@ class TaskJobManager(object):
             # allows the restart logic to correctly poll the status of the
             # background/at jobs that may still be running on the previous
             # suite host.
-            host = randomchoice(platform['remote hosts'])
+            host = get_host_from_platform(platform)
             if (
                 self.batch_sys_mgr.is_job_local_to_host(
                     itask.summary['batch_sys_name']
@@ -296,7 +295,8 @@ class TaskJobManager(object):
                     ('host', host, is_remote_host),
                     ('user', owner, is_remote_user)]:
                 if test_func(value):
-                    # TODO: review question - why have these lines been removed?
+                    # TODO: review question - why have these lines been
+                    # removed?
                     # if they are not needed then can the for loop go?
                     remote_mode = True
             if remote_mode:
@@ -318,6 +318,12 @@ class TaskJobManager(object):
             LOG.debug(
                 '%s ... # will invoke in batches, sizes=%s',
                 cmd, [len(b) for b in itasks_batches])
+            # TODO work out why we needed to remove the 'cylc' when
+            # we used the remote command but not the local.
+            if remote_mode:
+                cmd = construct_platform_ssh_cmd(cmd, platform)
+            else:
+                cmd = ['cylc'] + cmd
             for i, itasks_batch in enumerate(itasks_batches):
                 stdin_files = []
                 job_log_dirs = []
@@ -340,12 +346,7 @@ class TaskJobManager(object):
                     itask.state.reset(TASK_STATUS_READY)
                     if itask.state.outputs.has_custom_triggers():
                         self.suite_db_mgr.put_update_task_outputs(itask)
-                # TODO work out why we needed to remove the 'cylc' when
-                # we used the remote command but not the local.
-                if remote_mode:
-                    cmd = construct_platform_ssh_cmd(cmd, platform)
-                else:
-                    cmd = ['cylc'] + cmd
+
                 # TODO At the moment this is crudely replacing the host and
                 # sshing into localhost which seems crude and hack-y.
                 # We should be able to run this without the ssh but I have
@@ -903,7 +904,7 @@ class TaskJobManager(object):
         # itask.platform is going to get boring...
         platform = itask.platform
         # TODO - use a better algorithm for picking host
-        host = randomchoice(platform['remote hosts'])
+        host = get_host_from_platform(platform)
         owner = platform['owner']
 
         if owner:

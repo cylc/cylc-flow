@@ -17,7 +17,7 @@
 # Tests for the platform lookup.
 
 import pytest
-from cylc.flow.platform_lookup import forward_lookup, reverse_lookup
+from cylc.flow.platforms import forward_lookup, reverse_lookup
 from cylc.flow.exceptions import PlatformLookupError
 
 PLATFORMS = {

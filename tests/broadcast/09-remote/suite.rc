@@ -3,14 +3,16 @@
     UTC mode = True
 
 [scheduling]
-    initial cycle point=1999
-    final cycle point=1999
+    initial cycle point = 1999
+    final cycle point = 1999
     [[graph]]
-        P1Y="""t1 => t2"""
+        P1Y = t1 => t2
 [runtime]
     [[t1]]
-        script = cylc broadcast -v -v --debug "${CYLC_SUITE_NAME}" -n t2 -s 'script=true'
-        [[[remote]]]
-            host = {{environ["CYLC_TEST_HOST"]}}
+        script = """
+            cylc broadcast -v -v --debug "${CYLC_SUITE_NAME}" \
+                -n t2 -s 'script=true'
+        """
+        platform = {{ environ['CYLC_REMOTE_PLATFORM'] }}
     [[t2]]
         script = false

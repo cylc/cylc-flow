@@ -17,8 +17,4 @@ jumped over
 the lazy dog
 __END__
 """
-        platform = test platform
-        [[[remote]]]
-            host = {{CYLC_TEST_HOST | default("localhost")}}
-            # TODO: review comment: should host still be defined?
-            retrieve job logs = True
+        platform = {{ CYLC_REMOTE_PLATFORM | default('localhost') }}

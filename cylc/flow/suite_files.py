@@ -17,21 +17,17 @@
 
 # Note: Some modules are NOT imported in the header. Expensive modules are only
 # imported on demand.
-from functools import lru_cache
 import os
 import re
 import shutil
-import stat
 import zmq.auth
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import SuiteServiceFileError
-from cylc.flow.pathutil import get_remote_suite_run_dir, get_suite_run_dir
-import cylc.flow.flags
+from cylc.flow.pathutil import get_suite_run_dir
 from cylc.flow.hostuserutil import (
-    get_host, get_user, is_remote, is_remote_host, is_remote_user,
-    is_remote_platform
+    get_user, is_remote_host, is_remote_user
 )
 from cylc.flow.unicode_rules import SuiteNameValidator
 

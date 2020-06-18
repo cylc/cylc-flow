@@ -44,7 +44,7 @@ cmp_ok "${DIFF_LOG}" - <<__END__
 +true
  }
  
- . "${SUITE_RUN_DIR}/.service/etc/job.sh"
+ . "\$HOME/cylc-run/$SUITE_NAME/.service/etc/job.sh"
 __END__
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-diff2"
@@ -60,7 +60,7 @@ cmp_ok "${DIFF_LOG}" - <<__END__
 +true
  }
  
- . "${SUITE_RUN_DIR}/.service/etc/job.sh"
+ . "\$HOME/cylc-run/$SUITE_NAME/.service/etc/job.sh"
 __END__
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"

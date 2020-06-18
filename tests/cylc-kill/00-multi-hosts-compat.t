@@ -18,16 +18,16 @@
 # Test kill multiple jobs on localhost and a remote host
 export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
-set_test_platform
+require_remote_platform
 set_test_number 3
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate "${SUITE_NAME}" -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}"
+    cylc validate "${SUITE_NAME}" -s "CYLC_REMOTE_PLATFORM=${CYLC_REMOTE_PLATFORM}"
 
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug --no-detach "${SUITE_NAME}" \
-    -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}"
+    -s "CYLC_REMOTE_PLATFORM=${CYLC_REMOTE_PLATFORM}"
 
 RUN_DIR="$RUN_DIR/${SUITE_NAME}"
 LOG="${RUN_DIR}/log/suite/log"
@@ -39,6 +39,6 @@ cylc jobs-kill --debug -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 1/local-1/01 1
 __LOG__
 cmp_ok 'edited-suite-log' 'edited-suite-log-ref'
 
-purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
+purge_suite_platform "${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

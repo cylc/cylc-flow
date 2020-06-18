@@ -4,15 +4,14 @@
 
 [scheduling]
     [[graph]]
-        R1="t0 => t1"
+        R1 = t0 => t1
 
 [runtime]
     [[t0]]
         script = """
-# A client command should not require --use-ssh option.
-cylc broadcast "${CYLC_SUITE_NAME}" '--name=t1' '--set=script=true'
-"""
-        [[[remote]]]
-            host = {{CYLC_TEST_HOST}}
+            # A client command should not require --use-ssh option.
+            cylc broadcast "${CYLC_SUITE_NAME}" '--name=t1' '--set=script=true'
+        """
+        platform = {{ environ['CYLC_TEST_PLATFORM'] }}
     [[t1]]
         script = false

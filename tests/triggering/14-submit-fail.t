@@ -17,13 +17,11 @@
 #-------------------------------------------------------------------------------
 # Test submit-fail triggering
 . "$(dirname "$0")/test_header"
-skip_all "TODO not going to work until after the reimplimentation of remote init"
 set_test_number 2
 create_test_globalrc '
 [job platforms]
-[[idontexist]]
-remote hosts = idontexist
+    [[idontexist]]
+        remote hosts = idontexist
 '
-export CYLC_CONF_PATH
 reftest
 exit

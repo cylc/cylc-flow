@@ -18,14 +18,12 @@
 # Test job submission rundb task_jobs entry with garbage host command.
 . "$(dirname "$0")/test_header"
 
-skip_all "TODO: FIx after remote init fixed"
-
 set_test_number 3
 
 create_test_globalrc '
 [job platforms]
-[[badhost]]
-remote hosts = rubbish
+    [[badhost]]
+        remote hosts = rubbish
 '
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"

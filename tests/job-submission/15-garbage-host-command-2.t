@@ -17,14 +17,13 @@
 #-------------------------------------------------------------------------------
 # Test recovery of a failed host select command for a group of tasks.
 . "$(dirname "$0")/test_header"
-set_test_number 2
-
 skip_all "TODO replace this test with one checking that garbage-platform commands are handled ok"
+set_test_number 2
 
 create_test_globalrc "
 [job platforms]
-[[test platform]]
-remote hosts = $(my-host-select)
+    [[test platform]]
+        remote hosts = $(my-host-select)
 "
 
 install_suite "${TEST_NAME_BASE}"

@@ -17,7 +17,6 @@
 #-------------------------------------------------------------------------------
 # Test job submission, poll and kill with a garbage command.
 . "$(dirname "$0")/test_header"
-skip_all "TODO fix this after dealing with remote init"
 set_test_number 2
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 if [[ -n "${PYTHONPATH:-}" ]]; then
@@ -28,8 +27,8 @@ fi
 
 create_test_globalrc '
 [job platforms]
-[[bad]]
-remote hosts = bad
+    [[bad]]
+        remote hosts = bad
 '
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"

@@ -12,8 +12,8 @@
         platform = bad
     [[t2]]
         script = """
-grep -q -F \
-    '1/t1/01|[STDERR] [Errno 2] No such file or directory: '"'"'bad-bad-bad-submit'"'" \
-    "${CYLC_SUITE_LOG_DIR}/log"
-cylc shutdown "${CYLC_SUITE_NAME}"
-"""
+            grep -q -F \
+                'bad: initialisation did not complete' \
+                "${CYLC_SUITE_LOG_DIR}/log"
+            cylc shutdown "${CYLC_SUITE_NAME}"
+        """

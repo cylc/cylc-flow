@@ -21,7 +21,6 @@
 
 """
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.remote import remrun
 from cylc.flow.terminal import cli_function
 
 

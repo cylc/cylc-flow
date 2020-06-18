@@ -28,13 +28,11 @@ from subprocess import Popen, PIPE, DEVNULL
 import sys
 from time import sleep
 
-from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flow.flags
 from cylc.flow.hostuserutil import is_remote
 from cylc.flow import __version__ as CYLC_VERSION
-from cylc.flow.platform_lookup import forward_lookup
-from random import choice as randomchoice
+from cylc.flow.platforms import forward_lookup, get_host_from_platform
 
 
 def get_proc_ancestors():
@@ -150,7 +148,7 @@ def construct_platform_ssh_cmd(raw_cmd, platform, **kwargs):
     ret = construct_ssh_cmd(
         raw_cmd,
         user=platform['owner'],
-        host=randomchoice(platform['remote hosts']),
+        host=get_host_from_platform(platform),
         ssh_cmd=platform['ssh command'],
         ssh_cylc=platform['cylc executable'],
         ssh_login_shell=platform['use login shell'],

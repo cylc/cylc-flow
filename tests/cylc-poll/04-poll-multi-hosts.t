@@ -18,25 +18,24 @@
 # Test poll multiple jobs on localhost and a remote host
 export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
-set_test_remote_host
+require_remote_platform
 set_test_number 3
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate "${SUITE_NAME}" -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}"
+    cylc validate "${SUITE_NAME}"
 
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug --no-detach "${SUITE_NAME}" \
-    -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}"
+    cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
 
 RUN_DIR="$RUN_DIR/${SUITE_NAME}"
 LOG="${RUN_DIR}/log/suite/log"
 sed -n 's/^.*\(cylc jobs-poll\)/\1/p' "${LOG}" | sort -u >'edited-suite-log'
 
 sort >'edited-suite-log-ref' <<__LOG__
-cylc jobs-poll --debug --host=${CYLC_TEST_HOST} -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 1/remote-fail-1/01 1/remote-success-1/01 1/remote-success-2/01
-cylc jobs-poll --debug -- ${RUN_DIR}/log/job 1/local-fail-1/01 1/local-fail-2/01 1/local-success-1/01
+cylc jobs-poll --debug -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 1/remote-fail-1/01 1/remote-success-1/01 1/remote-success-2/01
+cylc jobs-poll --debug -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 1/local-fail-1/01 1/local-fail-2/01 1/local-success-1/01
 __LOG__
 cmp_ok 'edited-suite-log' 'edited-suite-log-ref'
 

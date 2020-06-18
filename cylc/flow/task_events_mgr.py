@@ -31,7 +31,6 @@ import os
 from shlex import quote
 import shlex
 from time import time
-from random import choice as randomchoice
 
 from cylc.flow.parsec.config import ItemNotFoundError
 
@@ -41,7 +40,7 @@ from cylc.flow.hostuserutil import get_host, get_user
 from cylc.flow.pathutil import (
     get_remote_suite_run_job_dir,
     get_suite_run_job_dir)
-from cylc.flow.platform_lookup import forward_lookup
+from cylc.flow.platforms import forward_lookup, get_host_from_platform
 from cylc.flow.subprocctx import SubProcContext
 from cylc.flow.task_action_timer import TaskActionTimer
 from cylc.flow.task_job_logs import (
@@ -844,7 +843,7 @@ class TaskEventsManager():
         id_key = (
             (self.HANDLER_JOB_LOGS_RETRIEVE, event),
             str(itask.point), itask.tdef.name, itask.submit_num)
-        host = randomchoice(itask.platform['remote hosts'])
+        host = get_host_from_platform(itask.platform)
         owner = itask.platform['owner']
         if owner:
             user_at_host = owner + "@" + host

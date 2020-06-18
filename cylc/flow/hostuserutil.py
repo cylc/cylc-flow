@@ -280,32 +280,3 @@ def is_remote_host(name):
 def is_remote_user(name):
     """Return True if name is not a name of the current user."""
     return HostUtil.get_inst().is_remote_user(name)
-
-
-def get_host_from_platform(platform, method=None):
-    """Placeholder for a more sophisticated function which returns a host
-    given an itask with a platform attribute
-
-    Args:
-        platform (dict):
-            A dict representing a platform.
-        method (str):
-            Name a function to use when selecting hosts from list provided
-            by platform.
-            If unset then `[platform][remote hosts][0]` will be returned
-
-    Returns:
-        hostname (str):
-
-    TODO:
-        Make methods other than None work:
-            - Random Selection
-            - Random Selection with check for host availability
-
-    """
-    if method is None:
-        return istask.platform['remote hosts'][0]
-    else:
-        raise NotImplementedError(
-            f'method {method} is not a valid input for get_host_from_platform'
-        )

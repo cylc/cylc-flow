@@ -54,6 +54,7 @@ messaging."""
 
 import sys
 from cylc.flow.remote import remrun, remote_cylc_cmd, watch_and_kill
+
 # Disallow remote re-invocation of edit mode (result: "ssh HOST vim <file>").
 if remrun(abort_if='edit', forward_x11=True):
     sys.exit(0)
@@ -61,6 +62,7 @@ if remrun(abort_if='edit', forward_x11=True):
 import os
 import shlex
 from contextlib import suppress
+from getpass import getuser
 from glob import glob
 from shlex import quote
 from stat import S_IRUSR
@@ -82,7 +84,7 @@ from cylc.flow.task_id import TaskID
 from cylc.flow.task_job_logs import (
     JOB_LOG_OUT, JOB_LOG_ERR, JOB_LOG_OPTS, NN, JOB_LOGS_LOCAL)
 from cylc.flow.terminal import cli_function
-from cylc.flow.platform_lookup import forward_lookup
+from cylc.flow.platforms import forward_lookup, get_host_from_platform
 
 
 # Immortal tail-follow processes on job hosts can be cleaned up by killing
@@ -422,7 +424,7 @@ def main(parser, options, *args, color=False):
                             and live_job_id is None)
         if log_is_remote and (not log_is_retrieved or options.force_remote):
             logpath = os.path.normpath(get_remote_suite_run_job_dir(
-                host, user,
+                platform,
                 suite_name, point, task, options.submit_num, options.filename))
             tail_tmpl = platform["tail command template"]
             # Reinvoke the cat-log command on the remote account.
@@ -436,6 +438,8 @@ def main(parser, options, *args, color=False):
             cmd.append(suite_name)
             is_edit_mode = (mode == 'edit')
             try:
+                host = get_host_from_platform(platform)
+                user = getuser()
                 proc = remote_cylc_cmd(
                     cmd, user, host, capture_process=is_edit_mode,
                     manage=(mode == 'tail'))

@@ -5,24 +5,23 @@
 [scheduling]
     [[graph]]
         R1 = """
-foo:fail => bar
-foo & bar => baz
-"""
+            foo:fail => bar
+            foo & bar => baz
+        """
 
 [runtime]
     [[foo]]
         script = """
-echo "${CYLC_TASK_SUBMIT_NUMBER}" >>"${CYLC_SUITE_RUN_DIR}/foo-submits.txt"
-# bash 4.2.0 bug: ((VAR == VAL)) does not trigger 'set -e':
-test "${CYLC_TASK_SUBMIT_NUMBER}" -gt "${CYLC_TASK_TRY_NUMBER}"
-"""
+            echo "${CYLC_TASK_SUBMIT_NUMBER}" \
+                >>"${CYLC_SUITE_RUN_DIR}/foo-submits.txt"
+            # bash 4.2.0 bug: ((VAR == VAL)) does not trigger 'set -e':
+            test "${CYLC_TASK_SUBMIT_NUMBER}" -gt "${CYLC_TASK_TRY_NUMBER}"
+        """
         [[[job]]]
             execution retry delays=2*PT0S
     [[bar]]
-        script = """
-cylc trigger "${CYLC_SUITE_NAME}" foo 1
-"""
+        script = cylc trigger "${CYLC_SUITE_NAME}" foo 1
     [[baz]]
         script = """
-printf "%d\n" {1..4} | cmp - "${CYLC_SUITE_RUN_DIR}/foo-submits.txt"
-"""
+            printf "%d\n" {1..4} | cmp - "${CYLC_SUITE_RUN_DIR}/foo-submits.txt"
+        """

@@ -7,7 +7,7 @@
 
     description = """
 Task host is determined by a script in the suite bin directory; for this
-test suite it just returns the value of $CYLC_TEST_HOST as used
+test suite it just returns the value of $CYLC_REMOTE_PLATFORM as used
 by many of the other test suites (see "cylc test-battery --help")."""
 
 [scheduling]
@@ -19,9 +19,7 @@ by many of the other test suites (see "cylc test-battery --help")."""
     [[foo1, foo2, foo3]]
         [[[remote]]]
             # in suite bin directory:
-            host = $(host-select.sh) # returns value of $CYLC_TEST_HOST
+            host = $(host-select.sh) # returns value of $CYLC_REMOTE_PLATFORM
             owner = {{ OWNER }}
     [[bar]]
-        [[[remote]]]
-            host = $CYLC_TEST_HOST
-            owner = {{ OWNER }}
+        platform = $CYLC_TEST_PLATFORM

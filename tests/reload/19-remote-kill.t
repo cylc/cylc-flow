@@ -18,15 +18,15 @@
 # Test reload then kill remote running task.
 export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
-set_test_remote_host
+require_remote_platform
 set_test_number 3
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate --set="CYLC_TEST_HOST=${CYLC_TEST_HOST}" "${SUITE_NAME}"
+    cylc validate --set="CYLC_REMOTE_PLATFORM=${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
 suite_run_fail "${TEST_NAME_BASE}-run" \
     cylc run --debug --no-detach --reference-test \
-    --set="CYLC_TEST_HOST=${CYLC_TEST_HOST}" \
+    --set="CYLC_REMOTE_PLATFORM=${CYLC_REMOTE_PLATFORM}" \
      "${SUITE_NAME}"
 sqlite3 "${SUITE_RUN_DIR}/.service/db" \
     'SELECT cycle,name,run_status FROM task_jobs' >'db.out'
@@ -35,6 +35,6 @@ cmp_ok 'db.out' <<'__OUT__'
 1|bar|0
 __OUT__
 
-purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
+purge_suite_remote "${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

@@ -17,10 +17,10 @@
 #-------------------------------------------------------------------------------
 . "$(dirname "$0")/test_header"
 CYLC_TEST_HOST2="$( \
-    cylc get-global-config -i '[test battery]remote host with shared fs' \
+    cylc get-global-config -i '[test battery]remote platform with shared fs' \
     2>'/dev/null')"
 if [[ -z "${CYLC_TEST_HOST2}" ]]; then
-    skip_all '"[test battery]remote host with shared fs": not defined'
+    skip_all '"[test battery]remote platform with shared fs": not defined'
 fi
 export CYLC_TEST_HOST2
 export CYLC_TEST_HOST1="${HOSTNAME}"

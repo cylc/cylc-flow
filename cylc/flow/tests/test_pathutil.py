@@ -19,7 +19,7 @@ from unittest import TestCase
 from unittest.mock import call, patch, MagicMock
 import pytest
 import os
-import cylc.flow.platform_lookup
+import cylc.flow.platforms
 from cylc.flow.pathutil import (
     get_remote_suite_run_dir,
     get_remote_suite_run_job_dir,
@@ -40,7 +40,7 @@ from cylc.flow.pathutil import (
 # TODO - parameterize for all local methods
 def test_get_suite_run_dir(monkeypatch):
     monkeypatch.setattr(
-        cylc.flow.platform_lookup,
+        cylc.flow.platforms,
         "forward_lookup", lambda: {'run directory': '$HOME/cylc-run'}
     )
     homedir = os.getenv("HOME")

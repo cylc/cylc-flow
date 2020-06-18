@@ -19,10 +19,10 @@
 # two servers by condemning them in turn in order to see if anything breaks
 . "$(dirname "$0")/test_header"
 CLOWNS="$( \
-    cylc get-global-config -i '[test battery]remote host with shared fs' \
+    cylc get-global-config -i '[test battery]remote platform with shared fs' \
     2>'/dev/null')"
 if [[ -z "${CLOWNS}" ]]; then
-    skip_all '"[test battery]remote host with shared fs": not defined'
+    skip_all '"[test battery]remote platform with shared fs": not defined'
 fi
 export CLOWNS
 export JOKERS="${HOSTNAME}"

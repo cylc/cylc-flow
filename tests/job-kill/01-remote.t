@@ -19,7 +19,7 @@
 export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_remote_host
+require_remote_platform
 set_test_number 3
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
@@ -34,6 +34,6 @@ run_fail "${TEST_NAME}" \
     ssh -oBatchMode=yes -oConnectTimeout=5 -n "${CYLC_TEST_HOST}" \
     "bash -c 'ps \$(cat cylc-run/${SUITE_NAME}/work/*/t*/file)'"
 #-------------------------------------------------------------------------------
-purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
+purge_suite_remote "${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

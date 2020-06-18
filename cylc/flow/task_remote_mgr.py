@@ -28,7 +28,6 @@ import re
 from subprocess import Popen, PIPE, DEVNULL
 import tarfile
 from time import time
-from random import choice as randchoice
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import TaskRemoteMgmtError
@@ -47,7 +46,7 @@ from cylc.flow.suite_files import (
     get_contact_file)
 from cylc.flow.task_remote_cmd import (
     FILE_BASE_UUID, REMOTE_INIT_DONE, REMOTE_INIT_NOT_REQUIRED)
-from cylc.flow.platform_lookup import forward_lookup
+from cylc.flow.platforms import forward_lookup, get_host_from_platform
 from cylc.flow.remote import construct_platform_ssh_cmd
 
 
@@ -180,7 +179,7 @@ class TaskRemoteMgr(object):
         # TODO pick a more elegant host picking method
         # Additionally these lines should probably become deprecated as this
         # function should not need to have this information exposed.
-        host = randchoice(platform['remote hosts'])
+        host = get_host_from_platform(platform)
         owner = platform['owner']
 
         # Get a list of files and folders to install;
@@ -247,7 +246,7 @@ class TaskRemoteMgr(object):
         procs = {}
         for platform, init_with_contact in self.remote_init_map.items():
             platform = forward_lookup(platform)
-            host = randchoice(platform['remote hosts'])
+            host = get_host_from_platform(platform)
             owner = platform['owner']
             if init_with_contact != REMOTE_INIT_DONE:
                 continue

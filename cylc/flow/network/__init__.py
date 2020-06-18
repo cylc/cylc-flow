@@ -18,7 +18,6 @@
 import asyncio
 import getpass
 import json
-import os
 from threading import Thread
 from time import sleep
 
@@ -39,7 +38,6 @@ from cylc.flow.suite_files import (
     KeyOwner,
     KeyInfo,
     load_contact_file,
-    SuiteFiles,
     get_suite_srv_dir
 )
 

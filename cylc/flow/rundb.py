@@ -23,7 +23,7 @@ from os.path import expandvars
 from cylc.flow import LOG
 import cylc.flow.flags
 from cylc.flow.wallclock import get_current_time_string
-from cylc.flow.platform_lookup import reverse_lookup
+from cylc.flow.platforms import reverse_lookup
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 
 
