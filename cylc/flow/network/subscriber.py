@@ -18,7 +18,6 @@
 import asyncio
 import json
 import sys
-from time import sleep
 from typing import Iterable, Union
 
 import zmq
@@ -109,4 +108,3 @@ class WorkflowSubscriber(ZMQSocketBase):
                 data = json.loads(msg)
                 sys.stdout.write(
                     json.dumps(data, indent=4) + '\n')
-        sleep(0)

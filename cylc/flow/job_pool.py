@@ -66,19 +66,19 @@ class JobPool:
         self.pool = {}
         self.task_jobs = {}
         self.deltas = JDeltas()
-        self.updates = {}
+        self.added = {}
+        self.updated = {}
         self.updates_pending = False
 
     def insert_job(self, job_conf):
         """Insert job into pool."""
-        update_time = time()
         job_owner = job_conf['owner']
         sub_num = job_conf['submit_num']
         name, point_string = TaskID.split(job_conf['task_id'])
         t_id = f'{self.workflow_id}{ID_DELIM}{point_string}{ID_DELIM}{name}'
         j_id = f'{t_id}{ID_DELIM}{sub_num}'
         j_buf = PbJob(
-            stamp=f'{j_id}@{update_time}',
+            stamp=f'{j_id}@{time()}',
             id=j_id,
             submit_num=sub_num,
             state=JOB_STATUSES_ALL[0],
@@ -119,7 +119,7 @@ class JobPool:
             self.schd.suite, point_string, name, sub_num)
         j_buf.extra_logs.extend(job_conf['logfiles'])
 
-        self.updates[j_id] = j_buf
+        self.added[j_id] = j_buf
         self.task_jobs.setdefault(t_id, set()).add(j_id)
         self.updates_pending = True
 
@@ -143,9 +143,8 @@ class JobPool:
                     j_host = user_at_host
             else:
                 j_host = self.schd.host
-            update_time = time()
             j_buf = PbJob(
-                stamp=f'{j_id}@{update_time}',
+                stamp=f'{j_id}@{time()}',
                 id=j_id,
                 submit_num=submit_num,
                 state=status,
@@ -182,27 +181,28 @@ class JobPool:
         except Exception:
             LOG.exception('could not load job %s' % j_id)
         else:
-            self.updates[j_id] = j_buf
+            self.added[j_id] = j_buf
             self.task_jobs.setdefault(t_id, set()).add(j_id)
             self.updates_pending = True
 
     def add_job_msg(self, job_d, msg):
         """Add message to job."""
-        update_time = time()
         point, name, sub_num = self.parse_job_item(job_d)
         j_id = (
             f'{self.workflow_id}{ID_DELIM}{point}'
             f'{ID_DELIM}{name}{ID_DELIM}{sub_num}')
-        j_delta = PbJob(stamp=f'{j_id}@{update_time}')
-        j_delta.messages.append(msg)
-        self.updates.setdefault(j_id, PbJob(id=j_id)).MergeFrom(j_delta)
-        self.updates_pending = True
+        # Check job existence before setting update (i.e orphan/simulation)
+        if j_id in self.pool or j_id in self.added:
+            j_delta = PbJob(stamp=f'{j_id}@{time()}')
+            j_delta.messages.append(msg)
+            self.updated.setdefault(j_id, PbJob(id=j_id)).MergeFrom(j_delta)
+            self.updates_pending = True
 
     def reload_deltas(self):
         """Gather all current jobs as deltas after reload."""
-        self.updates = deepcopy(self.pool)
+        self.added = deepcopy(self.pool)
         self.pool = {}
-        if self.updates:
+        if self.added:
             self.updates_pending = True
 
     def remove_job(self, job_d):
@@ -231,29 +231,31 @@ class JobPool:
 
     def set_job_attr(self, job_d, attr_key, attr_val):
         """Set job attribute."""
-        update_time = time()
         point, name, sub_num = self.parse_job_item(job_d)
         j_id = (
             f'{self.workflow_id}{ID_DELIM}{point}'
             f'{ID_DELIM}{name}{ID_DELIM}{sub_num}')
-        j_delta = PbJob(stamp=f'{j_id}@{update_time}')
-        setattr(j_delta, attr_key, attr_val)
-        self.updates.setdefault(j_id, PbJob(id=j_id)).MergeFrom(j_delta)
-        self.updates_pending = True
+        if j_id in self.pool or j_id in self.added:
+            j_delta = PbJob(stamp=f'{j_id}@{time()}')
+            setattr(j_delta, attr_key, attr_val)
+            self.updated.setdefault(j_id, PbJob(id=j_id)).MergeFrom(j_delta)
+            self.updates_pending = True
 
     def set_job_state(self, job_d, status):
         """Set job state."""
-        update_time = time()
         point, name, sub_num = self.parse_job_item(job_d)
         j_id = (
             f'{self.workflow_id}{ID_DELIM}{point}'
             f'{ID_DELIM}{name}{ID_DELIM}{sub_num}')
-        if status in JOB_STATUS_SET:
+        if (
+                status in JOB_STATUS_SET and
+                (j_id in self.pool or j_id in self.added)
+        ):
             j_delta = PbJob(
-                stamp=f'{j_id}@{update_time}',
+                stamp=f'{j_id}@{time()}',
                 state=status
             )
-            self.updates.setdefault(
+            self.updated.setdefault(
                 j_id, PbJob(id=j_id)).MergeFrom(j_delta)
             self.updates_pending = True
 
@@ -262,16 +264,16 @@ class JobPool:
 
         Set values of both event_key + '_time' and event_key + '_time_string'.
         """
-        update_time = time()
         point, name, sub_num = self.parse_job_item(job_d)
         j_id = (
             f'{self.workflow_id}{ID_DELIM}{point}'
             f'{ID_DELIM}{name}{ID_DELIM}{sub_num}')
-        j_delta = PbJob(stamp=f'{j_id}@{update_time}')
-        time_attr = f'{event_key}_time'
-        setattr(j_delta, time_attr, time_str)
-        self.updates.setdefault(j_id, PbJob(id=j_id)).MergeFrom(j_delta)
-        self.updates_pending = True
+        if j_id in self.pool or j_id in self.added:
+            j_delta = PbJob(stamp=f'{j_id}@{time()}')
+            time_attr = f'{event_key}_time'
+            setattr(j_delta, time_attr, time_str)
+            self.updated.setdefault(j_id, PbJob(id=j_id)).MergeFrom(j_delta)
+            self.updates_pending = True
 
     @staticmethod
     def parse_job_item(item):

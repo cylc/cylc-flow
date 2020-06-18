@@ -79,7 +79,7 @@ class TestWorkflowPublisher(CylcWorkflowTestCase):
                 stopcp=None,
                 check_point=True
             )
-            assert 0 == warnings
+            assert warnings == 0
         self.task_pool.release_runahead_tasks()
         self.scheduler.data_store_mgr.initiate_data_model()
         self.workflow_id = self.scheduler.data_store_mgr.workflow_id
@@ -110,7 +110,7 @@ class TestWorkflowPublisher(CylcWorkflowTestCase):
             subscriber.socket.recv_multipart())
         delta = DELTAS_MAP[btopic.decode('utf-8')]()
         delta.ParseFromString(msg)
-        self.assertEqual(delta.id, self.workflow_id)
+        self.assertEqual(delta.added.id, self.workflow_id)
         subscriber.stop()
         with self.assertLogs(LOG, level='ERROR') as cm:
             asyncio.run(

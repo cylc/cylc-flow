@@ -16,16 +16,29 @@
 
 """GraphQL resolvers for use in data accessing and mutation of workflows."""
 
+import asyncio
 from fnmatch import fnmatchcase
 from getpass import getuser
+import logging
 from operator import attrgetter
+import queue
+from time import time
+from uuid import uuid4
+
 from graphene.utils.str_converters import to_snake_case
 
 from cylc.flow import ID_DELIM
 from cylc.flow.data_store_mgr import (
-    EDGES, FAMILY_PROXIES, TASK_PROXIES, WORKFLOW
+    EDGES, FAMILY_PROXIES, TASK_PROXIES, WORKFLOW,
+    DELTA_ADDED, create_delta_store
 )
-from cylc.flow.network.schema import NodesEdges, PROXY_NODES
+from cylc.flow.network.schema import (
+    NodesEdges, PROXY_NODES, SUB_RESOLVERS, parse_node_id
+)
+
+logger = logging.getLogger(__name__)
+
+DELTA_SLEEP_INTERVAL = 0.5
 
 
 # Message Filters
@@ -53,9 +66,10 @@ def workflow_ids_filter(w_atts, items):
     return False
 
 
-def workflow_filter(flow, args):
+def workflow_filter(flow, args, w_atts=None):
     """Filter workflows based on attribute arguments"""
-    w_atts = collate_workflow_atts(flow[WORKFLOW])
+    if w_atts is None:
+        w_atts = collate_workflow_atts(flow[WORKFLOW])
     # The w_atts (workflow attributes) list contains ordered workflow values
     # or defaults (see collate function for index item).
     return ((not args.get('workflows') or
@@ -101,9 +115,14 @@ def node_ids_filter(n_atts, items):
     return False
 
 
-def node_filter(node, args):
+def node_filter(node, node_type, args):
     """Filter nodes based on attribute arguments"""
-    n_atts = collate_node_atts(node)
+    # Updated delta nodes don't contain name but still need filter
+    if not node.name:
+        n_atts = list(parse_node_id(node.id, node_type))
+        n_atts[3] = [n_atts[3]]
+    else:
+        n_atts = collate_node_atts(node)
     # The n_atts (node attributes) list contains ordered node values
     # or defaults (see collate function for index item).
     return (
@@ -162,16 +181,35 @@ def sort_elements(elements, args):
 class BaseResolvers:
     """Data access methods for resolving GraphQL queries."""
 
-    def __init__(self, data):
-        self.data = data
+    def __init__(self, data_store_mgr):
+        self.data_store_mgr = data_store_mgr
+        self.delta_store = {}
 
     # Query resolvers
+    async def get_workflow_by_id(self, args):
+        """Return a workflow store by ID."""
+        try:
+            if 'sub_id' in args and args['delta_store']:
+                return self.delta_store[args['sub_id']][args['id']][
+                    args['delta_type']][WORKFLOW]
+            return self.data_store_mgr.data[args['id']][WORKFLOW]
+        except KeyError:
+            return None
+
     async def get_workflows_data(self, args):
         """Return list of data from workflows."""
+        # Both cases just as common so 'if' not 'try'
+        if 'sub_id' in args and args['delta_store']:
+            return [
+                delta[args['delta_type']]
+                for key, delta in self.delta_store[args['sub_id']].items()
+                if workflow_filter(self.data_store_mgr.data[key], args)
+            ]
         return [
             flow
-            for flow in self.data.values()
-            if workflow_filter(flow, args)]
+            for flow in self.data_store_mgr.data.values()
+            if workflow_filter(flow, args)
+        ]
 
     async def get_workflows(self, args):
         """Return workflow elements."""
@@ -187,22 +225,33 @@ class BaseResolvers:
             [n
              for flow in await self.get_workflows_data(args)
              for n in flow.get(node_type).values()
-             if node_filter(n, args)],
+             if node_filter(n, node_type, args)],
             args)
 
     async def get_nodes_by_ids(self, node_type, args):
         """Return protobuf node objects for given id."""
         nat_ids = set(args.get('native_ids', []))
+        # Both cases just as common so 'if' not 'try'
+        if 'sub_id' in args and args['delta_store']:
+            flow_data = [
+                delta[args['delta_type']]
+                for delta in get_flow_data_from_ids(
+                    self.delta_store[args['sub_id']], nat_ids)
+            ]
+        else:
+            flow_data = get_flow_data_from_ids(
+                self.data_store_mgr.data, nat_ids)
+
         if node_type == PROXY_NODES:
             node_types = [TASK_PROXIES, FAMILY_PROXIES]
         else:
             node_types = [node_type]
         return sort_elements(
             [node
-             for flow in get_flow_data_from_ids(self.data, nat_ids)
+             for flow in flow_data
              for node_type in node_types
              for node in get_data_elements(flow, nat_ids, node_type)
-             if node_filter(node, args)],
+             if node_filter(node, node_type, args)],
             args)
 
     async def get_node_by_id(self, node_type, args):
@@ -210,8 +259,14 @@ class BaseResolvers:
         n_id = args.get('id')
         o_name, w_name, _ = n_id.split(ID_DELIM, 2)
         w_id = f'{o_name}{ID_DELIM}{w_name}'
-        flow = self.data.get(w_id)
-        if not flow:
+        # Both cases just as common so 'if' not 'try'
+        try:
+            if 'sub_id' in args and args.get('delta_store'):
+                flow = self.delta_store[
+                    args['sub_id']][w_id][args['delta_type']]
+            else:
+                flow = self.data_store_mgr.data[w_id]
+        except KeyError:
             return None
         if node_type == PROXY_NODES:
             return (
@@ -230,11 +285,20 @@ class BaseResolvers:
 
     async def get_edges_by_ids(self, args):
         """Return protobuf edge objects for given id."""
-        # TODO: Filter by given native ids.
         nat_ids = set(args.get('native_ids', []))
+        if 'sub_id' in args and args['delta_store']:
+            flow_data = [
+                delta[args['delta_type']]
+                for delta in get_flow_data_from_ids(
+                    self.delta_store[args['sub_id']], nat_ids)
+            ]
+        else:
+            flow_data = get_flow_data_from_ids(
+                self.data_store_mgr.data, nat_ids)
+
         return sort_elements(
             [edge
-             for flow in get_flow_data_from_ids(self.data, nat_ids)
+             for flow in flow_data
              for edge in get_data_elements(flow, nat_ids, EDGES)],
             args)
 
@@ -258,7 +322,8 @@ class BaseResolvers:
             edge_ids.update(new_edge_ids)
             new_edges = [
                 edge
-                for flow in get_flow_data_from_ids(self.data, new_edge_ids)
+                for flow in get_flow_data_from_ids(
+                    self.data_store_mgr.data, new_edge_ids)
                 for edge in get_data_elements(flow, new_edge_ids, EDGES)
             ]
             edges += new_edges
@@ -273,7 +338,8 @@ class BaseResolvers:
             node_ids.update(new_node_ids)
             new_nodes = [
                 node
-                for flow in get_flow_data_from_ids(self.data, new_node_ids)
+                for flow in get_flow_data_from_ids(
+                    self.data_store_mgr.data, new_node_ids)
                 for node in get_data_elements(flow, new_node_ids, TASK_PROXIES)
             ]
             nodes += new_nodes
@@ -281,6 +347,89 @@ class BaseResolvers:
         return NodesEdges(
             nodes=sort_elements(nodes, args),
             edges=sort_elements(edges, args))
+
+    async def subscribe_delta(self, root, info, args):
+        """Delta subscription async generator.
+
+        Async generator mapping the incomming protobuf deltas to
+        yielded GraphQL subscription objects.
+
+        """
+        workflow_ids = set(args.get('workflows', args.get('ids', ())))
+        sub_id = uuid4()
+        info.context['sub_id'] = sub_id
+        self.delta_store[sub_id] = {}
+        delta_queues = self.data_store_mgr.delta_queues
+        deltas_queue = queue.Queue()
+        try:
+            # Iterate over the queue yielding deltas
+            w_ids = workflow_ids
+            sub_resolver = SUB_RESOLVERS.get(to_snake_case(info.field_name))
+            interval = args['ignore_interval']
+            old_time = time()
+            while True:
+                if not workflow_ids:
+                    old_ids = w_ids
+                    w_ids = set(delta_queues.keys())
+                    for remove_id in old_ids.difference(w_ids):
+                        if remove_id in self.delta_store[sub_id]:
+                            del self.delta_store[sub_id][remove_id]
+                            if sub_resolver is None:
+                                yield create_delta_store(workflow_id=remove_id)
+                            else:
+                                yield await sub_resolver(root, info, **args)
+                for w_id in w_ids:
+                    if w_id in self.data_store_mgr.data:
+                        if sub_id not in delta_queues[w_id]:
+                            delta_queues[w_id][sub_id] = deltas_queue
+                            # On new yield workflow data-store as added delta
+                            if args.get('initial_burst'):
+                                delta_store = create_delta_store(
+                                    workflow_id=w_id)
+                                delta_store[DELTA_ADDED] = (
+                                    self.data_store_mgr.data[w_id])
+                                self.delta_store[sub_id][w_id] = delta_store
+                                if sub_resolver is None:
+                                    yield delta_store
+                                else:
+                                    result = await sub_resolver(
+                                        root, info, **args)
+                                    if result:
+                                        yield result
+                    elif w_id in self.delta_store[sub_id]:
+                        del self.delta_store[sub_id][w_id]
+                try:
+                    w_id, topic, delta_store = deltas_queue.get(False)
+                    if topic != 'shutdown':
+                        new_time = time()
+                        elapsed = new_time - old_time
+                        # ignore deltas that are more frequent than interval.
+                        if elapsed <= interval:
+                            continue
+                        old_time = new_time
+                    else:
+                        delta_store['shutdown'] = True
+                    self.delta_store[sub_id][w_id] = delta_store
+                    if sub_resolver is None:
+                        yield delta_store
+                    else:
+                        result = await sub_resolver(root, info, **args)
+                        if result:
+                            yield result
+                except queue.Empty:
+                    await asyncio.sleep(DELTA_SLEEP_INTERVAL)
+        except (GeneratorExit, asyncio.CancelledError):
+            raise
+        except Exception:
+            import traceback
+            logger.warn(traceback.format_exc())
+        finally:
+            for w_id in w_ids:
+                if delta_queues.get(w_id, {}).get(sub_id):
+                    del delta_queues[w_id][sub_id]
+            if sub_id in self.delta_store:
+                del self.delta_store[sub_id]
+            yield None
 
 
 class Resolvers(BaseResolvers):

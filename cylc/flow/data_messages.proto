@@ -84,6 +84,7 @@ message PbWorkflow {
     repeated string family_proxies = 29;
     optional string status_msg = 30;
     optional int32 is_held_total = 31;
+    repeated string jobs = 32;
 }
 
 message PbJob {
@@ -238,47 +239,70 @@ message PbEntireWorkflow {
 message EDeltas {
     optional double time = 1;
     optional int64 checksum = 2;
-    repeated string pruned = 3;
-    repeated PbEdge deltas = 4;
-    optional bool reloaded = 5;
+    repeated PbEdge added = 3;
+    repeated PbEdge updated = 4;
+    repeated string pruned = 5;
+    optional bool reloaded = 6;
 }
 
 message FDeltas {
     optional double time = 1;
     optional int64 checksum = 2;
-    repeated string pruned = 3;
-    repeated PbFamily deltas = 4;
-    optional bool reloaded = 5;
+    repeated PbFamily added = 3;
+    repeated PbFamily updated = 4;
+    repeated string pruned = 5;
+    optional bool reloaded = 6;
 }
 
 message FPDeltas {
     optional double time = 1;
     optional int64 checksum = 2;
-    repeated string pruned = 3;
-    repeated PbFamilyProxy deltas = 4;
-    optional bool reloaded = 5;
+    repeated PbFamilyProxy added = 3;
+    repeated PbFamilyProxy updated = 4;
+    repeated string pruned = 5;
+    optional bool reloaded = 6;
 }
 
 message JDeltas {
     optional double time = 1;
     optional int64 checksum = 2;
-    repeated string pruned = 3;
-    repeated PbJob deltas = 4;
-    optional bool reloaded = 5;
+    repeated PbJob added = 3;
+    repeated PbJob updated = 4;
+    repeated string pruned = 5;
+    optional bool reloaded = 6;
 }
 
 message TDeltas {
     optional double time = 1;
     optional int64 checksum = 2;
-    repeated string pruned = 3;
-    repeated PbTask deltas = 4;
-    optional bool reloaded = 5;
+    repeated PbTask added = 3;
+    repeated PbTask updated = 4;
+    repeated string pruned = 5;
+    optional bool reloaded = 6;
 }
 
 message TPDeltas {
     optional double time = 1;
     optional int64 checksum = 2;
-    repeated string pruned = 3;
-    repeated PbTaskProxy deltas = 4;
-    optional bool reloaded = 5;
+    repeated PbTaskProxy added = 3;
+    repeated PbTaskProxy updated = 4;
+    repeated string pruned = 5;
+    optional bool reloaded = 6;
+}
+
+message WDeltas {
+    optional double time = 1;
+    optional PbWorkflow added = 2;
+    optional PbWorkflow updated = 3;
+    optional bool reloaded = 4;
+}
+
+message AllDeltas {
+    FDeltas families = 1;
+    FPDeltas family_proxies = 2;
+    JDeltas jobs = 3;
+    TDeltas tasks = 4;
+    TPDeltas task_proxies = 5;
+    EDeltas edges = 6;
+    WDeltas workflow = 7;
 }

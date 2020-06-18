@@ -27,6 +27,9 @@ from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.network import encode_, decode_, ZMQSocketBase
 from cylc.flow.network.authorisation import Priv, authorise
+from cylc.flow.network.graphql import (
+    CylcGraphQLBackend, IgnoreFieldMiddleware, instantiate_middleware
+)
 from cylc.flow.network.resolvers import Resolvers
 from cylc.flow.network.schema import schema
 from cylc.flow.suite_status import (
@@ -140,8 +143,12 @@ class SuiteRuntimeServer(ZMQSocketBase):
         self.endpoints = None
         self.queue = None
         self.resolvers = Resolvers(
-            self.schd.data_store_mgr.data,
-            schd=self.schd)
+            self.schd.data_store_mgr,
+            schd=self.schd
+        )
+        self.middleware = [
+            IgnoreFieldMiddleware,
+        ]
 
     def _socket_options(self):
         """Set socket options.
@@ -346,11 +353,14 @@ class SuiteRuntimeServer(ZMQSocketBase):
         try:
             executed = schema.execute(
                 request_string,
-                variables=variables,
+                variable_values=variables,
                 context={
                     'resolvers': self.resolvers,
                 },
+                backend=CylcGraphQLBackend(),
+                middleware=list(instantiate_middleware(self.middleware)),
                 executor=AsyncioExecutor(),
+                validate=True,  # validate schema (dev only? default is True)
                 return_promise=False,
             )
         except Exception as exc:

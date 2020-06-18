@@ -77,7 +77,7 @@ class TestSuiteRuntimeServer(CylcWorkflowTestCase):
                 stopcp=None,
                 check_point=True
             )
-            assert 0 == warnings
+            assert warnings == 0
         self.task_pool.release_runahead_tasks()
         self.scheduler.data_store_mgr.initiate_data_model()
         self.workflow_id = self.scheduler.data_store_mgr.workflow_id
@@ -129,7 +129,7 @@ query {{
         element_type = 'workflow'
         data = PB_METHOD_MAP['pb_data_elements'][element_type]()
         data.ParseFromString(self.server.pb_data_elements(element_type))
-        self.assertEqual(data.id, self.workflow_id)
+        self.assertEqual(data.added.id, self.workflow_id)
 
     def test_pb_entire_workflow(self):
         """Test Protobuf entire workflow endpoint method."""

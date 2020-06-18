@@ -107,15 +107,15 @@ class TestDataStoreMgr(CylcWorkflowTestCase):
     def test_get_data_elements(self):
         """Test method that returns data elements by specified type."""
         flow_msg = self.data_store_mgr.get_data_elements(TASK_PROXIES)
-        self.assertEqual(0, len(flow_msg.deltas))
+        self.assertEqual(0, len(flow_msg.added))
         self.data_store_mgr.initiate_data_model()
         flow_msg = self.data_store_mgr.get_data_elements(TASK_PROXIES)
         self.assertEqual(
-            len(flow_msg.deltas),
+            len(flow_msg.added),
             len(self.data[TASK_PROXIES]))
         flow_msg = self.data_store_mgr.get_data_elements(WORKFLOW)
         self.assertEqual(
-            flow_msg.last_updated, self.data[WORKFLOW].last_updated)
+            flow_msg.added.last_updated, self.data[WORKFLOW].last_updated)
         none_msg = self.data_store_mgr.get_data_elements('fraggle')
         self.assertEqual(0, len(none_msg.ListFields()))
 

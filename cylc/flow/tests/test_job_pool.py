@@ -97,33 +97,33 @@ class TestJobPool(CylcWorkflowTestCase):
 
     def test_insert_job(self):
         """Test method that adds a new job to the pool."""
-        self.assertEqual(0, len(self.job_pool.updates))
+        self.assertEqual(0, len(self.job_pool.added))
         self.job_pool.insert_job(self.job_conf)
-        self.assertEqual(1, len(self.job_pool.updates))
-        self.assertTrue(self.ext_id in self.job_pool.updates)
+        self.assertEqual(1, len(self.job_pool.added))
+        self.assertTrue(self.ext_id in self.job_pool.added)
 
     def test_insert_db_job(self):
         """Test method that adds a new job to the pool."""
-        self.assertEqual(0, len(self.job_pool.updates))
+        self.assertEqual(0, len(self.job_pool.added))
         self.job_pool.insert_db_job(0, JOB_DB_ROW)
-        self.assertEqual(1, len(self.job_pool.updates))
-        self.assertTrue(self.ext_id in self.job_pool.updates)
+        self.assertEqual(1, len(self.job_pool.added))
+        self.assertTrue(self.ext_id in self.job_pool.added)
 
     def test_add_job_msg(self):
         """Test method adding messages to job element."""
         self.job_pool.insert_job(self.job_conf)
-        job = self.job_pool.updates[self.ext_id]
-        old_stamp = copy(job.stamp)
-        self.assertEqual(0, len(job.messages))
+        job_added = self.job_pool.added[self.ext_id]
+        self.assertEqual(0, len(job_added.messages))
         self.job_pool.add_job_msg(self.int_id, 'The Atomic Age')
-        self.assertNotEqual(old_stamp, job.stamp)
-        self.assertEqual(1, len(job.messages))
+        job_updated = self.job_pool.updated[self.ext_id]
+        self.assertNotEqual(job_added.stamp, job_updated.stamp)
+        self.assertEqual(1, len(job_updated.messages))
 
     def test_reload_deltas(self):
         """Test method reinstatiating job pool on reload"""
         self.assertFalse(self.job_pool.updates_pending)
         self.job_pool.insert_job(self.job_conf)
-        self.job_pool.pool = {e.id: e for e in self.job_pool.updates.values()}
+        self.job_pool.pool = {e.id: e for e in self.job_pool.added.values()}
         self.job_pool.reload_deltas()
         self.assertTrue(self.job_pool.updates_pending)
 
@@ -144,38 +144,40 @@ class TestJobPool(CylcWorkflowTestCase):
         self.assertEqual(0, len(pruned))
         self.job_pool.remove_task_jobs('NotTaskID')
         self.assertEqual(0, len(pruned))
-        task_id = self.job_pool.updates[self.ext_id].task_proxy
+        task_id = self.job_pool.added[self.ext_id].task_proxy
         self.job_pool.remove_task_jobs(task_id)
         self.assertEqual(1, len(pruned))
 
     def test_set_job_attr(self):
         """Test method setting job attribute value."""
         self.job_pool.insert_job(self.job_conf)
-        job = self.job_pool.updates[self.ext_id]
-        old_exit_script = copy(job.exit_script)
-        self.assertEqual(old_exit_script, job.exit_script)
+        job_added = self.job_pool.added[self.ext_id]
         self.job_pool.set_job_attr(self.int_id, 'exit_script', 'rm -v *')
-        self.assertNotEqual(old_exit_script, job.exit_script)
+        self.assertNotEqual(
+            job_added.exit_script,
+            self.job_pool.updated[self.ext_id].exit_script)
 
     def test_set_job_state(self):
         """Test method setting the job state."""
         self.job_pool.insert_job(self.job_conf)
-        job = self.job_pool.updates[self.ext_id]
-        old_state = copy(job.state)
-        self.job_pool.set_job_state(self.int_id, 'waiting')
-        self.assertEqual(old_state, job.state)
+        job_added = self.job_pool.added[self.ext_id]
+        self.job_pool.set_job_state(self.int_id, JOB_STATUSES_ALL[1])
+        job_updated = self.job_pool.updated[self.ext_id]
+        state_two = copy(job_updated.state)
+        self.assertNotEqual(job_added.state, state_two)
         self.job_pool.set_job_state(self.int_id, JOB_STATUSES_ALL[-1])
-        self.assertNotEqual(old_state, job.state)
+        self.assertNotEqual(state_two, job_updated.state)
 
     def test_set_job_time(self):
         """Test method setting event time."""
         event_time = get_current_time_string()
         self.job_pool.insert_job(self.job_conf)
-        job = self.job_pool.updates[self.ext_id]
-        old_time = copy(job.submitted_time)
-        self.assertEqual(old_time, job.submitted_time)
+        job_added = self.job_pool.added[self.ext_id]
         self.job_pool.set_job_time(self.int_id, 'submitted', event_time)
-        self.assertNotEqual(old_time, job.submitted_time)
+        job_updated = self.job_pool.updated[self.ext_id]
+        self.assertRaises(ValueError, job_updated.HasField, 'jumped_time')
+        self.assertNotEqual(
+            job_added.submitted_time, job_updated.submitted_time)
 
     def test_parse_job_item(self):
         """Test internal id parsing method."""
