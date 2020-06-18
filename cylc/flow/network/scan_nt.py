@@ -204,20 +204,61 @@ async def cylc_version(flow, requirement):
     return parse_version(flow[ContactFileFields.VERSION]) in requirement
 
 
+def format_query(pipe):
+    """Pre-process graphql queries from dicts or lists."""
+    @functools.wraps(pipe)
+    def _format_query(fields):
+        nonlocal pipe
+        ret = ''
+        stack = [(None, fields)]
+        while stack:
+            path, fields = stack.pop()
+            if isinstance(fields, dict):
+                leftover_fields = []
+                for key, value in fields.items():
+                    if value:
+                        stack.append((
+                            key,
+                            value
+                        ))
+                    else:
+                        leftover_fields.append(key)
+                if leftover_fields:
+                    fields = leftover_fields
+                else:
+                    continue
+            if path:
+                ret += '\n' + f'{path} {{'
+                for field in fields:
+                    ret += f'\n  {field}'
+                ret += '\n}'
+            else:
+                for field in fields:
+                    ret += f'\n{field}'
+        pipe.args = (ret + '\n',)
+        return pipe
+    return _format_query
+
+
+@format_query
 @Pipe
-async def query(flow, fields):
+async def graphql_query(flow, fields):
     """Obtain information from a GraphQL request to the flow.
 
     Args:
         flow (dict):
             Flow information dictionary, provided by scan through the pipe.
-        fields (list):
-            List of GraphQL fields on the `Workflow` object to request from
-            the flow.
+        fields:
+            Iterable containing the fields to request e.g::
+
+               ['id', 'name']
+
+            One level of nesting is supported e.g::
+
+               {'name': None, 'meta': ['title']}
 
     """
-    field_str = '\n'.join(fields)
-    query = f'query {{ workflows(ids: ["{flow["name"]}"]) {{ {field_str} }} }}'
+    query = f'query {{ workflows(ids: ["{flow["name"]}"]) {{ {fields} }} }}'
     client = SuiteRuntimeClient(
         flow['name'],
         # use contact_info data if present for efficiency
@@ -225,7 +266,7 @@ async def query(flow, fields):
         port=flow.get('CYLC_SUITE_PORT')
     )
     try:
-        ret = await client(
+        ret = await client.async_request(
             'graphql',
             {
                 'request_string': query,
@@ -243,5 +284,10 @@ async def query(flow, fields):
         LOG.exception(exc)
         return False
     else:
-        breakpoint()
-        return ret
+        for item in ret:
+            if 'error' in item:
+                LOG.exception(item['error']['message'])
+                return False
+            for workflow in ret.get('workflows', []):
+                flow.update(workflow)
+        return flow

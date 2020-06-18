@@ -7,11 +7,12 @@ from textwrap import dedent
 import pytest
 
 from cylc.flow.network.scan_nt import (
+    contact_info,
     cylc_version,
-    scan,
     filter_name,
+    graphql_query,
     is_active,
-    contact_info
+    scan
 )
 from cylc.flow.suite_files import (
     ContactFileFields,
@@ -272,3 +273,30 @@ async def test_contact_info(tmp_path):
         'bar': '2',
         'baz': '3'
     }
+
+
+def test_graphql_query_preproc():
+    """It should format graphql query fragments from the input data."""
+    pipe = graphql_query(['a', 'b', 'c'])
+    assert pipe.args[0] == dedent('''
+        a
+        b
+        c
+    ''')
+
+    pipe = graphql_query({'a': None, 'b': None, 'c': None})
+    assert pipe.args[0] == dedent('''
+        a
+        b
+        c
+    ''')
+
+    pipe = graphql_query({'a': None, 'b': ['ba', 'bb'], 'c': None})
+    assert pipe.args[0] == dedent('''
+        a
+        c
+        b {
+          ba
+          bb
+        }
+    ''')
