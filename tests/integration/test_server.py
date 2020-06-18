@@ -65,7 +65,7 @@ def test_pb_data_elements(myflow):
             element_type
         )
     )
-    assert data.id == myflow.id
+    assert data.added.id == myflow.id
 
 
 def test_pb_entire_workflow(myflow):

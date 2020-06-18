@@ -58,10 +58,10 @@ def test_generate_graph_elements(harness):
 def test_get_data_elements(harness):
     schd, data = harness
     flow_msg = schd.data_store_mgr.get_data_elements(TASK_PROXIES)
-    assert len(flow_msg.deltas) == len(data[TASK_PROXIES])
+    assert len(flow_msg.added) == len(data[TASK_PROXIES])
 
     flow_msg = schd.data_store_mgr.get_data_elements(WORKFLOW)
-    assert flow_msg.last_updated == data[WORKFLOW].last_updated
+    assert flow_msg.added.last_updated == data[WORKFLOW].last_updated
 
     none_msg = schd.data_store_mgr.get_data_elements('fraggle')
     assert len(none_msg.ListFields()) == 0
@@ -103,7 +103,7 @@ def test_prune_points(harness):
 
 def test_update_data_structure(harness):
     """Test update_data_structure. This method will generate and
-    apply deltas/updates given."""
+    apply adeltas/updates given."""
     schd, data = harness
     assert len(collect_states(data, TASK_PROXIES)) == 1
     update_tasks = schd.pool.get_all_tasks()

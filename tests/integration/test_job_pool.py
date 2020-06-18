@@ -93,36 +93,35 @@ def int_id(_):
 
 def test_insert_job(myflow):
     """Test method that adds a new job to the pool."""
-    assert len(myflow.job_pool.updates) == 0
+    assert len(myflow.job_pool.added) == 0
     myflow.job_pool.insert_job(job_config(myflow))
-    assert len(myflow.job_pool.updates) == 1
-    assert ext_id(myflow) in myflow.job_pool.updates
+    assert len(myflow.job_pool.added) == 1
+    assert ext_id(myflow) in myflow.job_pool.added
 
 
 def test_insert_db_job(myflow, job_db_row):
     """Test method that adds a new job to the pool."""
-    assert len(myflow.job_pool.updates) == 0
+    assert len(myflow.job_pool.added) == 0
     myflow.job_pool.insert_db_job(0, job_db_row)
-    assert len(myflow.job_pool.updates) == 1
-    assert ext_id(myflow) in myflow.job_pool.updates
+    assert len(myflow.job_pool.added) == 1
+    assert ext_id(myflow) in myflow.job_pool.added
 
 
 def test_add_job_msg(myflow):
     """Test method adding messages to job element."""
     myflow.job_pool.insert_job(job_config(myflow))
-    job = myflow.job_pool.updates[ext_id(myflow)]
-    old_stamp = copy(job.stamp)
-    assert len(job.messages) == 0
+    job_added = myflow.job_pool.added[ext_id(myflow)]
+    assert len(job_added.messages) == 0
     myflow.job_pool.add_job_msg(int_id(myflow), 'The Atomic Age')
-    assert old_stamp != job.stamp
-    assert len(job.messages) == 1
+    job_updated = myflow.job_pool.updated[ext_id(myflow)]
+    assert len(job_updated.messages) == 1
 
 
 def test_reload_deltas(myflow):
     """Test method reinstatiating job pool on reload"""
     assert myflow.job_pool.updates_pending is False
     myflow.job_pool.insert_job(job_config(myflow))
-    myflow.job_pool.pool = {e.id: e for e in myflow.job_pool.updates.values()}
+    myflow.job_pool.pool = {e.id: e for e in myflow.job_pool.added.values()}
     myflow.job_pool.reload_deltas()
     assert myflow.job_pool.updates_pending
 
@@ -145,7 +144,7 @@ def test_remove_task_jobs(myflow):
     assert len(pruned) == 0
     myflow.job_pool.remove_task_jobs('NotTaskID')
     assert len(pruned) == 0
-    task_id = myflow.job_pool.updates[ext_id(myflow)].task_proxy
+    task_id = myflow.job_pool.added[ext_id(myflow)].task_proxy
     myflow.job_pool.remove_task_jobs(task_id)
     assert len(pruned) == 1
 
@@ -153,33 +152,35 @@ def test_remove_task_jobs(myflow):
 def test_set_job_attr(myflow):
     """Test method setting job attribute value."""
     myflow.job_pool.insert_job(job_config(myflow))
-    job = myflow.job_pool.updates[ext_id(myflow)]
-    old_exit_script = copy(job.exit_script)
-    assert job.exit_script == old_exit_script
+    job_added = myflow.job_pool.added[ext_id(myflow)]
     myflow.job_pool.set_job_attr(int_id(myflow), 'exit_script', 'rm -v *')
-    assert old_exit_script != job.exit_script
+    assert job_added.exit_script != (
+        myflow.job_pool.updated[ext_id(myflow)].exit_script
+    )
 
 
 def test_set_job_state(myflow):
     """Test method setting the job state."""
     myflow.job_pool.insert_job(job_config(myflow))
-    job = myflow.job_pool.updates[ext_id(myflow)]
-    old_state = copy(job.state)
-    myflow.job_pool.set_job_state(int_id(myflow), 'waiting')
-    assert job.state == old_state
+    job_added = myflow.job_pool.added[ext_id(myflow)]
+    myflow.job_pool.set_job_state(int_id(myflow), JOB_STATUSES_ALL[1])
+    job_updated = myflow.job_pool.updated[ext_id(myflow)]
+    state_two = copy(job_updated.state)
+    assert job_added.state != state_two
     myflow.job_pool.set_job_state(int_id(myflow), JOB_STATUSES_ALL[-1])
-    assert old_state != job.state
+    assert state_two != job_updated.state
 
 
 def test_set_job_time(myflow):
     """Test method setting event time."""
     event_time = get_current_time_string()
     myflow.job_pool.insert_job(job_config(myflow))
-    job = myflow.job_pool.updates[ext_id(myflow)]
-    old_time = copy(job.submitted_time)
-    assert job.submitted_time == old_time
+    job_added = myflow.job_pool.added[ext_id(myflow)]
     myflow.job_pool.set_job_time(int_id(myflow), 'submitted', event_time)
-    assert old_time != job.submitted_time
+    job_updated = myflow.job_pool.updated[ext_id(myflow)]
+    with pytest.raises(ValueError):
+        job_updated.HasField('jumped_time')
+    assert job_added.submitted_time != job_updated.submitted_time
 
 
 def test_parse_job_item(myflow):

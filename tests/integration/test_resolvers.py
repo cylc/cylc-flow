@@ -69,7 +69,7 @@ async def flow(mod_flow, mod_scheduler, mod_run):
     ret.name = ret.schd.suite
     ret.id = list(ret.schd.data_store_mgr.data.keys())[0]
     ret.resolvers = Resolvers(
-        ret.schd.data_store_mgr.data,
+        ret.schd.data_store_mgr,
         schd=ret.schd
     )
     ret.data = ret.schd.data_store_mgr.data[ret.id]
