@@ -17,7 +17,7 @@
 import io
 import os
 import pytest
-from tempfile import TemporaryFile, TemporaryDirectory
+from tempfile import TemporaryFile, NamedTemporaryFile
 from unittest import mock
 
 import cylc.flow.flags
@@ -61,8 +61,8 @@ def test_write_prelude_invalid_cylc_command(mocked_glbl_cfg):
 @mock.patch("cylc.flow.job_file.get_remote_suite_run_dir")
 def test_write(mocked_get_remote_suite_run_dir):
     """Test write function outputs jobscript file correctly"""
-    with TemporaryFile() as local_job_file_path:
-        local_job_file_path = str(local_job_file_path)
+    with NamedTemporaryFile() as local_job_file_path:
+        local_job_file_path = local_job_file_path.name
         job_conf = {
             "host": "localhost",
             "owner": "me",
