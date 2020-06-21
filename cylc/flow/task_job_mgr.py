@@ -177,7 +177,8 @@ class TaskJobManager(object):
                 bad_tasks.append(itask)
         return [prepared_tasks, bad_tasks]
 
-    def submit_task_jobs(self, suite, itasks, is_simulation=False):
+    def submit_task_jobs(self, suite, itasks, curve_auth,
+                         client_pub_key_dir, is_simulation=False):
         """Prepare and submit task jobs.
 
         Submit tasks where possible. Ignore tasks that are waiting for host
@@ -210,7 +211,8 @@ class TaskJobManager(object):
         # Submit task jobs for each (host, owner) group
         done_tasks = bad_tasks
         for (host, owner), itasks in sorted(auth_itasks.items()):
-            is_init = self.task_remote_mgr.remote_init(host, owner)
+            is_init = self.task_remote_mgr.remote_init(
+                host, owner, curve_auth, client_pub_key_dir)
             if is_init is None:
                 # Remote is waiting to be initialised
                 for itask in itasks:

@@ -171,7 +171,11 @@ class SuiteRuntimeClient(ZMQSocketBase):
         else:
             if callable(self.timeout_handler):
                 self.timeout_handler()
-            raise ClientTimeout('Timeout waiting for server response.')
+            raise ClientTimeout(
+                'Timeout waiting for server response.'
+                ' This could be due to network or server issues.'
+                ' Check the suite log.'
+            )
 
         if msg['command'] in PB_METHOD_MAP:
             response = {'data': res}

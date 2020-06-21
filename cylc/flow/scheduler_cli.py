@@ -23,6 +23,7 @@ import cylc.flow.flags
 from cylc.flow.exceptions import SuiteServiceFileError
 from cylc.flow.host_select import select_suite_host
 from cylc.flow.hostuserutil import is_remote_host
+from cylc.flow.network.authentication import key_setup
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.pathutil import get_suite_run_dir
 from cylc.flow.remote import remrun, remote_cylc_cmd
@@ -257,9 +258,6 @@ def scheduler_cli(parser, options, args, is_restart=False):
                          f'at: {suite_run_dir}\n')
         sys.exit(1)
 
-    # Create auth files if needed.
-    suite_files.create_auth_files(reg)
-
     # Extract job.sh from library, for use in job scripts.
     extract_resources(
         suite_files.get_suite_srv_dir(reg),
@@ -267,15 +265,17 @@ def scheduler_cli(parser, options, args, is_restart=False):
 
     # Check whether a run host is explicitly specified, else select one.
     if not options.host:
-        host = select_suite_host()[0]
-        if is_remote_host(host):
+        options.host = select_suite_host()[0]
+        if is_remote_host(options.host):
             if is_restart:
                 base_cmd = ["restart"] + sys.argv[1:]
             else:
                 base_cmd = ["run"] + sys.argv[1:]
             # Prevent recursive host selection
             base_cmd.append("--host=localhost")
-            return remote_cylc_cmd(base_cmd, host=host)
+            return remote_cylc_cmd(base_cmd, host=options.host)
+    # Create ZMQ keys
+    key_setup(reg, platform=options.host)
     if remrun(set_rel_local=True):  # State localhost as above.
         sys.exit()
 

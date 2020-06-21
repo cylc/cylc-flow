@@ -29,13 +29,8 @@ import zmq
 from cylc.flow.exceptions import ClientError, CylcError, SuiteServiceFileError
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.network import ZMQSocketBase
-from cylc.flow.suite_files import (
-    create_auth_files,
-    get_suite_srv_dir,
-    SuiteFiles,
-    KeyInfo,
-    KeyOwner,
-    KeyType)
+from cylc.flow.suite_files import get_suite_srv_dir, KeyInfo, KeyOwner, KeyType
+from cylc.flow.tests.network.key_setup import setup_keys
 
 
 def get_port_range():
@@ -147,11 +142,11 @@ def test_client_requires_valid_client_private_key():
 def test_single_port():
     """Test server on a single port and port in use exception."""
     context = zmq.Context()
-    create_auth_files('test_zmq')  # auth keys are required for comms
+    setup_keys("test_zmq")  # auth keys are required for comms
     serv1 = ZMQSocketBase(
-        zmq.REP, context=context, suite='test_zmq', bind=True)
+        zmq.REP, context=context, suite="test_zmq", bind=True)
     serv2 = ZMQSocketBase(
-        zmq.REP, context=context, suite='test_zmq', bind=True)
+        zmq.REP, context=context, suite="test_zmq", bind=True)
 
     serv1._socket_bind(*PORT_RANGE)
     port = serv1.port
@@ -166,7 +161,7 @@ def test_single_port():
 
 def test_start():
     """Test socket start."""
-    create_auth_files('test_zmq_start')  # auth keys are required for comms
+    setup_keys('test_zmq_start')  # auth keys are required for comms
     barrier = Barrier(2, timeout=20)
     publisher = ZMQSocketBase(zmq.PUB, suite='test_zmq_start', bind=True,
                               barrier=barrier, threaded=True, daemon=True)
@@ -186,7 +181,7 @@ def test_start():
 
 def test_stop():
     """Test socket/thread stop."""
-    create_auth_files('test_zmq_stop')  # auth keys are required for comms
+    setup_keys('test_zmq_stop')  # auth keys are required for comms
     barrier = Barrier(2, timeout=20)
     publisher = ZMQSocketBase(zmq.PUB, suite='test_zmq_stop', bind=True,
                               barrier=barrier, threaded=True, daemon=True)
