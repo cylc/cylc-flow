@@ -55,6 +55,7 @@ from cylc.flow.loggingutil import (
     ReferenceLogFileHandler
 )
 from cylc.flow.network import API
+from cylc.flow.network.authentication import key_setup
 from cylc.flow.network.server import SuiteRuntimeServer
 from cylc.flow.network.publisher import WorkflowPublisher
 from cylc.flow.parsec.OrderedDict import DictTree
@@ -213,6 +214,7 @@ class Scheduler:
     publisher: WorkflowPublisher = None
     barrier: Barrier = None
     curve_auth: ThreadAuthenticator = None
+    client_pub_key_dir: str = None
 
     # managers
     profiler: Profiler = None
@@ -293,8 +295,8 @@ class Scheduler:
             # Source path is assumed to be the run directory
             suite_files.register(self.suite, get_suite_run_dir(self.suite))
 
-        # Create auth files if needed.
-        suite_files.create_auth_files(self.suite)
+        # Create ZMQ keys.
+        key_setup(self.suite, platform=self.options.host)
 
         # Extract job.sh from library, for use in job scripts.
         extract_resources(
@@ -337,7 +339,7 @@ class Scheduler:
         # Requires the Cylc main loop in asyncio first
         # And use of concurrent.futures.ThreadPoolExecutor?
         self.zmq_context = zmq.Context()
-        # create & configure an authenticator for the ZMQ context
+        # create an authenticator for the ZMQ context
         self.curve_auth = ThreadAuthenticator(self.zmq_context, log=LOG)
         self.curve_auth.start()  # start the authentication thread
 
@@ -350,10 +352,12 @@ class Scheduler:
             suite_files.KeyType.PUBLIC,
             suite_files.KeyOwner.CLIENT,
             suite_srv_dir=suite_srv_dir)
-        client_pub_key_dir = client_pub_keyinfo.key_path
+        self.client_pub_key_dir = client_pub_keyinfo.key_path
+
+        # Initial load for the localhost key.
         self.curve_auth.configure_curve(
             domain='*',
-            location=(client_pub_key_dir)
+            location=(self.client_pub_key_dir)
         )
 
         self.server = SuiteRuntimeServer(
@@ -690,8 +694,10 @@ class Scheduler:
                 auths.add((itask.task_host, itask.task_owner))
         while auths:
             for host, owner in auths.copy():
-                if self.task_job_mgr.task_remote_mgr.remote_init(
-                        host, owner) is not None:
+                if (
+                    self.task_job_mgr.task_remote_mgr.remote_init(
+                        host, owner, self.curve_auth, self.client_pub_key_dir)
+                ) is not None:
                     auths.remove((host, owner))
             if auths:
                 sleep(1.0)
@@ -1373,7 +1379,11 @@ class Scheduler:
             if itasks:
                 self.is_updated = True
             for itask in self.task_job_mgr.submit_task_jobs(
-                self.suite, itasks, self.config.run_mode('simulation')
+                    self.suite,
+                    itasks,
+                    self.curve_auth,
+                    self.client_pub_key_dir,
+                    self.config.run_mode('simulation')
             ):
                 LOG.info(
                     '[%s] -triggered off %s',

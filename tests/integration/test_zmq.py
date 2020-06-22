@@ -22,9 +22,8 @@ import zmq
 
 from cylc.flow.exceptions import CylcError
 from cylc.flow.network import ZMQSocketBase
-from cylc.flow.suite_files import (
-    create_auth_files,
-)
+
+from .key_setup import setup_keys
 
 
 @pytest.fixture(scope='module')
@@ -35,7 +34,7 @@ def myflow(mod_flow, mod_one_conf):
 def test_single_port(myflow, port_range):
     """Test server on a single port and port in use exception."""
     context = zmq.Context()
-    create_auth_files(myflow)  # auth keys are required for comms
+    setup_keys(myflow)  # auth keys are required for comms
     serv1 = ZMQSocketBase(
         zmq.REP, context=context, suite=myflow, bind=True)
     serv2 = ZMQSocketBase(
@@ -54,7 +53,7 @@ def test_single_port(myflow, port_range):
 
 def test_start(myflow, port_range):
     """Test socket start."""
-    create_auth_files(myflow)  # auth keys are required for comms
+    setup_keys(myflow)  # auth keys are required for comms
     barrier = Barrier(2, timeout=20)
     publisher = ZMQSocketBase(zmq.PUB, suite=myflow, bind=True,
                               barrier=barrier, threaded=True, daemon=True)
@@ -74,7 +73,7 @@ def test_start(myflow, port_range):
 
 def test_stop(myflow, port_range):
     """Test socket/thread stop."""
-    create_auth_files(myflow)  # auth keys are required for comms
+    setup_keys(myflow)  # auth keys are required for comms
     barrier = Barrier(2, timeout=20)
     publisher = ZMQSocketBase(zmq.PUB, suite=myflow, bind=True,
                               barrier=barrier, threaded=True, daemon=True)

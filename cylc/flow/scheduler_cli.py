@@ -16,7 +16,6 @@
 """Common logic for "cylc run" and "cylc restart" CLI."""
 
 import asyncio
-from collections import namedtuple
 from functools import partial, lru_cache
 from itertools import zip_longest
 import os
