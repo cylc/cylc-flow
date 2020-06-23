@@ -21,12 +21,12 @@
 export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
 
-set_test_remote
+require_remote_platform
 set_test_number 5
 
 create_test_globalrc "" "
 [job platforms]
-   [[${CYLC_TEST_HOST}]]
+   [[${CYLC_REMOTE_PLATFORM}]]
        retrieve job logs = False"
 install_suite "${TEST_NAME_BASE}" remote-simple
 
@@ -45,6 +45,6 @@ TEST_NAME=${TEST_NAME_BASE}-task-out
 run_ok "${TEST_NAME}" cylc cat-log -f o "${SUITE_NAME}" a-task.1
 grep_ok '^the quick brown fox$' "${TEST_NAME}.stdout"
 
-purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
+purge_suite_remote "${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

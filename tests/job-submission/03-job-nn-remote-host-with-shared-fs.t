@@ -18,13 +18,9 @@
 # Test job log NN link correctness on reaching 100, remote (with shared fs).
 export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
-CYLC_TEST_HOST="$( \
-    cylc get-global-config -i '[test battery]remote platform with shared fs' \
-    2>'/dev/null')"
-if [[ -z "${CYLC_TEST_HOST}" ]]; then
-    skip_all '"[test battery]remote platform with shared fs": not defined'
-fi
-export CYLC_TEST_HOST
+require_remote_platform_wsfs
+# export CYLC_REMOTE_PLATFORM which is used by the flow
+export CYLC_REMOTE_PLATFORM="$CYLC_REMOTE_PLATFORM_WSFS"
 set_test_number 2
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
@@ -33,8 +29,6 @@ sqlite3 "${SUITE_RUN_DIR}/.service/db" <'db.sqlite3'
 suite_run_ok "${TEST_NAME_BASE}-restart" \
     cylc restart --reference-test --debug --no-detach "${SUITE_NAME}"
 
-if [[ "$CYLC_TEST_HOST" != 'localhost' ]]; then
-    purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
-fi
+purge_suite_platform "${CYLC_REMOTE_PLATFORM_WSFS}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

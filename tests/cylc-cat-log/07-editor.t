@@ -22,5 +22,5 @@
 export PATH="${TEST_SOURCE_DIR}/editor/bin/:${PATH}"
 
 install_suite "${TEST_NAME_BASE}" "editor"
-run_tests localhost ""
+run_tests localhost
 purge_suite "${SUITE_NAME}"

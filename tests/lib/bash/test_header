@@ -122,12 +122,19 @@
 #         Create a new global config file $PWD/etc from site flow-tests.rc
 #         with PRE and POST pre- and ap-pended (PRE for top level items with no
 #         section heading). PRE and POST are strings.
-#     set_test_remote
-#         set CYLC_TEST_HOST and CYLC_TEST_OWNER for remote job tests.
 #     require_remote_platform
-#         set CYLC_REMOTE_PLATFORM for remote job tests
-#         # TODO delete set_test_remote once all it's tests are no longer used
-#         or skipped.
+#         Set CYLC_REMOTE_PLATFORM for remote job tests or skip all tests.
+#         Provides:
+#             CYLC_REMOTE_PLATFORM: Remote platform name
+#             CYLC_TEST_HOST:       Hostname of a remote host picked
+#                                   from the platform.
+#     require_remote_platform_wsfs
+#         (wsfs = with shared file system)
+#         Set CYLC_REMOTE_PLATFORM_WSFS for remote job tests or skip all tests.
+#         Provides:
+#             CYLC_REMOTE_PLATFORM_WSFS: Remote platform name
+#             CYLC_TEST_HOST_WSFS:       Hostname of a remote host picked
+#                                       from the platform.
 #     get_fqdn_by_host [TARGET]
 #         Get a host FQDN using the same mechanism Cylc uses.
 #-------------------------------------------------------------------------------
@@ -730,22 +737,6 @@ __PLATFORMS__
     export CYLC_CONF_PATH="${PWD}/etc"
 }
 
-set_test_remote() {
-  # For remote job tests, define CYLC_TEST_HOST and CYLC_TEST_OWNER from global
-  # config '[test battery]remote host/owner', defaulting to localhost and $USER.
-  # Skip all tests if neither host or owner is defined for a remote account.
-  # Call immediately after sourcing the test header, for skip_all to work.
-  CYLC_TEST_HOST="$( \
-      cylc get-global-config -i '[test battery]remote host' 2>'/dev/null')"
-  CYLC_TEST_OWNER="$( \
-      cylc get-global-config -i '[test battery]remote owner' 2>'/dev/null')"
-  if [[ -z "${CYLC_TEST_HOST}${CYLC_TEST_OWNER}" ]]; then
-      skip_all '"[test battery]remote host/owner": not defined'
-  fi
-  export CYLC_TEST_HOST=${CYLC_TEST_HOST:-"localhost"}
-  export CYLC_TEST_OWNER=${CYLC_TEST_OWNER:-${USER}}
-}
-
 require_remote_platform() {
     # For remote job tests, define CYLC_REMOTE_PLATFORM from global
     # config '[test battery]remote platform'.
@@ -768,6 +759,30 @@ require_remote_platform() {
     fi
     export CYLC_REMOTE_PLATFORM
     export CYLC_TEST_HOST
+}
+
+require_remote_platform_wsfs() {
+    # For remote job tests, define CYLC_REMOTE_PLATFORM from global
+    # config '[test battery]remote platform'.
+    # Skip all tests if is not defined.
+    # Call immediately after sourcing the test header, for skip_all to work.
+    CYLC_REMOTE_PLATFORM_WSFS="$(
+        cylc get-global-config -i '[test battery]remote platform with shared fs' 2>'/dev/null'
+    )"
+    if [[ -z "${CYLC_REMOTE_PLATFORM_WSFS}" ]]; then
+        skip_all '"[test battery]remote platform with shared fs": not defined'
+    fi
+    # This is ugly, but some tests require these variables for direct ssh-ing.
+    CYLC_TEST_HOST_WSFS="$(
+        cylc get-global --item \
+            "[job platforms][${CYLC_REMOTE_PLATFORM_WSFS}]remote hosts" \
+            | awk -F ',' '{print $1}'
+    )"
+    if [[ -z "${CYLC_TEST_HOST_WSFS}" ]]; then
+        skip_all '"[test battery]remote platform with shared fs": not configured'
+    fi
+    export CYLC_REMOTE_PLATFORM_WSFS
+    export CYLC_TEST_HOST_WSFS
 }
 
 get_fqdn_by_host() {

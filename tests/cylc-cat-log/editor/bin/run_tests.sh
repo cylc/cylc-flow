@@ -24,17 +24,16 @@ create_test_globalrc '' '
     gui = my-editor'
 
 function run_tests {
-    HOST=$1
-    OWNER=$2
+    PLATFORM=$1
 
     TEST_NAME="${TEST_NAME_BASE}-validate"
-    run_ok "${TEST_NAME}" cylc validate --set="CYLC_TEST_HOST=$HOST" \
-       --set="CYLC_TEST_OWNER=$OWNER" "${SUITE_NAME}"
+    run_ok "${TEST_NAME}" cylc validate --set="CYLC_TEST_PLATFORM=$PLATFORM" \
+        "${SUITE_NAME}"
 
     # Run the suite to generate some log files.
     TEST_NAME="${TEST_NAME_BASE}-suite-run"
-    run_ok "${TEST_NAME}" cylc run --set="CYLC_TEST_HOST=$HOST" \
-       --set="CYLC_TEST_OWNER=$OWNER" --no-detach "${SUITE_NAME}"
+    run_ok "${TEST_NAME}" cylc run --set="CYLC_TEST_PLATFORM=$PLATFORM" \
+        --no-detach "${SUITE_NAME}"
 
     LOG_DIR="$RUN_DIR/${SUITE_NAME}"
     JOB_LOG_DIR="${LOG_DIR}/log/job/1/foo/01"

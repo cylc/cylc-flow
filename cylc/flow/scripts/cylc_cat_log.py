@@ -266,7 +266,7 @@ def get_option_parser():
 
 
 def get_task_job_attrs(suite_name, point, task, submit_num):
-    """Return job (user_at_host, batch_sys_name, live_job_id).
+    """Return job (platform, batch_sys_name, live_job_id).
 
     live_job_id is batch system job ID if job is running, else None.
 
@@ -328,6 +328,7 @@ def main(parser, options, *args, color=False):
         # Tail and batchview commands come from global config on suite host).
         logpath, mode, tail_tmpl = options.remote_args[0:3]
         logpath = os.path.expandvars(logpath)
+        tail_tmpl = os.path.expandvars(tail_tmpl)
         try:
             batchview_cmd = options.remote_args[3]
         except IndexError:
@@ -359,7 +360,7 @@ def main(parser, options, *args, color=False):
             except IndexError:
                 raise UserInputError(
                     "max rotation %d" % (len(logs) - 1))
-        tail_tmpl = forward_lookup()["tail command template"]
+        tail_tmpl = os.path.expandvars(forward_lookup()["tail command template"])
         out = view_log(logpath, mode, tail_tmpl, color=color)
         if out == 1:
             sys.exit(1)
@@ -462,7 +463,7 @@ def main(parser, options, *args, color=False):
             # Local task job or local job log.
             logpath = os.path.normpath(get_suite_run_job_dir(
                 suite_name, point, task, options.submit_num, options.filename))
-            tail_tmpl = platform["tail command template"]
+            tail_tmpl = os.path.expandvars(platform["tail command template"])
             out = view_log(logpath, mode, tail_tmpl, batchview_cmd,
                            color=color)
             if mode != 'edit':

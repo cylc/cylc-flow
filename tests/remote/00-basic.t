@@ -18,8 +18,8 @@
 # Test remote host settings.
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_remote
-set_test_number 4
+require_remote_platform
+set_test_number 3
 #-------------------------------------------------------------------------------
 install_suite "${TEST_NAME_BASE}" basic
 #-------------------------------------------------------------------------------
@@ -29,16 +29,11 @@ run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 TEST_NAME="${TEST_NAME_BASE}-run"
 suite_run_ok "${TEST_NAME}" cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME=${TEST_NAME_BASE}-userathost
+TEST_NAME=${TEST_NAME_BASE}-platform
 sqlite3 "${SUITE_RUN_DIR}/log/db" \
-    'select user_at_host from task_jobs where name=="foo"' >'foo-host.txt'
-cmp_ok 'foo-host.txt' <<<"${CYLC_TEST_OWNER}@${CYLC_TEST_HOST}"
+    'select platform_name from task_jobs where name=="foo"' >'foo-host.txt'
+cmp_ok 'foo-host.txt' <<<"${CYLC_REMOTE_PLATFORM}"
 #-------------------------------------------------------------------------------
-TEST_NAME=${TEST_NAME_BASE}-hostonly
-sqlite3 "${SUITE_RUN_DIR}/log/db" \
-    'select user_at_host from task_jobs where name=="bar"' >'bar-host.txt'
-cmp_ok 'bar-host.txt' - <<<"${CYLC_TEST_HOST}"
-#-------------------------------------------------------------------------------
-purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
+purge_suite_remote "${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

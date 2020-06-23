@@ -37,7 +37,9 @@ else:
 
 def test_remote_select():
     """Test host selection works with remote host names."""
-    assert select_host([remote_platform]) == (remote_platform, remote_platform_fqdn)
+    assert select_host([remote_platform]) == (
+        remote_platform, remote_platform_fqdn
+    )
 
 
 def test_remote_blacklict():

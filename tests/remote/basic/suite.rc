@@ -7,14 +7,8 @@
 # determined by the [job platforms] section in site/user config files.
 [scheduling]
     [[graph]]
-        R1 = "foo => bar"
+        R1 = foo
 [runtime]
     [[foo]]
         script = "true" # fast
-        [[[remote]]]
-            host = {{ HOST }}
-            owner = {{ OWNER }}
-    [[bar]]
-        script = "true"
-        [[[remote]]]
-            host = {{ HOST }}
+        platform = {{ environ['CYLC_REMOTE_PLATFORM'] }}

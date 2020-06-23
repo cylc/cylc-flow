@@ -18,21 +18,15 @@
 # Test tidy of submits of previous runs.
 export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
-
-CYLC_TEST_HOST=$( \
-    cylc get-global-config -i '[test battery]remote platform with shared fs' \
-    2>'/dev/null')
-if [[ -z "${CYLC_TEST_HOST}" ]]; then
-    skip_all '"[test battery]remote platform with shared fs": not defined'
-fi
-
+require_remote_platform_wsfs
 set_test_number 7
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate "${SUITE_NAME}" -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}"
+    cylc validate "${SUITE_NAME}" \
+    -s "CYLC_REMOTE_PLATFORM=${CYLC_REMOTE_PLATFORM_WSFS}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --debug --no-detach --reference-test "${SUITE_NAME}" \
-    -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}"
+    -s "CYLC_REMOTE_PLATFORM=${CYLC_REMOTE_PLATFORM_WSFS}"
 LOGD1="$RUN_DIR/${SUITE_NAME}/log/job/1/t1/01"
 LOGD2="$RUN_DIR/${SUITE_NAME}/log/job/1/t1/02"
 exists_ok "${LOGD1}"
@@ -41,9 +35,10 @@ sed -i 's/script =.*$/script = true/' "suite.rc"
 sed -i -n '1,/triggered off/p' "reference.log"
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --debug --no-detach --reference-test "${SUITE_NAME}" \
-     -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}"
+    -s "CYLC_REMOTE_PLATFORM=${CYLC_REMOTE_PLATFORM_WSFS}"
 exists_ok "${LOGD1}"
 exists_fail "${LOGD2}"
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"
+purge_suite_platform "${CYLC_REMOTE_PLATFORM_WSFS}" "${SUITE_NAME}"
 exit
