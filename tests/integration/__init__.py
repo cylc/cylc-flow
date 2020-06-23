@@ -23,10 +23,7 @@ from textwrap import dedent
 from uuid import uuid1
 
 from cylc.flow import CYLC_LOG
-from cylc.flow.scheduler import (
-    Scheduler,
-    SchedulerStop
-)
+from cylc.flow.scheduler import Scheduler
 from cylc.flow.scheduler_cli import (
     RunOptions,
     RestartOptions
@@ -127,6 +124,7 @@ async def _poll_file(path, timeout=2, step=0.1, exists=True):
         elapsed += step
         if elapsed > timeout:
             raise Exception(f'Timeout waiting for file creation: {path}')
+    return True
 
 
 def _expanduser(path):
@@ -176,19 +174,18 @@ async def _run_flow(run_dir, caplog, scheduler, level=logging.INFO):
     if caplog:
         caplog.set_level(level, CYLC_LOG)
     task = None
+    started = False
     try:
         task = asyncio.get_event_loop().create_task(scheduler.run())
-        await _poll_file(contact)
+        started = await _poll_file(contact)
         yield caplog
     finally:
-        try:
+        if started:
             # ask the scheduler to shut down nicely
-            if task:
-                async with timeout(5):
-                    await scheduler.shutdown(
-                        SchedulerStop(StopMode.AUTO.value)
-                    )
-        except asyncio.TimeoutError:
-            # but be prepared to use the nuclear option
-            if task:
-                task.cancel()
+            async with timeout(5):
+                scheduler._set_stop(StopMode.REQUEST_NOW_NOW)
+                await task
+
+        if task:
+            # leave everything nice and tidy
+            task.cancel()

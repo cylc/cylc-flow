@@ -296,7 +296,7 @@ class Scheduler:
             suite_files.register(self.suite, get_suite_run_dir(self.suite))
 
         # Create ZMQ keys.
-        key_setup(self.suite, platform=self.options.host)
+        key_setup(self.suite)
 
         # Extract job.sh from library, for use in job scripts.
         extract_resources(
@@ -1766,7 +1766,14 @@ class Scheduler:
         return process
 
     async def shutdown(self, reason):
-        """Shutdown the suite."""
+        """Shutdown the suite.
+
+        Warning:
+            At the moment this method must be called from the main_loop.
+            In the future it should shutdown the main_loop itself but
+            we're not quite there yet.
+
+        """
         if isinstance(reason, SchedulerStop):
             LOG.info('Suite shutting down - %s', reason.args[0])
         elif isinstance(reason, SchedulerError):

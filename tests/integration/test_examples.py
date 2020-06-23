@@ -101,8 +101,8 @@ async def test_shutdown(flow, scheduler, run, one_conf):
     reg = flow(one_conf)
     schd = scheduler(reg)
     async with run(schd):
-        await schd.shutdown('because i said so')
-        assert schd.server.socket.closed
+        pass
+    assert schd.server.socket.closed
 
 
 @pytest.mark.asyncio
@@ -153,25 +153,31 @@ async def test_exception(flow, scheduler, run, one_conf, log_filter):
     reg = flow(one_conf)
     schd = scheduler(reg)
 
+    class MyException(Exception):
+        pass
+
     # replace the main loop with something that raises an exception
     def killer():
-        raise Exception('mess')
+        raise MyException('mess')
 
     schd.main_loop = killer
 
     # make sure that this error causes the flow to shutdown
-    async with run(schd) as log:
-        # evil sleep - gotta let the except mechanism do its work
-        await asyncio.sleep(0.1)
-        # make sure the exception was logged
-        assert len(log_filter(
-            log,
-            level=logging.CRITICAL,
-            contains='mess'
-        )) == 1
-        # make sure the server socket has closed - a good indication of a
-        # successful clean shutdown
-        assert schd.server.socket.closed
+    with pytest.raises(MyException):
+        async with run(schd) as log:
+            # evil sleep - gotta let the except mechanism do its work
+            await asyncio.sleep(0.1)
+
+    # make sure the exception was logged
+    assert len(log_filter(
+        log,
+        level=logging.CRITICAL,
+        contains='mess'
+    )) == 1
+
+    # make sure the server socket has closed - a good indication of a
+    # successful clean shutdown
+    assert schd.server.socket.closed
 
 
 @pytest.fixture(scope='module')
