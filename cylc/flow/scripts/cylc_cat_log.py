@@ -327,6 +327,7 @@ def main(parser, options, *args, color=False):
         # Invoked on job hosts for job logs only, as a wrapper to view_log().
         # Tail and batchview commands come from global config on suite host).
         logpath, mode, tail_tmpl = options.remote_args[0:3]
+        logpath = os.path.expandvars(logpath)
         try:
             batchview_cmd = options.remote_args[3]
         except IndexError:
