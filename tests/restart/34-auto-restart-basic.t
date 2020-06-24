@@ -17,13 +17,7 @@
 #-------------------------------------------------------------------------------
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-CYLC_TEST_HOST="$( \
-    cylc get-global-config -i '[test battery]remote platform with shared fs' \
-    2>'/dev/null')"
-if [[ -z "${CYLC_TEST_HOST}" ]]; then
-    skip_all '"[test battery]remote platform with shared fs": not defined'
-fi
-export CYLC_TEST_HOST
+require_remote_platform_wsfs
 set_test_number 9
 if ${CYLC_TEST_DEBUG:-false}; then ERR=2; else ERR=1; fi
 #-------------------------------------------------------------------------------
@@ -40,7 +34,7 @@ BASE_GLOBALRC="
         inactivity = PT1M
         timeout = PT1M
 [suite servers]
-    run hosts = localhost, ${CYLC_TEST_HOST}"
+    run hosts = localhost, ${CYLC_TEST_HOST_WSFS}"
 
 TEST_NAME="${TEST_NAME_BASE}"
 TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME}" - <<'__SUITERC__'
@@ -69,8 +63,8 @@ FILE=$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)
 log_scan "${TEST_NAME}-shutdown" "${FILE}" 20 1 \
     'The Cylc suite host will soon become un-available' \
     'Suite shutting down - REQUEST(NOW-NOW)' \
-    "Attempting to restart on \"${CYLC_TEST_HOST}\"" \
-    "Suite now running on \"${CYLC_TEST_HOST}\""
+    "Attempting to restart on \"${CYLC_TEST_HOST_WSFS}\"" \
+    "Suite now running on \"${CYLC_TEST_HOST_WSFS}\""
 LATEST_TASK=$(cylc suite-state "${SUITE_NAME}" -S succeeded \
     | cut -d ',' -f 1 | sort | tail -n 1 | sed 's/task_foo//')
 
@@ -78,18 +72,19 @@ LATEST_TASK=$(cylc suite-state "${SUITE_NAME}" -S succeeded \
 poll_suite_restart
 FILE=$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)
 log_scan "${TEST_NAME}-restart" "${FILE}" 20 1 \
-    "Suite server: url=tcp://$(get_fqdn_by_host "${CYLC_TEST_HOST}")"
+    "Suite server: url=tcp://$(get_fqdn_by_host "${CYLC_TEST_HOST_WSFS}")"
 run_ok "${TEST_NAME}-restart-success" cylc suite-state "${SUITE_NAME}" \
     --task="$(printf 'task_foo%02d' $(( LATEST_TASK + 3 )))" \
     --status='succeeded' --point=1 --interval=1 --max-polls=20
 
 # check the command the suite has been restarted with
 run_ok "${TEST_NAME}-contact" cylc get-contact "${SUITE_NAME}"
-grep_ok "cylc-restart ${SUITE_NAME} --host=localhost" \
+grep_ok "cylc-restart ${SUITE_NAME} --host=${CYLC_TEST_HOST_WSFS} --host=localhost" \
     "${TEST_NAME}-contact.stdout"
 
 # stop suite
 cylc stop "${SUITE_NAME}" --kill --max-polls=10 --interval=2 2>'/dev/null'
 purge_suite "${SUITE_NAME}"
+purge_suite_platform "${CYLC_REMOTE_PLATFORM_WSFS}" "${SUITE_NAME}"
 
 exit

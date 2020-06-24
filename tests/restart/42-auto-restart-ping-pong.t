@@ -18,13 +18,8 @@
 # play a game of Cylc suite ping pong bouncing a suite back and forth between
 # two servers by condemning them in turn in order to see if anything breaks
 . "$(dirname "$0")/test_header"
-CLOWNS="$( \
-    cylc get-global-config -i '[test battery]remote platform with shared fs' \
-    2>'/dev/null')"
-if [[ -z "${CLOWNS}" ]]; then
-    skip_all '"[test battery]remote platform with shared fs": not defined'
-fi
-export CLOWNS
+require_remote_platform_wsfs
+export CLOWNS="${CYLC_TEST_HOST_WSFS}"
 export JOKERS="${HOSTNAME}"
 
 BASE_GLOBALRC='
@@ -69,6 +64,7 @@ stuck_in_the_middle() {
 kill_suite() {
     cylc stop --now --now --max-polls=10 --interval=2 "${SUITE_NAME}" 2>'/dev/null'
     purge_suite "${SUITE_NAME}"
+    purge_suite_platform "${CYLC_REMOTE_PLATFORM_WSFS}" "${SUITE_NAME}"
 }
 
 log_scan2() {

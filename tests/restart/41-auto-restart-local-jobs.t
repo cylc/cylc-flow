@@ -16,13 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 . "$(dirname "$0")/test_header"
-CYLC_TEST_HOST2="$( \
-    cylc get-global-config -i '[test battery]remote platform with shared fs' \
-    2>'/dev/null')"
-if [[ -z "${CYLC_TEST_HOST2}" ]]; then
-    skip_all '"[test battery]remote platform with shared fs": not defined'
-fi
-export CYLC_TEST_HOST2
+require_remote_platform_wsfs
+export CYLC_TEST_HOST2="${CYLC_TEST_HOST_WSFS}"
 export CYLC_TEST_HOST1="${HOSTNAME}"
 if ${CYLC_TEST_DEBUG:-false}; then ERR=2; else ERR=1; fi
 set_test_number 11
@@ -114,3 +109,5 @@ cylc stop "${SUITE_NAME}" --now --now 2>/dev/null || true
 poll_suite_stopped
 sleep 1
 purge_suite "${SUITE_NAME}"
+purge_suite_platform "${CYLC_REMOTE_PLATFORM_WSFS}" "${SUITE_NAME}"
+exit

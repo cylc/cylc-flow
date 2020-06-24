@@ -250,12 +250,14 @@ class TaskRemoteMgr(object):
             owner = platform['owner']
             if init_with_contact != REMOTE_INIT_DONE:
                 continue
-            cmd = ['timeout', '10', 'cylc', 'remote-tidy']
-            if is_remote_platform(platform):
-                cmd.append('--host=%s' % host)
+            cmd = ['remote-tidy']
             if cylc.flow.flags.debug:
                 cmd.append('--debug')
             cmd.append(get_remote_suite_run_dir(platform, self.suite))
+            if is_remote_platform(platform):
+                cmd = construct_platform_ssh_cmd(cmd, platform, timeout='10s')
+            else:
+                cmd = ['cylc'] + cmd
             procs[(host, owner)] = (
                 cmd,
                 Popen(cmd, stdout=PIPE, stderr=PIPE, stdin=DEVNULL))

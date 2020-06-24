@@ -160,7 +160,7 @@ def construct_platform_ssh_cmd(raw_cmd, platform, **kwargs):
 def construct_ssh_cmd(
         raw_cmd, user=None, host=None, forward_x11=False, stdin=False,
         ssh_cmd=None, ssh_login_shell=None, ssh_cylc=None, set_UTC=False,
-        allow_flag_opts=False
+        allow_flag_opts=False, timeout=None
 ):
     """Append a bare command with further options required to run via ssh.
 
@@ -183,6 +183,8 @@ def construct_ssh_cmd(
         allow_flag_opts (boolean):
             If True, check CYLC_DEBUG and CYLC_VERBOSE and if non-default,
             specify debug and/or verbosity as options to the 'raw cmd'.
+        timeout (str):
+            String for bash timeout command.
 
     Return:
         A list containing a chosen command including all arguments and options
@@ -228,6 +230,9 @@ def construct_ssh_cmd(
         # profile file. To avoid having to quote the entire remote command
         # it is passed as arguments to the bash script.
         command += ['bash', '--login', '-c', quote(r'exec "$0" "$@"')]
+
+    if timeout:
+        command += ['timeout', timeout]
 
     # 'cylc' on the remote host
     if ssh_cylc:

@@ -17,13 +17,7 @@
 #-------------------------------------------------------------------------------
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-CYLC_TEST_HOST="$( \
-    cylc get-global-config -i '[test battery]remote platform with shared fs' \
-    2>'/dev/null')"
-if [[ -z "${CYLC_TEST_HOST}" ]]; then
-    skip_all '"[test battery]remote platform with shared fs": not defined'
-fi
-export CYLC_TEST_HOST
+require_remote_platform_wsfs
 set_test_number 2
 if ${CYLC_TEST_DEBUG:-false}; then ERR=2; else ERR=1; fi
 #-------------------------------------------------------------------------------
@@ -40,7 +34,7 @@ BASE_GLOBALRC="
         inactivity = PT1M
         timeout = PT1M
 [suite servers]
-    run hosts = localhost, ${CYLC_TEST_HOST}"
+    run hosts = localhost, ${CYLC_TEST_HOST_WSFS}"
 
 TEST_NAME="${TEST_NAME_BASE}"
 
@@ -72,5 +66,8 @@ ${BASE_GLOBALRC}
 poll_suite_stopped
 grep_ok 'Suite shutting down - REQUEST(CLEAN)' \
     "$(cylc cat-log "${SUITE_NAME}" -m p)"
+
+purge_suite "${SUITE_NAME}"
+purge_suite_platform "${CYLC_REMOTE_PLATFORM_WSFS}" "${SUITE_NAME}"
 
 exit

@@ -360,7 +360,9 @@ def main(parser, options, *args, color=False):
             except IndexError:
                 raise UserInputError(
                     "max rotation %d" % (len(logs) - 1))
-        tail_tmpl = os.path.expandvars(forward_lookup()["tail command template"])
+        tail_tmpl = os.path.expandvars(
+            forward_lookup()["tail command template"]
+        )
         out = view_log(logpath, mode, tail_tmpl, color=color)
         if out == 1:
             sys.exit(1)

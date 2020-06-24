@@ -20,18 +20,19 @@
 
 . "$(dirname "$0")/test_header"
 
-skip_all "TODO reinstate after remote-init fixed"
 
 skip_darwin 'atrun hard to configure on Mac OS'
 set_test_number 4
 
 create_test_globalrc "
 process pool timeout = PT10S
+" "
 [job platforms]
     [[unicorn]]
+        remote hosts = localhost
         batch system = at
-        batch submit command template = sleep 30
-" ""
+        batch submit command template = sleep 30"
+
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
@@ -47,9 +48,11 @@ cylc cat-log "${SUITE_NAME}" \
        | sed -e 's/^.* \(ERROR\)/\1/' > log
 
 SUITE_LOG_DIR=$(cylc cat-log -m p "${SUITE_NAME}")
+JOB_LOG_DIR="${SUITE_LOG_DIR%suite/log}"
+JOB_LOG_DIR=$(echo $JOB_LOG_DIR | sed "s#$HOME#\$HOME#")
 
 cmp_ok log <<__END__
-ERROR - [jobs-submit cmd] cylc jobs-submit --debug -- ${SUITE_LOG_DIR%suite/log}job 1/foo/01
+ERROR - [jobs-submit cmd] cylc jobs-submit --debug -- '${JOB_LOG_DIR}job' 1/foo/01
 	[jobs-submit ret_code] -9
 	[jobs-submit err] killed on timeout (PT10S)
 __END__

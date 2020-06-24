@@ -353,7 +353,6 @@ class BatchSysManager():
         """
         if "$" in job_log_root:
             job_log_root = os.path.expandvars(job_log_root)
-            LOG.debug(f"$HOME was removed from job_log_root is {job_log_root}")
         self.configure_suite_run_dir(job_log_root.rsplit(os.sep, 2)[0])
         if remote_mode:
             items = self._jobs_submit_prep_by_stdin(job_log_root, job_log_dirs)

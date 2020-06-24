@@ -520,8 +520,10 @@ purge_suite_platform() {
     HOST=$(echo "$HOSTS" | awk -F ',' '{print $1}')
     # CMD is part of this function
     # shellcheck disable=SC2029
-    ssh -n -oBatchMode=yes -oConnectTimeout=5 "${HOST}" "${CMD}" \
-        2>'/dev/null' || true
+    if [[ -z "${HOSTS}" ]]; then
+        ssh -n -oBatchMode=yes -oConnectTimeout=5 "${HOST}" "${CMD}" \
+            2>'/dev/null' || true
+    fi
 }
 
 purge_suite() {
@@ -716,24 +718,11 @@ create_test_globalrc() {
     if [[ -f "${SITE_TESTS_CONF_FILE}" ]]; then
         cat "${SITE_TESTS_CONF_FILE}" >>'etc/flow.rc'
     fi
-    # TODO: review comment: we shouldn't need a localhost platform right?
-    # TODO: review comment: defining a slurmtest platform here doesn't make much sense either
-    # Add some standard platforms to flowtext
-    cat <<__PLATFORMS__ >> 'etc/flow.rc'
-[job platforms]
-[[localhost]]
-  remote hosts = localhost
-  ssh command = ssh -oBatchMode=yes -oConnectTimeout=8 -oStrictHostKeyChecking=no
-[[slurmtest]]
-  remote hosts = localhost
-  batch system = slurm
-  ssh command = ssh -oBatchMode=yes -oConnectTimeout=8 -oStrictHostKeyChecking=no
-__PLATFORMS__
-    # (flow.rc items add-to or override earlier items)
     if [[ -f "${USER_TESTS_CONF_FILE}" ]]; then
         cat "${USER_TESTS_CONF_FILE}" >>'etc/flow.rc'
     fi
     echo "$POST" >>'etc/flow.rc'
+
     export CYLC_CONF_PATH="${PWD}/etc"
 }
 
@@ -753,6 +742,7 @@ require_remote_platform() {
         cylc get-global --item \
             "[job platforms][${CYLC_REMOTE_PLATFORM}]remote hosts" \
             | awk -F ',' '{print $1}'
+        2>/dev/null
     )"
     if [[ -z "${CYLC_TEST_HOST}" ]]; then
         skip_all '"[test battery]remote platform": not configured'
@@ -777,6 +767,7 @@ require_remote_platform_wsfs() {
         cylc get-global --item \
             "[job platforms][${CYLC_REMOTE_PLATFORM_WSFS}]remote hosts" \
             | awk -F ',' '{print $1}'
+        2>/dev/null
     )"
     if [[ -z "${CYLC_TEST_HOST_WSFS}" ]]; then
         skip_all '"[test battery]remote platform with shared fs": not configured'

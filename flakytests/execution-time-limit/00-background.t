@@ -18,22 +18,24 @@
 # Test execution time limit, background/at job
 . "$(dirname "$0")/test_header"
 
-skip_all "TODO re-write afterremote init sorted"
-
 set_test_number 4
 skip_darwin 'atrun hard to configure on Mac OS'
+
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 CYLC_TEST_BATCH_SYS=${TEST_NAME_BASE##??-}
 
+create_test_globalrc "" "
+[job platforms]
+[[hydra]]
+remote hosts = localhost
+batch system = ${CYLC_TEST_BATCH_SYS}
+"
+
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate \
-    -s "CYLC_TEST_BATCH_SYS=${CYLC_TEST_BATCH_SYS}" \
-    "${SUITE_NAME}"
+    cylc validate "${SUITE_NAME}"
 suite_run_fail "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug --no-detach \
-    -s "CYLC_TEST_BATCH_SYS=${CYLC_TEST_BATCH_SYS}" \
-    "${SUITE_NAME}"
+    cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
 
 LOGD="${RUN_DIR}/${SUITE_NAME}/log/job/1/foo"
 grep_ok '# Execution time limit: 5.0' "${LOGD}/01/job"

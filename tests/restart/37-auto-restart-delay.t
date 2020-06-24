@@ -17,13 +17,7 @@
 #-------------------------------------------------------------------------------
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-CYLC_TEST_HOST="$( \
-    cylc get-global-config -i '[test battery]remote platform with shared fs' \
-    2>'/dev/null')"
-if [[ -z "${CYLC_TEST_HOST}" ]]; then
-    skip_all '"[test battery]remote platform with shared fs": not defined'
-fi
-export CYLC_TEST_HOST
+require_remote_platform_wsfs
 set_test_number 6
 time_gt () {
     python3 -c "
@@ -72,7 +66,7 @@ poll_suite_running
 create_test_globalrc '' "
 ${BASE_GLOBALRC}
 [suite servers]
-    run hosts = ${CYLC_TEST_HOST}
+    run hosts = ${CYLC_TEST_HOST_WSFS}
     condemned hosts = $(hostname)
     auto restart delay = PT20S
 "
@@ -82,8 +76,8 @@ FILE=$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)
 log_scan "${TEST_NAME_BASE}-auto-restart" "${FILE}" 60 1 \
     'The Cylc suite host will soon become un-available' \
     'Suite will restart in' \
-    "Attempting to restart on \"${CYLC_TEST_HOST}\"" \
-    "Suite now running on \"${CYLC_TEST_HOST}\""
+    "Attempting to restart on \"${CYLC_TEST_HOST_WSFS}\"" \
+    "Suite now running on \"${CYLC_TEST_HOST_WSFS}\""
 
 # Extract scheduled restart time from the log.
 TIMES=$(grep --color=never 'Suite will restart in' "${FILE}" | \
@@ -115,5 +109,6 @@ fi
 cylc stop "${SUITE_NAME}" --now --now 2>/dev/null
 sleep 1
 purge_suite "${SUITE_NAME}"
+purge_suite_platform "${CYLC_REMOTE_PLATFORM_WSFS}" "${SUITE_NAME}"
 
 exit

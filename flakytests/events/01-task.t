@@ -18,7 +18,6 @@
 # Validate and run the task events suite.
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-skip_all "TODO fix after remote init fixed"
 set_test_number 3
 #-------------------------------------------------------------------------------
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"

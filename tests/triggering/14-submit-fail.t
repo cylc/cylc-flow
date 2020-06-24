@@ -18,7 +18,7 @@
 # Test submit-fail triggering
 . "$(dirname "$0")/test_header"
 set_test_number 2
-create_test_globalrc '
+create_test_globalrc '' '
 [job platforms]
     [[idontexist]]
         remote hosts = idontexist

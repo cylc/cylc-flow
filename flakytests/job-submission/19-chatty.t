@@ -20,14 +20,18 @@
 
 . "$(dirname "$0")/test_header"
 
-skip_all "@TODO fix after remote init sorted"
-
 skip_darwin 'atrun hard to configure on Mac OS'
 
 set_test_number 14
 
 create_test_globalrc "
-process pool timeout = PT10S" ""
+process pool timeout = PT10S" "
+[job platforms]
+[[griffin]]
+remote hosts = localhost
+batch system = at
+batch submit command template = talkingnonsense %(job)s
+"
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
