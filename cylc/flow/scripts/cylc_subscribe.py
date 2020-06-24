@@ -54,9 +54,8 @@ def get_option_parser():
     parser = COP(
         __doc__,
         argdoc=[
-            ('REG', 'Suite name'),
-            ('[USER_AT_HOST]', 'user@host:port, shorthand for --user, '
-             '--host & --port.')],
+            ('REG', 'Suite name')
+        ],
         comms=True,
         noforce=True
     )
@@ -83,28 +82,19 @@ def get_option_parser():
 def main(_, options, *args):
     suite = args[0]
 
-    if len(args) > 1:
-        try:
-            user_at_host, options.port = args[1].split(':')
-            options.owner, options.host = user_at_host.split('@')
-        except ValueError:
-            print(('USER_AT_HOST must take the form '
-                   '"user@host:port"'), file=sys.stderr)
-            sys.exit(1)
-    elif options.host is None or options.port is None:
-        try:
-            while True:
-                try:
-                    options.host, _, options.port = get_location(
-                        suite, options.owner, options.host)
-                except (ClientError, IOError, TypeError, ValueError):
-                    time.sleep(3)
-                    continue
-                break
-        except KeyboardInterrupt:
-            exit()
+    try:
+        while True:
+            try:
+                host, _, port = get_location(suite)
+            except (ClientError, IOError, TypeError, ValueError) as exc:
+                print(exc)
+                time.sleep(3)
+                continue
+            break
+    except KeyboardInterrupt:
+        sys.exit()
 
-    print(f'Connecting to tcp://{options.host}:{options.port}')
+    print(f'Connecting to tcp://{host}:{port}')
     topic_set = set()
     topic_set.add(b'shutdown')
     for topic in options.topics.split(','):
@@ -112,9 +102,10 @@ def main(_, options, *args):
 
     subscriber = WorkflowSubscriber(
         suite,
-        host=options.host,
-        port=options.port,
-        topics=topic_set)
+        host=host,
+        port=port,
+        topics=topic_set
+    )
 
     subscriber.loop.create_task(
         subscriber.subscribe(
@@ -131,8 +122,4 @@ def main(_, options, *args):
     except (KeyboardInterrupt, SystemExit):
         print('\nDisconnecting')
         subscriber.stop()
-        exit()
-
-
-if __name__ == '__main__':
-    main()
+        sys.exit()

@@ -48,9 +48,7 @@ def main(parser, options, suite, *task_globs):
         prompt('Poll task %s in %s' % (task_globs, suite), options.force)
     else:
         prompt('Poll ALL tasks in %s' % (suite), options.force)
-    pclient = SuiteRuntimeClient(
-        suite, options.owner, options.host, options.port,
-        options.comms_timeout)
+    pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
     pclient(
         'poll_tasks',
         {'tasks': task_globs, 'poll_succeeded': options.poll_succ}

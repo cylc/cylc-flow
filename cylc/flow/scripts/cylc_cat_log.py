@@ -47,10 +47,7 @@ Basic examples, for a task "bar.2020" in suite "foo":
     cylc cat-log -f o foo bar.2020
   Print task stderr:
     cylc cat-log -f e foo bar.2020
-
-Note the --host/user options are not needed to view remote job logs. They are
-the general command reinvocation options for sites using ssh-based task
-messaging."""
+"""
 
 import sys
 from cylc.flow.remote import remote_cylc_cmd, watch_and_kill
@@ -85,8 +82,8 @@ from cylc.flow.platforms import platform_from_name, get_host_from_platform
 
 # Immortal tail-follow processes on job hosts can be cleaned up by killing
 # my subprocesses if my PPID or PPPID changes (due to parent ssh connection
-# dying). This works even if cat-log is invoked with '--host' from a third
-# host, and even if the sshd-invoked "$(SHELL) -c <remote-command>" does not
+# dying). This works even if the sshd-invoked
+# "$(SHELL) -c <remote-command>" does not
 # exec <remote-command> (affects whether my parent process or I get inherited
 # by init).
 #

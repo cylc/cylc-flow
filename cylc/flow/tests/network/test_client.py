@@ -91,10 +91,7 @@ class TestSuiteRuntimeClient(CylcWorkflowTestCase):
             sleep(0.2)
         barrier.wait()
         sleep(0.5)
-        self.client = SuiteRuntimeClient(
-            self.scheduler.suite,
-            host=self.scheduler.host,
-            port=self.server.port)
+        self.client = SuiteRuntimeClient(self.scheduler.suite)
         sleep(0.5)
 
     def tearDown(self):

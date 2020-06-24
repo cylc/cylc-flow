@@ -59,10 +59,7 @@ def main(parser, options, suite, severity_str):
 
     prompt("Set logging level to %s in %s" % (severity_str, suite),
            options.force)
-    pclient = SuiteRuntimeClient(
-        suite, options.owner, options.host, options.port,
-        options.comms_timeout)
-
+    pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
     pclient('set_verbosity', {'level': severity})
 
 

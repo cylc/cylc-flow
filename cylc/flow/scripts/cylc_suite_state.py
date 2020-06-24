@@ -214,8 +214,7 @@ def main(parser, options, suite):
             options.status not in CylcSuiteDBChecker.STATE_ALIASES):
         raise UserInputError("invalid status '" + options.status + "'")
 
-    # this only runs locally (use of --host or --user results in remote
-    # re-invocation).
+    # this only runs locally
     run_dir = os.path.expandvars(
         os.path.expanduser(
             options.run_dir or platform_from_name()['run directory']

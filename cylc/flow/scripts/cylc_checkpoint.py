@@ -36,9 +36,7 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(_, options, suite, name):
-    pclient = SuiteRuntimeClient(
-        suite, options.owner, options.host, options.port,
-        options.comms_timeout)
+    pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
     pclient('take_checkpoints', {'name': name})
 
 

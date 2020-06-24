@@ -108,9 +108,7 @@ def main(parser, options, suite, shutdown_arg=None):
     if options.kill and options.now:
         parser.error("ERROR: --kill is not compatible with --now")
 
-    pclient = SuiteRuntimeClient(
-        suite, options.owner, options.host, options.port,
-        options.comms_timeout)
+    pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
 
     if int(options.max_polls) > 0:
         # (test to avoid the "nothing to do" warning for # --max-polls=0)

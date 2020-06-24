@@ -43,15 +43,12 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser, options, suite, task_id=None):
-    pclient = SuiteRuntimeClient(
-        suite, options.owner, options.host, options.port,
-        options.comms_timeout)
+    pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
 
     # cylc ping SUITE
     pclient('ping_suite')  # (no need to check the result)
     if cylc.flow.flags.verbose:
-        host, port = SuiteRuntimeClient.get_location(
-            suite, options.owner, options.host)
+        host, port = SuiteRuntimeClient.get_location(suite)
         sys.stdout.write("Running on %s:%s\n" % (host, port))
     if task_id is None:
         sys.exit(0)

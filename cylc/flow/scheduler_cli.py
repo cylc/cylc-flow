@@ -278,7 +278,7 @@ def scheduler_cli(parser, options, args, is_restart=False):
     key_setup(reg, platform=options.host)
 
     try:
-        suite_files.get_suite_source_dir(args[0], options.owner)
+        suite_files.get_suite_source_dir(args[0])
     except SuiteServiceFileError:
         # Source path is assumed to be the run directory
         suite_files.register(args[0], get_suite_run_dir(args[0]))

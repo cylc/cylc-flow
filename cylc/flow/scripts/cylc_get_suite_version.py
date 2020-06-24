@@ -32,9 +32,8 @@ def main():
     (options, args) = parser.parse_args()
     suite = args[0]
 
-    pclient = SuiteRuntimeClient(
-        suite, options.owner, options.host, options.port)
-    print(pclient('get_cylc_version', timeout=options.comms_timeout))
+    pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
+    print(pclient('get_cylc_version'))
 
 
 if __name__ == "__main__":

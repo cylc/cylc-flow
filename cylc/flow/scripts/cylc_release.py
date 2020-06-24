@@ -47,9 +47,7 @@ def main(parser, options, suite, *task_globs):
         prompt('Release task(s) %s in %s' % (task_globs, suite), options.force)
     else:
         prompt('Release suite %s' % suite, options.force)
-    pclient = SuiteRuntimeClient(
-        suite, options.owner, options.host, options.port,
-        options.comms_timeout)
+    pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
     if task_globs:
         pclient(
             'release_tasks',

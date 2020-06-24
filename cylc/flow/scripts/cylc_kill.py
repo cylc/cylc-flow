@@ -45,12 +45,10 @@ def main(parser, options, suite, *task_globs):
         prompt('Kill task %s in %s' % (task_globs, suite), options.force)
     else:
         prompt('Kill ALL tasks in %s' % (suite), options.force)
-    pclient = SuiteRuntimeClient(
-        suite, options.owner, options.host, options.port)
+    pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
     pclient(
         'kill_tasks',
-        {'tasks': task_globs},
-        timeout=options.comms_timeout
+        {'tasks': task_globs}
     )
 
 

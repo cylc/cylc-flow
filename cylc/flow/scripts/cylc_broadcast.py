@@ -255,9 +255,7 @@ def get_option_parser():
 @cli_function(get_option_parser)
 def main(_, options, suite):
     """Implement cylc broadcast."""
-    pclient = SuiteRuntimeClient(
-        suite, options.owner, options.host, options.port,
-        options.comms_timeout)
+    pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
 
     if options.show or options.showtask:
         if options.showtask:

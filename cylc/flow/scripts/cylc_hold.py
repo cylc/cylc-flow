@@ -57,25 +57,21 @@ def main(parser, options, suite, *task_globs):
     else:
         prompt('Hold suite %s' % suite, options.force)
 
-    pclient = SuiteRuntimeClient(
-        suite, options.owner, options.host, options.port)
+    pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
 
     if task_globs:
         pclient(
             'hold_tasks',
-            {'task_globs': task_globs},
-            timeout=options.comms_timeout
+            {'task_globs': task_globs}
         )
     elif options.hold_point_string:
         pclient(
             'hold_after_point_string',
-            {'point_string': options.hold_point_string},
-            timeout=options.comms_timeout
+            {'point_string': options.hold_point_string}
         )
     else:
         pclient(
-            'hold_suite',
-            timeout=options.comms_timeout
+            'hold_suite'
         )
 
 

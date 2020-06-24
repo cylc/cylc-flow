@@ -41,9 +41,7 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser, options, suite):
-    pclient = SuiteRuntimeClient(
-        suite, options.owner, options.host, options.port,
-        options.comms_timeout)
+    pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
 
     success, msg = pclient('nudge')
 

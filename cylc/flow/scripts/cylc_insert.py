@@ -61,14 +61,12 @@ def main(parser, options, suite, *items):
                 '"%s": invalid task ID (argument %d)' % (item, i + 1))
     prompt('Insert %s in %s' % (items, suite), options.force)
 
-    pclient = SuiteRuntimeClient(
-        suite, options.owner, options.host, options.port)
+    pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
 
     pclient(
         'insert_tasks',
         {'tasks': items, 'check_point': not options.no_check,
-         'stop_point': options.stop_point_string},
-        timeout=options.comms_timeout
+         'stop_point': options.stop_point_string}
     )
 
 

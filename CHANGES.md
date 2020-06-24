@@ -21,9 +21,22 @@ the cylc/cylc-ui repository (and see also cylc/cylc-uiserver).
 The User Guide and other documentation has been removed from the Python package
 to the cylc/cylc-doc repository.
 
-The commands `cylc-profile-battery`, `cylc-test-battery`, `cylc-license`
-have been removed, and `cylc graph` is only retained for text output
-used in tests (it will be re-implemented in the new web UI).
+The following obsolete commands have been removed:
+* `cylc-profile-battery`
+* `cylc-test-battery`
+* `cylc-license`
+* `cylc-jobscript`
+* `cylc-submit`
+
+The `cylc graph` command is only retained for text output (static graphing
+functionality will be re-implemented in the new UI framework).
+
+The following obsolete command line options have been removed:
+* `--host` (except for cylc run / restart)
+* `--owner`
+* `--port`
+* `--ssh-cylc`
+* `--no-login`
 
 The xtrigger examples were moved to a separate `cylc/cylc-xtriggers` project
 (see #3123).
@@ -32,6 +45,19 @@ Jinja filters were moved from its `Jinja2Filters` folder to within the `cylc`
 namespace, under `cylc.jinja.filters`.
 
 Cylc Review was also removed in this version.
+
+
+-------------------------------------------------------------------------------
+## __cylc-8.0a3 (2020-Q2?)__
+
+Fourth alpha release of Cylc 8.
+
+The following obsolete command line options have been removed:
+* `--host` (except for cylc run / restart)
+* `--owner`
+* `--port`
+* `--ssh-cylc`
+* `--no-login`
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0a2 (2019-Q4?)__

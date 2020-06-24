@@ -87,9 +87,7 @@ def main(parser, options, suite, *task_globs):
         options.state = ''
 
     prompt('Reset task(s) %s in %s' % (task_globs, suite), options.force)
-    pclient = SuiteRuntimeClient(
-        suite, options.owner, options.host, options.port,
-        options.comms_timeout)
+    pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
     pclient(
         'reset_task_states',
         {'tasks': task_globs, 'state': options.state,

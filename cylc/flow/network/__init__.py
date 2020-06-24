@@ -59,7 +59,7 @@ def decode_(message):
     return msg
 
 
-def get_location(suite: str, owner: str, host: str):
+def get_location(suite: str):
     """Extract host and port from a suite's contact file.
 
     NB: if it fails to load the suite contact file, it will exit.
@@ -78,10 +78,8 @@ def get_location(suite: str, owner: str, host: str):
     except SuiteServiceFileError:
         raise SuiteStopped(suite)
 
-    if not host:
-        host = contact[ContactFileFields.HOST]
+    host = contact[ContactFileFields.HOST]
     host = get_fqdn_by_host(host)
-
     port = int(contact[ContactFileFields.PORT])
     pub_port = int(contact[ContactFileFields.PUBLISH_PORT])
     return host, port, pub_port
