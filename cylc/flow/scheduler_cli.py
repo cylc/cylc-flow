@@ -266,6 +266,7 @@ def scheduler_cli(parser, options, args, is_restart=False):
     # Check whether a run host is explicitly specified, else select one.
     if not options.host:
         options.host = select_suite_host()[0]
+    if options.host:
         if is_remote_host(options.host):
             if is_restart:
                 base_cmd = ["restart"] + sys.argv[1:]
@@ -276,8 +277,6 @@ def scheduler_cli(parser, options, args, is_restart=False):
             return remote_cylc_cmd(base_cmd, host=options.host)
     # Create ZMQ keys
     key_setup(reg, platform=options.host)
-    if remrun(set_rel_local=True):  # State localhost as above.
-        sys.exit()
 
     try:
         suite_files.get_suite_source_dir(args[0], options.owner)
