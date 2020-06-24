@@ -18,6 +18,7 @@
 import os
 import cProfile
 import io
+from pathlib import Path
 import pstats
 
 import psutil
@@ -26,8 +27,9 @@ import psutil
 class Profiler(object):
     """Wrap cProfile, pstats, and memory logging, for performance profiling."""
 
-    def __init__(self, enabled=False):
+    def __init__(self, schd, enabled=False):
         """Initialize cProfile."""
+        self.schd = schd
         self.enabled = enabled
         if enabled:
             self.prof = cProfile.Profile()
@@ -49,7 +51,12 @@ class Profiler(object):
         stats = pstats.Stats(self.prof, stream=string_stream)
         stats.sort_stats('cumulative')
         stats.print_stats()
+        # dump to stdout
         print(string_stream.getvalue())
+        # write data file to suite log dir
+        self.prof.dump_stats(
+            Path(self.schd.suite_log_dir, 'profile.prof')
+        )
 
     def log_memory(self, message):
         """Print a message to standard out with the current memory usage."""
