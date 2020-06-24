@@ -98,7 +98,6 @@ def main(_, options, *args):
     # So for the moment generate an actual remote invocation command string for
     # "cylc --version".
 
-    # (save verbose flag as gets reset in remrun)
     verbose = cylc.flow.flags.verbose
 
     warn = {}

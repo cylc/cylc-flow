@@ -35,12 +35,6 @@ from cylc.flow.network.subscriber import WorkflowSubscriber, process_delta_msg
 from cylc.flow.terminal import cli_function
 from cylc.flow.data_store_mgr import DELTAS_MAP
 
-if '--use-ssh' in sys.argv[1:]:
-    sys.argv.remove('--use-ssh')
-    from cylc.flow.remote import remrun
-    if remrun():
-        sys.exit(0)
-
 
 def print_message(topic, data, subscriber=None, once=False):
     """Print protobuf message."""

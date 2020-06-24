@@ -39,13 +39,6 @@ reloaded).
 If the modified suite definition does not parse, failure to reload will
 be reported but no harm will be done to the running suite."""
 
-import sys
-if '--use-ssh' in sys.argv[1:]:
-    sys.argv.remove('--use-ssh')
-    from cylc.flow.remote import remrun
-    if remrun():
-        sys.exit(0)
-
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.terminal import prompt, cli_function

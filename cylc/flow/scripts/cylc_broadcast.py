@@ -72,12 +72,6 @@ Broadcast cannot change [runtime] inheritance.
 See also 'cylc reload' - reload a modified suite definition at run time."""
 import sys
 
-if '--use-ssh' in sys.argv[1:]:
-    sys.argv.remove('--use-ssh')
-    from cylc.flow.remote import remrun
-    if remrun():
-        sys.exit(0)
-
 import re
 
 from tempfile import NamedTemporaryFile

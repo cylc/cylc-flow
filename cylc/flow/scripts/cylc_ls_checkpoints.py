@@ -24,9 +24,6 @@ parameters, task pool and broadcast states in the suite runtime database.
 """
 
 import sys
-from cylc.flow.remote import remrun
-if remrun():
-    sys.exit(0)
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.pathutil import get_suite_run_pub_db_name

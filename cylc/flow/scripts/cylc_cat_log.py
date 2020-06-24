@@ -53,11 +53,7 @@ the general command reinvocation options for sites using ssh-based task
 messaging."""
 
 import sys
-from cylc.flow.remote import remrun, remote_cylc_cmd, watch_and_kill
-
-# Disallow remote re-invocation of edit mode (result: "ssh HOST vim <file>").
-if remrun(abort_if='edit', forward_x11=True):
-    sys.exit(0)
+from cylc.flow.remote import remote_cylc_cmd, watch_and_kill
 
 import os
 import shlex

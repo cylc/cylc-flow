@@ -22,11 +22,6 @@ If suite REG is running or TASK in suite REG is currently running,
 exit with success status, else exit with error status."""
 
 import sys
-if '--use-ssh' in sys.argv[1:]:
-    sys.argv.remove('--use-ssh')
-    from cylc.flow.remote import remrun
-    if remrun():
-        sys.exit(0)
 
 from ansimarkup import parse as cparse
 

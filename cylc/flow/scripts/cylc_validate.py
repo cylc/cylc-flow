@@ -23,20 +23,13 @@ Validate a suite definition.
 If the suite definition uses include-files reported line numbers
 will correspond to the inlined version seen by the parser; use
 'cylc view -i,--inline SUITE' for comparison."""
+from ansimarkup import parse as cparse
 import sys
 import textwrap
 
-from cylc.flow.remote import remrun
-
-if remrun():
-    sys.exit(0)
-
-from ansimarkup import parse as cparse
-
-import cylc.flow.flags
-
 from cylc.flow import LOG, __version__ as CYLC_VERSION
 from cylc.flow.config import SuiteConfig
+import cylc.flow.flags
 from cylc.flow.profiler import Profiler
 from cylc.flow.terminal import cli_function
 from cylc.flow.exceptions import (SuiteConfigError,

@@ -22,13 +22,6 @@ Interrogate running suite REG to find what version of cylc is running it.
 
 To find the version you've invoked at the command line see "cylc version"."""
 
-import sys
-if '--use-ssh' in sys.argv[1:]:
-    sys.argv.remove('--use-ssh')
-    from cylc.flow.remote import remrun
-    if remrun():
-        sys.exit(0)
-
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import SuiteRuntimeClient
 

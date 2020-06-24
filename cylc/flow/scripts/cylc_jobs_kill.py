@@ -22,8 +22,8 @@ systems. Invoke the relevant batch system commands to ask the batch systems to
 terminate the jobs.
 
 """
+from cylc.flow.batch_sys_manager import BatchSysManager
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.remote import remrun
 from cylc.flow.terminal import cli_function
 
 
@@ -42,10 +42,7 @@ def get_option_parser():
 @cli_function(get_option_parser)
 def main(parser, options, job_log_root, *job_log_dirs):
     """CLI main."""
-    if not remrun():
-        from cylc.flow.batch_sys_manager import BatchSysManager
-
-        BatchSysManager().jobs_kill(job_log_root, job_log_dirs)
+    BatchSysManager().jobs_kill(job_log_root, job_log_dirs)
 
 
 if __name__ == "__main__":

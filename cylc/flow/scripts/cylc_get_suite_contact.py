@@ -20,11 +20,6 @@
 
 Print contact information of running suite REG."""
 
-import sys
-from cylc.flow.remote import remrun
-if remrun():
-    sys.exit(0)
-
 from cylc.flow.exceptions import CylcError, SuiteServiceFileError
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.suite_files import load_contact_file

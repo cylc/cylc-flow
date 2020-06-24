@@ -25,11 +25,7 @@ Use the -n option if client function requires no keyword arguments.
 
 import json
 import sys
-if '--use-ssh' in sys.argv[1:]:
-    sys.argv.remove('--use-ssh')
-    from cylc.flow.remote import remrun
-    if remrun():
-        sys.exit(0)
+
 from google.protobuf.json_format import MessageToDict
 
 from cylc.flow.option_parsers import CylcOptionParser as COP

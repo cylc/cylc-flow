@@ -23,13 +23,6 @@ or above the chosen severity level will be logged; for example, if you
 choose WARNING, only warnings and critical messages will be logged."""
 
 from logging import CRITICAL, ERROR, WARNING, INFO, DEBUG
-import sys
-
-if '--use-ssh' in sys.argv[1:]:
-    sys.argv.remove('--use-ssh')
-    from cylc.flow.remote import remrun
-    if remrun():
-        sys.exit(0)
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import SuiteRuntimeClient

@@ -31,14 +31,11 @@ suite definition - so it will not report implicit default settings.
 
 For case insensitive matching use '(?i)PATTERN'."""
 
-import sys
-from cylc.flow.remote import remrun
-if remrun():
-    sys.exit(0)
-
+from collections import deque
 import os
 import re
-from collections import deque
+import sys
+
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.suite_files import parse_suite_arg
 from cylc.flow.terminal import cli_function

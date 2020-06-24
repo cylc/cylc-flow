@@ -50,11 +50,6 @@ import sqlite3
 import sys
 from time import sleep
 
-from cylc.flow.remote import remrun
-
-if remrun():
-    sys.exit(0)
-
 from cylc.flow.exceptions import CylcError, UserInputError
 import cylc.flow.flags
 from cylc.flow.option_parsers import CylcOptionParser as COP

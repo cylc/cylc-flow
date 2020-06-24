@@ -39,11 +39,6 @@ This command exits immediately unless --max-polls is greater than zero, in
 which case it polls to wait for suite shutdown."""
 
 import sys
-if '--use-ssh' in sys.argv[1:]:
-    sys.argv.remove('--use-ssh')
-    from cylc.flow.remote import remrun
-    if remrun():
-        sys.exit(0)
 
 from cylc.flow.command_polling import Poller
 from cylc.flow.exceptions import ClientError, ClientTimeout
