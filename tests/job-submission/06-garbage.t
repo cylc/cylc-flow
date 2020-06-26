@@ -26,7 +26,7 @@ else
 fi
 
 create_test_globalrc '
-[job platforms]
+[platforms]
     [[bad]]
         remote hosts = bad
 '

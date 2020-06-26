@@ -22,7 +22,7 @@ from shutil import rmtree
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
-from cylc.flow.platforms import forward_lookup
+from cylc.flow.platforms import platform_from_name
 
 
 def get_remote_suite_run_dir(platform, suite, *args):
@@ -50,7 +50,7 @@ def get_suite_run_dir(suite, *args):
     """Return local suite run directory, join any extra args."""
     return expandvars(
         os.path.join(
-            forward_lookup()['run directory'], suite, *args
+            platform_from_name()['run directory'], suite, *args
         )
     )
 
@@ -86,14 +86,14 @@ def get_suite_run_pub_db_name(suite):
 def get_suite_run_share_dir(suite, *args):
     """Return local suite work/share directory, join any extra args."""
     return expandvars(os.path.join(
-        forward_lookup()['work directory'], suite, 'share', *args
+        platform_from_name()['work directory'], suite, 'share', *args
     ))
 
 
 def get_suite_run_work_dir(suite, *args):
     """Return local suite work/work directory, join any extra args."""
     return expandvars(os.path.join(
-        forward_lookup()['work directory'], suite, 'work', *args
+        platform_from_name()['work directory'], suite, 'work', *args
     ))
 
 

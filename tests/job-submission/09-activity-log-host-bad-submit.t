@@ -24,7 +24,7 @@ require_remote_platform
 set_test_number 2
 
 create_test_globalrc '' "
-[job platforms]
+[platforms]
     [[${CYLC_REMOTE_PLATFORM}]]
         batch system = at
         batch submit command template = at non

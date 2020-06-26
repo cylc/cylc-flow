@@ -25,7 +25,7 @@ from unittest import mock
 
 import cylc.flow.flags
 from cylc.flow.job_file import JobFileWriter
-from cylc.flow.platforms import forward_lookup
+from cylc.flow.platforms import platform_from_name
 
 # List of tilde variable inputs
 # input value, expected output value
@@ -56,7 +56,7 @@ def fixture_get_platform():
         platforms dictionary.
     """
     def inner_func(custom_settings=None):
-        platform = forward_lookup()
+        platform = platform_from_name()
         if custom_settings is not None:
             platform.update(custom_settings)
         return platform
@@ -250,7 +250,7 @@ def test_write_directives(fixture_get_platform, job_conf: dict, expected: str):
 def test_traps_for_each_batch_system(batch_sys: str):
     """Test traps for each batch system"""
     # TODO create a fixture to automate platform creation.
-    platform = forward_lookup()
+    platform = platform_from_name()
     platform.update({
         "batch system": f"{batch_sys}",
         "owner": "me"

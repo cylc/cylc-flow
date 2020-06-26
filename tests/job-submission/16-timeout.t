@@ -27,7 +27,7 @@ set_test_number 4
 create_test_globalrc "
 process pool timeout = PT10S
 " "
-[job platforms]
+[platforms]
     [[unicorn]]
         remote hosts = localhost
         batch system = at
@@ -49,7 +49,7 @@ cylc cat-log "${SUITE_NAME}" \
 
 SUITE_LOG_DIR=$(cylc cat-log -m p "${SUITE_NAME}")
 JOB_LOG_DIR="${SUITE_LOG_DIR%suite/log}"
-JOB_LOG_DIR=$(echo $JOB_LOG_DIR | sed "s#$HOME#\$HOME#")
+JOB_LOG_DIR=$(echo "$JOB_LOG_DIR" | sed "s#$HOME#\$HOME#")
 
 cmp_ok log <<__END__
 ERROR - [jobs-submit cmd] cylc jobs-submit --debug -- '${JOB_LOG_DIR}job' 1/foo/01

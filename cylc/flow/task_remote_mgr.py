@@ -46,7 +46,7 @@ from cylc.flow.suite_files import (
     get_contact_file)
 from cylc.flow.task_remote_cmd import (
     FILE_BASE_UUID, REMOTE_INIT_DONE, REMOTE_INIT_NOT_REQUIRED)
-from cylc.flow.platforms import forward_lookup, get_host_from_platform
+from cylc.flow.platforms import platform_from_name, get_host_from_platform
 from cylc.flow.remote import construct_platform_ssh_cmd
 
 
@@ -129,7 +129,7 @@ class TaskRemoteMgr(object):
             if value is not None:
                 del self.remote_host_str_map[key]
 
-    def remote_init(self, platform, curve_auth, client_pub_key_dir):
+    def remote_init(self, platform_name, curve_auth, client_pub_key_dir):
         """Initialise a remote [owner@]host if necessary.
 
         Create UUID file on a platform ".service/uuid" for remotes to identify
@@ -156,7 +156,7 @@ class TaskRemoteMgr(object):
 
         """
         # get the platform from the platform_name
-        platform = forward_lookup(platform_name)
+        platform = platform_from_name(platform_name)
 
         # If task is running locally we can skip the rest of this function
         if self.single_task_mode or not is_remote_platform(platform):
@@ -219,7 +219,7 @@ class TaskRemoteMgr(object):
                 cmd,
                 stdin_files=[tmphandle]),
             self._remote_init_callback,
-            [host, owner, tmphandle, self.suite,
+            [host, owner, platform, tmphandle,
              curve_auth, client_pub_key_dir])
         # None status: Waiting for command to finish
         self.remote_init_map[platform['name']] = None
@@ -245,7 +245,7 @@ class TaskRemoteMgr(object):
         # Issue all SSH commands in parallel
         procs = {}
         for platform, init_with_contact in self.remote_init_map.items():
-            platform = forward_lookup(platform)
+            platform = platform_from_name(platform)
             host = get_host_from_platform(platform)
             owner = platform['owner']
             if init_with_contact != REMOTE_INIT_DONE:
@@ -301,19 +301,10 @@ class TaskRemoteMgr(object):
                 TaskRemoteMgmtError.MSG_SELECT, (cmd_str, None), cmd_str,
                 proc_ctx.ret_code, proc_ctx.out, proc_ctx.err)
 
-<<<<<<< HEAD
-<<<<<<< HEAD
     def _remote_init_callback(
-            self, proc_ctx, host, owner, tmphandle,
-            suite, curve_auth, client_pub_key_dir):
-=======
-    def _remote_init_callback(self, proc_ctx, host, owner, platform, tmphandle):
->>>>>>> remote init and tidy working with platforms
-=======
-    def _remote_init_callback(
-        self, proc_ctx, host, owner, platform, tmphandle
+        self, proc_ctx, host, owner, platform, tmphandle,
+        curve_auth, client_pub_key_dir
     ):
->>>>>>> tidying up remote and task_remote_mgr to remove dead code and add comments
         """Callback when "cylc remote-init" exits"""
         self.ready = True
         try:
@@ -325,7 +316,7 @@ class TaskRemoteMgr(object):
                 regex_result = re.search(
                     'KEYSTART((.|\n|\r)*)KEYEND', proc_ctx.out)
                 key = regex_result.group(1)
-                suite_srv_dir = get_suite_srv_dir(suite)
+                suite_srv_dir = get_suite_srv_dir(self.suite)
                 public_key = KeyInfo(
                     KeyType.PUBLIC,
                     KeyOwner.CLIENT,

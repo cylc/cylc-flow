@@ -41,7 +41,7 @@ from cylc.flow.pathutil import (
 def test_get_suite_run_dir(monkeypatch):
     monkeypatch.setattr(
         cylc.flow.platforms,
-        "forward_lookup", lambda: {'run directory': '$HOME/cylc-run'}
+        "platform_from_name", lambda: {'run directory': '$HOME/cylc-run'}
     )
     homedir = os.getenv("HOME")
     assert get_suite_run_dir('joe') == f'{homedir}/cylc-run/joe'

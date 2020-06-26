@@ -22,7 +22,7 @@ set_test_number 3
 #-------------------------------------------------------------------------------
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 create_test_globalrc '
-[job platforms]
+[platforms]
     [[test platform]]
         remote hosts = NOHOST.NODOMAIN
 '

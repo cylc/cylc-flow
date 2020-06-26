@@ -26,7 +26,7 @@ from cylc.flow.rundb import CylcSuiteDAO
 
 
 GLOBALRC = """
-[job platforms]
+[platforms]
     [[desktop[0-9]{2}|laptop[0-9]{2}]]
         # hosts = platform name (default)
         # Note: "desktop01" and "desktop02" are both valid and distinct

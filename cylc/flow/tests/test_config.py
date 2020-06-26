@@ -97,7 +97,7 @@ class TestSuiteConfig(object):
         mock_glbl_cfg(
             'cylc.flow.platforms.glbl_cfg',
             '''
-            [job platforms]
+            [platforms]
                 [[localhost]]
                     remote hosts = localhost
             '''
@@ -130,7 +130,7 @@ class TestSuiteConfig(object):
         mock_glbl_cfg(
             'cylc.flow.platforms.glbl_cfg',
             '''
-            [job platforms]
+            [platforms]
                 [[localhost]]
                     remote hosts = localhost
             '''
@@ -163,7 +163,7 @@ class TestSuiteConfig(object):
         mock_glbl_cfg(
             'cylc.flow.platforms.glbl_cfg',
             '''
-            [job platforms]
+            [platforms]
                 [[localhost]]
                     remote hosts = localhost
             '''
@@ -196,7 +196,7 @@ class TestSuiteConfig(object):
         mock_glbl_cfg(
             'cylc.flow.platforms.glbl_cfg',
             '''
-            [job platforms]
+            [platforms]
                 [[localhost]]
                     remote hosts = localhost
             '''
@@ -237,7 +237,7 @@ class TestSuiteConfig(object):
         mock_glbl_cfg(
             'cylc.flow.platforms.glbl_cfg',
             '''
-            [job platforms]
+            [platforms]
                 [[localhost]]
                     remote hosts = localhost
             '''

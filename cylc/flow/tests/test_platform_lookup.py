@@ -17,7 +17,7 @@
 # Tests for the platform lookup.
 
 import pytest
-from cylc.flow.platforms import forward_lookup, reverse_lookup
+from cylc.flow.platforms import platform_from_name, platform_from_job_info
 from cylc.flow.exceptions import PlatformLookupError
 
 PLATFORMS = {
@@ -114,7 +114,7 @@ PLATFORMS_WITH_RE = {
     ],
 )
 def test_basic(PLATFORMS, platform, expected):
-    platform = forward_lookup(platform_name=platform, platforms=PLATFORMS)
+    platform = platform_from_name(platform_name=platform, platforms=PLATFORMS)
     if isinstance(expected, dict):
         assert platform == expected
     else:
@@ -123,12 +123,12 @@ def test_basic(PLATFORMS, platform, expected):
 
 def test_platform_not_there():
     with pytest.raises(PlatformLookupError):
-        forward_lookup('moooo', PLATFORMS)
+        platform_from_name('moooo', PLATFORMS)
 
 
 def test_similar_but_not_exact_match():
     with pytest.raises(PlatformLookupError):
-        forward_lookup('vld1', PLATFORMS_WITH_RE)
+        platform_from_name('vld1', PLATFORMS_WITH_RE)
 
 
 # Basic tests that we can select sensible platforms
@@ -172,8 +172,8 @@ def test_similar_but_not_exact_match():
         ),
     ]
 )
-def test_reverse_lookup_basic(job, remote, returns):
-    assert reverse_lookup(PLATFORMS, job, remote) == returns
+def test_platform_from_job_info_basic(job, remote, returns):
+    assert platform_from_job_info(PLATFORMS, job, remote) == returns
 
 
 # Cases where the error ought to be raised because no matching platform should
@@ -200,7 +200,7 @@ def test_reverse_lookup_basic(job, remote, returns):
 )
 def test_reverse_PlatformLookupError(job, remote):
     with pytest.raises(PlatformLookupError):
-        reverse_lookup(PLATFORMS, job, remote)
+        platform_from_job_info(PLATFORMS, job, remote)
 
 
 # An example of a global config with two Spice systems available
@@ -224,7 +224,7 @@ def test_reverse_PlatformLookupError(job, remote):
         )
     ]
 )
-def test_reverse_lookup_two_spices(
+def test_platform_from_job_info_two_spices(
     job, remote, returns
 ):
     platforms = {
@@ -238,7 +238,7 @@ def test_reverse_lookup_two_spices(
         },
 
     }
-    assert reverse_lookup(platforms, job, remote) == returns
+    assert platform_from_job_info(platforms, job, remote) == returns
 
 
 # An example of two platforms with the same hosts and batch system settings
@@ -264,7 +264,7 @@ def test_reverse_lookup_two_spices(
         ),
     ]
 )
-def test_reverse_lookup_similar_platforms(
+def test_platform_from_job_info_similar_platforms(
     job, remote, returns
 ):
     platforms = {
@@ -285,4 +285,4 @@ def test_reverse_lookup_similar_platforms(
             'batch system': 'background'
         },
     }
-    assert reverse_lookup(platforms, job, remote) == returns
+    assert platform_from_job_info(platforms, job, remote) == returns

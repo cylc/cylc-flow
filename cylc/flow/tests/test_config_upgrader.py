@@ -102,10 +102,10 @@ FUNC_SUITERC = """
         # => job submission failure (no matching platform)
 """
 
-# A global rc file (job platforms section) defining platforms which look a bit
+# A global rc file (platforms section) defining platforms which look a bit
 # like those on a major Cylc user site.
 GLOBALRC = """
-[job platforms]
+[platforms]
     [[desktop[0-9]{2}|laptop[0-9]{2}]]
         # hosts = platform name (default)
         # Note: "desktop01" and "desktop02" are both valid and distinct

@@ -24,7 +24,7 @@ require_remote_platform
 set_test_number 7
 
 create_test_globalrc "" "
-[job platforms]
+[platforms]
    [[${CYLC_REMOTE_PLATFORM}]]
        retrieve job logs = True"
 install_suite "${TEST_NAME_BASE}" remote-simple

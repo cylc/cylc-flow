@@ -204,8 +204,8 @@ with Conf('flow.rc', desc='''
                 emacs
         ''')
 
-    # job platforms
-    with Conf('job platforms'):
+    # platforms
+    with Conf('platforms'):
         with Conf('<platform name>') as Platform:
             Conf('batch system', VDR.V_STRING, 'background')
             Conf('batch submit command template', VDR.V_STRING)

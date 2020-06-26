@@ -26,7 +26,7 @@ class PBSHandler(object):
     # PBS fails a job submit if job "name" in "-N name" is too long.
     # For version 12 or below, this is 15 characters.
     # You can modify this in the site/user `global.cfg` like this
-    # [job platforms]
+    # [platforms]
     #     [[the-name-of-my-pbs-platform]]
     #         batch system = pbs
     #         job name length maximum = 15

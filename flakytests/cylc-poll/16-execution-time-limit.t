@@ -20,7 +20,7 @@
 #-------------------------------------------------------------------------------
 set_test_number 4
 create_test_globalrc '
-[job platforms]
+[platforms]
    [[localhost]]
         task communication method = poll
         submission polling intervals = PT2S

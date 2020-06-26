@@ -63,7 +63,7 @@ from cylc.flow.command_polling import Poller
 from cylc.flow.task_state import TASK_STATUSES_ORDERED
 from cylc.flow.terminal import cli_function
 from cylc.flow.cycling.util import add_offset
-from cylc.flow.platforms import forward_lookup
+from cylc.flow.platforms import platform_from_name
 
 from metomi.isodatetime.parsers import TimePointParser
 
@@ -223,7 +223,7 @@ def main(parser, options, suite):
     # re-invocation).
     run_dir = os.path.expandvars(
         os.path.expanduser(
-            options.run_dir or forward_lookup()['run directory']
+            options.run_dir or platform_from_name()['run directory']
         )
     )
 

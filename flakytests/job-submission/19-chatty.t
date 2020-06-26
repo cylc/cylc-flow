@@ -26,7 +26,7 @@ set_test_number 14
 
 create_test_globalrc "
 process pool timeout = PT10S" "
-[job platforms]
+[platforms]
 [[griffin]]
 remote hosts = localhost
 batch system = at

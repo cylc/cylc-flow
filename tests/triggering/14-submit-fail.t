@@ -19,7 +19,7 @@
 . "$(dirname "$0")/test_header"
 set_test_number 2
 create_test_globalrc '' '
-[job platforms]
+[platforms]
     [[idontexist]]
         remote hosts = idontexist
 '

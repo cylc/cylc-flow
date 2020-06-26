@@ -19,7 +19,7 @@
 from metomi.isodatetime.timezone import get_local_time_zone
 
 import cylc.flow.cycling.iso8601
-from cylc.flow.platforms import forward_lookup
+from cylc.flow.platforms import platform_from_name
 from cylc.flow.exceptions import TaskProxySequenceBoundsError
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_state import (
@@ -229,7 +229,7 @@ class TaskProxy(object):
 
         self.local_job_file_path = None
 
-        self.platform = forward_lookup('localhost')
+        self.platform = platform_from_name('localhost')
         self.task_owner = None
 
         self.job_vacated = False

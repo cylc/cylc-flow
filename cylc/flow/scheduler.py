@@ -98,7 +98,7 @@ from cylc.flow.wallclock import (
     get_time_string_from_unix_time as time2str,
     get_utc_mode)
 from cylc.flow.xtrigger_mgr import XtriggerManager
-from cylc.flow.platforms import forward_lookup
+from cylc.flow.platforms import platform_from_name
 
 
 class SchedulerStop(CylcError):
@@ -626,15 +626,13 @@ see `COPYING' in the Cylc source distribution.
             for platform_name in auths.copy():
                 if (
                     self.task_job_mgr.task_remote_mgr.remote_init(
-                        platform_nameself.curve_auth,
+                        platform_name, self.curve_auth,
                         self.client_pub_key_dir
                     )
                     is not None
                 ):
                     auths.remove(
-                        platform_name,
-                        self.curve_auth,
-                        self.client_pub_key_dir
+                        platform_name
                     )
             if auths:
                 sleep(1.0)
@@ -1137,7 +1135,7 @@ see `COPYING' in the Cylc source distribution.
             fields.PUBLISH_PORT:
                 str(self.publisher.port),
             fields.SSH_USE_LOGIN_SHELL:
-                str(forward_lookup()['use login shell']),
+                str(platform_from_name()['use login shell']),
             fields.SUITE_RUN_DIR_ON_SUITE_HOST:
                 self.suite_run_dir,
             fields.UUID:

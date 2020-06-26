@@ -32,7 +32,7 @@ from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flow.flags
 from cylc.flow.hostuserutil import is_remote
 from cylc.flow import __version__ as CYLC_VERSION
-from cylc.flow.platforms import forward_lookup, get_host_from_platform
+from cylc.flow.platforms import platform_from_name, get_host_from_platform
 
 
 def get_proc_ancestors():
@@ -192,7 +192,7 @@ def construct_ssh_cmd(
     """
     # If ssh cmd isn't given use the default from localhost settings.
     if ssh_cmd is None:
-        command = shlex.split(forward_lookup()['ssh command'])
+        command = shlex.split(platform_from_name()['ssh command'])
     else:
         command = shlex.split(ssh_cmd)
 

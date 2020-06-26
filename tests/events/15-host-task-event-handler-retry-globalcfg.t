@@ -22,7 +22,7 @@ require_remote_platform
 set_test_number 4
 
 create_test_globalrc "" "
-[job platforms]
+[platforms]
     [[${CYLC_REMOTE_PLATFORM}]]
         task event handler retry delays=3*PT1S
 [task events]

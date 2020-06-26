@@ -131,7 +131,6 @@ from cylc.flow.task_job_logs import (
 from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.wallclock import get_current_time_string
 from cylc.flow.parsec.OrderedDict import OrderedDict
-from cylc.flow import LOG
 
 
 class JobPollContext():

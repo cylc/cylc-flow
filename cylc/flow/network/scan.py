@@ -28,7 +28,7 @@ import cylc.flow.flags
 from cylc.flow.hostuserutil import is_remote_host, get_host_ip_by_name
 from cylc.flow.network.client import (
     SuiteRuntimeClient, ClientError, ClientTimeout)
-from cylc.flow.platforms import forward_lookup
+from cylc.flow.platforms import platform_from_name
 from cylc.flow.suite_files import (
     ContactFileFields,
     SuiteFiles,
@@ -238,7 +238,7 @@ def get_scan_items_from_fs(
     if owner_pattern is None:
         # Run directory of current user only
         run_dirs = [
-            (os.path.expandvars(forward_lookup()['run directory']), None)
+            (os.path.expandvars(platform_from_name()['run directory']), None)
         ]
     else:
         # Run directory of all users matching "owner_pattern".
@@ -251,7 +251,9 @@ def get_scan_items_from_fs(
             if owner_pattern.match(pwent.pw_name):
                 run_dirs.append(
                     (
-                        os.path.expandvars(forward_lookup()['run directory']),
+                        os.path.expandvars(
+                            platform_from_name()['run directory']
+                        ),
                         None
                     )
                 )

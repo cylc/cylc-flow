@@ -23,7 +23,7 @@ require_remote_platform
 set_test_number 4
 OPT_SET=
 create_test_globalrc "" "
-    [job platforms]
+    [platforms]
         [[${CYLC_REMOTE_PLATFORM}]]
             retrieve job logs = True
             retrieve job logs retry delays = PT5S

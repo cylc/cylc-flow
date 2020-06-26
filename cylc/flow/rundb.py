@@ -23,7 +23,7 @@ from os.path import expandvars
 from cylc.flow import LOG
 import cylc.flow.flags
 from cylc.flow.wallclock import get_current_time_string
-from cylc.flow.platforms import reverse_lookup
+from cylc.flow.platforms import platform_from_job_info
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 
 
@@ -1015,7 +1015,7 @@ class CylcSuiteDAO(object):
                     platform_name TEXT
             '''
         )
-        job_platforms = glbl_cfg(cached=False).get(['job platforms'])
+        job_platforms = glbl_cfg(cached=False).get(['platforms'])
         for cycle, name, user_at_host, batch_system in conn.execute(rf'''
                 SELECT
                     cycle, name, user_at_host, batch_system
@@ -1029,7 +1029,7 @@ class CylcSuiteDAO(object):
             else:
                 user = ''
                 host = user_at_host
-            platform = reverse_lookup(
+            platform = platform_from_job_info(
                 job_platforms,
                 {'batch system': batch_system},
                 {'host': host}

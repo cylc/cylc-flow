@@ -21,7 +21,7 @@
 set_test_number 3
 
 create_test_globalrc '
-[job platforms]
+[platforms]
     [[badhost]]
         remote hosts = rubbish
 '

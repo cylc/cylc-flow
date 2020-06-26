@@ -21,7 +21,7 @@ skip_all "TODO replace this test with one checking that garbage-platform command
 set_test_number 2
 
 create_test_globalrc "
-[job platforms]
+[platforms]
     [[test platform]]
         remote hosts = $(my-host-select)
 "

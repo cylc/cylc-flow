@@ -26,7 +26,7 @@ from cylc.flow.parsec.config import ParsecConfig, ConfigNode as Conf
 from cylc.flow.parsec.upgrade import upgrader
 from cylc.flow.parsec.validate import (
     DurationFloat, CylcConfigValidator as VDR, cylc_config_validate)
-from cylc.flow.platforms import reverse_lookup
+from cylc.flow.platforms import platform_from_job_info
 from cylc.flow.exceptions import PlatformLookupError
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 
@@ -1303,8 +1303,8 @@ def host_to_platform_upgrader(cfg):
               |               +-------+      |  |                          |
               |                       |      |  +--------------------------+
     +---------v---------------------+ |      |
-    | Fail Loudly                   | |    +-v-----------------------------+
-    +-------------------------------+ |    | * Run reverse_lookup()        |
+    | FAIL LOUDLY                   | |    +-v-----------------------------+
+    +-------------------------------+ |    | * Run platform_from_job_info()|
                                       |    | * handle reverse lookup fail  |
                                       |    | * add platform                |
                                       |    | * delete forbidden settings   |
@@ -1376,8 +1376,8 @@ def host_to_platform_upgrader(cfg):
 
             # Attempt to use the reverse lookup
             try:
-                platform = reverse_lookup(
-                    glbl_cfg(cached=False).get(['job platforms']),
+                platform = platform_from_job_info(
+                    glbl_cfg(cached=False).get(['platforms']),
                     task_spec_job,
                     task_spec_remote
                 )

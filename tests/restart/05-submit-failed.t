@@ -24,7 +24,7 @@ skip_darwin 'atrun hard to configure on Mac OS'
 set_test_number 7
 #-------------------------------------------------------------------------------
 create_test_globalrc '
-[job platforms]
+[platforms]
 [[test platform]]
 remote hosts = localhost
 batch system = at

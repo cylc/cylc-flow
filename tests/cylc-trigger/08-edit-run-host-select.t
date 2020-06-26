@@ -29,7 +29,7 @@ run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 create_test_globalrc '' "
 [editors]
     terminal = my-edit
-[job platforms]
+[platforms]
     [[localhost]]
         remote hosts = $(echo localhost)
 "

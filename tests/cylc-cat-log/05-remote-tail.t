@@ -28,7 +28,7 @@ SCP='scp -oBatchMode=yes -oConnectTimeout=5'
 $SSH -n "${CYLC_REMOTE_PLATFORM}" "mkdir -p cylc-run/.bin"
 # shellcheck disable=SC2016
 create_test_globalrc "" "
-[job platforms]
+[platforms]
    [[$CYLC_REMOTE_PLATFORM]]
         tail command template = \$HOME/cylc-run/.bin/my-tailer.sh %(filename)s"
 #-------------------------------------------------------------------------------

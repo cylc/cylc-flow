@@ -36,7 +36,7 @@ export CYLC_TEST_HOST CYLC_TEST_DIRECTIVES
 set_test_number 2
 
 create_test_globalrc "" "
-[job platforms]
+[platforms]
     [[${CYLC_TEST_HOST}]]
         [[[batch systems]]]
             [[[[pbs]]]]

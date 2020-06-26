@@ -23,13 +23,13 @@ from cylc.flow.exceptions import PlatformLookupError
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 
 
-def forward_lookup(platform_name=None, platforms=None):
+def platform_from_name(platform_name=None, platforms=None):
     """
     Find out which job platform to use given a list of possible platforms and
     a task platform string.
 
     Verifies selected platform is present in global.rc file and returns it,
-    raises error if platfrom is not in global.rc or returns 'localhost' if
+    raises error if platform is not in global.rc or returns 'localhost' if
     no platform is initally selected.
 
     Args:
@@ -48,7 +48,7 @@ def forward_lookup(platform_name=None, platforms=None):
         - Work out what to do with cases where localhost not set.
     """
     if platforms is None:
-        platforms = glbl_cfg().get(['job platforms'])
+        platforms = glbl_cfg().get(['platforms'])
 
     if platform_name is None:
         platform_data = deepcopy(platforms['localhost'])
@@ -73,7 +73,7 @@ def forward_lookup(platform_name=None, platforms=None):
         f"No matching platform \"{platform_name}\" found")
 
 
-def reverse_lookup(platforms, job, remote):
+def platform_from_job_info(platforms, job, remote):
     """
     Find out which job platform to use given a list of possible platforms
     and the task dictionary with cylc 7 definitions in it.
@@ -126,10 +126,10 @@ def reverse_lookup(platforms, job, remote):
         remote (dict):
             Suite config [runtime][TASK][remote] section
         platforms (dict):
-            Dictionary containing platfrom definitions.
+            Dictionary containing platform definitions.
 
     Returns:
-        platfrom (str):
+        platform (str):
             string representing a platform from the global config.
 
     Raises:
@@ -146,10 +146,10 @@ def reverse_lookup(platforms, job, remote):
         ... }
         >>> job = {'batch system': 'slurm'}
         >>> remote = {'host': 'sugar'}
-        >>> reverse_lookup(platforms, job, remote)
+        >>> platform_from_job_info(platforms, job, remote)
         'sugar'
         >>> remote = {}
-        >>> reverse_lookup(platforms, job, remote)
+        >>> platform_from_job_info(platforms, job, remote)
         'localhost'
     """
     # These settings are removed from the incoming dictionaries for special

@@ -52,7 +52,7 @@ from cylc.flow.task_job_logs import (
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED,
     TASK_OUTPUT_FAILED)
-from cylc.flow.platforms import forward_lookup, get_host_from_platform
+from cylc.flow.platforms import platform_from_name, get_host_from_platform
 from cylc.flow.task_remote_mgr import (
     REMOTE_INIT_FAILED, TaskRemoteMgr)
 from cylc.flow.task_state import (
@@ -701,7 +701,7 @@ class TaskJobManager(object):
 
         # Go through each list of itasks and carry out commands as required.
         for (platform_n, host, owner), itasks in sorted(auth_itasks.items()):
-            platform = forward_lookup(platform_n)
+            platform = platform_from_name(platform_n)
             if is_remote_host(platform['remote hosts'][0]):
                 remote_mode = True
                 cmd = [cmd_key]
@@ -728,8 +728,7 @@ class TaskJobManager(object):
         if rtconfig is None:
             rtconfig = itask.tdef.rtconfig
         try:
-            no_retry = (
-                rtconfig[itask.tdef.run_mode + ' mode']['disable retries'])
+            _ = rtconfig[itask.tdef.run_mode + ' mode']['disable retries']
         except KeyError:
             retry = True
         if retry:
@@ -838,7 +837,7 @@ class TaskJobManager(object):
         # By forward lookup - later you need to re-add logic for
         # Dealing with platform = ``$(echo xcel00)``
         # try:
-        platform = forward_lookup(rtconfig['platform'])
+        platform = platform_from_name(rtconfig['platform'])
         # @TODO rm after platforms complete - kept for reference
         # task_host = self.task_remote_mgr.remote_host_select(
         #     rtconfig['remote']['host'])

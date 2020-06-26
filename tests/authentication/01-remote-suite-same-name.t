@@ -30,10 +30,10 @@ SSH_OPTS='-oBatchMode=yes -oConnectTimeout=5'
 # shellcheck disable=SC2029,SC2086
 ssh ${SSH_OPTS} "${CYLC_TEST_HOST}" mkdir -p "cylc-run/${SUITE_NAME}"
 # shellcheck disable=SC2086
-scp ${SSH_OPTS} -pqr "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/"* \
+scp "${SSH_OPTS}" -pqr "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/"* \
     "${CYLC_TEST_HOST}:cylc-run/${SUITE_NAME}"
 run_ok "${TEST_NAME_BASE}-register" \
-    ssh ${SSH_OPTS} "${CYLC_TEST_HOST}" \
+    ssh "${SSH_OPTS}" "${CYLC_TEST_HOST}" \
     cylc register "${SUITE_NAME}" "cylc-run/${SUITE_NAME}"
 
 suite_run_ok "${TEST_NAME_BASE}" \
