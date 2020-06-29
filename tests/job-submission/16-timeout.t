@@ -49,7 +49,7 @@ cylc cat-log "${SUITE_NAME}" \
 
 SUITE_LOG_DIR=$(cylc cat-log -m p "${SUITE_NAME}")
 JOB_LOG_DIR="${SUITE_LOG_DIR%suite/log}"
-JOB_LOG_DIR=$(echo "$JOB_LOG_DIR" | sed "s#$HOME#\$HOME#")
+JOB_LOG_DIR="${JOB_LOG_DIR/$HOME/\$HOME}"
 
 cmp_ok log <<__END__
 ERROR - [jobs-submit cmd] cylc jobs-submit --debug -- '${JOB_LOG_DIR}job' 1/foo/01

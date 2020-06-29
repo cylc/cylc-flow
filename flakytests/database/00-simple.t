@@ -74,7 +74,7 @@ sqlite3 "${DB_FILE}" \
 for DATE_TIME_STR in $(sed 's/[|]/ /g' "${NAME}"); do
     # Parse each string with "date --date=..." without the T
     run_ok "${NAME}-${DATE_TIME_STR}" \
-        date --date="$(sed 's/T/ /' <<<"${DATE_TIME_STR}")"
+        date --date="${DATE_TIME_STR/T/ }"
 done
 
 NAME='select-task-pool.out'
