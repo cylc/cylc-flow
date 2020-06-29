@@ -73,11 +73,11 @@ main () {
 
 # default configuration for linting cylc
 default () {
-    # run a strict check on all "functional" scripts
+    # run a strict check on all scripts
     main '.' \
         --exclude 'etc/bin/live-graph-movie.sh' \
         --exclude 'tests/jobscript/00-torture/foo.ref-jobfile' \
-        -- -e SC1090
+        -- -e SC1090 -S info
 }
 
 if [[ $# -gt 0 ]]; then
