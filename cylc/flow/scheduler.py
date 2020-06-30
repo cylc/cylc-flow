@@ -389,7 +389,7 @@ class Scheduler:
             suite_share_dir=self.suite_share_dir,
             suite_source_dir=self.suite_dir)
 
-        self.profiler = Profiler(self.options.profile_mode)
+        self.profiler = Profiler(self, self.options.profile_mode)
 
     async def configure(self):
         """Configure the scheduler.
