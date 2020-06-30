@@ -226,7 +226,7 @@ with Conf('flow.rc', desc='''
                    /nfs/data/$USER/cylc-run
             ''')
             Conf('suite definition directory', VDR.V_STRING)
-            Conf('task communication method',
+            Conf('communication method',
                  VDR.V_STRING, 'zmq', options=['zmq', 'poll'], desc='''
                 The means by which task progress messages are reported back to
                 the running suite.
@@ -447,7 +447,7 @@ with Conf('flow.rc', desc='''
         with Conf('localhost'):
             Conf('run directory', VDR.V_STRING, '$HOME/cylc-run')
             Conf('work directory', VDR.V_STRING, '$HOME/cylc-run')
-            Conf('task communication method',
+            Conf('communication method',
                  VDR.V_STRING, 'default', options=['default', 'ssh', 'poll'])
             Conf('submission polling intervals', VDR.V_INTERVAL_LIST)
             Conf('execution polling intervals', VDR.V_INTERVAL_LIST)
@@ -479,7 +479,7 @@ with Conf('flow.rc', desc='''
         with Conf('<hostname glob>'):
             Conf('run directory', VDR.V_STRING)
             Conf('work directory', VDR.V_STRING)
-            Conf('task communication method',
+            Conf('communication method',
                  VDR.V_STRING, 'default', options=['default', 'ssh', 'poll'])
             Conf('submission polling intervals', VDR.V_INTERVAL_LIST)
             Conf('execution polling intervals', VDR.V_INTERVAL_LIST)
@@ -822,7 +822,7 @@ class GlobalConfig(ParsecConfig):
                 if owner_home is None:
                     owner_home = os.path.expanduser('~%s' % owner)
                 value = value.replace(self._HOME, owner_home)
-        if item == "task communication method" and value == "default":
+        if item == "communication method" and value == "default":
             # Translate "default" to client-server comms: "zmq"
             value = 'zmq'
         return value

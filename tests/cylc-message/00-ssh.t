@@ -30,7 +30,7 @@ create_test_globalrc '' "
 [platforms]
     [[${CYLC_REMOTE_PLATFORM}-ssh]]
         remote hosts = ${CYLC_TEST_HOST}
-        task communication method = ssh
+        communication method = ssh
 "
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"

@@ -174,7 +174,7 @@ class TaskRemoteMgr(object):
             return status
 
         # Determine what items to install
-        comm_meth = platform['task communication method']
+        comm_meth = platform['communication method']
 
         # Get a host and the owner from platform
         host = get_host_from_platform(platform)
