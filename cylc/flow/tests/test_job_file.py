@@ -236,7 +236,6 @@ def test_write_header(fixture_get_platform):
 def test_write_directives(fixture_get_platform, job_conf: dict, expected: str):
     """"Test the directives section of job script file is correctly
         written"""
-    # TODO Replace the crude copy with a fixture
     platform = fixture_get_platform(job_conf['platform'])
 
     with io.StringIO() as fake_file:
@@ -249,7 +248,6 @@ def test_write_directives(fixture_get_platform, job_conf: dict, expected: str):
     ["at", "background", "loadleveler", "pbs", "sge", "slurm"])
 def test_traps_for_each_batch_system(batch_sys: str):
     """Test traps for each batch system"""
-    # TODO create a fixture to automate platform creation.
     platform = platform_from_name()
     platform.update({
         "batch system": f"{batch_sys}",

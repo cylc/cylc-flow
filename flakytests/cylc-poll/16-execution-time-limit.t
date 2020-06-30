@@ -22,7 +22,7 @@ set_test_number 4
 create_test_globalrc '
 [platforms]
    [[localhost]]
-        task communication method = poll
+        communication method = poll
         submission polling intervals = PT2S
         execution polling intervals = PT1M
         batch system = background

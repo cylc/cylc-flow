@@ -106,7 +106,6 @@ class KeyInfo():
                     and key_type is KeyType.PRIVATE)
                 or (key_owner is KeyOwner.SERVER
                     and key_type is KeyType.PUBLIC)):
-                # TODO- ??
                 self.key_path = os.path.expandvars(self.suite_srv_dir)
 
         else:

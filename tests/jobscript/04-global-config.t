@@ -26,7 +26,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 create_test_globalrc '
 [platforms]
    [[localhost]]
-        task communication method = poll
+        communication method = poll
         execution polling intervals = PT0.2M, PT0.1M
         submission polling intervals = PT0.2M, PT0.1M'
 

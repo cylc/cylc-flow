@@ -489,7 +489,6 @@ log_scan () {
     done
 }
 
-# TODO -document this in the header
 purge_suite_remote() {
     local HOST="$1"  # or "owner@host"
     local NAME="$2"
@@ -505,7 +504,6 @@ purge_suite_remote() {
         2>'/dev/null' || true
 }
 
-# TODO -document this in the header
 purge_suite_platform() {
     local PLATFORM="$1"  # or "owner@host"
     local NAME="$2"
