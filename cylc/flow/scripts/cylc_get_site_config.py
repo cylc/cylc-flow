@@ -67,7 +67,7 @@ def get_option_parser():
     return parser
 
 
-@cli_function(get_option_parser, remove_opts=['--host', '--user'])
+@cli_function(get_option_parser)
 def main(parser, options):
     if options.run_dir:
         print(platform_from_name()['run directory'])

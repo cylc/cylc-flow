@@ -21,18 +21,16 @@ Remove ".service/contact" from a task remote (i.e. a [owner@]host).
 Remove ".service" directory on the remote if emptied.
 
 """
-from cylc.flow.remote import remrun
+
+from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.task_remote_cmd import remote_tidy
 
 
 def main():
-    if not remrun():
-        from cylc.flow.option_parsers import CylcOptionParser as COP
-        from cylc.flow.task_remote_cmd import remote_tidy
-
-        parser = COP(
-            __doc__, argdoc=[("RUND", "The run directory of the suite")]
-        )
-        remote_tidy(parser.parse_args()[1][0])  # position argument 1, rund
+    parser = COP(
+        __doc__, argdoc=[("RUND", "The run directory of the suite")]
+    )
+    remote_tidy(parser.parse_args()[1][0])  # position argument 1, rund
 
 
 if __name__ == "__main__":

@@ -33,11 +33,6 @@ To hold and release tasks use "cylc hold" and "cylc release", not this command.
 
 import os
 import sys
-if '--use-ssh' in sys.argv[1:]:
-    sys.argv.remove('--use-ssh')
-    from cylc.flow.remote import remrun
-    if remrun():
-        sys.exit(0)
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import SuiteRuntimeClient
@@ -92,9 +87,7 @@ def main(parser, options, suite, *task_globs):
         options.state = ''
 
     prompt('Reset task(s) %s in %s' % (task_globs, suite), options.force)
-    pclient = SuiteRuntimeClient(
-        suite, options.owner, options.host, options.port,
-        options.comms_timeout)
+    pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
     pclient(
         'reset_task_states',
         {'tasks': task_globs, 'state': options.state,

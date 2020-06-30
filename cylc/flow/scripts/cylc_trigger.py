@@ -31,19 +31,6 @@ it submits, to apply one-off changes. A diff between the original and edited
 job script will be saved to the task job log directory.
 """
 
-import sys
-
-if '--host' in sys.argv[1:] and '--edit' in sys.argv[1:]:
-    # Edit runs must always be re-invoked on the suite host.
-    if '--use-ssh' not in sys.argv[1:]:
-        sys.argv[1:].append('--use-ssh')
-
-if '--use-ssh' in sys.argv[1:]:
-    sys.argv.remove('--use-ssh')
-    from cylc.flow.remote import remrun
-    if remrun(forward_x11=True):
-        sys.exit(0)
-
 import re
 import os
 import time
@@ -85,9 +72,7 @@ def main(parser, options, suite, *task_globs):
     msg = 'Trigger task(s) %s in %s' % (task_globs, suite)
     prompt(msg, options.force)
 
-    pclient = SuiteRuntimeClient(
-        suite, options.owner, options.host, options.port,
-        options.comms_timeout)
+    pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
 
     aborted = False
     if options.edit_run:

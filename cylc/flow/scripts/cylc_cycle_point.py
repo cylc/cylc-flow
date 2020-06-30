@@ -135,7 +135,7 @@ def get_option_parser():
     return parser
 
 
-@cli_function(get_option_parser, remove_opts=['--host', '--user'])
+@cli_function(get_option_parser)
 def main(parser, options, *args):
     if len(args) == 0:
         # input cycle point must be defined in the environment.

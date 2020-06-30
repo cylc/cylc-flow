@@ -24,14 +24,8 @@ Query a running workflow for:
   cylc show REG TASK_GLOB - prerequisites and outputs of matched task instances
 """
 
-import sys
-if '--use-ssh' in sys.argv[1:]:
-    sys.argv.remove('--use-ssh')
-    from cylc.flow.remote import remrun
-    if remrun():
-        sys.exit(0)
-
 import json
+import sys
 
 from ansimarkup import ansiprint
 
@@ -60,9 +54,7 @@ def get_option_parser():
 @cli_function(get_option_parser)
 def main(_, options, suite, *task_args):
     """Implement "cylc show" CLI."""
-    pclient = SuiteRuntimeClient(
-        suite, options.owner, options.host, options.port,
-        options.comms_timeout)
+    pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
     json_filter = []
 
     if not task_args:

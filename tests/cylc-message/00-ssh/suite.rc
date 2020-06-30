@@ -9,7 +9,6 @@
 [runtime]
     [[t0]]
         script = """
-            # A client command should not require --use-ssh option.
             cylc broadcast "${CYLC_SUITE_NAME}" '--name=t1' '--set=script=true'
         """
         platform = {{ environ['CYLC_TEST_PLATFORM'] }}

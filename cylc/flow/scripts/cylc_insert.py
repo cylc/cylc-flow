@@ -28,13 +28,6 @@ it catches up to another task with the same ID).
 
 """
 
-import sys
-if '--use-ssh' in sys.argv[1:]:
-    sys.argv.remove('--use-ssh')
-    from cylc.flow.remote import remrun
-    if remrun():
-        sys.exit(0)
-
 from cylc.flow.exceptions import UserInputError
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import SuiteRuntimeClient
@@ -68,14 +61,12 @@ def main(parser, options, suite, *items):
                 '"%s": invalid task ID (argument %d)' % (item, i + 1))
     prompt('Insert %s in %s' % (items, suite), options.force)
 
-    pclient = SuiteRuntimeClient(
-        suite, options.owner, options.host, options.port)
+    pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
 
     pclient(
         'insert_tasks',
         {'tasks': items, 'check_point': not options.no_check,
-         'stop_point': options.stop_point_string},
-        timeout=options.comms_timeout
+         'stop_point': options.stop_point_string}
     )
 
 

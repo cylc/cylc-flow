@@ -134,18 +134,6 @@ match name and cycle point patterns against instances already in the pool).
     def add_std_options(self):
         """Add standard options if they have not been overridden."""
         self.add_std_option(
-            "--user",
-            help=(
-                "Other user account name. This results in "
-                "command reinvocation on the remote account."
-            ),
-            metavar="USER", action="store", dest="owner")
-        self.add_std_option(
-            "--host",
-            help="Other host name. This results in "
-            "command reinvocation on the remote account.",
-            metavar="HOST", action="store", dest="host")
-        self.add_std_option(
             "-v", "--verbose",
             help="Verbose output mode.",
             action="store_true", dest="verbose",
@@ -170,29 +158,6 @@ match name and cycle point patterns against instances already in the pool).
                 dest="suite_owner")
 
         if self.comms:
-            self.add_std_option(
-                "--port",
-                help=(
-                    "Suite port number on the suite host. "
-                    "NOTE: this is retrieved automatically if "
-                    "non-interactive ssh is configured to the suite host."
-                ),
-                metavar="INT", action="store", default=None, dest="port")
-            self.add_std_option(
-                "--use-ssh",
-                help="Use ssh to re-invoke the command on the suite host.",
-                action="store_true", default=False, dest="use_ssh")
-            self.add_std_option(
-                "--ssh-cylc",
-                help="Location of cylc executable on remote ssh commands.",
-                action="store", default="cylc", dest="ssh_cylc")
-            self.add_std_option(
-                "--no-login",
-                help=(
-                    "Do not use a login shell to run remote ssh commands. "
-                    "The default is to use a login shell."
-                ),
-                action="store_false", default=True, dest="ssh_login")
             self.add_std_option(
                 "--comms-timeout", "--pyro-timeout", metavar='SEC',
                 help=(

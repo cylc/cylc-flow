@@ -23,13 +23,6 @@ Poll (query) task jobs to verify and update their statuses.
   cylc poll REG TASK_GLOB ... - poll multiple active tasks or families
 """
 
-import sys
-if '--use-ssh' in sys.argv[1:]:
-    sys.argv.remove('--use-ssh')
-    from cylc.flow.remote import remrun
-    if remrun():
-        sys.exit(0)
-
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.terminal import prompt, cli_function
@@ -55,9 +48,7 @@ def main(parser, options, suite, *task_globs):
         prompt('Poll task %s in %s' % (task_globs, suite), options.force)
     else:
         prompt('Poll ALL tasks in %s' % (suite), options.force)
-    pclient = SuiteRuntimeClient(
-        suite, options.owner, options.host, options.port,
-        options.comms_timeout)
+    pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
     pclient(
         'poll_tasks',
         {'tasks': task_globs, 'poll_succeeded': options.poll_succ}

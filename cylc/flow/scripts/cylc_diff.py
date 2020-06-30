@@ -29,9 +29,6 @@ Files in the suite bin directory and other sub-directories of the
 suite definition directory are not currently differenced."""
 
 import sys
-from cylc.flow.remote import remrun
-if remrun():
-    sys.exit(0)
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.config import SuiteConfig

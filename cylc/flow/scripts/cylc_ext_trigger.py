@@ -74,8 +74,7 @@ def get_option_parser():
 def main(parser, options, suite, event_msg, event_id):
     LOG.info('Send to suite %s: "%s" (%s)', suite, event_msg, event_id)
 
-    pclient = SuiteRuntimeClient(
-        suite, options.owner, options.host, options.port)
+    pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
 
     max_n_tries = int(options.max_n_tries)
     retry_intvl_secs = float(options.retry_intvl_secs)
@@ -84,8 +83,7 @@ def main(parser, options, suite, event_msg, event_id):
         try:
             pclient(
                 'put_ext_trigger',
-                {'message': event_msg, 'id': event_id},
-                timeout=options.comms_timeout
+                {'message': event_msg, 'id': event_id}
             )
         except ClientError as exc:
             LOG.exception(exc)

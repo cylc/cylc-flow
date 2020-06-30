@@ -39,11 +39,6 @@ This command exits immediately unless --max-polls is greater than zero, in
 which case it polls to wait for suite shutdown."""
 
 import sys
-if '--use-ssh' in sys.argv[1:]:
-    sys.argv.remove('--use-ssh')
-    from cylc.flow.remote import remrun
-    if remrun():
-        sys.exit(0)
 
 from cylc.flow.command_polling import Poller
 from cylc.flow.exceptions import ClientError, ClientTimeout
@@ -113,9 +108,7 @@ def main(parser, options, suite, shutdown_arg=None):
     if options.kill and options.now:
         parser.error("ERROR: --kill is not compatible with --now")
 
-    pclient = SuiteRuntimeClient(
-        suite, options.owner, options.host, options.port,
-        options.comms_timeout)
+    pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
 
     if int(options.max_polls) > 0:
         # (test to avoid the "nothing to do" warning for # --max-polls=0)

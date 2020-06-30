@@ -18,7 +18,7 @@
 # Test `cylc subscribe`.
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 8
+set_test_number 6
 #-------------------------------------------------------------------------------
 init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
 [scheduling]
@@ -32,27 +32,12 @@ __SUITE_RC__
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
 
-
 TEST_NAME="${TEST_NAME_BASE}-subscribe-1"
 run_ok "${TEST_NAME}" cylc subscribe --once --topics="workflow" "${SUITE_NAME}"
 grep_ok "running" "${TEST_NAME}.stdout"
 
 TEST_NAME="${TEST_NAME_BASE}-subscribe-2"
-# Need fields from "cylc scan", cannot quote
-# shellcheck disable=SC2046
-run_ok "${TEST_NAME}" cylc subscribe --once --topics="workflow" \
-    $(cylc scan --color=never --publisher -n "${SUITE_NAME}" \
-        | awk -F' ' -v RS='\n([ \t]*\n)+' '{print $1 " " $3}')
-grep_ok "running" "${TEST_NAME}.stdout"
-
-# Same again, but test user/host/port  from raw formated cylc-scan.
-TEST_NAME="${TEST_NAME_BASE}-subscribe-3"
-# Need fields from "cylc scan", cannot quote
-# shellcheck disable=SC2046
-run_ok "${TEST_NAME}" cylc subscribe --once --topics="workflow" \
-    $(cylc scan --format=raw --publisher -n "${SUITE_NAME}" \
-        | awk -F'|' -v RS='\n([ \t]*\n)+' \
-            '{print $1 " --user=" $2 " --host=" $3 " --port=" $7}')
+run_ok "${TEST_NAME}" cylc subscribe --once --topics="workflow" "${SUITE_NAME}"
 grep_ok "running" "${TEST_NAME}.stdout"
 
 cylc stop --kill --max-polls=20 --interval=1 "${SUITE_NAME}"

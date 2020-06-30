@@ -27,13 +27,6 @@ allows running successive instances of the same task out of order. See also
 the "spawn to max active cycle points" workflow configuration.
 """
 
-import sys
-if '--use-ssh' in sys.argv[1:]:
-    sys.argv.remove('--use-ssh')
-    from cylc.flow.remote import remrun
-    if remrun():
-        sys.exit(0)
-
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.terminal import prompt, cli_function
@@ -52,10 +45,7 @@ def get_option_parser():
 @cli_function(get_option_parser)
 def main(parser, options, suite, *task_globs):
     prompt('Spawn task(s) %s in %s' % (task_globs, suite), options.force)
-    pclient = SuiteRuntimeClient(
-        suite, options.owner, options.host, options.port,
-        options.comms_timeout)
-
+    pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
     pclient(
         'spawn_tasks',
         {'tasks': task_globs}
