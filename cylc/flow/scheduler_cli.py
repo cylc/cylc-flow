@@ -369,7 +369,6 @@ def scheduler_cli(parser, options, args, is_restart=False):
     sys.exit(ret)
 
 
-
 def _check_registration(reg):
     """Ensure the flow is registered."""
     suite_run_dir = get_suite_run_dir(reg)
