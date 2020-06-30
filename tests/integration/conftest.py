@@ -91,13 +91,16 @@ def _rmtree(path, tries=5):
         tries (int): Maximum number of attempts to make.
 
     """
+    exc = None
     for _ in range(tries):
         try:
             rmtree(path)
             return
-        except OSError as exc:
-            pass
-    raise exc
+        except OSError as exc_:
+            exc = exc_
+    # TODO: this suppresses teardown error on NFS filesystems
+    #       caused by https://github.com/cylc/cylc-flow/issues/3666
+    # raise exc
 
 
 @pytest.fixture(scope='session')
