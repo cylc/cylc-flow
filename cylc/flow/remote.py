@@ -147,7 +147,6 @@ def construct_platform_ssh_cmd(raw_cmd, platform, **kwargs):
     """
     ret = construct_ssh_cmd(
         raw_cmd,
-        user=platform['owner'],
         host=get_host_from_platform(platform),
         ssh_cmd=platform['ssh command'],
         ssh_cylc=platform['cylc executable'],

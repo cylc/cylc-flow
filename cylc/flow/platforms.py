@@ -56,12 +56,19 @@ def platform_from_name(platform_name=None, platforms=None):
     # defined platforms.
     for platform_name_re in reversed(list(platforms)):
         if re.fullmatch(platform_name_re, platform_name):
-            platform_data = platforms[platform_name_re]
-            if not platform_data:
-                platform_data = deepcopy(platforms['localhost'])
-                platform_data['remote hosts'] = platform_name
-            else:
-                platform_data = deepcopy(platform_data)
+            # Deepcopy prevents contaminating platforms with data
+            # from other platforms matching platform_name_re
+            platform_data = deepcopy(platforms[platform_name_re])
+
+            # If remote hosts are not filled in make remote
+            # hosts the platform name.
+            # Example: `[platforms][workplace_vm_123]<nothing>`
+            #   should create a platform where
+            #   `remote_hosts = ['workplace_vm_123']`
+            if 'remote hosts' not in platform_data.keys():
+                platform_data['remote hosts'] = [platform_name]
+
+            # Fill in the "private" name field.
             platform_data['name'] = platform_name
             return platform_data
 

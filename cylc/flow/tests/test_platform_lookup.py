@@ -48,21 +48,24 @@ PLATFORMS = {
 
 PLATFORMS_NO_UNIQUE = {
     'sugar': {
-        'login hosts': 'localhost',
+        'remote hosts': 'localhost',
         'batch system': 'slurm'
     },
     'pepper': {
-        'login hosts': ['hpc1', 'hpc2'],
+        'remote hosts': ['hpc1', 'hpc2'],
         'batch system': 'slurm'
     },
 
 }
 
 PLATFORMS_WITH_RE = {
-    'hpc.*': {'login hosts': 'hpc1', 'batch system': 'background'},
-    'h.*': {'login hosts': 'hpc3'},
-    r'vld\d{2,3}': None,
-    'nu.*': {'batch system': 'slurm'},
+    'hpc.*': {'remote hosts': 'hpc1', 'batch system': 'background'},
+    'h.*': {'remote hosts': 'hpc3'},
+    r'vld\d{2,3}': {},
+    'nu.*': {
+        'batch system': 'slurm',
+        'remote hosts': ['localhost']
+    },
     'localhost': {
         'remote hosts': 'localhost',
         'batch system': 'background'
@@ -75,15 +78,16 @@ PLATFORMS_WITH_RE = {
     [
         (PLATFORMS_WITH_RE, "nutmeg", {
             "batch system": "slurm",
-            "name": "nutmeg"
+            "name": "nutmeg",
+            "remote hosts": ['localhost']
         }),
-        (PLATFORMS_WITH_RE, "vld798", "vld798"),
-        (PLATFORMS_WITH_RE, "vld56", "vld56"),
+        (PLATFORMS_WITH_RE, "vld798", ["vld798"]),
+        (PLATFORMS_WITH_RE, "vld56", ["vld56"]),
         (
             PLATFORMS_NO_UNIQUE,
             "sugar",
             {
-                "login hosts": "localhost",
+                "remote hosts": "localhost",
                 "batch system": "slurm",
                 "name": "sugar"
             },
@@ -93,13 +97,13 @@ PLATFORMS_WITH_RE = {
             None,
             {
                 "remote hosts": "localhost",
-                "batch system": "background",
-                "name": "localhost",
+                "batch system": "background"
             },
         ),
         (PLATFORMS, "laptop22", {
             "batch system": "background",
-            "name": "laptop22"
+            "name": "laptop22",
+            "remote hosts": ["laptop22"]
         }),
         (
             PLATFORMS,
@@ -110,10 +114,12 @@ PLATFORMS_WITH_RE = {
                 "name": "hpc1-bg"
             },
         ),
-        (PLATFORMS_WITH_RE, "hpc2", {"login hosts": "hpc3", "name": "hpc2"}),
+        (PLATFORMS_WITH_RE, "hpc2", {"remote hosts": "hpc3", "name": "hpc2"}),
     ],
 )
 def test_basic(PLATFORMS, platform, expected):
+    # n.b. The name field of the platform is set in the Globalconfig object
+    # if the name is 'localhost', so we don't test for it here.
     platform = platform_from_name(platform_name=platform, platforms=PLATFORMS)
     if isinstance(expected, dict):
         assert platform == expected
@@ -157,7 +163,7 @@ def test_similar_but_not_exact_match():
             'sugar'
         ),
         # Check that when users asks for hpc1 and pbs they get a platform
-        # with hpc1 in its list of login hosts
+        # with hpc1 in its list of remote hosts
         (
             {'batch system': 'pbs'},
             {'host': 'hpc1'},
