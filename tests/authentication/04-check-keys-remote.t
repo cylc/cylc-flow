@@ -23,12 +23,14 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
 [cylc]
 [scheduling]
     [[graph]]
-        R1 = holder
+        R1 = holder => held
 [runtime]
     [[holder]]    
         script = """cylc hold "${CYLC_SUITE_NAME}" """
         [[[remote]]]
             host = $CYLC_TEST_HOST
+    [[held]]
+        script = true
 __SUITE_RC__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}" 
