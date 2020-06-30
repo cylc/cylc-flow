@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Default fixtures for functional tests."""
 
+import asyncio
 from functools import partial
 from pathlib import Path
 import re
@@ -238,3 +239,23 @@ def log_filter():
 def port_range():
     ports = glbl_cfg().get(['suite servers', 'run ports'])
     return min(ports), max(ports)
+
+
+@pytest.fixture(scope='module')
+def event_loop():
+    """This fixture defines the event loop used for each test.
+
+    The default scoping for this fixture is "function" which means that all
+    async fixtures must have "function" scoping.
+
+    Defining `event_loop` as a module scoped fixture opens the door to
+    module scoped fixtures but means all tests in a module will run in the same
+    event loop. This is fine, it's actually an efficiency win but also
+    something to be aware of.
+
+    See: https://github.com/pytest-dev/pytest-asyncio/issues/171
+
+    """
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.close()
