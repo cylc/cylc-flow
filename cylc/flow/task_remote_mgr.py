@@ -176,9 +176,7 @@ class TaskRemoteMgr(object):
         # Determine what items to install
         comm_meth = platform['task communication method']
 
-        # TODO pick a more elegant host picking method
-        # Additionally these lines should probably become deprecated as this
-        # function should not need to have this information exposed.
+        # Get a host and the owner from platform
         host = get_host_from_platform(platform)
         owner = platform['owner']
 

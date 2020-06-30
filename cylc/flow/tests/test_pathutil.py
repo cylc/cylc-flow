@@ -37,7 +37,6 @@ from cylc.flow.pathutil import (
 )
 
 
-# TODO - parameterize for all local methods
 def test_get_suite_run_dir(monkeypatch):
     monkeypatch.setattr(
         cylc.flow.platforms,
@@ -47,7 +46,6 @@ def test_get_suite_run_dir(monkeypatch):
     assert get_suite_run_dir('joe') == f'{homedir}/cylc-run/joe'
 
 
-# TODO - parameterize and have work for all remote methods
 def test_get_remote_suite_run_dir(monkeypatch):
     platform = {'run directory': '$HOME/cylc-andromeda'}
     result = get_remote_suite_run_dir(platform, 'joe')

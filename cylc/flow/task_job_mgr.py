@@ -207,9 +207,7 @@ class TaskJobManager(object):
         if not prepared_tasks:
             return bad_tasks
 
-        # Group task jobs by (host, owner)
-        # TODO - consider using itask.platform['name'] to reduce mem
-        # req'd
+        # Group task jobs by (platform)
         auth_itasks = {}  # {platform: [itask, ...], ...}
         for itask in prepared_tasks:
             platform_name = itask.platform['name']
@@ -291,16 +289,6 @@ class TaskJobManager(object):
                 cmd.append('--utc-mode')
             remote_mode = False
             kwargs = {}
-            for key, value, test_func in [
-                    ('host', host, is_remote_host),
-                    ('user', owner, is_remote_user)]:
-                if test_func(value):
-                    # TODO: review question - why have these lines been
-                    # removed?
-                    # if they are not needed then can the for loop go?
-                    remote_mode = True
-            if remote_mode:
-                cmd.append('--remote-mode')
             cmd.append('--')
             cmd.append(
                 get_remote_suite_run_job_dir(
@@ -318,8 +306,9 @@ class TaskJobManager(object):
             LOG.debug(
                 '%s ... # will invoke in batches, sizes=%s',
                 cmd, [len(b) for b in itasks_batches])
-            # TODO work out why we needed to remove the 'cylc' when
-            # we used the remote command but not the local.
+
+            # If the task jobs require submission to a remote machine
+            # construct an SSH command around our command.
             if remote_mode:
                 cmd = construct_platform_ssh_cmd(cmd, platform)
             else:
@@ -347,11 +336,6 @@ class TaskJobManager(object):
                     if itask.state.outputs.has_custom_triggers():
                         self.suite_db_mgr.put_update_task_outputs(itask)
 
-                # TODO At the moment this is crudely replacing the host and
-                # sshing into localhost which seems crude and hack-y.
-                # We should be able to run this without the ssh but I have
-                # Been struggling.
-                # breakpoint()
                 self.proc_pool.put_command(
                     SubProcContext(
                         self.JOBS_SUBMIT,
@@ -828,35 +812,16 @@ class TaskJobManager(object):
         else:
             rtconfig = itask.tdef.rtconfig
 
-        # Determine task host settings now, just before job submission,
-        # because dynamic host selection may be used.
-        # TODO remove these questions later
-        # - Should task host become task_platform?
-        # - What does remote_host_select do?
-        # Current Strategy - Replace task host here with one selected
-        # By forward lookup - later you need to re-add logic for
-        # Dealing with platform = ``$(echo xcel00)``
-        # try:
+        # TODO - re-enable this for platforms using logic similar to
+        # self.task_remote_mgr.remote_host_select
+        # Determine task platform settings now, just before job submission,
+        # because dynamic platform selection may be used.
         platform = platform_from_name(rtconfig['platform'])
-        # @TODO rm after platforms complete - kept for reference
-        # task_host = self.task_remote_mgr.remote_host_select(
-        #     rtconfig['remote']['host'])
-        # except TaskRemoteMgmtError as exc:
-        #     # Submit number not yet incremented
-        #     itask.submit_num += 1
-        #     itask.summary['job_hosts'][itask.submit_num] = ''
-        #     # Retry delays, needed for the try_num
-        #     self._set_retry_timers(itask, rtconfig)
-        #     self._prep_submit_task_job_error(
-        #         suite, itask, dry_run, '(remote host select)', exc)
-        # return False
-        # else:
-        # if task_host is None:  # host select not ready
-        #     itask.set_summary_message(self.REMOTE_SELECT_MSG)
-        #     return
         itask.platform = platform
+
         # Submit number not yet incremented
         itask.submit_num += 1
+
         # Retry delays, needed for the try_num
         self._set_retry_timers(itask, rtconfig)
 
@@ -864,7 +829,6 @@ class TaskJobManager(object):
             job_conf = self._prep_submit_task_job_impl(suite, itask, rtconfig)
 
             # Job pool insertion
-            # TODO get an explanation here of why the deepcopy is req'd
             job_config = deepcopy(job_conf)
             job_config['logfiles'] = deepcopy(itask.summary['logfiles'])
             itask.jobs.append(job_config['job_d'])
@@ -912,7 +876,6 @@ class TaskJobManager(object):
         """Helper for self._prep_submit_task_job."""
         # itask.platform is going to get boring...
         platform = itask.platform
-        # TODO - use a better algorithm for picking host
         host = get_host_from_platform(platform)
         owner = platform['owner']
 

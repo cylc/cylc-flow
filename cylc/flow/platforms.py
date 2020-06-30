@@ -37,15 +37,11 @@ def platform_from_name(platform_name=None, platforms=None):
             name of platform to be retrieved.
         platforms ():
             globalrc platforms given as a dict for logic testing purposes
+
     Returns:
         platform (dict):
             object containing settings for a platform, loaded from
             Global Config.
-
-    TODO:
-        - Refactor testing for this method. Ideally including a method
-          example.
-        - Work out what to do with cases where localhost not set.
     """
     if platforms is None:
         platforms = glbl_cfg().get(['platforms'])

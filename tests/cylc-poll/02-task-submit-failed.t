@@ -18,8 +18,6 @@
 # Test that polling a submit-failed task sets the task state correctly
 . "$(dirname "$0")/test_header"
 skip_darwin 'atrun hard to configure on Mac OS'
-# TODO check that this test will also work with Cylc7 upgraders/reverse
-#      lookup of platforms.
 set_test_number 2
 
 create_test_globalrc "" "
