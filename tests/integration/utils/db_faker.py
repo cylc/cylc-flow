@@ -127,20 +127,7 @@ JOB_STATUS_MAP = {
 
 
 def _task_has_job(status):
-    """Return True if a task status should be associated withi a job.
-
-    Examples:
-        >>> _task_has_job('waiting')
-        False
-        >>> _task_has_job('submitted')
-        True
-        >>> _task_has_job('submit-failed')
-        True
-        >>> _task_has_job('running')
-        True
-        >>> _task_has_job('succeeded')
-        True
-    """
+    """Return True if a task status should be associated withi a job."""
     return (
         TASK_STATUSES_ORDERED.index(status)
         >= TASK_STATUSES_ORDERED.index('submit-failed')

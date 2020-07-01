@@ -27,6 +27,7 @@ from pathlib import Path
 import pytest
 
 from cylc.flow import __version__
+from . import (Task, Job)
 
 
 @pytest.mark.asyncio
@@ -139,6 +140,41 @@ async def test_task_pool(flow, scheduler, one_conf):
     # pump the scheduler's heart manually
     schd.release_tasks()
     assert len(schd.pool.pool) == 1
+
+
+@pytest.mark.asyncio
+async def test_mock_task_pool(flow, scheduler, run):
+    """Any you don't have to run tasks to get the pool in the right state."""
+    # Ensure Cylc can load tasks from the DB on restart
+
+    # create a flow
+    reg = flow({
+        'scheduling': {
+            'graph': {
+                'R1': 'a & b & c'
+            }
+        }
+    })
+
+    # initiate it as a restart with some jobs in pre-defined states
+    tasks = [
+        Task('a', '1', 'waiting'),
+        Task('b', '1', 'running'),
+        Task('c', '1', 'failed'),
+    ]
+    schd = scheduler(reg, tasks=tasks)
+
+    # run it and see what happens
+    async with run(schd):
+        # remember to update the state summary mgr so you don't
+        # get timing dependency
+        schd.state_summary_mgr.update(schd)
+
+        # ensure that the tasks got loaded in the right state
+        task_summary = schd.info_get_suite_state_summary()[1]
+        assert task_summary['a.1']['state'] == 'waiting'
+        assert task_summary['b.1']['state'] == 'running'
+        assert task_summary['c.1']['state'] == 'failed'
 
 
 @pytest.mark.asyncio

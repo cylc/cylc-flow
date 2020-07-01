@@ -24,7 +24,8 @@ from .db_faker import (
     Job,
     JOB_STATUS_MAP,
     _mock_jobs,
-    _mock_submit_num
+    _mock_submit_num,
+    _task_has_job
 )
 
 
@@ -132,3 +133,12 @@ def test_mock_submit_num_job_list():
     ]) == [
         Task('foo', '1', 'waiting', jobs, submit_num=2)
     ]
+
+
+def test_task_has_job():
+    """It should know what task states should have jobs."""
+    assert not _task_has_job('waiting')
+    assert _task_has_job('submitted')
+    assert _task_has_job('submit-failed')
+    assert _task_has_job('running')
+    assert _task_has_job('succeeded')
