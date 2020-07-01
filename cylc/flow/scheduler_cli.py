@@ -360,10 +360,6 @@ def scheduler_cli(parser, options, args, is_restart=False):
     )
 
     # exit
-    if options.no_detach:
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(loop.shutdown_asyncgens())
-        loop.close()
     LOG.info("DONE")
     _close_logs()
     sys.exit(ret)
