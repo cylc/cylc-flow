@@ -25,6 +25,7 @@ import asyncio
 from async_timeout import timeout
 from async_generator import asynccontextmanager
 import logging
+from pathlib import Path
 from uuid import uuid1
 
 from cylc.flow import CYLC_LOG
@@ -35,12 +36,31 @@ from cylc.flow.scheduler_cli import (
 )
 from cylc.flow.suite_status import StopMode
 
+from .db_faker import fake_db
 from .flow_writer import suiterc
 from . import _poll_file
 
 
 def _make_flow(run_dir, test_dir, conf, name=None):
-    """Construct a workflow on the filesystem."""
+    """Construct a workflow on the filesystem.
+
+    Args:
+        run_dir (pathlib.Path):
+            The top-level Cylc run directory.
+        test-dir (pathlib.Path):
+            The location of the directory for this test to create its files in.
+            Note this should be within the run_dir.
+        conf (dict/str):
+            The Flow configuration either as a multiline string or as a
+            nested dictionary.
+        name (str):
+            The name to register this Flow with.
+            If unspecified we use a random hash.
+
+    Returns:
+        str - Cylc registration.
+
+    """
     if not name:
         name = str(uuid1())
     flow_run_dir = (test_dir / name)
@@ -53,8 +73,33 @@ def _make_flow(run_dir, test_dir, conf, name=None):
     return reg
 
 
-def _make_scheduler(reg, is_restart=False, **opts):
-    """Return a scheduler object for a flow registration."""
+def _make_scheduler(reg, is_restart=False, tasks=None, **opts):
+    """Return a scheduler object for a flow registration.
+
+    Args:
+        reg (str):
+            The registered name for the flow to load (from the filesystem).
+        is_restart (bool):
+            If True the Scheduler will be configured in restart mode.
+        tasks (list):
+            List of db_faker.Task instances.
+
+            Fakes a previous run of the suite allowing you to pre-define the
+            state of the task pool.
+
+            This implies ``is_restart=True``.
+        opts (cylc.flow.option_parser.Options):
+            Options for initiating the new Scheduler object. See:
+
+            * cylc.flow.scheduler_cli.RunOptions
+            * cylc.flow.scheduler_cli.RestartOptions
+
+    Returns:
+        cylc.flow.scheduler.Scheduler
+
+    """
+    if tasks:
+        is_restart = True
     opts = {'hold_start': True, **opts}
     # get options object
     if is_restart:
@@ -62,12 +107,31 @@ def _make_scheduler(reg, is_restart=False, **opts):
     else:
         options = RunOptions(**opts)
     # create workflow
-    return Scheduler(reg, options, is_restart=is_restart)
+    schd = Scheduler(reg, options, is_restart=is_restart)
+    if tasks:
+        fake_db(tasks, Path(schd.suite_dir, '.service', 'db'))
+    return schd
 
 
 @asynccontextmanager
 async def _run_flow(run_dir, caplog, scheduler, level=logging.INFO):
-    """Start a scheduler."""
+    """Start a scheduler.
+
+    Args:
+        run_dir (pathlib.Path):
+            The top-level Cylc run directory.
+        caplog (Object):
+            Instance of the Pytest caplog fixture for log capturing or None.
+        scheduler (cylc.flow.scheduler.Scheduler):
+            The Scheduler instance to run.
+        level (int):
+            Sets the minimum level for capturing log messages.
+
+    Yields:
+        Object - Instance of the Pytest caplog fixture configured jus
+        for this flow.
+
+    """
     contact = (run_dir / scheduler.suite / '.service' / 'contact')
     if caplog:
         caplog.set_level(level, CYLC_LOG)
