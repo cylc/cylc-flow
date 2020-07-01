@@ -653,7 +653,7 @@ class TaskJobManager(object):
             if (itask.task_host, itask.task_owner) not in auth_itasks:
                 auth_itasks[(itask.task_host, itask.task_owner)] = []
             auth_itasks[(itask.task_host, itask.task_owner)].append(itask)
-        for (host, owner), itasks in sorted(auth_itasks.items()):
+        for (host, owner), itasks in sorted(auth_itasks.items(), key=str):
             cmd = ["cylc", cmd_key]
             if LOG.isEnabledFor(DEBUG):
                 cmd.append("--debug")
