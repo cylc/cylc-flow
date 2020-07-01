@@ -173,8 +173,6 @@ def construct_ssh_cmd(raw_cmd, user=None, host=None, forward_x11=False,
         command.append('-n')
 
     user_at_host = ''
-    if user:
-        user_at_host = user + '@'
     if host:
         user_at_host += host
     else:

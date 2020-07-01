@@ -25,19 +25,19 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 set -eu
 SSH='ssh -oBatchMode=yes -oConnectTimeout=5'
 SCP='scp -oBatchMode=yes -oConnectTimeout=5'
-$SSH -n "${CYLC_TEST_OWNER}@${CYLC_TEST_HOST}" "mkdir -p cylc-run/.bin"
+$SSH -n "${CYLC_TEST_HOST}" "mkdir -p cylc-run/.bin"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 # shellcheck disable=SC2016
-REMOTE_HOME="$($SSH -n "${CYLC_TEST_OWNER}@${CYLC_TEST_HOST}" 'echo $PWD')"
+REMOTE_HOME="$($SSH -n "${CYLC_TEST_HOST}" 'echo $PWD')"
 create_test_globalrc "" "
 [hosts]
    [[$CYLC_TEST_HOST]]
         tail command template = $REMOTE_HOME/cylc-run/.bin/my-tailer.sh %(filename)s"
 $SCP "${PWD}/bin/my-tailer.sh" \
-    "${CYLC_TEST_OWNER}@${CYLC_TEST_HOST}:cylc-run/.bin/my-tailer.sh"
+    "${CYLC_TEST_HOST}:cylc-run/.bin/my-tailer.sh"
 #-------------------------------------------------------------------------------
 # Run detached.
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
@@ -54,7 +54,7 @@ grep_ok "HELLO from foo 1" "${TEST_NAME}.out"
 TEST_NAME=${TEST_NAME_BASE}-stop
 run_ok "${TEST_NAME}" cylc stop --kill --max-polls=20 --interval=1 "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-purge_suite_remote "${CYLC_TEST_OWNER}@${CYLC_TEST_HOST}" "${SUITE_NAME}"
-$SSH -n "${CYLC_TEST_OWNER}@${CYLC_TEST_HOST}" "rm -rf cylc-run/.bin/"
+purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
+$SSH -n "${CYLC_TEST_HOST}" "rm -rf cylc-run/.bin/"
 purge_suite "${SUITE_NAME}"
 exit
