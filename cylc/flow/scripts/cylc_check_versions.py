@@ -41,7 +41,7 @@ from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.cylc_subproc import Popen, PIPE, DEVNULL
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.config import SuiteConfig
-from cylc.flow.platforms import forward_lookup
+from cylc.flow.platforms import platform_from_name
 from cylc.flow.remote import construct_platform_ssh_cmd
 from cylc.flow.suite_files import parse_suite_arg
 from cylc.flow.templatevars import load_template_vars

@@ -97,6 +97,7 @@ PLATFORMS_WITH_RE = {
             None,
             {
                 "remote hosts": "localhost",
+                "name": "localhost",
                 "batch system": "background"
             },
         ),
