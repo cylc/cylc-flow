@@ -26,9 +26,11 @@ import pytest
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.wallclock import get_current_time_string
 
-from . import (
+from .utils import (
     _expanduser,
-    _rm_if_empty,
+    _rm_if_empty
+)
+from .utils.flow_tools import (
     _make_flow,
     _make_scheduler,
     _run_flow
