@@ -31,12 +31,15 @@ TEST_NAME="${TEST_NAME_BASE}"-run
 suite_run_ok "${TEST_NAME}" cylc run --reference-test --no-detach "${SUITE_NAME}"
 
 # extract flow labels from job files
+# shellcheck disable=SC2046
 eval $(cylc cat-log -s 1 -f j "${SUITE_NAME}" foo.1 | grep CYLC_TASK_FLOW_LABEL)
 FLOW_ONE="${CYLC_TASK_FLOW_LABEL}"
 
+# shellcheck disable=SC2046
 eval $(cylc cat-log -s 2 -f j "${SUITE_NAME}" foo.1 | grep CYLC_TASK_FLOW_LABEL)
 FLOW_TWO="${CYLC_TASK_FLOW_LABEL}"
 
+# shellcheck disable=SC2046
 eval $(cylc cat-log -s 1 -f j "${SUITE_NAME}" bar.3 | grep CYLC_TASK_FLOW_LABEL)
 FLOW_MERGED="${CYLC_TASK_FLOW_LABEL}"
 
