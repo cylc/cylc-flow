@@ -21,7 +21,6 @@ set_test_number 2
 create_test_globalrc '' '
 [platforms]
     [[idontexist]]
-        remote hosts = idontexist
 '
 reftest
 exit

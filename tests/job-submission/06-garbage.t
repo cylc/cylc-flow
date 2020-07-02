@@ -28,7 +28,6 @@ fi
 create_test_globalrc '
 [platforms]
     [[bad]]
-        remote hosts = bad
 '
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"

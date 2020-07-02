@@ -65,9 +65,12 @@ def platform_from_name(platform_name=None, platforms=None):
             # Example: `[platforms][workplace_vm_123]<nothing>`
             #   should create a platform where
             #   `remote_hosts = ['workplace_vm_123']`
-            if 'remote hosts' not in platform_data.keys():
+            from sys import stderr
+            if (
+                'remote hosts' not in platform_data.keys() or
+                not platform_data['remote hosts']
+            ):
                 platform_data['remote hosts'] = [platform_name]
-
             # Fill in the "private" name field.
             platform_data['name'] = platform_name
             return platform_data

@@ -23,7 +23,6 @@ set_test_number 3
 create_test_globalrc '
 [platforms]
     [[badhost]]
-        remote hosts = rubbish
 '
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
