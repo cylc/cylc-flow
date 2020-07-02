@@ -34,6 +34,12 @@ namespace, under `cylc.jinja.filters`.
 Cylc Review was also removed in this version.
 
 -------------------------------------------------------------------------------
+## __cylc-8.0a3 (2020-Q3?)__
+
+[#3515](https://github.com/cylc/cylc-flow/pull/3515) - spawn-on-demand: a more
+efficient way of the evolving the workflow via the graph.
+
+-------------------------------------------------------------------------------
 ## __cylc-8.0a2 (2019-Q4?)__
 
 Third alpha release of Cylc 8.
