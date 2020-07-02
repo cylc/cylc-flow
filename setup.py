@@ -93,6 +93,7 @@ extra_requires['all'] = (
 
 
 setup(
+    python_requires='>=3.7',
     version=find_version("cylc", "flow", "__init__.py"),
     long_description=open('README.md').read(),
     long_description_content_type="text/markdown",
