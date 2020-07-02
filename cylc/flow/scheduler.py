@@ -296,7 +296,7 @@ class Scheduler:
             suite_files.register(self.suite, get_suite_run_dir(self.suite))
 
         # Create ZMQ keys
-        key_housekeeping(self.suite, platform=self.options.host)
+        key_housekeeping(self.suite, platform=self.options.host or 'localhost')
 
         # Extract job.sh from library, for use in job scripts.
         extract_resources(
