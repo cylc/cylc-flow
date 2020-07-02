@@ -22,7 +22,7 @@ import sys
 from cylc.flow.exceptions import SuiteServiceFileError
 from cylc.flow.host_select import select_suite_host
 from cylc.flow.hostuserutil import is_remote_host
-from cylc.flow.network.authentication import key_setup
+from cylc.flow.network.authentication import key_housekeeping
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.pathutil import get_suite_run_dir
 from cylc.flow.remote import remote_cylc_cmd
@@ -275,7 +275,8 @@ def scheduler_cli(parser, options, args, is_restart=False):
             base_cmd.append("--host=localhost")
             return remote_cylc_cmd(base_cmd, host=options.host)
     # Create ZMQ keys
-    key_setup(reg, platform=options.host)
+    key_housekeeping(reg, platform=options.host)
+
 
     try:
         suite_files.get_suite_source_dir(args[0])
