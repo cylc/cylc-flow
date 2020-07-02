@@ -55,7 +55,7 @@ from cylc.flow.loggingutil import (
     ReferenceLogFileHandler
 )
 from cylc.flow.network import API
-from cylc.flow.network.authentication import key_setup
+from cylc.flow.network.authentication import key_housekeeping
 from cylc.flow.network.server import SuiteRuntimeServer
 from cylc.flow.network.publisher import WorkflowPublisher
 from cylc.flow.parsec.OrderedDict import DictTree
@@ -295,8 +295,8 @@ class Scheduler:
             # Source path is assumed to be the run directory
             suite_files.register(self.suite, get_suite_run_dir(self.suite))
 
-        # Create ZMQ keys.
-        key_setup(self.suite)
+        # Create ZMQ keys
+        key_housekeeping(self.suite, platform=self.options.host)
 
         # Extract job.sh from library, for use in job scripts.
         extract_resources(
@@ -1820,7 +1820,12 @@ class Scheduler:
                 LOG.exception(exc)
             if self.task_job_mgr:
                 self.task_job_mgr.task_remote_mgr.remote_tidy()
-
+        try:
+            # Remove ZMQ keys from scheduler
+            LOG.debug("Removing authentication keys from scheduler")
+            key_housekeeping(self.suite, create=False)
+        except Exception as ex:
+            LOG.exception(ex)
         # disconnect from suite-db, stop db queue
         try:
             self.suite_db_mgr.process_queued_ops()
