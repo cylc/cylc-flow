@@ -277,7 +277,6 @@ def scheduler_cli(parser, options, args, is_restart=False):
     # Create ZMQ keys
     key_housekeeping(reg, platform=options.host)
 
-
     try:
         suite_files.get_suite_source_dir(args[0])
     except SuiteServiceFileError:
