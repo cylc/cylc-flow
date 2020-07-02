@@ -20,6 +20,7 @@ import pytest
 from tempfile import TemporaryFile, NamedTemporaryFile
 from unittest import mock
 
+from cylc.flow import __version__
 import cylc.flow.flags
 from cylc.flow.job_file import JobFileWriter
 
@@ -242,8 +243,8 @@ def test_write_prelude(mocked_get_host_item, mocked_path):
     expected = ('\nCYLC_FAIL_SIGNALS=\'EXIT ERR TERM XCPU\'\n'
                 'CYLC_VACATION_SIGNALS=\'USR1\'\nexport PATH=moo/baa:$PATH'
                 '\nexport CYLC_DEBUG=true'
-                '\nexport CYLC_VERSION=\'8.0a1\'\nexport '
-                'CYLC_SUITE_INITIAL_CYCLE_POINT=\'20200101T0000Z\'')
+                '\nexport CYLC_VERSION=\'%s\'\nexport ' % __version__
+                + 'CYLC_SUITE_INITIAL_CYCLE_POINT=\'20200101T0000Z\'')
     job_conf = {
         "batch_system_name": "loadleveler",
         "batch_submit_command_template": "test_suite",

@@ -40,7 +40,7 @@ Cylc Review was also removed in this version.
 efficient way of the evolving the workflow via the graph.
 
 -------------------------------------------------------------------------------
-## __cylc-8.0a2 (2019-Q4?)__
+## __cylc-8.0a2 (2020-07-??)__
 
 Third alpha release of Cylc 8.
 
