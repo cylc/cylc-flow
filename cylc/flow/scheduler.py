@@ -638,9 +638,10 @@ class Scheduler:
             await self.start_servers()
             await self.log_start()
         except Exception as exc:
-            LOG.exception(exc)
+            await self.shutdown(exc)
             raise
         else:
+            # note start_scheduler handles its own shutdown logic
             await self.start_scheduler()
 
     def load_tasks_for_run(self):
