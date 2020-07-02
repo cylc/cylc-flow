@@ -29,9 +29,6 @@ run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 create_test_globalrc '' '
 [editors]
     terminal = my-edit
-[platforms]
-    [[localhost]]
-        remote hosts = localhost
 '
 TEST_NAME="${TEST_NAME_BASE}-run"
 run_ok "${TEST_NAME}" cylc run --no-detach "${SUITE_NAME}"
