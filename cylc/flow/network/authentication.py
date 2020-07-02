@@ -24,9 +24,11 @@ from cylc.flow.suite_files import (
     remove_keys_on_server)
 
 
-def key_setup(reg, platform=None):
+def key_housekeeping(reg, platform=None, create=True):
 
-    """Clean any existing authentication keys and create new ones."""
+    """Clean any existing authentication keys and create new ones.
+        If create is set to false, keys will only be cleaned from
+        server."""
     suite_srv_dir = get_suite_srv_dir(reg)
     keys = {
         "client_public_key": KeyInfo(
@@ -47,4 +49,5 @@ def key_setup(reg, platform=None):
             suite_srv_dir=suite_srv_dir)
     }
     remove_keys_on_server(keys)
-    create_server_keys(keys, suite_srv_dir)
+    if create:
+        create_server_keys(keys, suite_srv_dir)
