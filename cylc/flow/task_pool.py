@@ -77,7 +77,7 @@ class FlowLabelMgr(object):
 
     def make_avail(self, labels):
         """Return labels (set) to the pool of available labels."""
-        LOG.info("Returning unmerged flow label(s) %s", labels)
+        LOG.info("returning flow label(s) %s", labels)
         for label in labels:
             try:
                 self.inuse.remove(label)
@@ -1410,7 +1410,7 @@ class TaskPool(object):
                     itask.reflow = False
 
     def prune_flow_labels(self):
-        """Remove any redundant merged flow labels.
+        """Remove redundant flow labels.
 
         Note this iterates the task pool twice but it can be called
         infrequently and doesn't do anything if there is only one flow.
@@ -1429,7 +1429,7 @@ class TaskPool(object):
         num = len(list(common))
         if num <= 1:
             return
-        LOG.debug('Redundant flow labels: %s', common)
+        LOG.debug('Pruning redundant flow labels: %s', common)
         to_prune = []
         while num > 1:
             to_prune.append(common.pop())
