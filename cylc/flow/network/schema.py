@@ -1507,21 +1507,17 @@ class Stop(Mutation):
     result = GenericScalar()
 
 
-class Reflow(Mutation):
+class StopFlow(Mutation):
     class Meta:
         description = sstrip(f'''
-            Manage reflows.
+            Stop a specified flow from spawning any further.
         ''')
-        resolver = partial(mutator, command='reflow')
+        resolver = partial(mutator, command='stop_flow')
 
     class Arguments:
         workflows = List(WorkflowID, required=True)
-        stop = Boolean(
-            description='Stop reflow.',
-            default_value=False
-        )
         label = String(
-            description='The flow label.',
+            description='Flow label.',
             required=True
         )
 
@@ -1677,7 +1673,7 @@ class Mutations(ObjectType):
     set_verbosity = SetVerbosity.Field(
         description=SetVerbosity._meta.description)
     stop = Stop.Field(description=Stop._meta.description)
-    reflow = Reflow.Field(description=Reflow._meta.description)
+    stop_flow = StopFlow.Field(description=StopFlow._meta.description)
     checkpoint = Checkpoint.Field(
         description=Checkpoint._meta.description)
 

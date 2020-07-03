@@ -1196,12 +1196,11 @@ class SuiteRuntimeServer(ZMQSocketBase):
 
     @authorise(Priv.CONTROL)
     @expose
-    def reflow(self, flow_label, stop=False):
-        """Manage reflows.
+    def stop_flow(self, flow_label):
+        """Stop a specified flow from spawning any further.
 
         Args:
-            flow_label (str): the flow to operate on
-            stop (bool): stop the targetted flow
+            flow_label (str): the flow to stop
 
         Returns:
             tuple: (outcome, message)
@@ -1212,7 +1211,7 @@ class SuiteRuntimeServer(ZMQSocketBase):
                 Information about outcome.
 
         """
-        self.schd.command_queue.put(("reflow", (flow_label,), {'stop': stop}))
+        self.schd.command_queue.put(("stop_flow", (flow_label,), {}))
         return (True, 'Command queued')
 
     @authorise(Priv.CONTROL)

@@ -232,7 +232,6 @@ control_commands = {}
 control_commands['run'] = ['run', 'start']
 control_commands['stop'] = ['stop', 'shutdown']
 control_commands['restart'] = ['restart']
-control_commands['reflow'] = ['reflow']
 control_commands['spawn'] = ['spawn']
 control_commands['trigger'] = ['trigger']
 control_commands['remove'] = ['remove']
@@ -344,7 +343,6 @@ comsum['get-suite-version'] = 'Print cylc version of a suite server program'
 # control
 comsum['run'] = 'Start a suite at a given cycle point'
 comsum['stop'] = 'Shut down running suites'
-comsum['reflow'] = 'Manage reflows'
 comsum['restart'] = 'Restart a suite from a previous state'
 comsum['spawn'] = 'Spawn tasks that depend on outputs'
 comsum['trigger'] = 'Manually trigger any tasks'

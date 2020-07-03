@@ -1400,14 +1400,13 @@ class TaskPool(object):
                     bad_items.append(item)
         return itasks, bad_items
 
-    def reflow(self, flow_label, stop=False):
-        """Tentative new command for managing reflows; currently stop only."""
-        if stop:
-            # Stop tasks belong to flow_label from continuing.
-            for itask in self.get_all_tasks():
-                # Don't use match_label(); we don't want to stop merged flows.
-                if itask.flow_label == flow_label:
-                    itask.reflow = False
+    def stop_flow(self, flow_label):
+        """Stop a particular flow from spawning any further."""
+        # Stop tasks belong to flow_label from continuing.
+        for itask in self.get_all_tasks():
+            # Don't use match_label(); we don't want to stop merged flows.
+            if itask.flow_label == flow_label:
+                itask.reflow = False
 
     def prune_flow_labels(self):
         """Remove redundant flow labels.
