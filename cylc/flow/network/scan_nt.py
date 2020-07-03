@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from collections.abc import Iterable
 import asyncio
 import functools
 from pathlib import Path
@@ -148,8 +149,11 @@ async def is_active(flow, is_active):
             False to filter for stopped and unregistered flows.
 
     """
-    flow['contact'] = flow['path'] / SERVICE / CONTACT
-    return flow['contact'].exists() == is_active
+    contact = flow['path'] / SERVICE / CONTACT
+    _is_active = contact.exists()
+    if _is_active:
+        flow['contact'] = contact
+    return _is_active == is_active
 
 
 @Pipe
@@ -207,7 +211,7 @@ async def cylc_version(flow, requirement):
 def format_query(pipe):
     """Pre-process graphql queries from dicts or lists."""
     @functools.wraps(pipe)
-    def _format_query(fields):
+    def _format_query(fields, filters=None):
         nonlocal pipe
         ret = ''
         stack = [(None, fields)]
@@ -236,13 +240,14 @@ def format_query(pipe):
                 for field in fields:
                     ret += f'\n{field}'
         pipe.args = (ret + '\n',)
+        pipe.kwargs = {'filters': filters}
         return pipe
     return _format_query
 
 
 @format_query
 @Pipe
-async def graphql_query(flow, fields):
+async def graphql_query(flow, fields, filters=None):
     """Obtain information from a GraphQL request to the flow.
 
     Args:
@@ -284,10 +289,23 @@ async def graphql_query(flow, fields):
         LOG.exception(exc)
         return False
     else:
+        # stick the result into the flow object
         for item in ret:
             if 'error' in item:
                 LOG.exception(item['error']['message'])
                 return False
             for workflow in ret.get('workflows', []):
                 flow.update(workflow)
+
+        # process filters
+        for field, value in filters or []:
+            for field_ in field:
+                value_ = flow[field_]
+            if isinstance(value, Iterable):
+                if value_ not in value:
+                    return False
+            else:
+                if value_ != value:
+                    return False
+
         return flow
