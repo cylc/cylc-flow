@@ -341,12 +341,16 @@ def scheduler_cli(parser, options, args, is_restart=False):
         _start_print_blurb()
 
     # setup the scheduler
+    # NOTE: asyncio.run opens an event loop, runs your coro,
+    #       then shutdown async generators and closes the event loop
     scheduler = Scheduler(reg, options, is_restart=is_restart)
     asyncio.run(
         _setup(parser, options, reg, is_restart, scheduler)
     )
 
-    # daemonise if requested
+    # daemonize if requested
+    # NOTE: asyncio event loops cannot persist across daemonization
+    #       ensure you have tidied up all threads etc before daemonizing
     if not options.no_detach:
         from cylc.flow.daemonize import daemonize
         daemonize(scheduler)
@@ -360,6 +364,9 @@ def scheduler_cli(parser, options, args, is_restart=False):
     )
 
     # exit
+    # NOTE: we must clean up all asyncio / threading stuff before exiting
+    # NOTE: any threads which include sleep statements could cause
+    #       sys.exit to hang if not shutdown properly
     LOG.info("DONE")
     _close_logs()
     sys.exit(ret)
