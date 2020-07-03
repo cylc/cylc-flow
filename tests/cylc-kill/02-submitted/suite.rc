@@ -24,9 +24,8 @@ wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
 cylc__job__poll_grep_suite_log -F '[killable-1.1] -triggered'
 cylc__job__poll_grep_suite_log -F '[killable-2.1] -triggered'
 cylc__job__poll_grep_suite_log -F '[killable-3.1] -triggered'
-cylc kill "${CYLC_SUITE_NAME}" '*:submitted'
+# (Avoid killing myself if my started message hasn't arrived yet:)
+cylc kill "${CYLC_SUITE_NAME}" 'killable*:submitted'
 """
-    #[[sleeper]]
-    #    script=true
     [[stopper]]
         script=cylc stop "${CYLC_SUITE_NAME}"
