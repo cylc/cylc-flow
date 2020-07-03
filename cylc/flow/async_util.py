@@ -54,12 +54,14 @@ class Pipe:
         self.func = func
         self.args = tuple()
         self.kwargs = {}
+        self.filter_stop = True
         self._left = None
         self._right = None
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args, filter_stop=True, **kwargs):
         self.args = args
         self.kwargs = kwargs
+        self.filter_stop = filter_stop
         return self
 
     async def __aiter__(self):
@@ -69,11 +71,18 @@ class Pipe:
         async for item in gen.func(*gen.args, **gen.kwargs):
             for coro in coros:
                 ret = await coro.func(item, *coro.args, **coro.kwargs)
-                if ret is False:
-                    break
                 if ret is True:
+                    # filter passed -> continue
                     pass
+                elif ret is False and coro.filter_stop:
+                    # filter failed -> stop
+                    break
+                elif ret is False:
+                    # filter failed but pipe configured to yield -> stop
+                    yield item
+                    break
                 else:
+                    # returned an object -> continue
                     item = ret
             else:
                 yield item
