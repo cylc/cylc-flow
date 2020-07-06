@@ -21,10 +21,7 @@ from itertools import zip_longest
 import os
 import sys
 
-<<<<<<< HEAD
-=======
 from cylc.flow import LOG, __version__ as CYLC_VERSION
->>>>>>> master
 from cylc.flow.exceptions import SuiteServiceFileError
 from cylc.flow.host_select import select_suite_host
 from cylc.flow.hostuserutil import is_remote_host
@@ -34,13 +31,8 @@ from cylc.flow.option_parsers import (
     Options
 )
 from cylc.flow.pathutil import get_suite_run_dir
-<<<<<<< HEAD
-from cylc.flow.remote import remote_cylc_cmd
-from cylc.flow.scheduler import Scheduler
-=======
 from cylc.flow.remote import remrun, remote_cylc_cmd
 from cylc.flow.scheduler import Scheduler, SchedulerError
->>>>>>> master
 from cylc.flow import suite_files
 from cylc.flow.terminal import cli_function
 
