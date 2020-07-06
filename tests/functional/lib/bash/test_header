@@ -1,0 +1,826 @@
+#!/bin/bash
+# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# NAME
+#     test_header
+#
+# SYNOPSIS
+#     . $CYLC_REPO_DIR/tests/lib/bash/test_header
+#
+# DESCRIPTION
+#     Interface for constructing tests under a TAP harness (the "prove"
+#     command).
+#
+# FUNCTIONS
+#     set_test_number N
+#         echo a total number of tests for TAP to read.
+#     ok TEST_NAME
+#         echo a TAP OK message for TEST_NAME.
+#     fail TEST_NAME
+#         echo a TAP fail message for TEST_NAME. If $CYLC_TEST_DEBUG is set,
+#         cat $TEST_NAME.stderr to stderr.
+#     run_ok TEST_NAME COMMAND ...
+#         Run COMMAND with any following options/arguments and store stdout
+#         and stderr in TEST_NAME.stdout and TEST_NAME.stderr.
+#         This is expected to have a return code of 0, which ok's the test.
+#     run_fail TEST_NAME COMMAND ...
+#         Run COMMAND with any following options/arguments and store stdout
+#         and stderr in TEST_NAME.stdout and TEST_NAME.stderr.
+#         This is expected to have a non-zero return code, which ok's the test.
+#     run_graphql_ok SUITE TEST_NAME JSON
+#         Send a graphql query to the suite, extract the result from
+#         ${TEST_NAME}.stdout
+#     cmp_ok FILE_TEST [FILE_CONTROL]
+#         Compare FILE_TEST with a file or stdin given by FILE_CONTROL (stdin
+#         if FILE_CONTROL is "-" or missing). By default, it uses "diff -u" to
+#         compare files. However, if an alternate command such as "xxdiff -D"
+#         is desirable (e.g. for debugging),
+#         "export CYLC_TEST_DIFF_CMD=xxdiff -D".
+#     cmp_json FILE_TEST [FILE_CONTROL]
+#         Alternative implementation to cmp_json_ok, compare two JSON files
+#         and display any differences as a unified(ish) diff:
+#         * Works with nested dictionaries.
+#         * Impervious to dictionary order.
+#     contains_ok FILE_TEST [FILE_CONTROL]
+#         Make sure that each line in FILE_TEST is present in FILE_CONTROL
+#         (stdin if FILE_CONTROL is "-" or missing).
+#     grep_ok PATTERN FILE [$OPTS]
+#         Run "grep [$OPTS] -q -e PATTERN FILE".
+#         OPTS: put grep options like '-E' (extended regex) at end of line.
+#     grep_fail PATTERN FILE
+#         Run "grep -q -e PATTERN FILE", expect no match.
+#     count_ok PATTERN FILE COUNT
+#         Test that PATTERN occurs in exactly COUNT lines of FILE.
+#     exists_ok FILE
+#         Test that FILE exists
+#     exists_fail FILE
+#         Test that FILE does not exist
+#     init_suite TEST_NAME [SOURCE]
+#         Create a suite from SOURCE's "suite.rc" called:
+#         "cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR##*tests/}/${TEST_NAME}"
+#         Provides SUITE_NAME and SUITE_RUN_DIR variables.
+#     install_suite TEST_NAME SOURCE
+#         Same as init_suite, but SOURCE must be a directory containing a
+#         "suite.rc" file.
+#     log_scan TEST_NAME FILE ATTEMPTS DELAY PATTERN...
+#         Monitor FILE polling every DELAY seconds for maximum of ATTEMPTS
+#         tries grepping for each PATTERN in turn. Tests will only pass if the
+#         PATTERNs appear in FILE in the correct order. Runs one test per
+#         pattern, each prefixed by TEST_NAME.
+#     mock_smtpd_init
+#         Start a mock SMTP server daemon for testing. Write host:port setting
+#         to the variable TEST_SMTPD_HOST. Write pid of daemon to
+#         TEST_SMTPD_PID. Write log to TEST_SMTPD_LOG.
+#     mock_smtpd_kill
+#         Kill the mock SMTP server daemon process.
+#     purge_suite SUITE_NAME
+#         Tidy up test directories for SUITE_NAME.
+#     poll COMMAND
+#         Run COMMAND in 1 second intervals for a minute until COMMAND returns
+#         a zero value, or exit 1 (abort test) with a timeout message.
+#     poll_grep ...
+#         Shorthand for 'poll grep -s ...'.
+#     poll_grep_suite_log ...
+#         Shorthand for 'poll_grep ... "${SUITE_RUN_DIR}/log/suite/log"'
+#     poll_pid_done PID
+#         Poll until process with PID is done.
+#     poll_suite_running
+#         Shorthand for 'poll test -e "${SUITE_RUN_DIR}/.service/contact"'
+#     poll_suite_stopped
+#         Shorthand for 'poll "!" test -e "${SUITE_RUN_DIR}/.service/contact"'
+#     get_suite_uuid
+#         Extract the UUID from the contact file or echo '' if not present.
+#     poll_suite_restart [TIMEOUT [UUID]]
+#         Wait for the suite to restart.
+#         Provide the UUID from the current run if suite is not
+#         guaranteed to be running.
+#     skip N SKIP_REASON
+#         echo "ok $((++T)) # skip SKIP_REASON" N times.
+#     skip_all SKIP_REASON
+#         echo "1..0 # SKIP SKIP_REASON" and exit.
+#     ssh_install_cylc HOST
+#         Install cylc on a remote host.
+#     reftest [TEST_NAME [SOURCE]]
+#         Install a reference suite using `install_suite`, run a validation
+#         test on the suite and run the reference suite with `suite_run_ok`.
+#         Run `purge_suite` on success. Expect 2 OK tests.
+#     create_test_globalrc [PRE [POST]]
+#         Create a new global config file $PWD/etc from site flow-tests.rc
+#         with PRE and POST pre- and ap-pended (PRE for top level items with no
+#         section heading). PRE and POST are strings.
+#     require_remote_platform
+#         Set CYLC_REMOTE_PLATFORM for remote job tests or skip all tests.
+#         Provides:
+#             CYLC_REMOTE_PLATFORM: Remote platform name
+#             CYLC_TEST_HOST:       Hostname of a remote host picked
+#                                   from the platform.
+#     require_remote_platform_wsfs
+#         (wsfs = with shared file system)
+#         Set CYLC_REMOTE_PLATFORM_WSFS for remote job tests or skip all tests.
+#         Provides:
+#             CYLC_REMOTE_PLATFORM_WSFS: Remote platform name
+#             CYLC_TEST_HOST_WSFS:       Hostname of a remote host picked
+#                                       from the platform.
+#     get_fqdn_by_host [TARGET]
+#         Get a host FQDN using the same mechanism Cylc uses.
+#-------------------------------------------------------------------------------
+set -eu
+
+FAILURES=0
+SIGNALS="EXIT INT"
+TEST_DIR=
+TEST_RHOST_CYLC_DIR=
+FINALLY() {
+    for S in ${SIGNALS}; do
+        trap '' "${S}"
+    done
+    if [[ -n "${TEST_DIR}" ]]; then
+        cd ~
+        rm -rf "${TEST_DIR}"
+    fi
+    if [[ -n "${TEST_RHOST_CYLC_DIR}" ]]; then
+        # TEST_RHOST_CYLC_DIR is a local variable of this script
+        # shellcheck disable=SC2029
+        ssh -oBatchMode=yes -oConnectTimeout=5 "${TEST_RHOST_CYLC_DIR%%:*}" \
+            "rm -fr ${TEST_RHOST_CYLC_DIR#*:}"
+    fi
+    if [[ -n "${TEST_SMTPD_PID:-}" ]]; then
+        kill "${TEST_SMTPD_PID}"
+    fi
+    if ((FAILURES > 0)); then
+        echo -e "\n    stdout and stderr stored in: ${TEST_LOG_DIR}" >&2
+        if "${SUITE_RUN_FAILS}"; then
+            echo -e "    suite logs can be found under: ${SUITE_LOG_DIR}/" >&2
+        fi
+    fi
+}
+for S in ${SIGNALS}; do
+    # Signal as argument to FINALLY
+    # shellcheck disable=SC2064
+    trap "FINALLY ${S}" "${S}"
+done
+
+TEST_NUMBER=0
+
+set_test_number() {
+    echo "1..$1"
+}
+
+ok() {
+    echo "ok $((++TEST_NUMBER)) - $*"
+}
+
+fail() {
+    ((++FAILURES))
+    echo "not ok $((++TEST_NUMBER)) - $*"
+    if [[ -n "${CYLC_TEST_DEBUG:-}" ]]; then
+        echo >'/dev/tty'
+        echo "${TEST_NAME_BASE} ${TEST_NAME}" >'/dev/tty'
+        cat "${TEST_NAME}.stderr" >'/dev/tty'
+    fi
+}
+
+run_ok() {
+    local TEST_NAME="$1"
+    shift 1
+    if ! "$@" 1>"${TEST_NAME}.stdout" 2>"${TEST_NAME}.stderr"; then
+        fail "${TEST_NAME}"
+        mkdir -p "${TEST_LOG_DIR}"
+        cp -p "${TEST_NAME}.stdout" "${TEST_LOG_DIR}/${TEST_NAME}.stdout"
+        cp -p "${TEST_NAME}.stderr" "${TEST_LOG_DIR}/${TEST_NAME}.stderr"
+        return
+    fi
+    ok "${TEST_NAME}"
+}
+
+run_fail() {
+    local TEST_NAME="$1"
+    shift 1
+    if "$@" 1>"${TEST_NAME}.stdout" 2>"${TEST_NAME}.stderr"; then
+        fail "${TEST_NAME}"
+        mkdir -p "${TEST_LOG_DIR}"
+        cp -p "${TEST_NAME}.stdout" "${TEST_LOG_DIR}/${TEST_NAME}.stdout"
+        cp -p "${TEST_NAME}.stderr" "${TEST_LOG_DIR}/${TEST_NAME}.stderr"
+        return
+    fi
+    ok "${TEST_NAME}"
+}
+
+run_graphql_ok () {
+    # this is a thin wrapper to `cylc client` which strips newlines from $2 to
+    # make it valid JSON
+    local TEST_NAME="$1"
+    local SUITE="$2"
+    local JSON="$3"
+    # shellcheck disable=SC2086
+    run_ok "${TEST_NAME}" cylc client \
+        "${SUITE}" \
+        'graphql' \
+        < <(echo ${JSON})
+}
+
+suite_run_ok() {
+    local TEST_NAME="$1"
+    shift 1
+    if "$@" 1>"${TEST_NAME}.stdout" 2>"${TEST_NAME}.stderr"; then
+        ok "${TEST_NAME}"
+        return
+    fi
+    fail "${TEST_NAME}"
+    SUITE_RUN_FAILS=true
+    SUITE_LOG_DIR="${SUITE_RUN_DIR}/log/suite"
+    mkdir -p "${SUITE_LOG_DIR}" # directory may not exist if run fails very early
+    cp -p "${TEST_NAME}.stdout" "${SUITE_LOG_DIR}/out"
+    cp -p "${TEST_NAME}.stderr" "${SUITE_LOG_DIR}/err"
+}
+
+suite_run_fail() {
+    local TEST_NAME="$1"
+    shift 1
+    if ! "$@" 1>"${TEST_NAME}.stdout" 2>"${TEST_NAME}.stderr"; then
+        ok "${TEST_NAME}"
+        return
+    fi
+    fail "${TEST_NAME}"
+    SUITE_RUN_FAILS=true
+    SUITE_LOG_DIR="${SUITE_RUN_DIR}/log/suite"
+    mkdir -p "${SUITE_LOG_DIR}" # directory may not exist if run fails very early
+    cp -p "${TEST_NAME}.stdout" "${SUITE_LOG_DIR}/out"
+    cp -p "${TEST_NAME}.stderr" "${SUITE_LOG_DIR}/err"
+}
+
+cmp_ok() {
+    local FILE_TEST="$1"
+    local FILE_CONTROL="${2:--}"
+    local TEST_NAME
+    TEST_NAME="$(basename "${FILE_TEST}")-cmp-ok"
+    local DIFF_CMD=${CYLC_TEST_DIFF_CMD:-'diff -u'}
+    if ${DIFF_CMD} "${FILE_CONTROL}" "${FILE_TEST}" >"${TEST_NAME}.stderr" 2>&1
+    then
+        ok "${TEST_NAME}"
+        return
+    else
+        cat "${TEST_NAME}.stderr" >&2
+    fi
+    mkdir -p "${TEST_LOG_DIR}"
+    cp -p "${TEST_NAME}.stderr" "${TEST_LOG_DIR}/${TEST_NAME}.stderr"
+    fail "${TEST_NAME}"
+}
+
+cmp_json() {
+    local TEST_NAME="$1"
+    local FILE1="$2"
+    shift; shift
+
+    if python3 "$CYLC_REPO_DIR/tests/f/lib/python/diffr.py" \
+        "$(cat "${FILE1}")" "$@" >"${TEST_NAME}.stdout" 2>"${TEST_NAME}.stderr"
+    then
+        ok "${TEST_NAME}"
+        return
+    else
+        cat "${TEST_NAME}.stderr" >&2
+    fi
+    mkdir -p "${TEST_LOG_DIR}"
+    cp -p "${TEST_NAME}.stderr" "${TEST_LOG_DIR}/${TEST_NAME}.stderr"
+    fail "${TEST_NAME}"
+}
+
+contains_ok() {
+    local FILE_TEST="$1"
+    local FILE_CONTROL="${2:--}"
+    local TEST_NAME
+    TEST_NAME="$(basename "${FILE_TEST}")-contains-ok"
+    comm -13 <(sort "${FILE_TEST}") <(sort "${FILE_CONTROL}") \
+        1>"${TEST_NAME}.stdout" 2>"${TEST_NAME}.stderr"
+    if [[ -s "${TEST_NAME}.stdout" ]]; then
+        mkdir -p "${TEST_LOG_DIR}"
+        {
+            echo 'Missing lines:'
+            cat "${TEST_NAME}.stdout"
+            echo 'Test File:'
+            cat "${FILE_TEST}"
+        } >>"${TEST_NAME}.stderr"
+        cp -p "${TEST_NAME}.stderr" "${TEST_LOG_DIR}/${TEST_NAME}.stderr"
+        fail "${TEST_NAME}"
+        return
+    fi
+    ok "${TEST_NAME}"
+}
+
+count_ok() {
+    local BRE="$1"
+    local FILE="$2"
+    local COUNT="$3"
+    local TEST_NAME NEW_COUNT
+    TEST_NAME="$(basename "${FILE}")-count-ok"
+    NEW_COUNT=$(grep -c "${BRE}" "${FILE}")
+    if (( NEW_COUNT == COUNT )); then
+        ok "${TEST_NAME}"
+        return
+    fi
+    mkdir -p "${TEST_LOG_DIR}"
+    echo "Found ${NEW_COUNT} (not ${COUNT}) of ${BRE} in ${FILE}" \
+        >"${TEST_LOG_DIR}/${TEST_NAME}.stderr"
+    fail "${TEST_NAME}"
+}
+
+grep_ok() {
+    # (Put extra grep options like '-E' at end of the command line)
+    local BRE="$1"
+    local FILE="$2"
+    shift 2
+    OPTS="$*"
+    local TEST_NAME
+    TEST_NAME="$(basename "${FILE}")-grep-ok"
+    # shellcheck disable=SC2086
+    if grep ${OPTS} -q -e "${BRE}" "${FILE}"; then
+        ok "${TEST_NAME}"
+        return
+    fi
+    mkdir -p "${TEST_LOG_DIR}"
+    {
+        cat <<__ERR__
+Can't find:
+===========
+${BRE}
+===========
+in:
+===========
+__ERR__
+        cat "${FILE}"
+    } >"${TEST_LOG_DIR}/${TEST_NAME}.stderr"
+    fail "${TEST_NAME}"
+}
+
+grep_fail() {
+    local BRE="$1"
+    local FILE="$2"
+    local TEST_NAME
+    TEST_NAME="$(basename "${FILE}")-grep-fail"
+    if grep -q -e "${BRE}" "${FILE}"; then
+        mkdir -p "${TEST_LOG_DIR}"
+        echo "ERROR: Found ${BRE} in ${FILE}" \
+          >"${TEST_LOG_DIR}/${TEST_NAME}.stderr"
+        fail "${TEST_NAME}"
+        return
+    fi
+    ok "${TEST_NAME}"
+}
+
+exists_ok() {
+    local FILE="$1"
+    local TEST_NAME
+    TEST_NAME="$(basename "${FILE}")-file-exists-ok"
+    if [[ -a $FILE ]]; then
+        ok "${TEST_NAME}"
+        return
+    fi
+    mkdir -p "${TEST_LOG_DIR}"
+    echo "Does not exist: ${FILE}" >"${TEST_LOG_DIR}/${TEST_NAME}.stderr"
+    fail "${TEST_NAME}"
+}
+
+exists_fail() {
+    local FILE="$1"
+    local TEST_NAME
+    TEST_NAME="$(basename "${FILE}")-file-exists-fail"
+    if [[ ! -a "${FILE}" ]]; then
+        ok "${TEST_NAME}"
+        return
+    fi
+    mkdir -p "${TEST_LOG_DIR}"
+    echo "Exists: ${FILE}" >"${TEST_LOG_DIR}/${TEST_NAME}.stderr"
+    fail "${TEST_NAME}"
+}
+
+graph_suite() {
+    # Generate a graphviz "plain" format graph of a suite.
+    local SUITE_NAME="${1}"
+    local OUTPUT_FILE="${2}"
+    shift 2
+    mkdir -p "$(dirname "${OUTPUT_FILE}")"
+    cylc graph --reference "${SUITE_NAME}" "$@" >"${OUTPUT_FILE}"
+}
+
+init_suite() {
+    local TEST_NAME="$1"
+    local SUITE_RC="${2:--}"
+    SUITE_NAME="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME}"
+    SUITE_RUN_DIR="${RUN_DIR}/${SUITE_NAME}"
+    mkdir -p "${TEST_DIR}/${SUITE_NAME}/"
+    cat "${SUITE_RC}" >"${TEST_DIR}/${SUITE_NAME}/suite.rc"
+    cylc register "${SUITE_NAME}" "${TEST_DIR}/${SUITE_NAME}" 2>'/dev/null'
+    cd "${TEST_DIR}/${SUITE_NAME}"
+}
+
+install_suite() {
+    local TEST_NAME="${1:-${TEST_NAME_BASE}}"
+    local TEST_SOURCE_BASE="${2:-${TEST_NAME}}"
+    SUITE_NAME="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME}"
+    SUITE_RUN_DIR="${RUN_DIR}/${SUITE_NAME}"
+    mkdir -p "${TEST_DIR}/${SUITE_NAME}/"
+    cp -r "${TEST_SOURCE_DIR}/${TEST_SOURCE_BASE}/"* "${TEST_DIR}/${SUITE_NAME}/"
+    cylc register "${SUITE_NAME}" "${TEST_DIR}/${SUITE_NAME}" 2>'/dev/null'
+    cd "${TEST_DIR}/${SUITE_NAME}"
+}
+
+log_scan () {
+    local TEST_NAME="$1"
+    local FILE="$2"
+    local REPS=$3
+    local DELAY=$4
+    if ${CYLC_TEST_DEBUG:-false}; then
+        local ERR=2
+    else
+        local ERR=1
+    fi
+    shift 4
+    local count=0
+    local success=false
+    local position=0
+    local newposition=
+    for pattern in "$@"; do
+        count=$(( count + 1 ))
+        success=false
+        echo -n "scanning for '${pattern:0:30}'" >& $ERR
+        for _ in $(seq 1 "${REPS}"); do
+            echo -n '.' >& $ERR
+            newposition=$(grep -n "$pattern" "$FILE" | \
+                tail -n 1 | cut -d ':' -f 1)
+            if (( newposition > position )); then
+                position=$newposition
+                echo ': succeeded' >& $ERR
+                ok "${TEST_NAME}-${count}"
+                success=true
+                break
+            fi
+            sleep "${DELAY}"
+        done
+        shift
+        if ! "${success}"; then
+            echo ': failed' >& $ERR
+            fail "${TEST_NAME}-${count}"
+            if "${CYLC_TEST_DEBUG:-false}"; then
+                cat "${FILE}" >&2
+            fi
+            mkdir -p "${TEST_LOG_DIR}"
+            ERR_FILE="${TEST_LOG_DIR}/${TEST_NAME}.stderr"
+            echo "ERR_FILE=$ERR_FILE" >&2
+            echo "Could not find: ${pattern}" > "${ERR_FILE}"
+            echo -e '\n=======================\n' >> "${ERR_FILE}"
+            cat "${FILE}" >> "${ERR_FILE}"
+            skip "$#"
+            return 1
+        fi
+    done
+}
+
+purge_suite_remote() {
+    local HOST="$1"  # or "owner@host"
+    local NAME="$2"
+    local CMD="cd 'cylc-run' && rm -fr '${NAME}'"
+    local DIRNAME
+    DIRNAME="$(dirname "${NAME}")"
+    if [[ "${DIRNAME}" != '.' ]]; then
+        CMD="${CMD} && rmdir -p '${DIRNAME}'"
+    fi
+    # CMD is part of this function
+    # shellcheck disable=SC2029
+    ssh -n -oBatchMode=yes -oConnectTimeout=5 "${HOST}" "${CMD}" \
+        2>'/dev/null' || true
+}
+
+purge_suite_platform() {
+    local PLATFORM="$1"  # or "owner@host"
+    local NAME="$2"
+    local CMD="cd 'cylc-run' && rm -fr '${NAME}'"
+    local DIRNAME
+    DIRNAME="$(dirname "${NAME}")"
+    if [[ "${DIRNAME}" != '.' ]]; then
+        CMD="${CMD} && rmdir -p '${DIRNAME}'"
+    fi
+    # Pick the first host from the platform
+    HOSTS=$(cylc get-global --item "[platforms][${PLATFORM}]remote hosts")
+    HOST=$(echo "$HOSTS" | awk -F ',' '{print $1}')
+    # CMD is part of this function
+    # shellcheck disable=SC2029
+    if [[ -z "${HOSTS}" ]]; then
+        ssh -n -oBatchMode=yes -oConnectTimeout=5 "${HOST}" "${CMD}" \
+            2>'/dev/null' || true
+    fi
+}
+
+purge_suite() {
+    local SUITE_NAME="$1"
+    cd "${TEST_DIR:-}"
+    if ((FAILURES == 0)); then
+        local SUITE_RUN_DIR
+        SUITE_RUN_DIR="${RUN_DIR}/${SUITE_NAME}"
+        # Note: lsof can hang, so call with "timeout".
+        while grep -q "${SUITE_RUN_DIR}" < <(timeout 5 lsof); do
+            sleep 1
+        done
+        rm -fr "${SUITE_RUN_DIR}"
+        # The || true is here to prevent setting off the error trap no matter
+        # shellcheck disable=SC2015
+        (cd "${RUN_DIR}" && rmdir -p "$(dirname "${SUITE_RUN_DIR}")" 2>'/dev/null' || true)
+    fi
+    if [[ -n "${TEST_DIR:-}" && -n "${SUITE_NAME:-}" ]]; then
+        rm -fr "${TEST_DIR:?}/${SUITE_NAME:?}"
+    fi
+}
+
+poll() {
+    local TIMEOUT="$(($(date +%s) + 60))" # wait 1 minute
+    while ! "$@"; do
+        sleep 1
+        if (($(date +%s) > TIMEOUT)); then
+            echo "ERROR: poll timed out: $*" >&2
+            exit 1
+        fi
+    done
+}
+
+poll_grep() {
+    poll grep -s "$@"
+}
+
+poll_grep_suite_log() {
+    poll grep -s "$@" "${SUITE_RUN_DIR}/log/suite/log"
+}
+
+poll_pid_done() {
+    local TIMEOUT="$(($(date +%s) + 60))" # wait 1 minute
+    while ps --no-headers "$@" 1>'/dev/null' 2>&1; do
+        sleep 1
+        if (($(date +%s) > TIMEOUT)); then
+            echo "ERROR: poll timed out: ! ps --no-headers $*" >&2
+            exit 1
+        fi
+    done
+}
+
+poll_suite_running() {
+    poll test -e "${SUITE_RUN_DIR}/.service/contact"
+}
+
+poll_suite_stopped() {
+    poll test '!' -e "${SUITE_RUN_DIR}/.service/contact"
+}
+
+get_suite_uuid() {
+    sed -n 's|CYLC_SUITE_UUID=\(.*\)|\1|p' "${SUITE_RUN_DIR}/.service/contact" 2>/dev/null
+}
+
+poll_suite_restart() {
+    TIMEOUT="${1:-10}"
+    STEP=1
+    UUID="${2:-$(get_suite_uuid)}"
+    TIME=0
+    while true; do
+        if [[ ${TIME} -gt $TIMEOUT ]]; then
+            return 1
+        fi
+        if [[ $(get_suite_uuid) != "${UUID}" ]]; then
+            return 0
+        else
+            TIME=$(( TIME + STEP ))
+            sleep "${STEP}"
+        fi
+    done
+}
+
+skip() {
+    local N_TO_SKIP="$1"
+    shift 1
+    local COUNT=0
+    while ((COUNT++ < N_TO_SKIP)); do
+        echo "ok $((++TEST_NUMBER)) # skip $*"
+    done
+}
+
+skip_all() {
+    echo "1..0 # SKIP $*"
+    exit
+}
+
+skip_darwin() {
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        skip_all "Skipping (Mac OS/Darwin) $*"
+    fi
+}
+
+ssh_install_cylc() {
+    local RHOST="$1"
+    local RHOST_CYLC_DIR=
+    RHOST_CYLC_DIR=$(_ssh_mkdtemp_cylc_dir "${RHOST}")
+    TEST_RHOST_CYLC_DIR="${RHOST}:${RHOST_CYLC_DIR}"
+    rsync -a '--exclude=*.pyc' "${CYLC_REPO_DIR}"/* "${RHOST}:${RHOST_CYLC_DIR}/"
+    # RHOST_CYLC_DIR is a variable of this function
+    # shellcheck disable=SC2029
+    ssh -n -oBatchMode=yes -oConnectTimeout=5 "${RHOST}" \
+        "make -C '${RHOST_CYLC_DIR}' 'version'" 1>'/dev/null' 2>&1
+}
+
+_ssh_mkdtemp_cylc_dir() {
+    local RHOST="$1"
+    ssh -oBatchMode=yes -oConnectTimeout=5 "${RHOST}" python3 - <<'__PYTHON__'
+import os
+from tempfile import mkdtemp
+print(mkdtemp(dir=os.path.expanduser("~"), prefix="cylc-"))
+__PYTHON__
+}
+
+mock_smtpd_init() {  # Logic borrowed from Rose
+    local SMTPD_PORT=
+    for SMTPD_PORT in 8025 8125 8225 8325 8425 8525 8625 8725 8825 8925; do
+        local SMTPD_HOST="localhost:${SMTPD_PORT}"
+        local SMTPD_LOG="${TEST_DIR}/smtpd.log"
+        python3 -u -m 'smtpd' -c 'DebuggingServer' -d -n "${SMTPD_HOST}" \
+            1>"${SMTPD_LOG}" 2>&1 &
+        local SMTPD_PID="$!"
+        while ! grep -q 'DebuggingServer started' "${SMTPD_LOG}" 2>'/dev/null'
+        do
+            if ps "${SMTPD_PID}" 1>/dev/null 2>&1; then
+                sleep 1
+            else
+                rm -f "${SMTPD_LOG}"
+                unset SMTPD_HOST SMTPD_LOG SMTPD_PID
+                break
+            fi
+        done
+        if [[ -n "${SMTPD_PID:-}" ]]; then
+            # Variables used by tests
+            # shellcheck disable=SC2034
+            TEST_SMTPD_HOST="${SMTPD_HOST}"
+            # shellcheck disable=SC2034
+            TEST_SMTPD_LOG="${SMTPD_LOG}"
+            TEST_SMTPD_PID="${SMTPD_PID}"
+            break
+        fi
+    done
+}
+
+mock_smtpd_kill() {  # Logic borrowed from Rose
+    if [[ -n "${TEST_SMTPD_PID:-}" ]] && ps "${TEST_SMTPD_PID}" >'/dev/null' 2>&1
+    then
+        kill "${TEST_SMTPD_PID}"
+        wait "${TEST_SMTPD_PID}" 2>/dev/null || true
+        unset TEST_SMTPD_HOST TEST_SMTPD_LOG TEST_SMTPD_PID
+    fi
+}
+
+reftest() {
+    local TEST_NAME="${1:-${TEST_NAME_BASE}}"
+    install_suite "$@"
+    run_ok "${TEST_NAME}-validate" cylc validate "${SUITE_NAME}"
+    suite_run_ok "${TEST_NAME}-run" \
+        cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
+    purge_suite "${SUITE_NAME}"
+}
+
+create_test_globalrc() {
+    # (Documented in file header).
+    local PRE=
+    local POST=
+    if (( $# == 1 )); then
+        PRE=$1
+    elif (( $# == 2 )); then
+        PRE=$1
+        POST=$2
+    elif (( $# > 2 )); then
+        echo 'ERROR, create_test_globalrc: too many args' >&2
+        exit 1
+    fi
+    # Tidy in case of previous use of this function.
+    rm -fr 'etc'
+    mkdir 'etc'
+    # Suite host self-identification method.
+    echo "$PRE" >'etc/flow.rc'
+    SITE_TESTS_CONF_FILE="$(cylc get-global --print-site-dir)/flow-tests.rc"
+    USER_TESTS_CONF_FILE="$(cylc get-global --print-user-dir)/flow-tests.rc"
+    if [[ -f "${SITE_TESTS_CONF_FILE}" ]]; then
+        cat "${SITE_TESTS_CONF_FILE}" >>'etc/flow.rc'
+    fi
+    if [[ -f "${USER_TESTS_CONF_FILE}" ]]; then
+        cat "${USER_TESTS_CONF_FILE}" >>'etc/flow.rc'
+    fi
+    echo "$POST" >>'etc/flow.rc'
+
+    export CYLC_CONF_PATH="${PWD}/etc"
+}
+
+require_remote_platform() {
+    # For remote job tests, define CYLC_REMOTE_PLATFORM from global
+    # config '[test battery]remote platform'.
+    # Skip all tests if is not defined.
+    # Call immediately after sourcing the test header, for skip_all to work.
+    CYLC_REMOTE_PLATFORM="$(
+        cylc get-global-config -i '[test battery]remote platform' 2>'/dev/null'
+    )"
+    if [[ -z "${CYLC_REMOTE_PLATFORM}" ]]; then
+        skip_all '"[test battery]remote platform": not defined'
+    fi
+    # This is ugly, but some tests require these variables for direct ssh-ing.
+    CYLC_TEST_HOST="$(
+        cylc get-global --item \
+            "[platforms][${CYLC_REMOTE_PLATFORM}]remote hosts" \
+            | awk -F ',' '{print $1}' \
+        2>/dev/null
+    )"
+    if [[ -z "${CYLC_TEST_HOST}" ]]; then
+        skip_all '"[test battery]remote platform": not configured'
+    fi
+    export CYLC_REMOTE_PLATFORM
+    export CYLC_TEST_HOST
+}
+
+require_remote_platform_wsfs() {
+    # For remote job tests, define CYLC_REMOTE_PLATFORM from global
+    # config '[test battery]remote platform'.
+    # Skip all tests if is not defined.
+    # Call immediately after sourcing the test header, for skip_all to work.
+    CYLC_REMOTE_PLATFORM_WSFS="$(
+        cylc get-global-config -i '[test battery]remote platform with shared fs' 2>'/dev/null'
+    )"
+    if [[ -z "${CYLC_REMOTE_PLATFORM_WSFS}" ]]; then
+        skip_all '"[test battery]remote platform with shared fs": not defined'
+    fi
+    # This is ugly, but some tests require these variables for direct ssh-ing.
+    CYLC_TEST_HOST_WSFS="$(
+        cylc get-global --item \
+            "[platforms][${CYLC_REMOTE_PLATFORM_WSFS}]remote hosts" \
+            | awk -F ',' '{print $1}' \
+        2>/dev/null
+    )"
+    if [[ -z "${CYLC_TEST_HOST_WSFS}" ]]; then
+        skip_all '"[test battery]remote platform with shared fs": not configured'
+    fi
+    export CYLC_REMOTE_PLATFORM_WSFS
+    export CYLC_TEST_HOST_WSFS
+}
+
+get_fqdn_by_host() {
+if [[ $# -eq 1 ]]; then
+    TARGET="'$1'"
+else
+    TARGET='None'
+fi
+python -c "
+from cylc.flow.hostuserutil import get_fqdn_by_host
+print(get_fqdn_by_host(${TARGET}))
+"
+}
+
+
+# tags
+
+PATH="${CYLC_REPO_DIR}/bin:${PATH}"
+
+RUN_DIR="$(eval echo "$(cylc get-global-config --print-run-dir --color=never)")"
+export RUN_DIR
+TEST_NAME_BASE="$(basename "$0" '.t')"
+TEST_SOURCE_DIR="$(cd "$(dirname "$0")" && pwd)"
+TEST_DIR="$(mktemp -d)"
+cd "${TEST_DIR}"
+TEST_SOURCE_DIR_BASE="${TEST_SOURCE_DIR##*tests/}"
+TEST_LOG_DIR_BASE="${TMPDIR:-/tmp}/${USER}/cylctb-${CYLC_TEST_TIME_INIT}"
+TEST_LOG_DIR="${TEST_LOG_DIR_BASE}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}"
+SUITE_RUN_FAILS=false
+
+CYLC_TEST_SKIP="${CYLC_TEST_SKIP:-}"
+# Is this test in the skip list?
+THIS="${0#./}"
+THIS_DIR="$(dirname "${THIS}")"
+for SKIP in ${CYLC_TEST_SKIP}; do
+    RSKIP="${SKIP#./}"
+    if [[ "${THIS}" == "${RSKIP}" || "${THIS_DIR%/}" == "${RSKIP%/}" ]]; then
+        # Deliberately print variable substitution syntax unexpanded
+        # shellcheck disable=SC2016
+        skip_all 'this test is in $CYLC_TEST_SKIP.'
+        break
+    fi
+done
+if ! "${CYLC_TEST_RUN_GENERIC}" && "${CYLC_TEST_IS_GENERIC}"; then
+    skip_all 'not running generic tests'
+elif ! "${CYLC_TEST_RUN_PLATFORM}" && ! "${CYLC_TEST_IS_GENERIC}"; then
+    skip_all 'not running platform-specific tests'
+fi
+# Ignore the normal site/user global config, use flow-tests.rc.
+create_test_globalrc "$@"
+set +x
+set +e

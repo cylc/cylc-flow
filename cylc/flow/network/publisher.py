@@ -83,10 +83,13 @@ class WorkflowPublisher(ZMQSocketBase):
             serializer (object, optional): string/func for encoding.
 
         """
-        self.topics.add(topic)
-        self.socket.send_multipart(
-            [topic, serialize_data(data, serializer)]
-        )
+        if self.socket:
+            # don't attempt to send anything if we are in the process of
+            # shutting down
+            self.topics.add(topic)
+            self.socket.send_multipart(
+                [topic, serialize_data(data, serializer)]
+            )
 
     async def publish(self, items):
         """Publish topics.
