@@ -15,22 +15,27 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Common logic for "cylc run" and "cylc restart" CLI."""
 
-from functools import partial
+import asyncio
+from functools import partial, lru_cache
+from itertools import zip_longest
 import os
 import sys
 
-import cylc.flow.flags
+from cylc.flow import LOG, __version__ as CYLC_VERSION
 from cylc.flow.exceptions import SuiteServiceFileError
 from cylc.flow.host_select import select_suite_host
 from cylc.flow.hostuserutil import is_remote_host
-from cylc.flow.network.authentication import key_housekeeping
-from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.loggingutil import TimestampRotatingFileHandler
+from cylc.flow.option_parsers import (
+    CylcOptionParser as COP,
+    Options
+)
 from cylc.flow.pathutil import get_suite_run_dir
 from cylc.flow.remote import remrun, remote_cylc_cmd
-from cylc.flow.scheduler import Scheduler
+from cylc.flow.scheduler import Scheduler, SchedulerError
 from cylc.flow import suite_files
-from cylc.flow.resources import extract_resources
 from cylc.flow.terminal import cli_function
+
 
 RUN_DOC = r"""cylc [control] run|start [OPTIONS] [ARGS]
 
@@ -78,6 +83,7 @@ START_POINT_ARG_DOC = (
     "overrides the suite definition.")
 
 
+@lru_cache()
 def get_option_parser(is_restart):
     """Parse CLI for "cylc run" or "cylc restart"."""
     if is_restart:
@@ -232,6 +238,19 @@ def get_option_parser(is_restart):
     return parser
 
 
+# options we cannot simply extract from the parser
+DEFAULT_OPTS = {
+    'debug': False,
+    'verbose': False,
+    'templatevars': None,
+    'templatevars_file': None
+}
+
+
+RunOptions = Options(get_option_parser(False), DEFAULT_OPTS)
+RestartOptions = Options(get_option_parser(True), DEFAULT_OPTS)
+
+
 def _auto_register():
     """Register a suite installed in the cylc-run directory."""
     try:
@@ -242,8 +261,69 @@ def _auto_register():
     os.execv(sys.argv[0], [sys.argv[0]] + [reg] + sys.argv[1:])
 
 
+def _open_logs(reg, no_detach):
+    """Open Cylc log handlers for a flow run."""
+    if not no_detach:
+        while LOG.handlers:
+            LOG.handlers[0].close()
+            LOG.removeHandler(LOG.handlers[0])
+    LOG.addHandler(TimestampRotatingFileHandler(reg, no_detach))
+
+
+def _close_logs():
+    """Close Cylc log handlers for a flow run."""
+    for handler in LOG.handlers:
+        try:
+            handler.close()
+        except IOError:
+            # suppress traceback which `logging` might try to write to the
+            # log we are trying to close
+            pass
+
+
+def _start_print_blurb():
+    """Print copyright and license information."""
+    logo = (
+        "            ._.       \n"
+        "            | |       \n"
+        "._____._. ._| |_____. \n"
+        "| .___| | | | | .___| \n"
+        "| !___| !_! | | !___. \n"
+        "!_____!___. |_!_____! \n"
+        "      .___! |         \n"
+        "      !_____!         \n"
+    )
+    cylc_license = """
+The Cylc Suite Engine [%s]
+Copyright (C) 2008-2019 NIWA
+& British Crown (Met Office) & Contributors.
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+This program comes with ABSOLUTELY NO WARRANTY.
+It is free software, you are welcome to
+redistribute it under certain conditions;
+see `COPYING' in the Cylc source distribution.
+""" % CYLC_VERSION
+
+    logo_lines = logo.splitlines()
+    license_lines = cylc_license.splitlines()
+    lmax = max(len(line) for line in license_lines)
+    print(('\n'.join((
+        ('{0} {1: ^%s}' % lmax).format(*x) for x in zip_longest(
+            logo_lines, license_lines, fillvalue=' ' * (
+                len(logo_lines[-1]) + 1))))))
+
+
 def scheduler_cli(parser, options, args, is_restart=False):
-    """CLI main."""
+    """Implement cylc (run|restart).
+
+    This function should contain all of the command line facing
+    functionality of the Scheduler, exit codes, logging, etc.
+
+    The Scheduler itself should be a Python object you can import and
+    run in a regular Python session so cannot contain this kind of
+    functionality.
+
+    """
     reg = args[0]
     # Check suite is not already running before start of host selection.
     try:
@@ -251,45 +331,106 @@ def scheduler_cli(parser, options, args, is_restart=False):
     except SuiteServiceFileError as exc:
         sys.exit(exc)
 
-    suite_run_dir = get_suite_run_dir(reg)
+    _check_registration(reg)
 
+    # re-execute on another host if required
+    _distribute(options.host, is_restart)
+
+    # print the start message
+    if options.no_detach or options.format == 'plain':
+        _start_print_blurb()
+
+    # setup the scheduler
+    # NOTE: asyncio.run opens an event loop, runs your coro,
+    #       then shutdown async generators and closes the event loop
+    scheduler = Scheduler(reg, options, is_restart=is_restart)
+    asyncio.run(
+        _setup(parser, options, reg, is_restart, scheduler)
+    )
+
+    # daemonize if requested
+    # NOTE: asyncio event loops cannot persist across daemonization
+    #       ensure you have tidied up all threads etc before daemonizing
+    if not options.no_detach:
+        from cylc.flow.daemonize import daemonize
+        daemonize(scheduler)
+
+    # setup loggers
+    _open_logs(reg, options.no_detach)
+
+    # run the workflow
+    ret = asyncio.run(
+        _run(parser, options, reg, is_restart, scheduler)
+    )
+
+    # exit
+    # NOTE: we must clean up all asyncio / threading stuff before exiting
+    # NOTE: any threads which include sleep statements could cause
+    #       sys.exit to hang if not shutdown properly
+    LOG.info("DONE")
+    _close_logs()
+    sys.exit(ret)
+
+
+def _check_registration(reg):
+    """Ensure the flow is registered."""
+    suite_run_dir = get_suite_run_dir(reg)
     if not os.path.exists(suite_run_dir):
         sys.stderr.write(f'suite service directory not found '
                          f'at: {suite_run_dir}\n')
         sys.exit(1)
 
-    # Extract job.sh from library, for use in job scripts.
-    extract_resources(
-        suite_files.get_suite_srv_dir(reg),
-        ['etc/job.sh'])
 
+def _distribute(host, is_restart):
+    """Re-invoke this command on a different host if requested."""
     # Check whether a run host is explicitly specified, else select one.
-    if not options.host:
-        options.host = select_suite_host()[0]
-        if is_remote_host(options.host):
+    if not host:
+        host = select_suite_host()[0]
+        if is_remote_host(host):
             if is_restart:
                 base_cmd = ["restart"] + sys.argv[1:]
             else:
                 base_cmd = ["run"] + sys.argv[1:]
             # Prevent recursive host selection
             base_cmd.append("--host=localhost")
-            return remote_cylc_cmd(base_cmd, host=options.host)
-    # Create ZMQ keys
-    key_housekeeping(reg, platform=options.host)
+            return remote_cylc_cmd(base_cmd, host=host)
+
     if remrun(set_rel_local=True):  # State localhost as above.
         sys.exit()
 
-    try:
-        suite_files.get_suite_source_dir(args[0], options.owner)
-    except SuiteServiceFileError:
-        # Source path is assumed to be the run directory
-        suite_files.register(args[0], get_suite_run_dir(args[0]))
 
+async def _setup(parser, options, reg, is_restart, scheduler):
+    """Initialise the scheduler."""
     try:
-        scheduler = Scheduler(is_restart, options, args)
+        await scheduler.install()
     except SuiteServiceFileError as exc:
         sys.exit(exc)
-    scheduler.start()
+
+
+async def _run(parser, options, reg, is_restart, scheduler):
+    """Run the workflow and handle exceptions."""
+    # run cylc run
+    ret = 0
+    try:
+        await scheduler.run()
+
+    # stop cylc stop
+    except SchedulerError:
+        ret = 1
+    except KeyboardInterrupt as exc:
+        try:
+            await scheduler.shutdown(exc)
+        except Exception as exc2:
+            # In case of exceptions in the shutdown method itself.
+            LOG.exception(exc2)
+            raise exc2 from None
+        ret = 2
+    except Exception:
+        ret = 3
+
+    # kthxbye
+    finally:
+        return ret
 
 
 def main(is_restart=False):

@@ -54,10 +54,14 @@ install_requires = [
     'urwid==2.*'
 ]
 tests_require = [
+    'async-timeout>=3.0.0',
+    'async_generator',
     'codecov>=2.0.0',
     'coverage>=5.0.0',
-    'pytest-cov>=2.8.0',
     'pytest>=5.3.0',
+    'pytest-asyncio>=0.14.0',
+    'pytest-cov>=2.8.0',
+    'pytest-xdist>=1.32.0',
     'pycodestyle>=2.5.0',
     'testfixtures>=6.11.0'
 ]
