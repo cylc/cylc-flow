@@ -34,6 +34,7 @@ import zmq
 from zmq.auth.thread import ThreadAuthenticator
 
 from metomi.isodatetime.parsers import TimePointParser
+from metomi.isodatetime.exceptions import IsodatetimeError
 
 from cylc.flow import LOG
 from cylc.flow import main_loop
@@ -1010,11 +1011,11 @@ class Scheduler:
         parser = TimePointParser()
         try:
             stop_time = parser.parse(arg)
-        except ValueError as exc:
+        except IsodatetimeError as exc:
             try:
                 stop_time = parser.strptime(arg, "%Y/%m/%d-%H:%M")
-            except ValueError:
-                raise exc  # Raise the first (prob. more relevant) ValueError.
+            except IsodatetimeError:
+                raise exc  # The first (prob. more relevant) IsodatetimeError.
         self.set_stop_clock(int(stop_time.get("seconds_since_unix_epoch")))
 
     def command_set_stop_after_task(self, task_id):

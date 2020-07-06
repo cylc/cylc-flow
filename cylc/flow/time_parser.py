@@ -33,6 +33,7 @@ import re
 
 import metomi.isodatetime.data
 import metomi.isodatetime.parsers
+from metomi.isodatetime.exceptions import IsodatetimeError
 
 from cylc.flow.cycling import parse_exclusion
 from cylc.flow.exceptions import (
@@ -374,7 +375,7 @@ class CylcTimeParser(object):
             expr_to_parse = expr + "00"
         try:
             expr_point = self.timepoint_parser.parse(expr_to_parse)
-        except ValueError:
+        except ValueError:  # not IsodatetimeError as too specific
             pass
         else:
             return expr_point, expr_offset
@@ -385,7 +386,7 @@ class CylcTimeParser(object):
                         try:
                             expr_point = self.timepoint_parser.parse(
                                 truncation_string + expr_to_parse)
-                        except ValueError:
+                        except IsodatetimeError:
                             continue
                         return expr_point, expr_offset
         raise CylcTimeSyntaxError(
