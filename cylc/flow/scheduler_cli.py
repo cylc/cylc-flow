@@ -31,7 +31,7 @@ from cylc.flow.option_parsers import (
     Options
 )
 from cylc.flow.pathutil import get_suite_run_dir
-from cylc.flow.remote import remrun, remote_cylc_cmd
+from cylc.flow.remote import remote_cylc_cmd
 from cylc.flow.scheduler import Scheduler, SchedulerError
 from cylc.flow import suite_files
 from cylc.flow.terminal import cli_function
