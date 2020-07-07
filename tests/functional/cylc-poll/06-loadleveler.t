@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test "cylc poll" for loadleveler, slurm, or pbs jobs.
+# TODO Check this test on a dockerized system or VM.
 export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
@@ -31,6 +32,14 @@ then
 fi
 export CYLC_TEST_BATCH_TASK_HOST CYLC_TEST_BATCH_SITE_DIRECTIVES
 set_test_number 2
+
+create_test_globalrc "" "
+[platforms]
+    [[loadleveler-platform]]
+        remote hosts = $CYLC_TEST_BATCH_TASK_HOST
+        batch system = loadleveler
+"
+
 reftest
 if [[ "${CYLC_TEST_BATCH_TASK_HOST}" != 'localhost' ]]; then
     purge_suite_remote "${CYLC_TEST_BATCH_TASK_HOST}" "${SUITE_NAME}"
