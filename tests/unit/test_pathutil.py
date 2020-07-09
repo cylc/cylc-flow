@@ -180,13 +180,6 @@ def test_make_suite_run_tree(caplog, tmpdir, mock_glbl_cfg, subdir):
     for i in range(3):
         make_suite_run_tree('my-workflow')
 
-    # Check that the creation of directories has happened twice
-    expected = f"{tmpdir}/my-workflow{subdir}: directory created"
-    messages = [i.message for i in caplog.records]
-    # We've run through the routine 3 times, so we should have
-    # recorded the each debug message 3 times.
-    assert messages.count(expected) == 3
-
     # Check that directories have been created
     assert (tmpdir / 'my-workflow' / subdir).isdir() is True
     # ...and 1 rolling archive ...
