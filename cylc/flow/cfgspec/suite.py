@@ -1320,32 +1320,23 @@ def host_to_platform_upgrader(cfg):
     Returns (cfg):
         upgraded config object
     """
-    # If platform and old settings are set fail
-    # and remote should be added to this forbidden list
-    forbidden_with_platform = {
-        'host', 'batch system', 'batch submit command template'
-    }
-
+    forbidden_with_platform = (
+        ('remote', 'host'),
+        ('job', 'batch system'),
+        ('job', 'batch submit command template')
+    )
     for task_name, task_spec in cfg['runtime'].items():
-        # if task_name == 'delta':
-        #     breakpoint(header=f"task_name = {task_name}")
-
-        if (
-            'platform' in task_spec and 'job' in task_spec or
-            'platform' in task_spec and 'remote' in task_spec
-        ):
-            if (
-                'platform' in task_spec and
-                forbidden_with_platform & {
-                    *task_spec['job'], *task_spec['remote']
-                }
-            ):
-                # Fail Loudly and Horribly
-                raise PlatformLookupError(
-                    f"A mixture of Cylc 7 (host) and Cylc 8 (platform logic)"
-                    f" should not be used. Task {task_name} set platform "
-                    f"and item in {forbidden_with_platform}"
-                )
+        if 'platform' in task_spec:
+            for section, key in forbidden_with_platform:
+                if (
+                    section in task_spec and
+                    key in task_spec[section]
+                ):
+                    raise PlatformLookupError(
+                        f"A mixture of Cylc 7 (host) and Cylc 8 (platform)"
+                        f" logic should not be used. Task {task_name} "
+                        f"set platform and item in {forbidden_with_platform}"
+                    )
 
         elif 'platform' in task_spec:
             # Return config unchanged
@@ -1386,20 +1377,11 @@ def host_to_platform_upgrader(cfg):
             else:
                 # Set platform in config
                 cfg['runtime'][task_name].update({'platform': platform})
-                LOG.warning(f"Platform {platform} auto selected from ")
-                # Remove deprecated items from config
-                for old_spec_item in forbidden_with_platform:
-                    for task_section in ['job', 'remote']:
-                        if (
-                            task_section in cfg['runtime'][task_name] and
-                            old_spec_item in
-                                cfg['runtime'][task_name][task_section].keys()
-                        ):
-                            poppable = cfg['runtime'][task_name][task_section]
-                            poppable.pop(old_spec_item)
-                    LOG.warning(
-                        f"Cylc 7 {old_spec_item} removed."
-                    )
+                LOG.warning(
+                    f"Cylc 8 platform \"{platform}\" selected based "
+                    f"on your Cylc 7 [job] and/or [remote] settings for task "
+                    f"\"{task_name}\""
+                )
     return cfg
 
 
