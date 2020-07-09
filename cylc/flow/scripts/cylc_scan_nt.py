@@ -50,7 +50,6 @@ from pathlib import Path
 from ansimarkup import ansiprint as cprint
 
 from cylc.flow import LOG
-from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.scan_nt import (
     scan,
     is_active,
@@ -58,6 +57,8 @@ from cylc.flow.network.scan_nt import (
     graphql_query,
     filter_name
 )
+from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.print_tree import print_tree
 from cylc.flow.suite_files import ContactFileFields as Cont
 from cylc.flow.terminal import cli_function
 
@@ -106,7 +107,7 @@ def get_option_parser():
     parser.add_option(
         '--format', '-t',
         help='Set the output format:',
-        choices=('rich', 'plain', 'json'),
+        choices=('rich', 'plain', 'json', 'tree'),
         default='plain'
     )
 
@@ -135,25 +136,6 @@ def make_serial(flow):
     }
 
 
-def _format_json(items, _):
-    return json.dumps(
-        [
-            {
-                key: str(value) if isinstance(value, Path) else value
-                for key, value in flow.items()
-            }
-            for flow in items
-        ],
-        indent=4
-    )
-
-
-def _format_plain(flow, _):
-    # <name> [<host>:<port>]
-    if flow.get('contact'):
-        return f'<b>{flow["name"]}</b> {flow[Cont.HOST]}:{flow[Cont.PORT]}'
-    else:
-        return f'<dim><b>{flow["name"]}</b></dim>'
 
 
 RICH_FIELDS = {
@@ -198,7 +180,30 @@ def state_totals_keys():
     )
 
 
+def _format_json(items, _):
+    """A JSON formatter."""
+    return json.dumps(
+        [
+            {
+                key: str(value) if isinstance(value, Path) else value
+                for key, value in flow.items()
+            }
+            for flow in items
+        ],
+        indent=4
+    )
+
+
+def _format_plain(flow, _):
+    """A single line format of the form: <name> [<host>:<port>]"""
+    if flow.get('contact'):
+        return f'<b>{flow["name"]}</b> {flow[Cont.HOST]}:{flow[Cont.PORT]}'
+    else:
+        return f'<dim><b>{flow["name"]}</b></dim>'
+
+
 def _format_rich(flow, opts):
+    """A multiline format which pulls in metadata."""
     if not flow.get('contact'):
         ret = [f'<dim><b>{flow["name"]}</b> (stopped)</dim>']
     else:
@@ -240,6 +245,7 @@ def sort_function(flow):
 
 
 async def _sorted(pipe, formatter, opts):
+    """List all flows, sort, then print them individually."""
     ret = []
     async for item in pipe:
         ret.append(item)
@@ -248,6 +254,7 @@ async def _sorted(pipe, formatter, opts):
 
 
 async def _serial(pipe, formatter, opts):
+    """List all flows, then print them as one."""
     ret = []
     async for item in pipe:
         ret.append(item)
@@ -255,11 +262,40 @@ async def _serial(pipe, formatter, opts):
 
 
 async def _async(pipe, formatter, opts):
+    """List and print flows individually."""
     async for flow in pipe:
         cprint(formatter(flow, opts))
 
 
+async def _tree(pipe, formatter, opts):
+    """List all flows, sort, then print them as a tree."""
+    # get list of flows
+    ret = []
+    async for flow in pipe:
+        ret.append(flow)
+
+    # construct tree
+    tree = {}
+    for flow in sorted(ret, key=lambda f: f['name']):
+        parts = Path(flow['name']).parts
+        pointer = tree
+        for part in parts[:-1]:
+            if part not in pointer:
+                pointer[part] = {}
+            pointer = pointer[part]
+        flow['name'] = parts[-1]
+        item = formatter(flow, opts)
+        if len(parts) > 1:
+            item = f' {item}'
+        pointer[item] = ''
+
+    # print tree
+    ret = print_tree(tree, '', sort=False)
+    cprint('\n'.join(ret))
+
+
 def get_pipe(opts, formatter):
+    """Construct a pipe for listing flows."""
     pipe = scan
 
     show_running = 'running' in opts.states
@@ -306,6 +342,7 @@ def get_pipe(opts, formatter):
 
 
 def get_formatter(opts):
+    """Return the appropriate formatter and method for the provided opts."""
     formatter = None
     method = None
 
@@ -318,6 +355,9 @@ def get_formatter(opts):
     elif opts.format == 'rich':
         formatter = _format_rich
         method = _async
+    elif opts.format == 'tree':
+        formatter = _format_plain
+        method = _tree
     else:
         raise NotImplementedError
 
@@ -330,6 +370,7 @@ def get_formatter(opts):
 
 
 async def scanner(opts):
+    """Print workflows to stdout."""
     formatter, method = get_formatter(opts)
     pipe = get_pipe(opts, formatter)
 
