@@ -661,12 +661,8 @@ class TaskJobManager(object):
     def _run_job_cmd(self, cmd_key, suite, itasks, callback):
         """Run job commands, e.g. poll, kill, etc.
 
-        Group itasks with their user@host.
-        Put a job command for each user@host to the multiprocess pool.
-
-        n.b. When doing tasks like kill we may want to use the same host.
-        so we get the host and owner back from the itask and keep this working
-        using hosts rather than platforms.
+        Group itasks with their platform_name, host and owner.
+        Put a job command for each group to the multiprocess pool.
         """
         if not itasks:
             return
@@ -686,7 +682,7 @@ class TaskJobManager(object):
         # Go through each list of itasks and carry out commands as required.
         for (platform_n, host, owner), itasks in sorted(auth_itasks.items()):
             platform = platform_from_name(platform_n)
-            if is_remote_host(platform['remote hosts'][0]):
+            if is_remote_platform(platform):
                 remote_mode = True
                 cmd = [cmd_key]
             else:
