@@ -1,0 +1,37 @@
+tests/jobscript/00-torture/suite.rc                                     To be dealt with by Mel
+tests/jobscript/03-copyable-environment-variables/suite.rc              To be dealt with by Mel
+tests/jobscript/cycling/suite.rc                                        To be dealt with by Mel
+tests/jobscript/04-global-initial-scripting/suite.rc                    To be dealt with by Mel
+tests/host-select/00-simple/suite.rc                                    Fix after remote init
+tests/events/08-task-event-handler-retry/suite.rc
+tests/events/suite/suite.rc
+tests/events/11-cycle-task-event-job-logs-retrieve/suite.rc
+tests/events/10-task-event-job-logs-retrieve/suite.rc
+tests/events/32-task-event-job-logs-retrieve-2/suite.rc
+tests/events/33-task-event-job-logs-retrieve-3/suite.rc
+tests/job-submission/07-multi/suite.rc
+tests/job-submission/12-tidy-submits-of-prev-run/suite.rc
+tests/job-submission/01-job-nn-localhost/suite.rc
+tests/job-submission/15-garbage-host-command-2/suite.rc
+tests/job-submission/09-activity-log-host-bad-submit/suite.rc
+tests/job-submission/08-activity-log-host/suite.rc
+tests/restart/26-remote-kill/suite.rc
+tests/restart/bad-job-host/suite.rc
+tests/restart/bad-job-host/suite.rc
+tests/remote/basic/suite.rc
+tests/remote/basic/suite.rc
+tests/remote/basic/suite.rc
+tests/cylc-message/00-ssh/suite.rc
+tests/authentication/01-remote-suite-same-name/suite.rc
+tests/retries/submission/suite.rc
+tests/broadcast/09-remote/suite.rc
+tests/cylc-trigger/08-edit-run-host-select/suite.rc
+tests/directives/pbs/suite.rc
+tests/directives/pbs/suite.rc
+tests/directives/loadleveler/suite.rc
+tests/directives/loadleveler/suite.rc
+tests/directives/slurm/suite.rc
+tests/directives/slurm/suite.rc
+tests/cylc-submit/00-bg/suite.rc                                        To be dealt with by Mel
+tests/cylc-cat-log/editor/suite.rc
+tests/reload/19-remote-kill/suite.rc
