@@ -227,10 +227,6 @@ class HostUtil(object):
                 return True
         return False
 
-    def is_remote(self, host, owner):
-        """Shorthand: is_remote_host(host) or is_remote_user(owner)."""
-        return self.is_remote_host(host) or self.is_remote_user(owner)
-
 
 def get_host_ip_by_name(target):
     """Shorthand for HostUtil.get_inst().get_host_ip_by_name(target)."""
@@ -260,11 +256,6 @@ def get_user():
 def get_user_home():
     """Shorthand for HostUtil.get_inst().get_user_home()."""
     return HostUtil.get_inst().get_user_home()
-
-
-def is_remote(host, owner):
-    """Shorthand for HostUtil.get_inst().is_remote(host, owner)."""
-    return HostUtil.get_inst().is_remote(host, owner)
 
 
 def is_remote_platform(platform):

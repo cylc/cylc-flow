@@ -135,7 +135,7 @@ def test_remote_suite_host_rankings(mock_glbl_cfg):
         f'''
             [suite servers]
                 run hosts = {remote_platform}
-                rankings = """
+                ranking = """
                     # if this test fails due to race conditions
                     # then you are very lucky
                     virtual_memory().available > 123456789123456789
