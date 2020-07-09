@@ -1,3 +1,48 @@
+#!/usr/bin/env python3
+
+# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""cylc [discovery] scan-nt [OPTIONS]
+
+List Cylc workflows, by default this shows only running or held workflows.
+
+Examples:
+    # list all "active" workflows (i.e. running or held)
+    $ cylc scan-nt
+
+    # show more information about these workfows
+    $ cylc scan-nt -t rich
+
+    # don't rely on colour for job state totals
+    $ cylc scan-nt -t rich --colour-blind
+
+    # list all "inactive" workflows (i.e. registered or stopped)
+    $ cylc scan-nt --state stopped
+
+    # list all workflows (active or inactive)
+    $ cylc scan-nt --state=running,held,stopped
+    $ cylc scan-nt --state=all  # or using the shorthand
+
+    # filter workflows by name
+    $ cylc scan-nt --name '^f.*'  # show only flows starting with "f"
+
+    # get results in JSON format
+    $ cylc scan-nt -t json
+"""
+
 import asyncio
 import json
 from pathlib import Path
@@ -25,6 +70,13 @@ FLOW_STATE_CMAP = {
 }
 
 
+FLOW_STATES = {
+    'stopped',
+    'held',
+    'running'
+}
+
+
 def get_option_parser():
     """CLI opts for "cylc scan"."""
     parser = COP(
@@ -36,13 +88,17 @@ def get_option_parser():
 
     parser.add_option(
         '--name',
-        help='Filter flows by registered name using a regex.',
+        help=(
+            'Filter flows by registered name using a regex.'
+            ' Can be used multiple times, workflows will be displayed if'
+            ' their name matches ANY of the provided regexes.'
+        ),
         action='append'
     )
 
     parser.add_option(
         '--states',
-        help='List of flow states to filter by.',
+        help='Choose which flows to display by providing a list of states.',
         default='running,held',
         action='store'
     )
@@ -60,6 +116,15 @@ def get_option_parser():
         action='store_true'
     )
 
+    parser.add_option(
+        '--colour-blind', '--color-blind',
+        help=(
+            'Write out job state names when displaying state totals rather'
+            ' than relying on colour.'
+        ),
+        action='store_true'
+    )
+
     return parser
 
 
@@ -70,7 +135,7 @@ def make_serial(flow):
     }
 
 
-def _format_json(items):
+def _format_json(items, _):
     return json.dumps(
         [
             {
@@ -83,7 +148,7 @@ def _format_json(items):
     )
 
 
-def _format_plain(flow):
+def _format_plain(flow, _):
     # <name> [<host>:<port>]
     if flow.get('contact'):
         return f'<b>{flow["name"]}</b> {flow[Cont.HOST]}:{flow[Cont.PORT]}'
@@ -113,17 +178,27 @@ JOB_COLOURS = {
 }
 
 
-def state_totals(totals):
+def state_totals(totals, colour_blind=False):
     ret = []
     for state, tag in JOB_COLOURS.items():
         number = totals[state]
         if number == 0:
             continue
-        ret.append(f'<{tag}>{number} \u25A0</{tag}>')
+        if colour_blind:
+            ret.append(f'<{tag}>{state}:{number}</{tag}>')
+        else:
+            ret.append(f'<{tag}>{number} \u25A0</{tag}>')
     return ' '.join(ret)
 
 
-def _format_rich(flow):
+def state_totals_keys():
+    return '<b>Job State Key: </b>' + ' '.join(
+        f'<{tag}>\u25A0 {name}</{tag}>'
+        for name, tag in JOB_COLOURS.items()
+    )
+
+
+def _format_rich(flow, opts):
     if not flow.get('contact'):
         ret = [f'<dim><b>{flow["name"]}</b> (stopped)</dim>']
     else:
@@ -134,7 +209,9 @@ def _format_rich(flow):
         ]
 
         display = {
-            'state totals': state_totals(flow['stateTotals']),
+            'state totals': state_totals(
+                flow['stateTotals'], opts.colour_blind
+            ),
             **{
                 name: flow[key]
                 for name, key in (('host', Cont.HOST), ('port', Cont.PORT))
@@ -167,19 +244,19 @@ async def _sorted(pipe, formatter, opts):
     async for item in pipe:
         ret.append(item)
     for flow in sorted(ret, key=sort_function):
-        cprint(formatter(flow))
+        cprint(formatter(flow, opts))
 
 
 async def _serial(pipe, formatter, opts):
     ret = []
     async for item in pipe:
         ret.append(item)
-    cprint(formatter(ret))
+    cprint(formatter(ret, opts))
 
 
 async def _async(pipe, formatter, opts):
     async for flow in pipe:
-        cprint(formatter(flow))
+        cprint(formatter(flow, opts))
 
 
 def get_pipe(opts, formatter):
@@ -263,11 +340,19 @@ async def scanner(opts):
 
 @cli_function(get_option_parser)
 def main(parser, opts):
+    # validate / standardise the list of workflow states
     opts.states = set(opts.states.split(','))
-    assert opts.states
-    assert all(
-        state in {'stopped', 'running', 'held'}
-        for state in opts.states
-    )
+    if 'all' in opts.states:
+        opts.states = FLOW_STATES
+    else:
+        assert opts.states
+        assert all(
+            state in FLOW_STATES
+            for state in opts.states
+        )
+
+    # print state totals key as needed
+    if opts.format == 'rich' and not opts.colour_blind:
+        cprint(state_totals_keys() + '\n')
 
     asyncio.run(scanner(opts))
