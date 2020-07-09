@@ -149,7 +149,11 @@ def main(parser, options, regfilter=None):
             sub[regpath[-1]] = line
 
         pad = get_padding(allsuites)
-        print_tree(tree, pad, options.unicode)
+        print(
+            '\n'.join(
+                print_tree(tree, pad, options.unicode)
+            )
+        )
 
 
 if __name__ == "__main__":

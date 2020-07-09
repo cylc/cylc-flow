@@ -33,7 +33,8 @@ u_trm = '\u2514' + u_hbar
 
 
 def print_tree(tree, padding, use_unicode=False, prefix='', labels=None,
-               eq=False):
+               eq=False, sort=True):
+    ret = []
     if use_unicode:
         vbar = u_vbar
         trm = u_trm
@@ -46,7 +47,8 @@ def print_tree(tree, padding, use_unicode=False, prefix='', labels=None,
         tee_re = a_tee_re
 
     keys = list(tree)
-    keys.sort()
+    if sort:
+        keys.sort()
     # don't sort an ordered-dict tree!
     for item in keys:
         if item == keys[-1]:
@@ -62,18 +64,28 @@ def print_tree(tree, padding, use_unicode=False, prefix='', labels=None,
         result = pp + item
         line = result + ' ' + padding[len(result):]
         if isinstance(tree[item], dict):
-            print(line)
-            print_tree(tree[item], padding, use_unicode, pprefix, labels, eq)
+            ret.append(line)
+            ret.extend(
+                print_tree(
+                    tree[item],
+                    padding,
+                    use_unicode,
+                    pprefix,
+                    labels,
+                    eq
+                )
+            )
         else:
             if labels:
                 if item in labels:
                     reason = labels[item][1]
-                    print(line, '...', reason)
+                    ret.append(f'{line} ... {reason}')
                 else:
-                    print(line)
+                    ret.append(line)
             else:
                 if eq:
                     joiner = '= '
                 else:
                     joiner = ''
-                print(line + joiner + str(tree[item]))
+                ret.append(f'{line}{joiner}{tree[item]}')
+    return ret
