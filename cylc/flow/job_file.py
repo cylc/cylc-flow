@@ -164,7 +164,7 @@ class JobFileWriter(object):
             if [[ $1 == 'noreinvoke' ]]; then
                 shift
             else
-                exec "$(command -v bash)" -l "$0" noreinvoke "$@"
+                exec bash -l "$0" noreinvoke "$@"
             fi
         '''))
 
