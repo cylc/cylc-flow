@@ -442,7 +442,7 @@ async def _run(parser, options, reg, is_restart, scheduler):
     # stop cylc stop
     except SchedulerError:
         ret = 1
-    except KeyboardInterrupt as exc:
+    except (KeyboardInterrupt, asyncio.exceptions.CancelledError) as exc:
         try:
             await scheduler.shutdown(exc)
         except Exception as exc2:
