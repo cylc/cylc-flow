@@ -24,3 +24,6 @@ This is a small change with no associated Issue.
 - [ ] (master branch) I have opened a documentation PR at cylc/cylc-doc/pull/XXXX.
 - [ ] (7.8.x branch) I have updated the documentation in this PR branch.
 - [ ] No documentation update required.
+<!-- choose one: -->
+- [ ] Created an issue at [cylc-flow conda-forge repository](https://github.com/conda-forge/cylc-flow-feedstock) with version changes (if you changed dependencies in `setup.py`, see `recipe/meta.yaml`).
+- [ ] No dependency changes.
