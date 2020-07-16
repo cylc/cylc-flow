@@ -62,7 +62,7 @@ case "${CYLC_TASK_CYCLE_POINT}" in
 2016)
     sed -i 's/\(final cycle point =\) 2024/\1 2025/' "${CYLC_SUITE_DEF_PATH}/suite.rc"
     cylc reload "${CYLC_SUITE_NAME}"
-    sleep 2
+    cylc__job__poll_grep_suite_log "Reload completed"
     :;;
 2019)
     cylc stop "${CYLC_SUITE_NAME}" '2021'

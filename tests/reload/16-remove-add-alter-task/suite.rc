@@ -26,11 +26,6 @@ do_reload 1
 sed -i "s/\(R1 = reloader => inter\)/\1 => remove_add_alter_me/" \
     "${CYLC_SUITE_DEF_PATH}/suite.rc"
 do_reload 2
-#cylc insert "${CYLC_SUITE_NAME}" 'remove_add_alter_me.1'
-#while ! grep -qF 'remove_add_alter_me' < <(cylc dump -t "${CYLC_SUITE_NAME}")
-#do
-#    sleep 1
-#done
 cat >>"${CYLC_SUITE_DEF_PATH}/suite.rc" <<'__RUNTIME__'
 [[remove_add_alter_me]]
     script = true

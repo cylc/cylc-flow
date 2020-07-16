@@ -21,7 +21,6 @@ releaser[1990] & t2[2010] & t3 => stopper"""
 [runtime]
     [[holder]]
         script = """
-sleep 4
 cylc__job__poll_grep_suite_log 'spawned t1.19900101T0000Z'
 cylc__job__poll_grep_suite_log 'spawned t2.20100101T0000Z'
 cylc__job__poll_grep_suite_log 'spawned t3.20300101T0000Z'

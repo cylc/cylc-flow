@@ -12,8 +12,6 @@ sleeping-waiter:start => reloader
 """
 
 [runtime]
-    #[[long]]
-    #    script = sleep 30
     [[sleeping-waiter, starter]]
         script = """
 touch 'file'
@@ -25,7 +23,6 @@ done
         script = true
     [[reloader]]
         script = """
-sleep 5
 cylc reload "${CYLC_SUITE_NAME}"
 cylc__job__poll_grep_suite_log -F '[waiter.1] -reloaded task definition'
 rm -f "${CYLC_SUITE_WORK_DIR}/1/sleeping-waiter/file"
