@@ -471,7 +471,7 @@ class DataStoreMgr:
         workflow.name = self.schd.suite
         workflow.owner = self.schd.owner
         workflow.host = self.schd.host
-        workflow.port = self.schd.port
+        workflow.port = self.schd.port or -1
         for key, val in config.cfg['meta'].items():
             if key in ['title', 'description', 'URL']:
                 setattr(workflow.meta, key, val)

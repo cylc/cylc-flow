@@ -23,6 +23,7 @@ from metomi.isodatetime.data import Calendar, Duration
 from metomi.isodatetime.dumpers import TimePointDumper
 from metomi.isodatetime.timezone import (
     get_local_time_zone, get_local_time_zone_format, TimeZoneFormatMode)
+from metomi.isodatetime.exceptions import IsodatetimeError
 from cylc.flow.time_parser import CylcTimeParser
 from cylc.flow.cycling import (
     PointBase, IntervalBase, SequenceBase, ExclusionBase, cmp_to_rich, cmp
@@ -89,7 +90,7 @@ class ISO8601Point(PointBase):
         """Reformat self.value into a standard representation."""
         try:
             self.value = str(point_parse(self.value))
-        except ValueError as exc:
+        except IsodatetimeError as exc:
             if self.value.startswith("+") or self.value.startswith("-"):
                 message = WARNING_PARSE_EXPANDED_YEAR_DIGITS % (
                     SuiteSpecifics.NUM_EXPANDED_YEAR_DIGITS)
@@ -182,7 +183,7 @@ class ISO8601Interval(IntervalBase):
         """Format self.value into a standard representation."""
         try:
             self.value = str(interval_parse(self.value))
-        except ValueError:
+        except IsodatetimeError:
             raise IntervalParsingError(type(self), self.value)
         return self
 
@@ -356,13 +357,13 @@ class ISO8601Sequence(SequenceBase):
         try:
             exclusion_start_point = ISO8601Point.from_nonstandard_string(
                 str(self.recurrence.start_point))
-        except ValueError:
+        except IsodatetimeError:
             exclusion_start_point = self.context_start_point
 
         try:
             exclusion_end_point = ISO8601Point.from_nonstandard_string(
                 str(self.recurrence.end_point))
-        except ValueError:
+        except IsodatetimeError:
             exclusion_end_point = self.context_end_point
 
         self.exclusions = []
@@ -826,7 +827,7 @@ def get_point_relative(offset_string, base_point):
     """Create a point from offset_string applied to base_point."""
     try:
         interval = ISO8601Interval(str(interval_parse(offset_string)))
-    except ValueError:
+    except IsodatetimeError:
         return ISO8601Point(str(
             SuiteSpecifics.abbrev_util.parse_timepoint(
                 offset_string, context_point=_point_parse(base_point.value))
@@ -877,7 +878,7 @@ def _point_parse(point_string):
         try:
             return SuiteSpecifics.point_parser.strptime(
                 point_string, SuiteSpecifics.DUMP_FORMAT)
-        except ValueError:
+        except IsodatetimeError:
             pass
     # Attempt to parse it in ISO 8601 format.
     return SuiteSpecifics.point_parser.parse(point_string)

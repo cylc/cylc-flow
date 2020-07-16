@@ -22,7 +22,7 @@ Usage: run-functional-tests [...]
 
 Run the Cylc test battery, in <CYLC_REPO_DIR>/tests.
 
-Options and arguments are appended to "prove -j \$NPROC -s -r \${@:-tests}".
+Options and arguments are appended to "prove -j \$NPROC -s -r \${@:-tests/f}".
 NPROC is the number of concurrent processes to run, which defaults to the
 global config "process pool size" setting.
 
@@ -68,13 +68,13 @@ Run the full test suite with the default options.
   run-functional-tests
 Run the full test suite with 12 processes
   run-functional-tests -j 12
-Run only tests under "tests/cyclers/"
-  run-functional-tests tests/cyclers
-Run only "tests/cyclers/16-weekly.t" in verbose mode
-  run-functional-tests -v tests/cyclers/16-weekly.t
-Run only tests under "tests/cyclers/", and skip 00-daily.t
-  export CYLC_TEST_SKIP=tests/cyclers/00-daily.t
-  run-functional-tests tests/cyclers
+Run only tests under "tests/f/cyclers/"
+  run-functional-tests tests/f/cyclers
+Run only "tests/f/cyclers/16-weekly.t" in verbose mode
+  run-functional-tests -v tests/f/cyclers/16-weekly.t
+Run only tests under "tests/f/cyclers/", and skip 00-daily.t
+  export CYLC_TEST_SKIP=tests/f/cyclers/00-daily.t
+  run-functional-tests tests/f/cyclers
 Run the first quarter of the test battery
   CHUNK=1/4 run-functional-tests
 Re-run failed tests
@@ -125,7 +125,7 @@ export CYLC_REPO_DIR="${PWD}"
 
 # default test base
 if [[ ${#TESTS[@]} -eq 0 ]]; then
-    TESTS=('tests')
+    TESTS=('tests/functional')
 fi
 
 # handle chunking

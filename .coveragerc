@@ -29,11 +29,10 @@ debug=
 #include
 note=
 omit=
-    */cylc/flow/tests/*
+    tests/*
     */cylc/flow/profiler.py
     */cylc/flow/profiling/*
     */cylc/flow/parsec/OrderedDictCompat.py
-    */cylc/flow/parsec/tests/*
     */cylc/flow/*_pb2.py
 parallel = True
 plugins=
@@ -55,11 +54,10 @@ fail_under=0
 ignore_errors = False
 include=
 omit=
-    */cylc/flow/tests/*
+    tests/*
     */cylc/flow/profiler.py
     */cylc/flow/profiling/*
     */cylc/flow/parsec/OrderedDictCompat.py
-    */cylc/flow/parsec/tests/*
     */cylc/flow/*_pb2.py
 partial_branches=
 precision=2
