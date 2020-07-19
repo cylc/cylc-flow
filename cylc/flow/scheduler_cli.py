@@ -84,7 +84,7 @@ START_POINT_ARG_DOC = (
 
 
 @lru_cache()
-def get_option_parser(is_restart):
+def get_option_parser(is_restart, add_std_opts=False):
     """Parse CLI for "cylc run" or "cylc restart"."""
     if is_restart:
         parser = COP(RESTART_DOC, jset=True, argdoc=[SUITE_NAME_ARG_DOC])
@@ -234,6 +234,13 @@ def get_option_parser(is_restart):
     )
 
     parser.set_defaults(stop_point_string=None)
+    if add_std_opts:
+        # This is for the API wrapper for integration tests. Otherwise (CLI
+        # use) "standard options" are added later in options.parse_args().
+        # They should really be added in options.__init__() but that requires a
+        # bit of refactoring because option clashes are handled bass-ackwards
+        # ("overrides" are added before standard options).
+        parser.add_std_options()
 
     return parser
 
@@ -247,8 +254,10 @@ DEFAULT_OPTS = {
 }
 
 
-RunOptions = Options(get_option_parser(False), DEFAULT_OPTS)
-RestartOptions = Options(get_option_parser(True), DEFAULT_OPTS)
+RunOptions = Options(
+    get_option_parser(is_restart=False, add_std_opts=True), DEFAULT_OPTS)
+RestartOptions = Options(
+    get_option_parser(is_restart=True, add_std_opts=True), DEFAULT_OPTS)
 
 
 def _auto_register():
