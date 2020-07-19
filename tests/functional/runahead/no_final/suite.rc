@@ -4,7 +4,6 @@
     [[events]]
         abort on stalled = True
 [scheduling]
-    #runahead limit = PT18H
     max active cycle points = 4
     initial cycle point = 20100101T00
     [[graph]]

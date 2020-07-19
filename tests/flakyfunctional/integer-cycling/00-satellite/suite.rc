@@ -22,7 +22,6 @@
     initial cycle point = 1
     final cycle point = {{N_DATASETS}}
     max active cycle points = 3
-    #runahead limit = P3 # (alternative limiting method)
     [[graph]]
         R1 = prep => satsim & get_data
         P1 = """
