@@ -34,11 +34,19 @@ namespace, under `cylc.jinja.filters`.
 Cylc Review was also removed in this version.
 
 -------------------------------------------------------------------------------
-<<<<<<< HEAD
-## __cylc-8.0a3 (2020-Q3?)__
+## __cylc-8.0a3 (2020-08?)__
+
+Fourth alpha release of Cylc 8.
+
+(See note on cylc-8 backward-incompatible changes, above)
+
+### Enhancements
 
 [#3515](https://github.com/cylc/cylc-flow/pull/3515) - spawn-on-demand: a more
 efficient way of the evolving the workflow via the graph.
+
+[#3692](https://github.com/cylc/cylc-flow/pull/3692) - Use the `$EDITOR`
+and `$GEDITOR` environment variables to determine the default editor to use.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0a2 (2020-07-03)__

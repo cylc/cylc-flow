@@ -196,21 +196,47 @@ with Conf('flow.rc', desc='''
     with Conf('editors', desc='''
         Choose your favourite text editor for editing suite configurations.
     '''):
-        Conf('terminal', VDR.V_STRING, 'vim', desc='''
-            The editor to be invoked by the cylc command line interface.
+        Conf('terminal', VDR.V_STRING, desc='''
+            An in-terminal text editor to be used by the cylc command line.
+
+            If unspecified Cylc will use the environment variable
+            ``$EDITOR`` which is the preferred way to set your text editor.
+
+            If neither this or ``$EDITOR`` are specified then Cylc will
+            default to ``vi``.
+
+            .. Note::
+               You can set your ``$EDITOR`` in your shell profile file
+               (e.g. ``~.bashrc``)
 
             Examples::
 
+                ed
                 emacs -nw
-                vi -f
+                nano
+                vi
         ''')
-        Conf('gui', VDR.V_STRING, 'gvim -f', desc='''
-            GUI Text editor to be invoked by Cylc:
+        Conf('gui', VDR.V_STRING, desc='''
+            A graphical text editor to be used by cylc.
+
+            If unspecified Cylc will use the environment variable
+            ``$GEDITOR`` which is the preferred way to set your text editor.
+
+            If neither this or ``$GEDITOR`` are specified then Cylc will
+            default to ``gvim -fg``.
+
+            .. Note::
+               You can set your ``$GEDITOR`` in your shell profile file
+               (e.g. ``~.bashrc``)
 
             Examples::
 
-                gvim -g
+                atom --wait
+                code -nw
                 emacs
+                gedit -s
+                gvim -fg
+                nedit
         ''')
 
     # job platforms
@@ -853,6 +879,13 @@ class GlobalConfig(ParsecConfig):
         Ensure os.environ['HOME'] is defined with the correct value.
         """
         cfg = self.get()
+
+        # default to $[G]EDITOR unless an editor is defined in the config
+        # NOTE: use `or` to handle cases where an env var is set to ''
+        if not cfg['editors']['terminal']:
+            cfg['editors']['terminal'] = os.environ.get('EDITOR') or 'vi'
+        if not cfg['editors']['gui']:
+            cfg['editors']['gui'] = os.environ.get('GEDITOR') or 'gvim -fg'
 
         for host in cfg['hosts']:
             if host == 'localhost':
