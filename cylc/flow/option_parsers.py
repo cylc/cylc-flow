@@ -86,7 +86,7 @@ match name and cycle point patterns against instances already in the pool).
             else:
                 argdoc = [('REG', 'Suite name')]
 
-        # make comments grey in usage for reasability
+        # make comments grey in usage for readability
         usage = cparse(
             re.sub(
                 r'^(\s*(?:\$[^#]+)?)(#.*)$',
