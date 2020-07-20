@@ -49,12 +49,13 @@ The scheduler will run as a daemon unless you specify --no-detach.
 If the suite is not already registered (by "cylc register" or a previous run)
 it will be registered on the fly before start up.
 
-% cylc run REG
-  Run the suite registered with name REG.
+Examples:
+    # Run the suite registered with name REG.
+    $ cylc run REG
 
-% cylc run
-  Register $PWD/suite.rc as $(basename $PWD) and run it.
- (Note REG must be given explicitly if START_POINT is on the command line.)
+    # Register $PWD/suite.rc as $(basename $PWD) and run it.
+    # Note REG must be given explicitly if START_POINT is on the command line.
+    $ cylc run
 
 A "cold start" (the default) starts from the suite initial cycle point
 (specified in the suite.rc or on the command line). Any dependence on tasks
