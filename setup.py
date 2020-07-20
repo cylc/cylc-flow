@@ -43,7 +43,7 @@ def find_version(*file_paths):
 
 install_requires = [
     'ansimarkup>=1.0.0',
-    'colorama==0.4.*',
+    'colorama>=0.4,<=1',
     'click>=7.0',
     'graphene>=2.1,<3',
     'jinja2==2.11.*',
@@ -72,7 +72,7 @@ extra_requires = {
     ],
     'all': [],
     'report-timings': [
-        'pandas==0.25.*'
+        'pandas==1.*'
     ],
     'main_loop-log_data_store': [
         'pympler',
