@@ -619,8 +619,7 @@ def get_suite_title(reg):
     * Assume title is not in an include-file.
     """
     title = NO_TITLE
-    for line in open(get_flow_file(reg), 'rb'):
-        line = line.decode()
+    for line in open(get_flow_file(reg), 'r'):
         if line.lstrip().startswith("[meta]"):
             # continue : title comes inside [meta] section
             continue

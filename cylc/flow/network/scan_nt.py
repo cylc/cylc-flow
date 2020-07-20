@@ -32,11 +32,13 @@ from cylc.flow.async_util import (
     scandir
 )
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.network import API
 from cylc.flow.network.client import (
     SuiteRuntimeClient, ClientError, ClientTimeout)
 from cylc.flow.suite_files import (
     ContactFileFields,
     SuiteFiles,
+    get_suite_title,
     load_contact_file
 )
 
@@ -184,6 +186,8 @@ def requirement_parser(pipe):
     @functools.wraps(pipe)
     def _requirement_parser(req_string):
         nonlocal pipe
+        # we have to give the requirement a name but what we call it doesn't
+        # actually matter
         for req in parse_requirements(f'cylc_flow {req_string}'):
             pipe.args = (req,)
         return pipe
@@ -206,6 +210,24 @@ async def cylc_version(flow, requirement):
 
     """
     return parse_version(flow[ContactFileFields.VERSION]) in requirement
+
+
+@requirement_parser
+@Pipe
+async def api_version(flow, requirement):
+    """Filter by the cylc API version.
+
+    Requires:
+        * contact_info
+
+    Args:
+        flow (dict):
+            Flow information dictionary, provided by scan through the pipe.
+        requirement (str):
+            Requirement specifier in pkg_resources format e.g. > 8, < 9
+
+    """
+    return parse_version(flow[ContactFileFields.API]) in requirement
 
 
 def format_query(pipe):
@@ -309,3 +331,14 @@ async def graphql_query(flow, fields, filters=None):
                     return False
 
         return flow
+
+
+@Pipe
+async def title(flow):
+    """Attempt to parse the suite title out of the suite.rc file.
+
+    Note: This uses a fast but dumb method which may not be successfull.
+
+    """
+    flow['title'] = get_suite_title(flow['name'])
+    return flow

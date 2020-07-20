@@ -63,6 +63,15 @@ from cylc.flow.suite_files import ContactFileFields as Cont
 from cylc.flow.terminal import cli_function
 
 
+# all supported suite states
+FLOW_STATES = {
+    'running',
+    'held',
+    'stopped'
+}
+
+
+# suite status colours
 FLOW_STATE_CMAP = {
     # suite state: term colour
     'running': 'green',
@@ -71,10 +80,38 @@ FLOW_STATE_CMAP = {
 }
 
 
-FLOW_STATES = {
-    'stopped',
-    'held',
-    'running'
+# suite status symbols
+FLOW_STATE_SYMBOLS = {
+    # NOTE: the standard media control characters ▶️,, ⏸️,, ⏹️
+    #       can appear wildly different font-depending and may not
+    #       even be monospace
+    'running': '▶',
+    'held': '‖',
+    'stopped': '■'
+}
+
+
+# graphql fields to request from the workflow for the "rich" format
+RICH_FIELDS = {
+    'status': None,
+    'stateTotals': None,
+    'cylcVersion': None,
+    'meta': {
+        'title',
+        'description',
+    },
+
+}
+
+
+# job icon colours
+JOB_COLOURS = {
+    # job status: term colour
+    'submitted': 'fg 38',
+    'submit-failed': 'fg 13',
+    'running': 'fg 27',
+    'succeeded': 'fg 34',
+    'failed': 'fg 124'
 }
 
 
@@ -120,8 +157,8 @@ def get_option_parser():
     parser.add_option(
         '--colour-blind', '--color-blind',
         help=(
-            'Write out job state names when displaying state totals rather'
-            ' than relying on colour.'
+            "Don't depend on colour to convey information. "
+            ' Use this rather than --color=never so you still get bold text.'
         ),
         action='store_true'
     )
@@ -129,38 +166,19 @@ def get_option_parser():
     return parser
 
 
-def make_serial(flow):
-    return {
-        key: str(value)
-        for key, value in flow.items()
-    }
-
-
-
-
-RICH_FIELDS = {
-    'status': None,
-    'stateTotals': None,
-    'meta': {
-        'title',
-        'description',
-        # 'group',
-        # 'url',
-    },
-
-}
-
-
-JOB_COLOURS = {
-    'submitted': 'fg 38',
-    'submit-failed': 'fg 13',
-    'running': 'fg 27',
-    'succeeded': 'fg 34',
-    'failed': 'fg 124'
-}
-
-
 def state_totals(totals, colour_blind=False):
+    """Return a string with a visual representation of a suite's state totals.
+
+    Args:
+        totals (dict):
+            State totals dictionary.
+        colour_blind (bool):
+            If True then we will not depend on colour to convey information.
+
+    Returns:
+        str
+
+    """
     ret = []
     for state, tag in JOB_COLOURS.items():
         number = totals[state]
@@ -173,7 +191,8 @@ def state_totals(totals, colour_blind=False):
     return ' '.join(ret)
 
 
-def state_totals_keys():
+def state_totals_key():
+    """Return a key to accompany state_totals."""
     return '<b>Job State Key: </b>' + ' '.join(
         f'<{tag}>\u25A0 {name}</{tag}>'
         for name, tag in JOB_COLOURS.items()
@@ -204,26 +223,36 @@ def _format_plain(flow, _):
 
 def _format_rich(flow, opts):
     """A multiline format which pulls in metadata."""
-    if not flow.get('contact'):
-        ret = [f'<dim><b>{flow["name"]}</b> (stopped)</dim>']
+    status = flow.get('status', 'stopped')
+    if opts.colour_blind:
+        name = f'{flow["name"]} ({status})'
     else:
-        tag = FLOW_STATE_CMAP[flow['status']]
-        ret = [
-            f'<b>{flow["name"]}</b>'
-            f' (<{tag}>{flow["status"]}</{tag}>)'
-        ]
+        symbol = FLOW_STATE_SYMBOLS[status]
+        tag = FLOW_STATE_CMAP[status]
+        name = f'<{tag}>{symbol}</{tag}> {flow["name"]}'
+    if not flow.get('contact') or 'status' not in flow:
+        ret = [f'<dim><b>{name}</b></dim>']
+    else:
+        ret = [f'<b>{name}</b>']
 
         display = {
             'state totals': state_totals(
                 flow['stateTotals'], opts.colour_blind
             ),
             **{
-                name: flow[key]
-                for name, key in (('host', Cont.HOST), ('port', Cont.PORT))
+                key: flow['meta'][key] or '<dim>*null*</dim>'
+                for key in (
+                    'title',
+                    'description'
+                )
             },
             **{
-                key: flow['meta'][key] or '<dim>*null*</dim>'
-                for key in ('title', 'description')
+                name: flow[key]
+                for name, key in (
+                    ('cylcVersion', 'cylcVersion'),
+                    ('host', Cont.HOST),
+                    ('port', Cont.PORT)
+                )
             }
         }
         maxlen = max(len(key) for key in display)
@@ -290,7 +319,7 @@ async def _tree(pipe, formatter, opts):
         pointer[item] = ''
 
     # print tree
-    ret = print_tree(tree, '', sort=False)
+    ret = print_tree(tree, '', sort=False, use_unicode=True)
     cprint('\n'.join(ret))
 
 
@@ -303,7 +332,6 @@ def get_pipe(opts, formatter):
     show_active = show_running or show_held
     # show_active = bool({'running', 'held'} & opts.states)
     show_inactive = bool({'stopped'} & opts.states)
-    show_all = show_active and show_inactive
 
     # filter by flow name
     if opts.name:
@@ -380,7 +408,8 @@ async def scanner(opts):
 
 
 @cli_function(get_option_parser)
-def main(parser, opts):
+def main(parser, opts, color):
+    """Implement `cylc scan`."""
     # validate / standardise the list of workflow states
     opts.states = set(opts.states.split(','))
     if 'all' in opts.states:
@@ -392,8 +421,12 @@ def main(parser, opts):
             for state in opts.states
         )
 
+    if not color:
+        # we cannot support colour or have been requested not to use it
+        opts.colour_blind = True
+
     # print state totals key as needed
     if opts.format == 'rich' and not opts.colour_blind:
-        cprint(state_totals_keys() + '\n')
+        cprint(state_totals_key() + '\n')
 
     asyncio.run(scanner(opts))
