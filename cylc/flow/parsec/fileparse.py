@@ -246,8 +246,8 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
             try:
                 from cylc.flow.parsec.empysupport import empyprocess
             except (ImportError, ModuleNotFoundError):
-                raise ParsecError(f'EmPy Python package must be installed '
-                                  'to process file: {fpath}')
+                raise ParsecError('EmPy Python package must be installed '
+                                  'to process file: ' + fpath)
             flines = empyprocess(flines, fdir, template_vars)
 
     # process with Jinja2
@@ -257,8 +257,8 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
             try:
                 from cylc.flow.parsec.jinja2support import jinja2process
             except (ImportError, ModuleNotFoundError):
-                raise ParsecError(f'Jinja2 Python package must be installed '
-                                  'to process file: {fpath}')
+                raise ParsecError('Jinja2 Python package must be installed '
+                                  'to process file: ' + fpath)
             flines = jinja2process(flines, fdir, template_vars)
 
     # concatenate continuation lines
