@@ -404,8 +404,7 @@ class TaskState(object):
         """Change status, and manipulate outputs and prerequisites accordingly.
 
         Outputs are manipulated on manual state reset to reflect the new task
-        status, except for custom outputs on reset to succeeded or later -
-        these can be completed if need be using "cylc reset --output".
+        status.
 
         Note this method could take an additional argument to distinguish
         internal and manually forced state changes, if needed.
