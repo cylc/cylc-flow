@@ -80,7 +80,7 @@ with Conf(
         ''')
 
     with Conf('cylc'):
-        Conf('UTC mode', VDR.V_BOOLEAN, False)
+        Conf('UTC mode', VDR.V_BOOLEAN)
         Conf('cycle point format', VDR.V_CYCLE_POINT_FORMAT)
         Conf('cycle point num expanded year digits', VDR.V_INTEGER, 0)
         Conf('cycle point time zone', VDR.V_CYCLE_POINT_TIME_ZONE)

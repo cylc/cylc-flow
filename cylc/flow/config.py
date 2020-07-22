@@ -310,16 +310,16 @@ class SuiteConfig(object):
         self.cfg = self.pcfg.get(sparse=False)
         self.mem_log("config.py: after get(sparse=False)")
 
+        # Running in UTC time? (else just use the system clock)
+        if self.cfg['cylc']['UTC mode'] is None:
+            # This must be set before call to init_cyclers(self.cfg):
+            self.cfg['cylc']['UTC mode'] = glbl_cfg().get(['cylc', 'UTC mode'])
+        set_utc_mode(self.cfg['cylc']['UTC mode'])
+
         # after the call to init_cyclers, we can start getting proper points.
         init_cyclers(self.cfg)
         self.cycling_type = get_interval_cls().get_null().TYPE
         self.cycle_point_dump_format = get_dump_format(self.cycling_type)
-
-        # Running in UTC time? (else just use the system clock)
-        if self.cfg['cylc']['UTC mode'] is None:
-            set_utc_mode(glbl_cfg().get(['cylc', 'UTC mode']))
-        else:
-            set_utc_mode(self.cfg['cylc']['UTC mode'])
 
         # Initial point from suite definition (or CLI override above).
         self.process_initial_cycle_point()
