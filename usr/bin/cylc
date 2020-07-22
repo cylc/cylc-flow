@@ -16,54 +16,39 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Wrapper for selection between installed versions of cylc.
-# Author: Matt Shin (Met Office).
+# PURPOSE:
+# Central wrapper to select between multiple installed Cylc versions
+# Original author (pre Cylc 8): Matt Shin
 
-#_____________________________
 # INSTALLATION: 
-#
-#  1. Install this script as "cylc" in $PATH for normal users.
-#
-#  2. Install cylc versions as described in the INSTALL file, e.g.:
-#     /opt/cylc-7.6.1/
-#     /opt/cylc-7.7.0/
-#     /opt/cylc -> cylc-7.7.0/  # symlink DEFAULT version
-#
-# Environment variables:
-#  $CYLC_HOME_ROOT: top installation directory, e.g. /opt/
-#  $CYLC_HOME:   a specific version, e.g. /opt/cylc-7.7.0/
-#  $CYLC_VERSION: a specific version string, e.g. 7.7.0
-#
-#  3. Set $CYLC_HOME_ROOT for your site - see "!!! EDIT ME !!! below.
+# Install this script as "cylc" in $PATH for normal users
+# **Cylc 8**
+#  - Install Cylc into pip or conda virtual environments
+# **Cylc 7** back compat:
+#  - Install manually side-by-side, e.g. to /opt/cylc-7.x.y
+#  - use $CYLC_VERSION, $CYLC_HOME_ROOT, $CYLC_HOME as below
 
-#_____________________________
-# ACTION IN ORDER OF PRIORITY:
-# 
-# 1) If $CYLC_HOME is defined and exists it will be selected. If it does
-#   not exist the command will fail.
-#
-# 2) If $CYLC_VERSION is defined and exists it will be selected. If it
-#   does not exist the default under $CYLC_HOME_ROOT will be selected.
-# 
-# 3) If $CYLC_HOME and $CYLC_VERSION are both undefined, the default
-#   under $CYLC_HOME_ROOT will be selected.
- 
-#_____________________________
-# NOTES:
-# * Users will typically accept the default or set $CYLC_VERSION, but
-#   they may set $CYLC_HOME to pick up a private cylc installation.
-# * Developers may set $CYLC_HOME to pick up their own repository clone.
-# * Running suites export $CYLC_VERSION to task environments, so that
-#    task messaging commands etc. pick up the compatible cylc version.
-# * Note that $CYLC_ROOT_HOME can be overridden in the environment too.
+if [[ -n "${VIRTUAL_ENV}" ]]; then
+    # Cylc 8 Python virtual env
+    echo exec "${VIRTUAL_ENV}/bin/cylc" "$@"
 
-CYLC_HOME_ROOT=${CYLC_HOME_ROOT:-/opt} # !!! EDIT ME !!!
+elif [[ -n "${CONDA_DEFAULT_ENV}" ]]; then
+    # Cylc 8 Conda env
+    echo exec conda run -n "${CONDA_DEFAULT_ENV}" cylc "$@"
 
-if [[ -z ${CYLC_HOME:-} ]]; then
-    if [[ -n ${CYLC_VERSION:-} && -d $CYLC_HOME_ROOT/cylc-$CYLC_VERSION ]]; then
-        CYLC_HOME=$CYLC_HOME_ROOT/cylc-$CYLC_VERSION
-    else
-        CYLC_HOME=$CYLC_HOME_ROOT/cylc
+else
+    # CYLC 7 Backward compatibility
+    #   - set CYLC_HOME_ROOT below to site install dir e.g. /opt
+    #   - developers can use $CYLC_HOME to override the root dir
+    #   - users and jobs set $CYLC_VERSION to get a specific version
+    CYLC_HOME_ROOT="${CYLC_HOME_ROOT:-/opt}" # !!! EDIT ME !!!
+    if [[ -z "${CYLC_HOME:-}" ]]; then
+        if [[ -n "${CYLC_VERSION:-}" && \
+                -d "${CYLC_HOME_ROOT}/cylc-${CYLC_VERSION}" ]]; then
+            CYLC_HOME="${CYLC_HOME_ROOT}/cylc-${CYLC_VERSION}"
+        else
+            CYLC_HOME="${CYLC_HOME_ROOT}/cylc"
+        fi
     fi
+    echo exec "${CYLC_HOME}/bin/cylc" "$@"
 fi
-exec "$CYLC_HOME/bin/$(basename "$0")" "$@"

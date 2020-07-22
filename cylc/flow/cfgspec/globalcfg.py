@@ -483,7 +483,8 @@ with Conf('flow.rc', desc='''
             Conf('use login shell', VDR.V_BOOLEAN, True)
             Conf('cylc executable', VDR.V_STRING, 'cylc')
             Conf('global init-script', VDR.V_STRING)
-            Conf('copyable environment variables', VDR.V_STRING_LIST)
+            Conf('copyable environment variables', VDR.V_STRING_LIST,
+                 ['VIRTUAL_ENV', 'CONDA_DEFAULT_ENV'])
             Conf('retrieve job logs', VDR.V_BOOLEAN)
             Conf('retrieve job logs command', VDR.V_STRING, 'rsync -a')
             Conf('retrieve job logs max size', VDR.V_STRING)
