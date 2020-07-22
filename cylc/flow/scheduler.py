@@ -574,6 +574,8 @@ class Scheduler:
         try:
             self.data_store_mgr.initiate_data_model()
             self._configure_contact()
+            if self.is_restart:
+                self.restart_remote_init()
             self.run_event_handlers(self.EVENT_STARTUP, 'suite starting')
             await asyncio.gather(
                 *main_loop.get_runners(
@@ -687,9 +689,12 @@ class Scheduler:
         self.suite_db_mgr.pri_dao.select_xtriggers_for_restart(
             self.xtrigger_mgr.load_xtrigger_for_restart)
 
-        # Re-initialise run directory for user@host for each submitted and
-        # running tasks.
-        # Note: tasks should all be in the runahead pool at this point.
+    def restart_remote_init(self):
+        """Remote init for all submitted / running tasks in the pool.
+
+        Note: tasks should all be in the runahead pool at this point.
+
+        """
         auths = set()
         for itask in self.pool.get_rh_tasks():
             if itask.state(*TASK_STATUSES_ACTIVE):
