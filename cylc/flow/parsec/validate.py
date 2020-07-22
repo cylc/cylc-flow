@@ -30,6 +30,7 @@ from textwrap import dedent
 from metomi.isodatetime.data import Duration, TimePoint, Calendar
 from metomi.isodatetime.dumpers import TimePointDumper
 from metomi.isodatetime.parsers import TimePointParser, DurationParser
+from metomi.isodatetime.exceptions import IsodatetimeError
 
 from cylc.flow.parsec.exceptions import (
     ListValueError, IllegalValueError, IllegalItemError)
@@ -702,7 +703,7 @@ class CylcConfigValidator(ParsecValidator):
             for i in range(1, 101):
                 try:
                     TimePointParser(num_expanded_year_digits=i).parse(value)
-                except ValueError:
+                except IsodatetimeError:
                     continue
                 return value
             raise IllegalValueError('cycle point', keys, value)
@@ -716,11 +717,11 @@ class CylcConfigValidator(ParsecValidator):
                 else:
                     parser.parse(value)
                 return value
-            except ValueError:
+            except IsodatetimeError:
                 raise IllegalValueError("cycle point", keys, value)
         try:
             TimePointParser().parse(value)
-        except ValueError:
+        except IsodatetimeError:
             raise IllegalValueError('cycle point', keys, value)
         return value
 
@@ -748,7 +749,7 @@ class CylcConfigValidator(ParsecValidator):
         if '%' in value:
             try:
                 TimePointDumper().strftime(test_timepoint, value)
-            except ValueError:
+            except IsodatetimeError:
                 raise IllegalValueError('cycle point format', keys, value)
             return value
         if 'X' in value:
@@ -756,14 +757,14 @@ class CylcConfigValidator(ParsecValidator):
                 dumper = TimePointDumper(num_expanded_year_digits=i)
                 try:
                     dumper.dump(test_timepoint, value)
-                except ValueError:
+                except IsodatetimeError:
                     continue
                 return value
             raise IllegalValueError('cycle point format', keys, value)
         dumper = TimePointDumper()
         try:
             dumper.dump(test_timepoint, value)
-        except ValueError:
+        except IsodatetimeError:
             raise IllegalValueError('cycle point format', keys, value)
         return value
 
@@ -795,7 +796,7 @@ class CylcConfigValidator(ParsecValidator):
         parser = TimePointParser(allow_only_basic=True)
         try:
             parser.parse(test_timepoint_string)
-        except ValueError:
+        except ValueError:  # not IsodatetimeError as too specific
             raise IllegalValueError(
                 'cycle point time zone format', keys, value)
         return value
@@ -815,7 +816,7 @@ class CylcConfigValidator(ParsecValidator):
             return None
         try:
             interval = DurationParser().parse(value)
-        except ValueError:
+        except IsodatetimeError:
             raise IllegalValueError("ISO 8601 interval", keys, value)
         days, seconds = interval.get_days_and_seconds()
         return DurationFloat(

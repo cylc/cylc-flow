@@ -950,7 +950,7 @@ with Conf(
                 `String Formatting Operations in the Python
                 documentation
                 <https://docs.python.org/3/library/stdtypes.html
-                #string-formatting>`_.
+                #printf-style-string-formatting>`_.
 
                 Additional information can be passed to event handlers via the
                 ``[cylc] -> [[environment]]`` (but not via task

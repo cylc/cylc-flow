@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Cylc site and user configuration file spec."""
 
-from pathlib import Path
 import os
 import re
 
@@ -188,21 +187,47 @@ with Conf('flow.rc', desc='''
     with Conf('editors', desc='''
         Choose your favourite text editor for editing suite configurations.
     '''):
-        Conf('terminal', VDR.V_STRING, 'vim', desc='''
-            The editor to be invoked by the cylc command line interface.
+        Conf('terminal', VDR.V_STRING, desc='''
+            An in-terminal text editor to be used by the cylc command line.
+
+            If unspecified Cylc will use the environment variable
+            ``$EDITOR`` which is the preferred way to set your text editor.
+
+            If neither this or ``$EDITOR`` are specified then Cylc will
+            default to ``vi``.
+
+            .. Note::
+               You can set your ``$EDITOR`` in your shell profile file
+               (e.g. ``~.bashrc``)
 
             Examples::
 
+                ed
                 emacs -nw
-                vi -f
+                nano
+                vi
         ''')
-        Conf('gui', VDR.V_STRING, 'gvim -f', desc='''
-            GUI Text editor to be invoked by Cylc:
+        Conf('gui', VDR.V_STRING, desc='''
+            A graphical text editor to be used by cylc.
+
+            If unspecified Cylc will use the environment variable
+            ``$GEDITOR`` which is the preferred way to set your text editor.
+
+            If neither this or ``$GEDITOR`` are specified then Cylc will
+            default to ``gvim -fg``.
+
+            .. Note::
+               You can set your ``$GEDITOR`` in your shell profile file
+               (e.g. ``~.bashrc``)
 
             Examples::
 
-                gvim -g
+                atom --wait
+                code -nw
                 emacs
+                gedit -s
+                gvim -fg
+                nedit
         ''')
 
     # platforms
@@ -724,8 +749,8 @@ class GlobalConfig(ParsecConfig):
     _DEFAULT = None
     _HOME = os.getenv('HOME') or get_user_home()
     CONF_BASENAME = "flow.rc"
-    SITE_CONF_DIR = Path(os.sep, 'etc', 'cylc', 'flow', CYLC_VERSION)
-    USER_CONF_DIR = Path(_HOME, '.cylc', 'flow', CYLC_VERSION)
+    SITE_CONF_DIR = os.path.join(os.sep, 'etc', 'cylc', 'flow', CYLC_VERSION)
+    USER_CONF_DIR = os.path.join(_HOME, '.cylc', 'flow', CYLC_VERSION)
 
     @classmethod
     def get_inst(cls, cached=True):
@@ -754,20 +779,16 @@ class GlobalConfig(ParsecConfig):
         LOG.debug("Loading site/user config files")
         conf_path_str = os.getenv("CYLC_CONF_PATH")
         if conf_path_str:
-            path = Path(conf_path_str)
-            if path.is_dir():
-                path /= self.CONF_BASENAME
-            if not path.exists():
-                # this check is superfluous but it gives us a nicer error
-                raise ValueError(
-                    f'CYLC_CONF_PATH does not exist: {conf_path_str}')
-            self.loadcfg(path, upgrader.USER_CONFIG)
+            # Explicit config file override.
+            fname = os.path.join(conf_path_str, self.CONF_BASENAME)
+            if os.access(fname, os.F_OK | os.R_OK):
+                self.loadcfg(fname, upgrader.USER_CONFIG)
         elif conf_path_str is None:
             # Use default locations.
             for conf_dir, conf_type in [
                     (self.SITE_CONF_DIR, upgrader.SITE_CONFIG),
                     (self.USER_CONF_DIR, upgrader.USER_CONFIG)]:
-                fname = conf_dir / self.CONF_BASENAME
+                fname = os.path.join(conf_dir, self.CONF_BASENAME)
                 if not os.access(fname, os.F_OK | os.R_OK):
                     continue
                 try:
@@ -841,6 +862,13 @@ class GlobalConfig(ParsecConfig):
         Ensure os.environ['HOME'] is defined with the correct value.
         """
         cfg = self.get()
+
+        # default to $[G]EDITOR unless an editor is defined in the config
+        # NOTE: use `or` to handle cases where an env var is set to ''
+        if not cfg['editors']['terminal']:
+            cfg['editors']['terminal'] = os.environ.get('EDITOR') or 'vi'
+        if not cfg['editors']['gui']:
+            cfg['editors']['gui'] = os.environ.get('GEDITOR') or 'gvim -fg'
 
         for host in cfg['hosts']:
             if host == 'localhost':

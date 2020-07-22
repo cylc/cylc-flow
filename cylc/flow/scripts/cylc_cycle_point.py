@@ -62,6 +62,7 @@ from cylc.flow.terminal import cli_function
 import metomi.isodatetime.data
 import metomi.isodatetime.dumpers
 import metomi.isodatetime.parsers
+from metomi.isodatetime.exceptions import IsodatetimeError
 
 
 def get_option_parser():
@@ -202,14 +203,14 @@ def main(parser, options, *args):
     try:
         cycle_point = iso_point_parser.parse(
             cycle_point_string, dump_as_parsed=(template is None))
-    except ValueError as exc:
+    except IsodatetimeError as exc:
         parser.error('ERROR: invalid cycle: %s' % exc)
 
     if options.point2:
         try:
             cycle_point2 = iso_point_parser.parse(
                 options.point2, dump_as_parsed=(template is None))
-        except ValueError as exc:
+        except IsodatetimeError as exc:
             parser.error('ERROR: invalid cycle: %s' % exc)
         if cycle_point2 == cycle_point:
             sys.exit(0)
@@ -253,7 +254,7 @@ def main(parser, options, *args):
         try:
             offset += metomi.isodatetime.parsers.DurationParser().parse(
                 opt_offset) * sign_factor
-        except ValueError as exc:
+        except IsodatetimeError as exc:
             parser.error('ERROR: offset not valid: %s' % exc)
     cycle_point += offset
     if template is None:

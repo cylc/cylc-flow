@@ -35,6 +35,7 @@ import traceback
 
 from metomi.isodatetime.data import Calendar
 from metomi.isodatetime.parsers import DurationParser
+from metomi.isodatetime.exceptions import IsodatetimeError
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.util import replicate
 
@@ -380,7 +381,7 @@ class SuiteConfig(object):
                     # Relative, ISO8601 cycling.
                     self.final_point = get_point_relative(
                         fcp_str, self.initial_point).standardise()
-                except ValueError:
+                except IsodatetimeError:
                     # (not relative)
                     pass
             if self.final_point is None:
@@ -666,7 +667,7 @@ class SuiteConfig(object):
                 vfcp = get_point_relative(
                     self.cfg['visualization']['final cycle point'],
                     self.initial_point).standardise()
-            except ValueError:
+            except IsodatetimeError:
                 vfcp = get_point(
                     self.cfg['visualization']['final cycle point']
                 ).standardise()
@@ -724,7 +725,7 @@ class SuiteConfig(object):
             try:
                 my_now = get_current_time_string()
                 icp = ingest_time(orig_icp, my_now)
-            except ValueError as exc:
+            except IsodatetimeError as exc:
                 raise SuiteConfigError(str(exc))
         if orig_icp != icp:
             self.options.icp = icp
@@ -2020,7 +2021,7 @@ class SuiteConfig(object):
                 try:
                     stop_point = get_point_relative(
                         vfcp, get_point(start_point_string)).standardise()
-                except ValueError:
+                except IsodatetimeError:
                     stop_point = get_point(vfcp).standardise()
 
         if stop_point is not None:

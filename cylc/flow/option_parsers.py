@@ -18,7 +18,10 @@
 import logging
 from optparse import OptionParser, OptionConflictError, Values
 import os
+import re
 import sys
+
+from ansimarkup import parse as cparse
 
 from cylc.flow import LOG
 import cylc.flow.flags
@@ -82,6 +85,16 @@ match name and cycle point patterns against instances already in the pool).
                 argdoc = [('SUITE', 'Suite name or path')]
             else:
                 argdoc = [('REG', 'Suite name')]
+
+        # make comments grey in usage for readability
+        usage = cparse(
+            re.sub(
+                r'^(\s*(?:\$[^#]+)?)(#.*)$',
+                r'\1<dim>\2</dim>',
+                usage,
+                flags=re.M
+            )
+        )
 
         # noforce=True is for commands not using interactive prompts at all
 

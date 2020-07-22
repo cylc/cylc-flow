@@ -59,7 +59,7 @@ def duration_as(iso8601_duration, units):
         >>> # Exceptions.
         >>> duration_as('invalid value', 's')  # doctest: +NORMALIZE_WHITESPACE
         Traceback (most recent call last):
-        metomi.isodatetime.parsers.ISO8601SyntaxError: Invalid ISO 8601\
+        metomi.isodatetime.exceptions.ISO8601SyntaxError: Invalid ISO 8601\
         duration representation: invalid value
         >>> duration_as('invalid unit', '#')  # doctest: +NORMALIZE_WHITESPACE
         Traceback (most recent call last):

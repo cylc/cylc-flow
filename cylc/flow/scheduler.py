@@ -34,6 +34,7 @@ import zmq
 from zmq.auth.thread import ThreadAuthenticator
 
 from metomi.isodatetime.parsers import TimePointParser
+from metomi.isodatetime.exceptions import IsodatetimeError
 
 from cylc.flow import LOG
 from cylc.flow import main_loop
@@ -574,6 +575,8 @@ class Scheduler:
         try:
             self.data_store_mgr.initiate_data_model()
             self._configure_contact()
+            if self.is_restart:
+                self.restart_remote_init()
             self.run_event_handlers(self.EVENT_STARTUP, 'suite starting')
             await asyncio.gather(
                 *main_loop.get_runners(
@@ -687,9 +690,12 @@ class Scheduler:
         self.suite_db_mgr.pri_dao.select_xtriggers_for_restart(
             self.xtrigger_mgr.load_xtrigger_for_restart)
 
-        # Re-initialise run directory for user@host for each submitted and
-        # running tasks.
-        # Note: tasks should all be in the runahead pool at this point.
+    def restart_remote_init(self):
+        """Remote init for all submitted / running tasks in the pool.
+
+        Note: tasks should all be in the runahead pool at this point.
+
+        """
         auths = set()
         for itask in self.pool.get_rh_tasks():
             if itask.state(*TASK_STATUSES_ACTIVE):
@@ -1016,11 +1022,11 @@ class Scheduler:
         parser = TimePointParser()
         try:
             stop_time = parser.parse(arg)
-        except ValueError as exc:
+        except IsodatetimeError as exc:
             try:
                 stop_time = parser.strptime(arg, "%Y/%m/%d-%H:%M")
-            except ValueError:
-                raise exc  # Raise the first (prob. more relevant) ValueError.
+            except IsodatetimeError:
+                raise exc  # The first (prob. more relevant) IsodatetimeError.
         self.set_stop_clock(int(stop_time.get("seconds_since_unix_epoch")))
 
     def command_set_stop_after_task(self, task_id):

@@ -58,17 +58,17 @@ def strftime(iso8601_datetime, strftime_str, strptime_str=None):
         >>> # Exceptions.
         >>> strftime('invalid', '%H')  # doctest: +NORMALIZE_WHITESPACE
         Traceback (most recent call last):
-        <class 'metomi.isodatetime.parsers.ISO8601SyntaxError'>
-        metomi.isodatetime.parsers.ISO8601SyntaxError: Invalid ISO 8601 date \
-        representation: invalid
+        <class 'metomi.isodatetime.exceptions.ISO8601SyntaxError'>
+        metomi.isodatetime.exceptions.ISO8601SyntaxError: Invalid ISO 8601 \
+        date representation: invalid
         >>> strftime('2000', '%invalid')  # doctest: +NORMALIZE_WHITESPACE
         Traceback (most recent call last):
-        metomi.isodatetime.parser_spec.StrftimeSyntaxError: Invalid \
+        metomi.isodatetime.exceptions.StrftimeSyntaxError: Invalid \
         strftime/strptime representation: %i
         >>> strftime('2000', '%Y', '%invalid')
         ... # doctest: +NORMALIZE_WHITESPACE
         Traceback (most recent call last):
-        metomi.isodatetime.parser_spec.StrftimeSyntaxError: Invalid \
+        metomi.isodatetime.exceptions.StrftimeSyntaxError: Invalid \
         strftime/strptime representation: %i
     """
     if not strptime_str:
