@@ -25,7 +25,6 @@ from queue import Empty, Queue
 from shlex import quote
 from shutil import copytree, rmtree
 from subprocess import Popen, PIPE, DEVNULL
-from operator import itemgetter
 import sys
 from threading import Barrier
 from time import sleep, time

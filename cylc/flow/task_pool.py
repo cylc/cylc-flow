@@ -22,8 +22,6 @@ from fnmatch import fnmatchcase
 from string import ascii_letters
 import json
 from time import time
-from queue import Queue, Empty
-from itertools import chain
 
 from cylc.flow.parsec.OrderedDict import OrderedDict
 
@@ -333,10 +331,11 @@ class TaskPool(object):
         return released
 
     def load_db_task_pool_for_restart(self, row_idx, row):
-        """Load a task from DB task pool/states/jobs tables.
+        """Load tasks from DB task pool/states/jobs tables, to runahead pool.
 
         Output completion status is loaded from the DB, and tasks recorded
         as submitted or running are polled to confirm their true status.
+        Tasks are added to queues again on release from runahead pool.
 
         """
         if row_idx == 0:
@@ -378,13 +377,8 @@ class TaskPool(object):
                     itask.set_summary_time('started', time_run)
                 if timeout is not None:
                     itask.timeout = timeout
-
-            elif status in (
-                    TASK_STATUS_QUEUED,
-                    TASK_STATUS_READY,
-            ):
-                # reset to waiting as these had not been submitted yet.
-                # SOD: is this necessary?
+            elif status == TASK_STATUS_READY:
+                # put back to be readied again.
                 status = TASK_STATUS_WAITING
 
             # Running or finished task can have completed custom outputs.
