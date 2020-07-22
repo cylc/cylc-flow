@@ -12,3 +12,5 @@
     [[foo]]
         script = "true" # fast
         platform = {{ environ['CYLC_REMOTE_PLATFORM'] }}
+        [[[remote]]]
+            retrieve job logs = True
