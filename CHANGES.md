@@ -45,6 +45,11 @@ Fourth alpha release of Cylc 8.
 [#3692](https://github.com/cylc/cylc-flow/pull/3692) - Use the `$EDITOR`
 and `$GEDITOR` environment variables to determine the default editor to use.
 
+### Fixes
+
+[#3632](https://github.com/cylc/cylc-flow/pull/3632) - Fix a bug that was causing
+`UTC mode` specified in global config to be pretty much ignored.
+
 -------------------------------------------------------------------------------
 ## __cylc-8.0a2 (2020-07-03)__
 

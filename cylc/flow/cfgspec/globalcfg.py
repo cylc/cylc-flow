@@ -89,7 +89,7 @@ with Conf('flow.rc', desc='''
     with Conf('cylc', desc='''
         Default values for entries in the suite.rc ``[cylc]`` section.
     '''):
-        Conf('UTC mode', VDR.V_BOOLEAN, desc='''
+        Conf('UTC mode', VDR.V_BOOLEAN, False, desc='''
                 Default for :cylc:conf:`suite.rc[cylc]UTC mode`.
         ''')
         Conf('task event mail interval', VDR.V_INTERVAL, DurationFloat(300),
