@@ -920,12 +920,9 @@ class TaskEventsManager():
             # Note: user@host may not always be set for a submit number, e.g.
             # on late event or if host select command fails. Use null string to
             # prevent issues in this case.
-            user_at_host = itask.summary['platforms_used'].get(
+            platform_n = itask.summary['platforms_used'].get(
                 itask.submit_num, ''
             )
-            if user_at_host and '@' not in user_at_host:
-                # (only has 'user@' on the front if user is not suite owner).
-                user_at_host = '%s@%s' % (get_user(), user_at_host)
             # Custom event handler can be a command template string
             # or a command that takes 4 arguments (classic interface)
             # Note quote() fails on None, need str(None).
@@ -950,7 +947,7 @@ class TaskEventsManager():
                         str(itask.summary['started_time_string'])),
                     "finish_time": quote(
                         str(itask.summary['finished_time_string'])),
-                    "user@host": quote(user_at_host)
+                    "platform_name": quote(platform_n)
                 }
 
                 if self.suite_cfg:
