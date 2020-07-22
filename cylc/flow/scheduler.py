@@ -1884,7 +1884,7 @@ class Scheduler:
                     and not itask.state(*TASK_STATUSES_SUCCESS)
             ):
                 # Don't if any unsucceeded task exists < stop point...
-                if itask.identity not in self.pool.held_future_tasks:
+                if itask.identity not in self.pool.stuck_future_tasks:
                     # ...unless it has a future trigger extending > stop point.
                     can_shutdown = False
                     break

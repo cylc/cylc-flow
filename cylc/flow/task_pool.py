@@ -166,7 +166,7 @@ class TaskPool(object):
 
         self.is_held = False
         self.hold_point = None
-        self.held_future_tasks = []
+        self.stuck_future_tasks = []
 
         self.stop_task_id = None
         self.stop_task_finished = False
@@ -232,7 +232,9 @@ class TaskPool(object):
     def release_runahead_tasks(self):
         """Restrict the number of active cycle points.
 
-        Return True if any runahead tasks released, else False.
+        Compute max active cycle points or runahead limit, and release tasks to
+        the main pool if they are below that point (and <= the stop point, if
+        there is a stop point). Return True if any tasks released, else False.
 
         """
         released = False
@@ -1164,11 +1166,10 @@ class TaskPool(object):
             itask.state.reset(is_held=True)
         elif (self.stop_point and itask.point <= self.stop_point and
                 self.task_has_future_trigger_overrun(itask)):
-            # Hold if waiting on a future trigger beyond the stop point
+            # Record tasks waiting on a future trigger beyond the stop point.
             # (We ignore these waiting tasks when considering shutdown).
             LOG.info("[%s] -holding (future trigger beyond stop point)", itask)
-            self.held_future_tasks.append(itask.identity)
-            itask.state.reset(is_held=True)
+            self.stuck_future_tasks.append(itask.identity)
         elif (self.is_held
                 and itask.state(TASK_STATUS_WAITING, is_held=False)):
             # Hold newly-spawned tasks in a held suite (e.g. due to manual
