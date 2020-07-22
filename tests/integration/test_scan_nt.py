@@ -21,7 +21,10 @@ from tempfile import TemporaryDirectory
 
 import pytest
 
-from cylc.flow.network.scan_nt import scan
+from cylc.flow.network.scan_nt import (
+    scan,
+    is_active
+)
 from cylc.flow.suite_files import SuiteFiles
 
 
@@ -187,3 +190,32 @@ async def test_scan_really_nasty_symlinks(run_dir_with_really_nasty_symlinks):
     with pytest.raises(OSError):
         async for flow in scan(run_dir_with_really_nasty_symlinks):
             pass
+
+
+@pytest.mark.asyncio
+async def test_is_active(sample_run_dir):
+    """It should filter flows by presence of a contact file."""
+    # running flows
+    assert await is_active.func(
+        {'path': sample_run_dir / 'foo'},
+        True
+    )
+    assert await is_active.func(
+        {'path': sample_run_dir / 'bar/pub'},
+        True
+    )
+    # registered flows
+    assert not await is_active.func(
+        {'path': sample_run_dir / 'baz'},
+        True
+    )
+    # unregistered flows
+    assert not await is_active.func(
+        {'path': sample_run_dir / 'qux'},
+        True
+    )
+    # non-existent flows
+    assert not await is_active.func(
+        {'path': sample_run_dir / 'elephant'},
+        True
+    )

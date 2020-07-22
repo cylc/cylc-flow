@@ -16,7 +16,6 @@
 
 from collections.abc import Iterable
 import asyncio
-import functools
 from pathlib import Path
 import re
 
@@ -27,12 +26,11 @@ from pkg_resources import (
 
 from cylc.flow import LOG
 from cylc.flow.async_util import (
-    Pipe,
+    pipe,
     asyncqgen,
     scandir
 )
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
-from cylc.flow.network import API
 from cylc.flow.network.client import (
     SuiteRuntimeClient, ClientError, ClientTimeout)
 from cylc.flow.suite_files import (
@@ -72,7 +70,7 @@ async def dir_is_flow(listing):
     )
 
 
-@Pipe
+@pipe
 async def scan(run_dir=None):
     """List flows installed on the filesystem.
 
@@ -114,17 +112,12 @@ async def scan(run_dir=None):
                     await stack.put(subdir)
 
 
-def regex_joiner(pipe):
-    """Pre process arguments for filter_name."""
-    @functools.wraps(pipe)
-    def _regex_joiner(*patterns):
-        pipe.args = (re.compile(rf'({"|".join(patterns)})'),)
-        return pipe
-    return _regex_joiner
+def join_regexes(*patterns):
+    """Combine multiple regexes using OR logic."""
+    return (re.compile(rf'({"|".join(patterns)})'),), {}
 
 
-@regex_joiner
-@Pipe
+@pipe(preproc=join_regexes)
 async def filter_name(flow, pattern):
     """Filter flows by name.
 
@@ -139,7 +132,7 @@ async def filter_name(flow, pattern):
     return bool(pattern.match(flow['name']))
 
 
-@Pipe
+@pipe
 async def is_active(flow, is_active):
     """Filter flows by the presence of a contact file.
 
@@ -158,7 +151,7 @@ async def is_active(flow, is_active):
     return _is_active == is_active
 
 
-@Pipe
+@pipe
 async def contact_info(flow):
     """Read information from the contact file.
 
@@ -176,26 +169,16 @@ async def contact_info(flow):
     return flow
 
 
-def requirement_parser(pipe):
-    """Pre-process arguments for cylc_version.
-
-    This way we parse the requirement once when we assemble the pipe
-    rather than for each call
-
-    """
-    @functools.wraps(pipe)
-    def _requirement_parser(req_string):
-        nonlocal pipe
-        # we have to give the requirement a name but what we call it doesn't
-        # actually matter
-        for req in parse_requirements(f'cylc_flow {req_string}'):
-            pipe.args = (req,)
-        return pipe
-    return _requirement_parser
+def parse_requirement(requirement_string):
+    """Parse a requirement from a requirement string."""
+    # we have to give the requirement a name but what we call it doesn't
+    # actually matter
+    for req in parse_requirements(f'x {requirement_string}'):
+        # there should only be one requirement
+        return (req,), {}
 
 
-@requirement_parser
-@Pipe
+@pipe(preproc=parse_requirement)
 async def cylc_version(flow, requirement):
     """Filter by cylc version.
 
@@ -212,8 +195,7 @@ async def cylc_version(flow, requirement):
     return parse_version(flow[ContactFileFields.VERSION]) in requirement
 
 
-@requirement_parser
-@Pipe
+@pipe(preproc=parse_requirement)
 async def api_version(flow, requirement):
     """Filter by the cylc API version.
 
@@ -230,45 +212,37 @@ async def api_version(flow, requirement):
     return parse_version(flow[ContactFileFields.API]) in requirement
 
 
-def format_query(pipe):
-    """Pre-process graphql queries from dicts or lists."""
-    @functools.wraps(pipe)
-    def _format_query(fields, filters=None):
-        nonlocal pipe
-        ret = ''
-        stack = [(None, fields)]
-        while stack:
-            path, fields = stack.pop()
-            if isinstance(fields, dict):
-                leftover_fields = []
-                for key, value in fields.items():
-                    if value:
-                        stack.append((
-                            key,
-                            value
-                        ))
-                    else:
-                        leftover_fields.append(key)
-                if leftover_fields:
-                    fields = leftover_fields
+def format_query(fields, filters=None):
+    ret = ''
+    stack = [(None, fields)]
+    while stack:
+        path, fields = stack.pop()
+        if isinstance(fields, dict):
+            leftover_fields = []
+            for key, value in fields.items():
+                if value:
+                    stack.append((
+                        key,
+                        value
+                    ))
                 else:
-                    continue
-            if path:
-                ret += '\n' + f'{path} {{'
-                for field in fields:
-                    ret += f'\n  {field}'
-                ret += '\n}'
+                    leftover_fields.append(key)
+            if leftover_fields:
+                fields = leftover_fields
             else:
-                for field in fields:
-                    ret += f'\n{field}'
-        pipe.args = (ret + '\n',)
-        pipe.kwargs = {'filters': filters}
-        return pipe
-    return _format_query
+                continue
+        if path:
+            ret += '\n' + f'{path} {{'
+            for field in fields:
+                ret += f'\n  {field}'
+            ret += '\n}'
+        else:
+            for field in fields:
+                ret += f'\n{field}'
+    return (ret + '\n',), {'filters': filters}
 
 
-@format_query
-@Pipe
+@pipe(preproc=format_query)
 async def graphql_query(flow, fields, filters=None):
     """Obtain information from a GraphQL request to the flow.
 
@@ -333,7 +307,7 @@ async def graphql_query(flow, fields, filters=None):
         return flow
 
 
-@Pipe
+@pipe
 async def title(flow):
     """Attempt to parse the suite title out of the suite.rc file.
 
