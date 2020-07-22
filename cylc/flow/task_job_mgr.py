@@ -878,8 +878,9 @@ class TaskJobManager(object):
         platform = itask.platform
         host = get_host_from_platform(platform)
 
+        # TODO - check if you can get rid or change to platform
         itask.summary['host'] = host
-        itask.summary['job_hosts'][itask.submit_num] = host
+        itask.summary['platforms_used'][itask.submit_num] = platform['name']
 
         itask.summary['batch_sys_name'] = platform['batch system']
         for name in rtconfig['extra log files']:

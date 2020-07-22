@@ -926,7 +926,9 @@ class TaskEventsManager():
             # Note: user@host may not always be set for a submit number, e.g.
             # on late event or if host select command fails. Use null string to
             # prevent issues in this case.
-            user_at_host = itask.summary['job_hosts'].get(itask.submit_num, '')
+            user_at_host = itask.summary['platforms_used'].get(
+                itask.submit_num, ''
+            )
             if user_at_host and '@' not in user_at_host:
                 # (only has 'user@' on the front if user is not suite owner).
                 user_at_host = '%s@%s' % (get_user(), user_at_host)
