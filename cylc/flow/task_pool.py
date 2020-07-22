@@ -1156,14 +1156,16 @@ class TaskPool(object):
             # Manual trigger: new flow
             msg += " (new flow)"
 
-        # Hold task if beyond the suite hold point
         if self.hold_point and itask.point > self.hold_point:
+            # Hold if beyond the suite hold point
             LOG.info(
                 "[%s] -holding (beyond suite hold point) %s",
                 itask, self.hold_point)
             itask.state.reset(is_held=True)
         elif (self.stop_point and itask.point <= self.stop_point and
                 self.task_has_future_trigger_overrun(itask)):
+            # Hold if waiting on a future trigger beyond the stop point
+            # (We ignore these waiting tasks when considering shutdown).
             LOG.info("[%s] -holding (future trigger beyond stop point)", itask)
             self.held_future_tasks.append(itask.identity)
             itask.state.reset(is_held=True)
