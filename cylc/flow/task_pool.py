@@ -420,7 +420,8 @@ class TaskPool(object):
                         pass
 
             if platform_name:
-                itask.summary['platforms_used'][int(submit_num)] = platform_name
+                itask.summary['platforms_used'][
+                    int(submit_num)] = platform_name
             LOG.info("+ %s.%s %s%s" % (
                 name, cycle, status, ' (held)' if is_held else ''))
             self.add_to_runahead_pool(itask, is_new=False)
