@@ -26,10 +26,10 @@ from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import SuiteServiceFileError
 from cylc.flow.pathutil import get_suite_run_dir
-from cylc.flow.hostuserutil import (
-    get_user, is_remote_host, is_remote_user, is_remote_platform
-)
 from cylc.flow.platforms import platform_from_name
+from cylc.flow.hostuserutil import (
+    get_user, is_remote_host, is_remote_user
+)
 from cylc.flow.unicode_rules import SuiteNameValidator
 
 from enum import Enum
@@ -251,26 +251,25 @@ def detect_old_contact_file(reg, check_host_port=None):
     # and can be loaded.
     try:
         data = load_contact_file(reg)
-        old_platform = data[ContactFileFields.PLATFORM]
+        old_host = data[ContactFileFields.HOST]
         old_port = data[ContactFileFields.PORT]
         old_proc_str = data[ContactFileFields.PROCESS]
     except (IOError, ValueError, SuiteServiceFileError):
         # Contact file does not exist or corrupted, should be OK to proceed
         return
-    if check_host_port and check_host_port != (old_platform, int(old_port)):
+    if check_host_port and check_host_port != (old_host, int(old_port)):
         raise AssertionError("%s != (%s, %s)" % (
-            check_host_port, old_platform, old_port))
+            check_host_port, old_host, old_port))
     # Run the "ps" command to see if the process is still running or not.
     # If the old suite process is still running, it should show up with the
     # same command line as before.
     # Terminate command after 10 seconds to prevent hanging, etc.
     old_pid_str = old_proc_str.split(None, 1)[0].strip()
     cmd = ["timeout", "10", "ps", PS_OPTS, str(old_pid_str)]
-    if is_remote_platform(platform_from_name(old_platform)):
+    if is_remote_host(old_host):
         import shlex
-        # Assume this is localhost
-        ssh_str = str(platform_from_name(old_platform)["ssh command"])
-        cmd = shlex.split(ssh_str) + ["-n", old_platform] + cmd
+        ssh_str = platform_from_name()["ssh command"]
+        cmd = shlex.split(ssh_str) + ["-n", old_host] + cmd
     from subprocess import Popen, PIPE, DEVNULL  # nosec
     from time import sleep, time
     proc = Popen(cmd, stdin=DEVNULL, stdout=PIPE, stderr=PIPE)  # nosec
@@ -300,7 +299,7 @@ def detect_old_contact_file(reg, check_host_port=None):
 
     raise SuiteServiceFileError(
         CONTACT_FILE_EXISTS_MSG % {
-            "platform": old_platform,
+            "host": old_host,
             "port": old_port,
             "pid": old_pid_str,
             "fname": fname,
