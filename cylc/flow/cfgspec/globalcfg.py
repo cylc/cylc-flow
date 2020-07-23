@@ -739,3 +739,14 @@ class GlobalConfig(ParsecConfig):
                         # Abort on bad user file (users can fix it).
                         LOG.error('bad %s %s', conf_type, fname)
                         raise
+
+        self._set_default_editors()
+
+    def _set_default_editors(self):
+        # default to $[G]EDITOR unless an editor is defined in the config
+        # NOTE: use `or` to handle cases where an env var is set to ''
+        cfg = self.get()
+        if not cfg['editors']['terminal']:
+            cfg['editors']['terminal'] = os.environ.get('EDITOR') or 'vi'
+        if not cfg['editors']['gui']:
+            cfg['editors']['gui'] = os.environ.get('GEDITOR') or 'gvim -fg'
