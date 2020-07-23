@@ -33,6 +33,17 @@ syntax = "proto3";
  * If merge/rebase conflicts arise, then regenerate the module.
  * (DO NOT manually resolve conflicts)
  *
+ *
+ * WARNING: Avoid re-indexing existing fields!
+ *    - Field numbers do not need to be continuous/sequential (gaps are fine).
+ *    - These numbers are used by the client to know which field they correspond to,
+ *      so changing them can break back-compatibility (i.e. already running or old UIS).
+ *    - If in doubt, just leave the current fields as is, and just take a number
+ *      not in use for new fields.
+ *
+ * https://developers.google.com/protocol-buffers/docs/proto3#assigning_field_numbers
+ *
+ *
  * */
 
 
