@@ -798,7 +798,9 @@ class TaskEventsManager():
                 '[%s] -job[%02d] submitted to %s:%s[%s]',
                 itask,
                 itask.summary['submit_num'],
-                itask.summary['host'],
+                itask.summary['platforms_used'][max(
+                    itask.summary['platforms_used'].keys()
+                )],
                 itask.summary['batch_sys_name'],
                 itask.summary['submit_method_id'])
         except KeyError:
