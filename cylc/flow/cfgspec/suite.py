@@ -913,8 +913,8 @@ with Conf(
                    Date-time when task job starts running
                 ``%(finish_time)s``
                    Date-time when task job exits
-                ``%(user@host)s``
-                   user@host where the task job is submitted
+                ``%(platform_name)s``
+                   name of platform where the task job is submitted
                 ``%(message)s``
                    Event message, if any
                 any task [meta] item, e.g.:
