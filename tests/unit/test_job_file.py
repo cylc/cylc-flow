@@ -124,7 +124,7 @@ def test_write(mocked_get_remote_suite_run_dir, fixture_get_platform):
 
         assert (os.path.exists(local_job_file_path))
         size_of_file = os.stat(local_job_file_path).st_size
-        assert(size_of_file == 1717)
+        assert(size_of_file == 1724)
 
 
 def test_write_header(fixture_get_platform):
@@ -320,8 +320,8 @@ def test_write_suite_environment(fixture_get_platform, monkeypatch):
     expected = ('\n\ncylc__job__inst__cylc_env() {\n    # CYLC SUITE '
                 'ENVIRONMENT:\n    export CYLC_CYCLING_MODE="integer"\n  '
                 '  export CYLC_UTC="True"\n    export TZ="UTC"\n\n   '
-                ' export CYLC_SUITE_RUN_DIR="cylc-run/farm_noises"\n  '
-                '  CYLC_SUITE_WORK_DIR_ROOT="work/dir"\n   '
+                ' export CYLC_SUITE_RUN_DIR="cylc-run/farm_noises"\n   '
+                ' export CYLC_SUITE_WORK_DIR_ROOT="work/dir"\n   '
                 ' export CYLC_SUITE_DEF_PATH="remote/suite/dir"\n    expor'
                 't CYLC_SUITE_DEF_PATH_ON_SUITE_HOST="cylc/suite/def/path"'
                 '\n    export CYLC_SUITE_UUID="neigh"')
@@ -360,7 +360,8 @@ def test_write_suite_environment_no_remote_suite_d(
     expected = ('\n\ncylc__job__inst__cylc_env() {\n    # CYLC SUITE '
                 'ENVIRONMENT:\n    export CYLC_CYCLING_MODE="integer"\n    '
                 'export CYLC_UTC="True"\n    export TZ="UTC"\n\n    export '
-                'CYLC_SUITE_RUN_DIR="cylc-run/farm_noises"\n    CYLC_SUITE'
+                'CYLC_SUITE_RUN_DIR="cylc-run/farm_noises"\n    '
+                'export CYLC_SUITE'
                 '_WORK_DIR_ROOT="work/dir"\n    export CYLC_SUITE_DEF_PATH='
                 '"cylc/suite/def/path"\n    export '
                 'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST="cylc/suite/def/path"\n'
