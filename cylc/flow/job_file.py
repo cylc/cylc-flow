@@ -185,7 +185,9 @@ class JobFileWriter(object):
         handle.write('\n    export CYLC_SUITE_RUN_DIR="%s"' % run_d)
         if os.path.expandvars(work_d) != run_d:
             # Note: not an environment variable, but used by job.sh
-            handle.write('\n    CYLC_SUITE_WORK_DIR_ROOT="%s"' % work_d)
+            handle.write(
+                '\n    export CYLC_SUITE_WORK_DIR_ROOT="%s"' % work_d
+            )
         if job_conf['remote_suite_d']:
             handle.write(
                 '\n    export CYLC_SUITE_DEF_PATH="%s"' %
