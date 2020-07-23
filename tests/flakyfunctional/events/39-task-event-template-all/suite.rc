@@ -1,4 +1,7 @@
 # Test all the standard event handler command line template args.
+# When testing this suite outside the test framework you may find
+# it useful to delete the suite from your `cylc-run` directory
+# between tries.
 [meta]
   title = a test suite
   size = large
