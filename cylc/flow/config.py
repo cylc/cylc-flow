@@ -1586,11 +1586,11 @@ class SuiteConfig(object):
                     'task': self.suite_polling_tasks[name][1],
                     'status': self.suite_polling_tasks[name][2]}
 
-            if not offset_is_from_icp:
-                if offset:
-                    taskdef.used_in_offset_trigger = True
-                else:
-                    taskdef.add_sequence(seq)
+            # Only add sequence to taskdef if explicit (not an offset).
+            if offset:
+                taskdef.used_in_offset_trigger = True
+            else:
+                taskdef.add_sequence(seq)
 
             # Record custom message outputs.
             for item in self.cfg['runtime'][name]['outputs'].items():

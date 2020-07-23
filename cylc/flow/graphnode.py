@@ -93,6 +93,11 @@ class GraphNodeParser(object):
             (name, offset, output,
             offset_is_from_icp, offset_is_irregular, offset_is_absolute)
 
+        TODO: offset_is_from_icp is '^' or None - should be boolean?
+
+        NOTE that offsets from ICP like foo[^] and foo[^+P1] are not considered
+              absolute like foo[2] etc.
+
         Raise:
             GraphParseError: on illegal syntax.
         """
