@@ -183,7 +183,7 @@ class JobFileWriter(object):
         work_d = get_remote_suite_work_dir(
             job_conf["platform"], job_conf['suite_name'])
         handle.write('\n    export CYLC_SUITE_RUN_DIR="%s"' % run_d)
-        if os.path.expandvars(work_d) != run_d:
+        if work_d != run_d:
             # Note: not an environment variable, but used by job.sh
             handle.write(
                 '\n    export CYLC_SUITE_WORK_DIR_ROOT="%s"' % work_d
