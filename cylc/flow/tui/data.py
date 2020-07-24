@@ -16,7 +16,7 @@ QUERY = '''
         cyclePoint
         state
         isHeld
-        parents {
+        firstParent {
           id
           name
         }
