@@ -1545,7 +1545,7 @@ class SuiteConfig(object):
                         left, right))
             self.edges[seq].add((left, right, suicide, conditional))
 
-    def generate_taskdefs(self, orig_expr, left_nodes, right, seq):
+    def generate_taskdefs(self, orig_expr, left_nodes, right, seq, suicide):
         """Generate task definitions for all nodes in orig_expr."""
 
         for node in left_nodes + [right]:
@@ -1589,6 +1589,9 @@ class SuiteConfig(object):
             # Only add sequence to taskdef if explicit (not an offset).
             if offset:
                 taskdef.used_in_offset_trigger = True
+            elif suicide and name == right:
+                # "foo => !bar" should not create taskdef bar
+                pass
             else:
                 taskdef.add_sequence(seq)
 
@@ -2130,7 +2133,7 @@ class SuiteConfig(object):
                 lefts, suicide = trigs
                 orig = original[right][expr]
                 self.generate_edges(expr, orig, lefts, right, seq, suicide)
-                self.generate_taskdefs(orig, lefts, right, seq)
+                self.generate_taskdefs(orig, lefts, right, seq, suicide)
                 self.generate_triggers(
                     expr, lefts, right, seq, suicide, task_triggers)
 
