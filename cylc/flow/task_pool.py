@@ -913,10 +913,6 @@ class TaskPool(object):
         """
         if self.is_held:
             return False
-        # Suicide triggers might remove (submit-)failed tasks that cause a
-        # stall before shutdown. E.g.: flakytests/events/01-task/suite.rc.
-        # TODO: now calling this twice, uncessary??
-        self.remove_suiciding_tasks()
         can_be_stalled = False
         for itask in self.get_tasks():
             if (
@@ -1040,6 +1036,7 @@ class TaskPool(object):
             # No children depend on this ouput
             children = []
 
+        suicide = []
         for c_name, c_point in children:
             if itask.reflow:
                 c_task = self.get_or_spawn_task(
@@ -1049,11 +1046,25 @@ class TaskPool(object):
                 # Don't spawn, but update existing children.
                 c_task = self.get_task(c_name, c_point)
 
-            # Update downstream prerequisites directly.
             if c_task is not None:
+                # Update downstream prerequisites directly.
                 c_task.state.satisfy_me(
                     set([(itask.tdef.name, str(itask.point), output)]))
-                # TODO event-driven: just check if prereqs are satisfied now.
+                # Event-driven suicide.
+                if (c_task.state.suicide_prerequisites and
+                     c_task.state.suicide_prerequisites_are_all_satisfied()):
+                    suicide.append(c_task)
+                # TODO event-driven submit: check if prereqs are satisfied now.
+
+        for c_task in suicide:
+            print(f"NOT ADDING {c_task}")
+            if c_task.state(
+                    TASK_STATUS_READY,
+                    TASK_STATUS_SUBMITTED,
+                    TASK_STATUS_RUNNING,
+                    is_held=False):
+               LOG.warning(f'[c_task] -suiciding while active')
+            self.remove(c_task, 'SUICIDE')
 
         # Remove the parent task if finished.
         if (output in [TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_EXPIRED]
@@ -1179,25 +1190,6 @@ class TaskPool(object):
         self.add_to_runahead_pool(itask)
         LOG.info(msg, name, point, flow_label)
         return itask
-
-    def remove_suiciding_tasks(self):
-        """Remove tasks that suicide-triggered, return the number removed."""
-        num_removed = 0
-        for itask in self.get_all_tasks():
-            if (itask.state.suicide_prerequisites and
-                    itask.state.suicide_prerequisites_are_all_satisfied()):
-                if itask.state(
-                        TASK_STATUS_READY,
-                        TASK_STATUS_SUBMITTED,
-                        TASK_STATUS_RUNNING,
-                        is_held=False
-                ):
-                    LOG.warning('[%s] -suiciding while active', itask)
-                else:
-                    LOG.info('[%s] -suiciding', itask)
-                self.remove(itask, 'suicide')
-                num_removed += 1
-        return num_removed
 
     def match_taskdefs(self, items):
         """Return matching taskdefs valid for selected cycle points."""

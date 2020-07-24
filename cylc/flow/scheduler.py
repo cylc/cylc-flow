@@ -1397,9 +1397,6 @@ class Scheduler:
                 LOG.info('[%s] -triggered off %s',
                          itask, itask.state.get_resolved_dependencies())
 
-        if self.pool.remove_suiciding_tasks():
-            self.is_updated = True
-
         self.broadcast_mgr.expire_broadcast(self.pool.get_min_point())
         self.xtrigger_mgr.housekeep()
         self.suite_db_mgr.put_xtriggers(self.xtrigger_mgr.sat_xtrig)
