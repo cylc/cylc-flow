@@ -33,6 +33,18 @@ from cylc.flow.parsec.validate import (
 # - value_type: value type (compulsory).
 # - default: the default value (optional).
 # - allowed_2, ...: the only other allowed values of this setting (optional).
+
+# Standard executable search paths to pass to job submission subprocesses.
+SYSPATH = [
+    '/bin',
+    '/usr/bin',
+    '/usr/local/bin',
+    '/sbin',
+    '/usr/sbin',
+    '/usr/local/sbin'
+]
+
+
 with Conf('global.cylc', desc='''
     The global configuration which defines default Cylc Flow settings
     for a user or site.
@@ -548,6 +560,40 @@ with Conf('global.cylc', desc='''
                        install target = localhost
             ''')
 
+            Conf('clean job submission environment', VDR.V_BOOLEAN, False,
+                 desc='''
+                Job submission subprocesses inherit their parent environment by
+                default. So remote job submissions inherit the default
+                non-interactive shell environment, but local ones inherit the
+                scheduler environment. This means local jobs see the scheduler
+                environment unless the local batch system prevents it, which
+                can cause problems - e.g. scheduler ``$PYTHON...`` variables
+                can affect Python programs executed by task job scripts. For
+                consistent handling of local and remote jobs a clean job
+                submission environment is recommended, but it is not the
+                default because it prevents local task jobs from running unless
+                the ``cylc`` version selection wrapper script is installed in
+                ``$PATH`` (a clean environment prevents local jobs from seeing
+                the scheduler's virtual environment).
+
+                Specific environment variables can be singled out to pass
+                through to the clean environment, if necessary.
+
+                A standard set of executable paths is passed through to clean
+                environments, and can be added to if necessary.
+            ''')
+
+            Conf('job submission environment pass-through', VDR.V_STRING_LIST,
+                 desc='''
+                Minimal list of environment variable names to pass through to
+                job submission subprocesses. $HOME is passed automatically.
+                You are unlikely to need this.
+            ''')
+            Conf('job submission executable paths', VDR.V_STRING_LIST, desc='''
+                Additional executable locations to pass to the job
+                submission subprocess beyond the standard locations''' +
+                 ', '.join(SYSPATH) + '''. You are unlikely to need this.
+            ''')
         with Conf('localhost', meta=Platform):
             Conf('hosts', VDR.V_STRING_LIST, ['localhost'])
 

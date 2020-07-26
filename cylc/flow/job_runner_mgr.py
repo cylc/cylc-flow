@@ -60,7 +60,8 @@ job_runner.submit(job_file_path, submit_opts) => ret_code, out, err
     * Submit a job and return an instance of the Popen object for the
       submission. This method is useful if the job submission requires logic
       beyond just running a system or shell command. See also
-      "job_runner.SUBMIT_CMD".
+      "job_runner.SUBMIT_CMD". You must pass "env=submit_opts.get('env')" to
+      Popen - see background.py for example.
 
 job_runner.manip_job_id(job_id) => job_id
     * Modify the job ID that is returned by the job submit command.
@@ -217,12 +218,21 @@ class JobRunnerManager():
             if os.path.isdir(suite_py) and suite_py not in sys.path:
                 sys.path.append(suite_py)
 
+
+    def __init__(self, clean_env=False, env=None, path=None):
+        """Initialise JobRunnerManager."""
+        # Job submission environment.
+        self.clean_env = clean_env
+        self.path = path
+        self.env = env
+
     def _get_sys(self, job_runner_name):
         """Return an instance of the class for "job_runner_name"."""
         if job_runner_name in self._INSTANCES:
             return self._INSTANCES[job_runner_name]
         for key in [f"cylc.flow.job_runner_handlers.{job_runner_name}",
                     job_runner_name]:
+
             try:
                 mod_of_name = __import__(key, fromlist=[key])
                 self._INSTANCES[job_runner_name] = getattr(
@@ -636,7 +646,21 @@ class JobRunnerManager():
 
         # Submit job
         job_runner = self._get_sys(job_runner_name)
+        if not self.clean_env:
+            # Pass the whole environment to the job submit subprocess.
+            # (Note this runs on the job host).
+            env = os.environ
+        else:
+            # $HOME is required by job.sh on the job host.
+            env = {'HOME': os.environ.get('HOME', '')}
+        # Pass selected extra variables to the job submit subprocess.
+        for var in self.env:
+            env[var] = os.environ.get(var, '')
+        if self.path is not None:
+            # Append to avoid overriding an inherited PATH (e.g. in a venv)
+            env['PATH'] = env.get('PATH', '') + ':' + ':'.join(self.path)
         if hasattr(job_runner, "submit"):
+            submit_opts['env'] = env
             # job_runner.submit should handle OSError, if relevant.
             ret_code, out, err = job_runner.submit(job_file_path, submit_opts)
         else:
@@ -649,9 +673,7 @@ class JobRunnerManager():
                     job_file_path, submit_opts)
                 if isinstance(proc_stdin_value, str):
                     proc_stdin_value = proc_stdin_value.encode()
-            env = None
             if hasattr(job_runner, "SUBMIT_CMD_ENV"):
-                env = dict(os.environ)
                 env.update(job_runner.SUBMIT_CMD_ENV)
             job_runner_cmd_tmpl = submit_opts.get("job_runner_cmd_tmpl")
             if job_runner_cmd_tmpl:

@@ -50,15 +50,38 @@ def get_option_parser():
         dest="utc_mode",
         default=False,
     )
-
+    parser.add_option(
+        "--clean-env",
+        help="Clean job submission environment.",
+        action="store_true",
+        dest="clean_env",
+        default=False,
+    )
+    parser.add_option(
+        "--env",
+        help="Variable to pass from parent environment to job submit "
+        "environment. This option can be used multiple times.",
+        action="append",
+        metavar="VAR=VALUE",
+        dest="env",
+        default=[]
+    )
+    parser.add_option(
+        "--path",
+        help="Executable location to pass to job submit environment. "
+        "This option can be used multiple times.",
+        action="append",
+        metavar="PATH",
+        dest="path",
+        default=[]
+    )
     return parser
 
 
 @cli_function(get_option_parser)
 def main(parser, opts, job_log_root, *job_log_dirs):
     """CLI main."""
-    from cylc.flow.job_runner_mgr import JobRunnerManager
-    JobRunnerManager().jobs_submit(
+    JobRunnerManager(opts.clean_env, opts.env, opts.path).jobs_submit(
         job_log_root,
         job_log_dirs,
         remote_mode=opts.remote_mode,
