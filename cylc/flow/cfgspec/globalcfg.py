@@ -81,6 +81,29 @@ with Conf('global.cylc', desc='''
     Conf('run directory rolling archive length', VDR.V_INTEGER, -1, desc='''
         The number of old run directory trees to retain at start-up.
     ''')
+    with Conf('job submission environment', desc='''
+        Blah
+    '''):
+        Conf('divorce from scheduler', VDR.V_BOOLEAN, False, desc='''
+            Divorce the job submission shell from the scheduler environment.
+            Recommended to ensure that local and remote jobs are treated
+            consistently, but not the default because even local jobs will need
+            a central "cylc" wrapper or global "cylc executable" setting in
+            order to find Cylc commands.
+        ''')
+        Conf('environment', VDR.V_STRING_LIST, desc='''
+            Minimal list of environment variables to pass to the job submission
+            subprocess, if "divorce from scheduler" is enabled.
+            $HOME is passed automatically (needed by job scripts). You might
+            possibly need to include other variables if all jobs fail due to
+            undefined variables being referenced in profile scripts (e.g. in
+            /etc/profile.d).
+        ''')
+        Conf('path', VDR.V_STRING_LIST,
+             ['/bin', '/usr/bin', '/usr/local/bin'], desc='''
+            Minimal list of executable file locations to pass to the job
+            submission subprocess if "divorce from scheduler" is enabled.
+        ''')
 
     # suite
     with Conf('cylc', desc='''

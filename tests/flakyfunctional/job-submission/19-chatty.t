@@ -18,6 +18,12 @@
 # Test job submission with a very chatty command.
 # + Simulate "cylc jobs-submit" getting killed half way through.
 
+# WARNING: this test relies on jobs inheriting the scheduler environment: the
+# job submission command "bin/talkingnonsense reads COPYING from $CYLC_REPO_DIR
+# and writes to $CYLC_SUITE_RUN_DIR (with a clean environment, the run dir is
+# available to jobs via the job script, but not to the job submission shell).
+# To fix this it could read some other text file and write to a temp directory.
+
 . "$(dirname "$0")/test_header"
 
 skip_darwin 'atrun hard to configure on Mac OS'

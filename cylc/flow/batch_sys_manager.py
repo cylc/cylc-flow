@@ -60,7 +60,8 @@ batch_sys.submit(job_file_path, submit_opts) => ret_code, out, err
     * Submit a job and return an instance of the Popen object for the
       submission. This method is useful if the job submission requires logic
       beyond just running a system or shell command. See also
-      "batch_sys.SUBMIT_CMD".
+      "batch_sys.SUBMIT_CMD". Pass "env=submit_opts.get('env')" to Popen to
+      divorce the job from the scheduler environment (e.g. see background.py).
 
 batch_sys.manip_job_id(job_id) => job_id
     * Modify the job ID that is returned by the job submit command.
@@ -131,6 +132,7 @@ from cylc.flow.task_job_logs import (
 from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.wallclock import get_current_time_string
 from cylc.flow.parsec.OrderedDict import OrderedDict
+from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 
 
 class JobPollContext():
@@ -216,6 +218,20 @@ class BatchSysManager():
             suite_py = os.path.join(suite_run_dir, sub_dir)
             if os.path.isdir(suite_py) and suite_py not in sys.path:
                 sys.path.append(suite_py)
+
+    def __init__(self):
+        """Initialise BatchSysManager."""
+        # Configure the job submission environment if needed.
+        self.CLEAN_ENV = None
+        if glbl_cfg().get(
+                ['job submission environment', 'divorce from scheduler']):
+            self.CLEAN_ENV = {}
+            for var in glbl_cfg().get(
+                    ['job submission environment', 'environment']):
+                self.CLEAN_ENV[var] = os.environ.get(var, "")
+            self.CLEAN_ENV['HOME'] = os.environ.get('HOME')
+            self.CLEAN_ENV['PATH'] = ':'.join(glbl_cfg().get(
+                ['job submission environment', 'path']))
 
     def _get_sys(self, batch_sys_name):
         """Return an instance of the class for "batch_sys_name"."""
@@ -637,7 +653,13 @@ class BatchSysManager():
 
         # Submit job
         batch_sys = self._get_sys(batch_sys_name)
+        env = {}
+        if self.CLEAN_ENV is not None:
+            env.update(self.CLEAN_ENV)
+        else:
+            env.update(os.environ)
         if hasattr(batch_sys, "submit"):
+            submit_opts['env'] = env
             # batch_sys.submit should handle OSError, if relevant.
             ret_code, out, err = batch_sys.submit(job_file_path, submit_opts)
         else:
@@ -650,9 +672,7 @@ class BatchSysManager():
                     job_file_path, submit_opts)
                 if isinstance(proc_stdin_value, str):
                     proc_stdin_value = proc_stdin_value.encode()
-            env = None
             if hasattr(batch_sys, "SUBMIT_CMD_ENV"):
-                env = dict(os.environ)
                 env.update(batch_sys.SUBMIT_CMD_ENV)
             batch_submit_cmd_tmpl = submit_opts.get("batch_submit_cmd_tmpl")
             if batch_submit_cmd_tmpl:

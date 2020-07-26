@@ -60,6 +60,9 @@ installation defined in $path rather than hardcoding to /bin/bash.
 [#3774](https://github.com/cylc/cylc-flow/pull/3774) - Removed support for
 interactive prompt.
 
+[#3712](https://github.com/cylc/cylc-flow/pull/3712) - Global config option to
+divorce all jobs from the scheduler environment.
+
 ### Fixes
 
 [#3732](https://github.com/cylc/cylc-flow/pull/3732) - XTrigger labels
