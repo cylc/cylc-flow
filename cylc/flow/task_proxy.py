@@ -237,8 +237,9 @@ class TaskProxy(object):
                     self.graph_children[output] = []
                 for name, trigger in downs:
                     child_point = trigger.get_child_point(self.point, seq)
-                    if (trigger.offset_is_absolute or
-                            trigger.offset_is_from_icp):
+                    is_abs = (trigger.offset_is_absolute or
+                              trigger.offset_is_from_icp)
+                    if is_abs:
                         if trigger.get_parent_point(self.point) != self.point:
                             # If 'foo[^] => bar' only spawn off of '^'.
                             continue
@@ -246,7 +247,7 @@ class TaskProxy(object):
                         # E.g.: foo should trigger only on T06:
                         #   PT6H = "waz"
                         #   T06 = "waz[-PT6H] => foo"
-                        self.graph_children[output].append((name, child_point))
+                        self.graph_children[output].append((name, child_point, is_abs))
 
         if tdef.sequential:
             # Add next-instance child.
@@ -261,7 +262,7 @@ class TaskProxy(object):
                     self.graph_children[TASK_OUTPUT_SUCCEEDED] = []
                 self.state.outputs.add(TASK_OUTPUT_SUCCEEDED)
                 self.graph_children[TASK_OUTPUT_SUCCEEDED].append(
-                    (tdef.name, min(nexts)))
+                    (tdef.name, min(nexts), False))
 
         if TASK_OUTPUT_FAILED in self.graph_children:
             self.failure_handled = True

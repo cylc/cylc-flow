@@ -190,6 +190,7 @@ class CylcSuiteDAO(object):
     TABLE_TASK_STATES = "task_states"
     TABLE_TASK_TIMEOUT_TIMERS = "task_timeout_timers"
     TABLE_XTRIGGERS = "xtriggers"
+    TABLE_ABS_OUTPUTS = "absolute_outputs"
 
     TABLES_ATTRS = {
         TABLE_BROADCAST_EVENTS: [
@@ -314,6 +315,11 @@ class CylcSuiteDAO(object):
             ["cycle", {"is_primary_key": True}],
             ["name", {"is_primary_key": True}],
             ["timeout", {"datatype": "REAL"}],
+        ],
+        TABLE_ABS_OUTPUTS: [
+            ["cycle"],
+            ["name"],
+            ["output"],
         ],
     }
 
@@ -702,6 +708,11 @@ class CylcSuiteDAO(object):
 
     def select_xtriggers_for_restart(self, callback):
         stm = r"SELECT signature,results FROM %s" % self.TABLE_XTRIGGERS
+        for row_idx, row in enumerate(self.connect().execute(stm, [])):
+            callback(row_idx, list(row))
+
+    def select_abs_outputs_for_restart(self, callback):
+        stm = r"SELECT cycle,name,output FROM %s" % self.TABLE_ABS_OUTPUTS
         for row_idx, row in enumerate(self.connect().execute(stm, [])):
             callback(row_idx, list(row))
 

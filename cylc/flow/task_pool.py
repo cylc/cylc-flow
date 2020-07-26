@@ -167,6 +167,7 @@ class TaskPool(object):
         self.is_held = False
         self.hold_point = None
         self.stuck_future_tasks = []
+        self.abs_outputs_done = set()
 
         self.stop_task_id = None
         self.stop_task_finished = False
@@ -332,6 +333,10 @@ class TaskPool(object):
                     released = True
         return released
 
+    def load_abs_outputs_for_restart(self, row_idx, row):
+        cycle, name, output = row
+        self.abs_outputs_done.add((name, cycle, output))
+ 
     def load_db_task_pool_for_restart(self, row_idx, row):
         """Load tasks from DB task pool/states/jobs tables, to runahead pool.
 
@@ -522,7 +527,7 @@ class TaskPool(object):
                     itask.tdef.name, next_point, flow_label=itask.flow_label,
                     parent_id=itask.identity)
             else:
-                # Auto-spawn next instance of tasks with absolute triggers.
+                # Auto-spawn (if needed) next absolute-triggered instances.
                 for trig in itask.tdef.get_abs_triggers(next_point):
                     p_name = trig.task_name
                     p_point = trig.get_point(next_point)
@@ -530,10 +535,6 @@ class TaskPool(object):
                         itask.tdef.name, next_point,
                         flow_label=itask.flow_label,
                         parent_id=itask.identity)
-                    if c_task is not None:
-                        # Update downstream prerequisites directly.
-                        c_task.state.satisfy_me(
-                            set([(p_name, str(p_point), trig.output)]))
 
     def remove(self, itask, reason=""):
         """Remove a task from the pool."""
@@ -1024,6 +1025,11 @@ class TaskPool(object):
         Also set a the abort-on-task-failed flag if necessary.
         If not itask.reflow update existing children but don't spawn them.
 
+        If an absolute output is completed update the store of completed abs
+        outputs, and update the prerequisites of every instance of the child
+        in the pool. (And in self.spawn() use the store of completed abs
+        outputs to satisfy any tasks with abs prerequisites).
+
         """
         if output == TASK_OUTPUT_FAILED:
             if (self.expected_failed_tasks is not None
@@ -1037,7 +1043,13 @@ class TaskPool(object):
             children = []
 
         suicide = []
-        for c_name, c_point in children:
+        for c_name, c_point, is_abs in children:
+            if is_abs:
+                self.abs_outputs_done.add((itask.tdef.name,
+                                          str(itask.point), output))
+                self.suite_db_mgr.put_insert_abs_output(
+                      str(itask.point), itask.tdef.name, output)
+                self.suite_db_mgr.process_queued_ops()
             if itask.reflow:
                 c_task = self.get_or_spawn_task(
                     c_name, c_point, flow_label=itask.flow_label,
@@ -1048,12 +1060,18 @@ class TaskPool(object):
 
             if c_task is not None:
                 # Update downstream prerequisites directly.
-                c_task.state.satisfy_me(
-                    set([(itask.tdef.name, str(itask.point), output)]))
+                if is_abs:
+                    tasks, _ = self.filter_task_proxies([c_name])
+                else:
+                    tasks = [c_task]
+                for t in tasks:
+                    t.state.satisfy_me(
+                        set([(itask.tdef.name, str(itask.point), output)]))
                 # Event-driven suicide.
                 if (c_task.state.suicide_prerequisites and
                      c_task.state.suicide_prerequisites_are_all_satisfied()):
                     suicide.append(c_task)
+
                 # TODO event-driven submit: check if prereqs are satisfied now.
 
         for c_task in suicide:
@@ -1186,6 +1204,11 @@ class TaskPool(object):
             # Hold newly-spawned tasks in a held suite (e.g. due to manual
             # triggering of a held task).
             itask.state.reset(is_held=True)
+
+        # Attempt to satisfy any absolute triggers now.
+        # TODO: consider doing this only for tasks with absolute prerequisites.
+        if itask.state.prerequisites_are_not_all_satisfied():
+            itask.state.satisfy_me(self.abs_outputs_done)
 
         self.add_to_runahead_pool(itask)
         LOG.info(msg, name, point, flow_label)

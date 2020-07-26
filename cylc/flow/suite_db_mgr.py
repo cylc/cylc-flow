@@ -68,6 +68,8 @@ class SuiteDatabaseManager(object):
     TABLE_TASK_STATES = CylcSuiteDAO.TABLE_TASK_STATES
     TABLE_TASK_TIMEOUT_TIMERS = CylcSuiteDAO.TABLE_TASK_TIMEOUT_TIMERS
     TABLE_XTRIGGERS = CylcSuiteDAO.TABLE_XTRIGGERS
+    TABLE_ABS_OUTPUTS = CylcSuiteDAO.TABLE_ABS_OUTPUTS
+
 
     def __init__(self, pri_d=None, pub_d=None):
         self.pri_path = None
@@ -98,7 +100,8 @@ class SuiteDatabaseManager(object):
             self.TABLE_TASK_ACTION_TIMERS: [],
             self.TABLE_TASK_OUTPUTS: [],
             self.TABLE_TASK_TIMEOUT_TIMERS: [],
-            self.TABLE_XTRIGGERS: []}
+            self.TABLE_XTRIGGERS: [],
+            self.TABLE_ABS_OUTPUTS: []}
         self.db_updates_map = {}
 
     def checkpoint(self, name):
@@ -490,6 +493,16 @@ class SuiteDatabaseManager(object):
     def put_insert_task_outputs(self, itask):
         """Reset custom outputs for a task."""
         self._put_insert_task_x(CylcSuiteDAO.TABLE_TASK_OUTPUTS, itask, {})
+
+    def put_insert_abs_output(self, cycle, name, output):
+        """Put INSERT statement for a new abs output."""
+        args = {
+            "cycle": str(cycle),
+            "name": name,
+            "output": output
+        }
+        self.db_inserts_map.setdefault(CylcSuiteDAO.TABLE_ABS_OUTPUTS, [])
+        self.db_inserts_map[CylcSuiteDAO.TABLE_ABS_OUTPUTS].append(args)
 
     def _put_insert_task_x(self, table_name, itask, args):
         """Put INSERT statement for a task_* table."""

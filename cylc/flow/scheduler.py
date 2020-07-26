@@ -702,6 +702,8 @@ class Scheduler:
             self.pool.load_db_task_action_timers)
         self.suite_db_mgr.pri_dao.select_xtriggers_for_restart(
             self.xtrigger_mgr.load_xtrigger_for_restart)
+        self.suite_db_mgr.pri_dao.select_abs_outputs_for_restart(
+            self.pool.load_abs_outputs_for_restart)
 
         # Re-initialise run directory for user@host for each submitted and
         # running tasks.
