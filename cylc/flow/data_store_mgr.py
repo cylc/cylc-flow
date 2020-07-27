@@ -171,7 +171,7 @@ def apply_delta(key, delta, data):
                             if field.name in CLEAR_FIELD_MAP[key]:
                                 data[key][element.id].ClearField(field.name)
                     data[key][element.id].MergeFrom(element)
-                except KeyError:
+                except KeyError as exc:
                     # Ensure data-sync doesn't fail with
                     # network issues, sync reconcile/validate will catch.
                     LOG.debug(
