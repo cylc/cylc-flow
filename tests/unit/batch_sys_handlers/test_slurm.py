@@ -35,12 +35,16 @@ home = os.path.expandvars('$HOME/')
                 'task_id': 'axe.1',
             },
             [
-                f'#SBATCH --job-name=axe.1.chop',
-                f'#SBATCH'
-                f' --output={home}cylc-run/chop/log/job/1/axe/01/job.out',
-                f'#SBATCH'
-                f' --error={home}cylc-run/chop/log/job/1/axe/01/job.err',
-                f'#SBATCH --time=3:00',
+                '#SBATCH --job-name=axe.1.chop',
+                (
+                    f'#SBATCH --output='
+                    f'{home}cylc-run/chop/log/job/1/axe/01/job.out'
+                ),
+                (
+                    f'#SBATCH --error='
+                    f'{home}cylc-run/chop/log/job/1/axe/01/job.err'
+                ),
+                '#SBATCH --time=3:00',
             ],
         ),
         (  # task name with % character
@@ -81,15 +85,19 @@ home = os.path.expandvars('$HOME/')
                 'task_id': 'axe.1',
             },
             [
-                f'#SBATCH --job-name=axe.1.chop',
-                f'#SBATCH'
-                f' --output={home}cylc-run/chop/log/job/1/axe/01/job.out',
-                f'#SBATCH'
-                f' --error={home}cylc-run/chop/log/job/1/axe/01/job.err',
-                f'#SBATCH --time=3:20',
-                f'#SBATCH -p=middle',
-                f'#SBATCH --no-requeue',
-                f'#SBATCH --mem=256gb',
+                '#SBATCH --job-name=axe.1.chop',
+                (
+                    f'#SBATCH --output='
+                    f'{home}cylc-run/chop/log/job/1/axe/01/job.out'
+                ),
+                (
+                    f'#SBATCH --error='
+                    f'{home}cylc-run/chop/log/job/1/axe/01/job.err'
+                ),
+                '#SBATCH --time=3:20',
+                '#SBATCH -p=middle',
+                '#SBATCH --no-requeue',
+                '#SBATCH --mem=256gb',
             ],
         ),
     ],
