@@ -202,6 +202,8 @@ def create_delta_store(delta=None, workflow_id=None):
     Args:
         delta (cylc.flow.data_messages_pb2.AllDeltas):
             The message of accumulated deltas for publish/push.
+        workflow_id (str):
+            The workflow ID.
 
     Returns:
         dict
