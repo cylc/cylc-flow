@@ -469,69 +469,6 @@ with Conf('flow.rc', desc='''
             Conf('platforms', VDR.V_STRING_LIST)
 
     # task
-    with Conf('hosts'):
-        with Conf('localhost'):
-            Conf('run directory', VDR.V_STRING, '$HOME/cylc-run')
-            Conf('work directory', VDR.V_STRING, '$HOME/cylc-run')
-            Conf('communication method',
-                 VDR.V_STRING, 'default', options=['default', 'ssh', 'poll'])
-            Conf('submission polling intervals', VDR.V_INTERVAL_LIST)
-            Conf('execution polling intervals', VDR.V_INTERVAL_LIST)
-            Conf('scp command',
-                 VDR.V_STRING, 'scp -oBatchMode=yes -oConnectTimeout=10')
-            Conf('ssh command',
-                 VDR.V_STRING, 'ssh -oBatchMode=yes -oConnectTimeout=10')
-            Conf('use login shell', VDR.V_BOOLEAN, True)
-            Conf('cylc executable', VDR.V_STRING, 'cylc')
-            Conf('global init-script', VDR.V_STRING)
-            Conf('copyable environment variables', VDR.V_STRING_LIST)
-            Conf('retrieve job logs', VDR.V_BOOLEAN)
-            Conf('retrieve job logs command', VDR.V_STRING, 'rsync -a')
-            Conf('retrieve job logs max size', VDR.V_STRING)
-            Conf('retrieve job logs retry delays', VDR.V_INTERVAL_LIST)
-            Conf('task event handler retry delays', VDR.V_INTERVAL_LIST)
-            Conf('tail command template',
-                 VDR.V_STRING, 'tail -n +1 -F %(filename)s')
-            with Conf('batch systems'):
-                with Conf('<batch system name>'):
-                    Conf('err tailer', VDR.V_STRING)
-                    Conf('out tailer', VDR.V_STRING)
-                    Conf('err viewer', VDR.V_STRING)
-                    Conf('out viewer', VDR.V_STRING)
-                    Conf('job name length maximum', VDR.V_INTEGER)
-                    Conf('execution time limit polling intervals',
-                         VDR.V_INTERVAL_LIST)
-
-        with Conf('<hostname glob>'):
-            Conf('run directory', VDR.V_STRING)
-            Conf('work directory', VDR.V_STRING)
-            Conf('communication method',
-                 VDR.V_STRING, 'default', options=['default', 'ssh', 'poll'])
-            Conf('submission polling intervals', VDR.V_INTERVAL_LIST)
-            Conf('execution polling intervals', VDR.V_INTERVAL_LIST)
-            Conf('scp command', VDR.V_STRING)
-            Conf('ssh command', VDR.V_STRING)
-            Conf('use login shell', VDR.V_BOOLEAN)
-            Conf('cylc executable', VDR.V_STRING)
-            Conf('global init-script', VDR.V_STRING)
-            Conf('copyable environment variables', VDR.V_STRING_LIST)
-            Conf('retrieve job logs', VDR.V_BOOLEAN)
-            Conf('retrieve job logs command', VDR.V_STRING)
-            Conf('retrieve job logs max size', VDR.V_STRING)
-            Conf('retrieve job logs retry delays', VDR.V_INTERVAL_LIST)
-            Conf('task event handler retry delays', VDR.V_INTERVAL_LIST)
-            Conf('tail command template', VDR.V_STRING)
-            with Conf('batch systems'):
-                with Conf('<batch system name>'):
-                    Conf('err tailer', VDR.V_STRING)
-                    Conf('out tailer', VDR.V_STRING)
-                    Conf('out viewer', VDR.V_STRING)
-                    Conf('err viewer', VDR.V_STRING)
-                    Conf('job name length maximum', VDR.V_INTEGER)
-                    Conf('execution time limit polling intervals',
-                         VDR.V_INTERVAL_LIST)
-
-    # task
     with Conf('task events', desc='''
         Global site/user defaults for
         :cylc:conf:`suite.rc[runtime][<namespace>][events]`.
@@ -802,93 +739,14 @@ class GlobalConfig(ParsecConfig):
                         # Abort on bad user file (users can fix it).
                         LOG.error('bad %s %s', conf_type, fname)
                         raise
-        # (OK if no flow.rc is found, just use system defaults).
-        self._transform()
 
-    def get_host_item(self, item, host=None, owner=None, replace_home=False,
-                      owner_home=None):
-        """This allows hosts with no matching entry in the config file
-        to default to appropriately modified localhost settings."""
+        self._set_default_editors()
 
-        cfg = self.get()
-
-        # (this may be called with explicit None values for localhost
-        # and owner, so we can't use proper defaults in the arg list)
-        if not host:
-            # if no host is given the caller is asking about localhost
-            host = 'localhost'
-
-        # is there a matching host section?
-        host_key = None
-        if host in cfg['hosts']:
-            # there's an entry for this host
-            host_key = host
-        else:
-            # try for a pattern match
-            for cfg_host in cfg['hosts']:
-                if re.match(cfg_host, host):
-                    host_key = cfg_host
-                    break
-        modify_dirs = False
-        if host_key is not None:
-            # entry exists, any unset items under it have already
-            # defaulted to modified localhost values (see site cfgspec)
-            value = cfg['hosts'][host_key][item]
-        else:
-            # no entry so default to localhost and modify appropriately
-            value = cfg['hosts']['localhost'][item]
-            modify_dirs = True
-        if value is not None and 'directory' in item:
-            if replace_home or modify_dirs:
-                # Replace local home dir with $HOME for eval'n on other host.
-                value = value.replace(self._HOME, '$HOME')
-            elif is_remote_user(owner):
-                # Replace with ~owner for direct access via local filesys
-                # (works for standard cylc-run directory location).
-                if owner_home is None:
-                    owner_home = os.path.expanduser('~%s' % owner)
-                value = value.replace(self._HOME, owner_home)
-        if item == "communication method" and value == "default":
-            # Translate "default" to client-server comms: "zmq"
-            value = 'zmq'
-        return value
-
-    def _transform(self):
-        """Transform various settings.
-
-        Host item values of None default to modified localhost values.
-        Expand environment variables and ~ notations.
-
-        Ensure os.environ['HOME'] is defined with the correct value.
-        """
-        cfg = self.get()
-
+    def _set_default_editors(self):
         # default to $[G]EDITOR unless an editor is defined in the config
         # NOTE: use `or` to handle cases where an env var is set to ''
+        cfg = self.get()
         if not cfg['editors']['terminal']:
             cfg['editors']['terminal'] = os.environ.get('EDITOR') or 'vi'
         if not cfg['editors']['gui']:
             cfg['editors']['gui'] = os.environ.get('GEDITOR') or 'gvim -fg'
-
-        for host in cfg['hosts']:
-            if host == 'localhost':
-                continue
-            for item, value in cfg['hosts'][host].items():
-                if value is None:
-                    newvalue = cfg['hosts']['localhost'][item]
-                else:
-                    newvalue = value
-                if newvalue and 'directory' in item:
-                    # replace local home dir with $HOME for evaluation on other
-                    # host
-                    newvalue = newvalue.replace(self._HOME, '$HOME')
-                cfg['hosts'][host][item] = newvalue
-
-        # Expand environment variables and ~user in LOCAL file paths.
-        if 'HOME' not in os.environ:
-            os.environ['HOME'] = self._HOME
-        cfg['documentation']['local'] = os.path.expandvars(
-            cfg['documentation']['local'])
-        for key, val in cfg['hosts']['localhost'].items():
-            if val and 'directory' in key:
-                cfg['hosts']['localhost'][key] = os.path.expandvars(val)

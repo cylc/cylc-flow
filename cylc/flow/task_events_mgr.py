@@ -71,7 +71,7 @@ TaskEventMailContext = namedtuple(
 
 TaskJobLogsRetrieveContext = namedtuple(
     "TaskJobLogsRetrieveContext",
-    ["key", "ctx_type", "user_at_host", "max_size"])
+    ["key", "ctx_type", "platform_n", "max_size"])
 
 
 def log_task_job_activity(ctx, suite, point, name, submit_num=None):
@@ -605,7 +605,7 @@ class TaskEventsManager():
 
     def _process_job_logs_retrieval(self, schd_ctx, ctx, id_keys):
         """Process retrieval of task job logs from remote user@host."""
-        platform = platform_from_name(ctx.user_at_host)
+        platform = platform_from_name(ctx.platform_n)
         ssh_str = str(platform["ssh command"])
         rsync_str = str(platform["retrieve job logs command"])
 
@@ -626,7 +626,7 @@ class TaskEventsManager():
         cmd.append("--exclude=/**")  # exclude everything else
         # Remote source
         cmd.append("%s:%s/" % (
-            ctx.user_at_host,
+            get_host_from_platform(platform),
             get_remote_suite_run_job_dir(platform, schd_ctx.suite)))
         # Local target
         cmd.append(get_suite_run_job_dir(schd_ctx.suite) + "/")
@@ -798,7 +798,7 @@ class TaskEventsManager():
                 '[%s] -job[%02d] submitted to %s:%s[%s]',
                 itask,
                 itask.summary['submit_num'],
-                itask.summary['host'],
+                itask.summary['platforms_used'][itask.summary['submit_num']],
                 itask.summary['batch_sys_name'],
                 itask.summary['submit_method_id'])
         except KeyError:
@@ -843,15 +843,9 @@ class TaskEventsManager():
         id_key = (
             (self.HANDLER_JOB_LOGS_RETRIEVE, event),
             str(itask.point), itask.tdef.name, itask.submit_num)
-        host = get_host_from_platform(itask.platform)
-        owner = itask.platform['owner']
-        if owner:
-            user_at_host = owner + "@" + host
-        else:
-            user_at_host = host
         events = (self.EVENT_FAILED, self.EVENT_RETRY, self.EVENT_SUCCEEDED)
         if (event not in events or
-                user_at_host in [get_user() + '@localhost', 'localhost'] or
+                itask.platform['name'] == 'localhost' or
                 not self.get_host_conf(itask, "retrieve job logs") or
                 id_key in self.event_timers):
             return
@@ -863,7 +857,7 @@ class TaskEventsManager():
             TaskJobLogsRetrieveContext(
                 self.HANDLER_JOB_LOGS_RETRIEVE,  # key
                 self.HANDLER_JOB_LOGS_RETRIEVE,  # ctx_type
-                user_at_host,
+                itask.platform['name'],
                 self.get_host_conf(itask, "retrieve job logs max size"),
             ),
             retry_delays)
@@ -926,10 +920,9 @@ class TaskEventsManager():
             # Note: user@host may not always be set for a submit number, e.g.
             # on late event or if host select command fails. Use null string to
             # prevent issues in this case.
-            user_at_host = itask.summary['job_hosts'].get(itask.submit_num, '')
-            if user_at_host and '@' not in user_at_host:
-                # (only has 'user@' on the front if user is not suite owner).
-                user_at_host = '%s@%s' % (get_user(), user_at_host)
+            platform_n = itask.summary['platforms_used'].get(
+                itask.submit_num, ''
+            )
             # Custom event handler can be a command template string
             # or a command that takes 4 arguments (classic interface)
             # Note quote() fails on None, need str(None).
@@ -954,7 +947,7 @@ class TaskEventsManager():
                         str(itask.summary['started_time_string'])),
                     "finish_time": quote(
                         str(itask.summary['finished_time_string'])),
-                    "user@host": quote(user_at_host)
+                    "platform_name": quote(platform_n)
                 }
 
                 if self.suite_cfg:

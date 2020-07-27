@@ -19,7 +19,7 @@
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 require_remote_platform
-set_test_number 3
+set_test_number 4
 #-------------------------------------------------------------------------------
 install_suite "${TEST_NAME_BASE}" basic
 #-------------------------------------------------------------------------------
@@ -33,6 +33,11 @@ TEST_NAME=${TEST_NAME_BASE}-platform
 sqlite3 "${SUITE_RUN_DIR}/log/db" \
     'select platform_name from task_jobs where name=="foo"' >'foo-host.txt'
 cmp_ok 'foo-host.txt' <<<"${CYLC_REMOTE_PLATFORM}"
+#-------------------------------------------------------------------------------
+# Check that the remote job has actually been run on the correct remote by
+# checking it's job.out file for @CYLC_TEST_HOST
+TEST_NAME=${TEST_NAME_BASE}-ensure-remote-run
+grep_ok "@${CYLC_TEST_HOST}" "${SUITE_RUN_DIR}/log/job/1/foo/NN/job.out"
 #-------------------------------------------------------------------------------
 purge_suite_remote "${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"

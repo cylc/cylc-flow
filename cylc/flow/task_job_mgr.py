@@ -37,7 +37,7 @@ from cylc.flow.parsec.util import pdeepcopy, poverride
 from cylc.flow import LOG
 from cylc.flow.batch_sys_manager import JobPollContext
 from cylc.flow.hostuserutil import (
-    get_host, is_remote_host, is_remote_user, is_remote_platform
+    get_host, is_remote_platform
 )
 from cylc.flow.job_file import JobFileWriter
 from cylc.flow.pathutil import get_remote_suite_run_job_dir
@@ -60,7 +60,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED,
     TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING)
 from cylc.flow.wallclock import get_current_time_string, get_utc_mode
-from cylc.flow.remote import construct_platform_ssh_cmd, construct_ssh_cmd
+from cylc.flow.remote import construct_platform_ssh_cmd
 
 
 class TaskJobManager(object):
@@ -287,7 +287,13 @@ class TaskJobManager(object):
                 cmd.append('--debug')
             if get_utc_mode():
                 cmd.append('--utc-mode')
-            remote_mode = False
+            if is_remote_platform(itask.platform):
+                remote_mode = True
+                cmd.append('--remote-mode')
+            else:
+                remote_mode = False
+            # TODO - check whether Kwargs is actually used in
+            # platforms way of working and remove if not.
             kwargs = {}
             cmd.append('--')
             cmd.append(
@@ -307,12 +313,11 @@ class TaskJobManager(object):
                 '%s ... # will invoke in batches, sizes=%s',
                 cmd, [len(b) for b in itasks_batches])
 
-            # If the task jobs require submission to a remote machine
-            # construct an SSH command around our command.
             if remote_mode:
                 cmd = construct_platform_ssh_cmd(cmd, platform)
             else:
                 cmd = ['cylc'] + cmd
+
             for i, itasks_batch in enumerate(itasks_batches):
                 stdin_files = []
                 job_log_dirs = []
@@ -670,17 +675,16 @@ class TaskJobManager(object):
         auth_itasks = {}
         for itask in itasks:
             # retrieve owner and host used last time
-            host = itask.summary['job_hosts'][max(itask.summary['job_hosts'])]
-            owner = ''
-            if 'owner' in itask.summary:
-                owner = itask.summary['owner']
-            platform_name = itask.platform['name']
-            if (platform_name, host, owner) not in auth_itasks:
-                auth_itasks[(platform_name, host, owner)] = []
-            auth_itasks[(platform_name, host, owner)].append(itask)
+            platform_n = itask.summary['platforms_used'][
+                max(itask.summary['platforms_used'])
+            ]
+            platform_n = itask.platform['name']
+            if platform_n not in auth_itasks:
+                auth_itasks[platform_n] = []
+            auth_itasks[platform_n].append(itask)
 
         # Go through each list of itasks and carry out commands as required.
-        for (platform_n, host, owner), itasks in sorted(auth_itasks.items()):
+        for platform_n, itasks in sorted(auth_itasks.items()):
             platform = platform_from_name(platform_n)
             if is_remote_platform(platform):
                 remote_mode = True
@@ -694,7 +698,7 @@ class TaskJobManager(object):
             cmd.append(get_remote_suite_run_job_dir(platform, suite))
             job_log_dirs = []
             if remote_mode:
-                cmd = construct_ssh_cmd(cmd, owner, host)
+                cmd = construct_platform_ssh_cmd(cmd, platform)
             for itask in sorted(itasks, key=lambda itask: itask.identity):
                 job_log_dirs.append(get_task_job_id(
                     itask.point, itask.tdef.name, itask.submit_num))
@@ -872,16 +876,8 @@ class TaskJobManager(object):
         """Helper for self._prep_submit_task_job."""
         # itask.platform is going to get boring...
         platform = itask.platform
-        host = get_host_from_platform(platform)
-        owner = platform['owner']
 
-        if owner:
-            owner_at_host = f"{owner}@{host}"
-        else:
-            owner_at_host = host
-
-        itask.summary['host'] = owner_at_host
-        itask.summary['job_hosts'][itask.submit_num] = owner_at_host
+        itask.summary['platforms_used'][itask.submit_num] = platform['name']
 
         itask.summary['batch_sys_name'] = platform['batch system']
         for name in rtconfig['extra log files']:

@@ -221,8 +221,7 @@ def construct_ssh_cmd(
 
     # Use bash -l?
     if ssh_login_shell is None:
-        ssh_login_shell = glbl_cfg().get_host_item(
-            'use login shell', host, user)
+        ssh_login_shell = platform_from_name()['use login shell']
     if ssh_login_shell:
         # A login shell will always source /etc/profile and the user's bash
         # profile file. To avoid having to quote the entire remote command
@@ -236,7 +235,7 @@ def construct_ssh_cmd(
     if ssh_cylc:
         command.append(ssh_cylc)
     else:
-        ssh_cylc = glbl_cfg().get_host_item('cylc executable', host, user)
+        ssh_cylc = platform_from_name()['cylc executable']
         if ssh_cylc.endswith('cylc'):
             command.append(ssh_cylc)
         else:

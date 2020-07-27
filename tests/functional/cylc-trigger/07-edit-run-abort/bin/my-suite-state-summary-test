@@ -14,7 +14,7 @@ def main():
     summary = json.load(sys.stdin)[1]['victim.1']
     sys.stderr.write('%s' % summary)
     assert(summary['submit_num'] == 1)
-    assert(len(summary['job_hosts']) == 1)
+    assert(len(summary['platforms_used']) == 1)
 
 
 if __name__ == '__main__':

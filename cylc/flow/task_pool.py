@@ -420,7 +420,8 @@ class TaskPool(object):
                         pass
 
             if platform_name:
-                itask.summary['job_hosts'][int(submit_num)] = platform_name
+                itask.summary['platforms_used'][
+                    int(submit_num)] = platform_name
             LOG.info("+ %s.%s %s%s" % (
                 name, cycle, status, ' (held)' if is_held else ''))
             self.add_to_runahead_pool(itask, is_new=False)
@@ -1188,7 +1189,7 @@ class TaskPool(object):
             if back_out:
                 # (Aborted edit-run, reset for next trigger attempt).
                 try:
-                    del itask.summary['job_hosts'][itask.submit_num]
+                    del itask.summary['platforms_used'][itask.submit_num]
                 except KeyError:
                     pass
                 job_d = get_task_job_id(

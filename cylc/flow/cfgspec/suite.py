@@ -913,8 +913,8 @@ with Conf(
                    Date-time when task job starts running
                 ``%(finish_time)s``
                    Date-time when task job exits
-                ``%(user@host)s``
-                   user@host where the task job is submitted
+                ``%(platform_name)s``
+                   name of platform where the task job is submitted
                 ``%(message)s``
                    Event message, if any
                 any task [meta] item, e.g.:
@@ -1327,9 +1327,6 @@ def host_to_platform_upgrader(cfg):
     }
 
     for task_name, task_spec in cfg['runtime'].items():
-        # if task_name == 'delta':
-        #     breakpoint(header=f"task_name = {task_name}")
-
         if (
             'platform' in task_spec and 'job' in task_spec or
             'platform' in task_spec and 'remote' in task_spec
