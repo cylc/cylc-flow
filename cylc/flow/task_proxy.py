@@ -247,7 +247,8 @@ class TaskProxy(object):
                         # E.g.: foo should trigger only on T06:
                         #   PT6H = "waz"
                         #   T06 = "waz[-PT6H] => foo"
-                        self.graph_children[output].append((name, child_point, is_abs))
+                        self.graph_children[output].append(
+                            (name, child_point, is_abs))
 
         if tdef.sequential:
             # Add next-instance child.

@@ -70,7 +70,6 @@ class SuiteDatabaseManager(object):
     TABLE_XTRIGGERS = CylcSuiteDAO.TABLE_XTRIGGERS
     TABLE_ABS_OUTPUTS = CylcSuiteDAO.TABLE_ABS_OUTPUTS
 
-
     def __init__(self, pri_d=None, pub_d=None):
         self.pri_path = None
         if pri_d:

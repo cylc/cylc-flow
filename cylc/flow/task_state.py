@@ -337,7 +337,7 @@ class TaskState(object):
         """Return True if all xtriggers are satisfied."""
         return all(self.xtriggers.values())
 
-    def prerequisites_are_all_satisfied(self):
+    def prerequisites_all_satisfied(self):
         """Return True if (non-suicide) prerequisites are fully satisfied."""
         if self._is_satisfied is None:
             self._is_satisfied = all(
@@ -346,10 +346,10 @@ class TaskState(object):
 
     def prerequisites_are_not_all_satisfied(self):
         """Return True if (any) prerequisites are not fully satisfied."""
-        return (not self.prerequisites_are_all_satisfied() or
-                not self.suicide_prerequisites_are_all_satisfied())
+        return (not self.prerequisites_all_satisfied() or
+                not self.suicide_prerequisites_all_satisfied())
 
-    def suicide_prerequisites_are_all_satisfied(self):
+    def suicide_prerequisites_all_satisfied(self):
         """Return True if all suicide prerequisites are satisfied."""
         if self._suicide_is_satisfied is None:
             self._suicide_is_satisfied = all(

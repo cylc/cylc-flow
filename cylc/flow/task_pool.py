@@ -336,7 +336,7 @@ class TaskPool(object):
     def load_abs_outputs_for_restart(self, row_idx, row):
         cycle, name, output = row
         self.abs_outputs_done.add((name, cycle, output))
- 
+
     def load_db_task_pool_for_restart(self, row_idx, row):
         """Load tasks from DB task pool/states/jobs tables, to runahead pool.
 
@@ -933,7 +933,7 @@ class TaskPool(object):
                 return False
             if (
                     itask.state(TASK_STATUS_WAITING)
-                    and itask.state.prerequisites_are_all_satisfied()
+                    and itask.state.prerequisites_all_satisfied()
             ):
                 # Waiting tasks with all prerequisites satisfied,
                 # probably waiting for clock trigger only.
@@ -1048,7 +1048,7 @@ class TaskPool(object):
                 self.abs_outputs_done.add((itask.tdef.name,
                                           str(itask.point), output))
                 self.suite_db_mgr.put_insert_abs_output(
-                      str(itask.point), itask.tdef.name, output)
+                    str(itask.point), itask.tdef.name, output)
                 self.suite_db_mgr.process_queued_ops()
             if itask.reflow:
                 c_task = self.get_or_spawn_task(
@@ -1069,7 +1069,7 @@ class TaskPool(object):
                         set([(itask.tdef.name, str(itask.point), output)]))
                 # Event-driven suicide.
                 if (c_task.state.suicide_prerequisites and
-                     c_task.state.suicide_prerequisites_are_all_satisfied()):
+                        c_task.state.suicide_prerequisites_all_satisfied()):
                     suicide.append(c_task)
 
                 # TODO event-driven submit: check if prereqs are satisfied now.
@@ -1081,7 +1081,7 @@ class TaskPool(object):
                     TASK_STATUS_SUBMITTED,
                     TASK_STATUS_RUNNING,
                     is_held=False):
-               LOG.warning(f'[c_task] -suiciding while active')
+                LOG.warning(f'[c_task] -suiciding while active')
             self.remove(c_task, 'SUICIDE')
 
         # Remove the parent task if finished.
