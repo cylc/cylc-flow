@@ -174,41 +174,31 @@ def test_compute_tree():
             },
         ],
         'taskProxies': [
-            {  # orphan task (belongs to no family)
-                'name': 'baz',
-                'id': '1|baz',
-                'parents': [],
-                'cyclePoint': '1',
-                'jobs': []
-            },
             {  # top level task
                 'name': 'pub',
                 'id': '1|pub',
-                'parents': [{'name': 'root', 'id': '1|root'}],
+                'firstParent': {'name': 'root', 'id': '1|root'},
                 'cyclePoint': '1',
                 'jobs': []
             },
             {  # child task (belongs to family)
                 'name': 'fan',
                 'id': '1|fan',
-                'parents': [{'name': 'fan', 'id': '1|fan'}],
+                'firstParent': {'name': 'fan', 'id': '1|fan'},
                 'cyclePoint': '1',
                 'jobs': []
             },
             {  # nested child task (belongs to incestuous family)
                 'name': 'fool',
                 'id': '1|fool',
-                'parents': [
-                    {'name': 'FOOT', 'id': '1|FOOT'},
-                    {'name': 'FOO', 'id': '1|FOO'}
-                ],
+                'firstParent': {'name': 'FOOT', 'id': '1|FOOT'},
                 'cyclePoint': '1',
                 'jobs': []
             },
             {  # a task which has jobs
                 'name': 'worker',
                 'id': '1|worker',
-                'parents': [],
+                'firstParent': {'name': 'root', 'id': '1|root'},
                 'cyclePoint': '1',
                 'jobs': [
                     {'id': 'job3', 'submitNum': '3'},
@@ -239,14 +229,13 @@ def test_compute_tree():
         'id',
         'cyclePoint'
     ]
-    assert len(cycle['children']) == 4
+    assert len(cycle['children']) == 3
     assert [
         node['id_']
         for node in cycle['children']
     ] == [
         # test alphabetical sorting
         '1|FOO',
-        '1|baz',
         '1|pub',
         '1|worker'
     ]
@@ -282,7 +271,7 @@ def test_compute_tree():
     assert list(task['data']) == [
         'name',
         'id',
-        'parents',
+        'firstParent',
         'cyclePoint',
         'jobs'
     ]
