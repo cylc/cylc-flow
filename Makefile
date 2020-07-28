@@ -20,7 +20,7 @@ version:
 	etc/dev-bin/create-version-file
 
 documentation:
-	cylc make-docs
+	make -C doc clean html
 
 clean:
 	cd doc && $(MAKE) clean

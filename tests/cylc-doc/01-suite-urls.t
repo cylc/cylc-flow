@@ -26,7 +26,7 @@ set_test_number 3
 create_test_globalrc "" "
 [documentation]
    [[files]]
-      html user guides = ${PWD}/doc/built-sphinx/index.html
+      html user guides = ${PWD}/doc/build/html/index.html
    [[urls]]
       internet homepage = http://cylc.github.com/cylc/
       local index = http://localhost/cylc/index.html"

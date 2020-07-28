@@ -23,16 +23,16 @@ set_test_number 2
 create_test_globalrc "" "
 [documentation]
    [[files]]
-      html user guides = ${PWD}/doc/built-sphinx/index.html
+      html user guides = ${PWD}/doc/build/html/index.html
    [[urls]]
       internet homepage = http://cylc.github.com/cylc/
       local index = http://localhost/cylc/index.html"
 #-------------------------------------------------------------------------------
-mkdir -p doc/built-sphinx
-touch doc/built-sphinx/index.html
+mkdir -p doc/build/html
+touch doc/build/html/index.html
 cylc doc -s -g > stdout1.txt
 cmp_ok stdout1.txt <<__END__
-${PWD}/doc/built-sphinx/index.html
+${PWD}/doc/build/html/index.html
 __END__
 #-------------------------------------------------------------------------------
 cylc doc -s > stdout2.txt
