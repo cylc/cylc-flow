@@ -1075,7 +1075,6 @@ class TaskPool(object):
                 # TODO event-driven submit: check if prereqs are satisfied now.
 
         for c_task in suicide:
-            print(f"NOT ADDING {c_task}")
             if c_task.state(
                     TASK_STATUS_READY,
                     TASK_STATUS_SUBMITTED,
