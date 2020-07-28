@@ -47,7 +47,7 @@ install_requires = [
     'click>=7.0',
     'graphene>=2.1,<3',
     'jinja2==2.11.*',
-    'metomi-isodatetime==1!2.0.2',
+    'metomi-isodatetime>=1!2.0.2, <1!2.1.0',
     'protobuf==3.12.1',
     'pyzmq==18.1.*',
     'psutil>=5.6.0',
