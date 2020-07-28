@@ -16,3 +16,4 @@ CREATE TABLE task_pool_checkpoints(id INTEGER, cycle TEXT, name TEXT, flow_label
 CREATE TABLE task_states(name TEXT, cycle TEXT, flow_label TEXT, time_created TEXT, time_updated TEXT, submit_num INTEGER, status TEXT, PRIMARY KEY(name, cycle, flow_label));
 CREATE TABLE task_timeout_timers(cycle TEXT, name TEXT, timeout REAL, PRIMARY KEY(cycle, name));
 CREATE TABLE xtriggers(signature TEXT, results TEXT, PRIMARY KEY(signature));
+CREATE TABLE absolute_outputs(cycle TEXT, name TEXT, output TEXT);
