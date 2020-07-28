@@ -1,6 +1,4 @@
 exclude_paths:
-  - 'conf/**'
-  - 'doc/joss-paper/**'
   - 'etc/**'
   - 'tests/**'
   - 'cylc/flow/**_pb2.py'
