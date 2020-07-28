@@ -171,7 +171,7 @@ def apply_delta(key, delta, data):
                             if field.name in CLEAR_FIELD_MAP[key]:
                                 data[key][element.id].ClearField(field.name)
                     data[key][element.id].MergeFrom(element)
-                except KeyError:
+                except KeyError as exc:
                     # Ensure data-sync doesn't fail with
                     # network issues, sync reconcile/validate will catch.
                     LOG.debug(
@@ -202,6 +202,8 @@ def create_delta_store(delta=None, workflow_id=None):
     Args:
         delta (cylc.flow.data_messages_pb2.AllDeltas):
             The message of accumulated deltas for publish/push.
+        workflow_id (str):
+            The workflow ID.
 
     Returns:
         dict
