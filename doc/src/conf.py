@@ -88,8 +88,16 @@ html_theme_options = {
 
 # Custom sidebar templates, maps document names to template names.
 html_sidebars = {
-   '**': ['globaltoc.html', 'searchbox.html', 'sourcelink.html'],
-   'using/windows': ['windowssidebar.html', 'searchbox.html'],
+    '**': [
+        'globaltoc.html',
+        'searchbox.html',
+        'sourcelink.html',
+        'versions.html'
+    ],
+    'using/windows': [
+        'windowssidebar.html',
+        'searchbox.html'
+    ],
 }
 
 # Logo and favicon to display.
