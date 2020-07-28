@@ -37,7 +37,6 @@ set_test_number 13
 # Suite stop immediately
 # Restart, ignore final cycle point
 # Suite runs to final cycle point == 2020
-# TODO SOD - LAST TEST FAILS BECAUSE WE DON'T SPAWN PAST THE (original 2018) FCP
 init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
 [cylc]
     UTC mode=True
@@ -84,9 +83,6 @@ dumpdbtables
 cmp_ok 'fcp.out' <<<'fcp|2018'
 cmp_ok 'taskpool.out' <'/dev/null'
 
-# TODO - UNDER SOD THE PREVIOUS STOP POINT CAN'T BE OVERRIDDEN ON RESTART
-# UNLESS WE SPAWN INTO THE RUNAHEAD POOL BEYOND THE STOP POINT (PROBABLY A GOOD
-# IDEA - MAKES HANDLED FOR FCP SAME AS AN EARLER STOP POINT).
 suite_run_ok "${TEST_NAME_BASE}-restart-3" \
     cylc restart "${SUITE_NAME}" --no-detach --ignore-final-cycle-point
 dumpdbtables

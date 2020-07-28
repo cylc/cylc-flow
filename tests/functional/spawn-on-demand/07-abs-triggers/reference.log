@@ -1,0 +1,9 @@
+Initial point: 1
+Final point: 5
+[start.2] -triggered off []
+[foo.1] -triggered off []
+[foo.2] -triggered off []
+[foo.3] -triggered off []
+[bar.1] -triggered off ['foo.1', 'start.2']
+[bar.2] -triggered off ['foo.2', 'start.2']
+[bar.3] -triggered off ['foo.3', 'start.2']
