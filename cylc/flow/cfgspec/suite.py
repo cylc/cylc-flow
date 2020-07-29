@@ -81,15 +81,101 @@ with Conf(
 
     with Conf('cylc'):
         Conf('UTC mode', VDR.V_BOOLEAN)
-        Conf('cycle point format', VDR.V_CYCLE_POINT_FORMAT)
-        Conf('cycle point num expanded year digits', VDR.V_INTEGER, 0)
-        Conf('cycle point time zone', VDR.V_CYCLE_POINT_TIME_ZONE)
+        Conf('cycle point format', VDR.V_CYCLE_POINT_FORMAT, desc='''
+            To just alter the timezone used in the date-time cycle point
+            format, see :ref:`cycle-point-time-zone`. To just alter the number
+            of expanded year digits (for years below 0 or above 9999), see
+            :ref:`cycle-point-num-expanded-year-digits`.
+
+            Cylc usually uses a ``CCYYMMDDThhmmZ`` (``Z`` in the special
+            case of UTC) or ``CCYYMMDDThhmm+hhmm`` format (``+`` standing
+            for ``+`` or ``-`` here) for writing down date-time cycle points,
+            which follows one of the basic formats outlined in the ISO 8601
+            standard. For example, a cycle point on the 3rd of February 2001
+            at 4:50 a.m., UTC (+0000 timezone), would be written
+            ``20010203T0450Z``. Similarly, for the 3rd of February 2001 at
+            4:50 a.m., +1300 timezone, cylc would write ``20010203T0450+1300``.
+
+            You may use the isodatetime library's syntax to write dates and
+            times in ISO 8601 formats - ``CC`` for century, ``YY`` for decade
+            and decadal year, ``+X`` for expanded year digits and their
+            positive or negative sign, thereafter following the ISO 8601
+            standard example notation except for fractional digits, which are
+            represented as ``,ii`` for ``hh``, ``,nn`` for ``mm``, etc.
+            For example, to write date-times as week dates with fractional
+            hours, set cycle point format to ``CCYYWwwDThh,iiZ`` e.g.
+            ``1987W041T08,5Z`` for 08:30 UTC on Monday on the fourth ISO week
+            of 1987.
+
+            You can also use a subset of the strptime/strftime POSIX
+            standard - supported tokens are ``%F``, ``%H``, ``%M``, ``%S``,
+            ``%Y``, ``%d``, ``%j``, ``%m``, ``%s``, ``%z``.
+
+            The ISO8601 extended date-time format can be used
+            (``%Y-%m-%dT%H:%M``) but note that the "-" and ":" characters
+            end up in job log directory paths.
+        ''')
+        Conf('cycle point num expanded year digits', VDR.V_INTEGER, 0, desc='''
+            For years below 0 or above 9999, the ISO 8601 standard specifies
+            that an extra number of year digits and a sign should be used.
+            This extra number needs to be written down somewhere (here).
+
+            For example, if this extra number is set to 2, 00Z on the 1st of
+            January in the year 10040 will be represented as
+            ``+0100400101T0000Z`` (2 extra year digits used). With this number
+            set to 3, 06Z on the 4th of May 1985 would be written as
+            ``+00019850504T0600Z``.
+
+            This number defaults to 0 (no sign or extra digits used).
+        ''')
+        Conf('cycle point time zone', VDR.V_CYCLE_POINT_TIME_ZONE, desc='''
+            If you set UTC mode to True (:ref:`UTC-mode`) then this will
+            default to ``Z``. If you use a custom cycle point format
+            (:ref:`cycle-point-format`), you should specify the timezone
+            choice (or null timezone choice) here as well.
+
+            You may set your own time zone choice here, which will be used
+            for all date-time cycle point dumping. Time zones should be
+            expressed as ISO 8601 time zone offsets from UTC, such as
+            ``+13``, ``+1300``, ``-0500`` or ``+0645``, with ``Z``
+            representing the special ``+0000`` case. Cycle points will be
+            converted to the time zone you give and will be represented with
+            this string at the end.
+
+            Cycle points that are input without time zones (e.g. as an initial
+            cycle point setting) will use this time zone if set. If this isn't
+            set (and UTC mode is also not set), then they will default to the
+            current local time zone.
+
+            .. note::
+
+                The ISO standard also allows writing the hour and minute
+                separated by a ":" (e.g. ``+13:00``) - however, this is not
+                recommended, given that the time zone is used as part of task
+                output filenames.
+        ''')
         Conf('required run mode', VDR.V_STRING, '',
-             options=['', 'live', 'dummy', 'dummy-local', 'simulation'])
+             options=['', 'live', 'dummy', 'dummy-local', 'simulation'],
+             desc='''
+            If this item is set cylc will abort if the suite is not started in
+            the specified mode. This can be used for demo suites that have to
+            be run in simulation mode, for example, because they have been
+            taken out of their normal operational context; or to prevent
+            accidental submission of expensive real tasks during suite
+            development.
+        ''')
         Conf('force run mode', VDR.V_STRING, '',
              options=['', 'live', 'dummy', 'dummy-local', 'simulation'])
         Conf('task event mail interval', VDR.V_INTERVAL)
-        Conf('disable automatic shutdown', VDR.V_BOOLEAN)
+        Conf('disable automatic shutdown', VDR.V_BOOLEAN, desc='''
+            This has the same effect as the ``--no-auto-shutdown`` flag for
+            the suite run commands: it prevents the suite server program from
+            shutting down normally when all tasks have finished (a suite
+            timeout can still be used to stop the daemon after a period of
+            inactivity, however).  This option can make it easier to re-trigger
+            tasks manually near the end of a suite run, during suite
+            development and debugging.
+        ''')
 
         with Conf('main loop'):
             with Conf('<plugin name>'):
