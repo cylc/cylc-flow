@@ -243,20 +243,15 @@ class TaskJobManager(object):
                 ) and
                 not is_remote_platform(platform)
             ):
-                owner_at_host = get_host()
-            else:
-                owner_at_host = host
-            # Persist
-            owner = platform['owner']
-            if owner:
-                owner_at_host = owner + '@' + owner_at_host
+                host = get_host()
+
             now_str = get_current_time_string()
             done_tasks.extend(itasks)
             for itask in itasks:
                 # Log and persist
                 LOG.info(
                     '[%s] -submit-num=%02d, owner@host=%s',
-                    itask, itask.submit_num, owner_at_host)
+                    itask, itask.submit_num, host)
                 self.suite_db_mgr.put_insert_task_jobs(itask, {
                     'is_manual_submit': itask.is_manual_submit,
                     'try_num': itask.get_try_num(),
@@ -273,7 +268,7 @@ class TaskJobManager(object):
                     log_task_job_activity(
                         SubProcContext(
                             self.JOBS_SUBMIT,
-                            '(init %s)' % owner_at_host,
+                            '(init %s)' % host,
                             err=REMOTE_INIT_FAILED,
                             ret_code=1),
                         suite, itask.point, itask.tdef.name)
