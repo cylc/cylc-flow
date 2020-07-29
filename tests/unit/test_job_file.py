@@ -85,7 +85,7 @@ def test_write_prelude_invalid_cylc_command():
 def test_write(mocked_get_remote_suite_run_dir, fixture_get_platform):
     """Test write function outputs jobscript file correctly"""
     with NamedTemporaryFile() as local_job_file_path:
-        local_job_file_path = str(local_job_file_path)
+        local_job_file_path = local_job_file_path.name
         platform = fixture_get_platform(
             {
                 "batch submit command template": "woof",
