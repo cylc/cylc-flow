@@ -64,7 +64,7 @@ def generate_config():
                 [{typ}]
                     plain = {','.join(value)}  # comment
                     spaced = {', '.join(value)}  # comment
-                    badly spaced = {'  ,  '.join(value)}  # comment
+                    badly spaced = {'  ,  '.join(value)}  # comment
                     single quoted = {', '.join((f"'{x}'" for x in value))}
                     double quoted = {', '.join((f'"{x}"' for x in value))}
                     multi line = {value[0]}, \\
@@ -73,17 +73,17 @@ def generate_config():
         else:
             return f'''
                 [{typ}]
-                    plain1 = {value}  # comment
-                    single quoted = '{value}'  # comment
-                    double quoted = "{value}"  # comment
-                    triple single quoted = \'\'\'{value}\'\'\'  # comment
-                    triple double quoted = """{value}"""  # comment
+                    plain1 = {value}  # comment
+                    single quoted = '{value}'  # comment
+                    double quoted = "{value}"  # comment
+                    triple single quoted = \'\'\'{value}\'\'\'  # comment
+                    triple double quoted = """{value}"""  # comment
                     triple single quoted multi = \'\'\'
                         {value}
-                    \'\'\'  # comment
+                    \'\'\'  # comment
                     triple double quoted multi = """
                         {value}
-                    """  # comment
+                    """  # comment
             '''
     return _inner
 

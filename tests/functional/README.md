@@ -1,13 +1,13 @@
-# Functional Tests
+# Functional Tests
 
 This directory contains Cylc functional tests.
 
-## How To Run These Tests
+## How To Run These Tests
 
 ```console
 $ etc/bin/run-functional-tests tests/f
 
-# 4 tests in parallel
+# 4 tests in parallel
 $ etc/bin/run-functional-tests tests/f
 
 # split the tests into 4 "chunks" and run the first chunk
@@ -24,7 +24,7 @@ cause many parts of the system (and other systems) to be activated.
 This includes interaction with other systems (e.g. batch schedulers),
 command line interfaces / outputs, etc.
 
-# Guidelines
+# Guidelines
 
 Don't write functional tests when you can write integration tests:
 
