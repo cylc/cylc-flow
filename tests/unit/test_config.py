@@ -16,13 +16,16 @@
 
 import os
 import pytest
+import logging
 from unittest.mock import Mock
 from tempfile import TemporaryDirectory, NamedTemporaryFile
 from pathlib import Path
 
+from cylc.flow import CYLC_LOG
 from cylc.flow.config import SuiteConfig
 from cylc.flow.cycling import loader
 from cylc.flow.exceptions import SuiteConfigError
+from cylc.flow.wallclock import get_utc_mode, set_utc_mode
 
 
 def get_test_inheritance_quotes():
@@ -288,7 +291,7 @@ def test_missing_initial_cycle_point():
 def test_integer_cycling_default_initial_point(cycling_mode):
     """Test that the initial cycle point defaults to 1 for integer cycling
     mode."""
-    cycling_mode()  # This is a pytest fixture; sets integer cycling mode
+    cycling_mode(integer=True)  # This is a pytest fixture; sets cycling mode
     mocked_config = Mock()
     mocked_config.cfg = {
         'scheduling': {
@@ -299,3 +302,116 @@ def test_integer_cycling_default_initial_point(cycling_mode):
     SuiteConfig.process_initial_cycle_point(mocked_config)
     assert mocked_config.cfg['scheduling']['initial cycle point'] == '1'
     assert mocked_config.initial_point == loader.get_point(1)
+
+
+def test_utc_mode(caplog, mock_glbl_cfg):
+    """Test that UTC mode is handled correctly."""
+    caplog.set_level(logging.WARNING, CYLC_LOG)
+
+    def _test(utc_mode, expected, expected_warnings=0):
+        mock_glbl_cfg(
+            'cylc.flow.config.glbl_cfg',
+            f'''
+            [cylc]
+                UTC mode = {utc_mode['glbl']}
+            '''
+        )
+        mock_config = Mock()
+        mock_config.cfg = {
+            'cylc': {
+                'UTC mode': utc_mode['suite']
+            }
+        }
+        mock_config.options.utc_mode = utc_mode['stored']
+        SuiteConfig.process_utc_mode(mock_config)
+        assert mock_config.cfg['cylc']['UTC mode'] is expected
+        assert get_utc_mode() is expected
+        assert len(caplog.record_tuples) == expected_warnings
+        caplog.clear()
+
+    tests = [
+        {
+            'utc_mode': {'glbl': True, 'suite': None, 'stored': None},
+            'expected': True
+        },
+        {
+            'utc_mode': {'glbl': True, 'suite': False, 'stored': None},
+            'expected': False
+        },
+        {
+            # On restart
+            'utc_mode': {'glbl': False, 'suite': None, 'stored': True},
+            'expected': True
+        },
+        {
+            # Changed config value between restarts
+            'utc_mode': {'glbl': False, 'suite': False, 'stored': True},
+            'expected': True,
+            'expected_warnings': 1
+        }
+    ]
+    for case in tests:
+        _test(**case)
+
+
+def test_cycle_point_tz(caplog, monkeypatch):
+    """Test that `[cylc]cycle point time zone` is handled correctly."""
+    caplog.set_level(logging.WARNING, CYLC_LOG)
+
+    local_tz = '-0230'
+    monkeypatch.setattr(
+        'cylc.flow.config.get_local_time_zone_format',
+        lambda: local_tz
+    )
+
+    def _test(cp_tz, utc_mode, expected, expected_warnings=0):
+        set_utc_mode(utc_mode)
+        mock_config = Mock()
+        mock_config.cfg = {
+            'cylc': {
+                'cycle point time zone': cp_tz['suite']
+            }
+        }
+        mock_config.options.cycle_point_tz = cp_tz['stored']
+        SuiteConfig.process_cycle_point_tz(mock_config)
+        assert mock_config.cfg['cylc']['cycle point time zone'] == expected
+        assert len(caplog.record_tuples) == expected_warnings
+        caplog.clear()
+
+    tests = [
+        {
+            'cp_tz': {'suite': None, 'stored': None},
+            'utc_mode': True,
+            'expected': None
+        },
+        {
+            'cp_tz': {'suite': None, 'stored': None},
+            'utc_mode': False,
+            'expected': local_tz
+        },
+        {
+            'cp_tz': {'suite': '+0530', 'stored': None},
+            'utc_mode': True,
+            'expected': '+0530'
+        },
+        {
+            # On restart
+            'cp_tz': {'suite': None, 'stored': '+0530'},
+            'utc_mode': True,
+            'expected': '+0530'
+        },
+        {
+            # Changed config value between restarts
+            'cp_tz': {'suite': '+0530', 'stored': '-0030'},
+            'utc_mode': True,
+            'expected': '-0030',
+            'expected_warnings': 1
+        },
+        {
+            'cp_tz': {'suite': 'Z', 'stored': 'Z'},
+            'utc_mode': False,
+            'expected': 'Z'
+        }
+    ]
+    for case in tests:
+        _test(**case)
