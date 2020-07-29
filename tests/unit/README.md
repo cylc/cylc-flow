@@ -2,11 +2,11 @@
 
 This directory contains Cylc unit tests.
 
-## How To Run These Tests
+## How To Run These Tests
 
 ```console
 $ pytest tests/u
-$ pytest tests/u -n 5  # run up to 5 tests in parallel
+$ pytest tests/u -n 5  # run up to 5 tests in parallel
 ```
 
 ## What Are Unit Tests

@@ -2,12 +2,12 @@
 
 This directory contains tests that are sensitive to timing, server load, etc.
 
-## How To Run These Tests
+## How To Run These Tests
 
 ```console
 $ etc/bin/run-functional-tests tests/k
 
-# 4 tests in parallel
+# 4 tests in parallel
 $ etc/bin/run-functional-tests tests/k
 
 # split the tests into 4 "chunks" and run the first chunk
