@@ -3,18 +3,20 @@
 
 # You can set these variables from the command line, and also
 # from the environment for the first two.
+CYLC_VERSION  = $(shell python -c 'from cylc.version import CYLC_VERSION; print(CYLC_VERSION)')
 SPHINXOPTS    ?=
 SPHINXBUILD   ?= sphinx-build
 SOURCEDIR     = src
-BUILDDIR      = build
+BUILDDIR      = build/$(CYLC_VERSION)
 PYTHONPATH    = $(shell echo "$$PWD/../bin:$$PYTHONPATH")
+
 
 # Put it first so that "make" without argument is like "make help".
 help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 clean:
-	rm -r "$(BUILDDIR)" || true
+	@$(SPHINXBUILD) -M clean "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 .PHONY: clean help Makefile .EXPORT_ALL_VARIABLES
 

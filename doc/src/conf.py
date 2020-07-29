@@ -16,7 +16,6 @@
 
 import sys
 import os
-from cylc.version import CYLC_VERSION
 
 
 # -- General configuration ------------------------------------------------
@@ -48,6 +47,7 @@ project = u'The Cylc Suite Engine'
 copyright = u'2008-2019 NIWA & British Crown (Met Office) & Contributors'
 
 # Versioning information. Sphinx advises version strictly meaning X.Y.
+CYLC_VERSION = os.environ['CYLC_VERSION']
 version = '.'.join(CYLC_VERSION.split('.')[:2])  # The short X.Y version.
 release = CYLC_VERSION  # The full version, including alpha/beta/rc tags.
 

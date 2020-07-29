@@ -34,7 +34,7 @@ $('#versions-and-formats')
 const VERSIONS_URL = ROOT_DIR + '/versions.json';
 
 function url(version, format) {
-    // return the URL of the curret page in the documentation
+    // return the URL of the current page in the documentation
     var ret = ROOT_DIR + '/' + version + '/' + format + '/';
     if (format === 'html') {
         ret += PAGE_NAME + '.html';
@@ -42,7 +42,7 @@ function url(version, format) {
         ret += 'index.html#document-' + PAGE_NAME;
     } else if (format === 'epub') {
         ret += 'Cylc.epub';
-    } else if (format == 'latex') {
+    } else if (format === 'latex') {
         ret += 'cylc.pdf'
     } else {
         ret += 'index.html';
@@ -59,9 +59,6 @@ $(document).ready(function() {
         'url': VERSIONS_URL,
         dataType: 'json',
         success: function (versions) {
-            console.log(`versions: ${versions}, cur: ${CUR_VERSION}`);
-            console.log(versions)
-
             // write list versions (for all formats)
             var vn_fmt;
             for (let version of Object.keys(versions).sort()) {

@@ -91,7 +91,9 @@ SPEC = {
     'documentation': {
         'files': {
             'html user guides': [
-                VDR.V_STRING, '$CYLC_DIR/doc/build/html/index.html'],
+                VDR.V_STRING,
+                '$CYLC_DIR/doc/build/%s/html/index.html' % CYLC_VERSION
+            ],
         },
         'urls': {
             'internet homepage': [VDR.V_STRING, 'http://cylc.github.io/'],
