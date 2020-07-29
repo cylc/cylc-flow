@@ -433,9 +433,11 @@ class Scheduler:
         if reqmode and not self.config.run_mode(reqmode):
             raise ValueError('this suite requires the %s run mode' % reqmode)
 
-        if getattr(self.options, 'suite_tz', None) is None:
-            suite_tz_str = self.config.cfg['cylc']['cycle point time zone']
-            self.options.suite_tz = suite_tz_str
+        if not self.is_restart:
+            cp_tz_str = self.config.cfg['cylc']['cycle point time zone']
+            # Will save suite time zone in database:
+            self.options.cp_tz = cp_tz_str
+
         self.broadcast_mgr.linearized_ancestors.update(
             self.config.get_linearized_ancestors())
         self.task_events_mgr.mail_interval = self.cylc_config[
@@ -1359,9 +1361,9 @@ class Scheduler:
         elif key == self.suite_db_mgr.KEY_STOP_TASK:
             self.restored_stop_task_id = value
             LOG.info('+ stop task = %s', value)
-        elif key == self.suite_db_mgr.KEY_RUN_TIME_ZONE:
-            self.options.suite_tz = value
-            LOG.info('+ original suite run time zone = %s' % value)
+        elif key == self.suite_db_mgr.KEY_CYCLE_POINT_TIME_ZONE:
+            self.options.cp_tz = value
+            LOG.info('+ cycle point time zone = %s' % value)
 
     def _load_template_vars(self, _, row):
         """Load suite start up template variables."""

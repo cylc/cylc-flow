@@ -55,7 +55,7 @@ class SuiteDatabaseManager(object):
     KEY_RUN_MODE = 'run_mode'
     KEY_STOP_CLOCK_TIME = 'stop_clock_time'
     KEY_STOP_TASK = 'stop_task'
-    KEY_RUN_TIME_ZONE = 'suite_tz'
+    KEY_CYCLE_POINT_TIME_ZONE = 'cp_tz'
 
     TABLE_BROADCAST_EVENTS = CylcSuiteDAO.TABLE_BROADCAST_EVENTS
     TABLE_BROADCAST_STATES = CylcSuiteDAO.TABLE_BROADCAST_STATES
@@ -307,7 +307,7 @@ class SuiteDatabaseManager(object):
             self.KEY_START_CYCLE_POINT,
             self.KEY_STOP_CYCLE_POINT,
             self.KEY_RUN_MODE,
-            self.KEY_RUN_TIME_ZONE
+            self.KEY_CYCLE_POINT_TIME_ZONE
         ):
             value = getattr(schd.options, key, None)
             if value is not None:

@@ -215,10 +215,11 @@ class SuiteConfig(object):
 
         if self.cfg['cylc'].get('cycle point time zone') is None:
             # Get the original suite run time zone if restart:
-            suite_tz_str = getattr(self.options, 'suite_tz', None)
-            if suite_tz_str is None:
-                suite_tz_str = get_local_time_zone_format()
-            self.cfg['cylc']['cycle point time zone'] = suite_tz_str
+            cp_tz_str = getattr(self.options, 'cp_tz', None)
+            if cp_tz_str is None:
+                # Not a restart
+                cp_tz_str = get_local_time_zone_format()
+            self.cfg['cylc']['cycle point time zone'] = cp_tz_str
 
         graphdict = self.cfg['scheduling']['graph']
 
