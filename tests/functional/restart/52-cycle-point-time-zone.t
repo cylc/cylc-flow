@@ -22,7 +22,7 @@
 
 dumpdbtables() {
     sqlite3 "${SUITE_RUN_DIR}/log/db" \
-        'SELECT * FROM suite_params WHERE key=="cp_tz";' > 'dump.out'
+        'SELECT * FROM suite_params WHERE key=="cycle_point_tz";' > 'dump.out'
 }
 
 set_test_number 5
@@ -48,7 +48,7 @@ export TZ=BST-1
 
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
 dumpdbtables
-cmp_ok 'dump.out' <<< 'cp_tz|+0100'
+cmp_ok 'dump.out' <<< 'cycle_point_tz|+0100'
 
 cylc stop "${SUITE_NAME}"
 
@@ -57,7 +57,7 @@ export TZ=UTC
 
 suite_run_ok "${TEST_NAME_BASE}-restart" cylc restart "${SUITE_NAME}"
 dumpdbtables
-cmp_ok 'dump.out' <<< 'cp_tz|+0100'
+cmp_ok 'dump.out' <<< 'cycle_point_tz|+0100'
 
 cylc stop "${SUITE_NAME}"
 

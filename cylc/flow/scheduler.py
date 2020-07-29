@@ -434,9 +434,9 @@ class Scheduler:
             raise ValueError('this suite requires the %s run mode' % reqmode)
 
         if not self.is_restart:
-            cp_tz_str = self.config.cfg['cylc']['cycle point time zone']
             # Will save suite time zone in database:
-            self.options.cp_tz = cp_tz_str
+            self.options.cycle_point_tz = (
+                self.config.cfg['cylc']['cycle point time zone'])
 
         self.broadcast_mgr.linearized_ancestors.update(
             self.config.get_linearized_ancestors())
@@ -1362,7 +1362,7 @@ class Scheduler:
             self.restored_stop_task_id = value
             LOG.info('+ stop task = %s', value)
         elif key == self.suite_db_mgr.KEY_CYCLE_POINT_TIME_ZONE:
-            self.options.cp_tz = value
+            self.options.cycle_point_tz = value
             LOG.info('+ cycle point time zone = %s' % value)
 
     def _load_template_vars(self, _, row):

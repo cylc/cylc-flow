@@ -55,7 +55,7 @@ class SuiteDatabaseManager(object):
     KEY_RUN_MODE = 'run_mode'
     KEY_STOP_CLOCK_TIME = 'stop_clock_time'
     KEY_STOP_TASK = 'stop_task'
-    KEY_CYCLE_POINT_TIME_ZONE = 'cp_tz'
+    KEY_CYCLE_POINT_TIME_ZONE = 'cycle_point_tz'
 
     TABLE_BROADCAST_EVENTS = CylcSuiteDAO.TABLE_BROADCAST_EVENTS
     TABLE_BROADCAST_STATES = CylcSuiteDAO.TABLE_BROADCAST_STATES

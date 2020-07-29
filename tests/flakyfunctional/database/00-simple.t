@@ -41,7 +41,7 @@ cmp_ok "${SORTED_ORIG}" "${NAME}"
 NAME='select-suite-params.out'
 sqlite3 "${DB_FILE}" \
     'SELECT key, value FROM suite_params
-    WHERE key != "uuid_str" AND key != "cp_tz" ORDER BY key' \
+    WHERE key != "uuid_str" AND key != "cycle_point_tz" ORDER BY key' \
     >"${NAME}"
 sed -i "s/$(cylc --version)/<SOME-VERSION>/g" "${NAME}"
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}" "${NAME}"
