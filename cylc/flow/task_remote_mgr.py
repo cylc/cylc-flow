@@ -217,7 +217,7 @@ class TaskRemoteMgr(object):
                 cmd,
                 stdin_files=[tmphandle]),
             self._remote_init_callback,
-            [host, owner, platform, tmphandle,
+            [platform, tmphandle,
              curve_auth, client_pub_key_dir])
         # None status: Waiting for command to finish
         self.remote_init_map[platform['name']] = None
@@ -300,7 +300,7 @@ class TaskRemoteMgr(object):
                 proc_ctx.ret_code, proc_ctx.out, proc_ctx.err)
 
     def _remote_init_callback(
-        self, proc_ctx, host, owner, platform, tmphandle,
+        self, proc_ctx, platform, tmphandle,
         curve_auth, client_pub_key_dir
     ):
         """Callback when "cylc remote-init" exits"""
@@ -318,7 +318,9 @@ class TaskRemoteMgr(object):
                 public_key = KeyInfo(
                     KeyType.PUBLIC,
                     KeyOwner.CLIENT,
-                    suite_srv_dir=suite_srv_dir, platform=host)
+                    suite_srv_dir=suite_srv_dir,
+                    platform=platform['name']
+                )
                 old_umask = os.umask(0o177)
                 with open(
                         public_key.full_key_path,
@@ -339,7 +341,7 @@ class TaskRemoteMgr(object):
         # Bad status
         LOG.error(TaskRemoteMgmtError(
             TaskRemoteMgmtError.MSG_INIT,
-            (host, owner), ' '.join(quote(item) for item in proc_ctx.cmd),
+            platform['name'], ' '.join(quote(item) for item in proc_ctx.cmd),
             proc_ctx.ret_code, proc_ctx.out, proc_ctx.err))
         LOG.error(proc_ctx)
         self.remote_init_map[platform['name']] = REMOTE_INIT_FAILED

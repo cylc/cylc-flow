@@ -85,13 +85,9 @@ class TaskRemoteMgmtError(CylcError):
     MSG_TIDY = '%s: clean up did not complete:\n'  # %s owner_at_host
 
     def __str__(self):
-        msg, (host, owner), cmd_str, ret_code, out, err = self.args
-        if owner:
-            owner_at_host = owner + '@' + host
-        else:
-            owner_at_host = host
+        msg, platform_n, cmd_str, ret_code, out, err = self.args
         ret = (msg + 'COMMAND FAILED (%d): %s\n') % (
-            owner_at_host, ret_code, cmd_str)
+            platform_n, ret_code, cmd_str)
         for label, item in ('STDOUT', out), ('STDERR', err):
             if item:
                 for line in item.splitlines(True):  # keep newline chars
