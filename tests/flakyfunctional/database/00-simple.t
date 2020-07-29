@@ -1,7 +1,7 @@
 #!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -40,7 +40,8 @@ cmp_ok "${SORTED_ORIG}" "${NAME}"
 
 NAME='select-suite-params.out'
 sqlite3 "${DB_FILE}" \
-    'SELECT key,value FROM suite_params WHERE key != "uuid_str" ORDER BY key' \
+    'SELECT key, value FROM suite_params
+    WHERE key != "uuid_str" AND key != "cp_tz" ORDER BY key' \
     >"${NAME}"
 sed -i "s/$(cylc --version)/<SOME-VERSION>/g" "${NAME}"
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}" "${NAME}"
