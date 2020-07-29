@@ -81,7 +81,7 @@ def test_pymoduleloader(tmp_path):
     filters_dir.mkdir()
     with open(filters_dir / 'jinja2jinja.py', 'bw+') as tf:
         tf.write(
-            "def jinja2jinja()\n    raise Exception('It works!')".encode())
+            "def jinja2jinja():\n    raise Exception('It works!')".encode())
         tf.seek(0)
         env = jinja2environment(tmp_path)
 
@@ -100,7 +100,7 @@ def test_pymoduleloader_invalid_module(tmp_path):
     filters_dir.mkdir()
     with open(filters_dir / 'jinja2jinja.py', 'bw+') as tf:
         tf.write(
-            "def jinja2jinja()\n    raise Exception('It works!')".encode())
+            "def jinja2jinja():\n    raise Exception('It works!')".encode())
         tf.seek(0)
         env = jinja2environment(tmp_path)
 
