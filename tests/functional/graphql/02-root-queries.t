@@ -171,9 +171,6 @@ cat > expected << __HERE__
             "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}FAM4"
         },
         {
-            "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}FAM5"
-        },
-        {
             "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}root"
         }
     ],
