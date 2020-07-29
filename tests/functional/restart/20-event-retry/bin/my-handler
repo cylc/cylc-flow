@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -eu
 SUITE="$1"
 OUT_FILE="$(cylc get-global-config --print-run-dir)/${SUITE}/file"

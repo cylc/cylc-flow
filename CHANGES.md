@@ -48,6 +48,9 @@ efficient way of the evolving the workflow via the graph.
 [#3692](https://github.com/cylc/cylc-flow/pull/3692) - Use the `$EDITOR`
 and `$GEDITOR` environment variables to determine the default editor to use.
 
+[#3574](https://github.com/cylc/cylc-flow/pull/3574) - use the bash
+installation defined in $path rather than hardcoding to /bin/bash.
+
 ### Fixes
 
 [#3632](https://github.com/cylc/cylc-flow/pull/3632) - Fix a bug that was causing
