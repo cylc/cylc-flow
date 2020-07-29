@@ -36,6 +36,7 @@ import traceback
 from metomi.isodatetime.data import Calendar
 from metomi.isodatetime.parsers import DurationParser
 from metomi.isodatetime.exceptions import IsodatetimeError
+from metomi.isodatetime.timezone import get_local_time_zone_format
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.util import replicate
 
@@ -211,6 +212,13 @@ class SuiteConfig(object):
         icp_str = getattr(self.options, 'icp', None)
         if icp_str is not None:
             self.cfg['scheduling']['initial cycle point'] = icp_str
+
+        if self.cfg['cylc'].get('cycle point time zone') is None:
+            # Get the original suite run time zone if restart:
+            suite_tz_str = getattr(self.options, 'suite_tz', None)
+            if suite_tz_str is None:
+                suite_tz_str = get_local_time_zone_format()
+            self.cfg['cylc']['cycle point time zone'] = suite_tz_str
 
         graphdict = self.cfg['scheduling']['graph']
 

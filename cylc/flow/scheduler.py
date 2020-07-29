@@ -433,6 +433,9 @@ class Scheduler:
         if reqmode and not self.config.run_mode(reqmode):
             raise ValueError('this suite requires the %s run mode' % reqmode)
 
+        if getattr(self.options, 'suite_tz', None) is None:
+            suite_tz_str = self.config.cfg['cylc']['cycle point time zone']
+            self.options.suite_tz = suite_tz_str
         self.broadcast_mgr.linearized_ancestors.update(
             self.config.get_linearized_ancestors())
         self.task_events_mgr.mail_interval = self.cylc_config[
@@ -1291,7 +1294,7 @@ class Scheduler:
         * Stop task.
         * Suite UUID.
         * A flag to indicate if the suite should be held or not.
-
+        * Original suite run time zone.
         """
         if row_idx == 0:
             LOG.info('LOADING suite parameters')
@@ -1356,6 +1359,9 @@ class Scheduler:
         elif key == self.suite_db_mgr.KEY_STOP_TASK:
             self.restored_stop_task_id = value
             LOG.info('+ stop task = %s', value)
+        elif key == self.suite_db_mgr.KEY_RUN_TIME_ZONE:
+            self.options.suite_tz = value
+            LOG.info('+ original suite run time zone = %s' % value)
 
     def _load_template_vars(self, _, row):
         """Load suite start up template variables."""
