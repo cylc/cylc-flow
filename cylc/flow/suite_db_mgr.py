@@ -49,12 +49,15 @@ class SuiteDatabaseManager(object):
     KEY_FINAL_CYCLE_POINT_COMPATS = (KEY_FINAL_CYCLE_POINT, 'final_point')
     KEY_STOP_CYCLE_POINT = 'stopcp'
     KEY_UUID_STR = 'uuid_str'
+    KEY_CYLC_VERSION = 'cylc_version'
+    KEY_UTC_MODE = 'UTC_mode'
     KEY_HOLD = 'is_held'
     KEY_HOLD_CYCLE_POINT = 'holdcp'
     KEY_NO_AUTO_SHUTDOWN = 'no_auto_shutdown'
     KEY_RUN_MODE = 'run_mode'
     KEY_STOP_CLOCK_TIME = 'stop_clock_time'
     KEY_STOP_TASK = 'stop_task'
+    KEY_CYCLE_POINT_FORMAT = 'cycle_point_format'
     KEY_CYCLE_POINT_TIME_ZONE = 'cycle_point_tz'
 
     TABLE_BROADCAST_EVENTS = CylcSuiteDAO.TABLE_BROADCAST_EVENTS
@@ -291,12 +294,12 @@ class SuiteDatabaseManager(object):
         self.db_deletes_map[self.TABLE_SUITE_PARAMS].append({})
         self.db_inserts_map[self.TABLE_SUITE_PARAMS].extend([
             {"key": self.KEY_UUID_STR, "value": str(schd.uuid_str)},
-            {"key": "cylc_version", "value": CYLC_VERSION},
-            {"key": "UTC_mode", "value": get_utc_mode()},
+            {"key": self.KEY_CYLC_VERSION, "value": CYLC_VERSION},
+            {"key": self.KEY_UTC_MODE, "value": get_utc_mode()},
         ])
         if schd.config.cycle_point_dump_format is not None:
             self.db_inserts_map[self.TABLE_SUITE_PARAMS].append({
-                "key": "cycle_point_format",
+                "key": self.KEY_CYCLE_POINT_FORMAT,
                 "value": schd.config.cycle_point_dump_format})
         if schd.pool.is_held:
             self.db_inserts_map[self.TABLE_SUITE_PARAMS].append({
