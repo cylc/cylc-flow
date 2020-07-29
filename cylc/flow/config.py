@@ -312,30 +312,46 @@ class SuiteConfig(object):
         self.cfg = self.pcfg.get(sparse=False)
         self.mem_log("config.py: after get(sparse=False)")
 
-        # Running in UTC time? (else just use the system clock)
-        if self.cfg['cylc']['UTC mode'] is None:
-            # This must be set before call to init_cyclers(self.cfg):
-            self.cfg['cylc']['UTC mode'] = glbl_cfg().get(['cylc', 'UTC mode'])
-        set_utc_mode(self.cfg['cylc']['UTC mode'])
+        cfg_utc_mode = self.cfg['cylc']['UTC mode']
+        # Get the original UTC mode if restart:
+        orig_utc_mode = getattr(self.options, 'utc_mode', None)
+        if orig_utc_mode is None:
+            # Not a restart - will save config value
+            if cfg_utc_mode is not None:
+                orig_utc_mode = cfg_utc_mode
+            else:
+                orig_utc_mode = glbl_cfg().get(['cylc', 'UTC mode'])
+        elif cfg_utc_mode is not None and cfg_utc_mode != orig_utc_mode:
+            LOG.warning(
+                "UTC mode = {0} specified in configuration, but it is stored "
+                "as {1} from the initial run. The suite will continue to use "
+                "UTC mode = {1}"
+                .format(cfg_utc_mode, orig_utc_mode)
+            )
+        # This must be set before call to init_cyclers(self.cfg):
+        self.cfg['cylc']['UTC mode'] = orig_utc_mode
+        set_utc_mode(orig_utc_mode)
 
         cfg_cp_tz = self.cfg['cylc'].get('cycle point time zone')
         # Get the original suite run time zone if restart:
         orig_cp_tz = getattr(self.options, 'cycle_point_tz', None)
-        if cfg_cp_tz is None and orig_cp_tz is None:
-            # Not a restart - will save local time zone
-            orig_cp_tz = get_local_time_zone_format()
-        elif cfg_cp_tz is not None and orig_cp_tz is not None:
+        if orig_cp_tz is None:
+            # Not a restart
+            if cfg_cp_tz is None and get_utc_mode() is False:
+                orig_cp_tz = get_local_time_zone_format()
+            elif cfg_cp_tz is not None:
+                orig_cp_tz = cfg_cp_tz
+        elif cfg_cp_tz is not None:
             dmp = TimePointDumper()
             if dmp.get_time_zone(cfg_cp_tz) != dmp.get_time_zone(orig_cp_tz):
                 LOG.warning(
-                    "cycle point time zone {0} specified in configuration, "
-                    "but there is a stored cycle point time zone {1} from the "
-                    "initial run. The suite will continue to run in {1}"
+                    "cycle point time zone = {0} specified in configuration, "
+                    "but there is a stored value of {1} from the initial run. "
+                    "The suite will continue to run in {1}"
                     .format(cfg_cp_tz, orig_cp_tz)
                 )
-        if orig_cp_tz is not None:
-            # This must be set before call to init_cyclers(self.cfg):
-            self.cfg['cylc']['cycle point time zone'] = orig_cp_tz
+        # This must be set before call to init_cyclers(self.cfg):
+        self.cfg['cylc']['cycle point time zone'] = orig_cp_tz
 
         # after the call to init_cyclers, we can start getting proper points.
         init_cyclers(self.cfg)
