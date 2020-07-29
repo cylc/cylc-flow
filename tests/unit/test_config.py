@@ -382,7 +382,7 @@ def test_cycle_point_tz(caplog, monkeypatch):
         {
             'cp_tz': {'suite': None, 'stored': None},
             'utc_mode': True,
-            'expected': None
+            'expected': 'Z'
         },
         {
             'cp_tz': {'suite': None, 'stored': None},

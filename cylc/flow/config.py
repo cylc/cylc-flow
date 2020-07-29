@@ -738,8 +738,11 @@ class SuiteConfig(object):
         orig_cp_tz = getattr(self.options, 'cycle_point_tz', None)
         if orig_cp_tz is None:
             # Not a restart
-            if cfg_cp_tz is None and get_utc_mode() is False:
-                orig_cp_tz = get_local_time_zone_format()
+            if cfg_cp_tz is None:
+                if get_utc_mode() is True:
+                    orig_cp_tz = 'Z'
+                else:
+                    orig_cp_tz = get_local_time_zone_format()
             elif cfg_cp_tz is not None:
                 orig_cp_tz = cfg_cp_tz
         elif cfg_cp_tz is not None:
