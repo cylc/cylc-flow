@@ -213,6 +213,9 @@ class SuiteConfig(object):
         if icp_str is not None:
             self.cfg['scheduling']['initial cycle point'] = icp_str
 
+        if 'cylc' not in self.cfg:
+            self.cfg['cylc'] = {}
+
         if self.cfg['cylc'].get('cycle point time zone') is None:
             # Get the original suite run time zone if restart:
             cp_tz_str = getattr(self.options, 'cp_tz', None)
