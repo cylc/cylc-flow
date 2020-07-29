@@ -25,3 +25,4 @@ clean:
 %: Makefile .EXPORT_ALL_VARIABLES
 	./src/custom/make-commands.sh
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+	bin/version write > $(BUILDDIR)/../versions.json

@@ -1,0 +1,147 @@
+#!/usr/bin/env python3
+# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# Copyright (C) 2008-2020 NIWA & British Crown (Met Office) & Contributors.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Simple tools for managing multiple documented versions of cylc-flow."""
+
+import argparse
+import json
+import pathlib
+import sys
+
+from pkg_resources import (
+    parse_version
+)
+
+
+DUMMY_FORMATS = [
+    'doctrees',
+    'linkcheck',
+    'doctest',
+    'coverage'
+]
+
+
+def get_versions(builddir):
+    """Yield paths to each documented version."""
+    yield from pathlib.Path(builddir).glob('[0-9]*.*')
+    yield from pathlib.Path(builddir).glob('nightly.*')
+    yield from pathlib.Path(builddir).glob('dev*')
+
+
+def get_formats(builddir):
+    """Return a dictionary of the form {cylc_version: [doc_format...]}."""
+    return {
+        version.name: [
+            format_.name
+            for format_ in version.glob('*')
+            if format_.name not in DUMMY_FORMATS and '.' not in format_.name
+        ]
+        for version in get_versions(builddir)
+    }
+
+
+def write(args):
+    print(
+        json.dumps(
+            get_formats(args.builddir),
+            indent=4
+        )
+    )
+
+
+def ls(args):
+    print(' '.join(get_formats(args.builddir)))
+
+
+def tidy(args):
+    # get list of documented versions
+    versions = [
+        parse_version(version)
+        for version in get_formats(args.builddir)
+    ]
+
+    # build dictionary of minor versions
+    # versions = [<Version('1.0.1')>, <Version('1.0.2')>]
+    # minor_versions = {
+    #     (1, 0): [<Version('1.0.1')>, <Version('1.0.2')>]
+    # }
+    minor_versions = {}
+    for version in versions:
+        release = version._version.release
+        if len(release) > 2:
+            major_minor = release[:2]
+            if major_minor not in minor_versions:
+                minor_versions[major_minor] = []
+            minor_versions[major_minor].append(version)
+
+    # pull out the versions we don't want any more
+    # e.g from ['1.0.1', '1.0.2', '1.0.3'] pull out ['1.0.1', '1.0.2']
+    tidy = []
+    for major_minor, versions in minor_versions.items():
+        if len(versions) > 1:
+            versions.sort()
+            tidy.extend(versions[:-1])
+
+    print(' '.join(map(str, tidy)))
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        'builddir',
+        help=(
+            'The path to the dir where the built docs are put'
+            ' by default this is ./doc/'
+        ),
+        nargs='?',
+        default='build'
+    )
+
+    subparser = parser.add_subparsers()
+
+    write_parser = subparser.add_parser(
+        'write',
+        help=(
+            'Write the version file used by the static webpage to tell'
+            ' which versions are documented and in which formats.'
+        )
+    )
+    write_parser.set_defaults(func=write)
+
+    ls_parser = subparser.add_parser(
+        'ls',
+        help='List all documented versions'
+    )
+    ls_parser.set_defaults(func=ls)
+
+    tidy_parser = subparser.add_parser(
+        'tidy',
+        help=(
+            'Print list of older releases which have been outdated by'
+            ' newer bugfix releases.'
+        )
+    )
+    tidy_parser.set_defaults(func=tidy)
+
+    args = parser.parse_args()
+    if not hasattr(args, 'func'):
+        parser.print_usage()
+        sys.exit(1)
+    args.func(args)
+
+
+if __name__ == '__main__':
+    main()
