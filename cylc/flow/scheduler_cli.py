@@ -387,16 +387,15 @@ def _distribute(host, is_restart):
     # Check whether a run host is explicitly specified, else select one.
     if not host:
         host = select_suite_host()[0]
-    if host:
-        if is_remote_host(host):
-            if is_restart:
-                base_cmd = ["restart"] + sys.argv[1:]
-            else:
-                base_cmd = ["run"] + sys.argv[1:]
-            # Prevent recursive host selection
-            base_cmd.append("--host=localhost")
-            remote_cylc_cmd(base_cmd, host=host)
-            sys.exit(0)
+    if is_remote_host(host):
+        if is_restart:
+            base_cmd = ["restart"] + sys.argv[1:]
+        else:
+            base_cmd = ["run"] + sys.argv[1:]
+        # Prevent recursive host selection
+        base_cmd.append("--host=localhost")
+        remote_cylc_cmd(base_cmd, host=host)
+        sys.exit(0)
 
 
 async def _setup(parser, options, reg, is_restart, scheduler):
