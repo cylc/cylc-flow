@@ -217,7 +217,7 @@ class TaskRemoteMgr(object):
                 cmd,
                 stdin_files=[tmphandle]),
             self._remote_init_callback,
-            [host, owner, platform, tmphandle,
+            [platform, tmphandle,
              curve_auth, client_pub_key_dir])
         # None status: Waiting for command to finish
         self.remote_init_map[platform['name']] = None
