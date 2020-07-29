@@ -213,17 +213,6 @@ class SuiteConfig(object):
         if icp_str is not None:
             self.cfg['scheduling']['initial cycle point'] = icp_str
 
-        if 'cylc' not in self.cfg:
-            self.cfg['cylc'] = {}
-
-        if self.cfg['cylc'].get('cycle point time zone') is None:
-            # Get the original suite run time zone if restart:
-            cp_tz_str = getattr(self.options, 'cp_tz', None)
-            if cp_tz_str is None:
-                # Not a restart
-                cp_tz_str = get_local_time_zone_format()
-            self.cfg['cylc']['cycle point time zone'] = cp_tz_str
-
         graphdict = self.cfg['scheduling']['graph']
 
         if not any(graphdict.values()):
@@ -327,6 +316,15 @@ class SuiteConfig(object):
             # This must be set before call to init_cyclers(self.cfg):
             self.cfg['cylc']['UTC mode'] = glbl_cfg().get(['cylc', 'UTC mode'])
         set_utc_mode(self.cfg['cylc']['UTC mode'])
+
+        if self.cfg['cylc'].get('cycle point time zone') is None:
+            # Get the original suite run time zone if restart.
+            # This must be done before call to init_cyclers(self.cfg)
+            cp_tz_str = getattr(self.options, 'cp_tz', None)
+            if cp_tz_str is None:
+                # Not a restart
+                cp_tz_str = get_local_time_zone_format()
+                self.cfg['cylc']['cycle point time zone'] = cp_tz_str
 
         # after the call to init_cyclers, we can start getting proper points.
         init_cyclers(self.cfg)
