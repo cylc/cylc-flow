@@ -15,17 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test saving of cycle point time zone for restart, which is important for
-# restarting a suite after e.g. a daylight saving change
+# Test saving and loading of cycle point time zone to/from database on a run
+# followed by a restart. Important for restarting a suite after a system
+# time zone change.
 
 . "$(dirname "$0")/test_header"
 
-dumpdbtables() {
-    sqlite3 "${SUITE_RUN_DIR}/log/db" \
-        'SELECT * FROM suite_params WHERE key=="cycle_point_tz";' > 'dump.out'
-}
-
-set_test_number 5
+set_test_number 6
 
 init_suite "${TEST_NAME_BASE}" << '__SUITERC__'
 [cylc]
@@ -51,7 +47,8 @@ poll_suite_running
 cylc stop "${SUITE_NAME}"
 poll_suite_stopped
 
-dumpdbtables
+sqlite3 "${SUITE_RUN_DIR}/log/db" \
+    'SELECT * FROM suite_params WHERE key=="cycle_point_tz";' > 'dump.out'
 cmp_ok 'dump.out' <<< 'cycle_point_tz|+0100'
 
 # Simulate DST change
@@ -62,8 +59,8 @@ poll_suite_running
 cylc stop "${SUITE_NAME}"
 poll_suite_stopped
 
-dumpdbtables
-cmp_ok 'dump.out' <<< 'cycle_point_tz|+0100'
+log_scan "${TEST_NAME_BASE}-log-scan" "${SUITE_RUN_DIR}/log/suite/log" 1 0 \
+    'LOADING suite parameters' '+ cycle point time zone = +0100'
 
 purge_suite "${SUITE_NAME}"
 exit
