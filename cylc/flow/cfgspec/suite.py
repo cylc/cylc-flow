@@ -142,10 +142,13 @@ with Conf(
             converted to the time zone you give and will be represented with
             this string at the end.
 
-            Cycle points that are input without time zones (e.g. as an initial
-            cycle point setting) will use this time zone if set. If this isn't
-            set (and UTC mode is also not set), then they will default to the
-            current local time zone.
+            Cycle points that are input without time zones will use this time
+            zone if set. If this isn't set (and UTC mode is also not set),
+            then they will default to the local time zone at the time of
+            running the suite. This will persist over local time zone changes
+            (e.g. if this isn't set and the suite is run during winter time,
+            then stopped, then restarted after summer time has begun, the
+            cycle points will remain in winter time).
 
             .. note::
 
