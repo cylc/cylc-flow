@@ -111,6 +111,13 @@ with Conf(
             standard - supported tokens are ``%F``, ``%H``, ``%M``, ``%S``,
             ``%Y``, ``%d``, ``%j``, ``%m``, ``%s``, ``%z``.
 
+            The time zone you specify here will be used only for
+            writing/dumping cycle points. Cycle points that are input without
+            time zones will default to the local time zone unless
+            :ref:`cycle-point-time-zone` or :ref:`UTC-mode` are set. Not
+            specifying a time zone here is inadvisable as it leads to
+            ambiguity.
+
             The ISO8601 extended date-time format can be used
             (``%Y-%m-%dT%H:%M``) but note that the "-" and ":" characters
             end up in job log directory paths.
@@ -129,26 +136,30 @@ with Conf(
             This number defaults to 0 (no sign or extra digits used).
         ''')
         Conf('cycle point time zone', VDR.V_CYCLE_POINT_TIME_ZONE, desc='''
-            If you set UTC mode to True (:ref:`UTC-mode`) then this will
-            default to ``Z``. If you use a custom cycle point format
-            (:ref:`cycle-point-format`), you should specify the timezone
-            choice (or null timezone choice) here as well.
+            You may set your own time zone choice here, which will be used for
+            date-time cycle point dumping and inferring the time zone of cycle
+            points that are input without time zones.
 
-            You may set your own time zone choice here, which will be used
-            for all date-time cycle point dumping. Time zones should be
-            expressed as ISO 8601 time zone offsets from UTC, such as
-            ``+13``, ``+1300``, ``-0500`` or ``+0645``, with ``Z``
+            Time zones should be expressed as ISO 8601 time zone offsets from
+            UTC, such as ``+13``, ``+1300``, ``-0500`` or ``+0645``, with ``Z``
             representing the special ``+0000`` case. Cycle points will be
             converted to the time zone you give and will be represented with
             this string at the end.
 
             Cycle points that are input without time zones will use this time
-            zone if set. If this isn't set (and UTC mode is also not set),
-            then they will default to the local time zone at the time of
+            zone if set. If this isn't set (and :ref:`UTC-mode` is also not
+            set), then this will default to the local time zone at the time of
             running the suite. This will persist over local time zone changes
             (e.g. if this isn't set and the suite is run during winter time,
             then stopped, then restarted after summer time has begun, the
             cycle points will remain in winter time).
+
+            If this isn't set, and UTC mode is set to True, then this will
+            default to ``Z``. If you use a custom :ref:`cycle-point-format`,
+            it is a good idea to set the same time zone here. If you specify a
+            different one here, it will only be used for inferring
+            time-zone-less cycle points, while dumping will use the one from
+            the cycle point format.
 
             .. note::
 
