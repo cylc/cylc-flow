@@ -395,7 +395,8 @@ def _distribute(host, is_restart):
                 base_cmd = ["run"] + sys.argv[1:]
             # Prevent recursive host selection
             base_cmd.append("--host=localhost")
-            return remote_cylc_cmd(base_cmd, host=host)
+            remote_cylc_cmd(base_cmd, host=host)
+            sys.exit(0)
 
 
 async def _setup(parser, options, reg, is_restart, scheduler):
