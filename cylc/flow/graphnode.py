@@ -93,8 +93,6 @@ class GraphNodeParser(object):
             (name, offset, output,
             offset_is_from_icp, offset_is_irregular, offset_is_absolute)
 
-        TODO: offset_is_from_icp is '^' or None - should be boolean?
-
         NOTE that offsets from ICP like foo[^] and foo[^+P1] are not considered
               absolute like foo[2] etc.
 
@@ -105,7 +103,8 @@ class GraphNodeParser(object):
             match = self.REC_NODE.match(node)
             if not match:
                 raise GraphParseError('Illegal graph node: %s' % node)
-            name, offset_is_from_icp, offset, output = match.groups()
+            name, icp_mark, offset, output = match.groups()
+            offset_is_from_icp = (icp_mark == '^')  # convert to boolean
             if offset_is_from_icp and not offset:
                 offset = self._get_offset()
             offset_is_irregular = False
