@@ -20,6 +20,10 @@ generated reference version.
         T00 = """
             foo => bar & baz & qux & wibble => ENS
             ENS:finish-all => wobble
+            # Ensure that the first cycle completely finishes before
+            # the second (last) one, so that the broadcast to foo in the first
+            # cycle automatically EXPIRES before the suite shuts down:
+            wobble[-P1D] => wobble
         """
 [runtime]
     [[root]]
@@ -27,7 +31,7 @@ generated reference version.
         script = "true" # no sleep
         [[[environment]]]
             BCAST = ${BCAST:-(not set)}
-            BCASTLOG = ${CYLC_SUITE_DEF_PATH}/broadcast.log
+            BCASTLOG = ${CYLC_SUITE_SHARE_DIR}/broadcast.log
     [[prep]]
         pre-script = "rm -f $BCASTLOG"
         script = """
@@ -94,3 +98,9 @@ diff -u "${CYLC_SUITE_DEF_PATH}/expected-prep.err" 'prep.err'
         inherit = ENS
     [[o1]]
         inherit = ENS3
+    [[wobble]]
+        script = """
+if [[ "${CYLC_TASK_CYCLE_POINT}" == "20100809T00" ]]; then
+        sleep 5
+fi
+        """

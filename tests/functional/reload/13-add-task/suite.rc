@@ -4,15 +4,14 @@
 
 [scheduling]
    [[graph]]
-       R1 = reloader
+       R1 = reloader => foo
 
 [runtime]
    [[root]]
       script = true
    [[reloader]]
       script = """
-sed -i "s/\(R1 = reloader\)\s*$/\1 => add_me/" $CYLC_SUITE_DEF_PATH/suite.rc
+sed -i "s/\(R1 = reloader => foo\)\s*$/\1 => add_me/" $CYLC_SUITE_DEF_PATH/suite.rc
 cylc reload $CYLC_SUITE_NAME
-cylc insert $CYLC_SUITE_NAME add_me.1
 sleep 10
         """

@@ -227,6 +227,8 @@ class JobFileWriter(object):
             ' '.join(job_conf['dependencies']))
         handle.write(
             '\n    export CYLC_TASK_TRY_NUMBER=%s' % job_conf['try_num'])
+        handle.write(
+            '\n    export CYLC_TASK_FLOW_LABEL=%s' % job_conf['flow_label'])
         # Custom parameter environment variables
         for var, tmpl in job_conf['param_env_tmpl'].items():
             handle.write('\n    export %s="%s"' % (

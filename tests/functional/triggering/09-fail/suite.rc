@@ -4,8 +4,7 @@
 
 [scheduling]
     [[graph]]
-        R1 = """foo:fail => bar
-                   bar => !foo"""
+        R1 = "foo:fail => bar"
 [runtime]
     [[foo]]
         script = "false"

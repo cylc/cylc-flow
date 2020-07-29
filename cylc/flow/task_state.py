@@ -337,7 +337,7 @@ class TaskState(object):
         """Return True if all xtriggers are satisfied."""
         return all(self.xtriggers.values())
 
-    def prerequisites_are_all_satisfied(self):
+    def prerequisites_all_satisfied(self):
         """Return True if (non-suicide) prerequisites are fully satisfied."""
         if self._is_satisfied is None:
             self._is_satisfied = all(
@@ -346,10 +346,10 @@ class TaskState(object):
 
     def prerequisites_are_not_all_satisfied(self):
         """Return True if (any) prerequisites are not fully satisfied."""
-        return (not self.prerequisites_are_all_satisfied() or
-                not self.suicide_prerequisites_are_all_satisfied())
+        return (not self.prerequisites_all_satisfied() or
+                not self.suicide_prerequisites_all_satisfied())
 
-    def suicide_prerequisites_are_all_satisfied(self):
+    def suicide_prerequisites_all_satisfied(self):
         """Return True if all suicide prerequisites are satisfied."""
         if self._suicide_is_satisfied is None:
             self._suicide_is_satisfied = all(
@@ -404,12 +404,7 @@ class TaskState(object):
         """Change status, and manipulate outputs and prerequisites accordingly.
 
         Outputs are manipulated on manual state reset to reflect the new task
-        status, except for custom outputs on reset to succeeded or later -
-        these can be completed if need be using "cylc reset --output".
-
-        Prerequisites, which reflect the state of *other tasks*, are not
-        manipulated, except to unset them on reset to waiting or earlier.
-        (TODO - we should not do this - see GitHub #2329).
+        status.
 
         Note this method could take an additional argument to distinguish
         internal and manually forced state changes, if needed.
@@ -472,9 +467,6 @@ class TaskState(object):
         self.outputs.set_completion(
             TASK_OUTPUT_FAILED, status == TASK_STATUS_FAILED)
 
-        # Unset prerequisites on reset to waiting (see docstring).
-        if status == TASK_STATUS_WAITING:
-            self.set_prerequisites_not_satisfied()
         return True
 
     def is_gt(self, status):

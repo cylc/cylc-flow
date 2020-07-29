@@ -9,7 +9,7 @@
     [[t1]]
         script = """
 if [[ "${CYLC_TASK_CYCLE_POINT}" == '20200202T0000Z' ]]; then
-    ctb-get-graph-raw \
+    python3 ${CYLC_SUITE_DEF_PATH}/bin/ctb-get-graph-raw \
         'start_point_string=20200202T0000Z' \
         'stop_point_string=20200203T0000Z' \
         'group_nodes=T' \

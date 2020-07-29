@@ -744,7 +744,6 @@ class TaskProxy(ObjectType):
     state = String()
     cycle_point = String()
     is_held = Boolean()
-    spawned = Boolean()
     depth = Int()
     job_submits = Int()
     latest_message = String()
@@ -1440,27 +1439,18 @@ class Reload(Mutation):
         description = sstrip('''
             Tell a suite to reload its definition at run time.
 
-            All settings including task definitions, with the
-            exception of suite log configuration, can be changed on reload.
-            Note that defined tasks can be be added to or removed from a
-            running suite using "insert" and "remove" without reloading.  This
-            command also allows addition and removal of actual task
-            definitions, and therefore insertion of tasks that were not defined
-            at all when the suite started (you will still need to manually
-            insert a particular instance of a newly defined task). Live task
-            proxies that are orphaned by a reload (i.e. their task definitions
-            have been removed) will be removed from the task pool if they have
-            not started running yet. Changes to task definitions take effect
-            immediately, unless a task is already running at reload time.
+            All settings including task definitions, with the exception of
+            suite log configuration, can be changed on reload. Changes to task
+            definitions take effect immediately, unless a task is already
+            running at reload time.
 
-            If the suite was started with Jinja2 template variables
-            set on the command line (cylc run --set FOO=bar REG) the same
-            template settings apply to the reload (only changes to the suite.rc
+            If the suite was started with Jinja2 template variables set on the
+            command line (cylc run --set FOO=bar REG) the same template
+            settings apply to the reload (only changes to the suite.rc
             file itself are reloaded).
 
-            If the modified suite definition does not parse,
-            failure to reload will be reported but no harm will be done to the
-            running suite.
+            If the modified suite definition does not parse, failure to reload
+            will be reported but no harm will be done to the running suite.
         ''')
         resolver = partial(mutator, command='reload_suite')
 
@@ -1512,6 +1502,23 @@ class Stop(Mutation):
         )
         task = TaskID(
             description='Stop after this task succeeds.'
+        )
+
+    result = GenericScalar()
+
+
+class StopFlow(Mutation):
+    class Meta:
+        description = sstrip(f'''
+            Stop a specified flow from spawning any further.
+        ''')
+        resolver = partial(mutator, command='stop_flow')
+
+    class Arguments:
+        workflows = List(WorkflowID, required=True)
+        label = String(
+            description='Flow label.',
+            required=True
         )
 
     result = GenericScalar()
@@ -1585,52 +1592,6 @@ class TaskMutation:
     result = GenericScalar()
 
 
-class DryRun(Mutation, TaskMutation):
-    class Meta:
-        description = sstrip('''
-            [For internal use] Prepare the job file for a task.
-        ''')
-        resolver = partial(mutator, command='dry_run_tasks')
-
-    class Arguments(TaskMutation.Arguments):
-        check_syntax = Boolean(
-            description='Check shell syntax.',
-            default_value=True
-        )
-
-
-class Insert(Mutation, TaskMutation):
-    class Meta:
-        description = sstrip('''
-            Insert new task proxies into the task pool of a running workflow.
-
-            For example to enable re-triggering earlier tasks already removed
-            from the pool.
-
-            Note: inserted cycling tasks cycle on as normal, even if another
-            instance of the same task exists at a later cycle (instances of the
-            same task at different cycles can coexist, but a newly spawned task
-            will not be added to the pool if it catches up to another task with
-            the same ID).
-
-            See also "Submit", for running tasks without the scheduler.
-        ''')
-        resolver = partial(mutator, command='insert_tasks')
-
-    class Arguments(TaskMutation.Arguments):
-        check_point = Boolean(
-            description=sstrip('''
-                Check that the provided cycle point is on one of the task's
-                recurrences as defined in the suite configuration before
-                inserting.
-            '''),
-            default_value=True
-        )
-        stop_point = CyclePoint(
-            description='hold/stop cycle point for inserted task.'
-        )
-
-
 class Kill(Mutation, TaskMutation):
     # TODO: This should be a job mutation?
     class Meta:
@@ -1659,66 +1620,24 @@ class Remove(Mutation, TaskMutation):
         description = sstrip('''
             Remove one or more task instances from a running workflow.
 
-            Tasks will be forced to spawn successors before removal if they
-            have not done so already, unless you change the `spawn` option.
         ''')
         resolver = partial(mutator, command='remove_tasks')
-
-    class Arguments(TaskMutation.Arguments):
-        spawn = Boolean(
-            description='Spawn successors before removal.',
-            default_value=True
-        )
-
-
-class Reset(Mutation, TaskMutation):
-    class Meta:
-        description = sstrip(f'''
-            Force task instances to a specified state.
-
-            Outputs are automatically updated to reflect the new task state,
-            except for custom message outputs which can be manipulated directly
-            with `outputs`.
-
-            Prerequisites reflect the state of other tasks; they are not
-            changed except to unset them on resetting state to
-            `{TASK_STATUS_WAITING}` or earlier.
-
-            Note: To hold and release tasks use "Hold" and "Release", not this
-            command.
-        ''')
-        resolver = partial(mutator, command='reset_task_states')
-
-    class Arguments(TaskMutation.Arguments):
-        state = TaskStatus(
-            description='Reset the task status to this.'
-        )
-        outputs = List(
-            String,
-            description=sstrip('''
-                Find task output by message string or trigger string, set
-                complete or incomplete with `!OUTPUT`, `*` to set all
-                complete, `!*` to set all incomplete.
-            ''')
-        )
 
 
 class Spawn(Mutation, TaskMutation):
     class Meta:
         description = sstrip(f'''
-            Force task proxies to spawn successors at their own next cycle
-            point.
+            Spawn children off of specified task outputs.
 
-            Tasks normally spawn on reaching the {TASK_STATUS_SUBMITTED}
-            status. Spawning them early allows running successive instances of
-            the same task out of order.  See also the `spawn to max active
-            cycle points` workflow configuration.
-
-            Note this command does not operate on tasks at any arbitrary point
-            in the abstract workflow graph - tasks not already in the pool must
-            be inserted first with "Insert".
         ''')
-        resolver = partial(mutator, command='spawn_tasks')
+        resolver = partial(mutator, command='force_spawn_children')
+
+    class Arguments(TaskMutation.Arguments):
+        outputs = List(
+            String,
+            description='Outputs to spawn off of.',
+            default_value=None
+        )
 
 
 class Trigger(Mutation, TaskMutation):
@@ -1726,28 +1645,16 @@ class Trigger(Mutation, TaskMutation):
         description = sstrip('''
             Manually trigger tasks.
 
-            TODO: re-implement edit funtionality!
-
-            For single tasks you can use `edit` to edit the generated job
-            script before it submits, to apply one-off changes. A diff between
-            the original and edited job script will be saved to the task job
-            log directory.
-
             Warning: waiting tasks that are queue-limited will be queued if
             triggered, to submit as normal when released by the queue; queued
             tasks will submit immediately if triggered, even if that violates
             the queue limit (so you may need to trigger a queue-limited task
             twice to get it to submit immediately).
-
-            Note: tasks not already in the pool must be inserted first with
-            "Insert" in order to be matched.
         ''')
-        resolver = partial(mutator, command='trigger_tasks')
+        resolver = partial(mutator, command='force_trigger_tasks')
 
     class Arguments(TaskMutation.Arguments):
-        # back_out = Boolean()
-        # TODO: remove or re-implement?
-        pass
+        reflow = Boolean()
 
 
 # Mutation declarations
@@ -1766,16 +1673,14 @@ class Mutations(ObjectType):
     set_verbosity = SetVerbosity.Field(
         description=SetVerbosity._meta.description)
     stop = Stop.Field(description=Stop._meta.description)
+    stop_flow = StopFlow.Field(description=StopFlow._meta.description)
     checkpoint = Checkpoint.Field(
         description=Checkpoint._meta.description)
 
     # task actions
-    dry_run = DryRun.Field(description=DryRun._meta.description)
-    insert = Insert.Field(description=Insert._meta.description)
     kill = Kill.Field(description=Kill._meta.description)
     poll = Poll.Field(description=Poll._meta.description)
     remove = Remove.Field(description=Remove._meta.description)
-    reset = Reset.Field(description=Reset._meta.description)
     spawn = Spawn.Field(description=Spawn._meta.description)
     trigger = Trigger.Field(description=Trigger._meta.description)
 

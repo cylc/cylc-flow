@@ -1,0 +1,5 @@
+Initial point: 1
+Final point: 1
+[foo.1] -triggered off []
+[fish.1] -triggered off ['foo.1']
+[done.1] -triggered off ['fish.1']

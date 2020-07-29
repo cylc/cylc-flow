@@ -6,9 +6,10 @@
 [scheduling]
     initial cycle point = 2010-01-01
     final cycle point = 2010-01-05
-    runahead limit = PT12H # marker
+    max active cycle points = 2 # marker
     [[graph]]
-        T00 = "foo:fail => reloader"
+        # oops is stuck waiting task to hold back runahead
+        R1/T00 = "foo & reloader => oops"
         T00/PT6H = "foo => bar"
 [runtime]
     [[foo]]
@@ -17,8 +18,7 @@
         script = true
     [[reloader]]
         script = """
-# change the dependencies section name to garbage:
-perl -pi -e 's/(runahead limit = )PT12H( # marker)/\1 PT18H\2/' $CYLC_SUITE_DEF_PATH/suite.rc
-# reload
+cylc__job__poll_grep_suite_log '\[foo.* (received)failed'
+perl -pi -e 's/(max active cycle points = )2( # marker)/\1 4\2/' $CYLC_SUITE_DEF_PATH/suite.rc
 cylc reload -f $CYLC_SUITE_NAME
 """

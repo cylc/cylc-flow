@@ -38,9 +38,12 @@ prerequisites (- => not satisfied):
   (None)
 
 outputs (- => not completed):
-  + t1.2016 started
+  - t1.2016 expired
   + t1.2016 submitted
+  - t1.2016 submit-failed
+  + t1.2016 started
   - t1.2016 succeeded
+  - t1.2016 failed
 ----
 TASK ID: t1.2017
 title: (not given)
@@ -50,9 +53,12 @@ prerequisites (- => not satisfied):
   + t1.2016 started
 
 outputs (- => not completed):
-  + t1.2017 started
+  - t1.2017 expired
   + t1.2017 submitted
+  - t1.2017 submit-failed
+  + t1.2017 started
   - t1.2017 succeeded
+  - t1.2017 failed
 ----
 TASK ID: t1.2018
 title: (not given)
@@ -62,21 +68,12 @@ prerequisites (- => not satisfied):
   + t1.2017 started
 
 outputs (- => not completed):
-  + t1.2018 started
+  - t1.2018 expired
   + t1.2018 submitted
+  - t1.2018 submit-failed
+  + t1.2018 started
   - t1.2018 succeeded
-----
-TASK ID: t1.2019
-title: (not given)
-description: (not given)
-
-prerequisites (- => not satisfied):
-  - t1.2018 started
-
-outputs (- => not completed):
-  - t1.2019 started
-  - t1.2019 submitted
-  - t1.2019 succeeded
+  - t1.2018 failed
 __TXT__
 done
 

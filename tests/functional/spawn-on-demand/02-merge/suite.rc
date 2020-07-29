@@ -1,0 +1,23 @@
+# foo.3 triggers a reflow at foo.1 and waits for it to catch up and merge.
+# This results in a completely merged flow, e.g. u, V -> uV at foo.3 and bar.3.
+# Then bar.3 waits for the merged labels to be pruned, e.g. uV -> u (or V).
+[scheduling]
+    cycling mode = integer
+    initial cycle point = 1
+    final cycle point = 3
+    [[graph]]
+        P1 = "foo[-P1] => foo => bar => baz"
+[runtime]
+    [[foo]]
+         script = """
+if (( CYLC_TASK_CYCLE_POINT == 3 )); then
+    cylc trigger --reflow ${CYLC_SUITE_NAME} foo.1
+    cylc__job__poll_grep_suite_log 'merged flow'
+fi
+         """
+    [[bar]]
+         script = """
+if (( CYLC_TASK_CYCLE_POINT == 3 )); then
+    cylc__job__poll_grep_suite_log 'returning flow label(s)'
+fi
+         """

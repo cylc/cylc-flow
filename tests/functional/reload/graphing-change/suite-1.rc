@@ -1,9 +1,10 @@
 [scheduling]
-    initial cycle point = 20160101T00Z
-    final cycle point = 20160102T00Z
+    cycling mode = integer
+    initial cycle point = 1
+    final cycle point = 1
     [[graph]]
         R1 = start => one
-        PT1H = foo => bar => baz => bol
+        P1 = foo => bar => baz => bol
 [runtime]
     [[root]]
         script = true

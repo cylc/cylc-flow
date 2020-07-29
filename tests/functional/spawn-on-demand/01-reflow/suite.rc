@@ -1,0 +1,13 @@
+[scheduling]
+    cycling mode = integer
+    initial cycle point = 1
+    final cycle point = 2
+    [[graph]]
+        P1 = "foo[-P1] => foo => bar => baz"
+        R1/2/ = "foo => triggerer"
+[runtime]
+    [[triggerer]]
+         script = """
+# Cause both bar.1 and baz.1 to run again.
+cylc trigger --reflow ${CYLC_SUITE_NAME} bar.1
+         """

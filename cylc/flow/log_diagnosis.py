@@ -45,7 +45,7 @@ def run_reftest(config, ctx):
 def _load_reflog(filename):
     """Reference test: get trigger info from reference log."""
     res = []
-    re_trig = re.compile(r'(\[.+\]\s-triggered\soff\s\[.+\])$')
+    re_trig = re.compile(r'(\[.+\]\s-triggered\soff\s\[.*\])$')
     for line in open(filename, 'r'):
         match = re_trig.search(line)
         if match:

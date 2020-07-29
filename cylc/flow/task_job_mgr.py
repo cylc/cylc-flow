@@ -77,7 +77,6 @@ class TaskJobManager(object):
     POLL_FAIL = 'poll failed'
     REMOTE_SELECT_MSG = 'waiting for remote host selection'
     REMOTE_INIT_MSG = 'remote host initialising'
-    DRY_RUN_MSG = 'job file written (edit/dry-run)'
     KEY_EXECUTE_TIME_LIMIT = TaskEventsManager.KEY_EXECUTE_TIME_LIMIT
 
     def __init__(self, suite, proc_pool, suite_db_mgr,
@@ -156,8 +155,7 @@ class TaskJobManager(object):
                 self.JOBS_POLL, suite, to_poll_tasks,
                 self._poll_task_jobs_callback)
 
-    def prep_submit_task_jobs(self, suite, itasks, dry_run=False,
-                              check_syntax=True):
+    def prep_submit_task_jobs(self, suite, itasks, check_syntax=True):
         """Prepare task jobs for submit.
 
         Prepare tasks where possible. Ignore tasks that are waiting for host
@@ -169,7 +167,7 @@ class TaskJobManager(object):
         prepared_tasks = []
         bad_tasks = []
         for itask in itasks:
-            prep_task = self._prep_submit_task_job(suite, itask, dry_run,
+            prep_task = self._prep_submit_task_job(suite, itask,
                                                    check_syntax=check_syntax)
             if prep_task:
                 prepared_tasks.append(itask)
@@ -751,13 +749,13 @@ class TaskJobManager(object):
                 itask, CRITICAL, self.task_events_mgr.EVENT_SUBMIT_FAILED,
                 ctx.timestamp)
 
-    def _prep_submit_task_job(self, suite, itask, dry_run, check_syntax=True):
+    def _prep_submit_task_job(self, suite, itask, check_syntax=True):
         """Prepare a task job submission.
 
         Return itask on a good preparation.
 
         """
-        if itask.local_job_file_path and not dry_run:
+        if itask.local_job_file_path:
             return itask
 
         # Handle broadcasts
@@ -781,7 +779,7 @@ class TaskJobManager(object):
             # Retry delays, needed for the try_num
             self._set_retry_timers(itask, rtconfig)
             self._prep_submit_task_job_error(
-                suite, itask, dry_run, '(remote host select)', exc)
+                suite, itask, '(remote host select)', exc)
             return False
         else:
             if task_host is None:  # host select not ready
@@ -809,18 +807,13 @@ class TaskJobManager(object):
         except Exception as exc:
             # Could be a bad command template, IOError, etc
             self._prep_submit_task_job_error(
-                suite, itask, dry_run, '(prepare job file)', exc)
+                suite, itask, '(prepare job file)', exc)
             return False
         itask.local_job_file_path = local_job_file_path
 
-        if dry_run:
-            itask.set_summary_message(self.DRY_RUN_MSG)
-            self.job_pool.add_job_msg(job_config['job_d'], self.DRY_RUN_MSG)
-            LOG.debug(f'[{itask}] -{self.DRY_RUN_MSG}')
-
         return itask
 
-    def _prep_submit_task_job_error(self, suite, itask, dry_run, action, exc):
+    def _prep_submit_task_job_error(self, suite, itask, action, exc):
         """Helper for self._prep_submit_task_job. On error."""
         LOG.debug("submit_num %s" % itask.submit_num)
         LOG.debug(traceback.format_exc())
@@ -828,17 +821,16 @@ class TaskJobManager(object):
         log_task_job_activity(
             SubProcContext(self.JOBS_SUBMIT, action, err=exc, ret_code=1),
             suite, itask.point, itask.tdef.name, submit_num=itask.submit_num)
-        if not dry_run:
-            # Persist
-            self.suite_db_mgr.put_insert_task_jobs(itask, {
-                'is_manual_submit': itask.is_manual_submit,
-                'try_num': itask.get_try_num(),
-                'time_submit': get_current_time_string(),
-                'batch_sys_name': itask.summary.get('batch_sys_name'),
-            })
-            itask.is_manual_submit = False
-            self.task_events_mgr.process_message(
-                itask, CRITICAL, self.task_events_mgr.EVENT_SUBMIT_FAILED)
+        # Persist
+        self.suite_db_mgr.put_insert_task_jobs(itask, {
+            'is_manual_submit': itask.is_manual_submit,
+            'try_num': itask.get_try_num(),
+            'time_submit': get_current_time_string(),
+            'batch_sys_name': itask.summary.get('batch_sys_name'),
+        })
+        itask.is_manual_submit = False
+        self.task_events_mgr.process_message(
+            itask, CRITICAL, self.task_events_mgr.EVENT_SUBMIT_FAILED)
 
     def _prep_submit_task_job_impl(self, suite, itask, rtconfig):
         """Helper for self._prep_submit_task_job."""
@@ -898,6 +890,7 @@ class TaskJobManager(object):
             'remote_suite_d': rtconfig['remote']['suite definition directory'],
             'script': scripts[1],
             'submit_num': itask.submit_num,
+            'flow_label': itask.flow_label,
             'suite_name': suite,
             'task_id': itask.identity,
             'try_num': itask.get_try_num(),

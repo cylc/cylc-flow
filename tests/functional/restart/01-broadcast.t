@@ -20,7 +20,7 @@ if [[ -z ${TEST_DIR:-} ]]; then
     . "$(dirname "$0")/test_header"
 fi
 #-------------------------------------------------------------------------------
-set_test_number 9
+set_test_number 8
 #-------------------------------------------------------------------------------
 install_suite "${TEST_NAME_BASE}" broadcast
 cp "$TEST_SOURCE_DIR/lib/suite-runtime-restart.rc" "$TEST_DIR/${SUITE_NAME}/"
@@ -36,13 +36,9 @@ suite_run_ok "${TEST_NAME}" cylc run --no-detach "${SUITE_NAME}"
 TEST_NAME="${TEST_NAME_BASE}-restart-run"
 suite_run_ok "${TEST_NAME}" cylc restart --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-grep_ok "broadcast_task|20130923T0000Z|0||waiting" \
-    "${TEST_DIR}/pre-restart-db"
 grep_ok "send_a_broadcast_task|20130923T0000Z|1|1|succeeded" \
     "${TEST_DIR}/pre-restart-db"
 contains_ok "${TEST_DIR}/post-restart-db" <<'__DB_DUMP__'
-broadcast_task|20130923T0000Z|0||waiting
-finish|20130923T0000Z|0||waiting
 send_a_broadcast_task|20130923T0000Z|1|1|succeeded
 shutdown|20130923T0000Z|1|1|succeeded
 __DB_DUMP__

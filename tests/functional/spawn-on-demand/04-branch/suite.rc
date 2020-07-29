@@ -1,0 +1,13 @@
+# Check branching without SoS suicide triggers.
+# Scheduler should shut down normally even though one branch does not run.
+[scheduling]
+    [[graph]]
+        R1 = """foo:out1 => fish
+                foo:out2 => fowl
+                fish | fowl => done"""
+[runtime]
+    [[foo]]
+         script = "cylc message 'the quick brown fox'"
+         [[[outputs]]]
+              out1 = "the quick brown fox"
+              out2 = "jumped over the lazy dog"

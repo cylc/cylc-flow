@@ -4,8 +4,7 @@
 
 [scheduling]
     [[graph]]
-        R1 = """FAM:finish-all => foo
-                   foo => !FAM"""
+        R1 = "FAM:finish-all => foo"
 [runtime]
     [[FAM]]
         script = "false"

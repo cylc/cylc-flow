@@ -3,13 +3,16 @@
 
 [scheduling]
     [[graph]]
+# SoD: starter:start addeded to create a partially satisfied waiting task
+# to be present during the reload.
         R1 = """
+starter:start => waiter
 sleeping-waiter => waiter
 sleeping-waiter:start => reloader
 """
 
 [runtime]
-    [[sleeping-waiter]]
+    [[sleeping-waiter, starter]]
         script = """
 touch 'file'
 while [[ -e 'file' ]]; do
@@ -21,6 +24,7 @@ done
     [[reloader]]
         script = """
 cylc reload "${CYLC_SUITE_NAME}"
-cylc__job__poll_grep_suite_log '\[waiter\.1\] -reloaded task definition'
+cylc__job__poll_grep_suite_log -F '[waiter.1] -reloaded task definition'
 rm -f "${CYLC_SUITE_WORK_DIR}/1/sleeping-waiter/file"
+rm -f "${CYLC_SUITE_WORK_DIR}/1/starter/file"
 """

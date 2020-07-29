@@ -5,14 +5,15 @@
 [scheduling]
     [[graph]]
         R1 = """
-                   reloader => BAR # marker1
+                   reloader => inter => BAR # marker1
                    BAR:finish-all => FOO # marker2
                 """
 [runtime]
+    [[inter]]
     [[reloader]]
         script = """
 # change the order of FOO and BAR in the graphing section:
-perl -pi -e 's/(reloader => )BAR( # marker1)/\1FOO\2/' $CYLC_SUITE_DEF_PATH/suite.rc
+perl -pi -e 's/(reloader => inter => )BAR( # marker1)/\1FOO\2/' $CYLC_SUITE_DEF_PATH/suite.rc
 perl -pi -e 's/( )BAR:finish-all => FOO( # marker2)/\1FOO:finish-all => BAR\2/' $CYLC_SUITE_DEF_PATH/suite.rc
 # reload
 cylc reload -f "${CYLC_SUITE_NAME}"

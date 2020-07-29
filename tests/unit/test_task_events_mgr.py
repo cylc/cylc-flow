@@ -30,7 +30,8 @@ class TestTaskEventsManager(unittest.TestCase):
         :param cylc_log: mocked cylc logger
         :type cylc_log: mock.MagicMock
         """
-        task_events_manager = TaskEventsManager(None, None, None, None, None)
+        task_events_manager = TaskEventsManager(
+            None, None, None, None, None, None)
         proc_ctx = SubProcContext(cmd_key=None, cmd="error", ret_code=1,
                                   err="Error!", id_keys=[])
         task_events_manager._job_logs_retrieval_callback(proc_ctx, None)
@@ -45,7 +46,8 @@ class TestTaskEventsManager(unittest.TestCase):
         :param cylc_log: mocked cylc logger
         :type cylc_log: mock.MagicMock
         """
-        task_events_manager = TaskEventsManager(None, None, None, None, None)
+        task_events_manager = TaskEventsManager(
+            None, None, None, None, None, None)
         proc_ctx = SubProcContext(cmd_key=None, cmd="ls /tmp/123", ret_code=0,
                                   err="", id_keys=[])
         task_events_manager._job_logs_retrieval_callback(proc_ctx, None)

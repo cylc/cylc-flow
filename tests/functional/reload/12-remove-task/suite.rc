@@ -3,7 +3,7 @@
 [scheduling]
     [[graph]]
         R1 = """
-            reloader => remove_me => foo
+            reloader => inter => remove_me => foo
         """
 [runtime]
     [[reloader]]

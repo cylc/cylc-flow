@@ -1,13 +1,12 @@
 [cylc]
-   UTC mode = True
    [[reference test]]
        expected task failures = fixable-1a.1, fixable-1b.1, fixable-2a.1, fixable-2b.1, fixable-3.1, loser.1
 [scheduling]
     [[graph]]
         R1 = """
-FIXABLES:fail-all & loser:fail => fixer
+# Unhandled failures stay around for retriggering by "fixer"
+fixer
 FIXABLES:succeed-all & loser:fail => Z
-Z:succeed-all => resetter
 """
 [runtime]
     [[FIXABLES]]
@@ -22,12 +21,16 @@ Z:succeed-all => resetter
         inherit = FIXABLE-3
     [[fixer]]
         script = """
-cylc trigger "${CYLC_SUITE_NAME}" 'FIXABLE-1.*' 'fixable-2*.1' 'fixable-3.1'
+wait
+cylc__job__poll_grep_suite_log '\[fixable-1a\.1\].* (received)failed'
+cylc__job__poll_grep_suite_log '\[fixable-1b\.1\].* (received)failed'
+cylc__job__poll_grep_suite_log '\[fixable-2a\.1\].* (received)failed'
+cylc__job__poll_grep_suite_log '\[fixable-2b\.1\].* (received)failed'
+cylc__job__poll_grep_suite_log '\[fixable-3\.1\].* (received)failed'
+cylc trigger "${CYLC_SUITE_NAME}" '1/FIXABLE-1' '1/fixable-2*' '1/fixable-3'
 """
     [[loser]]
         script = false
-    [[resetter]]
-        script = cylc reset --state='succeeded' "${CYLC_SUITE_NAME}" 'loser.1'
     [[Z]]
         script = true
     [[z1, z2]]

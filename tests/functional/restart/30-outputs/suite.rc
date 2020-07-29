@@ -1,3 +1,4 @@
+# only the t1:hello output is generated
 [cylc]
     [[events]]
         abort on inactivity = True
@@ -5,7 +6,6 @@
         inactivity = PT1M
         abort on timeout = True
         timeout = PT1M
-        #stalled handler = cylc reset '%(suite)s' -O greet 't1.1'
 [scheduling]
     [[graph]]
         R1 = """

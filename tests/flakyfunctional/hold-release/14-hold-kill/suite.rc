@@ -12,12 +12,12 @@
             cylc__job__poll_grep_suite_log -F \
                 '[sleeper.1] -running => running (held)'
             cylc__job__poll_grep_suite_log -F \
-                -F '[sleeper.1] -running (held) => retrying (held)'
+                '[sleeper.1] -running (held) => retrying (held)'
             sleep 10  # sleep, should still be held after 10 seconds
             cylc dump -s -t "${CYLC_SUITE_NAME}" >'cylc-dump.out'
             diff -u 'cylc-dump.out' - <<'__OUT__'
-            1, killer, running, spawned, unheld
-            1, sleeper, retrying, spawned, held
+            1, killer, running, unheld
+            1, sleeper, retrying, held
             __OUT__
             cylc release "${CYLC_SUITE_NAME}" "sleeper.1"
         """

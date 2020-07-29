@@ -68,6 +68,7 @@ class SuiteDatabaseManager(object):
     TABLE_TASK_STATES = CylcSuiteDAO.TABLE_TASK_STATES
     TABLE_TASK_TIMEOUT_TIMERS = CylcSuiteDAO.TABLE_TASK_TIMEOUT_TIMERS
     TABLE_XTRIGGERS = CylcSuiteDAO.TABLE_XTRIGGERS
+    TABLE_ABS_OUTPUTS = CylcSuiteDAO.TABLE_ABS_OUTPUTS
 
     def __init__(self, pri_d=None, pub_d=None):
         self.pri_path = None
@@ -98,7 +99,8 @@ class SuiteDatabaseManager(object):
             self.TABLE_TASK_ACTION_TIMERS: [],
             self.TABLE_TASK_OUTPUTS: [],
             self.TABLE_TASK_TIMEOUT_TIMERS: [],
-            self.TABLE_XTRIGGERS: []}
+            self.TABLE_XTRIGGERS: [],
+            self.TABLE_ABS_OUTPUTS: []}
         self.db_updates_map = {}
 
     def checkpoint(self, name):
@@ -376,10 +378,29 @@ class SuiteDatabaseManager(object):
                 "signature": sig,
                 "results": json.dumps(res)})
 
-    def put_task_pool(self, pool):
-        """Put statements to update the task_pool table in runtime database.
+    def put_update_task_state(self, itask):
+        """Update task_states table for current state of itask.
 
-        Update the task_pool table and the task_action_timers table.
+        For final event-driven update before removing finished tasks.
+        No need to update task_pool table as finished tasks are immediately
+        removed from the pool.
+        """
+        set_args = {
+            "time_updated": itask.state.time_updated,
+            "status": itask.state.status}
+        where_args = {
+            "cycle": str(itask.point),
+            "name": itask.tdef.name,
+            "flow_label": itask.flow_label,
+            "submit_num": itask.submit_num,
+        }
+        self.db_updates_map.setdefault(self.TABLE_TASK_STATES, [])
+        self.db_updates_map[self.TABLE_TASK_STATES].append(
+            (set_args, where_args))
+
+    def put_task_pool(self, pool):
+        """Update various task tables for current pool, in runtime database.
+
         Queue delete (everything) statements to wipe the tables, and queue the
         relevant insert statements for the current tasks in the pool.
         """
@@ -389,11 +410,17 @@ class SuiteDatabaseManager(object):
         # Should already be done by self.put_task_event_timers above.
         self.db_deletes_map[self.TABLE_TASK_TIMEOUT_TIMERS].append({})
         for itask in pool.get_all_tasks():
+            satisfied = {}
+            for p in itask.state.prerequisites:
+                for k, v in p.satisfied.items():
+                    # need string key, not tuple for json.dumps
+                    satisfied[json.dumps(k)] = v
             self.db_inserts_map[self.TABLE_TASK_POOL].append({
                 "name": itask.tdef.name,
                 "cycle": str(itask.point),
-                "spawned": int(itask.has_spawned),
+                "flow_label": itask.flow_label,
                 "status": itask.state.status,
+                "satisfied": json.dumps(satisfied),
                 "is_held": itask.state.is_held})
             if itask.timeout is not None:
                 self.db_inserts_map[self.TABLE_TASK_TIMEOUT_TIMERS].append({
@@ -431,6 +458,7 @@ class SuiteDatabaseManager(object):
                 where_args = {
                     "cycle": str(itask.point),
                     "name": itask.tdef.name,
+                    "flow_label": itask.flow_label
                 }
                 self.db_updates_map.setdefault(self.TABLE_TASK_STATES, [])
                 self.db_updates_map[self.TABLE_TASK_STATES].append(
@@ -465,6 +493,16 @@ class SuiteDatabaseManager(object):
         """Reset custom outputs for a task."""
         self._put_insert_task_x(CylcSuiteDAO.TABLE_TASK_OUTPUTS, itask, {})
 
+    def put_insert_abs_output(self, cycle, name, output):
+        """Put INSERT statement for a new abs output."""
+        args = {
+            "cycle": str(cycle),
+            "name": name,
+            "output": output
+        }
+        self.db_inserts_map.setdefault(CylcSuiteDAO.TABLE_ABS_OUTPUTS, [])
+        self.db_inserts_map[CylcSuiteDAO.TABLE_ABS_OUTPUTS].append(args)
+
     def _put_insert_task_x(self, table_name, itask, args):
         """Put INSERT statement for a task_* table."""
         args.update({
@@ -496,6 +534,8 @@ class SuiteDatabaseManager(object):
             "name": itask.tdef.name}
         if "submit_num" not in set_args:
             where_args["submit_num"] = itask.submit_num
+        if "flow_label" not in set_args:
+            where_args["flow_label"] = itask.flow_label
         self.db_updates_map.setdefault(table_name, [])
         self.db_updates_map[table_name].append((set_args, where_args))
 

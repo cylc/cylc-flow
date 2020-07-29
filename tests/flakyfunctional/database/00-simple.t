@@ -77,10 +77,11 @@ for DATE_TIME_STR in $(sed 's/[|]/ /g' "${NAME}"); do
         date --date="$(sed 's/T/ /' <<<"${DATE_TIME_STR}")"
 done
 
-NAME='select-task-pool.out'
-sqlite3 "${DB_FILE}" 'SELECT name, cycle, spawned FROM task_pool ORDER BY name' \
+# Shut down with empty task pool (ran to completion)
+NAME=task-pool.out
+sqlite3 "${DB_FILE}" 'SELECT name, cycle, status FROM task_pool ORDER BY name' \
     >"${NAME}"
-cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}" "${NAME}"
+cmp_ok "${NAME}" <'/dev/null'
 
 NAME='select-task-states.out'
 sqlite3 "${DB_FILE}" 'SELECT name, cycle, status FROM task_states ORDER BY name' \

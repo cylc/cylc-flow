@@ -5,7 +5,7 @@
         expected task failures = foo.1
 [scheduling]
     [[graph]]
-        R1 = "foo:fail => !foo"
+        R1 = "foo:fail => handled"
 [runtime]
     [[foo]]
         script = """
@@ -16,3 +16,5 @@ echo TWO"""
             execution retry delays = PT0S
         [[[events]]]
             failed handler = echo "!!!FAILED!!!" %(event)s %(id)s %(submit_num)s %(message)s
+     [[handled]]
+          script = true

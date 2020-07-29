@@ -4,3 +4,4 @@
 2014/01/02 15:42:30 INFO - [foo.20100808T0000Z] -triggered off ['bar.20100808T0000Z']
 2014/01/02 15:42:30 INFO - [bar.20100809T0000Z] -triggered off []
 2014/01/02 15:42:34 INFO - [foo.20100809T0000Z] -triggered off ['foo.20100808T0000Z']
+2014/01/02 15:42:34 INFO - [handled.20100809T0000Z] -triggered off ['bar.20100809T0000Z']

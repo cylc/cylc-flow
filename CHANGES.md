@@ -42,6 +42,9 @@ Fourth alpha release of Cylc 8.
 
 ### Enhancements
 
+[#3515](https://github.com/cylc/cylc-flow/pull/3515) - spawn-on-demand: a more
+efficient way of the evolving the workflow via the graph.
+
 [#3692](https://github.com/cylc/cylc-flow/pull/3692) - Use the `$EDITOR`
 and `$GEDITOR` environment variables to determine the default editor to use.
 

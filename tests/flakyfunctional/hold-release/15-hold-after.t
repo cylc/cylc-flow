@@ -27,11 +27,10 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-1" \
     cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
 sqlite3 "${SUITE_RUN_DIR}/log/db" \
-    'SELECT * FROM task_pool WHERE cycle=="20140102T0000Z" ORDER BY name' \
+    'SELECT cycle, name, status FROM task_pool WHERE cycle=="20140102T0000Z" ORDER BY name' \
     >'taskpool.out'
 cmp_ok 'taskpool.out' <<'__OUT__'
-20140102T0000Z|bar|0|waiting|1
-20140102T0000Z|foo|0|waiting|1
+20140102T0000Z|foo|waiting
 __OUT__
 # cylc run --hold-after=...
 suite_run_ok "${TEST_NAME_BASE}-2" \

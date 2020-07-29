@@ -17,14 +17,21 @@
 #-------------------------------------------------------------------------------
 # Test restarting a suite with pre-initial cycle dependencies
 . "$(dirname "$0")/test_header"
-set_test_number 4
+set_test_number 5
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+RUND="$(cylc get-global-config --print-run-dir)"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run --debug --no-detach "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-restart" cylc restart --debug --no-detach "${SUITE_NAME}"
 
-RUND="$(cylc get-global-config --print-run-dir)"
+suite_run_ok "${TEST_NAME_BASE}-run" cylc run --debug --no-detach "${SUITE_NAME}"
+sqlite3 "${RUND}/${SUITE_NAME}/log/db" \
+    'SELECT name, cycle, status FROM task_pool ORDER BY name, cycle' \
+    >'mid-state'
+cmp_ok 'mid-state' <<"__OUT__"
+p1|20100808T0000Z|running
+__OUT__
+
+suite_run_ok "${TEST_NAME_BASE}-restart" cylc restart --debug --no-detach "${SUITE_NAME}"
 sqlite3 "${RUND}/${SUITE_NAME}/log/db" \
     'SELECT name, cycle, status FROM task_states ORDER BY name, cycle' \
     >'final-state'

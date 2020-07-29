@@ -39,7 +39,6 @@ suite_run_ok "${TEST_NAME}" cylc restart --debug --no-detach "${SUITE_NAME}"
 grep_ok "succeeded_task|20130923T0000Z|1|1|succeeded" \
     "${TEST_DIR}/pre-restart-db"
 contains_ok "${TEST_DIR}/post-restart-db" <<'__DB_DUMP__'
-finish|20130923T0000Z|0||waiting
 shutdown|20130923T0000Z|1|1|succeeded
 succeeded_task|20130923T0000Z|1|1|succeeded
 __DB_DUMP__

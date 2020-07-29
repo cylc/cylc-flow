@@ -34,7 +34,7 @@ from cylc.flow.task_state import (
 )
 def test_state_comparison(state, is_held):
     """Test the __call__ method."""
-    tdef = TaskDef('foo', {}, 'live', '123', True)
+    tdef = TaskDef('foo', {}, 'live', '123')
     tstate = TaskState(tdef, '123', state, is_held)
 
     assert tstate(state, is_held=is_held)
@@ -65,7 +65,7 @@ def test_state_comparison(state, is_held):
 )
 def test_reset(state, is_held, should_reset):
     """Test that tasks do or don't have their state changed."""
-    tdef = TaskDef('foo', {}, 'live', '123', True)
+    tdef = TaskDef('foo', {}, 'live', '123')
     # create task state:
     #   * status: waiting
     #   * is_held: true
@@ -118,7 +118,7 @@ def test_reset(state, is_held, should_reset):
 )
 def test_reset_outputs(before, after, outputs):
     """Test that outputs are reset correctly on state changes."""
-    tdef = TaskDef('foo', {}, 'live', '123', True)
+    tdef = TaskDef('foo', {}, 'live', '123')
 
     orig_status, orig_is_held = before
     new_status, new_is_held = after

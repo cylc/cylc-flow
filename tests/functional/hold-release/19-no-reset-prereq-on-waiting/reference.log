@@ -1,5 +1,6 @@
 2016-05-24T13:56:51Z INFO - Initial point: 20160101T0000Z
 2016-05-24T13:56:51Z INFO - Final point: 20160101T0000Z
-2016-05-24T13:56:51Z INFO - [holder.20160101T0000Z] -triggered off []
-2016-05-24T13:56:54Z INFO - [releaser.20160101T0000Z] -triggered off ['holder.20160101T0000Z']
-2016-05-24T13:56:56Z INFO - [t1.20160101T0000Z] -triggered off ['holder.20160101T0000Z']
+2016-05-24T13:56:51Z INFO - [spawner.1] -triggered off []
+2016-05-24T13:56:51Z INFO - [holder.1] -triggered off []
+2016-05-24T13:56:54Z INFO - [releaser.1] -triggered off ['holder.1']
+2016-05-24T13:56:56Z INFO - [t1.1] -triggered off ['holder.1', 'spawner.1']

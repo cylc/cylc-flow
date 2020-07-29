@@ -1,9 +1,10 @@
 [scheduling]
     [[graph]]
-        R1 = """foo
-            foo:fail => stopper"""
+        R1 = "foo & stopper"
 [runtime]
     [[foo]]
         script = false
     [[stopper]]
-        script = cylc stop $CYLC_SUITE_NAME
+        script = """
+cylc stop "${CYLC_SUITE_NAME}"
+                 """

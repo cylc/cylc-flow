@@ -28,7 +28,7 @@ import sys
 
 data = ast.literal_eval(open(sys.argv[1]).read())
 keys = list(sorted(data[1].keys()))
-if keys != ["t1.2031", "t1.2032", "t2.2031", "t2.2032"]:
+if keys != ["t1.2031", "t2.2031"]:
     sys.exit(keys)
 for datum in data[1].values():
     assert isinstance(datum["mean_elapsed_time"], float)
@@ -39,9 +39,9 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
 RUND="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run "${SUITE_NAME}" --debug --no-detach
+    cylc run "${SUITE_NAME}" --debug --no-detach --stop-point=2020
 suite_run_ok "${TEST_NAME_BASE}-restart-1" \
-    cylc restart "${SUITE_NAME}" --until=2028 --debug --no-detach
+    cylc restart "${SUITE_NAME}" --stop-point=2028 --debug --no-detach
 sed -n '/LOADING task run times/,+2{s/^.* INFO - //;s/[0-9]\(,\|$\)/%d\1/g;p}' \
     "${RUND}/log/suite/log" >'restart-1.out'
 contains_ok 'restart-1.out' <<'__OUT__'
@@ -50,7 +50,7 @@ LOADING task run times
 + t1: %d,%d,%d,%d,%d
 __OUT__
 suite_run_ok "${TEST_NAME_BASE}-restart-2" \
-    cylc restart "${SUITE_NAME}" --until=2030 --debug --no-detach
+    cylc restart "${SUITE_NAME}" --stop-point=2030 --debug --no-detach
 sed -n '/LOADING task run times/,+2{s/^.* INFO - //;s/[0-9]\(,\|$\)/%d\1/g;p}' \
     "${RUND}/log/suite/log" >'restart-2.out'
 contains_ok 'restart-2.out' <<'__OUT__'
@@ -59,7 +59,7 @@ LOADING task run times
 + t1: %d,%d,%d,%d,%d,%d,%d,%d,%d,%d
 __OUT__
 suite_run_ok "${TEST_NAME_BASE}-restart-3" \
-    cylc restart "${SUITE_NAME}" --until=2031 --hold
+    cylc restart "${SUITE_NAME}" --hold
 # allow the task pool to settle before requesting a dump
 cylc suite-state "${SUITE_NAME}" \
     --task=t1 \

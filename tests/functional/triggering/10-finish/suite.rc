@@ -5,8 +5,7 @@
 [scheduling]
     [[graph]]
         R1 = """foo:finish => bar
-                   bar => !foo
-                   baz:finish => qux"""
+                baz:finish => qux"""
 [runtime]
     [[foo]]
         script = false

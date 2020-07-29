@@ -2,7 +2,7 @@
     priority = HIGH
 [scheduling]
     [[graph]]
-        R1 = t1:fail => dummy => !t1
+        R1 = t1:fail => dummy
 [runtime]
     [[dummy]]
         script = true

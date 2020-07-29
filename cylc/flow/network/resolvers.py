@@ -483,9 +483,7 @@ class Resolvers(BaseResolvers):
                     id_arg = f'{id_arg}:{state}'
                 items.append(id_arg)
         if items:
-            if command == 'insert_tasks':
-                args['items'] = items
-            elif command == 'put_messages':
+            if command == 'put_messages':
                 args['task_job'] = items[0]
             else:
                 args['task_globs'] = items

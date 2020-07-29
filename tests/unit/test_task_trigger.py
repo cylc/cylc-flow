@@ -21,28 +21,32 @@ from cylc.flow.task_trigger import TaskTrigger, Dependency
 
 
 def test_check_with_cycle_point():
-    task_trigger = TaskTrigger('fake_task_name', '1', None, 'fakeOutput')
+    task_trigger = TaskTrigger(
+        'fake_task_name', 1, 'fakeOutput', None, None, None, None)
     actual = str(task_trigger)
     expected = 'fake_task_name[1]:fakeOutput'
     assert actual == expected
 
 
 def test_check_with_no_cycle_point_with_offset():
-    task_trigger = TaskTrigger('fake_task_name', None, 2, 'fakeOutput')
+    task_trigger = TaskTrigger(
+        'fake_task_name', 2, 'fakeOutput', None, None, None, None)
     actual = str(task_trigger)
     expected = 'fake_task_name[2]:fakeOutput'
     assert actual == expected
 
 
 def test_check_with_no_cycle_point_or_offset():
-    task_trigger = TaskTrigger('fake_task_name', None, None, 'fakeOutput')
+    task_trigger = TaskTrigger(
+        'fake_task_name', None, 'fakeOutput', None, None, None, None)
     actual = str(task_trigger)
     expected = 'fake_task_name:fakeOutput'
     assert actual == expected
 
 
 def test_check_for_false_suicide():
-    task_trigger = TaskTrigger('fake_task_name', '1', None, 'fakeOutput')
+    task_trigger = TaskTrigger(
+        'fake_task_name', 1, 'fakeOutput', None, None, None, None)
     dependency = Dependency(
         [task_trigger, '&', task_trigger], [task_trigger], False)
     actual = str(dependency)
@@ -53,7 +57,8 @@ def test_check_for_false_suicide():
 
 
 def test_check_for_true_suicide():
-    task_trigger = TaskTrigger('fake_task_name', None, None, 'fakeOutput')
+    task_trigger = TaskTrigger(
+        'fake_task_name', None, 'fakeOutput', None, None, None, None)
     dependency = Dependency(
         [task_trigger, '&', task_trigger], [task_trigger], True)
     actual = str(dependency)
@@ -63,7 +68,8 @@ def test_check_for_true_suicide():
 
 
 def test_check_for_list_of_lists_exp():
-    task_trigger = TaskTrigger('fake_task_name', None, None, 'fakeOutput')
+    task_trigger = TaskTrigger(
+        'fake_task_name', None, 'fakeOutput', None, None, None, None)
     dependency = Dependency(
         [
             task_trigger,

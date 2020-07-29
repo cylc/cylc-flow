@@ -1,8 +1,11 @@
+#!Jinja2
 [scheduling]
     [[graph]]
         R1 = "(FOO:finish-all & FOO:fail-any) => bar"
 [runtime]
     [[FOO]]
+        script = false
     [[foo1,foo2,foo3]]
         inherit = FOO
     [[bar]]
+        script = "cylc show ${CYLC_SUITE_NAME} bar.1 > {{SHOW_OUT}}"
