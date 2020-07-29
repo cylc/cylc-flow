@@ -37,6 +37,7 @@ from metomi.isodatetime.data import Calendar
 from metomi.isodatetime.parsers import DurationParser
 from metomi.isodatetime.exceptions import IsodatetimeError
 from metomi.isodatetime.timezone import get_local_time_zone_format
+from metomi.isodatetime.dumpers import TimePointDumper
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.util import replicate
 
@@ -324,12 +325,14 @@ class SuiteConfig(object):
             # Not a restart - will save local time zone
             orig_cp_tz = get_local_time_zone_format()
         elif cfg_cp_tz is not None and orig_cp_tz is not None:
-            LOG.warning(
-                "cycle point time zone {0} specified in configuration, but "
-                "there is a stored cycle point time zone {1} from the "
-                "initial run. The suite will continue to run in {1}"
-                .format(cfg_cp_tz, orig_cp_tz)
-            )
+            dmp = TimePointDumper()
+            if dmp.get_time_zone(cfg_cp_tz) != dmp.get_time_zone(orig_cp_tz):
+                LOG.warning(
+                    "cycle point time zone {0} specified in configuration, "
+                    "but there is a stored cycle point time zone {1} from the "
+                    "initial run. The suite will continue to run in {1}"
+                    .format(cfg_cp_tz, orig_cp_tz)
+                )
         if orig_cp_tz is not None:
             # This must be set before call to init_cyclers(self.cfg):
             self.cfg['cylc']['cycle point time zone'] = orig_cp_tz
