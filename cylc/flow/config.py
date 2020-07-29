@@ -305,7 +305,7 @@ class SuiteConfig(object):
         # filter task environment variables after inheritance
         self.filter_env()
 
-        # Now add config defaults.  Items added prior to this ends up in the
+        # Now add config defaults. Items added prior to this end up in the
         # sparse dict (e.g. parameter-expanded namespaces).
         self.mem_log("config.py: before get(sparse=False)")
         self.cfg = self.pcfg.get(sparse=False)
@@ -317,21 +317,22 @@ class SuiteConfig(object):
             self.cfg['cylc']['UTC mode'] = glbl_cfg().get(['cylc', 'UTC mode'])
         set_utc_mode(self.cfg['cylc']['UTC mode'])
 
+        cfg_cp_tz = self.cfg['cylc'].get('cycle point time zone')
         # Get the original suite run time zone if restart:
-        cycle_point_tz = getattr(self.options, 'cycle_point_tz', None)
-        if self.cfg['cylc'].get('cycle point time zone') is None:
-            if cycle_point_tz is None:
-                # Not a restart
-                cycle_point_tz = get_local_time_zone_format()
-            # This must be set before call to init_cyclers(self.cfg):
-            self.cfg['cylc']['cycle point time zone'] = cycle_point_tz
-        elif cycle_point_tz is not None:
+        orig_cp_tz = getattr(self.options, 'cycle_point_tz', None)
+        if cfg_cp_tz is None and orig_cp_tz is None:
+            # Not a restart - will save local time zone
+            orig_cp_tz = get_local_time_zone_format()
+        elif cfg_cp_tz is not None and orig_cp_tz is not None:
             LOG.warning(
-                "Specified cycle point time zone {0} is different to the "
-                "stored cycle point time zone {1} from initial run."
-                .format(self.cfg['cylc'].get('cycle point time zone'),
-                        cycle_point_tz)
+                "cycle point time zone {0} specified in configuration, but "
+                "there is a stored cycle point time zone {1} from the "
+                "initial run. The suite will continue to run in {1}"
+                .format(cfg_cp_tz, orig_cp_tz)
             )
+        if orig_cp_tz is not None:
+            # This must be set before call to init_cyclers(self.cfg):
+            self.cfg['cylc']['cycle point time zone'] = orig_cp_tz
 
         # after the call to init_cyclers, we can start getting proper points.
         init_cyclers(self.cfg)
