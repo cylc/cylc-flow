@@ -46,8 +46,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 # Set time zone to +01:00
 export TZ=BST-1
 
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
 dumpdbtables
 cmp_ok 'dump.out' <<< 'cp_tz|+0100'
 
@@ -56,8 +55,7 @@ cylc stop "${SUITE_NAME}"
 # Simulate DST change
 export TZ=UTC
 
-suite_run_ok "${TEST_NAME_BASE}-restart" \
-    cylc restart "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}-restart" cylc restart "${SUITE_NAME}"
 dumpdbtables
 cmp_ok 'dump.out' <<< 'cp_tz|+0100'
 
