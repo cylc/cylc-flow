@@ -13,9 +13,9 @@
 [runtime]
     [[start]]
         script = """
-# Ensure that bar.1,2 are spawned by foo.1,2 not by start.2 (so the scheduler
-# must update their prereqs in the pool after start.2 is done).
-cylc__job__poll_grep_suite_log "bar\.2.*spawned"
+# Ensure that bar.1,2 are spawned by foo.1,2 and not by start.2
+# (so the scheduler must update their prereqs when start.2 finishes).
+cylc__job__poll_grep_suite_log "spawned bar\.2"
         """
     [[foo]]
     [[bar]]
