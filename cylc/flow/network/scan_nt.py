@@ -71,7 +71,7 @@ async def dir_is_flow(listing):
 
 
 @pipe
-async def scan(run_dir=None):
+async def scan(run_dir=None, max_depth=3):
     """List flows installed on the filesystem.
 
     This is an async generator so use and async for to extract results::
@@ -80,8 +80,13 @@ async def scan(run_dir=None):
             print(flow['name'])
 
     Args:
-        directory (pathlib.Path):
+        run_dir (pathlib.Path):
             The directory to scan, defaults to the cylc run directory.
+        max_depth (int):
+            The maximum number of levels to descend before bailing.
+
+            * ``max_depth=1`` will pick up top-level suites (e.g. ``foo``).
+            * ``max_depth=2`` will pick up nested suites (e.g. ``foo/bar``).
 
     Yields:
         dict - Dictionary containing information about the flow.
@@ -94,10 +99,10 @@ async def scan(run_dir=None):
     stack = asyncio.Queue()
     for subdir in await scandir(run_dir):
         if subdir.is_dir():
-            await stack.put(subdir)
+            await stack.put((1, subdir))
 
     # for path in stack:
-    async for path in asyncqgen(stack):
+    async for depth, path in asyncqgen(stack):
         contents = await scandir(path)
         if await dir_is_flow(contents):
             # this is a flow directory
@@ -105,11 +110,11 @@ async def scan(run_dir=None):
                 'name': str(path.relative_to(run_dir)),
                 'path': path,
             }
-        else:
+        elif depth < max_depth:
             # we may have a nested flow, lets see...
             for subdir in contents:
                 if subdir.is_dir():
-                    await stack.put(subdir)
+                    await stack.put((depth + 1, subdir))
 
 
 def join_regexes(*patterns):

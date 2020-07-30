@@ -124,6 +124,18 @@ def run_dir_with_really_nasty_symlinks():
     rmtree(tmp_path)
 
 
+@pytest.fixture(scope='session')
+def nested_run_dir():
+    tmp_path = Path(TemporaryDirectory().name)
+    tmp_path.mkdir()
+    init_flows(
+        tmp_path,
+        running=('a', 'b/c', 'd/e/f', 'g/h/i/j'),
+    )
+    yield tmp_path
+    rmtree(tmp_path)
+
+
 async def listify(async_gen, field='name'):
     """Convert an async generator into a list."""
     ret = []
@@ -219,3 +231,21 @@ async def test_is_active(sample_run_dir):
         {'path': sample_run_dir / 'elephant'},
         True
     )
+
+
+@pytest.mark.asyncio
+async def test_max_depth(nested_run_dir):
+    """It should descend only as far as permitted."""
+    assert await listify(
+        scan(nested_run_dir, max_depth=1)
+    ) == [
+        'a'
+    ]
+
+    assert await listify(
+        scan(nested_run_dir, max_depth=3)
+    ) == [
+        'a',
+        'b/c',
+        'd/e/f'
+    ]
