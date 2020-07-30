@@ -24,4 +24,8 @@
         platform = test platform
         [[[meta]]]
             description = "Submit-failed task (runs before restart)"
+    [[remove]]
+          script = """
+ cylc remove ${CYLC_SUITE_NAME} submit_failed_task.${CYLC_TASK_CYCLE_POINT}
+                   """
 {% include 'suite-runtime-restart.rc' %}
