@@ -20,6 +20,8 @@ jobs:
         run: |
           docker exec slurm python3.7 -m pip install six==1.12
           docker exec -w /root/cylc-flow slurm python3.7 -m pip install -e .[all]
+          # this moves the flow-tests.rc to the correct location
+          docker exec slurm bash -c 'mkdir -p $(cylc get-global --print-site-dir) && cp -T /root/.cylc/flow/flow-tests.rc $(cylc get-global --print-site-dir)/flow-tests.rc'
 
       - name: Run functional tests that validate or are related to Cylc and SLURM
         run: |
