@@ -23,4 +23,4 @@ jobs:
 
       - name: Run functional tests that validate or are related to Cylc and SLURM
         run: |
-          docker exec -e CYLC_TEST_RUN_GENERIC=false -w /root/cylc-flow slurm ./etc/bin/run-functional-tests.sh -v tests/
+          docker exec -e CYLC_TEST_RUN_GENERIC=false -w /root/cylc-flow slurm ./etc/bin/run-functional-tests -v tests/functional/
