@@ -4,3 +4,4 @@
 2013/11/05 15:57:18 INFO - [c.1] -triggered off []
 2013/11/05 15:57:18 INFO - [b.1] -triggered off []
 2013/11/05 15:57:22 INFO - [foo.1] -triggered off ['b.1']
+2013/11/05 15:57:22 INFO - [handled.1] -triggered off ['a.1', 'c.1']

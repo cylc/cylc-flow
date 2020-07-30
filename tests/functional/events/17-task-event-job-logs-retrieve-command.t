@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 # 
@@ -34,7 +34,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 mkdir -p "${TEST_DIR}/${SUITE_NAME}/bin"
 cat >"${TEST_DIR}/${SUITE_NAME}/bin/my-rsync" <<'__BASH__'
-#!/bin/bash
+#!/usr/bin/env bash
 set -eu
 echo "$@" >>"${CYLC_SUITE_LOG_DIR}/my-rsync.log"
 exec rsync -a "$@"

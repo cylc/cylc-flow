@@ -240,7 +240,7 @@ def execute_and_validate_and_strip(
     variable_values = kwargs['variable_values'] or {}
     doc_args = AstDocArguments(schema, document_ast, variable_values)
     if doc_args.has_arg_val(STRIP_ARG, True):
-        if kwargs.get('return_promise', False):
+        if kwargs.get('return_promise', False) and hasattr(result, 'then'):
             return result.then(null_stripper)
         return null_stripper(result)
     return result

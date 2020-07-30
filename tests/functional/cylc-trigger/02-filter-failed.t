@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -15,7 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test "cylc trigger SUITE '*:failed'".
+# Test triggering multiple failed tasks in a cycle point.
+# (Pre SoD this matched the task pool by failed state).
 . "$(dirname "$0")/test_header"
 set_test_number 2
 reftest

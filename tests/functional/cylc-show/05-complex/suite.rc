@@ -1,12 +1,20 @@
+#!Jinja2
 [cylc]
     UTC mode = True
 [scheduling]
     initial cycle point = 2000
-    spawn to max active cycle points = True
+    final cycle point = +P1D
     max active cycle points = 2
     [[graph]]
         T00 = a & b & (c | (d & e)) & f[-P1D] => f
 [runtime]
     [[root]]
         script = true
-    [[a, b, c, d, e, f]]
+    [[a, b, c, d, e]]
+    [[f]]
+        script = """
+# show myself.
+sleep 4
+cylc show ${CYLC_SUITE_NAME} f.${CYLC_TASK_CYCLE_POINT} >>{{ TEST_OUTPUT_PATH }}
+cylc show --list-prereqs ${CYLC_SUITE_NAME} f.${CYLC_TASK_CYCLE_POINT} >>{{ TEST_OUTPUT_PATH }}
+"""

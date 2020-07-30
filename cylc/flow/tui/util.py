@@ -127,18 +127,14 @@ def compute_tree(flow):
 
     # add leaves
     for task in flow['taskProxies']:
-        parents = task['parents']
-        if not parents:
-            # handle inherit none by defaulting to root
-            parents = [{'name': 'root'}]
         task_node = add_node(
             'task', task['id'], nodes, data=task)
-        if parents[0]['name'] == 'root':
+        if task['firstParent']['name'] == 'root':
             family_node = add_node(
                 'cycle', idpop(task['id']), nodes)
         else:
             family_node = add_node(
-                'family', parents[0]['id'], nodes)
+                'family', task['firstParent']['id'], nodes)
         family_node['children'].append(task_node)
         for job in task['jobs']:
             job_node = add_node(

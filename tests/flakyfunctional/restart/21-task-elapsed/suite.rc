@@ -9,11 +9,11 @@
         startup handler = cylc release '%(suite)s'
 [scheduling]
     initial cycle point = 2016
-    final cycle point = 2020
+    final cycle point = 2031
     [[graph]]
         P1Y=t1 & t2
 [runtime]
     [[t1, t2]]
-        script = sleep $((RANDOM % 2 + 2))
+        script = sleep $((RANDOM % 2 + 6))
         [[[job]]]
             execution time limit = PT15S

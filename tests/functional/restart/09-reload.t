@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 # 
@@ -27,11 +27,6 @@ run_ok "${TEST_NAME}" cylc val "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
 suite_run_ok "${TEST_NAME}" cylc run --debug --no-detach "${SUITE_NAME}"
-# make sure the suite has shut down`
-while true; do
-    cylc ping "${SUITE_NAME}" > /dev/null 2>&1 || break
-    sleep 1
-done
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-restart"
 suite_run_ok "${TEST_NAME}" cylc restart --debug --no-detach --reference-test "${SUITE_NAME}"

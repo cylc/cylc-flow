@@ -1,7 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #------------------------------------------------------------------------
 
-# test the output of `cylc run` with different `--format` options
+# test the output of `cylc run` with different `--format` options
 
 . "$(dirname "$0")/test_header"
 
@@ -34,7 +34,7 @@ __SUITE_RC__
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 
-# format=plain
+# format=plain
 TEST_NAME="${TEST_NAME_BASE}-run-format=plain"
 suite_run_ok "${TEST_NAME}" cylc run --format plain "${SUITE_NAME}"
 grep_ok 'listening on tcp:' "${TEST_NAME}.stdout"

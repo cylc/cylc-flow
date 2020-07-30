@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 # 
@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Test suite event handler, dump unmet prereqs on stall
 . "$(dirname "$0")/test_header"
-set_test_number 8
+set_test_number 5
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" \
@@ -29,12 +29,6 @@ grep_ok "Abort on suite stalled is set" \
 grep_ok "WARNING - Unmet prerequisites for foo.20100101T0600Z:" \
     "${TEST_NAME_BASE}-run.stderr"
 grep_ok "WARNING -  \\* bar.20100101T0000Z succeeded" \
-    "${TEST_NAME_BASE}-run.stderr"
-grep_ok "WARNING - Unmet prerequisites for qux.20100101T0000Z:" \
-    "${TEST_NAME_BASE}-run.stderr"
-grep_ok "WARNING - Unmet prerequisites for baz.20100101T1200Z:" \
-    "${TEST_NAME_BASE}-run.stderr"
-grep_ok "WARNING -  \\* qux.20100101T0600Z succeeded" \
     "${TEST_NAME_BASE}-run.stderr"
 
 purge_suite "${SUITE_NAME}"

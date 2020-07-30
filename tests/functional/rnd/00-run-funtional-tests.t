@@ -1,7 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -23,7 +23,7 @@ set_test_number 16
 CTB="${CYLC_REPO_DIR}/etc/bin/run-functional-tests"
 unset CHUNK
 
-# ensure that 'tests/f' is used as the default test base
+# ensure that 'tests/f' is used as the default test base
 TEST_NAME="${TEST_NAME_BASE}-base"
 run_ok "${TEST_NAME}-1" "$CTB" --dry
 run_ok "${TEST_NAME}-2" "$CTB" --dry tests/functional
@@ -48,7 +48,7 @@ sort -o "${TEST_NAME}-1.stdout" "${TEST_NAME}-1.stdout"
 sort -o "${TEST_NAME}-3.stdout" "${TEST_NAME}-3.stdout"
 cmp_ok "${TEST_NAME}-1.stdout" "${TEST_NAME}-3.stdout"
 
-# ensure that the whole is equal to the sum of its parts
+# ensure that the whole is equal to the sum of its parts
 N_CHUNKS=4
 DRY_TEST_NAME="${TEST_NAME_BASE}-all"
 run_ok "${DRY_TEST_NAME}" "${CTB}" --dry 'tests/f' 'tests/k'

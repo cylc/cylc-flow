@@ -6,7 +6,6 @@ hold after point =
 cycling mode = integer
 runahead limit = 
 max active cycle points = 3
-spawn to max active cycle points = 
 [[queues]]
     [[[default]]]
         limit = 0

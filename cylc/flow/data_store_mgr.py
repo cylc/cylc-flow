@@ -171,7 +171,7 @@ def apply_delta(key, delta, data):
                             if field.name in CLEAR_FIELD_MAP[key]:
                                 data[key][element.id].ClearField(field.name)
                     data[key][element.id].MergeFrom(element)
-                except KeyError:
+                except KeyError as exc:
                     # Ensure data-sync doesn't fail with
                     # network issues, sync reconcile/validate will catch.
                     LOG.debug(
@@ -202,6 +202,8 @@ def create_delta_store(delta=None, workflow_id=None):
     Args:
         delta (cylc.flow.data_messages_pb2.AllDeltas):
             The message of accumulated deltas for publish/push.
+        workflow_id (str):
+            The workflow ID.
 
     Returns:
         dict
@@ -406,10 +408,11 @@ class DataStoreMgr:
             )
 
         ancestors = config.get_first_parent_ancestors()
+        pruned_ancestors = config.get_first_parent_ancestors(pruned=True)
         descendants = config.get_first_parent_descendants()
         parents = config.get_parent_lists()
 
-        # Create task definition elements.
+        # Create definition elements for graphed tasks.
         for name, tdef in config.taskdefs.items():
             t_id = f'{self.workflow_id}{ID_DELIM}{name}'
             t_stamp = f'{t_id}@{update_time}'
@@ -430,28 +433,33 @@ class DataStoreMgr:
                 task.mean_elapsed_time = elapsed_time
             tasks[t_id] = task
 
-        # Created family definition elements.
-        for name in ancestors.keys():
-            if name in config.taskdefs.keys():
-                continue
-            f_id = f'{self.workflow_id}{ID_DELIM}{name}'
-            f_stamp = f'{f_id}@{update_time}'
-            family = PbFamily(
-                stamp=f_stamp,
-                id=f_id,
-                name=name,
-                depth=len(ancestors[name]) - 1,
-            )
-            famcfg = config.cfg['runtime'][name]
-            for key, val in famcfg.get('meta', {}).items():
-                if key in ['title', 'description', 'URL']:
-                    setattr(family.meta, key, val)
-                else:
-                    family.meta.user_defined.append(f'{key}={val}')
-            family.parents.extend(
-                [f'{self.workflow_id}{ID_DELIM}{p_name}'
-                 for p_name in parents[name]])
-            families[f_id] = family
+        # Created family definition elements for first parent
+        # ancestors of graphed tasks.
+        for key, names in pruned_ancestors.items():
+            for name in names:
+                if (
+                        key == name or
+                        name in families
+                ):
+                    continue
+                f_id = f'{self.workflow_id}{ID_DELIM}{name}'
+                f_stamp = f'{f_id}@{update_time}'
+                family = PbFamily(
+                    stamp=f_stamp,
+                    id=f_id,
+                    name=name,
+                    depth=len(ancestors[name]) - 1,
+                )
+                famcfg = config.cfg['runtime'][name]
+                for key, val in famcfg.get('meta', {}).items():
+                    if key in ['title', 'description', 'URL']:
+                        setattr(family.meta, key, val)
+                    else:
+                        family.meta.user_defined.append(f'{key}={val}')
+                family.parents.extend(
+                    [f'{self.workflow_id}{ID_DELIM}{p_name}'
+                     for p_name in parents[name]])
+                families[f_id] = family
 
         for name, parent_list in parents.items():
             if not parent_list:
@@ -478,7 +486,7 @@ class DataStoreMgr:
             else:
                 workflow.meta.user_defined.append(f'{key}={val}')
         workflow.tree_depth = max(
-            [len(val) for key, val in ancestors.items()]) - 1
+            [len(val) for key, val in pruned_ancestors.items()]) - 1
 
         if get_utc_mode():
             time_zone_info = TIME_ZONE_UTC_INFO
@@ -588,8 +596,10 @@ class DataStoreMgr:
                 fp_id = (
                     f'{self.workflow_id}{ID_DELIM}'
                     f'{point_string}{ID_DELIM}{fam}')
-                if (fp_id in family_proxies or
-                        fp_id in self.added[FAMILY_PROXIES]):
+                if (
+                        fp_id in family_proxies or
+                        fp_id in self.added[FAMILY_PROXIES]
+                ):
                     continue
                 fp_delta = PbFamilyProxy(
                     stamp=f'{fp_id}@{update_time}',
@@ -879,7 +889,6 @@ class DataStoreMgr:
             tp_delta.state = itask.state.status
             tp_delta.is_held = itask.state.is_held
             tp_delta.job_submits = itask.submit_num
-            tp_delta.spawned = itask.has_spawned
             tp_delta.latest_message = itask.summary['latest_message']
             tp_delta.jobs[:] = [
                 j_id

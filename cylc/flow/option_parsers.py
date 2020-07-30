@@ -39,18 +39,13 @@ For example, to match:{1}"""
     # Help text either including or excluding globbing on cycle points:
     WITH_CYCLE_GLOBS = """
 One or more TASK_GLOBs can be given to match task instances in the current task
-pool, by task or family name pattern, cycle point pattern, and task state. Note
-this command does not operate on tasks at any arbitrary point in the abstract
-workflow graph - tasks not already in the pool must be inserted first with the
-"cylc insert" command in order to be matched.
+pool, by task or family name pattern, cycle point pattern, and task state.
 * [CYCLE-POINT-GLOB/]TASK-NAME-GLOB[:TASK-STATE]
 * [CYCLE-POINT-GLOB/]FAMILY-NAME-GLOB[:TASK-STATE]
 * TASK-NAME-GLOB[.CYCLE-POINT-GLOB][:TASK-STATE]
 * FAMILY-NAME-GLOB[.CYCLE-POINT-GLOB][:TASK-STATE]"""
     WITHOUT_CYCLE_GLOBS = """
-TASK_GLOB matches task or family names, to insert task instances into the pool
-at a specific given cycle point. (NOTE this differs from other commands which
-match name and cycle point patterns against instances already in the pool).
+TASK_GLOB matches task or family names at a given cycle point.
 * CYCLE-POINT/TASK-NAME-GLOB
 * CYCLE-POINT/FAMILY-NAME-GLOB
 * TASK-NAME-GLOB.CYCLE-POINT
@@ -156,6 +151,10 @@ match name and cycle point patterns against instances already in the pool).
             help="Output developer information and show exception tracebacks.",
             action="store_true", dest="debug",
             default=(os.getenv("CYLC_DEBUG", "false").lower() == "true"))
+        self.add_std_option(
+            "--no-timestamp",
+            help="Don't timestamp logged messages.",
+            action="store_false", dest="log_timestamp", default=True)
 
         if self.color:
             self.add_std_option(
@@ -274,7 +273,8 @@ match name and cycle point patterns against instances already in the pool).
             LOG.handlers[0].close()
             LOG.removeHandler(LOG.handlers[0])
         errhandler = logging.StreamHandler(sys.stderr)
-        errhandler.setFormatter(CylcLogFormatter())
+        errhandler.setFormatter(CylcLogFormatter(
+            timestamp=options.log_timestamp))
         LOG.addHandler(errhandler)
 
         return (options, args)

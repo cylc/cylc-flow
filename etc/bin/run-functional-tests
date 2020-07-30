@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
@@ -83,7 +83,7 @@ Re-run failed tests
 eof
 }
 
-# parse args
+# parse args
 PROVE_ARGS=()
 TESTS=()
 PROVIDE_TESTBASE=true
@@ -119,16 +119,16 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# base dir
+# base dir
 cd "$(dirname "$0")/../.." || exit 1
 export CYLC_REPO_DIR="${PWD}"
 
-# default test base
+# default test base
 if [[ ${#TESTS[@]} -eq 0 ]]; then
     TESTS=('tests/functional')
 fi
 
-# handle chunking
+# handle chunking
 if [[ -n "${CHUNK:-}" ]]; then
     TEMP=("${TESTS[@]}")
     TESTS=()
@@ -155,7 +155,7 @@ export CYLC_TEST_IS_GENERIC=true
 CYLC_TEST_TIME_INIT="$(date -u +'%Y%m%dT%H%M%SZ')"
 export CYLC_TEST_TIME_INIT
 
-# get number of cores
+# get number of cores
 NPROC=$(cylc get-global-config '--item=process pool size')
 if [[ -z "${NPROC}" ]]; then
     NPROC=$(python3 -c 'import multiprocessing as mp; print(mp.cpu_count())')

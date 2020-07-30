@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -18,7 +18,7 @@
 # Test that removing a task from the graph works OK.
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 13
+set_test_number 12
 #-------------------------------------------------------------------------------
 # test reporting of added tasks
 
@@ -27,7 +27,7 @@ install_suite "${TEST_NAME_BASE}" 'graphing-change'
 LOG_FILE="${SUITE_RUN_DIR}/log/suite/log"
 
 # start suite in held mode
-run_ok "${TEST_NAME_BASE}-add-run" cylc run --hold "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-add-run" cylc run --debug --hold "${SUITE_NAME}"
 
 # change the suite.rc file
 cp "${TEST_SOURCE_DIR}/graphing-change/suite-1.rc" \
@@ -59,13 +59,12 @@ grep_ok "Removed task: 'one'" "${LOG_FILE}"
 #-------------------------------------------------------------------------------
 # test reporting of adding / removing / swapping tasks
 
-# set suite running
-run_ok "${TEST_NAME_BASE}-release" cylc release "${SUITE_NAME}"
-
 # change the suite.rc file
 cp "${TEST_SOURCE_DIR}/graphing-change/suite-2.rc" \
     "${TEST_DIR}/${SUITE_NAME}/suite.rc"
 
+cylc spawn "${SUITE_NAME}"  foo.1
+cylc spawn "${SUITE_NAME}"  baz.1
 # reload suite
 run_ok "${TEST_NAME_BASE}-swap-reload" cylc reload "${SUITE_NAME}"
 while (($(grep -c 'Reload completed' "${LOG_FILE}" || true) < 3)); do
@@ -76,8 +75,8 @@ done
 grep_ok "Added task: 'one'" "${LOG_FILE}"
 grep_ok "Added task: 'add'" "${LOG_FILE}"
 grep_ok "Added task: 'boo'" "${LOG_FILE}"
-grep_ok "\\[bar.*\\].*orphaned" "${LOG_FILE}"
-grep_ok "\\[bol.*\\].*orphaned" "${LOG_FILE}"
+grep_ok "\\[bar.*\\].*task definition removed" "${LOG_FILE}"
+grep_ok "\\[bol.*\\].*task definition removed" "${LOG_FILE}"
 
 run_ok "${TEST_NAME_BASE}-stop" \
     cylc stop --max-polls=10 --interval=2 "${SUITE_NAME}"

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 # 
@@ -22,9 +22,10 @@ set_test_number 5
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+# Debug mode not needed here (and set-x w/ XTRACEFD broken some bash versions)
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --debug --no-detach --reference-test "${SUITE_NAME}"
-sort 'broadcast.log' >'broadcast.log.sorted'
+    cylc run --no-detach --reference-test "${SUITE_NAME}"
+sort "${SUITE_RUN_DIR}/share/broadcast.log" >'broadcast.log.sorted'
 cmp_ok 'broadcast.ref' 'broadcast.log.sorted'
 
 DB_FILE="${SUITE_RUN_DIR}/log/db"

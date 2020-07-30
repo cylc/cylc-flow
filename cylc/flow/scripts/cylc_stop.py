@@ -81,6 +81,12 @@ def get_option_parser():
         action="store_true", default=False, dest="kill")
 
     parser.add_option(
+        "--flow", metavar="LABEL",
+        help="Stop a specified flow from spawning any further. "
+             "The scheduler will shut down if LABEL is the only flow.",
+        action="store", dest="flow_label")
+
+    parser.add_option(
         "-n", "--now",
         help=(
             "Shut down without waiting for active tasks to complete." +
@@ -109,6 +115,12 @@ def main(parser, options, suite, shutdown_arg=None):
         parser.error("ERROR: --kill is not compatible with --now")
 
     pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
+
+    if options.flow_label:
+        # TODO integrate with the rest of stop functionality and options.
+        prompt('Stop flow %s' % suite, options.flow_label)
+        pclient('stop_flow', {'flow_label': options.flow_label})
+        return
 
     if int(options.max_polls) > 0:
         # (test to avoid the "nothing to do" warning for # --max-polls=0)

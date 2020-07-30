@@ -17,7 +17,8 @@
 
 import re
 
-from cylc.flow.cycling.loader import get_interval, get_interval_cls
+from cylc.flow.cycling.loader import (
+    get_interval, get_interval_cls, is_offset_absolute)
 from cylc.flow.exceptions import GraphParseError
 from cylc.flow.task_id import TaskID
 
@@ -36,7 +37,7 @@ class GraphNodeParser(object):
              ([^\]]*)      # Continue until next ']'
              \]            # Stop at next ']'
             )?             # End optional [offset] syntax]
-            (?::([\w-]+))? # Optional type (e.g. :succeed)
+            (?::([\w-]+))? # Optional output (e.g. :succeed)
             $
          """, re.X)
 
@@ -89,7 +90,11 @@ class GraphNodeParser(object):
 
         Return:
             tuple:
-            (name, offset_is_from_icp, offset_is_irregular, offset, output)
+            (name, offset, output,
+            offset_is_from_icp, offset_is_irregular, offset_is_absolute)
+
+        NOTE that offsets from ICP like foo[^] and foo[^+P1] are not considered
+              absolute like foo[2] etc.
 
         Raise:
             GraphParseError: on illegal syntax.
@@ -98,15 +103,20 @@ class GraphNodeParser(object):
             match = self.REC_NODE.match(node)
             if not match:
                 raise GraphParseError('Illegal graph node: %s' % node)
-            name, offset_is_from_icp, offset, output = match.groups()
+            name, icp_mark, offset, output = match.groups()
+            offset_is_from_icp = (icp_mark == '^')  # convert to boolean
             if offset_is_from_icp and not offset:
                 offset = self._get_offset()
             offset_is_irregular = False
+            offset_is_absolute = False
             if offset:
+                if is_offset_absolute(offset):
+                    offset_is_absolute = True
                 if self.REC_IRREGULAR_OFFSET.search(offset):
                     offset_is_irregular = True
                 else:
                     offset = self._get_offset(offset)
             self._nodes[node] = (
-                name, offset_is_from_icp, offset_is_irregular, offset, output)
+                name, offset, output,
+                offset_is_from_icp, offset_is_irregular, offset_is_absolute)
         return self._nodes[node]

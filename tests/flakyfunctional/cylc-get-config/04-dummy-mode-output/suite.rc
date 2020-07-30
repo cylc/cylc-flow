@@ -1,5 +1,5 @@
-# A suite that will fail in live mode but pass in dummy and sim modes due to
-# automatic completion of custom outputs.
+# Live mode: baz never runs as outputs not received.
+# Dummy and sim modes: baz runs due to automatic completion of custom outputs.
 
 [cylc]
     UTC mode = True

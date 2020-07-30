@@ -8,8 +8,8 @@
     initial cycle point = 20100101T00
     final cycle point = 20100105T00
     [[graph]]
-        # foo will fail and cause a stuck bar task at T00.
-        PT1H = "foo => bar"
+        # oops makes bar spawn as waiting, to hold back runahead
+        PT1H = "foo & oops => bar"
         # If wibble gets into the pool, it will demand a +PT6H raise
         # of the 'runahead limit'.
         {{ FUTURE_TRIGGER_START_POINT }}/PT6H = """
@@ -18,7 +18,12 @@
         """
 [runtime]
     [[foo]]
-        script = false
+        script = """
+ if [[ "$CYLC_TASK_CYCLE_POINT" == "20100101T0000Z" ]]; then
+   # SoD: spawn wibble (it's not sitting there waiting like in SoS)
+   cylc spawn $CYLC_SUITE_NAME baz.20100101T0800Z
+fi
+false"""
     [[bar,baz,wibble]]
         script = true
 

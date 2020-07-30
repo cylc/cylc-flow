@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -24,7 +24,7 @@ dumpdbtables() {
         'SELECT * FROM suite_params WHERE key=="no_auto_shutdown";' \
         >'noautoshutdown.out'
     sqlite3 "${SUITE_RUN_DIR}/log/db" \
-        'SELECT * FROM task_pool ORDER BY cycle, name;' >'taskpool.out'
+        'SELECT cycle, name, status FROM task_pool ORDER BY cycle, name;' >'taskpool.out'
 }
 
 set_test_number 8
@@ -41,7 +41,7 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
     [[events]]
         abort on stalled = True
         abort on inactivity = True
-        inactivity = PT3M
+        inactivity = PT10S
 [scheduling]
     [[graph]]
         R1 = t<i-1> => t<i>
@@ -58,16 +58,7 @@ suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" --no-detach -a
 dumpdbtables
 cmp_ok 'noautoshutdown.out' <<<"no_auto_shutdown|1"
 cmp_ok 'taskpool.out' <<'__OUT__'
-1|t_i01|1|succeeded|0
-1|t_i02|1|succeeded|0
-1|t_i03|0|waiting|0
-1|t_i04|0|waiting|0
-1|t_i05|0|waiting|0
-1|t_i06|0|waiting|0
-1|t_i07|0|waiting|0
-1|t_i08|0|waiting|0
-1|t_i09|0|waiting|0
-1|t_i10|0|waiting|0
+1|t_i03|waiting
 __OUT__
 
 suite_run_fail "${TEST_NAME_BASE}-restart-1" \
@@ -79,18 +70,7 @@ contains_ok 'log.edited' <<__LOG__
 + no auto shutdown = True
 Suite shutting down - Abort on suite inactivity is set
 __LOG__
-cmp_ok 'taskpool.out' <<'__OUT__'
-1|t_i01|1|succeeded|0
-1|t_i02|1|succeeded|0
-1|t_i03|1|succeeded|0
-1|t_i04|1|succeeded|0
-1|t_i05|1|succeeded|0
-1|t_i06|1|succeeded|0
-1|t_i07|1|succeeded|0
-1|t_i08|1|succeeded|0
-1|t_i09|1|succeeded|0
-1|t_i10|1|succeeded|0
-__OUT__
+cmp_ok 'taskpool.out' <'/dev/null'
 
 purge_suite "${SUITE_NAME}"
 exit

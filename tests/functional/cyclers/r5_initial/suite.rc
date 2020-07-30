@@ -2,9 +2,11 @@
     UTC mode = True
 [scheduling]
     initial cycle point = 20140101
-    final cycle point = 20140102T12
+    final cycle point = 20140101T18
     [[graph]]
-        R5//PT3H = "xyzzy => bar"
+        # xyzzy should not spawn bar in the last two cycle points:
+        PT3H = xyzzy  # 7 cycles
+        R5//PT3H = "xyzzy => bar"  # 5 cycles
 [runtime]
     [[root]]
         script = true

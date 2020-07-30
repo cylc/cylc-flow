@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -22,21 +22,21 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 run_ok "${TEST_NAME_BASE}-run" cylc run --hold "${SUITE_NAME}"
-sleep 5
+cylc__job__poll_grep_suite_log "Suite held"
 SUITE_PID=$(cylc get-suite-contact "${SUITE_NAME}" | \
   awk '/CYLC_SUITE_PROCESS/ {print $1}' | sed -e 's/^.*=//')
 
 # Suspend the suite, simulate Ctrl-Z
-sleep 1
 kill -SIGSTOP "${SUITE_PID}"
-sleep 1
+# (kill does not return until signal is handled; otherwise "cat /proc/PID/stat"
+#  should start with "PID (cylc-run) T")
 run_ok "${TEST_NAME_BASE}-scan" cylc scan
-# ensure there is no traceback
+# Check for timeout error.
 grep_ok "TIMEOUT" "${TEST_NAME_BASE}-scan.stdout"
 grep_ok "Timeout waiting for server response. This could be due to network or server issues. Check the suite log." "${TEST_NAME_BASE}-scan.stderr"
 # Tell the suite to continue
 kill -SIGCONT "${SUITE_PID}"
-sleep 1
+# (kill does not return until signal is handled)
 cylc stop --max-polls=5 --interval=2 "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

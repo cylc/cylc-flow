@@ -43,8 +43,6 @@ cylc poll "${CYLC_SUITE_NAME}"
 
 cylc__job__poll_grep_suite_log -F \
     "[submit_hold.${CYLC_TASK_CYCLE_POINT}] -ready => submitted"
-cylc__job__poll_grep_suite_log -F \
-    "[run_kill.${CYLC_TASK_CYCLE_POINT}] -suiciding"
 
 st_file="${CYLC_SUITE_RUN_DIR}/log/job/${CYLC_TASK_CYCLE_POINT}/submit_hold/NN/job.status"
 pkill -g "$(awk -F= '$1 == "CYLC_BATCH_SYS_JOB_ID" {print $2}' "${st_file}")"

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -36,7 +36,6 @@ run_ok "${TEST_NAME_BASE}" cylc validate 'suite.rc'
 run_ok "${TEST_NAME_BASE}-v" cylc validate -v 'suite.rc'
 contains_ok "${TEST_NAME_BASE}-v.stderr" <<'__ERR__'
  + R1/P0Y/19990101T0000Z: sequence out of bounds for initial cycle point 20000101T0000Z
- + Task out of bounds for 20000101T0000Z: t1
 __ERR__
 run_ok "${TEST_NAME_BASE}-strict" cylc validate --strict 'suite.rc'
 cmp_ok "${TEST_NAME_BASE}-strict.stderr" <<'__ERR__'
@@ -56,7 +55,7 @@ cat > suite.rc <<__END__
 __END__
 
 run_ok "${TEST_NAME_BASE}-strict" cylc validate --strict 'suite.rc'
-cmp_ok "${TEST_NAME_BASE}-strict.stderr" <<'__ERR__'
+contains_ok "${TEST_NAME_BASE}-strict.stderr" <<'__ERR__'
 WARNING - multiple sequences out of bounds for initial cycle point 20000101T0000Z:
 	R1/P0Y/19960101T0000Z, R1/P0Y/19970101T0000Z, R1/P0Y/19980101T0000Z,
 	R1/P0Y/19990101T0000Z

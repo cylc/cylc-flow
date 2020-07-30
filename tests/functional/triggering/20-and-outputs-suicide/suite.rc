@@ -1,5 +1,5 @@
+# NOTE this is an explicit test of suicide triggers, not very useful under SoD?
 [cylc]
-    UTC mode = True
     [[events]]
         abort on stalled = True
 [scheduling]

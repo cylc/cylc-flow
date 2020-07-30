@@ -1,0 +1,13 @@
+# Check conditional reflow prevention.
+#   foo | bar => baz
+# baz should not be spawned again if bar runs after baz is gone.
+[scheduling]
+    [[graph]]
+        R1 = """foo | bar => baz => qux
+                delay => bar"""
+[runtime]
+    [[delay]]
+         script = """
+         # Ensure that bar does not start until baz has gone.
+         cylc__job__poll_grep_suite_log 'qux.*started'
+         """

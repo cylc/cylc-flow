@@ -32,12 +32,6 @@ localhost_aliases = [
 ]
 
 
-def test_hostname_checking():
-    """Check that unknown hosts raise an error"""
-    with pytest.raises(socket.gaierror):
-        select_host(['beefwellington'])
-
-
 def test_localhost():
     """Basic test with one host to choose from."""
     assert select_host([localhost]) == (
@@ -133,19 +127,6 @@ def test_suite_host_select(mock_glbl_cfg):
         '''
     )
     assert select_suite_host() == (localhost, localhost_fqdn)
-
-
-def test_suite_host_select_invalid_host(mock_glbl_cfg):
-    """Ensure hosts are parsed before evaluation."""
-    mock_glbl_cfg(
-        'cylc.flow.host_select.glbl_cfg',
-        '''
-            [suite servers]
-                run hosts = elephant
-        '''
-    )
-    with pytest.raises(socket.gaierror):
-        select_suite_host()
 
 
 def test_suite_host_select_default(mock_glbl_cfg):

@@ -14,7 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.flow.cycling.loader import get_point_relative
+from cylc.flow.cycling.loader import (
+    get_point, get_point_relative, get_interval)
 from cylc.flow.exceptions import TriggerExpressionError
 from cylc.flow.prerequisite import Prerequisite
 from cylc.flow.task_outputs import (
@@ -38,9 +39,6 @@ class TaskTrigger(object):
 
     Args:
         task_name (str): The name of the upstream task.
-        abs_cycle_point (cylc.flow.cycling.PointBase): The cycle point of the
-            upstream dependency if it is an absolute dependency.
-            e.g. foo[^] => ...). Else `None`.
         cycle_point_offset (str): String representing the offset of the
             upstream task (e.g. -P1D) if this dependency is not an absolute
             one. Else None.
@@ -48,38 +46,101 @@ class TaskTrigger(object):
 
     """
 
-    __slots__ = ['task_name', 'abs_cycle_point', 'cycle_point_offset',
-                 'output']
+    __slots__ = ['task_name', 'cycle_point_offset', 'output',
+                 'offset_is_irregular', 'offset_is_absolute',
+                 'offset_is_from_icp', 'initial_point']
 
-    def __init__(self, task_name, abs_cycle_point, cycle_point_offset,
-                 output):
+    def __init__(self, task_name, cycle_point_offset, output,
+                 offset_is_irregular, offset_is_absolute,
+                 offset_is_from_icp, initial_point):
         self.task_name = task_name
-        self.abs_cycle_point = abs_cycle_point
         self.cycle_point_offset = cycle_point_offset
         self.output = output
+        self.offset_is_irregular = offset_is_irregular
+        self.offset_is_from_icp = offset_is_from_icp
+        self.offset_is_absolute = offset_is_absolute
+        self.initial_point = initial_point
+        # NEED TO DISTINGUISH BETWEEN ABSOLUTE OFFSETS
+        #   2000, 20000101T0600Z, 2000-01-01T06:00+00:00, ...
+        # AND NON-ABSOLUTE IRREGULAR:
+        #   -PT6H+P1D, T00, ...
+        if (self.offset_is_irregular and any(
+                self.cycle_point_offset.startswith(c)
+                for c in ['P', '+', '-', 'T'])):
+            self.offset_is_absolute = False
+
+    def get_parent_point(self, from_point):
+        """Return the specific parent point of this trigger.
+
+        Args:
+            from_point (cylc.flow.cycling.PointBase): parent task point.
+
+        Returns:
+            cylc.flow.cycling.PointBase: cycle point of the child.
+
+        """
+        if self.cycle_point_offset is None:
+            point = from_point
+        elif self.offset_is_absolute:
+            point = get_point(self.cycle_point_offset).standardise()
+        else:
+            if self.offset_is_from_icp:
+                from_point = self.initial_point
+            # works with offset_is_irregular or not:
+            point = get_point_relative(self.cycle_point_offset, from_point)
+        return point
+
+    def get_child_point(self, from_point, seq):
+        """Return the specific child task point of this trigger.
+
+        Args:
+            from_point (cylc.flow.cycling.PointBase): base point.
+            seq: the cycling sequence to find the child point.
+
+        Returns:
+            cylc.flow.cycling.PointBase: cycle point of the child.
+
+        """
+        if self.cycle_point_offset is None:
+            point = from_point
+        elif self.offset_is_absolute or self.offset_is_from_icp:
+            # First child is at start of sequence.
+            #   E.g. for "R/1/P1 = foo[2] => bar"
+            # foo.2 should spawn bar.1; then we auto-spawn bar.2,3,...
+            point = seq.get_start_point()
+        elif self.offset_is_irregular:
+            # Change offset sign to find children
+            #   e.g. -P1D+PT18H to +P1D-PT18H
+            point = get_point_relative(
+                self.cycle_point_offset.translate(
+                    self.cycle_point_offset.maketrans('-+', '+-')), from_point)
+        else:
+            point = from_point - get_interval(self.cycle_point_offset)
+        return point
 
     def get_point(self, point):
         """Return the point of the output to which this TaskTrigger pertains.
 
         Args:
-            point (cylc.flow.cycling.PointBase): The cycle point of the
-                dependent task.
+            point (cylc.flow.cycling.PointBase): cycle point of dependent task.
 
         Returns:
-            cylc.flow.cycling.PointBase: The cycle point of the dependency.
+            cylc.flow.cycling.PointBase: cycle point of the dependency.
 
         """
-        if self.abs_cycle_point:
-            point = self.abs_cycle_point
-        elif self.cycle_point_offset:
+        if self.offset_is_absolute:
+            point = get_point(self.cycle_point_offset).standardise()
+        elif self.offset_is_from_icp:
             point = get_point_relative(
-                self.cycle_point_offset, point)
+                self.cycle_point_offset, self.initial_point)
+        elif self.cycle_point_offset:
+            point = get_point_relative(self.cycle_point_offset, point)
         return point
 
     def __str__(self):
-        if self.abs_cycle_point:
-            return '%s[%s]:%s' % (self.task_name, self.abs_cycle_point,
-                                  self.output)
+        if not self.offset_is_irregular and self.offset_is_absolute:
+            point = get_point(self.cycle_point_offset).standardise()
+            return '%s[%s]:%s' % (self.task_name, point, self.output)
         elif self.cycle_point_offset:
             return '%s[%s]:%s' % (self.task_name, self.cycle_point_offset,
                                   self.output)

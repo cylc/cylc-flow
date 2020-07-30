@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 # 
@@ -18,44 +18,65 @@
 # Test cylc show for a basic task.
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 6
+set_test_number 3
 #-------------------------------------------------------------------------------
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+TEST_SHOW_OUTPUT_PATH="$PWD/${TEST_NAME_BASE}-show.stdout"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc validate \
+   --set=TEST_OUTPUT_PATH="$TEST_SHOW_OUTPUT_PATH"  "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
-run_ok "${TEST_NAME}" cylc run "${SUITE_NAME}" --hold
+run_ok "${TEST_NAME}" cylc run \
+   --no-detach --set=TEST_OUTPUT_PATH="$TEST_SHOW_OUTPUT_PATH" "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME="${TEST_NAME_BASE}-long"
-run_ok "${TEST_NAME}" cylc show "${SUITE_NAME}" 'f.20000102T00Z'
-cmp_ok "${TEST_NAME}.stdout" << '__OUT__'
+TEST_NAME="${TEST_NAME_BASE}-show"
+contains_ok "${TEST_SHOW_OUTPUT_PATH}" << '__OUT__'
 title: (not given)
 description: (not given)
 URL: (not given)
 
 prerequisites (- => not satisfied):
-  - 0 & 1 & (2 | (3 & 4)) & 5
-  - 	0 = a.20000102T0000Z succeeded
-  - 	1 = b.20000102T0000Z succeeded
-  - 	2 = c.20000102T0000Z succeeded
-  - 	3 = d.20000102T0000Z succeeded
-  - 	4 = e.20000102T0000Z succeeded
-  - 	5 = f.20000101T0000Z succeeded
+  + ((0  &  1)  &  (2  |  (3  &  4)))
+  + 	0 = a.20000101T0000Z succeeded
+  + 	1 = b.20000101T0000Z succeeded
+  + 	2 = c.20000101T0000Z succeeded
+  + 	3 = d.20000101T0000Z succeeded
+  + 	4 = e.20000101T0000Z succeeded
+
+outputs (- => not completed):
+  - f.20000101T0000Z expired
+  + f.20000101T0000Z submitted
+  - f.20000101T0000Z submit-failed
+  + f.20000101T0000Z started
+  - f.20000101T0000Z succeeded
+  - f.20000101T0000Z failed
+a.20000101T0000Z succeeded
+b.20000101T0000Z succeeded
+c.20000101T0000Z succeeded
+d.20000101T0000Z succeeded
+e.20000101T0000Z succeeded
+title: (not given)
+description: (not given)
+URL: (not given)
+
+prerequisites (- => not satisfied):
+  + 0 & 1 & (2 | (3 & 4)) & 5
+  + 	0 = a.20000102T0000Z succeeded
+  + 	1 = b.20000102T0000Z succeeded
+  + 	2 = c.20000102T0000Z succeeded
+  + 	3 = d.20000102T0000Z succeeded
+  + 	4 = e.20000102T0000Z succeeded
+  + 	5 = f.20000101T0000Z succeeded
 
 outputs (- => not completed):
   - f.20000102T0000Z expired
-  - f.20000102T0000Z submitted
+  + f.20000102T0000Z submitted
   - f.20000102T0000Z submit-failed
-  - f.20000102T0000Z started
+  + f.20000102T0000Z started
   - f.20000102T0000Z succeeded
   - f.20000102T0000Z failed
-__OUT__
-#-------------------------------------------------------------------------------
-TEST_NAME="${TEST_NAME_BASE}-short"
-run_ok "${TEST_NAME}" cylc show "${SUITE_NAME}" 'f.20000102T00Z' --list-prereqs
-cmp_ok "${TEST_NAME}.stdout" << '__OUT__'
 a.20000102T0000Z succeeded
 b.20000102T0000Z succeeded
 c.20000102T0000Z succeeded
@@ -64,5 +85,4 @@ e.20000102T0000Z succeeded
 f.20000101T0000Z succeeded
 __OUT__
 #-------------------------------------------------------------------------------
-cylc stop "${SUITE_NAME}" --now
 purge_suite "${SUITE_NAME}"

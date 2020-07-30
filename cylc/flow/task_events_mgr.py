@@ -135,7 +135,7 @@ class TaskEventsManager():
     NON_UNIQUE_EVENTS = ('warning', 'critical', 'custom')
 
     def __init__(self, suite, proc_pool, suite_db_mgr,
-                 broadcast_mgr, job_pool):
+                 broadcast_mgr, job_pool, timestamp):
         self.suite = suite
         self.suite_url = None
         self.suite_cfg = {}
@@ -148,12 +148,11 @@ class TaskEventsManager():
         self.mail_footer = None
         self.next_mail_time = None
         self.event_timers = {}
-        # Set pflag = True to stimulate task dependency negotiation whenever a
-        # task changes state in such a way that others could be affected. The
-        # flag should only be turned off again after use in
-        # Scheduler.process_tasks, to ensure that dependency negotiation occurs
-        # when required.
+        # To be set by the task pool:
+        self.spawn_func = None
+        # pflag was set to True to stimulate dependency negotiation in SoS.
         self.pflag = False
+        self.timestamp = timestamp
 
     @staticmethod
     def check_poll_time(itask, now=None):
@@ -354,9 +353,12 @@ class TaskEventsManager():
             get_task_job_id(itask.point, itask.tdef.name, submit_num),
             new_msg)
 
-        # Satisfy my output, if possible, and record the result.
+        # Satisfy my output, if possible, and spawn children.
+        # (first remove signal: failed/EXIT -> failed)
+
+        msg0 = message.split('/')[0]
         completed_trigger = itask.state.outputs.set_msg_trg_completion(
-            message=message, is_completed=True)
+            message=msg0, is_completed=True)
 
         if message == TASK_OUTPUT_STARTED:
             if (
@@ -365,22 +367,27 @@ class TaskEventsManager():
             ):
                 return True
             self._process_message_started(itask, event_time)
+            self.spawn_func(itask, TASK_OUTPUT_STARTED)
         elif message == TASK_OUTPUT_SUCCEEDED:
             self._process_message_succeeded(itask, event_time)
+            self.spawn_func(itask, TASK_OUTPUT_SUCCEEDED)
         elif message == TASK_OUTPUT_FAILED:
             if (
                     flag == self.FLAG_RECEIVED
                     and itask.state.is_gt(TASK_STATUS_FAILED)
             ):
                 return True
-            self._process_message_failed(itask, event_time, self.JOB_FAILED)
+            if self._process_message_failed(
+                    itask, event_time, self.JOB_FAILED):
+                self.spawn_func(itask, TASK_OUTPUT_FAILED)
         elif message == self.EVENT_SUBMIT_FAILED:
             if (
                     flag == self.FLAG_RECEIVED
                     and itask.state.is_gt(TASK_STATUS_SUBMIT_FAILED)
             ):
                 return True
-            self._process_message_submit_failed(itask, event_time)
+            if self._process_message_submit_failed(itask, event_time):
+                self.spawn_func(itask, TASK_OUTPUT_SUBMIT_FAILED)
         elif message == TASK_OUTPUT_SUBMITTED:
             if (
                     flag == self.FLAG_RECEIVED
@@ -388,6 +395,7 @@ class TaskEventsManager():
             ):
                 return True
             self._process_message_submitted(itask, event_time)
+            self.spawn_func(itask, TASK_OUTPUT_SUBMITTED)
         elif message.startswith(FAIL_MESSAGE_PREFIX):
             # Task received signal.
             if (
@@ -399,7 +407,9 @@ class TaskEventsManager():
             self._db_events_insert(itask, "signaled", signal)
             self.suite_db_mgr.put_update_task_jobs(
                 itask, {"run_signal": signal})
-            self._process_message_failed(itask, event_time, self.JOB_FAILED)
+            if self._process_message_failed(
+                    itask, event_time, self.JOB_FAILED):
+                self.spawn_func(itask, TASK_OUTPUT_FAILED)
         elif message.startswith(ABORT_MESSAGE_PREFIX):
             # Task aborted with message
             if (
@@ -411,7 +421,8 @@ class TaskEventsManager():
             self._db_events_insert(itask, "aborted", message)
             self.suite_db_mgr.put_update_task_jobs(
                 itask, {"run_signal": aborted_with})
-            self._process_message_failed(itask, event_time, aborted_with)
+            if self._process_message_failed(itask, event_time, aborted_with):
+                self.spawn_func(itask, TASK_OUTPUT_FAILED)
         elif message.startswith(VACATION_MESSAGE_PREFIX):
             # Task job pre-empted into a vacation state
             self._db_events_insert(itask, "vacated", message)
@@ -431,9 +442,9 @@ class TaskEventsManager():
         elif completed_trigger:
             # Message of an as-yet unreported custom task output.
             # No state change.
-            self.pflag = True
             self.suite_db_mgr.put_update_task_outputs(itask)
             self.setup_event_handlers(itask, completed_trigger, message)
+            self.spawn_func(itask, msg0)
         else:
             # Unhandled messages. These include:
             #  * general non-output/progress messages
@@ -452,7 +463,6 @@ class TaskEventsManager():
             itask.non_unique_events.setdefault(lseverity, 0)
             itask.non_unique_events[lseverity] += 1
             self.setup_event_handlers(itask, lseverity, message)
-        return None
 
     def _process_message_check(
         self,
@@ -469,13 +479,17 @@ class TaskEventsManager():
         Check whether to process/skip message.
         Return True if `.process_message` should contine, False otherwise.
         """
-        logfmt = r'[%s] status=%s: %s%s at %s for job(%02d)'
+        if self.timestamp:
+            timestamp = " at %s " % event_time
+        else:
+            timestamp = ""
+        logfmt = r'[%s] status=%s: %s%s%s for job(%02d) flow(%s)'
         if flag == self.FLAG_RECEIVED and submit_num != itask.submit_num:
             # Ignore received messages from old jobs
             LOG.warning(
                 logfmt + r' != current job(%02d)',
                 itask, itask.state, self.FLAG_RECEIVED_IGNORED, message,
-                event_time, submit_num, itask.submit_num)
+                timestamp, submit_num, itask.flow_label, itask.submit_num)
             return False
         if itask.state.status in (
             TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING
@@ -484,11 +498,11 @@ class TaskEventsManager():
             LOG.warning(
                 logfmt,
                 itask, itask.state, self.FLAG_POLLED_IGNORED, message,
-                event_time, submit_num)
+                timestamp, submit_num, itask.flow_label)
             return False
         LOG.log(
-            self.LEVELS.get(severity, INFO),
-            logfmt, itask, itask.state, flag, message, event_time, submit_num)
+            self.LEVELS.get(severity, INFO), logfmt, itask, itask.state, flag,
+            message, timestamp, submit_num, itask.flow_label)
         return True
 
     def setup_event_handlers(self, itask, event, message):
@@ -672,11 +686,16 @@ class TaskEventsManager():
                 LOG.exception(exc)
 
     def _process_message_failed(self, itask, event_time, message):
-        """Helper for process_message, handle a failed message."""
+        """Helper for process_message, handle a failed message.
+
+        Return True if no retries (hence go to the failed state).
+        """
+        no_retries = False
         if event_time is None:
             event_time = get_current_time_string()
         itask.set_summary_time('finished', event_time)
-        job_d = get_task_job_id(itask.point, itask.tdef.name, itask.submit_num)
+        job_d = get_task_job_id(
+            itask.point, itask.tdef.name, itask.submit_num)
         self.job_pool.set_job_time(job_d, 'finished', event_time)
         self.job_pool.set_job_state(job_d, TASK_STATUS_FAILED)
         self.suite_db_mgr.put_update_task_jobs(itask, {
@@ -691,6 +710,7 @@ class TaskEventsManager():
                 self.setup_event_handlers(itask, "failed", message)
             LOG.critical(
                 "[%s] -job(%02d) %s", itask, itask.submit_num, "failed")
+            no_retries = True
         elif itask.state.reset(TASK_STATUS_RETRYING):
             delay_msg = "retrying in %s" % (
                 itask.try_timers[TASK_STATUS_RETRYING].delay_timeout_as_str())
@@ -702,6 +722,7 @@ class TaskEventsManager():
             self.setup_event_handlers(
                 itask, "retry", "%s, %s" % (self.JOB_FAILED, delay_msg))
         self._reset_job_timers(itask)
+        return no_retries
 
     def _process_message_started(self, itask, event_time):
         """Helper for process_message, handle a started message."""
@@ -755,7 +776,11 @@ class TaskEventsManager():
         self._reset_job_timers(itask)
 
     def _process_message_submit_failed(self, itask, event_time):
-        """Helper for process_message, handle a submit-failed message."""
+        """Helper for process_message, handle a submit-failed message.
+
+        Return True if no retries (hence go to the submit-failed state).
+        """
+        no_retries = False
         LOG.error('[%s] -%s', itask, self.EVENT_SUBMIT_FAILED)
         if event_time is None:
             event_time = get_current_time_string()
@@ -771,6 +796,7 @@ class TaskEventsManager():
                 itask.try_timers[TASK_STATUS_SUBMIT_RETRYING].next() is None):
             # No submission retry lined up: definitive failure.
             # See github #476.
+            no_retries = True
             if itask.state.reset(TASK_STATUS_SUBMIT_FAILED):
                 self.setup_event_handlers(
                     itask, self.EVENT_SUBMIT_FAILED,
@@ -790,6 +816,7 @@ class TaskEventsManager():
                 itask, self.EVENT_SUBMIT_RETRY,
                 "job %s, %s" % (self.EVENT_SUBMIT_FAILED, delay_msg))
         self._reset_job_timers(itask)
+        return no_retries
 
     def _process_message_submitted(self, itask, event_time):
         """Helper for process_message, handle a submit-succeeded message."""

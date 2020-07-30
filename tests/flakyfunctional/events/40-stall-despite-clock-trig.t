@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -21,15 +21,13 @@ set_test_number 3
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+# Saw evidence in a failed test that timeout 60 isn't long enough under load?:
 run_fail "${TEST_NAME_BASE}-run" \
-    timeout 60 cylc run --debug --no-detach "${SUITE_NAME}"
+    timeout 120 cylc run --debug --no-detach "${SUITE_NAME}"
 sed -n 's/^.* WARNING - //p' "${SUITE_RUN_DIR}/log/suite/log" \
     >"${SUITE_RUN_DIR}/log/suite/log.edited"
-TODAY="$(date -u '+%Y%m%d')"
 contains_ok "${SUITE_RUN_DIR}/log/suite/log.edited" <<__OUT__
 suite stalled
-Unmet prerequisites for t3.${TODAY}:
- * t2.${TODAY} succeeded
 __OUT__
 
 purge_suite "${SUITE_NAME}"

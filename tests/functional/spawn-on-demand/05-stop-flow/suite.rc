@@ -1,0 +1,13 @@
+# Check that stopping the only flow causes the suite to shut down without
+# spawning more tasks.
+# Here bar stops the flow, so baz should never run.
+[scheduling]
+    [[graph]]
+        R1 = "foo => bar => baz"
+[runtime]
+    [[bar]]
+         script = """
+eval $(cylc cat-log -f j "${CYLC_SUITE_NAME}" foo.1 | grep CYLC_TASK_FLOW_LABEL)
+cylc stop --flow=${CYLC_TASK_FLOW_LABEL} ${CYLC_SUITE_NAME}
+cylc__job__poll_grep_suite_log 'Command succeeded: stop_flow'
+         """

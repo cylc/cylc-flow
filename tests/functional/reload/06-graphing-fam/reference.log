@@ -1,10 +1,11 @@
 2013/11/05 10:58:59 INFO - Initial point: 1
 2013/11/05 10:58:59 INFO - Final point: 1
 2013/11/05 10:58:59 INFO - [reloader.1] -triggered off []
-2013/11/05 10:59:08 INFO - [a.1] -triggered off ['reloader.1']
-2013/11/05 10:59:08 INFO - [c.1] -triggered off ['reloader.1']
-2013/11/05 10:59:08 INFO - [b.1] -triggered off ['reloader.1']
-2013/11/05 10:59:08 INFO - [d.1] -triggered off ['reloader.1']
+2013/11/05 10:58:59 INFO - [inter.1] -triggered off ['reloader.1']
+2013/11/05 10:59:08 INFO - [a.1] -triggered off ['inter.1']
+2013/11/05 10:59:08 INFO - [c.1] -triggered off ['inter.1']
+2013/11/05 10:59:08 INFO - [b.1] -triggered off ['inter.1']
+2013/11/05 10:59:08 INFO - [d.1] -triggered off ['inter.1']
 2013/11/05 10:59:16 INFO - [e.1] -triggered off ['a.1', 'b.1', 'c.1', 'd.1']
 2013/11/05 10:59:16 INFO - [g.1] -triggered off ['a.1', 'b.1', 'c.1', 'd.1']
 2013/11/05 10:59:16 INFO - [f.1] -triggered off ['a.1', 'b.1', 'c.1', 'd.1']

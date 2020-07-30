@@ -191,6 +191,7 @@ class CylcSuiteDAO(object):
     TABLE_TASK_STATES = "task_states"
     TABLE_TASK_TIMEOUT_TIMERS = "task_timeout_timers"
     TABLE_XTRIGGERS = "xtriggers"
+    TABLE_ABS_OUTPUTS = "absolute_outputs"
 
     TABLES_ATTRS = {
         TABLE_BROADCAST_EVENTS: [
@@ -284,8 +285,9 @@ class CylcSuiteDAO(object):
         TABLE_TASK_POOL: [
             ["cycle", {"is_primary_key": True}],
             ["name", {"is_primary_key": True}],
-            ["spawned", {"datatype": "INTEGER"}],
+            ["flow_label", {"is_primary_key": True}],
             ["status"],
+            ["satisfied"],
             ["is_held", {"datatype": "INTEGER"}],
         ],
         TABLE_XTRIGGERS: [
@@ -296,13 +298,15 @@ class CylcSuiteDAO(object):
             ["id", {"datatype": "INTEGER", "is_primary_key": True}],
             ["cycle", {"is_primary_key": True}],
             ["name", {"is_primary_key": True}],
-            ["spawned", {"datatype": "INTEGER"}],
+            ["flow_label", {"is_primary_key": True}],
             ["status"],
+            ["satisfied"],
             ["is_held", {"datatype": "INTEGER"}],
         ],
         TABLE_TASK_STATES: [
             ["name", {"is_primary_key": True}],
             ["cycle", {"is_primary_key": True}],
+            ["flow_label", {"is_primary_key": True}],
             ["time_created"],
             ["time_updated"],
             ["submit_num", {"datatype": "INTEGER"}],
@@ -312,6 +316,11 @@ class CylcSuiteDAO(object):
             ["cycle", {"is_primary_key": True}],
             ["name", {"is_primary_key": True}],
             ["timeout", {"datatype": "REAL"}],
+        ],
+        TABLE_ABS_OUTPUTS: [
+            ["cycle"],
+            ["name"],
+            ["output"],
         ],
     }
 
@@ -671,36 +680,31 @@ class CylcSuiteDAO(object):
         for row_idx, row in enumerate(self.connect().execute(stmt)):
             callback(row_idx, list(row))
 
-    def select_submit_nums_for_insert(self, task_ids):
-        """Select name,cycle,submit_num from task_states.
+    def select_submit_nums(self, name, point):
+        """Select submit_num and flow_label from task_states table.
 
-        Fetch submit numbers for tasks on insert.
-        Return a data structure like this:
-
+        Fetch submit number and flow label for spawning task name.point.
+        Return:
         {
-            (name1, point1): submit_num,
+            flow_label: submit_num,
             ...,
         }
 
-        task_ids should be specified as [(name-glob, cycle), ...]
-
         Args:
-            task_ids (list): A list of tuples, with the name-glob and cycle
-                of a task.
+            name: task name
+            point: task cycle point (str)
         """
         # Ignore bandit false positive: B608: hardcoded_sql_expressions
         # Not an injection, simply putting the table name in the SQL query
         # expression as a string constant local to this module.
         stmt = (  # nosec
-            r"SELECT name,cycle,submit_num FROM %(name)s"
+            r"SELECT flow_label,submit_num FROM %(name)s"
             r" WHERE name==? AND cycle==?"
         ) % {"name": self.TABLE_TASK_STATES}
         ret = {}
-        for task_name, task_cycle in task_ids:
-            for name, cycle, submit_num in self.connect().execute(
-                stmt, (task_name, task_cycle,)
-            ):
-                ret[(name, cycle)] = submit_num
+        for flow_label, submit_num in self.connect().execute(
+                stmt, (name, point,)):
+            ret[flow_label] = submit_num
         return ret
 
     def select_xtriggers_for_restart(self, callback):
@@ -708,17 +712,22 @@ class CylcSuiteDAO(object):
         for row_idx, row in enumerate(self.connect().execute(stm, [])):
             callback(row_idx, list(row))
 
+    def select_abs_outputs_for_restart(self, callback):
+        stm = r"SELECT cycle,name,output FROM %s" % self.TABLE_ABS_OUTPUTS
+        for row_idx, row in enumerate(self.connect().execute(stm, [])):
+            callback(row_idx, list(row))
+
     def select_task_pool(self, callback, id_key=None):
         """Select from task_pool or task_pool_checkpoints.
 
         Invoke callback(row_idx, row) on each row, where each row contains:
-            [cycle, name, spawned, status]
+            [cycle, name, status]
 
         If id_key is specified,
         select from task_pool table if id_key == CHECKPOINT_LATEST_ID.
         Otherwise select from task_pool_checkpoints where id == id_key.
         """
-        form_stmt = r"SELECT cycle,name,spawned,status,is_held FROM %s"
+        form_stmt = r"SELECT cycle,name,status,is_held FROM %s"
         if id_key is None or id_key == self.CHECKPOINT_LATEST_ID:
             stmt = form_stmt % self.TABLE_TASK_POOL
             stmt_args = []
@@ -733,7 +742,7 @@ class CylcSuiteDAO(object):
         """Select from task_pool+task_states+task_jobs for restart.
 
         Invoke callback(row_idx, row) on each row, where each row contains:
-            [cycle, name, spawned, is_late, status, is_held, submit_num,
+            [cycle, name, is_late, status, is_held, submit_num,
              try_num, platform_name, time_submit, time_run, timeout, outputs]
 
         If id_key is specified,
@@ -744,9 +753,10 @@ class CylcSuiteDAO(object):
             SELECT
                 %(task_pool)s.cycle,
                 %(task_pool)s.name,
-                %(task_pool)s.spawned,
+                %(task_pool)s.flow_label,
                 %(task_late_flags)s.value,
                 %(task_pool)s.status,
+                %(task_pool)s.satisfied,
                 %(task_pool)s.is_held,
                 %(task_states)s.submit_num,
                 %(task_jobs)s.try_num,
@@ -760,7 +770,8 @@ class CylcSuiteDAO(object):
             JOIN
                 %(task_states)s
             ON  %(task_pool)s.cycle == %(task_states)s.cycle AND
-                %(task_pool)s.name == %(task_states)s.name
+                %(task_pool)s.name == %(task_states)s.name AND
+                %(task_pool)s.flow_label == %(task_states)s.flow_label
             LEFT OUTER JOIN
                 %(task_late_flags)s
             ON  %(task_pool)s.cycle == %(task_late_flags)s.cycle AND

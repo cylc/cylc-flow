@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 # 
@@ -77,7 +77,6 @@ cylc suite-state "${SUITE_NAME}" > suite-state.log
 contains_ok suite-state.log << __END__
 foo, 1, succeeded
 bar, 1, succeeded
-bar, 2, waiting
 foo, 2, succeeded
 foo, 3, succeeded
 __END__

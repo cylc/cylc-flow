@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 # 
@@ -44,14 +44,13 @@ suite_run_fail "${TEST_NAME}" \
 SUITE_LOG="$(cylc cat-log -m 'p' "${SUITE_NAME}")"
 grep_ok 'WARNING - suite timed out after inactivity for PT10S' "${SUITE_LOG}"
 
-# ... with 2016 tasks in the waiting state.
+# ... with foo.2016 succeeded and FAM.2016 waiting.
 cylc suite-state -p '2016' "${SUITE_NAME}" >'suite_state.out'
 contains_ok 'suite_state.out' << __END__
 foo, 2016, succeeded
 f3, 2016, waiting
 f1, 2016, waiting
 f2, 2016, waiting
-blam, 2016, waiting
 __END__
 
 # Check broadcast of xtrigger outputs to dependent tasks.

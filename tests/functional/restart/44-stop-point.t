@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -23,7 +23,7 @@ dumpdbtables() {
     sqlite3 "${SUITE_RUN_DIR}/log/db" \
         'SELECT * FROM suite_params WHERE key=="stopcp";' >'stopcp.out'
     sqlite3 "${SUITE_RUN_DIR}/log/db" \
-        'SELECT * FROM task_pool ORDER BY cycle, name;' >'taskpool.out'
+        'SELECT cycle, name, status FROM task_pool ORDER BY cycle, name;' >'taskpool.out'
 }
 
 set_test_number 16
@@ -62,6 +62,7 @@ case "${CYLC_TASK_CYCLE_POINT}" in
 2016)
     sed -i 's/\(final cycle point =\) 2024/\1 2025/' "${CYLC_SUITE_DEF_PATH}/suite.rc"
     cylc reload "${CYLC_SUITE_NAME}"
+    cylc__job__poll_grep_suite_log "Reload completed"
     :;;
 2019)
     cylc stop "${CYLC_SUITE_NAME}" '2021'
@@ -78,8 +79,7 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 dumpdbtables
 cmp_ok 'stopcp.out' <<<'stopcp|2018'
 cmp_ok 'taskpool.out' <<'__OUT__'
-2015|t1|1|succeeded|0
-2016|t1|0|waiting|0
+2016|t1|waiting
 __OUT__
 
 suite_run_ok "${TEST_NAME_BASE}-restart-1" \
@@ -87,8 +87,7 @@ suite_run_ok "${TEST_NAME_BASE}-restart-1" \
 dumpdbtables
 cmp_ok 'stopcp.out' <'/dev/null'
 cmp_ok 'taskpool.out' <<'__OUT__'
-2018|t1|1|succeeded|0
-2019|t1|0|waiting|0
+2019|t1|waiting
 __OUT__
 
 suite_run_ok "${TEST_NAME_BASE}-restart-2" \
@@ -96,8 +95,7 @@ suite_run_ok "${TEST_NAME_BASE}-restart-2" \
 dumpdbtables
 cmp_ok 'stopcp.out' <<<'stopcp|2021'
 cmp_ok 'taskpool.out' <<'__OUT__'
-2019|t1|1|succeeded|0
-2020|t1|0|waiting|0
+2020|t1|waiting
 __OUT__
 
 suite_run_ok "${TEST_NAME_BASE}-restart-3" \
@@ -105,18 +103,14 @@ suite_run_ok "${TEST_NAME_BASE}-restart-3" \
 dumpdbtables
 cmp_ok 'stopcp.out' <'/dev/null'
 cmp_ok 'taskpool.out' <<'__OUT__'
-2021|t1|1|succeeded|0
-2022|t1|0|waiting|0
+2022|t1|waiting
 __OUT__
 
 suite_run_ok "${TEST_NAME_BASE}-restart-4" \
     cylc restart "${SUITE_NAME}" --no-detach
 dumpdbtables
 cmp_ok 'stopcp.out' <'/dev/null'
-cmp_ok 'taskpool.out' <<'__OUT__'
-2025|t1|1|succeeded|0
-2026|t1|0|waiting|0
-__OUT__
+cmp_ok 'taskpool.out' <'/dev/null'
 
 purge_suite "${SUITE_NAME}"
 exit

@@ -20,7 +20,7 @@
         [[[job]]]
             execution retry delays=2*PT0S
     [[bar]]
-        script = cylc trigger "${CYLC_SUITE_NAME}" foo 1
+        script = cylc trigger "${CYLC_SUITE_NAME}" foo.1
     [[baz]]
         script = """
             printf "%d\n" {1..4} | cmp - "${CYLC_SUITE_RUN_DIR}/foo-submits.txt"

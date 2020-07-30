@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 # 
@@ -15,7 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test intercycle dependencies.
+
+# Test triggering from unbounded to bound sequences - date-time cycling.
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 if [[ -f "$TEST_SOURCE_DIR/${TEST_NAME_BASE}-find.out" ]]; then

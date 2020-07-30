@@ -143,10 +143,10 @@ def get_suite_status(schd):
         status_msg = (
             SUITE_STATUS_RUNNING_TO_STOP %
             time2str(schd.stop_clock_time))
-    elif schd.stop_task:
+    elif schd.pool.stop_task_id:
         status_msg = (
             SUITE_STATUS_RUNNING_TO_STOP %
-            schd.stop_task)
+            schd.pool.stop_task_id)
     elif schd.config.final_point:
         status_msg = (
             SUITE_STATUS_RUNNING_TO_STOP %

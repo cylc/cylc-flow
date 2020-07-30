@@ -26,9 +26,6 @@ submit as normal when released by the queue; queued tasks will submit
 immediately if triggered, even if that violates the queue limit (so you may
 need to trigger a queue-limited task twice to get it to submit immediately).
 
-For single tasks you can use "--edit" to edit the generated job script before
-it submits, to apply one-off changes. A diff between the original and edited
-job script will be saved to the task job log directory.
 """
 
 import re
@@ -48,20 +45,15 @@ from cylc.flow.terminal import prompt, cli_function
 
 def get_option_parser():
     parser = COP(
-        __doc__, comms=True, multitask=True,
+        __doc__, comms=True, multitask_nocycles=True,
         argdoc=[
             ('REG', 'Suite name'),
             ('[TASK_GLOB ...]', 'Task matching patterns')])
 
     parser.add_option(
-        "-e", "--edit",
-        help="Manually edit the job script before running it.",
-        action="store_true", default=False, dest="edit_run")
-
-    parser.add_option(
-        "-g", "--geditor",
-        help="(with --edit) force use of the configured GUI editor.",
-        action="store_true", default=False, dest="geditor")
+        "-r", "--reflow",
+        help="Start a new flow from the triggered task.",
+        action="store_true", default=False, dest="reflow")
 
     return parser
 
@@ -74,117 +66,12 @@ def main(parser, options, suite, *task_globs):
 
     pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
 
-    aborted = False
-    if options.edit_run:
-        task_id = task_globs[0]
-        # Check that TASK is a unique task.
-        success, msg = pclient(
-            'ping_task',
-            {'task_id': task_id, 'exists_only': True}
-        )
-
-        # Get the job filename from the suite server program - the task cycle
-        # point may need standardising to the suite cycle point format.
-        jobfile_path = pclient(
-            'get_task_jobfile_path', {'task_id': task_id})
-        jobfile_path = os.path.expandvars(jobfile_path)
-        if not jobfile_path:
-            raise UserInputError('task not found')
-
-        # Note: localhost time and file system time may be out of sync,
-        #       so the safe way to detect whether a new file is modified
-        #       or is to detect whether time stamp has changed or not.
-        #       Comparing the localhost time with the file timestamp is unsafe
-        #       and may cause the "while True" loop that follows to sys.exit
-        #       with an error message after MAX_TRIES.
-        try:
-            old_mtime = os.stat(jobfile_path).st_mtime
-        except OSError:
-            old_mtime = None
-
-        # Tell the suite server program to generate the job file.
-        pclient(
-            'dry_run_tasks',
-            {'tasks': [task_id], 'check_syntax': False}
-        )
-
-        # Wait for the new job file to be written. Use mtime because the same
-        # file could potentially exist already, left from a previous run.
-        count = 0
-        MAX_TRIES = 10
-        while True:
-            count += 1
-            try:
-                mtime = os.stat(jobfile_path).st_mtime
-            except OSError:
-                pass
-            else:
-                if old_mtime is None or mtime > old_mtime:
-                    break
-            if count > MAX_TRIES:
-                raise CylcError(
-                    'no job file after %s seconds' % MAX_TRIES)
-            time.sleep(1)
-
-        # Make a pre-edit copy to allow a post-edit diff.
-        jobfile_copy_path = "%s.ORIG" % jobfile_path
-        shutil.copy(jobfile_path, jobfile_copy_path)
-
-        # Edit the new job file.
-        if options.geditor:
-            editor = glbl_cfg().get(['editors', 'gui'])
-        else:
-            editor = glbl_cfg().get(['editors', 'terminal'])
-        # The editor command may have options, e.g. 'emacs -nw'.
-        command_list = re.split(' ', editor)
-        command_list.append(jobfile_path)
-        command = ' '.join(command_list)
-        try:
-            # Block until the editor exits.
-            retcode = call(command_list)
-            if retcode != 0:
-                raise CylcError(
-                    'command failed with %d:\n %s' % (retcode, command))
-        except OSError:
-            raise CylcError('unable to execute:\n %s' % command)
-
-        # Get confirmation after editing is done.
-        # Don't allow force-no-prompt in this case.
-        if options.geditor:
-            # Alert stdout of the dialog window, in case it's missed.
-            print("Editing done. I'm popping up a confirmation dialog now.")
-
-        # Save a diff to record the changes made.
-        difflog = os.path.join(os.path.dirname(jobfile_path), JOB_LOG_DIFF)
-        with open(difflog, 'wb') as diff_file:
-            for line in difflib.unified_diff(
-                    open(jobfile_copy_path).readlines(),
-                    open(jobfile_path).readlines(),
-                    fromfile="original",
-                    tofile="edited"):
-                diff_file.write(line.encode())
-        os.unlink(jobfile_copy_path)
-
-        msg = "Trigger edited task %s?" % task_id
-        if not prompt(msg, gui=options.geditor, no_force=True, no_abort=True):
-            log_dir_symlink = os.path.dirname(jobfile_path)
-            real_log_dir = os.path.realpath(log_dir_symlink)
-            prev_nn = "%02d" % (int(os.path.basename(real_log_dir)) - 1)
-            os.unlink(log_dir_symlink)
-            if int(prev_nn) == 0:
-                # No previous submit: delete the whole parent directory.
-                shutil.rmtree(os.path.dirname(real_log_dir))
-            else:
-                # Reset to previous NN symlink and delete the log directory.
-                dirname = os.path.dirname(real_log_dir)
-                os.symlink(prev_nn, os.path.join(dirname, "NN"))
-                shutil.rmtree(real_log_dir)
-            aborted = True
-
-    # Trigger the task proxy(s).
     pclient(
-        'trigger_tasks',
-        {'tasks': task_globs, 'back_out': aborted}
+        'force_trigger_tasks',
+        {
+            'tasks': task_globs,
+            'reflow': options.reflow
+        }
     )
 
 

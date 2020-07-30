@@ -1,4 +1,3 @@
-#!jinja2
 [cylc]
     UTC mode=True
     cycle point format = %Y

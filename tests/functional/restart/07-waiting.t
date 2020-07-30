@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 # 
@@ -16,6 +16,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test restarting a simple suite with a waiting task
+
+# TODO: this test is not very meaningful in SoD
+
 if [[ -z ${TEST_DIR:-} ]]; then
     . "$(dirname "$0")/test_header"
 fi
@@ -37,9 +40,7 @@ TEST_NAME="${TEST_NAME_BASE}-restart-run"
 suite_run_ok "${TEST_NAME}" cylc restart --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 contains_ok "${TEST_DIR}/post-restart-db" <<'__DB_DUMP__'
-finish|20130923T0000Z|0||waiting
 shutdown|20130923T0000Z|1|1|succeeded
-waiting_task|20130923T0000Z|0||waiting
 __DB_DUMP__
 "${TEST_SOURCE_DIR}/bin/ctb-select-task-states" "${SUITE_RUN_DIR}" \
     > "${TEST_DIR}/db"

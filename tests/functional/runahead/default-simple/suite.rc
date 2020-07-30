@@ -8,7 +8,8 @@
     final cycle point = 20100105T00
     [[graph]]
         # Intervals are all 24 hours, but we really have a 6 hour repetition.
-        T00, T06, T12, T18 = "foo => bar"
+        # oops makes bar spawn as waiting to hold back the runahead
+        T00, T06, T12, T18 = "foo & oops => bar"
 [runtime]
     [[foo]]
         script = false

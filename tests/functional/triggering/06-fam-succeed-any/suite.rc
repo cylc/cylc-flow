@@ -4,8 +4,10 @@
 
 [scheduling]
     [[graph]]
-        R1 = """FAM:succeed-any => foo
-                   foo => !FAM"""
+        R1 = """
+    FAM:succeed-any => foo
+    a:fail & c:fail => handled
+             """
 [runtime]
     [[FAM]]
         script = "false"

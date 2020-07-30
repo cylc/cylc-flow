@@ -1,10 +1,6 @@
-
 # python bytecode
 *.py[cod]
 __pycache__/
-
-# - Command reference from called script 'custom/make-commands.sh'.
-doc/src/appendices/command-ref.rst
 
 # vim backup files
 *.swp
@@ -15,14 +11,8 @@ doc/src/appendices/command-ref.rst
 # vscode
 .vscode
 
-# ordereddict-0.4.5 build 
-ext/ordereddict-0.4.5/build
-
 # processed suite definitions
 *.rc.processed
-
-# suite passphrases
-passphrase
 
 # profiling
 .profiling
@@ -46,4 +36,3 @@ venv
 
 # mypy
 .mypy_cache/
-

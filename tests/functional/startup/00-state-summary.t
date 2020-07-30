@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 # 
@@ -30,11 +30,11 @@ run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 cylc run --no-detach "${SUITE_NAME}" > /dev/null 2>&1
 # Restart with a failed task and a succeeded task.
 cylc restart "${SUITE_NAME}"
-sleep 5
+poll_grep_suite_log -F '[foo.1] status=failed: (polled)failed'
 cylc dump "${SUITE_NAME}" > dump.out
 TEST_NAME=${TEST_NAME_BASE}-grep
 # State summary should not just say "Initializing..."
-grep_ok "state totals={'failed': 1, 'succeeded': 1}" dump.out
+grep_ok "state totals={'failed': 1}" dump.out
 #-------------------------------------------------------------------------------
 cylc stop --max-polls=10 --interval=2 "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"

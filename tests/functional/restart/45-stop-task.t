@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -23,7 +23,7 @@ dumpdbtables() {
     sqlite3 "${SUITE_RUN_DIR}/log/db" \
         'SELECT * FROM suite_params WHERE key=="stop_task";' >'stoptask.out'
     sqlite3 "${SUITE_RUN_DIR}/log/db" \
-        'SELECT * FROM task_pool ORDER BY cycle, name;' >'taskpool.out'
+        'SELECT cycle, name, status FROM task_pool ORDER BY cycle, name;' >'taskpool.out'
 }
 
 set_test_number 10
@@ -62,14 +62,7 @@ suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" --no-detach
 dumpdbtables
 cmp_ok 'stoptask.out' <<<'stop_task|t_i5.1'
 cmp_ok 'taskpool.out' <<'__OUT__'
-1|t_i1|1|succeeded|0
-1|t_i2|1|succeeded|0
-1|t_i3|0|waiting|0
-1|t_i4|0|waiting|0
-1|t_i5|0|waiting|0
-1|t_i6|0|waiting|0
-1|t_i7|0|waiting|0
-1|t_i8|0|waiting|0
+1|t_i3|waiting
 __OUT__
 
 suite_run_ok "${TEST_NAME_BASE}-restart-1" \
@@ -77,30 +70,14 @@ suite_run_ok "${TEST_NAME_BASE}-restart-1" \
 dumpdbtables
 cmp_ok 'stoptask.out' <'/dev/null'
 cmp_ok 'taskpool.out' <<'__OUT__'
-1|t_i1|1|succeeded|0
-1|t_i2|1|succeeded|0
-1|t_i3|1|succeeded|0
-1|t_i4|1|succeeded|0
-1|t_i5|1|succeeded|0
-1|t_i6|0|waiting|0
-1|t_i7|0|waiting|0
-1|t_i8|0|waiting|0
+1|t_i6|waiting
 __OUT__
 
 suite_run_ok "${TEST_NAME_BASE}-restart-2" \
     cylc restart "${SUITE_NAME}" --no-detach
 dumpdbtables
 cmp_ok 'stoptask.out' <'/dev/null'
-cmp_ok 'taskpool.out' <<'__OUT__'
-1|t_i1|1|succeeded|0
-1|t_i2|1|succeeded|0
-1|t_i3|1|succeeded|0
-1|t_i4|1|succeeded|0
-1|t_i5|1|succeeded|0
-1|t_i6|1|succeeded|0
-1|t_i7|1|succeeded|0
-1|t_i8|1|succeeded|0
-__OUT__
+cmp_ok 'taskpool.out' <'/dev/null'
 
 purge_suite "${SUITE_NAME}"
 exit

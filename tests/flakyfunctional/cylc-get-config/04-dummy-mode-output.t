@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -19,22 +19,29 @@
 # And no duplication dummy outputs (GitHub #2064)
 . "$(dirname "$0")/test_header"
 
-set_test_number 6
+set_test_number 10
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate --debug "${SUITE_NAME}"
 
-suite_run_fail "${TEST_NAME_BASE}-run-live" \
+# Live mode run: outputs not received, suite shuts down early without running baz
+suite_run_ok "${TEST_NAME_BASE}-run-live" \
     cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
+LOG="$(cylc log -m p "$SUITE_NAME")"
+count_ok '(received)meet' "${LOG}" 0
+count_ok '(received)greet' "${LOG}" 0
 
+# Dummy and sim mode: outputs auto-completed, baz runs
 suite_run_ok "${TEST_NAME_BASE}-run-dummy" \
     cylc run -m 'dummy' --reference-test --debug --no-detach "${SUITE_NAME}"
+LOG="$(cylc log -m p "$SUITE_NAME")"
+count_ok '(received)meet' "${LOG}" 1
+count_ok '(received)greet' "${LOG}" 1
 
 suite_run_ok "${TEST_NAME_BASE}-run-simulation" \
     cylc run -m 'simulation' --reference-test --debug --no-detach "${SUITE_NAME}"
-
 LOG="$(cylc log -m p "$SUITE_NAME")"
 count_ok '(received)meet' "${LOG}" 1
 count_ok '(received)greet' "${LOG}" 1

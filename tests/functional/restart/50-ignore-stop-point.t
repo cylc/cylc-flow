@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -23,7 +23,7 @@ dumpdbtables() {
     sqlite3 "${SUITE_RUN_DIR}/log/db" \
         'SELECT * FROM suite_params WHERE key=="stopcp";' >'stopcp.out'
     sqlite3 "${SUITE_RUN_DIR}/log/db" \
-        'SELECT * FROM task_pool ORDER BY cycle, name;' >'taskpool.out'
+        'SELECT cycle, name, status FROM task_pool ORDER BY cycle, name;' >'taskpool.out'
 }
 
 set_test_number 7
@@ -64,18 +64,14 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 dumpdbtables
 cmp_ok 'stopcp.out' <<<'stopcp|2018'
 cmp_ok 'taskpool.out' <<'__OUT__'
-2015|t1|1|succeeded|0
-2016|t1|0|waiting|0
+2016|t1|waiting
 __OUT__
 
 suite_run_ok "${TEST_NAME_BASE}-restart-1" \
     cylc restart "${SUITE_NAME}" --no-detach --ignore-stop-cycle-point
 dumpdbtables
 cmp_ok 'stopcp.out' <'/dev/null'
-cmp_ok 'taskpool.out' <<'__OUT__'
-2020|t1|1|succeeded|0
-2021|t1|0|waiting|0
-__OUT__
+cmp_ok 'taskpool.out' <'/dev/null'
 
 purge_suite "${SUITE_NAME}"
 exit

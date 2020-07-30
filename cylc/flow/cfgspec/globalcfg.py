@@ -89,7 +89,7 @@ with Conf('flow.rc', desc='''
     with Conf('cylc', desc='''
         Default values for entries in the suite.rc ``[cylc]`` section.
     '''):
-        Conf('UTC mode', VDR.V_BOOLEAN, desc='''
+        Conf('UTC mode', VDR.V_BOOLEAN, False, desc='''
                 Default for :cylc:conf:`suite.rc[cylc]UTC mode`.
         ''')
         Conf('task event mail interval', VDR.V_INTERVAL, DurationFloat(300),
@@ -125,7 +125,8 @@ with Conf('flow.rc', desc='''
         with Conf('main loop', desc='''
             Configuration of the Cylc Scheduler's main loop.
         '''):
-            Conf('plugins', VDR.V_STRING_LIST, ['health check'], desc='''
+            Conf('plugins', VDR.V_STRING_LIST,
+                 ['health check', 'prune flow labels'], desc='''
                 Configure the default main loop plugins to use when
                 starting up new suites.
             ''')
@@ -140,6 +141,13 @@ with Conf('flow.rc', desc='''
 
             with Conf('health check', meta=MainLoopPlugin, desc='''
                 Checks the integrity of the suite run directory.
+            '''):
+                Conf('interval', VDR.V_INTERVAL, DurationFloat(600), desc='''
+                    The interval with which this plugin is run.
+                ''')
+
+            with Conf('prune flow labels', meta=MainLoopPlugin, desc='''
+                Prune redundant flow labels.
             '''):
                 Conf('interval', VDR.V_INTERVAL, DurationFloat(600), desc='''
                     The interval with which this plugin is run.

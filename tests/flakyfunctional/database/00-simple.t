@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 # 
@@ -77,10 +77,11 @@ for DATE_TIME_STR in $(sed 's/[|]/ /g' "${NAME}"); do
         date --date="${DATE_TIME_STR/T/ }"
 done
 
-NAME='select-task-pool.out'
-sqlite3 "${DB_FILE}" 'SELECT name, cycle, spawned FROM task_pool ORDER BY name' \
+# Shut down with empty task pool (ran to completion)
+NAME=task-pool.out
+sqlite3 "${DB_FILE}" 'SELECT name, cycle, status FROM task_pool ORDER BY name' \
     >"${NAME}"
-cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}" "${NAME}"
+cmp_ok "${NAME}" <'/dev/null'
 
 NAME='select-task-states.out'
 sqlite3 "${DB_FILE}" 'SELECT name, cycle, status FROM task_states ORDER BY name' \

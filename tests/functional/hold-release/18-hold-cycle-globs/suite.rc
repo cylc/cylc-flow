@@ -1,18 +1,31 @@
 [cylc]
    UTC mode = True
+   [[events]]
+      abort if any task fails = True
+      timeout = PT1M
+      abort on timeout = True
 [scheduling]
     initial cycle point = 1990
     final cycle point = 2030
     [[graph]]
-        R1/1990 = """holder => releaser => t1"""
-        R1/2010 = """releaser[1990] => t2"""
+        R1/1990 = """
+spawner => t1
+holder => releaser => t1"""
+        R1/2010 = """
+spawner[1990] => t2
+releaser[1990] => t2"""
         R1/2030 = """
+spawner[1990] => t3
 releaser[1990] => t3
-releaser[1990] & t2[2010] & t3 => stopper
-"""
+releaser[1990] & t2[2010] & t3 => stopper"""
 [runtime]
     [[holder]]
-        script = cylc hold "${CYLC_SUITE_NAME}" '*/t*'
+        script = """
+cylc__job__poll_grep_suite_log 'spawned t1.19900101T0000Z'
+cylc__job__poll_grep_suite_log 'spawned t2.20100101T0000Z'
+cylc__job__poll_grep_suite_log 'spawned t3.20300101T0000Z'
+cylc hold "${CYLC_SUITE_NAME}" '*/t*'
+          """
     [[releaser]]
         script = cylc release "${CYLC_SUITE_NAME}" '20*/t*'
     [[stopper]]

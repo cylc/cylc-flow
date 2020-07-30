@@ -50,6 +50,9 @@ def get_option_parser():
         "-t", "--tasks", help="Task states only.",
         action="store_const", const="tasks", dest="disp_form")
     parser.add_option(
+        "-f", "--flow", help="Print flow label with tasks.",
+        action="store_true", default=False, dest="flow")
+    parser.add_option(
         "-r", "--raw", "--raw-format",
         help='Display raw format.',
         action="store_const", const="raw", dest="disp_form")
@@ -73,7 +76,7 @@ def main(_, options, suite):
             for key, value in sorted(summary[0].items()):
                 print("%s=%s" % (key, value))
         if options.disp_form != "global":
-            dump_to_stdout(summary[1], options.sort_by_cycle)
+            dump_to_stdout(summary[1], options.sort_by_cycle, options.flow)
 
 
 if __name__ == "__main__":

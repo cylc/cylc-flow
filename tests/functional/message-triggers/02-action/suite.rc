@@ -2,60 +2,20 @@
     [[events]]
         abort if any task fails = True
         abort on inactivity = True
-        inactivity = PT3M
+        inactivity = PT30S
 [scheduling]
     [[graph]]
          R1 = """
-            foo:fail => bar & baz
-            foo:a => !bar
-            foo:b => !baz"""
+            foo:a => bar
+            foo:b & bar => baz"""
 [runtime]
     [[foo]]
-        # Abort if messages don't result in the expected suite state change.
         script = """
-wait
-# There should be 3 task proxies in the suite state.
-while true; do
-    cylc dump -t "${CYLC_SUITE_NAME}" | sort > 'log.1'
-    if diff 'log.1' - << __EOF__
-bar, 1, waiting, unspawned, unheld
-baz, 1, waiting, unspawned, unheld
-foo, 1, running, spawned, unheld
-__EOF__
-    then
-        break
-    fi
-    sleep 1
-done
-
 cylc message "the quick brown fox"
-while true; do
-    # There should now be 2 task proxies in the suite state.
-    cylc dump -t "${CYLC_SUITE_NAME}" | sort > 'log.2'
-    if diff 'log.2' - << __EOF__
-baz, 1, waiting, unspawned, unheld
-foo, 1, running, spawned, unheld
-__EOF__
-    then
-        break
-    fi
-    sleep 1
-done
-
 cylc message "jumped over the lazy dog"
-while true; do
-    # There should now be only 1 task proxy in the suite state.
-    cylc dump -t "${CYLC_SUITE_NAME}" | sort > 'log.3'
-    if diff 'log.3' - << __EOF__
-foo, 1, running, spawned, unheld
-__EOF__
-    then
-        break
-    fi
-    sleep 1
-done
 """
         [[[outputs]]]
             a = "the quick brown fox"
             b = "jumped over the lazy dog"
-    [[bar, baz]]
+    [[bar]]
+    [[baz]]

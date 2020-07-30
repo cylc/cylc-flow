@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -24,7 +24,7 @@ dumpdbtables() {
         'SELECT * FROM suite_params WHERE key=="no_auto_shutdown";' \
         >'noautoshutdown.out'
     sqlite3 "${SUITE_RUN_DIR}/log/db" \
-        'SELECT * FROM task_pool ORDER BY cycle, name;' >'taskpool.out'
+        'SELECT cycle, name, status FROM task_pool ORDER BY cycle, name;' >'taskpool.out'
 }
 
 set_test_number 8
@@ -61,11 +61,7 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 dumpdbtables
 cmp_ok 'noautoshutdown.out' <<<"no_auto_shutdown|0"
 cmp_ok 'taskpool.out' <<'__OUT__'
-1|t_i1|1|succeeded|0
-1|t_i2|1|succeeded|0
-1|t_i3|0|waiting|0
-1|t_i4|0|waiting|0
-1|t_i5|0|waiting|0
+1|t_i3|waiting
 __OUT__
 
 suite_run_ok "${TEST_NAME_BASE}-restart-1" \
@@ -76,13 +72,7 @@ cut -d ' ' -f 4- "${SUITE_RUN_DIR}/log/suite/log" >'log.edited'
 contains_ok 'log.edited' <<__LOG__
 + no auto shutdown = False
 __LOG__
-cmp_ok 'taskpool.out' <<'__OUT__'
-1|t_i1|1|succeeded|0
-1|t_i2|1|succeeded|0
-1|t_i3|1|succeeded|0
-1|t_i4|1|succeeded|0
-1|t_i5|1|succeeded|0
-__OUT__
+cmp_ok 'taskpool.out' <'/dev/null'
 
 purge_suite "${SUITE_NAME}"
 exit

@@ -1,4 +1,3 @@
-
 [meta]
     title = "Suite to test that restart after reload works."
     description = """First task reloads and stops the suite,
@@ -11,11 +10,10 @@ which should run to completion on restarting."""
 [scheduling]
     initial cycle point = 20100808T00
     final cycle point = 20100809T00
-    runahead limit = PT12H
-    [[special tasks]]
-        sequential = foo
+    #[[special tasks]]
+    #    sequential = foo
     [[graph]]
-        T00 = "foo => bar"
+        T00 = "foo[-P1D] => foo => bar"
 [runtime]
     [[root]]
         script = true

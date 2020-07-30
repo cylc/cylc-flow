@@ -36,6 +36,7 @@ from cylc.flow.exceptions import (SuiteConfigError,
                                   TaskProxySequenceBoundsError,
                                   TriggerExpressionError)
 from cylc.flow.task_proxy import TaskProxy
+from cylc.flow.task_pool import FlowLabelMgr
 from cylc.flow.loggingutil import CylcLogFormatter
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow.option_parsers import CylcOptionParser as COP
@@ -115,9 +116,10 @@ def main(_, options, reg):
     # TODO - This is not exhaustive, it only uses the initial cycle point.
     if cylc.flow.flags.verbose:
         print('Instantiating tasks to check trigger expressions')
+    flow_label = FlowLabelMgr().get_new_label()
     for name, taskdef in cfg.taskdefs.items():
         try:
-            itask = TaskProxy(taskdef, cfg.start_point, is_startup=True)
+            itask = TaskProxy(taskdef, cfg.start_point, flow_label)
         except TaskProxySequenceBoundsError:
             # Should already failed above in strict mode.
             mesg = 'Task out of bounds for %s: %s\n' % (cfg.start_point, name)

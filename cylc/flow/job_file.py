@@ -19,6 +19,7 @@ import os
 import re
 import stat
 from subprocess import Popen, PIPE, DEVNULL
+from textwrap import dedent
 
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.batch_sys_manager import BatchSysManager
@@ -61,6 +62,7 @@ class JobFileWriter(object):
             with open(tmp_name, 'w') as handle:
                 self._write_header(handle, job_conf)
                 self._write_directives(handle, job_conf)
+                self._write_reinvocation(handle)
                 self._write_prelude(handle, job_conf)
                 self._write_suite_environment(handle, job_conf, run_d)
                 self._write_task_environment(handle, job_conf)
@@ -82,7 +84,7 @@ class JobFileWriter(object):
         if check_syntax:
             try:
                 with Popen(
-                        ['/bin/bash', '-n', tmp_name],
+                        ['/usr/bin/env', 'bash', '-n', tmp_name],
                         stderr=PIPE, stdin=DEVNULL) as proc:
                     if proc.wait():
                         # This will leave behind the temporary file,
@@ -92,7 +94,7 @@ class JobFileWriter(object):
                 # Popen has a bad habit of not telling you anything if it fails
                 # to run the executable.
                 if exc.filename is None:
-                    exc.filename = '/bin/bash'
+                    exc.filename = 'bash'
                 # Remove temporary file
                 try:
                     os.unlink(tmp_name)
@@ -141,6 +143,22 @@ class JobFileWriter(object):
             handle.write('\n\n# DIRECTIVES:')
             for line in lines:
                 handle.write('\n' + line)
+
+    def _write_reinvocation(self, handle):
+        """Re-invoke using user determined bash interpreter."""
+        # NOTE this must be done after the directives are written out
+        # due to the way slurm reads directives
+        # NOTE we cannot do /usr/bin/env bash because we need to use the -l
+        # option and GNU env doesn't support additional arguments (recent
+        # versions permit this with the -S option similar to BSD env but we
+        # cannot make the jump to this until is it more widely adopted)
+        handle.write(dedent('''
+            if [[ $1 == 'noreinvoke' ]]; then
+                shift
+            else
+                exec bash -l "$0" noreinvoke "$@"
+            fi
+        '''))
 
     def _write_prelude(self, handle, job_conf):
         """Job script prelude."""
@@ -219,6 +237,8 @@ class JobFileWriter(object):
             ' '.join(job_conf['dependencies']))
         handle.write(
             '\n    export CYLC_TASK_TRY_NUMBER=%s' % job_conf['try_num'])
+        handle.write(
+            '\n    export CYLC_TASK_FLOW_LABEL=%s' % job_conf['flow_label'])
         # Custom parameter environment variables
         for var, tmpl in job_conf['param_env_tmpl'].items():
             handle.write('\n    export %s="%s"' % (

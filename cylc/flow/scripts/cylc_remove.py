@@ -18,10 +18,8 @@
 
 """cylc [control] remove [OPTIONS] ARGS
 
-Remove one or more task instances from a running workflow.
+Remove task instances from the scheduler task pool.
 
-Tasks will be forced to spawn successors before removal if they have not done
-so already, unless you use '--no-spawn'.
 """
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
@@ -36,11 +34,6 @@ def get_option_parser():
             ("REG", "Suite name"),
             ('TASK_GLOB [...]', 'Task matching patterns')])
 
-    parser.add_option(
-        "--no-spawn",
-        help="Do not spawn successors before removal.",
-        action="store_true", default=False, dest="no_spawn")
-
     return parser
 
 
@@ -50,7 +43,7 @@ def main(parser, options, suite, *task_globs):
     pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
     pclient(
         'remove_tasks',
-        {'tasks': task_globs, 'spawn': (not options.no_spawn)}
+        {'tasks': task_globs}
     )
 
 

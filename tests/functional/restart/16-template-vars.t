@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 # 
@@ -29,7 +29,7 @@ run_ok "${TEST_NAME_BASE}-validate" \
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run "${SUITE_NAME}" \
     --set='FINAL_CYCLE_POINT=2020' --set='COMMAND=true' \
-    --until=2018 --debug --no-detach
+    --stop-point=2018 --debug --no-detach
 
 suite_run_ok "${TEST_NAME_BASE}-restart" \
     cylc restart "${SUITE_NAME}" --debug --no-detach --reference-test

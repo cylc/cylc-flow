@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 # 
@@ -40,7 +40,6 @@ grep_ok "failed_task|20130923T0000Z|1|1|failed" \
     "${TEST_DIR}/pre-restart-db"
 contains_ok "${TEST_DIR}/post-restart-db" <<'__DB_DUMP__'
 failed_task|20130923T0000Z|1|1|failed
-finish|20130923T0000Z|0||waiting
 shutdown|20130923T0000Z|1|1|succeeded
 __DB_DUMP__
 "${TEST_SOURCE_DIR}/bin/ctb-select-task-states" "${SUITE_RUN_DIR}" \

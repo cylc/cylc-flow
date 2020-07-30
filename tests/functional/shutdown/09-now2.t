@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -38,6 +38,8 @@ run_fail "${TEST_NAME_BASE}-activity-log-started" \
     "${JLOGD}/job-activity.log"
 # Check that t2.1 did not run
 exists_fail "${LOGD}/job/1/t2"
-suite_run_fail "${TEST_NAME_BASE}-run" cylc restart --no-detach "${SUITE_NAME}"
+# In SoD the restart does not stall and abort, because t1.1:failed can be removed
+# as handled.
+suite_run_ok "${TEST_NAME_BASE}-run" cylc restart --no-detach "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

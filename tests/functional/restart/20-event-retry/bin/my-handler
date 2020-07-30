@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -eu
 SUITE="$1"
 OUT_FILE="$CYLC_SUITE_RUN_DIR/file"

@@ -43,7 +43,7 @@ Main loop plugins can be activated either by:
 
   .. code-block:: console
 
-     $ # run a workflow using the "health check" and "auto restart" plugins:
+     $ # run a workflow using the "health check" and "auto restart" plugins:
      $ cylc run my-workflow --main-loop 'health check' \
        --main-loop 'auto restart'
 
@@ -64,7 +64,7 @@ Main loop plugins can be individually configured in their
    [cylc]
        [[main loop]]
            [[[health check]]]
-               interval = PT5M  # perform check every 5 minutes
+               interval = PT5M  # perform check every 5 minutes
 
 
 Developing Main Loop Plugins
@@ -87,7 +87,7 @@ Here is the "hello world" of main loop plugins:
 
    @startup
    async def my_startup_coroutine(schd, state):
-      # write Hello <suite name> to the Cylc log.
+      # write Hello <suite name> to the Cylc log.
       LOG.info(f'Hello {schd.suite}')
 
 Plugins are registered by registering them with the `cylc.main_loop`
@@ -96,7 +96,7 @@ entry point:
 .. code-block:: python
    :caption: setup.py
 
-   # plugins must be properly installed, in-place PYTHONPATH meddling will
+   # plugins must be properly installed, in-place PYTHONPATH meddling will
    # not work.
 
    from setuptools import setup
@@ -106,9 +106,9 @@ entry point:
        version='1.0',
        py_modules=['my_plugin'],
        entry_points={
-          # register this plugin with Cylc
+          # register this plugin with Cylc
           'cylc.main_loop': [
-            # name = python.namespace.of.module
+            # name = python.namespace.of.module
             'my_plugin=my_plugin.my_plugin'
           ]
        }

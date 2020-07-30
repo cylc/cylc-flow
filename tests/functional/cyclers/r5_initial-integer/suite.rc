@@ -1,0 +1,14 @@
+[scheduling]
+    cycling mode = integer
+    initial cycle point = 1
+    final cycle point = 7
+    [[graph]]
+        # xyzzy should not spawn bar in the last two cycle points:
+        P1 = xyzzy  # 7 cycles
+        R5//P1 = "xyzzy => bar"  # 5 cycles
+[runtime]
+    [[root]]
+        script = true
+[visualization]
+    initial cycle point = 1
+    final cycle point = 7

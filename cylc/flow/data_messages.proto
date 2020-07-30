@@ -33,6 +33,17 @@ syntax = "proto3";
  * If merge/rebase conflicts arise, then regenerate the module.
  * (DO NOT manually resolve conflicts)
  *
+ *
+ * WARNING: Avoid re-indexing existing fields!
+ *    - Field numbers do not need to be continuous/sequential (gaps are fine).
+ *    - These numbers are used by the client to know which field they correspond to,
+ *      so changing them can break back-compatibility (i.e. already running or old UIS).
+ *    - If in doubt, just leave the current fields as is, and just take a number
+ *      not in use for new fields.
+ *
+ * https://developers.google.com/protocol-buffers/docs/proto3#assigning_field_numbers
+ *
+ *
  * */
 
 
@@ -162,21 +173,20 @@ message PbTaskProxy {
     optional string task = 3;
     optional string state = 4;
     optional string cycle_point = 5;
-    optional bool spawned = 6;
-    optional int32 depth = 7;
-    optional int32 job_submits = 8;
-    optional string latest_message = 9;
-    repeated string outputs = 10;
-    repeated string broadcasts = 11;
-    repeated string namespace = 12;
-    repeated PbPrerequisite prerequisites = 13;
-    repeated string jobs = 14;
-    repeated string parents = 15;
-    optional string first_parent = 16;
-    optional string name = 17; /* filter item */
-    optional bool is_held = 18;
-    repeated string edges = 19;
-    repeated string ancestors = 20;
+    optional int32 depth = 6;
+    optional int32 job_submits = 7;
+    optional string latest_message = 8;
+    repeated string outputs = 9;
+    repeated string broadcasts = 10;
+    repeated string namespace = 11;
+    repeated PbPrerequisite prerequisites = 12;
+    repeated string jobs = 13;
+    repeated string parents = 14;
+    optional string first_parent = 15;
+    optional string name = 16; /* filter item */
+    optional bool is_held = 17;
+    repeated string edges = 18;
+    repeated string ancestors = 19;
 }
 
 message PbFamily {

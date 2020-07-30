@@ -7,7 +7,7 @@
 
 [scheduling]
     [[graph]]
-        R1 = reloader => remove_add_alter_me
+        R1 = reloader => inter => remove_add_alter_me
 
 [runtime]
    [[remove_add_alter_me]]
@@ -21,16 +21,11 @@ do_reload() {
         sleep 1
     done
 }
-sed -i "s/\(R1 = reloader\).*/\1/" "${CYLC_SUITE_DEF_PATH}/suite.rc"
+sed -i "s/\(R1 = reloader => inter\).*/\1/" "${CYLC_SUITE_DEF_PATH}/suite.rc"
 do_reload 1
-sed -i "s/\(R1 = reloader\)/\1 => remove_add_alter_me/" \
+sed -i "s/\(R1 = reloader => inter\)/\1 => remove_add_alter_me/" \
     "${CYLC_SUITE_DEF_PATH}/suite.rc"
 do_reload 2
-cylc insert "${CYLC_SUITE_NAME}" 'remove_add_alter_me.1'
-while ! grep -qF 'remove_add_alter_me' < <(cylc dump -t "${CYLC_SUITE_NAME}")
-do
-    sleep 1
-done
 cat >>"${CYLC_SUITE_DEF_PATH}/suite.rc" <<'__RUNTIME__'
 [[remove_add_alter_me]]
     script = true

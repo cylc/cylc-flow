@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2020 NIWA & British Crown (Met Office) & Contributors.
 #
@@ -57,9 +57,8 @@ ${SUITE_NAME} ${USER}@${HOST}:${PORT} ${USER}@${HOST}:${PUBLISH_PORT}
    custom_metadata:
       something_custom
    Task state totals:
-      failed:1 waiting:2
+      failed:1 waiting:1
       1 failed:1 waiting:1
-      2 waiting:1
 __END__
 
 # Check scan --describe output.

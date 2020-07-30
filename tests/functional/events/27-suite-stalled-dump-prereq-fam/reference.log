@@ -1,3 +1,4 @@
-2016-06-21T10:12:54Z INFO - Initial point: 1
-2016-06-21T10:12:54Z INFO - Final point: 1
-2016-06-21T10:12:54Z INFO - [foo.1] -triggered off []
+INFO - Initial point: 1
+INFO - Final point: 1
+INFO - [foo.1] -triggered off []
+INFO - [goo.1] -triggered off []

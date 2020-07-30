@@ -15,7 +15,8 @@
     initial cycle point = 1
     final cycle point = 2
     [[graph]]
-        R/1 = foo => bar
+        # oops makes bar spawn as waiting
+        R/1 = foo & oops => bar
         R/2 = bar[-P1] => pub
 [runtime]
     [[foo]]
