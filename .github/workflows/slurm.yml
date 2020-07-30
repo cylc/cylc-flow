@@ -4,7 +4,7 @@ name: bash
 on: [pull_request]
 
 jobs:
-  bash-docker:
+  slurm-docker:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
