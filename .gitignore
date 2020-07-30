@@ -2,11 +2,11 @@
 # python bytecode
 *.pyc
 
-# Generated documentation files (from 'cylc make-docs')
+# Generated documentation files (from 'make -C doc')
 # - Command reference from called script 'custom/make-commands.sh'.
 doc/src/appendices/command-ref.rst
 # - Main directory of generated sphinx docs (guides) files.
-doc/built-sphinx/
+doc/build/*
 # - Installed docs
 doc/install/
 

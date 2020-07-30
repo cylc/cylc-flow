@@ -1,0 +1,34 @@
+<!--
+  element which gets populated with the list of available versions and
+  formats for the documentation by versions.js
+-->
+<div
+  class="rst-versions"
+  data-toggle="rst-versions"
+  id='versions-and-formats'
+></div>
+
+{% set ROOT_DIR = pathto('').rsplit('.html', 1)[0] + '../..' %}
+
+<script type="text/javascript">
+    const CUR_FORMAT = "{{ builder }}";
+    const CUR_VERSION = "{{ release }}";
+    // name of page (in URL), for singlepage builds this will be `index`
+    const PAGE_NAME = "{{ current_page_name }}";
+    // URL path to the base docs dir i.e. ROOT_DIR/version/format
+    const ROOT_DIR = "{{ ROOT_DIR }}";
+</script>
+
+<script
+  type="text/javascript"
+  src="{{ ROOT_DIR }}/versions.js"
+></script>
+
+<!-- Hide the current version (doesn't fit well in this theme) -->
+<style
+  type="text/css"
+>
+  #versions-and-formats .rst-current-version {
+    display: none;
+  }
+</style>
