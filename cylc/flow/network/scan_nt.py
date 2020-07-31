@@ -13,6 +13,36 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Functionality for searching for workflows running as the current user.
+
+The :py:func:`scan` asynchronous generator yields workflows. Iterate
+over them using an ``async for`` statement::
+
+    async for flow in scan():
+        print(flow['name'])
+
+For further functionality construct a pipe::
+
+    pipe = scan | is_active(True) | contact_info
+    async for flow in pipe:
+        print(f'{flow["name"]} {flow["CYLC_SUITE_HOST"]}')
+
+There are filters which you can you to omit workflows e.g.
+:py:func:`cylc_version` and transformers which acquire more information
+e.g. :py:func:`contact_info`.
+
+.. note: we must manually list functions so they get built into the docs
+
+.. autofunction:: scan
+.. autofunction:: filter_name
+.. autofunction:: is_active
+.. autofunction:: contact_info
+.. autofunction:: cylc_version
+.. autofunction:: api_version
+.. autofunction:: graphql_query
+.. autofunction:: title
+
+"""
 
 from collections.abc import Iterable
 import asyncio
@@ -74,11 +104,6 @@ async def dir_is_flow(listing):
 async def scan(run_dir=None, max_depth=3):
     """List flows installed on the filesystem.
 
-    This is an async generator so use and async for to extract results::
-
-        async for flow in scan(directory):
-            print(flow['name'])
-
     Args:
         run_dir (pathlib.Path):
             The directory to scan, defaults to the cylc run directory.
@@ -129,7 +154,7 @@ async def filter_name(flow, pattern):
     Args:
         flow (dict):
             Flow information dictionary, provided by scan through the pipe.
-        *pattern (str):
+        pattern (str):
             One or more regex patterns as strings.
             This will return True if any of the patterns match.
 
@@ -188,13 +213,14 @@ async def cylc_version(flow, requirement):
     """Filter by cylc version.
 
     Requires:
+        * is_active(True)
         * contact_info
 
     Args:
         flow (dict):
             Flow information dictionary, provided by scan through the pipe.
         requirement (str):
-            Requirement specifier in pkg_resources format e.g. > 8, < 9
+            Requirement specifier in pkg_resources format e.g. ``> 8, < 9``
 
     """
     return parse_version(flow[ContactFileFields.VERSION]) in requirement
@@ -205,13 +231,14 @@ async def api_version(flow, requirement):
     """Filter by the cylc API version.
 
     Requires:
+        * is_active(True)
         * contact_info
 
     Args:
         flow (dict):
             Flow information dictionary, provided by scan through the pipe.
         requirement (str):
-            Requirement specifier in pkg_resources format e.g. > 8, < 9
+            Requirement specifier in pkg_resources format e.g. ``> 8, < 9``
 
     """
     return parse_version(flow[ContactFileFields.API]) in requirement
@@ -250,6 +277,10 @@ def format_query(fields, filters=None):
 @pipe(preproc=format_query)
 async def graphql_query(flow, fields, filters=None):
     """Obtain information from a GraphQL request to the flow.
+
+    Requires:
+        * is_active(True)
+        * contact_info
 
     Args:
         flow (dict):
@@ -316,7 +347,12 @@ async def graphql_query(flow, fields, filters=None):
 async def title(flow):
     """Attempt to parse the suite title out of the suite.rc file.
 
-    Note: This uses a fast but dumb method which may not be successfull.
+    .. warning::
+       This uses a fast but dumb method which may fail to extract the suite
+       title.
+
+       Obtaining the suite title via :py:func:`graphql_query` is preferable
+       for running flows.
 
     """
     flow['title'] = get_suite_title(flow['name'])

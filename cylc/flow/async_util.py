@@ -145,6 +145,10 @@ class _PipeFunction:
     def __repr__(self):
         return _AsyncPipe(self.func).__repr__()
 
+    @property
+    def __doc__(self):
+        return self.func.__doc__
+
 
 def pipe(func=None, preproc=None):
     """An asynchronous pipe implementation in pure Python.
