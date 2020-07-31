@@ -18,17 +18,23 @@
 
 # Note: Some modules are NOT imported in the header. Expensive modules are only
 # imported on demand.
+
 import os
+from pathlib import Path
 import re
 import shutil
 import zmq.auth
+
+import aiofiles
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import SuiteServiceFileError
 from cylc.flow.pathutil import get_suite_run_dir
 from cylc.flow.platforms import platform_from_name
 from cylc.flow.hostuserutil import (
-    get_user, is_remote_host, is_remote_user
+    get_user,
+    is_remote_host,
+    is_remote_user
 )
 from cylc.flow.unicode_rules import SuiteNameValidator
 
@@ -381,13 +387,10 @@ def get_suite_srv_dir(reg, suite_owner=None):
     return os.path.join(run_d, SuiteFiles.Service.DIRNAME)
 
 
-def load_contact_file(reg, path=None, owner=None, host=None):
+def load_contact_file(reg, owner=None, host=None):
     """Load contact file. Return data as key=value dict."""
     file_base = SuiteFiles.Service.CONTACT
-    if path:
-        path = path / SuiteFiles.Service.DIRNAME
-    else:
-        path = get_suite_srv_dir(reg)
+    path = get_suite_srv_dir(reg)
     file_content = _load_local_item(file_base, path)
     if file_content:
         data = {}
@@ -396,6 +399,29 @@ def load_contact_file(reg, path=None, owner=None, host=None):
             data[key] = value
         return data
     else:
+        raise SuiteServiceFileError("Couldn't load contact file")
+
+
+async def load_contact_file_async(reg, run_dir=None):
+    if not run_dir:
+        path = Path(
+            get_suite_srv_dir(reg),
+            SuiteFiles.Service.CONTACT
+        )
+    else:
+        path = Path(
+            run_dir,
+            SuiteFiles.Service.DIRNAME,
+            SuiteFiles.Service.CONTACT
+        )
+    try:
+        async with aiofiles.open(path, mode='r') as cont:
+            data = {}
+            async for line in cont:
+                key, value = [item.strip() for item in line.split("=", 1)]
+                data[key] = value
+            return data
+    except IOError:
         raise SuiteServiceFileError("Couldn't load contact file")
 
 

@@ -42,6 +42,7 @@ def find_version(*file_paths):
 
 
 install_requires = [
+    'aiofiles==0.5.*',
     'ansimarkup>=1.0.0',
     'colorama>=0.4,<=1',
     'click>=7.0',

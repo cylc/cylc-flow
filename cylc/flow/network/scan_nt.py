@@ -37,7 +37,7 @@ from cylc.flow.suite_files import (
     ContactFileFields,
     SuiteFiles,
     get_suite_title,
-    load_contact_file
+    load_contact_file_async
 )
 
 
@@ -169,7 +169,7 @@ async def contact_info(flow):
 
     """
     flow.update(
-        load_contact_file(flow['name'], path=flow['path'])
+        await load_contact_file_async(flow['name'], run_dir=flow['path'])
     )
     return flow
 
