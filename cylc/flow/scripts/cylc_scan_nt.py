@@ -209,7 +209,8 @@ def _format_json(items, _):
             }
             for flow in items
         ],
-        indent=4
+        indent=4,
+        sort_keys=True
     )
 
 
