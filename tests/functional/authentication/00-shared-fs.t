@@ -55,7 +55,7 @@ poll_grep_suite_log -F '[t1.19700101T0000Z] -running => failed'
 run_ok "${TEST_NAME_BASE}-broadcast" \
     cylc broadcast -n 't1' -s '[environment]CYLC_TEST_VAR_FOO=foo' "${SUITE_NAME}"
 run_ok "${TEST_NAME_BASE}-trigger" \
-    cylc trigger "${SUITE_NAME}" 't1' '19700101T0000Z'
+    cylc trigger "${SUITE_NAME}" 't1.19700101T0000Z'
 
 if wait "${SUITE_PID}"; then
     ok "${TEST_NAME_BASE}-run"
