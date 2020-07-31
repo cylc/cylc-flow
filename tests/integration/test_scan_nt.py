@@ -114,17 +114,6 @@ def run_dir_with_nasty_symlinks():
 
 
 @pytest.fixture(scope='session')
-def run_dir_with_really_nasty_symlinks():
-    tmp_path = Path(TemporaryDirectory().name)
-    tmp_path.mkdir()
-    flow = Path(tmp_path, 'foo')
-    flow.mkdir(parents=True)
-    Path(flow, 'bar').symlink_to(flow)
-    yield tmp_path
-    rmtree(tmp_path)
-
-
-@pytest.fixture(scope='session')
 def nested_run_dir():
     tmp_path = Path(TemporaryDirectory().name)
     tmp_path.mkdir()
@@ -194,14 +183,6 @@ async def test_scan_nasty_symlinks(run_dir_with_nasty_symlinks):
         'bar',  # well you got what you asked for
         'foo'
     ]
-
-
-@pytest.mark.asyncio
-async def test_scan_really_nasty_symlinks(run_dir_with_really_nasty_symlinks):
-    """It should handle infinite symlinks because users can be really nasty."""
-    with pytest.raises(OSError):
-        async for flow in scan(run_dir_with_really_nasty_symlinks):
-            pass
 
 
 @pytest.mark.asyncio
