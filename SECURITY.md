@@ -17,7 +17,7 @@ Please report security bugs by sending an email to the lead Cylc maintainers,
 [Hilary Oliver](mailto:hilary.oliver@niwa.co.nz) and [Oliver
 Sanders](mailto:oliver.sanders@metoffice.gov.uk). If a fix is needed, progress will be
 recorded on Cylc repository Issue page on GitHub, and resulting new releases
-will be announced on the Cylc [mail forum](mailto:cylc@googlegroups.com). 
+will be announced on the Cylc [Discourse forum](https://cylc.discourse.group/).
 
 Report security bugs in third-party modules to the person or team maintaining
 the module.
