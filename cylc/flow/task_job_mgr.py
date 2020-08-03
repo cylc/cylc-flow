@@ -668,10 +668,6 @@ class TaskJobManager(object):
         # sort itasks into lists based upon where they were run.
         auth_itasks = {}
         for itask in itasks:
-            # retrieve owner and host used last time
-            platform_n = itask.summary['platforms_used'][
-                max(itask.summary['platforms_used'])
-            ]
             platform_n = itask.platform['name']
             if platform_n not in auth_itasks:
                 auth_itasks[platform_n] = []
