@@ -306,7 +306,11 @@ with Conf(
             host (adjusted to UTC if the suite is in UTC mode but the host is
             not) to minute resolution.  Minutes (or hours, etc.) may be
             ignored depending on the value of
+
             :cylc:conf:`flow.cylc[cylc]cycle point format`.
+
+            For more information on setting the initial cycle point relative
+            to the current time see :ref:`setting-the-icp-relative-to-now`.
         ''')
         Conf('final cycle point', VDR.V_STRING, desc='''
             Cycling tasks are held once they pass the final cycle point, if
