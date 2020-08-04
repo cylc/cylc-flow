@@ -97,7 +97,7 @@ Argument keywords can be omitted if called in the right order, so the
    [[xtriggers]]
        clock_1 = wall_clock(PT1H)
 
-Finally, a zero-offset clock trigger does not need to be declared under
+A zero-offset clock trigger does not need to be declared under
 the ``[xtriggers]`` section:
 
 .. code-block:: cylc
@@ -111,6 +111,9 @@ the ``[xtriggers]`` section:
    [runtime]
        [[foo]]
            script = run-foo.sh
+
+However, when xtriggers are declared the name used must contain only
+the letters ``a`` to ``z`` in upper or lower case and underscores.
 
 
 .. _Built-in Suite State Triggers:
