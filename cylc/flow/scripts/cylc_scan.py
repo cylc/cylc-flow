@@ -124,7 +124,7 @@ def get_option_parser():
     )
 
     parser.add_option(
-        '--name',
+        '--name', '-n',
         help=(
             'Filter flows by registered name using a regex.'
             ' Can be used multiple times, workflows will be displayed if'
