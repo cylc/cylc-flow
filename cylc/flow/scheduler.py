@@ -260,7 +260,7 @@ class Scheduler:
 
         # directory information
         self.suite_dir = suite_files.get_suite_source_dir(self.suite)
-        self.suiterc = suite_files.get_suite_rc(self.suite)
+        self.suiterc = suite_files.get_flow_file(self.suite)
         self.suite_run_dir = get_suite_run_dir(self.suite)
         self.suite_work_dir = get_suite_run_work_dir(self.suite)
         self.suite_share_dir = get_suite_run_share_dir(self.suite)
@@ -399,7 +399,7 @@ class Scheduler:
         self.profiler.log_memory("scheduler.py: start configure")
         if self.is_restart:
             self.suite_db_mgr.restart_upgrade()
-            # This logic handles the lack of initial cycle point in "suite.rc".
+            # This logic handles lack of initial cycle point in "flow.cylc".
             # Things that can't change on suite reload.
             pri_dao = self.suite_db_mgr.get_pri_dao()
             pri_dao.select_suite_params(self._load_suite_params)
@@ -1238,7 +1238,7 @@ class Scheduler:
             mem_log_func=self.profiler.log_memory,
             output_fname=os.path.join(
                 self.suite_run_dir,
-                suite_files.SuiteFiles.SUITE_RC + '.processed'),
+                suite_files.SuiteFiles.FLOW_FILE + '.processed'),
             run_dir=self.suite_run_dir,
             log_dir=self.suite_log_dir,
             work_dir=self.suite_work_dir,

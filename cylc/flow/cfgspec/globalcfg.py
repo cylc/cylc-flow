@@ -87,21 +87,21 @@ with Conf('flow.rc', desc='''
 
     # suite
     with Conf('cylc', desc='''
-        Default values for entries in the suite.rc ``[cylc]`` section.
+        Default values for entries in flow.cylc ``[cylc]`` section.
     '''):
         Conf('UTC mode', VDR.V_BOOLEAN, False, desc='''
-                Default for :cylc:conf:`suite.rc[cylc]UTC mode`.
+                Default for :cylc:conf:`flow.cylc[cylc]UTC mode`.
         ''')
         Conf('task event mail interval', VDR.V_INTERVAL, DurationFloat(300),
              desc='''
                 Default for
-                :cylc:conf:`suite.rc[cylc]task event mail interval`.
+                :cylc:conf:`flow.cylc[cylc]task event mail interval`.
         ''')
 
         with Conf('events', desc='''
             You can define site defaults for each of the following options,
             details of which can be found under
-            :cylc:conf:`suite.rc[cylc][events]`.
+            :cylc:conf:`flow.cylc[cylc][events]`.
         '''):
             Conf('handlers', VDR.V_STRING_LIST)
             Conf('handler events', VDR.V_STRING_LIST)
@@ -380,7 +380,7 @@ with Conf('flow.rc', desc='''
             ''')
             Conf('retrieve job logs', VDR.V_BOOLEAN, desc='''
                 Global default for
-                :cylc:conf:`suite.rc[runtime][<namespace>][remote]retrieve job
+                :cylc:conf:`flow.cylc[runtime][<namespace>][remote]retrieve job
                 logs`.
             ''')
             Conf('retrieve job logs command', VDR.V_STRING, 'rsync -a',
@@ -391,22 +391,22 @@ with Conf('flow.rc', desc='''
             ''')
             Conf('retrieve job logs max size', VDR.V_STRING, desc='''
                 Global default for the
-                :cylc:conf:`suite.rc[runtime][<namespace>][remote]retrieve job
+                :cylc:conf:`flow.cylc[runtime][<namespace>][remote]retrieve job
                 logs max size`.
                 the specified host.
             ''')
             Conf('retrieve job logs retry delays', VDR.V_INTERVAL_LIST,
                  desc='''
                 Global default for the
-                :cylc:conf:`suite.rc[runtime][<namespace>][remote]retrieve job
+                :cylc:conf:`flow.cylc[runtime][<namespace>][remote]retrieve job
                 logs retry delays`.
                 setting for the specified host.
             ''')
             Conf('task event handler retry delays', VDR.V_INTERVAL_LIST,
                  desc='''
                 Host specific default for
-                :cylc:conf:`suite.rc[runtime][<namespace>][events]handler retry
-                delays`.
+                :cylc:conf:`flow.cylc[runtime][<namespace>][events]handler
+                retry delays`.
             ''')
             Conf('tail command template',
                  VDR.V_STRING, 'tail -n +1 -F %(filename)s', desc='''
@@ -540,7 +540,7 @@ with Conf('flow.rc', desc='''
     # task
     with Conf('task events', desc='''
         Global site/user defaults for
-        :cylc:conf:`suite.rc[runtime][<namespace>][events]`.
+        :cylc:conf:`flow.cylc[runtime][<namespace>][events]`.
     '''):
         Conf('execution timeout', VDR.V_INTERVAL)
         Conf('handlers', VDR.V_STRING_LIST)
@@ -659,7 +659,7 @@ with Conf('flow.rc', desc='''
     with Conf('authentication', desc='''
         Authentication of client programs with suite server programs can be
         configured here, and overridden in suites if necessary with
-        :cylc:conf:`suite.rc[cylc][authentication]`.
+        :cylc:conf:`flow.cylc[cylc][authentication]`.
 
         The suite-specific passphrase must be installed on a user's account to
         authorize full control privileges (see
