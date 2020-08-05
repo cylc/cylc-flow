@@ -54,7 +54,7 @@ for ARG in "$@"; do
         DIFF_CMD=${ARG#*=}
     else
         # A suite - check it's registered.
-        if ! cylc print --fail "$ARG$" >/dev/null 2>&1; then
+        if ! cylc scan --states=all | grep "$ARG" >/dev/null 2>&1; then
             echo "Suite not found: $ARG" >&2
             exit 1
         fi

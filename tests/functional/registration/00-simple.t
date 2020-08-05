@@ -219,7 +219,7 @@ __FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-val" cylc validate "${SUITE_NAME}"
 
-run_ok "${TEST_NAME_BASE}-print" cylc print
+run_ok "${TEST_NAME_BASE}-print" cylc scan -t name
 contains_ok "${TEST_NAME_BASE}-print.stdout" <<__OUT__
 ${SUITE_NAME} | the quick brown fox | ${TEST_DIR}/${SUITE_NAME}
 __OUT__
