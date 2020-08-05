@@ -29,7 +29,7 @@ process pool timeout = PT10S" ""
 
 # Long STDOUT output
 
-init_suite "${TEST_NAME_BASE}" <<__SUITERC__
+init_suite "${TEST_NAME_BASE}" <<__FLOW_CONFIG__
 [scheduling]
     [[graph]]
         R1 = t1
@@ -38,7 +38,7 @@ init_suite "${TEST_NAME_BASE}" <<__SUITERC__
         script = true
         [[[events]]]
             succeeded handler = cat "${CYLC_REPO_DIR}/COPYING" "${CYLC_REPO_DIR}/COPYING" "${CYLC_REPO_DIR}/COPYING" && echo
-__SUITERC__
+__FLOW_CONFIG__
 cat >'reference.log' <<'__REFLOG__'
 Initial point: 1
 Final point: 1
@@ -66,7 +66,7 @@ purge_suite "${SUITE_NAME}"
 
 # REPEAT: Long STDERR output
 
-init_suite "${TEST_NAME_BASE}" <<__SUITERC__
+init_suite "${TEST_NAME_BASE}" <<__FLOW_CONFIG__
 [scheduling]
     [[graph]]
         R1 = t1
@@ -75,7 +75,7 @@ init_suite "${TEST_NAME_BASE}" <<__SUITERC__
         script = true
         [[[events]]]
             succeeded handler = cat "${CYLC_REPO_DIR}/COPYING" "${CYLC_REPO_DIR}/COPYING" "${CYLC_REPO_DIR}/COPYING" >&2 && echo
-__SUITERC__
+__FLOW_CONFIG__
 cat >'reference.log' <<'__REFLOG__'
 Initial point: 1
 Final point: 1

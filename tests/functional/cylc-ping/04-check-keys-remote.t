@@ -19,22 +19,22 @@
 . "$(dirname "$0")/test_header"
 set_test_remote_host
 set_test_number 4
-init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
+init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [cylc]
 [scheduling]
     [[graph]]
         R1 = holder => held
 [runtime]
-    [[holder]]    
+    [[holder]]
         script = """cylc hold "${CYLC_SUITE_NAME}" """
         [[[remote]]]
             host = $CYLC_TEST_HOST
     [[held]]
         script = true
-__SUITE_RC__
+__FLOW_CONFIG__
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}" 
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" 
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
 RRUND="cylc-run/${SUITE_NAME}"
 RSRVD="${RRUND}/.service"
 poll_grep_suite_log 'Holding all waiting or queued tasks now'

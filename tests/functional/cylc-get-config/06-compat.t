@@ -21,7 +21,7 @@
 
 set_test_number 3
 
-cat >'suite.rc' <<'__SUITERC__'
+cat >'flow.cylc' <<'__FLOW_CONFIG__'
 [scheduling]
     initial cycle point = next(T00)
     [[dependencies]]
@@ -40,10 +40,10 @@ cat >'suite.rc' <<'__SUITERC__'
             graph = t1 => t2
         [[[ P1D!(01T, 11T) ]]]
             graph = t3
-__SUITERC__
-run_ok "${TEST_NAME_BASE}-validate" cylc validate 'suite.rc'
+__FLOW_CONFIG__
+run_ok "${TEST_NAME_BASE}-validate" cylc validate 'flow.cylc'
 run_ok "${TEST_NAME_BASE}-dependencies" \
-    cylc get-config --item='[scheduling][graph]' 'suite.rc'
+    cylc get-config --item='[scheduling][graph]' 'flow.cylc'
 cmp_ok "${TEST_NAME_BASE}-dependencies.stdout" <<'__OUT__'
 R1 = """
     r1

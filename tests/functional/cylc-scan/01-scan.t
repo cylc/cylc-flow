@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -20,14 +20,14 @@
 #-------------------------------------------------------------------------------
 set_test_number 8
 #-------------------------------------------------------------------------------
-init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
+init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduling]
     [[graph]]
         R1 = foo
 [runtime]
     [[foo]]
         script = sleep 60
-__SUITE_RC__
+__FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"

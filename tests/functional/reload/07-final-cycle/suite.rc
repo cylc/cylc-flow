@@ -15,7 +15,7 @@
     [[reloader]]
         script = """
 # change the final cycle:
-perl -pi -e 's/(final cycle point = )20100102T00( # marker)/\1 20100101T12\2/' $CYLC_SUITE_DEF_PATH/suite.rc
+perl -pi -e 's/(final cycle point = )20100102T00( # marker)/\1 20100101T12\2/' $CYLC_SUITE_DEF_PATH/flow.cylc
 # reload
 cylc reload -f $CYLC_SUITE_NAME
 cylc__job__poll_grep_suite_log -F 'Reload completed'

@@ -23,7 +23,7 @@
 set_test_number 3
 
 # Test suite uses built-in 'echo' xtrigger.
-init_suite "${TEST_NAME_BASE}" << '__SUITE_RC__'
+init_suite "${TEST_NAME_BASE}" << '__FLOW_CONFIG__'
 [cylc]
    cycle point format = %Y
 [scheduling]
@@ -42,9 +42,9 @@ init_suite "${TEST_NAME_BASE}" << '__SUITE_RC__'
 [runtime]
    [[start]]
    [[foo]]
-__SUITE_RC__
+__FLOW_CONFIG__
 
-run_ok "${TEST_NAME_BASE}-val" cylc validate 'suite.rc'
+run_ok "${TEST_NAME_BASE}-val" cylc validate 'flow.cylc'
 
 # Run suite; it will stall waiting on the never-satisfied xtriggers.
 cylc run "${SUITE_NAME}"

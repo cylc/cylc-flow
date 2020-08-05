@@ -25,7 +25,7 @@ TEST_NAME="${TEST_NAME_BASE}-pwd"
 
 TESTD="cylctb-cheese-${CYLC_TEST_TIME_INIT}"
 mkdir "${TESTD}"
-cat >> "${TESTD}/suite.rc" <<'__SUITE_RC__'
+cat >> "${TESTD}/flow.cylc" <<'__FLOW_CONFIG__'
 [meta]
     title = the quick brown fox
 [scheduling]
@@ -34,7 +34,7 @@ cat >> "${TESTD}/suite.rc" <<'__SUITE_RC__'
 [runtime]
     [[foo]]
         script = true
-__SUITE_RC__
+__FLOW_CONFIG__
 
 cd "${TESTD}" || exit 1
 run_ok "${TEST_NAME}-run" cylc run --hold
@@ -51,7 +51,7 @@ TESTD="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_NAME_BASE}"
 CYLC_RUN_DIR=$(cylc get-global --print-run-dir)
 
 mkdir -p "${CYLC_RUN_DIR}/${TESTD}"
-cat >> "${CYLC_RUN_DIR}/${TESTD}/suite.rc" <<'__SUITE_RC__'
+cat >> "${CYLC_RUN_DIR}/${TESTD}/flow.cylc" <<'__FLOW_CONFIG__'
 [meta]
     title = the quick brown fox
 [scheduling]
@@ -60,7 +60,7 @@ cat >> "${CYLC_RUN_DIR}/${TESTD}/suite.rc" <<'__SUITE_RC__'
 [runtime]
     [[foo]]
         script = true
-__SUITE_RC__
+__FLOW_CONFIG__
 
 TEST_NAME="${TEST_NAME_BASE}-cylc-run-dir"
 run_ok "${TEST_NAME}-run" cylc run --hold "${TESTD}"
@@ -74,7 +74,7 @@ purge_suite "${TESTD}"
 #------------------------------------------------------------------------------
 # Test `cylc run` REG for an un-registered suite
 mkdir -p "${CYLC_RUN_DIR}/${TESTD}"
-cat >> "${CYLC_RUN_DIR}/${TESTD}/suite.rc" <<'__SUITE_RC__'
+cat >> "${CYLC_RUN_DIR}/${TESTD}/flow.cylc" <<'__FLOW_CONFIG__'
 [meta]
     title = the quick brown fox
 [sched]
@@ -83,7 +83,7 @@ cat >> "${CYLC_RUN_DIR}/${TESTD}/suite.rc" <<'__SUITE_RC__'
 [runtime]
     [[foo]]
         script = true
-__SUITE_RC__
+__FLOW_CONFIG__
 
 TEST_NAME="${TEST_NAME_BASE}-cylc-run-dir-2"
 run_fail "${TEST_NAME}-validate" cylc validate "${TESTD}"

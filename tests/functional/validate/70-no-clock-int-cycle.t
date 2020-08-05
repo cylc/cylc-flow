@@ -20,7 +20,7 @@
 
 set_test_number 2
 
-cat >'suite.rc' <<'__SUITE_RC__'
+cat >'flow.cylc' <<'__FLOW_CONFIG__'
 [scheduling]
    cycling mode = integer
    initial cycle point = 1
@@ -29,9 +29,9 @@ cat >'suite.rc' <<'__SUITE_RC__'
        c1 = wall_clock(offset=P0Y)
    [[graph]]
       R/^/P1 = "@c1 & foo[-P1] => foo"
-__SUITE_RC__
+__FLOW_CONFIG__
 
-run_fail "${TEST_NAME_BASE}-val" cylc validate 'suite.rc'
+run_fail "${TEST_NAME_BASE}-val" cylc validate 'flow.cylc'
 
 contains_ok "${TEST_NAME_BASE}-val.stderr" <<'__END__'
 SuiteConfigError: clock xtriggers need date-time cycling: c1 = wall_clock(offset=P0Y)

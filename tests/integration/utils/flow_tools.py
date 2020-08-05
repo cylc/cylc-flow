@@ -48,7 +48,7 @@ def _make_flow(run_dir, test_dir, conf, name=None):
     reg = str(flow_run_dir.relative_to(run_dir))
     if isinstance(conf, dict):
         conf = suiterc(conf)
-    with open((flow_run_dir / 'suite.rc'), 'w+') as suiterc_file:
+    with open((flow_run_dir / 'flow.cylc'), 'w+') as suiterc_file:
         suiterc_file.write(conf)
     return reg
 

@@ -70,12 +70,12 @@
 #     exists_fail FILE
 #         Test that FILE does not exist
 #     init_suite TEST_NAME [SOURCE]
-#         Create a suite from SOURCE's "suite.rc" called:
+#         Create a suite from SOURCE's "flow.cylc" called:
 #         "cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR##*tests/}/${TEST_NAME}"
 #         Provides SUITE_NAME and SUITE_RUN_DIR variables.
 #     install_suite TEST_NAME SOURCE
 #         Same as init_suite, but SOURCE must be a directory containing a
-#         "suite.rc" file.
+#         "flow.cylc" file.
 #     log_scan TEST_NAME FILE ATTEMPTS DELAY PATTERN...
 #         Monitor FILE polling every DELAY seconds for maximum of ATTEMPTS
 #         tries grepping for each PATTERN in turn. Tests will only pass if the
@@ -410,11 +410,11 @@ graph_suite() {
 
 init_suite() {
     local TEST_NAME="$1"
-    local SUITE_RC="${2:--}"
+    local FLOW_CONFIG="${2:--}"
     SUITE_NAME="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME}"
     SUITE_RUN_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
     mkdir -p "${TEST_DIR}/${SUITE_NAME}/"
-    cat "${SUITE_RC}" >"${TEST_DIR}/${SUITE_NAME}/suite.rc"
+    cat "${FLOW_CONFIG}" >"${TEST_DIR}/${SUITE_NAME}/flow.cylc"
     cylc register "${SUITE_NAME}" "${TEST_DIR}/${SUITE_NAME}" 2>'/dev/null'
     cd "${TEST_DIR}/${SUITE_NAME}"
 }

@@ -20,7 +20,7 @@
 
 set_test_number 3
 
-init_suite "${TEST_NAME_BASE}-1" <<'__SUITE_RC__'
+init_suite "${TEST_NAME_BASE}-1" <<'__FLOW_CONFIG__'
 [cylc]
     UTC mode = True
 [scheduling]
@@ -29,10 +29,10 @@ init_suite "${TEST_NAME_BASE}-1" <<'__SUITE_RC__'
 [runtime]
     [[foo, bar]]
         script = true
-__SUITE_RC__
+__FLOW_CONFIG__
 # shellcheck disable=SC2153
 SUITE_NAME1="${SUITE_NAME}"
-init_suite "${TEST_NAME_BASE}-2" <<'__SUITE_RC__'
+init_suite "${TEST_NAME_BASE}-2" <<'__FLOW_CONFIG__'
 [cylc]
     UTC mode = True
 [scheduling]
@@ -41,7 +41,7 @@ init_suite "${TEST_NAME_BASE}-2" <<'__SUITE_RC__'
 [runtime]
     [[food, barley]]
         script = true
-__SUITE_RC__
+__FLOW_CONFIG__
 # shellcheck disable=SC2153
 SUITE_NAME2="${SUITE_NAME}"
 

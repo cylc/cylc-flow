@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -43,14 +43,14 @@ BASE_GLOBALRC="
     run hosts = localhost, ${CYLC_TEST_HOST}"
 
 TEST_NAME="${TEST_NAME_BASE}"
-TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME}" - <<'__SUITERC__'
+TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME}" - <<'__FLOW_CONFIG__'
 [cylc]
     [[parameters]]
         foo = 1..25
 [scheduling]
     [[graph]]
         R1 = "task<foo> => task<foo+1>"
-__SUITERC__
+__FLOW_CONFIG__
 # run suite on localhost normally
 create_test_globalrc '' "${BASE_GLOBALRC}"
 run_ok "${TEST_NAME}-suite-start" \

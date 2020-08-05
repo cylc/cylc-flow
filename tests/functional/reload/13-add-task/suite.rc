@@ -11,7 +11,7 @@
       script = true
    [[reloader]]
       script = """
-sed -i "s/\(R1 = reloader => foo\)\s*$/\1 => add_me/" $CYLC_SUITE_DEF_PATH/suite.rc
+sed -i "s/\(R1 = reloader => foo\)\s*$/\1 => add_me/" $CYLC_SUITE_DEF_PATH/flow.cylc
 cylc reload $CYLC_SUITE_NAME
 sleep 10
         """

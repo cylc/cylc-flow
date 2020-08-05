@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -18,14 +18,14 @@
 # Test that spawned children of tasks released in a held suite, are held.
 . "$(dirname "$0")/test_header"
 set_test_number 2
-init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
+init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduling]
    [[dependencies]]
         R1 = "foo => bar"
 [runtime]
    [[foo, bar]]
         script = true
-__SUITERC__
+__FLOW_CONFIG__
 
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run --hold "${SUITE_NAME}"
 

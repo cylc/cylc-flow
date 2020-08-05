@@ -19,7 +19,7 @@
 . "$(dirname "$0")/test_header"
 set_test_number 9
 
-init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
+init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 #!Jinja2
 [meta]
     title = a suite that logs run, reload, and restart configs
@@ -35,7 +35,7 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
         script = cylc reload "${CYLC_SUITE_NAME}"
     [[whatever]]
         script = true
-__SUITERC__
+__FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-val-1" cylc validate "${SUITE_NAME}"
 run_ok "${TEST_NAME_BASE}-val-2" \

@@ -24,7 +24,7 @@ create_test_globalrc '
 process pool size = 1
 ' ''
 
-init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
+init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [cylc]
     [[events]]
         abort on inactivity = True
@@ -45,7 +45,7 @@ sleep $((RANDOM % 10))
 wait
 sleep $((RANDOM % 5))
 """
-__SUITERC__
+__FLOW_CONFIG__
 
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"

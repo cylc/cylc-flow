@@ -19,7 +19,7 @@
 
 . "$(dirname "$0")/test_header"
 set_test_number 11
-init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
+init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [cylc]
     [[events]]
         abort on stalled = True
@@ -32,7 +32,7 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
 [runtime]
     [[t1, t2, t3]]
         script = true
-__SUITERC__
+__FLOW_CONFIG__
 
 create_test_globalrc '' '
 [suite logging]

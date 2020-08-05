@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -22,7 +22,7 @@ set_test_number 2
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-val"
-run_fail "${TEST_NAME}" cylc validate suite.rc
+run_fail "${TEST_NAME}" cylc validate flow.cylc
 cmp_ok "${TEST_NAME}.stderr" <<'__ERROR__'
 Jinja2Error: 'UNDEFINED_WHATEVER' is undefined
 Context lines:

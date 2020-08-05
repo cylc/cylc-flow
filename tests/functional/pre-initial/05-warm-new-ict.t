@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -15,8 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test pre-initial cycling works under warm starts with a new initial cycle 
-# time that is later than the suite.rc initial cycle point.
+# Test pre-initial cycling works under warm starts with a new initial cycle
+# time that is later than the flow.cylc initial cycle point.
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 2

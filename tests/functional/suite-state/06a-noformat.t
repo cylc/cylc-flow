@@ -22,7 +22,7 @@
 #-------------------------------------------------------------------------------
 set_test_number 5
 #-------------------------------------------------------------------------------
-init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
+init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [cylc]
     UTC mode = True
     # (Use default cycle point format)
@@ -33,7 +33,7 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
 [runtime]
     [[foo]]
         script = true
-__SUITERC__
+__FLOW_CONFIG__
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
 suite_run_ok "${TEST_NAME}" cylc run --debug --no-detach "${SUITE_NAME}"

@@ -21,7 +21,7 @@
 . "$(dirname "$0")/test_header"
 set_test_number 3
 
-init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
+init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [meta]
     title = the quick brown fox
 [scheduling]
@@ -30,7 +30,7 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
 [runtime]
     [[a,b,c]]
         script = true
-__SUITE_RC__
+__FLOW_CONFIG__
 RUND="$(cylc get-global-config --print-run-dir)"
 ln -sf "${SUITE_NAME}" "${RUND}/work"
 
@@ -41,7 +41,7 @@ __OUT__
 
 # Filter out errors from 'bad' suites in the 'cylc-run' directory
 NONSPECIFIC_ERR2='\[Errno 2\] No such file or directory:'
-SPECIFIC_ERR2="$NONSPECIFIC_ERR2 '$HOME/cylc-run/${SUITE_NAME}/suite.rc'"
+SPECIFIC_ERR2="$NONSPECIFIC_ERR2 '$HOME/cylc-run/${SUITE_NAME}/flow.cylc'"
 ERR2_COUNT=$(grep -c "$SPECIFIC_ERR2" "${TEST_NAME_BASE}-print.stderr")
 if [ "$ERR2_COUNT" -eq "0" ]; then
     grep -v -s "$NONSPECIFIC_ERR2" "${TEST_NAME_BASE}-print.stderr" > "${TEST_NAME_BASE}-print-filtered.stderr"

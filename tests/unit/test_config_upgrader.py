@@ -25,7 +25,7 @@ from cylc.flow.exceptions import PlatformLookupError
 
 # A set of tasks the host_to_platform_upgrader should be able to deal with
 # without hiccuping.
-SUITERC = """
+FLOW_CONFIG = """
 [runtime]
     [[alpha]]
         [[[remote]]]
@@ -62,7 +62,7 @@ SUITERC = """
 
 # A set of tasks which should return a validation failure because no
 # matching platform can be found.
-NOPLATFORM_SUITERC = """
+NOPLATFORM_FLOW_CONFIG = """
 [runtime]
     [[beta]]
     # => validation failure (no matching platform)
@@ -74,7 +74,7 @@ NOPLATFORM_SUITERC = """
 
 # A set of tasks which should return a python error because Cylc 7 & 8
 # Settings have both been used.
-BADSUITERC = """
+BAD_FLOW_CONFIG = """
 [runtime]
     [[kappa]]
         platform = sugar
@@ -84,7 +84,7 @@ BADSUITERC = """
             batch system = slurm
 """
 
-FUNC_SUITERC = """
+FUNC_FLOW_CONFIG = """
 [runtime]
     [[delta]]
         [[[remote]]]
@@ -142,25 +142,25 @@ def memoize(func):
 
 
 @memoize
-def set_up(global_rc_str, suite_rc_str, tmp_path):
+def set_up(global_rc_str, flow_file_str, tmp_path):
     """Set up configs before and after the upgrader has been run on them,
     and return these to the test function
 
     Args:
         global_rc_str (str):
             String of a `global.rc` file
-        suite_rc_str (str):
-            String of a `suite.rc` file
+        flow_file_str (str):
+            String of a `flow.cylc` file
         tmp_path (path object):
             A path to a temporary location to put some files.
     """
     # Set Up Config File
     globalrc = tmp_path / 'flow.rc'
-    suiterc = tmp_path / 'suite.rc'
+    suiterc = tmp_path / 'flow.cylc'
     with open(str(globalrc), 'w') as file_handle:
         file_handle.write(global_rc_str)
     with open(str(suiterc), 'w') as file_handle:
-        file_handle.write(suite_rc_str)
+        file_handle.write(flow_file_str)
     os.environ['CYLC_CONF_PATH'] = str(tmp_path)
     suite_config = RawSuiteConfig(str(suiterc), None, None)
     upgraded_suite_config = host_to_platform_upgrader(suite_config.sparse)
@@ -169,7 +169,7 @@ def set_up(global_rc_str, suite_rc_str, tmp_path):
 
 def test_upgrader_fn_not_used(tmp_path):
     # Check that nothing happens if nothing needs to.
-    before, after = set_up(GLOBALRC, SUITERC, tmp_path)
+    before, after = set_up(GLOBALRC, FLOW_CONFIG, tmp_path)
     assert after['runtime']['nu'] == before.get(['runtime', 'nu'])
 
 
@@ -185,7 +185,7 @@ def test_upgrader_fn_not_used(tmp_path):
 )
 def test_upgrader_function(tmp_path, task, output):
     # Check that upgradable configs are returned with platform settings added
-    before, after = set_up(GLOBALRC, SUITERC, tmp_path)
+    before, after = set_up(GLOBALRC, FLOW_CONFIG, tmp_path)
     assert after['runtime'][task]['platform'] == output
 
     # Assure ourselves that the old items have been removed
@@ -202,14 +202,14 @@ def test_upgrader_fails_mixed_syntax(tmp_path):
     """Check that mixed Cylc 7/8 configs return error messages.
     """
     with pytest.raises(PlatformLookupError):
-        set_up(GLOBALRC, BADSUITERC, tmp_path)
+        set_up(GLOBALRC, BAD_FLOW_CONFIG, tmp_path)
 
 
 def test_upgrader_fails_noplatform(tmp_path):
     """Check that an error is raised if no matchin Platfrom is found
     """
     with pytest.raises(PlatformLookupError):
-        set_up(GLOBALRC, NOPLATFORM_SUITERC, tmp_path)
+        set_up(GLOBALRC, NOPLATFORM_FLOW_CONFIG, tmp_path)
 
 
 def test_upgrader_where_host_is_function(tmp_path, caplog):
@@ -219,7 +219,7 @@ def test_upgrader_where_host_is_function(tmp_path, caplog):
     """
     import logging
     caplog.set_level(logging.DEBUG)
-    set_up(GLOBALRC, FUNC_SUITERC, tmp_path)
+    set_up(GLOBALRC, FUNC_FLOW_CONFIG, tmp_path)
     debug_tasks_messages = [
         (f"The host setting of '{name}' is a function: "
          f"Cylc will try to upgrade this task on job submission.")

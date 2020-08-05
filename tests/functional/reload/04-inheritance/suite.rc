@@ -13,7 +13,7 @@
     [[reloader]]
         script = """
 # change the inheritance of inheritor:
-perl -pi -e 's/(inherit = )FAM1( # marker)/\1FAM2\2/' $CYLC_SUITE_DEF_PATH/suite.rc
+perl -pi -e 's/(inherit = )FAM1( # marker)/\1FAM2\2/' $CYLC_SUITE_DEF_PATH/flow.cylc
 # reload
 cylc reload -f $CYLC_SUITE_NAME
 sleep 5

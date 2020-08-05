@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -26,9 +26,9 @@ set_test_number 2
 install_suite "${TEST_NAME_BASE}" '00-simple'
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc validate -o 'suite.rc.processed' "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc validate -o 'flow.cylc.processed' "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-check-expansion"
-cmp_ok 'suite.rc.processed' "${TEST_SOURCE_DIR}/00-simple/suite.rc-expanded"
+cmp_ok 'flow.cylc.processed' "${TEST_SOURCE_DIR}/00-simple/flow.cylc-expanded"
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"
