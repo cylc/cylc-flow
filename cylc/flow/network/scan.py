@@ -13,302 +13,347 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Port scan utilities."""
+"""Functionality for searching for workflows running as the current user.
 
+The :py:func:`scan` asynchronous generator yields workflows. Iterate
+over them using an ``async for`` statement::
+
+    async for flow in scan():
+        print(flow['name'])
+
+For further functionality construct a pipe::
+
+    pipe = scan | is_active(True) | contact_info
+    async for flow in pipe:
+        print(f'{flow["name"]} {flow["CYLC_SUITE_HOST"]}')
+
+There are filters which you can you to omit workflows e.g.
+:py:func:`cylc_version` and transformers which acquire more information
+e.g. :py:func:`contact_info`.
+
+.. note: we must manually list functions so they get built into the docs
+
+.. autofunction:: scan
+.. autofunction:: filter_name
+.. autofunction:: is_active
+.. autofunction:: contact_info
+.. autofunction:: cylc_version
+.. autofunction:: api_version
+.. autofunction:: graphql_query
+.. autofunction:: title
+
+"""
+
+from collections.abc import Iterable
 import asyncio
-import os
-from pwd import getpwall
+from pathlib import Path
 import re
-import sys
-import socket
-from cylc.flow import LOG
 
-from cylc.flow.exceptions import SuiteServiceFileError
-import cylc.flow.flags
-from cylc.flow.hostuserutil import is_remote_host, get_host_ip_by_name
+from pkg_resources import (
+    parse_requirements,
+    parse_version
+)
+
+from cylc.flow import LOG
+from cylc.flow.async_util import (
+    pipe,
+    asyncqgen,
+    scandir
+)
+from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.network.client import (
     SuiteRuntimeClient, ClientError, ClientTimeout)
-from cylc.flow.platforms import platform_from_name
 from cylc.flow.suite_files import (
     ContactFileFields,
     SuiteFiles,
-    load_contact_file,
     get_suite_title,
-    get_suite_source_dir
+    load_contact_file_async
 )
 
-DEBUG_DELIM = '\n' + ' ' * 4
-INACTIVITY_TIMEOUT = 10.0
-MSG_QUIT = "QUIT"
-MSG_TIMEOUT = "TIMEOUT"
-SLEEP_INTERVAL = 0.01
+
+SERVICE = Path(SuiteFiles.Service.DIRNAME)
+CONTACT = Path(SuiteFiles.Service.CONTACT)
+SUITERC = Path(SuiteFiles.SUITE_RC)
 
 
-def async_map(coroutine, iterator):
-    """Map iterator iterator onto a coroutine.
-
-    * Yields results in order as and when they are ready.
-    * Slow workers can block.
+async def dir_is_flow(listing):
+    """Return True if a Path contains a flow at the top level.
 
     Args:
-        coroutine (asyncio.coroutine):
-            I.E. an async function.
-        iterator (iter):
-            Should yield tuples to be passed into the coroutine.
-
-    Yields:
-        list - List of results.
-
-    Example:
-        >>> async def square(number): return number ** 2
-        >>> generator = async_map(square, ((i,) for i in range(5)))
-        >>> list(generator)
-        [0, 1, 4, 9, 16]
-
-    """
-    loop = asyncio.get_event_loop()
-
-    awaiting = []
-    for ind, args in enumerate(iterator):
-        task = loop.create_task(coroutine(*args))
-        task.ind = ind
-        awaiting.append(task)
-
-    index = 0
-    completed_tasks = {}
-    while awaiting:
-        completed, awaiting = loop.run_until_complete(
-            asyncio.wait(awaiting, return_when=asyncio.FIRST_COMPLETED))
-        completed_tasks.update({t.ind: t.result() for t in completed})
-
-        while completed_tasks:
-            if index in completed_tasks:
-                yield completed_tasks.pop(index)
-                index += 1
-            else:
-                break
-
-
-def async_unordered_map(coroutine, iterator):
-    """Map iterator iterator onto a coroutine.
-
-    Args:
-        coroutine (asyncio.coroutine):
-            I.E. an async function.
-        iterator (iter):
-            Should yield tuples to be passed into the coroutine.
-
-    Yields:
-        tuple - (args, result)
-
-    Example:
-        >>> async def square(number): return number ** 2
-        >>> generator = async_unordered_map(square, ((i,) for i in range(5)))
-        >>> sorted(list(generator))
-        [((0,), 0), ((1,), 1), ((2,), 4), ((3,), 9), ((4,), 16)]
-
-    """
-    loop = asyncio.get_event_loop()
-
-    awaiting = []
-    for args in iterator:
-        task = loop.create_task(coroutine(*args))
-        task.args = args
-        awaiting.append(task)
-
-    while awaiting:
-        completed, awaiting = loop.run_until_complete(
-            asyncio.wait(awaiting, return_when=asyncio.FIRST_COMPLETED))
-        for task in completed:
-            yield (task.args, task.result())
-
-
-def scan_many(items, methods=None, timeout=None, ordered=False):
-    """Call "identify" method of suites on many host:port.
-
-    Args:
-        items (list):
-            list of 'host' string or ('host', port, pub_port, api)
-            tuple to scan.
-        methods (list): list of 'method' string to be executed when scanning.
-        timeout (float): connection timeout, default is CONNECT_TIMEOUT.
-        ordered (bool): whether to scan items in order or not (default).
-
-    Return:
-        list: [(host, port, identify_result), ...]
-
-    """
-    args = ((reg, host, port, pub_port, api, timeout, methods)
-            for reg, host, port, pub_port, api in items)
-
-    if ordered:
-        yield from async_map(scan_one, args)
-    else:
-        yield from (
-            result for _, result in async_unordered_map(scan_one, args))
-
-
-async def scan_one(reg, host, port, pub_port, api, timeout=None, methods=None):
-    """Connect to and identify workflow server if possible.
-
-    Args:
-        reg (str): Registered name of workflow.
-        host (str): Workflow host.
-        port (int): Workflow server port.
-        pub_port (int): Workflow publisher port.
-        api (str): Workflow API version.
-        timeout (float, optional): Client socket receiver timeout.
-        methods (list): List of methods/endpoints to request.
+        listing (list):
+            A listing of the directory in question as a list of
+            ``pathlib.Path`` objects.
 
     Returns:
-        tuple: (reg, host, port, pub_port, result)
+        bool - True if the listing indicates that this is a flow directory.
 
     """
-    if not methods:
-        methods = ['identify']
-
-    if is_remote_host(host):
-        try:
-            host = get_host_ip_by_name(host)  # IP reduces DNS traffic
-        except socket.error as exc:
-            if cylc.flow.flags.debug:
-                raise
-            sys.stderr.write("ERROR: %s: %s\n" % (exc, host))
-            return (reg, host, port, pub_port, api, None)
-
-    # NOTE: Connect to the suite by host:port, this was the
-    #       SuiteRuntimeClient will not attempt to check the contact file
-    #       which would be unnecessary as we have already done so.
-    # NOTE: This part of the scan *is* IO blocking.
-    client = SuiteRuntimeClient(reg, timeout=timeout)
-
-    result = {}
-    for method in methods:
-        # work our way up the chain of identity methods, extract as much
-        # information as we can before the suite rejects us
-        try:
-            msg = await client.async_request(method)
-        except ClientTimeout:
-            LOG.exception(
-                "Timeout: name:%s, host:%s, port:%s", reg, host, port)
-            return (reg, host, port, pub_port, api, MSG_TIMEOUT)
-        except ClientError:
-            LOG.exception("ClientError")
-            return (reg, host, port, pub_port, api, result or None)
-        else:
-            result.update(msg)
-    return (reg, host, port, pub_port, api, result)
+    listing = {
+        path.name
+        for path in listing
+    }
+    return (
+        SERVICE.name in listing
+        or SUITERC.name in listing  # cylc7 flow definition file name
+        or 'flow.cylc' in listing  # cylc8 flow definition file name
+        or 'log' in listing
+    )
 
 
-def re_compile_filters(patterns_owner=None, patterns_name=None):
-    """Compile regexp for suite owner and suite name scan filters.
+@pipe
+async def scan(run_dir=None, max_depth=3):
+    """List flows installed on the filesystem.
 
-    Arguments:
-        patterns_owner (list): List of suite owner patterns
-        patterns_name (list): List of suite name patterns
+    Args:
+        run_dir (pathlib.Path):
+            The directory to scan, defaults to the cylc run directory.
+        max_depth (int):
+            The maximum number of levels to descend before bailing.
 
-    Returns (tuple):
-        A 2-element tuple in the form (cre_owner, cre_name). Either or both
-        element can be None to allow for the default scan behaviour.
-    """
-    cres = {'owner': None, 'name': None}
-    for label, items in [('owner', patterns_owner), ('name', patterns_name)]:
-        if items:
-            cres[label] = r'\A(?:' + r')|(?:'.join(items) + r')\Z'
-            try:
-                cres[label] = re.compile(cres[label])
-            except re.error:
-                raise ValueError(r'%s=%s: bad regexp' % (label, items))
-    return (cres['owner'], cres['name'])
-
-
-def get_scan_items_from_fs(
-        owner_pattern=None, reg_pattern=None, active_only=True):
-    """Scrape list of suites from the filesystem.
-
-    Walk users' "~/cylc-run/" to get (host, port) from ".service/contact" for
-    active, or all (active plus registered but dormant), suites.
-    Note suites run in cylc 7 or less will only be returned as LOG.info
-    statement.
+            * ``max_depth=1`` will pick up top-level suites (e.g. ``foo``).
+            * ``max_depth=2`` will pick up nested suites (e.g. ``foo/bar``).
 
     Yields:
-        tuple - (reg, host, port, pub_port, api)
+        dict - Dictionary containing information about the flow.
 
     """
-    if owner_pattern is None:
-        # Run directory of current user only
-        run_dirs = [
-            (os.path.expandvars(platform_from_name()['run directory']), None)
-        ]
-    else:
-        # Run directory of all users matching "owner_pattern".
-        # But skip those with /nologin or /false shells
-        run_dirs = []
-        skips = ('/false', '/nologin')
-        for pwent in getpwall():
-            if any(pwent.pw_shell.endswith(s) for s in skips):
-                continue
-            if owner_pattern.match(pwent.pw_name):
-                run_dirs.append(
-                    (
-                        os.path.expandvars(
-                            platform_from_name()['run directory']
-                        ),
-                        None
-                    )
-                )
-    if cylc.flow.flags.debug:
-        sys.stderr.write('Listing suites:%s%s\n' % (
-            DEBUG_DELIM, DEBUG_DELIM.join(item[1] for item in run_dirs if
-                                          item[1] is not None)))
-    for run_d, owner in run_dirs:
-        for dirpath, dnames, _ in os.walk(run_d, followlinks=True):
-            # Always descend for top directory, but
-            # don't descend further if it has a .service/ or log/ dir
-            if dirpath != run_d and (
-                    SuiteFiles.Service.DIRNAME
-                    in dnames or 'log' in dnames):
-                dnames[:] = []
+    if not run_dir:
+        run_dir = Path(
+            glbl_cfg().get_host_item('run directory').replace('$HOME', '~')
+        ).expanduser()
+    stack = asyncio.Queue()
+    for subdir in await scandir(run_dir):
+        if subdir.is_dir():
+            await stack.put((1, subdir))
 
-            # Filter suites by name
-            reg = os.path.relpath(dirpath, run_d)
-            if reg_pattern and not reg_pattern.match(reg):
-                continue
+    # for path in stack:
+    async for depth, path in asyncqgen(stack):
+        contents = await scandir(path)
+        if await dir_is_flow(contents):
+            # this is a flow directory
+            yield {
+                'name': str(path.relative_to(run_dir)),
+                'path': path,
+            }
+        elif depth < max_depth:
+            # we may have a nested flow, lets see...
+            for subdir in contents:
+                if subdir.is_dir():
+                    await stack.put((depth + 1, subdir))
 
-            # Choose only suites with .service and matching filter
-            if active_only:
-                # Skip suites running with cylc version < 8 (these suites
-                # do not have PUBLISH_PORT field)
-                try:
-                    contact_data = load_contact_file(reg, owner)
-                except (SuiteServiceFileError, IOError, TypeError):
-                    LOG.debug(f"Error loading contact file for: {reg}")
-                    continue
-                try:
-                    cylc_version = contact_data[ContactFileFields.VERSION]
-                    major_version = int(cylc_version.split(".", 1)[0])
-                    if (major_version < 8):
-                        LOG.info(f"Omitting \"{reg}\" (cylc-{cylc_version})")
-                        continue
-                except Exception as exc:
-                    LOG.debug(
-                        f"Error getting version from contact file: {exc}")
-                    continue
-                yield (
-                    reg,
-                    contact_data[ContactFileFields.HOST],
-                    contact_data[ContactFileFields.PORT],
-                    contact_data[ContactFileFields.PUBLISH_PORT],
-                    contact_data[ContactFileFields.API]
-                )
+
+def join_regexes(*patterns):
+    """Combine multiple regexes using OR logic."""
+    return (re.compile(rf'({"|".join(patterns)})'),), {}
+
+
+@pipe(preproc=join_regexes)
+async def filter_name(flow, pattern):
+    """Filter flows by name.
+
+    Args:
+        flow (dict):
+            Flow information dictionary, provided by scan through the pipe.
+        pattern (str):
+            One or more regex patterns as strings.
+            This will return True if any of the patterns match.
+
+    """
+    return bool(pattern.match(flow['name']))
+
+
+@pipe
+async def is_active(flow, is_active):
+    """Filter flows by the presence of a contact file.
+
+    Args:
+        flow (dict):
+            Flow information dictionary, provided by scan through the pipe.
+        is_active (bool):
+            True to filter for running flows.
+            False to filter for stopped and unregistered flows.
+
+    """
+    contact = flow['path'] / SERVICE / CONTACT
+    _is_active = contact.exists()
+    if _is_active:
+        flow['contact'] = contact
+    return _is_active == is_active
+
+
+@pipe
+async def contact_info(flow):
+    """Read information from the contact file.
+
+    Requires:
+        * is_active(True)
+
+    Args:
+        flow (dict):
+            Flow information dictionary, provided by scan through the pipe.
+
+    """
+    flow.update(
+        await load_contact_file_async(flow['name'], run_dir=flow['path'])
+    )
+    return flow
+
+
+def parse_requirement(requirement_string):
+    """Parse a requirement from a requirement string."""
+    # we have to give the requirement a name but what we call it doesn't
+    # actually matter
+    for req in parse_requirements(f'x {requirement_string}'):
+        # there should only be one requirement
+        return (req,), {}
+
+
+@pipe(preproc=parse_requirement)
+async def cylc_version(flow, requirement):
+    """Filter by cylc version.
+
+    Requires:
+        * is_active(True)
+        * contact_info
+
+    Args:
+        flow (dict):
+            Flow information dictionary, provided by scan through the pipe.
+        requirement (str):
+            Requirement specifier in pkg_resources format e.g. ``> 8, < 9``
+
+    """
+    return parse_version(flow[ContactFileFields.VERSION]) in requirement
+
+
+@pipe(preproc=parse_requirement)
+async def api_version(flow, requirement):
+    """Filter by the cylc API version.
+
+    Requires:
+        * is_active(True)
+        * contact_info
+
+    Args:
+        flow (dict):
+            Flow information dictionary, provided by scan through the pipe.
+        requirement (str):
+            Requirement specifier in pkg_resources format e.g. ``> 8, < 9``
+
+    """
+    return parse_version(flow[ContactFileFields.API]) in requirement
+
+
+def format_query(fields, filters=None):
+    ret = ''
+    stack = [(None, fields)]
+    while stack:
+        path, fields = stack.pop()
+        if isinstance(fields, dict):
+            leftover_fields = []
+            for key, value in fields.items():
+                if value:
+                    stack.append((
+                        key,
+                        value
+                    ))
+                else:
+                    leftover_fields.append(key)
+            if leftover_fields:
+                fields = leftover_fields
             else:
-                try:
-                    source_dir = get_suite_source_dir(reg)
-                    title = get_suite_title(reg)
-                except (SuiteServiceFileError, IOError):
-                    continue
-                yield (
-                    reg,
-                    source_dir,
-                    title
-                )
+                continue
+        if path:
+            ret += '\n' + f'{path} {{'
+            for field in fields:
+                ret += f'\n  {field}'
+            ret += '\n}'
+        else:
+            for field in fields:
+                ret += f'\n{field}'
+    return (ret + '\n',), {'filters': filters}
+
+
+@pipe(preproc=format_query)
+async def graphql_query(flow, fields, filters=None):
+    """Obtain information from a GraphQL request to the flow.
+
+    Requires:
+        * is_active(True)
+        * contact_info
+
+    Args:
+        flow (dict):
+            Flow information dictionary, provided by scan through the pipe.
+        fields:
+            Iterable containing the fields to request e.g::
+
+               ['id', 'name']
+
+            One level of nesting is supported e.g::
+
+               {'name': None, 'meta': ['title']}
+
+    """
+    query = f'query {{ workflows(ids: ["{flow["name"]}"]) {{ {fields} }} }}'
+    client = SuiteRuntimeClient(
+        flow['name'],
+        # use contact_info data if present for efficiency
+        host=flow.get('CYLC_SUITE_HOST'),
+        port=flow.get('CYLC_SUITE_PORT')
+    )
+    try:
+        ret = await client.async_request(
+            'graphql',
+            {
+                'request_string': query,
+                'variables': {}
+            }
+        )
+    except ClientTimeout:
+        LOG.exception(
+            f'Timeout: name: {flow["name"]}, '
+            f'host: {client.host}, '
+            f'port: {client.port}'
+        )
+        return False
+    except ClientError as exc:
+        LOG.exception(exc)
+        return False
+    else:
+        # stick the result into the flow object
+        for item in ret:
+            if 'error' in item:
+                LOG.exception(item['error']['message'])
+                return False
+            for workflow in ret.get('workflows', []):
+                flow.update(workflow)
+
+        # process filters
+        for field, value in filters or []:
+            for field_ in field:
+                value_ = flow[field_]
+            if isinstance(value, Iterable):
+                if value_ not in value:
+                    return False
+            else:
+                if value_ != value:
+                    return False
+
+        return flow
+
+
+@pipe
+async def title(flow):
+    """Attempt to parse the suite title out of the suite.rc file.
+
+    .. warning::
+       This uses a fast but dumb method which may fail to extract the suite
+       title.
+
+       Obtaining the suite title via :py:func:`graphql_query` is preferable
+       for running flows.
+
+    """
+    flow['title'] = get_suite_title(flow['name'])
+    return flow

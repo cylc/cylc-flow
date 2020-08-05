@@ -21,7 +21,7 @@ from tempfile import TemporaryDirectory
 
 import pytest
 
-from cylc.flow.network.scan_nt import (
+from cylc.flow.network.scan import (
     scan,
     is_active
 )

@@ -21,7 +21,7 @@ from textwrap import dedent
 
 import pytest
 
-from cylc.flow.network.scan_nt import (
+from cylc.flow.network.scan import (
     api_version,
     contact_info,
     cylc_version,
