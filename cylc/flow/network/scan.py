@@ -63,6 +63,7 @@ from cylc.flow.async_util import (
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.network.client import (
     SuiteRuntimeClient, ClientError, ClientTimeout)
+from cylc.flow.exceptions import SuiteStopped
 from cylc.flow.suite_files import (
     ContactFileFields,
     SuiteFiles,
@@ -296,12 +297,16 @@ async def graphql_query(flow, fields, filters=None):
 
     """
     query = f'query {{ workflows(ids: ["{flow["name"]}"]) {{ {fields} }} }}'
-    client = SuiteRuntimeClient(
-        flow['name'],
-        # use contact_info data if present for efficiency
-        host=flow.get('CYLC_SUITE_HOST'),
-        port=flow.get('CYLC_SUITE_PORT')
-    )
+    try:
+        client = SuiteRuntimeClient(
+            flow['name'],
+            # use contact_info data if present for efficiency
+            host=flow.get('CYLC_SUITE_HOST'),
+            port=flow.get('CYLC_SUITE_PORT')
+        )
+    except SuiteStopped:
+        LOG.warning(f'Workflow not running: {flow["name"]}')
+        return False
     try:
         ret = await client.async_request(
             'graphql',

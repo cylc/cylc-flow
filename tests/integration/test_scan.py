@@ -22,8 +22,9 @@ from tempfile import TemporaryDirectory
 import pytest
 
 from cylc.flow.network.scan import (
-    scan,
-    is_active
+    graphql_query,
+    is_active,
+    scan
 )
 from cylc.flow.suite_files import SuiteFiles
 
@@ -230,3 +231,31 @@ async def test_max_depth(nested_run_dir):
         'b/c',
         'd/e/f'
     ]
+
+
+@pytest.mark.asyncio
+async def test_scan_sigstop(flow, scheduler, run, one_conf, test_dir, caplog):
+    """It should log warnings if workflows are un-contactable.
+
+    Note:
+        This replaces tests/functional/cylc-scan/02-sigstop.t
+        last found in Cylc Flow 8.0a2 which used sigstop to make the flow
+        unresponsive.
+
+    """
+    # run a workflow
+    reg = flow(one_conf)
+    schd = scheduler(reg)
+    async with run(schd):
+        # stop the server to make the flow un-responsive
+        schd.server.stop()
+        # try scanning the workflow
+        pipe = scan(test_dir) | graphql_query(['status'])
+        caplog.clear()
+        async for flow in pipe:
+            raise Exception("There shouldn't be any scan results")
+        # there should, however, be a warning
+        name = Path(reg).name
+        assert [(level, msg) for _, level, msg in caplog.record_tuples] == [
+            (30, f'Workflow not running: {name}')
+        ]
