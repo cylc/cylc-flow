@@ -359,13 +359,15 @@ def get_suite_source_dir(reg, suite_owner=None):
             # suite exists but is not yet registered
             register(reg=reg, source=suite_d)
             return suite_d
-        else:
-            raise SuiteServiceFileError("Suite not found %s" % reg)
+        raise SuiteServiceFileError(f"Suite not found: {reg}")
     else:
-        if os.path.isabs(source):
-            return source
-        else:
-            return os.path.normpath(os.path.join(srv_d, source))
+        if not os.path.isabs(source):
+            source = os.path.normpath(os.path.join(srv_d, source))
+        flow_file_path = os.path.join(source, SuiteFiles.FLOW_FILE)
+        if not os.path.exists(flow_file_path):
+            # suite exists but is probably using deprecated suite.rc
+            register(reg=reg, source=source)
+        return source
 
 
 def get_suite_srv_dir(reg, suite_owner=None):
@@ -468,8 +470,7 @@ def register(reg=None, source=None, redirect=False, rundir=None):
             os.symlink(suite_rc_path, flow_file_path)
             LOG.warning(
                 f'The filename "{SuiteFiles.SUITE_RC}" is deprecated in favor '
-                f'of "{SuiteFiles.FLOW_FILE}". The latter has been '
-                f'automatically created as a symlink to the former.')
+                f'of "{SuiteFiles.FLOW_FILE}". Symlink created.')
         else:
             raise SuiteServiceFileError(
                 f"no flow.cylc or suite.rc in {source}")
