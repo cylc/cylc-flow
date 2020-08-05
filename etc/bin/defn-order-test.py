@@ -21,7 +21,7 @@ from copy import deepcopy
 
 # This is a standalone performance test of the algorithm used in gcylc to
 # sort namespaces into "definition order", i.e. the order in which they are
-# defined in the suite.rc file.
+# defined in the flow.cylc file.
 
 # Number of namespaces.
 N = 10000

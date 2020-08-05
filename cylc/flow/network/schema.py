@@ -1446,7 +1446,7 @@ class Reload(Mutation):
 
             If the suite was started with Jinja2 template variables set on the
             command line (cylc run --set FOO=bar REG) the same template
-            settings apply to the reload (only changes to the suite.rc
+            settings apply to the reload (only changes to the flow.cylc
             file itself are reloaded).
 
             If the modified suite definition does not parse, failure to reload

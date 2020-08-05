@@ -24,11 +24,11 @@ that Jinja2 suites can only be edited in raw form but the processed
 version can be viewed with 'cylc [prep] view -p'.
 
 1/cylc [prep] edit SUITE
-Change to the suite definition directory and edit the suite.rc file.
+Change to the suite definition directory and edit the flow.cylc file.
 
 2/ cylc [prep] edit -i,--inline SUITE
 Edit the suite with include-files inlined between special markers. The
-original suite.rc file is temporarily replaced so that the inlined
+original flow.cylc file is temporarily replaced so that the inlined
 version is "live" during editing (i.e. you can run suites during
 editing and cylc will pick up changes to the suite definition). The
 inlined file is then split into its constituent include-files
@@ -39,19 +39,19 @@ inlined (this prevents conflicting changes made to the same file).
 3/ cylc [prep] edit --cleanup SUITE
 Remove backup files left by previous INLINED edit sessions.
 
-INLINED EDITING SAFETY: The suite.rc file and its include-files are
+INLINED EDITING SAFETY: The flow.cylc file and its include-files are
 automatically backed up prior to an inlined editing session. If the
 editor dies mid-session just invoke 'cylc edit -i' again to recover from
 the last saved inlined file. On exiting the editor, if any of the
 original include-files are found to have changed due to external
 intervention during editing you will be warned and the affected files
 will be written to new backups instead of overwriting the originals.
-Finally, the inlined suite.rc file is also backed up on exiting
+Finally, the inlined flow.cylc file is also backed up on exiting
 the editor, to allow recovery in case of accidental corruption of the
 include-file boundary markers in the inlined file.
 
 The edit process is spawned in the foreground as follows:
-  % <editor> suite.rc
+  % <editor> flow.cylc
 Where <editor> is defined in the cylc site/user config files.
 
 See also 'cylc [prep] view'."""
@@ -120,7 +120,7 @@ def main(parser, options, *args):
         # move to suite def dir
         os.chdir(suitedir)
 
-        # edit the suite.rc file
+        # edit the flow.cylc file
         if not os.path.isfile(suiterc):
             raise UserInputError(f'file not found: {suiterc}')
 
@@ -137,7 +137,7 @@ def main(parser, options, *args):
         # !!!EDITING FINISHED!!!
         sys.exit(0)
 
-    # read the suite.rc file
+    # read the flow.cylc file
     if os.path.isfile(suiterc):
         # back up the original
         backup(suiterc)
@@ -185,7 +185,7 @@ def main(parser, options, *args):
     # Now back up the inlined file in case of absolute disaster, so as the
     # user or his editor corrupting the inlined-include-file marker lines.
     inlined_suiterc_backup = (
-        suitedir + '/suite.rc.INLINED.EDIT.' +
+        suitedir + '/flow.cylc.INLINED.EDIT.' +
         get_current_time_string(override_use_utc=True, use_basic_format=True)
     )
     copy(suiterc, inlined_suiterc_backup)

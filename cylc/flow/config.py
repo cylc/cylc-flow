@@ -619,7 +619,7 @@ class SuiteConfig(object):
 
         # (Note that we're retaining 'default node attributes' even
         # though this could now be achieved by styling the root family,
-        # because putting default attributes for root in the suite.rc spec
+        # because putting default attributes for root in the flow.cylc spec
         # results in root appearing last in the ordered dict of node
         # names, so it overrides the styling for lesser groups and
         # nodes, whereas the reverse is needed - fixing this would
@@ -1447,7 +1447,7 @@ class SuiteConfig(object):
         huge suites (several thousand tasks).
         Note:
           (a) self.cfg['runtime'][name]
-              contains the task definition sections of the suite.rc file.
+              contains the task definition sections of the flow.cylc file.
           (b) self.taskdefs[name]
               contains tasks that will be used, defined by the graph.
         Tasks (a) may be defined but not used (e.g. commented out of the
@@ -1565,10 +1565,10 @@ class SuiteConfig(object):
                 replicate(self.cfg['runtime'][name],
                           self.cfg['runtime']['root'])
                 if 'root' not in self.runtime['descendants']:
-                    # (happens when no runtimes are defined in the suite.rc)
+                    # (happens when no runtimes are defined in flow.cylc)
                     self.runtime['descendants']['root'] = []
                 if 'root' not in self.runtime['first-parent descendants']:
-                    # (happens when no runtimes are defined in the suite.rc)
+                    # (happens when no runtimes are defined in flow.cylc)
                     self.runtime['first-parent descendants']['root'] = []
                 self.runtime['parents'][name] = ['root']
                 self.runtime['linearized ancestors'][name] = [name, 'root']

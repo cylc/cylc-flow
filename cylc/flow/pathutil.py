@@ -65,7 +65,7 @@ def get_suite_run_log_name(suite):
 
 
 def get_suite_run_rc_dir(suite, *args):
-    """Return suite run suite.rc log directory, join any extra args."""
+    """Return suite run flow.cylc log directory, join any extra args."""
     return get_suite_run_dir(suite, 'log', 'suiterc', *args)
 
 

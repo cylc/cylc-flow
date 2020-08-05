@@ -20,7 +20,7 @@
 
 Compare two suite definitions and display any differences.
 
-Differencing is done after parsing the suite.rc files so it takes
+Differencing is done after parsing the flow.cylc files so it takes
 account of default values that are not explicitly defined, it disregards
 the order of configuration items, and it sees any include-file content
 after inlining has occurred.
@@ -120,7 +120,7 @@ def get_option_parser():
 
     parser.add_option(
         "-n", "--nested",
-        help="print suite.rc section headings in nested form.",
+        help="print flow.cylc section headings in nested form.",
         action="store_true", default=False, dest="nested")
 
     return parser

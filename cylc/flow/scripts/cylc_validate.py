@@ -63,7 +63,7 @@ def parse_args():
 
     parser.add_option(
         "--output", "-o",
-        help="Specify a file name to dump the processed suite.rc.",
+        help="Specify a file name to dump the processed flow.cylc.",
         metavar="FILENAME", action="store", dest="output")
 
     parser.add_option(

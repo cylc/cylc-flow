@@ -257,7 +257,7 @@ TASK_GLOB matches task or family names at a given cycle point.
                 metavar="CYCLE_POINT",
                 help=(
                     "Set the initial cycle point. "
-                    "Required if not defined in suite.rc."
+                    "Required if not defined in flow.cylc."
                 ),
                 action="store",
                 dest="icp",

@@ -30,7 +30,7 @@ historical reasons) as "None" with -o/--one-line. These defaults
 can be changed with the -n/--null-value option.
 
 Example:
-  |# SUITE.RC
+  |# FLOW.CYLC
   |[runtime]
   |    [[modelX]]
   |        [[[environment]]]

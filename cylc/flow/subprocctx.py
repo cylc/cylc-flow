@@ -113,7 +113,7 @@ class SubFuncContext(SubProcContext):
     Attributes:
         # See also parent class attributes.
         .label (str):
-            function label under [xtriggers] in suite.rc
+            function label under [xtriggers] in flow.cylc
         .func_name (str):
             function name
         .func_args (list):

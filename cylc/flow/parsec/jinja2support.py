@@ -226,7 +226,7 @@ def jinja2process(flines, dir_, template_vars=None):
         filename = None
         # extract source lines
         if exc.lineno and exc.source and not exc.filename:
-            # error in suite.rc or cylc include file
+            # error in flow.cylc or cylc include file
             lines = exc.source.splitlines()
         elif exc.lineno and exc.filename:
             # error in jinja2 include file

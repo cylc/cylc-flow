@@ -18,11 +18,11 @@
 
 """cylc [prep] view [OPTIONS] ARGS
 
-View a read-only temporary copy of suite NAME's suite.rc file, in your
+View a read-only temporary copy of suite NAME's flow.cylc file, in your
 editor, after optional include-file inlining and Jinja2 preprocessing.
 
 The edit process is spawned in the foreground as follows:
-  % <editor> suite.rc
+  % <editor> flow.cylc
 Where <editor> can be set in cylc global config.
 
 For remote host or owner, the suite will be printed to stdout unless
@@ -124,7 +124,7 @@ def main(parser, options, reg):
     else:
         editor = glbl_cfg().get(['editors', 'terminal'])
 
-    # read in the suite.rc file
+    # read in the flow.cylc file
     viewcfg = {'mark': options.mark,
                'single': options.single,
                'label': options.label,
@@ -146,7 +146,7 @@ def main(parser, options, reg):
 
     # write to a temporary file
     viewfile = NamedTemporaryFile(
-        suffix=".suite.rc", prefix=suite.replace('/', '_') + '.',
+        suffix=".flow.cylc", prefix=suite.replace('/', '_') + '.',
     )
     for line in lines:
         viewfile.write((line + '\n').encode())

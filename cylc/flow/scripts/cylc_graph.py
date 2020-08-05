@@ -212,7 +212,7 @@ def get_option_parser():
 
     parser.add_option(
         '--icp', action='store', default=None, metavar='CYCLE_POINT', help=(
-            'Set initial cycle point. Required if not defined in suite.rc.'))
+            'Set initial cycle point. Required if not defined in flow.cylc.'))
 
     return parser
 
