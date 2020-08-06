@@ -28,5 +28,5 @@ def test_flow(run_dir, flow, one_conf):
     reg = flow(one_conf)
     assert Path(run_dir / reg).exists()
     assert Path(run_dir / reg / 'flow.cylc').exists()
-    with open(Path(run_dir / reg / 'flow.cylc'), 'r') as suiterc:
-        assert 'scheduling' in suiterc.read()
+    with open(Path(run_dir / reg / 'flow.cylc'), 'r') as flow_file:
+        assert 'scheduling' in flow_file.read()

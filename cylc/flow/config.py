@@ -697,7 +697,7 @@ class SuiteConfig(object):
         self.mem_log("config.py: end init config")
 
     def process_initial_cycle_point(self):
-        """Validate and set initial cycle point from suiterc.
+        """Validate and set initial cycle point from flow.cylc.
 
         Sets:
             self.initial_point

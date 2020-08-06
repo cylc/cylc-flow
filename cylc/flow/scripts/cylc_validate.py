@@ -92,10 +92,10 @@ def main(_, options, reg):
             if isinstance(handler.formatter, CylcLogFormatter):
                 handler.formatter.configure(timestamp=False)
 
-    suite, suiterc = parse_suite_arg(options, reg)
+    suite, flow_file = parse_suite_arg(options, reg)
     cfg = SuiteConfig(
         suite,
-        suiterc,
+        flow_file,
         options,
         load_template_vars(options.templatevars, options.templatevars_file),
         output_fname=options.output, mem_log_func=profiler.log_memory)

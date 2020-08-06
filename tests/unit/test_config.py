@@ -219,7 +219,7 @@ class TestSuiteConfig(object):
 
 def test_queue_config_repeated(caplog, tmp_path):
     """Test repeated assignment to same queue."""
-    suiterc_content = """
+    flow_file_content = """
 [scheduling]
    [[queues]]
        [[[q1]]]
@@ -236,7 +236,7 @@ def test_queue_config_repeated(caplog, tmp_path):
    [[y]]
     """
     flow_file = tmp_path / "flow.cylc"
-    flow_file.write_text(suiterc_content)
+    flow_file.write_text(flow_file_content)
     config = SuiteConfig(suite="qtest", fpath=flow_file.absolute())
     log = caplog.messages[0].split('\n')
     assert log[0] == "Queue configuration warnings:"
@@ -245,7 +245,7 @@ def test_queue_config_repeated(caplog, tmp_path):
 
 def test_queue_config_not_used_not_defined(caplog, tmp_path):
     """Test task not defined vs no used, in queue config."""
-    suiterc_content = """
+    flow_file_content = """
 [scheduling]
    [[queues]]
        [[[q1]]]
@@ -262,7 +262,7 @@ def test_queue_config_not_used_not_defined(caplog, tmp_path):
    # bar not even defined
     """
     flow_file = tmp_path / "flow.cylc"
-    flow_file.write_text(suiterc_content)
+    flow_file.write_text(flow_file_content)
     config = SuiteConfig(suite="qtest", fpath=flow_file.absolute())
     log = caplog.messages[0].split('\n')
     assert log[0] == "Queue configuration warnings:"

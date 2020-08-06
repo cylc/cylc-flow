@@ -117,7 +117,7 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser, options, reg):
-    suite, suiterc = parse_suite_arg(options, reg)
+    suite, flow_file = parse_suite_arg(options, reg)
 
     if options.geditor:
         editor = glbl_cfg().get(['editors', 'gui'])
@@ -135,7 +135,7 @@ def main(parser, options, reg):
                           or options.process),
                }
     lines = read_and_proc(
-        suiterc,
+        flow_file,
         load_template_vars(options.templatevars, options.templatevars_file),
         viewcfg=viewcfg, asedit=options.asedit)
 

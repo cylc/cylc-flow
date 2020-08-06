@@ -181,8 +181,8 @@ class Scheduler:
     # configuration
     config: SuiteConfig = None  # flow config
     cylc_config: DictTree = None  # [cylc] config
-    suiterc: str = None
-    suiterc_update_time: float = None
+    flow_file: str = None
+    flow_file_update_time: float = None
 
     # directories
     suite_dir: str = None
@@ -260,7 +260,7 @@ class Scheduler:
 
         # directory information
         self.suite_dir = suite_files.get_suite_source_dir(self.suite)
-        self.suiterc = suite_files.get_flow_file(self.suite)
+        self.flow_file = suite_files.get_flow_file(self.suite)
         self.suite_run_dir = get_suite_run_dir(self.suite)
         self.suite_work_dir = get_suite_run_work_dir(self.suite)
         self.suite_share_dir = get_suite_run_share_dir(self.suite)
@@ -423,9 +423,9 @@ class Scheduler:
                     pass
                 copytree(suite_py, suite_run_py)
 
-        self.profiler.log_memory("scheduler.py: before load_suiterc")
-        self.load_suiterc()
-        self.profiler.log_memory("scheduler.py: after load_suiterc")
+        self.profiler.log_memory("scheduler.py: before load_flow_file")
+        self.load_flow_file()
+        self.profiler.log_memory("scheduler.py: after load_flow_file")
 
         self.suite_db_mgr.on_suite_start(self.is_restart)
 
@@ -1134,7 +1134,7 @@ class Scheduler:
         LOG.info("Reloading the suite definition.")
         old_tasks = set(self.config.get_task_name_list())
         self.suite_db_mgr.checkpoint("reload-init")
-        self.load_suiterc(is_reload=True)
+        self.load_flow_file(is_reload=True)
         self.broadcast_mgr.linearized_ancestors = (
             self.config.get_linearized_ancestors())
         self.pool.set_do_reload(self.config)
@@ -1225,12 +1225,12 @@ class Scheduler:
         suite_files.dump_contact_file(self.suite, contact_data)
         self.contact_data = contact_data
 
-    def load_suiterc(self, is_reload=False):
+    def load_flow_file(self, is_reload=False):
         """Load, and log the suite definition."""
         # Local suite environment set therein.
         self.config = SuiteConfig(
             self.suite,
-            self.suiterc,
+            self.flow_file,
             self.options,
             self.template_vars,
             is_reload=is_reload,
@@ -1248,8 +1248,8 @@ class Scheduler:
             self.config.cfg['cylc'],
             glbl_cfg().get(['cylc'])
         )
-        self.suiterc_update_time = time()
-        # Dump the loaded suiterc for future reference.
+        self.flow_file_update_time = time()
+        # Dump the loaded flow.cylc file for future reference.
         time_str = get_current_time_string(
             override_use_utc=True, use_basic_format=True,
             display_sub_seconds=False

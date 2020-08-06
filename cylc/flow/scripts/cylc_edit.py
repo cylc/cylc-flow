@@ -101,14 +101,14 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser, options, *args):
-    suiterc = parse_suite_arg(options, args[0])[1]
+    flow_file = parse_suite_arg(options, args[0])[1]
 
     if options.geditor:
         editor = glbl_cfg().get(['editors', 'gui'])
     else:
         editor = glbl_cfg().get(['editors', 'terminal'])
 
-    suitedir = os.path.dirname(suiterc)
+    suitedir = os.path.dirname(flow_file)
 
     if options.cleanup:
         # remove backup files left by inlined editing sessions
@@ -121,12 +121,12 @@ def main(parser, options, *args):
         os.chdir(suitedir)
 
         # edit the flow.cylc file
-        if not os.path.isfile(suiterc):
-            raise UserInputError(f'file not found: {suiterc}')
+        if not os.path.isfile(flow_file):
+            raise UserInputError(f'file not found: {flow_file}')
 
         # in case editor has options, e.g. 'emacs -nw':
         command_list = re.split(' ', editor)
-        command_list.append(suiterc)
+        command_list.append(flow_file)
         command = ' '.join(command_list)
         # THIS BLOCKS UNTIL THE COMMAND COMPLETES
         retcode = call(command_list)
@@ -138,13 +138,13 @@ def main(parser, options, *args):
         sys.exit(0)
 
     # read the flow.cylc file
-    if os.path.isfile(suiterc):
+    if os.path.isfile(flow_file):
         # back up the original
-        backup(suiterc)
+        backup(flow_file)
         # record original modtime
-        modtimes[suiterc] = os.stat(suiterc).st_mtime
+        modtimes[flow_file] = os.stat(flow_file).st_mtime
         # read the file
-        h = open(suiterc, 'r')
+        h = open(flow_file, 'r')
         lines0 = h.readlines()
         h.close()
         if lines0[0].startswith('# !WARNING! CYLC EDIT INLINED'):
@@ -153,14 +153,14 @@ def main(parser, options, *args):
             lines = lines0
         else:
             recovery = False
-            lines = inline(lines0, suitedir, suiterc, for_edit=True)
+            lines = inline(lines0, suitedir, flow_file, for_edit=True)
     else:
-        parser.error("File not found: " + suiterc)
+        parser.error(f"File not found: {flow_file}")
 
     lines = [i.rstrip() for i in lines]
 
     # overwrite the (now backed up) original with the inlined file:
-    h = open(suiterc, 'wb')
+    h = open(flow_file, 'wb')
     for line in lines:
         h.write((line + '\n').encode())
     h.close()
@@ -173,7 +173,7 @@ def main(parser, options, *args):
 
     # in case editor has options, e.g. 'emacs -nw':
     command_list = re.split(' ', editor)
-    command_list.append(suiterc)
+    command_list.append(flow_file)
     command = ' '.join(command_list)
     # THIS BLOCKS UNTIL THE COMMAND COMPLETES
     retcode = call(command_list)
@@ -184,22 +184,22 @@ def main(parser, options, *args):
 
     # Now back up the inlined file in case of absolute disaster, so as the
     # user or his editor corrupting the inlined-include-file marker lines.
-    inlined_suiterc_backup = (
+    inlined_flow_file_backup = (
         suitedir + '/flow.cylc.INLINED.EDIT.' +
         get_current_time_string(override_use_utc=True, use_basic_format=True)
     )
-    copy(suiterc, inlined_suiterc_backup)
+    copy(flow_file, inlined_flow_file_backup)
 
     # read in the edited inlined file
-    h = open(suiterc, 'r')
+    h = open(flow_file, 'r')
     lines = h.readlines()
     h.close()
 
     # split it back into separate files
-    split_file(suitedir, lines, suiterc, recovery)
+    split_file(suitedir, lines, flow_file, recovery)
 
-    print(' + edited:', suiterc)
-    print(' + backup:', inlined_suiterc_backup)
+    print(f' + edited: {flow_file}')
+    print(f' + backup: {inlined_flow_file_backup}')
     print('INCLUDE-FILES WRITTEN:')
     for file in newfiles:
         f = re.sub(suitedir + '/', '', file)

@@ -156,13 +156,13 @@ def set_up(global_rc_str, flow_file_str, tmp_path):
     """
     # Set Up Config File
     globalrc = tmp_path / 'flow.rc'
-    suiterc = tmp_path / 'flow.cylc'
+    flow_file = tmp_path / 'flow.cylc'
     with open(str(globalrc), 'w') as file_handle:
         file_handle.write(global_rc_str)
-    with open(str(suiterc), 'w') as file_handle:
+    with open(str(flow_file), 'w') as file_handle:
         file_handle.write(flow_file_str)
     os.environ['CYLC_CONF_PATH'] = str(tmp_path)
-    suite_config = RawSuiteConfig(str(suiterc), None, None)
+    suite_config = RawSuiteConfig(str(flow_file), None, None)
     upgraded_suite_config = host_to_platform_upgrader(suite_config.sparse)
     return (suite_config, upgraded_suite_config)
 

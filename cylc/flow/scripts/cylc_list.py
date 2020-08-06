@@ -86,7 +86,7 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser, options, reg):
-    suite, suiterc = parse_suite_arg(options, reg)
+    suite, flow_file = parse_suite_arg(options, reg)
 
     if options.all_tasks and options.all_namespaces:
         parser.error("Choose either -a or -n")
@@ -117,7 +117,7 @@ def main(parser, options, reg):
               file=sys.stderr)
     config = SuiteConfig(
         suite,
-        suiterc,
+        flow_file,
         options,
         load_template_vars(options.templatevars, options.templatevars_file))
     if options.tree:
