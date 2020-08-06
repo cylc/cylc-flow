@@ -102,12 +102,19 @@ async def dir_is_flow(listing):
 
 
 @pipe
-async def scan(run_dir=None, max_depth=3):
+async def scan(run_dir=None, scan_dir=None, max_depth=3):
     """List flows installed on the filesystem.
 
     Args:
         run_dir (pathlib.Path):
-            The directory to scan, defaults to the cylc run directory.
+            The run dir to look for workflows in, defaults to ~/cylc-run.
+
+            All workflow registrations will be given relative to this path.
+        scan_dir(pathlib.Path):
+            The directory to scan for workflows in.
+
+            Use in combination with run_dir if you want to scan a subdir
+            within the run_dir.
         max_depth (int):
             The maximum number of levels to descend before bailing.
 
@@ -122,8 +129,10 @@ async def scan(run_dir=None, max_depth=3):
         run_dir = Path(
             glbl_cfg().get_host_item('run directory').replace('$HOME', '~')
         ).expanduser()
+    if not scan_dir:
+        scan_dir = run_dir
     stack = asyncio.Queue()
-    for subdir in await scandir(run_dir):
+    for subdir in await scandir(scan_dir):
         if subdir.is_dir():
             await stack.put((1, subdir))
 
