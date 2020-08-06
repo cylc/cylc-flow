@@ -264,8 +264,8 @@ class ControlTree(object):
         return self._nat_cmp(prop1, prop2)
 
     def default_sort_column(self, model, iter1, iter2):
-        point_string1 = model.get_value(iter1, 0)
-        point_string2 = model.get_value(iter2, 0)
+        point_string1 = model.get_value(iter1, 1)
+        point_string2 = model.get_value(iter2, 1)
         if point_string1 is None or point_string2 is None:
             return cmp(point_string1, point_string2)
         return self._nat_cmp(point_string1, point_string2)
