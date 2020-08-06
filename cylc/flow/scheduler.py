@@ -1139,6 +1139,10 @@ class Scheduler:
         """Reload suite configuration."""
         LOG.info("Reloading the suite definition.")
         old_tasks = set(self.config.get_task_name_list())
+        # Things that can't change on suite reload:
+        pri_dao = self.suite_db_mgr.get_pri_dao()
+        pri_dao.select_suite_params(self._load_suite_params)
+
         self.suite_db_mgr.checkpoint("reload-init")
         self.load_suiterc(is_reload=True)
         self.broadcast_mgr.linearized_ancestors = (
@@ -1289,7 +1293,7 @@ class Scheduler:
         })
 
     def _load_suite_params(self, row_idx, row):
-        """Load a row in the "suite_params" table in a restart.
+        """Load a row in the "suite_params" table in a restart/reload.
 
         This currently includes:
         * Initial/Final cycle points.
@@ -1303,26 +1307,26 @@ class Scheduler:
             LOG.info('LOADING suite parameters')
         key, value = row
         if key in self.suite_db_mgr.KEY_INITIAL_CYCLE_POINT_COMPATS:
-            if self.options.ignore_icp:
+            if self.is_restart and self.options.ignore_icp:
                 LOG.debug('- initial point = %s (ignored)' % value)
             elif self.options.icp is None:
                 self.options.icp = value
                 LOG.info('+ initial point = %s' % value)
         elif key in self.suite_db_mgr.KEY_START_CYCLE_POINT_COMPATS:
             # 'warm_point' for back compat <= 7.6.X
-            if self.options.ignore_startcp:
+            if self.is_restart and self.options.ignore_startcp:
                 LOG.debug('- start point = %s (ignored)' % value)
             elif self.options.startcp is None:
                 self.options.startcp = value
                 LOG.info('+ start point = %s' % value)
         elif key in self.suite_db_mgr.KEY_FINAL_CYCLE_POINT_COMPATS:
-            if self.options.ignore_fcp:
+            if self.is_restart and self.options.ignore_fcp:
                 LOG.debug('- override final point = %s (ignored)' % value)
             elif self.options.fcp is None:
                 self.options.fcp = value
                 LOG.info('+ override final point = %s' % value)
         elif key == self.suite_db_mgr.KEY_STOP_CYCLE_POINT:
-            if self.options.ignore_stopcp:
+            if self.is_restart and self.options.ignore_stopcp:
                 LOG.debug('- stop point = %s (ignored)' % value)
             elif self.options.stopcp is None:
                 self.options.stopcp = value
