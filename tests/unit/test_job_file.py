@@ -100,7 +100,7 @@ def test_write(mocked_get_remote_suite_run_dir):
 
         assert (os.path.exists(local_job_file_path))
         size_of_file = os.stat(local_job_file_path).st_size
-        assert(size_of_file == 1841)
+        assert(size_of_file == 1845)
 
 
 def test_write_header():
