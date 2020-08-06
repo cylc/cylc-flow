@@ -30,7 +30,7 @@ LOG_FILE="${SUITE_RUN_DIR}/log/suite/log"
 run_ok "${TEST_NAME_BASE}-add-run" cylc run --debug --hold "${SUITE_NAME}"
 
 # change the flow.cylc file
-cp "${TEST_SOURCE_DIR}/graphing-change/suite-1.rc" \
+cp "${TEST_SOURCE_DIR}/graphing-change/flow-1.cylc" \
     "${TEST_DIR}/${SUITE_NAME}/flow.cylc"
 
 # reload suite
@@ -60,7 +60,7 @@ grep_ok "Removed task: 'one'" "${LOG_FILE}"
 # test reporting of adding / removing / swapping tasks
 
 # change the flow.cylc file
-cp "${TEST_SOURCE_DIR}/graphing-change/suite-2.rc" \
+cp "${TEST_SOURCE_DIR}/graphing-change/flow-2.cylc" \
     "${TEST_DIR}/${SUITE_NAME}/flow.cylc"
 
 cylc spawn "${SUITE_NAME}"  foo.1

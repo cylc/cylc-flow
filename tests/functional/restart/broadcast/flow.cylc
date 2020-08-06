@@ -36,4 +36,4 @@
             description = "Broadcast-recipient task (runs after restart)"
         [[[environment]]]
             MY_VALUE=nothing
-{% include 'suite-runtime-restart.rc' %}
+{% include 'flow-runtime-restart.cylc' %}

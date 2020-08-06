@@ -4,5 +4,5 @@
     description=A test flow.cylc with includes
 [cylc]
 UTC mode=True # Ignore DST
-%include include/suite-scheduling.rc
-%include include/suite-runtime.rc
+%include include/flow-scheduling.cylc
+%include include/flow-runtime.cylc

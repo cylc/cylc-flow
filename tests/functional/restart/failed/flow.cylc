@@ -22,4 +22,4 @@
         """
         [[[meta]]]
             description = "Failed task (runs before restart)"
-{% include 'suite-runtime-restart.rc' %}
+{% include 'flow-runtime-restart.cylc' %}

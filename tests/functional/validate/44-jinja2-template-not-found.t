@@ -24,11 +24,11 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 TEST_NAME="${TEST_NAME_BASE}-val"
 run_fail "${TEST_NAME}" cylc validate flow.cylc
 cmp_ok "${TEST_NAME}.stderr" <<'__ERROR__'
-Jinja2Error: suite-foo.rc
+Jinja2Error: flow-foo.cylc
 Context lines:
         R1 = foo
 [runtime]
-{% include 'suite-foo.rc' %}	<-- TemplateNotFound
+{% include 'flow-foo.cylc' %}	<-- TemplateNotFound
 __ERROR__
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"

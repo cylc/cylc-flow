@@ -2,7 +2,7 @@
 
 [scheduling]
     [[graph]]
-%include suite-includeme.rc
+%include flow-includeme.cylc
 [runtime]
     [[foo]]
         script = sleep 1

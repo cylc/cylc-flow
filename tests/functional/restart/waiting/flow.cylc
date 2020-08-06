@@ -18,4 +18,4 @@
         script = true
         [[[meta]]]
             description = "Waiting task (runs after restart)"
-{% include 'suite-runtime-restart.rc' %}
+{% include 'flow-runtime-restart.cylc' %}

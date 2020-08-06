@@ -25,7 +25,7 @@ date-remove() {
 set_test_number 8
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-cp -p 'flow.cylc' 'suite1.rc'
+cp -p 'flow.cylc' 'flow1.cylc'
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
@@ -92,7 +92,7 @@ suite_run_fail "${TEST_NAME_BASE}-restart-1" \
 
 # Restart from a checkpoint before the reload should allow the suite to proceed
 # normally.
-cp -p 'suite1.rc' 'flow.cylc'
+cp -p 'flow1.cylc' 'flow.cylc'
 suite_run_ok "${TEST_NAME_BASE}-restart-2" \
     timeout 120 cylc restart "${SUITE_NAME}" \
     --checkpoint=1 --debug --no-detach --reference-test

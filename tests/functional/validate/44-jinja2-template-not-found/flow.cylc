@@ -3,4 +3,4 @@
     [[graph]]
         R1 = foo
 [runtime]
-{% include 'suite-foo.rc' %}
+{% include 'flow-foo.cylc' %}
