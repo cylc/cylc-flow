@@ -28,6 +28,7 @@ import logging
 from uuid import uuid1
 
 from cylc.flow import CYLC_LOG
+from cylc.flow.suite_files import SuiteFiles
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.scheduler_cli import (
     RunOptions,
@@ -35,7 +36,7 @@ from cylc.flow.scheduler_cli import (
 )
 from cylc.flow.suite_status import StopMode
 
-from .flow_writer import suiterc
+from .flow_writer import flow_config_str
 from . import _poll_file
 
 
@@ -47,9 +48,9 @@ def _make_flow(run_dir, test_dir, conf, name=None):
     flow_run_dir.mkdir()
     reg = str(flow_run_dir.relative_to(run_dir))
     if isinstance(conf, dict):
-        conf = suiterc(conf)
-    with open((flow_run_dir / 'flow.cylc'), 'w+') as suiterc_file:
-        suiterc_file.write(conf)
+        conf = flow_config_str(conf)
+    with open((flow_run_dir / SuiteFiles.FLOW_FILE), 'w+') as flow_file:
+        flow_file.write(conf)
     return reg
 
 
@@ -68,7 +69,8 @@ def _make_scheduler(reg, is_restart=False, **opts):
 @asynccontextmanager
 async def _run_flow(run_dir, caplog, scheduler, level=logging.INFO):
     """Start a scheduler."""
-    contact = (run_dir / scheduler.suite / '.service' / 'contact')
+    contact = (run_dir / scheduler.suite / SuiteFiles.Service.DIRNAME /
+               SuiteFiles.Service.CONTACT)
     if caplog:
         caplog.set_level(level, CYLC_LOG)
     task = None

@@ -46,7 +46,7 @@ def empyprocess(flines, dir_, template_vars=None):
         ftempl.close()
         xtempl.close()
 
-    suiterc = []
+    flow_config = []
     for line in xsuite.splitlines():
         # EmPy leaves blank lines where source lines contain
         # only EmPy code; this matters if line continuation
@@ -55,7 +55,7 @@ def empyprocess(flines, dir_, template_vars=None):
             continue
             # restoring newlines here is only necessary for display by
         # the cylc view command:
-        # ##suiterc.append(line + '\n')
-        suiterc.append(line)
+        # ##flow_config.append(line + '\n')
+        flow_config.append(line)
 
-    return suiterc
+    return flow_config

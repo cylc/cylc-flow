@@ -39,7 +39,7 @@ with Conf(
         Defines a cylc suite configuration.
 
         Embedded Jinja2 code (see :ref:`Jinja`) must process to a valid
-        raw flow.cylc file. See also :ref:`SuiteRCFile` for a descriptive
+        raw flow.cylc file. See also :ref:`FlowConfigFile` for a descriptive
         overview of flow.cylc files, including syntax (:ref:`Syntax`).
 
         .. note::

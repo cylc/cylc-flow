@@ -249,7 +249,7 @@ def jinja2process(flines, dir_, template_vars=None):
             lines = flines[max(lineno - CONTEXT_LINES, 0):lineno]
         raise Jinja2Error(exc, lines=lines)
 
-    suiterc = []
+    flow_config = []
     for line in lines:
         # Jinja2 leaves blank lines where source lines contain
         # only Jinja2 code; this matters if line continuation
@@ -258,7 +258,7 @@ def jinja2process(flines, dir_, template_vars=None):
             continue
             # restoring newlines here is only necessary for display by
         # the cylc view command:
-        # ##suiterc.append(line + '\n')
-        suiterc.append(line)
+        # ##flow_config.append(line + '\n')
+        flow_config.append(line)
 
-    return suiterc
+    return flow_config
