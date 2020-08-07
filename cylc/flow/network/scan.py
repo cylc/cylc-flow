@@ -102,7 +102,7 @@ async def dir_is_flow(listing):
 
 
 @pipe
-async def scan(run_dir=None, scan_dir=None, max_depth=3):
+async def scan(run_dir=None, scan_dir=None, max_depth=4):
     """List flows installed on the filesystem.
 
     Args:
