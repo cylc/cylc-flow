@@ -1,7 +1,8 @@
 ;; ____________________________________________________________________________
 ;;
 ;; = cylc-mode.el =
-;;    Emacs syntax highlighting mode for Cylc suite definition (suite.rc) files
+;;    Emacs syntax highlighting mode for Cylc suite definition (flow.cylc)
+;;    files
 ;; ____________________________________________________________________________
 ;;
 ;; = Instructions =
@@ -36,7 +37,7 @@
 
 ;; Define the mode and the syntax highlighting for it
 (define-derived-mode cylc-mode fundamental-mode
-  "suite.rc" "Major mode for editing Cylc suite definition files"
+  "flow.cylc" "Major mode for editing Cylc suite definition files"
 
   ;; Note: ordered according to reverse application precedence, where
   ;; specification order for faces changes resultant highlighting
@@ -114,5 +115,10 @@
 
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("suite*.rc" . cylc-mode))
+(setq auto-mode-alist
+  (append
+    '(("suite*.rc" . cylc-mode)
+      ("*.cylc" . cylc-mode))
+   auto-mode-alist))
 
 (provide 'cylc-mode)
