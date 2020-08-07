@@ -50,6 +50,7 @@ from pathlib import Path
 from ansimarkup import ansiprint as cprint
 
 from cylc.flow import LOG
+from cylc.flow.exceptions import UserInputError
 from cylc.flow.network.scan import (
     scan,
     is_active,
@@ -70,6 +71,7 @@ from cylc.flow.terminal import cli_function
 FLOW_STATES = {
     'running',
     'held',
+    'stopping',
     'stopped'
 }
 
@@ -79,6 +81,7 @@ FLOW_STATE_CMAP = {
     # suite state: term colour
     'running': 'green',
     'held': 'fg 172',
+    'stopping': 'fg 201',
     'stopped': 'red'
 }
 
@@ -90,6 +93,7 @@ FLOW_STATE_SYMBOLS = {
     #       even be monospace
     'running': '▶',
     'held': '‖',
+    'stopping': '◧',
     'stopped': '■'
 }
 
@@ -165,8 +169,12 @@ def get_option_parser():
 
     parser.add_option(
         '--states',
-        help='Choose which flows to display by providing a list of states.',
-        default='running,held',
+        help=(
+            'Choose which flows to display by providing a list of states'
+            ' or "all" to show everything. See the full `cylc scan` help'
+            ' for a list of supported states.'
+        ),
+        default='running,held,stopping',
         action='store'
     )
 
@@ -377,7 +385,7 @@ def get_pipe(opts, formatter, scan_dir=None):
 
     show_running = 'running' in opts.states
     show_held = 'held' in opts.states
-    show_active = show_running or show_held
+    show_active = show_running or show_held or 'stopping' in opts.states
     # show_active = bool({'running', 'held'} & opts.states)
     show_inactive = bool({'stopped'} & opts.states)
 
@@ -470,11 +478,17 @@ async def main(opts, color=False, scan_dir=None, write=cprint):
     opts.states = set(opts.states.split(','))
     if 'all' in opts.states:
         opts.states = FLOW_STATES
-    else:
-        assert opts.states
-        assert all(
+    elif (
+        not opts.states
+        or not all(
             state in FLOW_STATES
             for state in opts.states
+        )
+    ):
+        raise UserInputError(
+            '--states must be set to a comma separated list of workflow'
+            ' states. \nSee `cylc scan --help` for a list of supported'
+            ' states.'
         )
 
     if not color:
