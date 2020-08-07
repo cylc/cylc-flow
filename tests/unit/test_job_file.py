@@ -122,14 +122,14 @@ def test_write(mocked_get_remote_suite_run_dir, request):
             difflib.unified_diff(
                 kgo_content,
                 test_content,
-                fromfile='known good output',
-                tofile='test output'
+                fromfile='known good job_file',
+                tofile='test job_file'
             )
         )
 
-        # If there is any diff write it like this for ease of reading
-        sys.stdout.writelines(diff)
-        assert [i for i in diff] == []
+        # The manipulation into string format should make
+        # any error easier to read.
+        assert ''.join(list(diff)) == ''
 
 
 def test_write_header():
