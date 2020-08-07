@@ -126,7 +126,7 @@ def test_write(mocked_get_remote_suite_run_dir, fixture_get_platform):
 
         assert (os.path.exists(local_job_file_path))
         size_of_file = os.stat(local_job_file_path).st_size
-        assert(size_of_file == 1850)
+        assert(size_of_file == 1854)
 
     """Test the header is correctly written"""
 
