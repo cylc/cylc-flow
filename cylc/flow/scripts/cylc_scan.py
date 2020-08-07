@@ -57,7 +57,10 @@ from cylc.flow.network.scan import (
     graphql_query,
     filter_name
 )
-from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.option_parsers import (
+    CylcOptionParser as COP,
+    Options
+)
 from cylc.flow.print_tree import print_tree
 from cylc.flow.suite_files import ContactFileFields as Cont
 from cylc.flow.terminal import cli_function
@@ -249,7 +252,7 @@ def _format_rich(flow, opts):
             **{
                 name: flow[key]
                 for name, key in (
-                    ('cylcVersion', 'cylcVersion'),
+                    ('version', 'cylcVersion'),
                     ('host', Cont.HOST),
                     ('port', Cont.PORT)
                 )
@@ -257,6 +260,9 @@ def _format_rich(flow, opts):
         }
         maxlen = max(len(key) for key in display)
         for key, value in display.items():
+            # format multiline strings by whitespace padding the lines
+            value = ('\n' + (' ' * (maxlen + 7))).join(value.splitlines())
+            # write out the key: value pairs
             ret.append(f'    {key: <{maxlen}}   {value}')
     return '\n'.join(ret)
 
@@ -273,30 +279,30 @@ def sort_function(flow):
     return (state, flow['name'])
 
 
-async def _sorted(pipe, formatter, opts):
+async def _sorted(pipe, formatter, opts, write):
     """List all flows, sort, then print them individually."""
     ret = []
     async for item in pipe:
         ret.append(item)
     for flow in sorted(ret, key=sort_function):
-        cprint(formatter(flow, opts))
+        write(formatter(flow, opts))
 
 
-async def _serial(pipe, formatter, opts):
+async def _serial(pipe, formatter, opts, write):
     """List all flows, then print them as one."""
     ret = []
     async for item in pipe:
         ret.append(item)
-    cprint(formatter(ret, opts))
+    write(formatter(ret, opts))
 
 
-async def _async(pipe, formatter, opts):
+async def _async(pipe, formatter, opts, write):
     """List and print flows individually."""
     async for flow in pipe:
-        cprint(formatter(flow, opts))
+        write(formatter(flow, opts))
 
 
-async def _tree(pipe, formatter, opts):
+async def _tree(pipe, formatter, opts, write):
     """List all flows, sort, then print them as a tree."""
     # get list of flows
     ret = []
@@ -320,12 +326,15 @@ async def _tree(pipe, formatter, opts):
 
     # print tree
     ret = print_tree(tree, '', sort=False, use_unicode=True)
-    cprint('\n'.join(ret))
+    write('\n'.join(ret))
 
 
-def get_pipe(opts, formatter):
+def get_pipe(opts, formatter, scan_dir=None):
     """Construct a pipe for listing flows."""
-    pipe = scan
+    if scan_dir:
+        pipe = scan(scan_dir=scan_dir)
+    else:
+        pipe = scan
 
     show_running = 'running' in opts.states
     show_held = 'held' in opts.states
@@ -397,19 +406,24 @@ def get_formatter(opts):
     return formatter, method
 
 
-async def scanner(opts):
+async def scanner(opts, write, scan_dir=None):
     """Print workflows to stdout."""
     formatter, method = get_formatter(opts)
-    pipe = get_pipe(opts, formatter)
+    pipe = get_pipe(opts, formatter, scan_dir)
 
     LOG.debug(f'pipe: {repr(pipe)}')
 
-    await method(pipe, formatter, opts)
+    await method(pipe, formatter, opts, write)
 
 
-@cli_function(get_option_parser)
-def main(parser, opts, color):
-    """Implement `cylc scan`."""
+async def main(opts, color=False, scan_dir=None, write=cprint):
+    """Open up a Python API for testing purposes.
+
+    Note:
+        Don't use this API for anything other than testing, there is a
+        proper Python API for these purposes.
+
+    """
     # validate / standardise the list of workflow states
     opts.states = set(opts.states.split(','))
     if 'all' in opts.states:
@@ -429,4 +443,15 @@ def main(parser, opts, color):
     if opts.format == 'rich' and not opts.colour_blind:
         cprint(state_totals_key() + '\n')
 
-    asyncio.run(scanner(opts))
+    await scanner(opts, write, scan_dir)
+
+
+@cli_function(get_option_parser)
+def cli(_, opts, color):
+    """Implement `cylc scan`."""
+    asyncio.run(
+        main(opts, color)
+    )
+
+
+ScanOptions = Options(get_option_parser())
