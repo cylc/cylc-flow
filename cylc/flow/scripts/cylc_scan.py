@@ -145,8 +145,15 @@ def get_option_parser():
 
     parser.add_option(
         '--format', '-t',
-        help='Set the output format:',
-        choices=('rich', 'plain', 'json', 'tree'),
+        help=(
+            'Set the output format.'
+            ' (rich: multi-line, human readable)'
+            ' (plain: single-line)'
+            ' (json: machine readable)'
+            ' (tree: display registration hierarchy as a tree)'
+            ' (name: just show flow names, machine readable)'
+        ),
+        choices=('rich', 'plain', 'json', 'tree', 'name'),
         default='plain'
     )
 
@@ -222,6 +229,11 @@ def _format_plain(flow, _):
         return f'<b>{flow["name"]}</b> {flow[Cont.HOST]}:{flow[Cont.PORT]}'
     else:
         return f'<dim><b>{flow["name"]}</b></dim>'
+
+
+def _format_name_only(flow, _):
+    """A single line format of the form: <name> [<host>:<port>]"""
+    return flow['name']
 
 
 def _format_rich(flow, opts):
@@ -395,6 +407,9 @@ def get_formatter(opts):
     elif opts.format == 'tree':
         formatter = _format_plain
         method = _tree
+    elif opts.format == 'name':
+        formatter = _format_name_only
+        method = _async
     else:
         raise NotImplementedError
 
