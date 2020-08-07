@@ -94,17 +94,20 @@ FLOW_STATE_SYMBOLS = {
 }
 
 
-# graphql fields to request from the workflow for the "rich" format
-RICH_FIELDS = {
-    'status': None,
-    'stateTotals': None,
-    'cylcVersion': None,
-    'meta': {
-        'title',
-        'description',
-    },
-
-}
+# document the flow states
+__doc__ += '\n    '.join(
+    [
+        '\nWorflow States:'
+    ] + [
+        (
+            f'<{FLOW_STATE_CMAP[state]}>'
+            f'{FLOW_STATE_SYMBOLS[state]}'
+            f' {state}'
+            f'</{FLOW_STATE_CMAP[state]}>'
+        )
+        for state in FLOW_STATES
+    ]
+)
 
 
 # job icon colours
@@ -115,6 +118,30 @@ JOB_COLOURS = {
     'running': 'fg 27',
     'succeeded': 'fg 34',
     'failed': 'fg 124'
+}
+
+
+# document the task states
+__doc__ += '\n    '.join(
+    [
+        '\n\nTask States:'
+    ] + [
+        f'<{tag}>■ {state}</{tag}>'
+        for state, tag in JOB_COLOURS.items()
+    ]
+)
+
+
+# graphql fields to request from the workflow for the "rich" format
+RICH_FIELDS = {
+    'status': None,
+    'stateTotals': None,
+    'cylcVersion': None,
+    'meta': {
+        'title',
+        'description',
+    },
+
 }
 
 
@@ -196,7 +223,7 @@ def state_totals(totals, colour_blind=False):
         if colour_blind:
             ret.append(f'<{tag}>{state}:{number}</{tag}>')
         else:
-            ret.append(f'<{tag}>{number} \u25A0</{tag}>')
+            ret.append(f'<{tag}>{number} ■</{tag}>')
     return ' '.join(ret)
 
 
