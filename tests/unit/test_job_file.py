@@ -98,9 +98,10 @@ def test_write(mocked_get_remote_suite_run_dir):
         mocked_get_remote_suite_run_dir.return_value = "run/dir"
         JobFileWriter().write(local_job_file_path, job_conf)
 
-        assert (os.path.exists(local_job_file_path))
-        size_of_file = os.stat(local_job_file_path).st_size
-        assert(size_of_file == 1841)
+        # Test whether file has been created and has non-zero content.
+        # We do not need to retest the other tests in this module.
+        assert os.path.exists(local_job_file_path)
+        assert os.stat(local_job_file_path).st_size > 100
 
 
 def test_write_header():
