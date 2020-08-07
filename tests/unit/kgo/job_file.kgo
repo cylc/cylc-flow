@@ -1,0 +1,87 @@
+#!/bin/bash -l
+#
+# ++++ THIS IS A CYLC TASK JOB SCRIPT ++++
+# Suite: farm_noises
+# Task: baa
+# Job log directory: 1/baa/01
+# Job submit method: background
+# Job submit command template: woof
+# Execution time limit: moo
+if [[ $1 == 'noreinvoke' ]]; then
+    shift
+else
+    exec bash -l "$0" noreinvoke "$@"
+fi
+
+CYLC_FAIL_SIGNALS='EXIT ERR TERM XCPU'
+export CYLC_VERSION='8.0a3.dev'
+
+cylc__job__inst__cylc_env() {
+    # CYLC SUITE ENVIRONMENT:
+
+    export CYLC_SUITE_RUN_DIR="run/dir"
+    CYLC_SUITE_WORK_DIR_ROOT="~me/cylc-run/farm_noises"
+    export CYLC_SUITE_DEF_PATH="remote/suite/dir"
+    export CYLC_SUITE_DEF_PATH_ON_SUITE_HOST="cylc/suite/def/path"
+    export CYLC_SUITE_UUID="neigh"
+
+    # CYLC TASK ENVIRONMENT:
+    export CYLC_TASK_JOB="1/baa/01"
+    export CYLC_TASK_NAMESPACE_HIERARCHY="root baa moo"
+    export CYLC_TASK_DEPENDENCIES="moo neigh quack"
+    export CYLC_TASK_TRY_NUMBER=1
+    export CYLC_TASK_FLOW_LABEL=aZ
+    export param_env_tmpl_1="moo"
+    export param_env_tmpl_2="baa"
+    export CYLC_TASK_PARAM_duck="quack"
+    export CYLC_TASK_PARAM_mouse="squeak"
+    CYLC_TASK_WORK_DIR_BASE='farm_noises/work_d'
+}
+
+cylc__job__inst__user_env() {
+    # TASK RUNTIME ENVIRONMENT:
+    export cow sheep duck
+    cow=~/"moo"
+    sheep=~baa/"baa"
+    duck=~quack
+}
+
+cylc__job__inst__init_script() {
+# INIT-SCRIPT:
+This is the init script
+}
+
+cylc__job__inst__env_script() {
+# ENV-SCRIPT:
+This is the env script
+}
+
+cylc__job__inst__err_script() {
+# ERR-SCRIPT:
+This is the err script
+}
+
+cylc__job__inst__pre_script() {
+# PRE-SCRIPT:
+This is the pre script
+}
+
+cylc__job__inst__script() {
+# SCRIPT:
+This is the script
+}
+
+cylc__job__inst__post_script() {
+# POST-SCRIPT:
+This is the post script
+}
+
+cylc__job__inst__exit_script() {
+# EXIT-SCRIPT:
+This is the exit script
+}
+
+. "run/dir/.service/etc/job.sh"
+cylc__job__main
+
+#EOF: 1/baa/01

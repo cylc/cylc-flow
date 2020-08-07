@@ -14,9 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import difflib
 import io
 import os
 import pytest
+import sys
 from tempfile import TemporaryFile, NamedTemporaryFile
 from unittest import mock
 
@@ -60,7 +62,7 @@ def test_write_prelude_invalid_cylc_command(mocked_glbl_cfg):
 @mock.patch.dict(
     "os.environ", {'CYLC_SUITE_DEF_PATH': 'cylc/suite/def/path'})
 @mock.patch("cylc.flow.job_file.get_remote_suite_run_dir")
-def test_write(mocked_get_remote_suite_run_dir):
+def test_write(mocked_get_remote_suite_run_dir, request):
     """Test write function outputs jobscript file correctly"""
     with NamedTemporaryFile() as local_job_file_path:
         local_job_file_path = local_job_file_path.name
@@ -99,8 +101,35 @@ def test_write(mocked_get_remote_suite_run_dir):
         JobFileWriter().write(local_job_file_path, job_conf)
 
         assert (os.path.exists(local_job_file_path))
-        size_of_file = os.stat(local_job_file_path).st_size
-        assert(size_of_file == 1845)
+
+        kgo_file = request.fspath / '..' / 'kgo' / 'job_file.kgo'
+
+        # Commented block below for the convience of people who may need to
+        # create new kgo - given a different filename so that you can diff it
+        # agains the old kgo
+        # import shutil
+        # shutil.copy(
+        #     local_job_file_path,
+        #     request.fspath / '..' / 'kgo' / 'job_file_new.kgo'
+        # )
+        with open(local_job_file_path) as handle:
+            test_content = handle.readlines()
+        with open(kgo_file) as handle:
+            kgo_content = handle.readlines()
+
+        # Convert to list so that we can use generator twice
+        diff = list(
+            difflib.unified_diff(
+                kgo_content,
+                test_content,
+                fromfile='known good output',
+                tofile='test output'
+            )
+        )
+
+        # If there is any diff write it like this for ease of reading
+        sys.stdout.writelines(diff)
+        assert [i for i in diff] == []
 
 
 def test_write_header():
