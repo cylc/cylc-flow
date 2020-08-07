@@ -7,6 +7,7 @@ This directory contains Cylc integration tests.
 ```console
 $ pytest tests/i
 $ pytest tests/i -n 5  # run up to 5 tests in parallel
+$ pytest tests/i --dist=no -n0  # turn off xdist (allows --pdb etc)
 ```
 
 ## What Are Integration Tests
