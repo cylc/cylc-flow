@@ -155,7 +155,7 @@ def set_up(global_rc_str, flow_file_str, tmp_path):
             A path to a temporary location to put some files.
     """
     # Set Up Config File
-    globalrc = tmp_path / 'flow.rc'
+    globalrc = tmp_path / 'global.cylc'
     flow_file = tmp_path / 'flow.cylc'
     with open(str(globalrc), 'w') as file_handle:
         file_handle.write(global_rc_str)

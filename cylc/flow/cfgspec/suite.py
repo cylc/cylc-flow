@@ -44,10 +44,10 @@ with Conf(
 
         .. note::
 
-            In earlier versions of Cylc, this was named ``suite.rc``, but that
-            name is now deprecated. If you ``cylc run`` a directory that
-            contains a ``suite.rc`` file instead of a ``flow.cylc`` file, Cylc
-            will automatically create the latter, symlinked to the former.
+           In earlier versions of Cylc, this was named ``suite.rc``, but that
+           name is now deprecated. If you ``cylc run`` a directory that
+           contains a ``suite.rc`` file instead of a ``flow.cylc`` file, Cylc
+           will automatically create the latter, symlinked to the former.
     '''
 ) as SPEC:
 
@@ -682,7 +682,8 @@ with Conf(
 
                 The top level share and work directory location can be changed
                 (e.g. to a large data area) by a global config setting (see
-                :cylc:conf:`flow.rc[hosts][<hostname glob>]work directory`).
+                :cylc:conf:`global.cylc[hosts][<hostname glob>]
+                work directory`).
 
                 .. note::
 

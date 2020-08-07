@@ -70,7 +70,7 @@ def mock_glbl_cfg(tmp_path, monkeypatch):
     # TODO: modify Parsec so we can use StringIO rather than a temp file.
     def _mock(pypath, rc_string):
         nonlocal tmp_path, monkeypatch
-        global_rc_path = tmp_path / 'flow.rc'
+        global_rc_path = tmp_path / 'global.cylc'
         global_rc_path.write_text(rc_string)
         glbl_cfg = ParsecConfig(SPEC)
         glbl_cfg.loadcfg(global_rc_path)

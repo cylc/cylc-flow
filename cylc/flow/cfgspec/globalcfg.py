@@ -34,7 +34,7 @@ from cylc.flow.parsec.validate import (
 # - value_type: value type (compulsory).
 # - default: the default value (optional).
 # - allowed_2, ...: the only other allowed values of this setting (optional).
-with Conf('flow.rc', desc='''
+with Conf('global.cylc', desc='''
     The global configuration which defines default Cylc Flow settings
     for a user or site.
 
@@ -43,11 +43,11 @@ with Conf('flow.rc', desc='''
        $ cylc get-global-config --sparse
 
 
-    Cylc will attempt to load the global configuration (flow.rc) from two
+    Cylc will attempt to load the global configuration (global.cylc) from two
     locations:
 
-    * ``/etc/cylc/flow/<CYLC_VERSION>/flow.rc``
-    * ``~/.cylc/flow/<CYLC_VERSION>/flow.rc``
+    * ``/etc/cylc/flow/<CYLC_VERSION>/global.cylc``
+    * ``~/.cylc/flow/<CYLC_VERSION>/global.cylc``
 
     If both files are present files will be loaded in this order so those
     lower down the list may override settings from those higher up.
@@ -56,8 +56,13 @@ with Conf('flow.rc', desc='''
 
     .. note::
 
-       The ``flow.rc`` file can be templated using Jinja2 variables.
+       The ``global.cylc`` file can be templated using Jinja2 variables.
        See :ref:`Jinja`.
+
+    .. note::
+
+       In earlier versions of Cylc, ``global.cylc`` was named ``flow.rc``, but
+       that name is no longer supported.
 ''') as SPEC:
 
     # suite
@@ -760,7 +765,7 @@ class GlobalConfig(ParsecConfig):
 
     _DEFAULT = None
     _HOME = os.getenv('HOME') or get_user_home()
-    CONF_BASENAME = "flow.rc"
+    CONF_BASENAME = "global.cylc"
     SITE_CONF_DIR = os.path.join(os.sep, 'etc', 'cylc', 'flow', CYLC_VERSION)
     USER_CONF_DIR = os.path.join(_HOME, '.cylc', 'flow', CYLC_VERSION)
 
@@ -814,7 +819,7 @@ class GlobalConfig(ParsecConfig):
                         # Abort on bad user file (users can fix it).
                         LOG.error('bad %s %s', conf_type, fname)
                         raise
-        # (OK if no flow.rc is found, just use system defaults).
+        # (OK if no global.cylc is found, just use system defaults).
         self._transform()
 
     def get_host_item(self, item, host=None, owner=None, replace_home=False,

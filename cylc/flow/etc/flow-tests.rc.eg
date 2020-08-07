@@ -6,7 +6,7 @@
 # and start from a special flow-tests.rc file instead. These should contain the
 # minimal essential settings (e.g. for host names) needed to run at your site.
 #
-# See documentation in flow.rc.eg
+# See documentation in global.cylc.eg
 #
 #------------------------------------------------------------------------------
 ## GLOBAL flow-tests.rc FILE LOCATIONS:

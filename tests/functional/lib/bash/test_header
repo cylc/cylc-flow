@@ -683,17 +683,17 @@ create_test_globalrc() {
     rm -fr 'etc'
     mkdir 'etc'
     # Suite host self-identification method.
-    echo "$PRE" >'etc/flow.rc'
+    echo "$PRE" >'etc/global.cylc'
     SITE_TESTS_CONF_FILE="$(cylc get-global --print-site-dir)/flow-tests.rc"
     USER_TESTS_CONF_FILE="$(cylc get-global --print-user-dir)/flow-tests.rc"
     if [[ -f "${SITE_TESTS_CONF_FILE}" ]]; then
-        cat "${SITE_TESTS_CONF_FILE}" >>'etc/flow.rc'
+        cat "${SITE_TESTS_CONF_FILE}" >>'etc/global.cylc'
     fi
-    # (flow.rc items add-to or override earlier items)
+    # (global.cylc items add-to or override earlier items)
     if [[ -f "${USER_TESTS_CONF_FILE}" ]]; then
-        cat "${USER_TESTS_CONF_FILE}" >>'etc/flow.rc'
+        cat "${USER_TESTS_CONF_FILE}" >>'etc/global.cylc'
     fi
-    echo "$POST" >>'etc/flow.rc'
+    echo "$POST" >>'etc/global.cylc'
     export CYLC_CONF_PATH="${PWD}/etc"
 }
 

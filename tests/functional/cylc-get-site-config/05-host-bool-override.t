@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -21,7 +21,7 @@
 set_test_number 2
 
 mkdir etc/
-cat etc/flow.rc <<'__hi__'
+cat etc/global.cylc <<'__hi__'
 [job platforms]
     [[desktop\d\d|laptop\d\d]]
     [[sugar]]
