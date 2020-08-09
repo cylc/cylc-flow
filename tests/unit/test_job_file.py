@@ -83,7 +83,7 @@ def test_write_prelude_invalid_cylc_command():
     "os.environ", {'CYLC_SUITE_DEF_PATH': 'cylc/suite/def/path'})
 @mock.patch("cylc.flow.job_file.get_remote_suite_run_dir")
 def test_write(mocked_get_remote_suite_run_dir, fixture_get_platform):
-    """Test write function outputs jobscript file correctly"""
+    """Test write function outputs jobscript file correctly."""
     with NamedTemporaryFile() as local_job_file_path:
         local_job_file_path = local_job_file_path.name
         platform = fixture_get_platform(
@@ -126,7 +126,9 @@ def test_write(mocked_get_remote_suite_run_dir, fixture_get_platform):
 
         assert (os.path.exists(local_job_file_path))
         size_of_file = os.stat(local_job_file_path).st_size
-        assert(size_of_file == 1854)
+        # This test only needs to check that the file is created and is
+        # non-empty as each section is covered by individual unit tests.
+        assert(size_of_file > 10)
 
     """Test the header is correctly written"""
 

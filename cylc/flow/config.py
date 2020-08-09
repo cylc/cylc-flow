@@ -68,6 +68,7 @@ from cylc.flow.taskdef import TaskDef
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.task_trigger import TaskTrigger, Dependency
+from cylc.flow.unicode_rules import XtriggerNameValidator
 from cylc.flow.wallclock import (
     get_current_time_string, set_utc_mode, get_utc_mode)
 from cylc.flow.xtrigger_mgr import XtriggerManager
@@ -1676,6 +1677,14 @@ class SuiteConfig(object):
         if triggers:
             dependency = Dependency(expr_list, set(triggers.values()), suicide)
             self.taskdefs[right].add_dependency(dependency, seq)
+
+        validator = XtriggerNameValidator.validate
+        for label in self.cfg['scheduling']['xtriggers']:
+            valid, msg = validator(label)
+            if not valid:
+                raise SuiteConfigError(
+                    f'Invalid xtrigger name "{label}" - {msg}'
+                )
 
         for label in xtrig_labels:
             try:
