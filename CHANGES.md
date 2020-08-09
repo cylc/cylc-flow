@@ -53,6 +53,10 @@ installation defined in $path rather than hardcoding to /bin/bash.
 
 ### Fixes
 
+[#3732](https://github.com/cylc/cylc-flow/pull/3732) - XTrigger labels
+are now validated to ensure that runtime errors can not occur when
+exporting environment variables.
+
 [#3632](https://github.com/cylc/cylc-flow/pull/3632) - Fix a bug that was causing
 `UTC mode` specified in global config to be pretty much ignored.
 
