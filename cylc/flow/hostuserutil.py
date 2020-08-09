@@ -189,8 +189,10 @@ class HostUtil(object):
                 except IOError:
                     self._remote_hosts[name] = True
                 else:
-                    self._remote_hosts[name] = (
-                        host_info != self._get_host_info())
+                    # look for common IP with localhost
+                    self._remote_hosts[name] = not bool(
+                        set(self._get_host_info()[2]).intersection(
+                            set(host_info[2])))
         return self._remote_hosts[name]
 
     def is_remote_user(self, name):
