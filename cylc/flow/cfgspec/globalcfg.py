@@ -563,7 +563,7 @@ with Conf('global.cylc', desc='''
         Settings for the automated development tests.
 
         .. note::
-           The test battery reads ``flow-tests.rc`` instead of the normal
+           The test battery reads ``global-tests.cylc`` instead of the normal
            site/user global config files (from the same locations, however).
     '''):
         Conf('remote host with shared fs', VDR.V_STRING, desc='''

@@ -3,16 +3,17 @@
 #------------------------------------------------------------------------------
 # Some functional tests need to modify or ignore installed global configuration
 # values; they therefore ignore the standard site and user global config files
-# and start from a special flow-tests.rc file instead. These should contain the
-# minimal essential settings (e.g. for host names) needed to run at your site.
+# and start from a special global-tests.cylc file instead. These should contain
+# the minimal essential settings (e.g. for host names) needed to run at your
+# site.
 #
 # See documentation in global.cylc.eg
 #
 #------------------------------------------------------------------------------
-## GLOBAL flow-tests.rc FILE LOCATIONS:
+## GLOBAL global-tests.cylc FILE LOCATIONS:
 #----------------
 # SITE:
-#   /etc/cylc/flow/<CYLC-VERSION>/flow-tests.rc
+#   /etc/cylc/flow/<CYLC-VERSION>/global-tests.cylc
 # USER:
-#   $HOME/.cylc/flow/<CYLC-VERSION>/flow-tests.rc
+#   $HOME/.cylc/flow/<CYLC-VERSION>/global-tests.cylc
 #------------------------------------------------------------------------------

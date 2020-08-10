@@ -21,7 +21,7 @@
 
 set_test_number 1
 
-# Empty it (of non-default flow-tests.rc items, which would then be retrieved
+# Empty it (of non-default global-tests.cylc items, which would then be retrieved
 # by "cylc get-global-config" below).
 echo '' > "$CYLC_CONF_PATH/global.cylc"
 

@@ -119,11 +119,11 @@
 #         test on the suite and run the reference suite with `suite_run_ok`.
 #         Run `purge_suite` on success. Expect 2 OK tests.
 #     create_test_global_config [PRE [POST]]
-#         Create a new global config file $PWD/etc from site flow-tests.rc
+#         Create a new global config file $PWD/etc from site global-tests.cylc
 #         with PRE and POST pre- and ap-pended (PRE for top level items with no
 #         section heading).
 #     set_test_remote_host
-#         set CYLC_TEST_HOST from flow-tests.rc, for remote job tests.
+#         set CYLC_TEST_HOST from global-tests.cylc, for remote job tests.
 #         (Remote job tests should really use set_test_remote, below, however).
 #     set_test_remote
 #         set CYLC_TEST_HOST and CYLC_TEST_OWNER for remote job tests.
@@ -684,8 +684,8 @@ create_test_global_config() {
     mkdir 'etc'
     # Suite host self-identification method.
     echo "$PRE" >'etc/global.cylc'
-    SITE_TESTS_CONF_FILE="$(cylc get-global --print-site-dir)/flow-tests.rc"
-    USER_TESTS_CONF_FILE="$(cylc get-global --print-user-dir)/flow-tests.rc"
+    SITE_TESTS_CONF_FILE="$(cylc get-global --print-site-dir)/global-tests.cylc"
+    USER_TESTS_CONF_FILE="$(cylc get-global --print-user-dir)/global-tests.cylc"
     if [[ -f "${SITE_TESTS_CONF_FILE}" ]]; then
         cat "${SITE_TESTS_CONF_FILE}" >>'etc/global.cylc'
     fi
@@ -771,7 +771,7 @@ if ! "${CYLC_TEST_RUN_GENERIC}" && "${CYLC_TEST_IS_GENERIC}"; then
 elif ! "${CYLC_TEST_RUN_PLATFORM}" && ! "${CYLC_TEST_IS_GENERIC}"; then
     skip_all 'not running platform-specific tests'
 fi
-# Ignore the normal site/user global config, use flow-tests.rc.
+# Ignore the normal site/user global config, use global-tests.cylc.
 create_test_global_config "$@"
 set +x
 set +e
