@@ -20,7 +20,7 @@
 status files to obtain the statuses of the jobs. If necessary, Invoke the
 relevant batch system commands to ask the batch systems for more statuses.
 
- """
+"""
 from cylc.flow.batch_sys_manager import BatchSysManager
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
