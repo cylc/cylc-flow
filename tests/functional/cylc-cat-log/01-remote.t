@@ -21,7 +21,7 @@ export CYLC_TEST_IS_GENERIC=false
 #-------------------------------------------------------------------------------
 set_test_remote
 set_test_number 14
-create_test_globalrc "" "
+create_test_global_config "" "
 [hosts]
    [[${CYLC_TEST_HOST}]]
        retrieve job logs = False"

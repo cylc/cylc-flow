@@ -26,7 +26,7 @@ skip_all 'ssh task comm not currently functional'
 set_test_remote_host
 set_test_number 3
 
-create_test_globalrc '' "
+create_test_global_config '' "
 [hosts]
     [[${CYLC_TEST_HOST}]]
         task communication method = ssh"

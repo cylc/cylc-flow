@@ -28,7 +28,7 @@ set_test_number 9
 if ${CYLC_TEST_DEBUG:-false}; then ERR=2; else ERR=1; fi
 #-------------------------------------------------------------------------------
 # run through the shutdown - restart procedure
-BASE_GLOBALRC="
+BASE_GLOBAL_CONFIG="
 [cylc]
     [[main loop]]
         plugins = health check, auto restart
@@ -52,15 +52,15 @@ TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME}" - <<'__FLOW_CONFIG__'
         R1 = "task<foo> => task<foo+1>"
 __FLOW_CONFIG__
 # run suite on localhost normally
-create_test_globalrc '' "${BASE_GLOBALRC}"
+create_test_global_config '' "${BASE_GLOBAL_CONFIG}"
 run_ok "${TEST_NAME}-suite-start" \
     cylc run "${SUITE_NAME}" --host=localhost -s 'FOO=foo' -v
 cylc suite-state "${SUITE_NAME}" --task='task_foo01' \
     --status='succeeded' --point=1 --interval=1 --max-polls=20 >& $ERR
 
 # condemn localhost
-create_test_globalrc '' "
-${BASE_GLOBALRC}
+create_test_global_config '' "
+${BASE_GLOBAL_CONFIG}
 [suite servers]
     condemned hosts = $(hostname)
 "

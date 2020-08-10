@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -27,7 +27,7 @@ export CYLC_TEST_HOST1="${HOSTNAME}"
 if ${CYLC_TEST_DEBUG:-false}; then ERR=2; else ERR=1; fi
 set_test_number 11
 
-BASE_GLOBALRC="
+BASE_GLOBAL_CONFIG="
 [cylc]
     [[main loop]]
         plugins = health check, auto restart
@@ -51,8 +51,8 @@ TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME_BASE}" <<< '
         script = sleep 60
 '
 
-create_test_globalrc '' "
-${BASE_GLOBALRC}
+create_test_global_config '' "
+${BASE_GLOBAL_CONFIG}
 [suite servers]
     run hosts = ${CYLC_TEST_HOST1}
 "
@@ -66,8 +66,8 @@ TEST_NAME="${TEST_NAME_BASE}-normal-mode"
 cylc suite-state "${SUITE_NAME}" --task='foo' --status='running' --point=1 \
     --interval=1 --max-polls=20 >& $ERR
 
-create_test_globalrc '' "
-${BASE_GLOBALRC}
+create_test_global_config '' "
+${BASE_GLOBAL_CONFIG}
 [suite servers]
     run hosts = ${CYLC_TEST_HOST1}, ${CYLC_TEST_HOST2}
     condemned hosts = ${CYLC_TEST_HOST1}
@@ -96,8 +96,8 @@ cylc trigger "${SUITE_NAME}" bar.1
 cylc suite-state "${SUITE_NAME}" --task='bar' --status='running' --point=1 \
     --interval=1 --max-polls=20 >& $ERR
 
-create_test_globalrc '' "
-${BASE_GLOBALRC}
+create_test_global_config '' "
+${BASE_GLOBAL_CONFIG}
 [suite servers]
     run hosts = ${CYLC_TEST_HOST1}, ${CYLC_TEST_HOST2}
     condemned hosts = ${CYLC_TEST_HOST2}!

@@ -38,7 +38,7 @@ def cycling_mode(monkeypatch):
 
 @pytest.fixture
 def mock_glbl_cfg(tmp_path, monkeypatch):
-    """A Pytest fixture for fiddling globalrc values.
+    """A Pytest fixture for fiddling global config values.
 
     * Hacks the specified `glbl_cfg` object.
     * Can be called multiple times within a test function.
@@ -50,7 +50,7 @@ def mock_glbl_cfg(tmp_path, monkeypatch):
             E.G. if you want to hack the `glbl_cfg` in
             `cylc.flow.scheduler` you would provide
             `cylc.flow.scheduler.glbl_cfg`
-        rc_string (str):
+        global_config (str):
             The globlal configuration as a multi-line string.
 
     Example:
@@ -68,12 +68,12 @@ def mock_glbl_cfg(tmp_path, monkeypatch):
 
     """
     # TODO: modify Parsec so we can use StringIO rather than a temp file.
-    def _mock(pypath, rc_string):
+    def _mock(pypath, global_config):
         nonlocal tmp_path, monkeypatch
-        global_rc_path = tmp_path / 'global.cylc'
-        global_rc_path.write_text(rc_string)
+        global_config_path = tmp_path / 'global.cylc'
+        global_config_path.write_text(global_config)
         glbl_cfg = ParsecConfig(SPEC)
-        glbl_cfg.loadcfg(global_rc_path)
+        glbl_cfg.loadcfg(global_config_path)
 
         def _inner(cached=False):
             nonlocal glbl_cfg

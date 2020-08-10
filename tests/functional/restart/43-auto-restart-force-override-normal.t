@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -26,7 +26,7 @@ fi
 export CYLC_TEST_HOST_2
 export CYLC_TEST_HOST_1="${HOSTNAME}"
 
-BASE_GLOBALRC='
+BASE_GLOBAL_CONFIG='
 [cylc]
     [[main loop]]
         plugins = health check, auto restart
@@ -49,8 +49,8 @@ TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME_BASE}" <<< '
         P1Y = foo[-P1Y] => foo
 '
 
-create_test_globalrc '' "
-${BASE_GLOBALRC}
+create_test_global_config '' "
+${BASE_GLOBAL_CONFIG}
 [suite servers]
     run hosts = ${CYLC_TEST_HOST_1}
 "
@@ -64,8 +64,8 @@ sleep 1
 FILE=$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)
 
 # condemn the host, the suite will schedule restart in PT60S
-create_test_globalrc '' "
-${BASE_GLOBALRC}
+create_test_global_config '' "
+${BASE_GLOBAL_CONFIG}
 [suite servers]
     run hosts = ${CYLC_TEST_HOST_1}, ${CYLC_TEST_HOST_2}
     condemned hosts = ${CYLC_TEST_HOST_1}
@@ -76,8 +76,8 @@ log_scan "${TEST_NAME_BASE}-stop" "${FILE}" 40 1 \
     'Suite will restart in 60s'
 
 # condemn the host in "Force Mode", this should cancel the scheduled restart
-create_test_globalrc '' "
-${BASE_GLOBALRC}
+create_test_global_config '' "
+${BASE_GLOBAL_CONFIG}
 [suite servers]
     condemned hosts = ${CYLC_TEST_HOST_1}!
 "

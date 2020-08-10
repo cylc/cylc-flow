@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -33,7 +33,7 @@ parser = TimePointParser()
 sys.exit(not parser.parse('$1') > parser.parse('$2'))
 "
 }
-BASE_GLOBALRC="
+BASE_GLOBAL_CONFIG="
 [cylc]
     [[main loop]]
         plugins = health check, auto restart
@@ -57,8 +57,8 @@ TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME_BASE}" <<< '
 '
 
 MAX_RESTART_DELAY=30
-create_test_globalrc '' "
-${BASE_GLOBALRC}
+create_test_global_config '' "
+${BASE_GLOBAL_CONFIG}
 [suite servers]
     run hosts = localhost
     auto restart delay = PT${MAX_RESTART_DELAY}S
@@ -69,8 +69,8 @@ cylc run "${SUITE_NAME}" --hold
 poll_suite_running
 
 # Condemn host - trigger stop-restart.
-create_test_globalrc '' "
-${BASE_GLOBALRC}
+create_test_global_config '' "
+${BASE_GLOBAL_CONFIG}
 [suite servers]
     run hosts = ${CYLC_TEST_HOST}
     condemned hosts = $(hostname)

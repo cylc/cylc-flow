@@ -27,7 +27,7 @@ export CYLC_TEST_HOST
 set_test_number 10
 #-------------------------------------------------------------------------------
 # test the failure recovery mechanism
-BASE_GLOBALRC="
+BASE_GLOBAL_CONFIG="
 [cylc]
     [[main loop]]
         plugins = health check, auto restart
@@ -47,7 +47,7 @@ TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME}" <<< '
     [[graph]]
         R1 = foo
 '
-create_test_globalrc '' "${BASE_GLOBALRC}"
+create_test_global_config '' "${BASE_GLOBAL_CONFIG}"
 run_ok "${TEST_NAME}-suite-start" \
     cylc run "${SUITE_NAME}" --host=localhost --hold
 poll_suite_running
@@ -56,8 +56,8 @@ poll_suite_running
 rm "${SUITE_RUN_DIR}/flow.cylc"
 
 # condemn localhost
-create_test_globalrc '' "
-${BASE_GLOBALRC}
+create_test_global_config '' "
+${BASE_GLOBAL_CONFIG}
 [suite servers]
     condemned hosts = $(hostname)
 "

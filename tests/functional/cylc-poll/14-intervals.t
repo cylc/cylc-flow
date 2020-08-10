@@ -22,7 +22,7 @@ set_test_number 6
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-create_test_globalrc '
+create_test_global_config '
 [hosts]
    [[localhost]]
         submission polling intervals = PT2S,6*PT10S

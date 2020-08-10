@@ -25,15 +25,15 @@ def forward_lookup(platforms, job_platform):
     Find out which job platform to use given a list of possible platforms and
     a task platform string.
 
-    Verifies selected platform is present in global.rc file and returns it,
-    raises error if platfrom is not in global.rc or returns 'localhost' if
+    Verifies selected platform is present in global.cylc file and returns it,
+    raises error if platfrom is not in global.cylc or returns 'localhost' if
     no platform is initally selected.
 
     Args:
         job_platform (str):
             platform item from config [runtime][TASK]platform
         platforms (dictionary):
-            list of possible platforms defined by global.rc
+            list of possible platforms defined by global.cylc
 
     Returns:
         platform (str):

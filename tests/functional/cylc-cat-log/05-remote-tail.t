@@ -32,7 +32,7 @@ run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 # shellcheck disable=SC2016
 REMOTE_HOME="$($SSH -n "${CYLC_TEST_HOST}" 'echo $PWD')"
-create_test_globalrc "" "
+create_test_global_config "" "
 [hosts]
    [[$CYLC_TEST_HOST]]
         tail command template = $REMOTE_HOME/cylc-run/.bin/my-tailer.sh %(filename)s"

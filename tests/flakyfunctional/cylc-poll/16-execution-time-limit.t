@@ -19,7 +19,7 @@
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 4
-create_test_globalrc '
+create_test_global_config '
 [hosts]
    [[localhost]]
         task communication method = poll

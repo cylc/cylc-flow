@@ -24,7 +24,7 @@ fi
 
 set_test_number 10
 
-create_test_globalrc "
+create_test_global_config "
 process pool timeout = PT10S" ""
 
 # Long STDOUT output

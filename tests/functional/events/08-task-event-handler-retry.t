@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -21,7 +21,7 @@ set_test_number 3
 
 OPT_SET=
 if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
-    create_test_globalrc "" "
+    create_test_global_config "" "
 [task events]
     handlers = hello-event-handler %(name)s %(event)s %(suite_url)s %(suite_uuid)s %(task_url)s %(message)s %(point)s %(submit_num)s %(id)s
     handler events=succeeded, failed

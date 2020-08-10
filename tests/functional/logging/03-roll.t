@@ -34,7 +34,7 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
         script = true
 __FLOW_CONFIG__
 
-create_test_globalrc '' '
+create_test_global_config '' '
 [suite logging]
     rolling archive length = 8
     maximum size in bytes = 2048'

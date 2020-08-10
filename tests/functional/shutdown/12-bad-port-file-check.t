@@ -22,7 +22,7 @@ set_test_number 3
 
 OPT_SET=
 if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
-    create_test_globalrc "" "
+    create_test_global_config "" "
 [cylc]
     [[main loop]]
         [[[health check]]]

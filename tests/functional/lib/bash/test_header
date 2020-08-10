@@ -118,7 +118,7 @@
 #         Install a reference suite using `install_suite`, run a validation
 #         test on the suite and run the reference suite with `suite_run_ok`.
 #         Run `purge_suite` on success. Expect 2 OK tests.
-#     create_test_globalrc [PRE [POST]]
+#     create_test_global_config [PRE [POST]]
 #         Create a new global config file $PWD/etc from site flow-tests.rc
 #         with PRE and POST pre- and ap-pended (PRE for top level items with no
 #         section heading).
@@ -666,7 +666,7 @@ reftest() {
     purge_suite "${SUITE_NAME}"
 }
 
-create_test_globalrc() {
+create_test_global_config() {
     # (Documented in file header).
     local PRE=
     local POST=
@@ -676,7 +676,7 @@ create_test_globalrc() {
         PRE=$1
         POST=$2
     elif (( $# > 2 )); then
-        echo 'ERROR, create_test_globalrc: too many args' >&2
+        echo 'ERROR, create_test_global_config: too many args' >&2
         exit 1
     fi
     # Tidy in case of previous use of this function.
@@ -772,6 +772,6 @@ elif ! "${CYLC_TEST_RUN_PLATFORM}" && ! "${CYLC_TEST_IS_GENERIC}"; then
     skip_all 'not running platform-specific tests'
 fi
 # Ignore the normal site/user global config, use flow-tests.rc.
-create_test_globalrc "$@"
+create_test_global_config "$@"
 set +x
 set +e
