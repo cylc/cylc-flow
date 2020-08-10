@@ -514,7 +514,7 @@ purge_suite_platform() {
         CMD="${CMD} && rmdir -p '${DIRNAME}'"
     fi
     # Pick the first host from the platform
-    HOSTS=$(cylc get-global --item "[platforms][${PLATFORM}]remote hosts")
+    HOSTS=$(cylc get-global --item "[platforms][${PLATFORM}]hosts")
     HOST=$(echo "$HOSTS" | awk -F ',' '{print $1}')
     # CMD is part of this function
     # shellcheck disable=SC2029
@@ -738,7 +738,7 @@ require_remote_platform() {
     # This is ugly, but some tests require these variables for direct ssh-ing.
     CYLC_TEST_HOST="$(
         cylc get-global --item \
-            "[platforms][${CYLC_REMOTE_PLATFORM}]remote hosts" \
+            "[platforms][${CYLC_REMOTE_PLATFORM}]hosts" \
             | awk -F ',' '{print $1}' \
         2>/dev/null
     )"
@@ -763,7 +763,7 @@ require_remote_platform_wsfs() {
     # This is ugly, but some tests require these variables for direct ssh-ing.
     CYLC_TEST_HOST_WSFS="$(
         cylc get-global --item \
-            "[platforms][${CYLC_REMOTE_PLATFORM_WSFS}]remote hosts" \
+            "[platforms][${CYLC_REMOTE_PLATFORM_WSFS}]hosts" \
             | awk -F ',' '{print $1}' \
         2>/dev/null
     )"

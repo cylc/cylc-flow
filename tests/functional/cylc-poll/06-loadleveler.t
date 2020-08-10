@@ -36,7 +36,7 @@ set_test_number 2
 create_test_globalrc "" "
 [platforms]
     [[loadleveler-platform]]
-        remote hosts = $CYLC_TEST_BATCH_TASK_HOST
+        hosts = $CYLC_TEST_BATCH_TASK_HOST
         batch system = loadleveler
 "
 

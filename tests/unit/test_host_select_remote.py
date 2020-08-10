@@ -1,4 +1,4 @@
-"""Test the cylc.flow.host_select module with remote hosts.
+"""Test the cylc.flow.host_select module with hosts.
 
 NOTE: These tests require a remote host to work with and are skipped
       unless one is provided.
@@ -65,7 +65,7 @@ def test_remote_blacklict():
 
 
 def test_remote_rankings():
-    """Test that ranking evaluation works on remote hosts (via SSH)."""
+    """Test that ranking evaluation works on hosts (via SSH)."""
     assert select_host(
         [remote_platform],
         ranking_string='''

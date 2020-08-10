@@ -37,7 +37,7 @@ create_test_globalrc "" "
     [platforms]
         [[test-slurm]]
             batch system = $CYLC_TEST_BATCH_SYS
-            remote hosts = $CYLC_TEST_BATCH_TASK_HOST
+            hosts = $CYLC_TEST_BATCH_TASK_HOST
 "
 
 

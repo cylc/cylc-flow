@@ -68,7 +68,7 @@ def test_write_prelude_invalid_cylc_command():
     job_conf = {
         "platform": {
             "batch system": "background",
-            "remote hosts": ["localhost"],
+            "hosts": ["localhost"],
             "owner": "me",
             "cylc executable": "sl -a"
         }

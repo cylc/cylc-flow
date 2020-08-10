@@ -74,7 +74,7 @@ def main(_, options, *args):
     platforms = {
         config.get_config(['runtime', name, 'platform'])
         for name in config.get_namespace_list('all tasks')
-    } ^ {None, 'localhost'}
+    } - {None, 'localhost'}
 
     # When "suite run hosts" are formalised as "flow platforms"
     # we can substitute `localhost` for this, in the mean time

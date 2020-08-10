@@ -16,8 +16,9 @@
 #
 # Tests for the platform lookup.
 
-from copy import deepcopy
+import random
 import re
+from copy import deepcopy
 
 from cylc.flow.exceptions import PlatformLookupError
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
@@ -60,16 +61,16 @@ def platform_from_name(platform_name=None, platforms=None):
             # from other platforms matching platform_name_re
             platform_data = deepcopy(platforms[platform_name_re])
 
-            # If remote hosts are not filled in make remote
+            # If hosts are not filled in make remote
             # hosts the platform name.
             # Example: `[platforms][workplace_vm_123]<nothing>`
             #   should create a platform where
             #   `remote_hosts = ['workplace_vm_123']`
             if (
-                'remote hosts' not in platform_data.keys() or
-                not platform_data['remote hosts']
+                'hosts' not in platform_data.keys() or
+                not platform_data['hosts']
             ):
-                platform_data['remote hosts'] = [platform_name]
+                platform_data['hosts'] = [platform_name]
             # Fill in the "private" name field.
             platform_data['name'] = platform_name
             return platform_data
@@ -145,7 +146,7 @@ def platform_from_job_info(platforms, job, remote):
         >>> platforms = {
         ...         'desktop[0-9][0-9]|laptop[0-9][0-9]': {},
         ...         'sugar': {
-        ...             'remote hosts': 'localhost',
+        ...             'hosts': 'localhost',
         ...             'batch system': 'slurm'
         ...         }
         ... }
@@ -196,8 +197,8 @@ def platform_from_job_info(platforms, job, remote):
             return 'localhost'
 
         elif (
-            'remote hosts' in platform_spec.keys() and
-            task_host in platform_spec['remote hosts'] and
+            'hosts' in platform_spec.keys() and
+            task_host in platform_spec['hosts'] and
             task_batch_system == platform_spec['batch system']
         ):
             # If we have localhost with a non-background batch system we
@@ -223,19 +224,22 @@ def get_host_from_platform(platform, method=None):
         method (str):
             Name a function to use when selecting hosts from list provided
             by platform.
-            If unset then `[platform][remote hosts][0]` will be returned
+
+            - None or 'random': Pick the first host from list
+            - 'first': Return the first host in the list
 
     Returns:
         hostname (str):
 
     TODO:
         Make methods other than None work:
-            - Random Selection
             - Random Selection with check for host availability
 
     """
-    if method is None:
-        return platform['remote hosts'][0]
+    if method is None or method == 'random':
+        return random.choice(platform['hosts'])
+    elif method == 'first':
+        return platform['hosts'][0]
     else:
         raise NotImplementedError(
             f'method {method} is not a valid input for get_host_from_platform'

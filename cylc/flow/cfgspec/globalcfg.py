@@ -354,7 +354,7 @@ with Conf('flow.rc', desc='''
                 sourcing ``~/.bashrc`` (or ``~/.cshrc``) to set up the
                 environment.
             ''')
-            Conf('remote hosts', VDR.V_STRING_LIST)
+            Conf('hosts', VDR.V_STRING_LIST)
             Conf('cylc executable', VDR.V_STRING, 'cylc', desc='''
                 The ``cylc`` executable on a remote host.
 
@@ -469,7 +469,7 @@ with Conf('flow.rc', desc='''
             ''')
             Conf('owner', VDR.V_STRING)
         with Conf('localhost', meta=Platform):
-            Conf('remote hosts', VDR.V_STRING_LIST, ['localhost'])
+            Conf('hosts', VDR.V_STRING_LIST, ['localhost'])
 
     # Platform Groups
     with Conf('platform groups'):

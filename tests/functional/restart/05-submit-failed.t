@@ -26,7 +26,7 @@ set_test_number 7
 create_test_globalrc '
 [platforms]
 [[test platform]]
-remote hosts = localhost
+hosts = localhost
 batch system = at
 batch submit command template = at oh-no
 '

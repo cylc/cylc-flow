@@ -24,7 +24,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 create_test_globalrc '
 [platforms]
     [[test platform]]
-        remote hosts = NOHOST.NODOMAIN
+        hosts = NOHOST.NODOMAIN
 '
 #-------------------------------------------------------------------------------
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"

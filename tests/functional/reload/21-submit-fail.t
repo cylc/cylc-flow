@@ -26,7 +26,7 @@ set_test_number 4
 create_test_globalrc '
 [platforms]
     [[platypus]]
-        remote hosts = localhost
+        hosts = localhost
         batch system = at
         batch submit command template = sleep 5
         submission retry delays = 3*PT5S

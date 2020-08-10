@@ -222,7 +222,7 @@ class HostUtil(object):
         """
         if not platform:
             return False
-        for host in platform['remote hosts']:
+        for host in platform['hosts']:
             if is_remote_host(host) is True:
                 return True
         return False

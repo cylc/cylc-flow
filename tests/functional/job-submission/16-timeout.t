@@ -29,7 +29,7 @@ process pool timeout = PT10S
 " "
 [platforms]
     [[unicorn]]
-        remote hosts = localhost
+        hosts = localhost
         batch system = at
         batch submit command template = sleep 30"
 

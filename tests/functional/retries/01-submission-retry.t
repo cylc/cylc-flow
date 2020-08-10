@@ -22,7 +22,7 @@ install_suite "${TEST_NAME_BASE}" 'submission'
 create_test_globalrc "" "
 [platforms]
 [[nonsense-platform]]
-remote hosts = notahost
+hosts = notahost
 "
 
 #-------------------------------------------------------------------------------

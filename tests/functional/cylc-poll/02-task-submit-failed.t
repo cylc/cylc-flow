@@ -23,7 +23,7 @@ set_test_number 2
 create_test_globalrc "" "
 [platforms]
 [[crocodile]]
-  remote hosts = localhost
+  hosts = localhost
   batch system = at
   batch submit command template = at noon tomorrow
 "

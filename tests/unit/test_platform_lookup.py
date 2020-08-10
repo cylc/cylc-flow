@@ -25,49 +25,49 @@ PLATFORMS = {
         'batch system': 'background'
     },
     'sugar': {
-        'remote hosts': 'localhost',
+        'hosts': 'localhost',
         'batch system': 'slurm',
     },
     'hpc': {
-        'remote hosts': ['hpc1', 'hpc2'],
+        'hosts': ['hpc1', 'hpc2'],
         'batch system': 'pbs',
     },
     'hpc1-bg': {
-        'remote hosts': 'hpc1',
+        'hosts': 'hpc1',
         'batch system': 'background',
     },
     'hpc2-bg': {
-        'remote hosts': 'hpc2',
+        'hosts': 'hpc2',
         'batch system': 'background'
     },
     'localhost': {
-        'remote hosts': 'localhost',
+        'hosts': 'localhost',
         'batch system': 'background'
     }
 }
 
 PLATFORMS_NO_UNIQUE = {
     'sugar': {
-        'remote hosts': 'localhost',
+        'hosts': 'localhost',
         'batch system': 'slurm'
     },
     'pepper': {
-        'remote hosts': ['hpc1', 'hpc2'],
+        'hosts': ['hpc1', 'hpc2'],
         'batch system': 'slurm'
     },
 
 }
 
 PLATFORMS_WITH_RE = {
-    'hpc.*': {'remote hosts': 'hpc1', 'batch system': 'background'},
-    'h.*': {'remote hosts': 'hpc3'},
+    'hpc.*': {'hosts': 'hpc1', 'batch system': 'background'},
+    'h.*': {'hosts': 'hpc3'},
     r'vld\d{2,3}': {},
     'nu.*': {
         'batch system': 'slurm',
-        'remote hosts': ['localhost']
+        'hosts': ['localhost']
     },
     'localhost': {
-        'remote hosts': 'localhost',
+        'hosts': 'localhost',
         'batch system': 'background'
     }
 }
@@ -79,7 +79,7 @@ PLATFORMS_WITH_RE = {
         (PLATFORMS_WITH_RE, "nutmeg", {
             "batch system": "slurm",
             "name": "nutmeg",
-            "remote hosts": ['localhost']
+            "hosts": ['localhost']
         }),
         (PLATFORMS_WITH_RE, "vld798", ["vld798"]),
         (PLATFORMS_WITH_RE, "vld56", ["vld56"]),
@@ -87,7 +87,7 @@ PLATFORMS_WITH_RE = {
             PLATFORMS_NO_UNIQUE,
             "sugar",
             {
-                "remote hosts": "localhost",
+                "hosts": "localhost",
                 "batch system": "slurm",
                 "name": "sugar"
             },
@@ -96,7 +96,7 @@ PLATFORMS_WITH_RE = {
             PLATFORMS,
             None,
             {
-                "remote hosts": "localhost",
+                "hosts": "localhost",
                 "name": "localhost",
                 "batch system": "background"
             },
@@ -104,18 +104,18 @@ PLATFORMS_WITH_RE = {
         (PLATFORMS, "laptop22", {
             "batch system": "background",
             "name": "laptop22",
-            "remote hosts": ["laptop22"]
+            "hosts": ["laptop22"]
         }),
         (
             PLATFORMS,
             "hpc1-bg",
             {
-                "remote hosts": "hpc1",
+                "hosts": "hpc1",
                 "batch system": "background",
                 "name": "hpc1-bg"
             },
         ),
-        (PLATFORMS_WITH_RE, "hpc2", {"remote hosts": "hpc3", "name": "hpc2"}),
+        (PLATFORMS_WITH_RE, "hpc2", {"hosts": "hpc3", "name": "hpc2"}),
     ],
 )
 def test_basic(PLATFORMS, platform, expected):
@@ -125,7 +125,7 @@ def test_basic(PLATFORMS, platform, expected):
     if isinstance(expected, dict):
         assert platform == expected
     else:
-        assert platform["remote hosts"] == expected
+        assert platform["hosts"] == expected
 
 
 def test_platform_not_there():
@@ -164,7 +164,7 @@ def test_similar_but_not_exact_match():
             'sugar'
         ),
         # Check that when users asks for hpc1 and pbs they get a platform
-        # with hpc1 in its list of remote hosts
+        # with hpc1 in its list of hosts
         (
             {'batch system': 'pbs'},
             {'host': 'hpc1'},
@@ -236,12 +236,12 @@ def test_platform_from_job_info_two_spices(
 ):
     platforms = {
         'sugar': {
-            'remote hosts': ['sugar', 'localhost'],
+            'hosts': ['sugar', 'localhost'],
             'batch system': 'slurm',
         },
         'pepper': {
             'batch system': 'slurm',
-            'remote hosts': 'pepper'
+            'hosts': 'pepper'
         },
 
     }
@@ -276,18 +276,18 @@ def test_platform_from_job_info_similar_platforms(
 ):
     platforms = {
         'my-platform-with-bash': {
-            'remote hosts': 'desktop01',
+            'hosts': 'desktop01',
             'shell': '/bin/bash',
             'batch system': 'background'
         },
         # An extra platform to check that we only pick up the first match
         'my-platform-with-fish-not-this-one': {
-            'remote hosts': 'desktop01',
+            'hosts': 'desktop01',
             'shell': '/bin/fish',
             'batch system': 'background'
         },
         'my-platform-with-fish': {
-            'remote hosts': 'desktop01',
+            'hosts': 'desktop01',
             'shell': '/bin/fish',
             'batch system': 'background'
         },

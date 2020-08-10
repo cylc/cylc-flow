@@ -29,7 +29,7 @@ set_test_number 3
 create_test_globalrc '' "
 [platforms]
     [[${CYLC_REMOTE_PLATFORM}-ssh]]
-        remote hosts = ${CYLC_TEST_HOST}
+        hosts = ${CYLC_TEST_HOST}
         communication method = ssh
 "
 

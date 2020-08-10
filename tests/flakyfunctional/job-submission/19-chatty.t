@@ -28,7 +28,7 @@ create_test_globalrc "
 process pool timeout = PT10S" "
 [platforms]
 [[griffin]]
-remote hosts = localhost
+hosts = localhost
 batch system = at
 batch submit command template = talkingnonsense %(job)s
 "

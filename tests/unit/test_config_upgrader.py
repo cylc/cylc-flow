@@ -111,18 +111,18 @@ GLOBALRC = """
         # Note: "desktop01" and "desktop02" are both valid and distinct
         # platforms
     [[sugar]]
-        remote hosts = localhost
+        hosts = localhost
         batch system = slurm
     [[hpc]]
-        remote hosts = hpcl1, hpcl2
+        hosts = hpcl1, hpcl2
         retrieve job logs = True
         batch system = pbs
     [[hpcl1-bg]]
-        remote hosts = hpcl1
+        hosts = hpcl1
         retrieve job logs = True
         batch system = background
     [[hpcl2-bg]]
-        remote hosts = hpcl2
+        hosts = hpcl2
         retrieve job logs = True
         batch system = background
 """

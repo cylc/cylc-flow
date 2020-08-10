@@ -99,7 +99,7 @@ class TestSuiteConfig(object):
             '''
             [platforms]
                 [[localhost]]
-                    remote hosts = localhost
+                    hosts = localhost
             '''
         )
         with TemporaryDirectory() as temp_dir:
@@ -132,7 +132,7 @@ class TestSuiteConfig(object):
             '''
             [platforms]
                 [[localhost]]
-                    remote hosts = localhost
+                    hosts = localhost
             '''
         )
         with TemporaryDirectory() as temp_dir:
@@ -165,7 +165,7 @@ class TestSuiteConfig(object):
             '''
             [platforms]
                 [[localhost]]
-                    remote hosts = localhost
+                    hosts = localhost
             '''
         )
         with TemporaryDirectory() as temp_dir:
@@ -198,7 +198,7 @@ class TestSuiteConfig(object):
             '''
             [platforms]
                 [[localhost]]
-                    remote hosts = localhost
+                    hosts = localhost
             '''
         )
         with TemporaryDirectory() as temp_dir:
@@ -239,7 +239,7 @@ class TestSuiteConfig(object):
             '''
             [platforms]
                 [[localhost]]
-                    remote hosts = localhost
+                    hosts = localhost
             '''
         )
         template_vars = {}
