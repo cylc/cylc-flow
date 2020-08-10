@@ -216,7 +216,7 @@ def platform_from_job_info(platforms, job, remote):
 
 def get_host_from_platform(platform, method=None):
     """Placeholder for a more sophisticated function which returns a host
-    given an itask with a platform attribute
+    given a platform dictionary.
 
     Args:
         platform (dict):
