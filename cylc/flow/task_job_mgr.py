@@ -286,9 +286,6 @@ class TaskJobManager(object):
                 cmd.append('--remote-mode')
             else:
                 remote_mode = False
-            # TODO - check whether Kwargs is actually used in
-            # platforms way of working and remove if not.
-            kwargs = {}
             cmd.append('--')
             cmd.append(
                 get_remote_suite_run_job_dir(
@@ -341,7 +338,6 @@ class TaskJobManager(object):
                         cmd + job_log_dirs,
                         stdin_files=stdin_files,
                         job_log_dirs=job_log_dirs,
-                        **kwargs
                     ),
                     self._submit_task_jobs_callback, [suite, itasks_batch])
         return done_tasks
