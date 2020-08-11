@@ -38,7 +38,7 @@ home = os.path.expandvars('$HOME/')
                 '#SBATCH --job-name=axe.1.chop',
                 (
                     f'#SBATCH --output='
-                    f'{home}/cylc-run/chop/log/job/1/axe/01/job.out'
+                    f'{home}cylc-run/chop/log/job/1/axe/01/job.out'
                 ),
                 (
                     f'#SBATCH --error='
