@@ -21,6 +21,7 @@ import re
 
 ENGLISH_REGEX_MAP = {
     r'\w': 'alphanumeric',
+    r'a-zA-Z0-9': 'latin letters and numbers',
     r'\-': '-',
     r'\.': '.',
     r'\/': '/'
@@ -141,4 +142,12 @@ class SuiteNameValidator(UnicodeRuleChecker):
         length(1, 254),
         not_starts_with(r'\.', r'\-'),
         allowed_characters(r'\w', r'\/', '_', '+', r'\-', r'\.', '@')
+    ]
+
+
+class XtriggerNameValidator(UnicodeRuleChecker):
+    """The rules for valid xtrigger labels:"""
+
+    RULES = [
+        allowed_characters(r'a-zA-Z0-9', '_')
     ]
