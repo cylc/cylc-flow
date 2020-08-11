@@ -28,7 +28,7 @@ defines the "file format" (next).
 
 ### File spec
 
-**E.g. ``cylc/flow/parsec/test_spec.py`` for ``cylc/flow/parsec/test.rc`` and Cylc file
+**E.g. ``cylc/flow/parsec/test_spec.py`` for ``cylc/flow/parsec/test.cylc`` and Cylc file
 specs in ``cylc/flow/cfgspec/``.**
 
 A nested dict that contains all legal items in their proper place, and
@@ -53,12 +53,12 @@ common use cases. Includes combine two config files with precedence order.
 
 ## Testing
 
-  * **``cylc/flow/parsec/test.rc``**
+  * **``cylc/flow/parsec/test.cylc``**
     An example config file that does (or should/will) contain all types of
     config item that parsec is supposed to support.
 
   * **``cylc/flow/parsec/test_spec.py``**
-    Defines a spec for ``test.rc``, and a unit test to parse, validate, and
+    Defines a spec for ``test.cylc``, and a unit test to parse, validate, and
     print the config file. Does not test deprecation/upgrade at this stage.
 
   * **``cylc/flow/parsec/upgrade.py``**

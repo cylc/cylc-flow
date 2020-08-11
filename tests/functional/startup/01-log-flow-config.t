@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test "log/flow-config/*-<mode>.rc" files that are generated on suite start up.
+# Test "log/flow-config/*-<mode>.cylc" files that are generated on suite start up.
 . "$(dirname "$0")/test_header"
 set_test_number 9
 
@@ -45,22 +45,22 @@ suite_run_ok "${TEST_NAME_BASE}-run" cylc run --no-detach "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-restart" \
     cylc restart --set 'WEATHER=good' --no-detach "${SUITE_NAME}"
 
-# Check for 3 generated *.rc files
+# Check for 3 generated *.cylc files
 LOGD="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/flow-config"
 # shellcheck disable=SC2012
 ls "${LOGD}" | sed -e 's/.*-//g' | sort >'ls.out'
 cmp_ok 'ls.out' <<'__OUT__'
-reload.rc
-restart.rc
-run.rc
+reload.cylc
+restart.cylc
+run.cylc
 __OUT__
 
 LOGD="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/flow-config"
-RUN_RC="$(ls "${LOGD}/"*-run.rc)"
-REL_RC="$(ls "${LOGD}/"*-reload.rc)"
-RES_RC="$(ls "${LOGD}/"*-restart.rc)"
-# The generated *-run.rc and *-reload.rc should be identical
-# The generated *.rc files should validate
+RUN_RC="$(ls "${LOGD}/"*-run.cylc)"
+REL_RC="$(ls "${LOGD}/"*-reload.cylc)"
+RES_RC="$(ls "${LOGD}/"*-restart.cylc)"
+# The generated *-run.cylc and *-reload.cylc should be identical
+# The generated *.cylc files should validate
 cmp_ok "${RUN_RC}" "${REL_RC}"
 run_ok "${TEST_NAME_BASE}-validate-run-rc" cylc validate "${RUN_RC}"
 run_ok "${TEST_NAME_BASE}-validate-restart-rc" cylc validate "${RES_RC}"

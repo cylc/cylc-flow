@@ -7,7 +7,7 @@
     [[t1]]
         script = """
 cylc broadcast -n 't2' -F - "${CYLC_SUITE_NAME}" \
-    <"${CYLC_SUITE_DEF_PATH}/broadcast.rc"
+    <"${CYLC_SUITE_DEF_PATH}/broadcast.cylc"
 """
     [[t2]]
         script = false

@@ -19,11 +19,11 @@
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 2
-echo '%include foo.rc' >flow.cylc
-echo '%include bar.rc' >foo.rc
+echo '%include foo.cylc' >flow.cylc
+echo '%include bar.cylc' >foo.cylc
 run_fail "${TEST_NAME_BASE}" cylc validate flow.cylc
 cmp_ok "${TEST_NAME_BASE}.stderr" <<__ERR__
-IncludeFileNotFoundError: bar.rc via foo.rc from $PWD/flow.cylc
+IncludeFileNotFoundError: bar.cylc via foo.cylc from $PWD/flow.cylc
 __ERR__
 #-------------------------------------------------------------------------------
 exit

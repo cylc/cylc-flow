@@ -1261,7 +1261,7 @@ class Scheduler:
         else:
             load_type = "run"
         file_name = get_suite_run_config_log_dir(
-            self.suite, f"{time_str}-{load_type}.rc")
+            self.suite, f"{time_str}-{load_type}.cylc")
         with open(file_name, "wb") as handle:
             handle.write(b"# cylc-version: %s\n" % CYLC_VERSION.encode())
             printcfg(self.config.cfg, none_str=None, handle=handle)

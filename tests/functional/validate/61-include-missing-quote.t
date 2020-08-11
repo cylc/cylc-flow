@@ -22,13 +22,13 @@
 set_test_number 2
 
 cat >'flow.cylc' <<'__FLOW_CONFIG__'
-%include 'foo.rc
+%include 'foo.cylc
 __FLOW_CONFIG__
 
 run_fail "${TEST_NAME_BASE}" cylc validate 'flow.cylc'
 cmp_ok "${TEST_NAME_BASE}.stderr" <<__ERR__
 FileParseError: mismatched quotes (in $PWD/flow.cylc):
-   %include 'foo.rc
+   %include 'foo.cylc
 __ERR__
 
 exit

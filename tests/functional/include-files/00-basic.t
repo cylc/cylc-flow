@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -26,13 +26,13 @@ TEST_NAME="${TEST_NAME_BASE}-validate"
 # test raw suite validates
 run_ok "${TEST_NAME}.1" cylc val "${SUITE_NAME}"
 # test suite validates as inlined during editing
-cylc view --inline --mark-for-edit --stdout "${SUITE_NAME}" > inlined-for-edit.rc
-run_ok "${TEST_NAME}.2" cylc val inlined-for-edit.rc
+cylc view --inline --mark-for-edit --stdout "${SUITE_NAME}" > inlined-for-edit.cylc
+run_ok "${TEST_NAME}.2" cylc val inlined-for-edit.cylc
 #-------------------------------------------------------------------------------
 # compare inlined suite def with reference copy
 TEST_NAME=${TEST_NAME_BASE}-compare
-cylc view --inline --stdout "${SUITE_NAME}" > inlined.rc
-cmp_ok inlined.rc "${TEST_SOURCE_DIR}/suite/ref-inlined.rc"
+cylc view --inline --stdout "${SUITE_NAME}" > inlined.cylc
+cmp_ok inlined.cylc "${TEST_SOURCE_DIR}/suite/ref-inlined.cylc"
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"
 #-------------------------------------------------------------------------------

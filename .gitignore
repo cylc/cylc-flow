@@ -13,6 +13,7 @@ __pycache__/
 
 # processed suite definitions
 *.rc.processed
+*.cylc.processed
 
 # profiling
 .profiling

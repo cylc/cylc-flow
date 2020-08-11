@@ -6,4 +6,4 @@
         R1 = "a => FAM"
 
 [runtime]
-{% include 'runtime-bad.rc' %}
+{% include 'runtime-bad.cylc' %}

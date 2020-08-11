@@ -6,4 +6,4 @@
         R1 = "a => FAM"
 
 [runtime]
-{% include 'runtime-incomplete.rc' %}
+{% include 'runtime-incomplete.cylc' %}

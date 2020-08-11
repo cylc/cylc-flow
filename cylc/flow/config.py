@@ -483,9 +483,9 @@ class SuiteConfig(object):
 
             self.cfg['scheduling']['special tasks'][s_type] = result
 
-        self.collapsed_families_rc = (
+        self.collapsed_families_config = (
             self.cfg['visualization']['collapsed families'])
-        for fam in self.collapsed_families_rc:
+        for fam in self.collapsed_families_config:
             if fam not in self.runtime['first-parent descendants']:
                 raise SuiteConfigError(
                     '[visualization]collapsed families: '
@@ -497,7 +497,7 @@ class SuiteConfig(object):
         elif is_reload:
             self.closed_families = []
         else:
-            self.closed_families = self.collapsed_families_rc
+            self.closed_families = self.collapsed_families_config
         for cfam in self.closed_families:
             if cfam not in self.runtime['descendants']:
                 self.closed_families.remove(cfam)
@@ -1743,7 +1743,7 @@ class SuiteConfig(object):
 
         if self.first_graph:
             self.first_graph = False
-            if not self.collapsed_families_rc and not ungroup_all:
+            if not self.collapsed_families_config and not ungroup_all:
                 # initially default to collapsing all families if
                 # "[visualization]collapsed families" not defined
                 group_all = True
@@ -1751,8 +1751,8 @@ class SuiteConfig(object):
         first_parent_descendants = self.runtime['first-parent descendants']
         if group_all:
             # Group all family nodes
-            if self.collapsed_families_rc:
-                self.closed_families = copy(self.collapsed_families_rc)
+            if self.collapsed_families_config:
+                self.closed_families = copy(self.collapsed_families_config)
             else:
                 for fam in first_parent_descendants:
                     if fam != 'root':

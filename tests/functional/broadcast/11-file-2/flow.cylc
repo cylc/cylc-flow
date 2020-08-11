@@ -7,8 +7,8 @@
     [[t1]]
         script = """
 cylc broadcast -n 't2' \
-    -F "${CYLC_SUITE_DEF_PATH}/broadcast-1.rc" \
-    -F "${CYLC_SUITE_DEF_PATH}/broadcast-2.rc" \
+    -F "${CYLC_SUITE_DEF_PATH}/broadcast-1.cylc" \
+    -F "${CYLC_SUITE_DEF_PATH}/broadcast-2.cylc" \
     "${CYLC_SUITE_NAME}"
 """
     [[t2]]

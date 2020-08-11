@@ -42,8 +42,8 @@ class Testcfg(ParsecConfig):
 
 cfg = Testcfg(SPEC)
 strict = False
-cfg.loadcfg(os.path.join(os.path.dirname(__file__), 'site.rc'))
-cfg.loadcfg(os.path.join(os.path.dirname(__file__), 'user.rc'))
+cfg.loadcfg(os.path.join(os.path.dirname(__file__), 'site.cylc'))
+cfg.loadcfg(os.path.join(os.path.dirname(__file__), 'user.cylc'))
 
 cfg.dump()
 cfg.dump(['list values'])

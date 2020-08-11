@@ -392,8 +392,8 @@ cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/19.graph.ref" '19.graph'
 # Note: This also demonstrates current badness of "cylc get-config"...
 #       Inconsistence between graph/runtime whitespace handling.
 #       Inconsistence between graph/runtime parameter expansion.
-cylc get-config --sparse 'flow.cylc' >'19.rc'
-cmp_ok '19.rc' <<'__FLOW_CONFIG__'
+cylc get-config --sparse 'flow.cylc' >'19.cylc'
+cmp_ok '19.cylc' <<'__FLOW_CONFIG__'
 [cylc]
     [[parameters]]
         lang = c++, fortran-2008
