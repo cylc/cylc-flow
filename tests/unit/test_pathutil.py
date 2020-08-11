@@ -27,7 +27,7 @@ from cylc.flow.pathutil import (
     get_suite_run_log_dir,
     get_suite_run_log_name,
     get_suite_run_pub_db_name,
-    get_suite_run_rc_dir,
+    get_suite_run_config_log_dir,
     get_suite_run_share_dir,
     get_suite_run_work_dir,
     get_suite_test_log_name,
@@ -81,7 +81,8 @@ class TestPathutil(TestCase):
             (get_suite_run_dir, 'run directory', ''),
             (get_suite_run_job_dir, 'run directory', '/log/job'),
             (get_suite_run_log_dir, 'run directory', '/log/suite'),
-            (get_suite_run_rc_dir, 'run directory', '/log/suiterc'),
+            (get_suite_run_config_log_dir,
+             'run directory', '/log/flow-config'),
             (get_suite_run_share_dir, 'work directory', '/share'),
             (get_suite_run_work_dir, 'work directory', '/work'),
         ):
@@ -136,7 +137,7 @@ class TestPathutil(TestCase):
                 '',
                 '/log/suite',
                 '/log/job',
-                '/log/suiterc',
+                '/log/flow-config',
                 '/share',
                 '/work',
             )

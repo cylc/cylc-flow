@@ -61,7 +61,7 @@ from cylc.flow.parsec.validate import DurationFloat
 from cylc.flow.pathutil import (
     get_suite_run_dir,
     get_suite_run_log_dir,
-    get_suite_run_rc_dir,
+    get_suite_run_config_log_dir,
     get_suite_run_share_dir,
     get_suite_run_work_dir,
     get_suite_test_log_name,
@@ -1260,7 +1260,7 @@ class Scheduler:
             load_type = "restart"
         else:
             load_type = "run"
-        file_name = get_suite_run_rc_dir(
+        file_name = get_suite_run_config_log_dir(
             self.suite, f"{time_str}-{load_type}.rc")
         with open(file_name, "wb") as handle:
             handle.write(b"# cylc-version: %s\n" % CYLC_VERSION.encode())

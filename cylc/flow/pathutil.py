@@ -64,9 +64,9 @@ def get_suite_run_log_name(suite):
     return get_suite_run_dir(suite, 'log', 'suite', 'log')
 
 
-def get_suite_run_rc_dir(suite, *args):
+def get_suite_run_config_log_dir(suite, *args):
     """Return suite run flow.cylc log directory, join any extra args."""
-    return get_suite_run_dir(suite, 'log', 'suiterc', *args)
+    return get_suite_run_dir(suite, 'log', 'flow-config', *args)
 
 
 def get_suite_run_pub_db_name(suite):
@@ -114,7 +114,7 @@ def make_suite_run_tree(suite):
         get_suite_run_dir(suite),
         get_suite_run_log_dir(suite),
         get_suite_run_job_dir(suite),
-        get_suite_run_rc_dir(suite),
+        get_suite_run_config_log_dir(suite),
         get_suite_run_share_dir(suite),
         get_suite_run_work_dir(suite),
     ):
