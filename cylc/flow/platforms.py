@@ -232,7 +232,7 @@ def get_host_from_platform(platform, method=None):
         hostname (str):
 
     TODO:
-        Make methods other than None work:
+        Other host selection methods:
             - Random Selection with check for host availability
 
     """
