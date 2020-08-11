@@ -38,7 +38,7 @@ import sys
 
 import cylc.flow.flags
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.cylc_subproc import Popen, PIPE, DEVNULL
+from cylc.flow.cylc_subproc import procopen, PIPE, DEVNULL
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.config import SuiteConfig
 from cylc.flow.platforms import platform_from_name
@@ -80,16 +80,19 @@ def main(_, options, *args):
     # we can substitute `localhost` for this, in the mean time
     # we will have to assume that flow hosts are configured correctly.
 
+    if not platforms:
+        sys.exit(0)
+
     verbose = cylc.flow.flags.verbose
 
     # get the cylc version on each platform
     versions = {}
     for platform_name in sorted(platforms):
-        platform = forward_lookup(platform_name)
+        platform = platform_from_name(platform_name)
         cmd = construct_platform_ssh_cmd(['version'], platform)
         if verbose:
             print(cmd)
-        proc = Popen(cmd, stdin=DEVNULL, stdout=PIPE, stderr=PIPE)
+        proc = procopen(cmd, stdin=DEVNULL, stdout=PIPE, stderr=PIPE)
         out, err = proc.communicate()
         out = out.decode()
         err = err.decode()
