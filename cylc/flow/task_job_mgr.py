@@ -816,7 +816,7 @@ class TaskJobManager(object):
                 suite, itask, '(remote host select)', exc)
             return False
         else:
-            # Re-instate when remote host selection upgraded
+            # TODO: re-instate when remote host selection upgraded
             # if task_host is None:  # host select not ready
             #     itask.set_summary_message(self.REMOTE_SELECT_MSG)
             #     return
