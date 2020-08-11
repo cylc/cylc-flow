@@ -865,12 +865,11 @@ class TaskJobManager(object):
 
     def _prep_submit_task_job_impl(self, suite, itask, rtconfig):
         """Helper for self._prep_submit_task_job."""
-        # itask.platform is going to get boring...
-        platform = itask.platform
 
-        itask.summary['platforms_used'][itask.submit_num] = platform['name']
+        itask.summary['platforms_used'][
+            itask.submit_num] = itask.platform['name']
 
-        itask.summary['batch_sys_name'] = platform['batch system']
+        itask.summary['batch_sys_name'] = itask.platform['batch system']
         for name in rtconfig['extra log files']:
             itask.summary['logfiles'].append(
                 os.path.expanduser(os.path.expandvars(name)))
@@ -894,9 +893,9 @@ class TaskJobManager(object):
         job_file_path = get_remote_suite_run_job_dir(
             itask.platform, suite, job_d, JOB_LOG_JOB)
         return {
-            'batch_system_name': platform['batch system'],
+            'batch_system_name': itask.platform['batch system'],
             'batch_submit_command_template': (
-                platform['batch submit command template']
+                itask.platform['batch submit command template']
             ),
             'batch_system_conf': batch_sys_conf,
             'dependencies': itask.state.get_resolved_dependencies(),
@@ -906,7 +905,7 @@ class TaskJobManager(object):
             'env-script': rtconfig['env-script'],
             'err-script': rtconfig['err-script'],
             'exit-script': rtconfig['exit-script'],
-            'platform': platform,
+            'platform': itask.platform,
             'init-script': rtconfig['init-script'],
             'job_file_path': job_file_path,
             'job_d': job_d,
@@ -916,7 +915,7 @@ class TaskJobManager(object):
             'param_var': itask.tdef.param_var,
             'post-script': scripts[2],
             'pre-script': scripts[0],
-            'remote_suite_d': platform['suite definition directory'],
+            'remote_suite_d': itask.platform['suite definition directory'],
             'script': scripts[1],
             'submit_num': itask.submit_num,
             'flow_label': itask.flow_label,
