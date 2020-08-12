@@ -47,20 +47,15 @@ Basic examples, for a task "bar.2020" in suite "foo":
     cylc cat-log -f o foo bar.2020
   Print task stderr:
     cylc cat-log -f e foo bar.2020
-
-Note the --host/user options are not needed to view remote job logs. They are
-the general command reinvocation options for sites using ssh-based task
-messaging."""
+"""
 
 import sys
-from cylc.flow.remote import remrun, remote_cylc_cmd, watch_and_kill
-# Disallow remote re-invocation of edit mode (result: "ssh HOST vim <file>").
-if remrun(abort_if='edit', forward_x11=True):
-    sys.exit(0)
+from cylc.flow.remote import remote_cylc_cmd, watch_and_kill
 
 import os
 import shlex
 from contextlib import suppress
+from getpass import getuser
 from glob import glob
 from shlex import quote
 from stat import S_IRUSR
@@ -70,7 +65,7 @@ from subprocess import Popen, PIPE
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import UserInputError
 import cylc.flow.flags
-from cylc.flow.hostuserutil import is_remote
+from cylc.flow.hostuserutil import is_remote_platform
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.pathutil import (
     get_remote_suite_run_job_dir,
@@ -82,12 +77,13 @@ from cylc.flow.task_id import TaskID
 from cylc.flow.task_job_logs import (
     JOB_LOG_OUT, JOB_LOG_ERR, JOB_LOG_OPTS, NN, JOB_LOGS_LOCAL)
 from cylc.flow.terminal import cli_function
+from cylc.flow.platforms import platform_from_name, get_host_from_platform
 
 
 # Immortal tail-follow processes on job hosts can be cleaned up by killing
 # my subprocesses if my PPID or PPPID changes (due to parent ssh connection
-# dying). This works even if cat-log is invoked with '--host' from a third
-# host, and even if the sshd-invoked "$(SHELL) -c <remote-command>" does not
+# dying). This works even if the sshd-invoked
+# "$(SHELL) -c <remote-command>" does not
 # exec <remote-command> (affects whether my parent process or I get inherited
 # by init).
 #
@@ -148,20 +144,6 @@ def colorise_cat_log(cat_proc, color=False):
         cat_proc.wait()
 
 
-def split_user_at_host(user_at_host):
-    """split user@host into user, host."""
-    if user_at_host is None:
-        # local user on local host
-        user, host = None, None
-    elif "@" in user_at_host:
-        # other user on other host
-        user, host = user_at_host.split("@", 1)
-    else:
-        # local user on other host
-        user, host = (None, user_at_host)
-    return (user, host)
-
-
 def view_log(logpath, mode, tailer_tmpl, batchview_cmd=None, remote=False,
              color=False):
     """View (by mode) local log file. This is only called on the file host.
@@ -174,7 +156,6 @@ def view_log(logpath, mode, tailer_tmpl, batchview_cmd=None, remote=False,
 
     """
     # The log file path may contain '$USER' to be evaluated on the job host.
-    logpath = os.path.expandvars(logpath)
     if mode == 'print':
         # Print location even if the suite does not exist yet.
         print(logpath)
@@ -278,7 +259,7 @@ def get_option_parser():
 
 
 def get_task_job_attrs(suite_name, point, task, submit_num):
-    """Return job (user_at_host, batch_sys_name, live_job_id).
+    """Return job (platform, batch_sys_name, live_job_id).
 
     live_job_id is batch system job ID if job is running, else None.
 
@@ -297,7 +278,7 @@ def get_task_job_attrs(suite_name, point, task, submit_num):
         live_job_id = None
     else:
         live_job_id = batch_sys_job_id
-    return (task_job_data["user_at_host"], batch_sys_name, live_job_id)
+    return (task_job_data["platform_name"], batch_sys_name, live_job_id)
 
 
 def tmpfile_edit(tmpfile, geditor=False):
@@ -339,10 +320,8 @@ def main(parser, options, *args, color=False):
         # Invoked on job hosts for job logs only, as a wrapper to view_log().
         # Tail and batchview commands come from global config on suite host).
         logpath, mode, tail_tmpl = options.remote_args[0:3]
-        if logpath.startswith('$'):
-            logpath = os.path.expandvars(logpath)
-        elif logpath.startswith('~'):
-            logpath = os.path.expanduser(logpath)
+        logpath = os.path.expandvars(logpath)
+        tail_tmpl = os.path.expandvars(tail_tmpl)
         try:
             batchview_cmd = options.remote_args[3]
         except IndexError:
@@ -374,7 +353,9 @@ def main(parser, options, *args, color=False):
             except IndexError:
                 raise UserInputError(
                     "max rotation %d" % (len(logs) - 1))
-        tail_tmpl = str(glbl_cfg().get_host_item("tail command template"))
+        tail_tmpl = os.path.expandvars(
+            platform_from_name()["tail command template"]
+        )
         out = view_log(logpath, mode, tail_tmpl, color=color)
         if out == 1:
             sys.exit(1)
@@ -406,9 +387,9 @@ def main(parser, options, *args, color=False):
             except KeyError:
                 # Is already long form (standard log, or custom).
                 pass
-        user_at_host, batch_sys_name, live_job_id = get_task_job_attrs(
+        platform_name, batch_sys_name, live_job_id = get_task_job_attrs(
             suite_name, point, task, options.submit_num)
-        user, host = split_user_at_host(user_at_host)
+        platform = platform_from_name(platform_name)
         batchview_cmd = None
         if live_job_id is not None:
             # Job is currently running. Get special batch system log view
@@ -425,26 +406,24 @@ def main(parser, options, *args, color=False):
                 elif mode == 'tail':
                     conf_key = "err tailer"
             if conf_key is not None:
-                conf = glbl_cfg().get_host_item("batch systems", host, user)
                 batchview_cmd_tmpl = None
                 try:
-                    batchview_cmd_tmpl = conf[batch_sys_name][conf_key]
+                    batchview_cmd_tmpl = platform[conf_key]
                 except KeyError:
                     pass
                 if batchview_cmd_tmpl is not None:
                     batchview_cmd = batchview_cmd_tmpl % {
                         "job_id": str(live_job_id)}
 
-        log_is_remote = (is_remote(host, user)
+        log_is_remote = (is_remote_platform(platform)
                          and (options.filename not in JOB_LOGS_LOCAL))
-        log_is_retrieved = (glbl_cfg().get_host_item('retrieve job logs', host)
+        log_is_retrieved = (platform['retrieve job logs']
                             and live_job_id is None)
         if log_is_remote and (not log_is_retrieved or options.force_remote):
             logpath = os.path.normpath(get_remote_suite_run_job_dir(
-                host, user,
+                platform,
                 suite_name, point, task, options.submit_num, options.filename))
-            tail_tmpl = str(glbl_cfg().get_host_item(
-                "tail command template", host, user))
+            tail_tmpl = platform["tail command template"]
             # Reinvoke the cat-log command on the remote account.
             cmd = ['cat-log']
             if cylc.flow.flags.debug:
@@ -456,6 +435,8 @@ def main(parser, options, *args, color=False):
             cmd.append(suite_name)
             is_edit_mode = (mode == 'edit')
             try:
+                host = get_host_from_platform(platform)
+                user = getuser()
                 proc = remote_cylc_cmd(
                     cmd, user, host, capture_process=is_edit_mode,
                     manage=(mode == 'tail'))
@@ -477,7 +458,7 @@ def main(parser, options, *args, color=False):
             # Local task job or local job log.
             logpath = os.path.normpath(get_suite_run_job_dir(
                 suite_name, point, task, options.submit_num, options.filename))
-            tail_tmpl = str(glbl_cfg().get_host_item("tail command template"))
+            tail_tmpl = os.path.expandvars(platform["tail command template"])
             out = view_log(logpath, mode, tail_tmpl, batchview_cmd,
                            color=color)
             if mode != 'edit':

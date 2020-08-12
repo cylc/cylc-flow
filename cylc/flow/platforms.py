@@ -16,65 +16,70 @@
 #
 # Tests for the platform lookup.
 
+import random
 import re
+from copy import deepcopy
+
 from cylc.flow.exceptions import PlatformLookupError
+from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 
 
-def forward_lookup(platforms, job_platform):
+def platform_from_name(platform_name=None, platforms=None):
     """
     Find out which job platform to use given a list of possible platforms and
     a task platform string.
 
     Verifies selected platform is present in global.rc file and returns it,
-    raises error if platfrom is not in global.rc or returns 'localhost' if
+    raises error if platform is not in global.rc or returns 'localhost' if
     no platform is initally selected.
 
     Args:
-        job_platform (str):
-            platform item from config [runtime][TASK]platform
-        platforms (dictionary):
-            list of possible platforms defined by global.rc
+        platform_name (str):
+            name of platform to be retrieved.
+        platforms ():
+            globalrc platforms given as a dict for logic testing purposes
 
     Returns:
-        platform (str):
-            string representing a platform from the global config.
-
-    Example:
-    >>> platforms = {
-    ...     'suite server platform': None,
-    ...     'desktop[0-9][0-9]|laptop[0-9][0-9]': None,
-    ...     'sugar': {
-    ...         'remote hosts': 'localhost',
-    ...         'batch system': 'slurm'
-    ...     },
-    ...     'hpc': {
-    ...         'remote hosts': ['hpc1', 'hpc2'],
-    ...         'batch system': 'pbs'
-    ...     },
-    ...     'hpc1-bg': {
-    ...         'remote hosts': 'hpc1',
-    ...         'batch system': 'background'
-    ...     },
-    ...     'hpc2-bg': {
-    ...         'remote hosts': 'hpc2',
-    ...         'batch system': 'background'
-    ...     }
-    ... }
-    >>> job_platform = 'desktop22'
-    >>> forward_lookup(platforms, job_platform)
-    'desktop22'
+        platform (dict):
+            object containing settings for a platform, loaded from
+            Global Config.
     """
-    if job_platform is None:
-        return 'localhost'
-    for platform in reversed(list(platforms)):
-        if re.fullmatch(platform, job_platform):
-            return job_platform
+    if platforms is None:
+        platforms = glbl_cfg().get(['platforms'])
+
+    if platform_name is None:
+        platform_data = deepcopy(platforms['localhost'])
+        platform_data['name'] = 'localhost'
+        return platform_data
+
+    # The list is reversed to allow user-set platforms (which are loaded
+    # later than site set platforms) to be matched first and override site
+    # defined platforms.
+    for platform_name_re in reversed(list(platforms)):
+        if re.fullmatch(platform_name_re, platform_name):
+            # Deepcopy prevents contaminating platforms with data
+            # from other platforms matching platform_name_re
+            platform_data = deepcopy(platforms[platform_name_re])
+
+            # If hosts are not filled in make remote
+            # hosts the platform name.
+            # Example: `[platforms][workplace_vm_123]<nothing>`
+            #   should create a platform where
+            #   `remote_hosts = ['workplace_vm_123']`
+            if (
+                'hosts' not in platform_data.keys() or
+                not platform_data['hosts']
+            ):
+                platform_data['hosts'] = [platform_name]
+            # Fill in the "private" name field.
+            platform_data['name'] = platform_name
+            return platform_data
 
     raise PlatformLookupError(
-        f"No matching platform \"{job_platform}\" found")
+        f"No matching platform \"{platform_name}\" found")
 
 
-def reverse_lookup(platforms, job, remote):
+def platform_from_job_info(platforms, job, remote):
     """
     Find out which job platform to use given a list of possible platforms
     and the task dictionary with cylc 7 definitions in it.
@@ -127,10 +132,10 @@ def reverse_lookup(platforms, job, remote):
         remote (dict):
             Suite config [runtime][TASK][remote] section
         platforms (dict):
-            Dictionary containing platfrom definitions.
+            Dictionary containing platform definitions.
 
     Returns:
-        platfrom (str):
+        platform (str):
             string representing a platform from the global config.
 
     Raises:
@@ -141,16 +146,16 @@ def reverse_lookup(platforms, job, remote):
         >>> platforms = {
         ...         'desktop[0-9][0-9]|laptop[0-9][0-9]': {},
         ...         'sugar': {
-        ...             'remote hosts': 'localhost',
+        ...             'hosts': 'localhost',
         ...             'batch system': 'slurm'
         ...         }
         ... }
         >>> job = {'batch system': 'slurm'}
         >>> remote = {'host': 'sugar'}
-        >>> reverse_lookup(platforms, job, remote)
+        >>> platform_from_job_info(platforms, job, remote)
         'sugar'
         >>> remote = {}
-        >>> reverse_lookup(platforms, job, remote)
+        >>> platform_from_job_info(platforms, job, remote)
         'localhost'
     """
     # These settings are removed from the incoming dictionaries for special
@@ -192,8 +197,8 @@ def reverse_lookup(platforms, job, remote):
             return 'localhost'
 
         elif (
-            'remote hosts' in platform_spec.keys() and
-            task_host in platform_spec['remote hosts'] and
+            'hosts' in platform_spec.keys() and
+            task_host in platform_spec['hosts'] and
             task_batch_system == platform_spec['batch system']
         ):
             # If we have localhost with a non-background batch system we
@@ -207,3 +212,35 @@ def reverse_lookup(platforms, job, remote):
             return task_host
 
     raise PlatformLookupError('No platform found matching your task')
+
+
+def get_host_from_platform(platform, method=None):
+    """Placeholder for a more sophisticated function which returns a host
+    given a platform dictionary.
+
+    Args:
+        platform (dict):
+            A dict representing a platform.
+        method (str):
+            Name a function to use when selecting hosts from list provided
+            by platform.
+
+            - None or 'random': Pick the first host from list
+            - 'first': Return the first host in the list
+
+    Returns:
+        hostname (str):
+
+    TODO:
+        Other host selection methods:
+            - Random Selection with check for host availability
+
+    """
+    if method is None or method == 'random':
+        return random.choice(platform['hosts'])
+    elif method == 'first':
+        return platform['hosts'][0]
+    else:
+        raise NotImplementedError(
+            f'method {method} is not a valid input for get_host_from_platform'
+        )

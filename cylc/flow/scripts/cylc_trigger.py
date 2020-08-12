@@ -28,14 +28,6 @@ need to trigger a queue-limited task twice to get it to submit immediately).
 
 """
 
-import sys
-
-if '--use-ssh' in sys.argv[1:]:
-    sys.argv.remove('--use-ssh')
-    from cylc.flow.remote import remrun
-    if remrun(forward_x11=True):
-        sys.exit(0)
-
 import re
 import os
 import time
@@ -72,9 +64,7 @@ def main(parser, options, suite, *task_globs):
     msg = 'Trigger task(s) %s in %s' % (task_globs, suite)
     prompt(msg, options.force)
 
-    pclient = SuiteRuntimeClient(
-        suite, options.owner, options.host, options.port,
-        options.comms_timeout)
+    pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
 
     pclient(
         'force_trigger_tasks',

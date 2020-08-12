@@ -1889,7 +1889,7 @@ advice printed at start-up on how to see if a suite is still running.
 the right-click menu for some tasks after enabling a filter.
 
 [#1768](https://github.com/cylc/cylc-flow/pull/1768): Client commands like `cylc
-broadcast` can now be invoked by tasks on remote hosts that do not share a
+broadcast` can now be invoked by tasks on hosts that do not share a
 filesystem with the suite host.
 
 [#1763](https://github.com/cylc/cylc-flow/pull/1763): Remote tasks now load

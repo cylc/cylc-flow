@@ -16,19 +16,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test remote host job log NN link correctness.
-export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
-set_test_remote_host
+require_remote_platform
 set_test_number 2
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 sqlite3 "${SUITE_RUN_DIR}/.service/db" <'db.sqlite3'
 suite_run_ok "${TEST_NAME_BASE}-restart" \
-    cylc restart --reference-test --debug --no-detach "${SUITE_NAME}"
+    cylc restart --reference-test --debug --no-detach  \
+    -s "CYLC_REMOTE_PLATFORM=${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
 
-if [[ "$CYLC_TEST_HOST" != 'localhost' ]]; then
-    purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
-fi
+purge_suite_remote "${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

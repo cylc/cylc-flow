@@ -48,10 +48,9 @@ purge_suite "${TESTD}"
 #------------------------------------------------------------------------------
 # Test `cylc run` REG for an un-registered suite
 TESTD="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_NAME_BASE}"
-CYLC_RUN_DIR=$(cylc get-global --print-run-dir)
 
-mkdir -p "${CYLC_RUN_DIR}/${TESTD}"
-cat >> "${CYLC_RUN_DIR}/${TESTD}/suite.rc" <<'__SUITE_RC__'
+mkdir -p "${RUN_DIR}/${TESTD}"
+cat >> "${RUN_DIR}/${TESTD}/suite.rc" <<'__SUITE_RC__'
 [meta]
     title = the quick brown fox
 [scheduling]
@@ -65,7 +64,7 @@ __SUITE_RC__
 TEST_NAME="${TEST_NAME_BASE}-cylc-run-dir"
 run_ok "${TEST_NAME}-run" cylc run --hold "${TESTD}"
 contains_ok "${TEST_NAME}-run.stdout" <<__ERR__
-REGISTERED ${TESTD} -> ${CYLC_RUN_DIR}/${TESTD}
+REGISTERED ${TESTD} -> ${RUN_DIR}/${TESTD}
 __ERR__
 
 run_ok "${TEST_NAME}-stop" cylc stop  --max-polls=10 --interval=2 "${TESTD}"
@@ -73,8 +72,8 @@ run_ok "${TEST_NAME}-stop" cylc stop  --max-polls=10 --interval=2 "${TESTD}"
 purge_suite "${TESTD}"
 #------------------------------------------------------------------------------
 # Test `cylc run` REG for an un-registered suite
-mkdir -p "${CYLC_RUN_DIR}/${TESTD}"
-cat >> "${CYLC_RUN_DIR}/${TESTD}/suite.rc" <<'__SUITE_RC__'
+mkdir -p "${RUN_DIR}/${TESTD}"
+cat >> "${RUN_DIR}/${TESTD}/suite.rc" <<'__SUITE_RC__'
 [meta]
     title = the quick brown fox
 [sched]
@@ -88,7 +87,7 @@ __SUITE_RC__
 TEST_NAME="${TEST_NAME_BASE}-cylc-run-dir-2"
 run_fail "${TEST_NAME}-validate" cylc validate "${TESTD}"
 contains_ok "${TEST_NAME}-validate.stdout" <<__OUT__
-REGISTERED ${TESTD} -> ${CYLC_RUN_DIR}/${TESTD}
+REGISTERED ${TESTD} -> ${RUN_DIR}/${TESTD}
 __OUT__
 contains_ok "${TEST_NAME}-validate.stderr" <<__ERR__
 IllegalItemError: sched

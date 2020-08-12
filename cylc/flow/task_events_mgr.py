@@ -40,6 +40,7 @@ from cylc.flow.hostuserutil import get_host, get_user
 from cylc.flow.pathutil import (
     get_remote_suite_run_job_dir,
     get_suite_run_job_dir)
+from cylc.flow.platforms import platform_from_name, get_host_from_platform
 from cylc.flow.subprocctx import SubProcContext
 from cylc.flow.task_action_timer import TaskActionTimer
 from cylc.flow.task_job_logs import (
@@ -70,7 +71,7 @@ TaskEventMailContext = namedtuple(
 
 TaskJobLogsRetrieveContext = namedtuple(
     "TaskJobLogsRetrieveContext",
-    ["key", "ctx_type", "user_at_host", "max_size"])
+    ["key", "ctx_type", "platform_n", "max_size"])
 
 
 def log_task_job_activity(ctx, suite, point, name, submit_num=None):
@@ -83,7 +84,7 @@ def log_task_job_activity(ctx, suite, point, name, submit_num=None):
     job_activity_log = get_task_job_activity_log(
         suite, point, name, submit_num)
     try:
-        with open(job_activity_log, "ab") as handle:
+        with open(os.path.expandvars(job_activity_log), "ab") as handle:
             handle.write((ctx_str + '\n').encode())
     except IOError as exc:
         # This happens when there is no job directory, e.g. if job host
@@ -213,8 +214,7 @@ class TaskEventsManager():
             ret = itask.tdef.rtconfig[skey][key]
         else:
             try:
-                ret = glbl_cfg().get_host_item(
-                    key, itask.task_host, itask.task_owner)
+                ret = itask.platform[key]
             except (KeyError, ItemNotFoundError):
                 ret = default
         return ret
@@ -619,13 +619,9 @@ class TaskEventsManager():
 
     def _process_job_logs_retrieval(self, schd_ctx, ctx, id_keys):
         """Process retrieval of task job logs from remote user@host."""
-        if ctx.user_at_host and "@" in ctx.user_at_host:
-            s_user, s_host = ctx.user_at_host.split("@", 1)
-        else:
-            s_user, s_host = (None, ctx.user_at_host)
-        ssh_str = str(glbl_cfg().get_host_item("ssh command", s_host, s_user))
-        rsync_str = str(glbl_cfg().get_host_item(
-            "retrieve job logs command", s_host, s_user))
+        platform = platform_from_name(ctx.platform_n)
+        ssh_str = str(platform["ssh command"])
+        rsync_str = str(platform["retrieve job logs command"])
 
         cmd = shlex.split(rsync_str) + ["--rsh=" + ssh_str]
         if LOG.isEnabledFor(DEBUG):
@@ -644,8 +640,8 @@ class TaskEventsManager():
         cmd.append("--exclude=/**")  # exclude everything else
         # Remote source
         cmd.append("%s:%s/" % (
-            ctx.user_at_host,
-            get_remote_suite_run_job_dir(s_host, s_user, schd_ctx.suite)))
+            get_host_from_platform(platform),
+            get_remote_suite_run_job_dir(platform, schd_ctx.suite)))
         # Local target
         cmd.append(get_suite_run_job_dir(schd_ctx.suite) + "/")
         self.proc_pool.put_command(
@@ -829,7 +825,7 @@ class TaskEventsManager():
                 '[%s] -job[%02d] submitted to %s:%s[%s]',
                 itask,
                 itask.summary['submit_num'],
-                itask.summary['host'],
+                itask.summary['platforms_used'][itask.summary['submit_num']],
                 itask.summary['batch_sys_name'],
                 itask.summary['submit_method_id'])
         except KeyError:
@@ -874,13 +870,9 @@ class TaskEventsManager():
         id_key = (
             (self.HANDLER_JOB_LOGS_RETRIEVE, event),
             str(itask.point), itask.tdef.name, itask.submit_num)
-        if itask.task_owner:
-            user_at_host = itask.task_owner + "@" + itask.task_host
-        else:
-            user_at_host = itask.task_host
         events = (self.EVENT_FAILED, self.EVENT_RETRY, self.EVENT_SUCCEEDED)
         if (event not in events or
-                user_at_host in [get_user() + '@localhost', 'localhost'] or
+                itask.platform['name'] == 'localhost' or
                 not self.get_host_conf(itask, "retrieve job logs") or
                 id_key in self.event_timers):
             return
@@ -892,7 +884,7 @@ class TaskEventsManager():
             TaskJobLogsRetrieveContext(
                 self.HANDLER_JOB_LOGS_RETRIEVE,  # key
                 self.HANDLER_JOB_LOGS_RETRIEVE,  # ctx_type
-                user_at_host,
+                itask.platform['name'],
                 self.get_host_conf(itask, "retrieve job logs max size"),
             ),
             retry_delays)
@@ -955,10 +947,9 @@ class TaskEventsManager():
             # Note: user@host may not always be set for a submit number, e.g.
             # on late event or if host select command fails. Use null string to
             # prevent issues in this case.
-            user_at_host = itask.summary['job_hosts'].get(itask.submit_num, '')
-            if user_at_host and '@' not in user_at_host:
-                # (only has 'user@' on the front if user is not suite owner).
-                user_at_host = '%s@%s' % (get_user(), user_at_host)
+            platform_n = itask.summary['platforms_used'].get(
+                itask.submit_num, ''
+            )
             # Custom event handler can be a command template string
             # or a command that takes 4 arguments (classic interface)
             # Note quote() fails on None, need str(None).
@@ -983,7 +974,7 @@ class TaskEventsManager():
                         str(itask.summary['started_time_string'])),
                     "finish_time": quote(
                         str(itask.summary['finished_time_string'])),
-                    "user@host": quote(user_at_host)
+                    "platform_name": quote(platform_n)
                 }
 
                 if self.suite_cfg:
@@ -1043,13 +1034,10 @@ class TaskEventsManager():
                 default=[900]))  # Default 15 minute intervals
             if itask.summary[self.KEY_EXECUTE_TIME_LIMIT]:
                 time_limit = itask.summary[self.KEY_EXECUTE_TIME_LIMIT]
-                try:
-                    host_conf = self.get_host_conf(itask, 'batch systems')
-                    batch_sys_conf = host_conf[itask.summary['batch_sys_name']]
-                except (TypeError, KeyError):
-                    batch_sys_conf = {}
-                time_limit_delays = batch_sys_conf.get(
-                    'execution time limit polling intervals', [60, 120, 420])
+                time_limit_delays = itask.platform.get(
+                    'execution time limit polling intervals')
+                if not time_limit_delays:
+                    time_limit_delays = [60, 120, 420]
                 timeout = time_limit + sum(time_limit_delays)
                 # Remove excessive polling before time limit
                 while sum(delays) > time_limit:

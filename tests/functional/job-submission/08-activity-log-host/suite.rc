@@ -10,10 +10,9 @@
 [runtime]
     [[sleeper]]
         script = test "${CYLC_TASK_SUBMIT_NUMBER}" -eq 2 || sleep 60
+        platform = {{ CYLC_REMOTE_PLATFORM }}
         [[[job]]]
             execution retry delays = PT1S
-        [[[remote]]]
-            host = {{CYLC_TEST_HOST}}
     [[killer]]
         script = cylc kill "${CYLC_SUITE_NAME}" sleeper.1999
     [[releaser]]

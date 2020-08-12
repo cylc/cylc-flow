@@ -209,9 +209,23 @@ class HostUtil(object):
                 self.remote_users[name] = True
         return self.remote_users[name]
 
-    def is_remote(self, host, owner):
-        """Shorthand: is_remote_host(host) or is_remote_user(owner)."""
-        return self.is_remote_host(host) or self.is_remote_user(owner)
+    def _is_remote_platform(self, platform):
+        """Return True if any job host in platform have different IP address
+        to the current host.
+
+        Return False if name is None.
+        Return True if host is unknown.
+
+        Todo:
+            Should this fail miserably if some hosts are remote and some are
+            not?
+        """
+        if not platform:
+            return False
+        for host in platform['hosts']:
+            if is_remote_host(host) is True:
+                return True
+        return False
 
 
 def get_host_ip_by_name(target):
@@ -244,9 +258,9 @@ def get_user_home():
     return HostUtil.get_inst().get_user_home()
 
 
-def is_remote(host, owner):
-    """Shorthand for HostUtil.get_inst().is_remote(host, owner)."""
-    return HostUtil.get_inst().is_remote(host, owner)
+def is_remote_platform(platform):
+    """Shorthand for HostUtil.get_inst()._is_remote_platform(host, owner)."""
+    return HostUtil.get_inst()._is_remote_platform(platform)
 
 
 def is_remote_host(name):

@@ -47,14 +47,10 @@ the database query to obtain the timing information may take some time.
 
 """
 
-import sys
-from cylc.flow.remote import remrun
-if remrun():
-    sys.exit(0)
-
 import io as StringIO
 import collections
 import contextlib
+import sys
 
 from cylc.flow.exceptions import CylcError
 from cylc.flow.option_parsers import CylcOptionParser as COP

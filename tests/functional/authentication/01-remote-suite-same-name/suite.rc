@@ -1,13 +1,12 @@
 #!jinja2
 [cylc]
-    UTC mode=True
+    UTC mode = True
 [scheduling]
-    initial cycle point=1970
-    final cycle point=1970
+    initial cycle point = 1970
+    final cycle point = 1970
     [[graph]]
-        P1Y=t1
+        P1Y = t1
 [runtime]
     [[t1]]
-        script=true
-        [[[remote]]]
-            host = $CYLC_TEST_HOST
+        script = true
+        platform = {{ environ['CYLC_REMOTE_PLATFORM'] }}

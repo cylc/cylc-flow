@@ -23,7 +23,7 @@ set_test_number 3
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
-LOGD="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/job"
+LOGD="$RUN_DIR/${SUITE_NAME}/log/job"
 JLOGD="${LOGD}/1/t1/01"
 poll_grep 'CYLC_JOB_INIT_TIME' "${JLOGD}/job.status"
 mv "${JLOGD}/job.status" "${JLOGD}/job.status.old"

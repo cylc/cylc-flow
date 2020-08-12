@@ -103,7 +103,7 @@ class SuiteConfig(object):
     TASK_EVENT_TMPL_KEYS = (
         'event', 'suite', 'suite_uuid', 'point', 'name', 'submit_num', 'id',
         'message', 'batch_sys_name', 'batch_sys_job_id', 'submit_time',
-        'start_time', 'finish_time', 'user@host', 'try_num')
+        'start_time', 'finish_time', 'platform_name', 'try_num')
 
     def __init__(
         self,
@@ -188,7 +188,13 @@ class SuiteConfig(object):
         # parse, upgrade, validate the suite, but don't expand with default
         # items
         self.mem_log("config.py: before RawSuiteConfig init")
-        self.pcfg = RawSuiteConfig(fpath, output_fname, template_vars)
+        if output_fname:
+            output_fname = os.path.expandvars(output_fname)
+        self.pcfg = RawSuiteConfig(
+            fpath,
+            output_fname,
+            template_vars
+        )
         self.mem_log("config.py: after RawSuiteConfig init")
         self.mem_log("config.py: before get(sparse=True")
         self.cfg = self.pcfg.get(sparse=True)
@@ -1275,8 +1281,7 @@ class SuiteConfig(object):
 
             if tdef.run_mode == 'dummy-local':
                 # Run all dummy tasks on the suite host.
-                rtc['remote']['host'] = None
-                rtc['remote']['owner'] = None
+                rtc['platform'] = 'localhost'
 
             # Simulation mode tasks should fail in which cycle points?
             f_pts = []

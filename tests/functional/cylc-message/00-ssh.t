@@ -23,25 +23,26 @@ export CYLC_TEST_IS_GENERIC=false
 skip_all 'ssh task comm not currently functional'
 
 #-------------------------------------------------------------------------------
-set_test_remote_host
+require_remote_platform
 set_test_number 3
 
 create_test_globalrc '' "
-[hosts]
-    [[${CYLC_TEST_HOST}]]
-        task communication method = ssh"
+[platforms]
+    [[${CYLC_REMOTE_PLATFORM}-ssh]]
+        hosts = ${CYLC_TEST_HOST}
+        communication method = ssh
+"
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate "${SUITE_NAME}" -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}"
+    cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --debug --no-detach --reference-test "${SUITE_NAME}" \
-        -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}"
+    cylc run --debug --no-detach --reference-test "${SUITE_NAME}"
 
 run_fail "${TEST_NAME_BASE}-grep-DENIED-suite-log" \
     grep -q "\\[client-connect\\] DENIED .*@${CYLC_TEST_HOST}:cylc-message" \
-    "$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/suite/log"
+    "$RUN_DIR/${SUITE_NAME}/log/suite/log"
 
 purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"

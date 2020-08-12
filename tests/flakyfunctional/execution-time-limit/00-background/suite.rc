@@ -1,4 +1,3 @@
-#!jinja2
 [cylc]
    [[events]]
        abort if any task fails = True
@@ -15,6 +14,7 @@
 [runtime]
     [[foo]]
         script = sleep 10
+        platform = hydra
         [[[job]]]
-            batch system = {{CYLC_TEST_BATCH_SYS}}
             execution time limit = PT5S
+

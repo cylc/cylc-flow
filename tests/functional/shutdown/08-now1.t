@@ -23,7 +23,7 @@ set_test_number 6
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run --no-detach "${SUITE_NAME}"
-LOGD="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log"
+LOGD="$RUN_DIR/${SUITE_NAME}/log"
 grep_ok 'INFO - Suite shutting down - REQUEST(NOW)' "${LOGD}/suite/log"
 JLOGD="${LOGD}/job/1/t1/01"
 # Check that t1.1 event handler runs

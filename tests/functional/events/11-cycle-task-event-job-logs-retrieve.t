@@ -19,7 +19,7 @@
 # job host.
 export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
-set_test_remote_host
+require_remote_platform
 set_test_number 3
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
@@ -27,7 +27,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate -s "HOST=${CYLC_TEST_HOST}" "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug --no-detach -s "HOST=${CYLC_TEST_HOST}" "${SUITE_NAME}"
+    cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
 
 # There are 2 remote tasks. One with "retrieve job logs = True", one without.
 # Only t1 should have job.err and job.out retrieved.
@@ -41,6 +41,6 @@ cmp_ok 'edited-activities.log' <<__LOG__
 [(('job-logs-retrieve', 'succeeded'), 3) ret_code] 0
 __LOG__
 
-purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
+purge_suite_remote "${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

@@ -17,24 +17,29 @@
 #-------------------------------------------------------------------------------
 # Checks remote ZMQ keys are created and deleted on shutdown.
 . "$(dirname "$0")/test_header"
-set_test_remote_host
+
+require_remote_platform
+
 set_test_number 4
+
 init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
+#!jinja2
 [cylc]
 [scheduling]
     [[graph]]
         R1 = holder => held
 [runtime]
-    [[holder]]    
+    [[holder]]
         script = """cylc hold "${CYLC_SUITE_NAME}" """
-        [[[remote]]]
-            host = $CYLC_TEST_HOST
+        platform = {{CYLC_REMOTE_PLATFORM}}
     [[held]]
         script = true
 __SUITE_RC__
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}" 
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" 
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}" \
+    -s "CYLC_REMOTE_PLATFORM=${CYLC_REMOTE_PLATFORM}"
+suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" \
+    -s "CYLC_REMOTE_PLATFORM=${CYLC_REMOTE_PLATFORM}"
 RRUND="cylc-run/${SUITE_NAME}"
 RSRVD="${RRUND}/.service"
 poll_grep_suite_log 'Holding all waiting or queued tasks now'

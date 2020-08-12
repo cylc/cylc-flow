@@ -30,6 +30,10 @@ from cylc.flow.batch_sys_handlers.pbs import BATCH_SYS_HANDLER
                 'job_file_path': '$HOME/cylc-run/chop/log/job/1/axe/01/job',
                 'suite_name': 'chop',
                 'task_id': 'axe.1',
+                'platform': {
+                    'batch system': 'pbs',
+                    'job name length maximum': 100
+                }
             },
             [
                 '#PBS -N axe.1.chop',
@@ -46,6 +50,10 @@ from cylc.flow.batch_sys_handlers.pbs import BATCH_SYS_HANDLER
                 'job_file_path': '$HOME/cylc-run/chop/log/job/1/axe/01/job',
                 'suite_name': 'chop',
                 'task_id': 'axe.1',
+                'platform': {
+                    'batch system': 'pbs',
+                    'job name length maximum': 6
+                }
             },
             [
                 '#PBS -N axe.1.',
@@ -66,6 +74,10 @@ from cylc.flow.batch_sys_handlers.pbs import BATCH_SYS_HANDLER
                 'job_file_path': '$HOME/cylc-run/chop/log/job/1/axe/01/job',
                 'suite_name': 'chop',
                 'task_id': 'axe.1',
+                'platform': {
+                    'batch system': 'pbs',
+                    'job name length maximum': 100
+                }
             },
             [
                 '#PBS -N axe.1.chop',

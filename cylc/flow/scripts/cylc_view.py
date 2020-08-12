@@ -31,9 +31,6 @@ the '-g,--gui' flag is used to spawn a remote GUI edit session.
 See also 'cylc [prep] edit'."""
 
 import sys
-from cylc.flow.remote import remrun
-if remrun(forward_x11=True):
-    sys.exit(0)
 
 import os
 from tempfile import NamedTemporaryFile

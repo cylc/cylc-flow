@@ -23,12 +23,12 @@ import sys
 import socket
 from cylc.flow import LOG
 
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import SuiteServiceFileError
 import cylc.flow.flags
 from cylc.flow.hostuserutil import is_remote_host, get_host_ip_by_name
 from cylc.flow.network.client import (
     SuiteRuntimeClient, ClientError, ClientTimeout)
+from cylc.flow.platforms import platform_from_name
 from cylc.flow.suite_files import (
     ContactFileFields,
     SuiteFiles,
@@ -180,7 +180,7 @@ async def scan_one(reg, host, port, pub_port, api, timeout=None, methods=None):
     #       SuiteRuntimeClient will not attempt to check the contact file
     #       which would be unnecessary as we have already done so.
     # NOTE: This part of the scan *is* IO blocking.
-    client = SuiteRuntimeClient(reg, host=host, port=port, timeout=timeout)
+    client = SuiteRuntimeClient(reg, timeout=timeout)
 
     result = {}
     for method in methods:
@@ -188,11 +188,11 @@ async def scan_one(reg, host, port, pub_port, api, timeout=None, methods=None):
         # information as we can before the suite rejects us
         try:
             msg = await client.async_request(method)
-        except ClientTimeout as exc:
+        except ClientTimeout:
             LOG.exception(
                 "Timeout: name:%s, host:%s, port:%s", reg, host, port)
             return (reg, host, port, pub_port, api, MSG_TIMEOUT)
-        except ClientError as exc:
+        except ClientError:
             LOG.exception("ClientError")
             return (reg, host, port, pub_port, api, result or None)
         else:
@@ -237,7 +237,9 @@ def get_scan_items_from_fs(
     """
     if owner_pattern is None:
         # Run directory of current user only
-        run_dirs = [(glbl_cfg().get_host_item('run directory'), None)]
+        run_dirs = [
+            (os.path.expandvars(platform_from_name()['run directory']), None)
+        ]
     else:
         # Run directory of all users matching "owner_pattern".
         # But skip those with /nologin or /false shells
@@ -247,12 +249,14 @@ def get_scan_items_from_fs(
             if any(pwent.pw_shell.endswith(s) for s in skips):
                 continue
             if owner_pattern.match(pwent.pw_name):
-                run_dirs.append((
-                    glbl_cfg().get_host_item(
-                        'run directory',
-                        owner=pwent.pw_name,
-                        owner_home=pwent.pw_dir),
-                    pwent.pw_name))
+                run_dirs.append(
+                    (
+                        os.path.expandvars(
+                            platform_from_name()['run directory']
+                        ),
+                        None
+                    )
+                )
     if cylc.flow.flags.debug:
         sys.stderr.write('Listing suites:%s%s\n' % (
             DEBUG_DELIM, DEBUG_DELIM.join(item[1] for item in run_dirs if
@@ -277,7 +281,7 @@ def get_scan_items_from_fs(
                 # do not have PUBLISH_PORT field)
                 try:
                     contact_data = load_contact_file(reg, owner)
-                except (SuiteServiceFileError, IOError, TypeError) as exc:
+                except (SuiteServiceFileError, IOError, TypeError):
                     LOG.debug(f"Error loading contact file for: {reg}")
                     continue
                 try:

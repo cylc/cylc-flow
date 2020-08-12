@@ -15,8 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
+import os
 
 from cylc.flow.batch_sys_handlers.slurm import BATCH_SYS_HANDLER
+
+home = os.path.expandvars('$HOME/')
 
 
 @pytest.mark.parametrize(
@@ -33,8 +36,14 @@ from cylc.flow.batch_sys_handlers.slurm import BATCH_SYS_HANDLER
             },
             [
                 '#SBATCH --job-name=axe.1.chop',
-                '#SBATCH --output=cylc-run/chop/log/job/1/axe/01/job.out',
-                '#SBATCH --error=cylc-run/chop/log/job/1/axe/01/job.err',
+                (
+                    f'#SBATCH --output='
+                    f'{home}cylc-run/chop/log/job/1/axe/01/job.out'
+                ),
+                (
+                    f'#SBATCH --error='
+                    f'{home}cylc-run/chop/log/job/1/axe/01/job.err'
+                ),
                 '#SBATCH --time=3:00',
             ],
         ),
@@ -52,12 +61,12 @@ from cylc.flow.batch_sys_handlers.slurm import BATCH_SYS_HANDLER
             [
                 '#SBATCH --job-name=axe%40HEAD.1.chop',
                 (
-                    '#SBATCH --output'
-                    '=cylc-run/chop/log/job/1/axe%%40HEAD/01/job.out'
+                    f'#SBATCH --output'
+                    f'={home}cylc-run/chop/log/job/1/axe%%40HEAD/01/job.out'
                 ),
                 (
-                    '#SBATCH --error'
-                    '=cylc-run/chop/log/job/1/axe%%40HEAD/01/job.err'
+                    f'#SBATCH --error'
+                    f'={home}cylc-run/chop/log/job/1/axe%%40HEAD/01/job.err'
                 ),
                 '#SBATCH --time=3:00',
             ],
@@ -77,8 +86,14 @@ from cylc.flow.batch_sys_handlers.slurm import BATCH_SYS_HANDLER
             },
             [
                 '#SBATCH --job-name=axe.1.chop',
-                '#SBATCH --output=cylc-run/chop/log/job/1/axe/01/job.out',
-                '#SBATCH --error=cylc-run/chop/log/job/1/axe/01/job.err',
+                (
+                    f'#SBATCH --output='
+                    f'{home}cylc-run/chop/log/job/1/axe/01/job.out'
+                ),
+                (
+                    f'#SBATCH --error='
+                    f'{home}cylc-run/chop/log/job/1/axe/01/job.err'
+                ),
                 '#SBATCH --time=3:20',
                 '#SBATCH -p=middle',
                 '#SBATCH --no-requeue',

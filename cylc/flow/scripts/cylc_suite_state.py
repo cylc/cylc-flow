@@ -50,20 +50,15 @@ import sqlite3
 import sys
 from time import sleep
 
-from cylc.flow.remote import remrun
-
-if remrun():
-    sys.exit(0)
-
 from cylc.flow.exceptions import CylcError, UserInputError
 import cylc.flow.flags
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.dbstatecheck import CylcSuiteDBChecker
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.command_polling import Poller
 from cylc.flow.task_state import TASK_STATUSES_ORDERED
 from cylc.flow.terminal import cli_function
 from cylc.flow.cycling.util import add_offset
+from cylc.flow.platforms import platform_from_name
 
 from metomi.isodatetime.parsers import TimePointParser
 
@@ -219,11 +214,12 @@ def main(parser, options, suite):
             options.status not in CylcSuiteDBChecker.STATE_ALIASES):
         raise UserInputError("invalid status '" + options.status + "'")
 
-    # this only runs locally (use of --host or --user results in remote
-    # re-invocation).
+    # this only runs locally
     run_dir = os.path.expandvars(
         os.path.expanduser(
-            options.run_dir or glbl_cfg().get_host_item('run directory')))
+            options.run_dir or platform_from_name()['run directory']
+        )
+    )
 
     pollargs = {'suite': suite,
                 'run_dir': run_dir,

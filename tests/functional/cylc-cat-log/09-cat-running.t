@@ -17,8 +17,8 @@
 #-------------------------------------------------------------------------------
 # Test "cylc cat-log" of currently-running local and remote jobs.
 . "$(dirname "$0")/test_header"
-set_test_remote
+require_remote_platform
 set_test_number 2
 reftest
-purge_suite_remote "${CYLC_TEST_OWNER}@${CYLC_TEST_HOST}" "${SUITE_NAME}"
+purge_suite_remote "${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
 exit

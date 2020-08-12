@@ -15,13 +15,12 @@ alog = proc.communicate()[0].decode().strip()
 proc.wait()
 for line in open(alog):
     if 'STDOUT' in line:
-        submit_time, _, job_id = line.split(' ') 
+        submit_time, _, job_id = line.split(' ')
         break
 
 del args['start_time']  # must exist, but value unreliable
 
-user_at_host = "%s@localhost" % os.environ['USER']
-assert args == {
+desired_args = {
     'suite_title': 'a test suite',
     'job_id': job_id.strip(),
     'point': '1',
@@ -36,8 +35,19 @@ assert args == {
     'suite_size': 'large',
     'suite': suite,
     'message': 'cheesy peas',
-    'user@host': user_at_host,
+    'platform_name': 'localhost',
     'event': 'custom',
     'submit_time': submit_time,
-    'name': 'foo'}
+    'name': 'foo'
+}
+
+try:
+    assert args == desired_args
+except AssertionError:
+    msg = ""
+    for key, value in desired_args.items():
+        if args[key] != value:
+            msg += f"\nkey, args[key], value are: {key, args[key], value}"
+    raise AssertionError(msg)
+
 print('OK: command line checks out')

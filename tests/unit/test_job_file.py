@@ -13,6 +13,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# Tests for functions contained in cylc.flow.job_file.
+# TODO remove the unittest dependency - it should not be necessary.
 
 import io
 import os
@@ -23,6 +26,7 @@ from unittest import mock
 from cylc.flow import __version__
 import cylc.flow.flags
 from cylc.flow.job_file import JobFileWriter
+from cylc.flow.platforms import platform_from_name
 
 # List of tilde variable inputs
 # input value, expected output value
@@ -41,16 +45,34 @@ def test_get_variable_value_definition():
         assert(out_value == res)
 
 
-@mock.patch("cylc.flow.job_file.glbl_cfg")
-def test_write_prelude_invalid_cylc_command(mocked_glbl_cfg):
+@pytest.fixture
+def fixture_get_platform():
+    """ Allows pytest to cache default platform dictionary.
+
+    Args:
+        custom_settings (dict):
+            settings that you wish to override.
+
+    Returns:
+        platforms dictionary.
+    """
+    def inner_func(custom_settings=None):
+        platform = platform_from_name()
+        if custom_settings is not None:
+            platform.update(custom_settings)
+        return platform
+    yield inner_func
+
+
+def test_write_prelude_invalid_cylc_command():
     job_conf = {
-        "batch_system_name": "background",
-        "host": "localhost",
-        "owner": "me"
+        "platform": {
+            "batch system": "background",
+            "hosts": ["localhost"],
+            "owner": "me",
+            "cylc executable": "sl -a"
+        }
     }
-    mocked = mock.MagicMock()
-    mocked_glbl_cfg.return_value = mocked
-    mocked.get_host_item.return_value = 'cylc-testing'
     with pytest.raises(ValueError) as ex:
         with TemporaryFile(mode="w+") as handle:
             JobFileWriter()._write_prelude(handle, job_conf)
@@ -60,13 +82,18 @@ def test_write_prelude_invalid_cylc_command(mocked_glbl_cfg):
 @mock.patch.dict(
     "os.environ", {'CYLC_SUITE_DEF_PATH': 'cylc/suite/def/path'})
 @mock.patch("cylc.flow.job_file.get_remote_suite_run_dir")
-def test_write(mocked_get_remote_suite_run_dir):
+def test_write(mocked_get_remote_suite_run_dir, fixture_get_platform):
     """Test write function outputs jobscript file correctly."""
     with NamedTemporaryFile() as local_job_file_path:
         local_job_file_path = local_job_file_path.name
+        platform = fixture_get_platform(
+            {
+                "batch submit command template": "woof",
+                "owner": "me"
+            }
+        )
         job_conf = {
-            "host": "localhost",
-            "owner": "me",
+            "platform": platform,
             "task_id": "baa",
             "suite_name": "farm_noises",
             "work_d": "farm_noises/work_d",
@@ -80,10 +107,9 @@ def test_write(mocked_get_remote_suite_run_dir):
             "job_d": "1/baa/01",
             "try_num": 1,
             "flow_label": "aZ",
-            "batch_system_name": "background",
+            # "batch_system_name": "background",
             "param_var": {"duck": "quack",
                           "mouse": "squeak"},
-            "batch_submit_command_template": "woof",
             "execution_time_limit": "moo",
             "namespace_hierarchy": ["root", "baa", "moo"],
             "dependencies": ['moo', 'neigh', 'quack'],
@@ -104,8 +130,6 @@ def test_write(mocked_get_remote_suite_run_dir):
         # non-empty as each section is covered by individual unit tests.
         assert(size_of_file > 10)
 
-
-def test_write_header():
     """Test the header is correctly written"""
 
     expected = ('#!/bin/bash -l\n#\n# ++++ THIS IS A CYLC TASK JOB SCRIPT '
@@ -113,9 +137,13 @@ def test_write_header():
                 'log directory: 1/baa/01\n# Job submit method: '
                 'background\n# Job submit command template: woof\n#'
                 ' Execution time limit: moo')
+
+    platform = fixture_get_platform(
+        {"batch submit command template": "woof"}
+    )
     job_conf = {
-        "batch_system_name": "background",
-        "batch_submit_command_template": "woof",
+        "platform": platform,
+        "batch system": "background",
         "execution_time_limit": "moo",
         "suite_name": "farm_noises",
         "task_id": "baa",
@@ -132,8 +160,10 @@ def test_write_header():
     [
         (  # basic
             {
-                "batch_system_name": "loadleveler",
-                "batch_submit_command_template": "test_suite",
+                "platform": {
+                    "batch system": "loadleveler",
+                    "batch submit command template": "test_suite",
+                },
                 "directives": {"moo": "foo",
                                "cluck": "bar"},
                 "suite_name": "farm_noises",
@@ -150,8 +180,10 @@ def test_write_header():
         ),
         (  # Check no directives is correctly written
             {
-                "batch_system_name": "slurm",
-                "batch_submit_command_template": "test_suite",
+                "platform": {
+                    "batch system": "slurm",
+                    "batch submit command template": "test_suite"
+                },
                 "directives": {},
                 "suite_name": "farm_noises",
                 "task_id": "baa",
@@ -166,9 +198,11 @@ def test_write_header():
         ),
         (  # Check pbs max job name length
             {
-                "batch_system_name": "pbs",
-                "batch_submit_command_template": "test_suite",
-                "batch_system_conf": {"job name length maximum": 15},
+                "platform": {
+                    "batch system": "pbs",
+                    "batch submit command template": "test_suite",
+                    "job name length maximum": 15
+                },
                 "directives": {},
                 "suite_name": "farm_noises",
                 "task_id": "baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
@@ -182,8 +216,10 @@ def test_write_header():
         ),
         (  # Check sge directives are correctly written
             {
-                "batch_system_name": "sge",
-                "batch_submit_command_template": "test_suite",
+                "platform": {
+                    "batch system": "sge",
+                    "batch submit command template": "test_suite",
+                },
                 "directives": {"-V": "",
                                "-q": "queuename",
                                "-l": "s_vmem=1G,s_cpu=60"},
@@ -200,24 +236,28 @@ def test_write_header():
              )
         )
     ], ids=["1", "2", "3", "4"])
-def test_write_directives(job_conf: dict, expected: str):
+def test_write_directives(fixture_get_platform, job_conf: dict, expected: str):
     """"Test the directives section of job script file is correctly
         written"""
+    platform = fixture_get_platform(job_conf['platform'])
 
     with io.StringIO() as fake_file:
         JobFileWriter()._write_directives(fake_file, job_conf)
         assert(fake_file.getvalue() == expected)
 
 
-@pytest.mark.parametrize("batch_sys",
-                         ["at", "background", "loadleveler",
-                          "pbs", "sge", "slurm"])
+@pytest.mark.parametrize(
+    "batch_sys",
+    ["at", "background", "loadleveler", "pbs", "sge", "slurm"])
 def test_traps_for_each_batch_system(batch_sys: str):
     """Test traps for each batch system"""
+    platform = platform_from_name()
+    platform.update({
+        "batch system": f"{batch_sys}",
+        "owner": "me"
+    })
     job_conf = {
-        "batch_system_name": f"{batch_sys}",
-        "host": "localhost",
-        "owner": "me",
+        "platform": platform,
         "directives": {}
     }
 
@@ -232,14 +272,10 @@ def test_traps_for_each_batch_system(batch_sys: str):
                 "CYLC_FAIL_SIGNALS='EXIT ERR TERM XCPU" in output)
 
 
-@mock.patch("os.path.dirname")
-@mock.patch.dict(
-    "os.environ", {'CYLC_SUITE_INITIAL_CYCLE_POINT': "20200101T0000Z"})
-@mock.patch("cylc.flow.job_file.JobFileWriter._get_host_item")
-def test_write_prelude(mocked_get_host_item, mocked_path):
+def test_write_prelude(monkeypatch, fixture_get_platform):
     """Test the prelude section of job script file is correctly
-        written"""
-
+    written.
+    """
     cylc.flow.flags.debug = True
     expected = ('\nCYLC_FAIL_SIGNALS=\'EXIT ERR TERM XCPU\'\n'
                 'CYLC_VACATION_SIGNALS=\'USR1\'\nexport PATH=moo/baa:$PATH'
@@ -247,30 +283,35 @@ def test_write_prelude(mocked_get_host_item, mocked_path):
                 '\nexport CYLC_VERSION=\'%s\'\nexport ' % __version__
                 + 'CYLC_SUITE_INITIAL_CYCLE_POINT=\'20200101T0000Z\'')
     job_conf = {
-        "batch_system_name": "loadleveler",
-        "batch_submit_command_template": "test_suite",
-        "host": "localhost",
-        "owner": "me",
+        "platform": fixture_get_platform({
+            "batch system": "loadleveler",
+            "batch submit command template": "test_suite",
+            "host": "localhost",
+            "owner": "me",
+            "copyable environment variables": [
+                "CYLC_SUITE_INITIAL_CYCLE_POINT"
+            ],
+            "cylc executable": "moo/baa/cylc"
+        }),
         "directives": {"restart": "yes"},
     }
-    mocked_path.return_value = "moo/baa"
+    monkeypatch.setenv("CYLC_SUITE_INITIAL_CYCLE_POINT", "20200101T0000Z")
 
     with io.StringIO() as fake_file:
         # copyable environment variables
-        mocked_get_host_item.return_value = [
-            "moo", "CYLC_SUITE_INITIAL_CYCLE_POINT", "cluck"]
         JobFileWriter()._write_prelude(fake_file, job_conf)
         assert(fake_file.getvalue() == expected)
 
 
-@mock.patch.dict(
-    "os.environ", {'CYLC_SUITE_DEF_PATH': 'cylc/suite/def/path'})
-@mock.patch("cylc.flow.job_file.get_remote_suite_work_dir")
-def test_write_suite_environment(mocked_get_remote_suite_work_dir):
+def test_write_suite_environment(fixture_get_platform, monkeypatch):
     """Test suite environment is correctly written in jobscript"""
     # set some suite environment conditions
-    # mocked_environ.return_value="cylc/suite/def/path"
-    mocked_get_remote_suite_work_dir.return_value = "work/dir"
+    monkeypatch.setattr(
+        cylc.flow.job_file,
+        "get_remote_suite_work_dir",
+        lambda a, b: "work/dir"
+    )
+    monkeypatch.setenv('CYLC_SUITE_DEF_PATH', 'cylc/suite/def/path')
     cylc.flow.flags.debug = True
     cylc.flow.flags.verbose = True
     suite_env = {'CYLC_UTC': 'True',
@@ -281,14 +322,16 @@ def test_write_suite_environment(mocked_get_remote_suite_work_dir):
     expected = ('\n\ncylc__job__inst__cylc_env() {\n    # CYLC SUITE '
                 'ENVIRONMENT:\n    export CYLC_CYCLING_MODE="integer"\n  '
                 '  export CYLC_UTC="True"\n    export TZ="UTC"\n\n   '
-                ' export CYLC_SUITE_RUN_DIR="cylc-run/farm_noises"\n  '
-                '  CYLC_SUITE_WORK_DIR_ROOT="work/dir"\n   '
+                ' export CYLC_SUITE_RUN_DIR="cylc-run/farm_noises"\n   '
+                ' export CYLC_SUITE_WORK_DIR_ROOT="work/dir"\n   '
                 ' export CYLC_SUITE_DEF_PATH="remote/suite/dir"\n    expor'
                 't CYLC_SUITE_DEF_PATH_ON_SUITE_HOST="cylc/suite/def/path"'
                 '\n    export CYLC_SUITE_UUID="neigh"')
     job_conf = {
-        "host": "localhost",
-        "owner": "me",
+        "platform": fixture_get_platform({
+            "host": "localhost",
+            "owner": "me",
+        }),
         "suite_name": "farm_noises",
         "remote_suite_d": "remote/suite/dir",
         "uuid_str": "neigh"
@@ -299,14 +342,17 @@ def test_write_suite_environment(mocked_get_remote_suite_work_dir):
         assert(fake_file.getvalue() == expected)
 
 
-@mock.patch.dict(
-    "os.environ", {'CYLC_SUITE_DEF_PATH': 'cylc/suite/def/path'})
-@mock.patch("cylc.flow.job_file.get_remote_suite_work_dir")
 def test_write_suite_environment_no_remote_suite_d(
-        mocked_get_remote_suite_work_dir):
+        fixture_get_platform, monkeypatch
+):
     """Test suite environment is correctly written in jobscript"""
 
-    mocked_get_remote_suite_work_dir.return_value = "work/dir"
+    monkeypatch.setenv('CYLC_SUITE_DEF_PATH', 'cylc/suite/def/path')
+    monkeypatch.setattr(
+        cylc.flow.job_file,
+        "get_remote_suite_work_dir",
+        lambda a, b: "work/dir"
+    )
     cylc.flow.flags.debug = True
     cylc.flow.flags.verbose = True
     suite_env = {'CYLC_UTC': 'True',
@@ -316,14 +362,17 @@ def test_write_suite_environment_no_remote_suite_d(
     expected = ('\n\ncylc__job__inst__cylc_env() {\n    # CYLC SUITE '
                 'ENVIRONMENT:\n    export CYLC_CYCLING_MODE="integer"\n    '
                 'export CYLC_UTC="True"\n    export TZ="UTC"\n\n    export '
-                'CYLC_SUITE_RUN_DIR="cylc-run/farm_noises"\n    CYLC_SUITE'
+                'CYLC_SUITE_RUN_DIR="cylc-run/farm_noises"\n    '
+                'export CYLC_SUITE'
                 '_WORK_DIR_ROOT="work/dir"\n    export CYLC_SUITE_DEF_PATH='
                 '"cylc/suite/def/path"\n    export '
                 'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST="cylc/suite/def/path"\n'
                 '    export CYLC_SUITE_UUID="neigh"')
     job_conf = {
-        "host": "localhost",
-        "owner": "me",
+        "platform": fixture_get_platform({
+            "host": "localhost",
+            "owner": "me",
+        }),
         "suite_name": "farm_noises",
         "uuid_str": "neigh",
         "remote_suite_d": ""
@@ -450,17 +499,19 @@ def test_write_epilogue():
         assert(fake_file.getvalue() == expected)
 
 
-@mock.patch("cylc.flow.job_file.JobFileWriter._get_host_item")
-def test_write_global_init_scripts(mocked_get_host_item):
+def test_write_global_init_scripts(fixture_get_platform):
     """Test global init script is correctly written in jobscript"""
 
-    mocked_get_host_item.return_value = (
-        'global init-script = \n'
-        'export COW=moo\n'
-        'export PIG=oink\n'
-        'export DONKEY=HEEHAW\n'
-    )
-    job_conf = {}
+    job_conf = {
+        "platform": fixture_get_platform({
+            "global init-script": (
+                'global init-script = \n'
+                'export COW=moo\n'
+                'export PIG=oink\n'
+                'export DONKEY=HEEHAW\n'
+            )
+        })
+    }
     expected = ('\n\ncylc__job__inst__global_init_script() {\n'
                 '# GLOBAL-INIT-SCRIPT:\nglobal init-script = \nexport '
                 'COW=moo\nexport PIG=oink\nexport DONKEY=HEEHAW\n\n}')

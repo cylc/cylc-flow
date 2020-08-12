@@ -8,8 +8,7 @@
 
 [runtime]
     [[t1]]
-        script=test -z "${TZ:-}"
+        script = test -z "${TZ:-}"
+        platform = {{ environ['CYLC_REMOTE_PLATFORM'] }}
         [[[job]]]
             execution time limit = PT1M
-        [[[remote]]]
-            host={{environ["CYLC_TEST_HOST"]}}

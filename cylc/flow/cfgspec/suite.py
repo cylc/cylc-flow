@@ -26,7 +26,7 @@ from cylc.flow.parsec.config import ParsecConfig, ConfigNode as Conf
 from cylc.flow.parsec.upgrade import upgrader
 from cylc.flow.parsec.validate import (
     DurationFloat, CylcConfigValidator as VDR, cylc_config_validate)
-from cylc.flow.platform_lookup import reverse_lookup
+from cylc.flow.platforms import platform_from_job_info
 from cylc.flow.exceptions import PlatformLookupError
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 
@@ -895,8 +895,8 @@ with Conf(
                    Date-time when task job starts running
                 ``%(finish_time)s``
                    Date-time when task job exits
-                ``%(user@host)s``
-                   user@host where the task job is submitted
+                ``%(platform_name)s``
+                   name of platform where the task job is submitted
                 ``%(message)s``
                    Event message, if any
                 any task [meta] item, e.g.:
@@ -1285,8 +1285,8 @@ def host_to_platform_upgrader(cfg):
               |               +-------+      |  |                          |
               |                       |      |  +--------------------------+
     +---------v---------------------+ |      |
-    | Fail Loudly                   | |    +-v-----------------------------+
-    +-------------------------------+ |    | * Run reverse_lookup()        |
+    | FAIL LOUDLY                   | |    +-v-----------------------------+
+    +-------------------------------+ |    | * Run platform_from_job_info()|
                                       |    | * handle reverse lookup fail  |
                                       |    | * add platform                |
                                       |    | * delete forbidden settings   |
@@ -1309,9 +1309,6 @@ def host_to_platform_upgrader(cfg):
     }
 
     for task_name, task_spec in cfg['runtime'].items():
-        # if task_name == 'delta':
-        #     breakpoint(header=f"task_name = {task_name}")
-
         if (
             'platform' in task_spec and 'job' in task_spec or
             'platform' in task_spec and 'remote' in task_spec
@@ -1358,8 +1355,8 @@ def host_to_platform_upgrader(cfg):
 
             # Attempt to use the reverse lookup
             try:
-                platform = reverse_lookup(
-                    glbl_cfg(cached=False).get(['job platforms']),
+                platform = platform_from_job_info(
+                    glbl_cfg(cached=False).get(['platforms']),
                     task_spec_job,
                     task_spec_remote
                 )

@@ -18,12 +18,12 @@
 # Test "cylc cat-log" open local logs in editor.
 
 . "$(dirname "$0")/test_header"
-set_test_remote
+require_remote_platform
 
 . "${TEST_SOURCE_DIR}/editor/bin/run_tests.sh"
 export PATH="${TEST_SOURCE_DIR}/editor/bin/:${PATH}"
 
 install_suite "${TEST_NAME_BASE}" "editor"
-run_tests "${CYLC_TEST_HOST}" "${CYLC_TEST_OWNER}"
+run_tests "${CYLC_REMOTE_PLATFORM}"
 purge_suite "${SUITE_NAME}"
-purge_suite_remote "${CYLC_TEST_OWNER}@${CYLC_TEST_HOST}" "${SUITE_NAME}"
+purge_suite_remote "${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"

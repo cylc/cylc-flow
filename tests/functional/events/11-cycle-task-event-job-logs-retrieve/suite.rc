@@ -1,24 +1,23 @@
 #!jinja2
 [meta]
-    title=Task Event Job Log Retrieve
+    title = Task Event Job Log Retrieve
 
 [cylc]
     UTC mode = True
-    cycle point format=%Y-%m-%dT%H:%MZ
+    cycle point format = %Y-%m-%dT%H:%MZ
 
 [scheduling]
-    initial cycle point=2020-02-02T02:02Z
-    final cycle point=2020-02-02T02:02Z
+    initial cycle point = 2020-02-02T02:02Z
+    final cycle point = 2020-02-02T02:02Z
     [[graph]]
-        R1=T
+        R1 = T
 
 [runtime]
     [[T]]
-        script=test "${CYLC_TASK_TRY_NUMBER}" -eq 3
+        script = test "${CYLC_TASK_TRY_NUMBER}" -eq 3
+        platform = {{ environ['CYLC_REMOTE_PLATFORM'] }}
         [[[job]]]
-            execution retry delays=PT0S, 2*PT1S
-        [[[remote]]]
-            host = {{HOST}}
+            execution retry delays = PT0S, 2*PT1S
     [[t1]]
         inherit = T
         [[[remote]]]
@@ -27,4 +26,3 @@
         inherit = T
         [[[remote]]]
             retrieve job logs = False
-

@@ -26,13 +26,6 @@ Held tasks do not submit their jobs even if ready to run.
 See also 'cylc [control] hold'.
 """
 
-import sys
-if '--use-ssh' in sys.argv[1:]:
-    sys.argv.remove('--use-ssh')
-    from cylc.flow.remote import remrun
-    if remrun():
-        sys.exit(0)
-
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.terminal import prompt, cli_function
@@ -54,9 +47,7 @@ def main(parser, options, suite, *task_globs):
         prompt('Release task(s) %s in %s' % (task_globs, suite), options.force)
     else:
         prompt('Release suite %s' % suite, options.force)
-    pclient = SuiteRuntimeClient(
-        suite, options.owner, options.host, options.port,
-        options.comms_timeout)
+    pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
     if task_globs:
         pclient(
             'release_tasks',

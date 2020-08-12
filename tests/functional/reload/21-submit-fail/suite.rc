@@ -14,10 +14,8 @@ reloader => stopper
 [runtime]
     [[t1]]
         script=true
-        [[[job]]]
-            batch system = at
-            batch submit command template = sleep 5
-            submission retry delays = 3*PT5S
+        platform = platypus
+
     [[reloader]]
         script=cylc reload "${CYLC_SUITE_NAME}"
     [[stopper]]

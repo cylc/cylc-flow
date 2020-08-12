@@ -5,46 +5,44 @@
         expected task failures = local-fail-1.1, local-fail-2.1, remote-fail-1.1
 [scheduling]
     [[graph]]
-        R1="""
-POLLABLE:start-all => poller
-"""
+        R1 = """
+            POLLABLE:start-all => poller
+        """
 [runtime]
     [[POLLABLE]]
-        pre-script="""
-# Stop script from reporting anything back
-trap '' 'EXIT'
-trap '' 'ERR'
-"""
+        pre-script = """
+            # Stop script from reporting anything back
+            trap '' 'EXIT'
+            trap '' 'ERR'
+        """
     [[FAIL]]
         inherit = POLLABLE
-        script="""
-echo 'I am failing...' >&2
-exit 1
-"""
+        script = """
+            echo 'I am failing...' >&2
+            exit 1
+        """
     [[local-fail-1, local-fail-2]]
         inherit = FAIL
     [[remote-fail-1]]
         inherit = FAIL
-        [[[remote]]]
-            host={{CYLC_TEST_HOST}}
+        platform = {{ environ['CYLC_REMOTE_PLATFORM'] }}
     [[SUCCESS]]
         inherit = POLLABLE
-        script="""
-echo 'I am OK.'
-{
-    echo 'CYLC_JOB_EXIT=SUCCEEDED'
-    echo "CYLC_JOB_EXIT_TIME=$(date +%FT%H:%M:%SZ)"
-} >>"${CYLC_TASK_LOG_ROOT}.status"
-exit
-"""
+        script = """
+            echo 'I am OK.'
+            {
+                echo 'CYLC_JOB_EXIT=SUCCEEDED'
+                echo "CYLC_JOB_EXIT_TIME=$(date +%FT%H:%M:%SZ)"
+            } >>"${CYLC_TASK_LOG_ROOT}.status"
+            exit
+        """
     [[local-success-1]]
         inherit = SUCCESS
     [[remote-success-1, remote-success-2]]
         inherit = SUCCESS
-        [[[remote]]]
-            host={{CYLC_TEST_HOST}}
+        platform = {{ environ['CYLC_REMOTE_PLATFORM'] }}
     [[poller]]
-        script="""
-cylc poll "${CYLC_SUITE_NAME}" 'POLLABLE'
-cylc stop "${CYLC_SUITE_NAME}"
-"""
+        script = """
+            cylc poll "${CYLC_SUITE_NAME}" 'POLLABLE'
+            cylc stop "${CYLC_SUITE_NAME}"
+        """

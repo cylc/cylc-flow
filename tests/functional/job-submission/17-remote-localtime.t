@@ -18,10 +18,9 @@
 # Test that suite does not set remote job TZ when in local time.
 export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
-set_test_remote_host
+require_remote_platform
 set_test_number 2
 reftest
-if [[ "${CYLC_TEST_HOST}" != 'localhost' ]]; then
-    purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
-fi
+purge_suite_remote "${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
+purge_suite "${SUITE_NAME}"
 exit

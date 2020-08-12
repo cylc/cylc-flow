@@ -44,6 +44,7 @@ def job_config(schd):
         'param_env_tmpl': {},
         'param_var': {},
         'logfiles': [],
+        'platform': {'name': 'platform'},
     }
 
 

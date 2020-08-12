@@ -26,24 +26,24 @@ from cylc.flow.rundb import CylcSuiteDAO
 
 
 GLOBALRC = """
-[job platforms]
+[platforms]
     [[desktop[0-9]{2}|laptop[0-9]{2}]]
         # hosts = platform name (default)
         # Note: "desktop01" and "desktop02" are both valid and distinct
         # platforms
     [[sugar]]
-        remote hosts = localhost
+        hosts = localhost
         batch system = slurm
     [[hpc]]
-        remote hosts = hpcl1, hpcl2
+        hosts = hpcl1, hpcl2
         retrieve job logs = True
         batch system = pbs
     [[hpcl1-bg]]
-        remote hosts = hpcl1
+        hosts = hpcl1
         retrieve job logs = True
         batch system = background
     [[hpcl2-bg]]
-        remote hosts = hpcl2
+        hosts = hpcl2
         retrieve job logs = True
         batch system = background
 """
@@ -257,7 +257,7 @@ def test_upgrade_to_platforms(mock_glbl_cfg):
         # check the data was correctly upgraded
         dump = [
             x for x in conn.execute(
-                rf'SELECT name, cycle, user, platform FROM task_jobs'
+                rf'SELECT name, cycle, user, platform_name FROM task_jobs'
             )
         ]
         assert dump == expected_data

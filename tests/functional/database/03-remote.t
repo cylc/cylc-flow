@@ -18,7 +18,7 @@
 # Suite database content, "task_jobs" table with a remote job.
 export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
-set_test_remote_host
+require_remote_platform
 set_test_number 3
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
@@ -26,21 +26,19 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --debug --no-detach --reference-test "${SUITE_NAME}"
 
-DB_FILE="$(cylc get-global-config '--print-run-dir')/${SUITE_NAME}/log/db"
+DB_FILE="${RUN_DIR}/${SUITE_NAME}/log/db"
 
 NAME='select-task-jobs.out'
 sqlite3 "${DB_FILE}" \
     'SELECT cycle, name, submit_num, try_num, submit_status, run_status,
-            user_at_host, batch_sys_name
+            platform_name, batch_sys_name
      FROM task_jobs ORDER BY name' \
     >"${NAME}"
 cmp_ok "${NAME}" <<__SELECT__
-20200101T0000Z|t1|1|1|0|0|$(get_fqdn_by_host)|background
+20200101T0000Z|t1|1|1|0|0|localhost|background
 20200101T0000Z|t2|1|1|0|0|${CYLC_TEST_HOST}|background
 __SELECT__
 
-if [[ "$CYLC_TEST_HOST" != 'localhost' ]]; then
-    purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
-fi
+purge_suite_remote "${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

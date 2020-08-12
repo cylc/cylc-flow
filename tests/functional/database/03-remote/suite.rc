@@ -1,8 +1,9 @@
+#!Jinja2
 [cylc]
     UTC mode = True
 [scheduling]
-    initial cycle point=2020
-    final cycle point=2020
+    initial cycle point = 2020
+    final cycle point = 2020
     [[graph]]
         P1Y = """
             t1
@@ -10,8 +11,7 @@
         """
 [runtime]
     [[t1]]
-        script=true
+        script = true
     [[t2]]
-        script=true
-        [[[remote]]]
-            host=$CYLC_TEST_HOST
+        script = true
+        platform = {{ environ['CYLC_REMOTE_PLATFORM'] }}

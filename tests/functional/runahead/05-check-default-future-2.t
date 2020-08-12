@@ -31,7 +31,7 @@ run_fail "${TEST_NAME}" cylc run --debug --no-detach --set=FUTURE_TRIGGER_START_
     "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-max-cycle
-DB="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/db"
+DB="$RUN_DIR/${SUITE_NAME}/log/db"
 run_ok "${TEST_NAME}" sqlite3 "${DB}" \
 "select max(cycle) from task_states where name=='foo' and status=='failed'"
 cmp_ok "${TEST_NAME}.stdout" <<'__OUT__'
@@ -39,7 +39,7 @@ cmp_ok "${TEST_NAME}.stdout" <<'__OUT__'
 __OUT__
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-check-timeout
-LOG="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/suite/log"
+LOG="$RUN_DIR/${SUITE_NAME}/log/suite/log"
 run_ok "${TEST_NAME}" grep 'suite timed out after' "${LOG}"
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"

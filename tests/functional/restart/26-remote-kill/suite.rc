@@ -12,7 +12,6 @@
 [runtime]
     [[t1]]
         script = sleep 300
+        platform = {{environ["CYLC_TEST_HOST"]}}
         [[[events]]]
             started handler = cylc stop --now --now '%(suite)s'
-        [[[remote]]]
-            host = {{environ["CYLC_TEST_HOST"]}}

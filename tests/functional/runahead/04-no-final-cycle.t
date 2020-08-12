@@ -29,7 +29,7 @@ TEST_NAME="${TEST_NAME_BASE}-run"
 run_fail "${TEST_NAME}" cylc run --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-check-fail
-DB="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/db"
+DB="$RUN_DIR/${SUITE_NAME}/log/db"
 TASKS=$(sqlite3 "${DB}" 'select count(*) from task_states where status=="failed"')
 # manual comparison for the test
 if ((TASKS==4)); then 

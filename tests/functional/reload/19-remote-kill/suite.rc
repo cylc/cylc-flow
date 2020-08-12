@@ -21,5 +21,4 @@ cylc__job__poll_grep_suite_log -F '[foo.1] -job(01) killed'
             execution time limit = PT1M
     [[foo]]
         script=sleep 61
-        [[[remote]]]
-            host = {{CYLC_TEST_HOST}}
+        platform = {{ CYLC_REMOTE_PLATFORM }}

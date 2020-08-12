@@ -9,5 +9,4 @@
 [runtime]
     [[a-task]]
         script = echo "the quick brown fox"
-        [[[remote]]]
-            host={{environ['CYLC_TEST_HOST'] | default("localhost")}}
+        platform = {{ environ['CYLC_REMOTE_PLATFORM'] | default("localhost") }}
