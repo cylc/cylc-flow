@@ -261,7 +261,7 @@ class GraphExpander:
 
     _REMOVE = -32768
     _REMOVE_REC = re.compile(
-        r'(?:^|\s*=>).*' + str(_REMOVE) + r'.*?(?:$|=>\s*?|&\s*)')
+        r'(?:^|\s*=>)*[^\s ]*' + str(_REMOVE) + r'.*?(?:$|=>\s*?|&\s*)')
 
     def __init__(self, parameters):
         """Initialize the parameterized task name expander.
@@ -372,7 +372,7 @@ class GraphExpander:
                                            'defined.' % str(exc.args[0]))
                 line = line.replace('<' + p_group + '>', repl)
                 # Remove out-of-range nodes
-                line = self._REMOVE_REC.sub('', line)
+                line = self._REMOVE_REC.sub('', line).strip()
             if line:
                 line_set.add(line)
         else:

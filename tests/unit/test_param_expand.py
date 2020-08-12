@@ -203,17 +203,86 @@ class TestParamExpand(unittest.TestCase):
         self.assertRaises(
             ParamExpandError, self.graph_expander.expand, 'foo<k>')
 
+    def _param_expand_params(self):
+        """Test data for test_parameter_graph_mixing_offset_and_conditional.
+
+            params_map, templates, expanded_str, expanded_values
+            params_map     : map of parameters used in the graph expression
+            templates      : parameters template
+            expanded_str   : graph string, using params/template
+            expanded_values: values expected to exist after params expanded
+        """
+        return (
+            # original case from #2608
+            (
+                {'m': ["cat", "dog"]},
+                {'m': '_%(m)s'},
+                "foo<m-1> & baz => foo<m>",
+                [
+                    'baz => foo_cat',
+                    'foo_cat & baz => foo_dog'
+                ]
+            ),
+            # cases from comments from #2608
+            # see cylc/cylc-flow/pull/3452#issuecomment-670782800
+            (
+                # single element, so bar<m-1> does not exist
+                {'m': ["cat"]},
+                {'m': '_%(m)s'},
+                "foo & bar<m-1> & baz => qux",
+                [
+                    "foo & baz => qux"
+                ]
+            ),
+            # cases from comments from #2608
+            # see cylc/cylc-flow/pull/3452#issuecomment-670776749
+            (
+                {'m': ["1", "2"]},
+                {'m': '_%(m)s'},
+                "foo<m-1> => bar<m> => baz",
+                [
+                    "bar_1 => baz",
+                    "foo_1 => bar_2 => baz"
+                ]
+            ),
+            # cases from comments from #2608
+            # see cylc/cylc-flow/pull/3452#discussion_r430967867
+            (
+                {'m': ["cat", "dog"]},
+                {'m': '_%(m)s'},
+                "baz & foo<m-1> & pub => foo<m>",
+                [
+                    "baz & pub => foo_cat",
+                    "baz & foo_cat & pub => foo_dog"
+                ]
+            ),
+            (
+                {'m': ["cat", "dog"]},
+                {'m': '_%(m)s'},
+                "bar & foo<m-1> & pub<m-1> & qux => foo<m>",
+                [
+                    "bar & qux => foo_cat",
+                    "bar & foo_cat & pub_cat & qux => foo_dog"
+                ]
+            )
+        )
+
     def test_parameter_graph_mixing_offset_and_conditional(self):
-        """Test for bug reported in issue #2608 on GitHub:
-        https://github.com/cylc/cylc-flow/issues/2608"""
-        params_map = {'m': ["cat", "dog"]}
-        templates = {'m': '_%(m)s'}
-        graph_expander = GraphExpander((params_map, templates))
-        expanded = graph_expander.expand("foo<m-1> & baz => foo<m>")
-        # no m-1 when m=cat
-        self.assertTrue('baz => foo_cat' in expanded)
-        # m-1 is foo_cat when m=dog
-        self.assertTrue('foo_cat & baz => foo_dog' in expanded)
+        """Test for bug reported in issue #2608 on GitHub."""
+        for test_case in self._param_expand_params():
+            params_map, templates, expanded_str, expanded_values = \
+                test_case
+            graph_expander = GraphExpander((params_map, templates))
+            expanded = graph_expander.expand(expanded_str)
+            self.assertEqual(
+                len(expanded_values),
+                len(expanded),
+                f"Invalid length for expected {expanded_values} and "
+                f"{expanded}")
+            for expected in expanded_values:
+                self.assertTrue(
+                    expected in expanded,
+                    f"Expected value {expected} not in {expanded}")
 
 
 if __name__ == "__main__":
