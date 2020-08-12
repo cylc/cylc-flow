@@ -413,8 +413,14 @@ def parse_suite_arg(options, arg):
     except SuiteServiceFileError:
         arg = os.path.abspath(arg)
         if os.path.isdir(arg):
-            path = os.path.join(arg, SuiteFiles.FLOW_FILE)
-            name = os.path.basename(arg)
+            try:
+                # in case registration failed because arg was an absolute path
+                arg_base = os.path.basename(arg)
+                path = get_flow_file(arg_base, options.suite_owner)
+                name = arg_base
+            except SuiteServiceFileError:
+                path = os.path.join(arg, SuiteFiles.FLOW_FILE)
+                name = os.path.basename(arg)
         else:
             path = arg
             name = os.path.basename(os.path.dirname(arg))
