@@ -45,9 +45,8 @@ with Conf(
         .. note::
 
            In earlier versions of Cylc, this was named ``suite.rc``, but that
-           name is now deprecated. If you ``cylc run`` a directory that
-           contains a ``suite.rc`` file instead of a ``flow.cylc`` file, Cylc
-           will automatically create the latter, symlinked to the former.
+           name is now deprecated. The ``cylc run`` command will automatically
+           symlink an existing ``suite.rc`` file to ``flow.cylc``.
     '''
 ) as SPEC:
 
