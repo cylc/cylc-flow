@@ -518,7 +518,7 @@ purge_suite_platform() {
     HOST=$(echo "$HOSTS" | awk -F ',' '{print $1}')
     # CMD is part of this function
     # shellcheck disable=SC2029
-    if [[ -z "${HOSTS}" ]]; then
+    if [[ -n "${HOST}" ]]; then
         ssh -n -oBatchMode=yes -oConnectTimeout=5 "${HOST}" "${CMD}" \
             2>'/dev/null' || true
     fi
