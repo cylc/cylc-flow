@@ -38,7 +38,8 @@ run_ok "${TEST_NAME_BASE}-validate" \
        -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}" 
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --debug --no-detach --reference-test \
-    -s "CYLC_REMOTE_PLATFORM=${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
+    -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}" \
+    -s "CYLC_REMOTE_PLATFORM=${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}" 
 
 purge_suite_remote "${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
