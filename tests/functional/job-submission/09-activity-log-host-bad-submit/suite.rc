@@ -19,7 +19,7 @@
             set -x
             # Test that the original command is printed
             A_LOG="$(dirname "$0")/../../bad-submitter/01/job-activity.log"
-            grep '\[jobs-submit cmd\] ssh .* {{CYLC_REMOTE_PLATFORM}} .* cylc jobs-submit.*' \
+            grep '\[jobs-submit cmd\] ssh .* {{CYLC_TEST_HOST}} .*cylc jobs-submit.*' \
                 "${A_LOG}"
             # Test that some STDERR is printed, with the host name as prefix
             # TODO: re-instate this functionality
