@@ -22,7 +22,7 @@ require_remote_platform
 set_test_number 4
 create_test_globalrc "" "
 [platforms]
-[[$CYLC_TEST_HOST]]
+[[$CYLC_REMOTE_PLATFORM]]
 hosts = $CYLC_TEST_HOST
 retrieve job logs = True
 "
