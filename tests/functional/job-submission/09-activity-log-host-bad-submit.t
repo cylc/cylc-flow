@@ -33,7 +33,9 @@ create_test_globalrc '' "
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate "${SUITE_NAME}" -s "CYLC_REMOTE_PLATFORM=${CYLC_REMOTE_PLATFORM}"
+    cylc validate "${SUITE_NAME}" \
+       -s "CYLC_REMOTE_PLATFORM=${CYLC_REMOTE_PLATFORM}" \
+       -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}" 
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --debug --no-detach --reference-test \
     -s "CYLC_REMOTE_PLATFORM=${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
