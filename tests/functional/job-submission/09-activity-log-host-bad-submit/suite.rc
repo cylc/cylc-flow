@@ -21,9 +21,6 @@
             A_LOG="$(dirname "$0")/../../bad-submitter/01/job-activity.log"
             grep '\[jobs-submit cmd\] ssh .* {{CYLC_TEST_HOST}} .*cylc jobs-submit.*' \
                 "${A_LOG}"
-            # Test that some STDERR is printed, with the host name as prefix
-            # TODO: re-instate this functionality
-            # grep '({{CYLC_REMOTE_PLATFORM}}) .* \[STDERR\] ' "${A_LOG}"
             # Stop the suite cleanly
             cylc stop "${CYLC_SUITE_NAME}"
         """
