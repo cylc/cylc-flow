@@ -24,7 +24,7 @@ from cylc.flow.task_id import TaskID
 from cylc.flow import LOG
 
 
-class TaskDef(object):
+class TaskDef:
     """Task definition."""
 
     # Memory optimization - constrain possible attributes to this list.

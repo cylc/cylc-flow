@@ -209,7 +209,7 @@ def status_geq(status_a, status_b):
             TASK_STATUSES_ORDERED.index(status_b))
 
 
-class TaskState(object):
+class TaskState:
     """Task status and utilities.
 
     Attributes:

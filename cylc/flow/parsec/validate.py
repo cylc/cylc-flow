@@ -37,7 +37,7 @@ from cylc.flow.parsec.exceptions import (
 from cylc.flow.subprocctx import SubFuncContext
 
 
-class ParsecValidator(object):
+class ParsecValidator:
     """Type validator and coercer for configurations.
 
     Attributes:

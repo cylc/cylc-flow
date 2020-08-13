@@ -160,7 +160,7 @@ def _get_dao(suite):
     return CylcSuiteDAO(get_suite_run_pub_db_name(suite), is_public=True)
 
 
-class TimingSummary(object):
+class TimingSummary:
     """Base class for summarizing timing output from cylc.flow run database."""
 
     def __init__(self, filepath_or_buffer=None):

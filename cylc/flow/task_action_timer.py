@@ -22,7 +22,7 @@ from cylc.flow.wallclock import (
     get_seconds_as_interval_string, get_time_string_from_unix_time)
 
 
-class TaskActionTimer(object):
+class TaskActionTimer:
     """A timer with delays for task actions."""
 
     # Memory optimization - constrain possible attributes to this list.

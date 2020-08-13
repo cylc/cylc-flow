@@ -18,7 +18,7 @@ import re
 import copy
 
 
-class ConditionalSimplifier(object):
+class ConditionalSimplifier:
     """A class to simplify logical expressions"""
     REC_CONDITIONALS = re.compile("([&|()])")
 

@@ -96,7 +96,7 @@ def check_varnames(env):
 # TODO: separate config for run and non-run purposes?
 
 
-class SuiteConfig(object):
+class SuiteConfig:
     """Class for suite configuration items and derived quantities."""
 
     Q_DEFAULT = 'default'

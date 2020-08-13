@@ -53,7 +53,7 @@ from time import time
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 
 
-class HostUtil(object):
+class HostUtil:
     """host and user ID utility."""
 
     EXPIRE = 3600.0  # singleton expires in 1 hour by default

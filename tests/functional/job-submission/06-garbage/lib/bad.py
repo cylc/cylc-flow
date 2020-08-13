@@ -18,7 +18,7 @@
 """Garbage batch system, for testing."""
 
 
-class BadSubmitHandler(object):
+class BadSubmitHandler:
 
     """Garbage batch system, for testing."""
 

@@ -30,7 +30,7 @@ from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.util import itemstr, m_override, replicate, un_many
 
 
-class ParsecConfig(object):
+class ParsecConfig:
     """Object wrapper for parsec functions."""
 
     def __init__(self, spec, upgrader=None, output_fname=None, tvars=None,

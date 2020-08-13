@@ -50,7 +50,7 @@ ARG_VAL_TEMPLATES = [
 RE_STR_TMPL = re.compile(r'(?<!%)%\(([\w]+)\)s')
 
 
-class XtriggerManager(object):
+class XtriggerManager:
     """Manage clock triggers and xtrigger functions.
 
     # Example:

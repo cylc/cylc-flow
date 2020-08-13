@@ -21,7 +21,7 @@ import re
 from subprocess import Popen, STDOUT, DEVNULL
 
 
-class BgCommandHandler(object):
+class BgCommandHandler:
     """Background job submission and manipulation.
 
     Run a task job as a nohup background process in its own process group.

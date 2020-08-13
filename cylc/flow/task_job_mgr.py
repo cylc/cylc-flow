@@ -64,7 +64,7 @@ from cylc.flow.remote import construct_platform_ssh_cmd
 from cylc.flow.exceptions import PlatformLookupError
 
 
-class TaskJobManager(object):
+class TaskJobManager:
     """Manage task job submit, poll and kill.
 
     This class provides logic to:
