@@ -447,9 +447,6 @@ def help_func():
             except CommandError as exc2:
                 print(exc, file=sys.stderr)
                 raise SystemExit(exc2)
-            else:
-                # cylc COMMAND --help
-                pass
         else:
             # cylc help CATEGORY
             category_help(category)

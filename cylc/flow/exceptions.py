@@ -188,7 +188,7 @@ class HostSelectException(CylcError):
         CylcError.__init__(self)
 
     def __str__(self):
-        ret = f'Could not select host from:'
+        ret = 'Could not select host from:'
         for host, data in sorted(self.data.items()):
             ret += f'\n    {host}:'
             for key, value in data.items():

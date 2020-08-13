@@ -1084,7 +1084,7 @@ class TaskPool(object):
                     TASK_STATUS_SUBMITTED,
                     TASK_STATUS_RUNNING,
                     is_held=False):
-                LOG.warning(f'[c_task] -suiciding while active')
+                LOG.warning(f'[{c_task}] -suiciding while active')
             self.remove(c_task, 'SUICIDE')
 
         # Remove the parent task if finished.
