@@ -109,6 +109,6 @@ fi
 cylc stop "${SUITE_NAME}" --now --now 2>/dev/null
 sleep 1
 purge_suite "${SUITE_NAME}"
-purge_suite_platform "${CYLC_REMOTE_PLATFORM_WSFS}" "${SUITE_NAME}"
+purge_suite_platform "${CYLC_TEST_PLATFORM_WSFS}" "${SUITE_NAME}"
 
 exit

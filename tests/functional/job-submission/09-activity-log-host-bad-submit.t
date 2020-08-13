@@ -25,7 +25,7 @@ set_test_number 2
 
 create_test_globalrc '' "
 [platforms]
-    [[${CYLC_REMOTE_PLATFORM}]]
+    [[${CYLC_TEST_PLATFORM}]]
         batch system = at
         batch submit command template = at non
 "
@@ -34,13 +34,13 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate "${SUITE_NAME}" \
-       -s "CYLC_REMOTE_PLATFORM=${CYLC_REMOTE_PLATFORM}" \
+       -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}" \
        -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}" 
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --debug --no-detach --reference-test \
     -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}" \
-    -s "CYLC_REMOTE_PLATFORM=${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}" 
+    -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}" "${SUITE_NAME}" 
 
-purge_suite_platform "${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
+purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

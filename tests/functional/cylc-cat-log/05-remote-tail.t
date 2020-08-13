@@ -25,18 +25,18 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 set -eu
 SSH='ssh -oBatchMode=yes -oConnectTimeout=5'
 SCP='scp -oBatchMode=yes -oConnectTimeout=5'
-$SSH -n "${CYLC_REMOTE_PLATFORM}" "mkdir -p cylc-run/.bin"
+$SSH -n "${CYLC_TEST_HOST}" "mkdir -p cylc-run/.bin"
 # shellcheck disable=SC2016
 create_test_globalrc "" "
 [platforms]
-   [[$CYLC_REMOTE_PLATFORM]]
+   [[$CYLC_TEST_PLATFORM]]
         tail command template = \$HOME/cylc-run/.bin/my-tailer.sh %(filename)s"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 $SCP "${PWD}/bin/my-tailer.sh" \
-    "${CYLC_REMOTE_PLATFORM}:cylc-run/.bin/my-tailer.sh
+    "${CYLC_TEST_HOST}:cylc-run/.bin/my-tailer.sh
 "
 #-------------------------------------------------------------------------------
 # Run detached.
@@ -54,7 +54,7 @@ grep_ok "HELLO from foo 1" "${TEST_NAME}.out"
 TEST_NAME=${TEST_NAME_BASE}-stop
 run_ok "${TEST_NAME}" cylc stop --kill --max-polls=20 --interval=1 "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-purge_suite_platform "${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
-$SSH -n "${CYLC_REMOTE_PLATFORM}" "rm -rf cylc-run/.bin/"
+purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
+$SSH -n "${CYLC_TEST_HOST}" "rm -rf cylc-run/.bin/"
 purge_suite "${SUITE_NAME}"
 exit

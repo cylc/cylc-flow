@@ -11,7 +11,7 @@ t2:start=>stop
 [runtime]
     [[T]]
         script=sleep 120 & echo $! >file; wait
-        platform = {{ environ['CYLC_REMOTE_PLATFORM'] }}
+        platform = {{ environ['CYLC_TEST_PLATFORM'] }}
     [[t1]]
         inherit=T
     [[t2]]

@@ -24,7 +24,7 @@ set_test_number 4
 OPT_SET=
 create_test_globalrc "" "
     [platforms]
-        [[${CYLC_REMOTE_PLATFORM}]]
+        [[${CYLC_TEST_PLATFORM}]]
             retrieve job logs = True
             retrieve job logs retry delays = PT5S
 "
@@ -35,11 +35,11 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 # shellcheck disable=SC2086
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate ${OPT_SET} \
-    -s "PLATFORM=${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
+    -s "PLATFORM=${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 # shellcheck disable=SC2086
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug --no-detach ${OPT_SET} \
-       -s "PLATFORM=${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
+       -s "PLATFORM=${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 
 sed "/'job-logs-retrieve'/!d" \
     "${SUITE_RUN_DIR}/log/job/1/t1/"{01,02,03}"/job-activity.log" \
@@ -58,6 +58,6 @@ cmp_ok 'edited-log' <<'__LOG__'
 1/t1/03 ('job-logs-retrieve', 'succeeded') will run after PT5S
 __LOG__
 
-purge_suite_remote "${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
+purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

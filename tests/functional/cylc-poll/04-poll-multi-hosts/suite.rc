@@ -25,7 +25,7 @@
         inherit = FAIL
     [[remote-fail-1]]
         inherit = FAIL
-        platform = {{ environ['CYLC_REMOTE_PLATFORM'] }}
+        platform = {{ environ['CYLC_TEST_PLATFORM'] }}
     [[SUCCESS]]
         inherit = POLLABLE
         script = """
@@ -40,7 +40,7 @@
         inherit = SUCCESS
     [[remote-success-1, remote-success-2]]
         inherit = SUCCESS
-        platform = {{ environ['CYLC_REMOTE_PLATFORM'] }}
+        platform = {{ environ['CYLC_TEST_PLATFORM'] }}
     [[poller]]
         script = """
             cylc poll "${CYLC_SUITE_NAME}" 'POLLABLE'

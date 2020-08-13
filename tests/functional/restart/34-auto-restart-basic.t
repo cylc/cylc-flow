@@ -85,6 +85,6 @@ grep_ok "cylc-restart ${SUITE_NAME} --host=${CYLC_TEST_HOST_WSFS} --host=localho
 # stop suite
 cylc stop "${SUITE_NAME}" --kill --max-polls=10 --interval=2 2>'/dev/null'
 purge_suite "${SUITE_NAME}"
-purge_suite_platform "${CYLC_REMOTE_PLATFORM_WSFS}" "${SUITE_NAME}"
+purge_suite_platform "${CYLC_TEST_PLATFORM_WSFS}" "${SUITE_NAME}"
 
 exit

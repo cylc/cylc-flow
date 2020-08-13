@@ -34,6 +34,6 @@ done
 suite_run_fail "${TEST_NAME_BASE}-restart" cylc restart --debug --no-detach "${SUITE_NAME}"
 grep_ok PlatformLookupError "${CYLC_SUITE_RUN_DIR}/log/suite/log"
 #-------------------------------------------------------------------------------
-purge_suite_remote "${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
+purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

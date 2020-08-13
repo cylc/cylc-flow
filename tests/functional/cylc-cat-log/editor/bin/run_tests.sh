@@ -27,12 +27,12 @@ function run_tests {
     PLATFORM=$1
 
     TEST_NAME="${TEST_NAME_BASE}-validate"
-    run_ok "${TEST_NAME}" cylc validate --set="CYLC_TEST_PLATFORM=$PLATFORM" \
+    run_ok "${TEST_NAME}" cylc validate --set="PLATFORM=$PLATFORM" \
         "${SUITE_NAME}"
 
     # Run the suite to generate some log files.
     TEST_NAME="${TEST_NAME_BASE}-suite-run"
-    run_ok "${TEST_NAME}" cylc run --set="CYLC_TEST_PLATFORM=$PLATFORM" \
+    run_ok "${TEST_NAME}" cylc run --set="PLATFORM=$PLATFORM" \
         --no-detach "${SUITE_NAME}"
 
     LOG_DIR="$RUN_DIR/${SUITE_NAME}"

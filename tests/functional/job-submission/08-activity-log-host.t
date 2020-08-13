@@ -24,11 +24,11 @@ set_test_number 2
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate "${SUITE_NAME}" -s "CYLC_REMOTE_PLATFORM=${CYLC_REMOTE_PLATFORM}"
+    cylc validate "${SUITE_NAME}" -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --debug --no-detach --reference-test -s "CYLC_REMOTE_PLATFORM=${CYLC_REMOTE_PLATFORM}" \
+    cylc run --debug --no-detach --reference-test -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}" \
     "${SUITE_NAME}"
 
-purge_suite_remote "${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
+purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

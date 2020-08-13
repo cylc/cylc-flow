@@ -13,6 +13,6 @@
             cylc broadcast -v -v --debug "${CYLC_SUITE_NAME}" \
                 -n t2 -s 'script=true'
         """
-        platform = {{ environ['CYLC_REMOTE_PLATFORM'] }}
+        platform = {{ environ['CYLC_TEST_PLATFORM'] }}
     [[t2]]
         script = false

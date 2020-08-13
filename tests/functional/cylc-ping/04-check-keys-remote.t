@@ -31,15 +31,15 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
 [runtime]
     [[holder]]
         script = """cylc hold "${CYLC_SUITE_NAME}" """
-        platform = {{CYLC_REMOTE_PLATFORM}}
+        platform = {{CYLC_TEST_PLATFORM}}
     [[held]]
         script = true
 __SUITE_RC__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}" \
-    -s "CYLC_REMOTE_PLATFORM=${CYLC_REMOTE_PLATFORM}"
+    -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}"
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" \
-    -s "CYLC_REMOTE_PLATFORM=${CYLC_REMOTE_PLATFORM}"
+    -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}"
 RRUND="cylc-run/${SUITE_NAME}"
 RSRVD="${RRUND}/.service"
 poll_grep_suite_log 'Holding all waiting or queued tasks now'
@@ -56,6 +56,6 @@ ${SSH} "${CYLC_TEST_HOST}" \
 find "${RRUND}" -type f -name "*key*"|awk -F/ '{print $NF}'|sort >'find.out'
 cmp_ok 'find.out' <<'__OUT__'
 __OUT__
-purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
+purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

@@ -68,6 +68,6 @@ grep_ok 'Suite shutting down - REQUEST(CLEAN)' \
     "$(cylc cat-log "${SUITE_NAME}" -m p)"
 
 purge_suite "${SUITE_NAME}"
-purge_suite_platform "${CYLC_REMOTE_PLATFORM_WSFS}" "${SUITE_NAME}"
+purge_suite_platform "${CYLC_TEST_PLATFORM_WSFS}" "${SUITE_NAME}"
 
 exit
