@@ -43,5 +43,5 @@ create_test_globalrc "" "
                 err viewer = ${ERR_VIEWER}
                 out viewer = ${OUT_VIEWER}"
 reftest
-purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
+purge_suite_platform "${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
 exit

@@ -41,6 +41,6 @@ cmp_ok 'edited-activities.log' <<__LOG__
 [(('job-logs-retrieve', 'succeeded'), 3) ret_code] 0
 __LOG__
 
-purge_suite_remote "${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
+purge_suite_platform "${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

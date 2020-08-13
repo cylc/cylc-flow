@@ -11,6 +11,6 @@
         script = """
             cylc broadcast "${CYLC_SUITE_NAME}" '--name=t1' '--set=script=true'
         """
-        platform = {{ environ['CYLC_TEST_PLATFORM'] }}
+        platform = {{ environ['CYLC_REMOTE_PLATFORM'] }}
     [[t1]]
         script = false

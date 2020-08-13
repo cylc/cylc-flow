@@ -27,6 +27,6 @@ suite_run_ok "${TEST_NAME_BASE}-restart" \
     cylc restart --reference-test --debug --no-detach  \
     -s "CYLC_REMOTE_PLATFORM=${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
 
-purge_suite_remote "${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
+purge_suite_platform "${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

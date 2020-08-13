@@ -88,7 +88,12 @@
 #     mock_smtpd_kill
 #         Kill the mock SMTP server daemon process.
 #     purge_suite SUITE_NAME
-#         Tidy up test directories for SUITE_NAME.
+#         Tidy up local test directories for SUITE_NAME.
+#     purge_suite_platform PLATFORM SUITE_NAME
+#         Tidy up test directories for SUITE_NAME on PLATFORM
+#     purge_suite_remote HOST SUITE_NAME
+#         Tidy up test directories for SUITE_NAME on HOST
+#         # TODO: remove this once all batch system tests are platform-based.
 #     poll COMMAND
 #         Run COMMAND in 1 second intervals for a minute until COMMAND returns
 #         a zero value, or exit 1 (abort test) with a timeout message.
@@ -490,6 +495,9 @@ log_scan () {
 }
 
 purge_suite_remote() {
+    # Tidy up test directories on a given host.
+    # (Use purge_suite_platform in preference to this, where possible).
+    # TODO: remove this once batch system tests are platform based.
     local HOST="$1"  # or "owner@host"
     local NAME="$2"
     local CMD="cd 'cylc-run' && rm -fr '${NAME}'"
@@ -505,6 +513,8 @@ purge_suite_remote() {
 }
 
 purge_suite_platform() {
+    # Tidy up test directories on a given platform.
+    # Currently just picks the first host on the platform.
     local PLATFORM="$1"  # or "owner@host"
     local NAME="$2"
     local CMD="cd 'cylc-run' && rm -fr '${NAME}'"
@@ -525,6 +535,7 @@ purge_suite_platform() {
 }
 
 purge_suite() {
+    # Tidy up local test directories.
     local SUITE_NAME="$1"
     cd "${TEST_DIR:-}"
     if ((FAILURES == 0)); then

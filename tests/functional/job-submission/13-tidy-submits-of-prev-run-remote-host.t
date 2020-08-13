@@ -50,6 +50,6 @@ run_fail "not-exists-rlogd2" ${SSH} "${CYLC_REMOTE_PLATFORM}" test -e "${RLOGD2}
 exists_ok "${LOGD1}"
 exists_fail "${LOGD2}"
 #-------------------------------------------------------------------------------
-purge_suite_remote "${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
+purge_suite_platform "${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

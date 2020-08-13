@@ -44,6 +44,6 @@ run_fail "${TEST_NAME_BASE}-grep-DENIED-suite-log" \
     grep -q "\\[client-connect\\] DENIED .*@${CYLC_TEST_HOST}:cylc-message" \
     "$RUN_DIR/${SUITE_NAME}/log/suite/log"
 
-purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
+purge_suite_platform "${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

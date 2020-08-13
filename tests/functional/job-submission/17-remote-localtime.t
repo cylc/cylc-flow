@@ -21,6 +21,6 @@ export CYLC_TEST_IS_GENERIC=false
 require_remote_platform
 set_test_number 2
 reftest
-purge_suite_remote "${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
+purge_suite_platform "${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

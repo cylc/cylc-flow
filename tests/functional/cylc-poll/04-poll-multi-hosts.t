@@ -39,6 +39,6 @@ cylc jobs-poll --debug -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 1/local-fail-1
 __LOG__
 cmp_ok 'edited-suite-log' 'edited-suite-log-ref'
 
-purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
+purge_suite_platform "${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit
