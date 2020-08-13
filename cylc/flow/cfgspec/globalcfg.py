@@ -61,8 +61,8 @@ with Conf('global.cylc', desc='''
 
     .. note::
 
-       In earlier versions of Cylc, ``global.cylc`` was named ``global.rc``;
-       that name is no longer supported.
+       Prior to Cylc 8, ``global.cylc`` was named ``global.rc``, but that name
+       is no longer supported.
 ''') as SPEC:
 
     # suite

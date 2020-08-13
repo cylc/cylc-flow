@@ -44,7 +44,7 @@ with Conf(
 
         .. note::
 
-           In earlier versions of Cylc, this was named ``suite.rc``, but that
+           Prior to Cylc 8, this was named ``suite.rc``, but that
            name is now deprecated. The ``cylc run`` command will automatically
            symlink an existing ``suite.rc`` file to ``flow.cylc``.
     '''
