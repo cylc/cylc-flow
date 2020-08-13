@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 # 
@@ -24,7 +24,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --debug --no-detach --reference-test "${SUITE_NAME}"
 
-DB_FILE="$(cylc get-global-config '--print-run-dir')/${SUITE_NAME}/log/db"
+DB_FILE="$RUN_DIR/${SUITE_NAME}/log/db"
 
 NAME='select-task-states.out'
 sqlite3 "${DB_FILE}" \

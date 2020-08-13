@@ -17,7 +17,7 @@
 # Tests for the platform lookup.
 
 import pytest
-from cylc.flow.platform_lookup import forward_lookup, reverse_lookup
+from cylc.flow.platforms import platform_from_name, platform_from_job_info
 from cylc.flow.exceptions import PlatformLookupError
 
 PLATFORMS = {
@@ -25,67 +25,117 @@ PLATFORMS = {
         'batch system': 'background'
     },
     'sugar': {
-        'remote hosts': 'localhost',
+        'hosts': 'localhost',
         'batch system': 'slurm',
     },
     'hpc': {
-        'remote hosts': ['hpc1', 'hpc2'],
+        'hosts': ['hpc1', 'hpc2'],
         'batch system': 'pbs',
     },
     'hpc1-bg': {
-        'remote hosts': 'hpc1',
+        'hosts': 'hpc1',
         'batch system': 'background',
     },
     'hpc2-bg': {
-        'remote hosts': 'hpc2',
+        'hosts': 'hpc2',
+        'batch system': 'background'
+    },
+    'localhost': {
+        'hosts': 'localhost',
         'batch system': 'background'
     }
 }
 
 PLATFORMS_NO_UNIQUE = {
     'sugar': {
-        'login hosts': 'localhost',
+        'hosts': 'localhost',
         'batch system': 'slurm'
     },
     'pepper': {
-        'login hosts': ['hpc1', 'hpc2'],
+        'hosts': ['hpc1', 'hpc2'],
         'batch system': 'slurm'
     },
 
 }
 
 PLATFORMS_WITH_RE = {
-    'hpc.*': {'login hosts': 'hpc1', 'batch system': 'background'},
-    'h.*': {'login hosts': 'hpc3'},
-    r'vld\d{2,3}': None,
-    'nu.*': {'batch system': 'slurm'}
+    'hpc.*': {'hosts': 'hpc1', 'batch system': 'background'},
+    'h.*': {'hosts': 'hpc3'},
+    r'vld\d{2,3}': {},
+    'nu.*': {
+        'batch system': 'slurm',
+        'hosts': ['localhost']
+    },
+    'localhost': {
+        'hosts': 'localhost',
+        'batch system': 'background'
+    }
 }
 
 
 @pytest.mark.parametrize(
     "PLATFORMS, platform, expected",
-    [(PLATFORMS_WITH_RE, 'nutmeg', 'nutmeg'),
-     (PLATFORMS_WITH_RE, 'vld798', 'vld798'),
-     (PLATFORMS_WITH_RE, 'vld56', 'vld56'),
-     (PLATFORMS_NO_UNIQUE, 'sugar', 'sugar'),
-     (PLATFORMS, None, 'localhost'),
-     (PLATFORMS, 'laptop22', 'laptop22'),
-     (PLATFORMS, 'hpc1-bg', 'hpc1-bg'),
-     (PLATFORMS_WITH_RE, 'hpc2', 'hpc2')
-     ]
+    [
+        (PLATFORMS_WITH_RE, "nutmeg", {
+            "batch system": "slurm",
+            "name": "nutmeg",
+            "hosts": ['localhost']
+        }),
+        (PLATFORMS_WITH_RE, "vld798", ["vld798"]),
+        (PLATFORMS_WITH_RE, "vld56", ["vld56"]),
+        (
+            PLATFORMS_NO_UNIQUE,
+            "sugar",
+            {
+                "hosts": "localhost",
+                "batch system": "slurm",
+                "name": "sugar"
+            },
+        ),
+        (
+            PLATFORMS,
+            None,
+            {
+                "hosts": "localhost",
+                "name": "localhost",
+                "batch system": "background"
+            },
+        ),
+        (PLATFORMS, "laptop22", {
+            "batch system": "background",
+            "name": "laptop22",
+            "hosts": ["laptop22"]
+        }),
+        (
+            PLATFORMS,
+            "hpc1-bg",
+            {
+                "hosts": "hpc1",
+                "batch system": "background",
+                "name": "hpc1-bg"
+            },
+        ),
+        (PLATFORMS_WITH_RE, "hpc2", {"hosts": "hpc3", "name": "hpc2"}),
+    ],
 )
 def test_basic(PLATFORMS, platform, expected):
-    assert forward_lookup(PLATFORMS, platform) == expected
+    # n.b. The name field of the platform is set in the Globalconfig object
+    # if the name is 'localhost', so we don't test for it here.
+    platform = platform_from_name(platform_name=platform, platforms=PLATFORMS)
+    if isinstance(expected, dict):
+        assert platform == expected
+    else:
+        assert platform["hosts"] == expected
 
 
 def test_platform_not_there():
     with pytest.raises(PlatformLookupError):
-        forward_lookup(PLATFORMS, 'moooo')
+        platform_from_name('moooo', PLATFORMS)
 
 
 def test_similar_but_not_exact_match():
     with pytest.raises(PlatformLookupError):
-        forward_lookup(PLATFORMS_WITH_RE, 'vld1')
+        platform_from_name('vld1', PLATFORMS_WITH_RE)
 
 
 # Basic tests that we can select sensible platforms
@@ -114,7 +164,7 @@ def test_similar_but_not_exact_match():
             'sugar'
         ),
         # Check that when users asks for hpc1 and pbs they get a platform
-        # with hpc1 in its list of login hosts
+        # with hpc1 in its list of hosts
         (
             {'batch system': 'pbs'},
             {'host': 'hpc1'},
@@ -129,8 +179,8 @@ def test_similar_but_not_exact_match():
         ),
     ]
 )
-def test_reverse_lookup_basic(job, remote, returns):
-    assert reverse_lookup(PLATFORMS, job, remote) == returns
+def test_platform_from_job_info_basic(job, remote, returns):
+    assert platform_from_job_info(PLATFORMS, job, remote) == returns
 
 
 # Cases where the error ought to be raised because no matching platform should
@@ -157,7 +207,7 @@ def test_reverse_lookup_basic(job, remote, returns):
 )
 def test_reverse_PlatformLookupError(job, remote):
     with pytest.raises(PlatformLookupError):
-        reverse_lookup(PLATFORMS, job, remote)
+        platform_from_job_info(PLATFORMS, job, remote)
 
 
 # An example of a global config with two Spice systems available
@@ -181,21 +231,21 @@ def test_reverse_PlatformLookupError(job, remote):
         )
     ]
 )
-def test_reverse_lookup_two_spices(
+def test_platform_from_job_info_two_spices(
     job, remote, returns
 ):
     platforms = {
         'sugar': {
-            'remote hosts': ['sugar', 'localhost'],
+            'hosts': ['sugar', 'localhost'],
             'batch system': 'slurm',
         },
         'pepper': {
             'batch system': 'slurm',
-            'remote hosts': 'pepper'
+            'hosts': 'pepper'
         },
 
     }
-    assert reverse_lookup(platforms, job, remote) == returns
+    assert platform_from_job_info(platforms, job, remote) == returns
 
 
 # An example of two platforms with the same hosts and batch system settings
@@ -221,25 +271,25 @@ def test_reverse_lookup_two_spices(
         ),
     ]
 )
-def test_reverse_lookup_similar_platforms(
+def test_platform_from_job_info_similar_platforms(
     job, remote, returns
 ):
     platforms = {
         'my-platform-with-bash': {
-            'remote hosts': 'desktop01',
+            'hosts': 'desktop01',
             'shell': '/bin/bash',
             'batch system': 'background'
         },
         # An extra platform to check that we only pick up the first match
         'my-platform-with-fish-not-this-one': {
-            'remote hosts': 'desktop01',
+            'hosts': 'desktop01',
             'shell': '/bin/fish',
             'batch system': 'background'
         },
         'my-platform-with-fish': {
-            'remote hosts': 'desktop01',
+            'hosts': 'desktop01',
             'shell': '/bin/fish',
             'batch system': 'background'
         },
     }
-    assert reverse_lookup(platforms, job, remote) == returns
+    assert platform_from_job_info(platforms, job, remote) == returns

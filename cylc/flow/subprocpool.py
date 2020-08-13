@@ -88,7 +88,7 @@ def run_function(func_name, json_args, json_kwargs, src_dir):
     sys.stdout.write(json.dumps(res))
 
 
-class SubProcPool(object):
+class SubProcPool:
     """Manage queueing and pooling of subprocesses.
 
     This is mainly used by the main loop of the suite server program, although

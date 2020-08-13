@@ -45,9 +45,10 @@ from cylc.flow.task_state import (
     TASK_STATUS_RETRYING, TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED,
     TASK_OUTPUT_EXPIRED)
 from cylc.flow.wallclock import get_current_time_string
+from cylc.flow.platforms import platform_from_name
 
 
-class FlowLabelMgr(object):
+class FlowLabelMgr:
     """
     Manage flow labels consisting of a string of one or more letters [a-zA-Z].
 
@@ -129,7 +130,7 @@ class FlowLabelMgr(object):
         return bool(labs1.intersection(labs2))
 
 
-class TaskPool(object):
+class TaskPool:
     """Task pool of a suite."""
 
     ERR_PREFIX_TASKID_MATCH = "No matching tasks found: "
@@ -349,7 +350,7 @@ class TaskPool(object):
             LOG.info("LOADING task proxies")
         # Create a task proxy corresponding to this DB entry.
         (cycle, name, flow_label, is_late, status, satisfied,
-         is_held, submit_num, _, user_at_host, time_submit, time_run, timeout,
+         is_held, submit_num, _, platform_name, time_submit, time_run, timeout,
          outputs_str) = row
         try:
             itask = TaskProxy(
@@ -372,12 +373,8 @@ class TaskPool(object):
                     TASK_STATUS_RUNNING
             ):
                 # update the task proxy with user@host
-                try:
-                    itask.task_owner, itask.task_host = user_at_host.split(
-                        "@", 1)
-                except (AttributeError, ValueError):
-                    itask.task_owner = None
-                    itask.task_host = user_at_host
+                itask.platform = platform_from_name(platform_name)
+
                 if time_submit:
                     itask.set_summary_time('submitted', time_submit)
                 if time_run:
@@ -407,8 +404,9 @@ class TaskPool(object):
                     except AttributeError:
                         pass
 
-            if user_at_host:
-                itask.summary['job_hosts'][int(submit_num)] = user_at_host
+            if platform_name:
+                itask.summary['platforms_used'][
+                    int(submit_num)] = platform_name
             LOG.info("+ %s.%s %s%s" % (
                 name, cycle, status, ' (held)' if is_held else ''))
 

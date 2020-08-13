@@ -15,12 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-import os.path
 from collections import namedtuple
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest import TestCase, main
 from unittest.mock import patch
+import pytest
 
 from cylc.flow import flags
 from cylc.flow.exceptions import SuiteServiceFileError
@@ -28,7 +28,7 @@ from cylc.flow.network import API
 from cylc.flow.network.scan import get_scan_items_from_fs, re_compile_filters
 
 
-class CaptureStderr(object):
+class CaptureStderr:
     """Used to mock sys.stderr"""
     lines = []
 
@@ -102,6 +102,7 @@ class TestScan(TestCase):
         list(get_scan_items_from_fs(owner_pattern=owner_pattern))
         self.assertTrue(len(mocked_sys.stderr.lines) > 0)
 
+    @pytest.mark.skip(reason="TODO Pending rewrite of cylc scan")
     @patch("cylc.flow.network.scan.get_suite_source_dir")
     @patch("cylc.flow.network.scan.get_suite_title")
     @patch("cylc.flow.network.scan.getpwall")
@@ -140,6 +141,7 @@ class TestScan(TestCase):
             # will match blog/five, but will stop once it finds the log dir
             self.assertEqual([('blog/five', 'DIR', 'TITLE')], suites)
 
+    @pytest.mark.skip(reason="TODO Pending rewrite of cylc scan")
     @patch("cylc.flow.network.scan.load_contact_file")
     @patch("cylc.flow.network.scan.ContactFileFields")
     @patch("cylc.flow.network.scan.getpwall")
@@ -186,6 +188,7 @@ class TestScan(TestCase):
             self.assertEqual(
                 [('good', 'localhost', 9999, 1234, str(API))], suites)
 
+    @pytest.mark.skip(reason="TODO Pending rewrite of cylc scan")
     @patch("cylc.flow.network.scan.load_contact_file")
     @patch("cylc.flow.network.scan.ContactFileFields")
     @patch("cylc.flow.network.scan.getpwall")

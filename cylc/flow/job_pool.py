@@ -33,6 +33,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED,
     TASK_STATUS_FAILED)
 from cylc.flow.data_messages_pb2 import PbJob, JDeltas
+from cylc.flow.platforms import platform_from_name, get_host_from_platform
 
 JOB_STATUSES_ALL = [
     TASK_STATUS_READY,
@@ -88,7 +89,7 @@ class JobPool:
             err_script=job_conf['err-script'],
             exit_script=job_conf['exit-script'],
             execution_time_limit=job_conf['execution_time_limit'],
-            host=job_conf['host'],
+            host=job_conf['platform']['name'],
             init_script=job_conf['init-script'],
             owner=job_owner,
             post_script=job_conf['post-script'],
@@ -128,7 +129,7 @@ class JobPool:
         if row_idx == 0:
             LOG.info("LOADING job data")
         (point_string, name, status, submit_num, time_submit, time_run,
-         time_run_exit, batch_sys_name, batch_sys_job_id, user_at_host) = row
+         time_run_exit, batch_sys_name, batch_sys_job_id, platform_name) = row
         if status not in JOB_STATUS_SET:
             return
         t_id = f'{self.workflow_id}{ID_DELIM}{point_string}{ID_DELIM}{name}'
@@ -136,11 +137,10 @@ class JobPool:
         try:
             tdef = self.schd.config.get_taskdef(name)
             j_owner = self.schd.owner
-            if user_at_host:
-                if '@' in user_at_host:
-                    j_owner, j_host = user_at_host.split('@')
-                else:
-                    j_host = user_at_host
+            if platform_name:
+                j_host = get_host_from_platform(
+                    platform_from_name(platform_name)
+                )
             else:
                 j_host = self.schd.host
             j_buf = PbJob(

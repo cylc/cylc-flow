@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 # 
@@ -33,7 +33,7 @@ sed -i "s/, '[^T']*T[^Z']*Z',/, '?',/" "${TEST_NAME_BASE}-run.stderr.grep"
 grep_ok "WARNING - cannot execute database statement:" \
     "${TEST_NAME_BASE}-run.stderr.grep"
 
-DB_FILE="$(cylc get-global-config '--print-run-dir')/${SUITE_NAME}/log/db"
+DB_FILE="$RUN_DIR/${SUITE_NAME}/log/db"
 
 NAME='select-task-states.out'
 sqlite3 "${DB_FILE}" \

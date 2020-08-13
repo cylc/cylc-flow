@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2020 NIWA & British Crown (Met Office) & Contributors.
 #
@@ -31,7 +31,7 @@ cylc run "${SUITE_NAME}"
 cylc suite-state "${SUITE_NAME}" --task=foo --status=failed --point=1 \
     --interval=1 --max-polls=20 || exit 1
 # Check scan --full output.
-SRV_D="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/.service"
+SRV_D="$RUN_DIR/${SUITE_NAME}/.service"
 HOST="$(sed -n 's/^CYLC_SUITE_HOST=//p' "${SRV_D}/contact")"
 PORT="$(sed -n 's/^CYLC_SUITE_PORT=//p' "${SRV_D}/contact")"
 PUBLISH_PORT="$(sed -n 's/^CYLC_SUITE_PUBLISH_PORT=//p' "${SRV_D}/contact")"

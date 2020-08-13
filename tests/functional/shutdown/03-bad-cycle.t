@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -25,7 +25,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 # N.B. No validate test because this suite does not validate.
 TEST_NAME="${TEST_NAME_BASE}-run"
 run_fail "${TEST_NAME}" cylc run "${SUITE_NAME}" --debug --no-detach
-RUND="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
+RUND="$RUN_DIR/${SUITE_NAME}"
 exists_fail "${RUND}/.service/contact"
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"

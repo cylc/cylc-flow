@@ -3,8 +3,6 @@
         R1 = "foo:submit-fail => stopper"
 [runtime]
     [[foo]]
-        [[[job]]]
-            batch system = at
-            batch submit command template = sleep 30
+        platform = unicorn
     [[stopper]]
         script = cylc stop "${CYLC_SUITE_NAME}"

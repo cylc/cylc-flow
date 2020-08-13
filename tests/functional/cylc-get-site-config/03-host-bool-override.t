@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 # 
@@ -21,14 +21,14 @@
 set_test_number 3
 
 create_test_globalrc '' '
-[hosts]
+[platforms]
     [[localhost]]
         use login shell = True
     [[mytesthost]]
         use login shell = False'
 
 run_ok "${TEST_NAME_BASE}" \
-    cylc get-global-config --item='[hosts][mytesthost]use login shell'
+    cylc get-global-config --item='[platforms][mytesthost]use login shell'
 cmp_ok "${TEST_NAME_BASE}.stdout" <<<'False'
 cmp_ok "${TEST_NAME_BASE}.stderr" <'/dev/null'
 exit

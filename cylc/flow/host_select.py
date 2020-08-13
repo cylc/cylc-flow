@@ -3,7 +3,6 @@ import ast
 from collections import namedtuple
 from functools import lru_cache
 from io import BytesIO
-from itertools import dropwhile
 import json
 import random
 from time import sleep
@@ -34,7 +33,10 @@ def select_suite_host(cached=True):
         tuple - See `select_host` for details.
 
     Raises:
-        HostSelectException: See `select_host` for details.
+        HostSelectException:
+            See `select_host` for details.
+        socket.gaierror:
+            See `select_host` for details.
 
     """
     # get the global config, if cached = False a new config instance will
@@ -93,6 +95,14 @@ def select_host(
         blacklist_name (str):
             The reason for blacklisting these hosts
             (used for exceptions).
+
+    Raises:
+        HostSelectException:
+            In the event that no hosts are available / meet the specified
+            criterion.
+        socket.gaierror:
+            This may be raised in the event of unknown host names
+            for some installations or not for others.
 
     Returns:
         tuple - (hostname, fqdn) the chosen host

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 # 
@@ -22,6 +22,14 @@ fi
 skip_darwin 'atrun hard to configure on Mac OS'
 #-------------------------------------------------------------------------------
 set_test_number 7
+#-------------------------------------------------------------------------------
+create_test_globalrc '
+[platforms]
+[[test platform]]
+hosts = localhost
+batch system = at
+batch submit command template = at oh-no
+'
 #-------------------------------------------------------------------------------
 install_suite "${TEST_NAME_BASE}" 'submit-failed'
 cp "$TEST_SOURCE_DIR/lib/suite-runtime-restart.rc" "$TEST_DIR/${SUITE_NAME}/"

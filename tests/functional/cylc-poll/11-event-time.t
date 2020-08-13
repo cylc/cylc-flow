@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -25,7 +25,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}" \
     cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
 
-RUND="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
+RUND="$RUN_DIR/${SUITE_NAME}"
 sed -n 's/CYLC_JOB_EXIT_TIME=//p' "${RUND}/log/job/1/w1/NN/job.status" >'st-time.txt'
 sqlite3 "${RUND}/log/db" '
     SELECT time_run_exit FROM task_jobs

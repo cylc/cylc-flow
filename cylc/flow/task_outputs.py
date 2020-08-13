@@ -37,7 +37,7 @@ _MESSAGE = 1
 _IS_COMPLETED = 2
 
 
-class TaskOutputs(object):
+class TaskOutputs:
     """Task output message manager.
 
     Manage standard task outputs and custom outputs, e.g.:

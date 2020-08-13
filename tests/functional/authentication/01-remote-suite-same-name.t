@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -20,7 +20,7 @@
 # be very confused if it is running under its ~/cylc-run/SUITE as well.)
 export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
-set_test_remote_host
+require_remote_platform
 set_test_number 3
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
@@ -32,13 +32,14 @@ ssh ${SSH_OPTS} "${CYLC_TEST_HOST}" mkdir -p "cylc-run/${SUITE_NAME}"
 # shellcheck disable=SC2086
 scp ${SSH_OPTS} -pqr "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/"* \
     "${CYLC_TEST_HOST}:cylc-run/${SUITE_NAME}"
+# shellcheck disable=SC2086
 run_ok "${TEST_NAME_BASE}-register" \
-    cylc register --host="${CYLC_TEST_HOST}" \
-    "${SUITE_NAME}" "cylc-run/${SUITE_NAME}"
+    ssh ${SSH_OPTS} "${CYLC_TEST_HOST}" \
+    cylc register "${SUITE_NAME}" "cylc-run/${SUITE_NAME}"
 
 suite_run_ok "${TEST_NAME_BASE}" \
     cylc run --debug --no-detach --reference-test "${SUITE_NAME}"
 
-purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
+purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

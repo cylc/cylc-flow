@@ -18,7 +18,6 @@
 import asyncio
 import getpass
 import json
-import os
 from threading import Thread
 from time import sleep
 
@@ -39,7 +38,6 @@ from cylc.flow.suite_files import (
     KeyOwner,
     KeyInfo,
     load_contact_file,
-    SuiteFiles,
     get_suite_srv_dir
 )
 
@@ -61,7 +59,7 @@ def decode_(message):
     return msg
 
 
-def get_location(suite: str, owner: str, host: str):
+def get_location(suite: str):
     """Extract host and port from a suite's contact file.
 
     NB: if it fails to load the suite contact file, it will exit.
@@ -76,14 +74,12 @@ def get_location(suite: str, owner: str, host: str):
         ClientError: if the suite is not running.
     """
     try:
-        contact = load_contact_file(suite, owner, host)
+        contact = load_contact_file(suite)
     except SuiteServiceFileError:
         raise SuiteStopped(suite)
 
-    if not host:
-        host = contact[ContactFileFields.HOST]
+    host = contact[ContactFileFields.HOST]
     host = get_fqdn_by_host(host)
-
     port = int(contact[ContactFileFields.PORT])
     pub_port = int(contact[ContactFileFields.PUBLISH_PORT])
     return host, port, pub_port

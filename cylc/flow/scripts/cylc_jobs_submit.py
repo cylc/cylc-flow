@@ -21,7 +21,6 @@
 
 """
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.remote import remrun
 from cylc.flow.terminal import cli_function
 
 
@@ -65,8 +64,7 @@ def main_cli(parser, opts, job_log_root, *job_log_dirs):
 
 
 def main():
-    if not remrun():
-        main_cli()
+    main_cli()
 
 
 if __name__ == "__main__":

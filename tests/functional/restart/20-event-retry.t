@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 # 
@@ -20,7 +20,7 @@
 set_test_number 7
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-SUITED="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
+SUITED="$RUN_DIR/${SUITE_NAME}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" --debug --no-detach
 sqlite3 "${SUITED}/log/db" \

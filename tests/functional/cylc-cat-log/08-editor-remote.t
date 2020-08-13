@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -18,12 +18,12 @@
 # Test "cylc cat-log" open local logs in editor.
 
 . "$(dirname "$0")/test_header"
-set_test_remote
+require_remote_platform
 
 . "${TEST_SOURCE_DIR}/editor/bin/run_tests.sh"
 export PATH="${TEST_SOURCE_DIR}/editor/bin/:${PATH}"
 
 install_suite "${TEST_NAME_BASE}" "editor"
-run_tests "${CYLC_TEST_HOST}" "${CYLC_TEST_OWNER}"
+run_tests "${CYLC_TEST_PLATFORM}"
 purge_suite "${SUITE_NAME}"
-purge_suite_remote "${CYLC_TEST_OWNER}@${CYLC_TEST_HOST}" "${SUITE_NAME}"
+purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"

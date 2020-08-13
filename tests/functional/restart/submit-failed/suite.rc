@@ -21,12 +21,10 @@
         script = """
             exit 1  # Should not submit, so this shouldn't run!
         """
+        platform = test platform
         [[[meta]]]
             description = "Submit-failed task (runs before restart)"
-        [[[job]]]
-            batch system = at
-            batch submit command template = at oh-no
-     [[remove]]
+    [[remove]]
           script = """
  cylc remove ${CYLC_SUITE_NAME} submit_failed_task.${CYLC_TASK_CYCLE_POINT}
                    """

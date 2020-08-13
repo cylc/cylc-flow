@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 # 
@@ -26,7 +26,7 @@ TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 export PATH_TO_CYLC_BIN="/path/to/cylc/bin"
 create_test_globalrc '' "
-[hosts]
+[platforms]
     [[localhost]]
         cylc executable = $PATH_TO_CYLC_BIN/cylc"
 #-------------------------------------------------------------------------------

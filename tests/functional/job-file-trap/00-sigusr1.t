@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -19,6 +19,8 @@
 # Obviously, job vacation does not happen with background job, and the job
 # will no longer be poll-able after the kill.
 . "$(dirname "$0")/test_header"
+
+skip_all "TODO decide whether to re-instate this"
 
 run_tests() {
     set_test_number 5

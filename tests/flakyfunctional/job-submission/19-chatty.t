@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -25,7 +25,13 @@ skip_darwin 'atrun hard to configure on Mac OS'
 set_test_number 14
 
 create_test_globalrc "
-process pool timeout = PT10S" ""
+process pool timeout = PT10S" "
+[platforms]
+[[griffin]]
+hosts = localhost
+batch system = at
+batch submit command template = talkingnonsense %(job)s
+"
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 

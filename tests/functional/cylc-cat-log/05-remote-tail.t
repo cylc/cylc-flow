@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -18,7 +18,7 @@
 # Test "cylc cat-log" with a custom remote tail command.
 export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
-set_test_remote
+require_remote_platform
 #-------------------------------------------------------------------------------
 set_test_number 4
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
@@ -26,18 +26,18 @@ set -eu
 SSH='ssh -oBatchMode=yes -oConnectTimeout=5'
 SCP='scp -oBatchMode=yes -oConnectTimeout=5'
 $SSH -n "${CYLC_TEST_HOST}" "mkdir -p cylc-run/.bin"
+# shellcheck disable=SC2016
+create_test_globalrc "" "
+[platforms]
+   [[$CYLC_TEST_PLATFORM]]
+        tail command template = \$HOME/cylc-run/.bin/my-tailer.sh %(filename)s"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-# shellcheck disable=SC2016
-REMOTE_HOME="$($SSH -n "${CYLC_TEST_HOST}" 'echo $PWD')"
-create_test_globalrc "" "
-[hosts]
-   [[$CYLC_TEST_HOST]]
-        tail command template = $REMOTE_HOME/cylc-run/.bin/my-tailer.sh %(filename)s"
 $SCP "${PWD}/bin/my-tailer.sh" \
-    "${CYLC_TEST_HOST}:cylc-run/.bin/my-tailer.sh"
+    "${CYLC_TEST_HOST}:cylc-run/.bin/my-tailer.sh
+"
 #-------------------------------------------------------------------------------
 # Run detached.
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
@@ -47,14 +47,14 @@ poll_grep_suite_log -F '[foo.1] status=submitted: (received)started'
 # Send interrupt signal to tail command after 15 seconds.
 TEST_NAME="${TEST_NAME_BASE}-cat-log"
 timeout -s 'INT' 15 \
-    cylc cat-log "${SUITE_NAME}" -f 'o' -m 't' 'foo.1' \
+    cylc cat-log "${SUITE_NAME}" -f 'o' -m 't' 'foo.1' --force-remote \
     >"${TEST_NAME}.out" 2>"${TEST_NAME}.err" || true
 grep_ok "HELLO from foo 1" "${TEST_NAME}.out"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-stop
 run_ok "${TEST_NAME}" cylc stop --kill --max-polls=20 --interval=1 "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
+purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 $SSH -n "${CYLC_TEST_HOST}" "rm -rf cylc-run/.bin/"
 purge_suite "${SUITE_NAME}"
 exit

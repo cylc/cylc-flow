@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -29,7 +29,7 @@ if ! command -v 'sqlite3' >'/dev/null'; then
     exit 0
 fi
 
-DB_FILE="$(cylc get-global-config '--print-run-dir')/${SUITE_NAME}/log/db"
+DB_FILE="${RUN_DIR}/${SUITE_NAME}/log/db"
 
 NAME='schema.out'
 ORIG="${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}"
@@ -54,7 +54,7 @@ cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}" "${NAME}"
 NAME='select-task-jobs.out'
 sqlite3 "${DB_FILE}" \
     'SELECT cycle, name, submit_num, try_num, submit_status, run_status,
-            user_at_host, batch_sys_name
+            platform_name, batch_sys_name
      FROM task_jobs ORDER BY name' \
     >"${NAME}"
 LOCALHOST="$(get_fqdn_by_host)"
@@ -75,7 +75,7 @@ sqlite3 "${DB_FILE}" \
 for DATE_TIME_STR in $(sed 's/[|]/ /g' "${NAME}"); do
     # Parse each string with "date --date=..." without the T
     run_ok "${NAME}-${DATE_TIME_STR}" \
-        date --date="$(sed 's/T/ /' <<<"${DATE_TIME_STR}")"
+        date --date="${DATE_TIME_STR/T/ }"
 done
 
 # Shut down with empty task pool (ran to completion)

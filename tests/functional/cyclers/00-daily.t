@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 # 
@@ -40,11 +40,10 @@ suite_run_ok "${TEST_NAME}" cylc run --reference-test --debug --no-detach "${SUI
 #-------------------------------------------------------------------------------
 if [[ -f "$TEST_SOURCE_DIR/${TEST_NAME_BASE}-find.out" ]]; then
     TEST_NAME="${TEST_NAME_BASE}-find"
-    SUITE_RUN_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
-    SUITE_WRK_DIR="$(cylc get-global-config -i '[hosts][localhost]work directory')/${SUITE_NAME}"
+    SUITE_RUN_DIR="$RUN_DIR/${SUITE_NAME}"
     {
         (cd "${SUITE_RUN_DIR}" && find 'log/job' -type f)
-        (cd "${SUITE_WRK_DIR}" && find 'work' -type f)
+        (cd "${SUITE_RUN_DIR}" && find 'work' -type f)
     } | sort -V >"${TEST_NAME}"
     cmp_ok "${TEST_NAME}" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}-find.out"
 fi

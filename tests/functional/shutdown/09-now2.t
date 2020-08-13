@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -23,7 +23,7 @@ set_test_number 8
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run --no-detach "${SUITE_NAME}"
-LOGD="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log"
+LOGD="$RUN_DIR/${SUITE_NAME}/log"
 grep_ok 'INFO - Suite shutting down - REQUEST(NOW-NOW)' "${LOGD}/suite/log"
 grep_ok 'WARNING - t1.1: orphaned task (running)' "${LOGD}/suite/log"
 JLOGD="${LOGD}/job/1/t1/01"

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 # 
@@ -25,7 +25,7 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
 if command -v 'sqlite3' >'/dev/null'; then
     sqlite3 \
-        "$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/db" \
+        "$RUN_DIR/${SUITE_NAME}/log/db" \
         'SELECT try_num, submit_num FROM task_jobs' >'select.out'
     cmp_ok 'select.out' <<'__OUT__'
 1|1

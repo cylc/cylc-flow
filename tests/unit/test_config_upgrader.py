@@ -102,27 +102,27 @@ FUNC_SUITERC = """
         # => job submission failure (no matching platform)
 """
 
-# A global rc file (job platforms section) defining platforms which look a bit
+# A global rc file (platforms section) defining platforms which look a bit
 # like those on a major Cylc user site.
 GLOBALRC = """
-[job platforms]
+[platforms]
     [[desktop[0-9]{2}|laptop[0-9]{2}]]
         # hosts = platform name (default)
         # Note: "desktop01" and "desktop02" are both valid and distinct
         # platforms
     [[sugar]]
-        remote hosts = localhost
+        hosts = localhost
         batch system = slurm
     [[hpc]]
-        remote hosts = hpcl1, hpcl2
+        hosts = hpcl1, hpcl2
         retrieve job logs = True
         batch system = pbs
     [[hpcl1-bg]]
-        remote hosts = hpcl1
+        hosts = hpcl1
         retrieve job logs = True
         batch system = background
     [[hpcl2-bg]]
-        remote hosts = hpcl2
+        hosts = hpcl2
         retrieve job logs = True
         batch system = background
 """

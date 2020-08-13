@@ -30,10 +30,11 @@ import tarfile
 from time import time
 
 from cylc.flow import LOG
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import TaskRemoteMgmtError
 import cylc.flow.flags
-from cylc.flow.hostuserutil import is_remote, is_remote_host, is_remote_user
+from cylc.flow.hostuserutil import (
+    is_remote_host, is_remote_platform
+)
 from cylc.flow.pathutil import get_remote_suite_run_dir
 from cylc.flow.subprocctx import SubProcContext
 from cylc.flow.suite_files import (
@@ -45,13 +46,15 @@ from cylc.flow.suite_files import (
     get_contact_file)
 from cylc.flow.task_remote_cmd import (
     FILE_BASE_UUID, REMOTE_INIT_DONE, REMOTE_INIT_NOT_REQUIRED)
+from cylc.flow.platforms import platform_from_name, get_host_from_platform
+from cylc.flow.remote import construct_platform_ssh_cmd
 
 
 REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
 REMOTE_INIT_FAILED = 'REMOTE INIT FAILED'
 
 
-class TaskRemoteMgr(object):
+class TaskRemoteMgr:
     """Manage task job remote initialisation, tidy, selection."""
 
     def __init__(self, suite, proc_pool):
@@ -126,15 +129,19 @@ class TaskRemoteMgr(object):
             if value is not None:
                 del self.remote_host_str_map[key]
 
-    def remote_init(self, host, owner, curve_auth, client_pub_key_dir):
+    def remote_init(self, platform_name, curve_auth, client_pub_key_dir):
         """Initialise a remote [owner@]host if necessary.
 
-        Create UUID file on suite host ".service/uuid" for remotes to identify
+        Create UUID file on a platform ".service/uuid" for remotes to identify
         shared file system with suite host.
 
         Call "cylc remote-init" to install suite items to remote:
             ".service/contact": For TCP task communication
             "python/": if source exists
+
+        Args:
+            platform_name (str):
+                The name of the platform to be initialized.
 
         Return:
             REMOTE_INIT_NOT_REQUIRED:
@@ -148,26 +155,33 @@ class TaskRemoteMgr(object):
                 If waiting for remote init command to complete
 
         """
-        if self.single_task_mode or not is_remote(host, owner):
+        # get the platform from the platform_name
+        platform = platform_from_name(platform_name)
+
+        # If task is running locally we can skip the rest of this function
+        if self.single_task_mode or not is_remote_platform(platform):
             return REMOTE_INIT_NOT_REQUIRED
+
+        # See if a previous failed attempt to initialize this platform has
+        # occured.
         try:
-            status = self.remote_init_map[(host, owner)]
+            status = self.remote_init_map[platform['name']]
         except KeyError:
             pass  # Not yet initialised
         else:
             if status == REMOTE_INIT_FAILED:
-                del self.remote_init_map[(host, owner)]  # reset to allow retry
+                del self.remote_init_map[platform['name']]
             return status
 
         # Determine what items to install
-        comm_meth = glbl_cfg().get_host_item(
-            'task communication method', host, owner)
-        owner_at_host = 'localhost'
-        if host:
-            owner_at_host = host
-        if owner:
-            owner_at_host = owner + '@' + owner_at_host
-        LOG.debug('comm_meth[%s]=%s' % (owner_at_host, comm_meth))
+        comm_meth = platform['communication method']
+
+        # Get a host and the owner from platform
+        host = get_host_from_platform(platform)
+        owner = platform['owner']
+
+        # Get a list of files and folders to install;
+        # if nothing needs install say so to remote_init_map and return.
         items = self._remote_init_items(comm_meth)
 
         # Create a TAR archive with the service files,
@@ -185,29 +199,29 @@ class TaskRemoteMgr(object):
         )
         if not os.path.exists(uuid_fname):
             open(uuid_fname, 'wb').write(str(self.uuid_str).encode())
-        # Build the command
-        cmd = ['cylc', 'remote-init']
-        if is_remote_host(host):
-            cmd.append('--host=%s' % host)
-        if is_remote_user(owner):
-            cmd.append('--user=%s' % owner)
+
+        # Build the remote-init command to be run over ssh
+        cmd = ['remote-init']
         if cylc.flow.flags.debug:
             cmd.append('--debug')
         if comm_meth in ['ssh']:
             cmd.append('--indirect-comm=%s' % comm_meth)
         cmd.append(str(self.uuid_str))
-        cmd.append(get_remote_suite_run_dir(host, owner, self.suite))
+        cmd.append(get_remote_suite_run_dir(platform, self.suite))
+        # Create the ssh command
+        cmd = construct_platform_ssh_cmd(cmd, platform)
+
         self.proc_pool.put_command(
             SubProcContext(
                 'remote-init',
                 cmd,
                 stdin_files=[tmphandle]),
             self._remote_init_callback,
-            [host, owner, tmphandle, self.suite,
+            [platform, tmphandle,
              curve_auth, client_pub_key_dir])
         # None status: Waiting for command to finish
-        self.remote_init_map[(host, owner)] = None
-        return self.remote_init_map[(host, owner)]
+        self.remote_init_map[platform['name']] = None
+        return self.remote_init_map[platform['name']]
 
     def remote_tidy(self):
         """Remove suite contact files from initialised remotes.
@@ -228,17 +242,20 @@ class TaskRemoteMgr(object):
             pass
         # Issue all SSH commands in parallel
         procs = {}
-        for (host, owner), init_with_contact in self.remote_init_map.items():
+        for platform, init_with_contact in self.remote_init_map.items():
+            platform = platform_from_name(platform)
+            host = get_host_from_platform(platform)
+            owner = platform['owner']
             if init_with_contact != REMOTE_INIT_DONE:
                 continue
-            cmd = ['timeout', '10', 'cylc', 'remote-tidy']
-            if is_remote_host(host):
-                cmd.append('--host=%s' % host)
-            if is_remote_user(owner):
-                cmd.append('--user=%s' % owner)
+            cmd = ['remote-tidy']
             if cylc.flow.flags.debug:
                 cmd.append('--debug')
-            cmd.append(get_remote_suite_run_dir(host, owner, self.suite))
+            cmd.append(get_remote_suite_run_dir(platform, self.suite))
+            if is_remote_platform(platform):
+                cmd = construct_platform_ssh_cmd(cmd, platform, timeout='10s')
+            else:
+                cmd = ['cylc'] + cmd
             procs[(host, owner)] = (
                 cmd,
                 Popen(cmd, stdout=PIPE, stderr=PIPE, stdin=DEVNULL))
@@ -283,8 +300,9 @@ class TaskRemoteMgr(object):
                 proc_ctx.ret_code, proc_ctx.out, proc_ctx.err)
 
     def _remote_init_callback(
-            self, proc_ctx, host, owner, tmphandle,
-            suite, curve_auth, client_pub_key_dir):
+        self, proc_ctx, platform, tmphandle,
+        curve_auth, client_pub_key_dir
+    ):
         """Callback when "cylc remote-init" exits"""
         self.ready = True
         try:
@@ -296,11 +314,13 @@ class TaskRemoteMgr(object):
                 regex_result = re.search(
                     'KEYSTART((.|\n|\r)*)KEYEND', proc_ctx.out)
                 key = regex_result.group(1)
-                suite_srv_dir = get_suite_srv_dir(suite)
+                suite_srv_dir = get_suite_srv_dir(self.suite)
                 public_key = KeyInfo(
                     KeyType.PUBLIC,
                     KeyOwner.CLIENT,
-                    suite_srv_dir=suite_srv_dir, platform=host)
+                    suite_srv_dir=suite_srv_dir,
+                    platform=platform['name']
+                )
                 old_umask = os.umask(0o177)
                 with open(
                         public_key.full_key_path,
@@ -316,15 +336,15 @@ class TaskRemoteMgr(object):
                 if status in proc_ctx.out:
                     # Good status
                     LOG.debug(proc_ctx)
-                    self.remote_init_map[(host, owner)] = status
+                    self.remote_init_map[platform['name']] = status
                     return
         # Bad status
         LOG.error(TaskRemoteMgmtError(
             TaskRemoteMgmtError.MSG_INIT,
-            (host, owner), ' '.join(quote(item) for item in proc_ctx.cmd),
+            platform['name'], ' '.join(quote(item) for item in proc_ctx.cmd),
             proc_ctx.ret_code, proc_ctx.out, proc_ctx.err))
         LOG.error(proc_ctx)
-        self.remote_init_map[(host, owner)] = REMOTE_INIT_FAILED
+        self.remote_init_map[platform['name']] = REMOTE_INIT_FAILED
 
     def _remote_init_items(self, comm_meth):
         """Return list of items to install based on communication method.

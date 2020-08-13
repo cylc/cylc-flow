@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -17,7 +17,6 @@
 #-------------------------------------------------------------------------------
 # Test job submission, poll and kill with a garbage command.
 . "$(dirname "$0")/test_header"
-
 set_test_number 2
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 if [[ -n "${PYTHONPATH:-}" ]]; then
@@ -25,6 +24,11 @@ if [[ -n "${PYTHONPATH:-}" ]]; then
 else
     export PYTHONPATH="${PWD}/lib"
 fi
+
+create_test_globalrc '
+[platforms]
+    [[bad]]
+'
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \

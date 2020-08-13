@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -36,12 +36,12 @@ export CYLC_TEST_HOST CYLC_TEST_DIRECTIVES
 set_test_number 2
 
 create_test_globalrc "" "
-[hosts]
+[platforms]
     [[${CYLC_TEST_HOST}]]
         [[[batch systems]]]
             [[[[pbs]]]]
                 err viewer = ${ERR_VIEWER}
                 out viewer = ${OUT_VIEWER}"
 reftest
-purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
+purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 exit

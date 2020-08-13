@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -25,7 +25,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 run_ok "${TEST_NAME_BASE}" cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
 
 # Ensure that fixable.20100101T0000Z is only triggered once.
-JOB_LOG_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/job"
+JOB_LOG_DIR="$RUN_DIR/${SUITE_NAME}/log/job"
 run_ok "${TEST_NAME_BASE}-fixable.20100101T0000Z-nn" \
     test "$(readlink "${JOB_LOG_DIR}/20100101T0000Z/fixable/NN")" = '01'
 

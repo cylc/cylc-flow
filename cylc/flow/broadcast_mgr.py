@@ -28,7 +28,7 @@ from cylc.flow.exceptions import PointParsingError
 from cylc.flow.task_id import TaskID
 
 
-class BroadcastMgr(object):
+class BroadcastMgr:
     """Manage broadcast.
 
     Broadcast settings are stored in the form:

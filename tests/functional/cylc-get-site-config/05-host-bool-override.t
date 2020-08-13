@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 # 
@@ -22,7 +22,7 @@ set_test_number 2
 
 mkdir etc/
 cat etc/flow.rc <<'__hi__'
-[job platforms]
+[platforms]
     [[desktop\d\d|laptop\d\d]]
     [[sugar]]
         login hosts = localhost

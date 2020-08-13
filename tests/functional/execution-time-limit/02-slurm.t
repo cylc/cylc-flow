@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -33,6 +33,14 @@ fi
 export CYLC_TEST_BATCH_TASK_HOST CYLC_TEST_BATCH_SITE_DIRECTIVES
 set_test_number 3
 
+create_test_globalrc "" "
+    [platforms]
+        [[test-slurm]]
+            batch system = $CYLC_TEST_BATCH_SYS
+            hosts = $CYLC_TEST_BATCH_TASK_HOST
+"
+
+
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" \
@@ -42,15 +50,15 @@ run_ok "${TEST_NAME_BASE}-validate" \
     -s "CYLC_TEST_BATCH_SITE_DIRECTIVES=${CYLC_TEST_BATCH_SITE_DIRECTIVES}" \
     "${SUITE_NAME}"
 
-suite_run_ok "${TEST_NAME_BASE}-run" \
+suite_run_fail "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug --no-detach \
     -s "CYLC_TEST_BATCH_SYS=${CYLC_TEST_BATCH_SYS}" \
     -s "CYLC_TEST_BATCH_TASK_HOST=${CYLC_TEST_BATCH_TASK_HOST}" \
     -s "CYLC_TEST_BATCH_SITE_DIRECTIVES=${CYLC_TEST_BATCH_SITE_DIRECTIVES}" \
     "${SUITE_NAME}"
 
-LOGD="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/job/1/foo"
-grep_ok '#SBATCH --time=1:10' "${LOGD}/01/job"
+LOGD="$RUN_DIR/${SUITE_NAME}/log/job/1/foo"
+grep_ok '#SBATCH --time=0:05' "${LOGD}/01/job"
 
 if [[ "${CYLC_TEST_BATCH_TASK_HOST}" != 'localhost' ]]; then
     purge_suite_remote "${CYLC_TEST_BATCH_TASK_HOST}" "${SUITE_NAME}"

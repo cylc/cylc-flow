@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 # 
@@ -18,15 +18,16 @@
 # Test remote job logs retrieval OK with only "job.out" on a succeeded task.
 export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
-set_test_remote_host
+require_remote_platform
 set_test_number 5
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate -s "HOST=${CYLC_TEST_HOST}" "${SUITE_NAME}"
+    cylc validate -s "PLATFORM=${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 suite_run_fail "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug --no-detach -s "HOST=${CYLC_TEST_HOST}" "${SUITE_NAME}"
+    cylc run --reference-test --debug --no-detach \
+    -s "PLATFORM=${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 
 sed "/'job-logs-retrieve'/!d" \
     "${SUITE_RUN_DIR}/log/job/1/t1/01/job-activity.log" \
@@ -40,6 +41,6 @@ __LOG__
 exists_ok "${SUITE_RUN_DIR}/log/job/1/t1/01/job.out"
 exists_fail "${SUITE_RUN_DIR}/log/job/1/t1/01/job.err"
 
-purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
+purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

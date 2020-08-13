@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -eu
 while [[ ! -e "$1" ]]; do
     sleep 1

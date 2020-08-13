@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 # 
@@ -19,21 +19,22 @@
 # cylc on remote job host.
 export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
-set_test_remote_host
+require_remote_platform
 set_test_number 3
 
 create_test_globalrc "" "
-[hosts]
-    [[${CYLC_TEST_HOST}]]
+[platforms]
+    [[${CYLC_TEST_PLATFORM}]]
         retrieve job logs = True
-        retrieve job logs command = my-rsync"
+        retrieve job logs command = my-rsync
+"
 OPT_SET='-s GLOBALCFG=True'
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 mkdir -p "${TEST_DIR}/${SUITE_NAME}/bin"
 cat >"${TEST_DIR}/${SUITE_NAME}/bin/my-rsync" <<'__BASH__'
-#!/bin/bash
+#!/usr/bin/env bash
 set -eu
 echo "$@" >>"${CYLC_SUITE_LOG_DIR}/my-rsync.log"
 exec rsync -a "$@"
@@ -42,13 +43,13 @@ chmod +x "${TEST_DIR}/${SUITE_NAME}/bin/my-rsync"
 
 # shellcheck disable=SC2086
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate ${OPT_SET} -s "HOST=${CYLC_TEST_HOST}" "${SUITE_NAME}"
+    cylc validate ${OPT_SET} -s "PLATFORM=${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 # shellcheck disable=SC2086
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug --no-detach ${OPT_SET} \
-       -s "HOST=${CYLC_TEST_HOST}" "${SUITE_NAME}"
+       -s "PLATFORM=${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 
-SUITE_LOG_D="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log"
+SUITE_LOG_D="$RUN_DIR/${SUITE_NAME}/log"
 sed 's/^.* -v //' "${SUITE_LOG_D}/suite/my-rsync.log" >'my-rsync.log.edited'
 
 OPT_HEAD='--include=/1 --include=/1/t1'
@@ -60,6 +61,6 @@ ${OPT_HEAD} --include=/1/t1/02 --include=/1/t1/02/** ${OPT_TAIL} ${ARGS}
 ${OPT_HEAD} --include=/1/t1/03 --include=/1/t1/03/** ${OPT_TAIL} ${ARGS}
 __LOG__
 
-purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
+purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

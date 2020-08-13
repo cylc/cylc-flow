@@ -21,6 +21,7 @@ from time import time
 from metomi.isodatetime.timezone import get_local_time_zone
 
 import cylc.flow.cycling.iso8601
+from cylc.flow.platforms import platform_from_name
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_state import (
     TaskState, TASK_STATUS_WAITING, TASK_STATUS_RETRYING,
@@ -28,7 +29,7 @@ from cylc.flow.task_state import (
 from cylc.flow.wallclock import get_unix_time_from_time_string as str2time
 
 
-class TaskProxy(object):
+class TaskProxy:
     """Represent an instance of a cycling task in a running suite.
 
     Attributes:
@@ -80,8 +81,8 @@ class TaskProxy(object):
                 Latest job exit time.
             finished_time_string (str):
                 Latest job exit time as string.
-            job_hosts (dict):
-                Jobs' owner@host by submit number.
+            platforms_used (dict):
+                Jobs' platform by submit number.
             label (str):
                 The .point attribute as string.
             latest_message (str):
@@ -106,10 +107,8 @@ class TaskProxy(object):
                 Same as the .tdef.rtconfig['meta']['title'] attribute.
         .state (cylc.flow.task_state.TaskState):
             Object representing the state of this task.
-        .task_host (str)
-            Name of host where latest job is submitted.
-        .task_owner (str)
-            Name of user (at task_host) where latest job is submitted.
+        .platform (dict)
+            Dict containing info for platform where latest job is submitted.
         .tdef (cylc.flow.taskdef.TaskDef):
             The definition object of this task.
         .timeout (float):
@@ -165,7 +164,7 @@ class TaskProxy(object):
         'tdef',
         'state',
         'summary',
-        'task_host',
+        'platform',
         'task_owner',
         'timeout',
         'try_timers',
@@ -202,7 +201,7 @@ class TaskProxy(object):
             'finished_time': None,
             'finished_time_string': None,
             'logfiles': [],
-            'job_hosts': {},
+            'platforms_used': {},
             'execution_time_limit': None,
             'batch_sys_name': None,
             'submit_method_id': None,
@@ -211,7 +210,7 @@ class TaskProxy(object):
 
         self.local_job_file_path = None
 
-        self.task_host = 'localhost'
+        self.platform = platform_from_name('localhost')
         self.task_owner = None
 
         self.job_vacated = False
@@ -283,7 +282,7 @@ class TaskProxy(object):
         reload_successor.summary = self.summary
         reload_successor.local_job_file_path = self.local_job_file_path
         reload_successor.try_timers = self.try_timers
-        reload_successor.task_host = self.task_host
+        reload_successor.platform = self.platform
         reload_successor.task_owner = self.task_owner
         reload_successor.job_vacated = self.job_vacated
         reload_successor.poll_timer = self.poll_timer

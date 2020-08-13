@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 # 
@@ -18,5 +18,9 @@
 # Test submit-fail triggering
 . "$(dirname "$0")/test_header"
 set_test_number 2
+create_test_globalrc '' '
+[platforms]
+    [[idontexist]]
+'
 reftest
 exit

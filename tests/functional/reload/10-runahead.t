@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 # 
@@ -29,7 +29,7 @@ TEST_NAME="${TEST_NAME_BASE}-run"
 run_fail "${TEST_NAME}" cylc run --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-check-fail
-DB_FILE="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/db"
+DB_FILE="$RUN_DIR/${SUITE_NAME}/log/db"
 QUERY='SELECT COUNT(*) FROM task_states WHERE status == "failed"'
 run_ok "${TEST_NAME}" test "$(sqlite3 "${DB_FILE}" "${QUERY}")" -eq 4
 #-------------------------------------------------------------------------------

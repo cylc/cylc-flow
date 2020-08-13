@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -31,7 +31,7 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
     [[a,b,c]]
         script = true
 __SUITE_RC__
-RUND="$(cylc get-global-config --print-run-dir)"
+RUND="$RUN_DIR"
 ln -sf "${SUITE_NAME}" "${RUND}/work"
 
 run_ok "${TEST_NAME_BASE}-print" cylc print

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -eu
 ME="$(basename "$0")"
 echo "$@" >>"${CYLC_SUITE_LOG_DIR}/${ME}.out"

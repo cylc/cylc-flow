@@ -70,6 +70,7 @@ from cylc.flow.taskdef import TaskDef
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.task_trigger import TaskTrigger, Dependency
+from cylc.flow.unicode_rules import XtriggerNameValidator
 from cylc.flow.wallclock import (
     get_current_time_string, set_utc_mode, get_utc_mode)
 from cylc.flow.xtrigger_mgr import XtriggerManager
@@ -97,14 +98,14 @@ def check_varnames(env):
 # TODO: separate config for run and non-run purposes?
 
 
-class SuiteConfig(object):
+class SuiteConfig:
     """Class for suite configuration items and derived quantities."""
 
     Q_DEFAULT = 'default'
     TASK_EVENT_TMPL_KEYS = (
         'event', 'suite', 'suite_uuid', 'point', 'name', 'submit_num', 'id',
         'message', 'batch_sys_name', 'batch_sys_job_id', 'submit_time',
-        'start_time', 'finish_time', 'user@host', 'try_num')
+        'start_time', 'finish_time', 'platform_name', 'try_num')
 
     def __init__(
         self,
@@ -189,7 +190,13 @@ class SuiteConfig(object):
         # parse, upgrade, validate the suite, but don't expand with default
         # items
         self.mem_log("config.py: before RawSuiteConfig init")
-        self.pcfg = RawSuiteConfig(fpath, output_fname, template_vars)
+        if output_fname:
+            output_fname = os.path.expandvars(output_fname)
+        self.pcfg = RawSuiteConfig(
+            fpath,
+            output_fname,
+            template_vars
+        )
         self.mem_log("config.py: after RawSuiteConfig init")
         self.mem_log("config.py: before get(sparse=True")
         self.cfg = self.pcfg.get(sparse=True)
@@ -1334,8 +1341,7 @@ class SuiteConfig(object):
 
             if tdef.run_mode == 'dummy-local':
                 # Run all dummy tasks on the suite host.
-                rtc['remote']['host'] = None
-                rtc['remote']['owner'] = None
+                rtc['platform'] = 'localhost'
 
             # Simulation mode tasks should fail in which cycle points?
             f_pts = []
@@ -1730,6 +1736,14 @@ class SuiteConfig(object):
         if triggers:
             dependency = Dependency(expr_list, set(triggers.values()), suicide)
             self.taskdefs[right].add_dependency(dependency, seq)
+
+        validator = XtriggerNameValidator.validate
+        for label in self.cfg['scheduling']['xtriggers']:
+            valid, msg = validator(label)
+            if not valid:
+                raise SuiteConfigError(
+                    f'Invalid xtrigger name "{label}" - {msg}'
+                )
 
         for label in xtrig_labels:
             try:

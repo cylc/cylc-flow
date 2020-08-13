@@ -18,15 +18,16 @@
 import re
 import sqlite3
 import traceback
+from os.path import expandvars
 
 from cylc.flow import LOG
 import cylc.flow.flags
 from cylc.flow.wallclock import get_current_time_string
-from cylc.flow.platform_lookup import reverse_lookup
+from cylc.flow.platforms import platform_from_job_info
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 
 
-class CylcSuiteDAOTableColumn(object):
+class CylcSuiteDAOTableColumn:
     """Represent a column in a table."""
 
     __slots__ = ('name', 'datatype', 'is_primary_key')
@@ -37,7 +38,7 @@ class CylcSuiteDAOTableColumn(object):
         self.is_primary_key = is_primary_key
 
 
-class CylcSuiteDAOTable(object):
+class CylcSuiteDAOTable:
     """Represent a table in the suite runtime database."""
 
     FMT_CREATE = "CREATE TABLE %(name)s(%(columns_str)s%(primary_keys_str)s)"
@@ -164,7 +165,7 @@ class CylcSuiteDAOTable(object):
         self.update_queues[stmt].append(stmt_args)
 
 
-class CylcSuiteDAO(object):
+class CylcSuiteDAO:
     """Data access object for the suite runtime database."""
 
     CONN_TIMEOUT = 0.2
@@ -259,7 +260,7 @@ class CylcSuiteDAO(object):
             ["time_run_exit"],
             ["run_signal"],
             ["run_status", {"datatype": "INTEGER"}],
-            ["user_at_host"],
+            ["platform_name"],
             ["batch_sys_name"],
             ["batch_sys_job_id"],
         ],
@@ -330,7 +331,7 @@ class CylcSuiteDAO(object):
         is_public - If True, allow retries, etc
 
         """
-        self.db_file_name = db_file_name
+        self.db_file_name = expandvars(db_file_name)
         self.is_public = is_public
         self.conn = None
         self.n_tries = 0
@@ -613,7 +614,7 @@ class CylcSuiteDAO(object):
 
         Invoke callback(row_idx, row) on each row, where each row contains:
             [cycle, name, status, submit_num, time_submit, time_run,
-             time_run_exit, batch_sys_name, batch_sys_job_id, user_at_host]
+             time_run_exit, batch_sys_name, batch_sys_job_id, platform_name]
 
         If id_key is specified,
         select from task_pool table if id_key == CHECKPOINT_LATEST_ID.
@@ -630,7 +631,7 @@ class CylcSuiteDAO(object):
                 %(task_jobs)s.time_run_exit,
                 %(task_jobs)s.batch_sys_name,
                 %(task_jobs)s.batch_sys_job_id,
-                %(task_jobs)s.user_at_host
+                %(task_jobs)s.platform_name
             FROM
                 %(task_jobs)s
             JOIN
@@ -742,7 +743,7 @@ class CylcSuiteDAO(object):
 
         Invoke callback(row_idx, row) on each row, where each row contains:
             [cycle, name, is_late, status, is_held, submit_num,
-             try_num, user_at_host, time_submit, time_run, timeout, outputs]
+             try_num, platform_name, time_submit, time_run, timeout, outputs]
 
         If id_key is specified,
         select from task_pool table if id_key == CHECKPOINT_LATEST_ID.
@@ -759,7 +760,7 @@ class CylcSuiteDAO(object):
                 %(task_pool)s.is_held,
                 %(task_states)s.submit_num,
                 %(task_jobs)s.try_num,
-                %(task_jobs)s.user_at_host,
+                %(task_jobs)s.platform_name,
                 %(task_jobs)s.time_submit,
                 %(task_jobs)s.time_run,
                 %(task_timeout_timers)s.timeout,
@@ -817,7 +818,7 @@ class CylcSuiteDAO(object):
             SELECT
                 name,
                 cycle,
-                user_at_host,
+                platform_name,
                 batch_sys_name,
                 time_submit,
                 time_run,
@@ -1002,8 +1003,8 @@ class CylcSuiteDAO(object):
         # check if upgrade required
         schema = conn.execute(rf'PRAGMA table_info({self.TABLE_TASK_JOBS})')
         for _, name, *_ in schema:
-            if name == 'platform':
-                LOG.debug('platform column present - skipping db upgrade')
+            if name == 'platform_name':
+                LOG.debug('platform_name column present - skipping db upgrade')
                 return False
 
         # Perform upgrade:
@@ -1022,10 +1023,10 @@ class CylcSuiteDAO(object):
                 ALTER TABLE
                     {table}
                 ADD COLUMN
-                    platform TEXT
+                    platform_name TEXT
             '''
         )
-        job_platforms = glbl_cfg(cached=False).get(['job platforms'])
+        job_platforms = glbl_cfg(cached=False).get(['platforms'])
         for cycle, name, user_at_host, batch_system in conn.execute(rf'''
                 SELECT
                     cycle, name, user_at_host, batch_system
@@ -1039,7 +1040,7 @@ class CylcSuiteDAO(object):
             else:
                 user = ''
                 host = user_at_host
-            platform = reverse_lookup(
+            platform = platform_from_job_info(
                 job_platforms,
                 {'batch system': batch_system},
                 {'host': host}
@@ -1050,7 +1051,7 @@ class CylcSuiteDAO(object):
                         {table}
                     SET
                         user=?,
-                        platform=?
+                        platform_name=?
                     WHERE
                         cycle==?
                         AND name==?

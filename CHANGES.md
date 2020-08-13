@@ -48,7 +48,14 @@ efficient way of the evolving the workflow via the graph.
 [#3692](https://github.com/cylc/cylc-flow/pull/3692) - Use the `$EDITOR`
 and `$GEDITOR` environment variables to determine the default editor to use.
 
+[#3574](https://github.com/cylc/cylc-flow/pull/3574) - use the bash
+installation defined in $path rather than hardcoding to /bin/bash.
+
 ### Fixes
+
+[#3732](https://github.com/cylc/cylc-flow/pull/3732) - XTrigger labels
+are now validated to ensure that runtime errors can not occur when
+exporting environment variables.
 
 [#3632](https://github.com/cylc/cylc-flow/pull/3632) - Fix a bug that was causing
 `UTC mode` specified in global config to be pretty much ignored.
@@ -1885,7 +1892,7 @@ advice printed at start-up on how to see if a suite is still running.
 the right-click menu for some tasks after enabling a filter.
 
 [#1768](https://github.com/cylc/cylc-flow/pull/1768): Client commands like `cylc
-broadcast` can now be invoked by tasks on remote hosts that do not share a
+broadcast` can now be invoked by tasks on hosts that do not share a
 filesystem with the suite host.
 
 [#1763](https://github.com/cylc/cylc-flow/pull/1763): Remote tasks now load

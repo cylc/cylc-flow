@@ -45,7 +45,7 @@ WARNING_PARSE_EXPANDED_YEAR_DIGITS = (
     "(incompatible with [cylc]cycle point num expanded year digits = %s ?)")
 
 
-class SuiteSpecifics(object):
+class SuiteSpecifics:
 
     """Store suite-setup-specific constants and utilities here."""
     ASSUMED_TIME_ZONE = None

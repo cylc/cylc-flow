@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 # 
@@ -18,7 +18,7 @@
 # Test stop with a remote running task, restart, kill the task.
 export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
-set_test_remote_host
+require_remote_platform
 set_test_number 5
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
@@ -39,6 +39,6 @@ sqlite3 "${SUITE_RUN_DIR}/log/db" \
     'SELECT status FROM task_pool WHERE cycle=="1" AND NAME=="t1"' \
         >'t1-status.out'
 cmp_ok 't1-status.out' <<<'failed'
-purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
+purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

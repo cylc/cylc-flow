@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -20,17 +20,27 @@
 export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
 skip_darwin 'atrun hard to configure on Mac OS'
-set_test_remote_host
+require_remote_platform
 set_test_number 2
+
+create_test_globalrc '' "
+[platforms]
+    [[${CYLC_TEST_PLATFORM}]]
+        batch system = at
+        batch submit command template = at non
+"
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate "${SUITE_NAME}" -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}"
+    cylc validate "${SUITE_NAME}" \
+       -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}" \
+       -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}" 
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --debug --no-detach --reference-test -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}" \
-    "${SUITE_NAME}"
+    cylc run --debug --no-detach --reference-test \
+    -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}" \
+    -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}" "${SUITE_NAME}" 
 
-purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
+purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

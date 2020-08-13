@@ -36,7 +36,7 @@ from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.wallclock import get_current_time_string, get_utc_mode
 
 
-class SuiteDatabaseManager(object):
+class SuiteDatabaseManager:
     """Manage the suite runtime private and public databases."""
 
     KEY_INITIAL_CYCLE_POINT = 'icp'

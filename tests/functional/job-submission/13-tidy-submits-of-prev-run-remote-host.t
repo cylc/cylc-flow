@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -18,18 +18,18 @@
 # Test tidy of submits of previous runs.
 export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
-set_test_remote_host
+require_remote_platform
 set_test_number 11
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate "${SUITE_NAME}" -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}"
+    cylc validate "${SUITE_NAME}" -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --debug --no-detach --reference-test "${SUITE_NAME}" \
-    -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}"
+    -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}"
 RLOGD1="cylc-run/${SUITE_NAME}/log/job/1/t1/01"
 RLOGD2="cylc-run/${SUITE_NAME}/log/job/1/t1/02"
-LOGD1="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/job/1/t1/01"
-LOGD2="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/job/1/t1/02"
+LOGD1="$RUN_DIR/${SUITE_NAME}/log/job/1/t1/01"
+LOGD2="$RUN_DIR/${SUITE_NAME}/log/job/1/t1/02"
 
 SSH='ssh -n -oBatchMode=yes -oConnectTimeout=5'
 # shellcheck disable=SC2086
@@ -42,7 +42,7 @@ sed -i 's/script =.*$/script = true/' "suite.rc"
 sed -i -n '1,/triggered off/p' "reference.log"
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --debug --no-detach --reference-test "${SUITE_NAME}" \
-    -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}"
+    -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}"
 # shellcheck disable=SC2086
 run_ok "exists-rlogd1" ${SSH} "${CYLC_TEST_HOST}" test -e "${RLOGD1}"
 # shellcheck disable=SC2086
@@ -50,6 +50,6 @@ run_fail "not-exists-rlogd2" ${SSH} "${CYLC_TEST_HOST}" test -e "${RLOGD2}"
 exists_ok "${LOGD1}"
 exists_fail "${LOGD2}"
 #-------------------------------------------------------------------------------
-purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
+purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

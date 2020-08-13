@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test killing of jobs submitted to loadleveler, slurm, pbs...
+# TODO Check this test on a dockerized system or VM.
 export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------

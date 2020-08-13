@@ -7,6 +7,7 @@ This directory contains Cylc unit tests.
 ```console
 $ pytest tests/u
 $ pytest tests/u -n 5  # run up to 5 tests in parallel
+$ pytest tests/u --dist=no -n0  # turn off xdist (allows --pdb etc)
 ```
 
 ## What Are Unit Tests

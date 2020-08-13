@@ -98,6 +98,7 @@ from cylc.flow.wallclock import (
     get_time_string_from_unix_time as time2str,
     get_utc_mode)
 from cylc.flow.xtrigger_mgr import XtriggerManager
+from cylc.flow.platforms import platform_from_name
 
 
 class SchedulerStop(CylcError):
@@ -110,7 +111,7 @@ class SchedulerError(CylcError):
     pass
 
 
-class SchedulerUUID(object):
+class SchedulerUUID:
     """Scheduler identifier - which persists on restart."""
     __slots__ = ('value')
 
@@ -722,14 +723,19 @@ class Scheduler:
         auths = set()
         for itask in self.pool.get_rh_tasks():
             if itask.state(*TASK_STATUSES_ACTIVE):
-                auths.add((itask.task_host, itask.task_owner))
+                auths.add(itask.platform['name'])
         while auths:
-            for host, owner in auths.copy():
+            for platform_name in auths.copy():
                 if (
                     self.task_job_mgr.task_remote_mgr.remote_init(
-                        host, owner, self.curve_auth, self.client_pub_key_dir)
-                ) is not None:
-                    auths.remove((host, owner))
+                        platform_name, self.curve_auth,
+                        self.client_pub_key_dir
+                    )
+                    is not None
+                ):
+                    auths.remove(
+                        platform_name
+                    )
             if auths:
                 sleep(1.0)
                 # Remote init is done via process pool
@@ -1224,7 +1230,7 @@ class Scheduler:
             fields.PUBLISH_PORT:
                 str(self.publisher.port),
             fields.SSH_USE_LOGIN_SHELL:
-                str(glbl_cfg().get_host_item('use login shell')),
+                str(platform_from_name()['use login shell']),
             fields.SUITE_RUN_DIR_ON_SUITE_HOST:
                 self.suite_run_dir,
             fields.UUID:
