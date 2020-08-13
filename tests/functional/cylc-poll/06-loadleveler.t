@@ -33,7 +33,7 @@ fi
 export CYLC_TEST_BATCH_TASK_HOST CYLC_TEST_BATCH_SITE_DIRECTIVES
 set_test_number 2
 
-create_test_globalrc "" "
+create_test_global_config "" "
 [platforms]
     [[loadleveler-platform]]
         hosts = $CYLC_TEST_BATCH_TASK_HOST

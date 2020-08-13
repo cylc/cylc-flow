@@ -25,7 +25,7 @@ else
     export PYTHONPATH="${PWD}/lib"
 fi
 
-create_test_globalrc '
+create_test_global_config '
 [platforms]
     [[bad]]
 '

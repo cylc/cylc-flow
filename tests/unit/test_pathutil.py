@@ -111,7 +111,7 @@ class TestPathutil(TestCase):
             (get_suite_run_dir, ''),
             (get_suite_run_job_dir, '/log/job'),
             (get_suite_run_log_dir, '/log/suite'),
-            (get_suite_run_rc_dir, '/log/flow-config'),
+            (get_suite_run_config_log_dir, '/log/flow-config'),
             (get_suite_run_share_dir, '/share'),
             (get_suite_run_work_dir, '/work'),
         ):
