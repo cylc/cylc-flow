@@ -6,6 +6,7 @@ on: [pull_request]
 jobs:
   fast-tests:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
       matrix:
         python-version: ['3.7', '3.8']
@@ -43,6 +44,7 @@ jobs:
 
   functional-tests:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     strategy:
       matrix:
         python-version: ['3.7']
