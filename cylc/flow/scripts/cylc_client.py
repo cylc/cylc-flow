@@ -25,11 +25,7 @@ Use the -n option if client function requires no keyword arguments.
 
 import json
 import sys
-if '--use-ssh' in sys.argv[1:]:
-    sys.argv.remove('--use-ssh')
-    from cylc.flow.remote import remrun
-    if remrun():
-        sys.exit(0)
+
 from google.protobuf.json_format import MessageToDict
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
@@ -53,14 +49,13 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(_, options, suite, func):
-    pclient = SuiteRuntimeClient(
-        suite, options.owner, options.host, options.port)
+    pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
     if options.no_input:
         kwargs = {}
     else:
         kwargs = json.load(sys.stdin)
     sys.stdin.close()
-    res = pclient(func, kwargs, timeout=options.comms_timeout)
+    res = pclient(func, kwargs)
     if func in PB_METHOD_MAP:
         if 'element_type' in kwargs:
             pb_msg = PB_METHOD_MAP[func][kwargs['element_type']]()

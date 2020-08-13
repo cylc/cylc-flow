@@ -27,11 +27,6 @@ the general wildcard is '.*' (match zero or more of anything), NOT '*'.
 each pattern ('foo' is the same as 'foo/*'); use the string end marker
 to prevent this ('foo$' matches only literal 'foo')."""
 
-import sys
-from cylc.flow.remote import remrun
-if remrun():
-    sys.exit(0)
-
 import os
 import re
 

@@ -1,4 +1,8 @@
 #!jinja2
+[cylc]
+    [[events]]
+        inactivity = PT2S
+
 [scheduling]
     [[graph]]
         R1 = foo
@@ -10,12 +14,9 @@ if [[ "${CYLC_TASK_SUBMIT_NUMBER}" == '1' ]]; then
     sleep 300
 fi
 """
-        [[[remote]]]
-            host={{CYLC_TEST_BATCH_TASK_HOST}}
+        platform = test-slurm
         [[[job]]]
-            batch system = {{CYLC_TEST_BATCH_SYS}}
-            execution time limit = PT70S
+            execution time limit = PT5S
             execution retry delays = PT0S
         [[[directives]]]
             {{CYLC_TEST_BATCH_SITE_DIRECTIVES}}
-

@@ -10,7 +10,6 @@
             default run length = PT0S
     [[oxygas]]
         env-script = ELSE=foo
-        [[[remote]]]
-            host = whatever
+        platform = 'whateva'
         [[[environment]]]
             SOMETHING = "some-modification-$ELSE"

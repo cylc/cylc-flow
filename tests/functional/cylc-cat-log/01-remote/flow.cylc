@@ -16,6 +16,4 @@ echo "jumped over the lazy dog" >&2
 # Write to a custom log file
 echo "drugs and money" > ${CYLC_TASK_LOG_ROOT}.custom-log
 """
-        [[[remote]]]
-            host={{environ['CYLC_TEST_HOST'] | default("localhost")}}
-            owner={{environ['CYLC_TEST_OWNER'] | default(environ["USER"])}}
+        platform = {{CYLC_TEST_PLATFORM | default("localhost")}}

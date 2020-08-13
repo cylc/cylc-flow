@@ -58,13 +58,6 @@ class SuiteRuntimeClient(ZMQSocketBase):
     Args:
         suite (str):
             Name of the suite to connect to.
-        owner (str):
-            Owner of suite, defaults to $USER.
-        host (str):
-            Overt need to check contact file if provided along with the
-            port.
-        port (int):
-            The port on the aforementioned host to connect to.
         timeout (float):
             Set the default timeout in seconds. The default is
             ``ZMQClient.DEFAULT_TIMEOUT``.
@@ -104,19 +97,13 @@ class SuiteRuntimeClient(ZMQSocketBase):
     def __init__(
             self,
             suite: str,
-            owner: str = None,
-            host: str = None,
-            port: Union[int, str] = None,
             context: object = None,
             timeout: Union[float, str] = None,
             srv_public_key_loc: str = None
     ):
         super().__init__(zmq.REQ, context=context)
         self.suite = suite
-        if port:
-            port = int(port)
-        if not (host and port):
-            host, port, _ = get_location(suite, owner, host)
+        host, port, _ = get_location(suite)
         if timeout is None:
             timeout = self.DEFAULT_TIMEOUT
         else:

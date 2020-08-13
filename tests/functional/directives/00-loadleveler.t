@@ -19,6 +19,7 @@
 #     This test requires an e.g. [test battery][batch systems][loadleveler]host
 #     entry in site/user config in order to run 'loadleveler' tests (same for
 #     slurm, pbs, etc), otherwise it will be bypassed.
+# TODO Check this test on a dockerized system or VM.
 export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------

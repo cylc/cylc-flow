@@ -20,7 +20,7 @@
 . "$(dirname "$0")/test_header"
 
 set_test_number 1
-RUND="$(cylc get-global-config --print-run-dir)"
+RUND="$RUN_DIR"
 NAME1="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}-1"
 NAME2="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}-2"
 SUITE1_RUND="${RUND}/${NAME1}"

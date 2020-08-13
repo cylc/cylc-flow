@@ -23,13 +23,6 @@ Kill jobs of active tasks and update their statuses accordingly.
  cylc kill REG - kill all active tasks in the workflow
 """
 
-import sys
-if '--use-ssh' in sys.argv[1:]:
-    sys.argv.remove('--use-ssh')
-    from cylc.flow.remote import remrun
-    if remrun():
-        sys.exit(0)
-
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.terminal import prompt, cli_function
@@ -52,12 +45,10 @@ def main(parser, options, suite, *task_globs):
         prompt('Kill task %s in %s' % (task_globs, suite), options.force)
     else:
         prompt('Kill ALL tasks in %s' % (suite), options.force)
-    pclient = SuiteRuntimeClient(
-        suite, options.owner, options.host, options.port)
+    pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
     pclient(
         'kill_tasks',
-        {'tasks': task_globs},
-        timeout=options.comms_timeout
+        {'tasks': task_globs}
     )
 
 

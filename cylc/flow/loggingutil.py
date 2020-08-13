@@ -64,6 +64,7 @@ class CylcLogFormatter(logging.Formatter):
         self.max_width = self.MAX_WIDTH
         self.wrapper = None
         self.configure(timestamp, color, max_width)
+        # You may find adding %(filename)s %(lineno)d are useful when debugging
         logging.Formatter.__init__(
             self,
             '%(asctime)s %(levelname)-2s - %(message)s',

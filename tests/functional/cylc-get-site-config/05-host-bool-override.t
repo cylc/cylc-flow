@@ -22,7 +22,7 @@ set_test_number 2
 
 mkdir etc/
 cat etc/global.cylc <<'__hi__'
-[job platforms]
+[platforms]
     [[desktop\d\d|laptop\d\d]]
     [[sugar]]
         login hosts = localhost

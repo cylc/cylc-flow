@@ -62,7 +62,6 @@ class WorkflowSubscriber(ZMQSocketBase):
     def __init__(
             self,
             suite: str,
-            owner: str = None,
             host: str = None,
             port: Union[int, str] = None,
             context: object = None,
@@ -74,7 +73,7 @@ class WorkflowSubscriber(ZMQSocketBase):
         if port:
             port = int(port)
         if not (host and port):
-            host, _, port = get_location(suite, owner, host)
+            host, _, port = get_location(suite)
         if topics is None:
             self.topics = set(b'')
         self.topics = topics

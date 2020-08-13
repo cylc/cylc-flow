@@ -51,11 +51,6 @@ $ cylc get-suite-config --item=[runtime][modelX] SUITE
     BAR = bar
 ..."""
 
-import sys
-from cylc.flow.remote import remrun
-if remrun():
-    sys.exit(0)
-
 from cylc.flow.config import SuiteConfig
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.suite_files import parse_suite_arg

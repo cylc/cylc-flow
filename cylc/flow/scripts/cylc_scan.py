@@ -29,13 +29,6 @@ revealed publicly, depending on global and suite authentication settings.
 WARNING: a suite suspended with Ctrl-Z will cause port scans to hang until the
 connection times out (see --comms-timeout)."""
 
-import sys
-if "--use-ssh" in sys.argv[1:]:
-    sys.argv.remove("--use-ssh")
-    from cylc.flow.remote import remrun
-    if remrun():
-        sys.exit(0)
-
 import json
 
 from colorama import Fore, Style, init as color_init

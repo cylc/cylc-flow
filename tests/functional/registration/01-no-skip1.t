@@ -31,7 +31,7 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
     [[a,b,c]]
         script = true
 __FLOW_CONFIG__
-RUND="$(cylc get-global-config --print-run-dir)"
+RUND="$RUN_DIR"
 ln -sf "${SUITE_NAME}" "${RUND}/work"
 
 run_ok "${TEST_NAME_BASE}-print" cylc print

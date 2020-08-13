@@ -9,6 +9,6 @@
 [runtime]
     [[t1]]
         script=rm -f "${CYLC_TASK_LOG_ROOT}.err"
+        platform = {{ PLATFORM }}
         [[[remote]]]
-            host = {{HOST}}
             retrieve job logs = True

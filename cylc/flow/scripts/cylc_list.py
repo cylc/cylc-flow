@@ -29,9 +29,6 @@ To visualize the full multiple inheritance hierarchy use:
 
 import os
 import sys
-from cylc.flow.remote import remrun
-if remrun():
-    sys.exit(0)
 
 from cylc.flow.config import SuiteConfig
 from cylc.flow.option_parsers import CylcOptionParser as COP

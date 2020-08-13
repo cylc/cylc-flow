@@ -31,7 +31,7 @@ from cylc.flow.option_parsers import (
     Options
 )
 from cylc.flow.pathutil import get_suite_run_dir
-from cylc.flow.remote import remrun, remote_cylc_cmd
+from cylc.flow.remote import remote_cylc_cmd
 from cylc.flow.scheduler import Scheduler, SchedulerError
 from cylc.flow import suite_files
 from cylc.flow.terminal import cli_function
@@ -396,17 +396,15 @@ def _distribute(host, is_restart):
     # Check whether a run host is explicitly specified, else select one.
     if not host:
         host = select_suite_host()[0]
-        if is_remote_host(host):
-            if is_restart:
-                base_cmd = ["restart"] + sys.argv[1:]
-            else:
-                base_cmd = ["run"] + sys.argv[1:]
-            # Prevent recursive host selection
-            base_cmd.append("--host=localhost")
-            return remote_cylc_cmd(base_cmd, host=host)
-
-    if remrun(set_rel_local=True):  # State localhost as above.
-        sys.exit()
+    if is_remote_host(host):
+        if is_restart:
+            base_cmd = ["restart"] + sys.argv[1:]
+        else:
+            base_cmd = ["run"] + sys.argv[1:]
+        # Prevent recursive host selection
+        base_cmd.append("--host=localhost")
+        remote_cylc_cmd(base_cmd, host=host)
+        sys.exit(0)
 
 
 async def _setup(parser, options, reg, is_restart, scheduler):

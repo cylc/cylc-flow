@@ -4,17 +4,11 @@
 {% set OWNER = environ['CYLC_TEST_OWNER'] %}
 
 # whether or not ssh messaging is used back from the remote host is
-# determined by the [hosts] section in site/user config files.
+# determined by the [platforms] section in site/user config files.
 [scheduling]
     [[graph]]
-        R1 = "foo => bar"
+        R1 = foo
 [runtime]
     [[foo]]
         script = "true" # fast
-        [[[remote]]]
-            host = {{ HOST }}
-            owner = {{ OWNER }}
-    [[bar]]
-        script = "true"
-        [[[remote]]]
-            host = {{ HOST }}
+        platform = {{ environ['CYLC_TEST_PLATFORM'] }}

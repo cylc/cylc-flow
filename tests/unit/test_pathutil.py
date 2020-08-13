@@ -18,6 +18,12 @@
 from unittest import TestCase
 from unittest.mock import call, patch, MagicMock
 
+import pytest
+import os
+import logging
+
+from tests.unit.conftest import mock_glbl_cfg
+
 from cylc.flow.pathutil import (
     get_remote_suite_run_dir,
     get_remote_suite_run_job_dir,
@@ -35,74 +41,99 @@ from cylc.flow.pathutil import (
 )
 
 
+@pytest.mark.parametrize(
+    'func, extra_args, expected',
+    [
+        (get_remote_suite_run_dir, (), "$HOME/annapurna/foo"),
+        (
+            get_remote_suite_run_dir,
+            ("comes", "true"),
+            "$HOME/annapurna/foo/comes/true",
+        ),
+        (
+            get_remote_suite_run_job_dir,
+            (),
+            "$HOME/annapurna/foo/log/job"),
+        (
+            get_remote_suite_run_job_dir,
+            ("comes", "true"),
+            "$HOME/annapurna/foo/log/job/comes/true",
+        ),
+        (get_remote_suite_work_dir, (), "$HOME/K2/foo"),
+        (
+            get_remote_suite_work_dir,
+            ("comes", "true"),
+            "$HOME/K2/foo/comes/true",
+        ),
+    ]
+)
+def test_get_remote_suite_run_dirs(
+    func, extra_args, expected
+):
+    """
+    Tests for get_remote_suite_run_[|job|work]_dir
+    Pick a unusual cylc dir names to ensure not picking up system settings
+    Pick different names for run and work dir to ensure that the test
+    isn't passing by accident.
+    """
+    platform = {
+        'run directory': '$HOME/annapurna',
+        'work directory': '$HOME/K2',
+    }
+    if extra_args:
+        result = func(platform, 'foo', *extra_args)
+    else:
+        result = func(platform, 'foo')
+    assert result == expected
+
+
 class TestPathutil(TestCase):
-    """Tests for functions in "cylc.flow.pathutil"."""
+    """Tests for functions in "cylc.flow.pathutil".
 
-    @patch('cylc.flow.pathutil.glbl_cfg')
-    def test_get_remote_suite_run_dirs(self, mocked_glbl_cfg):
-        """Usage of get_remote_suite_run_*dir."""
-        mocked = MagicMock()
-        mocked_glbl_cfg.return_value = mocked
-        mocked.get_host_item.return_value = '/home/sweet/cylc-run'
-        # func = get_remote_* function to test
-        # cfg = configuration used in mocked global configuration
-        # tail1 = expected tail of return value from configuration
-        # args = extra *args
-        # tail2 = expected tail of return value from extra args
-        for func, cfg, tail1 in (
-            (get_remote_suite_run_dir, 'run directory', ''),
-            (get_remote_suite_run_job_dir, 'run directory', '/log/job'),
-            (get_remote_suite_work_dir, 'work directory', ''),
-        ):
-            for args, tail2 in (
-                ((), ''),
-                (('comes', 'true'), '/comes/true'),
-            ):
-                self.assertEqual(
-                    f'/home/sweet/cylc-run/my-suite/dream{tail1}{tail2}',
-                    func('myhost', 'myuser', 'my-suite/dream', *args),
-                )
-                mocked.get_host_item.assert_called_with(
-                    cfg, 'myhost', 'myuser')
-                mocked.get_host_item.reset_mock()
-
-    @patch('cylc.flow.pathutil.glbl_cfg')
-    def test_get_suite_run_dirs(self, mocked_glbl_cfg):
+    TODO: Refactor these tests using `pytest.mark.parametrize` so
+          that the tester can more easily see which function ha
+          failed.
+    """
+    @patch('cylc.flow.pathutil.platform_from_name')
+    def test_get_suite_run_dirs(self, mocked_platform):
         """Usage of get_suite_run_*dir."""
+        homedir = os.getenv("HOME")
         mocked = MagicMock()
-        mocked_glbl_cfg.return_value = mocked
-        mocked.get_host_item.return_value = '/home/sweet/cylc-run'
+        mocked_platform.return_value = {
+            'run directory': '$HOME/cylc-run',
+            'work directory': '$HOME/cylc-run'
+        }
         # func = get_remote_* function to test
-        # cfg = configuration used in mocked global configuration
         # tail1 = expected tail of return value from configuration
         # args = extra *args
         # tail2 = expected tail of return value from extra args
-        for func, cfg, tail1 in (
-            (get_suite_run_dir, 'run directory', ''),
-            (get_suite_run_job_dir, 'run directory', '/log/job'),
-            (get_suite_run_log_dir, 'run directory', '/log/suite'),
-            (get_suite_run_config_log_dir,
-             'run directory', '/log/flow-config'),
-            (get_suite_run_share_dir, 'work directory', '/share'),
-            (get_suite_run_work_dir, 'work directory', '/work'),
+        for func, tail1 in (
+            (get_suite_run_dir, ''),
+            (get_suite_run_job_dir, '/log/job'),
+            (get_suite_run_log_dir, '/log/suite'),
+            (get_suite_run_rc_dir, '/log/flow-config'),
+            (get_suite_run_share_dir, '/share'),
+            (get_suite_run_work_dir, '/work'),
         ):
             for args, tail2 in (
                 ((), ''),
                 (('comes', 'true'), '/comes/true'),
             ):
-                self.assertEqual(
-                    f'/home/sweet/cylc-run/my-suite/dream{tail1}{tail2}',
-                    func('my-suite/dream', *args),
-                )
-                mocked.get_host_item.assert_called_with(cfg)
+                expected_result =\
+                    f'{homedir}/cylc-run/my-workflow/dream{tail1}{tail2}'
+                assert func('my-workflow/dream', *args) == expected_result
+                mocked_platform.assert_called_with()
                 mocked.get_host_item.reset_mock()
 
-    @patch('cylc.flow.pathutil.glbl_cfg')
-    def test_get_suite_run_names(self, mocked_glbl_cfg):
+    @patch('cylc.flow.pathutil.platform_from_name')
+    def test_get_suite_run_names(self, mocked_platform):
         """Usage of get_suite_run_*name."""
+        homedir = os.getenv("HOME")
         mocked = MagicMock()
-        mocked_glbl_cfg.return_value = mocked
-        mocked.get_host_item.return_value = '/home/sweet/cylc-run'
+        mocked_platform.return_value = {
+            'run directory': '$HOME/cylc-run',
+            'work directory': '$HOME/cylc-run'
+        }
         # func = get_remote_* function to test
         # cfg = configuration used in mocked global configuration
         # tail1 = expected tail of return value from configuration
@@ -112,36 +143,49 @@ class TestPathutil(TestCase):
             (get_suite_test_log_name, 'run directory',
              '/log/suite/reftest.log'),
         ):
-            self.assertEqual(
-                f'/home/sweet/cylc-run/my-suite/dream{tail1}',
-                func('my-suite/dream'),
+            assert (
+                func('my-suite/dream') ==
+                f'{homedir}/cylc-run/my-suite/dream{tail1}'
             )
-            mocked.get_host_item.assert_called_with(cfg)
+            mocked_platform.assert_called_with()
             mocked.get_host_item.reset_mock()
 
-    @patch('cylc.flow.pathutil.os.makedirs')
-    @patch('cylc.flow.pathutil.glbl_cfg')
-    def test_make_suite_run_tree(self, mocked_glbl_cfg, mocked_makedirs):
-        """Usage of make_suite_run_tree."""
-        mocked = MagicMock()
-        mocked_glbl_cfg.return_value = mocked
-        mocked.get_host_item.return_value = '/home/sweet/cylc-run'
-        mocked_cfg = MagicMock()
-        mocked_cfg['run directory rolling archive length'] = 0
-        mocked.get.return_value = mocked_cfg
-        make_suite_run_tree('my-suite/dream')
-        self.assertEqual(mocked_makedirs.call_count, 6)
-        mocked_makedirs.assert_has_calls((
-            call(f'/home/sweet/cylc-run/my-suite/dream{tail}', exist_ok=True)
-            for tail in (
-                '',
-                '/log/suite',
-                '/log/job',
-                '/log/flow-config',
-                '/share',
-                '/work',
-            )
-        ))
+
+@pytest.mark.parametrize(
+    'subdir',
+    [
+        '',
+        '/log/suite',
+        '/log/job',
+        '/log/flow-config',
+        '/share',
+        '/work'
+    ]
+)
+def test_make_suite_run_tree(caplog, tmpdir, mock_glbl_cfg, subdir):
+    glbl_conf_str = f'''
+        run directory rolling archive length = 1
+        [platforms]
+            [[localhost]]
+                run directory = {tmpdir}
+                work directory = {tmpdir}
+        '''
+
+    mock_glbl_cfg('cylc.flow.platforms.glbl_cfg', glbl_conf_str)
+    mock_glbl_cfg('cylc.flow.pathutil.glbl_cfg', glbl_conf_str)
+
+    caplog.set_level(logging.DEBUG)
+    # running the logic three times to ensure that the rolling
+    # archive logic is covered.
+    for i in range(3):
+        make_suite_run_tree('my-workflow')
+
+    # Check that directories have been created
+    assert (tmpdir / 'my-workflow' / subdir).isdir() is True
+    # ...and 1 rolling archive ...
+    assert (tmpdir / 'my-workflow.1' / subdir).isdir() is True
+    # ... but not 2.
+    assert (tmpdir / 'my-workflow.2' / subdir).isdir() is False
 
 
 if __name__ == '__main__':

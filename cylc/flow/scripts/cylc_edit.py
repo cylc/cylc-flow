@@ -56,22 +56,23 @@ Where <editor> is defined in the cylc site/user config files.
 
 See also 'cylc [prep] view'."""
 
-import sys
-from cylc.flow.exceptions import CylcError, UserInputError
-from cylc.flow.remote import remrun
-if remrun(forward_x11=True):
-    sys.exit(0)
-
 import os
 import re
 from subprocess import call
 from shutil import copy
+import sys
 
+from cylc.flow.exceptions import CylcError, UserInputError
 
-from cylc.flow.parsec.include import inline, \
-    split_file, backup, backups, newfiles, cleanup, modtimes
-
-
+from cylc.flow.parsec.include import (
+    inline,
+    split_file,
+    backup,
+    backups,
+    newfiles,
+    cleanup,
+    modtimes
+)
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.suite_files import parse_suite_arg

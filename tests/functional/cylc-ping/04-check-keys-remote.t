@@ -17,9 +17,13 @@
 #-------------------------------------------------------------------------------
 # Checks remote ZMQ keys are created and deleted on shutdown.
 . "$(dirname "$0")/test_header"
-set_test_remote_host
+
+require_remote_platform
+
 set_test_number 4
+
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
+#!jinja2
 [cylc]
 [scheduling]
     [[graph]]
@@ -27,14 +31,15 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [runtime]
     [[holder]]
         script = """cylc hold "${CYLC_SUITE_NAME}" """
-        [[[remote]]]
-            host = $CYLC_TEST_HOST
+        platform = {{CYLC_TEST_PLATFORM}}
     [[held]]
         script = true
 __FLOW_CONFIG__
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}" \
+    -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}"
+suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" \
+    -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}"
 RRUND="cylc-run/${SUITE_NAME}"
 RSRVD="${RRUND}/.service"
 poll_grep_suite_log 'Holding all waiting or queued tasks now'
@@ -51,6 +56,6 @@ ${SSH} "${CYLC_TEST_HOST}" \
 find "${RRUND}" -type f -name "*key*"|awk -F/ '{print $NF}'|sort >'find.out'
 cmp_ok 'find.out' <<'__OUT__'
 __OUT__
-purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
+purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

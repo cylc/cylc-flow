@@ -46,7 +46,7 @@ suite_run_ok "${TEST_NAME_BASE}-restart" \
     cylc restart --set 'WEATHER=good' --no-detach "${SUITE_NAME}"
 
 # Check for 3 generated *.cylc files
-LOGD="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/flow-config"
+LOGD="${RUN_DIR}/${SUITE_NAME}/log/flow-config"
 # shellcheck disable=SC2012
 ls "${LOGD}" | sed -e 's/.*-//g' | sort >'ls.out'
 cmp_ok 'ls.out' <<'__OUT__'
@@ -55,7 +55,7 @@ restart.cylc
 run.cylc
 __OUT__
 
-LOGD="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/flow-config"
+LOGD="${RUN_DIR}/${SUITE_NAME}/log/flow-config"
 RUN_RC="$(ls "${LOGD}/"*-run.cylc)"
 REL_RC="$(ls "${LOGD}/"*-reload.cylc)"
 RES_RC="$(ls "${LOGD}/"*-restart.cylc)"

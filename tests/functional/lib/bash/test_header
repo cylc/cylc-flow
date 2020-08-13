@@ -88,7 +88,12 @@
 #     mock_smtpd_kill
 #         Kill the mock SMTP server daemon process.
 #     purge_suite SUITE_NAME
-#         Tidy up test directories for SUITE_NAME.
+#         Tidy up local test directories for SUITE_NAME.
+#     purge_suite_platform PLATFORM SUITE_NAME
+#         Tidy up test directories for SUITE_NAME on PLATFORM
+#     purge_suite_remote HOST SUITE_NAME
+#         Tidy up test directories for SUITE_NAME on HOST
+#         # TODO: remove this once all batch system tests are platform-based.
 #     poll COMMAND
 #         Run COMMAND in 1 second intervals for a minute until COMMAND returns
 #         a zero value, or exit 1 (abort test) with a timeout message.
@@ -121,12 +126,20 @@
 #     create_test_global_config [PRE [POST]]
 #         Create a new global config file $PWD/etc from site global-tests.cylc
 #         with PRE and POST pre- and ap-pended (PRE for top level items with no
-#         section heading).
-#     set_test_remote_host
-#         set CYLC_TEST_HOST from global-tests.cylc, for remote job tests.
-#         (Remote job tests should really use set_test_remote, below, however).
-#     set_test_remote
-#         set CYLC_TEST_HOST and CYLC_TEST_OWNER for remote job tests.
+#         section heading). PRE and POST are strings.
+#     require_remote_platform
+#         Set CYLC_TEST_PLATFORM for remote job tests or skip all tests.
+#         Provides:
+#             CYLC_TEST_PLATFORM: Remote platform name
+#             CYLC_TEST_HOST:     Hostname of a remote host picked
+#                                 from the platform.
+#     require_remote_platform_wsfs
+#         (wsfs = with shared file system)
+#         Set CYLC_TEST_PLATFORM_WSFS for remote job tests or skip all tests.
+#         Provides:
+#             CYLC_TEST_PLATFORM_WSFS: Remote platform name
+#             CYLC_TEST_HOST_WSFS:     Hostname of a remote host picked
+#                                      from the platform.
 #     get_fqdn_by_host [TARGET]
 #         Get a host FQDN using the same mechanism Cylc uses.
 #-------------------------------------------------------------------------------
@@ -412,7 +425,7 @@ init_suite() {
     local TEST_NAME="$1"
     local FLOW_CONFIG="${2:--}"
     SUITE_NAME="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME}"
-    SUITE_RUN_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
+    SUITE_RUN_DIR="${RUN_DIR}/${SUITE_NAME}"
     mkdir -p "${TEST_DIR}/${SUITE_NAME}/"
     cat "${FLOW_CONFIG}" >"${TEST_DIR}/${SUITE_NAME}/flow.cylc"
     cylc register "${SUITE_NAME}" "${TEST_DIR}/${SUITE_NAME}" 2>'/dev/null'
@@ -423,7 +436,7 @@ install_suite() {
     local TEST_NAME="${1:-${TEST_NAME_BASE}}"
     local TEST_SOURCE_BASE="${2:-${TEST_NAME}}"
     SUITE_NAME="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME}"
-    SUITE_RUN_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
+    SUITE_RUN_DIR="${RUN_DIR}/${SUITE_NAME}"
     mkdir -p "${TEST_DIR}/${SUITE_NAME}/"
     cp -r "${TEST_SOURCE_DIR}/${TEST_SOURCE_BASE}/"* "${TEST_DIR}/${SUITE_NAME}/"
     cylc register "${SUITE_NAME}" "${TEST_DIR}/${SUITE_NAME}" 2>'/dev/null'
@@ -482,6 +495,9 @@ log_scan () {
 }
 
 purge_suite_remote() {
+    # Tidy up test directories on a given host.
+    # (Use purge_suite_platform in preference to this, where possible).
+    # TODO: remove this once batch system tests are platform based.
     local HOST="$1"  # or "owner@host"
     local NAME="$2"
     local CMD="cd 'cylc-run' && rm -fr '${NAME}'"
@@ -496,21 +512,43 @@ purge_suite_remote() {
         2>'/dev/null' || true
 }
 
+purge_suite_platform() {
+    # Tidy up test directories on a given platform.
+    # Currently just picks the first host on the platform.
+    local PLATFORM="$1"  # or "owner@host"
+    local NAME="$2"
+    local CMD="cd 'cylc-run' && rm -fr '${NAME}'"
+    local DIRNAME
+    DIRNAME="$(dirname "${NAME}")"
+    if [[ "${DIRNAME}" != '.' ]]; then
+        CMD="${CMD} && rmdir -p '${DIRNAME}'"
+    fi
+    # Pick the first host from the platform
+    HOSTS=$(cylc get-global --item "[platforms][${PLATFORM}]hosts")
+    HOST=$(echo "$HOSTS" | awk -F ',' '{print $1}')
+    # CMD is part of this function
+    # shellcheck disable=SC2029
+    if [[ -n "${HOST}" ]]; then
+        ssh -n -oBatchMode=yes -oConnectTimeout=5 "${HOST}" "${CMD}" \
+            2>'/dev/null' || true
+    fi
+}
+
 purge_suite() {
+    # Tidy up local test directories.
     local SUITE_NAME="$1"
     cd "${TEST_DIR:-}"
     if ((FAILURES == 0)); then
-        local RUND SUITE_DIR
-        RUND="$(cylc get-global-config --print-run-dir)"
-        SUITE_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
+        local SUITE_RUN_DIR
+        SUITE_RUN_DIR="${RUN_DIR}/${SUITE_NAME}"
         # Note: lsof can hang, so call with "timeout".
-        while grep -q "${SUITE_DIR}" < <(timeout 5 lsof); do
+        while grep -q "${SUITE_RUN_DIR}" < <(timeout 5 lsof); do
             sleep 1
         done
-        rm -fr "${SUITE_DIR}"
+        rm -fr "${SUITE_RUN_DIR}"
         # The || true is here to prevent setting off the error trap no matter
         # shellcheck disable=SC2015
-        (cd "${RUND}" && rmdir -p "$(dirname "${SUITE_DIR}")" 2>'/dev/null' || true)
+        (cd "${RUN_DIR}" && rmdir -p "$(dirname "${SUITE_RUN_DIR}")" 2>'/dev/null' || true)
     fi
     if [[ -n "${TEST_DIR:-}" && -n "${SUITE_NAME:-}" ]]; then
         rm -fr "${TEST_DIR:?}/${SUITE_NAME:?}"
@@ -689,7 +727,6 @@ create_test_global_config() {
     if [[ -f "${SITE_TESTS_CONF_FILE}" ]]; then
         cat "${SITE_TESTS_CONF_FILE}" >>'etc/global.cylc'
     fi
-    # (global.cylc items add-to or override earlier items)
     if [[ -f "${USER_TESTS_CONF_FILE}" ]]; then
         cat "${USER_TESTS_CONF_FILE}" >>'etc/global.cylc'
     fi
@@ -697,34 +734,54 @@ create_test_global_config() {
     export CYLC_CONF_PATH="${PWD}/etc"
 }
 
-set_test_remote_host() {
-  # For remote job tests, define CYLC_TEST_HOST from global config '[test
-  # battery]remote host', skipping tests if not defined. Call immediately after
-  # sourcing the test header, for skip_all to work.
-  # TODO - these tests should be modified to use set_test_remote() instead, to
-  # allow full remote job tests with another user account on the suite host.
-  CYLC_TEST_HOST="$( \
-      cylc get-global-config -i '[test battery]remote host' 2>'/dev/null')"
-  if [[ -z "${CYLC_TEST_HOST}" ]]; then
-      skip_all '"[test battery]remote host": not defined'
-  fi
-  export CYLC_TEST_HOST
+require_remote_platform() {
+    # For remote job tests, define CYLC_TEST_PLATFORM from global
+    # config '[test battery]remote platform'.
+    # Skip all tests if is not defined.
+    # Call immediately after sourcing the test header, for skip_all to work.
+    CYLC_TEST_PLATFORM="$(
+        cylc get-global-config -i '[test battery]remote platform' 2>'/dev/null'
+    )"
+    if [[ -z "${CYLC_TEST_PLATFORM}" ]]; then
+        skip_all '"[test battery]remote platform": not defined'
+    fi
+    # This is ugly, but some tests require these variables for direct ssh-ing.
+    CYLC_TEST_HOST="$(
+        cylc get-global --item \
+            "[platforms][${CYLC_TEST_PLATFORM}]hosts" \
+            | awk -F ',' '{print $1}' \
+        2>/dev/null
+    )"
+    if [[ -z "${CYLC_TEST_HOST}" ]]; then
+        skip_all '"[test battery]remote platform": not configured'
+    fi
+    export CYLC_TEST_PLATFORM
+    export CYLC_TEST_HOST
 }
 
-set_test_remote() {
-  # For remote job tests, define CYLC_TEST_HOST and CYLC_TEST_OWNER from global
-  # config '[test battery]remote host/owner', defaulting to localhost and $USER.
-  # Skip all tests if neither host or owner is defined for a remote account.
-  # Call immediately after sourcing the test header, for skip_all to work.
-  CYLC_TEST_HOST="$( \
-      cylc get-global-config -i '[test battery]remote host' 2>'/dev/null')"
-  CYLC_TEST_OWNER="$( \
-      cylc get-global-config -i '[test battery]remote owner' 2>'/dev/null')"
-  if [[ -z "${CYLC_TEST_HOST}${CYLC_TEST_OWNER}" ]]; then
-      skip_all '"[test battery]remote host/owner": not defined'
-  fi
-  export CYLC_TEST_HOST=${CYLC_TEST_HOST:-"localhost"}
-  export CYLC_TEST_OWNER=${CYLC_TEST_OWNER:-${USER}}
+require_remote_platform_wsfs() {
+    # For remote job tests, define CYLC_TEST_PLATFORM_WSFS from global
+    # config '[test battery]remote platform'.
+    # Skip all tests if is not defined.
+    # Call immediately after sourcing the test header, for skip_all to work.
+    CYLC_TEST_PLATFORM_WSFS="$(
+        cylc get-global-config -i '[test battery]remote platform with shared fs' 2>'/dev/null'
+    )"
+    if [[ -z "${CYLC_TEST_PLATFORM_WSFS}" ]]; then
+        skip_all '"[test battery]remote platform with shared fs": not defined'
+    fi
+    # This is ugly, but some tests require these variables for direct ssh-ing.
+    CYLC_TEST_HOST_WSFS="$(
+        cylc get-global --item \
+            "[platforms][${CYLC_TEST_PLATFORM_WSFS}]hosts" \
+            | awk -F ',' '{print $1}' \
+        2>/dev/null
+    )"
+    if [[ -z "${CYLC_TEST_HOST_WSFS}" ]]; then
+        skip_all '"[test battery]remote platform with shared fs": not configured'
+    fi
+    export CYLC_TEST_PLATFORM_WSFS
+    export CYLC_TEST_HOST_WSFS
 }
 
 get_fqdn_by_host() {
@@ -744,6 +801,8 @@ print(get_fqdn_by_host(${TARGET}))
 
 PATH="${CYLC_REPO_DIR}/bin:${PATH}"
 
+RUN_DIR="$(eval echo "$(cylc get-global-config --print-run-dir --color=never)")"
+export RUN_DIR
 TEST_NAME_BASE="$(basename "$0" '.t')"
 TEST_SOURCE_DIR="$(cd "$(dirname "$0")" && pwd)"
 TEST_DIR="$(mktemp -d)"

@@ -49,12 +49,6 @@ dangerous because the new suite will overwrite files in the existing run
 directory. You should consider deleting or renaming an existing run directory
 rather than just re-use it with another suite."""
 
-
-import sys
-from cylc.flow.remote import remrun
-if remrun():
-    sys.exit(0)
-
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.suite_files import register
 from cylc.flow.terminal import cli_function

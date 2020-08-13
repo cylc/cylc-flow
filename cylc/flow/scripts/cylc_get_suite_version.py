@@ -22,13 +22,6 @@ Interrogate running suite REG to find what version of cylc is running it.
 
 To find the version you've invoked at the command line see "cylc version"."""
 
-import sys
-if '--use-ssh' in sys.argv[1:]:
-    sys.argv.remove('--use-ssh')
-    from cylc.flow.remote import remrun
-    if remrun():
-        sys.exit(0)
-
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import SuiteRuntimeClient
 
@@ -39,9 +32,8 @@ def main():
     (options, args) = parser.parse_args()
     suite = args[0]
 
-    pclient = SuiteRuntimeClient(
-        suite, options.owner, options.host, options.port)
-    print(pclient('get_cylc_version', timeout=options.comms_timeout))
+    pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
+    print(pclient('get_cylc_version'))
 
 
 if __name__ == "__main__":
