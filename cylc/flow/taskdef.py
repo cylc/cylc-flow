@@ -18,7 +18,6 @@
 
 from collections import deque
 
-from cylc.flow.cycling.loader import get_point
 from cylc.flow.exceptions import TaskDefError
 from cylc.flow.task_id import TaskID
 from cylc.flow import LOG

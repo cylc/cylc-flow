@@ -16,11 +16,10 @@
 """Cylc site and user configuration file spec."""
 
 import os
-import re
 
 from cylc.flow import LOG
 from cylc.flow import __version__ as CYLC_VERSION
-from cylc.flow.hostuserutil import get_user_home, is_remote_user
+from cylc.flow.hostuserutil import get_user_home
 from cylc.flow.network.authorisation import Priv
 from cylc.flow.parsec.config import ParsecConfig, ConfigNode as Conf
 from cylc.flow.parsec.exceptions import ParsecError

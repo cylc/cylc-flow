@@ -28,18 +28,8 @@ need to trigger a queue-limited task twice to get it to submit immediately).
 
 """
 
-import re
-import os
-import time
-import shutil
-import difflib
-from subprocess import call
-
-from cylc.flow.exceptions import CylcError, UserInputError
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import SuiteRuntimeClient
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
-from cylc.flow.task_job_logs import JOB_LOG_DIFF
 from cylc.flow.terminal import prompt, cli_function
 
 

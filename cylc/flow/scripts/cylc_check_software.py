@@ -148,10 +148,11 @@ def check_py_module_ver(module, min_ver, write=True):
         if module == 'EmPy':
             # we want the 'em' module, but there is more than one out there
             # we want the one that provides 'Interpreter'
-            from em import Interpreter
+            from em import Interpreter  # noqa: F401
+
             module_version = sys.modules['em'].__version__
         elif module == 'ansimarkup':
-            import ansimarkup
+            import ansimarkup  # noqa: F401
             import pkg_resources
             module_version = pkg_resources.get_distribution(
                 'ansimarkup').version
