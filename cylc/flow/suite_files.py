@@ -414,14 +414,18 @@ def parse_suite_arg(options, arg):
     except SuiteServiceFileError:
         arg = os.path.abspath(arg)
         if os.path.isdir(arg):
-            try:
-                # in case registration failed because arg was an absolute path
-                arg_base = os.path.basename(arg)
-                path = get_flow_file(arg_base, options.suite_owner)
-                name = arg_base
-            except SuiteServiceFileError:
-                path = os.path.join(arg, SuiteFiles.FLOW_FILE)
-                name = os.path.basename(arg)
+            path = os.path.join(arg, SuiteFiles.FLOW_FILE)
+            name = os.path.basename(arg)
+            if not os.path.exists(path):
+                # Probably using deprecated suite.rc
+                path = os.path.join(arg, SuiteFiles.SUITE_RC)
+                if not os.path.exists(path):
+                    raise SuiteServiceFileError(
+                        f'no flow.cylc or suite.rc in {arg}')
+                else:
+                    LOG.warning(
+                        f'The filename "{SuiteFiles.SUITE_RC}" is deprecated '
+                        f'in favor of "{SuiteFiles.FLOW_FILE}".')
         else:
             path = arg
             name = os.path.basename(os.path.dirname(arg))
@@ -480,7 +484,7 @@ def register(reg=None, source=None, redirect=False, rundir=None):
                 f'of "{SuiteFiles.FLOW_FILE}". Symlink created.')
         else:
             raise SuiteServiceFileError(
-                f"no flow.cylc or suite.rc in {source}")
+                f'no flow.cylc or suite.rc in {source}')
 
     # Create service dir if necessary.
     srv_d = get_suite_srv_dir(reg)

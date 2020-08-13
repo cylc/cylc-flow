@@ -15,10 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #------------------------------------------------------------------------------
-# Test that a suite.rc file is upgraded to flow.cylc on registration
+# Test backwards compatibility for suite.rc files
 
 . "$(dirname "$0")/test_header"
-set_test_number 2
+set_test_number 3
 
 init_suiterc() {
     local TEST_NAME="$1"
@@ -30,15 +30,13 @@ init_suiterc() {
 }
 
 init_suiterc "${TEST_NAME_BASE}" <<'__FLOW__'
-[cylc]
-    UTC mode = True
 [scheduling]
-    initial cycle point = 2020-01-01T00Z
-    final cycle point = 2020-01-07T00Z
-    [[dependencies]]
-        [[[T00]]]
-            graph = foo => bar
+    [[graph]]
+        R1 = foo => bar
 __FLOW__
+
+TEST_NAME="${TEST_NAME_BASE}-validate"
+run_ok "${TEST_NAME}" cylc validate .
 
 TEST_NAME="${TEST_NAME_BASE}-register"
 run_ok "${TEST_NAME}" cylc register "${SUITE_NAME}"
