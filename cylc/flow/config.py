@@ -2335,3 +2335,20 @@ class SuiteConfig:
             return []
         else:
             return None
+
+    def get_rsync_includes(self):
+        """Validate and return items configured to be included in the file
+            installation"""
+        includes = self.cfg['scheduler']['includes']
+        if includes:
+            illegal_includes = []
+            for include in includes:
+                if include.count("/") > 1:
+                    illegal_includes.append(f"{include}")
+            if len(illegal_includes) > 0:
+                raise SuiteConfigError(
+                    "Error in [scheduler] includes. "
+                    "Directories can only be from the top level, please "
+                    "reconfigure:" + str(illegal_includes)[1:-1])
+            else:
+                return includes

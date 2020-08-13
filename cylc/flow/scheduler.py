@@ -728,7 +728,8 @@ class Scheduler:
                 if (
                     self.task_job_mgr.task_remote_mgr.remote_init(
                         platform_name, self.curve_auth,
-                        self.client_pub_key_dir
+                        self.client_pub_key_dir,
+                        self.config.get_rsync_includes()
                     )
                     is not None
                 ):
@@ -1237,7 +1238,8 @@ class Scheduler:
                     itasks,
                     self.curve_auth,
                     self.client_pub_key_dir,
-                    self.config.run_mode('simulation')
+                    self.config.run_mode('simulation'),
+                    self.config.get_rsync_includes()
             ):
                 # TODO log itask.flow_label here (beware effect on ref tests)
                 LOG.info('[%s] -triggered off %s',

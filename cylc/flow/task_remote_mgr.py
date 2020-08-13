@@ -35,7 +35,11 @@ import cylc.flow.flags
 from cylc.flow.hostuserutil import (
     is_remote_host, is_remote_platform
 )
-from cylc.flow.pathutil import get_remote_suite_run_dir
+from cylc.flow.pathutil import (
+    get_remote_suite_run_dir,
+    get_suite_run_dir,
+    get_suite_run_log_dir)
+from cylc.flow.remote import construct_rsync_over_ssh_cmd
 from cylc.flow.subprocctx import SubProcContext
 from cylc.flow.suite_files import (
     SuiteFiles,
@@ -48,6 +52,7 @@ from cylc.flow.task_remote_cmd import (
     FILE_BASE_UUID, REMOTE_INIT_DONE, REMOTE_INIT_NOT_REQUIRED)
 from cylc.flow.platforms import get_platform, get_host_from_platform
 from cylc.flow.remote import construct_platform_ssh_cmd
+from cylc.flow.wallclock import get_current_time_string
 
 
 REMOTE_INIT_FAILED = 'REMOTE INIT FAILED'
@@ -140,7 +145,8 @@ class TaskRemoteMgr:
             if value is not None:
                 del self.remote_command_map[key]
 
-    def remote_init(self, platform_name, curve_auth, client_pub_key_dir):
+    def remote_init(self, platform_name, curve_auth,
+                    client_pub_key_dir, rsync_includes):
         """Initialise a remote [owner@]host if necessary.
 
         Create UUID file on a platform ".service/uuid" for remotes to identify
@@ -229,7 +235,7 @@ class TaskRemoteMgr:
                 stdin_files=[tmphandle]),
             self._remote_init_callback,
             [platform, tmphandle,
-             curve_auth, client_pub_key_dir])
+             curve_auth, client_pub_key_dir, rsync_includes])
         # None status: Waiting for command to finish
         self.remote_init_map[platform['name']] = None
         return self.remote_init_map[platform['name']]
@@ -310,14 +316,37 @@ class TaskRemoteMgr:
 
     def _remote_init_callback(
         self, proc_ctx, platform, tmphandle,
-        curve_auth, client_pub_key_dir
+        curve_auth, client_pub_key_dir, rsync_includes
     ):
         """Callback when "cylc remote-init" exits"""
+
         self.ready = True
         try:
             tmphandle.close()
         except OSError:  # E.g. ignore bad unlink, etc
             pass
+        if REMOTE_INIT_DONE in proc_ctx.out:
+            self.platform_name = platform['name']
+            src_path = get_suite_run_dir(self.suite)
+            dst_path = get_remote_suite_run_dir(platform, self.suite)
+            time_str = get_current_time_string(
+                override_use_utc=True, use_basic_format=True,
+                display_sub_seconds=False
+            )
+            logfile = get_suite_run_log_dir(
+                self.suite,
+                f"log-file-install-{self.platform_name}-{time_str}")
+            with open(logfile, "wb") as handle:
+                handle.write(b"File installation information: ")
+            try:
+                Popen(construct_rsync_over_ssh_cmd(
+                    src_path,
+                    dst_path,
+                    platform,
+                    logfile,
+                    rsync_includes))
+            except Exception as ex:
+                LOG.error(f"Problem during rsync: {ex}")
         if proc_ctx.ret_code == 0:
             if "KEYSTART" in proc_ctx.out:
                 regex_result = re.search(
@@ -328,7 +357,7 @@ class TaskRemoteMgr:
                     KeyType.PUBLIC,
                     KeyOwner.CLIENT,
                     suite_srv_dir=suite_srv_dir,
-                    platform=platform['name']
+                    platform=self.platform_name
                 )
                 old_umask = os.umask(0o177)
                 with open(
@@ -345,7 +374,7 @@ class TaskRemoteMgr:
                 if status in proc_ctx.out:
                     # Good status
                     LOG.debug(proc_ctx)
-                    self.remote_init_map[platform['name']] = status
+                    self.remote_init_map[self.platform_name] = status
                     return
         # Bad status
         LOG.error(TaskRemoteMgmtError(
@@ -374,15 +403,4 @@ class TaskRemoteMgr:
                     SuiteFiles.Service.DIRNAME,
                     SuiteFiles.Service.CONTACT)))
 
-        if comm_meth in ['zmq']:
-            suite_srv_dir = get_suite_srv_dir(self.suite)
-            server_pub_keyinfo = KeyInfo(
-                KeyType.PUBLIC,
-                KeyOwner.SERVER,
-                suite_srv_dir=suite_srv_dir)
-            dest_path_srvr_public_key = os.path.join(
-                SuiteFiles.Service.DIRNAME, server_pub_keyinfo.file_name)
-            items.append(
-                (server_pub_keyinfo.full_key_path,
-                 dest_path_srvr_public_key))
         return items

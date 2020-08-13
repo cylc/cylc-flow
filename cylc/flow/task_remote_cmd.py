@@ -36,7 +36,7 @@ REMOTE_INIT_DONE = 'REMOTE INIT DONE'
 REMOTE_INIT_NOT_REQUIRED = 'REMOTE INIT NOT REQUIRED'
 
 
-def remove_keys_on_platform(srvd):
+def remove_keys_on_platform(srvd, full_clean=False):
     """Removes platform-held authentication keys"""
     keys = {
         "client_private_key": KeyInfo(
@@ -47,13 +47,11 @@ def remove_keys_on_platform(srvd):
             KeyType.PUBLIC,
             KeyOwner.CLIENT,
             suite_srv_dir=srvd, server_held=False),
-        "server_public_key": KeyInfo(
-            KeyType.PUBLIC,
-            KeyOwner.SERVER,
-            suite_srv_dir=srvd),
     }
     # WARNING, DESTRUCTIVE. Removes old keys if they already exist.
-
+    if full_clean:
+        keys.update({"server_public_key": KeyInfo(
+            KeyType.PUBLIC, KeyOwner.SERVER, suite_srv_dir=srvd)})
     for k in keys.values():
         if os.path.exists(k.full_key_path):
             os.remove(k.full_key_path)

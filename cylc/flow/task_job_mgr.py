@@ -185,7 +185,8 @@ class TaskJobManager:
         return [prepared_tasks, bad_tasks]
 
     def submit_task_jobs(self, suite, itasks, curve_auth,
-                         client_pub_key_dir, is_simulation=False):
+                         client_pub_key_dir, is_simulation=False,
+                         rsync_includes=None):
         """Prepare and submit task jobs.
 
         Submit tasks where possible. Ignore tasks that are waiting for host
@@ -222,7 +223,7 @@ class TaskJobManager:
             # Re-fetch a copy of platform
             platform = itasks[0].platform
             is_init = self.task_remote_mgr.remote_init(
-                platform_name, curve_auth, client_pub_key_dir
+                platform_name, curve_auth, client_pub_key_dir, rsync_includes
             )
             if is_init is None:
                 # Remote is waiting to be initialised

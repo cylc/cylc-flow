@@ -30,6 +30,7 @@ from time import sleep
 
 import cylc.flow.flags
 from cylc.flow import __version__ as CYLC_VERSION
+from cylc.flow import LOG
 from cylc.flow.platforms import get_platform, get_host_from_platform
 
 
@@ -152,6 +153,68 @@ def construct_platform_ssh_cmd(raw_cmd, platform, **kwargs):
         **kwargs
     )
     return ret
+
+
+def get_includes_to_rsync(rsync_includes=None):
+    """Returns a list of directories/files, configured in suite.rc,
+        to be included in the remote file installation.
+    """
+
+    configured_includes = []
+
+    if rsync_includes:
+        for include in rsync_includes:
+            if include.endswith("/"):  # item is a directory
+                configured_includes.append("/" + include + "***")
+            else:  # item is a file
+                configured_includes.append("/" + include)
+
+    return configured_includes
+
+
+def construct_rsync_over_ssh_cmd(
+        src_path, dst_path, platform, logfile, rsync_includes=None):
+    """Constructs the rsync command used for remote file installation
+        Args:
+        src_path(string): source path
+        dst_path(string): path of target
+        dst_host(string): remote host name
+        logfile(str): the path to the file logging the rsync
+        rsync_includes(list): files and directories to be included in the rsync
+    """
+    dst_host = platform['name']
+    rsync_cmd = "rsync -v --perms --recursive --links --checksum --delete"
+
+    ssh_cmd = platform['ssh command']
+    rsync_cmd = shlex.split(rsync_cmd)
+    rsync_cmd.append(f"--log-file={logfile}")
+    rsync_cmd.append("--rsh=" + ssh_cmd)
+    # Note to future devs - be wary of changing the order of the following
+    # rsync options, rsync is very particular about order of in/ex-cludes.
+    rsync_cmd.append('--include=/.service/')
+    rsync_cmd.append('--include=/.service/server.key')
+    rsync_cmd.append('--include=/.service/contact')
+    excludes = ['log', 'share', 'work']
+    for exclude in excludes:
+        rsync_cmd.append(f"--exclude={exclude}")
+    # rsync filter by the user - they should never be transferred.
+    rsync_cmd.append("--filter=: .rsync-filter")
+    default_includes = [
+        '/app/***',
+        '/bin/***',
+        '/etc/***',
+        '/lib/***']
+    for include in default_includes:
+        rsync_cmd.append(f"--include={include}")
+    configured_includes = get_includes_to_rsync(rsync_includes)
+    for include in configured_includes:
+        rsync_cmd.append(f"--include={include}")
+    # The following excludes are required in case these are added to the
+    rsync_cmd.append("--exclude=*")  # exclude everything else
+    rsync_cmd.append(f"{src_path}/")
+    rsync_cmd.append(f"{dst_host}:{dst_path}/")
+    LOG.debug(f"rsync cmd use for file install: {rsync_cmd}")
+    return rsync_cmd
 
 
 def construct_ssh_cmd(
