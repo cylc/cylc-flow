@@ -45,7 +45,7 @@ import colorama
 colorama.init(strip=True)
 
 
-class Diff(object):
+class Diff:
     """Representation of a diff between two dictionaries."""
 
     BRACES = {

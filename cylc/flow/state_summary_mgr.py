@@ -28,7 +28,7 @@ from cylc.flow.wallclock import (
 )
 
 
-class StateSummaryMgr(object):
+class StateSummaryMgr:
     """Manage suite state summary for client."""
 
     TIME_FIELDS = ['submitted_time', 'started_time', 'finished_time']

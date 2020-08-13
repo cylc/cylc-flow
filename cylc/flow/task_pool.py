@@ -48,7 +48,7 @@ from cylc.flow.wallclock import get_current_time_string
 from cylc.flow.platforms import platform_from_name
 
 
-class FlowLabelMgr(object):
+class FlowLabelMgr:
     """
     Manage flow labels consisting of a string of one or more letters [a-zA-Z].
 
@@ -130,7 +130,7 @@ class FlowLabelMgr(object):
         return bool(labs1.intersection(labs2))
 
 
-class TaskPool(object):
+class TaskPool:
     """Task pool of a suite."""
 
     ERR_PREFIX_TASKID_MATCH = "No matching tasks found: "

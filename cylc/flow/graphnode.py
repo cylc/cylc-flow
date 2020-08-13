@@ -23,7 +23,7 @@ from cylc.flow.exceptions import GraphParseError
 from cylc.flow.task_id import TaskID
 
 
-class GraphNodeParser(object):
+class GraphNodeParser:
     """Provide graph node parsing and caching service"""
 
     # Match a graph node string.

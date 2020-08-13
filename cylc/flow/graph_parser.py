@@ -25,7 +25,7 @@ from cylc.flow.task_id import TaskID
 ARROW = '=>'
 
 
-class Replacement(object):
+class Replacement:
     """A class to remember match group information in re.sub() calls"""
     def __init__(self, replacement):
         self.replacement = replacement
@@ -40,7 +40,7 @@ class Replacement(object):
         return replaced
 
 
-class GraphParser(object):
+class GraphParser:
     """Class for extracting dependency information from cylc graph strings.
 
     For each task in the graph string, results are stored as:
