@@ -53,6 +53,7 @@ from cylc.flow.platforms import (
     get_host_from_platform,
     get_install_target_from_platform)
 from cylc.flow.remote import construct_platform_ssh_cmd
+from cylc.flow.wallclock import get_current_time_string
 
 REMOTE_INIT_FAILED = 'REMOTE INIT FAILED'
 
@@ -231,7 +232,7 @@ class TaskRemoteMgr:
                 stdin_files=[tmphandle]),
             self._remote_init_callback,
             [platform, tmphandle,
-             curve_auth, client_pub_key_dir])
+             curve_auth, client_pub_key_dir, rsync_includes])
         # None status: Waiting for command to finish
         self.remote_init_map[platform['install target']] = None
         return self.remote_init_map[platform['install target']]
@@ -306,6 +307,7 @@ class TaskRemoteMgr:
             self, proc_ctx, platform, tmphandle,
             curve_auth, client_pub_key_dir):
         """Callback when "cylc remote-init" exits"""
+
         self.ready = True
         try:
             tmphandle.close()
