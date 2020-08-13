@@ -62,6 +62,18 @@ class SuiteRuntimeClient(ZMQSocketBase):
             Set the default timeout in seconds. The default is
             ``ZMQClient.DEFAULT_TIMEOUT``.
             Note the default timeout can be overridden for individual requests.
+        host (str):
+            The host where the flow is running if known.
+
+            If both host and port are provided it is not necessary to load
+            the contact file.
+        port (int):
+            The port on which the REQ-REP TCP server is listening.
+
+            If both host and port are provided it is not necessary to load
+            the contact file.
+
+    Attributes:
         timeout_handler (function):
             Optional function which runs before ClientTimeout is raised.
             This provides an interface for raising more specific exceptions in
@@ -97,13 +109,18 @@ class SuiteRuntimeClient(ZMQSocketBase):
     def __init__(
             self,
             suite: str,
+            host: str = None,
+            port: int = None,
             context: object = None,
             timeout: Union[float, str] = None,
             srv_public_key_loc: str = None
     ):
         super().__init__(zmq.REQ, context=context)
         self.suite = suite
-        host, port, _ = get_location(suite)
+        if not host or not port:
+            host, port, _ = get_location(suite)
+        else:
+            port = int(port)
         if timeout is None:
             timeout = self.DEFAULT_TIMEOUT
         else:
