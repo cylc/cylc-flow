@@ -649,7 +649,6 @@ def ingest_time(value, now=None):
     # remove extraneous whitespace from cycle point
     value = value.replace(" ", "")
     parser = SuiteSpecifics.point_parser
-    timepoint = parser.parse(value)
 
     # integer point or old-style date-time cycle point format
     is_integer = bool(re.match(r"\d+$", value))
@@ -662,15 +661,25 @@ def ingest_time(value, now=None):
     is_prev_next = "next" in value or "previous" in value
     # offset from now (±P...)
     is_offset = value.startswith("P") or value.startswith("-P")
-    # missing date-time components off the front (e.g. 01T00)
-    is_truncated = timepoint.truncated
 
     if (
         is_integer
         or is_expanded
-        or not any((is_prev_next, is_offset, is_truncated))
     ):
         # we don't need to do any fancy processing
+        return value
+
+    # parse the timepoint if needed
+    if is_prev_next or is_offset:
+        # `value` isn't necessarily valid ISO8601
+        timepoint = None
+        is_truncated = None
+    else:
+        timepoint = parser.parse(value)
+        # missing date-time components off the front (e.g. 01T00)
+        is_truncated = timepoint.truncated
+
+    if not any((is_prev_next, is_offset, is_truncated)):
         return value
 
     if now is None:
