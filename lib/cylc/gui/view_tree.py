@@ -264,11 +264,11 @@ class ControlTree(object):
         return self._nat_cmp(prop1, prop2)
 
     def default_sort_column(self, model, iter1, iter2):
-        point_string1 = model.get_value(iter1, 1)
-        point_string2 = model.get_value(iter2, 1)
-        if point_string1 is None or point_string2 is None:
-            return cmp(point_string1, point_string2)
-        return self._nat_cmp(point_string1, point_string2)
+        task_name_string1 = model.get_value(iter1, 1)
+        task_name_string2 = model.get_value(iter2, 1)
+        if task_name_string1 is None or task_name_string2 is None:
+            return cmp(task_name_string1, task_name_string2)
+        return self._nat_cmp(task_name_string1, task_name_string2)
 
     def _get_interval_in_seconds(self, val):
         """Convert the IOS 8601 date/time to seconds."""
