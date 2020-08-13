@@ -25,7 +25,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 set -eu
 SSH='ssh -oBatchMode=yes -oConnectTimeout=5'
 SCP='scp -oBatchMode=yes -oConnectTimeout=5'
-$SSH -n "${CYLC_TEST_PLATFORM}" "mkdir -p cylc-run/.bin"
+$SSH -n "${CYLC_TEST_HOST}" "mkdir -p cylc-run/.bin"
 # shellcheck disable=SC2016
 create_test_globalrc "" "
 [platforms]
@@ -55,6 +55,6 @@ TEST_NAME=${TEST_NAME_BASE}-stop
 run_ok "${TEST_NAME}" cylc stop --kill --max-polls=20 --interval=1 "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
-$SSH -n "${CYLC_TEST_PLATFORM}" "rm -rf cylc-run/.bin/"
+$SSH -n "${CYLC_TEST_HOST}" "rm -rf cylc-run/.bin/"
 purge_suite "${SUITE_NAME}"
 exit
