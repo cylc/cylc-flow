@@ -18,7 +18,7 @@
             touch 'file'
             timeout 30 bash -c 'while [[ -e 'file' ]]; do sleep 1; done' || true
         """
-        platform = {{environ['CYLC_REMOTE_PLATFORM']}}
+        platform = {{environ['CYLC_TEST_PLATFORM']}}
     [[t-shutdown]]
         script = """
             # Shutdown and wait
@@ -29,7 +29,7 @@
             # Release t-remote-1
             rm -f "${CYLC_SUITE_WORK_DIR}/${CYLC_TASK_CYCLE_POINT}/t-remote/file"
         """
-        platform = {{environ['CYLC_REMOTE_PLATFORM']}}
+        platform = {{environ['CYLC_TEST_PLATFORM']}}
     [[t-check-log]]
         script = """
             grep -q 'ERROR - garbage: initialisation did not complete' \

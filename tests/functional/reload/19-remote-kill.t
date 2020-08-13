@@ -23,10 +23,10 @@ set_test_number 3
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate --set="CYLC_REMOTE_PLATFORM=${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
+    cylc validate --set="CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 suite_run_fail "${TEST_NAME_BASE}-run" \
     cylc run --debug --no-detach --reference-test \
-    --set="CYLC_REMOTE_PLATFORM=${CYLC_REMOTE_PLATFORM}" \
+    --set="CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}" \
      "${SUITE_NAME}"
 sqlite3 "${SUITE_RUN_DIR}/.service/db" \
     'SELECT cycle,name,run_status FROM task_jobs' >'db.out'
@@ -35,6 +35,6 @@ cmp_ok 'db.out' <<'__OUT__'
 1|bar|0
 __OUT__
 
-purge_suite_platform "${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
+purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

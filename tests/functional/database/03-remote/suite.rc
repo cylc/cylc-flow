@@ -14,4 +14,4 @@
         script = true
     [[t2]]
         script = true
-        platform = {{ environ['CYLC_REMOTE_PLATFORM'] }}
+        platform = {{ environ['CYLC_TEST_PLATFORM'] }}

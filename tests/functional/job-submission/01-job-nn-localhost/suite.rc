@@ -7,9 +7,9 @@
         R1 = foo
 
 [runtime]
-{% if CYLC_REMOTE_PLATFORM is defined %}
+{% if CYLC_TEST_PLATFORM is defined %}
     [[root]]
-        platform = {{ CYLC_REMOTE_PLATFORM }}
+        platform = {{ CYLC_TEST_PLATFORM }}
 {% endif %}
     [[foo]]
         script = """

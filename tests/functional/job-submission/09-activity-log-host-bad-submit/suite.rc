@@ -13,7 +13,7 @@
     [[root]]
     [[bad-submitter]]
         script = true
-        platform = {{ CYLC_REMOTE_PLATFORM }}
+        platform = {{ CYLC_TEST_PLATFORM }}
     [[grepper]]
         script = """
             set -x

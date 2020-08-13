@@ -26,7 +26,7 @@ set_test_number 5
 
 create_test_globalrc "" "
 [platforms]
-   [[${CYLC_REMOTE_PLATFORM}]]
+   [[${CYLC_TEST_PLATFORM}]]
        retrieve job logs = False"
 install_suite "${TEST_NAME_BASE}" remote-simple
 
@@ -45,6 +45,6 @@ TEST_NAME=${TEST_NAME_BASE}-task-out
 run_ok "${TEST_NAME}" cylc cat-log -f o "${SUITE_NAME}" a-task.1
 grep_ok '^the quick brown fox$' "${TEST_NAME}.stdout"
 
-purge_suite_platform "${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
+purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

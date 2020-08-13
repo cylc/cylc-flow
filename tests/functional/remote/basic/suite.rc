@@ -11,4 +11,4 @@
 [runtime]
     [[foo]]
         script = "true" # fast
-        platform = {{ environ['CYLC_REMOTE_PLATFORM'] }}
+        platform = {{ environ['CYLC_TEST_PLATFORM'] }}

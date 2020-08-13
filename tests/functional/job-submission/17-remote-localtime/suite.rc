@@ -9,6 +9,6 @@
 [runtime]
     [[t1]]
         script = test -z "${TZ:-}"
-        platform = {{ environ['CYLC_REMOTE_PLATFORM'] }}
+        platform = {{ environ['CYLC_TEST_PLATFORM'] }}
         [[[job]]]
             execution time limit = PT1M

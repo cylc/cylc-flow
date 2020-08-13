@@ -20,7 +20,7 @@ cylc message 'echo done'
     [[local-task]]
         inherit = ECHO
     [[remote-task]]
-        platform = {{ environ['CYLC_REMOTE_PLATFORM'] }}
+        platform = {{ environ['CYLC_TEST_PLATFORM'] }}
         inherit = ECHO
     [[cat-log]]
         script = """
