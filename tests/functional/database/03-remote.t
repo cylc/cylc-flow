@@ -36,7 +36,7 @@ sqlite3 "${DB_FILE}" \
     >"${NAME}"
 cmp_ok "${NAME}" <<__SELECT__
 20200101T0000Z|t1|1|1|0|0|localhost|background
-20200101T0000Z|t2|1|1|0|0|${CYLC_TEST_HOST}|background
+20200101T0000Z|t2|1|1|0|0|${CYLC_TEST_PLATFORM}|background
 __SELECT__
 
 purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
