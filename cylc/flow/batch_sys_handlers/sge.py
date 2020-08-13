@@ -13,7 +13,45 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""SGE qsub job submission"""
+"""Submits task job scripts to Sun/Oracle Grid Engine with ``qsub``.
+
+.. cylc-scope:: suite.rc[runtime][<namespace>][job]
+
+SGE directives can be provided in the suite.rc file:
+
+.. code-block:: cylc
+
+   [runtime]
+       [[my_task]]
+           [[[job]]]
+               batch system = sge
+               execution time limit = P1D
+           [[[directives]]]
+               -cwd =
+               -q = foo
+               -l h_data = 1024M
+               -l h_rt = 24:00:00
+
+These are written to the top of the task job script like this:
+
+.. code-block:: bash
+
+   #!/bin/bash
+   # DIRECTIVES
+   #$ -cwd
+   #$ -q foo
+   #$ -l h_data=1024M
+   #$ -l h_rt=24:00:00
+
+If :cylc:conf:`execution time limit` is specified, it is used to generate the
+``-l h_rt`` directive. Do not specify the ``-l h_rt`` directive explicitly if
+:cylc:conf:`execution time limit` is specified.  Otherwise, the execution time
+limit known by the suite may be out of sync with what is submitted to the batch
+system.
+
+.. cylc-scope:: suite.rc
+
+"""
 
 import re
 

@@ -13,7 +13,47 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""SLURM job submission and manipulation."""
+"""Submits task job scripts to Simple Linux Utility for Resource Management.
+
+.. cylc-scope:: suite.rc[runtime][<namespace>][job]
+
+Uses the ``sbatch`` command. SLURM directives can be provided in the suite.rc
+file:
+
+.. code-block:: cylc
+
+   [runtime]
+       [[my_task]]
+           [[[job]]]
+               batch system = slurm
+               execution time limit = PT1H
+           [[[directives]]]
+               --nodes = 5
+               --account = QXZ5W2
+
+.. note::
+
+   Since not all SLURM commands have a short form, cylc requires
+   the long form directives.
+
+These are written to the top of the task job script like this:
+
+.. code-block:: bash
+
+   #!/bin/bash
+   #SBATCH --nodes=5
+   #SBATCH --time=60:00
+   #SBATCH --account=QXZ5W2
+
+If :cylc:conf:`execution time limit` is specified, it is used to generate the
+``--time`` directive. Do not specify the ``--time`` directive explicitly if
+:cylc:conf:`execution time limit` is specified.  Otherwise, the execution time
+limit known by the suite may be out of sync with what is submitted to the batch
+system.
+
+.. cylc-scope:: suite.rc
+
+"""
 
 import re
 import shlex

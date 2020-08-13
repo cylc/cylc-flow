@@ -13,7 +13,24 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Logic to submit jobs to the "at" batch system."""
+"""Submits task job scripts to the rudimentary Unix ``at`` scheduler.
+
+.. cylc-scope:: suite.rc[runtime][<namespace>][job]
+
+.. note::
+
+    The ``atd`` daemon must be running.
+
+.. note::
+
+   The ``atq`` command does not report if the job is running or not.
+
+If an :cylc:conf:`execution time limit` is specified for a task, its job will
+be wrapped by the ``timeout`` command.
+
+.. cylc-scope:: suite.rc
+
+"""
 
 import errno
 import os
@@ -22,20 +39,7 @@ from subprocess import PIPE
 
 
 class AtCommandHandler():
-    """Logic to submit jobs to the "at" batch system.
-
-    Submit the task job script to the simple 'at' scheduler. Note that
-    (1) the 'atd' daemon service must be running; (2) the atq command
-    does not report if the job is running or not.
-
-    How to make tasks stays in the queue until tea time:
-    [runtime]
-      [[MyTask]]
-        [[[job]]]
-           batch system = at
-           batch submit command template = at teatime
-    """
-
+    """Logic to submit jobs to the "at" batch system."""
     # List of known error strings when atd is not running
     ERR_NO_ATD_STRS = [
         "Can't open /var/run/atd.pid to signal atd. No atd running?",
