@@ -743,7 +743,7 @@ class SuiteConfig(object):
                     orig_cp_tz = 'Z'
                 else:
                     orig_cp_tz = get_local_time_zone_format()
-            elif cfg_cp_tz is not None:
+            else:
                 orig_cp_tz = cfg_cp_tz
         elif cfg_cp_tz is not None:
             dmp = TimePointDumper()

@@ -82,30 +82,23 @@ with Conf(
     with Conf('cylc'):
         Conf('UTC mode', VDR.V_BOOLEAN)
         Conf('cycle point format', VDR.V_CYCLE_POINT_FORMAT, desc='''
+            Set the date-time format that Cylc uses for
+            :term:`cycle points<cycle point>` in :term:`datetime cycling`
+            workflows.
+
             To just alter the timezone used in the date-time cycle point
-            format, see :ref:`cycle-point-time-zone`. To just alter the number
-            of expanded year digits (for years below 0 or above 9999), see
-            :ref:`cycle-point-num-expanded-year-digits`.
+            format, see :cylc:conf:`suite.rc[cylc]cycle point time zone`.
+            To just alter the number of expanded year digits (for years
+            below 0 or above 9999), see
+            :cylc:conf:`suite.rc[cylc]cycle point num expanded year digits`.
 
             Cylc usually uses a ``CCYYMMDDThhmmZ`` (``Z`` in the special
-            case of UTC) or ``CCYYMMDDThhmm+hhmm`` format (``+`` standing
-            for ``+`` or ``-`` here) for writing down date-time cycle points,
-            which follows one of the basic formats outlined in the ISO 8601
-            standard. For example, a cycle point on the 3rd of February 2001
-            at 4:50 a.m., UTC (+0000 timezone), would be written
-            ``20010203T0450Z``. Similarly, for the 3rd of February 2001 at
-            4:50 a.m., +1300 timezone, cylc would write ``20010203T0450+1300``.
+            case of UTC) or ``CCYYMMDDThhmm±hhmm`` format for writing
+            date-time cycle points, following the :term:`ISO8601` standard.
 
-            You may use the isodatetime library's syntax to write dates and
-            times in ISO 8601 formats - ``CC`` for century, ``YY`` for decade
-            and decadal year, ``+X`` for expanded year digits and their
-            positive or negative sign, thereafter following the ISO 8601
-            standard example notation except for fractional digits, which are
-            represented as ``,ii`` for ``hh``, ``,nn`` for ``mm``, etc.
-            For example, to write date-times as week dates with fractional
-            hours, set cycle point format to ``CCYYWwwDThh,iiZ`` e.g.
-            ``1987W041T08,5Z`` for 08:30 UTC on Monday on the fourth ISO week
-            of 1987.
+            You may use the `isodatetime library's syntax
+            <https://github.com/metomi/isodatetime#dates-and-times>`_ to set
+            the cycle point format, as demonstrated in the previous paragraph.
 
             You can also use a subset of the strptime/strftime POSIX
             standard - supported tokens are ``%F``, ``%H``, ``%M``, ``%S``,
@@ -113,14 +106,16 @@ with Conf(
 
             The time zone you specify here will be used only for
             writing/dumping cycle points. Cycle points that are input without
-            time zones will default to the local time zone unless
-            :ref:`cycle-point-time-zone` or :ref:`UTC-mode` are set. Not
-            specifying a time zone here is inadvisable as it leads to
-            ambiguity.
+            time zones will still default to the local time zone unless
+            :cylc:conf:`suite.rc[cylc]cycle point time zone` or
+            :cylc:conf:`suite.rc[cylc]UTC mode` are set. Not specifying a
+            time zone here is inadvisable as it leads to ambiguity.
 
-            The ISO8601 extended date-time format can be used
-            (``%Y-%m-%dT%H:%M``) but note that the "-" and ":" characters
-            end up in job log directory paths.
+            .. note::
+
+               The ISO8601 extended date-time format can be used
+               (``CCYY-MM-DDThh:mm``) but note that the "-" and ":" characters
+               end up in job log directory paths.
         ''')
         Conf('cycle point num expanded year digits', VDR.V_INTEGER, 0, desc='''
             For years below 0 or above 9999, the ISO 8601 standard specifies
@@ -140,33 +135,31 @@ with Conf(
             date-time cycle point dumping and inferring the time zone of cycle
             points that are input without time zones.
 
-            Time zones should be expressed as ISO 8601 time zone offsets from
-            UTC, such as ``+13``, ``+1300``, ``-0500`` or ``+0645``, with ``Z``
-            representing the special ``+0000`` case. Cycle points will be
-            converted to the time zone you give and will be represented with
-            this string at the end.
+            Time zones should be expressed as :term:`ISO8601` time zone offsets
+            from UTC, such as ``+13``, ``+1300``, ``-0500`` or ``+0645``,
+            with ``Z`` representing the special ``+0000`` case. Cycle points
+            will be converted to the time zone you give and will be
+            represented with this string at the end.
 
-            Cycle points that are input without time zones will use this time
-            zone if set. If this isn't set (and :ref:`UTC-mode` is also not
-            set), then this will default to the local time zone at the time of
-            running the suite. This will persist over local time zone changes
-            (e.g. if this isn't set and the suite is run during winter time,
-            then stopped, then restarted after summer time has begun, the
-            cycle points will remain in winter time).
+            If this isn't set (and :cylc:conf:`suite.rc[cylc]UTC mode` is also
+            not set), then it will default to the local time zone at the
+            time of running the suite. This will persist over local time zone
+            changes (e.g. if the suite is run during winter time, then stopped,
+            then restarted after summer time has begun, the cycle points will
+            remain in winter time).
 
             If this isn't set, and UTC mode is set to True, then this will
-            default to ``Z``. If you use a custom :ref:`cycle-point-format`,
-            it is a good idea to set the same time zone here. If you specify a
-            different one here, it will only be used for inferring
-            time-zone-less cycle points, while dumping will use the one from
-            the cycle point format.
+            default to ``Z``. If you use a custom
+            :cylc:conf:`suite.rc[cylc]cycle point format`, it is a good idea to
+            set the same time zone here. If you specify a different one here,
+            it will only be used for inferring timezone-less cycle points,
+            while dumping will use the one from the cycle point format.
 
             .. note::
 
-                The ISO standard also allows writing the hour and minute
-                separated by a ":" (e.g. ``+13:00``) - however, this is not
-                recommended, given that the time zone is used as part of task
-                output filenames.
+               It is not recommended to write the time zone with a ":"
+               (e.g. ``+05:30``), given that the time zone is used as part of
+               task output filenames.
         ''')
         Conf('required run mode', VDR.V_STRING, '',
              options=['', 'live', 'dummy', 'dummy-local', 'simulation'],
