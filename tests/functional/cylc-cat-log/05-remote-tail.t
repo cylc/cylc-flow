@@ -36,7 +36,7 @@ TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 $SCP "${PWD}/bin/my-tailer.sh" \
-    "${CYLC_TEST_PLATFORM}:cylc-run/.bin/my-tailer.sh
+    "${CYLC_TEST_HOST}:cylc-run/.bin/my-tailer.sh
 "
 #-------------------------------------------------------------------------------
 # Run detached.

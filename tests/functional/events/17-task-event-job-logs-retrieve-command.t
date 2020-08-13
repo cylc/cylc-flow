@@ -54,7 +54,7 @@ sed 's/^.* -v //' "${SUITE_LOG_D}/suite/my-rsync.log" >'my-rsync.log.edited'
 
 OPT_HEAD='--include=/1 --include=/1/t1'
 OPT_TAIL='--exclude=/**'
-ARGS="${CYLC_TEST_PLATFORM}:\$HOME/cylc-run/${SUITE_NAME}/log/job/ ${SUITE_LOG_D}/job/"
+ARGS="${CYLC_TEST_HOST}:\$HOME/cylc-run/${SUITE_NAME}/log/job/ ${SUITE_LOG_D}/job/"
 cmp_ok 'my-rsync.log.edited' <<__LOG__
 ${OPT_HEAD} --include=/1/t1/01 --include=/1/t1/01/** ${OPT_TAIL} ${ARGS}
 ${OPT_HEAD} --include=/1/t1/02 --include=/1/t1/02/** ${OPT_TAIL} ${ARGS}
