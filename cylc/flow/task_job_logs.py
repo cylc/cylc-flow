@@ -25,7 +25,6 @@ JOB_LOG_ERR = "job.err"
 JOB_LOG_ACTIVITY = "job-activity.log"
 JOB_LOG_STATUS = "job.status"
 JOB_LOG_XTRACE = "job.xtrace"  # Note this is also defined in job.sh.
-JOB_LOG_DIFF = "job-edit.diff"
 
 JOB_LOG_OPTS = {
     'j': JOB_LOG_JOB,
@@ -34,10 +33,7 @@ JOB_LOG_OPTS = {
     'a': JOB_LOG_ACTIVITY,
     's': JOB_LOG_STATUS,
     'x': JOB_LOG_XTRACE,
-    'd': JOB_LOG_DIFF
 }
-
-JOB_LOGS_LOCAL = [JOB_LOG_ACTIVITY, JOB_LOG_DIFF]
 
 NN = "NN"
 

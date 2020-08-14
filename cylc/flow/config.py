@@ -1025,8 +1025,6 @@ class SuiteConfig:
         # look if inheritance computation becomes a problem.
 
         results = OrderedDictWithDefaults()
-        # n_reps = 0
-        already_done = {}  # to store already computed namespaces by mro
 
         # Loop through runtime members, 'root' first.
         nses = list(self.cfg['runtime'])

@@ -18,7 +18,7 @@ import json
 import re
 from copy import deepcopy
 from time import time
-from typing import List, Tuple, Union
+from typing import List, Tuple
 
 from cylc.flow import LOG
 import cylc.flow.flags

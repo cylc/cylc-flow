@@ -150,7 +150,7 @@ def main(_, options, reg):
         if cylc.flow.flags.verbose:
             print('  + %s ok' % itask.identity)
 
-    print(cparse(f'<green>Valid for cylc-%s</green>' % CYLC_VERSION))
+    print(cparse('<green>Valid for cylc-%s</green>' % CYLC_VERSION))
     profiler.stop()
 
 

@@ -176,10 +176,6 @@ class TaskRemoteMgr:
         # Determine what items to install
         comm_meth = platform['communication method']
 
-        # Get a host and the owner from platform
-        host = get_host_from_platform(platform)
-        owner = platform['owner']
-
         # Get a list of files and folders to install;
         # if nothing needs install say so to remote_init_map and return.
         items = self._remote_init_items(comm_meth)

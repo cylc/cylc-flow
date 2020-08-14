@@ -30,6 +30,7 @@ jobs:
       - name: Style
         run: |
           pycodestyle
+          flake8
           etc/bin/shellchecker
 
       - name: Unit Tests

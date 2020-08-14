@@ -75,7 +75,7 @@ from cylc.flow.pathutil import (
 from cylc.flow.rundb import CylcSuiteDAO
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_job_logs import (
-    JOB_LOG_OUT, JOB_LOG_ERR, JOB_LOG_OPTS, NN, JOB_LOGS_LOCAL)
+    JOB_LOG_OUT, JOB_LOG_ERR, JOB_LOG_OPTS, NN, JOB_LOG_ACTIVITY)
 from cylc.flow.terminal import cli_function
 from cylc.flow.platforms import platform_from_name, get_host_from_platform
 
@@ -416,7 +416,7 @@ def main(parser, options, *args, color=False):
                         "job_id": str(live_job_id)}
 
         log_is_remote = (is_remote_platform(platform)
-                         and (options.filename not in JOB_LOGS_LOCAL))
+                         and (options.filename != JOB_LOG_ACTIVITY))
         log_is_retrieved = (platform['retrieve job logs']
                             and live_job_id is None)
         if log_is_remote and (not log_is_retrieved or options.force_remote):
