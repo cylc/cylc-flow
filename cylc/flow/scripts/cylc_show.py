@@ -39,7 +39,7 @@ from cylc.flow.terminal import cli_function
 
 def get_option_parser():
     parser = COP(
-        __doc__, comms=True, noforce=True, multitask=True,
+        __doc__, comms=True, multitask=True,
         argdoc=[
             ('REG', 'Suite name'),
             ('[TASK_NAME or TASK_GLOB ...]', 'Task names or match patterns')])

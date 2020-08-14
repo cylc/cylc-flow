@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -45,5 +45,5 @@ TEST_NAME="${TEST_NAME_BASE}-check-c"
 cylc show "${SUITE_NAME}" 'c.1' | sed -n "/prerequisites/,/outputs/p" > 'c-prereqs'
 cmp_ok "${TEST_SOURCE_DIR}/splitline_refs/c-ref" 'c-prereqs'
 #-------------------------------------------------------------------------------
-cylc shutdown "${SUITE_NAME}" --now -f
+cylc shutdown "${SUITE_NAME}" --now
 purge_suite "${SUITE_NAME}"

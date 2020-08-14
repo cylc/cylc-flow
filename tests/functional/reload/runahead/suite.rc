@@ -20,5 +20,5 @@
         script = """
 cylc__job__poll_grep_suite_log '\[foo.* (received)failed'
 perl -pi -e 's/(max active cycle points = )2( # marker)/\1 4\2/' $CYLC_SUITE_DEF_PATH/suite.rc
-cylc reload -f $CYLC_SUITE_NAME
+cylc reload $CYLC_SUITE_NAME
 """

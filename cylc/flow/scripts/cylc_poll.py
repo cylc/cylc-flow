@@ -25,7 +25,7 @@ Poll (query) task jobs to verify and update their statuses.
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import SuiteRuntimeClient
-from cylc.flow.terminal import prompt, cli_function
+from cylc.flow.terminal import cli_function
 
 
 def get_option_parser():
@@ -44,10 +44,6 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser, options, suite, *task_globs):
-    if task_globs:
-        prompt('Poll task %s in %s' % (task_globs, suite), options.force)
-    else:
-        prompt('Poll ALL tasks in %s' % (suite), options.force)
     pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
     pclient(
         'poll_tasks',
