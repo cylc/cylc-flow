@@ -26,6 +26,9 @@ management and does not bundle Jinja2.
 
 ### Fixes
 
+[#3759](https://github.com/cylc/cylc-flow/pull/3754) - Fix a bug in the GUI
+tree view that could cause tasks to be sorted in the wrong order.
+
 [#3734](https://github.com/cylc/cylc-flow/pull/3734) - Validate XTrigger
 labels to prevent runtime bugs when exporting environment variables.
 
