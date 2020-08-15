@@ -133,7 +133,7 @@ def remote_tidy(rund):
     else:
         if cylc.flow.flags.debug:
             print('Deleted: %s' % fname)
-    remove_keys_on_platform(srvd)
+    remove_keys_on_platform(srvd, full_clean=True)
     try:
         os.rmdir(srvd)  # remove directory if empty
     except OSError:

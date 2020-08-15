@@ -66,7 +66,7 @@ class TaskRemoteMgr:
         self.proc_pool = proc_pool
         # self.remote_command_map = {command: host|TaskRemoteMgmtError|None}
         self.remote_command_map = {}
-        # self.remote_init_map = {(host, owner): status, ...}
+        # self.remote_init_map = {(install target): status, ...}
         self.remote_init_map = {}
         self.single_task_mode = False
         self.uuid_str = None
@@ -177,7 +177,11 @@ class TaskRemoteMgr:
 
         """
         # get the platform from the platform_name
-        platform = get_platform(platform_name)
+        platform = platform_from_name(platform_name)
+        install_target = platform.get(
+            'install target')
+        if not install_target:
+            platform['install tagret'] = platform_name
 
         # If task is running locally we can skip the rest of this function
         if self.single_task_mode or not is_remote_platform(platform):
@@ -186,12 +190,12 @@ class TaskRemoteMgr:
         # See if a previous failed attempt to initialize this platform has
         # occurred.
         try:
-            status = self.remote_init_map[platform['name']]
+            status = self.remote_init_map[platform['install target']]
         except KeyError:
             pass  # Not yet initialised
         else:
             if status == REMOTE_INIT_FAILED:
-                del self.remote_init_map[platform['name']]
+                del self.remote_init_map[platform['install target']]
             return status
 
         # Determine what items to install
@@ -237,8 +241,8 @@ class TaskRemoteMgr:
             [platform, tmphandle,
              curve_auth, client_pub_key_dir, rsync_includes])
         # None status: Waiting for command to finish
-        self.remote_init_map[platform['name']] = None
-        return self.remote_init_map[platform['name']]
+        self.remote_init_map[platform['install target']] = None
+        return self.remote_init_map[platform['install target']]
 
     def remote_tidy(self):
         """Remove suite contact files from initialised remotes.
@@ -326,7 +330,7 @@ class TaskRemoteMgr:
         except OSError:  # E.g. ignore bad unlink, etc
             pass
         if REMOTE_INIT_DONE in proc_ctx.out:
-            self.platform_name = platform['name']
+            self.install_target = platform['install target']
             src_path = get_suite_run_dir(self.suite)
             dst_path = get_remote_suite_run_dir(platform, self.suite)
             time_str = get_current_time_string(
@@ -335,7 +339,7 @@ class TaskRemoteMgr:
             )
             logfile = get_suite_run_log_dir(
                 self.suite,
-                f"log-file-install-{self.platform_name}-{time_str}")
+                f"log-file-install-{self.install_target}-{time_str}")
             with open(logfile, "wb") as handle:
                 handle.write(b"File installation information: ")
             try:
@@ -357,7 +361,7 @@ class TaskRemoteMgr:
                     KeyType.PUBLIC,
                     KeyOwner.CLIENT,
                     suite_srv_dir=suite_srv_dir,
-                    platform=self.platform_name
+                    platform=self.install_target
                 )
                 old_umask = os.umask(0o177)
                 with open(
@@ -374,15 +378,16 @@ class TaskRemoteMgr:
                 if status in proc_ctx.out:
                     # Good status
                     LOG.debug(proc_ctx)
-                    self.remote_init_map[self.platform_name] = status
+                    self.remote_init_map[self.install_target] = status
                     return
         # Bad status
         LOG.error(TaskRemoteMgmtError(
             TaskRemoteMgmtError.MSG_INIT,
-            platform['name'], ' '.join(quote(item) for item in proc_ctx.cmd),
+            platform['install target'], ' '.join(
+                quote(item) for item in proc_ctx.cmd),
             proc_ctx.ret_code, proc_ctx.out, proc_ctx.err))
         LOG.error(proc_ctx)
-        self.remote_init_map[platform['name']] = REMOTE_INIT_FAILED
+        self.remote_init_map[platform['install target']] = REMOTE_INIT_FAILED
 
     def _remote_init_items(self, comm_meth):
         """Return list of items to install based on communication method.
