@@ -13,10 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Prune excess common flow labels
-
-"""
-import os
+"""Prune excess common flow labels."""
 
 from cylc.flow.main_loop import periodic
 

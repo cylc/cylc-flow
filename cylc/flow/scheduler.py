@@ -111,7 +111,7 @@ class SchedulerError(CylcError):
     pass
 
 
-class SchedulerUUID(object):
+class SchedulerUUID:
     """Scheduler identifier - which persists on restart."""
     __slots__ = ('value')
 

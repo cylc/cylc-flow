@@ -89,7 +89,7 @@ def get_test_inheritance_quotes():
     ]
 
 
-class TestSuiteConfig(object):
+class TestSuiteConfig:
     """Test class for the Cylc SuiteConfig object."""
 
     def test_xfunction_imports(self, mock_glbl_cfg):

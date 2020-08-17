@@ -17,10 +17,12 @@
 
 
 import re
+
 from cylc.flow.cycling.loader import get_point, standardise_point_string
+from cylc.flow.exceptions import PointParsingError
 
 
-class TaskID(object):
+class TaskID:
     """Task ID utilities."""
 
     DELIM = '.'

@@ -16,7 +16,7 @@
 perl -pi -e 's/(reloader => inter => )BAR( # marker1)/\1FOO\2/' $CYLC_SUITE_DEF_PATH/flow.cylc
 perl -pi -e 's/( )BAR:finish-all => FOO( # marker2)/\1FOO:finish-all => BAR\2/' $CYLC_SUITE_DEF_PATH/flow.cylc
 # reload
-cylc reload -f "${CYLC_SUITE_NAME}"
+cylc reload "${CYLC_SUITE_NAME}"
 cylc__job__poll_grep_suite_log -F 'Reload completed'
 """
     [[FOO, BAR]]

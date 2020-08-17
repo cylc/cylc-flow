@@ -37,18 +37,27 @@ from cylc.flow.task_id import TaskID
 from cylc.flow.task_job_logs import get_task_job_id
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_state import (
-    TASK_STATUSES_ACTIVE, TASK_STATUSES_FAILURE, TASK_STATUSES_NOT_STALLED,
-    TASK_STATUSES_SUCCESS, TASK_STATUS_WAITING, TASK_STATUS_EXPIRED,
-    TASK_STATUS_QUEUED, TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
-    TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_SUBMIT_RETRYING,
-    TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED,
-    TASK_STATUS_RETRYING, TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED,
-    TASK_OUTPUT_EXPIRED)
+    TASK_OUTPUT_EXPIRED,
+    TASK_OUTPUT_FAILED,
+    TASK_OUTPUT_SUCCEEDED,
+    TASK_STATUSES_ACTIVE,
+    TASK_STATUSES_NOT_STALLED,
+    TASK_STATUS_EXPIRED,
+    TASK_STATUS_FAILED,
+    TASK_STATUS_QUEUED,
+    TASK_STATUS_READY,
+    TASK_STATUS_RETRYING,
+    TASK_STATUS_RUNNING,
+    TASK_STATUS_SUBMITTED,
+    TASK_STATUS_SUBMIT_RETRYING,
+    TASK_STATUS_SUCCEEDED,
+    TASK_STATUS_WAITING
+)
 from cylc.flow.wallclock import get_current_time_string
 from cylc.flow.platforms import platform_from_name
 
 
-class FlowLabelMgr(object):
+class FlowLabelMgr:
     """
     Manage flow labels consisting of a string of one or more letters [a-zA-Z].
 
@@ -130,7 +139,7 @@ class FlowLabelMgr(object):
         return bool(labs1.intersection(labs2))
 
 
-class TaskPool(object):
+class TaskPool:
     """Task pool of a suite."""
 
     ERR_PREFIX_TASKID_MATCH = "No matching tasks found: "
@@ -514,22 +523,19 @@ class TaskPool(object):
         if not itask.reflow:
             return
         next_point = itask.next_point()
-        c_task = None
         if next_point is not None:
             parent_points = itask.tdef.get_parent_points(next_point)
             if (not parent_points or
                     all(x < self.config.start_point for x in parent_points)):
                 # Auto-spawn next instance of tasks with no parents at the next
                 # point (or with all parents before the suite start point).
-                c_task = self.get_or_spawn_task(
+                self.get_or_spawn_task(
                     itask.tdef.name, next_point, flow_label=itask.flow_label,
                     parent_id=itask.identity)
             else:
                 # Auto-spawn (if needed) next absolute-triggered instances.
                 for trig in itask.tdef.get_abs_triggers(next_point):
-                    p_name = trig.task_name
-                    p_point = trig.get_point(next_point)
-                    c_task = self.get_or_spawn_task(
+                    self.get_or_spawn_task(
                         itask.tdef.name, next_point,
                         flow_label=itask.flow_label,
                         parent_id=itask.identity)
@@ -1078,7 +1084,7 @@ class TaskPool(object):
                     TASK_STATUS_SUBMITTED,
                     TASK_STATUS_RUNNING,
                     is_held=False):
-                LOG.warning(f'[c_task] -suiciding while active')
+                LOG.warning(f'[{c_task}] -suiciding while active')
             self.remove(c_task, 'SUICIDE')
 
         # Remove the parent task if finished.

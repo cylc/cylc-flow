@@ -45,7 +45,7 @@ from cylc.flow.exceptions import ClientError, ClientTimeout
 from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.task_id import TaskID
-from cylc.flow.terminal import prompt, cli_function
+from cylc.flow.terminal import cli_function
 
 
 class StopPoller(Poller):
@@ -118,7 +118,6 @@ def main(parser, options, suite, shutdown_arg=None):
 
     if options.flow_label:
         # TODO integrate with the rest of stop functionality and options.
-        prompt('Stop flow %s' % suite, options.flow_label)
         pclient('stop_flow', {'flow_label': options.flow_label})
         return
 
@@ -128,32 +127,19 @@ def main(parser, options, suite, shutdown_arg=None):
             pclient, "suite stopped", options.interval, options.max_polls)
 
     if options.wall_clock:
-        prompt(
-            'Set shutdown at wall clock %s for %s' % (
-                options.wall_clock, suite),
-            options.force)
         pclient('set_stop_after_clock_time',
                 {'datetime_string': options.wall_clock})
     elif shutdown_arg is not None and TaskID.is_valid_id(shutdown_arg):
         # STOP argument detected
-        prompt(
-            'Set shutdown after task %s for %s' % (shutdown_arg, suite),
-            options.force)
         pclient('set_stop_after_task', {'task_id': shutdown_arg})
     elif shutdown_arg is not None:
         # not a task ID, may be a cycle point
-        prompt(
-            'Set shutdown at cycle point %s for %s' % (shutdown_arg, suite),
-            options.force)
         pclient('set_stop_after_point', {'point_string': shutdown_arg})
     elif options.now > 1:
-        prompt('Shut down and terminate %s now' % suite, options.force)
         pclient('stop_now', {'terminate': True})
     elif options.now:
-        prompt('Shut down %s now' % suite, options.force)
         pclient('stop_now')
     else:
-        prompt('Shut down %s' % suite, options.force)
         pclient('set_stop_cleanly', {'kill_active_tasks': options.kill})
 
     if int(options.max_polls) > 0:

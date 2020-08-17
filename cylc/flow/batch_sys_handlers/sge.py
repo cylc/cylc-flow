@@ -18,7 +18,7 @@
 import re
 
 
-class SGEHandler(object):
+class SGEHandler:
 
     """SGE qsub job submission"""
 

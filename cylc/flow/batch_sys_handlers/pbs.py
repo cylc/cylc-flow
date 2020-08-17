@@ -18,7 +18,7 @@
 import re
 
 
-class PBSHandler(object):
+class PBSHandler:
 
     """PBS batch system job submission and manipulation."""
 

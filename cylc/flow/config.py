@@ -96,7 +96,7 @@ def check_varnames(env):
 # TODO: separate config for run and non-run purposes?
 
 
-class SuiteConfig(object):
+class SuiteConfig:
     """Class for suite configuration items and derived quantities."""
 
     Q_DEFAULT = 'default'
@@ -1025,8 +1025,6 @@ class SuiteConfig(object):
         # look if inheritance computation becomes a problem.
 
         results = OrderedDictWithDefaults()
-        # n_reps = 0
-        already_done = {}  # to store already computed namespaces by mro
 
         # Loop through runtime members, 'root' first.
         nses = list(self.cfg['runtime'])

@@ -31,7 +31,6 @@ import cylc.flow.flags
 
 from cylc.flow.exceptions import CylcError
 from cylc.flow.loggingutil import CylcLogFormatter
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.parsec.exceptions import ParsecError
 
 
@@ -69,31 +68,6 @@ def supports_color():
     if 'ANSICON' in os.environ:
         return False
     return True
-
-
-def prompt(question, force=False, gui=False, no_force=False, no_abort=False,
-           keep_above=True):
-    """Interactive Yes/No prompt for cylc CLI scripts.
-
-    For convenience, on No we just exit rather than return.
-    If force is True don't prompt, just return immediately.
-
-    """
-    if (force or glbl_cfg().get(['disable interactive command prompts'])) and (
-            not no_force):
-        return True
-    if gui:
-        raise NotImplementedError
-    else:
-        cli_response = input('%s (y/n)? ' % question)
-        response_no = (cli_response not in ['y', 'Y'])
-    if response_no:
-        if no_abort:
-            return False
-        else:
-            sys.exit(0)
-    else:
-        return True
 
 
 def ansi_log(name='cylc', stream='stderr'):

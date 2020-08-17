@@ -24,7 +24,6 @@ import shutil
 import zmq.auth
 
 from cylc.flow import LOG
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import SuiteServiceFileError
 from cylc.flow.pathutil import get_suite_run_dir
 from cylc.flow.platforms import platform_from_name

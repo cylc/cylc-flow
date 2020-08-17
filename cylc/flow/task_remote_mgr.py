@@ -54,7 +54,7 @@ REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
 REMOTE_INIT_FAILED = 'REMOTE INIT FAILED'
 
 
-class TaskRemoteMgr(object):
+class TaskRemoteMgr:
     """Manage task job remote initialisation, tidy, selection."""
 
     def __init__(self, suite, proc_pool):
@@ -175,10 +175,6 @@ class TaskRemoteMgr(object):
 
         # Determine what items to install
         comm_meth = platform['communication method']
-
-        # Get a host and the owner from platform
-        host = get_host_from_platform(platform)
-        owner = platform['owner']
 
         # Get a list of files and folders to install;
         # if nothing needs install say so to remote_init_map and return.

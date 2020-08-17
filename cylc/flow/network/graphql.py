@@ -25,7 +25,6 @@ import logging
 from inspect import isclass, iscoroutinefunction
 
 from graphene.utils.str_converters import to_snake_case
-from graphql.execution import ExecutionResult
 from graphql.execution.utils import (
     get_operation_root_type, get_field_def
 )
@@ -226,12 +225,22 @@ class AstDocArguments:
 
 
 def execute_and_validate_and_strip(
-        schema,  # type: GraphQLSchema
-        document_ast,  # type: Document
-        *args,  # type: Any
-        **kwargs  # type: Any
+        schema,
+        document_ast,
+        *args,
+        **kwargs
 ):
-    # type: (...) -> Union[ExecutionResult, Observable]
+    """
+    Args:
+        schema (GraphQLSchema)
+        document_ast (Document)
+        args (Any)
+        kwargs (Any)
+
+    Returns
+        Union[ExecutionResult, Observable]
+
+    """
     result = execute_and_validate(schema, document_ast, *args, **kwargs)
 
     # Search request docuement to determine if 'stripNull: true' is set

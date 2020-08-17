@@ -25,7 +25,7 @@ from cylc.flow.exceptions import TriggerExpressionError
 from cylc.flow.data_messages_pb2 import PbPrerequisite, PbCondition
 
 
-class Prerequisite(object):
+class Prerequisite:
     """The concrete result of an abstract logical trigger expression."""
 
     # Memory optimization - constrain possible attributes to this list.

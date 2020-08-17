@@ -428,8 +428,6 @@ def help_func():
             category_help(category)
             sys.exit(0)
 
-    command_args = []
-
     if len(args) == 2 and (is_help(args[0]) or is_help(args[1])):
         # TWO ARGUMENTS, one help
         # cylc help CATEGORY
@@ -449,9 +447,6 @@ def help_func():
             except CommandError as exc2:
                 print(exc, file=sys.stderr)
                 raise SystemExit(exc2)
-            else:
-                # cylc COMMAND --help
-                command_args = ['--help']
         else:
             # cylc help CATEGORY
             category_help(category)

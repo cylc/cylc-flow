@@ -1480,7 +1480,7 @@ class SetVerbosity(Mutation):
 
 class Stop(Mutation):
     class Meta:
-        description = sstrip(f'''
+        description = sstrip('''
             Tell a suite server program to shut down.
 
             By default suites wait for all submitted and running tasks to
@@ -1509,7 +1509,7 @@ class Stop(Mutation):
 
 class StopFlow(Mutation):
     class Meta:
-        description = sstrip(f'''
+        description = sstrip('''
             Stop a specified flow from spawning any further.
         ''')
         resolver = partial(mutator, command='stop_flow')
@@ -1626,7 +1626,7 @@ class Remove(Mutation, TaskMutation):
 
 class Spawn(Mutation, TaskMutation):
     class Meta:
-        description = sstrip(f'''
+        description = sstrip('''
             Spawn children off of specified task outputs.
 
         ''')

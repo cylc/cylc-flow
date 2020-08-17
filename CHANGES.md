@@ -57,6 +57,9 @@ and `$GEDITOR` environment variables to determine the default editor to use.
 [#3574](https://github.com/cylc/cylc-flow/pull/3574) - use the bash
 installation defined in $path rather than hardcoding to /bin/bash.
 
+[#3774](https://github.com/cylc/cylc-flow/pull/3774) - Removed support for
+interactive prompt.
+
 ### Fixes
 
 [#3732](https://github.com/cylc/cylc-flow/pull/3732) - XTrigger labels

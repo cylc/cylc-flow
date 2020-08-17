@@ -44,7 +44,7 @@ from cylc.flow.exceptions import (
 UTC_UTC_OFFSET_HOURS_MINUTES = (0, 0)
 
 
-class CylcTimeParser(object):
+class CylcTimeParser:
 
     """Parser for Cylc abbreviated/full ISO 8601 syntax.
 

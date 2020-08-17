@@ -29,7 +29,7 @@ See also 'cylc [control] release'.
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import SuiteRuntimeClient
-from cylc.flow.terminal import prompt, cli_function
+from cylc.flow.terminal import cli_function
 
 
 def get_option_parser():
@@ -49,14 +49,6 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser, options, suite, *task_globs):
-    if task_globs:
-        prompt('Hold task(s) %s in %s' % (task_globs, suite), options.force)
-    elif options.hold_point_string:
-        prompt(
-            'Hold suite after %s' % options.hold_point_string, options.force)
-    else:
-        prompt('Hold suite %s' % suite, options.force)
-
     pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
 
     if task_globs:

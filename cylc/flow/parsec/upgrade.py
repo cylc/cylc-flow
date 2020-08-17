@@ -22,7 +22,7 @@ from cylc.flow.parsec.exceptions import UpgradeError
 from cylc.flow.parsec.OrderedDict import OrderedDict
 
 
-class converter(object):
+class converter:
     """Create custom config value converters."""
 
     def __init__(self, callback, descr):
@@ -36,7 +36,7 @@ class converter(object):
         return self.callback(val)
 
 
-class upgrader(object):
+class upgrader:
     """Handles upgrading of deprecated config values."""
 
     SITE_CONFIG = 'site config'

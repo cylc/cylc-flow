@@ -34,7 +34,7 @@ _ALT_TRIGGER_NAMES = {
 }
 
 
-class TaskTrigger(object):
+class TaskTrigger:
     """Class representing an upstream dependency.
 
     Args:
@@ -161,7 +161,7 @@ class TaskTrigger(object):
             f"Illegal task trigger name: {trigger_name}")
 
 
-class Dependency(object):
+class Dependency:
     """A graph dependency in its abstract form.
 
     Used to generate cylc.flow.prerequisite.Prerequisite objects.

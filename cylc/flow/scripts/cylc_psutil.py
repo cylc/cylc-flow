@@ -19,7 +19,6 @@
 
 For internal use with the `cylc.flow.host_select` module.
 """
-from itertools import dropwhile
 import json
 import sys
 

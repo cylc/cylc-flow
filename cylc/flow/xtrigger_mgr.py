@@ -18,7 +18,7 @@ import json
 import re
 from copy import deepcopy
 from time import time
-from typing import List, Tuple, Union
+from typing import List, Tuple
 
 from cylc.flow import LOG
 import cylc.flow.flags
@@ -50,7 +50,7 @@ ARG_VAL_TEMPLATES = [
 RE_STR_TMPL = re.compile(r'(?<!%)%\(([\w]+)\)s')
 
 
-class XtriggerManager(object):
+class XtriggerManager:
     """Manage clock triggers and xtrigger functions.
 
     # Example:

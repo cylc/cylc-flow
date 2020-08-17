@@ -29,7 +29,7 @@ from cylc.flow.task_state import (
 from cylc.flow.wallclock import get_unix_time_from_time_string as str2time
 
 
-class TaskProxy(object):
+class TaskProxy:
     """Represent an instance of a cycling task in a running suite.
 
     Attributes:
