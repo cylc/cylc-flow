@@ -32,8 +32,9 @@ u_tee = '\u251C' + u_hbar
 u_trm = '\u2514' + u_hbar
 
 
-def print_tree(tree, padding, use_unicode=False, prefix='', labels=None,
-               eq=False, sort=True):
+def get_tree(tree, padding, use_unicode=False, prefix='', labels=None,
+             eq=False, sort=True):
+
     ret = []
     if use_unicode:
         vbar = u_vbar
@@ -66,7 +67,7 @@ def print_tree(tree, padding, use_unicode=False, prefix='', labels=None,
         if isinstance(tree[item], dict):
             ret.append(line)
             ret.extend(
-                print_tree(
+                get_tree(
                     tree[item],
                     padding,
                     use_unicode,
@@ -89,3 +90,7 @@ def print_tree(tree, padding, use_unicode=False, prefix='', labels=None,
                     joiner = ''
                 ret.append(f'{line}{joiner}{tree[item]}')
     return ret
+
+
+def print_tree(*args, **kwargs):
+    print('\n'.join(get_tree(*args, **kwargs)))

@@ -62,7 +62,7 @@ from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
     Options
 )
-from cylc.flow.print_tree import print_tree
+from cylc.flow.print_tree import get_tree
 from cylc.flow.suite_files import ContactFileFields as Cont
 from cylc.flow.terminal import cli_function
 
@@ -372,7 +372,7 @@ async def _tree(pipe, formatter, opts, write):
         pointer[item] = ''
 
     # print tree
-    ret = print_tree(tree, '', sort=False, use_unicode=True)
+    ret = get_tree(tree, '', sort=False, use_unicode=True)
     write('\n'.join(ret))
 
 
