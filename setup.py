@@ -62,8 +62,8 @@ tests_require = [
     'pycodestyle>=2.5.0',
     'pytest-asyncio>=0.14.0',
     'pytest-cov>=2.8.0',
-    'pytest-xdist>=1.32.0',
-    'pytest>=5.3.0',
+    'pytest-xdist>=2',
+    'pytest>=6',
     'testfixtures>=6.11.0'
 ]
 
