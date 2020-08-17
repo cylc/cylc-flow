@@ -16,13 +16,11 @@
 """Tests for "cylc.flow.pathutil"."""
 
 from unittest import TestCase
-from unittest.mock import call, patch, MagicMock
+from unittest.mock import patch, MagicMock
 
 import pytest
 import os
 import logging
-
-from tests.unit.conftest import mock_glbl_cfg
 
 from cylc.flow.pathutil import (
     get_remote_suite_run_dir,

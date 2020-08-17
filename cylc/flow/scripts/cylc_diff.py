@@ -156,7 +156,7 @@ def main(parser, options, *args):
         prdict(suite1_only, '<', nested=options.nested)
 
     if n_otwo > 0:
-        msg = print(f'\n{n_otwo} items only in {suite2_name} (>)')
+        print(f'\n{n_otwo} items only in {suite2_name} (>)')
         prdict(suite2_only, '>', nested=options.nested)
 
     if n_diff > 0:
