@@ -55,7 +55,6 @@ def get_option_parser():
     parser = COP(
         __doc__,
         comms=True,
-        noforce=True,
         argdoc=[],
     )
 

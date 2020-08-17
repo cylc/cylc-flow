@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -37,6 +37,6 @@ cylc run "${SUITE_NAME}" --hold 1>'out' 2>&1
 poll_grep_suite_log 'Holding all waiting or queued tasks now'
 cylc show "${SUITE_NAME}" 'c.1' | sed -n "/prerequisites/,/outputs/p" > 'c-prereqs'
 contains_ok "${TEST_SOURCE_DIR}/multiline_and_refs/c-ref" 'c-prereqs'
-cylc shutdown "${SUITE_NAME}" --now -f
+cylc shutdown "${SUITE_NAME}" --now
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"

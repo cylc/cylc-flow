@@ -56,8 +56,7 @@ def get_option_parser():
         argdoc=[
             ('REG', 'Suite name')
         ],
-        comms=True,
-        noforce=True
+        comms=True
     )
 
     delta_keys = list(DELTAS_MAP)

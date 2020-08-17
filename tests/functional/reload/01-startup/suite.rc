@@ -12,6 +12,6 @@
         script = true
     [[b]]
         script = """
-cylc reload "${CYLC_SUITE_NAME}" -f
+cylc reload "${CYLC_SUITE_NAME}"
 cylc__job__poll_grep_suite_log -F 'Reload completed'
 """

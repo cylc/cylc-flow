@@ -22,7 +22,7 @@ fi
         script = """
 cylc__job__poll_grep_suite_log -F '[retrier.1] -running (held) => retrying (held)'
 cylc reload "${CYLC_SUITE_NAME}"
-cylc reload -f "${CYLC_SUITE_NAME}"
+cylc reload "${CYLC_SUITE_NAME}"
 cylc__job__poll_grep_suite_log -F 'Reload completed'
 cylc release "${CYLC_SUITE_NAME}" 'retrier.1'
 """

@@ -73,13 +73,6 @@ with Conf('flow.rc', desc='''
            The default is set quite high to avoid killing important
            processes when the system is under load.
     ''')
-    # client
-    Conf('disable interactive command prompts', VDR.V_BOOLEAN, True, desc='''
-        Commands that intervene in running suites can be made to ask for
-        confirmation before acting. Some find this annoying and ineffective as
-        a safety measure, however, so command prompts are disabled by default.
-    ''')
-    # suite
     Conf('run directory rolling archive length', VDR.V_INTEGER, -1, desc='''
         The number of old run directory trees to retain at start-up.
     ''')
@@ -680,6 +673,7 @@ def upg(cfg, descr):
     u.obsolete('8.0.0', ['xtrigger function timeout'])
     u.obsolete('8.0.0', ['enable run directory housekeeping'])
     u.obsolete('8.0.0', ['task messaging'])
+    u.obsolete('8.0.0', ['disable interactive command prompts'])
 
     u.upgrade()
 
