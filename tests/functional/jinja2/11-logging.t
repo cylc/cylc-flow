@@ -19,7 +19,7 @@
 
 . "$(dirname "$0")/test_header"
 set_test_number 2
-init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
+init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 #!Jinja2
 
 {% from "cylc.flow" import LOG %}
@@ -28,7 +28,7 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
 [scheduling]
     [[graph]]
         R1 = foo
-__SUITERC__
+__FLOW_CONFIG__
 
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}" --debug

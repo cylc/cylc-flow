@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -18,10 +18,10 @@
 # Test environment filtering
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 13 
+set_test_number 13
 #-------------------------------------------------------------------------------
 # a test suite that uses environment filtering:
-init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
+init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduling]
     [[graph]]
         R1 = "foo & bar & baz & qux"
@@ -48,7 +48,7 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
     [[qux]]
         [[[environment]]]
             QUX = qux
-__SUITERC__
+__FLOW_CONFIG__
 #-------------------------------------------------------------------------------
 # check validation
 TEST_NAME="${TEST_NAME_BASE}-validate"

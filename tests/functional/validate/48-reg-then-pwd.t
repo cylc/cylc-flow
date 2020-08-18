@@ -22,22 +22,22 @@ set_test_number 2
 SUITE_NAME="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}"
 
 mkdir -p 'good' "${SUITE_NAME}"
-cat >'good/suite.rc' <<'__SUITE_RC__'
+cat >'good/flow.cylc' <<'__FLOW_CONFIG__'
 [scheduling]
     [[graph]]
         R1 = t0
 [runtime]
     [[t0]]
         script = true
-__SUITE_RC__
-cat >"${SUITE_NAME}/suite.rc" <<'__SUITE_RC__'
+__FLOW_CONFIG__
+cat >"${SUITE_NAME}/flow.cylc" <<'__FLOW_CONFIG__'
 [scheduling]
     [[graph]]
         R1 = t0
 [runtime]
     [[t0]]
         scribble = true
-__SUITE_RC__
+__FLOW_CONFIG__
 
 # This should validate bad suite under current directory
 run_fail "${TEST_NAME_BASE}" cylc validate "${SUITE_NAME}"

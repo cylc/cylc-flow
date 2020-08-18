@@ -20,7 +20,7 @@
 
 Compare two suite definitions and display any differences.
 
-Differencing is done after parsing the suite.rc files so it takes
+Differencing is done after parsing the flow.cylc files so it takes
 account of default values that are not explicitly defined, it disregards
 the order of configuration items, and it sees any include-file content
 after inlining has occurred.
@@ -117,7 +117,7 @@ def get_option_parser():
 
     parser.add_option(
         "-n", "--nested",
-        help="print suite.rc section headings in nested form.",
+        help="print flow.cylc section headings in nested form.",
         action="store_true", default=False, dest="nested")
 
     return parser
@@ -125,23 +125,25 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser, options, *args):
-    suite1, suite1rc = parse_suite_arg(options, args[0])
-    suite2, suite2rc = parse_suite_arg(options, args[1])
-    if suite1 == suite2:
+    suite1_name, suite1_config = parse_suite_arg(options, args[0])
+    suite2_name, suite2_config = parse_suite_arg(options, args[1])
+    if suite1_name == suite2_name:
         parser.error("You can't diff a single suite.")
-    print("Parsing %s (%s)" % (suite1, suite1rc))
+    print(f"Parsing {suite1_name} ({suite1_config})")
     template_vars = load_template_vars(
         options.templatevars, options.templatevars_file)
-    config1 = SuiteConfig(suite1, suite1rc, options, template_vars).cfg
-    print("Parsing %s (%s)" % (suite2, suite2rc))
+    config1 = SuiteConfig(
+        suite1_name, suite1_config, options, template_vars).cfg
+    print(f"Parsing {suite2_name} ({suite2_config})")
     config2 = SuiteConfig(
-        suite2, suite2rc, options, template_vars, is_reload=True).cfg
+        suite2_name, suite2_config, options, template_vars, is_reload=True).cfg
 
     if config1 == config2:
-        print("Suite definitions %s and %s are identical" % (suite1, suite2))
+        print(f"Suite definitions {suite1_name} and {suite2_name} are "
+              f"identical")
         sys.exit(0)
 
-    print("Suite definitions %s and %s differ" % (suite1, suite2))
+    print(f"Suite definitions {suite1_name} and {suite2_name} differ")
 
     suite1_only = {}
     suite2_only = {}
@@ -150,22 +152,16 @@ def main(parser, options, *args):
     diffdict(config1, config2, suite1_only, suite2_only, diff_1_2)
 
     if n_oone > 0:
-        print()
-        msg = str(n_oone) + ' items only in ' + suite1 + ' (<)'
-        print(msg)
+        print(f'\n{n_oone} items only in {suite1_name} (<)')
         prdict(suite1_only, '<', nested=options.nested)
 
     if n_otwo > 0:
-        print()
-        msg = str(n_otwo) + ' items only in ' + suite2 + ' (>)'
-        print(msg)
+        print(f'\n{n_otwo} items only in {suite2_name} (>)')
         prdict(suite2_only, '>', nested=options.nested)
 
     if n_diff > 0:
-        print()
-        msg = (str(n_diff) + ' common items differ ' +
-               suite1 + '(<) ' + suite2 + '(>)')
-        print(msg)
+        print(f'\n{n_diff} common items differ {suite1_name}(<) '
+              f'{suite2_name}(>)')
         prdict(diff_1_2, '', diff=True, nested=options.nested)
 
 

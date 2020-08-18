@@ -70,12 +70,12 @@
 #     exists_fail FILE
 #         Test that FILE does not exist
 #     init_suite TEST_NAME [SOURCE]
-#         Create a suite from SOURCE's "suite.rc" called:
+#         Create a suite from SOURCE's "flow.cylc" called:
 #         "cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR##*tests/}/${TEST_NAME}"
 #         Provides SUITE_NAME and SUITE_RUN_DIR variables.
 #     install_suite TEST_NAME SOURCE
 #         Same as init_suite, but SOURCE must be a directory containing a
-#         "suite.rc" file.
+#         "flow.cylc" file.
 #     log_scan TEST_NAME FILE ATTEMPTS DELAY PATTERN...
 #         Monitor FILE polling every DELAY seconds for maximum of ATTEMPTS
 #         tries grepping for each PATTERN in turn. Tests will only pass if the
@@ -123,23 +123,23 @@
 #         Install a reference suite using `install_suite`, run a validation
 #         test on the suite and run the reference suite with `suite_run_ok`.
 #         Run `purge_suite` on success. Expect 2 OK tests.
-#     create_test_globalrc [PRE [POST]]
-#         Create a new global config file $PWD/etc from site flow-tests.rc
+#     create_test_global_config [PRE [POST]]
+#         Create a new global config file $PWD/etc from site global-tests.cylc
 #         with PRE and POST pre- and ap-pended (PRE for top level items with no
 #         section heading). PRE and POST are strings.
 #     require_remote_platform
 #         Set CYLC_TEST_PLATFORM for remote job tests or skip all tests.
 #         Provides:
 #             CYLC_TEST_PLATFORM: Remote platform name
-#             CYLC_TEST_HOST:       Hostname of a remote host picked
-#                                   from the platform.
+#             CYLC_TEST_HOST:     Hostname of a remote host picked
+#                                 from the platform.
 #     require_remote_platform_wsfs
 #         (wsfs = with shared file system)
 #         Set CYLC_TEST_PLATFORM_WSFS for remote job tests or skip all tests.
 #         Provides:
 #             CYLC_TEST_PLATFORM_WSFS: Remote platform name
-#             CYLC_TEST_HOST_WSFS:       Hostname of a remote host picked
-#                                       from the platform.
+#             CYLC_TEST_HOST_WSFS:     Hostname of a remote host picked
+#                                      from the platform.
 #     get_fqdn_by_host [TARGET]
 #         Get a host FQDN using the same mechanism Cylc uses.
 #-------------------------------------------------------------------------------
@@ -423,11 +423,11 @@ graph_suite() {
 
 init_suite() {
     local TEST_NAME="$1"
-    local SUITE_RC="${2:--}"
+    local FLOW_CONFIG="${2:--}"
     SUITE_NAME="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME}"
     SUITE_RUN_DIR="${RUN_DIR}/${SUITE_NAME}"
     mkdir -p "${TEST_DIR}/${SUITE_NAME}/"
-    cat "${SUITE_RC}" >"${TEST_DIR}/${SUITE_NAME}/suite.rc"
+    cat "${FLOW_CONFIG}" >"${TEST_DIR}/${SUITE_NAME}/flow.cylc"
     cylc register "${SUITE_NAME}" "${TEST_DIR}/${SUITE_NAME}" 2>'/dev/null'
     cd "${TEST_DIR}/${SUITE_NAME}"
 }
@@ -704,7 +704,7 @@ reftest() {
     purge_suite "${SUITE_NAME}"
 }
 
-create_test_globalrc() {
+create_test_global_config() {
     # (Documented in file header).
     local PRE=
     local POST=
@@ -714,24 +714,23 @@ create_test_globalrc() {
         PRE=$1
         POST=$2
     elif (( $# > 2 )); then
-        echo 'ERROR, create_test_globalrc: too many args' >&2
+        echo 'ERROR, create_test_global_config: too many args' >&2
         exit 1
     fi
     # Tidy in case of previous use of this function.
     rm -fr 'etc'
     mkdir 'etc'
     # Suite host self-identification method.
-    echo "$PRE" >'etc/flow.rc'
-    SITE_TESTS_CONF_FILE="$(cylc get-global --print-site-dir)/flow-tests.rc"
-    USER_TESTS_CONF_FILE="$(cylc get-global --print-user-dir)/flow-tests.rc"
+    echo "$PRE" >'etc/global.cylc'
+    SITE_TESTS_CONF_FILE="$(cylc get-global --print-site-dir)/global-tests.cylc"
+    USER_TESTS_CONF_FILE="$(cylc get-global --print-user-dir)/global-tests.cylc"
     if [[ -f "${SITE_TESTS_CONF_FILE}" ]]; then
-        cat "${SITE_TESTS_CONF_FILE}" >>'etc/flow.rc'
+        cat "${SITE_TESTS_CONF_FILE}" >>'etc/global.cylc'
     fi
     if [[ -f "${USER_TESTS_CONF_FILE}" ]]; then
-        cat "${USER_TESTS_CONF_FILE}" >>'etc/flow.rc'
+        cat "${USER_TESTS_CONF_FILE}" >>'etc/global.cylc'
     fi
-    echo "$POST" >>'etc/flow.rc'
-
+    echo "$POST" >>'etc/global.cylc'
     export CYLC_CONF_PATH="${PWD}/etc"
 }
 
@@ -831,7 +830,7 @@ if ! "${CYLC_TEST_RUN_GENERIC}" && "${CYLC_TEST_IS_GENERIC}"; then
 elif ! "${CYLC_TEST_RUN_PLATFORM}" && ! "${CYLC_TEST_IS_GENERIC}"; then
     skip_all 'not running platform-specific tests'
 fi
-# Ignore the normal site/user global config, use flow-tests.rc.
-create_test_globalrc "$@"
+# Ignore the normal site/user global config, use global-tests.cylc.
+create_test_global_config "$@"
 set +x
 set +e

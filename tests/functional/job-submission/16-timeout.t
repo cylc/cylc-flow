@@ -24,7 +24,7 @@
 skip_darwin 'atrun hard to configure on Mac OS'
 set_test_number 4
 
-create_test_globalrc "
+create_test_global_config "
 process pool timeout = PT10S
 " "
 [platforms]
@@ -65,4 +65,3 @@ foo, 1, submit-failed
 __END__
 
 purge_suite "${SUITE_NAME}"
-

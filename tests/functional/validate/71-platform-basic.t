@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -22,7 +22,7 @@ set_test_number 1
 
 TEST_NAME="${TEST_NAME_BASE}-val"
 
-cat >'suite.rc' <<'__SUITE_RC__'
+cat >'flow.cylc' <<'__FLOW_CONFIG__'
 [meta]
     title = "Test validation of simple multiple inheritance"
 
@@ -36,6 +36,6 @@ R1 = """foo"""
 platform=lewis
 
 
-__SUITE_RC__
+__FLOW_CONFIG__
 
-run_ok "${TEST_NAME}" cylc validate suite.rc
+run_ok "${TEST_NAME}" cylc validate flow.cylc

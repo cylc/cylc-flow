@@ -25,7 +25,7 @@ The --output=OUTPUT option can be used multiple times on the command line.
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import SuiteRuntimeClient
-from cylc.flow.terminal import prompt, cli_function
+from cylc.flow.terminal import cli_function
 
 
 def get_option_parser():
@@ -43,7 +43,6 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser, options, suite, *task_globs):
-    prompt('Spawn task(s) %s in %s' % (task_globs, suite), options.force)
     pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
     pclient(
         'force_spawn_children',

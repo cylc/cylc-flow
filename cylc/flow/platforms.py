@@ -29,15 +29,15 @@ def platform_from_name(platform_name=None, platforms=None):
     Find out which job platform to use given a list of possible platforms and
     a task platform string.
 
-    Verifies selected platform is present in global.rc file and returns it,
-    raises error if platform is not in global.rc or returns 'localhost' if
+    Verifies selected platform is present in global.cylc file and returns it,
+    raises error if platfrom is not in global.cylc or returns 'localhost' if
     no platform is initally selected.
 
     Args:
         platform_name (str):
             name of platform to be retrieved.
         platforms ():
-            globalrc platforms given as a dict for logic testing purposes
+            global.cylc platforms given as a dict for logic testing purposes
 
     Returns:
         platform (dict):

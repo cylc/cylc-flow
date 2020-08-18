@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -26,7 +26,7 @@ fi
 set_test_number 6
 #-------------------------------------------------------------------------------
 install_suite "${TEST_NAME_BASE}" 'waiting'
-cp "$TEST_SOURCE_DIR/lib/suite-runtime-restart.rc" "$TEST_DIR/${SUITE_NAME}/"
+cp "$TEST_SOURCE_DIR/lib/flow-runtime-restart.cylc" "$TEST_DIR/${SUITE_NAME}/"
 export TEST_DIR
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"

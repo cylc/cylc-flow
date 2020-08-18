@@ -24,12 +24,12 @@ RUND="$RUN_DIR"
 NAME1="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}-1"
 NAME2="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}-2"
 SUITE1_RUND="${RUND}/${NAME1}"
-mkdir -p "${SUITE1_RUND}" 
-cp -p "${TEST_SOURCE_DIR}/basic/suite.rc" "${SUITE1_RUND}"
+mkdir -p "${SUITE1_RUND}"
+cp -p "${TEST_SOURCE_DIR}/basic/flow.cylc" "${SUITE1_RUND}"
 cylc register "${NAME1}" "${SUITE1_RUND}"
 SUITE2_RUND="${RUND}/${NAME2}"
 mkdir -p "${SUITE2_RUND}"
-cat >"${SUITE2_RUND}/suite.rc" <<__SUITERC__
+cat >"${SUITE2_RUND}/flow.cylc" <<__FLOW_CONFIG__
 [cylc]
     [[events]]
         abort if any task fails=True
@@ -39,7 +39,7 @@ cat >"${SUITE2_RUND}/suite.rc" <<__SUITERC__
 [runtime]
     [[t1]]
         script=cylc shutdown "${NAME1}"
-__SUITERC__
+__FLOW_CONFIG__
 cylc register "${NAME2}" "${SUITE2_RUND}"
 cylc run --no-detach "${NAME1}" 1>'1.out' 2>&1 &
 SUITE_RUN_DIR="${SUITE1_RUND}" poll_suite_running

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -19,7 +19,7 @@
 . "$(dirname "$0")/test_header"
 set_test_number 39
 
-cat >'suite.rc' <<'__SUITE__'
+cat >'flow.cylc' <<'__SUITE__'
 [cylc]
     [[parameters]]
         i = cat, dog, fish
@@ -39,11 +39,11 @@ qux<j> => waz<k>
     [[qux<j>]]
     [[waz<k>]]
 __SUITE__
-run_ok "${TEST_NAME_BASE}-01" cylc validate "suite.rc"
-cylc graph --reference 'suite.rc' >'01.graph'
+run_ok "${TEST_NAME_BASE}-01" cylc validate "flow.cylc"
+cylc graph --reference 'flow.cylc' >'01.graph'
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/01.graph.ref" '01.graph'
 
-cat >'suite.rc' <<'__SUITE__'
+cat >'flow.cylc' <<'__SUITE__'
 [cylc]
     [[parameters]]
         i = 25, 30..35, 1..5, 110
@@ -58,11 +58,11 @@ foo<i> => bar<i>
     [[foo<i>]]
     [[bar<i>]]
 __SUITE__
-run_ok "${TEST_NAME_BASE}-02" cylc validate "suite.rc"
-cylc graph --reference 'suite.rc' >'02.graph'
+run_ok "${TEST_NAME_BASE}-02" cylc validate "flow.cylc"
+cylc graph --reference 'flow.cylc' >'02.graph'
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/02.graph.ref" '02.graph'
 
-cat >'suite.rc' <<'__SUITE__'
+cat >'flow.cylc' <<'__SUITE__'
 [cylc]
     [[parameters]]
         i = a-t, c-g
@@ -77,11 +77,11 @@ foo<i> => bar<i>
     [[foo<i>]]
     [[bar<i>]]
 __SUITE__
-run_ok "${TEST_NAME_BASE}-03" cylc validate "suite.rc"
-cylc graph --reference 'suite.rc' >'03.graph'
+run_ok "${TEST_NAME_BASE}-03" cylc validate "flow.cylc"
+cylc graph --reference 'flow.cylc' >'03.graph'
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/03.graph.ref" '03.graph'
 
-cat >'suite.rc' <<'__SUITE__'
+cat >'flow.cylc' <<'__SUITE__'
 [cylc]
     [[parameters]]
         i = 100, hundred, one-hundred, 99+1
@@ -96,11 +96,11 @@ foo<i> => bar<i>
     [[foo<i>]]
     [[bar<i>]]
 __SUITE__
-run_ok "${TEST_NAME_BASE}-04" cylc validate "suite.rc"
-cylc graph --reference 'suite.rc' >'04.graph'
+run_ok "${TEST_NAME_BASE}-04" cylc validate "flow.cylc"
+cylc graph --reference 'flow.cylc' >'04.graph'
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/04.graph.ref" '04.graph'
 
-cat >'suite.rc' <<'__SUITE__'
+cat >'flow.cylc' <<'__SUITE__'
 [cylc]
     [[parameters]]
         i = space is dangerous
@@ -115,12 +115,12 @@ foo<i> => bar<i>
     [[foo<i>]]
     [[bar<i>]]
 __SUITE__
-run_fail "${TEST_NAME_BASE}-05" cylc validate "suite.rc"
+run_fail "${TEST_NAME_BASE}-05" cylc validate "flow.cylc"
 cmp_ok "${TEST_NAME_BASE}-05.stderr" <<'__ERR__'
 IllegalValueError: (type=parameter) [cylc][parameters]i = space is dangerous - (space is dangerous: bad value)
 __ERR__
 
-cat >'suite.rc' <<'__SUITE__'
+cat >'flow.cylc' <<'__SUITE__'
 [cylc]
     [[parameters]]
         i = mix, 1..10
@@ -135,12 +135,12 @@ foo<i> => bar<i>
     [[foo<i>]]
     [[bar<i>]]
 __SUITE__
-run_fail "${TEST_NAME_BASE}-06" cylc validate "suite.rc"
+run_fail "${TEST_NAME_BASE}-06" cylc validate "flow.cylc"
 cmp_ok "${TEST_NAME_BASE}-06.stderr" <<'__ERR__'
 IllegalValueError: (type=parameter) [cylc][parameters]i = mix, 1..10 - (mixing int range and str)
 __ERR__
 
-cat >'suite.rc' <<'__SUITE__'
+cat >'flow.cylc' <<'__SUITE__'
 [cylc]
     [[parameters]]
         i = a, b #, c, d, e  # comment
@@ -155,11 +155,11 @@ foo<i> => bar<i>
     [[foo<i>]]
     [[bar<i>]]
 __SUITE__
-run_ok "${TEST_NAME_BASE}-07" cylc validate "suite.rc"
-cylc graph --reference 'suite.rc' >'07.graph'
+run_ok "${TEST_NAME_BASE}-07" cylc validate "flow.cylc"
+cylc graph --reference 'flow.cylc' >'07.graph'
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/07.graph.ref" '07.graph'
 
-cat >'suite.rc' <<'__SUITE__'
+cat >'flow.cylc' <<'__SUITE__'
 [cylc]
     [[parameters]]
         i = 1..2 3..4
@@ -174,12 +174,12 @@ foo<i> => bar<i>
     [[foo<i>]]
     [[bar<i>]]
 __SUITE__
-run_fail "${TEST_NAME_BASE}-08" cylc validate "suite.rc"
+run_fail "${TEST_NAME_BASE}-08" cylc validate "flow.cylc"
 cmp_ok "${TEST_NAME_BASE}-08.stderr" <<'__ERR__'
 IllegalValueError: (type=parameter) [cylc][parameters]i = 1..2 3..4 - (1..2 3..4: bad value)
 __ERR__
 
-cat >'suite.rc' <<'__SUITE__'
+cat >'flow.cylc' <<'__SUITE__'
 [cylc]
     [[parameters]]
         i =
@@ -194,12 +194,12 @@ foo<i> => bar<i>
     [[foo<i>]]
     [[bar<i>]]
 __SUITE__
-run_fail "${TEST_NAME_BASE}-09" cylc validate "suite.rc"
+run_fail "${TEST_NAME_BASE}-09" cylc validate "flow.cylc"
 cmp_ok "${TEST_NAME_BASE}-09.stderr" <<'__ERR__'
 ParamExpandError: parameter i is not defined in foo<i>
 __ERR__
 
-cat >'suite.rc' <<'__SUITE__'
+cat >'flow.cylc' <<'__SUITE__'
 [scheduling]
     [[graph]]
         R1 = """
@@ -211,12 +211,12 @@ foo<i> => bar<i>
     [[foo<i>]]
     [[bar<i>]]
 __SUITE__
-run_fail "${TEST_NAME_BASE}-10" cylc validate "suite.rc"
+run_fail "${TEST_NAME_BASE}-10" cylc validate "flow.cylc"
 cmp_ok "${TEST_NAME_BASE}-10.stderr" <<'__ERR__'
 ParamExpandError: parameter i is not defined in <i>: foo<i>=>bar<i>
 __ERR__
 
-cat >'suite.rc' <<'__SUITE__'
+cat >'flow.cylc' <<'__SUITE__'
 [cylc]
     [[parameters]]
         j = +1..+5
@@ -231,11 +231,11 @@ cat >'suite.rc' <<'__SUITE__'
     [[foo<j>]]
     [[bar<j>]]
 __SUITE__
-run_ok "${TEST_NAME_BASE}-11" cylc validate "suite.rc"
-cylc graph --reference 'suite.rc' >'11.graph'
+run_ok "${TEST_NAME_BASE}-11" cylc validate "flow.cylc"
+cylc graph --reference 'flow.cylc' >'11.graph'
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/11.graph.ref" '11.graph'
 
-cat >'suite.rc' <<'__SUITE__'
+cat >'flow.cylc' <<'__SUITE__'
 [cylc]
     [[parameters]]
         j = 1..5
@@ -250,12 +250,12 @@ cat >'suite.rc' <<'__SUITE__'
     [[foo<j>]]
     [[bar<j>]]
 __SUITE__
-run_ok "${TEST_NAME_BASE}-12" cylc validate "suite.rc"
-cylc graph --reference 'suite.rc' >'12.graph'
+run_ok "${TEST_NAME_BASE}-12" cylc validate "flow.cylc"
+cylc graph --reference 'flow.cylc' >'12.graph'
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/12.graph.ref" '12.graph'
 
 # Parameter with various meta characters
-cat >'suite.rc' <<'__SUITE__'
+cat >'flow.cylc' <<'__SUITE__'
 [cylc]
     [[parameters]]
         p = -minus, +plus, @at, %percent
@@ -270,12 +270,12 @@ cat >'suite.rc' <<'__SUITE__'
     [[foo<p>]]
     [[bar<p>]]
 __SUITE__
-run_ok "${TEST_NAME_BASE}-13" cylc validate "suite.rc"
-cylc graph --reference 'suite.rc' >'13.graph'
+run_ok "${TEST_NAME_BASE}-13" cylc validate "flow.cylc"
+cylc graph --reference 'flow.cylc' >'13.graph'
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/13.graph.ref" '13.graph'
 
 # Parameter as task name
-cat >'suite.rc' <<'__SUITE__'
+cat >'flow.cylc' <<'__SUITE__'
 [cylc]
     [[parameters]]
         i = 0..2
@@ -293,12 +293,12 @@ foo => <s> => bar
     [[foo, bar, <i>, <s>]]
         script = true
 __SUITE__
-run_ok "${TEST_NAME_BASE}-14" cylc validate "suite.rc"
-cylc graph --reference 'suite.rc' >'14.graph'
+run_ok "${TEST_NAME_BASE}-14" cylc validate "flow.cylc"
+cylc graph --reference 'flow.cylc' >'14.graph'
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/14.graph.ref" '14.graph'
 
 # Parameter in middle of family name
-cat >'suite.rc' <<'__SUITE__'
+cat >'flow.cylc' <<'__SUITE__'
 [cylc]
     [[parameters]]
         s = mercury, venus, earth, mars
@@ -311,12 +311,12 @@ cat >'suite.rc' <<'__SUITE__'
     [[x<s>y]]
         inherit = X<s>Y
 __SUITE__
-run_ok "${TEST_NAME_BASE}-15" cylc validate "suite.rc"
-cylc graph --reference 'suite.rc' >'15.graph'
+run_ok "${TEST_NAME_BASE}-15" cylc validate "flow.cylc"
+cylc graph --reference 'flow.cylc' >'15.graph'
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/15.graph.ref" '15.graph'
 
 # -ve offset on RHS
-cat >'suite.rc' <<'__SUITE__'
+cat >'flow.cylc' <<'__SUITE__'
 [cylc]
     [[parameters]]
         m = cat, dog
@@ -328,12 +328,12 @@ cat >'suite.rc' <<'__SUITE__'
         script = true
     [[foo<m>]]
 __SUITE__
-run_ok "${TEST_NAME_BASE}-16" cylc validate "suite.rc"
-cylc graph --reference 'suite.rc' >'16.graph'
+run_ok "${TEST_NAME_BASE}-16" cylc validate "flow.cylc"
+cylc graph --reference 'flow.cylc' >'16.graph'
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/16.graph.ref" '16.graph'
 
 # +ve offset
-cat >'suite.rc' <<'__SUITE__'
+cat >'flow.cylc' <<'__SUITE__'
 [cylc]
     [[parameters]]
         m = cat, dog
@@ -345,12 +345,12 @@ cat >'suite.rc' <<'__SUITE__'
         script = true
     [[foo<m>]]
 __SUITE__
-run_ok "${TEST_NAME_BASE}-17" cylc validate "suite.rc"
-cylc graph --reference 'suite.rc' >'17.graph'
+run_ok "${TEST_NAME_BASE}-17" cylc validate "flow.cylc"
+cylc graph --reference 'flow.cylc' >'17.graph'
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/17.graph.ref" '17.graph'
 
 # Negative integers
-cat >'suite.rc' <<'__SUITE__'
+cat >'flow.cylc' <<'__SUITE__'
 [cylc]
     [[parameters]]
         m = -12..12..6
@@ -362,12 +362,12 @@ cat >'suite.rc' <<'__SUITE__'
         script = true
     [[foo<m>]]
 __SUITE__
-run_ok "${TEST_NAME_BASE}-18" cylc validate "suite.rc"
-cylc graph --reference 'suite.rc' >'18.graph'
+run_ok "${TEST_NAME_BASE}-18" cylc validate "flow.cylc"
+cylc graph --reference 'flow.cylc' >'18.graph'
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/18.graph.ref" '18.graph'
 
 # Reference by value, with -+ meta characters
-cat >'suite.rc' <<'__SUITE__'
+cat >'flow.cylc' <<'__SUITE__'
 [cylc]
     [[parameters]]
         lang = c++, fortran-2008
@@ -386,14 +386,14 @@ cat >'suite.rc' <<'__SUITE__'
         [[[environment]]]
             FC = gfortran
 __SUITE__
-run_ok "${TEST_NAME_BASE}-19" cylc validate --debug "suite.rc"
-cylc graph --reference 'suite.rc' >'19.graph'
+run_ok "${TEST_NAME_BASE}-19" cylc validate --debug "flow.cylc"
+cylc graph --reference 'flow.cylc' >'19.graph'
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/19.graph.ref" '19.graph'
 # Note: This also demonstrates current badness of "cylc get-config"...
 #       Inconsistence between graph/runtime whitespace handling.
 #       Inconsistence between graph/runtime parameter expansion.
-cylc get-config --sparse 'suite.rc' >'19.rc'
-cmp_ok '19.rc' <<'__SUITERC__'
+cylc get-config --sparse 'flow.cylc' >'19.cylc'
+cmp_ok '19.cylc' <<'__FLOW_CONFIG__'
 [cylc]
     [[parameters]]
         lang = c++, fortran-2008
@@ -417,6 +417,6 @@ cmp_ok '19.rc' <<'__SUITERC__'
             FC = gfortran
 [visualization]
     [[node attributes]]
-__SUITERC__
+__FLOW_CONFIG__
 
 exit

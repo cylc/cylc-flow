@@ -37,7 +37,7 @@ set_test_number 13
 # Suite stop immediately
 # Restart, ignore final cycle point
 # Suite runs to final cycle point == 2020
-init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
+init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [cylc]
     UTC mode=True
     cycle point format = %Y
@@ -59,7 +59,7 @@ case "${CYLC_TASK_CYCLE_POINT}" in
     :;;
 esac
 """
-__SUITERC__
+__FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 

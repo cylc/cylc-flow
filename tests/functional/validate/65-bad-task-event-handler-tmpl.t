@@ -21,7 +21,7 @@
 set_test_number 4
 
 TEST_NAME="${TEST_NAME_BASE}-bad-key"
-cat >'suite.rc' <<'__SUITE_RC__'
+cat >'flow.cylc' <<'__FLOW_CONFIG__'
 [scheduling]
     [[graph]]
         R1=t1
@@ -30,14 +30,14 @@ cat >'suite.rc' <<'__SUITE_RC__'
         script=true
         [[[events]]]
             failed handler = echo %(id)s, echo %(rubbish)s
-__SUITE_RC__
-run_fail "${TEST_NAME}" cylc validate 'suite.rc'
+__FLOW_CONFIG__
+run_fail "${TEST_NAME}" cylc validate 'flow.cylc'
 cmp_ok "${TEST_NAME}.stderr" <<'__ERR__'
 SuiteConfigError: bad task event handler template t1: echo %(rubbish)s: KeyError('rubbish')
 __ERR__
 
 TEST_NAME="${TEST_NAME_BASE}-bad-value"
-cat >'suite.rc' <<'__SUITE_RC__'
+cat >'flow.cylc' <<'__FLOW_CONFIG__'
 [scheduling]
     [[graph]]
         R1=t1
@@ -46,8 +46,8 @@ cat >'suite.rc' <<'__SUITE_RC__'
         script=true
         [[[events]]]
             failed handler = echo %(ids
-__SUITE_RC__
-run_fail "${TEST_NAME}" cylc validate 'suite.rc'
+__FLOW_CONFIG__
+run_fail "${TEST_NAME}" cylc validate 'flow.cylc'
 cmp_ok "${TEST_NAME}.stderr" <<'__ERR__'
 SuiteConfigError: bad task event handler template t1: echo %(ids: ValueError('incomplete format key')
 __ERR__

@@ -39,7 +39,7 @@ set_test_number 16
 # Request suite stop right after, should retain stop point == 2021
 # Restart, should run to 2021, reset stop point before stop
 # Restart, should run to final cycle point == 2025
-init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
+init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [cylc]
     UTC mode=True
     cycle point format = %Y
@@ -60,7 +60,7 @@ case "${CYLC_TASK_CYCLE_POINT}" in
     cylc stop "${CYLC_SUITE_NAME}"
     :;;
 2016)
-    sed -i 's/\(final cycle point =\) 2024/\1 2025/' "${CYLC_SUITE_DEF_PATH}/suite.rc"
+    sed -i 's/\(final cycle point =\) 2024/\1 2025/' "${CYLC_SUITE_DEF_PATH}/flow.cylc"
     cylc reload "${CYLC_SUITE_NAME}"
     cylc__job__poll_grep_suite_log "Reload completed"
     :;;
@@ -70,7 +70,7 @@ case "${CYLC_TASK_CYCLE_POINT}" in
     :;;
 esac
 """
-__SUITERC__
+__FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 

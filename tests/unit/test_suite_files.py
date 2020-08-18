@@ -26,7 +26,7 @@ def get_register_test_cases():
     """Test cases for suite_files.register function."""
     return [
         # 1 no parameters provided, current directory is not a symlink,
-        # and contains a valid suite.rc
+        # and contains a valid flow.cylc
         (None,  # reg
          None,  # source
          False,  # redirect,
@@ -41,7 +41,7 @@ def get_register_test_cases():
          None  # expected part of exception message
          ),
         # 2 suite name provided, current directory is not a symlink,
-        # and contains a valid suite.rc
+        # and contains a valid flow.cylc
         ("super-suite-2",  # reg
          None,  # source
          False,  # redirect,
@@ -55,10 +55,10 @@ def get_register_test_cases():
          None,  # expected exception
          None  # expected part of exception message
          ),
-        # 3 suite name and directory location of suite.rc provided,
-        # current directory is not a symlink, and contains a valid suite.rc
+        # 3 suite name and directory location of flow.cylc provided,
+        # current directory is not a symlink, and contains a valid flow.cylc
         ("suite3",  # reg
-         "/home/user/cylc-run/suite3/suite.rc",  # source
+         "/home/user/cylc-run/suite3/flow.cylc",  # source
          False,  # redirect,
          "/home/user/cylc-run/suite3",  # cwd
          False,  # isabs
@@ -70,8 +70,8 @@ def get_register_test_cases():
          None,  # expected exception
          None  # expected part of exception message
          ),
-        # 4 suite name and directory location of suite.rc provided,
-        # current directory is not a symlink, but the suite.rc does not
+        # 4 suite name and directory location of flow.cylc provided,
+        # current directory is not a symlink, but the flow.cylc does not
         # exist
         ("suite4",  # reg
          "/home/user/cylc-run/suite4/suite.txt",  # source
@@ -84,7 +84,7 @@ def get_register_test_cases():
          None,  # expected symlink
          "suite4",  # expected return value
          SuiteServiceFileError,  # expected exception
-         "no suite.rc"  # expected part of exception message
+         "no flow.cylc"  # expected part of exception message
          ),
         # 5 the source directory and the resolved symlink for $SOURCE in
         # $SOURCE/.service are not the same directory. No redirect
@@ -106,7 +106,7 @@ def get_register_test_cases():
         # $SOURCE/.service are not the same directory. The redirect
         # flag is true, so it must simply delete the old source link
         ("suite6",  # reg
-         "/home/user/cylc-run/suite6/suite.rc",  # source
+         "/home/user/cylc-run/suite6/flow.cylc",  # source
          True,  # redirect,
          "/home/user/cylc-run/suite6",  # cwd
          False,  # isabs
@@ -123,7 +123,7 @@ def get_register_test_cases():
         # flag is true. But the resolved orig_source's parent directory,
         # is the source directory. So the symlink must be '..'
         ("suite7",  # reg
-         "/home/user/cylc-run/suite7/suite.rc",  # source
+         "/home/user/cylc-run/suite7/flow.cylc",  # source
          True,  # redirect,
          "/home/user/cylc-run/suite7",  # cwd
          False,  # isabs
@@ -137,7 +137,7 @@ def get_register_test_cases():
          ),
         # 8 fails to readlink, resulting in a new symlink created
         ("suite8",  # reg
-         "/home/user/cylc-run/suite8/suite.rc",  # source
+         "/home/user/cylc-run/suite8/flow.cylc",  # source
          False,  # redirect,
          "/home/user/cylc-run/suite8",  # cwd
          False,  # isabs

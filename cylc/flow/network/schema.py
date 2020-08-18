@@ -1446,7 +1446,7 @@ class Reload(Mutation):
 
             If the suite was started with Jinja2 template variables set on the
             command line (cylc run --set FOO=bar REG) the same template
-            settings apply to the reload (only changes to the suite.rc
+            settings apply to the reload (only changes to the flow.cylc
             file itself are reloaded).
 
             If the modified suite definition does not parse, failure to reload
@@ -1480,7 +1480,7 @@ class SetVerbosity(Mutation):
 
 class Stop(Mutation):
     class Meta:
-        description = sstrip(f'''
+        description = sstrip('''
             Tell a suite server program to shut down.
 
             By default suites wait for all submitted and running tasks to
@@ -1509,7 +1509,7 @@ class Stop(Mutation):
 
 class StopFlow(Mutation):
     class Meta:
-        description = sstrip(f'''
+        description = sstrip('''
             Stop a specified flow from spawning any further.
         ''')
         resolver = partial(mutator, command='stop_flow')
@@ -1626,7 +1626,7 @@ class Remove(Mutation, TaskMutation):
 
 class Spawn(Mutation, TaskMutation):
     class Meta:
-        description = sstrip(f'''
+        description = sstrip('''
             Spawn children off of specified task outputs.
 
         ''')

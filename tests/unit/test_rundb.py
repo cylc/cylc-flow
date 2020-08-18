@@ -25,7 +25,7 @@ from unittest import mock
 from cylc.flow.rundb import CylcSuiteDAO
 
 
-GLOBALRC = """
+GLOBAL_CONFIG = """
 [platforms]
     [[desktop[0-9]{2}|laptop[0-9]{2}]]
         # hosts = platform name (default)
@@ -198,8 +198,8 @@ def test_upgrade_hold_swap():
 def test_upgrade_to_platforms(mock_glbl_cfg):
     """Test upgrader logic for platforms in the database.
     """
-    # Set up the globalrc
-    mock_glbl_cfg('cylc.flow.rundb.glbl_cfg', GLOBALRC)
+    # Set up the global config
+    mock_glbl_cfg('cylc.flow.rundb.glbl_cfg', GLOBAL_CONFIG)
 
     # task name, cycle, user_at_host, batch_system
     initial_data = [

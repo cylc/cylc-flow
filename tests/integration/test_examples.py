@@ -32,7 +32,7 @@ from cylc.flow import __version__
 @pytest.mark.asyncio
 async def test_create_flow(flow, run_dir):
     """Use the flow fixture to create workflows on the file system."""
-    # Ensure a suite.rc file gets written out
+    # Ensure a flow.cylc file gets written out
     reg = flow({
         'scheduling': {
             'graph': {
@@ -41,10 +41,10 @@ async def test_create_flow(flow, run_dir):
         }
     })
     suite_dir = run_dir / reg
-    suite_rc = suite_dir / 'suite.rc'
+    flow_file = suite_dir / 'flow.cylc'
 
     assert suite_dir.exists()
-    assert suite_rc.exists()
+    assert flow_file.exists()
 
 
 @pytest.mark.asyncio

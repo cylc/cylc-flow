@@ -18,7 +18,7 @@
 # Test "cylc get-suite-contact" basic usage.
 . "$(dirname "$0")/test_header"
 set_test_number 6
-init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
+init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [cylc]
     cycle point format = %Y
 [scheduling]
@@ -28,7 +28,7 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
 [runtime]
     [[t1]]
         script = true
-__SUITE_RC__
+__FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 run_fail "${TEST_NAME_BASE}-get-suite-contact-1" \

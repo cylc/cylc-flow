@@ -25,14 +25,14 @@ already running at reload time.
 
 If the suite was started with Jinja2 template variables set on the command line
 (cylc run --set FOO=bar REG) the same template settings apply to the reload
-(only changes to the suite.rc file itself are reloaded).
+(only changes to the flow.cylc file itself are reloaded).
 
 If the modified suite definition does not parse, failure to reload will
 be reported but no harm will be done to the running suite."""
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import SuiteRuntimeClient
-from cylc.flow.terminal import prompt, cli_function
+from cylc.flow.terminal import cli_function
 
 
 def get_option_parser():
@@ -43,7 +43,6 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser, options, suite):
-    prompt('Reload %s' % suite, options.force)
     pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
     pclient('reload_suite')
 

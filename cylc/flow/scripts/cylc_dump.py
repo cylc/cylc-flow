@@ -42,7 +42,7 @@ from cylc.flow.terminal import cli_function
 
 
 def get_option_parser():
-    parser = COP(__doc__, comms=True, noforce=True)
+    parser = COP(__doc__, comms=True)
     parser.add_option(
         "-g", "--global", help="Global information only.",
         action="store_const", const="global", dest="disp_form")

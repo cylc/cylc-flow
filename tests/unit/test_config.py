@@ -113,8 +113,8 @@ class TestSuiteConfig:
                 # NB: we are not returning a lambda, instead we have a scalar
                 f.write("""name_a_tree = lambda: 'jacaranda'""")
                 f.flush()
-            suite_rc = Path(temp_dir, "suite.rc")
-            with suite_rc.open(mode="w") as f:
+            flow_file = Path(temp_dir, "flow.cylc")
+            with flow_file.open(mode="w") as f:
                 f.write("""
     [scheduling]
         initial cycle point = 2018-01-01
@@ -146,8 +146,8 @@ class TestSuiteConfig:
                 # NB: we are not returning a lambda, instead we have a scalar
                 f.write("""caiman = lambda: True""")
                 f.flush()
-            suite_rc = Path(temp_dir, "suite.rc")
-            with suite_rc.open(mode="w") as f:
+            flow_file = Path(temp_dir, "flow.cylc")
+            with flow_file.open(mode="w") as f:
                 f.write("""
     [scheduling]
         initial cycle point = 2018-01-01
@@ -179,8 +179,8 @@ class TestSuiteConfig:
                 # NB: we are not returning a lambda, instead we have a scalar
                 f.write("""toucan = lambda: True""")
                 f.flush()
-            suite_rc = Path(temp_dir, "suite.rc")
-            with suite_rc.open(mode="w") as f:
+            flow_file = Path(temp_dir, "flow.cylc")
+            with flow_file.open(mode="w") as f:
                 f.write("""
     [scheduling]
         initial cycle point = 2018-01-01
@@ -212,8 +212,8 @@ class TestSuiteConfig:
                 # NB: we are not returning a lambda, instead we have a scalar
                 f.write("""not_callable = 42""")
                 f.flush()
-            suite_rc = Path(temp_dir, "suite.rc")
-            with suite_rc.open(mode="w") as f:
+            flow_file = Path(temp_dir, "flow.cylc")
+            with flow_file.open(mode="w") as f:
                 f.write("""
     [scheduling]
         initial cycle point = 2018-01-01
@@ -263,7 +263,7 @@ class TestSuiteConfig:
 
 def test_queue_config_repeated(caplog, tmp_path):
     """Test repeated assignment to same queue."""
-    suiterc_content = """
+    flow_file_content = """
 [scheduling]
    [[queues]]
        [[[q1]]]
@@ -279,9 +279,9 @@ def test_queue_config_repeated(caplog, tmp_path):
        inherit = A, B
    [[y]]
     """
-    suite_rc = tmp_path / "suite.rc"
-    suite_rc.write_text(suiterc_content)
-    config = SuiteConfig(suite="qtest", fpath=suite_rc.absolute())
+    flow_file = tmp_path / "flow.cylc"
+    flow_file.write_text(flow_file_content)
+    config = SuiteConfig(suite="qtest", fpath=flow_file.absolute())
     log = caplog.messages[0].split('\n')
     assert log[0] == "Queue configuration warnings:"
     assert log[1] == "+ q2: ignoring x (already assigned to a queue)"
@@ -289,7 +289,7 @@ def test_queue_config_repeated(caplog, tmp_path):
 
 def test_queue_config_not_used_not_defined(caplog, tmp_path):
     """Test task not defined vs no used, in queue config."""
-    suiterc_content = """
+    flow_file_content = """
 [scheduling]
    [[queues]]
        [[[q1]]]
@@ -305,9 +305,9 @@ def test_queue_config_not_used_not_defined(caplog, tmp_path):
    [[foo]]
    # bar not even defined
     """
-    suite_rc = tmp_path / "suite.rc"
-    suite_rc.write_text(suiterc_content)
-    config = SuiteConfig(suite="qtest", fpath=suite_rc.absolute())
+    flow_file = tmp_path / "flow.cylc"
+    flow_file.write_text(flow_file_content)
+    config = SuiteConfig(suite="qtest", fpath=flow_file.absolute())
     log = caplog.messages[0].split('\n')
     assert log[0] == "Queue configuration warnings:"
     assert log[1] == "+ q1: ignoring foo (task not used in the graph)"

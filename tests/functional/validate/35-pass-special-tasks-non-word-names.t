@@ -18,7 +18,7 @@
 # Test validation of special tasks names with non-word characters
 . "$(dirname "$0")/test_header"
 set_test_number 1
-cat >'suite.rc' <<'__SUITE_RC__'
+cat >'flow.cylc' <<'__FLOW_CONFIG__'
 [scheduling]
     initial cycle point = 20200202
     final cycle point = 20300303
@@ -35,6 +35,6 @@ t@1
 [runtime]
     [[t-1, t+1, t%1, t@1]]
         script = true
-__SUITE_RC__
-run_ok "${TEST_NAME_BASE}" cylc validate --strict "${PWD}/suite.rc"
+__FLOW_CONFIG__
+run_ok "${TEST_NAME_BASE}" cylc validate --strict "${PWD}/flow.cylc"
 exit

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -31,7 +31,7 @@ suite_run_ok "${TEST_NAME}" cylc run --reference-test --debug --no-detach "${SUI
 TEST_NAME="${TEST_NAME_BASE}-run"
 # Swapping the Monthly and Hours-of-the-day cycling sections
 # should make no difference.
-perl -pi -e 'undef $/; s/( *\[\[\[00.*marker1)\n( *\[\[\[Monthly.*marker2)/${2}\n${1}/smg' "${TEST_DIR}/${SUITE_NAME}/suite.rc"
+perl -pi -e 'undef $/; s/( *\[\[\[00.*marker1)\n( *\[\[\[Monthly.*marker2)/${2}\n${1}/smg' "${TEST_DIR}/${SUITE_NAME}/flow.cylc"
 suite_run_ok "${TEST_NAME}" cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"

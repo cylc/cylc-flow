@@ -70,7 +70,7 @@ TASK_GLOB matches task or family names at a given cycle point.
     MULTITASK_USAGE = MULTI_USAGE_TEMPLATE.format(
         WITHOUT_CYCLE_GLOBS, WITHOUT_CYCLE_EXAMPLES)
 
-    def __init__(self, usage, argdoc=None, comms=False, noforce=False,
+    def __init__(self, usage, argdoc=None, comms=False,
                  jset=False, multitask=False, multitask_nocycles=False,
                  prep=False, auto_add=True, icp=False, color=True):
 
@@ -91,8 +91,6 @@ TASK_GLOB matches task or family names at a given cycle point.
             )
         )
 
-        # noforce=True is for commands not using interactive prompts at all
-
         if multitask:
             usage += self.MULTITASKCYCLE_USAGE
         elif multitask_nocycles:  # glob on task names but not cycle points
@@ -103,7 +101,6 @@ TASK_GLOB matches task or family names at a given cycle point.
         self.unlimited_args = False
         self.comms = comms
         self.jset = jset
-        self.noforce = noforce
         self.prep = prep
         self.icp = icp
         self.suite_info = []
@@ -180,17 +177,6 @@ TASK_GLOB matches task or family names at a given cycle point.
                 ),
                 action="store", default=None, dest="comms_timeout")
 
-            if not self.noforce:
-                self.add_std_option(
-                    "-f", "--force",
-                    help=(
-                        "Do not ask for confirmation before acting. "
-                        "Note that it is not necessary to use this option "
-                        "if interactive command prompts have been "
-                        "disabled in the site/user config files."
-                    ),
-                    action="store_true", default=False, dest="force")
-
         if self.jset:
             self.add_std_option(
                 "-s", "--set", metavar="NAME=VALUE",
@@ -222,7 +208,7 @@ TASK_GLOB matches task or family names at a given cycle point.
                 metavar="CYCLE_POINT",
                 help=(
                     "Set the initial cycle point. "
-                    "Required if not defined in suite.rc."
+                    "Required if not defined in flow.cylc."
                 ),
                 action="store",
                 dest="icp",

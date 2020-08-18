@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -22,7 +22,7 @@ require_remote_platform_wsfs
 export CLOWNS="${CYLC_TEST_HOST_WSFS}"
 export JOKERS="${HOSTNAME}"
 
-BASE_GLOBALRC='
+BASE_GLOBAL_CONFIG='
 [cylc]
     [[main loop]]
         plugins = health check, auto restart
@@ -53,8 +53,8 @@ stuck_in_the_middle() {
     # swap the condemned host forcing the suite to jump ship
     local temp="${JOKERS}"
     JOKERS="${CLOWNS}"; CLOWNS="${temp}"
-    create_test_globalrc '' "
-    ${BASE_GLOBALRC}
+    create_test_global_config '' "
+    ${BASE_GLOBAL_CONFIG}
     [suite servers]
         run hosts = ${JOKERS}, ${CLOWNS}
         condemned hosts = ${CLOWNS}

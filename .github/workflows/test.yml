@@ -6,6 +6,7 @@ on: [pull_request]
 jobs:
   fast-tests:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
       matrix:
         python-version: ['3.7', '3.8']
@@ -30,6 +31,7 @@ jobs:
       - name: Style
         run: |
           pycodestyle
+          flake8
           etc/bin/shellchecker
 
       - name: Unit Tests
@@ -43,6 +45,7 @@ jobs:
 
   functional-tests:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     strategy:
       matrix:
         python-version: ['3.7']

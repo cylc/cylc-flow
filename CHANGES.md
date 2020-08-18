@@ -40,6 +40,12 @@ Fourth alpha release of Cylc 8.
 
 (See note on cylc-8 backward-incompatible changes, above)
 
+The filenames `suite.rc` and `global.rc` are now deprecated in favour of
+`flow.cylc` and `global.cylc` respectively
+([#3755](https://github.com/cylc/cylc-flow/pull/3755)). For backwards
+compatibility, the `cylc run` command will automatically symlink an existing
+`suite.rc` file to `flow.cylc`.
+
 ### Enhancements
 
 [#3515](https://github.com/cylc/cylc-flow/pull/3515) - spawn-on-demand: a more
@@ -50,6 +56,9 @@ and `$GEDITOR` environment variables to determine the default editor to use.
 
 [#3574](https://github.com/cylc/cylc-flow/pull/3574) - use the bash
 installation defined in $path rather than hardcoding to /bin/bash.
+
+[#3774](https://github.com/cylc/cylc-flow/pull/3774) - Removed support for
+interactive prompt.
 
 ### Fixes
 

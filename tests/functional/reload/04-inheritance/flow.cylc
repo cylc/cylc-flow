@@ -1,0 +1,22 @@
+[meta]
+    title = queue size reload test
+    description = """change inheritance via a reload."""
+
+[scheduling]
+    [[graph]]
+        R1 = reloader => inheritor
+[runtime]
+    [[FAM1]]
+        script = false
+    [[FAM2]]
+        script = true
+    [[reloader]]
+        script = """
+# change the inheritance of inheritor:
+perl -pi -e 's/(inherit = )FAM1( # marker)/\1FAM2\2/' $CYLC_SUITE_DEF_PATH/flow.cylc
+# reload
+cylc reload $CYLC_SUITE_NAME
+sleep 5
+"""
+    [[inheritor]]
+        inherit = FAM1 # marker

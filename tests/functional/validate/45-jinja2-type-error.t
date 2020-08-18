@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -21,15 +21,15 @@
 set_test_number 4
 
 TEST_NAME="${TEST_NAME_BASE}-type-error"
-cat >'suite.rc' <<'__SUITERC__'
+cat >'flow.cylc' <<'__FLOW_CONFIG__'
 #!jinja2
 
 [scheduling]
     [[graph]]
         R1 = foo
 {{ 1 / 'foo' }}
-__SUITERC__
-run_fail "${TEST_NAME}" cylc validate 'suite.rc'
+__FLOW_CONFIG__
+run_fail "${TEST_NAME}" cylc validate 'flow.cylc'
 cmp_ok "${TEST_NAME}.stderr" <<'__ERROR__'
 Jinja2Error: unsupported operand type(s) for /: 'int' and 'str'
 Context lines:
@@ -39,12 +39,12 @@ Context lines:
 __ERROR__
 
 TEST_NAME="${TEST_NAME}-value-error"
-cat >'suite.rc' <<'__SUITERC__'
+cat >'flow.cylc' <<'__FLOW_CONFIG__'
 #!Jinja2
 {% set foo = [1, 2] %}
 {% set a, b, c = foo %}
-__SUITERC__
-run_fail "${TEST_NAME}" cylc validate 'suite.rc'
+__FLOW_CONFIG__
+run_fail "${TEST_NAME}" cylc validate 'flow.cylc'
 cmp_ok "${TEST_NAME}.stderr" <<'__ERROR__'
 Jinja2Error: not enough values to unpack (expected 3, got 2)
 Context lines:

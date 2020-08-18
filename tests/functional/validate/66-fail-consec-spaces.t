@@ -21,7 +21,7 @@
 set_test_number 2
 
 TEST_NAME="${TEST_NAME_BASE}-val"
-cat > suite.rc <<__END__
+cat > flow.cylc <<__END__
 [scheduling]
     [[graph]]
         R1 = task1
@@ -36,7 +36,7 @@ cat > suite.rc <<__END__
         [[[directives]]]
             -l  select=1:ncpus=24:mem=20GB  # ERROR!
 __END__
-run_fail "${TEST_NAME}" cylc validate suite.rc
+run_fail "${TEST_NAME}" cylc validate flow.cylc
 cmp_ok "${TEST_NAME}.stderr" <<__END__
 IllegalItemError: [runtime][task1][directives]-l  select - (consecutive spaces)
 __END__

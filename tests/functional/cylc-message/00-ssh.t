@@ -26,7 +26,7 @@ skip_all 'ssh task comm not currently functional'
 require_remote_platform
 set_test_number 3
 
-create_test_globalrc '' "
+create_test_global_config '' "
 [platforms]
     [[${CYLC_TEST_PLATFORM}-ssh]]
         hosts = ${CYLC_TEST_HOST}

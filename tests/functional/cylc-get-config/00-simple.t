@@ -20,7 +20,7 @@
 #-------------------------------------------------------------------------------
 set_test_number 19
 #-------------------------------------------------------------------------------
-init_suite "${TEST_NAME_BASE}" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/suite.rc"
+init_suite "${TEST_NAME_BASE}" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/flow.cylc"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-all"
 run_ok "${TEST_NAME}" cylc get-config "${SUITE_NAME}"

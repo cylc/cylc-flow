@@ -25,7 +25,7 @@ Kill jobs of active tasks and update their statuses accordingly.
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import SuiteRuntimeClient
-from cylc.flow.terminal import prompt, cli_function
+from cylc.flow.terminal import cli_function
 
 
 def get_option_parser():
@@ -41,10 +41,6 @@ def get_option_parser():
 @cli_function(get_option_parser)
 def main(parser, options, suite, *task_globs):
     """CLI of "cylc kill"."""
-    if task_globs:
-        prompt('Kill task %s in %s' % (task_globs, suite), options.force)
-    else:
-        prompt('Kill ALL tasks in %s' % (suite), options.force)
     pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
     pclient(
         'kill_tasks',

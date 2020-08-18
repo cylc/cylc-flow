@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -22,7 +22,7 @@ set_test_number 2
 if ${CYLC_TEST_DEBUG:-false}; then ERR=2; else ERR=1; fi
 #-------------------------------------------------------------------------------
 # ensure that suites don't get auto stop-restarted if they are already stopping
-BASE_GLOBALRC="
+BASE_GLOBAL_CONFIG="
 [cylc]
     [[main loop]]
         plugins = health check, auto restart
@@ -38,17 +38,17 @@ BASE_GLOBALRC="
 
 TEST_NAME="${TEST_NAME_BASE}"
 
-init_suite "${TEST_NAME}" - <<'__SUITERC__'
+init_suite "${TEST_NAME}" - <<'__FLOW_CONFIG__'
 [scheduling]
     [[graph]]
         R1 = foo => bar
 [runtime]
     [[foo]]
         script = cylc stop "${CYLC_SUITE_NAME}"; sleep 15
-__SUITERC__
+__FLOW_CONFIG__
 
-create_test_globalrc '' "
-${BASE_GLOBALRC}
+create_test_global_config '' "
+${BASE_GLOBAL_CONFIG}
 "
 
 run_ok "${TEST_NAME}-suite-start" cylc run "${SUITE_NAME}" --host=localhost
@@ -56,8 +56,8 @@ cylc suite-state "${SUITE_NAME}" --task='foo' --status='running' --point=1 \
     --interval=1 --max-polls=20 >& $ERR
 
 # condemn localhost
-create_test_globalrc '' "
-${BASE_GLOBALRC}
+create_test_global_config '' "
+${BASE_GLOBAL_CONFIG}
 [suite servers]
     condemned hosts = $(hostname)
 "

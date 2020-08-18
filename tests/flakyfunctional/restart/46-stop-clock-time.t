@@ -33,7 +33,7 @@ set_test_number 6
 # At t2.1, stop suite
 # Restart
 # Suite runs to stop clock time, reset stop clock time
-init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
+init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [cylc]
     [[parameters]]
         i = 1..10
@@ -55,7 +55,7 @@ cylc stop -w "$(date --date="@${CLOCKTIME}" +%FT%T%:z)" "${CYLC_SUITE_NAME}"
 """
     [[t<i=2>]]
         script = cylc stop "${CYLC_SUITE_NAME}"
-__SUITERC__
+__FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 

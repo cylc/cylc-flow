@@ -19,7 +19,6 @@ import os
 import zmq
 import tarfile
 import sys
-import datetime
 
 import cylc.flow.flags
 from cylc.flow.suite_files import (
@@ -27,7 +26,6 @@ from cylc.flow.suite_files import (
     KeyOwner,
     KeyType,
     ContactFileFields,
-    get_suite_srv_dir,
     SuiteFiles
 )
 from cylc.flow.resources import extract_resources

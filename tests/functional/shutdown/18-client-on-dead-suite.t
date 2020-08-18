@@ -19,7 +19,7 @@
 # And correct behaviour with client on the next 2 connection attempts.
 . "$(dirname "$0")/test_header"
 set_test_number 3
-init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
+init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [cylc]
     [[events]]
         abort on stalled = True
@@ -31,7 +31,7 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
 [runtime]
     [[t1]]
         script = true
-__SUITERC__
+__FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 cylc run --hold --no-detach "${SUITE_NAME}" 1>'cylc-run.out' 2>&1 &

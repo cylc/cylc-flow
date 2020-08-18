@@ -1,9 +1,0 @@
-#!Jinja2
-{% set MYVAR = "this is a set variable" %}
-
-[scheduling]
-    [[graph]]
-        R1 = "a => FAM"
-
-[runtime]
-{% include 'runtime.rc' %}

@@ -28,7 +28,7 @@ function make_rnd_suite() {
     RND_SUITE_NAME=x$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c6)
     RND_SUITE_SOURCE="$PWD/${RND_SUITE_NAME}"
     mkdir -p "${RND_SUITE_SOURCE}"
-    touch "${RND_SUITE_SOURCE}/suite.rc"
+    touch "${RND_SUITE_SOURCE}/flow.cylc"
     RND_SUITE_RUNDIR="${RUN_DIR}/${RND_SUITE_NAME}"
 }
 
@@ -53,18 +53,18 @@ make_rnd_suite
 rm -rf "${RND_SUITE_SOURCE}"
 run_fail "${TEST_NAME}" cylc register "${RND_SUITE_NAME}" "${RND_SUITE_SOURCE}"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
-SuiteServiceFileError: no suite.rc in ${RND_SUITE_SOURCE}
+SuiteServiceFileError: no flow.cylc or suite.rc in ${RND_SUITE_SOURCE}
 __ERR__
 purge_rnd_suite
 
 #---------------------------
-# Test fail no suite.rc file
+# Test fail no flow.cylc file
 TEST_NAME="${TEST_NAME_BASE}-nodir"
 make_rnd_suite
-rm -f "${RND_SUITE_SOURCE}/suite.rc"
+rm -f "${RND_SUITE_SOURCE}/flow.cylc"
 run_fail "${TEST_NAME}" cylc register "${RND_SUITE_NAME}" "${RND_SUITE_SOURCE}"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
-SuiteServiceFileError: no suite.rc in ${RND_SUITE_SOURCE}
+SuiteServiceFileError: no flow.cylc or suite.rc in ${RND_SUITE_SOURCE}
 __ERR__
 purge_rnd_suite
 
@@ -107,7 +107,7 @@ purge_rnd_suite
 TEST_NAME="${TEST_NAME_BASE}-reg-run-dir"
 make_rnd_suite
 mkdir -p "${RND_SUITE_RUNDIR}"
-cp "${RND_SUITE_SOURCE}/suite.rc" "${RND_SUITE_RUNDIR}"
+cp "${RND_SUITE_SOURCE}/flow.cylc" "${RND_SUITE_RUNDIR}"
 run_ok "${TEST_NAME}" cylc register "${RND_SUITE_NAME}" "${RND_SUITE_RUNDIR}"
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
 REGISTERED ${RND_SUITE_NAME} -> ${RND_SUITE_RUNDIR}
@@ -206,7 +206,7 @@ rm -rf "${TDIR}"
 #-----------------------------------------------------------------------------
 # Now use a real suite
 
-init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
+init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [meta]
     title = the quick brown fox
 [scheduling]
@@ -215,7 +215,7 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
 [runtime]
     [[a,b,c]]
         script = true
-__SUITE_RC__
+__FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-val" cylc validate "${SUITE_NAME}"
 
@@ -226,7 +226,7 @@ __OUT__
 
 # Filter out errors from 'bad' suites in the 'cylc-run' directory
 NONSPECIFIC_ERR2='\[Errno 2\] No such file or directory:'
-SPECIFIC_ERR2="$NONSPECIFIC_ERR2 '$HOME/cylc-run/${SUITE_NAME}/suite.rc'"
+SPECIFIC_ERR2="$NONSPECIFIC_ERR2 '$HOME/cylc-run/${SUITE_NAME}/flow.cylc'"
 ERR2_COUNT="$(grep -c "$SPECIFIC_ERR2" "${TEST_NAME_BASE}-print.stderr")"
 if ((ERR2_COUNT == 0)); then
     grep -v -s "$NONSPECIFIC_ERR2" "${TEST_NAME_BASE}-print.stderr" > "${TEST_NAME_BASE}-print-filtered.stderr"

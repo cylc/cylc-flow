@@ -24,7 +24,7 @@ export CYLC_TEST_IS_GENERIC=false
 require_remote_platform
 set_test_number 5
 
-create_test_globalrc "" "
+create_test_global_config "" "
 [platforms]
    [[${CYLC_TEST_PLATFORM}]]
        retrieve job logs = False"

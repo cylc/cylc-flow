@@ -53,16 +53,16 @@ Examples:
     # Run the suite registered with name REG.
     $ cylc run REG
 
-    # Register $PWD/suite.rc as $(basename $PWD) and run it.
+    # Register $PWD/flow.cylc as $(basename $PWD) and run it.
     # Note REG must be given explicitly if START_POINT is on the command line.
     $ cylc run
 
 A "cold start" (the default) starts from the suite initial cycle point
-(specified in the suite.rc or on the command line). Any dependence on tasks
+(specified in flow.cylc or on the command line). Any dependence on tasks
 prior to the suite initial cycle point is ignored.
 
 A "warm start" (-w/--warm) starts from a given cycle point later than the suite
-initial cycle point (specified in the suite.rc). Any dependence on tasks prior
+initial cycle point (specified in flow.cylc). Any dependence on tasks prior
 to the given warm start cycle point is ignored. The suite initial cycle point
 is preserved."""
 
@@ -305,7 +305,7 @@ def _start_print_blurb():
     )
     cylc_license = """
 The Cylc Suite Engine [%s]
-Copyright (C) 2008-2019 NIWA
+Copyright (C) 2008-2020 NIWA
 & British Crown (Met Office) & Contributors.
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 This program comes with ABSOLUTELY NO WARRANTY.

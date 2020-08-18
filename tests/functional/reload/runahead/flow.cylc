@@ -1,0 +1,24 @@
+[cylc]
+    UTC mode = True
+    [[events]]
+        timeout = PT0.2M
+        abort on timeout = True
+[scheduling]
+    initial cycle point = 2010-01-01
+    final cycle point = 2010-01-05
+    max active cycle points = 2 # marker
+    [[graph]]
+        # oops is stuck waiting task to hold back runahead
+        R1/T00 = "foo & reloader => oops"
+        T00/PT6H = "foo => bar"
+[runtime]
+    [[foo]]
+        script = false
+    [[bar]]
+        script = true
+    [[reloader]]
+        script = """
+cylc__job__poll_grep_suite_log '\[foo.* (received)failed'
+perl -pi -e 's/(max active cycle points = )2( # marker)/\1 4\2/' $CYLC_SUITE_DEF_PATH/flow.cylc
+cylc reload $CYLC_SUITE_NAME
+"""

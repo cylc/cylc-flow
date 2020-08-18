@@ -20,22 +20,22 @@
 #-------------------------------------------------------------------------------
 set_test_number 8
 #-------------------------------------------------------------------------------
-cat > suite.rc <<__END__
+cat > flow.cylc <<__END__
 [scheduling]
     [[graph]]
         R1 = foo && bar => baz
 __END__
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-async-and
-run_fail "${TEST_NAME}" cylc validate -v suite.rc
+run_fail "${TEST_NAME}" cylc validate -v flow.cylc
 grep_ok "GraphParseError: the graph AND operator is '&': " "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-async-or
-sed -i -e 's/&&/||/' suite.rc
-run_fail "${TEST_NAME}" cylc validate -v suite.rc
+sed -i -e 's/&&/||/' flow.cylc
+run_fail "${TEST_NAME}" cylc validate -v flow.cylc
 grep_ok "GraphParseError: the graph OR operator is '|': " "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
-cat > suite.rc <<__END__
+cat > flow.cylc <<__END__
 [scheduling]
     initial cycle point = 2015
     [[graph]]
@@ -43,10 +43,10 @@ cat > suite.rc <<__END__
 __END__
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-cycling-and
-run_fail "${TEST_NAME}" cylc validate -v suite.rc
+run_fail "${TEST_NAME}" cylc validate -v flow.cylc
 grep_ok "GraphParseError: the graph AND operator is '&': " "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-cycling-or
-sed -i -e 's/&&/||/' suite.rc
-run_fail "${TEST_NAME}" cylc validate -v suite.rc
+sed -i -e 's/&&/||/' flow.cylc
+run_fail "${TEST_NAME}" cylc validate -v flow.cylc
 grep_ok "GraphParseError: the graph OR operator is '|': " "${TEST_NAME}.stderr"

@@ -30,7 +30,7 @@ historical reasons) as "None" with -o/--one-line. These defaults
 can be changed with the -n/--null-value option.
 
 Example:
-  |# SUITE.RC
+  |# FLOW.CYLC
   |[runtime]
   |    [[modelX]]
   |        [[[environment]]]
@@ -113,7 +113,7 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser, options, reg):
-    suite, suiterc = parse_suite_arg(options, reg)
+    suite, flow_file = parse_suite_arg(options, reg)
 
     if options.markup:
         prefix = '!cylc!'
@@ -122,7 +122,7 @@ def main(parser, options, reg):
 
     config = SuiteConfig(
         suite,
-        suiterc,
+        flow_file,
         options,
         load_template_vars(options.templatevars, options.templatevars_file))
     if options.tasks:

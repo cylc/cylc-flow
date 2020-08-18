@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -19,11 +19,11 @@
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 2
-echo '%include foo.rc' >suite.rc
-echo '%include bar.rc' >foo.rc
-run_fail "${TEST_NAME_BASE}" cylc validate suite.rc
+echo '%include foo.cylc' >flow.cylc
+echo '%include bar.cylc' >foo.cylc
+run_fail "${TEST_NAME_BASE}" cylc validate flow.cylc
 cmp_ok "${TEST_NAME_BASE}.stderr" <<__ERR__
-IncludeFileNotFoundError: bar.rc via foo.rc from $PWD/suite.rc
+IncludeFileNotFoundError: bar.cylc via foo.cylc from $PWD/flow.cylc
 __ERR__
 #-------------------------------------------------------------------------------
 exit

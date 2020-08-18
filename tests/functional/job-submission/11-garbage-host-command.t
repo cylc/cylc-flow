@@ -20,7 +20,7 @@
 
 set_test_number 3
 
-create_test_globalrc '
+create_test_global_config '
 [platforms]
     [[badhost]]
 '

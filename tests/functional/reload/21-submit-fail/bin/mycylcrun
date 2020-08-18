@@ -25,7 +25,7 @@ from cylc.flow.scheduler import Scheduler
 from cylc.flow.scheduler_cli import main
 
 
-def patch_load_suiterc(method):
+def patch_load_flow_file(method):
     def new_method(self, is_reload=False):
         if is_reload:
             LOG.debug('Sleep on reload')
@@ -33,7 +33,7 @@ def patch_load_suiterc(method):
         return method(self, is_reload)
     return new_method
 
-Scheduler.load_suiterc = patch_load_suiterc(Scheduler.load_suiterc)
+Scheduler.load_flow_file = patch_load_flow_file(Scheduler.load_flow_file)
 
 
 if __name__ == '__main__':

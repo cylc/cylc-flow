@@ -154,18 +154,6 @@ def compute_tree(flow):
     return flow_node
 
 
-def dummy_flow():
-    """Return a blank workflow node."""
-    return add_node(
-        'worflow',
-        '',
-        {},
-        {
-            'id': 'Loading...'
-        }
-    )
-
-
 def dummy_flow(data):
     return add_node(
         'workflow',

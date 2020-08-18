@@ -21,7 +21,7 @@
 #-------------------------------------------------------------------------------
 set_test_number 3
 #-------------------------------------------------------------------------------
-init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
+init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [cylc]
     [[events]]
         abort on inactivity = True
@@ -32,7 +32,7 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
 [runtime]
     [[t1]]
         script = true
-__SUITERC__
+__FLOW_CONFIG__
 #-------------------------------------------------------------------------------
 suite_run_ok "${TEST_NAME_BASE}-run-reflog" \
     cylc run --debug --no-detach --reference-log "${SUITE_NAME}"

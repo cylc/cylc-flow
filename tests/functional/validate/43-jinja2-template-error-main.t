@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -20,7 +20,7 @@
 
 set_test_number 2
 
-cat >'suite.rc' <<'__SUITERC__'
+cat >'flow.cylc' <<'__FLOW_CONFIG__'
 #!jinja2
 {% set foo = {} %}
 [scheduling]
@@ -29,8 +29,8 @@ cat >'suite.rc' <<'__SUITERC__'
 [runtime]
     [[foo]]
         script = sleep 1
-__SUITERC__
-run_fail "${TEST_NAME_BASE}" cylc validate 'suite.rc'
+__FLOW_CONFIG__
+run_fail "${TEST_NAME_BASE}" cylc validate 'flow.cylc'
 cmp_ok "${TEST_NAME_BASE}.stderr" <<'__ERROR__'
 Jinja2Error: You can only sort by either "key" or "value"
 Context lines:

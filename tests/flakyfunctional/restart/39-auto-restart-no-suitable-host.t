@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -18,7 +18,7 @@
 . "$(dirname "$0")/test_header"
 set_test_number 5
 
-BASE_GLOBALRC="
+BASE_GLOBAL_CONFIG="
 [cylc]
     [[main loop]]
         plugins = health check, auto restart
@@ -42,8 +42,8 @@ init_suite "${TEST_NAME_BASE}" <<< '
         P1D = foo
 '
 
-create_test_globalrc '' "
-${BASE_GLOBALRC}
+create_test_global_config '' "
+${BASE_GLOBAL_CONFIG}
 [suite servers]
     run hosts = localhost
 "
@@ -51,8 +51,8 @@ ${BASE_GLOBALRC}
 cylc run "${SUITE_NAME}" --debug
 poll_suite_running
 
-create_test_globalrc '' "
-${BASE_GLOBALRC}
+create_test_global_config '' "
+${BASE_GLOBAL_CONFIG}
 [suite servers]
     run hosts = localhost
     condemned hosts = $(get_fqdn_by_host)

@@ -61,7 +61,7 @@ from cylc.flow.parsec.validate import DurationFloat
 from cylc.flow.pathutil import (
     get_suite_run_dir,
     get_suite_run_log_dir,
-    get_suite_run_rc_dir,
+    get_suite_run_config_log_dir,
     get_suite_run_share_dir,
     get_suite_run_work_dir,
     get_suite_test_log_name,
@@ -182,8 +182,8 @@ class Scheduler:
     # configuration
     config: SuiteConfig = None  # flow config
     cylc_config: DictTree = None  # [cylc] config
-    suiterc: str = None
-    suiterc_update_time: float = None
+    flow_file: str = None
+    flow_file_update_time: float = None
 
     # directories
     suite_dir: str = None
@@ -261,7 +261,7 @@ class Scheduler:
 
         # directory information
         self.suite_dir = suite_files.get_suite_source_dir(self.suite)
-        self.suiterc = suite_files.get_suite_rc(self.suite)
+        self.flow_file = suite_files.get_flow_file(self.suite)
         self.suite_run_dir = get_suite_run_dir(self.suite)
         self.suite_work_dir = get_suite_run_work_dir(self.suite)
         self.suite_share_dir = get_suite_run_share_dir(self.suite)
@@ -400,7 +400,7 @@ class Scheduler:
         self.profiler.log_memory("scheduler.py: start configure")
         if self.is_restart:
             self.suite_db_mgr.restart_upgrade()
-            # This logic handles the lack of initial cycle point in "suite.rc".
+            # This logic handles lack of initial cycle point in "flow.cylc".
             # Things that can't change on suite reload.
             pri_dao = self.suite_db_mgr.get_pri_dao()
             pri_dao.select_suite_params(self._load_suite_params)
@@ -424,9 +424,9 @@ class Scheduler:
                     pass
                 copytree(suite_py, suite_run_py)
 
-        self.profiler.log_memory("scheduler.py: before load_suiterc")
-        self.load_suiterc()
-        self.profiler.log_memory("scheduler.py: after load_suiterc")
+        self.profiler.log_memory("scheduler.py: before load_flow_file")
+        self.load_flow_file()
+        self.profiler.log_memory("scheduler.py: after load_flow_file")
 
         self.suite_db_mgr.on_suite_start(self.is_restart)
 
@@ -1150,7 +1150,7 @@ class Scheduler:
         pri_dao.select_suite_params(self._load_suite_params)
 
         self.suite_db_mgr.checkpoint("reload-init")
-        self.load_suiterc(is_reload=True)
+        self.load_flow_file(is_reload=True)
         self.broadcast_mgr.linearized_ancestors = (
             self.config.get_linearized_ancestors())
         self.pool.set_do_reload(self.config)
@@ -1241,12 +1241,12 @@ class Scheduler:
         suite_files.dump_contact_file(self.suite, contact_data)
         self.contact_data = contact_data
 
-    def load_suiterc(self, is_reload=False):
+    def load_flow_file(self, is_reload=False):
         """Load, and log the suite definition."""
         # Local suite environment set therein.
         self.config = SuiteConfig(
             self.suite,
-            self.suiterc,
+            self.flow_file,
             self.options,
             self.template_vars,
             is_reload=is_reload,
@@ -1254,7 +1254,7 @@ class Scheduler:
             mem_log_func=self.profiler.log_memory,
             output_fname=os.path.join(
                 self.suite_run_dir,
-                suite_files.SuiteFiles.SUITE_RC + '.processed'),
+                suite_files.SuiteFiles.FLOW_FILE + '.processed'),
             run_dir=self.suite_run_dir,
             log_dir=self.suite_log_dir,
             work_dir=self.suite_work_dir,
@@ -1264,8 +1264,8 @@ class Scheduler:
             self.config.cfg['cylc'],
             glbl_cfg().get(['cylc'])
         )
-        self.suiterc_update_time = time()
-        # Dump the loaded suiterc for future reference.
+        self.flow_file_update_time = time()
+        # Dump the loaded flow.cylc file for future reference.
         time_str = get_current_time_string(
             override_use_utc=True, use_basic_format=True,
             display_sub_seconds=False
@@ -1276,8 +1276,8 @@ class Scheduler:
             load_type = "restart"
         else:
             load_type = "run"
-        file_name = get_suite_run_rc_dir(
-            self.suite, f"{time_str}-{load_type}.rc")
+        file_name = get_suite_run_config_log_dir(
+            self.suite, f"{time_str}-{load_type}.cylc")
         with open(file_name, "wb") as handle:
             handle.write(b"# cylc-version: %s\n" % CYLC_VERSION.encode())
             printcfg(self.config.cfg, none_str=None, handle=handle)

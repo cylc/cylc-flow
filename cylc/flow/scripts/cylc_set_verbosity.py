@@ -26,7 +26,7 @@ from logging import CRITICAL, ERROR, WARNING, INFO, DEBUG
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import SuiteRuntimeClient
-from cylc.flow.terminal import prompt, cli_function
+from cylc.flow.terminal import cli_function
 
 LOGGING_LVL_OF = {
     "INFO": INFO,
@@ -57,8 +57,6 @@ def main(parser, options, suite, severity_str):
     except KeyError:
         parser.error("Illegal logging level, %s" % severity_str)
 
-    prompt("Set logging level to %s in %s" % (severity_str, suite),
-           options.force)
     pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
     pclient('set_verbosity', {'level': severity})
 

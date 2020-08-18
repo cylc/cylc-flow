@@ -49,15 +49,15 @@ member_n (there is no direct broadcast to member_n to cancel).
 To broadcast a variable to all tasks (quote items with internal spaces):
   % cylc broadcast -s "[environment]VERSE = the quick brown fox" REG
 To do the same with a file:
-  % cat >'broadcast.rc' <<'__RC__'
+  % cat >'broadcast.cylc' <<'__FLOW__'
   % [environment]
   %     VERSE = the quick brown fox
-  % __RC__
-  % cylc broadcast -F 'broadcast.rc' REG
+  % __FLOW__
+  % cylc broadcast -F 'broadcast.cylc' REG
 To cancel the same broadcast:
   % cylc broadcast --cancel "[environment]VERSE" REG
 If -F FILE was used, the same file can be used to cancel the broadcast:
-  % cylc broadcast -G 'broadcast.rc' REG
+  % cylc broadcast -G 'broadcast.cylc' REG
 
 Use -d/--display to see active broadcasts. Multiple --cancel options or
 multiple --set and --set-file options can be used on the same command line.

@@ -18,14 +18,14 @@
 # Checks ZMQ keys are created and deleted on shutdown - local.
 . "$(dirname "$0")/test_header"
 set_test_number 10
-init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
+init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [cylc]
     cycle point format = %Y
 [scheduling]
     initial cycle point = 2020
     [[graph]]
         R1 = t1
-__SUITE_RC__
+__FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
