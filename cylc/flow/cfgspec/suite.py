@@ -93,10 +93,10 @@ with Conf(
             workflows.
 
             To just alter the timezone used in the date-time cycle point
-            format, see :cylc:conf:`suite.rc[cylc]cycle point time zone`.
+            format, see :cylc:conf:`flow.cylc[cylc]cycle point time zone`.
             To just alter the number of expanded year digits (for years
             below 0 or above 9999), see
-            :cylc:conf:`suite.rc[cylc]cycle point num expanded year digits`.
+            :cylc:conf:`flow.cylc[cylc]cycle point num expanded year digits`.
 
             Cylc usually uses a ``CCYYMMDDThhmmZ`` (``Z`` in the special
             case of UTC) or ``CCYYMMDDThhmm±hhmm`` format for writing
@@ -113,8 +113,8 @@ with Conf(
             The time zone you specify here will be used only for
             writing/dumping cycle points. Cycle points that are input without
             time zones will still default to the local time zone unless
-            :cylc:conf:`suite.rc[cylc]cycle point time zone` or
-            :cylc:conf:`suite.rc[cylc]UTC mode` are set. Not specifying a
+            :cylc:conf:`flow.cylc[cylc]cycle point time zone` or
+            :cylc:conf:`flow.cylc[cylc]UTC mode` are set. Not specifying a
             time zone here is inadvisable as it leads to ambiguity.
 
             .. note::
@@ -147,7 +147,7 @@ with Conf(
             will be converted to the time zone you give and will be
             represented with this string at the end.
 
-            If this isn't set (and :cylc:conf:`suite.rc[cylc]UTC mode` is also
+            If this isn't set (and :cylc:conf:`flow.cylc[cylc]UTC mode` is also
             not set), then it will default to the local time zone at the
             time of running the suite. This will persist over local time zone
             changes (e.g. if the suite is run during winter time, then stopped,
@@ -156,10 +156,10 @@ with Conf(
 
             If this isn't set, and UTC mode is set to True, then this will
             default to ``Z``. If you use a custom
-            :cylc:conf:`suite.rc[cylc]cycle point format`, it is a good idea to
-            set the same time zone here. If you specify a different one here,
-            it will only be used for inferring timezone-less cycle points,
-            while dumping will use the one from the cycle point format.
+            :cylc:conf:`flow.cylc[cylc]cycle point format`, it is a good idea
+            to set the same time zone here. If you specify a different one
+            here, it will only be used for inferring timezone-less cycle
+            points, while dumping will use the one from the cycle point format.
 
             .. note::
 

@@ -730,8 +730,8 @@ class SuiteConfig:
         set_utc_mode(orig_utc_mode)
 
     def process_cycle_point_tz(self):
-        """Set the cycle point time zone from suiterc or from stored value on
-        restart.
+        """Set the cycle point time zone from config or from stored value
+        on restart.
 
         Ensure suites restart with the same cycle point time zone even after
         system time zone changes e.g. DST (the value is put in db by

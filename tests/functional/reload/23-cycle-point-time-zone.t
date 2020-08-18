@@ -23,7 +23,7 @@
 
 set_test_number 5
 
-init_suite "${TEST_NAME_BASE}" << '__SUITERC__'
+init_suite "${TEST_NAME_BASE}" << '__FLOW__'
 [cylc]
     UTC mode = False
 [scheduling]
@@ -35,7 +35,7 @@ init_suite "${TEST_NAME_BASE}" << '__SUITERC__'
 [runtime]
     [[foo]]
         script = true
-__SUITERC__
+__FLOW__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
