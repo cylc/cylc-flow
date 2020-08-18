@@ -22,7 +22,7 @@
 
 set_test_number 2
 
-cat >'suite.rc' <<'__SUITE_RC__'
+cat >'flow.cylc' <<'__FLOW_CONFIG__'
 [cylc]
     UTC mode = true
 [scheduling]
@@ -32,9 +32,9 @@ cat >'suite.rc' <<'__SUITE_RC__'
 [runtime]
     [[t1]]
         script = true
-__SUITE_RC__
+__FLOW_CONFIG__
 
-run_ok "${TEST_NAME_BASE}" cylc graph --reference 'suite.rc'
+run_ok "${TEST_NAME_BASE}" cylc graph --reference 'flow.cylc'
 grep_ok "t1.20171231T1200Z" "${TEST_NAME_BASE}.stdout"
 
 exit

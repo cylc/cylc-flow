@@ -21,7 +21,7 @@
 set_test_number 3
 
 OPT_SET=
-create_test_globalrc "" "
+create_test_global_config "" "
 [cylc]
     [[main loop]]
         # plugins = health check

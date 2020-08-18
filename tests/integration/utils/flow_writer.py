@@ -69,7 +69,7 @@ def _write_section(name, section, level):
     return ret
 
 
-def suiterc(conf):
+def flow_config_str(conf):
     """Convert a configuration dictionary into cylc/parsec format.
 
     Args:

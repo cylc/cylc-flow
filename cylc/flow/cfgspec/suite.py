@@ -34,13 +34,19 @@ from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
 
 with Conf(
-    'suite.rc',
+    'flow.cylc',
     desc='''
         Defines a cylc suite configuration.
 
         Embedded Jinja2 code (see :ref:`Jinja`) must process to a valid
-        raw suite.rc file. See also :ref:`SuiteRCFile` for a descriptive
-        overview of suite.rc files, including syntax (:ref:`Syntax`).
+        raw flow.cylc file. See also :ref:`FlowConfigFile` for a descriptive
+        overview of flow.cylc files, including syntax (:ref:`Syntax`).
+
+        .. note::
+
+           Prior to Cylc 8, this was named ``suite.rc``, but that
+           name is now deprecated. The ``cylc run`` command will automatically
+           symlink an existing ``suite.rc`` file to ``flow.cylc``.
     '''
 ) as SPEC:
 
@@ -66,7 +72,7 @@ with Conf(
             A web URL to suite documentation.  If present it can be browsed
             with the ``cylc doc`` command. The string template
             ``%(suite_name)s`` will be replaced with the actual suite name.
-            See also :cylc:conf:`suite.rc[runtime][<namespace>][meta]URL`.
+            See also :cylc:conf:`flow.cylc[runtime][<namespace>][meta]URL`.
 
             Example:
 
@@ -201,14 +207,14 @@ with Conf(
 
             In date-time cycling, if you do not provide time zone information
             for this, it will be assumed to be local time, or in UTC if
-            :cylc:conf:`suite.rc[cylc]UTC mode` is set, or in the time zone
-            determined by :cylc:conf`suite.rc[cylc][cycle point time zone]`.
+            :cylc:conf:`flow.cylc[cylc]UTC mode` is set, or in the time zone
+            determined by :cylc:conf`flow.cylc[cylc][cycle point time zone]`.
 
             The string ``now`` converts to the current date-time on the suite
             host (adjusted to UTC if the suite is in UTC mode but the host is
             not) to minute resolution.  Minutes (or hours, etc.) may be
             ignored depending on the value of
-            :cylc:conf:`suite.rc[cylc]cycle point format`.
+            :cylc:conf:`flow.cylc[cylc]cycle point format`.
         ''')
         Conf('final cycle point', VDR.V_STRING, desc='''
             Cycling tasks are held once they pass the final cycle point, if
@@ -218,9 +224,9 @@ with Conf(
 
             In date-time cycling, if you do not provide time zone information
             for this, it will be assumed to be local time, or in UTC if
-            :cylc:conf:`suite.rc[cylc]UTC mode`
+            :cylc:conf:`flow.cylc[cylc]UTC mode`
             is set, or in the time zone determined by
-            :cylc:conf`suite.rc[cylc][cycle point time zone]`.
+            :cylc:conf`flow.cylc[cylc][cycle point time zone]`.
         ''')
         Conf('initial cycle point constraints', VDR.V_STRING_LIST, desc='''
             in a cycling suite it is possible to restrict the initial cycle
@@ -675,7 +681,8 @@ with Conf(
 
                 The top level share and work directory location can be changed
                 (e.g. to a large data area) by a global config setting (see
-                :cylc:conf:`flow.rc[hosts][<hostname glob>]work directory`).
+                :cylc:conf:`global.cylc[hosts][<hostname glob>]
+                work directory`).
 
                 .. note::
 
@@ -732,7 +739,7 @@ with Conf(
                         ``%(task_name)s`` will be replaced with the actual
                         suite and task names.
 
-                        See also :cylc:conf:`[meta]URL <suite.rc[meta]URL>`.
+                        See also :cylc:conf:`[meta]URL <flow.cylc[meta]URL>`.
 
                         Example:
 
@@ -855,7 +862,7 @@ with Conf(
             with Conf('events', desc='''
                 Cylc can call nominated event handlers when certain task
                 events occur. This section configures specific task event
-                handlers; see :cylc:conf:`suite.rc[cylc][events]` for
+                handlers; see :cylc:conf:`flow.cylc[cylc][events]` for
                 suite event handlers.
 
                 Event handlers can be located in the suite ``bin/`` directory,
@@ -1078,7 +1085,7 @@ with Conf(
                     script without evaluation or manipulation by cylc, so any
                     variable assignment expression that is legal in the job
                     submission shell can be used.  White space around the
-                    ``=`` is allowed (as far as cylc's suite.rc parser is
+                    ``=`` is allowed (as far as cylc's flow.cylc parser is
                     concerned these are just normal configuration items).
 
                     Examples::
@@ -1089,7 +1096,7 @@ with Conf(
                        WAZ = ${FOO%.jpg}.png
                        NEXT_CYCLE = $( cylc cycle-point --offset=PT6H )
                        ZAZ = "${FOO#bar}"
-                       # ^ quoted to escape the suite.rc comment character
+                       # ^ quoted to escape the flow.cylc comment character
                 ''')
 
             with Conf('directives', desc='''

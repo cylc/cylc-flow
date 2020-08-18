@@ -16,7 +16,7 @@
 """Automatically restart suites if they are running on bad servers.
 
 Loads in the global configuration to check if the server a suite is running
-on is listed in :cylc:conf:`flow.rc[suite servers]condemned hosts`.
+on is listed in :cylc:conf:`global.cylc[suite servers]condemned hosts`.
 
 This is useful if a host needs to be taken off-line e.g. for scheduled
 maintenance.
@@ -24,13 +24,13 @@ maintenance.
 This functionality is configured via the following site configuration
 settings:
 
-.. cylc-scope:: flow.rc
+.. cylc-scope:: global.cylc
 
 - :cylc:conf:`[suite servers]auto restart delay`
 - :cylc:conf:`[suite servers]condemned hosts`
 - :cylc:conf:`[suite servers]run hosts`
 
-.. cylc-scope:: flow.rc[suite servers]
+.. cylc-scope:: global.cylc[suite servers]
 
 The auto stop-restart feature has two modes:
 

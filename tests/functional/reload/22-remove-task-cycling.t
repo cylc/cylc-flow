@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -25,7 +25,7 @@ set_test_number 3
 # A suite designed to orphan a single copy of a task 'bar' on self-reload,
 # or stall and abort if the orphaned task triggers the #3306 bug.
 
-init_suite "${TEST_NAME_BASE}" <<__SUITE_RC__
+init_suite "${TEST_NAME_BASE}" <<__FLOW_CONFIG__
 [cylc]
    [[events]]
       inactivity = PT25S
@@ -50,7 +50,7 @@ $(declare -f poll_grep)
 
 # Remove bar and tell the server to reload.
 if (( CYLC_TASK_CYCLE_POINT == CYLC_SUITE_INITIAL_CYCLE_POINT )); then
-   sed -i 's/^.*remove*$//g' "\${CYLC_SUITE_DEF_PATH}/suite.rc"
+   sed -i 's/^.*remove*$//g' "\${CYLC_SUITE_DEF_PATH}/flow.cylc"
    cylc reload "\${CYLC_SUITE_NAME}"
    poll_grep -F 'Reload complete' "\${CYLC_SUITE_RUN_DIR}/log/suite/log"
    # kill the long-running orphaned bar task.
@@ -64,7 +64,7 @@ fi
 sleep 1000 &
 echo \$! > pid
 wait"""
-__SUITE_RC__
+__FLOW_CONFIG__
 
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -20,16 +20,16 @@
 #-------------------------------------------------------------------------------
 set_test_number 2
 #-------------------------------------------------------------------------------
-cat >'suite.rc' <<'__SUITERC__'
+cat >'flow.cylc' <<'__FLOW_CONFIG__'
 [scheduling]
     initial cycle point = 20100101T00
     [[graph]]
         R1 = "cold_foo"
         12 = "cold_foo => foo"
-__SUITERC__
+__FLOW_CONFIG__
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}"
-run_fail "${TEST_NAME}" cylc validate -v 'suite.rc'
+run_fail "${TEST_NAME}" cylc validate -v 'flow.cylc'
 grep_ok 'SuiteConfigError: Cannot process recurrence 12' "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
 exit

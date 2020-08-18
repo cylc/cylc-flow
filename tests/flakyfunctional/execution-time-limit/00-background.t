@@ -25,7 +25,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 CYLC_TEST_BATCH_SYS=${TEST_NAME_BASE##??-}
 
-create_test_globalrc "" "
+create_test_global_config "" "
 [platforms]
 [[hydra]]
 hosts = localhost

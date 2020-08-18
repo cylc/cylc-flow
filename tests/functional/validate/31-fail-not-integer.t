@@ -20,7 +20,7 @@
 #-------------------------------------------------------------------------------
 set_test_number 2
 #-------------------------------------------------------------------------------
-cat >'suite.rc' <<'__SUITERC__'
+cat >'flow.cylc' <<'__FLOW_CONFIG__'
 [scheduling]
     initial cycle point = 2015-01-01
     final cycle point = 2015-01-01
@@ -30,10 +30,10 @@ cat >'suite.rc' <<'__SUITERC__'
 [runtime]
     [[foo]]
     script = sleep 10
-__SUITERC__
+__FLOW_CONFIG__
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}"
-run_fail "${TEST_NAME}" cylc validate -v 'suite.rc'
+run_fail "${TEST_NAME}" cylc validate -v 'flow.cylc'
 grep_ok "SuiteConfigError: Cannot process recurrence 1" "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
 exit

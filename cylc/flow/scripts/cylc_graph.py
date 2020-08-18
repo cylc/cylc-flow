@@ -27,7 +27,7 @@ from cylc.flow.config import SuiteConfig
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.exceptions import UserInputError, SuiteServiceFileError
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.suite_files import get_suite_rc
+from cylc.flow.suite_files import get_flow_file
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow.terminal import cli_function
 
@@ -168,12 +168,12 @@ def graph_inheritance(config):
 def get_config(suite, opts, template_vars=None):
     """Return a SuiteConfig object for the provided reg / path."""
     try:
-        suiterc = get_suite_rc(suite)
+        flow_file = get_flow_file(suite)
     except SuiteServiceFileError:
         # could not find suite, assume we have been given a path instead
-        suiterc = suite
+        flow_file = suite
         suite = 'test'
-    return SuiteConfig(suite, suiterc, opts, template_vars=template_vars)
+    return SuiteConfig(suite, flow_file, opts, template_vars=template_vars)
 
 
 def get_option_parser():
@@ -212,7 +212,7 @@ def get_option_parser():
 
     parser.add_option(
         '--icp', action='store', default=None, metavar='CYCLE_POINT', help=(
-            'Set initial cycle point. Required if not defined in suite.rc.'))
+            'Set initial cycle point. Required if not defined in flow.cylc.'))
 
     return parser
 

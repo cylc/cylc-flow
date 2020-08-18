@@ -18,7 +18,7 @@
 # Test validation of special tasks names with non-word characters
 . "$(dirname "$0")/test_header"
 set_test_number 2
-cat >'suite.rc' <<'__SUITE_RC__'
+cat >'flow.cylc' <<'__FLOW_CONFIG__'
 [scheduling]
     initial cycle point = 20200101
     [[special tasks]]
@@ -28,8 +28,8 @@ cat >'suite.rc' <<'__SUITE_RC__'
 [runtime]
     [[bar]]
         script = true
-__SUITE_RC__
-run_fail "${TEST_NAME_BASE}" cylc validate --strict "${PWD}/suite.rc"
+__FLOW_CONFIG__
+run_fail "${TEST_NAME_BASE}" cylc validate --strict "${PWD}/flow.cylc"
 cmp_ok "${TEST_NAME_BASE}.stderr" <<'__ERR__'
 SuiteConfigError: clock-trigger task "foo" is not defined.
 __ERR__

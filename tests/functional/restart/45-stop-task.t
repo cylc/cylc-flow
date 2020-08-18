@@ -36,7 +36,7 @@ set_test_number 10
 # Suite runs to stop task t5.1, reset stop task.
 # Restart
 # Suite stops normally at t8.1
-init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
+init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [cylc]
     [[parameters]]
         i = 1..8
@@ -54,7 +54,7 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
         script = cylc stop "${CYLC_SUITE_NAME}" 't_i5.1'
     [[t<i=2>]]
         script = cylc stop "${CYLC_SUITE_NAME}"
-__SUITERC__
+__FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 

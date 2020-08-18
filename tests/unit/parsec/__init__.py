@@ -40,7 +40,7 @@ def config(tmp_path):
         Returns:
             cylc.flow.parsec.ParsecConfig
         """
-        filepath = tmp_path / 'cfg.rc'
+        filepath = tmp_path / 'cfg.cylc'
         with open(filepath, 'w+') as filehandle:
             filehandle.write(conf)
         cfg = ParsecConfig(spec)

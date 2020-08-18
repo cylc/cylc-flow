@@ -20,7 +20,7 @@
 skip_all "TODO replace this test with one checking that garbage-platform commands are handled ok"
 set_test_number 2
 
-create_test_globalrc "
+create_test_global_config "
 [platforms]
     [[test platform]]
         hosts = $(my-host-select)

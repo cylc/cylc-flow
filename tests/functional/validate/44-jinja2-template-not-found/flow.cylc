@@ -1,0 +1,6 @@
+#!jinja2
+[scheduling]
+    [[graph]]
+        R1 = foo
+[runtime]
+{% include 'flow-foo.cylc' %}

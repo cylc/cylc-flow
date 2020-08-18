@@ -21,7 +21,7 @@
 
 set_test_number 3
 
-init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
+init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduling]
    [[graph]]
       R1 = t1
@@ -30,7 +30,7 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
         script=true
         [[[events]]]
             started handler = echo %(suite)s, echo %(name)s, echo %(start_time)s
-__SUITERC__
+__FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 

@@ -23,7 +23,7 @@
 
 set_test_number 3
 
-init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
+init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduling]
    [[graph]]
       R1 = foo
@@ -38,7 +38,7 @@ cylc message -s WARNING -- ${CYLC_SUITE_NAME} ${CYLC_TASK_JOB} "guinea pig"
       [[[events]]]
         handler events = warning
         handlers = echo "HANDLED %(message)s"
-__SUITERC__
+__FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 

@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test restart with override to reverse no auto shutdown setting in suite.rc
+# Test restart with override to reverse no auto shutdown setting in flow.cylc
 
 . "$(dirname "$0")/test_header"
 
@@ -35,7 +35,7 @@ set_test_number 8
 # At t2.1, stop suite
 # Restart, should retain auto shutdown enabled option
 # Suite runs to final task and shuts down normally
-init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
+init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [cylc]
     disable automatic shutdown = True
     [[parameters]]
@@ -52,7 +52,7 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
         script = true
     [[t<i=2>]]
         script = cylc stop "${CYLC_SUITE_NAME}"
-__SUITERC__
+__FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 

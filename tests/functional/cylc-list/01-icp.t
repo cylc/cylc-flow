@@ -20,7 +20,7 @@
 
 set_test_number 3
 
-init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
+init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [cylc]
     UTC mode = True
 [scheduling]
@@ -29,7 +29,7 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
 [runtime]
     [[foo, bar]]
         script = true
-__SUITE_RC__
+__FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}" cylc list --icp=20200101T0000Z "${SUITE_NAME}"
 cmp_ok "${TEST_NAME_BASE}.stdout" <<__OUT__

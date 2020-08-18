@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -29,7 +29,7 @@ TEST_NAME="${TEST_NAME_BASE}"-validate
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 
 # Set frequent pruning of merged flow labels.
-create_test_globalrc "" "
+create_test_global_config "" "
 [cylc]
    [[main loop]]
        [[[prune flow labels]]]

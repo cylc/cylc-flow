@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -21,7 +21,7 @@
 set_test_number 10
 
 TEST_NAME="${TEST_NAME_BASE}-interval"
-cat >'suite.rc' <<'__SUITE__'
+cat >'flow.cylc' <<'__SUITE__'
 [cylc]
     cycle point time zone = +01
 [scheduling]
@@ -34,13 +34,13 @@ cat >'suite.rc' <<'__SUITE__'
     [[foo]]
         script = true
 __SUITE__
-run_fail "${TEST_NAME}" cylc validate 'suite.rc'
+run_fail "${TEST_NAME}" cylc validate 'flow.cylc'
 cmp_ok "${TEST_NAME}.stderr" <<'__ERR__'
 SuiteConfigError: Cannot process recurrence R/T00/PT5D (initial cycle point=20140101T0000+01) (final cycle point=20140201T0000+01)
 __ERR__
 
 TEST_NAME="${TEST_NAME_BASE}-old-icp"
-cat >'suite.rc' <<'__SUITE__'
+cat >'flow.cylc' <<'__SUITE__'
 [cylc]
     UTC mode = True
 [scheduling]
@@ -51,13 +51,13 @@ cat >'suite.rc' <<'__SUITE__'
     [[root]]
         script = true
 __SUITE__
-run_fail "${TEST_NAME}" cylc validate 'suite.rc'
+run_fail "${TEST_NAME}" cylc validate 'flow.cylc'
 cmp_ok "${TEST_NAME}.stderr" <<'__ERR__'
 SuiteConfigError: Cannot process recurrence R1/P0D (initial cycle point=20140101T0000Z) (final cycle point=None) This suite requires a final cycle point.
 __ERR__
 
 TEST_NAME="${TEST_NAME_BASE}-2-digit-century"
-cat >'suite.rc' <<'__SUITE__'
+cat >'flow.cylc' <<'__SUITE__'
 [cylc]
     cycle point time zone = +01
 [scheduling]
@@ -71,13 +71,13 @@ cat >'suite.rc' <<'__SUITE__'
     [[foo]]
         script = true
 __SUITE__
-run_fail "${TEST_NAME}" cylc validate 'suite.rc'
+run_fail "${TEST_NAME}" cylc validate 'flow.cylc'
 cmp_ok "${TEST_NAME}.stderr" <<'__ERR__'
 SuiteConfigError: Cannot process recurrence R/00/P5D (initial cycle point=20140101T0000+01) (final cycle point=20140201T0000+01) '00': 2 digit centuries not allowed. Did you mean T-digit-digit e.g. 'T00'?
 __ERR__
 
 TEST_NAME="${TEST_NAME_BASE}-old-recurrences"
-cat >'suite.rc' <<'__SUITE__'
+cat >'flow.cylc' <<'__SUITE__'
 [cylc]
     cycle point time zone = +01
 [scheduling]
@@ -85,13 +85,13 @@ cat >'suite.rc' <<'__SUITE__'
     [[graph]]
         0,6,12 = "foo"
 __SUITE__
-run_fail "${TEST_NAME}" cylc validate 'suite.rc'
+run_fail "${TEST_NAME}" cylc validate 'flow.cylc'
 cmp_ok "${TEST_NAME}.stderr" <<'__ERR__'
 SuiteConfigError: Cannot process recurrence 0 (initial cycle point=20100101T0000+01) (final cycle point=None) '0': not a valid cylc-shorthand or full ISO 8601 date representation
 __ERR__
 
 TEST_NAME="${TEST_NAME_BASE}-old-cycle-point-format"
-cat >'suite.rc' <<'__SUITE__'
+cat >'flow.cylc' <<'__SUITE__'
 [cylc]
     cycle point format = %Y%m%d%H
 [scheduling]
@@ -99,7 +99,7 @@ cat >'suite.rc' <<'__SUITE__'
     [[graph]]
         R1 = foo
 __SUITE__
-run_fail "${TEST_NAME}" cylc validate 'suite.rc'
+run_fail "${TEST_NAME}" cylc validate 'flow.cylc'
 cmp_ok "${TEST_NAME}.stderr" <<'__ERR__'
 SuiteConfigError: Cannot process recurrence R1 (initial cycle point=2010010101) (final cycle point=None) '2010010101': not a valid cylc-shorthand or full ISO 8601 date representation
 __ERR__

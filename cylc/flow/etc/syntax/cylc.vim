@@ -1,4 +1,4 @@
-" Syntax highlighting for cylc suite.rc files.
+" Syntax highlighting for Cylc files.
 " Author: Hilary Oliver, 2011-2014
 " see :help syntax
 "______________________________________________________________________
@@ -12,11 +12,9 @@
 "
 "|augroup filetype
 "|  au! BufRead,BufnewFile *suite*.rc   set filetype=cylc
+"|  au! BufRead,BufnewFile *.cylc   set filetype=cylc
 "|augroup END
 "
-" (the wildcard in '*suite.rc' handles temporary files generated
-"  by the 'cylc view' command, e.g. /tmp/foo.bar.QYrZ0q.suite.rc)
-
 " 3) If you want to open files with syntax folds initially open, then
 "    also add the following line to your $HOME/.vimrc file:
 "
@@ -26,7 +24,7 @@
 " comments: 'hi def link cylcComment Comment'). These can be customized in
 "  your .vimrc file for consistent highlighting across file types, e.g.:
 "
-"|hi Statement guifg=#22a8e3 gui=bold 
+"|hi Statement guifg=#22a8e3 gui=bold
 "|hi Normal guifg=#9096a4
 "|hi Comment guifg=#ff6900
 "|hi Type guifg=#28d45b gui=bold"
@@ -104,4 +102,4 @@ hi def link cylcEquals LineNr
 hi def link output Special
 hi def link suicide Special
 hi def link offset Special
-hi def link trigger Constant 
+hi def link trigger Constant

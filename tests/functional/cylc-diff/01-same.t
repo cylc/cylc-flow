@@ -15,20 +15,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test for "cylc diff" with 2 suites pointing to same "suite.rc".
+# Test for "cylc diff" with 2 suites pointing to same "flow.cylc".
 . "$(dirname "$0")/test_header"
 
 set_test_number 3
 
-cat >'suite.rc' <<'__SUITE_RC__'
+cat >'flow.cylc' <<'__FLOW_CONFIG__'
 [scheduling]
     [[graph]]
         R1 = foo => bar
 [runtime]
     [[foo, bar]]
         script = true
-__SUITE_RC__
-init_suite "${TEST_NAME_BASE}-1" "${PWD}/suite.rc"
+__FLOW_CONFIG__
+init_suite "${TEST_NAME_BASE}-1" "${PWD}/flow.cylc"
 # shellcheck disable=SC2153
 SUITE_NAME1="${SUITE_NAME}"
 # shellcheck disable=SC2153
@@ -37,8 +37,8 @@ cylc register "${SUITE_NAME2}" "${TEST_DIR}/${SUITE_NAME1}" 2>'/dev/null'
 
 run_ok "${TEST_NAME_BASE}" cylc diff "${SUITE_NAME1}" "${SUITE_NAME2}"
 cmp_ok "${TEST_NAME_BASE}.stdout" <<__OUT__
-Parsing ${SUITE_NAME1} (${TEST_DIR}/${SUITE_NAME1}/suite.rc)
-Parsing ${SUITE_NAME2} (${TEST_DIR}/${SUITE_NAME1}/suite.rc)
+Parsing ${SUITE_NAME1} (${TEST_DIR}/${SUITE_NAME1}/flow.cylc)
+Parsing ${SUITE_NAME2} (${TEST_DIR}/${SUITE_NAME1}/flow.cylc)
 Suite definitions ${SUITE_NAME1} and ${SUITE_NAME2} are identical
 __OUT__
 cmp_ok "${TEST_NAME_BASE}.stderr" <'/dev/null'

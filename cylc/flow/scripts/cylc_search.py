@@ -74,20 +74,20 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser, options, reg, *patterns):
-    suite, suiterc = parse_suite_arg(options, reg)
+    suite, flow_file = parse_suite_arg(options, reg)
 
     # cylc search SUITE PATTERN
     pattern = '|'.join(patterns)
 
-    suitedir = os.path.dirname(suiterc)
+    suitedir = os.path.dirname(flow_file)
 
-    if os.path.isfile(suiterc):
-        h = open(suiterc, 'r')
+    if os.path.isfile(flow_file):
+        h = open(flow_file, 'r')
         lines = h.readlines()
         h.close()
-        lines = inline(lines, suitedir, suiterc, for_grep=True)
+        lines = inline(lines, suitedir, flow_file, for_grep=True)
     else:
-        parser.error("File not found: " + suiterc)
+        parser.error(f"File not found: {flow_file}")
 
     sections = deque(['(top)'])
 
@@ -137,7 +137,7 @@ def main(parser, options, reg, *patterns):
                 curr_file = os.path.join(suitedir, inc_file)
                 line_no = inc_line_count
             else:
-                curr_file = suiterc
+                curr_file = flow_file
                 line_no = line_count
 
             if curr_file != prev_file:

@@ -31,7 +31,7 @@ LOGD1="$RUN_DIR/${SUITE_NAME}/log/job/1/t1/01"
 LOGD2="$RUN_DIR/${SUITE_NAME}/log/job/1/t1/02"
 exists_ok "${LOGD1}"
 exists_ok "${LOGD2}"
-sed -i 's/script =.*$/script = true/' "suite.rc"
+sed -i 's/script =.*$/script = true/' "flow.cylc"
 sed -i -n '1,/triggered off/p' "reference.log"
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --debug --no-detach --reference-test "${SUITE_NAME}" \

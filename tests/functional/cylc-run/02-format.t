@@ -22,14 +22,14 @@
 
 set_test_number 7
 
-init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
+init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduling]
     [[dependencies]]
         R1 = foo
 [runtime]
     [[foo]]
         script = cylc stop --now --now "${CYLC_SUITE_NAME}"
-__SUITE_RC__
+__FLOW_CONFIG__
 
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"

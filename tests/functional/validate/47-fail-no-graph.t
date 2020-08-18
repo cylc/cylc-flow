@@ -21,19 +21,19 @@
 set_test_number 4
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-empty-graph
-cat > suite.rc <<__END__
+cat > flow.cylc <<__END__
 [scheduling]
     [[graph]]
         R1 = ""
 __END__
-run_fail "${TEST_NAME}" cylc validate -v suite.rc
+run_fail "${TEST_NAME}" cylc validate -v flow.cylc
 grep_ok "No suite dependency graph defined." "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-no-graph
-cat > suite.rc <<__END__
+cat > flow.cylc <<__END__
 [scheduling]
     initial cycle point = 2015
     [[graph]]
 __END__
-run_fail "${TEST_NAME}" cylc validate -v suite.rc
+run_fail "${TEST_NAME}" cylc validate -v flow.cylc
 grep_ok "No suite dependency graph defined." "${TEST_NAME}.stderr"

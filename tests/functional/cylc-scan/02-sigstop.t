@@ -22,7 +22,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 run_ok "${TEST_NAME_BASE}-run" cylc run --hold "${SUITE_NAME}"
-cylc__job__poll_grep_suite_log "Suite held"
+poll_grep_suite_log "Suite held"
 SUITE_PID=$(cylc get-suite-contact "${SUITE_NAME}" | \
   awk '/CYLC_SUITE_PROCESS/ {print $1}' | sed -e 's/^.*=//')
 

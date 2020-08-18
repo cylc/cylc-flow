@@ -27,7 +27,7 @@ from .flow_writer import (
     _write_header,
     _write_setting,
     _write_section,
-    suiterc
+    flow_config_str
 )
 
 
@@ -97,9 +97,9 @@ def test_write_section():
     ]
 
 
-def test_suiterc():
+def test_flow_config_str():
     """It should write out entire cylc configuration files."""
-    assert suiterc(
+    assert flow_config_str(
         {
             'foo': {
                 'bar': {

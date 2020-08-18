@@ -1,8 +1,0 @@
-#!jinja2
-[meta]
-    title=foo
-    description=A test suite.rc with includes
-[cylc]
-UTC mode=True # Ignore DST
-%include include/suite-scheduling.rc
-%include include/suite-runtime.rc

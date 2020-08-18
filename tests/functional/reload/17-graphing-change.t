@@ -29,9 +29,9 @@ LOG_FILE="${SUITE_RUN_DIR}/log/suite/log"
 # start suite in held mode
 run_ok "${TEST_NAME_BASE}-add-run" cylc run --debug --hold "${SUITE_NAME}"
 
-# change the suite.rc file
-cp "${TEST_SOURCE_DIR}/graphing-change/suite-1.rc" \
-    "${TEST_DIR}/${SUITE_NAME}/suite.rc"
+# change the flow.cylc file
+cp "${TEST_SOURCE_DIR}/graphing-change/flow-1.cylc" \
+    "${TEST_DIR}/${SUITE_NAME}/flow.cylc"
 
 # reload suite
 run_ok "${TEST_NAME_BASE}-add-reload" cylc reload "${SUITE_NAME}"
@@ -44,9 +44,9 @@ grep_ok "Added task: 'one'" "${LOG_FILE}"
 #-------------------------------------------------------------------------------
 # test reporting or removed tasks
 
-# change the suite.rc file
-cp "${TEST_SOURCE_DIR}/graphing-change/suite.rc" \
-    "${TEST_DIR}/${SUITE_NAME}/suite.rc"
+# change the flow.cylc file
+cp "${TEST_SOURCE_DIR}/graphing-change/flow.cylc" \
+    "${TEST_DIR}/${SUITE_NAME}/flow.cylc"
 
 # reload suite
 run_ok "${TEST_NAME_BASE}-remove-reload" cylc reload "${SUITE_NAME}"
@@ -59,9 +59,9 @@ grep_ok "Removed task: 'one'" "${LOG_FILE}"
 #-------------------------------------------------------------------------------
 # test reporting of adding / removing / swapping tasks
 
-# change the suite.rc file
-cp "${TEST_SOURCE_DIR}/graphing-change/suite-2.rc" \
-    "${TEST_DIR}/${SUITE_NAME}/suite.rc"
+# change the flow.cylc file
+cp "${TEST_SOURCE_DIR}/graphing-change/flow-2.cylc" \
+    "${TEST_DIR}/${SUITE_NAME}/flow.cylc"
 
 cylc spawn "${SUITE_NAME}"  foo.1
 cylc spawn "${SUITE_NAME}"  baz.1

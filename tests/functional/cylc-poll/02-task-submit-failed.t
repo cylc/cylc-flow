@@ -20,7 +20,7 @@
 skip_darwin 'atrun hard to configure on Mac OS'
 set_test_number 2
 
-create_test_globalrc "" "
+create_test_global_config "" "
 [platforms]
 [[crocodile]]
   hosts = localhost

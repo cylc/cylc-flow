@@ -20,31 +20,31 @@
 
 set_test_number 3
 
-init_suite "${TEST_NAME_BASE}-1" <<'__SUITE_RC__'
+init_suite "${TEST_NAME_BASE}-1" <<'__FLOW_CONFIG__'
 [scheduling]
     [[graph]]
         R1 = foo => bar
 [runtime]
     [[foo, bar]]
         script = true
-__SUITE_RC__
+__FLOW_CONFIG__
 # shellcheck disable=SC2153
 SUITE_NAME1="${SUITE_NAME}"
-init_suite "${TEST_NAME_BASE}-2" <<'__SUITE_RC__'
+init_suite "${TEST_NAME_BASE}-2" <<'__FLOW_CONFIG__'
 [scheduling]
     [[graph]]
         R1 = food => barley
 [runtime]
     [[food, barley]]
         script = true
-__SUITE_RC__
+__FLOW_CONFIG__
 # shellcheck disable=SC2153
 SUITE_NAME2="${SUITE_NAME}"
 
 run_ok "${TEST_NAME_BASE}" cylc diff "${SUITE_NAME1}" "${SUITE_NAME2}"
 cmp_ok "${TEST_NAME_BASE}.stdout" <<__OUT__
-Parsing ${SUITE_NAME1} (${TEST_DIR}/${SUITE_NAME1}/suite.rc)
-Parsing ${SUITE_NAME2} (${TEST_DIR}/${SUITE_NAME2}/suite.rc)
+Parsing ${SUITE_NAME1} (${TEST_DIR}/${SUITE_NAME1}/flow.cylc)
+Parsing ${SUITE_NAME2} (${TEST_DIR}/${SUITE_NAME2}/flow.cylc)
 Suite definitions ${SUITE_NAME1} and ${SUITE_NAME2} differ
 
 2 items only in ${SUITE_NAME1} (<)

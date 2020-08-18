@@ -34,7 +34,7 @@ set_test_number 8
 # At t2.1, stop suite
 # Restart with auto shutdown enabled, should override original
 # Suite runs to final task and shuts down normally
-init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
+init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [cylc]
     [[parameters]]
         i = 1..5
@@ -50,7 +50,7 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
         script = true
     [[t<i=2>]]
         script = cylc stop "${CYLC_SUITE_NAME}"
-__SUITERC__
+__FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 

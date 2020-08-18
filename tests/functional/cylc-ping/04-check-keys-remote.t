@@ -22,7 +22,7 @@ require_remote_platform
 
 set_test_number 4
 
-init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
+init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 #!jinja2
 [cylc]
 [scheduling]
@@ -34,7 +34,7 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
         platform = {{CYLC_TEST_PLATFORM}}
     [[held]]
         script = true
-__SUITE_RC__
+__FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}" \
     -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}"

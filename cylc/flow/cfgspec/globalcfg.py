@@ -33,7 +33,7 @@ from cylc.flow.parsec.validate import (
 # - value_type: value type (compulsory).
 # - default: the default value (optional).
 # - allowed_2, ...: the only other allowed values of this setting (optional).
-with Conf('flow.rc', desc='''
+with Conf('global.cylc', desc='''
     The global configuration which defines default Cylc Flow settings
     for a user or site.
 
@@ -42,11 +42,11 @@ with Conf('flow.rc', desc='''
        $ cylc get-global-config --sparse
 
 
-    Cylc will attempt to load the global configuration (flow.rc) from two
+    Cylc will attempt to load the global configuration (global.cylc) from two
     locations:
 
-    * ``/etc/cylc/flow/<CYLC_VERSION>/flow.rc``
-    * ``~/.cylc/flow/<CYLC_VERSION>/flow.rc``
+    * ``/etc/cylc/flow/<CYLC_VERSION>/global.cylc``
+    * ``~/.cylc/flow/<CYLC_VERSION>/global.cylc``
 
     If both files are present files will be loaded in this order so those
     lower down the list may override settings from those higher up.
@@ -55,8 +55,13 @@ with Conf('flow.rc', desc='''
 
     .. note::
 
-       The ``flow.rc`` file can be templated using Jinja2 variables.
+       The ``global.cylc`` file can be templated using Jinja2 variables.
        See :ref:`Jinja`.
+
+    .. note::
+
+       Prior to Cylc 8, ``global.cylc`` was named ``global.rc``, but that name
+       is no longer supported.
 ''') as SPEC:
 
     # suite
@@ -79,21 +84,21 @@ with Conf('flow.rc', desc='''
 
     # suite
     with Conf('cylc', desc='''
-        Default values for entries in the suite.rc ``[cylc]`` section.
+        Default values for entries in flow.cylc ``[cylc]`` section.
     '''):
         Conf('UTC mode', VDR.V_BOOLEAN, False, desc='''
-                Default for :cylc:conf:`suite.rc[cylc]UTC mode`.
+                Default for :cylc:conf:`flow.cylc[cylc]UTC mode`.
         ''')
         Conf('task event mail interval', VDR.V_INTERVAL, DurationFloat(300),
              desc='''
                 Default for
-                :cylc:conf:`suite.rc[cylc]task event mail interval`.
+                :cylc:conf:`flow.cylc[cylc]task event mail interval`.
         ''')
 
         with Conf('events', desc='''
             You can define site defaults for each of the following options,
             details of which can be found under
-            :cylc:conf:`suite.rc[cylc][events]`.
+            :cylc:conf:`flow.cylc[cylc][events]`.
         '''):
             Conf('handlers', VDR.V_STRING_LIST)
             Conf('handler events', VDR.V_STRING_LIST)
@@ -372,7 +377,7 @@ with Conf('flow.rc', desc='''
             ''')
             Conf('retrieve job logs', VDR.V_BOOLEAN, desc='''
                 Global default for
-                :cylc:conf:`suite.rc[runtime][<namespace>][remote]retrieve job
+                :cylc:conf:`flow.cylc[runtime][<namespace>][remote]retrieve job
                 logs`.
             ''')
             Conf('retrieve job logs command', VDR.V_STRING, 'rsync -a',
@@ -383,22 +388,22 @@ with Conf('flow.rc', desc='''
             ''')
             Conf('retrieve job logs max size', VDR.V_STRING, desc='''
                 Global default for the
-                :cylc:conf:`suite.rc[runtime][<namespace>][remote]retrieve job
+                :cylc:conf:`flow.cylc[runtime][<namespace>][remote]retrieve job
                 logs max size`.
                 the specified host.
             ''')
             Conf('retrieve job logs retry delays', VDR.V_INTERVAL_LIST,
                  desc='''
                 Global default for the
-                :cylc:conf:`suite.rc[runtime][<namespace>][remote]retrieve job
+                :cylc:conf:`flow.cylc[runtime][<namespace>][remote]retrieve job
                 logs retry delays`.
                 setting for the specified host.
             ''')
             Conf('task event handler retry delays', VDR.V_INTERVAL_LIST,
                  desc='''
                 Host specific default for
-                :cylc:conf:`suite.rc[runtime][<namespace>][events]handler retry
-                delays`.
+                :cylc:conf:`flow.cylc[runtime][<namespace>][events]handler
+                retry delays`.
             ''')
             Conf('tail command template',
                  VDR.V_STRING, 'tail -n +1 -F %(filename)s', desc='''
@@ -471,7 +476,7 @@ with Conf('flow.rc', desc='''
     # task
     with Conf('task events', desc='''
         Global site/user defaults for
-        :cylc:conf:`suite.rc[runtime][<namespace>][events]`.
+        :cylc:conf:`flow.cylc[runtime][<namespace>][events]`.
     '''):
         Conf('execution timeout', VDR.V_INTERVAL)
         Conf('handlers', VDR.V_STRING_LIST)
@@ -489,7 +494,7 @@ with Conf('flow.rc', desc='''
         Settings for the automated development tests.
 
         .. note::
-           The test battery reads ``flow-tests.rc`` instead of the normal
+           The test battery reads ``global-tests.cylc`` instead of the normal
            site/user global config files (from the same locations, however).
     '''):
         Conf('remote platform with shared fs', VDR.V_STRING, desc='''
@@ -584,7 +589,7 @@ with Conf('flow.rc', desc='''
     with Conf('authentication', desc='''
         Authentication of client programs with suite server programs can be
         configured here, and overridden in suites if necessary with
-        :cylc:conf:`suite.rc[cylc][authentication]`.
+        :cylc:conf:`flow.cylc[cylc][authentication]`.
 
         The suite-specific passphrase must be installed on a user's account to
         authorize full control privileges (see
@@ -686,7 +691,7 @@ class GlobalConfig(ParsecConfig):
 
     _DEFAULT = None
     _HOME = os.getenv('HOME') or get_user_home()
-    CONF_BASENAME = "flow.rc"
+    CONF_BASENAME = "global.cylc"
     SITE_CONF_DIR = os.path.join(os.sep, 'etc', 'cylc', 'flow', CYLC_VERSION)
     USER_CONF_DIR = os.path.join(_HOME, '.cylc', 'flow', CYLC_VERSION)
 

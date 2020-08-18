@@ -20,7 +20,7 @@
 #-------------------------------------------------------------------------------
 set_test_number 3
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-create_test_globalrc "" "
+create_test_global_config "" "
 [platforms]
    [[localhost]]
         tail command template = $PWD/bin/my-tailer.sh %(filename)s

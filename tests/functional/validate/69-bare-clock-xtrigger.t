@@ -20,11 +20,11 @@
 
 set_test_number 1
 
-cat >'suite.rc' <<'__SUITE_RC__'
+cat >'flow.cylc' <<'__FLOW_CONFIG__'
 [scheduling]
     initial cycle point = now
     [[graph]]
         T00 = "@wall_clock => foo"
-__SUITE_RC__
+__FLOW_CONFIG__
 
-run_ok "${TEST_NAME_BASE}-val" cylc validate 'suite.rc'
+run_ok "${TEST_NAME_BASE}-val" cylc validate 'flow.cylc'

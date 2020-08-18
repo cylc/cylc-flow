@@ -1,8 +1,0 @@
-#!jinja2
-
-[scheduling]
-    [[graph]]
-%include suite-includeme.rc
-[runtime]
-    [[foo]]
-        script = sleep 1

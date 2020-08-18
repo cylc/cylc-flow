@@ -15,12 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Test for handling task proxy sequence bounds error. #2735 
+# Test for handling task proxy sequence bounds error. #2735
 
 . "$(dirname "$0")/test_header"
 set_test_number 7
 
-cat > suite.rc <<__END__
+cat > flow.cylc <<__END__
 [cylc]
     UTC mode = True
 [scheduling]
@@ -32,17 +32,17 @@ cat > suite.rc <<__END__
         script = true
 __END__
 
-run_ok "${TEST_NAME_BASE}" cylc validate 'suite.rc'
-run_ok "${TEST_NAME_BASE}-v" cylc validate -v 'suite.rc'
+run_ok "${TEST_NAME_BASE}" cylc validate 'flow.cylc'
+run_ok "${TEST_NAME_BASE}-v" cylc validate -v 'flow.cylc'
 contains_ok "${TEST_NAME_BASE}-v.stderr" <<'__ERR__'
  + R1/P0Y/19990101T0000Z: sequence out of bounds for initial cycle point 20000101T0000Z
 __ERR__
-run_ok "${TEST_NAME_BASE}-strict" cylc validate --strict 'suite.rc'
+run_ok "${TEST_NAME_BASE}-strict" cylc validate --strict 'flow.cylc'
 cmp_ok "${TEST_NAME_BASE}-strict.stderr" <<'__ERR__'
 WARNING - R1/P0Y/19990101T0000Z: sequence out of bounds for initial cycle point 20000101T0000Z
 __ERR__
 
-cat > suite.rc <<__END__
+cat > flow.cylc <<__END__
 [cylc]
     UTC mode = True
 [scheduling]
@@ -54,7 +54,7 @@ cat > suite.rc <<__END__
         script = true
 __END__
 
-run_ok "${TEST_NAME_BASE}-strict" cylc validate --strict 'suite.rc'
+run_ok "${TEST_NAME_BASE}-strict" cylc validate --strict 'flow.cylc'
 contains_ok "${TEST_NAME_BASE}-strict.stderr" <<'__ERR__'
 WARNING - multiple sequences out of bounds for initial cycle point 20000101T0000Z:
 	R1/P0Y/19960101T0000Z, R1/P0Y/19970101T0000Z, R1/P0Y/19980101T0000Z,

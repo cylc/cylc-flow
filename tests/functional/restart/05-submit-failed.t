@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -23,7 +23,7 @@ skip_darwin 'atrun hard to configure on Mac OS'
 #-------------------------------------------------------------------------------
 set_test_number 7
 #-------------------------------------------------------------------------------
-create_test_globalrc '
+create_test_global_config '
 [platforms]
 [[test platform]]
 hosts = localhost
@@ -32,7 +32,7 @@ batch submit command template = at oh-no
 '
 #-------------------------------------------------------------------------------
 install_suite "${TEST_NAME_BASE}" 'submit-failed'
-cp "$TEST_SOURCE_DIR/lib/suite-runtime-restart.rc" "$TEST_DIR/${SUITE_NAME}/"
+cp "$TEST_SOURCE_DIR/lib/flow-runtime-restart.cylc" "$TEST_DIR/${SUITE_NAME}/"
 export TEST_DIR
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"

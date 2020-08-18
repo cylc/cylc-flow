@@ -25,7 +25,7 @@ TEST_NAME="${TEST_NAME_BASE}"
 run_ok "${TEST_NAME}" cylc search "${SUITE_NAME}" 'initial cycle point'
 cmp_ok "${TEST_NAME}.stdout" <<__OUT__
 
-FILE: ${PWD}/include/suite-scheduling.rc
+FILE: ${PWD}/include/flow-scheduling.cylc
    SECTION: [scheduling]
       (2): initial cycle point=20130101
 __OUT__

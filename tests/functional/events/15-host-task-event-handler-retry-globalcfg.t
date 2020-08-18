@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -21,7 +21,7 @@ export CYLC_TEST_IS_GENERIC=false
 require_remote_platform
 set_test_number 4
 
-create_test_globalrc "" "
+create_test_global_config "" "
 [platforms]
     [[${CYLC_TEST_PLATFORM}]]
         task event handler retry delays=3*PT1S

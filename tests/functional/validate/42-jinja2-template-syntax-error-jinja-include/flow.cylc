@@ -1,0 +1,7 @@
+#!jinja2
+[scheduling]
+    [[graph]]
+{% include 'flow-includeme.cylc' %}
+[runtime]
+    [[foo]]
+        script = sleep 1

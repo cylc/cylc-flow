@@ -6,7 +6,7 @@ from cylc.flow.parsec.config import ConfigNode as Conf
 @pytest.fixture(scope='module')
 def basic_config():
     """A basic config with a file, section and setting."""
-    with Conf('file.rc') as file_:
+    with Conf('file.cylc') as file_:
         with Conf('section') as section:
             setting = Conf('setting')
         return (file_, section, setting)
@@ -15,7 +15,7 @@ def basic_config():
 def test_config_node(basic_config):
     """It should associate parents & children in a tree."""
     file_, section, setting = basic_config
-    assert file_.name == 'file.rc'
+    assert file_.name == 'file.cylc'
     assert file_._parent is None
     assert file_._children == {'section': section}
 
@@ -31,7 +31,7 @@ def test_config_node(basic_config):
 def test_config_str(basic_config):
     """A node should str as a relative path from its parent node.."""
     file_, section, setting = basic_config
-    assert str(file_) == 'file.rc'
+    assert str(file_) == 'file.cylc'
     assert str(section) == '[section]'
     assert str(setting) == 'setting'
 
@@ -39,15 +39,15 @@ def test_config_str(basic_config):
 def test_config_repr(basic_config):
     """A node should repr as a full path."""
     file_, section, setting = basic_config
-    assert repr(file_) == 'file.rc'
-    assert repr(section) == 'file.rc[section]'
-    assert repr(setting) == 'file.rc[section]setting'
+    assert repr(file_) == 'file.cylc'
+    assert repr(section) == 'file.cylc[section]'
+    assert repr(setting) == 'file.cylc[section]setting'
 
 
 @pytest.fixture(scope='module')
 def many_setting():
     """A config containing a user-definable setting."""
-    with Conf('file.rc') as file_:
+    with Conf('file.cylc') as file_:
         Conf('<setting>')  # __MANY__
     return file_
 
@@ -58,13 +58,13 @@ def test_many_setting(many_setting):
     assert setting.name == '__MANY__'
     assert setting.display_name == '<setting>'
     assert str(setting) == '<setting>'
-    assert repr(setting) == 'file.rc|<setting>'
+    assert repr(setting) == 'file.cylc|<setting>'
 
 
 @pytest.fixture(scope='module')
 def many_section():
     """A config containing a user-definable section."""
-    with Conf('file.rc') as file_:
+    with Conf('file.cylc') as file_:
         with Conf('<section>'):
             Conf('setting')
     return file_
@@ -76,10 +76,10 @@ def test_many_section(many_section):
     assert section.name == '__MANY__'
     assert section.display_name == '<section>'
     assert str(section) == '[<section>]'
-    assert repr(section) == 'file.rc[<section>]'
+    assert repr(section) == 'file.cylc[<section>]'
     setting = list(section)[0]
     assert str(setting) == 'setting'
-    assert repr(setting) == 'file.rc[<section>]setting'
+    assert repr(setting) == 'file.cylc[<section>]setting'
 
 
 @pytest.fixture(scope='module')

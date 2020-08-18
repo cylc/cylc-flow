@@ -16,13 +16,11 @@
 """Tests for "cylc.flow.pathutil"."""
 
 from unittest import TestCase
-from unittest.mock import call, patch, MagicMock
+from unittest.mock import patch, MagicMock
 
 import pytest
 import os
 import logging
-
-from tests.unit.conftest import mock_glbl_cfg
 
 from cylc.flow.pathutil import (
     get_remote_suite_run_dir,
@@ -33,7 +31,7 @@ from cylc.flow.pathutil import (
     get_suite_run_log_dir,
     get_suite_run_log_name,
     get_suite_run_pub_db_name,
-    get_suite_run_rc_dir,
+    get_suite_run_config_log_dir,
     get_suite_run_share_dir,
     get_suite_run_work_dir,
     get_suite_test_log_name,
@@ -111,7 +109,7 @@ class TestPathutil(TestCase):
             (get_suite_run_dir, ''),
             (get_suite_run_job_dir, '/log/job'),
             (get_suite_run_log_dir, '/log/suite'),
-            (get_suite_run_rc_dir, '/log/suiterc'),
+            (get_suite_run_config_log_dir, '/log/flow-config'),
             (get_suite_run_share_dir, '/share'),
             (get_suite_run_work_dir, '/work'),
         ):
@@ -157,7 +155,7 @@ class TestPathutil(TestCase):
         '',
         '/log/suite',
         '/log/job',
-        '/log/suiterc',
+        '/log/flow-config',
         '/share',
         '/work'
     ]

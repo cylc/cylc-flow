@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """Suite service files management."""
 
 # Note: Some modules are NOT imported in the header. Expensive modules are only
@@ -120,8 +121,11 @@ class KeyInfo():
 class SuiteFiles:
     """Files and directories located in the suite directory."""
 
+    FLOW_FILE = 'flow.cylc'
+    """The workflow configuration file."""
+
     SUITE_RC = 'suite.rc'
-    """The suite configuration file."""
+    """Deprecated workflow configuration file."""
 
     class Service:
         """The directory containing Cylc system files."""
@@ -330,11 +334,11 @@ def get_contact_file(reg):
         get_suite_srv_dir(reg), SuiteFiles.Service.CONTACT)
 
 
-def get_suite_rc(reg, suite_owner=None):
-    """Return the suite.rc path of a suite."""
+def get_flow_file(reg, suite_owner=None):
+    """Return the path of a suite's flow.cylc file."""
     return os.path.join(
         get_suite_source_dir(reg, suite_owner),
-        SuiteFiles.SUITE_RC)
+        SuiteFiles.FLOW_FILE)
 
 
 def get_suite_source_dir(reg, suite_owner=None):
@@ -352,13 +356,15 @@ def get_suite_source_dir(reg, suite_owner=None):
             # suite exists but is not yet registered
             register(reg=reg, source=suite_d)
             return suite_d
-        else:
-            raise SuiteServiceFileError("Suite not found %s" % reg)
+        raise SuiteServiceFileError(f"Suite not found: {reg}")
     else:
-        if os.path.isabs(source):
-            return source
-        else:
-            return os.path.normpath(os.path.join(srv_d, source))
+        if not os.path.isabs(source):
+            source = os.path.normpath(os.path.join(srv_d, source))
+        flow_file_path = os.path.join(source, SuiteFiles.FLOW_FILE)
+        if not os.path.exists(flow_file_path):
+            # suite exists but is probably using deprecated suite.rc
+            register(reg=reg, source=source)
+        return source
 
 
 def get_suite_srv_dir(reg, suite_owner=None):
@@ -391,7 +397,7 @@ def load_contact_file(reg, owner=None, host=None):
 
 
 def parse_suite_arg(options, arg):
-    """From CLI arg "SUITE", return suite name and suite.rc path.
+    """From CLI arg "SUITE", return suite name and flow.cylc path.
 
     If arg is a registered suite, suite name is the registered name.
     If arg is a directory, suite name is the base name of the
@@ -402,13 +408,23 @@ def parse_suite_arg(options, arg):
     if arg == '.':
         arg = os.getcwd()
     try:
-        path = get_suite_rc(arg, options.suite_owner)
+        path = get_flow_file(arg, options.suite_owner)
         name = arg
     except SuiteServiceFileError:
         arg = os.path.abspath(arg)
         if os.path.isdir(arg):
-            path = os.path.join(arg, SuiteFiles.SUITE_RC)
+            path = os.path.join(arg, SuiteFiles.FLOW_FILE)
             name = os.path.basename(arg)
+            if not os.path.exists(path):
+                # Probably using deprecated suite.rc
+                path = os.path.join(arg, SuiteFiles.SUITE_RC)
+                if not os.path.exists(path):
+                    raise SuiteServiceFileError(
+                        f'no flow.cylc or suite.rc in {arg}')
+                else:
+                    LOG.warning(
+                        f'The filename "{SuiteFiles.SUITE_RC}" is deprecated '
+                        f'in favor of "{SuiteFiles.FLOW_FILE}".')
         else:
             path = arg
             name = os.path.basename(os.path.dirname(arg))
@@ -422,7 +438,7 @@ def register(reg=None, source=None, redirect=False, rundir=None):
 
     Args:
         reg (str): suite name, default basename($PWD).
-        source (str): directory location of suite.rc file, default $PWD.
+        source (str): directory location of flow.cylc file, default $PWD.
         redirect (bool): allow reuse of existing name and run directory.
         rundir (str): for overriding the default cylc-run directory.
 
@@ -431,7 +447,7 @@ def register(reg=None, source=None, redirect=False, rundir=None):
 
     Raise:
         SuiteServiceFileError:
-            No suite.rc file found in source location.
+            No flow.cylc file found in source location.
             Illegal name (can look like a relative path, but not absolute).
             Another suite already has this name (unless --redirect).
     """
@@ -449,15 +465,25 @@ def register(reg=None, source=None, redirect=False, rundir=None):
             "suite name cannot be an absolute path: %s" % reg)
 
     if source is not None:
-        if os.path.basename(source) == SuiteFiles.SUITE_RC:
+        if os.path.basename(source) == SuiteFiles.FLOW_FILE:
             source = os.path.dirname(source)
     else:
         source = os.getcwd()
 
-    # suite.rc must exist so we can detect accidentally reversed args.
+    # flow.cylc must exist so we can detect accidentally reversed args.
     source = os.path.abspath(source)
-    if not os.path.isfile(os.path.join(source, SuiteFiles.SUITE_RC)):
-        raise SuiteServiceFileError("no suite.rc in %s" % source)
+    flow_file_path = os.path.join(source, SuiteFiles.FLOW_FILE)
+    if not os.path.isfile(flow_file_path):
+        # If using deprecated suite.rc, symlink it into flow.cylc:
+        suite_rc_path = os.path.join(source, SuiteFiles.SUITE_RC)
+        if os.path.isfile(suite_rc_path):
+            os.symlink(suite_rc_path, flow_file_path)
+            LOG.warning(
+                f'The filename "{SuiteFiles.SUITE_RC}" is deprecated in favor '
+                f'of "{SuiteFiles.FLOW_FILE}". Symlink created.')
+        else:
+            raise SuiteServiceFileError(
+                f'no flow.cylc or suite.rc in {source}')
 
     # Create service dir if necessary.
     srv_d = get_suite_srv_dir(reg)
@@ -590,7 +616,7 @@ def get_suite_title(reg):
     * Assume title is not in an include-file.
     """
     title = NO_TITLE
-    for line in open(get_suite_rc(reg), 'rb'):
+    for line in open(get_flow_file(reg), 'rb'):
         line = line.decode()
         if line.lstrip().startswith("[meta]"):
             # continue : title comes inside [meta] section

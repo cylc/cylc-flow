@@ -62,12 +62,12 @@ def get_option_parser():
 @cli_function(get_option_parser)
 def main(_, options, *args):
     # suite name or file path
-    suite, suiterc = parse_suite_arg(options, args[0])
+    suite, flow_file = parse_suite_arg(options, args[0])
 
     # extract task host platforms from the suite
     config = SuiteConfig(
         suite,
-        suiterc,
+        flow_file,
         options,
         load_template_vars(options.templatevars, options.templatevars_file))
 

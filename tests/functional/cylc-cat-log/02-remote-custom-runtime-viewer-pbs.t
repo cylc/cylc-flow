@@ -35,7 +35,7 @@ CYLC_TEST_DIRECTIVES="$( \
 export CYLC_TEST_HOST CYLC_TEST_DIRECTIVES
 set_test_number 2
 
-create_test_globalrc "" "
+create_test_global_config "" "
 [platforms]
     [[${CYLC_TEST_HOST}]]
         [[[batch systems]]]

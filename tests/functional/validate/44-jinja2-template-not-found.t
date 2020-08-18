@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -22,13 +22,13 @@ set_test_number 2
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-val"
-run_fail "${TEST_NAME}" cylc validate suite.rc
+run_fail "${TEST_NAME}" cylc validate flow.cylc
 cmp_ok "${TEST_NAME}.stderr" <<'__ERROR__'
-Jinja2Error: suite-foo.rc
+Jinja2Error: flow-foo.cylc
 Context lines:
         R1 = foo
 [runtime]
-{% include 'suite-foo.rc' %}	<-- TemplateNotFound
+{% include 'flow-foo.cylc' %}	<-- TemplateNotFound
 __ERROR__
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"

@@ -489,9 +489,9 @@ class SuiteConfig:
 
             self.cfg['scheduling']['special tasks'][s_type] = result
 
-        self.collapsed_families_rc = (
+        self.collapsed_families_config = (
             self.cfg['visualization']['collapsed families'])
-        for fam in self.collapsed_families_rc:
+        for fam in self.collapsed_families_config:
             if fam not in self.runtime['first-parent descendants']:
                 raise SuiteConfigError(
                     '[visualization]collapsed families: '
@@ -503,7 +503,7 @@ class SuiteConfig:
         elif is_reload:
             self.closed_families = []
         else:
-            self.closed_families = self.collapsed_families_rc
+            self.closed_families = self.collapsed_families_config
         for cfam in self.closed_families:
             if cfam not in self.runtime['descendants']:
                 self.closed_families.remove(cfam)
@@ -626,7 +626,7 @@ class SuiteConfig:
 
         # (Note that we're retaining 'default node attributes' even
         # though this could now be achieved by styling the root family,
-        # because putting default attributes for root in the suite.rc spec
+        # because putting default attributes for root in the flow.cylc spec
         # results in root appearing last in the ordered dict of node
         # names, so it overrides the styling for lesser groups and
         # nodes, whereas the reverse is needed - fixing this would
@@ -704,7 +704,7 @@ class SuiteConfig:
         self.mem_log("config.py: end init config")
 
     def process_initial_cycle_point(self):
-        """Validate and set initial cycle point from suiterc.
+        """Validate and set initial cycle point from flow.cylc.
 
         Sets:
             self.initial_point
@@ -1451,7 +1451,7 @@ class SuiteConfig:
         huge suites (several thousand tasks).
         Note:
           (a) self.cfg['runtime'][name]
-              contains the task definition sections of the suite.rc file.
+              contains the task definition sections of the flow.cylc file.
           (b) self.taskdefs[name]
               contains tasks that will be used, defined by the graph.
         Tasks (a) may be defined but not used (e.g. commented out of the
@@ -1569,10 +1569,10 @@ class SuiteConfig:
                 replicate(self.cfg['runtime'][name],
                           self.cfg['runtime']['root'])
                 if 'root' not in self.runtime['descendants']:
-                    # (happens when no runtimes are defined in the suite.rc)
+                    # (happens when no runtimes are defined in flow.cylc)
                     self.runtime['descendants']['root'] = []
                 if 'root' not in self.runtime['first-parent descendants']:
-                    # (happens when no runtimes are defined in the suite.rc)
+                    # (happens when no runtimes are defined in flow.cylc)
                     self.runtime['first-parent descendants']['root'] = []
                 self.runtime['parents'][name] = ['root']
                 self.runtime['linearized ancestors'][name] = [name, 'root']
@@ -1746,7 +1746,7 @@ class SuiteConfig:
 
         if self.first_graph:
             self.first_graph = False
-            if not self.collapsed_families_rc and not ungroup_all:
+            if not self.collapsed_families_config and not ungroup_all:
                 # initially default to collapsing all families if
                 # "[visualization]collapsed families" not defined
                 group_all = True
@@ -1754,8 +1754,8 @@ class SuiteConfig:
         first_parent_descendants = self.runtime['first-parent descendants']
         if group_all:
             # Group all family nodes
-            if self.collapsed_families_rc:
-                self.closed_families = copy(self.collapsed_families_rc)
+            if self.collapsed_families_config:
+                self.closed_families = copy(self.collapsed_families_config)
             else:
                 for fam in first_parent_descendants:
                     if fam != 'root':

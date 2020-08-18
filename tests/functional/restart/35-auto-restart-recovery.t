@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -21,7 +21,7 @@ require_remote_platform_wsfs
 set_test_number 10
 #-------------------------------------------------------------------------------
 # test the failure recovery mechanism
-BASE_GLOBALRC="
+BASE_GLOBAL_CONFIG="
 [cylc]
     [[main loop]]
         plugins = health check, auto restart
@@ -41,17 +41,17 @@ TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME}" <<< '
     [[graph]]
         R1 = foo
 '
-create_test_globalrc '' "${BASE_GLOBALRC}"
+create_test_global_config '' "${BASE_GLOBAL_CONFIG}"
 run_ok "${TEST_NAME}-suite-start" \
     cylc run "${SUITE_NAME}" --host=localhost --hold
 poll_suite_running
 
 # corrupt suite
-rm "${SUITE_RUN_DIR}/suite.rc"
+rm "${SUITE_RUN_DIR}/flow.cylc"
 
 # condemn localhost
-create_test_globalrc '' "
-${BASE_GLOBALRC}
+create_test_global_config '' "
+${BASE_GLOBAL_CONFIG}
 [suite servers]
     condemned hosts = $(hostname)
 "

@@ -18,7 +18,7 @@
 set_test_number 16
 
 # Configure a fake editor that just copies a job file to ${DESTFILE}.
-create_test_globalrc '' '
+create_test_global_config '' '
 [editors]
     terminal = my-editor
     gui = my-editor'

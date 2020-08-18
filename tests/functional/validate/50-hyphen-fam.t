@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -20,7 +20,7 @@
 . "$(dirname "$0")/test_header"
 set_test_number 2
 
-cat >'suite.rc' <<'__SUITE_RC__'
+cat >'flow.cylc' <<'__FLOW_CONFIG__'
 [scheduling]
     [[graph]]
         R1 = "baz-foo => bar"
@@ -28,11 +28,11 @@ cat >'suite.rc' <<'__SUITE_RC__'
     [[foo]]
     [[bar, baz-foo]]
         inherit = foo
-__SUITE_RC__
+__FLOW_CONFIG__
 
-run_ok "${TEST_NAME_BASE}" cylc validate 'suite.rc'
+run_ok "${TEST_NAME_BASE}" cylc validate 'flow.cylc'
 
-cat >'suite.rc' <<'__SUITE_RC__'
+cat >'flow.cylc' <<'__FLOW_CONFIG__'
 [scheduling]
     [[graph]]
         R1 = "foo-baz => bar"
@@ -40,7 +40,7 @@ cat >'suite.rc' <<'__SUITE_RC__'
     [[foo]]
     [[bar, foo-baz]]
         inherit = foo
-__SUITE_RC__
+__FLOW_CONFIG__
 
-run_ok "${TEST_NAME_BASE}" cylc validate 'suite.rc'
+run_ok "${TEST_NAME_BASE}" cylc validate 'flow.cylc'
 exit
