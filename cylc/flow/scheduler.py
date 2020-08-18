@@ -886,6 +886,8 @@ class Scheduler:
             self.config.leaves,
             self.config.feet)
 
+    # TODO: Do we need prerequisites of non-live tasks?
+    #       If so, How to integrate into GraphQL? n-window might help?
     def info_get_task_requisites(self, items, list_prereqs=False):
         """Return prerequisites and outputs etc. of a task.
 
