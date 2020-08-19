@@ -69,6 +69,9 @@ exporting environment variables.
 [#3632](https://github.com/cylc/cylc-flow/pull/3632) - Fix a bug that was causing
 `UTC mode` specified in global config to be pretty much ignored.
 
+[#3614](https://github.com/cylc/cylc-flow/pull/3614) - Ensure the suite always
+restarts using the same time zone as the last `cylc run`.
+
 -------------------------------------------------------------------------------
 ## __cylc-8.0a2 (2020-07-03)__
 
