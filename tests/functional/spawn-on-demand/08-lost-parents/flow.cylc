@@ -1,0 +1,12 @@
+# bar has a parent to spawn it in the first three cycles, but requires
+# auto-spawning after that
+[scheduling]
+   cycling mode = integer
+   initial cycle point = 1
+   final cycle point = 4
+   [[graph]]
+      R3//P1 = "foo => bar"
+      P1 = "bar"
+[runtime]
+   [[root]]
+      script = true
