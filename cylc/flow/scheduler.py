@@ -98,7 +98,7 @@ from cylc.flow.wallclock import (
     get_time_string_from_unix_time as time2str,
     get_utc_mode)
 from cylc.flow.xtrigger_mgr import XtriggerManager
-from cylc.flow.platforms import platform_from_name
+from cylc.flow.platforms import get_platform
 
 
 class SchedulerStop(CylcError):
@@ -1230,7 +1230,7 @@ class Scheduler:
             fields.PUBLISH_PORT:
                 str(self.publisher.port),
             fields.SSH_USE_LOGIN_SHELL:
-                str(platform_from_name()['use login shell']),
+                str(get_platform()['use login shell']),
             fields.SUITE_RUN_DIR_ON_SUITE_HOST:
                 self.suite_run_dir,
             fields.UUID:

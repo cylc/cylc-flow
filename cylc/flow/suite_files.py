@@ -26,7 +26,7 @@ import zmq.auth
 from cylc.flow import LOG
 from cylc.flow.exceptions import SuiteServiceFileError
 from cylc.flow.pathutil import get_suite_run_dir
-from cylc.flow.platforms import platform_from_name
+from cylc.flow.platforms import get_platform
 from cylc.flow.hostuserutil import (
     get_user, is_remote_host, is_remote_user
 )
@@ -271,7 +271,7 @@ def detect_old_contact_file(reg, check_host_port=None):
     cmd = ["timeout", "10", "ps", PS_OPTS, str(old_pid_str)]
     if is_remote_host(old_host):
         import shlex
-        ssh_str = platform_from_name()["ssh command"]
+        ssh_str = get_platform()["ssh command"]
         cmd = shlex.split(ssh_str) + ["-n", old_host] + cmd
     from subprocess import Popen, PIPE, DEVNULL  # nosec
     from time import sleep, time

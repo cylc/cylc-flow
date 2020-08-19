@@ -52,7 +52,7 @@ from cylc.flow.task_job_logs import (
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED,
     TASK_OUTPUT_FAILED)
-from cylc.flow.platforms import platform_from_name, get_host_from_platform
+from cylc.flow.platforms import get_platform, get_host_from_platform
 from cylc.flow.task_remote_mgr import (
     REMOTE_INIT_FAILED, TaskRemoteMgr)
 from cylc.flow.task_state import (
@@ -671,7 +671,7 @@ class TaskJobManager:
 
         # Go through each list of itasks and carry out commands as required.
         for platform_n, itasks in sorted(auth_itasks.items()):
-            platform = platform_from_name(platform_n)
+            platform = get_platform(platform_n)
             if is_remote_platform(platform):
                 remote_mode = True
                 cmd = [cmd_key]
@@ -801,7 +801,7 @@ class TaskJobManager:
         # Determine task host settings now, just before job submission,
         # because dynamic host selection may be used.
         try:
-            platform = platform_from_name(rtconfig['platform'])
+            platform = get_platform(rtconfig)
         except PlatformLookupError as exc:
             # Submit number not yet incremented
             itask.submit_num += 1

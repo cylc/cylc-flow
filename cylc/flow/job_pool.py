@@ -33,7 +33,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED,
     TASK_STATUS_FAILED)
 from cylc.flow.data_messages_pb2 import PbJob, JDeltas
-from cylc.flow.platforms import platform_from_name, get_host_from_platform
+from cylc.flow.platforms import get_platform, get_host_from_platform
 
 JOB_STATUSES_ALL = [
     TASK_STATUS_READY,
@@ -139,7 +139,7 @@ class JobPool:
             j_owner = self.schd.owner
             if platform_name:
                 j_host = get_host_from_platform(
-                    platform_from_name(platform_name)
+                    get_platform(platform_name)
                 )
             else:
                 j_host = self.schd.host

@@ -24,6 +24,30 @@ from cylc.flow.exceptions import PlatformLookupError
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 
 
+def get_platform(task_conf=None):
+    """A single entry point for this module: Looking at a task config this
+    method decides whether to get platform from name, or Cylc7 config items.
+
+    Args:
+        task_conf (str, dict or dict-like such as OrderedDictWithDefaults):
+            If str this is assumed to be the platform name, otherwise this
+            should be a configuration for a task.
+
+    Returns:
+        platform:
+            Actually it returns either get_platform() or
+            platform_from_job_info(), but to the user these look the same.
+
+    Todo: Implement the above.
+    """
+    if task_conf is None:
+        return platform_from_name()
+    elif type(task_conf) is str:
+        return platform_from_name(task_conf)
+    else:
+        return platform_from_name(task_conf['platform'])
+
+
 def platform_from_name(platform_name=None, platforms=None):
     """
     Find out which job platform to use given a list of possible platforms and

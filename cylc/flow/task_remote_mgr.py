@@ -46,7 +46,7 @@ from cylc.flow.suite_files import (
     get_contact_file)
 from cylc.flow.task_remote_cmd import (
     FILE_BASE_UUID, REMOTE_INIT_DONE, REMOTE_INIT_NOT_REQUIRED)
-from cylc.flow.platforms import platform_from_name, get_host_from_platform
+from cylc.flow.platforms import get_platform, get_host_from_platform
 from cylc.flow.remote import construct_platform_ssh_cmd
 
 
@@ -156,7 +156,7 @@ class TaskRemoteMgr:
 
         """
         # get the platform from the platform_name
-        platform = platform_from_name(platform_name)
+        platform = get_platform(platform_name)
 
         # If task is running locally we can skip the rest of this function
         if self.single_task_mode or not is_remote_platform(platform):
@@ -239,7 +239,7 @@ class TaskRemoteMgr:
         # Issue all SSH commands in parallel
         procs = {}
         for platform, init_with_contact in self.remote_init_map.items():
-            platform = platform_from_name(platform)
+            platform = get_platform(platform)
             host = get_host_from_platform(platform)
             owner = platform['owner']
             if init_with_contact != REMOTE_INIT_DONE:
