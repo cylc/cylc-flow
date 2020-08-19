@@ -211,19 +211,21 @@ class TaskJobManager:
         if not prepared_tasks:
             return bad_tasks
 
-        # Group task jobs by (platform)
-        auth_itasks = {}  # {platform: [itask, ...], ...}
+        # Group task jobs by (install target)
+        auth_itasks = {}  # {install target: [itask, ...], ...}
         for itask in prepared_tasks:
-            platform_name = itask.platform['name']
-            auth_itasks.setdefault(platform_name, [])
-            auth_itasks[platform_name].append(itask)
+            install_target = itask.platform['install target']
+            if not install_target:
+                install_target = itask.platform['name']
+            auth_itasks.setdefault(install_target, [])
+            auth_itasks[install_target].append(itask)
         # Submit task jobs for each platform
         done_tasks = bad_tasks
-        for platform_name, itasks in sorted(auth_itasks.items()):
+        for install_target, itasks in sorted(auth_itasks.items()):
             # Re-fetch a copy of platform
             platform = itasks[0].platform
             is_init = self.task_remote_mgr.remote_init(
-                platform_name, curve_auth, client_pub_key_dir, rsync_includes
+                install_target, curve_auth, client_pub_key_dir, rsync_includes
             )
             if is_init is None:
                 # Remote is waiting to be initialised

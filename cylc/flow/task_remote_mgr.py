@@ -22,6 +22,7 @@ This module provides logic to:
 - Implement basic host select functionality.
 """
 
+from cylc.flow.cfgspec.globalcfg import Platform
 import os
 from shlex import quote
 import re
@@ -181,7 +182,7 @@ class TaskRemoteMgr:
         install_target = platform.get(
             'install target')
         if not install_target:
-            platform['install tagret'] = platform_name
+            platform['install target'] = platform_name
 
         # If task is running locally we can skip the rest of this function
         if self.single_task_mode or not is_remote_platform(platform):
