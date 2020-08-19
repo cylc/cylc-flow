@@ -775,7 +775,7 @@ with Conf(
                 The top level share and work directory location can be changed
                 (e.g. to a large data area) by a global config setting (see
                 :cylc:conf:`
-                flow.rc[platforms][<platform name>]work directory`).
+                global.cylc[platforms][<platform name>]work directory`).
 
                 .. note::
 

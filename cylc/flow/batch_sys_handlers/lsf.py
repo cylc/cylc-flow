@@ -15,9 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Submits task job scripts to IBM Platform LSF by the ``bsub`` command.
 
-.. cylc-scope:: suite.rc[runtime][<namespace>][job]
+.. cylc-scope:: flow.cylc[runtime][<namespace>][job]
 
-LSF directives can be provided in the suite.rc file:
+LSF directives can be provided in the flow.cylc file:
 
 .. code-block:: cylc
 
@@ -44,7 +44,7 @@ explicitly if :cylc:conf:`execution time limit` is specified. Otherwise, the
 execution time limit known by the suite may be out of sync with what is
 submitted to the batch system.
 
-.. cylc-scope:: suite.rc
+.. cylc-scope::
 
 """
 

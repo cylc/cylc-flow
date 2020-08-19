@@ -15,9 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Submits task job scripts to Sun/Oracle Grid Engine with ``qsub``.
 
-.. cylc-scope:: suite.rc[runtime][<namespace>][job]
+.. cylc-scope:: flow.cylc[runtime][<namespace>][job]
 
-SGE directives can be provided in the suite.rc file:
+SGE directives can be provided in the flow.cylc file:
 
 .. code-block:: cylc
 
@@ -49,7 +49,7 @@ If :cylc:conf:`execution time limit` is specified, it is used to generate the
 limit known by the suite may be out of sync with what is submitted to the batch
 system.
 
-.. cylc-scope:: suite.rc
+.. cylc-scope::
 
 """
 

@@ -15,12 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Runs task job scripts as Unix background processes.
 
-.. cylc-scope:: suite.rc[runtime][<namespace>][job]
+.. cylc-scope:: flow.cylc[runtime][<namespace>][job]
 
 If an :cylc:conf:`execution time limit` is specified for a task, its job will
 be wrapped by the ``timeout`` command.
 
-.. cylc-scope:: suite.rc
+.. cylc-scope::
 
 """
 

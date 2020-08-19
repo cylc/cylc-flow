@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Submits task job scripts to the rudimentary Unix ``at`` scheduler.
 
-.. cylc-scope:: suite.rc[runtime][<namespace>][job]
+.. cylc-scope:: flow.cylc[runtime][<namespace>][job]
 
 .. note::
 
@@ -28,7 +28,7 @@
 If an :cylc:conf:`execution time limit` is specified for a task, its job will
 be wrapped by the ``timeout`` command.
 
-.. cylc-scope:: suite.rc
+.. cylc-scope::
 
 """
 

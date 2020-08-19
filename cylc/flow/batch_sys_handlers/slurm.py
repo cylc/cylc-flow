@@ -15,9 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Submits task job scripts to Simple Linux Utility for Resource Management.
 
-.. cylc-scope:: suite.rc[runtime][<namespace>][job]
+.. cylc-scope:: flow.cylc[runtime][<namespace>][job]
 
-Uses the ``sbatch`` command. SLURM directives can be provided in the suite.rc
+Uses the ``sbatch`` command. SLURM directives can be provided in the flow.cylc
 file:
 
 .. code-block:: cylc
@@ -51,7 +51,7 @@ If :cylc:conf:`execution time limit` is specified, it is used to generate the
 limit known by the suite may be out of sync with what is submitted to the batch
 system.
 
-.. cylc-scope:: suite.rc
+.. cylc-scope::
 
 """
 
