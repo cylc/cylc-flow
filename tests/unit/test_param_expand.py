@@ -264,6 +264,43 @@ class TestParamExpand(unittest.TestCase):
                     "bar & qux => foo_cat",
                     "bar & foo_cat & pub_cat & qux => foo_dog"
                 ]
+            ),
+            # GraphParser strips spaces!
+            (
+                {'m': ["cat"]},
+                {'m': '_%(m)s'},
+                "foo&bar<m-1>&baz=>qux",
+                [
+                    "foo&baz=>qux"
+                ]
+            ),
+            (
+                {'m': ["cat", "dog"]},
+                {'m': '_%(m)s'},
+                "foo&bar<m-1>&baz=>qux",
+                [
+                    "foo&baz=>qux",
+                    "foo&bar_cat&baz=>qux"
+                ]
+            ),
+            # must support & and | in graph expressions
+            (
+                {'m': ["cat", "dog"]},
+                {'m': '_%(m)s'},
+                "foo|bar<m-1>|baz=>qux",
+                [
+                    "foo|baz=>qux",
+                    "foo|bar_cat|baz=>qux"
+                ]
+            ),
+            (
+                {'m': ["cat", "dog"]},
+                {'m': '_%(m)s'},
+                "foo&bar<m-1>|baz=>qux",
+                [
+                    "foo&baz=>qux",
+                    "foo&bar_cat|baz=>qux"
+                ]
             )
         )
 
