@@ -232,7 +232,7 @@ class TaskRemoteMgr:
                 stdin_files=[tmphandle]),
             self._remote_init_callback,
             [platform, tmphandle,
-             curve_auth, client_pub_key_dir, rsync_includes])
+             curve_auth, client_pub_key_dir])
         # None status: Waiting for command to finish
         self.remote_init_map[platform['install target']] = None
         return self.remote_init_map[platform['install target']]

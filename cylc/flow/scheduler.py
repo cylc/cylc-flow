@@ -1251,8 +1251,7 @@ class Scheduler:
                     itasks,
                     self.curve_auth,
                     self.client_pub_key_dir,
-                    self.config.run_mode('simulation'),
-                    self.config.get_rsync_includes()
+                    self.config.run_mode('simulation')
             ):
                 # TODO log itask.flow_label here (beware effect on ref tests)
                 LOG.info('[%s] -triggered off %s',

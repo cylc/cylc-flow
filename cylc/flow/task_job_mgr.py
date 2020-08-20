@@ -190,8 +190,7 @@ class TaskJobManager:
         return [prepared_tasks, bad_tasks]
 
     def submit_task_jobs(self, suite, itasks, curve_auth,
-                         client_pub_key_dir, is_simulation=False,
-                         rsync_includes=None):
+                         client_pub_key_dir, is_simulation=False):
         """Prepare and submit task jobs.
 
         Submit tasks where possible. Ignore tasks that are waiting for host
