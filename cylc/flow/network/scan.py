@@ -359,7 +359,7 @@ async def graphql_query(flow, fields, filters=None):
 
 @pipe
 async def title(flow):
-    """Attempt to parse the suite title out of the suite.rc file.
+    """Attempt to parse the suite title out of the flow config file.
 
     .. warning::
        This uses a fast but dumb method which may fail to extract the suite
