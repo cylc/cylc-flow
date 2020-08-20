@@ -21,6 +21,20 @@
 skip_darwin 'atrun hard to configure on Mac OS'
 
 set_test_number 3
+
+create_test_global_config "" "
+[platforms]
+  [[wibble]]
+    hosts = localhost
+    batch system = at
+    batch submit command template = sleep 15
+
+  [[wobble]]
+    hosts = localhost
+    batch system = at
+    batch submit command template = at now
+"
+
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"

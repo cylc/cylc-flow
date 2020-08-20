@@ -18,5 +18,17 @@
 # Test user-defined batch system handlers can be used.
 . "$(dirname "$0")/test_header"
 set_test_number 2
+
+create_test_global_config "" "
+[platforms]
+  [[testme]]
+    hosts = localhost
+    batch system = my_background
+  [[testme2]]
+    hosts = localhost
+    batch system = my_background2
+"
+
+
 reftest
 exit
