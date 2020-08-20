@@ -197,8 +197,6 @@ def construct_rsync_over_ssh_cmd(
     excludes = ['log', 'share', 'work']
     for exclude in excludes:
         rsync_cmd.append(f"--exclude={exclude}")
-    # rsync filter by the user - they should never be transferred.
-    rsync_cmd.append("--filter=: .rsync-filter")
     default_includes = [
         '/app/***',
         '/bin/***',

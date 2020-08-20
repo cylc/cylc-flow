@@ -72,6 +72,7 @@ class TaskRemoteMgr:
         self.single_task_mode = False
         self.uuid_str = None
         self.ready = False
+        self.rsync_includes = None
 
     def subshell_eval(self, command, command_pattern, host_check=True):
         """Evaluate a task platform from a subshell string.
@@ -146,8 +147,8 @@ class TaskRemoteMgr:
             if value is not None:
                 del self.remote_command_map[key]
 
-    def remote_init(self, platform_name, curve_auth,
-                    client_pub_key_dir, rsync_includes):
+    def remote_init(self, platform, curve_auth,
+                    client_pub_key_dir):
         """Initialise a remote [owner@]host if necessary.
 
         Create UUID file on a platform ".service/uuid" for remotes to identify
@@ -158,12 +159,13 @@ class TaskRemoteMgr:
             "python/": if source exists
 
         Args:
-            platform_name (str):
-                The name of the platform to be initialized.
+
             curve_auth (ThreadAuthenticator):
                 The ZMQ authenticator.
             client_pub_key_dir (str):
                 Client public key directory, used by the ZMQ authenticator.
+            platform (dict):
+                A dictionary containing information about platform.
 
         Return:
             REMOTE_INIT_NOT_REQUIRED:
@@ -177,12 +179,6 @@ class TaskRemoteMgr:
                 If waiting for remote init command to complete
 
         """
-        # get the platform from the platform_name
-        platform = platform_from_name(platform_name)
-        install_target = platform.get(
-            'install target')
-        if not install_target:
-            platform['install target'] = platform_name
 
         # If task is running locally we can skip the rest of this function
         if self.single_task_mode or not is_remote_platform(platform):
@@ -240,7 +236,7 @@ class TaskRemoteMgr:
                 stdin_files=[tmphandle]),
             self._remote_init_callback,
             [platform, tmphandle,
-             curve_auth, client_pub_key_dir, rsync_includes])
+             curve_auth, client_pub_key_dir])
         # None status: Waiting for command to finish
         self.remote_init_map[platform['install target']] = None
         return self.remote_init_map[platform['install target']]
@@ -320,9 +316,8 @@ class TaskRemoteMgr:
                 proc_ctx.ret_code, proc_ctx.out, proc_ctx.err)
 
     def _remote_init_callback(
-        self, proc_ctx, platform, tmphandle,
-        curve_auth, client_pub_key_dir, rsync_includes
-    ):
+            self, proc_ctx, platform, tmphandle,
+            curve_auth, client_pub_key_dir):
         """Callback when "cylc remote-init" exits"""
 
         self.ready = True
@@ -330,8 +325,8 @@ class TaskRemoteMgr:
             tmphandle.close()
         except OSError:  # E.g. ignore bad unlink, etc
             pass
+        self.install_target = platform['install target']
         if REMOTE_INIT_DONE in proc_ctx.out:
-            self.install_target = platform['install target']
             src_path = get_suite_run_dir(self.suite)
             dst_path = get_remote_suite_run_dir(platform, self.suite)
             time_str = get_current_time_string(
@@ -349,7 +344,7 @@ class TaskRemoteMgr:
                     dst_path,
                     platform,
                     logfile,
-                    rsync_includes))
+                    self.rsync_includes))
             except Exception as ex:
                 LOG.error(f"Problem during rsync: {ex}")
         if proc_ctx.ret_code == 0:

@@ -52,7 +52,7 @@ from cylc.flow.task_outputs import (
     TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED,
     TASK_OUTPUT_FAILED)
 from cylc.flow.platforms import (
-    get_platform, get_host_from_platform,
+    get_platform, get_host_from_platform, get_install_target_from_platform
     HOST_REC_COMMAND, PLATFORM_REC_COMMAND
 )
 from cylc.flow.task_remote_mgr import (
@@ -185,8 +185,7 @@ class TaskJobManager:
         return [prepared_tasks, bad_tasks]
 
     def submit_task_jobs(self, suite, itasks, curve_auth,
-                         client_pub_key_dir, is_simulation=False,
-                         rsync_includes=None):
+                         client_pub_key_dir, is_simulation=False):
         """Prepare and submit task jobs.
 
         Submit tasks where possible. Ignore tasks that are waiting for host
@@ -213,10 +212,9 @@ class TaskJobManager:
 
         # Group task jobs by (install target)
         auth_itasks = {}  # {install target: [itask, ...], ...}
+
         for itask in prepared_tasks:
-            install_target = itask.platform['install target']
-            if not install_target:
-                install_target = itask.platform['name']
+            install_target = get_install_target_from_platform(itask.platform)
             auth_itasks.setdefault(install_target, [])
             auth_itasks[install_target].append(itask)
         # Submit task jobs for each platform
@@ -225,8 +223,7 @@ class TaskJobManager:
             # Re-fetch a copy of platform
             platform = itasks[0].platform
             is_init = self.task_remote_mgr.remote_init(
-                install_target, curve_auth, client_pub_key_dir, rsync_includes
-            )
+                platform, curve_auth, client_pub_key_dir)
             if is_init is None:
                 # Remote is waiting to be initialised
                 for itask in itasks:

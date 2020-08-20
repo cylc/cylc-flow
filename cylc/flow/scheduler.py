@@ -101,7 +101,9 @@ from cylc.flow.wallclock import (
     get_time_string_from_unix_time as time2str,
     get_utc_mode)
 from cylc.flow.xtrigger_mgr import XtriggerManager
-from cylc.flow.platforms import get_platform
+from cylc.flow.platforms import (
+    get_platform,
+    get_install_target_from_platform)
 
 
 class SchedulerStop(CylcError):
@@ -722,19 +724,19 @@ class Scheduler:
         auths = set()
         for itask in self.pool.get_rh_tasks():
             if itask.state(*TASK_STATUSES_ACTIVE):
-                auths.add(itask.platform['name'])
+                # set the install target to platform name if not set.
+                auths.add(itask.platform)
         while auths:
-            for platform_name in auths.copy():
+            for platform in auths.copy():
                 if (
                     self.task_job_mgr.task_remote_mgr.remote_init(
-                        platform_name, self.curve_auth,
-                        self.client_pub_key_dir,
-                        self.config.get_rsync_includes()
+                        platform, self.curve_auth,
+                        self.client_pub_key_dir
                     )
                     is not None
                 ):
                     auths.remove(
-                        platform_name
+                        platform
                     )
             if auths:
                 sleep(1.0)
@@ -1233,13 +1235,14 @@ class Scheduler:
             itasks = self.pool.get_ready_tasks()
             if itasks:
                 self.is_updated = True
+            self.task_job_mgr.task_remote_mgr.rsync_includes = (
+                self.config.get_rsync_includes())
             for itask in self.task_job_mgr.submit_task_jobs(
                     self.suite,
                     itasks,
                     self.curve_auth,
                     self.client_pub_key_dir,
-                    self.config.run_mode('simulation'),
-                    self.config.get_rsync_includes()
+                    self.config.run_mode('simulation')
             ):
                 # TODO log itask.flow_label here (beware effect on ref tests)
                 LOG.info('[%s] -triggered off %s',
