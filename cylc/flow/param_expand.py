@@ -260,9 +260,35 @@ class GraphExpander:
     """Handle parameter expansion of graph string lines."""
 
     _REMOVE = -32768
+    # <SPACE>          : ' '
+    # <AND>            : '&'
+    # <OR>             : '|'
+    # <TRIGGER>        : '=>'
+    # <TASK_NAME_PART> : [^\s&\|] # i.e. sequence of not <AND|OR|SPACE>
+    # <_REMOVE>        : '-32768'
+    # <REMOVE>         : <SPACE> <TASK_NAME_PART> <_REMOVE>
+    #                      <TASK_NAME_PART>? <SPACE>
+    # sequence of not<AND|OR|SPACE|TRIGGER>
+    _TASK_NAME_PART = r'[^\s&\|=>]'
+    _REMOVE_TOKEN = rf'\s*{_TASK_NAME_PART}+{str(_REMOVE)}?' \
+                    rf'{_TASK_NAME_PART}+\s*'
     _REMOVE_REC = re.compile(
-        r'(?:^|\s*=>)*[^\s&\|]*' + str(_REMOVE) +
-        r'.*?(?:$|=>\s*?|&\s*|\|\s*)')
+        rf'''
+        (                               #
+          \s*=>{_REMOVE_TOKEN}(?:=>)    # <TRIGGER> <REMOVE> ?:<TRIGGER>
+          |                             #
+          \s*=>{_REMOVE_TOKEN}$         # <TRIGGER> <REMOVE>$
+          |                             #
+          ^{_REMOVE_TOKEN}=>            # ^<REMOVE> <TRIGGER>
+          |                             #
+          \s*[&|]+{_REMOVE_TOKEN}       # <AND|OR> <REMOVE>
+          |                             #
+          {_REMOVE_TOKEN}[&|]+          # <REMOVE> <AND|OR>
+          |                             #
+          {_REMOVE_TOKEN}               # <REMOVE>
+        )                               #
+        ''',
+        re.VERBOSE)
 
     def __init__(self, parameters):
         """Initialize the parameterized task name expander.

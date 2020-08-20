@@ -166,7 +166,8 @@ class TestParamExpand(unittest.TestCase):
         """Test graph expansion with a +ve offset."""
         self.assertEqual(
             self.graph_expander.expand("baz<i>=>baz<i+1>"),
-            set(["baz_i0=>baz_i1"])
+            set(["baz_i0=>baz_i1",
+                 "baz_i1"])
         )
 
     def test_graph_expand_specific(self):
@@ -298,7 +299,16 @@ class TestParamExpand(unittest.TestCase):
                 {'m': '_%(m)s'},
                 "foo&bar<m-1>|baz=>qux",
                 [
-                    "foo&baz=>qux",
+                    "foo|baz=>qux",
+                    "foo&bar_cat|baz=>qux"
+                ]
+            ),
+            (
+                {'m': ["cat", "dog"]},
+                {'m': '_%(m)s'},
+                "foo&bar<m-1>|baz=>qux",
+                [
+                    "foo|baz=>qux",
                     "foo&bar_cat|baz=>qux"
                 ]
             )
@@ -310,16 +320,22 @@ class TestParamExpand(unittest.TestCase):
             params_map, templates, expanded_str, expanded_values = \
                 test_case
             graph_expander = GraphExpander((params_map, templates))
-            expanded = graph_expander.expand(expanded_str)
+            # Ignore white spaces.
+            expanded = [expanded.replace(' ', '') for expanded in
+                        graph_expander.expand(expanded_str)]
             self.assertEqual(
                 len(expanded_values),
                 len(expanded),
                 f"Invalid length for expected {expanded_values} and "
                 f"{expanded}")
+            # When testing, we don't really care for white spaces,as they
+            # are removed in the GraphParser anyway. That's why we have
+            # ''.replace(' ', '').
             for expected in expanded_values:
                 self.assertTrue(
-                    expected in expanded,
-                    f"Expected value {expected} not in {expanded}")
+                    expected.replace(' ', '') in expanded,
+                    f"Expected value {expected.replace(' ', '')} "
+                    f"not in {expanded}")
 
 
 if __name__ == "__main__":
