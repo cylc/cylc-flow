@@ -38,14 +38,78 @@ def get_platform(task_conf=None):
             Actually it returns either get_platform() or
             platform_from_job_info(), but to the user these look the same.
 
-    Todo: Implement the above.
     """
+
+    forbidden_with_platform = (
+        ('remote', 'host', ['localhost', None]),
+        ('job', 'batch system', [None]),
+        ('job', 'batch submit command template', [None])
+    )
+
     if task_conf is None:
-        return platform_from_name()
+        # Just a simple way of accessing localhost items.
+        output = platform_from_name()
+
     elif type(task_conf) is str:
-        return platform_from_name(task_conf)
+        # If task_conf is str assume that it is a platform name.
+        output = platform_from_name(task_conf)
+
+    elif 'platform' in task_conf and task_conf['platform']:
+        # If platform is set check whether any Cylc7 items are present -
+        # and fail if they are:
+        fail_items = ''
+        for section, key, _ in forbidden_with_platform:
+            if (
+                section in task_conf and
+                key in task_conf[section] and
+                task_conf[section][key]
+            ):
+                fail_items += (
+                    f'- task_conf[section][key] is '
+                    f' [{section}]{key} = {task_conf[section][key]}\n'
+                )
+            if fail_items:
+                raise PlatformLookupError(
+                    "A mixture of Cylc 7 (host) and Cylc 8 (platform)"
+                    " logic should not be used. In this case the "
+                    "following are not compatible\n" +
+                    fail_items
+                )
+
+        # If platform name exists and doesn't clash with Cylc7 Config
+        # items:
+        output = platform_from_name(task_conf['platform'])
+
     else:
-        return platform_from_name(task_conf['platform'])
+        # If forbidden items present calculate plateform else platform is
+        # local
+        platform_is_localhost = True
+
+        for section, key, exceptions in forbidden_with_platform:
+            if section not in task_conf:
+                task_conf[section] = {}
+            if (
+                key in task_conf[section] and
+                task_conf[section][key] not in exceptions
+            ):
+                platform_is_localhost = False
+
+        if platform_is_localhost:
+            output = platform_from_name()
+
+        else:
+            # from cylc.flow import LOG
+            # LOG.critical(f"task_conf is {task_conf['job']}")
+            # LOG.critical(f"task_conf is {task_conf['remote']}")
+            output = platform_from_name(
+                platform_from_job_info(
+                    glbl_cfg(cached=False).get(['platforms']),
+                    task_conf['job'],
+                    task_conf['remote']
+                )
+            )
+
+    return output
 
 
 def platform_from_name(platform_name=None, platforms=None):
