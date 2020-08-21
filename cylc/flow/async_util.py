@@ -21,6 +21,8 @@ from pathlib import Path
 
 import pyuv
 
+from cylc.flow import LOG
+
 
 class _AsyncPipe:
     """Implement the @pipe interface.
@@ -63,7 +65,12 @@ class _AsyncPipe:
         coros = list(coros)
         async for item in gen.func(*gen.args, **gen.kwargs):
             for coro in coros:
-                ret = await coro.func(item, *coro.args, **coro.kwargs)
+                try:
+                    ret = await coro.func(item, *coro.args, **coro.kwargs)
+                except Exception as exc:
+                    # if something goes wrong log the error and skip the item
+                    LOG.warning(exc)
+                    ret = False
                 if ret is True:
                     # filter passed -> continue
                     pass
