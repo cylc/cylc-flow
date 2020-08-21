@@ -19,6 +19,8 @@
 
 from isodatetime.data import Calendar
 
+from parsec import LOG
+from parsec.OrderedDict import OrderedDictWithDefaults
 from parsec.upgrade import upgrader
 from parsec.config import ParsecConfig
 
@@ -253,6 +255,7 @@ SPEC = {
                 '__MANY__': [VDR.V_STRING],
             },
             'parameter environment templates': {
+                # deprecated - see _upgrade_param_env_templates()
                 '__MANY__': [VDR.V_STRING],
             },
         },
@@ -383,6 +386,42 @@ def upg(cfg, descr):
     u.obsolete('7.8.1', ['cylc', 'events', 'reset inactivity timer'])
     u.obsolete('7.8.1', ['runtime', '__MANY__', 'events', 'reset timer'])
     u.upgrade()
+
+    _upgrade_param_env_templates(cfg, descr)
+
+
+def _upgrade_param_env_templates(cfg, descr):
+    # Upgrader can't prepend to [runtime][X][environment] if it already  exists
+    if 'runtime' in cfg:
+        dep = "[runtime][%s][parameter environment templates]"
+        new = "[runtime][%s][environment]"
+        first_warn = True
+        for namespace, items in cfg['runtime'].items():
+            if 'parameter environment templates' not in items:
+                continue
+            if first_warn is True:
+                LOG.warning(
+                    "deprecated items automatically upgraded in '" + descr +
+                    "':"
+                )
+                first_warn = False
+            LOG.warning(
+                " * (7.8.7) " + dep % namespace + " contents prepended to " +
+                new % namespace
+            )
+            for key, val in reversed(
+                    items['parameter environment templates'].items()):
+                if 'environment' in items:
+                    if key in items['environment']:
+                        LOG.warning(
+                            " *** " + dep % namespace + key + " ignored as " +
+                            key + " already exists in " + new % namespace
+                        )
+                        continue
+                else:
+                    items['environment'] = OrderedDictWithDefaults()
+                items['environment'].prepend(key, val)
+            items.pop('parameter environment templates')
 
 
 class RawSuiteConfig(ParsecConfig):
