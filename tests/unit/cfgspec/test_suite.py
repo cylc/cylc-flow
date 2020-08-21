@@ -20,6 +20,7 @@ import pytest
 import re
 
 from cylc.flow.cfgspec.suite import host_to_platform_warner
+from cylc.flow.parsec.exceptions import UpgradeError
 
 
 @pytest.mark.parametrize(
@@ -61,19 +62,6 @@ from cylc.flow.cfgspec.suite import host_to_platform_warner
                 }
             },
             r'WARNING.*\[TASK5\]\[job\]batch system = barm\nCylc'
-        ),
-        (
-            # Check function returns error when platform and
-            # Cylc 7 conf are used together.
-            {
-                'TASK1': {
-                    'platform': 'shoes',
-                    'remote': {
-                        'host': 'alpha007'
-                    }
-                },
-            },
-            r'ERROR.*A mixture of Cylc 7.*alpha007.*shoes'
         )
     ]
 )
@@ -84,3 +72,22 @@ def test_host_to_platform_warner(caplog, task_confs, expected):
     conf['runtime'].update(task_confs)
     host_to_platform_warner(conf)
     assert re.match(expected, caplog.text, re.DOTALL)
+
+
+def test_host_to_platform_failer(caplog):
+    conf = {
+        'runtime': {
+            'TASK1': {
+                'platform': 'shoes',
+                'remote': {
+                    'host': 'alpha007'
+                }
+            },
+        },
+    }
+
+    with pytest.raises(UpgradeError):
+        host_to_platform_warner(conf)
+
+    errmsg = r'ERROR.*A mixture of Cylc 7.*alpha007.*shoes'
+    assert re.match(errmsg, caplog.text, re.DOTALL)

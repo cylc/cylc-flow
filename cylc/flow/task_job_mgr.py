@@ -847,11 +847,21 @@ class TaskJobManager:
     def _prep_submit_task_job_error(self, suite, itask, action, exc):
         """Helper for self._prep_submit_task_job. On error."""
         LOG.debug("submit_num %s" % itask.submit_num)
-        LOG.debug(traceback.format_exc())
-        LOG.error(exc)
-        log_task_job_activity(
-            SubProcContext(self.JOBS_SUBMIT, action, err=exc, ret_code=1),
-            suite, itask.point, itask.tdef.name, submit_num=itask.submit_num)
+        if type(exc) == PlatformLookupError:
+            LOG.error(
+                f"{itask.identity} cannot find platform to match Cylc 7 "
+                "settings:"
+            )
+        else:
+            LOG.debug(traceback.format_exc())
+            LOG.error(exc)
+            log_task_job_activity(
+                SubProcContext(self.JOBS_SUBMIT, action, err=exc, ret_code=1),
+                suite,
+                itask.point,
+                itask.tdef.name,
+                submit_num=itask.submit_num
+            )
         # Persist
         self.suite_db_mgr.put_insert_task_jobs(itask, {
             'is_manual_submit': itask.is_manual_submit,

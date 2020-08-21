@@ -1,0 +1,29 @@
+#!Jinja2
+[cylc]
+  UTC mode = True
+
+[scheduling]
+  [[graph]]
+    R1 = """
+      no_settings => finish
+      upgradeable_cylc7_settings => finish
+      not_upgradable_cylc7_settings:submit-fail => finish
+    """
+[runtime]
+  [[root]]
+    script = true
+
+  [[no_settings]]
+
+  [[upgradeable_cylc7_settings]]
+    [[[remote]]]
+      host = {{CYLC_TEST_HOST}}
+
+  [[not_upgradable_cylc7_settings]]
+    [[[remote]]]
+      host = 'parasite'
+    [[[job]]]
+      batch system = 'loaf'
+
+  [[finish]]
+    script = cylc stop ${CYLC_SUITE_NAME} --now --now

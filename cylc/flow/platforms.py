@@ -255,7 +255,7 @@ def platform_from_job_info(platforms, job, remote):
         task_host = remote.pop('host')
     else:
         task_host = 'localhost'
-    if 'batch system' in job.keys():
+    if 'batch system' in job.keys() and job['batch system']:
         task_batch_system = job.pop('batch system')
     else:
         # Necessary? Perhaps not if batch system default is 'background'

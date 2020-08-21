@@ -185,6 +185,18 @@ def test_similar_but_not_exact_match():
             {'host': 'hpc1'},
             'hpc1-bg'
         ),
+        # Check that None as a value is handled correctly
+        (
+            {'batch system': None},
+            {'host': 'hpc1-bg'},
+            'hpc1-bg'
+        ),
+        (
+            # Check that failure to set any items will return localhost
+            {'batch system': None},
+            {'host': None},
+            'localhost'
+        )
     ]
 )
 def test_platform_from_job_info_basic(job, remote, returns):
@@ -393,6 +405,17 @@ def test_get_platform_from_config_with_platform_name(mock_glbl_cfg):
                 }
             },
             'localhost'
+        ),
+        (
+            {
+                'remote': {'host': 'cylcdevbox'},
+                'job': {
+                    'batch system': None,
+                    'batch submit command template': None,
+                    'execution polling intervals': None
+                }
+            },
+            'cylcdevbox'
         )
     ]
 )
@@ -417,6 +440,8 @@ def test_get_platform_using_platform_from_job_info(
             [[local_batch_system]]
                 hosts = localhost
                 batch system = batchyMcBatchFace
+            [[cylcdevbox]]
+                hosts = cylcdevbox
         '''
     )
     assert get_platform(task_conf)['name'] == expected_platform_name

@@ -1357,6 +1357,8 @@ def upg(cfg, descr):
     except KeyError:
         pass
 
+    host_to_platform_warner(cfg)
+
 
 def host_to_platform_warner(cfg, nwarnings=5):
     """Look through tasks in runtime section and warns if logic at task run
@@ -1403,6 +1405,7 @@ def host_to_platform_warner(cfg, nwarnings=5):
                         f"{task_cfg[section][key]} and "
                         f"[{task_name}][platform] = {task_cfg['platform']}"
                     )
+                    raise UpgradeError()
                 else:
                     warnlines += (
                         f'[{task_name}][{section}]{key} = '
@@ -1415,7 +1418,7 @@ def host_to_platform_warner(cfg, nwarnings=5):
     if warnlines:
         LOG.warning(
             f"Cylc 7 Settings:\n{warnlines}"
-            "Cylc will attempt to upgrade these settings before submission"
+            "Cylc will attempt to upgrade these settings before submission "
             f"but cannot be sure of success. (Only the first {nwarnings} tasks"
             " are shown)"
         )
