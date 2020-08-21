@@ -1358,6 +1358,69 @@ def upg(cfg, descr):
         pass
 
 
+def host_to_platform_warner(cfg, nwarnings=5):
+    """Look through tasks in runtime section and warns if logic at task run
+    will attempt to upgrade Cylc 7 host logic to Cylc 8 platform logic.
+    Because this warning will apply to many tasks we will only provide the
+    first `nwarnings` warnings.
+
+    This upgrade cannot be performed here because it needs to be applied
+    after inheritance is applied.
+
+    Currently the following config items trigger a warning.
+
+    - [remote]host
+    - [job]batch system
+    - [job]batch submit command template
+
+    We can also be absolutely sure that any of these three in combination
+    with a platforms setting will cause an error later. Whilst inheritance
+    may cause this in cases that we cannot catch here, we might as well
+    return errors that we can catch here.
+    """
+    forbidden_with_platform = [
+        ('remote', 'host'),
+        ('job', 'batch system'),
+        ('job', 'batch submit command template')
+    ]
+    warnlines = ''
+    limit_count = 0
+    for task_name, task_cfg in cfg['runtime'].items():
+        for section, key in forbidden_with_platform:
+            if (
+                section in task_cfg and
+                key in task_cfg[section] and
+                task_cfg[section][key]
+            ):
+                if 'platform' in task_cfg:
+                    # We can be sure that this is wrong, although due to
+                    # inheritance we cannot catch all cases here.
+                    LOG.error(
+                        "A mixture of Cylc 7 (host) and Cylc 8 (platform)"
+                        " logic should not be used. In this case the "
+                        "following are not compatible\n"
+                        f"[{task_name}][{section}]{key} = "
+                        f"{task_cfg[section][key]} and "
+                        f"[{task_name}][platform] = {task_cfg['platform']}"
+                    )
+                else:
+                    warnlines += (
+                        f'[{task_name}][{section}]{key} = '
+                        f'{task_cfg[section][key]}\n'
+                    )
+                    limit_count += 1
+        if limit_count >= nwarnings:
+            break
+
+    if warnlines:
+        LOG.warning(
+            f"Cylc 7 Settings:\n{warnlines}"
+            "Cylc will attempt to upgrade these settings before submission"
+            f"but cannot be sure of success. (Only the first {nwarnings} tasks"
+            " are shown)"
+        )
+
+
 class RawSuiteConfig(ParsecConfig):
     """Raw suite configuration."""
 
