@@ -23,7 +23,7 @@ Examples:
     # list all "active" workflows (i.e. running or held)
     $ cylc scan
 
-    # show more information about these workfows
+    # show more information about these workflows
     $ cylc scan -t rich
 
     # don't rely on colour for job state totals
@@ -393,11 +393,9 @@ def get_pipe(opts, formatter, scan_dir=None):
     if opts.name:
         pipe |= filter_name(*opts.name)
 
-    # filter by flow state  -  TODO: reduce this
-    if show_active and show_inactive:
-        pipe |= is_active(True, filter_stop=False)
-    elif show_active:
-        pipe |= is_active(True)
+    # filter by flow state
+    if show_active:
+        pipe |= is_active(True, filter_stop=(not show_inactive))
     elif show_inactive:
         pipe |= is_active(False)
 

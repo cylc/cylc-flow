@@ -77,7 +77,7 @@ CONTACT = Path(SuiteFiles.Service.CONTACT)
 SUITERC = Path(SuiteFiles.SUITE_RC)
 
 
-async def dir_is_flow(listing):
+def dir_is_flow(listing):
     """Return True if a Path contains a flow at the top level.
 
     Args:
@@ -139,7 +139,7 @@ async def scan(run_dir=None, scan_dir=None, max_depth=4):
     # for path in stack:
     async for depth, path in asyncqgen(stack):
         contents = await scandir(path)
-        if await dir_is_flow(contents):
+        if dir_is_flow(contents):
             # this is a flow directory
             yield {
                 'name': str(path.relative_to(run_dir)),
