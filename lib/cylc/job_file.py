@@ -22,6 +22,7 @@ import re
 import stat
 from subprocess import Popen, PIPE
 
+from cylc.config import interpolate_template, ParamEnvTemplateError
 from cylc.batch_sys_manager import BatchSysManager
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
@@ -215,10 +216,6 @@ class JobFileWriter(object):
             ' '.join(job_conf['dependencies']))
         handle.write(
             '\n    export CYLC_TASK_TRY_NUMBER=%s' % job_conf['try_num'])
-        # Custom parameter environment variables
-        for var, tmpl in job_conf['param_env_tmpl'].items():
-            handle.write('\n    export %s="%s"' % (
-                var, tmpl % job_conf['param_var']))
         # Standard parameter environment variables
         for var, val in job_conf['param_var'].items():
             handle.write('\n    export CYLC_TASK_PARAM_%s="%s"' % (var, val))
@@ -253,6 +250,14 @@ class JobFileWriter(object):
 
             for var, val in job_conf['environment'].items():
                 value = str(val)  # (needed?)
+                # Interpolate any parameter environment template variables:
+                try:
+                    value = interpolate_template(value, job_conf['param_var'])
+                except ParamEnvTemplateError:
+                    # Already logged warnings in
+                    # cylc.config.SuiteConfig.check_param_env_tmpls()
+                    pass
+
                 match = re.match(r"^(~[^/\s]*/)(.*)$", value)
                 if match:
                     # ~foo/bar or ~/bar

@@ -90,8 +90,35 @@ def check_varnames(env):
     return bad
 
 
+def interpolate_template(tmpl, params_dict):
+    """Try the string interpolation/formatting operator `%` on a template
+    string with a dictionary of parameters. If it fails, raises
+    ParamEnvTemplateError, but if the string does not contain `%(`, it just
+    returns the string.
+
+    E.g.
+        'a_%(foo)d' % {'foo': 12}
+    """
+    if '%(' not in tmpl:
+        return tmpl  # User probably not trying to use param template
+    try:
+        return tmpl % params_dict
+    except KeyError:
+        raise ParamEnvTemplateError('bad parameter')
+    except TypeError:
+        raise ParamEnvTemplateError('wrong data type for parameter')
+    except ValueError:
+        raise ParamEnvTemplateError('bad template syntax')
+
+
 class SuiteConfigError(Exception):
     """Catch all exception for suite configuration errors."""
+    pass
+
+
+class ParamEnvTemplateError(SuiteConfigError):
+    """Exception for when an item in specified in the config cannot be
+    interpolated as a parameter environment template."""
     pass
 
 
@@ -916,18 +943,10 @@ class SuiteConfig(object):
             if 'environment' not in items:
                 continue
             for name, tmpl in items['environment'].items():
-                if '%(' not in tmpl:
-                    continue  # User probably not trying to use param template
                 try:
-                    tmpl % parameter_values
-                except KeyError:
-                    bads.add((namespace, name, tmpl, 'bad parameter'))
-                except TypeError:
-                    bads.add((
-                        namespace, name, tmpl,
-                        'wrong data type for parameter'))
-                except ValueError:
-                    bads.add((namespace, name, tmpl, 'bad template syntax'))
+                    interpolate_template(tmpl, parameter_values)
+                except ParamEnvTemplateError as descr:
+                    bads.add((namespace, name, tmpl, descr))
         if bads:
             LOG.warning(
                 "bad parameter environment template:\n    " + "\n    ".join(
