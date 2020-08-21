@@ -1380,6 +1380,10 @@ def host_to_platform_warner(cfg, nwarnings=5):
     may cause this in cases that we cannot catch here, we might as well
     return errors that we can catch here.
     """
+    if 'runtime' not in cfg:
+        # this whole function is pointless
+        return
+
     forbidden_with_platform = [
         ('remote', 'host'),
         ('job', 'batch system'),
