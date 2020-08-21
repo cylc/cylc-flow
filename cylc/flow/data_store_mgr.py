@@ -850,6 +850,16 @@ class DataStoreMgr:
             if edge.source in node_ids or edge.target in node_ids:
                 self.deltas[EDGES].pruned.append(e_id)
 
+    # TODO: Do we need prerequisites of non-live tasks?
+    #       If so, How to integrate into GraphQL? n-window might help?
+    # Old scheduler method use to create non-live task info like this:
+    #    for task_id in bad_items:
+    #        name, point = TaskID.split(task_id)
+    #        for tname in self.schd.config.get_task_name_list():
+    #            if tname == name:
+    #                itask = TaskProxy(
+    #                    self.schd.config.get_taskdef(name),
+    #                    get_point(point), flow_label="_")
     def update_task_proxies(self, updated_tasks=None):
         """Update dynamic fields of task nodes/proxies.
 

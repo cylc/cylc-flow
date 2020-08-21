@@ -326,28 +326,6 @@ class TaskProxy:
                 self.point_as_seconds += utc_offset_in_seconds
         return self.point_as_seconds
 
-    def get_state_summary(self):
-        """Return a dict containing the state summary of this task proxy."""
-        ret = self.summary.copy()
-        ret['name'] = self.tdef.name
-        ret['description'] = self.tdef.rtconfig['meta']['description']
-        ret['title'] = self.tdef.rtconfig['meta']['title']
-        ret['label'] = str(self.point)
-        ret['submit_num'] = self.submit_num
-        ret['state'] = self.state.status
-        ret['is_held'] = self.state.is_held
-        ret['flow_label'] = self.flow_label
-        ntimes = len(self.tdef.elapsed_times)
-        if ntimes:
-            ret['mean_elapsed_time'] = (
-                float(sum(self.tdef.elapsed_times)) / ntimes)
-        elif ret['execution_time_limit']:
-            ret['mean_elapsed_time'] = float(
-                ret['execution_time_limit'])
-        else:
-            ret['mean_elapsed_time'] = None
-        return ret
-
     def get_try_num(self):
         """Return the number of automatic tries (try number)."""
         try:

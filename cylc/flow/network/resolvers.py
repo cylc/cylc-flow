@@ -684,10 +684,13 @@ class Resolvers(BaseResolvers):
 
     def release(self, tasks=None):
         """Release (un-hold) the workflow."""
-        if tasks:
-            self.schd.command_queue.put(("release_tasks", (tasks,), {}))
-        else:
-            self.schd.command_queue.put(("release_suite", (), {}))
+        self.schd.command_queue.put((
+            "release",
+            (),
+            filter_none({
+                'ids': tasks
+            })
+        ))
         return (True, 'Command queued')
 
     def set_verbosity(self, level):
