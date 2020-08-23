@@ -142,6 +142,7 @@ message PbTask {
     optional int32 depth = 6;
     repeated string proxies = 7;
     repeated string namespace = 8;
+    repeated string parents = 9;
 }
 
 message PbPollTask {
@@ -181,7 +182,6 @@ message PbTaskProxy {
     repeated string namespace = 11;
     repeated PbPrerequisite prerequisites = 12;
     repeated string jobs = 13;
-    repeated string parents = 14;
     optional string first_parent = 15;
     optional string name = 16; /* filter item */
     optional bool is_held = 17;
@@ -210,11 +210,13 @@ message PbFamilyProxy {
     optional string state = 6;
     optional int32 depth = 7;
     optional string first_parent = 8;
-    repeated string parents = 9;
     repeated string child_tasks = 10;
     repeated string child_families = 11;
     optional bool is_held = 12;
     repeated string ancestors = 13;
+    repeated string states = 14;
+    map<string, int32> state_totals = 15;
+    optional int32 is_held_total = 16;
 }
 
 message PbEdge {

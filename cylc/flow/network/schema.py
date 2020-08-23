@@ -690,6 +690,14 @@ class Task(ObjectType):
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
         resolver=get_nodes_by_ids)
+    parents = List(
+        lambda: Family,
+        description="""Family definition parent.""",
+        args=DEF_ARGS,
+        strip_null=STRIP_NULL_DEFAULT,
+        delta_store=DELTA_STORE_DEFAULT,
+        delta_type=DELTA_TYPE_DEFAULT,
+        resolver=get_nodes_by_ids)
     namespace = List(String)
 
 
@@ -847,17 +855,11 @@ class FamilyProxy(ObjectType):
         delta_type=DELTA_TYPE_DEFAULT,
         resolver=get_node_by_id)
     state = String()
+    states = List(String)
+    state_totals = GenericScalar(resolver=resolve_state_totals)
     is_held = Boolean()
+    is_held_total = Int()
     depth = Int()
-    parents = List(
-        lambda: FamilyProxy,
-        description="""Family parent proxies.""",
-        args=PROXY_ARGS,
-        ghosts=GHOSTS_DEFAULT,
-        strip_null=STRIP_NULL_DEFAULT,
-        delta_store=DELTA_STORE_DEFAULT,
-        delta_type=DELTA_TYPE_DEFAULT,
-        resolver=get_nodes_by_ids)
     child_tasks = List(
         TaskProxy,
         description="""Descendant task proxies.""",

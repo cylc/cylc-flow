@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import pytest
 
+from cylc.flow.cycling.loader import standardise_point_string
 from cylc.flow.data_store_mgr import (
     FAMILY_PROXIES,
     TASKS,
@@ -92,13 +93,20 @@ def test_initiate_data_model(harness):
 def test_prune_points(harness):
     """Test method that removes data elements by cycle point."""
     schd, data = harness
-    points = schd.data_store_mgr.cycle_states.keys()
+    points = [
+        standardise_point_string(p.cycle_point)
+        for p in data[TASK_PROXIES].values()
+    ]
     point = next(iter(points))
     assert point in points
     schd.data_store_mgr.clear_deltas()
     schd.data_store_mgr.prune_points([point])
     schd.data_store_mgr.apply_deltas()
-    assert point not in points
+    assert point not in [
+        standardise_point_string(p.cycle_point)
+        for p in schd.data_store_mgr.data[
+            schd.data_store_mgr.workflow_id][TASK_PROXIES].values()
+    ]
 
 
 def test_update_data_structure(harness):
@@ -121,7 +129,7 @@ def test_update_family_proxies(harness):
     update_points = set((str(t.point) for t in update_tasks))
     schd.data_store_mgr.clear_deltas()
     schd.data_store_mgr.update_task_proxies(update_tasks)
-    schd.data_store_mgr.update_family_proxies(update_points)
+    schd.data_store_mgr.update_family_proxies()
     schd.data_store_mgr.apply_deltas()
     # Find families in updated cycle points
     point_fams = [
