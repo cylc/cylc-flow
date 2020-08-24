@@ -61,7 +61,10 @@ from cylc.flow.parsec.exceptions import UpgradeError
                     }
                 }
             },
-            r'WARNING.*\[TASK5\]\[job\]batch system = barm\nCylc'
+            (
+                r'WARNING.*\Deprecated \"host\".*\[TASK5\]\[job\]'
+                r'batch system = barm\n'
+            )
         )
     ]
 )

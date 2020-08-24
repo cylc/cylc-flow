@@ -1389,7 +1389,7 @@ def host_to_platform_warner(cfg, nwarnings=5):
         ('job', 'batch system'),
         ('job', 'batch submit command template')
     ]
-    warnlines = ''
+    warnlines = []
     limit_count = 0
     for task_name, task_cfg in cfg['runtime'].items():
         for section, key in forbidden_with_platform:
@@ -1411,7 +1411,7 @@ def host_to_platform_warner(cfg, nwarnings=5):
                     )
                     raise UpgradeError()
                 else:
-                    warnlines += (
+                    warnlines.append(
                         f'[{task_name}][{section}]{key} = '
                         f'{task_cfg[section][key]}\n'
                     )
@@ -1421,10 +1421,10 @@ def host_to_platform_warner(cfg, nwarnings=5):
 
     if warnlines:
         LOG.warning(
-            f"Cylc 7 Settings:\n{warnlines}"
-            "Cylc will attempt to upgrade these settings before submission "
-            f"but cannot be sure of success. (Only the first {nwarnings} tasks"
-            " are shown)"
+            'Deprecated "host" and "batch system" will be removed at Cylc 9, '
+            'upgrade to "platform".\n'
+            # '(<link to page in cylc7 to cylc8 transition docs>)\n'
+            f'First {nwarnings} warnings:\n' + "".join(warnlines)
         )
 
 
