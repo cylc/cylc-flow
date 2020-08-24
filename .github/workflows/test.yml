@@ -10,11 +10,7 @@ jobs:
     timeout-minutes: 15
     strategy:
       matrix:
-        python-version: ['3.7', '3.8']
-        experimental: [false]
-        include:
-          - python-version: 3.9
-            experimental: true
+        python-version: ['3.7', '3.8', '3.9']
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -65,6 +61,9 @@ jobs:
           ['tests/f', '4/4'],
           ['tests/k', '1/1']
         ]
+        platform: [
+          'local_background_indep_tcp',
+        ]
     env:
       BASE: ${{ matrix.tests[0] }}
       CHUNK: ${{ matrix.tests[1] }}
@@ -76,6 +75,10 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+
+      - name: Configure Platforms
+        run: |
+          dockerfiles/build --yes configure
 
       - name: Apt-Get
         run: |
@@ -100,9 +103,16 @@ jobs:
           else
               NPROC=8
           fi
-          etc/bin/run-functional-tests -j "${NPROC}" --state=save "${BASE}" || (
+          etc/bin/run-functional-tests \
+              --platform "${{ matrix.platform }}"
+              -j "${NPROC}" \
+              --state=save "${BASE}" \
+          || (
               echo '=== Re-running Failed Tests ==='
-              CHUNK= etc/bin/run-functional-tests -j "${NPROC}" --state=save,failed
+              CHUNK= etc/bin/run-functional-tests \
+                  --platform "${{ matrix.platform }}"
+                  -j "${NPROC}" \
+                  --state=save,failed
           )
 
       - name: Debug

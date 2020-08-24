@@ -16,11 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test job log NN link correctness on reaching 100, remote (with shared fs).
-export CYLC_TEST_IS_GENERIC=false
+export REQUIRE_PLATFORM='loc:remote fs:shared'
 . "$(dirname "$0")/test_header"
-require_remote_platform_wsfs
-# export CYLC_TEST_PLATFORM which is used by the flow
-export CYLC_TEST_PLATFORM="$CYLC_TEST_PLATFORM_WSFS"
 set_test_number 2
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
@@ -29,6 +26,6 @@ sqlite3 "${SUITE_RUN_DIR}/.service/db" <'db.sqlite3'
 suite_run_ok "${TEST_NAME_BASE}-restart" \
     cylc restart --reference-test --debug --no-detach "${SUITE_NAME}"
 
-purge_suite_platform "${CYLC_TEST_PLATFORM_WSFS}" "${SUITE_NAME}"
+purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

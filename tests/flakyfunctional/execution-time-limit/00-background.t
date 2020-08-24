@@ -16,22 +16,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test execution time limit, background/at job
+CYLC_TEST_BATCH_SYS=${TEST_NAME_BASE##??-}
+export REQUIRE_PLATFORM="batch:$CYLC_TEST_BATCH_SYS"
 . "$(dirname "$0")/test_header"
-
 set_test_number 4
-skip_darwin 'atrun hard to configure on Mac OS'
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-
-CYLC_TEST_BATCH_SYS=${TEST_NAME_BASE##??-}
-
-create_test_global_config "" "
-[platforms]
-[[hydra]]
-hosts = localhost
-install target = localhost
-batch system = ${CYLC_TEST_BATCH_SYS}
-"
 
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate "${SUITE_NAME}"

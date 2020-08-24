@@ -15,25 +15,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-
 # Test that job submission kill on timeout results in a failed job submission.
-
+export REQUIRE_PLATFORM='batch:at comms:tcp'
 . "$(dirname "$0")/test_header"
-
-
-skip_darwin 'atrun hard to configure on Mac OS'
 set_test_number 4
 
 create_test_global_config "
 process pool timeout = PT10S
 " "
 [platforms]
-    [[unicorn]]
-        hosts = localhost
-        install target = localhost
-        batch system = at
-        batch submit command template = sleep 30"
-
+    [[$CYLC_TEST_PLATFORM]]
+        batch submit command template = sleep 30
+"
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 

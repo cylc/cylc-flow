@@ -10,11 +10,11 @@
 [runtime]
     [[ECHO]]
         script = """
-wait
-echo rubbish
-echo garbage >&2
-cylc message 'echo done'
-"""
+            wait
+            echo rubbish
+            echo garbage >&2
+            cylc message 'echo done'
+        """
         [[[outputs]]]
             echo = "echo done"
     [[local-task]]
@@ -24,8 +24,9 @@ cylc message 'echo done'
         inherit = ECHO
     [[cat-log]]
         script = """
-wait
-for TASK in local-task.1 remote-task.1; do
-  cylc cat-log --debug -f o "${CYLC_SUITE_NAME}" $TASK | grep 'rubbish'
-  cylc cat-log --debug -f e "${CYLC_SUITE_NAME}" $TASK | grep 'garbage'
-done"""
+            wait
+            for TASK in local-task.1 remote-task.1; do
+                cylc cat-log --debug -f o "${CYLC_SUITE_NAME}" $TASK | grep 'rubbish'
+                cylc cat-log --debug -f e "${CYLC_SUITE_NAME}" $TASK | grep 'garbage'
+            done
+        """

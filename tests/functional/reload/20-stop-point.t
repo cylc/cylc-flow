@@ -16,9 +16,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test set stop point then reload. Reload should not reset stop point.
+# https://github.com/cylc/cylc-flow/issues/2964
+export REQUIRE_PLATFORM='batch:at'
 . "$(dirname "$0")/test_header"
+set_test_number 4
 
-set_test_number 3
+create_test_global_config "
+[platforms]
+    [[$CYLC_TEST_PLATFORM]]
+        batch submit command template = sleep 5
+        submission retry delays = 3*PT5S
+"
+
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
@@ -34,5 +43,5 @@ cmp_ok 'db.out' <<'__OUT__'
 3|t1|0
 __OUT__
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

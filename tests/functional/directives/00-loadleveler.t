@@ -20,23 +20,10 @@
 #     entry in site/user config in order to run 'loadleveler' tests (same for
 #     slurm, pbs, etc), otherwise it will be bypassed.
 # TODO Check this test on a dockerized system or VM.
-export CYLC_TEST_IS_GENERIC=false
+BATCH_SYS_NAME="${TEST_NAME_BASE##??-}"
+export REQUIRE_PLATFORM="batch:$BATCH_SYS_NAME comms:tcp"
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-# export an environment variable for this - allows a script to be used to 
-# select a compute node and have that same host used by the suite.
-BATCH_SYS_NAME="${TEST_NAME_BASE##??-}"
-RC_PREF="[test battery][batch systems][${BATCH_SYS_NAME}]"
-CYLC_TEST_BATCH_TASK_HOST=$( \
-    cylc get-global-config -i "${RC_PREF}host" 2>'/dev/null')
-CYLC_TEST_BATCH_SITE_DIRECTIVES=$( \
-    cylc get-global-config -i "${RC_PREF}[directives]" 2>'/dev/null')
-if [[ -z "${CYLC_TEST_BATCH_TASK_HOST}" || "${CYLC_TEST_BATCH_TASK_HOST}" == None ]]
-then
-    skip_all "\"[test battery][batch systems][$BATCH_SYS_NAME]host\" not defined"
-fi
-export CYLC_TEST_BATCH_TASK_HOST CYLC_TEST_BATCH_SITE_DIRECTIVES
-
 set_test_number 2
 
 create_test_global_config "" "
@@ -47,5 +34,5 @@ create_test_global_config "" "
 "
 
 reftest "${TEST_NAME_BASE}" "${BATCH_SYS_NAME}"
-purge_suite_remote "${CYLC_TEST_BATCH_TASK_HOST}" "${SUITE_NAME}"
+purge_remote_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 exit

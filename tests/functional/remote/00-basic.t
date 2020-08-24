@@ -16,15 +16,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test remote host settings.
+export REQUIRE_PLATFORM='loc:remote'
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-require_remote_platform
 set_test_number 4
 create_test_global_config "" "
 [platforms]
-[[$CYLC_TEST_PLATFORM]]
-hosts = $CYLC_TEST_HOST
-retrieve job logs = True
+    [[$CYLC_TEST_PLATFORM]]
+        retrieve job logs = True
 "
 #-------------------------------------------------------------------------------
 install_suite "${TEST_NAME_BASE}" basic
@@ -43,7 +42,7 @@ cmp_ok 'foo-host.txt' <<<"${CYLC_TEST_PLATFORM}"
 # Check that the remote job has actually been run on the correct remote by
 # checking it's job.out file for @CYLC_TEST_HOST
 TEST_NAME=${TEST_NAME_BASE}-ensure-remote-run
-grep_ok "@${CYLC_TEST_HOST}" "${SUITE_RUN_DIR}/log/job/1/foo/NN/job.out"
+grep_ok "@$(hostname -f)" "${SUITE_RUN_DIR}/log/job/1/foo/NN/job.out"
 #-------------------------------------------------------------------------------
 purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"

@@ -17,9 +17,8 @@
 #-------------------------------------------------------------------------------
 # Test restarting a suite when the host of a submitted or running job is not
 # available. https://github.com/cylc/cylc-flow/issues/1327
-export CYLC_TEST_IS_GENERIC=false
+export REQUIRE_PLATFORM='loc:remote comms:tcp'
 . "$(dirname "$0")/test_header"
-require_remote_platform
 set_test_number 4
 install_suite "${TEST_NAME_BASE}" bad-job-host
 #-------------------------------------------------------------------------------

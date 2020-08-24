@@ -16,9 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test job submission via at, with SHELL set to tcsh
+export REQUIRE_PLATFORM='batch:at'
 . "$(dirname "$0")/test_header"
-
-skip_darwin 'atrun hard to configure on Mac OS'
 set_test_number 2
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 

@@ -20,27 +20,10 @@
 # This does not test loadleveler job vacation itself, because the test will
 # require a site admin to pre-empt a job.
 # TODO Check this test on a dockerized system or VM.
-export CYLC_TEST_IS_GENERIC=false
+export REQUIRE_PLATFORM="batch:loadleveler"
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-RC_PREF="[test battery][batch systems][loadleveler]"
-CYLC_TEST_BATCH_TASK_HOST="$( \
-    cylc get-global-config -i "${RC_PREF}host" 2>'/dev/null')"
-if [[ -z $CYLC_TEST_BATCH_TASK_HOST ]]; then
-    skip_all '"[test battery][batch systems][loadleveler]host": not defined'
-fi
 set_test_number 6
-
-create_test_global_config "" "
-[platforms]
-  [[test-platform-loadleveler]]
-    host = $CYLC_TEST_BATCH_TASK_HOST
-    batch system = loadleveler
-"
-
-CYLC_TEST_DIRECTIVES="$( \
-    cylc get-global-config -i "${RC_PREF}[directives]" 2>'/dev/null')"
-export CYLC_TEST_BATCH_TASK_HOST CYLC_TEST_DIRECTIVES
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
@@ -60,8 +43,6 @@ T2_JOB_FILE="${SUITE_RUN_DIR}/log/job/1/t2/01/job"
 exists_ok "${T2_JOB_FILE}"
 grep_ok '^CYLC_VACATION_SIGNALS' "${T2_JOB_FILE}"
 #-------------------------------------------------------------------------------
-if [[ $CYLC_TEST_BATCH_TASK_HOST != 'localhost' ]]; then
-    purge_suite_remote "${CYLC_TEST_BATCH_TASK_HOST}" "${SUITE_NAME}"
-fi
 purge_suite "${SUITE_NAME}"
+purge_remote_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 exit

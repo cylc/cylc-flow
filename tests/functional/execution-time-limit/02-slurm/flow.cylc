@@ -10,13 +10,11 @@
 [runtime]
     [[foo]]
         script = """
-if [[ "${CYLC_TASK_SUBMIT_NUMBER}" == '1' ]]; then
-    sleep 300
-fi
-"""
-        platform = test-slurm
+            if [[ "${CYLC_TASK_SUBMIT_NUMBER}" == '1' ]]; then
+                sleep 300
+            fi
+        """
+        platform = {{ environ['CYLC_TEST_PLATFORM'] }}
         [[[job]]]
             execution time limit = PT5S
             execution retry delays = PT0S
-        [[[directives]]]
-            {{CYLC_TEST_BATCH_SITE_DIRECTIVES}}

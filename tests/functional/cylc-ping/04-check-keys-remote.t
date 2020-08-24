@@ -16,10 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Checks remote ZMQ keys are created and deleted on shutdown.
+export REQUIRE_PLATFORM='loc:remote comms:tcp'
 . "$(dirname "$0")/test_header"
-
-require_remote_platform
-
 set_test_number 4
 
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
@@ -30,7 +28,7 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
         R1 = holder => held
 [runtime]
     [[holder]]
-        script = """cylc hold "${CYLC_SUITE_NAME}" """
+        script = cylc hold "${CYLC_SUITE_NAME}"
         platform = {{CYLC_TEST_PLATFORM}}
     [[held]]
         script = true

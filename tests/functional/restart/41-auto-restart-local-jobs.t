@@ -15,13 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
+export REQUIRE_PLATFORM='loc:remote fs:shared'
 . "$(dirname "$0")/test_header"
-require_remote_platform_wsfs
-export CYLC_TEST_HOST2="${CYLC_TEST_HOST_WSFS}"
+# shellcheck disable=SC2153
+export CYLC_TEST_HOST2="${CYLC_TEST_HOST}"
 export CYLC_TEST_HOST1="${HOSTNAME}"
 if ${CYLC_TEST_DEBUG:-false}; then ERR=2; else ERR=1; fi
 set_test_number 11
-
+#-------------------------------------------------------------------------------
 BASE_GLOBAL_CONFIG="
 [scheduler]
     [[main loop]]
@@ -109,5 +110,5 @@ cylc stop "${SUITE_NAME}" --now --now 2>/dev/null || true
 poll_suite_stopped
 sleep 1
 purge_suite "${SUITE_NAME}"
-purge_suite_platform "${CYLC_TEST_PLATFORM_WSFS}" "${SUITE_NAME}"
+purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 exit

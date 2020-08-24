@@ -16,10 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test restart with a "ready" task. See GitHub #958 (update: and #2610).
+export REQUIRE_PLATFORM='batch:at'
 . "$(dirname "$0")/test_header"
-
-skip_darwin 'atrun hard to configure on Mac OS'
-
 set_test_number 3
 
 create_test_global_config "" "

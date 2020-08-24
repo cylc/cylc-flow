@@ -1,3 +1,5 @@
+#!Jinja2
+
 [meta]
     title = Restart with a task in the ready state.
 
@@ -9,16 +11,19 @@
 [scheduling]
     [[graph]]
         R1 = """
-foo => foo-1
-bar
-"""
+            foo => foo-1
+            bar
+        """
 
 [runtime]
     [[foo]]
         script = true
     [[foo-1]]
         script = true
-        platform = wibble
+        platform = {{ environ['CYLC_TEST_PLATFORM'] }}
+        [[[job]]]
+            # A fake submission on 1st attempt
+            batch submit command template = sleep 15
     [[bar]]
         script = """
             # Stop the suite as soon as job file of "foo-1" is in the ready state.

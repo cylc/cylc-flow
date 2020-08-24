@@ -91,9 +91,6 @@
 #         Tidy up local test directories for SUITE_NAME.
 #     purge_suite_platform PLATFORM SUITE_NAME
 #         Tidy up test directories for SUITE_NAME on PLATFORM
-#     purge_suite_remote HOST SUITE_NAME
-#         Tidy up test directories for SUITE_NAME on HOST
-#         # TODO: remove this once all batch system tests are platform-based.
 #     poll COMMAND
 #         Run COMMAND in 1 second intervals for a minute until COMMAND returns
 #         a zero value, or exit 1 (abort test) with a timeout message.
@@ -127,19 +124,6 @@
 #         Create a new global config file $PWD/etc from global-tests.cylc
 #         with PRE and POST pre- and ap-pended (PRE for top level items with no
 #         section heading). PRE and POST are strings.
-#     require_remote_platform
-#         Set CYLC_TEST_PLATFORM for remote job tests or skip all tests.
-#         Provides:
-#             CYLC_TEST_PLATFORM: Remote platform name
-#             CYLC_TEST_HOST:     Hostname of a remote host picked
-#                                 from the platform.
-#     require_remote_platform_wsfs
-#         (wsfs = with shared file system)
-#         Set CYLC_TEST_PLATFORM_WSFS for remote job tests or skip all tests.
-#         Provides:
-#             CYLC_TEST_PLATFORM_WSFS: Remote platform name
-#             CYLC_TEST_HOST_WSFS:     Hostname of a remote host picked
-#                                      from the platform.
 #     get_fqdn_by_host [TARGET]
 #         Get a host FQDN using the same mechanism Cylc uses.
 #-------------------------------------------------------------------------------
@@ -494,24 +478,6 @@ log_scan () {
     done
 }
 
-purge_suite_remote() {
-    # Tidy up test directories on a given host.
-    # (Use purge_suite_platform in preference to this, where possible).
-    # TODO: remove this once batch system tests are platform based.
-    local HOST="$1"  # or "owner@host"
-    local NAME="$2"
-    local CMD="cd 'cylc-run' && rm -fr '${NAME}'"
-    local DIRNAME
-    DIRNAME="$(dirname "${NAME}")"
-    if [[ "${DIRNAME}" != '.' ]]; then
-        CMD="${CMD} && rmdir -p '${DIRNAME}'"
-    fi
-    # CMD is part of this function
-    # shellcheck disable=SC2029
-    ssh -n -oBatchMode=yes -oConnectTimeout=5 "${HOST}" "${CMD}" \
-        2>'/dev/null' || true
-}
-
 purge_suite_platform() {
     # Tidy up test directories on a given platform.
     # Currently just picks the first host on the platform.
@@ -629,12 +595,6 @@ skip_all() {
     exit
 }
 
-skip_darwin() {
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        skip_all "Skipping (Mac OS/Darwin) $*"
-    fi
-}
-
 ssh_install_cylc() {
     local RHOST="$1"
     local RHOST_CYLC_DIR=
@@ -739,54 +699,60 @@ create_test_global_config() {
     export CYLC_CONF_PATH="${PWD}/etc"
 }
 
-require_remote_platform() {
-    # For remote job tests, define CYLC_TEST_PLATFORM from global
-    # config '[test battery]remote platform'.
-    # Skip all tests if is not defined.
-    # Call immediately after sourcing the test header, for skip_all to work.
-    CYLC_TEST_PLATFORM="$(
-        cylc get-global-config -i '[test battery]remote platform' 2>'/dev/null'
-    )"
-    if [[ -z "${CYLC_TEST_PLATFORM}" ]]; then
-        skip_all '"[test battery]remote platform": not defined'
-    fi
-    # This is ugly, but some tests require these variables for direct ssh-ing.
-    CYLC_TEST_HOST="$(
-        cylc get-global --item \
-            "[platforms][${CYLC_TEST_PLATFORM}]hosts" \
-            | awk -F ',' '{print $1}' \
-        2>/dev/null
-    )"
-    if [[ -z "${CYLC_TEST_HOST}" ]]; then
-        skip_all '"[test battery]remote platform": not configured'
-    fi
-    export CYLC_TEST_PLATFORM
-    export CYLC_TEST_HOST
+_parse_platform_spec () {
+    # the requirement string: e.g. comms:tcp
+    local requirement="$1"
+
+    local locality='local'
+    local batch_system='background'
+    local file_system='*'
+    local comms='*'
+    for req in ${requirement}; do
+        case "$req" in
+            loc:*)
+                locality="${req/loc:/}"
+                ;;
+            batch:*)
+                batch_system="${req/batch:/}"
+                ;;
+            fs:*)
+                file_system="${req/fs:/}"
+                ;;
+            comms:*)
+                comms="${req/comms:/}"
+                ;;
+            *)
+                echo "Invalid option $req" >&2
+                return 1
+                ;;
+        esac
+    done
+    echo "${locality}_${batch_system}_${file_system}_${comms}"
 }
 
-require_remote_platform_wsfs() {
-    # For remote job tests, define CYLC_TEST_PLATFORM_WSFS from global
-    # config '[test battery]remote platform'.
-    # Skip all tests if is not defined.
-    # Call immediately after sourcing the test header, for skip_all to work.
-    CYLC_TEST_PLATFORM_WSFS="$(
-        cylc get-global-config -i '[test battery]remote platform with shared fs' 2>'/dev/null'
-    )"
-    if [[ -z "${CYLC_TEST_PLATFORM_WSFS}" ]]; then
-        skip_all '"[test battery]remote platform with shared fs": not defined'
-    fi
-    # This is ugly, but some tests require these variables for direct ssh-ing.
-    CYLC_TEST_HOST_WSFS="$(
-        cylc get-global --item \
-            "[platforms][${CYLC_TEST_PLATFORM_WSFS}]hosts" \
-            | awk -F ',' '{print $1}' \
-        2>/dev/null
-    )"
-    if [[ -z "${CYLC_TEST_HOST_WSFS}" ]]; then
-        skip_all '"[test battery]remote platform with shared fs": not configured'
-    fi
-    export CYLC_TEST_PLATFORM_WSFS
-    export CYLC_TEST_HOST_WSFS
+require_platform () {
+    # the requirement string: e.g. comms:tcp
+    local requirement="$1"
+
+    local platform
+    local required_platform
+    required_platform="$(_parse_platform_spec "${requirement}")"
+    for platform in "${PLATFORMS[@]}"; do
+        # we are purposfully allowing pattern matching here
+        # shellcheck disable=SC2053
+        if [[ "$platform" == $required_platform ]]; then
+            export CYLC_TEST_PLATFORM="_$platform"
+            return 0
+        fi
+    done
+    echo "required: $required_platform" >&2
+    return 1
+}
+
+get_host_from_platform () {
+    local platform="$1"
+
+    cylc get-global -i "[platforms][${platform}]hosts" | cut -d ',' -f 1
 }
 
 get_fqdn_by_host() {
@@ -830,12 +796,36 @@ for SKIP in ${CYLC_TEST_SKIP}; do
         break
     fi
 done
-if ! "${CYLC_TEST_RUN_GENERIC}" && "${CYLC_TEST_IS_GENERIC}"; then
-    skip_all 'not running generic tests'
-elif ! "${CYLC_TEST_RUN_PLATFORM}" && ! "${CYLC_TEST_IS_GENERIC}"; then
-    skip_all 'not running platform-specific tests'
+
+# handle platform logic
+#DEFAULT_PLATFORM="$(_parse_platform_spec '')"
+DEFAULT_PLATFORM=''
+if [[ -n $PLATFORMS ]]; then
+    # purposfully spltting into array
+    # shellcheck disable=SC2206
+    PLATFORMS=($PLATFORMS)
+else
+    PLATFORMS=("$DEFAULT_PLATFORM")
 fi
+export PLATFORMS
+if [[ -z "${REQUIRE_PLATFORM:-}" ]]; then
+    REQUIRE_PLATFORM="$DEFAULT_PLATFORM"
+fi
+if ! require_platform "${REQUIRE_PLATFORM}"; then
+    skip_all "requires $REQUIRE_PLATFORM"
+fi
+
 # Ignore the normal site/user global config, use global-tests.cylc.
 create_test_global_config "$@"
+
+# this must happen after crete_test_global_config
+# because it relies on the platforms config from global-tests.cylc
+CYLC_TEST_HOST="$(get_host_from_platform "$CYLC_TEST_PLATFORM")"
+if [[ -z "${CYLC_TEST_HOST}" ]]; then
+    echo "Could not find host for platform $CYLC_TEST_PLATFORM" >&2
+    exit 1
+fi
+export CTLC_TEST_HOST
+
 set +x
 set +e

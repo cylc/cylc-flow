@@ -17,22 +17,11 @@
 #-------------------------------------------------------------------------------
 # Test "cylc message" in SSH mode, test needs to have compatible version
 # installed on the remote host.
-export CYLC_TEST_IS_GENERIC=false
-. "$(dirname "$0")/test_header"
 # TODO: Fix test once ssh task comms reinstated
-skip_all 'ssh task comm not currently functional'
-
+export REQUIRE_PLATFORM='loc:remote comms:ssh'
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-require_remote_platform
 set_test_number 3
-
-create_test_global_config '' "
-[platforms]
-    [[${CYLC_TEST_PLATFORM}-ssh]]
-        hosts = ${CYLC_TEST_HOST}
-        communication method = ssh
-"
-
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" \

@@ -16,52 +16,24 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test execution time limit setting, slurm job
-export CYLC_TEST_IS_GENERIC=false
+CYLC_TEST_BATCH_SYS="${TEST_NAME_BASE##??-}"
+export REQUIRE_PLATFORM="batch:$CYLC_TEST_BATCH_SYS"
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-CYLC_TEST_BATCH_SYS="${TEST_NAME_BASE##??-}"
-RC_PREF="[test battery][batch systems][$CYLC_TEST_BATCH_SYS]"
-CYLC_TEST_BATCH_TASK_HOST="$( \
-    cylc get-global-config -i "${RC_PREF}host" 2>'/dev/null')"
-CYLC_TEST_BATCH_SITE_DIRECTIVES="$( \
-    cylc get-global-config -i "${RC_PREF}[directives]" 2>'/dev/null')"
-if [[ -z "${CYLC_TEST_BATCH_TASK_HOST}" || \
-    "${CYLC_TEST_BATCH_TASK_HOST}" == None ]]
-then
-    skip_all "\"[test battery][batch systems][$CYLC_TEST_BATCH_SYS]host\" not defined"
-fi
-export CYLC_TEST_BATCH_TASK_HOST CYLC_TEST_BATCH_SITE_DIRECTIVES
 set_test_number 3
-
-create_test_global_config "" "
-    [platforms]
-        [[test-slurm]]
-            batch system = $CYLC_TEST_BATCH_SYS
-            hosts = $CYLC_TEST_BATCH_TASK_HOST
-"
-
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate \
-    -s "CYLC_TEST_BATCH_SYS=${CYLC_TEST_BATCH_SYS}" \
-    -s "CYLC_TEST_BATCH_TASK_HOST=${CYLC_TEST_BATCH_TASK_HOST}" \
-    -s "CYLC_TEST_BATCH_SITE_DIRECTIVES=${CYLC_TEST_BATCH_SITE_DIRECTIVES}" \
-    "${SUITE_NAME}"
+    cylc validate "${SUITE_NAME}"
 
 suite_run_fail "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug --no-detach \
-    -s "CYLC_TEST_BATCH_SYS=${CYLC_TEST_BATCH_SYS}" \
-    -s "CYLC_TEST_BATCH_TASK_HOST=${CYLC_TEST_BATCH_TASK_HOST}" \
-    -s "CYLC_TEST_BATCH_SITE_DIRECTIVES=${CYLC_TEST_BATCH_SITE_DIRECTIVES}" \
     "${SUITE_NAME}"
 
 LOGD="$RUN_DIR/${SUITE_NAME}/log/job/1/foo"
 grep_ok '#SBATCH --time=0:05' "${LOGD}/01/job"
 
-if [[ "${CYLC_TEST_BATCH_TASK_HOST}" != 'localhost' ]]; then
-    purge_suite_remote "${CYLC_TEST_BATCH_TASK_HOST}" "${SUITE_NAME}"
-fi
 purge_suite "${SUITE_NAME}"
+purge_remote_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 exit

@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Test "cylc cat-log" of currently-running local and remote jobs.
 . "$(dirname "$0")/test_header"
-require_remote_platform
+export REQUIRE_PLATFORM='loc:remote comms:tcp'
 set_test_number 2
 reftest
 purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"

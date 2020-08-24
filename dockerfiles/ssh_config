@@ -1,5 +1,5 @@
-Host cylc-remote
+Host _remote_background_indep_poll
     HostName localhost
     Port 42222
     User root
-    IdentityFile ~/.ssh/id_rsa.docker
+    IdentityFile ~/.ssh/cylc-docker

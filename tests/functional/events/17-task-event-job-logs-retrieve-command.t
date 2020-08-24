@@ -17,9 +17,8 @@
 #-------------------------------------------------------------------------------
 # Test remote job logs retrieval custom command, requires compatible version of
 # cylc on remote job host.
-export CYLC_TEST_IS_GENERIC=false
+export REQUIRE_PLATFORM='loc:remote'
 . "$(dirname "$0")/test_header"
-require_remote_platform
 set_test_number 3
 
 create_test_global_config "" "

@@ -37,3 +37,6 @@ venv
 
 # mypy
 .mypy_cache/
+
+# docker stuffs
+.docker*

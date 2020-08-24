@@ -15,9 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
+export REQUIRE_PLATFORM='loc:remote fs:shared'
 . "$(dirname "$0")/test_header"
-#-------------------------------------------------------------------------------
-require_remote_platform_wsfs
 set_test_number 10
 #-------------------------------------------------------------------------------
 # test the failure recovery mechanism
@@ -33,7 +32,7 @@ BASE_GLOBAL_CONFIG="
         inactivity = PT2M
         timeout = PT2M
 [suite servers]
-    run hosts = localhost, ${CYLC_TEST_HOST_WSFS}"
+    run hosts = localhost, ${CYLC_TEST_HOST}"
 
 TEST_NAME="${TEST_NAME_BASE}"
 TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME}" <<< '
@@ -60,17 +59,17 @@ FILE=$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)
 log_scan "${TEST_NAME}-shutdown" "${FILE}" 20 1 \
     'The Cylc suite host will soon become un-available' \
     'Suite shutting down - REQUEST(NOW-NOW)' \
-    "Attempting to restart on \"${CYLC_TEST_HOST_WSFS}\"" \
+    "Attempting to restart on \"${CYLC_TEST_HOST}\"" \
     'Could not restart suite will retry in 5s' \
-    "Attempting to restart on \"${CYLC_TEST_HOST_WSFS}\"" \
+    "Attempting to restart on \"${CYLC_TEST_HOST}\"" \
     'Could not restart suite will retry in 5s' \
-    "Attempting to restart on \"${CYLC_TEST_HOST_WSFS}\"" \
+    "Attempting to restart on \"${CYLC_TEST_HOST}\"" \
     'Could not restart suite will retry in 5s' \
     'Suite unable to automatically restart after 3 tries'
 
 # stop suite - suite should already by stopped but just to be safe
 cylc stop --max-polls=10 --interval=2 -kill "${SUITE_NAME}" 2>'/dev/null'
 purge_suite "${SUITE_NAME}"
-purge_suite_platform "${CYLC_TEST_PLATFORM_WSFS}" "${SUITE_NAME}"
+purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 
 exit

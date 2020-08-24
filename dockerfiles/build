@@ -1,0 +1,141 @@
+#!/usr/bin/env bash
+
+set -eux
+
+cd "$(dirname "$0")/../"
+
+YES=false
+SSHD="$HOME/.ssh"
+
+prompt () {
+    # the message to display
+    local MSG="$1"
+
+    if $YES; then
+        return 0
+    fi
+
+    local USR=''
+    while true; do
+        read -rp "$MSG [y/n]: " USR
+        case $USR in
+            [Yy])
+                return 0
+                break
+                ;;
+            [Nn])
+                return 1
+                break
+                ;;
+        esac
+    done
+}
+
+generate_keys () {
+    # the name of the key to generate
+    local KEY="$1"
+
+    if ! [[ -f "$SSHD/$KEY" ]]; then
+        if prompt "(Re)Generate ssh key: $KEY?"; then
+            ssh-keygen \
+                -t rsa \
+                -b 4096 \
+                -C 'docker@localhost' \
+                -f "$SSHD/$KEY" \
+                -P ''
+        else
+            exit 1
+        fi
+    fi
+}
+
+configure_ssh () {
+    local BASE='.docker-ssh-keys'
+    local KEY
+    mkdir "$BASE" -p
+
+    # ssh key pair for connecting to docker containers
+    KEY='cylc-docker'
+    generate_keys "$KEY" "$BASE"
+    cp "$SSHD/$KEY"* "$BASE"
+
+    # ssh keys for connecting to $(hostname) from docker containers
+    #KEY="docker-cylc-$(hostname -f)"
+    #generate_keys "$KEY" "$BASE"
+    #cp "$SSHD/$KEY"* "$BASE"
+}
+
+append_config () {
+    # the line to add to the config
+    local LINE="$1"
+    # the config to add the line to
+    local LOC="$2"
+    # whether the line should appear at the top or bottom (default bottom)
+    local POS=${3:-bottom}
+
+    # create the config if not already there
+    mkdir -p "$(dirname "$LOC")"
+    touch "$LOC"
+
+    # add the line to the config...
+    if ! grep -q "$LINE" "$LOC"; then
+        if prompt "Write \"$LINE\" to \"$LOC\"?"; then
+            if [[ "$POS" == top ]]; then
+                # ... at the top of the file
+                sed -i "1i$LINE" "$LOC"
+            elif [[ "$POS" == bottom ]]; then 
+                # ... at the bottom of the file
+                echo -e "\n$LINE" >> "$LOC"
+            else
+                # ... nowhere
+                echo "Invalid position :$PWD" >&2
+                exit 1
+            fi
+
+        else
+            exit 1
+        fi
+    fi
+}
+
+build () {
+    docker build . \
+        -f dockerfiles/cylc-dev/Dockerfile \
+        -t cylc-dev:latest
+    docker build . \
+        -f dockerfiles/remote-indep-poll/Dockerfile \
+        -t cylc-remote-indep-poll:latest
+}
+
+configure () {
+    HERE="$(realpath "$PWD")"
+
+    # generate required ssh keys
+    configure_ssh
+
+    # map exposed docker ports to hostnames
+    append_config \
+        "Include $HERE/dockerfiles/ssh_config" \
+        "$HOME/.ssh/config" \
+        top  # ssh config includes must be at the top
+
+    # make ssh hostnames to cylc platforms
+    append_config \
+        "%include '$HERE/dockerfiles/global.cylc'" \
+        "$HOME/.cylc/flow/$(cylc version)/global-tests.cylc"
+}
+
+cmds=()
+for arg in "$@"; do
+    case "$arg" in
+        -y|--yes)
+            YES=true
+            ;;
+        *)
+            cmds+=("$arg")
+    esac
+done
+
+for cmd in "${cmds[@]}"; do
+    "${cmd}"
+done

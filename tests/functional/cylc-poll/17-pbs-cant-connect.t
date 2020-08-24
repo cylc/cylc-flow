@@ -16,21 +16,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test poll PBS connection refused
-export CYLC_TEST_IS_GENERIC=false
-. "$(dirname "$0")/test_header"
-
 BATCH_SYS_NAME="${TEST_NAME_BASE##??-}"
-BATCH_SYS_NAME="${BATCH_SYS_NAME%-cant-connect}"
-RC_PREF="[test battery][batch systems][${BATCH_SYS_NAME}]"
-CYLC_TEST_BATCH_TASK_HOST=$( \
-    cylc get-global-config -i "${RC_PREF}host" 2>'/dev/null')
-CYLC_TEST_BATCH_SITE_DIRECTIVES=$( \
-    cylc get-global-config -i "${RC_PREF}[directives]" 2>'/dev/null')
-if [[ -z "${CYLC_TEST_BATCH_TASK_HOST}" || "${CYLC_TEST_BATCH_TASK_HOST}" == None ]]
-then
-    skip_all "\"[test battery][batch systems][${BATCH_SYS_NAME}]host\" not defined"
-fi
-export CYLC_TEST_BATCH_TASK_HOST CYLC_TEST_BATCH_SITE_DIRECTIVES
+export REQUIRE_PLATFORM="batch:$BATCH_SYS_NAME"
+. "$(dirname "$0")/test_header"
 
 set_test_number 4
 
@@ -43,10 +31,10 @@ create_test_global_config "" "
 
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-if [[ "${CYLC_TEST_BATCH_TASK_HOST}" != 'localhost' ]]; then
+if [[ "${CYLC_TEST_HOST}" != 'localhost' ]]; then
     # shellcheck disable=SC2029
-    ssh -n "${CYLC_TEST_BATCH_TASK_HOST}" "mkdir -p 'cylc-run/${SUITE_NAME}/'"
-    rsync -a 'lib' "${CYLC_TEST_BATCH_TASK_HOST}:cylc-run/${SUITE_NAME}/"
+    ssh -n "${CYLC_TEST_HOST}" "mkdir -p 'cylc-run/${SUITE_NAME}/'"
+    rsync -a 'lib' "${CYLC_TEST_HOST}:cylc-run/${SUITE_NAME}/"
 fi
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
@@ -66,8 +54,6 @@ contains_ok 'sed-log.out' <<'__LOG__'
 INFO - [t1.1] status=running: (polled)started
 __LOG__
 
-if [[ "${CYLC_TEST_BATCH_TASK_HOST}" != 'localhost' ]]; then
-    purge_suite_remote "${CYLC_TEST_BATCH_TASK_HOST}" "${SUITE_NAME}"
-fi
 purge_suite "${SUITE_NAME}"
+purge_remote_platform "${CYLC_TEST_PLATFORM}"
 exit

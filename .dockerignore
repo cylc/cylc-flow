@@ -1,0 +1,6 @@
+*
+!bin
+!cylc
+!setup*
+!README.md
+!.docker*

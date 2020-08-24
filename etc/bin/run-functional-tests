@@ -50,16 +50,22 @@ GitHub Actions to run tests, see .github/workflows for details.
 By default all tests are executed.  To run just a subset of them:
   * list individual tests or test directories to run on the command line
   * list individual tests or test directories to skip in \$CYLC_TEST_SKIP
-  * skip all generic tests with CYLC_TEST_RUN_GENERIC=false
-  * skip all platform-specific tests with CYLC_TEST_RUN_PLATFORM=false
   List specific tests relative to \$CYLC_REPO_DIR (i.e. starting with "test/").
 Some platform-specific tests are automatically skipped, depending on platform.
 
-Platform-specific tests must set "CYLC_TEST_IS_GENERIC=false" before sourcing
-the test_header.
 
 Options:
   -h, --help       Print this help message and exit.
+  -p, --platform   Specify one or more platforms to use for running the
+                   tests.
+
+                   Platforms should be configured in global-test.cylc.
+
+                   Tests will run on the first compatible platform.
+
+                   Defaults to:
+                       host: localhost
+                       batch-system: background
 
 Examples:
 
@@ -85,12 +91,18 @@ eof
 # parse args
 PROVE_ARGS=()
 TESTS=()
+PLATFORMS=''  # must use string as can't export arrays in bash
 PROVIDE_TESTBASE=true
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --help|-h)
             usage
             exit 0
+            ;;
+        -p|--platform)
+            PLATFORMS="$PLATFORMS $2"
+            shift
+            shift
             ;;
         --state*)
             STATES=${1/--state=/}
@@ -122,6 +134,8 @@ done
 cd "$(dirname "$0")/../.." || exit 1
 export CYLC_REPO_DIR="${PWD}"
 
+export PLATFORMS
+
 # default test base
 if [[ ${#TESTS[@]} -eq 0 ]]; then
     TESTS=('tests/functional')
@@ -148,9 +162,7 @@ export TMPDIR
 
 # test environment
 export CYLC_TEST_RUN_GENERIC=${CYLC_TEST_RUN_GENERIC:-true}
-export CYLC_TEST_RUN_PLATFORM=${CYLC_TEST_RUN_PLATFORM:-true}
 export CYLC_TEST_SKIP=${CYLC_TEST_SKIP:-}
-export CYLC_TEST_IS_GENERIC=true
 CYLC_TEST_TIME_INIT="$(date -u +'%Y%m%dT%H%M%SZ')"
 export CYLC_TEST_TIME_INIT
 

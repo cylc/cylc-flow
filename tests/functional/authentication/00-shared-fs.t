@@ -17,9 +17,8 @@
 #-------------------------------------------------------------------------------
 # Test sending commands to a suite on a host with shared file system with
 # current host.
-export CYLC_TEST_IS_GENERIC=false
+export REQUIRE_PLATFORM='loc:remote fs:shared'
 . "$(dirname "$0")/test_header"
-require_remote_platform_wsfs
 set_test_number 4
 
 # "install_suite" does not work here because it installs suites on the TMPDIR,
@@ -34,14 +33,14 @@ cylc register "${SUITE_NAME}" "${SUITE_RUN_DIR}" 2>'/dev/null'
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
 cylc run --debug --no-detach --reference-test \
-    --host="${CYLC_TEST_HOST_WSFS}" "${SUITE_NAME}" 1>'out' 2>&1 &
+    --host="${CYLC_TEST_HOST}" "${SUITE_NAME}" 1>'out' 2>&1 &
 SUITE_PID="$!"
 
 # Poll for job to fail
 SUITE_LOG="${SUITE_RUN_DIR}/log/suite/log"
 # Note: double poll existence of suite log on suite host and then localhost to
 # avoid any issues with unstable mounting of the shared file system.
-poll ssh -oBatchMode=yes -n "${CYLC_TEST_HOST_WSFS}" test -e "${SUITE_LOG}"
+poll ssh -oBatchMode=yes -n "${CYLC_TEST_HOST}" test -e "${SUITE_LOG}"
 poll_grep_suite_log -F '[t1.19700101T0000Z] -submitted => running'
 poll_grep_suite_log -F '[t1.19700101T0000Z] -running => failed'
 

@@ -16,17 +16,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test that polling a submit-failed task sets the task state correctly
+export REQUIRE_PLATFORM='batch:at comms:tcp'
 . "$(dirname "$0")/test_header"
-skip_darwin 'atrun hard to configure on Mac OS'
 set_test_number 2
 
 create_test_global_config "" "
 [platforms]
-[[crocodile]]
-  hosts = localhost
-  install target = localhost
-  batch system = at
-  batch submit command template = at noon tomorrow
+    [[$CYLC_TEST_PLATFORM]]
+        batch submit command template = at noon tomorrow
 "
 
 reftest

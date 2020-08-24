@@ -16,32 +16,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test "cylc cat-log" for viewing PBS runtime STDOUT/STDERR by a custom command
-export CYLC_TEST_IS_GENERIC=false
+export REQUIRE_PLATFORM='batch:pbs'
 . "$(dirname "$0")/test_header"
 
-RC_PREF='[test battery][batch systems][pbs]'
-CYLC_TEST_HOST="$( \
-    cylc get-global-config -i "${RC_PREF}host" 2>'/dev/null')"
-if [[ -z "${CYLC_TEST_HOST}" ]]; then
-    skip_all '"[test battery][batch systems][pbs]host": not defined'
-fi
-ERR_VIEWER="$(cylc get-global-config -i "${RC_PREF}err viewer" 2>'/dev/null')"
-OUT_VIEWER="$(cylc get-global-config -i "${RC_PREF}out viewer" 2>'/dev/null')"
+OUT_VIEWER="$(cylc get-global-config -i \
+    "[platforms][$CYLC_TEST_PLATFORM]out viewer")"
+ERR_VIEWER="$(cylc get-global-config -i \
+    "[platforms][$CYLC_TEST_PLATFORM]err viewer")"
 if [[ -z "${ERR_VIEWER}" || -z "${OUT_VIEWER}" ]]; then
-    skip_all '"[test battery][pbs]* viewer": not defined'
+    skip_all 'remote viewers not configured for this platform'
 fi
-CYLC_TEST_DIRECTIVES="$( \
-    cylc get-global-config -i "${RC_PREF}[directives]" 2>'/dev/null')"
-export CYLC_TEST_HOST CYLC_TEST_DIRECTIVES
 set_test_number 2
-
-create_test_global_config "" "
-[platforms]
-  [[pbs-test-platform]]
-    hosts = ${CYLC_TEST_HOST}
-    batch system = pbs
-    err viewer = ${ERR_VIEWER}
-    out viewer = ${OUT_VIEWER}"
 reftest
 purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 exit

@@ -1,8 +1,11 @@
 #!Jinja2
-{% set SITE_DIRECTIVES = environ['CYLC_TEST_BATCH_SITE_DIRECTIVES'] %}
+
+{% set HOST = environ['CYLC_TEST_HOST'] %}
+
 [scheduler]
    [[reference test]]
        expected task failures = rem2.1
+
 [scheduling]
     [[graph]]
         R1 = """rem1 => rem2
@@ -16,7 +19,8 @@
             job_type         = serial
             notification     = error
             wall_clock_limit = '120,60'
-            {{SITE_DIRECTIVES}}
+        [[[remote]]]
+            host = {{ HOST }}
     [[rem1]]
         inherit = LLSETTINGS
         script = "sleep 10; true"

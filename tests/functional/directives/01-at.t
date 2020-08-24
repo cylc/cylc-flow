@@ -16,8 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test at submission
+export REQUIRE_PLATFORM='batch:at comms:tcp'
 . "$(dirname "$0")/test_header"
-skip_darwin 'atrun hard to configure on Mac OS'
 set_test_number 2
 
 create_test_global_config "" "

@@ -1,6 +1,8 @@
 [platforms]
-    [[_remote]]
-        hosts = cylc-remote
+    [[_local_background_indep_tcp]]
+        hosts = localhost
+    [[_remote_background_indep_poll]]
+        hosts = _remote_background_indep_poll
         communication method = poll
         execution polling intervals = 5*PT1S, PT5S
         submission polling intervals = PT1S

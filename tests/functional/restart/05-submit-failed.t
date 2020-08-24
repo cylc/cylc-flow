@@ -16,21 +16,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test restarting a simple suite with a submit-failed task
+export REQUIRE_PLATFORM='batch:at'
 if [[ -z ${TEST_DIR:-} ]]; then
     . "$(dirname "$0")/test_header"
 fi
-skip_darwin 'atrun hard to configure on Mac OS'
 #-------------------------------------------------------------------------------
 set_test_number 7
 #-------------------------------------------------------------------------------
-create_test_global_config '
+create_test_global_config "
 [platforms]
-[[test platform]]
-hosts = localhost
-install target = localhost
-batch system = at
-batch submit command template = at oh-no
-'
+    [[$CYLC_TEST_PLATFORM]]
+        batch system = at
+        batch submit command template = at oh-no
+"
 #-------------------------------------------------------------------------------
 install_suite "${TEST_NAME_BASE}" 'submit-failed'
 cp "$TEST_SOURCE_DIR/lib/flow-runtime-restart.cylc" "$TEST_DIR/${SUITE_NAME}/"
@@ -57,10 +55,6 @@ contains_ok "${TEST_DIR}/db" <<'__DB_DUMP__'
 submit_failed_task|20130923T0000Z|1|1|submit-failed
 __DB_DUMP__
 #-------------------------------------------------------------------------------
-if [[ -n "${CYLC_TEST_BATCH_TASK_HOST:-}" && \
-    "${CYLC_TEST_BATCH_TASK_HOST:-}" != 'None' ]]
-then
-    purge_suite_remote "${CYLC_TEST_BATCH_TASK_HOST}" "${SUITE_NAME}"
-fi
 purge_suite "${SUITE_NAME}"
+purge_remote_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 exit

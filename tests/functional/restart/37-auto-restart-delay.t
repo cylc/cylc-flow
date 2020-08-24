@@ -15,10 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
+export REQUIRE_PLATFORM='loc:remote fs:shared'
 . "$(dirname "$0")/test_header"
-#-------------------------------------------------------------------------------
-require_remote_platform_wsfs
 set_test_number 6
+#-------------------------------------------------------------------------------
 time_gt () {
     python3 -c "
 import sys
@@ -66,7 +66,7 @@ poll_suite_running
 create_test_global_config '' "
 ${BASE_GLOBAL_CONFIG}
 [suite servers]
-    run hosts = ${CYLC_TEST_HOST_WSFS}
+    run hosts = ${CYLC_TEST_HOST}
     condemned hosts = $(hostname)
     auto restart delay = PT20S
 "
@@ -76,8 +76,8 @@ FILE=$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)
 log_scan "${TEST_NAME_BASE}-auto-restart" "${FILE}" 60 1 \
     'The Cylc suite host will soon become un-available' \
     'Suite will restart in' \
-    "Attempting to restart on \"${CYLC_TEST_HOST_WSFS}\"" \
-    "Suite now running on \"${CYLC_TEST_HOST_WSFS}\""
+    "Attempting to restart on \"${CYLC_TEST_HOST}\"" \
+    "Suite now running on \"${CYLC_TEST_HOST}\""
 
 # Extract scheduled restart time from the log.
 TIMES=$(grep --color=never 'Suite will restart in' "${FILE}" | \
@@ -109,6 +109,6 @@ fi
 cylc stop "${SUITE_NAME}" --now --now 2>/dev/null
 sleep 1
 purge_suite "${SUITE_NAME}"
-purge_suite_platform "${CYLC_TEST_PLATFORM_WSFS}" "${SUITE_NAME}"
+purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 
 exit

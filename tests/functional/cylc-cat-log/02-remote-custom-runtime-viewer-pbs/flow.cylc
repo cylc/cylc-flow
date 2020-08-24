@@ -1,26 +1,24 @@
 #!Jinja2
+
 [scheduling]
     [[graph]]
         R1 = a-task:echo => b-task
+
 [runtime]
     [[a-task]]
         script = """
-echo rubbish
-echo garbage >&2
-cylc message 'echo done'
-sleep 60
-"""
-        platform = pbs-test-platform
-        [[[directives]]]
-{% if "CYLC_TEST_DIRECTIVES" in environ and environ["CYLC_TEST_DIRECTIVES"] %}
-            {{environ["CYLC_TEST_DIRECTIVES"]}}
-{% endif %}
+            echo rubbish
+            echo garbage >&2
+            cylc message 'echo done'
+            sleep 60
+        """
+        platform = {{ environ['CYLC_TEST_PLATFORM'] }}
         [[[outputs]]]
             echo = "echo done"
 
     [[b-task]]
         script = """
-sleep 10  # wait for buffer to flush?
-cylc cat-log --debug -f o "${CYLC_SUITE_NAME}" 'a-task.1' | grep 'rubbish'
-cylc cat-log --debug -f e "${CYLC_SUITE_NAME}" 'a-task.1' | grep 'garbage'
-"""
+            sleep 10  # wait for buffer to flush?
+            cylc cat-log --debug -f o "${CYLC_SUITE_NAME}" 'a-task.1' | grep 'rubbish'
+            cylc cat-log --debug -f e "${CYLC_SUITE_NAME}" 'a-task.1' | grep 'garbage'
+        """

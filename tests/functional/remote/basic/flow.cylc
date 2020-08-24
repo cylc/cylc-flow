@@ -1,10 +1,5 @@
 #!Jinja2
 
-{% set HOST = environ['CYLC_TEST_HOST'] %}
-{% set OWNER = environ['CYLC_TEST_OWNER'] %}
-
-# whether or not ssh messaging is used back from the remote host is
-# determined by the [platforms] section in site/user config files.
 [scheduling]
     [[graph]]
         R1 = foo

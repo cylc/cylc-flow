@@ -1,22 +1,18 @@
 #!Jinja2
+
 [scheduling]
     [[graph]]
         R1 = a:start => b
+
 [runtime]
     [[a]]
         script = sleep 20
-{% if "CYLC_TEST_BATCH_TASK_HOST" in environ and environ["CYLC_TEST_BATCH_TASK_HOST"] %}
-        platform = loadleveler-test-platform
+        platform = {{ environ['CYLC_TEST_PLATFORM'] }}
         [[[directives]]]
             class=serial
             job_type=serial
             notification=never
             resources=ConsumableCpus(1) ConsumableMemory(64mb)
             wall_clock_limit=180,120
-{% if "CYLC_TEST_BATCH_SITE_DIRECTIVES" in environ and
-        environ["CYLC_TEST_BATCH_SITE_DIRECTIVES"] %}
-    {{environ["CYLC_TEST_BATCH_SITE_DIRECTIVES"]}}
-{% endif %}
-
     [[b]]
         script = cylc poll "$CYLC_SUITE_NAME" 'a'
