@@ -1,0 +1,1 @@
+docker build -f dockerfiles/cylc-deps/Dockerfile -t cylc-deps:latest .

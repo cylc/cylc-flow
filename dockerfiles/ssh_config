@@ -1,0 +1,5 @@
+Host cylc-remote
+    HostName localhost
+    Port 42222
+    User root
+    IdentityFile ~/.ssh/id_rsa.docker

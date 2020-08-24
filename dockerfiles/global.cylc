@@ -1,0 +1,6 @@
+[platforms]
+    [[_remote]]
+        hosts = cylc-remote
+        communication method = poll
+        execution polling intervals = 5*PT1S, PT5S
+        submission polling intervals = PT1S
