@@ -22,8 +22,9 @@ from cylc.cfgspec.suite import _upgrade_param_env_templates
 
 
 def test_upgrade_param_env_templates():
-    """Test that [runtime][X][parameter environment templates] contents is
-    prepended to [runtime][X][environment], in the correct order"""
+    """Test that the deprecated [runtime][X][parameter environment templates]
+    contents are prepended to [runtime][X][environment], in the correct
+    order"""
 
     def _cfg(dic):
         """Return OrderedDictWithDefaults config populated with values from

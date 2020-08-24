@@ -242,7 +242,7 @@ Specify the time interval on which a running cylc suite will check that its run
 directory exists and that its contact file contains the expected information.
 If not, the suite will shut itself down automatically.
 
-- *type*: ISO 8601 duration/interval representation (e.g. 
+- *type*: ISO 8601 duration/interval representation (e.g.
   ``PT5M``, 5 minutes (note: by contrast, ``P5M`` means 5
   months, so remember the ``T``!)).
 - *default*: PT10M
@@ -448,7 +448,7 @@ substituted with actual values:
 - \%(owner)s: suite owner name
 - \%(suite)s: suite name
 
-- *type*: 
+- *type*:
 - *default*: (none)
 - *example*:
   ``mail footer = see: http://localhost/%(owner)s/notes-on/%(suite)s/``
@@ -493,7 +493,7 @@ handler(s) will be called if the suite stays in a stalled state for some period
 of time. The timer is set initially at suite start up. It is possible to set a
 default for this at the site level (see :ref:`SiteCylcHooks`).
 
-- *type*: ISO 8601 duration/interval representation (e.g. 
+- *type*: ISO 8601 duration/interval representation (e.g.
   ``PT5S``, 5 seconds, ``PT1S``, 1 second) - minimum 0 seconds.
 - *default*: (none), unless set at the site level.
 
@@ -506,7 +506,7 @@ handler(s) will be called if there is no activity in the suite for some period
 of time. The timer is set initially at suite start up. It is possible to set a
 default for this at the site level (see :ref:`SiteCylcHooks`).
 
-- *type*: ISO 8601 duration/interval representation (e.g.  
+- *type*: ISO 8601 duration/interval representation (e.g.
   ``PT5S``, 5 seconds, ``PT1S``, 1 second) - minimum 0 seconds.
 - *default*: (none), unless set at the site level.
 
@@ -672,7 +672,7 @@ test run should be aborted if it has not finished, in live mode. Test runs
 cannot be done in live mode unless you define a value for this item, because
 it is not possible to arrive at a sensible default for all suites.
 
-- *type*: ISO 8601 duration/interval representation, e.g. 
+- *type*: ISO 8601 duration/interval representation, e.g.
   ``PT5M`` is 5 minutes (note: by contrast ``P5M`` means 5
   months, so remember the ``T``!).
 - *default*: PT1M (1 minute)
@@ -686,7 +686,7 @@ if it has not finished, in simulation mode. Test runs cannot be done in
 simulation mode unless you define a value for this item, because it is
 not possible to arrive at a sensible default for all suites.
 
-- *type*: ISO 8601 duration/interval representation (e.g. 
+- *type*: ISO 8601 duration/interval representation (e.g.
   ``PT5M``, 5 minutes (note: by contrast, ``P5M`` means 5
   months, so remember the ``T``!)).
 - *default*: PT1M (1 minute)
@@ -700,7 +700,7 @@ test run should be aborted if it has not finished, in dummy mode.  Test runs
 cannot be done in dummy mode unless you define a value for this item, because
 it is not possible to arrive at a sensible default for all suites.
 
-- *type*: ISO 8601 duration/interval representation (e.g. 
+- *type*: ISO 8601 duration/interval representation (e.g.
   ``PT5M``, 5 minutes (note: by contrast, ``P5M`` means 5
   months, so remember the ``T``!)).
 - *default*: PT1M (1 minute)
@@ -775,7 +775,7 @@ In date-time cycling, if you do not provide time zone information for this,
 it will be assumed to be local time, or in UTC if :ref:`UTC-mode` is set, or in
 the time zone determined by :ref:`cycle-point-time-zone` if that is set.
 
-- *type*: ISO 8601 date-time point representation (e.g. 
+- *type*: ISO 8601 date-time point representation (e.g.
   ``CCYYMMDDThhmm``, 19951231T0630) or "now".
 - *default*: (none)
 
@@ -884,7 +884,7 @@ In date-time cycling, if you do not provide time zone information for this,
 it will be assumed to be local time, or in UTC if :ref:`UTC-mode` is set, or in
 the :ref:`cycle-point-time-zone` if that is set.
 
-- *type*: ISO 8601 date-time point representation (e.g. 
+- *type*: ISO 8601 date-time point representation (e.g.
   ``CCYYMMDDThhmm``, 19951231T1230) or ISO 8601 date-time offset
   (e.g.  +P1D+PT6H)
 - *default*: (none)
@@ -2024,6 +2024,15 @@ earlier in the task job script, and variable assignment expressions can
 use cylc utility commands because access to cylc is also configured
 earlier in the script.  See also :ref:`TaskExecutionEnvironment`.
 
+You can also specify task execution parameter environment templates here (only
+relevant for *parameterized tasks* - see :ref:`Parameterized Tasks Label`.
+
+.. note::
+
+   Prior to Cylc 7.8.7 (or prior to 7.9.2 if using the 7.9.x releases),
+   parameter environment templates were in a separate section. However, this
+   was changed to allow users to control the order of definition of the
+   variables.
 
 .. _AppendixTaskExecutionEnvironment:
 
@@ -2033,9 +2042,10 @@ earlier in the script.  See also :ref:`TaskExecutionEnvironment`.
 Replace ``__VARIABLE__`` with any number of environment variable
 assignment expressions. Order of definition is preserved so values can
 refer to previously defined variables. Values are passed through to the task
-job script without evaluation or manipulation by cylc, so any variable assignment
-expression that is legal in the job submission shell can be used.
-White space around the ``=`` is allowed (as far as cylc's suite.rc
+job script without evaluation or manipulation by cylc (with the exception of
+valid Python string templates that match parameterized tasks - see below), so
+any variable assignment expression that is legal in the job submission shell
+can be used. White space around the ``=`` is allowed (as far as cylc's suite.rc
 parser is concerned these are just normal configuration items).
 
 - *type*: string
@@ -2052,6 +2062,20 @@ parser is concerned these are just normal configuration items).
   - ``PREV_CYCLE = \`cylc cycle-point --offset=-PT6H```
   - ``ZAZ = "${FOO#bar}" # <-- QUOTED to escape the suite.rc comment character``
 
+To use parameter environment templates, replace ``__VARIABLE__`` with pairs of
+environment variable name and Python string template for parameter
+substitution. This is only relevant for *parameterized tasks* - see
+:ref:`Parameterized Tasks Label`.
+
+If specified, the job script will export the named variables specified
+here (in addition to the standard ``CYLC_TASK_PARAM_<key>``
+variables), with the template strings substituted with the parameter values.
+
+- *examples*, for the bash shell:
+
+  - ``MYNUM = %(i)d``
+  - ``MYITEM = %(item)s``
+  - ``MYFILE = /path/to/%(i)03d/%(item)s``
 
 .. _EnvironmentFilter:
 
@@ -2095,35 +2119,6 @@ omission from an ``include`` list.
 
 - *type*: Comma-separated list of strings (variable names).
 - *default*: (none)
-
-
-[runtime] ``->`` [[\_\_NAME\_\_]] ``->`` [[[parameter environment templates]]]
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-The user defined task execution parameter environment templates. This is only
-relevant for *parameterized tasks* - see :ref:`Parameterized Tasks Label`.
-
-
-[runtime] ``->`` [[\_\_NAME\_\_]] ``->`` [[[parameter environment templates]]] ``->`` \_\_VARIABLE\_\_
-''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-
-Replace ``__VARIABLE__`` with pairs of environment variable
-name and Python string template for parameter substitution. This is only
-relevant for *parameterized tasks* - see :ref:`Parameterized Tasks Label`.
-
-If specified, in addition to the standard ``CYLC_TASK_PARAM_<key>``
-variables, the job script will also export the named variables specified
-here, with the template strings substituted with the parameter values.
-
-- *type*: string
-- *default*: (none)
-- *legal values*: name=string template pairs
-- *examples*, for the bash shell:
-
-  - ``MYNUM=%(i)d``
-  - ``MYITEM=%(item)s``
-  - ``MYFILE=/path/to/%(i)03d/%(item)s``
-
 
 [runtime] ``->`` [[\_\_NAME\_\_]] ``->`` [[[directives]]]
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""
