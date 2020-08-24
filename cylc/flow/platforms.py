@@ -70,10 +70,9 @@ def get_platform(task_conf=None):
                 )
             if fail_items:
                 raise PlatformLookupError(
-                    "A mixture of Cylc 7 (host) and Cylc 8 (platform)"
-                    " logic should not be used. In this case the "
-                    "following are not compatible\n" +
-                    fail_items
+                    f"A mixture of Cylc 7 (host) and Cylc 8 (platform) "
+                    f"logic should not be used. In this case the "
+                    f"following are not compatible:\n{fail_items}"
                 )
 
         # If platform name exists and doesn't clash with Cylc7 Config
