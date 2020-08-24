@@ -97,8 +97,6 @@ class SuiteRuntimeServer(ZMQSocketBase):
     Common Arguments:
         Arguments which are shared between multiple commands.
 
-        .. _task identifier:
-
         task identifier (str):
             A task identifier in the format ``task.cycle-point``
             e.g. ``foo.1`` or ``bar.20000101T0000Z``.
@@ -436,7 +434,7 @@ class SuiteRuntimeServer(ZMQSocketBase):
         """Retrieve all broadcast variables that target a given task ID.
 
         Args:
-            task_id (str, optional): A `task identifier`_
+            task_id (str, optional): A task identifier.
 
         Returns:
             dict: all broadcast variables that target the given task ID.
@@ -493,10 +491,10 @@ class SuiteRuntimeServer(ZMQSocketBase):
             list: [left, right, None, is_suicide, condition]
 
             left (str):
-                `Task identifier <task identifier>` for the dependency of
+                Task identifier for the dependency of
                 an edge.
             right (str):
-                `Task identifier <task identifier>` for the dependant task
+                Task identifier for the dependant task
                 of an edge.
             is_suicide (bool):
                 True if edge represents a suicide trigger.
@@ -536,7 +534,7 @@ class SuiteRuntimeServer(ZMQSocketBase):
             global_summary (dict):
                 Contains suite status items e.g. ``last_updated``.
             task_summary (dict):
-                A dictionary of `task identifiers <task identifier>`_
+                A dictionary of task identifiers
                 in the format ``{task_id: {...}, ...}``.
             family_summary (dict):
                 Contains task family information in the format
@@ -565,7 +563,7 @@ class SuiteRuntimeServer(ZMQSocketBase):
         """Return task job file path.
 
         Args:
-            task_id: A `task identifier`_
+            task_id: A task identifier.
 
         Returns:
             str: The jobfile path.
@@ -585,7 +583,7 @@ class SuiteRuntimeServer(ZMQSocketBase):
                 the results or not.
 
         Returns:
-            list: Dictionary of `task identifiers <task identifier>`_
+            list: Dictionary of task identifiers
             in the format ``{task_id: { ... }, ...}``.
 
         """
@@ -813,7 +811,7 @@ class SuiteRuntimeServer(ZMQSocketBase):
 
         Args:
             task_id:
-                A `task identifier`_
+                A task identifier.
             exists_only (bool, optional):
                 If True only test that the task exists, if False check both
                 that the task exists and that it is running.
@@ -1064,7 +1062,7 @@ class SuiteRuntimeServer(ZMQSocketBase):
         """Set suite to stop after an instance of a task.
 
         Args:
-            task_id (str): A `task identifier`_
+            task_id (str): A task identifier.
 
         Returns:
             tuple: (outcome, message)
