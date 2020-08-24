@@ -29,7 +29,7 @@ run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 
 # The suite tests that two tasks suicide immediately on message triggers.
 TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_ok "${TEST_NAME}" cylc run --no-detach "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME}" cylc run --no-detach --abort-if-any-task-fails "${SUITE_NAME}"
 
 # Check that final task pool indicates bar and baz ran
 # TODO: some final null task pool tests would be better on task_states table!

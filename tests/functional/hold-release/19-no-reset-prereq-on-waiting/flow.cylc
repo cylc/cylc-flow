@@ -3,7 +3,6 @@
 [cylc]
     [[events]]
         abort on stalled = True
-        abort if any task fails = True
         abort on timeout = True
         timeout = PT1M
 [scheduling]

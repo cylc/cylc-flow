@@ -2,7 +2,6 @@
     UTC mode=True
     cycle point format = %Y
     [[events]]
-        abort if any task fails = True
         abort on inactivity = True
         inactivity = P2M
 [scheduling]

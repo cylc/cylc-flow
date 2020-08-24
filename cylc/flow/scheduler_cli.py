@@ -235,7 +235,7 @@ def get_option_parser(is_restart, add_std_opts=False):
     )
 
     parser.add_option(
-        "--abort-if-any-task-fails", "--fragile",
+        "--abort-if-any-task-fails",
         help="If set workflow will abort with status 1 if any task fails.",
         action="store_true", default=False, dest="abort_if_any_task_fails"
     )

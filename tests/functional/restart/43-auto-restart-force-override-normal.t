@@ -37,7 +37,6 @@ BASE_GLOBAL_CONFIG='
 TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME_BASE}" <<< '
 [cylc]
     [[events]]
-        abort if any task fails = True
 [scheduling]
     initial cycle point = 2000
     [[graph]]
@@ -53,7 +52,7 @@ ${BASE_GLOBAL_CONFIG}
 set_test_number 7
 #-------------------------------------------------------------------------------
 # run suite
-cylc run "${SUITE_NAME}"
+cylc run "${SUITE_NAME}" --abort-if-any-task-fails
 poll_suite_running
 sleep 1
 FILE=$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)

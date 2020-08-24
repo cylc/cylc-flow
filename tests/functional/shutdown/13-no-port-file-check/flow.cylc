@@ -6,7 +6,6 @@
             interval = PT10S
 {% endif %}{# not GLOBALCFG is not defined #}
     [[events]]
-        abort if any task fails = True
         abort on stalled = False
         abort on timeout = True
         timeout = PT1M

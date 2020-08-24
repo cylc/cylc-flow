@@ -4,7 +4,6 @@
 # And see github #1415 - it did cause the suite server program to abort.
 [cylc]
     [[events]]
-        abort if any task fails = True
         abort on timeout = True
         timeout=PT1M
 [scheduling]

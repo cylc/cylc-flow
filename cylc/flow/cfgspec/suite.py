@@ -189,9 +189,6 @@ with Conf(
             tasks manually near the end of a suite run, during suite
             development and debugging.
         ''')
-        Conf('abort if any task fails', VDR.V_BOOLEAN, desc='''
-            TODO: Remove this at Cylc9
-        ''')
 
         with Conf('main loop'):
             with Conf('<plugin name>'):
@@ -1307,6 +1304,7 @@ def upg(cfg, descr):
         ['cylc', 'health check interval'])
     u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'shell'])
     u.obsolete('8.0.0', ['cylc', 'abort if any task fails'])
+    u.obsolete('8.0.0', ['cylc', 'events', 'abort if any task fails'])
     # TODO uncomment these deprecations when ready - see todo in
     # [runtime][__MANY__] section.
     # for job_setting in [
