@@ -1545,7 +1545,15 @@ class Scheduler:
 
     def suite_auto_restart(self, max_retries=3):
         """Attempt to restart the suite assuming it has already stopped."""
-        cmd = ['cylc', 'restart', quote(self.suite)]
+        if self.options.abort_if_any_task_fails:
+            cmd = [
+                'cylc',
+                'restart',
+                '--abort-if-any-task-fails',
+                quote(self.suite)
+            ]
+        else:
+            cmd = ['cylc', 'restart', quote(self.suite)]
 
         for attempt_no in range(max_retries):
             new_host = select_suite_host(cached=False)[0]
