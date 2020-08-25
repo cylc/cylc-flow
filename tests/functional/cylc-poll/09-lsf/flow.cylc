@@ -9,8 +9,7 @@
         [[[remote]]]
             host={{environ["CYLC_TEST_BATCH_TASK_HOST"]}}
 {% endif %}
-        [[[job]]]
-            batch system = lsf
+        platform = lsf-platform
         [[[directives]]]
 {% if "CYLC_TEST_BATCH_SITE_DIRECTIVES" in environ and
         environ["CYLC_TEST_BATCH_SITE_DIRECTIVES"] %}
