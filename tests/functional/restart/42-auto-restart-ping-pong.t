@@ -36,8 +36,6 @@ BASE_GLOBAL_CONFIG='
 '
 
 TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME_BASE}" <<< '
-[cylc]
-    [[events]]
 [scheduling]
     initial cycle point = 2000
     final cycle point = 9999  # test cylc/cylc-flow/issues/2799
@@ -81,7 +79,7 @@ set_test_number "${NO_TESTS}"
 
 # run the suite
 stuck_in_the_middle
-cylc run "${SUITE_NAME}" --host="${JOKERS}"
+cylc run "${SUITE_NAME}" --host="${JOKERS}" --abort-if-any-task-fails
 poll_suite_running
 sleep 1
 

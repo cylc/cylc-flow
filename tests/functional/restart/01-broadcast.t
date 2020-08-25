@@ -31,10 +31,10 @@ run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 cmp_ok "${TEST_NAME}.stderr" <'/dev/null'
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_ok "${TEST_NAME}" cylc run --no-detach "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME}" cylc run --no-detach --abort-if-any-task-fails "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-restart-run"
-suite_run_ok "${TEST_NAME}" cylc restart --no-detach "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME}" cylc restart --no-detach --abort-if-any-task-fails "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 grep_ok "send_a_broadcast_task|20130923T0000Z|1|1|succeeded" \
     "${TEST_DIR}/pre-restart-db"
