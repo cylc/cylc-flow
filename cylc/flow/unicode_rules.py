@@ -17,6 +17,7 @@
 """Module for unicode restrictions"""
 
 import re
+from cylc.flow import LOG_LEVELS
 
 
 ENGLISH_REGEX_MAP = {
@@ -151,3 +152,18 @@ class XtriggerNameValidator(UnicodeRuleChecker):
     RULES = [
         allowed_characters(r'a-zA-Z0-9', '_')
     ]
+
+
+class MessageTriggerValidator:
+    """Provides a method for validating custom output message trigger
+    contents"""
+
+    @classmethod
+    def validate(cls, string):
+        message = (
+            'a task message cannot contain a colon unless it starts with a '
+            'logging severity level, e.g. "INFO:"')
+        first_part = string.split(':')[0]
+        if first_part == string or first_part in LOG_LEVELS.keys():
+            return (True, None)
+        return (False, message)
