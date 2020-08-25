@@ -35,7 +35,6 @@ from ansimarkup import parse as cparse
 from cylc.flow.wallclock import (get_current_time_string,
                                  get_time_string_from_unix_time)
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
-from cylc.flow.pathutil import get_suite_run_log_name
 
 
 class CylcLogFormatter(logging.Formatter):
@@ -104,7 +103,6 @@ class CylcLogFormatter(logging.Formatter):
         """
         return get_time_string_from_unix_time(record.created)
 
-
 class TimestampRotatingFileHandler(logging.FileHandler):
     """Rotating suite logs using creation time stamps for names.
 
@@ -118,8 +116,8 @@ class TimestampRotatingFileHandler(logging.FileHandler):
     GLBL_KEY = 'suite logging'
     MIN_BYTES = 1024
 
-    def __init__(self, suite, no_detach=False, timestamp=True):
-        logging.FileHandler.__init__(self, get_suite_run_log_name(suite))
+    def __init__(self, log_file_path, no_detach=False, timestamp=True):
+        logging.FileHandler.__init__(self, log_file_path)
         self.no_detach = no_detach
         self.stamp = None
         self.formatter = CylcLogFormatter(timestamp=timestamp)
@@ -193,6 +191,13 @@ class TimestampRotatingFileHandler(logging.FileHandler):
                     header_record.__dict__[self.FILE_NUM],)
             logging.FileHandler.emit(self, header_record)
 
+# Unique type to separate behaviour and identify it easily when passing
+# filename to rsync command line
+class RsyncLogFileHandler(TimestampRotatingFileHandler):
+    def __init__(self, log_file_path, no_detach=False, timestamp=True ):
+        TimestampRotatingFileHandler.__init__(self, log_file_path, no_detach=True)
+        block_all_filter = logging.Filter("spammyeggs")
+        self.addFilter(block_all_filter)    
 
 class ReferenceLogFileHandler(logging.FileHandler):
     """A handler class which writes filtered reference logging records

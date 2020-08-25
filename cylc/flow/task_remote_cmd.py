@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Implement "cylc remote-init" and "cylc remote-tidy"."""
 
+
 import os
 import zmq
 import tarfile
@@ -34,6 +35,7 @@ from cylc.flow.resources import extract_resources
 FILE_BASE_UUID = 'uuid'
 REMOTE_INIT_DONE = 'REMOTE INIT DONE'
 REMOTE_INIT_NOT_REQUIRED = 'REMOTE INIT NOT REQUIRED'
+REMOTE_INIT_FAILED = 'REMOTE INIT FAILED'
 
 
 def remove_keys_on_platform(srvd, full_clean=False):
@@ -57,7 +59,7 @@ def remove_keys_on_platform(srvd, full_clean=False):
             os.remove(k.full_key_path)
 
 
-def create_platform_keys(srvd):
+def create_platform_keys(srvd, install_target):
     """Create or renew authentication keys for suite 'reg' in the .service
      directory.
      Generate a pair of ZMQ authentication keys"""
@@ -67,32 +69,34 @@ def create_platform_keys(srvd):
 
     old_umask = os.umask(0o177)  # u=rw only set as default for file creation
     _client_public_full_key_path, _client_private_full_key_path = (
-        zmq.auth.create_certificates(srvd, KeyOwner.CLIENT.value))
+        zmq.auth.create_certificates(
+            srvd, KeyOwner.CLIENT.value, metadata={'target': install_target}))
     # Return file permissions to default settings.
     os.umask(old_umask)
 
 
-def remote_init(uuid_str, rund, indirect_comm=None):
+def remote_init(install_target, rund, indirect_comm=None):
     """cylc remote-init
 
     Arguments:
-        uuid_str (str): suite host UUID
+        install_target (str): target to be initialised
         rund (str): suite run directory
-        *indirect_comm (str): use indirect communication via e.g. 'ssh'
+     construct_platform_ssh_cmd   *indirect_comm (str): use indirect communication via e.g. 'ssh'
     """
     rund = os.path.expandvars(rund)
     srvd = os.path.join(rund, SuiteFiles.Service.DIRNAME)
-    try:
-        orig_uuid_str = open(os.path.join(srvd, FILE_BASE_UUID)).read()
-    except IOError:
-        pass
-    else:
-        if orig_uuid_str == uuid_str:
-            print(REMOTE_INIT_NOT_REQUIRED)
-            return
     os.makedirs(srvd, exist_ok=True)
-    remove_keys_on_platform(srvd)
-    create_platform_keys(srvd)
+    client_key_path = os.path.join(srvd, "client.key_secret")
+    if os.path.exists(client_key_path):
+        with open(client_key_path, 'r') as key:
+            res = REMOTE_INIT_FAILED # client key for a different install target exists
+            for line in key:
+                if f"{install_target}" in line:
+                    res = REMOTE_INIT_NOT_REQUIRED # target has been initialised
+                    break                    
+        print(res) 
+        return
+    create_platform_keys(srvd, install_target)
     oldcwd = os.getcwd()
     os.chdir(rund)
     # Extract job.sh from library, for use in job scripts.
@@ -133,7 +137,7 @@ def remote_tidy(rund):
     else:
         if cylc.flow.flags.debug:
             print('Deleted: %s' % fname)
-    remove_keys_on_platform(srvd, full_clean=True)
+    # remove_keys_on_platform(srvd, full_clean=True)
     try:
         os.rmdir(srvd)  # remove directory if empty
     except OSError:

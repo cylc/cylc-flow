@@ -25,17 +25,19 @@ from cylc.flow import LOG, __version__ as CYLC_VERSION
 from cylc.flow.exceptions import SuiteServiceFileError
 from cylc.flow.host_select import select_suite_host
 from cylc.flow.hostuserutil import is_remote_host
-from cylc.flow.loggingutil import TimestampRotatingFileHandler
+from cylc.flow.loggingutil import TimestampRotatingFileHandler, RsyncLogFileHandler
 from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
     Options
 )
-from cylc.flow.pathutil import get_suite_run_dir
+from cylc.flow.pathutil import (
+    get_suite_run_dir,
+    get_suite_run_log_name,
+    get_suite_rsync_log_name)
 from cylc.flow.remote import remote_cylc_cmd
 from cylc.flow.scheduler import Scheduler, SchedulerError
 from cylc.flow import suite_files
 from cylc.flow.terminal import cli_function
-
 
 RUN_DOC = r"""cylc [control] run|start [OPTIONS] [ARGS]
 
@@ -283,7 +285,11 @@ def _open_logs(reg, no_detach):
         while LOG.handlers:
             LOG.handlers[0].close()
             LOG.removeHandler(LOG.handlers[0])
-    LOG.addHandler(TimestampRotatingFileHandler(reg, no_detach))
+    LOG.addHandler(TimestampRotatingFileHandler(get_suite_run_log_name(reg), no_detach ))
+
+    rsync_log_handler = get_suite_rsync_log_name(reg)
+    handler = RsyncLogFileHandler(rsync_log_handler, no_detach)
+    LOG.addHandler(handler)
 
 
 def _close_logs():

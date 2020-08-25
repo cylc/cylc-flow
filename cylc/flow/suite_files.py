@@ -603,7 +603,10 @@ def create_server_keys(keys, suite_srv_dir):
     os.makedirs(keys["client_public_key"].key_path, exist_ok=True)
     old_umask = os.umask(0o177)  # u=rw only set as default for file creation
     _server_public_full_key_path, _server_private_full_key_path = (
-        zmq.auth.create_certificates(suite_srv_dir, KeyOwner.SERVER.value))
+        zmq.auth.create_certificates(
+            suite_srv_dir, 
+            KeyOwner.SERVER.value, 
+            metadata={'target': 'localhost'}))
 
     # cylc scan requires host to behave as a client, so copy public server
     # key into client public key folder

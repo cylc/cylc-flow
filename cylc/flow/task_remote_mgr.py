@@ -22,6 +22,7 @@ This module provides logic to:
 - Implement basic host select functionality.
 """
 
+from os import sched_rr_get_interval
 from cylc.flow.cfgspec.globalcfg import Platform
 import os
 from shlex import quote
@@ -54,7 +55,7 @@ from cylc.flow.task_remote_cmd import (
 from cylc.flow.platforms import get_platform, get_host_from_platform
 from cylc.flow.remote import construct_platform_ssh_cmd
 from cylc.flow.wallclock import get_current_time_string
-
+from cylc.flow.loggingutil import RsyncLogFileHandler
 
 REMOTE_INIT_FAILED = 'REMOTE INIT FAILED'
 
@@ -151,9 +152,6 @@ class TaskRemoteMgr:
                     client_pub_key_dir):
         """Initialise a remote [owner@]host if necessary.
 
-        Create UUID file on a platform ".service/uuid" for remotes to identify
-        shared file system with suite host.
-
         Call "cylc remote-init" to install suite items to remote:
             ".service/contact": For TCP task communication
             "python/": if source exists
@@ -179,6 +177,14 @@ class TaskRemoteMgr:
                 If waiting for remote init command to complete
 
         """
+        src_path = get_suite_run_dir(self.suite)
+        dst_path = get_remote_suite_run_dir(platform, self.suite)
+        Popen(construct_rsync_over_ssh_cmd(
+            src_path,
+            dst_path,
+            platform,
+            first=True))
+        self.install_target = platform['install target']
 
         # If task is running locally we can skip the rest of this function
         if self.single_task_mode or not is_remote_platform(platform):
@@ -210,25 +216,17 @@ class TaskRemoteMgr:
             tarhandle.add(path, arcname=arcname)
         tarhandle.close()
         tmphandle.seek(0)
-        # UUID file - for remote to identify shared file system with suite host
-        uuid_fname = os.path.join(
-            get_suite_srv_dir(self.suite),
-            FILE_BASE_UUID
-        )
-        if not os.path.exists(uuid_fname):
-            open(uuid_fname, 'wb').write(str(self.uuid_str).encode())
-
         # Build the remote-init command to be run over ssh
         cmd = ['remote-init']
         if cylc.flow.flags.debug:
             cmd.append('--debug')
         if comm_meth in ['ssh']:
             cmd.append('--indirect-comm=%s' % comm_meth)
-        cmd.append(str(self.uuid_str))
+        cmd.append(str(self.install_target))
         cmd.append(get_remote_suite_run_dir(platform, self.suite))
         # Create the ssh command
         cmd = construct_platform_ssh_cmd(cmd, platform)
-
+       
         self.proc_pool.put_command(
             SubProcContext(
                 'remote-init',
@@ -250,14 +248,6 @@ class TaskRemoteMgr:
 
         Also remove UUID file on suite host ".service/uuid".
         """
-        # Remove UUID file
-        uuid_fname = os.path.join(
-            get_suite_srv_dir(self.suite), FILE_BASE_UUID
-        )
-        try:
-            os.unlink(uuid_fname)
-        except OSError:
-            pass
         # Issue all SSH commands in parallel
         procs = {}
         for platform, init_with_contact in self.remote_init_map.items():
@@ -329,21 +319,20 @@ class TaskRemoteMgr:
         if REMOTE_INIT_DONE in proc_ctx.out:
             src_path = get_suite_run_dir(self.suite)
             dst_path = get_remote_suite_run_dir(platform, self.suite)
-            time_str = get_current_time_string(
-                override_use_utc=True, use_basic_format=True,
-                display_sub_seconds=False
-            )
-            logfile = get_suite_run_log_dir(
-                self.suite,
-                f"log-file-install-{self.install_target}-{time_str}")
-            with open(logfile, "wb") as handle:
-                handle.write(b"File installation information: ")
+
+            log_file = ""
+            for handler in LOG.handlers:
+                if(isinstance(handler, RsyncLogFileHandler)):
+                    log_file = handler.baseFilename
+                    break
+
+              
             try:
                 Popen(construct_rsync_over_ssh_cmd(
                     src_path,
                     dst_path,
                     platform,
-                    logfile,
+                    log_file,
                     self.rsync_includes))
             except Exception as ex:
                 LOG.error(f"Problem during rsync: {ex}")
