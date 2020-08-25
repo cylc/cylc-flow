@@ -35,9 +35,9 @@ set_test_number 2
 
 create_test_global_config "" "
 [platforms]
-    [[lsf-platform]]
+    [[slurm-test-platform]]
         hosts = $CYLC_TEST_BATCH_TASK_HOST
-        batch system = lsf
+        batch system = slurm
 "
 
 reftest

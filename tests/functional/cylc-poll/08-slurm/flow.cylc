@@ -5,12 +5,7 @@
 [runtime]
     [[a]]
         script = sleep 20
-{% if "CYLC_TEST_BATCH_TASK_HOST" in environ and environ["CYLC_TEST_BATCH_TASK_HOST"] %}
-        [[[remote]]]
-            host={{environ["CYLC_TEST_BATCH_TASK_HOST"]}}
-{% endif %}
-        [[[job]]]
-            batch system = slurm
+        platform = slurm-test-platform
         [[[directives]]]
 {% if "CYLC_TEST_BATCH_SITE_DIRECTIVES" in environ and
         environ["CYLC_TEST_BATCH_SITE_DIRECTIVES"] %}

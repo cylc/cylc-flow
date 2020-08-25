@@ -32,6 +32,14 @@ then
 fi
 export CYLC_TEST_BATCH_TASK_HOST CYLC_TEST_BATCH_SITE_DIRECTIVES
 set_test_number 2
+
+create_test_global_config "" "
+[platforms]
+  [[slurm-test-platform]]
+    hosts = "${CYLC_TEST_BATCH_TASK_HOST}"
+    batch system = slurm
+"
+
 reftest
 if [[ $CYLC_TEST_BATCH_TASK_HOST != 'localhost' ]]; then
     purge_suite_remote "${CYLC_TEST_BATCH_TASK_HOST}" "${SUITE_NAME}"
