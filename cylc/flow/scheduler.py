@@ -1963,16 +1963,16 @@ class Scheduler:
 
     def filter_initial_task_list(self, inlist):
         """Return list of initial tasks after applying a filter."""
-        included_by_rc = self.config.cfg[
+        included_by_config = self.config.cfg[
             'scheduling']['special tasks']['include at start-up']
-        excluded_by_rc = self.config.cfg[
+        excluded_by_config = self.config.cfg[
             'scheduling']['special tasks']['exclude at start-up']
         outlist = []
         for name in inlist:
-            if name in excluded_by_rc:
+            if name in excluded_by_config:
                 continue
-            if len(included_by_rc) > 0:
-                if name not in included_by_rc:
+            if len(included_by_config) > 0:
+                if name not in included_by_config:
                     continue
             outlist.append(name)
         return outlist
