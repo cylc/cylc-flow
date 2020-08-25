@@ -1,6 +1,5 @@
 [cylc]
     [[events]]
-        abort if any task fails = True
 
 [scheduling]
     [[graph]]

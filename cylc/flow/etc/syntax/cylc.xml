@@ -122,7 +122,6 @@
         <RegExpr attribute='Keyword' String=' abort if stalled handler fails '/>
         <RegExpr attribute='Keyword' String=' abort if shutdown handler fails '/>
         <RegExpr attribute='Keyword' String=' abort if inactivity handler fails '/>
-        <RegExpr attribute='Keyword' String=' abort if any task fails '/>
         <RegExpr attribute='Keyword' String=' UTC mode '/>
         <RegExpr attribute='Keyword' String=' URL '/>
         <!-- Non-keyword syntax -->

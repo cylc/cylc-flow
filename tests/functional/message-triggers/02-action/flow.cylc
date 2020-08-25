@@ -1,6 +1,5 @@
 [cylc]
     [[events]]
-        abort if any task fails = True
         abort on inactivity = True
         inactivity = PT30S
 [scheduling]

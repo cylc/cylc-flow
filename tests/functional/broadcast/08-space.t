@@ -18,5 +18,6 @@
 # Test broadcast -s '[foo]  bar=baz' syntax. cylc/cylc-flow#1680
 . "$(dirname "$0")/test_header"
 set_test_number 2
+export ABORT_ON_TASK_FAIL=true
 reftest
 exit

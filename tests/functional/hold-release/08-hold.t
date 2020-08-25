@@ -25,7 +25,6 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
     [[events]]
         timeout = PT1M
         abort on timeout = True
-        abort if any task fails = True
 [scheduling]
     [[graph]]
         R1 = "spawner & holdrelease => STUFF & TOAST & CATS & DOGS & stop"
@@ -70,7 +69,8 @@ __FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-val" cylc validate "${SUITE_NAME}"
 
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run --debug --no-detach "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}-run" \
+    cylc run --debug --no-detach --abort-if-any-task-fails "${SUITE_NAME}"
 
 # Should shut down with all the held tasks in the held state, and dog.2
 # finished and gone from the task pool.

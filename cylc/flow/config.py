@@ -2305,7 +2305,7 @@ class SuiteConfig:
         """
         if self.options.reftest:
             return self.cfg['cylc']['reference test']['expected task failures']
-        elif self.cfg['cylc']['events']['abort if any task fails']:
+        elif self.options.abort_if_any_task_fails:
             return []
         else:
             return None

@@ -257,7 +257,6 @@ with Conf(
             Conf('abort if timeout handler fails', VDR.V_BOOLEAN)
             Conf('abort if inactivity handler fails', VDR.V_BOOLEAN)
             Conf('abort if stalled handler fails', VDR.V_BOOLEAN)
-            Conf('abort if any task fails', VDR.V_BOOLEAN)
             Conf('abort on stalled', VDR.V_BOOLEAN)
             Conf('abort on timeout', VDR.V_BOOLEAN)
             Conf('abort on inactivity', VDR.V_BOOLEAN)
@@ -1303,11 +1302,9 @@ def upg(cfg, descr):
     u.obsolete(
         '8.0.0',
         ['cylc', 'health check interval'])
-    u.deprecate(
-        '8.0.0',
-        ['cylc', 'abort if any task fails'],
-        ['cylc', 'events', 'abort if any task fails'])
     u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'shell'])
+    u.obsolete('8.0.0', ['cylc', 'abort if any task fails'])
+    u.obsolete('8.0.0', ['cylc', 'events', 'abort if any task fails'])
     # TODO uncomment these deprecations when ready - see todo in
     # [runtime][__MANY__] section.
     # for job_setting in [
