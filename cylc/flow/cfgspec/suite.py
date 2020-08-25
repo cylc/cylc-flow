@@ -21,6 +21,7 @@ from metomi.isodatetime.data import Calendar
 
 from cylc.flow import LOG
 from cylc.flow.parsec.exceptions import UpgradeError
+from cylc.flow.exceptions import SuiteConfigError
 from cylc.flow.network.authorisation import Priv
 from cylc.flow.parsec.config import ParsecConfig, ConfigNode as Conf
 from cylc.flow.parsec.upgrade import upgrader
@@ -1401,7 +1402,7 @@ def host_to_platform_warner(cfg, nwarnings=5):
                 if 'platform' in task_cfg:
                     # We can be sure that this is wrong, although due to
                     # inheritance we cannot catch all cases here.
-                    LOG.error(
+                    raise SuiteConfigError(
                         "A mixture of Cylc 7 (host) and Cylc 8 (platform)"
                         " logic should not be used. In this case the "
                         "following are not compatible\n"
@@ -1409,7 +1410,6 @@ def host_to_platform_warner(cfg, nwarnings=5):
                         f"{task_cfg[section][key]} and "
                         f"[{task_name}][platform] = {task_cfg['platform']}"
                     )
-                    raise UpgradeError()
                 else:
                     warnlines.append(
                         f'[{task_name}][{section}]{key} = '

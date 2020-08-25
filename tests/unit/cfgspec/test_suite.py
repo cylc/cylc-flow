@@ -20,7 +20,7 @@ import pytest
 import re
 
 from cylc.flow.cfgspec.suite import host_to_platform_warner
-from cylc.flow.parsec.exceptions import UpgradeError
+from cylc.flow.exceptions import SuiteConfigError
 
 
 @pytest.mark.parametrize(
@@ -88,9 +88,11 @@ def test_host_to_platform_failer(caplog):
             },
         },
     }
-
-    with pytest.raises(UpgradeError):
+    with pytest.raises(
+        SuiteConfigError,
+        match=(
+            r'\[TASK1\]\[remote\]host = '
+            r'alpha007 and \[TASK1\]\[platform\] = shoes'
+        )
+    ):
         host_to_platform_warner(conf)
-
-    errmsg = r'ERROR.*A mixture of Cylc 7.*alpha007.*shoes'
-    assert re.match(errmsg, caplog.text, re.DOTALL)

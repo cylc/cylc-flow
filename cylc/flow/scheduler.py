@@ -42,7 +42,7 @@ from cylc.flow.broadcast_mgr import BroadcastMgr
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.config import SuiteConfig
 from cylc.flow.cycling.loader import get_point
-from cylc.flow.exceptions import CylcError
+from cylc.flow.exceptions import CylcError, SuiteConfigError
 import cylc.flow.flags
 from cylc.flow.host_select import select_suite_host
 from cylc.flow.hostuserutil import get_host, get_user
@@ -1807,6 +1807,8 @@ class Scheduler:
             LOG.info('Suite shutting down - %s', reason.args[0])
         elif isinstance(reason, SchedulerError):
             LOG.error('Suite shutting down - %s', reason)
+        elif isinstance(reason, SuiteConfigError):
+            LOG.error(f'{SuiteConfigError.__name__}: {reason}')
         else:
             LOG.exception(reason)
             LOG.critical('Suite shutting down - %s', reason)
