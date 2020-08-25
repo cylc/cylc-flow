@@ -54,7 +54,6 @@ from cylc.flow.platforms import (
     get_install_target_from_platform)
 from cylc.flow.remote import construct_platform_ssh_cmd
 from cylc.flow.wallclock import get_current_time_string
-
 REMOTE_INIT_FAILED = 'REMOTE INIT FAILED'
 
 
@@ -224,7 +223,7 @@ class TaskRemoteMgr:
         cmd.append(get_remote_suite_run_dir(platform, self.suite))
         # Create the ssh command
         cmd = construct_platform_ssh_cmd(cmd, platform)
-
+       
         self.proc_pool.put_command(
             SubProcContext(
                 'remote-init',

@@ -72,6 +72,10 @@ def get_suite_run_log_name(suite):
     path = get_suite_run_dir(suite, 'log', 'suite', 'log')
     return expandvars(path)
 
+def get_suite_rsync_log_name(suite):
+    """Return suite run log file path."""
+    path = get_suite_run_dir(suite, 'log', 'suite', 'rsync')
+    return expandvars(path)
 
 def get_suite_file_install_log_name(suite):
     """Return suite file install log file path."""

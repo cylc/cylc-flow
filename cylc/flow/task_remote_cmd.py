@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Implement "cylc remote-init" and "cylc remote-tidy"."""
 
+
 import os
 import re
 import zmq
@@ -90,7 +91,7 @@ def remote_init(install_target, rund, indirect_comm=None):
     Arguments:
         install_target (str): target to be initialised
         rund (str): suite run directory
-        *indirect_comm (str): use indirect communication via e.g. 'ssh'
+     construct_platform_ssh_cmd   *indirect_comm (str): use indirect communication via e.g. 'ssh'
     """
     rund = os.path.expandvars(rund)
     srvd = os.path.join(rund, SuiteFiles.Service.DIRNAME)
