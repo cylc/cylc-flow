@@ -18,6 +18,6 @@
 # Test hold cycle point glob
 . "$(dirname "$0")/test_header"
 set_test_number 2
-export ABORT_ON_TASK_FAIL='--abort-if-any-task-fails'
+export ABORT_ON_TASK_FAIL=true
 reftest
 exit
