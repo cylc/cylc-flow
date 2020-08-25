@@ -111,7 +111,7 @@ def main(parser, options, *args):
     # Read messages from STDIN
     if '-' in message_strs:
         current_message_str = ''
-        while True:  # Note: for line in sys.stdin: can hang
+        while True:  # Note: `for line in sys.stdin:` can hang
             message_str = sys.stdin.readline()
             if message_str.strip():
                 # non-empty line

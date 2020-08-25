@@ -1604,10 +1604,9 @@ class SuiteConfig:
                 if suicide:
                     continue
                 if orig_lexpr != lexpr:
-                    LOG.error("%s => %s" % (orig_lexpr, right))
+                    LOG.error(f"{orig_lexpr} => {right}")
                 raise SuiteConfigError(
-                    "self-edge detected: %s => %s" % (
-                        left, right))
+                    f"self-edge detected: {left} => {right}")
             self.edges[seq].add((left, right, suicide, conditional))
 
     def generate_taskdefs(self, orig_expr, left_nodes, right, seq, suicide):
@@ -1701,7 +1700,7 @@ class SuiteConfig:
 
             # Qualifier.
             outputs = self.cfg['runtime'][name]['outputs']
-            if outputs and output in outputs:
+            if outputs and (output in outputs):
                 # Qualifier is a task message.
                 qualifier = outputs[output]
             elif output:
