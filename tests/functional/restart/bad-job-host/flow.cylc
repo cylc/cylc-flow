@@ -2,7 +2,6 @@
 [cylc]
     [[events]]
         timeout = PT2M
-        abort on timeout = True
 [scheduling]
     [[graph]]
             R1 = """
