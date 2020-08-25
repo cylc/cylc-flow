@@ -15,6 +15,7 @@ expressions."""
         R1 = "foo"
 [runtime]
     [[foo]]
+        platform = localhost
         init-script = """
 echo "HELLO FROM INIT-SCRIPT"
 # define a variable
@@ -74,7 +75,3 @@ export VAR_PostCS=postcs"""
             E_FOU = $CYLC_TASK_NAME
             # the suite bin must be in $PATH already:
             E_FIV = $( foo.sh )
-        [[[remote]]]
-            # force use of ssh job submission to disconnect local tasks
-            # from the submitting suite environment.
-            host = localhost
