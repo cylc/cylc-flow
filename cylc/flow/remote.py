@@ -173,7 +173,7 @@ def get_includes_to_rsync(rsync_includes=None):
 
 
 def construct_rsync_over_ssh_cmd(
-        src_path, dst_path, platform, first=False, logfile=None, rsync_includes=None):
+        src_path, dst_path, platform, logfile=None, rsync_includes=None):
     """Constructs the rsync command used for remote file installation
         Args:
         src_path(string): source path
@@ -191,23 +191,22 @@ def construct_rsync_over_ssh_cmd(
     rsync_cmd.append("--rsh=" + ssh_cmd)
     # Note to future devs - be wary of changing the order of the following
     # rsync options, rsync is very particular about order of in/ex-cludes.
-    if first:
-        rsync_cmd.append('--include=/.service/')
-        rsync_cmd.append('--include=/.service/server.key')
-    else:    
-        excludes = ['log', 'share', 'work']
-        for exclude in excludes:
-            rsync_cmd.append(f"--exclude={exclude}")
-        default_includes = [
-            '/app/***',
-            '/bin/***',
-            '/etc/***',
-            '/lib/***']
-        for include in default_includes:
-            rsync_cmd.append(f"--include={include}")
-        configured_includes = get_includes_to_rsync(rsync_includes)
-        for include in configured_includes:
-            rsync_cmd.append(f"--include={include}")
+
+    rsync_cmd.append('--include=/.service/')
+    rsync_cmd.append('--include=/.service/server.key')
+    excludes = ['log', 'share', 'work']
+    for exclude in excludes:
+        rsync_cmd.append(f"--exclude={exclude}")
+    default_includes = [
+        '/app/***',
+        '/bin/***',
+        '/etc/***',
+        '/lib/***']
+    for include in default_includes:
+        rsync_cmd.append(f"--include={include}")
+    configured_includes = get_includes_to_rsync(rsync_includes)
+    for include in configured_includes:
+        rsync_cmd.append(f"--include={include}")
     # The following excludes are required in case these are added to the
     rsync_cmd.append("--exclude=*")  # exclude everything else
     rsync_cmd.append(f"{src_path}/")

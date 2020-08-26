@@ -28,10 +28,10 @@ from cylc.flow.task_remote_cmd import remote_tidy
 
 def main():
     parser = COP(
-        __doc__, argdoc=[("RUND", "The run directory of the suite")]
+        __doc__, argdoc=[("INSTALL_TARGET", "target platform to be tidied"),
+                         ("RUND", "The run directory of the suite")]
     )
-    remote_tidy(parser.parse_args()[1][0])  # position argument 1, rund
-
-
+    (install_target, rund) = (parser.parse_args())  
+    remote_tidy(install_target, rund)
 if __name__ == "__main__":
     main()

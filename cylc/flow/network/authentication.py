@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Authentication key setup"""
 
+from zmq.asyncio import install
 from cylc.flow.suite_files import (
     KeyInfo,
     KeyOwner,
@@ -34,11 +35,11 @@ def key_housekeeping(reg, platform=None, create=True):
         "client_public_key": KeyInfo(
             KeyType.PUBLIC,
             KeyOwner.CLIENT,
-            suite_srv_dir=suite_srv_dir, platform=platform),
+            suite_srv_dir=suite_srv_dir, install_target=platform),
         "client_private_key": KeyInfo(
             KeyType.PRIVATE,
             KeyOwner.CLIENT,
-            suite_srv_dir=suite_srv_dir),
+            suite_srv_dir=suite_srv_dir, install_target=platform),
         "server_public_key": KeyInfo(
             KeyType.PUBLIC,
             KeyOwner.SERVER,

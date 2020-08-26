@@ -23,6 +23,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+from zmq.asyncio import install
 import zmq.auth
 
 import aiofiles
@@ -71,22 +72,21 @@ class KeyInfo():
     """
 
     def __init__(self, key_type, key_owner, full_key_path=None,
-                 suite_srv_dir=None, platform=None, server_held=True):
+                 suite_srv_dir=None, install_target=None, server_held=True):
         self.key_type = key_type
         self.key_owner = key_owner
         self.full_key_path = full_key_path
         self.suite_srv_dir = suite_srv_dir
-        self.platform = platform
+        self.install_target = install_target
         if self.full_key_path is not None:
             self.key_path, self.file_name = os.path.split(self.full_key_path)
         elif self.suite_srv_dir is not None:
             # Build key filename
             file_name = key_owner.value
 
-            # Add optional platform name
-            if key_owner is KeyOwner.CLIENT and self.platform is not None:
-                file_name = file_name + f"_{self.platform}"
-
+            # Add optional install target name
+            if key_owner is KeyOwner.CLIENT and self.install_target is not None:
+                file_name = file_name + f"_{self.install_target}"
             if key_type == KeyType.PRIVATE:
                 file_extension = SuiteFiles.Service.PRIVATE_FILE_EXTENSION
             elif key_type == KeyType.PUBLIC:
@@ -604,9 +604,8 @@ def create_server_keys(keys, suite_srv_dir):
     old_umask = os.umask(0o177)  # u=rw only set as default for file creation
     _server_public_full_key_path, _server_private_full_key_path = (
         zmq.auth.create_certificates(
-            suite_srv_dir, 
-            KeyOwner.SERVER.value, 
-            metadata={'target': 'localhost'}))
+            suite_srv_dir,
+            KeyOwner.SERVER.value))
 
     # cylc scan requires host to behave as a client, so copy public server
     # key into client public key folder

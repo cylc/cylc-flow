@@ -177,13 +177,6 @@ class TaskRemoteMgr:
                 If waiting for remote init command to complete
 
         """
-        src_path = get_suite_run_dir(self.suite)
-        dst_path = get_remote_suite_run_dir(platform, self.suite)
-        Popen(construct_rsync_over_ssh_cmd(
-            src_path,
-            dst_path,
-            platform,
-            first=True))
         self.install_target = platform['install target']
 
         # If task is running locally we can skip the rest of this function
@@ -226,7 +219,7 @@ class TaskRemoteMgr:
         cmd.append(get_remote_suite_run_dir(platform, self.suite))
         # Create the ssh command
         cmd = construct_platform_ssh_cmd(cmd, platform)
-       
+
         self.proc_pool.put_command(
             SubProcContext(
                 'remote-init',
@@ -245,8 +238,6 @@ class TaskRemoteMgr:
         Call "cylc remote-tidy".
         This method is called on suite shutdown, so we want nothing to hang.
         Timeout any incomplete commands after 10 seconds.
-
-        Also remove UUID file on suite host ".service/uuid".
         """
         # Issue all SSH commands in parallel
         procs = {}
@@ -259,6 +250,7 @@ class TaskRemoteMgr:
             cmd = ['remote-tidy']
             if cylc.flow.flags.debug:
                 cmd.append('--debug')
+            cmd.append(platform['install target'])
             cmd.append(get_remote_suite_run_dir(platform, self.suite))
             if is_remote_platform(platform):
                 cmd = construct_platform_ssh_cmd(cmd, platform, timeout='10s')
@@ -316,27 +308,25 @@ class TaskRemoteMgr:
         except OSError:  # E.g. ignore bad unlink, etc
             pass
         self.install_target = platform['install target']
-        if REMOTE_INIT_DONE in proc_ctx.out:
-            src_path = get_suite_run_dir(self.suite)
-            dst_path = get_remote_suite_run_dir(platform, self.suite)
-
-            log_file = ""
-            for handler in LOG.handlers:
-                if(isinstance(handler, RsyncLogFileHandler)):
-                    log_file = handler.baseFilename
-                    break
-
-              
-            try:
-                Popen(construct_rsync_over_ssh_cmd(
-                    src_path,
-                    dst_path,
-                    platform,
-                    log_file,
-                    self.rsync_includes))
-            except Exception as ex:
-                LOG.error(f"Problem during rsync: {ex}")
         if proc_ctx.ret_code == 0:
+            if REMOTE_INIT_DONE in proc_ctx.out:
+                src_path = get_suite_run_dir(self.suite)
+                dst_path = get_remote_suite_run_dir(platform, self.suite)
+
+                log_file = ""
+                for handler in LOG.handlers:
+                    if(isinstance(handler, RsyncLogFileHandler)):
+                        log_file = handler.baseFilename
+                        break
+                try:
+                    Popen(construct_rsync_over_ssh_cmd(
+                        src_path,
+                        dst_path,
+                        platform,
+                        log_file,
+                        self.rsync_includes))
+                except Exception as ex:
+                    LOG.error(f"Problem during rsync: {ex}")
             if "KEYSTART" in proc_ctx.out:
                 regex_result = re.search(
                     'KEYSTART((.|\n|\r)*)KEYEND', proc_ctx.out)
@@ -346,7 +336,7 @@ class TaskRemoteMgr:
                     KeyType.PUBLIC,
                     KeyOwner.CLIENT,
                     suite_srv_dir=suite_srv_dir,
-                    platform=self.install_target
+                    install_target=self.install_target
                 )
                 old_umask = os.umask(0o177)
                 with open(
