@@ -66,5 +66,5 @@ with open(sys.argv[1], 'r') as file_:
 cmp_ok "${TEST_NAME}-parse-config.stdout" "${TEST_NAME}.stdout"
 cmp_ok "${TEST_NAME}-parse-config.stderr" '/dev/null'
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 exit

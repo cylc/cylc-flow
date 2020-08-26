@@ -32,5 +32,5 @@ sqlite3 "${RUND}/log/db" '
     WHERE cycle=="1" AND name=="w1" AND submit_num=="1"' >'db-time.txt'
 run_ok "${TEST_NAME_BASE}-time-run-exit" diff -u 'st-time.txt' 'db-time.txt'
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

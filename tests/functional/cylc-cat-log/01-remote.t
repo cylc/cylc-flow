@@ -112,6 +112,5 @@ cylc cat-log -m p -f j "${SUITE_NAME}" a-task.1 >"${TEST_NAME}.out"
 grep_ok "${SUITE_NAME}/log/job/1/a-task/NN/job$" "${TEST_NAME}.out"
 #-------------------------------------------------------------------------------
 # Clean up the task host.
-purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
+purge
 exit

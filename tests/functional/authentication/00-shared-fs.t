@@ -56,5 +56,5 @@ else
     cat 'out' >&2
 fi
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

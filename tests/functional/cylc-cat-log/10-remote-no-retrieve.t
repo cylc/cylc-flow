@@ -41,6 +41,5 @@ TEST_NAME=${TEST_NAME_BASE}-task-out
 run_ok "${TEST_NAME}" cylc cat-log -f o "${SUITE_NAME}" a-task.1
 grep_ok '^the quick brown fox$' "${TEST_NAME}.stdout"
 
-purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
+purge
 exit

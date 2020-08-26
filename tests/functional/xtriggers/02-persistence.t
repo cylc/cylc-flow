@@ -59,4 +59,4 @@ suite_run_ok "${TEST_NAME}" cylc restart --no-detach "${SUITE_NAME}"
 cylc cat-log "${SUITE_NAME}" 'foo.2011' >'foo.2011.out'
 grep_ok 'NAME is bob' 'foo.2011.out'
 
-purge_suite "${SUITE_NAME}"
+purge

@@ -38,6 +38,5 @@ cylc jobs-poll --debug -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 1/local-fail-1
 __LOG__
 cmp_ok 'edited-suite-log' 'edited-suite-log-ref'
 
-purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
+purge
 exit

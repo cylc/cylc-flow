@@ -34,5 +34,5 @@ sqlite3 "${SUITE_RUN_DIR}/log/db" \
     'SELECT * FROM task_pool' >'task-pool.out'
 cmp_ok 'task-pool.out' <'/dev/null'
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

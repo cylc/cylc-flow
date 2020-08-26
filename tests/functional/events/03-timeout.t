@@ -29,4 +29,4 @@ TEST_NAME="${TEST_NAME_BASE}-run"
 suite_run_fail "${TEST_NAME}" cylc run --debug --no-detach "${SUITE_NAME}"
 grep_ok "WARNING - suite timed out after PT6S" "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge

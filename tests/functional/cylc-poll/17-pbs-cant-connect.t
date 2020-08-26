@@ -54,6 +54,5 @@ contains_ok 'sed-log.out' <<'__LOG__'
 INFO - [t1.1] status=running: (polled)started
 __LOG__
 
-purge_suite "${SUITE_NAME}"
-purge_remote_platform "${CYLC_TEST_PLATFORM}"
+purge
 exit

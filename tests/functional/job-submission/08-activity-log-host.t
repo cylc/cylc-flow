@@ -28,6 +28,5 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --debug --no-detach --reference-test -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}" \
     "${SUITE_NAME}"
 
-purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
+purge
 exit

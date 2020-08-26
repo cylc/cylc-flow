@@ -36,6 +36,5 @@ __LOG__
 exists_ok "${SUITE_RUN_DIR}/log/job/1/t1/01/job.out"
 exists_fail "${SUITE_RUN_DIR}/log/job/1/t1/01/job.err"
 
-purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
+purge
 exit

@@ -30,4 +30,4 @@ graph_suite "${SUITE_NAME}" 'graph.plain' -n
 cmp_ok graph.plain \
     "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph.plain.ref"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge

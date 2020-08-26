@@ -30,4 +30,4 @@ cmp_ok "${TEST_NAME_BASE}-validate.stderr" <<__ERR__
 TaskDefError: No cycling sequences defined for foo
 __ERR__
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge

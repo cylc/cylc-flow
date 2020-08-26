@@ -31,5 +31,5 @@ grep_ok 'INFO - + t2\.2016 waiting (held)' "${SUITE_RUN_DIR}/log/suite/log"
 sqlite3 "${SUITE_RUN_DIR}/log/db" 'SELECT cycle, name, status FROM task_pool ORDER BY cycle, name' \
     >'task-pool.out'
 cmp_ok 'task-pool.out' </dev/null
-purge_suite "${SUITE_NAME}"
+purge
 exit

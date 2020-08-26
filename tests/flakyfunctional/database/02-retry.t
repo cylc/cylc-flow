@@ -26,7 +26,7 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 
 if ! command -v sqlite3 > /dev/null; then
     skip 1 "sqlite3 not installed?"
-    purge_suite "${SUITE_NAME}"
+    purge
     exit 0
 fi
 
@@ -47,5 +47,5 @@ cmp_ok "${NAME}" <<__SELECT__
 20200101T0000Z|t1|3|3|0|0|${LOCALHOST}|background
 __SELECT__
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

@@ -84,7 +84,6 @@ log_scan "${TEST_NAME_BASE}-stop" "${FILE}" 40 1 \
     'DONE'
 
 cylc stop --now --now--max-polls=20 --interval=2 "${SUITE_NAME}" 2>'/dev/null'
-purge_suite "${SUITE_NAME}"
-purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
+purge
 
 exit

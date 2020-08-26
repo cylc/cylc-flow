@@ -44,6 +44,5 @@ cmp_ok 'foo-host.txt' <<<"${CYLC_TEST_PLATFORM}"
 TEST_NAME=${TEST_NAME_BASE}-ensure-remote-run
 grep_ok "@$(hostname -f)" "${SUITE_RUN_DIR}/log/job/1/foo/NN/job.out"
 #-------------------------------------------------------------------------------
-purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
+purge
 exit

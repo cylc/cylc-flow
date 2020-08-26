@@ -33,6 +33,5 @@ run_fail "${TEST_NAME}" \
     ssh -oBatchMode=yes -oConnectTimeout=5 -n "${CYLC_TEST_HOST}" \
     "bash -c 'ps \$(cat cylc-run/${SUITE_NAME}/work/*/t*/file)'"
 #-------------------------------------------------------------------------------
-purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
+purge
 exit

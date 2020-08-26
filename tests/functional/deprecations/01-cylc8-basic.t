@@ -29,4 +29,4 @@ TEST_NAME="${TEST_NAME_BASE}-cmp"
 cylc validate "${SUITE_NAME}" 2> 'val.out'
 cmp_ok val.out "$TEST_SOURCE_DIR/${TEST_NAME_BASE}/validation.stderr"
 
-purge_suite "${SUITE_NAME}"
+purge

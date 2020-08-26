@@ -28,5 +28,5 @@ cmp_ok 'graph.plain' "${SRCD}/graph.plain.ref"
 graph_suite "${SUITE_NAME}" 'graph.plain.ungrouped' --ungrouped
 cmp_ok 'graph.plain.ungrouped' "${SRCD}/graph.plain.ungrouped.ref"
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

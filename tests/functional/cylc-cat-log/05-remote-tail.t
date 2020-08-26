@@ -53,7 +53,6 @@ grep_ok "HELLO from foo 1" "${TEST_NAME}.out"
 TEST_NAME=${TEST_NAME_BASE}-stop
 run_ok "${TEST_NAME}" cylc stop --kill --max-polls=20 --interval=1 "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 $SSH -n "${CYLC_TEST_HOST}" "rm -rf cylc-run/.bin/"
-purge_suite "${SUITE_NAME}"
+purge
 exit

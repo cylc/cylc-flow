@@ -62,7 +62,7 @@ run_ok "log-event-handler-00-out" \
 run_ok "log-event-handler-ret-code" \
     grep -qF "[(('event-handler-00', 'succeeded'), 1) ret_code] 0" 'log'
 
-purge_suite "${SUITE_NAME}"
+purge
 
 # REPEAT: Long STDERR output
 
@@ -99,6 +99,6 @@ run_ok "log-event-handler-00-err" \
 run_ok "log-event-handler-00-ret-code" \
     grep -qF "[(('event-handler-00', 'succeeded'), 1) ret_code] 0" 'log'
 
-purge_suite "${SUITE_NAME}"
+purge
 
 exit

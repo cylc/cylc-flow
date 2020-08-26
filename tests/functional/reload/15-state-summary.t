@@ -48,4 +48,4 @@ TEST_NAME=${TEST_NAME_BASE}-grep
 grep_ok "reloaded=False" dump.out
 #-------------------------------------------------------------------------------
 cylc stop --max-polls=10 --interval=2 "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
+purge

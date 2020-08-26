@@ -81,4 +81,4 @@ foo, 2, succeeded
 foo, 3, succeeded
 __END__
 
-purge_suite "${SUITE_NAME}"
+purge

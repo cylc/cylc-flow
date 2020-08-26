@@ -39,6 +39,5 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 exists_ok "${LOGD1}"
 exists_fail "${LOGD2}"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
-purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
+purge
 exit

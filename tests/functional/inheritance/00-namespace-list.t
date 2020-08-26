@@ -45,5 +45,5 @@ cmp_ok runtime.out <<'__DONE__'
         FOO = foo
 __DONE__
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 exit

@@ -58,4 +58,4 @@ assert list(sorted(data)) == [
 ' "${TEST_NAME}.stdout" >&2 2>&2
 poll_suite_stopped
 
-purge_suite "${SUITE_NAME}"
+purge

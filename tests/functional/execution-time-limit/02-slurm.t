@@ -34,6 +34,5 @@ suite_run_fail "${TEST_NAME_BASE}-run" \
 LOGD="$RUN_DIR/${SUITE_NAME}/log/job/1/foo"
 grep_ok '#SBATCH --time=0:05' "${LOGD}/01/job"
 
-purge_suite "${SUITE_NAME}"
-purge_remote_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
+purge
 exit

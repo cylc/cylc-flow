@@ -27,5 +27,5 @@ sqlite3 "${SUITE_RUN_DIR}/log/db" \
 cmp_ok 'sqlite3.out' <<<'*|root|[events]submission timeout|60.0'
 suite_run_ok "${TEST_NAME_BASE}-restart" \
     cylc restart "${SUITE_NAME}" --debug --no-detach --reference-test
-purge_suite "${SUITE_NAME}"
+purge
 exit

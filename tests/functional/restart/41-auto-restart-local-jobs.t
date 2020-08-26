@@ -109,6 +109,5 @@ log_scan "${TEST_NAME}-stop" "${FILE}" 40 1 \
 cylc stop "${SUITE_NAME}" --now --now 2>/dev/null || true
 poll_suite_stopped
 sleep 1
-purge_suite "${SUITE_NAME}"
-purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
+purge
 exit

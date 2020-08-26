@@ -44,7 +44,7 @@ __ERR__
 
 run_ok "${TEST_NAME}-stop" cylc stop --max-polls=10 --interval=2 "${TESTD}"
 
-purge_suite "${TESTD}"
+purge "${TESTD}"
 #------------------------------------------------------------------------------
 # Test `cylc run` REG for an un-registered suite
 TESTD="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_NAME_BASE}"
@@ -69,7 +69,7 @@ __ERR__
 
 run_ok "${TEST_NAME}-stop" cylc stop  --max-polls=10 --interval=2 "${TESTD}"
 
-purge_suite "${TESTD}"
+purge "${TESTD}"
 #------------------------------------------------------------------------------
 # Test `cylc run` REG for an un-registered suite
 mkdir -p "${RUN_DIR}/${TESTD}"
@@ -93,6 +93,6 @@ contains_ok "${TEST_NAME}-validate.stderr" <<__ERR__
 IllegalItemError: sched
 __ERR__
 
-purge_suite "${TESTD}"
+purge "${TESTD}"
 
 exit

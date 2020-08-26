@@ -40,4 +40,4 @@ contains_ok "$SHOW_OUT" <<'__SHOW_DUMP__'
   - 	5 = foo3.1 succeeded
 __SHOW_DUMP__
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge

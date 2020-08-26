@@ -34,6 +34,5 @@ cmp_ok 'db.out' <<'__OUT__'
 1|bar|0
 __OUT__
 
-purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
+purge
 exit

@@ -60,8 +60,7 @@ stuck_in_the_middle() {
 
 kill_suite() {
     cylc stop --now --now --max-polls=10 --interval=2 "${SUITE_NAME}" 2>'/dev/null'
-    purge_suite "${SUITE_NAME}"
-    purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
+    purge
 }
 
 log_scan2() {

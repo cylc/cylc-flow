@@ -43,6 +43,5 @@ T2_JOB_FILE="${SUITE_RUN_DIR}/log/job/1/t2/01/job"
 exists_ok "${T2_JOB_FILE}"
 grep_ok '^CYLC_VACATION_SIGNALS' "${T2_JOB_FILE}"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
-purge_remote_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
+purge
 exit

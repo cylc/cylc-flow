@@ -63,5 +63,5 @@ contains_ok log <<__END__
 [(('event-handler-00', 'warning-4'), 1) out] HANDLED 'guinea pig'
 __END__
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

@@ -37,5 +37,5 @@ contains_ok "${TEST_NAME_BASE}.stdout" <<__OUT__
 __OUT__
 cmp_ok "${TEST_NAME_BASE}.stderr" <'/dev/null'
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

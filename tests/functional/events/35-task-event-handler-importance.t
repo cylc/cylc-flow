@@ -31,4 +31,4 @@ grep_ok \
     "\\[(('event-handler-00', 'failed'), 1) out\\] NAME = t1 POINT = 1 IMPORTANCE = 3 COLOR = red SUITE-PRIORITY = HIGH" \
     "${T1_ACTIVITY_LOG}"    
 #------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge

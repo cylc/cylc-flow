@@ -55,6 +55,5 @@ contains_ok "${TEST_DIR}/db" <<'__DB_DUMP__'
 submit_failed_task|20130923T0000Z|1|1|submit-failed
 __DB_DUMP__
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
-purge_remote_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
+purge
 exit

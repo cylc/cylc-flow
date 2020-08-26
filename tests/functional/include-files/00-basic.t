@@ -34,5 +34,5 @@ TEST_NAME=${TEST_NAME_BASE}-compare
 cylc view --inline --stdout "${SUITE_NAME}" > inlined.cylc
 cmp_ok inlined.cylc "${TEST_SOURCE_DIR}/suite/ref-inlined.cylc"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 #-------------------------------------------------------------------------------

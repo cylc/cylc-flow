@@ -44,6 +44,6 @@ cylc run --no-detach "${NAME1}" 1>'1.out' 2>&1 &
 SUITE_RUN_DIR="${SUITE1_RUND}" poll_suite_running
 run_ok "${TEST_NAME_BASE}" cylc run --no-detach --abort-if-any-task-fails "${NAME2}"
 cylc shutdown "${NAME1}" --max-polls=20 --interval=1 1>'/dev/null' 2>&1 || true
-purge_suite "${NAME1}"
-purge_suite "${NAME2}"
+purge "${NAME1}"
+purge "${NAME2}"
 exit

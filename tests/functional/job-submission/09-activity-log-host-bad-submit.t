@@ -39,6 +39,5 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
     -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}" \
     -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 
-purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
+purge
 exit

@@ -67,5 +67,5 @@ cmp_ok "${NAME}" <<'__SELECT__'
 20100809T00|m2|[environment]BCAST|M2
 __SELECT__
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

@@ -78,6 +78,6 @@ cmp_json "${TEST_NAME}-out" \
     "${TEST_NAME_BASE}-is-held-arg.stdout" \
     "$(cat expected)"
 
-purge_suite "${SUITE_NAME}"
+purge
 
 exit

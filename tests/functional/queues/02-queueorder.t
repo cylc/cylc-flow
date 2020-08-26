@@ -28,5 +28,5 @@ run_ok "${TEST_NAME_BASE}-test" bash -o pipefail -c "
     grep 'proc_n.*submitted at' |
     sort --key=4,4 --check"
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

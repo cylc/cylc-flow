@@ -45,5 +45,5 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
     "--set=MY_HOST_IP=${MY_HOST_IP}"
 #-------------------------------------------------------------------------------
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

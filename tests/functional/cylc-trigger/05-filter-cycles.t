@@ -29,5 +29,5 @@ JOB_LOG_DIR="$RUN_DIR/${SUITE_NAME}/log/job"
 run_ok "${TEST_NAME_BASE}-fixable.20100101T0000Z-nn" \
     test "$(readlink "${JOB_LOG_DIR}/20100101T0000Z/fixable/NN")" = '01'
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

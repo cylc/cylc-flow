@@ -50,4 +50,4 @@ sqlite3 "${DB_FILE}" \
     'SELECT value FROM suite_params WHERE key=="startcp"' >"${NAME}"
 cmp_ok "${NAME}" <<<'20130101T12'
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge

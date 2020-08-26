@@ -62,7 +62,7 @@ cmp_ok "${SUITE_RUN_DIR}/ctb-get-graph-raw.out" <<'__OUT__'
 ]
 __OUT__
 
-purge_suite "${SUITE_NAME}"
+purge
 exit
 
 TODO - the rest of these will require the same treatment

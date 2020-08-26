@@ -27,5 +27,5 @@ suite_run_fail "${TEST_NAME}" cylc run --debug --no-detach "${SUITE_NAME}"
 
 grep_ok "suite stalled" "${TEST_NAME}.stderr" 
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

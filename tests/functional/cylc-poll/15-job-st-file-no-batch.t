@@ -32,5 +32,5 @@ run_ok "${TEST_NAME_BASE}-log-2" \
     grep -F '[t1.1] status=running: (polled)failed' \
     "${LOG}"
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

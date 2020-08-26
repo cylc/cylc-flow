@@ -37,5 +37,5 @@ else
     skip 1 "sqlite3 not installed?"
 fi
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 exit

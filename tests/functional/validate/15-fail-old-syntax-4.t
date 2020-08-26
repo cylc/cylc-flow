@@ -28,5 +28,5 @@ grep_ok "Incompatible value for <class 'cylc.flow.cycling.iso8601.\
 ISO8601Point'>: 2010010100: Invalid ISO 8601 date representation: 2010010100" \
 "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 exit

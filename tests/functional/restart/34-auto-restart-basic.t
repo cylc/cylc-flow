@@ -84,7 +84,6 @@ grep_ok "cylc-restart ${SUITE_NAME} --host=${CYLC_TEST_HOST} --host=localhost" \
 
 # stop suite
 cylc stop "${SUITE_NAME}" --kill --max-polls=10 --interval=2 2>'/dev/null'
-purge_suite "${SUITE_NAME}"
-purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
+purge
 
 exit

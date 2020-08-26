@@ -43,5 +43,5 @@ if ! wait "${CYLC_RUN_PID}" 1>'/dev/null' 2>&1; then
     cat 'out' >&2
 fi
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 exit

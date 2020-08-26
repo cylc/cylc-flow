@@ -31,4 +31,4 @@ suite_run_ok "${TEST_NAME}" \
 #-------------------------------------------------------------------------------
 grep_ok 'Command failed: reload_suite' "${SUITE_RUN_DIR}/log/suite/log"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge

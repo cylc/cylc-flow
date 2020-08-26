@@ -71,5 +71,5 @@ contains_ok 'diff.out' <<'__DIFF__'
 +    description = the weather is good
 __DIFF__
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

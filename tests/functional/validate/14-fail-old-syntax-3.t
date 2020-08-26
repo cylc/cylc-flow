@@ -28,5 +28,5 @@ cmp_ok "${TEST_NAME}.stderr" <<__END__
 IllegalValueError: (type=ISO 8601 interval) [runtime][root][events]execution timeout = 3
 __END__
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 exit

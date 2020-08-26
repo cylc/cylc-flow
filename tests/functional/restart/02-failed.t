@@ -51,4 +51,4 @@ output_states|20130923T0000Z|1|1|succeeded
 shutdown|20130923T0000Z|1|1|succeeded
 __DB_DUMP__
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge

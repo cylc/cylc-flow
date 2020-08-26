@@ -26,13 +26,12 @@ set_test_number 3
 
 create_test_global_config '' "
 [platforms]
-  [[wibble]]
+  [[${CYLC_TEST_PLATFORM}]]
     hosts = ${CYLC_TEST_HOST}
     retrieve job logs = True
 "
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-
 
 # Both of these cases should validate ok.
 run_ok "${TEST_NAME_BASE}-validate" \

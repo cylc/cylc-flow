@@ -28,7 +28,7 @@ DB_FILE="${RUN_DIR}/${SUITE_NAME}/log/db"
 
 if ! command -v sqlite3 > /dev/null; then
     skip 3 "sqlite3 not installed?"
-    purge_suite "${SUITE_NAME}"
+    purge
     exit 0
 fi
 
@@ -61,5 +61,5 @@ cmp_ok "${NAME}" <<__SELECT__
 1|t1|2|1|0|0|${LOCALHOST}|background
 __SELECT__
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

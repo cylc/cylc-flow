@@ -40,5 +40,5 @@ grep_ok "foo.20100101T0600Z is waiting on:" \
 grep_ok "\* bar.20100101T0000Z succeeded" \
     "${TEST_NAME_BASE}-run.stderr" 
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

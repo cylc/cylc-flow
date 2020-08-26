@@ -42,5 +42,5 @@ for INDEX in 1 2; do
     done
 done
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 exit

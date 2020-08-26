@@ -32,5 +32,5 @@ suite_run_fail "${TEST_NAME_BASE}-run2" \
 run_ok "${TEST_NAME_BASE}-run2-err" \
     grep -q -F "Suite shutting down - ${MESSAGE}" \
     "${TEST_NAME_BASE}-run2.stderr"
-purge_suite "${SUITE_NAME}"
+purge
 exit

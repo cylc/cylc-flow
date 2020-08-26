@@ -44,5 +44,5 @@ FAIL1="Suite run directory does not exist: ${SYM_SUITE_RUND}"
 FAIL2="sqlite3.OperationalError: unable to open database file"
 grep_ok "(${FAIL1}|${FAIL2})" "${SUITE_RUN_DIR}/log/suite/log".* -E
 rm -f "${SYM_SUITE_RUND}"
-purge_suite "${SUITE_NAME}"
+purge
 exit

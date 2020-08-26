@@ -26,4 +26,4 @@ run_fail "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 grep_ok "Cannot dump TimePoint year: -1 not in bounds 0 to 9999." \
     "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge

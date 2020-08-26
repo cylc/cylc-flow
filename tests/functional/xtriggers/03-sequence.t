@@ -65,5 +65,5 @@ cmp_ok foo.2026.log - <<__END__
 __END__
 
 cylc stop --now --max-polls=10 --interval=2 "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
+purge
 exit

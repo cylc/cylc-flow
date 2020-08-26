@@ -20,5 +20,5 @@
 export REQUIRE_PLATFORM='loc:remote comms:tcp'
 set_test_number 2
 reftest
-purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
+purge
 exit

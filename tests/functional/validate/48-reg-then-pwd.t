@@ -46,5 +46,5 @@ run_fail "${TEST_NAME_BASE}" cylc validate "${SUITE_NAME}"
 cylc register "${SUITE_NAME}" "${PWD}/good"
 run_ok "${TEST_NAME_BASE}" cylc validate "${SUITE_NAME}"
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

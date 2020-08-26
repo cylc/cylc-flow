@@ -23,5 +23,5 @@ export REQUIRE_PLATFORM="batch:$BATCH_SYS_NAME comms:tcp"
 #-------------------------------------------------------------------------------
 set_test_number 2
 reftest
-purge_remote_platform "${CYLC_REMOTE_PLATFORM}" "${SUITE_NAME}"
+purge
 exit

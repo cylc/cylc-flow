@@ -32,4 +32,4 @@ run_fail "${TEST_NAME}" cylc suite-state \
 
 grep_ok "ERROR: condition not satisfied" "${TEST_NAME}.stderr"
 
-purge_suite "${SUITE_NAME}"
+purge

@@ -25,6 +25,6 @@ create_test_global_config "" "
     [[$CYLC_TEST_PLATFORM]]
         batch submit command template = at noon tomorrow
 "
-
 reftest
+purge
 exit

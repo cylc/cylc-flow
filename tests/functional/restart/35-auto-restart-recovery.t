@@ -69,7 +69,6 @@ log_scan "${TEST_NAME}-shutdown" "${FILE}" 20 1 \
 
 # stop suite - suite should already by stopped but just to be safe
 cylc stop --max-polls=10 --interval=2 -kill "${SUITE_NAME}" 2>'/dev/null'
-purge_suite "${SUITE_NAME}"
-purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
+purge
 
 exit

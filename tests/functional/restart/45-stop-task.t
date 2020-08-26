@@ -79,5 +79,5 @@ dumpdbtables
 cmp_ok 'stoptask.out' <'/dev/null'
 cmp_ok 'taskpool.out' <'/dev/null'
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

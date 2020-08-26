@@ -87,10 +87,6 @@
 #         TEST_SMTPD_PID. Write log to TEST_SMTPD_LOG.
 #     mock_smtpd_kill
 #         Kill the mock SMTP server daemon process.
-#     purge_suite SUITE_NAME
-#         Tidy up local test directories for SUITE_NAME.
-#     purge_suite_platform PLATFORM SUITE_NAME
-#         Tidy up test directories for SUITE_NAME on PLATFORM
 #     poll COMMAND
 #         Run COMMAND in 1 second intervals for a minute until COMMAND returns
 #         a zero value, or exit 1 (abort test) with a timeout message.
@@ -119,7 +115,7 @@
 #     reftest [TEST_NAME [SOURCE]]
 #         Install a reference suite using `install_suite`, run a validation
 #         test on the suite and run the reference suite with `suite_run_ok`.
-#         Run `purge_suite` on success. Expect 2 OK tests.
+#         Expect 2 OK tests.
 #     create_test_global_config [PRE [POST]]
 #         Create a new global config file $PWD/etc from global-tests.cylc
 #         with PRE and POST pre- and ap-pended (PRE for top level items with no
@@ -478,46 +474,43 @@ log_scan () {
     done
 }
 
-purge_suite_platform() {
-    # Tidy up test directories on a given platform.
-    # Currently just picks the first host on the platform.
-    local PLATFORM="$1"  # or "owner@host"
-    local NAME="$2"
-    local CMD="cd 'cylc-run' && rm -fr '${NAME}'"
-    local DIRNAME
-    DIRNAME="$(dirname "${NAME}")"
-    if [[ "${DIRNAME}" != '.' ]]; then
-        CMD="${CMD} && rmdir -p '${DIRNAME}'"
-    fi
-    # Pick the first host from the platform
-    HOSTS=$(cylc get-global --item "[platforms][${PLATFORM}]hosts")
-    HOST=$(echo "$HOSTS" | awk -F ',' '{print $1}')
-    # CMD is part of this function
-    # shellcheck disable=SC2029
-    if [[ -n "${HOST}" ]]; then
-        ssh -n -oBatchMode=yes -oConnectTimeout=5 "${HOST}" "${CMD}" \
-            2>'/dev/null' || true
-    fi
-}
+# shellcheck disable=2120 # these arguments are itentionally optional
+purge () {
+    # suite to remove - defaults to $SUITE_NAME
+    local SUITE_NAME="${1:-$SUITE_NAME}"
+    # job platform to remove it on - defaults to $CYLC_TEST_PLATFORM
+    local PLATFORM="${2:-$CYLC_TEST_PLATFORM}"
 
-purge_suite() {
-    # Tidy up local test directories.
-    local SUITE_NAME="$1"
-    cd "${TEST_DIR:-}"
-    if ((FAILURES == 0)); then
-        local SUITE_RUN_DIR
-        SUITE_RUN_DIR="${RUN_DIR}/${SUITE_NAME}"
-        # Note: lsof can hang, so call with "timeout".
-        while grep -q "${SUITE_RUN_DIR}" < <(timeout 5 lsof); do
-            sleep 1
-        done
-        rm -fr "${SUITE_RUN_DIR}"
-        # The || true is here to prevent setting off the error trap no matter
-        # shellcheck disable=SC2015
-        (cd "${RUN_DIR}" && rmdir -p "$(dirname "${SUITE_RUN_DIR}")" 2>'/dev/null' || true)
+    if ((FAILURES != 0)); then
+        # if tests have failed then don't clean up
+        return 0
     fi
-    if [[ -n "${TEST_DIR:-}" && -n "${SUITE_NAME:-}" ]]; then
-        rm -fr "${TEST_DIR:?}/${SUITE_NAME:?}"
+
+    local SUITE_RUN_DIR="${RUN_DIR}/${SUITE_NAME}"
+
+    # wait for local processes to let go of their file handles
+    # NOTE: lsof can hang, so call with "timeout".
+    while grep -q "${SUITE_RUN_DIR}" < <(timeout 5 lsof); do
+        sleep 1
+    done
+
+    # shellcheck disable=SC2016
+    # shellcheck disable=SC2089
+    local CMD='
+        cd '~/cylc-run' &&
+        rm -rf "'"$SUITE_NAME"'" &&
+        rmdir -p "$(dirname "'"$SUITE_NAME"'")"
+    '
+
+    # remove the suite run directory tree locally - if empty
+    bash -c "$CMD" 2>/dev/null || true
+
+    # remove the suite run directory on the platform if remote
+    if [[ -n "$PLATFORM" && "${PLATFORM}" != local* ]]; then
+        local HOST
+        HOST="$(get_host_from_platform "$PLATFORM")"
+        # shellcheck disable=SC2029 # we want this to expand client side
+        (ssh "$HOST" "$CMD" 2>/dev/null) || true
     fi
 }
 
@@ -670,7 +663,7 @@ reftest() {
             cylc run --reference-test --debug --no-detach \
             "${SUITE_NAME}"
     fi
-    purge_suite "${SUITE_NAME}"
+    purge
 }
 
 create_test_global_config() {
@@ -799,7 +792,7 @@ done
 
 # handle platform logic
 #DEFAULT_PLATFORM="$(_parse_platform_spec '')"
-DEFAULT_PLATFORM=''
+DEFAULT_PLATFORM='local_background_indep_tcp'
 if [[ -n $PLATFORMS ]]; then
     # purposfully spltting into array
     # shellcheck disable=SC2206
@@ -808,8 +801,9 @@ else
     PLATFORMS=("$DEFAULT_PLATFORM")
 fi
 export PLATFORMS
+DEFAULT_REQUIREMENT='loc:local batch:background'
 if [[ -z "${REQUIRE_PLATFORM:-}" ]]; then
-    REQUIRE_PLATFORM="$DEFAULT_PLATFORM"
+    REQUIRE_PLATFORM="$DEFAULT_REQUIREMENT"
 fi
 if ! require_platform "${REQUIRE_PLATFORM}"; then
     skip_all "requires $REQUIRE_PLATFORM"

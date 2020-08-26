@@ -41,5 +41,5 @@ LOGD="$RUN_DIR/${SUITE_NAME}/log"
 grep_ok \
     "${SRVD}/contact: contact file corrupted/modified and may be left" \
     "${LOGD}/suite/log"
-purge_suite "${SUITE_NAME}"
+purge
 exit

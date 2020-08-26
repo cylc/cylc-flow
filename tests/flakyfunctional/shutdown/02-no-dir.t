@@ -30,5 +30,5 @@ grep_ok 'CRITICAL - Suite shutting down' "${SUITE_RUN_DIR}/log/suite/log".*
 grep_ok 'unable to open database file' "${SUITE_RUN_DIR}/log/suite/log".*
 
 rm -f "${SYM_SUITE_RUND}"
-purge_suite "${SUITE_NAME}"
+purge
 exit

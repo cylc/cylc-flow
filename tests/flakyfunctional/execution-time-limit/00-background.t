@@ -32,5 +32,5 @@ LOGD="${RUN_DIR}/${SUITE_NAME}/log/job/1/foo"
 grep_ok '# Execution time limit: 5.0' "${LOGD}/01/job"
 grep_ok 'CYLC_JOB_EXIT=\(ERR\|XCPU\)' "${LOGD}/01/job.status"
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

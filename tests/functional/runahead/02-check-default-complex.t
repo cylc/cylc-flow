@@ -37,4 +37,4 @@ cmp_ok "${TEST_NAME}.stdout" <<< "20100101T1200Z"
 #-------------------------------------------------------------------------------
 grep_ok 'Suite shutting down - Abort on suite stalled is set' "${SUITE_RUN_DIR}/log/suite/log"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge

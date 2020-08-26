@@ -35,5 +35,5 @@ suite_run_ok "${TEST_NAME_BASE}-restart" \
     cylc restart "${SUITE_NAME}" --debug --no-detach --reference-test \
     --set='FINAL_CYCLE_POINT=2022'
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

@@ -36,4 +36,4 @@ cmp_ok val.out <<__END__
  * (8.0.0) [cylc] -> [scheduler] - value unchanged
 __END__
 
-purge_suite "${SUITE_NAME}"
+purge

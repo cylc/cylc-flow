@@ -27,4 +27,4 @@ perl -pi -e 's/(Initial point: ).*$/${1}2010-03/' \
     "${TEST_DIR}/${SUITE_NAME}/reference.log"
 suite_run_ok "${TEST_NAME}" cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge

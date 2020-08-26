@@ -39,7 +39,7 @@ suite_run_ok "${TEST_NAME}" \
     cylc run --reference-test --debug --no-detach "${SUITE_NAME}" \
     --set="REF_SUITE=${SUITE_NAME_REF}"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME_REF}"
-purge_suite "${SUITE_NAME}"
+purge "${SUITE_NAME_REF}"
+purge
 #-------------------------------------------------------------------------------
 exit 0

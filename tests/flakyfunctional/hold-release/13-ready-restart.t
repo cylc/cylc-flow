@@ -47,5 +47,5 @@ run_ok "${TEST_NAME_BASE}-restart" timeout 1m my-file-poll "${LOG}"
 # foo-1 should run when the suite is released
 poll_grep_suite_log 'foo-1\.1.*succeeded'
 poll_suite_stopped
-purge_suite "${SUITE_NAME}"
+purge
 exit

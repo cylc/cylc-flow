@@ -107,5 +107,5 @@ TEST_NAME=${TEST_NAME_BASE}-task-job-path
 run_ok "${TEST_NAME}" cylc cat-log -f j -m p "${SUITE_NAME}" a-task.1
 grep_ok "${SUITE_NAME}/log/job/1/a-task/NN/job$" "${TEST_NAME}.stdout"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 exit

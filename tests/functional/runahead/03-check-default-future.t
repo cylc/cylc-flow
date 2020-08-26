@@ -39,4 +39,4 @@ cmp_ok "${TEST_NAME}.stdout" <<< "20100101T0400Z"
 #-------------------------------------------------------------------------------
 grep_ok 'Suite shutting down - Abort on suite inactivity is set' "${SUITE_RUN_DIR}/log/suite/log"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge

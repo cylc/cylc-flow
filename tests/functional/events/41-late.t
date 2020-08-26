@@ -25,5 +25,5 @@ run_ok "${TEST_NAME_BASE}-run" cylc run --debug --no-detach "${SUITE_NAME}"
 grep_ok 'late (late-time=.*)' "${SUITE_RUN_DIR}/log/suite/log"
 grep_ok 'late (late-time=.*)' "${SUITE_RUN_DIR}/log/suite/my-handler.out"
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

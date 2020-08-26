@@ -31,4 +31,4 @@ cmp_ok "${TEST_NAME}.stdout" - <<__END__
 PARAM1 = \$CYLC_TASK_PARAM_t
 PARAM2 = \$CYLC_TASK_PARAM_u
 __END__
-purge_suite "${SUITE_NAME}"
+purge

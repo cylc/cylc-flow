@@ -32,5 +32,5 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 LOG="${SUITE_RUN_DIR}/log/suite/log"
 run_ok "${TEST_NAME_BASE}-log" grep -q -F "ERROR - 1/t1/01 ('event-handler-00', 'succeeded') bad template: 'rubbish'" "${LOG}"
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

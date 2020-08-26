@@ -27,4 +27,4 @@ run_fail "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 grep_ok "SuiteConfigError: clock-trigger tasks require \[scheduling\]cycling mode=" \
     "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge

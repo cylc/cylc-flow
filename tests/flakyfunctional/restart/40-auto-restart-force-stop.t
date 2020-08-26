@@ -62,5 +62,5 @@ log_scan "${TEST_NAME_BASE}-no-auto-restart" "${FILE}" 20 1 \
     'Suite shutting down - REQUEST(NOW)'
 
 cylc stop --kill --max-polls=10 --interval=2 "${SUITE_NAME}" 2>'/dev/null'
-purge_suite "${SUITE_NAME}"
+purge
 exit

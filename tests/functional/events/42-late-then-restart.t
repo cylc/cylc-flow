@@ -34,5 +34,5 @@ grep -c 'late (late-time=.*)' \
     > 'grep-my-handler.out'
 cmp_ok 'grep-my-handler.out' <<<'1'
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

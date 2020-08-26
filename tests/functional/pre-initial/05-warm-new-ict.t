@@ -30,4 +30,4 @@ TEST_NAME="${TEST_NAME_BASE}-run"
 suite_run_ok "${TEST_NAME}" cylc run --warm --reference-test --debug --no-detach "${SUITE_NAME}" \
     20130101T0600Z
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge

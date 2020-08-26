@@ -67,4 +67,4 @@ cmp_ok f.txt <<'__END'
 VAR1 = the quick brown fox
 __END
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge

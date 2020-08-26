@@ -34,5 +34,5 @@ create_test_global_config "" "
 "
 
 reftest "${TEST_NAME_BASE}" "${BATCH_SYS_NAME}"
-purge_remote_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
+purge
 exit

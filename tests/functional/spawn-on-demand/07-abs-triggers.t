@@ -33,5 +33,5 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 suite_run_ok "${TEST_NAME_BASE}-restart" \
     cylc restart "${SUITE_NAME}" --no-detach
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

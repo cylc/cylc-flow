@@ -31,4 +31,4 @@ cmp_ok graph.plain "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph.plain.ref"
 graph_suite "${SUITE_NAME}" 'graph.plain.suicide' --show-suicide
 cmp_ok 'graph.plain.suicide' "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph.plain.suicide.ref"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge

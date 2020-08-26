@@ -66,7 +66,6 @@ poll_suite_stopped
 grep_ok 'Suite shutting down - REQUEST(CLEAN)' \
     "$(cylc cat-log "${SUITE_NAME}" -m p)"
 
-purge_suite "${SUITE_NAME}"
-purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
+purge
 
 exit

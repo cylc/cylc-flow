@@ -62,5 +62,5 @@ poll_suite_stopped
 log_scan "${TEST_NAME_BASE}-log-scan" "${SUITE_RUN_DIR}/log/suite/log" 1 0 \
     'LOADING suite parameters' '+ cycle point time zone = +0100'
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

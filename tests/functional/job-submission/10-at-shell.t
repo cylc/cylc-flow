@@ -36,5 +36,5 @@ run_ok "${TEST_NAME_BASE}-validate" \
 suite_run_ok "${TEST_NAME_BASE}-run" \
     env 'SHELL=/bin/tcsh' cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

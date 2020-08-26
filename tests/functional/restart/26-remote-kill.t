@@ -38,6 +38,5 @@ sqlite3 "${SUITE_RUN_DIR}/log/db" \
     'SELECT status FROM task_pool WHERE cycle=="1" AND NAME=="t1"' \
         >'t1-status.out'
 cmp_ok 't1-status.out' <<<'failed'
-purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
+purge
 exit

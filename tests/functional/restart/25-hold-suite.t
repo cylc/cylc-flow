@@ -57,5 +57,5 @@ sqlite3 "${SUITE_RUN_DIR}/log/db" \
     'SELECT cycle, name, status FROM task_pool ORDER BY cycle, name' >'task-pool.out'
 cmp_ok 'task-pool.out' <<'__OUT__'
 __OUT__
-purge_suite "${SUITE_NAME}"
+purge
 exit

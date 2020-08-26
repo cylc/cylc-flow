@@ -48,5 +48,5 @@ for FILE in ${FILES}; do
     run_ok "${TEST_NAME_BASE}-log-size" test "$(stat -c'%s' "${FILE}")" -le 2048
 done
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

@@ -31,5 +31,5 @@ run_ok "${TEST_NAME_BASE}-shutdown" \
     cylc shutdown --kill --max-polls=10 --interval=2 "${SUITE_NAME}"
 mv "${JLOGD}/job.status.old" "${JLOGD}/job.status"
 cylc jobs-kill "${LOGD}" '1/t1/01' 1>'/dev/null' 2>&1
-purge_suite "${SUITE_NAME}"
+purge
 exit

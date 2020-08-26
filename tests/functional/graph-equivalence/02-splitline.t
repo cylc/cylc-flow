@@ -42,5 +42,4 @@ cmp_ok "${TEST_SOURCE_DIR}/splitline_refs/b-ref" 'b-prereqs'
 TEST_NAME="${TEST_NAME_BASE}-check-c"
 cmp_ok "${TEST_SOURCE_DIR}/splitline_refs/c-ref" 'c-prereqs'
 #-------------------------------------------------------------------------------
-#cylc shutdown "${SUITE_NAME}" --now
-purge_suite "${SUITE_NAME}"
+purge

@@ -31,5 +31,5 @@ create_test_global_config "" "
 "
 
 reftest
-purge_remote_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
+purge
 exit

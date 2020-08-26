@@ -25,7 +25,7 @@ suite_run_ok "${TEST_NAME_BASE}-run" cylc run --debug --no-detach "${SUITE_NAME}
 
 if ! command -v 'sqlite3' >'/dev/null'; then
     skip 7 "sqlite3 not installed?"
-    purge_suite "${SUITE_NAME}"
+    purge
     exit 0
 fi
 
@@ -94,5 +94,5 @@ sqlite3 "${DB_FILE}" 'SELECT namespace, inheritance FROM inheritance ORDER BY na
     >"${NAME}"
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}" "${NAME}"
 
-purge_suite "${SUITE_NAME}"
+purge
 exit
