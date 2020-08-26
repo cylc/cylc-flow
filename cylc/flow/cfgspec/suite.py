@@ -242,6 +242,8 @@ with Conf(
             ''')
 
         with Conf('events'):
+            # Note: default of None for V_STRING_LIST is used to differentiate
+            # between: value not set vs value set to empty
             Conf('handlers', VDR.V_STRING_LIST, None)
             Conf('handler events', VDR.V_STRING_LIST, None)
             Conf('startup handler', VDR.V_STRING_LIST, None)
