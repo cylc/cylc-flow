@@ -417,7 +417,7 @@ def get_pipe(opts, formatter, scan_dir=None):
         graphql_fields.update(RICH_FIELDS)
 
     # add graphql queries / filters to the pipe
-    if graphql_fields:
+    if show_active and graphql_fields:
         pipe |= graphql_query(graphql_fields, filters=graphql_filters)
 
     return pipe

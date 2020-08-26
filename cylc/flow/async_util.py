@@ -183,6 +183,8 @@ def pipe(func=None, preproc=None):
     waiting on IO to take place in the background.
 
     Args:
+        func (callable):
+            The function this decorator decorates.
         preproc (callable):
             An optional function for pre-processing any args or kwargs
             provided to a function when the pipe is created.
@@ -249,7 +251,7 @@ def pipe(func=None, preproc=None):
             @pipe(preproc=my_preproc)
             def my_pipe_step(x, *args, *kwargs): pass
 
-    Functions And Transforms:
+    Filters And Transforms:
         If a function in the pipe returns a bool then it will be interpreted
         as a filter. If it returns any other object then it is a transform.
 

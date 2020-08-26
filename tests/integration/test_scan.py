@@ -43,9 +43,6 @@ def init_flows(tmp_path, running=None, registered=None, un_registered=None):
         Path(tmp_path, name, SRV_DIR).mkdir(parents=True, exist_ok=True)
     for name in (un_registered or []):
         Path(tmp_path, name).mkdir(parents=True, exist_ok=True)
-    # chuck a file in there just to be annoying
-    # Path(tmp_path, 'this-is-a-random-file').touch()
-    # TODO - stick this in a separate test
 
 
 @pytest.fixture(scope='session')
@@ -148,8 +145,22 @@ async def test_scan(sample_run_dir):
 
 
 @pytest.mark.asyncio
+async def test_scan_with_files(sample_run_dir):
+    """It shouldn't be perturbed by arbitrary files."""
+    Path(sample_run_dir, 'abc').touch()
+    Path(sample_run_dir, 'def').touch()
+    assert await listify(
+        scan(sample_run_dir)
+    ) == [
+        'bar/pub',
+        'baz',
+        'foo'
+    ]
+
+
+@pytest.mark.asyncio
 async def test_scan_horrible_mess(badly_messed_up_run_dir):
-    """It shouldn't be effected by erroneous cylc files/dirs.
+    """It shouldn't be affected by erroneous cylc files/dirs.
 
     How could you end up with a .service dir in cylc-run, well misuse of
     Cylc7 can result in this situation so this test ensures Cylc7 suites

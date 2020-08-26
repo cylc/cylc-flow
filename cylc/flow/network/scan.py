@@ -295,7 +295,7 @@ async def graphql_query(flow, fields, filters=None):
     Args:
         flow (dict):
             Flow information dictionary, provided by scan through the pipe.
-        fields:
+        fields (iterable):
             Iterable containing the fields to request e.g::
 
                ['id', 'name']
@@ -303,6 +303,15 @@ async def graphql_query(flow, fields, filters=None):
             One level of nesting is supported e.g::
 
                {'name': None, 'meta': ['title']}
+        filters (list):
+            Filter by the data returned from the query.
+            List in the form ``[(key, ...), value]``, e.g::
+
+               # state must be running
+               [('state',), 'running']
+
+               # state must be running or held
+               [('state',), ('running', 'held')]
 
     """
     query = f'query {{ workflows(ids: ["{flow["name"]}"]) {{ {fields} }} }}'
