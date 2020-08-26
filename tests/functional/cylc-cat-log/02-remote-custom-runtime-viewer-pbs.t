@@ -38,7 +38,7 @@ set_test_number 2
 create_test_global_config "" "
 [platforms]
   [[pbs-test-platform]]
-    hosts = "${CYLC_TEST_HOST}"
+    hosts = ${CYLC_TEST_HOST}
     batch system = pbs
     err viewer = ${ERR_VIEWER}
     out viewer = ${OUT_VIEWER}"

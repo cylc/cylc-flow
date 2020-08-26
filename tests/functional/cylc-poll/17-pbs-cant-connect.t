@@ -38,7 +38,7 @@ create_test_global_config "" "
 [platforms]
   [[test-pbs-platform]]
     batch system = pbs
-    hosts = "${CYLC_TEST_BATCH_TASK_HOST}"
+    hosts = ${CYLC_TEST_BATCH_TASK_HOST}
 "
 
 

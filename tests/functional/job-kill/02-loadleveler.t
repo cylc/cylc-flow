@@ -36,7 +36,7 @@ set_test_number 2
 create_test_global_config "" "
 [platforms]
   [[test-platform]]
-    hosts = "${CYLC_TEST_BATCH_TASK_HOST}"
+    hosts = ${CYLC_TEST_BATCH_TASK_HOST}
     batch system = ${BATCH_SYS_NAME}
 "
 
