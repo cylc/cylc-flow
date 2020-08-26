@@ -67,6 +67,9 @@ Options:
                        host: localhost
                        batch-system: background
 
+                   If set to "all" then all platforms in global.cylc
+                   beginning with an underscore will be used.
+
 Examples:
 
 Run the full test suite with the default options.
@@ -88,6 +91,11 @@ Re-run failed tests
 eof
 }
 
+get_platforms () {
+    cylc get-global-config -i '[platforms]' --sparse \
+        | sed -n 's/\[\[_\(.*\)\]\]/\1/p'
+}
+
 # parse args
 PROVE_ARGS=()
 TESTS=()
@@ -100,7 +108,11 @@ while [[ $# -gt 0 ]]; do
             exit 0
             ;;
         -p|--platform)
-            PLATFORMS="$PLATFORMS $2"
+            if [[ $2 == all ]]; then
+                PLATFORMS="$(get_platforms)"
+            else
+                PLATFORMS="$PLATFORMS $2"
+            fi
             shift
             shift
             ;;

@@ -738,7 +738,6 @@ require_platform () {
             return 0
         fi
     done
-    echo "required: $required_platform" >&2
     return 1
 }
 
