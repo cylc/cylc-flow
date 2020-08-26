@@ -48,6 +48,10 @@ compatibility, the `cylc run` command will automatically symlink an existing
 
 ### Enhancements
 
+[#3724](https://github.com/cylc/cylc-flow/pull/3724) - Re-implemented
+the `cylc scan` command line interface and added a Python API for accessing
+workflow scanning functionality.
+
 [#3515](https://github.com/cylc/cylc-flow/pull/3515) - spawn-on-demand: a more
 efficient way of the evolving the workflow via the graph.
 
