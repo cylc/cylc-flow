@@ -1,8 +1,32 @@
 #!/usr/bin/env bash
 
-set -eux
+usage () {
+    cat << __USAGE__
+swarm [OPTIONS] (build|configure|run)
 
-cd "$(dirname "$0")/../"
+Build, configure and run a swarm of docker containers for test purposes.
+
+This swarm is both for local development and automated testing to proivde
+a stable testing/development platform.
+
+Containers ports are correctly exposed so they can be used either natively
+or in virtual machines.
+
+Commands:
+    build       Build docker images.
+    configure   Configure system ssh and cylc configuration files.
+    run         Run docker containers.
+
+Options:
+    -y --yes    Don't prompt.
+    --debug     Runs the script with set -x for debug.
+__USAGE__
+    exit 0
+}
+
+set -eu
+
+cd "$(dirname "$0")/../../"
 
 YES=false
 SSHD="$HOME/.ssh"
@@ -115,26 +139,50 @@ configure () {
 
     # map exposed docker ports to hostnames
     append_config \
-        "Include $HERE/dockerfiles/ssh_config" \
+        "Include $HERE/etc/conf/ssh_config" \
         "$HOME/.ssh/config" \
         top  # ssh config includes must be at the top
 
-    # make ssh hostnames to cylc platforms
+    # map ssh hostnames to cylc platforms
     append_config \
-        "%include '$HERE/dockerfiles/global.cylc'" \
+        "%include '$HERE/etc/conf/global.cylc'" \
         "$HOME/.cylc/flow/$(cylc version)/global-tests.cylc"
+    append_config \
+        "%include '$HERE/etc/conf/global.cylc'" \
+        "$HOME/.cylc/flow/$(cylc version)/global.cylc"
+}
+
+run () {
+    docker run -it \
+        -p 42222:22 \
+        --privileged \
+        cylc-remote-indep-poll:latest
 }
 
 cmds=()
 for arg in "$@"; do
     case "$arg" in
+        --help)
+            usage
+            ;;
         -y|--yes)
             YES=true
             ;;
-        *)
+        --debug)
+            set -x
+            ;;
+        build|configure|run)
             cmds+=("$arg")
+            ;;
+        *)
+            echo "Invalid argument '$arg'" >&2
+            exit 1
     esac
 done
+
+if [[ ${#cmds[@]} -eq 0 ]]; then
+    usage
+fi
 
 for cmd in "${cmds[@]}"; do
     "${cmd}"

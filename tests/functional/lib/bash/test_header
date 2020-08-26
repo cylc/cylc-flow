@@ -818,14 +818,15 @@ fi
 # Ignore the normal site/user global config, use global-tests.cylc.
 create_test_global_config "$@"
 
-# this must happen after crete_test_global_config
-# because it relies on the platforms config from global-tests.cylc
+# NOTE: this must happen after crete_test_global_config
+#       because it relies on the platforms config from global-tests.cylc
+# NOTE: this will cause a failure if the platform is not configured
 CYLC_TEST_HOST="$(get_host_from_platform "$CYLC_TEST_PLATFORM")"
 if [[ -z "${CYLC_TEST_HOST}" ]]; then
     echo "Could not find host for platform $CYLC_TEST_PLATFORM" >&2
     exit 1
 fi
-export CTLC_TEST_HOST
+export CYLC_TEST_HOST
 
 set +x
 set +e

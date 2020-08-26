@@ -76,10 +76,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Configure Platforms
-        run: |
-          dockerfiles/build --yes configure
-
       - name: Apt-Get
         run: |
           sudo apt-get update
@@ -92,6 +88,10 @@ jobs:
       - name: Install
         run: |
           pip install ."[all]"
+
+      - name: Configure Platforms
+        run: |
+          etc/bin/swarm --yes --debug configure
 
       - name: Test
         run: |
