@@ -104,6 +104,29 @@ def not_starts_with(*chars):
     )
 
 
+def not_contains_colon_unless_starts_with(*chars):
+    """Restrict use of colons.
+
+    Example:
+        >>> regex, message = not_contain_colon_unless_starts_with(
+                'INFO', 'WARNING')
+        >>> message
+        'cannot contain a colon unless starts with: INFO, WARNING'
+        >>> bool(regex.match('Foo: bar'))
+        False
+        >>> bool(regex.match('INFO: Foo: bar'))
+        True
+        >>> bool(regex.match('Foo bar'))
+        True
+
+    """
+    return (
+        re.compile(r'(^(%s):|^[^:]*$)' % '|'.join(chars)),
+        ('cannot contain a colon unless starts with: '
+         f'{", ".join(regex_chars_to_text(chars))}')
+    )
+
+
 class UnicodeRuleChecker():
 
     RULES = []
@@ -154,16 +177,9 @@ class XtriggerNameValidator(UnicodeRuleChecker):
     ]
 
 
-class MessageTriggerValidator:
-    """Provides a method for validating custom output message trigger
-    contents"""
+class MessageTriggerValidator(UnicodeRuleChecker):
+    """The rules for valid custom output message trigger contents:"""
 
-    @classmethod
-    def validate(cls, string):
-        message = (
-            'a task message cannot contain a colon unless it starts with a '
-            'logging severity level, e.g. "INFO:"')
-        first_part = string.split(':')[0]
-        if first_part == string or first_part in LOG_LEVELS.keys():
-            return (True, None)
-        return (False, message)
+    RULES = [
+        not_contains_colon_unless_starts_with(*LOG_LEVELS.keys())
+    ]
