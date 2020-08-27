@@ -107,14 +107,15 @@ def remote_init(install_target, rund, indirect_comm=None):
 
     pattern = re.compile(r"^client_\S*key$")
     for filepath in os.listdir(srvd):
-        if pattern.match(filepath) and not f"{install_target}" in filepath:
+        if pattern.match(filepath) and f"{install_target}" not in filepath:
             # client key for a different install target exists
             print(REMOTE_INIT_FAILED)
-            
-    remove_keys_on_platform(srvd, install_target)
     try:
+        remove_keys_on_platform(srvd, install_target)
         create_platform_keys(srvd, install_target)
-    except :
+    except Exception:
+        # Catching all exceptions as need to fail remote init if any problems
+        # with key generation.
         print(REMOTE_INIT_FAILED)
         return
     oldcwd = os.getcwd()

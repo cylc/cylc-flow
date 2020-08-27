@@ -21,7 +21,9 @@ import unittest
 from unittest import mock
 
 from cylc.flow import LOG
-from cylc.flow.loggingutil import TimestampRotatingFileHandler, RsyncLogFileHandler
+from cylc.flow.loggingutil import (
+    TimestampRotatingFileHandler,
+    FileInstallLogFileHandler)
 
 
 class TestLoggingutil(unittest.TestCase):
@@ -80,7 +82,7 @@ class TestLoggingutil(unittest.TestCase):
                 logging.raiseExceptions = True
 
     @mock.patch("cylc.flow.loggingutil.glbl_cfg")
-    def test_cylc_does_not_log_to_rsync_logfile(
+    def test_cylc_does_not_log_to_file_install_logfile(
         self,
         mocked_glbl_cfg
     ):
@@ -91,26 +93,23 @@ class TestLoggingutil(unittest.TestCase):
             mocked = mock.MagicMock()
             mocked_glbl_cfg.return_value = mocked
             mocked.get.return_value = 100
-            rsync_file_handler = RsyncLogFileHandler(tf.name, False)
-            rsync_file_handler.mode = "a+"
+            file_install_file_handler = FileInstallLogFileHandler(
+                tf.name, False)
+            file_install_file_handler.mode = "a+"
 
             # enable the logger
             LOG.setLevel(logging.INFO)
-            LOG.addHandler(rsync_file_handler)
+            LOG.addHandler(file_install_file_handler)
 
-            log_string = "This should not appear in the rsync log file"
+            log_string = "This should not appear in the file install log file"
             LOG.info(log_string)
-            LOG.info(log_string)
-
-            LOG.info(log_string)
-
             try:
                 with open(tf.name, 'r') as logfile:
                     logfile_string = logfile.read()
                     assert log_string not in logfile_string
-                
             finally:
-                LOG.removeHandler(rsync_file_handler)
+                LOG.removeHandler(file_install_file_handler)
+
 
 if __name__ == '__main__':
     unittest.main()

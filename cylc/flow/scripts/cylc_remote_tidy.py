@@ -32,7 +32,9 @@ def main():
         __doc__, argdoc=[("INSTALL_TARGET", "target platform to be tidied"),
                          ("RUND", "The run directory of the suite")]
     )
-    options, (install_target, rund) = parser.parse_args()  
+    options, (install_target, rund) = parser.parse_args()
     remote_tidy(install_target, rund)
+
+
 if __name__ == "__main__":
     main()

@@ -35,12 +35,11 @@ from cylc.flow import LOG
 from cylc.flow.exceptions import TaskRemoteMgmtError
 import cylc.flow.flags
 from cylc.flow.hostuserutil import (
-    is_remote_host, is_remote_platform
+    is_remote_host, is_remote_install_target, is_remote_platform
 )
 from cylc.flow.pathutil import (
     get_remote_suite_run_dir,
-    get_suite_run_dir,
-    get_suite_run_log_dir)
+    get_suite_run_dir)
 from cylc.flow.remote import construct_rsync_over_ssh_cmd
 from cylc.flow.subprocctx import SubProcContext
 from cylc.flow.suite_files import (
@@ -58,7 +57,7 @@ from cylc.flow.platforms import (
     get_install_target_from_platform)
 from cylc.flow.remote import construct_platform_ssh_cmd
 from cylc.flow.wallclock import get_current_time_string
-from cylc.flow.loggingutil import RsyncLogFileHandler
+from cylc.flow.loggingutil import FileInstallLogFileHandler
 
 REMOTE_INIT_FAILED = 'REMOTE INIT FAILED'
 
@@ -183,7 +182,8 @@ class TaskRemoteMgr:
         self.install_target = platform['install target']
 
         # If task is running locally we can skip the rest of this function
-        if self.single_task_mode or not is_remote_platform(platform):
+        if self.single_task_mode or not is_remote_install_target(self.install_target):
+            LOG.debug(f"REMOTE INIT NOT REQUIRED for {self.install_target}")
             return REMOTE_INIT_NOT_REQUIRED
 
         # See if a previous failed attempt to initialize this platform has
@@ -319,7 +319,7 @@ class TaskRemoteMgr:
 
                 log_file = ""
                 for handler in LOG.handlers:
-                    if(isinstance(handler, RsyncLogFileHandler)):
+                    if(isinstance(handler, FileInstallLogFileHandler)):
                         log_file = handler.baseFilename
                         break
                 try:
