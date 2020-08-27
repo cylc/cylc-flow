@@ -50,7 +50,7 @@ def get_platform(task_conf=None, task_id='unknown task'):
         # Just a simple way of accessing localhost items.
         output = platform_from_name()
 
-    elif type(task_conf) is str:
+    elif isinstance(task_conf, str):
         # If task_conf is str assume that it is a platform name.
         output = platform_from_name(task_conf)
 
