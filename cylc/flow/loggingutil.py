@@ -192,14 +192,21 @@ class TimestampRotatingFileHandler(logging.FileHandler):
                     header_record.__dict__[self.FILE_NUM],)
             logging.FileHandler.emit(self, header_record)
 
+
 # Unique type to separate behaviour and identify it easily when passing
 # filename to rsync command line
 class RsyncLogFileHandler(TimestampRotatingFileHandler):
+
     def __init__(self, log_file_path, no_detach=False, timestamp=True):
         TimestampRotatingFileHandler.__init__(
             self, log_file_path, no_detach=True)
-        block_all_filter = logging.Filter("spammyeggs")
-        self.addFilter(block_all_filter)    
+        self.addFilter(self.RsyncLogFilter())
+
+    # We're utilising the Python and Cylc log management for rsync log files
+    # but we do not actually want anything to reach the logs
+    class RsyncLogFilter(logging.Filter):
+        def filter(self, record):
+            return False
 
 
 class ReferenceLogFileHandler(logging.FileHandler):

@@ -19,6 +19,7 @@
 (This command is for internal use.)
 Remove ".service/contact" from a task remote (i.e. a [owner@]host).
 Remove ".service" directory on the remote if emptied.
+Remove authentication keys.
 
 """
 
@@ -31,7 +32,7 @@ def main():
         __doc__, argdoc=[("INSTALL_TARGET", "target platform to be tidied"),
                          ("RUND", "The run directory of the suite")]
     )
-    (install_target, rund) = (parser.parse_args())  
+    options, (install_target, rund) = parser.parse_args()  
     remote_tidy(install_target, rund)
 if __name__ == "__main__":
     main()

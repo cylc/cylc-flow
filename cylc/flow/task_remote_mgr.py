@@ -51,8 +51,11 @@ from cylc.flow.suite_files import (
     get_suite_srv_dir,
     get_contact_file)
 from cylc.flow.task_remote_cmd import (
-    FILE_BASE_UUID, REMOTE_INIT_DONE, REMOTE_INIT_NOT_REQUIRED)
-from cylc.flow.platforms import get_platform, get_host_from_platform
+    REMOTE_INIT_DONE, REMOTE_INIT_NOT_REQUIRED)
+from cylc.flow.platforms import (
+    get_platform,
+    get_host_from_platform,
+    get_install_target_from_platform)
 from cylc.flow.remote import construct_platform_ssh_cmd
 from cylc.flow.wallclock import get_current_time_string
 from cylc.flow.loggingutil import RsyncLogFileHandler
@@ -233,7 +236,7 @@ class TaskRemoteMgr:
         return self.remote_init_map[platform['install target']]
 
     def remote_tidy(self):
-        """Remove suite contact files from initialised remotes.
+        """Remove suite contact files and keys from initialised remotes.
 
         Call "cylc remote-tidy".
         This method is called on suite shutdown, so we want nothing to hang.
@@ -245,12 +248,13 @@ class TaskRemoteMgr:
             platform = get_platform(platform)
             host = get_host_from_platform(platform)
             owner = platform['owner']
+            self.install_target = get_install_target_from_platform(platform)
             if init_with_contact != REMOTE_INIT_DONE:
                 continue
             cmd = ['remote-tidy']
             if cylc.flow.flags.debug:
                 cmd.append('--debug')
-            cmd.append(platform['install target'])
+            cmd.append(str(f'{self.install_target}'))
             cmd.append(get_remote_suite_run_dir(platform, self.suite))
             if is_remote_platform(platform):
                 cmd = construct_platform_ssh_cmd(cmd, platform, timeout='10s')

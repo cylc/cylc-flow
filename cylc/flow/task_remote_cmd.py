@@ -22,6 +22,8 @@ import zmq
 import tarfile
 import sys
 
+from zmq.asyncio import install
+
 import cylc.flow.flags
 from cylc.flow import LOG
 from cylc.flow.suite_files import (
@@ -108,11 +110,11 @@ def remote_init(install_target, rund, indirect_comm=None):
         if pattern.match(filepath) and not f"{install_target}" in filepath:
             # client key for a different install target exists
             print(REMOTE_INIT_FAILED)
-            return
+            
     remove_keys_on_platform(srvd, install_target)
     try:
         create_platform_keys(srvd, install_target)
-    except:
+    except :
         print(REMOTE_INIT_FAILED)
         return
     oldcwd = os.getcwd()
@@ -142,7 +144,6 @@ def remote_tidy(install_target, rund):
 
     Arguments:
         rund (str): suite run directory
-        install_target(str): target platform to be tidied
     """
     rund = os.path.expandvars(rund)
     srvd = os.path.join(rund, SuiteFiles.Service.DIRNAME)
@@ -155,7 +156,7 @@ def remote_tidy(install_target, rund):
     else:
         if cylc.flow.flags.debug:
             print('Deleted: %s' % fname)
-    remove_keys_on_platform(srvd, install_target=install_target, full_clean=True)
+    remove_keys_on_platform(srvd, install_target, full_clean=True)
     try:
         os.rmdir(srvd)  # remove directory if empty
     except OSError:
