@@ -1,15 +1,24 @@
 #!/usr/bin/env python3
 
+"""Mock the mailx / mailutils `mail` command"""
+
 import argparse
 import smtplib
 import sys
 import os
 
-parser = argparse.ArgumentParser(description='Cylc functional tests mail command.')
-parser.add_argument('-s', metavar='subject', dest='subject', type=str, help='e-mail subject')
-parser.add_argument('-r', metavar='reply_to', dest='sender', type=str, help='e-mail reply-to address')
-parser.add_argument('to', metavar='to', type=str, help='e-mail destination address')
-parser.add_argument('body', metavar='body', nargs='?', type=argparse.FileType('r'), default=sys.stdin, help='e-mail body')
+parser = argparse.ArgumentParser(
+    description='Cylc functional tests mail command.')
+parser.add_argument(
+    '-s', metavar='subject', dest='subject', type=str, help='e-mail subject')
+parser.add_argument(
+    '-r', metavar='reply_to', dest='sender', type=str,
+    help='e-mail reply-to address')
+parser.add_argument(
+    'to', metavar='to', type=str, help='e-mail destination address')
+parser.add_argument(
+    'body', metavar='body', nargs='?', type=argparse.FileType('r'),
+    default=sys.stdin, help='e-mail body')
 
 smtp_server = os.getenv('smtp')
 try:
