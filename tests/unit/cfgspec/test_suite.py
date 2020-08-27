@@ -91,8 +91,7 @@ def test_host_to_platform_failer(caplog):
     with pytest.raises(
         SuiteConfigError,
         match=(
-            r'\[TASK1\]\[remote\]host = '
-            r'alpha007 and \[TASK1\]\[platform\] = shoes'
+            r'\[TASK1\]\[platform\] = shoes is incompatible'
         )
     ):
         host_to_platform_warner(conf)
