@@ -391,13 +391,15 @@ def upg(cfg, descr):
 
 
 def _upgrade_param_env_templates(cfg, descr):
-    # Upgrader can't prepend to [runtime][X][environment] if it already  exists
+    """Prepend [runtime][X][parameter environment templates] contents to
+    [runtime][X][environment]"""
+    # `u.deprecate()` can't do this if [environment] already exists
     if 'runtime' in cfg:
         dep = "[runtime][%s][parameter environment templates]"
         new = "[runtime][%s][environment]"
         first_warn = True
-        for namespace, items in cfg['runtime'].items():
-            if 'parameter environment templates' not in items:
+        for task_name, task_items in cfg['runtime'].items():
+            if 'parameter environment templates' not in task_items:
                 continue
             if first_warn is True:
                 LOG.warning(
@@ -406,22 +408,22 @@ def _upgrade_param_env_templates(cfg, descr):
                 )
                 first_warn = False
             LOG.warning(
-                " * (7.8.7) " + dep % namespace + " contents prepended to " +
-                new % namespace
+                " * (7.8.7) " + dep % task_name + " contents prepended to " +
+                new % task_name
             )
             for key, val in reversed(
-                    items['parameter environment templates'].items()):
-                if 'environment' in items:
-                    if key in items['environment']:
+                    task_items['parameter environment templates'].items()):
+                if 'environment' in task_items:
+                    if key in task_items['environment']:
                         LOG.warning(
-                            " *** " + dep % namespace + key + " ignored as " +
-                            key + " already exists in " + new % namespace
+                            " *** " + dep % task_name + key + " ignored as " +
+                            key + " already exists in " + new % task_name
                         )
                         continue
                 else:
-                    items['environment'] = OrderedDictWithDefaults()
-                items['environment'].prepend(key, val)
-            items.pop('parameter environment templates')
+                    task_items['environment'] = OrderedDictWithDefaults()
+                task_items['environment'].prepend(key, val)
+            task_items.pop('parameter environment templates')
 
 
 class RawSuiteConfig(ParsecConfig):

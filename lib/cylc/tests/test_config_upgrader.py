@@ -17,11 +17,69 @@
 # Tests for the config upgrader - this is specifically for the function
 # testing that configs can be upgraded from Cylc 7 to 8.
 
+import pytest
 from parsec.OrderedDict import OrderedDictWithDefaults as ord_dict
 from cylc.cfgspec.suite import _upgrade_param_env_templates
 
 
-def test_upgrade_param_env_templates():
+@pytest.mark.parametrize(
+    'cfg,expected',
+    [
+        (   # No clashes - order is important:
+            {
+                'parameter environment templates': ord_dict([
+                    ('FOO', 'jupiter'),
+                    ('MOO', 'pluto')
+                ]),
+                'environment': ord_dict([
+                    ('BAR', 'neptune'),
+                    ('BAZ', 'ares')
+                ])
+            },
+            {
+                'environment': ord_dict([
+                    ('FOO', 'jupiter'),
+                    ('MOO', 'pluto'),
+                    ('BAR', 'neptune'),
+                    ('BAZ', 'ares')
+                ])
+            }
+        ),
+        (   # Clashes - environment wins:
+            {
+                'parameter environment templates': ord_dict([
+                    ('FOO', 'jupiter'),
+                    ('BAR', 'neptune')
+                ]),
+                'environment': ord_dict([
+                    ('FOO', 'zeus'),
+                    ('BAR', 'poseidon')
+                ])
+            },
+            {
+                'environment': ord_dict([
+                    ('FOO', 'zeus'),
+                    ('BAR', 'poseidon')
+                ])
+            }
+        ),
+        (   # No environment section:
+            {
+                'parameter environment templates': ord_dict([
+                    ('FOO', 'jupiter'),
+                    ('BAR', 'neptune')
+                ])
+            },
+            {
+                'environment': ord_dict([
+                    ('FOO', 'jupiter'),
+                    ('BAR', 'neptune')
+                ])
+            }
+        )
+    ]
+)
+def test_upgrade_param_env_templates(cfg, expected):
     """Test that the deprecated [runtime][X][parameter environment templates]
     contents are prepended to [runtime][X][environment], in the correct
     order"""
@@ -44,71 +102,6 @@ def test_upgrade_param_env_templates():
             result['runtime']['<foo>']['environment'] = dic['environment']
         return result
 
-    # No clashes - order is important:
-    config = _cfg({
-        'parameter environment templates': ord_dict([
-            ('FOO', 'jupiter'),
-            ('MOO', 'pluto')
-        ]),
-        'environment': ord_dict([
-            ('BAR', 'neptune'),
-            ('BAZ', 'ares')
-        ])
-    })
-    expected = _cfg({
-        'environment': ord_dict([
-            ('FOO', 'jupiter'),
-            ('MOO', 'pluto'),
-            ('BAR', 'neptune'),
-            ('BAZ', 'ares')
-        ])
-    })
+    config = _cfg(cfg)
     _upgrade_param_env_templates(config, 'suite.rc')
-    assert config == expected
-
-    # Clashes - environment wins:
-    config = _cfg({
-        'parameter environment templates': ord_dict([
-            ('FOO', 'jupiter'),
-            ('BAR', 'neptune')
-        ]),
-        'environment': ord_dict([
-            ('FOO', 'zeus'),
-            ('BAR', 'poseidon')
-        ])
-    })
-    expected = _cfg({
-        'environment': ord_dict([
-            ('FOO', 'zeus'),
-            ('BAR', 'poseidon')
-        ])
-    })
-    _upgrade_param_env_templates(config, 'suite.rc')
-    assert config == expected
-
-    # No environment section:
-    config = _cfg({
-        'parameter environment templates': ord_dict([
-            ('FOO', 'jupiter'),
-            ('BAR', 'neptune')
-        ])
-    })
-    expected = _cfg({
-        'environment': ord_dict([
-            ('FOO', 'jupiter'),
-            ('BAR', 'neptune')
-        ])
-    })
-    _upgrade_param_env_templates(config, 'suite.rc')
-    assert config == expected
-
-    # No param env templates section:
-    config = _cfg({
-        'environment': ord_dict([
-            ('FOO', 'jupiter'),
-            ('BAR', 'neptune')
-        ])
-    })
-    expected = config.copy()
-    _upgrade_param_env_templates(config, 'suite.rc')
-    assert config == expected
+    assert config == _cfg(expected)

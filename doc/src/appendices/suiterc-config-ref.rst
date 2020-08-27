@@ -2024,8 +2024,8 @@ earlier in the task job script, and variable assignment expressions can
 use cylc utility commands because access to cylc is also configured
 earlier in the script.  See also :ref:`TaskExecutionEnvironment`.
 
-You can also specify task execution parameter environment templates here (only
-relevant for *parameterized tasks* - see :ref:`Parameterized Tasks Label`.
+You can also specify job environment templates here for *parameterized tasks*
+(see :ref:`Parameterized Tasks Label`).
 
 .. note::
 
@@ -2042,7 +2042,7 @@ relevant for *parameterized tasks* - see :ref:`Parameterized Tasks Label`.
 Replace ``__VARIABLE__`` with any number of environment variable
 assignment expressions. Order of definition is preserved so values can
 refer to previously defined variables. Values are passed through to the task
-job script without evaluation or manipulation by cylc (with the exception of
+job script without evaluation or manipulation by Cylc (with the exception of
 valid Python string templates that match parameterized tasks - see below), so
 any variable assignment expression that is legal in the job submission shell
 can be used. White space around the ``=`` is allowed (as far as cylc's suite.rc

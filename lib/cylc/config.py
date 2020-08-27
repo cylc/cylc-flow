@@ -918,11 +918,11 @@ class SuiteConfig(object):
     def check_env_names(self):
         """Check for illegal environment variable names"""
         bad = {}
-        for namespace, items in self.cfg['runtime'].items():
-            if 'environment' in items:
-                res = check_varnames(items['environment'])
+        for task_name, task_items in self.cfg['runtime'].items():
+            if 'environment' in task_items:
+                res = check_varnames(task_items['environment'])
                 if res:
-                    bad[(namespace, 'environment')] = res
+                    bad[(task_name, 'environment')] = res
         if bad:
             err_msg = "bad env variable names:"
             for (label, key), names in bad.items():
@@ -939,14 +939,14 @@ class SuiteConfig(object):
             (key, values[0])
             for key, values in self.parameters[0].items() if values)
         bads = set()
-        for namespace, items in self.cfg['runtime'].items():
-            if 'environment' not in items:
+        for task_name, task_items in self.cfg['runtime'].items():
+            if 'environment' not in task_items:
                 continue
-            for name, tmpl in items['environment'].items():
+            for name, tmpl in task_items['environment'].items():
                 try:
                     interpolate_template(tmpl, parameter_values)
                 except ParamEnvTemplateError as descr:
-                    bads.add((namespace, name, tmpl, descr))
+                    bads.add((task_name, name, tmpl, descr))
         if bads:
             LOG.warning(
                 "bad parameter environment template:\n    " + "\n    ".join(
