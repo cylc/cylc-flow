@@ -1403,12 +1403,11 @@ def host_to_platform_warner(cfg, nwarnings=5):
                     # We can be sure that this is wrong, although due to
                     # inheritance we cannot catch all cases here.
                     raise SuiteConfigError(
-                        "A mixture of Cylc 7 (host) and Cylc 8 (platform)"
-                        " logic should not be used. In this case the "
-                        "following are not compatible\n"
-                        f"[{task_name}][{section}]{key} = "
-                        f"{task_cfg[section][key]} and "
+                        "Found a mixture of Cylc 7 (host) and Cylc 8 (platform).\n"
                         f"[{task_name}][platform] = {task_cfg['platform']}"
+                        ' is incompatible with '
+                        f'[{task_name}][{section}]{key}\n'
+                       # '(<link to page in cylc7 to cylc8 transition docs>)'
                     )
                 else:
                     warnlines.append(
