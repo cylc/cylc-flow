@@ -2843,7 +2843,7 @@ substitution. For example, if we add this to the above configuration:
 
    [runtime]
        [[model<run,obs>]]
-           [[[parameter environment templates]]]
+           [[[environment]]]
                MYNAME = %(obs)sy-mc%(obs)sface
                MYFILE = /path/to/run%(run)03d/%(obs)s
 
@@ -2853,8 +2853,9 @@ environment variables:
 .. code-block:: bash
 
    # In a job script of an instance of the "model_run2_ship" task:
-   export MYNAME=shipy-mcshipface
-   export MYFILE=/path/to/run002/ship
+   export MYNAME MYFILE
+   MYNAME=shipy-mcshipface
+   MYFILE=/path/to/run002/ship
 
 
 Selecting Specific Parameter Values
