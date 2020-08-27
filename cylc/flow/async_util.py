@@ -61,31 +61,63 @@ class _AsyncPipe:
     async def __aiter__(self):
         # aiter = async iter
         coros = self.__iter__()
-        gen = next(coros)
-        coros = list(coros)
+        gen = next(coros)  # the generator we start the pipe with
+        coros = list(coros)  # the coros to push data through
+        running = []  # list of running asyncio tasks
+        completed = asyncio.Queue()  # queue of processed items to yield
+
+        # run the generator
+        running.append(
+            asyncio.create_task(
+                self._generate(gen, coros, running, completed)
+            )
+        )
+
+        # push the data through the pipe and yield results
+        while running or not completed.empty():
+            await asyncio.sleep(0)  # don't allow this loop to block
+            # process completed tasks
+            for task in running:
+                if task.done():
+                    running.remove(task)
+            # return any completed items
+            if not completed.empty():
+                yield await completed.get()
+
+    async def _generate(self, gen, coros, running, completed):
+        """Pull data out of the generator."""
         async for item in gen.func(*gen.args, **gen.kwargs):
-            for coro in coros:
-                try:
-                    ret = await coro.func(item, *coro.args, **coro.kwargs)
-                except Exception as exc:
-                    # if something goes wrong log the error and skip the item
-                    LOG.warning(exc)
-                    ret = False
-                if ret is True:
-                    # filter passed -> continue
-                    pass
-                elif ret is False and coro.filter_stop:
-                    # filter failed -> stop
-                    break
-                elif ret is False:
-                    # filter failed but pipe configured to yield -> stop
-                    yield item
-                    break
-                else:
-                    # returned an object -> continue
-                    item = ret
+            running.append(
+                asyncio.create_task(
+                    self._chain(item, coros, completed)
+                )
+            )
+
+    async def _chain(self, item, coros, completed):
+        """Push data through the coroutine pipe."""
+        for coro in coros:
+            try:
+                ret = await coro.func(item, *coro.args, **coro.kwargs)
+            except Exception as exc:
+                # if something goes wrong log the error and skip the item
+                LOG.warning(exc)
+                ret = False
+            if ret is True:
+                # filter passed -> continue
+                pass
+            elif ret is False and coro.filter_stop:
+                # filter failed -> stop
+                break
+            elif ret is False:
+                # filter failed but pipe configured to yield -> stop
+                # yield item
+                await completed.put(item)
+                return
             else:
-                yield item
+                # returned an object -> continue
+                item = ret
+        else:
+            await completed.put(item)
 
     def __or__(self, other):
         if isinstance(other, _PipeFunction):
