@@ -26,7 +26,9 @@ from cylc.flow import LOG, RSYNC_LOG
 from cylc.flow.exceptions import SuiteServiceFileError
 from cylc.flow.host_select import select_suite_host
 from cylc.flow.hostuserutil import is_remote_host
-from cylc.flow.loggingutil import TimestampRotatingFileHandler, RsyncLogFileHandler
+from cylc.flow.loggingutil import (
+    TimestampRotatingFileHandler,
+    FileInstallLogFileHandler)
 from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
     Options

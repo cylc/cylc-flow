@@ -33,7 +33,13 @@ from time import time
 from cylc.flow import LOG, RSYNC_LOG
 from cylc.flow.exceptions import TaskRemoteMgmtError
 import cylc.flow.flags
+<<<<<<< HEAD
 from cylc.flow.hostuserutil import (is_remote_host, is_remote_platform)
+=======
+from cylc.flow.hostuserutil import (
+    is_remote_host, is_remote_install_target, is_remote_platform
+)
+>>>>>>> restart not working
 from cylc.flow.pathutil import (
     get_remote_suite_run_dir,
     get_suite_run_dir)

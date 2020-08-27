@@ -50,6 +50,8 @@ import socket
 from contextlib import suppress
 from time import time
 
+from zmq.asyncio import install
+
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 
 
@@ -228,6 +230,20 @@ class HostUtil:
         return False
 
 
+    def _is_remote_install_target(self, install_target):
+        """Determines whether install_target is remote or not.
+        Return True if install target has different IP address
+        to the current host.
+
+        Return False if install target is to be treated as localhost.
+        """
+
+        if is_remote_host(install_target) is True:
+            return True
+        else:
+            return False
+
+
 def get_host_ip_by_name(target):
     """Shorthand for HostUtil.get_inst().get_host_ip_by_name(target)."""
     return HostUtil.get_inst().get_host_ip_by_name(target)
@@ -261,6 +277,11 @@ def get_user_home():
 def is_remote_platform(platform):
     """Shorthand for HostUtil.get_inst()._is_remote_platform(host, owner)."""
     return HostUtil.get_inst()._is_remote_platform(platform)
+
+
+def is_remote_install_target(install_target):
+    """Shorthand for HostUtil.get_inst()._is_remote_install_target(install_target)."""
+    return HostUtil.get_inst()._is_remote_install_target(install_target)
 
 
 def is_remote_host(name):
