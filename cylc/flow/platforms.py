@@ -24,7 +24,7 @@ from cylc.flow.exceptions import PlatformLookupError
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 
 
-def get_platform(task_conf=None):
+def get_platform(task_conf=None, task_id='unknown task'):
     """A single entry point for this module: Looking at a task config this
     method decides whether to get platform from name, or Cylc7 config items.
 
@@ -62,18 +62,19 @@ def get_platform(task_conf=None):
             if (
                 section in task_conf and
                 key in task_conf[section] and
-                task_conf[section][key]
+                task_conf[section][key] is not None
             ):
                 fail_items += (
-                    f'- task_conf[section][key] is '
+                    f' * platform = {task_conf["platform"]} AND'
                     f' [{section}]{key} = {task_conf[section][key]}\n'
                 )
-            if fail_items:
-                raise PlatformLookupError(
-                    f"A mixture of Cylc 7 (host) and Cylc 8 (platform) "
-                    f"logic should not be used. In this case the "
-                    f"following are not compatible:\n{fail_items}"
-                )
+        if fail_items != '':
+            raise PlatformLookupError(
+                f"A mixture of Cylc 7 (host) and Cylc 8 (platform) "
+                f"logic should not be used. In this case the task "
+                f"\"{task_id}\" has the following settings which "
+                f"are not compatible:\n{fail_items}"
+            )
 
         # If platform name exists and doesn't clash with Cylc7 Config
         # items:

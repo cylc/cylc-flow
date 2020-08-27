@@ -61,7 +61,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING)
 from cylc.flow.wallclock import get_current_time_string, get_utc_mode
 from cylc.flow.remote import construct_platform_ssh_cmd
-from cylc.flow.exceptions import PlatformLookupError
+from cylc.flow.exceptions import PlatformLookupError, TaskRemoteMgmtError
 
 
 class TaskJobManager:
@@ -801,8 +801,8 @@ class TaskJobManager:
         # Determine task host settings now, just before job submission,
         # because dynamic host selection may be used.
         try:
-            platform = get_platform(rtconfig)
-        except PlatformLookupError as exc:
+            platform = get_platform(rtconfig, itask.identity)
+        except TaskRemoteMgmtError as exc:
             # Submit number not yet incremented
             itask.submit_num += 1
             itask.summary['platforms_used'][itask.submit_num] = ''

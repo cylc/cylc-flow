@@ -15,16 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Check that platform upgraders work sensibly.
-# The following scenarios should be covered:
-#   - Task with no settings
-#   - Task with a host setting that should match platform "wibble"
-
+# Check that platform upgrader will fail if, after inheritance but not
+# before a task has both old and new settings - This should be a fail on
+# Job Submit.
 
 export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
 require_remote_platform
-set_test_number 5
+set_test_number 3
 
 create_test_global_config '' "
 [platforms]
@@ -35,28 +33,20 @@ create_test_global_config '' "
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-# Ensure that a mix of syntax will fail.
-run_fail "${TEST_NAME_BASE}-validate-fail" \
-  cylc validate "flow2.cylc"
 
-# Ensure that you can validate suite
+# Both of these cases should validate ok.
 run_ok "${TEST_NAME_BASE}-validate" \
   cylc validate "${SUITE_NAME}" \
      -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}"
 
-# Check that the cfgspec/suite.py has issued a warning about upgrades.
-grep_ok "\[upgradeable_cylc7_settings\]\[remote\]host = ${CYLC_TEST_HOST}"\
-  "${TEST_NAME_BASE}-validate.stderr"
-
 # Run the suite
-suite_run_ok "${TEST_NAME_BASE}-run" \
+suite_run_fail "${TEST_NAME_BASE}-run" \
   cylc run --debug --no-detach \
   -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}" "${SUITE_NAME}"
 
-# Check that the upgradeable config has been run on a sensible host.
-grep_ok \
-  "@${CYLC_TEST_HOST}"\
-  "${SUITE_RUN_DIR}/log/job/1/upgradeable_cylc7_settings/NN/job.out"
+# Grep for inherit-fail to fail later at submit time
+grep_ok "PlatformLookupError:.*non-valid-child.1"\
+  "${TEST_NAME_BASE}-run.stderr"
 
 purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
