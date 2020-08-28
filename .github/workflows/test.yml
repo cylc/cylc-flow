@@ -104,13 +104,13 @@ jobs:
               NPROC=8
           fi
           etc/bin/run-functional-tests \
-              --platform "${{ matrix.platform }}"
+              --platform "${{ matrix.platform }}" \
               -j "${NPROC}" \
               --state=save "${BASE}" \
           || (
               echo '=== Re-running Failed Tests ==='
               CHUNK= etc/bin/run-functional-tests \
-                  --platform "${{ matrix.platform }}"
+                  --platform "${{ matrix.platform }}" \
                   -j "${NPROC}" \
                   --state=save,failed
           )
