@@ -43,6 +43,14 @@ class _AsyncPipe:
         filter_stop (bool):
             If True then items which fail a filter will not get yielded.
             If False then they will get yielded immediately.
+        preserve_order (bool):
+            If True then this will behave like a "conventional" pipe i.e.
+            first-in first-out.
+
+            If False then results will be yielded as soon as they arrive.
+
+            Concurrency is the same for both options as results get cached
+            in the first case.
         _left (_AsyncPipe):
             The previous item in the pipe or None.
         _right (_AsyncPipe):
@@ -50,11 +58,19 @@ class _AsyncPipe:
 
     """
 
-    def __init__(self, func, args=None, kwargs=None, filter_stop=True):
+    def __init__(
+            self,
+            func,
+            args=None,
+            kwargs=None,
+            filter_stop=True,
+            preserve_order=True
+    ):
         self.func = func
         self.args = args or tuple()
         self.kwargs = kwargs or {}
         self.filter_stop = filter_stop
+        self.preserve_order = preserve_order
         self._left = None
         self._right = None
 
@@ -74,27 +90,72 @@ class _AsyncPipe:
         )
 
         # push the data through the pipe and yield results
-        while running or not completed.empty():
-            await asyncio.sleep(0)  # don't allow this loop to block
+        if self.preserve_order:
+            meth = self._ordered
+        else:
+            meth = self._unordered
+        async for item in meth(running, completed):
+            yield item
+
+    async def _ordered(self, running, completed):
+        """The classic first-in first-out pipe behaviour."""
+        cache = {}  # cache of results {index: result}
+        skip_cache = []  # list of results which have been filtered out
+        yield_ind = 0  # the result index used when preserve_order == True
+
+        while cache or running or not completed.empty():
+            # cache any completed items
+            if not completed.empty():
+                ind, item = await completed.get()
+                # add the item to the cache so we can yield in order
+                cache[ind] = item
+            # skip over any results which have been filtered out
+            while yield_ind in skip_cache:
+                skip_cache.remove(yield_ind)
+                yield_ind += 1
+            # yield any cached results
+            while yield_ind in cache:
+                yield cache.pop(yield_ind)
+                yield_ind += 1
             # process completed tasks
             for task in running:
                 if task.done():
                     running.remove(task)
+                    ind = task.result()
+                    if ind is not None:
+                        # this item has been filtered out
+                        skip_cache.append(ind)
+
+            await asyncio.sleep(0)  # don't allow this loop to block
+
+    async def _unordered(self, running, completed):
+        """The optimal yield items as they are processed behaviour."""
+        while running or not completed.empty():
             # return any completed items
             if not completed.empty():
-                yield await completed.get()
+                _, item = await completed.get()
+                yield item
+            # process completed tasks
+            for task in running:
+                if task.done():
+                    running.remove(task)
+
+            await asyncio.sleep(0)  # don't allow this loop to block
 
     async def _generate(self, gen, coros, running, completed):
         """Pull data out of the generator."""
+        ind = 0
         async for item in gen.func(*gen.args, **gen.kwargs):
             running.append(
                 asyncio.create_task(
-                    self._chain(item, coros, completed)
+                    self._chain((ind, item), coros, completed)
                 )
             )
+            ind += 1
 
     async def _chain(self, item, coros, completed):
         """Push data through the coroutine pipe."""
+        ind, item = item
         for coro in coros:
             try:
                 ret = await coro.func(item, *coro.args, **coro.kwargs)
@@ -104,20 +165,17 @@ class _AsyncPipe:
                 ret = False
             if ret is True:
                 # filter passed -> continue
-                pass
+                continue
             elif ret is False and coro.filter_stop:
                 # filter failed -> stop
-                break
+                return ind
             elif ret is False:
-                # filter failed but pipe configured to yield -> stop
-                # yield item
-                await completed.put(item)
-                return
+                # filter failed but pipe configured to yield -> stop + yield
+                break
             else:
                 # returned an object -> continue
                 item = ret
-        else:
-            await completed.put(item)
+        await completed.put((ind, item))
 
     def __or__(self, other):
         if isinstance(other, _PipeFunction):
@@ -262,6 +320,18 @@ def pipe(func=None, preproc=None):
         16
 
         Real world examples will involve a bit of awaiting.
+
+    Result Order
+        By default this behaves like a "conventional" pipe where results
+        are yielded in the order which the generator at the start of the pipe
+        created them.
+
+        By setting the ``preserve_order`` attribute on a pipe to ``False``
+        you can make it yield items as soon as they are processed irrespective
+        or order for more immediate results e.g::
+
+            pipe = arange | even
+            pipe.preserve_order = False
 
     Providing Arguments To Functions:
         The first function in the pipe will receive no data. All subsequent

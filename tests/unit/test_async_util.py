@@ -16,6 +16,7 @@
 
 import asyncio
 import logging
+from random import random
 
 import pytest
 
@@ -55,9 +56,11 @@ async def sleepy(x):
 
 
 @pytest.mark.asyncio
-async def test_pipe():
+@pytest.mark.parametrize('preserve_order', (True, False))
+async def test_pipe(preserve_order):
     """It passes values through the pipe."""
     pipe = a_range(5) | even | mult(2)
+    pipe.preserve_order = preserve_order
 
     result = []
     async for num in pipe:
@@ -71,9 +74,11 @@ async def test_pipe():
 
 
 @pytest.mark.asyncio
-async def test_pipe_single():
+@pytest.mark.parametrize('preserve_order', (True, False))
+async def test_pipe_single(preserve_order):
     """It allow single-step pipes."""
     pipe = a_range(5)
+    pipe.preserve_order = preserve_order
 
     result = []
     async for num in pipe:
@@ -89,9 +94,11 @@ async def test_pipe_single():
 
 
 @pytest.mark.asyncio
-async def test_pipe_reusable():
+@pytest.mark.parametrize('preserve_order', (True, False))
+async def test_pipe_reusable(preserve_order):
     """It can be re-used once depleted."""
     pipe = a_range(5) | even | mult(2)
+    pipe.preserve_order = preserve_order
 
     for _ in range(5):
         result = []
@@ -106,10 +113,12 @@ async def test_pipe_reusable():
 
 
 @pytest.mark.asyncio
-async def test_pipe_filter_stop():
+@pytest.mark.parametrize('preserve_order', (True, False))
+async def test_pipe_filter_stop(preserve_order):
     """It yields values early with the filter_stop argument."""
     pipe = a_range(5) | even(filter_stop=False)
     pipe |= mult(10)
+    pipe.preserve_order = preserve_order
 
     result = []
     async for num in pipe:
@@ -126,15 +135,39 @@ async def test_pipe_filter_stop():
     ]
 
 
-@pytest.mark.asyncio
-async def test_pipe_async(caplog):
-    """It is *actually* asynchronous.
+@pipe
+async def one(x):
+    await asyncio.sleep(random() / 5)
+    return x
 
-    It is easy to make something which appears to be asynchronous, this
-    test is intended to ensure that it actually IS asynchronous.
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('preserve_order', (True, False))
+async def test_pipe_preserve_order(preserve_order):
+    """It should control result order according to pipe configuration."""
+    n = 50
+    pipe = a_range(n) | one | one | one
+    pipe.preserve_order = preserve_order
+
+    result = []
+    async for item in pipe:
+        result.append(item)
+
+    # the odds of getting 50 items in order by chance are pretty slim
+    assert (result == list(range(n))) is preserve_order
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('preserve_order', (True, False))
+async def test_pipe_concurrent(caplog, preserve_order):
+    """It runs pipes concurrently.
+
+    It is easy to make something which appears to be concurrent, this
+    test is intended to ensure that it actually IS concurrent.
 
     """
     pipe = a_range(5) | even | sleepy | mult(2)
+    pipe.preserve_order = preserve_order
 
     caplog.set_level(logging.INFO, 'test')
     async for num in pipe:
