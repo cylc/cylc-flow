@@ -93,6 +93,8 @@ jobs:
           etc/bin/swarm --yes --debug configure
           etc/bin/swarm --yes --debug build
           etc/bin/swarm --yes --debug run
+          ssh -V
+          ssh _remote_background_indep_poll hostname
 
       - name: Test
         run: |
