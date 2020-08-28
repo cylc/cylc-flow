@@ -20,7 +20,7 @@ import pytest
 import re
 
 from cylc.flow.cfgspec.suite import host_to_platform_warner
-from cylc.flow.exceptions import SuiteConfigError
+from cylc.flow.exceptions import PlatformLookupError
 
 
 @pytest.mark.parametrize(
@@ -89,9 +89,9 @@ def test_host_to_platform_failer(caplog):
         },
     }
     with pytest.raises(
-        SuiteConfigError,
+        PlatformLookupError,
         match=(
-            r'\[TASK1\]\[platform\] = shoes is incompatible'
+            r'.*platform = shoes AND \[remote\]host = alpha007.*'
         )
     ):
         host_to_platform_warner(conf)

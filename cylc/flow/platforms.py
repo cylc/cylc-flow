@@ -55,26 +55,7 @@ def get_platform(task_conf=None, task_id='unknown task'):
         output = platform_from_name(task_conf)
 
     elif 'platform' in task_conf and task_conf['platform']:
-        # If platform is set check whether any Cylc7 items are present -
-        # and fail if they are:
-        fail_items = ''
-        for section, key, _ in forbidden_with_platform:
-            if (
-                section in task_conf and
-                key in task_conf[section] and
-                task_conf[section][key] is not None
-            ):
-                fail_items += (
-                    f' * platform = {task_conf["platform"]} AND'
-                    f' [{section}]{key} = {task_conf[section][key]}\n'
-                )
-        if fail_items != '':
-            raise PlatformLookupError(
-                f"A mixture of Cylc 7 (host) and Cylc 8 (platform) "
-                f"logic should not be used. In this case the task "
-                f"\"{task_id}\" has the following settings which "
-                f"are not compatible:\n{fail_items}"
-            )
+        fail_if_platform_and_host_conflict(task_conf, task_id)
 
         # If platform name exists and doesn't clash with Cylc7 Config
         # items:
@@ -332,3 +313,43 @@ def get_host_from_platform(platform, method=None):
         raise NotImplementedError(
             f'method {method} is not a valid input for get_host_from_platform'
         )
+
+
+def fail_if_platform_and_host_conflict(task_conf, task_name):
+    """Raise an error if task spec contains platform and forbidden host items.
+
+    Args:
+        task_conf(dict, OrderedDictWithDefaults):
+            A specification to be checked.
+        task_name(string):
+            A name to be given in an error.
+
+    Raises:
+        PlatformLookupError - if platform and host items conflict
+
+    """
+    forbidden_with_platform = (
+        ('remote', 'host', ['localhost', None]),
+        ('job', 'batch system', [None]),
+        ('job', 'batch submit command template', [None])
+    )
+
+    if 'platform' in task_conf and task_conf['platform']:
+        fail_items = ''
+        for section, key, _ in forbidden_with_platform:
+            if (
+                section in task_conf and
+                key in task_conf[section] and
+                task_conf[section][key] is not None
+            ):
+                fail_items += (
+                    f' * platform = {task_conf["platform"]} AND'
+                    f' [{section}]{key} = {task_conf[section][key]}\n'
+                )
+        if fail_items != '':
+            raise PlatformLookupError(
+                f"A mixture of Cylc 7 (host) and Cylc 8 (platform) "
+                f"logic should not be used. In this case the task "
+                f"\"{task_name}\" has the following settings which "
+                f"are not compatible:\n{fail_items}"
+            )

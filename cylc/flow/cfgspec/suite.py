@@ -21,12 +21,12 @@ from metomi.isodatetime.data import Calendar
 
 from cylc.flow import LOG
 from cylc.flow.parsec.exceptions import UpgradeError
-from cylc.flow.exceptions import SuiteConfigError
 from cylc.flow.network.authorisation import Priv
 from cylc.flow.parsec.config import ParsecConfig, ConfigNode as Conf
 from cylc.flow.parsec.upgrade import upgrader
 from cylc.flow.parsec.validate import (
     DurationFloat, CylcConfigValidator as VDR, cylc_config_validate)
+from cylc.flow.platforms import fail_if_platform_and_host_conflict
 
 # Regex to check whether a string is a command
 REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
@@ -1393,29 +1393,18 @@ def host_to_platform_warner(cfg, nwarnings=5):
     warnlines = []
     limit_count = 0
     for task_name, task_cfg in cfg['runtime'].items():
+        fail_if_platform_and_host_conflict(task_cfg, task_name)
         for section, key in forbidden_with_platform:
             if (
                 section in task_cfg and
                 key in task_cfg[section] and
                 task_cfg[section][key]
             ):
-                if 'platform' in task_cfg:
-                    # We can be sure that this is wrong, although due to
-                    # inheritance we cannot catch all cases here.
-                    raise SuiteConfigError(
-                        "Found a mixture of Cylc 7 (host) and Cylc 8 "
-                        "(platform).\n"
-                        f"[{task_name}][platform] = {task_cfg['platform']}"
-                        ' is incompatible with '
-                        f'[{task_name}][{section}]{key}\n'
-                        # '(<link to page in cylc7 to cylc8 transition docs>)'
-                    )
-                else:
-                    warnlines.append(
-                        f'[{task_name}][{section}]{key} = '
-                        f'{task_cfg[section][key]}\n'
-                    )
-                    limit_count += 1
+                warnlines.append(
+                    f'[{task_name}][{section}]{key} = '
+                    f'{task_cfg[section][key]}\n'
+                )
+                limit_count += 1
         if limit_count >= nwarnings:
             break
 
