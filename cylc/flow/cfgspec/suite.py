@@ -26,7 +26,7 @@ from cylc.flow.parsec.config import ParsecConfig, ConfigNode as Conf
 from cylc.flow.parsec.upgrade import upgrader
 from cylc.flow.parsec.validate import (
     DurationFloat, CylcConfigValidator as VDR, cylc_config_validate)
-from cylc.flow.platforms import fail_if_platform_and_host_conflict
+from cylc.flow.platforms import get_platform
 
 # Regex to check whether a string is a command
 REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
@@ -1358,63 +1358,11 @@ def upg(cfg, descr):
     except KeyError:
         pass
 
-    host_to_platform_warner(cfg)
-
-
-def host_to_platform_warner(cfg, nwarnings=5):
-    """Look through tasks in runtime section and warns if logic at task run
-    will attempt to upgrade Cylc 7 host logic to Cylc 8 platform logic.
-    Because this warning will apply to many tasks we will only provide the
-    first `nwarnings` warnings.
-
-    This upgrade cannot be performed here because it needs to be applied
-    after inheritance is applied.
-
-    Currently the following config items trigger a warning.
-
-    - [remote]host
-    - [job]batch system
-    - [job]batch submit command template
-
-    We can also be absolutely sure that any of these three in combination
-    with a platforms setting will cause an error later. Whilst inheritance
-    may cause this in cases that we cannot catch here, we might as well
-    return errors that we can catch here.
-    """
-    if 'runtime' not in cfg:
-        # this whole function is pointless
-        return
-
-    forbidden_with_platform = [
-        ('remote', 'host'),
-        ('job', 'batch system'),
-        ('job', 'batch submit command template')
-    ]
-    warnlines = []
-    limit_count = 0
-    for task_name, task_cfg in cfg['runtime'].items():
-        fail_if_platform_and_host_conflict(task_cfg, task_name)
-        for section, key in forbidden_with_platform:
-            if (
-                section in task_cfg and
-                key in task_cfg[section] and
-                task_cfg[section][key]
-            ):
-                warnlines.append(
-                    f'[{task_name}][{section}]{key} = '
-                    f'{task_cfg[section][key]}\n'
-                )
-                limit_count += 1
-        if limit_count >= nwarnings:
-            break
-
-    if warnlines:
-        LOG.warning(
-            'Deprecated "host" and "batch system" will be removed at Cylc 9, '
-            'upgrade to "platform".\n'
-            # '(<link to page in cylc7 to cylc8 transition docs>)\n'
-            f'First {nwarnings} warnings:\n' + "".join(warnlines)
-        )
+    if 'runtime' in cfg:
+        for task_name, task_cfg in cfg['runtime'].items():
+            platform = get_platform(task_cfg, task_name, warn_only=True)
+            if type(platform) == str:
+                LOG.warning(platform)
 
 
 class RawSuiteConfig(ParsecConfig):

@@ -24,27 +24,35 @@ from cylc.flow.exceptions import PlatformLookupError
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 
 
-def get_platform(task_conf=None, task_id='unknown task'):
-    """A single entry point for this module: Looking at a task config this
-    method decides whether to get platform from name, or Cylc7 config items.
+FORBIDDEN_WITH_PLATFORM = (
+    ('remote', 'host', ['localhost', None]),
+    ('job', 'batch system', [None]),
+    ('job', 'batch submit command template', [None])
+)
+
+
+def get_platform(task_conf=None, task_id='unknown task', warn_only=False):
+    """Get a platform.
+
+    Looking at a task config this method decides whether to get platform from
+    name, or Cylc7 config items.
 
     Args:
         task_conf (str, dict or dict-like such as OrderedDictWithDefaults):
             If str this is assumed to be the platform name, otherwise this
             should be a configuration for a task.
+        task_id (str):
+            Task identification string - help produce more helpful error
+            messages.
+        warn_only(bool):
+            If true, warnings about tasks requiring upgrade will be returned.
 
     Returns:
-        platform:
+        platform (platform, or string):
             Actually it returns either get_platform() or
             platform_from_job_info(), but to the user these look the same.
-
+            When working in warn_only mode, warnings are returned as strings.
     """
-
-    forbidden_with_platform = (
-        ('remote', 'host', ['localhost', None]),
-        ('job', 'batch system', [None]),
-        ('job', 'batch submit command template', [None])
-    )
 
     if task_conf is None:
         # Just a simple way of accessing localhost items.
@@ -66,27 +74,43 @@ def get_platform(task_conf=None, task_id='unknown task'):
         # local
         platform_is_localhost = True
 
-        for section, key, exceptions in forbidden_with_platform:
-            if section not in task_conf:
-                task_conf[section] = {}
+        warn_msgs = []
+        for section, key, exceptions in FORBIDDEN_WITH_PLATFORM:
+            # if section not in task_conf:
+            #     task_conf[section] = {}
             if (
+                section in task_conf and
                 key in task_conf[section] and
                 task_conf[section][key] not in exceptions
             ):
                 platform_is_localhost = False
+                if warn_only:
+                    warn_msgs.append(
+                        f"[runtime][{task_id}][{section}]{key} = "
+                        f"{task_conf[section][key]}\n"
+                    )
 
         if platform_is_localhost:
             output = platform_from_name()
 
+        elif warn_only:
+            output = (
+                f'Task {task_id} Deprecated "host" and "batch system" will be '
+                'removed at Cylc 9 - upgrade to platform:'
+                f'\n{"".join(warn_msgs)}'
+            )
+
         else:
-            # from cylc.flow import LOG
-            # LOG.critical(f"task_conf is {task_conf['job']}")
-            # LOG.critical(f"task_conf is {task_conf['remote']}")
+            task_job_section, task_remote_section = {}, {}
+            if 'job' in task_conf:
+                task_job_section = task_conf['job']
+            if 'remote' in task_conf:
+                task_remote_section = task_conf['remote']
             output = platform_from_name(
                 platform_from_job_info(
                     glbl_cfg(cached=False).get(['platforms']),
-                    task_conf['job'],
-                    task_conf['remote']
+                    task_job_section,
+                    task_remote_section
                 )
             )
 
@@ -227,6 +251,7 @@ def platform_from_job_info(platforms, job, remote):
         >>> platform_from_job_info(platforms, job, remote)
         'localhost'
     """
+
     # These settings are removed from the incoming dictionaries for special
     # handling later - we want more than a simple match:
     #   - In the case of host we also want a regex match to the platform name
@@ -315,7 +340,7 @@ def get_host_from_platform(platform, method=None):
         )
 
 
-def fail_if_platform_and_host_conflict(task_conf, task_name):
+def fail_if_platform_and_host_conflict(task_conf, task_name, warn_only=False):
     """Raise an error if task spec contains platform and forbidden host items.
 
     Args:
@@ -328,15 +353,9 @@ def fail_if_platform_and_host_conflict(task_conf, task_name):
         PlatformLookupError - if platform and host items conflict
 
     """
-    forbidden_with_platform = (
-        ('remote', 'host', ['localhost', None]),
-        ('job', 'batch system', [None]),
-        ('job', 'batch submit command template', [None])
-    )
-
     if 'platform' in task_conf and task_conf['platform']:
         fail_items = ''
-        for section, key, _ in forbidden_with_platform:
+        for section, key, _ in FORBIDDEN_WITH_PLATFORM:
             if (
                 section in task_conf and
                 key in task_conf[section] and

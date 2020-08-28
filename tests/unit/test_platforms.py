@@ -445,3 +445,20 @@ def test_get_platform_using_platform_from_job_info(
         '''
     )
     assert get_platform(task_conf)['name'] == expected_platform_name
+
+
+def test_get_platform_warn_mode(caplog):
+    task_conf = {
+        'remote': {'host': 'cylcdevbox'},
+        'job': {
+            'batch system': 'pbs',
+            'batch submit command template': 'some template'
+        }
+    }
+    output = get_platform(task_conf, warn_only=True)
+    for forbiddenitem in (
+        'batch submit command template = some template',
+        'host = cylcdevbox',
+        'batch system = pbs'
+    ):
+        assert forbiddenitem in output
