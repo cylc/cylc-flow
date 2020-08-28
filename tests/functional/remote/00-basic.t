@@ -41,8 +41,11 @@ cmp_ok 'foo-host.txt' <<<"${CYLC_TEST_PLATFORM}"
 #-------------------------------------------------------------------------------
 # Check that the remote job has actually been run on the correct remote by
 # checking it's job.out file for @CYLC_TEST_HOST
+REMOTE_HOST_FQDN="$(ssh "${CYLC_TEST_HOST}" hostname -f)"
 TEST_NAME=${TEST_NAME_BASE}-ensure-remote-run
-grep_ok "@$(hostname -f)" "${SUITE_RUN_DIR}/log/job/1/foo/NN/job.out"
+grep_ok \
+    "@$REMOTE_HOST_FQDN" \
+    "${SUITE_RUN_DIR}/log/job/1/foo/NN/job.out"
 #-------------------------------------------------------------------------------
 purge
 exit
