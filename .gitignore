@@ -18,6 +18,9 @@ __pycache__/
 # profiling
 .profiling
 
+# function test log file
+.prove
+
 # coverage
 .coverage
 .coverage.*
