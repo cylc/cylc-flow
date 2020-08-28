@@ -139,17 +139,18 @@ def platform_from_name(platform_name=None, platforms=None):
     """
     if platforms is None:
         platforms = glbl_cfg().get(['platforms'])
-        platform_aliases = glbl_cfg().get(['platform aliases'])
+    platform_aliases = glbl_cfg().get(['platform aliases'])
 
     if platform_name is None:
         platform_data = deepcopy(platforms['localhost'])
         platform_data['name'] = 'localhost'
         return platform_data
 
-    from random import choice
     for platform_name_re in reversed(list(platform_aliases)):
         if re.fullmatch(platform_name_re, platform_name):
-            platform_name = choice(platform_aliases[platform_name_re]['platforms'])
+            platform_name = random.choice(
+                platform_aliases[platform_name_re]['platforms']
+            )
 
     # The list is reversed to allow user-set platforms (which are loaded
     # later than site set platforms) to be matched first and override site
