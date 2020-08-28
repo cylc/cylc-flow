@@ -420,6 +420,9 @@ def get_pipe(opts, formatter, scan_dir=None):
     if show_active and graphql_fields:
         pipe |= graphql_query(graphql_fields, filters=graphql_filters)
 
+    # yield results as they are processed
+    pipe.preserve_order = False
+
     return pipe
 
 
