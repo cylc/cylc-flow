@@ -55,18 +55,17 @@ jobs:
       matrix:
         python-version: ['3.7']
         tests: [
-          ['tests/f', '1/4'],
-          ['tests/f', '2/4'],
-          ['tests/f', '3/4'],
-          ['tests/f', '4/4'],
-          ['tests/k', '1/1']
-        ]
-        platform: [
-          'local_background_indep_tcp',
+          ['tests/f', '1/4', 'local_background_indep_tcp'],
+          ['tests/f', '2/4', 'local_background_indep_tcp'],
+          ['tests/f', '3/4', 'local_background_indep_tcp'],
+          ['tests/f', '4/4', 'local_background_indep_tcp'],
+          ['tests/k', '1/1', 'local_background_indep_tcp'],
+          ['tests/f tests/k', '1/1', 'remote_background_indep_poll']
         ]
     env:
       BASE: ${{ matrix.tests[0] }}
       CHUNK: ${{ matrix.tests[1] }}
+      PLATFORM: ${{ matrix.tests[2] }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -105,14 +104,15 @@ jobs:
           else
               NPROC=8
           fi
+          # NOTE: $BASE is purposefully un-quoted
           etc/bin/run-functional-tests \
-              --platform "${{ matrix.platform }}" \
+              --platform "${PLATFORM}" \
               -j "${NPROC}" \
-              --state=save "${BASE}" \
+              --state=save ${BASE} \
           || (
               echo '=== Re-running Failed Tests ==='
               CHUNK= etc/bin/run-functional-tests \
-                  --platform "${{ matrix.platform }}" \
+                  --platform "${PLATFORM}" \
                   -j "${NPROC}" \
                   --state=save,failed
           )

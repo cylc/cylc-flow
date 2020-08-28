@@ -40,3 +40,6 @@ venv
 
 # docker stuffs
 .docker*
+
+# operating system junk
+.DS_Store
