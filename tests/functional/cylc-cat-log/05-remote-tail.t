@@ -41,7 +41,7 @@ $SCP "${PWD}/bin/my-tailer.sh" \
 # Run detached.
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-poll_grep_suite_log -F '[foo.1] status=submitted: (received)started'
+poll_grep_suite_log -F '[foo.1] status=submitted'
 # cylc cat-log -m 't' tail-follows a file, so needs to be killed.
 # Send interrupt signal to tail command after 15 seconds.
 TEST_NAME="${TEST_NAME_BASE}-cat-log"
