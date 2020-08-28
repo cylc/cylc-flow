@@ -167,8 +167,15 @@ configure () {
         "$HOME/.cylc/flow/$(cylc version)/global.cylc"
 }
 
-run () {
+interactive () {
     docker run -it \
+        -p 42222:22 \
+        --privileged \
+        cylc-remote-indep-poll:latest
+}
+
+run () {
+    docker run -t -d \
         -p 42222:22 \
         --privileged \
         cylc-remote-indep-poll:latest
@@ -186,7 +193,7 @@ for arg in "$@"; do
         --debug)
             set -x
             ;;
-        build|configure|run)
+        build|configure|run|interactive)
             cmds+=("$arg")
             ;;
         *)
