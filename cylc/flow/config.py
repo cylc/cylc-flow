@@ -70,7 +70,8 @@ from cylc.flow.taskdef import TaskDef
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.task_trigger import TaskTrigger, Dependency
-from cylc.flow.unicode_rules import XtriggerNameValidator
+from cylc.flow.unicode_rules import (
+    XtriggerNameValidator, MessageTriggerValidator)
 from cylc.flow.wallclock import (
     get_current_time_string, set_utc_mode, get_utc_mode)
 from cylc.flow.xtrigger_mgr import XtriggerManager
@@ -1603,10 +1604,9 @@ class SuiteConfig:
                 if suicide:
                     continue
                 if orig_lexpr != lexpr:
-                    LOG.error("%s => %s" % (orig_lexpr, right))
+                    LOG.error(f"{orig_lexpr} => {right}")
                 raise SuiteConfigError(
-                    "self-edge detected: %s => %s" % (
-                        left, right))
+                    f"self-edge detected: {left} => {right}")
             self.edges[seq].add((left, right, suicide, conditional))
 
     def generate_taskdefs(self, orig_expr, left_nodes, right, seq, suicide):
@@ -1661,6 +1661,13 @@ class SuiteConfig:
 
             # Record custom message outputs.
             for item in self.cfg['runtime'][name]['outputs'].items():
+                output, task_message = item
+                valid, msg = MessageTriggerValidator.validate(task_message)
+                if not valid:
+                    raise SuiteConfigError(
+                        f'Invalid task message "[runtime][{name}][outputs]'
+                        f'{output} = {task_message}" - {msg}'
+                    )
                 taskdef.outputs.add(item)
 
     def generate_triggers(self, lexpression, left_nodes, right, seq,
@@ -1693,7 +1700,7 @@ class SuiteConfig:
 
             # Qualifier.
             outputs = self.cfg['runtime'][name]['outputs']
-            if outputs and output in outputs:
+            if outputs and (output in outputs):
                 # Qualifier is a task message.
                 qualifier = outputs[output]
             elif output:

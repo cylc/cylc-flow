@@ -22,20 +22,10 @@ Change the logging severity level of a running suite.  Only messages at
 or above the chosen severity level will be logged; for example, if you
 choose WARNING, only warnings and critical messages will be logged."""
 
-from logging import CRITICAL, ERROR, WARNING, INFO, DEBUG
-
+from cylc.flow import LOG_LEVELS
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.terminal import cli_function
-
-LOGGING_LVL_OF = {
-    "INFO": INFO,
-    "NORMAL": INFO,
-    "WARNING": WARNING,
-    "ERROR": ERROR,
-    "CRITICAL": CRITICAL,
-    "DEBUG": DEBUG,
-}
 
 
 def get_option_parser():
@@ -43,7 +33,7 @@ def get_option_parser():
         __doc__, comms=True,
         argdoc=[
             ('REG', 'Suite name'),
-            ('LEVEL', ', '.join(LOGGING_LVL_OF.keys()))
+            ('LEVEL', ', '.join(LOG_LEVELS.keys()))
         ]
     )
 
@@ -53,7 +43,7 @@ def get_option_parser():
 @cli_function(get_option_parser)
 def main(parser, options, suite, severity_str):
     try:
-        severity = LOGGING_LVL_OF[severity_str]
+        severity = LOG_LEVELS[severity_str]
     except KeyError:
         parser.error("Illegal logging level, %s" % severity_str)
 

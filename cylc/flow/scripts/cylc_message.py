@@ -53,7 +53,7 @@ Note "${CYLC_SUITE_NAME}" and "${CYLC_TASK_JOB}" are made available in task job
 environments - you do not need to write their actual values in task scripting.
 
 Each message can be prefixed with a severity level using the syntax 'SEVERITY:
-MESSAGE'.
+MESSAGE' (colons cannot be used unless such a prefix is provided).
 
 The default message severity is INFO. The --severity=SEVERITY option can be
 used to set the default severity level for all unprefixed messages.
@@ -111,7 +111,7 @@ def main(parser, options, *args):
     # Read messages from STDIN
     if '-' in message_strs:
         current_message_str = ''
-        while True:  # Note: for line in sys.stdin: can hang
+        while True:  # Note: `for line in sys.stdin:` can hang
             message_str = sys.stdin.readline()
             if message_str.strip():
                 # non-empty line
