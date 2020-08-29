@@ -74,6 +74,10 @@ class SuiteRuntimeClient(ZMQSocketBase):
             the contact file.
 
     Attributes:
+        host (str):
+            Suite host name.
+        port (int):
+            Suite host port.
         timeout_handler (function):
             Optional function which runs before ClientTimeout is raised.
             This provides an interface for raising more specific exceptions in
@@ -121,6 +125,8 @@ class SuiteRuntimeClient(ZMQSocketBase):
             host, port, _ = get_location(suite)
         else:
             port = int(port)
+        self.host = host
+        self.port = port
         if timeout is None:
             timeout = self.DEFAULT_TIMEOUT
         else:
@@ -130,7 +136,7 @@ class SuiteRuntimeClient(ZMQSocketBase):
             self._timeout_handler, suite, host, port)
         self.poller = None
         # Connect the ZMQ socket on instantiation
-        self.start(host, port, srv_public_key_loc)
+        self.start(self.host, self.port, srv_public_key_loc)
         # gather header info post start
         self.header = self.get_header()
 
