@@ -122,7 +122,6 @@ class XtriggerManager:
         proc_pool: SubProcPool = None,
         suite_run_dir: str = None,
         suite_share_dir: str = None,
-        suite_work_dir: str = None,
         suite_source_dir: str = None,
     ):
         """Initialize the xtrigger manager.
