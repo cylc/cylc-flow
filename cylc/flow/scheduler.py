@@ -165,7 +165,7 @@ class Scheduler:
     owner: str = None
     host: str = None
     id: str = None  # owner|suite
-    uuid_str: str = None
+    uuid_str: SchedulerUUID = None
     contact_data: dict = None
 
     # run options
