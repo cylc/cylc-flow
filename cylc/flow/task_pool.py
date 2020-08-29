@@ -1043,7 +1043,7 @@ class TaskPool:
         try:
             children = itask.graph_children[output]
         except KeyError:
-            # No children depend on this ouput
+            # No children depend on this output
             children = []
 
         suicide = []

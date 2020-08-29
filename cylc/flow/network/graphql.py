@@ -243,7 +243,7 @@ def execute_and_validate_and_strip(
     """
     result = execute_and_validate(schema, document_ast, *args, **kwargs)
 
-    # Search request docuement to determine if 'stripNull: true' is set
+    # Search request document to determine if 'stripNull: true' is set
     # as and argument. It can not be done in the middleware, as they
     # can be Promises/futures (so may not been resolved at this point).
     variable_values = kwargs['variable_values'] or {}

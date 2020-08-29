@@ -163,7 +163,7 @@ class TaskRemoteMgr:
             return REMOTE_INIT_NOT_REQUIRED
 
         # See if a previous failed attempt to initialize this platform has
-        # occured.
+        # occurred.
         try:
             status = self.remote_init_map[platform['name']]
         except KeyError:
