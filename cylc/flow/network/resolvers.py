@@ -422,7 +422,7 @@ class BaseResolvers:
             raise
         except Exception:
             import traceback
-            logger.warn(traceback.format_exc())
+            logger.warning(traceback.format_exc())
         finally:
             for w_id in w_ids:
                 if delta_queues.get(w_id, {}).get(sub_id):
