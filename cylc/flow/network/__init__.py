@@ -42,6 +42,7 @@ from cylc.flow.suite_files import (
 )
 
 API = 5  # cylc API version
+MSG_TIMEOUT = "TIMEOUT"
 
 
 def encode_(message):

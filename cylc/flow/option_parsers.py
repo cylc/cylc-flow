@@ -299,20 +299,25 @@ class Options(Values):
         input validation:
         >>> opts(e=6)
         Traceback (most recent call last):
-        ValueError: e
+        TypeError: 'Values' object is not callable
+
+        You can reuse the object multiple times
+        >>> opts2 = PythonOptions(a=2)
+        >>> id(opts) == id(opts2)
+        False
 
     """
 
     def __init__(self, parser, overrides=None):
         if overrides is None:
             overrides = {}
-        defaults = {**parser.defaults, **overrides}
-        Values.__init__(self, defaults)
+        self.defaults = {**parser.defaults, **overrides}
 
     def __call__(self, **kwargs):
+        opts = Values(self.defaults)
         for key, value in kwargs.items():
-            if hasattr(self, key):
-                setattr(self, key, value)
+            if hasattr(opts, key):
+                setattr(opts, key, value)
             else:
                 raise ValueError(key)
-        return self
+        return opts
