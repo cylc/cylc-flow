@@ -50,8 +50,6 @@ import socket
 from contextlib import suppress
 from time import time
 
-from zmq.asyncio import install
-
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 
 

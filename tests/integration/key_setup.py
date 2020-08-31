@@ -16,7 +16,6 @@
 
 """Creates authentication keys for use in testing"""
 
-from zmq.asyncio import install
 from cylc.flow.suite_files import (
     create_server_keys,
     get_suite_srv_dir,

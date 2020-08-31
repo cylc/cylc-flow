@@ -54,7 +54,7 @@ __OUT__
 cylc stop --max-polls=60 --interval=1 "${SUITE_NAME}"
 ${SSH} "${CYLC_TEST_HOST}" \
 find "${RRUND}" -type f -name "*key*"|awk -F/ '{print $NF}'|sort >'find.out'
-cmp_ok 'find.out' <<'__OUT__'    
+cmp_ok 'find.out' <<'__OUT__'
 __OUT__
 purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"

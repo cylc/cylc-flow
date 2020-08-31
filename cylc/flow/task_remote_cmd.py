@@ -15,17 +15,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Implement "cylc remote-init" and "cylc remote-tidy"."""
 
-
 import os
 import re
 import zmq
 import tarfile
 import sys
 
-from zmq.asyncio import install
-
 import cylc.flow.flags
-from cylc.flow import LOG
 from cylc.flow.suite_files import (
     KeyInfo,
     KeyOwner,
@@ -36,7 +32,6 @@ from cylc.flow.suite_files import (
 from cylc.flow.resources import extract_resources
 
 
-FILE_BASE_UUID = 'uuid'
 REMOTE_INIT_DONE = 'REMOTE INIT DONE'
 REMOTE_INIT_NOT_REQUIRED = 'REMOTE INIT NOT REQUIRED'
 REMOTE_INIT_FAILED = 'REMOTE INIT FAILED'

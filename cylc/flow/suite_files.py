@@ -23,7 +23,6 @@ import os
 from pathlib import Path
 import re
 import shutil
-from zmq.asyncio import install
 import zmq.auth
 
 import aiofiles

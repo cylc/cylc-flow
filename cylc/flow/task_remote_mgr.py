@@ -22,8 +22,6 @@ This module provides logic to:
 - Implement basic host select functionality.
 """
 
-from os import sched_rr_get_interval
-from cylc.flow.cfgspec.globalcfg import Platform
 import os
 from shlex import quote
 import re
@@ -56,7 +54,6 @@ from cylc.flow.platforms import (
     get_host_from_platform,
     get_install_target_from_platform)
 from cylc.flow.remote import construct_platform_ssh_cmd
-from cylc.flow.wallclock import get_current_time_string
 from cylc.flow.loggingutil import FileInstallLogFileHandler
 
 REMOTE_INIT_FAILED = 'REMOTE INIT FAILED'
@@ -305,7 +302,6 @@ class TaskRemoteMgr:
             self, proc_ctx, platform, tmphandle,
             curve_auth, client_pub_key_dir):
         """Callback when "cylc remote-init" exits"""
-
         self.ready = True
         try:
             tmphandle.close()
@@ -316,7 +312,6 @@ class TaskRemoteMgr:
             if REMOTE_INIT_DONE in proc_ctx.out:
                 src_path = get_suite_run_dir(self.suite)
                 dst_path = get_remote_suite_run_dir(platform, self.suite)
-
                 log_file = ""
                 for handler in LOG.handlers:
                     if(isinstance(handler, FileInstallLogFileHandler)):
