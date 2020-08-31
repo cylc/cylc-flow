@@ -722,9 +722,9 @@ class Scheduler:
 
         """
 
-        def is_in_list(itask, distinct_itasks):
-            for distinct_itask in distinct_itasks:
-                if itask['install target'] == distinct_itask['install target']:
+        def is_in_list(platform, distinct_platform):
+            for distinct_platform in distinct_platform:
+                if platform['install target'] == distinct_platform['install target']:
                     return True
 
         distinct_install_target_platforms = []
