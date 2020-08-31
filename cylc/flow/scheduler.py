@@ -731,18 +731,17 @@ class Scheduler:
 
         for itask in self.pool.get_rh_tasks():
             if itask.state(*TASK_STATUSES_ACTIVE):
-                if not is_in_list(itask.platform, distinct_install_target_platforms):
+                if not is_in_list(itask.platform,
+                                  distinct_install_target_platforms):
                     distinct_install_target_platforms.append(itask.platform)
-               
+
         incomplete_init = False
         for platform in distinct_install_target_platforms:
-                if (
-                    self.task_job_mgr.task_remote_mgr.remote_init(
-                        platform, self.curve_auth,
-                        self.client_pub_key_dir
-                    ) is None):
-                        incomplete_init = True
-       
+            if (self.task_job_mgr.task_remote_mgr.remote_init(
+                    platform, self.curve_auth,
+                    self.client_pub_key_dir) is None):
+                incomplete_init = True
+
         if incomplete_init:
             sleep(1.0)
             # Remote init is done via process pool

@@ -229,7 +229,6 @@ class HostUtil:
                 return True
         return False
 
-
     def _is_remote_install_target(self, install_target):
         """Determines whether install_target is remote or not.
         Return True if install target has different IP address
@@ -280,7 +279,7 @@ def is_remote_platform(platform):
 
 
 def is_remote_install_target(install_target):
-    """Shorthand for HostUtil.get_inst()._is_remote_install_target(install_target)."""
+    """Shorthand for get_inst()._is_remote_install_target(install_target)."""
     return HostUtil.get_inst()._is_remote_install_target(install_target)
 
 

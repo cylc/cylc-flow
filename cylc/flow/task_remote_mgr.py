@@ -159,7 +159,6 @@ class TaskRemoteMgr:
             "python/": if source exists
 
         Args:
-
             curve_auth (ThreadAuthenticator):
                 The ZMQ authenticator.
             client_pub_key_dir (str):
@@ -182,7 +181,8 @@ class TaskRemoteMgr:
         self.install_target = platform['install target']
 
         # If task is running locally we can skip the rest of this function
-        if self.single_task_mode or not is_remote_install_target(self.install_target):
+        if (self.single_task_mode or
+                not is_remote_install_target(self.install_target)):
             LOG.debug(f"REMOTE INIT NOT REQUIRED for {self.install_target}")
             return REMOTE_INIT_NOT_REQUIRED
 
