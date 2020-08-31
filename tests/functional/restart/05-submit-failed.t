@@ -27,6 +27,7 @@ create_test_global_config '
 [platforms]
 [[test platform]]
 hosts = localhost
+install target = localhost
 batch system = at
 batch submit command template = at oh-no
 '

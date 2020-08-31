@@ -468,7 +468,7 @@ def test_rsync_includes_will_not_accept_sub_directories():
         includes = dir/, dir2/subdir2/, file1, file2
         """
     with TemporaryDirectory() as temp_dir:
-        suite_rc = Path(temp_dir, "suite.rc")
+        suite_rc = Path(temp_dir, "flow.cylc")
         with suite_rc.open(mode="w") as f:
             f.write(suiterc_content)
             f.flush()
@@ -492,7 +492,7 @@ def test_valid_rsync_includes_returns_correct_list():
         includes = dir/, dir2/, file1, file2
         """
     with TemporaryDirectory() as temp_dir:
-        suite_rc = Path(temp_dir, "suite.rc")
+        suite_rc = Path(temp_dir, "flow.cylc")
         with suite_rc.open(mode="w") as f:
             f.write(suiterc_content)
             f.flush()

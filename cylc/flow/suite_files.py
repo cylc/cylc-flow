@@ -87,7 +87,7 @@ class KeyInfo():
             if (key_owner is KeyOwner.CLIENT
                 and key_type is KeyType.PUBLIC
                     and self.install_target is not None):
-                file_name = file_name + f"_{self.install_target}"
+                file_name = f"{file_name}_{self.install_target}"
 
             if key_type == KeyType.PRIVATE:
                 file_extension = SuiteFiles.Service.PRIVATE_FILE_EXTENSION

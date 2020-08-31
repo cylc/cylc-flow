@@ -156,7 +156,7 @@ def construct_platform_ssh_cmd(raw_cmd, platform, **kwargs):
 
 
 def get_includes_to_rsync(rsync_includes=None):
-    """Returns a list of directories/files, configured in suite.rc,
+    """Returns a list of directories/files, configured in flow.cylc,
         to be included in the remote file installation.
     """
 

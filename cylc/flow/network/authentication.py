@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Authentication key setup"""
 
-from zmq.asyncio import install
 from cylc.flow.suite_files import (
     KeyInfo,
     KeyOwner,

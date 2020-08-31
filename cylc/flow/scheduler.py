@@ -101,9 +101,7 @@ from cylc.flow.wallclock import (
     get_time_string_from_unix_time as time2str,
     get_utc_mode)
 from cylc.flow.xtrigger_mgr import XtriggerManager
-from cylc.flow.platforms import (
-    get_platform,
-    get_install_target_from_platform)
+from cylc.flow.platforms import get_platform
 
 
 class SchedulerStop(CylcError):
@@ -724,7 +722,8 @@ class Scheduler:
 
         def is_in_list(platform, distinct_platform):
             for distinct_platform in distinct_platform:
-                if platform['install target'] == distinct_platform['install target']:
+                if(platform['install target']
+                   == distinct_platform['install target']):
                     return True
 
         distinct_install_target_platforms = []
