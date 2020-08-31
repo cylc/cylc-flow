@@ -721,27 +721,32 @@ class Scheduler:
         Note: tasks should all be in the runahead pool at this point.
 
         """
-        auths = set()
+
+        def is_in_list(itask, distinct_itasks):
+            for distinct_itask in distinct_itasks:
+                if itask['install target'] == distinct_itask['install target']:
+                    return True
+
+        distinct_install_target_platforms = []
+
         for itask in self.pool.get_rh_tasks():
             if itask.state(*TASK_STATUSES_ACTIVE):
-                # set the install target to platform name if not set.
-                auths.add(itask.platform)
-        while auths:
-            for platform in auths.copy():
+                if not is_in_list(itask.platform, distinct_install_target_platforms):
+                    distinct_install_target_platforms.append(itask.platform)
+               
+        incomplete_init = False
+        for platform in distinct_install_target_platforms:
                 if (
                     self.task_job_mgr.task_remote_mgr.remote_init(
                         platform, self.curve_auth,
                         self.client_pub_key_dir
-                    )
-                    is not None
-                ):
-                    auths.remove(
-                        platform
-                    )
-            if auths:
-                sleep(1.0)
-                # Remote init is done via process pool
-                self.proc_pool.process()
+                    ) is None):
+                        incomplete_init = True
+       
+        if incomplete_init:
+            sleep(1.0)
+            # Remote init is done via process pool
+            self.proc_pool.process()
         self.command_poll_tasks()
 
     def _load_task_run_times(self, row_idx, row):
