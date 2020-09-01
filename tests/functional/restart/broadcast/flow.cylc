@@ -3,7 +3,6 @@
 [cylc]
     UTC mode = True
     [[events]]
-        abort if any task fails = True
         abort on timeout = True
         timeout = PT1M
 [scheduling]

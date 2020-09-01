@@ -36,9 +36,6 @@ BASE_GLOBAL_CONFIG='
 '
 
 TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME_BASE}" <<< '
-[cylc]
-    [[events]]
-        abort if any task fails = True
 [scheduling]
     initial cycle point = 2000
     final cycle point = 9999  # test cylc/cylc-flow/issues/2799
@@ -68,7 +65,6 @@ kill_suite() {
 }
 
 log_scan2() {
-    # abort if any test fails = True
     NO_TESTS="$(( NO_TESTS - $# + 4 ))"
     if ! log_scan "$@"; then
         skip $NO_TESTS  # skip remaining tests
@@ -83,7 +79,7 @@ set_test_number "${NO_TESTS}"
 
 # run the suite
 stuck_in_the_middle
-cylc run "${SUITE_NAME}" --host="${JOKERS}"
+cylc run "${SUITE_NAME}" --host="${JOKERS}" --abort-if-any-task-fails
 poll_suite_running
 sleep 1
 

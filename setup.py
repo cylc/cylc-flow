@@ -42,6 +42,7 @@ def find_version(*file_paths):
 
 
 install_requires = [
+    'aiofiles==0.5.*',
     'ansimarkup>=1.0.0',
     'colorama>=0.4,<=1',
     'click>=7.0',
@@ -49,6 +50,7 @@ install_requires = [
     'jinja2==2.11.*',
     'metomi-isodatetime>=1!2.0.2, <1!2.1.0',
     'protobuf==3.12.1',
+    'pyuv==1.4.*',
     'pyzmq==18.1.*',
     'psutil>=5.6.0',
     'urwid==2.*'

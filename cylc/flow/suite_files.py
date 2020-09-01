@@ -18,17 +18,23 @@
 
 # Note: Some modules are NOT imported in the header. Expensive modules are only
 # imported on demand.
+
 import os
+from pathlib import Path
 import re
 import shutil
 import zmq.auth
+
+import aiofiles
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import SuiteServiceFileError
 from cylc.flow.pathutil import get_suite_run_dir
 from cylc.flow.platforms import get_platform
 from cylc.flow.hostuserutil import (
-    get_user, is_remote_host, is_remote_user
+    get_user,
+    is_remote_host,
+    is_remote_user
 )
 from cylc.flow.unicode_rules import SuiteNameValidator
 
@@ -396,6 +402,29 @@ def load_contact_file(reg, owner=None, host=None):
         raise SuiteServiceFileError("Couldn't load contact file")
 
 
+async def load_contact_file_async(reg, run_dir=None):
+    if not run_dir:
+        path = Path(
+            get_suite_srv_dir(reg),
+            SuiteFiles.Service.CONTACT
+        )
+    else:
+        path = Path(
+            run_dir,
+            SuiteFiles.Service.DIRNAME,
+            SuiteFiles.Service.CONTACT
+        )
+    try:
+        async with aiofiles.open(path, mode='r') as cont:
+            data = {}
+            async for line in cont:
+                key, value = [item.strip() for item in line.split("=", 1)]
+                data[key] = value
+            return data
+    except IOError:
+        raise SuiteServiceFileError("Couldn't load contact file")
+
+
 def parse_suite_arg(options, arg):
     """From CLI arg "SUITE", return suite name and flow.cylc path.
 
@@ -616,8 +645,7 @@ def get_suite_title(reg):
     * Assume title is not in an include-file.
     """
     title = NO_TITLE
-    for line in open(get_flow_file(reg), 'rb'):
-        line = line.decode()
+    for line in open(get_flow_file(reg), 'r'):
         if line.lstrip().startswith("[meta]"):
             # continue : title comes inside [meta] section
             continue

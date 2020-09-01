@@ -17,14 +17,15 @@
 """Module for unicode restrictions"""
 
 import re
+from cylc.flow import LOG_LEVELS
 
 
 ENGLISH_REGEX_MAP = {
     r'\w': 'alphanumeric',
     r'a-zA-Z0-9': 'latin letters and numbers',
-    r'\-': '-',
-    r'\.': '.',
-    r'\/': '/'
+    r'\-': '``-``',
+    r'\.': '``.``',
+    r'\/': '``/``'
 }
 
 
@@ -38,10 +39,12 @@ def regex_chars_to_text(chars):
         ['-', '.', '/']
         >>> regex_chars_to_text([r'\w'])
         ['alphanumeric']
+        >>> regex_chars_to_text(['not_in_map'])
+        ['not_in_map']
 
     """
     return [
-        ENGLISH_REGEX_MAP.get(char, char)
+        ENGLISH_REGEX_MAP.get(char, f'``{char}``')
         for char in chars
     ]
 
@@ -71,7 +74,7 @@ def allowed_characters(*chars):
     Example:
         >>> regex, message = allowed_characters('a', 'b', 'c')
         >>> message
-        'can only contain: a, b, c'
+        'can only contain: ``a``, ``b``, ``c``'
         >>> bool(regex.match('abc'))
         True
         >>> bool(regex.match('def'))
@@ -90,7 +93,7 @@ def not_starts_with(*chars):
     Example:
         >>> regex, message = not_starts_with('a', 'b', 'c')
         >>> message
-        'can not start with: a, b, c'
+        'can not start with: ``a``, ``b``, ``c``'
         >>> bool(regex.match('def'))
         True
         >>> bool(regex.match('adef'))
@@ -100,6 +103,29 @@ def not_starts_with(*chars):
     return (
         re.compile(r'^[^%s]' % ''.join(chars)),
         f'can not start with: {", ".join(regex_chars_to_text(chars))}'
+    )
+
+
+def not_contains_colon_unless_starts_with(*chars):
+    """Restrict use of colons.
+
+    Example:
+        >>> regex, message = not_contain_colon_unless_starts_with(
+                'INFO', 'WARNING')
+        >>> message
+        'cannot contain a colon unless starts with: ``INFO``, ``WARNING``'
+        >>> bool(regex.match('Foo: bar'))
+        False
+        >>> bool(regex.match('INFO: Foo: bar'))
+        True
+        >>> bool(regex.match('Foo bar'))
+        True
+
+    """
+    return (
+        re.compile(r'(^(%s):|^[^:]*$)' % '|'.join(chars)),
+        ('cannot contain a colon unless starts with: '
+         f'{", ".join(regex_chars_to_text(chars))}')
     )
 
 
@@ -150,4 +176,12 @@ class XtriggerNameValidator(UnicodeRuleChecker):
 
     RULES = [
         allowed_characters(r'a-zA-Z0-9', '_')
+    ]
+
+
+class MessageTriggerValidator(UnicodeRuleChecker):
+    """The rules for valid custom output message trigger contents:"""
+
+    RULES = [
+        not_contains_colon_unless_starts_with(*LOG_LEVELS.keys())
     ]

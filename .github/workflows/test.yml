@@ -73,6 +73,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y sqlite3
 
+      - name: Add .github/bin/ to PATH
+        # Sets up mocked mail command & any other custom executables
+        run: echo "::add-path::${{ github.workspace }}/.github/bin"
+
       - name: Install
         run: |
           pip install ."[all]"

@@ -139,7 +139,7 @@ class TaskDef:
         """Return the cycle points of my parents, at point."""
         parent_points = set()
         for seq in self.sequences:
-            if not seq.is_on_sequence(point):
+            if not seq.is_valid(point):
                 continue
             if seq in self.dependencies:
                 # task has prereqs in this sequence
@@ -154,7 +154,7 @@ class TaskDef:
         """Return my absolute triggers, if any, at point."""
         abs_triggers = set()
         for seq in self.sequences:
-            if not seq.is_on_sequence(point):
+            if not seq.is_valid(point):
                 continue
             if seq in self.dependencies:
                 # task has prereqs in this sequence

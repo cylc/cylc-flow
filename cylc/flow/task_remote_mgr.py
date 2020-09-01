@@ -142,6 +142,10 @@ class TaskRemoteMgr:
         Args:
             platform_name (str):
                 The name of the platform to be initialized.
+            curve_auth (ThreadAuthenticator):
+                The ZMQ authenticator.
+            client_pub_key_dir (str):
+                Client public key directory, used by the ZMQ authenticator.
 
         Return:
             REMOTE_INIT_NOT_REQUIRED:
@@ -163,7 +167,7 @@ class TaskRemoteMgr:
             return REMOTE_INIT_NOT_REQUIRED
 
         # See if a previous failed attempt to initialize this platform has
-        # occured.
+        # occurred.
         try:
             status = self.remote_init_map[platform['name']]
         except KeyError:

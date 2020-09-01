@@ -22,20 +22,18 @@ from collections import OrderedDict
 
 class OrderedDictWithDefaults(OrderedDict):
 
-    """Subclass to provide defaults fetching capability.
+    """Subclass to provide defaults fetching capability."""
 
-    Note that defining a '__missing__' method would work for foo[key],
-    but doesn't for foo.get(key).
-
-    """
+    # Note that defining a '__missing__' method would work for foo[key],
+    # but doesn't for foo.get(key).
 
     def __init__(self, *args, **kwargs):
         """Allow a defaults argument."""
         self._allow_contains_default = True
-        super(OrderedDictWithDefaults, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def __getitem__(self, key):
-        """Override to look in our special defaults attribute, if it exists."""
+        # Override to look in our special defaults attribute, if it exists.
         try:
             return OrderedDict.__getitem__(self, key)
         except KeyError:
@@ -44,7 +42,7 @@ class OrderedDictWithDefaults(OrderedDict):
             raise
 
     def __setitem__(self, *args, **kwargs):
-        """Make sure that we don't set the default value!"""
+        # Make sure that we don't set the default value!
         self._allow_contains_default = False
         return_value = OrderedDict.__setitem__(self, *args, **kwargs)
         self._allow_contains_default = True
@@ -95,12 +93,9 @@ class OrderedDictWithDefaults(OrderedDict):
         return bool(list(self.keys()))
 
     def prepend(self, key, value):
-        """Prepend new item in the ordered dict.
-
-        https://stackoverflow.com/questions/16664874/
-           how-can-i-add-an-element-at-the-top-of-an-ordereddict-in-python
-
-        """
+        """Prepend new item in the ordered dict."""
+        # https://stackoverflow.com/questions/16664874/
+        #   how-can-i-add-an-element-at-the-top-of-an-ordereddict-in-python
         self[key] = value
         self.move_to_end(key, last=False)
 
@@ -202,7 +197,7 @@ class DictTree:
         """Get an item from this tree or return `default` if not present.
 
         Note:
-            Behaviour purposefully differers from OrderedDictWithDefaults,
+            Behaviour purposefully differs from OrderedDictWithDefaults,
             this `get` method *will* return default values if present.
 
         """

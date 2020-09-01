@@ -134,7 +134,6 @@ with Conf('global.cylc', desc='''
                 Conf('interval', VDR.V_INTERVAL, desc='''
                     The interval with which this plugin is run.
                 ''')
-                Conf('foo', VDR.V_STRING, default='X')
 
             with Conf('health check', meta=MainLoopPlugin, desc='''
                 Checks the integrity of the suite run directory.

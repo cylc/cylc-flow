@@ -48,7 +48,7 @@ def main(parser, options, suite, task_id=None):
     # cylc ping SUITE
     pclient('ping_suite')  # (no need to check the result)
     if cylc.flow.flags.verbose:
-        host, port = SuiteRuntimeClient.get_location(suite)
+        host, port = pclient.host, pclient.port
         sys.stdout.write("Running on %s:%s\n" % (host, port))
     if task_id is None:
         sys.exit(0)

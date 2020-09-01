@@ -42,6 +42,7 @@ from cylc.flow.suite_files import (
 )
 
 API = 5  # cylc API version
+MSG_TIMEOUT = "TIMEOUT"
 
 
 def encode_(message):
@@ -66,8 +67,6 @@ def get_location(suite: str):
 
     Args:
         suite (str): suite name
-        owner (str): owner of the suite
-        host (str): host name
     Returns:
         Tuple[str, int, int]: tuple with the host name and port numbers.
     Raises:

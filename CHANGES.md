@@ -48,6 +48,10 @@ compatibility, the `cylc run` command will automatically symlink an existing
 
 ### Enhancements
 
+[#3724](https://github.com/cylc/cylc-flow/pull/3724) - Re-implemented
+the `cylc scan` command line interface and added a Python API for accessing
+workflow scanning functionality.
+
 [#3515](https://github.com/cylc/cylc-flow/pull/3515) - spawn-on-demand: a more
 efficient way of the evolving the workflow via the graph.
 
@@ -71,6 +75,12 @@ exporting environment variables.
 
 [#3614](https://github.com/cylc/cylc-flow/pull/3614) - Ensure the suite always
 restarts using the same time zone as the last `cylc run`.
+
+[#3788](https://github.com/cylc/cylc-flow/pull/3788) - Task messages are now
+validated.
+
+[#3614](https://github.com/cylc/cylc-flow/pull/3795) - Fix error when running
+`cylc ping --verbose $SUITE`.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0a2 (2020-07-03)__

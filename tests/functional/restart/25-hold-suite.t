@@ -21,7 +21,8 @@ set_test_number 7
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" --debug --no-detach
+suite_run_ok "${TEST_NAME_BASE}-run" \
+    cylc run "${SUITE_NAME}" --debug --no-detach --abort-if-any-task-fails
 
 sqlite3 "${SUITE_RUN_DIR}/log/db" \
     'SELECT value FROM suite_params WHERE key=="is_held"' >'suite-is-held.out'

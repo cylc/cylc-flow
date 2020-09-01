@@ -195,7 +195,6 @@
         <keyword>abort if stalled handler fails</keyword>
         <keyword>abort if shutdown handler fails</keyword>
         <keyword>abort if inactivity handler fails</keyword>
-        <keyword>abort if any task fails</keyword>
         <keyword>UTC mode</keyword>
         <keyword>URL</keyword>
     </context>

@@ -23,7 +23,6 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [cylc]
     cycle point format = %Y
     [[events]]
-        abort if any task fails = True
         abort on stalled = True
 [scheduling]
     initial cycle point = 2018
@@ -36,13 +35,13 @@ __FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --no-detach --stop-point=2019 --mode=simulation "${SUITE_NAME}"
+    cylc run --no-detach --stop-point=2019 --mode=simulation --abort-if-any-task-fails "${SUITE_NAME}"
 # Force a waiting task into a running task
 sqlite3 "${HOME}/cylc-run/${SUITE_NAME}/.service/db" \
     'UPDATE task_states SET status="running" WHERE name=="t1" AND cycle=="2019"'
 sqlite3 "${HOME}/cylc-run/${SUITE_NAME}/.service/db" \
     'UPDATE task_pool SET status="running" WHERE name=="t1" AND cycle=="2019"'
 suite_run_ok "${TEST_NAME_BASE}-restart" \
-    cylc restart --debug --no-detach --until=2020 --mode=simulation "${SUITE_NAME}"
+    cylc restart --debug --no-detach --until=2020 --mode=simulation --abort-if-any-task-fails "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

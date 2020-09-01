@@ -240,6 +240,8 @@ with Conf(
             ''')
 
         with Conf('events'):
+            # Note: default of None for V_STRING_LIST is used to differentiate
+            # between: value not set vs value set to empty
             Conf('handlers', VDR.V_STRING_LIST, None)
             Conf('handler events', VDR.V_STRING_LIST, None)
             Conf('startup handler', VDR.V_STRING_LIST, None)
@@ -255,7 +257,6 @@ with Conf(
             Conf('abort if timeout handler fails', VDR.V_BOOLEAN)
             Conf('abort if inactivity handler fails', VDR.V_BOOLEAN)
             Conf('abort if stalled handler fails', VDR.V_BOOLEAN)
-            Conf('abort if any task fails', VDR.V_BOOLEAN)
             Conf('abort on stalled', VDR.V_BOOLEAN)
             Conf('abort on timeout', VDR.V_BOOLEAN)
             Conf('abort on inactivity', VDR.V_BOOLEAN)
@@ -305,7 +306,11 @@ with Conf(
             host (adjusted to UTC if the suite is in UTC mode but the host is
             not) to minute resolution.  Minutes (or hours, etc.) may be
             ignored depending on the value of
+
             :cylc:conf:`flow.cylc[cylc]cycle point format`.
+
+            For more information on setting the initial cycle point relative
+            to the current time see :ref:`setting-the-icp-relative-to-now`.
         ''')
         Conf('final cycle point', VDR.V_STRING, desc='''
             Cycling tasks are held once they pass the final cycle point, if
@@ -772,8 +777,8 @@ with Conf(
 
                 The top level share and work directory location can be changed
                 (e.g. to a large data area) by a global config setting (see
-                :cylc:conf:`global.cylc[hosts][<hostname glob>]
-                work directory`).
+                :cylc:conf:`
+                global.cylc[platforms][<platform name>]work directory`).
 
                 .. note::
 
@@ -1301,11 +1306,9 @@ def upg(cfg, descr):
     u.obsolete(
         '8.0.0',
         ['cylc', 'health check interval'])
-    u.deprecate(
-        '8.0.0',
-        ['cylc', 'abort if any task fails'],
-        ['cylc', 'events', 'abort if any task fails'])
     u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'shell'])
+    u.obsolete('8.0.0', ['cylc', 'abort if any task fails'])
+    u.obsolete('8.0.0', ['cylc', 'events', 'abort if any task fails'])
     # TODO uncomment these deprecations when ready - see todo in
     # [runtime][__MANY__] section.
     # for job_setting in [

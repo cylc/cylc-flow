@@ -1,0 +1,12 @@
+Initial point: 1
+Final point: 6
+[dad.1] -triggered off []
+[dad.2] -triggered off []
+[dad.3] -triggered off []
+[child.1] -triggered off ['dad.1']
+[child.2] -triggered off ['dad.2']
+[child.3] -triggered off ['dad.3']
+[mum.5] -triggered off []
+[child.4] -triggered off []
+[child.5] -triggered off ['mum.5']
+[child.6] -triggered off []

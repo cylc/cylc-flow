@@ -234,6 +234,12 @@ def get_option_parser(is_restart, add_std_opts=False):
         metavar="PLUGIN_NAME", action="append", dest="main_loop"
     )
 
+    parser.add_option(
+        "--abort-if-any-task-fails",
+        help="If set workflow will abort with status 1 if any task fails.",
+        action="store_true", default=False, dest="abort_if_any_task_fails"
+    )
+
     parser.set_defaults(stop_point_string=None)
     if add_std_opts:
         # This is for the API wrapper for integration tests. Otherwise (CLI

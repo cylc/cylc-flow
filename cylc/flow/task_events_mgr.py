@@ -26,7 +26,7 @@ This module provides logic to:
 """
 
 from collections import namedtuple
-from logging import getLevelName, CRITICAL, ERROR, WARNING, INFO, DEBUG
+from logging import getLevelName, INFO, DEBUG
 import os
 from shlex import quote
 import shlex
@@ -34,7 +34,7 @@ from time import time
 
 from cylc.flow.parsec.config import ItemNotFoundError
 
-from cylc.flow import LOG
+from cylc.flow import LOG, LOG_LEVELS
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.hostuserutil import get_host, get_user
 from cylc.flow.pathutil import (
@@ -124,14 +124,6 @@ class TaskEventsManager():
     FLAG_POLLED = "(polled)"
     FLAG_POLLED_IGNORED = "(polled-ignored)"
     KEY_EXECUTE_TIME_LIMIT = 'execution_time_limit'
-    LEVELS = {
-        "INFO": INFO,
-        "NORMAL": INFO,
-        "WARNING": WARNING,
-        "ERROR": ERROR,
-        "CRITICAL": CRITICAL,
-        "DEBUG": DEBUG,
-    }
     NON_UNIQUE_EVENTS = ('warning', 'critical', 'custom')
 
     def __init__(self, suite, proc_pool, suite_db_mgr,
@@ -454,7 +446,7 @@ class TaskEventsManager():
             LOG.debug(
                 '[%s] status=%s: unhandled: %s',
                 itask, itask.state.status, message)
-            if severity in [CRITICAL, ERROR, WARNING, INFO, DEBUG]:
+            if severity in LOG_LEVELS.values():
                 severity = getLevelName(severity)
             self._db_events_insert(
                 itask, ("message %s" % str(severity).lower()), message)
@@ -501,7 +493,7 @@ class TaskEventsManager():
                 timestamp, submit_num, itask.flow_label)
             return False
         LOG.log(
-            self.LEVELS.get(severity, INFO), logfmt, itask, itask.state, flag,
+            LOG_LEVELS.get(severity, INFO), logfmt, itask, itask.state, flag,
             message, timestamp, submit_num, itask.flow_label)
         return True
 

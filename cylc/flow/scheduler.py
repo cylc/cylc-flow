@@ -167,7 +167,7 @@ class Scheduler:
     owner: str = None
     host: str = None
     id: str = None  # owner|suite
-    uuid_str: str = None
+    uuid_str: SchedulerUUID = None
     contact_data: dict = None
 
     # run options
@@ -1547,7 +1547,15 @@ class Scheduler:
 
     def suite_auto_restart(self, max_retries=3):
         """Attempt to restart the suite assuming it has already stopped."""
-        cmd = ['cylc', 'restart', quote(self.suite)]
+        if self.options.abort_if_any_task_fails:
+            cmd = [
+                'cylc',
+                'restart',
+                '--abort-if-any-task-fails',
+                quote(self.suite)
+            ]
+        else:
+            cmd = ['cylc', 'restart', quote(self.suite)]
 
         for attempt_no in range(max_retries):
             new_host = select_suite_host(cached=False)[0]
@@ -1969,16 +1977,16 @@ class Scheduler:
 
     def filter_initial_task_list(self, inlist):
         """Return list of initial tasks after applying a filter."""
-        included_by_rc = self.config.cfg[
+        included_by_config = self.config.cfg[
             'scheduling']['special tasks']['include at start-up']
-        excluded_by_rc = self.config.cfg[
+        excluded_by_config = self.config.cfg[
             'scheduling']['special tasks']['exclude at start-up']
         outlist = []
         for name in inlist:
-            if name in excluded_by_rc:
+            if name in excluded_by_config:
                 continue
-            if len(included_by_rc) > 0:
-                if name not in included_by_rc:
+            if len(included_by_config) > 0:
+                if name not in included_by_config:
                     continue
             outlist.append(name)
         return outlist

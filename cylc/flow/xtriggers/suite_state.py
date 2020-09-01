@@ -35,6 +35,8 @@ def suite_state(suite, task, point, offset=None, status='succeeded',
             The suite to interrogate.
         task (str):
             The name of the task to query.
+        point (str):
+            The cycle point.
         offset (str):
             The offset between the cycle this xtrigger is used in and the one
             it is querying for as an ISO8601 time duration.
