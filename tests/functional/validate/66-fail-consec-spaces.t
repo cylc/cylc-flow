@@ -20,6 +20,13 @@
 . "$(dirname "$0")/test_header"
 set_test_number 2
 
+create_test_global_config "" "
+[platforms]
+  [[wibble]]
+    hosts = localhost
+    batch system = pbs
+"
+
 TEST_NAME="${TEST_NAME_BASE}-val"
 cat > flow.cylc <<__END__
 [scheduling]
@@ -27,8 +34,7 @@ cat > flow.cylc <<__END__
         R1 = task1
  [runtime]
      [[HPC]]
-        [[[job]]]
-           batch system = pbs
+        platform = wibble
         [[[directives]]]
            -l select=1:ncpus=1:mem=5GB
      [[task1]]

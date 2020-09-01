@@ -42,7 +42,9 @@ from cylc.flow.broadcast_mgr import BroadcastMgr
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.config import SuiteConfig
 from cylc.flow.cycling.loader import get_point
-from cylc.flow.exceptions import CylcError
+from cylc.flow.exceptions import (
+    CylcError, SuiteConfigError, PlatformLookupError
+)
 import cylc.flow.flags
 from cylc.flow.host_select import select_suite_host
 from cylc.flow.hostuserutil import get_host, get_user
@@ -98,7 +100,7 @@ from cylc.flow.wallclock import (
     get_time_string_from_unix_time as time2str,
     get_utc_mode)
 from cylc.flow.xtrigger_mgr import XtriggerManager
-from cylc.flow.platforms import platform_from_name
+from cylc.flow.platforms import get_platform
 
 
 class SchedulerStop(CylcError):
@@ -1230,7 +1232,7 @@ class Scheduler:
             fields.PUBLISH_PORT:
                 str(self.publisher.port),
             fields.SSH_USE_LOGIN_SHELL:
-                str(platform_from_name()['use login shell']),
+                str(get_platform()['use login shell']),
             fields.SUITE_RUN_DIR_ON_SUITE_HOST:
                 self.suite_run_dir,
             fields.UUID:
@@ -1815,6 +1817,10 @@ class Scheduler:
             LOG.info('Suite shutting down - %s', reason.args[0])
         elif isinstance(reason, SchedulerError):
             LOG.error('Suite shutting down - %s', reason)
+        elif isinstance(reason, SuiteConfigError):
+            LOG.error(f'{SuiteConfigError.__name__}: {reason}')
+        elif isinstance(reason, PlatformLookupError):
+            LOG.error(f'{PlatformLookupError.__name__}: {reason}')
         else:
             LOG.exception(reason)
             LOG.critical('Suite shutting down - %s', reason)

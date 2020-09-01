@@ -22,6 +22,13 @@ skip_darwin 'atrun hard to configure on Mac OS'
 set_test_number 2
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
+create_test_global_config "" "
+[platforms]
+  [[atform]]
+    batch system = at
+    hosts = localhost
+"
+
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate "${SUITE_NAME}"
 # By setting "SHELL=/bin/tcsh", "at" would run its command under "/bin/tcsh",

@@ -22,6 +22,12 @@ set_test_number 1
 
 TEST_NAME="${TEST_NAME_BASE}-val"
 
+create_test_global_config "" "
+    [platforms]
+        [[lewis]]
+            hosts = localhost
+"
+
 cat >'flow.cylc' <<'__FLOW_CONFIG__'
 [meta]
     title = "Test validation of simple multiple inheritance"

@@ -26,9 +26,7 @@ from cylc.flow.parsec.config import ParsecConfig, ConfigNode as Conf
 from cylc.flow.parsec.upgrade import upgrader
 from cylc.flow.parsec.validate import (
     DurationFloat, CylcConfigValidator as VDR, cylc_config_validate)
-from cylc.flow.platforms import platform_from_job_info
-from cylc.flow.exceptions import PlatformLookupError
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.platforms import get_platform
 
 # Regex to check whether a string is a command
 REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
@@ -937,7 +935,7 @@ with Conf(
                 This section configures the means by which cylc submits task
                 job scripts to run.
             '''):
-                Conf('batch system', VDR.V_STRING, 'background')
+                Conf('batch system', VDR.V_STRING)
                 Conf('batch submit command template', VDR.V_STRING)
                 # TODO All the remaining items to be moved to top level of
                 # TASK when platforms work is completed.
@@ -1363,126 +1361,11 @@ def upg(cfg, descr):
     except KeyError:
         pass
 
-    # TODO - uncomment this fn so that we actually use the host to platform
-    # upgrader
-    # cfg = host_to_platform(cfg)
-
-
-def host_to_platform_upgrader(cfg):
-    """Upgrade a config with host settings to a config with platform settings
-    if it is appropriate to do so.
-
-                       +-------------------------------+
-                       | Is platform set in this       |
-                       | [runtime][TASK]?              |
-                       +-------------------------------+
-                          |YES                      |NO
-                          |                         |
-    +---------------------v---------+      +--------+--------------+
-    | Are any forbidden items set   |      | host == $(function)?  |
-    | in any [runtime][TASK]        |      +-+---------------------+
-    | [job] or [remote] section     |     NO |          |YES
-    |                               |        |  +-------v------------------+
-    +-------------------------------+        |  | Log - evaluate at task   |
-              |YES            |NO            |  | submit                   |
-              |               +-------+      |  |                          |
-              |                       |      |  +--------------------------+
-    +---------v---------------------+ |      |
-    | FAIL LOUDLY                   | |    +-v-----------------------------+
-    +-------------------------------+ |    | * Run platform_from_job_info()|
-                                      |    | * handle reverse lookup fail  |
-                                      |    | * add platform                |
-                                      |    | * delete forbidden settings   |
-                                      |    +-------------------------------+
-                                      |
-                                      |    +-------------------------------+
-                                      +----> Return without changes        |
-                                           +-------------------------------+
-
-    Args (cfg):
-        config object to be upgraded
-
-    Returns (cfg):
-        upgraded config object
-    """
-    # If platform and old settings are set fail
-    # and remote should be added to this forbidden list
-    forbidden_with_platform = {
-        'host', 'batch system', 'batch submit command template'
-    }
-
-    for task_name, task_spec in cfg['runtime'].items():
-        if (
-            'platform' in task_spec and 'job' in task_spec or
-            'platform' in task_spec and 'remote' in task_spec
-        ):
-            if (
-                'platform' in task_spec and
-                forbidden_with_platform & {
-                    *task_spec['job'], *task_spec['remote']
-                }
-            ):
-                # Fail Loudly and Horribly
-                raise PlatformLookupError(
-                    f"A mixture of Cylc 7 (host) and Cylc 8 (platform logic)"
-                    f" should not be used. Task {task_name} set platform "
-                    f"and item in {forbidden_with_platform}"
-                )
-
-        elif 'platform' in task_spec:
-            # Return config unchanged
-            continue
-
-        else:
-            # Add empty dicts if appropriate sections not present.
-            if 'job' in task_spec:
-                task_spec_job = task_spec['job']
-            else:
-                task_spec_job = {}
-            if 'remote' in task_spec:
-                task_spec_remote = task_spec['remote']
-            else:
-                task_spec_remote = {}
-
-            # Deal with case where host is a function and we cannot auto
-            # upgrade at the time of loading the config.
-            if (
-                'host' in task_spec_remote and
-                REC_COMMAND.match(task_spec['remote']['host'])
-            ):
-                LOG.debug(
-                    f"The host setting of '{task_name}' is a function: "
-                    f"Cylc will try to upgrade this task on job submission."
-                )
-                continue
-
-            # Attempt to use the reverse lookup
-            try:
-                platform = platform_from_job_info(
-                    glbl_cfg(cached=False).get(['platforms']),
-                    task_spec_job,
-                    task_spec_remote
-                )
-            except PlatformLookupError as exc:
-                raise PlatformLookupError(f"for task {task_name}: {exc}")
-            else:
-                # Set platform in config
-                cfg['runtime'][task_name].update({'platform': platform})
-                LOG.warning(f"Platform {platform} auto selected from ")
-                # Remove deprecated items from config
-                for old_spec_item in forbidden_with_platform:
-                    for task_section in ['job', 'remote']:
-                        if (
-                            task_section in cfg['runtime'][task_name] and
-                            old_spec_item in
-                                cfg['runtime'][task_name][task_section].keys()
-                        ):
-                            poppable = cfg['runtime'][task_name][task_section]
-                            poppable.pop(old_spec_item)
-                    LOG.warning(
-                        f"Cylc 7 {old_spec_item} removed."
-                    )
-    return cfg
+    if 'runtime' in cfg:
+        for task_name, task_cfg in cfg['runtime'].items():
+            platform = get_platform(task_cfg, task_name, warn_only=True)
+            if type(platform) == str:
+                LOG.warning(platform)
 
 
 class RawSuiteConfig(ParsecConfig):

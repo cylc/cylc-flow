@@ -72,7 +72,7 @@
         retrieve job logs retry delays = 
     [[[job]]]
         batch submit command template = 
-        batch system = background
+        batch system = 
         submission retry delays = 
         execution retry delays = 
         submission polling intervals = 
@@ -151,7 +151,7 @@
         retrieve job logs retry delays = 
     [[[job]]]
         batch submit command template = 
-        batch system = background
+        batch system = 
         submission retry delays = 
         execution retry delays = 
         submission polling intervals = 
@@ -231,7 +231,7 @@
         retrieve job logs retry delays = 
     [[[job]]]
         batch submit command template = 
-        batch system = background
+        batch system = 
         submission retry delays = 
         execution retry delays = 
         submission polling intervals = 
@@ -311,7 +311,7 @@
         retrieve job logs retry delays = 
     [[[job]]]
         batch submit command template = 
-        batch system = background
+        batch system = 
         submission retry delays = 
         execution retry delays = 
         submission polling intervals = 
@@ -391,7 +391,7 @@
         retrieve job logs retry delays = 
     [[[job]]]
         batch submit command template = 
-        batch system = background
+        batch system = 
         submission retry delays = 
         execution retry delays = 
         submission polling intervals = 
@@ -471,7 +471,7 @@
         retrieve job logs retry delays = 
     [[[job]]]
         batch submit command template = 
-        batch system = background
+        batch system = 
         submission retry delays = 
         execution retry delays = 
         submission polling intervals = 
@@ -551,7 +551,7 @@
         retrieve job logs retry delays = 
     [[[job]]]
         batch submit command template = 
-        batch system = background
+        batch system = 
         submission retry delays = 
         execution retry delays = 
         submission polling intervals = 
@@ -630,7 +630,7 @@
         retrieve job logs retry delays = 
     [[[job]]]
         batch submit command template = 
-        batch system = background
+        batch system = 
         submission retry delays = 
         execution retry delays = 
         submission polling intervals = 
@@ -710,7 +710,7 @@
         retrieve job logs retry delays = 
     [[[job]]]
         batch submit command template = 
-        batch system = background
+        batch system = 
         submission retry delays = 
         execution retry delays = 
         submission polling intervals = 
@@ -790,7 +790,7 @@
         retrieve job logs retry delays = 
     [[[job]]]
         batch submit command template = 
-        batch system = background
+        batch system = 
         submission retry delays = 
         execution retry delays = 
         submission polling intervals = 
@@ -869,7 +869,7 @@
         retrieve job logs retry delays = 
     [[[job]]]
         batch submit command template = 
-        batch system = background
+        batch system = 
         submission retry delays = 
         execution retry delays = 
         submission polling intervals = 
@@ -949,7 +949,7 @@
         retrieve job logs retry delays = 
     [[[job]]]
         batch submit command template = 
-        batch system = background
+        batch system = 
         submission retry delays = 
         execution retry delays = 
         submission polling intervals = 
@@ -1029,7 +1029,7 @@
         retrieve job logs retry delays = 
     [[[job]]]
         batch submit command template = 
-        batch system = background
+        batch system = 
         submission retry delays = 
         execution retry delays = 
         submission polling intervals = 

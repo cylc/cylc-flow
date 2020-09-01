@@ -1,0 +1,19 @@
+[cylc]
+  UTC mode = True
+
+[scheduling]
+  [[graph]]
+    R1 = """
+      non-valid-child
+    """
+[runtime]
+  [[root]]
+    script = true
+
+  [[VALID_PARENT]]
+    [[[remote]]]
+      host = parasite
+
+  [[non-valid-child]]
+    platform = wibble
+    inherit = VALID_PARENT

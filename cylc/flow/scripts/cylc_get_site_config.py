@@ -28,7 +28,7 @@ Multiple items can be specified at once."""
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
-from cylc.flow.platforms import platform_from_name
+from cylc.flow.platforms import get_platform
 
 
 def get_option_parser():
@@ -70,7 +70,7 @@ def get_option_parser():
 @cli_function(get_option_parser)
 def main(parser, options):
     if options.run_dir:
-        print(platform_from_name()['run directory'])
+        print(get_platform()['run directory'])
     elif options.site_dir:
         print(glbl_cfg().SITE_CONF_DIR)
     elif options.user_dir:

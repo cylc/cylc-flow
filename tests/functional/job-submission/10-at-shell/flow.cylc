@@ -5,5 +5,4 @@
 [runtime]
     [[foo]]
         script = true
-        [[[job]]]
-            batch system = at
+        platform = atform

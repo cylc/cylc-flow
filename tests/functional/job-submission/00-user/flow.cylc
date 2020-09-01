@@ -7,10 +7,6 @@
     [[root]]
         script = true # quick
     [[foo]]
-        [[[job]]]
-            # python/my_background.py  (deprecated location)
-            batch system = my_background
+        platform = testme
     [[bar]]
-        [[[job]]]
-            # lib/python/my_background2.py
-            batch system = my_background2
+        platform = testme2

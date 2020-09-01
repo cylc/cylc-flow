@@ -24,6 +24,99 @@ from cylc.flow.exceptions import PlatformLookupError
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 
 
+FORBIDDEN_WITH_PLATFORM = (
+    ('remote', 'host', ['localhost', None]),
+    ('job', 'batch system', [None]),
+    ('job', 'batch submit command template', [None])
+)
+
+
+def get_platform(task_conf=None, task_id='unknown task', warn_only=False):
+    """Get a platform.
+
+    Looking at a task config this method decides whether to get platform from
+    name, or Cylc7 config items.
+
+    Args:
+        task_conf (str, dict or dict-like such as OrderedDictWithDefaults):
+            If str this is assumed to be the platform name, otherwise this
+            should be a configuration for a task.
+        task_id (str):
+            Task identification string - help produce more helpful error
+            messages.
+        warn_only(bool):
+            If true, warnings about tasks requiring upgrade will be returned.
+
+    Returns:
+        platform (platform, or string):
+            Actually it returns either get_platform() or
+            platform_from_job_info(), but to the user these look the same.
+            When working in warn_only mode, warnings are returned as strings.
+    """
+
+    if task_conf is None:
+        # Just a simple way of accessing localhost items.
+        output = platform_from_name()
+
+    elif isinstance(task_conf, str):
+        # If task_conf is str assume that it is a platform name.
+        output = platform_from_name(task_conf)
+
+    elif 'platform' in task_conf and task_conf['platform']:
+        fail_if_platform_and_host_conflict(task_conf, task_id)
+
+        # If platform name exists and doesn't clash with Cylc7 Config
+        # items:
+        output = platform_from_name(task_conf['platform'])
+
+    else:
+        # If forbidden items present calculate plateform else platform is
+        # local
+        platform_is_localhost = True
+
+        warn_msgs = []
+        for section, key, exceptions in FORBIDDEN_WITH_PLATFORM:
+            # if section not in task_conf:
+            #     task_conf[section] = {}
+            if (
+                section in task_conf and
+                key in task_conf[section] and
+                task_conf[section][key] not in exceptions
+            ):
+                platform_is_localhost = False
+                if warn_only:
+                    warn_msgs.append(
+                        f"[runtime][{task_id}][{section}]{key} = "
+                        f"{task_conf[section][key]}\n"
+                    )
+
+        if platform_is_localhost:
+            output = platform_from_name()
+
+        elif warn_only:
+            output = (
+                f'Task {task_id} Deprecated "host" and "batch system" will be '
+                'removed at Cylc 9 - upgrade to platform:'
+                f'\n{"".join(warn_msgs)}'
+            )
+
+        else:
+            task_job_section, task_remote_section = {}, {}
+            if 'job' in task_conf:
+                task_job_section = task_conf['job']
+            if 'remote' in task_conf:
+                task_remote_section = task_conf['remote']
+            output = platform_from_name(
+                platform_from_job_info(
+                    glbl_cfg(cached=False).get(['platforms']),
+                    task_job_section,
+                    task_remote_section
+                )
+            )
+
+    return output
+
+
 def platform_from_name(platform_name=None, platforms=None):
     """
     Find out which job platform to use given a list of possible platforms and
@@ -158,6 +251,7 @@ def platform_from_job_info(platforms, job, remote):
         >>> platform_from_job_info(platforms, job, remote)
         'localhost'
     """
+
     # These settings are removed from the incoming dictionaries for special
     # handling later - we want more than a simple match:
     #   - In the case of host we also want a regex match to the platform name
@@ -167,7 +261,7 @@ def platform_from_job_info(platforms, job, remote):
         task_host = remote.pop('host')
     else:
         task_host = 'localhost'
-    if 'batch system' in job.keys():
+    if 'batch system' in job.keys() and job['batch system']:
         task_batch_system = job.pop('batch system')
     else:
         # Necessary? Perhaps not if batch system default is 'background'
@@ -244,3 +338,37 @@ def get_host_from_platform(platform, method=None):
         raise NotImplementedError(
             f'method {method} is not a valid input for get_host_from_platform'
         )
+
+
+def fail_if_platform_and_host_conflict(task_conf, task_name, warn_only=False):
+    """Raise an error if task spec contains platform and forbidden host items.
+
+    Args:
+        task_conf(dict, OrderedDictWithDefaults):
+            A specification to be checked.
+        task_name(string):
+            A name to be given in an error.
+
+    Raises:
+        PlatformLookupError - if platform and host items conflict
+
+    """
+    if 'platform' in task_conf and task_conf['platform']:
+        fail_items = ''
+        for section, key, _ in FORBIDDEN_WITH_PLATFORM:
+            if (
+                section in task_conf and
+                key in task_conf[section] and
+                task_conf[section][key] is not None
+            ):
+                fail_items += (
+                    f' * platform = {task_conf["platform"]} AND'
+                    f' [{section}]{key} = {task_conf[section][key]}\n'
+                )
+        if fail_items != '':
+            raise PlatformLookupError(
+                f"A mixture of Cylc 7 (host) and Cylc 8 (platform) "
+                f"logic should not be used. In this case the task "
+                f"\"{task_name}\" has the following settings which "
+                f"are not compatible:\n{fail_items}"
+            )

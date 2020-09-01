@@ -52,7 +52,7 @@ from cylc.flow.task_job_logs import (
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED,
     TASK_OUTPUT_FAILED)
-from cylc.flow.platforms import platform_from_name, get_host_from_platform
+from cylc.flow.platforms import get_platform, get_host_from_platform
 from cylc.flow.task_remote_mgr import (
     REMOTE_INIT_FAILED, TaskRemoteMgr)
 from cylc.flow.task_state import (
@@ -61,7 +61,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING)
 from cylc.flow.wallclock import get_current_time_string, get_utc_mode
 from cylc.flow.remote import construct_platform_ssh_cmd
-from cylc.flow.exceptions import PlatformLookupError
+from cylc.flow.exceptions import PlatformLookupError, TaskRemoteMgmtError
 
 
 class TaskJobManager:
@@ -671,7 +671,7 @@ class TaskJobManager:
 
         # Go through each list of itasks and carry out commands as required.
         for platform_n, itasks in sorted(auth_itasks.items()):
-            platform = platform_from_name(platform_n)
+            platform = get_platform(platform_n)
             if is_remote_platform(platform):
                 remote_mode = True
                 cmd = [cmd_key]
@@ -801,8 +801,8 @@ class TaskJobManager:
         # Determine task host settings now, just before job submission,
         # because dynamic host selection may be used.
         try:
-            platform = platform_from_name(rtconfig['platform'])
-        except PlatformLookupError as exc:
+            platform = get_platform(rtconfig, itask.identity)
+        except TaskRemoteMgmtError as exc:
             # Submit number not yet incremented
             itask.submit_num += 1
             itask.summary['platforms_used'][itask.submit_num] = ''
@@ -847,11 +847,21 @@ class TaskJobManager:
     def _prep_submit_task_job_error(self, suite, itask, action, exc):
         """Helper for self._prep_submit_task_job. On error."""
         LOG.debug("submit_num %s" % itask.submit_num)
-        LOG.debug(traceback.format_exc())
-        LOG.error(exc)
-        log_task_job_activity(
-            SubProcContext(self.JOBS_SUBMIT, action, err=exc, ret_code=1),
-            suite, itask.point, itask.tdef.name, submit_num=itask.submit_num)
+        if type(exc) == PlatformLookupError:
+            LOG.error(
+                f"{itask.identity} cannot find platform to match Cylc 7 "
+                "settings:"
+            )
+        else:
+            LOG.debug(traceback.format_exc())
+            LOG.error(exc)
+            log_task_job_activity(
+                SubProcContext(self.JOBS_SUBMIT, action, err=exc, ret_code=1),
+                suite,
+                itask.point,
+                itask.tdef.name,
+                submit_num=itask.submit_num
+            )
         # Persist
         self.suite_db_mgr.put_insert_task_jobs(itask, {
             'is_manual_submit': itask.is_manual_submit,

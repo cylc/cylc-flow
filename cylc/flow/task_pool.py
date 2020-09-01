@@ -54,7 +54,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_WAITING
 )
 from cylc.flow.wallclock import get_current_time_string
-from cylc.flow.platforms import platform_from_name
+from cylc.flow.platforms import get_platform
 
 
 class FlowLabelMgr:
@@ -382,7 +382,7 @@ class TaskPool:
                     TASK_STATUS_RUNNING
             ):
                 # update the task proxy with user@host
-                itask.platform = platform_from_name(platform_name)
+                itask.platform = get_platform(platform_name)
 
                 if time_submit:
                     itask.set_summary_time('submitted', time_submit)

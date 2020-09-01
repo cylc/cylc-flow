@@ -1333,7 +1333,7 @@ class SuiteConfig:
             # TODO - to use batch schedulers in dummy mode we need to
             # identify which resource directives to disable or modify.
             # (Only execution time limit is automatic at the moment.)
-            rtc['job']['batch system'] = 'background'
+            rtc['platform'] = 'localhost'
 
             # Disable environment, in case it depends on env-script.
             rtc['environment'] = {}

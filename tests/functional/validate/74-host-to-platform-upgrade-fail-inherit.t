@@ -15,37 +15,39 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test restart with a "ready" task. See GitHub #958 (update: and #2610).
+# Check that platform upgrader will fail if, after inheritance but not
+# before a task has both old and new settings - This should be a fail on
+# Job Submit.
+
+export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
-
-skip_darwin 'atrun hard to configure on Mac OS'
-
+require_remote_platform
 set_test_number 3
 
-create_test_global_config "" "
+create_test_global_config '' "
 [platforms]
   [[wibble]]
-    hosts = localhost
-    batch system = at
-    batch submit command template = sleep 15
-
-  [[wobble]]
-    hosts = localhost
-    batch system = at
-    batch submit command template = at now
+    hosts = ${CYLC_TEST_HOST}
+    retrieve job logs = True
 "
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
-SUITE_DIR="${RUN_DIR}/${SUITE_NAME}"
-export CYLC_SUITE_LOG_DIR="${SUITE_DIR}/log/suite"
-export PATH="${TEST_DIR}/${SUITE_NAME}/bin:$PATH"
-LOG="$(find "${CYLC_SUITE_LOG_DIR}/" -type f -name 'log.*' | sort | head -n 1)"
-run_ok "${TEST_NAME_BASE}-restart" timeout 1m my-file-poll "${LOG}"
-# foo-1 should run when the suite is released
-poll_grep_suite_log 'foo-1\.1.*succeeded'
-poll_suite_stopped
+
+# Both of these cases should validate ok.
+run_ok "${TEST_NAME_BASE}-validate" \
+  cylc validate "${SUITE_NAME}" \
+     -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}"
+
+# Run the suite
+suite_run_fail "${TEST_NAME_BASE}-run" \
+  cylc run --debug --no-detach \
+  -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}" "${SUITE_NAME}"
+
+# Grep for inherit-fail to fail later at submit time
+grep_ok "PlatformLookupError:.*non-valid-child.1"\
+  "${TEST_NAME_BASE}-run.stderr"
+
+purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

@@ -1,0 +1,19 @@
+#!Jinja2
+[cylc]
+  UTC mode = True
+
+[scheduling]
+  [[graph]]
+    R1 = """
+      just_wrong
+    """
+[runtime]
+  [[root]]
+    script = true
+
+  [[just_wrong]]
+    platform = wibble
+    [[[remote]]]
+      host = 'parasite'
+    [[[job]]]
+      batch system = 'loaf'

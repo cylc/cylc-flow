@@ -8,8 +8,7 @@
                    """
 [runtime]
     [[ATSETTINGS]]
-        [[[job]]]
-            batch system = at
+        platform = testplat
     [[rem1]]
         inherit = ATSETTINGS
         script = "sleep 10; true"
