@@ -667,7 +667,6 @@ class Job(ObjectType):
     batch_sys_conf = List(String)
     environment = List(String)
     directives = List(String)
-    param_env_tmpl = List(String)
     param_var = List(String)
     extra_logs = List(String)
     messages = List(String)

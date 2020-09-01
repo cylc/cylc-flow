@@ -108,9 +108,6 @@ class JobPool:
         j_buf.environment.extend(
             [f'{key}={val}'
              for key, val in job_conf['environment'].items()])
-        j_buf.param_env_tmpl.extend(
-            [f'{key}={val}'
-             for key, val in job_conf['param_env_tmpl'].items()])
         j_buf.param_var.extend(
             [f'{key}={val}'
              for key, val in job_conf['param_var'].items()])

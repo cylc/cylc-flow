@@ -102,8 +102,6 @@ def test_write(mocked_get_remote_suite_run_dir, fixture_get_platform):
             'environment': {'cow': '~/moo',
                             'sheep': '~baa/baa',
                             'duck': '~quack'},
-            "param_env_tmpl": {"param_env_tmpl_1": "moo",
-                               "param_env_tmpl_2": "baa"},
             "job_d": "1/baa/01",
             "try_num": 1,
             "flow_label": "aZ",
@@ -447,8 +445,6 @@ def test_write_task_environment():
                 'CYLC_TASK_DEPENDENCIES="moo neigh quack"\n    export '
                 'CYLC_TASK_TRY_NUMBER=1\n    export '
                 'CYLC_TASK_FLOW_LABEL=aZ\n    export '
-                'param_env_tmpl_1="moo"\n    export '
-                'param_env_tmpl_2="baa"\n    export '
                 'CYLC_TASK_PARAM_duck="quack"\n    export '
                 'CYLC_TASK_PARAM_mouse="squeak"\n    '
                 'CYLC_TASK_WORK_DIR_BASE=\'farm_noises/work_d\'\n}')
@@ -458,8 +454,6 @@ def test_write_task_environment():
         "dependencies": ['moo', 'neigh', 'quack'],
         "try_num": 1,
         "flow_label": "aZ",
-        "param_env_tmpl": {"param_env_tmpl_1": "moo",
-                           "param_env_tmpl_2": "baa"},
         "param_var": {"duck": "quack",
                       "mouse": "squeak"},
         "work_d": "farm_noises/work_d"

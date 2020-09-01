@@ -27,6 +27,7 @@ import cylc.flow.flags
 from cylc.flow.pathutil import (
     get_remote_suite_run_dir,
     get_remote_suite_work_dir)
+from cylc.flow.config import interpolate_template, ParamExpandError
 
 
 class JobFileWriter:
@@ -239,10 +240,6 @@ class JobFileWriter:
             '\n    export CYLC_TASK_TRY_NUMBER=%s' % job_conf['try_num'])
         handle.write(
             '\n    export CYLC_TASK_FLOW_LABEL=%s' % job_conf['flow_label'])
-        # Custom parameter environment variables
-        for var, tmpl in job_conf['param_env_tmpl'].items():
-            handle.write('\n    export %s="%s"' % (
-                var, tmpl % job_conf['param_var']))
         # Standard parameter environment variables
         for var, val in job_conf['param_var'].items():
             handle.write('\n    export CYLC_TASK_PARAM_%s="%s"' % (var, val))
@@ -254,7 +251,6 @@ class JobFileWriter:
 
     @staticmethod
     def _write_runtime_environment(handle, job_conf):
-        """Run time environment part 2."""
         if job_conf['environment']:
             handle.write("\n\ncylc__job__inst__user_env() {")
             # Generate variable assignment expressions
@@ -275,19 +271,31 @@ class JobFileWriter:
             for var in job_conf['environment']:
                 handle.write(" " + var)
             for var, val in job_conf['environment'].items():
-                value = str(val)  # (needed?)
-                value = JobFileWriter._get_variable_value_definition(value)
-                handle.write('\n    %s=%s' % (var, value))
+                value = JobFileWriter._get_variable_value_definition(
+                    str(val), job_conf.get('param_var', {})
+                )
+                handle.write(f'\n    {var}={value}')
             handle.write("\n}")
 
     @staticmethod
-    def _get_variable_value_definition(value):
-        """Create a quoted command which handles '~'
+    def _get_variable_value_definition(value, param_vars):
+        """Return a properly-quoted command which handles parameter environment
+        templates and the '~' character.
+
         Args:
-            value: value to assign to a variable
-        Returns:
-            str: Properly handled '~' value
+            value (str): value to assign to a variable
+            param_vars (dict): parameter variables ( job_conf['param_vars'] )
         """
+        # Interpolate any parameter environment template variables:
+        if param_vars:
+            try:
+                value = interpolate_template(value, param_vars)
+            except ParamExpandError:
+                # Already logged warnings in
+                # cylc.flow.config.SuiteConfig.check_param_env_tmpls()
+                pass
+
+        # Handle '~':
         match = re.match(r"^(~[^/\s]*/)(.*)$", value)
         if match:
             # ~foo/bar or ~/bar
