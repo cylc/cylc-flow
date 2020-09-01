@@ -389,7 +389,7 @@ def _scandir(future, path, request):
     """Callback helper for scandir()."""
     future.set_result([
         Path(path, directory.name)
-        for directory in request.result
+        for directory in request.result or []
     ])
 
 
