@@ -23,7 +23,7 @@ set_test_number 4
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 # run suite
-run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-run" cylc run --hold "${SUITE_NAME}"
 
 # query suite
 TEST_NAME="${TEST_NAME_BASE}-workflows"
@@ -80,8 +80,8 @@ cat > expected << __HERE__
     "workflows": [
         {
             "name": "${SUITE_NAME}",
-            "status": "running",
-            "statusMsg": "running to stop at 1",
+            "status": "held",
+            "statusMsg": "",
             "host": "${HOST}",
             "port": ${PORT},
             "owner": "${USER}",
@@ -97,10 +97,10 @@ cat > expected << __HERE__
             "runMode": "live",
             "stateTotals": {
                 "runahead": 0,
-                "waiting": 0,
+                "waiting": 1,
                 "queued": 0,
                 "expired": 0,
-                "ready": 1,
+                "ready": 0,
                 "submit-failed": 0,
                 "submit-retrying": 0,
                 "submitted": 0,
@@ -119,7 +119,7 @@ cat > expected << __HERE__
                 "root"
             ],
             "states": [
-                "ready"
+                "waiting"
             ]
         }
     ]

@@ -124,7 +124,7 @@ DELTA_FIELDS = {DELTA_ADDED, DELTA_UPDATED, DELTA_PRUNED}
 CLEAR_FIELD_MAP = {
     EDGES: set(),
     FAMILIES: set(),
-    FAMILY_PROXIES: set(),
+    FAMILY_PROXIES: {'state_totals', 'states'},
     JOBS: set(),
     TASKS: set(),
     TASK_PROXIES: {'prerequisites', 'outputs'},
@@ -248,9 +248,6 @@ class DataStoreMgr:
     Attributes:
         .ancestors (dict):
             Local store of config.get_first_parent_ancestors()
-        .cycle_states (dict):
-            Contains dict of task and tuple (state, is_held) pairs
-            for each cycle point key.
         .data (dict):
             .edges (dict):
                 cylc.flow.data_messages_pb2.PbEdge by internal ID.
@@ -293,11 +290,9 @@ class DataStoreMgr:
     __slots__ = [
         'added',
         'ancestors',
-        'cycle_states',
         'data',
         'deltas',
         'delta_queues',
-        'delta_cycle_states',
         'descendants',
         'edge_points',
         'max_point',
@@ -305,6 +300,8 @@ class DataStoreMgr:
         'parents',
         'pool_points',
         'schd',
+        'state_update_families',
+        'updated_state_families',
         'updated',
         'updates_pending',
         'workflow_id',
@@ -320,8 +317,8 @@ class DataStoreMgr:
         self.max_point = None
         self.min_point = None
         self.edge_points = {}
-        self.cycle_states = {}
-        self.delta_cycle_states = {}
+        self.state_update_families = set()
+        self.updated_state_families = set()
         # Managed data types
         self.data = {
             self.workflow_id: deepcopy(DATA_TEMPLATE)
@@ -408,7 +405,6 @@ class DataStoreMgr:
             )
 
         ancestors = config.get_first_parent_ancestors()
-        pruned_ancestors = config.get_first_parent_ancestors(pruned=True)
         descendants = config.get_first_parent_descendants()
         parents = config.get_parent_lists()
 
@@ -431,11 +427,14 @@ class DataStoreMgr:
             elapsed_time = task_mean_elapsed_time(tdef)
             if elapsed_time:
                 task.mean_elapsed_time = elapsed_time
+            task.parents.extend(
+                [f'{self.workflow_id}{ID_DELIM}{p_name}'
+                 for p_name in parents[name]])
             tasks[t_id] = task
 
         # Created family definition elements for first parent
         # ancestors of graphed tasks.
-        for key, names in pruned_ancestors.items():
+        for key, names in ancestors.items():
             for name in names:
                 if (
                         key == name or
@@ -485,8 +484,10 @@ class DataStoreMgr:
                 setattr(workflow.meta, key, val)
             else:
                 workflow.meta.user_defined.append(f'{key}={val}')
-        workflow.tree_depth = max(
-            [len(val) for key, val in pruned_ancestors.items()]) - 1
+        workflow.tree_depth = max([
+            len(val)
+            for val in config.get_first_parent_ancestors(pruned=True).values()
+        ]) - 1
 
         if get_utc_mode():
             time_zone_info = TIME_ZONE_UTC_INFO
@@ -528,9 +529,6 @@ class DataStoreMgr:
         taskdef = self.data[self.workflow_id][TASKS].get(
             t_id, self.added[TASKS].get(t_id))
 
-        self.cycle_states.setdefault(point_string, {})[taskdef.name] = (
-            None, False)
-
         update_time = time()
         tp_stamp = f'{tp_id}@{update_time}'
         tproxy = PbTaskProxy(
@@ -542,9 +540,6 @@ class DataStoreMgr:
             name=taskdef.name,
         )
         tproxy.namespace[:] = taskdef.namespace
-        tproxy.parents[:] = [
-            f'{self.workflow_id}{ID_DELIM}{point_string}{ID_DELIM}{p_name}'
-            for p_name in self.parents[taskdef.name]]
         tproxy.ancestors[:] = [
             f'{self.workflow_id}{ID_DELIM}{point_string}{ID_DELIM}{a_name}'
             for a_name in self.ancestors[taskdef.name]
@@ -560,89 +555,75 @@ class DataStoreMgr:
                 id=t_id,
             )
         ).proxies.append(tp_id)
+        self.generate_ghost_family(tproxy.first_parent, child_task=tp_id)
 
-    def generate_ghost_families(self, cycle_points=None):
-        """Generate the family-point elements from tasks in cycle points.
+    def generate_ghost_family(self, fp_id, child_fam=None, child_task=None):
+        """Generate the family-point elements from given ID if non-existent.
+
+        Adds the ID of the child proxy that called for it's creation. Also
+        generates parents recursively to root if they don't exist.
 
         Args:
-            cycle_points (set):
-                a set of cycle points.
+            fp_id (str):
+                Family proxy ID
+            child_fam (str):
+                Family proxy ID
+            child_task (str):
+                Task proxy ID
 
         Returns:
 
             None
 
         """
+
         update_time = time()
         families = self.data[self.workflow_id][FAMILIES]
         if not families:
             families = self.added[FAMILIES]
-        family_proxies = self.data[self.workflow_id][FAMILY_PROXIES]
-        for point_string, tasks in self.cycle_states.items():
-            # construct family tree based on the
-            # first-parent single-inheritance tree
-            if not cycle_points or point_string not in cycle_points:
-                continue
-            cycle_first_parents = set()
-
-            for key in tasks:
-                for parent in self.ancestors.get(key, []):
-                    if parent == key:
-                        continue
-                    cycle_first_parents.add(parent)
-
-            for f_id in families:
-                fam = families[f_id].name
-                fp_id = (
-                    f'{self.workflow_id}{ID_DELIM}'
-                    f'{point_string}{ID_DELIM}{fam}')
-                if (
-                        fp_id in family_proxies or
-                        fp_id in self.added[FAMILY_PROXIES]
-                ):
-                    continue
-                fp_delta = PbFamilyProxy(
-                    stamp=f'{fp_id}@{update_time}',
-                    id=fp_id,
-                    cycle_point=point_string,
-                    name=fam,
-                    family=f'{self.workflow_id}{ID_DELIM}{fam}',
-                    depth=families[f_id].depth,
-                )
-                fp_delta.parents[:] = [
-                    f'{self.workflow_id}{ID_DELIM}'
-                    f'{point_string}{ID_DELIM}{p_name}'
-                    for p_name in self.parents[fam]]
-                fp_delta.ancestors[:] = [
-                    f'{self.workflow_id}{ID_DELIM}'
-                    f'{point_string}{ID_DELIM}{a_name}'
-                    for a_name in self.ancestors[fam]
-                    if a_name != fam]
-                if fp_delta.ancestors:
-                    fp_delta.first_parent = fp_delta.ancestors[0]
-                if fam in cycle_first_parents:
-                    for child_name in self.descendants[fam]:
-                        ch_id = (
-                            f'{self.workflow_id}{ID_DELIM}'
-                            f'{point_string}{ID_DELIM}{child_name}'
-                        )
-                        if self.parents[child_name][0] == fam:
-                            if child_name in cycle_first_parents:
-                                fp_delta.child_families.append(ch_id)
-                            elif child_name in self.schd.config.taskdefs:
-                                fp_delta.child_tasks.append(ch_id)
-                self.added[FAMILY_PROXIES][fp_id] = fp_delta
-
-                # Add ref ID to family element
-                f_delta = PbFamily(
-                    id=f_id,
-                    stamp=f'{f_id}@{update_time}')
-                f_delta.proxies.append(fp_id)
-                self.updated[FAMILIES].setdefault(
-                    f_id, PbFamily(id=f_id)).MergeFrom(f_delta)
-
-                # Add ref ID to workflow element
-                getattr(self.updated[WORKFLOW], FAMILY_PROXIES).append(fp_id)
+        fp_data = self.data[self.workflow_id][FAMILY_PROXIES]
+        fp_added = self.added[FAMILY_PROXIES]
+        fp_updated = self.updated[FAMILY_PROXIES]
+        if fp_id in fp_data:
+            fp_delta = fp_data[fp_id]
+            fp_parent = fp_updated.setdefault(fp_id, PbFamilyProxy(id=fp_id))
+        elif fp_id in fp_added:
+            fp_delta = fp_added[fp_id]
+            fp_parent = fp_added.setdefault(fp_id, PbFamilyProxy(id=fp_id))
+        else:
+            _, _, point_string, name = fp_id.split(ID_DELIM)
+            fam = families[f'{self.workflow_id}{ID_DELIM}{name}']
+            fp_delta = PbFamilyProxy(
+                stamp=f'{fp_id}@{update_time}',
+                id=fp_id,
+                cycle_point=point_string,
+                name=fam.name,
+                family=fam.id,
+                depth=fam.depth,
+            )
+            fp_delta.ancestors[:] = [
+                f'{self.workflow_id}{ID_DELIM}{point_string}{ID_DELIM}{a_name}'
+                for a_name in self.ancestors[fam.name]
+                if a_name != fam.name]
+            if fp_delta.ancestors:
+                fp_delta.first_parent = fp_delta.ancestors[0]
+            self.added[FAMILY_PROXIES][fp_id] = fp_delta
+            fp_parent = fp_delta
+            # Add ref ID to family element
+            f_delta = PbFamily(id=fam.id, stamp=f'{fam.id}@{update_time}')
+            f_delta.proxies.append(fp_id)
+            self.updated[FAMILIES].setdefault(
+                fam.id, PbFamily(id=fam.id)).MergeFrom(f_delta)
+            # Add ref ID to workflow element
+            getattr(self.updated[WORKFLOW], FAMILY_PROXIES).append(fp_id)
+            # Generate this families parent if it not root.
+            if fp_delta.first_parent:
+                self.generate_ghost_family(
+                    fp_delta.first_parent, child_fam=fp_id)
+        if child_fam is None:
+            fp_parent.child_tasks.append(child_task)
+        elif child_fam not in fp_parent.child_families:
+            fp_parent.child_families.append(child_fam)
 
     def generate_graph_elements(self, start_point=None, stop_point=None):
         """Generate edges and [ghost] nodes (family and task proxy elements).
@@ -662,8 +643,6 @@ class DataStoreMgr:
         if stop_point is None:
             stop_point = max(self.pool_points)
 
-        # Used for generating family [ghost] nodes
-        new_points = set()
         # Reference set for workflow relations
         new_edges = set()
 
@@ -703,7 +682,6 @@ class DataStoreMgr:
             # as source may be an isolate (hence no edges).
             if s_valid:
                 s_task_id = f'{self.workflow_id}{ID_DELIM}{s_name}'
-                new_points.add(s_point)
                 # Add source points for pruning.
                 self.edge_points.setdefault(s_point_cls, set())
                 self.generate_ghost_task(s_task_id, source_id, s_point)
@@ -714,7 +692,6 @@ class DataStoreMgr:
                 target_id = (
                     f'{self.workflow_id}{ID_DELIM}{t_point}{ID_DELIM}{t_name}')
                 t_task_id = f'{self.workflow_id}{ID_DELIM}{t_name}'
-                new_points.add(t_point)
                 # Add target points to associated source points for pruning.
                 self.edge_points.setdefault(s_point_cls, set())
                 self.edge_points[s_point_cls].add(t_point_cls)
@@ -740,9 +717,6 @@ class DataStoreMgr:
                     self.updated[TASK_PROXIES].setdefault(
                         source_id,
                         PbTaskProxy(id=source_id)).edges.append(e_id)
-
-        if new_points:
-            self.generate_ghost_families(new_points)
         if new_edges:
             getattr(self.updated[WORKFLOW], EDGES).edges.extend(new_edges)
 
@@ -844,12 +818,6 @@ class DataStoreMgr:
             if edge.source in node_ids or edge.target in node_ids:
                 self.deltas[EDGES].pruned.append(e_id)
 
-        for point_string in point_strings:
-            try:
-                del self.cycle_states[point_string]
-            except KeyError:
-                continue
-
     def update_task_proxies(self, updated_tasks=None):
         """Update dynamic fields of task nodes/proxies.
 
@@ -865,7 +833,6 @@ class DataStoreMgr:
         task_proxies = self.data[self.workflow_id][TASK_PROXIES]
         update_time = time()
         task_defs = {}
-        self.delta_cycle_states = {}
 
         # update task instance
         for itask in updated_tasks:
@@ -875,10 +842,6 @@ class DataStoreMgr:
             if (tp_id not in task_proxies and
                     tp_id not in self.added[TASK_PROXIES]):
                 continue
-            self.cycle_states.setdefault(point_string, {})[name] = (
-                itask.state.status, itask.state.is_held)
-            self.delta_cycle_states.setdefault(point_string, {})[name] = (
-                itask.state.status, itask.state.is_held)
             # Gather task definitions for elapsed time recalculation.
             if name not in task_defs:
                 task_defs[name] = itask.tdef
@@ -887,6 +850,12 @@ class DataStoreMgr:
                 tp_id, PbTaskProxy(id=tp_id))
             tp_delta.stamp = f'{tp_id}@{update_time}'
             tp_delta.state = itask.state.status
+            if tp_id in task_proxies:
+                self.state_update_families.add(
+                    task_proxies[tp_id].first_parent)
+            else:
+                self.state_update_families.add(
+                    self.added[TASK_PROXIES][tp_id].first_parent)
             tp_delta.is_held = itask.state.is_held
             tp_delta.job_submits = itask.submit_num
             tp_delta.latest_message = itask.summary['latest_message']
@@ -925,63 +894,87 @@ class DataStoreMgr:
                     PbTask(id=t_id)).MergeFrom(t_delta)
                 tasks[t_id].MergeFrom(t_delta)
 
-    def update_family_proxies(self, cycle_points=None):
-        """Update state of family proxies.
+    def update_family_proxies(self):
+        """Update state & summary of flagged families and ancestors.
 
-        Args:
-            cycle_points (list):
-                Update family-node state from given list of
-                valid cycle point strings.
+        Tasks whose state are updated flag their first parent, as a family
+        to be updated, by adding their ID to a set.
+        This set is iterated over here until empty, with each members child
+        families checked/updated and first parent added to the set (flagged).
+
+        Order doesn't matter, as every family will be checked/updated once at
+        most (as an ancestor will-be/has-been added to the set of updated
+        families).
 
         """
-        family_proxies = self.data[self.workflow_id][FAMILY_PROXIES]
-        if cycle_points is None:
-            cycle_points = self.delta_cycle_states.keys()
-        if not cycle_points:
-            return
+        self.updated_state_families.clear()
+        while self.state_update_families:
+            for fam_id in self.state_update_families:
+                self._family_ascent_point_update(fam_id)
+                break
 
-        for point_string in cycle_points:
-            # For each cycle point, construct a family state tree
-            # based on the first-parent single-inheritance tree
-            c_task_states = self.delta_cycle_states.get(point_string, None)
-            if c_task_states is None:
-                continue
-            c_fam_task_states = {}
-            c_fam_task_is_held = {}
+    def _family_ascent_point_update(self, fp_id):
+        """Updates the given family and children recursively.
 
-            for key in c_task_states:
-                state, is_held = c_task_states[key]
-                if state is None:
-                    continue
+        First the child families that haven't been checked/updated are acted
+        on first by calling this function. This recursion ends at the family
+        first called with this function, which then adds it's first parent
+        ancestor to the set of families flagged for update.
 
-                for parent in self.ancestors.get(key, []):
-                    if parent == key:
-                        continue
-                    c_fam_task_states.setdefault(parent, set())
-                    c_fam_task_states[parent].add(state)
-                    c_fam_task_is_held.setdefault(parent, False)
-                    if is_held:
-                        c_fam_task_is_held[parent] = is_held
-
-            for fam, child_states in c_fam_task_states.items():
-                state = extract_group_state(child_states)
-                fp_id = (
-                    f'{self.workflow_id}{ID_DELIM}'
-                    f'{point_string}{ID_DELIM}{fam}')
-                if state is None or (
-                        fp_id not in family_proxies and
-                        fp_id not in self.added[FAMILY_PROXIES]):
-                    continue
-                # Since two fields strings are reassigned,
-                # it should be safe without copy.
-                fp_delta = PbFamilyProxy(
-                    id=fp_id,
-                    stamp=f'{fp_id}@{time()}',
-                    state=state,
-                    is_held=c_fam_task_is_held[fam]
-                )
-                self.updated[FAMILY_PROXIES].setdefault(
-                    fp_id, PbFamilyProxy()).MergeFrom(fp_delta)
+        """
+        fp_added = self.added[FAMILY_PROXIES]
+        fp_data = self.data[self.workflow_id][FAMILY_PROXIES]
+        if fp_id in fp_data:
+            fam_node = fp_data[fp_id]
+        else:
+            fam_node = fp_added[fp_id]
+        # Gather child families, then check/update recursively
+        child_fam_nodes = [
+            n_id
+            for n_id in fam_node.child_families
+            if n_id not in self.updated_state_families
+        ]
+        for child_fam_id in child_fam_nodes:
+            self._family_ascent_point_update(child_fam_id)
+        if fp_id in self.state_update_families:
+            fp_updated = self.updated[FAMILY_PROXIES]
+            tp_data = self.data[self.workflow_id][TASK_PROXIES]
+            tp_updated = self.updated[TASK_PROXIES]
+            # gather child states for count and set is_held
+            state_counter = Counter({})
+            is_held_total = 0
+            for child_id in fam_node.child_families:
+                child_node = fp_updated.get(child_id, fp_data.get(child_id))
+                if child_node is not None:
+                    is_held_total += child_node.is_held_total
+                    state_counter += Counter(dict(child_node.state_totals))
+            task_states = []
+            for tp_id in fam_node.child_tasks:
+                tp_node = tp_updated.get(tp_id, tp_data.get(tp_id))
+                if tp_node is not None:
+                    if tp_node.state:
+                        task_states.append(tp_node.state)
+                    if tp_node.is_held:
+                        is_held_total += 1
+            state_counter += Counter(task_states)
+            # created delta data element
+            fp_delta = PbFamilyProxy(
+                id=fp_id,
+                stamp=f'{fp_id}@{time()}',
+                state=extract_group_state(state_counter.keys()),
+                is_held=(is_held_total > 0),
+                is_held_total=is_held_total
+            )
+            fp_delta.states[:] = state_counter.keys()
+            for state, state_cnt in state_counter.items():
+                fp_delta.state_totals[state] = state_cnt
+            fp_updated.setdefault(fp_id, PbFamilyProxy()).MergeFrom(fp_delta)
+            # mark as updated in case parent family is updated next
+            self.updated_state_families.add(fp_id)
+            # mark parent for update
+            if fam_node.first_parent:
+                self.state_update_families.add(fam_node.first_parent)
+            self.state_update_families.remove(fp_id)
 
     def update_workflow(self):
         """Update workflow element status and state totals."""
@@ -995,27 +988,26 @@ class DataStoreMgr:
 
         # new updates/deltas not applied yet
         # so need to search/use updated states if available.
-        counter = Counter(
-            [t.state
-             for t in data[TASK_PROXIES].values()
-             if t.state and t.id not in self.updated[TASK_PROXIES]] +
-            [t.state
-             for t in self.updated[TASK_PROXIES].values()
-             if t.state]
-        )
-
-        workflow.states[:] = counter.keys()
-        for state, state_cnt in counter.items():
+        state_counter = Counter({})
+        is_held_total = 0
+        for root_id in set(
+                [n.id
+                 for n in data[FAMILY_PROXIES].values()
+                 if n.name == 'root'] +
+                [n.id
+                 for n in self.added[FAMILY_PROXIES].values()
+                 if n.name == 'root']
+        ):
+            root_node = self.updated[FAMILY_PROXIES].get(
+                root_id, data.get(root_id))
+            if root_node is not None and root_node.state:
+                is_held_total += root_node.is_held_total
+                state_counter += Counter(dict(root_node.state_totals))
+        workflow.states[:] = state_counter.keys()
+        for state, state_cnt in state_counter.items():
             workflow.state_totals[state] = state_cnt
 
-        workflow.is_held_total = len(
-            [t.is_held
-             for t in data[TASK_PROXIES].values()
-             if t.is_held and t.id not in self.updated[TASK_PROXIES]] +
-            [t.is_held
-             for t in self.updated[TASK_PROXIES].values()
-             if t.is_held]
-        )
+        workflow.is_held_total = is_held_total
 
         # Construct a workflow status string for use by monitoring clients.
         workflow.status, workflow.status_msg = map(
@@ -1037,7 +1029,7 @@ class DataStoreMgr:
         elif not updated_nodes:
             return
         self.update_task_proxies(updated_nodes)
-        self.update_family_proxies(set(str(t.point) for t in updated_nodes))
+        self.update_family_proxies()
         self.updates_pending = True
 
     def clear_deltas(self):
