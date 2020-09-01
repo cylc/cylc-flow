@@ -74,6 +74,7 @@ from cylc.flow.suite_files import (
 SERVICE = Path(SuiteFiles.Service.DIRNAME)
 CONTACT = Path(SuiteFiles.Service.CONTACT)
 SUITERC = Path(SuiteFiles.SUITE_RC)
+FLOW_FILE = Path(SuiteFiles.FLOW_FILE)
 
 
 def dir_is_flow(listing):
@@ -95,7 +96,7 @@ def dir_is_flow(listing):
     return (
         SERVICE.name in listing
         or SUITERC.name in listing  # cylc7 flow definition file name
-        or 'flow.cylc' in listing  # cylc8 flow definition file name
+        or FLOW_FILE in listing  # cylc8 flow definition file name
         or 'log' in listing
     )
 
