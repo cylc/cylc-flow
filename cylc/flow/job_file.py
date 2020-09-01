@@ -269,7 +269,7 @@ class JobFileWriter:
             #   BAR=$(script_using_FOO)
             handle.write("\n    export")
             for var in job_conf['environment']:
-                handle.write(" " + var)
+                handle.write(f' {var}')
             for var, val in job_conf['environment'].items():
                 value = JobFileWriter._get_variable_value_definition(
                     str(val), job_conf.get('param_var', {})

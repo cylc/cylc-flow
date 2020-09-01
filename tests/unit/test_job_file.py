@@ -28,21 +28,20 @@ import cylc.flow.flags
 from cylc.flow.job_file import JobFileWriter
 from cylc.flow.platforms import platform_from_name
 
-# List of tilde variable inputs
-# input value, expected output value
-TILDE_IN_OUT = [('~foo/bar bar', '~foo/"bar bar"'),
-                ('~/bar bar', '~/"bar bar"'),
-                ('~/a', '~/"a"'),
-                ('test', '"test"'),
-                ('~', '~'),
-                ('~a', '~a')]
 
-
-def test_get_variable_value_definition():
+@pytest.mark.parametrize(
+    'in_value, out_value',
+    [('~foo/bar bar', '~foo/"bar bar"'),
+     ('~/bar bar', '~/"bar bar"'),
+     ('~/a', '~/"a"'),
+     ('test', '"test"'),
+     ('~', '~'),
+     ('~a', '~a')]
+)
+def test_get_variable_value_definition(in_value, out_value):
     """Test the value for single/tilde variables are correctly quoted"""
-    for in_value, out_value in TILDE_IN_OUT:
-        res = JobFileWriter._get_variable_value_definition(in_value)
-        assert(out_value == res)
+    res = JobFileWriter._get_variable_value_definition(in_value, param_vars={})
+    assert(out_value == res)
 
 
 @pytest.fixture
@@ -237,8 +236,6 @@ def test_write(mocked_get_remote_suite_run_dir, fixture_get_platform):
 def test_write_directives(fixture_get_platform, job_conf: dict, expected: str):
     """"Test the directives section of job script file is correctly
         written"""
-    platform = fixture_get_platform(job_conf['platform'])
-
     with io.StringIO() as fake_file:
         JobFileWriter()._write_directives(fake_file, job_conf)
         assert(fake_file.getvalue() == expected)
