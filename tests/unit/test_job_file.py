@@ -36,11 +36,15 @@ from cylc.flow.platforms import platform_from_name
      ('~/a', '~/"a"'),
      ('test', '"test"'),
      ('~', '~'),
-     ('~a', '~a')]
+     ('~a', '~a'),
+     ('foo%s', '"foo%s"'),
+     ('foo%(i)d', '"foo3"')]
 )
 def test_get_variable_value_definition(in_value, out_value):
-    """Test the value for single/tilde variables are correctly quoted"""
-    res = JobFileWriter._get_variable_value_definition(in_value, param_vars={})
+    """Test the value for single/tilde variables are correctly quoted, and
+    parameter environment templates are handled"""
+    param_dict = {'i': 3}
+    res = JobFileWriter._get_variable_value_definition(in_value, param_dict)
     assert(out_value == res)
 
 
