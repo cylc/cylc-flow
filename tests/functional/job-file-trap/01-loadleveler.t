@@ -30,6 +30,14 @@ if [[ -z $CYLC_TEST_BATCH_TASK_HOST ]]; then
     skip_all '"[test battery][batch systems][loadleveler]host": not defined'
 fi
 set_test_number 6
+
+create_test_global_config "" "
+[platforms]
+  [[test-platform-loadleveler]]
+    host = $CYLC_TEST_BATCH_TASK_HOST
+    batch system = loadleveler
+"
+
 CYLC_TEST_DIRECTIVES="$( \
     cylc get-global-config -i "${RC_PREF}[directives]" 2>'/dev/null')"
 export CYLC_TEST_BATCH_TASK_HOST CYLC_TEST_DIRECTIVES

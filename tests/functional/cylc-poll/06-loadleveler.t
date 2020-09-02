@@ -35,9 +35,9 @@ set_test_number 2
 
 create_test_global_config "" "
 [platforms]
-    [[loadleveler-platform]]
+    [[${BATCH_SYS_NAME}-test-platform]]
         hosts = $CYLC_TEST_BATCH_TASK_HOST
-        batch system = loadleveler
+        batch system = $BATCH_SYS_NAME
 "
 
 reftest

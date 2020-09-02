@@ -37,11 +37,11 @@ set_test_number 2
 
 create_test_global_config "" "
 [platforms]
-    [[${CYLC_TEST_HOST}]]
-        [[[batch systems]]]
-            [[[[pbs]]]]
-                err viewer = ${ERR_VIEWER}
-                out viewer = ${OUT_VIEWER}"
+  [[pbs-test-platform]]
+    hosts = ${CYLC_TEST_HOST}
+    batch system = pbs
+    err viewer = ${ERR_VIEWER}
+    out viewer = ${OUT_VIEWER}"
 reftest
 purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 exit

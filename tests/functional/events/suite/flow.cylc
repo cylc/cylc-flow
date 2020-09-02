@@ -18,14 +18,11 @@ else
     fi
 fi
 """
+        platform = localhost
         [[[environment]]]
             DEF = $CYLC_SUITE_DEF_PATH/hidden/${CYLC_TASK_NAME}
             REG = ${CYLC_SUITE_NAME}-${CYLC_TASK_NAME}
             LOG = ${CYLC_TASK_NAME}.log
             GREP = "ERROR - ${CYLC_TASK_NAME} EVENT HANDLER FAILED"
-        [[[remote]]]
-            # divorce sub-suites from the task execution environments
-            # that launch them
-            host = localhost
     [[startup, timeout, shutdown]]
         inherit = common

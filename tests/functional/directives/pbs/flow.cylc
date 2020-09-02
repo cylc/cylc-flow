@@ -11,14 +11,11 @@
                    """
 [runtime]
     [[PBS_SETTINGS]]
-        [[[job]]]
-            batch system = pbs
+        platform = pbs-test-platform
         [[[directives]]]
             -l walltime=00:60:00
             -l cput=00:02:00
             {{SITE_DIRECTIVES}}
-        [[[remote]]]
-            host = {{ HOST }}
     [[rem1]]
         inherit = PBS_SETTINGS
         script = "sleep 10; true"
