@@ -56,16 +56,16 @@ run.cylc
 __OUT__
 
 LOGD="${RUN_DIR}/${SUITE_NAME}/log/flow-config"
-RUN_RC="$(ls "${LOGD}/"*-run.cylc)"
-REL_RC="$(ls "${LOGD}/"*-reload.cylc)"
-RES_RC="$(ls "${LOGD}/"*-restart.cylc)"
+RUN_CONFIG="$(ls "${LOGD}/"*-run.cylc)"
+REL_CONFIG="$(ls "${LOGD}/"*-reload.cylc)"
+RES_CONFIG="$(ls "${LOGD}/"*-restart.cylc)"
 # The generated *-run.cylc and *-reload.cylc should be identical
 # The generated *.cylc files should validate
-cmp_ok "${RUN_RC}" "${REL_RC}"
-run_ok "${TEST_NAME_BASE}-validate-run-rc" cylc validate "${RUN_RC}"
-run_ok "${TEST_NAME_BASE}-validate-restart-rc" cylc validate "${RES_RC}"
+cmp_ok "${RUN_CONFIG}" "${REL_CONFIG}"
+run_ok "${TEST_NAME_BASE}-validate-run-config" cylc validate "${RUN_CONFIG}"
+run_ok "${TEST_NAME_BASE}-validate-restart-config" cylc validate "${RES_CONFIG}"
 
-diff -u "${RUN_RC}" "${RES_RC}" >'diff.out'
+diff -u "${RUN_CONFIG}" "${RES_CONFIG}" >'diff.out'
 contains_ok 'diff.out' <<'__DIFF__'
 -    description = the weather is bad
 +    description = the weather is good

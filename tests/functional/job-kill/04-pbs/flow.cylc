@@ -8,7 +8,7 @@
 [runtime]
     [[t1]]
         script=sleep 120
-        platform = test-platform
+        platform = pbs-test-platform
         [[[job]]]
             execution time limit=PT2M
         [[[directives]]]

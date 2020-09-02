@@ -11,7 +11,7 @@
                    """
 [runtime]
     [[PBS_SETTINGS]]
-        platform = test-platform
+        platform = pbs-test-platform
         [[[directives]]]
             -l walltime=00:60:00
             -l cput=00:02:00
