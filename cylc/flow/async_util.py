@@ -389,7 +389,7 @@ def _scandir(future, path, request):
     """Callback helper for scandir()."""
     future.set_result([
         Path(path, directory.name)
-        # request.result can be None (maybe because of an empty directory in cylc-run)
+        # request.result can be None (maybe an empty dir in cylc-run)
         for directory in request.result or []
     ])
 
