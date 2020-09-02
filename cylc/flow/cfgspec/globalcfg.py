@@ -468,7 +468,7 @@ with Conf('global.cylc', desc='''
             Conf('hosts', VDR.V_STRING_LIST, ['localhost'])
 
     # Platform Groups
-    with Conf('platform aliases'):
+    with Conf('platform groups'):
         with Conf('<group>'):
             Conf('platforms', VDR.V_STRING_LIST)
 

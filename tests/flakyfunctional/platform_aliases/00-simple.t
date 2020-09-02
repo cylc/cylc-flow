@@ -40,7 +40,7 @@ create_test_global_config "" "
   [[platform2]]
     hosts = ${LOCAL_HOSTNAME}
 
-[platform aliases]
+[platform groups]
   [[test_alias]]
     platforms = platform2, platform1
 "
