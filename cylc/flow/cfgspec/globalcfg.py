@@ -705,13 +705,17 @@ def get_version_hierarchy(version):
         version (str): A PEP 440 compliant version number.
 
     Example:
-        >>> get_version_hierarchy('8.0.1a2')
-        ['', '8', '8.0', '8.0.1', '8.0.1a2']
+        >>> get_version_hierarchy('8.0.1a2.dev')
+        ['', '8', '8.0', '8.0.1', '8.0.1a2', '8.0.1a2.dev']
 
     """
-    base = [str(i) for i in packaging.version.Version(version).release]
+    smart_ver = packaging.version.Version(version)
+    base = [str(i) for i in smart_ver.release]
     hierarchy = ['']
-    hierarchy += ['.'.join(base[:i+1]) for i in range(len(base))]
+    hierarchy += ['.'.join(base[:i]) for i in range(1, len(base) + 1)]
+    if smart_ver.pre:
+        hierarchy.append(
+            hierarchy[-1] + ''.join(str(i) for i in smart_ver.pre))
     if version not in hierarchy:
         hierarchy.append(version)
     return hierarchy
