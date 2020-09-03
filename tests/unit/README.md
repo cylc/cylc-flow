@@ -26,3 +26,21 @@ Don't write integration tests here:
 * If your test sees logic flow through multiple modules it's not a unit test.
 * If you are constructing computationally expensive objects it's unlikely
   to be a unit test.
+
+## Doctests
+
+Doctests are Python interactive shell examples embedded in the docstrings of
+functions/methods, that can provide some level of unit testing. E.g.
+```python
+def factorial(n):
+    """
+    Example:
+      >>> factorial(7)
+      5040
+    """
+```
+
+To run doctests:
+```console
+$ pytest cylc/flow
+```
