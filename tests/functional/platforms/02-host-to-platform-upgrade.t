@@ -19,11 +19,8 @@
 # The following scenarios should be covered:
 #   - Task with no settings
 #   - Task with a host setting that should match platform "wibble"
-
-
-export CYLC_TEST_IS_GENERIC=false
+export REQUIRE_PLATFORM='loc:remote'
 . "$(dirname "$0")/test_header"
-require_remote_platform
 set_test_number 5
 
 create_test_global_config '' "

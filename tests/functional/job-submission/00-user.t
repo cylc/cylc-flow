@@ -31,6 +31,5 @@ create_test_global_config "" "
     install target = localhost
 "
 
-
 reftest
 exit

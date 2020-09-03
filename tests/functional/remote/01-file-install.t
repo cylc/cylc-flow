@@ -17,10 +17,8 @@
 #-------------------------------------------------------------------------------
 # Checks configured files/directories along with default files/directories
 # (app, bin, etc, lib) are correctly installed on the remote platform.
-
-export CYLC_TEST_IS_GENERIC=false
+export REQUIRE_PLATFORM='loc:remote comms:tcp'
 . "$(dirname "$0")/test_header"
-require_remote_platform
 set_test_number 6
 install_suite "${TEST_NAME_BASE}"
 
@@ -68,7 +66,5 @@ __OUT__
 
 cylc stop --max-polls=60 --interval=1 "${SUITE_NAME}"
 
-purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
-
+purge
 exit

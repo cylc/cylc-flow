@@ -24,11 +24,10 @@ set_test_number 4
 
 create_test_global_config "" "
 [platforms]
-  [[test-pbs-platform]]
-    batch system = pbs
+  [[${CYLC_TEST_PLATFORM}]]
+    batch system = my_pbs
     hosts = ${CYLC_TEST_BATCH_TASK_HOST}
 "
-
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 if [[ "${CYLC_TEST_HOST}" != 'localhost' ]]; then

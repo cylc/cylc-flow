@@ -25,14 +25,6 @@ export REQUIRE_PLATFORM="batch:$BATCH_SYS_NAME comms:tcp"
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 2
-
-create_test_global_config "" "
-[platforms]
-    [[${BATCH_SYS_NAME}-test-platform]]
-        hosts = $CYLC_TEST_BATCH_TASK_HOST
-        batch system = ${BATCH_SYS_NAME}
-"
-
 reftest "${TEST_NAME_BASE}" "${BATCH_SYS_NAME}"
 purge
 exit

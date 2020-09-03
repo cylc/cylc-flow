@@ -16,17 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Test consecutive spaces in a __MANY__ name fails validation (GitHub #2417).
-
 . "$(dirname "$0")/test_header"
 set_test_number 2
-
-create_test_global_config "" "
-[platforms]
-  [[wibble]]
-    hosts = localhost
-    batch system = pbs
-    install target = localhost
-"
 
 TEST_NAME="${TEST_NAME_BASE}-val"
 cat > flow.cylc <<__END__
@@ -35,7 +26,6 @@ cat > flow.cylc <<__END__
         R1 = task1
  [runtime]
      [[HPC]]
-        platform = wibble
         [[[directives]]]
            -l select=1:ncpus=1:mem=5GB
      [[task1]]

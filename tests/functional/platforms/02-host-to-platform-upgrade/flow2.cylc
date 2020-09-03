@@ -12,7 +12,7 @@
     script = true
 
   [[just_wrong]]
-    platform = wibble
+    platform = {{ environ['CYLC_TEST_PLATFORM'] }}
     [[[remote]]]
       host = 'parasite'
     [[[job]]]

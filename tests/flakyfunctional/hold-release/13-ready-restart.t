@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test restart with a "ready" task. See GitHub #958 (update: and #2610).
-export REQUIRE_PLATFORM='batch:at'
+export REQUIRE_PLATFORM='loc:local batch:at'
 . "$(dirname "$0")/test_header"
 set_test_number 3
 
