@@ -20,10 +20,7 @@
         script = true
     [[foo-1]]
         script = true
-        platform = {{ environ['CYLC_TEST_PLATFORM'] }}
-        [[[job]]]
-            # A fake submission on 1st attempt
-            batch submit command template = sleep 15
+        platform = wibble
     [[bar]]
         script = """
             # Stop the suite as soon as job file of "foo-1" is in the ready state.

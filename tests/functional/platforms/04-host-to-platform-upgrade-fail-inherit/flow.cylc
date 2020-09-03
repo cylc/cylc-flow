@@ -1,19 +1,19 @@
 [scheduler]
-  UTC mode = True
+    UTC mode = True
 
 [scheduling]
-  [[graph]]
-    R1 = """
-      non-valid-child
-    """
+    [[graph]]
+        R1 = """
+            non-valid-child
+        """
 [runtime]
-  [[root]]
-    script = true
+    [[root]]
+        script = true
 
-  [[VALID_PARENT]]
-    [[[remote]]]
-      host = parasite
+    [[VALID_PARENT]]
+        [[[remote]]]
+            host = parasite
 
-  [[non-valid-child]]
-    platform = wibble
-    inherit = VALID_PARENT
+    [[non-valid-child]]
+        platform = wibble
+        inherit = VALID_PARENT

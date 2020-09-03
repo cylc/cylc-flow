@@ -19,7 +19,7 @@
 # matches host settings.
 export REQUIRE_PLATFORM='loc:remote'
 . "$(dirname "$0")/test_header"
-set_test_number 4
+set_test_number 3
 
 create_test_global_config '' "
 [platforms]

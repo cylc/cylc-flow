@@ -20,6 +20,7 @@
 # Check for task failure at job-submit.
 export REQUIRE_PLATFORM='loc:remote'
 . "$(dirname "$0")/test_header"
+skip_all 'TODO test does not make sense, come back later'
 set_test_number 3
 
 create_test_global_config '' "

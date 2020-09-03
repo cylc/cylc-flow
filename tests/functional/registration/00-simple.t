@@ -203,37 +203,4 @@ __OUT__
 purge_rnd_suite
 rm -rf "${TDIR}"
 
-#-----------------------------------------------------------------------------
-# Now use a real suite
-
-init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
-[meta]
-    title = the quick brown fox
-[scheduling]
-    [[graph]]
-        R1 = a => b => c
-[runtime]
-    [[a,b,c]]
-        script = true
-__FLOW_CONFIG__
-
-run_ok "${TEST_NAME_BASE}-val" cylc validate "${SUITE_NAME}"
-
-run_ok "${TEST_NAME_BASE}-print" cylc print
-contains_ok "${TEST_NAME_BASE}-print.stdout" <<__OUT__
-${SUITE_NAME} | the quick brown fox | ${TEST_DIR}/${SUITE_NAME}
-__OUT__
-
-# Filter out errors from 'bad' suites in the 'cylc-run' directory
-NONSPECIFIC_ERR2='\[Errno 2\] No such file or directory:'
-SPECIFIC_ERR2="$NONSPECIFIC_ERR2 '$HOME/cylc-run/${SUITE_NAME}/flow.cylc'"
-ERR2_COUNT="$(grep -c "$SPECIFIC_ERR2" "${TEST_NAME_BASE}-print.stderr")"
-if ((ERR2_COUNT == 0)); then
-    grep -v -s "$NONSPECIFIC_ERR2" "${TEST_NAME_BASE}-print.stderr" > "${TEST_NAME_BASE}-print-filtered.stderr"
-    cmp_ok "${TEST_NAME_BASE}-print-filtered.stderr" <'/dev/null'
-else
-    fail "${TEST_NAME_BASE}-print.stderr"
-fi
-
-purge
 exit
