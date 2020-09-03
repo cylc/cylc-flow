@@ -64,6 +64,10 @@ installation defined in $path rather than hardcoding to /bin/bash.
 [#3774](https://github.com/cylc/cylc-flow/pull/3774) - Removed support for
 interactive prompt.
 
+[#3798](https://github.com/cylc/cylc-flow/pull/3798) - Deprecated the
+[runtime][X][parameter environment templates] section and instead allow
+templates in [runtime][X][environment].
+
 ### Fixes
 
 [#3732](https://github.com/cylc/cylc-flow/pull/3732) - XTrigger labels

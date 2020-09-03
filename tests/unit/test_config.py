@@ -26,7 +26,6 @@ from cylc.flow.config import SuiteConfig
 from cylc.flow.cycling import loader
 from cylc.flow.exceptions import SuiteConfigError
 from cylc.flow.wallclock import get_utc_mode, set_utc_mode
-from tests.unit.conftest import mock_glbl_cfg
 
 
 def get_test_inheritance_quotes():
@@ -281,7 +280,7 @@ def test_queue_config_repeated(caplog, tmp_path):
     """
     flow_file = tmp_path / "flow.cylc"
     flow_file.write_text(flow_file_content)
-    config = SuiteConfig(suite="qtest", fpath=flow_file.absolute())
+    SuiteConfig(suite="qtest", fpath=flow_file.absolute())
     log = caplog.messages[0].split('\n')
     assert log[0] == "Queue configuration warnings:"
     assert log[1] == "+ q2: ignoring x (already assigned to a queue)"
@@ -307,7 +306,7 @@ def test_queue_config_not_used_not_defined(caplog, tmp_path):
     """
     flow_file = tmp_path / "flow.cylc"
     flow_file.write_text(flow_file_content)
-    config = SuiteConfig(suite="qtest", fpath=flow_file.absolute())
+    SuiteConfig(suite="qtest", fpath=flow_file.absolute())
     log = caplog.messages[0].split('\n')
     assert log[0] == "Queue configuration warnings:"
     assert log[1] == "+ q1: ignoring foo (task not used in the graph)"

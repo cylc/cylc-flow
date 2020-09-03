@@ -41,7 +41,6 @@ def job_config(schd):
         'batch_system_conf': {},
         'directives': {},
         'environment': {},
-        'param_env_tmpl': {},
         'param_var': {},
         'logfiles': [],
         'platform': {'name': 'platform'},

@@ -23,6 +23,7 @@ from cylc.flow import LOG
 from cylc.flow.parsec.exceptions import UpgradeError
 from cylc.flow.network.authorisation import Priv
 from cylc.flow.parsec.config import ParsecConfig, ConfigNode as Conf
+from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.upgrade import upgrader
 from cylc.flow.parsec.validate import (
     DurationFloat, CylcConfigValidator as VDR, cylc_config_validate)
@@ -1173,12 +1174,17 @@ with Conf(
                     utility commands because access to cylc is also configured
                     earlier in the script.  See also
                     :ref:`TaskExecutionEnvironment`.
+
+                    You can also specify job environment templates here for
+                    :ref:`parameterized tasks <Parameterized Tasks Label>`.
             '''):
                 Conf('<variable>', VDR.V_STRING, desc='''
                     The order of definition is
                     preserved so values can refer to previously defined
                     variables. Values are passed through to the task job
-                    script without evaluation or manipulation by cylc, so any
+                    script without evaluation or manipulation by Cylc
+                    (with the exception of valid Python string templates
+                    that match parameterized task names - see below), so any
                     variable assignment expression that is legal in the job
                     submission shell can be used.  White space around the
                     ``=`` is allowed (as far as cylc's flow.cylc parser is
@@ -1193,6 +1199,21 @@ with Conf(
                        NEXT_CYCLE = $( cylc cycle-point --offset=PT6H )
                        ZAZ = "${FOO#bar}"
                        # ^ quoted to escape the flow.cylc comment character
+
+                    For parameter environment templates, use Python string
+                    templates for parameter substitution. This is only
+                    relevant for
+                    :ref:`parameterized tasks <Parameterized Tasks Label>`.
+                    The job script will export the named variables specified
+                    here (in addition to the standard ``CYLC_TASK_PARAM_<key>``
+                    variables), with the template strings substituted with
+                    the parameter values.
+
+                    Examples::
+
+                       MYNUM = %(i)d
+                       MYITEM = %(item)s
+                       MYFILE = /path/to/%(i)03d/%(item)s
                 ''')
 
             with Conf('directives', desc='''
@@ -1231,27 +1252,19 @@ with Conf(
                 ''')
 
             with Conf('parameter environment templates', desc='''
-                The user defined task execution parameter environment
-                templates. This is only relevant for *parameterized tasks* -
-                see :ref:`Parameterized Tasks Label`.
+                .. note::
+
+                   This section is deprecated and will be removed in Cylc 9.
+                   Parameter environment templates have moved to
+                   :cylc:conf:`flow.cylc[runtime][<namespace>][environment]`.
+                   This was done to allow users to control the order of
+                   definition of the variables.
+
+                   For the time being, the contents of this section will be
+                   prepended to the ``[environment]`` section when running
+                   a suite.
             '''):
-                Conf('<parameter>', VDR.V_STRING, desc='''
-                    Pairs of environment
-                    variable name and Python string template for parameter
-                    substitution. This is only relevant for *parameterized
-                    tasks* - see :ref:`Parameterized Tasks Label`.
-
-                    If specified, in addition to the standard
-                    ``CYLC_TASK_PARAM_<key>`` variables, the job script will
-                    also export the named variables specified here, with the
-                    template strings substituted with the parameter values.
-
-                    Examples:
-
-                    - ``MYNUM=%(i)d``
-                    - ``MYITEM=%(item)s``
-                    - ``MYFILE=/path/to/%(i)03d/%(item)s``
-                ''')
+                Conf('<parameter>', VDR.V_STRING)
 
     with Conf('visualization'):
         Conf('initial cycle point', VDR.V_CYCLE_POINT)
@@ -1327,15 +1340,28 @@ def upg(cfg, descr):
     # and [job] moved up 1 level for example) which should be upgraded here.
     u.upgrade()
 
-    # Upgrader cannot do this type of move:
-    try:  # Upgrade cfg['scheduling']['dependencies']['graph']
+    upgrade_graph_section(cfg, descr)
+    upgrade_param_env_templates(cfg, descr)
+
+    if 'runtime' in cfg:
+        for task_name, task_cfg in cfg['runtime'].items():
+            platform = get_platform(task_cfg, task_name, warn_only=True)
+            if type(platform) == str:
+                LOG.warning(platform)
+
+
+def upgrade_graph_section(cfg, descr):
+    """Upgrade Cylc 7 `[scheduling][dependencies][X]graph` format to
+    `[scheduling][graph]X`."""
+    # Parsec upgrader cannot do this type of move
+    try:
         if 'dependencies' in cfg['scheduling']:
             msg_old = '[scheduling][dependencies][X]graph'
             msg_new = '[scheduling][graph]X'
             if 'graph' in cfg['scheduling']:
                 raise UpgradeError(
-                    "Cannot upgrade deprecated item '{0} -> {1}' because "
-                    "{2} already exists".format(msg_old, msg_new, msg_new[:-1])
+                    f'Cannot upgrade deprecated item "{msg_old} -> {msg_new}" '
+                    f'because {msg_new[:-1]} already exists.'
                 )
             else:
                 keys = set()
@@ -1350,22 +1376,50 @@ def upg(cfg, descr):
                         keys.add(key)
                 if keys:
                     LOG.warning(
-                        "deprecated graph items were automatically upgraded "
-                        "in '{0}':".format(descr)
+                        'deprecated graph items were automatically upgraded '
+                        f'in "{descr}:'
                     )
                     LOG.warning(
-                        ' * (8.0.0) {0} -> {1} - for X in:\n{2}'.format(
-                            msg_old, msg_new, '\n'.join(sorted(keys))
-                        )
+                        f' * (8.0.0) {msg_old} -> {msg_new} - for X in:\n'
+                        '\n'.join(sorted(keys))
                     )
     except KeyError:
         pass
 
+
+def upgrade_param_env_templates(cfg, descr):
+    """Prepend contents of `[runtime][X][parameter environment templates]` to
+    `[runtime][X][environment]`."""
+
     if 'runtime' in cfg:
-        for task_name, task_cfg in cfg['runtime'].items():
-            platform = get_platform(task_cfg, task_name, warn_only=True)
-            if type(platform) == str:
-                LOG.warning(platform)
+        dep = '[runtime][%s][parameter environment templates]'
+        new = '[runtime][%s][environment]'
+        first_warn = True
+        for task_name, task_items in cfg['runtime'].items():
+            if 'parameter environment templates' not in task_items:
+                continue
+            if first_warn is True:
+                LOG.warning(
+                    f'deprecated items automatically upgraded in "{descr}":'
+                )
+                first_warn = False
+            LOG.warning(
+                f' * (8.0.0) {dep % task_name} contents prepended to '
+                f'{new % task_name}'
+            )
+            for key, val in reversed(
+                    task_items['parameter environment templates'].items()):
+                if 'environment' in task_items:
+                    if key in task_items['environment']:
+                        LOG.warning(
+                            f' *** {dep % task_name} {key} ignored as {key} '
+                            f'already exists in {new % task_name}'
+                        )
+                        continue
+                else:
+                    task_items['environment'] = OrderedDictWithDefaults()
+                task_items['environment'].prepend(key, val)
+            task_items.pop('parameter environment templates')
 
 
 class RawSuiteConfig(ParsecConfig):

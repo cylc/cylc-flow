@@ -7,7 +7,7 @@
         R1 = "t1<num,stuff> => t2<num,stuff>"
 [runtime]
     [[T]]
-        [[[parameter environment templates]]]
+        [[[environment]]]
             MYNUM = %(num)d
             MYSTUFF = stuff %(stuff)s
             MY_FILE = %(num)04d-%(stuff)s

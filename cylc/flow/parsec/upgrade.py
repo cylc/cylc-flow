@@ -117,8 +117,7 @@ class upgrader:
             return [upg]
         if upg['old'].count('__MANY__') > 1:
             raise UpgradeError(
-                'Multiple simultaneous __MANY__ not supported: %s' %
-                upg['old'])
+                f"Multiple simultaneous __MANY__ not supported: {upg['old']}")
         exp_upgs = []
         pre = []
         post = []
@@ -202,12 +201,11 @@ class upgrader:
                                 self.put_item(upg['new'],
                                               upg['cvt'].convert(old))
                             else:
-                                errMsg = (
+                                raise UpgradeError(
                                     'ERROR: Cannot upgrade deprecated '
-                                    'item "' + msg + '" because the upgraded '
+                                    f'item "{msg}" because the upgraded '
                                     'item already exists'
                                 )
-                                raise UpgradeError(errMsg)
         if warnings:
             level = WARNING
             if self.descr == self.SITE_CONFIG:
@@ -218,10 +216,9 @@ class upgrader:
                 # User level configuration, user should be able to fix.
                 # Log at warning level.
                 level = WARNING
-            LOG.log(
-                level,
-                "deprecated items were automatically upgraded in '%s':",
-                self.descr)
+            LOG.log(level,
+                    'deprecated items were automatically upgraded in '
+                    f'"{self.descr}"')
             for vn, msgs in warnings.items():
                 for msg in msgs:
                     LOG.log(level, ' * (%s) %s', vn, msg)

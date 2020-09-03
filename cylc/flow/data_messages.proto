@@ -125,7 +125,6 @@ message PbJob {
     repeated string batch_sys_conf = 24;
     repeated string environment = 25;
     repeated string directives = 26;
-    repeated string param_env_tmpl = 27;
     repeated string param_var = 28;
     repeated string extra_logs = 29;
     optional string name = 30; /* filter item */

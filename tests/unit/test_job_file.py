@@ -28,21 +28,24 @@ import cylc.flow.flags
 from cylc.flow.job_file import JobFileWriter
 from cylc.flow.platforms import platform_from_name
 
-# List of tilde variable inputs
-# input value, expected output value
-TILDE_IN_OUT = [('~foo/bar bar', '~foo/"bar bar"'),
-                ('~/bar bar', '~/"bar bar"'),
-                ('~/a', '~/"a"'),
-                ('test', '"test"'),
-                ('~', '~'),
-                ('~a', '~a')]
 
-
-def test_get_variable_value_definition():
-    """Test the value for single/tilde variables are correctly quoted"""
-    for in_value, out_value in TILDE_IN_OUT:
-        res = JobFileWriter._get_variable_value_definition(in_value)
-        assert(out_value == res)
+@pytest.mark.parametrize(
+    'in_value, out_value',
+    [('~foo/bar bar', '~foo/"bar bar"'),
+     ('~/bar bar', '~/"bar bar"'),
+     ('~/a', '~/"a"'),
+     ('test', '"test"'),
+     ('~', '~'),
+     ('~a', '~a'),
+     ('foo%s', '"foo%s"'),
+     ('foo%(i)d', '"foo3"')]
+)
+def test_get_variable_value_definition(in_value, out_value):
+    """Test the value for single/tilde variables are correctly quoted, and
+    parameter environment templates are handled"""
+    param_dict = {'i': 3}
+    res = JobFileWriter._get_variable_value_definition(in_value, param_dict)
+    assert(out_value == res)
 
 
 @pytest.fixture
@@ -102,8 +105,6 @@ def test_write(mocked_get_remote_suite_run_dir, fixture_get_platform):
             'environment': {'cow': '~/moo',
                             'sheep': '~baa/baa',
                             'duck': '~quack'},
-            "param_env_tmpl": {"param_env_tmpl_1": "moo",
-                               "param_env_tmpl_2": "baa"},
             "job_d": "1/baa/01",
             "try_num": 1,
             "flow_label": "aZ",
@@ -239,8 +240,6 @@ def test_write(mocked_get_remote_suite_run_dir, fixture_get_platform):
 def test_write_directives(fixture_get_platform, job_conf: dict, expected: str):
     """"Test the directives section of job script file is correctly
         written"""
-    platform = fixture_get_platform(job_conf['platform'])
-
     with io.StringIO() as fake_file:
         JobFileWriter()._write_directives(fake_file, job_conf)
         assert(fake_file.getvalue() == expected)
@@ -447,8 +446,6 @@ def test_write_task_environment():
                 'CYLC_TASK_DEPENDENCIES="moo neigh quack"\n    export '
                 'CYLC_TASK_TRY_NUMBER=1\n    export '
                 'CYLC_TASK_FLOW_LABEL=aZ\n    export '
-                'param_env_tmpl_1="moo"\n    export '
-                'param_env_tmpl_2="baa"\n    export '
                 'CYLC_TASK_PARAM_duck="quack"\n    export '
                 'CYLC_TASK_PARAM_mouse="squeak"\n    '
                 'CYLC_TASK_WORK_DIR_BASE=\'farm_noises/work_d\'\n}')
@@ -458,8 +455,6 @@ def test_write_task_environment():
         "dependencies": ['moo', 'neigh', 'quack'],
         "try_num": 1,
         "flow_label": "aZ",
-        "param_env_tmpl": {"param_env_tmpl_1": "moo",
-                           "param_env_tmpl_2": "baa"},
         "param_var": {"duck": "quack",
                       "mouse": "squeak"},
         "work_d": "farm_noises/work_d"

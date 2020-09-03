@@ -45,7 +45,8 @@ from cylc.flow import LOG
 from cylc.flow.c3mro import C3
 from cylc.flow.conditional_simplifier import ConditionalSimplifier
 from cylc.flow.exceptions import (
-    CylcError, SuiteConfigError, IntervalParsingError, TaskDefError)
+    CylcError, SuiteConfigError, IntervalParsingError, TaskDefError,
+    ParamExpandError)
 from cylc.flow.graph_parser import GraphParser
 from cylc.flow.param_expand import NameExpander
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
@@ -95,6 +96,28 @@ def check_varnames(env):
         if not RE_VARNAME.match(varname):
             bad.append(varname)
     return bad
+
+
+def interpolate_template(tmpl, params_dict):
+    """Try the string interpolation/formatting operator `%` on a template
+    string with a dictionary of parameters.
+
+    E.g. 'a_%(foo)d' % {'foo': 12}
+
+    If it fails, raises ParamExpandError, but if the string does not contain
+    `%(`, it just returns the string.
+    """
+    if '%(' not in tmpl:
+        return tmpl  # User probably not trying to use param template
+    try:
+        return tmpl % params_dict
+    except KeyError:
+        raise ParamExpandError('bad parameter')
+    except TypeError:
+        raise ParamExpandError('wrong data type for parameter')
+    except ValueError:
+        raise ParamExpandError('bad template syntax')
+
 
 # TODO: separate config for run and non-run purposes?
 
@@ -956,28 +979,22 @@ class SuiteConfig:
             (key, values[0])
             for key, values in self.parameters[0].items() if values)
         bads = set()
-        for namespace, item in self.cfg['runtime'].items():
-            if 'parameter environment templates' not in item:
+        for task_name, task_items in self.cfg['runtime'].items():
+            if 'environment' not in task_items:
                 continue
-            for name, tmpl in item['parameter environment templates'].items():
+            for name, tmpl in task_items['environment'].items():
                 try:
-                    value = tmpl % parameter_values
-                except KeyError:
-                    bads.add((namespace, name, tmpl, 'bad parameter'))
-                except TypeError:
-                    bads.add((
-                        namespace, name, tmpl,
-                        'wrong data type for parameter'))
-                except ValueError:
-                    bads.add((namespace, name, tmpl, 'bad template syntax'))
-                else:
-                    if value == tmpl:  # Not a template
-                        bads.add((namespace, name, tmpl, 'not a template'))
+                    interpolate_template(tmpl, parameter_values)
+                except ParamExpandError as descr:
+                    bads.add((task_name, name, tmpl, descr))
         if bads:
-            LOG.error("bad parameter environment template:\n  %s" % (
-                "\n  ".join('[%s]%s=%s  # %s' % bad for bad in sorted(bads))))
-            raise SuiteConfigError(
-                "Illegal parameter environment template(s) detected")
+            LOG.warning(
+                'bad parameter environment template:\n    '
+                '\n    '.join(
+                    '[runtime][%s][environment]%s = %s  # %s' %
+                    bad for bad in sorted(bads)
+                )
+            )
 
     def filter_env(self):
         """Filter environment variables after sparse inheritance"""
