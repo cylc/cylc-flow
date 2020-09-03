@@ -34,13 +34,13 @@ def regex_chars_to_text(chars):
 
     Examples:
         >>> regex_chars_to_text(['a', 'b', 'c'])
-        ['a', 'b', 'c']
+        ['``a``', '``b``', '``c``']
         >>> regex_chars_to_text([r'\-', r'\.', r'\/'])
-        ['-', '.', '/']
+        ['``-``', '``.``', '``/``']
         >>> regex_chars_to_text([r'\w'])
         ['alphanumeric']
         >>> regex_chars_to_text(['not_in_map'])
-        ['not_in_map']
+        ['``not_in_map``']
 
     """
     return [
@@ -110,8 +110,8 @@ def not_contains_colon_unless_starts_with(*chars):
     """Restrict use of colons.
 
     Example:
-        >>> regex, message = not_contain_colon_unless_starts_with(
-                'INFO', 'WARNING')
+        >>> regex, message = not_contains_colon_unless_starts_with(
+        ...     'INFO', 'WARNING')
         >>> message
         'cannot contain a colon unless starts with: ``INFO``, ``WARNING``'
         >>> bool(regex.match('Foo: bar'))
