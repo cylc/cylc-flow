@@ -91,10 +91,17 @@ jobs:
       - name: Swarm
         run: |
           etc/bin/swarm --yes --debug configure
+          # actions doesn't seem to read ~/.ssh/config for some reason
+          #sudo cat $HOME/.ssh/config >> /etc/ssh/ssh_config
+          cp etc/conf/ssh_config $HOME/.ssh/config
+          echo '--------------------------------'
+          cat $HOME/.ssh/config
+          echo '--------------------------------'
           etc/bin/swarm --yes --debug build
           etc/bin/swarm --yes --debug run
           ssh -V
-          ssh _remote_background_indep_poll hostname
+          cat $HOME/.ssh/config
+          ssh -vv _remote_background_indep_poll hostname
 
       - name: Test
         run: |
