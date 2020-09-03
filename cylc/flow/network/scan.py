@@ -73,8 +73,14 @@ from cylc.flow.suite_files import (
 
 SERVICE = Path(SuiteFiles.Service.DIRNAME)
 CONTACT = Path(SuiteFiles.Service.CONTACT)
-SUITERC = Path(SuiteFiles.SUITE_RC)
-FLOW_FILE = Path(SuiteFiles.FLOW_FILE)
+
+FLOW_FILES = {
+    # marker files/dirs which we use to determine if something is a flow
+    SuiteFiles.Service.DIRNAME,
+    SuiteFiles.SUITE_RC,   # cylc7 flow definition file name
+    SuiteFiles.FLOW_FILE,  # cylc8 flow definition file name
+    'log'
+}
 
 
 def dir_is_flow(listing):
@@ -93,12 +99,7 @@ def dir_is_flow(listing):
         path.name
         for path in listing
     }
-    return (
-        SERVICE.name in listing
-        or SUITERC.name in listing  # cylc7 flow definition file name
-        or FLOW_FILE in listing  # cylc8 flow definition file name
-        or 'log' in listing
-    )
+    return bool(FLOW_FILES & listing)
 
 
 @pipe
