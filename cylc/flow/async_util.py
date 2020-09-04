@@ -81,21 +81,24 @@ class _AsyncPipe:
         coros = list(coros)  # the coros to push data through
         running = []  # list of running asyncio tasks
         completed = asyncio.Queue()  # queue of processed items to yield
-
-        # run the generator
-        running.append(
-            asyncio.create_task(
-                self._generate(gen, coros, running, completed)
+        try:
+            # run the generator
+            running.append(
+                asyncio.create_task(
+                    self._generate(gen, coros, running, completed)
+                )
             )
-        )
-
-        # push the data through the pipe and yield results
-        if self.preserve_order:
-            meth = self._ordered
-        else:
-            meth = self._unordered
-        async for item in meth(running, completed):
-            yield item
+            # push the data through the pipe and yield results
+            if self.preserve_order:
+                meth = self._ordered
+            else:
+                meth = self._unordered
+            async for item in meth(running, completed):
+                yield item
+        finally:
+            # tidy up after ourselves
+            for task in running:
+                task.cancel()
 
     async def _ordered(self, running, completed):
         """The classic first-in first-out pipe behaviour."""
@@ -271,6 +274,10 @@ def pipe(func=None, preproc=None):
     asynchronous pipes. These pipes can process multiple items through multiple
     stages of the pipe simultaneously by doing what processing it can whilst
     waiting on IO to take place in the background.
+
+    Async pipes perform maximum concurrency running as far ahead as they can.
+    Don't use for cases where you only want the first N items as the pipe may
+    process items outside of this window.
 
     Args:
         func (callable):
