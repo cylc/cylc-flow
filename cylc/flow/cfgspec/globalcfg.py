@@ -721,8 +721,6 @@ class GlobalConfig(ParsecConfig):
     _DEFAULT = None
     _HOME = os.getenv('HOME') or get_user_home()
     CONF_BASENAME = "global.cylc"
-    SITE_CONF_DIR = os.path.join(os.sep, 'etc', 'cylc', 'flow', CYLC_VERSION)
-    USER_CONF_DIR = os.path.join(_HOME, '.cylc', 'flow', CYLC_VERSION)
 
     def __init__(self, *args, **kwargs):
         self.SITE_CONF_DIR_HIERARCHY = [
