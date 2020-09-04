@@ -790,10 +790,10 @@ class GlobalConfig(ParsecConfig):
                     if conf_type == upgrader.SITE_CONFIG:
                         # Warn on bad site file (users can't fix it).
                         LOG.warning(
-                            'ignoring bad %s %s:\n%s', conf_type, fname, exc)
+                            f'ignoring bad {conf_type} {fname}:\n{exc}')
                     else:
                         # Abort on bad user file (users can fix it).
-                        LOG.error('bad %s %s', conf_type, fname)
+                        LOG.error(f'bad {conf_type} {fname}')
                         raise
 
         self._set_default_editors()
