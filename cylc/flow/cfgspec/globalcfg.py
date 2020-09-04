@@ -16,6 +16,7 @@
 """Cylc site and user configuration file spec."""
 
 import os
+import packaging.version
 
 from cylc.flow import LOG
 from cylc.flow import __version__ as CYLC_VERSION
@@ -42,14 +43,23 @@ with Conf('global.cylc', desc='''
        $ cylc get-global-config --sparse
 
 
-    Cylc will attempt to load the global configuration (global.cylc) from two
-    locations:
+    Cylc will attempt to load the global configuration (global.cylc) from a
+    hierarchy of locations, including the site directory at ``/etc/cylc/flow/``
+    and the user directory at ``~/.cylc/flow/``. E.g. for Cylc version 8.0.1,
+    the hierarchy would be, in order of ascending priority:
 
-    * ``/etc/cylc/flow/<CYLC_VERSION>/global.cylc``
-    * ``~/.cylc/flow/<CYLC_VERSION>/global.cylc``
+    * ``/etc/cylc/flow/global.cylc``
+    * ``/etc/cylc/flow/8/global.cylc``
+    * ``/etc/cylc/flow/8.0/global.cylc``
+    * ``/etc/cylc/flow/8.0.1/global.cylc``
+    * ``~/.cylc/flow/global.cylc``
+    * ``~/.cylc/flow/8/global.cylc``
+    * ``~/.cylc/flow/8.0/global.cylc``
+    * ``~/.cylc/flow/8.0.1/global.cylc``
 
-    If both files are present files will be loaded in this order so those
-    lower down the list may override settings from those higher up.
+    A setting in a file lower down in the list will override the same setting
+    from those higher up (but if a setting is present in a file higher up and
+    not in any files lower down, it will not be overridden).
 
     To override the default configuration path use ``CYLC_CONF_PATH``.
 
@@ -682,6 +692,26 @@ def upg(cfg, descr):
     u.upgrade()
 
 
+def get_version_hierarchy(version):
+    """Return list of versions whose global configs are compatible, in
+    ascending priority.
+
+    Args:
+        version (str): A PEP 440 compliant version number.
+
+    Example:
+        >>> get_version_hierarchy('8.0.1a2')
+        ['', '8', '8.0', '8.0.1', '8.0.1a2']
+
+    """
+    base = [str(i) for i in packaging.version.Version(version).release]
+    hierarchy = ['']
+    hierarchy += ['.'.join(base[:i+1]) for i in range(len(base))]
+    if version not in hierarchy:
+        hierarchy.append(version)
+    return hierarchy
+
+
 class GlobalConfig(ParsecConfig):
     """
     Handle global (all suites) site and user configuration for cylc.
@@ -693,6 +723,17 @@ class GlobalConfig(ParsecConfig):
     CONF_BASENAME = "global.cylc"
     SITE_CONF_DIR = os.path.join(os.sep, 'etc', 'cylc', 'flow', CYLC_VERSION)
     USER_CONF_DIR = os.path.join(_HOME, '.cylc', 'flow', CYLC_VERSION)
+
+    def __init__(self, *args, **kwargs):
+        self.SITE_CONF_DIR_HIERARCHY = [
+            os.path.join(os.sep, 'etc', 'cylc', 'flow', version) for version in
+            get_version_hierarchy(CYLC_VERSION)
+        ]
+        self.USER_CONF_DIR_HIERARCHY = [
+            os.path.join(self._HOME, '.cylc', 'flow', version) for version in
+            get_version_hierarchy(CYLC_VERSION)
+        ]
+        super().__init__(*args, **kwargs)
 
     @classmethod
     def get_inst(cls, cached=True):
@@ -727,9 +768,14 @@ class GlobalConfig(ParsecConfig):
                 self.loadcfg(fname, upgrader.USER_CONFIG)
         elif conf_path_str is None:
             # Use default locations.
-            for conf_dir, conf_type in [
-                    (self.SITE_CONF_DIR, upgrader.SITE_CONFIG),
-                    (self.USER_CONF_DIR, upgrader.USER_CONFIG)]:
+            hierarchy = [
+                (path, upgrader.SITE_CONFIG) for path in
+                self.SITE_CONF_DIR_HIERARCHY
+            ] + [
+                (path, upgrader.USER_CONFIG) for path in
+                self.USER_CONF_DIR_HIERARCHY
+            ]
+            for conf_dir, conf_type in hierarchy:
                 fname = os.path.join(conf_dir, self.CONF_BASENAME)
                 if not os.access(fname, os.F_OK | os.R_OK):
                     continue
