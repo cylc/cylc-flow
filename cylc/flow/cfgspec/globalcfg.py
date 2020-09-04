@@ -43,15 +43,15 @@ with Conf('global.cylc', desc='''
        $ cylc get-global-config --sparse
 
 
-    Cylc will attempt to load the global configuration (global.cylc) from a
-    hierarchy of locations, including the site directory at ``/etc/cylc/flow/``
-    and the user directory at ``~/.cylc/flow/``. E.g. for Cylc version 8.0.1,
-    the hierarchy would be, in order of ascending priority:
+    Cylc will attempt to load the global configuration (``global.cylc``) from a
+    hierarchy of locations, including the site directory (defaults to
+    ``/etc/cylc/flow/``) and the user directory at ``~/.cylc/flow/``. E.g. for
+    Cylc version 8.0.1, the hierarchy would be, in order of ascending priority:
 
-    * ``/etc/cylc/flow/global.cylc``
-    * ``/etc/cylc/flow/8/global.cylc``
-    * ``/etc/cylc/flow/8.0/global.cylc``
-    * ``/etc/cylc/flow/8.0.1/global.cylc``
+    * ``${CYLC_SITE_CONF_PATH}/global.cylc``
+    * ``${CYLC_SITE_CONF_PATH}/8/global.cylc``
+    * ``${CYLC_SITE_CONF_PATH}/8.0/global.cylc``
+    * ``${CYLC_SITE_CONF_PATH}/8.0.1/global.cylc``
     * ``~/.cylc/flow/global.cylc``
     * ``~/.cylc/flow/8/global.cylc``
     * ``~/.cylc/flow/8.0/global.cylc``
@@ -61,7 +61,12 @@ with Conf('global.cylc', desc='''
     from those higher up (but if a setting is present in a file higher up and
     not in any files lower down, it will not be overridden).
 
-    To override the default configuration path use ``CYLC_CONF_PATH``.
+    To override the default configuration path, set the ``CYLC_CONF_PATH``
+    environment variable to the directory containing your ``global.cylc`` file.
+    If this is set, the hierarchy above is ignored.
+
+    Setting the ``CYLC_SITE_CONF_PATH`` environment variable overrides the
+    default value of ``/etc/cylc/flow/``, without ignoring the hierarchy.
 
     .. note::
 
@@ -721,10 +726,12 @@ class GlobalConfig(ParsecConfig):
     _DEFAULT = None
     _HOME = os.getenv('HOME') or get_user_home()
     CONF_BASENAME = "global.cylc"
+    SITE_CONF_PATH = (os.getenv('CYLC_SITE_CONF_PATH') or
+                      os.path.join(os.sep, 'etc', 'cylc', 'flow'))
 
     def __init__(self, *args, **kwargs):
         self.SITE_CONF_DIR_HIERARCHY = [
-            os.path.join(os.sep, 'etc', 'cylc', 'flow', version) for version in
+            os.path.join(self.SITE_CONF_PATH, version) for version in
             get_version_hierarchy(CYLC_VERSION)
         ]
         self.USER_CONF_DIR_HIERARCHY = [
