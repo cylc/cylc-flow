@@ -22,8 +22,11 @@ LABEL version="1.0" \
 ARG CONDA_ENV="cylc8"
 ARG CYLC_FLOW_DIR="./"
 
-# install cylc dependencies
+# suppress bizarre error messages
+# mesg: ttyname failed: Inappropriate ioctl for device
+RUN sed -i 's/mesg.*/tty -s \&\& &/' "$HOME/.profile"
 
+# install cylc dependencies
 RUN apt-get update && \
     # build-deps: build-essential
     # run deps: procps 
