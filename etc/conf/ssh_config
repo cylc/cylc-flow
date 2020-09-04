@@ -1,9 +1,17 @@
+Host _*
+    # elegantly handle the re-building/starting of this container
+    StrictHostKeyChecking=no
+    UserKnownHostsFile=/dev/null
+    LogLevel=ERROR
+
 Host _remote_background_indep_poll
     HostName localhost
     Port 42222
     User root
     IdentityFile ~/.ssh/cylc-docker
-    # elegantly handle the re-building/starting of this container
-    StrictHostKeyChecking=no
-    UserKnownHostsFile=/dev/null
-    LogLevel=ERROR
+
+Host _remote_background_shared_poll
+    HostName localhost
+    Port 42223
+    User root
+    IdentityFile ~/.ssh/cylc-docker

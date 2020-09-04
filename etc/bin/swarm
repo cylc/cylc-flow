@@ -28,9 +28,12 @@ Containers ports are correctly exposed so they can be used either natively
 or in virtual machines.
 
 Commands:
-    build       Build docker images.
-    configure   Configure system ssh and cylc configuration files.
-    run         Run docker containers.
+    build        Build docker images.
+    configure    Configure system ssh and cylc configuration files.
+    deconfigure  Undo configuration changes.
+    run          Run docker containers.
+    interactive  Run a docker container interactively.
+    shutdown     Kill detactched containers started with "run"
 
 Options:
     -y --yes    Don't prompt.
@@ -45,6 +48,11 @@ cd "$(dirname "$0")/../../"
 
 YES=false
 SSHD="$HOME/.ssh"
+SSH_CONF="$SSHD/config"
+CYLC_CONF="$HOME/.cylc/flow/$(cylc version)/global.cylc"
+CYLC_TEST_CONF="$HOME/.cylc/flow/$(cylc version)/global-tests.cylc"
+HERE="$(realpath "$PWD")"
+ACTIVE_CONTAINERS="$HERE/.docker-active-containers"
 
 prompt () {
     # the message to display
@@ -88,7 +96,7 @@ generate_keys () {
     fi
 }
 
-configure_ssh () {
+generate_ssh_keys () {
     local BASE='.docker-ssh-keys'
     local KEY
     mkdir "$BASE" -p
@@ -146,39 +154,64 @@ build () {
         -t cylc-remote-indep-poll:latest
 }
 
-configure () {
-    HERE="$(realpath "$PWD")"
+deconfigure () {
+    sed -i "\|$HERE/etc/conf|d" "${SSH_CONF}"
+    sed -i "\|$HERE/etc/conf|d" "${CYLC_CONF}"
+    sed -i "\|$HERE/etc/conf|d" "${CYLC_TEST_CONF}"
+}
 
-    # generate required ssh keys
-    configure_ssh
+configure () {
+    # generate ssh keys for host - docker image communication
+    generate_ssh_keys
 
     # map exposed docker ports to hostnames
     append_config \
         "Include $HERE/etc/conf/ssh_config" \
-        "$HOME/.ssh/config" \
+        "${SSH_CONF}" \
         top  # ssh config includes must be at the top
 
     # map ssh hostnames to cylc platforms
     append_config \
         "%include '$HERE/etc/conf/global.cylc'" \
-        "$HOME/.cylc/flow/$(cylc version)/global-tests.cylc"
+        "${CYLC_CONF}"
     append_config \
         "%include '$HERE/etc/conf/global.cylc'" \
-        "$HOME/.cylc/flow/$(cylc version)/global.cylc"
+        "${CYLC_TEST_CONF}"
 }
+
+SHARED_FS_OPTS=(
+    '-v' "$HOME/cylc-run:/root/cylc-run"
+)
 
 interactive () {
     docker run -it \
         -p 42222:22 \
-        --privileged \
         cylc-remote-indep-poll:latest
+
+        #"${SHARED_FS_OPTS[@]}" \
 }
 
 run () {
-    docker run -t -d \
-        -p 42222:22 \
-        --privileged \
-        cylc-remote-indep-poll:latest
+    (
+        # _remote_background_indep_poll
+        docker run -t -d --privileged \
+            -p 42222:22 \
+            cylc-remote-indep-poll:latest
+        # _remote_background_shared_poll
+        #docker run -t -d --privileged \
+        #    -p 42223:22 \
+        #    "${SHARED_FS_OPTS[@]}" \
+        #    cylc-remote-indep-poll:latest
+    ) > "$ACTIVE_CONTAINERS"
+    cat "$ACTIVE_CONTAINERS"
+}
+
+shutdown () {
+    # shellcheck disable=SC2046  # provide each line of the file as an arg
+    if [[ -f "$ACTIVE_CONTAINERS" ]]; then
+        docker kill $(cat "$ACTIVE_CONTAINERS")
+        rm "$ACTIVE_CONTAINERS"
+    fi
 }
 
 cmds=()
@@ -193,7 +226,7 @@ for arg in "$@"; do
         --debug)
             set -x
             ;;
-        build|configure|run|interactive)
+        build|deconfigure|configure|run|interactive|shutdown)
             cmds+=("$arg")
             ;;
         *)

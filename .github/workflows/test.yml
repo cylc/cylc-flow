@@ -87,6 +87,7 @@ jobs:
       - name: Install
         run: |
           pip install ."[all]"
+          mkdir "$HOME/cylc-run"
 
       - name: Swarm
         run: |
@@ -126,11 +127,18 @@ jobs:
                   --state=save,failed
           )
 
+      - name: Shutdown
+        if: always()
+        run: |
+          etc/bin/swarm shutdown
+
       - name: Debug
         if: failure()
         run: |
           cylc scan
           find "$HOME/cylc-run" -name '*.err' -type f \
+              -exec echo '==== {} ====' \; -exec cat '{}' \;
+          find "$HOME/cylc-run" -name 'log.*' -type f \
               -exec echo '==== {} ====' \; -exec cat '{}' \;
           find "${TMPDIR:-/tmp}/${USER}/cylctb-"* -type f \
               -exec echo '==== {} ====' \; -exec cat '{}' \;
