@@ -61,7 +61,9 @@ from cylc.flow.task_state import (
     TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING)
 from cylc.flow.wallclock import get_current_time_string, get_utc_mode
 from cylc.flow.remote import construct_platform_ssh_cmd
-from cylc.flow.exceptions import PlatformLookupError, TaskRemoteMgmtError
+from cylc.flow.exceptions import (
+    PlatformLookupError, SuiteConfigError, TaskRemoteMgmtError
+)
 
 
 class TaskJobManager:
@@ -798,10 +800,39 @@ class TaskJobManager:
         else:
             rtconfig = itask.tdef.rtconfig
 
-        # Determine task host settings now, just before job submission,
-        # because dynamic host selection may be used.
+        # TODO - remove host logic at Cylc 9
+        # Determine task host or platform now, just before job submission,
+        # because dynamic host/platform selection may be used.
+        # cases:
+        # - Platform exists, host does = throw error here:
+        #    Although errors of this sort should ideally be caught on config
+        #    load this cannot be done because inheritance may create conflicts
+        #    which appear later. Although this error is also raised
+        #    by the platforms module it's probably worth putting it here too
+        #    to prevent trying to run the remote_host/platform_select logic for
+        #    tasks which will fail anyway later.
+        # - Platform exists, host doesn't = eval platform_n
+        # - host exists - eval host_n
+        if (
+            rtconfig['platform'] is not None and
+            rtconfig['remote']['host'] is not None
+        ):
+            raise SuiteConfigError(
+                "A mixture of Cylc 7 (host) and Cylc 8 (platform) "
+                "logic should not be used. In this case for the task "
+                f"\"{itask.identity}\" the following are not compatible:\n"
+            )
+
+        host_n, platform_n = None, None
         try:
-            platform = get_platform(rtconfig, itask.identity)
+            if rtconfig['remote']['host'] is not None:
+                host_n = self.task_remote_mgr.remote_host_select(
+                    rtconfig['remote']['host']
+                )
+            else:
+                platform_n = self.task_remote_mgr.remote_host_select(
+                    rtconfig['platform']
+                )
         except TaskRemoteMgmtError as exc:
             # Submit number not yet incremented
             itask.submit_num += 1
@@ -812,10 +843,24 @@ class TaskJobManager:
                 suite, itask, '(remote host select)', exc)
             return False
         else:
-            # TODO: re-instate when remote host selection upgraded
-            # if task_host is None:  # host select not ready
-            #     itask.set_summary_message(self.REMOTE_SELECT_MSG)
-            #     return
+            # host/platform select not ready
+            if host_n is None and platform_n is None:
+                itask.set_summary_message(self.REMOTE_SELECT_MSG)
+                return
+            elif host_n is None and rtconfig['platform'] != platform_n:
+                LOG.debug(
+                    f"for task {itask.identity}: platform = "
+                    f"{rtconfig['platform']} evaluated as {platform_n}"
+                )
+                rtconfig['platform'] = platform_n
+            elif platform_n is None and rtconfig['remote']['host'] != host_n:
+                LOG.debug(
+                    f"for task {itask.identity}: host = "
+                    f"{rtconfig['remote']['host']} evaluated as {host_n}"
+                )
+                rtconfig['remote']['host'] = host_n
+
+            platform = get_platform(rtconfig)
             itask.platform = platform
             # Submit number not yet incremented
             itask.submit_num += 1
