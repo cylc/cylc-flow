@@ -161,6 +161,12 @@ done
 
 TEST_NUMBER=0
 
+if command -v lsof; then
+    HAS_LSOF=true
+else
+    HAS_LSOF=false
+fi
+
 set_test_number() {
     echo "1..$1"
 }
@@ -489,10 +495,13 @@ purge () {
     local SUITE_RUN_DIR="${RUN_DIR}/${SUITE_NAME}"
 
     # wait for local processes to let go of their file handles
-    # NOTE: lsof can hang, so call with "timeout".
-    while grep -q "${SUITE_RUN_DIR}" < <(timeout 5 lsof); do
-        sleep 1
-    done
+    if ${HAS_LSOF}; then
+        # NOTE: lsof can hang, so call with "timeout".
+        # NOTE: lsof can raise warnings with some filesystems so ignore stderr
+        while grep -q "${SUITE_RUN_DIR}" < <(timeout 5 lsof 2>/dev/null); do
+            sleep 1
+        done
+    fi
 
     # shellcheck disable=SC2016
     # shellcheck disable=SC2089
