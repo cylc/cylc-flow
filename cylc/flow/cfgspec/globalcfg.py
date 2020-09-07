@@ -479,7 +479,16 @@ with Conf('global.cylc', desc='''
             Conf('owner', VDR.V_STRING)
             Conf('install target', VDR.V_STRING, desc='''
             This defaults to the platform name. This will be used as the
-            target for remote file installation.''')
+            target for remote file installation.
+            For example, to indicate to Cylc that Platform_A shares a file
+            system with localhost, we would configure as follows:
+
+                .. code-block:: cylc
+
+                    [platforms]
+                        [[Platform_A]]
+                            install target = localhost
+            ''')
         with Conf('localhost', meta=Platform):
             Conf('hosts', VDR.V_STRING_LIST, ['localhost'])
 

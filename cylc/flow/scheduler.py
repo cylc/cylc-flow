@@ -101,7 +101,9 @@ from cylc.flow.wallclock import (
     get_time_string_from_unix_time as time2str,
     get_utc_mode)
 from cylc.flow.xtrigger_mgr import XtriggerManager
-from cylc.flow.platforms import get_platform
+from cylc.flow.platforms import (
+    get_install_target_from_platform,
+    get_platform)
 
 
 class SchedulerStop(CylcError):
@@ -720,18 +722,26 @@ class Scheduler:
 
         """
 
-        def is_in_list(platform, distinct_platform):
-            for distinct_platform in distinct_platform:
-                if(platform['install target']
+        def is_platform_with_target_in_list(
+                install_target, distinct_platforms_list):
+            """Determines whether install target is in the list of platforms"""
+            for distinct_platform in distinct_platforms_list:
+                if(install_target
                    == distinct_platform['install target']):
                     return True
 
         distinct_install_target_platforms = []
 
         for itask in self.pool.get_rh_tasks():
+            itask.platform['install target'] = (
+                get_install_target_from_platform(itask.platform))
             if itask.state(*TASK_STATUSES_ACTIVE):
-                if not is_in_list(itask.platform,
-                                  distinct_install_target_platforms):
+                if not (
+                    is_platform_with_target_in_list(
+                        itask.platform['install target'],
+                        distinct_install_target_platforms
+                    )
+                ):
                     distinct_install_target_platforms.append(itask.platform)
 
         incomplete_init = False
@@ -742,6 +752,7 @@ class Scheduler:
                 incomplete_init = True
 
         if incomplete_init:
+            # TODO: Review whether this sleep is needed.
             sleep(1.0)
             # Remote init is done via process pool
             self.proc_pool.process()

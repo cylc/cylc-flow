@@ -174,13 +174,18 @@ def get_includes_to_rsync(rsync_includes=None):
 
 def construct_rsync_over_ssh_cmd(
         src_path, dst_path, platform, logfile=None, rsync_includes=None):
-    """Constructs the rsync command used for remote file installation
-        Args:
+    """Constructs the rsync command used for remote file installation.
+
+    Includes as standard the directories: app, bin, etc, lib; and the server
+    key, used for ZMQ authentication.
+
+    Args:
         src_path(string): source path
         dst_path(string): path of target
         platform(dict)): contains info relating to platform
         logfile(str): the path to the file logging the rsync
         rsync_includes(list): files and directories to be included in the rsync
+
     """
     dst_host = platform['name']
     rsync_cmd = "rsync -v --perms --recursive --links --checksum --delete"

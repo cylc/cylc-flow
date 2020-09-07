@@ -405,7 +405,8 @@ def fail_if_platform_and_host_conflict(task_conf, task_name, warn_only=False):
 
 
 def get_install_target_from_platform(platform):
-    """Sets install target to default platform name.
+    """Sets install target to configured or default platform name.
+
     Args:
         platform (dict):
             A dict representing a platform.

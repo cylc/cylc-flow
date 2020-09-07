@@ -89,11 +89,12 @@ with Conf(
             Configure the directories and files to be included in the remote
             file installation.
                 .. note::
+
                     These, as standard, include the following directories:
-                        app
-                        bin
-                        etc
-                        lib
+                        * app
+                        * bin
+                        * etc
+                        * lib
                     And include the server.key file (from the .service
                     directory), this is required for authentication.
             These should be located in the top level of your Cylc workflow,
@@ -101,7 +102,8 @@ with Conf(
             Directories must have a trailing slash.
             For example, to add the following items to your file installation:
 
-                .. code-block:: bash
+                .. code-block:: none
+
                     ~/cylc-run/workflow_x
                     |__dir1/
                     |__dir2/
@@ -109,6 +111,7 @@ with Conf(
                     |__file2
 
                 .. code-block:: cylc
+
                    [scheduler]
                        includes = dir/, dir2/, file1, file2
                 ''')
