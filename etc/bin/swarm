@@ -43,6 +43,76 @@ Note:
 Options:
     -y --yes    Don't prompt.
     --debug     Runs the script with set -x for debug.
+
+Basic usage:
+    $ swarm configure
+    $ swarm build
+    $ swarm run
+    $ run-functional-tests -p all tests/f
+    $ swarm kill
+    $ swarm deconfigure
+
+Virtual Machines and Docker Desktop:
+    All containers in this swarm should work when run in a virtual machine
+    (e.g. VirtualBox, Docker Desktop for Mac OS or Windows, etc).
+
+The Containers:
+    This "swarm" is made up of several containers.
+
+    * Each container exposes its SSH port (22).
+    * The SSH config maps these ports onto hostnames.
+    * The Cylc config maps hostnames onto test platforms.
+
+    Each platform is named using this convention:
+
+        _<submission_locality>_<batch_system>_<filesystem>_<comms_method>
+
+        submission_locality {local, remote}:
+            Where do jobs get submitted?
+
+            * Locally (on the scheduler host).
+            * Remotely (on a remote host).
+
+        batch_system {background, at, slurm, ...}:
+            The name of the batch system the container is configured to use.
+
+        filesystem {indep, shared}:
+            What is the relationship between the filesystem in the contaier to
+            the filesystem on the host?
+
+            * Independent (indep) - it is a completely different filesystem.
+            * Shared (shared) - the cylc-run directory is shared.
+
+            warning: For shared filesystems cylc-run is shared, however, the
+            absolute path to cylc-run on the host system may be different
+            to that on the container, use ~/cylc-run for safety.
+
+        comms_method {tcp, poll}:
+            The task communication method to use.
+
+Running Tests Without The Swarm:
+    Configure the platforms with the same names as the swarm platforms.
+
+    For example if you have a remote host compatible with TCP comms you
+    could configure it like so:
+
+    [platforms]
+        [[_remote_background_indep_tcp]]
+            host = my_remote_host
+
+    NOTE: You will have to have ensure you have the same branch installed
+          on the remote hosts as on your local host. Remember to pip install.
+
+Caveats:
+    At present TCP comms are not possible FROM the host TO the container.
+    This is not generally an issue as the standard test approach is to run
+    a workflow on the host submitting its jobs to the container.
+
+    However some of the shared filesystem tests actually run entire workflows
+    inside the container. Communicating with these workflows FROM the host
+    is not possible at present (perhaps if you meddle /etc/hosts you *might*
+    be able to get it to work generally - note containers running in VMs
+    make this an interesting problem).
 __USAGE__
     exit 0
 }
@@ -156,6 +226,8 @@ INDEP_FS_OPTS=(
 # docker run opts for shared filesystem images
 SHARED_FS_OPTS=(
     '-v' "$HOME/cylc-run:/root/cylc-run"
+    #'-p' '43001-43100:43001-43100'  # all cylc run ports
+    '-P'  # all ports
 )
 # docker run opts for tcp communication images
 TCP_OPTS=(
@@ -262,8 +334,7 @@ run () {
     (
         _run indep tcp
         _run indep poll
-        #_run shared tcp
-        #_run shared poll
+        _run shared tcp
     ) > "$ACTIVE_CONTAINERS"
     cat "$ACTIVE_CONTAINERS"
 }

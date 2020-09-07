@@ -120,8 +120,10 @@
 #         Create a new global config file $PWD/etc from global-tests.cylc
 #         with PRE and POST pre- and ap-pended (PRE for top level items with no
 #         section heading). PRE and POST are strings.
-#     get_fqdn_by_host [TARGET]
-#         Get a host FQDN using the same mechanism Cylc uses.
+#     localhost_fqdn
+#         Get the FQDN of the current host using the same mechanism Cylc uses.
+#     get_fqdn [TARGET]
+#         SSH to TARGET and return `hostname -f`.
 #-------------------------------------------------------------------------------
 set -eu
 
@@ -480,7 +482,7 @@ log_scan () {
     done
 }
 
-# shellcheck disable=2120 # these arguments are itentionally optional
+# shellcheck disable=2120 # these arguments are intentionally optional
 purge () {
     # suite to remove - defaults to $SUITE_NAME
     local SUITE_NAME="${1:-$SUITE_NAME}"
@@ -511,9 +513,6 @@ purge () {
         rmdir -p "$(dirname "'"$SUITE_NAME"'")"
     '
 
-    # remove the suite run directory tree locally - if empty
-    bash -c "$CMD" 2>/dev/null || true
-
     # remove the suite run directory on the platform if remote
     if [[ -n "$PLATFORM" && "${PLATFORM}" != local* ]]; then
         local HOST
@@ -521,6 +520,10 @@ purge () {
         # shellcheck disable=SC2029 # we want this to expand client side
         (ssh "$HOST" "$CMD" 2>/dev/null) || true
     fi
+
+    # remove the suite run directory tree locally - if empty
+    # NOTE: do this after remote purge as this removes the test config too
+    bash -c "$CMD" 2>/dev/null || true
 }
 
 poll() {
@@ -756,16 +759,16 @@ get_host_from_platform () {
     cylc get-global -i "[platforms][${platform}]hosts" | cut -d ',' -f 1
 }
 
-get_fqdn_by_host() {
-if [[ $# -eq 1 ]]; then
-    TARGET="'$1'"
-else
-    TARGET='None'
-fi
+localhost_fqdn () {
 python -c "
 from cylc.flow.hostuserutil import get_fqdn_by_host
-print(get_fqdn_by_host(${TARGET}))
+print(get_fqdn_by_host(None))
 "
+}
+
+get_fqdn () {
+    local HOST="${1}"
+    ssh "$HOST" hostname -f
 }
 
 

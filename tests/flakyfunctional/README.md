@@ -26,5 +26,5 @@ running in parallel to give them a chance of passing.
 
 ## See Also
 
-* ../functional/README.md
+* ../functional/README.md (which has more details on functional tests)
 * [cylc/cylc-flow#2894](https://github.com/cylc/cylc-flow/issues/2894).
