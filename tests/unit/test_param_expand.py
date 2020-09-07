@@ -154,9 +154,9 @@ class TestParamExpand(unittest.TestCase):
         """Test graph expansion with a -ve offset."""
         self.assertEqual(
             self.graph_expander.expand("bar<i-1,j>=>baz<i,j>"),
-            set(["baz_i0_j0",
-                 "baz_i0_j1",
-                 "baz_i0_j2",
+            set(["bar_i-32768_j0=>baz_i0_j0",
+                 "bar_i-32768_j1=>baz_i0_j1",
+                 "bar_i-32768_j2=>baz_i0_j2",
                  "bar_i0_j0=>baz_i1_j0",
                  "bar_i0_j1=>baz_i1_j1",
                  "bar_i0_j2=>baz_i1_j2"])
@@ -167,7 +167,7 @@ class TestParamExpand(unittest.TestCase):
         self.assertEqual(
             self.graph_expander.expand("baz<i>=>baz<i+1>"),
             set(["baz_i0=>baz_i1",
-                 "baz_i1"])
+                 "baz_i1=>baz_i-32768"])
         )
 
     def test_graph_expand_specific(self):
@@ -220,7 +220,7 @@ class TestParamExpand(unittest.TestCase):
                 {'m': '_%(m)s'},
                 "foo<m-1> & baz => foo<m>",
                 [
-                    'baz => foo_cat',
+                    'foo_-32768 & baz => foo_cat',
                     'foo_cat & baz => foo_dog'
                 ]
             ),
@@ -232,7 +232,7 @@ class TestParamExpand(unittest.TestCase):
                 {'m': '_%(m)s'},
                 "foo & bar<m-1> & baz => qux",
                 [
-                    "foo & baz => qux"
+                    "foo & bar_-32768 & baz => qux"
                 ]
             ),
             # cases from comments from #2608
@@ -242,7 +242,7 @@ class TestParamExpand(unittest.TestCase):
                 {'m': '_%(m)s'},
                 "foo<m-1> => bar<m> => baz",
                 [
-                    "bar_1 => baz",
+                    "foo_-32768 => bar_1 => baz",
                     "foo_1 => bar_2 => baz"
                 ]
             ),
@@ -253,7 +253,7 @@ class TestParamExpand(unittest.TestCase):
                 {'m': '_%(m)s'},
                 "baz & foo<m-1> & pub => foo<m>",
                 [
-                    "baz & pub => foo_cat",
+                    "baz & foo_-32768 & pub => foo_cat",
                     "baz & foo_cat & pub => foo_dog"
                 ]
             ),
@@ -262,7 +262,7 @@ class TestParamExpand(unittest.TestCase):
                 {'m': '_%(m)s'},
                 "bar & foo<m-1> & pub<m-1> & qux => foo<m>",
                 [
-                    "bar & qux => foo_cat",
+                    "bar & foo_-32768 & pub_-32768 & qux => foo_cat",
                     "bar & foo_cat & pub_cat & qux => foo_dog"
                 ]
             ),
@@ -272,7 +272,7 @@ class TestParamExpand(unittest.TestCase):
                 {'m': '_%(m)s'},
                 "foo&bar<m-1>&baz=>qux",
                 [
-                    "foo&baz=>qux"
+                    "foo&bar_-32768&baz=>qux"
                 ]
             ),
             (
@@ -280,7 +280,7 @@ class TestParamExpand(unittest.TestCase):
                 {'m': '_%(m)s'},
                 "foo&bar<m-1>&baz=>qux",
                 [
-                    "foo&baz=>qux",
+                    "foo&bar_-32768&baz=>qux",
                     "foo&bar_cat&baz=>qux"
                 ]
             ),
@@ -290,7 +290,7 @@ class TestParamExpand(unittest.TestCase):
                 {'m': '_%(m)s'},
                 "foo|bar<m-1>|baz=>qux",
                 [
-                    "foo|baz=>qux",
+                    "foo|bar_-32768|baz=>qux",
                     "foo|bar_cat|baz=>qux"
                 ]
             ),
@@ -299,7 +299,7 @@ class TestParamExpand(unittest.TestCase):
                 {'m': '_%(m)s'},
                 "foo&bar<m-1>|baz=>qux",
                 [
-                    "foo|baz=>qux",
+                    "foo&bar_-32768|baz=>qux",
                     "foo&bar_cat|baz=>qux"
                 ]
             ),
@@ -308,7 +308,7 @@ class TestParamExpand(unittest.TestCase):
                 {'m': '_%(m)s'},
                 "foo&bar<m-1>|baz=>qux",
                 [
-                    "foo|baz=>qux",
+                    "foo&bar_-32768|baz=>qux",
                     "foo&bar_cat|baz=>qux"
                 ]
             )

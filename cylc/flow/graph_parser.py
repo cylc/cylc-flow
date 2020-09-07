@@ -143,6 +143,23 @@ class GraphParser:
         r'(' + TaskID.NAME_RE + r')(<([\w.\-/]+)::(' +
         TaskID.NAME_RE + r')(' + _RE_TRIG + r')?>)')
 
+    # Remove out-of-range nodes
+    # <TASK_NAME_PART> : [^\s&\|] # i.e. sequence of not <AND|OR|SPACE>
+    # <REMOVE_TOKEN>   : <TASK_NAME_PART> <_REMOVE>
+    #                    <TASK_NAME_PART>?
+    _TASK_NAME_PART = rf'[^\s{OP_AND}{OP_OR}]'
+    _REMOVE_TOKEN = rf'{_TASK_NAME_PART}+{str(GraphExpander._REMOVE)}?' \
+                    rf'{_TASK_NAME_PART}+'
+    REC_NODE_OUT_OF_RANGE = re.compile(rf'''
+        (                                     #
+            ^{_REMOVE_TOKEN}[{OP_AND}{OP_OR}] # ^<REMOVE> <AND|OR>
+            |                                 #
+            [{OP_AND}{OP_OR}]{_REMOVE_TOKEN}  # <AND|OR> <REMOVE>
+            |                                 #
+            ^{_REMOVE_TOKEN}$                 # ^<REMOVE>$
+        )                                     #
+        ''', re.X)
+
     def __init__(self, family_map=None, parameters=None):
         """Initializing the graph string parser.
 
@@ -274,7 +291,16 @@ class GraphParser:
         pairs = set()
         for line in line_set:
             # "foo => bar => baz" becomes [foo, bar, baz]
-            chain = line.split(ARROW)
+            # "foo-32768 => bar" becomes [bar] (remove out-of-range nodes)
+            chain = [
+                self.REC_NODE_OUT_OF_RANGE.sub('', node)
+                for node in
+                line.split(ARROW)
+            ]
+            # The regex above will have replaced "foo-32768 => bar" by
+            # "'' => bar", so we need to filter the array one more time
+            chain = [node for node in chain if node != '']
+
             # Auto-trigger lone nodes and initial nodes in a chain.
             for name, offset, _ in self.__class__.REC_NODES.findall(chain[0]):
                 if not offset and not name.startswith('@'):
