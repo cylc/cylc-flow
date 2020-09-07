@@ -262,8 +262,8 @@ run () {
     (
         _run indep tcp
         _run indep poll
-        _run shared tcp
-        _run shared poll
+        #_run shared tcp
+        #_run shared poll
     ) > "$ACTIVE_CONTAINERS"
     cat "$ACTIVE_CONTAINERS"
 }
