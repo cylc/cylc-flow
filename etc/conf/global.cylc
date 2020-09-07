@@ -1,13 +1,17 @@
 [platforms]
     [[_local_background_indep_tcp]]
         hosts = localhost
+    [[_remote_background_indep_tcp]]
+        hosts = _remote_background_indep_tcp
     [[_remote_background_indep_poll]]
         hosts = _remote_background_indep_poll
         communication method = poll
         execution polling intervals = 5*PT1S, PT5S
         submission polling intervals = PT1S
+    [[_remote_background_shared_tcp]]
+        hosts = _remote_background_shared_tcp
     [[_remote_background_shared_poll]]
-        hosts = _remote_background_indep_poll
+        hosts = _remote_background_shared_poll
         communication method = poll
         execution polling intervals = 5*PT1S, PT5S
         submission polling intervals = PT1S

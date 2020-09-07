@@ -14,12 +14,30 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+FROM cylc-dev
+
 LABEL version="1.0" \
-      description="Cylc remote job host configured for TCP task comms."
+      description="Cylc remote job host."
 
-FROM cylc-remote-indep-poll
+# setup ssh
+RUN apt-get -qq -y update && \
+    apt-get -qq -y install ssh
 
-# copy both the public and private keys
-#COPY .docker-ssh-keys/* .ssh/
+# copy public ssh key (don't setup two way ssh)
+COPY .docker-ssh-keys/*.pub .ssh/
 
-EXPOSE 43001-43100
+# authorise that key
+RUN mkdir ~/.ssh -p && \
+    chmod 700 ~/.ssh && \
+    touch ~/.ssh/authorized_keys && \
+    chmod 600 ~/.ssh/authorized_keys && \
+    cat .ssh/cylc-docker.pub >> ~/.ssh/authorized_keys
+
+# expose port 22 for ssh
+EXPOSE 22
+
+# copy a script for configuring /etc/hosts
+COPY dockerfiles/cylc-remote/configure bin/host-configure
+
+# ensure the ssh service gets started with the container
+ENTRYPOINT service ssh start && /bin/host-configure && /usr/bin/env bash

@@ -31,9 +31,14 @@ Commands:
     build        Build docker images.
     configure    Configure system ssh and cylc configuration files.
     deconfigure  Undo configuration changes.
-    run          Run docker containers.
     interactive  Run a docker container interactively.
-    shutdown     Kill detactched containers started with "run"
+    run          Run docker containers.
+    ps           List running detached containers started with "run"
+    kill         Kill detactched containers started with "run"
+
+Note:
+    "ps" and "kill" only track the most resent swarm of containers started
+    by "run".
 
 Options:
     -y --yes    Don't prompt.
@@ -145,22 +150,83 @@ append_config () {
     fi
 }
 
+# docker run opts for independent filesystem images
+INDEP_FS_OPTS=(
+)
+# docker run opts for shared filesystem images
+SHARED_FS_OPTS=(
+    '-v' "$HOME/cylc-run:/root/cylc-run"
+)
+# docker run opts for tcp communication images
+TCP_OPTS=(
+    '-e' "HOST_HOSTNAME=$(hostname -f)"
+)
+# docker run opts for polling communication images
+POLL_OPTS=(
+    '-e' 'HOST_HOSTNAME=false'
+)
+# the lowest port to use for communicating with containers
+BASE_PORT=42220
+
+_run () {
+    # run a container
+    local fs="$1"  # i.e. indep, shared
+    local comms="$2"  # i.e. tcp, poll
+    local detached="${3:-false}"  # i.e. true, false
+    local port
+
+    # set the detach args
+    local opts=()
+    if ${detached}; then
+        opts+=('-i')
+    else
+        opts+=('-d')
+    fi
+
+    # set the filesystem args
+    if [[ $fs == indep ]]; then
+        port=$BASE_PORT
+        opts+=("${INDEP_FS_OPTS[@]}")
+    elif [[ $fs == shared ]]; then
+        port=$(( BASE_PORT + 10 ))
+        opts+=("${SHARED_FS_OPTS[@]}")
+    else
+        echo "invalid fs type '$fs'" >&2
+        exit 1
+    fi
+
+    # set the communications args
+    if [[ $comms == tcp ]]; then
+        opts+=("${TCP_OPTS[@]}")
+    elif [[ $comms == poll ]]; then
+        opts+=("${POLL_OPTS[@]}")
+        (( port += 1 ))
+    else
+        echo "invalid comms method '$comms'" >&2
+        exit 1
+    fi
+
+    # run docker run
+    docker run \
+        -t --privileged \
+        -p "$port:22" \
+        "${opts[@]}" \
+        cylc-remote:latest
+}
+
 build () {
+    # build docker images
     docker build . \
         -f dockerfiles/cylc-dev/Dockerfile \
         -t cylc-dev:latest
     docker build . \
-        -f dockerfiles/remote-indep-poll/Dockerfile \
-        -t cylc-remote-indep-poll:latest
-}
-
-deconfigure () {
-    sed -i "\|$HERE/etc/conf|d" "${SSH_CONF}"
-    sed -i "\|$HERE/etc/conf|d" "${CYLC_CONF}"
-    sed -i "\|$HERE/etc/conf|d" "${CYLC_TEST_CONF}"
+        -f dockerfiles/cylc-remote/Dockerfile \
+        -t cylc-remote:latest
 }
 
 configure () {
+    # configure ssh and cylc to work with this swarm
+
     # generate ssh keys for host - docker image communication
     generate_ssh_keys
 
@@ -179,34 +245,38 @@ configure () {
         "${CYLC_TEST_CONF}"
 }
 
-SHARED_FS_OPTS=(
-    '-v' "$HOME/cylc-run:/root/cylc-run"
-)
+deconfigure () {
+    # undo configurations make in configure ()
+    sed -i "\|$HERE/etc/conf|d" "${SSH_CONF}"
+    sed -i "\|$HERE/etc/conf|d" "${CYLC_CONF}"
+    sed -i "\|$HERE/etc/conf|d" "${CYLC_TEST_CONF}"
+}
 
 interactive () {
-    docker run -it \
-        -p 42222:22 \
-        cylc-remote-indep-poll:latest
-
-        #"${SHARED_FS_OPTS[@]}" \
+    # run one container interactively
+    _run indep tcp true
 }
 
 run () {
+    # run all containers detached
     (
-        # _remote_background_indep_poll
-        docker run -t -d --privileged \
-            -p 42222:22 \
-            cylc-remote-indep-poll:latest
-        # _remote_background_shared_poll
-        #docker run -t -d --privileged \
-        #    -p 42223:22 \
-        #    "${SHARED_FS_OPTS[@]}" \
-        #    cylc-remote-indep-poll:latest
+        _run indep tcp
+        _run indep poll
+        _run shared tcp
+        _run shared poll
     ) > "$ACTIVE_CONTAINERS"
     cat "$ACTIVE_CONTAINERS"
 }
 
-shutdown () {
+ps () {
+    # list all containers started with run ()
+    if [[ -f "$ACTIVE_CONTAINERS" ]]; then
+        cat "$ACTIVE_CONTAINERS"
+    fi
+}
+
+kill () {
+    # kill all containers started with run ()
     # shellcheck disable=SC2046  # provide each line of the file as an arg
     if [[ -f "$ACTIVE_CONTAINERS" ]]; then
         docker kill $(cat "$ACTIVE_CONTAINERS")
@@ -226,7 +296,7 @@ for arg in "$@"; do
         --debug)
             set -x
             ;;
-        build|deconfigure|configure|run|interactive|shutdown)
+        build|deconfigure|configure|run|interactive|ps|kill)
             cmds+=("$arg")
             ;;
         *)

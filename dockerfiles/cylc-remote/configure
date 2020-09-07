@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# get the ip from:
+# ping localhost -c 1 | sed -n 's/PING[^(]*(\([^)]*\)).*/\1/p'
+
+# it works:
+# HOST='host.docker.internal'
+# ping "$HOST" -c 1 | sed -n "s/PING $HOST (\([0-9\.]*\)).*/\1/p"
+
+# then add this to etc/hosts:
+# 192.168.65.2  olivers-macbook-pro.local
+
+set -eu
+
+if [[ ${HOST_HOSTNAME} == false ]]; then
+    # if HOST_HOSTNAME is false then do nothing
+    exit 0
+fi
+
+get_ip_addr () {
+    local HOST="$1"
+    ping "$HOST" -c 1 | sed -n "s/PING $HOST (\([0-9\.]*\)).*/\1/p"
+}
+
+map_ip_addr () {
+    local HOST="$1"
+    local ADDR="$2"
+    echo -e "$ADDR\t$HOST" >> /etc/hosts
+}
+
+alias_hostname () {
+    # configure one hostname to point at the same IP as another
+    local FROM="$1"  # source
+    local TO="$2"  # target
+    map_ip_addr "$FROM" "$(get_ip_addr "$TO")"
+
+}
+
+# map the hostname of the docker host (the host that is running the container)
+# onto whatever 'host.docker.internal' points to
+# NOTE:
+#   * for Mac OS and Windows 'host.docker.internal' is set by docker desktop
+#   * for Linux you must set it yourself using the --add-host run arg
+alias_hostname "$HOST_HOSTNAME" 'host.docker.internal'
