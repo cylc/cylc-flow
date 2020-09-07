@@ -311,6 +311,14 @@ class TestParamExpand(unittest.TestCase):
                     "foo&bar_-32768|baz=>qux",
                     "foo&bar_cat|baz=>qux"
                 ]
+            ),
+            (
+                {'m': ["cat"]},
+                {'m': '_%(m)s'},
+                "foo => bar<m-1> => baz",
+                [
+                    "foo=>bar_-32768=>baz"
+                ]
             )
         )
 

@@ -491,6 +491,20 @@ class TestGraphParser(unittest.TestCase):
         }
         self.assertEqual(gp.triggers, triggers)
 
+    def test_param_expand_graph_parser(self):
+        """Test to validate that the graph parser removes out-of-edge nodes:
+        https://github.com/cylc/cylc-flow/pull/3452#issuecomment-677165000"""
+        params = {'m': ["cat"]}
+        templates = {'m': '_%(m)s'}
+        gp = GraphParser(parameters=(params, templates))
+        gp.parse_graph("foo => bar<m-1> => baz")
+        triggers = {
+            'foo': {
+                '': ([], False)
+            }
+        }
+        self.assertEqual(gp.triggers, triggers)
+
 
 if __name__ == "__main__":
     unittest.main()

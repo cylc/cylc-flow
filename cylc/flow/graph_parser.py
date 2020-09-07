@@ -298,8 +298,19 @@ class GraphParser:
                 line.split(ARROW)
             ]
             # The regex above will have replaced "foo-32768 => bar" by
-            # "'' => bar", so we need to filter the array one more time
-            chain = [node for node in chain if node != '']
+            # "'' => bar". In this case, we need to remove the empty
+            # space, and start the chain from the "bar" node.
+            #
+            # But if the chain is broken anywhere else (e.g.
+            # "foo => bar<err> => baz" which has the broken bar<err>) then
+            # we must remove everything leaving only up to the broken node
+            # (this way, "foo => bar<err> => baz" results in just "foo").
+            if '' in chain:
+                first_index = chain.index('', 0)
+                if first_index == 0:
+                    chain = chain[1:]
+                else:
+                    chain = chain[:first_index]
 
             # Auto-trigger lone nodes and initial nodes in a chain.
             for name, offset, _ in self.__class__.REC_NODES.findall(chain[0]):
