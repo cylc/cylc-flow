@@ -33,7 +33,7 @@ jobs:
 
       - name: Run functional tests that validate or are related to how Cylc uses bash
         run: |
-          docker exec -e -w /root/cylc-flow bash \
+          docker exec -w /root/cylc-flow bash \
             ./etc/bin/run-functional-tests -v \
             tests/functional/broadcast/00-simple.t \
             tests/functional/cylc-poll/11-event-time.t \
