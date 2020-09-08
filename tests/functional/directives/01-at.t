@@ -25,6 +25,7 @@ create_test_global_config "" "
   [[testplat]]
     hosts = localhost
     batch system = at
+    install target = localhost
 "
 
 reftest

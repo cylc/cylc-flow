@@ -27,6 +27,7 @@ create_test_global_config "" "
   [[atform]]
     batch system = at
     hosts = localhost
+    install target = localhost
 "
 
 run_ok "${TEST_NAME_BASE}-validate" \
