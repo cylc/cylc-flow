@@ -349,7 +349,7 @@ ps () {
 
 kill () {
     # kill all containers started with run ()
-    # shellcheck disable=SC2046  # provide each line of the file as an arg
+    # shellcheck disable=SC2046
     if [[ -f "$ACTIVE_CONTAINERS" ]]; then
         docker kill $(cat "$ACTIVE_CONTAINERS")
         rm "$ACTIVE_CONTAINERS"

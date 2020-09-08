@@ -482,7 +482,8 @@ log_scan () {
     done
 }
 
-# shellcheck disable=2120 # these arguments are intentionally optional
+# shellcheck disable=2120
+# these arguments are intentionally optional
 purge () {
     # suite to remove - defaults to $SUITE_NAME
     local SUITE_NAME="${1:-$SUITE_NAME}"
@@ -517,7 +518,8 @@ purge () {
     if [[ -n "$PLATFORM" && "${PLATFORM}" != local* ]]; then
         local HOST
         HOST="$(get_host_from_platform "$PLATFORM")"
-        # shellcheck disable=SC2029 # we want this to expand client side
+        # shellcheck disable=SC2029
+        # we want this to expand client side
         (ssh "$HOST" "$CMD" 2>/dev/null) || true
     fi
 
@@ -675,6 +677,7 @@ reftest() {
             cylc run --reference-test --debug --no-detach \
             "${SUITE_NAME}"
     fi
+    # shellcheck disable=SC2119
     purge
 }
 
