@@ -1,54 +1,9 @@
-name: test
+name: functional tests
 
 on: [pull_request]
 
-
 jobs:
-  fast-tests:
-    runs-on: ubuntu-latest
-    continue-on-error: ${{ matrix.experimental }}
-    timeout-minutes: 15
-    strategy:
-      matrix:
-        python-version: ['3.7', '3.8', '3.9']
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Configure Python
-        uses: actions/setup-python@v1
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Apt-Get
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y shellcheck sqlite3
-
-      - name: Install
-        run: |
-          pip install ."[all]"
-
-      - name: Style
-        run: |
-          pycodestyle
-          flake8
-          etc/bin/shellchecker
-
-      - name: Unit Tests
-        run: |
-          pytest -n 5 tests/unit
-
-      - name: Integration Tests
-        run: |
-          pytest -n 5 tests/integration
-
-      - name: Doctests
-        run: |
-          pytest -n 5 cylc/flow
-
-
-  functional-tests:
+  test:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
@@ -92,6 +47,7 @@ jobs:
           mkdir "$HOME/cylc-run"
 
       - name: Swarm
+        if: matrix.tests[2] != 'local_background_indep_tcp'
         run: |
           etc/bin/swarm --yes --debug configure
           # actions doesn't seem to read ~/.ssh/config for some reason
