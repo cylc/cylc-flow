@@ -17,7 +17,8 @@ jobs:
           ['tests/f', '4/4', 'local_background_indep_tcp'],
           ['tests/k', '1/1', 'local_background_indep_tcp'],
           ['tests/f tests/k', '1/1', 'remote_background_indep_poll'],
-          ['tests/f tests/k', '1/1', 'remote_background_indep_tcp']
+          ['tests/f tests/k', '1/1', 'remote_background_indep_tcp'],
+          ['tests/f tests/k', '1/1', 'remote_at_indep_tcp']
         ]
     env:
       BASE: ${{ matrix.tests[0] }}

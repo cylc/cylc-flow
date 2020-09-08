@@ -3,6 +3,9 @@
         hosts = localhost
     [[_remote_background_indep_tcp]]
         hosts = _remote_background_indep_tcp
+    [[_remote_at_indep_tcp]]
+        # at submission uses the same container as background
+        hosts = _remote_background_indep_tcp
     [[_remote_background_indep_poll]]
         hosts = _remote_background_indep_poll
         communication method = poll

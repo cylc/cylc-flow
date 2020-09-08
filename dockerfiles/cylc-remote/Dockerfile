@@ -17,11 +17,11 @@
 FROM cylc-dev
 
 LABEL version="1.0" \
-      description="Cylc remote job host."
+      description="Cylc remote job host for background & at jobs."
 
-# setup ssh
+# install deps
 RUN apt-get -qq -y update && \
-    apt-get -qq -y install ssh
+    apt-get -qq -y install at ssh
 
 # copy public ssh key (don't setup two way ssh)
 COPY .docker-ssh-keys/*.pub .ssh/
@@ -39,5 +39,8 @@ EXPOSE 22
 # copy a script for configuring /etc/hosts
 COPY dockerfiles/cylc-remote/configure bin/host-configure
 
-# ensure the ssh service gets started with the container
-ENTRYPOINT service ssh start && /bin/host-configure && /usr/bin/env bash
+# configure on boot and start the required services
+ENTRYPOINT service ssh start && \
+    atd && \
+    /bin/host-configure && \ 
+    /usr/bin/env bash
