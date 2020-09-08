@@ -47,10 +47,13 @@ jobs:
           pip install ."[all]"
           mkdir "$HOME/cylc-run"
 
-      - name: Swarm
-        if: matrix.tests[2] != 'local_background_indep_tcp'
+      - name: Swarm Configure
         run: |
           etc/bin/swarm --yes --debug configure
+
+      - name: Swarm Build
+        if: matrix.tests[2] != 'local_background_indep_tcp'
+        run: |
           # actions doesn't seem to read ~/.ssh/config for some reason
           #sudo cat $HOME/.ssh/config >> /etc/ssh/ssh_config
           echo '--------------------------------1'
