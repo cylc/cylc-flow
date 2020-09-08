@@ -290,27 +290,28 @@ class GraphParser:
         # Parameterization can duplicate some dependencies, so use a set.
         pairs = set()
         for line in line_set:
+            chain = []
             # "foo => bar => baz" becomes [foo, bar, baz]
-            # "foo-32768 => bar" becomes [bar] (remove out-of-range nodes)
-            chain = [
-                self.REC_NODE_OUT_OF_RANGE.sub('', node)
-                for node in
-                line.split(ARROW)
-            ]
-            # The regex above will have replaced "foo-32768 => bar" by
-            # "'' => bar". In this case, we need to remove the empty
-            # space, and start the chain from the "bar" node.
-            #
-            # But if the chain is broken anywhere else (e.g.
-            # "foo => bar<err> => baz" which has the broken bar<err>) then
-            # we must remove everything leaving only up to the broken node
-            # (this way, "foo => bar<err> => baz" results in just "foo").
-            if '' in chain:
-                first_index = chain.index('', 0)
-                if first_index == 0:
-                    chain = chain[1:]
+            # "foo_-32768 => bar" becomes [bar] (remove out-of-range nodes)
+            # "foo => bar_-32768 => baz" becomes [foo]
+            for index, node in enumerate(line.split(ARROW)):
+                # This can happen, e.g. "foo => => bar" produces
+                # "foo, '', bar", so we add so that later it raises
+                # an error
+                if node == '':
+                    chain.append(node)
+                    continue
+                node = self.REC_NODE_OUT_OF_RANGE.sub('', node)
+                if node == '':
+                    if index == 0:
+                        # For "foo<err> => bar", we simply skip "foo<err>"
+                        continue
+                    else:
+                        # For "foo => bar<err> => baz", we stop once we find
+                        # "bar<err>"
+                        break
                 else:
-                    chain = chain[:first_index]
+                    chain.append(node)
 
             # Auto-trigger lone nodes and initial nodes in a chain.
             for name, offset, _ in self.__class__.REC_NODES.findall(chain[0]):
