@@ -467,7 +467,10 @@ class Scheduler:
             self.config,
             self.suite_db_mgr,
             self.task_events_mgr,
-            self.job_pool)
+            self.job_pool,
+            self.data_store_mgr)
+
+        self.data_store_mgr.initiate_data_model()
 
         self.profiler.log_memory("scheduler.py: before load_tasks")
         if self.is_restart:
@@ -584,7 +587,6 @@ class Scheduler:
     async def start_scheduler(self):
         """Start the scheduler main loop."""
         try:
-            self.data_store_mgr.initiate_data_model()
             self._configure_contact()
             if self.is_restart:
                 self.restart_remote_init()
@@ -1429,12 +1431,14 @@ class Scheduler:
         """The scheduler main loop."""
         while True:  # MAIN LOOP
             tinit = time()
-            has_reloaded = False
 
             if self.pool.do_reload:
+                # Re-initialise data model on reload
+                self.data_store_mgr.initiate_data_model(reloaded=True)
                 self.pool.reload_taskdefs()
                 self.is_updated = True
-                has_reloaded = True
+                await self.publisher.publish(
+                    self.data_store_mgr.publish_deltas)
 
             self.process_command_queue()
             self.release_tasks()
@@ -1448,12 +1452,6 @@ class Scheduler:
             self.process_command_queue()
             self.task_events_mgr.process_events(self)
 
-            # Re-initialise data model on reload
-            if has_reloaded:
-                self.data_store_mgr.initiate_data_model(reloaded=True)
-                await self.publisher.publish(
-                    self.data_store_mgr.publish_deltas
-                )
             # Update state summary, database, and uifeed
             self.suite_db_mgr.put_task_event_timers(self.task_events_mgr)
             has_updated = await self.update_data_structure()
@@ -1754,6 +1752,7 @@ class Scheduler:
         """Hold all tasks in suite."""
         if point is None:
             self.pool.hold_all_tasks()
+            self.data_store_mgr.hold_release_tasks()
             self.task_events_mgr.pflag = True
             self.suite_db_mgr.put_suite_hold()
             LOG.info('Suite held.')
@@ -1772,6 +1771,7 @@ class Scheduler:
             LOG.info("RELEASE: new tasks will be queued when ready")
         self.pool.set_hold_point(None)
         self.pool.release_all_tasks()
+        self.data_store_mgr.hold_release_tasks(hold=False)
         self.suite_db_mgr.delete_suite_hold()
 
     def paused(self):

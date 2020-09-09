@@ -57,7 +57,6 @@ from time import time
 import zlib
 
 from cylc.flow import __version__ as CYLC_VERSION, LOG, ID_DELIM
-from cylc.flow.cycling.loader import get_point
 from cylc.flow.data_messages_pb2 import (
     PbEdge, PbEntireWorkflow, PbFamily, PbFamilyProxy, PbJob, PbTask,
     PbTaskProxy, PbWorkflow, AllDeltas, EDeltas, FDeltas, FPDeltas,
@@ -66,6 +65,8 @@ from cylc.flow.network import API
 from cylc.flow.suite_status import get_suite_status
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_job_logs import JOB_LOG_OPTS
+from cylc.flow.task_proxy import generate_graph_children
+from cylc.flow.task_state import TASK_STATUS_WAITING
 from cylc.flow.task_state_prop import extract_group_state
 from cylc.flow.wallclock import (
     TIME_ZONE_LOCAL_INFO,
@@ -119,7 +120,6 @@ DELTAS_MAP = {
 }
 
 DELTA_FIELDS = {DELTA_ADDED, DELTA_UPDATED, DELTA_PRUNED}
-
 
 # Protobuf message merging appends repeated field results on merge,
 # unlike singular fields which are overwritten. This behaviour is
@@ -271,16 +271,10 @@ class DataStoreMgr:
                 Message containing the global information of the workflow.
         .descendants (dict):
             Local store of config.get_first_parent_descendants()
-        .edge_points (dict):
-            Source point keys of target points lists.
-        .max_point (cylc.flow.cycling.PointBase):
-            Maximum cycle point in the pool.
-        .min_point (cylc.flow.cycling.PointBase):
-            Minimum cycle point in the pool.
+        .n_max (int):
+            Maximum distance of the data-store graph from the active pool.
         .parents (dict):
             Local store of config.get_parent_lists()
-        .pool_points (set):
-            Cycle point objects in the task pool.
         .publish_deltas (list):
             Collection of the latest applied deltas for publishing.
         .schd (cylc.flow.scheduler.Scheduler):
@@ -301,11 +295,8 @@ class DataStoreMgr:
         'deltas',
         'delta_queues',
         'descendants',
-        'edge_points',
-        'max_point',
-        'min_point',
+        'n_max',
         'parents',
-        'pool_points',
         'publish_deltas',
         'schd',
         'state_update_families',
@@ -321,12 +312,9 @@ class DataStoreMgr:
         self.ancestors = {}
         self.descendants = {}
         self.parents = {}
-        self.pool_points = set()
-        self.max_point = None
-        self.min_point = None
-        self.edge_points = {}
         self.state_update_families = set()
         self.updated_state_families = set()
+        self.n_max = 1
         # Managed data types
         self.data = {
             self.workflow_id: deepcopy(DATA_TEMPLATE)
@@ -360,7 +348,6 @@ class DataStoreMgr:
 
         # Static elements
         self.generate_definition_elements()
-        self.increment_graph_elements()
 
         # Tidy and reassign task jobs after reload
         if reloaded:
@@ -374,17 +361,17 @@ class DataStoreMgr:
                     for j_id in self.schd.job_pool.task_jobs.get(tp_id, [])
                 ]
             self.schd.job_pool.reload_deltas()
-
         # Set jobs ref
         self.data[self.workflow_id][JOBS] = self.schd.job_pool.pool
-
         # Update workflow statuses and totals (assume needed)
         self.update_workflow()
+
         # Apply current deltas
         self.apply_deltas(reloaded)
         self.updates_pending = False
         self.schd.job_pool.updates_pending = False
 
+        # Gather this batch of deltas for publish
         self.publish_deltas = self.get_publish_deltas()
 
         # Clear deltas after application and publishing
@@ -539,19 +526,87 @@ class DataStoreMgr:
         self.descendants = descendants
         self.parents = parents
 
-    def generate_ghost_task(self, t_id, tp_id, point_string):
-        """Create task-point element populated with static data.
+    def increment_graph_window(
+            self, name, point, flow_label, n_distance=0, active_id=None):
+        """Generate graph window about given task proxy to n_max
 
         Args:
-            t_id (str): data-store task ID.
-            tp_id (str): data-store task proxy ID.
-            point_string (str): Valid cycle point string.
+            source_itask (cylc.flow.TaskProxy):
+                Edge source task proxy object.
+            n_distance (int): Graph distance from active parent.
 
         Returns:
 
             None
 
         """
+        if n_distance is None:
+            n_distance = 0
+        # Create this source node
+        s_node = TaskID.get(name, point)
+        s_id = f'{self.workflow_id}{ID_DELIM}{point}{ID_DELIM}{name}'
+        if active_id is None:
+            active_id = s_id
+
+        # Generate task node
+        self.generate_ghost_task(s_id, name, point, flow_label)
+
+        n_distance += 1
+        if n_distance > self.n_max:
+            return
+
+        # TODO: xtrigger is suite_state edges too
+        # Reference set for workflow relations
+        new_edges = set()
+        for output, items in generate_graph_children(
+                self.schd.config.get_taskdef(name), point).items():
+            for t_name, t_point, is_abs in items:
+                t_node = TaskID.get(t_name, t_point)
+                t_id = (
+                    f'{self.workflow_id}{ID_DELIM}{t_point}{ID_DELIM}{t_name}')
+                # Even if node is in data store, itask needed for it's
+                # graph_children.. Somehow make more efficient?
+                self.increment_graph_window(
+                    t_name, t_point, flow_label, n_distance, active_id)
+
+                # Initiate edge element.
+                e_id = (
+                    f'{self.workflow_id}{ID_DELIM}{s_node}{ID_DELIM}{t_node}')
+                if (
+                    e_id not in self.data[self.workflow_id][EDGES] and
+                    e_id not in self.added[EDGES]
+                ):
+                    self.added[EDGES][e_id] = PbEdge(
+                        id=e_id,
+                        source=s_id,
+                        target=t_id
+                    )
+                    # Add edge id to node field for resolver reference
+                    self.updated[TASK_PROXIES].setdefault(
+                        t_id,
+                        PbTaskProxy(id=t_id)).edges.append(e_id)
+                    self.updated[TASK_PROXIES].setdefault(
+                        s_id,
+                        PbTaskProxy(id=s_id)).edges.append(e_id)
+                    new_edges.add(e_id)
+        if new_edges:
+            self.updates_pending = True
+            getattr(self.updated[WORKFLOW], EDGES).edges.extend(new_edges)
+
+    def generate_ghost_task(self, tp_id, name, point, flow_label):
+        """Create task-point element populated with static data.
+
+        Args:
+            tp_id (str): data-store task proxy ID.
+            itask (cylc.flow.TaskProxy): Task proxy object.
+
+        Returns:
+
+            None
+
+        """
+        t_id = f'{self.workflow_id}{ID_DELIM}{name}'
+        point_string = f'{point}'
         task_proxies = self.data[self.workflow_id][TASK_PROXIES]
         if tp_id in task_proxies or tp_id in self.added[TASK_PROXIES]:
             return
@@ -568,6 +623,8 @@ class DataStoreMgr:
             cycle_point=point_string,
             depth=taskdef.depth,
             name=taskdef.name,
+            state=TASK_STATUS_WAITING,
+            flow_label=flow_label
         )
         tproxy.namespace[:] = taskdef.namespace
         tproxy.ancestors[:] = [
@@ -586,6 +643,8 @@ class DataStoreMgr:
             )
         ).proxies.append(tp_id)
         self.generate_ghost_family(tproxy.first_parent, child_task=tp_id)
+        self.state_update_families.add(tproxy.first_parent)
+        self.updates_pending = True
 
     def generate_ghost_family(self, fp_id, child_fam=None, child_task=None):
         """Generate the family-point elements from given ID if non-existent.
@@ -655,175 +714,6 @@ class DataStoreMgr:
         elif child_fam not in fp_parent.child_families:
             fp_parent.child_families.append(child_fam)
 
-    def generate_graph_elements(self, start_point=None, stop_point=None):
-        """Generate edges and [ghost] nodes (family and task proxy elements).
-
-        Args:
-            start_point (cylc.flow.cycling.PointBase):
-                Edge generation start point.
-            stop_point (cylc.flow.cycling.PointBase):
-                Edge generation stop point.
-
-        """
-        if not self.pool_points:
-            return
-        config = self.schd.config
-        if start_point is None:
-            start_point = min(self.pool_points)
-        if stop_point is None:
-            stop_point = max(self.pool_points)
-
-        # Reference set for workflow relations
-        new_edges = set()
-
-        # Generate ungrouped edges
-        for edge in config.get_graph_edges(start_point, stop_point):
-            # Reference or create edge source & target nodes/proxies
-            s_node = edge[0]
-            t_node = edge[1]
-            if s_node is None:
-                continue
-            # Is the source cycle point in the task pool?
-            s_name, s_point = TaskID.split(s_node)
-            s_point_cls = get_point(s_point)
-            s_pool_point = False
-            s_valid = TaskID.is_valid_id(s_node)
-            if s_valid:
-                s_pool_point = s_point_cls in self.pool_points
-            # Is the target cycle point in the task pool?
-            t_pool_point = False
-            t_valid = t_node and TaskID.is_valid_id(t_node)
-            if t_valid:
-                t_name, t_point = TaskID.split(t_node)
-                t_point_cls = get_point(t_point)
-                t_pool_point = get_point(t_point) in self.pool_points
-
-            # Proceed if either source or target cycle points
-            # are in the task pool.
-            if not s_pool_point and not t_pool_point:
-                continue
-
-            # If source/target is valid add/create the corresponding items.
-            # TODO: if xtrigger is suite_state create remote ID
-            source_id = (
-                f'{self.workflow_id}{ID_DELIM}{s_point}{ID_DELIM}{s_name}')
-
-            # Add valid source before checking for no target,
-            # as source may be an isolate (hence no edges).
-            if s_valid:
-                s_task_id = f'{self.workflow_id}{ID_DELIM}{s_name}'
-                # Add source points for pruning.
-                self.edge_points.setdefault(s_point_cls, set())
-                self.generate_ghost_task(s_task_id, source_id, s_point)
-            # If target is valid then created it.
-            # Edges are only created for valid targets.
-            # At present targets can't be xtriggers.
-            if t_valid:
-                target_id = (
-                    f'{self.workflow_id}{ID_DELIM}{t_point}{ID_DELIM}{t_name}')
-                t_task_id = f'{self.workflow_id}{ID_DELIM}{t_name}'
-                # Add target points to associated source points for pruning.
-                self.edge_points.setdefault(s_point_cls, set())
-                self.edge_points[s_point_cls].add(t_point_cls)
-                self.generate_ghost_task(t_task_id, target_id, t_point)
-
-                # Initiate edge element.
-                e_id = (
-                    f'{self.workflow_id}{ID_DELIM}{s_node}{ID_DELIM}{t_node}')
-                self.added[EDGES][e_id] = PbEdge(
-                    id=e_id,
-                    suicide=edge[3],
-                    cond=edge[4],
-                    source=source_id,
-                    target=target_id,
-                )
-                new_edges.add(e_id)
-
-                # Add edge id to node field for resolver reference
-                self.updated[TASK_PROXIES].setdefault(
-                    target_id,
-                    PbTaskProxy(id=target_id)).edges.append(e_id)
-                if s_valid:
-                    self.updated[TASK_PROXIES].setdefault(
-                        source_id,
-                        PbTaskProxy(id=source_id)).edges.append(e_id)
-        if new_edges:
-            getattr(self.updated[WORKFLOW], EDGES).edges.extend(new_edges)
-
-    def update_data_structure(self, updated_nodes=None):
-        """Reflect workflow changes in the data structure."""
-        # Update edges & node set
-        self.increment_graph_elements()
-        # update states and other dynamic fields
-        self.update_dynamic_elements(updated_nodes)
-
-        # Update workflow statuses and totals if needed
-        if self.updates_pending:
-            self.update_workflow()
-
-        if self.updates_pending or self.schd.job_pool.updates_pending:
-            # Apply current deltas
-            self.apply_deltas()
-            self.updates_pending = False
-            self.schd.job_pool.updates_pending = False
-
-        self.publish_deltas = self.get_publish_deltas()
-
-        # Clear deltas after application and publishing
-        self.clear_deltas()
-
-    def increment_graph_elements(self):
-        """Generate and/or prune graph elements if needed.
-
-        Use the task pool and edge source/target cycle points to find
-        new points to generate edges and/or old points to prune data-store.
-
-        """
-        # Gather task pool cycle points.
-        old_pool_points = self.pool_points.copy()
-        self.pool_points = set(self.schd.pool.pool)
-        # No action if pool is not yet initiated.
-        if not self.pool_points:
-            return
-        # Increment edges:
-        # - Initially for each cycle point in the pool.
-        # - For each new cycle point thereafter.
-        # Using difference and pointwise allows for historical
-        # task insertion (in gaps).
-        new_points = self.pool_points.difference(old_pool_points)
-        if new_points:
-            for point in new_points:
-                # All family & task cycle instances are generated and
-                # populated with static data as 'ghost nodes'.
-                self.generate_graph_elements(point, point)
-            self.min_point = min(self.pool_points)
-            self.max_point = max(self.pool_points)
-        # Prune data store by cycle point where said point is:
-        # - Not in the set of pool points.
-        # - Not a source or target cycle point in the set of edges.
-        # This ensures a buffer of sources and targets in front and behind the
-        # task pool, while accommodating exceptions such as ICP dependencies.
-        # TODO: Turn nodes back to ghost if not in pool? (for suicide)
-        prune_points = set()
-        for s_point, t_points in list(self.edge_points.items()):
-            if (s_point not in self.pool_points and
-                    t_points.isdisjoint(self.pool_points)):
-                prune_points.add(str(s_point))
-                prune_points.update((str(t_p) for t_p in t_points))
-                del self.edge_points[s_point]
-                continue
-            t_diffs = t_points.difference(self.pool_points)
-            if t_diffs:
-                prune_points.update((str(t_p) for t_p in t_diffs))
-                self.edge_points[s_point].difference_update(t_diffs)
-        # Action pruning if any eligible cycle points are found.
-        if prune_points:
-            self.prune_points(prune_points)
-        if new_points or prune_points:
-            # Pruned and/or additional elements require
-            # state/status recalculation, and ID ref updates.
-            self.updates_pending = True
-
     def prune_points(self, point_strings):
         """Remove old nodes and edges by cycle point.
 
@@ -850,16 +740,25 @@ class DataStoreMgr:
             if edge.source in node_ids or edge.target in node_ids:
                 self.deltas[EDGES].pruned.append(e_id)
 
-    # TODO: Do we need prerequisites of non-live tasks?
-    #       If so, How to integrate into GraphQL? n-window might help?
-    # Old scheduler method use to create non-live task info like this:
-    #    for task_id in bad_items:
-    #        name, point = TaskID.split(task_id)
-    #        for tname in self.schd.config.get_task_name_list():
-    #            if tname == name:
-    #                itask = TaskProxy(
-    #                    self.schd.config.get_taskdef(name),
-    #                    get_point(point), flow_label="_")
+    def update_data_structure(self, updated_nodes=None):
+        """Reflect workflow changes in the data structure."""
+        # update states and other dynamic fields
+        self.update_dynamic_elements(updated_nodes)
+
+        # Update workflow statuses and totals if needed
+        if self.updates_pending:
+            self.update_workflow()
+
+        if self.updates_pending or self.schd.job_pool.updates_pending:
+            # Apply current deltas
+            self.apply_deltas()
+            self.updates_pending = False
+            self.schd.job_pool.updates_pending = False
+            # Gather this batch of deltas for publish
+            self.publish_deltas = self.get_publish_deltas()
+            # Clear deltas
+            self.clear_deltas()
+
     def update_task_proxies(self, updated_tasks=None):
         """Update dynamic fields of task nodes/proxies.
 
@@ -999,6 +898,7 @@ class DataStoreMgr:
             fp_updated = self.updated[FAMILY_PROXIES]
             tp_data = self.data[self.workflow_id][TASK_PROXIES]
             tp_updated = self.updated[TASK_PROXIES]
+            tp_added = self.added[TASK_PROXIES]
             # gather child states for count and set is_held
             state_counter = Counter({})
             is_held_total = 0
@@ -1009,7 +909,9 @@ class DataStoreMgr:
                     state_counter += Counter(dict(child_node.state_totals))
             task_states = []
             for tp_id in fam_node.child_tasks:
-                tp_node = tp_updated.get(tp_id, tp_data.get(tp_id))
+                tp_node = tp_updated.get(tp_id)
+                if tp_node is None or not tp_node.state:
+                    tp_node = tp_added.get(tp_id, tp_data.get(tp_id))
                 if tp_node is not None:
                     if tp_node.state:
                         task_states.append(tp_node.state)
@@ -1034,6 +936,22 @@ class DataStoreMgr:
             if fam_node.first_parent:
                 self.state_update_families.add(fam_node.first_parent)
             self.state_update_families.remove(fp_id)
+
+    def hold_release_tasks(self, hold=True):
+        """Hold or release all task nodes in the graph window."""
+        # Needed, as not all data-store tasks are in the task pool
+        tp_data = self.data[self.workflow_id][TASK_PROXIES]
+        tp_added = self.added[TASK_PROXIES]
+        update_time = time()
+        for tp_node in list(tp_data.values()) + list(tp_added.values()):
+            if tp_node.is_held is hold:
+                continue
+            tp_delta = self.updated[TASK_PROXIES].setdefault(
+                tp_node.id, PbTaskProxy(id=tp_node.id))
+            tp_delta.stamp = f'{tp_node.id}@{update_time}'
+            tp_delta.is_held = hold
+            tp_delta.state = tp_node.state
+            self.state_update_families.add(tp_node.first_parent)
 
     def update_workflow(self):
         """Update workflow element status and state totals."""
@@ -1072,13 +990,14 @@ class DataStoreMgr:
         workflow.status, workflow.status_msg = map(
             str, get_suite_status(self.schd))
 
-        for key, value in (
-                ('oldest_cycle_point', self.min_point),
-                ('newest_cycle_point', self.max_point),
-                ('newest_runahead_cycle_point',
-                 self.schd.pool.get_max_point_runahead())):
-            if value:
-                setattr(workflow, key, str(value))
+        if self.schd.pool.pool:
+            pool_points = set(self.schd.pool.pool)
+            workflow.oldest_cycle_point = str(min(pool_points))
+            workflow.newest_cycle_point = str(max(pool_points))
+        if self.schd.pool.runahead_pool:
+            workflow.newest_runahead_cycle_point = str(
+                max(set(self.schd.pool.runahead_pool))
+            )
 
     def update_dynamic_elements(self, updated_nodes=None):
         """Update data elements containing dynamic/live fields."""
