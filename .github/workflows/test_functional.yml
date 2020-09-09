@@ -11,19 +11,22 @@ jobs:
       matrix:
         python-version: ['3.7']
         tests: [
-          ['tests/f', '1/4', 'local_background_indep_tcp'],
-          ['tests/f', '2/4', 'local_background_indep_tcp'],
-          ['tests/f', '3/4', 'local_background_indep_tcp'],
-          ['tests/f', '4/4', 'local_background_indep_tcp'],
-          ['tests/k', '1/1', 'local_background_indep_tcp'],
-          ['tests/f tests/k', '1/1', 'remote_background_indep_poll'],
-          ['tests/f tests/k', '1/1', 'remote_background_indep_tcp'],
-          ['tests/f tests/k', '1/1', 'remote_at_indep_tcp']
+          # local tests
+          ['tests/f', '1/4', '_local_background* _local_at*'],
+          ['tests/f', '2/4', '_local_background* _local_at*'],
+          ['tests/f', '3/4', '_local_background* _local_at*'],
+          ['tests/f', '4/4', '_local_background* _local_at*'],
+          ['tests/k', '1/1', '_local_background* _local_at*'],
+          # remote tests
+          ['tests/f tests/k', '1/1',
+           '_remote_background_indep_poll _remote_at_indep_poll'],
+          ['tests/f tests/k', '1/1',
+           '_remote_background_indep_tcp _remote_at_indep_tcp']
         ]
     env:
       BASE: ${{ matrix.tests[0] }}
       CHUNK: ${{ matrix.tests[1] }}
-      PLATFORM: ${{ matrix.tests[2] }}
+      CYLC_TEST_PLATFORMS: ${{ matrix.tests[2] }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -47,12 +50,23 @@ jobs:
           pip install ."[all]"
           mkdir "$HOME/cylc-run"
 
+      - name: Configure Atrun
+        if: matrix.tests[2] == '_local_background* _local_at*'
+        run: |
+          PTH="$HOME/.cylc/flow/$(cylc version)"
+          mkdir -p "${PTH}"
+          cat > "${PTH}/global-test.cylc" << __HERE__
+            [platforms]
+                [[_local_at_indep_tcp]]
+                    hostname = localhost
+          __HERE__
+
       - name: Swarm Configure
         run: |
           etc/bin/swarm --yes --debug configure
 
       - name: Swarm Build
-        if: matrix.tests[2] != 'local_background_indep_tcp'
+        if: matrix.tests[2] != '_local_background* _local_at*'
         run: |
           # actions doesn't seem to read ~/.ssh/config for some reason
           #sudo cat $HOME/.ssh/config >> /etc/ssh/ssh_config
@@ -82,13 +96,11 @@ jobs:
           fi
           # NOTE: $BASE is purposefully un-quoted
           etc/bin/run-functional-tests \
-              --platform "${PLATFORM}" \
               -j "${NPROC}" \
               --state=save ${BASE} \
           || (
               echo '=== Re-running Failed Tests ==='
               CHUNK= etc/bin/run-functional-tests \
-                  --platform "${PLATFORM}" \
                   -j "${NPROC}" \
                   --state=save,failed
           )

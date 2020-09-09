@@ -72,6 +72,9 @@ Options:
 
                    '*' will match all configured test platforms.
 
+                   Alternatively provide a space separared string of platforms
+                   using the CYLC_TEST_PLATFORMS environment variable.
+
 Examples:
   # Run the full test suite with the default options.
   $ run-functional-tests
@@ -108,7 +111,8 @@ eof
 # parse args
 PROVE_ARGS=()
 TESTS=()
-PLATFORMS=''  # must use string as can't export arrays in bash
+# must use string as can't export arrays in bash
+PLATFORMS="${CYLC_TEST_PLATFORMS:-}"
 PROVIDE_TESTBASE=true
 while [[ $# -gt 0 ]]; do
     case "$1" in
