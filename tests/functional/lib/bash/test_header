@@ -801,7 +801,14 @@ _expand_test_platforms () {
     local pattern
     local platform
     local all_platforms
-    mapfile -t all_platforms < <(_get_test_platforms)
+
+    # get list of all configured test platforms
+    # NOTE: when we drop bash3 convert to
+    # mapfile -t all_platforms < <(_get_test_platforms)
+    all_platforms=()
+    while IFS='' read -r line; do
+        all_platforms+=("$line");
+    done < <(_get_test_platforms)
 
     # perform pattern matching on the PLATFORMS variable
     if [[ "${#PLATFORMS[@]}" -eq 0 ]]; then
@@ -821,7 +828,12 @@ _expand_test_platforms () {
     done
 
     # set PLATFORMS to the unique results
-    mapfile -t PLATFORMS < <(
+    # NOTE: when we drop bash3 convert to
+    # mapfile -t PLATFORMS < <(
+    PLATFORMS=()
+    while IFS='' read -r line; do
+        PLATFORMS+=("$line");
+    done < <(
         for platform in "${ret[@]}"; do
             echo "${platform}";
         done | sort -u
