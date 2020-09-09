@@ -1,3 +1,6 @@
+# SSH configuration for the Cylc "swarm" containers
+# override configurations in your ~/.ssh/config as required
+
 Host _remote*
     User root
     HostName localhost

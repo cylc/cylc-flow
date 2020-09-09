@@ -113,6 +113,21 @@ Caveats:
     is not possible at present (perhaps if you meddle /etc/hosts you *might*
     be able to get it to work generally - note containers running in VMs
     make this an interesting problem).
+
+Port Mapping:
+    Each container uses one port to enable SSH, the SSH config maps these
+    ports to hostnames. The ports are as follows:
+
+    Batch System:
+        * 42200 - "background/at"
+
+    Filesystem:
+        * +20 - "indep"
+        * +30 - "shared"
+
+    Comms Method:
+        * +0 - "tcp"
+        * +1 - "poll"
 __USAGE__
     exit 0
 }
@@ -129,6 +144,8 @@ CYLC_TEST_CONF="$HOME/.cylc/flow/$(cylc version)/global-tests.cylc"
 HERE="$(realpath "$PWD")"
 ACTIVE_CONTAINERS="$HERE/.docker-active-containers"
 
+# display message, ask [yn] question, return 0 (y) or 1 (n)
+# if YES=true return 0
 prompt () {
     # the message to display
     local MSG="$1"
@@ -153,6 +170,7 @@ prompt () {
     done
 }
 
+# wrapper of ssh-keygen
 generate_keys () {
     # the name of the key to generate
     local KEY="$1"
@@ -171,6 +189,7 @@ generate_keys () {
     fi
 }
 
+# generate ssh keys for host-container comms
 generate_ssh_keys () {
     local BASE='.docker-ssh-keys'
     local KEY
@@ -180,13 +199,9 @@ generate_ssh_keys () {
     KEY='cylc-docker'
     generate_keys "$KEY" "$BASE"
     cp "$SSHD/$KEY"* "$BASE"
-
-    # ssh keys for connecting to $(hostname) from docker containers
-    #KEY="docker-cylc-$(hostname -f)"
-    #generate_keys "$KEY" "$BASE"
-    #cp "$SSHD/$KEY"* "$BASE"
 }
 
+# add a line to a configuration file touching the file if not present
 append_config () {
     # the line to add to the config
     local LINE="$1"
@@ -221,13 +236,13 @@ append_config () {
 }
 
 # docker run opts for independent filesystem images
-INDEP_FS_OPTS=(
-)
+#INDEP_FS_OPTS=(
+#)
 # docker run opts for shared filesystem images
 SHARED_FS_OPTS=(
     '-v' "$HOME/cylc-run:/root/cylc-run"
     #'-p' '43001-43100:43001-43100'  # all cylc run ports
-    '-P'  # all ports
+    '-P'  # all ports
 )
 # docker run opts for tcp communication images
 TCP_OPTS=(
@@ -240,11 +255,12 @@ POLL_OPTS=(
 # the lowest port to use for communicating with containers
 BASE_PORT=42220
 
+# wrapper for running containers with the required options
 _run () {
     # run a container
-    local fs="$1"  # i.e. indep, shared
+    local fs="$1"  # i.e. indep, shared
     local comms="$2"  # i.e. tcp, poll
-    local detached="${3:-false}"  # i.e. true, false
+    local detached="${3:-false}"  # i.e. true, false
     local port
 
     # set the detach args
@@ -258,7 +274,7 @@ _run () {
     # set the filesystem args
     if [[ $fs == indep ]]; then
         port=$BASE_PORT
-        opts+=("${INDEP_FS_OPTS[@]}")
+        # opts+=("${INDEP_FS_OPTS[@]}")
     elif [[ $fs == shared ]]; then
         port=$(( BASE_PORT + 10 ))
         opts+=("${SHARED_FS_OPTS[@]}")
@@ -287,8 +303,8 @@ _run () {
         cylc-remote:latest
 }
 
+# build all docker images
 build () {
-    # build docker images
     docker build . \
         -f dockerfiles/cylc-dev/Dockerfile \
         -t cylc-dev:latest
@@ -297,9 +313,8 @@ build () {
         -t cylc-remote:latest
 }
 
+# configure the system so we can use these images as cylc platforms
 configure () {
-    # configure ssh and cylc to work with this swarm
-
     # generate ssh keys for host - docker image communication
     generate_ssh_keys
 
@@ -318,20 +333,20 @@ configure () {
         "${CYLC_TEST_CONF}"
 }
 
+# undo configurations make in configure ()
 deconfigure () {
-    # undo configurations make in configure ()
     sed -i "\|$HERE/etc/conf|d" "${SSH_CONF}"
     sed -i "\|$HERE/etc/conf|d" "${CYLC_CONF}"
     sed -i "\|$HERE/etc/conf|d" "${CYLC_TEST_CONF}"
 }
 
+# run one container interactively
 interactive () {
-    # run one container interactively
     _run indep tcp true
 }
 
+# run all containers detached
 run () {
-    # run all containers detached
     (
         _run indep tcp
         _run indep poll
@@ -340,15 +355,15 @@ run () {
     cat "$ACTIVE_CONTAINERS"
 }
 
+# list all containers started with run ()
 ps () {
-    # list all containers started with run ()
     if [[ -f "$ACTIVE_CONTAINERS" ]]; then
         cat "$ACTIVE_CONTAINERS"
     fi
 }
 
+# kill all containers started with run ()
 kill () {
-    # kill all containers started with run ()
     # shellcheck disable=SC2046
     if [[ -f "$ACTIVE_CONTAINERS" ]]; then
         docker kill $(cat "$ACTIVE_CONTAINERS")

@@ -23,7 +23,7 @@ ARG CONDA_ENV="cylc8"
 ARG CYLC_FLOW_DIR="./"
 
 # suppress bizarre error messages
-# mesg: ttyname failed: Inappropriate ioctl for device
+# mesg: ttyname failed: Inappropriate ioctl for device
 RUN sed -i 's/mesg.*/tty -s \&\& &/' "$HOME/.profile"
 
 # install cylc dependencies

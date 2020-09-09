@@ -67,33 +67,42 @@ Options:
                        host: localhost
                        batch-system: background
 
-                   If set to "all" then all platforms in global.cylc
-                   beginning with an underscore will be used.
+                   Can be set to a glob. e.g. '_local*' will match all
+                   configuted test platforms with local job submission.
+
+                   '*' will match all configured test platforms.
 
 Examples:
+  # Run the full test suite with the default options.
+  $ run-functional-tests
 
-Run the full test suite with the default options.
-  run-functional-tests
-Run the full test suite with 12 processes
-  run-functional-tests -j 12
-Run only tests under "tests/f/cyclers/"
-  run-functional-tests tests/f/cyclers
-Run only "tests/f/cyclers/16-weekly.t" in verbose mode
-  run-functional-tests -v tests/f/cyclers/16-weekly.t
-Run only tests under "tests/f/cyclers/", and skip 00-daily.t
-  export CYLC_TEST_SKIP=tests/f/cyclers/00-daily.t
-  run-functional-tests tests/f/cyclers
-Run the first quarter of the test battery
-  CHUNK=1/4 run-functional-tests
-Re-run failed tests
-  run-functional-tests --state=save
-  run-functional-tests --state=failed
+  # Run the full test suite with 12 processes
+  $ run-functional-tests -j 12
+
+  # Run only tests under "tests/f/cyclers/"
+  $ run-functional-tests tests/f/cyclers
+
+  # Run only "tests/f/cyclers/16-weekly.t" in verbose mode
+  $ run-functional-tests -v tests/f/cyclers/16-weekly.t
+
+  # Run only tests under "tests/f/cyclers/", and skip 00-daily.t
+  $ export CYLC_TEST_SKIP=tests/f/cyclers/00-daily.t
+  $ run-functional-tests tests/f/cyclers
+
+  # Run the first quarter of the test battery
+  $ CHUNK=1/4 run-functional-tests
+
+  # Re-run failed tests
+  $ run-functional-tests --state=save
+  $ run-functional-tests --state=failed
+
+  # run tests on a specified test platform
+  $ run-functional-tests -p <test_platform> <path>
+
+  # run tests using the first matching test platform from the test config
+  # (test platforms have names begining with an underscore)
+  $ run-functional-tests -p all <path>
 eof
-}
-
-get_platforms () {
-    cylc get-global-config -i '[platforms]' --sparse \
-        | sed -n 's/\[\[_\(.*\)\]\]/\1/p'
 }
 
 # parse args
@@ -108,11 +117,8 @@ while [[ $# -gt 0 ]]; do
             exit 0
             ;;
         -p|--platform)
-            if [[ $2 == all ]]; then
-                PLATFORMS="$(get_platforms)"
-            else
-                PLATFORMS="$PLATFORMS $2"
-            fi
+            # note "all" logic is handled in the test_header
+            PLATFORMS="$PLATFORMS $2"
             shift
             shift
             ;;
@@ -178,10 +184,7 @@ CYLC_TEST_TIME_INIT="$(date -u +'%Y%m%dT%H%M%SZ')"
 export CYLC_TEST_TIME_INIT
 
 # get number of cores
-NPROC=$(cylc get-global-config '--item=process pool size')
-if [[ -z "${NPROC}" ]]; then
-    NPROC=$(python3 -c 'import multiprocessing as mp; print(mp.cpu_count())')
-fi
+NPROC=$(python3 -c 'import multiprocessing as mp; print(mp.cpu_count())')
 
 # run tests run
 exec prove --timer -j "${NPROC}" -s -r "${PROVE_ARGS[@]}" "${TESTS[@]}"

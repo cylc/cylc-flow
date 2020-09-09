@@ -1,3 +1,6 @@
+# default configuration for the Cylc "swarm" platforms
+# override configurations in your global.cylc/global-tests.cylc as required
+
 [platforms]
     [[_local_background_indep_tcp]]
         hosts = localhost

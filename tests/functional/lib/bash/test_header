@@ -106,6 +106,9 @@
 #         Wait for the suite to restart.
 #         Provide the UUID from the current run if suite is not
 #         guaranteed to be running.
+#     purge [SUITE_NAME [PLATFORM]]
+#         Remove a workflow from the filesystem.
+#         Defaults to remving $SUITE_NAME on $CYLC_TEST_PLATFORM
 #     skip N SKIP_REASON
 #         echo "ok $((++T)) # skip SKIP_REASON" N times.
 #     skip_all SKIP_REASON
@@ -735,10 +738,10 @@ _parse_platform_spec () {
                 ;;
         esac
     done
-    echo "${locality}_${batch_system}_${file_system}_${comms}"
+    echo "_${locality}_${batch_system}_${file_system}_${comms}"
 }
 
-require_platform () {
+_get_test_platform () {
     # the requirement string: e.g. comms:tcp
     local requirement="$1"
 
@@ -749,11 +752,22 @@ require_platform () {
         # we are purposfully allowing pattern matching here
         # shellcheck disable=SC2053
         if [[ "$platform" == $required_platform ]]; then
-            export CYLC_TEST_PLATFORM="_$platform"
+            export CYLC_TEST_PLATFORM="$platform"
             return 0
         fi
     done
     return 1
+}
+
+_get_test_host () {
+    # extract a test host from the test platform
+    # NOTE: this will cause a failure if the platform is not configured
+    CYLC_TEST_HOST="$(get_host_from_platform "$CYLC_TEST_PLATFORM")"
+    if [[ -z "${CYLC_TEST_HOST}" ]]; then
+        echo "Could not find host for platform $CYLC_TEST_PLATFORM" >&2
+        exit 1
+    fi
+    export CYLC_TEST_HOST
 }
 
 get_host_from_platform () {
@@ -773,6 +787,59 @@ get_fqdn () {
     local HOST="${1}"
     ssh "$HOST" hostname -f
 }
+
+_get_test_platforms () {
+    cylc get-global-config -i '[platforms]' --sparse \
+        | sed -n 's/\[\[\(_.*\)\]\]/\1/p'
+}
+
+_expand_test_platforms () {
+    # convert sting of space separated platforms to array
+    read -r -a PLATFORMS <<< "${1}"
+
+    local ret=()
+    local pattern
+    local platform
+    local all_platforms
+    mapfile -t all_platforms < <(_get_test_platforms)
+
+    # perform pattern matching on the PLATFORMS variable
+    if [[ "${#PLATFORMS[@]}" -eq 0 ]]; then
+        # default to all local platforms
+        PLATFORMS=('_local_background*' '_local_at*')
+    fi
+
+    # perform pattern matching
+    for pattern in "${PLATFORMS[@]}"; do
+        for platform in "${all_platforms[@]}"; do
+            # shellcheck disable=SC2053
+            # we are purposfully performing glob matching here
+            if [[ ${platform} == ${pattern} ]]; then
+                ret+=("${platform}")
+            fi
+        done
+    done
+
+    # set PLATFORMS to the unique results
+    mapfile -t PLATFORMS < <(
+        for platform in "${ret[@]}"; do
+            echo "${platform}";
+        done | sort -u
+    )
+    export PLATFORMS
+}
+
+_check_test_requirements () {
+    # check the test requirements against the array of test platforms
+    if [[ -z "${REQUIRE_PLATFORM:-}" ]]; then
+        # if no requirement string is provided default to local, background
+        REQUIRE_PLATFORM='loc:local batch:background'
+    fi
+    if ! _get_test_platform "${REQUIRE_PLATFORM}"; then
+        skip_all "requires $REQUIRE_PLATFORM"
+    fi
+}
+
 
 
 # tags
@@ -804,37 +871,19 @@ for SKIP in ${CYLC_TEST_SKIP}; do
     fi
 done
 
-# handle platform logic
-#DEFAULT_PLATFORM="$(_parse_platform_spec '')"
-DEFAULT_PLATFORM='local_background_indep_tcp'
-if [[ -n $PLATFORMS ]]; then
-    # purposfully spltting into array
-    # shellcheck disable=SC2206
-    PLATFORMS=($PLATFORMS)
-else
-    PLATFORMS=("$DEFAULT_PLATFORM")
-fi
-export PLATFORMS
-DEFAULT_REQUIREMENT='loc:local batch:background'
-if [[ -z "${REQUIRE_PLATFORM:-}" ]]; then
-    REQUIRE_PLATFORM="$DEFAULT_REQUIREMENT"
-fi
-if ! require_platform "${REQUIRE_PLATFORM}"; then
-    skip_all "requires $REQUIRE_PLATFORM"
-fi
-
 # Ignore the normal site/user global config, use global-tests.cylc.
 create_test_global_config "$@"
 
-# NOTE: this must happen after crete_test_global_config
-#       because it relies on the platforms config from global-tests.cylc
-# NOTE: this will cause a failure if the platform is not configured
-CYLC_TEST_HOST="$(get_host_from_platform "$CYLC_TEST_PLATFORM")"
-if [[ -z "${CYLC_TEST_HOST}" ]]; then
-    echo "Could not find host for platform $CYLC_TEST_PLATFORM" >&2
-    exit 1
-fi
-export CYLC_TEST_HOST
+# get array of test platforms to run tests with
+_expand_test_platforms "${PLATFORMS}"
+
+# run or skip tests based on the test requirements and provided test platforms
+# provides: CYLC_TEST_PLATFORM
+_check_test_requirements
+
+# extract a test host from the test platform
+# provides: CYLC_TEST_HOST
+_get_test_host
 
 set +x
 set +e

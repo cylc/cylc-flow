@@ -45,11 +45,10 @@ Once you have defined your remote platforms provide them with the `-p` arg:
 
 ```console
 # run ONLY tests compatible with the _remote_background_indep_tcp platform
-# NOTE: no leading underscore
-$ etc/bin/run-functional-tests -p remote_background_indep_tcp tests/f
+$ etc/bin/run-functional-tests -p _remote_background_indep_tcp tests/f
 
 # run tests on the first compatible platform configured 
-$ etc/bin/run-functional-tests -p all tests/f
+$ etc/bin/run-functional-tests -p '*' tests/f
 ```
 
 ## Guidelines
