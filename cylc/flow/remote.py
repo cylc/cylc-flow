@@ -187,7 +187,7 @@ def construct_rsync_over_ssh_cmd(
         rsync_includes(list): files and directories to be included in the rsync
 
     """
-    dst_host = platform['name']
+    dst_host = get_host_from_platform(platform)
     rsync_cmd = "rsync -v --perms --recursive --links --checksum --delete"
     ssh_cmd = platform['ssh command']
     rsync_cmd = shlex.split(rsync_cmd)
