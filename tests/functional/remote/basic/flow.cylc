@@ -5,5 +5,5 @@
         R1 = foo
 [runtime]
     [[foo]]
-        script = "true" # fast
+        script = hostname -f
         platform = {{ environ['CYLC_TEST_PLATFORM'] }}

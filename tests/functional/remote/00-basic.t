@@ -44,7 +44,7 @@ cmp_ok 'foo-host.txt' <<<"${CYLC_TEST_PLATFORM}"
 REMOTE_HOST_FQDN="$(ssh "${CYLC_TEST_HOST}" hostname -f)"
 TEST_NAME=${TEST_NAME_BASE}-ensure-remote-run
 grep_ok \
-    "@$REMOTE_HOST_FQDN" \
+    "^$REMOTE_HOST_FQDN" \
     "${SUITE_RUN_DIR}/log/job/1/foo/NN/job.out"
 #-------------------------------------------------------------------------------
 purge
