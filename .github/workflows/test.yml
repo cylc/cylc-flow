@@ -96,7 +96,7 @@ jobs:
       - name: Debug
         if: failure()
         run: |
-          cylc scan -f --color=never
+          cylc scan
           find "$HOME/cylc-run" -name '*.err' -type f \
               -exec echo '==== {} ====' \; -exec cat '{}' \;
           find "${TMPDIR:-/tmp}/${USER}/cylctb-"* -type f \
