@@ -29,7 +29,6 @@ structures.
 
 from copy import copy
 from fnmatch import fnmatchcase
-from logging import error
 import os
 import re
 import traceback
