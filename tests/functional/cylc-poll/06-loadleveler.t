@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Test "cylc poll" for loadleveler, slurm, or pbs jobs.
 # TODO Check this test on a dockerized system or VM.
-BATCH_SYS_NAME="${TEST_NAME_BASE##??-}"
+BATCH_SYS_NAME="$(sed 's/.*\/...\(.*\)\.t/\1/' <<< "$0")"
 export REQUIRE_PLATFORM="batch:$BATCH_SYS_NAME comms:tcp"
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------

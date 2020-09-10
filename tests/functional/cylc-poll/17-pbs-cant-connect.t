@@ -16,8 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test poll PBS connection refused
-BATCH_SYS_NAME="${TEST_NAME_BASE##??-}"
-export REQUIRE_PLATFORM="batch:$BATCH_SYS_NAME"
+export REQUIRE_PLATFORM="batch:pbs"
 . "$(dirname "$0")/test_header"
 
 set_test_number 4
