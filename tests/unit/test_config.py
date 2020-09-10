@@ -459,7 +459,7 @@ def test_cycle_point_tz(caplog, monkeypatch):
 
 def test_rsync_includes_will_not_accept_sub_directories():
 
-    suiterc_content = """
+    flow_cylc_content = """
     [scheduling]
         initial cycle point = 2020-01-01
         [[dependencies]]
@@ -468,22 +468,20 @@ def test_rsync_includes_will_not_accept_sub_directories():
         includes = dir/, dir2/subdir2/, file1, file2
         """
     with TemporaryDirectory() as temp_dir:
-        suite_rc = Path(temp_dir, "flow.cylc")
-        with suite_rc.open(mode="w") as f:
-            f.write(suiterc_content)
+        flow_cylc = Path(temp_dir, "flow.cylc")
+        with flow_cylc.open(mode="w") as f:
+            f.write(flow_cylc_content)
             f.flush()
 
-        config = SuiteConfig(suite="rsynctest", fpath=suite_rc)
-
         with pytest.raises(SuiteConfigError) as exc:
-            SuiteConfig.get_rsync_includes(config)
+            SuiteConfig(suite="rsynctest", fpath=flow_cylc)
         assert "Directories can only be from the top level" in str(exc.value)
 
 
 def test_valid_rsync_includes_returns_correct_list():
     """Test that the rsync includes in the correct """
 
-    suiterc_content = """
+    flow_cylc_content = """
     [scheduling]
         initial cycle point = 2020-01-01
         [[dependencies]]
@@ -492,12 +490,12 @@ def test_valid_rsync_includes_returns_correct_list():
         includes = dir/, dir2/, file1, file2
         """
     with TemporaryDirectory() as temp_dir:
-        suite_rc = Path(temp_dir, "flow.cylc")
-        with suite_rc.open(mode="w") as f:
-            f.write(suiterc_content)
+        flow_cylc = Path(temp_dir, "flow.cylc")
+        with flow_cylc.open(mode="w") as f:
+            f.write(flow_cylc_content)
             f.flush()
 
-        config = SuiteConfig(suite="rsynctest", fpath=suite_rc)
+        config = SuiteConfig(suite="rsynctest", fpath=flow_cylc)
 
-        rsync_includes = SuiteConfig.get_rsync_includes(config)
+        rsync_includes = SuiteConfig.get_validated_rsync_includes(config)
         assert rsync_includes == ['dir/', 'dir2/', 'file1', 'file2']

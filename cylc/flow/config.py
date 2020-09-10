@@ -227,6 +227,9 @@ class SuiteConfig:
         self.cfg = self.pcfg.get(sparse=True)
         self.mem_log("config.py: after get(sparse=True)")
 
+        if 'scheduler' in self.cfg and 'includes' in self.cfg['scheduler']:
+            _ = self.get_validated_rsync_includes()
+
         # First check for the essential scheduling section.
         if 'scheduling' not in self.cfg:
             raise SuiteConfigError("missing [scheduling] section.")
@@ -2336,7 +2339,7 @@ class SuiteConfig:
         else:
             return None
 
-    def get_rsync_includes(self):
+    def get_validated_rsync_includes(self):
         """Validate and return items configured to be included in the file
             installation"""
         includes = self.cfg['scheduler']['includes']

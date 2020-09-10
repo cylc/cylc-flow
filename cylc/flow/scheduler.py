@@ -1250,7 +1250,7 @@ class Scheduler:
             if itasks:
                 self.is_updated = True
             self.task_job_mgr.task_remote_mgr.rsync_includes = (
-                self.config.get_rsync_includes())
+                self.config.get_validated_rsync_includes())
             for itask in self.task_job_mgr.submit_task_jobs(
                     self.suite,
                     itasks,
