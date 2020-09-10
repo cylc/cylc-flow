@@ -19,36 +19,31 @@ FROM conda/miniconda3:latest
 LABEL version="1.0" \
       description="Image with Cylc installed with Conda from a working copy."
 
-ARG CONDA_ENV="cylc8"
+ARG CONDA_ENV="cylc-dev"
 ARG CYLC_FLOW_DIR="./"
 
 # suppress bizarre error messages
 # mesg: ttyname failed: Inappropriate ioctl for device
 RUN sed -i 's/mesg.*/tty -s \&\& &/' "$HOME/.profile"
 
+# copy in cylc source files
+COPY "$CYLC_FLOW_DIR" "cylc"
+
 # install cylc dependencies
 RUN apt-get update && \
     # build-deps: build-essential
-    # run deps: procps 
+    # run deps: procps, rsync
     apt-get -qq -y install build-essential procps rsync && \
     # install conda stuff
     conda init bash && \
     . ./usr/local/etc/profile.d/conda.sh && \
-    conda create -y -n "$CONDA_ENV" && \
-    conda install -y -n "$CONDA_ENV" \
-        --only-deps \
-        --prune \
-        -c conda-forge \
-        cylc-flow && \
+    conda env create -n "${CONDA_ENV}" -f './cylc/conda-environment.yml' && \
     conda clean -y --all && \
-    # tidy up after ourselves
     apt-get -y remove build-essential && \
     apt-get autoclean && \
     echo "conda activate $CONDA_ENV" >> $HOME/.bashrc
 
-# copy in cylc source files
-COPY "$CYLC_FLOW_DIR" "cylc"
-
 # run setup logic
-RUN pip install -e ./cylc && \
+RUN . $HOME/.bashrc && \
+    pip install -e ./cylc && \
     cylc version

@@ -1,9 +1,10 @@
 *
-__pycache__
 *.py[cod]
-!bin
-!cylc
-!setup*
-!README.md
+__pycache__
 !.docker*
+!README.md
+!bin
+!conda-environment.yml
+!cylc
 !dockerfiles/*
+!setup*
