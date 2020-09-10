@@ -340,7 +340,7 @@ class CylcTimeParser:
                     raise CylcMissingContextPointError(
                         "Missing context cycle point."
                     )
-                return context.copy(), None
+                return context, None
             return None, None
         expr_point = None
         expr_offset = None
@@ -365,7 +365,7 @@ class CylcTimeParser:
                 else:
                     expr_offset = expr_offset + expr_offset_item
         if not expr and allow_truncated:
-            return context.copy(), expr_offset
+            return context, expr_offset
         for invalid_rec, msg in self.POINT_INVALID_FOR_CYLC_REGEXES:
             if invalid_rec.search(expr):
                 raise CylcTimeSyntaxError("'%s': %s" % (expr, msg))

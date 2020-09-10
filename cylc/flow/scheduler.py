@@ -923,7 +923,7 @@ class Scheduler:
             # schedule shutdown after wallclock time passes provided time
             parser = TimePointParser()
             self.set_stop_clock(
-                int(parser.parse(clock_time).get("seconds_since_unix_epoch"))
+                int(parser.parse(clock_time).seconds_since_unix_epoch)
             )
         elif task:
             # schedule shutdown after task succeeds
