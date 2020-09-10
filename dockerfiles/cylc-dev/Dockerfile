@@ -35,7 +35,11 @@ RUN apt-get update && \
     conda init bash && \
     . ./usr/local/etc/profile.d/conda.sh && \
     conda create -y -n "$CONDA_ENV" && \
-    conda install -y -n "$CONDA_ENV" --only-deps -c conda-forge cylc-flow && \
+    conda install -y -n "$CONDA_ENV" \
+        --only-deps \
+        --prune \
+        -c conda-forge \
+        cylc-flow && \
     conda clean -y --all && \
     # tidy up after ourselves
     apt-get -y remove build-essential && \
