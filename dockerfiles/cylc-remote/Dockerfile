@@ -20,8 +20,8 @@ LABEL version="1.0" \
       description="Cylc remote job host for background & at jobs."
 
 # install deps
-RUN apt-get -qq -y update && \
-    apt-get -qq -y install at ssh
+RUN apt-get -qq -y install at ssh && \
+    apt-get autoclean
 
 # copy public ssh key (don't setup two way ssh)
 COPY .docker-ssh-keys/*.pub .ssh/
