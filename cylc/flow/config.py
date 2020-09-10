@@ -29,6 +29,7 @@ structures.
 
 from copy import copy
 from fnmatch import fnmatchcase
+from logging import error
 import os
 import re
 import traceback
@@ -231,6 +232,7 @@ class SuiteConfig:
         self.mem_log("config.py: before get(sparse=True")
         self.cfg = self.pcfg.get(sparse=True)
         self.mem_log("config.py: after get(sparse=True)")
+        _ = self.get_validated_rsync_includes()
 
         if 'scheduler' in self.cfg and 'install' in self.cfg['scheduler']:
             self.get_validated_rsync_includes()
