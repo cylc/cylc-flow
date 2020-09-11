@@ -28,10 +28,11 @@ if [[ -z "${TZ_OFFSET_EXTENDED}" ]]; then
     skip 3 "'date' command doesn't support '%:z'"
     exit 0
 fi
+TZ_OFFSET_BASIC=$(date +%z | sed "/^%/d")
 if [[ "${TZ_OFFSET_EXTENDED}" == "+00:00" ]]; then
     TZ_OFFSET_EXTENDED=Z
+    TZ_OFFSET_BASIC=Z
 fi
-TZ_OFFSET_BASIC=$(date +%z | sed "/^%/d")
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate \
