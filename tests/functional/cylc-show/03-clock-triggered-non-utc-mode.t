@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -25,14 +25,14 @@ install_suite "${TEST_NAME_BASE}" clock-triggered-non-utc-mode
 TEST_SHOW_OUTPUT_PATH="$PWD/${TEST_NAME_BASE}-show.stdout"
 TZ_OFFSET_EXTENDED=$(date +%:z | sed "/^%/d")
 if [[ -z "${TZ_OFFSET_EXTENDED}" ]]; then
-    skip 3 "'date' command doesn't support '%:::z'"
+    skip 3 "'date' command doesn't support '%:z'"
     exit 0
 fi
+TZ_OFFSET_BASIC=$(date +%z | sed "/^%/d")
 if [[ "${TZ_OFFSET_EXTENDED}" == "+00:00" ]]; then
     TZ_OFFSET_EXTENDED=Z
+    TZ_OFFSET_BASIC=Z
 fi
-TZ_OFFSET_BASIC=${TZ_OFFSET_EXTENDED/:00/}
-TZ_OFFSET_BASIC=${TZ_OFFSET_BASIC/:/}
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate \
