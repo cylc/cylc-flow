@@ -69,7 +69,7 @@ def record_messages(suite, task_job, messages):
         else:
             handle = sys.stdout
         handle.write('%s %s - %s\n' % (event_time, severity, message))
-    handle.flush()
+        handle.flush()
     # Write to job.status
     _append_job_status_file(suite, task_job, event_time, messages)
     # Send messages
