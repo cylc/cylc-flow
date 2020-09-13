@@ -78,7 +78,7 @@ async def flows(mod_flow, mod_scheduler, mod_run, mod_one_conf):
 
 
 @pytest.mark.asyncio
-async def test_state_filter(flows, mod_test_dir, capsys):
+async def test_state_filter(flows, mod_test_dir):
     """It should filter flows by state."""
     # one stopped flow
     opts = ScanOptions(states='stopped')
@@ -115,7 +115,7 @@ async def test_state_filter(flows, mod_test_dir, capsys):
 
 
 @pytest.mark.asyncio
-async def test_name_filter(flows, mod_test_dir, capsys):
+async def test_name_filter(flows, mod_test_dir):
     """It should filter flows by name regex."""
     # one stopped flow
     opts = ScanOptions(states='all', name=['.*held.*'])
@@ -126,7 +126,7 @@ async def test_name_filter(flows, mod_test_dir, capsys):
 
 
 @pytest.mark.asyncio
-async def test_name_sort(flows, mod_test_dir, capsys):
+async def test_name_sort(flows, mod_test_dir):
     """It should sort flows by name."""
     # one stopped flow
     opts = ScanOptions(states='all', sort=True)
@@ -139,7 +139,7 @@ async def test_name_sort(flows, mod_test_dir, capsys):
 
 
 @pytest.mark.asyncio
-async def test_format_json(flows, mod_test_dir, capsys):
+async def test_format_json(flows, mod_test_dir):
     """It should dump results in json format."""
     # one stopped flow
     opts = ScanOptions(states='all', format='json')
@@ -151,7 +151,7 @@ async def test_format_json(flows, mod_test_dir, capsys):
 
 
 @pytest.mark.asyncio
-async def test_format_tree(flows, run_dir, ses_test_dir, mod_test_dir, capsys):
+async def test_format_tree(flows, run_dir, ses_test_dir, mod_test_dir):
     """It should dump results in an ascii tree format."""
     # one stopped flow
     opts = ScanOptions(states='running', format='tree')
@@ -167,7 +167,7 @@ async def test_format_tree(flows, run_dir, ses_test_dir, mod_test_dir, capsys):
 
 
 @pytest.mark.asyncio
-async def test_format_rich(flows, mod_test_dir, capsys):
+async def test_format_rich(flows, mod_test_dir):
     """It should print results in a long human-friendly format."""
     # one stopped flow (--colour-blind)
     opts = ScanOptions(states='running', format='rich', colour_blind=True)
