@@ -108,7 +108,8 @@ class ControlTree(object):
         # TODO - REMOVE FILTER HERE?
         self.tmodelfilter = self.ttreestore.filter_new()
         self.tmodelsort = gtk.TreeModelSort(self.tmodelfilter)
-        self.tmodelsort.set_default_sort_func(self.default_sort_column)
+        if not self.cfg.use_defn_order:
+            self.tmodelsort.set_default_sort_func(self.default_sort_column)
         self.ttreeview.set_model(self.tmodelsort)
 
         # multiple selection
