@@ -23,6 +23,15 @@ cylc-8 (master branch, Python 3 - not yet released) uses proper Python package
 management and does not bundle Jinja2.
 
 -------------------------------------------------------------------------------
+## __cylc-7.8.7 (2020-05-14)__
+
+### Fixes
+
+[#3814](https://github.com/cylc/cylc-flow/pull/3814) - Fixes a minor bug in the
+auto-restart functionality which caused suites to wait for local jobs running
+on *any* host to complete before restarting.
+
+-------------------------------------------------------------------------------
 ## __cylc-7.8.6 (2020-05-14)__
 
 ### Fixes
