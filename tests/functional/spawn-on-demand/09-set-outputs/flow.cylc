@@ -1,0 +1,25 @@
+# Test that `cylc set-outputs` has the same effect as natural output
+# completion: downstream children spawned as normal.
+
+[scheduling]
+    [[graph]]
+        R1 = """
+            foo & setter
+            foo:out1 => bar
+            foo:out2 => baz
+             """
+[runtime]
+    [[root]]
+        script = true
+    [[foo]]
+        # (Neglecting to complete my outputs naturally).
+        [[[outputs]]]
+            out1 = "file-1 done"
+            out2 = "file-2 done"
+    [[setter]]
+        # (To the rescue).
+        script = """
+            cylc set-outputs --output=out1 --output=out2 "${CYLC_SUITE_NAME}" 1/foo
+                 """
+    [[bar]]
+    [[baz]]

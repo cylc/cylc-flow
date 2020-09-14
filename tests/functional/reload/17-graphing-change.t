@@ -63,8 +63,8 @@ grep_ok "Removed task: 'one'" "${LOG_FILE}"
 cp "${TEST_SOURCE_DIR}/graphing-change/flow-2.cylc" \
     "${TEST_DIR}/${SUITE_NAME}/flow.cylc"
 
-cylc spawn "${SUITE_NAME}"  foo.1
-cylc spawn "${SUITE_NAME}"  baz.1
+cylc set-outputs "${SUITE_NAME}"  foo.1
+cylc set-outputs "${SUITE_NAME}"  baz.1
 # reload suite
 run_ok "${TEST_NAME_BASE}-swap-reload" cylc reload "${SUITE_NAME}"
 while (($(grep -c 'Reload completed' "${LOG_FILE}" || true) < 3)); do

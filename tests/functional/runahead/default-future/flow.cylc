@@ -21,7 +21,7 @@
         script = """
  if [[ "$CYLC_TASK_CYCLE_POINT" == "20100101T0000Z" ]]; then
    # SoD: spawn wibble (it's not sitting there waiting like in SoS)
-   cylc spawn $CYLC_SUITE_NAME baz.20100101T0800Z
+   cylc set-outputs $CYLC_SUITE_NAME baz.20100101T0800Z
 fi
 false"""
     [[bar,baz,wibble]]

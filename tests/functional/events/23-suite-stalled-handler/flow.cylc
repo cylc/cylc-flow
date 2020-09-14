@@ -1,7 +1,7 @@
 [cylc]
     UTC mode = True # Ignore DST
     [[events]]
-        stalled handler = cylc spawn %(suite)s bar.1
+        stalled handler = cylc set-outputs %(suite)s bar.1
     [[reference test]]
         expected task failures = bar.1
 [scheduling]
