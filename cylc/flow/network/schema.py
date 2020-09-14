@@ -412,10 +412,12 @@ async def get_nodes_by_ids(root, info, **args):
             parent_args.update(
                 {'id': parent_id, 'delta_store': False}
             )
-            parent = await resolvers.get_node_by_id(
-                NODE_MAP[get_type_str(info.parent_type)],
-                parent_args
-            )
+            parent_type = get_type_str(info.parent_type)
+            if parent_type in NODE_MAP:
+                parent = await resolvers.get_node_by_id(
+                    NODE_MAP[parent_type], parent_args)
+            else:
+                parent = await resolvers.get_workflow_by_id(parent_args)
             field_ids = getattr(parent, field_name, None)
         if not field_ids:
             return []
