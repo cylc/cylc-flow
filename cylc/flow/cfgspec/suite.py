@@ -88,15 +88,18 @@ with Conf(
         Conf('includes', VDR.V_STRING_LIST, desc='''
             Configure the directories and files to be included in the remote
             file installation.
-                .. note::
 
-                    These, as standard, include the following directories:
-                        * app
-                        * bin
-                        * etc
-                        * lib
-                    And include the server.key file (from the .service
-                    directory), this is required for authentication.
+             .. note::
+                These, as standard, include the following directories:
+
+                 * app
+                 * bin
+                 * etc
+                 * lib
+
+                 And include the server.key file (from the .service
+                 directory), this is required for authentication.
+            
             These should be located in the top level of your Cylc workflow,
             ie. the directory that contains your flow.cylc file.
             Directories must have a trailing slash.
