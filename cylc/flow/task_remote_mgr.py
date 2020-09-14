@@ -22,6 +22,7 @@ This module provides logic to:
 - Implement basic host select functionality.
 """
 
+from cylc.flow.cylc_subproc import procopen
 import os
 from shlex import quote
 import re
@@ -312,18 +313,26 @@ class TaskRemoteMgr:
             if REMOTE_INIT_DONE in proc_ctx.out:
                 src_path = get_suite_run_dir(self.suite)
                 dst_path = get_remote_suite_run_dir(platform, self.suite)
-                log_file = ""
-                for handler in LOG.handlers:
-                    if(isinstance(handler, FileInstallLogFileHandler)):
-                        log_file = handler.baseFilename
-                        break
                 try:
-                    Popen(construct_rsync_over_ssh_cmd(
+                    process = procopen(construct_rsync_over_ssh_cmd(
                         src_path,
                         dst_path,
                         platform,
-                        log_file,
-                        self.rsync_includes))
+                        self.rsync_includes),
+                        stdoutpipe=True,
+                        stderrpipe=True,
+                        universal_newlines=True)
+
+                    out, err = process.communicate()
+                    install_target = platform['install target']
+                    if out:
+                        LOG.info(
+                            'File installation information for '
+                            f'{install_target}: \n {out}')
+                    if err:
+                        LOG.error(
+                            'File installation error on '
+                            f'{install_target}:\n {err}')
                 except Exception as ex:
                     LOG.error(f"Problem during rsync: {ex}")
             if "KEYSTART" in proc_ctx.out:

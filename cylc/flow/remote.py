@@ -173,7 +173,7 @@ def get_includes_to_rsync(rsync_includes=None):
 
 
 def construct_rsync_over_ssh_cmd(
-        src_path, dst_path, platform, logfile=None, rsync_includes=None):
+        src_path, dst_path, platform, rsync_includes=None):
     """Constructs the rsync command used for remote file installation.
 
     Includes as standard the directories: app, bin, etc, lib; and the server
@@ -190,13 +190,11 @@ def construct_rsync_over_ssh_cmd(
     dst_host = get_host_from_platform(platform)
     rsync_cmd = "rsync -v --perms --recursive --links --checksum --delete"
     ssh_cmd = platform['ssh command']
+    ssh_cmd = ssh_cmd + " -o LogLevel=error"
     rsync_cmd = shlex.split(rsync_cmd)
-    if logfile:
-        rsync_cmd.append(f"--log-file={logfile}")
     rsync_cmd.append("--rsh=" + ssh_cmd)
     # Note to future devs - be wary of changing the order of the following
     # rsync options, rsync is very particular about order of in/ex-cludes.
-
     rsync_cmd.append('--include=/.service/')
     rsync_cmd.append('--include=/.service/server.key')
     excludes = ['log', 'share', 'work']

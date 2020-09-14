@@ -203,13 +203,17 @@ class FileInstallLogFileHandler(TimestampRotatingFileHandler):
         self.addFilter(self.FileInstallLogFilter())
 
     # We're utilising the Python and Cylc log management for file installation
-    # log files but we do not actually want anything to reach the logs
+    # log files but we do not actually want anything, other than file
+    # installation information to reach the logs
     class FileInstallLogFilter(logging.Filter):
         """Filter to ensure File Install Log is used only for file installation
         """
         def filter(self, record):
-            """Returns false"""
-            return False
+            if (hasattr(record, 'message')
+                    and "File installation information" in record.message):
+                return True
+            else:
+                return False
 
 
 class ReferenceLogFileHandler(logging.FileHandler):
