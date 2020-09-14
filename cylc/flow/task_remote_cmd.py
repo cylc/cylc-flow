@@ -37,8 +37,8 @@ REMOTE_INIT_NOT_REQUIRED = 'REMOTE INIT NOT REQUIRED'
 REMOTE_INIT_FAILED = 'REMOTE INIT FAILED'
 
 
-def remove_keys_on_platform(srvd, install_target, full_clean=False):
-    """Removes platform-held authentication keys"""
+def remove_keys_on_client(srvd, install_target, full_clean=False):
+    """Removes client authentication keys"""
     keys = {
         "client_private_key": KeyInfo(
             KeyType.PRIVATE,
@@ -60,7 +60,7 @@ def remove_keys_on_platform(srvd, install_target, full_clean=False):
             os.remove(k.full_key_path)
 
 
-def create_platform_keys(srvd, install_target):
+def create_client_keys(srvd, install_target):
     """Create or renew authentication keys for suite 'reg' in the .service
      directory.
      Generate a pair of ZMQ authentication keys"""
@@ -106,8 +106,8 @@ def remote_init(install_target, rund, indirect_comm=None):
             # client key for a different install target exists
             print(REMOTE_INIT_FAILED)
     try:
-        remove_keys_on_platform(srvd, install_target)
-        create_platform_keys(srvd, install_target)
+        remove_keys_on_client(srvd, install_target)
+        create_client_keys(srvd, install_target)
     except Exception:
         # Catching all exceptions as need to fail remote init if any problems
         # with key generation.
@@ -152,7 +152,7 @@ def remote_tidy(install_target, rund):
     else:
         if cylc.flow.flags.debug:
             print('Deleted: %s' % fname)
-    remove_keys_on_platform(srvd, install_target, full_clean=True)
+    remove_keys_on_client(srvd, install_target, full_clean=True)
     try:
         os.rmdir(srvd)  # remove directory if empty
     except OSError:

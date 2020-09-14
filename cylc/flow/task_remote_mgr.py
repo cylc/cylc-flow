@@ -55,7 +55,6 @@ from cylc.flow.platforms import (
     get_host_from_platform,
     get_install_target_from_platform)
 from cylc.flow.remote import construct_platform_ssh_cmd
-from cylc.flow.loggingutil import FileInstallLogFileHandler
 
 REMOTE_INIT_FAILED = 'REMOTE INIT FAILED'
 
@@ -323,7 +322,7 @@ class TaskRemoteMgr:
                         stderrpipe=True,
                         universal_newlines=True)
 
-                    out, err = process.communicate()
+                    out, err = process.communicate(timeout=600)
                     install_target = platform['install target']
                     if out:
                         LOG.info(

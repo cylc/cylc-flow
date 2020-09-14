@@ -24,7 +24,7 @@ from cylc.flow.suite_files import (
     KeyType,
     remove_keys_on_server)
 from cylc.flow.task_remote_cmd import (
-    remove_keys_on_platform, create_platform_keys)
+    remove_keys_on_client, create_client_keys)
 
 
 def setup_keys(suite_name):
@@ -48,6 +48,6 @@ def setup_keys(suite_name):
             suite_srv_dir=suite_srv_dir)
     }
     remove_keys_on_server(server_keys)
-    remove_keys_on_platform(suite_srv_dir, None, full_clean=True)
+    remove_keys_on_client(suite_srv_dir, None, full_clean=True)
     create_server_keys(server_keys, suite_srv_dir)
-    create_platform_keys(suite_srv_dir, None)
+    create_client_keys(suite_srv_dir, None)

@@ -190,7 +190,6 @@ def construct_rsync_over_ssh_cmd(
     dst_host = get_host_from_platform(platform)
     rsync_cmd = "rsync -v --perms --recursive --links --checksum --delete"
     ssh_cmd = platform['ssh command']
-    ssh_cmd = ssh_cmd + " -o LogLevel=error"
     rsync_cmd = shlex.split(rsync_cmd)
     rsync_cmd.append("--rsh=" + ssh_cmd)
     # Note to future devs - be wary of changing the order of the following
