@@ -16,9 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc [control] spawn [OPTIONS] TASK-GLOB [...]
+"""cylc [control] set-outputs [OPTIONS] TASK-GLOB [...]
 
-Force a task to spawn downstream children that depend on specified ouputs.
+Tell the scheduler that specified outputs (or the "succeeded" output by
+default) of matched tasks are complete. Downstream tasks will be spawned or
+updated just as if the outputs were completed normally.
+
 The --output=OUTPUT option can be used multiple times on the command line.
 
 """
@@ -36,7 +39,7 @@ def get_option_parser():
             ('TASK-GLOB [...]', 'Task match pattern')])
     parser.add_option(
         "--output", metavar="OUTPUT",
-        help="Spawn on OUTPUT",
+        help="set task output OUTPUT completed",
         action="append", dest="outputs")
     return parser
 

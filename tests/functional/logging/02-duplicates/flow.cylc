@@ -21,7 +21,7 @@
         script = false
     [[bar]]
         script = """
-cylc spawn "${CYLC_SUITE_NAME}" "foo.${CYLC_TASK_CYCLE_POINT}"
+cylc set-outputs "${CYLC_SUITE_NAME}" "foo.${CYLC_TASK_CYCLE_POINT}"
 """
     [[restart]]
         script = """
