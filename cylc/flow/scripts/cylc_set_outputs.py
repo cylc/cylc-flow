@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc [control] set-outputs [OPTIONS] TASK-GLOB [...]
+"""cylc [control] set-outputs [OPTIONS] REG TASK-GLOB [...]
 
 Tell the scheduler that specified outputs (or the "succeeded" output by
 default) of matched tasks are complete. Downstream tasks will be spawned or
