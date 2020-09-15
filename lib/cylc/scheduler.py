@@ -44,7 +44,12 @@ from cylc.daemonize import daemonize
 from cylc.exceptions import CylcError
 import cylc.flags
 from cylc.host_appointer import HostAppointer, EmptyHostList
-from cylc.hostuserutil import get_host, get_user, get_fqdn_by_host
+from cylc.hostuserutil import (
+    get_host,
+    get_user,
+    get_fqdn_by_host,
+    is_remote_host
+)
 from cylc.loggingutil import CylcLogFormatter, TimestampRotatingFileHandler
 from cylc.log_diagnosis import LogSpec
 from cylc.network import PRIVILEGE_LEVELS
@@ -1349,6 +1354,7 @@ conditions; see `cylc conditions`.
             for itask in self.pool.get_tasks():
                 if (itask.state.status in TASK_STATUSES_ACTIVE and
                         itask.summary['batch_sys_name'] and
+                        (not is_remote_host(itask.task_host)) and
                         self.task_job_mgr.batch_sys_mgr.is_job_local_to_host(
                             itask.summary['batch_sys_name'])):
                     LOG.info('Waiting for jobs running on localhost to '
