@@ -48,6 +48,9 @@ compatibility, the `cylc run` command will automatically symlink an existing
 
 ### Enhancements
 
+[#3816](https://github.com/cylc/cylc-flow/pull/3816) - change `cylc spawn`
+command name to `cylc set-outputs` to better reflect its role in Cylc 8.
+
 [#3724](https://github.com/cylc/cylc-flow/pull/3724) - Re-implemented
 the `cylc scan` command line interface and added a Python API for accessing
 workflow scanning functionality.
