@@ -695,14 +695,15 @@ class TaskJobManager:
                 SubProcContext(cmd_key, cmd), callback, [suite, itasks])
 
     @staticmethod
-    def _set_retry_timers(itask, rtconfig=None):
+    def _set_retry_timers(itask, rtconfig=None, retry=True):
         """Set try number and retry delays."""
         if rtconfig is None:
             rtconfig = itask.tdef.rtconfig
-        try:
-            _ = rtconfig[itask.tdef.run_mode + ' mode']['disable retries']
-        except KeyError:
-            retry = True
+        if (
+            itask.tdef.run_mode + ' mode' in rtconfig and
+            'disable retries' in rtconfig[itask.tdef.run_mode + ' mode']
+        ):
+            retry = False
         if retry:
             if rtconfig['job']['submission retry delays']:
                 submit_delays = rtconfig['job']['submission retry delays']
@@ -860,12 +861,24 @@ class TaskJobManager:
                 )
                 rtconfig['remote']['host'] = host_n
 
-            platform = get_platform(rtconfig)
-            itask.platform = platform
-            # Submit number not yet incremented
-            itask.submit_num += 1
-            # Retry delays, needed for the try_num
-            self._set_retry_timers(itask, rtconfig)
+            try:
+                platform = get_platform(rtconfig)
+            except PlatformLookupError as exc:
+                # Submit number not yet incremented
+                itask.submit_num += 1
+                itask.summary['platforms_used'][itask.submit_num] = ''
+                # Retry delays, needed for the try_num
+                self._set_retry_timers(itask, rtconfig, False)
+                self._prep_submit_task_job_error(
+                    suite, itask, '(platform not defined)', exc
+                )
+                return False
+            else:
+                itask.platform = platform
+                # Submit number not yet incremented
+                itask.submit_num += 1
+                # Retry delays, needed for the try_num
+                self._set_retry_timers(itask, rtconfig)
 
         try:
             job_conf = self._prep_submit_task_job_impl(suite, itask, rtconfig)
@@ -900,13 +913,13 @@ class TaskJobManager:
         else:
             LOG.debug(traceback.format_exc())
             LOG.error(exc)
-            log_task_job_activity(
-                SubProcContext(self.JOBS_SUBMIT, action, err=exc, ret_code=1),
-                suite,
-                itask.point,
-                itask.tdef.name,
-                submit_num=itask.submit_num
-            )
+        log_task_job_activity(
+            SubProcContext(self.JOBS_SUBMIT, action, err=exc, ret_code=1),
+            suite,
+            itask.point,
+            itask.tdef.name,
+            submit_num=itask.submit_num
+        )
         # Persist
         self.suite_db_mgr.put_insert_task_jobs(itask, {
             'is_manual_submit': itask.is_manual_submit,
