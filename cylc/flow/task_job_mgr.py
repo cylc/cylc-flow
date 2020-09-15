@@ -203,7 +203,7 @@ class TaskJobManager:
         prepared_tasks, bad_tasks = self.prep_submit_task_jobs(suite, itasks)
 
         # Reset consumed host selection results
-        self.task_remote_mgr.remote_host_select_reset()
+        self.task_remote_mgr.subshell_eval_reset()
 
         if not prepared_tasks:
             return bad_tasks
@@ -827,12 +827,12 @@ class TaskJobManager:
         host_n, platform_n = None, None
         try:
             if rtconfig['remote']['host'] is not None:
-                host_n = self.task_remote_mgr.remote_host_select(
+                host_n = self.task_remote_mgr.subshell_eval(
                     rtconfig['remote']['host']
                 )
             else:
-                platform_n = self.task_remote_mgr.remote_host_select(
-                    rtconfig['platform']
+                platform_n = self.task_remote_mgr.subshell_eval(
+                    rtconfig['platform'], host_check=False
                 )
         except TaskRemoteMgmtError as exc:
             # Submit number not yet incremented
