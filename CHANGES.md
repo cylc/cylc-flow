@@ -73,6 +73,10 @@ templates in [runtime][X][environment].
 
 ### Fixes
 
+[#3815](https://github.com/cylc/cylc-flow/pull/3815) - Fixes a minor bug in the
+auto-restart functionality which caused suites to wait for local jobs running
+on *any* host to complete before restarting.
+
 [#3732](https://github.com/cylc/cylc-flow/pull/3732) - XTrigger labels
 are now validated to ensure that runtime errors can not occur when
 exporting environment variables.

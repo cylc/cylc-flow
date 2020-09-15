@@ -47,7 +47,11 @@ from cylc.flow.exceptions import (
 )
 import cylc.flow.flags
 from cylc.flow.host_select import select_suite_host
-from cylc.flow.hostuserutil import get_host, get_user
+from cylc.flow.hostuserutil import (
+    get_host,
+    get_user,
+    is_remote_platform
+)
 from cylc.flow.job_pool import JobPool
 from cylc.flow.loggingutil import (
     TimestampRotatingFileHandler,
@@ -1528,6 +1532,7 @@ class Scheduler:
                 if (
                         itask.state(*TASK_STATUSES_ACTIVE)
                         and itask.summary['batch_sys_name']
+                        and not is_remote_platform(itask.platform)
                         and self.task_job_mgr.batch_sys_mgr
                         .is_job_local_to_host(
                             itask.summary['batch_sys_name'])
