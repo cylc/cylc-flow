@@ -78,6 +78,7 @@ from tempfile import NamedTemporaryFile
 
 from ansimarkup import parse as cparse
 
+from cylc.flow import ID_DELIM
 from cylc.flow.task_id import TaskID
 from cylc.flow.terminal import cli_function
 from cylc.flow.exceptions import UserInputError
@@ -91,6 +92,42 @@ from cylc.flow.parsec.config import ParsecConfig
 from cylc.flow.parsec.validate import cylc_config_validate
 
 REC_ITEM = re.compile(r'^\[([^\]]*)\](.*)$')
+
+MUTATION = '''
+mutation (
+    $wFlows: [WorkflowID]!,
+    $bMode: BroadcastMode!,
+    $cPoints: [CyclePoint],
+    $nSpaces: [NamespaceName],
+    $bSettings: [GenericScalar],
+    $bCutoff: CyclePoint
+) {
+  broadcast (
+    workflows: $wFlows,
+    mode: $bMode,
+    cyclePoints: $cPoints,
+    namespaces: $nSpaces,
+    settings: $bSettings,
+    cutoff: $bCutoff
+  ) {
+    result
+  }
+}
+'''
+
+QUERY = '''
+query (
+  $wFlows: [ID],
+  $nIds: [ID]
+) {
+  workflows (
+    ids: $wFlows,
+  ) {
+    id
+    broadcasts (ids: $nIds)
+  }
+}
+'''
 
 
 def get_padding(settings, level=0, padding=0):
@@ -233,7 +270,7 @@ def get_option_parser():
         action="store_true", default=False, dest="show")
 
     parser.add_option(
-        "-k", "--display-task", metavar="TASKID",
+        "-k", "--display-task", metavar="TASK_GLOB",
         help="Print active broadcasts for a given task "
              "(" + TaskID.SYNTAX + ").",
         action="store", default=None, dest="showtask")
@@ -257,40 +294,52 @@ def main(_, options, suite):
     """Implement cylc broadcast."""
     pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
 
+    mutation_kwargs = {
+        'request_string': MUTATION,
+        'variables': {
+            'wFlows': [suite],
+            'bMode': 'Set',
+            'cPoints': options.point_strings,
+            'nSpaces': options.namespaces,
+            'bSettings': options.settings,
+            'bCutoff': options.expire,
+        }
+    }
+
+    query_kwargs = {
+        'request_string': QUERY,
+        'variables': {
+            'wFlows': [suite],
+            'nIds': []
+        }
+
+    }
+
     if options.show or options.showtask:
         if options.showtask:
             try:
-                TaskID.split(options.showtask)
+                task, point = TaskID.split(options.showtask)
+                query_kwargs['variables']['nIds'] = [
+                    f'{point}{ID_DELIM}{task}']
             except ValueError:
                 raise UserInputError("TASKID must be " + TaskID.SYNTAX)
-        settings = pclient('get_broadcast', {'task_id': options.showtask})
-        padding = get_padding(settings) * ' '
-        if options.raw:
-            print(str(settings))
-        else:
-            print_tree(settings, padding, options.unicode)
+        result = pclient('graphql', query_kwargs)
+        for wflow in result['workflows']:
+            settings = wflow['broadcasts']
+            padding = get_padding(settings) * ' '
+            if options.raw:
+                print(str(settings))
+            else:
+                print_tree(settings, padding, options.unicode)
         sys.exit(0)
 
+    report_cancel = True
+    report_set = False
     if options.clear:
-        modified_settings, bad_options = pclient(
-            'clear_broadcast',
-            {'point_strings': options.point_strings,
-             'namespaces': options.namespaces}
-        )
-        if modified_settings:
-            print(get_broadcast_change_report(
-                modified_settings, is_cancel=True))
-        sys.exit(report_bad_options(bad_options))
+        mutation_kwargs['variables']['bMode'] = 'Clear'
 
     if options.expire:
-        modified_settings, bad_options = pclient(
-            'expire_broadcast',
-            {'cutoff': options.expire}
-        )
-        if modified_settings:
-            print(get_broadcast_change_report(
-                modified_settings, is_cancel=True))
-        sys.exit(report_bad_options(bad_options))
+        mutation_kwargs['variables']['bMode'] = 'Expire'
 
     # implement namespace and cycle point defaults here
     namespaces = options.namespaces
@@ -310,16 +359,14 @@ def main(_, options, suite):
             setting = get_rdict(option_item)
             settings.append(setting)
         files_to_settings(settings, options.cancel_files, options.cancel)
-        modified_settings, bad_options = pclient(
-            'clear_broadcast',
-            {'point_strings': point_strings,
-             'namespaces': namespaces,
-             'cancel_settings': settings}
+        mutation_kwargs['variables'].update(
+            {
+                'bMode': 'Clear',
+                'cPoints': point_strings,
+                'nSpaces': namespaces,
+                'bSettings': settings,
+            }
         )
-        if modified_settings:
-            print(get_broadcast_change_report(
-                modified_settings, is_cancel=True))
-        sys.exit(report_bad_options(bad_options))
 
     if options.settings or options.setting_files:
         settings = []
@@ -331,15 +378,25 @@ def main(_, options, suite):
             setting = get_rdict(lhs, rhs)
             settings.append(setting)
         files_to_settings(settings, options.setting_files)
-        modified_settings, bad_options = pclient(
-            'put_broadcast',
-            {'point_strings': point_strings,
-             'namespaces': namespaces,
-             'settings': settings
-             }
+        mutation_kwargs['variables'].update(
+            {
+                'bMode': 'Set',
+                'cPoints': point_strings,
+                'nSpaces': namespaces,
+                'bSettings': settings,
+            }
         )
-        print(get_broadcast_change_report(modified_settings))
-        sys.exit(report_bad_options(bad_options, is_set=True))
+        report_cancel = False
+        report_set = True
+
+    results = pclient('graphql', mutation_kwargs)
+    for result in results['broadcast']['result']:
+        modified_settings = result['response'][0]
+        bad_options = result['response'][1]
+        if modified_settings:
+            print(get_broadcast_change_report(
+                modified_settings, is_cancel=report_cancel))
+    sys.exit(report_bad_options(bad_options, is_set=report_set))
 
 
 if __name__ == "__main__":

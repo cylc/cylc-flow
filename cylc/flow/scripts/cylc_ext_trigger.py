@@ -49,6 +49,22 @@ MSG_SEND_FAILED = "Send message: try %s of %s failed"
 MSG_SEND_RETRY = "Retrying in %s seconds, timeout is %s"
 MSG_SEND_SUCCEED = "Send message: try %s of %s succeeded"
 
+MUTATION = '''
+mutation (
+  $wFlows: [WorkflowID]!,
+  $eventMsg: String!,
+  $eventId: String!
+) {
+  extTrigger (
+    workflows: $wFlows,
+    message: $eventMsg,
+    id: $eventId
+  ) {
+    result
+  }
+}
+'''
+
 
 def get_option_parser():
     parser = COP(
@@ -79,21 +95,25 @@ def main(parser, options, suite, event_msg, event_id):
     max_n_tries = int(options.max_n_tries)
     retry_intvl_secs = float(options.retry_intvl_secs)
 
+    mutation_kwargs = {
+        'request_string': MUTATION,
+        'variables': {
+            'wFlows': [suite],
+            'eventMsg': event_msg,
+            'eventId': event_id,
+        }
+    }
+
     for i_try in range(max_n_tries):
         try:
-            pclient(
-                'put_ext_trigger',
-                {'message': event_msg, 'id': event_id}
-            )
+            pclient('graphql', mutation_kwargs)
         except ClientError as exc:
             LOG.exception(exc)
             LOG.info(MSG_SEND_FAILED, i_try + 1, max_n_tries)
             if i_try == max_n_tries - 1:  # final attempt
                 raise CylcError('send failed')
-            else:
-                LOG.info(MSG_SEND_RETRY, retry_intvl_secs,
-                         options.comms_timeout)
-                sleep(retry_intvl_secs)
+            LOG.info(MSG_SEND_RETRY, retry_intvl_secs, options.comms_timeout)
+            sleep(retry_intvl_secs)
         else:
             if i_try > 0:
                 LOG.info(MSG_SEND_SUCCEED, i_try + 1, max_n_tries)

@@ -18,7 +18,6 @@
 
 import asyncio
 from fnmatch import fnmatchcase
-from getpass import getuser
 import logging
 from operator import attrgetter
 import queue
@@ -39,6 +38,25 @@ from cylc.flow.network.schema import (
 logger = logging.getLogger(__name__)
 
 DELTA_SLEEP_INTERVAL = 0.5
+
+
+def filter_none(dictionary):
+    """Filter out `None` items from a dictionary:
+
+    Examples:
+        >>> filter_none({
+        ...     'a': 0,
+        ...     'b': '',
+        ...     'c': None
+        ... })
+        {'a': 0, 'b': ''}
+
+    """
+    return {
+        key: value
+        for key, value in dictionary.items()
+        if value is not None
+    }
 
 
 # Message Filters
@@ -494,5 +512,302 @@ class Resolvers(BaseResolvers):
 
     async def _mutation_mapper(self, command, kwargs):
         """Map between GraphQL resolvers and internal command interface."""
-        method = getattr(self.schd.server, command)
-        return method(user=getuser(), **kwargs)
+        method = getattr(self, command)
+        return method(**kwargs)
+
+    def broadcast(
+            self,
+            mode,
+            cycle_points=None,
+            namespaces=None,
+            settings=None,
+            cutoff=None
+    ):
+        """Put or clear broadcasts."""
+        if mode == 'put_broadcast':
+            return self.schd.task_events_mgr.broadcast_mgr.put_broadcast(
+                cycle_points, namespaces, settings)
+        if mode == 'clear_broadcast':
+            return self.schd.task_events_mgr.broadcast_mgr.clear_broadcast(
+                cycle_points, namespaces, settings)
+        if mode == 'expire_broadcast':
+            return self.schd.task_events_mgr.broadcast_mgr.expire_broadcast(
+                cutoff)
+        raise ValueError('Unsupported broadcast mode')
+
+    def hold(self, tasks=None, time=None):
+        """Hold the workflow."""
+        self.schd.command_queue.put((
+            'hold',
+            tuple(),
+            filter_none({
+                'tasks': tasks or None,
+                'time': time
+            })
+        ))
+        return (True, 'Command queued')
+
+    def kill_tasks(self, tasks):
+        """Kill task jobs.
+
+        Args:
+            tasks (list): List of identifiers, see `task globs`_
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool)
+                True if command successfully queued.
+            message (str)
+                Information about outcome.
+
+        """
+        self.schd.command_queue.put(("kill_tasks", (tasks,), {}))
+        return (True, 'Command queued')
+
+    def remove_tasks(self, tasks):
+        """Remove tasks from the task pool.
+
+        Args:
+            tasks (list):
+                List of identifiers, see `task globs`
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool)
+                True if command successfully queued.
+            message (str)
+                Information about outcome.
+
+        """
+        self.schd.command_queue.put(("remove_tasks", (tasks,), {}))
+        return (True, 'Command queued')
+
+    def nudge(self):
+        """Tell suite to try task processing.
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool)
+                True if command successfully queued.
+            message (str)
+                Information about outcome.
+
+        """
+        self.schd.command_queue.put(("nudge", (), {}))
+        return (True, 'Command queued')
+
+    def poll_tasks(self, tasks=None, poll_succeeded=False):
+        """Request the suite to poll task jobs.
+
+        Args:
+            tasks (list, optional):
+                List of identifiers, see `task globs`_
+            poll_succeeded (bool, optional):
+                Allow polling of remote tasks if True.
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool)
+                True if command successfully queued.
+            message (str)
+                Information about outcome.
+
+        """
+        self.schd.command_queue.put(
+            ("poll_tasks", (tasks,), {"poll_succ": poll_succeeded}))
+        return (True, 'Command queued')
+
+    def put_ext_trigger(self, message, id):
+        """Server-side external event trigger interface.
+
+        Args:
+            message (str): The external trigger message.
+            id (str): The unique trigger ID.
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool)
+                True if command successfully queued.
+            message (str)
+                Information about outcome.
+
+        """
+        self.schd.ext_trigger_queue.put((message, id))
+        return (True, 'Event queued')
+
+    def put_messages(self, task_job=None, event_time=None, messages=None):
+        """Put task messages in queue for processing later by the main loop.
+
+        Arguments:
+            task_job (str, optional):
+                Task job in the format ``CYCLE/TASK_NAME/SUBMIT_NUM``.
+            event_time (str, optional):
+                Event time as an ISO8601 string.
+            messages (list, optional):
+                List in the format ``[[severity, message], ...]``.
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool)
+                True if command successfully queued.
+            message (str)
+                Information about outcome.
+
+        """
+        #  TODO: standardise the task_job interface to one of the other
+        #        systems
+        for severity, message in messages:
+            self.schd.message_queue.put(
+                (task_job, event_time, severity, message))
+        return (True, 'Messages queued: %d' % len(messages))
+
+    def reload_suite(self):
+        """Tell suite to reload the suite definition.
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool)
+                True if command successfully queued.
+            message (str)
+                Information about outcome.
+
+        """
+        self.schd.command_queue.put(("reload_suite", (), {}))
+        return (True, 'Command queued')
+
+    def release(self, tasks=None):
+        """Release (un-hold) the workflow."""
+        self.schd.command_queue.put((
+            "release",
+            (),
+            filter_none({
+                'ids': tasks
+            })
+        ))
+        return (True, 'Command queued')
+
+    def set_verbosity(self, level):
+        """Set suite verbosity to new level (for suite logs).
+
+        Args:
+            level (str): A logging level e.g. ``INFO`` or ``ERROR``.
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool)
+                True if command successfully queued.
+            message (str)
+                Information about outcome.
+
+        """
+        self.schd.command_queue.put(("set_verbosity", (level,), {}))
+        return (True, 'Command queued')
+
+    def force_spawn_children(self, tasks, outputs):
+        """Spawn children of given task outputs.
+
+        Args:
+            tasks (list): List of identifiers, see `task globs`
+            outputs (list): List of outputs to spawn on
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool)
+                True if command successfully queued.
+            message (str)
+                Information about outcome.
+
+        """
+        self.schd.command_queue.put(
+            ("force_spawn_children", (tasks,),
+             {'outputs': outputs}))
+        return (True, 'Command queued')
+
+    def stop(
+            self,
+            mode=None,
+            cycle_point=None,
+            clock_time=None,
+            task=None,
+            flow_label=None
+    ):
+        """Stop the workflow or specific flow from spawning any further.
+
+        Args:
+            mode (StopMode.Value): Stop mode to set
+            cycle_point (str): Cycle point after which to stop.
+            clock_time (str): Wallclock time after which to stop.
+            task (str): Stop after this task succeeds.
+            flow_label (str): The flow to sterilise.
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool)
+                True if command successfully queued.
+            message (str)
+                Information about outcome.
+
+        """
+        self.schd.command_queue.put((
+            "stop",
+            (),
+            filter_none({
+                'mode': mode,
+                'cycle_point': cycle_point,
+                'clock_time': clock_time,
+                'task': task,
+                'flow_label': flow_label,
+            })
+        ))
+        return (True, 'Command queued')
+
+    def take_checkpoints(self, name):
+        """Checkpoint current task pool.
+
+        Args:
+            name (str): The checkpoint name
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool)
+                True if command successfully queued.
+            message (str)
+                Information about outcome.
+
+        """
+        self.schd.command_queue.put(("take_checkpoints", (name,), {}))
+        return (True, 'Command queued')
+
+    def force_trigger_tasks(self, tasks, reflow=False):
+        """Trigger submission of task jobs where possible.
+
+        Args:
+            tasks (list):
+                List of identifiers, see `task globs`_
+            reflow (bool, optional):
+                Start new flow(s) from triggered tasks.
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool)
+                True if command successfully queued.
+            message (str)
+                Information about outcome.
+
+        """
+        self.schd.command_queue.put(
+            ("force_trigger_tasks", (tasks,),
+             {"reflow": reflow}))
+        return (True, 'Command queued')

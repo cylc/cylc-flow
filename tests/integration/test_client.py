@@ -16,14 +16,6 @@ async def harness(mod_flow, mod_scheduler, mod_run, mod_one_conf):
 
 
 @pytest.mark.asyncio
-async def test_ping(harness):
-    """It should return True if running."""
-    _, client = harness
-    assert await client.async_request('ping_suite')
-    assert not client.socket.closed
-
-
-@pytest.mark.asyncio
 async def test_graphql(harness):
     """It should return True if running."""
     schd, client = harness

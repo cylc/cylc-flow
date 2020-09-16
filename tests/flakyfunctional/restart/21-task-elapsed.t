@@ -27,11 +27,14 @@ import ast
 import sys
 
 data = ast.literal_eval(open(sys.argv[1]).read())
-keys = list(sorted(data[1].keys()))
+
+keys = list(
+    f"{task['name']}.{task['cyclePoint']}"
+    for task in data['taskProxies'])
 if keys != ["t1.2031", "t2.2031"]:
     sys.exit(keys)
-for datum in data[1].values():
-    assert isinstance(datum["mean_elapsed_time"], float)
+for datum in data['tasks']:
+    assert isinstance(datum['meanElapsedTime'], float)
 __PYTHON__
 }
 

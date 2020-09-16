@@ -46,6 +46,24 @@ VACATION_MESSAGE_PREFIX = "vacated/"
 
 STDERR_LEVELS = (getLevelName(level) for level in (WARNING, ERROR, CRITICAL))
 
+MUTATION = '''
+mutation (
+  $wFlows: [WorkflowID]!,
+  $taskJob: String!,
+  $eventTime: String,
+  $messages: [[String]]
+) {
+  message (
+    workflows: $wFlows,
+    taskJob: $taskJob,
+    eventTime: $eventTime,
+    messages: $messages
+  ) {
+    result
+  }
+}
+'''
+
 
 def record_messages(suite, task_job, messages):
     """Record task job messages.
@@ -87,11 +105,16 @@ def record_messages(suite, task_job, messages):
             import traceback
             traceback.print_exc()
     else:
-        pclient(
-            'put_messages',
-            {'task_job': task_job, 'event_time': event_time,
-             'messages': messages}
-        )
+        mutation_kwargs = {
+            'request_string': MUTATION,
+            'variables': {
+                'wFlows': [suite],
+                'taskJob': task_job,
+                'eventTime': event_time,
+                'messages': messages,
+            }
+        }
+        pclient('graphql', mutation_kwargs)
 
 
 def _append_job_status_file(suite, task_job, event_time, messages):

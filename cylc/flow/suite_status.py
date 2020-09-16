@@ -65,6 +65,9 @@ class StopMode(Enum):
     REQUEST_CLEAN = 'REQUEST(CLEAN)'
     """External shutdown request, will wait for active jobs to complete."""
 
+    REQUEST_KILL = 'REQUEST(KILL)'
+    """External shutdown request, will wait for active jobs to be killed."""
+
     REQUEST_NOW = 'REQUEST(NOW)'
     """External shutdown request, will wait for event handlers to complete."""
 
@@ -81,6 +84,12 @@ class StopMode(Enum):
             return (
                 'Regular shutdown:\n'
                 '* Wait for all active jobs to complete.\n'
+                '* Run suite event handlers and wait for them to complete.'
+            )
+        if self == self.REQUEST_KILL:
+            return (
+                'Kill shutdown:\n'
+                '* Wait for all active jobs to be killed.\n'
                 '* Run suite event handlers and wait for them to complete.'
             )
         if self == self.REQUEST_NOW:

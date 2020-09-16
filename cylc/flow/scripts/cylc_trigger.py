@@ -32,6 +32,22 @@ from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.terminal import cli_function
 
+MUTATION = '''
+mutation (
+  $wFlows: [WorkflowID]!,
+  $tasks: [NamespaceIDGlob]!,
+  $reflow: Boolean,
+) {
+  trigger (
+    workflows: $wFlows,
+    tasks: $tasks,
+    reflow: $reflow
+  ) {
+    result
+  }
+}
+'''
+
 
 def get_option_parser():
     parser = COP(
@@ -53,13 +69,16 @@ def main(parser, options, suite, *task_globs):
     """CLI for "cylc trigger"."""
     pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
 
-    pclient(
-        'force_trigger_tasks',
-        {
-            'tasks': task_globs,
-            'reflow': options.reflow
+    mutation_kwargs = {
+        'request_string': MUTATION,
+        'variables': {
+            'wFlows': [suite],
+            'tasks': list(task_globs),
+            'reflow': options.reflow,
         }
-    )
+    }
+
+    pclient('graphql', mutation_kwargs)
 
 
 if __name__ == "__main__":

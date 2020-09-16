@@ -1356,25 +1356,6 @@ class TaskPool:
                 return True
         return False
 
-    def ping_task(self, id_, exists_only=False):
-        """Return message to indicate if task exists and/or is running."""
-        found = False
-        running = False
-        for itask in self.get_tasks():
-            if itask.identity == id_:
-                found = True
-                if itask.state(TASK_STATUS_RUNNING):
-                    running = True
-                break
-        if found and exists_only:
-            return True, "task found"
-        elif running:
-            return True, "task running"
-        elif found:
-            return False, "task not running"
-        else:
-            return False, "task not found"
-
     def filter_task_proxies(self, items):
         """Return task proxies that match names, points, states in items.
 

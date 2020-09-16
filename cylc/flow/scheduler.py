@@ -34,7 +34,6 @@ import zmq
 from zmq.auth.thread import ThreadAuthenticator
 
 from metomi.isodatetime.parsers import TimePointParser
-from metomi.isodatetime.exceptions import IsodatetimeError
 
 from cylc.flow import LOG
 from cylc.flow import main_loop
@@ -75,7 +74,6 @@ from cylc.flow.pathutil import (
 )
 from cylc.flow.profiler import Profiler
 from cylc.flow.resources import extract_resources
-from cylc.flow.state_summary_mgr import StateSummaryMgr
 from cylc.flow.subprocpool import SubProcPool
 from cylc.flow.suite_db_mgr import SuiteDatabaseManager
 from cylc.flow.suite_events import (
@@ -86,7 +84,6 @@ from cylc.flow import suite_files
 from cylc.flow.taskdef import TaskDef
 from cylc.flow.task_events_mgr import TaskEventsManager
 from cylc.flow.task_id import TaskID
-from cylc.flow.task_job_logs import JOB_LOG_JOB, get_task_job_log
 from cylc.flow.task_job_mgr import TaskJobManager
 from cylc.flow.task_pool import TaskPool
 from cylc.flow.task_proxy import TaskProxy
@@ -220,7 +217,6 @@ class Scheduler:
 
     # managers
     profiler: Profiler = None
-    state_summary_mgr: StateSummaryMgr = None
     pool: TaskPool = None
     proc_pool: SubProcPool = None
     task_job_mgr: TaskJobManager = None
@@ -334,9 +330,9 @@ class Scheduler:
         self.suite_db_mgr = SuiteDatabaseManager(
             suite_files.get_suite_srv_dir(self.suite),  # pri_d
             os.path.join(self.suite_run_dir, 'log'))  # pub_d
-        self.broadcast_mgr = BroadcastMgr(self.suite_db_mgr)
-
         self.data_store_mgr = DataStoreMgr(self)
+        self.broadcast_mgr = BroadcastMgr(
+            self.suite_db_mgr, self.data_store_mgr)
 
         # *** Network Related ***
         # TODO: this in zmq asyncio context?
@@ -370,7 +366,6 @@ class Scheduler:
             self.suite, context=self.zmq_context, barrier=self.barrier)
 
         self.proc_pool = SubProcPool()
-        self.state_summary_mgr = StateSummaryMgr()
         self.command_queue = Queue()
         self.message_queue = Queue()
         self.ext_trigger_queue = Queue()
@@ -595,9 +590,7 @@ class Scheduler:
                     self
                 )
             )
-            await self.publisher.publish(
-                self.data_store_mgr.get_publish_deltas()
-            )
+            await self.publisher.publish(self.data_store_mgr.publish_deltas)
             self.profiler.start()
             await self.main_loop()
 
@@ -844,37 +837,6 @@ class Scheduler:
             self.command_queue.task_done()
         LOG.info(log_msg)
 
-    def _task_type_exists(self, name_or_id):
-        """Does a task name or id match a known task type in this suite?"""
-        name = name_or_id
-        if TaskID.is_valid_id(name_or_id):
-            name = TaskID.split(name_or_id)[0]
-        return name in self.config.get_task_name_list()
-
-    def info_get_task_jobfile_path(self, task_id):
-        """Return task job file path."""
-        name, point = TaskID.split(task_id)
-        return get_task_job_log(
-            self.suite, point, name, suffix=JOB_LOG_JOB)
-
-    def info_get_suite_info(self):
-        """Return a dict containing the suite title and description."""
-        return self.config.cfg['meta']
-
-    def info_get_suite_state_summary(self):
-        """Return the global, task, and family summary data structures."""
-        return self.state_summary_mgr.get_state_summary()
-
-    def info_get_task_info(self, names):
-        """Return info of a task."""
-        results = {}
-        for name in names:
-            try:
-                results[name] = self.config.describe(name)
-            except KeyError:
-                results[name] = {}
-        return results
-
     def info_get_graph_raw(self, cto, ctn, group_nodes=None,
                            ungroup_nodes=None,
                            ungroup_recursive=False, group_all=False,
@@ -888,100 +850,21 @@ class Scheduler:
             self.config.leaves,
             self.config.feet)
 
-    def info_get_task_requisites(self, items, list_prereqs=False):
-        """Return prerequisites and outputs etc. of a task.
-
-        Result in a dict of a dict:
-        {
-            "task_id": {
-                "meta": {key: value, ...},
-                "prerequisites": {key: value, ...},
-                "outputs": {key: value, ...},
-                "extras": {key: value, ...},
-            },
-            ...
-        }
-        """
-        itasks, bad_items = self.pool.filter_task_proxies(items)
-        results = {}
-        for itask in itasks:
-            if list_prereqs:
-                results[itask.identity] = {
-                    'prerequisites': itask.state.prerequisites_dump(
-                        list_prereqs=True)}
-                continue
-            results[itask.identity] = self._info_get_task_requisites(
-                itask, list_prereqs=False)
-        for task_id in bad_items:
-            # TODO: currently assuming bad_items is a list of task IDs at valid
-            # cycle points. TODO: make it clear that these are not live tasks.
-            name, point = TaskID.split(task_id)
-            for tname in self.config.get_task_name_list():
-                if tname == name:
-                    itask = TaskProxy(
-                        self.config.get_taskdef(name),
-                        get_point(point), flow_label="_")
-                    results[itask.identity] = self._info_get_task_requisites(
-                        itask, list_prereqs=False)
-                    break
-        return results, bad_items
-
-    def _info_get_task_requisites(self, itask, list_prereqs):
-        extras = {}
-        if itask.tdef.clocktrigger_offset is not None:
-            extras['Clock trigger time reached'] = (
-                itask.is_waiting_clock_done())
-            extras['Triggers at'] = time2str(
-                itask.clock_trigger_time)
-        for trig, satisfied in itask.state.external_triggers.items():
-            key = f'External trigger "{trig}"'
-            if satisfied:
-                extras[key] = 'satisfied'
-            else:
-                extras[key] = 'NOT satisfied'
-        for label, satisfied in itask.state.xtriggers.items():
-            sig = self.xtrigger_mgr.get_xtrig_ctx(
-                itask, label).get_signature()
-            extra = f'xtrigger "{label} = {sig}"'
-            if satisfied:
-                extras[extra] = 'satisfied'
-            else:
-                extras[extra] = 'NOT satisfied'
-        outputs = []
-        for _, msg, is_completed in itask.state.outputs.get_all():
-            outputs.append(
-                [f"{itask.identity} {msg}", is_completed])
-        return {
-            "meta": itask.tdef.describe(),
-            "prerequisites": itask.state.prerequisites_dump(),
-            "outputs": outputs,
-            "extras": extras}
-
-    def info_ping_task(self, task_id, exists_only=False):
-        """Return True if task exists and running."""
-        task_id = TaskID.get_standardised_taskid(task_id)
-        return self.pool.ping_task(task_id, exists_only)
-
-    def command_stop_flow(self, flow_label):
-        self.pool.stop_flow(flow_label)
-
     def command_stop(
             self,
             mode=None,
             cycle_point=None,
             # NOTE clock_time YYYY/MM/DD-HH:mm back-compat removed
             clock_time=None,
-            task=None
+            task=None,
+            flow_label=None
     ):
-        # immediate shutdown
-        if mode:
-            self._set_stop(mode)
-        elif not any([mode, cycle_point, clock_time, task]):
-            # if no arguments provided do a standard clean shutdown
-            self._set_stop(StopMode.REQUEST_CLEAN)
+        if flow_label:
+            self.pool.stop_flow(flow_label)
+            return
 
-        # schedule shutdown after tasks pass provided cycle point
         if cycle_point:
+            # schedule shutdown after tasks pass provided cycle point
             point = TaskID.get_standardised_point(cycle_point)
             if self.pool.set_stop_point(point):
                 self.options.stopcp = str(point)
@@ -990,85 +873,35 @@ class Scheduler:
             else:
                 # TODO: yield warning
                 pass
-
-        # schedule shutdown after wallclock time passes provided time
-        if clock_time:
+        elif clock_time:
+            # schedule shutdown after wallclock time passes provided time
             parser = TimePointParser()
             clock_time = parser.parse(clock_time)
             self.set_stop_clock(
                 int(clock_time.get("seconds_since_unix_epoch")))
-
-        # schedule shutdown after task succeeds
-        if task:
+        elif task:
+            # schedule shutdown after task succeeds
             task_id = TaskID.get_standardised_taskid(task)
             if TaskID.is_valid_id(task_id):
                 self.pool.set_stop_task(task_id)
             else:
                 # TODO: yield warning
                 pass
-
-    def command_set_stop_cleanly(self, kill_active_tasks=False):
-        """Stop job submission and set the flag for clean shutdown."""
-        # TODO: deprecated by command_stop()
-        self._set_stop()
-        if kill_active_tasks:
-            self.time_next_kill = time()
-
-    def command_stop_now(self, terminate=False):
-        """Shutdown immediately."""
-        # TODO: deprecated by command_stop()
-        if terminate:
-            self._set_stop(StopMode.REQUEST_NOW_NOW)
         else:
-            self._set_stop(StopMode.REQUEST_NOW)
+            # immediate shutdown
+            self._set_stop(mode)
+            if mode is StopMode.REQUEST_KILL:
+                self.time_next_kill = time()
 
     def _set_stop(self, stop_mode=None):
         """Set shutdown mode."""
         self.proc_pool.set_stopping()
-        if stop_mode is None:
-            stop_mode = StopMode.REQUEST_CLEAN
         self.stop_mode = stop_mode
-
-    def command_set_stop_after_point(self, point_string):
-        """Set stop after ... point."""
-        # TODO: deprecated by command_stop()
-        stop_point = TaskID.get_standardised_point(point_string)
-        if self.pool.set_stop_point(stop_point):
-            self.options.stopcp = str(stop_point)
-            self.suite_db_mgr.put_suite_stop_cycle_point(self.options.stopcp)
-
-    def command_set_stop_after_clock_time(self, arg):
-        """Set stop after clock time.
-
-        format: ISO 8601 compatible or YYYY/MM/DD-HH:mm (backwards comp.)
-        """
-        # TODO: deprecate
-        parser = TimePointParser()
-        try:
-            stop_time = parser.parse(arg)
-        except IsodatetimeError as exc:
-            try:
-                stop_time = parser.strptime(arg, "%Y/%m/%d-%H:%M")
-            except IsodatetimeError:
-                raise exc  # The first (prob. more relevant) IsodatetimeError.
-        self.set_stop_clock(int(stop_time.get("seconds_since_unix_epoch")))
-
-    def command_set_stop_after_task(self, task_id):
-        """Set stop after a task."""
-        # TODO: deprecate
-        task_id = TaskID.get_standardised_taskid(task_id)
-        if TaskID.is_valid_id(task_id):
-            self.pool.set_stop_task(task_id)
 
     def command_release(self, ids=None):
         if ids:
             return self.pool.release_tasks(ids)
         self.release_suite()
-
-    def command_release_tasks(self, items):
-        """Release tasks."""
-        # TODO: deprecated by command_release()
-        return self.pool.release_tasks(items)
 
     def command_poll_tasks(self, items=None, poll_succ=False):
         """Poll pollable tasks or a task/family if options are provided.
@@ -1094,11 +927,6 @@ class Scheduler:
         self.task_job_mgr.kill_task_jobs(self.suite, itasks)
         return len(bad_items)
 
-    def command_release_suite(self):
-        """Release all task proxies in the suite."""
-        # TODO: deprecated by command_release()
-        self.release_suite()
-
     def command_hold(self, tasks=None, time=None):
         if tasks:
             self.pool.hold_tasks(tasks)
@@ -1109,24 +937,6 @@ class Scheduler:
                 'The suite will pause when all tasks have passed %s', point)
         if not (tasks or time):
             self.hold_suite()
-
-    def command_hold_tasks(self, items):
-        """Hold selected task proxies in the suite."""
-        # TODO: deprecated by command_hold()
-        return self.pool.hold_tasks(items)
-
-    def command_hold_suite(self):
-        """Hold all task proxies in the suite."""
-        # TODO: deprecated by command_hold()
-        self.hold_suite()
-
-    def command_hold_after_point_string(self, point_string):
-        """Hold tasks AFTER this point (itask.point > point)."""
-        # TODO: deprecated by command_hold()
-        point = TaskID.get_standardised_point(point_string)
-        self.hold_suite(point)
-        LOG.info(
-            "The suite will pause when all tasks have passed %s" % point)
 
     @staticmethod
     def command_set_verbosity(lvl):
@@ -1632,7 +1442,8 @@ class Scheduler:
             if has_reloaded:
                 self.data_store_mgr.initiate_data_model(reloaded=True)
                 await self.publisher.publish(
-                    self.data_store_mgr.get_publish_deltas())
+                    self.data_store_mgr.publish_deltas
+                )
             # Update state summary, database, and uifeed
             self.suite_db_mgr.put_task_event_timers(self.task_events_mgr)
             has_updated = await self.update_data_structure()
@@ -1692,14 +1503,16 @@ class Scheduler:
         # Add tasks that have moved moved from runahead to live pool.
         updated_nodes = set(updated_tasks).union(
             self.pool.get_pool_change_tasks())
-        if has_updated:
+        if (
+                has_updated or
+                self.data_store_mgr.updates_pending or
+                self.job_pool.updates_pending
+        ):
             # WServer incremental data store update
             self.data_store_mgr.update_data_structure(updated_nodes)
             # Publish updates:
-            await self.publisher.publish(
-                self.data_store_mgr.get_publish_deltas())
-            # TODO: deprecate after CLI GraphQL migration
-            self.state_summary_mgr.update(self)
+            await self.publisher.publish(self.data_store_mgr.publish_deltas)
+        if has_updated:
             # Database update
             self.suite_db_mgr.put_task_pool(self.pool)
             # Reset suite and task updated flags.
@@ -1909,10 +1722,8 @@ class Scheduler:
             self.stop_clock_time = None
             self.suite_db_mgr.delete_suite_stop_clock_time()
             return True
-        else:
-            LOG.debug(
-                "stop time=%d; current time=%d", self.stop_clock_time, now)
-            return False
+        LOG.debug("stop time=%d; current time=%d", self.stop_clock_time, now)
+        return False
 
     def check_auto_shutdown(self):
         """Check if we should do a normal automatic shutdown."""

@@ -178,7 +178,7 @@ async def test_mutator(flow, flow_args):
     args = {}
     response = await flow.resolvers.mutator(
         None,
-        'hold_suite',
+        'hold',
         flow_args,
         args
     )
@@ -203,5 +203,5 @@ async def test_nodes_mutator(flow, flow_args):
 @pytest.mark.asyncio
 async def test_mutation_mapper(flow):
     """Test the mapping of mutations to internal command methods."""
-    response = await flow.resolvers._mutation_mapper('hold_suite', {})
+    response = await flow.resolvers._mutation_mapper('hold', {})
     assert response is not None

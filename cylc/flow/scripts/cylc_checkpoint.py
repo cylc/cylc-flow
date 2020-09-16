@@ -25,6 +25,20 @@ from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.terminal import cli_function
 
+MUTATION = '''
+mutation (
+    $wFlows: [WorkflowID]!,
+    $cName: String!
+) {
+  checkpoint (
+    workflows: $wFlows,
+    name: $cName
+  ) {
+    result
+  }
+}
+'''
+
 
 def get_option_parser():
     parser = COP(__doc__, comms=True, argdoc=[
@@ -37,7 +51,16 @@ def get_option_parser():
 @cli_function(get_option_parser)
 def main(_, options, suite, name):
     pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
-    pclient('take_checkpoints', {'name': name})
+
+    mutation_kwargs = {
+        'request_string': MUTATION,
+        'variables': {
+            'wFlows': [suite],
+            'cName': name,
+        }
+    }
+
+    pclient('graphql', mutation_kwargs)
 
 
 if __name__ == "__main__":

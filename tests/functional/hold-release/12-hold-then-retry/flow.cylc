@@ -19,7 +19,7 @@ t-submit-retry-able:submit => t-hold
         script = """
             # Hold the suite
             cylc hold "${CYLC_SUITE_NAME}"
-            cylc__job__poll_grep_suite_log -F 'Command succeeded: hold_suite'
+            cylc__job__poll_grep_suite_log -F 'Command succeeded: hold'
             # Poll t-submit-retry-able, should return submit-fail
             cylc poll "${CYLC_SUITE_NAME}" 't-submit-retry-able'
             # Allow t-retry-able to continue

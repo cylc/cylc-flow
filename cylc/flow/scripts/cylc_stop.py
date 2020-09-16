@@ -47,6 +47,36 @@ from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.task_id import TaskID
 from cylc.flow.terminal import cli_function
 
+MUTATION = '''
+mutation (
+  $wFlows: [WorkflowID]!,
+  $stopMode: SuiteStopMode,
+  $cyclePoint: CyclePoint,
+  $clockTime: TimePoint,
+  $task: TaskID,
+  $flowLabel: String,
+) {
+  stop (
+    workflows: $wFlows,
+    mode: $stopMode,
+    cyclePoint: $cyclePoint,
+    clockTime: $clockTime,
+    task: $task,
+    flowLabel: $flowLabel
+  ) {
+    result
+  }
+}
+'''
+
+POLLER_QUERY = '''
+query ($wFlows: [ID]) {
+  workflows(ids: $wFlows) {
+    id
+  }
+}
+'''
+
 
 class StopPoller(Poller):
     """A polling object that checks if a suite has stopped yet."""
@@ -54,11 +84,15 @@ class StopPoller(Poller):
     def __init__(self, pclient, condition, interval, max_polls):
         Poller.__init__(self, condition, interval, max_polls, None)
         self.pclient = pclient
+        self.query = {
+            'request_string': POLLER_QUERY,
+            'variables': {'wFlows': [self.pclient.suite]}
+        }
 
     def check(self):
         """Return True if suite has stopped (success) else False"""
         try:
-            self.pclient('ping_suite')
+            self.pclient('graphql', self.query)
         except (ClientError, ClientTimeout):
             # failed to ping - suite stopped
             return True
@@ -114,33 +148,46 @@ def main(parser, options, suite, shutdown_arg=None):
     if options.kill and options.now:
         parser.error("ERROR: --kill is not compatible with --now")
 
-    pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
+    if options.flow_label and int(options.max_polls) > 0:
+        parser.error("ERROR: --flow is not compatible with --max-polls")
 
-    if options.flow_label:
-        # TODO integrate with the rest of stop functionality and options.
-        pclient('stop_flow', {'flow_label': options.flow_label})
-        return
+    pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
 
     if int(options.max_polls) > 0:
         # (test to avoid the "nothing to do" warning for # --max-polls=0)
         spoller = StopPoller(
             pclient, "suite stopped", options.interval, options.max_polls)
 
-    if options.wall_clock:
-        pclient('set_stop_after_clock_time',
-                {'datetime_string': options.wall_clock})
-    elif shutdown_arg is not None and TaskID.is_valid_id(shutdown_arg):
+    # mode defaults to 'Clean'
+    mode = None
+    task = None
+    cycle_point = None
+    if shutdown_arg is not None and TaskID.is_valid_id(shutdown_arg):
         # STOP argument detected
-        pclient('set_stop_after_task', {'task_id': shutdown_arg})
+        task = shutdown_arg
     elif shutdown_arg is not None:
         # not a task ID, may be a cycle point
-        pclient('set_stop_after_point', {'point_string': shutdown_arg})
+        cycle_point = shutdown_arg
+    elif options.kill:
+        mode = 'Kill'
     elif options.now > 1:
-        pclient('stop_now', {'terminate': True})
+        mode = 'NowNow'
     elif options.now:
-        pclient('stop_now')
-    else:
-        pclient('set_stop_cleanly', {'kill_active_tasks': options.kill})
+        mode = 'Now'
+
+    mutation_kwargs = {
+        'request_string': MUTATION,
+        'variables': {
+            'wFlows': [suite],
+            'stopMode': mode,
+            'cyclePoint': cycle_point,
+            'clockTime': options.wall_clock,
+            'task': task,
+            'flowLabel': options.flow_label,
+        }
+    }
+
+    pclient('graphql', mutation_kwargs)
 
     if int(options.max_polls) > 0:
         # (test to avoid the "nothing to do" warning for # --max-polls=0)

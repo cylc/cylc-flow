@@ -18,6 +18,7 @@
 
 from copy import deepcopy
 from functools import partial
+import json
 import logging
 from textwrap import dedent
 from typing import AsyncGenerator, Any
@@ -30,6 +31,7 @@ from graphene.types.generic import GenericScalar
 from graphene.utils.str_converters import to_snake_case
 
 from cylc.flow import ID_DELIM
+from cylc.flow.broadcast_mgr import ALL_CYCLE_POINTS_STRS, addict
 from cylc.flow.task_state import (
     TASK_STATUSES_ORDERED,
     TASK_STATUS_DESC,
@@ -526,8 +528,43 @@ def resolve_state_totals(root, info, **args):
     return state_totals
 
 
+async def resolve_broadcasts(root, info, **args):
+    """Resolve and parse broadcasts from JSON."""
+    broadcasts = json.loads(
+        getattr(root, to_snake_case(info.field_name), '{}'))
+    resolvers = info.context.get('resolvers')
+
+    if not args['ids']:
+        return broadcasts
+
+    result = {}
+    t_type = NODE_MAP['Task']
+    t_args = {'workflows': [parse_workflow_id(root.id)]}
+    tp_type = NODE_MAP['TaskProxy']
+    for n_id in args['ids']:
+        _, _, point_string, name, _, _ = parse_node_id(n_id, tp_type)
+        if point_string is None:
+            point_string = '*'
+        for cycle in set(ALL_CYCLE_POINTS_STRS + [point_string]):
+            if cycle not in broadcasts:
+                continue
+            t_args['ids'] = [(None, None, None, name, None, None)]
+            tasks = await resolvers.get_nodes_all(t_type, t_args)
+            for namespace in set(ns for t in tasks for ns in t.namespace):
+                if namespace in broadcasts[cycle]:
+                    addict(
+                        result,
+                        {cycle: {namespace: broadcasts[cycle][namespace]}}
+                    )
+    return result
+
+
+def resolve_json_dump(root, info, **args):
+    return json.loads(getattr(root, to_snake_case(info.field_name), '{}'))
+
+
 # Types:
-class DefMeta(ObjectType):
+class NodeMeta(ObjectType):
     class Meta:
         description = """
 Meta data fields,
@@ -535,7 +572,7 @@ including custom fields in a generic user-defined dump"""
     title = String(default_value=None)
     description = String(default_value=None)
     URL = String(default_value=None)
-    user_defined = List(String, default_value=[])
+    user_defined = GenericScalar(resolver=resolve_json_dump)
 
 
 class TimeZone(ObjectType):
@@ -556,6 +593,7 @@ class Workflow(ObjectType):
     status_msg = String()
     host = String()
     port = Int()
+    pub_port = Int()
     owner = String()
     tasks = List(
         lambda: Task,
@@ -617,7 +655,7 @@ class Workflow(ObjectType):
     api_version = Int()
     cylc_version = String()
     last_updated = Float()
-    meta = Field(DefMeta)
+    meta = Field(NodeMeta)
     newest_runahead_cycle_point = String()
     newest_cycle_point = String()
     oldest_cycle_point = String()
@@ -628,9 +666,18 @@ class Workflow(ObjectType):
     workflow_log_dir = String()
     time_zone_info = Field(TimeZone)
     tree_depth = Int()
-    ns_defn_order = List(String)
+    ns_def_order = List(String)
     job_log_names = List(String)
     states = List(String)
+    broadcasts = GenericScalar(
+        ids=List(
+            ID,
+            description=sstrip('''
+                Node IDs, cycle point and/or-just family/task namespace:
+                    ["foo.1234", "1234|foo", "FAM.1234", "FAM.*"]
+            '''),
+            default_value=[]),
+        resolver=resolve_broadcasts)
 
 
 class Job(ObjectType):
@@ -666,10 +713,10 @@ class Job(ObjectType):
     pre_script = String()
     script = String()
     work_sub_dir = String()
-    batch_sys_conf = List(String)
-    environment = List(String)
-    directives = List(String)
-    param_var = List(String)
+    batch_sys_conf = GenericScalar(resolver=resolve_json_dump)
+    environment = GenericScalar(resolver=resolve_json_dump)
+    directives = GenericScalar(resolver=resolve_json_dump)
+    param_var = GenericScalar(resolver=resolve_json_dump)
     extra_logs = List(String)
     messages = List(String)
 
@@ -679,7 +726,7 @@ class Task(ObjectType):
         description = """Task definition, static fields"""
     id = ID(required=True)
     name = String()
-    meta = Field(DefMeta)
+    meta = Field(NodeMeta)
     mean_elapsed_time = Float()
     depth = Int()
     proxies = List(
@@ -700,6 +747,13 @@ class Task(ObjectType):
         delta_type=DELTA_TYPE_DEFAULT,
         resolver=get_nodes_by_ids)
     namespace = List(String)
+    first_parent = Field(
+        lambda: Family,
+        description="""Task first parent.""",
+        strip_null=STRIP_NULL_DEFAULT,
+        delta_store=DELTA_STORE_DEFAULT,
+        delta_type=DELTA_TYPE_DEFAULT,
+        resolver=get_node_by_id)
 
 
 class PollTask(ObjectType):
@@ -715,6 +769,7 @@ class PollTask(ObjectType):
 class Condition(ObjectType):
     class Meta:
         description = """Prerequisite conditions."""
+    task_id = String()
     task_proxy = Field(
         lambda: TaskProxy,
         description="""Associated Task Proxy""",
@@ -726,6 +781,9 @@ class Condition(ObjectType):
     req_state = String()
     satisfied = Boolean()
     message = String()
+
+    def resolve_task_id(root, info, **args):
+        return getattr(root, 'task_proxy', None)
 
 
 class Prerequisite(ObjectType):
@@ -753,11 +811,12 @@ class TaskProxy(ObjectType):
     state = String()
     cycle_point = String()
     is_held = Boolean()
+    flow_label = String()
     depth = Int()
     job_submits = Int()
     latest_message = String()
-    outputs = List(String, default_value=[])
-    broadcasts = List(String, default_value=[])
+    outputs = GenericScalar(resolver=resolve_json_dump)
+    extras = GenericScalar(resolver=resolve_json_dump)
     # name & namespace for filtering/sorting
     name = String()
     namespace = List(String)
@@ -804,7 +863,7 @@ class Family(ObjectType):
         description = """Task definition, static fields"""
     id = ID(required=True)
     name = String()
-    meta = Field(DefMeta)
+    meta = Field(NodeMeta)
     depth = Int()
     proxies = List(
         lambda: FamilyProxy,
@@ -839,6 +898,13 @@ class Family(ObjectType):
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
         resolver=get_nodes_by_ids)
+    first_parent = Field(
+        lambda: Family,
+        description="""Family first parent.""",
+        strip_null=STRIP_NULL_DEFAULT,
+        delta_store=DELTA_STORE_DEFAULT,
+        delta_type=DELTA_TYPE_DEFAULT,
+        resolver=get_node_by_id)
 
 
 class FamilyProxy(ObjectType):
@@ -1138,25 +1204,10 @@ class RuntimeConfiguration(String):
     """A configuration item for a task or family e.g. `script`."""
 
 
-class BroadcastSetting(InputObjectType):
-    """A task/family runtime setting as a key, value pair."""
-
-    key = RuntimeConfiguration(
-        description=sstrip('''
-            The cylc namespace for the setting to modify.
-            e.g. `[environment]variable_name`.
-        '''),
-        required=True
-    )
-    value = String(
-        description='The value of the modification',
-        required=True
-    )
-
-
 class BroadcastMode(Enum):
     Set = 'put_broadcast'
     Clear = 'clear_broadcast'
+    Expire = 'expire_broadcast'
 
     @property
     def description(self):
@@ -1164,6 +1215,8 @@ class BroadcastMode(Enum):
             return 'Create a new broadcast.'
         if self == BroadcastMode.Clear:
             return 'Revoke an existing broadcast.'
+        if self == BroadcastMode.Expire:
+            return 'Expire an existing broadcast.'
         return ''
 
 
@@ -1246,6 +1299,7 @@ class SuiteStopMode(Enum):
 
     # Note: contains only the REQUEST_* values from StopMode
     Clean = StopMode.REQUEST_CLEAN
+    Kill = StopMode.REQUEST_KILL
     Now = StopMode.REQUEST_NOW
     NowNow = StopMode.REQUEST_NOW_NOW
 
@@ -1311,15 +1365,22 @@ class Broadcast(Mutation):
                 broadcasts without canceling all specific-cycle broadcasts.
             '''),
             default_value=['*'])
-        tasks = List(
+        namespaces = List(
             NamespaceName,
             description='Target namespaces.',
             default_value=['root']
         )
         settings = List(
-            BroadcastSetting,
-            description='Target settings.'
+            GenericScalar,
+            description=sstrip('''
+                The cylc namespace for the setting to modify.
+                e.g. `{environment: {variable_name: "value",. . .}. . .}`.
+            '''),
         )
+        cutoff = CyclePoint(
+            description='Clear broadcasts ealier than cutoff cycle point.'
+        )
+
         # TODO: work out how to implement this feature, it needs to be
         #       handled client-side which makes it slightly awkward in
         #       api-on-the-fly land
@@ -1401,7 +1462,7 @@ class Message(Mutation):
             this command to report messages and to report registered task
             outputs.
         ''')
-        resolver = partial(nodes_mutator, command='put_messages')
+        resolver = partial(mutator, command='put_messages')
 
     class Arguments:
         workflows = List(WorkflowID, required=True)
@@ -1484,18 +1545,19 @@ class SetVerbosity(Mutation):
 class Stop(Mutation):
     class Meta:
         description = sstrip('''
-            Tell a suite server program to shut down.
+            Tell a suite server program to shut down,
+            or stop a specified flow from spawning any further.
 
-            By default suites wait for all submitted and running tasks to
-            complete before shutting down. You can change this behaviour
+            By default stopping suites wait for all submitted and running tasks
+            to complete before shutting down. You can change this behaviour
             with the "mode" option.
         ''')
-        resolver = partial(mutator, command='stop_workflow')
+        resolver = partial(mutator, command='stop')
 
     class Arguments:
         workflows = List(WorkflowID, required=True)
         mode = SuiteStopMode(
-            # TODO default
+            default_value=StopMode.REQUEST_CLEAN
         )
         cycle_point = CyclePoint(
             description='Stop after the suite reaches this cycle.'
@@ -1506,22 +1568,8 @@ class Stop(Mutation):
         task = TaskID(
             description='Stop after this task succeeds.'
         )
-
-    result = GenericScalar()
-
-
-class StopFlow(Mutation):
-    class Meta:
-        description = sstrip('''
-            Stop a specified flow from spawning any further.
-        ''')
-        resolver = partial(mutator, command='stop_flow')
-
-    class Arguments:
-        workflows = List(WorkflowID, required=True)
-        label = String(
-            description='Flow label.',
-            required=True
+        flow_label = String(
+            description='Label of flow to sterilise.'
         )
 
     result = GenericScalar()
@@ -1637,8 +1685,7 @@ class SetOutputs(Mutation, TaskMutation):
     class Arguments(TaskMutation.Arguments):
         outputs = List(
             String,
-            description='Task outputs to mark as completed.',
-            default_value=None
+            default_value=[],
         )
 
 
@@ -1675,7 +1722,6 @@ class Mutations(ObjectType):
     set_verbosity = SetVerbosity.Field(
         description=SetVerbosity._meta.description)
     stop = Stop.Field(description=Stop._meta.description)
-    stop_flow = StopFlow.Field(description=StopFlow._meta.description)
     checkpoint = Checkpoint.Field(
         description=Checkpoint._meta.description)
 
