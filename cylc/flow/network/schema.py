@@ -1627,18 +1627,17 @@ class Remove(Mutation, TaskMutation):
         resolver = partial(mutator, command='remove_tasks')
 
 
-class Spawn(Mutation, TaskMutation):
+class SetOutputs(Mutation, TaskMutation):
     class Meta:
         description = sstrip('''
-            Spawn children off of specified task outputs.
-
+            Mark task outputs as completed.
         ''')
         resolver = partial(mutator, command='force_spawn_children')
 
     class Arguments(TaskMutation.Arguments):
         outputs = List(
             String,
-            description='Outputs to spawn off of.',
+            description='Task outputs to mark as completed.',
             default_value=None
         )
 
@@ -1684,7 +1683,7 @@ class Mutations(ObjectType):
     kill = Kill.Field(description=Kill._meta.description)
     poll = Poll.Field(description=Poll._meta.description)
     remove = Remove.Field(description=Remove._meta.description)
-    spawn = Spawn.Field(description=Spawn._meta.description)
+    set_outputs = SetOutputs.Field(description=SetOutputs._meta.description)
     trigger = Trigger.Field(description=Trigger._meta.description)
 
     # job actions
