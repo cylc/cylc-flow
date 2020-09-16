@@ -17,7 +17,6 @@
 """Module for unicode restrictions"""
 
 import re
-from cylc.flow import LOG_LEVELS
 
 
 ENGLISH_REGEX_MAP = {
@@ -87,13 +86,32 @@ def allowed_characters(*chars):
     )
 
 
+def disallowed_characters(*chars):
+    """Restrict permitted characters.
+
+    Example:
+        >>> regex, message = disallowed_characters('&', '~')
+        >>> message
+        'cannot contain: ``&``, ``~``'
+        >>> bool(regex.match('abc01'))
+        True
+        >>> bool(regex.match('abc&01'))
+        False
+
+    """
+    return (
+        re.compile(r'^[^%s]*$' % ''.join(chars)),
+        f'cannot contain: {", ".join(regex_chars_to_text(chars))}'
+    )
+
+
 def not_starts_with(*chars):
     """Restrict first character.
 
     Example:
         >>> regex, message = not_starts_with('a', 'b', 'c')
         >>> message
-        'can not start with: ``a``, ``b``, ``c``'
+        'cannot start with: ``a``, ``b``, ``c``'
         >>> bool(regex.match('def'))
         True
         >>> bool(regex.match('adef'))
@@ -102,30 +120,33 @@ def not_starts_with(*chars):
     """
     return (
         re.compile(r'^[^%s]' % ''.join(chars)),
-        f'can not start with: {", ".join(regex_chars_to_text(chars))}'
+        f'cannot start with: {", ".join(regex_chars_to_text(chars))}'
     )
 
 
-def not_contains_colon_unless_starts_with(*chars):
-    """Restrict use of colons.
+def disallow_char_if_not_at_end_of_first_word(char):
+    """Prevent use of a (non-alphanumeric) character unless it occurs directly
+    after first word (in which case there is no limit on subsequent
+    occurances).
 
     Example:
-        >>> regex, message = not_contains_colon_unless_starts_with(
-        ...     'INFO', 'WARNING')
+        >>> regex, message = disallow_char_if_not_at_end_of_first_word(':')
         >>> message
-        'cannot contain a colon unless starts with: ``INFO``, ``WARNING``'
+        'cannot contain ``:`` unless it occurs at the end of the first word'
         >>> bool(regex.match('Foo: bar'))
-        False
+        True
         >>> bool(regex.match('INFO: Foo: bar'))
         True
+        >>> bool(regex.match('Foo bar: baz'))
+        False
         >>> bool(regex.match('Foo bar'))
         True
 
     """
     return (
-        re.compile(r'(^(%s):|^[^:]*$)' % '|'.join(chars)),
-        ('cannot contain a colon unless starts with: '
-         f'{", ".join(regex_chars_to_text(chars))}')
+        re.compile(fr'^(\w+{char}.*|[^{char}]+)$'),
+        f'cannot contain ``{char}`` unless it occurs at the end of the '
+        'first word'
     )
 
 
@@ -179,9 +200,17 @@ class XtriggerNameValidator(UnicodeRuleChecker):
     ]
 
 
-class MessageTriggerValidator(UnicodeRuleChecker):
-    """The rules for valid custom output message trigger contents:"""
+class TaskMessageValidator(UnicodeRuleChecker):
+    """The rules for valid task messages:"""
 
     RULES = [
-        not_contains_colon_unless_starts_with(*LOG_LEVELS.keys())
+        disallow_char_if_not_at_end_of_first_word(':')
+    ]
+
+
+class TaskOutputValidator(UnicodeRuleChecker):
+    """The rules for valid task outputs/message triggers:"""
+
+    RULES = [
+        disallowed_characters(':')
     ]

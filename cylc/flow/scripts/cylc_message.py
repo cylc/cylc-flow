@@ -77,6 +77,8 @@ import cylc.flow.flags
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.task_message import record_messages
 from cylc.flow.terminal import cli_function
+from cylc.flow.exceptions import UserInputError
+from cylc.flow.unicode_rules import TaskMessageValidator
 
 
 def get_option_parser():
@@ -132,6 +134,10 @@ def main(parser, options, *args):
         if message_str == '-':
             pass
         elif ':' in message_str:
+            valid, err_msg = TaskMessageValidator.validate(message_str)
+            if not valid:
+                raise UserInputError(
+                    f'Invalid task message "{message_str}" - {err_msg}')
             messages.append(
                 [item.strip() for item in message_str.split(':', 1)])
         elif options.severity:
