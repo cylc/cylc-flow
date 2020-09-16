@@ -484,11 +484,11 @@ with Conf('global.cylc', desc='''
             For example, to indicate to Cylc that Platform_A shares a file
             system with localhost, we would configure as follows:
 
-                .. code-block:: cylc
+            .. code-block:: cylc
 
-                    [platforms]
-                        [[Platform_A]]
-                            install target = localhost
+                [platforms]
+                    [[Platform_A]]
+                        install target = localhost
             ''')
         with Conf('localhost', meta=Platform):
             Conf('hosts', VDR.V_STRING_LIST, ['localhost'])

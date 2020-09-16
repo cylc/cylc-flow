@@ -105,18 +105,18 @@ with Conf(
             Directories must have a trailing slash.
             For example, to add the following items to your file installation:
 
-                .. code-block:: none
+            .. code-block:: none
 
-                    ~/cylc-run/workflow_x
-                    |__dir1/
-                    |__dir2/
-                    |__file1
-                    |__file2
+                ~/cylc-run/workflow_x
+                |__dir1/
+                |__dir2/
+                |__file1
+                |__file2
 
-                .. code-block:: cylc
+            .. code-block:: cylc
 
-                   [scheduler]
-                       includes = dir/, dir2/, file1, file2
+                [scheduler]
+                    includes = dir/, dir2/, file1, file2
                 ''')
 
     with Conf('cylc'):
