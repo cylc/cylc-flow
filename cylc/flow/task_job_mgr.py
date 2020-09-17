@@ -839,6 +839,7 @@ class TaskJobManager:
             itask.submit_num += 1
             itask.summary['platforms_used'][itask.submit_num] = ''
             # Retry delays, needed for the try_num
+            self._create_job_log_path(suite, itask)
             self._set_retry_timers(itask, rtconfig)
             self._prep_submit_task_job_error(
                 suite, itask, '(remote host select)', exc)
@@ -868,6 +869,7 @@ class TaskJobManager:
                 itask.submit_num += 1
                 itask.summary['platforms_used'][itask.submit_num] = ''
                 # Retry delays, needed for the try_num
+                self._create_job_log_path(suite, itask)
                 self._set_retry_timers(itask, rtconfig, False)
                 self._prep_submit_task_job_error(
                     suite, itask, '(platform not defined)', exc
@@ -905,14 +907,8 @@ class TaskJobManager:
     def _prep_submit_task_job_error(self, suite, itask, action, exc):
         """Helper for self._prep_submit_task_job. On error."""
         LOG.debug("submit_num %s" % itask.submit_num)
-        if type(exc) == PlatformLookupError:
-            LOG.error(
-                f"{itask.identity} cannot find platform to match Cylc 7 "
-                "settings:"
-            )
-        else:
-            LOG.debug(traceback.format_exc())
-            LOG.error(exc)
+        LOG.debug(traceback.format_exc())
+        LOG.error(exc)
         log_task_job_activity(
             SubProcContext(self.JOBS_SUBMIT, action, err=exc, ret_code=1),
             suite,
