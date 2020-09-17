@@ -68,8 +68,11 @@ installation defined in $path rather than hardcoding to /bin/bash.
 interactive prompt.
 
 [#3798](https://github.com/cylc/cylc-flow/pull/3798) - Deprecated the
-[runtime][X][parameter environment templates] section and instead allow
-templates in [runtime][X][environment].
+`[runtime][X][parameter environment templates]` section and instead allow
+templates in `[runtime][X][environment]`.
+
+[#3802](https://github.com/cylc/cylc-flow/pull/3802) - New global config
+hierarchy and ability to set site config directory.
 
 ### Fixes
 

@@ -16,6 +16,7 @@
 """Cylc site and user configuration file spec."""
 
 import os
+import packaging.version
 
 from cylc.flow import LOG
 from cylc.flow import __version__ as CYLC_VERSION
@@ -41,17 +42,29 @@ with Conf('global.cylc', desc='''
 
        $ cylc get-global-config --sparse
 
+    Cylc will attempt to load the global configuration (``global.cylc``) from a
+    hierarchy of locations, including the site directory (defaults to
+    ``/etc/cylc/flow/``) and the user directory (``~/.cylc/flow/``). E.g. for
+    Cylc version 8.0.1, the hierarchy would be, in order of ascending priority:
 
-    Cylc will attempt to load the global configuration (global.cylc) from two
-    locations:
+    * ``${CYLC_SITE_CONF_PATH}/global.cylc``
+    * ``${CYLC_SITE_CONF_PATH}/8/global.cylc``
+    * ``${CYLC_SITE_CONF_PATH}/8.0/global.cylc``
+    * ``${CYLC_SITE_CONF_PATH}/8.0.1/global.cylc``
+    * ``~/.cylc/flow/global.cylc``
+    * ``~/.cylc/flow/8/global.cylc``
+    * ``~/.cylc/flow/8.0/global.cylc``
+    * ``~/.cylc/flow/8.0.1/global.cylc``
 
-    * ``/etc/cylc/flow/<CYLC_VERSION>/global.cylc``
-    * ``~/.cylc/flow/<CYLC_VERSION>/global.cylc``
+    A setting in a file lower down in the list will override the same setting
+    from those higher up (but if a setting is present in a file higher up and
+    not in any files lower down, it will not be overridden).
 
-    If both files are present files will be loaded in this order so those
-    lower down the list may override settings from those higher up.
+    Setting the ``CYLC_SITE_CONF_PATH`` environment variable overrides the
+    default value of ``/etc/cylc/flow/``.
 
-    To override the default configuration path use ``CYLC_CONF_PATH``.
+    To override the entire hierarchy, set the ``CYLC_CONF_PATH`` environment
+    variable to the directory containing your ``global.cylc`` file.
 
     .. note::
 
@@ -682,6 +695,30 @@ def upg(cfg, descr):
     u.upgrade()
 
 
+def get_version_hierarchy(version):
+    """Return list of versions whose global configs are compatible, in
+    ascending priority.
+
+    Args:
+        version (str): A PEP 440 compliant version number.
+
+    Example:
+        >>> get_version_hierarchy('8.0.1a2.dev')
+        ['', '8', '8.0', '8.0.1', '8.0.1a2', '8.0.1a2.dev']
+
+    """
+    smart_ver = packaging.version.Version(version)
+    base = [str(i) for i in smart_ver.release]
+    hierarchy = ['']
+    hierarchy += ['.'.join(base[:i]) for i in range(1, len(base) + 1)]
+    if smart_ver.pre:  # alpha/beta (excluding dev) part of version
+        pre_ver = ''.join(str(i) for i in smart_ver.pre)
+        hierarchy.append(f'{hierarchy[-1]}{pre_ver}')
+    if version not in hierarchy:  # catch-all
+        hierarchy.append(version)
+    return hierarchy
+
+
 class GlobalConfig(ParsecConfig):
     """
     Handle global (all suites) site and user configuration for cylc.
@@ -691,8 +728,19 @@ class GlobalConfig(ParsecConfig):
     _DEFAULT = None
     _HOME = os.getenv('HOME') or get_user_home()
     CONF_BASENAME = "global.cylc"
-    SITE_CONF_DIR = os.path.join(os.sep, 'etc', 'cylc', 'flow', CYLC_VERSION)
-    USER_CONF_DIR = os.path.join(_HOME, '.cylc', 'flow', CYLC_VERSION)
+
+    def __init__(self, *args, **kwargs):
+        self.SITE_CONF_PATH = (os.getenv('CYLC_SITE_CONF_PATH') or
+                               os.path.join(os.sep, 'etc', 'cylc', 'flow'))
+        self.USER_CONF_PATH = os.path.join(self._HOME, '.cylc', 'flow')
+        version_hierarchy = get_version_hierarchy(CYLC_VERSION)
+        self.CONF_DIR_HIERARCHY = [
+            *[(upgrader.SITE_CONFIG, os.path.join(self.SITE_CONF_PATH, ver))
+              for ver in version_hierarchy],
+            *[(upgrader.USER_CONFIG, os.path.join(self.USER_CONF_PATH, ver))
+              for ver in version_hierarchy]
+        ]
+        super().__init__(*args, **kwargs)
 
     @classmethod
     def get_inst(cls, cached=True):
@@ -727,9 +775,7 @@ class GlobalConfig(ParsecConfig):
                 self.loadcfg(fname, upgrader.USER_CONFIG)
         elif conf_path_str is None:
             # Use default locations.
-            for conf_dir, conf_type in [
-                    (self.SITE_CONF_DIR, upgrader.SITE_CONFIG),
-                    (self.USER_CONF_DIR, upgrader.USER_CONFIG)]:
+            for conf_type, conf_dir in self.CONF_DIR_HIERARCHY:
                 fname = os.path.join(conf_dir, self.CONF_BASENAME)
                 if not os.access(fname, os.F_OK | os.R_OK):
                     continue
@@ -739,10 +785,10 @@ class GlobalConfig(ParsecConfig):
                     if conf_type == upgrader.SITE_CONFIG:
                         # Warn on bad site file (users can't fix it).
                         LOG.warning(
-                            'ignoring bad %s %s:\n%s', conf_type, fname, exc)
+                            f'ignoring bad {conf_type} {fname}:\n{exc}')
                     else:
                         # Abort on bad user file (users can fix it).
-                        LOG.error('bad %s %s', conf_type, fname)
+                        LOG.error(f'bad {conf_type} {fname}')
                         raise
 
         self._set_default_editors()

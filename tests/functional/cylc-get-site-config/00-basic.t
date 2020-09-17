@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -18,12 +18,11 @@
 # Test cylc-get-site-config
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 10
+set_test_number 9
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-get-config"
 run_ok "${TEST_NAME}.validate" cylc get-site-config
 run_ok "${TEST_NAME}.print-run-dir" cylc get-site-config --print-run-dir
-run_ok "${TEST_NAME}.print-site-dir" cylc get-site-config --print-site-dir
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-get-items"
 run_ok "${TEST_NAME}.doc-section" cylc get-site-config --item='[documentation]'

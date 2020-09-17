@@ -72,6 +72,41 @@ def test_loadcfg(sample_spec):
             assert [1, 2, 3, 4] == value
 
 
+def test_loadcfg_override(sample_spec):
+    """Test that loading a second config file overrides common settings but
+    leaves in settings only present in the first"""
+    with tempfile.NamedTemporaryFile() as output_file_name:
+        parsec_config = config.ParsecConfig(
+            spec=sample_spec,
+            upgrader=None,
+            output_fname=output_file_name.name,
+            tvars=None,
+            validator=None
+        )
+        with tempfile.NamedTemporaryFile() as conf_file1:
+            conf_file1.write("""
+                [section1]
+                    value1 = 'frodo'
+                    value2 = 'sam'
+            """.encode())
+            conf_file1.seek(0)
+            parsec_config.loadcfg(conf_file1.name, "File test_loadcfg")
+        sparse = parsec_config.sparse
+        assert sparse['section1']['value1'] == 'frodo'
+        assert sparse['section1']['value2'] == 'sam'
+
+        with tempfile.NamedTemporaryFile() as conf_file2:
+            conf_file2.write("""
+                [section1]
+                    value2 = 'pippin'
+            """.encode())
+            conf_file2.seek(0)
+            parsec_config.loadcfg(conf_file2.name, "File test_loadcfg")
+        sparse = parsec_config.sparse
+        assert sparse['section1']['value1'] == 'frodo'
+        assert sparse['section1']['value2'] == 'pippin'
+
+
 def test_loadcfg_with_upgrade(sample_spec):
     def upg(cfg, description):
         u = upgrader(cfg, description)

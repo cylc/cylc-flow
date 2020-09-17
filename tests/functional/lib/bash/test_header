@@ -124,7 +124,7 @@
 #         test on the suite and run the reference suite with `suite_run_ok`.
 #         Run `purge_suite` on success. Expect 2 OK tests.
 #     create_test_global_config [PRE [POST]]
-#         Create a new global config file $PWD/etc from site global-tests.cylc
+#         Create a new global config file $PWD/etc from global-tests.cylc
 #         with PRE and POST pre- and ap-pended (PRE for top level items with no
 #         section heading). PRE and POST are strings.
 #     require_remote_platform
@@ -729,11 +729,7 @@ create_test_global_config() {
     mkdir 'etc'
     # Suite host self-identification method.
     echo "$PRE" >'etc/global.cylc'
-    SITE_TESTS_CONF_FILE="$(cylc get-global --print-site-dir)/global-tests.cylc"
-    USER_TESTS_CONF_FILE="$(cylc get-global --print-user-dir)/global-tests.cylc"
-    if [[ -f "${SITE_TESTS_CONF_FILE}" ]]; then
-        cat "${SITE_TESTS_CONF_FILE}" >>'etc/global.cylc'
-    fi
+    USER_TESTS_CONF_FILE="${HOME}/.cylc/flow/$(cylc version)/global-tests.cylc"
     if [[ -f "${USER_TESTS_CONF_FILE}" ]]; then
         cat "${USER_TESTS_CONF_FILE}" >>'etc/global.cylc'
     fi

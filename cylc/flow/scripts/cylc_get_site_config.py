@@ -54,16 +54,6 @@ def get_option_parser():
         help="Print the configured top level run directory.",
         action="store_true", default=False, dest="run_dir")
 
-    parser.add_option(
-        "--print-site-dir",
-        help="Print the site configuration directory location.",
-        action="store_true", default=False, dest="site_dir")
-
-    parser.add_option(
-        "--print-user-dir",
-        help="Print the user configuration directory location.",
-        action="store_true", default=False, dest="user_dir")
-
     return parser
 
 
@@ -71,10 +61,6 @@ def get_option_parser():
 def main(parser, options):
     if options.run_dir:
         print(get_platform()['run directory'])
-    elif options.site_dir:
-        print(glbl_cfg().SITE_CONF_DIR)
-    elif options.user_dir:
-        print(glbl_cfg().USER_CONF_DIR)
     else:
         glbl_cfg().idump(
             options.item, sparse=options.sparse, pnative=options.pnative)
