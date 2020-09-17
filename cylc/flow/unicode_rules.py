@@ -144,7 +144,7 @@ def disallow_char_if_not_at_end_of_first_word(char):
 
     """
     return (
-        re.compile(fr'^(\w+{char}.*|[^{char}]+)$'),
+        re.compile(fr'^(\w+{char}.*|[^{char}]+)$', flags=re.S),
         f'cannot contain ``{char}`` unless it occurs at the end of the '
         'first word'
     )
