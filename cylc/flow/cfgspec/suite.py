@@ -166,18 +166,6 @@ with Conf(
                (e.g. ``+05:30``), given that the time zone is used as part of
                task output filenames.
         ''')
-        Conf('required run mode', VDR.V_STRING, '',
-             options=['', 'live', 'dummy', 'dummy-local', 'simulation'],
-             desc='''
-            If this item is set cylc will abort if the suite is not started in
-            the specified mode. This can be used for demo suites that have to
-            be run in simulation mode, for example, because they have been
-            taken out of their normal operational context; or to prevent
-            accidental submission of expensive real tasks during suite
-            development.
-        ''')
-        Conf('force run mode', VDR.V_STRING, '',
-             options=['', 'live', 'dummy', 'dummy-local', 'simulation'])
         Conf('task event mail interval', VDR.V_INTERVAL)
         Conf('disable automatic shutdown', VDR.V_BOOLEAN, desc='''
             This has the same effect as the ``--no-auto-shutdown`` flag for
@@ -1310,6 +1298,8 @@ def upg(cfg, descr):
     u.obsolete('8.0.0', ['cylc', 'reference test', 'allow task failures'])
     u.obsolete('8.0.0', ['cylc', 'reference test', 'live mode suite timeout'])
     u.obsolete('8.0.0', ['cylc', 'reference test', 'dummy mode suite timeout'])
+    u.obsolete('8.0.0', ['cylc', 'force run mode'])
+    u.obsolete('8.0.0', ['cylc', 'required run mode'])
     u.obsolete(
         '8.0.0',
         ['cylc', 'reference test', 'dummy-local mode suite timeout'])

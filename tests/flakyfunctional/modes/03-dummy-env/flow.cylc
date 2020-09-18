@@ -1,5 +1,3 @@
-[cylc]
-    force run mode = dummy-local
 [scheduling]
     [[graph]]
         R1 = oxygas

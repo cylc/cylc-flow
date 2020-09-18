@@ -58,6 +58,7 @@ from cylc.flow.cycling.loader import (
 from cylc.flow.cycling.iso8601 import ingest_time
 import cylc.flow.flags
 from cylc.flow.graphnode import GraphNodeParser
+from cylc.flow.platforms import FORBIDDEN_WITH_PLATFORM
 from cylc.flow.pathutil import (
     get_suite_run_dir,
     get_suite_run_log_dir,
@@ -548,7 +549,7 @@ class SuiteConfig:
 
         self.configure_queues()
 
-        if self.run_mode('simulation', 'dummy', 'dummy-local'):
+        if self.run_mode('simulation', 'dummy', 'dummy-local', warn_mode=True):
             self.configure_sim_modes()
 
         self.configure_suite_state_polling_tasks()
@@ -1346,18 +1347,15 @@ class SuiteConfig:
             scr += "\ncylc__job__dummy_result %s %s || exit 1" % (arg1, arg2)
             rtc['script'] = scr
 
-            # Disable batch scheduler in dummy modes.
-            # TODO - to use batch schedulers in dummy mode we need to
-            # identify which resource directives to disable or modify.
-            # (Only execution time limit is automatic at the moment.)
+            # All dummy modes should run on platform localhost
+            # All Cylc 7 config items which conflict with platform are removed.
+            for section, key, exceptions in FORBIDDEN_WITH_PLATFORM:
+                if (section in rtc and key in rtc[section]):
+                    rtc[section][key] = None
             rtc['platform'] = 'localhost'
 
             # Disable environment, in case it depends on env-script.
             rtc['environment'] = {}
-
-            if tdef.run_mode == 'dummy-local':
-                # Run all dummy tasks on the suite host.
-                rtc['platform'] = 'localhost'
 
             # Simulation mode tasks should fail in which cycle points?
             f_pts = []
@@ -1504,16 +1502,22 @@ class SuiteConfig:
         for var, val in cenv.items():
             os.environ[var] = val
 
-    def run_mode(self, *reqmodes):
+    def run_mode(self, *reqmodes, warn_mode=False):
         """Return the run mode.
 
         Combine command line option with configuration setting.
         If "reqmodes" is specified, return the boolean (mode in reqmodes).
         Otherwise, return the mode as a str.
+
+        If warn_mode is true log a warning if dummy-local mode used.
         """
         mode = getattr(self.options, 'run_mode', None)
-        if not mode:
-            mode = self.cfg['cylc']['force run mode']
+        if mode == 'dummy':
+            mode = 'dummy-local'
+            if warn_mode:
+                LOG.warning(
+                    "Dummy mode is deprecated: setting mode to dummy-local"
+                )
         if not mode:
             mode = 'live'
         if reqmodes:

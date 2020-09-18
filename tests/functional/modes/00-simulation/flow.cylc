@@ -1,5 +1,3 @@
-[cylc]
-    force run mode = simulation
 [scheduling]
     [[graph]]
         R1 = "a => b => c"
