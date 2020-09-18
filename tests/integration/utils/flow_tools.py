@@ -45,7 +45,7 @@ def _make_flow(run_dir, test_dir, conf, name=None):
     if not name:
         name = str(uuid1())
     flow_run_dir = (test_dir / name)
-    flow_run_dir.mkdir()
+    flow_run_dir.mkdir(parents=True)
     reg = str(flow_run_dir.relative_to(run_dir))
     if isinstance(conf, dict):
         conf = flow_config_str(conf)
