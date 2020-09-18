@@ -133,54 +133,49 @@ async def scan(run_dir=None, scan_dir=None, max_depth=4):
     if not scan_dir:
         scan_dir = run_dir
 
-    pending = asyncio.Queue()
     running = []
-
-    # perform the first directory listing
-    for subdir in await scandir(scan_dir):
-        if subdir.is_dir():
-            await pending.put((subdir, 1))
 
     # wrapper for scandir to preserve context
     async def _scandir(path, depth):
         contents = await scandir(path)
         return path, depth, contents
 
+    # perform the first directory listing
+    for subdir in await scandir(scan_dir):
+        if subdir.is_dir():
+            running.append(
+                asyncio.create_task(
+                    _scandir(subdir, 1)
+                )
+            )
+
     # perform all further directory listings
-    while running or not pending.empty():
+    while running:
         # wait here until there's something to do
         done, _ = await asyncio.wait(
-            [pending.get()] + running,
+            running,
             return_when=asyncio.FIRST_COMPLETED
         )
-        for qitem in done:
-            item = qitem.result()
-            if len(item) == 2:
-                # this is a pending directory to scan
-                path, depth = item
-                running.append(
-                    asyncio.create_task(
-                        _scandir(path, depth)
-                    )
-                )
-            else:
-                # this is the result of a directory scan
-                path, depth, contents = item
-                running.remove(qitem)
-                if dir_is_flow(contents):
-                    # this is a flow directory
-                    yield {
-                        'name': str(path.relative_to(run_dir)),
-                        'path': path,
-                    }
-                elif depth < max_depth:
-                    # we may have a nested flow, lets see...
-                    for subdir in contents:
-                        if subdir.is_dir():
-                            await pending.put((subdir, depth + 1))
-
-            # don't allow this to become blocking
-            await asyncio.sleep(0)
+        for task in done:
+            path, depth, contents = task.result()
+            running.remove(task)
+            if dir_is_flow(contents):
+                # this is a flow directory
+                yield {
+                    'name': str(path.relative_to(run_dir)),
+                    'path': path,
+                }
+            elif depth < max_depth:
+                # we may have a nested flow, lets see...
+                for subdir in contents:
+                    if subdir.is_dir():
+                        running.append(
+                            asyncio.create_task(
+                                _scandir(subdir, depth + 1)
+                            )
+                        )
+        # don't allow this to become blocking
+        await asyncio.sleep(0)
 
 
 def join_regexes(*patterns):
