@@ -175,7 +175,7 @@ def get_register_test_cases():
          None,  # expected symlink
          None,  # expected return value
          SuiteServiceFileError,  # expected exception
-         "can not start with: ``.``, ``-``"  # expected part of exception msg
+         "cannot start with: ``.``, ``-``"  # expected part of exception msg
          )
     ]
 

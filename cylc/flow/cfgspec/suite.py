@@ -1238,9 +1238,8 @@ with Conf(
                 this section (:ref:`MessageTriggers`)
             '''):
                 Conf('<output>', VDR.V_STRING, desc='''
-                    Task output
-                    messages (:ref:`MessageTriggers`).  The item name is used
-                    to select the custom output
+                    Task output messages (:ref:`MessageTriggers`). The
+                    item name is used to select the custom output
                     message in graph trigger notation.
 
                     Examples:
@@ -1249,6 +1248,11 @@ with Conf(
 
                        out1 = "sea state products ready"
                        out2 = "NWP restart files completed"
+
+                    Task outputs are validated by
+                    :py:class:`cylc.flow.unicode_rules.TaskOutputValidator`.
+
+                    .. autoclass:: cylc.flow.unicode_rules.TaskOutputValidator
                 ''')
 
             with Conf('parameter environment templates', desc='''

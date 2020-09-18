@@ -72,7 +72,7 @@ from cylc.flow.task_id import TaskID
 from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.task_trigger import TaskTrigger, Dependency
 from cylc.flow.unicode_rules import (
-    XtriggerNameValidator, MessageTriggerValidator)
+    XtriggerNameValidator, TaskOutputValidator)
 from cylc.flow.wallclock import (
     get_current_time_string, set_utc_mode, get_utc_mode)
 from cylc.flow.xtrigger_mgr import XtriggerManager
@@ -1679,10 +1679,10 @@ class SuiteConfig:
             # Record custom message outputs.
             for item in self.cfg['runtime'][name]['outputs'].items():
                 output, task_message = item
-                valid, msg = MessageTriggerValidator.validate(task_message)
+                valid, msg = TaskOutputValidator.validate(task_message)
                 if not valid:
                     raise SuiteConfigError(
-                        f'Invalid task message "[runtime][{name}][outputs]'
+                        f'Invalid message trigger "[runtime][{name}][outputs]'
                         f'{output} = {task_message}" - {msg}'
                     )
                 taskdef.outputs.add(item)
