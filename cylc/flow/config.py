@@ -64,6 +64,7 @@ from cylc.flow.pathutil import (
     get_suite_run_share_dir,
     get_suite_run_work_dir,
 )
+from cylc.flow.platforms import FORBIDDEN_WITH_PLATFORM
 from cylc.flow.print_tree import print_tree
 from cylc.flow.subprocctx import SubFuncContext
 from cylc.flow.suite_files import NO_TITLE
@@ -1346,10 +1347,11 @@ class SuiteConfig:
             scr += "\ncylc__job__dummy_result %s %s || exit 1" % (arg1, arg2)
             rtc['script'] = scr
 
-            # Disable batch scheduler in dummy modes.
-            # TODO - to use batch schedulers in dummy mode we need to
-            # identify which resource directives to disable or modify.
-            # (Only execution time limit is automatic at the moment.)
+            # All dummy modes should run on platform localhost
+            # All Cylc 7 config items which conflict with platform are removed.
+            for section, key, exceptions in FORBIDDEN_WITH_PLATFORM:
+                if (section in rtc and key in rtc[section]):
+                    rtc[section][key] = None
             rtc['platform'] = 'localhost'
 
             # Disable environment, in case it depends on env-script.
