@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Functions to return paths to common suite files and directories."""
 
+import errno
 import os
 from os.path import expandvars
 from shutil import rmtree
@@ -144,3 +145,14 @@ def make_suite_run_tree(suite):
         if dir_:
             os.makedirs(dir_, exist_ok=True)
             LOG.debug('%s: directory created', dir_)
+
+def make_symlink(src, dest, replace=False):
+    """Makes symlinks, with option to replace if they already exist"""
+    try:
+        os.symlink(src, dest)
+    except (OSError, Exception) as e:
+        if e.errno == errno.EEXIST and replace:
+            os.remove(dest)
+            os.symlink(src, dest)
+        else:
+            raise e
