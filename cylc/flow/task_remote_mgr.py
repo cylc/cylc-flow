@@ -49,7 +49,7 @@ from cylc.flow.suite_files import (
     get_suite_srv_dir,
     get_contact_file)
 from cylc.flow.task_remote_cmd import (
-    REMOTE_INIT_DONE, REMOTE_INIT_FAILED, REMOTE_INIT_NOT_REQUIRED)
+    REMOTE_INIT_DONE, REMOTE_INIT_NOT_REQUIRED)
 from cylc.flow.platforms import (
     get_platform,
     get_host_from_platform,
