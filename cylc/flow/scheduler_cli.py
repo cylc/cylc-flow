@@ -21,13 +21,11 @@ from itertools import zip_longest
 import os
 import sys
 
-from cylc.flow import LOG, __version__ as CYLC_VERSION
+from cylc.flow import LOG, RSYNC_LOG, __version__ as CYLC_VERSION
 from cylc.flow.exceptions import SuiteServiceFileError
 from cylc.flow.host_select import select_suite_host
 from cylc.flow.hostuserutil import is_remote_host
-from cylc.flow.loggingutil import (
-    TimestampRotatingFileHandler,
-    FileInstallLogFileHandler)
+from cylc.flow.loggingutil import TimestampRotatingFileHandler
 from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
     Options
@@ -287,14 +285,16 @@ def _open_logs(reg, no_detach):
         while LOG.handlers:
             LOG.handlers[0].close()
             LOG.removeHandler(LOG.handlers[0])
+    suite_log_handler = get_suite_run_log_name(reg)
     LOG.addHandler(
         TimestampRotatingFileHandler(
-            get_suite_run_log_name(reg),
+            suite_log_handler,
             no_detach))
 
-    file_install_log_handler = get_suite_file_install_log_name(reg)
-    handler = FileInstallLogFileHandler(file_install_log_handler, no_detach)
-    LOG.addHandler(handler)
+    # Add file installation log
+    file_install_log_path = get_suite_file_install_log_name(reg)
+    handler = TimestampRotatingFileHandler(file_install_log_path, no_detach)
+    RSYNC_LOG.addHandler(handler)
 
 
 def _close_logs():

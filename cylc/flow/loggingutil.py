@@ -193,29 +193,6 @@ class TimestampRotatingFileHandler(logging.FileHandler):
             logging.FileHandler.emit(self, header_record)
 
 
-# Unique type to separate behaviour and identify it easily when passing
-# filename to rsync command line
-class FileInstallLogFileHandler(TimestampRotatingFileHandler):
-    """A handler class for file installation log."""
-    def __init__(self, log_file_path, no_detach=False, timestamp=True):
-        TimestampRotatingFileHandler.__init__(
-            self, log_file_path, no_detach=True)
-        self.addFilter(self.FileInstallLogFilter())
-
-    # We're utilising the Python and Cylc log management for file installation
-    # log files but we do not actually want anything, other than file
-    # installation information to reach the logs
-    class FileInstallLogFilter(logging.Filter):
-        """Filter to ensure File Install Log is used only for file installation
-        """
-        def filter(self, record):
-            if (hasattr(record, 'message')
-                    and "File installation information" in record.message):
-                return True
-            else:
-                return False
-
-
 class ReferenceLogFileHandler(logging.FileHandler):
     """A handler class which writes filtered reference logging records
     to disk files.

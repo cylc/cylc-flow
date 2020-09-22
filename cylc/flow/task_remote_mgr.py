@@ -30,7 +30,7 @@ from subprocess import Popen, PIPE, DEVNULL
 import tarfile
 from time import time
 
-from cylc.flow import LOG
+from cylc.flow import LOG, RSYNC_LOG
 from cylc.flow.exceptions import TaskRemoteMgmtError
 import cylc.flow.flags
 from cylc.flow.hostuserutil import (
@@ -325,9 +325,9 @@ class TaskRemoteMgr:
                     out, err = process.communicate(timeout=600)
                     install_target = platform['install target']
                     if out:
-                        LOG.info(
+                        RSYNC_LOG.info(
                             'File installation information for '
-                            f'{install_target}: \n {out}')
+                            f'{install_target}:\n {out}')
                     if err:
                         LOG.error(
                             'File installation error on '

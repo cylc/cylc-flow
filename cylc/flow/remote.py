@@ -188,14 +188,23 @@ def construct_rsync_over_ssh_cmd(
 
     """
     dst_host = get_host_from_platform(platform)
-    rsync_cmd = "rsync -v --perms --recursive --links --checksum --delete"
+    rsync_cmd = ["rsync"]
     ssh_cmd = platform['ssh command']
-    rsync_cmd = shlex.split(rsync_cmd)
-    rsync_cmd.append("--rsh=" + ssh_cmd)
+    rsync_options = [
+        "-v",
+        "--perms",
+        "--recursive",
+        "--links",
+        "--checksum",
+        "--delete",
+        "--rsh=" + ssh_cmd,
+        "--include=/.service/",
+        "--include=/.service/server.key"
+    ]
+    rsync_cmd.extend(rsync_options)
     # Note to future devs - be wary of changing the order of the following
     # rsync options, rsync is very particular about order of in/ex-cludes.
-    rsync_cmd.append('--include=/.service/')
-    rsync_cmd.append('--include=/.service/server.key')
+
     excludes = ['log', 'share', 'work']
     for exclude in excludes:
         rsync_cmd.append(f"--exclude={exclude}")
@@ -213,7 +222,7 @@ def construct_rsync_over_ssh_cmd(
     rsync_cmd.append("--exclude=*")  # exclude everything else
     rsync_cmd.append(f"{src_path}/")
     rsync_cmd.append(f"{dst_host}:{dst_path}/")
-    LOG.debug(f"rsync cmd use for file install: {rsync_cmd}")
+    LOG.debug(f"rsync cmd use for file install: {' '.join(rsync_cmd)}")
     return rsync_cmd
 
 

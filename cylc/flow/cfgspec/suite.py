@@ -101,7 +101,8 @@ with Conf(
                  directory), this is required for authentication.
 
             These should be located in the top level of your Cylc workflow,
-            ie. the directory that contains your flow.cylc file.
+            i.e. the directory that contains your flow.cylc file.
+
             Directories must have a trailing slash.
             For example, to add the following items to your file installation:
 

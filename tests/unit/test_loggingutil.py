@@ -20,10 +20,8 @@ import unittest
 
 from unittest import mock
 
-from cylc.flow import LOG
-from cylc.flow.loggingutil import (
-    TimestampRotatingFileHandler,
-    FileInstallLogFileHandler)
+from cylc.flow import LOG, RSYNC_LOG
+from cylc.flow.loggingutil import TimestampRotatingFileHandler
 
 
 class TestLoggingutil(unittest.TestCase):
@@ -31,7 +29,7 @@ class TestLoggingutil(unittest.TestCase):
     @mock.patch("cylc.flow.loggingutil.glbl_cfg")
     def test_value_error_raises_system_exit(
         self,
-        mocked_glbl_cfg
+        mocked_glbl_cfg,
     ):
         """Test that a ValueError when writing to a log stream won't result
         in multiple exceptions (what could lead to infinite loop in some
@@ -80,35 +78,6 @@ class TestLoggingutil(unittest.TestCase):
                 file_handler.close()
                 LOG.removeHandler(file_handler)
                 logging.raiseExceptions = True
-
-    @mock.patch("cylc.flow.loggingutil.glbl_cfg")
-    def test_cylc_does_not_log_to_file_install_logfile(
-        self,
-        mocked_glbl_cfg
-    ):
-        """Test that the rsync log is not being used as an additional logfile
-            for general Cylc logging"""
-        with tempfile.NamedTemporaryFile() as tf:
-            # mock objects used when creating the file handler
-            mocked = mock.MagicMock()
-            mocked_glbl_cfg.return_value = mocked
-            mocked.get.return_value = 100
-            file_install_file_handler = FileInstallLogFileHandler(
-                tf.name, False)
-            file_install_file_handler.mode = "a+"
-
-            # enable the logger
-            LOG.setLevel(logging.INFO)
-            LOG.addHandler(file_install_file_handler)
-
-            log_string = "This should not appear in the file install log file"
-            LOG.info(log_string)
-            try:
-                with open(tf.name, 'r') as logfile:
-                    logfile_string = logfile.read()
-                    assert log_string not in logfile_string
-            finally:
-                LOG.removeHandler(file_install_file_handler)
 
 
 if __name__ == '__main__':
