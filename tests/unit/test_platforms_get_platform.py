@@ -192,6 +192,8 @@ def test_get_platform_groups_basic(mock_glbl_cfg):
     flakiness = 2 / 2 ** flakiness_n
     for i in range(flakiness_n):
         names.append(get_platform('hebrew_letters')['name'])
+        if 'aleph' in names and 'bet' in names:
+            break
     for name in ['aleph', 'bet']:
         assert name in names, \
             f"Probability this test is false negative = {flakiness}"
