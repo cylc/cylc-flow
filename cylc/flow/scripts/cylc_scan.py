@@ -101,7 +101,7 @@ FLOW_STATE_SYMBOLS = {
 # document the flow states
 __doc__ += '\n    '.join(
     [
-        '\nWorflow States:'
+        '\nWorkflow States:'
     ] + [
         (
             f'<{FLOW_STATE_CMAP[state]}>'
