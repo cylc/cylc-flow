@@ -67,6 +67,9 @@ from cylc.flow.suite_files import ContactFileFields as Cont
 from cylc.flow.terminal import cli_function
 
 
+# default grey colour (do not use "dim", it is not sufficiently portable)
+DIM = 'fg 248'
+
 # all supported suite states
 FLOW_STATES = {
     'running',
@@ -117,10 +120,10 @@ __doc__ += '\n    '.join(
 # job icon colours
 JOB_COLOURS = {
     # job status: term colour
-    'submitted': 'fg 38',
+    'submitted': 'fg 44',
     'submit-failed': 'fg 13',
-    'running': 'fg 27',
-    'succeeded': 'fg 34',
+    'running': 'fg 32',
+    'succeeded': 'fg 35',
     'failed': 'fg 124'
 }
 
@@ -263,7 +266,7 @@ def _format_plain(flow, _):
     if flow.get('contact'):
         return f'<b>{flow["name"]}</b> {flow[Cont.HOST]}:{flow[Cont.PORT]}'
     else:
-        return f'<dim><b>{flow["name"]}</b></dim>'
+        return f'<{DIM}><b>{flow["name"]}</b></{DIM}>'
 
 
 def _format_name_only(flow, _):
@@ -281,7 +284,7 @@ def _format_rich(flow, opts):
         tag = FLOW_STATE_CMAP[status]
         name = f'<{tag}>{symbol}</{tag}> {flow["name"]}'
     if not flow.get('contact') or 'status' not in flow:
-        ret = [f'<dim><b>{name}</b></dim>']
+        ret = [f'<{DIM}><b>{name}</b></{DIM}>']
     else:
         ret = [f'<b>{name}</b>']
 
@@ -290,7 +293,7 @@ def _format_rich(flow, opts):
                 flow['stateTotals'], opts.colour_blind
             ),
             **{
-                key: flow['meta'][key] or '<dim>*null*</dim>'
+                key: flow['meta'][key] or f'<{DIM}>*null*</{DIM}>'
                 for key in (
                     'title',
                     'description'
