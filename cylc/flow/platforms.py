@@ -146,8 +146,10 @@ def platform_from_name(platform_name=None, platforms=None):
         platform_data['name'] = 'localhost'
         return platform_data
 
+    platform_group = None
     for platform_name_re in reversed(list(platform_groups)):
         if re.fullmatch(platform_name_re, platform_name):
+            platform_group = deepcopy(platform_name)
             platform_name = random.choice(
                 platform_groups[platform_name_re]['platforms']
             )
@@ -173,6 +175,8 @@ def platform_from_name(platform_name=None, platforms=None):
                 platform_data['hosts'] = [platform_name]
             # Fill in the "private" name field.
             platform_data['name'] = platform_name
+            if platform_group:
+                platform_data['group'] = platform_group
             return platform_data
 
     raise PlatformLookupError(
