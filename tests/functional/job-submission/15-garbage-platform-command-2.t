@@ -17,14 +17,7 @@
 #-------------------------------------------------------------------------------
 # Test recovery of a failed host select command for a group of tasks.
 . "$(dirname "$0")/test_header"
-skip_all "TODO replace this test with one checking that garbage-platform commands are handled ok"
 set_test_number 2
-
-create_test_global_config "
-[platforms]
-    [[test platform]]
-        hosts = $(my-host-select)
-"
 
 install_suite "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"

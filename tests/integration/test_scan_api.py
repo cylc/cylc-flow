@@ -38,6 +38,9 @@ async def flows(mod_flow, mod_scheduler, mod_run, mod_one_conf):
     # a simple workflow we will leave stopped
     mod_flow(mod_one_conf, name='-stopped-')
 
+    # a simply hierarchically registered workflow we will leave stopped
+    mod_flow(mod_one_conf, name='a/b/c')
+
     # a simple workflow we will leave held
     reg1 = mod_flow(mod_one_conf, name='-held-')
     schd1 = mod_scheduler(reg1, hold_start=True)
@@ -81,11 +84,12 @@ async def flows(mod_flow, mod_scheduler, mod_run, mod_one_conf):
 async def test_state_filter(flows, mod_test_dir):
     """It should filter flows by state."""
     # one stopped flow
-    opts = ScanOptions(states='stopped')
+    opts = ScanOptions(states='stopped', sort=True)
     lines = []
     await main(opts, write=lines.append, scan_dir=mod_test_dir)
-    assert len(lines) == 1
+    assert len(lines) == 2
     assert '-stopped-' in lines[0]
+    assert 'a/b/c' in lines[1]
 
     # one held flow
     opts = ScanOptions(states='held')
@@ -111,7 +115,7 @@ async def test_state_filter(flows, mod_test_dir):
     opts = ScanOptions(states='held,running,stopped')
     lines = []
     await main(opts, write=lines.append, scan_dir=mod_test_dir)
-    assert len(lines) == 3
+    assert len(lines) == 4
 
 
 @pytest.mark.asyncio
@@ -132,10 +136,11 @@ async def test_name_sort(flows, mod_test_dir):
     opts = ScanOptions(states='all', sort=True)
     lines = []
     await main(opts, write=lines.append, scan_dir=mod_test_dir)
-    assert len(lines) == 3
+    assert len(lines) == 4
     assert '-held-' in lines[0]
     assert '-running-' in lines[1]
     assert '-stopped-' in lines[2]
+    assert 'a/b/c' in lines[3]
 
 
 @pytest.mark.asyncio
@@ -146,7 +151,7 @@ async def test_format_json(flows, mod_test_dir):
     lines = []
     await main(opts, write=lines.append, scan_dir=mod_test_dir)
     data = json.loads(lines[0])
-    assert len(data) == 3
+    assert len(data) == 4
     assert data[0]['name']
 
 

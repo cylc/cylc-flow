@@ -15,9 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Check that platform upgrader will fail if, after inheritance but not
-# before a task has both old and new settings - This should be a fail on
-# Job Submit.
+# Parent and child tasks are both valid, before inheritance calculated.
+# Child function not valid after inheritance.
+# Check for task failure at job-submit.
 
 export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
@@ -45,7 +45,7 @@ suite_run_fail "${TEST_NAME_BASE}-run" \
   -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}" "${SUITE_NAME}"
 
 # Grep for inherit-fail to fail later at submit time
-grep_ok "PlatformLookupError:.*non-valid-child.1"\
+grep_ok "SuiteConfigError:.*non-valid-child.1"\
   "${TEST_NAME_BASE}-run.stderr"
 
 purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
