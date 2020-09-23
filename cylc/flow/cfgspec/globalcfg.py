@@ -334,7 +334,7 @@ with Conf('global.cylc', desc='''
             ''')
             Conf('ssh command',
                  VDR.V_STRING,
-                 'ssh -oBatchMode=yes -oConnectTimeout=10 -oLogLevel=error',
+                 'ssh -oBatchMode=yes -oConnectTimeout=10',
                  desc='''
                 A string for the command used to invoke commands on this host.
                 This is not used on the suite host unless you run local tasks
