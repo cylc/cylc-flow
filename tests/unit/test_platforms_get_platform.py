@@ -159,7 +159,7 @@ def test_get_platform_warn_mode(caplog):
         }
     }
     output = get_platform(task_conf, warn_only=True)
-    for forbiddenitem in (
+    for forbidden_item in (
         'batch submit command template = some template',
         'host = cylcdevbox',
         'batch system = pbs'
