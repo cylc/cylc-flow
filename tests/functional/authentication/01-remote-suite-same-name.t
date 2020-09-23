@@ -35,7 +35,8 @@ scp ${SSH_OPTS} -pqr "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/"* \
 # shellcheck disable=SC2086
 run_ok "${TEST_NAME_BASE}-register" \
     ssh ${SSH_OPTS} "${CYLC_TEST_HOST}" \
-    cylc register "${SUITE_NAME}" "cylc-run/${SUITE_NAME}"
+    CYLC_VERSION="$(cylc version)" cylc register "${SUITE_NAME}" \
+    "cylc-run/${SUITE_NAME}"
 
 suite_run_ok "${TEST_NAME_BASE}" \
     cylc run --debug --no-detach --reference-test "${SUITE_NAME}"
