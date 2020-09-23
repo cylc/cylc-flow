@@ -17,6 +17,7 @@
 # Tests for the platform lookup module's get_platform method.
 
 import pytest
+import random
 from cylc.flow.platforms import get_platform
 from cylc.flow.exceptions import PlatformLookupError
 
@@ -185,15 +186,7 @@ def test_get_platform_groups_basic(mock_glbl_cfg):
     )
     output = get_platform('hebrew_letters')
     assert output['group'] == 'hebrew_letters'
-    names = []
-    # this number keeps the test fast but give about 1.6x10^-30 chance of
-    # a false negative.
-    flakiness_n = 100
-    flakiness = 2 / 2 ** flakiness_n
-    for i in range(flakiness_n):
-        names.append(get_platform('hebrew_letters')['name'])
-        if 'aleph' in names and 'bet' in names:
-            break
-    for name in ['aleph', 'bet']:
-        assert name in names, \
-            f"Probability this test is false negative = {flakiness}"
+    random.seed(42)
+    assert get_platform('hebrew_letters')['name'] == 'aleph'
+    random.seed(44)
+    assert get_platform('hebrew_letters')['name'] == 'bet'
