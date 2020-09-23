@@ -29,7 +29,6 @@ from logging import DEBUG, CRITICAL, INFO, WARNING
 import os
 from shutil import rmtree
 from time import time
-import traceback
 from copy import deepcopy
 
 from cylc.flow.parsec.util import pdeepcopy, poverride
