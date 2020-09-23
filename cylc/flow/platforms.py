@@ -30,6 +30,9 @@ FORBIDDEN_WITH_PLATFORM = (
     ('job', 'batch submit command template', [None])
 )
 
+# Regex to check whether a string is a command
+REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
+
 
 def get_platform(task_conf=None, task_id='unknown task', warn_only=False):
     """Get a platform.
@@ -52,6 +55,9 @@ def get_platform(task_conf=None, task_id='unknown task', warn_only=False):
             Actually it returns either get_platform() or
             platform_from_job_info(), but to the user these look the same.
             When working in warn_only mode, warnings are returned as strings.
+
+    TODO:
+        At Cylc 9 remove all Cylc7 upgrade logic.
     """
 
     if task_conf is None:
@@ -63,10 +69,16 @@ def get_platform(task_conf=None, task_id='unknown task', warn_only=False):
         output = platform_from_name(task_conf)
 
     elif 'platform' in task_conf and task_conf['platform']:
+        if REC_COMMAND.match(task_conf['platform']) and warn_only:
+            # In warning mode this function might have been passed an
+            # un-expanded platform string - warn that they won't deal with
+            # with this until job submit.
+            return None
+
+        # Check whether task has conflicting Cylc7 items.
         fail_if_platform_and_host_conflict(task_conf, task_id)
 
-        # If platform name exists and doesn't clash with Cylc7 Config
-        # items:
+        # If platform name exists and doesn't clash with Cylc7 Config items.
         output = platform_from_name(task_conf['platform'])
 
     else:

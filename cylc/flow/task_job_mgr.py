@@ -61,7 +61,9 @@ from cylc.flow.task_state import (
     TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING)
 from cylc.flow.wallclock import get_current_time_string, get_utc_mode
 from cylc.flow.remote import construct_platform_ssh_cmd
-from cylc.flow.exceptions import PlatformLookupError, TaskRemoteMgmtError
+from cylc.flow.exceptions import (
+    PlatformLookupError, SuiteConfigError, TaskRemoteMgmtError
+)
 
 
 class TaskJobManager:
@@ -201,7 +203,7 @@ class TaskJobManager:
         prepared_tasks, bad_tasks = self.prep_submit_task_jobs(suite, itasks)
 
         # Reset consumed host selection results
-        self.task_remote_mgr.remote_host_select_reset()
+        self.task_remote_mgr.subshell_eval_reset()
 
         if not prepared_tasks:
             return bad_tasks
@@ -693,14 +695,15 @@ class TaskJobManager:
                 SubProcContext(cmd_key, cmd), callback, [suite, itasks])
 
     @staticmethod
-    def _set_retry_timers(itask, rtconfig=None):
+    def _set_retry_timers(itask, rtconfig=None, retry=True):
         """Set try number and retry delays."""
         if rtconfig is None:
             rtconfig = itask.tdef.rtconfig
-        try:
-            _ = rtconfig[itask.tdef.run_mode + ' mode']['disable retries']
-        except KeyError:
-            retry = True
+        if (
+            itask.tdef.run_mode + ' mode' in rtconfig and
+            'disable retries' in rtconfig[itask.tdef.run_mode + ' mode']
+        ):
+            retry = False
         if retry:
             if rtconfig['job']['submission retry delays']:
                 submit_delays = rtconfig['job']['submission retry delays']
@@ -798,29 +801,86 @@ class TaskJobManager:
         else:
             rtconfig = itask.tdef.rtconfig
 
-        # Determine task host settings now, just before job submission,
-        # because dynamic host selection may be used.
+        # TODO - remove host logic at Cylc 9
+        # Determine task host or platform now, just before job submission,
+        # because dynamic host/platform selection may be used.
+        # cases:
+        # - Platform exists, host does = throw error here:
+        #    Although errors of this sort should ideally be caught on config
+        #    load this cannot be done because inheritance may create conflicts
+        #    which appear later. Although this error is also raised
+        #    by the platforms module it's probably worth putting it here too
+        #    to prevent trying to run the remote_host/platform_select logic for
+        #    tasks which will fail anyway later.
+        # - Platform exists, host doesn't = eval platform_n
+        # - host exists - eval host_n
+        if (
+            rtconfig['platform'] is not None and
+            rtconfig['remote']['host'] is not None
+        ):
+            raise SuiteConfigError(
+                "A mixture of Cylc 7 (host) and Cylc 8 (platform) "
+                "logic should not be used. In this case for the task "
+                f"\"{itask.identity}\" the following are not compatible:\n"
+            )
+
+        host_n, platform_n = None, None
         try:
-            platform = get_platform(rtconfig, itask.identity)
+            if rtconfig['remote']['host'] is not None:
+                host_n = self.task_remote_mgr.subshell_eval(
+                    rtconfig['remote']['host']
+                )
+            else:
+                platform_n = self.task_remote_mgr.subshell_eval(
+                    rtconfig['platform'], host_check=False
+                )
         except TaskRemoteMgmtError as exc:
             # Submit number not yet incremented
             itask.submit_num += 1
             itask.summary['platforms_used'][itask.submit_num] = ''
             # Retry delays, needed for the try_num
+            self._create_job_log_path(suite, itask)
             self._set_retry_timers(itask, rtconfig)
             self._prep_submit_task_job_error(
                 suite, itask, '(remote host select)', exc)
             return False
         else:
-            # TODO: re-instate when remote host selection upgraded
-            # if task_host is None:  # host select not ready
-            #     itask.set_summary_message(self.REMOTE_SELECT_MSG)
-            #     return
-            itask.platform = platform
-            # Submit number not yet incremented
-            itask.submit_num += 1
-            # Retry delays, needed for the try_num
-            self._set_retry_timers(itask, rtconfig)
+            # host/platform select not ready
+            if host_n is None and platform_n is None:
+                itask.set_summary_message(self.REMOTE_SELECT_MSG)
+                return
+            elif host_n is None and rtconfig['platform'] != platform_n:
+                LOG.debug(
+                    f"for task {itask.identity}: platform = "
+                    f"{rtconfig['platform']} evaluated as {platform_n}"
+                )
+                rtconfig['platform'] = platform_n
+            elif platform_n is None and rtconfig['remote']['host'] != host_n:
+                LOG.debug(
+                    f"for task {itask.identity}: host = "
+                    f"{rtconfig['remote']['host']} evaluated as {host_n}"
+                )
+                rtconfig['remote']['host'] = host_n
+
+            try:
+                platform = get_platform(rtconfig)
+            except PlatformLookupError as exc:
+                # Submit number not yet incremented
+                itask.submit_num += 1
+                itask.summary['platforms_used'][itask.submit_num] = ''
+                # Retry delays, needed for the try_num
+                self._create_job_log_path(suite, itask)
+                self._set_retry_timers(itask, rtconfig, False)
+                self._prep_submit_task_job_error(
+                    suite, itask, '(platform not defined)', exc
+                )
+                return False
+            else:
+                itask.platform = platform
+                # Submit number not yet incremented
+                itask.submit_num += 1
+                # Retry delays, needed for the try_num
+                self._set_retry_timers(itask, rtconfig)
 
         try:
             job_conf = self._prep_submit_task_job_impl(suite, itask, rtconfig)
@@ -847,21 +907,15 @@ class TaskJobManager:
     def _prep_submit_task_job_error(self, suite, itask, action, exc):
         """Helper for self._prep_submit_task_job. On error."""
         LOG.debug("submit_num %s" % itask.submit_num)
-        if type(exc) == PlatformLookupError:
-            LOG.error(
-                f"{itask.identity} cannot find platform to match Cylc 7 "
-                "settings:"
-            )
-        else:
-            LOG.debug(traceback.format_exc())
-            LOG.error(exc)
-            log_task_job_activity(
-                SubProcContext(self.JOBS_SUBMIT, action, err=exc, ret_code=1),
-                suite,
-                itask.point,
-                itask.tdef.name,
-                submit_num=itask.submit_num
-            )
+        LOG.debug(traceback.format_exc())
+        LOG.error(exc)
+        log_task_job_activity(
+            SubProcContext(self.JOBS_SUBMIT, action, err=exc, ret_code=1),
+            suite,
+            itask.point,
+            itask.tdef.name,
+            submit_num=itask.submit_num
+        )
         # Persist
         self.suite_db_mgr.put_insert_task_jobs(itask, {
             'is_manual_submit': itask.is_manual_submit,
