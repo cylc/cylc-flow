@@ -907,8 +907,6 @@ class TaskJobManager:
     def _prep_submit_task_job_error(self, suite, itask, action, exc):
         """Helper for self._prep_submit_task_job. On error."""
         LOG.debug("submit_num %s" % itask.submit_num)
-        LOG.debug(traceback.format_exc())
-        LOG.error(exc)
         log_task_job_activity(
             SubProcContext(self.JOBS_SUBMIT, action, err=exc, ret_code=1),
             suite,
