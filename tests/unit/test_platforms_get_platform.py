@@ -164,7 +164,7 @@ def test_get_platform_warn_mode(caplog):
         'host = cylcdevbox',
         'batch system = pbs'
     ):
-        assert forbiddenitem in output
+        assert forbidden_item in output
 
 
 def test_get_platform_groups_basic(mock_glbl_cfg):
