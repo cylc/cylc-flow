@@ -26,6 +26,7 @@ create_test_global_config "
 
     [[improbable platform name]]
         hosts = localhost
+        install target = localhost
 "
 
 install_suite "${TEST_NAME_BASE}"
