@@ -159,12 +159,12 @@ def test_get_platform_warn_mode(caplog):
         }
     }
     output = get_platform(task_conf, warn_only=True)
-    for forbiddenitem in (
+    for forbidden_item in (
         'batch submit command template = some template',
         'host = cylcdevbox',
         'batch system = pbs'
     ):
-        assert forbiddenitem in output
+        assert forbidden_item in output
 
 
 def test_get_platform_groups_basic(mock_glbl_cfg):
