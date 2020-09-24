@@ -1,0 +1,18 @@
+#!jinja2
+[cylc]
+  UTC mode = True
+
+[scheduling]
+  [[graph]]
+    R1 = """
+      upgradeable_cylc7_settings
+    """
+[runtime]
+  [[upgradeable_cylc7_settings]]
+    script = echo "In Dummy Mode this shouldn't be written to job.out"
+    [[[remote]]]
+      host = localhost
+    [[[job]]]
+      batch system = background
+      batch submit command template = timeout 10
+
