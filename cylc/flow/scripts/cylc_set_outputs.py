@@ -64,6 +64,9 @@ def get_option_parser():
 def main(parser, options, suite, *task_globs):
     pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
 
+    if not options.outputs:
+        parser.error('No outputs specified')
+
     mutation_kwargs = {
         'request_string': MUTATION,
         'variables': {

@@ -1678,7 +1678,7 @@ class SetOutputs(Mutation, TaskMutation):
     class Arguments(TaskMutation.Arguments):
         outputs = List(
             String,
-            default_value=[],
+            required=True
         )
 
 
