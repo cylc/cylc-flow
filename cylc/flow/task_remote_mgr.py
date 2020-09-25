@@ -299,8 +299,6 @@ class TaskRemoteMgr:
         """Callback when host select command exits"""
         self.ready = True
         if proc_ctx.ret_code == 0 and proc_ctx.out:
-            # Good status
-            LOG.debug(proc_ctx)
             self.remote_command_map[cmd_str] = proc_ctx.out.splitlines()[0]
         else:
             # Bad status
