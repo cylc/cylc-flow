@@ -1,0 +1,12 @@
+[cylc]
+    [[events]]
+        shutdown handler = "false"
+        abort if shutdown handler fails = True
+
+[scheduling]
+    [[graph]]
+        R1 = "foo"
+
+[runtime]
+    [[root]]
+        script = "true" # no sleep

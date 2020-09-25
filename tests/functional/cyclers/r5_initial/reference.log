@@ -1,0 +1,14 @@
+Initial point: 20140101
+Final point: 20140102T12
+[xyzzy.20140101T0000Z] -triggered off []
+[xyzzy.20140101T0300Z] -triggered off []
+[xyzzy.20140101T0600Z] -triggered off []
+[bar.20140101T0000Z] -triggered off ['xyzzy.20140101T0000Z']
+[bar.20140101T0300Z] -triggered off ['xyzzy.20140101T0300Z']
+[xyzzy.20140101T0900Z] -triggered off []
+[bar.20140101T0600Z] -triggered off ['xyzzy.20140101T0600Z']
+[bar.20140101T0900Z] -triggered off ['xyzzy.20140101T0900Z']
+[xyzzy.20140101T1200Z] -triggered off []
+[bar.20140101T1200Z] -triggered off ['xyzzy.20140101T1200Z']
+[xyzzy.20140101T1500Z] -triggered off []
+[xyzzy.20140101T1800Z] -triggered off []

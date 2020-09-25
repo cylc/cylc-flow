@@ -1,0 +1,7 @@
+Initial point: 1
+Final point: 1
+[delay.1] -triggered off []
+[foo.1] -triggered off []
+[baz.1] -triggered off ['foo.1']
+[qux.1] -triggered off ['baz.1']
+[bar.1] -triggered off ['delay.1']

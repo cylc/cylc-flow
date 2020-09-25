@@ -1,0 +1,24 @@
+[cylc]
+    [[main loop]]
+        [[[health check]]]
+            interval = PT1S
+    [[events]]
+        abort on inactivity = true
+        inactivity = PT1M
+        abort on timeout = true
+        timeout = PT1M
+        aborted handler = echo %(event)s %(message)s >"${CYLC_SUITE_RUN_DIR}/handler.out"
+[scheduling]
+    [[graph]]
+        R1 = modify => t2
+
+[runtime]
+    [[modify]]
+        script = """
+# Hold the suite, so it does not shutdown
+cylc hold "${CYLC_SUITE_NAME}"
+# Extra content in suite contact file should cause health check to fail
+echo 'TIME=MONEY' >>"${CYLC_SUITE_RUN_DIR}/.service/contact"
+"""
+    [[t2]]
+        script = true

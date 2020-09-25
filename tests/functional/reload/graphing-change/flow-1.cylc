@@ -1,0 +1,10 @@
+[scheduling]
+    cycling mode = integer
+    initial cycle point = 1
+    final cycle point = 1
+    [[graph]]
+        R1 = start => one
+        P1 = foo => bar => baz => bol
+[runtime]
+    [[root]]
+        script = true

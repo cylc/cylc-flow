@@ -1,7 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 
 cd "$(mktemp -d)" || exit 1
 
-cat > suite.rc <<__EOF__
+cat > flow.cylc <<__EOF__
 title = "gcylc task state color theme demo"
 description = """Generate a lot of possible task states,
 to show what they look like live in gcylc."""
@@ -98,8 +98,8 @@ for GROUP in nwp tst opr; do
     fi
     SUITE=${GROUP}-$N
     mkdir -p $DEST/$SUITE
-    cp -r suite.rc $DEST/$SUITE
-    perl -pi -e "s/\[cylc\]/title = $GROUP suite $N\ngroup = $GROUP\n[cylc]/" $DEST/$SUITE/suite.rc
+    cp -r flow.cylc $DEST/$SUITE
+    perl -pi -e "s/\[cylc\]/title = $GROUP suite $N\ngroup = $GROUP\n[cylc]/" $DEST/$SUITE/flow.cylc
     cylc reg $DEST/$SUITE $DEST/$SUITE
     cylc run $DEST/$SUITE > /dev/null &
   done

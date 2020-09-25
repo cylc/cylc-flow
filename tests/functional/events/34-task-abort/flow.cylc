@@ -1,0 +1,20 @@
+[meta]
+    title = "Test job abort with retries and failed handler"
+[cylc]
+    [[reference test]]
+        expected task failures = foo.1
+[scheduling]
+    [[graph]]
+        R1 = "foo:fail => handled"
+[runtime]
+    [[foo]]
+        script = """
+echo ONE
+cylc__job_abort "ERROR: rust never sleeps"
+echo TWO"""
+        [[[job]]]
+            execution retry delays = PT0S
+        [[[events]]]
+            failed handler = echo "!!!FAILED!!!" %(event)s %(id)s %(submit_num)s %(message)s
+     [[handled]]
+          script = true

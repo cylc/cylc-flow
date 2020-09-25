@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,8 +27,21 @@ from cylc.flow.cycling.loader import get_point, standardise_point_string
 from cylc.flow.exceptions import PointParsingError
 from cylc.flow.task_id import TaskID
 
+ALL_CYCLE_POINTS_STRS = ["*", "all-cycle-points", "all-cycles"]
 
-class BroadcastMgr(object):
+
+def addict(target, source):
+    """Recursively add source dict to target dict."""
+    for key, val in source.items():
+        if isinstance(val, dict):
+            if key not in target:
+                target[key] = {}
+            addict(target[key], val)
+        else:
+            target[key] = val
+
+
+class BroadcastMgr:
     """Manage broadcast.
 
     Broadcast settings are stored in the form:
@@ -36,11 +49,11 @@ class BroadcastMgr(object):
         self.broadcasts['20100808T06Z']['root'] = {'script': 'stuff'}
     """
 
-    ALL_CYCLE_POINTS_STRS = ["*", "all-cycle-points", "all-cycles"]
     REC_SECTION = re.compile(r"\[([^\]]+)\]")
 
-    def __init__(self, suite_db_mgr):
+    def __init__(self, suite_db_mgr, data_store_mgr):
         self.suite_db_mgr = suite_db_mgr
+        self.data_store_mgr = data_store_mgr
         self.linearized_ancestors = {}
         self.broadcasts = {}
         self.ext_triggers = {}  # Can use collections.Counter in future
@@ -107,10 +120,11 @@ class BroadcastMgr(object):
             get_broadcast_change_report(modified_settings, is_cancel=True))
         if bad_options:
             LOG.error(get_broadcast_bad_options_report(bad_options))
-
+        if modified_settings:
+            self.data_store_mgr.delta_broadcast()
         return modified_settings, bad_options
 
-    def expire_broadcast(self, cutoff=None):
+    def expire_broadcast(self, cutoff=None, **kwargs):
         """Clear all broadcasts targeting cycle points earlier than cutoff."""
         point_strings = []
         cutoff_point = None
@@ -119,12 +133,12 @@ class BroadcastMgr(object):
         with self.lock:
             for point_string in self.broadcasts:
                 if cutoff_point is None or (
-                        point_string not in self.ALL_CYCLE_POINTS_STRS and
+                        point_string not in ALL_CYCLE_POINTS_STRS and
                         get_point(point_string) < cutoff_point):
                     point_strings.append(point_string)
         if not point_strings:
             return (None, {"expire": [cutoff]})
-        return self.clear_broadcast(point_strings=point_strings)
+        return self.clear_broadcast(point_strings=point_strings, **kwargs)
 
     def get_broadcast(self, task_id=None):
         """Retrieve all broadcast variables that target a given task ID."""
@@ -142,12 +156,12 @@ class BroadcastMgr(object):
         # The order is:
         #    all:root -> all:FAM -> ... -> all:task
         # -> tag:root -> tag:FAM -> ... -> tag:task
-        for cycle in self.ALL_CYCLE_POINTS_STRS + [point_string]:
+        for cycle in ALL_CYCLE_POINTS_STRS + [point_string]:
             if cycle not in self.broadcasts:
                 continue
             for namespace in reversed(self.linearized_ancestors[name]):
                 if namespace in self.broadcasts[cycle]:
-                    self._addict(ret, self.broadcasts[cycle][namespace])
+                    addict(ret, self.broadcasts[cycle][namespace])
         return ret
 
     def load_db_broadcast_states(self, row_idx, row):
@@ -235,7 +249,7 @@ class BroadcastMgr(object):
                         elif not bad_point:
                             if namespace not in self.broadcasts[point_string]:
                                 self.broadcasts[point_string][namespace] = {}
-                            self._addict(
+                            addict(
                                 self.broadcasts[point_string][namespace],
                                 setting)
                             modified_settings.append(
@@ -250,17 +264,9 @@ class BroadcastMgr(object):
             bad_options["point_strings"] = bad_point_strings
         if bad_namespaces:
             bad_options["namespaces"] = bad_namespaces
+        if modified_settings:
+            self.data_store_mgr.delta_broadcast()
         return modified_settings, bad_options
-
-    def _addict(self, target, source):
-        """Recursively add source dict to target dict."""
-        for key, val in source.items():
-            if isinstance(val, dict):
-                if key not in target:
-                    target[key] = {}
-                self._addict(target[key], val)
-            else:
-                target[key] = source[key]
 
     @staticmethod
     def _cancel_keys_in_prunes(prunes, cancel_keys):

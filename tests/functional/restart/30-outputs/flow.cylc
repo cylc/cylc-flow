@@ -1,0 +1,22 @@
+# only the t1:hello output is generated
+[cylc]
+    [[events]]
+        abort on inactivity = True
+        abort on stalled = True
+        inactivity = PT1M
+        abort on timeout = True
+        timeout = PT1M
+[scheduling]
+    [[graph]]
+        R1 = """
+t1:hello => t2
+t1:greet => t3
+"""
+[runtime]
+    [[t1]]
+        script = cylc message 'hello'
+        [[[outputs]]]
+            hello = hello
+            greet = greeting
+    [[t2, t3]]
+        script = true

@@ -1,0 +1,14 @@
+#!jinja2
+[cylc]
+    UTC mode = False
+
+[scheduling]
+    [[graph]]
+        R1=t1
+
+[runtime]
+    [[t1]]
+        script = test -z "${TZ:-}"
+        platform = {{ environ['CYLC_TEST_PLATFORM'] }}
+        [[[job]]]
+            execution time limit = PT1M

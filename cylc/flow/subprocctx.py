@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@ from shlex import quote
 from cylc.flow.wallclock import get_current_time_string
 
 
-class SubProcContext(object):
+class SubProcContext:
     """Represent the context of an external command to run as a subprocess.
 
     Attributes:
@@ -113,7 +113,7 @@ class SubFuncContext(SubProcContext):
     Attributes:
         # See also parent class attributes.
         .label (str):
-            function label under [xtriggers] in suite.rc
+            function label under [xtriggers] in flow.cylc
         .func_name (str):
             function name
         .func_args (list):
@@ -155,3 +155,12 @@ class SubFuncContext(SubProcContext):
         args = self.func_args + [
             "%s=%s" % (i, self.func_kwargs[i]) for i in skeys]
         return "%s(%s)" % (self.func_name, ", ".join([str(a) for a in args]))
+
+    def __str__(self):
+        return (
+            f'{self.func_name}('
+            f'{", ".join(self.func_args + list(self.func_kwargs))}'
+            f'):{self.intvl}'
+        )
+
+    __repr__ = __str__

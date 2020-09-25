@@ -1,0 +1,23 @@
+#!jinja2
+[cylc]
+    UTC mode = True # Ignore DST
+
+[scheduling]
+    [[graph]]
+        R1 = foo
+
+[runtime]
+{% if CYLC_TEST_PLATFORM is defined %}
+    [[root]]
+        platform = {{ CYLC_TEST_PLATFORM }}
+{% endif %}
+    [[foo]]
+        script = """
+            JOB_LOG_DIR="$(dirname "${CYLC_TASK_LOG_DIR}")"
+            NN_VALUE="$(readlink "${JOB_LOG_DIR}/NN")"
+            # bash 4.2.0 bug: ((VAR == VAL)) does not trigger 'set -e':
+            test "${CYLC_TASK_SUBMIT_NUMBER}" -eq "100"
+            test "${NN_VALUE}" -eq "100"
+        """
+        [[[job]]]
+            execution retry delays = 99*PT0S

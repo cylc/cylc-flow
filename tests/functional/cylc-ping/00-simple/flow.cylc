@@ -1,0 +1,11 @@
+[scheduling]
+    [[graph]]
+        R1 = "foo => bar"
+[runtime]
+    [[foo]]
+        script = """
+            cylc ping $CYLC_SUITE_NAME
+            cylc ping --verbose $CYLC_SUITE_NAME
+            """
+    [[bar]]
+        script = [[ ! $(cylc ping $CYLC_SUITE_NAME-non-existent) ]]

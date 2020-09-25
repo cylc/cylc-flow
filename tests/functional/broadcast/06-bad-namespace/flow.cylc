@@ -1,0 +1,19 @@
+[meta]
+    title=broadcast bad namespace
+    description=Test broadcast to an undefined namespace fails.
+[cylc]
+    [[events]]
+        abort on timeout = True
+        timeout=PT1M
+[scheduling]
+    initial cycle point = 20150808
+    final cycle point = 20150808
+    [[graph]]
+        P1M = broadcast
+[runtime]
+    [[broadcast]]
+        script="""
+# Broadcast to an undefined namespace; fail if the broadcast succeeds (it
+# should fail).
+! cylc broadcast -s 'title=foo' -n 'zilch' "${CYLC_SUITE_NAME}"
+"""

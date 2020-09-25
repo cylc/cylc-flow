@@ -1,0 +1,16 @@
+[cylc]
+   [[reference test]]
+       expected task failures = foo.1
+
+[scheduling]
+    [[graph]]
+        R1 = """
+            foo:submit-fail => bar
+            bar => !foo
+        """
+[runtime]
+    [[foo]]
+        script = true
+        platform = idontexist
+    [[bar]]
+        script = true

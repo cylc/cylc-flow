@@ -1,0 +1,16 @@
+[meta]
+    priority = HIGH
+[scheduling]
+    [[graph]]
+        R1 = t1:fail => dummy
+[runtime]
+    [[dummy]]
+        script = true
+    [[t1]]
+        script = false
+        [[[meta]]]
+            URL = http://example.com
+            importance = 3
+            color = red
+        [[[events]]]
+            failed handler = echo 'NAME =' %(name)s 'POINT =' %(point)s 'IMPORTANCE =' %(importance)s 'COLOR =' %(color)s 'SUITE-PRIORITY =' %(suite_priority)s

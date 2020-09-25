@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,79 +16,90 @@
 """Functions to return paths to common suite files and directories."""
 
 import os
+from os.path import expandvars
 from shutil import rmtree
 
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.platforms import get_platform
 
 
-def get_remote_suite_run_dir(host, owner, suite, *args):
+def get_remote_suite_run_dir(platform, suite, *args):
     """Return remote suite run directory, join any extra args."""
     return os.path.join(
-        glbl_cfg().get_host_item('run directory', host, owner), suite, *args)
+        platform['run directory'], suite, *args)
 
 
-def get_remote_suite_run_job_dir(host, owner, suite, *args):
+def get_remote_suite_run_job_dir(platform, suite, *args):
     """Return remote suite run directory, join any extra args."""
     return get_remote_suite_run_dir(
-        host, owner, suite, 'log', 'job', *args)
+        platform, suite, 'log', 'job', *args)
 
 
-def get_remote_suite_work_dir(host, owner, suite, *args):
+def get_remote_suite_work_dir(platform, suite, *args):
     """Return remote suite work directory root, join any extra args."""
     return os.path.join(
-        glbl_cfg().get_host_item('work directory', host, owner),
+        platform['work directory'],
         suite,
-        *args)
+        *args
+    )
 
 
 def get_suite_run_dir(suite, *args):
     """Return local suite run directory, join any extra args."""
-    return os.path.join(
-        glbl_cfg().get_host_item('run directory'), suite, *args)
+    return expandvars(
+        os.path.join(
+            get_platform()['run directory'], suite, *args
+        )
+    )
 
 
 def get_suite_run_job_dir(suite, *args):
     """Return suite run job (log) directory, join any extra args."""
-    return get_suite_run_dir(suite, 'log', 'job', *args)
+    return expandvars(
+        get_suite_run_dir(suite, 'log', 'job', *args)
+    )
 
 
 def get_suite_run_log_dir(suite, *args):
     """Return suite run log directory, join any extra args."""
-    return get_suite_run_dir(suite, 'log', 'suite', *args)
+    return expandvars(get_suite_run_dir(suite, 'log', 'suite', *args))
 
 
 def get_suite_run_log_name(suite):
     """Return suite run log file path."""
-    return get_suite_run_dir(suite, 'log', 'suite', 'log')
+    path = get_suite_run_dir(suite, 'log', 'suite', 'log')
+    return expandvars(path)
 
 
-def get_suite_run_rc_dir(suite, *args):
-    """Return suite run suite.rc log directory, join any extra args."""
-    return get_suite_run_dir(suite, 'log', 'suiterc', *args)
+def get_suite_run_config_log_dir(suite, *args):
+    """Return suite run flow.cylc log directory, join any extra args."""
+    return expandvars(get_suite_run_dir(suite, 'log', 'flow-config', *args))
 
 
 def get_suite_run_pub_db_name(suite):
     """Return suite run public database file path."""
-    return get_suite_run_dir(suite, 'log', 'db')
+    return expandvars(get_suite_run_dir(suite, 'log', 'db'))
 
 
 def get_suite_run_share_dir(suite, *args):
     """Return local suite work/share directory, join any extra args."""
-    return os.path.join(
-        glbl_cfg().get_host_item('work directory'), suite, 'share', *args)
+    return expandvars(os.path.join(
+        get_platform()['work directory'], suite, 'share', *args
+    ))
 
 
 def get_suite_run_work_dir(suite, *args):
     """Return local suite work/work directory, join any extra args."""
-    return os.path.join(
-        glbl_cfg().get_host_item('work directory'), suite, 'work', *args)
+    return expandvars(os.path.join(
+        get_platform()['work directory'], suite, 'work', *args
+    ))
 
 
 def get_suite_test_log_name(suite):
     """Return suite run ref test log file path."""
-    return get_suite_run_dir(suite, 'log', 'suite', 'reftest.log')
+    return expandvars(get_suite_run_dir(suite, 'log', 'suite', 'reftest.log'))
 
 
 def make_suite_run_tree(suite):
@@ -96,7 +107,7 @@ def make_suite_run_tree(suite):
     cfg = glbl_cfg().get()
     # Roll archive
     archlen = cfg['run directory rolling archive length']
-    dir_ = get_suite_run_dir(suite)
+    dir_ = os.path.expandvars(get_suite_run_dir(suite))
     for i in range(archlen, -1, -1):  # archlen...0
         if i > 0:
             dpath = dir_ + '.' + str(i)
@@ -114,10 +125,11 @@ def make_suite_run_tree(suite):
         get_suite_run_dir(suite),
         get_suite_run_log_dir(suite),
         get_suite_run_job_dir(suite),
-        get_suite_run_rc_dir(suite),
+        get_suite_run_config_log_dir(suite),
         get_suite_run_share_dir(suite),
         get_suite_run_work_dir(suite),
     ):
+        dir_ = os.path.expandvars(dir_)
         if dir_:
             os.makedirs(dir_, exist_ok=True)
             LOG.debug('%s: directory created', dir_)

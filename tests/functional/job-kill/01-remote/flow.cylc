@@ -1,0 +1,23 @@
+#!Jinja2
+[cylc]
+   [[reference test]]
+       expected task failures = t1.1, t2.1
+[scheduling]
+    [[graph]]
+        R1="""
+t1:start=>stop
+t2:start=>stop
+"""
+[runtime]
+    [[T]]
+        script=sleep 120 & echo $! >file; wait
+        platform = {{ environ['CYLC_TEST_PLATFORM'] }}
+    [[t1]]
+        inherit=T
+    [[t2]]
+        inherit=T
+    [[stop]]
+        script="""
+cylc kill "$CYLC_SUITE_NAME" 't1.1' 't2.1' || true
+cylc stop $CYLC_SUITE_NAME
+"""

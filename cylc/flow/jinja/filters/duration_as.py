@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Provides a Jinja2 filter for formatting ISO8601 duration strings."""
+"""Filter for formatting ISO8601 duration strings."""
 
 from metomi.isodatetime.parsers import DurationParser
 
@@ -36,7 +36,25 @@ CONVERSIONS = {
 
 
 def duration_as(iso8601_duration, units):
-    """Format an iso8601 duration string as the specified units.
+    """Format an :term:`ISO8601 duration` string as the specified units.
+
+    Units for the conversion can be specified in a case-insensitive short or
+    long form:
+
+    - Seconds - "s" or "seconds"
+    - Minutes - "m" or "minutes"
+    - Hours - "h" or "hours"
+    - Days - "d" or "days"
+    - Weeks - "w" or "weeks"
+
+    While the filtered value is a floating-point number, it is often required
+    to supply an integer to suite entities (e.g. environment variables) that
+    require it.  This is accomplished by chaining filters:
+
+    - ``{{CYCLE_INTERVAL | duration_as('h') | int}}`` - 24
+    - ``{{CYCLE_SUBINTERVAL | duration_as('h') | int}}`` - 0
+    - ``{{CYCLE_INTERVAL | duration_as('s') | int}}`` - 86400
+    - ``{{CYCLE_SUBINTERVAL | duration_as('s') | int}}`` - 1800
 
     Args:
         iso8601_duration (str): Any valid ISO8601 duration as a string.
@@ -49,7 +67,7 @@ def duration_as(iso8601_duration, units):
     Raises:
         ISO8601SyntaxError: In the event of an invalid datetime string.
 
-    Examples:
+    Python Examples:
         >>> # Basic usage.
         >>> duration_as('PT1M', 's')
         60.0
@@ -57,10 +75,26 @@ def duration_as(iso8601_duration, units):
         3600.0
 
         >>> # Exceptions.
-        >>> duration_as('invalid', 's')  # doctest: +NORMALIZE_WHITESPACE
+        >>> duration_as('invalid value', 's')  # doctest: +NORMALIZE_WHITESPACE
         Traceback (most recent call last):
-        metomi.isodatetime.parsers.ISO8601SyntaxError: Invalid ISO 8601\
-        duration representation: invalid
+        metomi.isodatetime.exceptions.ISO8601SyntaxError: Invalid ISO 8601\
+        duration representation: invalid value
+        >>> duration_as('invalid unit', '#')  # doctest: +NORMALIZE_WHITESPACE
+        Traceback (most recent call last):
+        ValueError: No matching units found for #
+
+    Jinja2 Examples:
+       .. code-block:: cylc
+
+          {% set CYCLE_INTERVAL = 'PT1D' %}
+          {{ CYCLE_INTERVAL | duration_as('h') }}  # 24.0
+          {% set CYCLE_SUBINTERVAL = 'PT30M' %}
+          {{ CYCLE_SUBINTERVAL | duration_as('hours') }}  # 0.5
+          {% set CYCLE_INTERVAL = 'PT1D' %}
+          {{ CYCLE_INTERVAL | duration_as('s') }}  # 86400.0
+          {% set CYCLE_SUBINTERVAL = 'PT30M' %}
+          {{ CYCLE_SUBINTERVAL | duration_as('seconds') }}  # 1800.0
+
     """
     for converter_names in CONVERSIONS:
         if units.lower() in converter_names:

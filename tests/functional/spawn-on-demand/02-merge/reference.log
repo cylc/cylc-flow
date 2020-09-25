@@ -1,0 +1,17 @@
+Initial point: 1
+Final point: 3
+[foo.1] -triggered off []
+[foo.2] -triggered off ['foo.1']
+[bar.1] -triggered off ['foo.1']
+[foo.3] -triggered off ['foo.2']
+[bar.2] -triggered off ['foo.2']
+[baz.1] -triggered off ['bar.1']
+[foo.1] -triggered off []
+[baz.2] -triggered off ['bar.2']
+[foo.2] -triggered off ['foo.1']
+[bar.1] -triggered off ['foo.1']
+[bar.2] -triggered off ['foo.2']
+[baz.1] -triggered off ['bar.1']
+[bar.3] -triggered off ['foo.3']
+[baz.2] -triggered off ['bar.2']
+[baz.3] -triggered off ['bar.3']

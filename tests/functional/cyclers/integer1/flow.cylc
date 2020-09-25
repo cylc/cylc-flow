@@ -1,0 +1,54 @@
+[scheduling]
+    initial cycle point = 1
+    final cycle point = +P15  # = 16
+    max active cycle points = 12
+    cycling mode = integer
+    [[special tasks]]
+        sequential = seq
+    [[graph]]
+        R1 = wibble
+        R1/+P6 = wibble[^] => wobble
+        R1/P0 = wobble[^+P6] => wubble
+        P3 = """
+            seq => foo        # sequential task
+            foo[-P3] => foo   # prev instance trigger
+            foo => bar        # plain trigger
+            woo[+P1] => foo   # prev cycle
+            woo[+P1] => bar
+            woo[-P1] => foo   # next cycle
+            foo[-P3]:out1 => on_toast  # message outputs
+        """
+        +P1/P3 = woo
+        R/+P2/P3 = woo
+        R/7/P6 = foo[-P3] => qux       # every second cycle
+        R1/$ = baz
+        R/P4!8 = ning
+        R/P4!(4,12) = quux    # Multiple exclusion points
+        R1/^ = nang
+        R/+P1/P6!14 = nong
+[runtime]
+    [[root]]
+        script = true
+    [[foo]]
+        script = """
+wait
+cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" "the cheese is ready"
+"""
+        [[[outputs]]]
+            out1 = "the cheese is ready"
+
+[visualization]
+    default node attributes = "style=filled"
+    initial cycle point = 1
+    final cycle point = 16
+    [[node attributes]]
+        foo = "fillcolor=slateblue"
+        woo = "fillcolor=limegreen"
+        bar = "fillcolor=orange"
+        seq = "fillcolor=navajowhite"
+        on_toast = "fillcolor=beige"
+        qux = "fillcolor=orangered"
+        wibble = "fillcolor=violet"
+        wobble = "fillcolor=darkviolet"
+        wubble = "fillcolor=mediumvioletred"
+        quux = "fillcolor=yellow"

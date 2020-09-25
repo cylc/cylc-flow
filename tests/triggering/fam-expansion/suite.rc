@@ -1,8 +1,0 @@
-[scheduling]
-    [[graph]]
-        R1 = "(FOO:finish-all & FOO:fail-any) => bar"
-[runtime]
-    [[FOO]]
-    [[foo1,foo2,foo3]]
-        inherit = FOO
-    [[bar]]

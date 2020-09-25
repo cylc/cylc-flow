@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -e -o pipefail
+
+readonly VERSION=${1}
+readonly BASH_DIR="bash-${VERSION}"
+readonly BASH_TAR="bash-${VERSION}.tar.gz"
+
+wget -q "http://ftpmirror.gnu.org/bash/bash-${VERSION}.tar.gz"
+tar -xzf "${BASH_TAR}"
+cd "${BASH_DIR}"
+./configure
+make
+mv bash "${BASH_VERSIONS_DIR}/bash-${VERSION}"

@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,12 +13,52 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Moab batch system job submission and manipulation."""
+"""Submits task job scripts to the Moab workload manager with ``msub``.
+
+.. cylc-scope:: flow.cylc[runtime][<namespace>][job]
+
+Moab directives can be provided in the flow.cylc file; the syntax is
+very similar to PBS:
+
+.. code-block:: cylc
+
+   [runtime]
+       [[my_task]]
+           [[[job]]]
+               batch system = moab
+               execution time limit = PT1M
+           [[[directives]]]
+               -V =
+               -q = foo
+               -l nodes = 1
+
+These are written to the top of the task job script like this:
+
+.. code-block:: bash
+
+   #!/bin/bash
+   # DIRECTIVES
+   #PBS -V
+   #PBS -q foo
+   #PBS -l nodes=1
+   #PBS -l walltime=60
+
+(Moab understands ``#PBS`` directives).
+
+If :cylc:conf:`execution time limit` is specified, it is used to generate the
+``-l walltime`` directive. Do not specify the ``-l walltime`` directive
+explicitly if :cylc:conf:`execution time limit` is specified.  Otherwise, the
+execution time limit known by the suite may be out of sync with what is
+submitted to the batch system.
+
+.. cylc-scope::
+
+"""
 
 import re
 
 
-class MoabHandler(object):
+class MoabHandler:
 
     """Moab batch system job submission and manipulation."""
 

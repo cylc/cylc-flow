@@ -1,0 +1,9 @@
+Initial point: 1
+Final point: 1
+[setter.1] -triggered off []
+[foo.1] -triggered off []
+[bar.1] -triggered off []
+[qux.1] -triggered off ['foo.1']
+[quw.1] -triggered off ['foo.1']
+[fux.1] -triggered off ['bar.1']
+[fuw.1] -triggered off ['bar.1']

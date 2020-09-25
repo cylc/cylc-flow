@@ -1,0 +1,35 @@
+[cylc]
+   [[events]]
+      abort on timeout = True
+      timeout = PT20S
+[scheduling]
+    [[graph]]
+        # The "starter" task sleeps 5 seconds between start and complete.
+        # NOHOPE family should start first, so we'll have a "cylc jobs-submit"
+        # starting to run the talkingnonsense command (which sleeps and talks
+        # nonsense!) in serial.
+        # While the above "cylc jobs-submit" is still on going, we start
+        # another "cylc jobs-submit" command doing normal job submissions of
+        # HOPEFUL tasks.
+        # The first job submission command should never finish before getting
+        # killed (see global configuration in ".t" file causing the NOHOPE
+        # family to go into submission failure and triggering the stopper task.
+        # The idea is that the NOHOPE job submission nonsense should not block
+        # the HOPEFUL tasks from launching normally.
+        R1 = "starter:start => NOHOPE"
+        R1 = "starter => HOPEFUL"
+        R1 = HOPEFUL:succeeded-all
+        R1 = "NOHOPE:submit-fail-all => stopper"
+[runtime]
+    [[starter]]
+        script = wait && sleep 5
+    [[HOPEFUL]]
+        script = true
+    [[NOHOPE]]
+        platform = griffin
+    [[nh0, nh1, nh2, nh3, nh4, nh5, nh6, nh7, nh8, nh9]]
+        inherit = NOHOPE
+    [[h0, h1, h2, h3, h4, h5, h6, h7, h8, h9]]
+        inherit = HOPEFUL
+    [[stopper]]
+        script = cylc stop "${CYLC_SUITE_NAME}"

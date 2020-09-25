@@ -1,4 +1,4 @@
-# This is the Coverage.py configuration file. This is used by Travis-CI when running
+# This is the Coverage.py configuration file. This is used by CI when running
 # the tests and collecting coverage
 
 [run]
@@ -29,11 +29,7 @@ debug=
 #include
 note=
 omit=
-    */cylc/flow/tests/*
-    */cylc/flow/profiler.py
-    */cylc/flow/profiling/*
-    */cylc/flow/parsec/OrderedDictCompat.py
-    */cylc/flow/parsec/tests/*
+    tests/*
     */cylc/flow/*_pb2.py
 parallel = True
 plugins=
@@ -55,11 +51,7 @@ fail_under=0
 ignore_errors = False
 include=
 omit=
-    */cylc/flow/tests/*
-    */cylc/flow/profiler.py
-    */cylc/flow/profiling/*
-    */cylc/flow/parsec/OrderedDictCompat.py
-    */cylc/flow/parsec/tests/*
+    tests/*
     */cylc/flow/*_pb2.py
 partial_branches=
 precision=2

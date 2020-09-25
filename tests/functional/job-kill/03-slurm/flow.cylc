@@ -1,0 +1,21 @@
+#!Jinja2
+[cylc]
+   [[reference test]]
+       expected task failures = t1.1
+[scheduling]
+    [[graph]]
+        R1=t1:start=>stop
+[runtime]
+    [[t1]]
+        script=sleep 120
+        platform = slurm-test-platform
+        [[[directives]]]
+            --time=03:00
+{% if "CYLC_TEST_BATCH_SITE_DIRECTIVES" in environ and environ["CYLC_TEST_BATCH_SITE_DIRECTIVES"] %}
+            {{environ["CYLC_TEST_BATCH_SITE_DIRECTIVES"]}}
+{% endif %}
+    [[stop]]
+        script="""
+cylc kill "$CYLC_SUITE_NAME" 't1'
+cylc stop "$CYLC_SUITE_NAME"
+"""

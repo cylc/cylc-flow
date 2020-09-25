@@ -4,11 +4,11 @@
  and other gtksourceview programs.
 
  = Instructions =
- 
+
  To use it, place or symlink this file in
  ~/.local/share/gtksourceview-2.0/language-specs/ - or, if possible,
  /usr/share/gtksourceview-2.0/language-specs/
- 
+
  If your installation uses GNOME 3, the '2.0' in the paths will need
  to be '3.0', and the version="2.0" string below will need changing
  as well.
@@ -38,10 +38,10 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<language id="cylc-suite-rc" _name="cylc suite.rc" version="2.0" _section="Others">
+<language id="cylc-flow" _name="cylc flow.cylc" version="2.0" _section="Others">
   <metadata>
     <property name="mimetypes">jinja2</property>
-    <property name="globs">suite*.rc</property>
+    <property name="globs">suite*.rc;*.cylc</property>
     <property name="line-comment-start">#</property>
   </metadata>
 
@@ -83,7 +83,7 @@
       </include>
     </context>
     <context id="cylc-options" style-ref="option">
-      <!-- To regenerate this keyword list, create a minimal suite.rc file and run something like:
+      <!-- To regenerate this keyword list, create a minimal flow.cylc file and run something like:
         cylc get-config my-minimal-suite | sed "/^[^=]*$/d; s/=.*//g; s/^ *//g; s/ *$//g" | sort -r | uniq | sed "s/\(.*\)/<keyword>\1<\/keyword>/g"
         -->
         <keyword>work sub-directory</keyword>
@@ -195,7 +195,6 @@
         <keyword>abort if stalled handler fails</keyword>
         <keyword>abort if shutdown handler fails</keyword>
         <keyword>abort if inactivity handler fails</keyword>
-        <keyword>abort if any task fails</keyword>
         <keyword>UTC mode</keyword>
         <keyword>URL</keyword>
     </context>
@@ -239,7 +238,7 @@
     <!-- end cylc-specific -->
 
     <!-- taken from sh.lang -->
- 
+
     <!-- we cannot use def:shell-like-comment, because
          m4.lang needs to replace this context -->
     <context id="line-comment" style-ref="comment" end-at-line-end="true">
@@ -276,7 +275,7 @@
       <include>
         <context sub-pattern="0" where="start" style-ref="keyword"/>
         <context sub-pattern="0" where="end" style-ref="keyword"/>
-        <context ref="cylc-suite-rc"/>
+        <context ref="cylc-flow"/>
       </include>
     </context>
 
@@ -666,12 +665,12 @@
         <context style-ref="others">
           <match>[^\)\s]+\s*\)|;;</match>
         </context>
-        <context ref="cylc-suite-rc"/>
+        <context ref="cylc-flow"/>
       </include>
     </context>
     <!-- end sh.lang -->
 
-    <context id="cylc-suite-rc">
+    <context id="cylc-flow">
       <include>
         <!-- cylc-specific -->
         <context ref="cylc-section"/>

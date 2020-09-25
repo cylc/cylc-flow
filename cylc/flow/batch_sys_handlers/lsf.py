@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,7 +13,40 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""IBM Platform LSF bsub job submission"""
+"""Submits task job scripts to IBM Platform LSF by the ``bsub`` command.
+
+.. cylc-scope:: flow.cylc[runtime][<namespace>][job]
+
+LSF directives can be provided in the flow.cylc file:
+
+.. code-block:: cylc
+
+   [runtime]
+       [[my_task]]
+           [[[job]]]
+               batch system = lsf
+               execution time limit = PT10M
+           [[[directives]]]
+               -q = foo
+
+These are written to the top of the task job script like this:
+
+.. code-block:: bash
+
+   #!/bin/bash
+   # DIRECTIVES
+   #BSUB -q = foo
+   #BSUB -W = 10
+
+If :cylc:conf:`execution time limit` is specified, it is used to generate the
+``-W`` directive. Do not specify the ``-W`` directive
+explicitly if :cylc:conf:`execution time limit` is specified. Otherwise, the
+execution time limit known by the suite may be out of sync with what is
+submitted to the batch system.
+
+.. cylc-scope::
+
+"""
 
 import math
 import re

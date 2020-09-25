@@ -1,0 +1,17 @@
+[cylc]
+    UTC mode = True # Ignore DST
+    [[events]]
+        stalled handler = cylc set-outputs %(suite)s bar.1
+    [[reference test]]
+        expected task failures = bar.1
+[scheduling]
+    [[graph]]
+        R1 = foo => bar => baz
+
+[runtime]
+    [[foo]]
+        script = true
+    [[bar]]
+        script = false
+    [[baz]]
+        script = cylc remove $CYLC_SUITE_NAME bar.1

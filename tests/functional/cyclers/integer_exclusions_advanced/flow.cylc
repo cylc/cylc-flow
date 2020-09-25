@@ -1,0 +1,22 @@
+[scheduling]
+    initial cycle point = 1
+    final cycle point = +P15  # = 16
+    max active cycle points = 12
+    cycling mode = integer
+    [[graph]]
+        R/P1!(2,3,7) = foo
+        P1 ! P2 = woo
+        P1 ! +P1/P2 = bar
+        P1 !(P2,6,8) = qux
+        R/1/P2!P3 = cthulhu
+[runtime]
+    [[foo]]
+        script = """
+wait
+cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" 'the cheese is ready'
+"""
+        [[[outputs]]]
+            out1 = the cheese is ready
+[visualization]
+    initial cycle point = 1
+    final cycle point = 16

@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,59 +13,41 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Network authentication layer."""
+"""Authentication key setup"""
 
-import getpass
-
-from jose import jwt
-
-from cylc.flow.suite_files import SuiteFiles, get_auth_item
-
-
-HASH = 'HS256'  # Encoding for JWT
-
-
-def get_secret(suite):
-    """Return the secret used for encrypting messages.
-
-    Currently this is the suite passphrase. This means we are sending
-    many messages all encrypted with the same hash which isn't great.
-
-    TODO: Upgrade the secret to add foreword security.
-
-    """
-    return get_auth_item(
-        SuiteFiles.Service.PASSPHRASE,
-        suite, content=True
-    )
+from cylc.flow.suite_files import (
+    KeyInfo,
+    KeyOwner,
+    KeyType,
+    create_server_keys,
+    get_suite_srv_dir,
+    remove_keys_on_server)
 
 
-def decrypt(message, secret):
-    """Make a message readable.
+def key_housekeeping(reg, platform=None, create=True):
 
-    Args:
-        message (str): The message to decode - JWT str.
-        secret (str): The decrypt key.
-
-    Return:
-        dict - The received message plus a `user` field.
-
-    """
-    message = jwt.decode(message, secret, algorithms=[HASH])
-    # if able to decode assume this is the user
-    message['user'] = getpass.getuser()
-    return message
-
-
-def encrypt(message, secret):
-    """Make a message unreadable.
-
-    Args:
-        message (dict): The message to send, must be serializable .
-        secret (str): The encrypt key.
-
-    Return:
-        str - JWT str.
-
-    """
-    return jwt.encode(message, secret, algorithm=HASH)
+    """Clean any existing authentication keys and create new ones.
+        If create is set to false, keys will only be cleaned from
+        server."""
+    suite_srv_dir = get_suite_srv_dir(reg)
+    keys = {
+        "client_public_key": KeyInfo(
+            KeyType.PUBLIC,
+            KeyOwner.CLIENT,
+            suite_srv_dir=suite_srv_dir, platform=platform),
+        "client_private_key": KeyInfo(
+            KeyType.PRIVATE,
+            KeyOwner.CLIENT,
+            suite_srv_dir=suite_srv_dir),
+        "server_public_key": KeyInfo(
+            KeyType.PUBLIC,
+            KeyOwner.SERVER,
+            suite_srv_dir=suite_srv_dir),
+        "server_private_key": KeyInfo(
+            KeyType.PRIVATE,
+            KeyOwner.SERVER,
+            suite_srv_dir=suite_srv_dir)
+    }
+    remove_keys_on_server(keys)
+    if create:
+        create_server_keys(keys, suite_srv_dir)

@@ -1,9 +1,0 @@
-[scheduling]
-    initial cycle point = 20160101T00Z
-    final cycle point = 20160102T00Z
-    [[graph]]
-        R1 = start => one
-        PT1H = foo => bar => baz => bol
-[runtime]
-    [[root]]
-        script = true

@@ -1,0 +1,22 @@
+#!jinja2
+[cylc]
+    [[events]]
+        inactivity = PT2S
+
+[scheduling]
+    [[graph]]
+        R1 = foo
+
+[runtime]
+    [[foo]]
+        script = """
+if [[ "${CYLC_TASK_SUBMIT_NUMBER}" == '1' ]]; then
+    sleep 300
+fi
+"""
+        platform = test-slurm
+        [[[job]]]
+            execution time limit = PT5S
+            execution retry delays = PT0S
+        [[[directives]]]
+            {{CYLC_TEST_BATCH_SITE_DIRECTIVES}}

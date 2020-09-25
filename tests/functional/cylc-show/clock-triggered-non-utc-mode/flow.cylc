@@ -1,0 +1,19 @@
+#!jinja2
+[cylc]
+[scheduling]
+    initial cycle point = 20140808T09
+    final cycle point = 20140808T09
+    [[special tasks]]
+        clock-trigger = foo(PT5M)
+    [[graph]]
+        PT1H = "woo => foo & show"
+[runtime]
+    [[woo]]
+        script = true
+    [[foo]]
+        script = sleep 10
+    [[show]]
+        script = """
+sleep 4
+cylc show "$CYLC_SUITE_NAME" foo.20140808T0900{{ TZ_OFFSET_BASIC }} >{{ TEST_SHOW_OUTPUT_PATH }}
+"""

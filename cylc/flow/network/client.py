@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,99 +15,137 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Client for suite runtime API."""
 
-import asyncio
+from functools import partial
 import os
+from shutil import which
 import socket
 import sys
-from functools import partial
 from typing import Union
 
-import jose.exceptions
 import zmq
 import zmq.asyncio
 
-from shutil import which
-
-import cylc.flow.flags
 from cylc.flow import LOG
 from cylc.flow.exceptions import (
     ClientError,
     ClientTimeout,
-    SuiteServiceFileError
+    SuiteServiceFileError,
+    SuiteStopped
 )
-from cylc.flow.hostuserutil import get_fqdn_by_host
-from cylc.flow.network.authentication import encrypt, decrypt, get_secret
+from cylc.flow.network import (
+    encode_,
+    decode_,
+    get_location,
+    ZMQSocketBase
+)
 from cylc.flow.network.server import PB_METHOD_MAP
-from cylc.flow.suite_files import (
-    ContactFileFields,
-    detect_old_contact_file,
-    load_contact_file
-)
-
-# we should only have one ZMQ context per-process
-CONTEXT = zmq.asyncio.Context()
+from cylc.flow.suite_files import detect_old_contact_file
 
 
-class ZMQClient(object):
-    """Initiate the REQ part of a ZMQ REQ-REP pair.
+class SuiteRuntimeClient(ZMQSocketBase):
+    """Initiate a client to the workflow server API.
+
+    Initiates the REQ part of a ZMQ REQ-REP pair.
 
     This class contains the logic for the ZMQ message interface and client -
     server communication.
 
-    NOTE: Security to be provided via the encode / decode interface.
+    Determine host and port from the contact file unless provided.
+
+    If there is no socket bound to the specified host/port the client will
+    bail after ``timeout`` seconds.
 
     Args:
-        host (str):
-            The host to connect to.
-        port (int):
-            The port on the aforementioned host to connect to.
-        encode_method (function):
-            Translates outgoing messages into strings to be sent over the
-            network. ``encode_method(json, secret) -> str``
-        decode_method (function):
-            Translates incoming message strings into digestible data.
-            ``encode_method(str, secret) -> dict``
-        secret_method (function):
-            Return the secret for use with the encode/decode methods.
-            Called for each encode / decode.
+        suite (str):
+            Name of the suite to connect to.
         timeout (float):
             Set the default timeout in seconds. The default is
             ``ZMQClient.DEFAULT_TIMEOUT``.
             Note the default timeout can be overridden for individual requests.
+        host (str):
+            The host where the flow is running if known.
+
+            If both host and port are provided it is not necessary to load
+            the contact file.
+        port (int):
+            The port on which the REQ-REP TCP server is listening.
+
+            If both host and port are provided it is not necessary to load
+            the contact file.
+
+    Attributes:
+        host (str):
+            Suite host name.
+        port (int):
+            Suite host port.
         timeout_handler (function):
             Optional function which runs before ClientTimeout is raised.
             This provides an interface for raising more specific exceptions in
             the event of a communication timeout.
-        header (dict): Request "header" data to attach to each request.
+        header (dict):
+            Request "header" data to attach to each request.
 
     Usage:
-        * Call endpoints using ``ZMQClient.__call__``.
+        Call endpoints using ``ZMQClient.__call__``.
 
     Message interface:
         * Accepts responses of the format: {"data": {...}}
         * Accepts error in the format: {"error": {"message": MSG}}
         * Returns requests of the format: {"command": CMD,
-        "args": {...}}
+          "args": {...}}
+
+    Raises:
+        ClientError: if the suite is not running.
+
+    Call server "endpoints" using:
+        ``__call__``, ``serial_request``
+            .. automethod::
+                cylc.flow.network.client.SuiteRuntimeClient.serial_request
+
+        ``async_request``
+            .. automethod::
+                cylc.flow.network.client.SuiteRuntimeClient.async_request
 
     """
 
     DEFAULT_TIMEOUT = 5.  # 5 seconds
 
-    def __init__(self, host, port, encode_method, decode_method, secret_method,
-                 timeout=None, timeout_handler=None, header=None):
-        self.encode = encode_method
-        self.decode = decode_method
-        self.secret = secret_method
+    def __init__(
+            self,
+            suite: str,
+            host: str = None,
+            port: int = None,
+            context: object = None,
+            timeout: Union[float, str] = None,
+            srv_public_key_loc: str = None
+    ):
+        super().__init__(zmq.REQ, context=context)
+        self.suite = suite
+        if not host or not port:
+            host, port, _ = get_location(suite)
+        else:
+            port = int(port)
+        self.host = host
+        self.port = port
         if timeout is None:
             timeout = self.DEFAULT_TIMEOUT
         else:
             timeout = float(timeout)
         self.timeout = timeout * 1000
-        self.timeout_handler = timeout_handler
+        self.timeout_handler = partial(
+            self._timeout_handler, suite, host, port)
+        self.poller = None
+        # Connect the ZMQ socket on instantiation
+        self.start(self.host, self.port, srv_public_key_loc)
+        # gather header info post start
+        self.header = self.get_header()
 
-        # open the ZMQ socket
-        self.socket = CONTEXT.socket(zmq.REQ)
-        self.socket.connect('tcp://%s:%d' % (host, port))
+    def _socket_options(self):
+        """Set socket options after socket instantiation before connect.
+
+        Overwrites Base method.
+
+        """
         # if there is no server don't keep the client hanging around
         self.socket.setsockopt(zmq.LINGER, int(self.DEFAULT_TIMEOUT))
 
@@ -115,54 +153,45 @@ class ZMQClient(object):
         self.poller = zmq.Poller()
         self.poller.register(self.socket, zmq.POLLIN)
 
-        if not header:
-            self.header = {}
-        else:
-            self.header = dict(header)
-
     async def async_request(self, command, args=None, timeout=None):
         """Send an asynchronous request using asyncio.
 
         Has the same arguments and return values as ``serial_request``.
 
         """
-        if timeout:
-            timeout = float(timeout)
-        timeout = (timeout * 1000 if timeout else None) or self.timeout
+        timeout = (float(timeout) * 1000 if timeout else None) or self.timeout
         if not args:
             args = {}
 
-        # get secret for this request
-        # assumes secret won't change during the request
-        try:
-            secret = self.secret()
-        except SuiteServiceFileError:
-            raise ClientError('could not read suite passphrase')
+        # Note: we are using CurveZMQ to secure the messages (see
+        # self.curve_auth, self.socket.curve_...key etc.). We have set up
+        # public-key cryptography on the ZMQ messaging and sockets, so
+        # there is no need to encrypt messages ourselves before sending.
 
         # send message
         msg = {'command': command, 'args': args}
         msg.update(self.header)
-        LOG.debug('zmq:send %s' % msg)
-        message = encrypt(msg, secret)
+        LOG.debug('zmq:send %s', msg)
+        message = encode_(msg)
         self.socket.send_string(message)
 
         # receive response
         if self.poller.poll(timeout):
             res = await self.socket.recv()
         else:
-            if self.timeout_handler:
+            if callable(self.timeout_handler):
                 self.timeout_handler()
-            raise ClientTimeout('Timeout waiting for server response.')
+            raise ClientTimeout(
+                'Timeout waiting for server response.'
+                ' This could be due to network or server issues.'
+                ' Check the suite log.'
+            )
 
         if msg['command'] in PB_METHOD_MAP:
             response = {'data': res}
         else:
-            try:
-                response = decrypt(res.decode(), secret)
-            except jose.exceptions.JWTError:
-                raise ClientError(
-                    'Could not decrypt response. Has the passphrase changed?')
-        LOG.debug('zmq:recv %s' % response)
+            response = decode_(res.decode())
+        LOG.debug('zmq:recv %s', response)
 
         try:
             return response['data']
@@ -189,77 +218,10 @@ class ZMQClient(object):
                 nothing more, nothing less.
 
         """
-        loop = asyncio.get_event_loop()
-        task = loop.create_task(self.async_request(command, args, timeout))
-        loop.run_until_complete(task)
+        task = self.loop.create_task(
+            self.async_request(command, args, timeout))
+        self.loop.run_until_complete(task)
         return task.result()
-
-    __call__ = serial_request
-
-
-class SuiteRuntimeClient(ZMQClient):
-    """This class contains the logic specific to communicating with Cylc
-    suites.
-
-    Call server "endpoints" using:
-
-        ``__call__``, ``serial_request``
-
-           .. automethod:: cylc.flow.network.client.ZMQClient.serial_request
-
-        ``async_request``
-
-           .. automethod:: cylc.flow.network.client.ZMQClient.async_request
-    """
-
-    def __init__(
-            self,
-            suite: str,
-            owner: str = None,
-            host: str = None,
-            port: Union[int, str] = None,
-            timeout: Union[float, str] = None
-    ):
-        """Initiate a client to the suite runtime API.
-
-        Determine host and port from the contact file unless provided.
-
-        If there is no socket bound to the specified host/port the client will
-        bail after ``timeout`` seconds.
-
-        Args:
-            suite (str):
-                Name of the suite to connect to.
-            owner (str):
-                Owner of suite, defaults to $USER.
-            host (str):
-                Overt need to check contact file if provided along with the
-                port.
-            port (int):
-                Overt need to check contact file if provided along with the
-                host.
-            timeout (int):
-                Message receive timeout in seconds. Also used to set the
-                "linger" time, see ``ZMQClient``.
-        Raises:
-            ClientError: if the suite is not running.
-        """
-        if isinstance(timeout, str):
-            timeout = float(timeout)
-        if port:
-            port = int(port)
-        if not (host and port):
-            host, port = self.get_location(suite, owner, host)
-        super().__init__(
-            host=host,
-            port=port,
-            encode_method=encrypt,
-            decode_method=decrypt,
-            secret_method=partial(get_secret, suite),
-            timeout=timeout,
-            header=self.get_header(),
-            timeout_handler=partial(self._timeout_handler, suite, host, port)
-        )
 
     @staticmethod
     def get_header() -> dict:
@@ -312,33 +274,6 @@ class SuiteRuntimeClient(ZMQClient):
             return
         else:
             # the suite has stopped
-            raise ClientError('Suite "%s" already stopped' % suite)
+            raise SuiteStopped(suite)
 
-    @classmethod
-    def get_location(cls, suite: str, owner: str, host: str):
-        """Extract host and port from a suite's contact file.
-
-        NB: if it fails to load the suite contact file, it will exit.
-
-        Args:
-            suite (str): suite name
-            owner (str): owner of the suite
-            host (str): host name
-        Returns:
-            Tuple[str, int]: tuple with the host name and port number.
-        Raises:
-            ClientError: if the suite is not running.
-        """
-        try:
-            contact = load_contact_file(
-                suite, owner, host)
-        except SuiteServiceFileError:
-            raise ClientError(f'Contact info not found for suite '
-                              f'"{suite}", suite not running?')
-
-        if not host:
-            host = contact[ContactFileFields.HOST]
-        host = get_fqdn_by_host(host)
-
-        port = int(contact[ContactFileFields.PORT])
-        return host, port
+    __call__ = serial_request

@@ -1,0 +1,11 @@
+[cylc]
+   UTC mode = True
+[scheduling]
+    initial cycle point = 2011
+    final cycle point = 2018
+    max active cycle points = 1
+    [[graph]]
+        2010/P3Y = "a"
+[runtime]
+    [[a]]
+        script = true

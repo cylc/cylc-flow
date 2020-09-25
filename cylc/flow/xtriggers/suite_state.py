@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,15 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""xtrigger function to check a remote suite state.
-
-"""
-
 import os
 import sqlite3
+
 from cylc.flow.cycling.util import add_offset
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.dbstatecheck import CylcSuiteDBChecker
+from cylc.flow.platforms import get_platform
 from metomi.isodatetime.parsers import TimePointParser
 
 
@@ -30,13 +27,55 @@ def suite_state(suite, task, point, offset=None, status='succeeded',
                 message=None, cylc_run_dir=None, debug=False):
     """Connect to a suite DB and query the requested task state.
 
-    Reports satisfied only if the remote suite state has been achieved.
-    Returns all suite state args to pass on to triggering tasks.
+    * Reports satisfied only if the remote suite state has been achieved.
+    * Returns all suite state args to pass on to triggering tasks.
+
+    Arguments:
+        suite (str):
+            The suite to interrogate.
+        task (str):
+            The name of the task to query.
+        point (str):
+            The cycle point.
+        offset (str):
+            The offset between the cycle this xtrigger is used in and the one
+            it is querying for as an ISO8601 time duration.
+            e.g. PT1H (one hour).
+        status (str):
+            The task status required for this xtrigger to be satisfied.
+        message (str):
+            The custom task output required for this xtrigger to be satisfied.
+            .. note::
+
+               This cannot be specified in conjunction with ``status``.
+
+        cylc_run_dir (str):
+            The directory in which the suite to interrogate.
+
+            .. note::
+
+               This only needs to be supplied if the suite is running in a
+               different location to what is specified in the global
+               configuration (usually ``~/cylc-run``).
+
+        debug (bool):
+            Flag to enable debug information.
+
+    Returns:
+        tuple: (satisfied, results)
+
+        satisfied (bool):
+            True if ``satisfied`` else ``False``.
+        results (dict):
+            Dictionary containing the args / kwargs which were provided
+            to this xtrigger (except ``debug``).
 
     """
     cylc_run_dir = os.path.expandvars(
         os.path.expanduser(
-            cylc_run_dir or glbl_cfg().get_host_item('run directory')))
+            cylc_run_dir or get_platform()['run directory']
+        )
+    )
     if offset is not None:
         point = str(add_offset(point, offset))
     try:
@@ -61,4 +100,4 @@ def suite_state(suite, task, point, offset=None, status='succeeded',
         'message': message,
         'cylc_run_dir': cylc_run_dir
     }
-    return (satisfied, results)
+    return satisfied, results

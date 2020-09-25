@@ -1,0 +1,19 @@
+[cylc]
+   [[reference test]]
+       expected task failures = t1.1
+
+[scheduling]
+    [[graph]]
+        R1 = """t1:submit-fail => t2"""
+
+[runtime]
+    [[t1]]
+        script = true
+        platform = bad
+    [[t2]]
+        script = """
+            grep -q -F \
+                'bad: initialisation did not complete' \
+                "${CYLC_SUITE_LOG_DIR}/log"
+            cylc shutdown "${CYLC_SUITE_NAME}"
+        """

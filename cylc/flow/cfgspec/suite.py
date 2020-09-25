@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,248 +15,1280 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Define all legal items and values for cylc suite definition files."""
 
+import re
+
 from metomi.isodatetime.data import Calendar
 
 from cylc.flow import LOG
+from cylc.flow.parsec.exceptions import UpgradeError
 from cylc.flow.network.authorisation import Priv
-from cylc.flow.parsec.config import ParsecConfig
+from cylc.flow.parsec.config import ParsecConfig, ConfigNode as Conf
+from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.upgrade import upgrader
 from cylc.flow.parsec.validate import (
     DurationFloat, CylcConfigValidator as VDR, cylc_config_validate)
+from cylc.flow.platforms import get_platform
 
-# Nested dict of spec items.
-# Spec value is [value_type, default, allowed_2, allowed_3, ...]
-# where:
-# - value_type: value type (compulsory).
-# - default: the default value (optional).
-# - allowed_2, ...: the only other allowed values of this setting (optional).
-SPEC = {
-    'meta': {
-        'description': [VDR.V_STRING, ''],
-        'group': [VDR.V_STRING, ''],
-        'title': [VDR.V_STRING, ''],
-        'URL': [VDR.V_STRING, ''],
-        '__MANY__': [VDR.V_STRING, ''],
-    },
-    'cylc': {
-        'UTC mode': [VDR.V_BOOLEAN, False],
-        'cycle point format': [VDR.V_CYCLE_POINT_FORMAT],
-        'cycle point num expanded year digits': [VDR.V_INTEGER, 0],
-        'cycle point time zone': [VDR.V_CYCLE_POINT_TIME_ZONE],
-        'required run mode': [
-            VDR.V_STRING, '', 'live', 'dummy', 'dummy-local', 'simulation'],
-        'force run mode': [
-            VDR.V_STRING, '', 'live', 'dummy', 'dummy-local', 'simulation'],
-        'health check interval': [VDR.V_INTERVAL],
-        'task event mail interval': [VDR.V_INTERVAL],
-        'disable automatic shutdown': [VDR.V_BOOLEAN],
-        'simulation': {
-            'disable suite event handlers': [VDR.V_BOOLEAN, True],
-        },
-        'environment': {
-            '__MANY__': [VDR.V_STRING],
-        },
-        'parameters': {
-            '__MANY__': [VDR.V_PARAMETER_LIST],
-        },
-        'parameter templates': {
-            '__MANY__': [VDR.V_STRING],
-        },
-        'events': {
-            'handlers': [VDR.V_STRING_LIST, None],
-            'handler events': [VDR.V_STRING_LIST, None],
-            'startup handler': [VDR.V_STRING_LIST, None],
-            'timeout handler': [VDR.V_STRING_LIST, None],
-            'inactivity handler': [VDR.V_STRING_LIST, None],
-            'shutdown handler': [VDR.V_STRING_LIST, None],
-            'aborted handler': [VDR.V_STRING_LIST, None],
-            'stalled handler': [VDR.V_STRING_LIST, None],
-            'timeout': [VDR.V_INTERVAL],
-            'inactivity': [VDR.V_INTERVAL],
-            'abort if startup handler fails': [VDR.V_BOOLEAN],
-            'abort if shutdown handler fails': [VDR.V_BOOLEAN],
-            'abort if timeout handler fails': [VDR.V_BOOLEAN],
-            'abort if inactivity handler fails': [VDR.V_BOOLEAN],
-            'abort if stalled handler fails': [VDR.V_BOOLEAN],
-            'abort if any task fails': [VDR.V_BOOLEAN],
-            'abort on stalled': [VDR.V_BOOLEAN],
-            'abort on timeout': [VDR.V_BOOLEAN],
-            'abort on inactivity': [VDR.V_BOOLEAN],
-            'mail events': [VDR.V_STRING_LIST, None],
-            'mail from': [VDR.V_STRING],
-            'mail smtp': [VDR.V_STRING],
-            'mail to': [VDR.V_STRING],
-            'mail footer': [VDR.V_STRING],
-        },
-        'reference test': {
-            'expected task failures': [VDR.V_STRING_LIST],
-        },
-        'authentication': {
+# Regex to check whether a string is a command
+REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
+
+with Conf(
+    'flow.cylc',
+    desc='''
+        Defines a cylc suite configuration.
+
+        Embedded Jinja2 code (see :ref:`Jinja`) must process to a valid
+        raw flow.cylc file. See also :ref:`FlowConfigFile` for a descriptive
+        overview of flow.cylc files, including syntax (:ref:`Syntax`).
+
+        .. note::
+
+           Prior to Cylc 8, this was named ``suite.rc``, but that
+           name is now deprecated. The ``cylc run`` command will automatically
+           symlink an existing ``suite.rc`` file to ``flow.cylc``.
+    '''
+) as SPEC:
+
+    with Conf('meta', desc='''
+        Section containing metadata items for this suite. Several items (title,
+        description, URL) are pre-defined and are used by Cylc. Others can be
+        user-defined and passed to suite event handlers to be interpreted
+        according to your needs. For example, the value of a "suite-priority"
+        item could determine how an event handler responds to failure events.
+    '''):
+        Conf('description', VDR.V_STRING, '', desc='''
+            A multi-line description of the suite. It can be retrieved at run
+            time with the ``cylc show`` command.
+        ''')
+        Conf('group', VDR.V_STRING, '', desc='''
+            A group name for a suite.
+        ''')
+        Conf('title', VDR.V_STRING, '', desc='''
+            A single line description of the suite, can be retrieved at run
+            time with the ``cylc show`` command.
+        ''')
+        Conf('URL', VDR.V_STRING, '', desc='''
+            A web URL to suite documentation.  If present it can be browsed
+            with the ``cylc doc`` command. The string template
+            ``%(suite_name)s`` will be replaced with the actual suite name.
+            See also :cylc:conf:`flow.cylc[runtime][<namespace>][meta]URL`.
+
+            Example:
+
+            ``http://my-site.com/suites/%(suite_name)s/index.html``
+        ''')
+        Conf('<custom metadata>', VDR.V_STRING, '', desc='''
+            Any user-defined metadata item. These,
+            like title, URL, etc. can be passed to suite event handlers to be
+            interpreted according to your needs. For example,
+            "suite-priority".
+        ''')
+
+    with Conf('cylc'):
+        Conf('UTC mode', VDR.V_BOOLEAN)
+        Conf('cycle point format', VDR.V_CYCLE_POINT_FORMAT, desc='''
+            Set the date-time format that Cylc uses for
+            :term:`cycle points<cycle point>` in :term:`datetime cycling`
+            workflows.
+
+            To just alter the timezone used in the date-time cycle point
+            format, see :cylc:conf:`flow.cylc[cylc]cycle point time zone`.
+            To just alter the number of expanded year digits (for years
+            below 0 or above 9999), see
+            :cylc:conf:`flow.cylc[cylc]cycle point num expanded year digits`.
+
+            Cylc usually uses a ``CCYYMMDDThhmmZ`` (``Z`` in the special
+            case of UTC) or ``CCYYMMDDThhmm±hhmm`` format for writing
+            date-time cycle points, following the :term:`ISO8601` standard.
+
+            You may use the `isodatetime library's syntax
+            <https://github.com/metomi/isodatetime#dates-and-times>`_ to set
+            the cycle point format, as demonstrated in the previous paragraph.
+
+            You can also use a subset of the strptime/strftime POSIX
+            standard - supported tokens are ``%F``, ``%H``, ``%M``, ``%S``,
+            ``%Y``, ``%d``, ``%j``, ``%m``, ``%s``, ``%z``.
+
+            The time zone you specify here will be used only for
+            writing/dumping cycle points. Cycle points that are input without
+            time zones will still default to the local time zone unless
+            :cylc:conf:`flow.cylc[cylc]cycle point time zone` or
+            :cylc:conf:`flow.cylc[cylc]UTC mode` are set. Not specifying a
+            time zone here is inadvisable as it leads to ambiguity.
+
+            .. note::
+
+               The ISO8601 extended date-time format can be used
+               (``CCYY-MM-DDThh:mm``) but note that the "-" and ":" characters
+               end up in job log directory paths.
+        ''')
+        Conf('cycle point num expanded year digits', VDR.V_INTEGER, 0, desc='''
+            For years below 0 or above 9999, the ISO 8601 standard specifies
+            that an extra number of year digits and a sign should be used.
+            This extra number needs to be written down somewhere (here).
+
+            For example, if this extra number is set to 2, 00Z on the 1st of
+            January in the year 10040 will be represented as
+            ``+0100400101T0000Z`` (2 extra year digits used). With this number
+            set to 3, 06Z on the 4th of May 1985 would be written as
+            ``+00019850504T0600Z``.
+
+            This number defaults to 0 (no sign or extra digits used).
+        ''')
+        Conf('cycle point time zone', VDR.V_CYCLE_POINT_TIME_ZONE, desc='''
+            You may set your own time zone choice here, which will be used for
+            date-time cycle point dumping and inferring the time zone of cycle
+            points that are input without time zones.
+
+            Time zones should be expressed as :term:`ISO8601` time zone offsets
+            from UTC, such as ``+13``, ``+1300``, ``-0500`` or ``+0645``,
+            with ``Z`` representing the special ``+0000`` case. Cycle points
+            will be converted to the time zone you give and will be
+            represented with this string at the end.
+
+            If this isn't set (and :cylc:conf:`flow.cylc[cylc]UTC mode` is also
+            not set), then it will default to the local time zone at the
+            time of running the suite. This will persist over local time zone
+            changes (e.g. if the suite is run during winter time, then stopped,
+            then restarted after summer time has begun, the cycle points will
+            remain in winter time).
+
+            If this isn't set, and UTC mode is set to True, then this will
+            default to ``Z``. If you use a custom
+            :cylc:conf:`flow.cylc[cylc]cycle point format`, it is a good idea
+            to set the same time zone here. If you specify a different one
+            here, it will only be used for inferring timezone-less cycle
+            points, while dumping will use the one from the cycle point format.
+
+            .. note::
+
+               It is not recommended to write the time zone with a ":"
+               (e.g. ``+05:30``), given that the time zone is used as part of
+               task output filenames.
+        ''')
+        Conf('required run mode', VDR.V_STRING, '',
+             options=['', 'live', 'dummy', 'dummy-local', 'simulation'],
+             desc='''
+            If this item is set cylc will abort if the suite is not started in
+            the specified mode. This can be used for demo suites that have to
+            be run in simulation mode, for example, because they have been
+            taken out of their normal operational context; or to prevent
+            accidental submission of expensive real tasks during suite
+            development.
+        ''')
+        Conf('force run mode', VDR.V_STRING, '',
+             options=['', 'live', 'dummy', 'dummy-local', 'simulation'])
+        Conf('task event mail interval', VDR.V_INTERVAL)
+        Conf('disable automatic shutdown', VDR.V_BOOLEAN, desc='''
+            This has the same effect as the ``--no-auto-shutdown`` flag for
+            the suite run commands: it prevents the suite server program from
+            shutting down normally when all tasks have finished (a suite
+            timeout can still be used to stop the daemon after a period of
+            inactivity, however).  This option can make it easier to re-trigger
+            tasks manually near the end of a suite run, during suite
+            development and debugging.
+        ''')
+
+        with Conf('main loop'):
+            with Conf('<plugin name>'):
+                Conf('interval', VDR.V_INTERVAL)
+
+        with Conf('simulation'):
+            Conf('disable suite event handlers', VDR.V_BOOLEAN, True)
+
+        with Conf('environment'):
+            Conf('<variable>', VDR.V_STRING)
+
+        with Conf('parameters', desc='''
+            Define parameter values here for use in expanding
+            :ref:`parameterized tasks <Parameterized Tasks Label>`.
+        '''):
+            Conf('<parameter>', VDR.V_PARAMETER_LIST, desc='''
+                Examples:
+                - ``run = control, test1, test2``
+                - ``mem = 1..5``  (equivalent to ``1, 2, 3, 4, 5``).
+                - ``mem = -11..-7..2``  (equivalent to ``-11, -9, -7``).
+            ''')
+
+        with Conf('parameter templates', desc='''
+            Parameterized task names are expanded, for each parameter value,
+            using string templates.
+
+            You can assign templates to parameter names here to override the
+            default templates.
+        '''):
+            Conf('<parameter>', VDR.V_STRING, desc='''
+                Default for integer parameters:
+                   ``_p%(p)0Nd``
+                   where ``N`` is the number of digits of the maximum integer
+                   value, e.g. ``foo<run>`` becomes ``foo_run3`` for ``run``
+                   value ``3``.
+                Default for non-integer parameters:
+                   ``_%(p)s`` e.g. ``foo<run>`` becomes ``foo_top`` for
+                   ``run`` value ``top``.
+
+                Example:
+
+                ``run = -R%(run)s`` e.g. ``foo<run>`` becomes ``foo-R3`` for
+                ``run`` value ``3``.
+
+                .. note::
+
+                   The values of a parameter named ``p`` are substituted for
+                   ``%(p)s``.  In ``_run%(run)s`` the first "run" is a string
+                   literal, and the second gets substituted with each value of
+                   the parameter.
+            ''')
+
+        with Conf('events'):
+            # Note: default of None for V_STRING_LIST is used to differentiate
+            # between: value not set vs value set to empty
+            Conf('handlers', VDR.V_STRING_LIST, None)
+            Conf('handler events', VDR.V_STRING_LIST, None)
+            Conf('startup handler', VDR.V_STRING_LIST, None)
+            Conf('timeout handler', VDR.V_STRING_LIST, None)
+            Conf('inactivity handler', VDR.V_STRING_LIST, None)
+            Conf('shutdown handler', VDR.V_STRING_LIST, None)
+            Conf('aborted handler', VDR.V_STRING_LIST, None)
+            Conf('stalled handler', VDR.V_STRING_LIST, None)
+            Conf('timeout', VDR.V_INTERVAL)
+            Conf('inactivity', VDR.V_INTERVAL)
+            Conf('abort if startup handler fails', VDR.V_BOOLEAN)
+            Conf('abort if shutdown handler fails', VDR.V_BOOLEAN)
+            Conf('abort if timeout handler fails', VDR.V_BOOLEAN)
+            Conf('abort if inactivity handler fails', VDR.V_BOOLEAN)
+            Conf('abort if stalled handler fails', VDR.V_BOOLEAN)
+            Conf('abort on stalled', VDR.V_BOOLEAN)
+            Conf('abort on timeout', VDR.V_BOOLEAN)
+            Conf('abort on inactivity', VDR.V_BOOLEAN)
+            Conf('mail events', VDR.V_STRING_LIST, None)
+            Conf('mail from', VDR.V_STRING)
+            Conf('mail smtp', VDR.V_STRING)
+            Conf('mail to', VDR.V_STRING)
+            Conf('mail footer', VDR.V_STRING)
+
+        with Conf('reference test'):
+            Conf('expected task failures', VDR.V_STRING_LIST)
+
+        with Conf('authentication'):
             # Allow owners to grant public shutdown rights at the most, not
             # full control.
-            'public': (
-                [VDR.V_STRING, '']
-                + [level.name.lower().replace('_', '-') for level in [
-                    Priv.IDENTITY, Priv.DESCRIPTION, Priv.STATE_TOTALS,
-                    Priv.READ, Priv.SHUTDOWN]])
-        },
-    },
-    'scheduling': {
-        'initial cycle point': [VDR.V_CYCLE_POINT],
-        'final cycle point': [VDR.V_STRING],
-        'initial cycle point constraints': [VDR.V_STRING_LIST],
-        'final cycle point constraints': [VDR.V_STRING_LIST],
-        'hold after point': [VDR.V_CYCLE_POINT],
-        'cycling mode': (
-            [VDR.V_STRING, Calendar.MODE_GREGORIAN] +
-            list(Calendar.MODES) + ["integer"]),
-        'runahead limit': [VDR.V_STRING],
-        'max active cycle points': [VDR.V_INTEGER, 3],
-        'spawn to max active cycle points': [VDR.V_BOOLEAN],
-        'queues': {
-            'default': {
-                'limit': [VDR.V_INTEGER, 0],
-                'members': [VDR.V_STRING_LIST],
-            },
-            '__MANY__': {
-                'limit': [VDR.V_INTEGER, 0],
-                'members': [VDR.V_STRING_LIST],
-            },
-        },
-        'special tasks': {
-            'clock-trigger': [VDR.V_STRING_LIST],
-            'external-trigger': [VDR.V_STRING_LIST],
-            'clock-expire': [VDR.V_STRING_LIST],
-            'sequential': [VDR.V_STRING_LIST],
-            'exclude at start-up': [VDR.V_STRING_LIST],
-            'include at start-up': [VDR.V_STRING_LIST],
-        },
-        'xtriggers': {
-            '__MANY__': [VDR.V_XTRIGGER],
-        },
-        'graph': {
-            '__MANY__': [VDR.V_STRING],
-        },
-    },
-    'runtime': {
-        '__MANY__': {
-            'inherit': [VDR.V_STRING_LIST],
-            'init-script': [VDR.V_STRING],
-            'env-script': [VDR.V_STRING],
-            'err-script': [VDR.V_STRING],
-            'exit-script': [VDR.V_STRING],
-            'pre-script': [VDR.V_STRING],
-            'script': [VDR.V_STRING],
-            'post-script': [VDR.V_STRING],
-            'extra log files': [VDR.V_STRING_LIST],
-            'work sub-directory': [VDR.V_STRING],
-            'meta': {
-                'title': [VDR.V_STRING, ''],
-                'description': [VDR.V_STRING, ''],
-                'URL': [VDR.V_STRING, ''],
-                '__MANY__': [VDR.V_STRING, ''],
-            },
-            'simulation': {
-                'default run length': [VDR.V_INTERVAL, DurationFloat(10)],
-                'speedup factor': [VDR.V_FLOAT],
-                'time limit buffer': [VDR.V_INTERVAL, DurationFloat(30)],
-                'fail cycle points': [VDR.V_STRING_LIST],
-                'fail try 1 only': [VDR.V_BOOLEAN, True],
-                'disable task event handlers': [VDR.V_BOOLEAN, True],
-            },
-            'environment filter': {
-                'include': [VDR.V_STRING_LIST],
-                'exclude': [VDR.V_STRING_LIST],
-            },
-            'job': {
-                'batch system': [VDR.V_STRING, 'background'],
-                'batch submit command template': [VDR.V_STRING],
-                'execution polling intervals': [VDR.V_INTERVAL_LIST, None],
-                'execution retry delays': [VDR.V_INTERVAL_LIST, None],
-                'execution time limit': [VDR.V_INTERVAL],
-                'submission polling intervals': [VDR.V_INTERVAL_LIST, None],
-                'submission retry delays': [VDR.V_INTERVAL_LIST, None],
-            },
-            'remote': {
-                'host': [VDR.V_STRING],
-                'owner': [VDR.V_STRING],
-                'suite definition directory': [VDR.V_STRING],
-                'retrieve job logs': [VDR.V_BOOLEAN],
-                'retrieve job logs max size': [VDR.V_STRING],
-                'retrieve job logs retry delays': [VDR.V_INTERVAL_LIST, None],
-            },
-            'events': {
-                'execution timeout': [VDR.V_INTERVAL],
-                'handlers': [VDR.V_STRING_LIST, None],
-                'handler events': [VDR.V_STRING_LIST, None],
-                'handler retry delays': [VDR.V_INTERVAL_LIST, None],
-                'mail events': [VDR.V_STRING_LIST, None],
-                'mail from': [VDR.V_STRING],
-                'mail retry delays': [VDR.V_INTERVAL_LIST, None],
-                'mail smtp': [VDR.V_STRING],
-                'mail to': [VDR.V_STRING],
-                'submission timeout': [VDR.V_INTERVAL],
+            Conf(
+                'public',
+                VDR.V_STRING,
+                default=Priv.STATE_TOTALS.name.lower().replace('_', '-'),
+                options=[
+                    level.name.lower().replace('_', '-')
+                    for level in [
+                        Priv.IDENTITY, Priv.DESCRIPTION,
+                        Priv.STATE_TOTALS, Priv.READ, Priv.SHUTDOWN
+                    ]
+                ]
+            )
 
-                'expired handler': [VDR.V_STRING_LIST, None],
-                'late offset': [VDR.V_INTERVAL, None],
-                'late handler': [VDR.V_STRING_LIST, None],
-                'submitted handler': [VDR.V_STRING_LIST, None],
-                'started handler': [VDR.V_STRING_LIST, None],
-                'succeeded handler': [VDR.V_STRING_LIST, None],
-                'failed handler': [VDR.V_STRING_LIST, None],
-                'submission failed handler': [VDR.V_STRING_LIST, None],
-                'warning handler': [VDR.V_STRING_LIST, None],
-                'critical handler': [VDR.V_STRING_LIST, None],
-                'retry handler': [VDR.V_STRING_LIST, None],
-                'submission retry handler': [VDR.V_STRING_LIST, None],
-                'execution timeout handler': [VDR.V_STRING_LIST, None],
-                'submission timeout handler': [VDR.V_STRING_LIST, None],
-                'custom handler': [VDR.V_STRING_LIST, None],
-            },
-            'suite state polling': {
-                'user': [VDR.V_STRING],
-                'host': [VDR.V_STRING],
-                'interval': [VDR.V_INTERVAL],
-                'max-polls': [VDR.V_INTEGER],
-                'message': [VDR.V_STRING],
-                'run-dir': [VDR.V_STRING],
-                'verbose mode': [VDR.V_BOOLEAN],
-            },
-            'environment': {
-                '__MANY__': [VDR.V_STRING],
-            },
-            'directives': {
-                '__MANY__': [VDR.V_STRING],
-            },
-            'outputs': {
-                '__MANY__': [VDR.V_STRING],
-            },
-            'parameter environment templates': {
-                '__MANY__': [VDR.V_STRING],
-            },
-        },
-    },
-    'visualization': {
-        'initial cycle point': [VDR.V_CYCLE_POINT],
-        'final cycle point': [VDR.V_STRING],
-        'number of cycle points': [VDR.V_INTEGER, 3],
-        'collapsed families': [VDR.V_STRING_LIST],
-        'use node color for edges': [VDR.V_BOOLEAN],
-        'use node fillcolor for edges': [VDR.V_BOOLEAN],
-        'use node color for labels': [VDR.V_BOOLEAN],
-        'node penwidth': [VDR.V_INTEGER, 2],
-        'edge penwidth': [VDR.V_INTEGER, 2],
-        'default node attributes': [
-            VDR.V_STRING_LIST, ['style=unfilled', 'shape=ellipse']],
-        'default edge attributes': [VDR.V_STRING_LIST],
-        'node groups': {
-            '__MANY__': [VDR.V_STRING_LIST],
-        },
-        'node attributes': {
-            '__MANY__': [VDR.V_STRING_LIST],
-        },
-    },
-}
+    with Conf('scheduling', desc='''
+        This section allows cylc to determine when tasks are ready to run.
+    '''):
+        Conf('initial cycle point', VDR.V_CYCLE_POINT, desc='''
+            In a cold start each cycling task (unless specifically excluded
+            under :cylc:conf:`[..][special tasks]`) will be loaded into the
+            suite with this cycle point, or with the closest subsequent valid
+            cycle point for the task. This item can be overridden on the
+            command line.
+
+            In integer cycling, the default is ``1``.
+
+            In date-time cycling, if you do not provide time zone information
+            for this, it will be assumed to be local time, or in UTC if
+            :cylc:conf:`flow.cylc[cylc]UTC mode` is set, or in the time zone
+            determined by :cylc:conf`flow.cylc[cylc][cycle point time zone]`.
+
+            The string ``now`` converts to the current date-time on the suite
+            host (adjusted to UTC if the suite is in UTC mode but the host is
+            not) to minute resolution.  Minutes (or hours, etc.) may be
+            ignored depending on the value of
+
+            :cylc:conf:`flow.cylc[cylc]cycle point format`.
+
+            For more information on setting the initial cycle point relative
+            to the current time see :ref:`setting-the-icp-relative-to-now`.
+        ''')
+        Conf('final cycle point', VDR.V_STRING, desc='''
+            Cycling tasks are held once they pass the final cycle point, if
+            one is specified. Once all tasks have achieved this state the
+            suite will shut down. If this item is provided you can override it
+            on the command line.
+
+            In date-time cycling, if you do not provide time zone information
+            for this, it will be assumed to be local time, or in UTC if
+            :cylc:conf:`flow.cylc[cylc]UTC mode`
+            is set, or in the time zone determined by
+            :cylc:conf`flow.cylc[cylc][cycle point time zone]`.
+        ''')
+        Conf('initial cycle point constraints', VDR.V_STRING_LIST, desc='''
+            in a cycling suite it is possible to restrict the initial cycle
+            point by defining a list of truncated time points under the
+            initial cycle point constraints.
+
+            Examples: T00, T06, T-30).
+        ''')
+        Conf('final cycle point constraints', VDR.V_STRING_LIST, desc='''
+            In a cycling suite it is possible to restrict the final cycle
+            point by defining a list of truncated time points under the final
+            cycle point constraints.
+        ''')
+        Conf('hold after point', VDR.V_CYCLE_POINT, desc='''
+            Cycling tasks are held once they pass the hold after cycle point,
+            if one is specified. Unlike the final cycle point suite will not
+            shut down once all tasks have passed this point. If this item
+            is provided you can override it on the command line.
+        ''')
+        Conf('cycling mode', VDR.V_STRING, Calendar.MODE_GREGORIAN,
+             options=list(Calendar.MODES) + ['integer'], desc='''
+            Cylc runs using the proleptic Gregorian calendar by default. This
+            item allows you to either run the suite using the 360 day calendar
+            (12 months of 30 days in a year) or using integer cycling. It also
+            supports use of the 365 (never a leap year) and 366 (always a leap
+            year) calendars.
+        ''')
+        Conf('runahead limit', VDR.V_STRING, desc='''
+            Runahead limiting prevents the fastest tasks in a suite from
+            getting too far ahead of the slowest ones, as documented in
+            :ref:`RunaheadLimit`.
+
+            This config item specifies a hard limit as a cycle interval
+            between the slowest and fastest tasks. See also
+            :cylc:conf:`[..]max active cycle points` which defines the limit
+            as a number of cyles.
+
+            Example: ``PT12H`` - for a 12 hour limit under ISO 8601 cycling.
+        ''')
+        Conf('max active cycle points', VDR.V_INTEGER, 3, desc='''
+            Runahead limiting prevents the fastest tasks in a suite from
+            getting too far ahead of the slowest ones, as documented in
+            :ref:`RunaheadLimit`.
+
+            It allows up to ``N`` (default 3)
+            consecutive cycle points to be active at any time, adjusted up if
+            necessary for any future triggering.
+        ''')
+
+        with Conf('queues', desc='''
+            Configuration of internal queues, by which the number of
+            simultaneously active tasks (submitted or running) can be limited,
+            per queue. By default a single queue called *default* is defined,
+            with all tasks assigned to it and no limit. To use a single queue
+            for the whole suite just set the limit on the *default* queue as
+            required. See also :ref:`InternalQueues`.
+        '''):
+            with Conf('default'):
+                Conf('limit', VDR.V_INTEGER, 0, desc='''
+                    The maximum number of active tasks allowed at any one
+                    time, for this queue.
+                ''')
+                Conf('members', VDR.V_STRING_LIST, desc='All tasks.''')
+
+            with Conf('<queue name>', desc='''
+                Section heading for configuration of a single queue.
+            '''):
+                Conf('limit', VDR.V_INTEGER, 0, desc='''
+                    The maximum number of active tasks allowed at any one
+                    time, for this queue.
+                ''')
+                Conf('members', VDR.V_STRING_LIST, desc='''
+                    A list of member tasks, or task family names, to assign to
+                    this queue (assigned tasks will automatically be removed
+                    from the default queue).
+                ''')
+
+        with Conf('special tasks', desc='''
+            This section is used to identify tasks with special behaviour.
+            Family names can be used in special task lists as shorthand for
+            listing all member tasks.
+        '''):
+            Conf('clock-trigger', VDR.V_STRING_LIST, desc='''
+            .. note::
+
+               Please read :ref:`Section External Triggers` before
+               using the older clock triggers described in this section.
+
+            Clock-trigger tasks (see :ref:`ClockTriggerTasks`) wait on a wall
+            clock time specified as an offset from their own cycle point.
+
+            Example:
+
+               ``foo(PT1H30M), bar(PT1.5H), baz``
+            ''')
+            Conf('external-trigger', VDR.V_STRING_LIST, desc='''
+                .. note::
+
+                   Please read :ref:`Section External Triggers` before
+                   using the older mechanism described in this section.
+
+                Externally triggered tasks (see :ref:`Old-Style External
+                Triggers`) wait on external events reported via the
+                ``cylc ext-trigger`` command. To constrain triggers to a
+                specific cycle point, include ``$CYLC_TASK_CYCLE_POINT``
+                in the trigger message string and pass the cycle point to the
+                ``cylc ext-trigger`` command.
+            ''')
+            Conf('clock-expire', VDR.V_STRING_LIST, desc='''
+                Clock-expire tasks enter the ``expired`` state and skip job
+                submission if too far behind the wall clock when they become
+                ready to run.  The expiry time is specified as an offset from
+                wall-clock time; typically it should be negative - see
+                :ref:`ClockExpireTasks`.
+
+                .. note::
+                   The offset:
+
+                   * May be positive or negative
+                   * The offset may be omitted if it is zero.
+
+                Example: ``PT1H`` - 1 hour
+            ''')
+            Conf('sequential', VDR.V_STRING_LIST, desc='''
+                Sequential tasks automatically depend on their own
+                previous-cycle instance.  This declaration is deprecated in
+                favour of explicit inter-cycle triggers - see
+                :ref:`SequentialTasks`.
+
+                Example:
+                   ``foo, bar``
+            ''')
+            Conf('exclude at start-up', VDR.V_STRING_LIST, desc='''
+                Any task listed here will be excluded from the initial task
+                pool (this goes for suite restarts too). If an *inclusion*
+                list is also specified, the initial pool will contain only
+                included tasks that have not been excluded. Excluded tasks can
+                still be inserted at run time.  Other tasks may still depend
+                on excluded tasks if they have not been removed from the suite
+                dependency graph, in which case some manual triggering, or
+                insertion of excluded tasks, may be required.
+            ''')
+            Conf('include at start-up', VDR.V_STRING_LIST, desc='''
+                If this list is not empty, any task *not* listed in it will be
+                excluded from the initial task pool (this goes for suite
+                restarts too).  If an *exclusion* list is also specified, the
+                initial pool will contain only included tasks that have not
+                been excluded. Excluded tasks can still be inserted at run
+                time. Other tasks may still depend on excluded tasks if they
+                have not been removed from the suite dependency graph, in
+                which case some manual triggering, or insertion of excluded
+                tasks, may be required.
+            ''')
+
+        with Conf('xtriggers', desc='''
+                This section is for *External Trigger* function declarations -
+                see :ref:`Section External Triggers`.
+        '''):
+            Conf('<xtrigger name>', VDR.V_XTRIGGER, desc='''
+                Any user-defined event trigger function declarations and
+                corresponding labels for use in the graph.
+
+                See :ref:`Section External Triggers` for details.
+
+                Example = ``my_trigger(arg1, arg2, kwarg1, kwarg2):PT10S``
+            ''')
+
+        with Conf('graph', desc='''
+            The suite dependency graph is defined under this section.  You can
+            plot the dependency graph as you work on it, with ``cylc graph``
+            or by right clicking on the suite in the db viewer.  See also
+            :ref:`ConfiguringScheduling`.
+        '''):
+            Conf('<recurrence>', VDR.V_STRING, desc='''
+                The recurrence defines the sequence of cycle points
+                for which the dependency graph is valid. These should be
+                specified in our ISO 8601 derived sequence syntax, or
+                similar for integer cycling:
+
+                Example Recurrences:
+
+                date-time cycling:
+                   ``T00,T06,T12,T18`` or ``PT6H`` - *every six hours*
+                integer cycling:
+                   ``P2`` - *every other cycle*
+
+                See :ref:`GraphTypes` for more on recurrence expressions, and
+                how multiple graphs combine.
+
+                The value should be a dependency graph the given recurrence.
+                Syntax examples follow; see also :ref:`ConfiguringScheduling`
+                and :ref:`TriggerTypes`.
+
+                Example Graph Strings:
+
+                  .. code-block:: cylc-graph
+
+                     # baz and waz both trigger off bar
+                     foo => bar => baz & waz
+
+                     # bar triggers off foo[-P1D-PT6H]
+                     foo[-P1D-PT6H] => bar
+
+                     # faz triggers off a message output of baz
+                     baz:out1 => faz
+
+                     # Y triggers if X starts executing
+                     X:start => Y
+
+                     # Y triggers if X fails
+                     X:fail => Y
+
+                     # bar triggers if foo[-PT6H] fails
+                     foo[-PT6H]:fail => bar
+
+                     # Y suicides if X succeeds
+                     X => !Y
+
+                     # Z triggers if X succeeds or fails
+                     X | X:fail => Z
+
+                     # Z triggers if X succeeds or fails
+                     X:finish => Z
+
+                     # general conditional triggers
+                     (A | B & C ) | D => foo
+
+                     # bar triggers if foo is successfully submitted
+                     foo:submit => bar
+
+                     # bar triggers if submission of foo fails
+                     foo:submit-fail => bar
+            ''')
+
+    with Conf('runtime', desc='''
+        This section is used to specify how, where, and what to execute when
+        tasks are ready to run. Common configuration can be factored out in a
+        multiple-inheritance hierarchy of runtime namespaces that culminates
+        in the tasks of the suite. Order of precedence is determined by the C3
+        linearization algorithm as used to find the *method resolution order*
+        in Python language class hierarchies. For details and examples see
+        :ref:`NIORP`.
+    '''):
+        with Conf('<namespace>', desc='''
+            A namespace (i.e. task or family name) or a comma-separated list
+            of namespace names, and repeat as needed to define all tasks in
+            the suite. Names may contain letters, digits, underscores, and
+            hyphens.  A namespace represents a group or family of tasks if
+            other namespaces inherit from it, or a task if no others inherit
+            from it.
+
+            Names may not contain colons (which would preclude use of
+            directory paths involving the registration name in ``$PATH``
+            variables). They may not contain the "." character (it will be
+            interpreted as the namespace hierarchy delimiter, separating
+            groups and names -huh?).
+
+            legal values:
+
+            - ``[foo]``
+            - ``[foo, bar, baz]``
+
+            If multiple names are listed the subsequent settings apply to
+            each.
+
+            All namespaces inherit initially from *root*, which can be
+            explicitly configured to provide or override default settings for
+            all tasks in the suite.
+        '''):
+            Conf('platform', VDR.V_STRING)
+            Conf('inherit', VDR.V_STRING_LIST, desc='''
+                A list of the immediate parent(s) this namespace inherits
+                from. If no parents are listed ``root`` is assumed.
+            ''')
+            Conf('init-script', VDR.V_STRING, desc='''
+                Custom script invoked by the task job script before the task
+                execution environment is configured - so it does not have
+                access to any suite or task environment variables. It can be
+                an external command or script, or inlined scripting. The
+                original intention for this item was to allow remote tasks to
+                source login scripts to configure their access to cylc, but
+                this should no longer be necessary.
+
+                See also :ref:`JobScripts`.
+
+                User-defined script items:
+
+                * :cylc:conf:`[..]init-script`
+                * :cylc:conf:`[..]env-script`
+                * :cylc:conf:`[..]pre-script`
+                * :cylc:conf:`[..]script`
+                * :cylc:conf:`[..]post-script`
+                * :cylc:conf:`[..]err-script`
+                * :cylc:conf:`[..]exit-script`
+
+                Example::
+
+                   echo 'Hello World'
+            ''')
+            Conf('env-script', VDR.V_STRING, desc='''
+                Custom script invoked by the task job script between the
+                cylc-defined environment (suite and task identity, etc.) and
+                the user-defined task runtime environment - so it has access
+                to the cylc environment (and the task environment has access
+                to variables defined by this scripting). It can be an
+                external command or script, or inlined scripting.
+
+                See also :ref:`JobScripts`.
+
+                User-defined script items:
+
+                * :cylc:conf:`[..]init-script`
+                * :cylc:conf:`[..]env-script`
+                * :cylc:conf:`[..]pre-script`
+                * :cylc:conf:`[..]script`
+                * :cylc:conf:`[..]post-script`
+                * :cylc:conf:`[..]err-script`
+                * :cylc:conf:`[..]exit-script`
+
+                Example::
+
+                   echo 'Hello World'
+            ''')
+            Conf('err-script', VDR.V_STRING, desc='''
+                Custom script to be invoked at the end of the error trap,
+                which is triggered due to failure of a command in the task job
+                script or trappable job kill. The output of this will always
+                be sent to STDERR and ``$1`` is set to the name of the signal
+                caught by the error trap. The script should be fast and use
+                very little system resource to ensure that the error trap can
+                return quickly.  Companion of ``exit-script``, which is
+                executed on job success.  It can be an external command or
+                script, or inlined scripting.
+
+                See also :ref:`JobScripts`.
+
+                User-defined script items:
+
+                * :cylc:conf:`[..]init-script`
+                * :cylc:conf:`[..]env-script`
+                * :cylc:conf:`[..]pre-script`
+                * :cylc:conf:`[..]script`
+                * :cylc:conf:`[..]post-script`
+                * :cylc:conf:`[..]err-script`
+                * :cylc:conf:`[..]exit-script`
+
+                Example::
+
+                   printenv FOO
+            ''')
+            Conf('exit-script', VDR.V_STRING, desc='''
+                Custom script invoked at the very end of *successful* job
+                execution, just before the job script exits. It should
+                execute very quickly. Companion of ``err-script``, which is
+                executed on job failure. It can be an external command or
+                script, or inlined scripting.
+
+                See also :ref:`JobScripts`.
+
+                User-defined script items:
+
+                * :cylc:conf:`[..]init-script`
+                * :cylc:conf:`[..]env-script`
+                * :cylc:conf:`[..]pre-script`
+                * :cylc:conf:`[..]script`
+                * :cylc:conf:`[..]post-script`
+                * :cylc:conf:`[..]err-script`
+                * :cylc:conf:`[..]exit-script`
+
+                Example::
+
+                   rm -f "$TMP_FILES"
+            ''')
+            Conf('pre-script', VDR.V_STRING, desc='''
+                Custom script invoked by the task job script immediately
+                before the ``script`` item (just below). It can be an
+                external command or script, or inlined scripting.
+
+                See also :ref:`JobScripts`.
+
+                User-defined script items:
+
+                * :cylc:conf:`[..]init-script`
+                * :cylc:conf:`[..]env-script`
+                * :cylc:conf:`[..]pre-script`
+                * :cylc:conf:`[..]script`
+                * :cylc:conf:`[..]post-script`
+                * :cylc:conf:`[..]err-script`
+                * :cylc:conf:`[..]exit-script`
+
+                Example::
+
+                   echo "Hello from suite ${CYLC_SUITE_NAME}!"
+            ''')
+            Conf('script', VDR.V_STRING, desc='''
+                The main custom script invoked from the task job script. It
+                can be an external command or script, or inlined scripting.
+
+                See also :ref:`JobScripts`.
+
+                User-defined script items:
+
+                * :cylc:conf:`[..]init-script`
+                * :cylc:conf:`[..]env-script`
+                * :cylc:conf:`[..]pre-script`
+                * :cylc:conf:`[..]script`
+                * :cylc:conf:`[..]post-script`
+                * :cylc:conf:`[..]err-script`
+                * :cylc:conf:`[..]exit-script`
+
+            ''')
+            Conf('post-script', VDR.V_STRING, desc='''
+                Custom script invoked by the task job script immediately
+                after the ``script`` item (just above). It can be an external
+                command or script, or inlined scripting.
+
+                See also :ref:`JobScripts`.
+
+                User-defined script items:
+
+                * :cylc:conf:`[..]init-script`
+                * :cylc:conf:`[..]env-script`
+                * :cylc:conf:`[..]pre-script`
+                * :cylc:conf:`[..]script`
+                * :cylc:conf:`[..]post-script`
+                * :cylc:conf:`[..]err-script`
+                * :cylc:conf:`[..]exit-script`
+
+            ''')
+            Conf('extra log files', VDR.V_STRING_LIST, desc='''
+                A list of user-defined log files associated with a task. Log
+                files must reside in the job log directory
+                ``$CYLC_TASK_LOG_DIR`` and ideally should be named using the
+                ``$CYLC_TASK_LOG_ROOT`` prefix (see :ref:`Task Job Script
+                Variables`).
+
+                Example:
+
+                   ``job.custom-log-name``
+            ''')
+            Conf('work sub-directory', VDR.V_STRING, desc='''
+                Task job scripts are executed from within *work directories*
+                created automatically under the suite run directory. A task
+                can get its own work directory from ``$CYLC_TASK_WORK_DIR``
+                (or simply ``$PWD`` if it does not ``cd`` elsewhere at
+                runtime). The default directory path contains task name and
+                cycle point, to provide a unique workspace for every instance
+                of every task. If several tasks need to exchange files and
+                simply read and write from their from current working
+                directory, this item can be used to override the default to
+                make them all use the same workspace.
+
+                The top level share and work directory location can be changed
+                (e.g. to a large data area) by a global config setting (see
+                :cylc:conf:`
+                global.cylc[platforms][<platform name>]work directory`).
+
+                .. note::
+
+                   If you omit cycle point from the work sub-directory path
+                   successive instances of the task will share the same
+                   workspace. Consider the effect on cycle point offset
+                   housekeeping of work directories before doing this.
+
+                Example:
+
+                   ``$CYLC_TASK_CYCLE_POINT/shared/``
+            ''')
+
+            with Conf('meta', desc=r'''
+                Section containing metadata items for this task or family
+                namespace.  Several items (title, description, URL) are
+                pre-defined and are used by Cylc. Others can be user-defined
+                and passed to task event handlers to be interpreted according
+                to your needs. For example, the value of an "importance" item
+                could determine how an event handler responds to task failure
+                events.
+
+                Any suite meta item can now be passed to task event handlers
+                by prefixing the string template item name with ``suite_``,
+                for example:
+
+                .. code-block:: cylc
+
+                   [runtime]
+                       [[root]]
+                           [[[events]]]
+                               failed handler = """
+                                   send-help.sh \
+                                       %(suite_title)s \
+                                       %(suite_importance)s \
+                                       %(title)s
+                                """
+            '''):
+                Conf('title', VDR.V_STRING, '', desc='''
+                    A single line description of this namespace. It is
+                    displayed by the ``cylc list`` command and can be
+                    retrieved from running tasks with the ``cylc show``
+                    command.
+                ''')
+                Conf('description', VDR.V_STRING, '', desc='''
+                    A multi-line description of this namespace, retrievable
+                    from running tasks with the ``cylc show`` command.
+                ''')
+                Conf(
+                    'URL', VDR.V_STRING, '', desc='''
+                        A web URL to task documentation for this suite.  If
+                        present it can be browsed with the ``cylc doc``
+                        command.  The string templates ``%(suite_name)s`` and
+                        ``%(task_name)s`` will be replaced with the actual
+                        suite and task names.
+
+                        See also :cylc:conf:`[meta]URL <flow.cylc[meta]URL>`.
+
+                        Example:
+
+                    '''
+                    + '   ``http://my-site.com/suites/%(suite_name)s/'
+                    + '%(task_name)s.html``')
+                Conf('<custom metadata>', VDR.V_STRING, '', desc='''
+                    Any user-defined metadata item.
+                    These, like title, URL, etc. can be passed to task event
+                    handlers to be interpreted according to your needs. For
+                    example, the value of an "importance" item could determine
+                    how an event handler responds to task failure events.
+                ''')
+
+            with Conf('simulation', desc='''
+                Task configuration for the suite *simulation* and *dummy* run
+                modes described in :ref:`SimulationMode`.
+            '''):
+                Conf('default run length', VDR.V_INTERVAL, DurationFloat(10),
+                     desc='''
+                    The default simulated job run length, if
+                    ``[job]execution time limit`` and
+                    ``[simulation]speedup factor`` are not set.
+                ''')
+                Conf('speedup factor', VDR.V_FLOAT, desc='''
+                    If ``[job]execution time limit`` is set, the task
+                    simulated run length is computed by dividing it by this
+                    factor.
+
+                    Example:
+
+                       ``10.0``
+                ''')
+                Conf('time limit buffer', VDR.V_INTERVAL, DurationFloat(30),
+                     desc='''
+                    For dummy jobs, a new ``[job]execution time limit`` is set
+                    to the simulated task run length plus this buffer
+                    interval, to avoid job kill due to exceeding the time
+                    limit.
+
+                    Example:
+
+                       ``PT10S``
+                ''')
+                Conf('fail cycle points', VDR.V_STRING_LIST, desc='''
+                    Configure simulated or dummy jobs to fail at certain cycle
+                    points.
+
+                    Example:
+
+                    - ``all`` - all instance of the task will fail
+                    - ``2017-08-12T06, 2017-08-12T18`` - these instances of
+                      the task will fail
+                ''')
+                Conf('fail try 1 only', VDR.V_BOOLEAN, True, desc='''
+                    If this is set to ``True`` only the first run of the task
+                    instance will fail, otherwise retries will fail too.
+                ''')
+                Conf('disable task event handlers', VDR.V_BOOLEAN, True,
+                     desc='''
+                    If this is set to ``True`` configured task event handlers
+                    will not be called in simulation or dummy modes.
+                ''')
+
+            with Conf('environment filter', desc='''
+                This section contains environment variable inclusion and
+                exclusion lists that can be used to filter the inherited
+                environment. *This is not intended as an alternative to a
+                well-designed inheritance hierarchy that provides each task
+                with just the variables it needs.* Filters can, however,
+                improve suites with tasks that inherit a lot of environment
+                they don't need, by making it clear which tasks use which
+                variables.  They can optionally be used routinely as explicit
+                "task environment interfaces" too, at some cost to brevity,
+                because they guarantee that variables filtered out of the
+                inherited task environment are not used.
+
+                .. note::
+                   Environment filtering is done after inheritance is
+                   completely worked out, not at each level on the way, so
+                   filter lists in higher-level namespaces only have an effect
+                   if they are not overridden by descendants.
+            '''):
+                Conf('include', VDR.V_STRING_LIST, desc='''
+                    If given, only variables named in this list will be
+                    included from the inherited environment, others will be
+                    filtered out. Variables may also be explicitly excluded by
+                    an ``exclude`` list.
+                ''')
+                Conf('exclude', VDR.V_STRING_LIST, desc='''
+                    Variables named in this list will be filtered out of the
+                    inherited environment.  Variables may also be implicitly
+                    excluded by omission from an ``include`` list.
+                ''')
+
+            with Conf('job', desc='''
+                This section configures the means by which cylc submits task
+                job scripts to run.
+            '''):
+                Conf('batch system', VDR.V_STRING)
+                Conf('batch submit command template', VDR.V_STRING)
+                # TODO All the remaining items to be moved to top level of
+                # TASK when platforms work is completed.
+                Conf('execution polling intervals', VDR.V_INTERVAL_LIST, None)
+                Conf('execution retry delays', VDR.V_INTERVAL_LIST, None)
+                Conf('execution time limit', VDR.V_INTERVAL)
+                Conf('submission polling intervals', VDR.V_INTERVAL_LIST,
+                     None)
+                Conf('submission retry delays', VDR.V_INTERVAL_LIST, None)
+
+            with Conf('remote'):
+                Conf('host', VDR.V_STRING)
+                Conf('owner', VDR.V_STRING)
+                Conf('suite definition directory', VDR.V_STRING)
+                Conf('retrieve job logs', VDR.V_BOOLEAN)
+                Conf('retrieve job logs max size', VDR.V_STRING)
+                Conf('retrieve job logs retry delays',
+                     VDR.V_INTERVAL_LIST, None)
+
+            with Conf('events', desc='''
+                Cylc can call nominated event handlers when certain task
+                events occur. This section configures specific task event
+                handlers; see :cylc:conf:`flow.cylc[cylc][events]` for
+                suite event handlers.
+
+                Event handlers can be located in the suite ``bin/`` directory,
+                otherwise it is up to you to ensure their location is in
+                ``$PATH`` (in the shell in which the suite server program
+                runs). They should require little resource to run and return
+                quickly.
+
+                Each task event handler can be specified as a list of command
+                lines or command line templates. They can contain any or all
+                of the following patterns, which will be substituted with
+                actual values:
+
+                ``%(event)s``
+                   Event name
+                ``%(suite)s``
+                   Suite name
+                ``%(suite_uuid)s``
+                   Suite UUID string
+                ``%(point)s``
+                   Cycle point
+                ``%(name)s``
+                   Task name
+                ``%(submit_num)s``
+                   Submit number
+                ``%(try_num)s``
+                   Try number
+                ``%(id)s``
+                   Task ID (i.e. %(name)s.%(point)s)
+                ``%(batch_sys_name)s``
+                   Batch system name
+                ``%(batch_sys_job_id)``
+                   Batch system job ID
+                ``%(submit_time)s``
+                   Date-time when task job is submitted
+                ``%(start_time)s``
+                   Date-time when task job starts running
+                ``%(finish_time)s``
+                   Date-time when task job exits
+                ``%(platform_name)s``
+                   name of platform where the task job is submitted
+                ``%(message)s``
+                   Event message, if any
+                any task [meta] item, e.g.:
+                   ``%(title)s``
+                      Task title
+                   ``%(URL)s``
+                      Task URL
+                   ``%(importance)s``
+                      Example custom task metadata
+                any suite ``[meta]`` item, prefixed with ``suite_``
+                   ``%(suite_title)s``
+                      Suite title
+                   ``%(suite_URL)s``
+                      Suite URL.
+                   ``%(suite_rating)s``
+                      Example custom suite metadata.
+
+                Otherwise, the command line will be called with the following
+                default
+
+                Arguments:
+
+                .. code-block:: none
+
+                   <task-event-handler> %(event)s %(suite)s %(id)s %(message)s
+
+                .. note::
+
+                   Substitution patterns should not be quoted in the template
+                   strings.  This is done automatically where required.
+
+                For an explanation of the substitution syntax, see
+                `String Formatting Operations in the Python
+                documentation
+                <https://docs.python.org/3/library/stdtypes.html
+                #printf-style-string-formatting>`_.
+
+                Additional information can be passed to event handlers via the
+                ``[cylc] -> [[environment]]`` (but not via task
+                runtime environments - event handlers are not called by
+                tasks).
+            '''):
+                Conf('execution timeout', VDR.V_INTERVAL, desc='''
+                    If a task has not finished after the specified ISO 8601
+                    duration/interval, the *execution timeout* event
+                    handler(s) will be called.
+                ''')
+                Conf('handlers', VDR.V_STRING_LIST, None, desc='''
+                    Specify a list of command lines or command line templates
+                    as task event handlers.
+                ''')
+                Conf('handler events', VDR.V_STRING_LIST, None, desc='''
+                    Specify the events for which the general task event
+                    handlers should be invoked.
+
+                    Example:
+
+                       ``submission failed, failed``
+                ''')
+                Conf('handler retry delays', VDR.V_INTERVAL_LIST, None,
+                     desc='''
+                    Specify an initial delay before running an event handler
+                    command and any retry delays in case the command returns a
+                    non-zero code. The default behaviour is to run an event
+                    handler command once without any delay.
+
+                    Example:
+
+                       ``PT10S, PT1M, PT5M``
+                ''')
+                Conf('mail events', VDR.V_STRING_LIST, None, desc='''
+                    Specify the events for which notification emails should be
+                    sent.
+
+                    Example:
+
+                       ``submission failed, failed``
+                ''')
+                Conf('mail from', VDR.V_STRING, desc='''
+                    Specify an alternate ``from:`` email address for event
+                    notifications.
+                ''')
+                Conf('mail retry delays', VDR.V_INTERVAL_LIST, None, desc='''
+                    Specify an initial delay before running the mail
+                    notification command and any retry delays in case the
+                    command returns a non-zero code. The default behaviour is
+                    to run the mail notification command once without any
+                    delay.
+                ''')
+                Conf('mail smtp', VDR.V_STRING, desc='''
+                    Specify the SMTP server for sending email notifications.
+
+                    Example:
+
+                       ``smtp.yourorg``
+                ''')
+                Conf('mail to', VDR.V_STRING, desc='''
+                    A list of email addresses to send task event
+                    notifications. The list can be anything accepted by the
+                    ``mail`` command.
+                ''')
+                Conf('submission timeout', VDR.V_INTERVAL, desc='''
+                    If a task has not started after the specified ISO 8601
+                    duration/interval, the *submission timeout* event
+                    handler(s) will be called.
+                ''')
+                Conf('expired handler', VDR.V_STRING_LIST, None)
+                Conf('late offset', VDR.V_INTERVAL, None)
+                Conf('late handler', VDR.V_STRING_LIST, None)
+                Conf('submitted handler', VDR.V_STRING_LIST, None)
+                Conf('started handler', VDR.V_STRING_LIST, None)
+                Conf('succeeded handler', VDR.V_STRING_LIST, None)
+                Conf('failed handler', VDR.V_STRING_LIST, None)
+                Conf('submission failed handler', VDR.V_STRING_LIST, None)
+                Conf('warning handler', VDR.V_STRING_LIST, None)
+                Conf('critical handler', VDR.V_STRING_LIST, None)
+                Conf('retry handler', VDR.V_STRING_LIST, None)
+                Conf('submission retry handler', VDR.V_STRING_LIST, None)
+                Conf('execution timeout handler', VDR.V_STRING_LIST, None)
+                Conf('submission timeout handler', VDR.V_STRING_LIST, None)
+                Conf('custom handler', VDR.V_STRING_LIST, None)
+
+            with Conf('suite state polling', desc='''
+                Configure automatic suite polling tasks as described in
+                :ref:`SuiteStatePolling`. The items in this section reflect
+                the options and defaults of the ``cylc suite-state`` command,
+                except that the target suite name and the
+                ``--task``, ``--cycle``, and ``--status`` options are
+                taken from the graph notation.
+            '''):
+                Conf('user', VDR.V_STRING, desc='''
+                    Username of an account on the suite host to which you have
+                    access. The polling ``cylc suite-state`` command will be
+                    invoked on the remote account.
+                ''')
+                Conf('host', VDR.V_STRING, desc='''
+                    The hostname of the target suite. The polling
+                    ``cylc suite-state`` command will be invoked on the remote
+                    account.
+                ''')
+                Conf('interval', VDR.V_INTERVAL, desc='''
+                    Polling interval expressed as an ISO 8601
+                    duration/interval.
+                ''')
+                Conf('max-polls', VDR.V_INTEGER, desc='''
+                    The maximum number of polls before timing out and entering
+                    the "failed" state.
+                ''')
+                Conf('message', VDR.V_STRING, desc='''
+                    Wait for the target task in the target suite to receive a
+                    specified message rather than achieve a state.
+                ''')
+                Conf('run-dir', VDR.V_STRING, desc='''
+                    For your own suites the run database location is
+                    determined by your site/user config. For other suites,
+                    e.g. those owned by others, or mirrored suite databases,
+                    use this item to specify the location of the top level
+                    cylc run directory (the database should be a suite-name
+                    sub-directory of this location).
+                ''')
+                Conf('verbose mode', VDR.V_BOOLEAN, desc='''
+                    Run the polling ``cylc suite-state`` command in verbose
+                    output mode.
+                ''')
+
+            with Conf('environment', desc='''
+                    The user defined task execution environment. Variables
+                    defined here can refer to cylc suite and task identity
+                    variables, which are exported earlier in the task job
+                    script, and variable assignment expressions can use cylc
+                    utility commands because access to cylc is also configured
+                    earlier in the script.  See also
+                    :ref:`TaskExecutionEnvironment`.
+
+                    You can also specify job environment templates here for
+                    :ref:`parameterized tasks <Parameterized Tasks Label>`.
+            '''):
+                Conf('<variable>', VDR.V_STRING, desc='''
+                    The order of definition is
+                    preserved so values can refer to previously defined
+                    variables. Values are passed through to the task job
+                    script without evaluation or manipulation by Cylc
+                    (with the exception of valid Python string templates
+                    that match parameterized task names - see below), so any
+                    variable assignment expression that is legal in the job
+                    submission shell can be used.  White space around the
+                    ``=`` is allowed (as far as cylc's flow.cylc parser is
+                    concerned these are just normal configuration items).
+
+                    Examples::
+
+                       FOO = $HOME/bar/baz
+                       BAR = ${FOO}$GLOBALVAR
+                       BAZ = $( echo "hello world" )
+                       WAZ = ${FOO%.jpg}.png
+                       NEXT_CYCLE = $( cylc cycle-point --offset=PT6H )
+                       ZAZ = "${FOO#bar}"
+                       # ^ quoted to escape the flow.cylc comment character
+
+                    For parameter environment templates, use Python string
+                    templates for parameter substitution. This is only
+                    relevant for
+                    :ref:`parameterized tasks <Parameterized Tasks Label>`.
+                    The job script will export the named variables specified
+                    here (in addition to the standard ``CYLC_TASK_PARAM_<key>``
+                    variables), with the template strings substituted with
+                    the parameter values.
+
+                    Examples::
+
+                       MYNUM = %(i)d
+                       MYITEM = %(item)s
+                       MYFILE = /path/to/%(i)03d/%(item)s
+                ''')
+
+            with Conf('directives', desc='''
+                Batch queue scheduler directives.  Whether or not these are
+                used depends on the batch system. For the built-in methods
+                that support directives (``loadleveler``, ``lsf``, ``pbs``,
+                ``sge``, ``slurm``, ``moab``), directives are written to the
+                top of the task job script in the correct format for the
+                method. Specifying directives individually like this allows
+                use of default directives that can be individually overridden
+                at lower levels of the runtime namespace hierarchy.
+            '''):
+                Conf('<directive>', VDR.V_STRING, desc='''
+                    e.g. ``class = parallel``.
+
+                    Example directives for the built-in batch system handlers
+                    are shown in :ref:`AvailableMethods`.
+                ''')
+
+            with Conf('outputs', desc='''
+                Register custom task outputs for use in message triggering in
+                this section (:ref:`MessageTriggers`)
+            '''):
+                Conf('<output>', VDR.V_STRING, desc='''
+                    Task output messages (:ref:`MessageTriggers`). The
+                    item name is used to select the custom output
+                    message in graph trigger notation.
+
+                    Examples:
+
+                    .. code-block:: cylc
+
+                       out1 = "sea state products ready"
+                       out2 = "NWP restart files completed"
+
+                    Task outputs are validated by
+                    :py:class:`cylc.flow.unicode_rules.TaskOutputValidator`.
+
+                    .. autoclass:: cylc.flow.unicode_rules.TaskOutputValidator
+                ''')
+
+            with Conf('parameter environment templates', desc='''
+                .. note::
+
+                   This section is deprecated and will be removed in Cylc 9.
+                   Parameter environment templates have moved to
+                   :cylc:conf:`flow.cylc[runtime][<namespace>][environment]`.
+                   This was done to allow users to control the order of
+                   definition of the variables.
+
+                   For the time being, the contents of this section will be
+                   prepended to the ``[environment]`` section when running
+                   a suite.
+            '''):
+                Conf('<parameter>', VDR.V_STRING)
+
+    with Conf('visualization'):
+        Conf('initial cycle point', VDR.V_CYCLE_POINT)
+        Conf('final cycle point', VDR.V_STRING)
+        Conf('number of cycle points', VDR.V_INTEGER, 3)
+        Conf('collapsed families', VDR.V_STRING_LIST)
+        Conf('use node color for edges', VDR.V_BOOLEAN)
+        Conf('use node fillcolor for edges', VDR.V_BOOLEAN)
+        Conf('use node color for labels', VDR.V_BOOLEAN)
+        Conf('node penwidth', VDR.V_INTEGER, 2)
+        Conf('edge penwidth', VDR.V_INTEGER, 2)
+        Conf('default node attributes', VDR.V_STRING_LIST,
+             default=['style=unfilled', 'shape=ellipse'])
+        Conf('default edge attributes', VDR.V_STRING_LIST)
+
+        with Conf('node groups'):
+            Conf('<group>', VDR.V_STRING_LIST)
+
+        with Conf('node attributes'):
+            Conf('<node>', VDR.V_STRING_LIST)
 
 
 def upg(cfg, descr):
@@ -288,36 +1320,110 @@ def upg(cfg, descr):
     u.obsolete(
         '8.0.0',
         ['cylc', 'reference test', 'suite shutdown event handler'])
-    u.deprecate(
+    u.obsolete(
         '8.0.0',
-        ['cylc', 'abort if any task fails'],
-        ['cylc', 'events', 'abort if any task fails'])
+        ['cylc', 'health check interval'])
     u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'shell'])
+    u.obsolete('8.0.0', ['cylc', 'abort if any task fails'])
+    u.obsolete('8.0.0', ['cylc', 'events', 'abort if any task fails'])
+    # TODO uncomment these deprecations when ready - see todo in
+    # [runtime][__MANY__] section.
+    # for job_setting in [
+    #     'execution polling intervals',
+    #     'execution retry delays',
+    #     'execution time limit',
+    #     'submission polling intervals',
+    #     'submission retry delays'
+    # ]:
+    #     u.deprecate(
+    #         '8.0.0',
+    #         ['runtime', '__MANY__', 'job', job_setting],
+    #         ['runtime', '__MANY__', job_setting]
+    #     )
+    # TODO - there are some simple changes to the config (items from [remote]
+    # and [job] moved up 1 level for example) which should be upgraded here.
     u.upgrade()
 
-    # Upgrader cannot do this type of move.
+    upgrade_graph_section(cfg, descr)
+    upgrade_param_env_templates(cfg, descr)
+
+    if 'runtime' in cfg:
+        for task_name, task_cfg in cfg['runtime'].items():
+            platform = get_platform(task_cfg, task_name, warn_only=True)
+            if type(platform) == str:
+                LOG.warning(platform)
+
+
+def upgrade_graph_section(cfg, descr):
+    """Upgrade Cylc 7 `[scheduling][dependencies][X]graph` format to
+    `[scheduling][graph]X`."""
+    # Parsec upgrader cannot do this type of move
     try:
-        keys = set()
-        cfg['scheduling'].setdefault('graph', {})
-        cfg['scheduling']['graph'].update(
-            cfg['scheduling'].pop('dependencies'))
-        graphdict = cfg['scheduling']['graph']
-        for key, value in graphdict.copy().items():
-            if isinstance(value, dict) and 'graph' in value:
-                graphdict[key] = value['graph']
-                keys.add(key)
-        if keys:
-            LOG.warning(
-                "deprecated graph items were automatically upgraded in '%s':",
-                descr)
-            LOG.warning(
-                ' * (8.0.0) %s -> %s - for X in:\n%s',
-                u.show_keys(['scheduling', 'dependencies', 'X', 'graph']),
-                u.show_keys(['scheduling', 'graph', 'X']),
-                '\n'.join(sorted(keys)),
-            )
+        if 'dependencies' in cfg['scheduling']:
+            msg_old = '[scheduling][dependencies][X]graph'
+            msg_new = '[scheduling][graph]X'
+            if 'graph' in cfg['scheduling']:
+                raise UpgradeError(
+                    f'Cannot upgrade deprecated item "{msg_old} -> {msg_new}" '
+                    f'because {msg_new[:-1]} already exists.'
+                )
+            else:
+                keys = set()
+                cfg['scheduling'].setdefault('graph', {})
+                cfg['scheduling']['graph'].update(
+                    cfg['scheduling'].pop('dependencies')
+                )
+                graphdict = cfg['scheduling']['graph']
+                for key, value in graphdict.copy().items():
+                    if isinstance(value, dict) and 'graph' in value:
+                        graphdict[key] = value['graph']
+                        keys.add(key)
+                if keys:
+                    LOG.warning(
+                        'deprecated graph items were automatically upgraded '
+                        f'in "{descr}:'
+                    )
+                    LOG.warning(
+                        f' * (8.0.0) {msg_old} -> {msg_new} - for X in:\n'
+                        '\n'.join(sorted(keys))
+                    )
     except KeyError:
         pass
+
+
+def upgrade_param_env_templates(cfg, descr):
+    """Prepend contents of `[runtime][X][parameter environment templates]` to
+    `[runtime][X][environment]`."""
+
+    if 'runtime' in cfg:
+        dep = '[runtime][%s][parameter environment templates]'
+        new = '[runtime][%s][environment]'
+        first_warn = True
+        for task_name, task_items in cfg['runtime'].items():
+            if 'parameter environment templates' not in task_items:
+                continue
+            if first_warn is True:
+                LOG.warning(
+                    f'deprecated items automatically upgraded in "{descr}":'
+                )
+                first_warn = False
+            LOG.warning(
+                f' * (8.0.0) {dep % task_name} contents prepended to '
+                f'{new % task_name}'
+            )
+            for key, val in reversed(
+                    task_items['parameter environment templates'].items()):
+                if 'environment' in task_items:
+                    if key in task_items['environment']:
+                        LOG.warning(
+                            f' *** {dep % task_name} {key} ignored as {key} '
+                            f'already exists in {new % task_name}'
+                        )
+                        continue
+                else:
+                    task_items['environment'] = OrderedDictWithDefaults()
+                task_items['environment'].prepend(key, val)
+            task_items.pop('parameter environment templates')
 
 
 class RawSuiteConfig(ParsecConfig):

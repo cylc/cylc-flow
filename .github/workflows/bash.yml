@@ -1,0 +1,48 @@
+# Workflow for testing multiple bash versions with Docker
+name: bash
+
+on: [pull_request]
+
+jobs:
+  bash-docker:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        bash-version:
+          - '3.2'
+          - '4.2'
+          # if you use a value like 5.0, YAML will round it to 5, which will cause an error later on
+          - '5.0'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Build Docker container
+        run: |
+          docker build -t bash:test dockerfiles/bash/
+          docker run --name bash -v $(pwd -P):/root/cylc-flow --rm -t -d bash:test /bin/bash
+          docker ps -a
+
+      - name: Install Cylc dependencies in the container
+        run: |
+          docker exec bash python3.7 -m pip install six==1.12
+          docker exec -w /root/cylc-flow bash python3.7 -m pip install .[all]
+
+      - name: Set the container bash version
+        run: docker exec bash update-alternatives --set bash /bash/bash-${{ matrix.bash-version }}
+
+      - name: Run functional tests that validate or are related to how Cylc uses bash
+        run: |
+          docker exec -e CYLC_TEST_RUN_GENERIC=true -w /root/cylc-flow bash \
+            ./etc/bin/run-functional-tests -v \
+            tests/functional/broadcast/00-simple.t \
+            tests/functional/cylc-poll/11-event-time.t \
+            tests/functional/cylc-poll/15-job-st-file-no-batch.t \
+            tests/functional/events/28-inactivity.t \
+            tests/functional/events/34-task-abort.t \
+            tests/functional/hold-release/12-hold-then-retry.t \
+            tests/functional/job-file-trap/00-sigusr1.t \
+            tests/functional/job-file-trap/02-pipefail.t \
+            tests/functional/shutdown/09-now2.t \
+            tests/functional/shutdown/13-no-port-file-check.t \
+            tests/functional/shutdown/14-no-dir-check.t

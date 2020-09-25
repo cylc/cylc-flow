@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.wallclock import get_current_time_string, get_utc_mode
 
 
-class SuiteDatabaseManager(object):
+class SuiteDatabaseManager:
     """Manage the suite runtime private and public databases."""
 
     KEY_INITIAL_CYCLE_POINT = 'icp'
@@ -49,12 +49,16 @@ class SuiteDatabaseManager(object):
     KEY_FINAL_CYCLE_POINT_COMPATS = (KEY_FINAL_CYCLE_POINT, 'final_point')
     KEY_STOP_CYCLE_POINT = 'stopcp'
     KEY_UUID_STR = 'uuid_str'
+    KEY_CYLC_VERSION = 'cylc_version'
+    KEY_UTC_MODE = 'UTC_mode'
     KEY_HOLD = 'is_held'
     KEY_HOLD_CYCLE_POINT = 'holdcp'
     KEY_NO_AUTO_SHUTDOWN = 'no_auto_shutdown'
     KEY_RUN_MODE = 'run_mode'
     KEY_STOP_CLOCK_TIME = 'stop_clock_time'
     KEY_STOP_TASK = 'stop_task'
+    KEY_CYCLE_POINT_FORMAT = 'cycle_point_format'
+    KEY_CYCLE_POINT_TIME_ZONE = 'cycle_point_tz'
 
     TABLE_BROADCAST_EVENTS = CylcSuiteDAO.TABLE_BROADCAST_EVENTS
     TABLE_BROADCAST_STATES = CylcSuiteDAO.TABLE_BROADCAST_STATES
@@ -68,6 +72,7 @@ class SuiteDatabaseManager(object):
     TABLE_TASK_STATES = CylcSuiteDAO.TABLE_TASK_STATES
     TABLE_TASK_TIMEOUT_TIMERS = CylcSuiteDAO.TABLE_TASK_TIMEOUT_TIMERS
     TABLE_XTRIGGERS = CylcSuiteDAO.TABLE_XTRIGGERS
+    TABLE_ABS_OUTPUTS = CylcSuiteDAO.TABLE_ABS_OUTPUTS
 
     def __init__(self, pri_d=None, pub_d=None):
         self.pri_path = None
@@ -98,7 +103,8 @@ class SuiteDatabaseManager(object):
             self.TABLE_TASK_ACTION_TIMERS: [],
             self.TABLE_TASK_OUTPUTS: [],
             self.TABLE_TASK_TIMEOUT_TIMERS: [],
-            self.TABLE_XTRIGGERS: []}
+            self.TABLE_XTRIGGERS: [],
+            self.TABLE_ABS_OUTPUTS: []}
         self.db_updates_map = {}
 
     def checkpoint(self, name):
@@ -286,21 +292,15 @@ class SuiteDatabaseManager(object):
             schd (cylc.flow.scheduler.Scheduler): scheduler object.
         """
         self.db_deletes_map[self.TABLE_SUITE_PARAMS].append({})
-        if schd.config.final_point is None:
-            # Store None as proper null value in database. No need to do this
-            # for initial cycle point, which should never be None.
-            final_point_str = None
-        else:
-            final_point_str = str(schd.config.final_point)
         self.db_inserts_map[self.TABLE_SUITE_PARAMS].extend([
             {"key": self.KEY_UUID_STR, "value": str(schd.uuid_str)},
-            {"key": "cylc_version", "value": CYLC_VERSION},
-            {"key": "UTC_mode", "value": get_utc_mode()},
+            {"key": self.KEY_CYLC_VERSION, "value": CYLC_VERSION},
+            {"key": self.KEY_UTC_MODE, "value": get_utc_mode()},
         ])
-        if schd.config.cfg['cylc']['cycle point format']:
+        if schd.config.cycle_point_dump_format is not None:
             self.db_inserts_map[self.TABLE_SUITE_PARAMS].append({
-                "key": "cycle_point_format",
-                "value": schd.config.cfg['cylc']['cycle point format']})
+                "key": self.KEY_CYCLE_POINT_FORMAT,
+                "value": schd.config.cycle_point_dump_format})
         if schd.pool.is_held:
             self.db_inserts_map[self.TABLE_SUITE_PARAMS].append({
                 "key": self.KEY_HOLD, "value": 1})
@@ -310,6 +310,7 @@ class SuiteDatabaseManager(object):
             self.KEY_START_CYCLE_POINT,
             self.KEY_STOP_CYCLE_POINT,
             self.KEY_RUN_MODE,
+            self.KEY_CYCLE_POINT_TIME_ZONE
         ):
             value = getattr(schd.options, key, None)
             if value is not None:
@@ -361,19 +362,18 @@ class SuiteDatabaseManager(object):
 
     def put_task_event_timers(self, task_events_mgr):
         """Put statements to update the task_action_timers table."""
-        if task_events_mgr.event_timers:
-            self.db_deletes_map[self.TABLE_TASK_ACTION_TIMERS].append({})
-            for key, timer in task_events_mgr.event_timers.items():
-                key1, point, name, submit_num = key
-                self.db_inserts_map[self.TABLE_TASK_ACTION_TIMERS].append({
-                    "name": name,
-                    "cycle": point,
-                    "ctx_key": json.dumps((key1, submit_num,)),
-                    "ctx": self._namedtuple2json(timer.ctx),
-                    "delays": json.dumps(timer.delays),
-                    "num": timer.num,
-                    "delay": timer.delay,
-                    "timeout": timer.timeout})
+        self.db_deletes_map[self.TABLE_TASK_ACTION_TIMERS].append({})
+        for key, timer in task_events_mgr.event_timers.items():
+            key1, point, name, submit_num = key
+            self.db_inserts_map[self.TABLE_TASK_ACTION_TIMERS].append({
+                "name": name,
+                "cycle": point,
+                "ctx_key": json.dumps((key1, submit_num,)),
+                "ctx": self._namedtuple2json(timer.ctx),
+                "delays": json.dumps(timer.delays),
+                "num": timer.num,
+                "delay": timer.delay,
+                "timeout": timer.timeout})
 
     def put_xtriggers(self, sat_xtrig):
         """Put statements to update external triggers table."""
@@ -383,10 +383,29 @@ class SuiteDatabaseManager(object):
                 "signature": sig,
                 "results": json.dumps(res)})
 
-    def put_task_pool(self, pool):
-        """Put statements to update the task_pool table in runtime database.
+    def put_update_task_state(self, itask):
+        """Update task_states table for current state of itask.
 
-        Update the task_pool table and the task_action_timers table.
+        For final event-driven update before removing finished tasks.
+        No need to update task_pool table as finished tasks are immediately
+        removed from the pool.
+        """
+        set_args = {
+            "time_updated": itask.state.time_updated,
+            "status": itask.state.status}
+        where_args = {
+            "cycle": str(itask.point),
+            "name": itask.tdef.name,
+            "flow_label": itask.flow_label,
+            "submit_num": itask.submit_num,
+        }
+        self.db_updates_map.setdefault(self.TABLE_TASK_STATES, [])
+        self.db_updates_map[self.TABLE_TASK_STATES].append(
+            (set_args, where_args))
+
+    def put_task_pool(self, pool):
+        """Update various task tables for current pool, in runtime database.
+
         Queue delete (everything) statements to wipe the tables, and queue the
         relevant insert statements for the current tasks in the pool.
         """
@@ -396,11 +415,17 @@ class SuiteDatabaseManager(object):
         # Should already be done by self.put_task_event_timers above.
         self.db_deletes_map[self.TABLE_TASK_TIMEOUT_TIMERS].append({})
         for itask in pool.get_all_tasks():
+            satisfied = {}
+            for p in itask.state.prerequisites:
+                for k, v in p.satisfied.items():
+                    # need string key, not tuple for json.dumps
+                    satisfied[json.dumps(k)] = v
             self.db_inserts_map[self.TABLE_TASK_POOL].append({
                 "name": itask.tdef.name,
                 "cycle": str(itask.point),
-                "spawned": int(itask.has_spawned),
+                "flow_label": itask.flow_label,
                 "status": itask.state.status,
+                "satisfied": json.dumps(satisfied),
                 "is_held": itask.state.is_held})
             if itask.timeout is not None:
                 self.db_inserts_map[self.TABLE_TASK_TIMEOUT_TIMERS].append({
@@ -438,6 +463,7 @@ class SuiteDatabaseManager(object):
                 where_args = {
                     "cycle": str(itask.point),
                     "name": itask.tdef.name,
+                    "flow_label": itask.flow_label
                 }
                 self.db_updates_map.setdefault(self.TABLE_TASK_STATES, [])
                 self.db_updates_map[self.TABLE_TASK_STATES].append(
@@ -472,6 +498,16 @@ class SuiteDatabaseManager(object):
         """Reset custom outputs for a task."""
         self._put_insert_task_x(CylcSuiteDAO.TABLE_TASK_OUTPUTS, itask, {})
 
+    def put_insert_abs_output(self, cycle, name, output):
+        """Put INSERT statement for a new abs output."""
+        args = {
+            "cycle": str(cycle),
+            "name": name,
+            "output": output
+        }
+        self.db_inserts_map.setdefault(CylcSuiteDAO.TABLE_ABS_OUTPUTS, [])
+        self.db_inserts_map[CylcSuiteDAO.TABLE_ABS_OUTPUTS].append(args)
+
     def _put_insert_task_x(self, table_name, itask, args):
         """Put INSERT statement for a task_* table."""
         args.update({
@@ -503,6 +539,8 @@ class SuiteDatabaseManager(object):
             "name": itask.tdef.name}
         if "submit_num" not in set_args:
             where_args["submit_num"] = itask.submit_num
+        if "flow_label" not in set_args:
+            where_args["flow_label"] = itask.flow_label
         self.db_updates_map.setdefault(table_name, [])
         self.db_updates_map[table_name].append((set_args, where_args))
 

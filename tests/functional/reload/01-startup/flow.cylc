@@ -1,0 +1,17 @@
+[cylc]
+    cycle point format = "%Y%m%dT%H"
+[scheduling]
+    initial cycle point = 20100101T00
+    final cycle point = 20100102T00
+    [[graph]]
+        R1 = "start => a"
+        T00, T06 = "c[-PT6H] => a => b => c"
+        T18 = "c"
+[runtime]
+    [[a,c,start]]
+        script = true
+    [[b]]
+        script = """
+cylc reload "${CYLC_SUITE_NAME}"
+cylc__job__poll_grep_suite_log -F 'Reload completed'
+"""

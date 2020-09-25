@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -593,6 +593,12 @@ class IntegerSequence(SequenceBase):
 def init_from_cfg(_):
     """Placeholder function required by all cycling modules."""
     pass
+
+
+def get_dump_format(cycling_type=None):
+    """Return cycle point string dump format."""
+    # Not used for integer cycling.
+    return None
 
 
 def get_point_relative(point_expr, context_point):

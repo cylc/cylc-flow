@@ -1,0 +1,17 @@
+[cylc]
+   [[reference test]]
+       expected task failures = b.1
+
+[scheduling]
+    [[graph]]
+        R1 = "FAM:fail-any => foo"
+[runtime]
+    [[FAM]]
+        script = "true"
+    [[a,c]]
+        inherit = FAM
+    [[b]]
+        inherit = FAM
+        script = "false"
+    [[foo]]
+        script = "true"

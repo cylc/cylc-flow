@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -51,7 +51,30 @@ TASK_STATUS_SUCCEEDED = "succeeded"
 TASK_STATUS_FAILED = "failed"
 # Job execution failed, but will try again soon:
 
-# Tasks statuses ordered according to task runtime progression.
+TASK_STATUS_DESC = {
+    TASK_STATUS_RUNAHEAD:
+        'Waiting for dependencies to be satisfied.',
+    TASK_STATUS_WAITING:
+        'Waiting for dependencies to be satisfied.',
+    TASK_STATUS_QUEUED:
+        'Depencies are satisfied, placed in internal queue.',
+    TASK_STATUS_EXPIRED:
+        'Execution skipped.',
+    TASK_STATUS_READY:
+        'Cylc is preparing a job for submission.',
+    TASK_STATUS_SUBMIT_FAILED:
+        'Job submission has failed.',
+    TASK_STATUS_SUBMITTED:
+        'Job has been submitted.',
+    TASK_STATUS_RUNNING:
+        'Job is running.',
+    TASK_STATUS_FAILED:
+        'Job has returned non-zero exit code.',
+    TASK_STATUS_SUCCEEDED:
+        'Job has returned zero exit code.'
+}
+
+# Task statuses ordered according to task runtime progression.
 TASK_STATUSES_ORDERED = [
     TASK_STATUS_RUNAHEAD,
     TASK_STATUS_WAITING,
@@ -63,6 +86,20 @@ TASK_STATUSES_ORDERED = [
     TASK_STATUS_RUNNING,
     TASK_STATUS_FAILED,
     TASK_STATUS_SUCCEEDED
+]
+
+# Task statuses ordered according to display importance
+TASK_STATUS_DISPLAY_ORDER = [
+    TASK_STATUS_SUBMIT_FAILED,
+    TASK_STATUS_FAILED,
+    TASK_STATUS_RUNNING,
+    TASK_STATUS_SUBMITTED,
+    TASK_STATUS_EXPIRED,
+    TASK_STATUS_READY,
+    TASK_STATUS_SUCCEEDED,
+    TASK_STATUS_QUEUED,
+    TASK_STATUS_WAITING,
+    TASK_STATUS_RUNAHEAD
 ]
 
 TASK_STATUSES_ALL = set(TASK_STATUSES_ORDERED)
@@ -156,7 +193,7 @@ def status_geq(status_a, status_b):
             TASK_STATUSES_ORDERED.index(status_b))
 
 
-class TaskState(object):
+class TaskState:
     """Task status and utilities.
 
     Attributes:
@@ -284,7 +321,7 @@ class TaskState(object):
         """Return True if all xtriggers are satisfied."""
         return all(self.xtriggers.values())
 
-    def prerequisites_are_all_satisfied(self):
+    def prerequisites_all_satisfied(self):
         """Return True if (non-suicide) prerequisites are fully satisfied."""
         if self._is_satisfied is None:
             self._is_satisfied = all(
@@ -293,10 +330,10 @@ class TaskState(object):
 
     def prerequisites_are_not_all_satisfied(self):
         """Return True if (any) prerequisites are not fully satisfied."""
-        return (not self.prerequisites_are_all_satisfied() or
-                not self.suicide_prerequisites_are_all_satisfied())
+        return (not self.prerequisites_all_satisfied() or
+                not self.suicide_prerequisites_all_satisfied())
 
-    def suicide_prerequisites_are_all_satisfied(self):
+    def suicide_prerequisites_all_satisfied(self):
         """Return True if all suicide prerequisites are satisfied."""
         if self._suicide_is_satisfied is None:
             self._suicide_is_satisfied = all(
@@ -351,12 +388,7 @@ class TaskState(object):
         """Change status, and manipulate outputs and prerequisites accordingly.
 
         Outputs are manipulated on manual state reset to reflect the new task
-        status, except for custom outputs on reset to succeeded or later -
-        these can be completed if need be using "cylc reset --output".
-
-        Prerequisites, which reflect the state of *other tasks*, are not
-        manipulated, except to unset them on reset to waiting or earlier.
-        (TODO - we should not do this - see GitHub #2329).
+        status.
 
         Note this method could take an additional argument to distinguish
         internal and manually forced state changes, if needed.
@@ -419,9 +451,6 @@ class TaskState(object):
         self.outputs.set_completion(
             TASK_OUTPUT_FAILED, status == TASK_STATUS_FAILED)
 
-        # Unset prerequisites on reset to waiting (see docstring).
-        if status == TASK_STATUS_WAITING:
-            self.set_prerequisites_not_satisfied()
         return True
 
     def is_gt(self, status):

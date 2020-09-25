@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -64,6 +64,7 @@ class CylcLogFormatter(logging.Formatter):
         self.max_width = self.MAX_WIDTH
         self.wrapper = None
         self.configure(timestamp, color, max_width)
+        # You may find adding %(filename)s %(lineno)d are useful when debugging
         logging.Formatter.__init__(
             self,
             '%(asctime)s %(levelname)-2s - %(message)s',
@@ -117,11 +118,11 @@ class TimestampRotatingFileHandler(logging.FileHandler):
     GLBL_KEY = 'suite logging'
     MIN_BYTES = 1024
 
-    def __init__(self, suite, no_detach=False):
+    def __init__(self, suite, no_detach=False, timestamp=True):
         logging.FileHandler.__init__(self, get_suite_run_log_name(suite))
         self.no_detach = no_detach
         self.stamp = None
-        self.formatter = CylcLogFormatter()
+        self.formatter = CylcLogFormatter(timestamp=timestamp)
         self.header_records = []
 
     def emit(self, record):

@@ -1,0 +1,40 @@
+#!/usr/bin/env python3
+
+# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+"""Monkey CLI for testing."""
+
+from time import sleep
+
+from cylc.flow import LOG
+from cylc.flow.scheduler import Scheduler
+from cylc.flow.scheduler_cli import main
+
+
+def patch_load_flow_file(method):
+    def new_method(self, is_reload=False):
+        if is_reload:
+            LOG.debug('Sleep on reload')
+            sleep(15.0)
+        return method(self, is_reload)
+    return new_method
+
+Scheduler.load_flow_file = patch_load_flow_file(Scheduler.load_flow_file)
+
+
+if __name__ == '__main__':
+    main(is_restart=False)

@@ -1,0 +1,12 @@
+#!Jinja2
+[cylc]
+   [[events]]
+       abort on timeout = True
+       timeout = PT1M
+[scheduling]
+    [[graph]]
+        R1 = a-task
+[runtime]
+    [[a-task]]
+        script = echo "the quick brown fox"
+        platform = {{ environ['CYLC_TEST_PLATFORM'] | default("localhost") }}

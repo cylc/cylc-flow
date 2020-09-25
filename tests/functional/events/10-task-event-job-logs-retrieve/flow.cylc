@@ -1,0 +1,14 @@
+#!jinja2
+[meta]
+    title=Task Event Job Log Retrieve
+
+[scheduling]
+    [[graph]]
+        R1=t1
+
+[runtime]
+    [[t1]]
+        script=test "${CYLC_TASK_TRY_NUMBER}" -eq 3
+        platform = {{ PLATFORM }}
+        [[[job]]]
+            execution retry delays=PT0S, 2*PT1S

@@ -1,0 +1,25 @@
+[meta]
+    title = "One task takes 20 sec to succeed, another to fail, another to send a message."
+
+[scheduling]
+    [[graph]]
+        R1 = """
+             good-stuff & bad
+          bad:fail => handler
+             messenger:x => done
+                """
+[runtime]
+    [[done]]
+    [[good-stuff]]
+        script = "sleep 20"
+    [[bad]]
+        script = "sleep 20; false"
+    [[messenger]]
+        script = """
+          sleep 20
+          cylc message 'the quick brown fox'
+                 """
+        [[[outputs]]]
+          x = "the quick brown fox"
+    [[handler]]
+        script = true

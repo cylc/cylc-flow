@@ -1,0 +1,19 @@
+#!jinja2
+[cylc]
+    UTC mode=True
+    cycle point format = %Y
+    [[events]]
+        abort on stalled = True
+        abort on inactivity = True
+        inactivity = PT3M
+        startup handler = cylc release '%(suite)s'
+[scheduling]
+    initial cycle point = 2016
+    final cycle point = 2031
+    [[graph]]
+        P1Y=t1 & t2
+[runtime]
+    [[t1, t2]]
+        script = sleep $((RANDOM % 2 + 6))
+        [[[job]]]
+            execution time limit = PT15S

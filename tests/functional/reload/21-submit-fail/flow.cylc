@@ -1,0 +1,22 @@
+#!Jinja2
+[cylc]
+   [[events]]
+       abort on stalled = True
+   [[reference test]]
+       expected task failures = t1.1
+[scheduling]
+    [[graph]]
+        R1="""
+t1:submit-fail => stopper
+reloader => stopper
+"""
+
+[runtime]
+    [[t1]]
+        script=true
+        platform = platypus
+
+    [[reloader]]
+        script=cylc reload "${CYLC_SUITE_NAME}"
+    [[stopper]]
+        script=cylc stop "${CYLC_SUITE_NAME}"

@@ -1,0 +1,26 @@
+# Test restart with an inter-cycle trigger and no initial cycle point in
+# the suite definition. See github #957.
+
+# INSTRUCTIONS:
+# 1) first run to set up the restart:
+#      cylc run --until=20100808T00 SUITE 20100808T00
+# 2) the restart as reference test:
+#      cylc restart --debug --reference-test SUITE
+
+[cylc]
+    cycle point format = %Y%m%dT%H
+
+[scheduling]
+    # DO NOT PUT AN INITIAL CYCLE TIME HERE,
+    # use the command line as described above
+    final cycle point = 20100810T00
+    [[graph]]
+        T00 = """
+            foo[-P1D] => bar
+            foo
+        """
+[runtime]
+    [[root]]
+        script = true
+    [[foo]]
+    [[bar]]

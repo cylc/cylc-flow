@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -85,13 +85,9 @@ class TaskRemoteMgmtError(CylcError):
     MSG_TIDY = '%s: clean up did not complete:\n'  # %s owner_at_host
 
     def __str__(self):
-        msg, (host, owner), cmd_str, ret_code, out, err = self.args
-        if owner:
-            owner_at_host = owner + '@' + host
-        else:
-            owner_at_host = host
+        msg, platform_n, cmd_str, ret_code, out, err = self.args
         ret = (msg + 'COMMAND FAILED (%d): %s\n') % (
-            owner_at_host, ret_code, cmd_str)
+            platform_n, ret_code, cmd_str)
         for label, item in ('STDOUT', out), ('STDERR', err):
             if item:
                 for line in item.splitlines(True):  # keep newline chars
@@ -111,6 +107,16 @@ class ClientError(CylcError):
             # append server-side traceback if appended
             ret += '\n' + self.args[1]
         return ret
+
+
+class SuiteStopped(ClientError):
+    """Special case of ClientError for a stopped suite."""
+
+    def __init__(self, suite):
+        self.suite = suite
+
+    def __str__(self):
+        return f'{self.suite} is not running'
 
 
 class ClientTimeout(CylcError):
@@ -167,3 +173,24 @@ class CylcMissingContextPointError(CyclingError):
 
 class CylcMissingFinalCyclePointError(CyclingError):
     """An error denoting a missing (but required) final cycle point."""
+
+
+class PlatformLookupError(CylcConfigError):
+    """Unable to determine the correct job platform from the information
+    given"""
+
+
+class HostSelectException(CylcError):
+    """No hosts could be selected from the provided configuration."""
+
+    def __init__(self, data):
+        self.data = data
+        CylcError.__init__(self)
+
+    def __str__(self):
+        ret = 'Could not select host from:'
+        for host, data in sorted(self.data.items()):
+            ret += f'\n    {host}:'
+            for key, value in data.items():
+                ret += f'\n        {key}: {value}'
+        return ret

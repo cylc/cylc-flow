@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@ from cylc.flow.parsec.exceptions import UpgradeError
 from cylc.flow.parsec.OrderedDict import OrderedDict
 
 
-class converter(object):
+class converter:
     """Create custom config value converters."""
 
     def __init__(self, callback, descr):
@@ -36,7 +36,7 @@ class converter(object):
         return self.callback(val)
 
 
-class upgrader(object):
+class upgrader:
     """Handles upgrading of deprecated config values."""
 
     SITE_CONFIG = 'site config'
@@ -117,8 +117,7 @@ class upgrader(object):
             return [upg]
         if upg['old'].count('__MANY__') > 1:
             raise UpgradeError(
-                'Multiple simultaneous __MANY__ not supported: %s' %
-                upg['old'])
+                f"Multiple simultaneous __MANY__ not supported: {upg['old']}")
         exp_upgs = []
         pre = []
         post = []
@@ -194,7 +193,19 @@ class upgrader(object):
                             warnings[vn].append(msg)
                         self.del_item(upg['old'])
                         if upg['cvt'].describe() != "DELETED (OBSOLETE)":
-                            self.put_item(upg['new'], upg['cvt'].convert(old))
+                            # check self.cfg does not already contain a
+                            # non-deprecated item matching upg['new']:
+                            try:
+                                self.get_item(upg['new'])
+                            except KeyError:
+                                self.put_item(upg['new'],
+                                              upg['cvt'].convert(old))
+                            else:
+                                raise UpgradeError(
+                                    'ERROR: Cannot upgrade deprecated '
+                                    f'item "{msg}" because the upgraded '
+                                    'item already exists'
+                                )
         if warnings:
             level = WARNING
             if self.descr == self.SITE_CONFIG:
@@ -205,10 +216,9 @@ class upgrader(object):
                 # User level configuration, user should be able to fix.
                 # Log at warning level.
                 level = WARNING
-            LOG.log(
-                level,
-                "deprecated items were automatically upgraded in '%s':",
-                self.descr)
+            LOG.log(level,
+                    'deprecated items were automatically upgraded in '
+                    f'"{self.descr}"')
             for vn, msgs in warnings.items():
                 for msg in msgs:
                     LOG.log(level, ' * (%s) %s', vn, msg)

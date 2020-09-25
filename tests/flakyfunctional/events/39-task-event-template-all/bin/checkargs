@@ -1,0 +1,53 @@
+#!/usr/bin/env python3
+
+# Compare actual and expected event handler command lines.
+
+import os
+import sys
+from subprocess import Popen, PIPE
+
+args = dict([arg.split('=', 1) for arg in sys.argv[1:]])
+
+suite = os.environ['CYLC_SUITE_NAME']
+proc = Popen(['cylc', 'cat-log', '-m', 'p', '-f', 'a', suite, 'foo.1'],
+             stdout=PIPE, stdin=open(os.devnull))
+alog = proc.communicate()[0].decode().strip()
+proc.wait()
+for line in open(alog):
+    if 'STDOUT' in line:
+        submit_time, _, job_id = line.split(' ')
+        break
+
+del args['start_time']  # must exist, but value unreliable
+
+desired_args = {
+    'suite_title': 'a test suite',
+    'job_id': job_id.strip(),
+    'point': '1',
+    'URL': 'http://cheesy.peas',
+    'title': 'a task called foo',
+    'fish': 'trout',
+    'submit_num': '1',
+    'try_num': '1',
+    'batch_sys_name': 'background',
+    'id': 'foo.1',
+    'finish_time': 'None',
+    'suite_size': 'large',
+    'suite': suite,
+    'message': 'cheesy peas',
+    'platform_name': 'localhost',
+    'event': 'custom',
+    'submit_time': submit_time,
+    'name': 'foo'
+}
+
+try:
+    assert args == desired_args
+except AssertionError:
+    msg = ""
+    for key, value in desired_args.items():
+        if args[key] != value:
+            msg += f"\nkey, args[key], value are: {key, args[key], value}"
+    raise AssertionError(msg)
+
+print('OK: command line checks out')

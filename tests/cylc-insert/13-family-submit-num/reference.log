@@ -1,6 +1,0 @@
-2019-07-24T12:28:47+01:00 INFO - Run mode: live
-2019-07-24T12:28:47+01:00 INFO - Initial point: 1
-2019-07-24T12:28:47+01:00 INFO - Final point: 1
-2019-07-24T12:28:47+01:00 INFO - [bar.1] -triggered off []
-2019-07-24T12:28:51+01:00 INFO - [foo.1] -triggered off ['bar.1']
-2019-07-24T12:28:55+01:00 INFO - [bar.1] -triggered off []

@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,73 +30,83 @@ import tarfile
 from time import time
 
 from cylc.flow import LOG
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import TaskRemoteMgmtError
 import cylc.flow.flags
-from cylc.flow.hostuserutil import is_remote, is_remote_host, is_remote_user
+from cylc.flow.hostuserutil import (
+    is_remote_host, is_remote_platform
+)
 from cylc.flow.pathutil import get_remote_suite_run_dir
 from cylc.flow.subprocctx import SubProcContext
 from cylc.flow.suite_files import (
     SuiteFiles,
+    KeyInfo,
+    KeyOwner,
+    KeyType,
     get_suite_srv_dir,
-    get_contact_file,
-    get_auth_item
-)
+    get_contact_file)
 from cylc.flow.task_remote_cmd import (
     FILE_BASE_UUID, REMOTE_INIT_DONE, REMOTE_INIT_NOT_REQUIRED)
+from cylc.flow.platforms import get_platform, get_host_from_platform
+from cylc.flow.remote import construct_platform_ssh_cmd
 
 
 REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
 REMOTE_INIT_FAILED = 'REMOTE INIT FAILED'
 
 
-class TaskRemoteMgr(object):
+class TaskRemoteMgr:
     """Manage task job remote initialisation, tidy, selection."""
 
     def __init__(self, suite, proc_pool):
         self.suite = suite
         self.proc_pool = proc_pool
-        # self.remote_host_str_map = {host_str: host|TaskRemoteMgmtError|None}
-        self.remote_host_str_map = {}
+        # self.remote_command_map = {command: host|TaskRemoteMgmtError|None}
+        self.remote_command_map = {}
         # self.remote_init_map = {(host, owner): status, ...}
         self.remote_init_map = {}
         self.single_task_mode = False
         self.uuid_str = None
         self.ready = False
 
-    def remote_host_select(self, host_str):
-        """Evaluate a task host string.
+    def subshell_eval(self, command, host_check=True):
+        """Evaluate a task platform from a subshell string.
+
+        At Cylc 7, from a host string.
 
         Arguments:
-            host_str (str):
+            command (str):
                 An explicit host name, a command in back-tick or $(command)
                 format, or an environment variable holding a hostname.
 
         Return (str):
-            None if evaluate of host_str is still taking place.
-            'localhost' if host_str is not defined or if the evaluated host
-            name is equivalent to 'localhost'.
-            Otherwise, return the evaluated host name on success.
+            - None if evaluation of command is still taking place.
+            - If command is not defined or the evaluated name is equivelent
+              to 'localhost', _and_ host_check is set to True then
+              'localhost'
+            - Otherwise, return the evaluated host name on success.
+
+        TODO:
+            At Cylc 9, strip of all references to host.
 
         Raise TaskRemoteMgmtError on error.
 
         """
-        if not host_str:
+        if not command:
             return 'localhost'
 
         # Host selection command: $(command) or `command`
-        match = REC_COMMAND.match(host_str)
+        match = REC_COMMAND.match(command)
         if match:
             cmd_str = match.groups()[1]
-            if cmd_str in self.remote_host_str_map:
+            if cmd_str in self.remote_command_map:
                 # Command recently launched
-                value = self.remote_host_str_map[cmd_str]
+                value = self.remote_command_map[cmd_str]
                 if isinstance(value, TaskRemoteMgmtError):
                     raise value  # command failed
                 elif value is None:
                     return  # command not yet ready
                 else:
-                    host_str = value  # command succeeded
+                    command = value  # command succeeded
             else:
                 # Command not launched (or already reset)
                 self.proc_pool.put_command(
@@ -104,37 +114,48 @@ class TaskRemoteMgr(object):
                         'remote-host-select',
                         ['bash', '-c', cmd_str],
                         env=dict(os.environ)),
-                    self._remote_host_select_callback, [cmd_str])
-                self.remote_host_str_map[cmd_str] = None
-                return self.remote_host_str_map[cmd_str]
+                    self._subshell_eval_callback, [cmd_str])
+                self.remote_command_map[cmd_str] = None
+                return self.remote_command_map[cmd_str]
 
         # Environment variable substitution
-        host_str = os.path.expandvars(host_str)
+        command = os.path.expandvars(command)
         # Remote?
-        if is_remote_host(host_str):
-            return host_str
+        # TODO - Remove at Cylc 9 as this only makes sense with host logic
+        if host_check is True:
+            if is_remote_host(command):
+                return command
+            else:
+                return 'localhost'
         else:
-            return 'localhost'
+            return command
 
-    def remote_host_select_reset(self):
-        """Reset remote host select results.
+    def subshell_eval_reset(self):
+        """Reset remote eval subshell results.
 
         This is normally called after the results are consumed.
         """
-        for key, value in list(self.remote_host_str_map.copy().items()):
+        for key, value in list(self.remote_command_map.copy().items()):
             if value is not None:
-                del self.remote_host_str_map[key]
+                del self.remote_command_map[key]
 
-    def remote_init(self, host, owner):
+    def remote_init(self, platform_name, curve_auth, client_pub_key_dir):
         """Initialise a remote [owner@]host if necessary.
 
-        Create UUID file on suite host ".service/uuid" for remotes to identify
+        Create UUID file on a platform ".service/uuid" for remotes to identify
         shared file system with suite host.
 
         Call "cylc remote-init" to install suite items to remote:
             ".service/contact": For TCP task communication
-            ".service/passphrase": For TCP task communication
             "python/": if source exists
+
+        Args:
+            platform_name (str):
+                The name of the platform to be initialized.
+            curve_auth (ThreadAuthenticator):
+                The ZMQ authenticator.
+            client_pub_key_dir (str):
+                Client public key directory, used by the ZMQ authenticator.
 
         Return:
             REMOTE_INIT_NOT_REQUIRED:
@@ -148,31 +169,30 @@ class TaskRemoteMgr(object):
                 If waiting for remote init command to complete
 
         """
-        if self.single_task_mode or not is_remote(host, owner):
+        # get the platform from the platform_name
+        platform = get_platform(platform_name)
+
+        # If task is running locally we can skip the rest of this function
+        if self.single_task_mode or not is_remote_platform(platform):
             return REMOTE_INIT_NOT_REQUIRED
+
+        # See if a previous failed attempt to initialize this platform has
+        # occurred.
         try:
-            status = self.remote_init_map[(host, owner)]
+            status = self.remote_init_map[platform['name']]
         except KeyError:
             pass  # Not yet initialised
         else:
             if status == REMOTE_INIT_FAILED:
-                del self.remote_init_map[(host, owner)]  # reset to allow retry
+                del self.remote_init_map[platform['name']]
             return status
 
         # Determine what items to install
-        comm_meth = glbl_cfg().get_host_item(
-            'task communication method', host, owner)
-        owner_at_host = 'localhost'
-        if host:
-            owner_at_host = host
-        if owner:
-            owner_at_host = owner + '@' + owner_at_host
-        LOG.debug('comm_meth[%s]=%s' % (owner_at_host, comm_meth))
+        comm_meth = platform['communication method']
+
+        # Get a list of files and folders to install;
+        # if nothing needs install say so to remote_init_map and return.
         items = self._remote_init_items(comm_meth)
-        # No item to install
-        if not items:
-            self.remote_init_map[(host, owner)] = REMOTE_INIT_NOT_REQUIRED
-            return self.remote_init_map[(host, owner)]
 
         # Create a TAR archive with the service files,
         # so they can be sent later via SSH's STDIN to the task remote.
@@ -189,25 +209,29 @@ class TaskRemoteMgr(object):
         )
         if not os.path.exists(uuid_fname):
             open(uuid_fname, 'wb').write(str(self.uuid_str).encode())
-        # Build the command
-        cmd = ['cylc', 'remote-init']
-        if is_remote_host(host):
-            cmd.append('--host=%s' % host)
-        if is_remote_user(owner):
-            cmd.append('--user=%s' % owner)
+
+        # Build the remote-init command to be run over ssh
+        cmd = ['remote-init']
         if cylc.flow.flags.debug:
             cmd.append('--debug')
         if comm_meth in ['ssh']:
             cmd.append('--indirect-comm=%s' % comm_meth)
         cmd.append(str(self.uuid_str))
-        cmd.append(get_remote_suite_run_dir(host, owner, self.suite))
+        cmd.append(get_remote_suite_run_dir(platform, self.suite))
+        # Create the ssh command
+        cmd = construct_platform_ssh_cmd(cmd, platform)
+
         self.proc_pool.put_command(
-            SubProcContext('remote-init', cmd, stdin_files=[tmphandle]),
+            SubProcContext(
+                'remote-init',
+                cmd,
+                stdin_files=[tmphandle]),
             self._remote_init_callback,
-            [host, owner, tmphandle])
+            [platform, tmphandle,
+             curve_auth, client_pub_key_dir])
         # None status: Waiting for command to finish
-        self.remote_init_map[(host, owner)] = None
-        return self.remote_init_map[(host, owner)]
+        self.remote_init_map[platform['name']] = None
+        return self.remote_init_map[platform['name']]
 
     def remote_tidy(self):
         """Remove suite contact files from initialised remotes.
@@ -228,20 +252,23 @@ class TaskRemoteMgr(object):
             pass
         # Issue all SSH commands in parallel
         procs = {}
-        for (host, owner), init_with_contact in self.remote_init_map.items():
+        for platform, init_with_contact in self.remote_init_map.items():
+            platform = get_platform(platform)
+            host = get_host_from_platform(platform)
+            owner = platform['owner']
             if init_with_contact != REMOTE_INIT_DONE:
                 continue
-            cmd = ['timeout', '10', 'cylc', 'remote-tidy']
-            if is_remote_host(host):
-                cmd.append('--host=%s' % host)
-            if is_remote_user(owner):
-                cmd.append('--user=%s' % owner)
+            cmd = ['remote-tidy']
             if cylc.flow.flags.debug:
                 cmd.append('--debug')
-            cmd.append(get_remote_suite_run_dir(host, owner, self.suite))
+            cmd.append(get_remote_suite_run_dir(platform, self.suite))
+            if is_remote_platform(platform):
+                cmd = construct_platform_ssh_cmd(cmd, platform, timeout='10s')
+            else:
+                cmd = ['cylc'] + cmd
             procs[(host, owner)] = (
                 cmd,
-                Popen(cmd, stdout=PIPE, stderr=PIPE, stdin=open(DEVNULL)))
+                Popen(cmd, stdout=PIPE, stderr=PIPE, stdin=DEVNULL))
         # Wait for commands to complete for a max of 10 seconds
         timeout = time() + 10.0
         while procs and time() < timeout:
@@ -268,21 +295,24 @@ class TaskRemoteMgr(object):
                     (host, owner), ' '.join(quote(item) for item in cmd),
                     proc.returncode, out, err))
 
-    def _remote_host_select_callback(self, proc_ctx, cmd_str):
+    def _subshell_eval_callback(self, proc_ctx, cmd_str):
         """Callback when host select command exits"""
         self.ready = True
         if proc_ctx.ret_code == 0 and proc_ctx.out:
             # Good status
             LOG.debug(proc_ctx)
-            self.remote_host_str_map[cmd_str] = proc_ctx.out.splitlines()[0]
+            self.remote_command_map[cmd_str] = proc_ctx.out.splitlines()[0]
         else:
             # Bad status
             LOG.error(proc_ctx)
-            self.remote_host_str_map[cmd_str] = TaskRemoteMgmtError(
+            self.remote_command_map[cmd_str] = TaskRemoteMgmtError(
                 TaskRemoteMgmtError.MSG_SELECT, (cmd_str, None), cmd_str,
                 proc_ctx.ret_code, proc_ctx.out, proc_ctx.err)
 
-    def _remote_init_callback(self, proc_ctx, host, owner, tmphandle):
+    def _remote_init_callback(
+        self, proc_ctx, platform, tmphandle,
+        curve_auth, client_pub_key_dir
+    ):
         """Callback when "cylc remote-init" exits"""
         self.ready = True
         try:
@@ -290,29 +320,53 @@ class TaskRemoteMgr(object):
         except OSError:  # E.g. ignore bad unlink, etc
             pass
         if proc_ctx.ret_code == 0:
+            if "KEYSTART" in proc_ctx.out:
+                regex_result = re.search(
+                    'KEYSTART((.|\n|\r)*)KEYEND', proc_ctx.out)
+                key = regex_result.group(1)
+                suite_srv_dir = get_suite_srv_dir(self.suite)
+                public_key = KeyInfo(
+                    KeyType.PUBLIC,
+                    KeyOwner.CLIENT,
+                    suite_srv_dir=suite_srv_dir,
+                    platform=platform['name']
+                )
+                old_umask = os.umask(0o177)
+                with open(
+                        public_key.full_key_path,
+                        'w', encoding='utf8') as text_file:
+                    text_file.write(key)
+                os.umask(old_umask)
+                # configure_curve must be called every time certificates are
+                # added or removed, in order to update the Authenticator's
+                # state.
+                curve_auth.configure_curve(
+                    domain='*', location=(client_pub_key_dir))
             for status in (REMOTE_INIT_DONE, REMOTE_INIT_NOT_REQUIRED):
                 if status in proc_ctx.out:
                     # Good status
                     LOG.debug(proc_ctx)
-                    self.remote_init_map[(host, owner)] = status
+                    self.remote_init_map[platform['name']] = status
                     return
         # Bad status
         LOG.error(TaskRemoteMgmtError(
             TaskRemoteMgmtError.MSG_INIT,
-            (host, owner), ' '.join(quote(item) for item in proc_ctx.cmd),
+            platform['name'], ' '.join(quote(item) for item in proc_ctx.cmd),
             proc_ctx.ret_code, proc_ctx.out, proc_ctx.err))
         LOG.error(proc_ctx)
-        self.remote_init_map[(host, owner)] = REMOTE_INIT_FAILED
+        self.remote_init_map[platform['name']] = REMOTE_INIT_FAILED
 
     def _remote_init_items(self, comm_meth):
         """Return list of items to install based on communication method.
 
         Return (list):
-            Each item is (path, name) where:
-            - path is the path to the source file to install.
-            - name is relative path under suite run directory at target remote.
+            Each item is (source_path, dest_path) where:
+            - source_path is the path to the source file to install.
+            - dest_path is relative path under suite run directory
+              at target remote.
         """
         items = []
+
         if comm_meth in ['ssh', 'zmq']:
             # Contact file
             items.append((
@@ -320,13 +374,16 @@ class TaskRemoteMgr(object):
                 os.path.join(
                     SuiteFiles.Service.DIRNAME,
                     SuiteFiles.Service.CONTACT)))
+
         if comm_meth in ['zmq']:
-            # Passphrase file
-            items.append((
-                get_auth_item(
-                    SuiteFiles.Service.PASSPHRASE,
-                    self.suite),
-                os.path.join(
-                    SuiteFiles.Service.DIRNAME,
-                    SuiteFiles.Service.PASSPHRASE)))
+            suite_srv_dir = get_suite_srv_dir(self.suite)
+            server_pub_keyinfo = KeyInfo(
+                KeyType.PUBLIC,
+                KeyOwner.SERVER,
+                suite_srv_dir=suite_srv_dir)
+            dest_path_srvr_public_key = os.path.join(
+                SuiteFiles.Service.DIRNAME, server_pub_keyinfo.file_name)
+            items.append(
+                (server_pub_keyinfo.full_key_path,
+                 dest_path_srvr_public_key))
         return items

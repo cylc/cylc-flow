@@ -1,0 +1,26 @@
+#!Jinja2
+[cylc]
+    UTC mode = True
+   [[reference test]]
+       expected task failures = bad-submitter.19990101T0000Z
+
+[scheduling]
+    initial cycle point=1999
+    final cycle point=1999
+    [[graph]]
+        P1Y="""bad-submitter:submit-failed => grepper"""
+[runtime]
+    [[root]]
+    [[bad-submitter]]
+        script = true
+        platform = {{ CYLC_TEST_PLATFORM }}
+    [[grepper]]
+        script = """
+            set -x
+            # Test that the original command is printed
+            A_LOG="$(dirname "$0")/../../bad-submitter/01/job-activity.log"
+            grep '\[jobs-submit cmd\] ssh .* {{CYLC_TEST_HOST}} .*cylc jobs-submit.*' \
+                "${A_LOG}"
+            # Stop the suite cleanly
+            cylc stop "${CYLC_SUITE_NAME}"
+        """

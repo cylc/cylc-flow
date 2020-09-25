@@ -1,7 +1,0 @@
-[scheduling]
-    [[graph]]
-        R1 = """a => b \
-                     => c"""
-[runtime]
-    [[a,b,c]]
-        script = true

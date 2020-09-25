@@ -1,0 +1,17 @@
+[cylc]
+  UTC mode = True
+
+[scheduling]
+  [[graph]]
+    R1 = """
+      not_upgradable_cylc7_settings
+    """
+[runtime]
+  [[root]]
+    script = true
+
+  [[not_upgradable_cylc7_settings]]
+    [[[remote]]]
+      host = parasite
+    [[[job]]]
+      batch system = 'loaf'

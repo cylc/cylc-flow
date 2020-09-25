@@ -1,0 +1,21 @@
+[cylc]
+    UTC mode=True
+    cycle point format = %Y
+    [[events]]
+        abort on inactivity = True
+        inactivity = P2M
+[scheduling]
+    initial cycle point = 2016
+    final cycle point = 2017
+    [[graph]]
+        P1Y = t1[-P1Y] => t1 => t2
+[runtime]
+    [[t1]]
+        script = """
+            if [[ "${CYLC_TASK_CYCLE_POINT}" == '2016' ]]; then
+                cylc hold "${CYLC_SUITE_NAME}"
+                cylc stop "${CYLC_SUITE_NAME}"
+            fi
+        """
+    [[t2]]
+        script = true

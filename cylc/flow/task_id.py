@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,8 +18,11 @@
 
 import re
 
+from cylc.flow.cycling.loader import get_point, standardise_point_string
+from cylc.flow.exceptions import PointParsingError
 
-class TaskID(object):
+
+class TaskID:
     """Task ID utilities."""
 
     DELIM = '.'
@@ -68,3 +71,29 @@ class TaskID(object):
         do more as the string may have wildcards.
         """
         return id_str.count(cls.DELIM) == 1 or id_str.count(cls.DELIM2) == 1
+
+    @classmethod
+    def get_standardised_point_string(cls, point_string):
+        """Return a standardised point string.
+
+        Used to process incoming command arguments.
+        """
+        try:
+            point_string = standardise_point_string(point_string)
+        except PointParsingError as exc:
+            # (This is only needed to raise a clearer error message).
+            raise ValueError(
+                "Invalid cycle point: %s (%s)" % (point_string, exc))
+        return point_string
+
+    @classmethod
+    def get_standardised_point(cls, point_string):
+        """Return a standardised point."""
+        return get_point(cls.get_standardised_point_string(point_string))
+
+    @classmethod
+    def get_standardised_taskid(cls, task_id):
+        """Return task ID with standardised cycle point."""
+        name, point_string = cls.split(task_id)
+        return cls.get(
+            name, cls.get_standardised_point_string(point_string))

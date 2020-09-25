@@ -1,0 +1,54 @@
+[meta]
+    title = "Test suite for task state change on poll result."
+    description = """Task run_kill fails silently - it will be stuck in 'running'
+unless polled. Task run_kill goes to Task submit_hold. Task poll_check_kill 
+then polls all to find if any tasks have failed, allowing run_kill to suicide
+via a :fail trigger. Task submit_hold is an idle task which is killed after
+Task poll_check_kill succeeds by Task poll_now. Task poll_now then polls all
+to find if any tasks, allowing submit_hold to suicide via a :submit-fail
+trigger, and the suite to shut down successfully."""
+
+[cylc]
+   UTC mode = True
+   [[events]]
+       abort on inactivity = True
+       inactivity = PT2M
+   [[reference test]]
+       expected task failures = run_kill.20141207T0000Z,\
+                                run_kill.20141208T0000Z,\
+                                submit_hold.20141207T0000Z,\
+                                submit_hold.20141208T0000Z
+
+[scheduling]
+    initial cycle point = 20141207T0000Z
+    final cycle point   = 20141208T0000Z
+    [[graph]]
+        T00 = """
+            run_kill[-P1D]:fail => run_kill
+            run_kill:start => submit_hold
+            run_kill:fail => !run_kill
+            submit_hold:submit => poll_check_kill => poll_now
+            submit_hold:submit-fail => !submit_hold
+        """
+
+[runtime]
+    [[run_kill]]
+        script = """
+trap '' EXIT
+exit 0
+"""
+    [[poll_check_kill]]
+        script = """
+cylc poll "${CYLC_SUITE_NAME}"
+
+cylc__job__poll_grep_suite_log -F \
+    "[submit_hold.${CYLC_TASK_CYCLE_POINT}] -ready => submitted"
+
+st_file="${CYLC_SUITE_RUN_DIR}/log/job/${CYLC_TASK_CYCLE_POINT}/submit_hold/NN/job.status"
+pkill -g "$(awk -F= '$1 == "CYLC_BATCH_SYS_JOB_ID" {print $2}' "${st_file}")"
+"""
+    [[poll_now]]
+        script = cylc poll "${CYLC_SUITE_NAME}"
+
+    [[submit_hold]]
+        init-script = sleep 120

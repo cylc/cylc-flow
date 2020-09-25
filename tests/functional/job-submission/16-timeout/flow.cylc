@@ -1,0 +1,8 @@
+[scheduling]
+    [[graph]]
+        R1 = "foo:submit-fail => stopper"
+[runtime]
+    [[foo]]
+        platform = unicorn
+    [[stopper]]
+        script = cylc stop "${CYLC_SUITE_NAME}"

@@ -1,0 +1,16 @@
+#!Jinja2
+[scheduling]
+    [[graph]]
+        R1 = a:start => b
+[runtime]
+    [[a]]
+        script = sleep 20
+        platform = lsf-test-platform
+        [[[directives]]]
+{% if "CYLC_TEST_BATCH_SITE_DIRECTIVES" in environ and
+        environ["CYLC_TEST_BATCH_SITE_DIRECTIVES"] %}
+    {{environ["CYLC_TEST_BATCH_SITE_DIRECTIVES"]}}
+{% endif %}
+
+    [[b]]
+        script = cylc poll "$CYLC_SUITE_NAME" 'a'

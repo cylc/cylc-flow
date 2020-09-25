@@ -1,0 +1,29 @@
+[meta]
+    title = "hold/release test suite"
+
+    description = """
+        One task that holds then releases the suite, with
+        short sleeps to make the effect on the downstream task obvious.
+    """
+
+# ref: bug-fix GitHub Pull Request #843 (5412d01)
+
+[cylc]
+    cycle point format = %Y%m%dT%H
+
+[scheduling]
+    initial cycle point = 20140101T00
+    final cycle point   = 20140101T00
+    [[graph]]
+        R1 = "holdrelease => foo & bar"
+        T00, T06 = "bar"
+[runtime]
+    [[holdrelease]]
+        script = """
+wait
+cylc hold "${CYLC_SUITE_NAME}"
+cylc__job__poll_grep_suite_log -F 'INFO - Command succeeded: hold()'
+cylc release "${CYLC_SUITE_NAME}"
+"""
+    [[foo,bar]]
+        script = true

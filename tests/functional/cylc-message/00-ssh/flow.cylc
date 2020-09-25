@@ -1,0 +1,16 @@
+#!jinja2
+[cylc]
+    UTC mode = True # Ignore DST
+
+[scheduling]
+    [[graph]]
+        R1 = t0 => t1
+
+[runtime]
+    [[t0]]
+        script = """
+            cylc broadcast "${CYLC_SUITE_NAME}" '--name=t1' '--set=script=true'
+        """
+        platform = {{ environ['CYLC_TEST_PLATFORM'] }}
+    [[t1]]
+        script = false

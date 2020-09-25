@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,13 +18,14 @@
 
 import math
 
+from cylc.flow import ID_DELIM
 from cylc.flow.conditional_simplifier import ConditionalSimplifier
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.exceptions import TriggerExpressionError
-from cylc.flow.ws_messages_pb2 import PbPrerequisite, PbCondition
+from cylc.flow.data_messages_pb2 import PbPrerequisite, PbCondition
 
 
-class Prerequisite(object):
+class Prerequisite:
     """The concrete result of an abstract logical trigger expression."""
 
     # Memory optimization - constrain possible attributes to this list.
@@ -236,7 +237,7 @@ class Prerequisite(object):
         num_length = math.ceil(len(self.satisfied) / 10)
         for ind, message_tuple in enumerate(sorted(self.satisfied)):
             name, point = message_tuple[0:2]
-            t_id = f"{workflow_id}/{point}/{name}"
+            t_id = f"{workflow_id}{ID_DELIM}{point}{ID_DELIM}{name}"
             char = 'c%.{0}d'.format(num_length) % ind
             c_msg = self.MESSAGE_TEMPLATE % message_tuple
             c_val = self.satisfied[message_tuple]

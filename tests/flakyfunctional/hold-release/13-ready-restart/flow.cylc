@@ -1,0 +1,51 @@
+[meta]
+    title = Restart with a task in the ready state.
+
+[cylc]
+    [[events]]
+        inactivity = PT30S
+        abort on inactivity = True
+
+[scheduling]
+    [[graph]]
+        R1 = """
+foo => foo-1
+bar
+"""
+
+[runtime]
+    [[foo]]
+        script = true
+    [[foo-1]]
+        script = true
+        platform = wibble
+    [[bar]]
+        script = """
+            # Stop the suite as soon as job file of "foo-1" is in the ready state.
+            timeout 1m my-file-poll "${CYLC_SUITE_RUN_DIR}/log/job/1/foo-1/NN/job"
+
+            # Kill the suite (cylc stop --now --now also kills the foo-1 job submit process
+            # and may result in foo-1 going to the submit-failed state instead of ready).
+            SUITE_PID="$(
+                cylc get-suite-contact "${CYLC_SUITE_NAME}" \
+                | sed -n 's/CYLC_SUITE_PROCESS=\([0-9]*\).*/\1/p'
+            )"
+
+            kill -9 $SUITE_PID
+
+            # Let the old job submit process finish.
+            sleep 10
+
+            # Restart the suite on hold.
+            cylc restart --hold "${CYLC_SUITE_NAME}"
+            cylc__job__poll_grep_suite_log \
+                'Held on start-up (no tasks will be submitted)'
+
+            # Modify the job submission command template for "foo-1".
+            cylc broadcast "${CYLC_SUITE_NAME}" \
+                -p '1' -n 'foo-1' -s 'platform=wobble'
+
+            # Release the suite to run to completion.
+            sleep 2
+            cylc release "${CYLC_SUITE_NAME}"
+        """

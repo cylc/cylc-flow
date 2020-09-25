@@ -1,3 +1,0 @@
-#!/bin/bash
-TXT="${CYLC_SUITE_RUN_DIR}/my-host-select.txt"
-cat "${TXT}" || echo 'localhost' >"${TXT}"

@@ -1,0 +1,21 @@
+[cylc]
+    [[events]]
+        abort on stalled = True
+        abort on inactivity = True
+        inactivity = PT2M
+[scheduling]
+    cycling mode = integer
+    initial cycle point = 1
+    final cycle point = 5
+    [[graph]]
+        R1/2 = start
+        P1 = "start[2] & foo => bar"
+[runtime]
+    [[start]]
+        script = """
+# Ensure that bar.1,2 are spawned by foo.1,2 and not by start.2
+# (so the scheduler must update their prereqs when start.2 finishes).
+cylc__job__poll_grep_suite_log "spawned bar\.2"
+        """
+    [[foo]]
+    [[bar]]

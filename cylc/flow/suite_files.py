@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,30 +13,125 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """Suite service files management."""
 
 # Note: Some modules are NOT imported in the header. Expensive modules are only
 # imported on demand.
-from functools import lru_cache
+
 import os
+from pathlib import Path
 import re
-from string import ascii_letters, digits
+import shutil
+import zmq.auth
+
+import aiofiles
 
 from cylc.flow import LOG
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import SuiteServiceFileError
-from cylc.flow.pathutil import get_remote_suite_run_dir, get_suite_run_dir
-import cylc.flow.flags
+from cylc.flow.pathutil import get_suite_run_dir
+from cylc.flow.platforms import get_platform
 from cylc.flow.hostuserutil import (
-    get_host, get_user, is_remote, is_remote_host, is_remote_user)
+    get_user,
+    is_remote_host,
+    is_remote_user
+)
 from cylc.flow.unicode_rules import SuiteNameValidator
+
+from enum import Enum
+
+
+class KeyType(Enum):
+    """Used for authentication keys - public or private"""
+
+    PRIVATE = "private"
+    PUBLIC = "public"
+
+
+class KeyOwner(Enum):
+    """Used for authentication keys - server or client"""
+
+    SERVER = "server"
+    CLIENT = "client"
+
+
+class KeyInfo():
+    """Represents a server or client key file, which can be private or public.
+
+    Attributes:
+        file_name:       The file name of this key object.
+        key_type:        public or private
+        key_owner:       server or client
+        key_path:        The absolute path, not including filename,
+                         for this key object.
+        full_key_path:   The absolute path, including filename,
+                         for this key object.
+
+
+    """
+
+    def __init__(self, key_type, key_owner, full_key_path=None,
+                 suite_srv_dir=None, platform=None, server_held=True):
+        self.key_type = key_type
+        self.key_owner = key_owner
+        self.full_key_path = full_key_path
+        self.suite_srv_dir = suite_srv_dir
+        self.platform = platform
+        if self.full_key_path is not None:
+            self.key_path, self.file_name = os.path.split(self.full_key_path)
+        elif self.suite_srv_dir is not None:
+            # Build key filename
+            file_name = key_owner.value
+
+            # Add optional platform name
+            if key_owner is KeyOwner.CLIENT and self.platform is not None:
+                file_name = file_name + f"_{self.platform}"
+
+            if key_type == KeyType.PRIVATE:
+                file_extension = SuiteFiles.Service.PRIVATE_FILE_EXTENSION
+            elif key_type == KeyType.PUBLIC:
+                file_extension = SuiteFiles.Service.PUBLIC_FILE_EXTENSION
+
+            self.file_name = f"{file_name}{file_extension}"
+
+            # Build key path (without filename) for client public keys
+            if (key_owner is KeyOwner.CLIENT
+                    and key_type is KeyType.PUBLIC and server_held):
+                temp = f"{key_owner.value}_{key_type.value}_keys"
+                self.key_path = os.path.join(
+                    os.path.expanduser("~"),
+                    self.suite_srv_dir,
+                    temp)
+            elif (
+                (key_owner is KeyOwner.CLIENT
+                 and key_type is KeyType.PUBLIC
+                 and server_held is False)
+                or
+                (key_owner is KeyOwner.SERVER
+                 and key_type is KeyType.PRIVATE)
+                or (key_owner is KeyOwner.CLIENT
+                    and key_type is KeyType.PRIVATE)
+                or (key_owner is KeyOwner.SERVER
+                    and key_type is KeyType.PUBLIC)):
+                self.key_path = os.path.expandvars(self.suite_srv_dir)
+
+        else:
+            raise ValueError(
+                "Cannot create KeyInfo without the suite path or full path.")
+
+        # Build full key path (including file name)
+
+        self.full_key_path = os.path.join(self.key_path, self.file_name)
 
 
 class SuiteFiles:
     """Files and directories located in the suite directory."""
 
+    FLOW_FILE = 'flow.cylc'
+    """The workflow configuration file."""
+
     SUITE_RC = 'suite.rc'
-    """The suite configuration file."""
+    """Deprecated workflow configuration file."""
 
     class Service:
         """The directory containing Cylc system files."""
@@ -50,14 +145,15 @@ class SuiteFiles:
         For details of the fields see ``ContactFileFields``.
         """
 
-        CONTACT2 = 'contact2'
-        """Same as ``CONTACT``, installed on remote platforms."""
-
-        PASSPHRASE = 'passphrase'
-        """The suite authentication token."""
-
         SOURCE = 'source'
         """Symlink to the suite definition (suite dir)."""
+
+        PUBLIC_FILE_EXTENSION = '.key'
+        PRIVATE_FILE_EXTENSION = '.key_secret'
+        """Keyword identifiers used to form the certificate names.
+        Note: the public & private identifiers are set by CurveZMQ, so cannot
+        be renamed, but we hard-code them since they can't be extracted easily.
+        """
 
 
 class ContactFileFields:
@@ -93,6 +189,9 @@ class ContactFileFields:
     PORT = 'CYLC_SUITE_PORT'
     """The port Cylc uses to communicate with this suite."""
 
+    PUBLISH_PORT = 'CYLC_SUITE_PUBLISH_PORT'
+    """The port Cylc uses to publish data."""
+
     SSH_USE_LOGIN_SHELL = 'CYLC_SSH_USE_LOGIN_SHELL'
     """TODO: Unused at present, waiting on #2975 (#3327)."""
 
@@ -115,37 +214,12 @@ class ContactFileFields:
     """The Cylc version under which the suite is running."""
 
 
-class UserFiles:
-    """Directory containing config and auth files for a user."""
-
-    DIRNAME = '.cylc'
-    """The name of this directory."""
-
-    class Auth:
-        """Cache for remote service files."""
-
-        DIRNAME = 'auth'
-        """The name of this directory."""
-
-    @classmethod
-    def get_path(cls):
-        """Return the path to this directory for the current user."""
-        return os.path.join(
-            os.path.expanduser("~"),
-            cls.DIRNAME,
-            cls.Auth.DIRNAME,
-        )
-
-
 REG_DELIM = "/"
 
 NO_TITLE = "No title provided"
 REC_TITLE = re.compile(r"^\s*title\s*=\s*(.*)\s*$")
 
-PASSPHRASE_CHARSET = ascii_letters + digits
-PASSPHRASE_LEN = 20
-
-PS_OPTS = '-opid,args'
+PS_OPTS = '-wopid,args'
 
 CONTACT_FILE_EXISTS_MSG = r"""suite contact file exists: %(fname)s
 
@@ -203,7 +277,7 @@ def detect_old_contact_file(reg, check_host_port=None):
     cmd = ["timeout", "10", "ps", PS_OPTS, str(old_pid_str)]
     if is_remote_host(old_host):
         import shlex
-        ssh_str = str(glbl_cfg().get_host_item("ssh command", old_host))
+        ssh_str = get_platform()["ssh command"]
         cmd = shlex.split(ssh_str) + ["-n", old_host] + cmd
     from subprocess import Popen, PIPE, DEVNULL  # nosec
     from time import sleep, time
@@ -266,95 +340,11 @@ def get_contact_file(reg):
         get_suite_srv_dir(reg), SuiteFiles.Service.CONTACT)
 
 
-def get_auth_item(item, reg, owner=None, host=None, content=False):
-    """Locate/load passphrase, SSL private key, SSL certificate, etc.
-
-    Return file name, or content of file if content=True is set.
-    Files are searched from these locations in order:
-
-    1/ For running task jobs, service directory under:
-       a/ $CYLC_SUITE_RUN_DIR for remote jobs.
-       b/ $CYLC_SUITE_RUN_DIR_ON_SUITE_HOST for local jobs or remote jobs
-          with SSH messaging.
-
-    2/ For suite on local user@host. The suite service directory.
-
-    3/ Location under $HOME/.cylc/ for remote suite control from accounts
-       that do not actually need the suite definition directory to be
-       installed:
-       $HOME/.cylc/auth/SUITE_OWNER@SUITE_HOST/SUITE_NAME/
-
-    4/ For remote suites, try locating the file from the suite service
-       directory on remote owner@host via SSH. If content=False, the value
-       of the located file will be dumped under:
-       $HOME/.cylc/auth/SUITE_OWNER@SUITE_HOST/SUITE_NAME/
-
-    """
-    if item not in [
-            SuiteFiles.Service.PASSPHRASE, SuiteFiles.Service.CONTACT,
-            SuiteFiles.Service.CONTACT2]:
-        raise ValueError("%s: item not recognised" % item)
-
-    if reg == os.getenv('CYLC_SUITE_NAME'):
-        env_keys = []
-        if 'CYLC_SUITE_RUN_DIR' in os.environ:
-            # 1(a)/ Task messaging call.
-            env_keys.append('CYLC_SUITE_RUN_DIR')
-        elif ContactFileFields.SUITE_RUN_DIR_ON_SUITE_HOST in os.environ:
-            # 1(b)/ Task messaging call via ssh messaging.
-            env_keys.append(ContactFileFields.SUITE_RUN_DIR_ON_SUITE_HOST)
-        for key in env_keys:
-            path = os.path.join(os.environ[key], SuiteFiles.Service.DIRNAME)
-            if content:
-                value = _load_local_item(item, path)
-            else:
-                value = _locate_item(item, path)
-            if value:
-                return value
-    # 2/ Local suite service directory
-    if _is_local_auth_ok(reg, owner, host):
-        path = get_suite_srv_dir(reg)
-        if content:
-            value = _load_local_item(item, path)
-        else:
-            value = _locate_item(item, path)
-        if value:
-            return value
-    # 3/ Disk cache for remote suites
-    if owner is not None and host is not None:
-        paths = [_get_cache_dir(reg, owner, host)]
-        short_host = host.split('.', 1)[0]
-        if short_host != host:
-            paths.append(_get_cache_dir(reg, owner, short_host))
-        for path in paths:
-            if content:
-                value = _load_local_item(item, path)
-            else:
-                value = _locate_item(item, path)
-            if value:
-                return value
-
-    # 4/ Use SSH to load content from remote owner@host
-    # Note: It is not possible to find ".service/contact2" on the suite
-    # host, because it is installed on task host by "cylc remote-init" on
-    # demand.
-    if item != SuiteFiles.Service.CONTACT2:
-        value = _load_remote_item(item, reg, owner, host)
-        if value:
-            if not content:
-                path = _get_cache_dir(reg, owner, host)
-                _dump_item(path, item, value)
-                value = os.path.join(path, item)
-            return value
-
-    raise SuiteServiceFileError("Couldn't get %s" % item)
-
-
-def get_suite_rc(reg, suite_owner=None):
-    """Return the suite.rc path of a suite."""
+def get_flow_file(reg, suite_owner=None):
+    """Return the path of a suite's flow.cylc file."""
     return os.path.join(
         get_suite_source_dir(reg, suite_owner),
-        SuiteFiles.SUITE_RC)
+        SuiteFiles.FLOW_FILE)
 
 
 def get_suite_source_dir(reg, suite_owner=None):
@@ -372,13 +362,15 @@ def get_suite_source_dir(reg, suite_owner=None):
             # suite exists but is not yet registered
             register(reg=reg, source=suite_d)
             return suite_d
-        else:
-            raise SuiteServiceFileError("Suite not found %s" % reg)
+        raise SuiteServiceFileError(f"Suite not found: {reg}")
     else:
-        if os.path.isabs(source):
-            return source
-        else:
-            return os.path.normpath(os.path.join(srv_d, source))
+        if not os.path.isabs(source):
+            source = os.path.normpath(os.path.join(srv_d, source))
+        flow_file_path = os.path.join(source, SuiteFiles.FLOW_FILE)
+        if not os.path.exists(flow_file_path):
+            # suite exists but is probably using deprecated suite.rc
+            register(reg=reg, source=source)
+        return source
 
 
 def get_suite_srv_dir(reg, suite_owner=None):
@@ -386,27 +378,55 @@ def get_suite_srv_dir(reg, suite_owner=None):
     if not suite_owner:
         suite_owner = get_user()
     run_d = os.getenv("CYLC_SUITE_RUN_DIR")
-    if (not run_d or os.getenv("CYLC_SUITE_NAME") != reg or
-            os.getenv("CYLC_SUITE_OWNER") != suite_owner):
+    if (
+        not run_d
+        or os.getenv("CYLC_SUITE_NAME") != reg
+        or os.getenv("CYLC_SUITE_OWNER") != suite_owner
+    ):
         run_d = get_suite_run_dir(reg)
     return os.path.join(run_d, SuiteFiles.Service.DIRNAME)
 
 
-def load_contact_file(reg, owner=None, host=None, file_base=None):
+def load_contact_file(reg, owner=None, host=None):
     """Load contact file. Return data as key=value dict."""
-    if not file_base:
-        file_base = SuiteFiles.Service.CONTACT
-    file_content = get_auth_item(
-        file_base, reg, owner, host, content=True)
-    data = {}
-    for line in file_content.splitlines():
-        key, value = [item.strip() for item in line.split("=", 1)]
-        data[key] = value
-    return data
+    file_base = SuiteFiles.Service.CONTACT
+    path = get_suite_srv_dir(reg)
+    file_content = _load_local_item(file_base, path)
+    if file_content:
+        data = {}
+        for line in file_content.splitlines():
+            key, value = [item.strip() for item in line.split("=", 1)]
+            data[key] = value
+        return data
+    else:
+        raise SuiteServiceFileError("Couldn't load contact file")
+
+
+async def load_contact_file_async(reg, run_dir=None):
+    if not run_dir:
+        path = Path(
+            get_suite_srv_dir(reg),
+            SuiteFiles.Service.CONTACT
+        )
+    else:
+        path = Path(
+            run_dir,
+            SuiteFiles.Service.DIRNAME,
+            SuiteFiles.Service.CONTACT
+        )
+    try:
+        async with aiofiles.open(path, mode='r') as cont:
+            data = {}
+            async for line in cont:
+                key, value = [item.strip() for item in line.split("=", 1)]
+                data[key] = value
+            return data
+    except IOError:
+        raise SuiteServiceFileError("Couldn't load contact file")
 
 
 def parse_suite_arg(options, arg):
-    """From CLI arg "SUITE", return suite name and suite.rc path.
+    """From CLI arg "SUITE", return suite name and flow.cylc path.
 
     If arg is a registered suite, suite name is the registered name.
     If arg is a directory, suite name is the base name of the
@@ -417,13 +437,23 @@ def parse_suite_arg(options, arg):
     if arg == '.':
         arg = os.getcwd()
     try:
-        path = get_suite_rc(arg, options.suite_owner)
+        path = get_flow_file(arg, options.suite_owner)
         name = arg
     except SuiteServiceFileError:
         arg = os.path.abspath(arg)
         if os.path.isdir(arg):
-            path = os.path.join(arg, SuiteFiles.SUITE_RC)
+            path = os.path.join(arg, SuiteFiles.FLOW_FILE)
             name = os.path.basename(arg)
+            if not os.path.exists(path):
+                # Probably using deprecated suite.rc
+                path = os.path.join(arg, SuiteFiles.SUITE_RC)
+                if not os.path.exists(path):
+                    raise SuiteServiceFileError(
+                        f'no flow.cylc or suite.rc in {arg}')
+                else:
+                    LOG.warning(
+                        f'The filename "{SuiteFiles.SUITE_RC}" is deprecated '
+                        f'in favor of "{SuiteFiles.FLOW_FILE}".')
         else:
             path = arg
             name = os.path.basename(os.path.dirname(arg))
@@ -437,7 +467,7 @@ def register(reg=None, source=None, redirect=False, rundir=None):
 
     Args:
         reg (str): suite name, default basename($PWD).
-        source (str): directory location of suite.rc file, default $PWD.
+        source (str): directory location of flow.cylc file, default $PWD.
         redirect (bool): allow reuse of existing name and run directory.
         rundir (str): for overriding the default cylc-run directory.
 
@@ -446,7 +476,7 @@ def register(reg=None, source=None, redirect=False, rundir=None):
 
     Raise:
         SuiteServiceFileError:
-            No suite.rc file found in source location.
+            No flow.cylc file found in source location.
             Illegal name (can look like a relative path, but not absolute).
             Another suite already has this name (unless --redirect).
     """
@@ -464,15 +494,25 @@ def register(reg=None, source=None, redirect=False, rundir=None):
             "suite name cannot be an absolute path: %s" % reg)
 
     if source is not None:
-        if os.path.basename(source) == SuiteFiles.SUITE_RC:
+        if os.path.basename(source) == SuiteFiles.FLOW_FILE:
             source = os.path.dirname(source)
     else:
         source = os.getcwd()
 
-    # suite.rc must exist so we can detect accidentally reversed args.
+    # flow.cylc must exist so we can detect accidentally reversed args.
     source = os.path.abspath(source)
-    if not os.path.isfile(os.path.join(source, SuiteFiles.SUITE_RC)):
-        raise SuiteServiceFileError("no suite.rc in %s" % source)
+    flow_file_path = os.path.join(source, SuiteFiles.FLOW_FILE)
+    if not os.path.isfile(flow_file_path):
+        # If using deprecated suite.rc, symlink it into flow.cylc:
+        suite_rc_path = os.path.join(source, SuiteFiles.SUITE_RC)
+        if os.path.isfile(suite_rc_path):
+            os.symlink(suite_rc_path, flow_file_path)
+            LOG.warning(
+                f'The filename "{SuiteFiles.SUITE_RC}" is deprecated in favor '
+                f'of "{SuiteFiles.FLOW_FILE}". Symlink created.')
+        else:
+            raise SuiteServiceFileError(
+                f'no flow.cylc or suite.rc in {source}')
 
     # Create service dir if necessary.
     srv_d = get_suite_srv_dir(reg)
@@ -538,17 +578,41 @@ def register(reg=None, source=None, redirect=False, rundir=None):
     return reg
 
 
-def create_auth_files(reg):
-    """Create or renew passphrase and SSL files for suite 'reg'."""
-    # Suite service directory.
-    srv_d = get_suite_srv_dir(reg)
-    os.makedirs(srv_d, exist_ok=True)
+def remove_keys_on_server(keys):
+    """Removes server-held authentication keys"""
+    # WARNING, DESTRUCTIVE. Removes old keys if they already exist.
+    for k in keys.values():
+        if os.path.exists(k.full_key_path):
+            os.remove(k.full_key_path)
+    # Remove client public key folder
+    client_public_key_dir = keys["client_public_key"].key_path
+    if os.path.exists(client_public_key_dir):
+        shutil.rmtree(client_public_key_dir)
 
-    # Create a new passphrase for the suite if necessary.
-    if not _locate_item(SuiteFiles.Service.PASSPHRASE, srv_d):
-        import random
-        _dump_item(srv_d, SuiteFiles.Service.PASSPHRASE, ''.join(
-            random.sample(PASSPHRASE_CHARSET, PASSPHRASE_LEN)))
+
+def create_server_keys(keys, suite_srv_dir):
+    """Create or renew authentication keys for suite 'reg' in the .service
+     directory.
+     Generate a pair of ZMQ authentication keys"""
+
+    # ZMQ keys generated in .service directory.
+    # .service/client_public_keys will store client public keys generated on
+    # platform and sent back.
+    # ZMQ keys need to be created with stricter file permissions, changing
+    # umask default denials.
+    os.makedirs(keys["client_public_key"].key_path, exist_ok=True)
+    old_umask = os.umask(0o177)  # u=rw only set as default for file creation
+    _server_public_full_key_path, _server_private_full_key_path = (
+        zmq.auth.create_certificates(suite_srv_dir, KeyOwner.SERVER.value))
+
+    # cylc scan requires host to behave as a client, so copy public server
+    # key into client public key folder
+    server_pub_in_client_folder = keys["client_public_key"].full_key_path
+    client_host_private_key = keys["client_private_key"].full_key_path
+    shutil.copyfile(_server_private_full_key_path, client_host_private_key)
+    shutil.copyfile(_server_public_full_key_path, server_pub_in_client_folder)
+    # Return file permissions to default settings.
+    os.umask(old_umask)
 
 
 def _dump_item(path, item, value):
@@ -573,14 +637,6 @@ def _dump_item(path, item, value):
     LOG.debug('Generated %s', fname)
 
 
-def _get_cache_dir(reg, owner, host):
-    """Return the cache directory for remote suite service files."""
-    return os.path.join(
-        UserFiles.get_path(),
-        "%s@%s" % (owner, host), reg
-    )
-
-
 def get_suite_title(reg):
     """Return the the suite title without a full file parse
 
@@ -589,8 +645,7 @@ def get_suite_title(reg):
     * Assume title is not in an include-file.
     """
     title = NO_TITLE
-    for line in open(get_suite_rc(reg), 'rb'):
-        line = line.decode()
+    for line in open(get_flow_file(reg), 'r'):
         if line.lstrip().startswith("[meta]"):
             # continue : title comes inside [meta] section
             continue
@@ -603,43 +658,6 @@ def get_suite_title(reg):
     return title
 
 
-@lru_cache()
-def _is_local_auth_ok(reg, owner, host):
-    """Return True if it is OK to use local passphrase file.
-
-    Use values in ~/cylc-run/REG/.service/contact to make a judgement.
-    """
-    if is_remote(host, owner):
-        fname = os.path.join(
-            get_suite_srv_dir(reg), SuiteFiles.Service.CONTACT)
-        data = {}
-        try:
-            for line in open(fname):
-                key, value = (
-                    [item.strip() for item in line.split("=", 1)])
-                data[key] = value
-        except (IOError, ValueError):
-            # No contact file
-            return False
-        else:
-            # Contact file exists, check values match
-            if owner is None:
-                owner = get_user()
-            if host is None:
-                host = get_host()
-            host_value = data.get(ContactFileFields.HOST, "")
-            return (
-                reg == data.get(ContactFileFields.NAME) and
-                owner == data.get(ContactFileFields.OWNER) and
-                (
-                    host == host_value or
-                    host == host_value.split(".", 1)[0]  # no domain
-                )
-            )
-    else:
-        return True
-
-
 def _load_local_item(item, path):
     """Load and return content of a file (item) in path."""
     try:
@@ -647,78 +665,3 @@ def _load_local_item(item, path):
             return file_.read()
     except IOError:
         return None
-
-
-def _load_remote_item(item, reg, owner, host):
-    """Load content of service item from remote [owner@]host via SSH."""
-    if not is_remote(host, owner):
-        return
-    if host is None:
-        host = 'localhost'
-    if owner is None:
-        owner = get_user()
-    if item == SuiteFiles.Service.CONTACT and not is_remote_host(host):
-        # Attempt to read suite contact file via the local filesystem.
-        path = r'%(run_d)s/%(srv_base)s' % {
-            'run_d': get_remote_suite_run_dir('localhost', owner, reg),
-            'srv_base': SuiteFiles.Service.DIRNAME,
-        }
-        content = _load_local_item(item, path)
-        if content is not None:
-            return content
-        # Else drop through and attempt via ssh to the suite account.
-    # Prefix STDOUT to ensure returned content is relevant
-    prefix = r'[CYLC-AUTH] %(suite)s' % {'suite': reg}
-    # Attempt to cat passphrase file under suite service directory
-    script = (
-        r"""echo '%(prefix)s'; """
-        r'''cat "%(run_d)s/%(srv_base)s/%(item)s"'''
-    ) % {
-        'prefix': prefix,
-        'run_d': get_remote_suite_run_dir(host, owner, reg),
-        'srv_base': SuiteFiles.Service.DIRNAME,
-        'item': item
-    }
-    import shlex
-    command = shlex.split(
-        glbl_cfg().get_host_item('ssh command', host, owner))
-    command += ['-n', owner + '@' + host, script]
-    from subprocess import Popen, PIPE, DEVNULL  # nosec
-    try:
-        proc = Popen(
-            command, stdin=DEVNULL, stdout=PIPE, stderr=PIPE)  # nosec
-    except OSError:
-        if cylc.flow.flags.debug:
-            import traceback
-            traceback.print_exc()
-        return
-    out, err = (f.decode() for f in proc.communicate())
-    ret_code = proc.wait()
-    # Extract passphrase from STDOUT
-    # It should live in the line with the correct prefix
-    content = ""
-    can_read = False
-    for line in out.splitlines(True):
-        if can_read:
-            content += line
-        elif line.strip() == prefix:
-            can_read = True
-    if not content or ret_code:
-        LOG.debug(
-            '$ %(command)s  # code=%(ret_code)s\n%(err)s',
-            {
-                'command': command,
-                # STDOUT may contain passphrase, so not safe to print
-                # 'out': out,
-                'err': err,
-                'ret_code': ret_code,
-            })
-        return
-    return content
-
-
-def _locate_item(item, path):
-    """Locate a service item in "path"."""
-    fname = os.path.join(path, item)
-    if os.path.exists(fname):
-        return fname

@@ -1,0 +1,19 @@
+#!Jinja2
+[cylc]
+    UTC mode = True
+
+[scheduling]
+    initial cycle point=1999
+    final cycle point=1999
+    [[graph]]
+        P1Y="""sleeper:start => killer => releaser"""
+[runtime]
+    [[sleeper]]
+        script = test "${CYLC_TASK_SUBMIT_NUMBER}" -eq 2 || sleep 60
+        platform = {{ CYLC_TEST_PLATFORM }}
+        [[[job]]]
+            execution retry delays = PT1S
+    [[killer]]
+        script = cylc kill "${CYLC_SUITE_NAME}" sleeper.1999
+    [[releaser]]
+        script = wait; cylc release "${CYLC_SUITE_NAME}" sleeper.1999

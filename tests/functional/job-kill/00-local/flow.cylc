@@ -1,0 +1,26 @@
+#!Jinja2
+[cylc]
+   [[reference test]]
+       expected task failures = t1.1, t2.1, t3.1, t4.1, stop2.1
+[scheduling]
+    [[graph]]
+        R1="""
+           t1:start & t2:start => stop1 =>
+              t3:start & t4:start => stop2
+           stop2:fail => shutdown"""
+[runtime]
+    [[T]]
+        script=sleep 120 & echo $! >file; wait
+    [[t1, t2, t3, t4]]
+        inherit=T
+    [[stop1]]
+        script="""
+# Kill t1.1 and t2.1 explicitly.
+cylc kill $CYLC_SUITE_NAME t1.1 t2.1 || true"""
+    [[stop2]]
+        script="""
+# Kill t3.1, t4.1, and myself! implicitly (kill all active tasks).
+cylc kill $CYLC_SUITE_NAME || true
+sleep 30"""
+    [[shutdown]]
+        script = "cylc stop $CYLC_SUITE_NAME"

@@ -1,0 +1,37 @@
+[cylc]
+   [[reference test]]
+       expected task failures = fixable-1a.1, fixable-1b.1, fixable-2a.1, fixable-2b.1, fixable-3.1, loser.1
+[scheduling]
+    [[graph]]
+        R1 = """
+# Unhandled failures stay around for retriggering by "fixer"
+fixer
+FIXABLES:succeed-all & loser:fail => Z
+"""
+[runtime]
+    [[FIXABLES]]
+        script = test "${CYLC_TASK_SUBMIT_NUMBER}" -eq 2
+    [[FIXABLE-1, FIXABLE-2, FIXABLE-3]]
+        inherit = FIXABLES
+    [[fixable-1a, fixable-1b]]
+        inherit = FIXABLE-1
+    [[fixable-2a, fixable-2b]]
+        inherit = FIXABLE-2
+    [[fixable-3]]
+        inherit = FIXABLE-3
+    [[fixer]]
+        script = """
+wait
+cylc__job__poll_grep_suite_log '\[fixable-1a\.1\].* (received)failed'
+cylc__job__poll_grep_suite_log '\[fixable-1b\.1\].* (received)failed'
+cylc__job__poll_grep_suite_log '\[fixable-2a\.1\].* (received)failed'
+cylc__job__poll_grep_suite_log '\[fixable-2b\.1\].* (received)failed'
+cylc__job__poll_grep_suite_log '\[fixable-3\.1\].* (received)failed'
+cylc trigger "${CYLC_SUITE_NAME}" '1/FIXABLE-1' '1/fixable-2*' '1/fixable-3'
+"""
+    [[loser]]
+        script = false
+    [[Z]]
+        script = true
+    [[z1, z2]]
+        inherit = Z

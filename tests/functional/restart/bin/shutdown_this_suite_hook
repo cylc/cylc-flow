@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+cylc shutdown --kill --max-polls=30 --interval=2 "$2"

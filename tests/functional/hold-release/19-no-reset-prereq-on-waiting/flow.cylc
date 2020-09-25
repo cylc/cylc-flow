@@ -1,0 +1,27 @@
+[meta]
+    title = Test cylc hold/release remembers satisfied dependencies
+[cylc]
+    [[events]]
+        abort on stalled = True
+        abort on timeout = True
+        timeout = PT1M
+[scheduling]
+    [[graph]]
+        R1 = """
+spawner => t1
+holder => t1
+holder => releaser
+"""
+[runtime]
+    [[spawner, t1]]
+        script = true
+    [[holder]]
+        script = """
+cylc__job__poll_grep_suite_log -F 'spawned t1.1'
+cylc hold "${CYLC_SUITE_NAME}" 't1.1'
+"""
+    [[releaser]]
+        script = """
+wait
+cylc release "${CYLC_SUITE_NAME}" 't1.1'
+"""

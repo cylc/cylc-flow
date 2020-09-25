@@ -1,0 +1,18 @@
+[meta]
+    title = queue size reload test
+    description = """change graphing order via a reload."""
+
+[scheduling]
+    [[graph]]
+        R1 = reloader => inter => bar => foo # marker
+[runtime]
+    [[reloader]]
+        script = """
+# change the order of foo and bar in the graphing section:
+perl -pi -e 's/(R1 = reloader => inter => )bar => foo( # marker)/\1foo => bar\2/' $CYLC_SUITE_DEF_PATH/flow.cylc
+# reload
+cylc reload "${CYLC_SUITE_NAME}"
+cylc__job__poll_grep_suite_log -F 'Reload completed'
+"""
+    [[foo, bar]]
+        script = true

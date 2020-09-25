@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,7 +13,16 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Background job submission and manipulation."""
+"""Runs task job scripts as Unix background processes.
+
+.. cylc-scope:: flow.cylc[runtime][<namespace>][job]
+
+If an :cylc:conf:`execution time limit` is specified for a task, its job will
+be wrapped by the ``timeout`` command.
+
+.. cylc-scope::
+
+"""
 
 import errno
 import os
@@ -21,7 +30,7 @@ import re
 from subprocess import Popen, STDOUT, DEVNULL
 
 
-class BgCommandHandler(object):
+class BgCommandHandler:
     """Background job submission and manipulation.
 
     Run a task job as a nohup background process in its own process group.

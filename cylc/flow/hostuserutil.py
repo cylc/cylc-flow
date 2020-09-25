@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -53,7 +53,7 @@ from time import time
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 
 
-class HostUtil(object):
+class HostUtil:
     """host and user ID utility."""
 
     EXPIRE = 3600.0  # singleton expires in 1 hour by default
@@ -131,7 +131,7 @@ class HostUtil(object):
         """Return the preferred identifier for the suite (or current) host.
 
         As specified by the "suite host self-identification" settings in the
-        site/user flow.rc files. This is mainly used for suite host
+        site/user global.cylc files. This is mainly used for suite host
         identification by task jobs.
 
         """
@@ -209,9 +209,23 @@ class HostUtil(object):
                 self.remote_users[name] = True
         return self.remote_users[name]
 
-    def is_remote(self, host, owner):
-        """Shorthand: is_remote_host(host) or is_remote_user(owner)."""
-        return self.is_remote_host(host) or self.is_remote_user(owner)
+    def _is_remote_platform(self, platform):
+        """Return True if any job host in platform have different IP address
+        to the current host.
+
+        Return False if name is None.
+        Return True if host is unknown.
+
+        Todo:
+            Should this fail miserably if some hosts are remote and some are
+            not?
+        """
+        if not platform:
+            return False
+        for host in platform['hosts']:
+            if is_remote_host(host) is True:
+                return True
+        return False
 
 
 def get_host_ip_by_name(target):
@@ -244,9 +258,9 @@ def get_user_home():
     return HostUtil.get_inst().get_user_home()
 
 
-def is_remote(host, owner):
-    """Shorthand for HostUtil.get_inst().is_remote(host, owner)."""
-    return HostUtil.get_inst().is_remote(host, owner)
+def is_remote_platform(platform):
+    """Shorthand for HostUtil.get_inst()._is_remote_platform(host, owner)."""
+    return HostUtil.get_inst()._is_remote_platform(platform)
 
 
 def is_remote_host(name):

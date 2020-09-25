@@ -1,0 +1,39 @@
+#!/usr/bin/env python3
+# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""USAGE: cylc function-run <name> <json-args> <json-kwargs> <src-dir>
+
+INTERNAL USE (asynchronous external trigger function execution)
+
+Run a Python function "<name>(*args, **kwargs)" in the process pool. It must be
+defined in a module of the same name. Positional and keyword arguments must be
+passed in as JSON strings. <src-dir> is the suite source dir, needed to find
+local xtrigger modules.
+"""
+import sys
+
+from cylc.flow.subprocpool import run_function
+
+
+def main():
+    if sys.argv[1] in ["help", "--help"] or len(sys.argv) != 5:
+        print(__doc__)
+        sys.exit(0)
+    run_function(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+
+
+if __name__ == "__main__":
+    main()

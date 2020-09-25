@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,26 +16,29 @@
 
 """Date-time cycling by point, interval, and sequence classes."""
 
+from functools import lru_cache
 import re
 
-from metomi.isodatetime.data import Calendar, Duration
+from metomi.isodatetime.data import Calendar, Duration, CALENDAR
 from metomi.isodatetime.dumpers import TimePointDumper
 from metomi.isodatetime.timezone import (
     get_local_time_zone, get_local_time_zone_format, TimeZoneFormatMode)
+from metomi.isodatetime.exceptions import IsodatetimeError
 from cylc.flow.time_parser import CylcTimeParser
 from cylc.flow.cycling import (
     PointBase, IntervalBase, SequenceBase, ExclusionBase, cmp_to_rich, cmp
 )
 from cylc.flow.exceptions import (
-    SequenceDegenerateError, PointParsingError, IntervalParsingError
+    CylcConfigError,
+    IntervalParsingError,
+    PointParsingError,
+    SequenceDegenerateError
 )
 from cylc.flow.wallclock import get_current_time_string
 from cylc.flow.parsec.validate import IllegalValueError
 
 CYCLER_TYPE_ISO8601 = "iso8601"
 CYCLER_TYPE_SORT_KEY_ISO8601 = "b"
-
-MEMOIZE_LIMIT = 10000
 
 DATE_TIME_FORMAT = "CCYYMMDDThhmm"
 EXPANDED_DATE_TIME_FORMAT = "+XCCYYMMDDThhmm"
@@ -45,7 +48,7 @@ WARNING_PARSE_EXPANDED_YEAR_DIGITS = (
     "(incompatible with [cylc]cycle point num expanded year digits = %s ?)")
 
 
-class SuiteSpecifics(object):
+class SuiteSpecifics:
 
     """Store suite-setup-specific constants and utilities here."""
     ASSUMED_TIME_ZONE = None
@@ -56,32 +59,6 @@ class SuiteSpecifics(object):
     point_parser = None
     recurrence_parser = None
     iso8601_parsers = None
-
-
-def memoize(function):
-    """This stores results for a given set of inputs to a function.
-
-    The inputs and results of the function must be immutable.
-    Keyword arguments are not allowed.
-
-    To avoid memory leaks, only the first 10000 separate input
-    permutations are cached for a given function.
-
-    """
-    inputs_results = {}
-
-    def _wrapper(*args):
-        """Cache results for function(*args)."""
-        try:
-            return inputs_results[args]
-        except KeyError:
-            results = function(*args)
-            if len(inputs_results) > MEMOIZE_LIMIT:
-                # Full up, no more room.
-                inputs_results.popitem()
-            inputs_results[args] = results
-            return results
-    return _wrapper
 
 
 class ISO8601Point(PointBase):
@@ -116,7 +93,7 @@ class ISO8601Point(PointBase):
         """Reformat self.value into a standard representation."""
         try:
             self.value = str(point_parse(self.value))
-        except ValueError as exc:
+        except IsodatetimeError as exc:
             if self.value.startswith("+") or self.value.startswith("-"):
                 message = WARNING_PARSE_EXPANDED_YEAR_DIGITS % (
                     SuiteSpecifics.NUM_EXPANDED_YEAR_DIGITS)
@@ -137,7 +114,7 @@ class ISO8601Point(PointBase):
         return hash(self.value)
 
     @staticmethod
-    @memoize
+    @lru_cache(10000)
     def _iso_point_add(point_string, interval_string):
         """Add the parsed point_string to the parsed interval_string."""
         point = point_parse(point_string)
@@ -145,7 +122,7 @@ class ISO8601Point(PointBase):
         return str(point + interval)
 
     @staticmethod
-    @memoize
+    @lru_cache(10000)
     def _iso_point_cmp(point_string, other_point_string):
         """Compare the parsed point_string to the other one."""
         point = point_parse(point_string)
@@ -153,7 +130,7 @@ class ISO8601Point(PointBase):
         return cmp(point, other_point)
 
     @staticmethod
-    @memoize
+    @lru_cache(10000)
     def _iso_point_sub_interval(point_string, interval_string):
         """Return the parsed point_string minus the parsed interval_string."""
         point = point_parse(point_string)
@@ -161,7 +138,7 @@ class ISO8601Point(PointBase):
         return str(point - interval)
 
     @staticmethod
-    @memoize
+    @lru_cache(10000)
     def _iso_point_sub_point(point_string, other_point_string):
         """Return the difference between the two parsed point strings."""
         point = point_parse(point_string)
@@ -209,7 +186,7 @@ class ISO8601Interval(IntervalBase):
         """Format self.value into a standard representation."""
         try:
             self.value = str(interval_parse(self.value))
-        except ValueError:
+        except IsodatetimeError:
             raise IntervalParsingError(type(self), self.value)
         return self
 
@@ -243,7 +220,7 @@ class ISO8601Interval(IntervalBase):
         return self._iso_interval_nonzero(self.value)
 
     @staticmethod
-    @memoize
+    @lru_cache(10000)
     def _iso_interval_abs(interval_string, other_interval_string):
         """Return the absolute (non-negative) value of an interval_string."""
         interval = interval_parse(interval_string)
@@ -253,7 +230,7 @@ class ISO8601Interval(IntervalBase):
         return interval_string
 
     @staticmethod
-    @memoize
+    @lru_cache(10000)
     def _iso_interval_add(interval_string, other_interval_string):
         """Return one parsed interval_string plus the other one."""
         interval = interval_parse(interval_string)
@@ -261,7 +238,7 @@ class ISO8601Interval(IntervalBase):
         return str(interval + other)
 
     @staticmethod
-    @memoize
+    @lru_cache(10000)
     def _iso_interval_cmp(interval_string, other_interval_string):
         """Compare one parsed interval_string with the other one."""
         interval = interval_parse(interval_string)
@@ -269,7 +246,7 @@ class ISO8601Interval(IntervalBase):
         return cmp(interval, other)
 
     @staticmethod
-    @memoize
+    @lru_cache(10000)
     def _iso_interval_sub(interval_string, other_interval_string):
         """Subtract one parsed interval_string from the other one."""
         interval = interval_parse(interval_string)
@@ -277,14 +254,14 @@ class ISO8601Interval(IntervalBase):
         return str(interval - other)
 
     @staticmethod
-    @memoize
+    @lru_cache(10000)
     def _iso_interval_mul(interval_string, factor):
         """Multiply one parsed interval_string's values by factor."""
         interval = interval_parse(interval_string)
         return str(interval * factor)
 
     @staticmethod
-    @memoize
+    @lru_cache(10000)
     def _iso_interval_nonzero(interval_string):
         """Return whether the parsed interval_string is a null interval."""
         interval = interval_parse(interval_string)
@@ -383,13 +360,13 @@ class ISO8601Sequence(SequenceBase):
         try:
             exclusion_start_point = ISO8601Point.from_nonstandard_string(
                 str(self.recurrence.start_point))
-        except ValueError:
+        except IsodatetimeError:
             exclusion_start_point = self.context_start_point
 
         try:
             exclusion_end_point = ISO8601Point.from_nonstandard_string(
                 str(self.recurrence.end_point))
-        except ValueError:
+        except IsodatetimeError:
             exclusion_end_point = self.context_end_point
 
         self.exclusions = []
@@ -432,6 +409,7 @@ class ISO8601Sequence(SequenceBase):
         if self.exclusions:
             self.value += '!' + str(self.exclusions)
 
+    @lru_cache(100)
     def is_on_sequence(self, point):
         """Return True if point is on-sequence."""
         # Iterate starting at recent valid points, for speed.
@@ -658,115 +636,76 @@ def _get_old_anchor_step_recurrence(anchor, step, start_point):
     return str(anchor_point) + "/" + str(step)
 
 
-def ingest_time(value, my_now=None):
+def ingest_time(value, now=None):
+    """Handle relative, truncated and prev/next cycle points.
+
+    Args:
+        value (str):
+            The string containing the prev()/next() stuff.
+        now (metomi.isodatetime.data.TimePoint):
+            A time point to use as the context for resolving the value.
+
     """
-    Allows for relative and truncated cycle points,
-    and cycle point as an offset from 'now'
-    """
-
-    # Send back integer cycling, date-only, and expanded datetimes.
-    if re.match(r"\d+$", value):
-        # Could be an old date-time cycle point format, or integer format.
-        return value
-    if (value.startswith("-") or value.startswith("+")) and "P" not in value:
-        # Expanded year
-        return value
-
-    parser = SuiteSpecifics.point_parser
-    offset = None
-
-    if my_now is None:
-        my_now = parser.parse(get_current_time_string())
-    else:
-        my_now = parser.parse(my_now)
-
     # remove extraneous whitespace from cycle point
     value = value.replace(" ", "")
+    parser = SuiteSpecifics.point_parser
+
+    # integer point or old-style date-time cycle point format
+    is_integer = bool(re.match(r"\d+$", value))
+    # iso8601 expanded year
+    is_expanded = (
+        (value.startswith("-") or value.startswith("+"))
+        and "P" not in value
+    )
+    # prev() or next()
+    is_prev_next = "next" in value or "previous" in value
+    # offset from now (±P...)
+    is_offset = value.startswith("P") or value.startswith("-P")
+
+    if (
+        is_integer
+        or is_expanded
+    ):
+        # we don't need to do any fancy processing
+        return value
+
+    # parse the timepoint if needed
+    if is_prev_next or is_offset:
+        # `value` isn't necessarily valid ISO8601
+        timepoint = None
+        is_truncated = None
+    else:
+        timepoint = parser.parse(value)
+        # missing date-time components off the front (e.g. 01T00)
+        is_truncated = timepoint.truncated
+
+    if not any((is_prev_next, is_offset, is_truncated)):
+        return value
+
+    if now is None:
+        now = parser.parse(get_current_time_string())
+    else:
+        now = parser.parse(now)
 
     # correct for year in 'now' if year only,
     # or year and time, specified in input
     if re.search(r"\(-\d{2}[);T]", value):
-        my_now.year = my_now.year + 1
+        now.year += 1
 
     # correct for month in 'now' if year and month only,
     # or year, month and time, specified in input
     elif re.search(r"\(-\d{4}[);T]", value):
-        my_now.month_of_year = my_now.month_of_year + 1
+        now.month_of_year += 1
 
-    if "next" in value or "previous" in value:
-
-        # break down cycle point into constituent parts.
-        direction, tmp = value.split("(")
-        tmp, offset = tmp.split(")")
-
-        if offset.strip() == '':
-            offset = None
-        else:
-            offset = offset.strip()
-
-        timepoints = tmp.split(";")
-
-        # for use with 'previous' below.
-        go_back = {
-            "minute_of_hour": "PT1M",
-            "hour_of_day": "PT1H",
-            "day_of_week": "P1D",
-            "day_of_month": "P1D",
-            "day_of_year": "P1D",
-            "week_of_year": "P1W",
-            "month_of_year": "P1M",
-            "year_of_decade": "P1Y",
-            "decade_of_century": "P10Y",
-            "year_of_century": "P1Y",
-            "century": "P100Y"}
-
-        for i_time, my_time in enumerate(timepoints):
-            parsed_point = parser.parse(my_time.strip())
-            timepoints[i_time] = parsed_point + my_now
-
-            if direction == 'previous':
-                # for 'previous' determine next largest unit,
-                # from go_back dict (defined outside 'for' loop), and
-                # subtract 1 of it from each timepoint
-                duration_parser = SuiteSpecifics.interval_parser
-                next_unit = parsed_point.get_smallest_missing_property_name()
-
-                timepoints[i_time] = (
-                    timepoints[i_time] -
-                    duration_parser.parse(go_back[next_unit]))
-
-        my_diff = [abs(my_time - my_now) for my_time in timepoints]
-
-        my_cp = timepoints[my_diff.index(min(my_diff))]
-
-        # ensure truncated dates do not have
-        # time from 'now' included'
-        if 'T' not in value.split(')')[0]:
-            my_cp.hour_of_day = 0
-            my_cp.minute_of_hour = 0
-            my_cp.second_of_minute = 0
-        # ensure month and day from 'now' are not included
-        # where they did not appear in the truncated datetime
-        # NOTE: this may break when the order of tick over
-        # for time point is reversed!!!
-        # https://github.com/metomi/isodatetime/pull/101
-        # case 1 - year only
-        if re.search(r"\(-\d{2}[);T]", value):
-            my_cp.month_of_year = 1
-            my_cp.day_of_month = 1
-        # case 2 - month only or year and month
-        elif re.search(r"\(-(-\d{2}|\d{4})[;T)]", value):
-            my_cp.day_of_month = 1
-
-    elif value.startswith("P") or value.startswith("-P"):
-        my_cp = my_now
+    # perform whatever transformation is required
+    offset = None
+    if is_prev_next:
+        cycle_point, offset = prev_next(value, now, parser)
+    elif is_offset:
+        cycle_point = now
         offset = value
-
-    else:
-        timepoint = parser.parse(value)
-        if timepoint.truncated is False:
-            return value
-        my_cp = my_now + timepoint
+    else:  # is_truncated
+        cycle_point = now + timepoint
 
     if offset is not None:
         # add/subtract offset duration to/from chosen timepoint
@@ -774,9 +713,97 @@ def ingest_time(value, my_now=None):
 
         offset = offset.replace('+', '')
         offset = duration_parser.parse(offset)
-        my_cp = my_cp + offset
+        cycle_point = cycle_point + offset
 
-    return str(my_cp)
+    return str(cycle_point)
+
+
+def prev_next(value, now, parser):
+    """Handle prev() and next() syntax.
+
+    Args:
+        value (str):
+            The string containing the prev()/next() stuff.
+        now (metomi.isodatetime.data.TimePoint):
+            A time point to use as the context for resolving the value.
+        parser (metomi.isodatetime.parsers.TimePointParser):
+            A time point parser.
+
+    Returns
+        tuple - (cycle_point, offset)
+
+    """
+    # are we in gregorian mode (or some other eccentric calendar
+    if CALENDAR.mode != Calendar.MODE_GREGORIAN:
+        raise CylcConfigError(
+            'prev()/next() syntax must be used with integer or gregorian'
+            f' cycling modes ("{value}")'
+        )
+
+    # break down cycle point into constituent parts.
+    direction, tmp = value.split("(")
+    tmp, offset = tmp.split(")")
+
+    if offset.strip() == '':
+        offset = None
+    else:
+        offset = offset.strip()
+
+    timepoints = tmp.split(";")
+
+    # for use with 'previous' below.
+    go_back = {
+        "minute_of_hour": "PT1M",
+        "hour_of_day": "PT1H",
+        "day_of_week": "P1D",
+        "day_of_month": "P1D",
+        "day_of_year": "P1D",
+        "week_of_year": "P1W",
+        "month_of_year": "P1M",
+        "year_of_decade": "P1Y",
+        "decade_of_century": "P10Y",
+        "year_of_century": "P1Y",
+        "century": "P100Y"}
+
+    for i_time, my_time in enumerate(timepoints):
+        parsed_point = parser.parse(my_time.strip())
+        timepoints[i_time] = parsed_point + now
+
+        if direction == 'previous':
+            # for 'previous' determine next largest unit,
+            # from go_back dict (defined outside 'for' loop), and
+            # subtract 1 of it from each timepoint
+            duration_parser = SuiteSpecifics.interval_parser
+            next_unit = parsed_point.get_smallest_missing_property_name()
+
+            timepoints[i_time] = (
+                timepoints[i_time] -
+                duration_parser.parse(go_back[next_unit]))
+
+    my_diff = [abs(my_time - now) for my_time in timepoints]
+
+    cycle_point = timepoints[my_diff.index(min(my_diff))]
+
+    # ensure truncated dates do not have
+    # time from 'now' included'
+    if 'T' not in value.split(')')[0]:
+        cycle_point.hour_of_day = 0
+        cycle_point.minute_of_hour = 0
+        cycle_point.second_of_minute = 0
+    # ensure month and day from 'now' are not included
+    # where they did not appear in the truncated datetime
+    # NOTE: this may break when the order of tick over
+    # for time point is reversed!!!
+    # https://github.com/metomi/isodatetime/pull/101
+    # case 1 - year only
+    if re.search(r"\(-\d{2}[);T]", value):
+        cycle_point.month_of_year = 1
+        cycle_point.day_of_month = 1
+    # case 2 - month only or year and month
+    elif re.search(r"\(-(-\d{2}|\d{4})[;T)]", value):
+        cycle_point.day_of_month = 1
+
+    return cycle_point, offset
 
 
 def init_from_cfg(cfg):
@@ -843,11 +870,16 @@ def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None,
     )
 
 
+def get_dump_format():
+    """Return cycle point string dump format."""
+    return SuiteSpecifics.DUMP_FORMAT
+
+
 def get_point_relative(offset_string, base_point):
     """Create a point from offset_string applied to base_point."""
     try:
         interval = ISO8601Interval(str(interval_parse(offset_string)))
-    except ValueError:
+    except IsodatetimeError:
         return ISO8601Point(str(
             SuiteSpecifics.abbrev_util.parse_timepoint(
                 offset_string, context_point=_point_parse(base_point.value))
@@ -879,7 +911,7 @@ def is_offset_absolute(offset_string):
         return False
 
 
-@memoize
+@lru_cache(10000)
 def _interval_parse(interval_string):
     """Parse an interval_string into a proper Duration object."""
     return SuiteSpecifics.interval_parser.parse(interval_string)
@@ -890,7 +922,7 @@ def point_parse(point_string):
     return _point_parse(point_string).copy()
 
 
-@memoize
+@lru_cache(10000)
 def _point_parse(point_string):
     """Parse a point_string into a proper TimePoint object."""
     if "%" in SuiteSpecifics.DUMP_FORMAT:
@@ -898,7 +930,7 @@ def _point_parse(point_string):
         try:
             return SuiteSpecifics.point_parser.strptime(
                 point_string, SuiteSpecifics.DUMP_FORMAT)
-        except ValueError:
+        except IsodatetimeError:
             pass
     # Attempt to parse it in ISO 8601 format.
     return SuiteSpecifics.point_parser.parse(point_string)

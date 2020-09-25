@@ -1,0 +1,19 @@
+[cylc]
+   [[reference test]]
+       expected task failures = rem2.1
+[scheduling]
+    [[graph]]
+        R1 = """rem1 => rem2
+                   rem2:start => killer => !rem2
+                   """
+[runtime]
+    [[ATSETTINGS]]
+        platform = testplat
+    [[rem1]]
+        inherit = ATSETTINGS
+        script = "sleep 10; true"
+    [[rem2]]
+        inherit = ATSETTINGS
+        script = "sleep 30"
+    [[killer]]
+        script = cylc kill "$CYLC_SUITE_NAME" 'rem2'; sleep 10

@@ -1,0 +1,14 @@
+# Time out with an unhandled failure.
+[cylc]
+    [[events]]
+        abort on timeout = True
+        timeout = PT1S
+[scheduling]
+    [[graph]]
+        R1 = "foo"
+[runtime]
+    [[foo]]
+        script = "false"
+        [[[simulation]]]
+            fail cycle points = 1
+            default run length = PT0S

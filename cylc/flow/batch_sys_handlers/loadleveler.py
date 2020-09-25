@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,7 +13,50 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Loadleveler job submission"""
+"""Submits task job scripts to loadleveler by the ``llsubmit`` command.
+
+.. cylc-scope:: flow.cylc[runtime][<namespace>][job]
+
+Loadleveler directives can be provided in the flow.cylc file:
+
+.. code-block:: cylc
+
+   [runtime]
+       [[my_task]]
+           [[[job]]]
+               batch system = loadleveler
+               execution time limit = PT10M
+           [[[directives]]]
+               foo = bar
+               baz = qux
+
+These are written to the top of the task job script like this:
+
+.. code-block:: bash
+
+   #!/bin/bash
+   # DIRECTIVES
+   # @ foo = bar
+   # @ baz = qux
+   # @ wall_clock_limit = 660,600
+   # @ queue
+
+If ``restart=yes`` is specified as a directive for loadleveler, the job will
+automatically trap SIGUSR1, which loadleveler may use to preempt the job. On
+trapping SIGUSR1, the job will inform the suite that it has been vacated by
+loadleveler. This will put it back to the submitted state, until it starts
+running again.
+
+If :cylc:conf:`execution time limit` is specified, it is used to generate the
+``wall_clock_limit`` directive. The setting is assumed to be the soft limit.
+The hard limit will be set by adding an extra minute to the soft limit.  Do not
+specify the ``wall_clock_limit`` directive explicitly if :cylc:conf:`execution
+time limit` is specified. Otherwise, the execution time limit known by the
+suite may be out of sync with what is submitted to the batch system.
+
+.. cylc-scope::
+
+"""
 
 import re
 

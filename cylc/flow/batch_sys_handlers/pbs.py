@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,12 +13,49 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""PBS batch system job submission and manipulation."""
+"""Submits task job scripts to PBS (or Torque) by the ``qsub`` command.
+
+.. cylc-scope:: flow.cylc[runtime][<namespace>][job]
+
+PBS directives can be provided in the flow.cylc file:
+
+.. code-block:: cylc
+
+   [runtime]
+       [[my_task]]
+           [[[job]]]
+               batch system = pbs
+               execution time limit = PT1M
+           [[[directives]]]
+               -V =
+               -q = foo
+               -l nodes = 1
+
+These are written to the top of the task job script like this:
+
+.. code-block:: bash
+
+   #!/bin/bash
+   # DIRECTIVES
+   #PBS -V
+   #PBS -q foo
+   #PBS -l nodes=1
+   #PBS -l walltime=60
+
+If :cylc:conf:`execution time limit` is specified, it is used to generate the
+``-l walltime`` directive. Do not specify the ``-l walltime`` directive
+explicitly if :cylc:conf:`execution time limit` is specified.  Otherwise, the
+execution time limit known by the suite may be out of sync with what is
+submitted to the batch system.
+
+.. cylc-scope::
+
+"""
 
 import re
 
 
-class PBSHandler(object):
+class PBSHandler:
 
     """PBS batch system job submission and manipulation."""
 
@@ -26,12 +63,10 @@ class PBSHandler(object):
     # PBS fails a job submit if job "name" in "-N name" is too long.
     # For version 12 or below, this is 15 characters.
     # You can modify this in the site/user `global.cfg` like this
-    # [hosts]
-    #     [[the-name-of-my-pbs-host]]
-    #         [[[batch systems]]]
-    #             [[[[pbs]]]]
-    #                # E.g.: PBS 11
-    #                job name length maximum = 15
+    # [platforms]
+    #     [[the-name-of-my-pbs-platform]]
+    #         batch system = pbs
+    #         job name length maximum = 15
     JOB_NAME_LEN_MAX = 236
     KILL_CMD_TMPL = "qdel '%(job_id)s'"
     # N.B. The "qstat JOB_ID" command returns 1 if JOB_ID is no longer in the
@@ -47,8 +82,7 @@ class PBSHandler(object):
         directives = job_conf["directives"].__class__()  # an ordereddict
 
         directives["-N"] = job_conf["task_id"] + "." + job_conf["suite_name"]
-        job_name_len_max = job_conf['batch_system_conf'].get(
-            "job name length maximum", self.JOB_NAME_LEN_MAX)
+        job_name_len_max = job_conf['platform']["job name length maximum"]
         if job_name_len_max:
             directives["-N"] = directives["-N"][0:job_name_len_max]
 

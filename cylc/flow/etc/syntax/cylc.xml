@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE language SYSTEM "language.dtd">
-<language name="Cylc suite.rc" section="Configuration" extensions="suite*.rc" mimetype="" version="1.0" kateversion="2.0" author="" license="GPL">
+<language name="Cylc flow.cylc" section="Configuration" extensions="suite*.rc;*.cylc" mimetype="" version="1.0" kateversion="2.0" author="" license="GPL">
 
 <!-- For use with Kate. To use it, place or symlink this file in ~/.kde/share/apps/katepart/syntax/,
  or if possible, /usr/share/kde4/apps/katepart/syntax/ -->
@@ -9,7 +9,7 @@
 
     <contexts>
       <context name="File" attribute="Normal Text" lineEndContext="#stay">
-        <!-- To regenerate this keyword list, create a minimal suite.rc file and run something like:
+        <!-- To regenerate this keyword list, create a minimal flow.cylc file and run something like:
         cylc get-config my-minimal-suite | sed "/^[^=]*$/d; s/=.*//g; s/^ *//g; s/ *$//g" | sort -r | uniq | sed "s/\(.*\)/<RegExpr attribute='Keyword' String=' \1 '\/>/g"
         The sort is in reverse order to allow longer keywords to take precedence over sub-sets. -->
 
@@ -122,7 +122,6 @@
         <RegExpr attribute='Keyword' String=' abort if stalled handler fails '/>
         <RegExpr attribute='Keyword' String=' abort if shutdown handler fails '/>
         <RegExpr attribute='Keyword' String=' abort if inactivity handler fails '/>
-        <RegExpr attribute='Keyword' String=' abort if any task fails '/>
         <RegExpr attribute='Keyword' String=' UTC mode '/>
         <RegExpr attribute='Keyword' String=' URL '/>
         <!-- Non-keyword syntax -->
@@ -159,7 +158,7 @@
       <itemData name="String" defStyleNum="dsString" />
     </itemDatas>
   </highlighting>
-  
+
   <general>
     <comments>
       <comment name="multiLine" start="{#" end="#}"/>

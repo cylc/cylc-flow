@@ -2,7 +2,7 @@
 # coding=utf-8
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -42,33 +42,61 @@ def find_version(*file_paths):
 
 
 install_requires = [
+    'aiofiles==0.5.*',
     'ansimarkup>=1.0.0',
-    'colorama==0.4.*',
+    'colorama>=0.4,<=1',
+    'click>=7.0',
     'graphene>=2.1,<3',
-    'metomi-isodatetime==1!2.0.*',
-    'jinja2>=2.10.1, <2.11.0',
-    'markupsafe==1.1.*',
-    'protobuf==3.9.*',
-    'python-jose==3.0.*',
-    'pyzmq==18.0.*'
+    'jinja2==2.11.*',
+    'metomi-isodatetime>=1!2.0.2, <1!2.1.0',
+    'protobuf==3.12.1',
+    'pyuv==1.4.*',
+    'pyzmq==18.1.*',
+    'psutil>=5.6.0',
+    'urwid==2.*'
 ]
 tests_require = [
-    'codecov==2.0.*',
-    'coverage==4.5.*',
-    'pytest-cov==2.6.*',
-    'pytest==4.4.*',
-    'pycodestyle==2.5.*',
-    'testfixtures==6.6.*'
+    'async-timeout>=3.0.0',
+    'async_generator',
+    'codecov>=2.0.0',
+    'coverage>=5.0.0',
+    'flake8>=3.0.0',
+    'pycodestyle>=2.5.0',
+    'pytest-asyncio>=0.14.0',
+    'pytest-cov>=2.8.0',
+    'pytest-xdist>=2',
+    'pytest>=6',
+    'testfixtures>=6.11.0'
 ]
 
 extra_requires = {
-    'empy': ['EmPy==3.3.*'],
+    'empy': [
+        'EmPy==3.3.*'
+    ],
     'all': [],
-    'report-timings': ['pandas==0.25.*']
+    'report-timings': [
+        'pandas==1.*'
+    ],
+    'main_loop-log_data_store': [
+        'pympler',
+        'matplotlib'
+    ],
+    'main_loop-log_main_loop': [
+        'matplotlib'
+    ],
+    'main_loop-log_memory': [
+        'pympler',
+        'matplotlib'
+    ]
 }
-extra_requires['all'] += extra_requires['empy']
-extra_requires['all'] += tests_require
-extra_requires['all'] += extra_requires['report-timings']
+extra_requires['all'] = (
+    tests_require
+    + list({
+        req
+        for reqs in extra_requires.values()
+        for req in reqs
+    })
+)
 
 
 setup(

@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,8 +19,22 @@ import os
 import logging
 
 
-LOG = logging.getLogger('cylc')  # Acceptable?
+CYLC_LOG = 'cylc'
+LOG = logging.getLogger(CYLC_LOG)
 LOG.addHandler(logging.NullHandler())  # Start with a null handler
+
+LOG_LEVELS = {
+    "INFO": logging.INFO,
+    "NORMAL": logging.INFO,
+    "WARNING": logging.WARNING,
+    "ERROR": logging.ERROR,
+    "CRITICAL": logging.CRITICAL,
+    "DEBUG": logging.DEBUG,
+}
+
+# Used widely with data element ID (internally and externally),
+# scope may widen further with internal and CLI adoption.
+ID_DELIM = '|'
 
 
 def environ_init():
@@ -58,4 +72,4 @@ def environ_path_add(dirs, key='PATH'):
 
 environ_init()
 
-__version__ = "8.0a1"
+__version__ = '8.0a3.dev'

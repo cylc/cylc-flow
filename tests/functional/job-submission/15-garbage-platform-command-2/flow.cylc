@@ -1,0 +1,12 @@
+[cylc]
+    [[parameters]]
+        i = 1..5
+[scheduling]
+    [[graph]]
+        R1 = foo<i>
+[runtime]
+    [[foo<i>]]
+        script = true
+        platform = $(my-host-select)
+        [[[job]]]
+            submission retry delays = PT10S

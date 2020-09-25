@@ -1,0 +1,26 @@
+#!Jinja2
+[cylc]
+{% if GLOBALCFG is not defined %}
+    [[main loop]]
+        [[[health check]]]
+            interval = PT10S
+{% endif %}{# not GLOBALCFG is not defined #}
+    [[events]]
+        abort on stalled = False
+        abort on timeout = True
+        timeout = PT1M
+
+[scheduling]
+    [[graph]]
+        R1 = t1
+
+[runtime]
+    [[t1]]
+        script = """
+wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
+# Corrupt port file and don't report back to suite
+SRVD="$RUN_DIR/${CYLC_SUITE_NAME}/.service"
+echo 'Haha! I have corrupted the port file!' >"${SRVD}/contact"
+trap '' EXIT
+exit
+"""

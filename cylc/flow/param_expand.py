@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -88,7 +88,7 @@ def item_in_iterable(item, itt):
     return int(item) in (int(i) for i in itt)
 
 
-class NameExpander(object):
+class NameExpander:
     """Handle parameter expansion in runtime namespace headings."""
 
     def __init__(self, parameters):
@@ -256,7 +256,7 @@ class NameExpander(object):
         return tmpl % used
 
 
-class GraphExpander(object):
+class GraphExpander:
     """Handle parameter expansion of graph string lines."""
 
     _REMOVE = -32768

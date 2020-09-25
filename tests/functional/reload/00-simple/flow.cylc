@@ -1,0 +1,8 @@
+[scheduling]
+    [[graph]]
+        R1 = "a => b => c"
+[runtime]
+    [[a,c]]
+        script = "true"
+    [[b]]
+        script = "cylc reload $CYLC_SUITE_NAME; sleep 5"

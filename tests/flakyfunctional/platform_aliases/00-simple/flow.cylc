@@ -1,0 +1,28 @@
+[meta]
+purpose = """suite should stop in a held state, so that the test can
+    repeatedly retrigger task_with_platform_alias to check that it gets
+    submitted to a different platform each time.
+    """
+
+[cylc]
+    UTC mode = True
+    [[events]]
+        abort on stalled = True
+
+[scheduling]
+    [[dependencies]]
+        [[[R1]]]
+            graph = """
+            task_with_platform_alias => holder => end
+            """
+
+[runtime]
+    [[task_with_platform_alias]]
+        script = true
+        platform = test_alias
+        [[[remote]]]
+            retrieve job logs = true
+    [[holder]]
+        script = cylc hold "${CYLC_SUITE_NAME}"
+    [[end]]
+        script = true

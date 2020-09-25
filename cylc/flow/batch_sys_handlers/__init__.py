@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,4 +13,19 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""This package contains handlers for various batch systems."""
+"""Cylc provides support for the following batch system handlers.
+
+.. autosummary::
+   :toctree: batch-sys-handlers
+   :template: automodule_batch_sys_handlers.rst
+
+   cylc.flow.batch_sys_handlers.at
+   cylc.flow.batch_sys_handlers.background
+   cylc.flow.batch_sys_handlers.loadleveler
+   cylc.flow.batch_sys_handlers.lsf
+   cylc.flow.batch_sys_handlers.moab
+   cylc.flow.batch_sys_handlers.pbs
+   cylc.flow.batch_sys_handlers.sge
+   cylc.flow.batch_sys_handlers.slurm
+
+"""

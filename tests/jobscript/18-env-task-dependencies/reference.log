@@ -1,6 +1,0 @@
-2018-01-24T16:31:47Z INFO - Initial point: 1
-2018-01-24T16:31:47Z INFO - Final point: 1
-2018-01-24T16:31:47Z INFO - [qux.1] -triggered off []
-2018-01-24T16:31:47Z INFO - [bar.1] -triggered off []
-2018-01-24T16:31:47Z INFO - [baz.1] -triggered off []
-2018-01-24T16:31:51Z INFO - [foo.1] -triggered off ['bar.1', 'baz.1']

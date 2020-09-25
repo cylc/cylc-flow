@@ -1,0 +1,13 @@
+[scheduling]
+    [[graph]]
+        R1=foo
+
+[runtime]
+    [[foo]]
+        script="""
+cylc broadcast "${CYLC_SUITE_NAME}" -s '[environment]CYLC_TEST_VAR=1'
+cp -p "${CYLC_SUITE_DEF_PATH}/flow-2.cylc" "${CYLC_SUITE_DEF_PATH}/flow.cylc"
+cylc reload "${CYLC_SUITE_NAME}"
+sleep 5
+cylc trigger "${CYLC_SUITE_NAME}" 'bar.1'
+"""

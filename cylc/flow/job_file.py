@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,17 +19,18 @@ import os
 import re
 import stat
 from subprocess import Popen, PIPE, DEVNULL
+from textwrap import dedent
 
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.batch_sys_manager import BatchSysManager
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flow.flags
 from cylc.flow.pathutil import (
     get_remote_suite_run_dir,
     get_remote_suite_work_dir)
+from cylc.flow.config import interpolate_template, ParamExpandError
 
 
-class JobFileWriter(object):
+class JobFileWriter:
 
     """Write task job files."""
 
@@ -55,21 +56,22 @@ class JobFileWriter(object):
         # Access to cylc must be configured before user environment so
         # that cylc commands can be used in defining user environment
         # variables: NEXT_CYCLE=$( cylc cycle-point --offset-hours=6 )
-
-        tmp_name = local_job_file_path + '.tmp'
-        run_d = get_remote_suite_run_dir(
-            job_conf['host'], job_conf['owner'], job_conf['suite_name'])
+        platform = job_conf['platform']
+        tmp_name = os.path.expandvars(local_job_file_path + '.tmp')
+        run_d = get_remote_suite_run_dir(platform, job_conf['suite_name'])
         try:
             with open(tmp_name, 'w') as handle:
                 self._write_header(handle, job_conf)
                 self._write_directives(handle, job_conf)
+                self._write_reinvocation(handle)
                 self._write_prelude(handle, job_conf)
-                self._write_environment_1(handle, job_conf, run_d)
+                self._write_suite_environment(handle, job_conf, run_d)
+                self._write_task_environment(handle, job_conf)
                 self._write_global_init_script(handle, job_conf)
                 # suite bin access must be before runtime environment
                 # because suite bin commands may be used in variable
                 # assignment expressions: FOO=$(command args).
-                self._write_environment_2(handle, job_conf)
+                self._write_runtime_environment(handle, job_conf)
                 self._write_script(handle, job_conf)
                 self._write_epilogue(handle, job_conf, run_d)
         except IOError as exc:
@@ -83,7 +85,7 @@ class JobFileWriter(object):
         if check_syntax:
             try:
                 with Popen(
-                        ['/bin/bash', '-n', tmp_name],
+                        ['/usr/bin/env', 'bash', '-n', tmp_name],
                         stderr=PIPE, stdin=DEVNULL) as proc:
                     if proc.wait():
                         # This will leave behind the temporary file,
@@ -93,7 +95,7 @@ class JobFileWriter(object):
                 # Popen has a bad habit of not telling you anything if it fails
                 # to run the executable.
                 if exc.filename is None:
-                    exc.filename = '/bin/bash'
+                    exc.filename = 'bash'
                 # Remove temporary file
                 try:
                     os.unlink(tmp_name)
@@ -105,7 +107,7 @@ class JobFileWriter(object):
             os.stat(tmp_name).st_mode |
             stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
         os.chmod(tmp_name, mode)
-        os.rename(tmp_name, local_job_file_path)
+        os.rename(tmp_name, os.path.expandvars(local_job_file_path))
 
     @staticmethod
     def _check_script_value(value):
@@ -118,12 +120,6 @@ class JobFileWriter(object):
         return False
 
     @staticmethod
-    def _get_host_item(job_conf, key):
-        """Return host item from glbl_cfg()."""
-        return glbl_cfg().get_host_item(
-            key, job_conf["host"], job_conf["owner"])
-
-    @staticmethod
     def _write_header(handle, job_conf):
         """Write job script header."""
         handle.write("#!/bin/bash -l\n")
@@ -133,9 +129,9 @@ class JobFileWriter(object):
                 ("# Task: ", job_conf['task_id']),
                 (BatchSysManager.LINE_PREFIX_JOB_LOG_DIR, job_conf['job_d']),
                 (BatchSysManager.LINE_PREFIX_BATCH_SYS_NAME,
-                 job_conf['batch_system_name']),
+                 job_conf['platform']['batch system']),
                 (BatchSysManager.LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL,
-                 job_conf['batch_submit_command_template']),
+                 job_conf['platform']['batch submit command template']),
                 (BatchSysManager.LINE_PREFIX_EXECUTION_TIME_LIMIT,
                  job_conf['execution_time_limit'])]:
             if value:
@@ -149,6 +145,22 @@ class JobFileWriter(object):
             for line in lines:
                 handle.write('\n' + line)
 
+    def _write_reinvocation(self, handle):
+        """Re-invoke using user determined bash interpreter."""
+        # NOTE this must be done after the directives are written out
+        # due to the way slurm reads directives
+        # NOTE we cannot do /usr/bin/env bash because we need to use the -l
+        # option and GNU env doesn't support additional arguments (recent
+        # versions permit this with the -S option similar to BSD env but we
+        # cannot make the jump to this until is it more widely adopted)
+        handle.write(dedent('''
+            if [[ $1 == 'noreinvoke' ]]; then
+                shift
+            else
+                exec bash -l "$0" noreinvoke "$@"
+            fi
+        '''))
+
     def _write_prelude(self, handle, job_conf):
         """Job script prelude."""
         # Variables for traps
@@ -158,8 +170,7 @@ class JobFileWriter(object):
         if vacation_signals_str:
             handle.write("\nCYLC_VACATION_SIGNALS='%s'" % vacation_signals_str)
         # Path to cylc executable, if defined.
-        cylc_exec = glbl_cfg().get_host_item(
-            'cylc executable', job_conf["host"], job_conf["owner"])
+        cylc_exec = job_conf['platform']['cylc executable']
         if not cylc_exec.endswith('cylc'):
             raise ValueError(
                 f'ERROR: bad cylc executable in global config: {cylc_exec}')
@@ -170,12 +181,11 @@ class JobFileWriter(object):
         if cylc.flow.flags.debug:
             handle.write("\nexport CYLC_DEBUG=true")
         handle.write("\nexport CYLC_VERSION='%s'" % CYLC_VERSION)
-        for key in self._get_host_item(
-                job_conf, 'copyable environment variables'):
+        for key in job_conf['platform']['copyable environment variables']:
             if key in os.environ:
                 handle.write("\nexport %s='%s'" % (key, os.environ[key]))
 
-    def _write_environment_1(self, handle, job_conf, run_d):
+    def _write_suite_environment(self, handle, job_conf, run_d):
         """Suite and task environment."""
         handle.write("\n\ncylc__job__inst__cylc_env() {")
         handle.write("\n    # CYLC SUITE ENVIRONMENT:")
@@ -190,27 +200,34 @@ class JobFileWriter(object):
         handle.write('\n')
         # override and write task-host-specific suite variables
         work_d = get_remote_suite_work_dir(
-            job_conf["host"], job_conf["owner"], job_conf['suite_name'])
+            job_conf["platform"], job_conf['suite_name'])
         handle.write('\n    export CYLC_SUITE_RUN_DIR="%s"' % run_d)
         if work_d != run_d:
             # Note: not an environment variable, but used by job.sh
-            handle.write('\n    CYLC_SUITE_WORK_DIR_ROOT="%s"' % work_d)
+            handle.write(
+                '\n    export CYLC_SUITE_WORK_DIR_ROOT="%s"' % work_d
+            )
         if job_conf['remote_suite_d']:
             handle.write(
                 '\n    export CYLC_SUITE_DEF_PATH="%s"' %
                 job_conf['remote_suite_d'])
         else:
             # replace home dir with '$HOME' for evaluation on the task host
+            cylc_suite_def_path = os.environ['CYLC_SUITE_DEF_PATH']
+            if cylc_suite_def_path.startswith(os.environ['HOME']):
+                cylc_suite_def_path = cylc_suite_def_path.replace(
+                    os.environ['HOME'],
+                    '${HOME}'
+                )
             handle.write(
-                '\n    export CYLC_SUITE_DEF_PATH="%s"' %
-                os.environ['CYLC_SUITE_DEF_PATH'].replace(
-                    os.environ['HOME'], '${HOME}'))
+                '\n    export CYLC_SUITE_DEF_PATH="%s"' % cylc_suite_def_path)
         handle.write(
             '\n    export CYLC_SUITE_DEF_PATH_ON_SUITE_HOST="%s"' %
             os.environ['CYLC_SUITE_DEF_PATH'])
         handle.write(
             '\n    export CYLC_SUITE_UUID="%s"' % job_conf['uuid_str'])
 
+    def _write_task_environment(self, handle, job_conf):
         handle.write("\n\n    # CYLC TASK ENVIRONMENT:")
         handle.write('\n    export CYLC_TASK_JOB="%s"' % job_conf['job_d'])
         handle.write(
@@ -221,10 +238,8 @@ class JobFileWriter(object):
             ' '.join(job_conf['dependencies']))
         handle.write(
             '\n    export CYLC_TASK_TRY_NUMBER=%s' % job_conf['try_num'])
-        # Custom parameter environment variables
-        for var, tmpl in job_conf['param_env_tmpl'].items():
-            handle.write('\n    export %s="%s"' % (
-                var, tmpl % job_conf['param_var']))
+        handle.write(
+            '\n    export CYLC_TASK_FLOW_LABEL=%s' % job_conf['flow_label'])
         # Standard parameter environment variables
         for var, val in job_conf['param_var'].items():
             handle.write('\n    export CYLC_TASK_PARAM_%s="%s"' % (var, val))
@@ -235,8 +250,7 @@ class JobFileWriter(object):
         handle.write("\n}")
 
     @staticmethod
-    def _write_environment_2(handle, job_conf):
-        """Run time environment part 2."""
+    def _write_runtime_environment(handle, job_conf):
         if job_conf['environment']:
             handle.write("\n\ncylc__job__inst__user_env() {")
             # Generate variable assignment expressions
@@ -255,21 +269,33 @@ class JobFileWriter(object):
             #   BAR=$(script_using_FOO)
             handle.write("\n    export")
             for var in job_conf['environment']:
-                handle.write(" " + var)
+                handle.write(f' {var}')
             for var, val in job_conf['environment'].items():
-                value = str(val)  # (needed?)
-                value = JobFileWriter._get_variable_value_definition(value)
-                handle.write('\n    %s=%s' % (var, value))
+                value = JobFileWriter._get_variable_value_definition(
+                    str(val), job_conf.get('param_var', {})
+                )
+                handle.write(f'\n    {var}={value}')
             handle.write("\n}")
 
     @staticmethod
-    def _get_variable_value_definition(value):
-        """Create a quoted command which handles '~'
+    def _get_variable_value_definition(value, param_vars):
+        """Return a properly-quoted command which handles parameter environment
+        templates and the '~' character.
+
         Args:
-            value: value to assign to a variable
-        Returns:
-            str: Properly handled '~' value
+            value (str): value to assign to a variable
+            param_vars (dict): parameter variables ( job_conf['param_vars'] )
         """
+        # Interpolate any parameter environment template variables:
+        if param_vars:
+            try:
+                value = interpolate_template(value, param_vars)
+            except ParamExpandError:
+                # Already logged warnings in
+                # cylc.flow.config.SuiteConfig.check_param_env_tmpls()
+                pass
+
+        # Handle '~':
         match = re.match(r"^(~[^/\s]*/)(.*)$", value)
         if match:
             # ~foo/bar or ~/bar
@@ -299,8 +325,7 @@ class JobFileWriter(object):
     @classmethod
     def _write_global_init_script(cls, handle, job_conf):
         """Global Init-script."""
-        global_init_script = cls._get_host_item(
-            job_conf, 'global init-script')
+        global_init_script = job_conf['platform']['global init-script']
         if cls._check_script_value(global_init_script):
             handle.write("\n\ncylc__job__inst__global_init_script() {")
             handle.write("\n# GLOBAL-INIT-SCRIPT:\n")

@@ -1,0 +1,24 @@
+#!Jinja2
+{% set SITE_DIRECTIVES = environ['CYLC_TEST_BATCH_SITE_DIRECTIVES'] %}
+[cylc]
+   [[reference test]]
+       expected task failures = rem2.1
+[scheduling]
+    [[graph]]
+        R1 = """rem1 => rem2
+                   rem2:start => killer => !rem2
+                   """
+[runtime]
+    [[SLURM_SETTINGS]]
+        platform = slurm-test-platform
+        [[[directives]]]
+            --time = 02:00
+            {{SITE_DIRECTIVES}}
+    [[rem1]]
+        inherit = SLURM_SETTINGS
+        script = "sleep 10; true"
+    [[rem2]]
+        inherit = SLURM_SETTINGS
+        script = "sleep 30"
+    [[killer]]
+        script = cylc kill "$CYLC_SUITE_NAME" 'rem2'; sleep 10

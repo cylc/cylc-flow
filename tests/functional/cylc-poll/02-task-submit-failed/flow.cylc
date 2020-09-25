@@ -1,0 +1,24 @@
+[cylc]
+    [[reference test]]
+        expected task failures = foo.1
+[scheduling]
+    [[graph]]
+        R1 = """
+            foo:submit => kill_foo_submit => poll_foo
+            foo:submit-fail => stop
+        """
+            
+[runtime]
+    [[foo]]
+        platform = crocodile
+    [[poll_foo]]
+        script = wait; cylc poll "$CYLC_SUITE_NAME" 'foo'
+    [[stop]]
+        script = cylc stop $CYLC_SUITE_NAME
+    [[kill_foo_submit]]
+        script = """
+            wait
+            ID=$(sed -n "s/^CYLC_BATCH_SYS_JOB_ID=//p" \
+                 $CYLC_SUITE_RUN_DIR/log/job/1/foo/01/job.status)
+            atrm $ID
+        """

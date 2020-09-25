@@ -1,5 +1,0 @@
-
-[foo]
-    [[bar]]
-        baz = BAZ
-        qux = QUX

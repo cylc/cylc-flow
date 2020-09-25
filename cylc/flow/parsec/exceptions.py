@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -124,8 +124,9 @@ class IncludeFileNotFoundError(ParsecError):
     def __init__(self, flist):
         """Missing include file error.
 
-        E.g. for [DIR/top.rc, DIR/inc/sub.rc, DIR/inc/gone.rc]
-        "Include-file not found: inc/gone.rc via inc/sub.rc from DIR/top.rc"
+        E.g. for [DIR/top.cylc, DIR/inc/sub.cylc, DIR/inc/gone.cylc]
+        "Include-file not found: inc/gone.cylc via inc/sub.cylc from
+        DIR/top.cylc"
         """
         rflist = copy(flist)
         top_file = rflist[0]

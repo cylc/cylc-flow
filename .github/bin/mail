@@ -1,0 +1,44 @@
+#!/usr/bin/env python3
+
+"""Mock the mailx / mailutils `mail` command"""
+
+import argparse
+import smtplib
+import sys
+import os
+
+parser = argparse.ArgumentParser(
+    description='Cylc functional tests mail command.')
+parser.add_argument(
+    '-s', metavar='subject', dest='subject', type=str, help='e-mail subject')
+parser.add_argument(
+    '-r', metavar='reply_to', dest='sender', type=str,
+    help='e-mail reply-to address')
+parser.add_argument(
+    'to', metavar='to', type=str, help='e-mail destination address')
+parser.add_argument(
+    'body', metavar='body', nargs='?', type=argparse.FileType('r'),
+    default=sys.stdin, help='e-mail body')
+
+smtp_server = os.getenv('smtp')
+try:
+    host, port = smtp_server.split(':')
+    port = int(port)
+except (AttributeError, ValueError):
+    raise OSError(
+        'The environment variable "smtp" must be set to a string of the form '
+        '"host:port" (e.g. "localhost:8025") for the mocked mail command '
+        'to work.')
+
+args = parser.parse_args()
+
+sender_email = args.sender
+receiver_email = args.to
+message = f"""\
+Subject: {args.subject}
+
+{args.body.read()}"""
+
+# https://realpython.com/python-send-email/
+with smtplib.SMTP(host, port) as server:
+    server.sendmail(sender_email, receiver_email, message)

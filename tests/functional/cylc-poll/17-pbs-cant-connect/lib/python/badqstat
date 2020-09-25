@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+echo 'Connection refused' >&2
+exit 1

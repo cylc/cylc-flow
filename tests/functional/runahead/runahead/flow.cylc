@@ -1,0 +1,19 @@
+[cylc]
+    cycle point time zone = Z
+    [[events]]
+        timeout = PT30S
+        abort on timeout = True
+[scheduling]
+    max active cycle points = 4
+    initial cycle point = 20100101T00
+    final cycle point = 20100105T00
+    [[graph]]
+        PT6H = """
+   # oops makes a bar spawn as waiting, to hold back the runahead
+           foo & oops => bar
+           """
+[runtime]
+    [[foo]]
+        script = false
+    [[bar]]
+        script = true

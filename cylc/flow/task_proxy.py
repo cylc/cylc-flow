@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,31 +16,30 @@
 
 """Provide a class to represent a task proxy in a running suite."""
 
+from time import time
+
 from metomi.isodatetime.timezone import get_local_time_zone
 
 import cylc.flow.cycling.iso8601
-from cylc.flow.exceptions import TaskProxySequenceBoundsError
+from cylc.flow.platforms import get_platform
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_action_timer import TimerFlags
 from cylc.flow.task_state import (
     TaskState,
-    TASK_STATUS_WAITING
-)
+    TASK_STATUS_WAITING,
+    TASK_OUTPUT_FAILED,
+    TASK_OUTPUT_SUCCEEDED)
 from cylc.flow.wallclock import get_unix_time_from_time_string as str2time
 
 
-class TaskProxy(object):
+class TaskProxy:
     """Represent an instance of a cycling task in a running suite.
 
     Attributes:
-        .cleanup_cutoff (cylc.flow.cycling.PointBase):
-            Cycle point beyond which this task can be removed from the pool.
         .clock_trigger_time (float):
             Clock trigger time in seconds since epoch.
         .expire_time (float):
             Time in seconds since epoch when this task is considered expired.
-        .has_spawned (boolean):
-            Has this task spawned its successor in the sequence?
         .identity (str):
             Task ID in NAME.POINT syntax.
         .is_late (boolean):
@@ -72,8 +71,6 @@ class TaskProxy(object):
             This attribute provides a useful link to the latest replacement
             instance while the current object may still be referenced by a job
             manipulation command.
-        .stop_point (cylc.flow.cycling.PointBase):
-            Do not spawn successor beyond this point.
         .submit_num (int):
             Number of times the task has attempted job submission.
         .summary (dict):
@@ -87,8 +84,8 @@ class TaskProxy(object):
                 Latest job exit time.
             finished_time_string (str):
                 Latest job exit time as string.
-            job_hosts (dict):
-                Jobs' owner@host by submit number.
+            platforms_used (dict):
+                Jobs' platform by submit number.
             label (str):
                 The .point attribute as string.
             latest_message (str):
@@ -113,10 +110,8 @@ class TaskProxy(object):
                 Same as the .tdef.rtconfig['meta']['title'] attribute.
         .state (cylc.flow.task_state.TaskState):
             Object representing the state of this task.
-        .task_host (str)
-            Name of host where latest job is submitted.
-        .task_owner (str)
-            Name of user (at task_host) where latest job is submitted.
+        .platform (dict)
+            Dict containing info for platform where latest job is submitted.
         .tdef (cylc.flow.taskdef.TaskDef):
             The definition object of this task.
         .timeout (float):
@@ -125,6 +120,14 @@ class TaskProxy(object):
         .try_timers (dict)
             Retry schedules as cylc.flow.task_action_timer.TaskActionTimer
             objects.
+        .graph_children (dict)
+            graph children: {msg: [(name, point), ...]}
+        .failure_handled (bool)
+            task failure is handled (by children)
+        .flow_label (str)
+            flow label
+        .reflow (bool)
+            flow on from outputs
 
     Arguments:
         tdef (cylc.flow.taskdef.TaskDef):
@@ -136,12 +139,6 @@ class TaskProxy(object):
             Task state string.
         is_held (bool):
             True if the task is held, else False.
-        has_spawned (boolean):
-            Has this task spawned its successor in the sequence.
-        stop_point (cylc.flow.cycling.PointBase):
-            Do not spawn successor beyond this point.
-        is_startup (boolean):
-            Is this on start up?
         submit_num (int):
             Number of times the task has attempted job submission.
         late_time (float):
@@ -151,10 +148,8 @@ class TaskProxy(object):
 
     # Memory optimization - constrain possible attributes to this list.
     __slots__ = [
-        'cleanup_cutoff',
         'clock_trigger_time',
         'expire_time',
-        'has_spawned',
         'identity',
         'is_late',
         'is_manual_submit',
@@ -171,48 +166,32 @@ class TaskProxy(object):
         'submit_num',
         'tdef',
         'state',
-        'stop_point',
         'summary',
-        'task_host',
+        'platform',
         'task_owner',
         'timeout',
         'try_timers',
+        'graph_children',
+        'failure_handled',
+        'flow_label',
+        'reflow',
     ]
 
-    def __init__(
-            self, tdef, start_point, status=TASK_STATUS_WAITING,
-            is_held=False, has_spawned=False, stop_point=None,
-            is_startup=False, submit_num=0, is_late=False):
+    def __init__(self, tdef, start_point, flow_label,
+                 status=TASK_STATUS_WAITING, is_held=False,
+                 submit_num=0, is_late=False, reflow=True):
         self.tdef = tdef
         if submit_num is None:
             submit_num = 0
         self.submit_num = submit_num
         self.jobs = []
-
-        if is_startup:
-            # adjust up to the first on-sequence cycle point
-            adjusted = []
-            for seq in self.tdef.sequences:
-                adj = seq.get_first_point(start_point)
-                if adj:
-                    # may be None if out of sequence bounds
-                    adjusted.append(adj)
-            if not adjusted:
-                # This task is out of sequence bounds
-                raise TaskProxySequenceBoundsError(self.tdef.name)
-            self.point = min(adjusted)
-            self.late_time = None
-        else:
-            self.point = start_point
-        self.cleanup_cutoff = self.tdef.get_cleanup_cutoff_point(self.point)
+        self.flow_label = flow_label
+        self.reflow = reflow
+        self.point = start_point
         self.identity = TaskID.get(self.tdef.name, self.point)
 
-        self.has_spawned = has_spawned
         self.reload_successor = None
         self.point_as_seconds = None
-
-        # Manually inserted tasks may have a final cycle point set.
-        self.stop_point = stop_point
 
         self.manual_trigger = False
         self.is_manual_submit = False
@@ -225,15 +204,16 @@ class TaskProxy(object):
             'finished_time': None,
             'finished_time_string': None,
             'logfiles': [],
-            'job_hosts': {},
+            'platforms_used': {},
             'execution_time_limit': None,
             'batch_sys_name': None,
-            'submit_method_id': None
+            'submit_method_id': None,
+            'flow_label': None
         }
 
         self.local_job_file_path = None
 
-        self.task_host = 'localhost'
+        self.platform = get_platform()
         self.task_owner = None
 
         self.job_vacated = False
@@ -251,20 +231,46 @@ class TaskProxy(object):
 
         self.state = TaskState(tdef, self.point, status, is_held)
 
+        # Determine graph children of this task (for spawning).
+        self.graph_children = {}
+        for seq, dout in tdef.graph_children.items():
+            for output, downs in dout.items():
+                if output not in self.graph_children:
+                    self.graph_children[output] = []
+                for name, trigger in downs:
+                    child_point = trigger.get_child_point(self.point, seq)
+                    is_abs = (trigger.offset_is_absolute or
+                              trigger.offset_is_from_icp)
+                    if is_abs:
+                        if trigger.get_parent_point(self.point) != self.point:
+                            # If 'foo[^] => bar' only spawn off of '^'.
+                            continue
+                    if seq.is_on_sequence(child_point):
+                        # E.g.: foo should trigger only on T06:
+                        #   PT6H = "waz"
+                        #   T06 = "waz[-PT6H] => foo"
+                        self.graph_children[output].append(
+                            (name, child_point, is_abs))
+
         if tdef.sequential:
-            # Adjust clean-up cutoff.
-            p_next = None
-            adjusted = []
+            # Add next-instance child.
+            nexts = []
             for seq in tdef.sequences:
                 nxt = seq.get_next_point(self.point)
-                if nxt:
-                    # may be None if beyond the sequence bounds
-                    adjusted.append(nxt)
-            if adjusted:
-                p_next = min(adjusted)
-                if (self.cleanup_cutoff is not None and
-                        self.cleanup_cutoff < p_next):
-                    self.cleanup_cutoff = p_next
+                if nxt is not None:
+                    # Within sequence bounds.
+                    nexts.append(nxt)
+            if nexts:
+                if TASK_OUTPUT_SUCCEEDED not in self.graph_children:
+                    self.graph_children[TASK_OUTPUT_SUCCEEDED] = []
+                self.state.outputs.add(TASK_OUTPUT_SUCCEEDED)
+                self.graph_children[TASK_OUTPUT_SUCCEEDED].append(
+                    (tdef.name, min(nexts), False))
+
+        if TASK_OUTPUT_FAILED in self.graph_children:
+            self.failure_handled = True
+        else:
+            self.failure_handled = False
 
     def __str__(self):
         """Stringify using "self.identity"."""
@@ -274,13 +280,12 @@ class TaskProxy(object):
         """Copy attributes to successor on reload of this task proxy."""
         self.reload_successor = reload_successor
         reload_successor.submit_num = self.submit_num
-        reload_successor.has_spawned = self.has_spawned
         reload_successor.manual_trigger = self.manual_trigger
         reload_successor.is_manual_submit = self.is_manual_submit
         reload_successor.summary = self.summary
         reload_successor.local_job_file_path = self.local_job_file_path
         reload_successor.try_timers = self.try_timers
-        reload_successor.task_host = self.task_host
+        reload_successor.platform = self.platform
         reload_successor.task_owner = self.task_owner
         reload_successor.job_vacated = self.job_vacated
         reload_successor.poll_timer = self.poll_timer
@@ -288,6 +293,8 @@ class TaskProxy(object):
         reload_successor.state.outputs = self.state.outputs
         reload_successor.state.is_held = self.state.is_held
         reload_successor.state.is_updated = self.state.is_updated
+        reload_successor.state.prerequisites = self.state.prerequisites
+        reload_successor.graph_children = self.graph_children
 
     @staticmethod
     def get_offset_as_seconds(offset):
@@ -322,28 +329,6 @@ class TaskProxy(object):
                 self.point_as_seconds += utc_offset_in_seconds
         return self.point_as_seconds
 
-    def get_state_summary(self):
-        """Return a dict containing the state summary of this task proxy."""
-        ret = self.summary.copy()
-        ret['name'] = self.tdef.name
-        ret['description'] = self.tdef.rtconfig['meta']['description']
-        ret['title'] = self.tdef.rtconfig['meta']['title']
-        ret['label'] = str(self.point)
-        ret['submit_num'] = self.submit_num
-        ret['state'] = self.state.status
-        ret['is_held'] = self.state.is_held
-        ret['spawned'] = str(self.has_spawned)
-        ntimes = len(self.tdef.elapsed_times)
-        if ntimes:
-            ret['mean_elapsed_time'] = (
-                float(sum(self.tdef.elapsed_times)) / ntimes)
-        elif ret['execution_time_limit']:
-            ret['mean_elapsed_time'] = float(
-                ret['execution_time_limit'])
-        else:
-            ret['mean_elapsed_time'] = None
-        return ret
-
     def get_try_num(self):
         """Return the number of automatic tries (try number)."""
         try:
@@ -364,7 +349,7 @@ class TaskProxy(object):
             p_next = min(adjusted)
         return p_next
 
-    def is_ready(self, now):
+    def is_ready(self):
         """Am I in a pre-run state but ready to run?
 
         Queued tasks are not counted as they've already been deemed ready.
@@ -375,10 +360,10 @@ class TaskProxy(object):
         if self.state.is_held:
             return False
         if self.state.status in self.try_timers:
-            return self.try_timers[self.state.status].is_delay_done(now)
+            return self.try_timers[self.state.status].is_delay_done()
         return (
             self.state(TASK_STATUS_WAITING)
-            and self.is_waiting_clock_done(now)
+            and self.is_waiting_clock_done()
             and self.is_waiting_prereqs_done())
 
     def reset_manual_trigger(self):
@@ -410,7 +395,7 @@ class TaskProxy(object):
             self.summary[event_key + '_time'] = float(str2time(time_str))
         self.summary[event_key + '_time_string'] = time_str
 
-    def is_waiting_clock_done(self, now):
+    def is_waiting_clock_done(self):
         """Is this task done waiting for its clock trigger time?
 
         Return True if there is no clock trigger or when clock trigger is done.
@@ -421,7 +406,13 @@ class TaskProxy(object):
             self.clock_trigger_time = (
                 self.get_point_as_seconds() +
                 self.get_offset_as_seconds(self.tdef.clocktrigger_offset))
-        return now >= self.clock_trigger_time
+        return time() >= self.clock_trigger_time
+
+    def is_task_prereqs_not_done(self):
+        """Is this task waiting on other-task prerequisites?"""
+        return (len(self.state.prerequisites) > 0 and
+                not all(pre.is_satisfied()
+                for pre in self.state.prerequisites))
 
     def is_waiting_prereqs_done(self):
         """Is this task waiting for its prerequisites?"""

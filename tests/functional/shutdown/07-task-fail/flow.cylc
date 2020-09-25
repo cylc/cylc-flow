@@ -1,0 +1,16 @@
+[cylc]
+    [[events]]
+        abort on timeout = True
+        timeout = PT1M
+
+[scheduling]
+    [[graph]]
+        R1 = t1:finish => t2
+
+[runtime]
+    [[t1]]
+        script = false
+        [[[events]]]
+            failed handler = echo 'Unfortunately %(id)s %(event)s'
+    [[t2]]
+        script = true

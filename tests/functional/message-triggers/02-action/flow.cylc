@@ -1,0 +1,20 @@
+[cylc]
+    [[events]]
+        abort on inactivity = True
+        inactivity = PT30S
+[scheduling]
+    [[graph]]
+         R1 = """
+            foo:a => bar
+            foo:b & bar => baz"""
+[runtime]
+    [[foo]]
+        script = """
+cylc message "the quick brown fox"
+cylc message "jumped over the lazy dog"
+"""
+        [[[outputs]]]
+            a = "the quick brown fox"
+            b = "jumped over the lazy dog"
+    [[bar]]
+    [[baz]]

@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ def empyprocess(flines, dir_, template_vars=None):
         ftempl.close()
         xtempl.close()
 
-    suiterc = []
+    flow_config = []
     for line in xsuite.splitlines():
         # EmPy leaves blank lines where source lines contain
         # only EmPy code; this matters if line continuation
@@ -55,7 +55,7 @@ def empyprocess(flines, dir_, template_vars=None):
             continue
             # restoring newlines here is only necessary for display by
         # the cylc view command:
-        # ##suiterc.append(line + '\n')
-        suiterc.append(line)
+        # ##flow_config.append(line + '\n')
+        flow_config.append(line)
 
-    return suiterc
+    return flow_config

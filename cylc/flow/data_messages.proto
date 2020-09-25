@@ -1,0 +1,323 @@
+syntax = "proto3";
+
+/* THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+ Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.*/
+
+/* Protobuf message definitions
+ *
+ * The original intention of these messages is for use as data elements sent
+ * to and used in resolving GraphQL queries at the UI Server.
+ *
+ * This file is not needed at runtime. It is used to generate python protobuf
+ * message modules.
+ *
+ * Command:
+ * $ protoc --experimental_allow_proto3_optional -I=./ --python_out=./ data_messages.proto
+ *
+ * Pre-compiled protoc binary may be download from:
+ * https://github.com/protocolbuffers/protobuf/releases
+ *
+ * If merge/rebase conflicts arise, then regenerate the module.
+ * (DO NOT manually resolve conflicts)
+ *
+ *
+ * WARNING: Avoid re-indexing existing fields!
+ *    - Field numbers do not need to be continuous/sequential (gaps are fine).
+ *    - These numbers are used by the client to know which field they correspond to,
+ *      so changing them can break back-compatibility (i.e. already running or old UIS).
+ *    - If in doubt, just leave the current fields as is, and just take a number
+ *      not in use for new fields.
+ *
+ * https://developers.google.com/protocol-buffers/docs/proto3#assigning_field_numbers
+ *
+ *
+ * */
+
+
+// Query type messages
+message PbMeta {
+    optional string title = 1;
+    optional string description = 2;
+    optional string URL = 3;
+    optional string user_defined = 4;
+}
+
+message PbTimeZone {
+    optional int32 hours = 1;
+    optional int32 minutes = 2;
+    optional string string_basic = 3;
+    optional string string_extended = 4;
+}
+
+message PbWorkflow {
+    optional string stamp = 1;
+    optional string id = 2;
+    optional string name = 3;
+    optional string status = 4;
+    optional string host = 5;
+    optional int32 port = 6;
+    optional string owner = 7;
+    repeated string tasks = 8;
+    repeated string families = 9;
+    optional PbEdges edges = 10;
+    optional int32 api_version = 11;
+    optional string cylc_version = 12;
+    optional double last_updated = 13;
+    optional PbMeta meta = 14;
+    optional string newest_runahead_cycle_point = 15;
+    optional string newest_cycle_point = 16;
+    optional string oldest_cycle_point = 17;
+    optional bool reloaded = 18;
+    optional string run_mode = 19;
+    optional string cycling_mode = 20;
+    map<string, int32> state_totals = 21;
+    optional string workflow_log_dir = 22;
+    optional PbTimeZone time_zone_info = 23;
+    optional int32 tree_depth = 24;
+    repeated string job_log_names = 25;
+    repeated string ns_def_order = 26;
+    repeated string states = 27;
+    repeated string task_proxies = 28;
+    repeated string family_proxies = 29;
+    optional string status_msg = 30;
+    optional int32 is_held_total = 31;
+    repeated string jobs = 32;
+    optional int32 pub_port = 33;
+    optional string broadcasts = 34;
+}
+
+message PbJob {
+    optional string stamp = 1;
+    optional string id = 2;
+    optional int32 submit_num = 3;
+    optional string state = 4;
+    optional string task_proxy = 5;
+    optional string submitted_time = 6;
+    optional string started_time = 7;
+    optional string finished_time = 8;
+    optional string batch_sys_job_id = 9;
+    optional string batch_sys_name = 10;
+    optional string env_script = 11;
+    optional string err_script = 12;
+    optional string exit_script = 13;
+    optional float execution_time_limit = 14;
+    optional string host = 15;
+    optional string init_script = 16;
+    optional string job_log_dir = 17;
+    optional string owner = 18;
+    optional string post_script = 19;
+    optional string pre_script = 20;
+    optional string script = 21;
+    optional string shell = 22;
+    optional string work_sub_dir = 23;
+    optional string batch_sys_conf = 24;
+    optional string environment = 25;
+    optional string directives = 26;
+    optional string param_var = 28;
+    repeated string extra_logs = 29;
+    optional string name = 30; /* filter item */
+    optional string cycle_point = 31; /* filter item */
+    repeated string messages = 32;
+}
+
+message PbTask {
+    optional string stamp = 1;
+    optional string id = 2;
+    optional string name = 3;
+    optional PbMeta meta = 4;
+    optional float mean_elapsed_time = 5;
+    optional int32 depth = 6;
+    repeated string proxies = 7;
+    repeated string namespace = 8;
+    repeated string parents = 9;
+    optional string first_parent = 10;
+}
+
+message PbPollTask {
+    optional string local_proxy = 1;
+    optional string workflow = 2;
+    optional string remote_proxy = 3;
+    optional string req_state = 4;
+    optional string graph_string = 5;
+}
+
+message PbCondition {
+    optional string task_proxy = 1;
+    optional string expr_alias = 2;
+    optional string req_state = 3;
+    optional bool satisfied = 4;
+    optional string message = 5;
+}
+
+message PbPrerequisite {
+    optional string expression = 1;
+    repeated PbCondition conditions = 2;
+    repeated string cycle_points = 3;
+    optional bool satisfied = 4;
+}
+
+message PbTaskProxy {
+    optional string stamp = 1;
+    optional string id = 2;
+    optional string task = 3;
+    optional string state = 4;
+    optional string cycle_point = 5;
+    optional int32 depth = 6;
+    optional int32 job_submits = 7;
+    optional string latest_message = 8;
+    optional string outputs = 9;
+    repeated string namespace = 11;
+    repeated PbPrerequisite prerequisites = 12;
+    repeated string jobs = 13;
+    optional string first_parent = 15;
+    optional string name = 16; /* filter item */
+    optional bool is_held = 17;
+    repeated string edges = 18;
+    repeated string ancestors = 19;
+    optional string flow_label = 20;
+    optional string extras = 21;
+}
+
+message PbFamily {
+    optional string stamp = 1;
+    optional string id = 2;
+    optional string name = 3;
+    optional PbMeta meta = 4;
+    optional int32 depth = 5;
+    repeated string proxies = 6;
+    repeated string parents = 7;
+    repeated string child_tasks = 8;
+    repeated string child_families = 9;
+    optional string first_parent = 10;
+}
+
+message PbFamilyProxy {
+    optional string stamp = 1;
+    optional string id = 2;
+    optional string cycle_point = 3;
+    optional string name = 4; /* filter item */
+    optional string family = 5;
+    optional string state = 6;
+    optional int32 depth = 7;
+    optional string first_parent = 8;
+    repeated string child_tasks = 10;
+    repeated string child_families = 11;
+    optional bool is_held = 12;
+    repeated string ancestors = 13;
+    repeated string states = 14;
+    map<string, int32> state_totals = 15;
+    optional int32 is_held_total = 16;
+}
+
+message PbEdge {
+    optional string stamp = 1;
+    optional string id = 2;
+    optional string source = 3;
+    optional string target = 4;
+    optional bool suicide = 5;
+    optional bool cond = 6;
+}
+
+message PbEdges {
+    optional string id = 1;
+    repeated string edges = 2;
+    repeated PbPollTask workflow_polling_tasks = 3;
+    repeated string leaves = 4;
+    repeated string feet = 5;
+}
+
+
+/* Now bundle for messaging */
+message PbEntireWorkflow {
+    optional PbWorkflow workflow = 1;
+    repeated PbTask tasks = 2;
+    repeated PbTaskProxy task_proxies = 3;
+    repeated PbJob jobs = 4;
+    repeated PbFamily families = 5;
+    repeated PbFamilyProxy family_proxies = 6;
+    repeated PbEdge edges = 7;
+}
+
+message EDeltas {
+    optional double time = 1;
+    optional int64 checksum = 2;
+    repeated PbEdge added = 3;
+    repeated PbEdge updated = 4;
+    repeated string pruned = 5;
+    optional bool reloaded = 6;
+}
+
+message FDeltas {
+    optional double time = 1;
+    optional int64 checksum = 2;
+    repeated PbFamily added = 3;
+    repeated PbFamily updated = 4;
+    repeated string pruned = 5;
+    optional bool reloaded = 6;
+}
+
+message FPDeltas {
+    optional double time = 1;
+    optional int64 checksum = 2;
+    repeated PbFamilyProxy added = 3;
+    repeated PbFamilyProxy updated = 4;
+    repeated string pruned = 5;
+    optional bool reloaded = 6;
+}
+
+message JDeltas {
+    optional double time = 1;
+    optional int64 checksum = 2;
+    repeated PbJob added = 3;
+    repeated PbJob updated = 4;
+    repeated string pruned = 5;
+    optional bool reloaded = 6;
+}
+
+message TDeltas {
+    optional double time = 1;
+    optional int64 checksum = 2;
+    repeated PbTask added = 3;
+    repeated PbTask updated = 4;
+    repeated string pruned = 5;
+    optional bool reloaded = 6;
+}
+
+message TPDeltas {
+    optional double time = 1;
+    optional int64 checksum = 2;
+    repeated PbTaskProxy added = 3;
+    repeated PbTaskProxy updated = 4;
+    repeated string pruned = 5;
+    optional bool reloaded = 6;
+}
+
+message WDeltas {
+    optional double time = 1;
+    optional PbWorkflow added = 2;
+    optional PbWorkflow updated = 3;
+    optional bool reloaded = 4;
+}
+
+message AllDeltas {
+    FDeltas families = 1;
+    FPDeltas family_proxies = 2;
+    JDeltas jobs = 3;
+    TDeltas tasks = 4;
+    TPDeltas task_proxies = 5;
+    EDeltas edges = 6;
+    WDeltas workflow = 7;
+}

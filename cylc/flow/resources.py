@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,8 +25,8 @@ from cylc.flow import LOG
 
 
 resource_names = [
-    'etc/flow.rc.eg',
-    'etc/flow-tests.rc.eg',
+    'etc/global.cylc.eg',
+    'etc/global-tests.cylc.eg',
     'etc/syntax/cylc-mode.el',
     'etc/syntax/cylc.lang',
     'etc/syntax/cylc.vim',

@@ -1,0 +1,22 @@
+# Stall with t3 waiting due to unhandled failure of t2
+[cylc]
+    UTC mode = True
+    cycle point format = %Y%m%d
+    [[events]]
+        abort on stalled = True
+        abort on inactivity = True
+        inactivity = PT5M
+[scheduling]
+    initial cycle point = now
+    [[special tasks]]
+        clock-trigger = t1(P0D)
+    [[graph]]
+        # Stall with t2 failed, no waiting tasks.
+        P1D=t3[-P1D] => t1 => t2 => t3
+[runtime]
+    [[t1]]
+        script = true
+    [[t2]]
+        script = false
+    [[t3]]
+        script = true

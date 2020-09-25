@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,6 +16,8 @@
 """Suite status constants."""
 
 from enum import Enum
+
+from cylc.flow.wallclock import get_time_string_from_unix_time as time2str
 
 # Keys for identify API call
 KEY_GROUP = "group"
@@ -63,6 +65,9 @@ class StopMode(Enum):
     REQUEST_CLEAN = 'REQUEST(CLEAN)'
     """External shutdown request, will wait for active jobs to complete."""
 
+    REQUEST_KILL = 'REQUEST(KILL)'
+    """External shutdown request, will wait for active jobs to be killed."""
+
     REQUEST_NOW = 'REQUEST(NOW)'
     """External shutdown request, will wait for event handlers to complete."""
 
@@ -72,15 +77,33 @@ class StopMode(Enum):
     def describe(self):
         """Return a user-friendly description of this state."""
         if self == self.AUTO:
-            return 'suite has completed'
+            return 'Wait until suite has completed.'
         if self == self.AUTO_ON_TASK_FAILURE:
-            return 'a task has finished'
+            return 'Wait until the first task fails.'
         if self == self.REQUEST_CLEAN:
-            return 'waiting for active jobs to complete'
+            return (
+                'Regular shutdown:\n'
+                '* Wait for all active jobs to complete.\n'
+                '* Run suite event handlers and wait for them to complete.'
+            )
+        if self == self.REQUEST_KILL:
+            return (
+                'Kill shutdown:\n'
+                '* Wait for all active jobs to be killed.\n'
+                '* Run suite event handlers and wait for them to complete.'
+            )
         if self == self.REQUEST_NOW:
-            return 'waiting for event handlers to complete'
+            return (
+                'Immediate shutdown\n'
+                "* Don't kill submitted or running jobs.\n"
+                '* Run suite event handlers and wait for them to complete.'
+            )
         if self == self.REQUEST_NOW_NOW:
-            return 'immediate shutdown'
+            return (
+                'Immediate shutdown\n'
+                "* Don't kill submitted or running jobs.\n"
+                "* Don't run event handlers."
+            )
         return ''
 
 
@@ -128,11 +151,11 @@ def get_suite_status(schd):
     elif schd.stop_clock_time is not None:
         status_msg = (
             SUITE_STATUS_RUNNING_TO_STOP %
-            schd.stop_clock_time_string)
-    elif schd.stop_task:
+            time2str(schd.stop_clock_time))
+    elif schd.pool.stop_task_id:
         status_msg = (
             SUITE_STATUS_RUNNING_TO_STOP %
-            schd.stop_task)
+            schd.pool.stop_task_id)
     elif schd.config.final_point:
         status_msg = (
             SUITE_STATUS_RUNNING_TO_STOP %

@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,10 +13,51 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""SLURM job submission and manipulation."""
+"""Submits task job scripts to Simple Linux Utility for Resource Management.
+
+.. cylc-scope:: flow.cylc[runtime][<namespace>][job]
+
+Uses the ``sbatch`` command. SLURM directives can be provided in the flow.cylc
+file:
+
+.. code-block:: cylc
+
+   [runtime]
+       [[my_task]]
+           [[[job]]]
+               batch system = slurm
+               execution time limit = PT1H
+           [[[directives]]]
+               --nodes = 5
+               --account = QXZ5W2
+
+.. note::
+
+   Since not all SLURM commands have a short form, cylc requires
+   the long form directives.
+
+These are written to the top of the task job script like this:
+
+.. code-block:: bash
+
+   #!/bin/bash
+   #SBATCH --nodes=5
+   #SBATCH --time=60:00
+   #SBATCH --account=QXZ5W2
+
+If :cylc:conf:`execution time limit` is specified, it is used to generate the
+``--time`` directive. Do not specify the ``--time`` directive explicitly if
+:cylc:conf:`execution time limit` is specified.  Otherwise, the execution time
+limit known by the suite may be out of sync with what is submitted to the batch
+system.
+
+.. cylc-scope::
+
+"""
 
 import re
 import shlex
+import os
 
 
 class SLURMHandler():
@@ -44,12 +85,12 @@ class SLURMHandler():
     @classmethod
     def format_directives(cls, job_conf):
         """Format the job directives for a job file."""
-        job_file_path = re.sub(r'\$HOME/', '', job_conf['job_file_path'])
+        job_file_path = os.path.expandvars(job_conf['job_file_path'])
         directives = job_conf['directives'].__class__()
         directives['--job-name'] = (
             job_conf['task_id'] + '.' + job_conf['suite_name'])
-        directives['--output'] = job_file_path + ".out"
-        directives['--error'] = job_file_path + ".err"
+        directives['--output'] = job_file_path.replace('%', '%%') + ".out"
+        directives['--error'] = job_file_path.replace('%', '%%') + ".err"
         if (job_conf["execution_time_limit"] and
                 directives.get("--time") is None):
             directives["--time"] = "%d:%02d" % (

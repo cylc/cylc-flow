@@ -1,0 +1,16 @@
+[meta]
+    title = "Test Suite"
+    description="Testing grouping options"
+group="test group 1"
+
+[scheduling]
+    max active cycle points = 3
+    cycling mode = integer
+    initial cycle point = 1
+[[graph]]
+P1 = foo => bar
+
+[runtime]
+[[root]]
+script = sleep 1
+

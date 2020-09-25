@@ -1,0 +1,37 @@
+[meta]
+purpose = """
+        Test that subshells are handled for platform and host configs.
+        Tasks of the form .*no_subshell act as control runs.
+"""
+
+[cylc]
+    UTC mode = True
+    [[events]]
+        abort on stalled = True
+
+[scheduling]
+    [[dependencies]]
+        R1 = """
+            platform_subshell
+            host_subshell
+            platform_no_subshell
+            host_no_subshell
+        """
+
+[runtime]
+    [[root]]
+        script = true
+
+    [[platform_no_subshell]]
+        platform = improbable platform name
+
+    [[host_no_subshell]]
+        [[[remote]]]
+            host = localhost
+
+    [[platform_subshell]]
+        platform = $(echo "improbable platform name")
+
+    [[host_subshell]]
+        [[[remote]]]
+            host = $(echo localhost)

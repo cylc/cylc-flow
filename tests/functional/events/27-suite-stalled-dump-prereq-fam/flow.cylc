@@ -1,0 +1,18 @@
+[cylc]
+    UTC mode = True # Ignore DST
+    [[events]]
+        abort on stalled = true
+    [[reference test]]
+        expected task failures = foo.1
+[scheduling]
+    [[graph]]
+        # Goo added to spawn waiting FAM and thereby cause a stall with
+        # unsatisfied waiting tasks.
+        R1 = """foo & goo => FAM
+            FAM:succeed-any => bar"""
+[runtime]
+    [[foo]]
+        script = false
+    [[FAM]]
+    [[f_1, f_2, f_3]]
+        inherit = FAM

@@ -1,0 +1,31 @@
+#!jinja2
+[cylc]
+    UTC mode = True
+    [[events]]
+        timeout = PT30S
+        abort on timeout = True
+[scheduling]
+    initial cycle point = 20100101T00
+    final cycle point = 20100105T00
+    [[graph]]
+        # oops makes bar spawn as waiting, to hold back runahead
+        PT1H = "foo & oops => bar"
+        # If wibble gets into the pool, it will demand a +PT6H raise
+        # of the 'runahead limit'.
+        {{ FUTURE_TRIGGER_START_POINT }}/PT6H = """
+            baz[+PT6H] => wibble
+            baz
+        """
+[runtime]
+    [[foo]]
+        script = """
+ if [[ "$CYLC_TASK_CYCLE_POINT" == "20100101T0000Z" ]]; then
+   # SoD: spawn wibble (it's not sitting there waiting like in SoS)
+   cylc set-outputs $CYLC_SUITE_NAME baz.20100101T0800Z
+fi
+false"""
+    [[bar,baz,wibble]]
+        script = true
+
+[visualization]
+    number of cycle points = 10

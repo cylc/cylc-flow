@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,6 +36,9 @@ IS_OFFSET_ABSOLUTE_IMPLS = {
 POINTS = {INTEGER_CYCLING_TYPE: integer.IntegerPoint,
           ISO8601_CYCLING_TYPE: iso8601.ISO8601Point}
 
+DUMP_FORMAT_GETTERS = {INTEGER_CYCLING_TYPE: integer.get_dump_format,
+                       ISO8601_CYCLING_TYPE: iso8601.get_dump_format}
+
 POINT_RELATIVE_GETTERS = {
     INTEGER_CYCLING_TYPE: integer.get_point_relative,
     ISO8601_CYCLING_TYPE: iso8601.get_point_relative
@@ -51,7 +54,7 @@ INIT_FUNCTIONS = {INTEGER_CYCLING_TYPE: integer.init_from_cfg,
                   ISO8601_CYCLING_TYPE: iso8601.init_from_cfg}
 
 
-class DefaultCycler(object):
+class DefaultCycler:
 
     """Store the default TYPE for Cyclers."""
 
@@ -71,6 +74,11 @@ def get_point_cls(cycling_type=None):
     if cycling_type is None:
         cycling_type = DefaultCycler.TYPE
     return POINTS[cycling_type]
+
+
+def get_dump_format(cycling_type=None):
+    """Return cycle point dump format, or None."""
+    return DUMP_FORMAT_GETTERS[cycling_type]()
 
 
 def get_point_relative(*args, **kwargs):

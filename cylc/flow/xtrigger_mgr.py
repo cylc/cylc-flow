@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@ import json
 import re
 from copy import deepcopy
 from time import time
-from typing import List, Tuple, Union
+from typing import List, Tuple
 
 from cylc.flow import LOG
 import cylc.flow.flags
@@ -50,7 +50,7 @@ ARG_VAL_TEMPLATES = [
 RE_STR_TMPL = re.compile(r'(?<!%)%\(([\w]+)\)s')
 
 
-class XtriggerManager(object):
+class XtriggerManager:
     """Manage clock triggers and xtrigger functions.
 
     # Example:
@@ -107,7 +107,6 @@ class XtriggerManager(object):
         proc_pool: SubProcPool = None,
         suite_run_dir: str = None,
         suite_share_dir: str = None,
-        suite_work_dir: str = None,
         suite_source_dir: str = None,
     ):
         # Suite function and clock triggers by label.

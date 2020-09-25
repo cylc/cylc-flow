@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ from cylc.flow.task_id import TaskID
 ARROW = '=>'
 
 
-class Replacement(object):
+class Replacement:
     """A class to remember match group information in re.sub() calls"""
     def __init__(self, replacement):
         self.replacement = replacement
@@ -40,7 +40,7 @@ class Replacement(object):
         return replaced
 
 
-class GraphParser(object):
+class GraphParser:
     """Class for extracting dependency information from cylc graph strings.
 
     For each task in the graph string, results are stored as:
@@ -266,8 +266,8 @@ class GraphParser(object):
             if not self.__class__.REC_PARAMS.search(line):
                 line_set.add(line)
                 continue
-            for l in graph_expander.expand(line):
-                line_set.add(l)
+            for line_ in graph_expander.expand(line):
+                line_set.add(line_)
 
         # Process chains of dependencies as pairs: left => right.
         # Parameterization can duplicate some dependencies, so use a set.

@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -88,7 +88,7 @@ def run_function(func_name, json_args, json_kwargs, src_dir):
     sys.stdout.write(json.dumps(res))
 
 
-class SubProcPool(object):
+class SubProcPool:
     """Manage queueing and pooling of subprocesses.
 
     This is mainly used by the main loop of the suite server program, although
@@ -288,6 +288,7 @@ class SubProcPool(object):
             if not fileno_list:
                 # Nothing readable
                 break
+            received_data = []
             for fileno in fileno_list:
                 # If a file handle is readable, read something from it, add
                 # results into the command context object's `.out` or `.err`,
@@ -300,6 +301,7 @@ class SubProcPool(object):
                     data = os.read(fileno, 65536).decode()  # 64K
                 except OSError:
                     continue
+                received_data.append(data != '')
                 if fileno == proc.stdout.fileno():
                     if ctx.out is None:
                         ctx.out = ''
@@ -308,6 +310,15 @@ class SubProcPool(object):
                     if ctx.err is None:
                         ctx.err = ''
                     ctx.err += data
+            if received_data and not all(received_data):
+                # if no data was pushed down the pipe exit the polling loop,
+                # we can always re-enter the polling loop later if there is
+                # more data
+                # NOTE: this suppresses an infinite polling-loop observed
+                # on darwin see:
+                # https://github.com/cylc/cylc-flow/issues/3535
+                # https://github.com/cylc/cylc-flow/pull/3543
+                return
         self.pipepoller.unregister(proc.stdout.fileno())
         self.pipepoller.unregister(proc.stderr.fileno())
 

@@ -1,0 +1,28 @@
+[cylc]
+   UTC mode = True
+   [[reference test]]
+       expected task failures = fixable.19700101T0000Z, fixable.19900101T0000Z, fixable.20100101T0000Z
+[scheduling]
+    initial cycle point = 1970
+    final cycle point = 2010
+    [[graph]]
+# Unhandled failures stay around for retriggering by "fixer"
+# fixable in the first two cycles fail and get retriggered,
+# but is left as failed in the last cycle.
+# Putting fixer at an offset to avoid retriggering it as well by the '*' glob.
+        P20Y = fixable
+        R1/2009 = fixer
+        R1/2010 = """
+           fixer[-P1Y] & fixable:fail => z"""
+[runtime]
+    [[fixable]]
+        script = test "${CYLC_TASK_SUBMIT_NUMBER}" -eq 2
+    [[fixer]]
+        script = """
+wait
+cylc__job__poll_grep_suite_log '\[fixable\.19700101T0000Z\].* (received)failed'
+cylc__job__poll_grep_suite_log '\[fixable\.19900101T0000Z\].* (received)failed'
+cylc trigger "${CYLC_SUITE_NAME}" '19700101T0000Z/*' '19900101T0000Z/*'
+"""
+    [[z]]
+        script = true

@@ -1,0 +1,18 @@
+[meta]
+    title = "test reloading after manually removing a task."
+[scheduling]
+    [[graph]]
+        R1 = """
+            reloader => inter => remove_me => foo
+        """
+[runtime]
+    [[reloader]]
+        script = """
+            sed -i "s/remove_me =>//g" $CYLC_SUITE_DEF_PATH/flow.cylc
+            cylc reload $CYLC_SUITE_NAME
+            cylc__job__poll_grep_suite_log -F 'Reload completed'
+        """
+    [[remove_me]]
+        script = false
+    [[foo]]
+        script = true

@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ class TimerFlags:
     SUBMISSION_RETRY = 'submission-retry'
 
 
-class TaskActionTimer(object):
+class TaskActionTimer:
     """A timer with delays for task actions."""
 
     # Memory optimization - constrain possible attributes to this list.

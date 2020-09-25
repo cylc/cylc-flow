@@ -1,0 +1,110 @@
+name: test
+
+on: [pull_request]
+
+
+jobs:
+  fast-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        python-version: ['3.7', '3.8']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Configure Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Apt-Get
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck sqlite3
+
+      - name: Install
+        run: |
+          pip install ."[all]"
+
+      - name: Style
+        run: |
+          pycodestyle
+          flake8
+          etc/bin/shellchecker
+
+      - name: Unit Tests
+        run: |
+          pytest -n 5 tests/unit
+
+      - name: Integration Tests
+        run: |
+          pytest -n 5 tests/integration
+
+      - name: Doctests
+        run: |
+          pytest -n 5 cylc/flow
+
+
+  functional-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      matrix:
+        python-version: ['3.7']
+        tests: [
+          ['tests/f', '1/4'],
+          ['tests/f', '2/4'],
+          ['tests/f', '3/4'],
+          ['tests/f', '4/4'],
+          ['tests/k', '1/1']
+        ]
+    env:
+      BASE: ${{ matrix.tests[0] }}
+      CHUNK: ${{ matrix.tests[1] }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Configure Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Apt-Get
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y sqlite3
+
+      - name: Add .github/bin/ to PATH
+        # Sets up mocked mail command & any other custom executables
+        run: echo "::add-path::${{ github.workspace }}/.github/bin"
+
+      - name: Install
+        run: |
+          pip install ."[all]"
+
+      - name: Test
+        run: |
+          # Use non-UTC time zone
+          export TZ=XXX-05:30
+
+          if [[ "${BASE}" == 'tests/k' ]]; then
+              NPROC=4
+          else
+              NPROC=8
+          fi
+          etc/bin/run-functional-tests -j "${NPROC}" --state=save "${BASE}" || (
+              echo '=== Re-running Failed Tests ==='
+              CHUNK= etc/bin/run-functional-tests -j "${NPROC}" --state=save,failed
+          )
+
+      - name: Debug
+        if: failure()
+        run: |
+          cylc scan
+          find "$HOME/cylc-run" -name '*.err' -type f \
+              -exec echo '==== {} ====' \; -exec cat '{}' \;
+          find "${TMPDIR:-/tmp}/${USER}/cylctb-"* -type f \
+              -exec echo '==== {} ====' \; -exec cat '{}' \;

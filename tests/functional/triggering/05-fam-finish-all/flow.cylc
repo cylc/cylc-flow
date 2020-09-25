@@ -1,0 +1,17 @@
+[cylc]
+   [[reference test]]
+       expected task failures = a.1, c.1
+
+[scheduling]
+    [[graph]]
+        R1 = "FAM:finish-all => foo"
+[runtime]
+    [[FAM]]
+        script = "false"
+    [[a,c]]
+        inherit = FAM
+    [[b]]
+        inherit = FAM
+        script = "true"
+    [[foo]]
+        script = "true"

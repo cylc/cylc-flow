@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,11 +28,9 @@ from subprocess import Popen, PIPE, DEVNULL
 import sys
 from time import sleep
 
-from cylc.flow import LOG
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flow.flags
-from cylc.flow.hostuserutil import is_remote
 from cylc.flow import __version__ as CYLC_VERSION
+from cylc.flow.platforms import get_platform, get_host_from_platform
 
 
 def get_proc_ancestors():
@@ -61,8 +59,14 @@ def watch_and_kill(proc):
             break
 
 
-def run_cmd(command, stdin=None, capture_process=False, capture_status=False,
-            manage=False):
+def run_cmd(
+        command,
+        stdin=None,
+        stdin_str=None,
+        capture_process=False,
+        capture_status=False,
+        manage=False
+):
     """Run a given cylc command on another account and/or host.
 
     Arguments:
@@ -70,7 +74,10 @@ def run_cmd(command, stdin=None, capture_process=False, capture_status=False,
             command inclusive of all opts and args required to run via ssh.
         stdin (file):
             If specified, it should be a readable file object.
-            If None, `open(DEVNULL)` is set if output is to be captured.
+            If None, DEVNULL is set if output is to be captured.
+        stdin_str (str):
+            A string to be passed to stdin.
+            Implies `stdin=PIPE`.
         capture_process (boolean):
             If True, set stdout=PIPE and return the Popen object.
         capture_status (boolean):
@@ -99,8 +106,11 @@ def run_cmd(command, stdin=None, capture_process=False, capture_status=False,
         stderr = PIPE
         if stdin is None:
             stdin = DEVNULL
-    if isinstance(stdin, str):
-        stdin = stdin.encode()
+    if stdin_str:
+        read, write = os.pipe()
+        os.write(write, stdin_str.encode())
+        os.close(write)
+        stdin = read
 
     try:
         proc = Popen(command, stdin=stdin, stdout=stdout, stderr=stderr)
@@ -126,9 +136,29 @@ def run_cmd(command, stdin=None, capture_process=False, capture_status=False,
             return True
 
 
-def construct_ssh_cmd(raw_cmd, user=None, host=None, forward_x11=False,
-                      stdin=False, ssh_login_shell=None, ssh_cylc=None,
-                      set_UTC=False, allow_flag_opts=False):
+def construct_platform_ssh_cmd(raw_cmd, platform, **kwargs):
+    """A wrapper around `construct_ssh_cmd` allowing us to pass a platform
+    object rather than a user and host.
+
+    Args:
+        All as `construct_ssh_cmd` except for user and host.
+    """
+    ret = construct_ssh_cmd(
+        raw_cmd,
+        host=get_host_from_platform(platform),
+        ssh_cmd=platform['ssh command'],
+        ssh_cylc=platform['cylc executable'],
+        ssh_login_shell=platform['use login shell'],
+        **kwargs
+    )
+    return ret
+
+
+def construct_ssh_cmd(
+        raw_cmd, user=None, host=None, forward_x11=False, stdin=False,
+        ssh_cmd=None, ssh_login_shell=None, ssh_cylc=None, set_UTC=False,
+        allow_flag_opts=False, timeout=None
+):
     """Append a bare command with further options required to run via ssh.
 
     Arguments:
@@ -139,6 +169,8 @@ def construct_ssh_cmd(raw_cmd, user=None, host=None, forward_x11=False,
             If True, use 'ssh -Y' to enable X11 forwarding, else just 'ssh'.
         stdin:
             If None, the `-n` option will be added to the SSH command line.
+        ssh_cmd (string):
+            ssh command to use: If unset defaults to localhost ssh cmd.
         ssh_login_shell (boolean):
             If True, launch remote command with `bash -l -c 'exec "$0" "$@"'`.
         ssh_cylc (string):
@@ -148,12 +180,18 @@ def construct_ssh_cmd(raw_cmd, user=None, host=None, forward_x11=False,
         allow_flag_opts (boolean):
             If True, check CYLC_DEBUG and CYLC_VERBOSE and if non-default,
             specify debug and/or verbosity as options to the 'raw cmd'.
+        timeout (str):
+            String for bash timeout command.
 
     Return:
         A list containing a chosen command including all arguments and options
         necessary to directly execute the bare command on a given host via ssh.
     """
-    command = shlex.split(glbl_cfg().get_host_item('ssh command', host, user))
+    # If ssh cmd isn't given use the default from localhost settings.
+    if ssh_cmd is None:
+        command = shlex.split(get_platform()['ssh command'])
+    else:
+        command = shlex.split(ssh_cmd)
 
     if forward_x11:
         command.append('-Y')
@@ -161,8 +199,6 @@ def construct_ssh_cmd(raw_cmd, user=None, host=None, forward_x11=False,
         command.append('-n')
 
     user_at_host = ''
-    if user:
-        user_at_host = user + '@'
     if host:
         user_at_host += host
     else:
@@ -182,19 +218,21 @@ def construct_ssh_cmd(raw_cmd, user=None, host=None, forward_x11=False,
 
     # Use bash -l?
     if ssh_login_shell is None:
-        ssh_login_shell = glbl_cfg().get_host_item(
-            'use login shell', host, user)
+        ssh_login_shell = get_platform()['use login shell']
     if ssh_login_shell:
         # A login shell will always source /etc/profile and the user's bash
         # profile file. To avoid having to quote the entire remote command
         # it is passed as arguments to the bash script.
         command += ['bash', '--login', '-c', quote(r'exec "$0" "$@"')]
 
+    if timeout:
+        command += ['timeout', timeout]
+
     # 'cylc' on the remote host
     if ssh_cylc:
         command.append(ssh_cylc)
     else:
-        ssh_cylc = glbl_cfg().get_host_item('cylc executable', host, user)
+        ssh_cylc = get_platform()['cylc executable']
         if ssh_cylc.endswith('cylc'):
             command.append(ssh_cylc)
         else:
@@ -212,17 +250,21 @@ def construct_ssh_cmd(raw_cmd, user=None, host=None, forward_x11=False,
         if (cylc.flow.flags.debug or os.getenv('CYLC_DEBUG') in
                 ["True", "true"]):
             command.append(r'--debug')
-    if LOG.handlers:
-        LOG.debug("$ %s", ' '.join(quote(c) for c in command))
-    elif cylc.flow.flags.debug:
-        sys.stderr.write("$ %s\n" % ' '.join(quote(c) for c in command))
 
     return command
 
 
 def remote_cylc_cmd(
-        cmd, user=None, host=None, stdin=None, ssh_login_shell=None,
-        ssh_cylc=None, capture_process=False, manage=False):
+        cmd,
+        user=None,
+        host=None,
+        stdin=None,
+        stdin_str=None,
+        ssh_login_shell=None,
+        ssh_cylc=None,
+        capture_process=False,
+        manage=False
+):
     """Run a given cylc command on another account and/or host.
 
     Arguments:
@@ -245,94 +287,16 @@ def remote_cylc_cmd(
     """
     return run_cmd(
         construct_ssh_cmd(
-            cmd, user=user, host=host, stdin=stdin,
-            ssh_login_shell=ssh_login_shell, ssh_cylc=ssh_cylc),
-        stdin=stdin, capture_process=capture_process,
-        capture_status=True, manage=manage)
-
-
-def remrun(dry_run=False, forward_x11=False, abort_if=None,
-           set_rel_local=False):
-    """Short for RemoteRunner().execute(...)"""
-    return RemoteRunner().execute(
-        dry_run, forward_x11, abort_if, set_rel_local)
-
-
-class RemoteRunner(object):
-    """Run current command on a remote host.
-
-    If user/owner or host differ from username and localhost, strip the
-    remote options from the commandline and reinvoke the command on the
-    remote host by non-interactive ssh, then exit; else do nothing.
-
-    To ensure that users are aware of remote re-invocation info is always
-    printed, but to stderr so as not to interfere with results.
-    """
-    OPT_ARG_OPTS = ('--user', '--host', '--ssh-cylc')
-
-    def __init__(self, argv=None):
-        self.user = None  # i.e. owner; name it user for consistency with CLI
-        self.host = None
-        self.ssh_login_shell = None
-        self.ssh_cylc = None
-        self.argv = argv or sys.argv
-
-        cylc.flow.flags.verbose = '-v' in self.argv or '--verbose' in self.argv
-
-        # Detect and replace host and user options
-        argv = self.argv[1:]
-
-        self.args = []
-        while argv:
-            arg = argv.pop(0)
-            if arg.startswith(tuple([opt + '=' for opt in self.OPT_ARG_OPTS])):
-                # e.g. if arg is '--host=HOST' here set self.host to HOST
-                opt_with_dashes, opt_arg = arg.split('=', 1)
-                setattr(self, opt_with_dashes.strip('--'), opt_arg)
-            elif arg in self.OPT_ARG_OPTS:  # if opt arg provided after a space
-                # e.g. if arg is '--host' set self.host to next element in argv
-                setattr(self, arg.strip('--'), argv.pop(0))
-            elif arg == '--login':
-                self.ssh_login_shell = True
-            elif arg == '--no-login':
-                self.ssh_login_shell = False
-            else:
-                self.args.append(arg)
-
-        if self.user is None and self.host is None:
-            self.is_remote = False
-        else:
-            self.is_remote = is_remote(self.host, self.user)
-
-    def execute(self, dry_run=False, forward_x11=False, abort_if=None,
-                set_rel_local=False):
-        """Execute command on remote host.
-
-        Returns False if remote re-invocation is not needed, True if it is
-        needed and executes successfully otherwise aborts.
-        """
-        if not self.is_remote:
-            return False
-
-        if abort_if is not None and abort_if in sys.argv:
-            sys.exit(
-                "ERROR: option '%s' not available for remote run" % abort_if)
-
-        cmd = [os.path.basename(self.argv[0])[5:]]  # /path/to/cylc-foo => foo
-        for arg in self.args:
-            cmd.append(quote(arg))
-            # above: args quoted to avoid interpretation by the shell,
-            # e.g. for match patterns such as '.*' on the command line.
-
-        if set_rel_local:
-            # State as relative localhost to prevent recursive host selection.
-            cmd.append("--host=localhost")
-        command = construct_ssh_cmd(
-            cmd, user=self.user, host=self.host, forward_x11=forward_x11,
-            ssh_login_shell=self.ssh_login_shell, ssh_cylc=self.ssh_cylc,
-            set_UTC=True, allow_flag_opts=False)
-
-        if dry_run:
-            return command
-        else:
-            return run_cmd(command)
+            cmd,
+            user=user,
+            host=host,
+            stdin=True if stdin_str else stdin,
+            ssh_login_shell=ssh_login_shell,
+            ssh_cylc=ssh_cylc
+        ),
+        stdin=stdin,
+        stdin_str=stdin_str,
+        capture_process=capture_process,
+        capture_status=True,
+        manage=manage
+    )

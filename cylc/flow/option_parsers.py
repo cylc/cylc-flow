@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,9 +16,12 @@
 """Common options for all cylc commands."""
 
 import logging
-from optparse import OptionParser, OptionConflictError
+from optparse import OptionParser, OptionConflictError, Values
 import os
+import re
 import sys
+
+from ansimarkup import parse as cparse
 
 from cylc.flow import LOG
 import cylc.flow.flags
@@ -36,18 +39,13 @@ For example, to match:{1}"""
     # Help text either including or excluding globbing on cycle points:
     WITH_CYCLE_GLOBS = """
 One or more TASK_GLOBs can be given to match task instances in the current task
-pool, by task or family name pattern, cycle point pattern, and task state. Note
-this command does not operate on tasks at any arbitrary point in the abstract
-workflow graph - tasks not already in the pool must be inserted first with the
-"cylc insert" command in order to be matched.
+pool, by task or family name pattern, cycle point pattern, and task state.
 * [CYCLE-POINT-GLOB/]TASK-NAME-GLOB[:TASK-STATE]
 * [CYCLE-POINT-GLOB/]FAMILY-NAME-GLOB[:TASK-STATE]
 * TASK-NAME-GLOB[.CYCLE-POINT-GLOB][:TASK-STATE]
 * FAMILY-NAME-GLOB[.CYCLE-POINT-GLOB][:TASK-STATE]"""
     WITHOUT_CYCLE_GLOBS = """
-TASK_GLOB matches task or family names, to insert task instances into the pool
-at a specific given cycle point. (NOTE this differs from other commands which
-match name and cycle point patterns against instances already in the pool).
+TASK_GLOB matches task or family names at a given cycle point.
 * CYCLE-POINT/TASK-NAME-GLOB
 * CYCLE-POINT/FAMILY-NAME-GLOB
 * TASK-NAME-GLOB.CYCLE-POINT
@@ -72,7 +70,7 @@ match name and cycle point patterns against instances already in the pool).
     MULTITASK_USAGE = MULTI_USAGE_TEMPLATE.format(
         WITHOUT_CYCLE_GLOBS, WITHOUT_CYCLE_EXAMPLES)
 
-    def __init__(self, usage, argdoc=None, comms=False, noforce=False,
+    def __init__(self, usage, argdoc=None, comms=False,
                  jset=False, multitask=False, multitask_nocycles=False,
                  prep=False, auto_add=True, icp=False, color=True):
 
@@ -83,7 +81,15 @@ match name and cycle point patterns against instances already in the pool).
             else:
                 argdoc = [('REG', 'Suite name')]
 
-        # noforce=True is for commands not using interactive prompts at all
+        # make comments grey in usage for readability
+        usage = cparse(
+            re.sub(
+                r'^(\s*(?:\$[^#]+)?)(#.*)$',
+                r'\1<dim>\2</dim>',
+                usage,
+                flags=re.M
+            )
+        )
 
         if multitask:
             usage += self.MULTITASKCYCLE_USAGE
@@ -95,7 +101,6 @@ match name and cycle point patterns against instances already in the pool).
         self.unlimited_args = False
         self.comms = comms
         self.jset = jset
-        self.noforce = noforce
         self.prep = prep
         self.icp = icp
         self.suite_info = []
@@ -134,18 +139,6 @@ match name and cycle point patterns against instances already in the pool).
     def add_std_options(self):
         """Add standard options if they have not been overridden."""
         self.add_std_option(
-            "--user",
-            help=(
-                "Other user account name. This results in "
-                "command reinvocation on the remote account."
-            ),
-            metavar="USER", action="store", dest="owner")
-        self.add_std_option(
-            "--host",
-            help="Other host name. This results in "
-            "command reinvocation on the remote account.",
-            metavar="HOST", action="store", dest="host")
-        self.add_std_option(
             "-v", "--verbose",
             help="Verbose output mode.",
             action="store_true", dest="verbose",
@@ -155,6 +148,10 @@ match name and cycle point patterns against instances already in the pool).
             help="Output developer information and show exception tracebacks.",
             action="store_true", dest="debug",
             default=(os.getenv("CYLC_DEBUG", "false").lower() == "true"))
+        self.add_std_option(
+            "--no-timestamp",
+            help="Don't timestamp logged messages.",
+            action="store_false", dest="log_timestamp", default=True)
 
         if self.color:
             self.add_std_option(
@@ -171,29 +168,6 @@ match name and cycle point patterns against instances already in the pool).
 
         if self.comms:
             self.add_std_option(
-                "--port",
-                help=(
-                    "Suite port number on the suite host. "
-                    "NOTE: this is retrieved automatically if "
-                    "non-interactive ssh is configured to the suite host."
-                ),
-                metavar="INT", action="store", default=None, dest="port")
-            self.add_std_option(
-                "--use-ssh",
-                help="Use ssh to re-invoke the command on the suite host.",
-                action="store_true", default=False, dest="use_ssh")
-            self.add_std_option(
-                "--ssh-cylc",
-                help="Location of cylc executable on remote ssh commands.",
-                action="store", default="cylc", dest="ssh_cylc")
-            self.add_std_option(
-                "--no-login",
-                help=(
-                    "Do not use a login shell to run remote ssh commands. "
-                    "The default is to use a login shell."
-                ),
-                action="store_false", default=True, dest="ssh_login")
-            self.add_std_option(
                 "--comms-timeout", "--pyro-timeout", metavar='SEC',
                 help=(
                     "Set a timeout for network connections "
@@ -202,17 +176,6 @@ match name and cycle point patterns against instances already in the pool).
                     "site/user config file documentation."
                 ),
                 action="store", default=None, dest="comms_timeout")
-
-            if not self.noforce:
-                self.add_std_option(
-                    "-f", "--force",
-                    help=(
-                        "Do not ask for confirmation before acting. "
-                        "Note that it is not necessary to use this option "
-                        "if interactive command prompts have been "
-                        "disabled in the site/user config files."
-                    ),
-                    action="store_true", default=False, dest="force")
 
         if self.jset:
             self.add_std_option(
@@ -245,7 +208,7 @@ match name and cycle point patterns against instances already in the pool).
                 metavar="CYCLE_POINT",
                 help=(
                     "Set the initial cycle point. "
-                    "Required if not defined in suite.rc."
+                    "Required if not defined in flow.cylc."
                 ),
                 action="store",
                 dest="icp",
@@ -296,7 +259,65 @@ match name and cycle point patterns against instances already in the pool).
             LOG.handlers[0].close()
             LOG.removeHandler(LOG.handlers[0])
         errhandler = logging.StreamHandler(sys.stderr)
-        errhandler.setFormatter(CylcLogFormatter())
+        errhandler.setFormatter(CylcLogFormatter(
+            timestamp=options.log_timestamp))
         LOG.addHandler(errhandler)
 
         return (options, args)
+
+
+class Options(Values):
+    """Wrapper to allow Python API access to optparse CLI functionality.
+
+    Example:
+        Create an optparse parser as normal:
+        >>> import optparse
+        >>> parser = optparse.OptionParser()
+        >>> _ = parser.add_option('-a', default=1)
+        >>> _ = parser.add_option('-b', default=2)
+
+        Create an Options object from the parser:
+        >>> PythonOptions = Options(parser, overrides={'c': 3})
+
+        "Parse" options via Python API:
+        >>> opts = PythonOptions(a=4)
+
+        Access options as normal:
+        >>> opts.a
+        4
+        >>> opts.b
+        2
+        >>> opts.c
+        3
+
+        Optparse allows you to create new options on the fly:
+        >>> opts.d = 5
+        >>> opts.d
+        5
+
+        But you can't create new options at initiation, this gives us basic
+        input validation:
+        >>> opts(e=6)
+        Traceback (most recent call last):
+        TypeError: 'Values' object is not callable
+
+        You can reuse the object multiple times
+        >>> opts2 = PythonOptions(a=2)
+        >>> id(opts) == id(opts2)
+        False
+
+    """
+
+    def __init__(self, parser, overrides=None):
+        if overrides is None:
+            overrides = {}
+        self.defaults = {**parser.defaults, **overrides}
+
+    def __call__(self, **kwargs):
+        opts = Values(self.defaults)
+        for key, value in kwargs.items():
+            if hasattr(opts, key):
+                setattr(opts, key, value)
+            else:
+                raise ValueError(key)
+        return opts

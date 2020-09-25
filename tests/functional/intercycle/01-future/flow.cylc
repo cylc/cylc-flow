@@ -1,0 +1,12 @@
+[cylc]
+    cycle point format = %Y%m%dT%H
+
+[scheduling]
+    initial cycle point = 20120101T00
+    final cycle point = 20120101T18
+    [[graph]]
+        PT6H = a[+PT6H] => b
+        R/+PT6H/PT6H = a
+[runtime]
+    [[a,b]]
+        script = "true" # fast

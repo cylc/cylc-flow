@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,6 +26,7 @@ import os
 import sys
 
 
+from cylc.flow.exceptions import SuiteStopped
 import cylc.flow.flags
 from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.pathutil import get_suite_run_job_dir
@@ -44,6 +45,24 @@ FAIL_MESSAGE_PREFIX = "failed/"
 VACATION_MESSAGE_PREFIX = "vacated/"
 
 STDERR_LEVELS = (getLevelName(level) for level in (WARNING, ERROR, CRITICAL))
+
+MUTATION = '''
+mutation (
+  $wFlows: [WorkflowID]!,
+  $taskJob: String!,
+  $eventTime: String,
+  $messages: [[String]]
+) {
+  message (
+    workflows: $wFlows,
+    taskJob: $taskJob,
+    eventTime: $eventTime,
+    messages: $messages
+  ) {
+    result
+  }
+}
+'''
 
 
 def record_messages(suite, task_job, messages):
@@ -68,23 +87,34 @@ def record_messages(suite, task_job, messages):
         else:
             handle = sys.stdout
         handle.write('%s %s - %s\n' % (event_time, severity, message))
-    handle.flush()
+        handle.flush()
     # Write to job.status
     _append_job_status_file(suite, task_job, event_time, messages)
     # Send messages
     try:
         pclient = SuiteRuntimeClient(suite)
+    except SuiteStopped:
+        # on a remote host this means the contact file is not present
+        # either the suite is stopped or the contact file is not present
+        # on the job host (i.e. comms method is polling)
+        # eitherway don't try messaging
+        pass
     except Exception:
         # Backward communication not possible
         if cylc.flow.flags.debug:
             import traceback
             traceback.print_exc()
     else:
-        pclient(
-            'put_messages',
-            {'task_job': task_job, 'event_time': event_time,
-             'messages': messages}
-        )
+        mutation_kwargs = {
+            'request_string': MUTATION,
+            'variables': {
+                'wFlows': [suite],
+                'taskJob': task_job,
+                'eventTime': event_time,
+                'messages': messages,
+            }
+        }
+        pclient('graphql', mutation_kwargs)
 
 
 def _append_job_status_file(suite, task_job, event_time, messages):

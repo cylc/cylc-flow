@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -226,7 +226,7 @@ def jinja2process(flines, dir_, template_vars=None):
         filename = None
         # extract source lines
         if exc.lineno and exc.source and not exc.filename:
-            # error in suite.rc or cylc include file
+            # error in flow.cylc or cylc include file
             lines = exc.source.splitlines()
         elif exc.lineno and exc.filename:
             # error in jinja2 include file
@@ -249,7 +249,7 @@ def jinja2process(flines, dir_, template_vars=None):
             lines = flines[max(lineno - CONTEXT_LINES, 0):lineno]
         raise Jinja2Error(exc, lines=lines)
 
-    suiterc = []
+    flow_config = []
     for line in lines:
         # Jinja2 leaves blank lines where source lines contain
         # only Jinja2 code; this matters if line continuation
@@ -258,7 +258,7 @@ def jinja2process(flines, dir_, template_vars=None):
             continue
             # restoring newlines here is only necessary for display by
         # the cylc view command:
-        # ##suiterc.append(line + '\n')
-        suiterc.append(line)
+        # ##flow_config.append(line + '\n')
+        flow_config.append(line)
 
-    return suiterc
+    return flow_config

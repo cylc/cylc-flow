@@ -1,0 +1,17 @@
+[cylc]
+    UTC mode = True
+    [[events]]
+        timeout = PT0.3M
+        abort on timeout = True
+[scheduling]
+    initial cycle point = 20100101T00
+    final cycle point = 20100105T00
+    [[graph]]
+        # Intervals are all 24 hours, but we really have a 6 hour repetition.
+        # oops makes bar spawn as waiting to hold back the runahead
+        T00, T06, T12, T18 = "foo & oops => bar"
+[runtime]
+    [[foo]]
+        script = false
+    [[bar]]
+        script = true

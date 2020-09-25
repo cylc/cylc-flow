@@ -1,0 +1,15 @@
+[meta]
+    description = This suite is supposed to time out
+
+[cylc]
+    [[events]]
+        timeout = PT6S
+        abort on timeout = True
+
+[scheduling]
+    [[graph]]
+        R1 = "foo"
+
+[runtime]
+    [[foo]]
+        script = false

@@ -1,0 +1,19 @@
+[meta]
+    description = This suite is supposed to time out
+
+[cylc]
+    [[reference test]]
+        expected task failures = foo.1
+    [[events]]
+        abort on timeout = True
+        timeout = PT1S
+
+[scheduling]
+    [[graph]]
+        R1 = "foo"
+
+[runtime]
+    [[foo]]
+        script = false
+        [[[simulation]]]
+             fail cycle points = 1

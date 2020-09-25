@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,20 +13,29 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Provides a Jinja2 filter for formatting ISO8601 datetime strings."""
+"""Filter for formatting ISO8601 datetime strings."""
 
 from metomi.isodatetime.parsers import TimePointParser
 
 
 def strftime(iso8601_datetime, strftime_str, strptime_str=None):
-    """Format an iso8601 datetime string using an strftime string.
+    """Format an :term:`ISO8601 datetime` string using an strftime string.
+
+    .. code-block:: cylc
+
+       {{ '10661004T08+01' | strftime('%H') }}  # 00
+
+    It is also possible to parse non-standard date-time strings by passing a
+    strptime string as the second argument.
 
     Args:
-        iso8601_datetime (str): Any valid ISO8601 datetime as a string.
-        strftime_str (str): A valid strftime string to format the output
-            datetime.
-        strptime_str (str - optional): A valid strptime string defining the
-            format of the provided iso8601_datetime.
+        iso8601_datetime (str):
+            Any valid ISO8601 datetime as a string.
+        strftime_str (str):
+            A valid strftime string to format the output datetime.
+        strptime_str (str - optional):
+            A valid strptime string defining the format of the provided
+            iso8601_datetime.
 
     Return:
         The result of applying the strftime to the iso8601_datetime as parsed
@@ -36,7 +45,7 @@ def strftime(iso8601_datetime, strftime_str, strptime_str=None):
         ISO8601SyntaxError: In the event of an invalid datetime string.
         StrftimeSyntaxError: In the event of an invalid strftime string.
 
-    Examples:
+    Python Examples:
         >>> # Basic usage.
         >>> strftime('2000-01-01T00Z', '%H')
         '00'
@@ -58,18 +67,30 @@ def strftime(iso8601_datetime, strftime_str, strptime_str=None):
         >>> # Exceptions.
         >>> strftime('invalid', '%H')  # doctest: +NORMALIZE_WHITESPACE
         Traceback (most recent call last):
-        <class 'metomi.isodatetime.parsers.ISO8601SyntaxError'>
-        metomi.isodatetime.parsers.ISO8601SyntaxError: Invalid ISO 8601 date \
-        representation: invalid
+        <class 'metomi.isodatetime.exceptions.ISO8601SyntaxError'>
+        metomi.isodatetime.exceptions.ISO8601SyntaxError: Invalid ISO 8601 \
+        date representation: invalid
         >>> strftime('2000', '%invalid')  # doctest: +NORMALIZE_WHITESPACE
         Traceback (most recent call last):
-        metomi.isodatetime.parser_spec.StrftimeSyntaxError: Invalid \
+        metomi.isodatetime.exceptions.StrftimeSyntaxError: Invalid \
         strftime/strptime representation: %i
         >>> strftime('2000', '%Y', '%invalid')
         ... # doctest: +NORMALIZE_WHITESPACE
         Traceback (most recent call last):
-        metomi.isodatetime.parser_spec.StrftimeSyntaxError: Invalid \
+        metomi.isodatetime.exceptions.StrftimeSyntaxError: Invalid \
         strftime/strptime representation: %i
+
+    Jinja2 Examples:
+        .. code-block:: cylc
+
+           {% set START_CYCLE = '10661004T08+01' %}
+
+           {{START_CYCLE | strftime('%Y')}}  # 1066
+           {{START_CYCLE | strftime('%m')}}  # 10
+           {{START_CYCLE | strftime('%d')}}  # 14
+           {{START_CYCLE | strftime('%H:%M:%S %z')}}  # 08:00:00 +01
+           {{'12,30,2000' | strftime('%m', '%m,%d,%Y')}}  # 12
+
     """
     if not strptime_str:
         return TimePointParser().parse(iso8601_datetime).strftime(strftime_str)

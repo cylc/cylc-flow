@@ -1,0 +1,31 @@
+[meta]
+    title = "cylc hold --after"
+
+    description = """One task that holds future cycles after a given cycle."""
+
+[cylc]
+    UTC mode = True
+    [[events]]
+        abort on stalled = True
+
+[scheduling]
+    initial cycle point = 20140101T00
+    final cycle point   = 20140104T00
+    [[graph]]
+        R1 = """
+            stopper
+            holdafter => foo
+        """
+        T00, T12 = foo[-PT12H] => foo => bar
+[runtime]
+    [[holdafter]]
+        script = cylc hold --after '20140101T12' "${CYLC_SUITE_NAME}"
+    [[stopper]]
+        script = """
+            cylc__job__poll_grep_suite_log '\[bar\.20140101T1200Z\].* (received)succeeded'
+            cylc stop "${CYLC_SUITE_NAME}"
+        """
+        [[[job]]]
+            execution time limit = PT1M
+    [[foo, bar]]
+        script = true

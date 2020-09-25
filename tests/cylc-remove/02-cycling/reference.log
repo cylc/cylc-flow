@@ -1,8 +1,0 @@
-2016-07-07T22:17:12Z INFO - Run mode: live
-2016-07-07T22:17:12Z INFO - Initial point: 2020
-2016-07-07T22:17:12Z INFO - Final point: 2021
-2016-07-07T22:17:12Z INFO - Cold Start 2020
-2016-07-07T22:17:12Z INFO - [remover.2020] -triggered off []
-2016-07-07T22:17:12Z INFO - [foo.2020] -triggered off ['remover.2020']
-2016-07-07T22:17:14Z INFO - [foo.2021] -triggered off ['remover.2020']
-2016-07-07T22:17:29Z INFO - [bar.2021] -triggered off ['foo.2021']

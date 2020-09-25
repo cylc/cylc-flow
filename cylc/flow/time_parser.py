@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,6 +33,7 @@ import re
 
 import metomi.isodatetime.data
 import metomi.isodatetime.parsers
+from metomi.isodatetime.exceptions import IsodatetimeError
 
 from cylc.flow.cycling import parse_exclusion
 from cylc.flow.exceptions import (
@@ -43,7 +44,7 @@ from cylc.flow.exceptions import (
 UTC_UTC_OFFSET_HOURS_MINUTES = (0, 0)
 
 
-class CylcTimeParser(object):
+class CylcTimeParser:
 
     """Parser for Cylc abbreviated/full ISO 8601 syntax.
 
@@ -357,9 +358,6 @@ class CylcTimeParser(object):
                     continue
                 split_expr = self.OFFSET_REGEX.split(item)
                 expr += split_expr.pop(0)
-                if split_expr[1] == "+":
-                    split_expr.pop(1)
-                expr_offset_item = "".join(split_expr[1:])
                 expr_offset_item = self.duration_parser.parse(item[1:])
                 if item[0] == "-":
                     expr_offset_item *= -1
@@ -377,7 +375,7 @@ class CylcTimeParser(object):
             expr_to_parse = expr + "00"
         try:
             expr_point = self.timepoint_parser.parse(expr_to_parse)
-        except ValueError:
+        except ValueError:  # not IsodatetimeError as too specific
             pass
         else:
             return expr_point, expr_offset
@@ -388,7 +386,7 @@ class CylcTimeParser(object):
                         try:
                             expr_point = self.timepoint_parser.parse(
                                 truncation_string + expr_to_parse)
-                        except ValueError:
+                        except IsodatetimeError:
                             continue
                         return expr_point, expr_offset
         raise CylcTimeSyntaxError(

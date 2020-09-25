@@ -1,0 +1,17 @@
+#!jinja2
+[cylc]
+    UTC mode = True
+    cycle point format = %Y
+    [[events]]
+        abort on stalled = True
+        abort on inactivity = True
+        inactivity = P6M
+[scheduling]
+    [[graph]]
+        R1 = t1
+[runtime]
+    [[t1]]
+        script = sleep 300
+        platform = {{environ["CYLC_TEST_PLATFORM"]}}
+        [[[events]]]
+            started handler = cylc stop --now --now '%(suite)s'

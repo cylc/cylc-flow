@@ -1,0 +1,42 @@
+# Abort on timeout unless we successfully remove some failed and waiting tasks.
+[cylc]
+    UTC mode = True
+    cycle point format = %Y
+    [[reference test]]
+        expected task failures = bar.2020, baz.2021
+    [[events]]
+        timeout = PT30S
+        abort on timeout = True
+[scheduling]
+    initial cycle point = 2020
+    final cycle point = 2021
+    [[graph]]
+        R1 = remover
+        P1Y = foo => bar & baz => waz
+[runtime]
+    [[remover]]
+        script = """
+cylc__job__poll_grep_suite_log '\[bar\.2020\].* (received)failed'
+cylc__job__poll_grep_suite_log '\[baz\.2021\].* (received)failed'
+# Remove the two unhandled failed tasks.
+cylc remove $CYLC_SUITE_NAME */ba*:failed
+# Remove the two unsatisfied waiting tasks.
+cylc remove $CYLC_SUITE_NAME */waz
+# Exit so suite can shut down.
+"""
+    [[foo, waz]]
+        script = true
+    [[bar]]
+        script = """
+if [[ $CYLC_TASK_CYCLE_POINT == 2020 ]]; then
+   false
+else
+    true
+fi"""
+    [[baz]]
+        script = """
+if [[ $CYLC_TASK_CYCLE_POINT == 2021 ]]; then
+   false
+else
+    true
+fi"""

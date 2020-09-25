@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,6 +35,9 @@ import traceback
 
 from metomi.isodatetime.data import Calendar
 from metomi.isodatetime.parsers import DurationParser
+from metomi.isodatetime.exceptions import IsodatetimeError
+from metomi.isodatetime.timezone import get_local_time_zone_format
+from metomi.isodatetime.dumpers import TimePointDumper
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.util import replicate
 
@@ -42,7 +45,8 @@ from cylc.flow import LOG
 from cylc.flow.c3mro import C3
 from cylc.flow.conditional_simplifier import ConditionalSimplifier
 from cylc.flow.exceptions import (
-    CylcError, SuiteConfigError, IntervalParsingError, TaskDefError)
+    CylcError, SuiteConfigError, IntervalParsingError, TaskDefError,
+    ParamExpandError)
 from cylc.flow.graph_parser import GraphParser
 from cylc.flow.param_expand import NameExpander
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
@@ -50,7 +54,7 @@ from cylc.flow.cfgspec.suite import RawSuiteConfig
 from cylc.flow.cycling.loader import (
     get_point, get_point_relative, get_interval, get_interval_cls,
     get_sequence, get_sequence_cls, init_cyclers, INTEGER_CYCLING_TYPE,
-    ISO8601_CYCLING_TYPE)
+    ISO8601_CYCLING_TYPE, get_dump_format)
 from cylc.flow.cycling.iso8601 import ingest_time
 import cylc.flow.flags
 from cylc.flow.graphnode import GraphNodeParser
@@ -60,6 +64,7 @@ from cylc.flow.pathutil import (
     get_suite_run_share_dir,
     get_suite_run_work_dir,
 )
+from cylc.flow.platforms import FORBIDDEN_WITH_PLATFORM
 from cylc.flow.print_tree import print_tree
 from cylc.flow.subprocctx import SubFuncContext
 from cylc.flow.suite_files import NO_TITLE
@@ -67,6 +72,8 @@ from cylc.flow.taskdef import TaskDef
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.task_trigger import TaskTrigger, Dependency
+from cylc.flow.unicode_rules import (
+    XtriggerNameValidator, TaskOutputValidator)
 from cylc.flow.wallclock import (
     get_current_time_string, set_utc_mode, get_utc_mode)
 from cylc.flow.xtrigger_mgr import XtriggerManager
@@ -77,6 +84,7 @@ RE_EXT_TRIGGER = re.compile(r'(.*)\s*\(\s*(.+)\s*\)\s*')
 RE_SEC_MULTI_SEQ = re.compile(r'(?![^(]+\)),')
 RE_SUITE_NAME_VAR = re.compile(r'\${?CYLC_SUITE_(REG_)?NAME}?')
 RE_TASK_NAME_VAR = re.compile(r'\${?CYLC_TASK_NAME}?')
+RE_VARNAME = re.compile(r'^[a-zA-Z_][\w]*$')
 
 
 def check_varnames(env):
@@ -86,21 +94,43 @@ def check_varnames(env):
     """
     bad = []
     for varname in env:
-        if not re.match(r'^[a-zA-Z_][\w]*$', varname):
+        if not RE_VARNAME.match(varname):
             bad.append(varname)
     return bad
+
+
+def interpolate_template(tmpl, params_dict):
+    """Try the string interpolation/formatting operator `%` on a template
+    string with a dictionary of parameters.
+
+    E.g. 'a_%(foo)d' % {'foo': 12}
+
+    If it fails, raises ParamExpandError, but if the string does not contain
+    `%(`, it just returns the string.
+    """
+    if '%(' not in tmpl:
+        return tmpl  # User probably not trying to use param template
+    try:
+        return tmpl % params_dict
+    except KeyError:
+        raise ParamExpandError('bad parameter')
+    except TypeError:
+        raise ParamExpandError('wrong data type for parameter')
+    except ValueError:
+        raise ParamExpandError('bad template syntax')
+
 
 # TODO: separate config for run and non-run purposes?
 
 
-class SuiteConfig(object):
+class SuiteConfig:
     """Class for suite configuration items and derived quantities."""
 
     Q_DEFAULT = 'default'
     TASK_EVENT_TMPL_KEYS = (
         'event', 'suite', 'suite_uuid', 'point', 'name', 'submit_num', 'id',
         'message', 'batch_sys_name', 'batch_sys_job_id', 'submit_time',
-        'start_time', 'finish_time', 'user@host', 'try_num')
+        'start_time', 'finish_time', 'platform_name', 'try_num')
 
     def __init__(
         self,
@@ -185,7 +215,13 @@ class SuiteConfig(object):
         # parse, upgrade, validate the suite, but don't expand with default
         # items
         self.mem_log("config.py: before RawSuiteConfig init")
-        self.pcfg = RawSuiteConfig(fpath, output_fname, template_vars)
+        if output_fname:
+            output_fname = os.path.expandvars(output_fname)
+        self.pcfg = RawSuiteConfig(
+            fpath,
+            output_fname,
+            template_vars
+        )
         self.mem_log("config.py: after RawSuiteConfig init")
         self.mem_log("config.py: before get(sparse=True")
         self.cfg = self.pcfg.get(sparse=True)
@@ -302,38 +338,24 @@ class SuiteConfig(object):
         # filter task environment variables after inheritance
         self.filter_env()
 
-        # Now add config defaults.  Items added prior to this ends up in the
+        # Now add config defaults. Items added prior to this end up in the
         # sparse dict (e.g. parameter-expanded namespaces).
         self.mem_log("config.py: before get(sparse=False)")
         self.cfg = self.pcfg.get(sparse=False)
         self.mem_log("config.py: after get(sparse=False)")
 
+        # These 2 must be called before call to init_cyclers(self.cfg):
+        self.process_utc_mode()
+        self.process_cycle_point_tz()
+
         # after the call to init_cyclers, we can start getting proper points.
         init_cyclers(self.cfg)
-
-        # Running in UTC time? (else just use the system clock)
-        if self.cfg['cylc']['UTC mode'] is None:
-            set_utc_mode(glbl_cfg().get(['cylc', 'UTC mode']))
-        else:
-            set_utc_mode(self.cfg['cylc']['UTC mode'])
+        self.cycling_type = get_interval_cls().get_null().TYPE
+        self.cycle_point_dump_format = get_dump_format(self.cycling_type)
 
         # Initial point from suite definition (or CLI override above).
-        orig_icp = self.cfg['scheduling']['initial cycle point']
-        if orig_icp is None:
-            raise SuiteConfigError(
-                "This suite requires an initial cycle point.")
-        if orig_icp == "now":
-            icp = get_current_time_string()
-        else:
-            try:
-                my_now = get_current_time_string()
-                icp = ingest_time(orig_icp, my_now)
-            except ValueError as exc:
-                raise SuiteConfigError(str(exc))
-        if orig_icp != icp:
-            self.options.icp = icp
-        self.initial_point = get_point(icp).standardise()
-        self.cfg['scheduling']['initial cycle point'] = str(self.initial_point)
+        self.process_initial_cycle_point()
+
         if getattr(self.options, 'startcp', None) is not None:
             # Warm start from a point later than initial point.
             if self.options.startcp == "now":
@@ -373,7 +395,7 @@ class SuiteConfig(object):
             fcp_str = self.cfg['scheduling']['final cycle point']
         if fcp_str is not None:
             # Is the final "point"(/interval) relative to initial?
-            if get_interval_cls().get_null().TYPE == INTEGER_CYCLING_TYPE:
+            if self.cycling_type == INTEGER_CYCLING_TYPE:
                 if "P" in fcp_str:
                     # Relative, integer cycling.
                     self.final_point = get_point_relative(
@@ -385,7 +407,7 @@ class SuiteConfig(object):
                     # Relative, ISO8601 cycling.
                     self.final_point = get_point_relative(
                         fcp_str, self.initial_point).standardise()
-                except ValueError:
+                except IsodatetimeError:
                     # (not relative)
                     pass
             if self.final_point is None:
@@ -492,9 +514,9 @@ class SuiteConfig(object):
 
             self.cfg['scheduling']['special tasks'][s_type] = result
 
-        self.collapsed_families_rc = (
+        self.collapsed_families_config = (
             self.cfg['visualization']['collapsed families'])
-        for fam in self.collapsed_families_rc:
+        for fam in self.collapsed_families_config:
             if fam not in self.runtime['first-parent descendants']:
                 raise SuiteConfigError(
                     '[visualization]collapsed families: '
@@ -506,7 +528,7 @@ class SuiteConfig(object):
         elif is_reload:
             self.closed_families = []
         else:
-            self.closed_families = self.collapsed_families_rc
+            self.closed_families = self.collapsed_families_config
         for cfam in self.closed_families:
             if cfam not in self.runtime['descendants']:
                 self.closed_families.remove(cfam)
@@ -629,7 +651,7 @@ class SuiteConfig(object):
 
         # (Note that we're retaining 'default node attributes' even
         # though this could now be achieved by styling the root family,
-        # because putting default attributes for root in the suite.rc spec
+        # because putting default attributes for root in the flow.cylc spec
         # results in root appearing last in the ordered dict of node
         # names, so it overrides the styling for lesser groups and
         # nodes, whereas the reverse is needed - fixing this would
@@ -671,7 +693,7 @@ class SuiteConfig(object):
                 vfcp = get_point_relative(
                     self.cfg['visualization']['final cycle point'],
                     self.initial_point).standardise()
-            except ValueError:
+            except IsodatetimeError:
                 vfcp = get_point(
                     self.cfg['visualization']['final cycle point']
                 ).standardise()
@@ -705,6 +727,96 @@ class SuiteConfig(object):
             self.mem_log("config.py: after _check_circular()")
 
         self.mem_log("config.py: end init config")
+
+    def process_utc_mode(self):
+        """Set UTC mode from config or from stored value on restart.
+
+        Sets:
+            self.cfg['cylc']['UTC mode']
+            The UTC mode flag
+        """
+        cfg_utc_mode = self.cfg['cylc']['UTC mode']
+        # Get the original UTC mode if restart:
+        orig_utc_mode = getattr(self.options, 'utc_mode', None)
+        if orig_utc_mode is None:
+            # Not a restart - will save config value
+            if cfg_utc_mode is not None:
+                orig_utc_mode = cfg_utc_mode
+            else:
+                orig_utc_mode = glbl_cfg().get(['cylc', 'UTC mode'])
+        elif cfg_utc_mode is not None and cfg_utc_mode != orig_utc_mode:
+            LOG.warning(
+                "UTC mode = {0} specified in configuration, but it is stored "
+                "as {1} from the initial run. The suite will continue to use "
+                "UTC mode = {1}"
+                .format(cfg_utc_mode, orig_utc_mode)
+            )
+        self.cfg['cylc']['UTC mode'] = orig_utc_mode
+        set_utc_mode(orig_utc_mode)
+
+    def process_cycle_point_tz(self):
+        """Set the cycle point time zone from config or from stored value
+        on restart.
+
+        Ensure suites restart with the same cycle point time zone even after
+        system time zone changes e.g. DST (the value is put in db by
+        Scheduler).
+
+        Sets:
+            self.cfg['cylc']['cycle point time zone']
+        """
+        cfg_cp_tz = self.cfg['cylc'].get('cycle point time zone')
+        # Get the original suite run time zone if restart:
+        orig_cp_tz = getattr(self.options, 'cycle_point_tz', None)
+        if orig_cp_tz is None:
+            # Not a restart
+            if cfg_cp_tz is None:
+                if get_utc_mode() is True:
+                    orig_cp_tz = 'Z'
+                else:
+                    orig_cp_tz = get_local_time_zone_format()
+            else:
+                orig_cp_tz = cfg_cp_tz
+        elif cfg_cp_tz is not None:
+            dmp = TimePointDumper()
+            if dmp.get_time_zone(cfg_cp_tz) != dmp.get_time_zone(orig_cp_tz):
+                LOG.warning(
+                    "cycle point time zone = {0} specified in configuration, "
+                    "but there is a stored value of {1} from the initial run. "
+                    "The suite will continue to run in {1}"
+                    .format(cfg_cp_tz, orig_cp_tz)
+                )
+        self.cfg['cylc']['cycle point time zone'] = orig_cp_tz
+
+    def process_initial_cycle_point(self):
+        """Validate and set initial cycle point from flow.cylc.
+
+        Sets:
+            self.initial_point
+            self.cfg['scheduling']['initial cycle point']
+            self.options.icp
+        Raises:
+            SuiteConfigError - if it fails to validate
+        """
+        orig_icp = self.cfg['scheduling']['initial cycle point']
+        if orig_icp is None:
+            if self.cfg['scheduling']['cycling mode'] == INTEGER_CYCLING_TYPE:
+                orig_icp = '1'
+            else:
+                raise SuiteConfigError(
+                    "This suite requires an initial cycle point.")
+        if orig_icp == "now":
+            icp = get_current_time_string()
+        else:
+            try:
+                my_now = get_current_time_string()
+                icp = ingest_time(orig_icp, my_now)
+            except IsodatetimeError as exc:
+                raise SuiteConfigError(str(exc))
+        if orig_icp != icp:
+            self.options.icp = icp
+        self.initial_point = get_point(icp).standardise()
+        self.cfg['scheduling']['initial cycle point'] = str(self.initial_point)
 
     def _check_circular(self):
         """Check for circular dependence in graph."""
@@ -868,28 +980,22 @@ class SuiteConfig(object):
             (key, values[0])
             for key, values in self.parameters[0].items() if values)
         bads = set()
-        for namespace, item in self.cfg['runtime'].items():
-            if 'parameter environment templates' not in item:
+        for task_name, task_items in self.cfg['runtime'].items():
+            if 'environment' not in task_items:
                 continue
-            for name, tmpl in item['parameter environment templates'].items():
+            for name, tmpl in task_items['environment'].items():
                 try:
-                    value = tmpl % parameter_values
-                except KeyError:
-                    bads.add((namespace, name, tmpl, 'bad parameter'))
-                except TypeError:
-                    bads.add((
-                        namespace, name, tmpl,
-                        'wrong data type for parameter'))
-                except ValueError:
-                    bads.add((namespace, name, tmpl, 'bad template syntax'))
-                else:
-                    if value == tmpl:  # Not a template
-                        bads.add((namespace, name, tmpl, 'not a template'))
+                    interpolate_template(tmpl, parameter_values)
+                except ParamExpandError as descr:
+                    bads.add((task_name, name, tmpl, descr))
         if bads:
-            LOG.error("bad parameter environment template:\n  %s" % (
-                "\n  ".join('[%s]%s=%s  # %s' % bad for bad in sorted(bads))))
-            raise SuiteConfigError(
-                "Illegal parameter environment template(s) detected")
+            LOG.warning(
+                'bad parameter environment template:\n    '
+                '\n    '.join(
+                    '[runtime][%s][environment]%s = %s  # %s' %
+                    bad for bad in sorted(bads)
+                )
+            )
 
     def filter_env(self):
         """Filter environment variables after sparse inheritance"""
@@ -988,12 +1094,16 @@ class SuiteConfig(object):
                 if name not in self.runtime['first-parent descendants'][p]:
                     self.runtime['first-parent descendants'][p].append(name)
 
-    def compute_inheritance(self, use_simple_method=True):
+    def compute_inheritance(self):
         LOG.debug("Parsing the runtime namespace hierarchy")
 
+        # TODO: Note an unused alternative mechanism was removed here
+        # (March 2020). It stored the result of each completed MRO and
+        # re-used these wherever possible. This could be more efficient
+        # for full namespaces in deep hierarchies. We should go back and
+        # look if inheritance computation becomes a problem.
+
         results = OrderedDictWithDefaults()
-        # n_reps = 0
-        already_done = {}  # to store already computed namespaces by mro
 
         # Loop through runtime members, 'root' first.
         nses = list(self.cfg['runtime'])
@@ -1006,39 +1116,11 @@ class SuiteConfig(object):
 
             result = OrderedDictWithDefaults()
 
-            if use_simple_method:
-                # Go up the linearized MRO from root, replicating or
-                # overriding each namespace element as we go.
-                for name in hierarchy:
-                    replicate(result, self.cfg['runtime'][name])
-                    # n_reps += 1
-
-            else:
-                # As for the simple method, but store the result of each
-                # completed MRO (full or partial) as we go, and re-use
-                # these wherever possible. This ought to be a lot more
-                # efficient for big namespaces (e.g. lots of environment
-                # variables) in deep hierarchies, but results may vary...
-                prev_shortcut = False
-                mro = []
-                for name in hierarchy:
-                    mro.append(name)
-                    i_mro = '*'.join(mro)
-                    if i_mro in already_done:
-                        ad_result = already_done[i_mro]
-                        prev_shortcut = True
-                    else:
-                        if prev_shortcut:
-                            prev_shortcut = False
-                            # copy ad_result (to avoid altering already_done)
-                            result = OrderedDictWithDefaults()
-                            replicate(result, ad_result)  # ...and use stored
-                            # n_reps += 1
-                        # override name content into tmp
-                        replicate(result, self.cfg['runtime'][name])
-                        # n_reps += 1
-                        # record this mro as already done
-                        already_done[i_mro] = result
+            # Go up the linearized MRO from root, replicating or
+            # overriding each namespace element as we go.
+            for name in hierarchy:
+                replicate(result, self.cfg['runtime'][name])
+                # n_reps += 1
 
             results[ns] = result
 
@@ -1071,7 +1153,7 @@ class SuiteConfig(object):
         if not limit:
             limit = None
         if (limit is not None and limit.isdigit() and
-                get_interval_cls().get_null().TYPE == ISO8601_CYCLING_TYPE):
+                self.cycling_type == ISO8601_CYCLING_TYPE):
             # Backwards-compatibility for raw number of hours.
             limit = "PT%sH" % limit
 
@@ -1114,9 +1196,11 @@ class SuiteConfig(object):
         # Then reassign to other queues as requested.
         warnings = []
         requeued = []
+        # Record non-default queues by task name, to avoid spurious warnings
+        # about tasks "already added to a queue", when the queue is the same.
+        myq = {}
         for key, queue in list(queues.copy().items()):
-            # queues.copy() is essential here to allow items to be removed from
-            # the queues dict.
+            myq[key] = []
             if key == self.Q_DEFAULT:
                 continue
             # Assign tasks to queue and remove them from default.
@@ -1131,7 +1215,7 @@ class SuiteConfig(object):
                             try:
                                 queues[self.Q_DEFAULT]['members'].remove(fmem)
                             except ValueError:
-                                if fmem in requeued:
+                                if fmem in requeued and fmem not in myq[key]:
                                     msg = "%s: ignoring %s from %s (%s)" % (
                                         key, fmem, qmember,
                                         'already assigned to a queue')
@@ -1140,6 +1224,7 @@ class SuiteConfig(object):
                                     # Ignore: task not used in the graph.
                                     pass
                             else:
+                                myq[key] = fmem
                                 qmembers.append(fmem)
                                 requeued.append(fmem)
                 else:
@@ -1149,30 +1234,35 @@ class SuiteConfig(object):
                             queues[self.Q_DEFAULT]['members'].remove(qmember)
                         except ValueError:
                             if qmember in requeued:
-                                msg = "%s: ignoring '%s' (%s)" % (
-                                    key, qmember, 'task already assigned')
+                                msg = "%s: ignoring %s (%s)" % (
+                                    key, qmember,
+                                    'already assigned to a queue')
                                 warnings.append(msg)
                             elif qmember not in all_task_names:
-                                msg = "%s: ignoring '%s' (%s)" % (
-                                    key, qmember, 'task not defined')
+                                if qmember not in self.cfg['runtime']:
+                                    err = 'task not defined'
+                                else:
+                                    err = 'task not used in the graph'
+                                msg = "%s: ignoring %s (%s)" % (
+                                    key, qmember, err)
                                 warnings.append(msg)
                             else:
                                 # Ignore: task not used in the graph.
                                 pass
                         else:
+                            myq[key] = qmember
                             qmembers.append(qmember)
                             requeued.append(qmember)
-
-            if warnings:
-                err_msg = "Queue configuration warnings:"
-                for msg in warnings:
-                    err_msg += "\n+ %s" % msg
-                LOG.warning(err_msg)
-
             if qmembers:
                 queue['members'] = qmembers
             else:
                 del queues[key]
+
+        if warnings:
+            err_msg = "Queue configuration warnings:"
+            for msg in warnings:
+                err_msg += "\n+ %s" % msg
+            LOG.warning(err_msg)
 
         if cylc.flow.flags.verbose and len(queues) > 1:
             log_msg = "Internal queues created:"
@@ -1257,19 +1347,19 @@ class SuiteConfig(object):
             scr += "\ncylc__job__dummy_result %s %s || exit 1" % (arg1, arg2)
             rtc['script'] = scr
 
-            # Disable batch scheduler in dummy modes.
-            # TODO - to use batch schedulers in dummy mode we need to
-            # identify which resource directives to disable or modify.
-            # (Only execution time limit is automatic at the moment.)
-            rtc['job']['batch system'] = 'background'
+            # All dummy modes should run on platform localhost
+            # All Cylc 7 config items which conflict with platform are removed.
+            for section, key, exceptions in FORBIDDEN_WITH_PLATFORM:
+                if (section in rtc and key in rtc[section]):
+                    rtc[section][key] = None
+            rtc['platform'] = 'localhost'
 
             # Disable environment, in case it depends on env-script.
             rtc['environment'] = {}
 
             if tdef.run_mode == 'dummy-local':
                 # Run all dummy tasks on the suite host.
-                rtc['remote']['host'] = None
-                rtc['remote']['owner'] = None
+                rtc['platform'] = 'localhost'
 
             # Simulation mode tasks should fail in which cycle points?
             f_pts = []
@@ -1441,7 +1531,7 @@ class SuiteConfig(object):
         huge suites (several thousand tasks).
         Note:
           (a) self.cfg['runtime'][name]
-              contains the task definition sections of the suite.rc file.
+              contains the task definition sections of the flow.cylc file.
           (b) self.taskdefs[name]
               contains tasks that will be used, defined by the graph.
         Tasks (a) may be defined but not used (e.g. commented out of the
@@ -1533,13 +1623,12 @@ class SuiteConfig(object):
                 if suicide:
                     continue
                 if orig_lexpr != lexpr:
-                    LOG.error("%s => %s" % (orig_lexpr, right))
+                    LOG.error(f"{orig_lexpr} => {right}")
                 raise SuiteConfigError(
-                    "self-edge detected: %s => %s" % (
-                        left, right))
+                    f"self-edge detected: {left} => {right}")
             self.edges[seq].add((left, right, suicide, conditional))
 
-    def generate_taskdefs(self, orig_expr, left_nodes, right, seq):
+    def generate_taskdefs(self, orig_expr, left_nodes, right, seq, suicide):
         """Generate task definitions for all nodes in orig_expr."""
 
         for node in left_nodes + [right]:
@@ -1547,7 +1636,7 @@ class SuiteConfig(object):
                 # if right is None, lefts are lone nodes
                 # for which we still define the taskdefs
                 continue
-            name, offset_is_from_icp, _, offset, _ = (
+            name, offset, _, offset_is_from_icp, _, _ = (
                 GraphNodeParser.get_inst().parse(node))
 
             if name not in self.cfg['runtime']:
@@ -1559,10 +1648,10 @@ class SuiteConfig(object):
                 replicate(self.cfg['runtime'][name],
                           self.cfg['runtime']['root'])
                 if 'root' not in self.runtime['descendants']:
-                    # (happens when no runtimes are defined in the suite.rc)
+                    # (happens when no runtimes are defined in flow.cylc)
                     self.runtime['descendants']['root'] = []
                 if 'root' not in self.runtime['first-parent descendants']:
-                    # (happens when no runtimes are defined in the suite.rc)
+                    # (happens when no runtimes are defined in flow.cylc)
                     self.runtime['first-parent descendants']['root'] = []
                 self.runtime['parents'][name] = ['root']
                 self.runtime['linearized ancestors'][name] = [name, 'root']
@@ -1580,14 +1669,24 @@ class SuiteConfig(object):
                     'task': self.suite_polling_tasks[name][1],
                     'status': self.suite_polling_tasks[name][2]}
 
-            if not offset_is_from_icp:
-                if offset:
-                    taskdef.used_in_offset_trigger = True
-                else:
-                    taskdef.add_sequence(seq)
+            # Only add sequence to taskdef if explicit (not an offset).
+            if offset:
+                taskdef.used_in_offset_trigger = True
+            elif suicide and name == right:
+                # "foo => !bar" should not create taskdef bar
+                pass
+            else:
+                taskdef.add_sequence(seq)
 
             # Record custom message outputs.
             for item in self.cfg['runtime'][name]['outputs'].items():
+                output, task_message = item
+                valid, msg = TaskOutputValidator.validate(task_message)
+                if not valid:
+                    raise SuiteConfigError(
+                        f'Invalid message trigger "[runtime][{name}][outputs]'
+                        f'{output} = {task_message}" - {msg}'
+                    )
                 taskdef.outputs.add(item)
 
     def generate_triggers(self, lexpression, left_nodes, right, seq,
@@ -1614,34 +1713,13 @@ class SuiteConfig(object):
                 xtrig_labels.add(left[1:])
                 continue
             # (GraphParseError checked above)
-            name, offset_is_from_icp, offset_is_irregular, offset, output = (
+            (name, offset, output, offset_is_from_icp,
+             offset_is_irregular, offset_is_absolute) = (
                 GraphNodeParser.get_inst().parse(left))
-            ltaskdef = self.taskdefs[name]
-
-            # Determine intercycle offsets.
-            abs_cycle_point = None
-            cycle_point_offset = None
-            if offset_is_from_icp:
-                first_point = get_point_relative(offset, self.initial_point)
-                last_point = seq.get_stop_point()
-                abs_cycle_point = first_point
-                if last_point is None:
-                    # This dependency persists for the whole suite run.
-                    ltaskdef.intercycle_offsets.add((None, seq))
-                else:
-                    ltaskdef.intercycle_offsets.add(
-                        (str(-(last_point - first_point)), seq))
-            elif offset:
-                if offset_is_irregular:
-                    offset_tuple = (offset, seq)
-                else:
-                    offset_tuple = (offset, None)
-                ltaskdef.intercycle_offsets.add(offset_tuple)
-                cycle_point_offset = offset
 
             # Qualifier.
             outputs = self.cfg['runtime'][name]['outputs']
-            if outputs and output in outputs:
+            if outputs and (output in outputs):
                 # Qualifier is a task message.
                 qualifier = outputs[output]
             elif output:
@@ -1652,7 +1730,9 @@ class SuiteConfig(object):
                 qualifier = TASK_OUTPUT_SUCCEEDED
 
             # Generate TaskTrigger if not already done.
-            key = (name, abs_cycle_point, cycle_point_offset, qualifier)
+            key = (name, offset, qualifier,
+                   offset_is_irregular, offset_is_absolute,
+                   offset_is_from_icp, self.initial_point)
             try:
                 task_trigger = task_triggers[key]
             except KeyError:
@@ -1660,6 +1740,11 @@ class SuiteConfig(object):
                 task_triggers[key] = task_trigger
 
             triggers[left] = task_trigger
+
+            # (name is left name)
+            self.taskdefs[name].add_graph_child(task_trigger, right, seq)
+            # graph_parents not currently used but might be needed soon:
+            # self.taskdefs[right].add_graph_parent(task_trigger, name, seq)
 
         # Walk down "expr_list" depth first, and replace any items matching a
         # key in "triggers" ("left" values) with the trigger.
@@ -1675,6 +1760,14 @@ class SuiteConfig(object):
         if triggers:
             dependency = Dependency(expr_list, set(triggers.values()), suicide)
             self.taskdefs[right].add_dependency(dependency, seq)
+
+        validator = XtriggerNameValidator.validate
+        for label in self.cfg['scheduling']['xtriggers']:
+            valid, msg = validator(label)
+            if not valid:
+                raise SuiteConfigError(
+                    f'Invalid xtrigger name "{label}" - {msg}'
+                )
 
         for label in xtrig_labels:
             try:
@@ -1739,7 +1832,7 @@ class SuiteConfig(object):
 
         if self.first_graph:
             self.first_graph = False
-            if not self.collapsed_families_rc and not ungroup_all:
+            if not self.collapsed_families_config and not ungroup_all:
                 # initially default to collapsing all families if
                 # "[visualization]collapsed families" not defined
                 group_all = True
@@ -1747,8 +1840,8 @@ class SuiteConfig(object):
         first_parent_descendants = self.runtime['first-parent descendants']
         if group_all:
             # Group all family nodes
-            if self.collapsed_families_rc:
-                self.closed_families = copy(self.collapsed_families_rc)
+            if self.collapsed_families_config:
+                self.closed_families = copy(self.collapsed_families_config)
             else:
                 for fam in first_parent_descendants:
                     if fam != 'root':
@@ -1843,7 +1936,7 @@ class SuiteConfig(object):
                         offset_is_from_icp = False
                         offset = None
                     else:
-                        name, offset_is_from_icp, _, offset, _ = (
+                        name, offset, _, offset_is_from_icp, _, _ = (
                             GraphNodeParser.get_inst().parse(left))
                     if offset:
                         if offset_is_from_icp:
@@ -1957,7 +2050,7 @@ class SuiteConfig(object):
                         offset_is_from_icp = False
                         offset = None
                     else:
-                        name, offset_is_from_icp, _, offset, _ = (
+                        name, offset, _, offset_is_from_icp, _, _ = (
                             GraphNodeParser.get_inst().parse(left))
                     if offset:
                         if offset_is_from_icp:
@@ -2009,7 +2102,7 @@ class SuiteConfig(object):
                 try:
                     stop_point = get_point_relative(
                         vfcp, get_point(start_point_string)).standardise()
-                except ValueError:
+                except IsodatetimeError:
                     stop_point = get_point(vfcp).standardise()
 
         if stop_point is not None:
@@ -2138,7 +2231,7 @@ class SuiteConfig(object):
                 lefts, suicide = trigs
                 orig = original[right][expr]
                 self.generate_edges(expr, orig, lefts, right, seq, suicide)
-                self.generate_taskdefs(orig, lefts, right, seq)
+                self.generate_taskdefs(orig, lefts, right, seq, suicide)
                 self.generate_triggers(
                     expr, lefts, right, seq, suicide, task_triggers)
 
@@ -2197,8 +2290,7 @@ class SuiteConfig(object):
 
         # Get the taskdef object for generating the task proxy class
         taskd = TaskDef(
-            name, rtcfg, self.run_mode(), self.start_point,
-            self.cfg['scheduling']['spawn to max active cycle points'])
+            name, rtcfg, self.run_mode(), self.start_point)
 
         # TODO - put all taskd.foo items in a single config dict
 
@@ -2239,7 +2331,7 @@ class SuiteConfig(object):
         """
         if self.options.reftest:
             return self.cfg['cylc']['reference test']['expected task failures']
-        elif self.cfg['cylc']['events']['abort if any task fails']:
+        elif self.options.abort_if_any_task_fails:
             return []
         else:
             return None

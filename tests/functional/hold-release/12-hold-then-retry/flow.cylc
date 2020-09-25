@@ -1,0 +1,59 @@
+[meta]
+    title = Test: run task - hold suite - task job retry - release suite
+
+[cylc]
+    [[events]]
+        abort on stalled = True
+        abort on inactivity = True
+        inactivity = PT3M
+
+[scheduling]
+    [[graph]]
+        R1 = """
+t-retry-able:start => t-hold
+t-submit-retry-able:submit => t-hold
+"""
+
+[runtime]
+    [[t-hold]]
+        script = """
+            # Hold the suite
+            cylc hold "${CYLC_SUITE_NAME}"
+            cylc__job__poll_grep_suite_log -F 'Command succeeded: hold'
+            # Poll t-submit-retry-able, should return submit-fail
+            cylc poll "${CYLC_SUITE_NAME}" 't-submit-retry-able'
+            # Allow t-retry-able to continue
+            rm -f "${CYLC_SUITE_RUN_DIR}/file"
+            cylc__job__poll_grep_suite_log -F \
+                '[t-retry-able.1] -running (held) => retrying (held)'
+            cylc__job__poll_grep_suite_log -F \
+                '[t-submit-retry-able.1] -submitted (held) => submit-retrying (held)'
+            # Release the suite
+            cylc release "${CYLC_SUITE_NAME}"
+            cylc__job__poll_grep_suite_log -F \
+                '[t-retry-able.1] -retrying (held) => retrying'
+            cylc__job__poll_grep_suite_log -F \
+                '[t-submit-retry-able.1] -submit-retrying (held) => submit-retrying'
+        """
+    [[t-retry-able]]
+        script = """
+            if ((CYLC_TASK_SUBMIT_NUMBER == 1)); then
+                touch "${CYLC_SUITE_RUN_DIR}/file"
+                while [[ -e "${CYLC_SUITE_RUN_DIR}/file" ]]; do
+                    sleep 1
+                done
+                false
+            fi
+        """
+        [[[job]]]
+            execution retry delays = PT5S
+    [[t-submit-retry-able]]
+        env-script = """
+            if ((CYLC_TASK_SUBMIT_NUMBER == 1)); then
+                trap '' EXIT
+                exit
+            fi
+        """
+        script = true
+        [[[job]]]
+            submission retry delays = PT5S

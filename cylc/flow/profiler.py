@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,15 +18,18 @@
 import os
 import cProfile
 import io
+from pathlib import Path
 import pstats
-from subprocess import Popen, PIPE, DEVNULL
+
+import psutil
 
 
-class Profiler(object):
+class Profiler:
     """Wrap cProfile, pstats, and memory logging, for performance profiling."""
 
-    def __init__(self, enabled=False):
+    def __init__(self, schd, enabled=False):
         """Initialize cProfile."""
+        self.schd = schd
         self.enabled = enabled
         if enabled:
             self.prof = cProfile.Profile()
@@ -48,14 +51,16 @@ class Profiler(object):
         stats = pstats.Stats(self.prof, stream=string_stream)
         stats.sort_stats('cumulative')
         stats.print_stats()
+        # dump to stdout
         print(string_stream.getvalue())
+        # write data file to suite log dir
+        self.prof.dump_stats(
+            Path(self.schd.suite_log_dir, 'profile.prof')
+        )
 
     def log_memory(self, message):
         """Print a message to standard out with the current memory usage."""
         if not self.enabled:
             return
-        proc = Popen(
-            ["ps", "h", "-orss", str(os.getpid())],
-            stdin=DEVNULL, stdout=PIPE)
-        memory = int(proc.communicate()[0])
+        memory = psutil.Process(os.getpid()).memory_info().rss / 1024
         print("PROFILE: Memory: %d KiB: %s" % (memory, message))

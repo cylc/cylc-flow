@@ -1,0 +1,12 @@
+# Test job submission modules in lib/python/ and python/ (deprecated).
+[scheduling]
+    [[graph]]
+        R1 = foo & bar
+
+[runtime]
+    [[root]]
+        script = true # quick
+    [[foo]]
+        platform = testme
+    [[bar]]
+        platform = testme2

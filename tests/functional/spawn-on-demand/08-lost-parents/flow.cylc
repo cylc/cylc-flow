@@ -1,0 +1,13 @@
+# A task with parents in some cycles but not others must be spawned on demand
+# by parents (when it has them) and auto-spawned otherwise.
+[scheduling]
+   cycling mode = integer
+   initial cycle point = 1
+   final cycle point = 6
+   [[graph]]
+      R3//P1 = "dad => child"
+      R1/5/P1 = "mum => child"
+      P1 = "child"
+[runtime]
+   [[root]]
+      script = true

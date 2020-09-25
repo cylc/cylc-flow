@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,6 +17,7 @@
 
 from difflib import unified_diff
 import re
+import os
 
 
 from cylc.flow import LOG
@@ -45,8 +46,8 @@ def run_reftest(config, ctx):
 def _load_reflog(filename):
     """Reference test: get trigger info from reference log."""
     res = []
-    re_trig = re.compile(r'(\[.+\]\s-triggered\soff\s\[.+\])$')
-    for line in open(filename, 'r'):
+    re_trig = re.compile(r'(\[.+\]\s-triggered\soff\s\[.*\])$')
+    for line in open(os.path.expandvars(filename), 'r'):
         match = re_trig.search(line)
         if match:
             res.append(match.groups()[0])

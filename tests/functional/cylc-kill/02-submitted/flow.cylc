@@ -1,0 +1,31 @@
+#!Jinja2
+[cylc]
+    UTC mode = True
+    [[reference test]]
+        expected task failures = killable-1.1, killable-2.1, killable-3.1
+[scheduling]
+    [[graph]]
+        R1="""
+KILLABLE:submit-all => killer
+KILLABLE:submit-fail-all => stopper
+"""
+[runtime]
+    [[KILLABLE]]
+        init-script="""
+echo "CYLC_JOB_PID=$$" >>"$0.status"
+sleep 60
+"""
+        script=true
+    [[killable-1, killable-2, killable-3]]
+        inherit=KILLABLE
+    [[killer]]
+        script="""
+wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
+cylc__job__poll_grep_suite_log -F '[killable-1.1] -triggered'
+cylc__job__poll_grep_suite_log -F '[killable-2.1] -triggered'
+cylc__job__poll_grep_suite_log -F '[killable-3.1] -triggered'
+# (Avoid killing myself if my started message hasn't arrived yet:)
+cylc kill "${CYLC_SUITE_NAME}" 'killable*:submitted'
+"""
+    [[stopper]]
+        script=cylc stop "${CYLC_SUITE_NAME}"

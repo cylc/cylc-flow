@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ from copy import deepcopy
 
 # This is a standalone performance test of the algorithm used in gcylc to
 # sort namespaces into "definition order", i.e. the order in which they are
-# defined in the suite.rc file.
+# defined in the flow.cylc file.
 
 # Number of namespaces.
 N = 10000
