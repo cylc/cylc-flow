@@ -1259,8 +1259,6 @@ class TaskPool:
 
     def force_spawn_children(self, items, outputs):
         """Spawn downstream children of given task outputs on user command."""
-        if not outputs:
-            outputs = [TASK_OUTPUT_SUCCEEDED]
         n_warnings, task_items = self.match_taskdefs(items)
         for (_, point), taskdef in sorted(task_items.items()):
             # This the upstream target task:

@@ -55,7 +55,7 @@ def get_option_parser():
             ('TASK-GLOB [...]', 'Task match pattern')])
     parser.add_option(
         "--output", metavar="OUTPUT",
-        help="set task output OUTPUT completed",
+        help="Set task output OUTPUT completed, defaults to 'succeeded'.",
         action="append", dest="outputs")
     return parser
 
@@ -63,9 +63,6 @@ def get_option_parser():
 @cli_function(get_option_parser)
 def main(parser, options, suite, *task_globs):
     pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
-
-    if not options.outputs:
-        parser.error('No outputs specified')
 
     mutation_kwargs = {
         'request_string': MUTATION,
