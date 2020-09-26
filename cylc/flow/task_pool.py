@@ -611,6 +611,8 @@ class TaskPool:
 
         # Event-driven final update of task_states table.
         # TODO: same for datastore (still updated by iterating the task pool)
+        self.data_store_mgr.decrement_graph_window(
+            itask.tdef.name, itask.point)
         self.suite_db_mgr.put_update_task_state(itask)
         LOG.debug("[%s] -%s", itask, msg)
         del itask
