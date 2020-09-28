@@ -1,14 +1,16 @@
-[cylc]
-    force run mode = dummy-local
 [scheduling]
     [[graph]]
         R1 = oxygas
 [runtime]
     [[root]]
-        script = true
         [[[simulation]]]
             default run length = PT0S
     [[oxygas]]
+        pre-script = echo "[MY-PRE-SCRIPT] \${CYLC_TASK_NAME} is ${CYLC_TASK_NAME}"
+        script = """
+            echo "[MY-SCRIPT] \${CYLC_TASK_NAME} is ${CYLC_TASK_NAME}"
+        """
+        post-script = echo "[MY-POST-SCRIPT] \${CYLC_TASK_NAME} is ${CYLC_TASK_NAME}"
         env-script = ELSE=foo
         [[[environment]]]
             SOMETHING = "some-modification-$ELSE"
