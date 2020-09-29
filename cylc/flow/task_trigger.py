@@ -51,8 +51,8 @@ class TaskTrigger:
                  'offset_is_from_icp', 'initial_point']
 
     def __init__(self, task_name, cycle_point_offset, output,
-                 offset_is_irregular, offset_is_absolute,
-                 offset_is_from_icp, initial_point):
+                 offset_is_irregular=False, offset_is_absolute=False,
+                 offset_is_from_icp=False, initial_point=None):
         self.task_name = task_name
         self.cycle_point_offset = cycle_point_offset
         self.output = output
