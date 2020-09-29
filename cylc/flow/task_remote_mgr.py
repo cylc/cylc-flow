@@ -50,7 +50,6 @@ from cylc.flow.platforms import get_platform, get_host_from_platform
 from cylc.flow.remote import construct_platform_ssh_cmd
 
 
-REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
 REMOTE_INIT_FAILED = 'REMOTE INIT FAILED'
 
 
@@ -68,7 +67,7 @@ class TaskRemoteMgr:
         self.uuid_str = None
         self.ready = False
 
-    def subshell_eval(self, command, host_check=True):
+    def subshell_eval(self, command, command_pattern, host_check=True):
         """Evaluate a task platform from a subshell string.
 
         At Cylc 7, from a host string.
@@ -77,10 +76,12 @@ class TaskRemoteMgr:
             command (str):
                 An explicit host name, a command in back-tick or $(command)
                 format, or an environment variable holding a hostname.
+            command_re (re.Pattern):
+                A compiled regex pattern designed to match subshell strings.
 
         Return (str):
             - None if evaluation of command is still taking place.
-            - If command is not defined or the evaluated name is equivelent
+            - If command is not defined or the evaluated name is equivalent
               to 'localhost', _and_ host_check is set to True then
               'localhost'
             - Otherwise, return the evaluated host name on success.
@@ -95,7 +96,7 @@ class TaskRemoteMgr:
             return 'localhost'
 
         # Host selection command: $(command) or `command`
-        match = REC_COMMAND.match(command)
+        match = command_pattern.match(command)
         if match:
             cmd_str = match.groups()[1]
             if cmd_str in self.remote_command_map:
@@ -296,7 +297,7 @@ class TaskRemoteMgr:
                     proc.returncode, out, err))
 
     def _subshell_eval_callback(self, proc_ctx, cmd_str):
-        """Callback when host select command exits"""
+        """Callback when subshell eval command exits"""
         self.ready = True
         if proc_ctx.ret_code == 0 and proc_ctx.out:
             self.remote_command_map[cmd_str] = proc_ctx.out.splitlines()[0]

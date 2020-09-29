@@ -17,12 +17,12 @@
 #-------------------------------------------------------------------------------
 # Test recovery of a failed host select command for a group of tasks.
 . "$(dirname "$0")/test_header"
-set_test_number 5
+set_test_number 7
 
 create_test_global_config "
 [platforms]
     [[test platform]]
-        hosts = localhost
+        hosts = hostname
 
     [[improbable platform name]]
         hosts = localhost
@@ -31,24 +31,40 @@ create_test_global_config "
 install_suite "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" \
+run_fail "${TEST_NAME_BASE}-run" \
     cylc run --debug --no-detach "${SUITE_NAME}"
 
 declare -A GREP_TESTS
 
 # Check that we are warned that platform check will not occur until job-submit
-GREP_TESTS["warn can't check at validate"]="""
+errname='warn cannot check at validate'
+GREP_TESTS["${errname}"]="""
     WARNING - Cannot attempt check .*platform_subshell.*\$(echo \"improbable platform name\")
 """
 
+errname="host subshell eval ok"
 # Check that host = $(hostname) is correctly evaluated
-GREP_TESTS["host subshell evaluate ok"]="""
-    DEBUG - for task platform_subshell.1.*evaluated as improbable platform name
+GREP_TESTS["${errname}"]="""
+    DEBUG.*platform_subshell.1.*evaluated as improbable platform name
+"""
+
+# Check that host = `hostname` is correctly evaluated
+errname="host subshell backticks eval ok"
+# shellcheck disable=SC2006
+GREP_TESTS["${errname}"]="""
+    DEBUG.*host_subshell_backticks.1:.*`hostname` evaluated as localhost
 """
 
 # Check that platform = $(echo "improbable platform name") correctly evaluated
-GREP_TESTS["platform subshell evaluate ok"]="""
-    DEBUG - for task platform_subshell.1.*evaluated as improbable platform name
+errname="platform subshell eval ok"
+GREP_TESTS["${errname}"]="""
+    DEBUG.*platform_subshell.1:.*evaluated as improbable platform name
+"""
+
+errname="fail if platform expression in backticks"
+# shellcheck disable=SC2006,SC2116
+GREP_TESTS["${errname}"]="""
+    ERROR - PlatformLookupError.*\"`echo \"improbable platform name\"`\".*
 """
 
 for testname in "${!GREP_TESTS[@]}"; do
