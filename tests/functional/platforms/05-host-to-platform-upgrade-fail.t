@@ -22,13 +22,13 @@
 export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
 require_remote_platform
-set_test_number 3
+set_test_number 4
 
 create_test_global_config '' "
 [platforms]
-  [[wibble]]
-    hosts = ${CYLC_TEST_HOST}
-    retrieve job logs = True
+    [[wibble]]
+        hosts = ${CYLC_TEST_HOST}
+        retrieve job logs = True
 "
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
@@ -36,17 +36,21 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 # Both of these cases should validate ok.
 run_ok "${TEST_NAME_BASE}-validate" \
-  cylc validate "${SUITE_NAME}" \
-     -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}"
+    cylc validate "${SUITE_NAME}" \
+         -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}"
 
 # Check that the cfgspec/suite.py has issued a warning about upgrades.
 grep_ok "\[not_upgradable_cylc7_settings\]\[remote\]host = parasite"\
-  "${TEST_NAME_BASE}-validate.stderr"
+    "${TEST_NAME_BASE}-validate.stderr"
 
 # Run the suite
 suite_run_fail "${TEST_NAME_BASE}-run" \
-  cylc run --debug --no-detach \
-  -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}" "${SUITE_NAME}"
+    cylc run --debug --no-detach \
+    -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}" "${SUITE_NAME}"
+
+# Check that the suite failed because no matching platfrom could be found.
+grep_ok "\[jobs-submit err\] No platform found matching your task"\
+    "${SUITE_RUN_DIR}/log/suite/log"
 
 purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
