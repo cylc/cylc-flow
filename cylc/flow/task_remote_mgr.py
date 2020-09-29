@@ -176,8 +176,10 @@ class TaskRemoteMgr:
         """
         self.install_target = platform['install target']
 
-        # If task is running locally we can skip the rest of this function
-        if (self.single_task_mode or
+        # If task is running locally or the install target is localhost
+        # we can skip the rest of this function
+        if (self.install_target == 'localhost' or
+                self.single_task_mode or
                 not is_remote_host(get_host_from_platform(platform))):
             LOG.debug(f"REMOTE INIT NOT REQUIRED for {self.install_target}")
             return REMOTE_INIT_NOT_REQUIRED
