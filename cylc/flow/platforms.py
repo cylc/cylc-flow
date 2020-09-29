@@ -31,7 +31,8 @@ FORBIDDEN_WITH_PLATFORM = (
 )
 
 # Regex to check whether a string is a command
-REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
+HOST_REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
+PLATFORM_REC_COMMAND = re.compile(r'(\$\()\s*(.*)\s*([)])$')
 
 
 def get_platform(task_conf=None, task_id='unknown task', warn_only=False):
@@ -69,11 +70,17 @@ def get_platform(task_conf=None, task_id='unknown task', warn_only=False):
         output = platform_from_name(task_conf)
 
     elif 'platform' in task_conf and task_conf['platform']:
-        if REC_COMMAND.match(task_conf['platform']) and warn_only:
+        if PLATFORM_REC_COMMAND.match(task_conf['platform']) and warn_only:
             # In warning mode this function might have been passed an
             # un-expanded platform string - warn that they won't deal with
             # with this until job submit.
             return None
+        if HOST_REC_COMMAND.match(task_conf['platform']) and warn_only:
+            raise PlatformLookupError(
+                f"platform = {task_conf['platform']}: "
+                "backticks are not supported; "
+                "please use $()"
+            )
 
         # Check whether task has conflicting Cylc7 items.
         fail_if_platform_and_host_conflict(task_conf, task_id)

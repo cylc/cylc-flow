@@ -16,6 +16,7 @@ purpose = """
             host_subshell
             platform_no_subshell
             host_no_subshell
+            host_subshell_backticks
         """
 
 [runtime]
@@ -34,4 +35,8 @@ purpose = """
 
     [[host_subshell]]
         [[[remote]]]
-            host = $(echo localhost)
+            host = $(echo hostname)
+
+    [[host_subshell_backticks]]
+        [[[remote]]]
+            host = `echo hostname`

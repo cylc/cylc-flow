@@ -51,7 +51,10 @@ from cylc.flow.task_job_logs import (
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED,
     TASK_OUTPUT_FAILED)
-from cylc.flow.platforms import get_platform, get_host_from_platform
+from cylc.flow.platforms import (
+    get_platform, get_host_from_platform,
+    HOST_REC_COMMAND, PLATFORM_REC_COMMAND
+)
 from cylc.flow.task_remote_mgr import (
     REMOTE_INIT_FAILED, TaskRemoteMgr)
 from cylc.flow.task_state import (
@@ -827,11 +830,11 @@ class TaskJobManager:
         try:
             if rtconfig['remote']['host'] is not None:
                 host_n = self.task_remote_mgr.subshell_eval(
-                    rtconfig['remote']['host']
+                    rtconfig['remote']['host'], HOST_REC_COMMAND
                 )
             else:
                 platform_n = self.task_remote_mgr.subshell_eval(
-                    rtconfig['platform'], host_check=False
+                    rtconfig['platform'], PLATFORM_REC_COMMAND
                 )
         except TaskRemoteMgmtError as exc:
             # Submit number not yet incremented

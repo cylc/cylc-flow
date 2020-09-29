@@ -190,3 +190,16 @@ def test_get_platform_groups_basic(mock_glbl_cfg):
     assert get_platform('hebrew_letters')['name'] == 'aleph'
     random.seed(44)
     assert get_platform('hebrew_letters')['name'] == 'bet'
+
+
+def test_get_platform_warn_mode_fail_if_backticks():
+    # Platform = `cmd in backticks` not allowed.
+    task_conf = {
+        'platform': '`echo ${chamber}`'
+    }
+    with pytest.raises(PlatformLookupError) as err:
+        get_platform(task_conf, warn_only=True)
+    assert err.match(
+        r'platform = `echo \$\{chamber\}`: '
+        r'backticks are not supported; please use \$\(\)'
+    )
