@@ -53,9 +53,10 @@ from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.cfgspec.suite import RawSuiteConfig
 from cylc.flow.cycling.loader import (
     get_point, get_point_relative, get_interval, get_interval_cls,
-    get_sequence, get_sequence_cls, init_cyclers, INTEGER_CYCLING_TYPE,
-    ISO8601_CYCLING_TYPE, get_dump_format)
-from cylc.flow.cycling.iso8601 import ingest_time
+    get_sequence, get_sequence_cls, init_cyclers, get_dump_format,
+    INTEGER_CYCLING_TYPE, ISO8601_CYCLING_TYPE)
+from cylc.flow.cycling.integer import IntegerInterval
+from cylc.flow.cycling.iso8601 import ingest_time, ISO8601Interval
 import cylc.flow.flags
 from cylc.flow.graphnode import GraphNodeParser
 from cylc.flow.pathutil import (
@@ -241,8 +242,7 @@ class SuiteConfig:
         mact = self.cfg['scheduling'].get('max active cycle points')
         if rlim and mact:
             raise SuiteConfigError(
-                "use 'runahead limit' OR "
-                "'max active cycle points', not both")
+                "use 'runahead limit' OR 'max active cycle points', not both")
 
         # Override the suite defn with an initial point from the CLI.
         icp_str = getattr(self.options, 'icp', None)
@@ -548,7 +548,7 @@ class SuiteConfig:
             GraphNodeParser.get_inst().clear()
         self.mem_log("config.py: after load_graph()")
 
-        self.compute_runahead_limits()
+        self.process_runahead_limit()
 
         self.configure_queues()
 
@@ -1141,27 +1141,41 @@ class SuiteConfig:
     #             log_msg += '\t\t' + item + '\t' + val
     #         LOG.info(log_msg)
 
-    def compute_runahead_limits(self):
+    def process_runahead_limit(self):
         """Extract the runahead limits information."""
-        max_cycles = self.cfg['scheduling']['max active cycle points']
-        if max_cycles == 0:
-            raise SuiteConfigError(
-                "max cycle points must be greater than %s" %
-                (max_cycles)
-            )
-        self.max_num_active_cycle_points = self.cfg['scheduling'][
-            'max active cycle points']
+        if self.cfg['scheduling']['max active cycle points']:
+            limit = self.cfg['scheduling']['max active cycle points']
+            LOG.warning(
+                '"[scheduling]max active cycle points" is temporarily '
+                'disabled until a non-consecutive implementation is '
+                'developed (https://github.com/cylc/cylc-flow/issues/3667). '
+                f'Use "runahead limit = P{limit}" for a limit on '
+                'consecutive cycle points.')
+        # TODO: reimplement non-consecutive max active cycle pts elsewhere
+        # https://github.com/cylc/cylc-flow/issues/3667
 
         limit = self.cfg['scheduling']['runahead limit']
-        if not limit:
-            limit = None
-        if (limit is not None and limit.isdigit() and
-                self.cycling_type == ISO8601_CYCLING_TYPE):
-            # Backwards-compatibility for raw number of hours.
-            limit = "PT%sH" % limit
+        if limit.isdigit():
+            limit = f'PT{limit}H'
+            LOG.warning(
+                'Use of a raw number of hours for the runahead limit is '
+                f'deprecated. Use "{limit}" instead')
 
-        # The custom runahead limit is None if not user-configured.
-        self.custom_runahead_limit = get_interval(limit)
+        number_limit_regex = re.compile(r'^P\d+$')
+        time_limit_regexes = DurationParser.DURATION_REGEXES
+
+        if number_limit_regex.fullmatch(limit):
+            self.custom_runahead_limit = IntegerInterval(limit)
+            # Handle "runahead limit = P0":
+            if self.custom_runahead_limit.is_null():
+                self.custom_runahead_limit = IntegerInterval('P1')
+        elif (self.cycling_type == ISO8601_CYCLING_TYPE and
+              any(tlr.fullmatch(limit) for tlr in time_limit_regexes)):
+            self.custom_runahead_limit = ISO8601Interval(limit)
+        else:
+            raise SuiteConfigError(
+                f'bad runahead limit "{limit}" for {self.cycling_type} '
+                'cycling type')
 
     def get_custom_runahead_limit(self):
         """Return the custom runahead limit (may be None)."""

@@ -27,6 +27,8 @@ from cylc.flow.parsec.OrderedDict import OrderedDict
 
 from cylc.flow import LOG
 from cylc.flow.cycling.loader import get_point, standardise_point_string
+from cylc.flow.cycling.integer import IntegerInterval
+from cylc.flow.cycling.iso8601 import ISO8601Interval
 from cylc.flow.exceptions import SuiteConfigError, PointParsingError
 from cylc.flow.suite_status import StopMode
 from cylc.flow.task_action_timer import TaskActionTimer
@@ -264,8 +266,6 @@ class TaskPool:
                     self.release_runahead_task(itask)
                     released = True
 
-        limit = self.max_num_active_cycle_points
-
         points = []
         for point, itasks in sorted(
                 self.get_tasks_by_point(incl_runahead=True).items()):
@@ -289,6 +289,13 @@ class TaskPool:
         # Get the earliest point with unfinished tasks.
         runahead_base_point = min(points)
 
+        if isinstance(self.custom_runahead_limit, IntegerInterval):
+            number_limit = int(self.custom_runahead_limit)
+            runahead_time_limit = None
+        elif isinstance(self.custom_runahead_limit, ISO8601Interval):
+            number_limit = None
+            runahead_time_limit = self.custom_runahead_limit
+
         # Get all cycling points possible after the runahead base point.
         if (self._prev_runahead_base_point is not None and
                 runahead_base_point == self._prev_runahead_base_point):
@@ -298,7 +305,7 @@ class TaskPool:
             sequence_points = []
             for sequence in self.config.sequences:
                 point = runahead_base_point
-                for _ in range(limit):
+                for _ in range(number_limit or sequence._MAX_CACHED_POINTS):
                     point = sequence.get_next_point(point)
                     if point is None:
                         break
@@ -309,29 +316,25 @@ class TaskPool:
 
         points = set(points).union(sequence_points)
 
-        if self.custom_runahead_limit is None:
+        if number_limit is not None:
             # Calculate which tasks to release based on a maximum number of
             # active cycle points (active meaning non-finished tasks).
-            latest_allowed_point = sorted(points)[:limit][-1]
+            latest_allowed_point = sorted(points)[:number_limit][-1]
             if self.max_future_offset is not None:
                 # For the first N points, release their future trigger tasks.
                 latest_allowed_point += self.max_future_offset
         else:
             # Calculate which tasks to release based on a maximum duration
             # measured from the oldest non-finished task.
-            latest_allowed_point = (
-                runahead_base_point + self.custom_runahead_limit)
+            latest_allowed_point = runahead_base_point + runahead_time_limit
 
             if (self._prev_runahead_base_point is None or
                     self._prev_runahead_base_point != runahead_base_point):
-                if self.custom_runahead_limit < self.max_future_offset:
+                if runahead_time_limit < self.max_future_offset:
                     LOG.warning(
-                        ('custom runahead limit of %s is less than ' +
-                         'future triggering offset %s: suite may stall.') % (
-                            self.custom_runahead_limit,
-                            self.max_future_offset
-                        )
-                    )
+                        f'custom runahead limit "{runahead_time_limit}" '
+                        'is less than future triggering offset '
+                        f'"{self.max_future_offset}"; suite may stall.')
             self._prev_runahead_base_point = runahead_base_point
         if self.stop_point and latest_allowed_point > self.stop_point:
             latest_allowed_point = self.stop_point

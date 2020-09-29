@@ -358,27 +358,26 @@ with Conf(
             supports use of the 365 (never a leap year) and 366 (always a leap
             year) calendars.
         ''')
-        Conf('runahead limit', VDR.V_STRING, desc='''
+        Conf('runahead limit', VDR.V_STRING, 'P5', desc='''
             Runahead limiting prevents the fastest tasks in a suite from
             getting too far ahead of the slowest ones, as documented in
             :ref:`RunaheadLimit`.
 
-            This config item specifies a hard limit as a cycle interval
-            between the slowest and fastest tasks. See also
-            :cylc:conf:`[..]max active cycle points` which defines the limit
-            as a number of cyles.
-
-            Example: ``PT12H`` - for a 12 hour limit under ISO 8601 cycling.
-        ''')
-        Conf('max active cycle points', VDR.V_INTEGER, 3, desc='''
-            Runahead limiting prevents the fastest tasks in a suite from
-            getting too far ahead of the slowest ones, as documented in
-            :ref:`RunaheadLimit`.
-
-            It allows up to ``N`` (default 3)
-            consecutive cycle points to be active at any time, adjusted up if
-            necessary for any future triggering.
-        ''')
+            This limit on the number of consecutive cycle points is specified
+            by an interval between the least and most recent: either an integer
+            interval (e.g. ``P3`` -  works for both :term:`integer cycling` and
+            :term:`datetime cycling`), or a time interval (e.g. ``PT12H`` -
+            only works for datetime cycling). Alternatively, if a raw number is
+            given, it will be taken to mean that number of hours, though this
+            usage is deprecated.
+        ''')  # TODO: mention :cylc:conf:`[..]max active cycle points`
+        Conf('max active cycle points', VDR.V_INTEGER, None, desc='''
+        ''')  # TODO: rewrite desc after non-consecutive implementation
+        # See https://github.com/cylc/cylc-flow/issues/3667
+        # Old desc:
+        # It allows up to ``N`` (default 3)
+        # consecutive cycle points to be active at any time, adjusted up if
+        # necessary for any future triggering.
 
         with Conf('queues', desc='''
             Configuration of internal queues, by which the number of
