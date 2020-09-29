@@ -72,6 +72,10 @@ from cylc.flow.pathutil import (
     get_suite_test_log_name,
     make_suite_run_tree,
 )
+from cylc.flow.platforms import (
+    get_install_target_from_platform,
+    get_platform,
+    is_platform_with_target_in_list)
 from cylc.flow.profiler import Profiler
 from cylc.flow.resources import extract_resources
 from cylc.flow.subprocpool import SubProcPool
@@ -101,9 +105,6 @@ from cylc.flow.wallclock import (
     get_time_string_from_unix_time as time2str,
     get_utc_mode)
 from cylc.flow.xtrigger_mgr import XtriggerManager
-from cylc.flow.platforms import (
-    get_install_target_from_platform,
-    get_platform)
 
 
 class SchedulerStop(CylcError):
@@ -722,14 +723,6 @@ class Scheduler:
 
         """
 
-        def is_platform_with_target_in_list(
-                install_target, distinct_platforms_list):
-            """Determines whether install target is in the list of platforms"""
-            for distinct_platform in distinct_platforms_list:
-                if(install_target
-                   == distinct_platform['install target']):
-                    return True
-
         distinct_install_target_platforms = []
 
         for itask in self.pool.get_rh_tasks():
@@ -750,7 +743,7 @@ class Scheduler:
                     platform, self.curve_auth,
                     self.client_pub_key_dir) is None):
                 incomplete_init = True
-
+                break
         if incomplete_init:
             # TODO: Review whether this sleep is needed.
             sleep(1.0)

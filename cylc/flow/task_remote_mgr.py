@@ -33,9 +33,7 @@ from time import time
 from cylc.flow import LOG, RSYNC_LOG
 from cylc.flow.exceptions import TaskRemoteMgmtError
 import cylc.flow.flags
-from cylc.flow.hostuserutil import (
-    is_remote_host, is_remote_install_target, is_remote_platform
-)
+from cylc.flow.hostuserutil import (is_remote_host, is_remote_platform)
 from cylc.flow.pathutil import (
     get_remote_suite_run_dir,
     get_suite_run_dir)
@@ -161,7 +159,8 @@ class TaskRemoteMgr:
             client_pub_key_dir (str):
                 Client public key directory, used by the ZMQ authenticator.
             platform (dict):
-                A dictionary containing information about platform.
+                A dictionary containing settings relating to platform used in
+                this remote installation.
 
         Return:
             REMOTE_INIT_NOT_REQUIRED:
@@ -179,7 +178,7 @@ class TaskRemoteMgr:
 
         # If task is running locally we can skip the rest of this function
         if (self.single_task_mode or
-                not is_remote_install_target(self.install_target)):
+                not is_remote_host(get_host_from_platform(platform))):
             LOG.debug(f"REMOTE INIT NOT REQUIRED for {self.install_target}")
             return REMOTE_INIT_NOT_REQUIRED
 

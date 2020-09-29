@@ -156,13 +156,11 @@ def construct_platform_ssh_cmd(raw_cmd, platform, **kwargs):
 
 
 def get_includes_to_rsync(rsync_includes=None):
-    """Returns a list of directories/files, configured in flow.cylc,
-        to be included in the remote file installation.
-    """
+    """Returns list of configured dirs/files for remote file installation."""
 
     configured_includes = []
 
-    if rsync_includes:
+    if rsync_includes is not None:
         for include in rsync_includes:
             if include.endswith("/"):  # item is a directory
                 configured_includes.append("/" + include + "***")
@@ -205,8 +203,7 @@ def construct_rsync_over_ssh_cmd(
     # Note to future devs - be wary of changing the order of the following
     # rsync options, rsync is very particular about order of in/ex-cludes.
 
-    excludes = ['log', 'share', 'work']
-    for exclude in excludes:
+    for exclude in ['log', 'share', 'work']:
         rsync_cmd.append(f"--exclude={exclude}")
     default_includes = [
         '/app/***',
@@ -215,8 +212,7 @@ def construct_rsync_over_ssh_cmd(
         '/lib/***']
     for include in default_includes:
         rsync_cmd.append(f"--include={include}")
-    configured_includes = get_includes_to_rsync(rsync_includes)
-    for include in configured_includes:
+    for include in get_includes_to_rsync(rsync_includes):
         rsync_cmd.append(f"--include={include}")
     # The following excludes are required in case these are added to the
     rsync_cmd.append("--exclude=*")  # exclude everything else

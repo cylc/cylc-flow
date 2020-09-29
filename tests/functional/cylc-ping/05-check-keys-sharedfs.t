@@ -23,7 +23,7 @@ require_remote_platform_wsfs
 export CYLC_TEST_PLATFORM="$CYLC_TEST_PLATFORM_WSFS"
 set_test_number 4
 
-init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
+init_suite "${TEST_NAME_BASE}" <<'__FLOW_CYLC__'
 #!jinja2
 [cylc]
 [scheduling]
@@ -35,7 +35,7 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
         platform = {{CYLC_TEST_PLATFORM}}
     [[held]]
         script = true
-__SUITE_RC__
+__FLOW_CYLC__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}" \
     -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}"
@@ -44,7 +44,7 @@ suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" \
 RRUND="cylc-run/${SUITE_NAME}"
 RSRVD="${RRUND}/.service"
 poll_grep_suite_log 'Holding all waiting or queued tasks now'
-SSH='ssh -n -oBatchMode=yes -oConnectTimeout=5'
+SSH="$(cylc get-global-config -i "[platforms][$CYLC_TEST_PLATFORM]ssh command")"
 ${SSH} "${CYLC_TEST_PLATFORM}" \
 find "${RSRVD}" -type f -name "*key*"|awk -F/ '{print $NF}'|sort >'find.out'
 cmp_ok 'find.out' <<'__OUT__'

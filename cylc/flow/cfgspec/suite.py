@@ -85,7 +85,7 @@ with Conf(
         ''')
 
     with Conf('scheduler'):
-        Conf('includes', VDR.V_STRING_LIST, desc='''
+        Conf('install', VDR.V_STRING_LIST, desc='''
             Configure the directories and files to be included in the remote
             file installation.
 
@@ -117,7 +117,7 @@ with Conf(
             .. code-block:: cylc
 
                 [scheduler]
-                    includes = dir/, dir2/, file1, file2
+                    install = dir/, dir2/, file1, file2
                 ''')
 
     with Conf('cylc'):

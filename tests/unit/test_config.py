@@ -465,7 +465,7 @@ def test_rsync_includes_will_not_accept_sub_directories():
         [[dependencies]]
             graph = "blah => deeblah"
     [scheduler]
-        includes = dir/, dir2/subdir2/, file1, file2
+        install = dir/, dir2/subdir2/, file1, file2
         """
     with TemporaryDirectory() as temp_dir:
         flow_cylc = Path(temp_dir, "flow.cylc")
@@ -487,7 +487,7 @@ def test_valid_rsync_includes_returns_correct_list():
         [[dependencies]]
             graph = "blah => deeblah"
     [scheduler]
-        includes = dir/, dir2/, file1, file2
+        install = dir/, dir2/, file1, file2
         """
     with TemporaryDirectory() as temp_dir:
         flow_cylc = Path(temp_dir, "flow.cylc")

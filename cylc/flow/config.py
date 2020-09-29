@@ -227,7 +227,7 @@ class SuiteConfig:
         self.cfg = self.pcfg.get(sparse=True)
         self.mem_log("config.py: after get(sparse=True)")
 
-        if 'scheduler' in self.cfg and 'includes' in self.cfg['scheduler']:
+        if 'scheduler' in self.cfg and 'install' in self.cfg['scheduler']:
             self.get_validated_rsync_includes()
 
         # First check for the essential scheduling section.
@@ -2340,18 +2340,15 @@ class SuiteConfig:
             return None
 
     def get_validated_rsync_includes(self):
-        """Validate and return items configured to be included in the file
-            installation"""
-        includes = self.cfg['scheduler']['includes']
-        if includes:
-            illegal_includes = []
-            for include in includes:
-                if include.count("/") > 1:
-                    illegal_includes.append(f"{include}")
-            if len(illegal_includes) > 0:
-                raise SuiteConfigError(
-                    "Error in [scheduler] includes. "
-                    "Directories can only be from the top level, please "
-                    "reconfigure:" + str(illegal_includes)[1:-1])
-            else:
-                return includes
+        """Validate and return items to be included in the file installation"""
+        includes = self.cfg['scheduler']['install']
+        illegal_includes = []
+        for include in includes:
+            if include.count("/") > 1:
+                illegal_includes.append(f"{include}")
+        if len(illegal_includes) > 0:
+            raise SuiteConfigError(
+                "Error in [scheduler] install. "
+                "Directories can only be from the top level, please "
+                "reconfigure:" + str(illegal_includes)[1:-1])
+        return includes
