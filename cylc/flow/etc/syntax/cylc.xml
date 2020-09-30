@@ -55,7 +55,6 @@
         <RegExpr attribute='Keyword' String=' retrieve job logs retry delays '/>
         <RegExpr attribute='Keyword' String=' retrieve job logs max size '/>
         <RegExpr attribute='Keyword' String=' retrieve job logs '/>
-        <RegExpr attribute='Keyword' String=' required run mode '/>
         <RegExpr attribute='Keyword' String=' public '/>
         <RegExpr attribute='Keyword' String=' pre-script '/>
         <RegExpr attribute='Keyword' String=' post-script '/>

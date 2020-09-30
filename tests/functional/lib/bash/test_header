@@ -701,12 +701,18 @@ reftest() {
     local TEST_NAME="${1:-${TEST_NAME_BASE}}"
     install_suite "$@"
     run_ok "${TEST_NAME}-validate" cylc validate "${SUITE_NAME}"
-    if [[ "${ABORT_ON_TASK_FAIL:-}" == true ]]; then
+    if [[ -n "${REFTEST_OPTS:-}" ]]; then
         suite_run_ok "${TEST_NAME}-run" \
-            cylc run --reference-test --debug --no-detach --abort-if-any-task-fails "${SUITE_NAME}"
+            cylc run --reference-test --debug --no-detach \
+            "${REFTEST_OPTS}" "${SUITE_NAME}"
+    elif [[ "${ABORT_ON_TASK_FAIL:-}" == true ]]; then
+        suite_run_ok "${TEST_NAME}-run" \
+            cylc run --reference-test --debug --no-detach \
+            --abort-if-any-task-fails "${SUITE_NAME}"
     else
         suite_run_ok "${TEST_NAME}-run" \
-            cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
+            cylc run --reference-test --debug --no-detach \
+            "${SUITE_NAME}"
     fi
     purge_suite "${SUITE_NAME}"
 }
