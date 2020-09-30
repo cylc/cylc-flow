@@ -4,6 +4,7 @@
 [cylc]
     log resolved dependencies =
     abort if any task fails =
+    authentication =
     [[reference test]]
         allow task failures =
         live mode suite timeout =

@@ -86,7 +86,9 @@ def authorise(req_priv_level):
             host = meta.get('host', '?')
             prog = meta.get('prog', '?')
 
-            usr_priv_level = self._get_priv_level(user)
+            # Hardcoded, for new - but much of this functionality can be
+            # removed more swingingly.
+            usr_priv_level = Priv.CONTROL
             if usr_priv_level < req_priv_level:
                 LOG.warn(
                     "[client-connect] DENIED (privilege '%s' < '%s') %s@%s:%s",

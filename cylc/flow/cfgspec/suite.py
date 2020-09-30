@@ -21,7 +21,6 @@ from metomi.isodatetime.data import Calendar
 
 from cylc.flow import LOG
 from cylc.flow.parsec.exceptions import UpgradeError
-from cylc.flow.network.authorisation import Priv
 from cylc.flow.parsec.config import ParsecConfig, ConfigNode as Conf
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.upgrade import upgrader
@@ -269,22 +268,6 @@ with Conf(
 
         with Conf('reference test'):
             Conf('expected task failures', VDR.V_STRING_LIST)
-
-        with Conf('authentication'):
-            # Allow owners to grant public shutdown rights at the most, not
-            # full control.
-            Conf(
-                'public',
-                VDR.V_STRING,
-                default=Priv.STATE_TOTALS.name.lower().replace('_', '-'),
-                options=[
-                    level.name.lower().replace('_', '-')
-                    for level in [
-                        Priv.IDENTITY, Priv.DESCRIPTION,
-                        Priv.STATE_TOTALS, Priv.READ, Priv.SHUTDOWN
-                    ]
-                ]
-            )
 
     with Conf('scheduling', desc='''
         This section allows cylc to determine when tasks are ready to run.
@@ -1306,6 +1289,7 @@ def upg(cfg, descr):
     u.obsolete('7.8.1', ['cylc', 'events', 'reset timer'])
     u.obsolete('7.8.1', ['cylc', 'events', 'reset inactivity timer'])
     u.obsolete('7.8.1', ['runtime', '__MANY__', 'events', 'reset timer'])
+    u.obsolete('8.0.0', ['cylc', 'authentication'])
     u.obsolete('8.0.0', ['cylc', 'log resolved dependencies'])
     u.obsolete('8.0.0', ['cylc', 'reference test', 'allow task failures'])
     u.obsolete('8.0.0', ['cylc', 'reference test', 'live mode suite timeout'])

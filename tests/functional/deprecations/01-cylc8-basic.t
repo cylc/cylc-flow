@@ -29,6 +29,7 @@ TEST_NAME=${TEST_NAME_BASE}-cmp
 cylc validate -v "${SUITE_NAME}" 2>&1 \
     | sed  -n -e 's/^WARNING - \( \* (.*$\)/\1/p' > 'val.out'
 cmp_ok val.out <<__END__
+ * (8.0.0) [cylc][authentication] - DELETED (OBSOLETE)
  * (8.0.0) [cylc][log resolved dependencies] - DELETED (OBSOLETE)
  * (8.0.0) [cylc][reference test][allow task failures] - DELETED (OBSOLETE)
  * (8.0.0) [cylc][reference test][live mode suite timeout] - DELETED (OBSOLETE)

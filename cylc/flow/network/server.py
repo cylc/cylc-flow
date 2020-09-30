@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Server for suite runtime API."""
 
-import getpass
+import getpass  # noqa: F401
 from queue import Queue
 from textwrap import dedent
 from time import sleep
@@ -24,7 +24,6 @@ from graphql.execution.executors.asyncio import AsyncioExecutor
 import zmq
 
 from cylc.flow import LOG
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.network import encode_, decode_, ZMQSocketBase
 from cylc.flow.network.authorisation import Priv, authorise
 from cylc.flow.network.graphql import (
@@ -253,23 +252,6 @@ class SuiteRuntimeServer(ZMQSocketBase):
                 'message': str(exc), 'traceback': traceback.format_exc()}}
 
         return {'data': response}
-
-    def _get_public_priv(self):
-        """Return the public privilege level of this suite."""
-        if self.schd.config.cfg['cylc']['authentication']['public']:
-            return Priv.parse(
-                self.schd.config.cfg['cylc']['authentication']['public'])
-        return Priv.parse(glbl_cfg().get(['authentication', 'public']))
-
-    def _get_priv_level(self, user):
-        """Return the privilege level for the given user for this suite."""
-        if user == getpass.getuser():
-            return Priv.CONTROL
-        if self.public_priv is None:
-            # cannot do this on initialisation as the suite configuration has
-            # not yet been parsed
-            self.public_priv = self._get_public_priv()
-        return self.public_priv
 
     def register_endpoints(self):
         """Register all exposed methods."""
