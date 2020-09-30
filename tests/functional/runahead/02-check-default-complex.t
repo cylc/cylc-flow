@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -30,10 +30,10 @@ run_fail "${TEST_NAME}" cylc run --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-max-cycle
 DB="${SUITE_RUN_DIR}/log/db"
-run_ok "${TEST_NAME}" sqlite3 "${DB}" "select max(cycle) from task_states"
-cmp_ok "${TEST_NAME}.stdout" <<'__OUT__'
-20100102T0500Z
-__OUT__
+run_ok "${TEST_NAME}" sqlite3 "${DB}" \
+    "select max(cycle) from task_states where status!='waiting'"
+cmp_ok "${TEST_NAME}.stdout" <<< "20100101T1200Z"
+# i.e. should have spawned 5 cycle points from initial T00
 #-------------------------------------------------------------------------------
 grep_ok 'suite timed out after' "${SUITE_RUN_DIR}/log/suite/log"
 #-------------------------------------------------------------------------------

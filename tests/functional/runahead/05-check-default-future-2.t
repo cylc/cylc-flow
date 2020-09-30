@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -34,9 +34,9 @@ TEST_NAME=${TEST_NAME_BASE}-max-cycle
 DB="$RUN_DIR/${SUITE_NAME}/log/db"
 run_ok "${TEST_NAME}" sqlite3 "${DB}" \
 "select max(cycle) from task_states where name=='foo' and status=='failed'"
-cmp_ok "${TEST_NAME}.stdout" <<'__OUT__'
-20100101T0800Z
-__OUT__
+cmp_ok "${TEST_NAME}.stdout" <<< "20100101T1000Z"
+# i.e. should have spawned 5 cycle points from initial T00, and then raised
+# this by PT6H due to fact that wibble spawned
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-check-timeout
 LOG="$RUN_DIR/${SUITE_NAME}/log/suite/log"

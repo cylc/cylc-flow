@@ -4,7 +4,7 @@
         timeout = PT30S
         abort on timeout = True
 [scheduling]
-    max active cycle points = 4
+    runahead limit = P4
     initial cycle point = 20100101T00
     final cycle point = 20100105T00
     [[graph]]
