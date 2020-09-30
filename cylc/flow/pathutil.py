@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Functions to return paths to common suite files and directories."""
 
-import errno
 import os
 from os.path import expandvars
 from shutil import rmtree
@@ -23,6 +22,7 @@ from shutil import rmtree
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.exceptions import WorkflowFilesError
 from cylc.flow.platforms import get_platform
 
 
@@ -73,11 +73,6 @@ def get_suite_run_log_name(suite):
     path = get_suite_run_dir(suite, 'log', 'suite', 'log')
     return expandvars(path)
 
-
-def get_suite_file_install_log_name(suite):
-    """Return suite run log file path."""
-    path = get_suite_run_dir(suite, 'log', 'suite', 'file-installation-log')
-    return expandvars(path)
 
 def get_suite_file_install_log_name(suite):
     """Return suite file install log file path."""
@@ -146,13 +141,22 @@ def make_suite_run_tree(suite):
             os.makedirs(dir_, exist_ok=True)
             LOG.debug('%s: directory created', dir_)
 
-def make_symlink(src, dest, replace=False):
-    """Makes symlinks, with option to replace if they already exist"""
+
+def make_symlink(src, target):
+    """Makes symlinks and replaces if they already exist"""
+    if os.path.islink(target) and os.path.realpath(target) == src:
+        # correct symlink already exists
+        return
+
     try:
-        os.symlink(src, dest)
-    except (OSError, Exception) as e:
-        if e.errno == errno.EEXIST and replace:
-            os.remove(dest)
-            os.symlink(src, dest)
+        os.symlink(src, target, target_is_directory=True)
+
+    except (OSError, Exception) as exc:
+        import errno
+        if exc.errno == errno.EEXIST:
+            # incorrect symlink exists - clear and replace with correct link
+            if os.path.islink(target) and not os.path.isdir(target):
+                LOG.error("Can not symlink over an existing link")
         else:
-            raise e
+            LOG.error(f"Error occurred while symlinking {target} to {src}: {exc}")
+            raise WorkflowFilesError

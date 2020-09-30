@@ -108,6 +108,7 @@ class ParsecConfig:
             cfg = self.dense
 
         parents = []
+
         if keys:
             for key in keys:
                 try:

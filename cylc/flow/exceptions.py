@@ -76,6 +76,9 @@ class SuiteEventError(CylcError):
 class SuiteServiceFileError(CylcError):
     """Exception for errors related to suite service files."""
 
+class WorkflowFilesError(CylcError):
+    """Exception for errors related to workflow files/directories."""
+
 
 class TaskRemoteMgmtError(CylcError):
     """Exceptions initialising suite run directory of remote job host."""

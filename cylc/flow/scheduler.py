@@ -304,14 +304,6 @@ class Scheduler:
             ['etc/job.sh'])
 
         make_suite_run_tree(self.suite)
-        def get_dirs_to_symlink():
-            if 'symlink dirs' in glbl_cfg().get['symlink dirs']:
-                for dir in 
-            return dirs
-
-        def create_symlinks(self, dirs):
-            for dir,  in dirs:
-                make_symlink()
         # Copy local python modules from source to run directory
         for sub_dir in ["python", os.path.join("lib", "python")]:
             # TODO - eventually drop the deprecated "python" sub-dir.

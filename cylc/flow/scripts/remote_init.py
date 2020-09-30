@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""cylc remote-init [--indirect-comm=ssh] UUID RUND
+"""cylc remote-init [--indirect-comm=ssh] INSTALL TARGET RUND
 
 (This command is for internal use.)
 
@@ -40,13 +40,13 @@ from cylc.flow.terminal import cli_function
 
 INTERNAL = True
 
-
 def get_option_parser():
     parser = COP(
         __doc__,
         argdoc=[
             ("INSTALL_TARGET", "Target to be initialised"),
             ("RUND", "The run directory of the suite"),
+            ('[DIRS_TO_BE_SYMLINKED ...]', "Directories to be symlinked"),
         ],
         color=False
     )
@@ -67,6 +67,13 @@ def get_option_parser():
 @cli_function(get_option_parser)
 def main(parser, options, install_target, rund):
     remote_init(install_target, rund, indirect_comm=options.indirect_comm)
+    options, (install_target, rund, *
+              dirs_to_be_symlinked) = parser.parse_args()
+    remote_init(
+        install_target,
+        rund,
+        *dirs_to_be_symlinked,
+        indirect_comm=options.indirect_comm)
 
 
 if __name__ == "__main__":

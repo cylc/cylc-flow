@@ -22,6 +22,10 @@ This module provides logic to:
 - Implement basic host select functionality.
 """
 
+from genericpath import exists
+from os import symlink
+
+from zmq.asyncio import install
 from cylc.flow.cylc_subproc import procopen
 import os
 from shlex import quote
@@ -53,7 +57,7 @@ from cylc.flow.platforms import (
     get_host_from_platform,
     get_install_target_from_platform)
 from cylc.flow.remote import construct_platform_ssh_cmd
-from cylc.flow.wallclock import get_current_time_string
+from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 REMOTE_INIT_FAILED = 'REMOTE INIT FAILED'
 
 
@@ -148,6 +152,17 @@ class TaskRemoteMgr:
             if value is not None:
                 del self.remote_command_map[key]
 
+    def get_dirs_to_symlink(self, install_target):
+        """Returns dictionary of directories to symlink from glbcfg.
+            """
+
+        dirs_to_symlink = {}
+        for dir_ in ['log', 'run', 'share','share/cycle', 'work']:
+            link = glbl_cfg().get(['symlink dirs', install_target, dir_])
+            if link is not None:
+                dirs_to_symlink[dir_] = os.path.join(link, self.suite, dir_)
+        return dirs_to_symlink
+
     def remote_init(self, platform, curve_auth,
                     client_pub_key_dir):
         """Initialise a remote [owner@]host if necessary.
@@ -177,14 +192,14 @@ class TaskRemoteMgr:
                 If waiting for remote init command to complete
 
         """
-        self.install_target = platform['install target']
+        install_target = platform['install target']
 
         # If task is running locally or the install target is localhost
         # we can skip the rest of this function
-        if (self.install_target == 'localhost' or
+        if (install_target == 'localhost' or
                 self.single_task_mode or
                 not is_remote_host(get_host_from_platform(platform))):
-            LOG.debug(f"REMOTE INIT NOT REQUIRED for {self.install_target}")
+            LOG.debug(f"REMOTE INIT NOT REQUIRED for {install_target}")
             return REMOTE_INIT_NOT_REQUIRED
 
         # See if a previous failed attempt to initialize this platform has
@@ -217,13 +232,16 @@ class TaskRemoteMgr:
         cmd = ['remote-init']
         if cylc.flow.flags.debug:
             cmd.append('--debug')
+        cmd.append(str(install_target))
+        cmd.append(get_remote_suite_run_dir(platform, self.suite))
+        dirs_to_symlink = self.get_dirs_to_symlink(install_target)
+        for key, value in dirs_to_symlink.items():
+            if value is not None:
+                cmd.append(f"{key}={quote(value)} ")
         if comm_meth in ['ssh']:
             cmd.append('--indirect-comm=%s' % comm_meth)
-        cmd.append(str(self.install_target))
-        cmd.append(get_remote_suite_run_dir(platform, self.suite))
         # Create the ssh command
         cmd = construct_platform_ssh_cmd(cmd, platform)
-       
         self.proc_pool.put_command(
             SubProcContext(
                 'remote-init',

@@ -15,8 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Implement "cylc remote-init" and "cylc remote-tidy"."""
 
+from genericpath import exists
 import os
+from os import symlink
 import re
+from typing import ItemsView
 import zmq
 import tarfile
 import sys
@@ -29,6 +32,7 @@ from cylc.flow.suite_files import (
     ContactFileFields,
     SuiteFiles
 )
+from cylc.flow.pathutil import make_symlink
 from cylc.flow.resources import extract_resources
 
 
@@ -84,17 +88,33 @@ def create_client_keys(srvd, install_target):
     os.umask(old_umask)
 
 
-def remote_init(install_target, rund, indirect_comm=None):
+def remote_init(install_target, rund, *dirs_to_symlink, indirect_comm=None):
     """cylc remote-init
 
     Arguments:
         install_target (str): target to be initialised
         rund (str): suite run directory
-     construct_platform_ssh_cmd   *indirect_comm (str): use indirect communication via e.g. 'ssh'
+        dirs_to_symlink (list): directories to be symlinked in form
+        [directory=symlink_location, ...]
+        *indirect_comm (str): use indirect communication via e.g. 'ssh'
     """
+
     rund = os.path.expandvars(rund)
     srvd = os.path.join(rund, SuiteFiles.Service.DIRNAME)
     os.makedirs(srvd, exist_ok=True)
+
+    for item in dirs_to_symlink:
+        key, val = item.split("=", 1)
+        if key == 'run':
+            src = rund
+            target = os.path.dirname(os.path.expandvars(val))
+        else:
+            src = os.path.join(rund, key)
+            os.makedirs(src, exist_ok=True)
+            target = os.path.expandvars(val)
+            os.makedirs(os.path.dirname(target), exist_ok=True)
+        make_symlink(src, target)
+
     client_pub_keyinfo = KeyInfo(
         KeyType.PUBLIC,
         KeyOwner.CLIENT,

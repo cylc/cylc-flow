@@ -456,7 +456,6 @@ with Conf('global.cylc', desc='''
                     [[Platform_A]]
                         install target = localhost
             ''')
-            Conf('inherit')
 
         with Conf('localhost', meta=Platform):
             Conf('hosts', VDR.V_STRING_LIST, ['localhost'])
@@ -467,7 +466,7 @@ with Conf('global.cylc', desc='''
             Conf('platforms', VDR.V_STRING_LIST)
     # Symlink Dirs
     with Conf('symlink dirs'):
-        with Conf('install target'):
+        with Conf('<install target>'):
             Conf('run', VDR.V_STRING, None, desc="""
                 Specifies the directory where the workflow run directories are
                 created. If specified, the workflow run directory will be

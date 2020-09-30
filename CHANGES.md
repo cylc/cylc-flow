@@ -54,12 +54,17 @@ The filenames `suite.rc` and `global.rc` are now deprecated in favour of
 compatibility, the `cylc run` command will automatically symlink an existing
 `suite.rc` file to `flow.cylc`.
 
+Remove cylc register's option `--run-dir=DIR`, which created a run directory
+symlink to `DIR` (see #......).  
+
 ### Enhancements
 
 [#3811](https://github.com/cylc/cylc-flow/pull/3811) - Move from cycle based
 to `n` distance dependency graph window node generation and pruning of the
 data-store (API/visual backing data). Ability to modify distance of live
 workflow via API, with default of `n=1`.
+
+[#](https://github.com/cylc/cylc-flow/pull/) - Directories `run`, `log`, `share`, `share/cycle`, `work` now have the option to be redirected to configured directories by symlink.
 
 [#3899](https://github.com/cylc/cylc-flow/pull/3899) - CLI changes
 * Commands no longer re-invoke (so you get `cylc run` not `cylc-run`).
