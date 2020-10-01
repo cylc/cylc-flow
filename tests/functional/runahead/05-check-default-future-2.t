@@ -38,8 +38,8 @@ cmp_ok "${TEST_NAME}.stdout" <<< "20100101T1000Z"
 # i.e. should have spawned 5 cycle points from initial T00, and then raised
 # this by PT6H due to fact that wibble spawned
 #-------------------------------------------------------------------------------
-TEST_NAME=${TEST_NAME_BASE}-check-timeout
+TEST_NAME=${TEST_NAME_BASE}-check-stalled
 LOG="$RUN_DIR/${SUITE_NAME}/log/suite/log"
-run_ok "${TEST_NAME}" grep 'suite timed out after' "${LOG}"
+grep_ok 'Suite shutting down - Abort on suite stalled is set' "${LOG}"
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"
