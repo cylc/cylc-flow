@@ -62,10 +62,9 @@
         <RegExpr attribute='Keyword' String=' number of cycle points '/>
         <RegExpr attribute='Keyword' String=' members '/>
         <RegExpr attribute='Keyword' String=' max-polls '/>
-        <RegExpr attribute='Keyword' String=' mail to '/>
-        <RegExpr attribute='Keyword' String=' mail smtp '/>
-        <RegExpr attribute='Keyword' String=' mail retry delays '/>
-        <RegExpr attribute='Keyword' String=' mail from '/>
+        <RegExpr attribute='Keyword' String=' to '/>
+        <RegExpr attribute='Keyword' String=' smtp '/>
+        <RegExpr attribute='Keyword' String=' from '/>
         <RegExpr attribute='Keyword' String=' mail events '/>
         <RegExpr attribute='Keyword' String=' limit '/>
         <RegExpr attribute='Keyword' String=' interval '/>

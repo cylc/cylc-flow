@@ -456,10 +456,10 @@ class Scheduler:
 
         self.broadcast_mgr.linearized_ancestors.update(
             self.config.get_linearized_ancestors())
-        self.task_events_mgr.mail_interval = self.cylc_config[
-            "task event mail interval"]
+        self.task_events_mgr.mail_interval = self.cylc_config['mail'][
+            "task event batch interval"]
         self.task_events_mgr.mail_footer = self._get_events_conf(
-            "mail footer")
+            "footer")
         self.task_events_mgr.suite_url = self.config.cfg['meta']['URL']
         self.task_events_mgr.suite_cfg = self.config.cfg['meta']
         if self.options.genref:
@@ -989,9 +989,9 @@ class Scheduler:
         self.broadcast_mgr.linearized_ancestors = (
             self.config.get_linearized_ancestors())
         self.pool.set_do_reload(self.config)
-        self.task_events_mgr.mail_interval = self.cylc_config[
-            'task event mail interval']
-        self.task_events_mgr.mail_footer = self._get_events_conf("mail footer")
+        self.task_events_mgr.mail_interval = self.cylc_config['mail'][
+            'task event batch interval']
+        self.task_events_mgr.mail_footer = self._get_events_conf("footer")
 
         # Log tasks that have been added by the reload, removed tasks are
         # logged by the TaskPool.

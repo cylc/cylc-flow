@@ -136,11 +136,10 @@
         <keyword>number of cycle points</keyword>
         <keyword>members</keyword>
         <keyword>max-polls</keyword>
-        <keyword>mail to</keyword>
-        <keyword>mail smtp</keyword>
-        <keyword>mail retry delays</keyword>
-        <keyword>mail from</keyword>
-        <keyword>mail events</keyword>
+        <keyword>to</keyword>
+        <keyword>smtp</keyword>
+        <keyword>from</keyword>
+        <keyword>events</keyword>
         <keyword>limit</keyword>
         <keyword>interval</keyword>
         <keyword>initial cycle point constraints</keyword>

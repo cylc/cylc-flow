@@ -51,16 +51,28 @@ class SuiteEventHandler():
     @staticmethod
     def get_events_conf(config, key, default=None):
         """Return a named [cylc][[events]] configuration."""
-        for getter in [
+        # Mail doesn't have any defaults in suite.py
+        if 'mail' in config.cfg['cylc']:
+            getters = [
                 config.cfg['cylc']['events'],
-                glbl_cfg().get(['cylc', 'events'])]:
-            try:
+                config.cfg['cylc']['mail'],
+                glbl_cfg().get(['cylc', 'events']),
+                glbl_cfg().get(['cylc', 'mail'])
+            ]
+        else:
+            getters = [
+                config.cfg['cylc']['events'],
+                glbl_cfg().get(['cylc', 'events']),
+                glbl_cfg().get(['cylc', 'mail'])
+            ]
+        value = None
+        for getter in getters:
+            if key in getter:
                 value = getter[key]
-            except KeyError:
-                pass
-            else:
-                if value is not None:
-                    return value
+            elif key.replace('mail ', '') in getter:
+                value = getter[key.replace('mail ', '')]
+            if value is not None:
+                return value
         return default
 
     def handle(self, config, ctx):
@@ -75,7 +87,7 @@ class SuiteEventHandler():
         if ctx.event in self.get_events_conf(config, 'mail events', []):
             # SMTP server
             env = dict(os.environ)
-            mail_smtp = self.get_events_conf(config, 'mail smtp')
+            mail_smtp = self.get_events_conf(config, 'smtp')
             if mail_smtp:
                 env['smtp'] = mail_smtp
             subject = '[suite %(event)s] %(suite)s' % {
@@ -90,7 +102,7 @@ class SuiteEventHandler():
                     ('owner', ctx.owner)]:
                 if value:
                     stdin_str += '%s: %s\n' % (name, value)
-            mail_footer_tmpl = self.get_events_conf(config, 'mail footer')
+            mail_footer_tmpl = self.get_events_conf(config, 'footer')
             if mail_footer_tmpl:
                 stdin_str += (mail_footer_tmpl + '\n') % {
                     'host': ctx.host,
@@ -104,8 +116,8 @@ class SuiteEventHandler():
                     '-s', subject,
                     '-r', self.get_events_conf(
                         config,
-                        'mail from', 'notifications@' + get_host()),
-                    self.get_events_conf(config, 'mail to', get_user()),
+                        'from', 'notifications@' + get_host()),
+                    self.get_events_conf(config, 'to', get_user()),
                 ],
                 env=env,
                 stdin_str=stdin_str)

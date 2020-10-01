@@ -3,11 +3,12 @@
     title=Task Event Mail
 
 [cylc]
-    task event mail interval = PT15S
     [[events]]
         abort on timeout = True
-        mail footer = see: http://localhost/stuff/%(owner)s/%(suite)s/
         timeout = PT20S
+    [[mail]]
+        footer = see: http://localhost/stuff/%(owner)s/%(suite)s/
+        task event batch interval = PT15S
     [[reference test]]
         expected task failures = t1.1, t2.1, t3.1, t4.1, t5.1
 
@@ -22,4 +23,5 @@
             execution retry delays = 2*PT20S
         [[[events]]]
             mail events = failed, retry
-            mail smtp = {{MAIL_SMTP}}
+        [[[mail]]]
+            smtp = {{MAIL_SMTP}}
