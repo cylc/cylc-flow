@@ -18,7 +18,7 @@
 # Test runahead limit is being enforced
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 4
+set_test_number 5
 #-------------------------------------------------------------------------------
 install_suite "${TEST_NAME_BASE}" runahead
 #-------------------------------------------------------------------------------
@@ -28,10 +28,11 @@ run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 TEST_NAME="${TEST_NAME_BASE}-run"
 run_fail "${TEST_NAME}" cylc run --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME="${TEST_NAME_BASE}-check-fail"
+TEST_NAME="${TEST_NAME_BASE}-max-cycle"
 DB="${SUITE_RUN_DIR}/log/db"
-TASKS="$(sqlite3 "${DB}" 'select count(*) from task_states where status=="failed"')"
-run_ok "${TEST_NAME_BASE}-check-fail" test "${TASKS}" -eq 4
+run_ok "${TEST_NAME}" sqlite3 "${DB}" \
+    "select max(cycle) from task_states where status!='waiting'"
+cmp_ok "${TEST_NAME}.stdout" <<< "4"
 #-------------------------------------------------------------------------------
 grep_ok 'Suite shutting down - Abort on suite stalled is set' "${SUITE_RUN_DIR}/log/suite/log"
 #-------------------------------------------------------------------------------
