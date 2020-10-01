@@ -21,7 +21,6 @@ import packaging.version
 from cylc.flow import LOG
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.hostuserutil import get_user_home
-from cylc.flow.network.authorisation import Priv
 from cylc.flow.parsec.config import ParsecConfig, ConfigNode as Conf
 from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.parsec.upgrade import upgrader
@@ -596,37 +595,6 @@ with Conf('global.cylc', desc='''
             Use this item to explicitly set the name or IP address of the suite
             host if you have to use the *hardwired* self-identification method.
         ''')
-
-    # suite
-    with Conf('authentication', desc='''
-        Authentication of client programs with suite server programs can be
-        configured here, and overridden in suites if necessary with
-        :cylc:conf:`flow.cylc[cylc][authentication]`.
-
-        The suite-specific passphrase must be installed on a user's account to
-        authorize full control privileges (see
-        :ref:`ConnectionAuthentication`). In the future we plan to move to a
-        more traditional user account model so that each authorized user can
-        have their own password.
-    '''):
-        # Allow owners to grant public shutdown rights at the most, not full
-        # control.
-        Conf(
-            'public',
-            VDR.V_STRING,
-            default=Priv.STATE_TOTALS.name.lower().replace('_', '-'),
-            options=[
-                level.name.lower().replace('_', '-')
-                for level in [
-                    Priv.IDENTITY, Priv.DESCRIPTION,
-                    Priv.STATE_TOTALS, Priv.READ, Priv.SHUTDOWN
-                ]
-            ],
-            desc='''
-                This sets the client privilege level for public access - i.e.
-                no suite passphrase required.
-            '''
-        )
 
     # suite
     with Conf('suite servers', desc='''
