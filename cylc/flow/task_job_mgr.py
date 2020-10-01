@@ -40,6 +40,10 @@ from cylc.flow.hostuserutil import (
 )
 from cylc.flow.job_file import JobFileWriter
 from cylc.flow.pathutil import get_remote_suite_run_job_dir
+from cylc.flow.platforms import (
+    get_platform, get_host_from_platform, get_install_target_from_platform,
+    HOST_REC_COMMAND, PLATFORM_REC_COMMAND
+)
 from cylc.flow.subprocpool import SubProcPool
 from cylc.flow.subprocctx import SubProcContext
 from cylc.flow.task_action_timer import TaskActionTimer
@@ -51,10 +55,6 @@ from cylc.flow.task_job_logs import (
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED,
     TASK_OUTPUT_FAILED)
-from cylc.flow.platforms import (
-    get_platform, get_host_from_platform, get_install_target_from_platform
-    HOST_REC_COMMAND, PLATFORM_REC_COMMAND
-)
 from cylc.flow.task_remote_mgr import (
     REMOTE_INIT_FAILED, TaskRemoteMgr)
 from cylc.flow.task_state import (
