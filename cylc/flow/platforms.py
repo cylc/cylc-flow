@@ -74,7 +74,10 @@ def get_platform(task_conf=None, task_id='unknown task', warn_only=False):
             # In warning mode this function might have been passed an
             # un-expanded platform string - warn that they won't deal with
             # with this until job submit.
-            return None
+            return (
+                f"{task_conf['platform']} will be evaluated at Job Submission "
+                "and may fail then."
+            )
         if HOST_REC_COMMAND.match(task_conf['platform']) and warn_only:
             raise PlatformLookupError(
                 f"platform = {task_conf['platform']}: "
