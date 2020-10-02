@@ -705,10 +705,6 @@ reftest() {
         suite_run_ok "${TEST_NAME}-run" \
             cylc run --reference-test --debug --no-detach \
             "${REFTEST_OPTS}" "${SUITE_NAME}"
-    elif [[ "${ABORT_ON_TASK_FAIL:-}" == true ]]; then
-        suite_run_ok "${TEST_NAME}-run" \
-            cylc run --reference-test --debug --no-detach \
-            --abort-if-any-task-fails "${SUITE_NAME}"
     else
         suite_run_ok "${TEST_NAME}-run" \
             cylc run --reference-test --debug --no-detach \
