@@ -165,18 +165,6 @@ with Conf(
                (e.g. ``+05:30``), given that the time zone is used as part of
                task output filenames.
         ''')
-        Conf('required run mode', VDR.V_STRING, '',
-             options=['', 'live', 'dummy', 'dummy-local', 'simulation'],
-             desc='''
-            If this item is set cylc will abort if the suite is not started in
-            the specified mode. This can be used for demo suites that have to
-            be run in simulation mode, for example, because they have been
-            taken out of their normal operational context; or to prevent
-            accidental submission of expensive real tasks during suite
-            development.
-        ''')
-        Conf('force run mode', VDR.V_STRING, '',
-             options=['', 'live', 'dummy', 'dummy-local', 'simulation'])
         Conf('task event mail interval', VDR.V_INTERVAL)
         Conf('disable automatic shutdown', VDR.V_BOOLEAN, desc='''
             This has the same effect as the ``--no-auto-shutdown`` flag for
@@ -1288,6 +1276,7 @@ def upg(cfg, descr):
         ['runtime', '__MANY__', 'suite state polling', 'template'])
     u.obsolete('7.8.1', ['cylc', 'events', 'reset timer'])
     u.obsolete('7.8.1', ['cylc', 'events', 'reset inactivity timer'])
+    u.obsolete('8.0.0', ['cylc', 'force run mode'])
     u.obsolete('7.8.1', ['runtime', '__MANY__', 'events', 'reset timer'])
     u.obsolete('8.0.0', ['cylc', 'authentication'])
     u.obsolete('8.0.0', ['cylc', 'log resolved dependencies'])
@@ -1301,6 +1290,7 @@ def upg(cfg, descr):
         '8.0.0',
         ['cylc', 'reference test', 'simulation mode suite timeout'])
     u.obsolete('8.0.0', ['cylc', 'reference test', 'required run mode'])
+    u.obsolete('8.0.0', ['cylc', 'required run mode'])
     u.obsolete(
         '8.0.0',
         ['cylc', 'reference test', 'suite shutdown event handler'])

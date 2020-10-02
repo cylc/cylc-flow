@@ -5,6 +5,8 @@
     log resolved dependencies =
     abort if any task fails =
     authentication =
+    required run mode =
+    force run mode =
     [[reference test]]
         allow task failures =
         live mode suite timeout =

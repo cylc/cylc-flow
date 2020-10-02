@@ -1515,8 +1515,6 @@ class SuiteConfig:
         """
         mode = getattr(self.options, 'run_mode', None)
         if not mode:
-            mode = self.cfg['cylc']['force run mode']
-        if not mode:
             mode = 'live'
         if reqmodes:
             return mode in reqmodes

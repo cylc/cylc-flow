@@ -431,10 +431,6 @@ class Scheduler:
 
         self.suite_db_mgr.on_suite_start(self.is_restart)
 
-        reqmode = self.config.cfg['cylc']['required run mode']
-        if reqmode and not self.config.run_mode(reqmode):
-            raise ValueError('this suite requires the %s run mode' % reqmode)
-
         if not self.is_restart:
             # Set suite params that would otherwise be loaded from database:
             self.options.utc_mode = get_utc_mode()
