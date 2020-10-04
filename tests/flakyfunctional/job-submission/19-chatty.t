@@ -29,6 +29,7 @@ process pool timeout = PT10S" "
 [platforms]
 [[griffin]]
 hosts = localhost
+install target = localhost
 batch system = at
 batch submit command template = talkingnonsense %(job)s
 "

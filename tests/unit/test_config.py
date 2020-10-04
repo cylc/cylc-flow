@@ -455,3 +455,47 @@ def test_cycle_point_tz(caplog, monkeypatch):
     ]
     for case in tests:
         _test(**case)
+
+
+def test_rsync_includes_will_not_accept_sub_directories():
+
+    flow_cylc_content = """
+    [scheduling]
+        initial cycle point = 2020-01-01
+        [[dependencies]]
+            graph = "blah => deeblah"
+    [scheduler]
+        install = dir/, dir2/subdir2/, file1, file2
+        """
+    with TemporaryDirectory() as temp_dir:
+        flow_cylc = Path(temp_dir, "flow.cylc")
+        with flow_cylc.open(mode="w") as f:
+            f.write(flow_cylc_content)
+            f.flush()
+
+        with pytest.raises(SuiteConfigError) as exc:
+            SuiteConfig(suite="rsynctest", fpath=flow_cylc)
+        assert "Directories can only be from the top level" in str(exc.value)
+
+
+def test_valid_rsync_includes_returns_correct_list():
+    """Test that the rsync includes in the correct """
+
+    flow_cylc_content = """
+    [scheduling]
+        initial cycle point = 2020-01-01
+        [[dependencies]]
+            graph = "blah => deeblah"
+    [scheduler]
+        install = dir/, dir2/, file1, file2
+        """
+    with TemporaryDirectory() as temp_dir:
+        flow_cylc = Path(temp_dir, "flow.cylc")
+        with flow_cylc.open(mode="w") as f:
+            f.write(flow_cylc_content)
+            f.flush()
+
+        config = SuiteConfig(suite="rsynctest", fpath=flow_cylc)
+
+        rsync_includes = SuiteConfig.get_validated_rsync_includes(config)
+        assert rsync_includes == ['dir/', 'dir2/', 'file1', 'file2']

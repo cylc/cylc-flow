@@ -23,7 +23,7 @@ import sys
 
 from ansimarkup import parse as cparse
 
-from cylc.flow import LOG
+from cylc.flow import LOG, RSYNC_LOG
 import cylc.flow.flags
 from cylc.flow.loggingutil import CylcLogFormatter
 
@@ -255,6 +255,7 @@ TASK_GLOB matches task or family names at a given cycle point.
         else:
             LOG.setLevel(logging.INFO)
         # Remove NullHandler before add the StreamHandler
+        RSYNC_LOG.setLevel(logging.INFO)
         while LOG.handlers:
             LOG.handlers[0].close()
             LOG.removeHandler(LOG.handlers[0])

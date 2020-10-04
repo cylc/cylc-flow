@@ -24,6 +24,7 @@ create_test_global_config "" "
 [platforms]
 [[crocodile]]
   hosts = localhost
+  install target = localhost
   batch system = at
   batch submit command template = at noon tomorrow
 "

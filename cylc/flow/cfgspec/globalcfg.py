@@ -332,7 +332,8 @@ with Conf('global.cylc', desc='''
                 similar interface to ``scp``.
             ''')
             Conf('ssh command',
-                 VDR.V_STRING, 'ssh -oBatchMode=yes -oConnectTimeout=10',
+                 VDR.V_STRING,
+                 'ssh -oBatchMode=yes -oConnectTimeout=10',
                  desc='''
                 A string for the command used to invoke commands on this host.
                 This is not used on the suite host unless you run local tasks
@@ -476,6 +477,18 @@ with Conf('global.cylc', desc='''
                 accepts up to 236 characters.
             ''')
             Conf('owner', VDR.V_STRING)
+            Conf('install target', VDR.V_STRING, desc='''
+            This defaults to the platform name. This will be used as the
+            target for remote file installation.
+            For example, to indicate to Cylc that Platform_A shares a file
+            system with localhost, we would configure as follows:
+
+            .. code-block:: cylc
+
+                [platforms]
+                    [[Platform_A]]
+                        install target = localhost
+            ''')
         with Conf('localhost', meta=Platform):
             Conf('hosts', VDR.V_STRING_LIST, ['localhost'])
 

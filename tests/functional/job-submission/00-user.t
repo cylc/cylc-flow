@@ -24,9 +24,11 @@ create_test_global_config "" "
   [[testme]]
     hosts = localhost
     batch system = my_background
+    install target = localhost
   [[testme2]]
     hosts = localhost
     batch system = my_background2
+    install target = localhost
 "
 
 

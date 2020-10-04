@@ -29,6 +29,7 @@ create_test_global_config "" "
 [platforms]
 [[hydra]]
 hosts = localhost
+install target = localhost
 batch system = ${CYLC_TEST_BATCH_SYS}
 "
 

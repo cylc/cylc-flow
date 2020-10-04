@@ -16,13 +16,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Checks remote ZMQ keys are created and deleted on shutdown.
+
+export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
-
-require_remote_platform
-
+require_remote_platform_wsfs
+export CYLC_TEST_PLATFORM="$CYLC_TEST_PLATFORM_WSFS"
 set_test_number 4
 
-init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
+init_suite "${TEST_NAME_BASE}" <<'__FLOW_CYLC__'
 #!jinja2
 [cylc]
 [scheduling]
@@ -34,7 +35,7 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
         platform = {{CYLC_TEST_PLATFORM}}
     [[held]]
         script = true
-__FLOW_CONFIG__
+__FLOW_CYLC__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}" \
     -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}"
@@ -43,16 +44,17 @@ suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" \
 RRUND="cylc-run/${SUITE_NAME}"
 RSRVD="${RRUND}/.service"
 poll_grep_suite_log 'Holding all waiting or queued tasks now'
-SSH='ssh -n -oBatchMode=yes -oConnectTimeout=5'
-${SSH} "${CYLC_TEST_HOST}" \
+SSH="$(cylc get-global-config -i "[platforms][$CYLC_TEST_PLATFORM]ssh command")"
+${SSH} "${CYLC_TEST_PLATFORM}" \
 find "${RSRVD}" -type f -name "*key*"|awk -F/ '{print $NF}'|sort >'find.out'
-cmp_ok 'find.out' <<__OUT__
+cmp_ok 'find.out' <<'__OUT__'
 client.key_secret
-client_$CYLC_TEST_PLATFORM.key
+client_localhost.key
 server.key
+server.key_secret
 __OUT__
 cylc stop --max-polls=60 --interval=1 "${SUITE_NAME}"
-${SSH} "${CYLC_TEST_HOST}" \
+${SSH} "${CYLC_TEST_PLATFORM}" \
 find "${RRUND}" -type f -name "*key*"|awk -F/ '{print $NF}'|sort >'find.out'
 cmp_ok 'find.out' <<'__OUT__'
 __OUT__

@@ -51,6 +51,9 @@ compatibility, the `cylc run` command will automatically symlink an existing
 [#3816](https://github.com/cylc/cylc-flow/pull/3816) - change `cylc spawn`
 command name to `cylc set-outputs` to better reflect its role in Cylc 8.
 
+[#3796](https://github.com/cylc/cylc-flow/pull/3796) - Remote installation is
+now on a per install target rather than a per platform basis. app/ bin/ etc/ lib/ directories are now installed on the target, configurable in flow.cylc.
+
 [#3724](https://github.com/cylc/cylc-flow/pull/3724) - Re-implemented
 the `cylc scan` command line interface and added a Python API for accessing
 workflow scanning functionality.

@@ -30,6 +30,7 @@ process pool timeout = PT10S
 [platforms]
     [[unicorn]]
         hosts = localhost
+        install target = localhost
         batch system = at
         batch submit command template = sleep 30"
 

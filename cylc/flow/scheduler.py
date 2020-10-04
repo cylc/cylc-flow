@@ -72,6 +72,10 @@ from cylc.flow.pathutil import (
     get_suite_test_log_name,
     make_suite_run_tree,
 )
+from cylc.flow.platforms import (
+    get_install_target_from_platform,
+    get_platform,
+    is_platform_with_target_in_list)
 from cylc.flow.profiler import Profiler
 from cylc.flow.resources import extract_resources
 from cylc.flow.subprocpool import SubProcPool
@@ -101,7 +105,6 @@ from cylc.flow.wallclock import (
     get_time_string_from_unix_time as time2str,
     get_utc_mode)
 from cylc.flow.xtrigger_mgr import XtriggerManager
-from cylc.flow.platforms import get_platform
 
 
 class SchedulerStop(CylcError):
@@ -715,26 +718,33 @@ class Scheduler:
         Note: tasks should all be in the runahead pool at this point.
 
         """
-        auths = set()
+
+        distinct_install_target_platforms = []
+
         for itask in self.pool.get_rh_tasks():
+            itask.platform['install target'] = (
+                get_install_target_from_platform(itask.platform))
             if itask.state(*TASK_STATUSES_ACTIVE):
-                auths.add(itask.platform['name'])
-        while auths:
-            for platform_name in auths.copy():
-                if (
-                    self.task_job_mgr.task_remote_mgr.remote_init(
-                        platform_name, self.curve_auth,
-                        self.client_pub_key_dir
+                if not (
+                    is_platform_with_target_in_list(
+                        itask.platform['install target'],
+                        distinct_install_target_platforms
                     )
-                    is not None
                 ):
-                    auths.remove(
-                        platform_name
-                    )
-            if auths:
-                sleep(1.0)
-                # Remote init is done via process pool
-                self.proc_pool.process()
+                    distinct_install_target_platforms.append(itask.platform)
+
+        incomplete_init = False
+        for platform in distinct_install_target_platforms:
+            if (self.task_job_mgr.task_remote_mgr.remote_init(
+                    platform, self.curve_auth,
+                    self.client_pub_key_dir) is None):
+                incomplete_init = True
+                break
+        if incomplete_init:
+            # TODO: Review whether this sleep is needed.
+            sleep(1.0)
+            # Remote init is done via process pool
+            self.proc_pool.process()
         self.command_poll_tasks()
 
     def _load_task_run_times(self, row_idx, row):
@@ -1228,6 +1238,8 @@ class Scheduler:
             itasks = self.pool.get_ready_tasks()
             if itasks:
                 self.is_updated = True
+            self.task_job_mgr.task_remote_mgr.rsync_includes = (
+                self.config.get_validated_rsync_includes())
             for itask in self.task_job_mgr.submit_task_jobs(
                     self.suite,
                     itasks,

@@ -22,6 +22,7 @@ from copy import deepcopy
 
 from cylc.flow.exceptions import PlatformLookupError
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.hostuserutil import is_remote_host
 
 
 FORBIDDEN_WITH_PLATFORM = (
@@ -315,7 +316,7 @@ def platform_from_job_info(platforms, job, remote):
         # We have some special logic to identify whether task host and task
         # batch system match the platform in question.
         if (
-                task_host == 'localhost' and
+                not is_remote_host(task_host) and
                 task_batch_system == 'background'
         ):
             return 'localhost'
@@ -402,3 +403,25 @@ def fail_if_platform_and_host_conflict(task_conf, task_name, warn_only=False):
                 f"\"{task_name}\" has the following settings which "
                 f"are not compatible:\n{fail_items}"
             )
+
+
+def get_install_target_from_platform(platform):
+    """Sets install target to configured or default platform name.
+
+    Args:
+        platform (dict):
+            A dict representing a platform.
+
+    Returns install target."""
+
+    if not platform['install target']:
+        platform['install target'] = platform['name']
+
+    return platform.get('install target')
+
+
+def is_platform_with_target_in_list(
+        install_target, distinct_platforms_list):
+    """Determines whether install target is in the list of platforms"""
+    for distinct_platform in distinct_platforms_list:
+        return install_target == distinct_platform['install target']

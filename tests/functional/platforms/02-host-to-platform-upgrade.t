@@ -30,6 +30,7 @@ create_test_global_config '' "
 [platforms]
   [[wibble]]
     hosts = ${CYLC_TEST_HOST}
+    install target = ${CYLC_TEST_HOST}
     retrieve job logs = True
 "
 

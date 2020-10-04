@@ -20,18 +20,16 @@ import unittest
 
 from unittest import mock
 
-from cylc.flow import LOG
+from cylc.flow import LOG, RSYNC_LOG
 from cylc.flow.loggingutil import TimestampRotatingFileHandler
 
 
 class TestLoggingutil(unittest.TestCase):
 
-    @mock.patch("cylc.flow.loggingutil.get_suite_run_log_name")
     @mock.patch("cylc.flow.loggingutil.glbl_cfg")
     def test_value_error_raises_system_exit(
         self,
         mocked_glbl_cfg,
-        mocked_get_suite_run_log_name,
     ):
         """Test that a ValueError when writing to a log stream won't result
         in multiple exceptions (what could lead to infinite loop in some
@@ -41,8 +39,7 @@ class TestLoggingutil(unittest.TestCase):
             mocked = mock.MagicMock()
             mocked_glbl_cfg.return_value = mocked
             mocked.get.return_value = 100
-            mocked_get_suite_run_log_name.return_value = tf.name
-            file_handler = TimestampRotatingFileHandler("suiteA", False)
+            file_handler = TimestampRotatingFileHandler(tf.name, False)
             # next line is important as pytest can have a "Bad file descriptor"
             # due to a FileHandler with default "a" (pytest tries to r/w).
             file_handler.mode = "a+"
