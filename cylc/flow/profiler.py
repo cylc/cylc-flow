@@ -54,8 +54,13 @@ class Profiler:
         # dump to stdout
         print(string_stream.getvalue())
         # write data file to suite log dir
+        if not self.schd:
+            # if no scheduler present (e.g. validate) dump to PWD
+            loc = Path()
+        else:
+            loc = Path(self.schd.suite_log_dir)
         self.prof.dump_stats(
-            Path(self.schd.suite_log_dir, 'profile.prof')
+            Path(loc, 'profile.prof')
         )
 
     def log_memory(self, message):

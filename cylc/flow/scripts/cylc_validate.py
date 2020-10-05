@@ -76,7 +76,7 @@ def parse_args():
 @cli_function(parse_args)
 def main(_, options, reg):
     """cylc validate CLI."""
-    profiler = Profiler(options.profile_mode)
+    profiler = Profiler(None, options.profile_mode)
     profiler.start()
 
     if not cylc.flow.flags.debug:
