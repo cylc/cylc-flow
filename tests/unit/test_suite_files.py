@@ -14,10 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import pytest
 import unittest
 
 from unittest import mock
 
+import os.path
 from cylc.flow import suite_files
 from cylc.flow.exceptions import SuiteServiceFileError
 
@@ -243,3 +245,47 @@ class TestSuiteFiles(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+@pytest.mark.parametrize('abs_path', [False, True])
+def test_is_valid_run_dir(abs_path, monkeypatch):
+    """Test that a directory is correctly identified as a valid suite dir when
+    it contains a flow config file or service dir.
+    """
+    prefix = os.sep if abs_path is True else 'mock_cylc_dir'
+    flow_file = os.path.join(prefix, 'flow', 'file', 'exists', 'flow.cylc')
+    suite_rc_file = os.path.join(prefix, 'suite_rc', 'exists', 'suite.rc')
+    serv_dir = os.path.join(prefix, 'service', 'dir', 'exists', '.service')
+
+    monkeypatch.setattr('os.path.isfile',
+                        lambda x: x in [flow_file, suite_rc_file])
+    monkeypatch.setattr('os.path.isdir',
+                        lambda x: x == serv_dir)
+    monkeypatch.setattr('cylc.flow.suite_files.get_platform',
+                        lambda: {'run directory': 'mock_cylc_dir'})
+
+    for path, expected in [('flow/file/exists', True),
+                           ('suite_rc/exists', True),
+                           ('service/dir/exists', True),
+                           ('nothing/exists', False)]:
+        path = os.path.normpath(path)
+        if abs_path:
+            path = os.path.join(os.sep, path)
+        assert suite_files._is_valid_run_dir(path) is expected, (
+            f'Is "{path}" a valid run dir?')
+
+
+def test_register_nested_run_dirs(monkeypatch):
+    """Test that a suite cannot be registered in a subdir of another suite."""
+    monkeypatch.setattr('cylc.flow.suite_files._is_valid_run_dir',
+                        lambda x: x == os.path.join('bright', 'falls'))
+    # Not nested in suite dir - ok:
+    suite_files.check_nested_run_dirs('alan/wake')
+    # It is itself a suite dir - ok:
+    suite_files.check_nested_run_dirs('bright/falls')
+    # Nested in a suite dir - bad:
+    for func in (suite_files.check_nested_run_dirs, suite_files.register):
+        for path in ('bright/falls/light', 'bright/falls/light/and/power'):
+            with pytest.raises(SuiteServiceFileError) as exc:
+                func(path)
+            assert 'Nested run directories not allowed' in str(exc.value)

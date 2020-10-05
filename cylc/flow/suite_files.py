@@ -481,6 +481,7 @@ def register(reg=None, source=None, redirect=False, rundir=None):
             No flow.cylc file found in source location.
             Illegal name (can look like a relative path, but not absolute).
             Another suite already has this name (unless --redirect).
+            Trying to register a suite nested inside of another.
     """
     if reg is None:
         reg = os.path.basename(os.getcwd())
@@ -494,6 +495,8 @@ def register(reg=None, source=None, redirect=False, rundir=None):
     if os.path.isabs(reg):
         raise SuiteServiceFileError(
             "suite name cannot be an absolute path: %s" % reg)
+
+    check_nested_run_dirs(reg)
 
     if source is not None:
         if os.path.basename(source) == SuiteFiles.FLOW_FILE:
@@ -669,3 +672,37 @@ def _load_local_item(item, path):
             return file_.read()
     except IOError:
         return None
+
+
+def check_nested_run_dirs(reg):
+    """Disallow nested run dirs e.g. trying to register foo/bar where foo is
+    already a valid suite directory.
+
+    Args:
+        reg (str): suite name
+    """
+    parent_dir = os.path.dirname(os.path.normpath(reg))
+    while parent_dir != '':
+        if _is_valid_run_dir(parent_dir):
+            raise SuiteServiceFileError(
+                'Nested run directories not allowed - cannot register suite '
+                f'name "{reg}" as {parent_dir} is already a valid '
+                'run directory.')
+        parent_dir = os.path.dirname(parent_dir)
+
+
+def _is_valid_run_dir(path):
+    """Return True if path is a valid suite run directory, else False.
+
+    Args:
+        path (str): if this is a relative path, it is taken to be relative to
+            the Cylc run directory.
+    """
+    if not os.path.isabs(path):
+        cylc_run_dir = os.path.expandvars(get_platform()['run directory'])
+        path = os.path.join(cylc_run_dir, path)
+    if (os.path.isfile(os.path.join(path, SuiteFiles.FLOW_FILE)) or
+            os.path.isdir(os.path.join(path, SuiteFiles.Service.DIRNAME)) or
+            os.path.isfile(os.path.join(path, SuiteFiles.SUITE_RC))):
+        return True
+    return False
