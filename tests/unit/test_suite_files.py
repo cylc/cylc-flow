@@ -15,8 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
-import unittest
-
 from unittest import mock
 
 import os.path
@@ -182,69 +180,57 @@ def get_register_test_cases():
     ]
 
 
-class TestSuiteFiles(unittest.TestCase):
+@mock.patch('os.unlink')
+@mock.patch('os.makedirs')
+@mock.patch('os.symlink')
+@mock.patch('os.readlink')
+@mock.patch('os.path.isfile')
+@mock.patch('os.path.isabs')
+@mock.patch('os.getcwd')
+@mock.patch('os.path.abspath')
+@mock.patch('cylc.flow.suite_files.get_suite_srv_dir')
+def test_register(mocked_get_suite_srv_dir,
+                  mocked_abspath,
+                  mocked_getcwd,
+                  mocked_isabs,
+                  mocked_isfile,
+                  mocked_readlink,
+                  mocked_symlink,
+                  mocked_makedirs,
+                  mocked_unlink):
+    """Test the register function."""
+    def mkdirs_standin(_, exist_ok=False):
+        return True
 
-    @mock.patch('os.unlink')
-    @mock.patch('os.makedirs')
-    @mock.patch('os.symlink')
-    @mock.patch('os.readlink')
-    @mock.patch('os.path.isfile')
-    @mock.patch('os.path.isabs')
-    @mock.patch('os.getcwd')
-    @mock.patch('os.path.abspath')
-    @mock.patch('cylc.flow.suite_files.get_suite_srv_dir')
-    def test_register(
-            self,
-            mocked_get_suite_srv_dir,
-            mocked_abspath,
-            mocked_getcwd,
-            mocked_isabs,
-            mocked_isfile,
-            mocked_readlink,
-            mocked_symlink,
-            mocked_makedirs,
-            mocked_unlink
-    ):
-        """Test the register function."""
-        def mkdirs_standin(_, exist_ok=False):
-            return True
+    mocked_abspath.side_effect = lambda x: x
 
-        mocked_abspath.side_effect = lambda x: x
+    for (reg, source, redirect, cwd, isabs, isfile, suite_srv_dir,
+            readlink, expected_symlink, expected, e_expected,
+            e_message) in get_register_test_cases():
+        mocked_getcwd.side_effect = lambda: cwd
+        mocked_isabs.side_effect = lambda x: isabs
 
-        for reg, source, redirect, cwd, isabs, isfile, \
-            suite_srv_dir, readlink, expected_symlink, \
-            expected, e_expected, e_message \
-                in get_register_test_cases():
-            mocked_getcwd.side_effect = lambda: cwd
-            mocked_isabs.side_effect = lambda x: isabs
+        mocked_isfile.side_effect = lambda x: isfile
+        mocked_get_suite_srv_dir.return_value = str(suite_srv_dir)
+        mocked_makedirs.return_value = True
+        mocked_unlink.return_value = True
+        if readlink == OSError:
+            mocked_readlink.side_effect = readlink
+        else:
+            mocked_readlink.side_effect = lambda x: readlink
 
-            mocked_isfile.side_effect = lambda x: isfile
-            mocked_get_suite_srv_dir.return_value = str(suite_srv_dir)
-            mocked_makedirs.return_value = True
-            mocked_unlink.return_value = True
-            if readlink == OSError:
-                mocked_readlink.side_effect = readlink
-            else:
-                mocked_readlink.side_effect = lambda x: readlink
-
-            if e_expected is None:
-                reg = suite_files.register(reg, source, redirect)
-                self.assertEqual(expected, reg)
-                if mocked_symlink.call_count > 0:
-                    # first argument, of the first call
-                    arg0 = mocked_symlink.call_args[0][0]
-                    self.assertEqual(expected_symlink, arg0)
-            else:
-                with self.assertRaises(e_expected) as cm:
-                    suite_files.register(reg, source, redirect)
-                if e_message is not None:
-                    the_exception = cm.exception
-                    self.assertTrue(e_message in str(the_exception),
-                                    str(the_exception))
-
-
-if __name__ == '__main__':
-    unittest.main()
+        if e_expected is None:
+            reg = suite_files.register(reg, source, redirect)
+            assert reg == expected
+            if mocked_symlink.call_count > 0:
+                # first argument, of the first call
+                arg0 = mocked_symlink.call_args[0][0]
+                assert arg0 == expected_symlink
+        else:
+            with pytest.raises(e_expected) as exc:
+                suite_files.register(reg, source, redirect)
+            if e_message is not None:
+                assert e_message in str(exc.value)
 
 
 @pytest.mark.parametrize('abs_path', [False, True])

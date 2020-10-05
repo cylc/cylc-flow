@@ -345,8 +345,7 @@ def get_contact_file(reg):
 def get_flow_file(reg, suite_owner=None):
     """Return the path of a suite's flow.cylc file."""
     return os.path.join(
-        get_suite_source_dir(reg, suite_owner),
-        SuiteFiles.FLOW_FILE)
+        get_suite_source_dir(reg, suite_owner), SuiteFiles.FLOW_FILE)
 
 
 def get_suite_source_dir(reg, suite_owner=None):
@@ -488,13 +487,11 @@ def register(reg=None, source=None, redirect=False, rundir=None):
 
     is_valid, message = SuiteNameValidator.validate(reg)
     if not is_valid:
-        raise SuiteServiceFileError(
-            f'invalid suite name - {message}'
-        )
+        raise SuiteServiceFileError(f'invalid suite name - {message}')
 
     if os.path.isabs(reg):
         raise SuiteServiceFileError(
-            "suite name cannot be an absolute path: %s" % reg)
+            f'suite name cannot be an absolute path: {reg}')
 
     check_nested_run_dirs(reg)
 
@@ -556,14 +553,12 @@ def register(reg=None, source=None, redirect=False, rundir=None):
     if orig_source is not None and source != orig_source:
         if not redirect:
             raise SuiteServiceFileError(
-                "the name '%s' already points to %s.\nUse "
-                "--redirect to re-use an existing name and run "
-                "directory." % (reg, orig_source))
+                f"the name '{reg}' already points to {orig_source}.\nUse "
+                "--redirect to re-use an existing name and run directory.")
         LOG.warning(
-            "the name '%(reg)s' points to %(old)s.\nIt will now"
-            " be redirected to %(new)s.\nFiles in the existing %(reg)s run"
-            " directory will be overwritten.\n",
-            {'reg': reg, 'old': orig_source, 'new': source})
+            f"the name '{reg}' points to {orig_source}.\nIt will now be "
+            f"redirected to {source}.\nFiles in the existing {reg} run "
+            "directory will be overwritten.\n")
         # Remove symlink to the original suite.
         os.unlink(os.path.join(srv_d, SuiteFiles.Service.SOURCE))
 
@@ -579,7 +574,7 @@ def register(reg=None, source=None, redirect=False, rundir=None):
             source_str = source
         os.symlink(source_str, target)
 
-    print('REGISTERED %s -> %s' % (reg, source))
+    print(f'REGISTERED {reg} -> {source}')
     return reg
 
 
