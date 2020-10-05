@@ -6,10 +6,15 @@ on: [pull_request]
 jobs:
   fast-tests:
     runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.experimental }}
     timeout-minutes: 15
     strategy:
       matrix:
         python-version: ['3.7', '3.8']
+        experimental: [false]
+        include:
+          - python-version: 3.9
+            experimental: true
     steps:
       - name: Checkout
         uses: actions/checkout@v2
