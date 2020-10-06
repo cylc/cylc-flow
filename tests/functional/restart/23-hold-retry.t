@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test restart with held (retrying) task
+# Test restart with held task waiting to retry
 . "$(dirname "$0")/test_header"
 set_test_number 5
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
@@ -26,11 +26,11 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 sqlite3 "${SUITE_RUN_DIR}/log/db" \
     'SELECT cycle, name, status FROM task_pool ORDER BY cycle, name' >'task-pool.out'
 cmp_ok 'task-pool.out' <<__OUT__
-1|t1|retrying
+1|t1|waiting
 __OUT__
 cylc restart "${SUITE_NAME}" --debug --no-detach 1>'out' 2>&1 &
 SUITE_PID=$!
-poll_grep_suite_log -F 'INFO - + t1.1 retrying (held)'
+poll_grep_suite_log -F 'INFO - + t1.1 waiting (held)'
 run_ok "${TEST_NAME_BASE}-release" cylc release "${SUITE_NAME}"
 poll_grep_suite_log -F 'INFO - DONE'
 if ! wait "${SUITE_PID}"; then
