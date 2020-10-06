@@ -66,8 +66,7 @@ from cylc.flow.task_outputs import (
     TASK_OUTPUT_FAILED, TASK_OUTPUT_SUBMIT_FAILED, TASK_OUTPUT_EXPIRED)
 from cylc.flow.wallclock import (
     get_current_time_string,
-    get_seconds_as_interval_string as intvl_as_str,
-    get_time_string_from_unix_time
+    get_seconds_as_interval_string as intvl_as_str
 )
 
 CustomTaskEventHandlerContext = namedtuple(
