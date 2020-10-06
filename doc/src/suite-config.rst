@@ -1862,8 +1862,8 @@ workflow is skipped, if it is more than one day behind the wall-clock (see also
                  copy:expired => !proc"""
 
 
-External Triggers
-"""""""""""""""""
+External Event Triggers
+"""""""""""""""""""""""
 
 This is a substantial topic, documented in :ref:`External Triggers`.
 
