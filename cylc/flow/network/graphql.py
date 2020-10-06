@@ -150,14 +150,28 @@ class AstDocArguments:
         for defn in document_ast.definitions:
             if isinstance(defn, ast.OperationDefinition):
                 root_type = get_operation_root_type(schema, defn)
+                definition_variables = defn.variable_definitions or []
+                variables = {}
+                if definition_variables:
+                    variables = get_variable_values(
+                        schema,
+                        definition_variables,
+                        variable_values
+                    )
+                    # check if we are missing some of the definition variables
+                    if not variables or \
+                            len(variables) != len(definition_variables):
+                        variable_names = [
+                            v.variable.name.value for v in definition_variables
+                        ]
+                        msg = (f'Please check your query variables. The '
+                               f'following variables are expected: '
+                               f'[{", ".join(variable_names)}]')
+                        raise ValueError(msg)
                 self.operation_defs[getattr(defn.name, 'value', root_type)] = {
                     'definition': defn,
                     'parent_type': root_type,
-                    'variables': get_variable_values(
-                        schema,
-                        defn.variable_definitions or [],
-                        variable_values
-                    ),
+                    'variables': variables,
                 }
             elif isinstance(defn, ast.FragmentDefinition):
                 self.fragment_defs[defn.name.value] = defn
