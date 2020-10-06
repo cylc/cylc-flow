@@ -245,9 +245,9 @@ class TaskPool:
     def release_runahead_tasks(self):
         """Restrict the number of active cycle points.
 
-        Compute max active cycle points or runahead limit, and release tasks to
-        the main pool if they are below that point (and <= the stop point, if
-        there is a stop point). Return True if any tasks released, else False.
+        Compute runahead limit, and release tasks to the main pool if they are
+        below that point (and <= the stop point, if there is a stop point).
+        Return True if any tasks released, else False.
 
         """
         released = False

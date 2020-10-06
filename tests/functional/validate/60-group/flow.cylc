@@ -4,7 +4,7 @@
 group="test group 1"
 
 [scheduling]
-    max active cycle points = 3
+    runahead limit = P3
     cycling mode = integer
     initial cycle point = 1
 [[graph]]

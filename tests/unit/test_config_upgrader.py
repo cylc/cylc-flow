@@ -17,7 +17,7 @@
 # Tests that configs can be upgraded from earlier versions of Cylc.
 
 import pytest
-from cylc.flow.cfgspec.suite import upgrade_param_env_templates
+from cylc.flow.cfgspec.suite import upg, upgrade_param_env_templates
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults as ord_dict
 
 
@@ -102,5 +102,23 @@ def test_upgrade_param_env_templates(cfg, expected):
         return result
 
     config = _cfg(cfg)
-    upgrade_param_env_templates(config, 'suite.rc')
+    upgrade_param_env_templates(config, 'flow.cylc')
     assert config == _cfg(expected)
+
+
+@pytest.mark.parametrize(
+    'macp, rlim',
+    [(16, 'P16'),
+     ('', '')]
+)
+def test_upgrade_max_active_cycle_points(macp, rlim):
+    """Test that `max active cycle points` is correctly upgraded to
+    `runahead limit`."""
+    cfg = {
+        'scheduling': {'max active cycle points': macp}
+    }
+    expected = {
+        'scheduling': {'runahead limit': rlim}
+    }
+    upg(cfg, 'flow.cylc')
+    assert cfg == expected

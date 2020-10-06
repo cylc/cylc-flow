@@ -237,12 +237,6 @@ class SuiteConfig:
         if 'graph' not in self.cfg['scheduling']:
             raise SuiteConfigError("missing [scheduling][[graph]] section.")
         # (The check that 'graph' is defined is below).
-        # The two runahead limiting schemes are mutually exclusive.
-        rlim = self.cfg['scheduling'].get('runahead limit')
-        mact = self.cfg['scheduling'].get('max active cycle points')
-        if rlim and mact:
-            raise SuiteConfigError(
-                "use 'runahead limit' OR 'max active cycle points', not both")
 
         # Override the suite defn with an initial point from the CLI.
         icp_str = getattr(self.options, 'icp', None)
@@ -1143,17 +1137,6 @@ class SuiteConfig:
 
     def process_runahead_limit(self):
         """Extract the runahead limits information."""
-        if self.cfg['scheduling']['max active cycle points']:
-            limit = self.cfg['scheduling']['max active cycle points']
-            LOG.warning(
-                '"[scheduling]max active cycle points" is temporarily '
-                'disabled until a non-consecutive implementation is '
-                'developed (https://github.com/cylc/cylc-flow/issues/3667). '
-                f'Use "runahead limit = P{limit}" for a limit on '
-                'consecutive cycle points.')
-        # TODO: reimplement non-consecutive max active cycle pts elsewhere
-        # https://github.com/cylc/cylc-flow/issues/3667
-
         limit = self.cfg['scheduling']['runahead limit']
         if limit.isdigit():
             limit = f'PT{limit}H'
@@ -1176,6 +1159,9 @@ class SuiteConfig:
             raise SuiteConfigError(
                 f'bad runahead limit "{limit}" for {self.cycling_type} '
                 'cycling type')
+
+        # TODO: reimplement non-consecutive max active cycle pts elsewhere
+        # https://github.com/cylc/cylc-flow/issues/3667
 
     def get_custom_runahead_limit(self):
         """Return the custom runahead limit (may be None)."""

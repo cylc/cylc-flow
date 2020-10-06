@@ -23,7 +23,7 @@ from cylc.flow import LOG
 from cylc.flow.parsec.exceptions import UpgradeError
 from cylc.flow.parsec.config import ParsecConfig, ConfigNode as Conf
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
-from cylc.flow.parsec.upgrade import upgrader
+from cylc.flow.parsec.upgrade import upgrader, converter
 from cylc.flow.parsec.validate import (
     DurationFloat, CylcConfigValidator as VDR, cylc_config_validate)
 from cylc.flow.platforms import get_platform
@@ -363,21 +363,32 @@ with Conf(
             getting too far ahead of the slowest ones, as documented in
             :ref:`RunaheadLimit`.
 
-            This limit on the number of consecutive cycle points is specified
-            by an interval between the least and most recent: either an integer
-            interval (e.g. ``P3`` -  works for both :term:`integer cycling` and
-            :term:`datetime cycling`), or a time interval (e.g. ``PT12H`` -
+            This limit on the number of consecutive spawned cycle points is
+            specified by an interval between the least and most recent: either
+            an integer (e.g. ``P3`` -  works for both :term:`integer cycling`
+            and :term:`datetime cycling`), or a time interval (e.g. ``PT12H`` -
             only works for datetime cycling). Alternatively, if a raw number is
-            given, it will be taken to mean that number of hours, though this
+            given, e.g. ``7``, it will be taken to mean ``PT7H``, though this
             usage is deprecated.
-        ''')  # TODO: mention :cylc:conf:`[..]max active cycle points`
-        Conf('max active cycle points', VDR.V_INTEGER, None, desc='''
-        ''')  # TODO: rewrite desc after non-consecutive implementation
-        # See https://github.com/cylc/cylc-flow/issues/3667
-        # Old desc:
-        # It allows up to ``N`` (default 3)
-        # consecutive cycle points to be active at any time, adjusted up if
-        # necessary for any future triggering.
+
+            .. note::
+
+               The integer limit format is irrespective of the labelling of
+               cycle points. For example, if the runhead limit is ``P3`` and
+               you have a suite *solely* consisting of a task that repeats
+               "every four cycles", it would still spawn three consecutive
+               cycle points at a time (starting with 1, 5 and 9). This is
+               because the suite is functionally equivalent to one where the
+               task repeats every cycle.
+
+            .. note::
+
+               The runahead limit may be automatically raised if this is
+               necessary to allow a future task to be triggererd, preventing
+               the suite from stalling.
+        ''')
+        # TODO: make raw number of hours obsolete and then later allow a raw
+        # number to mean the integer limit ?
 
         with Conf('queues', desc='''
             Configuration of internal queues, by which the number of
@@ -1335,6 +1346,11 @@ def upg(cfg, descr):
     u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'shell'])
     u.obsolete('8.0.0', ['cylc', 'abort if any task fails'])
     u.obsolete('8.0.0', ['cylc', 'events', 'abort if any task fails'])
+    u.deprecate(
+        '8.0.0',
+        ['scheduling', 'max active cycle points'],
+        ['scheduling', 'runahead limit'],
+        cvtr=converter(lambda x: f'P{x}' if x != '' else '', '"n" -> "Pn"'))
     # TODO uncomment these deprecations when ready - see todo in
     # [runtime][__MANY__] section.
     # for job_setting in [

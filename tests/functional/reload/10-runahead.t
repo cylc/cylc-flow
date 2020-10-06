@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -31,6 +31,6 @@ run_fail "${TEST_NAME}" cylc run --debug --no-detach "${SUITE_NAME}"
 TEST_NAME=${TEST_NAME_BASE}-check-fail
 DB_FILE="$RUN_DIR/${SUITE_NAME}/log/db"
 QUERY='SELECT COUNT(*) FROM task_states WHERE status == "failed"'
-run_ok "${TEST_NAME}" test "$(sqlite3 "${DB_FILE}" "${QUERY}")" -eq 4
+cmp_ok <(sqlite3 "$DB_FILE" "$QUERY") <<< "2"
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"

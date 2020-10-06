@@ -522,12 +522,7 @@ def test_process_runahead_limit(cfg_scheduling, valid, cycling_mode):
     is_integer_mode = cfg_scheduling['cycling mode'] == 'integer'
     mock_config = Mock()
     mock_config.cycling_type = cycling_mode(integer=is_integer_mode)
-    mock_config.cfg = {
-        'scheduling': {
-            **cfg_scheduling,
-            'max active cycle points': None
-        }
-    }
+    mock_config.cfg = {'scheduling': cfg_scheduling}
     if valid:
         SuiteConfig.process_runahead_limit(mock_config)
     else:
