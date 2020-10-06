@@ -100,6 +100,10 @@ task outputs/message triggers are now validated.
 [#3614](https://github.com/cylc/cylc-flow/pull/3795) - Fix error when running
 `cylc ping --verbose $SUITE`.
 
+[#3852](https://github.com/cylc/cylc-flow/pull/3852) - Prevents registering a
+workflow in a sub-directory of a run directory (as `cylc scan` would not be
+able to find it).
+
 -------------------------------------------------------------------------------
 ## __cylc-8.0a2 (2020-07-03)__
 
