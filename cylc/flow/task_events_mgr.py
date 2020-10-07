@@ -515,7 +515,7 @@ class TaskEventsManager():
                 )
 
         ):
-            # Ignore polled messages if task is already in retrying statuses
+            # Ignore polled messages if task has a retry lined up
             LOG.warning(
                 logfmt,
                 itask, itask.state, self.FLAG_POLLED_IGNORED, message,
