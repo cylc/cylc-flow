@@ -181,7 +181,6 @@ def construct_rsync_over_ssh_cmd(
         src_path(string): source path
         dst_path(string): path of target
         platform(dict)): contains info relating to platform
-        logfile(str): the path to the file logging the rsync
         rsync_includes(list): files and directories to be included in the rsync
 
     """
