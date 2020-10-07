@@ -304,12 +304,19 @@ class TaskPool:
         else:
             sequence_points = []
             for sequence in self.config.sequences:
-                point = runahead_base_point
-                for _ in range(number_limit or sequence._MAX_CACHED_POINTS):
-                    point = sequence.get_next_point(point)
-                    if point is None:
-                        break
-                    sequence_points.append(point)
+                seq_point = sequence.get_next_point(runahead_base_point)
+                count = 1
+                while seq_point is not None:
+                    if number_limit is None:
+                        if (seq_point > runahead_base_point +
+                                runahead_time_limit):
+                            break
+                    else:
+                        if count > number_limit:
+                            break
+                        count += 1
+                    sequence_points.append(seq_point)
+                    seq_point = sequence.get_next_point(seq_point)
             sequence_points = set(sequence_points)
             self._prev_runahead_sequence_points = sequence_points
             self._prev_runahead_base_point = runahead_base_point
