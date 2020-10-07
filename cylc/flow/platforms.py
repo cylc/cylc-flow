@@ -371,7 +371,7 @@ def get_host_from_platform(platform, method=None):
         )
 
 
-def fail_if_platform_and_host_conflict(task_conf, task_name, warn_only=False):
+def fail_if_platform_and_host_conflict(task_conf, task_name):
     """Raise an error if task spec contains platform and forbidden host items.
 
     Args:
