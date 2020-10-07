@@ -93,7 +93,6 @@ class XtriggerManager:
         proc_pool (SubProcPool): pool of Subprocesses
         suite_run_dir (str): suite run directory
         suite_share_dir (str): suite share directory
-        suite_work_dir (str): suite work directory
         suite_source_dir (str): suite source directory
 
     """

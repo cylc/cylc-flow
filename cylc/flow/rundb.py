@@ -920,7 +920,7 @@ class CylcSuiteDAO:
     def upgrade_retry_state(self):
         """Replace the retry state with xtriggers.
 
-        * Change *retring tasks to waiting
+        * Change *retrying tasks to waiting
         * Add the required xtrigger
 
         Note:

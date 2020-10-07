@@ -712,14 +712,14 @@ class TaskEventsManager():
         Args:
             itask (cylc.flow.task_proxy.TaskProxy):
                 The task to retry.
-            timer (cylc.flow.task_action_timer.TaskActionTimer):
-                The [retry] timer to which triggered this retry.
+            wallclick_time (float):
+                Unix time to schedule the retry for.
             submit_retry (bool):
                 False if this is an execution retry.
                 True if this is a submission retry.
 
         """
-        # devive an xtrigger label for this retry
+        # derive an xtrigger label for this retry
         label = '_'.join((
             'cylc',
             'submit_retry' if submit_retry else 'retry',
@@ -732,7 +732,6 @@ class TaskEventsManager():
         # if this isn't the first retry the xtrigger will already exist
         if label in itask.state.xtriggers:
             # retry xtrigger already exists from a previous retry, modify it
-            xtrig = itask.state.xtriggers[label]
             self.xtrigger_mgr.mutate_trig(label, kwargs)
             itask.state.xtriggers[label] = False
         else:
