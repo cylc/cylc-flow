@@ -43,7 +43,6 @@ import urwid
 
 from cylc.flow.task_state import (
     TASK_STATUSES_ORDERED,
-    TASK_STATUS_RUNAHEAD,
     TASK_STATUS_WAITING
 )
 from cylc.flow.tui import (
@@ -153,8 +152,6 @@ def help_info(app):
     items.append(urwid.Divider())
     items.append(urwid.Text('Task Icons:'))
     for state in TASK_STATUSES_ORDERED:
-        if state == TASK_STATUS_RUNAHEAD:
-            continue
         items.append(
             urwid.Text(
                 get_task_icon(state, is_held=False)

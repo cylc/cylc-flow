@@ -36,7 +36,7 @@ from cylc.flow.parsec.config import ItemNotFoundError
 
 from cylc.flow import LOG, LOG_LEVELS
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
-from cylc.flow.hostuserutil import get_host, get_user
+from cylc.flow.hostuserutil import get_host, get_user, is_remote_host
 from cylc.flow.pathutil import (
     get_remote_suite_run_job_dir,
     get_suite_run_job_dir)
@@ -941,8 +941,9 @@ class TaskEventsManager():
             (self.HANDLER_JOB_LOGS_RETRIEVE, event),
             str(itask.point), itask.tdef.name, itask.submit_num)
         events = (self.EVENT_FAILED, self.EVENT_RETRY, self.EVENT_SUCCEEDED)
+        host = get_host_from_platform(itask.platform)
         if (event not in events or
-                itask.platform['name'] == 'localhost' or
+                not is_remote_host(host) or
                 not self.get_host_conf(itask, "retrieve job logs") or
                 id_key in self.event_timers):
             return

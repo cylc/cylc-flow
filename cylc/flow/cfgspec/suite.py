@@ -21,7 +21,6 @@ from metomi.isodatetime.data import Calendar
 
 from cylc.flow import LOG
 from cylc.flow.parsec.exceptions import UpgradeError
-from cylc.flow.network.authorisation import Priv
 from cylc.flow.parsec.config import ParsecConfig, ConfigNode as Conf
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.upgrade import upgrader
@@ -83,6 +82,42 @@ with Conf(
             interpreted according to your needs. For example,
             "suite-priority".
         ''')
+
+    with Conf('scheduler'):
+        Conf('install', VDR.V_STRING_LIST, desc='''
+            Configure the directories and files to be included in the remote
+            file installation.
+
+             .. note::
+                These, as standard, include the following directories:
+
+                 * app
+                 * bin
+                 * etc
+                 * lib
+
+                 And include the server.key file (from the .service
+                 directory), this is required for authentication.
+
+            These should be located in the top level of your Cylc workflow,
+            i.e. the directory that contains your flow.cylc file.
+
+            Directories must have a trailing slash.
+            For example, to add the following items to your file installation:
+
+            .. code-block:: none
+
+                ~/cylc-run/workflow_x
+                |__dir1/
+                |__dir2/
+                |__file1
+                |__file2
+
+            .. code-block:: cylc
+
+                [scheduler]
+                    install = dir/, dir2/, file1, file2
+                ''')
 
     with Conf('cylc'):
         Conf('UTC mode', VDR.V_BOOLEAN)
@@ -166,18 +201,6 @@ with Conf(
                (e.g. ``+05:30``), given that the time zone is used as part of
                task output filenames.
         ''')
-        Conf('required run mode', VDR.V_STRING, '',
-             options=['', 'live', 'dummy', 'dummy-local', 'simulation'],
-             desc='''
-            If this item is set cylc will abort if the suite is not started in
-            the specified mode. This can be used for demo suites that have to
-            be run in simulation mode, for example, because they have been
-            taken out of their normal operational context; or to prevent
-            accidental submission of expensive real tasks during suite
-            development.
-        ''')
-        Conf('force run mode', VDR.V_STRING, '',
-             options=['', 'live', 'dummy', 'dummy-local', 'simulation'])
         Conf('task event mail interval', VDR.V_INTERVAL)
         Conf('disable automatic shutdown', VDR.V_BOOLEAN, desc='''
             This has the same effect as the ``--no-auto-shutdown`` flag for
@@ -269,22 +292,6 @@ with Conf(
 
         with Conf('reference test'):
             Conf('expected task failures', VDR.V_STRING_LIST)
-
-        with Conf('authentication'):
-            # Allow owners to grant public shutdown rights at the most, not
-            # full control.
-            Conf(
-                'public',
-                VDR.V_STRING,
-                default=Priv.STATE_TOTALS.name.lower().replace('_', '-'),
-                options=[
-                    level.name.lower().replace('_', '-')
-                    for level in [
-                        Priv.IDENTITY, Priv.DESCRIPTION,
-                        Priv.STATE_TOTALS, Priv.READ, Priv.SHUTDOWN
-                    ]
-                ]
-            )
 
     with Conf('scheduling', desc='''
         This section allows cylc to determine when tasks are ready to run.
@@ -1305,7 +1312,9 @@ def upg(cfg, descr):
         ['runtime', '__MANY__', 'suite state polling', 'template'])
     u.obsolete('7.8.1', ['cylc', 'events', 'reset timer'])
     u.obsolete('7.8.1', ['cylc', 'events', 'reset inactivity timer'])
+    u.obsolete('8.0.0', ['cylc', 'force run mode'])
     u.obsolete('7.8.1', ['runtime', '__MANY__', 'events', 'reset timer'])
+    u.obsolete('8.0.0', ['cylc', 'authentication'])
     u.obsolete('8.0.0', ['cylc', 'log resolved dependencies'])
     u.obsolete('8.0.0', ['cylc', 'reference test', 'allow task failures'])
     u.obsolete('8.0.0', ['cylc', 'reference test', 'live mode suite timeout'])
@@ -1317,6 +1326,7 @@ def upg(cfg, descr):
         '8.0.0',
         ['cylc', 'reference test', 'simulation mode suite timeout'])
     u.obsolete('8.0.0', ['cylc', 'reference test', 'required run mode'])
+    u.obsolete('8.0.0', ['cylc', 'required run mode'])
     u.obsolete(
         '8.0.0',
         ['cylc', 'reference test', 'suite shutdown event handler'])

@@ -28,11 +28,13 @@ create_test_global_config "" "
     hosts = localhost
     batch system = at
     batch submit command template = sleep 15
+    install target = localhost
 
   [[wobble]]
     hosts = localhost
     batch system = at
     batch submit command template = at now
+    install target = localhost
 "
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"

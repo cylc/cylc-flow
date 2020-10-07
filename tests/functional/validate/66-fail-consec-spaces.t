@@ -25,6 +25,7 @@ create_test_global_config "" "
   [[wibble]]
     hosts = localhost
     batch system = pbs
+    install target = localhost
 "
 
 TEST_NAME="${TEST_NAME_BASE}-val"

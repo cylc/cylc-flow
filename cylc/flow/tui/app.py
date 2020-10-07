@@ -30,7 +30,6 @@ from cylc.flow.exceptions import (
 )
 from cylc.flow.task_state import (
     TASK_STATUSES_ORDERED,
-    TASK_STATUS_RUNAHEAD,
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_RUNNING,
     TASK_STATUS_FAILED,
@@ -250,7 +249,6 @@ class TuiApp:
         self.filter_states = {
             state: True
             for state in TASK_STATUSES_ORDERED
-            if state is not TASK_STATUS_RUNAHEAD
         }
         if isinstance(screen, html_fragment.HtmlGenerator):
             # the HtmlGenerator only captures one frame

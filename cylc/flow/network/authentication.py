@@ -34,7 +34,7 @@ def key_housekeeping(reg, platform=None, create=True):
         "client_public_key": KeyInfo(
             KeyType.PUBLIC,
             KeyOwner.CLIENT,
-            suite_srv_dir=suite_srv_dir, platform=platform),
+            suite_srv_dir=suite_srv_dir, install_target=platform),
         "client_private_key": KeyInfo(
             KeyType.PRIVATE,
             KeyOwner.CLIENT,

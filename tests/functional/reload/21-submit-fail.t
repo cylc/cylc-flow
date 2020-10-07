@@ -27,6 +27,7 @@ create_test_global_config '
 [platforms]
     [[platypus]]
         hosts = localhost
+        install target = localhost
         batch system = at
         batch submit command template = sleep 5
         submission retry delays = 3*PT5S

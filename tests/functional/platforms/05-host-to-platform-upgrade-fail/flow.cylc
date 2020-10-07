@@ -1,17 +1,24 @@
+[meta]
+description = """
+The task settings for not_upgradable_cylc7_settings should not match any
+platform: The workflow should fail as a result.
+"""
+
 [cylc]
-  UTC mode = True
+    UTC mode = True
+    [[events]]
+        abort on stalled = True
 
 [scheduling]
-  [[graph]]
-    R1 = """
-      not_upgradable_cylc7_settings
-    """
-[runtime]
-  [[root]]
-    script = true
+    [[graph]]
+        R1 = """
+            not_upgradable_cylc7_settings
+        """
 
-  [[not_upgradable_cylc7_settings]]
-    [[[remote]]]
-      host = parasite
-    [[[job]]]
-      batch system = 'loaf'
+[runtime]
+    [[not_upgradable_cylc7_settings]]
+        script = True
+        [[[remote]]]
+            host = parasite
+        [[[job]]]
+            batch system = 'loaf'

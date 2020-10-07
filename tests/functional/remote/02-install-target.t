@@ -15,47 +15,44 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Checks remote ZMQ keys are created and deleted on shutdown.
+# Test install target.
+export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
+#-------------------------------------------------------------------------------
+require_remote_platform_wsfs
+export CYLC_TEST_PLATFORM="$CYLC_TEST_PLATFORM_WSFS"
 
-require_remote_platform
-
-set_test_number 4
+set_test_number 3
+create_test_global_config "" "
+[platforms]
+   [[${CYLC_TEST_PLATFORM}]]
+       install target = localhost"
 
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 #!jinja2
 [cylc]
 [scheduling]
     [[graph]]
-        R1 = holder => held
+        graph = remote => held
 [runtime]
-    [[holder]]
+    [[remote]]
         script = """cylc hold "${CYLC_SUITE_NAME}" """
         platform = {{CYLC_TEST_PLATFORM}}
     [[held]]
-        script = true
+        script = sleep 1
+        platform = {{CYLC_TEST_PLATFORM}}
 __FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}" \
     -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}"
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" \
-    -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}"
-RRUND="cylc-run/${SUITE_NAME}"
-RSRVD="${RRUND}/.service"
-poll_grep_suite_log 'Holding all waiting or queued tasks now'
-SSH='ssh -n -oBatchMode=yes -oConnectTimeout=5'
-${SSH} "${CYLC_TEST_HOST}" \
-find "${RSRVD}" -type f -name "*key*"|awk -F/ '{print $NF}'|sort >'find.out'
-cmp_ok 'find.out' <<__OUT__
-client.key_secret
-client_$CYLC_TEST_PLATFORM.key
-server.key
-__OUT__
+suite_run_ok "${TEST_NAME_BASE}-run" cylc run --debug \
+     "${SUITE_NAME}" -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}"
+CYLC_SUITE_RUN_DIR="$RUN_DIR/${SUITE_NAME}"
+poll_grep_suite_log 'Suite held'
+grep_ok "REMOTE INIT NOT REQUIRED for localhost" "${CYLC_SUITE_RUN_DIR}/log/suite/log"
 cylc stop --max-polls=60 --interval=1 "${SUITE_NAME}"
-${SSH} "${CYLC_TEST_HOST}" \
-find "${RRUND}" -type f -name "*key*"|awk -F/ '{print $NF}'|sort >'find.out'
-cmp_ok 'find.out' <<'__OUT__'
-__OUT__
+
+# Clean up the task host.
 purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

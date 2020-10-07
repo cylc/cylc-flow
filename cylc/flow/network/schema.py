@@ -35,7 +35,6 @@ from cylc.flow.broadcast_mgr import ALL_CYCLE_POINTS_STRS, addict
 from cylc.flow.task_state import (
     TASK_STATUSES_ORDERED,
     TASK_STATUS_DESC,
-    # TASK_STATUS_RUNAHEAD,
     TASK_STATUS_WAITING,
     TASK_STATUS_QUEUED,
     TASK_STATUS_EXPIRED,
@@ -1224,8 +1223,6 @@ class TaskStatus(Enum):
     # NOTE: this is an enumeration purely for the GraphQL schema
     # TODO: the task statuses should be formally declared in a Python
     #       enumeration rendering this class unnecessary
-    # NOTE: runahead purposefully omitted to hide users from the task pool
-    # Runahead = TASK_STATUS_RUNAHEAD
     Waiting = TASK_STATUS_WAITING
     Queued = TASK_STATUS_QUEUED
     Expired = TASK_STATUS_EXPIRED

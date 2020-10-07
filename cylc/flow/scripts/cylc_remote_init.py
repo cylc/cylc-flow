@@ -41,7 +41,7 @@ def main():
     parser = COP(
         __doc__,
         argdoc=[
-            ("UUID", "UUID of current suite server process"),
+            ("INSTALL_TARGET", "Target to be initialised"),
             ("RUND", "The run directory of the suite"),
         ],
     )
@@ -55,8 +55,8 @@ def main():
         dest="indirect_comm",
         default=None,
     )
-    options, (uuid_str, rund) = parser.parse_args()
-    remote_init(uuid_str, rund, indirect_comm=options.indirect_comm)
+    options, (install_target, rund) = parser.parse_args()
+    remote_init(install_target, rund, indirect_comm=options.indirect_comm)
 
 
 if __name__ == "__main__":

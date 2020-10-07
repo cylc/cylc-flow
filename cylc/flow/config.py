@@ -227,6 +227,9 @@ class SuiteConfig:
         self.cfg = self.pcfg.get(sparse=True)
         self.mem_log("config.py: after get(sparse=True)")
 
+        if 'scheduler' in self.cfg and 'install' in self.cfg['scheduler']:
+            self.get_validated_rsync_includes()
+
         # First check for the essential scheduling section.
         if 'scheduling' not in self.cfg:
             raise SuiteConfigError("missing [scheduling] section.")
@@ -1515,8 +1518,6 @@ class SuiteConfig:
         """
         mode = getattr(self.options, 'run_mode', None)
         if not mode:
-            mode = self.cfg['cylc']['force run mode']
-        if not mode:
             mode = 'live'
         if reqmodes:
             return mode in reqmodes
@@ -2335,3 +2336,17 @@ class SuiteConfig:
             return []
         else:
             return None
+
+    def get_validated_rsync_includes(self):
+        """Validate and return items to be included in the file installation"""
+        includes = self.cfg['scheduler']['install']
+        illegal_includes = []
+        for include in includes:
+            if include.count("/") > 1:
+                illegal_includes.append(f"{include}")
+        if len(illegal_includes) > 0:
+            raise SuiteConfigError(
+                "Error in [scheduler] install. "
+                "Directories can only be from the top level, please "
+                "reconfigure:" + str(illegal_includes)[1:-1])
+        return includes

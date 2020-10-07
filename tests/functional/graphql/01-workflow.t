@@ -96,7 +96,6 @@ cat > expected << __HERE__
             "reloaded": false,
             "runMode": "live",
             "stateTotals": {
-                "runahead": 0,
                 "waiting": 1,
                 "queued": 0,
                 "expired": 0,

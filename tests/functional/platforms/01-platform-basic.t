@@ -26,6 +26,7 @@ create_test_global_config "" "
     [platforms]
         [[lewis]]
             hosts = localhost
+            install target = localhost
 "
 
 cat >'flow.cylc' <<'__FLOW_CONFIG__'
