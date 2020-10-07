@@ -40,9 +40,12 @@ from cylc.flow.hostuserutil import get_host, get_user, is_remote_host
 from cylc.flow.pathutil import (
     get_remote_suite_run_job_dir,
     get_suite_run_job_dir)
+from cylc.flow.subprocctx import SubFuncContext, SubProcContext
+from cylc.flow.task_action_timer import (
+    TaskActionTimer,
+    TimerFlags
+)
 from cylc.flow.platforms import get_platform, get_host_from_platform
-from cylc.flow.subprocctx import SubProcContext
-from cylc.flow.task_action_timer import TaskActionTimer
 from cylc.flow.task_job_logs import (
     get_task_job_id, get_task_job_log, get_task_job_activity_log,
     JOB_LOG_OUT, JOB_LOG_ERR)
@@ -50,14 +53,21 @@ from cylc.flow.task_message import (
     ABORT_MESSAGE_PREFIX, FAIL_MESSAGE_PREFIX, VACATION_MESSAGE_PREFIX)
 from cylc.flow.task_state import (
     TASK_STATUSES_ACTIVE,
-    TASK_STATUS_READY, TASK_STATUS_SUBMITTED, TASK_STATUS_SUBMIT_RETRYING,
-    TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_RUNNING, TASK_STATUS_RETRYING,
-    TASK_STATUS_FAILED, TASK_STATUS_SUCCEEDED)
+    TASK_STATUS_READY,
+    TASK_STATUS_SUBMITTED,
+    TASK_STATUS_SUBMIT_FAILED,
+    TASK_STATUS_RUNNING,
+    TASK_STATUS_FAILED,
+    TASK_STATUS_SUCCEEDED,
+    TASK_STATUS_WAITING
+)
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED,
     TASK_OUTPUT_FAILED, TASK_OUTPUT_SUBMIT_FAILED, TASK_OUTPUT_EXPIRED)
 from cylc.flow.wallclock import (
-    get_current_time_string, get_seconds_as_interval_string as intvl_as_str)
+    get_current_time_string,
+    get_seconds_as_interval_string as intvl_as_str
+)
 
 CustomTaskEventHandlerContext = namedtuple(
     "CustomTaskEventHandlerContext",
@@ -127,7 +137,7 @@ class TaskEventsManager():
     NON_UNIQUE_EVENTS = ('warning', 'critical', 'custom')
 
     def __init__(self, suite, proc_pool, suite_db_mgr,
-                 broadcast_mgr, job_pool, timestamp):
+                 broadcast_mgr, xtrigger_mgr, job_pool, timestamp):
         self.suite = suite
         self.suite_url = None
         self.suite_cfg = {}
@@ -135,6 +145,7 @@ class TaskEventsManager():
         self.proc_pool = proc_pool
         self.suite_db_mgr = suite_db_mgr
         self.broadcast_mgr = broadcast_mgr
+        self.xtrigger_mgr = xtrigger_mgr
         self.job_pool = job_pool
         self.mail_interval = 0.0
         self.mail_footer = None
@@ -419,8 +430,8 @@ class TaskEventsManager():
             # Task job pre-empted into a vacation state
             self._db_events_insert(itask, "vacated", message)
             itask.set_summary_time('started')  # unset
-            if TASK_STATUS_SUBMIT_RETRYING in itask.try_timers:
-                itask.try_timers[TASK_STATUS_SUBMIT_RETRYING].num = 0
+            if TimerFlags.SUBMISSION_RETRY in itask.try_timers:
+                itask.try_timers[TimerFlags.SUBMISSION_RETRY].num = 0
             itask.job_vacated = True
             # Believe this and change state without polling (could poll?).
             self.pflag = True
@@ -483,10 +494,28 @@ class TaskEventsManager():
                 itask, itask.state, self.FLAG_RECEIVED_IGNORED, message,
                 timestamp, submit_num, itask.flow_label, itask.submit_num)
             return False
-        if itask.state.status in (
-            TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING
+
+        if (
+                itask.state(TASK_STATUS_WAITING)
+                and
+                (
+                    (
+                        # task has a submit-retry lined up
+                        TimerFlags.SUBMISSION_RETRY in itask.try_timers
+                        and itask.try_timers[
+                            TimerFlags.SUBMISSION_RETRY].num > 0
+                    )
+                    or
+                    (
+                        # task has an execution-retry lined up
+                        TimerFlags.EXECUTION_RETRY in itask.try_timers
+                        and itask.try_timers[
+                            TimerFlags.EXECUTION_RETRY].num > 0
+                    )
+                )
+
         ):
-            # Ignore polled messages if task is already in retrying statuses
+            # Ignore polled messages if task has a retry lined up
             LOG.warning(
                 logfmt,
                 itask, itask.state, self.FLAG_POLLED_IGNORED, message,
@@ -677,6 +706,50 @@ class TaskEventsManager():
             except KeyError as exc:
                 LOG.exception(exc)
 
+    def _retry_task(self, itask, wallclock_time, submit_retry=False):
+        """Retry a task.
+
+        Args:
+            itask (cylc.flow.task_proxy.TaskProxy):
+                The task to retry.
+            wallclick_time (float):
+                Unix time to schedule the retry for.
+            submit_retry (bool):
+                False if this is an execution retry.
+                True if this is a submission retry.
+
+        """
+        # derive an xtrigger label for this retry
+        label = '_'.join((
+            'cylc',
+            'submit_retry' if submit_retry else 'retry',
+            itask.identity
+        ))
+        kwargs = {
+            'absolute_as_seconds': wallclock_time
+        }
+
+        # if this isn't the first retry the xtrigger will already exist
+        if label in itask.state.xtriggers:
+            # retry xtrigger already exists from a previous retry, modify it
+            self.xtrigger_mgr.mutate_trig(label, kwargs)
+            itask.state.xtriggers[label] = False
+        else:
+            # create a new retry xtrigger
+            xtrig = SubFuncContext(
+                label,
+                'wall_clock',
+                [],
+                kwargs
+            )
+            self.xtrigger_mgr.add_trig(
+                label,
+                xtrig,
+                os.getenv("CYLC_SUITE_RUN_DIR")
+            )
+            itask.state.add_xtrigger(label)
+        itask.state.reset(TASK_STATUS_WAITING)
+
     def _process_message_failed(self, itask, event_time, message):
         """Helper for process_message, handle a failed message.
 
@@ -694,18 +767,22 @@ class TaskEventsManager():
             "run_status": 1,
             "time_run_exit": event_time,
         })
-        if (TASK_STATUS_RETRYING not in itask.try_timers or
-                itask.try_timers[TASK_STATUS_RETRYING].next() is None):
+        self.pflag = True
+        if (
+                TimerFlags.EXECUTION_RETRY not in itask.try_timers
+                or itask.try_timers[TimerFlags.EXECUTION_RETRY].next() is None
+        ):
             # No retry lined up: definitive failure.
-            self.pflag = True
             if itask.state.reset(TASK_STATUS_FAILED):
                 self.setup_event_handlers(itask, "failed", message)
             LOG.critical(
                 "[%s] -job(%02d) %s", itask, itask.submit_num, "failed")
             no_retries = True
-        elif itask.state.reset(TASK_STATUS_RETRYING):
-            delay_msg = "retrying in %s" % (
-                itask.try_timers[TASK_STATUS_RETRYING].delay_timeout_as_str())
+        else:
+            # There is an execution retry lined up.
+            timer = itask.try_timers[TimerFlags.EXECUTION_RETRY]
+            self._retry_task(itask, timer.timeout)
+            delay_msg = f"retrying in {timer.delay_timeout_as_str()}"
             if itask.state.is_held:
                 delay_msg = "held (%s)" % delay_msg
             msg = "failed, %s" % (delay_msg)
@@ -733,8 +810,8 @@ class TaskEventsManager():
         self._reset_job_timers(itask)
 
         # submission was successful so reset submission try number
-        if TASK_STATUS_SUBMIT_RETRYING in itask.try_timers:
-            itask.try_timers[TASK_STATUS_SUBMIT_RETRYING].num = 0
+        if TimerFlags.SUBMISSION_RETRY in itask.try_timers:
+            itask.try_timers[TimerFlags.SUBMISSION_RETRY].num = 0
 
     def _process_message_succeeded(self, itask, event_time):
         """Helper for process_message, handle a succeeded message."""
@@ -784,8 +861,10 @@ class TaskEventsManager():
         self.job_pool.set_job_state(job_d, TASK_STATUS_SUBMIT_FAILED)
         itask.summary['submit_method_id'] = None
         self.pflag = True
-        if (TASK_STATUS_SUBMIT_RETRYING not in itask.try_timers or
-                itask.try_timers[TASK_STATUS_SUBMIT_RETRYING].next() is None):
+        if (
+                TimerFlags.SUBMISSION_RETRY not in itask.try_timers
+                or itask.try_timers[TimerFlags.SUBMISSION_RETRY].next() is None
+        ):
             # No submission retry lined up: definitive failure.
             # See github #476.
             no_retries = True
@@ -793,12 +872,11 @@ class TaskEventsManager():
                 self.setup_event_handlers(
                     itask, self.EVENT_SUBMIT_FAILED,
                     'job %s' % self.EVENT_SUBMIT_FAILED)
-        elif itask.state.reset(
-            TASK_STATUS_SUBMIT_RETRYING,
-        ):
+        else:
             # There is a submission retry lined up.
-            timer = itask.try_timers[TASK_STATUS_SUBMIT_RETRYING]
-            delay_msg = "submit-retrying in %s" % timer.delay_timeout_as_str()
+            timer = itask.try_timers[TimerFlags.SUBMISSION_RETRY]
+            self._retry_task(itask, timer.timeout, submit_retry=True)
+            delay_msg = f"submit-retrying in {timer.delay_timeout_as_str()}"
             if itask.state.is_held:
                 delay_msg = "held (%s)" % delay_msg
             msg = "%s, %s" % (self.EVENT_SUBMIT_FAILED, delay_msg)

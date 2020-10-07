@@ -134,6 +134,10 @@ files are now auto-documented from their definitions.
 [#3617](https://github.com/cylc/cylc-flow/pull/3617) - For integer cycling mode
 there is now a default initial cycle point of 1.
 
+[#3423](https://github.com/cylc/cylc-flow/pull/3423) - automatic task retries
+re-implemented using xtriggers. Retrying tasks will now be in the "waiting"
+state with a wall_clock xtrigger set for the retry time.
+
 ### Fixes
 
 [#3618](https://github.com/cylc/cylc-flow/pull/3618) - Clear queue configuration

@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test restarting a simple suite with a task in a retrying state.
+# Test restarting with a task waiting to retry (was retrying state).
 . "$(dirname "$0")/test_header"
 set_test_number 5
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
@@ -45,7 +45,7 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --debug --no-detach "${SUITE_NAME}"
 sqlite3 "${SUITE_RUN_DIR}/log/db" 'SELECT cycle, name, status FROM task_pool' >'sqlite3.out'
 cmp_ok 'sqlite3.out' <<'__DB_DUMP__'
-1|t1|retrying
+1|t1|waiting
 __DB_DUMP__
 suite_run_ok "${TEST_NAME_BASE}-restart" \
     cylc restart --debug --no-detach "${SUITE_NAME}"

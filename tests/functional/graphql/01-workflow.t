@@ -101,9 +101,7 @@ cat > expected << __HERE__
                 "expired": 0,
                 "ready": 0,
                 "submit-failed": 0,
-                "submit-retrying": 0,
                 "submitted": 0,
-                "retrying": 0,
                 "running": 0,
                 "failed": 0,
                 "succeeded": 0

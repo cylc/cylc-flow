@@ -22,11 +22,10 @@ from cylc.flow.task_state import (
     TASK_STATUS_EXPIRED,
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_SUBMIT_FAILED,
-    TASK_STATUS_SUBMIT_RETRYING,
     TASK_STATUS_RUNNING,
     TASK_STATUS_SUCCEEDED,
-    TASK_STATUS_FAILED,
-    TASK_STATUS_RETRYING)
+    TASK_STATUS_FAILED
+)
 
 from colorama import Style, Fore, Back
 
@@ -50,9 +49,6 @@ _STATUS_MAP = {
     TASK_STATUS_SUBMIT_FAILED: {
         "ascii_ctrl": Style.BRIGHT + Fore.BLUE + Back.RESET
     },
-    TASK_STATUS_SUBMIT_RETRYING: {
-        "ascii_ctrl": Style.BRIGHT + Fore.BLUE + Back.RESET
-    },
     TASK_STATUS_RUNNING: {
         "ascii_ctrl": Style.BRIGHT + Fore.WHITE + Back.GREEN
     },
@@ -62,27 +58,34 @@ _STATUS_MAP = {
     TASK_STATUS_FAILED: {
         "ascii_ctrl": Style.BRIGHT + Fore.WHITE + Back.RED
     },
-    TASK_STATUS_RETRYING: {
-        "ascii_ctrl": Style.BRIGHT + Fore.MAGENTA + Back.RESET
-    }
 }
 
 
 def extract_group_state(child_states, is_stopped=False):
     """Summarise child states as a group."""
-    ordered_states = [TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_FAILED,
-                      TASK_STATUS_EXPIRED, TASK_STATUS_SUBMIT_RETRYING,
-                      TASK_STATUS_RETRYING, TASK_STATUS_RUNNING,
-                      TASK_STATUS_SUBMITTED, TASK_STATUS_READY,
-                      TASK_STATUS_QUEUED, TASK_STATUS_WAITING,
-                      TASK_STATUS_SUCCEEDED]
+    ordered_states = [
+        TASK_STATUS_SUBMIT_FAILED,
+        TASK_STATUS_FAILED,
+        TASK_STATUS_EXPIRED,
+        TASK_STATUS_RUNNING,
+        TASK_STATUS_SUBMITTED,
+        TASK_STATUS_READY,
+        TASK_STATUS_QUEUED,
+        TASK_STATUS_WAITING,
+        TASK_STATUS_SUCCEEDED
+    ]
     if is_stopped:
-        ordered_states = [TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_FAILED,
-                          TASK_STATUS_RUNNING, TASK_STATUS_SUBMITTED,
-                          TASK_STATUS_EXPIRED, TASK_STATUS_READY,
-                          TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING,
-                          TASK_STATUS_SUCCEEDED, TASK_STATUS_QUEUED,
-                          TASK_STATUS_WAITING]
+        ordered_states = [
+            TASK_STATUS_SUBMIT_FAILED,
+            TASK_STATUS_FAILED,
+            TASK_STATUS_RUNNING,
+            TASK_STATUS_SUBMITTED,
+            TASK_STATUS_EXPIRED,
+            TASK_STATUS_READY,
+            TASK_STATUS_SUCCEEDED,
+            TASK_STATUS_QUEUED,
+            TASK_STATUS_WAITING
+        ]
     for state in ordered_states:
         if state in child_states:
             return state

@@ -29,7 +29,7 @@ from cylc.flow import LOG
 from cylc.flow.cycling.loader import get_point, standardise_point_string
 from cylc.flow.exceptions import SuiteConfigError, PointParsingError
 from cylc.flow.suite_status import StopMode
-from cylc.flow.task_action_timer import TaskActionTimer
+from cylc.flow.task_action_timer import TaskActionTimer, TimerFlags
 from cylc.flow.task_events_mgr import (
     CustomTaskEventHandlerContext, TaskEventMailContext,
     TaskJobLogsRetrieveContext)
@@ -37,21 +37,19 @@ from cylc.flow.task_id import TaskID
 from cylc.flow.task_job_logs import get_task_job_id
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_state import (
+    TASK_STATUSES_ACTIVE,
+    TASK_STATUSES_NOT_STALLED,
+    TASK_STATUS_WAITING,
+    TASK_STATUS_EXPIRED,
+    TASK_STATUS_QUEUED,
+    TASK_STATUS_READY,
+    TASK_STATUS_SUBMITTED,
+    TASK_STATUS_RUNNING,
+    TASK_STATUS_SUCCEEDED,
+    TASK_STATUS_FAILED,
     TASK_OUTPUT_EXPIRED,
     TASK_OUTPUT_FAILED,
     TASK_OUTPUT_SUCCEEDED,
-    TASK_STATUSES_ACTIVE,
-    TASK_STATUSES_NOT_STALLED,
-    TASK_STATUS_EXPIRED,
-    TASK_STATUS_FAILED,
-    TASK_STATUS_QUEUED,
-    TASK_STATUS_READY,
-    TASK_STATUS_RETRYING,
-    TASK_STATUS_RUNNING,
-    TASK_STATUS_SUBMITTED,
-    TASK_STATUS_SUBMIT_RETRYING,
-    TASK_STATUS_SUCCEEDED,
-    TASK_STATUS_WAITING
 )
 from cylc.flow.wallclock import get_current_time_string
 from cylc.flow.platforms import get_platform
@@ -462,6 +460,7 @@ class TaskPool:
                 "%(id)s: skip action timer %(ctx_key)s" %
                 {"id": id_, "ctx_key": ctx_key_raw})
             return
+        LOG.info("+ %s.%s %s" % (name, cycle, ctx_key))
         if ctx_key == "poll_timer" or ctx_key[0] == "poll_timers":
             # "poll_timers" for back compat with <=7.6.X
             itask = self.get_task_by_id(id_)
@@ -475,6 +474,22 @@ class TaskPool:
             if itask is None:
                 LOG.warning("%(id)s: task not found, skip" % {"id": id_})
                 return
+            if 'retrying' in ctx_key[1]:
+                if 'submit' in ctx_key[1]:
+                    submit = True
+                    ctx_key[1] = TimerFlags.SUBMISSION_RETRY
+                else:
+                    submit = False
+                    ctx_key[1] = TimerFlags.EXECUTION_RETRY
+
+                if timeout:
+                    LOG.info(
+                        f'  (upgrading retrying state for {itask.identity})')
+                    self.task_events_mgr._retry_task(
+                        itask,
+                        float(timeout),
+                        submit_retry=submit
+                    )
             itask.try_timers[ctx_key[1]] = TaskActionTimer(
                 ctx, delays, num, delay, timeout)
         elif ctx:
@@ -491,7 +506,6 @@ class TaskPool:
                 "%(id)s: skip action timer %(ctx_key)s" %
                 {"id": id_, "ctx_key": ctx_key_raw})
             return
-        LOG.info("+ %s.%s %s" % (name, cycle, ctx_key))
 
     def release_runahead_task(self, itask):
         """Release itask to the appropriate queue in the active pool.
@@ -815,8 +829,6 @@ class TaskPool:
                         itask.state(
                             TASK_STATUS_WAITING,
                             TASK_STATUS_QUEUED,
-                            TASK_STATUS_SUBMIT_RETRYING,
-                            TASK_STATUS_RETRYING,
                         )
                         or itask.state.is_held
                 ):

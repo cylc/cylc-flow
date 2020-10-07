@@ -58,9 +58,14 @@ from cylc.flow.task_outputs import (
 from cylc.flow.task_remote_mgr import (
     REMOTE_INIT_FAILED, TaskRemoteMgr)
 from cylc.flow.task_state import (
-    TASK_STATUSES_ACTIVE, TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
-    TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED,
-    TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING)
+    TASK_STATUSES_ACTIVE,
+    TASK_STATUS_READY,
+    TASK_STATUS_SUBMITTED,
+    TASK_STATUS_RUNNING,
+    TASK_STATUS_SUCCEEDED,
+    TASK_STATUS_FAILED
+)
+from cylc.flow.task_action_timer import TimerFlags
 from cylc.flow.wallclock import get_current_time_string, get_utc_mode
 from cylc.flow.remote import construct_platform_ssh_cmd
 from cylc.flow.exceptions import (
@@ -706,18 +711,22 @@ class TaskJobManager:
             'disable retries' in rtconfig[itask.tdef.run_mode + ' mode']
         ):
             retry = False
+
         if retry:
             if rtconfig['job']['submission retry delays']:
                 submit_delays = rtconfig['job']['submission retry delays']
             else:
                 submit_delays = itask.platform['submission retry delays']
+            # TODO: same for execution delays?
+
+        if retry:
             for key, delays in [
                     (
-                        TASK_STATUS_SUBMIT_RETRYING,
+                        TimerFlags.SUBMISSION_RETRY,
                         submit_delays
                     ),
                     (
-                        TASK_STATUS_RETRYING,
+                        TimerFlags.EXECUTION_RETRY,
                         rtconfig['job']['execution retry delays']
                     )
             ]:

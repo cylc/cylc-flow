@@ -100,7 +100,7 @@ def test_remove_columns():
     """Test workaround for dropping columns in sqlite3."""
     with create_temp_db() as (temp_db, conn):
         conn.execute(
-            rf'''
+            r'''
                 CREATE TABLE foo (
                     bar,
                     baz,
@@ -109,7 +109,7 @@ def test_remove_columns():
             '''
         )
         conn.execute(
-            rf'''
+            r'''
                 INSERT INTO foo
                 VALUES (?,?,?)
             ''',
@@ -122,8 +122,75 @@ def test_remove_columns():
         dao.remove_columns('foo', ['bar', 'baz'])
 
         conn = dao.connect()
-        data = [row for row in conn.execute(rf'SELECT * from foo')]
+        data = [row for row in conn.execute(r'SELECT * from foo')]
         assert data == [('PUB',)]
+
+
+def test_upgrade_retry_state():
+    """Pre Cylc8 DB upgrade compatibility test."""
+    initial_data = [
+        # (name, cycle, status)
+        ('foo', '1', 'waiting'),
+        ('bar', '1', 'running'),
+        ('baz', '1', 'retrying'),
+        ('pub', '1', 'submit-retrying')
+    ]
+    expected_data = [
+        # (name, cycle, status)
+        ('foo', '1', 'waiting'),
+        ('bar', '1', 'running'),
+        ('baz', '1', 'waiting'),
+        ('pub', '1', 'waiting')
+    ]
+    tables = [
+        CylcSuiteDAO.TABLE_TASK_POOL,
+        CylcSuiteDAO.TABLE_TASK_POOL_CHECKPOINTS
+    ]
+
+    with create_temp_db() as (temp_db, conn):
+        # initialise tables
+        for table in tables:
+            conn.execute(
+                rf'''
+                    CREATE TABLE {table} (
+                        name varchar(255),
+                        cycle varchar(255),
+                        status varchar(255)
+                    )
+                '''
+            )
+
+            conn.executemany(
+                rf'''
+                    INSERT INTO {table}
+                    VALUES (?,?,?)
+                ''',
+                initial_data
+            )
+
+        # close database
+        conn.commit()
+        conn.close()
+
+        # open database as cylc dao
+        dao = CylcSuiteDAO(temp_db)
+        conn = dao.connect()
+
+        # check the initial data was correctly inserted
+        for table in tables:
+            dump = [x for x in conn.execute(rf'SELECT * FROM {table}')]
+            assert dump == initial_data
+
+        # upgrade
+        assert dao.upgrade_retry_state() == [
+            ('1', 'baz', 'retrying'),
+            ('1', 'pub', 'submit-retrying')
+        ]
+
+        # check the data was correctly upgraded
+        for table in tables:
+            dump = [x for x in conn.execute(r'SELECT * FROM task_pool')]
+            assert dump == expected_data
 
 
 def test_upgrade_hold_swap():
@@ -188,7 +255,7 @@ def test_upgrade_hold_swap():
 
         # check the data was correctly upgraded
         for table in tables:
-            dump = [x for x in conn.execute(rf'SELECT * FROM task_pool')]
+            dump = [x for x in conn.execute(r'SELECT * FROM task_pool')]
             assert dump == expected_data
 
         # make sure the upgrade is skipped on future runs
@@ -257,7 +324,7 @@ def test_upgrade_to_platforms(mock_glbl_cfg):
         # check the data was correctly upgraded
         dump = [
             x for x in conn.execute(
-                rf'SELECT name, cycle, user, platform_name FROM task_jobs'
+                r'SELECT name, cycle, user, platform_name FROM task_jobs'
             )
         ]
         assert dump == expected_data

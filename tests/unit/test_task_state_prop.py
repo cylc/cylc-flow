@@ -31,16 +31,6 @@ def get_test_extract_group_state_order():
             False,
             TASK_STATUS_FAILED
         ),
-        (
-            [TASK_STATUS_RETRYING, TASK_STATUS_RUNNING],
-            False,
-            TASK_STATUS_RETRYING
-        ),
-        (
-            [TASK_STATUS_RETRYING, TASK_STATUS_RUNNING],
-            True,
-            TASK_STATUS_RUNNING
-        ),
     ]
 
 

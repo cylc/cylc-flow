@@ -41,7 +41,6 @@ TASK_STATUS_SUBMITTED = "submitted"
 # Job submission failed:
 TASK_STATUS_SUBMIT_FAILED = "submit-failed"
 # Job submission failed but will try again soon:
-TASK_STATUS_SUBMIT_RETRYING = "submit-retrying"
 # Job execution started, but not completed yet:
 TASK_STATUS_RUNNING = "running"
 # Job execution completed successfully:
@@ -49,7 +48,6 @@ TASK_STATUS_SUCCEEDED = "succeeded"
 # Job execution failed:
 TASK_STATUS_FAILED = "failed"
 # Job execution failed, but will try again soon:
-TASK_STATUS_RETRYING = "retrying"
 
 TASK_STATUS_DESC = {
     TASK_STATUS_WAITING:
@@ -62,12 +60,8 @@ TASK_STATUS_DESC = {
         'Cylc is preparing a job for submission.',
     TASK_STATUS_SUBMIT_FAILED:
         'Job submission has failed.',
-    TASK_STATUS_SUBMIT_RETRYING:
-        'Atempting to re-submit job after previous failed attempt.',
     TASK_STATUS_SUBMITTED:
         'Job has been submitted.',
-    TASK_STATUS_RETRYING:
-        'Attempting to re-run job after previous failed attempt.',
     TASK_STATUS_RUNNING:
         'Job is running.',
     TASK_STATUS_FAILED:
@@ -83,9 +77,7 @@ TASK_STATUSES_ORDERED = [
     TASK_STATUS_EXPIRED,
     TASK_STATUS_READY,
     TASK_STATUS_SUBMIT_FAILED,
-    TASK_STATUS_SUBMIT_RETRYING,
     TASK_STATUS_SUBMITTED,
-    TASK_STATUS_RETRYING,
     TASK_STATUS_RUNNING,
     TASK_STATUS_FAILED,
     TASK_STATUS_SUCCEEDED
@@ -99,8 +91,6 @@ TASK_STATUS_DISPLAY_ORDER = [
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_EXPIRED,
     TASK_STATUS_READY,
-    TASK_STATUS_SUBMIT_RETRYING,
-    TASK_STATUS_RETRYING,
     TASK_STATUS_SUCCEEDED,
     TASK_STATUS_QUEUED,
     TASK_STATUS_WAITING,
@@ -113,10 +103,8 @@ TASK_STATUSES_RESTRICTED = set([
     TASK_STATUS_EXPIRED,
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_SUBMIT_FAILED,
-    TASK_STATUS_SUBMIT_RETRYING,
     TASK_STATUS_RUNNING,
     TASK_STATUS_FAILED,
-    TASK_STATUS_RETRYING
 ])
 
 # Tasks statuses to show in restricted monitoring mode.
@@ -163,8 +151,6 @@ TASK_STATUSES_NEVER_ACTIVE = set([
 TASK_STATUSES_TO_BE_ACTIVE = set([
     TASK_STATUS_QUEUED,
     TASK_STATUS_READY,
-    TASK_STATUS_SUBMIT_RETRYING,
-    TASK_STATUS_RETRYING,
 ])
 
 # Task statuses that are externally active
@@ -182,10 +168,8 @@ TASK_STATUSES_TRIGGERABLE = set([
     TASK_STATUS_QUEUED,
     TASK_STATUS_EXPIRED,
     TASK_STATUS_SUBMIT_FAILED,
-    TASK_STATUS_SUBMIT_RETRYING,
     TASK_STATUS_SUCCEEDED,
     TASK_STATUS_FAILED,
-    TASK_STATUS_RETRYING
 ])
 
 
@@ -500,6 +484,12 @@ class TaskState:
                 cpre.set_condition(tdef.name)
                 self.prerequisites.append(cpre)
 
+    def add_xtrigger(self, label, satisfied=False):
+        self.xtriggers[label] = satisfied
+
+    def get_xtrigger(self, label):
+        return self.xtriggers[label]
+
     def _add_xtriggers(self, point, tdef):
         """Add task xtriggers valid for the current sequence.
 
@@ -511,4 +501,4 @@ class TaskState:
             if not sequence.is_valid(point):
                 continue
             for xtrig_label in xtrig_labels:
-                self.xtriggers[xtrig_label] = False
+                self.add_xtrigger(xtrig_label)
