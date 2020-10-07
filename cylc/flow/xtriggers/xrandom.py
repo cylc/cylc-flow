@@ -22,7 +22,7 @@ COLORS = ["red", "orange", "yellow", "green", "blue", "indigo", "violet"]
 SIZES = ["tiny", "small", "medium", "large", "huge", "humongous"]
 
 
-def xrandom(percent, secs=0, _=None, debug=False):
+def xrandom(percent, secs=0, _=None):
     """Random xtrigger, with configurable sleep and percent success.
 
     Sleep for ``sec`` seconds, and report satisfied with ~``percent``
@@ -39,8 +39,6 @@ def xrandom(percent, secs=0, _=None, debug=False):
         _ (object):
             Used to allow users to specialize the trigger with extra
             parameters.
-        debug (bool):
-            Flag to enable debug information.
 
     Examples:
         If the percent is zero, it returns that the trigger condition was
