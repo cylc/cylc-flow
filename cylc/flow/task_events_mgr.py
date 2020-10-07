@@ -507,7 +507,7 @@ class TaskEventsManager():
                     )
                     or
                     (
-                        # task has automatically execn-retried at least once
+                        # task has an execution-retry lined up
                         TimerFlags.EXECUTION_RETRY in itask.try_timers
                         and itask.try_timers[
                             TimerFlags.EXECUTION_RETRY].num > 0
