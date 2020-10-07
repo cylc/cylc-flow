@@ -28,8 +28,6 @@ from cylc.flow.wallclock import get_current_time_string
 
 
 # Task status names and meanings.
-# Held back from dependency matching, in the runahead pool:
-TASK_STATUS_RUNAHEAD = "runahead"
 # Held back from job submission due to un-met prerequisites:
 TASK_STATUS_WAITING = "waiting"
 # Prerequisites met, but held back in a limited internal queue:
@@ -54,8 +52,6 @@ TASK_STATUS_FAILED = "failed"
 TASK_STATUS_RETRYING = "retrying"
 
 TASK_STATUS_DESC = {
-    TASK_STATUS_RUNAHEAD:
-        'Waiting for dependencies to be satisfied.',
     TASK_STATUS_WAITING:
         'Waiting for dependencies to be satisfied.',
     TASK_STATUS_QUEUED:
@@ -82,7 +78,6 @@ TASK_STATUS_DESC = {
 
 # Task statuses ordered according to task runtime progression.
 TASK_STATUSES_ORDERED = [
-    TASK_STATUS_RUNAHEAD,
     TASK_STATUS_WAITING,
     TASK_STATUS_QUEUED,
     TASK_STATUS_EXPIRED,
@@ -109,7 +104,6 @@ TASK_STATUS_DISPLAY_ORDER = [
     TASK_STATUS_SUCCEEDED,
     TASK_STATUS_QUEUED,
     TASK_STATUS_WAITING,
-    TASK_STATUS_RUNAHEAD
 ]
 
 TASK_STATUSES_ALL = set(TASK_STATUSES_ORDERED)
@@ -127,7 +121,6 @@ TASK_STATUSES_RESTRICTED = set([
 
 # Tasks statuses to show in restricted monitoring mode.
 TASK_STATUSES_NO_JOB_FILE = set([
-    TASK_STATUS_RUNAHEAD,
     TASK_STATUS_WAITING,
     TASK_STATUS_READY,
     TASK_STATUS_EXPIRED,
@@ -161,7 +154,6 @@ TASK_STATUSES_FINAL = TASK_STATUSES_SUCCESS | TASK_STATUSES_FAILURE
 # - expired: which is effectively the "succeeded" final state.
 # - held: which is placeholder state, not a real state.
 TASK_STATUSES_NEVER_ACTIVE = set([
-    TASK_STATUS_RUNAHEAD,
     TASK_STATUS_WAITING,
     TASK_STATUS_QUEUED,
     TASK_STATUS_READY,

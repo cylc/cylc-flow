@@ -16,7 +16,6 @@
 """Task state properties for display."""
 
 from cylc.flow.task_state import (
-    TASK_STATUS_RUNAHEAD,
     TASK_STATUS_WAITING,
     TASK_STATUS_QUEUED,
     TASK_STATUS_READY,
@@ -33,9 +32,6 @@ from colorama import Style, Fore, Back
 
 
 _STATUS_MAP = {
-    TASK_STATUS_RUNAHEAD: {
-        "ascii_ctrl": Style.BRIGHT + Fore.WHITE + Back.BLUE
-    },
     TASK_STATUS_WAITING: {
         "ascii_ctrl": Style.BRIGHT + Fore.CYAN + Back.RESET
     },
@@ -79,16 +75,14 @@ def extract_group_state(child_states, is_stopped=False):
                       TASK_STATUS_RETRYING, TASK_STATUS_RUNNING,
                       TASK_STATUS_SUBMITTED, TASK_STATUS_READY,
                       TASK_STATUS_QUEUED, TASK_STATUS_WAITING,
-                      TASK_STATUS_SUCCEEDED,
-                      TASK_STATUS_RUNAHEAD]
+                      TASK_STATUS_SUCCEEDED]
     if is_stopped:
         ordered_states = [TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_FAILED,
                           TASK_STATUS_RUNNING, TASK_STATUS_SUBMITTED,
                           TASK_STATUS_EXPIRED, TASK_STATUS_READY,
                           TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING,
                           TASK_STATUS_SUCCEEDED, TASK_STATUS_QUEUED,
-                          TASK_STATUS_WAITING,
-                          TASK_STATUS_RUNAHEAD]
+                          TASK_STATUS_WAITING]
     for state in ordered_states:
         if state in child_states:
             return state
