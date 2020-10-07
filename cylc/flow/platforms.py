@@ -90,7 +90,7 @@ def get_platform(task_conf=None, task_id='unknown task', warn_only=False):
         output = platform_from_name(task_conf['platform'])
 
     else:
-        # If forbidden items present calculate plateform else platform is
+        # If forbidden items present calculate platform else platform is
         # local
         platform_is_localhost = True
 
