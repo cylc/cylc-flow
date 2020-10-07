@@ -1518,6 +1518,22 @@ class SetVerbosity(Mutation):
     result = GenericScalar()
 
 
+class SetGraphWindowExtent(Mutation):
+    class Meta:
+        description = sstrip('''
+            Set the maximum graph distance (n) from an active node
+            of the data-store graph window.
+
+        ''')
+        resolver = partial(mutator, command='set_graph_window_extent')
+
+    class Arguments:
+        workflows = List(WorkflowID, required=True)
+        n_edge_distance = Int(required=True)
+
+    result = GenericScalar()
+
+
 class Stop(Mutation):
     class Meta:
         description = sstrip('''
@@ -1687,6 +1703,8 @@ class Mutations(ObjectType):
     reload = Reload.Field(description=Reload._meta.description)
     set_verbosity = SetVerbosity.Field(
         description=SetVerbosity._meta.description)
+    set_graph_window_extent = SetGraphWindowExtent.Field(
+        description=SetGraphWindowExtent._meta.description)
     stop = Stop.Field(description=Stop._meta.description)
 
     # task actions

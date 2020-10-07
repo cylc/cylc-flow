@@ -232,9 +232,8 @@ class TaskPool:
         self.runahead_pool[itask.point][itask.identity] = itask
         self.rhpool_changed = True
 
-        # Create new data-store n-distance graph window about this task
-        self.data_store_mgr.increment_graph_window(
-            itask.tdef.name, itask.point, itask.flow_label)
+        # Register pool node in data-store in external ID format
+        self.data_store_mgr.add_runahead_node(itask.tdef.name, itask.point)
 
         # add row to "task_states" table & data-store
         if is_new:
@@ -550,6 +549,9 @@ class TaskPool:
         self.pool_changed = True
         self.pool_changes.append(itask)
         LOG.debug("[%s] -released to the task pool", itask)
+        # Create new data-store n-distance graph window about this task
+        self.data_store_mgr.increment_graph_window(
+            itask.tdef.name, itask.point, itask.flow_label)
         del self.runahead_pool[itask.point][itask.identity]
         if not self.runahead_pool[itask.point]:
             del self.runahead_pool[itask.point]
@@ -609,10 +611,11 @@ class TaskPool:
                 del self.runahead_pool[itask.point]
             self.rhpool_changed = True
 
+        # Notify the data-store manager of their removal
+        # (the manager uses window boundary tracking for pruning).
+        self.data_store_mgr.remove_active_node(itask.tdef.name, itask.point)
         # Event-driven final update of task_states table.
-        # TODO: same for datastore (still updated by iterating the task pool)
-        self.data_store_mgr.decrement_graph_window(
-            itask.tdef.name, itask.point)
+        # TODO: same for datastore (still updated by scheduler loop)
         self.suite_db_mgr.put_update_task_state(itask)
         LOG.debug("[%s] -%s", itask, msg)
         del itask

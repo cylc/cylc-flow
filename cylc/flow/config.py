@@ -1742,7 +1742,7 @@ class SuiteConfig:
             # (name is left name)
             self.taskdefs[name].add_graph_child(task_trigger, right, seq)
             # graph_parents not currently used but might be needed soon:
-            # self.taskdefs[right].add_graph_parent(task_trigger, name, seq)
+            self.taskdefs[right].add_graph_parent(task_trigger, name, seq)
 
         # Walk down "expr_list" depth first, and replace any items matching a
         # key in "triggers" ("left" values) with the trigger.

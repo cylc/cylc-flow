@@ -70,6 +70,41 @@ def generate_graph_children(tdef, point):
     return graph_children
 
 
+def generate_graph_parents(tdef, point):
+    # Determine graph parents of this task.
+    graph_parents = {}
+    for seq, ups in tdef.graph_parents.items():
+        graph_parents[seq] = []
+        for name, trigger in ups:
+            parent_point = trigger.get_parent_point(point)
+            is_abs = (trigger.offset_is_absolute or
+                      trigger.offset_is_from_icp)
+            if is_abs:
+                if parent_point != point:
+                    # If 'foo[^] => bar' only spawn off of '^'.
+                    continue
+            if seq.is_on_sequence(parent_point):
+                # E.g.: foo should trigger only on T06:
+                #   PT6H = "waz"
+                #   T06 = "waz[-PT6H] => foo"
+                graph_parents[seq].append((name, parent_point, is_abs))
+
+    if tdef.sequential:
+        # Add prev-instance parent.
+        prevs = []
+        for seq in tdef.sequences:
+            prev = seq.get_prev_point(point)
+            if prev is not None:
+                # Within sequence bounds.
+                prevs.append(prev)
+        if prevs:
+            if seq not in graph_parents:
+                graph_parents[seq] = []
+            graph_parents[seq].append((tdef.name, min(prevs), False))
+
+    return graph_parents
+
+
 class TaskProxy:
     """Represent an instance of a cycling task in a running suite.
 

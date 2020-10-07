@@ -33,7 +33,7 @@ class TaskDef:
         "sequential", "is_coldstart",
         "suite_polling_cfg", "clocktrigger_offset", "expiration_offset",
         "namespace_hierarchy", "dependencies", "outputs", "param_var",
-        "graph_children",
+        "graph_children", "graph_parents",
         "external_triggers", "xtrig_labels", "name", "elapsed_times"]
 
     # Store the elapsed times for a maximum of 10 cycles
@@ -63,7 +63,7 @@ class TaskDef:
         self.outputs = set()
         self.graph_children = {}
         # graph_parents not currently used, but might be soon:
-        # self.graph_parents = {}
+        self.graph_parents = {}
         self.param_var = {}
         self.external_triggers = []
         self.xtrig_labels = {}  # {sequence: [labels]}
@@ -84,15 +84,15 @@ class TaskDef:
                 trigger.output, []).append((taskname, trigger))
 
     # graph_parents not currently used, but might be soon:
-    # def add_graph_parent(self, trigger, parent, sequence):
-    #    """Record task instances that I depend on.
-    #      {
-    #         sequence: set([(a,t1), (b,t2), ...])  # (task-name, trigger)
-    #      }
-    #    """
-    #    if sequence not in self.graph_parents:
-    #        self.graph_parents[sequence] = set()
-    #    self.graph_parents[sequence].add((parent, trigger))
+    def add_graph_parent(self, trigger, parent, sequence):
+        """Record task instances that I depend on.
+          {
+             sequence: set([(a,t1), (b,t2), ...])  # (task-name, trigger)
+          }
+        """
+        if sequence not in self.graph_parents:
+            self.graph_parents[sequence] = set()
+        self.graph_parents[sequence].add((parent, trigger))
 
     def add_dependency(self, dependency, sequence):
         """Add a dependency to a named sequence.

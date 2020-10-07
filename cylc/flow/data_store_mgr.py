@@ -32,16 +32,24 @@ data-stores.
 Static data elements are generated on workflow start/restart/reload, which
 includes workflow, task, and family definition objects.
 
+The cycle point nodes/edges (i.e. task/family proxies) generation is triggered
+individually on transition from staging to active task pool. Each active task
+is generated along with any children and parents out recursively out to a
+specified maximum graph distance (n_edge_distance), that can be externally
+altered (via API). Collectively this forms the N-Distance-Window on the
+workflow graph.
+
+Pruning of data-store elements is done using both the collection/set of nodes
+generated through the associated graph paths of the the active nodes and the
+tracking of the boundary nodes (n_edge_distance+1) of those active nodes.
+Once a boundary node becomes active the active node is flagged for prunning.
+Set operations are used to do a diff between the nodes of active paths
+(paths whose node is in the active task pool) and the nodes of flagged paths
+(whose boundary node(s) have become active).
+
 Updates are triggered by changes in the task pool;
 migrations of task instances from runahead to live pool, and
 changes in task state (itask.state.is_updated).
-- Graph edges are generated for new cycle points in the pool
-- Ghost nodes, task and family cycle point instances containing static data,
-  are generated from the source & target of edges and pointwise respectively.
-- Cycle points are removed/pruned if they are not in the pool and not
-  the source or target cycle point of the current edge set. The removed include
-  edge, task, and family cycle point items and an update of the family,
-  workflow, and manager aggregate attributes.
 
 Data elements include a "stamp" field, which is a timestamped ID for use
 in assessing changes in the data store, for comparisons of a store sync.
@@ -51,7 +59,7 @@ Packaging methods are included for dissemination of protobuf messages.
 """
 
 from collections import Counter
-from copy import deepcopy
+from copy import copy, deepcopy
 import json
 from time import time
 import zlib
@@ -65,7 +73,9 @@ from cylc.flow.network import API
 from cylc.flow.suite_status import get_suite_status
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_job_logs import JOB_LOG_OPTS
-from cylc.flow.task_proxy import generate_graph_children
+from cylc.flow.task_proxy import (
+    generate_graph_children, generate_graph_parents
+)
 from cylc.flow.task_state import TASK_STATUS_WAITING
 from cylc.flow.task_state_prop import extract_group_state
 from cylc.flow.wallclock import (
@@ -288,7 +298,7 @@ class DataStoreMgr:
                 Message containing the global information of the workflow.
         .descendants (dict):
             Local store of config.get_first_parent_descendants()
-        .n_max (int):
+        .n_edge_distance (int):
             Maximum distance of the data-store graph from the active pool.
         .parents (dict):
             Local store of config.get_parent_lists()
@@ -312,7 +322,8 @@ class DataStoreMgr:
         self.parents = {}
         self.state_update_families = set()
         self.updated_state_families = set()
-        self.n_max = 1
+        self.n_edge_distance = 1
+        self.next_n_edge_distance = None
         # Managed data types
         self.data = {
             self.workflow_id: deepcopy(DATA_TEMPLATE)
@@ -331,10 +342,12 @@ class DataStoreMgr:
         self.updates_pending = False
         self.delta_queues = {self.workflow_id: {}}
         self.publish_deltas = []
-        self.in_window_edges = {}
-        self.out_window_edges = {}
-        self.in_window_nodes = {}
-        self.out_window_nodes = {}
+        self.all_task_pool = set()
+        self.n_window_nodes = {}
+        self.n_window_edges = {}
+        self.n_window_boundary_nodes = {}
+        self.prune_trigger_nodes = {}
+        self.prune_flagged_nodes = set()
         self.prune_pending = False
 
     def initiate_data_model(self, reloaded=False):
@@ -530,13 +543,23 @@ class DataStoreMgr:
         self.parents = parents
 
     def increment_graph_window(
-            self, name, point, flow_label, n_distance=0, active_id=None):
-        """Generate graph window about given task proxy to n_max
+            self, name, point, flow_label,
+            edge_distance=0, active_id=None, descendant=False):
+        """Generate graph window about given origin to n-edge-distance.
 
         Args:
-            source_itask (cylc.flow.TaskProxy):
-                Edge source task proxy object.
-            n_distance (int): Graph distance from active parent.
+            name (str):
+                Task name.
+            point (cylc.flow.cycling.PointBase):
+                PointBase derived object.
+            flow_label (str):
+                Flow label used to distinguish multiple runs.
+            edge_distance (int):
+                Graph distance from active/origin node.
+            active_id (str):
+                Active/origin node id.
+            descendent (bool):
+                Is the current node a direct descendent of the active/origin.
 
         Returns:
 
@@ -549,65 +572,127 @@ class DataStoreMgr:
         if active_id is None:
             active_id = s_id
 
+        # Setup and check if active node is another's boundary node
+        # to flag it's paths for pruning.
+        if edge_distance == 0:
+            self.n_window_edges[active_id] = set()
+            self.n_window_boundary_nodes[active_id] = {}
+            self.n_window_nodes[active_id] = set()
+            if active_id in self.prune_trigger_nodes:
+                self.prune_flagged_nodes.update(
+                    self.prune_trigger_nodes[active_id])
+                del self.prune_trigger_nodes[active_id]
+                self.prune_pending = True
+
+        # This part is vital to constructing a set of boundary nodes
+        # associated with the current Active node.
+        graph_children = generate_graph_children(
+            self.schd.config.get_taskdef(name), point)
+        if (
+                edge_distance > self.n_edge_distance or
+                not any(graph_children.values())
+        ):
+            if descendant or edge_distance == 0:
+                self.n_window_boundary_nodes[
+                    active_id].setdefault(edge_distance, set()).add(s_id)
+
+        if edge_distance > self.n_edge_distance:
+            return
+
+        self.n_window_nodes[active_id].add(s_id)
         # Generate task node
         self.generate_ghost_task(s_id, name, point, flow_label)
-        if n_distance == 0:
-            self.in_window_nodes[active_id] = set()
-            self.in_window_edges[active_id] = set()
-        self.in_window_nodes[active_id].add(s_id)
 
-        n_distance += 1
-        if n_distance > self.n_max:
-            return
+        edge_distance += 1
 
         # TODO: xtrigger is suite_state edges too
         # Reference set for workflow relations
-        new_edges = set()
-        for output, items in generate_graph_children(
-                self.schd.config.get_taskdef(name), point).items():
-            for t_name, t_point, is_abs in items:
-                t_node = TaskID.get(t_name, t_point)
-                t_id = (
-                    f'{self.workflow_id}{ID_DELIM}{t_point}{ID_DELIM}{t_name}')
-                self.increment_graph_window(
-                    t_name, t_point, flow_label, n_distance, active_id)
+        for _, items in graph_children.items():
+            if edge_distance == 1:
+                descendant = True
+            self._expand_graph_window(
+                s_id, s_node, items, active_id, flow_label, edge_distance,
+                descendant, False)
 
-                # Initiate edge element.
+        for _, items in generate_graph_parents(
+                self.schd.config.get_taskdef(name), point).items():
+            self._expand_graph_window(
+                s_id, s_node, items, active_id, flow_label, edge_distance,
+                False, True)
+
+        if edge_distance == 1:
+            levels = self.n_window_boundary_nodes[active_id].keys()
+            # Could be self-reference node foo:failed => foo
+            if not levels:
+                self.n_window_boundary_nodes[active_id][0] = {active_id}
+                levels = (0,)
+            # Only trigger pruning for futherest set of boundary nodes
+            for tp_id in self.n_window_boundary_nodes[active_id][max(levels)]:
+                self.prune_trigger_nodes.setdefault(
+                    tp_id, set()).add(active_id)
+            del self.n_window_boundary_nodes[active_id]
+            if self.n_window_edges[active_id]:
+                getattr(self.updated[WORKFLOW], EDGES).edges.extend(
+                    self.n_window_edges[active_id])
+
+    def _expand_graph_window(
+            self, s_id, s_node, items, active_id, flow_label, edge_distance,
+            descendant=False, is_parent=False):
+        """Construct nodes/edges for children/parents of source node."""
+        for t_name, t_point, is_abs in items:
+            t_node = TaskID.get(t_name, t_point)
+            t_id = (
+                f'{self.workflow_id}{ID_DELIM}{t_point}{ID_DELIM}{t_name}')
+            # Initiate edge element.
+            if is_parent:
+                e_id = (
+                    f'{self.workflow_id}{ID_DELIM}{t_node}{ID_DELIM}{s_node}')
+            else:
                 e_id = (
                     f'{self.workflow_id}{ID_DELIM}{s_node}{ID_DELIM}{t_node}')
-                if (
-                    e_id not in self.data[self.workflow_id][EDGES] and
-                    e_id not in self.added[EDGES]
-                ):
-                    self.added[EDGES][e_id] = PbEdge(
-                        id=e_id,
-                        source=s_id,
-                        target=t_id
-                    )
-                    # Add edge id to node field for resolver reference
-                    self.updated[TASK_PROXIES].setdefault(
-                        t_id,
-                        PbTaskProxy(id=t_id)).edges.append(e_id)
-                    self.updated[TASK_PROXIES].setdefault(
-                        s_id,
-                        PbTaskProxy(id=s_id)).edges.append(e_id)
-                    new_edges.add(e_id)
-        if new_edges:
-            self.updates_pending = True
-            self.in_window_edges[active_id] |= new_edges
-            getattr(self.updated[WORKFLOW], EDGES).edges.extend(new_edges)
+            if e_id in self.n_window_edges[active_id]:
+                continue
+            if (
+                e_id not in self.data[self.workflow_id][EDGES] and
+                e_id not in self.added[EDGES] and
+                edge_distance <= self.n_edge_distance
+            ):
+                self.added[EDGES][e_id] = PbEdge(
+                    id=e_id,
+                    source=s_id,
+                    target=t_id
+                )
+                # Add edge id to node field for resolver reference
+                self.updated[TASK_PROXIES].setdefault(
+                    t_id,
+                    PbTaskProxy(id=t_id)).edges.append(e_id)
+                self.updated[TASK_PROXIES].setdefault(
+                    s_id,
+                    PbTaskProxy(id=s_id)).edges.append(e_id)
+                self.n_window_edges[active_id].add(e_id)
+            if t_id in self.n_window_nodes[active_id]:
+                continue
+            self.increment_graph_window(
+                t_name, t_point, flow_label,
+                copy(edge_distance), active_id, descendant)
 
-    def decrement_graph_window(self, name, point):
+    def remove_active_node(self, name, point):
         """Flag removal of this active graph window."""
-
         tp_id = f'{self.workflow_id}{ID_DELIM}{point}{ID_DELIM}{name}'
-        if tp_id in self.in_window_nodes:
-            self.out_window_nodes[tp_id] = self.in_window_nodes[tp_id]
-            del self.in_window_nodes[tp_id]
-        if tp_id in self.in_window_edges:
-            self.out_window_edges[tp_id] = self.in_window_edges[tp_id]
-            del self.in_window_edges[tp_id]
-        self.prune_pending = True
+        self.all_task_pool.remove(tp_id)
+        # flagged isolates/end-of-branch nodes for pruning on removal
+        if (
+                tp_id in self.prune_trigger_nodes and
+                tp_id in self.prune_trigger_nodes[tp_id]
+        ):
+            self.prune_flagged_nodes.update(self.prune_trigger_nodes[tp_id])
+            del self.prune_trigger_nodes[tp_id]
+            self.prune_pending = True
+
+    def add_runahead_node(self, name, point):
+        """Flag removal of this active graph window."""
+        tp_id = f'{self.workflow_id}{ID_DELIM}{point}{ID_DELIM}{name}'
+        self.all_task_pool.add(tp_id)
 
     def generate_ghost_task(self, tp_id, name, point, flow_label):
         """Create task-point element populated with static data.
@@ -737,6 +822,11 @@ class DataStoreMgr:
         self.update_dynamic_elements(updated_nodes)
         self.update_family_proxies()
 
+        # Avoids changing window edge distance during edge/node creation
+        if self.next_n_edge_distance is not None:
+            self.n_edge_distance = self.next_n_edge_distance
+            self.next_n_edge_distance = None
+
         # Update workflow statuses and totals if needed
         if self.prune_pending:
             self.prune_data_store()
@@ -765,41 +855,65 @@ class DataStoreMgr:
 
         """
         self.prune_pending = False
-        if not self.out_window_nodes and not self.out_window_edges:
+        if not self.prune_flagged_nodes:
             return
 
-        data = self.data[self.workflow_id]
+        # Gather nodes to prune via a diff of nodes in the dependency paths
+        # of flagged boundary nodes against all other paths.
+        in_paths = [
+            v
+            for k, v in self.n_window_nodes.items()
+            if k in self.all_task_pool
+        ]
+        #    if k in self.all_task_pool
+        out_paths = [
+            v
+            for k, v in self.n_window_nodes.items()
+            if k in self.prune_flagged_nodes
+        ]
+        node_ids = set().union(*out_paths).difference(*in_paths)
+        # Absolute triggers may be present in task pool, so recheck.
+        # Clear the rest.
+        self.prune_flagged_nodes.intersection_update(self.all_task_pool)
 
-        # Gather nodes and edges to prune
-        node_ids = set().union(*self.out_window_nodes.values()).difference(
-            *self.in_window_nodes.values())
-        self.out_window_nodes.clear()
-        edge_ids = set().union(*self.out_window_edges.values()).difference(
-            *self.in_window_edges.values())
-        self.out_window_edges.clear()
-
-        for e_id in edge_ids:
-            self.deltas[EDGES].pruned.append(e_id)
-
-        flagged_ids = set()
+        tp_data = self.data[self.workflow_id][TASK_PROXIES]
+        tp_added = self.added[TASK_PROXIES]
+        parent_ids = set()
         for tp_id in node_ids:
+            if tp_id in self.n_window_nodes:
+                del self.n_window_nodes[tp_id]
+            if tp_id in self.n_window_edges:
+                del self.n_window_edges[tp_id]
+            if tp_id in tp_data:
+                node = tp_data[tp_id]
+            elif tp_id in tp_added:
+                node = tp_added[tp_id]
+            else:
+                continue
             self.deltas[TASK_PROXIES].pruned.append(tp_id)
             self.schd.job_pool.remove_task_jobs(tp_id)
-            flagged_ids.add(data[TASK_PROXIES][tp_id].first_parent)
+            self.deltas[EDGES].pruned.extend(node.edges)
+            parent_ids.add(node.first_parent)
 
         prune_ids = set()
         checked_ids = set()
-        while flagged_ids:
-            for fp_id in flagged_ids:
+        while parent_ids:
+            for fp_id in parent_ids:
                 self._family_ascent_point_prune(
-                    fp_id, node_ids, flagged_ids, checked_ids, prune_ids)
+                    fp_id, node_ids, parent_ids, checked_ids, prune_ids)
                 break
         if prune_ids:
             self.deltas[FAMILY_PROXIES].pruned.extend(prune_ids)
             self.updates_pending = True
 
     def _family_ascent_point_prune(
-            self, fp_id, node_ids, flagged_ids, checked_ids, prune_ids):
+            self, fp_id, node_ids, parent_ids, checked_ids, prune_ids):
+        """Find and prune family recursively checking child families.
+
+        Recursively map out child families to the bottom from the origin
+        family. The work back up to origin checking these families are active.
+
+        """
         fp_data = self.data[self.workflow_id][FAMILY_PROXIES]
         if fp_id in fp_data and fp_id not in self.updated[FAMILY_PROXIES]:
             fam_node = fp_data[fp_id]
@@ -811,7 +925,7 @@ class DataStoreMgr:
             ]
             for child_id in child_fam_nodes:
                 self._family_ascent_point_prune(
-                    child_id, node_ids, flagged_ids, checked_ids, prune_ids)
+                    child_id, node_ids, parent_ids, checked_ids, prune_ids)
             if [
                     child_id
                     for child_id in fam_node.child_tasks
@@ -824,11 +938,11 @@ class DataStoreMgr:
                 self.state_update_families.add(fp_id)
             else:
                 if fam_node.first_parent:
-                    flagged_ids.add(fam_node.first_parent)
+                    parent_ids.add(fam_node.first_parent)
                 prune_ids.add(fp_id)
         checked_ids.add(fp_id)
-        if fp_id in flagged_ids:
-            flagged_ids.remove(fp_id)
+        if fp_id in parent_ids:
+            parent_ids.remove(fp_id)
 
     def update_dynamic_elements(self, updated_nodes=None):
         """Update data elements containing dynamic/live fields."""
@@ -1040,6 +1154,17 @@ class DataStoreMgr:
             tp_delta.is_held = hold
             tp_delta.state = tp_node.state
             self.state_update_families.add(tp_node.first_parent)
+
+    def set_graph_window_extent(self, n_edge_distance):
+        """Set the what the max edge distance will change to.
+
+        Args:
+            n_edge_distance (int):
+                Maximum edge distance from active node.
+
+        """
+        self.next_n_edge_distance = n_edge_distance
+        self.updates_pending = True
 
     def update_workflow(self):
         """Update workflow element status and state totals."""

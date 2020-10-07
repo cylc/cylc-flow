@@ -696,6 +696,28 @@ class Resolvers(BaseResolvers):
         self.schd.command_queue.put(("set_verbosity", (level,), {}))
         return (True, 'Command queued')
 
+    def set_graph_window_extent(self, n_edge_distance):
+        """Set data-store graph window to new max edge distance.
+
+        Args:
+            n_edge_distance (int):
+                Max edge distance 0..n from active node.
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool)
+                True if command successfully queued.
+            message (str)
+                Information about outcome.
+
+        """
+        if n_edge_distance >= 0:
+            self.schd.data_store_mgr.set_graph_window_extent(n_edge_distance)
+            return (True, f'Maximum edge distance set to {n_edge_distance}')
+        else:
+            return (False, 'Edge distance cannot be negative')
+
     def force_spawn_children(self, tasks, outputs):
         """Spawn children of given task outputs.
 
