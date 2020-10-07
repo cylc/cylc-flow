@@ -500,7 +500,7 @@ class TaskEventsManager():
                 and
                 (
                     (
-                        # task has automatically submit-retried at least once
+                        # task has a submit-retry lined up
                         TimerFlags.SUBMISSION_RETRY in itask.try_timers
                         and itask.try_timers[
                             TimerFlags.SUBMISSION_RETRY].num > 0
