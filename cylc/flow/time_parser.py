@@ -223,7 +223,6 @@ class CylcTimeParser:
                     "This suite requires a final cycle point."
                 )
 
-            exclusion_point = None
             exclusion_points = []
             # Convert the exclusion strings to ISO8601 points
             if exclusions is not None:
