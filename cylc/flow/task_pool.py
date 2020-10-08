@@ -532,13 +532,12 @@ class TaskPool:
                 self.get_or_spawn_task(
                     itask.tdef.name, next_point, flow_label=itask.flow_label,
                     parent_id=itask.identity)
-            else:
+            elif itask.tdef.get_abs_triggers(next_point):
                 # Auto-spawn (if needed) next absolute-triggered instances.
-                for trig in itask.tdef.get_abs_triggers(next_point):
-                    self.get_or_spawn_task(
-                        itask.tdef.name, next_point,
-                        flow_label=itask.flow_label,
-                        parent_id=itask.identity)
+                self.get_or_spawn_task(
+                    itask.tdef.name, next_point,
+                    flow_label=itask.flow_label,
+                    parent_id=itask.identity)
 
     def remove(self, itask, reason=""):
         """Remove a task from the pool."""
