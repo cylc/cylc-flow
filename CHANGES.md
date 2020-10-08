@@ -82,6 +82,10 @@ hierarchy and ability to set site config directory.
 
 ### Fixes
 
+[#3859](https://github.com/cylc/cylc-flow/pull/3859) - Fixes the query of
+broadcast states to retrieve only the data for the requested ID, instead
+of returning all the broadcast states in the database.
+
 [#3815](https://github.com/cylc/cylc-flow/pull/3815) - Fixes a minor bug in the
 auto-restart functionality which caused suites to wait for local jobs running
 on *any* host to complete before restarting.
