@@ -65,7 +65,7 @@ def suite_state(suite, task, point, offset=None, status='succeeded',
             True if ``satisfied`` else ``False``.
         results (dict):
             Dictionary containing the args / kwargs which were provided
-            to this xtrigger (except ``debug``).
+            to this xtrigger.
 
     """
     cylc_run_dir = os.path.expandvars(
