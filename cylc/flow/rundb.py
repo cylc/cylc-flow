@@ -505,7 +505,7 @@ class CylcSuiteDAO:
         select from broadcast_states table if id_key == CHECKPOINT_LATEST_ID.
         Otherwise select from broadcast_states_checkpoints where id == id_key.
         """
-        stmt, stmt_args = self.pre_select_broadcast_states(id_key=None,
+        stmt, stmt_args = self.pre_select_broadcast_states(id_key=id_key,
                                                            order=sort)
         for row_idx, row in enumerate(self.connect().execute(stmt, stmt_args)):
             callback(row_idx, list(row))
