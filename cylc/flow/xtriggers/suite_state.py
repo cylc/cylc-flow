@@ -24,7 +24,7 @@ from metomi.isodatetime.parsers import TimePointParser
 
 
 def suite_state(suite, task, point, offset=None, status='succeeded',
-                message=None, cylc_run_dir=None, debug=False):
+                message=None, cylc_run_dir=None):
     """Connect to a suite DB and query the requested task state.
 
     * Reports satisfied only if the remote suite state has been achieved.
@@ -58,9 +58,6 @@ def suite_state(suite, task, point, offset=None, status='succeeded',
                different location to what is specified in the global
                configuration (usually ``~/cylc-run``).
 
-        debug (bool):
-            Flag to enable debug information.
-
     Returns:
         tuple: (satisfied, results)
 
@@ -68,7 +65,7 @@ def suite_state(suite, task, point, offset=None, status='succeeded',
             True if ``satisfied`` else ``False``.
         results (dict):
             Dictionary containing the args / kwargs which were provided
-            to this xtrigger (except ``debug``).
+            to this xtrigger.
 
     """
     cylc_run_dir = os.path.expandvars(

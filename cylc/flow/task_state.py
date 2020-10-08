@@ -469,7 +469,6 @@ class TaskState:
 
         if tdef.sequential:
             # Add a previous-instance succeeded prerequisite.
-            p_prev = None
             adjusted = []
             for seq in tdef.sequences:
                 prv = seq.get_nearest_prev_point(point)

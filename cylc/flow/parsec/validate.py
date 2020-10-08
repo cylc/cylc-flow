@@ -909,7 +909,6 @@ class CylcConfigValidator(ParsecValidator):
         value = cls.strip_and_unquote(keys, value)
         if not value:
             raise IllegalValueError("xtrigger", keys, value)
-        fname = None
         args = []
         kwargs = {}
         match = cls._REC_TRIG_FUNC.match(value)

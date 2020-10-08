@@ -190,7 +190,7 @@ async def filter_name(flow, pattern):
     Args:
         flow (dict):
             Flow information dictionary, provided by scan through the pipe.
-        pattern (str):
+        pattern (re.Pattern):
             One or more regex patterns as strings.
             This will return True if any of the patterns match.
 

@@ -81,8 +81,11 @@ class TaskRemoteMgr:
             command (str):
                 An explicit host name, a command in back-tick or $(command)
                 format, or an environment variable holding a hostname.
-            command_re (re.Pattern):
+            command_pattern (re.Pattern):
                 A compiled regex pattern designed to match subshell strings.
+            host_check (bool):
+                A flag to enable remote testing. If True, and if the command
+                is running locally, then it will return 'localhost'.
 
         Return (str):
             - None if evaluation of command is still taking place.

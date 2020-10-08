@@ -389,7 +389,7 @@ def get_suite_srv_dir(reg, suite_owner=None):
     return os.path.join(run_d, SuiteFiles.Service.DIRNAME)
 
 
-def load_contact_file(reg, owner=None, host=None):
+def load_contact_file(reg):
     """Load contact file. Return data as key=value dict."""
     file_base = SuiteFiles.Service.CONTACT
     path = get_suite_srv_dir(reg)

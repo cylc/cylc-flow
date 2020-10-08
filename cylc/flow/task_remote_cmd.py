@@ -139,6 +139,7 @@ def remote_tidy(install_target, rund):
     """cylc remote-tidy
 
     Arguments:
+        install_target (str): suite install target name
         rund (str): suite run directory
     """
     rund = os.path.expandvars(rund)

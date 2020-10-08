@@ -181,7 +181,6 @@ def construct_rsync_over_ssh_cmd(
         src_path(string): source path
         dst_path(string): path of target
         platform(dict)): contains info relating to platform
-        logfile(str): the path to the file logging the rsync
         rsync_includes(list): files and directories to be included in the rsync
 
     """
@@ -223,7 +222,7 @@ def construct_rsync_over_ssh_cmd(
 
 
 def construct_ssh_cmd(
-        raw_cmd, user=None, host=None, forward_x11=False, stdin=False,
+        raw_cmd, host=None, forward_x11=False, stdin=False,
         ssh_cmd=None, ssh_login_shell=None, ssh_cylc=None, set_UTC=False,
         allow_flag_opts=False, timeout=None
 ):
@@ -231,7 +230,6 @@ def construct_ssh_cmd(
 
     Arguments:
         raw_cmd (list): primitive command to run remotely.
-        user (string): user ID for the remote login.
         host (string): remote host name. Use 'localhost' if not specified.
         forward_x11 (boolean):
             If True, use 'ssh -Y' to enable X11 forwarding, else just 'ssh'.
@@ -324,7 +322,6 @@ def construct_ssh_cmd(
 
 def remote_cylc_cmd(
         cmd,
-        user=None,
         host=None,
         stdin=None,
         stdin_str=None,
@@ -339,7 +336,6 @@ def remote_cylc_cmd(
     Args are directly inputted to one of two functions; see those docstrings:
             * See 'construct_ssh_cmd()' docstring:
                 * cmd (--> raw_cmd);
-                * user;
                 * host;
                 * stdin;
                 * ssh_login_shell;
@@ -356,7 +352,6 @@ def remote_cylc_cmd(
     return run_cmd(
         construct_ssh_cmd(
             cmd,
-            user=user,
             host=host,
             stdin=True if stdin_str else stdin,
             ssh_login_shell=ssh_login_shell,

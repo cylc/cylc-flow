@@ -560,7 +560,6 @@ class Scheduler:
             TimestampRotatingFileHandler.FILE_HEADER_FLAG: True,
             TimestampRotatingFileHandler.FILE_NUM: 1}
         LOG.info(
-            # this is the signal daemonize is waiting for
             self.START_MESSAGE_TMPL % {
                 'comms_method': 'tcp',
                 'host': self.host,
@@ -640,7 +639,7 @@ class Scheduler:
         finally:
             self.profiler.stop()
 
-    async def run(self, daemonize=False):
+    async def run(self):
         """Run the startup sequence.
 
         * initialise
