@@ -696,8 +696,6 @@ def _is_valid_run_dir(path):
     if not os.path.isabs(path):
         cylc_run_dir = os.path.expandvars(get_platform()['run directory'])
         path = os.path.join(cylc_run_dir, path)
-    if (os.path.isfile(os.path.join(path, SuiteFiles.FLOW_FILE)) or
-            os.path.isdir(os.path.join(path, SuiteFiles.Service.DIRNAME)) or
-            os.path.isfile(os.path.join(path, SuiteFiles.SUITE_RC))):
+    if os.path.isdir(os.path.join(path, SuiteFiles.Service.DIRNAME)):
         return True
     return False
