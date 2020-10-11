@@ -477,6 +477,7 @@ def restart(parser, options, *args):
 @cli_function(partial(get_option_parser, is_restart=False))
 def run(parser, options, *args):
     """Implement cylc run."""
+    #from cylc.flow import patch_pudb; import pudb; pudb.set_trace()
     if not args:
         _auto_register()
     if options.startcp:

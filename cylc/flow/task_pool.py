@@ -262,6 +262,25 @@ class TaskPool:
                     self.release_runahead_task(itask)
                     released = True
 
+        pool_size_limit = 10
+        pool_size = len(self.get_tasks())
+        if pool_size >= pool_size_limit:
+            return released
+        for point, itasks in sorted(
+                self.get_runahead_tasks_by_point().items()):
+            if pool_size >= pool_size_limit:
+                break
+            for itask in itasks:
+                if itask.is_task_prereqs_not_done():
+                    # Hide partially satisfied waiting tasks
+                    continue
+                if pool_size >= pool_size_limit:
+                    break
+                self.release_runahead_task(itask)
+                pool_size += 1
+                released = True
+        return released
+
         limit = self.max_num_active_cycle_points
 
         points = []
@@ -627,6 +646,13 @@ class TaskPool:
         if not incl_runahead:
             return point_itasks
 
+        for point, itask_id_map in self.runahead_pool.items():
+            point_itasks.setdefault(point, [])
+            point_itasks[point].extend(list(itask_id_map.values()))
+        return point_itasks
+
+    def get_runahead_tasks_by_point(self):
+        point_itasks = {}
         for point, itask_id_map in self.runahead_pool.items():
             point_itasks.setdefault(point, [])
             point_itasks[point].extend(list(itask_id_map.values()))
