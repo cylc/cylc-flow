@@ -1098,12 +1098,27 @@ class TaskPool:
                 LOG.warning(f'[{c_task}] -suiciding while active')
             self.remove(c_task, 'SUICIDE')
 
+        # TODO - event-driven finished task removal (needs datastore update):
         # Remove the parent task if finished.
-        if (output in [TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_EXPIRED]
-                or output == TASK_OUTPUT_FAILED and itask.failure_handled):
-            if itask.identity == self.stop_task_id:
-                self.stop_task_finished = True
-            self.remove(itask, 'finished')
+        # if (output in [TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_EXPIRED]
+        #         or output == TASK_OUTPUT_FAILED and itask.failure_handled):
+        #     if itask.identity == self.stop_task_id:
+        #         self.stop_task_finished = True
+        #     self.remove(itask, 'finished')
+
+    def remove_spent_tasks(self):
+        """Remove finished tasks from the task pool.
+
+        TODO - event-driven finished task removal, once we have event-driven
+        datastore updates (see commented-out block in spawn_on_output above).
+        """
+        for itask in self.get_tasks():
+            if (itask.state(TASK_STATUS_SUCCEEDED, TASK_STATUS_EXPIRED) or
+                    itask.state(TASK_STATUS_FAILED) and itask.failure_handled):
+                print(f'REMOVING {itask.identity}')
+                if itask.identity == self.stop_task_id:
+                    self.stop_task_finished = True
+                self.remove(itask, 'finished')
 
     def get_or_spawn_task(self, name, point, flow_label=None, reflow=True,
                           parent_id=None):

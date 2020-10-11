@@ -1469,6 +1469,8 @@ class Scheduler:
             self.suite_db_mgr.put_task_event_timers(self.task_events_mgr)
             has_updated = await self.update_data_structure()
 
+            self.pool.remove_spent_tasks()
+
             self.process_suite_db_queue()
 
             # If public database is stuck, blast it away by copying the content
