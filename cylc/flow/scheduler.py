@@ -70,7 +70,7 @@ from cylc.flow.pathutil import (
     get_suite_run_share_dir,
     get_suite_run_work_dir,
     get_suite_test_log_name,
-    make_suite_run_tree, make_symlink,
+    make_suite_run_tree
 )
 from cylc.flow.platforms import (
     get_install_target_from_platform,

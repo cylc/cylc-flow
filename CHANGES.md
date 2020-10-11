@@ -55,7 +55,7 @@ compatibility, the `cylc run` command will automatically symlink an existing
 `suite.rc` file to `flow.cylc`.
 
 Remove cylc register's option `--run-dir=DIR`, which created a run directory
-symlink to `DIR` (see #......).  
+symlink to `DIR` (see #......).
 
 ### Enhancements
 

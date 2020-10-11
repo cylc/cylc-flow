@@ -15,11 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Implement "cylc remote-init" and "cylc remote-tidy"."""
 
-from genericpath import exists
 import os
-from os import symlink
 import re
-from typing import ItemsView
 import zmq
 import tarfile
 import sys
@@ -98,22 +95,18 @@ def remote_init(install_target, rund, *dirs_to_symlink, indirect_comm=None):
         [directory=symlink_location, ...]
         *indirect_comm (str): use indirect communication via e.g. 'ssh'
     """
-
     rund = os.path.expandvars(rund)
-    srvd = os.path.join(rund, SuiteFiles.Service.DIRNAME)
-    os.makedirs(srvd, exist_ok=True)
-
     for item in dirs_to_symlink:
         key, val = item.split("=", 1)
         if key == 'run':
-            src = rund
-            target = os.path.dirname(os.path.expandvars(val))
+            dst = rund
+            src = (os.path.expandvars(val))
         else:
-            src = os.path.join(rund, key)
-            os.makedirs(src, exist_ok=True)
-            target = os.path.expandvars(val)
-            os.makedirs(os.path.dirname(target), exist_ok=True)
-        make_symlink(src, target)
+            dst = os.path.join(rund, key)
+            src = os.path.expandvars(val)
+        make_symlink(src, dst)
+    srvd = os.path.join(rund, SuiteFiles.Service.DIRNAME)
+    os.makedirs(srvd, exist_ok=True)
 
     client_pub_keyinfo = KeyInfo(
         KeyType.PUBLIC,

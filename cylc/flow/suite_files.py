@@ -29,7 +29,7 @@ import aiofiles
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import SuiteServiceFileError
-from cylc.flow.pathutil import get_suite_run_dir
+from cylc.flow.pathutil import get_suite_run_dir, make_localhost_symlinks
 from cylc.flow.platforms import get_platform
 from cylc.flow.hostuserutil import (
     get_user,
@@ -486,7 +486,7 @@ def register(reg=None, source=None, redirect=False):
     """
     if reg is None:
         reg = os.path.basename(os.getcwd())
-
+    make_localhost_symlinks(reg)
     is_valid, message = SuiteNameValidator.validate(reg)
     if not is_valid:
         raise SuiteServiceFileError(f'invalid suite name - {message}')

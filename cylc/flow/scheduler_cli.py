@@ -34,7 +34,7 @@ from cylc.flow.option_parsers import (
 from cylc.flow.pathutil import (
     get_suite_run_dir,
     get_suite_run_log_name,
-    get_suite_file_install_log_name)
+    get_suite_file_install_log_name, make_localhost_symlinks)
 from cylc.flow.remote import remote_cylc_cmd
 from cylc.flow.scheduler import Scheduler, SchedulerError
 from cylc.flow.scripts import cylc_header
@@ -332,7 +332,7 @@ def scheduler_cli(parser, options, args, is_restart=False):
         suite_files.detect_old_contact_file(reg)
     except SuiteServiceFileError as exc:
         sys.exit(exc)
-
+    make_localhost_symlinks(reg)
     _check_registration(reg)
 
     # re-execute on another host if required

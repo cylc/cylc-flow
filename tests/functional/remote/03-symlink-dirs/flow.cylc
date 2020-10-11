@@ -1,0 +1,11 @@
+#!jinja2
+[cylc]
+[scheduling]
+    [[graph]]
+        R1 = holder => held
+[runtime]
+    [[holder]]
+        script = """cylc hold "${CYLC_SUITE_NAME}" """
+        platform = {{CYLC_TEST_PLATFORM}}
+    [[held]]
+        script = true

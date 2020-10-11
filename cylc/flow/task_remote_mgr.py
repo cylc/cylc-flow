@@ -22,10 +22,6 @@ This module provides logic to:
 - Implement basic host select functionality.
 """
 
-from genericpath import exists
-from os import symlink
-
-from zmq.asyncio import install
 from cylc.flow.cylc_subproc import procopen
 import os
 from shlex import quote
@@ -40,6 +36,7 @@ import cylc.flow.flags
 from cylc.flow.hostuserutil import (is_remote_host, is_remote_platform)
 from cylc.flow.pathutil import (
     get_remote_suite_run_dir,
+    get_dirs_to_symlink,
     get_suite_run_dir)
 from cylc.flow.remote import construct_rsync_over_ssh_cmd
 from cylc.flow.subprocctx import SubProcContext
@@ -57,7 +54,6 @@ from cylc.flow.platforms import (
     get_host_from_platform,
     get_install_target_from_platform)
 from cylc.flow.remote import construct_platform_ssh_cmd
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 REMOTE_INIT_FAILED = 'REMOTE INIT FAILED'
 
 
@@ -152,17 +148,6 @@ class TaskRemoteMgr:
             if value is not None:
                 del self.remote_command_map[key]
 
-    def get_dirs_to_symlink(self, install_target):
-        """Returns dictionary of directories to symlink from glbcfg.
-            """
-
-        dirs_to_symlink = {}
-        for dir_ in ['log', 'run', 'share','share/cycle', 'work']:
-            link = glbl_cfg().get(['symlink dirs', install_target, dir_])
-            if link is not None:
-                dirs_to_symlink[dir_] = os.path.join(link, self.suite, dir_)
-        return dirs_to_symlink
-
     def remote_init(self, platform, curve_auth,
                     client_pub_key_dir):
         """Initialise a remote [owner@]host if necessary.
@@ -234,7 +219,7 @@ class TaskRemoteMgr:
             cmd.append('--debug')
         cmd.append(str(install_target))
         cmd.append(get_remote_suite_run_dir(platform, self.suite))
-        dirs_to_symlink = self.get_dirs_to_symlink(install_target)
+        dirs_to_symlink = get_dirs_to_symlink(install_target, self.suite)
         for key, value in dirs_to_symlink.items():
             if value is not None:
                 cmd.append(f"{key}={quote(value)} ")
