@@ -387,12 +387,11 @@ class TaskPool:
                 submit_num=submit_num,
                 is_late=bool(is_late))
         except SuiteConfigError:
-            LOG.exception((
-                'ignoring task %s from the suite run database\n'
-                '(its task definition has probably been deleted).'
-            ) % name)
+            LOG.exception(
+                f'ignoring task {name} from the suite run database\n'
+                '(its task definition has probably been deleted).')
         except Exception:
-            LOG.exception('could not load task %s' % name)
+            LOG.exception(f'could not load task {name}')
         else:
             if status in (
                     TASK_STATUS_SUBMITTED,
@@ -433,8 +432,8 @@ class TaskPool:
             if platform_name:
                 itask.summary['platforms_used'][
                     int(submit_num)] = platform_name
-            LOG.info("+ %s.%s %s%s" % (
-                name, cycle, status, ' (held)' if is_held else ''))
+            LOG.info(
+                f"+ {name}.{cycle} {status}{' (held)' if is_held else ''}")
 
             # Update prerequisite satisfaction status from DB
             sat = {}

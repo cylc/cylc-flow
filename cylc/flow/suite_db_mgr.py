@@ -394,7 +394,8 @@ class SuiteDatabaseManager:
         """
         set_args = {
             "time_updated": itask.state.time_updated,
-            "status": itask.state.status}
+            "status": itask.state.status
+        }
         where_args = {
             "cycle": str(itask.point),
             "name": itask.tdef.name,
@@ -461,7 +462,8 @@ class SuiteDatabaseManager:
                     "time_updated": itask.state.time_updated,
                     "submit_num": itask.submit_num,
                     "try_num": itask.get_try_num(),
-                    "status": itask.state.status}
+                    "status": itask.state.status
+                }
                 where_args = {
                     "cycle": str(itask.point),
                     "name": itask.tdef.name,
@@ -572,9 +574,8 @@ class SuiteDatabaseManager:
         if self.pub_dao.n_tries >= self.pub_dao.MAX_TRIES:
             self.copy_pri_to_pub()
             LOG.warning(
-                "%(pub_db_name)s: recovered from %(pri_db_name)s" % {
-                    "pub_db_name": self.pub_dao.db_file_name,
-                    "pri_db_name": self.pri_dao.db_file_name})
+                f"{self.pub_dao.db_file_name}: recovered from "
+                f"{self.pri_dao.db_file_name}")
             self.pub_dao.n_tries = 0
 
     def restart_upgrade(self):
