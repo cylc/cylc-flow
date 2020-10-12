@@ -189,6 +189,7 @@ class CylcSuiteDAO:
     TABLE_TASK_OUTPUTS = "task_outputs"
     TABLE_TASK_POOL = "task_pool"
     TABLE_TASK_POOL_CHECKPOINTS = "task_pool_checkpoints"
+    TABLE_TASK_PREREQUISITES = "task_prerequisites"
     TABLE_TASK_STATES = "task_states"
     TABLE_TASK_TIMEOUT_TIMERS = "task_timeout_timers"
     TABLE_XTRIGGERS = "xtriggers"
@@ -288,8 +289,15 @@ class CylcSuiteDAO:
             ["name", {"is_primary_key": True}],
             ["flow_label", {"is_primary_key": True}],
             ["status"],
-            ["satisfied"],
             ["is_held", {"datatype": "INTEGER"}],
+        ],
+        TABLE_TASK_PREREQUISITES: [
+            ["cycle", {"is_primary_key": True}],
+            ["name", {"is_primary_key": True}],
+            ["prereq_name", {"is_primary_key": True}],
+            ["prereq_cycle", {"is_primary_key": True}],
+            ["prereq_output", {"is_primary_key": True}],
+            ["satisfied"],
         ],
         TABLE_XTRIGGERS: [
             ["signature", {"is_primary_key": True}],
@@ -301,7 +309,6 @@ class CylcSuiteDAO:
             ["name", {"is_primary_key": True}],
             ["flow_label", {"is_primary_key": True}],
             ["status"],
-            ["satisfied"],
             ["is_held", {"datatype": "INTEGER"}],
         ],
         TABLE_TASK_STATES: [
@@ -757,7 +764,6 @@ class CylcSuiteDAO:
                 %(task_pool)s.flow_label,
                 %(task_late_flags)s.value,
                 %(task_pool)s.status,
-                %(task_pool)s.satisfied,
                 %(task_pool)s.is_held,
                 %(task_states)s.submit_num,
                 %(task_jobs)s.try_num,
@@ -808,6 +814,22 @@ class CylcSuiteDAO:
             stmt_args = [id_key]
         for row_idx, row in enumerate(self.connect().execute(stmt, stmt_args)):
             callback(row_idx, list(row))
+
+    def select_task_prerequisites(self, cycle, name):
+        """Return prerequisites of a task of the given name & cycle point."""
+        stmt = f"""
+            SELECT
+                prereq_name,
+                prereq_cycle,
+                prereq_output,
+                satisfied
+            FROM
+                {self.TABLE_TASK_PREREQUISITES}
+            WHERE
+                cycle == '{cycle}' AND
+                name == '{name}'
+        """
+        return list(self.connect().execute(stmt))
 
     def select_task_times(self):
         """Select submit/start/stop times to compute job timings.

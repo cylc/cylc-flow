@@ -70,6 +70,7 @@ class SuiteDatabaseManager:
     TABLE_TASK_POOL = CylcSuiteDAO.TABLE_TASK_POOL
     TABLE_TASK_OUTPUTS = CylcSuiteDAO.TABLE_TASK_OUTPUTS
     TABLE_TASK_STATES = CylcSuiteDAO.TABLE_TASK_STATES
+    TABLE_TASK_PREREQUISITES = CylcSuiteDAO.TABLE_TASK_PREREQUISITES
     TABLE_TASK_TIMEOUT_TIMERS = CylcSuiteDAO.TABLE_TASK_TIMEOUT_TIMERS
     TABLE_XTRIGGERS = CylcSuiteDAO.TABLE_XTRIGGERS
     TABLE_ABS_OUTPUTS = CylcSuiteDAO.TABLE_ABS_OUTPUTS
@@ -102,6 +103,7 @@ class SuiteDatabaseManager:
             self.TABLE_TASK_POOL: [],
             self.TABLE_TASK_ACTION_TIMERS: [],
             self.TABLE_TASK_OUTPUTS: [],
+            self.TABLE_TASK_PREREQUISITES: [],
             self.TABLE_TASK_TIMEOUT_TIMERS: [],
             self.TABLE_XTRIGGERS: [],
             self.TABLE_ABS_OUTPUTS: []}
@@ -415,17 +417,17 @@ class SuiteDatabaseManager:
         # Should already be done by self.put_task_event_timers above.
         self.db_deletes_map[self.TABLE_TASK_TIMEOUT_TIMERS].append({})
         for itask in pool.get_all_tasks():
-            satisfied = {}
-            for p in itask.state.prerequisites:
-                for k, v in p.satisfied.items():
-                    # need string key, not tuple for json.dumps
-                    satisfied[json.dumps(k)] = v
+            # Update the task_prerequisites table:
+            for prereq in itask.state.prerequisites:
+                for (p_name, p_cycle, p_output), satisfied_state in (
+                        prereq.satisfied.items()):
+                    self.put_update_task_prerequisites(
+                        itask, p_name, p_cycle, p_output, satisfied_state)
             self.db_inserts_map[self.TABLE_TASK_POOL].append({
                 "name": itask.tdef.name,
                 "cycle": str(itask.point),
                 "flow_label": itask.flow_label,
                 "status": itask.state.status,
-                "satisfied": json.dumps(satisfied),
                 "is_held": itask.state.is_held})
             if itask.timeout is not None:
                 self.db_inserts_map[self.TABLE_TASK_TIMEOUT_TIMERS].append({
@@ -476,6 +478,23 @@ class SuiteDatabaseManager:
             "time": get_current_time_string(),
             "event": CylcSuiteDAO.CHECKPOINT_LATEST_EVENT})
 
+    def put_update_task_prerequisites(self, itask, prereq_name, prereq_cycle,
+                                      prereq_output, satisfied_state):
+        """Put statements to update the task_prerequisites table."""
+        set_args = {
+            "satisfied": satisfied_state
+        }
+        where_args = {
+            "cycle": str(itask.point),
+            "name": itask.tdef.name,
+            "prereq_name": prereq_name,
+            "prereq_cycle": prereq_cycle,
+            "prereq_output": prereq_output
+        }
+        self.db_updates_map.setdefault(self.TABLE_TASK_PREREQUISITES, [])
+        self.db_updates_map[self.TABLE_TASK_PREREQUISITES].append(
+            (set_args, where_args))
+
     def put_insert_task_events(self, itask, args):
         """Put INSERT statement for task_events table."""
         self._put_insert_task_x(CylcSuiteDAO.TABLE_TASK_EVENTS, itask, args)
@@ -493,6 +512,10 @@ class SuiteDatabaseManager:
     def put_insert_task_states(self, itask, args):
         """Put INSERT statement for task_states table."""
         self._put_insert_task_x(CylcSuiteDAO.TABLE_TASK_STATES, itask, args)
+
+    def put_insert_task_prerequisites(self, itask, args):
+        """Put INSERT statement for task_prerequisites table."""
+        self._put_insert_task_x(self.TABLE_TASK_PREREQUISITES, itask, args)
 
     def put_insert_task_outputs(self, itask):
         """Reset custom outputs for a task."""

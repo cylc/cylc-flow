@@ -229,15 +229,25 @@ class TaskPool:
         self.runahead_pool[itask.point][itask.identity] = itask
         self.rhpool_changed = True
 
-        # add row to "task_states" table
         if is_new:
+            # add row to "task_states" table:
             self.suite_db_mgr.put_insert_task_states(itask, {
                 "time_created": get_current_time_string(),
                 "time_updated": get_current_time_string(),
                 "status": itask.state.status,
                 "flow_label": itask.flow_label})
+            # add row to "task_outputs" table:
             if itask.state.outputs.has_custom_triggers():
                 self.suite_db_mgr.put_insert_task_outputs(itask)
+            # add rows to "task_prerequisites" table:
+            for prereq in itask.state.prerequisites:
+                for (name, cycle, output), satisfied_state in (
+                        prereq.satisfied.items()):
+                    self.suite_db_mgr.put_insert_task_prerequisites(itask, {
+                        "prereq_name": name,
+                        "prereq_cycle": cycle,
+                        "prereq_output": output,
+                        "satisfied": satisfied_state})
         return itask
 
     def release_runahead_tasks(self):
@@ -366,9 +376,8 @@ class TaskPool:
         if row_idx == 0:
             LOG.info("LOADING task proxies")
         # Create a task proxy corresponding to this DB entry.
-        (cycle, name, flow_label, is_late, status, satisfied,
-         is_held, submit_num, _, platform_name, time_submit, time_run, timeout,
-         outputs_str) = row
+        (cycle, name, flow_label, is_late, status, is_held, submit_num, _,
+         platform_name, time_submit, time_run, timeout, outputs_str) = row
         try:
             itask = TaskProxy(
                 self.config.get_taskdef(name),
@@ -429,15 +438,15 @@ class TaskPool:
 
             # Update prerequisite satisfaction status from DB
             sat = {}
-            for k, v in json.loads(satisfied).items():
-                sat[tuple(json.loads(k))] = v
-            # TODO (from Oliver's PR review):
-            #   Wait, what, the keys to a JSON dictionary are themselves JSON
-            #     :vomiting_face:!
-            #   This should be converted to its own DB table pre-8.0.0.
-            for pre in itask.state.prerequisites:
-                for k, v in pre.satisfied.items():
-                    pre.satisfied[k] = sat[k]
+            for prereq_name, prereq_cycle, prereq_output, satisfied in (
+                    self.suite_db_mgr.pri_dao.select_task_prerequisites(
+                        cycle, name)):
+                key = (prereq_name, prereq_cycle, prereq_output)
+                sat[key] = satisfied if satisfied != '0' else False
+
+            for itask_prereq in itask.state.prerequisites:
+                for key, _ in itask_prereq.satisfied.items():
+                    itask_prereq.satisfied[key] = sat[key]
 
             itask.state.reset(status)
             self.add_to_runahead_pool(itask, is_new=False)
