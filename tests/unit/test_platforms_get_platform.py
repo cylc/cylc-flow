@@ -17,14 +17,13 @@
 # Tests for the platform lookup module's get_platform method.
 
 import pytest
-import random
-from cylc.flow.platforms import get_platform
+from cylc.flow.platforms import get_platform_group
 from cylc.flow.exceptions import PlatformLookupError
 
 
 def test_get_platform_no_args():
     # If no task conf is given, we get localhost args.
-    assert get_platform()['hosts'] == ['localhost']
+    assert get_platform_group()['platforms'][0]['hosts'] == ['localhost']
 
 
 def test_get_platform_from_platform_name_str(mock_glbl_cfg):
@@ -38,9 +37,9 @@ def test_get_platform_from_platform_name_str(mock_glbl_cfg):
                 batch system = slurm
         '''
     )
-    platform = get_platform('saffron')
-    assert platform['hosts'] == ['saff01']
-    assert platform['batch system'] == 'slurm'
+    platforms = get_platform_group('saffron')
+    assert platforms['platforms'][0]['hosts'] == ['saff01']
+    assert platforms['platforms'][0]['batch system'] == 'slurm'
 
 
 def test_get_platform_cylc7_8_syntax_mix_fails(mock_glbl_cfg):
@@ -57,7 +56,7 @@ def test_get_platform_cylc7_8_syntax_mix_fails(mock_glbl_cfg):
         PlatformLookupError,
         match=r'A mixture of Cylc 7 \(host\) and Cylc 8 \(platform\).*'
     ):
-        get_platform(task_conf)
+        get_platform_group(task_conf)
 
 
 def test_get_platform_from_config_with_platform_name(mock_glbl_cfg):
@@ -72,9 +71,9 @@ def test_get_platform_from_config_with_platform_name(mock_glbl_cfg):
         '''
     )
     task_conf = {'platform': 'mace'}
-    platform = get_platform(task_conf)
-    assert platform['hosts'] == ['mace001', 'mace002']
-    assert platform['batch system'] == 'slurm'
+    platforms = get_platform_group(task_conf)
+    assert platforms['platforms'][0]['hosts'] == ['mace001', 'mace002']
+    assert platforms['platforms'][0]['batch system'] == 'slurm'
 
 
 @pytest.mark.parametrize(
@@ -148,7 +147,8 @@ def test_get_platform_using_platform_from_job_info(
                 hosts = cylcdevbox
         '''
     )
-    assert get_platform(task_conf)['name'] == expected_platform_name
+    output = get_platform_group(task_conf)
+    assert output['platforms'][0]['name'] == expected_platform_name
 
 
 def test_get_platform_warn_mode(caplog):
@@ -159,7 +159,7 @@ def test_get_platform_warn_mode(caplog):
             'batch submit command template': 'some template'
         }
     }
-    output = get_platform(task_conf, warn_only=True)
+    output = get_platform_group(task_conf, warn_only=True)
     for forbidden_item in (
         'batch submit command template = some template',
         'host = cylcdevbox',
@@ -184,12 +184,9 @@ def test_get_platform_groups_basic(mock_glbl_cfg):
                 platforms = aleph, bet
         '''
     )
-    output = get_platform('hebrew_letters')
-    assert output['group'] == 'hebrew_letters'
-    random.seed(42)
-    assert get_platform('hebrew_letters')['name'] == 'aleph'
-    random.seed(44)
-    assert get_platform('hebrew_letters')['name'] == 'bet'
+    output = get_platform_group('hebrew_letters')
+    assert [i['name'] for i in output['platforms']] == ['bet', 'aleph']
+    assert [i['hosts'] for i in output['platforms']] == [['bet'], ['aleph']]
 
 
 def test_get_platform_warn_mode_fail_if_backticks():
@@ -198,7 +195,7 @@ def test_get_platform_warn_mode_fail_if_backticks():
         'platform': '`echo ${chamber}`'
     }
     with pytest.raises(PlatformLookupError) as err:
-        get_platform(task_conf, warn_only=True)
+        get_platform_group(task_conf, warn_only=True)
     assert err.match(
         r'platform = `echo \$\{chamber\}`: '
         r'backticks are not supported; please use \$\(\)'

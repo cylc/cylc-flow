@@ -36,8 +36,10 @@ HOST_REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
 PLATFORM_REC_COMMAND = re.compile(r'(\$\()\s*(.*)\s*([)])$')
 
 
-def get_platform(task_conf=None, task_id='unknown task', warn_only=False):
-    """Get a platform.
+def get_platform_group(
+    task_conf=None, task_id='unknown task', warn_only=False
+):
+    """Get a platform group based on a task config.
 
     Looking at a task config this method decides whether to get platform from
     name, or Cylc7 config items.
@@ -53,22 +55,22 @@ def get_platform(task_conf=None, task_id='unknown task', warn_only=False):
             If true, warnings about tasks requiring upgrade will be returned.
 
     Returns:
-        platform (platform, or string):
+        platform_group (dict, or string):
             Actually it returns either get_platform() or
             platform_from_job_info(), but to the user these look the same.
             When working in warn_only mode, warnings are returned as strings.
 
     TODO:
-        At Cylc 9 remove all Cylc7 upgrade logic.
+        At Cylc 9 remove all Cylc 7 upgrade logic.
     """
 
     if task_conf is None:
         # Just a simple way of accessing localhost items.
-        output = platform_from_name()
+        output = platforms_from_name()
 
     elif isinstance(task_conf, str):
         # If task_conf is str assume that it is a platform name.
-        output = platform_from_name(task_conf)
+        output = platforms_from_name(task_conf)
 
     elif 'platform' in task_conf and task_conf['platform']:
         if PLATFORM_REC_COMMAND.match(task_conf['platform']) and warn_only:
@@ -87,7 +89,7 @@ def get_platform(task_conf=None, task_id='unknown task', warn_only=False):
         fail_if_platform_and_host_conflict(task_conf, task_id)
 
         # If platform name exists and doesn't clash with Cylc7 Config items.
-        output = platform_from_name(task_conf['platform'])
+        output = platforms_from_name(task_conf['platform'])
 
     else:
         # If forbidden items present calculate platform else platform is
@@ -111,7 +113,7 @@ def get_platform(task_conf=None, task_id='unknown task', warn_only=False):
                     )
 
         if platform_is_localhost:
-            output = platform_from_name()
+            output = platforms_from_name()
 
         elif warn_only:
             output = (
@@ -126,21 +128,19 @@ def get_platform(task_conf=None, task_id='unknown task', warn_only=False):
                 task_job_section = task_conf['job']
             if 'remote' in task_conf:
                 task_remote_section = task_conf['remote']
-            output = platform_from_name(
+            output = platforms_from_name(
                 platform_from_job_info(
                     glbl_cfg(cached=False).get(['platforms']),
                     task_job_section,
                     task_remote_section
                 )
             )
-
     return output
 
 
-def platform_from_name(platform_name=None, platforms=None):
+def platforms_from_name(platform_name=None, platforms=None):
     """
-    Find out which job platform to use given a list of possible platforms and
-    a task platform string.
+    Get a dictionary containing platform group of platform objects.
 
     Verifies selected platform is present in global.cylc file and returns it,
     raises error if platfrom is not in global.cylc or returns 'localhost' if
@@ -148,14 +148,17 @@ def platform_from_name(platform_name=None, platforms=None):
 
     Args:
         platform_name (str):
-            name of platform to be retrieved.
+            name of platform or platform group to be retrieved.
         platforms ():
             global.cylc platforms given as a dict for logic testing purposes
 
     Returns:
-        platform (dict):
-            object containing settings for a platform, loaded from
-            Global Config.
+        platform group(dict):
+            object containing settings for a platform group containing the
+            settings for each platform within that group under
+            ``platform_group['platforms']``. If only a group if found then a
+            dummy platfrom group containing only this platform will be
+            returned.
     """
     if platforms is None:
         platforms = glbl_cfg().get(['platforms'])
@@ -164,43 +167,54 @@ def platform_from_name(platform_name=None, platforms=None):
     if platform_name is None:
         platform_data = deepcopy(platforms['localhost'])
         platform_data['name'] = 'localhost'
-        return platform_data
+        return {'platforms': [platform_data]}
 
     platform_group = None
     for platform_name_re in reversed(list(platform_groups)):
         if re.fullmatch(platform_name_re, platform_name):
-            platform_group = deepcopy(platform_name)
-            platform_name = random.choice(
-                platform_groups[platform_name_re]['platforms']
-            )
+            platform_group = platform_groups[platform_name]
+
+    if platform_group is None:
+        platform_group = {'platforms': [platform_name]}
 
     # The list is reversed to allow user-set platforms (which are loaded
     # later than site set platforms) to be matched first and override site
     # defined platforms.
     for platform_name_re in reversed(list(platforms)):
-        if re.fullmatch(platform_name_re, platform_name):
-            # Deepcopy prevents contaminating platforms with data
-            # from other platforms matching platform_name_re
-            platform_data = deepcopy(platforms[platform_name_re])
-
-            # If hosts are not filled in make remote
-            # hosts the platform name.
-            # Example: `[platforms][workplace_vm_123]<nothing>`
-            #   should create a platform where
-            #   `remote_hosts = ['workplace_vm_123']`
+        for platform_name in platform_group['platforms']:
             if (
-                'hosts' not in platform_data.keys() or
-                not platform_data['hosts']
+                type(platform_name) == str and
+                re.fullmatch(platform_name_re, platform_name)
             ):
-                platform_data['hosts'] = [platform_name]
-            # Fill in the "private" name field.
-            platform_data['name'] = platform_name
-            if platform_group:
-                platform_data['group'] = platform_group
-            return platform_data
+                # Deepcopy prevents contaminating platforms with data
+                # from other platforms matching platform_name_re
+                platform_data = deepcopy(platforms[platform_name_re])
 
-    raise PlatformLookupError(
-        f"No matching platform \"{platform_name}\" found")
+                # If hosts are not filled in make remote
+                # hosts the platform name.
+                # Example: `[platforms][workplace_vm_123]<nothing>`
+                #   should create a platform where
+                #   `remote_hosts = ['workplace_vm_123']`
+                if (
+                    'hosts' not in platform_data.keys() or
+                    not platform_data['hosts']
+                ):
+                    platform_data['hosts'] = [platform_name]
+                # Fill in the "private" name field.
+                platform_data['name'] = platform_name
+                platform_group['platforms'].remove(platform_name)
+                platform_group['platforms'].append(platform_data)
+
+    for platform in platform_group['platforms']:
+        if isinstance(platform, str):
+            platform_group['platforms'].remove(platform)
+
+    if platform_group['platforms'] != []:
+        return platform_group
+    else:
+        raise PlatformLookupError(
+            f"No matching platform \"{platform_name}\" found"
+        )
 
 
 def platform_from_job_info(platforms, job, remote):

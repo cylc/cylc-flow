@@ -17,7 +17,7 @@
 # Tests for the platform lookup.
 
 import pytest
-from cylc.flow.platforms import platform_from_name, platform_from_job_info
+from cylc.flow.platforms import platforms_from_name, platform_from_job_info
 from cylc.flow.exceptions import PlatformLookupError
 
 PLATFORMS = {
@@ -74,7 +74,7 @@ PLATFORMS_WITH_RE = {
 
 
 # ----------------------------------------------------------------------------
-# Tests of platform_from_name
+# Tests of platforms_from_name
 # ----------------------------------------------------------------------------
 @pytest.mark.parametrize(
     "PLATFORMS, platform, expected",
@@ -124,7 +124,8 @@ PLATFORMS_WITH_RE = {
 def test_basic(PLATFORMS, platform, expected):
     # n.b. The name field of the platform is set in the Globalconfig object
     # if the name is 'localhost', so we don't test for it here.
-    platform = platform_from_name(platform_name=platform, platforms=PLATFORMS)
+    platform_group = platforms_from_name(platform_name=platform, platforms=PLATFORMS)
+    platform = platform_group['platforms'][0]
     if isinstance(expected, dict):
         assert platform == expected
     else:
@@ -133,12 +134,12 @@ def test_basic(PLATFORMS, platform, expected):
 
 def test_platform_not_there():
     with pytest.raises(PlatformLookupError):
-        platform_from_name('moooo', PLATFORMS)
+        platforms_from_name('moooo', PLATFORMS)
 
 
 def test_similar_but_not_exact_match():
     with pytest.raises(PlatformLookupError):
-        platform_from_name('vld1', PLATFORMS_WITH_RE)
+        platforms_from_name('vld1', PLATFORMS_WITH_RE)
 
 
 # ----------------------------------------------------------------------------
