@@ -48,6 +48,10 @@ compatibility, the `cylc run` command will automatically symlink an existing
 
 ### Enhancements
 
+[#3856](https://github.com/cylc/cylc-flow/pull/3856) - fail the GraphQL query
+with a helpful message if the variables defined do not match the expected
+values.
+
 [#3853](https://github.com/cylc/cylc-flow/pull/3853) - Update protobuf and
 pyzmq.
 
