@@ -34,7 +34,7 @@ init_suite "${TEST_NAME_BASE}" <<__FLOW_CONFIG__
    initial cycle point = 1
    final cycle point = 3
    cycling mode = integer
-   max active cycle points = 2
+   runahead limit = P2
    [[dependencies]]
       [[[R/^/P1]]]
          graph = """foo[-P1] => foo

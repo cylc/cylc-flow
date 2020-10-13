@@ -1,7 +1,0 @@
-[scheduling]
-    max active cycle points = 0
-    [[graph]]
-         R1 = foo
-[runtime]
-    [[foo]]
-        script = echo "foo"

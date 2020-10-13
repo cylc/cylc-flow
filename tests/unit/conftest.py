@@ -27,12 +27,12 @@ from cylc.flow.parsec.config import ParsecConfig
 
 @pytest.fixture
 def cycling_mode(monkeypatch):
-    """Set the Cylc cycling mode."""
+    """Set the Cylc cycling mode and return its value."""
     def _cycling_mode(integer=True):
+        mode = INTEGER_CYCLING_TYPE if integer else ISO8601_CYCLING_TYPE
         monkeypatch.setattr(
-            'cylc.flow.cycling.loader.DefaultCycler.TYPE',
-            (INTEGER_CYCLING_TYPE if integer else ISO8601_CYCLING_TYPE)
-        )
+            'cylc.flow.cycling.loader.DefaultCycler.TYPE', mode)
+        return mode
     return _cycling_mode
 
 

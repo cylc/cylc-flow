@@ -80,6 +80,9 @@ templates in `[runtime][X][environment]`.
 [#3802](https://github.com/cylc/cylc-flow/pull/3802) - New global config
 hierarchy and ability to set site config directory.
 
+[#3848](https://github.com/cylc/cylc-flow/pull/3848) - Deprecated
+`[scheduling]max active cycle points` in favour of `[scheduling]runahead limit`.
+
 ### Fixes
 
 [#3859](https://github.com/cylc/cylc-flow/pull/3859) - Fixes the query of

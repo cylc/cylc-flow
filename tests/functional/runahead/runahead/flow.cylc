@@ -1,19 +1,22 @@
 [cylc]
-    cycle point time zone = Z
     [[events]]
+        abort on stalled = True
         timeout = PT30S
         abort on timeout = True
 [scheduling]
-    max active cycle points = 4
-    initial cycle point = 20100101T00
-    final cycle point = 20100105T00
+    cycling mode = integer
+    runahead limit = P4
+    initial cycle point = 1
+    final cycle point = 20
     [[graph]]
-        PT6H = """
-   # oops makes a bar spawn as waiting, to hold back the runahead
-           foo & oops => bar
-           """
+        P1 = foo & run_ok => bar
+        # foo fails on 1st cycle point only, succeeds on all others.
+        # SoD: run_ok ensures bar spawns as waiting in 1st cycle pt, to
+        # hold back the runahead.
+        # As runahead limit is consecutive, even though cycle points 2 and
+        # above succeed, workflow stalls after 4 cycle points.
 [runtime]
-    [[foo]]
-        script = false
-    [[bar]]
+    [[root]]
         script = true
+    [[foo]]
+        script = if [[ "$CYLC_TASK_JOB" == '1/foo/01' ]]; then false; else true; fi

@@ -499,3 +499,33 @@ def test_valid_rsync_includes_returns_correct_list():
 
         rsync_includes = SuiteConfig.get_validated_rsync_includes(config)
         assert rsync_includes == ['dir/', 'dir2/', 'file1', 'file2']
+
+
+@pytest.mark.parametrize(
+    'cfg_scheduling, valid',
+    [
+        ({'cycling mode': 'integer', 'runahead limit': 'P14'}, True),
+        ({'cycling mode': 'gregorian', 'runahead limit': 'P14'}, True),
+        ({'cycling mode': 'gregorian', 'runahead limit': 'PT12H'}, True),
+        ({'cycling mode': 'gregorian', 'runahead limit': 'P7D'}, True),
+        ({'cycling mode': 'gregorian', 'runahead limit': 'P2W'}, True),
+        ({'cycling mode': 'gregorian', 'runahead limit': '4'}, True),
+
+        ({'cycling mode': 'integer', 'runahead limit': 'PT12H'}, False),
+        ({'cycling mode': 'integer', 'runahead limit': 'P7D'}, False),
+        ({'cycling mode': 'integer', 'runahead limit': '4'}, False),
+        ({'cycling mode': 'gregorian', 'runahead limit': ''}, False),
+        ({'cycling mode': 'gregorian', 'runahead limit': 'asdf'}, False)
+    ]
+)
+def test_process_runahead_limit(cfg_scheduling, valid, cycling_mode):
+    is_integer_mode = cfg_scheduling['cycling mode'] == 'integer'
+    mock_config = Mock()
+    mock_config.cycling_type = cycling_mode(integer=is_integer_mode)
+    mock_config.cfg = {'scheduling': cfg_scheduling}
+    if valid:
+        SuiteConfig.process_runahead_limit(mock_config)
+    else:
+        with pytest.raises(SuiteConfigError) as exc:
+            SuiteConfig.process_runahead_limit(mock_config)
+        assert "bad runahead limit" in str(exc.value).lower()

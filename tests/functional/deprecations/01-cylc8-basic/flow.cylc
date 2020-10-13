@@ -16,8 +16,9 @@
         required run mode =
         suite shutdown event handler =
 
-
 [scheduling]
+    max active cycle points = 2
+
     initial cycle point = 20150808T00
     final cycle point = 20150808T00
     [[graph]]
