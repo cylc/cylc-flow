@@ -1160,8 +1160,6 @@ class SuiteConfig:
                 f'bad runahead limit "{limit}" for {self.cycling_type} '
                 'cycling type')
 
-        # TODO: reimplement non-consecutive max active cycle pts elsewhere
-        # https://github.com/cylc/cylc-flow/issues/3667
 
     def get_custom_runahead_limit(self):
         """Return the custom runahead limit (may be None)."""

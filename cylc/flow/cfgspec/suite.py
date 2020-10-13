@@ -387,8 +387,6 @@ with Conf(
                necessary to allow a future task to be triggererd, preventing
                the suite from stalling.
         ''')
-        # TODO: make raw number of hours obsolete and then later allow a raw
-        # number to mean the integer limit ?
 
         with Conf('queues', desc='''
             Configuration of internal queues, by which the number of

@@ -339,7 +339,7 @@ class TaskPool:
                     self._prev_runahead_base_point != runahead_base_point):
                 if runahead_time_limit < self.max_future_offset:
                     LOG.warning(
-                        f'custom runahead limit "{runahead_time_limit}" '
+                        f'runahead limit "{runahead_time_limit}" '
                         'is less than future triggering offset '
                         f'"{self.max_future_offset}"; suite may stall.')
             self._prev_runahead_base_point = runahead_base_point
