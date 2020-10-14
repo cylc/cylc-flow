@@ -48,6 +48,9 @@ compatibility, the `cylc run` command will automatically symlink an existing
 
 ### Enhancements
 
+[#3853](https://github.com/cylc/cylc-flow/pull/3853) - Update protobuf and
+pyzmq.
+
 [#3857](https://github.com/cylc/cylc-flow/pull/3857) - removed the obsolete
 "runahead" task state (not used since spawn-on-demand implementation).
 
