@@ -36,6 +36,11 @@ HOST_REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
 PLATFORM_REC_COMMAND = re.compile(r'(\$\()\s*(.*)\s*([)])$')
 
 
+def get_localhost_platform():
+    # Convienence wrapper to get_platform_group
+    return get_platform_group()['platforms'][0]
+
+
 def get_platform_group(
     task_conf=None, task_id='unknown task', warn_only=False
 ):
@@ -351,6 +356,12 @@ def platform_from_job_info(platforms, job, remote):
             return task_host
 
     raise PlatformLookupError('No platform found matching your task')
+
+
+def get_host_from_platform_group(platform_group, method=None):
+    # Wrapper for get_host_from_platform
+    platform = random.choice(platform_group['platforms'])
+    return get_host_from_platform(platform, method)
 
 
 def get_host_from_platform(platform, method=None):

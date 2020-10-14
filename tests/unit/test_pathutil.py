@@ -92,7 +92,7 @@ class TestPathutil(TestCase):
           that the tester can more easily see which function ha
           failed.
     """
-    @patch('cylc.flow.pathutil.get_platform')
+    @patch('cylc.flow.pathutil.get_localhost_platform')
     def test_get_suite_run_dirs(self, mocked_platform):
         """Usage of get_suite_run_*dir."""
         homedir = os.getenv("HOME")
@@ -123,7 +123,7 @@ class TestPathutil(TestCase):
                 mocked_platform.assert_called_with()
                 mocked.get_host_item.reset_mock()
 
-    @patch('cylc.flow.pathutil.get_platform')
+    @patch('cylc.flow.pathutil.get_localhost_platform')
     def test_get_suite_run_names(self, mocked_platform):
         """Usage of get_suite_run_*name."""
         homedir = os.getenv("HOME")

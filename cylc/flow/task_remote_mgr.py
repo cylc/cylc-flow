@@ -25,6 +25,7 @@ This module provides logic to:
 from cylc.flow.cylc_subproc import procopen
 import os
 from shlex import quote
+import random
 import re
 from subprocess import Popen, PIPE, DEVNULL
 import tarfile
@@ -49,7 +50,7 @@ from cylc.flow.suite_files import (
 from cylc.flow.task_remote_cmd import (
     REMOTE_INIT_DONE, REMOTE_INIT_NOT_REQUIRED)
 from cylc.flow.platforms import (
-    get_platform,
+    get_platform_group,
     get_host_from_platform,
     get_install_target_from_platform)
 from cylc.flow.remote import construct_platform_ssh_cmd
@@ -246,7 +247,7 @@ class TaskRemoteMgr:
         # Issue all SSH commands in parallel
         procs = {}
         for platform, init_with_contact in self.remote_init_map.items():
-            platform = get_platform(platform)
+            platform = random.choice(get_platform_group(platform)['platforms'])
             host = get_host_from_platform(platform)
             owner = platform['owner']
             self.install_target = get_install_target_from_platform(platform)

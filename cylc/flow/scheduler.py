@@ -74,7 +74,7 @@ from cylc.flow.pathutil import (
 )
 from cylc.flow.platforms import (
     get_install_target_from_platform,
-    get_platform,
+    get_localhost_platform,
     is_platform_with_target_in_list)
 from cylc.flow.profiler import Profiler
 from cylc.flow.resources import extract_resources
@@ -1065,7 +1065,7 @@ class Scheduler:
             fields.PUBLISH_PORT:
                 str(self.publisher.port),
             fields.SSH_USE_LOGIN_SHELL:
-                str(get_platform()['use login shell']),
+                str(get_localhost_platform()['use login shell']),
             fields.SUITE_RUN_DIR_ON_SUITE_HOST:
                 self.suite_run_dir,
             fields.UUID:

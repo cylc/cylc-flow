@@ -27,6 +27,7 @@ This module provides logic to:
 import json
 from logging import DEBUG, CRITICAL, INFO, WARNING
 import os
+import random
 from shutil import rmtree
 from time import time
 from copy import deepcopy
@@ -41,7 +42,8 @@ from cylc.flow.hostuserutil import (
 from cylc.flow.job_file import JobFileWriter
 from cylc.flow.pathutil import get_remote_suite_run_job_dir
 from cylc.flow.platforms import (
-    get_platform, get_host_from_platform, get_install_target_from_platform,
+    get_platform_group, get_host_from_platform,
+    get_install_target_from_platform,
     HOST_REC_COMMAND, PLATFORM_REC_COMMAND
 )
 from cylc.flow.subprocpool import SubProcPool
@@ -680,7 +682,9 @@ class TaskJobManager:
 
         # Go through each list of itasks and carry out commands as required.
         for platform_n, itasks in sorted(auth_itasks.items()):
-            platform = get_platform(platform_n)
+            platform = random.choice(
+                get_platform_group(platform_n)['platforms']
+            )
             if is_remote_platform(platform):
                 remote_mode = True
                 cmd = [cmd_key]
@@ -874,7 +878,9 @@ class TaskJobManager:
                 rtconfig['remote']['host'] = host_n
 
             try:
-                platform = get_platform(rtconfig)
+                platform = random.choice(
+                    get_platform_group(rtconfig)['platforms']
+                )
             except PlatformLookupError as exc:
                 # Submit number not yet incremented
                 itask.submit_num += 1

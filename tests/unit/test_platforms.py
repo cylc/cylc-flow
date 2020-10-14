@@ -124,7 +124,9 @@ PLATFORMS_WITH_RE = {
 def test_basic(PLATFORMS, platform, expected):
     # n.b. The name field of the platform is set in the Globalconfig object
     # if the name is 'localhost', so we don't test for it here.
-    platform_group = platforms_from_name(platform_name=platform, platforms=PLATFORMS)
+    platform_group = platforms_from_name(
+        platform_name=platform, platforms=PLATFORMS
+    )
     platform = platform_group['platforms'][0]
     if isinstance(expected, dict):
         assert platform == expected

@@ -19,7 +19,7 @@ import sqlite3
 
 from cylc.flow.cycling.util import add_offset
 from cylc.flow.dbstatecheck import CylcSuiteDBChecker
-from cylc.flow.platforms import get_platform
+from cylc.flow.platforms import get_localhost_platform
 from metomi.isodatetime.parsers import TimePointParser
 
 
@@ -70,7 +70,7 @@ def suite_state(suite, task, point, offset=None, status='succeeded',
     """
     cylc_run_dir = os.path.expandvars(
         os.path.expanduser(
-            cylc_run_dir or get_platform()['run directory']
+            cylc_run_dir or get_localhost_platform()['run directory']
         )
     )
     if offset is not None:

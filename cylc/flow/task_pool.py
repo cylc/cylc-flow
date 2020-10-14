@@ -21,6 +21,7 @@
 from fnmatch import fnmatchcase
 from string import ascii_letters
 import json
+import random
 from time import time
 
 from cylc.flow.parsec.OrderedDict import OrderedDict
@@ -52,7 +53,7 @@ from cylc.flow.task_state import (
     TASK_OUTPUT_SUCCEEDED,
 )
 from cylc.flow.wallclock import get_current_time_string
-from cylc.flow.platforms import get_platform
+from cylc.flow.platforms import get_platform_group
 
 
 class FlowLabelMgr:
@@ -380,7 +381,9 @@ class TaskPool:
                     TASK_STATUS_RUNNING
             ):
                 # update the task proxy with user@host
-                itask.platform = get_platform(platform_name)
+                itask.platform = random.choice(
+                    get_platform_group(platform_name)['platforms']
+                )
 
                 if time_submit:
                     itask.set_summary_time('submitted', time_submit)

@@ -31,7 +31,7 @@ from time import sleep
 import cylc.flow.flags
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow import LOG
-from cylc.flow.platforms import get_platform, get_host_from_platform
+from cylc.flow.platforms import get_localhost_platform, get_host_from_platform
 
 
 def get_proc_ancestors():
@@ -255,7 +255,7 @@ def construct_ssh_cmd(
     """
     # If ssh cmd isn't given use the default from localhost settings.
     if ssh_cmd is None:
-        command = shlex.split(get_platform()['ssh command'])
+        command = shlex.split(get_localhost_platform()['ssh command'])
     else:
         command = shlex.split(ssh_cmd)
 
@@ -284,7 +284,7 @@ def construct_ssh_cmd(
 
     # Use bash -l?
     if ssh_login_shell is None:
-        ssh_login_shell = get_platform()['use login shell']
+        ssh_login_shell = get_localhost_platform()['use login shell']
     if ssh_login_shell:
         # A login shell will always source /etc/profile and the user's bash
         # profile file. To avoid having to quote the entire remote command
@@ -298,7 +298,7 @@ def construct_ssh_cmd(
     if ssh_cylc:
         command.append(ssh_cylc)
     else:
-        ssh_cylc = get_platform()['cylc executable']
+        ssh_cylc = get_localhost_platform()['cylc executable']
         if ssh_cylc.endswith('cylc'):
             command.append(ssh_cylc)
         else:

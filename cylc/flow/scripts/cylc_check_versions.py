@@ -41,7 +41,7 @@ from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.cylc_subproc import procopen, PIPE, DEVNULL
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.config import SuiteConfig
-from cylc.flow.platforms import get_platform
+from cylc.flow.platforms import get_platform_group
 from cylc.flow.remote import construct_platform_ssh_cmd
 from cylc.flow.suite_files import parse_suite_arg
 from cylc.flow.templatevars import load_template_vars
@@ -88,8 +88,8 @@ def main(_, options, *args):
     # get the cylc version on each platform
     versions = {}
     for platform_name in sorted(platforms):
-        platform = get_platform(platform_name)
-        cmd = construct_platform_ssh_cmd(['version'], platform)
+        platform_group = get_platform_group(platform_name)
+        cmd = construct_platform_ssh_cmd(['version'], platform_group)
         if verbose:
             print(cmd)
         proc = procopen(cmd, stdin=DEVNULL, stdout=PIPE, stderr=PIPE)

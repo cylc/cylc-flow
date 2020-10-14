@@ -21,7 +21,7 @@ from time import time
 from metomi.isodatetime.timezone import get_local_time_zone
 
 import cylc.flow.cycling.iso8601
-from cylc.flow.platforms import get_platform
+from cylc.flow.platforms import get_localhost_platform
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_action_timer import TimerFlags
 from cylc.flow.task_state import (
@@ -213,7 +213,7 @@ class TaskProxy:
 
         self.local_job_file_path = None
 
-        self.platform = get_platform()
+        self.platform = get_localhost_platform()
         self.task_owner = None
 
         self.job_vacated = False

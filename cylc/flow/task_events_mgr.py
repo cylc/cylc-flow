@@ -45,7 +45,7 @@ from cylc.flow.task_action_timer import (
     TaskActionTimer,
     TimerFlags
 )
-from cylc.flow.platforms import get_platform, get_host_from_platform
+from cylc.flow.platforms import get_platform_group, get_host_from_platform
 from cylc.flow.task_job_logs import (
     get_task_job_id, get_task_job_log, get_task_job_activity_log,
     JOB_LOG_OUT, JOB_LOG_ERR)
@@ -640,7 +640,7 @@ class TaskEventsManager():
 
     def _process_job_logs_retrieval(self, schd_ctx, ctx, id_keys):
         """Process retrieval of task job logs from remote user@host."""
-        platform = get_platform(ctx.platform_n)
+        platform = get_platform_group(ctx.platform_n)
         ssh_str = str(platform["ssh command"])
         rsync_str = str(platform["retrieve job logs command"])
 

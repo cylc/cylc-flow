@@ -61,7 +61,7 @@ from cylc.flow.async_util import (
 )
 from cylc.flow.network.client import (
     SuiteRuntimeClient, ClientError, ClientTimeout)
-from cylc.flow.platforms import get_platform
+from cylc.flow.platforms import get_localhost_platform
 from cylc.flow.exceptions import SuiteStopped
 from cylc.flow.suite_files import (
     ContactFileFields,
@@ -128,7 +128,7 @@ async def scan(run_dir=None, scan_dir=None, max_depth=4):
     """
     if not run_dir:
         run_dir = Path(
-            get_platform()['run directory'].replace('$HOME', '~')
+            get_localhost_platform()['run directory'].replace('$HOME', '~')
         ).expanduser()
     if not scan_dir:
         scan_dir = run_dir

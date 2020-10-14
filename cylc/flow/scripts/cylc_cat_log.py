@@ -53,6 +53,7 @@ import sys
 from cylc.flow.remote import remote_cylc_cmd, watch_and_kill
 
 import os
+import random
 import shlex
 from contextlib import suppress
 from getpass import getuser
@@ -77,7 +78,9 @@ from cylc.flow.task_id import TaskID
 from cylc.flow.task_job_logs import (
     JOB_LOG_OUT, JOB_LOG_ERR, JOB_LOG_OPTS, NN, JOB_LOG_ACTIVITY)
 from cylc.flow.terminal import cli_function
-from cylc.flow.platforms import get_platform, get_host_from_platform
+from cylc.flow.platforms import (
+    get_localhost_platform, get_platform_group, get_host_from_platform
+)
 
 
 # Immortal tail-follow processes on job hosts can be cleaned up by killing
@@ -354,7 +357,7 @@ def main(parser, options, *args, color=False):
                 raise UserInputError(
                     "max rotation %d" % (len(logs) - 1))
         tail_tmpl = os.path.expandvars(
-            get_platform()["tail command template"]
+            get_localhost_platform()["tail command template"]
         )
         out = view_log(logpath, mode, tail_tmpl, color=color)
         if out == 1:
@@ -389,7 +392,10 @@ def main(parser, options, *args, color=False):
                 pass
         platform_name, batch_sys_name, live_job_id = get_task_job_attrs(
             suite_name, point, task, options.submit_num)
-        platform = get_platform(platform_name)
+        # TODO - use intelligent platform/host selection
+        platform = random.choice(
+            get_platform_group(platform_name)['platforms']
+        )
         batchview_cmd = None
         if live_job_id is not None:
             # Job is currently running. Get special batch system log view

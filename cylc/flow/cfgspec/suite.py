@@ -26,7 +26,7 @@ from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.upgrade import upgrader
 from cylc.flow.parsec.validate import (
     DurationFloat, CylcConfigValidator as VDR, cylc_config_validate)
-from cylc.flow.platforms import get_platform
+from cylc.flow.platforms import get_platform_group
 
 # Regex to check whether a string is a command
 REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
@@ -1359,8 +1359,8 @@ def upg(cfg, descr):
 
     if 'runtime' in cfg:
         for task_name, task_cfg in cfg['runtime'].items():
-            platform = get_platform(task_cfg, task_name, warn_only=True)
-            if type(platform) == str:
+            platform = get_platform_group(task_cfg, task_name, warn_only=True)
+            if isinstance(platform, str):
                 LOG.warning(platform)
 
 

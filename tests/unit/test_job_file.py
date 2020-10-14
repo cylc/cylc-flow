@@ -26,7 +26,7 @@ from unittest import mock
 from cylc.flow import __version__
 import cylc.flow.flags
 from cylc.flow.job_file import JobFileWriter
-from cylc.flow.platforms import platform_from_name
+from cylc.flow.platforms import get_localhost_platform
 
 
 @pytest.mark.parametrize(
@@ -60,7 +60,7 @@ def fixture_get_platform():
         platforms dictionary.
     """
     def inner_func(custom_settings=None):
-        platform = platform_from_name()
+        platform = get_localhost_platform()
         if custom_settings is not None:
             platform.update(custom_settings)
         return platform
@@ -250,7 +250,7 @@ def test_write_directives(fixture_get_platform, job_conf: dict, expected: str):
     ["at", "background", "loadleveler", "pbs", "sge", "slurm"])
 def test_traps_for_each_batch_system(batch_sys: str):
     """Test traps for each batch system"""
-    platform = platform_from_name()
+    platform = get_localhost_platform()
     platform.update({
         "batch system": f"{batch_sys}",
         "owner": "me"

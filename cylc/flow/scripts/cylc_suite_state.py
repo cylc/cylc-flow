@@ -58,7 +58,7 @@ from cylc.flow.command_polling import Poller
 from cylc.flow.task_state import TASK_STATUSES_ORDERED
 from cylc.flow.terminal import cli_function
 from cylc.flow.cycling.util import add_offset
-from cylc.flow.platforms import get_platform
+from cylc.flow.platforms import get_localhost_platform
 
 from metomi.isodatetime.parsers import TimePointParser
 
@@ -217,7 +217,7 @@ def main(parser, options, suite):
     # this only runs locally
     run_dir = os.path.expandvars(
         os.path.expanduser(
-            options.run_dir or get_platform()['run directory']
+            options.run_dir or get_localhost_platform()['run directory']
         )
     )
 

@@ -25,7 +25,7 @@ import pytest
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.wallclock import get_current_time_string
-from cylc.flow.platforms import platform_from_name
+from cylc.flow.platforms import get_localhost_platform
 
 from .utils import (
     _expanduser,
@@ -80,7 +80,7 @@ def _pytest_passed(request):
 def run_dir(request):
     """The cylc run directory for this host."""
     path = _expanduser(
-        platform_from_name()['run directory']
+        get_localhost_platform()['run directory']
     )
     path.mkdir(exist_ok=True)
     yield path
