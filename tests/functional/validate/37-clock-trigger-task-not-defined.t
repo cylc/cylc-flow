@@ -31,6 +31,8 @@ cat >'flow.cylc' <<'__FLOW_CONFIG__'
 __FLOW_CONFIG__
 run_fail "${TEST_NAME_BASE}" cylc validate --strict "${PWD}/flow.cylc"
 cmp_ok "${TEST_NAME_BASE}.stderr" <<'__ERR__'
-SuiteConfigError: clock-trigger task "foo" is not defined.
+WARNING - naked tasks detected (no entry under [runtime]):
+	+       foo
+SuiteConfigError: strict validation fails naked tasks
 __ERR__
 exit

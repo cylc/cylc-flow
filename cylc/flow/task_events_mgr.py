@@ -26,6 +26,7 @@ This module provides logic to:
 """
 
 from collections import namedtuple
+from enum import Enum
 from logging import getLevelName, INFO, DEBUG
 import os
 from shlex import quote
@@ -106,6 +107,44 @@ def log_task_job_activity(ctx, suite, point, name, submit_num=None):
         LOG.error(ctx_str)
     elif ctx.cmd:
         LOG.debug(ctx_str)
+
+
+class EventData(Enum):
+    """Template variables which are available to event handlers."""
+
+    Event = 'event'
+    Suite = 'suite'
+    SuiteUUID = 'suite_uuid'
+    CyclePoint = 'point'
+    SubmitNum = 'submit_num'
+    TryNum = 'try_num'
+    ID = 'id'
+    Message = 'message'
+    BatchSysName = 'batch_sys_name'
+    BatchSysJobID = 'batch_sys_job_id'
+    SubmitTime = 'submit_time'
+    StartTime = 'start_time'
+    FinishTime = 'finish_time'
+    PlatformName = 'platform_name'
+    TaskName = 'name'
+    TaskURL = 'task_url'  # deprecated
+    SuiteURL = 'suite_url'  # deprecated
+
+
+def get_event_handler_data(task_cfg, suite_cfg):
+    """Extract event handler data from suite and task metadata."""
+    handler_data = {}
+    # task metadata
+    for key, value in task_cfg['meta'].items():
+        if key == "URL":
+            handler_data[EventData.TaskURL.value] = quote(value)
+        handler_data[key] = quote(value)
+    # suite metadata
+    for key, value in suite_cfg['meta'].items():
+        if key == "URL":
+            handler_data[EventData.SuiteURL.value] = quote(value)
+        handler_data["suite_" + key] = quote(value)
+    return handler_data
 
 
 class TaskEventsManager():
@@ -1027,41 +1066,40 @@ class TaskEventsManager():
             # Note quote() fails on None, need str(None).
             try:
                 handler_data = {
-                    "event": quote(event),
-                    "suite": quote(self.suite),
-                    'suite_uuid': quote(str(self.uuid_str)),
-                    "point": quote(str(itask.point)),
-                    "name": quote(itask.tdef.name),
-                    "submit_num": itask.submit_num,
-                    "try_num": itask.get_try_num(),
-                    "id": quote(itask.identity),
-                    "message": quote(message),
-                    "batch_sys_name": quote(
-                        str(itask.summary['batch_sys_name'])),
-                    "batch_sys_job_id": quote(
-                        str(itask.summary['submit_method_id'])),
-                    "submit_time": quote(
-                        str(itask.summary['submitted_time_string'])),
-                    "start_time": quote(
-                        str(itask.summary['started_time_string'])),
-                    "finish_time": quote(
-                        str(itask.summary['finished_time_string'])),
-                    "platform_name": quote(platform_n)
+                    EventData.BatchSysJobID.value:
+                        quote(str(itask.summary['submit_method_id'])),
+                    EventData.BatchSysName.value:
+                        quote(str(itask.summary['batch_sys_name'])),
+                    EventData.CyclePoint.value:
+                        quote(str(itask.point)),
+                    EventData.Event.value:
+                        quote(event),
+                    EventData.FinishTime.value:
+                        quote(str(itask.summary['finished_time_string'])),
+                    EventData.ID.value:
+                        quote(itask.identity),
+                    EventData.Message.value:
+                        quote(message),
+                    EventData.TaskName.value:
+                        quote(itask.tdef.name),
+                    EventData.PlatformName.value:
+                        quote(platform_n),
+                    EventData.StartTime.value:
+                        quote(str(itask.summary['started_time_string'])),
+                    EventData.SubmitNum.value:
+                        itask.submit_num,
+                    EventData.SubmitTime.value:
+                        quote(str(itask.summary['submitted_time_string'])),
+                    EventData.Suite.value:
+                        quote(self.suite),
+                    EventData.SuiteUUID.value:
+                        quote(str(self.uuid_str)),
+                    EventData.TryNum.value:
+                        itask.get_try_num(),
+                    # task and suite metadata
+                    **get_event_handler_data(
+                        itask.tdef.rtconfig, self.suite_cfg)
                 }
-
-                if self.suite_cfg:
-                    for key, value in self.suite_cfg.items():
-                        if key == "URL":
-                            handler_data["suite_url"] = quote(value)
-                        else:
-                            handler_data["suite_" + key] = quote(value)
-
-                if itask.tdef.rtconfig['meta']:
-                    for key, value in itask.tdef.rtconfig['meta'].items():
-                        if key == "URL":
-                            handler_data["task_url"] = quote(value)
-                        handler_data[key] = quote(value)
-
                 cmd = handler % (handler_data)
             except KeyError as exc:
                 message = "%s/%s/%02d %s bad template: %s" % (

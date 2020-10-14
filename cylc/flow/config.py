@@ -69,10 +69,14 @@ from cylc.flow.platforms import FORBIDDEN_WITH_PLATFORM
 from cylc.flow.print_tree import print_tree
 from cylc.flow.subprocctx import SubFuncContext
 from cylc.flow.suite_files import NO_TITLE
-from cylc.flow.taskdef import TaskDef
+from cylc.flow.task_events_mgr import (
+    EventData,
+    get_event_handler_data
+)
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.task_trigger import TaskTrigger, Dependency
+from cylc.flow.taskdef import TaskDef
 from cylc.flow.unicode_rules import (
     XtriggerNameValidator, TaskOutputValidator)
 from cylc.flow.wallclock import (
@@ -161,7 +165,7 @@ class SuiteConfig:
         self.share_dir = share_dir or get_suite_run_share_dir(self.suite)
         self.work_dir = work_dir or get_suite_run_work_dir(self.suite)
         self.options = options
-        self.naked_dummy_tasks = []
+        self.naked_tasks = []
         self.edges = {}
         self.taskdefs = {}
         self.initial_point = None
@@ -538,8 +542,6 @@ class SuiteConfig:
 
         self.mem_log("config.py: before load_graph()")
         self.load_graph()
-        if self._is_validate():
-            GraphNodeParser.get_inst().clear()
         self.mem_log("config.py: after load_graph()")
 
         self.process_runahead_limit()
@@ -551,21 +553,22 @@ class SuiteConfig:
 
         self.configure_suite_state_polling_tasks()
 
-        # Warn or abort (if --strict) if naked dummy tasks (no runtime
+        self._check_task_event_handlers()
+        self._check_special_tasks()  # adds to self.naked_tasks
+        self._check_explicit_cycling()
+
+        # Warn or abort (if --strict) if naked tasks (no runtime
         # section) are found in graph or queue config.
-        if len(self.naked_dummy_tasks) > 0:
+        if len(self.naked_tasks) > 0:
             if self._is_validate(is_strict=True) or cylc.flow.flags.verbose:
-                err_msg = ('naked dummy tasks detected (no entry'
+                err_msg = ('naked tasks detected (no entry'
                            ' under [runtime]):')
-                for ndt in self.naked_dummy_tasks:
+                for ndt in self.naked_tasks:
                     err_msg += '\n+\t' + str(ndt)
                 LOG.warning(err_msg)
             if self._is_validate(is_strict=True):
                 raise SuiteConfigError(
-                    'strict validation fails naked dummy tasks')
-
-        if self._is_validate():
-            self.check_tasks()
+                    'strict validation fails naked tasks')
 
         # Check that external trigger messages are only used once (they have to
         # be discarded immediately to avoid triggering the next instance of the
@@ -1521,55 +1524,37 @@ class SuiteConfig:
         else:
             return mode
 
-    def check_tasks(self):
-        """Call after all tasks are defined.
+    def _check_task_event_handlers(self):
+        """Check custom event handler templates can be expanded.
 
-        ONLY IF VALIDATING THE SUITE
-        because checking conditional triggers below may be slow for
-        huge suites (several thousand tasks).
-        Note:
-          (a) self.cfg['runtime'][name]
-              contains the task definition sections of the flow.cylc file.
-          (b) self.taskdefs[name]
-              contains tasks that will be used, defined by the graph.
-        Tasks (a) may be defined but not used (e.g. commented out of the
-        graph)
-        Tasks (b) may not be defined in (a), in which case they are dummied
-        out.
+        Ensures that any %(template_variables)s in task event handlers
+        are present in the data that will be passed to them when called
+        (otherwise they will fail).
         """
-
         for taskdef in self.taskdefs.values():
-            taskdef.check_for_explicit_cycling()
-            # Check custom event handler templates compat with task meta
             if taskdef.rtconfig['events']:
-                subs = dict((key, key) for key in self.TASK_EVENT_TMPL_KEYS)
-                for key, value in self.cfg['meta'].items():
-                    subs['suite_' + key.lower()] = value
-                subs.update(taskdef.rtconfig['meta'])
-                # Back compat.
-                try:
-                    subs['task_url'] = subs['URL']
-                except KeyError:
-                    pass
+                handler_data = {
+                    item.value: ''
+                    for item in EventData
+                }
+                handler_data.update(
+                    get_event_handler_data(taskdef.rtconfig, self.cfg)
+                )
                 for key, values in taskdef.rtconfig['events'].items():
                     if values and (
                             key == 'handlers' or key.endswith(' handler')):
-                        for value in values:
+                        for handler_template in values:
                             try:
-                                value % subs
+                                handler_template % handler_data
                             except (KeyError, ValueError) as exc:
                                 raise SuiteConfigError(
-                                    'bad task event handler template'
-                                    ' %s: %s: %s' % (
-                                        taskdef.name, value, repr(exc)))
-        if cylc.flow.flags.verbose:
-            LOG.debug("Checking for defined tasks not used in the graph")
-            for name in self.cfg['runtime']:
-                if name not in self.taskdefs:
-                    if name not in self.runtime['descendants']:
-                        # Family triggers have been replaced with members.
-                        LOG.warning(
-                            'task "%s" not used in the graph.' % (name))
+                                    f'bad task event handler template'
+                                    f' {taskdef.name}:'
+                                    f' {handler_template}:'
+                                    f' {repr(exc)}'
+                                )
+
+    def _check_special_tasks(self):
         # Check declared special tasks are valid.
         for task_type in self.cfg['scheduling']['special tasks']:
             for name in self.cfg['scheduling']['special tasks'][task_type]:
@@ -1578,14 +1563,19 @@ class SuiteConfig:
                     name = name.split('(', 1)[0]
                 if not TaskID.is_valid_name(name):
                     raise SuiteConfigError(
-                        'Illegal %s task name: %s' % (task_type, name))
+                        f'Illegal {task_type} task name: {name}')
                 if (name not in self.taskdefs and
                         name not in self.cfg['runtime']):
-                    msg = '%s task "%s" is not defined.' % (task_type, name)
-                    if self._is_validate(is_strict=True):
-                        raise SuiteConfigError(msg)
-                    else:
-                        LOG.warning(msg)
+                    self.naked_tasks.append(name)
+
+    def _check_explicit_cycling(self):
+        """Check that inter-cycle offsets refer to cycling tasks.
+
+        E.G. foo[-P1] => bar requires foo to be defined in the
+        graph somewhere.
+        """
+        for taskdef in self.taskdefs.values():
+            taskdef.check_for_explicit_cycling()
 
     def get_task_name_list(self):
         # return a list of all tasks used in the dependency graph
@@ -1638,8 +1628,8 @@ class SuiteConfig:
                 GraphNodeParser.get_inst().parse(node))
 
             if name not in self.cfg['runtime']:
-                # naked dummy task, implicit inheritance from root
-                self.naked_dummy_tasks.append(name)
+                # naked task, implicit inheritance from root
+                self.naked_tasks.append(name)
                 # These can't just be a reference to root runtime as we have to
                 # make some items task-specific: e.g. subst task name in URLs.
                 self.cfg['runtime'][name] = OrderedDictWithDefaults()
@@ -1820,7 +1810,7 @@ class SuiteConfig:
         In validate mode, set ungroup_all to True, and only return non-suicide
         edges with left and right nodes.
         """
-        is_validate = self._is_validate()
+        is_validate = self._is_validate()  # this is for _check_circular
         if is_validate:
             ungroup_all = True
         if group_nodes is None:

@@ -461,7 +461,7 @@ class Scheduler:
         self.task_events_mgr.mail_footer = self._get_events_conf(
             "footer")
         self.task_events_mgr.suite_url = self.config.cfg['meta']['URL']
-        self.task_events_mgr.suite_cfg = self.config.cfg['meta']
+        self.task_events_mgr.suite_cfg = self.config.cfg
         if self.options.genref:
             LOG.addHandler(ReferenceLogFileHandler(
                 self.config.get_ref_log_name()))

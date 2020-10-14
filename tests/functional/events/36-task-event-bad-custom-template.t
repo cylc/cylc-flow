@@ -27,10 +27,11 @@ run_fail "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 cmp_ok "${TEST_NAME_BASE}-validate.stderr" <<'__ERR__'
 SuiteConfigError: bad task event handler template t1: echo %(rubbish)s: KeyError('rubbish')
 __ERR__
-suite_run_ok "${TEST_NAME_BASE}-run" \
+suite_run_fail "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
-LOG="${SUITE_RUN_DIR}/log/suite/log"
-run_ok "${TEST_NAME_BASE}-log" grep -q -F "ERROR - 1/t1/01 ('event-handler-00', 'succeeded') bad template: 'rubbish'" "${LOG}"
+grep_ok \
+    'SuiteConfigError: bad task event handler template t1: echo %(rubbish)s: KeyError(.rubbish.)' \
+    "${SUITE_RUN_DIR}/log/suite/log"
 
 purge_suite "${SUITE_NAME}"
 exit
