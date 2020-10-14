@@ -1160,7 +1160,6 @@ class SuiteConfig:
                 f'bad runahead limit "{limit}" for {self.cycling_type} '
                 'cycling type')
 
-
     def get_custom_runahead_limit(self):
         """Return the custom runahead limit (may be None)."""
         return self.custom_runahead_limit
