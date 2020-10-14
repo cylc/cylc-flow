@@ -28,6 +28,9 @@ run_ok "${TEST_NAME}" cylc validate -v "${SUITE_NAME}"
 TEST_NAME="${TEST_NAME_BASE}-run"
 run_fail "${TEST_NAME}" cylc run --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
+# Testing runahead by counting tasks after a stall is tricky, so this test
+# might not be optimal. For instance, abort-on-stall aborts even if tasks
+# could immediately be released from the runahead pool.
 TEST_NAME="${TEST_NAME_BASE}-max-cycle"
 DB="${SUITE_RUN_DIR}/log/db"
 run_ok "${TEST_NAME}" sqlite3 "${DB}" \
