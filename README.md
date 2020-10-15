@@ -62,6 +62,8 @@ Until then we recommend the latest Cylc 7 release for production use.
 
 ### Copyright and Terms of Use
 
+[![License](https://img.shields.io/github/license/cylc/cylc-flow.svg?color=lightgrey)](https://github.com/cylc/cylc-flow/blob/master/COPYING)
+
 Copyright (C) 2008-2020 NIWA & British Crown (Met Office) & Contributors.
  
 Cylc is free software: you can redistribute it and/or modify it under the terms
@@ -75,6 +77,25 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with
 Cylc.  If not, see [GNU licenses](http://www.gnu.org/licenses/).
 
+### Contributing
+
+[![Contributors](https://img.shields.io/github/contributors/cylc/cylc-flow.svg?color=9cf)](https://github.com/cylc/cylc-flow/graphs/contributors)
+[![Commit activity](https://img.shields.io/github/commit-activity/m/cylc/cylc-flow.svg?color=yellowgreen)](https://github.com/cylc/cylc-flow/commits/master)
+[![Last commit](https://img.shields.io/github/last-commit/cylc/cylc-flow.svg?color=ff69b4)](https://github.com/cylc/cylc-flow/commits/master)
+
+Contributions welcome:
+
+* Read the [contributing](CONTRIBUTING.md) page.
+* Development setup instations are in the
+  [developer docs](https://cylc.github.io/cylc-admin/#cylc-8-developer-docs).
+* Involved change proposals can be found in the
+  [admin pages](https://cylc.github.io/cylc-admin/#change-proposals).
+* Touch base in the
+  [developers chat](https://matrix.to/#/#cylc-general:matrix.org).
+
+
 ### Cylc Documentation
+
+[![Documentation](https://img.shields.io/website/https/cylc.github.io/doc/built-sphinx/index.html.svg?color=green&label=documentation&up_message=live)](https://cylc.github.io/doc/built-sphinx/index.html)
 
 * See [The Cylc Website](https://cylc.github.io/)
