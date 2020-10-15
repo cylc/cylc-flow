@@ -189,7 +189,9 @@ def get_register_test_cases():
 @mock.patch('os.getcwd')
 @mock.patch('os.path.abspath')
 @mock.patch('cylc.flow.suite_files.get_suite_srv_dir')
-def test_register(mocked_get_suite_srv_dir,
+@mock.patch('cylc.flow.suite_files.check_nested_run_dirs')
+def test_register(mocked_check_nested_run_dirs,
+                  mocked_get_suite_srv_dir,
                   mocked_abspath,
                   mocked_getcwd,
                   mocked_isabs,
@@ -203,6 +205,7 @@ def test_register(mocked_get_suite_srv_dir,
         return True
 
     mocked_abspath.side_effect = lambda x: x
+    # mocked_check_nested_run_dirs - no side effect as we're just ignoring it
 
     for (reg, source, redirect, cwd, isabs, isfile, suite_srv_dir,
             readlink, expected_symlink, expected, e_expected,
@@ -235,6 +238,17 @@ def test_register(mocked_get_suite_srv_dir,
 
 @pytest.mark.parametrize(
     'path, expected',
+    [('a/b/c', '/mock_cylc_dir/a/b/c'),
+     ('/a/b/c', '/a/b/c')]
+)
+def test_get_cylc_run_abs_path(path, expected, monkeypatch):
+    monkeypatch.setattr('cylc.flow.suite_files.get_platform',
+                        lambda: {'run directory': '/mock_cylc_dir'})
+    assert suite_files.get_cylc_run_abs_path(path) == expected
+
+
+@pytest.mark.parametrize(
+    'path, expected',
     [('service/dir/exists', True),
      ('flow/file/exists', False),  # Non-run dirs can still contain flow.cylc
      ('nothing/exists', False)]
@@ -255,21 +269,57 @@ def test_is_valid_run_dir(path, expected, is_abs_path, monkeypatch):
     if is_abs_path:
         path = os.path.join(os.sep, path)
 
-    assert suite_files._is_valid_run_dir(path) is expected, (
+    assert suite_files.is_valid_run_dir(path) is expected, (
         f'Is "{path}" a valid run dir?')
 
 
-def test_register_nested_run_dirs(monkeypatch):
+@pytest.mark.parametrize('direction', ['parents', 'children'])
+def test_register_nested_run_dirs(direction, monkeypatch):
     """Test that a suite cannot be registered in a subdir of another suite."""
-    monkeypatch.setattr('cylc.flow.suite_files._is_valid_run_dir',
-                        lambda x: x == os.path.join('bright', 'falls'))
-    # Not nested in suite dir - ok:
-    suite_files.check_nested_run_dirs('alan/wake')
-    # It is itself a suite dir - ok:
-    suite_files.check_nested_run_dirs('bright/falls')
-    # Nested in a suite dir - bad:
-    for func in (suite_files.check_nested_run_dirs, suite_files.register):
-        for path in ('bright/falls/light', 'bright/falls/light/and/power'):
-            with pytest.raises(SuiteServiceFileError) as exc:
-                func(path)
-            assert 'Nested run directories not allowed' in str(exc.value)
+    monkeypatch.setattr('cylc.flow.suite_files.get_cylc_run_abs_path',
+                        lambda x: x)
+
+    if direction == "parents":
+        monkeypatch.setattr('cylc.flow.suite_files.os.scandir', lambda x: [])
+        monkeypatch.setattr('cylc.flow.suite_files.is_valid_run_dir',
+                            lambda x: x == os.path.join('bright', 'falls'))
+        # Not nested in run dir - ok:
+        suite_files.check_nested_run_dirs('alan/wake')
+        # It is itself a run dir - ok:
+        suite_files.check_nested_run_dirs('bright/falls')
+        # Nested in a run dir - bad:
+        for func in (suite_files.check_nested_run_dirs, suite_files.register):
+            for path in ('bright/falls/light', 'bright/falls/light/and/power'):
+                with pytest.raises(SuiteServiceFileError) as exc:
+                    func(path)
+                assert 'Nested run directories not allowed' in str(exc.value)
+
+    else:
+        dirs = ['a', 'a/a', 'a/R', 'a/a/a', 'a/a/R',
+                'a/b', 'a/b/a', 'a/b/b',
+                'a/c', 'a/c/a', 'a/c/a/a', 'a/c/a/a/a', 'a/c/a/a/a/R',
+                'a/d', 'a/d/a', 'a/d/a/a', 'a/d/a/a/a', 'a/d/a/a/a/a',
+                'a/d/a/a/a/a/R']
+        run_dirs = [d for d in dirs if 'R' in d]
+
+        def mock_scandir(path):
+            return [mock.Mock(path=d, is_dir=lambda: True,
+                              is_symlink=lambda: False) for d in dirs
+                    if (d.startswith(path) and len(d) == len(path) + 2)]
+        monkeypatch.setattr('cylc.flow.suite_files.os.scandir', mock_scandir)
+        monkeypatch.setattr('cylc.flow.suite_files.os.path.isdir',
+                            lambda x: x in dirs)
+        monkeypatch.setattr('cylc.flow.suite_files.is_valid_run_dir',
+                            lambda x: x in run_dirs)
+
+        # No run dir nested below - ok:
+        for path in ('a/a/a', 'a/b'):
+            suite_files.check_nested_run_dirs(path)
+        # Run dir nested below - bad:
+        for func in (suite_files.check_nested_run_dirs, suite_files.register):
+            for path in ('a', 'a/a', 'a/c'):
+                with pytest.raises(SuiteServiceFileError) as exc:
+                    func(path)
+                assert 'Nested run directories not allowed' in str(exc.value)
+        # Run dir nested below max scan depth - not ideal but passes:
+        suite_files.check_nested_run_dirs('a/d')

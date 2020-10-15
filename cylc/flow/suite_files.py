@@ -223,6 +223,8 @@ REC_TITLE = re.compile(r"^\s*title\s*=\s*(.*)\s*$")
 
 PS_OPTS = '-wopid,args'
 
+MAX_SCAN_DEPTH = 4  # How many subdir levels down to look for valid run dirs
+
 CONTACT_FILE_EXISTS_MSG = r"""suite contact file exists: %(fname)s
 
 Suite "%(suite)s" is already running, and listening at "%(host)s:%(port)s".
@@ -676,26 +678,52 @@ def check_nested_run_dirs(reg):
     Args:
         reg (str): suite name
     """
-    parent_dir = os.path.dirname(os.path.normpath(reg))
+    exc_msg = (
+        'Nested run directories not allowed - cannot register suite name '
+        '"%s" as "%s" is already a valid run directory.')
+
+    def _check_child_dirs(path, depth_count=1):
+        for result in os.scandir(path):
+            if result.is_dir() and not result.is_symlink():
+                if is_valid_run_dir(result.path):
+                    raise SuiteServiceFileError(exc_msg % (reg, result.path))
+                if depth_count < MAX_SCAN_DEPTH:
+                    _check_child_dirs(result.path, depth_count + 1)
+
+    reg_path = os.path.normpath(reg)
+    parent_dir = os.path.dirname(reg_path)
     while parent_dir != '':
-        if _is_valid_run_dir(parent_dir):
+        if is_valid_run_dir(parent_dir):
             raise SuiteServiceFileError(
-                'Nested run directories not allowed - cannot register suite '
-                f'name "{reg}" as {parent_dir} is already a valid '
-                'run directory.')
+                exc_msg % (reg, get_cylc_run_abs_path(parent_dir)))
         parent_dir = os.path.dirname(parent_dir)
 
+    reg_path = get_cylc_run_abs_path(reg_path)
+    if os.path.isdir(reg_path):
+        _check_child_dirs(reg_path)
 
-def _is_valid_run_dir(path):
-    """Return True if path is a valid suite run directory, else False.
+
+def is_valid_run_dir(path):
+    """Return True if path is a valid run directory, else False.
 
     Args:
         path (str): if this is a relative path, it is taken to be relative to
-            the Cylc run directory.
+            the cylc-run directory.
     """
-    if not os.path.isabs(path):
-        cylc_run_dir = os.path.expandvars(get_platform()['run directory'])
-        path = os.path.join(cylc_run_dir, path)
+    path = get_cylc_run_abs_path(path)
     if os.path.isdir(os.path.join(path, SuiteFiles.Service.DIRNAME)):
         return True
     return False
+
+
+def get_cylc_run_abs_path(path):
+    """Return the absolute path under the cylc-run directory for the specified
+    relative path.
+
+    If the specified path is already absolute, just return it.
+    The path need not exist.
+    """
+    if os.path.isabs(path):
+        return path
+    cylc_run_dir = os.path.expandvars(get_platform()['run directory'])
+    return os.path.join(cylc_run_dir, path)

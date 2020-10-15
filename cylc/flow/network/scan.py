@@ -67,7 +67,8 @@ from cylc.flow.suite_files import (
     ContactFileFields,
     SuiteFiles,
     get_suite_title,
-    load_contact_file_async
+    load_contact_file_async,
+    MAX_SCAN_DEPTH
 )
 
 
@@ -103,7 +104,7 @@ def dir_is_flow(listing):
 
 
 @pipe
-async def scan(run_dir=None, scan_dir=None, max_depth=4):
+async def scan(run_dir=None, scan_dir=None, max_depth=MAX_SCAN_DEPTH):
     """List flows installed on the filesystem.
 
     Args:
