@@ -7,6 +7,11 @@
     authentication =
     required run mode =
     force run mode =
+    task event mail interval = 
+    mail to = 
+    mail from = 
+    mail smtp = 
+    mail footer = 
     [[reference test]]
         allow task failures =
         live mode suite timeout =
@@ -28,5 +33,10 @@
     [[foo, cat, dog]]
         [[[job]]]
             shell = fish
+        [[[events]]]
+            mail from = 
+            mail to = 
+            mail smtp = 
+            mail retry delays = 
 
 

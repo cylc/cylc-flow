@@ -1341,8 +1341,29 @@ def upg(cfg, descr):
         '8.0.0',
         ['cylc', 'health check interval'])
     u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'shell'])
+    u.obsolete('8.0.0', ['runtime', '__MANY__', 'events', 'mail retry delays'])
     u.obsolete('8.0.0', ['cylc', 'abort if any task fails'])
     u.obsolete('8.0.0', ['cylc', 'events', 'abort if any task fails'])
+    u.obsolete('8.0.0', ['cylc', 'events', 'mail retry delays'])
+    u.deprecate(
+        '8.0.0',
+        ['cylc', 'task event mail interval'],
+        ['cylc', 'mail', 'task event batch interval']
+    )
+    # Whole workflow task mail settings
+    for mail_setting in ['to', 'from', 'smtp', 'footer']:
+        u.deprecate(
+            '8.0.0',
+            ['cylc', f'mail {mail_setting}'],
+            ['cylc', 'mail', mail_setting]
+        )
+    # Task mail settings in [runtime][TASK]
+    for mail_setting in ['to', 'from', 'smtp']:
+        u.deprecate(
+            '8.0.0',
+            ['runtime', '__MANY__', 'events', f'mail {mail_setting}'],
+            ['runtime', '__MANY__', 'mail', mail_setting]
+        )
     u.deprecate(
         '8.0.0',
         ['scheduling', 'max active cycle points'],

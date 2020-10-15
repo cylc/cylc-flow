@@ -26,23 +26,7 @@ TEST_NAME="${TEST_NAME_BASE}-val"
 run_ok "${TEST_NAME}" cylc validate -v "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-cmp"
-cylc validate -v "${SUITE_NAME}" 2>&1 \
-    | sed  -n -e 's/^WARNING - \( \* (.*$\)/\1/p' > 'val.out'
-cmp_ok val.out <<__END__
- * (8.0.0) [cylc][force run mode] - DELETED (OBSOLETE)
- * (8.0.0) [cylc][authentication] - DELETED (OBSOLETE)
- * (8.0.0) [cylc][log resolved dependencies] - DELETED (OBSOLETE)
- * (8.0.0) [cylc][reference test][allow task failures] - DELETED (OBSOLETE)
- * (8.0.0) [cylc][reference test][live mode suite timeout] - DELETED (OBSOLETE)
- * (8.0.0) [cylc][reference test][dummy mode suite timeout] - DELETED (OBSOLETE)
- * (8.0.0) [cylc][reference test][dummy-local mode suite timeout] - DELETED (OBSOLETE)
- * (8.0.0) [cylc][reference test][simulation mode suite timeout] - DELETED (OBSOLETE)
- * (8.0.0) [cylc][reference test][required run mode] - DELETED (OBSOLETE)
- * (8.0.0) [cylc][required run mode] - DELETED (OBSOLETE)
- * (8.0.0) [cylc][reference test][suite shutdown event handler] - DELETED (OBSOLETE)
- * (8.0.0) [runtime][foo, cat, dog][job][shell] - DELETED (OBSOLETE)
- * (8.0.0) [cylc][abort if any task fails] - DELETED (OBSOLETE)
- * (8.0.0) [scheduling][max active cycle points] -> [scheduling][runahead limit] - "n" -> "Pn"
-__END__
+cylc validate "${SUITE_NAME}" 2> 'val.out'
+cmp_ok val.out "$TEST_SOURCE_DIR/${TEST_NAME_BASE}/validation.stderr"
 
 purge_suite "${SUITE_NAME}"

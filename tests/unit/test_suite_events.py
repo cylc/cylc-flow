@@ -30,7 +30,6 @@ from cylc.flow.suite_events import SuiteEventHandler
         ('handlers', ['stalled'], True),
         ('hotel', None, True),
         ('from', 'highway@mixture', True),
-        ('mail from', 'highway@mixture', True),
         ('abort on timeout', True, True),
         ('handlers', ['stalled'], False),
         ('hotel', None, False),

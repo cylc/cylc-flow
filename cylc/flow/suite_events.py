@@ -69,8 +69,6 @@ class SuiteEventHandler():
         for getter in getters:
             if key in getter:
                 value = getter[key]
-            elif key.replace('mail ', '') in getter:
-                value = getter[key.replace('mail ', '')]
             if value is not None:
                 return value
         return default
