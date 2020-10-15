@@ -145,13 +145,31 @@ cat > expected << __HERE__
             "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}20190101T00${ID_DELIM}baa"
         },
         {
+            "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}20190101T00${ID_DELIM}bar"
+        },
+        {
             "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}20190101T00${ID_DELIM}foo"
         },
         {
             "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}20190101T00${ID_DELIM}qar"
         },
         {
+            "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}20190101T00${ID_DELIM}qaz"
+        },
+        {
             "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}20190101T00${ID_DELIM}qux"
+        },
+        {
+            "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}20190201T00${ID_DELIM}baa"
+        },
+        {
+            "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}20190201T00${ID_DELIM}foo"
+        },
+        {
+            "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}20190201T00${ID_DELIM}qar"
+        },
+        {
+            "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}20190201T00${ID_DELIM}qux"
         }
     ],
     "family": {
@@ -184,10 +202,7 @@ cat > expected << __HERE__
     ],
     "edges": [
         {
-            "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}@wall_clock.20190101T00${ID_DELIM}foo.20190101T00"
-        },
-        {
-            "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}@wall_clock.20190101T00${ID_DELIM}qux.20190101T00"
+            "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}baa.20190101T00${ID_DELIM}baa.20190201T00"
         },
         {
             "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}baa.20190101T00${ID_DELIM}qaz.20190101T00"
@@ -196,10 +211,19 @@ cat > expected << __HERE__
             "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}foo.20190101T00${ID_DELIM}bar.20190101T00"
         },
         {
+            "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}foo.20190101T00${ID_DELIM}foo.20190201T00"
+        },
+        {
+            "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}qar.20190101T00${ID_DELIM}qar.20190201T00"
+        },
+        {
             "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}qux.20190101T00${ID_DELIM}bar.20190101T00"
         },
         {
             "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}qux.20190101T00${ID_DELIM}qaz.20190101T00"
+        },
+        {
+            "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}qux.20190101T00${ID_DELIM}qux.20190201T00"
         }
     ],
     "nodesEdges": {
@@ -209,14 +233,17 @@ cat > expected << __HERE__
             },
             {
                 "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}20190101T00${ID_DELIM}foo"
+            },
+            {
+                "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}20190201T00${ID_DELIM}foo"
             }
         ],
         "edges": [
             {
-                "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}@wall_clock.20190101T00${ID_DELIM}foo.20190101T00"
+                "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}foo.20190101T00${ID_DELIM}bar.20190101T00"
             },
             {
-                "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}foo.20190101T00${ID_DELIM}bar.20190101T00"
+                "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}foo.20190101T00${ID_DELIM}foo.20190201T00"
             }
         ]
     }

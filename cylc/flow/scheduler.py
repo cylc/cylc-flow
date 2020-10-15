@@ -545,6 +545,7 @@ class Scheduler:
         self.barrier.wait()
         self.port = self.server.port
         self.pub_port = self.publisher.port
+        self.data_store_mgr.set_workflow_ports()
 
     async def log_start(self):
         if self.is_restart:

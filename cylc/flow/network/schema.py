@@ -558,7 +558,8 @@ async def resolve_broadcasts(root, info, **args):
 
 
 def resolve_json_dump(root, info, **args):
-    return json.loads(getattr(root, to_snake_case(info.field_name), '{}'))
+    field = getattr(root, to_snake_case(info.field_name), '{}') or '{}'
+    return json.loads(field)
 
 
 # Types:

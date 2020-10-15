@@ -679,7 +679,8 @@ class DataStoreMgr:
     def remove_active_node(self, name, point):
         """Flag removal of this active graph window."""
         tp_id = f'{self.workflow_id}{ID_DELIM}{point}{ID_DELIM}{name}'
-        self.all_task_pool.remove(tp_id)
+        if tp_id in self.all_task_pool:
+            self.all_task_pool.remove(tp_id)
         # flagged isolates/end-of-branch nodes for pruning on removal
         if (
                 tp_id in self.prune_trigger_nodes and
@@ -1164,6 +1165,18 @@ class DataStoreMgr:
 
         """
         self.next_n_edge_distance = n_edge_distance
+        self.updates_pending = True
+
+    def set_workflow_ports(self):
+        # Create new message and copy existing message content
+        workflow = self.updated[WORKFLOW]
+        workflow.id = self.workflow_id
+        workflow.last_updated = time()
+        workflow.stamp = f'{workflow.id}@{workflow.last_updated}'
+
+        workflow.port = self.schd.port
+        workflow.pub_port = self.schd.pub_port
+
         self.updates_pending = True
 
     def update_workflow(self):

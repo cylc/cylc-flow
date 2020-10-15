@@ -90,7 +90,7 @@ cat > expected << __HERE__
                 "title": "foo",
                 "description": "bar"
             },
-            "newestRunaheadCyclePoint": "1",
+            "newestRunaheadCyclePoint": "",
             "newestCyclePoint": "1",
             "oldestCyclePoint": "1",
             "reloaded": false,

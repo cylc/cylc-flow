@@ -75,10 +75,10 @@ def test_get_entire_workflow(harness):
     assert len(flow_msg.task_proxies) == len(data[TASK_PROXIES])
 
 
-def test_increment_graph_elements(harness):
-    """Test method that adds and removes elements by cycle point."""
+def test_increment_graph_window(harness):
+    """Test method that adds and removes elements window boundary."""
     schd, data = harness
-    assert schd.data_store_mgr.pool_points
+    assert schd.data_store_mgr.prune_trigger_nodes
     assert len(data[TASK_PROXIES]) == 1
 
 
@@ -90,23 +90,24 @@ def test_initiate_data_model(harness):
     assert len(data[WORKFLOW].task_proxies) == 1
 
 
-def test_prune_points(harness):
+def test_prune_data_store(harness):
     """Test method that removes data elements by cycle point."""
     schd, data = harness
-    points = [
-        standardise_point_string(p.cycle_point)
-        for p in data[TASK_PROXIES].values()
-    ]
-    point = next(iter(points))
-    assert point in points
-    schd.data_store_mgr.clear_deltas()
-    schd.data_store_mgr.prune_points([point])
+    for itask in schd.pool.get_all_tasks():
+        schd.data_store_mgr.increment_graph_window(
+            itask.tdef.name, itask.point, itask.flow_label
+        )
     schd.data_store_mgr.apply_deltas()
-    assert point not in [
-        standardise_point_string(p.cycle_point)
-        for p in schd.data_store_mgr.data[
-            schd.data_store_mgr.workflow_id][TASK_PROXIES].values()
-    ]
+    schd.data_store_mgr.clear_deltas()
+    before_count = len(schd.data_store_mgr.data[
+        schd.data_store_mgr.workflow_id][TASK_PROXIES])
+    assert before_count > 0
+    schd.data_store_mgr.prune_flagged_nodes.update(set(data[TASK_PROXIES]))
+    schd.data_store_mgr.prune_data_store()
+    schd.data_store_mgr.apply_deltas()
+    after_count = len(schd.data_store_mgr.data[
+        schd.data_store_mgr.workflow_id][TASK_PROXIES])
+    assert after_count < before_count
 
 
 def test_update_data_structure(harness):

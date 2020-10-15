@@ -27,6 +27,7 @@ CYLC_RUN_PID="$!"
 poll_suite_running
 YYYY="$(date +%Y)"
 NEXT1=$(( YYYY + 1 ))
+NEXT2=$(( YYYY + 2 ))
 poll_grep_suite_log -F "spawned bar.${NEXT1}"
 
 # sleep a little to allow the datastore to update (`cylc dump` sees the
@@ -34,6 +35,9 @@ poll_grep_suite_log -F "spawned bar.${NEXT1}"
 sleep 10
 cylc dump -t "${SUITE_NAME}" | awk '{print $1 $2 $3}' >'log'
 cmp_ok 'log' - <<__END__
+bar,$YYYY,running,
+bar,$NEXT1,waiting,
+bar,$NEXT2,waiting,
 foo,$NEXT1,waiting,
 __END__
 
