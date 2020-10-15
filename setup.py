@@ -78,6 +78,7 @@ extra_requires = {
     "main_loop-log_data_store": ["pympler", "matplotlib"],
     "main_loop-log_main_loop": ["matplotlib"],
     "main_loop-log_memory": ["pympler", "matplotlib"],
+    "dev": ["pre-commit"],
 }
 extra_requires["all"] = tests_require + list(
     {req for reqs in extra_requires.values() for req in reqs}
