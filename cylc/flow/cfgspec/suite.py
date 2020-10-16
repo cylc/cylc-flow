@@ -1422,13 +1422,12 @@ def upgrade_graph_section(cfg, descr):
                         graphdict[key] = value['graph']
                         keys.add(key)
                 if keys:
+                    keys = ', '.join(sorted(keys))
                     LOG.warning(
                         'deprecated graph items were automatically upgraded '
-                        f'in "{descr}:'
-                    )
-                    LOG.warning(
+                        f'in "{descr}":\n'
                         f' * (8.0.0) {msg_old} -> {msg_new} - for X in:\n'
-                        '\n'.join(sorted(keys))
+                        f'       {keys}'
                     )
     except KeyError:
         pass
