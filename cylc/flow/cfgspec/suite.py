@@ -288,19 +288,20 @@ with Conf(
         with Conf('mail'):
             Conf('footer', VDR.V_STRING, desc='''
                 Specify a string or string template for footers of
-                emails sent for both suite _and_ task events.
+                emails sent for both suite and task events.
 
-                .. csv-table: Valid template strings
-                   :header: "template", "description"
+                ================ ======================
+                Syntax           Description
+                ================ ======================
+                ``%(host)s``     Suite host name.
+                ``%(port)s``     Suite port number.
+                ``%(owner)s``    Suite owner name.
+                ``%(suite)s``    Suite name
+                ================ ======================
 
-                   "``%(host)s``", "Suite host name."
-                   "``%(port)s``", "Suite port number."
-                   "``%(owner)s``", "Suite owner name."
-                   "``%(suite)s``", "Suite name"
+                Example:
 
-                .. example:
-
-                   mail footer = see http://myhost/%(owner)s/notes/%(suite)s
+                ``mail footer = see http://myhost/%(owner)s/notes/%(suite)s``
 
             ''')
             Conf('smtp', VDR.V_STRING, desc='''
