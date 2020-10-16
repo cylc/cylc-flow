@@ -295,7 +295,7 @@ class TaskEventsManager():
         flag=FLAG_INTERNAL,
         submit_num=None,
     ):
-        """Parse an task message and update task state.
+        """Parse a task message and update task state.
 
         Incoming, e.g. "succeeded at <TIME>", may be from task job or polling.
 
@@ -627,8 +627,11 @@ class TaskEventsManager():
         """Return an events setting from suite then global configuration."""
         for getter in [
                 self.broadcast_mgr.get_broadcast(itask.identity).get("events"),
+                itask.tdef.rtconfig["mail"],
                 itask.tdef.rtconfig["events"],
-                glbl_cfg().get()["task events"]]:
+                glbl_cfg().get()["task mail"],
+                glbl_cfg().get()["task events"],
+        ]:
             try:
                 value = getter.get(key)
             except (AttributeError, ItemNotFoundError, KeyError):
@@ -972,22 +975,20 @@ class TaskEventsManager():
         if (id_key in self.event_timers or
                 event not in self._get_events_conf(itask, "mail events", [])):
             return
-        retry_delays = self._get_events_conf(itask, "mail retry delays")
-        if not retry_delays:
-            retry_delays = [0]
+
         self.event_timers[id_key] = TaskActionTimer(
             TaskEventMailContext(
                 self.HANDLER_MAIL,  # key
                 self.HANDLER_MAIL,  # ctx_type
                 self._get_events_conf(  # mail_from
                     itask,
-                    "mail from",
+                    "from",
                     "notifications@" + get_host(),
                 ),
-                self._get_events_conf(itask, "mail to", get_user()),  # mail_to
-                self._get_events_conf(itask, "mail smtp"),  # mail_smtp
+                self._get_events_conf(itask, "to", get_user()),  # mail_to
+                self._get_events_conf(itask, "smtp"),  # mail_smtp
             ),
-            retry_delays)
+        )
 
     def _setup_custom_event_handlers(self, itask, event, message):
         """Set up custom task event handlers."""

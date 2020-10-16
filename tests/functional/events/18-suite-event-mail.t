@@ -28,8 +28,9 @@ if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
 [cylc]
     [[events]]
         mail events = startup, shutdown
-        mail footer = see: http://localhost/stuff/%(owner)s/%(suite)s/
-        mail smtp = ${TEST_SMTPD_HOST}"
+    [[mail]]
+        footer = see: http://localhost/stuff/%(owner)s/%(suite)s/
+        smtp = ${TEST_SMTPD_HOST}"
     OPT_SET='-s GLOBALCFG=True'
 else
     OPT_SET="-s MAIL_SMTP=${TEST_SMTPD_HOST}"

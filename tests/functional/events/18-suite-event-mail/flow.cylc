@@ -3,12 +3,14 @@
     title=Suite Event Mail
 
 [cylc]
-    [[events]]
 {% if GLOBALCFG is not defined %}
+    [[mail]]
+        footer = see: http://localhost/stuff/%(owner)s/%(suite)s/
+        smtp = {{MAIL_SMTP}}
+    [[events]]
         mail events = startup, shutdown
-        mail footer = see: http://localhost/stuff/%(owner)s/%(suite)s/
-        mail smtp = {{MAIL_SMTP}}
 {% endif %}{# not GLOBALCFG is not defined #}
+    [[events]]
         abort on stalled = True
         abort on inactivity = True
         inactivity = PT3M

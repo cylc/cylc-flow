@@ -4,8 +4,8 @@
 
 [cylc]
 {% if GLOBALCFG is not defined %}
-    [[events]]
-        mail footer = see: http://localhost/stuff/%(owner)s/%(suite)s/
+    [[mail]]
+        footer = see: http://localhost/stuff/%(owner)s/%(suite)s/
 {% endif %}{# not GLOBALCFG is not defined #}
 
 [scheduling]
@@ -20,5 +20,6 @@
 {% if GLOBALCFG is not defined %}
         [[[events]]]
             mail events = failed, retry, succeeded
-            mail smtp = {{MAIL_SMTP}}
+        [[[mail]]]
+            smtp = {{MAIL_SMTP}}
 {% endif %}{# not GLOBALCFG is not defined #}

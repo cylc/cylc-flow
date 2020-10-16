@@ -3,8 +3,8 @@
     title=Task Event Mail
 
 [cylc]
-    [[events]]
-        mail footer = see: http://localhost/stuff/%(owner)s/%(suite)s/
+    [[mail]]
+        footer = see: http://localhost/stuff/%(owner)s/%(suite)s/
 
 [scheduling]
     [[graph]]
@@ -17,4 +17,5 @@
             execution retry delays = PT1S
         [[[events]]]
             mail events = failed, retry
-            mail smtp = {{MAIL_SMTP}}
+        [[[mail]]]
+            smtp = {{MAIL_SMTP}}

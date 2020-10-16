@@ -101,11 +101,6 @@ with Conf('global.cylc', desc='''
         Conf('UTC mode', VDR.V_BOOLEAN, False, desc='''
                 Default for :cylc:conf:`flow.cylc[cylc]UTC mode`.
         ''')
-        Conf('task event mail interval', VDR.V_INTERVAL, DurationFloat(300),
-             desc='''
-                Default for
-                :cylc:conf:`flow.cylc[cylc]task event mail interval`.
-        ''')
 
         with Conf('events', desc='''
             You can define site defaults for each of the following options,
@@ -115,10 +110,6 @@ with Conf('global.cylc', desc='''
             Conf('handlers', VDR.V_STRING_LIST)
             Conf('handler events', VDR.V_STRING_LIST)
             Conf('mail events', VDR.V_STRING_LIST)
-            Conf('mail from', VDR.V_STRING)
-            Conf('mail smtp', VDR.V_STRING)
-            Conf('mail to', VDR.V_STRING)
-            Conf('mail footer', VDR.V_STRING)
             Conf('startup handler', VDR.V_STRING_LIST)
             Conf('timeout handler', VDR.V_STRING_LIST)
             Conf('inactivity handler', VDR.V_STRING_LIST)
@@ -130,6 +121,24 @@ with Conf('global.cylc', desc='''
             Conf('abort on timeout', VDR.V_BOOLEAN)
             Conf('abort on inactivity', VDR.V_BOOLEAN)
             Conf('abort on stalled', VDR.V_BOOLEAN)
+
+        with Conf('mail', desc='''
+            Options for email handling.
+        '''):
+            Conf('from', VDR.V_STRING)
+            Conf('smtp', VDR.V_STRING)
+            Conf('to', VDR.V_STRING)
+            Conf('footer', VDR.V_STRING)
+            Conf(
+                'task event batch interval',
+                VDR.V_INTERVAL,
+                DurationFloat(300),
+                desc='''
+                    Default for
+                    :cylc:conf:
+                    `flow.cylc[cylc][mail]task event batch interval`.
+                '''
+            )
 
         with Conf('main loop', desc='''
             Configuration of the Cylc Scheduler's main loop.
@@ -507,11 +516,17 @@ with Conf('global.cylc', desc='''
         Conf('handler events', VDR.V_STRING_LIST)
         Conf('handler retry delays', VDR.V_INTERVAL_LIST, None)
         Conf('mail events', VDR.V_STRING_LIST)
-        Conf('mail from', VDR.V_STRING)
-        Conf('mail retry delays', VDR.V_INTERVAL_LIST)
-        Conf('mail smtp', VDR.V_STRING)
-        Conf('mail to', VDR.V_STRING)
         Conf('submission timeout', VDR.V_INTERVAL)
+
+    with Conf('task mail', desc='''
+        Global site/user defaults for
+        :cylc:conf:`flow.cylc[runtime][<namespace>][mail]`.
+    '''):
+
+        Conf('from', VDR.V_STRING)
+        Conf('retry delays', VDR.V_INTERVAL_LIST)
+        Conf('smtp', VDR.V_STRING)
+        Conf('to', VDR.V_STRING)
 
     # client
     with Conf('test battery', desc='''

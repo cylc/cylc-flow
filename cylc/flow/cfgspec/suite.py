@@ -201,7 +201,6 @@ with Conf(
                (e.g. ``+05:30``), given that the time zone is used as part of
                task output filenames.
         ''')
-        Conf('task event mail interval', VDR.V_INTERVAL)
         Conf('disable automatic shutdown', VDR.V_BOOLEAN, desc='''
             This has the same effect as the ``--no-auto-shutdown`` flag for
             the suite run commands: it prevents the suite server program from
@@ -285,10 +284,13 @@ with Conf(
             Conf('abort on timeout', VDR.V_BOOLEAN)
             Conf('abort on inactivity', VDR.V_BOOLEAN)
             Conf('mail events', VDR.V_STRING_LIST, None)
-            Conf('mail from', VDR.V_STRING)
-            Conf('mail smtp', VDR.V_STRING)
-            Conf('mail to', VDR.V_STRING)
-            Conf('mail footer', VDR.V_STRING)
+
+        with Conf('mail'):
+            Conf('from', VDR.V_STRING)
+            Conf('smtp', VDR.V_STRING)
+            Conf('to', VDR.V_STRING)
+            Conf('footer', VDR.V_STRING)
+            Conf('task event batch interval', VDR.V_INTERVAL)
 
         with Conf('reference test'):
             Conf('expected task failures', VDR.V_STRING_LIST)
@@ -1094,29 +1096,6 @@ with Conf(
 
                        ``submission failed, failed``
                 ''')
-                Conf('mail from', VDR.V_STRING, desc='''
-                    Specify an alternate ``from:`` email address for event
-                    notifications.
-                ''')
-                Conf('mail retry delays', VDR.V_INTERVAL_LIST, None, desc='''
-                    Specify an initial delay before running the mail
-                    notification command and any retry delays in case the
-                    command returns a non-zero code. The default behaviour is
-                    to run the mail notification command once without any
-                    delay.
-                ''')
-                Conf('mail smtp', VDR.V_STRING, desc='''
-                    Specify the SMTP server for sending email notifications.
-
-                    Example:
-
-                       ``smtp.yourorg``
-                ''')
-                Conf('mail to', VDR.V_STRING, desc='''
-                    A list of email addresses to send task event
-                    notifications. The list can be anything accepted by the
-                    ``mail`` command.
-                ''')
                 Conf('submission timeout', VDR.V_INTERVAL, desc='''
                     If a task has not started after the specified ISO 8601
                     duration/interval, the *submission timeout* event
@@ -1137,6 +1116,26 @@ with Conf(
                 Conf('execution timeout handler', VDR.V_STRING_LIST, None)
                 Conf('submission timeout handler', VDR.V_STRING_LIST, None)
                 Conf('custom handler', VDR.V_STRING_LIST, None)
+
+            with Conf('mail', desc='''
+                Settings for mail events.
+            '''):
+                Conf('from', VDR.V_STRING, desc='''
+                    Specify an alternate ``from:`` email address for event
+                    notifications.
+                ''')
+                Conf('smtp', VDR.V_STRING, desc='''
+                    Specify the SMTP server for sending email notifications.
+
+                    Example:
+
+                       ``smtp.yourorg``
+                ''')
+                Conf('to', VDR.V_STRING, desc='''
+                    A list of email addresses to send task event
+                    notifications. The list can be anything accepted by the
+                    ``mail`` command.
+                ''')
 
             with Conf('suite state polling', desc='''
                 Configure automatic suite polling tasks as described in
@@ -1342,8 +1341,29 @@ def upg(cfg, descr):
         '8.0.0',
         ['cylc', 'health check interval'])
     u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'shell'])
+    u.obsolete('8.0.0', ['runtime', '__MANY__', 'events', 'mail retry delays'])
     u.obsolete('8.0.0', ['cylc', 'abort if any task fails'])
     u.obsolete('8.0.0', ['cylc', 'events', 'abort if any task fails'])
+    u.obsolete('8.0.0', ['cylc', 'events', 'mail retry delays'])
+    u.deprecate(
+        '8.0.0',
+        ['cylc', 'task event mail interval'],
+        ['cylc', 'mail', 'task event batch interval']
+    )
+    # Whole workflow task mail settings
+    for mail_setting in ['to', 'from', 'smtp', 'footer']:
+        u.deprecate(
+            '8.0.0',
+            ['cylc', f'mail {mail_setting}'],
+            ['cylc', 'mail', mail_setting]
+        )
+    # Task mail settings in [runtime][TASK]
+    for mail_setting in ['to', 'from', 'smtp']:
+        u.deprecate(
+            '8.0.0',
+            ['runtime', '__MANY__', 'events', f'mail {mail_setting}'],
+            ['runtime', '__MANY__', 'mail', mail_setting]
+        )
     u.deprecate(
         '8.0.0',
         ['scheduling', 'max active cycle points'],
