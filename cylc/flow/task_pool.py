@@ -239,15 +239,6 @@ class TaskPool:
             # add row to "task_outputs" table:
             if itask.state.outputs.has_custom_triggers():
                 self.suite_db_mgr.put_insert_task_outputs(itask)
-            # add rows to "task_prerequisites" table:
-            for prereq in itask.state.prerequisites:
-                for (name, cycle, output), satisfied_state in (
-                        prereq.satisfied.items()):
-                    self.suite_db_mgr.put_insert_task_prerequisites(itask, {
-                        "prereq_name": name,
-                        "prereq_cycle": cycle,
-                        "prereq_output": output,
-                        "satisfied": satisfied_state})
         return itask
 
     def release_runahead_tasks(self):

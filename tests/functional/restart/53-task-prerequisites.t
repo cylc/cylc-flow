@@ -38,7 +38,6 @@ TEST_NAME="${TEST_NAME_BASE}-db-task-prereq"
 QUERY='SELECT * FROM task_prerequisites ORDER BY cycle, name, prereq_cycle;'
 run_ok "$TEST_NAME" sqlite3 "$DB_FILE" "$QUERY"
 cmp_ok "${TEST_NAME}.stdout" << '__EOF__'
-1|bar|apollo|1|The Eagle has landed|satisfied naturally
 2|bar|foo|1|succeeded|0
 2|bar|apollo|2|The Eagle has landed|satisfied naturally
 3|bar|foo|2|succeeded|satisfied naturally

@@ -93,6 +93,7 @@ class SuiteDatabaseManager:
             self.TABLE_TASK_POOL: [],
             self.TABLE_TASK_ACTION_TIMERS: [],
             self.TABLE_TASK_OUTPUTS: [],
+            self.TABLE_TASK_PREREQUISITES: [],
             self.TABLE_TASK_TIMEOUT_TIMERS: [],
             self.TABLE_XTRIGGERS: []}
         self.db_inserts_map = {
@@ -415,6 +416,7 @@ class SuiteDatabaseManager:
         relevant insert statements for the current tasks in the pool.
         """
         self.db_deletes_map[self.TABLE_TASK_POOL].append({})
+        self.db_deletes_map[self.TABLE_TASK_PREREQUISITES].append({})
         # No need to do:
         # self.db_deletes_map[self.TABLE_TASK_ACTION_TIMERS].append({})
         # Should already be done by self.put_task_event_timers above.
@@ -424,8 +426,11 @@ class SuiteDatabaseManager:
             for prereq in itask.state.prerequisites:
                 for (p_name, p_cycle, p_output), satisfied_state in (
                         prereq.satisfied.items()):
-                    self.put_update_task_prerequisites(
-                        itask, p_name, p_cycle, p_output, satisfied_state)
+                    self.put_insert_task_prerequisites(itask, {
+                        "prereq_name": p_name,
+                        "prereq_cycle": p_cycle,
+                        "prereq_output": p_output,
+                        "satisfied": satisfied_state})
             self.db_inserts_map[self.TABLE_TASK_POOL].append({
                 "name": itask.tdef.name,
                 "cycle": str(itask.point),
@@ -481,23 +486,6 @@ class SuiteDatabaseManager:
             "id": CylcSuiteDAO.CHECKPOINT_LATEST_ID,
             "time": get_current_time_string(),
             "event": CylcSuiteDAO.CHECKPOINT_LATEST_EVENT})
-
-    def put_update_task_prerequisites(self, itask, prereq_name, prereq_cycle,
-                                      prereq_output, satisfied_state):
-        """Put statements to update the task_prerequisites table."""
-        set_args = {
-            "satisfied": satisfied_state
-        }
-        where_args = {
-            "cycle": str(itask.point),
-            "name": itask.tdef.name,
-            "prereq_name": prereq_name,
-            "prereq_cycle": prereq_cycle,
-            "prereq_output": prereq_output
-        }
-        self.db_updates_map.setdefault(self.TABLE_TASK_PREREQUISITES, [])
-        self.db_updates_map[self.TABLE_TASK_PREREQUISITES].append(
-            (set_args, where_args))
 
     def put_insert_task_events(self, itask, args):
         """Put INSERT statement for task_events table."""
