@@ -286,11 +286,42 @@ with Conf(
             Conf('mail events', VDR.V_STRING_LIST, None)
 
         with Conf('mail'):
-            Conf('from', VDR.V_STRING)
-            Conf('smtp', VDR.V_STRING)
-            Conf('to', VDR.V_STRING)
-            Conf('footer', VDR.V_STRING)
-            Conf('task event batch interval', VDR.V_INTERVAL)
+            Conf('footer', VDR.V_STRING, desc='''
+                Specify a string or string template for footers of
+                emails sent for both suite and task events.
+
+                ================ ======================
+                Syntax           Description
+                ================ ======================
+                ``%(host)s``     Suite host name.
+                ``%(port)s``     Suite port number.
+                ``%(owner)s``    Suite owner name.
+                ``%(suite)s``    Suite name
+                ================ ======================
+
+                Example:
+
+                ``mail footer = see http://myhost/%(owner)s/notes/%(suite)s``
+
+            ''')
+            Conf('smtp', VDR.V_STRING, desc='''
+                Specify the SMTP server for sending suite email notifications.
+
+            ''')
+            Conf('to', VDR.V_STRING, desc='''
+                A string containing a list of addresses which can be accepted
+                by the ``mail`` command.
+            ''')
+            Conf('from', VDR.V_STRING, desc='''
+                Specify an alternative ``from`` email address for suite event
+                notifications.
+            ''')
+            Conf('task event batch interval', VDR.V_INTERVAL, desc='''
+                Gather all task event notifications in the given interval
+                into a single email.
+
+                Useful to prevent being overwhelmed by emails.
+            ''')
 
         with Conf('reference test'):
             Conf('expected task failures', VDR.V_STRING_LIST)
