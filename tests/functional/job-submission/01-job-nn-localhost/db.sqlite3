@@ -9,6 +9,7 @@ CREATE TABLE inheritance(namespace TEXT, inheritance TEXT, PRIMARY KEY(namespace
 INSERT INTO inheritance VALUES('root','["root"]');
 INSERT INTO inheritance VALUES('foo','["foo", "root"]');
 CREATE TABLE suite_params(key TEXT, value TEXT, PRIMARY KEY(key));
+INSERT INTO suite_params VALUES('cylc_version', '8.0a3');
 CREATE TABLE suite_params_checkpoints(id INTEGER, key TEXT, value TEXT, PRIMARY KEY(id, key));
 CREATE TABLE suite_template_vars(key TEXT, value TEXT, PRIMARY KEY(key));
 CREATE TABLE task_action_timers(cycle TEXT, name TEXT, ctx_key TEXT, ctx TEXT, delays TEXT, num INTEGER, delay TEXT, timeout TEXT, PRIMARY KEY(cycle, name, ctx_key));

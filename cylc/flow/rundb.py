@@ -168,6 +168,7 @@ class CylcSuiteDAO:
     CONN_TIMEOUT = 0.2
     DB_FILE_BASE_NAME = "db"
     MAX_TRIES = 100
+    RESTART_INCOMPAT_VERSION = "8.0a2"  # Can't restart suite if <= this vers
     CHECKPOINT_LATEST_ID = 0
     CHECKPOINT_LATEST_EVENT = "latest"
     TABLE_BROADCAST_EVENTS = "broadcast_events"

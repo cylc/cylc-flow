@@ -25,6 +25,7 @@ This module provides the logic to:
 
 import json
 import os
+import packaging.version
 from shutil import copy, rmtree
 from tempfile import mkstemp
 
@@ -34,6 +35,7 @@ from cylc.flow.broadcast_report import get_broadcast_change_iter
 from cylc.flow.rundb import CylcSuiteDAO
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.wallclock import get_current_time_string, get_utc_mode
+from cylc.flow.exceptions import SuiteServiceFileError
 
 
 class SuiteDatabaseManager:
@@ -578,8 +580,36 @@ class SuiteDatabaseManager:
                 f"{self.pri_dao.db_file_name}")
             self.pub_dao.n_tries = 0
 
-    def restart_upgrade(self):
-        """Vacuum/upgrade runtime DB on restart."""
+    def on_restart(self):
+        """Check & vacuum the runtime DB on restart."""
+        if not os.path.isfile(self.pri_path):
+            raise SuiteServiceFileError(
+                'Cannot restart as suite database not found')
+        self.check_suite_db_compatibility()
         pri_dao = self.get_pri_dao()
         pri_dao.vacuum()
         pri_dao.close()
+
+    def check_suite_db_compatibility(self):
+        """Raises SuiteServiceFileError if the existing suite database is
+        incompatible with the current version of Cylc."""
+        pri_dao = self.get_pri_dao()
+        try:
+            last_run_ver = pri_dao.connect().execute(
+                f'SELECT value FROM {self.TABLE_SUITE_PARAMS} '
+                f'WHERE key == "{self.KEY_CYLC_VERSION}"').fetchone()[0]
+        except TypeError:
+            raise SuiteServiceFileError(
+                'Cannot restart suite as the suite database is incompatible '
+                f'with Cylc {CYLC_VERSION}')
+        pri_dao.close()
+        try:
+            last_run_ver = packaging.version.Version(last_run_ver)
+        except packaging.version.InvalidVersion:
+            last_run_ver = packaging.version.LegacyVersion(last_run_ver)
+        restart_incompat_ver = packaging.version.Version(
+            CylcSuiteDAO.RESTART_INCOMPAT_VERSION)
+        if last_run_ver <= restart_incompat_ver:
+            raise SuiteServiceFileError(
+                f'Cannot restart suite last run with Cylc {last_run_ver} as '
+                f'the suite database is incompatible with Cylc {CYLC_VERSION}')

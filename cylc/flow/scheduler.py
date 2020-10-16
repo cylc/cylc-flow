@@ -287,7 +287,6 @@ class Scheduler:
         * Register.
         * Install authentication files.
         * Build the directory tree.
-        * Upgrade the DB if required.
         * Copy Python files.
 
         """
@@ -417,7 +416,7 @@ class Scheduler:
         """
         self.profiler.log_memory("scheduler.py: start configure")
         if self.is_restart:
-            self.suite_db_mgr.restart_upgrade()
+            self.suite_db_mgr.on_restart()
             # This logic handles lack of initial cycle point in "flow.cylc".
             # Things that can't change on suite reload.
             pri_dao = self.suite_db_mgr.get_pri_dao()
