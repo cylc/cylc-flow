@@ -14,10 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import unittest
-
+import pytest
 from unittest import mock
 
+import os.path
 from cylc.flow import suite_files
 from cylc.flow.exceptions import SuiteServiceFileError
 
@@ -180,66 +180,146 @@ def get_register_test_cases():
     ]
 
 
-class TestSuiteFiles(unittest.TestCase):
+@mock.patch('os.unlink')
+@mock.patch('os.makedirs')
+@mock.patch('os.symlink')
+@mock.patch('os.readlink')
+@mock.patch('os.path.isfile')
+@mock.patch('os.path.isabs')
+@mock.patch('os.getcwd')
+@mock.patch('os.path.abspath')
+@mock.patch('cylc.flow.suite_files.get_suite_srv_dir')
+@mock.patch('cylc.flow.suite_files.check_nested_run_dirs')
+def test_register(mocked_check_nested_run_dirs,
+                  mocked_get_suite_srv_dir,
+                  mocked_abspath,
+                  mocked_getcwd,
+                  mocked_isabs,
+                  mocked_isfile,
+                  mocked_readlink,
+                  mocked_symlink,
+                  mocked_makedirs,
+                  mocked_unlink):
+    """Test the register function."""
+    def mkdirs_standin(_, exist_ok=False):
+        return True
 
-    @mock.patch('os.unlink')
-    @mock.patch('os.makedirs')
-    @mock.patch('os.symlink')
-    @mock.patch('os.readlink')
-    @mock.patch('os.path.isfile')
-    @mock.patch('os.path.isabs')
-    @mock.patch('os.getcwd')
-    @mock.patch('os.path.abspath')
-    @mock.patch('cylc.flow.suite_files.get_suite_srv_dir')
-    def test_register(
-            self,
-            mocked_get_suite_srv_dir,
-            mocked_abspath,
-            mocked_getcwd,
-            mocked_isabs,
-            mocked_isfile,
-            mocked_readlink,
-            mocked_symlink,
-            mocked_makedirs,
-            mocked_unlink
-    ):
-        """Test the register function."""
-        def mkdirs_standin(_, exist_ok=False):
-            return True
+    mocked_abspath.side_effect = lambda x: x
+    # mocked_check_nested_run_dirs - no side effect as we're just ignoring it
 
-        mocked_abspath.side_effect = lambda x: x
+    for (reg, source, redirect, cwd, isabs, isfile, suite_srv_dir,
+            readlink, expected_symlink, expected, e_expected,
+            e_message) in get_register_test_cases():
+        mocked_getcwd.side_effect = lambda: cwd
+        mocked_isabs.side_effect = lambda x: isabs
 
-        for reg, source, redirect, cwd, isabs, isfile, \
-            suite_srv_dir, readlink, expected_symlink, \
-            expected, e_expected, e_message \
-                in get_register_test_cases():
-            mocked_getcwd.side_effect = lambda: cwd
-            mocked_isabs.side_effect = lambda x: isabs
+        mocked_isfile.side_effect = lambda x: isfile
+        mocked_get_suite_srv_dir.return_value = str(suite_srv_dir)
+        mocked_makedirs.return_value = True
+        mocked_unlink.return_value = True
+        if readlink == OSError:
+            mocked_readlink.side_effect = readlink
+        else:
+            mocked_readlink.side_effect = lambda x: readlink
 
-            mocked_isfile.side_effect = lambda x: isfile
-            mocked_get_suite_srv_dir.return_value = str(suite_srv_dir)
-            mocked_makedirs.return_value = True
-            mocked_unlink.return_value = True
-            if readlink == OSError:
-                mocked_readlink.side_effect = readlink
-            else:
-                mocked_readlink.side_effect = lambda x: readlink
-
-            if e_expected is None:
-                reg = suite_files.register(reg, source, redirect)
-                self.assertEqual(expected, reg)
-                if mocked_symlink.call_count > 0:
-                    # first argument, of the first call
-                    arg0 = mocked_symlink.call_args[0][0]
-                    self.assertEqual(expected_symlink, arg0)
-            else:
-                with self.assertRaises(e_expected) as cm:
-                    suite_files.register(reg, source, redirect)
-                if e_message is not None:
-                    the_exception = cm.exception
-                    self.assertTrue(e_message in str(the_exception),
-                                    str(the_exception))
+        if e_expected is None:
+            reg = suite_files.register(reg, source, redirect)
+            assert reg == expected
+            if mocked_symlink.call_count > 0:
+                # first argument, of the first call
+                arg0 = mocked_symlink.call_args[0][0]
+                assert arg0 == expected_symlink
+        else:
+            with pytest.raises(e_expected) as exc:
+                suite_files.register(reg, source, redirect)
+            if e_message is not None:
+                assert e_message in str(exc.value)
 
 
-if __name__ == '__main__':
-    unittest.main()
+@pytest.mark.parametrize(
+    'path, expected',
+    [('a/b/c', '/mock_cylc_dir/a/b/c'),
+     ('/a/b/c', '/a/b/c')]
+)
+def test_get_cylc_run_abs_path(path, expected, monkeypatch):
+    monkeypatch.setattr('cylc.flow.suite_files.get_platform',
+                        lambda: {'run directory': '/mock_cylc_dir'})
+    assert suite_files.get_cylc_run_abs_path(path) == expected
+
+
+@pytest.mark.parametrize(
+    'path, expected',
+    [('service/dir/exists', True),
+     ('flow/file/exists', False),  # Non-run dirs can still contain flow.cylc
+     ('nothing/exists', False)]
+)
+@pytest.mark.parametrize('is_abs_path', [False, True])
+def test_is_valid_run_dir(path, expected, is_abs_path, monkeypatch):
+    """Test that a directory is correctly identified as a valid run dir when
+    it contains a service dir.
+    """
+    prefix = os.sep if is_abs_path is True else 'mock_cylc_dir'
+    flow_file = os.path.join(prefix, 'flow', 'file', 'exists', 'flow.cylc')
+    serv_dir = os.path.join(prefix, 'service', 'dir', 'exists', '.service')
+    monkeypatch.setattr('os.path.isfile', lambda x: x == flow_file)
+    monkeypatch.setattr('os.path.isdir', lambda x: x == serv_dir)
+    monkeypatch.setattr('cylc.flow.suite_files.get_platform',
+                        lambda: {'run directory': 'mock_cylc_dir'})
+    path = os.path.normpath(path)
+    if is_abs_path:
+        path = os.path.join(os.sep, path)
+
+    assert suite_files.is_valid_run_dir(path) is expected, (
+        f'Is "{path}" a valid run dir?')
+
+
+@pytest.mark.parametrize('direction', ['parents', 'children'])
+def test_register_nested_run_dirs(direction, monkeypatch):
+    """Test that a suite cannot be registered in a subdir of another suite."""
+    monkeypatch.setattr('cylc.flow.suite_files.get_cylc_run_abs_path',
+                        lambda x: x)
+
+    if direction == "parents":
+        monkeypatch.setattr('cylc.flow.suite_files.os.scandir', lambda x: [])
+        monkeypatch.setattr('cylc.flow.suite_files.is_valid_run_dir',
+                            lambda x: x == os.path.join('bright', 'falls'))
+        # Not nested in run dir - ok:
+        suite_files.check_nested_run_dirs('alan/wake')
+        # It is itself a run dir - ok:
+        suite_files.check_nested_run_dirs('bright/falls')
+        # Nested in a run dir - bad:
+        for func in (suite_files.check_nested_run_dirs, suite_files.register):
+            for path in ('bright/falls/light', 'bright/falls/light/and/power'):
+                with pytest.raises(SuiteServiceFileError) as exc:
+                    func(path)
+                assert 'Nested run directories not allowed' in str(exc.value)
+
+    else:
+        dirs = ['a', 'a/a', 'a/R', 'a/a/a', 'a/a/R',
+                'a/b', 'a/b/a', 'a/b/b',
+                'a/c', 'a/c/a', 'a/c/a/a', 'a/c/a/a/a', 'a/c/a/a/a/R',
+                'a/d', 'a/d/a', 'a/d/a/a', 'a/d/a/a/a', 'a/d/a/a/a/a',
+                'a/d/a/a/a/a/R']
+        run_dirs = [d for d in dirs if 'R' in d]
+
+        def mock_scandir(path):
+            return [mock.Mock(path=d, is_dir=lambda: True,
+                              is_symlink=lambda: False) for d in dirs
+                    if (d.startswith(path) and len(d) == len(path) + 2)]
+        monkeypatch.setattr('cylc.flow.suite_files.os.scandir', mock_scandir)
+        monkeypatch.setattr('cylc.flow.suite_files.os.path.isdir',
+                            lambda x: x in dirs)
+        monkeypatch.setattr('cylc.flow.suite_files.is_valid_run_dir',
+                            lambda x: x in run_dirs)
+
+        # No run dir nested below - ok:
+        for path in ('a/a/a', 'a/b'):
+            suite_files.check_nested_run_dirs(path)
+        # Run dir nested below - bad:
+        for func in (suite_files.check_nested_run_dirs, suite_files.register):
+            for path in ('a', 'a/a', 'a/c'):
+                with pytest.raises(SuiteServiceFileError) as exc:
+                    func(path)
+                assert 'Nested run directories not allowed' in str(exc.value)
+        # Run dir nested below max scan depth - not ideal but passes:
+        suite_files.check_nested_run_dirs('a/d')

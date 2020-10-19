@@ -223,6 +223,8 @@ REC_TITLE = re.compile(r"^\s*title\s*=\s*(.*)\s*$")
 
 PS_OPTS = '-wopid,args'
 
+MAX_SCAN_DEPTH = 4  # How many subdir levels down to look for valid run dirs
+
 CONTACT_FILE_EXISTS_MSG = r"""suite contact file exists: %(fname)s
 
 Suite "%(suite)s" is already running, and listening at "%(host)s:%(port)s".
@@ -345,8 +347,7 @@ def get_contact_file(reg):
 def get_flow_file(reg, suite_owner=None):
     """Return the path of a suite's flow.cylc file."""
     return os.path.join(
-        get_suite_source_dir(reg, suite_owner),
-        SuiteFiles.FLOW_FILE)
+        get_suite_source_dir(reg, suite_owner), SuiteFiles.FLOW_FILE)
 
 
 def get_suite_source_dir(reg, suite_owner=None):
@@ -481,19 +482,20 @@ def register(reg=None, source=None, redirect=False, rundir=None):
             No flow.cylc file found in source location.
             Illegal name (can look like a relative path, but not absolute).
             Another suite already has this name (unless --redirect).
+            Trying to register a suite nested inside of another.
     """
     if reg is None:
         reg = os.path.basename(os.getcwd())
 
     is_valid, message = SuiteNameValidator.validate(reg)
     if not is_valid:
-        raise SuiteServiceFileError(
-            f'invalid suite name - {message}'
-        )
+        raise SuiteServiceFileError(f'invalid suite name - {message}')
 
     if os.path.isabs(reg):
         raise SuiteServiceFileError(
-            "suite name cannot be an absolute path: %s" % reg)
+            f'suite name cannot be an absolute path: {reg}')
+
+    check_nested_run_dirs(reg)
 
     if source is not None:
         if os.path.basename(source) == SuiteFiles.FLOW_FILE:
@@ -553,14 +555,12 @@ def register(reg=None, source=None, redirect=False, rundir=None):
     if orig_source is not None and source != orig_source:
         if not redirect:
             raise SuiteServiceFileError(
-                "the name '%s' already points to %s.\nUse "
-                "--redirect to re-use an existing name and run "
-                "directory." % (reg, orig_source))
+                f"the name '{reg}' already points to {orig_source}.\nUse "
+                "--redirect to re-use an existing name and run directory.")
         LOG.warning(
-            "the name '%(reg)s' points to %(old)s.\nIt will now"
-            " be redirected to %(new)s.\nFiles in the existing %(reg)s run"
-            " directory will be overwritten.\n",
-            {'reg': reg, 'old': orig_source, 'new': source})
+            f"the name '{reg}' points to {orig_source}.\nIt will now be "
+            f"redirected to {source}.\nFiles in the existing {reg} run "
+            "directory will be overwritten.\n")
         # Remove symlink to the original suite.
         os.unlink(os.path.join(srv_d, SuiteFiles.Service.SOURCE))
 
@@ -576,7 +576,7 @@ def register(reg=None, source=None, redirect=False, rundir=None):
             source_str = source
         os.symlink(source_str, target)
 
-    print('REGISTERED %s -> %s' % (reg, source))
+    print(f'REGISTERED {reg} -> {source}')
     return reg
 
 
@@ -669,3 +669,61 @@ def _load_local_item(item, path):
             return file_.read()
     except IOError:
         return None
+
+
+def check_nested_run_dirs(reg):
+    """Disallow nested run dirs e.g. trying to register foo/bar where foo is
+    already a valid suite directory.
+
+    Args:
+        reg (str): suite name
+    """
+    exc_msg = (
+        'Nested run directories not allowed - cannot register suite name '
+        '"%s" as "%s" is already a valid run directory.')
+
+    def _check_child_dirs(path, depth_count=1):
+        for result in os.scandir(path):
+            if result.is_dir() and not result.is_symlink():
+                if is_valid_run_dir(result.path):
+                    raise SuiteServiceFileError(exc_msg % (reg, result.path))
+                if depth_count < MAX_SCAN_DEPTH:
+                    _check_child_dirs(result.path, depth_count + 1)
+
+    reg_path = os.path.normpath(reg)
+    parent_dir = os.path.dirname(reg_path)
+    while parent_dir != '':
+        if is_valid_run_dir(parent_dir):
+            raise SuiteServiceFileError(
+                exc_msg % (reg, get_cylc_run_abs_path(parent_dir)))
+        parent_dir = os.path.dirname(parent_dir)
+
+    reg_path = get_cylc_run_abs_path(reg_path)
+    if os.path.isdir(reg_path):
+        _check_child_dirs(reg_path)
+
+
+def is_valid_run_dir(path):
+    """Return True if path is a valid run directory, else False.
+
+    Args:
+        path (str): if this is a relative path, it is taken to be relative to
+            the cylc-run directory.
+    """
+    path = get_cylc_run_abs_path(path)
+    if os.path.isdir(os.path.join(path, SuiteFiles.Service.DIRNAME)):
+        return True
+    return False
+
+
+def get_cylc_run_abs_path(path):
+    """Return the absolute path under the cylc-run directory for the specified
+    relative path.
+
+    If the specified path is already absolute, just return it.
+    The path need not exist.
+    """
+    if os.path.isabs(path):
+        return path
+    cylc_run_dir = os.path.expandvars(get_platform()['run directory'])
+    return os.path.join(cylc_run_dir, path)
