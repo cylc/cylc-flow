@@ -142,6 +142,7 @@ def make_suite_run_tree(suite):
 
 
 def make_localhost_symlinks(suite):
+    """Creates symlinks for any configured symlink dirs from glbl_cfg."""
     dirs_to_symlink = get_dirs_to_symlink('localhost', suite)
     rund = get_suite_run_dir(suite)
     for key, value in dirs_to_symlink.items():
@@ -163,7 +164,7 @@ def get_dirs_to_symlink(install_target, suite):
         return dirs_to_symlink
     base_dir = symlink_conf[install_target]['run']
     if base_dir is not None:
-        dirs_to_symlink['run'] = os.path.join(base_dir, suite)
+        dirs_to_symlink['run'] = os.path.join(base_dir, 'cylc-run', suite)
     for dir_ in ['log', 'share', 'share/cycle', 'work']:
         link = symlink_conf[install_target][dir_]
         if link is None:
@@ -171,7 +172,7 @@ def get_dirs_to_symlink(install_target, suite):
         elif link == base_dir:
             continue
         elif (base_dir is None and link is not None) or link != base_dir:
-            dirs_to_symlink[dir_] = os.path.join(link, suite, dir_)
+            dirs_to_symlink[dir_] = os.path.join(link, 'cylc-run', suite, dir_)
             continue
 
     return dirs_to_symlink
@@ -179,8 +180,9 @@ def get_dirs_to_symlink(install_target, suite):
 
 def make_symlink(src, dst):
     """Makes symlinks for directories.
-    args: src - where the files are to be stored
-          dst - where the link, pointing to src, will be created.
+    Args:
+        src (str): path to where the files are to be stored
+        dst (str): path to where the link, pointing to src, will be created.
     """
     if os.path.exists(dst) and os.path.islink(
             dst) and os.path.samefile(dst, src):

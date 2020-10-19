@@ -15,14 +15,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Tests for "cylc.flow.pathutil"."""
 
+from tempfile import TemporaryDirectory
 from unittest import TestCase
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, call
 
 import pytest
 import os
 import logging
 
 from cylc.flow.pathutil import (
+    get_dirs_to_symlink,
     get_remote_suite_run_dir,
     get_remote_suite_run_job_dir,
     get_remote_suite_work_dir,
@@ -34,8 +36,8 @@ from cylc.flow.pathutil import (
     get_suite_run_config_log_dir,
     get_suite_run_share_dir,
     get_suite_run_work_dir,
-    get_suite_test_log_name,
-    make_suite_run_tree,
+    get_suite_test_log_name, make_localhost_symlinks,
+    make_suite_run_tree, make_symlink,
 )
 
 
@@ -184,6 +186,86 @@ def test_make_suite_run_tree(caplog, tmpdir, mock_glbl_cfg, subdir):
     assert (tmpdir / 'my-workflow.1' / subdir).isdir() is True
     # ... but not 2.
     assert (tmpdir / 'my-workflow.2' / subdir).isdir() is False
+
+
+@pytest.mark.parametrize(
+    'suite, install_target, mocked_glbl_cfg, output',
+    [
+        (  # basic
+            'suite1', 'install_target_1',
+            '''[symlink dirs]
+            [[install_target_1]]
+                run = $DEE
+                work = $DAH
+                log = $DUH
+                share = $DOH
+                share/cycle = $DAH''', {
+                'run': '$DEE/cylc-run/suite1',
+                'work': '$DAH/cylc-run/suite1/work',
+                'log': '$DUH/cylc-run/suite1/log',
+                'share': '$DOH/cylc-run/suite1/share',
+                'share/cycle': '$DAH/cylc-run/suite1/share/cycle'
+            }),
+        (  # remove nested run symlinks
+            'suite2', 'install_target_2',
+            '''
+        [symlink dirs]
+            [[install_target_2]]
+                run = $DEE
+                work = $DAH
+                log = $DEE
+                share = $DOH
+                share/cycle = $DAH
+
+        ''', {
+                'run': '$DEE/cylc-run/suite2',
+                'work': '$DAH/cylc-run/suite2/work',
+                'share': '$DOH/cylc-run/suite2/share',
+                'share/cycle': '$DAH/cylc-run/suite2/share/cycle'
+            }),
+        (  # remove only nested run symlinks
+            'suite3', 'install_target_3', '''
+        [symlink dirs]
+            [[install_target_3]]
+                run = $DOH
+                log = $DEE
+                share = $DEE
+        ''', {
+                'run': '$DOH/cylc-run/suite3',
+                'log': '$DEE/cylc-run/suite3/log',
+                'share': '$DEE/cylc-run/suite3/share'})
+
+    ])
+def test_get_dirs_to_symlink(
+        suite, install_target, mocked_glbl_cfg, output, mock_glbl_cfg):
+    mock_glbl_cfg('cylc.flow.pathutil.glbl_cfg', mocked_glbl_cfg)
+    dirs = get_dirs_to_symlink(install_target, suite)
+    assert dirs == output
+
+
+@patch('os.path.expandvars')
+@patch('cylc.flow.pathutil.get_suite_run_dir')
+@patch('cylc.flow.pathutil.make_symlink')
+@patch('cylc.flow.pathutil.get_dirs_to_symlink')
+def test_make_localhost_symlinks_calls_make_symlink_foreach_keyvaluedir(
+        mocked_dirs_to_symlink,
+        mocked_make_symlink,
+        mocked_get_suite_run_dir, mocked_expandvars):
+
+    mocked_dirs_to_symlink.return_value = {
+        'run': '$DOH/suite3',
+        'log': '$DEE/suite3/log',
+        'share': '$DEE/suite3/share'}
+    mocked_get_suite_run_dir.return_value = "rund"
+    mocked_expandvars.return_value = "expanded"
+
+    make_localhost_symlinks('suite')
+
+    mocked_make_symlink.assert_has_calls([
+        call('expanded', 'rund'),
+        call('expanded', 'rund/log'),
+        call('expanded', 'rund/share')
+    ])
 
 
 if __name__ == '__main__':
