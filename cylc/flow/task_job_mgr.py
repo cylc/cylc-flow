@@ -110,35 +110,35 @@ class TaskJobManager:
         Poll tasks that have timed out and/or have reached next polling time.
         """
         now = time()
-        poll_tasks = set()
+        poll_task_jobs = set()
         for itask in task_pool.get_tasks():
             if self.task_events_mgr.check_job_time(itask, now):
-                poll_tasks.add(itask)
+                poll_task_jobs.add((itask, None))
                 if itask.poll_timer.delay is not None:
                     LOG.info(
                         '[%s] -poll now, (next in %s)',
                         itask, itask.poll_timer.delay_timeout_as_str())
-        if poll_tasks:
-            self.poll_task_jobs(suite, poll_tasks)
+        if poll_task_jobs:
+            self.poll_task_jobs(suite, poll_task_jobs)
 
-    def kill_task_jobs(self, suite, itasks):
+    def kill_task_jobs(self, suite, task_jobs):
         """Kill jobs of active tasks, and hold the tasks.
 
         If items is specified, kill active tasks matching given IDs.
 
         """
-        to_kill_tasks = []
-        for itask in itasks:
+        to_kill_task_jobs = []
+        for itask, submit_num in task_jobs:
             if itask.state(*TASK_STATUSES_ACTIVE):
                 itask.state.reset(is_held=True)
-                to_kill_tasks.append(itask)
+                to_kill_task_jobs.append((itask, submit_num))
             else:
                 LOG.warning('skipping %s: task not killable' % itask.identity)
         self._run_job_cmd(
-            self.JOBS_KILL, suite, to_kill_tasks,
+            self.JOBS_KILL, suite, to_kill_task_jobs,
             self._kill_task_jobs_callback)
 
-    def poll_task_jobs(self, suite, itasks, poll_succ=True, msg=None):
+    def poll_task_jobs(self, suite, task_jobs, poll_succ=True, msg=None):
         """Poll jobs of specified tasks.
 
         Any job that is or was submitted or running can be polled, except for
@@ -150,23 +150,23 @@ class TaskJobManager:
 
         _poll_task_job_callback() executes one specific job.
         """
-        to_poll_tasks = []
+        to_poll_task_jobs = []
         pollable_statuses = {
             TASK_STATUS_SUBMITTED, TASK_STATUS_RUNNING, TASK_STATUS_FAILED
         }
         if poll_succ:
             pollable_statuses.add(TASK_STATUS_SUCCEEDED)
-        for itask in itasks:
+        for itask, submit_num in task_jobs:
             if itask.state(*pollable_statuses):
-                to_poll_tasks.append(itask)
+                to_poll_task_jobs.append((itask, submit_num))
             else:
                 LOG.debug("skipping %s: not pollable, "
                           "or skipping 'succeeded' tasks" % itask.identity)
-        if to_poll_tasks:
+        if to_poll_task_jobs:
             if msg is not None:
                 LOG.info(msg)
             self._run_job_cmd(
-                self.JOBS_POLL, suite, to_poll_tasks,
+                self.JOBS_POLL, suite, to_poll_task_jobs,
                 self._poll_task_jobs_callback)
 
     def prep_submit_task_jobs(self, suite, itasks, check_syntax=True):
@@ -662,24 +662,29 @@ class TaskJobManager:
                 self.task_events_mgr.FLAG_POLLED)
         log_task_job_activity(ctx, suite, itask.point, itask.tdef.name)
 
-    def _run_job_cmd(self, cmd_key, suite, itasks, callback):
+    def _run_job_cmd(self, cmd_key, suite, task_jobs, callback):
         """Run job commands, e.g. poll, kill, etc.
 
-        Group itasks with their platform_name, host and owner.
+        Group jobs by their platform_name.
         Put a job command for each group to the multiprocess pool.
-        """
-        if not itasks:
-            return
-        # sort itasks into lists based upon where they were run.
-        auth_itasks = {}
-        for itask in itasks:
-            platform_n = itask.platform['name']
-            if platform_n not in auth_itasks:
-                auth_itasks[platform_n] = []
-            auth_itasks[platform_n].append(itask)
 
-        # Go through each list of itasks and carry out commands as required.
-        for platform_n, itasks in sorted(auth_itasks.items()):
+        Where task_jobs is a list of the form
+        `[(itask: TaskProxy, submit_num: int), ...]` where `submit_num` will
+        default to the most recent job if not specified.
+        """
+        if not task_jobs:
+            return
+        # sort jobs into lists based upon where they were run.
+        job_platforms = {}
+        for itask, submit_num in task_jobs:
+            platform_n = itask.platform['name']
+            if platform_n not in job_platforms:
+                job_platforms[platform_n] = []
+            job_platforms[platform_n].append((itask, submit_num))
+
+        # Go through each list of jobs and carry out commands as required.
+        itasks = []
+        for platform_n, task_jobs in sorted(job_platforms.items()):
             platform = get_platform(platform_n)
             if is_remote_platform(platform):
                 remote_mode = True
@@ -694,9 +699,15 @@ class TaskJobManager:
             job_log_dirs = []
             if remote_mode:
                 cmd = construct_platform_ssh_cmd(cmd, platform)
-            for itask in sorted(itasks, key=lambda itask: itask.identity):
+            for itask, submit_num in sorted(
+                task_jobs, key=lambda item: item[0].identity
+            ):
+                itasks.append(itask)
                 job_log_dirs.append(get_task_job_id(
-                    itask.point, itask.tdef.name, itask.submit_num))
+                    itask.point,
+                    itask.tdef.name,
+                    submit_num or itask.submit_num
+                ))
             cmd += job_log_dirs
             self.proc_pool.put_command(
                 SubProcContext(cmd_key, cmd), callback, [suite, itasks])

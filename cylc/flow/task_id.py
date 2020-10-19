@@ -22,6 +22,58 @@ from cylc.flow.cycling.loader import get_point, standardise_point_string
 from cylc.flow.exceptions import PointParsingError
 
 
+SEP_PATTERN = r'[^\.\:\#\/]+'
+
+TASK_GLOB_DOT = re.compile(
+    rf'''
+        ^
+        (?P<namespace>{SEP_PATTERN})
+        (?:\.(?P<point>{SEP_PATTERN}))?
+        (?:\:(?P<state>{SEP_PATTERN}))?
+        (?:\#(?P<job>{SEP_PATTERN}))?
+        $
+    ''',
+    re.X
+)
+TASK_GLOB_PATH = re.compile(
+    rf'''
+        ^
+        (?P<point>{SEP_PATTERN})
+        \/
+        (?P<namespace>{SEP_PATTERN})
+        (?:\:(?P<state>{SEP_PATTERN}))?
+        (?:\#(?P<job>{SEP_PATTERN}))?
+        $
+    ''',
+    re.X
+)
+
+
+def parse_reference(string):
+    """Parse a cycle/namespace/state/job reference string.
+
+    Supports both formats:
+
+    * namespace[.cycle][:status][#job]
+    * cycle[/namespace][:status][#job]
+
+    Returns:
+        dict - Dictionary containing the keys:
+
+        * point
+        * namespace
+        * state
+        * job
+
+    """
+    match = TASK_GLOB_DOT.match(string)
+    if match:
+        return match.groupdict()
+    match = TASK_GLOB_PATH.match(string)
+    if match:
+        return match.groupdict()
+
+
 class TaskID:
     """Task ID utilities."""
 

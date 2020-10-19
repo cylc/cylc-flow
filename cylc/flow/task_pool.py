@@ -35,7 +35,10 @@ from cylc.flow.task_action_timer import TaskActionTimer, TimerFlags
 from cylc.flow.task_events_mgr import (
     CustomTaskEventHandlerContext, TaskEventMailContext,
     TaskJobLogsRetrieveContext)
-from cylc.flow.task_id import TaskID
+from cylc.flow.task_id import (
+    TaskID,
+    parse_reference
+)
 from cylc.flow.task_job_logs import get_task_job_id
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_state import (
@@ -1014,14 +1017,14 @@ class TaskPool:
     def hold_tasks(self, items):
         """Hold tasks with IDs matching any item in "ids"."""
         itasks, bad_items = self.filter_task_proxies(items)
-        for itask in itasks:
+        for itask, _ in itasks:
             itask.state.reset(is_held=True)
         return len(bad_items)
 
     def release_tasks(self, items):
         """Release held tasks with IDs matching any item in "ids"."""
         itasks, bad_items = self.filter_task_proxies(items)
-        for itask in itasks:
+        for itask, _ in itasks:
             itask.state.reset(is_held=False)
         return len(bad_items)
 
@@ -1087,6 +1090,7 @@ class TaskPool:
                 # Update downstream prerequisites directly.
                 if is_abs:
                     tasks, _ = self.filter_task_proxies([c_name])
+                    tasks = [item[0] for item in tasks]
                 else:
                     tasks = [c_task]
                 for t in tasks:
@@ -1243,7 +1247,9 @@ class TaskPool:
         n_warnings = 0
         task_items = {}
         for item in items:
-            point_str, name_str = self._parse_task_item(item)[:2]
+            tokens = parse_reference(item)
+            point_str = tokens['cycle']
+            name_str = tokens['namespace']
             if point_str is None:
                 LOG.warning(
                     "%s: task to spawn must have a cycle point" % (item))
@@ -1285,7 +1291,7 @@ class TaskPool:
     def remove_tasks(self, items):
         """Remove tasks from the pool."""
         itasks, bad_items = self.filter_task_proxies(items)
-        for itask in itasks:
+        for itask, _ in itasks:
             self.remove(itask, 'request')
         return len(bad_items)
 
@@ -1380,21 +1386,36 @@ class TaskPool:
     def filter_task_proxies(self, items):
         """Return task proxies that match names, points, states in items.
 
-        Return (itasks, bad_items).
-        In the new form, the arguments should look like:
-        items -- a list of strings for matching task proxies, each with
-                 the general form name[.point][:state] or [point/]name[:state]
-                 where name is a glob-like pattern for matching a task name or
-                 a family name.
+        Args:
+            items (list):
+                A list of strings for matching task proxies, each with the
+                general form name[.point][:state][#job] or
+                [point/]name[:state][#job] where name and point are glob-like
+                pattern for matching a task name or a family name and cycle
+                points respectively.
+
+        Returns:
+            tuple: (task_jobs, bad_items):
+
+            task_jobs (list):
+                [(itask: TaskProxy, submit_num: int), ...]
+            bad_items (list):
+                [str, ...]
 
         """
-        itasks = []
+        task_jobs = []
         bad_items = []
         if not items:
-            itasks += self.get_all_tasks()
+            task_jobs += self.get_all_tasks()
         else:
             for item in items:
-                point_str, name_str, status = self._parse_task_item(item)
+                tokens = parse_reference(item)
+                point_str = tokens['point']
+                name_str = tokens['namespace']
+                status = tokens['state']
+                job = tokens['job']
+                if job:
+                    job = int(job)
                 if point_str is None:
                     point_str = "*"
                 else:
@@ -1410,12 +1431,12 @@ class TaskPool:
                             (not status or itask.state.status == status) and
                             (fnmatchcase(itask.tdef.name, name_str) or
                              any(fnmatchcase(ns, name_str) for ns in nss))):
-                        itasks.append(itask)
+                        task_jobs.append((itask, job))
                         tasks_found = True
                 if not tasks_found:
                     LOG.warning(self.ERR_PREFIX_TASKID_MATCH + item)
                     bad_items.append(item)
-        return itasks, bad_items
+        return task_jobs, bad_items
 
     def stop_flow(self, flow_label):
         """Stop a particular flow from spawning any further."""
@@ -1454,18 +1475,3 @@ class TaskPool:
             itask.flow_label = self.flow_label_mgr.unmerge_labels(
                 to_prune, itask.flow_label)
         self.flow_label_mgr.make_avail(to_prune)
-
-    @staticmethod
-    def _parse_task_item(item):
-        """Parse point/name:state or name.point:state syntax."""
-        if ":" in item:
-            head, state_str = item.rsplit(":", 1)
-        else:
-            head, state_str = (item, None)
-        if "/" in head:
-            point_str, name_str = head.split("/", 1)
-        elif "." in head:
-            name_str, point_str = head.split(".", 1)
-        else:
-            name_str, point_str = (head, None)
-        return (point_str, name_str, state_str)

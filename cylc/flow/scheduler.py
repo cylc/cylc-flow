@@ -930,20 +930,20 @@ class Scheduler:
         """
         if self.config.run_mode('simulation'):
             return
-        itasks, bad_items = self.pool.filter_task_proxies(items)
-        self.task_job_mgr.poll_task_jobs(self.suite, itasks,
+        task_jobs, bad_items = self.pool.filter_task_proxies(items)
+        self.task_job_mgr.poll_task_jobs(self.suite, task_jobs,
                                          poll_succ=poll_succ)
         return len(bad_items)
 
     def command_kill_tasks(self, items=None):
         """Kill all tasks or a task/family if options are provided."""
-        itasks, bad_items = self.pool.filter_task_proxies(items)
+        task_jobs, bad_items = self.pool.filter_task_proxies(items)
         if self.config.run_mode('simulation'):
-            for itask in itasks:
+            for itask in task_jobs:
                 if itask.state(*TASK_STATUSES_ACTIVE):
                     itask.state.reset(TASK_STATUS_FAILED)
             return len(bad_items)
-        self.task_job_mgr.kill_task_jobs(self.suite, itasks)
+        self.task_job_mgr.kill_task_jobs(self.suite, task_jobs)
         return len(bad_items)
 
     def command_hold(self, tasks=None, time=None):

@@ -1263,7 +1263,39 @@ class NamespaceName(String):
 class NamespaceIDGlob(String):
     """A glob search for an active task or family.
 
-    Can use the wildcard character (`*`), e.g `foo*` might match `foot`.
+    Examples:
+
+    * `foo.*` the task named `foo` in any cycle.
+    * `*.1` all tasks in cycle `1`.
+    * `*.*:failed` all failed tasks.
+
+    Can use either of these formats:
+
+    * `namespace[.cycle][:status]`
+    * `point[/namespace][:status]`
+
+    Where both `namespace` and `cycle` can be globs.
+
+    """
+
+
+class NamespaceJobGlob(String):
+    """A glob search for jobs within namespaces and cycles.
+
+    Examples:
+
+    * `foo.*` the task named `foo` in any cycle.
+    * `*.1` all tasks in cycle `1`.
+    * `*.*:failed` all failed tasks.
+    * `foo.1#1` the first job submitted by the task `foo` in cycle `1`.
+
+    Can use either of these formats:
+
+    * `namespace[.cycle][:status][#job]`
+    * `point[/namespace][:status][#job]`
+
+    Where both `namespace` and `cycle` can be globs.
+
     """
 
 
@@ -1622,6 +1654,42 @@ class ExtTrigger(Mutation):
     result = GenericScalar()
 
 
+class JobMutation:
+    class Arguments:
+        workflows = List(
+            WorkflowID,
+            required=True
+        )
+        tasks = List(
+            NamespaceJobGlob,
+            required=True
+        )
+
+    result = GenericScalar()
+
+
+class Kill(Mutation, JobMutation):
+    class Meta:
+        description = sstrip('''
+            Kill jobs of active tasks and update their statuses accordingly.
+        ''')
+        resolver = partial(mutator, command='kill_tasks')
+
+
+class Poll(Mutation, JobMutation):
+    class Meta:
+        description = sstrip('''
+            Poll (query) task jobs to verify and update their statuses.
+        ''')
+        resolver = partial(mutator, command='poll_tasks')
+
+    class Arguments(JobMutation.Arguments):
+        poll_succeeded = Boolean(
+            description='Allow polling of succeeded tasks.',
+            default_value=False
+        )
+
+
 class TaskMutation:
     class Arguments:
         workflows = List(
@@ -1634,29 +1702,6 @@ class TaskMutation:
         )
 
     result = GenericScalar()
-
-
-class Kill(Mutation, TaskMutation):
-    # TODO: This should be a job mutation?
-    class Meta:
-        description = sstrip('''
-            Kill jobs of active tasks and update their statuses accordingly.
-        ''')
-        resolver = partial(mutator, command='kill_tasks')
-
-
-class Poll(Mutation, TaskMutation):
-    class Meta:
-        description = sstrip('''
-            Poll (query) task jobs to verify and update their statuses.
-        ''')
-        resolver = partial(mutator, command='poll_tasks')
-
-    class Arguments(TaskMutation.Arguments):
-        poll_succeeded = Boolean(
-            description='Allow polling of succeeded tasks.',
-            default_value=False
-        )
 
 
 class Remove(Mutation, TaskMutation):
