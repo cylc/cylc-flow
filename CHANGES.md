@@ -85,6 +85,11 @@ hierarchy and ability to set site config directory.
 
 ### Fixes
 
+[#3879](https://github.com/cylc/cylc-flow/pull/3879) - Removed Google
+Groups e-mail from pip packaging metadata. Users browsing PYPI will have
+to visit our website to find out how to reach us (we are using Discourse
+and it does not offer an e-mail address).
+
 [#3859](https://github.com/cylc/cylc-flow/pull/3859) - Fixes the query of
 broadcast states to retrieve only the data for the requested ID, instead
 of returning all the broadcast states in the database.
