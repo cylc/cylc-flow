@@ -232,10 +232,7 @@ class TaskPool:
         self.runahead_pool[itask.point][itask.identity] = itask
         self.rhpool_changed = True
 
-        # Register pool node in data-store in external ID format
-        self.data_store_mgr.add_runahead_node(itask.tdef.name, itask.point)
-
-        # add row to "task_states" table & data-store
+        # add row to "task_states" table
         if is_new:
             # add row to "task_states" table:
             self.suite_db_mgr.put_insert_task_states(itask, {
@@ -246,7 +243,6 @@ class TaskPool:
             # add row to "task_outputs" table:
             if itask.state.outputs.has_custom_triggers():
                 self.suite_db_mgr.put_insert_task_outputs(itask)
-            # create data-store task graph window
         return itask
 
     def release_runahead_tasks(self):
@@ -549,9 +545,15 @@ class TaskPool:
         self.pool_changed = True
         self.pool_changes.append(itask)
         LOG.debug("[%s] -released to the task pool", itask)
+
+        # The following two could be called in separate places,
+        # so haven't merged/removed-one.
+        # Register pool node reference data-store with ID_DELIM format
+        self.data_store_mgr.add_pool_node(itask.tdef.name, itask.point)
         # Create new data-store n-distance graph window about this task
         self.data_store_mgr.increment_graph_window(
             itask.tdef.name, itask.point, itask.flow_label)
+
         del self.runahead_pool[itask.point][itask.identity]
         if not self.runahead_pool[itask.point]:
             del self.runahead_pool[itask.point]
@@ -613,7 +615,7 @@ class TaskPool:
 
         # Notify the data-store manager of their removal
         # (the manager uses window boundary tracking for pruning).
-        self.data_store_mgr.remove_active_node(itask.tdef.name, itask.point)
+        self.data_store_mgr.remove_pool_node(itask.tdef.name, itask.point)
         # Event-driven final update of task_states table.
         # TODO: same for datastore (still updated by scheduler loop)
         self.suite_db_mgr.put_update_task_state(itask)

@@ -34,18 +34,18 @@ includes workflow, task, and family definition objects.
 
 The cycle point nodes/edges (i.e. task/family proxies) generation is triggered
 individually on transition from staging to active task pool. Each active task
-is generated along with any children and parents out recursively out to a
+is generated along with any children and parents recursively out to a
 specified maximum graph distance (n_edge_distance), that can be externally
 altered (via API). Collectively this forms the N-Distance-Window on the
 workflow graph.
 
 Pruning of data-store elements is done using both the collection/set of nodes
-generated through the associated graph paths of the the active nodes and the
+generated through the associated graph paths of the active nodes and the
 tracking of the boundary nodes (n_edge_distance+1) of those active nodes.
-Once a boundary node becomes active the active node is flagged for prunning.
-Set operations are used to do a diff between the nodes of active paths
-(paths whose node is in the active task pool) and the nodes of flagged paths
-(whose boundary node(s) have become active).
+Once active, these boundary nodes act as the prune trigger for their
+original/generator node(s). Set operations are used to do a diff between the
+nodes of active paths (paths whose node is in the active task pool) and the
+nodes of flagged paths (whose boundary node(s) have become active).
 
 Updates are triggered by changes in the task pool;
 migrations of task instances from runahead to live pool, and
@@ -73,11 +73,9 @@ from cylc.flow.network import API
 from cylc.flow.suite_status import get_suite_status
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_job_logs import JOB_LOG_OPTS
-from cylc.flow.task_proxy import (
-    generate_graph_children, generate_graph_parents
-)
 from cylc.flow.task_state import TASK_STATUS_WAITING
 from cylc.flow.task_state_prop import extract_group_state
+from cylc.flow.taskdef import generate_graph_children, generate_graph_parents
 from cylc.flow.wallclock import (
     TIME_ZONE_LOCAL_INFO,
     TIME_ZONE_UTC_INFO,
@@ -558,7 +556,7 @@ class DataStoreMgr:
                 Graph distance from active/origin node.
             active_id (str):
                 Active/origin node id.
-            descendent (bool):
+            descendant (bool):
                 Is the current node a direct descendent of the active/origin.
 
         Returns:
@@ -573,7 +571,7 @@ class DataStoreMgr:
             active_id = s_id
 
         # Setup and check if active node is another's boundary node
-        # to flag it's paths for pruning.
+        # to flag its paths for pruning.
         if edge_distance == 0:
             self.n_window_edges[active_id] = set()
             self.n_window_boundary_nodes[active_id] = {}
@@ -586,18 +584,17 @@ class DataStoreMgr:
 
         # This part is vital to constructing a set of boundary nodes
         # associated with the current Active node.
-        graph_children = generate_graph_children(
-            self.schd.config.get_taskdef(name), point)
-        if (
-                edge_distance > self.n_edge_distance or
-                not any(graph_children.values())
-        ):
+        if edge_distance > self.n_edge_distance:
             if descendant or edge_distance == 0:
                 self.n_window_boundary_nodes[
                     active_id].setdefault(edge_distance, set()).add(s_id)
-
-        if edge_distance > self.n_edge_distance:
             return
+        graph_children = generate_graph_children(
+            self.schd.config.get_taskdef(name), point)
+        if not any(graph_children.values()):
+            if descendant or edge_distance == 0:
+                self.n_window_boundary_nodes[
+                    active_id].setdefault(edge_distance, set()).add(s_id)
 
         self.n_window_nodes[active_id].add(s_id)
         # Generate task node
@@ -607,15 +604,15 @@ class DataStoreMgr:
 
         # TODO: xtrigger is suite_state edges too
         # Reference set for workflow relations
-        for _, items in graph_children.items():
+        for items in graph_children.values():
             if edge_distance == 1:
                 descendant = True
             self._expand_graph_window(
                 s_id, s_node, items, active_id, flow_label, edge_distance,
                 descendant, False)
 
-        for _, items in generate_graph_parents(
-                self.schd.config.get_taskdef(name), point).items():
+        for items in generate_graph_parents(
+                self.schd.config.get_taskdef(name), point).values():
             self._expand_graph_window(
                 s_id, s_node, items, active_id, flow_label, edge_distance,
                 False, True)
@@ -626,7 +623,7 @@ class DataStoreMgr:
             if not levels:
                 self.n_window_boundary_nodes[active_id][0] = {active_id}
                 levels = (0,)
-            # Only trigger pruning for futherest set of boundary nodes
+            # Only trigger pruning for futhest set of boundary nodes
             for tp_id in self.n_window_boundary_nodes[active_id][max(levels)]:
                 self.prune_trigger_nodes.setdefault(
                     tp_id, set()).add(active_id)
@@ -676,8 +673,8 @@ class DataStoreMgr:
                 t_name, t_point, flow_label,
                 copy(edge_distance), active_id, descendant)
 
-    def remove_active_node(self, name, point):
-        """Flag removal of this active graph window."""
+    def remove_pool_node(self, name, point):
+        """Remove ID reference and flag isolate node/branch for pruning."""
         tp_id = f'{self.workflow_id}{ID_DELIM}{point}{ID_DELIM}{name}'
         if tp_id in self.all_task_pool:
             self.all_task_pool.remove(tp_id)
@@ -690,8 +687,8 @@ class DataStoreMgr:
             del self.prune_trigger_nodes[tp_id]
             self.prune_pending = True
 
-    def add_runahead_node(self, name, point):
-        """Flag removal of this active graph window."""
+    def add_pool_node(self, name, point):
+        """Add external ID reference for internal task pool node."""
         tp_id = f'{self.workflow_id}{ID_DELIM}{point}{ID_DELIM}{name}'
         self.all_task_pool.add(tp_id)
 
@@ -699,8 +696,14 @@ class DataStoreMgr:
         """Create task-point element populated with static data.
 
         Args:
-            tp_id (str): data-store task proxy ID.
-            itask (cylc.flow.TaskProxy): Task proxy object.
+            tp_id (str):
+                data-store task proxy ID.
+            name (str):
+                Task name.
+            point (cylc.flow.cycling.PointBase):
+                PointBase derived object.
+            flow_label (str):
+                Flow label used to distinguish multiple runs.
 
         Returns:
 
@@ -848,31 +851,27 @@ class DataStoreMgr:
             self.updates_pending = True
 
     def prune_data_store(self):
-        """Remove old nodes and edges by cycle point.
+        """Remove flagged nodes and edges not in the set of active paths."""
 
-        Args:
-            point_strings (iterable):
-                Iterable of valid cycle point strings.
-
-        """
         self.prune_pending = False
+
         if not self.prune_flagged_nodes:
             return
 
-        # Gather nodes to prune via a diff of nodes in the dependency paths
-        # of flagged boundary nodes against all other paths.
-        in_paths = [
+        in_paths_nodes = set().union(*[
             v
             for k, v in self.n_window_nodes.items()
             if k in self.all_task_pool
-        ]
-        #    if k in self.all_task_pool
-        out_paths = [
+        ])
+        out_paths_nodes = set().union(*[
             v
             for k, v in self.n_window_nodes.items()
             if k in self.prune_flagged_nodes
-        ]
-        node_ids = set().union(*out_paths).difference(*in_paths)
+        ])
+        # Trim out any nodes in the runahead pool
+        out_paths_nodes.difference(self.all_task_pool)
+        # Prune only nodes not in the paths of active nodes
+        node_ids = out_paths_nodes.difference(in_paths_nodes)
         # Absolute triggers may be present in task pool, so recheck.
         # Clear the rest.
         self.prune_flagged_nodes.intersection_update(self.all_task_pool)
@@ -880,7 +879,7 @@ class DataStoreMgr:
         tp_data = self.data[self.workflow_id][TASK_PROXIES]
         tp_added = self.added[TASK_PROXIES]
         parent_ids = set()
-        for tp_id in node_ids:
+        for tp_id in list(node_ids):
             if tp_id in self.n_window_nodes:
                 del self.n_window_nodes[tp_id]
             if tp_id in self.n_window_edges:
@@ -890,6 +889,7 @@ class DataStoreMgr:
             elif tp_id in tp_added:
                 node = tp_added[tp_id]
             else:
+                node_ids.remove(tp_id)
                 continue
             self.deltas[TASK_PROXIES].pruned.append(tp_id)
             self.schd.job_pool.remove_task_jobs(tp_id)
@@ -899,12 +899,12 @@ class DataStoreMgr:
         prune_ids = set()
         checked_ids = set()
         while parent_ids:
-            for fp_id in parent_ids:
-                self._family_ascent_point_prune(
-                    fp_id, node_ids, parent_ids, checked_ids, prune_ids)
-                break
+            self._family_ascent_point_prune(
+                next(iter(parent_ids)),
+                node_ids, parent_ids, checked_ids, prune_ids)
         if prune_ids:
             self.deltas[FAMILY_PROXIES].pruned.extend(prune_ids)
+        if node_ids:
             self.updates_pending = True
 
     def _family_ascent_point_prune(
@@ -916,7 +916,8 @@ class DataStoreMgr:
 
         """
         fp_data = self.data[self.workflow_id][FAMILY_PROXIES]
-        if fp_id in fp_data and fp_id not in self.updated[FAMILY_PROXIES]:
+        fp_updated = self.updated[FAMILY_PROXIES]
+        if fp_id in fp_data:
             fam_node = fp_data[fp_id]
             # Gather child families, then check/update recursively
             child_fam_nodes = [
@@ -927,16 +928,21 @@ class DataStoreMgr:
             for child_id in child_fam_nodes:
                 self._family_ascent_point_prune(
                     child_id, node_ids, parent_ids, checked_ids, prune_ids)
-            if [
-                    child_id
-                    for child_id in fam_node.child_tasks
-                    if child_id not in node_ids
-            ] or [
-                    child_id
-                    for child_id in fam_node.child_families
-                    if child_id not in prune_ids
-            ]:
-                self.state_update_families.add(fp_id)
+            child_tasks = set(fam_node.child_tasks)
+            child_families = set(fam_node.child_families)
+            # Add in any new children
+            if fp_id in fp_updated:
+                if fp_updated[fp_id].child_tasks:
+                    child_tasks.update(fp_updated[fp_id].child_tasks)
+                if fp_updated[fp_id].child_families:
+                    child_families.update(fp_updated[fp_id].child_families)
+            # if any child tasks or families are active, don't prune.
+            if (
+                    child_tasks.difference(node_ids)
+                    or child_families.difference(prune_ids)
+            ):
+                if fp_id in prune_ids:
+                    self.state_update_families.add(fp_id)
             else:
                 if fam_node.first_parent:
                     parent_ids.add(fam_node.first_parent)
@@ -950,7 +956,7 @@ class DataStoreMgr:
         # If no tasks are given update all
         if updated_nodes is None:
             updated_nodes = self.schd.pool.get_all_tasks()
-        elif not updated_nodes:
+        if not updated_nodes:
             return
         self.update_task_proxies(updated_nodes)
         self.updates_pending = True
@@ -1063,9 +1069,8 @@ class DataStoreMgr:
         """
         self.updated_state_families.clear()
         while self.state_update_families:
-            for fam_id in self.state_update_families:
-                self._family_ascent_point_update(fam_id)
-                break
+            self._family_ascent_point_update(
+                next(iter(self.state_update_families)))
 
     def _family_ascent_point_update(self, fp_id):
         """Updates the given family and children recursively.
@@ -1157,7 +1162,7 @@ class DataStoreMgr:
             self.state_update_families.add(tp_node.first_parent)
 
     def set_graph_window_extent(self, n_edge_distance):
-        """Set the what the max edge distance will change to.
+        """Set what the max edge distance will change to.
 
         Args:
             n_edge_distance (int):
