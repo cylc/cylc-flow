@@ -363,6 +363,14 @@ class TaskEventsManager():
         completed_trigger = itask.state.outputs.set_msg_trg_completion(
             message=msg0, is_completed=True)
 
+        # Check the `started` event has not been missed e.g. due to
+        # polling delay
+        if (message not in [TASK_OUTPUT_SUBMITTED, self.EVENT_SUBMIT_FAILED,
+                            TASK_OUTPUT_STARTED]
+                and not itask.state.outputs.is_completed(TASK_OUTPUT_STARTED)):
+            self.setup_event_handlers(itask, 'started', 'job started')
+            self.spawn_func(itask, TASK_OUTPUT_STARTED)
+
         if message == TASK_OUTPUT_STARTED:
             if (
                     flag == self.FLAG_RECEIVED
@@ -800,7 +808,7 @@ class TaskEventsManager():
         """Helper for process_message, handle a started message."""
         if itask.job_vacated:
             itask.job_vacated = False
-            LOG.warning("[%s] -Vacated job restarted", itask)
+            LOG.warning(f"[{itask}] -Vacated job restarted")
         self.pflag = True
         job_d = get_task_job_id(itask.point, itask.tdef.name, itask.submit_num)
         self.job_pool.set_job_time(job_d, 'started', event_time)
@@ -835,14 +843,14 @@ class TaskEventsManager():
         if not itask.state.outputs.all_completed():
             msg = ""
             for output in itask.state.outputs.get_not_completed():
-                if output not in [TASK_OUTPUT_EXPIRED,
-                                  TASK_OUTPUT_SUBMIT_FAILED,
-                                  TASK_OUTPUT_FAILED]:
+                if output not in [
+                        TASK_OUTPUT_EXPIRED, TASK_OUTPUT_SUBMIT_FAILED,
+                        TASK_OUTPUT_FAILED, TASK_OUTPUT_STARTED]:
                     msg += "\n  " + output
             if msg:
                 LOG.info(
-                    "[%s] -Succeeded with outputs not completed: %s",
-                    itask, msg)
+                    f"[{itask}] -Succeeded with outputs not completed: {msg}"
+                )
         if itask.state.reset(TASK_STATUS_SUCCEEDED):
             self.setup_event_handlers(itask, "succeeded", "job succeeded")
         self._reset_job_timers(itask)
