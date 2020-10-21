@@ -2,8 +2,6 @@
 # in cylc/flow/cfgspec/suite.py.
 
 [cylc]
-    [[dummy mode]]
-    [[simulation mode]]
     [[events]]
         reset timer = 10
         reset inactivity timer = 15
@@ -16,14 +14,7 @@
         external-trigger = cat("meow available") # deprecated name
 [runtime]
     [[foo, cat, dog]]
-        [[[simulation mode]]]
-            script = "echo script" # deprecate
-        [[[dummy mode]]]
-            script = "echo script" # deprecate
-        [[[enable resurrection]]]
         [[[suite state polling]]]
             template = ""
         [[[events]]]
             reset timer = 20
-[visualization]
-    enable live graph movie = True # obsolete

@@ -29,12 +29,6 @@ TEST_NAME=${TEST_NAME_BASE}-cmp
 cylc validate -v "${SUITE_NAME}" 2>&1 \
     | sed  -n -e 's/^WARNING - \( \* (.*$\)/\1/p' > 'val.out'
 cmp_ok val.out <<__END__
- * (6.1.3) [visualization][enable live graph movie] - DELETED (OBSOLETE)
- * (7.2.2) [cylc][dummy mode] - DELETED (OBSOLETE)
- * (7.2.2) [cylc][simulation mode] - DELETED (OBSOLETE)
- * (7.2.2) [runtime][foo, cat, dog][dummy mode] - DELETED (OBSOLETE)
- * (7.2.2) [runtime][foo, cat, dog][simulation mode] - DELETED (OBSOLETE)
- * (7.6.0) [runtime][foo, cat, dog][enable resurrection] - DELETED (OBSOLETE)
  * (7.8.0) [runtime][foo, cat, dog][suite state polling][template] - DELETED (OBSOLETE)
  * (7.8.1) [cylc][events][reset timer] - DELETED (OBSOLETE)
  * (7.8.1) [cylc][events][reset inactivity timer] - DELETED (OBSOLETE)
