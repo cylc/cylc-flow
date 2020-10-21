@@ -223,7 +223,7 @@ with Conf(
 
         with Conf('parameters', desc='''
             Define parameter values here for use in expanding
-            :ref:`parameterized tasks <Parameterized Tasks Label>`.
+            :ref:`parameterized tasks <User Guide Param>`.
         '''):
             Conf('<parameter>', VDR.V_PARAMETER_LIST, desc='''
                 Examples:
@@ -543,7 +543,7 @@ with Conf(
             The suite dependency graph is defined under this section.  You can
             plot the dependency graph as you work on it, with ``cylc graph``
             or by right clicking on the suite in the db viewer.  See also
-            :ref:`ConfiguringScheduling`.
+            :ref:`User Guide Scheduling`.
         '''):
             Conf('<recurrence>', VDR.V_STRING, desc='''
                 The recurrence defines the sequence of cycle points
@@ -562,7 +562,7 @@ with Conf(
                 how multiple graphs combine.
 
                 The value should be a dependency graph the given recurrence.
-                Syntax examples follow; see also :ref:`ConfiguringScheduling`
+                Syntax examples follow; see also :ref:`User Guide Scheduling`
                 and :ref:`TriggerTypes`.
 
                 Example Graph Strings:
@@ -613,7 +613,7 @@ with Conf(
         in the tasks of the suite. Order of precedence is determined by the C3
         linearization algorithm as used to find the *method resolution order*
         in Python language class hierarchies. For details and examples see
-        :ref:`NIORP`.
+        :ref:`User Guide Runtime`.
     '''):
         with Conf('<namespace>', desc='''
             A namespace (i.e. task or family name) or a comma-separated list
@@ -1221,7 +1221,7 @@ with Conf(
                     :ref:`TaskExecutionEnvironment`.
 
                     You can also specify job environment templates here for
-                    :ref:`parameterized tasks <Parameterized Tasks Label>`.
+                    :ref:`parameterized tasks <User Guide Param>`.
             '''):
                 Conf('<variable>', VDR.V_STRING, desc='''
                     The order of definition is
@@ -1248,7 +1248,7 @@ with Conf(
                     For parameter environment templates, use Python string
                     templates for parameter substitution. This is only
                     relevant for
-                    :ref:`parameterized tasks <Parameterized Tasks Label>`.
+                    :ref:`parameterized tasks <User Guide Param>`.
                     The job script will export the named variables specified
                     here (in addition to the standard ``CYLC_TASK_PARAM_<key>``
                     variables), with the template strings substituted with

@@ -645,7 +645,7 @@ class CylcConfigValidator(ParsecValidator):
                 '1..5..2': 'The same as 1, 3, 5.',
                 '1..5..2, 8': 'Range and integers can be mixed.',
             },
-            [('ref', 'Parameterized Tasks Label')]
+            [('ref', 'User Guide Param')]
         ),
         V_XTRIGGER: (
             'xtrigger function signature',
