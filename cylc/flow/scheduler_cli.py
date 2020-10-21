@@ -151,7 +151,9 @@ def get_option_parser(is_restart, add_std_opts=False):
             help="Ignore the stop cycle point in the suite run database.",
             action="store_true", dest="ignore_stopcp")
 
-        parser.set_defaults(icp=None, startcp=None, warm=None)
+        parser.set_defaults(
+            icp=None, startcp=None, warm=None, ignore_stopcp=None
+        )
     else:
         parser.add_option(
             "-w", "--warm",

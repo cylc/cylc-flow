@@ -482,15 +482,7 @@ class Scheduler:
                 self.pool.set_stop_task(self.restored_stop_task_id)
         else:
             self.load_tasks_for_run()
-
-        # Get stop after cycle point from config first, then options so that
-        # Options over-ride config.
-        if 'stop after cycle point' in self.config.cfg['scheduling']:
-            self.pool.set_stop_point(get_point(
-                self.config.cfg['scheduling']['stop after cycle point']
-            ))
-        if self.options.stopcp:
-            self.pool.set_stop_point(get_point(self.options.stopcp))
+        self.process_cylc_stop_point()
         self.profiler.log_memory("scheduler.py: after load_tasks")
 
         self.suite_db_mgr.put_suite_params(self)
@@ -1878,3 +1870,32 @@ class Scheduler:
         """Return a named [cylc][[events]] configuration."""
         return self.suite_event_handler.get_events_conf(
             self.config, key, default)
+
+    def process_cylc_stop_point(self):
+        """
+        Set stop point.
+
+        In priority order stop cyclepoint (``stopcp``) is set:
+        * From the final point ff ``cylc restart --ignore-stop-cycle-point``.
+        * From the command line (``cylc <run/restart> --stop-point``).
+        * From the database.
+        * From the flow.cylc file (``[scheduler]stop after cycle point``).
+        """
+        stoppoint = None
+
+        if self.is_restart and self.options.ignore_stopcp:
+            stoppoint = self.config.final_point
+        elif self.options.stopcp:
+            stoppoint = self.options.stopcp
+        # Tests whether pool has stopcp from database on restart.
+        elif (
+            self.pool.stop_point and
+            self.pool.stop_point != self.config.final_point
+        ):
+            stoppoint = self.pool.stop_point
+        elif 'stop after cycle point' in self.config.cfg['scheduling']:
+            stoppoint = self.config.cfg['scheduling']['stop after cycle point']
+
+        if stoppoint is not None:
+            self.options.stopcp = str(stoppoint)
+            self.pool.set_stop_point(get_point(self.options.stopcp))
