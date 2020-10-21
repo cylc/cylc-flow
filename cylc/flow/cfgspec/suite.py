@@ -383,6 +383,18 @@ with Conf(
             shut down once all tasks have passed this point. If this item
             is provided you can override it on the command line.
         ''')
+        Conf('stop after cycle point', VDR.V_CYCLE_POINT, desc='''
+            Set stop point. Shut down after all tasks have PASSED
+            this cycle point. Will be over-ridden by command line
+            ``--stop-cycle-point=POINT``
+
+            .. note:
+
+                Not to be confused with ``final cycle point``: There can be
+                more graph beyond this point, but you are choosing not to run
+                that part of the graph.
+
+        ''')
         Conf('cycling mode', VDR.V_STRING, Calendar.MODE_GREGORIAN,
              options=list(Calendar.MODES) + ['integer'], desc='''
             Cylc runs using the proleptic Gregorian calendar by default. This

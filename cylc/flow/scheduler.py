@@ -482,6 +482,13 @@ class Scheduler:
                 self.pool.set_stop_task(self.restored_stop_task_id)
         else:
             self.load_tasks_for_run()
+
+        # Get stop after cycle point from config first, then options so that
+        # Options over-ride config.
+        if 'stop after cycle point' in self.config.cfg['scheduling']:
+            self.pool.set_stop_point(get_point(
+                self.config.cfg['scheduling']['stop after cycle point']
+            ))
         if self.options.stopcp:
             self.pool.set_stop_point(get_point(self.options.stopcp))
         self.profiler.log_memory("scheduler.py: after load_tasks")
