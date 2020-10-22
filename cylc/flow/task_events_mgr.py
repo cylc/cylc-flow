@@ -539,7 +539,7 @@ class TaskEventsManager():
         if itask.tdef.run_mode != 'live':
             return
         msg = ""
-        if message != "job %s" % event:
+        if message != f"job {event}":
             msg = message
         self._db_events_insert(itask, event, msg)
         self._setup_job_logs_retrieval(itask, event)
@@ -882,14 +882,14 @@ class TaskEventsManager():
             if itask.state.reset(TASK_STATUS_SUBMIT_FAILED):
                 self.setup_event_handlers(
                     itask, self.EVENT_SUBMIT_FAILED,
-                    'job %s' % self.EVENT_SUBMIT_FAILED)
+                    f'job {self.EVENT_SUBMIT_FAILED}')
         else:
             # There is a submission retry lined up.
             timer = itask.try_timers[TimerFlags.SUBMISSION_RETRY]
             self._retry_task(itask, timer.timeout, submit_retry=True)
             delay_msg = f"submit-retrying in {timer.delay_timeout_as_str()}"
             if itask.state.is_held:
-                delay_msg = "held (%s)" % delay_msg
+                delay_msg = f"held ({delay_msg})"
             msg = "%s, %s" % (self.EVENT_SUBMIT_FAILED, delay_msg)
             LOG.info("[%s] -job(%02d) %s", itask, itask.submit_num, msg)
             itask.set_summary_message(msg)
