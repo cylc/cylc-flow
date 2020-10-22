@@ -39,9 +39,7 @@ ${RRUND}/lib/moo
 __OUT__
 
 cylc stop --max-polls=60 --interval=1 "${SUITE_NAME}"
-
-purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
+purge
 
 install_suite "${TEST_NAME_BASE}"
 

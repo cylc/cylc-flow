@@ -46,4 +46,4 @@ suite_run_ok "${TEST_NAME_BASE}-cmd-line-stop" \
     cylc restart --no-detach --ignore-stop-cycle-point "${SUITE_NAME}"
 grep_ok "\[hello.19700101T0200Z\] -submit-num=01" "${SUITELOG}"
 
-purge_suite "${SUITE_NAME}"
+purge

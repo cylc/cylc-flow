@@ -19,4 +19,24 @@
 . "$(dirname "$0")/test_header"
 set_test_number 2
 reftest
+
+# install the cylc7 restart database
+cp "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/.service/db" \
+    "${HOME}/cylc-run/${SUITE_NAME}/.service/db"
+
+run_ok "${TEST_NAME_BASE}-run" cylc restart "${SUITE_NAME}"
+
+FILE="$(cylc cat-log "${SUITE_NAME}" -m p)"
+log_scan "${TEST_NAME_BASE}-retries" "${FILE}" 30 0.5 \
+    '(upgrading retrying state for b.1)' \
+    'xtrigger satisfied: cylc_retry_b.1' \
+    '\[b.1\] -submit-num=02' \
+    '\[b.1\] status=running: (received)failed/EXIT.*job(02)' \
+    '\[b.1\] -job(02) failed, retrying in PT2S' \
+    'xtrigger satisfied: cylc_retry_b.1' \
+    '\[b.1\] -submit-num=03' \
+    '\[b.1] status=running: (received)succeeded' \
+    '\[c.1] status=running: (received)succeeded'
+
+purge
 exit

@@ -36,5 +36,4 @@ TEST_NAME="${TEST_NAME_BASE}"
 run_fail "${TEST_NAME}" cylc validate -v 'flow.cylc'
 grep_ok "SuiteConfigError: Cannot process recurrence 1" "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
-purge
 exit

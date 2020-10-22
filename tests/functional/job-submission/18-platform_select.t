@@ -74,6 +74,5 @@ for testname in "${!GREP_TESTS[@]}"; do
     grep_ok "${GREP_TESTS[$testname]}" "$testname"
 done
 
-purge_suite "${SUITE_NAME}"
-
+purge
 exit
