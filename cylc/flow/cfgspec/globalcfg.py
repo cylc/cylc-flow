@@ -660,34 +660,6 @@ with Conf('global.cylc', desc='''
 def upg(cfg, descr):
     """Upgrader."""
     u = upgrader(cfg, descr)
-
-    u.obsolete('6.4.1', ['test battery', 'directives'])
-    u.obsolete('6.11.0', ['state dump rolling archive length'])
-    # Roll over is always done.
-    u.obsolete('7.8.0', ['suite logging', 'roll over at start-up'])
-    u.obsolete('7.8.1', ['documentation', 'local index'])
-    u.obsolete('7.8.1', ['documentation', 'files', 'pdf user guide'])
-    u.obsolete('7.8.1', ['documentation', 'files',
-                         'single-page html user guide'])
-    u.deprecate('7.8.1',
-                ['documentation', 'files', 'multi-page html user guide'],
-                ['documentation', 'local'])
-    u.deprecate('8.0.0',
-                ['documentation', 'files', 'html index'],
-                ['documentation', 'local'])
-    u.deprecate('8.0.0',
-                ['documentation', 'urls', 'internet homepage'],
-                ['documentation', 'cylc homepage'])
-    u.obsolete('8.0.0', ['suite servers', 'scan hosts'])
-    u.obsolete('8.0.0', ['suite servers', 'scan ports'])
-    u.obsolete('8.0.0', ['communication'])
-    u.obsolete('8.0.0', ['temporary directory'])
-    u.obsolete('8.0.0', ['task host select command timeout'])
-    u.obsolete('8.0.0', ['xtrigger function timeout'])
-    u.obsolete('8.0.0', ['enable run directory housekeeping'])
-    u.obsolete('8.0.0', ['task messaging'])
-    u.obsolete('8.0.0', ['disable interactive command prompts'])
-
     u.upgrade()
 
 

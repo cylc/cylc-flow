@@ -1339,12 +1339,6 @@ with Conf(
 def upg(cfg, descr):
     """Upgrade old suite configuration."""
     u = upgrader(cfg, descr)
-    u.obsolete('6.1.3', ['visualization', 'enable live graph movie'])
-    u.obsolete('7.2.2', ['cylc', 'dummy mode'])
-    u.obsolete('7.2.2', ['cylc', 'simulation mode'])
-    u.obsolete('7.2.2', ['runtime', '__MANY__', 'dummy mode'])
-    u.obsolete('7.2.2', ['runtime', '__MANY__', 'simulation mode'])
-    u.obsolete('7.6.0', ['runtime', '__MANY__', 'enable resurrection'])
     u.obsolete(
         '7.8.0',
         ['runtime', '__MANY__', 'suite state polling', 'template'])
