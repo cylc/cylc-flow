@@ -55,7 +55,6 @@ from cylc.flow.remote import remote_cylc_cmd, watch_and_kill
 import os
 import shlex
 from contextlib import suppress
-from getpass import getuser
 from glob import glob
 from shlex import quote
 from stat import S_IRUSR
@@ -436,9 +435,8 @@ def main(parser, options, *args, color=False):
             is_edit_mode = (mode == 'edit')
             try:
                 host = get_host_from_platform(platform)
-                user = getuser()
                 proc = remote_cylc_cmd(
-                    cmd, user, host, capture_process=is_edit_mode,
+                    cmd, host, capture_process=is_edit_mode,
                     manage=(mode == 'tail'))
             except KeyboardInterrupt:
                 # Ctrl-C while tailing.
