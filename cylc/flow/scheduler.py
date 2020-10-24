@@ -1882,7 +1882,6 @@ class Scheduler:
         * From the flow.cylc file (``[scheduler]stop after cycle point``).
         """
         stoppoint = None
-
         if self.is_restart and self.options.ignore_stopcp:
             stoppoint = self.config.final_point
         elif self.options.stopcp:
