@@ -179,6 +179,8 @@ def get_option_parser(is_restart, add_std_opts=False):
             "Set stop point. "
             "Shut down after all tasks have PASSED this cycle point. "
             "(Not to be confused with the final cycle point.)"
+            "Adding this command line option over-rides the workflow"
+            "config option [scheduling]stop after cycle point"
         ),
         metavar="CYCLE_POINT", action="store", dest="stopcp")
 

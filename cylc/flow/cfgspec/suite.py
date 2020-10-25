@@ -390,9 +390,9 @@ with Conf(
 
             .. note:
 
-                Not to be confused with ``final cycle point``: There can be
-                more graph beyond this point, but you are choosing not to run
-                that part of the graph.
+                Not to be confused with :cylc:conf:`[..]final cycle point`:
+                There can be more graph beyond this point, but you are
+                choosing not to run that part of the graph.
 
         ''')
         Conf('cycling mode', VDR.V_STRING, Calendar.MODE_GREGORIAN,
