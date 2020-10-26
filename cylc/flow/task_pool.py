@@ -1406,7 +1406,10 @@ class TaskPool:
         task_jobs = []
         bad_items = []
         if not items:
-            task_jobs += self.get_all_tasks()
+            task_jobs += [
+                (itask, None)
+                for itask in self.get_all_tasks()
+            ]
         else:
             for item in items:
                 tokens = parse_reference(item)

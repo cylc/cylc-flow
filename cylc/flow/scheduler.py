@@ -939,7 +939,7 @@ class Scheduler:
         """Kill all tasks or a task/family if options are provided."""
         task_jobs, bad_items = self.pool.filter_task_proxies(items)
         if self.config.run_mode('simulation'):
-            for itask in task_jobs:
+            for itask, _ in task_jobs:
                 if itask.state(*TASK_STATUSES_ACTIVE):
                     itask.state.reset(TASK_STATUS_FAILED)
             return len(bad_items)
