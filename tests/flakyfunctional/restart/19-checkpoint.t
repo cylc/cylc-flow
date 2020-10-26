@@ -16,13 +16,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test restart from a checkpoint before a reload
+
+# TODO: Remove named checkpointing - https://github.com/cylc/cylc-flow/issues/3891
+
 . "$(dirname "$0")/test_header"
 
 date-remove() {
     sed 's/[0-9]\+\(-[0-9]\{2\}\)\{2\}T[0-9]\{2\}\(:[0-9]\{2\}\)\{2\}Z/DATE/'
 }
 
-set_test_number 8
+set_test_number 7
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 cp -p 'flow.cylc' 'flow1.cylc'
@@ -90,12 +93,12 @@ __OUT__
 suite_run_fail "${TEST_NAME_BASE}-restart-1" \
     timeout 60 cylc restart "${SUITE_NAME}" --debug --no-detach
 
-# Restart from a checkpoint before the reload should allow the suite to proceed
-# normally.
-cp -p 'flow1.cylc' 'flow.cylc'
-suite_run_ok "${TEST_NAME_BASE}-restart-2" \
-    timeout 120 cylc restart "${SUITE_NAME}" \
-    --checkpoint=1 --debug --no-detach --reference-test
+# # Restart from a checkpoint before the reload should allow the suite to proceed
+# # normally. (disabled until named checkpointing and this whole test file removed)
+# cp -p 'flow1.cylc' 'flow.cylc'
+# suite_run_ok "${TEST_NAME_BASE}-restart-2" \
+#     timeout 120 cylc restart "${SUITE_NAME}" \
+#     --checkpoint=1 --debug --no-detach --reference-test
 
 purge_suite "${SUITE_NAME}"
 exit
