@@ -108,3 +108,10 @@ jobs:
               -exec echo '==== {} ====' \; -exec cat '{}' \;
           find "${TMPDIR:-/tmp}/${USER}/cylctb-"* -type f \
               -exec echo '==== {} ====' \; -exec cat '{}' \;
+
+      - name: Upload
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          name: cylc-run
+          path: cylc-run
