@@ -17,11 +17,9 @@
 
 import asyncio
 from functools import partial, lru_cache
-from itertools import zip_longest
 import os
 import sys
 
-from cylc.flow import LOG, RSYNC_LOG, __version__ as CYLC_VERSION
 from cylc.flow.exceptions import SuiteServiceFileError
 from cylc.flow.host_select import select_suite_host
 from cylc.flow.hostuserutil import is_remote_host
@@ -36,6 +34,7 @@ from cylc.flow.pathutil import (
     get_suite_file_install_log_name)
 from cylc.flow.remote import remote_cylc_cmd
 from cylc.flow.scheduler import Scheduler, SchedulerError
+from cylc.flow.scripts import cylc_header
 from cylc.flow import suite_files
 from cylc.flow.terminal import cli_function
 
@@ -312,38 +311,6 @@ def _close_logs():
             pass
 
 
-def _start_print_blurb():
-    """Print copyright and license information."""
-    logo = (
-        "            ._.       \n"
-        "            | |       \n"
-        "._____._. ._| |_____. \n"
-        "| .___| | | | | .___| \n"
-        "| !___| !_! | | !___. \n"
-        "!_____!___. |_!_____! \n"
-        "      .___! |         \n"
-        "      !_____!         \n"
-    )
-    cylc_license = """
-The Cylc Suite Engine [%s]
-Copyright (C) 2008-2020 NIWA
-& British Crown (Met Office) & Contributors.
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
-This program comes with ABSOLUTELY NO WARRANTY.
-It is free software, you are welcome to
-redistribute it under certain conditions;
-see `COPYING' in the Cylc source distribution.
-""" % CYLC_VERSION
-
-    logo_lines = logo.splitlines()
-    license_lines = cylc_license.splitlines()
-    lmax = max(len(line) for line in license_lines)
-    print(('\n'.join((
-        ('{0} {1: ^%s}' % lmax).format(*x) for x in zip_longest(
-            logo_lines, license_lines, fillvalue=' ' * (
-                len(logo_lines[-1]) + 1))))))
-
-
 def scheduler_cli(parser, options, args, is_restart=False):
     """Implement cylc (run|restart).
 
@@ -369,7 +336,7 @@ def scheduler_cli(parser, options, args, is_restart=False):
 
     # print the start message
     if options.no_detach or options.format == 'plain':
-        _start_print_blurb()
+        cylc_header()
 
     # setup the scheduler
     # NOTE: asyncio.run opens an event loop, runs your coro,

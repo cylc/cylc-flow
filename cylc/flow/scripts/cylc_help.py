@@ -19,9 +19,15 @@
 
 import sys
 
+from colorama import init as color_init
+
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.exceptions import CylcError
-from cylc.flow.terminal import cli_function
+from cylc.flow.scripts import cylc_header
+from cylc.flow.terminal import cli_function, centered, format_shell_examples
+
+
+color_init(autoreset=True, strip=False)
 
 
 class CommandError(CylcError):
@@ -151,53 +157,56 @@ def category_help(category):
     pretty_print(comsum, coms, sort=True)
 
 
-# BEGIN MAIN
-general_usage = f"""Cylc ("silk") is a workflow engine for orchestrating
-complex *suites* of inter-dependent distributed cycling (repeating) tasks, as
-well as ordinary non-cycling workflows.
-For detailed documentation see the Cylc User Guide (cylc doc --help).
+desc = '''
+Cylc ("silk") is a workflow engine for orchestrating complex *suites* of
+inter-dependent distributed cycling (repeating) tasks, as well as ordinary
+non-cycling workflows.
+'''
 
-Version {CYLC_VERSION}
+# BEGIN MAIN
+general_usage = f"""
+{cylc_header()}
+{centered(desc)}
 
 USAGE:
-  % cylc -V,--version,version           # print cylc version
-  % cylc version --long                 # print cylc version and path
-  % cylc help,--help,-h,?               # print this help page
+  $ cylc validate FLOW            # validate a workflow definition
+  $ cylc run FLOW                 # run a workflow
+  $ cylc tui FLOW                 # view a running workflow in the terminal
+  $ cylc stop FLOW                # stop a running workflow
 
-  % cylc help CATEGORY                  # print help by category
-  % cylc CATEGORY help                  # (ditto)
-  % cylc help [CATEGORY] COMMAND        # print command help
-  % cylc [CATEGORY] COMMAND --help      # (ditto)
-  % cylc COMMAND --help                 # (ditto)
-
-  % cylc COMMAND [options] SUITE [arguments]
-  % cylc COMMAND [options] SUITE TASK [arguments]"""
+  $ cylc --version                # print cylc version
+  $ cylc help CATEGORY            # print help by category
+  $ cylc help [CATEGORY] COMMAND  # print command help
+"""
 
 usage = general_usage + """
 
 Commands can be abbreviated as long as there is no ambiguity in
 the abbreviated command:
 
-  % cylc trigger SUITE TASK             # trigger TASK in SUITE
-  % cylc trig SUITE TASK                # ditto
-  % cylc tr SUITE TASK                  # ditto
-
-  % cylc get                            # Error: ambiguous command
+  $ cylc trigger SUITE TASK       # trigger TASK in SUITE
+  $ cylc trig SUITE TASK          # ditto
+  $ cylc tr SUITE TASK            # ditto
+  $ cylc get                      # Error: ambiguous command
 
 TASK IDENTIFICATION IN CYLC SUITES
   Tasks are identified by NAME.CYCLE_POINT where POINT is either a
   date-time or an integer.
+
   Date-time cycle points are in an ISO 8601 date-time format, typically
   CCYYMMDDThhmm followed by a time zone - e.g. 20101225T0600Z.
+
   Integer cycle points (including those for one-off suites) are integers
   - just '1' for one-off suites.
 
 HOW TO DRILL DOWN TO COMMAND USAGE HELP:
-  % cylc help           # list all available categories (this page)
-  % cylc help prep      # list commands in category 'preparation'
-  % cylc help prep edit # command usage help for 'cylc [prep] edit'
+  $ cylc help                     # list all available categories (this page)
+  $ cylc help prep                # list commands in category 'preparation'
+  $ cylc help prep edit           # command usage help for 'cylc [prep] edit'
 
 Command CATEGORIES:"""
+
+usage = format_shell_examples(usage)
 
 # categories[category] = [aliases]
 categories = {}

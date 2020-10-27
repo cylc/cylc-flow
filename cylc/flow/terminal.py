@@ -17,6 +17,7 @@
 """Functionality to assist working with terminals"""
 import json
 import os
+import re
 import sys
 import inspect
 import logging
@@ -53,6 +54,35 @@ def get_width(default=80):
         return int(proc.communicate()[0].split()[1])
     except IndexError:
         return default
+
+
+def centered(string, width=None):
+    """Print centeed text.
+
+    Examples:
+        >>> centered('foo', 9)
+        '   foo'
+
+    """
+    if not width:
+        width = get_width()
+    return '\n'.join(
+        ' ' * int((width - len(line)) / 2)
+        + line
+        for line in string.splitlines()
+    )
+
+
+def format_shell_examples(string):
+    """Put comments in the terminal "dimished" colour."""
+    return cparse(
+        re.sub(
+            r'^(\s*(?:\$[^#]+)?)(#.*)$',
+            r'\1<dim>\2</dim>',
+            string,
+            flags=re.M
+        )
+    )
 
 
 def supports_color():

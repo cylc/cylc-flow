@@ -18,14 +18,12 @@
 import logging
 from optparse import OptionParser, OptionConflictError, Values
 import os
-import re
 import sys
-
-from ansimarkup import parse as cparse
 
 from cylc.flow import LOG, RSYNC_LOG
 import cylc.flow.flags
 from cylc.flow.loggingutil import CylcLogFormatter
+from cylc.flow.terminal import format_shell_examples
 
 
 class CylcOptionParser(OptionParser):
@@ -82,14 +80,7 @@ TASK_GLOB matches task or family names at a given cycle point.
                 argdoc = [('REG', 'Suite name')]
 
         # make comments grey in usage for readability
-        usage = cparse(
-            re.sub(
-                r'^(\s*(?:\$[^#]+)?)(#.*)$',
-                r'\1<dim>\2</dim>',
-                usage,
-                flags=re.M
-            )
-        )
+        usage = format_shell_examples(usage)
 
         if multitask:
             usage += self.MULTITASKCYCLE_USAGE
