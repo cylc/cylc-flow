@@ -35,7 +35,6 @@ category_list = [
     "control",
     "information",
     "all",
-    "task",
     "admin",
     "preparation",
     "discovery",
@@ -44,6 +43,7 @@ category_list = [
     "prep",
     "con",
     "info",
+    "internal"
 ]
 
 

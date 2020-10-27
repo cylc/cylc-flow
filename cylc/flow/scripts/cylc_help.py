@@ -72,8 +72,7 @@ def match_command(abbrev):
                 information_commands,
                 discovery_commands,
                 control_commands,
-                utility_commands,
-                task_commands]:
+                utility_commands]:
         for com, aliases in dct.items():
             if any(alias == abbrev for alias in aliases):
                 matches.clear()
@@ -207,11 +206,10 @@ categories['information'] = ['information']
 categories['discovery'] = ['discovery']
 categories['control'] = ['control']
 categories['utility'] = ['utility']
-categories['task'] = ['task']
 categories['admin'] = ['admin']
+categories['internal'] = ['internal']
 
 information_commands = {}
-
 information_commands['list'] = ['list', 'ls']
 information_commands['dump'] = ['dump']
 information_commands['show'] = ['show']
@@ -246,8 +244,7 @@ control_commands['set-verbosity'] = ['set-verbosity']
 control_commands['broadcast'] = ['broadcast', 'bcast']
 control_commands['ext-trigger'] = ['ext-trigger', 'external-trigger']
 control_commands['checkpoint'] = ['checkpoint']
-control_commands['client'] = ['client']
-control_commands['subscribe'] = ['subscribe']
+control_commands['message'] = ['message', 'task-message']
 control_commands['tui'] = ['tui']
 
 utility_commands = {}
@@ -255,8 +252,6 @@ utility_commands['cycle-point'] = [
     'cycle-point', 'cyclepoint', 'datetime', 'cycletime']
 utility_commands['suite-state'] = ['suite-state']
 utility_commands['ls-checkpoints'] = ['ls-checkpoints']
-utility_commands['function-run'] = ['function-run']
-utility_commands['psutil'] = ['psutil']
 
 admin_commands = {}
 admin_commands['check-software'] = ['check-software']
@@ -278,13 +273,16 @@ discovery_commands = {}
 discovery_commands['ping'] = ['ping']
 discovery_commands['scan'] = ['scan']
 
-task_commands = {}
-task_commands['message'] = ['message', 'task-message']
-task_commands['jobs-kill'] = ['jobs-kill']
-task_commands['jobs-poll'] = ['jobs-poll']
-task_commands['jobs-submit'] = ['jobs-submit']
-task_commands['remote-init'] = ['remote-init']
-task_commands['remote-tidy'] = ['remote-tidy']
+internal_commands = {}
+internal_commands['client'] = ['client']
+internal_commands['function-run'] = ['function-run']
+internal_commands['jobs-kill'] = ['jobs-kill']
+internal_commands['jobs-poll'] = ['jobs-poll']
+internal_commands['jobs-submit'] = ['jobs-submit']
+internal_commands['psutil'] = ['psutil']
+internal_commands['remote-init'] = ['remote-init']
+internal_commands['remote-tidy'] = ['remote-tidy']
+internal_commands['subscribe'] = ['subscribe']
 
 all_commands = {}
 for dct in [
@@ -293,20 +291,21 @@ for dct in [
         discovery_commands,
         control_commands,
         utility_commands,
-        task_commands,
-        admin_commands]:
+        admin_commands
+        # NOTE: internal_commands not present here
+]:
     all_commands.update(dct)
 
 # topic summaries
 catsum = {}
-catsum['all'] = "The complete command set."
+catsum['all'] = "The complete command set (minus internal commands)."
 catsum['admin'] = "Cylc installation, testing, and example suites."
 catsum['information'] = "Interrogate suite definitions and running suites."
 catsum['preparation'] = "Suite editing, validation, visualization, etc."
 catsum['discovery'] = "Detect running suites."
 catsum['control'] = "Suite start up, monitoring, and control."
-catsum['task'] = "The task messaging interface."
 catsum['utility'] = "Cycle arithmetic and templating, etc."
+catsum['internal'] = "Commands used by Cylc internally."
 
 # Some commands and categories are aliased and
 # some common typographical errors are corrected (e.g. cycl => cylc).
@@ -345,10 +344,10 @@ comsum['show'] = 'Print task state (prerequisites and outputs etc.)'
 # control
 comsum['broadcast'] = 'Change suite [runtime] settings on the fly'
 comsum['checkpoint'] = 'Tell suite to checkpoint its current state'
-comsum['client'] = '(Internal) Invoke suite runtime client, expect JSON input'
 comsum['ext-trigger'] = 'Report an external trigger event to a suite'
 comsum['hold'] = 'Hold (pause) suites or individual tasks'
 comsum['kill'] = 'Kill submitted or running tasks'
+comsum['message'] = 'Report task messages'
 comsum['nudge'] = 'Cause the cylc task processing loop to be invoked'
 comsum['poll'] = 'Poll submitted or running tasks'
 comsum['release'] = 'Release (unpause) suites or individual tasks'
@@ -359,7 +358,6 @@ comsum['run'] = 'Start a suite at a given cycle point'
 comsum['set-outputs'] = 'Set task outputs as completed'
 comsum['set-verbosity'] = 'Change a running suite\'s logging verbosity'
 comsum['stop'] = 'Shut down running suites'
-comsum['subscribe'] = '(Internal) Invoke suite subscriber'
 comsum['trigger'] = 'Manually trigger any tasks'
 comsum['tui'] = 'A terminal user interface for suites.'
 
@@ -367,20 +365,21 @@ comsum['tui'] = 'A terminal user interface for suites.'
 comsum['ping'] = 'Check that a suite is running'
 comsum['scan'] = 'Scan a host for running suites'
 
-# task
+# utility
+comsum['cycle-point'] = 'Cycle point arithmetic and filename templating'
+comsum['ls-checkpoints'] = 'Display task pool etc at given events'
+comsum['suite-state'] = 'Query the task states in a suite'
+
+# internal
+comsum['client'] = '(Internal) Invoke suite runtime client, expect JSON input'
+comsum['function-run'] = '(Internal) Run a function in the process pool'
 comsum['jobs-kill'] = '(Internal) Kill task jobs'
 comsum['jobs-poll'] = '(Internal) Retrieve status for task jobs'
 comsum['jobs-submit'] = '(Internal) Submit task jobs'
-comsum['message'] = 'Report task messages'
+comsum['psutil'] = '(Internal) Report information about the usage of a host'
 comsum['remote-init'] = '(Internal) Initialise a task remote'
 comsum['remote-tidy'] = '(Internal) Tidy a task remote'
-
-# utility
-comsum['cycle-point'] = 'Cycle point arithmetic and filename templating'
-comsum['function-run'] = '(Internal) Run a function in the process pool'
-comsum['ls-checkpoints'] = 'Display task pool etc at given events'
-comsum['psutil'] = '(Internal) Report information about the usage of a host'
-comsum['suite-state'] = 'Query the task states in a suite'
+comsum['subscribe'] = '(Internal) Invoke suite subscriber'
 
 
 def help_func():
