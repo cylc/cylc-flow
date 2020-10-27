@@ -221,11 +221,10 @@ information_commands['get-suite-contact'] = [
     'get-suite-contact', 'get-contact']
 information_commands['get-suite-version'] = [
     'get-suite-version', 'get-cylc-version']
-
-information_commands['tui'] = ['tui']
 information_commands['get-suite-config'] = ['get-suite-config', 'get-config']
 information_commands['get-site-config'] = [
     'get-site-config', 'get-global-config']
+information_commands['report-timings'] = ['report-timings']
 
 control_commands = {}
 # NOTE: don't change 'run' to 'start' or the category [control]
@@ -249,22 +248,22 @@ control_commands['ext-trigger'] = ['ext-trigger', 'external-trigger']
 control_commands['checkpoint'] = ['checkpoint']
 control_commands['client'] = ['client']
 control_commands['subscribe'] = ['subscribe']
+control_commands['tui'] = ['tui']
 
 utility_commands = {}
 utility_commands['cycle-point'] = [
     'cycle-point', 'cyclepoint', 'datetime', 'cycletime']
 utility_commands['suite-state'] = ['suite-state']
 utility_commands['ls-checkpoints'] = ['ls-checkpoints']
-utility_commands['report-timings'] = ['report-timings']
 utility_commands['function-run'] = ['function-run']
 utility_commands['psutil'] = ['psutil']
 
 admin_commands = {}
 admin_commands['check-software'] = ['check-software']
+admin_commands['check-versions'] = ['check-versions']
 
 preparation_commands = {}
 preparation_commands['register'] = ['register']
-preparation_commands['print'] = ['print']
 preparation_commands['get-directory'] = ['get-directory']
 preparation_commands['edit'] = ['edit']
 preparation_commands['view'] = ['view']
@@ -278,10 +277,8 @@ preparation_commands['diff'] = ['diff', 'compare']
 discovery_commands = {}
 discovery_commands['ping'] = ['ping']
 discovery_commands['scan'] = ['scan']
-discovery_commands['check-versions'] = ['check-versions']
 
 task_commands = {}
-task_commands['submit'] = ['submit', 'single']
 task_commands['message'] = ['message', 'task-message']
 task_commands['jobs-kill'] = ['jobs-kill']
 task_commands['jobs-poll'] = ['jobs-poll']
@@ -316,70 +313,74 @@ catsum['utility'] = "Cycle arithmetic and templating, etc."
 
 # command summaries
 comsum = {}
+
 # admin
 comsum['check-software'] = 'Check required software is installed'
+comsum['check-versions'] = 'Compare cylc versions on task host accounts'
+
 # preparation
-comsum['register'] = 'Register a suite for use'
-comsum['print'] = 'Print registered suites'
-comsum['get-directory'] = 'Retrieve suite source directory paths'
+comsum['diff'] = 'Compare two suite definitions and print differences'
 comsum['edit'] = 'Edit suite definitions, optionally inlined'
-comsum['view'] = 'View suite definitions, inlined and Jinja2 processed'
-comsum['validate'] = 'Parse and validate suite definitions'
-comsum['search'] = 'Search in suite definitions'
+comsum['get-directory'] = 'Retrieve suite source directory paths'
 comsum['graph'] = 'Plot suite dependency graphs and runtime hierarchies'
 comsum['graph-diff'] = 'Compare two suite dependencies or runtime hierarchies'
-comsum['diff'] = 'Compare two suite definitions and print differences'
+comsum['register'] = 'Register a suite for use'
+comsum['search'] = 'Search in suite definitions'
+comsum['validate'] = 'Parse and validate suite definitions'
+comsum['view'] = 'View suite definitions, inlined and Jinja2 processed'
+
 # information
-comsum['list'] = 'List suite tasks and family namespaces'
-comsum['dump'] = 'Print the state of tasks in a running suite'
-comsum['show'] = 'Print task state (prerequisites and outputs etc.)'
 comsum['cat-log'] = 'Print various suite and task log files'
+comsum['dump'] = 'Print the state of tasks in a running suite'
 comsum['extract-resources'] = 'Extract cylc.flow library package resources'
-comsum['tui'] = 'A terminal user interface for suites.'
-comsum['get-suite-config'] = 'Print suite configuration items'
 comsum['get-site-config'] = 'Print site/user configuration items'
+comsum['get-suite-config'] = 'Print suite configuration items'
 comsum['get-suite-contact'] = (
     'Print contact information of a suite server program')
 comsum['get-suite-version'] = 'Print cylc version of a suite server program'
+comsum['list'] = 'List suite tasks and family namespaces'
+comsum['report-timings'] = 'Generate a report on task timing data'
+comsum['show'] = 'Print task state (prerequisites and outputs etc.)'
+
 # control
-comsum['run'] = 'Start a suite at a given cycle point'
-comsum['stop'] = 'Shut down running suites'
-comsum['restart'] = 'Restart a suite from a previous state'
-comsum['trigger'] = 'Manually trigger any tasks'
-comsum['remove'] = 'Remove task instances from scheduler task pool'
-comsum['poll'] = 'Poll submitted or running tasks'
-comsum['kill'] = 'Kill submitted or running tasks'
-comsum['hold'] = 'Hold (pause) suites or individual tasks'
-comsum['release'] = 'Release (unpause) suites or individual tasks'
-comsum['set-outputs'] = 'Set task outputs as completed'
-comsum['nudge'] = 'Cause the cylc task processing loop to be invoked'
-comsum['reload'] = 'Reload the suite definition at run time'
-comsum['set-verbosity'] = 'Change a running suite\'s logging verbosity'
 comsum['broadcast'] = 'Change suite [runtime] settings on the fly'
-comsum['ext-trigger'] = 'Report an external trigger event to a suite'
 comsum['checkpoint'] = 'Tell suite to checkpoint its current state'
 comsum['client'] = '(Internal) Invoke suite runtime client, expect JSON input'
+comsum['ext-trigger'] = 'Report an external trigger event to a suite'
+comsum['hold'] = 'Hold (pause) suites or individual tasks'
+comsum['kill'] = 'Kill submitted or running tasks'
+comsum['nudge'] = 'Cause the cylc task processing loop to be invoked'
+comsum['poll'] = 'Poll submitted or running tasks'
+comsum['release'] = 'Release (unpause) suites or individual tasks'
+comsum['reload'] = 'Reload the suite definition at run time'
+comsum['remove'] = 'Remove task instances from scheduler task pool'
+comsum['restart'] = 'Restart a suite from a previous state'
+comsum['run'] = 'Start a suite at a given cycle point'
+comsum['set-outputs'] = 'Set task outputs as completed'
+comsum['set-verbosity'] = 'Change a running suite\'s logging verbosity'
+comsum['stop'] = 'Shut down running suites'
 comsum['subscribe'] = '(Internal) Invoke suite subscriber'
+comsum['trigger'] = 'Manually trigger any tasks'
+comsum['tui'] = 'A terminal user interface for suites.'
+
 # discovery
 comsum['ping'] = 'Check that a suite is running'
 comsum['scan'] = 'Scan a host for running suites'
-comsum['check-versions'] = 'Compare cylc versions on task host accounts'
+
 # task
-comsum['submit'] = 'Run a single task just as its parent suite would'
-comsum['message'] = 'Report task messages'
 comsum['jobs-kill'] = '(Internal) Kill task jobs'
 comsum['jobs-poll'] = '(Internal) Retrieve status for task jobs'
 comsum['jobs-submit'] = '(Internal) Submit task jobs'
+comsum['message'] = 'Report task messages'
 comsum['remote-init'] = '(Internal) Initialise a task remote'
 comsum['remote-tidy'] = '(Internal) Tidy a task remote'
 
 # utility
 comsum['cycle-point'] = 'Cycle point arithmetic and filename templating'
-comsum['suite-state'] = 'Query the task states in a suite'
-comsum['ls-checkpoints'] = 'Display task pool etc at given events'
-comsum['report-timings'] = 'Generate a report on task timing data'
 comsum['function-run'] = '(Internal) Run a function in the process pool'
+comsum['ls-checkpoints'] = 'Display task pool etc at given events'
 comsum['psutil'] = '(Internal) Report information about the usage of a host'
+comsum['suite-state'] = 'Query the task states in a suite'
 
 
 def help_func():
