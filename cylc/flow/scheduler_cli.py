@@ -151,7 +151,9 @@ def get_option_parser(is_restart, add_std_opts=False):
             help="Ignore the stop cycle point in the suite run database.",
             action="store_true", dest="ignore_stopcp")
 
-        parser.set_defaults(icp=None, startcp=None, warm=None)
+        parser.set_defaults(
+            icp=None, startcp=None, warm=None, ignore_stopcp=None
+        )
     else:
         parser.add_option(
             "-w", "--warm",
@@ -177,6 +179,8 @@ def get_option_parser(is_restart, add_std_opts=False):
             "Set stop point. "
             "Shut down after all tasks have PASSED this cycle point. "
             "(Not to be confused with the final cycle point.)"
+            "Adding this command line option over-rides the workflow"
+            "config option [scheduling]stop after cycle point"
         ),
         metavar="CYCLE_POINT", action="store", dest="stopcp")
 

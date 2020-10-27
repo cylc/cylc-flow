@@ -86,6 +86,9 @@ hierarchy and ability to set site config directory.
 [#3848](https://github.com/cylc/cylc-flow/pull/3848) - Deprecated
 `[scheduling]max active cycle points` in favour of `[scheduling]runahead limit`.
 
+[#3883](https://github.com/cylc/cylc-flow/pull/3883) - Added a new workflow
+config option `[scheduling]stop after cycle point`.
+
 ### Fixes
 
 [#3879](https://github.com/cylc/cylc-flow/pull/3879) - Removed Google
