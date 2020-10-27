@@ -20,6 +20,9 @@ from functools import partial, lru_cache
 import os
 import sys
 
+from ansimarkup import parse as cparse
+
+from cylc.flow import LOG, RSYNC_LOG
 from cylc.flow.exceptions import SuiteServiceFileError
 from cylc.flow.host_select import select_suite_host
 from cylc.flow.hostuserutil import is_remote_host
@@ -336,7 +339,11 @@ def scheduler_cli(parser, options, args, is_restart=False):
 
     # print the start message
     if options.no_detach or options.format == 'plain':
-        cylc_header()
+        print(
+            cparse(
+                cylc_header()
+            )
+        )
 
     # setup the scheduler
     # NOTE: asyncio.run opens an event loop, runs your coro,
