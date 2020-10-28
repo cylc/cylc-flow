@@ -18,7 +18,7 @@
     [[t1]]
         script = """
 if [[ "${CYLC_TASK_CYCLE_POINT}" == '2016' ]]; then
-    cylc__job__poll_grep_suite_log -F '[t2.2016] -released to the task pool'
+    cylc__job__poll_grep_suite_log -F 'spawned t2.2016'
     cylc hold "${CYLC_SUITE_NAME}" t2.2016
     cylc stop "${CYLC_SUITE_NAME}"
 else

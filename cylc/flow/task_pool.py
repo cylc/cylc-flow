@@ -40,7 +40,7 @@ from cylc.flow.task_job_logs import get_task_job_id
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_state import (
     TASK_STATUSES_ACTIVE,
-    TASK_STATUSES_NOT_STALLED,
+    TASK_STATUSES_FAILURE,
     TASK_STATUS_WAITING,
     TASK_STATUS_EXPIRED,
     TASK_STATUS_QUEUED,
@@ -176,7 +176,6 @@ class TaskPool:
 
         self.is_held = False
         self.hold_point = None
-        self.stuck_future_tasks = []
         self.abs_outputs_done = set()
 
         self.stop_task_id = None
@@ -241,7 +240,11 @@ class TaskPool:
         return itask
 
     def release_runahead_tasks(self):
-        """Restrict the number of active cycle points.
+        """Release tasks from the runahead pool to the main pool.
+
+        This serves to:
+        - restrict the number of active cycle points
+        - keep partially-satisfied waiting tasks out of the n=0 active pool
 
         Compute runahead limit, and release tasks to the main pool if they are
         below that point (and <= the stop point, if there is a stop point).
@@ -347,6 +350,9 @@ class TaskPool:
         for point, itask_id_map in self.runahead_pool.copy().items():
             if point <= latest_allowed_point:
                 for itask in itask_id_map.copy().values():
+                    if itask.is_task_prereqs_not_done():
+                        # Only release if all prerequisites are satisfied.
+                        continue
                     self.release_runahead_task(itask)
                     released = True
         return released
@@ -728,15 +734,6 @@ class TaskPool:
 
         return ready_tasks
 
-    def task_has_future_trigger_overrun(self, itask):
-        """Check for future triggers extending beyond the final cycle."""
-        if not self.stop_point:
-            return False
-        for pct in itask.state.prerequisites_get_target_points():
-            if pct > self.stop_point:
-                return True
-        return False
-
     def get_min_point(self):
         """Return the minimum cycle point currently in the pool."""
         cycles = list(self.pool)
@@ -914,16 +911,23 @@ class TaskPool:
 
     def warn_stop_orphans(self):
         """Log (warning) orphaned tasks on suite stop."""
+        orphans = []
+        orphans_kill_failed = []
         for itask in self.get_tasks():
-            if (
-                    itask.state(*TASK_STATUSES_ACTIVE)
-                    and itask.state.kill_failed
-            ):
-                LOG.warning("%s: orphaned task (%s, kill failed)" % (
-                    itask.identity, itask.state.status))
-            elif itask.state(*TASK_STATUSES_ACTIVE):
-                LOG.warning("%s: orphaned task (%s)" % (
-                    itask.identity, itask.state.status))
+            if itask.state(*TASK_STATUSES_ACTIVE):
+                if itask.state.kill_failed:
+                    orphans_kill_failed.append(itask)
+                else:
+                    orphans.append(itask)
+        if orphans_kill_failed:
+            LOG.warning("Orphaned task jobs (kill failed):")
+            for itask in orphans_kill_failed:
+                LOG.warning(f"* {itask.identity} ({itask.state.status})")
+        if orphans:
+            LOG.warning("Orphaned task jobs:")
+            for itask in orphans:
+                LOG.warning(f"* {itask.identity} ({itask.state.status})")
+
         for key1, point, name, submit_num in self.task_events_mgr.event_timers:
             LOG.warning("%s/%s/%s: incomplete task event handler %s" % (
                 point, name, submit_num, key1))
@@ -931,60 +935,41 @@ class TaskPool:
     def is_stalled(self):
         """Return True if the suite is stalled.
 
-        A suite is stalled when:
-        * It is not held.
-        * It has no active tasks.
-        * It has waiting tasks with unmet prerequisites
-          (ignoring clock triggers).
+        A suite is stalled if it is not held and the active pool contains only
+        unhandled failed tasks.
         """
         if self.is_held:
             return False
-        can_be_stalled = False
+        unhandled_failed = []
         for itask in self.get_tasks():
-            if (
-                    self.stop_point
-                    and itask.point > self.stop_point
-                    or itask.state(
-                        TASK_STATUS_SUCCEEDED,
-                        TASK_STATUS_EXPIRED,
-                    )
-            ):
-                # Ignore: Task beyond stop point.
-                # Ignore: Succeeded and expired tasks.
-                continue
-            if itask.state(*TASK_STATUSES_NOT_STALLED):
-                # Pool contains active tasks (or held active tasks)
-                # Return "not stalled" immediately.
+            if itask.state(*TASK_STATUSES_FAILURE):
+                unhandled_failed.append(itask)
+            else:
                 return False
-            if (
-                    itask.state(TASK_STATUS_WAITING)
-                    and itask.state.prerequisites_all_satisfied()
-            ):
-                # Waiting tasks with all prerequisites satisfied,
-                # probably waiting for clock trigger only.
-                # This task can be considered active.
-                # Return "not stalled" immediately.
-                return False
-            # We should be left with (submission) failed tasks and
-            # waiting tasks with unsatisfied prerequisites.
-            can_be_stalled = True
-        return can_be_stalled
+        if unhandled_failed:
+            LOG.warning("Suite stalled with unhandled failed tasks:")
+            for itask in unhandled_failed:
+                LOG.warning(f"* {itask.identity} ({itask.state.status})")
+            return True
+        else:
+            return False
 
-    def report_stalled_task_deps(self):
-        """Log unmet dependencies on stalled."""
+    def report_unmet_deps(self):
+        """Log unmet dependencies on stall or shutdown."""
         prereqs_map = {}
-        for itask in self.get_tasks():
-            if (
-                    itask.state(TASK_STATUS_WAITING)
-                    and itask.state.prerequisites_are_not_all_satisfied()
-            ):
-                prereqs_map[itask.identity] = []
-                for prereq_str, is_met in itask.state.prerequisites_dump():
-                    if not is_met:
-                        prereqs_map[itask.identity].append(prereq_str)
+        # Partially satisfied tasks are hidden in the runahead pool.
+        for itask in self.get_rh_tasks():
+            prereqs_map[itask.identity] = []
+            for prereq_str, is_met in itask.state.prerequisites_dump():
+                if not is_met:
+                    prereqs_map[itask.identity].append(prereq_str)
 
         # prune tree to ignore items that are elsewhere in it
         for id_, prereqs in list(prereqs_map.copy().items()):
+            if not prereqs:
+                # (tasks in runahead pool that are not unsatisfied)
+                del prereqs_map[id_]
+                continue
             for prereq in prereqs:
                 prereq_strs = prereq.split()
                 if prereq_strs[0] == "LABEL:":
@@ -998,10 +983,12 @@ class TaskPool:
                     del prereqs_map[id_]
                     break
 
-        for id_, prereqs in prereqs_map.items():
-            LOG.warning("Unmet prerequisites for %s:" % id_)
-            for prereq in prereqs:
-                LOG.warning(" * %s" % prereq)
+        if prereqs_map:
+            LOG.warning("Some partially satisfied prerequisites left over:")
+            for id_, prereqs in prereqs_map.items():
+                LOG.warning("%s is waiting on:" % id_)
+                for prereq in prereqs:
+                    LOG.warning("* %s" % prereq)
 
     def set_hold_point(self, point):
         """Set the point after which tasks must be held."""
@@ -1217,13 +1204,16 @@ class TaskPool:
                 "[%s] -holding (beyond suite hold point) %s",
                 itask, self.hold_point)
             itask.state.reset(is_held=True)
-        elif (self.stop_point and itask.point <= self.stop_point and
-                self.task_has_future_trigger_overrun(itask)):
-            # Record tasks waiting on a future trigger beyond the stop point.
-            # (We ignore these waiting tasks when considering shutdown).
-            LOG.info("[%s] -holding (future trigger beyond stop point)", itask)
-            self.stuck_future_tasks.append(itask.identity)
-        elif (self.is_held
+        if self.stop_point and itask.point <= self.stop_point:
+            future_trigger_overrun = False
+            for pct in itask.state.prerequisites_get_target_points():
+                if pct > self.stop_point:
+                    future_trigger_overrun = True
+                    break
+            if future_trigger_overrun:
+                LOG.warning("[%s] -won't run: depends on a "
+                            "task beyond the stop point", itask)
+        if (self.is_held
                 and itask.state(TASK_STATUS_WAITING, is_held=False)):
             # Hold newly-spawned tasks in a held suite (e.g. due to manual
             # triggering of a held task).

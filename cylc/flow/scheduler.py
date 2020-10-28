@@ -94,7 +94,6 @@ from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_state import (
     TASK_STATUSES_ACTIVE,
     TASK_STATUSES_NEVER_ACTIVE,
-    TASK_STATUSES_SUCCESS,
     TASK_STATUS_FAILED)
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow import __version__ as CYLC_VERSION
@@ -1525,7 +1524,7 @@ class Scheduler:
         updated_nodes = set(updated_tasks).union(
             self.pool.get_pool_change_tasks())
         if (
-                has_updated or
+                updated_nodes or
                 self.data_store_mgr.updates_pending or
                 self.job_pool.updates_pending
         ):
@@ -1587,10 +1586,8 @@ class Scheduler:
             return
         self.is_stalled = self.pool.is_stalled()
         if self.is_stalled:
-            message = 'suite stalled'
-            LOG.warning(message)
-            self.run_event_handlers(self.EVENT_STALLED, message)
-            self.pool.report_stalled_task_deps()
+            self.run_event_handlers(self.EVENT_STALLED, 'suite stalled')
+            self.pool.report_unmet_deps()
             if self._get_events_conf('abort on stalled'):
                 raise SchedulerError('Abort on suite stalled is set')
             # Start suite timeout timer
@@ -1672,6 +1669,9 @@ class Scheduler:
             self.proc_pool.process()
 
         if self.pool is not None:
+            if not self.is_stalled:
+                # (else already reported)
+                self.pool.report_unmet_deps()
             self.pool.warn_stop_orphans()
             try:
                 self.suite_db_mgr.put_task_event_timers(self.task_events_mgr)
@@ -1747,30 +1747,18 @@ class Scheduler:
         return False
 
     def check_auto_shutdown(self):
-        """Check if we should do a normal automatic shutdown."""
+        """Check if we should do an automatic shutdown: main pool empty."""
         if not self.can_auto_stop:
             return False
-        can_shutdown = True
-        for itask in self.pool.get_all_tasks():
-            if self.pool.stop_point is None:
-                # Don't if any unsucceeded task exists.
-                if not itask.state(*TASK_STATUSES_SUCCESS):
-                    can_shutdown = False
-                    break
-            elif (
-                    itask.point <= self.pool.stop_point
-                    and not itask.state(*TASK_STATUSES_SUCCESS)
-            ):
-                # Don't if any unsucceeded task exists < stop point...
-                if itask.identity not in self.pool.stuck_future_tasks:
-                    # ...unless it has a future trigger extending > stop point.
-                    can_shutdown = False
-                    break
-        if can_shutdown and self.pool.stop_point:
+        self.pool.release_runahead_tasks()
+        if self.pool.get_tasks():
+            return False
+        # can shut down
+        if self.pool.stop_point:
             self.options.stopcp = None
             self.pool.stop_point = None
             self.suite_db_mgr.delete_suite_stop_cycle_point()
-        return can_shutdown
+        return True
 
     def hold_suite(self, point=None):
         """Hold all tasks in suite."""

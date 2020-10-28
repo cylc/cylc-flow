@@ -147,20 +147,11 @@ TASK_STATUSES_NEVER_ACTIVE = set([
     TASK_STATUS_READY,
 ])
 
-# Task statuses that are to be externally active
-TASK_STATUSES_TO_BE_ACTIVE = set([
-    TASK_STATUS_QUEUED,
-    TASK_STATUS_READY,
-])
-
 # Task statuses that are externally active
 TASK_STATUSES_ACTIVE = set([
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_RUNNING,
 ])
-
-# Task statuses in which tasks cannot be considered stalled
-TASK_STATUSES_NOT_STALLED = TASK_STATUSES_ACTIVE | TASK_STATUSES_TO_BE_ACTIVE
 
 # Task statuses that can be manually triggered.
 TASK_STATUSES_TRIGGERABLE = set([

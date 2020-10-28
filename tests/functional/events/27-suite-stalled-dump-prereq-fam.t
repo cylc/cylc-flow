@@ -17,22 +17,37 @@
 #-------------------------------------------------------------------------------
 # Test suite event handler, dump unmet prereqs on stall
 . "$(dirname "$0")/test_header"
-set_test_number 7
+set_test_number 12
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate "${SUITE_NAME}"
+
 suite_run_fail "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
-grep_ok "Abort on suite stalled is set" \
+
+grep_ok "Abort on suite stalled is set" "${TEST_NAME_BASE}-run.stderr"
+
+grep_ok "WARNING - Suite stalled with unhandled failed tasks:" \
     "${TEST_NAME_BASE}-run.stderr"
-grep_ok "WARNING - Unmet prerequisites for f_1.1:" \
+grep_ok "WARNING - \* foo.1 (failed)" \
     "${TEST_NAME_BASE}-run.stderr"
-grep_ok "WARNING - Unmet prerequisites for f_3.1:" \
+
+grep_ok "WARNING - Some partially satisfied prerequisites left over:" \
     "${TEST_NAME_BASE}-run.stderr"
-grep_ok "WARNING - Unmet prerequisites for f_2.1" \
+grep_ok "WARNING - f_1.1 is waiting on:" \
     "${TEST_NAME_BASE}-run.stderr"
-grep_ok "WARNING -  \\* foo.1 succeeded" \
+grep_ok "WARNING - \* foo.1 succeeded" \
     "${TEST_NAME_BASE}-run.stderr"
+grep_ok "WARNING - f_2.1 is waiting on:" \
+    "${TEST_NAME_BASE}-run.stderr"
+grep_ok "WARNING - \* foo.1 succeeded" \
+    "${TEST_NAME_BASE}-run.stderr"
+grep_ok "WARNING - f_3.1 is waiting on:" \
+    "${TEST_NAME_BASE}-run.stderr"
+grep_ok "WARNING - \* foo.1 succeeded" \
+    "${TEST_NAME_BASE}-run.stderr"
+
 purge_suite "${SUITE_NAME}"
 exit

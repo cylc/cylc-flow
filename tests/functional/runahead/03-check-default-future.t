@@ -37,6 +37,6 @@ run_ok "${TEST_NAME}" sqlite3 "${DB}" \
 cmp_ok "${TEST_NAME}.stdout" <<< "20100101T0400Z"
 # i.e. should have spawned 5 cycle points from initial T00 (wibble not spawned)
 #-------------------------------------------------------------------------------
-grep_ok 'Suite shutting down - Abort on suite stalled is set' "${SUITE_RUN_DIR}/log/suite/log"
+grep_ok 'Suite shutting down - Abort on suite inactivity is set' "${SUITE_RUN_DIR}/log/suite/log"
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"
