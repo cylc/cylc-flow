@@ -2,7 +2,6 @@ PRAGMA foreign_keys=OFF;
 BEGIN TRANSACTION;
 CREATE TABLE broadcast_events(time TEXT, change TEXT, point TEXT, namespace TEXT, key TEXT, value TEXT);
 CREATE TABLE broadcast_states(point TEXT, namespace TEXT, key TEXT, value TEXT, PRIMARY KEY(point, namespace, key));
-CREATE TABLE broadcast_states_checkpoints(id INTEGER, point TEXT, namespace TEXT, key TEXT, value TEXT, PRIMARY KEY(id, point, namespace, key));
 CREATE TABLE checkpoint_id(id INTEGER, time TEXT, event TEXT, PRIMARY KEY(id));
 INSERT INTO checkpoint_id VALUES(0,'2019-06-14T11:40:24+01:00','latest');
 CREATE TABLE inheritance(namespace TEXT, inheritance TEXT, PRIMARY KEY(namespace));
@@ -22,7 +21,6 @@ CREATE TABLE task_late_flags(cycle TEXT, name TEXT, value INTEGER, PRIMARY KEY(c
 CREATE TABLE task_outputs(cycle TEXT, name TEXT, outputs TEXT, PRIMARY KEY(cycle, name));
 CREATE TABLE task_pool(cycle TEXT, name TEXT, flow_label TEXT, status TEXT, is_held INTEGER, PRIMARY KEY(cycle, name, flow_label));
 INSERT INTO task_pool VALUES('1','foo','abcdefg', 'waiting', 0);
-CREATE TABLE task_pool_checkpoints(id INTEGER, cycle TEXT, name TEXT, flow_label TEXT, status TEXT, is_held INTEGER, PRIMARY KEY(id, cycle, name, flow_label));
 CREATE TABLE task_states(name TEXT, cycle TEXT, flow_label TEXT, time_created TEXT, time_updated TEXT, submit_num INTEGER, status TEXT, PRIMARY KEY(name, cycle, flow_label));
 INSERT INTO task_states VALUES('foo','1','abcdefg', '2019-06-14T11:30:16+01:00','2019-06-14T11:40:24+01:00',99,'waiting');
 CREATE TABLE task_prerequisites(cycle TEXT, name TEXT, prereq_name TEXT, prereq_cycle TEXT, prereq_output TEXT, satisfied TEXT, PRIMARY KEY(cycle, name, prereq_name, prereq_cycle, prereq_output));

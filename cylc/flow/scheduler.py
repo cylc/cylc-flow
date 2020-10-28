@@ -706,14 +706,13 @@ class Scheduler:
             self.config.start_point = TaskID.get_standardised_point(
                 self.options.startcp)
         self.suite_db_mgr.pri_dao.select_broadcast_states(
-            self.broadcast_mgr.load_db_broadcast_states,
-            self.options.checkpoint)
+            self.broadcast_mgr.load_db_broadcast_states)
         self.suite_db_mgr.pri_dao.select_task_job_run_times(
             self._load_task_run_times)
         self.suite_db_mgr.pri_dao.select_task_pool_for_restart(
-            self.pool.load_db_task_pool_for_restart, self.options.checkpoint)
+            self.pool.load_db_task_pool_for_restart)
         self.suite_db_mgr.pri_dao.select_job_pool_for_restart(
-            self.job_pool.insert_db_job, self.options.checkpoint)
+            self.job_pool.insert_db_job)
         self.suite_db_mgr.pri_dao.select_task_action_timers(
             self.pool.load_db_task_action_timers)
         self.suite_db_mgr.pri_dao.select_xtriggers_for_restart(
@@ -1790,7 +1789,7 @@ class Scheduler:
         return self.pool.force_spawn_children(items, outputs)
 
     def command_take_checkpoints(self, name):
-        """Insert current task_pool, etc to checkpoints tables."""
+        """Insert current suite params to checkpoints tables."""
         return self.suite_db_mgr.checkpoint(name)
 
     def filter_initial_task_list(self, inlist):

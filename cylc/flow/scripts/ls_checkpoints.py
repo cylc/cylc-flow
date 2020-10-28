@@ -20,7 +20,7 @@
 
 In the absence of arguments and the --all option, list checkpoint IDs, their
 time and events. Otherwise, display the latest and/or the checkpoints of suite
-parameters, task pool and broadcast states in the suite runtime database.
+parameters in the suite runtime database.
 """
 
 import sys
@@ -34,8 +34,6 @@ from cylc.flow.terminal import cli_function
 DELIM = "#" * 71
 TITLE_CHECKPOINT_ID = "\n# CHECKPOINT ID (ID|TIME|EVENT)\n"
 TITLE_SUITE_PARAMS = "\n# SUITE PARAMS (KEY|VALUE)\n"
-TITLE_BROADCAST_STATES = "\n# BROADCAST STATES (POINT|NAMESPACE|KEY|VALUE)\n"
-TITLE_TASK_POOL = "\n# TASK POOL (CYCLE|NAME|STATUS|IS_HELD)\n"
 
 
 def get_option_parser():
@@ -74,9 +72,7 @@ def get_checkpoints_details(suite, id_keys, callback):
     for id_key in id_keys:
         for dao_select, title in [
                 (dao.select_checkpoint_id, TITLE_CHECKPOINT_ID),
-                (dao.select_suite_params, TITLE_SUITE_PARAMS),
-                (dao.select_broadcast_states, TITLE_BROADCAST_STATES),
-                (dao.select_task_pool, TITLE_TASK_POOL)]:
+                (dao.select_suite_params, TITLE_SUITE_PARAMS)]:
             dao_select(
                 lambda row_idx, row: callback(title, row_idx, row),
                 int(id_key))
