@@ -22,7 +22,7 @@ Print cylc site/user configuration settings.
 
 By default all settings are printed. For specific sections or items
 use -i/--item and wrap parent sections in square brackets:
-   cylc get-site-config --item '[editors]terminal'
+  $ cylc get-site-config --item '[editors]terminal'
 Multiple items can be specified at once."""
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg

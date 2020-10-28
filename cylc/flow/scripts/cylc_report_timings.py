@@ -23,22 +23,22 @@ Raw output and summary output (in text or HTML format) are available.  Output
 is sent to standard output, unless an output filename is supplied.
 
 Summary Output (the default):
-Data stratified by host and batch system that provides a statistical
-summary of
+  Data stratified by host and batch system that provides a statistical
+  summary of:
     1. Queue wait time (duration between task submission and start times)
     2. Task run time (duration between start and succeed times)
     3. Total run time (duration between task submission and succeed times)
-Summary tables can be output in plain text format, or HTML with embedded SVG
-boxplots.  Both summary options require the Pandas library, and the HTML
-summary option requires the Matplotlib library.
+  Summary tables can be output in plain text format, or HTML with embedded SVG
+  boxplots.  Both summary options require the Pandas library, and the HTML
+  summary option requires the Matplotlib library.
 
 Raw Output:
-A flat list of tabular data that provides (for each task and cycle) the
+  A flat list of tabular data that provides (for each task and cycle) the
     1. Time of successful submission
     2. Time of task start
     3. Time of task successful completion
-as well as information about the batch system and remote host to permit
-stratification/grouping if desired by downstream processors.
+  as well as information about the batch system and remote host to permit
+  stratification/grouping if desired by downstream processors.
 
 Timings are shown only for succeeded tasks.
 

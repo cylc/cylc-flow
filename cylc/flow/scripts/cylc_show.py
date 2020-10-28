@@ -19,9 +19,9 @@
 """cylc [info] show [OPTIONS] ARGS
 
 Query a running workflow for:
-  cylc show REG - workflow metadata
-  cylc show REG TASK_NAME - task metadata
-  cylc show REG TASK_GLOB - prerequisites and outputs of task instances
+  $ cylc show REG  # workflow metadata
+  $ cylc show REG TASK_NAME  # task metadata
+  $ cylc show REG TASK_GLOB  # prerequisites and outputs of task instances
 
 Prerequisite and output status is indicated for current active tasks.
 """

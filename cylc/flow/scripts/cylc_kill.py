@@ -19,8 +19,10 @@
 """cylc [control] kill [OPTIONS] ARGS
 
 Kill jobs of active tasks and update their statuses accordingly.
- cylc kill REG TASK_GLOB ... - kill one or more active tasks
- cylc kill REG - kill all active tasks in the workflow
+
+Examples:
+  $ cylc kill REG  # kill all active tasks in the workflow
+  $ cylc kill REG TASK_GLOB ...  # kill one or more active tasks
 """
 
 from cylc.flow.option_parsers import CylcOptionParser as COP

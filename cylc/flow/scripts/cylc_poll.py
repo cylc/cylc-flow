@@ -19,8 +19,10 @@
 """cylc [control] poll [OPTIONS] ARGS
 
 Poll (query) task jobs to verify and update their statuses.
-  cylc poll REG - poll all active tasks
-  cylc poll REG TASK_GLOB ... - poll multiple active tasks or families
+
+Examples:
+  $ cylc poll REG  # poll all active tasks
+  $ cylc poll REG TASK_GLOB  # poll multiple active tasks or families
 """
 
 from cylc.flow.option_parsers import CylcOptionParser as COP

@@ -183,7 +183,6 @@ usage = general_usage + """
 
 Commands can be abbreviated as long as there is no ambiguity in
 the abbreviated command:
-
   $ cylc trigger SUITE TASK       # trigger TASK in SUITE
   $ cylc trig SUITE TASK          # ditto
   $ cylc tr SUITE TASK            # ditto

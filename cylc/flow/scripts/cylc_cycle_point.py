@@ -25,31 +25,30 @@ Filename templating replaces elements of a template string with corresponding
 elements of the current or given cycle point.
 
 Use ISO 8601 or posix date-time format elements:
-  % cylc cyclepoint 2010080T00 --template foo-CCYY-MM-DD-Thh.nc
+  $ cylc cyclepoint 2010080T00 --template foo-CCYY-MM-DD-Thh.nc
   foo-2010-08-08-T00.nc
-  % cylc cyclepoint 2010080T00 --template foo-%Y-%m-%d-T%H.nc
+  $ cylc cyclepoint 2010080T00 --template foo-%Y-%m-%d-T%H.nc
   foo-2010-08-08-T00.nc
 
 Other examples:
-
-1) print offset from an explicit cycle point:
-  % cylc [util] cycle-point --offset-hours=6 20100823T1800Z
+  # print offset from an explicit cycle point:
+  $ cylc [util] cycle-point --offset-hours=6 20100823T1800Z
   20100824T0000Z
 
-2) print offset from $CYLC_TASK_CYCLE_POINT (as in suite tasks):
-  % export CYLC_TASK_CYCLE_POINT=20100823T1800Z
-  % cylc cycle-point --offset-hours=-6
+  # print offset from $CYLC_TASK_CYCLE_POINT (as in suite tasks):
+  $ export CYLC_TASK_CYCLE_POINT=20100823T1800Z
+  $ cylc cycle-point --offset-hours=-6
   20100823T1200Z
 
-3) cycle point filename templating, explicit template:
-  % export CYLC_TASK_CYCLE_POINT=2010-08
-  % cylc cycle-point --offset-years=2 --template=foo-CCYY-MM.nc
+  # cycle point filename templating, explicit template:
+  $ export CYLC_TASK_CYCLE_POINT=2010-08
+  $ cylc cycle-point --offset-years=2 --template=foo-CCYY-MM.nc
   foo-2012-08.nc
 
-4) cycle point filename templating, template in a variable:
-  % export CYLC_TASK_CYCLE_POINT=2010-08
-  % export MYTEMPLATE=foo-CCYY-MM.nc
-  % cylc cycle-point --offset-years=2 --template=MYTEMPLATE
+  # cycle point filename templating, template in a variable:
+  $ export CYLC_TASK_CYCLE_POINT=2010-08
+  $ export MYTEMPLATE=foo-CCYY-MM.nc
+  $ cylc cycle-point --offset-years=2 --template=MYTEMPLATE
   foo-2012-08.nc"""
 
 import os

@@ -22,7 +22,7 @@ Print parsed suite configuration items, after runtime inheritance.
 
 By default all settings are printed. For specific sections or items
 use -i/--item and wrap sections in square brackets, e.g.:
-   cylc get-suite-config --item '[scheduling]initial cycle point'
+  $ cylc get-suite-config --item '[scheduling]initial cycle point'
 Multiple items can be retrieved at once.
 
 By default, unset values are printed as an empty string, or (for
@@ -37,19 +37,19 @@ Example:
   |            FOO = foo
   |            BAR = bar
 
-$ cylc get-suite-config --item=[runtime][modelX][environment]FOO SUITE
-foo
+  $ cylc get-suite-config --item=[runtime][modelX][environment]FOO SUITE
+  foo
 
-$ cylc get-suite-config --item=[runtime][modelX][environment] SUITE
-FOO = foo
-BAR = bar
+  $ cylc get-suite-config --item=[runtime][modelX][environment] SUITE
+  FOO = foo
+  BAR = bar
 
-$ cylc get-suite-config --item=[runtime][modelX] SUITE
-...
-[[[environment]]]
-    FOO = foo
-    BAR = bar
-..."""
+  $ cylc get-suite-config --item=[runtime][modelX] SUITE
+  ...
+  [[[environment]]]
+      FOO = foo
+      BAR = bar
+  ..."""
 
 from cylc.flow.config import SuiteConfig
 from cylc.flow.option_parsers import CylcOptionParser as COP

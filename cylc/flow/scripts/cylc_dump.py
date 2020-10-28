@@ -29,11 +29,11 @@ For more information about a specific task, such as the current state of
 its prerequisites and outputs, see 'cylc [info] show'.
 
 Examples:
- Display the state of all running tasks, sorted by cycle point:
- % cylc [info] dump --tasks --sort SUITE | grep running
+  # Display the state of all running tasks, sorted by cycle point:
+  $ cylc [info] dump --tasks --sort SUITE | grep running
 
- Display the state of all tasks in a particular cycle point:
- % cylc [info] dump -t SUITE | grep 2010082406"""
+  # Display the state of all tasks in a particular cycle point:
+  $ cylc [info] dump -t SUITE | grep 2010082406"""
 
 import sys
 import json

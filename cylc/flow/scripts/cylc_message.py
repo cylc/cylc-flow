@@ -30,24 +30,25 @@ and to report registered task outputs.
 
 Messages can be specified as arguments. A '-' indicates that the command should
 read messages from STDIN. When reading from STDIN, multiple messages are
-separated by empty lines. Examples:
+separated by empty lines.
 
-Single message as an argument:
- % cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" 'Hello world!'
+Examples:
+  # Single message as an argument:
+  $ cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" 'Hello world!'
 
-Multiple messages as arguments:
- % cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" \
-        'Hello world!' 'Hi' 'WARNING:Hey!'
+  # Multiple messages as arguments:
+  $ cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" \
+  >     'Hello world!' 'Hi' 'WARNING:Hey!'
 
-Multiple messages on STDIN:
- % cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" - <<'__STDIN__'
- % Hello
- % world!
- %
- % Hi
- %
- % WARNING:Hey!
- %__STDIN__
+  # Multiple messages on STDIN:
+  $ cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" - <<'__STDIN__'
+  > Hello
+  > world!
+  >
+  > Hi
+  >
+  > WARNING:Hey!
+  >__STDIN__
 
 Note "${CYLC_SUITE_NAME}" and "${CYLC_TASK_JOB}" are made available in task job
 environments - you do not need to write their actual values in task scripting.

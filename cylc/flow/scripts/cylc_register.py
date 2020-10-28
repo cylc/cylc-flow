@@ -28,14 +28,17 @@ will also be used for server authentication files at run time.
 
 Suite names can be hierarchical, corresponding to the path under ~/cylc-run.
 
-  % cylc register dogs/fido PATH
-Register PATH/flow.cylc as dogs/fido, with run directory ~/cylc-run/dogs/fido.
+Examples:
+  # Register PATH/flow.cylc as dogs/fido
+  # (with run directory ~/cylc-run/dogs/fido)
+  $ cylc register dogs/fido PATH
 
-  % cylc register dogs/fido
-Register $PWD/flow.cylc as dogs/fido.
+  # Register $PWD/flow.cylc as dogs/fido.
+  $ cylc register dogs/fido
 
-  % cylc register
-Register $PWD/flow.cylc as the parent directory name: $(basename $PWD).
+  # Register $PWD/flow.cylc as the parent directory
+  # name: $(basename $PWD).
+  $ cylc register
 
 The same suite can be registered with multiple names; this results in multiple
 suite run directories that link to the same suite definition.

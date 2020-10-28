@@ -18,9 +18,11 @@
 
 """cylc [control] hold [OPTIONS] ARGS
 
-Hold a workflow or tasks:
-  cylc hold REG - hold a workflow
-  cylc hold REG TASK_GLOB ... - hold one or more tasks in a workflow
+Hold a workflow or tasks.
+
+Examples:
+  $ cylc hold REG  # hold a workflow
+  $ cylc hold REG TASK_GLOB ...  # hold one or more tasks in a workflow
 
 Held tasks do not submit their jobs even if ready to run.
 

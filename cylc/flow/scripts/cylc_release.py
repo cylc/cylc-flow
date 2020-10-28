@@ -19,8 +19,11 @@
 """cylc [control] release|unhold [OPTIONS] ARGS
 
 Release a held workflow or tasks.
-  cylc release REG - release the workflow
-  cylc release REG TASK_GLOB ... - release one or more tasks
+
+Examples:
+  $ cylc release REG  # release the workflow
+  $ cylc release REG TASK_GLOB ...  # release one or more tasks
+
 Held tasks do not submit their jobs even if ready to run.
 
 See also 'cylc [control] hold'.

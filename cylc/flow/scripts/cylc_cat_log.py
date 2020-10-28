@@ -39,14 +39,18 @@ name must be given, but can be discovered with '--mode=l' (list-dir).
 The correct cycle poin t format of the suite must be used for task job logs,
 but can be discovered with '--mode=d' (print-dir).
 
-Basic examples, for a task "bar.2020" in suite "foo":
-  Print suite log:
-    cylc cat-log foo
-  Print task stdout:
-    cylc cat-log foo bar.2020
-    cylc cat-log -f o foo bar.2020
-  Print task stderr:
-    cylc cat-log -f e foo bar.2020
+Examples:
+  # for a task "bar.2020" in suite "foo"
+
+  # Print suite log:
+  $ cylc cat-log foo
+
+  # Print task stdout:
+  $ cylc cat-log foo bar.2020
+  $ cylc cat-log -f o foo bar.2020
+
+  # Print task stderr:
+  $cylc cat-log -f e foo bar.2020
 """
 
 import sys

@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc suite-state REG [OPTIONS]
+r"""cylc suite-state REG [OPTIONS]
 
 Print task states retrieved from a suite database; or (with --task,
 --point, and --status) poll until a given task reaches a given state; or (with
@@ -32,17 +32,19 @@ For your own suites the database location is determined by your
 site/user config. For other suites, e.g. those owned by others, or
 mirrored suite databases, use --run-dir=DIR to specify the location.
 
-Example usages:
-  cylc suite-state REG --task=TASK --point=POINT --status=STATUS
-returns 0 if TASK.POINT reaches STATUS before the maximum number of
-polls, otherwise returns 1.
+Examples:
+  $ cylc suite-state REG --task=TASK --point=POINT --status=STATUS
+  # returns 0 if TASK.POINT reaches STATUS before the maximum number of
+  # polls, otherwise returns 1.
 
-  cylc suite-state REG --task=TASK --point=POINT --status=STATUS --offset=PT6H
-adds 6 hours to the value of CYCLE for carrying out the polling operation.
+  $ cylc suite-state REG --task=TASK --point=POINT --status=STATUS \
+  > --offset=PT6H
+  # adds 6 hours to the value of CYCLE for carrying out the polling operation.
 
-  cylc suite-state REG --task=TASK --status=STATUS --task-point
-uses CYLC_TASK_CYCLE_POINT environment variable as the value for the CYCLE
-to poll. This is useful when you want to use cylc suite-state in a cylc task.
+  $ cylc suite-state REG --task=TASK --status=STATUS --task-point
+  # uses CYLC_TASK_CYCLE_POINT environment variable as the value for the
+  # CYCLE to poll. This is useful when you want to use cylc suite-state in a
+  # cylc task.
 """
 
 import os

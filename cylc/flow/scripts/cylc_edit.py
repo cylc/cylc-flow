@@ -51,7 +51,7 @@ the editor, to allow recovery in case of accidental corruption of the
 include-file boundary markers in the inlined file.
 
 The edit process is spawned in the foreground as follows:
-  % <editor> flow.cylc
+  $ <editor> flow.cylc
 Where <editor> is defined in the cylc site/user config files.
 
 See also 'cylc [prep] view'."""

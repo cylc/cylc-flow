@@ -18,8 +18,10 @@
 """cylc [control] trigger [OPTIONS] ARGS
 
 Manually trigger tasks.
-  cylc trigger REG - trigger all tasks in a running workflow
-  cylc trigger REG TASK_GLOB ... - trigger some tasks in a running workflow
+
+Examples:
+  $ cylc trigger REG  # trigger all tasks in a running workflow
+  $ cylc trigger REG TASK_GLOB ...  # trigger some tasks in a running workflow
 
 NOTE waiting tasks that are queue-limited will be queued if triggered, to
 submit as normal when released by the queue; queued tasks will submit

@@ -22,7 +22,7 @@ View a read-only temporary copy of suite NAME's flow.cylc file, in your
 editor, after optional include-file inlining and Jinja2 preprocessing.
 
 The edit process is spawned in the foreground as follows:
-  % <editor> flow.cylc
+  $ <editor> flow.cylc
 Where <editor> can be set in cylc global config.
 
 For remote host or owner, the suite will be printed to stdout unless

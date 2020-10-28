@@ -20,27 +20,27 @@
 List Cylc workflows, by default this shows only running or held workflows.
 
 Examples:
-    # list all "active" workflows (i.e. running or held)
-    $ cylc scan
+  # list all "active" workflows (i.e. running or held)
+  $ cylc scan
 
-    # show more information about these workflows
-    $ cylc scan -t rich
+  # show more information about these workflows
+  $ cylc scan -t rich
 
-    # don't rely on colour for job state totals
-    $ cylc scan -t rich --colour-blind
+  # don't rely on colour for job state totals
+  $ cylc scan -t rich --colour-blind
 
-    # list all "inactive" workflows (i.e. registered or stopped)
-    $ cylc scan --state stopped
+  # list all "inactive" workflows (i.e. registered or stopped)
+  $ cylc scan --state stopped
 
-    # list all workflows (active or inactive)
-    $ cylc scan --state=running,held,stopped
-    $ cylc scan --state=all  # or using the shorthand
+  # list all workflows (active or inactive)
+  $ cylc scan --state=running,held,stopped
+  $ cylc scan --state=all  # or using the shorthand
 
-    # filter workflows by name
-    $ cylc scan --name '^f.*'  # show only flows starting with "f"
+  # filter workflows by name
+  $ cylc scan --name '^f.*'  # show only flows starting with "f"
 
-    # get results in JSON format
-    $ cylc scan -t json
+  # get results in JSON format
+  $ cylc scan -t json
 """
 
 import asyncio
