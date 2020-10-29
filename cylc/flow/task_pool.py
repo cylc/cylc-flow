@@ -996,11 +996,17 @@ class TaskPool:
                     break
 
         if prereqs_map:
-            LOG.warning("Some partially satisfied prerequisites left over:")
-            for id_, prereqs in prereqs_map.items():
-                LOG.warning("%s is waiting on:" % id_)
-                for prereq in prereqs:
-                    LOG.warning("* %s" % prereq)
+            LOG.warning(
+                "Some partially satisfied prerequisites left over:"
+                + [
+                    f"\n{id_} is waiting on:"
+                    + [
+                        f"\n    * {prereq}"
+                        for prereq in prereqs
+                    ]
+                    for id_, prereqs in prereqs_map.items()
+                ]
+            )
 
     def set_hold_point(self, point):
         """Set the point after which tasks must be held."""
