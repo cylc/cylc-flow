@@ -29,22 +29,21 @@ from cylc.flow.scripts import cylc_header
 from cylc.flow.terminal import (
     centered,
     format_shell_examples,
-    get_width,
     print_contents
 )
 
 
-desc = '''
+DESC = '''
 Cylc ("silk") is a workflow engine for orchestrating complex *suites* of
 inter-dependent distributed cycling (repeating) tasks, as well as ordinary
 non-cycling workflows.
 '''
 
-# BEGIN MAIN
-usage = f"""{cylc_header()}
-{centered(desc)}
+USAGE = f"""{cylc_header()}
+{centered(DESC)}
 
 Usage:
+  $ cylc help all                 # list all commands
   $ cylc validate FLOW            # validate a workflow definition
   $ cylc run FLOW                 # run a workflow
   $ cylc tui FLOW                 # view a running workflow in the terminal
@@ -71,12 +70,11 @@ Task Identification:
 
 # because this command is not served from behind cli_function like the
 # other cylc commands we have to manually patch in colour support
-usage = format_shell_examples(usage)
-usage = cparse(usage)
-color_init(autoreset=True, strip=False)
-# TODO ^ this is causing the job submit errors due to control chars
+USAGE = format_shell_examples(USAGE)
+USAGE = cparse(USAGE)
 
-# These will be ported to python as click commands
+# bash sub-commands
+# {name: (description, usage)}
 bash_commands = {
     'graph-diff': (
         'Compare the graphs of two workflows in text format.',
@@ -85,7 +83,8 @@ bash_commands = {
     )
 }
 
-# First step of the click port, the list won't be necessary after that
+# all sub-commands
+# {name: entry_point}
 commands = {
     # TODO: remove the cylc-flow constraint
     **pkg_resources.get_entry_map("cylc-flow").get("cylc.command"),
@@ -96,43 +95,8 @@ commands = {
 }
 
 
-def execute_bash(cmd, *args):
-    # Replace the current process with that of the sub-command.
-    cmd = f'cylc-{cmd}'
-    try:
-        os.execvp(cmd, [cmd] + list(args))  # nosec
-    except OSError as exc:
-        if exc.filename is None:
-            exc.filename = cmd
-        raise click.ClickException(exc)
-
-
-def execute_python(cmd, *args):
-    commands[cmd].resolve()(*args)
-
-
-def execute_cmd(cmd, *args):
-    sys.stderr.write(f'$$$ {cmd} {" ".join(args)}')
-    if cmd in bash_commands:
-        execute_bash(cmd, *args)
-    else:
-        execute_python(cmd, *args)
-    sys.exit()
-
-
-CONTEXT_SETTINGS = dict(ignore_unknown_options=True)
-
-
-def cli_help():
-    print(usage)
-    sys.exit(0)
-
-
-def cli_version():
-    click.echo(__version__)
-    sys.exit(0)
-
-
+# aliases for sub-commands
+# {alias_name: command_name}
 ALIASES = {
     'bcast': 'broadcast',
     'compare': 'diff',
@@ -154,7 +118,133 @@ ALIASES = {
 }
 
 
-@click.command(context_settings=CONTEXT_SETTINGS)
+def execute_bash(cmd, *args):
+    """Execute Bash sub-command.
+
+    Note:
+        Replaces the current process with that of the sub-command.
+
+    """
+    cmd = f'cylc-{cmd}'
+    try:
+        os.execvp(cmd, [cmd] + list(args))  # nosec
+    except OSError as exc:
+        if exc.filename is None:
+            exc.filename = cmd
+        raise click.ClickException(exc)
+
+
+def execute_python(cmd, *args):
+    """Execute a Python sub-command.
+
+    Note:
+        Imports the function and calls it in the current Python session.
+
+    """
+    commands[cmd].resolve()(*args)
+
+
+def execute_cmd(cmd, *args):
+    """Execute a sub-command.
+
+    Args:
+        cmd (str):
+            The name of the command.
+        args (list):
+            List of command line arguments to pass to that command.
+
+    """
+    if cmd in bash_commands:
+        execute_bash(cmd, *args)
+    else:
+        execute_python(cmd, *args)
+    sys.exit()
+
+
+def parse_docstring(docstring):
+    """Extract the description and usage lines from a sub-command docstring.
+
+    Args:
+        docstring (str):
+            Multiline string i.e. __doc__
+
+    Returns:
+        tuple - (usage, description)
+
+    """
+    lines = [
+        line
+        for line in docstring.splitlines()
+        if line
+    ]
+    usage = None
+    desc = None
+    if len(lines) > 0:
+        usage = lines[0]
+    if len(lines) > 1:
+        desc = lines[1]
+    return (usage, desc)
+
+
+def iter_commands():
+    """Yield all Cylc sub-commands.
+
+    Yields:
+        tuple - (command, description, usage)
+
+    """
+    for cmd, obj in sorted(commands.items()):
+        if cmd == 'cylc':
+            # don't include this command in the listing
+            continue
+        if obj:
+            # python command
+            module = __import__(obj.module_name, fromlist=[''])
+            if getattr(module, 'INTERNAL', False):
+                # do not list internal commands
+                continue
+            usage, desc = parse_docstring(module.__doc__)
+            yield (cmd, desc, usage)
+        elif cmd in bash_commands:
+            # bash command
+            desc, usage = bash_commands[cmd]
+            yield (cmd, desc, usage)
+        else:
+            raise ValueError(f'Unrecognised command "{cmd}"')
+
+
+def print_command_list(commands=None):
+    """Print list of Cylc commands."""
+    contents = [
+        (cmd, desc)
+        for cmd, desc, _, in iter_commands()
+        if not commands
+        or cmd in commands
+    ]
+    print_contents(contents, indent=2)
+
+
+def cli_help():
+    """Display the main Cylc help page."""
+    # add a splash of colour
+    # we need to do this explicitly as this command is not behind cli_function
+    # (assume the cylc help is only ever requested interactively in a
+    # modern terminal)
+    color_init(autoreset=True, strip=False)
+    print(USAGE)
+    print('Selected Sub-Commands:')
+    print_command_list(commands=['validate', 'run', 'restart', 'stop', 'tui'])
+    print('\nTo see all commands run: cylc help all')
+    sys.exit(0)
+
+
+def cli_version():
+    """Display the Cylc Flow version."""
+    click.echo(__version__)
+    sys.exit(0)
+
+
+@click.command(context_settings={'ignore_unknown_options': True})
 @click.option("--help", "-h", "help_", is_flag=True, is_eager=True)
 @click.option("--version", "-V", is_flag=True, is_eager=True)
 @click.argument("cmd-args", nargs=-1)
@@ -175,6 +265,9 @@ def main(cmd_args, version, help_):
             help_ = True
             if not len(cmd_args):
                 cli_help()
+            elif cmd_args == ['all']:
+                print_command_list()
+                sys.exit(0)
             else:
                 command = cmd_args.pop(0)
 
@@ -233,53 +326,3 @@ def main(cmd_args, version, help_):
             if version:
                 cmd_args.append("--version")
             execute_cmd(command, *cmd_args)
-    # elif help_:
-    #     cli_help()
-
-
-def parse_docstring(docstring):
-    lines = [
-        line
-        for line in docstring.splitlines()
-        if line
-    ]
-    usage = None
-    desc = None
-    if len(lines) > 0:
-        usage = lines[0]
-    if len(lines) > 1:
-        desc = lines[1]
-    return (usage, desc)
-
-
-# def list_cmds():
-def main2():
-    contents = [
-        (cmd, desc)
-        for cmd, desc, _, in get_command_info()
-    ]
-    print_contents(contents)
-
-
-def get_command_info():
-    ret = []
-    for cmd, obj in sorted(commands.items()):
-        if cmd == 'cylc':
-            continue
-        if cmd == 'cylc-help':
-            continue
-        if obj:
-            # python command
-            module = __import__(obj.module_name, fromlist=[''])
-            if getattr(module, 'INTERNAL', False):
-                # do not list internal commands
-                continue
-            usage, desc = parse_docstring(module.__doc__)
-            ret.append((cmd, desc, usage))
-        elif cmd in bash_commands:
-            # bash command
-            desc, usage = bash_commands[cmd]
-            ret.append((cmd, desc, usage))
-        else:
-            raise ValueError(f'Unrecognised command "{cmd}"')
-    return ret

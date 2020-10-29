@@ -86,26 +86,25 @@ def format_shell_examples(string):
     )
 
 
-def print_contents(contents, padding=5, char='.'):
+def print_contents(contents, padding=5, char='.', indent=0):
     title_width = max(
         len(title)
         for title, _ in contents
     )
     width = get_width(default=0)
-    if width < title_width + 20:
-        width = title_width + 20
-    desc_width = width - title_width - padding - 2
+    if width < title_width + 20 - indent - padding:
+        width = title_width + 20 - indent - padding
+    desc_width = width - title_width - padding - 2 - indent
+    indent = ' ' * indent
     for title, desc in contents:
         desc_lines = wrap(desc or '', desc_width) or ['']
-        try:
-            print(
-                f'{title} {char * (padding + title_width - len(title))} '
-                f'{desc_lines[0]}'
-            )
-        except:
-            breakpoint()
+        print(
+            f'{indent}'
+            f'{title} {char * (padding + title_width - len(title))} '
+            f'{desc_lines[0]}'
+        )
         for line in desc_lines[1:]:
-            print(f'  {" " * title_width}{" " * padding}{line}')
+            print(f'{indent}  {" " * title_width}{" " * padding}{line}')
 
 
 def supports_color():
