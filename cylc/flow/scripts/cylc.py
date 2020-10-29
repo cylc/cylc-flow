@@ -87,8 +87,13 @@ bash_commands = {
 # all sub-commands
 # {name: entry_point}
 commands = {
-    # TODO: remove the cylc-flow constraint
-    **pkg_resources.get_entry_map("cylc-flow").get("cylc.command"),
+    # python sub-commands
+    **{
+        entry_point.name: entry_point
+        for entry_point
+        in pkg_resources.iter_entry_points('cylc.command')
+    },
+    # bash sub-commands
     **{
         cmd: None
         for cmd in bash_commands
