@@ -17,6 +17,7 @@
 """cylc [task] remote-tidy RUND
 
 (This command is for internal use.)
+
 Remove ".service/contact" from a task remote (i.e. a [owner@]host).
 Remove ".service" directory on the remote if emptied.
 Remove authentication keys.
@@ -25,6 +26,8 @@ Remove authentication keys.
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.task_remote_cmd import remote_tidy
+
+INTERNAL = True
 
 
 def main():

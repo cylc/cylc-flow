@@ -17,6 +17,7 @@
 """cylc [task] remote-init [--indirect-comm=ssh] UUID RUND
 
 (This command is for internal use.)
+
 Install suite service files on a task remote (i.e. a [owner@]host):
     .service/contact: All task -> suite communication methods.
 
@@ -32,6 +33,8 @@ Return:
         On failure.
 
 """
+
+INTERNAL = True
 
 
 def main():

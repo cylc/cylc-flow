@@ -16,6 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Report system utilisation information.
 
+(This command is for internal use.)
+
 For internal use with the `cylc.flow.host_select` module.
 """
 import json
@@ -29,6 +31,8 @@ from cylc.flow.terminal import (
     cli_function,
     parse_dirty_json
 )
+
+INTERNAL = True
 
 
 def get_option_parser():

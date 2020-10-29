@@ -16,14 +16,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """cylc [control] jobs-poll JOB-LOG-ROOT [JOB-LOG-DIR ...]
 
-(This command is for internal use. Users should use "cylc poll".) Read job
-status files to obtain the statuses of the jobs. If necessary, Invoke the
-relevant batch system commands to ask the batch systems for more statuses.
+(This command is for internal use. Users should use "cylc poll".)
+
+Read job status files to obtain the statuses of the jobs. If necessary, Invoke
+the relevant batch system commands to ask the batch systems for more statuses.
 
 """
 from cylc.flow.batch_sys_manager import BatchSysManager
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
+
+INTERNAL = True
 
 
 def get_option_parser():

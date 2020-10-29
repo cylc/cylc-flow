@@ -144,7 +144,7 @@ class SubFuncContext(SubProcContext):
 
     def update_command(self, suite_source_dir):
         """Update the function wrap command after changes."""
-        self.cmd = ['cylc-function-run', self.func_name,
+        self.cmd = ['cylc', 'function-run', self.func_name,
                     json.dumps(self.func_args),
                     json.dumps(self.func_kwargs),
                     suite_source_dir]

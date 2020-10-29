@@ -436,14 +436,14 @@ async def _run(parser, options, reg, is_restart, scheduler):
         return ret
 
 
-def main(is_restart=False):
+def main(*args, is_restart=False):
     """Abstraction for cylc (run|restart) CLI"""
     # the cli_function decorator changes the function signature which
     # irritates pylint.
     if is_restart:
-        return restart()  # pylint: disable=E1120
+        return restart(*args)  # pylint: disable=E1120
     else:
-        return run()  # pylint: disable=E1120
+        return run(*args)  # pylint: disable=E1120
 
 
 @cli_function(partial(get_option_parser, is_restart=True))

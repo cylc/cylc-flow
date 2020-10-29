@@ -19,6 +19,7 @@
 """cylc client [OPTIONS] ARGS
 
 (This command is for internal use.)
+
 Invoke suite runtime client, expect JSON from STDIN for keyword arguments.
 Use the -n option if client function requires no keyword arguments.
 """
@@ -32,6 +33,8 @@ from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.terminal import cli_function
 from cylc.flow.network.server import PB_METHOD_MAP
+
+INTERNAL = True
 
 
 def get_option_parser():

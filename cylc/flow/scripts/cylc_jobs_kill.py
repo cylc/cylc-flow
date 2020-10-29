@@ -16,15 +16,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """cylc [control] jobs-kill JOB-LOG-ROOT [JOB-LOG-DIR ...]
 
-(This command is for internal use. Users should use "cylc kill".) Read job
-status files to obtain the names of the batch systems and the job IDs in the
-systems. Invoke the relevant batch system commands to ask the batch systems to
-terminate the jobs.
+(This command is for internal use. Users should use "cylc kill".)
+
+Read job status files to obtain the names of the batch systems and the job IDs
+in the systems. Invoke the relevant batch system commands to ask the batch
+systems to terminate the jobs.
 
 """
 from cylc.flow.batch_sys_manager import BatchSysManager
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
+
+INTERNAL = True
 
 
 def get_option_parser():

@@ -19,6 +19,7 @@
 """cylc subscribe [OPTIONS] ARGS
 
 (This command is for internal use.)
+
 Invoke suite subscriber to receive published workflow output.
 """
 
@@ -34,6 +35,8 @@ from cylc.flow.network import get_location
 from cylc.flow.network.subscriber import WorkflowSubscriber, process_delta_msg
 from cylc.flow.terminal import cli_function
 from cylc.flow.data_store_mgr import DELTAS_MAP
+
+INTERNAL = True
 
 
 def print_message(topic, data, subscriber=None, once=False):

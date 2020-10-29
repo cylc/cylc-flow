@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """USAGE: cylc function-run <name> <json-args> <json-kwargs> <src-dir>
 
-INTERNAL USE (asynchronous external trigger function execution)
+(This command is for internal use.)
 
 Run a Python function "<name>(*args, **kwargs)" in the process pool. It must be
 defined in a module of the same name. Positional and keyword arguments must be
@@ -26,6 +26,8 @@ local xtrigger modules.
 import sys
 
 from cylc.flow.subprocpool import run_function
+
+INTERNAL = True
 
 
 def main():
