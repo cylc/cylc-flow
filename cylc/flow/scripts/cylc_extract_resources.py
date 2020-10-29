@@ -14,50 +14,40 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""cylc extract-resources [OPTIONS] DIR [RESOURCES]
+"""cylc extract-resources [OPTIONS] [DIR] [RESOURCES...]
 
-Extract resources from the cylc.flow package.
+Extract resources from the cylc.flow package."""
 
-Options:
-    --list      List available resources
-Arguments:
-    DIR         Target Directory
-    [RESOURCES] Specific resources to extract (default all).
-"""
-
-import os
 import sys
 
-from cylc.flow.exceptions import UserInputError
+from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.resources import extract_resources, list_resources
 from cylc.flow.terminal import cli_function
 
 
-class ArgParser:
-    """Lightweight standin for cylc.flow.option_parsers.CylcOptionParser."""
+def get_option_parser():
+    parser = COP(
+        __doc__,
+        argdoc=[
+            ('[DIR]', 'Target directory.'),
+            ('[RESOURCES...]', 'Resources to extract (default all).')
+        ]
+    )
 
-    @classmethod
-    def parser(cls):
-        return cls
+    parser.add_option('--list', default=False, action='store_true')
 
-    @staticmethod
-    def parse_args():
-        if {'help', '--help', "-h"} & set(sys.argv):
-            print(__doc__)
-        elif len(sys.argv) < 2:
-            raise UserInputError(
-                "wrong number of arguments, "
-                f"see '{os.path.basename(sys.argv[0])} --help'."
-            )
-        elif '--list' in sys.argv:
-            print('\n'.join(list_resources()))
-        else:
-            return (None, sys.argv[1:])
-        sys.exit()
+    return parser
 
 
-@cli_function(ArgParser.parser)
-def main(parser, _, target_dir, *resources):
+@cli_function(get_option_parser)
+def main(parser, opts, *args):
+    if opts.list:
+        print('\n'.join(list_resources()))
+        sys.exit(0)
+    elif not args:
+        print(parser.usage)
+        sys.exit(0)
+    target_dir, *resources = args
     extract_resources(target_dir, resources or None)
 
 

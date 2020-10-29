@@ -205,7 +205,7 @@ TASK_GLOB matches task or family names at a given cycle point.
                 dest="icp",
             )
 
-    def parse_args(self, api_args=None, remove_opts=None):
+    def parse_args(self, api_args, remove_opts=None):
         """Parse options and arguments, overrides OptionParser.parse_args.
 
         Args:

@@ -43,7 +43,7 @@ from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.suite_files import parse_suite_arg
 
 
-def parse_args():
+def get_option_parser():
     parser = COP(__doc__, jset=True, prep=True, icp=True)
 
     parser.add_option(
@@ -73,7 +73,7 @@ def parse_args():
     return parser
 
 
-@cli_function(parse_args)
+@cli_function(get_option_parser)
 def main(_, options, reg):
     """cylc validate CLI."""
     profiler = Profiler(None, options.profile_mode)

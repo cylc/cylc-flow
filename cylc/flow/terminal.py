@@ -223,7 +223,7 @@ def cli_function(parser_function=None, **parser_kwargs):
             if parser_function:
                 parser = parser_function()
                 opts, args = parser_function().parse_args(
-                    api_args=list(api_args),
+                    list(api_args),
                     **parser_kwargs
                 )
                 use_color = (
