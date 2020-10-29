@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc [control] hold [OPTIONS] ARGS
+"""cylc hold [OPTIONS] ARGS
 
 Hold a workflow or tasks.
 
@@ -26,7 +26,7 @@ Examples:
 
 Held tasks do not submit their jobs even if ready to run.
 
-See also 'cylc [control] release'.
+See also 'cylc release'.
 """
 
 from cylc.flow.option_parsers import CylcOptionParser as COP

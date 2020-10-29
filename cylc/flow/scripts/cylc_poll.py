@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc [control] poll [OPTIONS] ARGS
+"""cylc poll [OPTIONS] ARGS
 
 Poll (query) task jobs to verify and update their statuses.
 

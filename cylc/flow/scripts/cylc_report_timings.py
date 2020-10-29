@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc [util] report-timings [OPTIONS] REG
+"""cylc report-timings [OPTIONS] REG
 
 Display suite timing informatiom.
 

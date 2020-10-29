@@ -15,7 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-r"""cylc [task] message [OPTIONS] -- ARGS
+r"""cylc message [OPTIONS] -- ARGS
 
 Record task job messages.
 

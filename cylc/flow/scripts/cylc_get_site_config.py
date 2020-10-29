@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc [admin] get-site-config [OPTIONS]
+"""cylc get-site-config [OPTIONS]
 
 Print cylc site/user configuration settings.
 

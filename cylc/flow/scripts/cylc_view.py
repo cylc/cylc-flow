@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc [prep] view [OPTIONS] ARGS
+"""cylc view [OPTIONS] ARGS
 
 View a processessed suite configuration.
 
@@ -34,7 +34,7 @@ Where <editor> can be set in cylc global config.
 For remote host or owner, the suite will be printed to stdout unless
 the '-g,--gui' flag is used to spawn a remote GUI edit session.
 
-See also 'cylc [prep] edit'."""
+See also 'cylc edit'."""
 
 import sys
 
@@ -182,7 +182,7 @@ def main(parser, options, reg):
         print('WARNING: YOU HAVE EDITED A TEMPORARY READ-ONLY SUITE COPY:',
               file=sys.stderr)
         print(viewfile.name, file=sys.stderr)
-        print('In future use \'cylc [prep] edit\' to edit a suite.',
+        print('In future use \'cylc edit\' to edit a suite.',
               file=sys.stderr)
         print()
     # DONE

@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""cylc [control] jobs-submit JOB-LOG-ROOT [JOB-LOG-DIR ...]
+"""cylc jobs-submit JOB-LOG-ROOT [JOB-LOG-DIR ...]
 
 (This command is for internal use.)
 

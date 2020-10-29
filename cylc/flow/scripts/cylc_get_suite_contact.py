@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc [info] get-suite-contact [OPTIONS] ARGS
+"""cylc get-suite-contact [OPTIONS] ARGS
 
 Print contact information of a running suite."""
 

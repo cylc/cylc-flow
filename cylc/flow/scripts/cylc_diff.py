@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc [prep] diff|compare [OPTIONS] SUITE1 SUITE2
+"""cylc diff [OPTIONS] SUITE1 SUITE2
 
 Compare two suite configurations and display any differences.
 

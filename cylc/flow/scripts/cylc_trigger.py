@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc [control] trigger [OPTIONS] ARGS
+"""cylc trigger [OPTIONS] ARGS
 
 Manually trigger tasks.
 

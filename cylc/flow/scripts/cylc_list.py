@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc [info|prep] list|ls [OPTIONS] ARGS
+"""cylc list [OPTIONS] ARGS
 
 List tasks and families defined in a workflow.
 

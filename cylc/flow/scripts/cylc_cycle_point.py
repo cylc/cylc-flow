@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc [util] cycle-point [OPTIONS] ARGS
+"""cylc cycle-point [OPTIONS] ARGS
 
 Utility for date-time cycle point arithmetic.
 
@@ -32,7 +32,7 @@ Use ISO 8601 or posix date-time format elements:
 
 Other examples:
   # print offset from an explicit cycle point:
-  $ cylc [util] cycle-point --offset-hours=6 20100823T1800Z
+  $ cylc cycle-point --offset-hours=6 20100823T1800Z
   20100824T0000Z
 
   # print offset from $CYLC_TASK_CYCLE_POINT (as in suite tasks):

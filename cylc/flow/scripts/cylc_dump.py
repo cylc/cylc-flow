@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc [info] dump [OPTIONS] ARGS
+"""cylc dump [OPTIONS] ARGS
 
 Print information about a running suite.
 
@@ -25,14 +25,14 @@ For command line monitoring:
 * `watch cylc dump SUITE` works for small simple suites
 
 For more information about a specific task, such as the current state of
-its prerequisites and outputs, see 'cylc [info] show'.
+its prerequisites and outputs, see 'cylc show'.
 
 Examples:
   # Display the state of all running tasks, sorted by cycle point:
-  $ cylc [info] dump --tasks --sort SUITE | grep running
+  $ cylc dump --tasks --sort SUITE | grep running
 
   # Display the state of all tasks in a particular cycle point:
-  $ cylc [info] dump -t SUITE | grep 2010082406"""
+  $ cylc dump -t SUITE | grep 2010082406"""
 
 import sys
 import json

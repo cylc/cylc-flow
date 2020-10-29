@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc [prep] get-directory REG
+"""cylc get-directory REG
 
 Retrieve and print the source directory location of suite REG.
 

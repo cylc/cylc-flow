@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""cylc [task] tui REG
+"""cylc tui REG
 
 View and control running suites in the terminal.
 

@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc [control] ext-trigger [OPTIONS] ARGS
+"""cylc ext-trigger [OPTIONS] ARGS
 
 Report an external event message to a suite server program.
 

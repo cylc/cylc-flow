@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc [discovery] ping [OPTIONS] ARGS
+"""cylc ping [OPTIONS] ARGS
 
 Test communication with a running suite.
 

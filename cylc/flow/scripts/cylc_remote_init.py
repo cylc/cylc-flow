@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""cylc [task] remote-init [--indirect-comm=ssh] UUID RUND
+"""cylc remote-init [--indirect-comm=ssh] UUID RUND
 
 (This command is for internal use.)
 

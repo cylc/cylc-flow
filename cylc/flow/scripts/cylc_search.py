@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc [prep] search|grep [OPTIONS] ARGS
+"""cylc search [OPTIONS] ARGS
 
 Search for patterns in suite configurations.
 

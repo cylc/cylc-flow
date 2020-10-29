@@ -15,19 +15,19 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""cylc [prep] edit [OPTIONS] ARGS
+"""cylc edit [OPTIONS] ARGS
 
 Edit suite definitions.
 
 Edit suite definitions without having to move to their directory
 locations, and with optional reversible inlining of include-files. Note
 that Jinja2 suites can only be edited in raw form but the processed
-version can be viewed with 'cylc [prep] view -p'.
+version can be viewed with 'cylc view -p'.
 
-1/ cylc [prep] edit SUITE
+1/ cylc edit SUITE
 Change to the suite definition directory and edit the flow.cylc file.
 
-2/ cylc [prep] edit -i,--inline SUITE
+2/ cylc edit -i,--inline SUITE
 Edit the suite with include-files inlined between special markers. The
 original flow.cylc file is temporarily replaced so that the inlined
 version is "live" during editing (i.e. you can run suites during
@@ -37,7 +37,7 @@ again when you exit the editor. Include-files can be nested or
 multiply-included; in the latter case only the first inclusion is
 inlined (this prevents conflicting changes made to the same file).
 
-3/ cylc [prep] edit --cleanup SUITE
+3/ cylc edit --cleanup SUITE
 Remove backup files left by previous INLINED edit sessions.
 
 INLINED EDITING SAFETY: The flow.cylc file and its include-files are
@@ -55,7 +55,7 @@ The edit process is spawned in the foreground as follows:
   $ <editor> flow.cylc
 Where <editor> is defined in the cylc site/user config files.
 
-See also 'cylc [prep] view'."""
+See also 'cylc view'."""
 
 import os
 import re

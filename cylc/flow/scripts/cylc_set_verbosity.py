@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc [control] set-verbosity [OPTIONS] ARGS
+"""cylc set-verbosity [OPTIONS] ARGS
 
 Change the logging severity level of a running suite.
 

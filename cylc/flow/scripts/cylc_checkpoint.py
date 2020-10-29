@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc [control] checkpoint [OPTIONS] ARGS
+"""cylc checkpoint [OPTIONS] ARGS
 
 Tell suite to checkpoint its current state.
 """
