@@ -928,9 +928,13 @@ class TaskPool:
                 ]
             )
         if orphans:
-            LOG.warning("Orphaned task jobs:")
-            for itask in orphans:
-                LOG.warning(f"* {itask.identity} ({itask.state.status})")
+            LOG.warning(
+                "Orphaned task jobs:"
+                + [
+                    f"\n* {itask.identity} ({itask.state.status})"
+                    for itask in orphans
+                ]
+            )
 
         for key1, point, name, submit_num in self.task_events_mgr.event_timers:
             LOG.warning("%s/%s/%s: incomplete task event handler %s" % (
