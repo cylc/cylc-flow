@@ -119,6 +119,17 @@ ALIASES = {
 }
 
 
+# alises for sub-commands which no longer exist
+# {alias_name: message_to_user}
+DEAD_ENDS = {
+    'reset': 'cylc reset has been replaced by cylc set-outputs',
+    'documentation': 'Cylc documentation is now at http://cylc.org',
+    'gscan': 'cylc gscan has been removed, use the web UI',
+    'gui': 'cylc gui has been removed, use the web UI',
+    'insert': 'inserting tasks is now done automatically'
+}
+
+
 def execute_bash(cmd, *args):
     """Execute Bash sub-command.
 
@@ -160,6 +171,52 @@ def execute_cmd(cmd, *args):
     else:
         execute_python(cmd, *args)
     sys.exit()
+
+
+def match_command(command):
+    """Permit abbreviated commands (e.g. tri -> trigger).
+
+    Args:
+        command (string):
+            The input string to match.
+
+    Returns:
+        string - The matched command.
+
+    Raises:
+        click.ClickException:
+            In the event that there is no matching command.
+
+    Exits:
+        1:
+            In the event that the input is ambiguous.
+
+    """
+    possible_cmds = [
+        cmd for cmd in commands if cmd.startswith(command)
+    ]
+    if len(possible_cmds) == 0:
+        raise click.ClickException(
+            f"cylc {command}: unknown utility. Abort.\n"
+            'Type "cylc help all" for a list of utilities.'
+        )
+    elif len(possible_cmds) > 1:
+        click.echo(
+            "cylc {}: is ambiguous for:\n{}".format(
+                command,
+                "\n".join(
+                    [
+                        "    cylc {}".format(cmd[5:])
+                        for cmd in possible_cmds
+                    ]
+                ),
+            ),
+            err=True,
+        )
+        sys.exit(1)
+    else:
+        command = possible_cmds[0]
+    return command
 
 
 def parse_docstring(docstring):
@@ -296,33 +353,22 @@ def main(cmd_args, version, help_):
                 command = cmd_args.pop(0)
 
         if command in ALIASES:
+            # this is an alias to a command
             command = ALIASES[command]
 
+        if command in DEAD_ENDS:
+            # this command has been removed but not aliased
+            # display a helpful message and move on#
+            print(
+                cparse(
+                    f'<red>{DEAD_ENDS[command]}</red>'
+                )
+            )
+            sys.exit(42)
+
         if command not in commands:
-            possible_cmds = [
-                cmd for cmd in commands if cmd.startswith(command)
-            ]
-            if len(possible_cmds) == 0:
-                raise click.ClickException(
-                    f"cylc {command}: unknown utility. Abort.\n"
-                    'Type "cylc help all" for a list of utilities.'
-                )
-            elif len(possible_cmds) > 1:
-                click.echo(
-                    "cylc {}: is ambiguous for:\n{}".format(
-                        command,
-                        "\n".join(
-                            [
-                                "    cylc {}".format(cmd[5:])
-                                for cmd in possible_cmds
-                            ]
-                        ),
-                    ),
-                    err=True,
-                )
-                sys.exit(1)
-            else:
-                command = possible_cmds[0]
+            # check if this is a command abbreviation or exit
+            command = match_command(command)
 
         if command == "graph-diff":
             if len(cmd_args) > 2:
