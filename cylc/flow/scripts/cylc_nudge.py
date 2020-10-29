@@ -23,9 +23,6 @@ Cause the cylc task processing loop to be invoked in a running suite.
 This happens automatically when the state of any task changes such that
 task processing (dependency negotiation etc.) is required, or if a
 clock-trigger task is ready to run.
-
-The main reason to use this command is to update the "estimated time till
-completion" intervals, during periods when nothing else is happening.
 """
 
 from cylc.flow.option_parsers import CylcOptionParser as COP

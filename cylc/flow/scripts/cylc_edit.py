@@ -15,15 +15,16 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 """cylc [prep] edit [OPTIONS] ARGS
+
+Edit suite definitions.
 
 Edit suite definitions without having to move to their directory
 locations, and with optional reversible inlining of include-files. Note
 that Jinja2 suites can only be edited in raw form but the processed
 version can be viewed with 'cylc [prep] view -p'.
 
-1/cylc [prep] edit SUITE
+1/ cylc [prep] edit SUITE
 Change to the suite definition directory and edit the flow.cylc file.
 
 2/ cylc [prep] edit -i,--inline SUITE

@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """cylc [info] extract-resources [OPTIONS] DIR [RESOURCES]
 
-Extract resources from the cylc.flow package and write them to DIR.
+Extract resources from the cylc.flow package.
 
 Options:
     --list      List available resources

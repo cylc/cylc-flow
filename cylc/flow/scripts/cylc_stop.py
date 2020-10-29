@@ -18,9 +18,9 @@
 
 """cylc [control] stop|shutdown [OPTIONS] ARGS
 
-Tell a suite server program to shut down. In order to prevent failures going
-unnoticed, suites only shut down automatically at a final cycle point if no
-failed tasks are present. There are several shutdown methods:
+Stop a running suite.
+
+There are several shutdown methods:
 
   1. (default) stop after current active tasks finish
   2. (--now) stop immediately, orphaning current active tasks

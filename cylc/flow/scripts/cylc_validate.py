@@ -18,7 +18,7 @@
 
 """cylc [prep] validate [OPTIONS] ARGS
 
-Validate a suite definition.
+Validate a suite configuration.
 
 If the suite definition uses include-files reported line numbers
 will correspond to the inlined version seen by the parser; use

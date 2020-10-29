@@ -43,7 +43,9 @@ from cylc.flow.terminal import cli_function
 
 RUN_DOC = r"""cylc [control] run|start [OPTIONS] [ARGS]
 
-Start a suite run from scratch, ignoring dependence prior to the start point.
+Start a new suite run.
+
+This ignoring dependence prior to the start point.
 
 WARNING: this will wipe out previous suite state. To restart from a previous
 state, see 'cylc restart --help'.
@@ -72,8 +74,9 @@ is preserved."""
 
 RESTART_DOC = r"""cylc [control] restart [OPTIONS] ARGS
 
-Start a suite run from the previous state. To start from scratch (cold or warm
-start) see the 'cylc run' command.
+Continue a suite run from the previous state.
+
+To start from scratch (cold or warm start) see the 'cylc run' command.
 
 The scheduler runs as a daemon unless you specify --no-detach.
 

@@ -18,6 +18,8 @@
 
 """cylc [info|prep] list|ls [OPTIONS] ARGS
 
+List tasks and families defined in a workflow.
+
 Print runtime namespace names (tasks and families), the first-parent
 inheritance graph, or actual tasks for a given cycle range.
 

@@ -44,8 +44,9 @@ USAGE = f"""{cylc_header()}
 
 Usage:
   $ cylc help all                 # list all commands
-  $ cylc validate FLOW            # validate a workflow definition
+  $ cylc validate FLOW            # validate a workflow configuration
   $ cylc run FLOW                 # run a workflow
+  $ cylc scan                     # list all running workflows (by default)
   $ cylc tui FLOW                 # view a running workflow in the terminal
   $ cylc stop FLOW                # stop a running workflow
 
@@ -213,15 +214,23 @@ def iter_commands():
             raise ValueError(f'Unrecognised command "{cmd}"')
 
 
-def print_command_list(commands=None):
-    """Print list of Cylc commands."""
+def print_command_list(commands=None, indent=0):
+    """Print list of Cylc commands.
+
+    Args:
+        commands (list):
+            List of commands to display.
+        indent (int):
+            Number of spaces to put at the start of each line.
+
+    """
     contents = [
         (cmd, desc)
         for cmd, desc, _, in iter_commands()
         if not commands
         or cmd in commands
     ]
-    print_contents(contents, indent=2)
+    print_contents(contents, indent=indent, char=cparse('<dim>.</dim>'))
 
 
 def cli_help():
@@ -233,7 +242,22 @@ def cli_help():
     color_init(autoreset=True, strip=False)
     print(USAGE)
     print('Selected Sub-Commands:')
-    print_command_list(commands=['validate', 'run', 'restart', 'stop', 'tui'])
+    print_command_list(
+        # print a short list of the main cylc commands
+        commands=[
+            'hold',
+            'kill',
+            'release',
+            'restart',
+            'run',
+            'scan',
+            'stop',
+            'trigger',
+            'tui',
+            'validate'
+        ],
+        indent=2
+    )
     print('\nTo see all commands run: cylc help all')
     sys.exit(0)
 

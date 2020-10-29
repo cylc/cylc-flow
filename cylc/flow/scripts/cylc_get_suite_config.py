@@ -20,6 +20,10 @@
 
 Print parsed suite configuration items, after runtime inheritance.
 
+Note:
+  This is different to `cylc view` which doesn't parse the configuration
+  so is useful for debugging Jinja2.
+
 By default all settings are printed. For specific sections or items
 use -i/--item and wrap sections in square brackets, e.g.:
   $ cylc get-suite-config --item '[scheduling]initial cycle point'

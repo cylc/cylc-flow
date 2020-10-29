@@ -18,6 +18,8 @@
 
 """cylc [info] cat-log|log [OPTIONS] ARGS
 
+View Cylc suite and job log files.
+
 Print, view-in-editor, or tail-follow content, print path, or list directory,
 of local or remote task job and suite server logs. Batch-system view commands
 (e.g. 'qcat') are used if defined in global config and the job is running.

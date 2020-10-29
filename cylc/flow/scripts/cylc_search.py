@@ -18,6 +18,8 @@
 
 """cylc [prep] search|grep [OPTIONS] ARGS
 
+Search for patterns in suite configurations.
+
 Search for pattern matches in suite definitions and any files in the
 suite bin directory. Matches are reported by line number and suite
 section. An unquoted list of PATTERNs will be converted to an OR'd

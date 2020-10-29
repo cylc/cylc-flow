@@ -18,11 +18,10 @@
 
 """cylc [discovery] check-versions [OPTIONS] ARGS
 
+Check that Cylc versions match on different platforms.
+
 Check the version of cylc invoked on each of SUITE's task host platforms when
 CYLC_VERSION is set to *the version running this command line tool*.
-Different versions are reported but are not considered an error unless the
--e|--error option is specified, because different cylc versions from 6.0.0
-onward should at least be backward compatible.
 
 It is recommended that cylc versions be installed in parallel and access
 configured via the cylc version wrapper as described in the cylc INSTALL

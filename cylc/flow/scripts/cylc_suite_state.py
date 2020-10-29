@@ -18,6 +18,8 @@
 
 r"""cylc suite-state REG [OPTIONS]
 
+Retrieve task states from the suite database.
+
 Print task states retrieved from a suite database; or (with --task,
 --point, and --status) poll until a given task reaches a given state; or (with
 --task, --point, and --message) poll until a task receives a given message.

@@ -18,9 +18,12 @@
 
 """cylc [control] set-verbosity [OPTIONS] ARGS
 
-Change the logging severity level of a running suite.  Only messages at
-or above the chosen severity level will be logged; for example, if you
-choose WARNING, only warnings and critical messages will be logged."""
+Change the logging severity level of a running suite.
+
+Only messages at or above the chosen severity level will be logged; for
+example, if you choose WARNING, only warnings and critical messages will be
+logged.
+"""
 
 from cylc.flow import LOG_LEVELS
 from cylc.flow.option_parsers import CylcOptionParser as COP

@@ -18,6 +18,12 @@
 
 """cylc [prep] view [OPTIONS] ARGS
 
+View a processessed suite configuration.
+
+Note:
+  This is different to `cylc get-config` which displays the parsed
+  configuration (as Cylc would see it).
+
 View a read-only temporary copy of suite NAME's flow.cylc file, in your
 editor, after optional include-file inlining and Jinja2 preprocessing.
 

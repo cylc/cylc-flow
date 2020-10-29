@@ -15,10 +15,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Usage:
-    cylc graph SUITE [START] [STOP]
+"""cylc graph SUITE [START] [STOP]
 
-Implement the old ``cylc graph --reference command`` for producing a textural
+A text-based graph representation of workflow dependencies.
+
+Implements the old ``cylc graph --reference command`` for producing a textural
 graph of a suite.
 
 """

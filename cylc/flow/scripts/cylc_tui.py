@@ -16,7 +16,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """cylc [task] tui REG
 
-Open the terminal user interface (TUI) for the given suite.
+View and control running suites in the terminal.
+
+(TUI = Terminal User Interface)
 """
 from textwrap import indent
 

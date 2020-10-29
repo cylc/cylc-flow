@@ -18,7 +18,7 @@
 
 """cylc [info] get-suite-version [OPTIONS] ARGS
 
-Interrogate running suite REG to find what version of cylc is running it.
+Find out what version of Cylc a running suite is using.
 
 To find the version you've invoked at the command line see "cylc version".
 """

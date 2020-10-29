@@ -19,7 +19,7 @@
 
 """cylc [util] cycle-point [OPTIONS] ARGS
 
-Cycle point date-time offset computation, and filename templating.
+Utility for date-time cycle point arithmetic.
 
 Filename templating replaces elements of a template string with corresponding
 elements of the current or given cycle point.

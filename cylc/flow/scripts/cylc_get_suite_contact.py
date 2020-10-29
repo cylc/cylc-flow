@@ -18,7 +18,7 @@
 
 """cylc [info] get-suite-contact [OPTIONS] ARGS
 
-Print contact information of running suite REG."""
+Print contact information of a running suite."""
 
 from cylc.flow.exceptions import CylcError, SuiteServiceFileError
 from cylc.flow.option_parsers import CylcOptionParser as COP

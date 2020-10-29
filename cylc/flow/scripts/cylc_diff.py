@@ -18,7 +18,7 @@
 
 """cylc [prep] diff|compare [OPTIONS] SUITE1 SUITE2
 
-Compare two suite definitions and display any differences.
+Compare two suite configurations and display any differences.
 
 Differencing is done after parsing the flow.cylc files so it takes
 account of default values that are not explicitly defined, it disregards

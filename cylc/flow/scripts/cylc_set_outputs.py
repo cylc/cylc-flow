@@ -18,9 +18,13 @@
 
 """cylc [control] set-outputs [OPTIONS] REG TASK-GLOB [...]
 
-Tell the scheduler that specified outputs (or the "succeeded" output by
-default) of matched tasks are complete. Downstream tasks will be spawned or
-updated just as if the outputs were completed normally.
+Override the outputs of tasks in a running suite.
+
+Tell the scheduler that specified outputs (the "succeeded" output by default)
+of tasks are complete.
+
+Downstream tasks will be spawned or updated just as if the outputs were
+completed normally.
 
 The --output=OUTPUT option can be used multiple times on the command line.
 

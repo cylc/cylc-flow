@@ -19,6 +19,7 @@
 """cylc [prep] get-directory REG
 
 Retrieve and print the source directory location of suite REG.
+
 Here's an easy way to move to a suite source directory:
   $ cd $(cylc get-dir REG)."""
 

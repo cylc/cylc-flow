@@ -18,6 +18,8 @@
 
 """cylc [prep] register [OPTIONS] ARGS
 
+Register a new suite.
+
 Register the name REG for the suite definition in PATH. The suite server
 program can then be started, stopped, and targeted by name REG. (Note that
 "cylc run" can also register suites on the fly).

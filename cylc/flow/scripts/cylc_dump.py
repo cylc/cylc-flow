@@ -18,8 +18,7 @@
 
 """cylc [info] dump [OPTIONS] ARGS
 
-Print state information (e.g. the state of each task) from a running
-suite.
+Print information about a running suite.
 
 For command line monitoring:
 * `cylc tui`

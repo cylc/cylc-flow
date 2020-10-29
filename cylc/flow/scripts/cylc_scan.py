@@ -17,7 +17,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """cylc [discovery] scan [OPTIONS]
 
-List Cylc workflows, by default this shows only running or held workflows.
+List Cylc workflows.
+
+By default this shows only running or held workflows.
 
 Examples:
   # list all "active" workflows (i.e. running or held)

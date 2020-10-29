@@ -18,6 +18,8 @@
 
 """cylc [info] show [OPTIONS] ARGS
 
+Display suite and task information.
+
 Query a running workflow for:
   $ cylc show REG  # workflow metadata
   $ cylc show REG TASK_NAME  # task metadata

@@ -18,6 +18,8 @@
 
 """cylc [discovery] ping [OPTIONS] ARGS
 
+Test communication with a running suite.
+
 If suite REG is running or TASK in suite REG is currently running,
 exit with success status, else exit with error status."""
 

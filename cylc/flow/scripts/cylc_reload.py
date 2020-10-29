@@ -18,6 +18,8 @@
 
 """cylc [control] reload [OPTIONS] ARGS
 
+Reload the configuration of a running suite.
+
 Tell a suite to reload its definition at run time. All settings including task
 definitions, with the exception of suite log configuration, can be changed on
 reload. Changes to task definitions take effect immediately, unless a task is

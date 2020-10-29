@@ -18,7 +18,7 @@
 
 """cylc [control] broadcast|bcast [OPTIONS] REG
 
-Override [runtime] config in targeted namespaces in a running suite.
+Override [runtime] configuation items in a running suite.
 
 Uses for broadcast include making temporary changes to task behaviour,
 and task-to-downstream-task communication via environment variables.

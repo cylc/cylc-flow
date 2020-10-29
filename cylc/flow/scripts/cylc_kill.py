@@ -18,7 +18,7 @@
 
 """cylc [control] kill [OPTIONS] ARGS
 
-Kill jobs of active tasks and update their statuses accordingly.
+Kill running or submitted jobs.
 
 Examples:
   $ cylc kill REG  # kill all active tasks in the workflow

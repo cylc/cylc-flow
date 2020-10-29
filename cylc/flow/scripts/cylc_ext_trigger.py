@@ -18,10 +18,11 @@
 
 """cylc [control] ext-trigger [OPTIONS] ARGS
 
-Report an external event message to a suite server program. It is expected that
-a task in the suite has registered the same message as an external trigger - a
-special prerequisite to be satisfied by an external system, via this command,
-rather than by triggering off other tasks.
+Report an external event message to a suite server program.
+
+It is expected that a task in the suite has registered the same message as an
+external trigger - a special prerequisite to be satisfied by an external
+system, via this command, rather than by triggering off other tasks.
 
 The ID argument should uniquely distinguish one external trigger event from the
 next. When a task's external trigger is satisfied by an incoming message, the
