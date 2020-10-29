@@ -101,16 +101,16 @@ commands = {
 ALIASES = {
     'bcast': 'broadcast',
     'compare': 'diff',
-    'cyclepoint': 'cycle_point',
-    'cycletime': 'cycle_point',
-    'datetime': 'cycle_point',
-    'external-trigger': 'ext_trigger',
-    'get-config': 'get_suite_config',
-    'get-contact': 'get_suite_contact',
-    'get-cylc-version': 'get_suite_version',
-    'get-global-config': 'get_site_config',
+    'cyclepoint': 'cycle-point',
+    'cycletime': 'cycle-point',
+    'datetime': 'cycle-point',
+    'external-trigger': 'ext-trigger',
+    'get-config': 'get-suite-config',
+    'get-contact': 'get-suite-contact',
+    'get-cylc-version': 'get-suite-version',
+    'get-global-config': 'get-site-config',
     'grep': 'search',
-    'log': 'cat_log',
+    'log': 'cat-log',
     'ls': 'list',
     'shutdown': 'stop',
     'start': 'run',
@@ -126,7 +126,11 @@ DEAD_ENDS = {
     'documentation': 'Cylc documentation is now at http://cylc.org',
     'gscan': 'cylc gscan has been removed, use the web UI',
     'gui': 'cylc gui has been removed, use the web UI',
-    'insert': 'inserting tasks is now done automatically'
+    'insert': 'inserting tasks is now done automatically',
+    'check-software': (
+        'use standard tools to inspect the environment '
+        'e.g. https://pypi.org/project/pipdeptree/'
+    )
 }
 
 
