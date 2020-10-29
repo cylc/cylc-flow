@@ -955,9 +955,13 @@ class TaskPool:
             else:
                 return False
         if unhandled_failed:
-            LOG.warning("Suite stalled with unhandled failed tasks:")
-            for itask in unhandled_failed:
-                LOG.warning(f"* {itask.identity} ({itask.state.status})")
+            LOG.warning(
+                "Suite stalled with unhandled failed tasks:"
+                + [
+                    f"\n* {itask.identity} ({itask.state.status})"
+                    for itask in unhandled_failed
+                ]
+            )
             return True
         else:
             return False
