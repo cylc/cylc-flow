@@ -54,8 +54,8 @@ forecasting - which is notorious for the size and complexity of its workflows.
 * In-browser GUI
 * On the `master` branch in the source code.
 
-The first official Cylc-8 release is not expected until late 2020.
-Until then we recommend the latest Cylc 7 release for production use.
+Cylc-8.0.0 will be released in 2021. Until then we recommend the latest
+Cylc 7 versions for production use.
 
 [Installation](https://cylc.github.io/cylc-doc/8.0a2/html/installation.html) |
 [Documentation - in development](https://cylc.github.io/cylc-doc/8.0a2/)
