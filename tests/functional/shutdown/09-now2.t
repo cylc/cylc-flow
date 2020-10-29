@@ -26,7 +26,7 @@ suite_run_ok "${TEST_NAME_BASE}-run" cylc run --no-detach "${SUITE_NAME}"
 LOGD="$RUN_DIR/${SUITE_NAME}/log"
 grep_ok 'INFO - Suite shutting down - REQUEST(NOW-NOW)' "${LOGD}/suite/log"
 grep_ok 'WARNING - Orphaned task jobs' "${LOGD}/suite/log"
-grep_ok 'WARNING - \* t1.1 (running)' "${LOGD}/suite/log"
+grep_ok '\* t1.1 (running)' "${LOGD}/suite/log"
 JLOGD="${LOGD}/job/1/t1/01"
 # Check that t1.1 event handler runs
 run_fail "${TEST_NAME_BASE}-activity-log-succeeded" \

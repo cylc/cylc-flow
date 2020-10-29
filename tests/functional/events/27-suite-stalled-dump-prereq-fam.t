@@ -31,22 +31,22 @@ grep_ok "Abort on suite stalled is set" "${TEST_NAME_BASE}-run.stderr"
 
 grep_ok "WARNING - Suite stalled with unhandled failed tasks:" \
     "${TEST_NAME_BASE}-run.stderr"
-grep_ok "WARNING - \* foo.1 (failed)" \
+grep_ok "\* foo.1 (failed)" \
     "${TEST_NAME_BASE}-run.stderr"
 
 grep_ok "WARNING - Some partially satisfied prerequisites left over:" \
     "${TEST_NAME_BASE}-run.stderr"
-grep_ok "WARNING - f_1.1 is waiting on:" \
+grep_ok "f_1.1 is waiting on:" \
     "${TEST_NAME_BASE}-run.stderr"
-grep_ok "WARNING - \* foo.1 succeeded" \
+grep_ok "\* foo.1 succeeded" \
     "${TEST_NAME_BASE}-run.stderr"
-grep_ok "WARNING - f_2.1 is waiting on:" \
+grep_ok "f_2.1 is waiting on:" \
     "${TEST_NAME_BASE}-run.stderr"
-grep_ok "WARNING - \* foo.1 succeeded" \
+grep_ok "\* foo.1 succeeded" \
     "${TEST_NAME_BASE}-run.stderr"
-grep_ok "WARNING - f_3.1 is waiting on:" \
+grep_ok "f_3.1 is waiting on:" \
     "${TEST_NAME_BASE}-run.stderr"
-grep_ok "WARNING - \* foo.1 succeeded" \
+grep_ok "\* foo.1 succeeded" \
     "${TEST_NAME_BASE}-run.stderr"
 
 purge_suite "${SUITE_NAME}"

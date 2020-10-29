@@ -30,14 +30,14 @@ grep_ok "Abort on suite stalled is set" "${TEST_NAME_BASE}-run.stderr"
 
 grep_ok "WARNING - Suite stalled with unhandled failed tasks:" \
     "${TEST_NAME_BASE}-run.stderr" 
-grep_ok "WARNING - \* bar.20100101T0000Z (failed)" \
+grep_ok "\* bar.20100101T0000Z (failed)" \
     "${TEST_NAME_BASE}-run.stderr" 
 
 grep_ok "WARNING - Some partially satisfied prerequisites left over:" \
     "${TEST_NAME_BASE}-run.stderr" 
-grep_ok "WARNING - foo.20100101T0600Z is waiting on:" \
+grep_ok "foo.20100101T0600Z is waiting on:" \
     "${TEST_NAME_BASE}-run.stderr" 
-grep_ok "WARNING - \* bar.20100101T0000Z succeeded" \
+grep_ok "\* bar.20100101T0000Z succeeded" \
     "${TEST_NAME_BASE}-run.stderr" 
 
 purge_suite "${SUITE_NAME}"

@@ -921,19 +921,19 @@ class TaskPool:
                     orphans.append(itask)
         if orphans_kill_failed:
             LOG.warning(
-                "Orphaned task jobs (kill failed):"
-                + [
-                    f"\n* {itask.identity} ({itask.state.status})"
+                "Orphaned task jobs (kill failed):\n"
+                + "\n".join(
+                    f"* {itask.identity} ({itask.state.status})"
                     for itask in orphans_kill_failed
-                ]
+                )
             )
         if orphans:
             LOG.warning(
-                "Orphaned task jobs:"
-                + [
-                    f"\n* {itask.identity} ({itask.state.status})"
+                "Orphaned task jobs:\n"
+                + "\n".join(
+                    f"* {itask.identity} ({itask.state.status})"
                     for itask in orphans
-                ]
+                )
             )
 
         for key1, point, name, submit_num in self.task_events_mgr.event_timers:
@@ -956,11 +956,11 @@ class TaskPool:
                 return False
         if unhandled_failed:
             LOG.warning(
-                "Suite stalled with unhandled failed tasks:"
-                + [
-                    f"\n* {itask.identity} ({itask.state.status})"
+                "Suite stalled with unhandled failed tasks:\n"
+                + "\n".join(
+                    f"* {itask.identity} ({itask.state.status})"
                     for itask in unhandled_failed
-                ]
+                )
             )
             return True
         else:
@@ -997,15 +997,13 @@ class TaskPool:
 
         if prereqs_map:
             LOG.warning(
-                "Some partially satisfied prerequisites left over:"
-                + [
-                    f"\n{id_} is waiting on:"
-                    + [
-                        f"\n    * {prereq}"
-                        for prereq in prereqs
-                    ]
-                    for id_, prereqs in prereqs_map.items()
-                ]
+                "Some partially satisfied prerequisites left over:\n"
+                + "\n".join(
+                    f"{id_} is waiting on:"
+                    + "\n".join(
+                        f"\n* {prereq}" for prereq in prereqs
+                    ) for id_, prereqs in prereqs_map.items()
+                )
             )
 
     def set_hold_point(self, point):
