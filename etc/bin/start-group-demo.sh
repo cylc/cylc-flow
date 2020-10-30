@@ -49,7 +49,7 @@ cat > flow.cylc <<__EOF__
         script = """
 sleep 10
 if [[ \$CYLC_TASK_TRY_NUMBER < 2 ]]; then
-    cylc task message -p WARNING ABORTING
+    cylc message -p WARNING ABORTING
     exit 1
 fi"""
         [[[job]]]
