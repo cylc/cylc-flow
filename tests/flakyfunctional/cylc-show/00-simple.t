@@ -36,7 +36,6 @@ suite_run_ok "${TEST_NAME}" cylc run --reference-test --debug --no-detach \
 TEST_NAME="${TEST_NAME_BASE}-show"
 cmp_ok "${TEST_NAME}-suite" <<'__SHOW_OUTPUT__'
 title: a test suite
-group: (not given)
 description: the quick brown fox
 custom: custard
 URL: (not given)
@@ -73,8 +72,7 @@ cmp_json "${TEST_NAME}-suite" "${TEST_NAME}-suite" <<'__SHOW_OUTPUT__'
     "title": "a test suite",
     "description": "the quick brown fox", 
     "URL": "", 
-    "custom": "custard", 
-    "group": ""
+    "custom": "custard"
 }
 __SHOW_OUTPUT__
 
