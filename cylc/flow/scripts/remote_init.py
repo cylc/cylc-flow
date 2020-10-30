@@ -34,19 +34,21 @@ Return:
 
 """
 
+from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.task_remote_cmd import remote_init
+from cylc.flow.terminal import cli_function
+
 INTERNAL = True
 
 
-def main():
-    from cylc.flow.option_parsers import CylcOptionParser as COP
-    from cylc.flow.task_remote_cmd import remote_init
-
+def get_option_parser():
     parser = COP(
         __doc__,
         argdoc=[
             ("INSTALL_TARGET", "Target to be initialised"),
             ("RUND", "The run directory of the suite"),
         ],
+        color=False
     )
     parser.add_option(
         "--indirect-comm",
@@ -58,7 +60,12 @@ def main():
         dest="indirect_comm",
         default=None,
     )
-    options, (install_target, rund) = parser.parse_args()
+
+    return parser
+
+
+@cli_function(get_option_parser)
+def main(parser, options, install_target, rund):
     remote_init(install_target, rund, indirect_comm=options.indirect_comm)
 
 

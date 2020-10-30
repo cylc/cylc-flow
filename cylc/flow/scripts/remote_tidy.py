@@ -26,16 +26,22 @@ Remove authentication keys.
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.task_remote_cmd import remote_tidy
+from cylc.flow.terminal import cli_function
 
 INTERNAL = True
 
 
-def main():
+def get_option_parser():
     parser = COP(
         __doc__, argdoc=[("INSTALL_TARGET", "target platform to be tidied"),
                          ("RUND", "The run directory of the suite")]
     )
-    options, (install_target, rund) = parser.parse_args()
+
+    return parser
+
+
+@cli_function(get_option_parser)
+def main(parser, _, install_target, rund):
     remote_tidy(install_target, rund)
 
 
