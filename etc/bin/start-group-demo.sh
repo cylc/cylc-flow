@@ -19,10 +19,6 @@
 cd "$(mktemp -d)" || exit 1
 
 cat > flow.cylc <<__EOF__
-title = "gcylc task state color theme demo"
-description = """Generate a lot of possible task states,
-to show what they look like live in gcylc."""
-
 [cylc]
   cycle point format = %Y-%m-%d
 [scheduling]
@@ -50,29 +46,24 @@ to show what they look like live in gcylc."""
         inherit = FAMILY
     [[m_x]]
         inherit = FAMILY
-        title = "this task succeeds on the second try "
-        retry delays = PT18S
         script = """
 sleep 10
 if [[ \$CYLC_TASK_TRY_NUMBER < 2 ]]; then
     cylc task message -p WARNING ABORTING
     exit 1
 fi"""
+        [[[job]]]
+        execution retry delays = PT18S
+
     [[bird]]
-        title = "A task that tries and fails twice"
-        description = """Failed instances of this task are removed from the suite
-at the end of each cycle by a suicide trigger."""
-        retry delays = PT12S
         script = "sleep 10; exit 1"
+        [[[job]]]
+        execution retry delays = PT12S
     [[fish]]
-        title = "A task that fails to submit twice"
         [[[job]]]
             batch system = fail
             submission retry delays = PT18S
     [[dog]]
-        title = "A task successfully submits on the second try "
-        description = """Uses a retry event handler to broadcast a new job
-submission method for the retry."""
         [[[job]]]
             batch system = fail
             submission retry delays = PT18S
@@ -99,7 +90,6 @@ for GROUP in nwp tst opr; do
     SUITE=${GROUP}-$N
     mkdir -p $DEST/$SUITE
     cp -r flow.cylc $DEST/$SUITE
-    perl -pi -e "s/\[cylc\]/title = $GROUP suite $N\ngroup = $GROUP\n[cylc]/" $DEST/$SUITE/flow.cylc
     cylc reg $DEST/$SUITE $DEST/$SUITE
     cylc run $DEST/$SUITE > /dev/null &
   done
