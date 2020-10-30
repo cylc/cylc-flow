@@ -756,24 +756,6 @@ class Resolvers(BaseResolvers):
         ))
         return (True, 'Command queued')
 
-    def take_checkpoints(self, name):
-        """Checkpoint current task pool.
-
-        Args:
-            name (str): The checkpoint name
-
-        Returns:
-            tuple: (outcome, message)
-
-            outcome (bool)
-                True if command successfully queued.
-            message (str)
-                Information about outcome.
-
-        """
-        self.schd.command_queue.put(("take_checkpoints", (name,), {}))
-        return (True, 'Command queued')
-
     def force_trigger_tasks(self, tasks, reflow=False):
         """Trigger submission of task jobs where possible.
 
