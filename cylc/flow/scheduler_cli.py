@@ -285,7 +285,10 @@ def _auto_register():
     except SuiteServiceFileError as exc:
         sys.exit(exc)
     # Replace this process with "cylc run REG ..." for 'ps -f'.
-    os.execv(sys.argv[0], [sys.argv[0]] + [reg] + sys.argv[1:])
+    os.execv(
+        sys.argv[0],
+        [sys.argv[0]] + sys.argv[1:] + [reg]
+    )
 
 
 def _open_logs(reg, no_detach):
