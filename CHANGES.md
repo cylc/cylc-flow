@@ -53,6 +53,8 @@ compatibility, the `cylc run` command will automatically symlink an existing
 * Improve CLI descriptions and help.
 * Internal-only commands now hidden from help.
 * New entry point for defining Cylc sub-commands.
+* remove `cylc check-software` (use standard tools like pipdeptree)
+* remove `cylc nudge` (no longer needed)
 
 [#3856](https://github.com/cylc/cylc-flow/pull/3856) - fail the GraphQL query
 with a helpful message if the variables defined do not match the expected
