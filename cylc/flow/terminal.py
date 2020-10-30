@@ -58,7 +58,7 @@ def get_width(default=80):
 
 
 def centered(string, width=None):
-    """Print centeed text.
+    """Print centered text.
 
     Examples:
         >>> centered('foo', 9)

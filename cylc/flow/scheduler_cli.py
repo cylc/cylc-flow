@@ -45,7 +45,7 @@ RUN_DOC = r"""cylc [control] run|start [OPTIONS] [ARGS]
 
 Start a new suite run.
 
-This ignoring dependence prior to the start point.
+Any dependencies prior to the start point will be ignored.
 
 WARNING: this will wipe out previous suite state. To restart from a previous
 state, see 'cylc restart --help'.

@@ -226,8 +226,8 @@ def match_command(command):
                 command,
                 "\n".join(
                     [
-                        "    cylc {}".format(cmd[5:])
-                        for cmd in possible_cmds
+                        f"    cylc {cmd}"
+                        for cmd in sorted(possible_cmds)
                     ]
                 ),
             ),

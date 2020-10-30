@@ -38,7 +38,7 @@ Custom job logs (written to $CYLC_TASK_LOG_DIR on the job host) can be
 listed in 'extra log files' in the suite definition. The file
 name must be given, but can be discovered with '--mode=l' (list-dir).
 
-The correct cycle poin t format of the suite must be used for task job logs,
+The correct cycle point format of the suite must be used for task job logs,
 but can be discovered with '--mode=d' (print-dir).
 
 Examples:

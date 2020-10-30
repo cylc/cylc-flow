@@ -30,11 +30,15 @@ from cylc.flow.subprocpool import run_function
 INTERNAL = True
 
 
-def main():
-    if sys.argv[1] in ["help", "--help"] or len(sys.argv) != 5:
+def main(*api_args):
+    if api_args:
+        args = [None] + list(api_args)
+    else:
+        args = sys.argv
+    if args[1] in ["help", "--help"] or len(args) != 5:
         print(__doc__)
         sys.exit(0)
-    run_function(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+    run_function(args[1], args[2], args[3], args[4])
 
 
 if __name__ == "__main__":
