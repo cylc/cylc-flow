@@ -482,7 +482,6 @@ class SuiteDatabaseManager:
                 itask.state.time_updated = None
 
         self.db_inserts_map[self.TABLE_CHECKPOINT_ID].append({
-            # id = -1 for latest
             "id": CylcSuiteDAO.CHECKPOINT_LATEST_ID,
             "time": get_current_time_string(),
             "event": CylcSuiteDAO.CHECKPOINT_LATEST_EVENT})

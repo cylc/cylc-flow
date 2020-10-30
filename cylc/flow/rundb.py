@@ -814,7 +814,7 @@ class CylcSuiteDAO:
         """
         id_ = 1
         for max_id, in self.connect().execute(
-                "SELECT MAX(id) FROM checkpoint_id"):
+                f"SELECT MAX(id) FROM {self.TABLE_CHECKPOINT_ID}"):
             if max_id is not None and max_id >= id_:
                 id_ = max_id + 1
         daos = [self]
