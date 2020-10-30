@@ -4,6 +4,7 @@
 [platforms]
     [[_local_background_indep_tcp]]
         hosts = localhost
+        install target = localhost
     [[_remote_background_indep_tcp]]
         hosts = _remote_background_indep_tcp
     [[_remote_at_indep_tcp]]
