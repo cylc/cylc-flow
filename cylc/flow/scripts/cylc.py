@@ -76,7 +76,7 @@ USAGE = cparse(USAGE)
 
 # bash sub-commands
 # {name: (description, usage)}
-bash_commands = {
+BASH_COMMANDS = {
     'graph-diff': (
         'Compare the graphs of two workflows in text format.',
         'cylc graph-diff [OPTIONS] SUITE1 SUITE2 -- '
@@ -86,7 +86,7 @@ bash_commands = {
 
 # all sub-commands
 # {name: entry_point}
-commands = {
+COMMANDS = {
     # python sub-commands
     **{
         entry_point.name: entry_point
@@ -96,7 +96,7 @@ commands = {
     # bash sub-commands
     **{
         cmd: None
-        for cmd in bash_commands
+        for cmd in BASH_COMMANDS
     }
 }
 
@@ -162,7 +162,7 @@ def execute_python(cmd, *args):
         Imports the function and calls it in the current Python session.
 
     """
-    commands[cmd].resolve()(*args)
+    COMMANDS[cmd].resolve()(*args)
 
 
 def execute_cmd(cmd, *args):
@@ -175,7 +175,7 @@ def execute_cmd(cmd, *args):
             List of command line arguments to pass to that command.
 
     """
-    if cmd in bash_commands:
+    if cmd in BASH_COMMANDS:
         execute_bash(cmd, *args)
     else:
         execute_python(cmd, *args)
@@ -201,9 +201,20 @@ def match_command(command):
             In the event that the input is ambiguous.
 
     """
-    possible_cmds = [
-        cmd for cmd in commands if cmd.startswith(command)
-    ]
+    possible_cmds = {
+        *{
+            # search commands
+            cmd
+            for cmd in COMMANDS
+            if cmd.startswith(command)
+        },
+        *{
+            # search aliases
+            cmd
+            for alias, cmd in ALIASES.items()
+            if alias.startswith(command)
+        }
+    }
     if len(possible_cmds) == 0:
         raise click.ClickException(
             f"cylc {command}: unknown utility. Abort.\n"
@@ -224,7 +235,7 @@ def match_command(command):
         )
         sys.exit(1)
     else:
-        command = possible_cmds[0]
+        command = possible_cmds.pop()
     return command
 
 
@@ -260,7 +271,7 @@ def iter_commands():
         tuple - (command, description, usage)
 
     """
-    for cmd, obj in sorted(commands.items()):
+    for cmd, obj in sorted(COMMANDS.items()):
         if cmd == 'cylc':
             # don't include this command in the listing
             continue
@@ -272,9 +283,9 @@ def iter_commands():
                 continue
             usage, desc = parse_docstring(module.__doc__)
             yield (cmd, desc, usage)
-        elif cmd in bash_commands:
+        elif cmd in BASH_COMMANDS:
             # bash command
-            desc, usage = bash_commands[cmd]
+            desc, usage = BASH_COMMANDS[cmd]
             yield (cmd, desc, usage)
         else:
             raise ValueError(f'Unrecognised command "{cmd}"')
@@ -375,7 +386,7 @@ def main(cmd_args, version, help_):
             )
             sys.exit(42)
 
-        if command not in commands:
+        if command not in COMMANDS:
             # check if this is a command abbreviation or exit
             command = match_command(command)
 
