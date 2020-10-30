@@ -126,11 +126,6 @@ def get_option_parser(is_restart, add_std_opts=False):
 
     if is_restart:
         parser.add_option(
-            "--checkpoint",
-            help="Specify the ID of a checkpoint to restart from",
-            metavar="CHECKPOINT-ID", action="store", dest="checkpoint")
-
-        parser.add_option(
             "--ignore-initial-cycle-point",
             help=(
                 "Ignore the initial cycle point in the suite run database. " +
