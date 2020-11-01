@@ -151,27 +151,30 @@ class AstDocArguments:
             if isinstance(defn, ast.OperationDefinition):
                 root_type = get_operation_root_type(schema, defn)
                 definition_variables = defn.variable_definitions or []
-                variables = {}
                 if definition_variables:
-                    variables = get_variable_values(
-                        schema,
-                        definition_variables,
-                        variable_values
-                    )
+                    def_var_names = {
+                        v.variable.name.value
+                        for v in definition_variables
+                    }
+                    var_names_diff = def_var_names.difference({
+                        k
+                        for k in variable_values
+                        if k in def_var_names
+                    })
                     # check if we are missing some of the definition variables
-                    if not variables or \
-                            len(variables) != len(definition_variables):
-                        variable_names = [
-                            v.variable.name.value for v in definition_variables
-                        ]
+                    if var_names_diff:
                         msg = (f'Please check your query variables. The '
-                               f'following variables are expected: '
-                               f'[{", ".join(variable_names)}]')
+                               f'following variables are missing: '
+                               f'[{", ".join(var_names_diff)}]')
                         raise ValueError(msg)
                 self.operation_defs[getattr(defn.name, 'value', root_type)] = {
                     'definition': defn,
                     'parent_type': root_type,
-                    'variables': variables,
+                    'variables': get_variable_values(
+                        schema,
+                        definition_variables,
+                        variable_values
+                    ),
                 }
             elif isinstance(defn, ast.FragmentDefinition):
                 self.fragment_defs[defn.name.value] = defn
