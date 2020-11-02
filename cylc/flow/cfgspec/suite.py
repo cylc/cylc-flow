@@ -59,9 +59,6 @@ with Conf(
             A multi-line description of the suite. It can be retrieved at run
             time with the ``cylc show`` command.
         ''')
-        Conf('group', VDR.V_STRING, '', desc='''
-            A group name for a suite.
-        ''')
         Conf('title', VDR.V_STRING, '', desc='''
             A single line description of the suite, can be retrieved at run
             time with the ``cylc show`` command.
