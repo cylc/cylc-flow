@@ -336,12 +336,11 @@ class TaskRemoteMgr:
                         RSYNC_LOG.info(
                             'File installation information for '
                             f'{install_target}:\n {out}')
+                        LOG.info("File installation complete.")
                     if err:
                         LOG.error(
                             'File installation error on '
                             f'{install_target}:\n {err}')
-                    else:
-                        LOG.info("File installation complete.")
                 except Exception as ex:
                     LOG.error(f"Problem during rsync: {ex}")
                     self.remote_init_map[self.install_target] = (
