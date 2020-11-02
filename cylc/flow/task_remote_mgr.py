@@ -148,7 +148,6 @@ class TaskRemoteMgr:
             if value is not None:
                 del self.remote_command_map[key]
 
-
     def remote_init(self, platform, curve_auth,
                     client_pub_key_dir):
         """Initialise a remote [owner@]host if necessary.
