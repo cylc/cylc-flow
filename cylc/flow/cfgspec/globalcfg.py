@@ -255,7 +255,6 @@ with Conf('global.cylc', desc='''
                 nedit
         ''')
 
-    # platforms
     with Conf('platforms'):
         with Conf('<platform name>') as Platform:
             Conf('batch system', VDR.V_STRING, 'background')
@@ -330,15 +329,6 @@ with Conf('global.cylc', desc='''
                 The accumulated times (in minutes) for these intervals will be
                 roughly 1, 1 + 2 = 3 and 1 + 2 + 7 = 10 after a task job
                 exceeds its execution time limit.
-            ''')
-            Conf('scp command',
-                 VDR.V_STRING, 'scp -oBatchMode=yes -oConnectTimeout=10',
-                 desc='''
-                A string for the command used to copy files to a remote host.
-                This is not used on the suite host unless you run local tasks
-                under another user account. The value is assumed to be ``scp``
-                with some initial options or a command that implements a
-                similar interface to ``scp``.
             ''')
             Conf('ssh command',
                  VDR.V_STRING,
@@ -419,12 +409,6 @@ with Conf('global.cylc', desc='''
                 :cylc:conf:`flow.cylc[runtime][<namespace>][remote]retrieve job
                 logs retry delays`.
                 setting for the specified host.
-            ''')
-            Conf('task event handler retry delays', VDR.V_INTERVAL_LIST,
-                 desc='''
-                Host specific default for
-                :cylc:conf:`flow.cylc[runtime][<namespace>][events]handler
-                retry delays`.
             ''')
             Conf('tail command template',
                  VDR.V_STRING, 'tail -n +1 -F %(filename)s', desc='''

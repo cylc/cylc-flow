@@ -1000,8 +1000,8 @@ class TaskEventsManager():
             return
         retry_delays = self._get_events_conf(
             itask,
-            'handler retry delays',
-            self.get_host_conf(itask, "task event handler retry delays"))
+            'handler retry delays'
+        )
         if not retry_delays:
             retry_delays = [0]
         # There can be multiple custom event handlers
