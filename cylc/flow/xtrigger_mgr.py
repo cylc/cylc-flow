@@ -27,6 +27,7 @@ from cylc.flow.xtriggers.wall_clock import wall_clock
 
 from cylc.flow.subprocctx import SubFuncContext
 from cylc.flow.broadcast_mgr import BroadcastMgr
+from cylc.flow.data_store_mgr import DataStoreMgr
 from cylc.flow.subprocpool import SubProcPool
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.subprocpool import get_func
@@ -103,6 +104,7 @@ class XtriggerManager:
         user: str = None,
         *,  # following must be keyword args
         broadcast_mgr: BroadcastMgr = None,
+        data_store_mgr: DataStoreMgr = None,
         proc_pool: SubProcPool = None,
         suite_run_dir: str = None,
         suite_share_dir: str = None,
@@ -133,6 +135,7 @@ class XtriggerManager:
         }
         self.proc_pool = proc_pool
         self.broadcast_mgr = broadcast_mgr
+        self.data_store_mgr = data_store_mgr
         self.suite_source_dir = suite_source_dir
 
     @staticmethod
@@ -290,6 +293,7 @@ class XtriggerManager:
                 if wall_clock(*ctx.func_args, **ctx.func_kwargs):
                     itask.state.xtriggers[label] = True
                     self.sat_xtrig[sig] = {}
+                    self.data_store_mgr.delta_task_xtrigger(sig, True)
                     LOG.info('xtrigger satisfied: %s = %s', label, sig)
                 continue
             # General case: asynchronous xtrigger function call.
@@ -350,6 +354,7 @@ class XtriggerManager:
             return
         LOG.debug('%s: returned %s', sig, results)
         if satisfied:
+            self.data_store_mgr.delta_task_xtrigger(sig, True)
             LOG.info('xtrigger satisfied: %s = %s', ctx.label, sig)
             self.pflag = True
             self.sat_xtrig[sig] = results

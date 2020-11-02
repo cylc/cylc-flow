@@ -172,6 +172,20 @@ class TaskOutputs:
             else:
                 return item[_TRIGGER]
 
+    def get_item(self, message):
+        """Return output item by message.
+
+        Args:
+            message (str): Output message.
+
+        Returns:
+            item (tuple):
+                label (str), message (str), satisfied (bool)
+
+        """
+        if message in self._by_message:
+            return self._by_message[message]
+
     def _get_item(self, message, trigger):
         """Return self._by_trigger[trigger] or self._by_message[message].
 

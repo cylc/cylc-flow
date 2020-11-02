@@ -135,12 +135,13 @@ class TaskJobManager:
     }
 
     def __init__(self, suite, proc_pool, suite_db_mgr,
-                 task_events_mgr, job_pool):
+                 task_events_mgr, job_pool, data_store_mgr):
         self.suite = suite
         self.proc_pool = proc_pool
         self.suite_db_mgr = suite_db_mgr
         self.task_events_mgr = task_events_mgr
         self.job_pool = job_pool
+        self.data_store_mgr = data_store_mgr
         self.job_file_writer = JobFileWriter()
         self.job_runner_mgr = self.job_file_writer.job_runner_mgr
         self.task_remote_mgr = TaskRemoteMgr(suite, proc_pool)
@@ -172,6 +173,7 @@ class TaskJobManager:
         for itask in itasks:
             if itask.state(*TASK_STATUSES_ACTIVE):
                 itask.state.reset(is_held=True)
+                self.data_store_mgr.delta_task_held(itask)
                 to_kill_tasks.append(itask)
             else:
                 LOG.warning('skipping %s: task not killable' % itask.identity)
@@ -394,7 +396,8 @@ class TaskJobManager:
                     # write flag so that subsequent manual retrigger will
                     # generate a new job file.
                     itask.local_job_file_path = None
-                    itask.state.reset(TASK_STATUS_PREPARING)
+                    if itask.state.reset(TASK_STATUS_PREPARING):
+                        self.data_store_mgr.delta_task_state(itask)
                     if itask.state.outputs.has_custom_triggers():
                         self.suite_db_mgr.put_update_task_outputs(itask)
 

@@ -210,6 +210,9 @@ class BroadcastMgr:
                             ['root'],
                             [{'environment': {'CYLC_EXT_TRIGGER_ID': qid}}],
                         )
+                    # Create data-store delta
+                    self.data_store_mgr.delta_task_ext_trigger(
+                        itask, qid, qmsg, True)
                     self.ext_triggers[(qmsg, qid)] -= 1
                     if not self.ext_triggers[(qmsg, qid)]:
                         del self.ext_triggers[(qmsg, qid)]

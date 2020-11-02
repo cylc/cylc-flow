@@ -99,8 +99,8 @@ from cylc.flow.task_state import (
     TASK_STATUSES_NEVER_ACTIVE,
     TASK_STATUS_FAILED)
 from cylc.flow.templatevars import load_template_vars
-from cylc.flow import __version__ as CYLC_VERSION
-from cylc.flow.data_store_mgr import DataStoreMgr, ID_DELIM
+from cylc.flow import __version__ as CYLC_VERSION, ID_DELIM
+from cylc.flow.data_store_mgr import DataStoreMgr
 from cylc.flow.wallclock import (
     get_current_time_string,
     get_seconds_as_interval_string,
@@ -377,6 +377,7 @@ class Scheduler:
             self.suite,
             self.owner,
             broadcast_mgr=self.broadcast_mgr,
+            data_store_mgr=self.data_store_mgr,
             proc_pool=self.proc_pool,
             suite_run_dir=self.suite_run_dir,
             suite_share_dir=self.suite_share_dir,
@@ -390,6 +391,7 @@ class Scheduler:
             self.broadcast_mgr,
             self.xtrigger_mgr,
             self.job_pool,
+            self.data_store_mgr,
             self.options.log_timestamp
         )
         self.task_events_mgr.uuid_str = self.uuid_str
@@ -399,7 +401,8 @@ class Scheduler:
             self.proc_pool,
             self.suite_db_mgr,
             self.task_events_mgr,
-            self.job_pool
+            self.job_pool,
+            self.data_store_mgr
         )
         self.task_job_mgr.task_remote_mgr.uuid_str = self.uuid_str
 
@@ -924,6 +927,7 @@ class Scheduler:
             for itask in itasks:
                 if itask.state(*TASK_STATUSES_ACTIVE):
                     itask.state.reset(TASK_STATUS_FAILED)
+                    self.data_store_mgr.delta_task_state(itask)
             return len(bad_items)
         self.task_job_mgr.kill_task_jobs(self.suite, itasks)
         return len(bad_items)
@@ -1597,7 +1601,7 @@ class Scheduler:
                 process = True
             if self.pool.set_expired_task(itask, time()):
                 process = True
-            if itask.is_ready():
+            if all(itask.is_ready()):
                 process = True
         if (
             self.config.run_mode('simulation') and
@@ -1732,7 +1736,6 @@ class Scheduler:
         """Hold all tasks in suite."""
         if point is None:
             self.pool.hold_all_tasks()
-            self.data_store_mgr.hold_release_tasks()
             self.task_events_mgr.pflag = True
             self.suite_db_mgr.put_suite_hold()
             LOG.info('Suite held.')
@@ -1751,7 +1754,6 @@ class Scheduler:
             LOG.info("RELEASE: new tasks will be queued when ready")
         self.pool.set_hold_point(None)
         self.pool.release_all_tasks()
-        self.data_store_mgr.hold_release_tasks(hold=False)
         self.suite_db_mgr.delete_suite_hold()
 
     def paused(self):

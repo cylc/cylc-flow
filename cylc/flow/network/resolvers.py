@@ -19,7 +19,6 @@
 import asyncio
 from fnmatch import fnmatchcase
 import logging
-from operator import attrgetter
 import queue
 from time import time
 from uuid import uuid4
@@ -32,7 +31,7 @@ from cylc.flow.data_store_mgr import (
     DELTA_ADDED, create_delta_store
 )
 from cylc.flow.network.schema import (
-    NodesEdges, PROXY_NODES, SUB_RESOLVERS, parse_node_id
+    NodesEdges, PROXY_NODES, SUB_RESOLVERS, parse_node_id, sort_elements
 )
 
 logger = logging.getLogger(__name__)
@@ -178,22 +177,6 @@ def get_data_elements(flow, nat_ids, element_type):
         for n_id in nat_ids
         if n_id in flow[element_type]
     ]
-
-
-def sort_elements(elements, args):
-    """Sort iterable of elements by given attribute."""
-    sort_args = args.get('sort')
-    if sort_args and elements:
-        sort_keys = [
-            key
-            for key in [to_snake_case(k) for k in sort_args.keys]
-            if hasattr(elements[0], key)
-        ]
-        if sort_keys:
-            elements.sort(
-                key=attrgetter(*sort_keys),
-                reverse=sort_args.reverse)
-    return elements
 
 
 class BaseResolvers:
