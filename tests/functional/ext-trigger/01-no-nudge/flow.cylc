@@ -9,7 +9,7 @@
         time out.
     """
 
-[cylc]
+[scheduler]
     [[events]]
         abort on timeout = True
         timeout = PT30S

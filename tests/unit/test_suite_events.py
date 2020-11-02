@@ -44,7 +44,7 @@ def test_get_events_handler(
         mock_glbl_cfg(
             'cylc.flow.suite_events.glbl_cfg',
             '''
-            [cylc]
+            [scheduler]
                 [[mail]]
                     from = highway@mixture
                 [[events]]
@@ -55,7 +55,7 @@ def test_get_events_handler(
         mock_glbl_cfg(
             'cylc.flow.suite_events.glbl_cfg',
             '''
-            [cylc]
+            [scheduler]
                 [[events]]
                     abort on timeout = True
             '''
@@ -63,7 +63,7 @@ def test_get_events_handler(
 
     config = SimpleNamespace()
     config.cfg = {
-        'cylc': {
+        'scheduler': {
             'events': {
                 'handlers': ['stalled']
             },

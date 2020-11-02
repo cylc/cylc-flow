@@ -28,7 +28,7 @@ sys.exit(not parser.parse('$1') > parser.parse('$2'))
 "
 }
 BASE_GLOBAL_CONFIG="
-[cylc]
+[scheduler]
     [[main loop]]
         plugins = health check, auto restart
         [[[auto restart]]]
@@ -42,7 +42,7 @@ BASE_GLOBAL_CONFIG="
 #-------------------------------------------------------------------------------
 # Test the delayed restart feature
 TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME_BASE}" <<< '
-[cylc]
+[scheduler]
     UTC mode = True
 [scheduling]
     initial cycle point = 2000

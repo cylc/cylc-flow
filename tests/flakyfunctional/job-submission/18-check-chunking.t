@@ -25,7 +25,7 @@ process pool size = 1
 ' ''
 
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
-[cylc]
+[scheduler]
     [[events]]
         abort on inactivity = True
         abort on stalled = True

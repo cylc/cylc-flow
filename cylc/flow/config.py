@@ -267,12 +267,12 @@ class SuiteConfig:
             self.cfg['runtime']['root'] = OrderedDictWithDefaults()
 
         try:
-            parameter_values = self.cfg['cylc']['parameters']
+            parameter_values = self.cfg['scheduler']['parameters']
         except KeyError:
             # (Suite config defaults not put in yet.)
             parameter_values = {}
         try:
-            parameter_templates = self.cfg['cylc']['parameter templates']
+            parameter_templates = self.cfg['scheduler']['parameter templates']
         except KeyError:
             parameter_templates = {}
         # parameter values and templates are normally needed together.
@@ -729,10 +729,10 @@ class SuiteConfig:
         """Set UTC mode from config or from stored value on restart.
 
         Sets:
-            self.cfg['cylc']['UTC mode']
+            self.cfg['scheduler']['UTC mode']
             The UTC mode flag
         """
-        cfg_utc_mode = self.cfg['cylc']['UTC mode']
+        cfg_utc_mode = self.cfg['scheduler']['UTC mode']
         # Get the original UTC mode if restart:
         orig_utc_mode = getattr(self.options, 'utc_mode', None)
         if orig_utc_mode is None:
@@ -740,7 +740,7 @@ class SuiteConfig:
             if cfg_utc_mode is not None:
                 orig_utc_mode = cfg_utc_mode
             else:
-                orig_utc_mode = glbl_cfg().get(['cylc', 'UTC mode'])
+                orig_utc_mode = glbl_cfg().get(['scheduler', 'UTC mode'])
         elif cfg_utc_mode is not None and cfg_utc_mode != orig_utc_mode:
             LOG.warning(
                 "UTC mode = {0} specified in configuration, but it is stored "
@@ -748,7 +748,7 @@ class SuiteConfig:
                 "UTC mode = {1}"
                 .format(cfg_utc_mode, orig_utc_mode)
             )
-        self.cfg['cylc']['UTC mode'] = orig_utc_mode
+        self.cfg['scheduler']['UTC mode'] = orig_utc_mode
         set_utc_mode(orig_utc_mode)
 
     def process_cycle_point_tz(self):
@@ -760,9 +760,9 @@ class SuiteConfig:
         Scheduler).
 
         Sets:
-            self.cfg['cylc']['cycle point time zone']
+            self.cfg['scheduler']['cycle point time zone']
         """
-        cfg_cp_tz = self.cfg['cylc'].get('cycle point time zone')
+        cfg_cp_tz = self.cfg['scheduler'].get('cycle point time zone')
         # Get the original suite run time zone if restart:
         orig_cp_tz = getattr(self.options, 'cycle_point_tz', None)
         if orig_cp_tz is None:
@@ -783,7 +783,7 @@ class SuiteConfig:
                     "The suite will continue to run in {1}"
                     .format(cfg_cp_tz, orig_cp_tz)
                 )
-        self.cfg['cylc']['cycle point time zone'] = orig_cp_tz
+        self.cfg['scheduler']['cycle point time zone'] = orig_cp_tz
 
     def process_initial_cycle_point(self):
         """Validate and set initial cycle point from flow.cylc.
@@ -1496,7 +1496,7 @@ class SuiteConfig:
         os.environ['CYLC_CYCLING_MODE'] = self.cfg['scheduling'][
             'cycling mode']
         #     (global config auto expands environment variables in local paths)
-        cenv = self.cfg['cylc']['environment'].copy()
+        cenv = self.cfg['scheduler']['environment'].copy()
         for var, val in cenv.items():
             cenv[var] = os.path.expandvars(val)
         #     path to suite bin directory for suite and event handlers
@@ -2328,7 +2328,9 @@ class SuiteConfig:
         - None if there is no expectation either way.
         """
         if self.options.reftest:
-            return self.cfg['cylc']['reference test']['expected task failures']
+            return self.cfg['scheduler']['reference test'][
+                'expected task failures'
+            ]
         elif self.options.abort_if_any_task_fails:
             return []
         else:

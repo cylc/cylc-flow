@@ -88,7 +88,7 @@ def test_query_variables(
         query: str,
         variables: dict,
         expected_variables: Optional[dict],
-        expected_error: Optional[Exception]
+        expected_error: Optional[Exception],
 ):
     """Test that query variables are parsed correctly.
 

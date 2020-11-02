@@ -1,7 +1,7 @@
 # Live mode: baz never runs as outputs not received.
 # Dummy and sim modes: baz runs due to automatic completion of custom outputs.
 
-[cylc]
+[scheduler]
     UTC mode = True
     [[events]]
         abort on stalled = True

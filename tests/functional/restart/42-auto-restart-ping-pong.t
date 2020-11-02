@@ -23,7 +23,7 @@ export CLOWNS="${CYLC_TEST_HOST_WSFS}"
 export JOKERS="${HOSTNAME}"
 
 BASE_GLOBAL_CONFIG='
-[cylc]
+[scheduler]
     [[main loop]]
         plugins = health check, auto restart
         [[[auto restart]]]

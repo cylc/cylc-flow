@@ -21,7 +21,7 @@
 set_test_number 3
 
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
-[cylc]
+[scheduler]
     [[events]]
         timeout = PT1M
         abort on timeout = True

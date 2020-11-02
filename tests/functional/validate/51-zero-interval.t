@@ -21,7 +21,7 @@
 set_test_number 2
 
 cat >'flow.cylc' <<'__FLOW_CONFIG__'
-[cylc]
+[scheduler]
     UTC mode = True
 [scheduling]
     initial cycle point = 2010

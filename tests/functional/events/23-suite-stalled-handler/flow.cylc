@@ -1,4 +1,4 @@
-[cylc]
+[scheduler]
     UTC mode = True # Ignore DST
     [[events]]
         stalled handler = cylc set-outputs %(suite)s bar.1

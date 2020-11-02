@@ -21,7 +21,7 @@
 set_test_number 7
 
 cat > flow.cylc <<__END__
-[cylc]
+[scheduler]
     UTC mode = True
 [scheduling]
     initial cycle point = 2000
@@ -43,7 +43,7 @@ WARNING - R1/P0Y/19990101T0000Z: sequence out of bounds for initial cycle point 
 __ERR__
 
 cat > flow.cylc <<__END__
-[cylc]
+[scheduler]
     UTC mode = True
 [scheduling]
     initial cycle point = 2000

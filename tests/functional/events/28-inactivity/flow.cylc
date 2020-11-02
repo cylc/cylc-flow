@@ -1,4 +1,4 @@
-[cylc]
+[scheduler]
     UTC mode = True
     [[events]]
         inactivity = PT10S

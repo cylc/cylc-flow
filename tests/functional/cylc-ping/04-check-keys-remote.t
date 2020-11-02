@@ -24,7 +24,7 @@ set_test_number 4
 
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 #!jinja2
-[cylc]
+[scheduler]
 [scheduling]
     [[graph]]
         R1 = holder => held

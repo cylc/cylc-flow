@@ -1,5 +1,5 @@
 # only the t1:hello output is generated
-[cylc]
+[scheduler]
     [[events]]
         abort on inactivity = True
         abort on stalled = True

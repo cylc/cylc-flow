@@ -1,4 +1,4 @@
-[cylc]
+[scheduler]
     [[events]]
         shutdown handler = "false"
         abort if shutdown handler fails = True

@@ -23,7 +23,7 @@
 set_test_number 5
 #-------------------------------------------------------------------------------
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
-[cylc]
+[scheduler]
     UTC mode = True
     # (Use default cycle point format)
 [scheduling]

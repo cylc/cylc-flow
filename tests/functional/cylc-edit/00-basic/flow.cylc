@@ -2,7 +2,7 @@
 [meta]
     title=foo
     description=A test flow.cylc with includes
-[cylc]
+[scheduler]
 UTC mode=True # Ignore DST
 %include include/flow-scheduling.cylc
 %include include/flow-runtime.cylc

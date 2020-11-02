@@ -23,7 +23,7 @@
 set_test_number 2
 
 cat >'flow.cylc' <<'__FLOW_CONFIG__'
-[cylc]
+[scheduler]
     UTC mode = true
 [scheduling]
     initial cycle point = previous(-17T1200Z; -18T1200Z) - P1D

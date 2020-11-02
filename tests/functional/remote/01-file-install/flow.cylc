@@ -1,5 +1,5 @@
 #!jinja2
-[cylc]
+[scheduler]
 
 {% if SECOND_RUN is defined %}
 

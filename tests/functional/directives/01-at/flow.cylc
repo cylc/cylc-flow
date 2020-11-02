@@ -1,4 +1,4 @@
-[cylc]
+[scheduler]
    [[reference test]]
        expected task failures = rem2.1
 [scheduling]

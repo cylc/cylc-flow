@@ -23,7 +23,7 @@ set_test_number 3
 OPT_SET=
 if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
     create_test_global_config "" "
-[cylc]
+[scheduler]
     [[main loop]]
         [[[health check]]]
             interval = PT10S"

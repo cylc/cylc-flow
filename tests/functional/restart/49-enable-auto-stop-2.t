@@ -35,7 +35,7 @@ set_test_number 8
 # Restart with auto shutdown enabled, should override original
 # Suite runs to final task and shuts down normally
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
-[cylc]
+[scheduler]
     [[parameters]]
         i = 1..5
     [[events]]

@@ -1,4 +1,4 @@
-[cylc]
+[scheduler]
     [[events]]
         startup handler = "false"
         abort if startup handler fails = True

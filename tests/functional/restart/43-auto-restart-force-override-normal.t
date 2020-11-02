@@ -22,7 +22,7 @@ export CYLC_TEST_HOST_2="${CYLC_TEST_HOST_WSFS}"
 export CYLC_TEST_HOST_1="${HOSTNAME}"
 
 BASE_GLOBAL_CONFIG='
-[cylc]
+[scheduler]
     [[main loop]]
         plugins = health check, auto restart
         [[[auto restart]]]
@@ -35,7 +35,7 @@ BASE_GLOBAL_CONFIG='
 '
 
 TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME_BASE}" <<< '
-[cylc]
+[scheduler]
     [[events]]
 [scheduling]
     initial cycle point = 2000

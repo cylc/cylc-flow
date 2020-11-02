@@ -1,5 +1,5 @@
 # Time out with an unhandled failure.
-[cylc]
+[scheduler]
     [[events]]
         abort on timeout = True
         timeout = PT1S

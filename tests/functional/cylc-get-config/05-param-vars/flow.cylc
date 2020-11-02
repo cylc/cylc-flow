@@ -1,4 +1,4 @@
-[cylc]
+[scheduler]
     [[parameters]]
          t = 1..5
          u = right,left

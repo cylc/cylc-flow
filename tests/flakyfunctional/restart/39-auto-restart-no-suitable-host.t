@@ -19,7 +19,7 @@
 set_test_number 5
 
 BASE_GLOBAL_CONFIG="
-[cylc]
+[scheduler]
     [[main loop]]
         plugins = health check, auto restart
         [[[auto restart]]]
@@ -34,7 +34,7 @@ BASE_GLOBAL_CONFIG="
 # test that suites will not attempt to auto stop-restart if there is no
 # available host to restart on
 init_suite "${TEST_NAME_BASE}" <<< '
-[cylc]
+[scheduler]
     UTC mode = True
 [scheduling]
     initial cycle point = 2000

@@ -22,7 +22,7 @@
 set_test_number 1
 
 cat >'flow.cylc' <<'__FLOW_CONFIG__'
-[cylc]
+[scheduler]
     cycle point format = %Y%m%d
 [scheduling]
     initial cycle point = "now"

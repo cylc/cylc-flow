@@ -1,5 +1,5 @@
 # Abort on timeout unless we successfully remove some failed and waiting tasks.
-[cylc]
+[scheduler]
     UTC mode = True
     cycle point format = %Y
     [[reference test]]

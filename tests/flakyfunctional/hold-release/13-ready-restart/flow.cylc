@@ -1,7 +1,7 @@
 [meta]
     title = Restart with a task in the ready state.
 
-[cylc]
+[scheduler]
     [[events]]
         inactivity = PT30S
         abort on inactivity = True

@@ -22,7 +22,7 @@ set_test_number 10
 #-------------------------------------------------------------------------------
 # test the failure recovery mechanism
 BASE_GLOBAL_CONFIG="
-[cylc]
+[scheduler]
     [[main loop]]
         plugins = health check, auto restart
         [[[auto restart]]]

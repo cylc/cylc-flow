@@ -79,8 +79,9 @@ with Conf(
             interpreted according to your needs. For example,
             "suite-priority".
         ''')
-
     with Conf('scheduler'):
+        Conf('UTC mode', VDR.V_BOOLEAN)
+
         Conf('install', VDR.V_STRING_LIST, desc='''
             Configure the directories and files to be included in the remote
             file installation.
@@ -116,8 +117,6 @@ with Conf(
                     install = dir/, dir2/, file1, file2
                 ''')
 
-    with Conf('cylc'):
-        Conf('UTC mode', VDR.V_BOOLEAN)
         Conf('cycle point format', VDR.V_CYCLE_POINT_FORMAT, desc='''
             Set the date-time format that Cylc uses for
             :term:`cycle points<cycle point>` in :term:`datetime cycling`
@@ -1419,6 +1418,7 @@ def upg(cfg, descr):
     #     )
     # TODO - there are some simple changes to the config (items from [remote]
     # and [job] moved up 1 level for example) which should be upgraded here.
+    u.deprecate('8.0.0', ['cylc'], ['scheduler'])
     u.upgrade()
 
     upgrade_graph_section(cfg, descr)

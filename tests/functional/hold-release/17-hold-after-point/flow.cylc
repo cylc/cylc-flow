@@ -3,7 +3,7 @@
 
     description = """Define a hold after point in the flow.cylc"""
 
-[cylc]
+[scheduler]
     UTC mode = True
 
 [scheduling]

@@ -4,7 +4,7 @@ The task settings for not_upgradable_cylc7_settings should not match any
 platform: The workflow should fail as a result.
 """
 
-[cylc]
+[scheduler]
     UTC mode = True
     [[events]]
         abort on stalled = True
