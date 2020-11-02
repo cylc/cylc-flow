@@ -17,19 +17,28 @@
 #-------------------------------------------------------------------------------
 # Test suite event handler, dump unmet prereqs on stall
 . "$(dirname "$0")/test_header"
-set_test_number 5
+set_test_number 8
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate "${SUITE_NAME}"
+
 suite_run_fail "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
-grep_ok "Abort on suite stalled is set" \
-    "${TEST_NAME_BASE}-run.stderr"
-grep_ok "WARNING - Unmet prerequisites for foo.20100101T0600Z:" \
-    "${TEST_NAME_BASE}-run.stderr"
-grep_ok "WARNING -  \\* bar.20100101T0000Z succeeded" \
-    "${TEST_NAME_BASE}-run.stderr"
+
+grep_ok "Abort on suite stalled is set" "${TEST_NAME_BASE}-run.stderr"
+
+grep_ok "WARNING - Suite stalled with unhandled failed tasks:" \
+    "${TEST_NAME_BASE}-run.stderr" 
+grep_ok "\* bar.20100101T0000Z (failed)" \
+    "${TEST_NAME_BASE}-run.stderr" 
+
+grep_ok "WARNING - Some partially satisfied prerequisites left over:" \
+    "${TEST_NAME_BASE}-run.stderr" 
+grep_ok "foo.20100101T0600Z is waiting on:" \
+    "${TEST_NAME_BASE}-run.stderr" 
+grep_ok "\* bar.20100101T0000Z succeeded" \
+    "${TEST_NAME_BASE}-run.stderr" 
 
 purge_suite "${SUITE_NAME}"
 exit

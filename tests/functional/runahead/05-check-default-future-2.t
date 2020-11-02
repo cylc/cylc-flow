@@ -36,10 +36,10 @@ run_ok "${TEST_NAME}" sqlite3 "${DB}" \
 "select max(cycle) from task_states where name=='foo' and status=='failed'"
 cmp_ok "${TEST_NAME}.stdout" <<< "20100101T1000Z"
 # i.e. should have spawned 5 cycle points from initial T00, and then raised
-# this by PT6H due to fact that wibble spawned
+# this by PT6H due to fact that wibble spawned.
 #-------------------------------------------------------------------------------
-TEST_NAME=${TEST_NAME_BASE}-check-stalled
+TEST_NAME=${TEST_NAME_BASE}-check-aborted
 LOG="$RUN_DIR/${SUITE_NAME}/log/suite/log"
-grep_ok 'Suite shutting down - Abort on suite stalled is set' "${LOG}"
+grep_ok 'Suite shutting down - Abort on suite inactivity is set' "${LOG}"
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"

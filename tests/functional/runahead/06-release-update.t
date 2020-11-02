@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test that the state summary is updated when runahead tasks are released.
+# Test that the datastore is updated when runahead tasks are released.
 # GitHub #1981
 . "$(dirname "$0")/test_header"
 set_test_number 3
@@ -27,11 +27,13 @@ CYLC_RUN_PID="$!"
 poll_suite_running
 YYYY="$(date +%Y)"
 NEXT1=$(( YYYY + 1 ))
-poll_grep_suite_log -F "[bar.${NEXT1}] -released to the task pool"
+poll_grep_suite_log -F "spawned bar.${NEXT1}"
 
+# sleep a little to allow the datastore to update (`cylc dump` sees the
+# datastore) TODO can we avoid this flaky sleep somehow?
+sleep 10
 cylc dump -t "${SUITE_NAME}" | awk '{print $1 $2 $3}' >'log'
 cmp_ok 'log' - <<__END__
-bar,$NEXT1,waiting,
 foo,$NEXT1,waiting,
 __END__
 
