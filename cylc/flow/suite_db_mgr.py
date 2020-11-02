@@ -61,10 +61,10 @@ class SuiteDatabaseManager:
     KEY_STOP_TASK = 'stop_task'
     KEY_CYCLE_POINT_FORMAT = 'cycle_point_format'
     KEY_CYCLE_POINT_TIME_ZONE = 'cycle_point_tz'
+    KEY_RESTART_COUNT = 'n_restart'
 
     TABLE_BROADCAST_EVENTS = CylcSuiteDAO.TABLE_BROADCAST_EVENTS
     TABLE_BROADCAST_STATES = CylcSuiteDAO.TABLE_BROADCAST_STATES
-    TABLE_CHECKPOINT_ID = CylcSuiteDAO.TABLE_CHECKPOINT_ID
     TABLE_INHERITANCE = CylcSuiteDAO.TABLE_INHERITANCE
     TABLE_SUITE_PARAMS = CylcSuiteDAO.TABLE_SUITE_PARAMS
     TABLE_SUITE_TEMPLATE_VARS = CylcSuiteDAO.TABLE_SUITE_TEMPLATE_VARS
@@ -102,7 +102,6 @@ class SuiteDatabaseManager:
             self.TABLE_INHERITANCE: [],
             self.TABLE_SUITE_PARAMS: [],
             self.TABLE_SUITE_TEMPLATE_VARS: [],
-            self.TABLE_CHECKPOINT_ID: [],
             self.TABLE_TASK_POOL: [],
             self.TABLE_TASK_ACTION_TIMERS: [],
             self.TABLE_TASK_OUTPUTS: [],
@@ -111,10 +110,6 @@ class SuiteDatabaseManager:
             self.TABLE_XTRIGGERS: [],
             self.TABLE_ABS_OUTPUTS: []}
         self.db_updates_map = {}
-
-    def checkpoint(self, name):
-        """Checkpoint the task pool, etc."""
-        return self.pri_dao.take_checkpoints(name, other_daos=[self.pub_dao])
 
     def copy_pri_to_pub(self):
         """Copy content of primary database file to public database file.
@@ -481,11 +476,6 @@ class SuiteDatabaseManager:
                     (set_args, where_args))
                 itask.state.time_updated = None
 
-        self.db_inserts_map[self.TABLE_CHECKPOINT_ID].append({
-            "id": CylcSuiteDAO.CHECKPOINT_LATEST_ID,
-            "time": get_current_time_string(),
-            "event": CylcSuiteDAO.CHECKPOINT_LATEST_EVENT})
-
     def put_insert_task_events(self, itask, args):
         """Put INSERT statement for task_events table."""
         self._put_insert_task_x(CylcSuiteDAO.TABLE_TASK_EVENTS, itask, args)
@@ -575,6 +565,8 @@ class SuiteDatabaseManager:
         self.check_suite_db_compatibility()
         pri_dao = self.get_pri_dao()
         pri_dao.vacuum()
+        self.n_restart = pri_dao.select_suite_params_restart_count() + 1
+        self.put_suite_params_1(self.KEY_RESTART_COUNT, self.n_restart)
         pri_dao.close()
 
     def check_suite_db_compatibility(self):

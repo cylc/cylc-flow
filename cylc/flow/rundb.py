@@ -21,7 +21,6 @@ from os.path import expandvars
 
 from cylc.flow import LOG
 import cylc.flow.flags
-from cylc.flow.wallclock import get_current_time_string
 
 
 class CylcSuiteDAOTableColumn:
@@ -169,18 +168,14 @@ class CylcSuiteDAO:
     DB_FILE_BASE_NAME = "db"
     MAX_TRIES = 100
     RESTART_INCOMPAT_VERSION = "8.0a2"  # Can't restart suite if <= this vers
-    CHECKPOINT_LATEST_ID = 0
-    CHECKPOINT_LATEST_EVENT = "latest"
     TABLE_BROADCAST_EVENTS = "broadcast_events"
     TABLE_BROADCAST_STATES = "broadcast_states"
     TABLE_INHERITANCE = "inheritance"
     TABLE_SUITE_PARAMS = "suite_params"
-    TABLE_SUITE_PARAMS_CHECKPOINTS = "suite_params_checkpoints"
     TABLE_SUITE_TEMPLATE_VARS = "suite_template_vars"
     TABLE_TASK_JOBS = "task_jobs"
     TABLE_TASK_EVENTS = "task_events"
     TABLE_TASK_ACTION_TIMERS = "task_action_timers"
-    TABLE_CHECKPOINT_ID = "checkpoint_id"
     TABLE_TASK_LATE_FLAGS = "task_late_flags"
     TABLE_TASK_OUTPUTS = "task_outputs"
     TABLE_TASK_POOL = "task_pool"
@@ -205,21 +200,11 @@ class CylcSuiteDAO:
             ["key", {"is_primary_key": True}],
             ["value"],
         ],
-        TABLE_CHECKPOINT_ID: [
-            ["id", {"datatype": "INTEGER", "is_primary_key": True}],
-            ["time"],
-            ["event"],
-        ],
         TABLE_INHERITANCE: [
             ["namespace", {"is_primary_key": True}],
             ["inheritance"],
         ],
         TABLE_SUITE_PARAMS: [
-            ["key", {"is_primary_key": True}],
-            ["value"],
-        ],
-        TABLE_SUITE_PARAMS_CHECKPOINTS: [
-            ["id", {"datatype": "INTEGER", "is_primary_key": True}],
             ["key", {"is_primary_key": True}],
             ["value"],
         ],
@@ -488,51 +473,24 @@ class CylcSuiteDAO:
         for row_idx, row in enumerate(self.connect().execute(stmt)):
             callback(row_idx, list(row))
 
-    def select_checkpoint_id(self, callback, id_key=None):
-        """Select from checkpoint_id.
-
-        Invoke callback(row_idx, row) on each row, where each row contains:
-            [id, time, event]
-
-        If id_key is specified, add where id == id_key to select.
-        """
-        stmt = r"SELECT id,time,event FROM checkpoint_id"
-        stmt_args = []
-        if id_key is not None:
-            stmt += r" WHERE id==?"
-            stmt_args.append(id_key)
-        stmt += r"  ORDER BY time ASC"
-        for row_idx, row in enumerate(self.connect().execute(stmt, stmt_args)):
-            callback(row_idx, list(row))
-
-    def select_checkpoint_id_restart_count(self):
-        """Return number of restart event in checkpoint_id table."""
-        stmt = r"SELECT COUNT(event) FROM checkpoint_id WHERE event==?"
-        stmt_args = ['restart']
-        for row in self.connect().execute(stmt, stmt_args):
-            return row[0]
-        return 0
-
-    def select_suite_params(self, callback, id_key=None):
-        """Select from suite_params or suite_params_checkpoints.
+    def select_suite_params(self, callback):
+        """Select from suite_params.
 
         Invoke callback(row_idx, row) on each row, where each row contains:
             [key,value]
-
-        If id_key is specified,
-        select from suite_params table if id_key == CHECKPOINT_LATEST_ID.
-        Otherwise select from suite_params_checkpoints where id == id_key.
         """
-        form_stmt = r"SELECT key,value FROM %s"
-        if id_key is None or id_key == self.CHECKPOINT_LATEST_ID:
-            stmt = form_stmt % self.TABLE_SUITE_PARAMS
-            stmt_args = []
-        else:
-            stmt = (form_stmt % self.TABLE_SUITE_PARAMS_CHECKPOINTS +
-                    r" WHERE id==?")
-            stmt_args = [id_key]
-        for row_idx, row in enumerate(self.connect().execute(stmt, stmt_args)):
+        stmt = f"SELECT key, value FROM {self.TABLE_SUITE_PARAMS}"
+        for row_idx, row in enumerate(self.connect().execute(stmt)):
             callback(row_idx, list(row))
+
+    def select_suite_params_restart_count(self):
+        """Return number of restarts in suite_params table."""
+        stmt = f"""
+            SELECT value FROM {self.TABLE_SUITE_PARAMS}
+            WHERE key == 'n_restart';
+        """
+        result = self.connect().execute(stmt).fetchone()
+        return int(result[0]) if result else 0
 
     def select_suite_template_vars(self, callback):
         """Select from suite_template_vars.
@@ -800,34 +758,6 @@ class CylcSuiteDAO:
             'submit_time', 'start_time', 'succeed_time'
         )
         return columns, [r for r in self.connect().execute(q)]
-
-    def take_checkpoints(self, event, other_daos=None):
-        """Add insert items to *_checkpoints tables.
-
-        Select items in suite_params and prepare them for insert into the
-        suite_params_checkpoints tables, and prepare an insert into the
-        checkpoint_id table the event and the current time.
-
-        If other_daos is a specified, it should be a list of CylcSuiteDAO
-        objects.  The logic will prepare insertion of the same items into the
-        suite_params_checkpoints tables of these DAOs as well.
-        """
-        id_ = 1
-        for max_id, in self.connect().execute(
-                f"SELECT MAX(id) FROM {self.TABLE_CHECKPOINT_ID}"):
-            if max_id is not None and max_id >= id_:
-                id_ = max_id + 1
-        daos = [self]
-        if other_daos:
-            daos.extend(other_daos)
-        for dao in daos:
-            dao.tables[self.TABLE_CHECKPOINT_ID].add_insert_item([
-                id_, get_current_time_string(), event])
-        stmt = f"SELECT * FROM {self.TABLE_SUITE_PARAMS}"
-        for row in self.connect().execute(stmt):
-            for dao in daos:
-                table = self.TABLE_SUITE_PARAMS_CHECKPOINTS
-                dao.tables[table].add_insert_item([id_] + list(row))
 
     def vacuum(self):
         """Vacuum to the database."""

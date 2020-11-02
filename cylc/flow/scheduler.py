@@ -420,9 +420,6 @@ class Scheduler:
             pri_dao = self.suite_db_mgr.get_pri_dao()
             pri_dao.select_suite_params(self._load_suite_params)
             pri_dao.select_suite_template_vars(self._load_template_vars)
-            # Take checkpoint and commit immediately so that checkpoint can be
-            # copied to the public database.
-            pri_dao.take_checkpoints("restart")
             pri_dao.execute_queued_items()
 
         # Copy local python modules from source to run directory
@@ -546,8 +543,7 @@ class Scheduler:
 
     async def log_start(self):
         if self.is_restart:
-            pri_dao = self.suite_db_mgr.get_pri_dao()
-            n_restart = pri_dao.select_checkpoint_id_restart_count()
+            n_restart = self.suite_db_mgr.n_restart
         else:
             n_restart = 0
 
@@ -975,7 +971,6 @@ class Scheduler:
         pri_dao = self.suite_db_mgr.get_pri_dao()
         pri_dao.select_suite_params(self._load_suite_params)
 
-        self.suite_db_mgr.checkpoint("reload-init")
         self.load_flow_file(is_reload=True)
         self.broadcast_mgr.linearized_ancestors = (
             self.config.get_linearized_ancestors())
@@ -1434,7 +1429,6 @@ class Scheduler:
 
             if self.pool.do_reload:
                 self.pool.reload_taskdefs()
-                self.suite_db_mgr.checkpoint("reload-done")
                 self.is_updated = True
                 has_reloaded = True
 
@@ -1787,10 +1781,6 @@ class Scheduler:
     def command_force_spawn_children(self, items, outputs):
         """Force spawn task successors."""
         return self.pool.force_spawn_children(items, outputs)
-
-    def command_take_checkpoints(self, name):
-        """Insert current suite params to checkpoints tables."""
-        return self.suite_db_mgr.checkpoint(name)
 
     def filter_initial_task_list(self, inlist):
         """Return list of initial tasks after applying a filter."""
