@@ -171,17 +171,19 @@ with Conf('global.cylc', desc='''
                     The interval with which this plugin is run.
                 ''')
 
-    with Conf('suite logging', desc='''
-        The suite event log, held under the suite run directory, is maintained
-        as a rolling archive. Logs are rolled over (backed up and started anew)
-        when they reach a configurable limit size.
-    '''):
-        Conf('rolling archive length', VDR.V_INTEGER, 5, desc='''
-            How many rolled logs to retain in the archive.
-        ''')
-        Conf('maximum size in bytes', VDR.V_INTEGER, 1000000, desc='''
-            Suite event logs are rolled over when they reach this file size.
-        ''')
+        with Conf('logging', desc='''
+            The workflow event log is kept as a rolling archive in the
+            suite run directory. Logs are rolled over (backed up
+            and started anew) when they reach a limit size you can set
+            using ``[scheduler][logging]maximum size in bytes = <integer>.``
+        '''):
+            Conf('rolling archive length', VDR.V_INTEGER, 5, desc='''
+                How many rolled logs to retain in the archive.
+            ''')
+            Conf('maximum size in bytes', VDR.V_INTEGER, 1000000, desc='''
+                Suite event logs are rolled over when they reach this file
+                size.
+            ''')
 
     with Conf('editors', desc='''
         Choose your favourite text editor for editing suite configurations.

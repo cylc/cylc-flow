@@ -114,7 +114,7 @@ class TimestampRotatingFileHandler(logging.FileHandler):
 
     FILE_HEADER_FLAG = 'cylc_log_file_header'
     FILE_NUM = 'cylc_log_num'
-    GLBL_KEY = 'suite logging'
+    GLBL_KEY = ['scheduler', 'suite logging']
     MIN_BYTES = 1024
 
     def __init__(self, log_file_path, no_detach=False, timestamp=True):
@@ -141,7 +141,7 @@ class TimestampRotatingFileHandler(logging.FileHandler):
         """Should rollover?"""
         if self.stamp is None or self.stream is None:
             return True
-        max_bytes = glbl_cfg().get([self.GLBL_KEY, 'maximum size in bytes'])
+        max_bytes = glbl_cfg().get(self.GLBL_KEY + ['maximum size in bytes'])
         if max_bytes < self.MIN_BYTES:  # No silly value
             max_bytes = self.MIN_BYTES
         msg = "%s\n" % self.format(record)
@@ -168,7 +168,7 @@ class TimestampRotatingFileHandler(logging.FileHandler):
             os.unlink(self.baseFilename)
         os.symlink(os.path.basename(filename), self.baseFilename)
         # Housekeep log files
-        arch_len = glbl_cfg().get([self.GLBL_KEY, 'rolling archive length'])
+        arch_len = glbl_cfg().get(self.GLBL_KEY + ['rolling archive length'])
         if arch_len:
             log_files = glob(self.baseFilename + '.*')
             log_files.sort()
