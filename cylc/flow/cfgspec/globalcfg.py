@@ -183,31 +183,6 @@ with Conf('global.cylc', desc='''
             Suite event logs are rolled over when they reach this file size.
         ''')
 
-    # general
-    with Conf('documentation', desc='''
-        Documentation locations for the ``cylc doc`` command.
-    '''):
-        Conf('local', VDR.V_STRING, '', desc='''
-            Path where the cylc documentation will appear if built locally.
-        ''')
-        Conf('online', VDR.V_STRING,
-             'http://cylc.github.io/doc/built-sphinx/index.html', desc='''
-            URL of the online cylc documentation.
-        ''')
-        Conf('cylc homepage', VDR.V_STRING, 'http://cylc.github.io/', desc='''
-            URL of the cylc internet homepage, with links to documentation for
-            the latest official release.
-        ''')
-
-    # general
-    with Conf('document viewers', desc='''
-        PDF and HTML viewers can be launched by cylc to view the
-        documentation.
-    '''):
-        Conf('html', VDR.V_STRING, 'firefox', desc='''
-            Your preferred web browser.
-        ''')
-
     # client
     with Conf('editors', desc='''
         Choose your favourite text editor for editing suite configurations.
