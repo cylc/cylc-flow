@@ -70,6 +70,7 @@ requests_).
  - Gilliano Menezes
  - Mel Hall
  - Ronnie Dutta
+ - John Haiducek
 
 (All contributors are identifiable with email addresses in the git version
 control logs or otherwise.)
