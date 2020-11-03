@@ -77,7 +77,7 @@ CustomTaskEventHandlerContext = namedtuple(
 
 TaskEventMailContext = namedtuple(
     "TaskEventMailContext",
-    ["key", "ctx_type", "mail_from", "mail_to", "mail_smtp"])
+    ["key", "ctx_type", "mail_from", "mail_to"])
 
 
 TaskJobLogsRetrieveContext = namedtuple(
@@ -187,6 +187,7 @@ class TaskEventsManager():
         self.xtrigger_mgr = xtrigger_mgr
         self.job_pool = job_pool
         self.mail_interval = 0.0
+        self.mail_smtp = None
         self.mail_footer = None
         self.next_mail_time = None
         self.event_timers = {}
@@ -646,9 +647,8 @@ class TaskEventsManager():
                 "suite": schd_ctx.suite}
         # SMTP server
         env = dict(os.environ)
-        mail_smtp = ctx.mail_smtp
-        if mail_smtp:
-            env["smtp"] = mail_smtp
+        if self.mail_smtp:
+            env["smtp"] = self.mail_smtp
         self.proc_pool.put_command(
             SubProcContext(
                 ctx, cmd, env=env, stdin_str=stdin_str, id_keys=id_keys,
@@ -1035,14 +1035,13 @@ class TaskEventsManager():
                     "from",
                     "notifications@" + get_host(),
                 ),
-                self._get_events_conf(itask, "to", get_user()),  # mail_to
-                self._get_events_conf(itask, "smtp"),  # mail_smtp
-            ),
+                self._get_events_conf(itask, "to", get_user())  # mail_to
+            )
         )
 
     def _setup_custom_event_handlers(self, itask, event, message):
         """Set up custom task event handlers."""
-        handlers = self._get_events_conf(itask, event + ' handler')
+        handlers = self._get_events_conf(itask, f'{event} handler')
         if (handlers is None and
                 event in self._get_events_conf(itask, 'handler events', [])):
             handlers = self._get_events_conf(itask, 'handlers')

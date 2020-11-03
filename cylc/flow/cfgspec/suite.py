@@ -303,7 +303,6 @@ with Conf(
             ''')
             Conf('smtp', VDR.V_STRING, desc='''
                 Specify the SMTP server for sending suite email notifications.
-
             ''')
             Conf('to', VDR.V_STRING, desc='''
                 A string containing a list of addresses which can be accepted
@@ -1165,13 +1164,6 @@ with Conf(
                     Specify an alternate ``from:`` email address for event
                     notifications.
                 ''')
-                Conf('smtp', VDR.V_STRING, desc='''
-                    Specify the SMTP server for sending email notifications.
-
-                    Example:
-
-                       ``smtp.yourorg``
-                ''')
                 Conf('to', VDR.V_STRING, desc='''
                     A list of email addresses to send task event
                     notifications. The list can be anything accepted by the
@@ -1377,6 +1369,7 @@ def upg(cfg, descr):
         ['cylc', 'health check interval'])
     u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'shell'])
     u.obsolete('8.0.0', ['runtime', '__MANY__', 'events', 'mail retry delays'])
+    u.obsolete('8.0.0', ['runtime', '__MANY__', 'events', 'mail smtp'])
     u.obsolete('8.0.0', ['cylc', 'abort if any task fails'])
     u.obsolete('8.0.0', ['cylc', 'events', 'abort if any task fails'])
     u.obsolete('8.0.0', ['cylc', 'events', 'mail retry delays'])
@@ -1393,7 +1386,7 @@ def upg(cfg, descr):
             ['cylc', 'mail', mail_setting]
         )
     # Task mail settings in [runtime][TASK]
-    for mail_setting in ['to', 'from', 'smtp']:
+    for mail_setting in ['to', 'from']:
         u.deprecate(
             '8.0.0',
             ['runtime', '__MANY__', 'events', f'mail {mail_setting}'],

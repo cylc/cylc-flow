@@ -63,7 +63,6 @@
         custom handler = 
     [[[mail]]]
         from = 
-        smtp = 
         to = 
     [[[suite state polling]]]
         user = 
@@ -142,7 +141,6 @@
         custom handler = 
     [[[mail]]]
         from = 
-        smtp = 
         to = 
     [[[suite state polling]]]
         user = 
@@ -221,7 +219,6 @@
         custom handler = 
     [[[mail]]]
         from = 
-        smtp = 
         to = 
     [[[suite state polling]]]
         user = 
@@ -302,7 +299,6 @@
         custom handler = 
     [[[mail]]]
         from = 
-        smtp = 
         to = 
     [[[suite state polling]]]
         user = 
@@ -382,7 +378,6 @@
         custom handler = 
     [[[mail]]]
         from = 
-        smtp = 
         to = 
     [[[suite state polling]]]
         user = 
@@ -462,7 +457,6 @@
         custom handler = 
     [[[mail]]]
         from = 
-        smtp = 
         to = 
     [[[suite state polling]]]
         user = 
@@ -542,7 +536,6 @@
         custom handler = 
     [[[mail]]]
         from = 
-        smtp = 
         to = 
     [[[suite state polling]]]
         user = 
@@ -622,7 +615,6 @@
         custom handler = 
     [[[mail]]]
         from = 
-        smtp = 
         to = 
     [[[suite state polling]]]
         user = 
@@ -702,7 +694,6 @@
         custom handler = 
     [[[mail]]]
         from = 
-        smtp = 
         to = 
     [[[suite state polling]]]
         user = 
@@ -782,7 +773,6 @@
         custom handler = 
     [[[mail]]]
         from = 
-        smtp = 
         to = 
     [[[suite state polling]]]
         user = 
@@ -862,7 +852,6 @@
         custom handler = 
     [[[mail]]]
         from = 
-        smtp = 
         to = 
     [[[suite state polling]]]
         user = 
@@ -942,7 +931,6 @@
         custom handler = 
     [[[mail]]]
         from = 
-        smtp = 
         to = 
     [[[suite state polling]]]
         user = 
@@ -1022,7 +1010,6 @@
         custom handler = 
     [[[mail]]]
         from = 
-        smtp = 
         to = 
     [[[suite state polling]]]
         user = 

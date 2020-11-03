@@ -5,6 +5,7 @@
 [scheduler]
     [[mail]]
         footer = see: http://localhost/stuff/%(owner)s/%(suite)s/
+        smtp = {{MAIL_SMTP}}
 
 [scheduling]
     [[graph]]
@@ -17,5 +18,3 @@
             execution retry delays = PT1S
         [[[events]]]
             mail events = failed, retry
-        [[[mail]]]
-            smtp = {{MAIL_SMTP}}
