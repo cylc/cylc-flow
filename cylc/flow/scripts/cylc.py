@@ -48,16 +48,15 @@ category_list = [
 
 
 def execute_cmd(cmd, *args):
-    # Replace the current process with that of the sub-command.
+    # Call a sub-command entrypoint
     try:
-        os.execvp(cmd, [cmd] + list(args))  # nosec
+        from pkg_resources import load_entry_point
+        fun=load_entry_point('cylc-flow','console_scripts',cmd)
+        sys.exit(fun(list(args)))
     except OSError as exc:
         if exc.filename is None:
             exc.filename = cmd
         raise click.ClickException(exc)
-    else:
-        sys.exit()
-
 
 CONTEXT_SETTINGS = dict(ignore_unknown_options=True)
 

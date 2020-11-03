@@ -214,7 +214,7 @@ TASK_GLOB matches task or family names at a given cycle point.
                 dest="icp",
             )
 
-    def parse_args(self, remove_opts=None):
+    def parse_args(self, args=None, remove_opts=None):
         """Parse options and arguments, overrides OptionParser.parse_args."""
         if self.auto_add:
             # Add common options after command-specific options.
@@ -227,7 +227,7 @@ TASK_GLOB matches task or family names at a given cycle point.
                 except ValueError:
                     pass
 
-        (options, args) = OptionParser.parse_args(self)
+        (options, args) = OptionParser.parse_args(self, args)
 
         if len(args) < self.n_compulsory_args:
             self.error("Wrong number of arguments (too few)")

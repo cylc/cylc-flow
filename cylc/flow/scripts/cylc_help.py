@@ -462,7 +462,7 @@ class ArgumentParser:
         return cls
 
     @staticmethod
-    def parse_args():
+    def parse_args(args):
         help_func()
         return (None, None)
 

@@ -155,13 +155,13 @@ def cli_function(parser_function=None, **parser_kwargs):
     """
     def inner(wrapped_function):
         @wraps(wrapped_function)
-        def wrapper():
+        def wrapper(args=None):
             use_color = False
             wrapped_args, wrapped_kwargs = tuple(), {}
             # should we use colour?
             if parser_function:
                 parser = parser_function()
-                opts, args = parser_function().parse_args(**parser_kwargs)
+                opts, args = parser_function().parse_args(args,**parser_kwargs)
                 use_color = (
                     hasattr(opts, 'color')
                     and (
