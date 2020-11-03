@@ -55,7 +55,7 @@ def get_option_parser():
             ('TASK-GLOB [...]', 'Task match pattern')])
     parser.add_option(
         "--output", metavar="OUTPUT",
-        help="set task output OUTPUT completed",
+        help="Set task output OUTPUT completed, defaults to 'succeeded'.",
         action="append", dest="outputs")
     return parser
 

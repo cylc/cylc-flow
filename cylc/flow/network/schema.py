@@ -33,6 +33,7 @@ from graphene.utils.str_converters import to_snake_case
 from cylc.flow import ID_DELIM
 from cylc.flow.broadcast_mgr import ALL_CYCLE_POINTS_STRS, addict
 from cylc.flow.task_state import (
+    TASK_OUTPUT_SUCCEEDED,
     TASK_STATUSES_ORDERED,
     TASK_STATUS_DESC,
     TASK_STATUS_WAITING,
@@ -1671,14 +1672,20 @@ class Remove(Mutation, TaskMutation):
 class SetOutputs(Mutation, TaskMutation):
     class Meta:
         description = sstrip('''
-            Mark task outputs as completed.
+            Artificially mark task outputs as completed.
+
+            This allows you to manually intervene with Cylc's scheduling
+            algorithm by artificially satisfying outputs of tasks.
+
+            By default this makes tasks appear as if they succeeded.
         ''')
         resolver = partial(mutator, command='force_spawn_children')
 
     class Arguments(TaskMutation.Arguments):
         outputs = List(
             String,
-            default_value=[],
+            default_value=[TASK_OUTPUT_SUCCEEDED],
+            description='List of task outputs to satisfy.'
         )
 
 
