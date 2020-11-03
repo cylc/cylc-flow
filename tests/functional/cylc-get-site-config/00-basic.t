@@ -18,20 +18,13 @@
 # Test cylc-get-site-config
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 9
+set_test_number 5
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-get-config"
 run_ok "${TEST_NAME}.validate" cylc get-site-config
 run_ok "${TEST_NAME}.print-run-dir" cylc get-site-config --print-run-dir
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-get-items"
-run_ok "${TEST_NAME}.doc-section" cylc get-site-config --item='[documentation]'
-run_ok "${TEST_NAME}.doc-section-python" \
-    cylc get-site-config --item='[documentation]' -p
-run_ok "${TEST_NAME}.multiple-secs" \
-    cylc get-site-config --item='[documentation]' --item='[platforms]'
-run_ok "${TEST_NAME}.doc-entry" \
-    cylc get-site-config --item='[documentation]online'
 run_fail "${TEST_NAME}.non-existent" \
     cylc get-site-config --item='[this][doesnt]exist'
 #-------------------------------------------------------------------------------
