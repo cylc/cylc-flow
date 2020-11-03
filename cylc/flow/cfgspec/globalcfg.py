@@ -95,17 +95,18 @@ with Conf('global.cylc', desc='''
     ''')
 
     with Conf('scheduler', desc='''
-        Default values for entries in flow.cylc ``[scheduler]`` section.
-        This should not be confused with scheduling in the ``flow.conf`` file.
+        Default values for entries in :cylc:conf:`flow.cylc[scheduler]`
+        section. This should not be confused with scheduling in the
+        ``flow.cylc`` file.
     '''):
         Conf('UTC mode', VDR.V_BOOLEAN, False, desc='''
-                Default for :cylc:conf:`flow.cylc[cylc]UTC mode`.
+                Default for :cylc:conf:`flow.cylc[scheduler]UTC mode`.
         ''')
 
         with Conf('events', desc='''
             You can define site defaults for each of the following options,
             details of which can be found under
-            :cylc:conf:`flow.cylc[cylc][events]`.
+            :cylc:conf:`flow.cylc[scheduler][events]`.
         '''):
             Conf('handlers', VDR.V_STRING_LIST)
             Conf('handler events', VDR.V_STRING_LIST)
@@ -136,7 +137,7 @@ with Conf('global.cylc', desc='''
                 desc='''
                     Default for
                     :cylc:conf:
-                    `flow.cylc[cylc][mail]task event batch interval`.
+                    `flow.cylc[scheduler][mail]task event batch interval`.
                 '''
             )
 
