@@ -40,13 +40,12 @@ class TestHostUserUtil(unittest.TestCase):
     def test_get_fqdn_by_host_on_bad_host(self):
         """get_fqdn_by_host bad host."""
         bad_host = 'nosuchhost.nosuchdomain.org'
-        try:  # Future: Replace with assertRaises context manager syntax
+        with self.assertRaisesRegex(
+                IOError,
+                "(\[Errno -2\] Name or service|\[Errno 8\] nodename nor servname provided, or) not known: '{}'".format(bad_host)) as ctx:
             get_fqdn_by_host(bad_host)
-        except IOError as exc:
-            self.assertEqual(exc.filename, bad_host)
-            self.assertEqual(
-                "[Errno -2] Name or service not known: '%s'" % bad_host,
-                str(exc))
+
+        self.assertEqual(ctx.exception.filename, bad_host)
 
     def test_get_user(self):
         """get_user."""
