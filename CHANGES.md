@@ -37,6 +37,10 @@ Cylc Review was also removed in this version.
 Cylc 7 suites cannot be restarted in Cylc 8 using `cylc restart`, but they
 can still be run using `cylc run` ([#3863](https://github.com/cylc/cylc-flow/pull/3863)).
 
+Named checkpoints have been removed ([#3906](https://github.com/cylc/cylc-flow/pull/3906))
+due to being a seldom-used feature. Workflows can still be restarted from the
+last run, or reflow can be used to achieve the same result.
+
 -------------------------------------------------------------------------------
 ## __cylc-8.0a3 (2020-08?)__
 
