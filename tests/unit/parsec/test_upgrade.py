@@ -48,7 +48,9 @@ def test_simple():
     upg.deprecate('1.3', ['section A'], ['Heading A'])
     # NOTE change to new item keys here!
     upg.deprecate('1.3', ['Heading A', 'cde'], ['Heading A', 'CDE'])
-    upg.deprecate('1.4', ['Heading A', 'abc'], cvtr=x2, silent=True)
+    upg.deprecate(
+        '1.4', ['Heading A', 'abc'], ['Heading A', 'abc'], cvtr=x2,
+        silent=True)
     upg.deprecate(
         '1.4.1', ['item two'], ['Heading A', 'item two'], silent=True)
     upg.deprecate('1.5', ['hostnames'], ['hosts'])

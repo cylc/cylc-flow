@@ -1369,7 +1369,6 @@ def upg(cfg, descr):
         ['cylc', 'health check interval'])
     u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'shell'])
     u.obsolete('8.0.0', ['runtime', '__MANY__', 'events', 'mail retry delays'])
-    u.obsolete('8.0.0', ['runtime', '__MANY__', 'events', 'mail smtp'])
     u.obsolete('8.0.0', ['cylc', 'abort if any task fails'])
     u.obsolete('8.0.0', ['cylc', 'events', 'abort if any task fails'])
     u.obsolete('8.0.0', ['cylc', 'events', 'mail retry delays'])
@@ -1392,6 +1391,12 @@ def upg(cfg, descr):
             ['runtime', '__MANY__', 'events', f'mail {mail_setting}'],
             ['runtime', '__MANY__', 'mail', mail_setting]
         )
+    u.deprecate(
+        '8.0.0',
+        ['runtime', '__MANY__', 'events', 'mail smtp'],
+        None,  # This is really a .obsolete(), just with a custom message
+        cvtr=converter(lambda x: x,
+                       'DELETED (OBSOLETE) - use "[cylc][mail]smtp" instead'))
     u.deprecate(
         '8.0.0',
         ['scheduling', 'max active cycle points'],
