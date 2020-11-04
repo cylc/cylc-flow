@@ -182,7 +182,12 @@ class JobFileWriter:
         if cylc.flow.flags.debug:
             handle.write("\nexport CYLC_DEBUG=true")
         handle.write("\nexport CYLC_VERSION='%s'" % CYLC_VERSION)
-        for key in job_conf['platform']['copyable environment variables']:
+        env_vars = (
+            (job_conf['platform']['copyable environment variables'] or [])
+            # pass CYLC_COVERAGE into the job execution environment
+            + ['CYLC_COVERAGE']
+        )
+        for key in env_vars:
             if key in os.environ:
                 handle.write("\nexport %s='%s'" % (key, os.environ[key]))
 
