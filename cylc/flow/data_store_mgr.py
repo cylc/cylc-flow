@@ -73,7 +73,7 @@ from cylc.flow.network import API
 from cylc.flow.suite_status import get_suite_status
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_job_logs import JOB_LOG_OPTS
-from cylc.flow.task_state import TASK_STATUS_WAITING
+from cylc.flow.task_state import TASK_STATUS_WAITING, TASK_STATUS_EXPIRED
 from cylc.flow.task_state_prop import extract_group_state
 from cylc.flow.taskdef import generate_graph_children, generate_graph_parents
 from cylc.flow.wallclock import (
@@ -542,7 +542,8 @@ class DataStoreMgr:
 
     def increment_graph_window(
             self, name, point, flow_label,
-            edge_distance=0, active_id=None, descendant=False):
+            edge_distance=0, active_id=None,
+            descendant=False, is_parent=False):
         """Generate graph window about given origin to n-edge-distance.
 
         Args:
@@ -598,7 +599,7 @@ class DataStoreMgr:
 
         self.n_window_nodes[active_id].add(s_id)
         # Generate task node
-        self.generate_ghost_task(s_id, name, point, flow_label)
+        self.generate_ghost_task(s_id, name, point, flow_label, is_parent)
 
         edge_distance += 1
 
@@ -650,9 +651,9 @@ class DataStoreMgr:
             if e_id in self.n_window_edges[active_id]:
                 continue
             if (
-                e_id not in self.data[self.workflow_id][EDGES] and
-                e_id not in self.added[EDGES] and
-                edge_distance <= self.n_edge_distance
+                e_id not in self.data[self.workflow_id][EDGES]
+                and e_id not in self.added[EDGES]
+                and edge_distance <= self.n_edge_distance
             ):
                 self.added[EDGES][e_id] = PbEdge(
                     id=e_id,
@@ -671,7 +672,7 @@ class DataStoreMgr:
                 continue
             self.increment_graph_window(
                 t_name, t_point, flow_label,
-                copy(edge_distance), active_id, descendant)
+                copy(edge_distance), active_id, descendant, is_parent)
 
     def remove_pool_node(self, name, point):
         """Remove ID reference and flag isolate node/branch for pruning."""
@@ -692,7 +693,8 @@ class DataStoreMgr:
         tp_id = f'{self.workflow_id}{ID_DELIM}{point}{ID_DELIM}{name}'
         self.all_task_pool.add(tp_id)
 
-    def generate_ghost_task(self, tp_id, name, point, flow_label):
+    def generate_ghost_task(
+            self, tp_id, name, point, flow_label, is_parent=False):
         """Create task-point element populated with static data.
 
         Args:
@@ -731,6 +733,12 @@ class DataStoreMgr:
             state=TASK_STATUS_WAITING,
             flow_label=flow_label
         )
+        if is_parent and tp_id not in self.n_window_nodes:
+            # TODO: Load task info from DB
+            tproxy.state = TASK_STATUS_EXPIRED
+        else:
+            tproxy.state = TASK_STATUS_WAITING
+
         tproxy.namespace[:] = taskdef.namespace
         tproxy.ancestors[:] = [
             f'{self.workflow_id}{ID_DELIM}{point_string}{ID_DELIM}{a_name}'
@@ -863,7 +871,7 @@ class DataStoreMgr:
             for k, v in self.n_window_nodes.items()
             if k in self.all_task_pool
         ])
-        out_paths_nodes = set().union(*[
+        out_paths_nodes = self.prune_flagged_nodes.union(*[
             v
             for k, v in self.n_window_nodes.items()
             if k in self.prune_flagged_nodes
