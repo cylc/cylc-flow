@@ -95,6 +95,10 @@ config option `[scheduling]stop after cycle point`.
 
 ### Fixes
 
+[#3920](https://github.com/cylc/cylc-flow/pull/3920) - Fixed calls to CLI
+commands so that local cylc commands work correctly if cylc is not found in the
+$PATH environment variable.
+
 [#3879](https://github.com/cylc/cylc-flow/pull/3879) - Removed Google
 Groups e-mail from pip packaging metadata. Users browsing PYPI will have
 to visit our website to find out how to reach us (we are using Discourse
