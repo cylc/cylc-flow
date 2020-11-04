@@ -42,7 +42,9 @@ class TestHostUserUtil(unittest.TestCase):
         bad_host = 'nosuchhost.nosuchdomain.org'
         with self.assertRaisesRegex(
                 IOError,
-                "(\[Errno -2\] Name or service|\[Errno 8\] nodename nor servname provided, or) not known: '{}'".format(bad_host)) as ctx:
+                r"(\[Errno -2\] Name or service|"
+                r"\[Errno 8\] nodename nor servname provided, or)"
+                r" not known: '{}'".format(bad_host)) as ctx:
             get_fqdn_by_host(bad_host)
 
         self.assertEqual(ctx.exception.filename, bad_host)
