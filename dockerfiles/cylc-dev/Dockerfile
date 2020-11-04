@@ -47,5 +47,5 @@ RUN apt-get update && \
 
 # run setup logic
 RUN . $HOME/.bashrc && \
-    pip install -e ./cylc && \
+    pip install -e ./cylc[all] && \
     cylc version

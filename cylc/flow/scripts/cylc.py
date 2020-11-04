@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """cylc main entry point"""
 
+from contextlib import contextmanager
 import os
 import sys
 from pathlib import Path
@@ -362,74 +363,170 @@ def cli_version(long=False):
     sys.exit(0)
 
 
+@contextmanager
+def pycoverage(cmd_args):
+    """Capture code coverage if configured to do so.
+
+    This requires Cylc to be installed in editible mode
+    (i.e. `pip install -e`) in order to access the coverage configuration
+    file, etc.
+
+    $ pip install -e /cylc/working/directory
+
+    Set the CYLC_COVERAGE env var as appropriate before running tests
+
+    $ export CYLC_COVERAGE=1
+
+    Coverage files will be written out to the working copy irrespective
+    of where in the filesystem the `cylc` command was run.
+
+    $ cd /cylc/working/directory
+    $ coverage combine
+    $ coverage report
+
+    For remote tasks the coverage files will be written to the cylc
+    working directory on the remote so you will have to scp them back
+    to your local working directory before running coverage combine:
+
+    $ cd /cylc/working/directory
+    $ ssh remote-host cd /cylc/remote/working/directory && covrage combine
+    $ scp \
+    >     remote-host/cylc/remote/working/directory/.coverage \
+    >    .coverage.remote-host.12345.12345
+    $ coverage combine
+    $ coverage report
+
+    Environment Variables:
+        CYLC_COVERAGE:
+            '0'
+                Do nothing / run as normal.
+            '1'
+                Collect coverage data.
+            '2'
+                Collect coverage data and log every command for which
+                coverage data was successfully recorded to
+                a .coverage_commands_captured file in the Cylc
+                working directory.
+
+    """
+    cylc_coverage = os.environ.get('CYLC_COVERAGE')
+    if cylc_coverage not in ('1', '2'):
+        yield
+        return
+
+    # import here to avoid unnecessary imports when not running coverage
+    import cylc.flow
+    import coverage
+    from pathlib import Path
+
+    # the cylc working directory
+    cylc_wc = Path(cylc.flow.__file__).parent.parent.parent
+
+    # intiate coverage
+    try:
+        cov = coverage.Coverage(
+            # NOTE: coverage paths are all relative so we must hack them here
+            # to absolute values, otherwise when `cylc` scripts are run
+            # elsewhere on the filesystem they will fail to capture coverage
+            # data and will dump empty coverage files where they run.
+            config_file=str(cylc_wc / '.coveragerc'),
+            data_file=str(cylc_wc / '.coverage'),
+            source=[str(cylc_wc / 'cylc')]
+        )
+    except coverage.misc.CoverageException:
+        raise Exception(
+            # make sure this exception is visible in the traceback
+            '\n\n*****************************\n\n'
+            'Could not initiate coverage, likely because Cylc was not '
+            'installed in editible mode.'
+            '\n\n*****************************\n\n'
+        )
+
+    # start the coverage running
+    cov.start()
+    try:
+        # yield control back to cylc, return once the command exits
+        yield
+    finally:
+        # stop the coverage and save the data
+        cov.stop()
+        cov.save()
+        if cylc_coverage == '2':
+            with open(cylc_wc / '.coverage_commands_captured', 'a+') as ccc:
+                ccc.write(
+                    '$ cylc ' + (' '.join(cmd_args) + '\n'),
+                )
+
+
 @click.command(context_settings={'ignore_unknown_options': True})
 @click.option("--help", "-h", "help_", is_flag=True, is_eager=True)
 @click.option("--version", "-V", is_flag=True, is_eager=True)
 @click.argument("cmd-args", nargs=-1)
 def main(cmd_args, version, help_):
-    if not cmd_args:
-        if version:
-            cli_version()
-        else:
-            cli_help()
-    else:
-        cmd_args = list(cmd_args)
-        command = cmd_args.pop(0)
-
-        if command == "version":
-            cli_version("--long" in cmd_args)
-
-        if command == "help":
-            help_ = True
-            if not len(cmd_args):
-                cli_help()
-            elif cmd_args == ['all']:
-                print_command_list()
-                sys.exit(0)
-            else:
-                command = cmd_args.pop(0)
-
-        if command in ALIASES:
-            # this is an alias to a command
-            command = ALIASES[command]
-
-        if command in DEAD_ENDS:
-            # this command has been removed but not aliased
-            # display a helpful message and move on#
-            print(
-                cparse(
-                    f'<red>{DEAD_ENDS[command]}</red>'
-                )
-            )
-            sys.exit(42)
-
-        if command not in COMMANDS:
-            # check if this is a command abbreviation or exit
-            command = match_command(command)
-
-        if command == "graph-diff":
-            if len(cmd_args) > 2:
-                for arg in cmd_args[2:]:
-                    if arg.startswith("-"):
-                        cmd_args.insert(cmd_args.index(arg), "--")
-                        break
-        elif command == "jobs-submit":
-            if len(cmd_args) > 1:
-                for arg in cmd_args:
-                    if not arg.startswith("-"):
-                        cmd_args.insert(cmd_args.index(arg) + 1, "--")
-                        break
-        elif command == "message":
-            if cmd_args:
-                if cmd_args[0] in ['-s', '--severity', '-p', '--priority']:
-                    dd_index = 2
-                else:
-                    dd_index = 0
-                cmd_args.insert(dd_index, "--")
-
-        if help_:
-            execute_cmd(command, "--help")
-        else:
+    with pycoverage(cmd_args):
+        if not cmd_args:
             if version:
-                cmd_args.append("--version")
-            execute_cmd(command, *cmd_args)
+                cli_version()
+            else:
+                cli_help()
+        else:
+            cmd_args = list(cmd_args)
+            command = cmd_args.pop(0)
+
+            if command == "version":
+                cli_version("--long" in cmd_args)
+
+            if command == "help":
+                help_ = True
+                if not len(cmd_args):
+                    cli_help()
+                elif cmd_args == ['all']:
+                    print_command_list()
+                    sys.exit(0)
+                else:
+                    command = cmd_args.pop(0)
+
+            if command in ALIASES:
+                # this is an alias to a command
+                command = ALIASES[command]
+
+            if command in DEAD_ENDS:
+                # this command has been removed but not aliased
+                # display a helpful message and move on#
+                print(
+                    cparse(
+                        f'<red>{DEAD_ENDS[command]}</red>'
+                    )
+                )
+                sys.exit(42)
+
+            if command not in COMMANDS:
+                # check if this is a command abbreviation or exit
+                command = match_command(command)
+
+            if command == "graph-diff":
+                if len(cmd_args) > 2:
+                    for arg in cmd_args[2:]:
+                        if arg.startswith("-"):
+                            cmd_args.insert(cmd_args.index(arg), "--")
+                            break
+            elif command == "jobs-submit":
+                if len(cmd_args) > 1:
+                    for arg in cmd_args:
+                        if not arg.startswith("-"):
+                            cmd_args.insert(cmd_args.index(arg) + 1, "--")
+                            break
+            elif command == "message":
+                if cmd_args:
+                    if cmd_args[0] in ['-s', '--severity', '-p', '--priority']:
+                        dd_index = 2
+                    else:
+                        dd_index = 0
+                    cmd_args.insert(dd_index, "--")
+
+            if help_:
+                execute_cmd(command, "--help")
+            else:
+                if version:
+                    cmd_args.append("--version")
+                execute_cmd(command, *cmd_args)

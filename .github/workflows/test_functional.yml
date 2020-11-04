@@ -27,6 +27,7 @@ jobs:
       BASE: ${{ matrix.tests[0] }}
       CHUNK: ${{ matrix.tests[1] }}
       CYLC_TEST_PLATFORMS: ${{ matrix.tests[2] }}
+      CYLC_COVERAGE: 1
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -48,7 +49,7 @@ jobs:
       - name: Install
         run: |
           pip install git+https://github.com/metomi/rose@master
-          pip install ."[all]"
+          pip install -e ."[all]"
           pip install --no-deps git+https://github.com/cylc/cylc-rose.git@master
           mkdir "$HOME/cylc-run"
 
@@ -116,14 +117,15 @@ jobs:
           find "${TMPDIR:-/tmp}/${USER}/cylctb-"* -type f \
               -exec echo '==== {} ====' \; -exec cat '{}' \;
 
-      - name: Copy cylc-run out of container
-        if: failure()
-        run: |
-          docker cp bash:/root/cylc-run .
-
       - name: Upload
         if: failure()
         uses: actions/upload-artifact@v2
         with:
-          name: Upload cylc-run artifact
-          path: cylc-run
+          name: cylc-run
+          path: ~/cylc-run
+
+      - name: Coverage
+        run: |
+          coverage combine
+          coverage report
+          bash <(curl -s https://codecov.io/bash)
