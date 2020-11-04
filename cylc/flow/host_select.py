@@ -527,7 +527,8 @@ def _get_metrics(hosts, metrics, data=None):
             proc_map[host] = remote_cylc_cmd(cmd, host=host, **kwargs)
         else:
             import sys
-            proc_map[host] = run_cmd([sys.executable,'-m','cylc']+cmd, **kwargs)
+            proc_map[host] = run_cmd(
+                [sys.executable, '-m', 'cylc'] + cmd, **kwargs)
 
     # Collect results from commands
     while proc_map:

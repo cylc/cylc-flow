@@ -161,7 +161,8 @@ def cli_function(parser_function=None, **parser_kwargs):
             # should we use colour?
             if parser_function:
                 parser = parser_function()
-                opts, args = parser_function().parse_args(args,**parser_kwargs)
+                opts, args = parser_function().parse_args(
+                    args, **parser_kwargs)
                 use_color = (
                     hasattr(opts, 'color')
                     and (

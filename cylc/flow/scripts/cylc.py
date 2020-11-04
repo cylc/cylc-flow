@@ -51,12 +51,13 @@ def execute_cmd(cmd, *args):
     # Call a sub-command entrypoint
     try:
         from pkg_resources import load_entry_point
-        fun=load_entry_point('cylc-flow','console_scripts',cmd)
+        fun = load_entry_point('cylc-flow', 'console_scripts', cmd)
         sys.exit(fun(list(args)))
     except OSError as exc:
         if exc.filename is None:
             exc.filename = cmd
         raise click.ClickException(exc)
+
 
 CONTEXT_SETTINGS = dict(ignore_unknown_options=True)
 
