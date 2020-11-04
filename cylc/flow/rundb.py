@@ -15,17 +15,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Provide data access object for the suite runtime database."""
 
-import re
 import sqlite3
 import traceback
 from os.path import expandvars
 
 from cylc.flow import LOG
 import cylc.flow.flags
-from cylc.flow.task_state import TASK_STATUS_WAITING
 from cylc.flow.wallclock import get_current_time_string
-from cylc.flow.platforms import platform_from_job_info
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 
 
 class CylcSuiteDAOTableColumn:
@@ -172,6 +168,7 @@ class CylcSuiteDAO:
     CONN_TIMEOUT = 0.2
     DB_FILE_BASE_NAME = "db"
     MAX_TRIES = 100
+    RESTART_INCOMPAT_VERSION = "8.0a2"  # Can't restart suite if <= this vers
     CHECKPOINT_LATEST_ID = 0
     CHECKPOINT_LATEST_EVENT = "latest"
     TABLE_BROADCAST_EVENTS = "broadcast_events"
@@ -189,6 +186,7 @@ class CylcSuiteDAO:
     TABLE_TASK_OUTPUTS = "task_outputs"
     TABLE_TASK_POOL = "task_pool"
     TABLE_TASK_POOL_CHECKPOINTS = "task_pool_checkpoints"
+    TABLE_TASK_PREREQUISITES = "task_prerequisites"
     TABLE_TASK_STATES = "task_states"
     TABLE_TASK_TIMEOUT_TIMERS = "task_timeout_timers"
     TABLE_XTRIGGERS = "xtriggers"
@@ -288,8 +286,15 @@ class CylcSuiteDAO:
             ["name", {"is_primary_key": True}],
             ["flow_label", {"is_primary_key": True}],
             ["status"],
-            ["satisfied"],
             ["is_held", {"datatype": "INTEGER"}],
+        ],
+        TABLE_TASK_PREREQUISITES: [
+            ["cycle", {"is_primary_key": True}],
+            ["name", {"is_primary_key": True}],
+            ["prereq_name", {"is_primary_key": True}],
+            ["prereq_cycle", {"is_primary_key": True}],
+            ["prereq_output", {"is_primary_key": True}],
+            ["satisfied"],
         ],
         TABLE_XTRIGGERS: [
             ["signature", {"is_primary_key": True}],
@@ -301,7 +306,6 @@ class CylcSuiteDAO:
             ["name", {"is_primary_key": True}],
             ["flow_label", {"is_primary_key": True}],
             ["status"],
-            ["satisfied"],
             ["is_held", {"datatype": "INTEGER"}],
         ],
         TABLE_TASK_STATES: [
@@ -757,7 +761,6 @@ class CylcSuiteDAO:
                 %(task_pool)s.flow_label,
                 %(task_late_flags)s.value,
                 %(task_pool)s.status,
-                %(task_pool)s.satisfied,
                 %(task_pool)s.is_held,
                 %(task_states)s.submit_num,
                 %(task_jobs)s.try_num,
@@ -808,6 +811,22 @@ class CylcSuiteDAO:
             stmt_args = [id_key]
         for row_idx, row in enumerate(self.connect().execute(stmt, stmt_args)):
             callback(row_idx, list(row))
+
+    def select_task_prerequisites(self, cycle, name):
+        """Return prerequisites of a task of the given name & cycle point."""
+        stmt = f"""
+            SELECT
+                prereq_name,
+                prereq_cycle,
+                prereq_output,
+                satisfied
+            FROM
+                {self.TABLE_TASK_PREREQUISITES}
+            WHERE
+                cycle == '{cycle}' AND
+                name == '{name}'
+        """
+        return list(self.connect().execute(stmt))
 
     def select_task_times(self):
         """Select submit/start/stop times to compute job timings.
@@ -916,200 +935,3 @@ class CylcSuiteDAO:
 
         # done
         conn.commit()
-
-    def upgrade_retry_state(self):
-        """Replace the retry state with xtriggers.
-
-        * Change *retrying tasks to waiting
-        * Add the required xtrigger
-
-        Note:
-            The retry status can be safely removed as this is really a display
-            state, the retry logic revolves around the TaskActionTimer.
-
-        From:
-            cylc<8
-        To:
-            cylc>=8
-        PR:
-            #3423
-
-        Returns:
-            list - (cycle, name, status) tuples of all retrying tasks.
-
-        """
-        conn = self.connect()
-
-        for table in [self.TABLE_TASK_POOL_CHECKPOINTS, self.TABLE_TASK_POOL]:
-            tasks = list(conn.execute(
-                rf'''
-                    SELECT
-                        cycle, name, status
-                    FROM
-                        {table}
-                    WHERE
-                        status IN ('retrying', 'submit-retrying')
-                '''
-            ))
-            if tasks:
-                LOG.info(f'Upgrade retrying tasks in table {table}')
-            conn.executemany(
-                rf'''
-                    UPDATE
-                        {table}
-                    SET
-                        status='{TASK_STATUS_WAITING}'
-                    WHERE
-                        cycle==?
-                        and name==?
-                        and status==?
-                ''',
-                tasks
-            )
-        conn.commit()
-        return tasks
-
-    def upgrade_is_held(self):
-        """Upgrade hold_swap => is_held.
-
-        * Add a is_held column.
-        * Set status and is_held as per the new schema.
-        * Set the swap_hold values to None
-          (bacause sqlite3 does not support DROP COLUMN)
-
-        From:
-            cylc<8
-        To:
-            cylc>=8
-        PR:
-            #3230
-
-        Returns:
-            bool - True if upgrade performed, False if upgrade skipped.
-
-        """
-        conn = self.connect()
-
-        # check if upgrade required
-        schema = conn.execute(rf'PRAGMA table_info({self.TABLE_TASK_POOL})')
-        for _, name, *_ in schema:
-            if name == 'is_held':
-                LOG.debug('is_held column present - skipping db upgrade')
-                return False
-
-        # perform upgrade
-        for table in [self.TABLE_TASK_POOL, self.TABLE_TASK_POOL_CHECKPOINTS]:
-            LOG.info('Upgrade hold_swap => is_held in %s', table)
-            conn.execute(
-                rf'''
-                    ALTER TABLE
-                        {table}
-                    ADD COLUMN
-                        is_held BOOL
-                '''
-            )
-            for cycle, name, status, hold_swap in conn.execute(rf'''
-                    SELECT
-                        cycle, name, status, hold_swap
-                    FROM
-                        {table}
-            '''):
-                if status == 'held':
-                    new_status = hold_swap
-                    is_held = True
-                elif hold_swap == 'held':
-                    new_status = status
-                    is_held = True
-                else:
-                    new_status = status
-                    is_held = False
-                conn.execute(
-                    rf'''
-                        UPDATE
-                            {table}
-                        SET
-                            status=?,
-                            is_held=?,
-                            hold_swap=?
-                        WHERE
-                            cycle==?
-                            AND name==?
-                    ''',
-                    (new_status, is_held, None, cycle, name)
-                )
-            self.remove_columns(table, ['hold_swap'])
-            conn.commit()
-        return True
-
-    def upgrade_to_platforms(self):
-        """upgrade [job]batch system and [remote]host to platform
-
-        * Add 'platform' and 'user' columns to table task_jobs.
-        * Remove 'user_at_host' and 'batch_sys_name' columns
-
-
-        Returns:
-            bool - True if upgrade performed, False if upgrade skipped.
-        """
-        conn = self.connect()
-
-        # check if upgrade required
-        schema = conn.execute(rf'PRAGMA table_info({self.TABLE_TASK_JOBS})')
-        for _, name, *_ in schema:
-            if name == 'platform_name':
-                LOG.debug('platform_name column present - skipping db upgrade')
-                return False
-
-        # Perform upgrade:
-        table = self.TABLE_TASK_JOBS
-        LOG.info('Upgrade to Cylc 8 platforms syntax')
-        conn.execute(
-            rf'''
-                ALTER TABLE
-                    {table}
-                ADD COLUMN
-                    user TEXT
-            '''
-        )
-        conn.execute(
-            rf'''
-                ALTER TABLE
-                    {table}
-                ADD COLUMN
-                    platform_name TEXT
-            '''
-        )
-        job_platforms = glbl_cfg(cached=False).get(['platforms'])
-        for cycle, name, user_at_host, batch_system in conn.execute(rf'''
-                SELECT
-                    cycle, name, user_at_host, batch_system
-                FROM
-                    {table}
-        '''):
-            match = re.match(r"(?P<user>\S+)@(?P<host>\S+)", user_at_host)
-            if match:
-                user = match.group('user')
-                host = match.group('host')
-            else:
-                user = ''
-                host = user_at_host
-            platform = platform_from_job_info(
-                job_platforms,
-                {'batch system': batch_system},
-                {'host': host}
-            )
-            conn.execute(
-                rf'''
-                    UPDATE
-                        {table}
-                    SET
-                        user=?,
-                        platform_name=?
-                    WHERE
-                        cycle==?
-                        AND name==?
-                ''',
-                (user, platform, cycle, name)
-            )
-        conn.commit()
-        return True

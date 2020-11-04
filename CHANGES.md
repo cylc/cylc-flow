@@ -11,7 +11,8 @@ Cylc 8.0aX (alpha) releases are not compatible with Cylc 7 or with previous
 8.0aX releases, as the API is still under heavy development.
 
 The Cylc server program and CLI codebase is now a Python 3 package that can be
-installed from PyPI with `pip` (see #2990), and has been renamed to
+installed from PyPI with `pip` (see
+[#2990](https://github.com/cylc/cylc-flow/pull/2990)), and has been renamed to
 `cylc-flow`. The name `cylc` is now used as a native Python package namespace
 to allow other projects to re-use it and extend Cylc with plug-ins.
 
@@ -26,12 +27,15 @@ have been removed, and `cylc graph` is only retained for text output
 used in tests (it will be re-implemented in the new web UI).
 
 The xtrigger examples were moved to a separate `cylc/cylc-xtriggers` project
-(see #3123).
+(see [#3123](https://github.com/cylc/cylc-flow/pull/3123)).
 
 Jinja filters were moved from its `Jinja2Filters` folder to within the `cylc`
 namespace, under `cylc.jinja.filters`.
 
 Cylc Review was also removed in this version.
+
+Cylc 7 suites cannot be restarted in Cylc 8 using `cylc restart`, but they
+can still be run using `cylc run` ([#3863](https://github.com/cylc/cylc-flow/pull/3863)).
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0a3 (2020-08?)__
@@ -62,7 +66,8 @@ pyzmq.
 command name to `cylc set-outputs` to better reflect its role in Cylc 8.
 
 [#3796](https://github.com/cylc/cylc-flow/pull/3796) - Remote installation is
-now on a per install target rather than a per platform basis. app/ bin/ etc/ lib/ directories are now installed on the target, configurable in flow.cylc.
+now on a per install target rather than a per platform basis. `app/`, `bin/`,
+`etc/`, `lib/` directories are now installed on the target, configurable in flow.cylc.
 
 [#3724](https://github.com/cylc/cylc-flow/pull/3724) - Re-implemented
 the `cylc scan` command line interface and added a Python API for accessing

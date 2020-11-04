@@ -25,6 +25,7 @@ This module provides the logic to:
 
 import json
 import os
+import packaging.version
 from shutil import copy, rmtree
 from tempfile import mkstemp
 
@@ -34,6 +35,7 @@ from cylc.flow.broadcast_report import get_broadcast_change_iter
 from cylc.flow.rundb import CylcSuiteDAO
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.wallclock import get_current_time_string, get_utc_mode
+from cylc.flow.exceptions import SuiteServiceFileError
 
 
 class SuiteDatabaseManager:
@@ -70,6 +72,7 @@ class SuiteDatabaseManager:
     TABLE_TASK_POOL = CylcSuiteDAO.TABLE_TASK_POOL
     TABLE_TASK_OUTPUTS = CylcSuiteDAO.TABLE_TASK_OUTPUTS
     TABLE_TASK_STATES = CylcSuiteDAO.TABLE_TASK_STATES
+    TABLE_TASK_PREREQUISITES = CylcSuiteDAO.TABLE_TASK_PREREQUISITES
     TABLE_TASK_TIMEOUT_TIMERS = CylcSuiteDAO.TABLE_TASK_TIMEOUT_TIMERS
     TABLE_XTRIGGERS = CylcSuiteDAO.TABLE_XTRIGGERS
     TABLE_ABS_OUTPUTS = CylcSuiteDAO.TABLE_ABS_OUTPUTS
@@ -90,6 +93,7 @@ class SuiteDatabaseManager:
             self.TABLE_TASK_POOL: [],
             self.TABLE_TASK_ACTION_TIMERS: [],
             self.TABLE_TASK_OUTPUTS: [],
+            self.TABLE_TASK_PREREQUISITES: [],
             self.TABLE_TASK_TIMEOUT_TIMERS: [],
             self.TABLE_XTRIGGERS: []}
         self.db_inserts_map = {
@@ -102,6 +106,7 @@ class SuiteDatabaseManager:
             self.TABLE_TASK_POOL: [],
             self.TABLE_TASK_ACTION_TIMERS: [],
             self.TABLE_TASK_OUTPUTS: [],
+            self.TABLE_TASK_PREREQUISITES: [],
             self.TABLE_TASK_TIMEOUT_TIMERS: [],
             self.TABLE_XTRIGGERS: [],
             self.TABLE_ABS_OUTPUTS: []}
@@ -392,7 +397,8 @@ class SuiteDatabaseManager:
         """
         set_args = {
             "time_updated": itask.state.time_updated,
-            "status": itask.state.status}
+            "status": itask.state.status
+        }
         where_args = {
             "cycle": str(itask.point),
             "name": itask.tdef.name,
@@ -410,22 +416,26 @@ class SuiteDatabaseManager:
         relevant insert statements for the current tasks in the pool.
         """
         self.db_deletes_map[self.TABLE_TASK_POOL].append({})
+        self.db_deletes_map[self.TABLE_TASK_PREREQUISITES].append({})
         # No need to do:
         # self.db_deletes_map[self.TABLE_TASK_ACTION_TIMERS].append({})
         # Should already be done by self.put_task_event_timers above.
         self.db_deletes_map[self.TABLE_TASK_TIMEOUT_TIMERS].append({})
         for itask in pool.get_all_tasks():
-            satisfied = {}
-            for p in itask.state.prerequisites:
-                for k, v in p.satisfied.items():
-                    # need string key, not tuple for json.dumps
-                    satisfied[json.dumps(k)] = v
+            # Update the task_prerequisites table:
+            for prereq in itask.state.prerequisites:
+                for (p_name, p_cycle, p_output), satisfied_state in (
+                        prereq.satisfied.items()):
+                    self.put_insert_task_prerequisites(itask, {
+                        "prereq_name": p_name,
+                        "prereq_cycle": p_cycle,
+                        "prereq_output": p_output,
+                        "satisfied": satisfied_state})
             self.db_inserts_map[self.TABLE_TASK_POOL].append({
                 "name": itask.tdef.name,
                 "cycle": str(itask.point),
                 "flow_label": itask.flow_label,
                 "status": itask.state.status,
-                "satisfied": json.dumps(satisfied),
                 "is_held": itask.state.is_held})
             if itask.timeout is not None:
                 self.db_inserts_map[self.TABLE_TASK_TIMEOUT_TIMERS].append({
@@ -459,7 +469,8 @@ class SuiteDatabaseManager:
                     "time_updated": itask.state.time_updated,
                     "submit_num": itask.submit_num,
                     "try_num": itask.get_try_num(),
-                    "status": itask.state.status}
+                    "status": itask.state.status
+                }
                 where_args = {
                     "cycle": str(itask.point),
                     "name": itask.tdef.name,
@@ -493,6 +504,10 @@ class SuiteDatabaseManager:
     def put_insert_task_states(self, itask, args):
         """Put INSERT statement for task_states table."""
         self._put_insert_task_x(CylcSuiteDAO.TABLE_TASK_STATES, itask, args)
+
+    def put_insert_task_prerequisites(self, itask, args):
+        """Put INSERT statement for task_prerequisites table."""
+        self._put_insert_task_x(self.TABLE_TASK_PREREQUISITES, itask, args)
 
     def put_insert_task_outputs(self, itask):
         """Reset custom outputs for a task."""
@@ -549,18 +564,40 @@ class SuiteDatabaseManager:
         if self.pub_dao.n_tries >= self.pub_dao.MAX_TRIES:
             self.copy_pri_to_pub()
             LOG.warning(
-                "%(pub_db_name)s: recovered from %(pri_db_name)s" % {
-                    "pub_db_name": self.pub_dao.db_file_name,
-                    "pri_db_name": self.pri_dao.db_file_name})
+                f"{self.pub_dao.db_file_name}: recovered from "
+                f"{self.pri_dao.db_file_name}")
             self.pub_dao.n_tries = 0
 
-    def restart_upgrade(self):
-        """Vacuum/upgrade runtime DB on restart."""
+    def on_restart(self):
+        """Check & vacuum the runtime DB on restart."""
+        if not os.path.isfile(self.pri_path):
+            raise SuiteServiceFileError(
+                'Cannot restart as suite database not found')
+        self.check_suite_db_compatibility()
         pri_dao = self.get_pri_dao()
         pri_dao.vacuum()
-
-        # compat: <8.0
-        pri_dao.upgrade_is_held()
-        pri_dao.upgrade_retry_state()
-
         pri_dao.close()
+
+    def check_suite_db_compatibility(self):
+        """Raises SuiteServiceFileError if the existing suite database is
+        incompatible with the current version of Cylc."""
+        pri_dao = self.get_pri_dao()
+        try:
+            last_run_ver = pri_dao.connect().execute(
+                f'SELECT value FROM {self.TABLE_SUITE_PARAMS} '
+                f'WHERE key == "{self.KEY_CYLC_VERSION}"').fetchone()[0]
+        except TypeError:
+            raise SuiteServiceFileError(
+                'Cannot restart suite as the suite database is incompatible '
+                f'with Cylc {CYLC_VERSION}')
+        pri_dao.close()
+        try:
+            last_run_ver = packaging.version.Version(last_run_ver)
+        except packaging.version.InvalidVersion:
+            last_run_ver = packaging.version.LegacyVersion(last_run_ver)
+        restart_incompat_ver = packaging.version.Version(
+            CylcSuiteDAO.RESTART_INCOMPAT_VERSION)
+        if last_run_ver <= restart_incompat_ver:
+            raise SuiteServiceFileError(
+                f'Cannot restart suite last run with Cylc {last_run_ver} as '
+                f'the suite database is incompatible with Cylc {CYLC_VERSION}')

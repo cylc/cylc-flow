@@ -228,13 +228,14 @@ class TaskPool:
         self.runahead_pool[itask.point][itask.identity] = itask
         self.rhpool_changed = True
 
-        # add row to "task_states" table
         if is_new:
+            # add row to "task_states" table:
             self.suite_db_mgr.put_insert_task_states(itask, {
                 "time_created": get_current_time_string(),
                 "time_updated": get_current_time_string(),
                 "status": itask.state.status,
                 "flow_label": itask.flow_label})
+            # add row to "task_outputs" table:
             if itask.state.outputs.has_custom_triggers():
                 self.suite_db_mgr.put_insert_task_outputs(itask)
         return itask
@@ -372,9 +373,8 @@ class TaskPool:
         if row_idx == 0:
             LOG.info("LOADING task proxies")
         # Create a task proxy corresponding to this DB entry.
-        (cycle, name, flow_label, is_late, status, satisfied,
-         is_held, submit_num, _, platform_name, time_submit, time_run, timeout,
-         outputs_str) = row
+        (cycle, name, flow_label, is_late, status, is_held, submit_num, _,
+         platform_name, time_submit, time_run, timeout, outputs_str) = row
         try:
             itask = TaskProxy(
                 self.config.get_taskdef(name),
@@ -384,12 +384,11 @@ class TaskPool:
                 submit_num=submit_num,
                 is_late=bool(is_late))
         except SuiteConfigError:
-            LOG.exception((
-                'ignoring task %s from the suite run database\n'
-                '(its task definition has probably been deleted).'
-            ) % name)
+            LOG.exception(
+                f'ignoring task {name} from the suite run database\n'
+                '(its task definition has probably been deleted).')
         except Exception:
-            LOG.exception('could not load task %s' % name)
+            LOG.exception(f'could not load task {name}')
         else:
             if status in (
                     TASK_STATUS_SUBMITTED,
@@ -430,20 +429,20 @@ class TaskPool:
             if platform_name:
                 itask.summary['platforms_used'][
                     int(submit_num)] = platform_name
-            LOG.info("+ %s.%s %s%s" % (
-                name, cycle, status, ' (held)' if is_held else ''))
+            LOG.info(
+                f"+ {name}.{cycle} {status}{' (held)' if is_held else ''}")
 
             # Update prerequisite satisfaction status from DB
             sat = {}
-            for k, v in json.loads(satisfied).items():
-                sat[tuple(json.loads(k))] = v
-            # TODO (from Oliver's PR review):
-            #   Wait, what, the keys to a JSON dictionary are themselves JSON
-            #     :vomiting_face:!
-            #   This should be converted to its own DB table pre-8.0.0.
-            for pre in itask.state.prerequisites:
-                for k, v in pre.satisfied.items():
-                    pre.satisfied[k] = sat[k]
+            for prereq_name, prereq_cycle, prereq_output, satisfied in (
+                    self.suite_db_mgr.pri_dao.select_task_prerequisites(
+                        cycle, name)):
+                key = (prereq_name, prereq_cycle, prereq_output)
+                sat[key] = satisfied if satisfied != '0' else False
+
+            for itask_prereq in itask.state.prerequisites:
+                for key, _ in itask_prereq.satisfied.items():
+                    itask_prereq.satisfied[key] = sat[key]
 
             itask.state.reset(status)
             self.add_to_runahead_pool(itask, is_new=False)
