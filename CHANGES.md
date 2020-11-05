@@ -95,10 +95,6 @@ config option `[scheduling]stop after cycle point`.
 
 ### Fixes
 
-[#3919](https://github.com/cylc/cylc-flow/pull/3919) - Fixed a bug in which
-remote tests failed when a newline character was included in the output from
-sed.
-
 [#3879](https://github.com/cylc/cylc-flow/pull/3879) - Removed Google
 Groups e-mail from pip packaging metadata. Users browsing PYPI will have
 to visit our website to find out how to reach us (we are using Discourse
