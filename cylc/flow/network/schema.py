@@ -1410,24 +1410,6 @@ class Hold(Mutation):
     result = GenericScalar()
 
 
-class Nudge(Mutation):
-    class Meta:
-        description = sstrip('''
-            Cause the Cylc task processing loop to be invoked on a running
-            suite.
-
-            This happens automatically when the state of any task changes
-            such that task processing (dependency negotiation etc.)
-            is required, or if a clock-trigger task is ready to run.
-        ''')
-        resolver = partial(mutator, command='nudge')
-
-    class Arguments:
-        workflows = List(WorkflowID, required=True)
-
-    result = GenericScalar()
-
-
 class Ping(Mutation):
     class Meta:
         description = sstrip('''
@@ -1714,7 +1696,6 @@ class Mutations(ObjectType):
     ext_trigger = ExtTrigger.Field(
         description=ExtTrigger._meta.description)
     hold = Hold.Field(description=Hold._meta.description)
-    nudge = Nudge.Field(description=Nudge._meta.description)
     message = Message.Field(description=Message._meta.description)
     ping = Ping.Field(description=Ping._meta.description)
     release = Release.Field(description=Release._meta.description)

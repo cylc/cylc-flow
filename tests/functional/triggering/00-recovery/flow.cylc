@@ -29,7 +29,7 @@
     [[model]]
         script = """
             echo Hello from $CYLC_TASK_ID
-            if [[ $(cylc util cycletime --print-hour) == 12 ]]; then
+            if [[ $(cylc cycletime --print-hour) == 12 ]]; then
                 echo "FAILING NOW!"
                 false
             else

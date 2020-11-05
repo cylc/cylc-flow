@@ -18,14 +18,12 @@
 import logging
 from optparse import OptionParser, OptionConflictError, Values
 import os
-import re
 import sys
-
-from ansimarkup import parse as cparse
 
 from cylc.flow import LOG, RSYNC_LOG
 import cylc.flow.flags
 from cylc.flow.loggingutil import CylcLogFormatter
+from cylc.flow.terminal import format_shell_examples
 
 
 class CylcOptionParser(OptionParser):
@@ -82,14 +80,7 @@ TASK_GLOB matches task or family names at a given cycle point.
                 argdoc = [('REG', 'Suite name')]
 
         # make comments grey in usage for readability
-        usage = cparse(
-            re.sub(
-                r'^(\s*(?:\$[^#]+)?)(#.*)$',
-                r'\1<dim>\2</dim>',
-                usage,
-                flags=re.M
-            )
-        )
+        usage = format_shell_examples(usage)
 
         if multitask:
             usage += self.MULTITASKCYCLE_USAGE
@@ -214,8 +205,17 @@ TASK_GLOB matches task or family names at a given cycle point.
                 dest="icp",
             )
 
-    def parse_args(self, remove_opts=None):
-        """Parse options and arguments, overrides OptionParser.parse_args."""
+    def parse_args(self, api_args, remove_opts=None):
+        """Parse options and arguments, overrides OptionParser.parse_args.
+
+        Args:
+            api_args (list):
+                Command line options if passed via Python as opposed to
+                sys.argv
+            remove_opts (list):
+                List of standard options to remove before parsing.
+
+        """
         if self.auto_add:
             # Add common options after command-specific options.
             self.add_std_options()
@@ -227,7 +227,7 @@ TASK_GLOB matches task or family names at a given cycle point.
                 except ValueError:
                     pass
 
-        (options, args) = OptionParser.parse_args(self)
+        (options, args) = OptionParser.parse_args(self, api_args)
 
         if len(args) < self.n_compulsory_args:
             self.error("Wrong number of arguments (too few)")

@@ -161,7 +161,6 @@ class Scheduler:
         'kill_tasks',
         'force_spawn_children',
         'force_trigger_tasks',
-        'nudge',
         'reload_suite'
     )
 
@@ -968,10 +967,6 @@ class Scheduler:
     def command_remove_tasks(self, items):
         """Remove tasks."""
         return self.pool.remove_tasks(items)
-
-    def command_nudge(self):
-        """Cause the task processing loop to be invoked"""
-        self.task_events_mgr.pflag = True
 
     def command_reload_suite(self):
         """Reload suite configuration."""

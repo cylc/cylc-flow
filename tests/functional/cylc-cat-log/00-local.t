@@ -51,7 +51,7 @@ echo "jumped over the lazy dog" >&2
 # Write to a custom log file
 echo "drugs and money" > \${CYLC_TASK_LOG_ROOT}.custom-log
 # Generate a warning message in the suite log.
-cylc task message -p WARNING 'marmite and squashed bananas'
+cylc message -p WARNING 'marmite and squashed bananas'
 __END__
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-task-err

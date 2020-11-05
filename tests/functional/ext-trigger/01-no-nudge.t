@@ -17,9 +17,9 @@
 
 #-------------------------------------------------------------------------------
 # Test that external trigger events stimulate task processing even when nothing
-# else is happening in the # suite. If not, the test suite will stall until
-# manually nudged.  Note this test will probably become irrelevant once we go
-# to entirely event-driven scheduling.
+# else is happening in the suite.
+# Note this test will probably become irrelevant once we go to entirely
+# event-driven scheduling.
 
 . "$(dirname "$0")/test_header"
 

@@ -19,7 +19,5 @@
 . "$(dirname "$0")/test_header"
 set_test_number 2
 run_fail "${TEST_NAME_BASE}" cylc set-verbosity duck quack
-contains_ok "${TEST_NAME_BASE}.stderr" <<'__ERR__'
-cylc-set-verbosity: error: Illegal logging level, quack
-__ERR__
+grep_ok 'Illegal logging level, quack' "${TEST_NAME_BASE}.stderr"
 exit

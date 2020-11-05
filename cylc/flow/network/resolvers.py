@@ -584,21 +584,6 @@ class Resolvers(BaseResolvers):
         self.schd.command_queue.put(("remove_tasks", (tasks,), {}))
         return (True, 'Command queued')
 
-    def nudge(self):
-        """Tell suite to try task processing.
-
-        Returns:
-            tuple: (outcome, message)
-
-            outcome (bool)
-                True if command successfully queued.
-            message (str)
-                Information about outcome.
-
-        """
-        self.schd.command_queue.put(("nudge", (), {}))
-        return (True, 'Command queued')
-
     def poll_tasks(self, tasks=None, poll_succeeded=False):
         """Request the suite to poll task jobs.
 

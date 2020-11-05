@@ -17,11 +17,12 @@
 
 import asyncio
 from functools import partial, lru_cache
-from itertools import zip_longest
 import os
 import sys
 
-from cylc.flow import LOG, RSYNC_LOG, __version__ as CYLC_VERSION
+from ansimarkup import parse as cparse
+
+from cylc.flow import LOG, RSYNC_LOG
 from cylc.flow.exceptions import SuiteServiceFileError
 from cylc.flow.host_select import select_suite_host
 from cylc.flow.hostuserutil import is_remote_host
@@ -36,12 +37,15 @@ from cylc.flow.pathutil import (
     get_suite_file_install_log_name)
 from cylc.flow.remote import remote_cylc_cmd
 from cylc.flow.scheduler import Scheduler, SchedulerError
+from cylc.flow.scripts import cylc_header
 from cylc.flow import suite_files
 from cylc.flow.terminal import cli_function
 
 RUN_DOC = r"""cylc [control] run|start [OPTIONS] [ARGS]
 
-Start a suite run from scratch, ignoring dependence prior to the start point.
+Start a new suite run.
+
+Any dependencies prior to the start point will be ignored.
 
 WARNING: this will wipe out previous suite state. To restart from a previous
 state, see 'cylc restart --help'.
@@ -70,8 +74,9 @@ is preserved."""
 
 RESTART_DOC = r"""cylc [control] restart [OPTIONS] ARGS
 
-Start a suite run from the previous state. To start from scratch (cold or warm
-start) see the 'cylc run' command.
+Continue a suite run from the previous state.
+
+To start from scratch (cold or warm start) see the 'cylc run' command.
 
 The scheduler runs as a daemon unless you specify --no-detach.
 
@@ -280,7 +285,10 @@ def _auto_register():
     except SuiteServiceFileError as exc:
         sys.exit(exc)
     # Replace this process with "cylc run REG ..." for 'ps -f'.
-    os.execv(sys.argv[0], [sys.argv[0]] + [reg] + sys.argv[1:])
+    os.execv(
+        sys.argv[0],
+        [sys.argv[0]] + sys.argv[1:] + [reg]
+    )
 
 
 def _open_logs(reg, no_detach):
@@ -312,38 +320,6 @@ def _close_logs():
             pass
 
 
-def _start_print_blurb():
-    """Print copyright and license information."""
-    logo = (
-        "            ._.       \n"
-        "            | |       \n"
-        "._____._. ._| |_____. \n"
-        "| .___| | | | | .___| \n"
-        "| !___| !_! | | !___. \n"
-        "!_____!___. |_!_____! \n"
-        "      .___! |         \n"
-        "      !_____!         \n"
-    )
-    cylc_license = """
-The Cylc Suite Engine [%s]
-Copyright (C) 2008-2020 NIWA
-& British Crown (Met Office) & Contributors.
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
-This program comes with ABSOLUTELY NO WARRANTY.
-It is free software, you are welcome to
-redistribute it under certain conditions;
-see `COPYING' in the Cylc source distribution.
-""" % CYLC_VERSION
-
-    logo_lines = logo.splitlines()
-    license_lines = cylc_license.splitlines()
-    lmax = max(len(line) for line in license_lines)
-    print(('\n'.join((
-        ('{0} {1: ^%s}' % lmax).format(*x) for x in zip_longest(
-            logo_lines, license_lines, fillvalue=' ' * (
-                len(logo_lines[-1]) + 1))))))
-
-
 def scheduler_cli(parser, options, args, is_restart=False):
     """Implement cylc (run|restart).
 
@@ -369,7 +345,11 @@ def scheduler_cli(parser, options, args, is_restart=False):
 
     # print the start message
     if options.no_detach or options.format == 'plain':
-        _start_print_blurb()
+        print(
+            cparse(
+                cylc_header()
+            )
+        )
 
     # setup the scheduler
     # NOTE: asyncio.run opens an event loop, runs your coro,
@@ -462,14 +442,14 @@ async def _run(parser, options, reg, is_restart, scheduler):
         return ret
 
 
-def main(is_restart=False):
+def main(*args, is_restart=False):
     """Abstraction for cylc (run|restart) CLI"""
     # the cli_function decorator changes the function signature which
     # irritates pylint.
     if is_restart:
-        return restart()  # pylint: disable=E1120
+        return restart(*args)  # pylint: disable=E1120
     else:
-        return run()  # pylint: disable=E1120
+        return run(*args)  # pylint: disable=E1120
 
 
 @cli_function(partial(get_option_parser, is_restart=True))

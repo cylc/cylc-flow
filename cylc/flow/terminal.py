@@ -17,9 +17,11 @@
 """Functionality to assist working with terminals"""
 import json
 import os
+import re
 import sys
 import inspect
 import logging
+from textwrap import wrap
 
 from functools import wraps
 from subprocess import PIPE, Popen  # nosec
@@ -53,6 +55,56 @@ def get_width(default=80):
         return int(proc.communicate()[0].split()[1])
     except IndexError:
         return default
+
+
+def centered(string, width=None):
+    """Print centered text.
+
+    Examples:
+        >>> centered('foo', 9)
+        '   foo'
+
+    """
+    if not width:
+        width = get_width()
+    return '\n'.join(
+        ' ' * int((width - len(line)) / 2)
+        + line
+        for line in string.splitlines()
+    )
+
+
+def format_shell_examples(string):
+    """Put comments in the terminal "dimished" colour."""
+    return cparse(
+        re.sub(
+            r'^(\s*(?:\$[^#]+)?)(#.*)$',
+            r'\1<dim>\2</dim>',
+            string,
+            flags=re.M
+        )
+    )
+
+
+def print_contents(contents, padding=5, char='.', indent=0):
+    title_width = max(
+        len(title)
+        for title, _ in contents
+    )
+    width = get_width(default=0)
+    if width < title_width + 20 - indent - padding:
+        width = title_width + 20 - indent - padding
+    desc_width = width - title_width - padding - 2 - indent
+    indent = ' ' * indent
+    for title, desc in contents:
+        desc_lines = wrap(desc or '', desc_width) or ['']
+        print(
+            f'{indent}'
+            f'{title} {char * (padding + title_width - len(title))} '
+            f'{desc_lines[0]}'
+        )
+        for line in desc_lines[1:]:
+            print(f'{indent}  {" " * title_width}{" " * padding}{line}')
 
 
 def supports_color():
@@ -155,13 +207,25 @@ def cli_function(parser_function=None, **parser_kwargs):
     """
     def inner(wrapped_function):
         @wraps(wrapped_function)
-        def wrapper():
+        def wrapper(*api_args):
+            """The function that we actually call.
+
+            Args:
+                api_args (tuple|list):
+                    CLI arguments as specified via Python rather than
+                    sys.argv directly.
+                    If specified these will be passed to the option parser.
+
+            """
             use_color = False
             wrapped_args, wrapped_kwargs = tuple(), {}
             # should we use colour?
             if parser_function:
                 parser = parser_function()
-                opts, args = parser_function().parse_args(**parser_kwargs)
+                opts, args = parser_function().parse_args(
+                    list(api_args),
+                    **parser_kwargs
+                )
                 use_color = (
                     hasattr(opts, 'color')
                     and (
