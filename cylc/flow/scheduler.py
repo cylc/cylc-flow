@@ -420,9 +420,6 @@ class Scheduler:
             pri_dao = self.suite_db_mgr.get_pri_dao()
             pri_dao.select_suite_params(self._load_suite_params)
             pri_dao.select_suite_template_vars(self._load_template_vars)
-            # Take checkpoint and commit immediately so that checkpoint can be
-            # copied to the public database.
-            pri_dao.take_checkpoints("restart")
             pri_dao.execute_queued_items()
 
         # Copy local python modules from source to run directory
@@ -546,8 +543,7 @@ class Scheduler:
 
     async def log_start(self):
         if self.is_restart:
-            pri_dao = self.suite_db_mgr.get_pri_dao()
-            n_restart = pri_dao.select_checkpoint_id_restart_count()
+            n_restart = self.suite_db_mgr.n_restart
         else:
             n_restart = 0
 
@@ -706,14 +702,13 @@ class Scheduler:
             self.config.start_point = TaskID.get_standardised_point(
                 self.options.startcp)
         self.suite_db_mgr.pri_dao.select_broadcast_states(
-            self.broadcast_mgr.load_db_broadcast_states,
-            self.options.checkpoint)
+            self.broadcast_mgr.load_db_broadcast_states)
         self.suite_db_mgr.pri_dao.select_task_job_run_times(
             self._load_task_run_times)
         self.suite_db_mgr.pri_dao.select_task_pool_for_restart(
-            self.pool.load_db_task_pool_for_restart, self.options.checkpoint)
+            self.pool.load_db_task_pool_for_restart)
         self.suite_db_mgr.pri_dao.select_job_pool_for_restart(
-            self.job_pool.insert_db_job, self.options.checkpoint)
+            self.job_pool.insert_db_job)
         self.suite_db_mgr.pri_dao.select_task_action_timers(
             self.pool.load_db_task_action_timers)
         self.suite_db_mgr.pri_dao.select_xtriggers_for_restart(
@@ -976,7 +971,6 @@ class Scheduler:
         pri_dao = self.suite_db_mgr.get_pri_dao()
         pri_dao.select_suite_params(self._load_suite_params)
 
-        self.suite_db_mgr.checkpoint("reload-init")
         self.load_flow_file(is_reload=True)
         self.broadcast_mgr.linearized_ancestors = (
             self.config.get_linearized_ancestors())
@@ -1435,7 +1429,6 @@ class Scheduler:
 
             if self.pool.do_reload:
                 self.pool.reload_taskdefs()
-                self.suite_db_mgr.checkpoint("reload-done")
                 self.is_updated = True
                 has_reloaded = True
 
@@ -1788,10 +1781,6 @@ class Scheduler:
     def command_force_spawn_children(self, items, outputs):
         """Force spawn task successors."""
         return self.pool.force_spawn_children(items, outputs)
-
-    def command_take_checkpoints(self, name):
-        """Insert current task_pool, etc to checkpoints tables."""
-        return self.suite_db_mgr.checkpoint(name)
 
     def filter_initial_task_list(self, inlist):
         """Return list of initial tasks after applying a filter."""

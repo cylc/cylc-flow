@@ -1551,21 +1551,6 @@ class Stop(Mutation):
     result = GenericScalar()
 
 
-class Checkpoint(Mutation):
-    class Meta:
-        description = 'Tell the suite to checkpoint its current state.'
-        resolver = partial(mutator, command='take_checkpoints')
-
-    class Arguments:
-        workflows = List(WorkflowID, required=True)
-        name = String(
-            description='The checkpoint name.',
-            required=True
-        )
-
-    result = GenericScalar()
-
-
 class ExtTrigger(Mutation):
     class Meta:
         description = sstrip('''
@@ -1703,8 +1688,6 @@ class Mutations(ObjectType):
     set_verbosity = SetVerbosity.Field(
         description=SetVerbosity._meta.description)
     stop = Stop.Field(description=Stop._meta.description)
-    checkpoint = Checkpoint.Field(
-        description=Checkpoint._meta.description)
 
     # task actions
     kill = Kill.Field(description=Kill._meta.description)

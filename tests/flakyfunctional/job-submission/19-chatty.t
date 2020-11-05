@@ -22,7 +22,7 @@
 
 skip_darwin 'atrun hard to configure on Mac OS'
 
-set_test_number 14
+set_test_number 15
 
 create_test_global_config "
 process pool timeout = PT10S" "
@@ -66,13 +66,11 @@ for I in $(eval echo "{$N..9}"); do
 done
 
 # Task pool in database contains the correct states
-# Use LANG=C sort to put # on top
-cylc ls-checkpoints "${SUITE_NAME}" '0' \
-    | sed -n '/^# TASK POOL/,$p' \
-    | sed '/^# TASK POOL/d' \
-    | sort >'cylc-ls-checkpoints.out'
-
-cmp_ok 'cylc-ls-checkpoints.out' <<'__OUT__'
+TEST_NAME="${TEST_NAME_BASE}-db-task-pool"
+DB_FILE="${SUITE_RUN_DIR}/log/db"
+QUERY='SELECT cycle, name, status, is_held FROM task_pool'
+run_ok "$TEST_NAME" sqlite3 "$DB_FILE" "$QUERY"
+cmp_ok "${TEST_NAME}.stdout" << '__OUT__'
 1|nh0|submit-failed|0
 1|nh1|submit-failed|0
 1|nh2|submit-failed|0
