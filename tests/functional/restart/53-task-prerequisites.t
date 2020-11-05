@@ -59,5 +59,5 @@ cmp_ok "${TEST_NAME}.stdout" << '__EOF__'
 4|foo|waiting
 __EOF__
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

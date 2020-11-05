@@ -17,19 +17,10 @@
 # -----------------------------------------------------------------------------
 # Test that a quickly finishing task's `:start` trigger does not get missed
 # when using polling to get remote task status.
-
+REQUIRE_PLATFORM='loc:remote comms:poll'
 . "$(dirname "$0")/test_header"
-require_remote_platform
 set_test_number 4
 
-create_test_global_config '' "
-[platforms]
-    [[enterprise]]
-        hosts = $CYLC_TEST_HOST
-        communication method = poll
-        submission polling intervals = PT5S
-        execution polling intervals = PT5S
-"
 install_suite
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "$SUITE_NAME"
@@ -42,6 +33,5 @@ grep_ok "[(('event-handler-00', 'started'), 1) out] THERE ARE FOUR LIGHTS" "$PIC
 JANEWAY_ACTIVITY_LOG="${SUITE_RUN_DIR}/log/job/1/janeway/01/job-activity.log"
 grep_ok "[(('event-handler-00', 'started'), 1) out] THERE'S COFFEE IN THAT NEBULA" "$JANEWAY_ACTIVITY_LOG" -F
 
-purge_suite "$SUITE_NAME"
-purge_suite_platform "$CYLC_TEST_PLATFORM" "$SUITE_NAME"
+purge
 exit
