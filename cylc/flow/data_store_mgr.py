@@ -586,16 +586,18 @@ class DataStoreMgr:
         # This part is vital to constructing a set of boundary nodes
         # associated with the current Active node.
         if edge_distance > self.n_edge_distance:
-            if descendant or edge_distance == 0:
+            if descendant and self.n_edge_distance > 0:
                 self.n_window_boundary_nodes[
                     active_id].setdefault(edge_distance, set()).add(s_id)
             return
         graph_children = generate_graph_children(
             self.schd.config.get_taskdef(name), point)
-        if not any(graph_children.values()):
-            if descendant or edge_distance == 0:
-                self.n_window_boundary_nodes[
-                    active_id].setdefault(edge_distance, set()).add(s_id)
+        if (
+                (not any(graph_children.values()) and descendant)
+                or self.n_edge_distance == 0
+        ):
+            self.n_window_boundary_nodes[
+                active_id].setdefault(edge_distance, set()).add(s_id)
 
         self.n_window_nodes[active_id].add(s_id)
         # Generate task node
