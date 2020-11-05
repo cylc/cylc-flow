@@ -477,7 +477,9 @@ class CylcSuiteDAO:
         """Select from suite_params.
 
         Invoke callback(row_idx, row) on each row, where each row contains:
-            [key,value]
+            [key, value]
+
+        E.g. a row might be ['UTC mode', '1']
         """
         stmt = f"SELECT key, value FROM {self.TABLE_SUITE_PARAMS}"
         for row_idx, row in enumerate(self.connect().execute(stmt)):
