@@ -26,6 +26,7 @@ from cylc.flow.task_id import (
 ENGLISH_REGEX_MAP = {
     r'\w': 'alphanumeric',
     r'a-zA-Z0-9': 'latin letters and numbers',
+    r'\d': 'numbers',
     r'\-': '``-``',
     r'\.': '``.``',
     r'\/': '``/``'
@@ -269,8 +270,8 @@ class WorkflowNameValidator(UnicodeRuleChecker):
 
     RULES = [
         length(1, 254),
-        not_starts_with_char(r'\.', r'\-'),
-        allowed_characters(r'\w', r'\/', '_', '+', r'\-', r'\.', '@')
+        not_starts_with_char(r'\.', r'\-', r'\d'),
+        allowed_characters(r'\w', r'\/', '_', '+', r'\-', r'\.', '@'),
     ]
 
 
