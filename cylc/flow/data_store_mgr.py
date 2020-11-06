@@ -915,8 +915,8 @@ class DataStoreMgr:
                     prereq_list.append(prereq_obj)
             tp_delta.prerequisites.extend(prereq_list)
             tp_delta.outputs = json.dumps({
-                trigger: is_completed
-                for trigger, _, is_completed in itask.state.outputs.get_all()
+                message: received
+                for _, message, received in itask.state.outputs.get_all()
             })
             extras = {}
             if itask.tdef.clocktrigger_offset is not None:
