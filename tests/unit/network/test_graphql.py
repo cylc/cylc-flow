@@ -19,8 +19,13 @@ from typing import Optional
 import pytest
 from graphql import parse
 
-from cylc.flow.network.graphql import AstDocArguments
+from cylc.flow.data_messages_pb2 import PbTaskProxy, PbPrerequisite
+from cylc.flow.network.graphql import AstDocArguments, null_setter, NULL_VALUE
 from cylc.flow.network.schema import schema
+
+
+TASK_PROXY_PREREQS = PbTaskProxy()
+TASK_PROXY_PREREQS.prerequisites.append(PbPrerequisite(expression="foo"))
 
 
 @pytest.mark.parametrize(
@@ -117,3 +122,35 @@ def test_query_variables(
             test()
     else:
         test()
+
+
+@pytest.mark.parametrize(
+    'pre_result,'
+    'expected_result',
+    [
+        (
+            'foo',
+            'foo'
+        ),
+        (
+            [],
+            NULL_VALUE
+        ),
+        (
+            {},
+            NULL_VALUE
+        ),
+        (
+            TASK_PROXY_PREREQS.prerequisites,
+            TASK_PROXY_PREREQS.prerequisites
+        ),
+        (
+            PbTaskProxy().prerequisites,
+            NULL_VALUE
+        )
+    ]
+)
+def test_null_setter(pre_result, expected_result):
+    """Test the null setting of different data types/results."""
+    post_result = null_setter(pre_result)
+    assert post_result == expected_result

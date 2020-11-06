@@ -95,8 +95,13 @@ def instantiate_middleware(middlewares):
 def null_setter(result):
     """Set type to null if result is empty/null-like."""
     # Only set empty parents to null.
-    if result in EMPTY_VALUES:
-        return NULL_VALUE
+    try:
+        if result in EMPTY_VALUES:
+            return NULL_VALUE
+    except TypeError:
+        # If field is a repeated composite field convert to list.
+        if not result:
+            return NULL_VALUE
     return result
 
 
