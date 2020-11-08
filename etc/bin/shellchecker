@@ -24,7 +24,7 @@ cd "$(dirname "$0")/../../"
 # find shell files under the specified directory
 find_files () {
     SEARCH_PATH="$1"
-    grep --color=never -Rl '^#\!.*bash' "${SEARCH_PATH}" | sed 's/^\.\///'
+    grep --color=never -rl '^#\!.*bash' "${SEARCH_PATH}" | sed 's/^\.\///'
     find "${SEARCH_PATH}" -name '*.sh' | sed 's/^\.\///'
 }
 
