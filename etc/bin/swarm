@@ -248,6 +248,15 @@ SHARED_FS_OPTS=(
 TCP_OPTS=(
     '-e' "HOST_HOSTNAME=$(hostname -f)"
 )
+if [[ $(uname) == "Linux" ]]; then
+    # host.docker.internal is not set on Linux. The default address of the host
+    # on the docker0 network is 172.17.0.1, but let's extract it just in case.
+    DOCKER_HOST=$(ip -4 addr show docker0 | grep -Po 'inet \K[\d.]+')
+    TCP_OPTS+=(
+        '--add-host' "host.docker.internal:${DOCKER_HOST}"
+    )
+fi
+
 # docker run opts for polling communication images
 POLL_OPTS=(
     '-e' 'HOST_HOSTNAME=false'
