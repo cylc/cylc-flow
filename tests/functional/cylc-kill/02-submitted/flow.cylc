@@ -1,5 +1,5 @@
 #!Jinja2
-[cylc]
+[scheduler]
     UTC mode = True
     [[reference test]]
         expected task failures = killable-1.1, killable-2.1, killable-3.1

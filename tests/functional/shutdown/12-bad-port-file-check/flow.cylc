@@ -1,5 +1,5 @@
 #!Jinja2
-[cylc]
+[scheduler]
 {% if GLOBALCFG is not defined %}
     [[main loop]]
         [[[health check]]]

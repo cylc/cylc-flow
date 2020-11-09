@@ -446,7 +446,7 @@ class Scheduler:
             # Set suite params that would otherwise be loaded from database:
             self.options.utc_mode = get_utc_mode()
             self.options.cycle_point_tz = (
-                self.config.cfg['cylc']['cycle point time zone'])
+                self.config.cfg['scheduler']['cycle point time zone'])
 
         self.broadcast_mgr.linearized_ancestors.update(
             self.config.get_linearized_ancestors())
@@ -490,9 +490,11 @@ class Scheduler:
         self.already_inactive = False
         key = self.EVENT_INACTIVITY_TIMEOUT
         if self.options.reftest:
-            self.config.cfg['cylc']['events'][f'abort on {key}'] = True
-            if not self.config.cfg['cylc']['events'][key]:
-                self.config.cfg['cylc']['events'][key] = DurationFloat(180)
+            self.config.cfg['scheduler']['events'][f'abort on {key}'] = True
+            if not self.config.cfg['scheduler']['events'][key]:
+                self.config.cfg['scheduler']['events'][key] = DurationFloat(
+                    180
+                )
         if self._get_events_conf(key):
             self.set_suite_inactivity_timer()
 
@@ -523,11 +525,11 @@ class Scheduler:
         if self.options.no_auto_shutdown is not None:
             self.can_auto_stop = not self.options.no_auto_shutdown
         elif (
-                self.config.cfg['cylc']['disable automatic shutdown']
+                self.config.cfg['scheduler']['disable automatic shutdown']
                 is not None
         ):
             self.can_auto_stop = (
-                not self.config.cfg['cylc']['disable automatic shutdown'])
+                not self.config.cfg['scheduler']['disable automatic shutdown'])
 
         self.profiler.log_memory("scheduler.py: end configure")
 
@@ -1082,8 +1084,8 @@ class Scheduler:
             share_dir=self.suite_share_dir,
         )
         self.cylc_config = DictTree(
-            self.config.cfg['cylc'],
-            glbl_cfg().get(['cylc'])
+            self.config.cfg['scheduler'],
+            glbl_cfg().get(['scheduler'])
         )
         self.flow_file_update_time = time()
         # Dump the loaded flow.cylc file for future reference.
@@ -1217,7 +1219,9 @@ class Scheduler:
         try:
             if (
                 conf.run_mode('simulation', 'dummy') and
-                conf.cfg['cylc']['simulation']['disable suite event handlers']
+                conf.cfg['scheduler']['simulation'][
+                    'disable suite event handlers'
+                ]
             ):
                 return
         except KeyError:

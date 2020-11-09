@@ -1,4 +1,4 @@
-[cylc]
+[scheduler]
     [[events]]
         abort on inactivity = True
         inactivity = PT30S

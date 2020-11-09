@@ -25,7 +25,7 @@ mock_smtpd_init
 OPT_SET=
 if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
     create_test_global_config "" "
-[cylc]
+[scheduler]
     [[events]]
         mail events = startup, shutdown
     [[mail]]

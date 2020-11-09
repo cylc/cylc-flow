@@ -35,7 +35,7 @@ set_test_number 8
 # Restart, should retain auto shutdown
 # Suite runs to final task, then fails on inactivity after 10s
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
-[cylc]
+[scheduler]
     [[parameters]]
         i = 1..10
     [[events]]

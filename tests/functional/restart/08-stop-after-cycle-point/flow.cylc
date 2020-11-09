@@ -6,7 +6,7 @@ description = """
       2. That cylc run --stop-cycle-point over-rides the config.
 """
 
-[cylc]
+[scheduler]
     UTC mode = True
 
 [scheduling]

@@ -58,7 +58,7 @@ SuiteConfigError: self-edge detected: f:succeed => f
 __ERR__
 
 cat >'flow.cylc' <<'__FLOW_CONFIG__'
-[cylc]
+[scheduler]
     cycle point format = %Y
 [scheduling]
     initial cycle point = 2001
@@ -90,7 +90,7 @@ SuiteConfigError: circular edges detected:  foo.8 => bar.8  bar.8 => baz.8  baz.
 __ERR__
 
 cat >'flow.cylc' <<'__FLOW_CONFIG__'
-[cylc]
+[scheduler]
     [[parameters]]
         foo = 1..5
 [scheduling]

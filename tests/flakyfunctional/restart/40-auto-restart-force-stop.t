@@ -19,7 +19,7 @@
 set_test_number 4
 
 BASE_GLOBAL_CONFIG="
-[cylc]
+[scheduler]
     [[main loop]]
         plugins = health check, auto restart
         [[[auto restart]]]

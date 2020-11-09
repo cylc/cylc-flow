@@ -1,6 +1,6 @@
 #!Jinja2
 {% set SITE_DIRECTIVES = environ['CYLC_TEST_BATCH_SITE_DIRECTIVES'] %}
-[cylc]
+[scheduler]
    [[reference test]]
        expected task failures = rem2.1
 [scheduling]

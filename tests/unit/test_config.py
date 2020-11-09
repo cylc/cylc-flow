@@ -33,7 +33,7 @@ def get_test_inheritance_quotes():
     return [
         # first case, second family name surrounded by double quotes
         b'''
-[cylc]
+[scheduler]
     [[parameters]]
         major = 1..5
         minor = 10..20
@@ -52,7 +52,7 @@ def get_test_inheritance_quotes():
         ''',
         # second case, second family surrounded by single quotes
         b'''
-[cylc]
+[scheduler]
     [[parameters]]
         major = 1..5
         minor = 10..20
@@ -71,7 +71,7 @@ def get_test_inheritance_quotes():
         ''',
         # third case, second family name without quotes
         b'''
-[cylc]
+[scheduler]
     [[parameters]]
         major = 1..5
         minor = 10..20
@@ -352,19 +352,19 @@ def test_utc_mode(caplog, mock_glbl_cfg):
         mock_glbl_cfg(
             'cylc.flow.config.glbl_cfg',
             f'''
-            [cylc]
+            [scheduler]
                 UTC mode = {utc_mode['glbl']}
             '''
         )
         mock_config = Mock()
         mock_config.cfg = {
-            'cylc': {
+            'scheduler': {
                 'UTC mode': utc_mode['suite']
             }
         }
         mock_config.options.utc_mode = utc_mode['stored']
         SuiteConfig.process_utc_mode(mock_config)
-        assert mock_config.cfg['cylc']['UTC mode'] is expected
+        assert mock_config.cfg['scheduler']['UTC mode'] is expected
         assert get_utc_mode() is expected
         assert len(caplog.record_tuples) == expected_warnings
         caplog.clear()
@@ -408,13 +408,14 @@ def test_cycle_point_tz(caplog, monkeypatch):
         set_utc_mode(utc_mode)
         mock_config = Mock()
         mock_config.cfg = {
-            'cylc': {
+            'scheduler': {
                 'cycle point time zone': cp_tz['suite']
             }
         }
         mock_config.options.cycle_point_tz = cp_tz['stored']
         SuiteConfig.process_cycle_point_tz(mock_config)
-        assert mock_config.cfg['cylc']['cycle point time zone'] == expected
+        assert mock_config.cfg['scheduler'][
+            'cycle point time zone'] == expected
         assert len(caplog.record_tuples) == expected_warnings
         caplog.clear()
 

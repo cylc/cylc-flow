@@ -22,7 +22,7 @@ set_test_number 3
 
 OPT_SET=
 create_test_global_config "" "
-[cylc]
+[scheduler]
     [[main loop]]
         # plugins = health check
         [[[health check]]]

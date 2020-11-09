@@ -23,7 +23,7 @@ if ${CYLC_TEST_DEBUG:-false}; then ERR=2; else ERR=1; fi
 #-------------------------------------------------------------------------------
 # run through the shutdown - restart procedure
 BASE_GLOBAL_CONFIG="
-[cylc]
+[scheduler]
     [[main loop]]
         plugins = health check, auto restart
         [[[auto restart]]]
@@ -38,7 +38,7 @@ BASE_GLOBAL_CONFIG="
 
 TEST_NAME="${TEST_NAME_BASE}"
 TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME}" - <<'__FLOW_CONFIG__'
-[cylc]
+[scheduler]
     [[parameters]]
         foo = 1..25
 [scheduling]

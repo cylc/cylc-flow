@@ -1,4 +1,4 @@
-[cylc]
+[scheduler]
     cycle point time zone = +01
     [[events]]
         abort on stalled = True

@@ -2,7 +2,7 @@
 {%- set TEST_DIR = environ['TEST_DIR'] %}
 # TODO SoD: added new "remove" tasks to get rid of submit-failed one and allow
 # shutdown, in lieu of suicidge triggers.  What's the best way to handle this?
-[cylc]
+[scheduler]
     UTC mode = True
     [[events]]
         abort on timeout = True

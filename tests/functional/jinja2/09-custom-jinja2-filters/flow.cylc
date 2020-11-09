@@ -1,6 +1,6 @@
 #!Jinja2
 
-[cylc]
+[scheduler]
     UTC mode = True
 
 [scheduling]

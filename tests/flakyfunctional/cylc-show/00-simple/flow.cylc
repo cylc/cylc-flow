@@ -3,7 +3,7 @@
     title = a test suite
     description = the quick brown fox
     custom = custard
-[cylc]
+[scheduler]
     UTC mode = True
 [scheduling]
     initial cycle point = 20141106T09

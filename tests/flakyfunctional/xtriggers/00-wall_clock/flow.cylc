@@ -3,7 +3,7 @@
 # Test wall_clock xtrigger: suite will run to completion and exit if the
 # clock trigger is not satisfied, else stall and abort.
 
-[cylc]
+[scheduler]
     UTC mode = False
     [[events]]
         abort on inactivity = True

@@ -1,4 +1,4 @@
-[cylc]
+[scheduler]
     cycle point time zone = Z
 [scheduling]
     initial cycle point = 20001231T0100

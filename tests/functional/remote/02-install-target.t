@@ -30,7 +30,7 @@ create_test_global_config "" "
 
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 #!jinja2
-[cylc]
+[scheduler]
 [scheduling]
     [[graph]]
         graph = remote => held

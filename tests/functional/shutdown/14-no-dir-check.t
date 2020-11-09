@@ -21,7 +21,7 @@ set_test_number 3
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 create_test_global_config "" "
-[cylc]
+[scheduler]
     [[main loop]]
         [[[health check]]]
             interval = PT10S"

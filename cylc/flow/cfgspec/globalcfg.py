@@ -94,18 +94,19 @@ with Conf('global.cylc', desc='''
         The number of old run directory trees to retain at start-up.
     ''')
 
-    # suite
-    with Conf('cylc', desc='''
-        Default values for entries in flow.cylc ``[cylc]`` section.
+    with Conf('scheduler', desc='''
+        Default values for entries in :cylc:conf:`flow.cylc[scheduler]`
+        section. This should not be confused with scheduling in the
+        ``flow.cylc`` file.
     '''):
         Conf('UTC mode', VDR.V_BOOLEAN, False, desc='''
-                Default for :cylc:conf:`flow.cylc[cylc]UTC mode`.
+                Default for :cylc:conf:`flow.cylc[scheduler]UTC mode`.
         ''')
 
         with Conf('events', desc='''
             You can define site defaults for each of the following options,
             details of which can be found under
-            :cylc:conf:`flow.cylc[cylc][events]`.
+            :cylc:conf:`flow.cylc[scheduler][events]`.
         '''):
             Conf('handlers', VDR.V_STRING_LIST)
             Conf('handler events', VDR.V_STRING_LIST)
@@ -136,7 +137,7 @@ with Conf('global.cylc', desc='''
                 desc='''
                     Default for
                     :cylc:conf:
-                    `flow.cylc[cylc][mail]task event batch interval`.
+                    `flow.cylc[scheduler][mail]task event batch interval`.
                 '''
             )
 
@@ -170,7 +171,6 @@ with Conf('global.cylc', desc='''
                     The interval with which this plugin is run.
                 ''')
 
-    # suite
     with Conf('suite logging', desc='''
         The suite event log, held under the suite run directory, is maintained
         as a rolling archive. Logs are rolled over (backed up and started anew)
@@ -183,7 +183,6 @@ with Conf('global.cylc', desc='''
             Suite event logs are rolled over when they reach this file size.
         ''')
 
-    # client
     with Conf('editors', desc='''
         Choose your favourite text editor for editing suite configurations.
     '''):

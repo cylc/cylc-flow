@@ -1,5 +1,5 @@
 # Should shutdown stalled with 4 failed tasks.
-[cylc]
+[scheduler]
     cycle point time zone = Z
     [[events]]
         abort on inactivity = True

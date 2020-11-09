@@ -1,4 +1,4 @@
-[cylc]
+[scheduler]
     UTC mode = True # Ignore DST
     [[events]]
         abort on stalled = true

@@ -30,7 +30,7 @@ cylc register "${NAME1}" "${SUITE1_RUND}"
 SUITE2_RUND="${RUND}/${NAME2}"
 mkdir -p "${SUITE2_RUND}"
 cat >"${SUITE2_RUND}/flow.cylc" <<__FLOW_CONFIG__
-[cylc]
+[scheduler]
     [[events]]
 [scheduling]
     [[graph]]

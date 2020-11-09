@@ -20,7 +20,7 @@
 . "$(dirname "$0")/test_header"
 set_test_number 3
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
-[cylc]
+[scheduler]
     [[events]]
         abort on stalled = True
         abort on inactivity = True

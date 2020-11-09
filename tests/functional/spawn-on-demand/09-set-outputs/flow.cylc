@@ -3,7 +3,7 @@
 
 # DEBUG mode required: we search for "task proxy removed" in the log.
 
-[cylc]
+[scheduler]
     [[events]]
         abort on stalled = True
         timeout = PT30S

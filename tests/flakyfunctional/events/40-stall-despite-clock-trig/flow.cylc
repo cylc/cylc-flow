@@ -3,7 +3,7 @@
 # can stall due to unhandled failed tasks, which is tested elsewhere. It was
 # probably meant to test that stall was not affected by the clock trigger on
 # waiting t1 in the next cycle under SoS.
-[cylc]
+[scheduler]
     UTC mode = True
     cycle point format = %Y%m%d
     [[events]]
