@@ -367,6 +367,8 @@ class TaskRemoteMgr:
         self.remote_init_map[platform['install target']] = REMOTE_INIT_FAILED
 
     def _file_install_callback(self, ctx, install_target):
+        """Callback when file installation exits"""
+
         if ctx.out:
             RSYNC_LOG.info(
                 'File installation information for '
