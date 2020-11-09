@@ -319,32 +319,16 @@ class TaskRemoteMgr:
             if REMOTE_INIT_DONE in proc_ctx.out:
                 src_path = get_suite_run_dir(self.suite)
                 dst_path = get_remote_suite_run_dir(platform, self.suite)
-                try:
-                    process = procopen(construct_rsync_over_ssh_cmd(
+                ctx = SubProcContext(
+                    'file_install',
+                    construct_rsync_over_ssh_cmd(
                         src_path,
                         dst_path,
                         platform,
-                        self.rsync_includes),
-                        stdoutpipe=True,
-                        stderrpipe=True,
-                        universal_newlines=True)
-
-                    out, err = process.communicate(timeout=600)
-                    install_target = platform['install target']
-                    if out:
-                        RSYNC_LOG.info(
-                            'File installation information for '
-                            f'{install_target}:\n {out}')
-                        LOG.info("File installation complete.")
-                    if err:
-                        LOG.error(
-                            'File installation error on '
-                            f'{install_target}:\n {err}')
-                except Exception as ex:
-                    LOG.error(f"Problem during rsync: {ex}")
-                    self.remote_init_map[self.install_target] = (
-                        REMOTE_INIT_FAILED)
-                    return
+                        self.rsync_includes))
+                install_target = platform['install target']
+                self.proc_pool.put_command(
+                    ctx, self._file_install_callback, [install_target])
             if "KEYSTART" in proc_ctx.out:
                 regex_result = re.search(
                     'KEYSTART((.|\n|\r)*)KEYEND', proc_ctx.out)
@@ -381,6 +365,18 @@ class TaskRemoteMgr:
             proc_ctx.ret_code, proc_ctx.out, proc_ctx.err))
         LOG.error(proc_ctx)
         self.remote_init_map[platform['install target']] = REMOTE_INIT_FAILED
+
+    def _file_install_callback(self, ctx, install_target):
+        if ctx.out:
+            RSYNC_LOG.info(
+                'File installation information for '
+                f'{install_target}:\n {ctx.out}')
+        if ctx.err:
+            LOG.error(
+                'File installation error on '
+                f'{install_target}:\n {ctx.err}')
+            self.remote_init_map[self.install_target] = (REMOTE_INIT_FAILED)
+        return
 
     def _remote_init_items(self, comm_meth):
         """Return list of items to install based on communication method.
