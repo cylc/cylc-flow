@@ -61,7 +61,7 @@ def mock_glbl_cfg(tmp_path, monkeypatch):
             mock_glbl_cfg(
                 'cylc.flow.scheduler.glbl_cfg',
                 '''
-                    [cylc]
+                    [scheduler]
                         UTC mode = True
                 '''
             )

@@ -185,7 +185,7 @@ class Scheduler:
 
     # configuration
     config: SuiteConfig = None  # flow config
-    cylc_config: DictTree = None  # [cylc] config
+    cylc_config: DictTree = None  # [scheduler] config
     flow_file: str = None
     flow_file_update_time: float = None
 
@@ -1842,7 +1842,7 @@ class Scheduler:
         self._update_profile_info("CPU %", cpu_frac, amount_format="%.1f")
 
     def _get_events_conf(self, key, default=None):
-        """Return a named [cylc][[events]] configuration."""
+        """Return a named [scheduler][[events]] configuration."""
         return self.suite_event_handler.get_events_conf(
             self.config, key, default)
 
