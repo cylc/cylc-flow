@@ -395,7 +395,7 @@ def test_utc_mode(caplog, mock_glbl_cfg):
 
 
 def test_cycle_point_tz(caplog, monkeypatch):
-    """Test that `[cylc]cycle point time zone` is handled correctly."""
+    """Test that `[scheduler]cycle point time zone` is handled correctly."""
     caplog.set_level(logging.WARNING, CYLC_LOG)
 
     local_tz = '-0230'
