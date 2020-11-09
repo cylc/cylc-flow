@@ -17,7 +17,7 @@
 # -----------------------------------------------------------------------------
 # Test that a quickly finishing task's `:start` trigger does not get missed
 # when using polling to get remote task status.
-REQUIRE_PLATFORM='loc:remote comms:poll'
+export REQUIRE_PLATFORM='loc:remote comms:poll'
 . "$(dirname "$0")/test_header"
 set_test_number 4
 

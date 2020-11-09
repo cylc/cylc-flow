@@ -19,7 +19,7 @@
 # + Simulate "cylc jobs-submit" getting killed half way through.
 export REQUIRE_PLATFORM='batch:at'
 . "$(dirname "$0")/test_header"
-set_test_number 14
+set_test_number 15
 
 create_test_global_config "
 process pool timeout = PT10S" "
