@@ -95,5 +95,5 @@ bar|2|${FLOW_TWO}
 baz|2|${FLOW_TWO}
 __OUT__
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

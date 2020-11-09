@@ -31,5 +31,5 @@ Context lines:
 {% include 'flow-foo.cylc' %}	<-- TemplateNotFound
 __ERROR__
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 exit

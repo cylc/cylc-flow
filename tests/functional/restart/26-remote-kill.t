@@ -16,9 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test stop with a remote running task, restart, kill the task.
-export CYLC_TEST_IS_GENERIC=false
+export REQUIRE_PLATFORM='loc:remote'
 . "$(dirname "$0")/test_header"
-require_remote_platform
 set_test_number 5
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
@@ -39,6 +38,5 @@ sqlite3 "${SUITE_RUN_DIR}/log/db" \
     'SELECT status FROM task_pool WHERE cycle=="1" AND NAME=="t1"' \
         >'t1-status.out'
 cmp_ok 't1-status.out' <<<'failed'
-purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
+purge
 exit

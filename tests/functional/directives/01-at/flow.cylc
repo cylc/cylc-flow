@@ -1,14 +1,19 @@
+#!Jinja2
+
 [scheduler]
    [[reference test]]
        expected task failures = rem2.1
+
 [scheduling]
     [[graph]]
-        R1 = """rem1 => rem2
-                   rem2:start => killer => !rem2
-                   """
+        R1 = """
+            rem1 => rem2
+            rem2:start => killer => !rem2
+        """
+
 [runtime]
     [[ATSETTINGS]]
-        platform = testplat
+        platform = {{ environ['CYLC_TEST_PLATFORM'] }}
     [[rem1]]
         inherit = ATSETTINGS
         script = "sleep 10; true"

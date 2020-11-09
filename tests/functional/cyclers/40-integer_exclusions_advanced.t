@@ -26,5 +26,5 @@ cmp_ok "${SUITE_NAME}.graph.plain" 'graph.plain.ref'
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 exit

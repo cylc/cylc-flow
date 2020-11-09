@@ -87,5 +87,5 @@ __OUT__
 cmp_ok "${TEST_NAME}.stderr" - </dev/null
 
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 exit

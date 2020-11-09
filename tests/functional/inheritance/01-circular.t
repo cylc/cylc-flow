@@ -30,4 +30,4 @@ cmp_ok "${TEST_NAME_BASE}-validate.stderr" <<__ERR__
 SuiteConfigError: circular [runtime] inheritance?
 __ERR__
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge

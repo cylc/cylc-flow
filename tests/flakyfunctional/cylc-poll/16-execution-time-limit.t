@@ -75,5 +75,5 @@ ACTUAL_POLL_TIME=$(sed -n \
 run_ok "${TEST_NAME_BASE}-poll-time" \
     cmp_times "${PREDICTED_POLL_TIME}" "${ACTUAL_POLL_TIME}" '10'
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 exit

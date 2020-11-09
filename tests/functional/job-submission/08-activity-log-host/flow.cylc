@@ -1,4 +1,5 @@
 #!Jinja2
+
 [scheduler]
     UTC mode = True
 
@@ -6,7 +7,8 @@
     initial cycle point=1999
     final cycle point=1999
     [[graph]]
-        P1Y="""sleeper:start => killer => releaser"""
+        P1Y=sleeper:start => killer => releaser
+
 [runtime]
     [[sleeper]]
         script = test "${CYLC_TASK_SUBMIT_NUMBER}" -eq 2 || sleep 60

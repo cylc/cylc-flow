@@ -33,4 +33,4 @@ TEST_NAME="${TEST_NAME_BASE}-run"
 suite_run_ok "${TEST_NAME}" cylc run --no-detach --reference-test \
     --set-file="${TEST_DIR}/${SUITE_NAME}/vars.txt" "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge

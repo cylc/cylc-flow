@@ -24,4 +24,4 @@ TEST_NAME="${TEST_NAME_BASE}"-run-filters
 install_suite "${TEST_NAME_BASE}-install-filter-suite" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME}" cylc run "${SUITE_NAME}" --reference-test --debug --no-detach
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge

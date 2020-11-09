@@ -41,4 +41,4 @@ the quick brown fox
 jumped over the lazy dog
 __LOG__
 
-purge_suite "${SUITE_NAME}"
+purge

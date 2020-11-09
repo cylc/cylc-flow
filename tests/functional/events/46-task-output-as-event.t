@@ -62,5 +62,5 @@ cmp_ok log <<__END__
 [(('event-handler-00', 'warning-1'), 1) ret_code] 0
 __END__
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

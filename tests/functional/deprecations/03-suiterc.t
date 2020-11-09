@@ -43,4 +43,4 @@ run_ok "${TEST_NAME}" cylc register "${SUITE_NAME}"
 
 exists_ok "flow.cylc"
 
-purge_suite "${SUITE_NAME}"
+purge

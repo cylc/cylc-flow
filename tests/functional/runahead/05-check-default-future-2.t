@@ -42,4 +42,4 @@ TEST_NAME=${TEST_NAME_BASE}-check-aborted
 LOG="$RUN_DIR/${SUITE_NAME}/log/suite/log"
 grep_ok 'Suite shutting down - Abort on suite inactivity is set' "${LOG}"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge

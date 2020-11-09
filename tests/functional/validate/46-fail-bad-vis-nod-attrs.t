@@ -28,5 +28,5 @@ grep_ok \
     "Node attributes must be of the form 'key1=value1', 'key2=value2', etc." \
     "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 exit

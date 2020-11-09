@@ -81,4 +81,4 @@ cmp_ok task-pool.out <<__OUT__
 1|dog2|waiting|1
 __OUT__
 
-purge_suite "${SUITE_NAME}"
+purge

@@ -29,5 +29,5 @@ contains_ok "${SUITE_RUN_DIR}/log/job/1/foo/NN/job-activity.log" <<'__LOG__'
 [(('event-handler-00', 'execution timeout'), 1) ret_code] 0
 [(('event-handler-00', 'execution timeout'), 1) out] foo.1 execution timeout
 __LOG__
-purge_suite "${SUITE_NAME}"
+purge
 exit

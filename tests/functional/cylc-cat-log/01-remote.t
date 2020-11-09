@@ -16,10 +16,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test "cylc cat-log" for remote tasks.
-export CYLC_TEST_IS_GENERIC=false
+export REQUIRE_PLATFORM='loc:remote'
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-require_remote_platform
 set_test_number 14
 create_test_global_config "" "
 [platforms]
@@ -113,6 +112,5 @@ cylc cat-log -m p -f j "${SUITE_NAME}" a-task.1 >"${TEST_NAME}.out"
 grep_ok "${SUITE_NAME}/log/job/1/a-task/NN/job$" "${TEST_NAME}.out"
 #-------------------------------------------------------------------------------
 # Clean up the task host.
-purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
+purge
 exit

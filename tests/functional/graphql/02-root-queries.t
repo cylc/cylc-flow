@@ -226,6 +226,6 @@ cmp_json "${TEST_NAME}-out" \
     "${TEST_NAME_BASE}-root-queries.stdout" \
     "$(cat expected)"
 
-purge_suite "${SUITE_NAME}"
+purge
 
 exit

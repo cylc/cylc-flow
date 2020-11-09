@@ -75,5 +75,5 @@ cylc dump -r "${SUITE_NAME}" >'cylc-dump.out'
 test_dump 'cylc-dump.out'
 
 cylc stop --max-polls=10 --interval=2 "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
+purge
 exit

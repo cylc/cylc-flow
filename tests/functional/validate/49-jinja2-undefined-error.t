@@ -31,5 +31,5 @@ Context lines:
     [[[{{ UNDEFINED_WHATEVER }}]]]	<-- UndefinedError
 __ERROR__
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 exit

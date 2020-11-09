@@ -28,7 +28,7 @@ export TEST_DIR
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 if ! command -v 'sqlite3' > /dev/null; then
     skip 5 'sqlite3 not installed?'
-    purge_suite "${SUITE_NAME}"
+    purge
     exit 0
 fi
 suite_run_ok "${TEST_NAME_BASE}-run" \
@@ -83,5 +83,5 @@ output_states|20130925T0000Z|1|1|succeeded
 shutdown|20130925T0000Z|1|1|succeeded
 __DB_DUMP__
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 exit

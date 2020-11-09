@@ -106,10 +106,10 @@ contains_ok "${NAME}" << __DB_BROADCASTS__
 -|2015|f1|[environment]upstream_task|foo
 __DB_BROADCASTS__
 
-purge_suite "${SUITE_NAME}"
+purge
 
 # Clean up the upstream suite, just in case (expect error here, but exit 0):
 cylc stop --now "${SUITE_NAME_UPSTREAM}" --max-polls=20 --interval=2 \
     >'/dev/null' 2>&1
-purge_suite "${SUITE_NAME_UPSTREAM}"
+purge "${SUITE_NAME_UPSTREAM}"
 exit

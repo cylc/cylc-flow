@@ -58,6 +58,6 @@ contains_ok "${TEST_NAME_BASE}.stdout" <<__OUT__
 __OUT__
 cmp_ok "${TEST_NAME_BASE}.stderr" <'/dev/null'
 
-purge_suite "${SUITE_NAME1}"
-purge_suite "${SUITE_NAME2}"
+purge "${SUITE_NAME1}"
+purge "${SUITE_NAME2}"
 exit

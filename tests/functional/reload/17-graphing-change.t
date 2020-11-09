@@ -81,5 +81,5 @@ grep_ok "\\[bol.*\\].*task definition removed" "${LOG_FILE}"
 run_ok "${TEST_NAME_BASE}-stop" \
     cylc stop --max-polls=10 --interval=2 "${SUITE_NAME}"
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

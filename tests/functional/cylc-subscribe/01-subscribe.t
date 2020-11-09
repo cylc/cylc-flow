@@ -41,5 +41,5 @@ run_ok "${TEST_NAME}" cylc subscribe --once --topics="workflow" "${SUITE_NAME}"
 grep_ok "running" "${TEST_NAME}.stdout"
 
 cylc stop --kill --max-polls=20 --interval=1 "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
+purge
 exit

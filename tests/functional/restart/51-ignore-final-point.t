@@ -89,5 +89,5 @@ dumpdbtables
 cmp_ok 'fcp.out' <'/dev/null'
 cmp_ok 'taskpool.out' <'/dev/null'
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

@@ -72,5 +72,5 @@ for ICP in 'now' 'next(T00)' 'previous(T00)'; do
     # TODO - is this test still useful? consider a task_states table test.
 done
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

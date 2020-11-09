@@ -37,4 +37,4 @@ TEST_NAME=${TEST_NAME_BASE}-cmp-task-pool
 sqlite3 "${SUITE_RUN_DIR}/log/db" 'select cycle, name, status from task_pool;' > task-pool.log
 cmp_ok task-pool.log - <'/dev/null'
 
-purge_suite "${SUITE_NAME}"
+purge

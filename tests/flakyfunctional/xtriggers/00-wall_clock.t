@@ -55,5 +55,5 @@ run_fail "${TEST_NAME}" run_suite "${SUITE_NAME}" "${START}" "${HOUR}" "${OFFSET
 LOG="$(cylc cat-log -m p "${SUITE_NAME}")"
 grep_ok "suite timed out after inactivity" "${LOG}"
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

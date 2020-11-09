@@ -1,20 +1,21 @@
 #!jinja2
+
 [scheduler]
-  UTC mode = True
+    UTC mode = True
 
 [scheduling]
-  [[graph]]
-    R1 = """
-      no_settings
-      upgradeable_cylc7_settings
-    """
+    [[graph]]
+        R1 = """
+            no_settings
+            upgradeable_cylc7_settings
+        """
+
 [runtime]
-  [[root]]
-    script = true
+    [[root]]
+        script = true
 
-  [[no_settings]]
+    [[no_settings]]
 
-  [[upgradeable_cylc7_settings]]
-    [[[remote]]]
-      host = {{CYLC_TEST_HOST}}
-
+    [[upgradeable_cylc7_settings]]
+        [[[remote]]]
+            host = {{CYLC_TEST_HOST}}

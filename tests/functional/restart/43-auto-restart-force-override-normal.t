@@ -16,11 +16,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Check that "Force Mode" can override a scheduler "Normal Mode" restart.
+export REQUIRE_PLATFORM='loc:remote fs:shared'
 . "$(dirname "$0")/test_header"
-require_remote_platform_wsfs
-export CYLC_TEST_HOST_2="${CYLC_TEST_HOST_WSFS}"
+# shellcheck disable=SC2153
+export CYLC_TEST_HOST_2="${CYLC_TEST_HOST}"
 export CYLC_TEST_HOST_1="${HOSTNAME}"
-
+#-------------------------------------------------------------------------------
 BASE_GLOBAL_CONFIG='
 [scheduler]
     [[main loop]]
@@ -83,7 +84,6 @@ log_scan "${TEST_NAME_BASE}-stop" "${FILE}" 40 1 \
     'DONE'
 
 cylc stop --now --now--max-polls=20 --interval=2 "${SUITE_NAME}" 2>'/dev/null'
-purge_suite "${SUITE_NAME}"
-purge_suite_platform "${CYLC_TEST_PLATFORM_WSFS}" "${SUITE_NAME}"
+purge
 
 exit

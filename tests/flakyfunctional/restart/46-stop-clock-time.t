@@ -87,5 +87,5 @@ for i in {01..10}; do
     fi
 done
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

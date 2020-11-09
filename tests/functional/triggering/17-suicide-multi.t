@@ -28,5 +28,5 @@ sqlite3 "${DBFILE}" 'SELECT cycle, name, status FROM task_pool ORDER BY cycle, n
     >'sqlite3.out'
 cmp_ok 'sqlite3.out' <'/dev/null'
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

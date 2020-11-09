@@ -67,6 +67,6 @@ run_ok "${TEST_NAME_BASE}-grep-log" \
     grep -q "Subject: \\[. tasks retry\\].* ${SUITE_NAME}" "${TEST_SMTPD_LOG}"
 run_ok "${TEST_NAME_BASE}-grep-log" \
     grep -q "Subject: \\[. tasks failed\\].* ${SUITE_NAME}" "${TEST_SMTPD_LOG}"
-purge_suite "${SUITE_NAME}"
+purge
 mock_smtpd_kill
 exit

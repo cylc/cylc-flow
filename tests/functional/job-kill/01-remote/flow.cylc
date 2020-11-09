@@ -1,13 +1,16 @@
 #!Jinja2
+
 [scheduler]
    [[reference test]]
        expected task failures = t1.1, t2.1
+
 [scheduling]
     [[graph]]
-        R1="""
-t1:start=>stop
-t2:start=>stop
-"""
+        R1 = """
+            t1:start=>stop
+            t2:start=>stop
+        """
+
 [runtime]
     [[T]]
         script=sleep 120 & echo $! >file; wait
@@ -18,6 +21,6 @@ t2:start=>stop
         inherit=T
     [[stop]]
         script="""
-cylc kill "$CYLC_SUITE_NAME" 't1.1' 't2.1' || true
-cylc stop $CYLC_SUITE_NAME
-"""
+            cylc kill "$CYLC_SUITE_NAME" 't1.1' 't2.1' || true
+            cylc stop $CYLC_SUITE_NAME
+        """

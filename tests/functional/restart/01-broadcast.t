@@ -61,4 +61,4 @@ sqlite3 "${SUITE_RUN_DIR}/log/db" '
 cmp_ok 'select-broadcast-states.out' \
     <<<'20130923T0000Z|broadcast_task|[environment]MY_VALUE|something'
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge

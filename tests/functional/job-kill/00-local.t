@@ -39,5 +39,5 @@ for FILE in "${SUITE_RUN_DIR}"/log/job/*/t*/01/job.status; do
         ps "$(awk -F= '$1 == "CYLC_JOB_PID" {print $2}' "$FILE")"
 done
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 exit

@@ -33,4 +33,4 @@ grep_ok "\[baz\.20160101T0100Z\]" "$HOME/cylc-run/${SUITE_NAME}/log/suite/log"
 grep_ok "\[boo\.20160101T2300Z\]" "$HOME/cylc-run/${SUITE_NAME}/log/suite/log"
 grep_ok "\[bot\.20160102T0000Z\]" "$HOME/cylc-run/${SUITE_NAME}/log/suite/log"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge

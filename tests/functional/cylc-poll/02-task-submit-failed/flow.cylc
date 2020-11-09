@@ -1,6 +1,9 @@
+#!Jinja2
+
 [scheduler]
     [[reference test]]
         expected task failures = foo.1
+
 [scheduling]
     [[graph]]
         R1 = """
@@ -10,7 +13,7 @@
             
 [runtime]
     [[foo]]
-        platform = crocodile
+        platform = {{ environ['CYLC_TEST_PLATFORM'] }}
     [[poll_foo]]
         script = wait; cylc poll "$CYLC_SUITE_NAME" 'foo'
     [[stop]]

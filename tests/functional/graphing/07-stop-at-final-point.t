@@ -33,4 +33,4 @@ TEST_NAME="${TEST_NAME_BASE}-graph-final-point"
 graph_suite "${SUITE_NAME}" 'graph.plain.test2' --set="STOP_CRITERION=final cycle point = 2015-01-05"
 cmp_ok 'graph.plain.test2' "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph.plain.ref"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge

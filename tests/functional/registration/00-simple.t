@@ -202,4 +202,5 @@ SuiteServiceFileError: Symlink '${RND_SUITE_RUNDIR}' already points to ${TDIR}.
 __OUT__
 purge_rnd_suite
 rm -rf "${TDIR}"
+
 exit

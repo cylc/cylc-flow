@@ -17,10 +17,8 @@
 #-------------------------------------------------------------------------------
 # Test bad job submission, activity log has original command and some stderr
 # with the host name written.
-export CYLC_TEST_IS_GENERIC=false
+export REQUIRE_PLATFORM='batch:at loc:remote'
 . "$(dirname "$0")/test_header"
-skip_darwin 'atrun hard to configure on Mac OS'
-require_remote_platform
 set_test_number 2
 
 create_test_global_config '' "
@@ -41,6 +39,5 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
     -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}" \
     -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 
-purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
+purge
 exit

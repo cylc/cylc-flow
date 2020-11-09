@@ -1,0 +1,115 @@
+name: functional tests
+
+on: [pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.7']
+        tests: [
+          # local tests
+          ['tests/f', '1/4', '_local_background* _local_at*'],
+          ['tests/f', '2/4', '_local_background* _local_at*'],
+          ['tests/f', '3/4', '_local_background* _local_at*'],
+          ['tests/f', '4/4', '_local_background* _local_at*'],
+          ['tests/k', '1/1', '_local_background* _local_at*'],
+          # remote tests
+          ['tests/f tests/k', '1/1',
+           '_remote_background_indep_poll _remote_at_indep_poll'],
+          ['tests/f tests/k', '1/1',
+           '_remote_background_indep_tcp _remote_at_indep_tcp']
+        ]
+    env:
+      BASE: ${{ matrix.tests[0] }}
+      CHUNK: ${{ matrix.tests[1] }}
+      CYLC_TEST_PLATFORMS: ${{ matrix.tests[2] }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Configure Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Apt-Get
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y sqlite3
+
+      - name: Add .github/bin/ to PATH
+        # Sets up mocked mail command & any other custom executables
+        run: echo "${{ github.workspace }}/.github/bin" >> $GITHUB_PATH
+
+      - name: Install
+        run: |
+          pip install ."[all]"
+          mkdir "$HOME/cylc-run"
+
+      - name: Configure Atrun
+        if: matrix.tests[2] == '_local_background* _local_at*'
+        run: |
+          PTH="$HOME/.cylc/flow/$(cylc version)"
+          mkdir -p "${PTH}"
+          cat > "${PTH}/global-test.cylc" << __HERE__
+            [platforms]
+                [[_local_at_indep_tcp]]
+                    hostname = localhost
+          __HERE__
+
+      - name: Swarm Configure
+        run: |
+          etc/bin/swarm --yes --debug configure
+
+      - name: Swarm Build
+        if: matrix.tests[2] != '_local_background* _local_at*'
+        run: |
+          # `swarm configure` seems to get ignored so override the user config
+          cp etc/conf/ssh_config $HOME/.ssh/config
+          # build and run the swarm
+          etc/bin/swarm --yes --debug build
+          etc/bin/swarm --yes --debug run
+          # test that it's up and running before proceeding
+          sleep 1
+          ssh -vv _remote_background_indep_poll hostname
+
+      - name: Test
+        run: |
+          # Use non-UTC time zone
+          export TZ=XXX-05:30
+
+          if [[ "${BASE}" == 'tests/k' ]]; then
+              NPROC=4
+          else
+              NPROC=8
+          fi
+          # NOTE: $BASE is purposefully un-quoted
+          etc/bin/run-functional-tests \
+              -j "${NPROC}" \
+              --state=save ${BASE} \
+          || (
+              echo '=== Re-running Failed Tests ==='
+              CHUNK= etc/bin/run-functional-tests \
+                  -j "${NPROC}" \
+                  --state=save,failed
+          )
+
+      - name: Shutdown
+        if: always()
+        run: |
+          etc/bin/swarm kill
+
+      - name: Debug
+        if: failure()
+        run: |
+          cylc scan
+          find "$HOME/cylc-run" -name '*.err' -type f \
+              -exec echo '==== {} ====' \; -exec cat '{}' \;
+          find "$HOME/cylc-run" -name 'log.*' -type f \
+              -exec echo '==== {} ====' \; -exec cat '{}' \;
+          find "${TMPDIR:-/tmp}/${USER}/cylctb-"* -type f \
+              -exec echo '==== {} ====' \; -exec cat '{}' \;

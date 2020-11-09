@@ -28,5 +28,5 @@ cmp_ok "${TEST_NAME}.stdout" - << __OUT__
 
 __OUT__
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 exit

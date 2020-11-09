@@ -32,7 +32,7 @@ suite_run_fail "$TEST_NAME" cylc restart "${SUITE_NAME}"
 
 grep_ok 'suite database is incompatible' "${TEST_NAME}.stderr"
 
-purge_suite "${SUITE_NAME}"
+purge
 
 # -----------------------------------------------------------------------------
 # Test that trying to restart a suite without a database gives suitable
@@ -44,5 +44,5 @@ suite_run_fail "$TEST_NAME" cylc restart "${SUITE_NAME}"
 
 grep_ok 'Cannot restart as suite database not found' "${TEST_NAME}.stderr"
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

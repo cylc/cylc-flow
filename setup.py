@@ -53,7 +53,8 @@ install_requires = [
     'pyuv==1.4.*',
     'pyzmq==19.0.*',
     'psutil>=5.6.0',
-    'urwid==2.*'
+    'urwid==2.*',
+    'packaging'
 ]
 tests_require = [
     'async-timeout>=3.0.0',

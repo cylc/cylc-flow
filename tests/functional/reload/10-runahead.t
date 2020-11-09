@@ -33,4 +33,4 @@ DB_FILE="$RUN_DIR/${SUITE_NAME}/log/db"
 QUERY='SELECT COUNT(*) FROM task_states WHERE status == "failed"'
 cmp_ok <(sqlite3 "$DB_FILE" "$QUERY") <<< "2"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge

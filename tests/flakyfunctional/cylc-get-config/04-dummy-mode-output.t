@@ -46,5 +46,5 @@ LOG="$(cylc log -m p "$SUITE_NAME")"
 count_ok '(received)meet' "${LOG}" 1
 count_ok '(received)greet' "${LOG}" 1
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

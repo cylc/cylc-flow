@@ -1,3 +1,4 @@
+#!Jinja2
 [scheduler]
     [[reference test]]
         expected task failures = janeway.1
@@ -13,7 +14,7 @@
         """
 [runtime]
     [[root]]
-        platform = enterprise
+        platform = {{ environ['CYLC_TEST_PLATFORM'] }}
     [[picard]]
         script = true
         [[[events]]]

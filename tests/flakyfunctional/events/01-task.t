@@ -35,5 +35,5 @@ sed 's/ (after .*)$//' "${SUITE_RUN_DIR}/log/suite/events.log" | sort -u \
     >'actual.events.log'
 cmp_ok 'actual.events.log' 'expected.events.log'
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 exit

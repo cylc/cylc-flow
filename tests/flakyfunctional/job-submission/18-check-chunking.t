@@ -54,5 +54,5 @@ grep_ok "# will invoke in batches, sizes=\[68, 68, 66\]" \
     "${SUITE_RUN_DIR}/log/suite/log"
 
 # tidy up
-purge_suite "${SUITE_NAME}"
+purge
 exit

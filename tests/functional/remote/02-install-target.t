@@ -16,18 +16,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test install target.
-export CYLC_TEST_IS_GENERIC=false
+export REQUIRE_PLATFORM='loc:remote fs:shared comms:tcp'
 . "$(dirname "$0")/test_header"
-#-------------------------------------------------------------------------------
-require_remote_platform_wsfs
-export CYLC_TEST_PLATFORM="$CYLC_TEST_PLATFORM_WSFS"
-
 set_test_number 3
-create_test_global_config "" "
-[platforms]
-   [[${CYLC_TEST_PLATFORM}]]
-       install target = localhost"
 
+export CYLC_TEST_PLATFORM="$CYLC_TEST_PLATFORM_WSFS"
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 #!jinja2
 [scheduler]
@@ -53,6 +46,5 @@ grep_ok "REMOTE INIT NOT REQUIRED for localhost" "${CYLC_SUITE_RUN_DIR}/log/suit
 cylc stop --max-polls=60 --interval=1 "${SUITE_NAME}"
 
 # Clean up the task host.
-purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
+purge
 exit

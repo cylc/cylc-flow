@@ -26,5 +26,5 @@ sqlite3 "${SUITE_RUN_DIR}/.service/db" <'db.sqlite3'
 suite_run_ok "${TEST_NAME_BASE}-restart" \
     cylc restart --reference-test --debug --no-detach "${SUITE_NAME}"
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

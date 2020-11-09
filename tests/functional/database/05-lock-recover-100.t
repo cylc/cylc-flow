@@ -44,5 +44,5 @@ cmp_ok "${NAME}" <<'__SELECT__'
 1|t9|succeeded
 __SELECT__
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

@@ -52,5 +52,5 @@ suite_run_ok "${TEST_NAME_BASE}-restart" \
 sqlite3 "${SUITE_RUN_DIR}/log/db" 'SELECT * FROM task_pool' >'sqlite3.out'
 cmp_ok 'sqlite3.out' </dev/null
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 exit

@@ -1,0 +1,23 @@
+# SSH configuration for the Cylc "swarm" containers
+# override configurations in your ~/.ssh/config as required
+
+Host _remote*
+    User root
+    HostName localhost
+    IdentityFile ~/.ssh/cylc-docker
+    # elegantly handle the re-building/starting of this container
+    LogLevel=ERROR
+    StrictHostKeyChecking=no
+    UserKnownHostsFile=/dev/null
+
+Host _remote_background_indep_tcp
+    Port 42220
+
+Host _remote_background_indep_poll
+    Port 42221
+
+Host _remote_background_shared_tcp
+    Port 42230
+
+Host _remote_background_shared_poll
+    Port 42231

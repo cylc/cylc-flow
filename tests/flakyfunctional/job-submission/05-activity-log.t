@@ -34,5 +34,5 @@ grep_ok '\[jobs-poll out\] [^|]*|1/t1/01|{"batch_sys_name": "background", "batch
 grep_ok "\\[(('event-handler-00', 'failed'), 1) out\\] failed ${SUITE_NAME} \
 t1\\.1 job failed" "${T1_ACTIVITY_LOG}"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 exit

@@ -56,5 +56,5 @@ run_fail "${TEST_NAME_BASE}-run-later" \
     -s 'OFFSET=PT0S' \
     -s 'TIMEOUT=PT12S'
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 exit

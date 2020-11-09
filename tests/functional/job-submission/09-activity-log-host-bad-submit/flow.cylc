@@ -1,14 +1,16 @@
 #!Jinja2
+
 [scheduler]
     UTC mode = True
-   [[reference test]]
-       expected task failures = bad-submitter.19990101T0000Z
+    [[reference test]]
+        expected task failures = bad-submitter.19990101T0000Z
 
 [scheduling]
     initial cycle point=1999
     final cycle point=1999
     [[graph]]
-        P1Y="""bad-submitter:submit-failed => grepper"""
+        P1Y = bad-submitter:submit-failed => grepper
+
 [runtime]
     [[root]]
     [[bad-submitter]]

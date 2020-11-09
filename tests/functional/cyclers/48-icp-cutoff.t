@@ -36,5 +36,5 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITE__'
 __SUITE__
 run_ok "${TEST_NAME_BASE}" cylc run "${SUITE_NAME}" --no-detach
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

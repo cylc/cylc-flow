@@ -72,5 +72,5 @@ Suite shutting down - Abort on suite inactivity is set
 __LOG__
 cmp_ok 'taskpool.out' <'/dev/null'
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

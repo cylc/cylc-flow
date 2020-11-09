@@ -28,5 +28,5 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 run_fail "${TEST_NAME_BASE}-database-integrity-error" \
    grep -q 'Database Integrity Error' "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 exit

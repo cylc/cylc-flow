@@ -74,5 +74,5 @@ contains_ok 'log.edited' <<__LOG__
 __LOG__
 cmp_ok 'taskpool.out' <'/dev/null'
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

@@ -38,4 +38,4 @@ fi
 rm -r "${SUITE_RUN_DIR}/log"
 suite_run_ok "${TEST_NAME}" cylc restart --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge

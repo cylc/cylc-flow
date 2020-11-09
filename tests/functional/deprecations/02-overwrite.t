@@ -25,4 +25,4 @@ install_suite "$TEST_NAME_BASE" "$TEST_NAME_BASE"
 cylc validate "$SUITE_NAME" 2> val.out
 grep_ok "UpgradeError" "val.out"
 #-------------------------------------------------------------------------------
-purge_suite "$SUITE_NAME"
+purge "$SUITE_NAME"

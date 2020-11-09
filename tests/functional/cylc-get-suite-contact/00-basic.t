@@ -43,5 +43,5 @@ contains_ok "${TEST_NAME_BASE}-get-suite-contact-2.stdout" \
     "${SUITE_RUN_DIR}/.service/contact"
 
 cylc stop --max-polls=60 --interval=1 "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
+purge
 exit

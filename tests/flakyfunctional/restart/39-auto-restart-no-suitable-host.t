@@ -55,7 +55,7 @@ create_test_global_config '' "
 ${BASE_GLOBAL_CONFIG}
 [suite servers]
     run hosts = localhost
-    condemned hosts = $(get_fqdn_by_host)
+    condemned hosts = $(localhost_fqdn)
 "
 
 FILE=$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)
@@ -67,5 +67,5 @@ log_scan "${TEST_NAME_BASE}-no-auto-restart" "${FILE}" 20 1 \
     'No alternative host to restart suite on.'
 
 cylc stop --kill --max-polls=10 --interval=2 "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
+purge
 exit

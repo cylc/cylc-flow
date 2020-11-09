@@ -52,6 +52,6 @@ b'reason: AUTOMATIC'
 b'see: http://localhost/stuff/${USER}/${SUITE_NAME}/'
 __LOG__
 
-purge_suite "${SUITE_NAME}"
+purge
 mock_smtpd_kill
 exit

@@ -1,3 +1,5 @@
+#!Jinja2
+
 [meta]
     title = Restart with a task in the ready state.
 
@@ -9,9 +11,9 @@
 [scheduling]
     [[graph]]
         R1 = """
-foo => foo-1
-bar
-"""
+            foo => foo-1
+            bar
+        """
 
 [runtime]
     [[foo]]

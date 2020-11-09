@@ -16,9 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test poll multiple jobs on localhost and a remote host
-export CYLC_TEST_IS_GENERIC=false
+export REQUIRE_PLATFORM='loc:remote comms:tcp'
 . "$(dirname "$0")/test_header"
-require_remote_platform
 set_test_number 3
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
@@ -39,6 +38,5 @@ cylc jobs-poll --debug -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 1/local-fail-1
 __LOG__
 cmp_ok 'edited-suite-log' 'edited-suite-log-ref'
 
-purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
+purge
 exit

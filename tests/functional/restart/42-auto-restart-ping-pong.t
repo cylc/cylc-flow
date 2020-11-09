@@ -17,9 +17,9 @@
 #-------------------------------------------------------------------------------
 # play a game of Cylc suite ping pong bouncing a suite back and forth between
 # two servers by condemning them in turn in order to see if anything breaks
+export REQUIRE_PLATFORM='loc:remote fs:shared'
 . "$(dirname "$0")/test_header"
-require_remote_platform_wsfs
-export CLOWNS="${CYLC_TEST_HOST_WSFS}"
+export CLOWNS="${CYLC_TEST_HOST}"
 export JOKERS="${HOSTNAME}"
 
 BASE_GLOBAL_CONFIG='
@@ -60,8 +60,7 @@ stuck_in_the_middle() {
 
 kill_suite() {
     cylc stop --now --now --max-polls=10 --interval=2 "${SUITE_NAME}" 2>'/dev/null'
-    purge_suite "${SUITE_NAME}"
-    purge_suite_platform "${CYLC_TEST_PLATFORM_WSFS}" "${SUITE_NAME}"
+    purge
 }
 
 log_scan2() {
@@ -101,7 +100,7 @@ for ear in $(seq 1 "${EARS}"); do
     # test the restart procedure
     FILE=$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)
     log_scan2 "${TEST_NAME_BASE}-${ear}-restart" "${FILE}" 20 1 \
-        "Suite server: url=tcp://$(get_fqdn_by_host "${JOKERS}")"
+        "Suite server: url=tcp://$(get_fqdn "${JOKERS}")"
     sleep 2
 done
 

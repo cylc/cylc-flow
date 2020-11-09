@@ -30,4 +30,4 @@ run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 TEST_NAME="${TEST_NAME_BASE}-run"
 suite_run_ok "${TEST_NAME}" cylc run --reference-test --debug --no-detach "${SUITE_NAME}" --warm 20100101T1800Z
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge

@@ -17,21 +17,15 @@
 #-------------------------------------------------------------------------------
 # Test job submission with a very chatty command.
 # + Simulate "cylc jobs-submit" getting killed half way through.
-
+export REQUIRE_PLATFORM='batch:at'
 . "$(dirname "$0")/test_header"
-
-skip_darwin 'atrun hard to configure on Mac OS'
-
 set_test_number 15
 
 create_test_global_config "
 process pool timeout = PT10S" "
 [platforms]
-[[griffin]]
-hosts = localhost
-install target = localhost
-batch system = at
-batch submit command template = talkingnonsense %(job)s
+    [[$CYLC_TEST_PLATFORM]]
+        batch submit command template = talkingnonsense %(job)s
 "
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
@@ -83,5 +77,5 @@ cmp_ok "${TEST_NAME}.stdout" << '__OUT__'
 1|nh9|submit-failed|0
 __OUT__
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

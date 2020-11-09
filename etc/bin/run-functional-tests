@@ -50,47 +50,81 @@ GitHub Actions to run tests, see .github/workflows for details.
 By default all tests are executed.  To run just a subset of them:
   * list individual tests or test directories to run on the command line
   * list individual tests or test directories to skip in \$CYLC_TEST_SKIP
-  * skip all generic tests with CYLC_TEST_RUN_GENERIC=false
-  * skip all platform-specific tests with CYLC_TEST_RUN_PLATFORM=false
   List specific tests relative to \$CYLC_REPO_DIR (i.e. starting with "test/").
 Some platform-specific tests are automatically skipped, depending on platform.
 
-Platform-specific tests must set "CYLC_TEST_IS_GENERIC=false" before sourcing
-the test_header.
 
 Options:
   -h, --help       Print this help message and exit.
+  -p, --platform   Specify one or more platforms to use for running the
+                   tests.
+
+                   Platforms should be configured in global-test.cylc.
+
+                   Tests will run on the first compatible platform.
+
+                   Defaults to:
+                       host: localhost
+                       batch-system: background
+
+                   Can be set to a glob. e.g. '_local*' will match all
+                   configuted test platforms with local job submission.
+
+                   '*' will match all configured test platforms.
+
+                   Alternatively provide a space separared string of platforms
+                   using the CYLC_TEST_PLATFORMS environment variable.
 
 Examples:
+  # Run the full test suite with the default options.
+  $ run-functional-tests
 
-Run the full test suite with the default options.
-  run-functional-tests
-Run the full test suite with 12 processes
-  run-functional-tests -j 12
-Run only tests under "tests/f/cyclers/"
-  run-functional-tests tests/f/cyclers
-Run only "tests/f/cyclers/16-weekly.t" in verbose mode
-  run-functional-tests -v tests/f/cyclers/16-weekly.t
-Run only tests under "tests/f/cyclers/", and skip 00-daily.t
-  export CYLC_TEST_SKIP=tests/f/cyclers/00-daily.t
-  run-functional-tests tests/f/cyclers
-Run the first quarter of the test battery
-  CHUNK=1/4 run-functional-tests
-Re-run failed tests
-  run-functional-tests --state=save
-  run-functional-tests --state=failed
+  # Run the full test suite with 12 processes
+  $ run-functional-tests -j 12
+
+  # Run only tests under "tests/f/cyclers/"
+  $ run-functional-tests tests/f/cyclers
+
+  # Run only "tests/f/cyclers/16-weekly.t" in verbose mode
+  $ run-functional-tests -v tests/f/cyclers/16-weekly.t
+
+  # Run only tests under "tests/f/cyclers/", and skip 00-daily.t
+  $ export CYLC_TEST_SKIP=tests/f/cyclers/00-daily.t
+  $ run-functional-tests tests/f/cyclers
+
+  # Run the first quarter of the test battery
+  $ CHUNK=1/4 run-functional-tests
+
+  # Re-run failed tests
+  $ run-functional-tests --state=save
+  $ run-functional-tests --state=failed
+
+  # run tests on a specified test platform
+  $ run-functional-tests -p <test_platform> <path>
+
+  # run tests using the first matching test platform from the test config
+  # (test platforms have names begining with an underscore)
+  $ run-functional-tests -p all <path>
 eof
 }
 
 # parse args
 PROVE_ARGS=()
 TESTS=()
+# must use string as can't export arrays in bash
+PLATFORMS="${CYLC_TEST_PLATFORMS:-}"
 PROVIDE_TESTBASE=true
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --help|-h)
             usage
             exit 0
+            ;;
+        -p|--platform)
+            # note "all" logic is handled in the test_header
+            PLATFORMS="$PLATFORMS $2"
+            shift
+            shift
             ;;
         --state*)
             STATES=${1/--state=/}
@@ -122,6 +156,8 @@ done
 cd "$(dirname "$0")/../.." || exit 1
 export CYLC_REPO_DIR="${PWD}"
 
+export PLATFORMS
+
 # default test base
 if [[ ${#TESTS[@]} -eq 0 ]]; then
     TESTS=('tests/functional')
@@ -147,18 +183,12 @@ TMPDIR="$(realpath "${TMPDIR:-/tmp}")"
 export TMPDIR
 
 # test environment
-export CYLC_TEST_RUN_GENERIC=${CYLC_TEST_RUN_GENERIC:-true}
-export CYLC_TEST_RUN_PLATFORM=${CYLC_TEST_RUN_PLATFORM:-true}
 export CYLC_TEST_SKIP=${CYLC_TEST_SKIP:-}
-export CYLC_TEST_IS_GENERIC=true
 CYLC_TEST_TIME_INIT="$(date -u +'%Y%m%dT%H%M%SZ')"
 export CYLC_TEST_TIME_INIT
 
 # get number of cores
-NPROC=$(cylc get-global-config '--item=process pool size')
-if [[ -z "${NPROC}" ]]; then
-    NPROC=$(python3 -c 'import multiprocessing as mp; print(mp.cpu_count())')
-fi
+NPROC=$(python3 -c 'import multiprocessing as mp; print(mp.cpu_count())')
 
 # run tests run
 exec prove --timer -j "${NPROC}" -s -r "${PROVE_ARGS[@]}" "${TESTS[@]}"

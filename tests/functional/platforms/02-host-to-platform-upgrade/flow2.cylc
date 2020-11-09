@@ -1,19 +1,20 @@
 #!Jinja2
+
 [scheduler]
-  UTC mode = True
+    UTC mode = True
 
 [scheduling]
-  [[graph]]
-    R1 = """
-      just_wrong
-    """
+    [[graph]]
+        R1 = """
+            just_wrong
+        """
 [runtime]
-  [[root]]
-    script = true
+    [[root]]
+        script = true
 
-  [[just_wrong]]
-    platform = wibble
-    [[[remote]]]
-      host = 'parasite'
-    [[[job]]]
-      batch system = 'loaf'
+    [[just_wrong]]
+        platform = {{ environ['CYLC_TEST_PLATFORM'] }}
+        [[[remote]]]
+            host = 'parasite'
+        [[[job]]]
+            batch system = 'loaf'

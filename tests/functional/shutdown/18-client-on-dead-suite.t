@@ -43,5 +43,5 @@ run_fail "${TEST_NAME_BASE}-1" cylc ping "${SUITE_NAME}"
 contains_ok "${TEST_NAME_BASE}-1.stderr" <<__ERR__
 SuiteStopped: ${SUITE_NAME} is not running
 __ERR__
-purge_suite "${SUITE_NAME}"
+purge
 exit

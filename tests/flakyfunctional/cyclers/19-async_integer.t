@@ -50,5 +50,5 @@ if [[ -f "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}-find.out" ]]; then
     cmp_ok "${TEST_NAME}" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}-find.out"
 fi
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 exit

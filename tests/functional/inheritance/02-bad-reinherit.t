@@ -31,4 +31,4 @@ SuiteConfigError: ERROR: foo: bad runtime namespace inheritance hierarchy.
 See the cylc documentation on multiple inheritance.
 __ERR__
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge

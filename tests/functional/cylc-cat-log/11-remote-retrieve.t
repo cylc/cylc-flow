@@ -15,12 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-
 # Test "cylc cat-log" for remote tasks with auto-retrieval.
-
-export CYLC_TEST_IS_GENERIC=false
+export REQUIRE_PLATFORM='loc:remote'
 . "$(dirname "$0")/test_header"
-require_remote_platform
 set_test_number 7
 
 create_test_global_config "" "
@@ -52,6 +49,5 @@ TEST_NAME=${TEST_NAME_BASE}-out-loc
 run_ok "${TEST_NAME}" cylc cat-log -f o "${SUITE_NAME}" a-task.1
 grep_ok '^the quick brown FOX$' "${TEST_NAME}.stdout"
 
-purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
+purge
 exit

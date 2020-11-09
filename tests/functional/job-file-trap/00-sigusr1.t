@@ -58,7 +58,7 @@ run_tests() {
     cmp_ok "${TEST_NAME}-db-t1" - <<<'succeeded'
     # Test reference
     grep_ok 'SUITE REFERENCE TEST PASSED' "${SUITE_RUN_DIR}/log/suite/log"
-    purge_suite "${SUITE_NAME}"
+    purge
     exit
 }
 

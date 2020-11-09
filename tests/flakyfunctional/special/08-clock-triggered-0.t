@@ -46,5 +46,5 @@ run_fail "${TEST_NAME_BASE}-run-later" \
     cylc run --debug --no-detach "${SUITE_NAME}" -s START="${START}" \
     -s HOUR="${HOUR}" -s 'UTC_MODE=False' -s 'TIMEOUT=PT0.2M'
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 exit

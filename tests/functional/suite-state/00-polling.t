@@ -69,11 +69,11 @@ suite_run_ok "${TEST_NAME}" \
     --set="UPSTREAM=${UPSTREAM}" "${SUITE_NAME}"
 
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 
 #-------------------------------------------------------------------------------
 # clean up the upstream suite
 # just in case (expect error message here, but exit 0):
 cylc stop --now "${UPSTREAM}" --max-polls=20 --interval=2 >'/dev/null' 2>&1
-purge_suite "${UPSTREAM}"
+purge "${UPSTREAM}"
 exit

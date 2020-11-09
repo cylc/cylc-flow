@@ -28,4 +28,4 @@ run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 graph_suite "${SUITE_NAME}" 'graph.plain'
 cmp_ok 'graph.plain' "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph.plain.ref"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge

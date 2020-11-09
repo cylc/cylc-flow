@@ -39,4 +39,4 @@ cylc show "${SUITE_NAME}" 'c.1' | sed -n "/prerequisites/,/outputs/p" > 'c-prere
 contains_ok "${TEST_SOURCE_DIR}/multiline_and_refs/c-ref" 'c-prereqs'
 cylc shutdown "${SUITE_NAME}" --now
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge

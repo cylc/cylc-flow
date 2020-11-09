@@ -55,6 +55,6 @@ run_ok "${TEST_NAME_BASE}-grep-log" \
 run_ok "${TEST_NAME_BASE}-grep-log" \
     grep -q "Subject: \\[1/t1/02 succeeded\\].* ${SUITE_NAME}" "${TEST_SMTPD_LOG}"
 
-purge_suite "${SUITE_NAME}"
+purge
 mock_smtpd_kill
 exit

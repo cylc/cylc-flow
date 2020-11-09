@@ -44,5 +44,5 @@ exists_fail "${SRVD}/server.key_secret"
 exists_fail "${SRVD}/server.key"
 exists_fail "${SRVD}/client_public_keys/client_localhost.key"
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

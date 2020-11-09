@@ -49,5 +49,5 @@ INFO - [foo.1] status=running: (received)whatever
 INFO - [foo.1] status=running: (received)succeeded
 __LOG__
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

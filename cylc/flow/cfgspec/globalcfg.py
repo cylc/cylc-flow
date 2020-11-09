@@ -486,59 +486,6 @@ with Conf('global.cylc', desc='''
         Conf('smtp', VDR.V_STRING)
         Conf('to', VDR.V_STRING)
 
-    # client
-    with Conf('test battery', desc='''
-        Settings for the automated development tests.
-
-        .. note::
-           The test battery reads ``global-tests.cylc`` instead of the normal
-           site/user global config files (from the same locations, however).
-    '''):
-        Conf('remote platform with shared fs', VDR.V_STRING, desc='''
-            The name of a remote platform that sees the same HOME file system
-            as the host running the test battery.
-        ''')
-        Conf('remote platform', VDR.V_STRING, desc='''
-            Platform name of a remote account that does not see the same home
-            directory as the account running the test battery.
-        ''')
-
-        with Conf('batch systems', desc='''
-            Settings for testing supported batch systems (job submission
-            methods). The tests for a batch system are only performed if the
-            batch system is available on the test host or a remote host
-            accessible via SSH from the test host.
-        '''):
-
-            with Conf('<batch system name>', desc='''
-                SYSTEM is the name of a supported batch system with automated
-                tests.  This can currently be "loadleveler", "lsf", "pbs",
-                "sge" and/or "slurm".
-            '''):
-                Conf('host', VDR.V_STRING, desc='''
-                    The name of a host where commands for this batch system is
-                    available. Use "localhost" if the batch system is available
-                    on the host running the test battery. Any specified remote
-                    host should be accessible via SSH from the host running the
-                    test battery.
-                ''')
-                Conf('out viewer', VDR.V_STRING, desc='''
-                    The command template (with ``%(job_id)s`` substitution)
-                    for testing the run time stdout viewer functionality for
-                    this batch system.
-                ''')
-                Conf('err viewer', VDR.V_STRING, desc='''
-                    The command template (with ``%(job_id)s`` substitution)
-                    for testing the run time stderr viewer functionality for
-                    this batch system.
-                ''')
-
-                with Conf('directives', desc='''
-                    The minimum set of directives that must be supplied to the
-                    batch system on the site to initiate jobs for the tests.
-                '''):
-                    Conf('<directive>', VDR.V_STRING)
-
     # suite
     with Conf('suite host self-identification', desc='''
         The suite host's identity must be determined locally by cylc and passed

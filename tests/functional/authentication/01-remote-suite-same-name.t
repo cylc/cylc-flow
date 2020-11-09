@@ -18,9 +18,8 @@
 # Test communication from a remote host (non-shared file system) when it has
 # a suite with the same name registered, but not running. (Obviously, it will
 # be very confused if it is running under its ~/cylc-run/SUITE as well.)
-export CYLC_TEST_IS_GENERIC=false
+export REQUIRE_PLATFORM='loc:remote'
 . "$(dirname "$0")/test_header"
-require_remote_platform
 set_test_number 3
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
@@ -41,6 +40,5 @@ run_ok "${TEST_NAME_BASE}-register" \
 suite_run_ok "${TEST_NAME_BASE}" \
     cylc run --debug --no-detach --reference-test "${SUITE_NAME}"
 
-purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
+purge
 exit

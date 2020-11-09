@@ -27,5 +27,5 @@ run_fail "${TEST_NAME}" cylc validate -v "${SUITE_NAME}"
 grep_ok "incompatible with \[cylc\]cycle point num expanded year digits = 0" \
     "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 exit

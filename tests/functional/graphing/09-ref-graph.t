@@ -29,4 +29,4 @@ TEST_NAME="${TEST_NAME_BASE}-graph"
 graph_suite "${SUITE_NAME}" 'new.ref'
 cmp_ok 'new.ref' "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph.ref"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge

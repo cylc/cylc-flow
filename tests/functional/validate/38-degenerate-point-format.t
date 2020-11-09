@@ -27,5 +27,5 @@ run_fail "${TEST_NAME}" cylc validate -v "${SUITE_NAME}"
 grep_ok "SequenceDegenerateError: R/2015-08/P1D, point format %Y-%m: equal adjacent points: 2015-08 => 2015-08." \
     "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 exit
