@@ -19,8 +19,8 @@
 cd "$(mktemp -d)" || exit 1
 
 cat > flow.cylc <<__EOF__
-[cylc]
-  cycle point format = %Y-%m-%d
+[scheduler]
+    cycle point format = %Y-%m-%d
 [scheduling]
     initial cycle point = 20120808
     final cycle point = 20120818

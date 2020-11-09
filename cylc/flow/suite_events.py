@@ -50,7 +50,7 @@ class SuiteEventHandler():
 
     @staticmethod
     def get_events_conf(config, key, default=None):
-        """Return a named [cylc][[events]] configuration."""
+        """Return a named [scheduler][[events]] configuration."""
         # Mail doesn't have any defaults in suite.py
         if 'mail' in config.cfg['scheduler']:
             getters = [

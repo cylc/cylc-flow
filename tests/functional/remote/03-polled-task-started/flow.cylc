@@ -1,6 +1,5 @@
 #!Jinja2
-
-[cylc]
+[scheduler]
     [[reference test]]
         expected task failures = janeway.1
 [scheduling]

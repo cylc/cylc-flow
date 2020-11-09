@@ -235,7 +235,7 @@ def get_option_parser(is_restart, add_std_opts=False):
         help=(
             "Specify an additional plugin to run in the main loop."
             " These are used in combination with those specified in"
-            " [cylc][main loop]plugins. Can be used multiple times"
+            " [scheduler][main loop]plugins. Can be used multiple times"
         ),
         metavar="PLUGIN_NAME", action="append", dest="main_loop"
     )
