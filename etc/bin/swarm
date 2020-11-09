@@ -104,6 +104,11 @@ Running Tests Without The Swarm:
           on the remote hosts as on your local host. Remember to pip install.
 
 Caveats:
+    For TCP comms the firewall on the Docker host must accept packets from
+    containers on the "docker0" network adapter:
+        $ iptables -A INPUT -i docker0 -j ACCEPT
+    (must appear early in the table to avoid preemption by reject or drop.)
+
     At present TCP comms are not possible FROM the host TO the container.
     This is not generally an issue as the standard test approach is to run
     a workflow on the host submitting its jobs to the container.
