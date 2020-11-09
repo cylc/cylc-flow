@@ -148,10 +148,13 @@ def make_localhost_symlinks(suite):
     for key, value in dirs_to_symlink.items():
         if key == 'run':
             dst = rund
-            src = (os.path.expandvars(value))
         else:
             dst = os.path.join(rund, key)
-            src = os.path.expandvars(value)
+        src = os.path.expandvars(value)
+        if '$' in src:
+            raise WorkflowFilesError(
+                f'Unable to create symlink to {src}. '
+                'Please check configuration.')
         make_symlink(src, dst)
 
 
@@ -167,30 +170,34 @@ def get_dirs_to_symlink(install_target, suite):
         dirs_to_symlink['run'] = os.path.join(base_dir, 'cylc-run', suite)
     for dir_ in ['log', 'share', 'share/cycle', 'work']:
         link = symlink_conf[install_target][dir_]
-        if link is None:
-            continue
-        elif link == base_dir:
+        if link is None or link == base_dir:
             continue
         elif (base_dir is None and link is not None) or link != base_dir:
             dirs_to_symlink[dir_] = os.path.join(link, 'cylc-run', suite, dir_)
             continue
-
     return dirs_to_symlink
 
 
 def make_symlink(src, dst):
     """Makes symlinks for directories.
     Args:
-        src (str): path to where the files are to be stored
-        dst (str): path to where the link, pointing to src, will be created.
+        src (str): target path, where the files are to be stored.
+        dst (str): full path of link that will point to src.
     """
-    if os.path.exists(dst) and os.path.islink(
-            dst) and os.path.samefile(dst, src):
-        # correct symlink already exists
-        return
-    if os.path.islink(dst) and not os.path.exists(dst):
-        # Remove a bad symlink.
-        os.unlink(dst)
+    if os.path.exists(dst):
+        if os.path.islink(dst) and os.path.samefile(dst, src):
+            # correct symlink already exists
+            return
+        # symlink name is in use by a physical file or directory
+        raise WorkflowFilesError(
+            f"Error when symlinking. The path {dst} already exists.")
+    elif os.path.islink(dst):
+        # remove a bad symlink.
+        try:
+            os.unlink(dst)
+        except Exception:
+            raise WorkflowFilesError(
+                f"Error when symlinking. Failed to unlink bad symlink {dst}.")
     os.makedirs(src, exist_ok=True)
     os.makedirs(os.path.dirname(dst), exist_ok=True)
     try:

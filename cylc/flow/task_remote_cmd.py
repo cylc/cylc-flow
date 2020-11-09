@@ -100,10 +100,11 @@ def remote_init(install_target, rund, *dirs_to_symlink, indirect_comm=None):
         key, val = item.split("=", 1)
         if key == 'run':
             dst = rund
-            src = (os.path.expandvars(val))
         else:
             dst = os.path.join(rund, key)
-            src = os.path.expandvars(val)
+        src = os.path.expandvars(val)
+        if '$' in src:
+            print(REMOTE_INIT_FAILED)
         make_symlink(src, dst)
     srvd = os.path.join(rund, SuiteFiles.Service.DIRNAME)
     os.makedirs(srvd, exist_ok=True)
