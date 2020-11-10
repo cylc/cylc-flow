@@ -301,9 +301,6 @@ with Conf(
                 ``mail footer = see http://myhost/%(owner)s/notes/%(suite)s``
 
             ''')
-            Conf('smtp', VDR.V_STRING, desc='''
-                Specify the SMTP server for sending suite email notifications.
-            ''')
             Conf('to', VDR.V_STRING, desc='''
                 A string containing a list of addresses which can be accepted
                 by the ``mail`` command.
@@ -1378,7 +1375,7 @@ def upg(cfg, descr):
         ['cylc', 'mail', 'task event batch interval']
     )
     # Whole workflow task mail settings
-    for mail_setting in ['to', 'from', 'smtp', 'footer']:
+    for mail_setting in ['to', 'from', 'footer']:
         u.deprecate(
             '8.0.0',
             ['cylc', 'events', f'mail {mail_setting}'],
@@ -1393,10 +1390,20 @@ def upg(cfg, descr):
         )
     u.deprecate(
         '8.0.0',
-        ['runtime', '__MANY__', 'events', 'mail smtp'],
+        ['cylc', 'events', 'mail smtp'],
         None,  # This is really a .obsolete(), just with a custom message
-        cvtr=converter(lambda x: x,
-                       'DELETED (OBSOLETE) - use "[cylc][mail]smtp" instead'))
+        cvtr=converter(lambda x: x, (
+            'DELETED (OBSOLETE) - use "global.cylc[scheduler][mail]smtp" '
+            'instead'))
+    )
+    u.deprecate(
+        '8.0.0',
+        ['runtime', '__MANY__', 'events', 'mail smtp'],
+        None,
+        cvtr=converter(lambda x: x, (
+            'DELETED (OBSOLETE) - use "global.cylc[scheduler][mail]smtp" '
+            'instead'))
+    )
     u.deprecate(
         '8.0.0',
         ['scheduling', 'max active cycle points'],

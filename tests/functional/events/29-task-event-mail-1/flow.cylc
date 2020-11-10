@@ -5,7 +5,6 @@
 [scheduler]
     [[mail]]
         footer = see: http://localhost/stuff/%(owner)s/%(suite)s/
-        smtp = {{MAIL_SMTP}}
 
 [scheduling]
     [[graph]]

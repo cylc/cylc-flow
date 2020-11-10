@@ -6,7 +6,6 @@
 {% if GLOBALCFG is not defined %}
     [[mail]]
         footer = see: http://localhost/stuff/%(owner)s/%(suite)s/
-        smtp = {{MAIL_SMTP}}
     [[events]]
         mail events = startup, shutdown
 {% endif %}{# not GLOBALCFG is not defined #}

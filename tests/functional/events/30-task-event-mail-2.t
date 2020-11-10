@@ -34,7 +34,11 @@ if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
 "
     OPT_SET='-s GLOBALCFG=True'
 else
-    OPT_SET="-s MAIL_SMTP=${TEST_SMTPD_HOST}"
+    create_test_global_config "
+[scheduler]
+    [[mail]]
+        smtp = ${TEST_SMTPD_HOST}
+"
 fi
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"

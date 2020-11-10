@@ -9,7 +9,6 @@
     [[mail]]
         footer = see: http://localhost/stuff/%(owner)s/%(suite)s/
         task event batch interval = PT15S
-        smtp = {{MAIL_SMTP}}
     [[reference test]]
         expected task failures = t1.1, t2.1, t3.1, t4.1, t5.1
 
