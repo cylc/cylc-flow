@@ -393,13 +393,10 @@ def _distribute(host, is_restart):
     if not host:
         host = select_suite_host()[0]
     if is_remote_host(host):
-        if is_restart:
-            base_cmd = ["restart"] + sys.argv[1:]
-        else:
-            base_cmd = ["run"] + sys.argv[1:]
         # Prevent recursive host selection
-        base_cmd.append("--host=localhost")
-        remote_cylc_cmd(base_cmd, host=host)
+        cmd = sys.argv[1:]
+        cmd.append("--host=localhost")
+        remote_cylc_cmd(cmd, host=host)
         sys.exit(0)
 
 
