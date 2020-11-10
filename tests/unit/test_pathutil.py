@@ -242,7 +242,8 @@ def test_get_dirs_to_symlink(
     mock_glbl_cfg('cylc.flow.pathutil.glbl_cfg', mocked_glbl_cfg)
     dirs = get_dirs_to_symlink(install_target, suite)
     assert dirs == output
-    
+
+
 @patch('os.path.expandvars')
 @patch('cylc.flow.pathutil.get_suite_run_dir')
 @patch('cylc.flow.pathutil.make_symlink')
@@ -283,6 +284,7 @@ def test_incorrect_environment_variables_raise_error(
     with pytest.raises(WorkflowFilesError, match=r"Unable to create symlink"
                        r" to \$doh. Please check configuration."):
         make_localhost_symlinks('test_workflow')
+
 
 if __name__ == '__main__':
     from unittest import main

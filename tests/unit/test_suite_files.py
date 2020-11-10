@@ -204,7 +204,7 @@ def test_register(mocked_check_nested_run_dirs,
                   mocked_makedirs,
                   mocked_unlink,
                   mocked_make_localhost_symlinks
-):
+                  ):
     """Test the register function."""
     def mkdirs_standin(_, exist_ok=False):
         return True
