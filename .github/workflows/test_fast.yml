@@ -25,6 +25,7 @@ jobs:
 
       - name: Install
         run: |
+          pip install git+https://github.com/metomi/rose@master
           pip install ."[all]"
 
       - name: Style

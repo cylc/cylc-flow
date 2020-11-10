@@ -130,6 +130,10 @@ config option `[scheduling]stop after cycle point`.
 [#3961](https://github.com/cylc/cylc-flow/pull/3961) - Added a new command:
 `cylc clean`.
 
+[#3913](https://github.com/cylc/cylc-flow/pull/3913) - Added the ability to
+parse `[jinja2:suite.rc]` section from a `rose-suite.conf` file in the same
+folder as the `flow.cylc` file.
+
 ### Fixes
 
 [#3984](https://github.com/cylc/cylc-flow/pull/3984) - Only write task

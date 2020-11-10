@@ -20,9 +20,9 @@ Importing code should catch ImportError in case Jinja2 is not installed.
 
 import importlib
 import os
+import sys
 import pkgutil
 import re
-import sys
 import traceback
 from glob import glob
 
@@ -182,6 +182,7 @@ def jinja2environment(dir_=None):
     env.globals['environ'] = os.environ
     env.globals['raise'] = raise_helper
     env.globals['assert'] = assert_helper
+
     return env
 
 

@@ -34,8 +34,12 @@ import os
 import sys
 import re
 
+from pathlib import Path
+from ast import literal_eval
+
 from cylc.flow import LOG
 from cylc.flow.parsec.exceptions import ParsecError, FileParseError
+from cylc.flow.parsec.rose_utils import get_rose_vars
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.include import inline
 from cylc.flow.parsec.util import itemstr
@@ -224,6 +228,16 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
     do_empy = True
     do_jinja2 = True
     do_contin = True
+
+    if not template_vars:
+        template_vars = {}
+
+    # Load Rose Vars, if a ``rose-suite.conf`` file is present.
+    rose_vars = get_rose_vars(Path(fpath).parent)
+    if rose_vars is not None:
+        for key, value in rose_vars.items():
+            template_vars[key] = literal_eval(value)
+
     if viewcfg:
         if not viewcfg['empy']:
             do_empy = False
