@@ -120,7 +120,7 @@
 #         test on the suite and run the reference suite with `suite_run_ok`.
 #         Expect 2 OK tests.
 #     create_test_global_config [PRE [POST]]
-#         Create a new global config file $PWD/etc from global-tests.cylc
+#         Create a new global config file $PWD/etc from global.cylc
 #         with PRE and POST pre- and ap-pended (PRE for top level items with no
 #         section heading). PRE and POST are strings.
 #     localhost_fqdn
@@ -702,7 +702,7 @@ create_test_global_config() {
     mkdir 'etc'
     # Suite host self-identification method.
     echo "$PRE" >'etc/global.cylc'
-    USER_TESTS_CONF_FILE="${HOME}/.cylc/flow/$(cylc version)/global-tests.cylc"
+    USER_TESTS_CONF_FILE="${HOME}/.cylc/flow/$(cylc version)/global.cylc"
     if [[ -f "${USER_TESTS_CONF_FILE}" ]]; then
         cat "${USER_TESTS_CONF_FILE}" >>'etc/global.cylc'
     fi
@@ -882,9 +882,6 @@ for SKIP in ${CYLC_TEST_SKIP}; do
         break
     fi
 done
-
-# Ignore the normal site/user global config, use global-tests.cylc.
-create_test_global_config "$@"
 
 # get array of test platforms to run tests with
 _expand_test_platforms "${PLATFORMS}"

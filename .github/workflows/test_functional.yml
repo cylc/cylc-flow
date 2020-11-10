@@ -55,10 +55,10 @@ jobs:
         run: |
           PTH="$HOME/.cylc/flow/$(cylc version)"
           mkdir -p "${PTH}"
-          cat > "${PTH}/global-test.cylc" << __HERE__
+          cat > "${PTH}/global.cylc" << __HERE__
             [platforms]
                 [[_local_at_indep_tcp]]
-                    hostname = localhost
+                    hosts = localhost
           __HERE__
 
       - name: Swarm Configure

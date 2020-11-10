@@ -145,7 +145,6 @@ YES=false
 SSHD="$HOME/.ssh"
 SSH_CONF="$SSHD/config"
 CYLC_CONF="$HOME/.cylc/flow/$(cylc version)/global.cylc"
-CYLC_TEST_CONF="$HOME/.cylc/flow/$(cylc version)/global-tests.cylc"
 HERE="$(realpath "$PWD")"
 ACTIVE_CONTAINERS="$HERE/.docker-active-containers"
 
@@ -342,16 +341,12 @@ configure () {
     append_config \
         "%include '$HERE/etc/conf/global.cylc'" \
         "${CYLC_CONF}"
-    append_config \
-        "%include '$HERE/etc/conf/global.cylc'" \
-        "${CYLC_TEST_CONF}"
 }
 
 # undo configurations make in configure ()
 deconfigure () {
     sed -i "\|$HERE/etc/conf|d" "${SSH_CONF}"
     sed -i "\|$HERE/etc/conf|d" "${CYLC_CONF}"
-    sed -i "\|$HERE/etc/conf|d" "${CYLC_TEST_CONF}"
 }
 
 # run one container interactively
