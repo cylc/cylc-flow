@@ -40,6 +40,7 @@ from cylc.flow.terminal import cli_function
 
 INTERNAL = True
 
+
 def get_option_parser():
     parser = COP(
         __doc__,
