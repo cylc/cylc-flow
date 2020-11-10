@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from cylc.flow.suite_files import check_nested_run_dirs
+from cylc.flow.pathutil import make_localhost_symlinks
 import pytest
 from unittest import mock
 
@@ -180,6 +182,7 @@ def get_register_test_cases():
     ]
 
 
+@mock.patch('cylc.flow.suite_files.make_localhost_symlinks')
 @mock.patch('os.unlink')
 @mock.patch('os.makedirs')
 @mock.patch('os.symlink')
@@ -199,7 +202,9 @@ def test_register(mocked_check_nested_run_dirs,
                   mocked_readlink,
                   mocked_symlink,
                   mocked_makedirs,
-                  mocked_unlink):
+                  mocked_unlink,
+                  mocked_make_localhost_symlinks
+):
     """Test the register function."""
     def mkdirs_standin(_, exist_ok=False):
         return True
@@ -274,11 +279,10 @@ def test_is_valid_run_dir(path, expected, is_abs_path, monkeypatch):
 
 
 @pytest.mark.parametrize('direction', ['parents', 'children'])
-def test_register_nested_run_dirs(direction, monkeypatch):
-    """Test that a suite cannot be registered in a subdir of another suite."""
+def test_nested_run_dirs_raise_error(direction, monkeypatch):
+    """Test that a suite cannot be contained in a subdir of another suite."""
     monkeypatch.setattr('cylc.flow.suite_files.get_cylc_run_abs_path',
                         lambda x: x)
-
     if direction == "parents":
         monkeypatch.setattr('cylc.flow.suite_files.os.scandir', lambda x: [])
         monkeypatch.setattr('cylc.flow.suite_files.is_valid_run_dir',
@@ -288,11 +292,10 @@ def test_register_nested_run_dirs(direction, monkeypatch):
         # It is itself a run dir - ok:
         suite_files.check_nested_run_dirs('bright/falls')
         # Nested in a run dir - bad:
-        for func in (suite_files.check_nested_run_dirs, suite_files.register):
-            for path in ('bright/falls/light', 'bright/falls/light/and/power'):
-                with pytest.raises(SuiteServiceFileError) as exc:
-                    func(path)
-                assert 'Nested run directories not allowed' in str(exc.value)
+        for path in ('bright/falls/light', 'bright/falls/light/and/power'):
+            with pytest.raises(SuiteServiceFileError) as exc:
+                suite_files.check_nested_run_dirs(path)
+            assert 'Nested run directories not allowed' in str(exc.value)
 
     else:
         dirs = ['a', 'a/a', 'a/R', 'a/a/a', 'a/a/R',
@@ -316,10 +319,10 @@ def test_register_nested_run_dirs(direction, monkeypatch):
         for path in ('a/a/a', 'a/b'):
             suite_files.check_nested_run_dirs(path)
         # Run dir nested below - bad:
-        for func in (suite_files.check_nested_run_dirs, suite_files.register):
-            for path in ('a', 'a/a', 'a/c'):
-                with pytest.raises(SuiteServiceFileError) as exc:
-                    func(path)
-                assert 'Nested run directories not allowed' in str(exc.value)
+
+        for path in ('a', 'a/a', 'a/c'):
+            with pytest.raises(SuiteServiceFileError) as exc:
+                check_nested_run_dirs(path)
+            assert 'Nested run directories not allowed' in str(exc.value)
         # Run dir nested below max scan depth - not ideal but passes:
         suite_files.check_nested_run_dirs('a/d')

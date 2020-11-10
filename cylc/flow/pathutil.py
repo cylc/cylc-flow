@@ -172,9 +172,7 @@ def get_dirs_to_symlink(install_target, suite):
         link = symlink_conf[install_target][dir_]
         if link is None or link == base_dir:
             continue
-        elif (base_dir is None and link is not None) or link != base_dir:
-            dirs_to_symlink[dir_] = os.path.join(link, 'cylc-run', suite, dir_)
-            continue
+        dirs_to_symlink[dir_] = os.path.join(link, 'cylc-run', suite, dir_)
     return dirs_to_symlink
 
 

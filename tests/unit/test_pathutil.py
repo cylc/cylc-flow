@@ -23,6 +23,8 @@ import pytest
 import os
 import logging
 
+from cylc.flow.exceptions import WorkflowFilesError
+
 from cylc.flow.pathutil import (
     get_dirs_to_symlink,
     get_remote_suite_run_dir,
@@ -234,7 +236,6 @@ def test_make_suite_run_tree(caplog, tmpdir, mock_glbl_cfg, subdir):
                 'run': '$DOH/cylc-run/suite3',
                 'log': '$DEE/cylc-run/suite3/log',
                 'share': '$DEE/cylc-run/suite3/share'})
-
     ])
 def test_get_dirs_to_symlink(
         suite, install_target, mocked_glbl_cfg, output, mock_glbl_cfg):
@@ -246,7 +247,7 @@ def test_get_dirs_to_symlink(
 @patch('cylc.flow.pathutil.get_suite_run_dir')
 @patch('cylc.flow.pathutil.make_symlink')
 @patch('cylc.flow.pathutil.get_dirs_to_symlink')
-def test_make_localhost_symlinks_calls_make_symlink_foreach_keyvaluedir(
+def test_make_localhost_symlinks_calls_make_symlink_for_each_key_value_dir(
         mocked_dirs_to_symlink,
         mocked_make_symlink,
         mocked_get_suite_run_dir, mocked_expandvars):
@@ -266,6 +267,22 @@ def test_make_localhost_symlinks_calls_make_symlink_foreach_keyvaluedir(
         call('expanded', 'rund/share')
     ])
 
+
+@patch('os.path.expandvars')
+@patch('cylc.flow.pathutil.get_suite_run_dir')
+@patch('cylc.flow.pathutil.make_symlink')
+@patch('cylc.flow.pathutil.get_dirs_to_symlink')
+def test_incorrect_environment_variables_raise_error(
+        mocked_dirs_to_symlink,
+        mocked_make_symlink,
+        mocked_get_suite_run_dir, mocked_expandvars):
+    mocked_dirs_to_symlink.return_value = {'run': '$DOH/test_workflow'}
+    mocked_get_suite_run_dir.return_value = "rund"
+    mocked_expandvars.return_value = "$doh"
+
+    with pytest.raises(WorkflowFilesError, match=r"Unable to create symlink"
+                       r" to \$doh. Please check configuration."):
+        make_localhost_symlinks('test_workflow')
 
 if __name__ == '__main__':
     from unittest import main
