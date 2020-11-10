@@ -160,47 +160,4 @@ __ERR__
 purge_rnd_suite
 purge_rnd_suite "${RND_SUITE_SOURCE1}" "${RND_SUITE_RUNDIR1}"
 
-#-----------------------
-# Test alternate run dir
-# 1. Normal case.
-TEST_NAME="${TEST_NAME_BASE}-alt-run-dir"
-make_rnd_suite
-ALT_RUN_DIR="${PWD}/alt"
-run_ok "${TEST_NAME}" \
-    cylc register --run-dir="${ALT_RUN_DIR}" "${RND_SUITE_NAME}" "${RND_SUITE_SOURCE}"
-contains_ok "${TEST_NAME}.stdout" <<__OUT__
-REGISTERED ${RND_SUITE_NAME} -> ${RND_SUITE_SOURCE}
-__OUT__
-run_ok "${TEST_NAME}-check-link" test -L "${RND_SUITE_RUNDIR}"
-run_ok "${TEST_NAME}-rm-link" rm "${RND_SUITE_RUNDIR}"
-run_ok "${TEST_NAME}-rm-alt-run-dir" rm -r "${ALT_RUN_DIR}"
-purge_rnd_suite
-
-# 2. If reg already exists (as a directory).
-TEST_NAME="${TEST_NAME_BASE}-alt-exists1"
-make_rnd_suite
-ALT_RUN_DIR="${PWD}/alt"
-mkdir -p "${RND_SUITE_RUNDIR}"
-run_fail "${TEST_NAME}" \
-   cylc register --run-dir="${ALT_RUN_DIR}" "${RND_SUITE_NAME}" "${RND_SUITE_SOURCE}"
-contains_ok "${TEST_NAME}.stderr" <<__OUT__
-SuiteServiceFileError: Run directory '${RND_SUITE_RUNDIR}' already exists.
-__OUT__
-purge_rnd_suite
-
-# 3. If reg already exists (as a valid symlink).
-TEST_NAME="${TEST_NAME_BASE}-alt-exists2"
-make_rnd_suite
-ALT_RUN_DIR="${PWD}/alt"
-TDIR=$(mktemp -d)
-mkdir -p "$(dirname "${RND_SUITE_RUNDIR}")"
-ln -s "${TDIR}" "${RND_SUITE_RUNDIR}"
-run_fail "${TEST_NAME}" \
-    cylc register --run-dir="${ALT_RUN_DIR}" "${RND_SUITE_NAME}" "${RND_SUITE_SOURCE}"
-contains_ok "${TEST_NAME}.stderr" <<__OUT__
-SuiteServiceFileError: Symlink '${RND_SUITE_RUNDIR}' already points to ${TDIR}.
-__OUT__
-purge_rnd_suite
-rm -rf "${TDIR}"
-
 exit

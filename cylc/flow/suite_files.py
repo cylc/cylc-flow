@@ -472,7 +472,6 @@ def register(reg=None, source=None, redirect=False):
         reg (str): suite name, default basename($PWD).
         source (str): directory location of flow.cylc file, default $PWD.
         redirect (bool): allow reuse of existing name and run directory.
-        rundir (str): for overriding the default cylc-run directory.
 
     Return:
         str: The registered suite name (which may be computed here).
