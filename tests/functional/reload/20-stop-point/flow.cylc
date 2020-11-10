@@ -1,25 +1,27 @@
 #!Jinja2
+#
 [scheduler]
    [[events]]
        abort on stalled = True
+
 [scheduling]
     cycling mode = integer
     initial cycle point = 1
     final cycle point = 5
     [[graph]]
-        R1="set-stop-point => reload => t1"
-        P1="t1[-P1] => t1"
+        R1 = "set-stop-point => reload => t1"
+        P1 = "t1[-P1] => t1"
 
 [runtime]
     [[set-stop-point]]
-        script=cylc stop "${CYLC_SUITE_NAME}" '3'
+        script = cylc stop "${CYLC_SUITE_NAME}" '3'
     [[reload]]
-        script="""
-wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
-cylc reload "${CYLC_SUITE_NAME}"
-cylc__job__poll_grep_suite_log -F 'Reload completed'
-"""
+        script = """
+            wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
+            cylc reload "${CYLC_SUITE_NAME}"
+            cylc__job__poll_grep_suite_log -F 'Reload completed'
+        """
         [[[job]]]
             execution time limit = PT1M
     [[t1]]
-        script=true
+        script = true
