@@ -19,7 +19,7 @@
 # https://github.com/cylc/cylc-flow/issues/2964
 export REQUIRE_PLATFORM='batch:at'
 . "$(dirname "$0")/test_header"
-set_test_number 4
+set_test_number 3
 
 create_test_global_config "
 [platforms]
