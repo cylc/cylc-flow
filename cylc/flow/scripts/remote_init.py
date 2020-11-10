@@ -65,10 +65,8 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(parser, options, install_target, rund):
-    remote_init(install_target, rund, indirect_comm=options.indirect_comm)
-    options, (install_target, rund, *
-              dirs_to_be_symlinked) = parser.parse_args()
+def main(parser, options, install_target, rund, *dirs_to_be_symlinked):
+
     remote_init(
         install_target,
         rund,
