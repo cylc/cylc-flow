@@ -1381,7 +1381,7 @@ def upg(cfg, descr):
     for mail_setting in ['to', 'from', 'smtp', 'footer']:
         u.deprecate(
             '8.0.0',
-            ['cylc', f'mail {mail_setting}'],
+            ['cylc', 'events', f'mail {mail_setting}'],
             ['cylc', 'mail', mail_setting]
         )
     # Task mail settings in [runtime][TASK]
