@@ -75,6 +75,8 @@ SUITE_LOG_DIR="$( cylc cat-log -m p "${SUITE_NAME}" \
 cylc stop --max-polls=10 --interval=2 --kill "${SUITE_NAME}"
 
 # compare to expectation
+# Note: Runahead pool has no members on start-up, which means,
+# newestRunaheadCyclePoint is expected to be blank.
 cat > expected << __HERE__
 {
     "workflows": [
@@ -90,7 +92,7 @@ cat > expected << __HERE__
                 "title": "foo",
                 "description": "bar"
             },
-            "newestRunaheadCyclePoint": "1",
+            "newestRunaheadCyclePoint": "",
             "newestCyclePoint": "1",
             "oldestCyclePoint": "1",
             "reloaded": false,

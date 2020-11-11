@@ -144,7 +144,10 @@ class TaskPool:
 
     ERR_PREFIX_TASKID_MATCH = "No matching tasks found: "
 
-    def __init__(self, config, suite_db_mgr, task_events_mgr, job_pool):
+    def __init__(
+            self, config, suite_db_mgr, task_events_mgr,
+            job_pool, data_store_mgr
+    ):
         self.config = config
         self.stop_point = config.final_point
         self.suite_db_mgr = suite_db_mgr
@@ -152,6 +155,7 @@ class TaskPool:
         # TODO this is ugly:
         self.task_events_mgr.spawn_func = self.spawn_on_output
         self.job_pool = job_pool
+        self.data_store_mgr = data_store_mgr
         self.flow_label_mgr = FlowLabelMgr()
 
         self.do_reload = False
@@ -228,6 +232,7 @@ class TaskPool:
         self.runahead_pool[itask.point][itask.identity] = itask
         self.rhpool_changed = True
 
+        # add row to "task_states" table
         if is_new:
             # add row to "task_states" table:
             self.suite_db_mgr.put_insert_task_states(itask, {
@@ -540,6 +545,15 @@ class TaskPool:
         self.pool_changed = True
         self.pool_changes.append(itask)
         LOG.debug("[%s] -released to the task pool", itask)
+
+        # The following two could be called in separate places,
+        # so haven't merged/removed-one.
+        # Register pool node reference data-store with ID_DELIM format
+        self.data_store_mgr.add_pool_node(itask.tdef.name, itask.point)
+        # Create new data-store n-distance graph window about this task
+        self.data_store_mgr.increment_graph_window(
+            itask.tdef.name, itask.point, itask.flow_label)
+
         del self.runahead_pool[itask.point][itask.identity]
         if not self.runahead_pool[itask.point]:
             del self.runahead_pool[itask.point]
@@ -599,8 +613,11 @@ class TaskPool:
                 del self.runahead_pool[itask.point]
             self.rhpool_changed = True
 
+        # Notify the data-store manager of their removal
+        # (the manager uses window boundary tracking for pruning).
+        self.data_store_mgr.remove_pool_node(itask.tdef.name, itask.point)
         # Event-driven final update of task_states table.
-        # TODO: same for datastore (still updated by iterating the task pool)
+        # TODO: same for datastore (still updated by scheduler loop)
         self.suite_db_mgr.put_update_task_state(itask)
         LOG.debug("[%s] -%s", itask, msg)
         del itask
@@ -1205,19 +1222,10 @@ class TaskPool:
             taskdef,
             point, flow_label,
             submit_num=submit_num, reflow=reflow)
-        if parent_id is not None:
-            msg = "(" + parent_id + ") spawned %s.%s flow(%s)"
-        else:
-            msg = "(no parent) spawned %s.%s %s"
-        if flow_label is None:
-            # Manual trigger: new flow
-            msg += " (new flow)"
-
         if self.hold_point and itask.point > self.hold_point:
             # Hold if beyond the suite hold point
-            LOG.info(
-                "[%s] -holding (beyond suite hold point) %s",
-                itask, self.hold_point)
+            LOG.info("[%s] -holding (beyond suite hold point) %s",
+                     itask, self.hold_point)
             itask.state.reset(is_held=True)
         if self.stop_point and itask.point <= self.stop_point:
             future_trigger_overrun = False
@@ -1238,6 +1246,14 @@ class TaskPool:
         # TODO: consider doing this only for tasks with absolute prerequisites.
         if itask.state.prerequisites_are_not_all_satisfied():
             itask.state.satisfy_me(self.abs_outputs_done)
+
+        if parent_id is not None:
+            msg = "(" + parent_id + ") spawned %s.%s flow(%s)"
+        else:
+            msg = "(no parent) spawned %s.%s %s"
+        if flow_label is None:
+            # Manual trigger: new flow
+            msg += " (new flow)"
 
         self.add_to_runahead_pool(itask)
         LOG.info(msg, name, point, flow_label)

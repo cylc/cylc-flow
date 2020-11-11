@@ -56,6 +56,11 @@ compatibility, the `cylc run` command will automatically symlink an existing
 
 ### Enhancements
 
+[#3811](https://github.com/cylc/cylc-flow/pull/3811) - Move from cycle based
+to `n` distance dependency graph window node generation and pruning of the
+data-store (API/visual backing data). Ability to modify distance of live
+workflow via API, with default of `n=1`.
+
 [#3899](https://github.com/cylc/cylc-flow/pull/3899) - CLI changes
 * Commands no longer re-invoke (so you get `cylc run` not `cylc-run`).
 * Improve CLI descriptions and help.

@@ -34,6 +34,9 @@ poll_grep_suite_log -F "spawned bar.${NEXT1}"
 sleep 10
 cylc dump -t "${SUITE_NAME}" | awk '{print $1 $2 $3}' >'log'
 cmp_ok 'log' - <<__END__
+bar,$YYYY,running,
+bar,$NEXT1,waiting,
+foo,$YYYY,running,
 foo,$NEXT1,waiting,
 __END__
 
