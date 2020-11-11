@@ -34,7 +34,7 @@ create_test_global_config "" "
         log = \$TMPDIR/\$USER
         share/cycle = \$TMPDIR/\$USER/cylctb_tmp_share_dir
         work = \$TMPDIR/\$USER
-    [[$CYLC_TEST_PLATFORM]]
+    [[$CYLC_TEST_INSTALL_TARGET]]
         run = \$TMPDIR/\$USER/ctb_tmp_run_dir
         share = \$TMPDIR/\$USER
         log = \$TMPDIR/\$USER
