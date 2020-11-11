@@ -350,7 +350,7 @@ def get_flow_file(reg, suite_owner=None):
 def get_suite_source_dir(reg, suite_owner=None):
     """Return the source directory path of a suite.
 
-    Will register un-registered suites located in the cylc run dir.
+    Will install un-installed suites located in the cylc run dir.
     """
     srv_d = get_suite_srv_dir(reg, suite_owner)
     fname = os.path.join(srv_d, SuiteFiles.Service.SOURCE)
@@ -359,8 +359,8 @@ def get_suite_source_dir(reg, suite_owner=None):
     except OSError:
         suite_d = os.path.dirname(srv_d)
         if os.path.exists(suite_d) and not is_remote_user(suite_owner):
-            # suite exists but is not yet registered
-            register(reg=reg, source=suite_d)
+            # suite exists but is not yet installed
+            install(reg=reg, source=suite_d)
             return suite_d
         raise SuiteServiceFileError(f"Suite not found: {reg}")
     else:
@@ -369,7 +369,7 @@ def get_suite_source_dir(reg, suite_owner=None):
         flow_file_path = os.path.join(source, SuiteFiles.FLOW_FILE)
         if not os.path.exists(flow_file_path):
             # suite exists but is probably using deprecated suite.rc
-            register(reg=reg, source=source)
+            install(reg=reg, source=source)
         return source
 
 
@@ -428,7 +428,7 @@ async def load_contact_file_async(reg, run_dir=None):
 def parse_suite_arg(options, arg):
     """From CLI arg "SUITE", return suite name and flow.cylc path.
 
-    If arg is a registered suite, suite name is the registered name.
+    If arg is a installed suite, suite name is the installed name.
     If arg is a directory, suite name is the base name of the
     directory.
     If arg is a file, suite name is the base name of its container
@@ -460,8 +460,8 @@ def parse_suite_arg(options, arg):
     return name, path
 
 
-def register(reg=None, source=None, redirect=False):
-    """Register a suite, or renew its registration.
+def install(reg=None, source=None, redirect=False, rundir=None):
+    """Install a suite, or renew its installation.
 
     Create suite service directory and symlink to suite source location.
 
@@ -471,14 +471,14 @@ def register(reg=None, source=None, redirect=False):
         redirect (bool): allow reuse of existing name and run directory.
 
     Return:
-        str: The registered suite name (which may be computed here).
+        str: The installed suite name (which may be computed here).
 
     Raise:
         SuiteServiceFileError:
-            - No flow.cylc file found in source location.
-            - Illegal name (can look like a relative path, but not absolute).
-            - Another suite already has this name (unless --redirect).
-            - Trying to register a suite nested inside of another.
+           - No flow.cylc file found in source location.
+           - Illegal name (can look like a relative path, but not absolute).
+           - Another suite already has this name (unless --redirect).
+           - Trying to install a workflow that is nested inside of another.
     """
     if reg is None:
         reg = os.path.basename(os.getcwd())
@@ -546,7 +546,7 @@ def register(reg=None, source=None, redirect=False):
             source_str = source
         os.symlink(source_str, target)
 
-    print(f'REGISTERED {reg} -> {source}')
+    print(f'INSTALLED {reg} -> {source}')
     return reg
 
 
@@ -867,7 +867,7 @@ def _validate_reg(reg):
 
 
 def check_nested_run_dirs(reg):
-    """Disallow nested run dirs e.g. trying to register foo/bar where foo is
+    """Disallow nested run dirs e.g. trying to install foo/bar where foo is
     already a valid suite directory.
 
     Args:
@@ -880,7 +880,7 @@ def check_nested_run_dirs(reg):
                 depth)
     """
     exc_msg = (
-        'Nested run directories not allowed - cannot register suite name '
+        'Nested run directories not allowed - cannot install suite name '
         '"%s" as "%s" is already a valid run directory.')
 
     def _check_child_dirs(path, depth_count=1):

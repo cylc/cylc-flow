@@ -231,7 +231,7 @@ def test_register(mocked_check_nested_run_dirs,
             mocked_readlink.side_effect = lambda x: readlink
 
         if e_expected is None:
-            reg = suite_files.register(reg, source, redirect)
+            reg = suite_files.install(reg, source, redirect)
             assert reg == expected
             if mocked_symlink.call_count > 0:
                 # first argument, of the first call
@@ -239,7 +239,7 @@ def test_register(mocked_check_nested_run_dirs,
                 assert arg0 == expected_symlink
         else:
             with pytest.raises(e_expected) as exc:
-                suite_files.register(reg, source, redirect)
+                suite_files.install(reg, source, redirect)
             if e_message is not None:
                 assert e_message in str(exc.value)
 
@@ -322,10 +322,16 @@ def test_nested_run_dirs_raise_error(direction, monkeypatch):
         for path in ('a/a/a', 'a/b'):
             suite_files.check_nested_run_dirs(path)
         # Run dir nested below - bad:
+
         for path in ('a', 'a/a', 'a/c'):
             with pytest.raises(WorkflowFilesError) as exc:
                 check_nested_run_dirs(path)
             assert 'Nested run directories not allowed' in str(exc.value)
+        for func in (suite_files.check_nested_run_dirs, suite_files.install):
+            for path in ('a', 'a/a', 'a/c'):
+                with pytest.raises(SuiteServiceFileError) as exc:
+                    func(path)
+                assert 'Nested run directories not allowed' in str(exc.value)
         # Run dir nested below max scan depth - not ideal but passes:
         suite_files.check_nested_run_dirs('a/d')
 

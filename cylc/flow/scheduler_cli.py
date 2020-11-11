@@ -52,14 +52,14 @@ state, see 'cylc restart --help'.
 
 The scheduler will run as a daemon unless you specify --no-detach.
 
-If the suite is not already registered (by "cylc register" or a previous run)
-it will be registered on the fly before start up.
+If the suite is not already installed (by "cylc install" or a previous run)
+it will be installed on the fly before start up.
 
 Examples:
-    # Run the suite registered with name REG.
+    # Run the suite installed with name REG.
     $ cylc run REG
 
-    # Register $PWD/flow.cylc as $(basename $PWD) and run it.
+    # Install $PWD/flow.cylc as $(basename $PWD) and run it.
     # Note REG must be given explicitly if START_POINT is on the command line.
     $ cylc run
 
@@ -261,10 +261,10 @@ RestartOptions = Options(
     get_option_parser(is_restart=True, add_std_opts=True), DEFAULT_OPTS)
 
 
-def _auto_register():
-    """Register a suite installed in the cylc-run directory."""
+def _auto_install():
+    """Install a suite installed in the cylc-run directory."""
     try:
-        reg = suite_files.register()
+        reg = suite_files.install()
     except SuiteServiceFileError as exc:
         sys.exit(exc)
     # Replace this process with "cylc run REG ..." for 'ps -f'.
@@ -366,8 +366,8 @@ def scheduler_cli(parser, options, args, is_restart=False):
     sys.exit(ret)
 
 
-def _check_registration(reg):
-    """Ensure the flow is registered."""
+def _check_installation(reg):
+    """Ensure the flow is installed."""
     suite_run_dir = get_suite_run_dir(reg)
     if not os.path.exists(suite_run_dir):
         sys.stderr.write(f'suite service directory not found '
@@ -436,7 +436,7 @@ def restart(parser, options, *args):
 def run(parser, options, *args):
     """Implement cylc run."""
     if not args:
-        _auto_register()
+        _auto_install()
     if options.startcp:
         options.warm = True
     if len(args) >= 2:
