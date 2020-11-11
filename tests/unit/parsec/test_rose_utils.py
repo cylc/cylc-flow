@@ -72,13 +72,13 @@ def rose_config_template(tmp_path, scope='module'):
     'override, section, exp_ANOTHER_JINJA2_ENV, exp_JINJA2_VAR',
     [
         (None, 'jinja2', 'Defined in config', '64'),
+        (None, 'empy', 'Defined in config', '64'),
         ('environment', 'jinja2', 'Optional config picked from env var', '42'),
         ('CLI', 'jinja2', 'Optional config picked from CLI', '99'),
+        ('environment', 'empy', 'Optional config picked from env var', '42'),
+        ('CLI', 'empy', 'Optional config picked from CLI', '99'),
         ('override', 'jinja2', 'Variable overridden', '99'),
-        # (None, 'empy', 'Defined in config', '64'),
-        # ('environment', 'empy', 'Optional config picked from env var', '42'),
-        # ('CLI', 'empy', 'Optional config picked from CLI', '99'),
-        # ('override', 'empy', 'Variable overridden', '99')
+        ('override', 'empy', 'Variable overridden', '99')
     ]
 )
 def test_get_jinja2_basic(
@@ -100,17 +100,26 @@ def test_get_jinja2_basic(
     options = None
     if override == 'environment':
         os.environ['ROSE_SUITE_OPT_CONF_KEYS'] = "gravy"
-    elif override == 'CLI':
+    else:
+        # Prevent externally set environment var breaking tests.
+        os.environ['ROSE_SUITE_OPT_CONF_KEYS'] = ""
+    if override == 'CLI':
         options = SimpleNamespace()
         options.opt_conf_keys = ["chips"]
-    elif override == 'override':
+    if override == 'override':
         options = SimpleNamespace()
         options.opt_conf_keys = ["chips"]
         options.defines = [
             f"[{section}:suite.rc]Another_Jinja2_var=Variable overridden"
         ]
 
-    assert get_rose_vars(rose_config_template(section), options)[section] == {
+    result = get_rose_vars(
+        rose_config_template(section), options
+    )[f"{section}:suite.rc"]
+
+    expected = {
         'Another_Jinja2_var': f'{exp_ANOTHER_JINJA2_ENV}',
         'JINJA2_VAR': f'{exp_JINJA2_VAR}'
     }
+
+    assert result == expected

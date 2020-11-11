@@ -34,8 +34,9 @@ import os
 import sys
 import re
 
-from pathlib import Path
 from ast import literal_eval
+from copy import copy
+from pathlib import Path
 
 from cylc.flow import LOG
 from cylc.flow.parsec.exceptions import ParsecError, FileParseError
@@ -234,9 +235,6 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
 
     # Load Rose Vars, if a ``rose-suite.conf`` file is present.
     rose_vars = get_rose_vars(Path(fpath).parent)
-    if rose_vars is not None:
-        for key, value in rose_vars.items():
-            template_vars[key] = literal_eval(value)
 
     if viewcfg:
         if not viewcfg['empy']:
@@ -257,23 +255,31 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
     if do_empy:
         if flines and re.match(r'^#![Ee]m[Pp]y\s*', flines[0]):
             LOG.debug('Processing with EmPy')
+            tvars = copy(template_vars)
+            if rose_vars['empy:suite.rc'] is not None:
+                for key, value in rose_vars['empy:suite.rc'].items():
+                    tvars[key] = literal_eval(value)
             try:
                 from cylc.flow.parsec.empysupport import empyprocess
             except (ImportError, ModuleNotFoundError):
                 raise ParsecError('EmPy Python package must be installed '
                                   'to process file: ' + fpath)
-            flines = empyprocess(flines, fdir, template_vars)
+            flines = empyprocess(flines, fdir, tvars)
 
     # process with Jinja2
     if do_jinja2:
         if flines and re.match(r'^#![jJ]inja2\s*', flines[0]):
             LOG.debug('Processing with Jinja2')
+            tvars = copy(template_vars)
+            if rose_vars['jinja2:suite.rc'] is not None:
+                for key, value in rose_vars['jinja2:suite.rc'].items():
+                    tvars[key] = literal_eval(value)
             try:
                 from cylc.flow.parsec.jinja2support import jinja2process
             except (ImportError, ModuleNotFoundError):
                 raise ParsecError('Jinja2 Python package must be installed '
                                   'to process file: ' + fpath)
-            flines = jinja2process(flines, fdir, template_vars)
+            flines = jinja2process(flines, fdir, tvars)
 
     # concatenate continuation lines
     if do_contin:

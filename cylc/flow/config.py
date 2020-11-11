@@ -227,7 +227,7 @@ class SuiteConfig:
         self.pcfg = RawSuiteConfig(
             fpath,
             output_fname,
-            copy(template_vars)
+            template_vars
         )
         self.mem_log("config.py: after RawSuiteConfig init")
         self.mem_log("config.py: before get(sparse=True")

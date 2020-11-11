@@ -9,15 +9,13 @@
     initial cycle point = {{ICP}}
     final cycle point = {{FCP}}
     cycling mode = integer
-    [[dependencies]]
-        [[[P1]]]
-            {% for member in MEMBERS %}
-                graph = {{TASK1}} => {{TASK2}}_{{member}} => {{TASK3}}
-            {% endfor %}
-            {% for key, value in SAMUELJOHNSON.items() %}
-                graph = {{TASK3}} => {{value}}_auf_deutsch_ist_{{key}} => fin
-            {% endfor %}
-            
+    [[graph]]
+{% for member in MEMBERS %}
+        P1 = {{TASK1}} => {{TASK2}}_{{member}} => {{TASK3}}
+{% endfor %}
+{% for key, value in SAMUELJOHNSON.items() %}
+        P1 = {{TASK3}} => {{value}}_auf_deutsch_ist_{{key}} => fin
+{% endfor %}
 
 [runtime]
     [[root]]
@@ -25,15 +23,14 @@
 
     [[{{ TASK1 }}]]
 
-    {% for member in MEMBERS %}
+{% for member in MEMBERS %}
     [[{{ TASK2 }}_{{member}}]]
-    {% endfor %}
+{% endfor %}
 
     [[{{ TASK3 }}]]
 
-    {% for key, value in SAMUELJOHNSON.items() %}
+{% for key, value in SAMUELJOHNSON.items() %}
     [[{{value}}_auf_deutsch_ist_{{key}}]]
-    {% endfor %}
-
+{% endfor %}
 
     [[fin]]

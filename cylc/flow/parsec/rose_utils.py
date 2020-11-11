@@ -41,8 +41,10 @@ def get_rose_vars(dir_=None, opts=None):
         E.g.
             {
                 'env': {'MYVAR': 42},
-                'empy': None,
-                'jinja2': {'myJinja2Var': {'yes': 'it is a dictionary!'}},
+                'empy:suite.rc': None,
+                'jinja2:suite.rc': {
+                    'myJinja2Var': {'yes': 'it is a dictionary!'}
+                },
                 'fileinstall': {} # TODO - update this once implemented.
             }
 
@@ -55,8 +57,8 @@ def get_rose_vars(dir_=None, opts=None):
     """
     config = {
         'env': None,
-        'empy': None,
-        'jinja2': None,
+        'empy:suite.rc': None,
+        'jinja2:suite.rc': None,
         'fileinstall': None
     }
     # Return None if dir_ does not exist
@@ -94,12 +96,13 @@ def get_rose_vars(dir_=None, opts=None):
         defines=redefinitions
     )
 
-    # Get the jinja2 section of the config
-    if 'jinja2:suite.rc' in config_tree.node.value:
-        config['jinja2'] = dict(
-            [
-                (item[0][1], item[1].value) for
-                item in config_tree.node.value['jinja2:suite.rc'].walk()
-            ]
-        )
+    # For each of the template language sections...
+    for section in ['jinja2:suite.rc', 'empy:suite.rc']:
+        if section in config_tree.node.value:
+            config[section] = dict(
+                [
+                    (item[0][1], item[1].value) for
+                    item in config_tree.node.value[section].walk()
+                ]
+            )
     return config
