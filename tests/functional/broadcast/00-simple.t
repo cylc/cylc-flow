@@ -25,7 +25,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 # Debug mode not needed here (and set-x w/ XTRACEFD broken some bash versions)
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --no-detach --reference-test "${SUITE_NAME}"
-sort "${SUITE_RUN_DIR}/share/broadcast.log" >'broadcast.log.sorted'
+poll sort "${SUITE_RUN_DIR}/share/broadcast.log" >'broadcast.log.sorted'
 cmp_ok 'broadcast.ref' 'broadcast.log.sorted'
 
 DB_FILE="${SUITE_RUN_DIR}/log/db"
