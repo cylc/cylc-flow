@@ -1,23 +1,25 @@
 #!Jinja2
-[cylc]
+
+[scheduler]
    [[reference test]]
        expected task failures = t1.1
+
 [scheduling]
     [[graph]]
-        R1=t1:start=>stop
+        R1 = t1:start=>stop
+
 [runtime]
     [[t1]]
-        script=sleep 120
-        platform = pbs-test-platform
+        script = sleep 120
+{% if "CYLC_TEST_PLATFORM" in environ and environ["CYLC_TEST_PLATFORM"] %}
+        platform == {{ environ['CYLC_TEST_PLATFORM'] }}
+{% endif %}
         [[[job]]]
-            execution time limit=PT2M
+            execution time limit = PT2M
         [[[directives]]]
             -l select=1:ncpus=1:mem=15mb
-{% if "CYLC_TEST_BATCH_SITE_DIRECTIVES" in environ and environ["CYLC_TEST_BATCH_SITE_DIRECTIVES"] %}
-            {{environ["CYLC_TEST_BATCH_SITE_DIRECTIVES"]}}
-{% endif %}
     [[stop]]
         script="""
-cylc kill "$CYLC_SUITE_NAME" 't1'
-cylc stop "$CYLC_SUITE_NAME"
-"""
+            cylc kill "$CYLC_SUITE_NAME" 't1'
+            cylc stop "$CYLC_SUITE_NAME"
+        """

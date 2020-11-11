@@ -29,6 +29,6 @@ TEST_NAME=${TEST_NAME_BASE}-cli-template
 run_ok "${TEST_NAME}" cylc suite-state "${SUITE_NAME}" -p 20100101T0000Z \
         --message=hello --task=t1 --max-polls=1
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 #-------------------------------------------------------------------------------
 exit 0

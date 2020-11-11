@@ -16,9 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test "cylc cat-log" with a custom remote tail command.
-export CYLC_TEST_IS_GENERIC=false
+export REQUIRE_PLATFORM='loc:remote comms:tcp'
 . "$(dirname "$0")/test_header"
-require_remote_platform
 #-------------------------------------------------------------------------------
 set_test_number 4
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
@@ -42,7 +41,7 @@ $SCP "${PWD}/bin/my-tailer.sh" \
 # Run detached.
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-poll_grep_suite_log -F '[foo.1] status=submitted: (received)started'
+poll_grep_suite_log -F '[foo.1] status=submitted'
 # cylc cat-log -m 't' tail-follows a file, so needs to be killed.
 # Send interrupt signal to tail command after 15 seconds.
 TEST_NAME="${TEST_NAME_BASE}-cat-log"
@@ -54,7 +53,6 @@ grep_ok "HELLO from foo 1" "${TEST_NAME}.out"
 TEST_NAME=${TEST_NAME_BASE}-stop
 run_ok "${TEST_NAME}" cylc stop --kill --max-polls=20 --interval=1 "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
 $SSH -n "${CYLC_TEST_HOST}" "rm -rf cylc-run/.bin/"
-purge_suite "${SUITE_NAME}"
+purge
 exit

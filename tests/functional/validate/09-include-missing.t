@@ -26,4 +26,5 @@ cmp_ok "${TEST_NAME_BASE}.stderr" <<__ERR__
 IncludeFileNotFoundError: bar.cylc via foo.cylc from $PWD/flow.cylc
 __ERR__
 #-------------------------------------------------------------------------------
-exit
+rm flow.cylc
+rm foo.cylc

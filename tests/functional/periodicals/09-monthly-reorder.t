@@ -34,4 +34,4 @@ TEST_NAME="${TEST_NAME_BASE}-run"
 perl -pi -e 'undef $/; s/( *\[\[\[00.*marker1)\n( *\[\[\[Monthly.*marker2)/${2}\n${1}/smg' "${TEST_DIR}/${SUITE_NAME}/flow.cylc"
 suite_run_ok "${TEST_NAME}" cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge

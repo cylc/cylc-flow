@@ -27,10 +27,10 @@ def test_run_cmd_stdin_str():
         stdin_str='1foo2',
         capture_process=True
     )
-    assert proc.communicate() == (
+    assert [s.strip() for s in proc.communicate()] == [
         b'1bar2',
         b''
-    )
+    ]
 
 
 def test_run_cmd_stdin_file(tmp_path):
@@ -44,7 +44,7 @@ def test_run_cmd_stdin_file(tmp_path):
         stdin=tmp_file,
         capture_process=True
     )
-    assert proc.communicate() == (
+    assert [s.strip() for s in proc.communicate()] == [
         b'1bar2',
         b''
-    )
+    ]

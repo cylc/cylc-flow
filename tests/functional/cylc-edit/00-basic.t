@@ -33,5 +33,5 @@ PATH=$PWD/bin:$PATH run_ok "${TEST_NAME}" cylc edit -i "${SUITE_NAME}"
 TEST_NAME="${TEST_NAME_BASE}-validate-after"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 exit

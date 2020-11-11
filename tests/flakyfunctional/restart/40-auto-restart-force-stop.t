@@ -19,7 +19,7 @@
 set_test_number 4
 
 BASE_GLOBAL_CONFIG="
-[cylc]
+[scheduler]
     [[main loop]]
         plugins = health check, auto restart
         [[[auto restart]]]
@@ -51,7 +51,7 @@ create_test_global_config '' "
 ${BASE_GLOBAL_CONFIG}
 [suite servers]
     run hosts = localhost
-    condemned hosts = $(get_fqdn_by_host)!
+    condemned hosts = $(localhost_fqdn)!
 "
 
 FILE=$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)
@@ -62,5 +62,5 @@ log_scan "${TEST_NAME_BASE}-no-auto-restart" "${FILE}" 20 1 \
     'Suite shutting down - REQUEST(NOW)'
 
 cylc stop --kill --max-polls=10 --interval=2 "${SUITE_NAME}" 2>'/dev/null'
-purge_suite "${SUITE_NAME}"
+purge
 exit

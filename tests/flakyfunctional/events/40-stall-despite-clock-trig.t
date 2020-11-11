@@ -21,14 +21,11 @@ set_test_number 3
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-# Saw evidence in a failed test that timeout 60 isn't long enough under load?:
-run_fail "${TEST_NAME_BASE}-run" \
-    timeout 120 cylc run --debug --no-detach "${SUITE_NAME}"
-sed -n 's/^.* WARNING - //p' "${SUITE_RUN_DIR}/log/suite/log" \
-    >"${SUITE_RUN_DIR}/log/suite/log.edited"
-contains_ok "${SUITE_RUN_DIR}/log/suite/log.edited" <<__OUT__
-suite stalled
-__OUT__
 
-purge_suite "${SUITE_NAME}"
+TEST_NAME="${TEST_NAME_BASE}-run"
+suite_run_fail "${TEST_NAME}" cylc run --debug --no-detach "${SUITE_NAME}"
+
+grep_ok "suite stalled" "${TEST_NAME}.stderr" 
+
+purge
 exit

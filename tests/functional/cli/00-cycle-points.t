@@ -38,4 +38,4 @@ TEST_NAME=${TEST_NAME_BASE}-run-fail
 # This should fail as the final cycle point  is < the initial one.
 suite_run_fail "${TEST_NAME}" cylc run --until=2015-03 --debug --no-detach "${SUITE_NAME}" 2015-04
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge

@@ -21,7 +21,7 @@
 set_test_number 3
 
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
-[cylc]
+[scheduler]
     UTC mode = True
 [scheduling]
     [[graph]]
@@ -37,5 +37,5 @@ contains_ok "${TEST_NAME_BASE}.stdout" <<__OUT__
 __OUT__
 cmp_ok "${TEST_NAME_BASE}.stderr" <'/dev/null'
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

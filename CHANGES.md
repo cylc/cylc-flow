@@ -11,7 +11,8 @@ Cylc 8.0aX (alpha) releases are not compatible with Cylc 7 or with previous
 8.0aX releases, as the API is still under heavy development.
 
 The Cylc server program and CLI codebase is now a Python 3 package that can be
-installed from PyPI with `pip` (see #2990), and has been renamed to
+installed from PyPI with `pip` (see
+[#2990](https://github.com/cylc/cylc-flow/pull/2990)), and has been renamed to
 `cylc-flow`. The name `cylc` is now used as a native Python package namespace
 to allow other projects to re-use it and extend Cylc with plug-ins.
 
@@ -26,12 +27,19 @@ have been removed, and `cylc graph` is only retained for text output
 used in tests (it will be re-implemented in the new web UI).
 
 The xtrigger examples were moved to a separate `cylc/cylc-xtriggers` project
-(see #3123).
+(see [#3123](https://github.com/cylc/cylc-flow/pull/3123)).
 
 Jinja filters were moved from its `Jinja2Filters` folder to within the `cylc`
 namespace, under `cylc.jinja.filters`.
 
 Cylc Review was also removed in this version.
+
+Cylc 7 suites cannot be restarted in Cylc 8 using `cylc restart`, but they
+can still be run using `cylc run` ([#3863](https://github.com/cylc/cylc-flow/pull/3863)).
+
+Named checkpoints have been removed ([#3906](https://github.com/cylc/cylc-flow/pull/3906))
+due to being a seldom-used feature. Workflows can still be restarted from the
+last run, or reflow can be used to achieve the same result.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0a3 (2020-08?)__
@@ -48,6 +56,23 @@ compatibility, the `cylc run` command will automatically symlink an existing
 
 ### Enhancements
 
+[#3811](https://github.com/cylc/cylc-flow/pull/3811) - Move from cycle based
+to `n` distance dependency graph window node generation and pruning of the
+data-store (API/visual backing data). Ability to modify distance of live
+workflow via API, with default of `n=1`.
+
+[#3899](https://github.com/cylc/cylc-flow/pull/3899) - CLI changes
+* Commands no longer re-invoke (so you get `cylc run` not `cylc-run`).
+* Improve CLI descriptions and help.
+* Internal-only commands now hidden from help.
+* New entry point for defining Cylc sub-commands.
+* remove `cylc check-software` (use standard tools like pipdeptree)
+* remove `cylc nudge` (no longer needed)
+
+[#3856](https://github.com/cylc/cylc-flow/pull/3856) - fail the GraphQL query
+with a helpful message if the variables defined do not match the expected
+values.
+
 [#3853](https://github.com/cylc/cylc-flow/pull/3853) - Update protobuf and
 pyzmq.
 
@@ -58,7 +83,8 @@ pyzmq.
 command name to `cylc set-outputs` to better reflect its role in Cylc 8.
 
 [#3796](https://github.com/cylc/cylc-flow/pull/3796) - Remote installation is
-now on a per install target rather than a per platform basis. app/ bin/ etc/ lib/ directories are now installed on the target, configurable in flow.cylc.
+now on a per install target rather than a per platform basis. `app/`, `bin/`,
+`etc/`, `lib/` directories are now installed on the target, configurable in flow.cylc.
 
 [#3724](https://github.com/cylc/cylc-flow/pull/3724) - Re-implemented
 the `cylc scan` command line interface and added a Python API for accessing
@@ -86,7 +112,12 @@ hierarchy and ability to set site config directory.
 [#3848](https://github.com/cylc/cylc-flow/pull/3848) - Deprecated
 `[scheduling]max active cycle points` in favour of `[scheduling]runahead limit`.
 
+[#3883](https://github.com/cylc/cylc-flow/pull/3883) - Added a new workflow
+config option `[scheduling]stop after cycle point`.
+
 ### Fixes
+
+[#3917](https://github.com/cylc/cylc-flow/pull/3917) - Fix a bug that caused one of the hostname resolution tests to fail in certain environments.
 
 [#3879](https://github.com/cylc/cylc-flow/pull/3879) - Removed Google
 Groups e-mail from pip packaging metadata. Users browsing PYPI will have

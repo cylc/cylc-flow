@@ -24,5 +24,5 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run --hold --no-detach "${SUITE_NAME}"
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

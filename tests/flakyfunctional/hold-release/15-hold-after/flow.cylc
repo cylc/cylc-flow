@@ -3,7 +3,7 @@
 
     description = """One task that holds future cycles after a given cycle."""
 
-[cylc]
+[scheduler]
     UTC mode = True
     [[events]]
         abort on stalled = True

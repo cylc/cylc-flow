@@ -23,7 +23,7 @@ set_test_number 3
 OPT_SET=
 if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
     create_test_global_config "" "
-[cylc]
+[scheduler]
     [[main loop]]
         [[[health check]]]
             interval = PT10S"
@@ -41,5 +41,5 @@ LOGD="$RUN_DIR/${SUITE_NAME}/log"
 grep_ok \
     "${SRVD}/contact: contact file corrupted/modified and may be left" \
     "${LOGD}/suite/log"
-purge_suite "${SUITE_NAME}"
+purge
 exit

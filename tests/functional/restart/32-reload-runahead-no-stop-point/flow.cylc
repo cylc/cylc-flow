@@ -1,20 +1,22 @@
-[cylc]
+[scheduler]
     cycle point format = %Y
+
 [scheduling]
     initial cycle point = 2018
     runahead limit = P2
     [[graph]]
         P1Y = t1[-P3Y] => t1 => t2 => t3
+
 [runtime]
     [[t1]]
         script = """
-wait
-cylc stop --now "${CYLC_SUITE_NAME}"
-"""
+            wait
+            cylc stop --now "${CYLC_SUITE_NAME}"
+        """
     [[t2]]
         script = """
-wait
-cylc reload "${CYLC_SUITE_NAME}"
-"""
+            wait
+            cylc reload "${CYLC_SUITE_NAME}"
+        """
     [[t3]]
         script = true

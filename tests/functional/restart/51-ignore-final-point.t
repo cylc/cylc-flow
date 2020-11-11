@@ -38,7 +38,7 @@ set_test_number 13
 # Restart, ignore final cycle point
 # Suite runs to final cycle point == 2020
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
-[cylc]
+[scheduler]
     UTC mode=True
     cycle point format = %Y
     [[events]]
@@ -89,5 +89,5 @@ dumpdbtables
 cmp_ok 'fcp.out' <'/dev/null'
 cmp_ok 'taskpool.out' <'/dev/null'
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

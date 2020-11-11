@@ -40,7 +40,7 @@ set_test_number 16
 # Restart, should run to 2021, reset stop point before stop
 # Restart, should run to final cycle point == 2025
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
-[cylc]
+[scheduler]
     UTC mode=True
     cycle point format = %Y
     [[events]]
@@ -112,5 +112,5 @@ dumpdbtables
 cmp_ok 'stopcp.out' <'/dev/null'
 cmp_ok 'taskpool.out' <'/dev/null'
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

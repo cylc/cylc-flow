@@ -18,21 +18,18 @@
 # Parent and child tasks are both valid, before inheritance calculated.
 # Child function not valid after inheritance.
 # Check for task failure at job-submit.
-
-export CYLC_TEST_IS_GENERIC=false
+export REQUIRE_PLATFORM='loc:remote'
 . "$(dirname "$0")/test_header"
-require_remote_platform
+skip_all 'TODO test does not make sense, come back later'
 set_test_number 3
 
 create_test_global_config '' "
 [platforms]
-  [[wibble]]
-    hosts = ${CYLC_TEST_HOST}
+  [[${CYLC_TEST_PLATFORM}]]
     retrieve job logs = True
 "
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-
 
 # Both of these cases should validate ok.
 run_ok "${TEST_NAME_BASE}-validate" \
@@ -48,6 +45,5 @@ suite_run_fail "${TEST_NAME_BASE}-run" \
 grep_ok "SuiteConfigError:.*non-valid-child.1"\
   "${TEST_NAME_BASE}-run.stderr"
 
-purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
+purge
 exit

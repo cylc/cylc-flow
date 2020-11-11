@@ -26,5 +26,5 @@ TEST_NAME=${TEST_NAME_BASE}
 run_fail "${TEST_NAME}" cylc validate -v "${SUITE_NAME}"
 grep_ok 'Illegal graph node: foo\[T\-24\]:succeed' "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 exit

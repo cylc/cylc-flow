@@ -20,7 +20,7 @@
 . "$(dirname "$0")/test_header"
 set_test_number 11
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
-[cylc]
+[scheduler]
     [[events]]
         abort on stalled = True
 [scheduling]
@@ -48,5 +48,5 @@ for FILE in ${FILES}; do
     run_ok "${TEST_NAME_BASE}-log-size" test "$(stat -c'%s' "${FILE}")" -le 2048
 done
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

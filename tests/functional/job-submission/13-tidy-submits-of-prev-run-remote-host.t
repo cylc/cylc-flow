@@ -16,10 +16,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test tidy of submits of previous runs.
-export CYLC_TEST_IS_GENERIC=false
+export REQUIRE_PLATFORM='loc:remote'
 . "$(dirname "$0")/test_header"
-require_remote_platform
 set_test_number 11
+
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate "${SUITE_NAME}" -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}"
@@ -50,6 +50,5 @@ run_fail "not-exists-rlogd2" ${SSH} "${CYLC_TEST_HOST}" test -e "${RLOGD2}"
 exists_ok "${LOGD1}"
 exists_fail "${LOGD2}"
 #-------------------------------------------------------------------------------
-purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
+purge
 exit

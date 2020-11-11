@@ -29,5 +29,5 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 FOO_ACTIVITY_LOG="${SUITE_RUN_DIR}/log/job/1/foo/NN/job-activity.log"
 grep_ok 'OK: command line checks out' "${FOO_ACTIVITY_LOG}"
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

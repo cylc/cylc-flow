@@ -24,7 +24,7 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [meta]
     title = a suite that logs run, reload, and restart configs
     description = the weather is {{WEATHER | default("bad")}}
-[cylc]
+[scheduler]
     [[events]]
         abort on stalled = True
 [scheduling]
@@ -71,5 +71,5 @@ contains_ok 'diff.out' <<'__DIFF__'
 +    description = the weather is good
 __DIFF__
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

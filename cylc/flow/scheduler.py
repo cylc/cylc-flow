@@ -94,7 +94,6 @@ from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_state import (
     TASK_STATUSES_ACTIVE,
     TASK_STATUSES_NEVER_ACTIVE,
-    TASK_STATUSES_SUCCESS,
     TASK_STATUS_FAILED)
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow import __version__ as CYLC_VERSION
@@ -162,7 +161,6 @@ class Scheduler:
         'kill_tasks',
         'force_spawn_children',
         'force_trigger_tasks',
-        'nudge',
         'reload_suite'
     )
 
@@ -187,7 +185,7 @@ class Scheduler:
 
     # configuration
     config: SuiteConfig = None  # flow config
-    cylc_config: DictTree = None  # [cylc] config
+    cylc_config: DictTree = None  # [scheduler] config
     flow_file: str = None
     flow_file_update_time: float = None
 
@@ -287,7 +285,6 @@ class Scheduler:
         * Register.
         * Install authentication files.
         * Build the directory tree.
-        * Upgrade the DB if required.
         * Copy Python files.
 
         """
@@ -417,15 +414,12 @@ class Scheduler:
         """
         self.profiler.log_memory("scheduler.py: start configure")
         if self.is_restart:
-            self.suite_db_mgr.restart_upgrade()
+            self.suite_db_mgr.on_restart()
             # This logic handles lack of initial cycle point in "flow.cylc".
             # Things that can't change on suite reload.
             pri_dao = self.suite_db_mgr.get_pri_dao()
             pri_dao.select_suite_params(self._load_suite_params)
             pri_dao.select_suite_template_vars(self._load_template_vars)
-            # Take checkpoint and commit immediately so that checkpoint can be
-            # copied to the public database.
-            pri_dao.take_checkpoints("restart")
             pri_dao.execute_queued_items()
 
         # Copy local python modules from source to run directory
@@ -452,7 +446,7 @@ class Scheduler:
             # Set suite params that would otherwise be loaded from database:
             self.options.utc_mode = get_utc_mode()
             self.options.cycle_point_tz = (
-                self.config.cfg['cylc']['cycle point time zone'])
+                self.config.cfg['scheduler']['cycle point time zone'])
 
         self.broadcast_mgr.linearized_ancestors.update(
             self.config.get_linearized_ancestors())
@@ -473,7 +467,10 @@ class Scheduler:
             self.config,
             self.suite_db_mgr,
             self.task_events_mgr,
-            self.job_pool)
+            self.job_pool,
+            self.data_store_mgr)
+
+        self.data_store_mgr.initiate_data_model()
 
         self.profiler.log_memory("scheduler.py: before load_tasks")
         if self.is_restart:
@@ -482,8 +479,7 @@ class Scheduler:
                 self.pool.set_stop_task(self.restored_stop_task_id)
         else:
             self.load_tasks_for_run()
-        if self.options.stopcp:
-            self.pool.set_stop_point(get_point(self.options.stopcp))
+        self.process_cylc_stop_point()
         self.profiler.log_memory("scheduler.py: after load_tasks")
 
         self.suite_db_mgr.put_suite_params(self)
@@ -497,9 +493,11 @@ class Scheduler:
         self.already_inactive = False
         key = self.EVENT_INACTIVITY_TIMEOUT
         if self.options.reftest:
-            self.config.cfg['cylc']['events'][f'abort on {key}'] = True
-            if not self.config.cfg['cylc']['events'][key]:
-                self.config.cfg['cylc']['events'][key] = DurationFloat(180)
+            self.config.cfg['scheduler']['events'][f'abort on {key}'] = True
+            if not self.config.cfg['scheduler']['events'][key]:
+                self.config.cfg['scheduler']['events'][key] = DurationFloat(
+                    180
+                )
         if self._get_events_conf(key):
             self.set_suite_inactivity_timer()
 
@@ -530,11 +528,11 @@ class Scheduler:
         if self.options.no_auto_shutdown is not None:
             self.can_auto_stop = not self.options.no_auto_shutdown
         elif (
-                self.config.cfg['cylc']['disable automatic shutdown']
+                self.config.cfg['scheduler']['disable automatic shutdown']
                 is not None
         ):
             self.can_auto_stop = (
-                not self.config.cfg['cylc']['disable automatic shutdown'])
+                not self.config.cfg['scheduler']['disable automatic shutdown'])
 
         self.profiler.log_memory("scheduler.py: end configure")
 
@@ -547,11 +545,11 @@ class Scheduler:
         self.barrier.wait()
         self.port = self.server.port
         self.pub_port = self.publisher.port
+        self.data_store_mgr.set_workflow_ports()
 
     async def log_start(self):
         if self.is_restart:
-            pri_dao = self.suite_db_mgr.get_pri_dao()
-            n_restart = pri_dao.select_checkpoint_id_restart_count()
+            n_restart = self.suite_db_mgr.n_restart
         else:
             n_restart = 0
 
@@ -590,7 +588,6 @@ class Scheduler:
     async def start_scheduler(self):
         """Start the scheduler main loop."""
         try:
-            self.data_store_mgr.initiate_data_model()
             self._configure_contact()
             if self.is_restart:
                 self.restart_remote_init()
@@ -710,14 +707,13 @@ class Scheduler:
             self.config.start_point = TaskID.get_standardised_point(
                 self.options.startcp)
         self.suite_db_mgr.pri_dao.select_broadcast_states(
-            self.broadcast_mgr.load_db_broadcast_states,
-            self.options.checkpoint)
+            self.broadcast_mgr.load_db_broadcast_states)
         self.suite_db_mgr.pri_dao.select_task_job_run_times(
             self._load_task_run_times)
         self.suite_db_mgr.pri_dao.select_task_pool_for_restart(
-            self.pool.load_db_task_pool_for_restart, self.options.checkpoint)
+            self.pool.load_db_task_pool_for_restart)
         self.suite_db_mgr.pri_dao.select_job_pool_for_restart(
-            self.job_pool.insert_db_job, self.options.checkpoint)
+            self.job_pool.insert_db_job)
         self.suite_db_mgr.pri_dao.select_task_action_timers(
             self.pool.load_db_task_action_timers)
         self.suite_db_mgr.pri_dao.select_xtriggers_for_restart(
@@ -972,10 +968,6 @@ class Scheduler:
         """Remove tasks."""
         return self.pool.remove_tasks(items)
 
-    def command_nudge(self):
-        """Cause the task processing loop to be invoked"""
-        self.task_events_mgr.pflag = True
-
     def command_reload_suite(self):
         """Reload suite configuration."""
         LOG.info("Reloading the suite definition.")
@@ -984,7 +976,6 @@ class Scheduler:
         pri_dao = self.suite_db_mgr.get_pri_dao()
         pri_dao.select_suite_params(self._load_suite_params)
 
-        self.suite_db_mgr.checkpoint("reload-init")
         self.load_flow_file(is_reload=True)
         self.broadcast_mgr.linearized_ancestors = (
             self.config.get_linearized_ancestors())
@@ -1096,8 +1087,8 @@ class Scheduler:
             share_dir=self.suite_share_dir,
         )
         self.cylc_config = DictTree(
-            self.config.cfg['cylc'],
-            glbl_cfg().get(['cylc'])
+            self.config.cfg['scheduler'],
+            glbl_cfg().get(['scheduler'])
         )
         self.flow_file_update_time = time()
         # Dump the loaded flow.cylc file for future reference.
@@ -1231,7 +1222,9 @@ class Scheduler:
         try:
             if (
                 conf.run_mode('simulation', 'dummy') and
-                conf.cfg['cylc']['simulation']['disable suite event handlers']
+                conf.cfg['scheduler']['simulation'][
+                    'disable suite event handlers'
+                ]
             ):
                 return
         except KeyError:
@@ -1439,13 +1432,14 @@ class Scheduler:
         """The scheduler main loop."""
         while True:  # MAIN LOOP
             tinit = time()
-            has_reloaded = False
 
             if self.pool.do_reload:
+                # Re-initialise data model on reload
+                self.data_store_mgr.initiate_data_model(reloaded=True)
                 self.pool.reload_taskdefs()
-                self.suite_db_mgr.checkpoint("reload-done")
                 self.is_updated = True
-                has_reloaded = True
+                await self.publisher.publish(
+                    self.data_store_mgr.publish_deltas)
 
             self.process_command_queue()
             self.release_tasks()
@@ -1459,12 +1453,6 @@ class Scheduler:
             self.process_command_queue()
             self.task_events_mgr.process_events(self)
 
-            # Re-initialise data model on reload
-            if has_reloaded:
-                self.data_store_mgr.initiate_data_model(reloaded=True)
-                await self.publisher.publish(
-                    self.data_store_mgr.publish_deltas
-                )
             # Update state summary, database, and uifeed
             self.suite_db_mgr.put_task_event_timers(self.task_events_mgr)
             has_updated = await self.update_data_structure()
@@ -1525,7 +1513,7 @@ class Scheduler:
         updated_nodes = set(updated_tasks).union(
             self.pool.get_pool_change_tasks())
         if (
-                has_updated or
+                updated_nodes or
                 self.data_store_mgr.updates_pending or
                 self.job_pool.updates_pending
         ):
@@ -1587,10 +1575,8 @@ class Scheduler:
             return
         self.is_stalled = self.pool.is_stalled()
         if self.is_stalled:
-            message = 'suite stalled'
-            LOG.warning(message)
-            self.run_event_handlers(self.EVENT_STALLED, message)
-            self.pool.report_stalled_task_deps()
+            self.run_event_handlers(self.EVENT_STALLED, 'suite stalled')
+            self.pool.report_unmet_deps()
             if self._get_events_conf('abort on stalled'):
                 raise SchedulerError('Abort on suite stalled is set')
             # Start suite timeout timer
@@ -1672,6 +1658,9 @@ class Scheduler:
             self.proc_pool.process()
 
         if self.pool is not None:
+            if not self.is_stalled:
+                # (else already reported)
+                self.pool.report_unmet_deps()
             self.pool.warn_stop_orphans()
             try:
                 self.suite_db_mgr.put_task_event_timers(self.task_events_mgr)
@@ -1747,35 +1736,24 @@ class Scheduler:
         return False
 
     def check_auto_shutdown(self):
-        """Check if we should do a normal automatic shutdown."""
+        """Check if we should do an automatic shutdown: main pool empty."""
         if not self.can_auto_stop:
             return False
-        can_shutdown = True
-        for itask in self.pool.get_all_tasks():
-            if self.pool.stop_point is None:
-                # Don't if any unsucceeded task exists.
-                if not itask.state(*TASK_STATUSES_SUCCESS):
-                    can_shutdown = False
-                    break
-            elif (
-                    itask.point <= self.pool.stop_point
-                    and not itask.state(*TASK_STATUSES_SUCCESS)
-            ):
-                # Don't if any unsucceeded task exists < stop point...
-                if itask.identity not in self.pool.stuck_future_tasks:
-                    # ...unless it has a future trigger extending > stop point.
-                    can_shutdown = False
-                    break
-        if can_shutdown and self.pool.stop_point:
+        self.pool.release_runahead_tasks()
+        if self.pool.get_tasks():
+            return False
+        # can shut down
+        if self.pool.stop_point:
             self.options.stopcp = None
             self.pool.stop_point = None
             self.suite_db_mgr.delete_suite_stop_cycle_point()
-        return can_shutdown
+        return True
 
     def hold_suite(self, point=None):
         """Hold all tasks in suite."""
         if point is None:
             self.pool.hold_all_tasks()
+            self.data_store_mgr.hold_release_tasks()
             self.task_events_mgr.pflag = True
             self.suite_db_mgr.put_suite_hold()
             LOG.info('Suite held.')
@@ -1794,6 +1772,7 @@ class Scheduler:
             LOG.info("RELEASE: new tasks will be queued when ready")
         self.pool.set_hold_point(None)
         self.pool.release_all_tasks()
+        self.data_store_mgr.hold_release_tasks(hold=False)
         self.suite_db_mgr.delete_suite_hold()
 
     def paused(self):
@@ -1807,10 +1786,6 @@ class Scheduler:
     def command_force_spawn_children(self, items, outputs):
         """Force spawn task successors."""
         return self.pool.force_spawn_children(items, outputs)
-
-    def command_take_checkpoints(self, name):
-        """Insert current task_pool, etc to checkpoints tables."""
-        return self.suite_db_mgr.checkpoint(name)
 
     def filter_initial_task_list(self, inlist):
         """Return list of initial tasks after applying a filter."""
@@ -1868,6 +1843,34 @@ class Scheduler:
         self._update_profile_info("CPU %", cpu_frac, amount_format="%.1f")
 
     def _get_events_conf(self, key, default=None):
-        """Return a named [cylc][[events]] configuration."""
+        """Return a named [scheduler][[events]] configuration."""
         return self.suite_event_handler.get_events_conf(
             self.config, key, default)
+
+    def process_cylc_stop_point(self):
+        """
+        Set stop point.
+
+        In priority order stop cyclepoint (``stopcp``) is set:
+        * From the final point ff ``cylc restart --ignore-stop-cycle-point``.
+        * From the command line (``cylc <run/restart> --stop-point``).
+        * From the database.
+        * From the flow.cylc file (``[scheduler]stop after cycle point``).
+        """
+        stoppoint = None
+        if self.is_restart and self.options.ignore_stopcp:
+            stoppoint = self.config.final_point
+        elif self.options.stopcp:
+            stoppoint = self.options.stopcp
+        # Tests whether pool has stopcp from database on restart.
+        elif (
+            self.pool.stop_point and
+            self.pool.stop_point != self.config.final_point
+        ):
+            stoppoint = self.pool.stop_point
+        elif 'stop after cycle point' in self.config.cfg['scheduling']:
+            stoppoint = self.config.cfg['scheduling']['stop after cycle point']
+
+        if stoppoint is not None:
+            self.options.stopcp = str(stoppoint)
+            self.pool.set_stop_point(get_point(self.options.stopcp))

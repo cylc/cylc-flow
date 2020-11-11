@@ -271,12 +271,12 @@ class SuiteConfig:
             self.cfg['runtime']['root'] = OrderedDictWithDefaults()
 
         try:
-            parameter_values = self.cfg['cylc']['parameters']
+            parameter_values = self.cfg['scheduler']['parameters']
         except KeyError:
             # (Suite config defaults not put in yet.)
             parameter_values = {}
         try:
-            parameter_templates = self.cfg['cylc']['parameter templates']
+            parameter_templates = self.cfg['scheduler']['parameter templates']
         except KeyError:
             parameter_templates = {}
         # parameter values and templates are normally needed together.
@@ -732,10 +732,10 @@ class SuiteConfig:
         """Set UTC mode from config or from stored value on restart.
 
         Sets:
-            self.cfg['cylc']['UTC mode']
+            self.cfg['scheduler']['UTC mode']
             The UTC mode flag
         """
-        cfg_utc_mode = self.cfg['cylc']['UTC mode']
+        cfg_utc_mode = self.cfg['scheduler']['UTC mode']
         # Get the original UTC mode if restart:
         orig_utc_mode = getattr(self.options, 'utc_mode', None)
         if orig_utc_mode is None:
@@ -743,7 +743,7 @@ class SuiteConfig:
             if cfg_utc_mode is not None:
                 orig_utc_mode = cfg_utc_mode
             else:
-                orig_utc_mode = glbl_cfg().get(['cylc', 'UTC mode'])
+                orig_utc_mode = glbl_cfg().get(['scheduler', 'UTC mode'])
         elif cfg_utc_mode is not None and cfg_utc_mode != orig_utc_mode:
             LOG.warning(
                 "UTC mode = {0} specified in configuration, but it is stored "
@@ -751,7 +751,7 @@ class SuiteConfig:
                 "UTC mode = {1}"
                 .format(cfg_utc_mode, orig_utc_mode)
             )
-        self.cfg['cylc']['UTC mode'] = orig_utc_mode
+        self.cfg['scheduler']['UTC mode'] = orig_utc_mode
         set_utc_mode(orig_utc_mode)
 
     def process_cycle_point_tz(self):
@@ -763,9 +763,9 @@ class SuiteConfig:
         Scheduler).
 
         Sets:
-            self.cfg['cylc']['cycle point time zone']
+            self.cfg['scheduler']['cycle point time zone']
         """
-        cfg_cp_tz = self.cfg['cylc'].get('cycle point time zone')
+        cfg_cp_tz = self.cfg['scheduler'].get('cycle point time zone')
         # Get the original suite run time zone if restart:
         orig_cp_tz = getattr(self.options, 'cycle_point_tz', None)
         if orig_cp_tz is None:
@@ -786,7 +786,7 @@ class SuiteConfig:
                     "The suite will continue to run in {1}"
                     .format(cfg_cp_tz, orig_cp_tz)
                 )
-        self.cfg['cylc']['cycle point time zone'] = orig_cp_tz
+        self.cfg['scheduler']['cycle point time zone'] = orig_cp_tz
 
     def process_initial_cycle_point(self):
         """Validate and set initial cycle point from flow.cylc.
@@ -1499,7 +1499,7 @@ class SuiteConfig:
         os.environ['CYLC_CYCLING_MODE'] = self.cfg['scheduling'][
             'cycling mode']
         #     (global config auto expands environment variables in local paths)
-        cenv = self.cfg['cylc']['environment'].copy()
+        cenv = self.cfg['scheduler']['environment'].copy()
         for var, val in cenv.items():
             cenv[var] = os.path.expandvars(val)
         #     path to suite bin directory for suite and event handlers
@@ -1732,7 +1732,7 @@ class SuiteConfig:
             # (name is left name)
             self.taskdefs[name].add_graph_child(task_trigger, right, seq)
             # graph_parents not currently used but might be needed soon:
-            # self.taskdefs[right].add_graph_parent(task_trigger, name, seq)
+            self.taskdefs[right].add_graph_parent(task_trigger, name, seq)
 
         # Walk down "expr_list" depth first, and replace any items matching a
         # key in "triggers" ("left" values) with the trigger.
@@ -1984,103 +1984,6 @@ class SuiteConfig:
         self._last_graph_raw_edges = graph_raw_edges
         return graph_raw_edges
 
-    def get_graph_edges(self, start_point, stop_point):
-        """Convert the abstract graph edges (self.edges, etc) to actual edges
-
-        This method differs from the get_graph_raw; class attributes are not
-        used to hold information from previous method calls, and only ungrouped
-        edges are returned.
-
-        Args:
-            start_point (cylc.flow.cycling.*Point):
-                Start Integer or ISO8601 Point.
-            stop_point (cylc.flow.cycling.*Point):
-                Stop Integer or ISO8601 Point.
-        """
-
-        if start_point is None:
-            raise TypeError(
-                "get_graph_edges() start_point argument must be a"
-                " valid cycle point, not 'NoneType'")
-        # Avoid infinite edge generation
-        if stop_point is None:
-            raise TypeError(
-                "get_graph_edges() stop_point argument must be a"
-                " valid cycle point, not 'NoneType'")
-        suite_final_point = get_point(
-            self.cfg['scheduling']['final cycle point'])
-
-        # Get ICP on-sequence point
-        actual_first_point = self.get_actual_first_point(self.start_point)
-
-        gr_edges = {}
-        start_point_offset_cache = {}
-        point_offset_cache = None
-        for sequence, edges in self.edges.items():
-            # Get first cycle point for this sequence
-            point = sequence.get_first_point(start_point)
-            while point is not None:
-                if point > stop_point:
-                    # Beyond requested final cycle point.
-                    break
-                if suite_final_point is not None and point > suite_final_point:
-                    # Beyond suite final cycle point.
-                    break
-                point_offset_cache = {}
-                for left, right, suicide, cond in edges:
-                    if right:
-                        r_id = (right, point)
-                    else:
-                        r_id = None
-                    if left.startswith('@'):
-                        # @trigger node.
-                        name = left
-                        offset_is_from_icp = False
-                        offset = None
-                    else:
-                        name, offset, _, offset_is_from_icp, _, _ = (
-                            GraphNodeParser.get_inst().parse(left))
-                    if offset:
-                        if offset_is_from_icp:
-                            cache = start_point_offset_cache
-                            # use actual ICP first point
-                            rel_point = actual_first_point
-                        else:
-                            cache = point_offset_cache
-                            rel_point = point
-                        try:
-                            l_point = cache[offset]
-                        except KeyError:
-                            l_point = get_point_relative(offset, rel_point)
-                            cache[offset] = l_point
-                    else:
-                        l_point = point
-                    l_id = (name, l_point)
-
-                    if l_id is None and r_id is None:
-                        continue
-                    if l_id is not None and actual_first_point > l_id[1]:
-                        # Check that l_id is not earlier than start time.
-                        if r_id is None or r_id[1] < actual_first_point:
-                            continue
-                        # Pre-initial dependency;
-                        # keep right hand node.
-                        l_id = r_id
-                        r_id = None
-                    if point not in gr_edges:
-                        gr_edges[point] = []
-                    # only used to get task ID here
-                    lstr, rstr = self._close_families(l_id, r_id, {})
-                    gr_edges[point].append((lstr, rstr, None, suicide, cond))
-                # Increment the cycle point.
-                point = sequence.get_next_point_on_sequence(point)
-
-        del start_point_offset_cache
-        del point_offset_cache
-        GraphNodeParser.get_inst().clear()
-        # Flatten nested list.
-        return [i for sublist in gr_edges.values() for i in sublist]
-
     def get_node_labels(self, start_point_string, stop_point_string=None):
         """Return dependency graph node labels."""
         stop_point = None
@@ -2318,7 +2221,9 @@ class SuiteConfig:
         - None if there is no expectation either way.
         """
         if self.options.reftest:
-            return self.cfg['cylc']['reference test']['expected task failures']
+            return self.cfg['scheduler']['reference test'][
+                'expected task failures'
+            ]
         elif self.options.abort_if_any_task_fails:
             return []
         else:

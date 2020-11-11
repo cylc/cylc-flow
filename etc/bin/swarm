@@ -1,0 +1,415 @@
+#!/usr/bin/env bash
+# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+usage () {
+    cat << __USAGE__
+swarm [OPTIONS] (build|configure|run)
+
+Build, configure and run a swarm of docker containers for test purposes.
+
+This swarm is both for local development and automated testing to proivde
+a stable testing/development platform.
+
+Containers ports are correctly exposed so they can be used either natively
+or in virtual machines.
+
+Commands:
+    build        Build docker images.
+    configure    Configure system ssh and cylc configuration files.
+    deconfigure  Undo configuration changes.
+    interactive  Run a docker container interactively.
+    run          Run docker containers.
+    ps           List running detached containers started with "run"
+    kill         Kill detactched containers started with "run"
+
+Note:
+    "ps" and "kill" only track the most resent swarm of containers started
+    by "run".
+
+Options:
+    -y --yes    Don't prompt.
+    --debug     Runs the script with set -x for debug.
+
+Basic usage:
+    $ swarm configure
+    $ swarm build
+    $ swarm run
+    $ run-functional-tests -p all tests/f
+    $ swarm kill
+    $ swarm deconfigure
+
+Virtual Machines and Docker Desktop:
+    All containers in this swarm should work when run in a virtual machine
+    (e.g. VirtualBox, Docker Desktop for Mac OS or Windows, etc).
+
+The Containers:
+    This "swarm" is made up of several containers.
+
+    * Each container exposes its SSH port (22).
+    * The SSH config maps these ports onto hostnames.
+    * The Cylc config maps hostnames onto test platforms.
+
+    Each platform is named using this convention:
+
+        _<submission_locality>_<batch_system>_<filesystem>_<comms_method>
+
+        submission_locality {local, remote}:
+            Where do jobs get submitted?
+
+            * Locally (on the scheduler host).
+            * Remotely (on a remote host).
+
+        batch_system {background, at, slurm, ...}:
+            The name of the batch system the container is configured to use.
+
+        filesystem {indep, shared}:
+            What is the relationship between the filesystem in the contaier to
+            the filesystem on the host?
+
+            * Independent (indep) - it is a completely different filesystem.
+            * Shared (shared) - the cylc-run directory is shared.
+
+            warning: For shared filesystems cylc-run is shared, however, the
+            absolute path to cylc-run on the host system may be different
+            to that on the container, use ~/cylc-run for safety.
+
+        comms_method {tcp, poll}:
+            The task communication method to use.
+
+Running Tests Without The Swarm:
+    Configure the platforms with the same names as the swarm platforms.
+
+    For example if you have a remote host compatible with TCP comms you
+    could configure it like so:
+
+    [platforms]
+        [[_remote_background_indep_tcp]]
+            host = my_remote_host
+
+    NOTE: You will have to have ensure you have the same branch installed
+          on the remote hosts as on your local host. Remember to pip install.
+
+Caveats:
+    For TCP comms the firewall on the Docker host must accept packets from
+    containers on the "docker0" network adapter:
+        $ iptables -A INPUT -i docker0 -j ACCEPT
+    (must appear early in the table to avoid preemption by reject or drop.)
+
+    At present TCP comms are not possible FROM the host TO the container.
+    This is not generally an issue as the standard test approach is to run
+    a workflow on the host submitting its jobs to the container.
+
+    However some of the shared filesystem tests actually run entire workflows
+    inside the container. Communicating with these workflows FROM the host
+    is not possible at present (perhaps if you meddle /etc/hosts you *might*
+    be able to get it to work generally - note containers running in VMs
+    make this an interesting problem).
+
+Port Mapping:
+    Each container uses one port to enable SSH, the SSH config maps these
+    ports to hostnames. The ports are as follows:
+
+    Batch System:
+        * 42200 - "background/at"
+
+    Filesystem:
+        * +20 - "indep"
+        * +30 - "shared"
+
+    Comms Method:
+        * +0 - "tcp"
+        * +1 - "poll"
+__USAGE__
+    exit 0
+}
+
+set -eu
+
+cd "$(dirname "$0")/../../"
+
+YES=false
+SSHD="$HOME/.ssh"
+SSH_CONF="$SSHD/config"
+CYLC_CONF="$HOME/.cylc/flow/$(cylc version)/global.cylc"
+CYLC_TEST_CONF="$HOME/.cylc/flow/$(cylc version)/global-tests.cylc"
+HERE="$(realpath "$PWD")"
+ACTIVE_CONTAINERS="$HERE/.docker-active-containers"
+
+# display message, ask [yn] question, return 0 (y) or 1 (n)
+# if YES=true return 0
+prompt () {
+    # the message to display
+    local MSG="$1"
+
+    if $YES; then
+        return 0
+    fi
+
+    local USR=''
+    while true; do
+        read -rp "$MSG [y/n]: " USR
+        case $USR in
+            [Yy])
+                return 0
+                break
+                ;;
+            [Nn])
+                return 1
+                break
+                ;;
+        esac
+    done
+}
+
+# wrapper of ssh-keygen
+generate_keys () {
+    # the name of the key to generate
+    local KEY="$1"
+
+    if ! [[ -f "$SSHD/$KEY" ]]; then
+        if prompt "(Re)Generate ssh key: $KEY?"; then
+            ssh-keygen \
+                -t rsa \
+                -b 4096 \
+                -C 'docker@localhost' \
+                -f "$SSHD/$KEY" \
+                -P ''
+        else
+            exit 1
+        fi
+    fi
+}
+
+# generate ssh keys for host-container comms
+generate_ssh_keys () {
+    local BASE='.docker-ssh-keys'
+    local KEY
+    mkdir "$BASE" -p
+
+    # ssh key pair for connecting to docker containers
+    KEY='cylc-docker'
+    generate_keys "$KEY" "$BASE"
+    cp "$SSHD/$KEY"* "$BASE"
+}
+
+# add a line to a configuration file touching the file if not present
+append_config () {
+    # the line to add to the config
+    local LINE="$1"
+    # the config to add the line to
+    local LOC="$2"
+    # whether the line should appear at the top or bottom (default bottom)
+    local POS=${3:-bottom}
+
+    # create the config if not already there
+    mkdir -p "$(dirname "$LOC")"
+    touch "$LOC"
+
+    # add the line to the config...
+    if ! grep -q "$LINE" "$LOC"; then
+        if prompt "Write \"$LINE\" to \"$LOC\"?"; then
+            if [[ "$POS" == top ]]; then
+                # ... at the top of the file
+                sed -i "1i$LINE" "$LOC"
+            elif [[ "$POS" == bottom ]]; then 
+                # ... at the bottom of the file
+                echo -e "\n$LINE" >> "$LOC"
+            else
+                # ... nowhere
+                echo "Invalid position :$PWD" >&2
+                exit 1
+            fi
+
+        else
+            exit 1
+        fi
+    fi
+}
+
+# docker run opts for independent filesystem images
+#INDEP_FS_OPTS=(
+#)
+# docker run opts for shared filesystem images
+SHARED_FS_OPTS=(
+    '-v' "$HOME/cylc-run:/root/cylc-run"
+    #'-p' '43001-43100:43001-43100'  # all cylc run ports
+    '-P'  # all ports
+)
+# docker run opts for tcp communication images
+TCP_OPTS=(
+    '-e' "HOST_HOSTNAME=$(hostname -f)"
+)
+if [[ $(uname) == "Linux" ]]; then
+    # host.docker.internal is not set on Linux. The default address of the host
+    # on the docker0 network is 172.17.0.1, but let's extract it just in case.
+    DOCKER_HOST=$(ip -4 addr show docker0 | grep -Po 'inet \K[\d.]+')
+    TCP_OPTS+=(
+        '--add-host' "host.docker.internal:${DOCKER_HOST}"
+    )
+fi
+
+# docker run opts for polling communication images
+POLL_OPTS=(
+    '-e' 'HOST_HOSTNAME=false'
+)
+# the lowest port to use for communicating with containers
+BASE_PORT=42220
+
+# wrapper for running containers with the required options
+_run () {
+    # run a container
+    local fs="$1"  # i.e. indep, shared
+    local comms="$2"  # i.e. tcp, poll
+    local detached="${3:-false}"  # i.e. true, false
+    local port
+
+    # set the detach args
+    local opts=()
+    if ${detached}; then
+        opts+=('-i')
+    else
+        opts+=('-d')
+    fi
+
+    # set the filesystem args
+    if [[ $fs == indep ]]; then
+        port=$BASE_PORT
+        # opts+=("${INDEP_FS_OPTS[@]}")
+    elif [[ $fs == shared ]]; then
+        port=$(( BASE_PORT + 10 ))
+        opts+=("${SHARED_FS_OPTS[@]}")
+    else
+        echo "invalid fs type '$fs'" >&2
+        exit 1
+    fi
+
+    # set the communications args
+    if [[ $comms == tcp ]]; then
+        opts+=("${TCP_OPTS[@]}")
+    elif [[ $comms == poll ]]; then
+        opts+=("${POLL_OPTS[@]}")
+        (( port += 1 ))
+    else
+        echo "invalid comms method '$comms'" >&2
+        exit 1
+    fi
+
+    # run docker run
+    docker run \
+        --rm \
+        -t --privileged \
+        -p "$port:22" \
+        "${opts[@]}" \
+        cylc-remote:latest
+}
+
+# build all docker images
+build () {
+    docker build . \
+        -f dockerfiles/cylc-dev/Dockerfile \
+        -t cylc-dev:latest
+    docker build . \
+        -f dockerfiles/cylc-remote/Dockerfile \
+        -t cylc-remote:latest
+}
+
+# configure the system so we can use these images as cylc platforms
+configure () {
+    # generate ssh keys for host - docker image communication
+    generate_ssh_keys
+
+    # map exposed docker ports to hostnames
+    append_config \
+        "Include $HERE/etc/conf/ssh_config" \
+        "${SSH_CONF}" \
+        top  # ssh config includes must be at the top
+
+    # map ssh hostnames to cylc platforms
+    append_config \
+        "%include '$HERE/etc/conf/global.cylc'" \
+        "${CYLC_CONF}"
+    append_config \
+        "%include '$HERE/etc/conf/global.cylc'" \
+        "${CYLC_TEST_CONF}"
+}
+
+# undo configurations make in configure ()
+deconfigure () {
+    sed -i "\|$HERE/etc/conf|d" "${SSH_CONF}"
+    sed -i "\|$HERE/etc/conf|d" "${CYLC_CONF}"
+    sed -i "\|$HERE/etc/conf|d" "${CYLC_TEST_CONF}"
+}
+
+# run one container interactively
+interactive () {
+    _run indep tcp true
+}
+
+# run all containers detached
+run () {
+    (
+        _run indep tcp
+        _run indep poll
+        _run shared tcp
+    ) > "$ACTIVE_CONTAINERS"
+    cat "$ACTIVE_CONTAINERS"
+}
+
+# list all containers started with run ()
+ps () {
+    if [[ -f "$ACTIVE_CONTAINERS" ]]; then
+        cat "$ACTIVE_CONTAINERS"
+    fi
+}
+
+# kill all containers started with run ()
+kill () {
+    # shellcheck disable=SC2046
+    if [[ -f "$ACTIVE_CONTAINERS" ]]; then
+        docker kill $(cat "$ACTIVE_CONTAINERS")
+        rm "$ACTIVE_CONTAINERS"
+    fi
+}
+
+cmds=()
+for arg in "$@"; do
+    case "$arg" in
+        --help)
+            usage
+            ;;
+        -y|--yes)
+            YES=true
+            ;;
+        --debug)
+            set -x
+            ;;
+        build|deconfigure|configure|run|interactive|ps|kill)
+            cmds+=("$arg")
+            ;;
+        *)
+            echo "Invalid argument '$arg'" >&2
+            exit 1
+    esac
+done
+
+if [[ ${#cmds[@]} -eq 0 ]]; then
+    usage
+fi
+
+for cmd in "${cmds[@]}"; do
+    "${cmd}"
+done

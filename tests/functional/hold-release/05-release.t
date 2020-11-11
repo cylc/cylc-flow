@@ -21,7 +21,7 @@
 set_test_number 3
 
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
-[cylc]
+[scheduler]
     [[events]]
         timeout = PT1M
         abort on timeout = True
@@ -81,4 +81,4 @@ cmp_ok task-pool.out <<__OUT__
 1|dog2|waiting|1
 __OUT__
 
-purge_suite "${SUITE_NAME}"
+purge

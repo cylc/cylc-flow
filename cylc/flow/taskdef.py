@@ -20,7 +20,81 @@ from collections import deque
 
 from cylc.flow.exceptions import TaskDefError
 from cylc.flow.task_id import TaskID
+from cylc.flow.task_state import TASK_OUTPUT_SUCCEEDED
 from cylc.flow import LOG
+
+
+def generate_graph_children(tdef, point):
+    """Determine graph children of this task (for spawning)."""
+    graph_children = {}
+    for seq, dout in tdef.graph_children.items():
+        for output, downs in dout.items():
+            if output not in graph_children:
+                graph_children[output] = []
+            for name, trigger in downs:
+                child_point = trigger.get_child_point(point, seq)
+                is_abs = (trigger.offset_is_absolute or
+                          trigger.offset_is_from_icp)
+                if is_abs:
+                    if trigger.get_parent_point(point) != point:
+                        # If 'foo[^] => bar' only spawn off of '^'.
+                        continue
+                if seq.is_valid(child_point):
+                    # E.g.: foo should trigger only on T06:
+                    #   PT6H = "waz"
+                    #   T06 = "waz[-PT6H] => foo"
+                    graph_children[output].append((name, child_point, is_abs))
+
+    if tdef.sequential:
+        # Add next-instance child.
+        nexts = []
+        for seq in tdef.sequences:
+            nxt = seq.get_next_point(point)
+            if nxt is not None:
+                # Within sequence bounds.
+                nexts.append(nxt)
+        if nexts:
+            if TASK_OUTPUT_SUCCEEDED not in graph_children:
+                graph_children[TASK_OUTPUT_SUCCEEDED] = []
+            graph_children[TASK_OUTPUT_SUCCEEDED].append(
+                (tdef.name, min(nexts), False))
+
+    return graph_children
+
+
+def generate_graph_parents(tdef, point):
+    """Determine graph parents of this task."""
+    graph_parents = {}
+    for seq, ups in tdef.graph_parents.items():
+        graph_parents[seq] = []
+        for name, trigger in ups:
+            parent_point = trigger.get_parent_point(point)
+            is_abs = (trigger.offset_is_absolute or
+                      trigger.offset_is_from_icp)
+            if is_abs:
+                if parent_point != point:
+                    # If 'foo[^] => bar' only spawn off of '^'.
+                    continue
+            if seq.is_valid(parent_point):
+                # E.g.: foo should trigger only on T06:
+                #   PT6H = "waz"
+                #   T06 = "waz[-PT6H] => foo"
+                graph_parents[seq].append((name, parent_point, is_abs))
+
+    if tdef.sequential:
+        # Add prev-instance parent.
+        prevs = []
+        for seq in tdef.sequences:
+            prev = seq.get_prev_point(point)
+            if prev is not None:
+                # Within sequence bounds.
+                prevs.append(prev)
+        if prevs:
+            if seq not in graph_parents:
+                graph_parents[seq] = []
+            graph_parents[seq].append((tdef.name, min(prevs), False))
+
+    return graph_parents
 
 
 class TaskDef:
@@ -33,7 +107,7 @@ class TaskDef:
         "sequential", "is_coldstart",
         "suite_polling_cfg", "clocktrigger_offset", "expiration_offset",
         "namespace_hierarchy", "dependencies", "outputs", "param_var",
-        "graph_children",
+        "graph_children", "graph_parents",
         "external_triggers", "xtrig_labels", "name", "elapsed_times"]
 
     # Store the elapsed times for a maximum of 10 cycles
@@ -62,8 +136,7 @@ class TaskDef:
         self.dependencies = {}
         self.outputs = set()
         self.graph_children = {}
-        # graph_parents not currently used, but might be soon:
-        # self.graph_parents = {}
+        self.graph_parents = {}
         self.param_var = {}
         self.external_triggers = []
         self.xtrig_labels = {}  # {sequence: [labels]}
@@ -84,15 +157,15 @@ class TaskDef:
                 trigger.output, []).append((taskname, trigger))
 
     # graph_parents not currently used, but might be soon:
-    # def add_graph_parent(self, trigger, parent, sequence):
-    #    """Record task instances that I depend on.
-    #      {
-    #         sequence: set([(a,t1), (b,t2), ...])  # (task-name, trigger)
-    #      }
-    #    """
-    #    if sequence not in self.graph_parents:
-    #        self.graph_parents[sequence] = set()
-    #    self.graph_parents[sequence].add((parent, trigger))
+    def add_graph_parent(self, trigger, parent, sequence):
+        """Record task instances that I depend on.
+          {
+             sequence: set([(a,t1), (b,t2), ...])  # (task-name, trigger)
+          }
+        """
+        if sequence not in self.graph_parents:
+            self.graph_parents[sequence] = set()
+        self.graph_parents[sequence].add((parent, trigger))
 
     def add_dependency(self, dependency, sequence):
         """Add a dependency to a named sequence.

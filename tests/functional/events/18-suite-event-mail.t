@@ -25,7 +25,7 @@ mock_smtpd_init
 OPT_SET=
 if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
     create_test_global_config "" "
-[cylc]
+[scheduler]
     [[events]]
         mail events = startup, shutdown
     [[mail]]
@@ -52,6 +52,6 @@ b'reason: AUTOMATIC'
 b'see: http://localhost/stuff/${USER}/${SUITE_NAME}/'
 __LOG__
 
-purge_suite "${SUITE_NAME}"
+purge
 mock_smtpd_kill
 exit

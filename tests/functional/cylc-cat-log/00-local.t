@@ -51,7 +51,7 @@ echo "jumped over the lazy dog" >&2
 # Write to a custom log file
 echo "drugs and money" > \${CYLC_TASK_LOG_ROOT}.custom-log
 # Generate a warning message in the suite log.
-cylc task message -p WARNING 'marmite and squashed bananas'
+cylc message -p WARNING 'marmite and squashed bananas'
 __END__
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-task-err
@@ -107,5 +107,5 @@ TEST_NAME=${TEST_NAME_BASE}-task-job-path
 run_ok "${TEST_NAME}" cylc cat-log -f j -m p "${SUITE_NAME}" a-task.1
 grep_ok "${SUITE_NAME}/log/job/1/a-task/NN/job$" "${TEST_NAME}.stdout"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 exit

@@ -18,8 +18,6 @@
 # Check that setting the platform to localhost for dummy-local mode doesn't
 # cause conflicts with Cylc 7 settings
 # TODO Remove test at Cylc 9.
-
-export CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
 set_test_number 3
 
@@ -37,5 +35,5 @@ grep_ok \
     "(dummy job succeed)"\
     "${SUITE_RUN_DIR}/log/job/1/upgradeable_cylc7_settings/NN/job.out"
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

@@ -16,14 +16,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Test "cylc cat-log" open local logs in editor.
-
+export REQUIRE_PLATFORM='loc:remote'
 . "$(dirname "$0")/test_header"
-require_remote_platform
 
 . "${TEST_SOURCE_DIR}/editor/bin/run_tests.sh"
 export PATH="${TEST_SOURCE_DIR}/editor/bin/:${PATH}"
 
 install_suite "${TEST_NAME_BASE}" "editor"
 run_tests "${CYLC_TEST_PLATFORM}"
-purge_suite "${SUITE_NAME}"
-purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
+purge

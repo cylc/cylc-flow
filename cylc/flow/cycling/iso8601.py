@@ -808,11 +808,11 @@ def prev_next(value, now, parser):
 
 def init_from_cfg(cfg):
     """Initialise global variables (yuk) based on the configuration."""
-    num_expanded_year_digits = cfg['cylc'][
+    num_expanded_year_digits = cfg['scheduler'][
         'cycle point num expanded year digits']
-    time_zone = cfg['cylc']['cycle point time zone']
-    custom_dump_format = cfg['cylc']['cycle point format']
-    assume_utc = cfg['cylc']['UTC mode']
+    time_zone = cfg['scheduler']['cycle point time zone']
+    custom_dump_format = cfg['scheduler']['cycle point format']
+    assume_utc = cfg['scheduler']['UTC mode']
     cycling_mode = cfg['scheduling']['cycling mode']
 
     init(

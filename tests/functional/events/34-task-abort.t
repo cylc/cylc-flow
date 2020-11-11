@@ -41,5 +41,5 @@ grep_ok 'ONE' "${LOG}"
 # ...after abort
 grep_fail 'TWO' "${LOG}"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 exit

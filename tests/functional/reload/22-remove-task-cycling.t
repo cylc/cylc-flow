@@ -26,7 +26,7 @@ set_test_number 3
 # or stall and abort if the orphaned task triggers the #3306 bug.
 
 init_suite "${TEST_NAME_BASE}" <<__FLOW_CONFIG__
-[cylc]
+[scheduler]
    [[events]]
       inactivity = PT25S
       abort on inactivity = True
@@ -81,4 +81,4 @@ foo, 2, succeeded
 foo, 3, succeeded
 __END__
 
-purge_suite "${SUITE_NAME}"
+purge

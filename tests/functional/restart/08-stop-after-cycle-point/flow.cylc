@@ -1,0 +1,26 @@
+[meta]
+title = Test: flow.cylc[scheduling]stop after cycle point
+description = """
+    Test:
+      1. That [scheduling]stop after cycle point works
+      2. That cylc run --stop-cycle-point over-rides the config.
+"""
+
+[scheduler]
+    UTC mode = True
+
+[scheduling]
+    initial cycle point = 19700101T0000Z
+    final cycle point = 19700101T0300Z
+    stop after cycle point = 19700101T0100Z
+    [[dependencies]]
+        PT1H = hello[-PT1H] => hello
+
+[runtime]
+    [[hello]]
+        script = """
+        if [[ "$CYLC_TASK_CYCLE_POINT" == 19700101T0000Z ]]; then
+            cylc stop "$CYLC_SUITE_NAME"
+        fi
+
+        """

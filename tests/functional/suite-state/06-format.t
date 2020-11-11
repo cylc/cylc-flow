@@ -22,7 +22,7 @@
 set_test_number 5
 #-------------------------------------------------------------------------------
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
-[cylc]
+[scheduler]
     UTC mode = True
     cycle point format = CCYY-MM-DD
 [scheduling]
@@ -50,6 +50,6 @@ contains_ok "${TEST_NAME}.stdout" <<__OUT__
 foo, 2010-01-01, succeeded
 __OUT__
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 #-------------------------------------------------------------------------------
 exit 0

@@ -32,4 +32,4 @@ suite_run_fail "${TEST_NAME}" \
     "${SUITE_NAME}"
 grep_ok "WARNING - suite timed out after PT1S" "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge

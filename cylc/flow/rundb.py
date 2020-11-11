@@ -15,17 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Provide data access object for the suite runtime database."""
 
-import re
 import sqlite3
 import traceback
 from os.path import expandvars
 
 from cylc.flow import LOG
 import cylc.flow.flags
-from cylc.flow.task_state import TASK_STATUS_WAITING
-from cylc.flow.wallclock import get_current_time_string
-from cylc.flow.platforms import platform_from_job_info
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 
 
 class CylcSuiteDAOTableColumn:
@@ -172,23 +167,19 @@ class CylcSuiteDAO:
     CONN_TIMEOUT = 0.2
     DB_FILE_BASE_NAME = "db"
     MAX_TRIES = 100
-    CHECKPOINT_LATEST_ID = 0
-    CHECKPOINT_LATEST_EVENT = "latest"
+    RESTART_INCOMPAT_VERSION = "8.0a2"  # Can't restart suite if <= this vers
     TABLE_BROADCAST_EVENTS = "broadcast_events"
     TABLE_BROADCAST_STATES = "broadcast_states"
-    TABLE_BROADCAST_STATES_CHECKPOINTS = "broadcast_states_checkpoints"
     TABLE_INHERITANCE = "inheritance"
     TABLE_SUITE_PARAMS = "suite_params"
-    TABLE_SUITE_PARAMS_CHECKPOINTS = "suite_params_checkpoints"
     TABLE_SUITE_TEMPLATE_VARS = "suite_template_vars"
     TABLE_TASK_JOBS = "task_jobs"
     TABLE_TASK_EVENTS = "task_events"
     TABLE_TASK_ACTION_TIMERS = "task_action_timers"
-    TABLE_CHECKPOINT_ID = "checkpoint_id"
     TABLE_TASK_LATE_FLAGS = "task_late_flags"
     TABLE_TASK_OUTPUTS = "task_outputs"
     TABLE_TASK_POOL = "task_pool"
-    TABLE_TASK_POOL_CHECKPOINTS = "task_pool_checkpoints"
+    TABLE_TASK_PREREQUISITES = "task_prerequisites"
     TABLE_TASK_STATES = "task_states"
     TABLE_TASK_TIMEOUT_TIMERS = "task_timeout_timers"
     TABLE_XTRIGGERS = "xtriggers"
@@ -209,28 +200,11 @@ class CylcSuiteDAO:
             ["key", {"is_primary_key": True}],
             ["value"],
         ],
-        TABLE_BROADCAST_STATES_CHECKPOINTS: [
-            ["id", {"datatype": "INTEGER", "is_primary_key": True}],
-            ["point", {"is_primary_key": True}],
-            ["namespace", {"is_primary_key": True}],
-            ["key", {"is_primary_key": True}],
-            ["value"],
-        ],
-        TABLE_CHECKPOINT_ID: [
-            ["id", {"datatype": "INTEGER", "is_primary_key": True}],
-            ["time"],
-            ["event"],
-        ],
         TABLE_INHERITANCE: [
             ["namespace", {"is_primary_key": True}],
             ["inheritance"],
         ],
         TABLE_SUITE_PARAMS: [
-            ["key", {"is_primary_key": True}],
-            ["value"],
-        ],
-        TABLE_SUITE_PARAMS_CHECKPOINTS: [
-            ["id", {"datatype": "INTEGER", "is_primary_key": True}],
             ["key", {"is_primary_key": True}],
             ["value"],
         ],
@@ -288,21 +262,19 @@ class CylcSuiteDAO:
             ["name", {"is_primary_key": True}],
             ["flow_label", {"is_primary_key": True}],
             ["status"],
-            ["satisfied"],
             ["is_held", {"datatype": "INTEGER"}],
+        ],
+        TABLE_TASK_PREREQUISITES: [
+            ["cycle", {"is_primary_key": True}],
+            ["name", {"is_primary_key": True}],
+            ["prereq_name", {"is_primary_key": True}],
+            ["prereq_cycle", {"is_primary_key": True}],
+            ["prereq_output", {"is_primary_key": True}],
+            ["satisfied"],
         ],
         TABLE_XTRIGGERS: [
             ["signature", {"is_primary_key": True}],
             ["results"],
-        ],
-        TABLE_TASK_POOL_CHECKPOINTS: [
-            ["id", {"datatype": "INTEGER", "is_primary_key": True}],
-            ["cycle", {"is_primary_key": True}],
-            ["name", {"is_primary_key": True}],
-            ["flow_label", {"is_primary_key": True}],
-            ["status"],
-            ["satisfied"],
-            ["is_held", {"datatype": "INTEGER"}],
         ],
         TABLE_TASK_STATES: [
             ["name", {"is_primary_key": True}],
@@ -483,78 +455,44 @@ class CylcSuiteDAO:
             LOG.warning(err_log)
             raise
 
-    def pre_select_broadcast_states(self, id_key=None, order=None):
+    def pre_select_broadcast_states(self, order=None):
         """Query statement and args formation for select_broadcast_states."""
         form_stmt = r"SELECT point,namespace,key,value FROM %s"
         if order == "ASC":
             ordering = " ORDER BY point ASC, namespace ASC, key ASC"
             form_stmt = form_stmt + ordering
-        if id_key is None or id_key == self.CHECKPOINT_LATEST_ID:
-            return form_stmt % self.TABLE_BROADCAST_STATES, []
-        else:
-            return (form_stmt % self.TABLE_BROADCAST_STATES_CHECKPOINTS +
-                    r" WHERE id==?"), [id_key]
+        return form_stmt % self.TABLE_BROADCAST_STATES
 
-    def select_broadcast_states(self, callback, id_key=None, sort=None):
-        """Select from broadcast_states or broadcast_states_checkpoints.
+    def select_broadcast_states(self, callback, sort=None):
+        """Select from broadcast_states.
 
         Invoke callback(row_idx, row) on each row, where each row contains:
             [point, namespace, key, value]
-
-        If id_key is specified,
-        select from broadcast_states table if id_key == CHECKPOINT_LATEST_ID.
-        Otherwise select from broadcast_states_checkpoints where id == id_key.
         """
-        stmt, stmt_args = self.pre_select_broadcast_states(id_key=id_key,
-                                                           order=sort)
-        for row_idx, row in enumerate(self.connect().execute(stmt, stmt_args)):
+        stmt = self.pre_select_broadcast_states(order=sort)
+        for row_idx, row in enumerate(self.connect().execute(stmt)):
             callback(row_idx, list(row))
 
-    def select_checkpoint_id(self, callback, id_key=None):
-        """Select from checkpoint_id.
+    def select_suite_params(self, callback):
+        """Select from suite_params.
 
         Invoke callback(row_idx, row) on each row, where each row contains:
-            [id, time, event]
+            [key, value]
 
-        If id_key is specified, add where id == id_key to select.
+        E.g. a row might be ['UTC mode', '1']
         """
-        stmt = r"SELECT id,time,event FROM checkpoint_id"
-        stmt_args = []
-        if id_key is not None:
-            stmt += r" WHERE id==?"
-            stmt_args.append(id_key)
-        stmt += r"  ORDER BY time ASC"
-        for row_idx, row in enumerate(self.connect().execute(stmt, stmt_args)):
+        stmt = f"SELECT key, value FROM {self.TABLE_SUITE_PARAMS}"
+        for row_idx, row in enumerate(self.connect().execute(stmt)):
             callback(row_idx, list(row))
 
-    def select_checkpoint_id_restart_count(self):
-        """Return number of restart event in checkpoint_id table."""
-        stmt = r"SELECT COUNT(event) FROM checkpoint_id WHERE event==?"
-        stmt_args = ['restart']
-        for row in self.connect().execute(stmt, stmt_args):
-            return row[0]
-        return 0
-
-    def select_suite_params(self, callback, id_key=None):
-        """Select from suite_params or suite_params_checkpoints.
-
-        Invoke callback(row_idx, row) on each row, where each row contains:
-            [key,value]
-
-        If id_key is specified,
-        select from suite_params table if id_key == CHECKPOINT_LATEST_ID.
-        Otherwise select from suite_params_checkpoints where id == id_key.
+    def select_suite_params_restart_count(self):
+        """Return number of restarts in suite_params table."""
+        stmt = f"""
+            SELECT value FROM {self.TABLE_SUITE_PARAMS}
+            WHERE key == 'n_restart';
         """
-        form_stmt = r"SELECT key,value FROM %s"
-        if id_key is None or id_key == self.CHECKPOINT_LATEST_ID:
-            stmt = form_stmt % self.TABLE_SUITE_PARAMS
-            stmt_args = []
-        else:
-            stmt = (form_stmt % self.TABLE_SUITE_PARAMS_CHECKPOINTS +
-                    r" WHERE id==?")
-            stmt_args = [id_key]
-        for row_idx, row in enumerate(self.connect().execute(stmt, stmt_args)):
-            callback(row_idx, list(row))
+        result = self.connect().execute(stmt).fetchone()
+        return int(result[0]) if result else 0
 
     def select_suite_template_vars(self, callback):
         """Select from suite_template_vars.
@@ -610,16 +548,12 @@ class CylcSuiteDAO:
         except sqlite3.DatabaseError:
             return None
 
-    def select_job_pool_for_restart(self, callback, id_key=None):
+    def select_job_pool_for_restart(self, callback):
         """Select from task_pool+task_states+task_jobs for restart.
 
         Invoke callback(row_idx, row) on each row, where each row contains:
             [cycle, name, status, submit_num, time_submit, time_run,
              time_run_exit, batch_sys_name, batch_sys_job_id, platform_name]
-
-        If id_key is specified,
-        select from task_pool table if id_key == CHECKPOINT_LATEST_ID.
-        Otherwise select from task_pool_checkpoints where id == id_key.
         """
         form_stmt = r"""
             SELECT
@@ -650,14 +584,8 @@ class CylcSuiteDAO:
             "task_states": self.TABLE_TASK_STATES,
             "task_jobs": self.TABLE_TASK_JOBS,
         }
-        if id_key is None or id_key == self.CHECKPOINT_LATEST_ID:
-            stmt = form_stmt % form_data
-            stmt_args = []
-        else:
-            form_data["task_pool"] = self.TABLE_TASK_POOL_CHECKPOINTS
-            stmt = (form_stmt + r" WHERE %(task_pool)s.id==?") % form_data
-            stmt_args = [id_key]
-        for row_idx, row in enumerate(self.connect().execute(stmt, stmt_args)):
+        stmt = form_stmt % form_data
+        for row_idx, row in enumerate(self.connect().execute(stmt)):
             callback(row_idx, list(row))
 
     def select_task_job_run_times(self, callback):
@@ -718,37 +646,23 @@ class CylcSuiteDAO:
         for row_idx, row in enumerate(self.connect().execute(stm, [])):
             callback(row_idx, list(row))
 
-    def select_task_pool(self, callback, id_key=None):
-        """Select from task_pool or task_pool_checkpoints.
+    def select_task_pool(self, callback):
+        """Select from task_pool.
 
         Invoke callback(row_idx, row) on each row, where each row contains:
             [cycle, name, status]
-
-        If id_key is specified,
-        select from task_pool table if id_key == CHECKPOINT_LATEST_ID.
-        Otherwise select from task_pool_checkpoints where id == id_key.
         """
         form_stmt = r"SELECT cycle,name,status,is_held FROM %s"
-        if id_key is None or id_key == self.CHECKPOINT_LATEST_ID:
-            stmt = form_stmt % self.TABLE_TASK_POOL
-            stmt_args = []
-        else:
-            stmt = (
-                form_stmt % self.TABLE_TASK_POOL_CHECKPOINTS + r" WHERE id==?")
-            stmt_args = [id_key]
-        for row_idx, row in enumerate(self.connect().execute(stmt, stmt_args)):
+        stmt = form_stmt % self.TABLE_TASK_POOL
+        for row_idx, row in enumerate(self.connect().execute(stmt)):
             callback(row_idx, list(row))
 
-    def select_task_pool_for_restart(self, callback, id_key=None):
+    def select_task_pool_for_restart(self, callback):
         """Select from task_pool+task_states+task_jobs for restart.
 
         Invoke callback(row_idx, row) on each row, where each row contains:
             [cycle, name, is_late, status, is_held, submit_num,
              try_num, platform_name, time_submit, time_run, timeout, outputs]
-
-        If id_key is specified,
-        select from task_pool table if id_key == CHECKPOINT_LATEST_ID.
-        Otherwise select from task_pool_checkpoints where id == id_key.
         """
         form_stmt = r"""
             SELECT
@@ -757,7 +671,6 @@ class CylcSuiteDAO:
                 %(task_pool)s.flow_label,
                 %(task_late_flags)s.value,
                 %(task_pool)s.status,
-                %(task_pool)s.satisfied,
                 %(task_pool)s.is_held,
                 %(task_states)s.submit_num,
                 %(task_jobs)s.try_num,
@@ -799,15 +712,25 @@ class CylcSuiteDAO:
             "task_jobs": self.TABLE_TASK_JOBS,
             "task_outputs": self.TABLE_TASK_OUTPUTS,
         }
-        if id_key is None or id_key == self.CHECKPOINT_LATEST_ID:
-            stmt = form_stmt % form_data
-            stmt_args = []
-        else:
-            form_data["task_pool"] = self.TABLE_TASK_POOL_CHECKPOINTS
-            stmt = (form_stmt + r" WHERE %(task_pool)s.id==?") % form_data
-            stmt_args = [id_key]
-        for row_idx, row in enumerate(self.connect().execute(stmt, stmt_args)):
+        stmt = form_stmt % form_data
+        for row_idx, row in enumerate(self.connect().execute(stmt)):
             callback(row_idx, list(row))
+
+    def select_task_prerequisites(self, cycle, name):
+        """Return prerequisites of a task of the given name & cycle point."""
+        stmt = f"""
+            SELECT
+                prereq_name,
+                prereq_cycle,
+                prereq_output,
+                satisfied
+            FROM
+                {self.TABLE_TASK_PREREQUISITES}
+            WHERE
+                cycle == '{cycle}' AND
+                name == '{name}'
+        """
+        return list(self.connect().execute(stmt))
 
     def select_task_times(self):
         """Select submit/start/stop times to compute job timings.
@@ -837,38 +760,6 @@ class CylcSuiteDAO:
             'submit_time', 'start_time', 'succeed_time'
         )
         return columns, [r for r in self.connect().execute(q)]
-
-    def take_checkpoints(self, event, other_daos=None):
-        """Add insert items to *_checkpoints tables.
-
-        Select items in suite_params, broadcast_states and task_pool and
-        prepare them for insert into the relevant *_checkpoints tables, and
-        prepare an insert into the checkpoint_id table the event and the
-        current time.
-
-        If other_daos is a specified, it should be a list of CylcSuiteDAO
-        objects.  The logic will prepare insertion of the same items into the
-        *_checkpoints tables of these DAOs as well.
-        """
-        id_ = 1
-        for max_id, in self.connect().execute(
-                "SELECT MAX(id) FROM checkpoint_id"):
-            if max_id is not None and max_id >= id_:
-                id_ = max_id + 1
-        daos = [self]
-        if other_daos:
-            daos.extend(other_daos)
-        for dao in daos:
-            dao.tables[self.TABLE_CHECKPOINT_ID].add_insert_item([
-                id_, get_current_time_string(), event])
-        for table_name in [
-                self.TABLE_SUITE_PARAMS,
-                self.TABLE_BROADCAST_STATES,
-                self.TABLE_TASK_POOL]:
-            for row in self.connect().execute("SELECT * FROM %s" % table_name):
-                for dao in daos:
-                    dao.tables[table_name + "_checkpoints"].add_insert_item(
-                        [id_] + list(row))
 
     def vacuum(self):
         """Vacuum to the database."""
@@ -916,200 +807,3 @@ class CylcSuiteDAO:
 
         # done
         conn.commit()
-
-    def upgrade_retry_state(self):
-        """Replace the retry state with xtriggers.
-
-        * Change *retrying tasks to waiting
-        * Add the required xtrigger
-
-        Note:
-            The retry status can be safely removed as this is really a display
-            state, the retry logic revolves around the TaskActionTimer.
-
-        From:
-            cylc<8
-        To:
-            cylc>=8
-        PR:
-            #3423
-
-        Returns:
-            list - (cycle, name, status) tuples of all retrying tasks.
-
-        """
-        conn = self.connect()
-
-        for table in [self.TABLE_TASK_POOL_CHECKPOINTS, self.TABLE_TASK_POOL]:
-            tasks = list(conn.execute(
-                rf'''
-                    SELECT
-                        cycle, name, status
-                    FROM
-                        {table}
-                    WHERE
-                        status IN ('retrying', 'submit-retrying')
-                '''
-            ))
-            if tasks:
-                LOG.info(f'Upgrade retrying tasks in table {table}')
-            conn.executemany(
-                rf'''
-                    UPDATE
-                        {table}
-                    SET
-                        status='{TASK_STATUS_WAITING}'
-                    WHERE
-                        cycle==?
-                        and name==?
-                        and status==?
-                ''',
-                tasks
-            )
-        conn.commit()
-        return tasks
-
-    def upgrade_is_held(self):
-        """Upgrade hold_swap => is_held.
-
-        * Add a is_held column.
-        * Set status and is_held as per the new schema.
-        * Set the swap_hold values to None
-          (bacause sqlite3 does not support DROP COLUMN)
-
-        From:
-            cylc<8
-        To:
-            cylc>=8
-        PR:
-            #3230
-
-        Returns:
-            bool - True if upgrade performed, False if upgrade skipped.
-
-        """
-        conn = self.connect()
-
-        # check if upgrade required
-        schema = conn.execute(rf'PRAGMA table_info({self.TABLE_TASK_POOL})')
-        for _, name, *_ in schema:
-            if name == 'is_held':
-                LOG.debug('is_held column present - skipping db upgrade')
-                return False
-
-        # perform upgrade
-        for table in [self.TABLE_TASK_POOL, self.TABLE_TASK_POOL_CHECKPOINTS]:
-            LOG.info('Upgrade hold_swap => is_held in %s', table)
-            conn.execute(
-                rf'''
-                    ALTER TABLE
-                        {table}
-                    ADD COLUMN
-                        is_held BOOL
-                '''
-            )
-            for cycle, name, status, hold_swap in conn.execute(rf'''
-                    SELECT
-                        cycle, name, status, hold_swap
-                    FROM
-                        {table}
-            '''):
-                if status == 'held':
-                    new_status = hold_swap
-                    is_held = True
-                elif hold_swap == 'held':
-                    new_status = status
-                    is_held = True
-                else:
-                    new_status = status
-                    is_held = False
-                conn.execute(
-                    rf'''
-                        UPDATE
-                            {table}
-                        SET
-                            status=?,
-                            is_held=?,
-                            hold_swap=?
-                        WHERE
-                            cycle==?
-                            AND name==?
-                    ''',
-                    (new_status, is_held, None, cycle, name)
-                )
-            self.remove_columns(table, ['hold_swap'])
-            conn.commit()
-        return True
-
-    def upgrade_to_platforms(self):
-        """upgrade [job]batch system and [remote]host to platform
-
-        * Add 'platform' and 'user' columns to table task_jobs.
-        * Remove 'user_at_host' and 'batch_sys_name' columns
-
-
-        Returns:
-            bool - True if upgrade performed, False if upgrade skipped.
-        """
-        conn = self.connect()
-
-        # check if upgrade required
-        schema = conn.execute(rf'PRAGMA table_info({self.TABLE_TASK_JOBS})')
-        for _, name, *_ in schema:
-            if name == 'platform_name':
-                LOG.debug('platform_name column present - skipping db upgrade')
-                return False
-
-        # Perform upgrade:
-        table = self.TABLE_TASK_JOBS
-        LOG.info('Upgrade to Cylc 8 platforms syntax')
-        conn.execute(
-            rf'''
-                ALTER TABLE
-                    {table}
-                ADD COLUMN
-                    user TEXT
-            '''
-        )
-        conn.execute(
-            rf'''
-                ALTER TABLE
-                    {table}
-                ADD COLUMN
-                    platform_name TEXT
-            '''
-        )
-        job_platforms = glbl_cfg(cached=False).get(['platforms'])
-        for cycle, name, user_at_host, batch_system in conn.execute(rf'''
-                SELECT
-                    cycle, name, user_at_host, batch_system
-                FROM
-                    {table}
-        '''):
-            match = re.match(r"(?P<user>\S+)@(?P<host>\S+)", user_at_host)
-            if match:
-                user = match.group('user')
-                host = match.group('host')
-            else:
-                user = ''
-                host = user_at_host
-            platform = platform_from_job_info(
-                job_platforms,
-                {'batch system': batch_system},
-                {'host': host}
-            )
-            conn.execute(
-                rf'''
-                    UPDATE
-                        {table}
-                    SET
-                        user=?,
-                        platform_name=?
-                    WHERE
-                        cycle==?
-                        AND name==?
-                ''',
-                (user, platform, cycle, name)
-            )
-        conn.commit()
-        return True

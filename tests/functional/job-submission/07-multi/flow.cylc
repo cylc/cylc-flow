@@ -1,12 +1,14 @@
 #!Jinja2
-[cylc]
+
+[scheduler]
     UTC mode = True
 
 [scheduling]
-    initial cycle point=2020
-    final cycle point=2025
+    initial cycle point = 2020
+    final cycle point = 2025
     [[graph]]
-        P1Y=T[-P1Y]:succeed-all => T
+        P1Y = T[-P1Y]:succeed-all => T
+
 [runtime]
     [[T]]
         script = true
@@ -15,4 +17,3 @@
     [[t4,t5,t6]]
         inherit = T
         platform = {{CYLC_TEST_PLATFORM}}
-

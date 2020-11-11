@@ -40,4 +40,4 @@ cmp_ok "${SUITE_NAME}.graph.plain" 'graph.plain.local.ref'
 TEST_NAME="${TEST_NAME_BASE}-run"
 suite_run_ok "${TEST_NAME}" cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge

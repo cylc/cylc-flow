@@ -30,5 +30,5 @@ cmp_ok "${SUITE_RUN_DIR}/handler.out" <<'__OUT__'
 aborted contact file modified
 __OUT__
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

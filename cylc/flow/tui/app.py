@@ -397,7 +397,7 @@ class TuiApp:
         if status_summary:
             header.extend([' ('] + status_summary + [' )'])
         if not all(self.filter_states.values()):
-            header.extend([' ', '*fitered* "R" to reset', ' '])
+            header.extend([' ', '*filtered* "R" to reset', ' '])
         self.set_header(header)
 
         # global update - the nuclear option - slow but simple

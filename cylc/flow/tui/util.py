@@ -127,6 +127,10 @@ def compute_tree(flow):
 
     # add leaves
     for task in flow['taskProxies']:
+        # If there's no first parent, the child will have been deleted
+        # during/after API query resolution. So ignore.
+        if not task['firstParent']:
+            continue
         task_node = add_node(
             'task', task['id'], nodes, data=task)
         if task['firstParent']['name'] == 'root':
@@ -293,7 +297,7 @@ def render_node(node, data, type_):
             first_child = None
 
         # progress information
-        if data['state'] == TASK_STATUS_RUNNING:
+        if data['state'] == TASK_STATUS_RUNNING and first_child:
             start_time = first_child.get_value()['data']['startedTime']
             mean_time = data['task']['meanElapsedTime']
 

@@ -1,4 +1,4 @@
-[cylc]
+[scheduler]
     UTC mode = True
 
 [scheduling]
@@ -8,7 +8,7 @@
 
 [runtime]
     [[t1]]
-        script = cylc task message "hello"
+        script = cylc message "hello"
         [[[outputs]]]
             out1 = "hello"
     [[t2]]

@@ -22,7 +22,7 @@ set_test_number 3
 
 OPT_SET=
 create_test_global_config "" "
-[cylc]
+[scheduler]
     [[main loop]]
         # plugins = health check
         [[[health check]]]
@@ -40,5 +40,5 @@ LOGD="$RUN_DIR/${SUITE_NAME}/log"
 grep_ok \
     "${SRVD}/contact: contact file corrupted/modified and may be left" \
     "${LOGD}/suite/log"
-purge_suite "${SUITE_NAME}"
+purge
 exit

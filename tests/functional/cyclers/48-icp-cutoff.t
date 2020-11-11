@@ -20,7 +20,7 @@
 set_test_number 1
 
 init_suite "${TEST_NAME_BASE}" <<'__SUITE__'
-[cylc]
+[scheduler]
     cycle point time zone = Z
     [[events]]
         abort on stalled = True
@@ -36,5 +36,5 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITE__'
 __SUITE__
 run_ok "${TEST_NAME_BASE}" cylc run "${SUITE_NAME}" --no-detach
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

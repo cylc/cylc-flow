@@ -1,0 +1,32 @@
+# default configuration for the Cylc "swarm" platforms
+# override configurations in your global.cylc/global-tests.cylc as required
+
+[platforms]
+    [[_local_background_indep_tcp]]
+        hosts = localhost
+        install target = localhost
+    [[_remote_background_indep_tcp]]
+        hosts = _remote_background_indep_tcp
+    [[_remote_at_indep_tcp]]
+        # NOTE: at submission uses the same container as background
+        batch system = at
+        hosts = _remote_background_indep_tcp
+    [[_remote_background_indep_poll]]
+        hosts = _remote_background_indep_poll
+        communication method = poll
+        execution polling intervals = 5*PT1S, PT5S
+        submission polling intervals = PT1S
+    [[_remote_at_indep_poll]]
+        # NOTE: at submission uses the same container as background
+        batch system = at
+        hosts = _remote_background_indep_poll
+        communication method = poll
+        execution polling intervals = 5*PT1S, PT5S
+        submission polling intervals = PT1S
+    # [[_remote_background_shared_tcp]]
+    #     hosts = _remote_background_shared_tcp
+    # [[_remote_background_shared_poll]]
+    #     hosts = _remote_background_shared_poll
+    #     communication method = poll
+    #     execution polling intervals = 5*PT1S, PT5S
+    #     submission polling intervals = PT1S

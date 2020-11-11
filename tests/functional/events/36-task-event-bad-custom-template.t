@@ -33,5 +33,5 @@ grep_ok \
     'SuiteConfigError: bad task event handler template t1: echo %(rubbish)s: KeyError(.rubbish.)' \
     "${SUITE_RUN_DIR}/log/suite/log"
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

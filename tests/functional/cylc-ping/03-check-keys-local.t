@@ -19,7 +19,7 @@
 . "$(dirname "$0")/test_header"
 set_test_number 10
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
-[cylc]
+[scheduler]
     cycle point format = %Y
 [scheduling]
     initial cycle point = 2020
@@ -44,5 +44,5 @@ exists_fail "${SRVD}/server.key_secret"
 exists_fail "${SRVD}/server.key"
 exists_fail "${SRVD}/client_public_keys/client_localhost.key"
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

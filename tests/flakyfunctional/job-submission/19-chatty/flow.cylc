@@ -1,7 +1,10 @@
-[cylc]
+#!Jinja2
+
+[scheduler]
    [[events]]
       abort on timeout = True
       timeout = PT20S
+
 [scheduling]
     [[graph]]
         # The "starter" task sleeps 5 seconds between start and complete.
@@ -20,13 +23,14 @@
         R1 = "starter => HOPEFUL"
         R1 = HOPEFUL:succeeded-all
         R1 = "NOHOPE:submit-fail-all => stopper"
+
 [runtime]
     [[starter]]
         script = wait && sleep 5
     [[HOPEFUL]]
         script = true
     [[NOHOPE]]
-        platform = griffin
+        platform = {{ environ['CYLC_TEST_PLATFORM'] }}
     [[nh0, nh1, nh2, nh3, nh4, nh5, nh6, nh7, nh8, nh9]]
         inherit = NOHOPE
     [[h0, h1, h2, h3, h4, h5, h6, h7, h8, h9]]

@@ -33,6 +33,7 @@ from graphene.utils.str_converters import to_snake_case
 from cylc.flow import ID_DELIM
 from cylc.flow.broadcast_mgr import ALL_CYCLE_POINTS_STRS, addict
 from cylc.flow.task_state import (
+    TASK_OUTPUT_SUCCEEDED,
     TASK_STATUSES_ORDERED,
     TASK_STATUS_DESC,
     TASK_STATUS_WAITING,
@@ -557,7 +558,8 @@ async def resolve_broadcasts(root, info, **args):
 
 
 def resolve_json_dump(root, info, **args):
-    return json.loads(getattr(root, to_snake_case(info.field_name), '{}'))
+    field = getattr(root, to_snake_case(info.field_name), '{}') or '{}'
+    return json.loads(field)
 
 
 # Types:
@@ -1409,24 +1411,6 @@ class Hold(Mutation):
     result = GenericScalar()
 
 
-class Nudge(Mutation):
-    class Meta:
-        description = sstrip('''
-            Cause the Cylc task processing loop to be invoked on a running
-            suite.
-
-            This happens automatically when the state of any task changes
-            such that task processing (dependency negotiation etc.)
-            is required, or if a clock-trigger task is ready to run.
-        ''')
-        resolver = partial(mutator, command='nudge')
-
-    class Arguments:
-        workflows = List(WorkflowID, required=True)
-
-    result = GenericScalar()
-
-
 class Ping(Mutation):
     class Meta:
         description = sstrip('''
@@ -1535,6 +1519,22 @@ class SetVerbosity(Mutation):
     result = GenericScalar()
 
 
+class SetGraphWindowExtent(Mutation):
+    class Meta:
+        description = sstrip('''
+            Set the maximum graph distance (n) from an active node
+            of the data-store graph window.
+
+        ''')
+        resolver = partial(mutator, command='set_graph_window_extent')
+
+    class Arguments:
+        workflows = List(WorkflowID, required=True)
+        n_edge_distance = Int(required=True)
+
+    result = GenericScalar()
+
+
 class Stop(Mutation):
     class Meta:
         description = sstrip('''
@@ -1563,21 +1563,6 @@ class Stop(Mutation):
         )
         flow_label = String(
             description='Label of flow to sterilise.'
-        )
-
-    result = GenericScalar()
-
-
-class Checkpoint(Mutation):
-    class Meta:
-        description = 'Tell the suite to checkpoint its current state.'
-        resolver = partial(mutator, command='take_checkpoints')
-
-    class Arguments:
-        workflows = List(WorkflowID, required=True)
-        name = String(
-            description='The checkpoint name.',
-            required=True
         )
 
     result = GenericScalar()
@@ -1671,14 +1656,20 @@ class Remove(Mutation, TaskMutation):
 class SetOutputs(Mutation, TaskMutation):
     class Meta:
         description = sstrip('''
-            Mark task outputs as completed.
+            Artificially mark task outputs as completed.
+
+            This allows you to manually intervene with Cylc's scheduling
+            algorithm by artificially satisfying outputs of tasks.
+
+            By default this makes tasks appear as if they succeeded.
         ''')
         resolver = partial(mutator, command='force_spawn_children')
 
     class Arguments(TaskMutation.Arguments):
         outputs = List(
             String,
-            default_value=[],
+            default_value=[TASK_OUTPUT_SUCCEEDED],
+            description='List of task outputs to satisfy.'
         )
 
 
@@ -1707,16 +1698,15 @@ class Mutations(ObjectType):
     ext_trigger = ExtTrigger.Field(
         description=ExtTrigger._meta.description)
     hold = Hold.Field(description=Hold._meta.description)
-    nudge = Nudge.Field(description=Nudge._meta.description)
     message = Message.Field(description=Message._meta.description)
     ping = Ping.Field(description=Ping._meta.description)
     release = Release.Field(description=Release._meta.description)
     reload = Reload.Field(description=Reload._meta.description)
     set_verbosity = SetVerbosity.Field(
         description=SetVerbosity._meta.description)
+    set_graph_window_extent = SetGraphWindowExtent.Field(
+        description=SetGraphWindowExtent._meta.description)
     stop = Stop.Field(description=Stop._meta.description)
-    checkpoint = Checkpoint.Field(
-        description=Checkpoint._meta.description)
 
     # task actions
     kill = Kill.Field(description=Kill._meta.description)

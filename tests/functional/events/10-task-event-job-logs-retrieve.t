@@ -17,9 +17,8 @@
 #-------------------------------------------------------------------------------
 # Test remote job logs retrieval, requires compatible version of cylc on remote
 # job host.
-export CYLC_TEST_IS_GENERIC=false
+export REQUIRE_PLATFORM='loc:remote'
 . "$(dirname "$0")/test_header"
-require_remote_platform
 set_test_number 4
 OPT_SET=
 create_test_global_config "" "
@@ -58,6 +57,5 @@ cmp_ok 'edited-log' <<'__LOG__'
 1/t1/03 ('job-logs-retrieve', 'succeeded') will run after PT5S
 __LOG__
 
-purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
+purge
 exit

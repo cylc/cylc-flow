@@ -50,20 +50,20 @@ class SuiteEventHandler():
 
     @staticmethod
     def get_events_conf(config, key, default=None):
-        """Return a named [cylc][[events]] configuration."""
+        """Return a named [scheduler][[events]] configuration."""
         # Mail doesn't have any defaults in suite.py
-        if 'mail' in config.cfg['cylc']:
+        if 'mail' in config.cfg['scheduler']:
             getters = [
-                config.cfg['cylc']['events'],
-                config.cfg['cylc']['mail'],
-                glbl_cfg().get(['cylc', 'events']),
-                glbl_cfg().get(['cylc', 'mail'])
+                config.cfg['scheduler']['events'],
+                config.cfg['scheduler']['mail'],
+                glbl_cfg().get(['scheduler', 'events']),
+                glbl_cfg().get(['scheduler', 'mail'])
             ]
         else:
             getters = [
-                config.cfg['cylc']['events'],
-                glbl_cfg().get(['cylc', 'events']),
-                glbl_cfg().get(['cylc', 'mail'])
+                config.cfg['scheduler']['events'],
+                glbl_cfg().get(['scheduler', 'events']),
+                glbl_cfg().get(['scheduler', 'mail'])
             ]
         value = None
         for getter in getters:

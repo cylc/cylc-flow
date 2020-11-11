@@ -34,7 +34,7 @@ set_test_number 6
 # Restart
 # Suite runs to stop clock time, reset stop clock time
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
-[cylc]
+[scheduler]
     [[parameters]]
         i = 1..10
     [[events]]
@@ -87,5 +87,5 @@ for i in {01..10}; do
     fi
 done
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

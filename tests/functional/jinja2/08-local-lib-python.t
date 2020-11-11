@@ -28,4 +28,4 @@ run_ok "${TEST_NAME}" cylc validate -o 'flow.cylc.processed' "${SUITE_NAME}"
 TEST_NAME=${TEST_NAME_BASE}-check-expansion
 cmp_ok 'flow.cylc.processed' "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/flow.cylc.jproc"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge

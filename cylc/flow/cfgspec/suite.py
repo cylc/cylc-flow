@@ -59,9 +59,6 @@ with Conf(
             A multi-line description of the suite. It can be retrieved at run
             time with the ``cylc show`` command.
         ''')
-        Conf('group', VDR.V_STRING, '', desc='''
-            A group name for a suite.
-        ''')
         Conf('title', VDR.V_STRING, '', desc='''
             A single line description of the suite, can be retrieved at run
             time with the ``cylc show`` command.
@@ -82,8 +79,9 @@ with Conf(
             interpreted according to your needs. For example,
             "suite-priority".
         ''')
-
     with Conf('scheduler'):
+        Conf('UTC mode', VDR.V_BOOLEAN)
+
         Conf('install', VDR.V_STRING_LIST, desc='''
             Configure the directories and files to be included in the remote
             file installation.
@@ -119,18 +117,17 @@ with Conf(
                     install = dir/, dir2/, file1, file2
                 ''')
 
-    with Conf('cylc'):
-        Conf('UTC mode', VDR.V_BOOLEAN)
         Conf('cycle point format', VDR.V_CYCLE_POINT_FORMAT, desc='''
             Set the date-time format that Cylc uses for
             :term:`cycle points<cycle point>` in :term:`datetime cycling`
             workflows.
 
             To just alter the timezone used in the date-time cycle point
-            format, see :cylc:conf:`flow.cylc[cylc]cycle point time zone`.
+            format, see :cylc:conf:`flow.cylc[scheduler]cycle point time zone`.
             To just alter the number of expanded year digits (for years
             below 0 or above 9999), see
-            :cylc:conf:`flow.cylc[cylc]cycle point num expanded year digits`.
+            :cylc:conf:
+            `flow.cylc[scheduler]cycle point num expanded year digits`.
 
             Cylc usually uses a ``CCYYMMDDThhmmZ`` (``Z`` in the special
             case of UTC) or ``CCYYMMDDThhmm±hhmm`` format for writing
@@ -147,8 +144,8 @@ with Conf(
             The time zone you specify here will be used only for
             writing/dumping cycle points. Cycle points that are input without
             time zones will still default to the local time zone unless
-            :cylc:conf:`flow.cylc[cylc]cycle point time zone` or
-            :cylc:conf:`flow.cylc[cylc]UTC mode` are set. Not specifying a
+            :cylc:conf:`flow.cylc[scheduler]cycle point time zone` or
+            :cylc:conf:`flow.cylc[scheduler]UTC mode` are set. Not specifying a
             time zone here is inadvisable as it leads to ambiguity.
 
             .. note::
@@ -181,18 +178,18 @@ with Conf(
             will be converted to the time zone you give and will be
             represented with this string at the end.
 
-            If this isn't set (and :cylc:conf:`flow.cylc[cylc]UTC mode` is also
-            not set), then it will default to the local time zone at the
-            time of running the suite. This will persist over local time zone
-            changes (e.g. if the suite is run during winter time, then stopped,
-            then restarted after summer time has begun, the cycle points will
-            remain in winter time).
+            If this isn't set (and :cylc:conf:`flow.cylc[scheduler]UTC mode`
+            is also not set), then it will default to the local time zone at
+            the time of running the suite. This will persist over local time
+            zone changes (e.g. if the suite is run during winter time, then
+            stopped, then restarted after summer time has begun, the cycle
+            points will remain in winter time).
 
             If this isn't set, and UTC mode is set to True, then this will
             default to ``Z``. If you use a custom
-            :cylc:conf:`flow.cylc[cylc]cycle point format`, it is a good idea
-            to set the same time zone here. If you specify a different one
-            here, it will only be used for inferring timezone-less cycle
+            :cylc:conf:`flow.cylc[scheduler]cycle point format`, it is a good
+            idea to set the same time zone here. If you specify a different
+            one here, it will only be used for inferring timezone-less cycle
             points, while dumping will use the one from the cycle point format.
 
             .. note::
@@ -340,15 +337,16 @@ with Conf(
 
             In date-time cycling, if you do not provide time zone information
             for this, it will be assumed to be local time, or in UTC if
-            :cylc:conf:`flow.cylc[cylc]UTC mode` is set, or in the time zone
-            determined by :cylc:conf`flow.cylc[cylc][cycle point time zone]`.
+            :cylc:conf:`flow.cylc[scheduler]UTC mode` is set, or in the time
+            zone determined by
+            :cylc:conf`flow.cylc[scheduler][cycle point time zone]`.
 
             The string ``now`` converts to the current date-time on the suite
             host (adjusted to UTC if the suite is in UTC mode but the host is
             not) to minute resolution.  Minutes (or hours, etc.) may be
             ignored depending on the value of
 
-            :cylc:conf:`flow.cylc[cylc]cycle point format`.
+            :cylc:conf:`flow.cylc[scheduler]cycle point format`.
 
             For more information on setting the initial cycle point relative
             to the current time see :ref:`setting-the-icp-relative-to-now`.
@@ -361,9 +359,9 @@ with Conf(
 
             In date-time cycling, if you do not provide time zone information
             for this, it will be assumed to be local time, or in UTC if
-            :cylc:conf:`flow.cylc[cylc]UTC mode`
+            :cylc:conf:`flow.cylc[scheduler]UTC mode`
             is set, or in the time zone determined by
-            :cylc:conf`flow.cylc[cylc][cycle point time zone]`.
+            :cylc:conf`flow.cylc[scheduler][cycle point time zone]`.
         ''')
         Conf('initial cycle point constraints', VDR.V_STRING_LIST, desc='''
             in a cycling suite it is possible to restrict the initial cycle
@@ -382,6 +380,18 @@ with Conf(
             if one is specified. Unlike the final cycle point suite will not
             shut down once all tasks have passed this point. If this item
             is provided you can override it on the command line.
+        ''')
+        Conf('stop after cycle point', VDR.V_CYCLE_POINT, desc='''
+            Set stop point. Shut down after all tasks have PASSED
+            this cycle point. Will be over-ridden by command line
+            ``--stop-cycle-point=POINT``
+
+            .. note:
+
+                Not to be confused with :cylc:conf:`[..]final cycle point`:
+                There can be more graph beyond this point, but you are
+                choosing not to run that part of the graph.
+
         ''')
         Conf('cycling mode', VDR.V_STRING, Calendar.MODE_GREGORIAN,
              options=list(Calendar.MODES) + ['integer'], desc='''
@@ -1007,7 +1017,7 @@ with Conf(
             with Conf('events', desc='''
                 Cylc can call nominated event handlers when certain task
                 events occur. This section configures specific task event
-                handlers; see :cylc:conf:`flow.cylc[cylc][events]` for
+                handlers; see :cylc:conf:`flow.cylc[scheduler][events]` for
                 suite event handlers.
 
                 Event handlers can be located in the suite ``bin/`` directory,
@@ -1087,7 +1097,7 @@ with Conf(
                 #printf-style-string-formatting>`_.
 
                 Additional information can be passed to event handlers via the
-                ``[cylc] -> [[environment]]`` (but not via task
+                ``[scheduler] -> [[environment]]`` (but not via task
                 runtime environments - event handlers are not called by
                 tasks).
             '''):
@@ -1339,12 +1349,6 @@ with Conf(
 def upg(cfg, descr):
     """Upgrade old suite configuration."""
     u = upgrader(cfg, descr)
-    u.obsolete('6.1.3', ['visualization', 'enable live graph movie'])
-    u.obsolete('7.2.2', ['cylc', 'dummy mode'])
-    u.obsolete('7.2.2', ['cylc', 'simulation mode'])
-    u.obsolete('7.2.2', ['runtime', '__MANY__', 'dummy mode'])
-    u.obsolete('7.2.2', ['runtime', '__MANY__', 'simulation mode'])
-    u.obsolete('7.6.0', ['runtime', '__MANY__', 'enable resurrection'])
     u.obsolete(
         '7.8.0',
         ['runtime', '__MANY__', 'suite state polling', 'template'])
@@ -1416,6 +1420,7 @@ def upg(cfg, descr):
     #     )
     # TODO - there are some simple changes to the config (items from [remote]
     # and [job] moved up 1 level for example) which should be upgraded here.
+    u.deprecate('8.0.0', ['cylc'], ['scheduler'])
     u.upgrade()
 
     upgrade_graph_section(cfg, descr)

@@ -402,7 +402,16 @@ class TaskEventsManager():
         completed_trigger = itask.state.outputs.set_msg_trg_completion(
             message=msg0, is_completed=True)
 
-        if message == TASK_OUTPUT_STARTED:
+        # Check the `started` event has not been missed e.g. due to
+        # polling delay
+        if (message not in [self.EVENT_SUBMITTED, self.EVENT_SUBMIT_FAILED,
+                            self.EVENT_STARTED]
+                and not itask.state.outputs.is_completed(TASK_OUTPUT_STARTED)):
+            self.setup_event_handlers(
+                itask, self.EVENT_STARTED, f'job {self.EVENT_STARTED}')
+            self.spawn_func(itask, TASK_OUTPUT_STARTED)
+
+        if message == self.EVENT_STARTED:
             if (
                     flag == self.FLAG_RECEIVED
                     and itask.state.is_gt(TASK_STATUS_RUNNING)
@@ -410,10 +419,10 @@ class TaskEventsManager():
                 return True
             self._process_message_started(itask, event_time)
             self.spawn_func(itask, TASK_OUTPUT_STARTED)
-        elif message == TASK_OUTPUT_SUCCEEDED:
+        elif message == self.EVENT_SUCCEEDED:
             self._process_message_succeeded(itask, event_time)
             self.spawn_func(itask, TASK_OUTPUT_SUCCEEDED)
-        elif message == TASK_OUTPUT_FAILED:
+        elif message == self.EVENT_FAILED:
             if (
                     flag == self.FLAG_RECEIVED
                     and itask.state.is_gt(TASK_STATUS_FAILED)
@@ -430,7 +439,7 @@ class TaskEventsManager():
                 return True
             if self._process_message_submit_failed(itask, event_time):
                 self.spawn_func(itask, TASK_OUTPUT_SUBMIT_FAILED)
-        elif message == TASK_OUTPUT_SUBMITTED:
+        elif message == self.EVENT_SUBMITTED:
             if (
                     flag == self.FLAG_RECEIVED
                     and itask.state.is_gt(TASK_STATUS_SUBMITTED)
@@ -570,7 +579,7 @@ class TaskEventsManager():
         if itask.tdef.run_mode != 'live':
             return
         msg = ""
-        if message != "job %s" % event:
+        if message != f"job {event}":
             msg = message
         self._db_events_insert(itask, event, msg)
         self._setup_job_logs_retrieval(itask, event)
@@ -816,7 +825,7 @@ class TaskEventsManager():
         ):
             # No retry lined up: definitive failure.
             if itask.state.reset(TASK_STATUS_FAILED):
-                self.setup_event_handlers(itask, "failed", message)
+                self.setup_event_handlers(itask, self.EVENT_FAILED, message)
             LOG.critical(
                 "[%s] -job(%02d) %s", itask, itask.submit_num, "failed")
             no_retries = True
@@ -831,7 +840,7 @@ class TaskEventsManager():
             LOG.info("[%s] -job(%02d) %s", itask, itask.submit_num, msg)
             itask.set_summary_message(msg)
             self.setup_event_handlers(
-                itask, "retry", "%s, %s" % (self.JOB_FAILED, delay_msg))
+                itask, self.EVENT_RETRY, f"{self.JOB_FAILED}, {delay_msg}")
         self._reset_job_timers(itask)
         return no_retries
 
@@ -839,7 +848,7 @@ class TaskEventsManager():
         """Helper for process_message, handle a started message."""
         if itask.job_vacated:
             itask.job_vacated = False
-            LOG.warning("[%s] -Vacated job restarted", itask)
+            LOG.warning(f"[{itask}] -Vacated job restarted")
         self.pflag = True
         job_d = get_task_job_id(itask.point, itask.tdef.name, itask.submit_num)
         self.job_pool.set_job_time(job_d, 'started', event_time)
@@ -848,7 +857,8 @@ class TaskEventsManager():
         self.suite_db_mgr.put_update_task_jobs(itask, {
             "time_run": itask.summary['started_time_string']})
         if itask.state.reset(TASK_STATUS_RUNNING):
-            self.setup_event_handlers(itask, 'started', 'job started')
+            self.setup_event_handlers(
+                itask, self.EVENT_STARTED, f'job {self.EVENT_STARTED}')
         self._reset_job_timers(itask)
 
         # submission was successful so reset submission try number
@@ -874,16 +884,17 @@ class TaskEventsManager():
         if not itask.state.outputs.all_completed():
             msg = ""
             for output in itask.state.outputs.get_not_completed():
-                if output not in [TASK_OUTPUT_EXPIRED,
-                                  TASK_OUTPUT_SUBMIT_FAILED,
-                                  TASK_OUTPUT_FAILED]:
+                if output not in [
+                        TASK_OUTPUT_EXPIRED, TASK_OUTPUT_SUBMIT_FAILED,
+                        TASK_OUTPUT_FAILED, TASK_OUTPUT_STARTED]:
                     msg += "\n  " + output
             if msg:
                 LOG.info(
-                    "[%s] -Succeeded with outputs not completed: %s",
-                    itask, msg)
+                    f"[{itask}] -Succeeded with outputs not completed: {msg}"
+                )
         if itask.state.reset(TASK_STATUS_SUCCEEDED):
-            self.setup_event_handlers(itask, "succeeded", "job succeeded")
+            self.setup_event_handlers(
+                itask, self.EVENT_SUCCEEDED, f"job {self.EVENT_SUCCEEDED}")
         self._reset_job_timers(itask)
 
     def _process_message_submit_failed(self, itask, event_time):
@@ -913,20 +924,20 @@ class TaskEventsManager():
             if itask.state.reset(TASK_STATUS_SUBMIT_FAILED):
                 self.setup_event_handlers(
                     itask, self.EVENT_SUBMIT_FAILED,
-                    'job %s' % self.EVENT_SUBMIT_FAILED)
+                    f'job {self.EVENT_SUBMIT_FAILED}')
         else:
             # There is a submission retry lined up.
             timer = itask.try_timers[TimerFlags.SUBMISSION_RETRY]
             self._retry_task(itask, timer.timeout, submit_retry=True)
             delay_msg = f"submit-retrying in {timer.delay_timeout_as_str()}"
             if itask.state.is_held:
-                delay_msg = "held (%s)" % delay_msg
+                delay_msg = f"held ({delay_msg})"
             msg = "%s, %s" % (self.EVENT_SUBMIT_FAILED, delay_msg)
             LOG.info("[%s] -job(%02d) %s", itask, itask.submit_num, msg)
             itask.set_summary_message(msg)
             self.setup_event_handlers(
                 itask, self.EVENT_SUBMIT_RETRY,
-                "job %s, %s" % (self.EVENT_SUBMIT_FAILED, delay_msg))
+                f"job {self.EVENT_SUBMIT_FAILED}, {delay_msg}")
         self._reset_job_timers(itask)
         return no_retries
 
@@ -970,7 +981,7 @@ class TaskEventsManager():
             # command returns - in which case do not go back to 'submitted'.
             if itask.state.reset(TASK_STATUS_SUBMITTED):
                 self.setup_event_handlers(
-                    itask, TASK_OUTPUT_SUBMITTED, 'job submitted')
+                    itask, self.EVENT_SUBMITTED, f'job {self.EVENT_SUBMITTED}')
             self._reset_job_timers(itask)
 
     def _setup_job_logs_retrieval(self, itask, event):
@@ -1039,8 +1050,8 @@ class TaskEventsManager():
             return
         retry_delays = self._get_events_conf(
             itask,
-            'handler retry delays',
-            self.get_host_conf(itask, "task event handler retry delays"))
+            'handler retry delays'
+        )
         if not retry_delays:
             retry_delays = [0]
         # There can be multiple custom event handlers

@@ -1,4 +1,6 @@
-[cylc]
+#!Jinja2
+
+[scheduler]
    [[events]]
        abort on inactivity = True
        abort on stalled = True
@@ -13,7 +15,6 @@
 [runtime]
     [[foo]]
         script = sleep 10
-        platform = hydra
+        platform = {{ environ['CYLC_TEST_PLATFORM'] }}
         [[[job]]]
             execution time limit = PT5S
-

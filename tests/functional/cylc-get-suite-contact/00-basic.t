@@ -19,7 +19,7 @@
 . "$(dirname "$0")/test_header"
 set_test_number 6
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
-[cylc]
+[scheduler]
     cycle point format = %Y
 [scheduling]
     initial cycle point = 2016
@@ -43,5 +43,5 @@ contains_ok "${TEST_NAME_BASE}-get-suite-contact-2.stdout" \
     "${SUITE_RUN_DIR}/.service/contact"
 
 cylc stop --max-polls=60 --interval=1 "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
+purge
 exit

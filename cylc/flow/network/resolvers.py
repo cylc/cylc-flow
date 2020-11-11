@@ -584,21 +584,6 @@ class Resolvers(BaseResolvers):
         self.schd.command_queue.put(("remove_tasks", (tasks,), {}))
         return (True, 'Command queued')
 
-    def nudge(self):
-        """Tell suite to try task processing.
-
-        Returns:
-            tuple: (outcome, message)
-
-            outcome (bool)
-                True if command successfully queued.
-            message (str)
-                Information about outcome.
-
-        """
-        self.schd.command_queue.put(("nudge", (), {}))
-        return (True, 'Command queued')
-
     def poll_tasks(self, tasks=None, poll_succeeded=False):
         """Request the suite to poll task jobs.
 
@@ -711,6 +696,28 @@ class Resolvers(BaseResolvers):
         self.schd.command_queue.put(("set_verbosity", (level,), {}))
         return (True, 'Command queued')
 
+    def set_graph_window_extent(self, n_edge_distance):
+        """Set data-store graph window to new max edge distance.
+
+        Args:
+            n_edge_distance (int):
+                Max edge distance 0..n from active node.
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool)
+                True if command successfully queued.
+            message (str)
+                Information about outcome.
+
+        """
+        if n_edge_distance >= 0:
+            self.schd.data_store_mgr.set_graph_window_extent(n_edge_distance)
+            return (True, f'Maximum edge distance set to {n_edge_distance}')
+        else:
+            return (False, 'Edge distance cannot be negative')
+
     def force_spawn_children(self, tasks, outputs):
         """Spawn children of given task outputs.
 
@@ -769,24 +776,6 @@ class Resolvers(BaseResolvers):
                 'flow_label': flow_label,
             })
         ))
-        return (True, 'Command queued')
-
-    def take_checkpoints(self, name):
-        """Checkpoint current task pool.
-
-        Args:
-            name (str): The checkpoint name
-
-        Returns:
-            tuple: (outcome, message)
-
-            outcome (bool)
-                True if command successfully queued.
-            message (str)
-                Information about outcome.
-
-        """
-        self.schd.command_queue.put(("take_checkpoints", (name,), {}))
         return (True, 'Command queued')
 
     def force_trigger_tasks(self, tasks, reflow=False):

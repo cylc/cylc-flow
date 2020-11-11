@@ -25,6 +25,6 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
 
 for SUFFIX in '' '-shutdown' '-startup' '-timeout'; do
-    purge_suite "${SUITE_NAME}${SUFFIX}"
+    purge "${SUITE_NAME}${SUFFIX}"
 done
 exit

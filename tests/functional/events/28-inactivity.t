@@ -25,5 +25,5 @@ run_ok "${TEST_NAME_BASE}-validate" \
 suite_run_fail "${TEST_NAME_BASE}-run" \
     cylc run --debug --no-detach "${SUITE_NAME}"
 grep_ok "suite timed out after inactivity" "${TEST_NAME_BASE}-run.stderr"
-purge_suite "${SUITE_NAME}"
+purge
 exit

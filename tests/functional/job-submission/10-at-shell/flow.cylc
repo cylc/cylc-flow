@@ -1,3 +1,5 @@
+#!Jinja2
+
 [scheduling]
     [[graph]]
         R1 = foo
@@ -5,4 +7,4 @@
 [runtime]
     [[foo]]
         script = true
-        platform = atform
+        platform = {{ environ['CYLC_TEST_PLATFORM'] }}

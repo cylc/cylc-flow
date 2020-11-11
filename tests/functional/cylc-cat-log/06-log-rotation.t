@@ -45,5 +45,5 @@ log.20000102T00Z
 log.20000103T00Z
 __CMP__
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

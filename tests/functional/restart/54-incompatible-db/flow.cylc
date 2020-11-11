@@ -1,0 +1,7 @@
+[scheduling]
+    cycling mode = integer
+    initial cycle point = 1
+    final cycle point = 2
+    [[dependencies]]
+        [[[P1]]]
+            graph = foo => bar

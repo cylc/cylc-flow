@@ -43,5 +43,5 @@ cmp_ok "${NAME}" <<'__SELECT__'
 1|t1|message warning|You have been warned
 __SELECT__
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

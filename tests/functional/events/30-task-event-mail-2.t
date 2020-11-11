@@ -25,7 +25,7 @@ mock_smtpd_init
 OPT_SET=
 if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
     create_test_global_config "" "
-[cylc]
+[scheduler]
     [[mail]]
         footer = see: http://localhost/stuff/%(owner)s/%(suite)s/
 [task events]
@@ -67,6 +67,6 @@ run_ok "${TEST_NAME_BASE}-grep-log" \
     grep -q "Subject: \\[. tasks retry\\].* ${SUITE_NAME}" "${TEST_SMTPD_LOG}"
 run_ok "${TEST_NAME_BASE}-grep-log" \
     grep -q "Subject: \\[. tasks failed\\].* ${SUITE_NAME}" "${TEST_SMTPD_LOG}"
-purge_suite "${SUITE_NAME}"
+purge
 mock_smtpd_kill
 exit

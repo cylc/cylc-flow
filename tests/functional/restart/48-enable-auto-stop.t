@@ -36,7 +36,7 @@ set_test_number 8
 # Restart, should retain auto shutdown enabled option
 # Suite runs to final task and shuts down normally
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
-[cylc]
+[scheduler]
     disable automatic shutdown = True
     [[parameters]]
         i = 1..5
@@ -74,5 +74,5 @@ contains_ok 'log.edited' <<__LOG__
 __LOG__
 cmp_ok 'taskpool.out' <'/dev/null'
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

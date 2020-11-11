@@ -21,7 +21,7 @@ set_test_number 4
 OPT_SET=
 if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
     create_test_global_config "" "
-[cylc]
+[scheduler]
     [[events]]
         handlers = echo 'Your %(suite)s suite has a %(event)s event and URL %(suite_url)s and suite-priority as %(suite-priority)s and suite-UUID as %(suite_uuid)s.'
         handler events = startup"
@@ -42,5 +42,5 @@ LOG_FILE="${LOGD}/suite/log"
 grep_ok "\\[('suite-event-handler-00', 'startup') ret_code\\] 0" "${LOG_FILE}"
 grep_ok "\\[('suite-event-handler-00', 'startup') out\\] Your ${SUITE_NAME} suite has a startup event and URL http://mysuites.com/${SUITE_NAME}.html and suite-priority as HIGH and suite-UUID as ${SUITE_UUID}." "${LOG_FILE}"
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

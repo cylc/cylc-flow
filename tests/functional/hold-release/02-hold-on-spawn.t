@@ -30,7 +30,7 @@ __FLOW_CONFIG__
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run --hold "${SUITE_NAME}"
 
 cylc release "${SUITE_NAME}" foo.1
-# foo.1 should run and spawn bar.1 as waiting
+# foo.1 should run and spawn bar.1 as waiting and held
 
 poll_grep_suite_log 'spawned bar\.1'
 
@@ -43,4 +43,4 @@ __OUT__
 
 cylc stop --max-polls=10 --interval=2 "${SUITE_NAME}"
 
-purge_suite "${SUITE_NAME}"
+purge

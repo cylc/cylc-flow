@@ -16,9 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test job submission, multiple jobs per host.
-export CYLC_TEST_IS_GENERIC=false
+export REQUIRE_PLATFORM='loc:remote'
 . "$(dirname "$0")/test_header"
-require_remote_platform
 set_test_number 3
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
@@ -49,6 +48,5 @@ cylc jobs-submit --debug --utc-mode --remote-mode -- '\$HOME/cylc-run/${SUITE_NA
 __LOG__
 cmp_ok 'edited-suite-log' 'edited-suite-log-ref'
 
-purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
+purge
 exit

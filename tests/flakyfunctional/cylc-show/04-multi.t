@@ -77,5 +77,5 @@ outputs (- => not completed):
 __TXT__
 done
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

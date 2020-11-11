@@ -166,6 +166,6 @@ stop
 __OUT__
 cmp_ok "${TEST_NAME}.stderr" <'/dev/null'
 #-------------------------------------------------------------------------------
-purge_suite "${DIFF_SUITE_NAME}"
-purge_suite "${SAME_SUITE_NAME}"
-purge_suite "${CONTROL_SUITE_NAME}"
+purge "${DIFF_SUITE_NAME}"
+purge "${SAME_SUITE_NAME}"
+purge "${CONTROL_SUITE_NAME}"

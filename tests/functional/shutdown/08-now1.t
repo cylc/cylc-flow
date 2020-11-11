@@ -37,5 +37,5 @@ run_ok "${TEST_NAME_BASE}-activity-log-started" \
     "${JLOGD}/job-activity.log"
 # Check that t2.1 did not run
 exists_fail "${LOGD}/job/1/t2"
-purge_suite "${SUITE_NAME}"
+purge
 exit

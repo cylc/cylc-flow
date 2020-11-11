@@ -16,9 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test reload then kill remote running task.
-export CYLC_TEST_IS_GENERIC=false
+export REQUIRE_PLATFORM='loc:remote comms:tcp'
 . "$(dirname "$0")/test_header"
-require_remote_platform
 set_test_number 3
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
@@ -35,6 +34,5 @@ cmp_ok 'db.out' <<'__OUT__'
 1|bar|0
 __OUT__
 
-purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
+purge
 exit

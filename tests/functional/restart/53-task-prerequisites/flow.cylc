@@ -1,0 +1,19 @@
+[scheduler]
+    UTC mode = True
+    [[events]]
+        abort on stalled = True
+[scheduling]
+    cycling mode = integer
+    final cycle point = 5
+    [[graph]]
+        P1 = """
+            foo
+            foo[-P1] & apollo:landed => bar
+        """
+[runtime]
+    [[foo]]
+        script = if [[ "$CYLC_TASK_JOB" == '1/foo/01' ]]; then false; else true; fi
+    [[apollo]]
+        script = cylc message -- "The Eagle has landed"
+        [[[outputs]]]
+            landed = The Eagle has landed

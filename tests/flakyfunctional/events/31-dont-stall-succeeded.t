@@ -34,5 +34,5 @@ sleep 5
 cylc stop --max-polls=10 --interval=2 "${SUITE_NAME}" 1>'/dev/null' 2>&1
 run_fail "${TEST_NAME_BASE}-stall" \
     grep -q -F 'WARNING - suite stalled' "${SUITE_RUN_DIR}/log/suite/log"
-purge_suite "${SUITE_NAME}"
+purge
 exit

@@ -1,5 +1,5 @@
 
-[cylc]
+[scheduler]
     cycle point time zone = +12
 
 [scheduling]

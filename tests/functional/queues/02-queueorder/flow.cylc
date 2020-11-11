@@ -1,4 +1,4 @@
-[cylc]
+[scheduler]
     [[parameters]]
         n = 1..7
 [scheduling]

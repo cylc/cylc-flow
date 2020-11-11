@@ -53,5 +53,5 @@ cmp_json "${TEST_NAME_BASE}-out" \
 ]
 __OUT__
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

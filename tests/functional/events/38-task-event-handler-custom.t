@@ -31,4 +31,4 @@ grep_ok \
 grep_ok "\[foo.1\].*Data ready for barring" "${SUITE_LOG}"
 grep_ok "\[foo.1\].*Data ready for bazzing" "${SUITE_LOG}"
 grep_ok "\[foo.1\].*Aren't the hydrangeas nice?" "${SUITE_LOG}"
-purge_suite "${SUITE_NAME}"
+purge

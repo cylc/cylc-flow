@@ -67,4 +67,4 @@ other:
   o  Triggers at ... 2014-08-08T09:05:00$TZ_OFFSET_EXTENDED
 __SHOW_OUTPUT__
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge

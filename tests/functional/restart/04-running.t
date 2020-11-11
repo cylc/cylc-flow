@@ -19,7 +19,7 @@
 . "$(dirname "$0")/test_header"
 set_test_number 5
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
-[cylc]
+[scheduler]
     [[events]]
         abort on stalled = True
         abort on inactivity = True
@@ -49,5 +49,5 @@ suite_run_ok "${TEST_NAME_BASE}-restart" \
 sqlite3 "${SUITE_RUN_DIR}/log/db" 'SELECT * FROM task_pool' >'sqlite3.out'
 cmp_ok 'sqlite3.out' <'/dev/null'
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 exit

@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test restart from a checkpoint before a reload
 . "$(dirname "$0")/test_header"
 set_test_number 8
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
@@ -30,7 +29,8 @@ data = ast.literal_eval(open(sys.argv[1]).read())
 
 keys = list(
     f"{task['name']}.{task['cyclePoint']}"
-    for task in data['taskProxies'])
+    for task in data['taskProxies']
+)
 if keys != ["t1.2031", "t2.2031"]:
     sys.exit(keys)
 for datum in data['tasks']:
@@ -71,8 +71,9 @@ cylc suite-state "${SUITE_NAME}" \
     --interval=1 \
     --max-polls=10 1>'/dev/null' 2>&1
 cylc dump -r "${SUITE_NAME}" >'cylc-dump.out'
+
 test_dump 'cylc-dump.out'
 
 cylc stop --max-polls=10 --interval=2 "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
+purge
 exit

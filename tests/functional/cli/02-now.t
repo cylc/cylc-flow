@@ -22,7 +22,7 @@
 . "$(dirname "$0")/test_header"
 set_test_number 13
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
-[cylc]
+[scheduler]
     [[events]]
         abort on stalled = true
         abort on inactivity = true
@@ -72,5 +72,5 @@ for ICP in 'now' 'next(T00)' 'previous(T00)'; do
     # TODO - is this test still useful? consider a task_states table test.
 done
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

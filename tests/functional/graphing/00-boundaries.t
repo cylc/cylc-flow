@@ -34,4 +34,4 @@ for POINT in 20140808T00 20140808T06; do
         "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${POINT}.graph.plain.ref"
 done
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge

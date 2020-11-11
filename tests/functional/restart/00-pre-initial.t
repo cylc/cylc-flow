@@ -36,5 +36,5 @@ sqlite3 "${RUN_DIR}/${SUITE_NAME}/log/db" \
     >'final-state'
 contains_ok 'final-state' "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/ref-state"
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

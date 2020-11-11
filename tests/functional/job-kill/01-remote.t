@@ -16,10 +16,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test killing of jobs on a remote host.
-export CYLC_TEST_IS_GENERIC=false
+export REQUIRE_PLATFORM='loc:remote comms:tcp'
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-require_remote_platform
 set_test_number 3
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
@@ -34,6 +33,5 @@ run_fail "${TEST_NAME}" \
     ssh -oBatchMode=yes -oConnectTimeout=5 -n "${CYLC_TEST_HOST}" \
     "bash -c 'ps \$(cat cylc-run/${SUITE_NAME}/work/*/t*/file)'"
 #-------------------------------------------------------------------------------
-purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
+purge
 exit

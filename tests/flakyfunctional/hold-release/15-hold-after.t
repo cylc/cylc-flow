@@ -37,5 +37,5 @@ suite_run_ok "${TEST_NAME_BASE}-2" \
     cylc run --hold-after='20140101T1200Z' --reference-test --debug \
     --no-detach "${SUITE_NAME}"
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

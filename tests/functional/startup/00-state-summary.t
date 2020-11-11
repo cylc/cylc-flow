@@ -37,4 +37,4 @@ TEST_NAME=${TEST_NAME_BASE}-grep
 grep_ok "state totals={'waiting': 0, 'queued': 0, 'expired': 0, 'ready': 0, 'submit-failed': 0, 'submitted': 0, 'running': 0, 'failed': 1, 'succeeded': 0}" dump.out
 #-------------------------------------------------------------------------------
 cylc stop --max-polls=10 --interval=2 "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
+purge

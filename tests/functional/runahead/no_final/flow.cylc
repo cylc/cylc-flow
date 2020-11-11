@@ -1,16 +1,19 @@
 # Should shutdown stalled with 4 failed tasks.
-[cylc]
+[scheduler]
     cycle point time zone = Z
     [[events]]
-        abort on stalled = True
+        abort on inactivity = True
+        inactivity = PT10S
 [scheduling]
     runahead limit = P4
     initial cycle point = 20100101T00
+    [[xtriggers]]
+        never = wall_clock(P100Y)
     [[graph]]
-        # oops makes bar spawn as waiting, to hold back the runahead
-        PT6H = "foo & oops => bar"
+        PT6H = """
+           foo
+           @never => bar
+        """
 [runtime]
     [[foo]]
         script = false
-    [[bar]]
-        script = true

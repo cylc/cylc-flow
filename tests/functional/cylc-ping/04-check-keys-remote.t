@@ -16,21 +16,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Checks remote ZMQ keys are created and deleted on shutdown.
+export REQUIRE_PLATFORM='loc:remote comms:tcp'
 . "$(dirname "$0")/test_header"
-
-require_remote_platform
-
 set_test_number 4
 
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 #!jinja2
-[cylc]
+[scheduler]
 [scheduling]
     [[graph]]
         R1 = holder => held
 [runtime]
     [[holder]]
-        script = """cylc hold "${CYLC_SUITE_NAME}" """
+        script = cylc hold "${CYLC_SUITE_NAME}"
         platform = {{CYLC_TEST_PLATFORM}}
     [[held]]
         script = true
@@ -56,6 +54,5 @@ ${SSH} "${CYLC_TEST_HOST}" \
 find "${RRUND}" -type f -name "*key*"|awk -F/ '{print $NF}'|sort >'find.out'
 cmp_ok 'find.out' <<'__OUT__'
 __OUT__
-purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
+purge
 exit

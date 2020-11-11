@@ -33,5 +33,5 @@ CYLC_JOB_EXIT=EXIT
 __STATUS__
 grep_ok 'CYLC_JOB_EXIT_TIME=' "${T1_STATUS_FILE}"
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

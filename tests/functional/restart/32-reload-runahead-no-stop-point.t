@@ -17,7 +17,6 @@
 #-------------------------------------------------------------------------------
 # Test cylc/cylc-flow#2722
 . "$(dirname "$0")/test_header"
-skip_darwin 'atrun hard to configure on Mac OS'
 set_test_number 3
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
@@ -25,5 +24,5 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run --no-detach "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-restart" \
     cylc restart --no-detach "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
+purge
 exit

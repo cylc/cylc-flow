@@ -26,7 +26,16 @@ from cylc.flow.data_messages_pb2 import PbPrerequisite, PbCondition
 
 
 class Prerequisite:
-    """The concrete result of an abstract logical trigger expression."""
+    """The concrete result of an abstract logical trigger expression.
+
+    A single TaskProxy can have multiple Prerequisites, all of which require
+    satisfying. This corresponds to multiple tasks being dependencies of a task
+    in Cylc graphs (e.g. `a => c`, `b => c`). But a single Prerequisite can
+    also have multiple 'messages' (basically, subcomponents of a Prerequisite)
+    corresponding to parenthesised expressions in Cylc graphs (e.g.
+    `(a & b) => c` or `(a | b) => c`). For the OR operator (`|`), only one
+    message has to be satisfied for the Prerequisite to be satisfied.
+    """
 
     # Memory optimization - constrain possible attributes to this list.
     __slots__ = ["satisfied", "_all_satisfied",
@@ -156,7 +165,7 @@ class Prerequisite:
             return self._all_satisfied
         else:
             # No cached value.
-            if not self.satisfied:
+            if self.satisfied == {}:
                 # No prerequisites left after pre-initial simplification.
                 return True
             if self.conditional_expression:
@@ -276,7 +285,7 @@ class Prerequisite:
             self._all_satisfied = self._conditional_is_satisfied()
 
     def set_not_satisfied(self):
-        """Force this prerequiste into the un-satisfied state.
+        """Force this prerequisite into the un-satisfied state.
 
         State can be overridden by calling `self.satisfy_me`.
 
@@ -301,6 +310,6 @@ class Prerequisite:
         E.G: ['foo.1', 'bar.2']
 
         """
-        return ['%s.%s' % (name, point) for
+        return [f'{name}.{point}' for
                 (name, point, _), satisfied in self.satisfied.items() if
                 satisfied == self.DEP_STATE_SATISFIED]

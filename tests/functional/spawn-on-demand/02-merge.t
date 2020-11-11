@@ -30,7 +30,7 @@ run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 
 # Set frequent pruning of merged flow labels.
 create_test_global_config "" "
-[cylc]
+[scheduler]
    [[main loop]]
        [[[prune flow labels]]]
             interval = PT10S"
@@ -95,5 +95,5 @@ bar|2|${FLOW_TWO}
 baz|2|${FLOW_TWO}
 __OUT__
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

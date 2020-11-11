@@ -2,7 +2,7 @@
     title = final cycle reload test
     description = """change final cycle."""
 
-[cylc]
+[scheduler]
    UTC mode = True
 
 [scheduling]

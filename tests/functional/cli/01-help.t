@@ -19,17 +19,13 @@
 
 . "$(dirname "$0")/test_header"
 # Number of tests depends on the number of 'cylc' commands.
-set_test_number $(( 32 + $(find "${CYLC_REPO_DIR}/bin" -name 'cylc-*' | wc -l) ))
+set_test_number $(( 22 + $(find "${CYLC_REPO_DIR}/bin" -name 'cylc-*' | wc -l) ))
 
 # Top help
 run_ok "${TEST_NAME_BASE}-0" cylc
-run_ok "${TEST_NAME_BASE}-h" cylc h
-run_ok "${TEST_NAME_BASE}--h" cylc h
 run_ok "${TEST_NAME_BASE}-help" cylc help
 run_ok "${TEST_NAME_BASE}---help" cylc --help
 for FILE in \
-    "${TEST_NAME_BASE}-h.stdout" \
-    "${TEST_NAME_BASE}--h.stdout" \
     "${TEST_NAME_BASE}-help.stdout" \
     "${TEST_NAME_BASE}---help.stdout"
 do
@@ -38,26 +34,16 @@ done
 
 # Sub-command - no match
 run_fail "${TEST_NAME_BASE}-aardvark" cylc aardvark
-run_fail "${TEST_NAME_BASE}-prep-aardvark" cylc prep aardvark
-for FILE in \
-    "${TEST_NAME_BASE}-aardvark.stderr" \
-    "${TEST_NAME_BASE}-prep-aardvark.stderr"
-do
-    cmp_ok "${FILE}" <<'__STDERR__'
+cmp_ok "${TEST_NAME_BASE}-aardvark.stderr" <<'__STDERR__'
 Error: cylc aardvark: unknown utility. Abort.
 Type "cylc help all" for a list of utilities.
 __STDERR__
-done
 
 # Sub-command - many matches
 run_fail "${TEST_NAME_BASE}-get" cylc get
 cmp_ok "${TEST_NAME_BASE}-get.stderr" <<'__STDERR__'
 cylc get: is ambiguous for:
-    cylc get-config
-    cylc get-contact
-    cylc get-cylc-version
     cylc get-directory
-    cylc get-global-config
     cylc get-site-config
     cylc get-suite-config
     cylc get-suite-contact
@@ -68,15 +54,11 @@ __STDERR__
 run_ok "${TEST_NAME_BASE}-validate--help" cylc validate --help
 run_ok "${TEST_NAME_BASE}-validate-h" cylc validate -h
 run_ok "${TEST_NAME_BASE}-help-validate" cylc help validate
-run_ok "${TEST_NAME_BASE}-h-prep-validate" cylc h prep validate
 run_ok "${TEST_NAME_BASE}-help-va" cylc help va
-run_ok "${TEST_NAME_BASE}-prep-va" cylc help prep va
 for FILE in \
     "${TEST_NAME_BASE}-validate-h.stdout" \
     "${TEST_NAME_BASE}-help-validate.stdout" \
-    "${TEST_NAME_BASE}-h-prep-validate.stdout" \
-    "${TEST_NAME_BASE}-help-va.stdout" \
-    "${TEST_NAME_BASE}-prep-va.stdout"
+    "${TEST_NAME_BASE}-help-va.stdout"
 do
     cmp_ok "${FILE}" "${TEST_NAME_BASE}-validate--help.stdout"
 done

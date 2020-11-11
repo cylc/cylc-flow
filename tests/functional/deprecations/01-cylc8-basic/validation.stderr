@@ -22,3 +22,4 @@ WARNING -  * (8.0.0) [runtime][foo, cat, dog][events][mail to] -> [runtime][foo,
 WARNING -  * (8.0.0) [runtime][foo, cat, dog][events][mail from] -> [runtime][foo, cat, dog][mail][from] - value unchanged
 WARNING -  * (8.0.0) [runtime][foo, cat, dog][events][mail smtp] -> [runtime][foo, cat, dog][mail][smtp] - value unchanged
 WARNING -  * (8.0.0) [scheduling][max active cycle points] -> [scheduling][runahead limit] - "n" -> "Pn"
+WARNING -  * (8.0.0) [cylc] -> [scheduler] - value unchanged

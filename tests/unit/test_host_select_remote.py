@@ -23,7 +23,9 @@ NOTE: These are functional tests, for unit tests see the docstrings in
       the host_select module.
 
 """
+from shlex import quote
 import socket
+from subprocess import call, DEVNULL
 
 import pytest
 
@@ -39,16 +41,25 @@ from cylc.flow.hostuserutil import get_fqdn_by_host
 local_host, local_host_alises, _ = socket.gethostbyname_ex('localhost')
 local_host_fqdn = get_fqdn_by_host(local_host)
 
-remote_platform = glbl_cfg().get(
-    ['test battery', 'remote platform with shared fs']
-)
-remote_platform_fqdn = None
 
-
-if not remote_platform:
-    pytest.skip('Remote test host not available', allow_module_level=True)
-else:
+try:
+    # get a suitable remote host for running tests on
+    # NOTE: do NOT copy this testing approach in other python tests
+    remote_platform = glbl_cfg().get(
+        ['platforms', '_remote_background_shared_tcp', 'hosts'],
+        []
+    )[0]
+    # don't run tests unless host is contactable
+    if call(
+        ['ssh', quote(remote_platform), 'hostname'],
+        stdin=DEVNULL, stdout=DEVNULL, stderr=DEVNULL
+    ):
+        raise KeyError('remote platform')
+    # get the fqdn for this host
     remote_platform_fqdn = get_fqdn_by_host(remote_platform)
+except (KeyError, IndexError):
+    pytest.skip('Remote test host not available', allow_module_level=True)
+    remote_platform = None
 
 
 def test_remote_select():
@@ -61,13 +72,13 @@ def test_remote_select():
 def test_remote_blacklict():
     """Test that blacklisting works with remote host names."""
     # blacklist by fqdn
-    with pytest.raises(HostSelectException) as excinfo:
+    with pytest.raises(HostSelectException):
         select_host(
             [remote_platform],
             blacklist=[remote_platform]
         )
     # blacklist by short name
-    with pytest.raises(HostSelectException) as excinfo:
+    with pytest.raises(HostSelectException):
         select_host(
             [remote_platform],
             blacklist=[remote_platform_fqdn]
@@ -155,7 +166,6 @@ def test_remote_suite_host_rankings(mock_glbl_cfg):
                     # if this test fails due to race conditions
                     # then you are very lucky
                     virtual_memory().available > 123456789123456789
-                    getloadavg()[0] < 1
                     cpu_count() > 512
                     disk_usage('/').free > 123456789123456789
                 """
@@ -166,7 +176,6 @@ def test_remote_suite_host_rankings(mock_glbl_cfg):
     # ensure that host selection actually evuluated rankings
     assert set(excinfo.value.data[remote_platform_fqdn]) == {
         'virtual_memory().available > 123456789123456789',
-        'getloadavg()[0] < 1',
         'cpu_count() > 512',
         "disk_usage('/').free > 123456789123456789"
     }

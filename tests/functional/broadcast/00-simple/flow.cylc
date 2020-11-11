@@ -9,7 +9,7 @@ shutdown event handler compares the broadcast log file with a previously
 generated reference version.
               """
 
-[cylc]
+[scheduler]
     cycle point format = %Y%m%dT%H
 
 [scheduling]

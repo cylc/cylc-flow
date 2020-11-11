@@ -25,7 +25,7 @@ process pool size = 1
 ' ''
 
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
-[cylc]
+[scheduler]
     [[events]]
         abort on inactivity = True
         abort on stalled = True
@@ -54,5 +54,5 @@ grep_ok "# will invoke in batches, sizes=\[68, 68, 66\]" \
     "${SUITE_RUN_DIR}/log/suite/log"
 
 # tidy up
-purge_suite "${SUITE_NAME}"
+purge
 exit

@@ -1,7 +1,9 @@
+#!Jinja2
+
 [meta]
     title = Restart with a task in the ready state.
 
-[cylc]
+[scheduler]
     [[events]]
         inactivity = PT30S
         abort on inactivity = True
@@ -9,9 +11,9 @@
 [scheduling]
     [[graph]]
         R1 = """
-foo => foo-1
-bar
-"""
+            foo => foo-1
+            bar
+        """
 
 [runtime]
     [[foo]]

@@ -16,10 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test restart with a "ready" task. See GitHub #958 (update: and #2610).
+export REQUIRE_PLATFORM='loc:local batch:at'
 . "$(dirname "$0")/test_header"
-
-skip_darwin 'atrun hard to configure on Mac OS'
-
 set_test_number 3
 
 create_test_global_config "" "
@@ -49,5 +47,5 @@ run_ok "${TEST_NAME_BASE}-restart" timeout 1m my-file-poll "${LOG}"
 # foo-1 should run when the suite is released
 poll_grep_suite_log 'foo-1\.1.*succeeded'
 poll_suite_stopped
-purge_suite "${SUITE_NAME}"
+purge
 exit

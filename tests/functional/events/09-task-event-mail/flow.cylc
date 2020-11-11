@@ -2,7 +2,7 @@
 [meta]
     title=Task Event Mail
 
-[cylc]
+[scheduler]
 {% if GLOBALCFG is not defined %}
     [[mail]]
         footer = see: http://localhost/stuff/%(owner)s/%(suite)s/

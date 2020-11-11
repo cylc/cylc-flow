@@ -28,5 +28,5 @@ cmp_ok "${TEST_NAME}.stderr" <<__END__
 IllegalItemError: [scheduling]initial cycle time
 __END__
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 exit

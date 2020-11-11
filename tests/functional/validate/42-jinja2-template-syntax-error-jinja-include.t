@@ -34,5 +34,5 @@ Context lines:
         {% end if %	<-- TemplateSyntaxError
 __ERROR__
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 exit

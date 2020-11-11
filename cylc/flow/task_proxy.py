@@ -29,6 +29,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_WAITING,
     TASK_OUTPUT_FAILED,
     TASK_OUTPUT_SUCCEEDED)
+from cylc.flow.taskdef import generate_graph_children
 from cylc.flow.wallclock import get_unix_time_from_time_string as str2time
 
 
@@ -232,40 +233,9 @@ class TaskProxy:
         self.state = TaskState(tdef, self.point, status, is_held)
 
         # Determine graph children of this task (for spawning).
-        self.graph_children = {}
-        for seq, dout in tdef.graph_children.items():
-            for output, downs in dout.items():
-                if output not in self.graph_children:
-                    self.graph_children[output] = []
-                for name, trigger in downs:
-                    child_point = trigger.get_child_point(self.point, seq)
-                    is_abs = (trigger.offset_is_absolute or
-                              trigger.offset_is_from_icp)
-                    if is_abs:
-                        if trigger.get_parent_point(self.point) != self.point:
-                            # If 'foo[^] => bar' only spawn off of '^'.
-                            continue
-                    if seq.is_on_sequence(child_point):
-                        # E.g.: foo should trigger only on T06:
-                        #   PT6H = "waz"
-                        #   T06 = "waz[-PT6H] => foo"
-                        self.graph_children[output].append(
-                            (name, child_point, is_abs))
-
-        if tdef.sequential:
-            # Add next-instance child.
-            nexts = []
-            for seq in tdef.sequences:
-                nxt = seq.get_next_point(self.point)
-                if nxt is not None:
-                    # Within sequence bounds.
-                    nexts.append(nxt)
-            if nexts:
-                if TASK_OUTPUT_SUCCEEDED not in self.graph_children:
-                    self.graph_children[TASK_OUTPUT_SUCCEEDED] = []
-                self.state.outputs.add(TASK_OUTPUT_SUCCEEDED)
-                self.graph_children[TASK_OUTPUT_SUCCEEDED].append(
-                    (tdef.name, min(nexts), False))
+        self.graph_children = generate_graph_children(tdef, self.point)
+        if TASK_OUTPUT_SUCCEEDED in self.graph_children:
+            self.state.outputs.add(TASK_OUTPUT_SUCCEEDED)
 
         if TASK_OUTPUT_FAILED in self.graph_children:
             self.failure_handled = True

@@ -20,7 +20,7 @@
 
 set_test_number 3
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
-[cylc]
+[scheduler]
     cycle point format = %Y
     [[events]]
         abort on stalled = True
@@ -43,5 +43,5 @@ sqlite3 "${HOME}/cylc-run/${SUITE_NAME}/.service/db" \
     'UPDATE task_pool SET status="running" WHERE name=="t1" AND cycle=="2019"'
 suite_run_ok "${TEST_NAME_BASE}-restart" \
     cylc restart --debug --no-detach --until=2020 --mode=simulation --abort-if-any-task-fails "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
+purge
 exit

@@ -20,7 +20,7 @@
 . "$(dirname "$0")/test_header"
 set_test_number 3
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
-[cylc]
+[scheduler]
     [[events]]
         abort on stalled = True
         abort on inactivity = True
@@ -43,5 +43,5 @@ run_fail "${TEST_NAME_BASE}-1" cylc ping "${SUITE_NAME}"
 contains_ok "${TEST_NAME_BASE}-1.stderr" <<__ERR__
 SuiteStopped: ${SUITE_NAME} is not running
 __ERR__
-purge_suite "${SUITE_NAME}"
+purge
 exit

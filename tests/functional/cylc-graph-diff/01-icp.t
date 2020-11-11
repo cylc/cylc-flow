@@ -21,7 +21,7 @@
 set_test_number 3
 
 init_suite "${TEST_NAME_BASE}-1" <<'__FLOW_CONFIG__'
-[cylc]
+[scheduler]
     UTC mode = True
 [scheduling]
     [[graph]]
@@ -33,7 +33,7 @@ __FLOW_CONFIG__
 # shellcheck disable=SC2153
 SUITE_NAME1="${SUITE_NAME}"
 init_suite "${TEST_NAME_BASE}-2" <<'__FLOW_CONFIG__'
-[cylc]
+[scheduler]
     UTC mode = True
 [scheduling]
     [[graph]]
@@ -58,6 +58,6 @@ contains_ok "${TEST_NAME_BASE}.stdout" <<__OUT__
 __OUT__
 cmp_ok "${TEST_NAME_BASE}.stderr" <'/dev/null'
 
-purge_suite "${SUITE_NAME1}"
-purge_suite "${SUITE_NAME2}"
+purge "${SUITE_NAME1}"
+purge "${SUITE_NAME2}"
 exit

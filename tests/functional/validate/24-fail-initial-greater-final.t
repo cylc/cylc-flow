@@ -27,5 +27,5 @@ run_fail "${TEST_NAME}" cylc validate -v "${SUITE_NAME}"
 grep_ok "The initial cycle point:20141208T0000Z is after the final cycle \
 point:20141207T0000Z."    "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 exit

@@ -4,7 +4,7 @@ purpose = """
         Tasks of the form .*no_subshell act as control runs.
 """
 
-[cylc]
+[scheduler]
     UTC mode = True
     [[events]]
         abort on stalled = True

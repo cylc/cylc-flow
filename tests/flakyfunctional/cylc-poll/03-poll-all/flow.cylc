@@ -8,7 +8,7 @@ Task poll_check_kill succeeds by Task poll_now. Task poll_now then polls all
 to find if any tasks, allowing submit_hold to suicide via a :submit-fail
 trigger, and the suite to shut down successfully."""
 
-[cylc]
+[scheduler]
    UTC mode = True
    [[events]]
        abort on inactivity = True

@@ -28,5 +28,5 @@ run_ok "${TEST_NAME_BASE}-check" \
 run_fail "${TEST_NAME_BASE}-check" \
     test -s "${SUITE_RUN_DIR}/work/2/pub/log-duplication"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 exit

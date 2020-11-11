@@ -94,18 +94,19 @@ with Conf('global.cylc', desc='''
         The number of old run directory trees to retain at start-up.
     ''')
 
-    # suite
-    with Conf('cylc', desc='''
-        Default values for entries in flow.cylc ``[cylc]`` section.
+    with Conf('scheduler', desc='''
+        Default values for entries in :cylc:conf:`flow.cylc[scheduler]`
+        section. This should not be confused with scheduling in the
+        ``flow.cylc`` file.
     '''):
         Conf('UTC mode', VDR.V_BOOLEAN, False, desc='''
-                Default for :cylc:conf:`flow.cylc[cylc]UTC mode`.
+                Default for :cylc:conf:`flow.cylc[scheduler]UTC mode`.
         ''')
 
         with Conf('events', desc='''
             You can define site defaults for each of the following options,
             details of which can be found under
-            :cylc:conf:`flow.cylc[cylc][events]`.
+            :cylc:conf:`flow.cylc[scheduler][events]`.
         '''):
             Conf('handlers', VDR.V_STRING_LIST)
             Conf('handler events', VDR.V_STRING_LIST)
@@ -136,7 +137,7 @@ with Conf('global.cylc', desc='''
                 desc='''
                     Default for
                     :cylc:conf:
-                    `flow.cylc[cylc][mail]task event batch interval`.
+                    `flow.cylc[scheduler][mail]task event batch interval`.
                 '''
             )
 
@@ -170,7 +171,6 @@ with Conf('global.cylc', desc='''
                     The interval with which this plugin is run.
                 ''')
 
-    # suite
     with Conf('suite logging', desc='''
         The suite event log, held under the suite run directory, is maintained
         as a rolling archive. Logs are rolled over (backed up and started anew)
@@ -183,32 +183,6 @@ with Conf('global.cylc', desc='''
             Suite event logs are rolled over when they reach this file size.
         ''')
 
-    # general
-    with Conf('documentation', desc='''
-        Documentation locations for the ``cylc doc`` command.
-    '''):
-        Conf('local', VDR.V_STRING, '', desc='''
-            Path where the cylc documentation will appear if built locally.
-        ''')
-        Conf('online', VDR.V_STRING,
-             'http://cylc.github.io/doc/built-sphinx/index.html', desc='''
-            URL of the online cylc documentation.
-        ''')
-        Conf('cylc homepage', VDR.V_STRING, 'http://cylc.github.io/', desc='''
-            URL of the cylc internet homepage, with links to documentation for
-            the latest official release.
-        ''')
-
-    # general
-    with Conf('document viewers', desc='''
-        PDF and HTML viewers can be launched by cylc to view the
-        documentation.
-    '''):
-        Conf('html', VDR.V_STRING, 'firefox', desc='''
-            Your preferred web browser.
-        ''')
-
-    # client
     with Conf('editors', desc='''
         Choose your favourite text editor for editing suite configurations.
     '''):
@@ -255,7 +229,6 @@ with Conf('global.cylc', desc='''
                 nedit
         ''')
 
-    # platforms
     with Conf('platforms'):
         with Conf('<platform name>') as Platform:
             Conf('batch system', VDR.V_STRING, 'background')
@@ -330,15 +303,6 @@ with Conf('global.cylc', desc='''
                 The accumulated times (in minutes) for these intervals will be
                 roughly 1, 1 + 2 = 3 and 1 + 2 + 7 = 10 after a task job
                 exceeds its execution time limit.
-            ''')
-            Conf('scp command',
-                 VDR.V_STRING, 'scp -oBatchMode=yes -oConnectTimeout=10',
-                 desc='''
-                A string for the command used to copy files to a remote host.
-                This is not used on the suite host unless you run local tasks
-                under another user account. The value is assumed to be ``scp``
-                with some initial options or a command that implements a
-                similar interface to ``scp``.
             ''')
             Conf('ssh command',
                  VDR.V_STRING,
@@ -419,12 +383,6 @@ with Conf('global.cylc', desc='''
                 :cylc:conf:`flow.cylc[runtime][<namespace>][remote]retrieve job
                 logs retry delays`.
                 setting for the specified host.
-            ''')
-            Conf('task event handler retry delays', VDR.V_INTERVAL_LIST,
-                 desc='''
-                Host specific default for
-                :cylc:conf:`flow.cylc[runtime][<namespace>][events]handler
-                retry delays`.
             ''')
             Conf('tail command template',
                  VDR.V_STRING, 'tail -n +1 -F %(filename)s', desc='''
@@ -528,59 +486,6 @@ with Conf('global.cylc', desc='''
         Conf('smtp', VDR.V_STRING)
         Conf('to', VDR.V_STRING)
 
-    # client
-    with Conf('test battery', desc='''
-        Settings for the automated development tests.
-
-        .. note::
-           The test battery reads ``global-tests.cylc`` instead of the normal
-           site/user global config files (from the same locations, however).
-    '''):
-        Conf('remote platform with shared fs', VDR.V_STRING, desc='''
-            The name of a remote platform that sees the same HOME file system
-            as the host running the test battery.
-        ''')
-        Conf('remote platform', VDR.V_STRING, desc='''
-            Platform name of a remote account that does not see the same home
-            directory as the account running the test battery.
-        ''')
-
-        with Conf('batch systems', desc='''
-            Settings for testing supported batch systems (job submission
-            methods). The tests for a batch system are only performed if the
-            batch system is available on the test host or a remote host
-            accessible via SSH from the test host.
-        '''):
-
-            with Conf('<batch system name>', desc='''
-                SYSTEM is the name of a supported batch system with automated
-                tests.  This can currently be "loadleveler", "lsf", "pbs",
-                "sge" and/or "slurm".
-            '''):
-                Conf('host', VDR.V_STRING, desc='''
-                    The name of a host where commands for this batch system is
-                    available. Use "localhost" if the batch system is available
-                    on the host running the test battery. Any specified remote
-                    host should be accessible via SSH from the host running the
-                    test battery.
-                ''')
-                Conf('out viewer', VDR.V_STRING, desc='''
-                    The command template (with ``%(job_id)s`` substitution)
-                    for testing the run time stdout viewer functionality for
-                    this batch system.
-                ''')
-                Conf('err viewer', VDR.V_STRING, desc='''
-                    The command template (with ``%(job_id)s`` substitution)
-                    for testing the run time stderr viewer functionality for
-                    this batch system.
-                ''')
-
-                with Conf('directives', desc='''
-                    The minimum set of directives that must be supplied to the
-                    batch system on the site to initiate jobs for the tests.
-                '''):
-                    Conf('<directive>', VDR.V_STRING)
-
     # suite
     with Conf('suite host self-identification', desc='''
         The suite host's identity must be determined locally by cylc and passed
@@ -660,34 +565,6 @@ with Conf('global.cylc', desc='''
 def upg(cfg, descr):
     """Upgrader."""
     u = upgrader(cfg, descr)
-
-    u.obsolete('6.4.1', ['test battery', 'directives'])
-    u.obsolete('6.11.0', ['state dump rolling archive length'])
-    # Roll over is always done.
-    u.obsolete('7.8.0', ['suite logging', 'roll over at start-up'])
-    u.obsolete('7.8.1', ['documentation', 'local index'])
-    u.obsolete('7.8.1', ['documentation', 'files', 'pdf user guide'])
-    u.obsolete('7.8.1', ['documentation', 'files',
-                         'single-page html user guide'])
-    u.deprecate('7.8.1',
-                ['documentation', 'files', 'multi-page html user guide'],
-                ['documentation', 'local'])
-    u.deprecate('8.0.0',
-                ['documentation', 'files', 'html index'],
-                ['documentation', 'local'])
-    u.deprecate('8.0.0',
-                ['documentation', 'urls', 'internet homepage'],
-                ['documentation', 'cylc homepage'])
-    u.obsolete('8.0.0', ['suite servers', 'scan hosts'])
-    u.obsolete('8.0.0', ['suite servers', 'scan ports'])
-    u.obsolete('8.0.0', ['communication'])
-    u.obsolete('8.0.0', ['temporary directory'])
-    u.obsolete('8.0.0', ['task host select command timeout'])
-    u.obsolete('8.0.0', ['xtrigger function timeout'])
-    u.obsolete('8.0.0', ['enable run directory housekeeping'])
-    u.obsolete('8.0.0', ['task messaging'])
-    u.obsolete('8.0.0', ['disable interactive command prompts'])
-
     u.upgrade()
 
 

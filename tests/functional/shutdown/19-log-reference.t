@@ -22,7 +22,7 @@
 set_test_number 3
 #-------------------------------------------------------------------------------
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
-[cylc]
+[scheduler]
     [[events]]
         abort on inactivity = True
         inactivity = PT3M
@@ -40,5 +40,5 @@ exists_ok 'reference.log'
 suite_run_ok "${TEST_NAME_BASE}-run-reftest" \
     cylc run --debug --no-detach --reference-test "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 exit

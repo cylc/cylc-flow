@@ -28,5 +28,5 @@ run_fail "${TEST_NAME}" cylc run "${SUITE_NAME}" --debug --no-detach
 RUND="$RUN_DIR/${SUITE_NAME}"
 exists_fail "${RUND}/.service/contact"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 exit

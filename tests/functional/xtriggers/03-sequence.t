@@ -24,7 +24,7 @@ set_test_number 3
 
 # Test suite uses built-in 'echo' xtrigger.
 init_suite "${TEST_NAME_BASE}" << '__FLOW_CONFIG__'
-[cylc]
+[scheduler]
    cycle point format = %Y
 [scheduling]
    initial cycle point = 2025
@@ -65,5 +65,5 @@ cmp_ok foo.2026.log - <<__END__
 __END__
 
 cylc stop --now --max-polls=10 --interval=2 "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
+purge
 exit

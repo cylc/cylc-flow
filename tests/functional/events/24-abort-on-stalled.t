@@ -26,5 +26,5 @@ suite_run_fail "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
 grep_ok "Abort on suite stalled is set" "${TEST_NAME_BASE}-run.stderr"
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

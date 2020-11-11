@@ -95,8 +95,13 @@ def instantiate_middleware(middlewares):
 def null_setter(result):
     """Set type to null if result is empty/null-like."""
     # Only set empty parents to null.
-    if result in EMPTY_VALUES:
-        return NULL_VALUE
+    try:
+        if result in EMPTY_VALUES:
+            return NULL_VALUE
+    except TypeError:
+        # If field is a repeated composite field convert to list.
+        if not result:
+            return NULL_VALUE
     return result
 
 
@@ -150,12 +155,29 @@ class AstDocArguments:
         for defn in document_ast.definitions:
             if isinstance(defn, ast.OperationDefinition):
                 root_type = get_operation_root_type(schema, defn)
+                definition_variables = defn.variable_definitions or []
+                if definition_variables:
+                    def_var_names = {
+                        v.variable.name.value
+                        for v in definition_variables
+                    }
+                    var_names_diff = def_var_names.difference({
+                        k
+                        for k in variable_values
+                        if k in def_var_names
+                    })
+                    # check if we are missing some of the definition variables
+                    if var_names_diff:
+                        msg = (f'Please check your query variables. The '
+                               f'following variables are missing: '
+                               f'[{", ".join(var_names_diff)}]')
+                        raise ValueError(msg)
                 self.operation_defs[getattr(defn.name, 'value', root_type)] = {
                     'definition': defn,
                     'parent_type': root_type,
                     'variables': get_variable_values(
                         schema,
-                        defn.variable_definitions or [],
+                        definition_variables,
                         variable_values
                     ),
                 }

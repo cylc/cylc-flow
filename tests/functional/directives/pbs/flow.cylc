@@ -1,21 +1,22 @@
 #!Jinja2
-{% set HOST = environ['CYLC_TEST_BATCH_TASK_HOST'] %}
-{% set SITE_DIRECTIVES = environ['CYLC_TEST_BATCH_SITE_DIRECTIVES'] %}
-[cylc]
+
+[scheduler]
    [[reference test]]
        expected task failures = rem2.1
+
 [scheduling]
     [[graph]]
-        R1 = """rem1 => rem2
-                   rem2:start => killer => !rem2
-                   """
+        R1 = """
+            rem1 => rem2
+            rem2:start => killer => !rem2
+        """
+
 [runtime]
     [[PBS_SETTINGS]]
-        platform = pbs-test-platform
+        platform = {{ environ['CYLC_TEST_PLATFORM'] }}
         [[[directives]]]
             -l walltime=00:60:00
             -l cput=00:02:00
-            {{SITE_DIRECTIVES}}
     [[rem1]]
         inherit = PBS_SETTINGS
         script = "sleep 10; true"

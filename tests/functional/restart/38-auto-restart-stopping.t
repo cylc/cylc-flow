@@ -15,15 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
+export REQUIRE_PLATFORM='loc:remote fs:shared'
 . "$(dirname "$0")/test_header"
-#-------------------------------------------------------------------------------
-require_remote_platform_wsfs
 set_test_number 2
 if ${CYLC_TEST_DEBUG:-false}; then ERR=2; else ERR=1; fi
 #-------------------------------------------------------------------------------
 # ensure that suites don't get auto stop-restarted if they are already stopping
 BASE_GLOBAL_CONFIG="
-[cylc]
+[scheduler]
     [[main loop]]
         plugins = health check, auto restart
         [[[auto restart]]]
@@ -34,7 +33,7 @@ BASE_GLOBAL_CONFIG="
         inactivity = PT1M
         timeout = PT1M
 [suite servers]
-    run hosts = localhost, ${CYLC_TEST_HOST_WSFS}"
+    run hosts = localhost, ${CYLC_TEST_HOST}"
 
 TEST_NAME="${TEST_NAME_BASE}"
 
@@ -67,7 +66,6 @@ poll_suite_stopped
 grep_ok 'Suite shutting down - REQUEST(CLEAN)' \
     "$(cylc cat-log "${SUITE_NAME}" -m p)"
 
-purge_suite "${SUITE_NAME}"
-purge_suite_platform "${CYLC_TEST_PLATFORM_WSFS}" "${SUITE_NAME}"
+purge
 
 exit

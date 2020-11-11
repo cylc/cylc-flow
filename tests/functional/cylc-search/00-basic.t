@@ -30,5 +30,5 @@ FILE: ${PWD}/include/flow-scheduling.cylc
       (2): initial cycle point=20130101
 __OUT__
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge
 exit

@@ -32,4 +32,4 @@ graph_suite "${SUITE_NAME}" 'graph.plain.suicide' --ungrouped
 cmp_ok graph.plain.suicide \
     "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph.plain.ungrouped.ref"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge

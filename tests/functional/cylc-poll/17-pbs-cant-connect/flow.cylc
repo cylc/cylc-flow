@@ -6,12 +6,7 @@
 [runtime]
     [[t1]]
         script = sleep 60
-        platform = test-pbs-platform
+        platform = {{ environ['CYLC_TEST_PLATFORM'] }}
         [[[job]]]
             execution time limit = PT2M
             execution polling intervals = PT20S
-        [[[directives]]]
-{% if "CYLC_TEST_BATCH_SITE_DIRECTIVES" in environ and
-        environ["CYLC_TEST_BATCH_SITE_DIRECTIVES"] %}
-    {{environ["CYLC_TEST_BATCH_SITE_DIRECTIVES"]}}
-{% endif %}

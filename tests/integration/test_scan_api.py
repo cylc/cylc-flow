@@ -19,7 +19,7 @@ import json
 
 import pytest
 
-from cylc.flow.scripts.cylc_scan import main, ScanOptions
+from cylc.flow.scripts.scan import main, ScanOptions
 
 
 @pytest.fixture(scope='module')

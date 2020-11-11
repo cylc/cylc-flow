@@ -35,4 +35,5 @@ for BAD_PHRASE in "${GREPFOR[@]}"; do
     grep_fail "${BAD_PHRASE}" "${BAD_PHRASE}"
 done
 
+purge
 exit

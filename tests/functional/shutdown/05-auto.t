@@ -48,4 +48,4 @@ run_ok "${TEST_NAME}" cylc ping "${SUITE_NAME}"
 TEST_NAME=${TEST_NAME_BASE}-stop-2
 run_ok "${TEST_NAME}" cylc stop --max-polls=10 --interval=2 "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
+purge

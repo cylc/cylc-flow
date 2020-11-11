@@ -17,9 +17,8 @@
 #-------------------------------------------------------------------------------
 # Test restarting a suite when the host of a submitted or running job is not
 # available. https://github.com/cylc/cylc-flow/issues/1327
-export CYLC_TEST_IS_GENERIC=false
+export REQUIRE_PLATFORM='loc:remote comms:tcp'
 . "$(dirname "$0")/test_header"
-require_remote_platform
 set_test_number 4
 install_suite "${TEST_NAME_BASE}" bad-job-host
 #-------------------------------------------------------------------------------
@@ -34,6 +33,5 @@ done
 suite_run_fail "${TEST_NAME_BASE}-restart" cylc restart --debug --no-detach --abort-if-any-task-fails "${SUITE_NAME}"
 grep_ok PlatformLookupError "${CYLC_SUITE_RUN_DIR}/log/suite/log"
 #-------------------------------------------------------------------------------
-purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
+purge
 exit
