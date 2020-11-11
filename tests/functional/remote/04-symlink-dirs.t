@@ -17,8 +17,8 @@
 #-------------------------------------------------------------------------------
 # Checks configured symlinks are created for run, work, share, share/cycle, log 
 # # directories on localhost and the remote platform.
-. "$(dirname "$0")/test_header"
 export REQUIRE_PLATFORM='loc:remote comms:tcp'
+. "$(dirname "$0")/test_header"
 
 if [[ -z ${TMPDIR:-} || -z ${USER:-} || $TMPDIR/$USER == "$HOME" ]]; then
     skip_all '"TMPDIR" or "USER" not defined or "TMPDIR"/"USER" is "HOME"'
@@ -103,9 +103,9 @@ for DIR in 'work' 'share' 'log'; do
     else
         fail "${TEST_NAME_BASE}-${DIR}-symlink-exists-ok.remotehost"
     fi
+    
 done
 
-purge_suite_platform "${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
-purge_suite "${SUITE_NAME}"
+purge
 
 exit 
