@@ -1,0 +1,19 @@
+#!jinja2
+[meta]
+    title = "Suite Filled in With info from ``rose-suite.conf``"
+    description = """
+    Natively, in Cylc!
+    """
+
+[scheduler]
+    [[environment]]
+        here = "to check not over-written"
+
+[scheduling]
+    initial cycle point = 20200101
+    [[graph]]
+        R1 = task
+
+[runtime]
+    [[task]]
+        script = true

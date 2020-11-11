@@ -281,6 +281,17 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
                                   'to process file: ' + fpath)
             flines = jinja2process(flines, fdir, tvars)
 
+    # Inject rose-suite.conf environment variables into the workflow env.
+    # Appended to ensure that Rose settings over-ride flow.cylc.
+    if rose_vars['env'] is not None:
+        env_lines = [
+            f'        {key} = {value}' for
+            key, value in rose_vars['env'].items()
+        ]
+        flines += ['[scheduler]']
+        flines += ['    [[environment]]']
+        flines += env_lines
+
     # concatenate continuation lines
     if do_contin:
         flines = _concatenate(flines)

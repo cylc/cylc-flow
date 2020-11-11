@@ -123,3 +123,13 @@ def test_get_jinja2_basic(
     }
 
     assert result == expected
+
+
+def test_get_env_section(tmp_path):
+    with open(tmp_path / 'rose-suite.conf', 'w+') as testfh:
+        testfh.write(
+            "[env]\n"
+            "DOG_TYPE = Spaniel \n"
+        )
+
+    assert get_rose_vars(tmp_path)['env'] == {'DOG_TYPE': 'Spaniel'}

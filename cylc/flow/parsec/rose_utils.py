@@ -97,7 +97,7 @@ def get_rose_vars(dir_=None, opts=None):
     )
 
     # For each of the template language sections...
-    for section in ['jinja2:suite.rc', 'empy:suite.rc']:
+    for section in ['jinja2:suite.rc', 'empy:suite.rc', 'env']:
         if section in config_tree.node.value:
             config[section] = dict(
                 [
