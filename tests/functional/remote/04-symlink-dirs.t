@@ -35,11 +35,11 @@ create_test_global_config "" "
         share/cycle = \$TMPDIR/\$USER/cylctb_tmp_share_dir
         work = \$TMPDIR/\$USER
     [[$CYLC_TEST_INSTALL_TARGET]]
-        run = \$TMPDIR/\$USER/ctb_tmp_run_dir
-        share = \$TMPDIR/\$USER
-        log = \$TMPDIR/\$USER
-        share/cycle = \$TMPDIR/\$USER/ctb_tmp_share_dir
-        work = \$TMPDIR/\$USER
+        run = \$TMPDIR/\$USER/test_cylc_symlink/ctb_tmp_run_dir
+        share = \$TMPDIR/\$USER/test_cylc_symlink/
+        log = \$TMPDIR/\$USER/test_cylc_symlink/
+        share/cycle = \$TMPDIR/\$USER/test_cylc_symlink/ctb_tmp_share_dir
+        work = \$TMPDIR/\$USER/test_cylc_symlink/
 "
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
@@ -77,19 +77,17 @@ done
 
 SSH="$(cylc get-global-config -i "[platforms][$CYLC_TEST_PLATFORM]ssh command")"
 
-
 # shellcheck disable=SC2016
 LINK="$(${SSH} "${CYLC_TEST_HOST}" 'readlink "$HOME/cylc-run/'"$SUITE_NAME"'"')"
-if [[ "$LINK" == "$TMPDIR/$USER/ctb_tmp_run_dir/cylc-run/${SUITE_NAME}" ]]; then
+if [[ "$LINK" == *"/test_cylc_symlink/ctb_tmp_run_dir/cylc-run/${SUITE_NAME}" ]]; then
     ok "${TEST_NAME_BASE}-run-symlink-exists-ok.remotehost"
 else
     fail "${TEST_NAME_BASE}-run-symlink-exists-ok.remotehost"
 fi
 
-
 # shellcheck disable=SC2016
 LINK="$(${SSH} "${CYLC_TEST_HOST}" 'readlink "$HOME/cylc-run/'"$SUITE_NAME"/share/cycle'"')"
-if [[ "$LINK" == "$TMPDIR/$USER/ctb_tmp_share_dir/cylc-run/${SUITE_NAME}/share/cycle" ]]; then
+if [[ "$LINK" == *"/test_cylc_symlink/ctb_tmp_share_dir/cylc-run/${SUITE_NAME}/share/cycle" ]]; then
     ok "${TEST_NAME_BASE}-share/cycle-symlink-exists-ok.remotehost"
 else
     fail "${TEST_NAME_BASE}-share/cycle-symlink-exists-ok.remotehost"
@@ -98,14 +96,14 @@ fi
 for DIR in 'work' 'share' 'log'; do
 # shellcheck disable=SC2016
     LINK="$(${SSH} "${CYLC_TEST_HOST}" 'readlink "$HOME/cylc-run/'"$SUITE_NAME"/$DIR'"')"
-    if [[ "$LINK" == "$TMPDIR/$USER/cylc-run/${SUITE_NAME}/${DIR}" ]]; then
+    if [[ "$LINK" == *"/test_cylc_symlink/cylc-run/${SUITE_NAME}/${DIR}" ]]; then
         ok "${TEST_NAME_BASE}-${DIR}-symlink-exists-ok.remotehost"
     else
         fail "${TEST_NAME_BASE}-${DIR}-symlink-exists-ok.remotehost"
     fi
-    
 done
 
+# clean up remote
+${SSH} "${CYLC_TEST_HOST}" rm -rf "${TMPDIR}/${USER}/test_cylc_symlink/"
 purge
-
 exit 
