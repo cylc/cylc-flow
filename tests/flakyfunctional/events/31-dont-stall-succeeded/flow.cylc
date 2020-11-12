@@ -1,6 +1,5 @@
 #!jinja2
 [scheduler]
-    disable automatic shutdown = True
     [[events]]
         abort on stalled = True
         abort on inactivity = True

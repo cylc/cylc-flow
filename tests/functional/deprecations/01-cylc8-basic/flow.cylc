@@ -12,6 +12,7 @@
     mail from = 
     mail smtp = 
     mail footer = 
+    disable automatic shutdown =
     [[reference test]]
         allow task failures =
         live mode suite timeout =
@@ -38,5 +39,3 @@
             mail to = 
             mail smtp = 
             mail retry delays = 
-
-

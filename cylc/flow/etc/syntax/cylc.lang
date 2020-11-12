@@ -171,7 +171,6 @@
         <keyword>exclude at start-up</keyword>
         <keyword>exclude</keyword>
         <keyword>env-script</keyword>
-        <keyword>disable automatic shutdown</keyword>
         <keyword>description</keyword>
         <keyword>default node attributes</keyword>
         <keyword>default edge attributes</keyword>

@@ -198,15 +198,6 @@ with Conf(
                (e.g. ``+05:30``), given that the time zone is used as part of
                task output filenames.
         ''')
-        Conf('disable automatic shutdown', VDR.V_BOOLEAN, desc='''
-            This has the same effect as the ``--no-auto-shutdown`` flag for
-            the suite run commands: it prevents the suite server program from
-            shutting down normally when all tasks have finished (a suite
-            timeout can still be used to stop the daemon after a period of
-            inactivity, however).  This option can make it easier to re-trigger
-            tasks manually near the end of a suite run, during suite
-            development and debugging.
-        ''')
 
         with Conf('main loop'):
             with Conf('<plugin name>'):
@@ -1380,6 +1371,7 @@ def upg(cfg, descr):
     u.obsolete('8.0.0', ['cylc', 'abort if any task fails'])
     u.obsolete('8.0.0', ['cylc', 'events', 'abort if any task fails'])
     u.obsolete('8.0.0', ['cylc', 'events', 'mail retry delays'])
+    u.obsolete('8.0.0', ['cylc', 'disable automatic shutdown'])
     u.deprecate(
         '8.0.0',
         ['cylc', 'task event mail interval'],

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -21,18 +21,13 @@ set_test_number 4
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+
 run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
-TIMEOUT=$(($(date +%s) + 60))
-while (($(date +%s) < TIMEOUT)) && \
-    ! grep -q '\[t1\.1\] .* succeeded' "${SUITE_RUN_DIR}/log/suite/log"
-do
-    sleep 1
-done
+poll_suite_stopped
+
 grep_ok '\[t1\.1\] .*succeeded' "${SUITE_RUN_DIR}/log/suite/log"
 
-sleep 5
-cylc stop --max-polls=10 --interval=2 "${SUITE_NAME}" 1>'/dev/null' 2>&1
-run_fail "${TEST_NAME_BASE}-stall" \
+run_fail "${TEST_NAME_BASE}-not-stalled" \
     grep -q -F 'WARNING - suite stalled' "${SUITE_RUN_DIR}/log/suite/log"
 purge
 exit
