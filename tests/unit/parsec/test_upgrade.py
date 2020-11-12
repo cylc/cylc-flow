@@ -16,7 +16,9 @@
 
 import unittest
 
-from cylc.flow.parsec.upgrade import *
+from cylc.flow.parsec.upgrade import upgrader, converter
+from cylc.flow.parsec.exceptions import UpgradeError
+from cylc.flow.parsec.OrderedDict import OrderedDict
 
 
 def test_simple():
@@ -27,6 +29,7 @@ def test_simple():
         'section A': {
             'abc': 5,
             'cde': 'foo',
+            'gah': 'bar'
         },
         'hostnames': {
             'host 1': {
@@ -48,13 +51,19 @@ def test_simple():
     upg.deprecate('1.3', ['section A'], ['Heading A'])
     # NOTE change to new item keys here!
     upg.deprecate('1.3', ['Heading A', 'cde'], ['Heading A', 'CDE'])
-    upg.deprecate('1.4', ['Heading A', 'abc'], cvtr=x2, silent=True)
+    upg.deprecate(
+        '1.4', ['Heading A', 'abc'], ['Heading A', 'abc'], cvtr=x2,
+        silent=True)
     upg.deprecate(
         '1.4.1', ['item two'], ['Heading A', 'item two'], silent=True)
     upg.deprecate('1.5', ['hostnames'], ['hosts'])
     upg.deprecate(
         '1.5',
         ['hosts', '__MANY__', 'running dir'], ['hosts', '__MANY__', 'run dir'])
+    # obsolete() but with a custom message - `[Heading A]gah` will be deleted:
+    upg.deprecate(
+        '1.3', ['Heading A', 'gah'], None,
+        cvtr=converter(lambda x: x, 'Yaba daba do'))
 
     upg.upgrade()
 

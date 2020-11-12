@@ -79,7 +79,7 @@ run_ok "${TEST_NAME}-restart-success" cylc suite-state "${SUITE_NAME}" \
 
 # check the command the suite has been restarted with
 run_ok "${TEST_NAME}-contact" cylc get-contact "${SUITE_NAME}"
-grep_ok "cylc-restart ${SUITE_NAME} --host=${CYLC_TEST_HOST} --host=localhost" \
+grep_ok "cylc restart ${SUITE_NAME} --host=${CYLC_TEST_HOST} --host=localhost" \
     "${TEST_NAME}-contact.stdout"
 
 # stop suite

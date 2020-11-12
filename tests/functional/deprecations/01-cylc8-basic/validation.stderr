@@ -15,12 +15,12 @@ WARNING -  * (8.0.0) [runtime][foo, cat, dog][events][mail retry delays] - DELET
 WARNING -  * (8.0.0) [cylc][abort if any task fails] - DELETED (OBSOLETE)
 WARNING -  * (8.0.0) [cylc][disable automatic shutdown] - DELETED (OBSOLETE)
 WARNING -  * (8.0.0) [cylc][task event mail interval] -> [cylc][mail][task event batch interval] - value unchanged
-WARNING -  * (8.0.0) [cylc][mail to] -> [cylc][mail][to] - value unchanged
-WARNING -  * (8.0.0) [cylc][mail from] -> [cylc][mail][from] - value unchanged
-WARNING -  * (8.0.0) [cylc][mail smtp] -> [cylc][mail][smtp] - value unchanged
-WARNING -  * (8.0.0) [cylc][mail footer] -> [cylc][mail][footer] - value unchanged
+WARNING -  * (8.0.0) [cylc][events][mail to] -> [cylc][mail][to] - value unchanged
+WARNING -  * (8.0.0) [cylc][events][mail from] -> [cylc][mail][from] - value unchanged
+WARNING -  * (8.0.0) [cylc][events][mail footer] -> [cylc][mail][footer] - value unchanged
 WARNING -  * (8.0.0) [runtime][foo, cat, dog][events][mail to] -> [runtime][foo, cat, dog][mail][to] - value unchanged
 WARNING -  * (8.0.0) [runtime][foo, cat, dog][events][mail from] -> [runtime][foo, cat, dog][mail][from] - value unchanged
-WARNING -  * (8.0.0) [runtime][foo, cat, dog][events][mail smtp] -> [runtime][foo, cat, dog][mail][smtp] - value unchanged
+WARNING -  * (8.0.0) [cylc][events][mail smtp] - DELETED (OBSOLETE) - use "global.cylc[scheduler][mail]smtp" instead
+WARNING -  * (8.0.0) [runtime][foo, cat, dog][events][mail smtp] - DELETED (OBSOLETE) - use "global.cylc[scheduler][mail]smtp" instead
 WARNING -  * (8.0.0) [scheduling][max active cycle points] -> [scheduling][runahead limit] - "n" -> "Pn"
 WARNING -  * (8.0.0) [cylc] -> [scheduler] - value unchanged

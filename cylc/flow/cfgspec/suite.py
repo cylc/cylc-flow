@@ -292,10 +292,6 @@ with Conf(
                 ``mail footer = see http://myhost/%(owner)s/notes/%(suite)s``
 
             ''')
-            Conf('smtp', VDR.V_STRING, desc='''
-                Specify the SMTP server for sending suite email notifications.
-
-            ''')
             Conf('to', VDR.V_STRING, desc='''
                 A string containing a list of addresses which can be accepted
                 by the ``mail`` command.
@@ -1156,13 +1152,6 @@ with Conf(
                     Specify an alternate ``from:`` email address for event
                     notifications.
                 ''')
-                Conf('smtp', VDR.V_STRING, desc='''
-                    Specify the SMTP server for sending email notifications.
-
-                    Example:
-
-                       ``smtp.yourorg``
-                ''')
                 Conf('to', VDR.V_STRING, desc='''
                     A list of email addresses to send task event
                     notifications. The list can be anything accepted by the
@@ -1378,19 +1367,35 @@ def upg(cfg, descr):
         ['cylc', 'mail', 'task event batch interval']
     )
     # Whole workflow task mail settings
-    for mail_setting in ['to', 'from', 'smtp', 'footer']:
+    for mail_setting in ['to', 'from', 'footer']:
         u.deprecate(
             '8.0.0',
-            ['cylc', f'mail {mail_setting}'],
+            ['cylc', 'events', f'mail {mail_setting}'],
             ['cylc', 'mail', mail_setting]
         )
     # Task mail settings in [runtime][TASK]
-    for mail_setting in ['to', 'from', 'smtp']:
+    for mail_setting in ['to', 'from']:
         u.deprecate(
             '8.0.0',
             ['runtime', '__MANY__', 'events', f'mail {mail_setting}'],
             ['runtime', '__MANY__', 'mail', mail_setting]
         )
+    u.deprecate(
+        '8.0.0',
+        ['cylc', 'events', 'mail smtp'],
+        None,  # This is really a .obsolete(), just with a custom message
+        cvtr=converter(lambda x: x, (
+            'DELETED (OBSOLETE) - use "global.cylc[scheduler][mail]smtp" '
+            'instead'))
+    )
+    u.deprecate(
+        '8.0.0',
+        ['runtime', '__MANY__', 'events', 'mail smtp'],
+        None,
+        cvtr=converter(lambda x: x, (
+            'DELETED (OBSOLETE) - use "global.cylc[scheduler][mail]smtp" '
+            'instead'))
+    )
     u.deprecate(
         '8.0.0',
         ['scheduling', 'max active cycle points'],

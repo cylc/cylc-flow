@@ -8,11 +8,12 @@
     required run mode =
     force run mode =
     task event mail interval = 
-    mail to = 
-    mail from = 
-    mail smtp = 
-    mail footer = 
     disable automatic shutdown =
+    [[events]]
+        mail to = 
+        mail from = 
+        mail smtp = 
+        mail footer = 
     [[reference test]]
         allow task failures =
         live mode suite timeout =
