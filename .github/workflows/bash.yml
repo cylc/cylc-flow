@@ -46,3 +46,15 @@ jobs:
             tests/functional/shutdown/09-now2.t \
             tests/functional/shutdown/13-no-port-file-check.t \
             tests/functional/shutdown/14-no-dir-check.t
+
+      - name: Copy cylc-run out of container
+        if: failure()
+        run: |
+          docker cp bash:/root/cylc-run .
+
+      - name: Upload
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          name: Upload cylc-run artifact
+          path: cylc-run
