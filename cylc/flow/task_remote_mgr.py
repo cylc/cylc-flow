@@ -227,6 +227,8 @@ class TaskRemoteMgr:
             cmd.append('--indirect-comm=%s' % comm_meth)
         # Create the ssh command
         cmd = construct_ssh_cmd(cmd, platform)
+        # None status: Waiting for command to finish
+        self.remote_init_map[platform['install target']] = None
         self.proc_pool.put_command(
             SubProcContext(
                 'remote-init',
@@ -235,8 +237,6 @@ class TaskRemoteMgr:
             self._remote_init_callback,
             [platform, tmphandle,
              curve_auth, client_pub_key_dir])
-        # None status: Waiting for command to finish
-        self.remote_init_map[platform['install target']] = None
         return self.remote_init_map[platform['install target']]
 
     def remote_tidy(self):
@@ -309,26 +309,12 @@ class TaskRemoteMgr:
             self, proc_ctx, platform, tmphandle,
             curve_auth, client_pub_key_dir):
         """Callback when "cylc remote-init" exits"""
-        self.ready = True
         try:
             tmphandle.close()
         except OSError:  # E.g. ignore bad unlink, etc
             pass
-        self.install_target = platform['install target']
+        install_target = platform['install target']
         if proc_ctx.ret_code == 0:
-            if REMOTE_INIT_DONE in proc_ctx.out:
-                src_path = get_suite_run_dir(self.suite)
-                dst_path = get_remote_suite_run_dir(platform, self.suite)
-                ctx = SubProcContext(
-                    'file_install',
-                    construct_rsync_over_ssh_cmd(
-                        src_path,
-                        dst_path,
-                        platform,
-                        self.rsync_includes))
-                install_target = platform['install target']
-                self.proc_pool.put_command(
-                    ctx, self._file_install_callback, [install_target])
             if "KEYSTART" in proc_ctx.out:
                 regex_result = re.search(
                     'KEYSTART((.|\n|\r)*)KEYEND', proc_ctx.out)
@@ -338,7 +324,7 @@ class TaskRemoteMgr:
                     KeyType.PUBLIC,
                     KeyOwner.CLIENT,
                     suite_srv_dir=suite_srv_dir,
-                    install_target=self.install_target
+                    install_target=install_target
                 )
                 old_umask = os.umask(0o177)
                 with open(
@@ -351,12 +337,22 @@ class TaskRemoteMgr:
                 # state.
                 curve_auth.configure_curve(
                     domain='*', location=(client_pub_key_dir))
-            for status in (REMOTE_INIT_DONE, REMOTE_INIT_NOT_REQUIRED):
-                if status in proc_ctx.out:
-                    # Good status
-                    LOG.debug(proc_ctx)
-                    self.remote_init_map[self.install_target] = status
-                    return
+            if REMOTE_INIT_DONE in proc_ctx.out:
+                src_path = get_suite_run_dir(self.suite)
+                dst_path = get_remote_suite_run_dir(platform, self.suite)
+                ctx = SubProcContext(
+                    'file-install',
+                    construct_rsync_over_ssh_cmd(
+                        src_path,
+                        dst_path,
+                        platform,
+                        self.rsync_includes))
+                LOG.debug(f"Begin file installation on {install_target}")
+                self.proc_pool.put_command(
+                    ctx, self._file_install_callback,
+                    [install_target, proc_ctx]
+                )
+                return
         # Bad status
         LOG.error(TaskRemoteMgmtError(
             TaskRemoteMgmtError.MSG_INIT,
@@ -366,19 +362,28 @@ class TaskRemoteMgr:
         LOG.error(proc_ctx)
         self.remote_init_map[platform['install target']] = REMOTE_INIT_FAILED
 
-    def _file_install_callback(self, ctx, install_target):
+    def _file_install_callback(self, ctx, install_target, proc_ctx):
         """Callback when file installation exits"""
 
         if ctx.out:
             RSYNC_LOG.info(
                 'File installation information for '
                 f'{install_target}:\n {ctx.out}')
-        if ctx.err:
-            LOG.error(
-                'File installation error on '
-                f'{install_target}:\n {ctx.err}')
-            self.remote_init_map[self.install_target] = (REMOTE_INIT_FAILED)
-        return
+        for status in (REMOTE_INIT_DONE, REMOTE_INIT_NOT_REQUIRED):
+            if status in proc_ctx.out and ctx.ret_code == 0:
+                # Both file installation and remote init success
+                LOG.debug(proc_ctx)
+                self.remote_init_map[install_target] = status
+                self.ready = True
+                return
+        for context in (proc_ctx, ctx):
+            if context.ret_code != 0:
+                self.remote_init_map[install_target] = REMOTE_INIT_FAILED
+                LOG.error(TaskRemoteMgmtError(
+                    TaskRemoteMgmtError.MSG_INIT,
+                    install_target, ' '.join(
+                        quote(item) for item in context.cmd),
+                    context.ret_code, context.out, context.err))
 
     def _remote_init_items(self, comm_meth):
         """Return list of items to install based on communication method.

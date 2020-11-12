@@ -199,7 +199,6 @@ def construct_rsync_over_ssh_cmd(
     rsync_cmd.append("--exclude=*")  # exclude everything else
     rsync_cmd.append(f"{src_path}/")
     rsync_cmd.append(f"{dst_host}:{dst_path}/")
-    LOG.debug(f"rsync cmd use for file install: {' '.join(rsync_cmd)}")
     return rsync_cmd
 
 
