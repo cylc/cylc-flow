@@ -518,7 +518,7 @@ purge () {
     '
 
     # remove the suite run directory on the platform if remote
-    if [[ -n "$PLATFORM" && "${PLATFORM}" != local* ]]; then
+    if [[ -n "$PLATFORM" && "${PLATFORM}" != _local* ]]; then
         local HOST
         HOST="$(get_host_from_platform "$PLATFORM")"
         # shellcheck disable=SC2029
