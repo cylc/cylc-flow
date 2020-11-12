@@ -35,9 +35,10 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 __FLOW_CONFIG__
 
 create_test_global_config '' '
-[suite logging]
-    rolling archive length = 8
-    maximum size in bytes = 2048'
+[scheduler]
+    [[logging]]
+        rolling archive length = 8
+        maximum size in bytes = 2048'
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
