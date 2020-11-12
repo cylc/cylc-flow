@@ -8,6 +8,7 @@
     required run mode =
     force run mode =
     task event mail interval = 
+    disable automatic shutdown =
     [[events]]
         mail to = 
         mail from = 
@@ -39,5 +40,3 @@
             mail to = 
             mail smtp = 
             mail retry delays = 
-
-

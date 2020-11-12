@@ -204,8 +204,8 @@ async def myflow(mod_flow, mod_scheduler, mod_one_conf):
 
 
 def test_module_one(myflow):
-    # Ensure can_auto_stop defaults to True
-    assert myflow.can_auto_stop is True
+    # Ensure a particular scheduler property defaults to False
+    assert myflow.is_restart is False
 
 
 def test_module_two(myflow):

@@ -109,18 +109,6 @@ def get_option_parser(is_restart, add_std_opts=False):
         action="store_true", dest="no_detach")
 
     parser.add_option(
-        "-a", "--no-auto-shutdown", help="Do not shut down"
-        " the suite automatically when all tasks have finished."
-        " This flag overrides the corresponding suite config item.",
-        action="store_true", dest="no_auto_shutdown")
-
-    parser.add_option(
-        "--auto-shutdown", help="Shut down"
-        " the suite automatically when all tasks have finished."
-        " This flag overrides the corresponding suite config item.",
-        action="store_false", dest="no_auto_shutdown")
-
-    parser.add_option(
         "--profile", help="Output profiling (performance) information",
         action="store_true", dest="profile_mode")
 

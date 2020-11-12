@@ -178,7 +178,6 @@ class Scheduler:
     options: Values = None
 
     # suite params
-    can_auto_stop: bool = True
     stop_mode: StopMode = None
     stop_task: str = None
     stop_clock_time: int = None
@@ -525,14 +524,6 @@ class Scheduler:
         if self.options.profile_mode:
             self.previous_profile_point = 0
             self.count = 0
-        if self.options.no_auto_shutdown is not None:
-            self.can_auto_stop = not self.options.no_auto_shutdown
-        elif (
-                self.config.cfg['scheduler']['disable automatic shutdown']
-                is not None
-        ):
-            self.can_auto_stop = (
-                not self.config.cfg['scheduler']['disable automatic shutdown'])
 
         self.profiler.log_memory("scheduler.py: end configure")
 
@@ -1179,13 +1170,6 @@ class Scheduler:
             if self.options.holdcp is None:
                 self.options.holdcp = value
                 LOG.info('+ hold point = %s', value)
-        elif key == self.suite_db_mgr.KEY_NO_AUTO_SHUTDOWN:
-            value = bool(int(value))
-            if self.options.no_auto_shutdown is None:
-                self.options.no_auto_shutdown = value
-                LOG.info('+ no auto shutdown = %s', value)
-            else:
-                LOG.debug('- no auto shutdown = %s (ignored)', value)
         elif key == self.suite_db_mgr.KEY_STOP_CLOCK_TIME:
             value = int(value)
             if time() <= value:
@@ -1738,8 +1722,6 @@ class Scheduler:
 
     def check_auto_shutdown(self):
         """Check if we should do an automatic shutdown: main pool empty."""
-        if not self.can_auto_stop:
-            return False
         self.pool.release_runahead_tasks()
         if self.pool.get_tasks():
             return False

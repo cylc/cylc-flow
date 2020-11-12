@@ -55,7 +55,6 @@ class SuiteDatabaseManager:
     KEY_UTC_MODE = 'UTC_mode'
     KEY_HOLD = 'is_held'
     KEY_HOLD_CYCLE_POINT = 'holdcp'
-    KEY_NO_AUTO_SHUTDOWN = 'no_auto_shutdown'
     KEY_RUN_MODE = 'run_mode'
     KEY_STOP_CLOCK_TIME = 'stop_clock_time'
     KEY_STOP_TASK = 'stop_task'
@@ -316,10 +315,6 @@ class SuiteDatabaseManager:
             if value is not None:
                 self.db_inserts_map[self.TABLE_SUITE_PARAMS].append({
                     "key": key, "value": value})
-        if schd.options.no_auto_shutdown is not None:
-            self.db_inserts_map[self.TABLE_SUITE_PARAMS].append({
-                "key": self.KEY_NO_AUTO_SHUTDOWN,
-                "value": int(schd.options.no_auto_shutdown)})
         for key in (self.KEY_STOP_CLOCK_TIME, self.KEY_STOP_TASK):
             value = getattr(schd, key, None)
             if value is not None:
