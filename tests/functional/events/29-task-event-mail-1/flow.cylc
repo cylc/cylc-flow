@@ -17,5 +17,3 @@
             execution retry delays = PT1S
         [[[events]]]
             mail events = failed, retry
-        [[[mail]]]
-            smtp = {{MAIL_SMTP}}

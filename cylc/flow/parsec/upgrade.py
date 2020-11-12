@@ -185,14 +185,12 @@ class upgrader:
                         msg = self.show_keys(upg['old'])
                         if upg['new']:
                             msg += ' -> ' + self.show_keys(upg['new'])
-                        else:
-                            upg['new'] = upg['old']
                         msg += " - " + upg['cvt'].describe()
                         if not upg['silent']:
                             warnings.setdefault(vn, [])
                             warnings[vn].append(msg)
                         self.del_item(upg['old'])
-                        if upg['cvt'].describe() != "DELETED (OBSOLETE)":
+                        if upg['new']:
                             # check self.cfg does not already contain a
                             # non-deprecated item matching upg['new']:
                             try:

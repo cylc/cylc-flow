@@ -452,8 +452,8 @@ class Scheduler:
             self.config.get_linearized_ancestors())
         self.task_events_mgr.mail_interval = self.cylc_config['mail'][
             "task event batch interval"]
-        self.task_events_mgr.mail_footer = self._get_events_conf(
-            "footer")
+        self.task_events_mgr.mail_smtp = self._get_events_conf("smtp")
+        self.task_events_mgr.mail_footer = self._get_events_conf("footer")
         self.task_events_mgr.suite_url = self.config.cfg['meta']['URL']
         self.task_events_mgr.suite_cfg = self.config.cfg
         if self.options.genref:
@@ -982,6 +982,7 @@ class Scheduler:
         self.pool.set_do_reload(self.config)
         self.task_events_mgr.mail_interval = self.cylc_config['mail'][
             'task event batch interval']
+        self.task_events_mgr.mail_smtp = self._get_events_conf("smtp")
         self.task_events_mgr.mail_footer = self._get_events_conf("footer")
 
         # Log tasks that have been added by the reload, removed tasks are

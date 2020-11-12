@@ -480,10 +480,7 @@ with Conf('global.cylc', desc='''
         Global site/user defaults for
         :cylc:conf:`flow.cylc[runtime][<namespace>][mail]`.
     '''):
-
         Conf('from', VDR.V_STRING)
-        Conf('retry delays', VDR.V_INTERVAL_LIST)
-        Conf('smtp', VDR.V_STRING)
         Conf('to', VDR.V_STRING)
 
     # suite
