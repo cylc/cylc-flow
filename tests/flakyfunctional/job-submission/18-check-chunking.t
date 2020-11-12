@@ -21,7 +21,8 @@
 set_test_number 3
 
 create_test_global_config '
-process pool size = 1
+[scheduler]
+    process pool size = 1
 ' ''
 
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'

@@ -21,7 +21,8 @@ export REQUIRE_PLATFORM='batch:at comms:tcp'
 set_test_number 4
 
 create_test_global_config "
-process pool timeout = PT10S
+[scheduler]
+    process pool timeout = PT10S
 " "
 [platforms]
     [[$CYLC_TEST_PLATFORM]]

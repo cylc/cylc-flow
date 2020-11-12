@@ -22,7 +22,8 @@ export REQUIRE_PLATFORM='batch:at'
 set_test_number 15
 
 create_test_global_config "
-process pool timeout = PT10S" "
+[scheduler]
+    process pool timeout = PT10S
 [platforms]
     [[$CYLC_TEST_PLATFORM]]
         batch submit command template = talkingnonsense %(job)s

@@ -120,8 +120,9 @@ class SubProcPool:
     RET_CODE_SUITE_STOPPING = 999
 
     def __init__(self):
-        self.size = glbl_cfg().get(['process pool size'])
-        self.proc_pool_timeout = glbl_cfg().get(['process pool timeout'])
+        self.size = glbl_cfg().get(['scheduler', 'process pool size'])
+        self.proc_pool_timeout = glbl_cfg().get(
+            ['scheduler', 'process pool timeout'])
         self.closed = False  # Close queue
         self.stopping = False  # No more job submit if True
         # .stopping may be set by an API command in a different thread

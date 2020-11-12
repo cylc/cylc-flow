@@ -23,7 +23,9 @@
 set_test_number 4
 
 create_test_global_config "
-process pool timeout = PT10S" ""
+[scheduler]
+    process pool timeout = PT10S
+"
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
