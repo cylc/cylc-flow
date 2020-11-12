@@ -90,9 +90,6 @@ with Conf('global.cylc', desc='''
            The default is set quite high to avoid killing important
            processes when the system is under load.
     ''')
-    Conf('run directory rolling archive length', VDR.V_INTEGER, -1, desc='''
-        The number of old run directory trees to retain at start-up.
-    ''')
 
     with Conf('scheduler', desc='''
         Default values for entries in :cylc:conf:`flow.cylc[scheduler]`
@@ -100,7 +97,11 @@ with Conf('global.cylc', desc='''
         ``flow.cylc`` file.
     '''):
         Conf('UTC mode', VDR.V_BOOLEAN, False, desc='''
-                Default for :cylc:conf:`flow.cylc[scheduler]UTC mode`.
+            Default for :cylc:conf:`flow.cylc[scheduler]UTC mode`.
+        ''')
+        Conf('run directory rolling archive length', VDR.V_INTEGER, -1,
+             desc='''
+            The number of old run directory trees to retain at start-up.
         ''')
 
         with Conf('events', desc='''

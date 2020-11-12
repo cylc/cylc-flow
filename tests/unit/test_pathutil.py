@@ -162,7 +162,8 @@ class TestPathutil(TestCase):
 )
 def test_make_suite_run_tree(caplog, tmpdir, mock_glbl_cfg, subdir):
     glbl_conf_str = f'''
-        run directory rolling archive length = 1
+        [scheduler]
+            run directory rolling archive length = 1
         [platforms]
             [[localhost]]
                 run directory = {tmpdir}
