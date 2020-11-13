@@ -87,6 +87,7 @@ def rose_fileinstall(dir_=None, opts=None, dest_root=None):
         dir_(string or pathlib.Path):
             Search for a ``rose-suite.conf`` file in this location.
         dest_root (string or pathlib.Path)
+
     """
     if not rose_config_exists(dir_):
         return False

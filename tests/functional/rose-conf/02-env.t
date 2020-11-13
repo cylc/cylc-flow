@@ -18,6 +18,9 @@
 # Test jinja2 from rose-suite.conf file is processed into a suite.
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
+python -c "import cylc.rose" > /dev/null 2>&1 ||
+  skip_all "cylc.rose not installed in environment."
+
 set_test_number 1
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 

@@ -1,0 +1,36 @@
+#!jinja2
+[meta]
+    title = "Add jinja2 vars from a rose-suite.conf"
+    description = """
+    Natively, in Cylc!
+    """
+
+[scheduling]
+    initial cycle point = {{ICP}}
+    final cycle point = {{FCP}}
+    cycling mode = integer
+    [[graph]]
+{% for member in MEMBERS %}
+        P1 = {{TASK1}} => {{TASK2}}_{{member}} => {{TASK3}}
+{% endfor %}
+{% for key, value in SAMUELJOHNSON.items() %}
+        P1 = {{TASK3}} => {{value}}_auf_deutsch_ist_{{key}} => fin
+{% endfor %}
+
+[runtime]
+    [[root]]
+        script = echo "This task is ${CYLC_TASK_ID}"
+
+    [[{{ TASK1 }}]]
+
+{% for member in MEMBERS %}
+    [[{{ TASK2 }}_{{member}}]]
+{% endfor %}
+
+    [[{{ TASK3 }}]]
+
+{% for key, value in SAMUELJOHNSON.items() %}
+    [[{{value}}_auf_deutsch_ist_{{key}}]]
+{% endfor %}
+
+    [[fin]]

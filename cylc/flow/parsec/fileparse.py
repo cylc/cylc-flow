@@ -34,13 +34,13 @@ import os
 import sys
 import re
 
+import pkg_resources
 from ast import literal_eval
 from copy import copy
 from pathlib import Path
 
 from cylc.flow import LOG
 from cylc.flow.parsec.exceptions import ParsecError, FileParseError
-from cylc.flow.parsec.rose_utils import get_rose_vars
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.include import inline
 from cylc.flow.parsec.util import itemstr
@@ -234,7 +234,15 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
         template_vars = {}
 
     # Load Rose Vars, if a ``rose-suite.conf`` file is present.
-    rose_vars = get_rose_vars(Path(fpath).parent)
+    rose_vars = {
+        'env': None,
+        'empy:suite.rc': None,
+        'jinja2:suite.rc': None
+    }
+    for entry_point in pkg_resources.iter_entry_points(
+        'cylc.configure'
+    ):
+        rose_vars = entry_point.resolve()(Path(fpath).parent)
 
     if viewcfg:
         if not viewcfg['empy']:
