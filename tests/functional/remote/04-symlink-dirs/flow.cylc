@@ -1,0 +1,9 @@
+#!jinja2
+[scheduler]
+[scheduling]
+    [[graph]]
+        R1 = holder => held
+[runtime]
+    [[holder]]
+        script = true
+        platform = {{CYLC_TEST_PLATFORM}}

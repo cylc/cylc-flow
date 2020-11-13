@@ -14,14 +14,18 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""cylc remote-init [--indirect-comm=ssh] UUID RUND
+"""cylc remote-init [OPTIONS] ARGS
 
 (This command is for internal use.)
 
-Install suite service files on a task remote (i.e. a [owner@]host):
-    .service/contact: All task -> suite communication methods.
+Initialise an install target.
 
-Content of items to install from a tar file read from STDIN.
+Initialisation creates a workflow run directory on the install target,
+"$HOME/cylc-run/<WORKFLOW_NAME>/". The .service directory is also created and
+populated with the install target authentication files and the contact file.
+
+Symlinks are created for run, work, share, share/cycle, log directories,
+configured in the global.flow.
 
 Return:
     0:
@@ -47,6 +51,7 @@ def get_option_parser():
         argdoc=[
             ("INSTALL_TARGET", "Target to be initialised"),
             ("RUND", "The run directory of the suite"),
+            ('[DIRS_TO_BE_SYMLINKED ...]', "Directories to be symlinked"),
         ],
         color=False
     )
@@ -65,8 +70,13 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(parser, options, install_target, rund):
-    remote_init(install_target, rund, indirect_comm=options.indirect_comm)
+def main(parser, options, install_target, rund, *dirs_to_be_symlinked):
+
+    remote_init(
+        install_target,
+        rund,
+        *dirs_to_be_symlinked,
+        indirect_comm=options.indirect_comm)
 
 
 if __name__ == "__main__":

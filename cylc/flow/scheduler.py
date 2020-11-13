@@ -70,7 +70,7 @@ from cylc.flow.pathutil import (
     get_suite_run_share_dir,
     get_suite_run_work_dir,
     get_suite_test_log_name,
-    make_suite_run_tree,
+    make_suite_run_tree
 )
 from cylc.flow.platforms import (
     get_install_target_from_platform,
@@ -303,7 +303,6 @@ class Scheduler:
             ['etc/job.sh'])
 
         make_suite_run_tree(self.suite)
-
         # Copy local python modules from source to run directory
         for sub_dir in ["python", os.path.join("lib", "python")]:
             # TODO - eventually drop the deprecated "python" sub-dir.

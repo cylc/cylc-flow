@@ -29,6 +29,7 @@ from cylc.flow.suite_files import (
     ContactFileFields,
     SuiteFiles
 )
+from cylc.flow.pathutil import make_symlink
 from cylc.flow.resources import extract_resources
 
 
@@ -84,17 +85,30 @@ def create_client_keys(srvd, install_target):
     os.umask(old_umask)
 
 
-def remote_init(install_target, rund, indirect_comm=None):
+def remote_init(install_target, rund, *dirs_to_symlink, indirect_comm=None):
     """cylc remote-init
 
     Arguments:
         install_target (str): target to be initialised
         rund (str): suite run directory
+        dirs_to_symlink (list): directories to be symlinked in form
+        [directory=symlink_location, ...]
         *indirect_comm (str): use indirect communication via e.g. 'ssh'
     """
     rund = os.path.expandvars(rund)
+    for item in dirs_to_symlink:
+        key, val = item.split("=", 1)
+        if key == 'run':
+            dst = rund
+        else:
+            dst = os.path.join(rund, key)
+        src = os.path.expandvars(val)
+        if '$' in src:
+            print(REMOTE_INIT_FAILED)
+        make_symlink(src, dst)
     srvd = os.path.join(rund, SuiteFiles.Service.DIRNAME)
     os.makedirs(srvd, exist_ok=True)
+
     client_pub_keyinfo = KeyInfo(
         KeyType.PUBLIC,
         KeyOwner.CLIENT,

@@ -70,16 +70,12 @@ def get_option_parser():
                            " to be used with another suite.",
         action="store_true", default=False, dest="redirect")
 
-    parser.add_option(
-        "--run-dir", help="Symlink $HOME/cylc-run/REG to RUNDIR/REG.",
-        action="store", metavar="RUNDIR", default=None, dest="rundir")
-
     return parser
 
 
 @cli_function(get_option_parser)
 def main(parser, opts, reg=None, src=None):
-    register(reg, src, redirect=opts.redirect, rundir=opts.rundir)
+    register(reg, src, redirect=opts.redirect)
 
 
 if __name__ == "__main__":

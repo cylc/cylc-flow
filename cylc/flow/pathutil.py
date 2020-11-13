@@ -19,9 +19,9 @@ import os
 from os.path import expandvars
 from shutil import rmtree
 
-
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.exceptions import WorkflowFilesError
 from cylc.flow.platforms import get_platform
 
 
@@ -139,3 +139,67 @@ def make_suite_run_tree(suite):
         if dir_:
             os.makedirs(dir_, exist_ok=True)
             LOG.debug('%s: directory created', dir_)
+
+
+def make_localhost_symlinks(suite):
+    """Creates symlinks for any configured symlink dirs from glbl_cfg."""
+    dirs_to_symlink = get_dirs_to_symlink('localhost', suite)
+    rund = get_suite_run_dir(suite)
+    for key, value in dirs_to_symlink.items():
+        if key == 'run':
+            dst = rund
+        else:
+            dst = os.path.join(rund, key)
+        src = os.path.expandvars(value)
+        if '$' in src:
+            raise WorkflowFilesError(
+                f'Unable to create symlink to {src}.'
+                f' \'{value}\' contains an invalid environment variable.'
+                ' Please check configuration.')
+        make_symlink(src, dst)
+
+
+def get_dirs_to_symlink(install_target, suite):
+    """Returns dictionary of directories to symlink from glbcfg."""
+    dirs_to_symlink = {}
+    symlink_conf = glbl_cfg().get(['symlink dirs'])
+
+    if install_target not in symlink_conf.keys():
+        return dirs_to_symlink
+    base_dir = symlink_conf[install_target]['run']
+    if base_dir is not None:
+        dirs_to_symlink['run'] = os.path.join(base_dir, 'cylc-run', suite)
+    for dir_ in ['log', 'share', 'share/cycle', 'work']:
+        link = symlink_conf[install_target][dir_]
+        if link is None or link == base_dir:
+            continue
+        dirs_to_symlink[dir_] = os.path.join(link, 'cylc-run', suite, dir_)
+    return dirs_to_symlink
+
+
+def make_symlink(src, dst):
+    """Makes symlinks for directories.
+    Args:
+        src (str): target path, where the files are to be stored.
+        dst (str): full path of link that will point to src.
+    """
+    if os.path.exists(dst):
+        if os.path.islink(dst) and os.path.samefile(dst, src):
+            # correct symlink already exists
+            return
+        # symlink name is in use by a physical file or directory
+        raise WorkflowFilesError(
+            f"Error when symlinking. The path {dst} already exists.")
+    elif os.path.islink(dst):
+        # remove a bad symlink.
+        try:
+            os.unlink(dst)
+        except Exception:
+            raise WorkflowFilesError(
+                f"Error when symlinking. Failed to unlink bad symlink {dst}.")
+    os.makedirs(src, exist_ok=True)
+    os.makedirs(os.path.dirname(dst), exist_ok=True)
+    try:
+        os.symlink(src, dst, target_is_directory=True)
+    except Exception as exc:
+        raise WorkflowFilesError(f"Error when symlinking '{exc}'")

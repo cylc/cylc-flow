@@ -36,6 +36,7 @@ import cylc.flow.flags
 from cylc.flow.hostuserutil import (is_remote_host, is_remote_platform)
 from cylc.flow.pathutil import (
     get_remote_suite_run_dir,
+    get_dirs_to_symlink,
     get_suite_run_dir)
 from cylc.flow.remote import construct_rsync_over_ssh_cmd
 from cylc.flow.subprocctx import SubProcContext
@@ -53,7 +54,6 @@ from cylc.flow.platforms import (
     get_host_from_platform,
     get_install_target_from_platform)
 from cylc.flow.remote import construct_platform_ssh_cmd
-
 REMOTE_INIT_FAILED = 'REMOTE INIT FAILED'
 
 
@@ -177,14 +177,14 @@ class TaskRemoteMgr:
                 If waiting for remote init command to complete
 
         """
-        self.install_target = platform['install target']
+        install_target = platform['install target']
 
         # If task is running locally or the install target is localhost
         # we can skip the rest of this function
-        if (self.install_target == 'localhost' or
+        if (install_target == 'localhost' or
                 self.single_task_mode or
                 not is_remote_host(get_host_from_platform(platform))):
-            LOG.debug(f"REMOTE INIT NOT REQUIRED for {self.install_target}")
+            LOG.debug(f"REMOTE INIT NOT REQUIRED for {install_target}")
             return REMOTE_INIT_NOT_REQUIRED
 
         # See if a previous failed attempt to initialize this platform has
@@ -217,13 +217,16 @@ class TaskRemoteMgr:
         cmd = ['remote-init']
         if cylc.flow.flags.debug:
             cmd.append('--debug')
+        cmd.append(str(install_target))
+        cmd.append(get_remote_suite_run_dir(platform, self.suite))
+        dirs_to_symlink = get_dirs_to_symlink(install_target, self.suite)
+        for key, value in dirs_to_symlink.items():
+            if value is not None:
+                cmd.append(f"{key}={quote(value)} ")
         if comm_meth in ['ssh']:
             cmd.append('--indirect-comm=%s' % comm_meth)
-        cmd.append(str(self.install_target))
-        cmd.append(get_remote_suite_run_dir(platform, self.suite))
         # Create the ssh command
         cmd = construct_platform_ssh_cmd(cmd, platform)
-
         self.proc_pool.put_command(
             SubProcContext(
                 'remote-init',
@@ -332,6 +335,7 @@ class TaskRemoteMgr:
                         RSYNC_LOG.info(
                             'File installation information for '
                             f'{install_target}:\n {out}')
+                        LOG.info("File installation complete.")
                     if err:
                         LOG.error(
                             'File installation error on '

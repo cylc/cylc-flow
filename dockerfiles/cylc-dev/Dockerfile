@@ -41,7 +41,9 @@ RUN apt-get update && \
     conda clean -y --all && \
     apt-get -y remove build-essential && \
     apt-get autoclean && \
-    echo "conda activate $CONDA_ENV" >> $HOME/.bashrc
+    echo "conda activate $CONDA_ENV" >> $HOME/.bashrc && \
+    # tests require TMPDIR
+    echo "export TMPDIR=/tmp" >> $HOME/.bashrc
 
 # run setup logic
 RUN . $HOME/.bashrc && \

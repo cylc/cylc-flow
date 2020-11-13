@@ -770,10 +770,32 @@ _get_test_host () {
     export CYLC_TEST_HOST
 }
 
+_get_test_install_target () {
+    # extract a test host from the test platform
+    # NOTE: this will cause a failure if the platform is not configured
+    CYLC_TEST_INSTALL_TARGET="$(
+        get_install_target_from_platform "$CYLC_TEST_PLATFORM"
+    )"
+    if [[ -z "${CYLC_TEST_INSTALL_TARGET}" ]]; then
+        CYLC_TEST_INSTALL_TARGET="$CYLC_TEST_PLATFORM"
+    fi
+    export CYLC_TEST_INSTALL_TARGET
+}
+
 get_host_from_platform () {
     local platform="$1"
 
-    cylc get-global -i "[platforms][${platform}]hosts" | cut -d ',' -f 1
+    cylc get-global-config \
+        -i "[platforms][${platform}]hosts" \
+        | cut -d ',' -f 1
+}
+
+get_install_target_from_platform () {
+    local platform="$1"
+
+    cylc get-global-config \
+        -i "[platforms][${platform}]install target" \
+        | cut -d ',' -f 1
 }
 
 localhost_fqdn () {
@@ -896,6 +918,10 @@ _check_test_requirements
 # extract a test host from the test platform
 # provides: CYLC_TEST_HOST
 _get_test_host
+
+# extract a test install target from the test platform
+# provides: CYLC_TEST_INSTALL_TARGET
+_get_test_install_target
 
 set +x
 set +e
