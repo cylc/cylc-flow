@@ -19,7 +19,28 @@ import pytest
 
 from types import SimpleNamespace
 
-from cylc.flow.parsec.rose_utils import get_rose_vars
+from cylc.flow.parsec.rose_utils import (
+    rose_config_exists,
+    get_rose_vars,
+    rose_config_tree_loader
+)
+
+
+def test_rose_config_exists_no_dir(tmp_path):
+    assert rose_config_exists(None) is False
+
+
+def test_rose_config_exists_no_rose_suite_conf(tmp_path):
+    assert rose_config_exists(tmp_path) is False
+
+
+def test_rose_config_exists_nonexistant_dir(tmp_path):
+    assert rose_config_exists(tmp_path / "non-existant-folder") is False
+
+
+def test_rose_config_exists_true(tmp_path):
+    (tmp_path / "rose-suite.conf").touch()
+    assert rose_config_exists(tmp_path) is True
 
 
 @pytest.fixture
@@ -81,7 +102,7 @@ def rose_config_template(tmp_path, scope='module'):
         ('override', 'empy', 'Variable overridden', '99')
     ]
 )
-def test_get_jinja2_basic(
+def test_get_rose_vars(
     rose_config_template,
     override,
     section,
@@ -133,3 +154,62 @@ def test_get_env_section(tmp_path):
         )
 
     assert get_rose_vars(tmp_path)['env'] == {'DOG_TYPE': 'Spaniel'}
+
+
+@pytest.mark.parametrize(
+    'override, section, exp_ANOTHER_JINJA2_ENV, exp_JINJA2_VAR',
+    [
+        (None, 'jinja2', 'Defined in config', '64'),
+        (None, 'empy', 'Defined in config', '64'),
+        ('environment', 'jinja2', 'Optional config picked from env var', '42'),
+        ('CLI', 'jinja2', 'Optional config picked from CLI', '99'),
+        ('environment', 'empy', 'Optional config picked from env var', '42'),
+        ('CLI', 'empy', 'Optional config picked from CLI', '99'),
+        ('override', 'jinja2', 'Variable overridden', '99'),
+        ('override', 'empy', 'Variable overridden', '99')
+    ]
+)
+def test_rose_config_tree_loader(
+    rose_config_template,
+    override,
+    section,
+    exp_ANOTHER_JINJA2_ENV,
+    exp_JINJA2_VAR
+):
+    """Test reading of empy or jinja2 vars
+
+    Scenarios tested:
+        - Read in a basic rose-suite.conf file. Ensure we don't return env,
+          just jinja2/empy.
+        - Get optional config name from an environment variable.
+        - Get optional config name from command line option.
+        - Get optional config name from an explicit over-ride string.
+    """
+    options = None
+    if override == 'environment':
+        os.environ['ROSE_SUITE_OPT_CONF_KEYS'] = "gravy"
+    else:
+        # Prevent externally set environment var breaking tests.
+        os.environ['ROSE_SUITE_OPT_CONF_KEYS'] = ""
+    if override == 'CLI':
+        options = SimpleNamespace()
+        options.opt_conf_keys = ["chips"]
+    if override == 'override':
+        options = SimpleNamespace()
+        options.opt_conf_keys = ["chips"]
+        options.defines = [
+            f"[{section}:suite.rc]Another_Jinja2_var=Variable overridden"
+        ]
+
+    result = rose_config_tree_loader(
+        rose_config_template(section), options
+    ).node.value[section + ':suite.rc'].value
+    results = {
+        'Another_Jinja2_var': result['Another_Jinja2_var'].value,
+        'JINJA2_VAR': result['JINJA2_VAR'].value
+    }
+    expected = {
+        'Another_Jinja2_var': f'{exp_ANOTHER_JINJA2_ENV}',
+        'JINJA2_VAR': f'{exp_JINJA2_VAR}'
+    }
+    assert results == expected

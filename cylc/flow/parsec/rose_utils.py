@@ -19,6 +19,7 @@ configuration files.
 
 import os
 import shlex
+import nest_asyncio
 
 from pathlib import Path
 
@@ -44,8 +45,7 @@ def get_rose_vars(dir_=None, opts=None):
                 'empy:suite.rc': None,
                 'jinja2:suite.rc': {
                     'myJinja2Var': {'yes': 'it is a dictionary!'}
-                },
-                'fileinstall': {} # TODO - update this once implemented.
+                }
             }
 
     TODO:
@@ -58,20 +58,108 @@ def get_rose_vars(dir_=None, opts=None):
     config = {
         'env': None,
         'empy:suite.rc': None,
-        'jinja2:suite.rc': None,
-        'fileinstall': None
+        'jinja2:suite.rc': None
     }
     # Return None if dir_ does not exist
-    if dir_ is None:
+    if not rose_config_exists(dir_):
         return config
+
+    # Load the config tree
+    config_tree = rose_config_tree_loader(dir_, opts)
+
+    # For each of the template language sections...
+    for section in ['jinja2:suite.rc', 'empy:suite.rc', 'env']:
+        if section in config_tree.node.value:
+            config[section] = dict(
+                [
+                    (item[0][1], item[1].value) for
+                    item in config_tree.node.value[section].walk()
+                ]
+            )
+
+    return config
+
+
+def rose_fileinstall(dir_=None, opts=None, dest_root=None):
+    """Call Rose Fileinstall.
+
+    Args:
+        dir_(string or pathlib.Path):
+            Search for a ``rose-suite.conf`` file in this location.
+        dest_root (string or pathlib.Path)
+    """
+    if not rose_config_exists(dir_):
+        return False
+
+    # Load the config tree
+    config_tree = rose_config_tree_loader(dir_, opts)
+
+    if any(['file' in i for i in config_tree.node.value]):
+
+        # Carry out imports.
+        from metomi.rose.config_processor import ConfigProcessorsManager
+        from metomi.rose.popen import RosePopener
+        from metomi.rose.reporter import Reporter
+        from metomi.rose.fs_util import FileSystemUtil
+
+        # Allow nested asyncio usage.
+        nest_asyncio.apply()
+
+        # Update config tree with install location
+        # NOTE-TO-SELF: value=os.environ["CYLC_SUITE_RUN_DIR"]
+        config_tree.node = config_tree.node.set(
+            keys=["file-install-root"], value=dest_root
+        )
+
+        # Artificially set rose to verbose.
+        # TODO - either use Cylc Log as event handler, or get Cylc Verbosity
+        # settings to pass to Rose Reporter.
+        event_handler = Reporter(3)
+        fs_util = FileSystemUtil(event_handler)
+        popen = RosePopener(event_handler)
+
+        # Process files
+        config_pm = ConfigProcessorsManager(event_handler, popen, fs_util)
+        config_pm(config_tree, "file")
+
+    return True
+
+
+def rose_config_exists(dir_):
+    """Does a directory contain a rose-suite config?
+
+    Args:
+        dir_(str or pathlib.Path object):
+            location to test.
+
+    Returns:
+
+    """
+    if dir_ is None:
+        return False
 
     # Return None if rose-suite.conf do not exist.
     if isinstance(dir_, str):
         dir_ = Path(dir_)
     top_level_file = dir_ / 'rose-suite.conf'
     if not top_level_file.is_file():
-        return config
+        return False
 
+    return True
+
+
+def rose_config_tree_loader(dir_=None, opts=None):
+    """Get a rose config tree from a given dir
+
+    Args:
+        dir_(string or Pathlib.path object):
+            Search for a ``rose-suite.conf`` file in this location.
+        opts:
+            Some sort of options object or string - To be used to allow CLI
+            specification of optional configuaration.
+    Returns:
+        A Rose ConfigTree object.
+    """
     from metomi.rose.config_tree import ConfigTreeLoader
 
     opt_conf_keys = []
@@ -96,13 +184,4 @@ def get_rose_vars(dir_=None, opts=None):
         defines=redefinitions
     )
 
-    # For each of the template language sections...
-    for section in ['jinja2:suite.rc', 'empy:suite.rc', 'env']:
-        if section in config_tree.node.value:
-            config[section] = dict(
-                [
-                    (item[0][1], item[1].value) for
-                    item in config_tree.node.value[section].walk()
-                ]
-            )
-    return config
+    return config_tree

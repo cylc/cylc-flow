@@ -55,6 +55,7 @@ install_requires = [
     'psutil>=5.6.0',
     # 'metomi-rose>=2.*',
     'urwid==2.*',
+    'nest_asyncio',
     'packaging'
 ]
 tests_require = [
