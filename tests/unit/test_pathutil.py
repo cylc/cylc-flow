@@ -277,7 +277,8 @@ def test_incorrect_environment_variables_raise_error(
         mocked_dirs_to_symlink,
         mocked_make_symlink,
         mocked_get_suite_run_dir, mocked_expandvars):
-    mocked_dirs_to_symlink.return_value = {'run': '$doh/cylc-run/test_workflow'}
+    mocked_dirs_to_symlink.return_value = {
+        'run': '$doh/cylc-run/test_workflow'}
     mocked_get_suite_run_dir.return_value = "rund"
     mocked_expandvars.return_value = "$doh"
 
