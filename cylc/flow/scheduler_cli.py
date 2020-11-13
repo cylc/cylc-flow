@@ -35,7 +35,7 @@ from cylc.flow.pathutil import (
     get_suite_run_dir,
     get_suite_run_log_name,
     get_suite_file_install_log_name, make_localhost_symlinks)
-from cylc.flow.remote import remote_cylc_cmd
+from cylc.flow.remote import _remote_cylc_cmd
 from cylc.flow.scheduler import Scheduler, SchedulerError
 from cylc.flow.scripts import cylc_header
 from cylc.flow import suite_files
@@ -384,7 +384,7 @@ def _distribute(host, is_restart):
         # Prevent recursive host selection
         cmd = sys.argv[1:]
         cmd.append("--host=localhost")
-        remote_cylc_cmd(cmd, host=host)
+        _remote_cylc_cmd(cmd, host=host)
         sys.exit(0)
 
 

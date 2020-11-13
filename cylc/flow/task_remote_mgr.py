@@ -53,7 +53,7 @@ from cylc.flow.platforms import (
     get_platform,
     get_host_from_platform,
     get_install_target_from_platform)
-from cylc.flow.remote import construct_platform_ssh_cmd
+from cylc.flow.remote import construct_ssh_cmd
 REMOTE_INIT_FAILED = 'REMOTE INIT FAILED'
 
 
@@ -226,7 +226,7 @@ class TaskRemoteMgr:
         if comm_meth in ['ssh']:
             cmd.append('--indirect-comm=%s' % comm_meth)
         # Create the ssh command
-        cmd = construct_platform_ssh_cmd(cmd, platform)
+        cmd = construct_ssh_cmd(cmd, platform)
         self.proc_pool.put_command(
             SubProcContext(
                 'remote-init',
@@ -261,7 +261,7 @@ class TaskRemoteMgr:
             cmd.append(str(f'{self.install_target}'))
             cmd.append(get_remote_suite_run_dir(platform, self.suite))
             if is_remote_platform(platform):
-                cmd = construct_platform_ssh_cmd(cmd, platform, timeout='10s')
+                cmd = construct_ssh_cmd(cmd, platform, timeout='10s')
             else:
                 cmd = ['cylc'] + cmd
             procs[(host, owner)] = (

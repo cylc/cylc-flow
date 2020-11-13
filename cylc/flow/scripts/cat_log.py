@@ -82,7 +82,7 @@ from cylc.flow.task_id import TaskID
 from cylc.flow.task_job_logs import (
     JOB_LOG_OUT, JOB_LOG_ERR, JOB_LOG_OPTS, NN, JOB_LOG_ACTIVITY)
 from cylc.flow.terminal import cli_function
-from cylc.flow.platforms import get_platform, get_host_from_platform
+from cylc.flow.platforms import get_platform
 
 
 # Immortal tail-follow processes on job hosts can be cleaned up by killing
@@ -440,10 +440,12 @@ def main(parser, options, *args, color=False):
             cmd.append(suite_name)
             is_edit_mode = (mode == 'edit')
             try:
-                host = get_host_from_platform(platform)
                 proc = remote_cylc_cmd(
-                    cmd, host, capture_process=is_edit_mode,
-                    manage=(mode == 'tail'))
+                    cmd,
+                    platform,
+                    capture_process=is_edit_mode,
+                    manage=(mode == 'tail')
+                )
             except KeyboardInterrupt:
                 # Ctrl-C while tailing.
                 pass
