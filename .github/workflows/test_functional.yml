@@ -114,9 +114,14 @@ jobs:
           find "${TMPDIR:-/tmp}/${USER}/cylctb-"* -type f \
               -exec echo '==== {} ====' \; -exec cat '{}' \;
 
+      - name: Copy cylc-run out of container
+        if: failure()
+        run: |
+          docker cp bash:/root/cylc-run .
+
       - name: Upload
         if: failure()
         uses: actions/upload-artifact@v2
         with:
-          name: cylc-run
+          name: Upload cylc-run artifact
           path: cylc-run
