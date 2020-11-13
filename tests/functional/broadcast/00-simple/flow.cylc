@@ -16,7 +16,7 @@ generated reference version.
     initial cycle point = 20100808T00
     final cycle point   = 20100809T00
     [[graph]]
-        R1 = prep => foo
+        R1 = prep => check & foo
         T00 = """
             foo => bar & baz & qux & wibble => ENS
             ENS:finish-all => wobble
@@ -32,8 +32,9 @@ generated reference version.
         [[[environment]]]
             BCAST = ${BCAST:-(not set)}
             BCASTLOG = ${CYLC_SUITE_SHARE_DIR}/broadcast.log
+            PREPLOG = ${CYLC_SUITE_SHARE_DIR}/prep
     [[prep]]
-        pre-script = "rm -f $BCASTLOG"
+        pre-script = "rm -f $BCASTLOG $PREPLOG"
         script = """
 set +x
 {
@@ -72,19 +73,26 @@ set +x
         cylc broadcast -n m9 -s "[environment]BCAST = M9" $CYLC_SUITE_NAME
     # clear broadcast for ENS3 (will not work):
         ! cylc broadcast -n ENS3 --clear $CYLC_SUITE_NAME
-    # list the result to prep task stdout:
-        cylc bcast --display $CYLC_SUITE_NAME
-} 1>prep.out 2>prep.err
-set -x
-sed -i '/DEBUG -/d' 'prep.out'
-sed -i '/\(DEBUG\|WARNING\|ERROR\) -/d' 'prep.err'
-
-# workaround for platforms affected by https://github.com/cylc/cylc-flow/issues/3585
-sed -i '/BASH_XTRACEFD/d' 'prep.err'
-
-diff -u "${CYLC_SUITE_DEF_PATH}/expected-prep.out" 'prep.out'
-diff -u "${CYLC_SUITE_DEF_PATH}/expected-prep.err" 'prep.err'
+} 1>${PREPLOG}.out 2>${PREPLOG}.err
 """
+    [[check]]
+        # Check that the broadcasts performed by the previous task were
+        # recorded properly by the scheduler (doing this in another task
+        # gives time for the datastore to update broadcast data).
+        script = """
+           # list the result to prep task stdout:
+           cylc bcast --display $CYLC_SUITE_NAME \
+             1>>${PREPLOG}.out 2>>${PREPLOG}.err
+           set -x
+           sed -i '/DEBUG -/d' ${PREPLOG}.out
+           sed -i '/\(DEBUG\|WARNING\|ERROR\) -/d' ${PREPLOG}.err
+
+           # workaround for platforms affected by https://github.com/cylc/cylc-flow/issues/3585
+           sed -i '/BASH_XTRACEFD/d' ${PREPLOG}.err
+
+           diff -u "${CYLC_SUITE_DEF_PATH}/expected-prep.out" ${PREPLOG}.out
+           diff -u "${CYLC_SUITE_DEF_PATH}/expected-prep.err" ${PREPLOG}.err
+        """
     [[ENS]]
     [[ENS1]]
         inherit = ENS

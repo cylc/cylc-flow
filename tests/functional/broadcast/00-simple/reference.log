@@ -2,6 +2,7 @@
 2013/09/20 17:16:28 INFO - Final point: 20100809T00
 2013/09/20 17:16:28 INFO - [prep.20100808T00] -triggered off []
 2013/09/20 17:16:43 INFO - [foo.20100808T00] -triggered off ['prep.20100808T00']
+2013/09/20 17:16:43 INFO - [check.20100808T00] -triggered off ['prep.20100808T00']
 2013/09/20 17:16:45 INFO - [bar.20100808T00] -triggered off ['foo.20100808T00']
 2013/09/20 17:16:45 INFO - [qux.20100808T00] -triggered off ['foo.20100808T00']
 2013/09/20 17:16:45 INFO - [baz.20100808T00] -triggered off ['foo.20100808T00']
