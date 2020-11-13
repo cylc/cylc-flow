@@ -153,8 +153,9 @@ def make_localhost_symlinks(suite):
         src = os.path.expandvars(value)
         if '$' in src:
             raise WorkflowFilesError(
-                f'Unable to create symlink to {src}. '
-                'Please check configuration.')
+                f'Unable to create symlink to {src}.'
+                f' \'{value}\' contains an invalid environment variable.'
+                ' Please check configuration.')
         make_symlink(src, dst)
 
 

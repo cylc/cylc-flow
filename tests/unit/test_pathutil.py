@@ -236,7 +236,7 @@ def test_make_suite_run_tree(caplog, tmpdir, mock_glbl_cfg, subdir):
                 'run': '$DOH/cylc-run/suite3',
                 'log': '$DEE/cylc-run/suite3/log',
                 'share': '$DEE/cylc-run/suite3/share'})
-    ])
+    ], ids=["1", "2", "3"])
 def test_get_dirs_to_symlink(
         suite, install_target, mocked_glbl_cfg, output, mock_glbl_cfg):
     mock_glbl_cfg('cylc.flow.pathutil.glbl_cfg', mocked_glbl_cfg)
@@ -277,12 +277,14 @@ def test_incorrect_environment_variables_raise_error(
         mocked_dirs_to_symlink,
         mocked_make_symlink,
         mocked_get_suite_run_dir, mocked_expandvars):
-    mocked_dirs_to_symlink.return_value = {'run': '$DOH/test_workflow'}
+    mocked_dirs_to_symlink.return_value = {'run': '$doh/cylc-run/test_workflow'}
     mocked_get_suite_run_dir.return_value = "rund"
     mocked_expandvars.return_value = "$doh"
 
     with pytest.raises(WorkflowFilesError, match=r"Unable to create symlink"
-                       r" to \$doh. Please check configuration."):
+                       r" to \$doh. '\$doh/cylc-run/test_workflow' contains an"
+                       " invalid environment variable. Please check "
+                       "configuration."):
         make_localhost_symlinks('test_workflow')
 
 
