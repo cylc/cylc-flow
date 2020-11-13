@@ -22,7 +22,7 @@
 
 set_test_number 4
 
-create_test_global_config "
+create_test_global_config "" "
 [scheduler]
     process pool timeout = PT10S
 "

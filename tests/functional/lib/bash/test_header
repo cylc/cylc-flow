@@ -121,8 +121,8 @@
 #         Expect 2 OK tests.
 #     create_test_global_config [PRE [POST]]
 #         Create a new global config file $PWD/etc from global-tests.cylc
-#         with PRE and POST pre- and ap-pended (PRE for top level items with no
-#         section heading). PRE and POST are strings.
+#         with PRE and POST pre- and ap-pended (PRE for e.g. jinja2 shebang).
+#         PRE and POST are strings.
 #     localhost_fqdn
 #         Get the FQDN of the current host using the same mechanism Cylc uses.
 #     get_fqdn [TARGET]

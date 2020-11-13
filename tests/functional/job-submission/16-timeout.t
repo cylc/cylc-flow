@@ -20,10 +20,9 @@ export REQUIRE_PLATFORM='batch:at comms:tcp'
 . "$(dirname "$0")/test_header"
 set_test_number 4
 
-create_test_global_config "
+create_test_global_config "" "
 [scheduler]
     process pool timeout = PT10S
-" "
 [platforms]
     [[$CYLC_TEST_PLATFORM]]
         batch submit command template = sleep 30

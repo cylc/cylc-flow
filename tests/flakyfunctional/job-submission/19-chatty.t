@@ -21,7 +21,7 @@ export REQUIRE_PLATFORM='batch:at'
 . "$(dirname "$0")/test_header"
 set_test_number 15
 
-create_test_global_config "
+create_test_global_config "" "
 [scheduler]
     process pool timeout = PT10S
 [platforms]

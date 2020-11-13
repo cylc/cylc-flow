@@ -38,7 +38,8 @@ create_test_global_config '' '
 [scheduler]
     [[logging]]
         rolling archive length = 8
-        maximum size in bytes = 2048'
+        maximum size in bytes = 2048
+'
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
