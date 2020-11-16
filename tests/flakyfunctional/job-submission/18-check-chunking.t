@@ -20,9 +20,10 @@
 . "$(dirname "$0")/test_header"
 set_test_number 3
 
-create_test_global_config '
-process pool size = 1
-' ''
+create_test_global_config '' '
+[scheduler]
+    process pool size = 1
+'
 
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduler]
@@ -39,12 +40,12 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
     [[t1<p>]]
         # Reduce the load on many jobs sending the "started" message
         init-script = """
-sleep $((RANDOM % 10))
-"""
+            sleep $((RANDOM % 10))
+        """
         script = """
-wait
-sleep $((RANDOM % 5))
-"""
+            wait
+            sleep $((RANDOM % 5))
+        """
 __FLOW_CONFIG__
 
 

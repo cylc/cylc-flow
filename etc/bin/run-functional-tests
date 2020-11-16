@@ -24,7 +24,7 @@ Run the Cylc test battery, in <CYLC_REPO_DIR>/tests.
 
 Options and arguments are appended to "prove -j \$NPROC -s -r \${@:-tests/f}".
 NPROC is the number of concurrent processes to run, which defaults to the
-global config "process pool size" setting.
+global config "[scheduler]process pool size" setting.
 
 The tests ignore normal site/user global config and instead use:
    ~/.cylc/flow/<cylc-version>/global-tests.cylc

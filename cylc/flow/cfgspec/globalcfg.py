@@ -75,32 +75,31 @@ with Conf('global.cylc', desc='''
        Prior to Cylc 8, ``global.cylc`` was named ``global.rc``, but that name
        is no longer supported.
 ''') as SPEC:
-
-    # suite
-    Conf('process pool size', VDR.V_INTEGER, 4, desc='''
-        Maximum number of concurrent processes used to execute external job
-        submission, event handlers, and job poll and kill commands - see
-        :ref:`Managing External Command Execution`.
-    ''')
-    Conf('process pool timeout', VDR.V_INTERVAL, DurationFloat(600), desc='''
-        Interval after which long-running commands in the process pool will be
-        killed - see :ref:`Managing External Command Execution`.
-
-        .. note::
-           The default is set quite high to avoid killing important
-           processes when the system is under load.
-    ''')
-    Conf('run directory rolling archive length', VDR.V_INTEGER, -1, desc='''
-        The number of old run directory trees to retain at start-up.
-    ''')
-
     with Conf('scheduler', desc='''
         Default values for entries in :cylc:conf:`flow.cylc[scheduler]`
         section. This should not be confused with scheduling in the
         ``flow.cylc`` file.
     '''):
         Conf('UTC mode', VDR.V_BOOLEAN, False, desc='''
-                Default for :cylc:conf:`flow.cylc[scheduler]UTC mode`.
+            Default for :cylc:conf:`flow.cylc[scheduler]UTC mode`.
+        ''')
+        Conf('process pool size', VDR.V_INTEGER, 4, desc='''
+            Maximum number of concurrent processes used to execute external job
+            submission, event handlers, and job poll and kill commands - see
+            :ref:`Managing External Command Execution`.
+        ''')
+        Conf('process pool timeout', VDR.V_INTERVAL, DurationFloat(600),
+             desc='''
+            Interval after which long-running commands in the process pool
+            will be killed - see :ref:`Managing External Command Execution`.
+
+            .. note::
+               The default is set quite high to avoid killing important
+               processes when the system is under load.
+        ''')
+        Conf('run directory rolling archive length', VDR.V_INTEGER, -1,
+             desc='''
+            The number of old run directory trees to retain at start-up.
         ''')
 
         with Conf('events', desc='''
@@ -171,17 +170,18 @@ with Conf('global.cylc', desc='''
                     The interval with which this plugin is run.
                 ''')
 
-    with Conf('suite logging', desc='''
-        The suite event log, held under the suite run directory, is maintained
-        as a rolling archive. Logs are rolled over (backed up and started anew)
-        when they reach a configurable limit size.
-    '''):
-        Conf('rolling archive length', VDR.V_INTEGER, 5, desc='''
-            How many rolled logs to retain in the archive.
-        ''')
-        Conf('maximum size in bytes', VDR.V_INTEGER, 1000000, desc='''
-            Suite event logs are rolled over when they reach this file size.
-        ''')
+        with Conf('logging', desc='''
+            The workflow event log, held under the suite run directory, is
+            maintained as a rolling archive. Logs are rolled over (backed up
+            and started anew) when they reach a configurable limit size.
+        '''):
+            Conf('rolling archive length', VDR.V_INTEGER, 5, desc='''
+                How many rolled logs to retain in the archive.
+            ''')
+            Conf('maximum size in bytes', VDR.V_INTEGER, 1000000, desc='''
+                Suite event logs are rolled over when they reach this
+                file size.
+            ''')
 
     with Conf('editors', desc='''
         Choose your favourite text editor for editing suite configurations.

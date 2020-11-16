@@ -112,7 +112,7 @@ def make_suite_run_tree(suite):
     """Create all top-level cylc-run output dirs on the suite host."""
     cfg = glbl_cfg().get()
     # Roll archive
-    archlen = cfg['run directory rolling archive length']
+    archlen = cfg['scheduler']['run directory rolling archive length']
     dir_ = os.path.expandvars(get_suite_run_dir(suite))
     for i in range(archlen, -1, -1):  # archlen...0
         if i > 0:
