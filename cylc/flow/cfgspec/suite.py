@@ -357,9 +357,9 @@ with Conf(
             point by defining a list of truncated time points under the final
             cycle point constraints.
         ''')
-        Conf('hold after point', VDR.V_CYCLE_POINT, desc='''
-            Cycling tasks are held once they pass the hold after cycle point,
-            if one is specified. Unlike the final cycle point suite will not
+        Conf('hold after cycle point', VDR.V_CYCLE_POINT, desc='''
+            Cycling tasks are held once they pass this cycle point, if
+            specified. Unlike for the final cycle point, the suite will not
             shut down once all tasks have passed this point. If this item
             is provided you can override it on the command line.
         ''')
@@ -1358,6 +1358,11 @@ def upg(cfg, descr):
         ['scheduling', 'max active cycle points'],
         ['scheduling', 'runahead limit'],
         cvtr=converter(lambda x: f'P{x}' if x != '' else '', '"n" -> "Pn"')
+    )
+    u.deprecate(
+        '8.0.0',
+        ['scheduling', 'hold after point'],
+        ['scheduling', 'hold after cycle point']
     )
     # TODO uncomment these deprecations when ready - see todo in
     # [runtime][__MANY__] section.

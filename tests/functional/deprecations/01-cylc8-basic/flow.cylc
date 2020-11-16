@@ -29,6 +29,7 @@
 
 [scheduling]
     max active cycle points = 2
+    hold after point =
 
     initial cycle point = 20150808T00
     final cycle point = 20150808T00
