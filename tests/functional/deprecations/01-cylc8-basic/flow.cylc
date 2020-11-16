@@ -9,6 +9,8 @@
     force run mode =
     task event mail interval =
     disable automatic shutdown =
+    [[environment]]
+        darmok =
     [[events]]
         mail to =
         mail from =

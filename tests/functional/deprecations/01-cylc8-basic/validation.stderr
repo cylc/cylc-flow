@@ -8,6 +8,7 @@ WARNING -  * (8.0.0) [runtime][foo, cat, dog][extra log files] - DELETED (OBSOLE
 WARNING -  * (8.0.0) [runtime][foo, cat, dog][job][shell] - DELETED (OBSOLETE)
 WARNING -  * (8.0.0) [cylc][abort if any task fails] - DELETED (OBSOLETE)
 WARNING -  * (8.0.0) [cylc][disable automatic shutdown] - DELETED (OBSOLETE)
+WARNING -  * (8.0.0) [cylc][environment] - DELETED (OBSOLETE)
 WARNING -  * (8.0.0) [cylc][reference test] - DELETED (OBSOLETE)
 WARNING -  * (8.0.0) [cylc][simulation][disable suite event handlers] - DELETED (OBSOLETE)
 WARNING -  * (8.0.0) [cylc][simulation] - DELETED (OBSOLETE)

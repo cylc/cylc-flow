@@ -203,9 +203,6 @@ with Conf(
             with Conf('<plugin name>'):
                 Conf('interval', VDR.V_INTERVAL)
 
-        with Conf('environment'):
-            Conf('<variable>', VDR.V_STRING)
-
         with Conf('parameters', desc='''
             Define parameter values here for use in expanding
             :ref:`parameterized tasks <User Guide Param>`.
@@ -1050,10 +1047,9 @@ with Conf(
                 <https://docs.python.org/3/library/stdtypes.html
                 #printf-style-string-formatting>`_.
 
-                Additional information can be passed to event handlers via the
-                ``[scheduler] -> [[environment]]`` (but not via task
-                runtime environments - event handlers are not called by
-                tasks).
+                Additional variables can be passed to event handlers using
+                :ref:`Jinja2 <User Guide Jinja2>`.
+                .
             '''):
                 Conf('execution timeout', VDR.V_INTERVAL, desc='''
                     If a task has not finished after the specified ISO 8601
@@ -1169,16 +1165,16 @@ with Conf(
                 ''')
 
             with Conf('environment', desc='''
-                    The user defined task execution environment. Variables
-                    defined here can refer to cylc suite and task identity
-                    variables, which are exported earlier in the task job
-                    script, and variable assignment expressions can use cylc
-                    utility commands because access to cylc is also configured
-                    earlier in the script.  See also
-                    :ref:`TaskExecutionEnvironment`.
+                The user defined task execution environment. Variables
+                defined here can refer to cylc suite and task identity
+                variables, which are exported earlier in the task job
+                script, and variable assignment expressions can use cylc
+                utility commands because access to cylc is also configured
+                earlier in the script.  See also
+                :ref:`TaskExecutionEnvironment`.
 
-                    You can also specify job environment templates here for
-                    :ref:`parameterized tasks <User Guide Param>`.
+                You can also specify job environment templates here for
+                :ref:`parameterized tasks <User Guide Param>`.
             '''):
                 Conf('<variable>', VDR.V_STRING, desc='''
                     The order of definition is
@@ -1318,6 +1314,7 @@ def upg(cfg, descr):
     u.obsolete('8.0.0', ['cylc', 'events', 'abort if any task fails'])
     u.obsolete('8.0.0', ['cylc', 'events', 'mail retry delays'])
     u.obsolete('8.0.0', ['cylc', 'disable automatic shutdown'])
+    u.obsolete('8.0.0', ['cylc', 'environment'])
     u.obsolete('8.0.0', ['cylc', 'reference test'])
     u.obsolete('8.0.0', ['cylc', 'simulation', 'disable suite event handlers'])
     u.obsolete('8.0.0', ['cylc', 'simulation'])
@@ -1360,7 +1357,8 @@ def upg(cfg, descr):
         '8.0.0',
         ['scheduling', 'max active cycle points'],
         ['scheduling', 'runahead limit'],
-        cvtr=converter(lambda x: f'P{x}' if x != '' else '', '"n" -> "Pn"'))
+        cvtr=converter(lambda x: f'P{x}' if x != '' else '', '"n" -> "Pn"')
+    )
     # TODO uncomment these deprecations when ready - see todo in
     # [runtime][__MANY__] section.
     # for job_setting in [
