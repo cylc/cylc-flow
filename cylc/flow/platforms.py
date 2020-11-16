@@ -339,7 +339,7 @@ def platform_from_job_info(platforms, job, remote):
     raise PlatformLookupError('No platform found matching your task')
 
 
-def get_host_from_platform(platform, method=None):
+def get_host_from_platform(platform, method='random'):
     """Placeholder for a more sophisticated function which returns a host
     given a platform dictionary.
 
@@ -349,8 +349,7 @@ def get_host_from_platform(platform, method=None):
         method (str):
             Name a function to use when selecting hosts from list provided
             by platform.
-
-            - None or 'random': Pick the first host from list
+            - 'random' (default): Pick a random host from list
             - 'first': Return the first host in the list
 
     Returns:
@@ -361,7 +360,7 @@ def get_host_from_platform(platform, method=None):
             - Random Selection with check for host availability
 
     """
-    if method is None or method == 'random':
+    if method == 'random':
         return random.choice(platform['hosts'])
     elif method == 'first':
         return platform['hosts'][0]

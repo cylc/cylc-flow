@@ -247,7 +247,7 @@ def test_register(mocked_check_nested_run_dirs,
      ('/a/b/c', '/a/b/c')]
 )
 def test_get_cylc_run_abs_path(path, expected, monkeypatch):
-    monkeypatch.setattr('cylc.flow.suite_files.get_platform',
+    monkeypatch.setattr('cylc.flow.pathutil.get_platform',
                         lambda: {'run directory': '/mock_cylc_dir'})
     assert suite_files.get_cylc_run_abs_path(path) == expected
 
@@ -268,7 +268,7 @@ def test_is_valid_run_dir(path, expected, is_abs_path, monkeypatch):
     serv_dir = os.path.join(prefix, 'service', 'dir', 'exists', '.service')
     monkeypatch.setattr('os.path.isfile', lambda x: x == flow_file)
     monkeypatch.setattr('os.path.isdir', lambda x: x == serv_dir)
-    monkeypatch.setattr('cylc.flow.suite_files.get_platform',
+    monkeypatch.setattr('cylc.flow.pathutil.get_platform',
                         lambda: {'run directory': 'mock_cylc_dir'})
     path = os.path.normpath(path)
     if is_abs_path:

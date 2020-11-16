@@ -704,5 +704,4 @@ def get_cylc_run_abs_path(path):
     """
     if os.path.isabs(path):
         return path
-    cylc_run_dir = os.path.expandvars(get_platform()['run directory'])
-    return os.path.join(cylc_run_dir, path)
+    return get_suite_run_dir(path)
