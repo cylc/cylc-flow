@@ -948,6 +948,7 @@ class TaskEventsManager(object):
 
         """
         self._event_timers[key] = timer
+        self.event_timers_updated = True
 
     def remove_event_timer(self, key):
         """Remove a new event timer.
@@ -957,6 +958,7 @@ class TaskEventsManager(object):
 
         """
         del self._event_timers[key]
+        self.event_timers_updated = True
 
     def unset_waiting_event_timer(self, key):
         """Invoke unset_waiting on an event timer.
@@ -966,6 +968,7 @@ class TaskEventsManager(object):
 
         """
         self._event_timers[key].unset_waiting()
+        self.event_timers_updated = True
 
     def _reset_job_timers(self, itask):
         """Set up poll timer and timeout for task."""
