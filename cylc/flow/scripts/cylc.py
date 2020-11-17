@@ -18,6 +18,7 @@
 
 import os
 import sys
+import pathlib
 
 from ansimarkup import parse as cparse
 import click
@@ -339,20 +340,26 @@ def cli_help():
     sys.exit(0)
 
 
-def cli_version():
+def cli_version(short=False):
     """Display the Cylc Flow version."""
-    click.echo(__version__)
+    version = f"{__version__}"
+    if not short:
+        version += f" ({pathlib.Path(__file__).parent.parent.parent})"
+    click.echo(version)
     sys.exit(0)
 
 
 @click.command(context_settings={'ignore_unknown_options': True})
 @click.option("--help", "-h", "help_", is_flag=True, is_eager=True)
 @click.option("--version", "-V", is_flag=True, is_eager=True)
+@click.option("--version-short", is_flag=True, is_eager=True)
 @click.argument("cmd-args", nargs=-1)
-def main(cmd_args, version, help_):
+def main(cmd_args, version, version_short, help_):
     if not cmd_args:
         if version:
-            cli_version()
+            cli_version(short=False)
+        elif version_short:
+            cli_version(short=True)
         else:
             cli_help()
     else:
@@ -360,7 +367,7 @@ def main(cmd_args, version, help_):
         command = cmd_args.pop(0)
 
         if command == "version":
-            cli_version()
+            cli_version(short=("--short" in cmd_args))
 
         if command == "help":
             help_ = True
