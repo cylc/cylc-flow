@@ -465,8 +465,10 @@ class TaskPool(object):
             if isinstance(key1, list):
                 key1 = tuple(key1)
             key = (key1, cycle, name, submit_num)
-            self.task_events_mgr.event_timers[key] = TaskActionTimer(
-                ctx, delays, num, delay, timeout)
+            self.task_events_mgr.add_event_timer(
+                key,
+                TaskActionTimer(ctx, delays, num, delay, timeout)
+            )
         else:
             LOG.exception(
                 "%(id)s: skip action timer %(ctx_key)s" %
@@ -787,7 +789,7 @@ class TaskPool(object):
             return False
         if stop_mode == self.STOP_REQUEST_NOW_NOW:
             return True
-        if self.task_events_mgr.event_timers:
+        if self.task_events_mgr._event_timers:
             return False
         for itask in self.get_tasks():
             if (stop_mode == self.STOP_REQUEST_CLEAN and
@@ -806,7 +808,9 @@ class TaskPool(object):
             elif itask.state.status in TASK_STATUSES_ACTIVE:
                 LOG.warning("%s: orphaned task (%s)" % (
                     itask.identity, itask.state.status))
-        for key1, point, name, submit_num in self.task_events_mgr.event_timers:
+        for key1, point, name, submit_num in (
+            self.task_events_mgr._event_timers
+        ):
             LOG.warning("%s/%s/%s: incomplete task event handler %s" % (
                 point, name, submit_num, key1))
 
