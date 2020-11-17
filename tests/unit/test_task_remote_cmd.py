@@ -16,7 +16,7 @@
 """Tests for remote initialisation."""
 
 from io import StringIO
-from mock import patch
+from unittest.mock import patch
 
 from cylc.flow.task_remote_cmd import remote_init
 
