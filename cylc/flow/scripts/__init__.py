@@ -78,7 +78,7 @@ LOGO_LINES = [
 ]
 
 LICENCE = dedent(f"""
-    The Cylc Suite Engine [{__version__}]
+    The Cylc Workflow Engine [{__version__}]
     Copyright (C) 2008-2020 NIWA
     & British Crown (Met Office) & Contributors.
 """)

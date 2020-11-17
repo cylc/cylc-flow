@@ -18,6 +18,7 @@
 
 import os
 import sys
+from pathlib import Path
 
 from ansimarkup import parse as cparse
 import click
@@ -33,14 +34,29 @@ from cylc.flow.terminal import (
 )
 
 
+def get_version(long=False):
+    """Return the Cylc Flow version and top level installation path.
+
+    Path reports correctly for normal pip and conda installations
+    but not for "pip install -e ." because of the source links.
+    """
+    version = f"{__version__}"
+    if long:
+        parents = Path(__file__).parent.parent.parent
+        version += f" ({parents.parent.parent.parent.parent})"
+    return version
+
+
 DESC = '''
-Cylc ("silk") is a workflow engine for orchestrating complex *suites* of
-inter-dependent distributed cycling (repeating) tasks, as well as ordinary
-non-cycling workflows.
+Cylc ("silk") orchestrates complex cycling (and non-cycling) workflows.
 '''
 
 USAGE = f"""{cylc_header()}
 {centered(DESC)}
+
+Version:
+  $ cylc version --long           # print cylc-flow version and install path
+    {get_version(True)}
 
 Usage:
   $ cylc help all                 # list all commands
@@ -339,9 +355,9 @@ def cli_help():
     sys.exit(0)
 
 
-def cli_version():
-    """Display the Cylc Flow version."""
-    click.echo(__version__)
+def cli_version(long=False):
+    """Wrapper for get_version."""
+    click.echo(get_version(long))
     sys.exit(0)
 
 
@@ -360,7 +376,7 @@ def main(cmd_args, version, help_):
         command = cmd_args.pop(0)
 
         if command == "version":
-            cli_version()
+            cli_version("--long" in cmd_args)
 
         if command == "help":
             help_ = True
