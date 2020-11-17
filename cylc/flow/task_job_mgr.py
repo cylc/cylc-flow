@@ -67,7 +67,7 @@ from cylc.flow.task_state import (
 )
 from cylc.flow.task_action_timer import TimerFlags
 from cylc.flow.wallclock import get_current_time_string, get_utc_mode
-from cylc.flow.remote import construct_platform_ssh_cmd
+from cylc.flow.remote import construct_ssh_cmd
 from cylc.flow.exceptions import (
     PlatformLookupError, SuiteConfigError, TaskRemoteMgmtError
 )
@@ -314,7 +314,7 @@ class TaskJobManager:
                 cmd, [len(b) for b in itasks_batches])
 
             if remote_mode:
-                cmd = construct_platform_ssh_cmd(cmd, platform)
+                cmd = construct_ssh_cmd(cmd, platform)
             else:
                 cmd = ['cylc'] + cmd
 
@@ -693,7 +693,7 @@ class TaskJobManager:
             cmd.append(get_remote_suite_run_job_dir(platform, suite))
             job_log_dirs = []
             if remote_mode:
-                cmd = construct_platform_ssh_cmd(cmd, platform)
+                cmd = construct_ssh_cmd(cmd, platform)
             for itask in sorted(itasks, key=lambda itask: itask.identity):
                 job_log_dirs.append(get_task_job_id(
                     itask.point, itask.tdef.name, itask.submit_num))

@@ -137,24 +137,6 @@ def run_cmd(
             return True
 
 
-def construct_platform_ssh_cmd(raw_cmd, platform, **kwargs):
-    """A wrapper around `construct_ssh_cmd` allowing us to pass a platform
-    object rather than a user and host.
-
-    Args:
-        All as `construct_ssh_cmd` except for user and host.
-    """
-    ret = construct_ssh_cmd(
-        raw_cmd,
-        host=get_host_from_platform(platform),
-        ssh_cmd=platform['ssh command'],
-        ssh_cylc=platform['cylc executable'],
-        ssh_login_shell=platform['use login shell'],
-        **kwargs
-    )
-    return ret
-
-
 def get_includes_to_rsync(rsync_includes=None):
     """Returns list of configured dirs/files for remote file installation."""
 
@@ -221,16 +203,42 @@ def construct_rsync_over_ssh_cmd(
     return rsync_cmd
 
 
-def construct_ssh_cmd(
-        raw_cmd, host=None, forward_x11=False, stdin=False,
-        ssh_cmd=None, ssh_login_shell=None, ssh_cylc=None, set_UTC=False,
-        allow_flag_opts=False, timeout=None
+def construct_ssh_cmd(raw_cmd, platform, **kwargs):
+    """Build an SSH command for execution on a remote platform.
+
+    Constructs the SSH command according to the platform configuration.
+
+    See _construct_ssh_cmd for argument documentation.
+    """
+    return _construct_ssh_cmd(
+        raw_cmd,
+        host=get_host_from_platform(platform),
+        ssh_cmd=platform['ssh command'],
+        ssh_cylc=platform['cylc executable'],
+        ssh_login_shell=platform['use login shell'],
+        **kwargs
+    )
+
+
+def _construct_ssh_cmd(
+        raw_cmd,
+        host=None,
+        forward_x11=False,
+        stdin=False,
+        ssh_cmd=None,
+        ssh_login_shell=None,
+        ssh_cylc=None,
+        set_UTC=False,
+        allow_flag_opts=False,
+        timeout=None
 ):
-    """Append a bare command with further options required to run via ssh.
+    """Build an SSH command for execution on a remote platform hosts.
 
     Arguments:
-        raw_cmd (list): primitive command to run remotely.
-        host (string): remote host name. Use 'localhost' if not specified.
+        raw_cmd (list):
+            primitive command to run remotely.
+        host (string):
+            remote host name. Use 'localhost' if not specified.
         forward_x11 (boolean):
             If True, use 'ssh -Y' to enable X11 forwarding, else just 'ssh'.
         stdin:
@@ -320,41 +328,51 @@ def construct_ssh_cmd(
     return command
 
 
-def remote_cylc_cmd(
+def remote_cylc_cmd(cmd, platform, **kwargs):
+    """Execute a Cylc command on a remote platform.
+
+    Uses the platform configuration to construct the command.
+
+    See _construct_ssh_cmd for argument documentation.
+    """
+    return _remote_cylc_cmd(
+        cmd,
+        host=get_host_from_platform(platform),
+        ssh_cmd=platform['ssh command'],
+        ssh_cylc=platform['cylc executable'],
+        ssh_login_shell=platform['use login shell'],
+        **kwargs
+    )
+
+
+def _remote_cylc_cmd(
         cmd,
         host=None,
         stdin=None,
         stdin_str=None,
         ssh_login_shell=None,
+        ssh_cmd=None,
         ssh_cylc=None,
         capture_process=False,
         manage=False
 ):
-    """Run a given cylc command on another account and/or host.
+    """Execute a Cylc command on a remote platform.
 
-    Arguments:
-    Args are directly inputted to one of two functions; see those docstrings:
-            * See 'construct_ssh_cmd()' docstring:
-                * cmd (--> raw_cmd);
-                * host;
-                * stdin;
-                * ssh_login_shell;
-                * ssh_cylc.
-            * See 'run_cmd()' docstring:
-                * stdin [see also above]
-                * capture (--> capture_process);
-                * manage.
+    See run_cmd and _construct_ssh_cmd for argument documentation.
 
-    Return:
-        If capture_process=True, return the Popen object if created
-        successfully. Otherwise, return the exit code of the remote command.
+    Returns:
+        subprocess.Popen or int - If capture_process=True, return the Popen
+        object if created successfully. Otherwise, return the exit code of the
+        remote command.
+
     """
     return run_cmd(
-        construct_ssh_cmd(
+        _construct_ssh_cmd(
             cmd,
             host=host,
             stdin=True if stdin_str else stdin,
             ssh_login_shell=ssh_login_shell,
+            ssh_cmd=ssh_cmd,
             ssh_cylc=ssh_cylc
         ),
         stdin=stdin,
