@@ -702,7 +702,7 @@ create_test_global_config() {
     mkdir 'etc'
     # Suite host self-identification method.
     echo "$PRE" >'etc/global.cylc'
-    USER_TESTS_CONF_FILE="${HOME}/.cylc/flow/$(cylc version)/global-tests.cylc"
+    USER_TESTS_CONF_FILE="${HOME}/.cylc/flow/$(cylc version --short)/global-tests.cylc"
     if [[ -f "${USER_TESTS_CONF_FILE}" ]]; then
         cat "${USER_TESTS_CONF_FILE}" >>'etc/global.cylc'
     fi

@@ -10,5 +10,5 @@
 [runtime]
     [[root]]
         script = """
-diff -u <(cylc --version) <(cylc get-cylc-version "${CYLC_SUITE_NAME}")
+diff -u <(cylc version --short) <(cylc get-cylc-version "${CYLC_SUITE_NAME}")
 """

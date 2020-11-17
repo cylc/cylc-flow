@@ -43,7 +43,7 @@ sqlite3 "${DB_FILE}" \
     'SELECT key, value FROM suite_params
     WHERE key != "uuid_str" AND key != "cycle_point_tz" ORDER BY key' \
     >"${NAME}"
-sed -i "s/$(cylc --version)/<SOME-VERSION>/g" "${NAME}"
+sed -i "s/$(cylc --version-short)/<SOME-VERSION>/g" "${NAME}"
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}" "${NAME}"
 
 NAME='select-task-events.out'

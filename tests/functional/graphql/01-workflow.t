@@ -87,7 +87,7 @@ cat > expected << __HERE__
             "host": "${HOST}",
             "port": ${PORT},
             "owner": "${USER}",
-            "cylcVersion": "$(cylc version)",
+            "cylcVersion": "$(cylc version --short)",
             "meta": {
                 "title": "foo",
                 "description": "bar"

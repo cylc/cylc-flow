@@ -19,7 +19,7 @@
 
 . "$(dirname "$0")/test_header"
 # Number of tests depends on the number of 'cylc' commands.
-set_test_number $(( 22 + $(find "${CYLC_REPO_DIR}/bin" -name 'cylc-*' | wc -l) ))
+set_test_number $(( 25 + $(find "${CYLC_REPO_DIR}/bin" -name 'cylc-*' | wc -l) ))
 
 # Top help
 run_ok "${TEST_NAME_BASE}-0" cylc
@@ -71,6 +71,10 @@ run_ok "${TEST_NAME_BASE}-version.stdout" \
     test -n "${TEST_NAME_BASE}-version.stdout"
 cmp_ok "${TEST_NAME_BASE}-version.stdout" "${TEST_NAME_BASE}---version.stdout"
 cmp_ok "${TEST_NAME_BASE}-version.stdout" "${TEST_NAME_BASE}-V.stdout"
+
+run_ok "${TEST_NAME_BASE}-version-short" cylc version --short
+run_ok "${TEST_NAME_BASE}---version-short" cylc --version-short
+cmp_ok "${TEST_NAME_BASE}-version-short.stdout" "${TEST_NAME_BASE}---version-short.stdout"
 
 # --help with no DISPLAY
 while read -r ITEM; do
