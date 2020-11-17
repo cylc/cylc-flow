@@ -131,8 +131,9 @@ config option `[scheduling]stop after cycle point`.
 `cylc clean`.
 
 [#3913](https://github.com/cylc/cylc-flow/pull/3913) - Added the ability to
-parse `[jinja2:suite.rc]` section from a `rose-suite.conf` file in the same
-folder as the `flow.cylc` file.
+use plugins to parse suite templating variables and additional files to
+install. Only one such plugin exists at the time of writing, designed to
+parse ``rose-suite.conf`` files in repository "cylc-rose".
 
 ### Fixes
 

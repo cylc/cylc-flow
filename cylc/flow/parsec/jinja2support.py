@@ -20,9 +20,9 @@ Importing code should catch ImportError in case Jinja2 is not installed.
 
 import importlib
 import os
-import sys
 import pkgutil
 import re
+import sys
 import traceback
 from glob import glob
 
@@ -137,7 +137,7 @@ def _load_jinja2_extensions():
     return jinja2_extensions
 
 
-def jinja2environment(dir_=None):
+def jinja2environment(dir_=None, template_vars=None):
     """Set up and return Jinja2 environment."""
     if dir_ is None:
         dir_ = os.getcwd()
@@ -183,6 +183,13 @@ def jinja2environment(dir_=None):
     env.globals['raise'] = raise_helper
     env.globals['assert'] = assert_helper
 
+    # if template_vars is not None:
+    #     # I expect multiple things in this block
+    #     if 'ROSE_SUITE_VARIABLES' in template_vars:
+    #         env.globals['ROSE_SUITE_VARIABLES'] = template_vars[
+    #             'ROSE_SUITE_VARIABLES'
+    #         ]
+
     return env
 
 
@@ -220,7 +227,7 @@ def jinja2process(flines, dir_, template_vars=None):
     # Convert unicode to plain str, ToDo - still needed for parsec?)
 
     try:
-        env = jinja2environment(dir_)
+        env = jinja2environment(dir_, template_vars)
         template = env.from_string('\n'.join(flines[1:]))
         lines = str(template.render(template_vars)).splitlines()
     except TemplateSyntaxError as exc:

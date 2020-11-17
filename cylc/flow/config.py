@@ -222,8 +222,6 @@ class SuiteConfig:
         self.mem_log("config.py: before RawSuiteConfig init")
         if output_fname:
             output_fname = os.path.expandvars(output_fname)
-        # Copy template_vars to prevent addition of non serializable template
-        # vars from file being added by parsec.
         self.pcfg = RawSuiteConfig(
             fpath,
             output_fname,

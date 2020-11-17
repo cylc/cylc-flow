@@ -31,8 +31,8 @@ parsec config file parsing:
 """
 
 import os
-import sys
 import re
+import sys
 
 import pkg_resources
 from ast import literal_eval
@@ -234,15 +234,15 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
         template_vars = {}
 
     # Load Rose Vars, if a ``rose-suite.conf`` file is present.
-    rose_vars = {
+    extra_vars = {
         'env': None,
         'empy:suite.rc': None,
         'jinja2:suite.rc': None
     }
     for entry_point in pkg_resources.iter_entry_points(
-        'cylc.configure'
+        'cylc.pre_configure'
     ):
-        rose_vars = entry_point.resolve()(Path(fpath).parent)
+        extra_vars = entry_point.resolve()(Path(fpath).parent)
 
     if viewcfg:
         if not viewcfg['empy']:
@@ -259,14 +259,31 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
         flines = inline(
             flines, fdir, fpath, False, viewcfg=viewcfg, for_edit=asedit)
 
+    # If empy and jinja2 sections are both filled raise an error.
+    if (all([extra_vars['empy:suite.rc'], extra_vars['jinja2:suite.rc']])):
+        raise FileParseError(
+            "Your additional configuration files define both empy and jinja2"
+            "variables. This makes sense."
+        )
+
     # process with EmPy
     if do_empy:
+        if (
+            extra_vars['empy:suite.rc'] is not None and
+            not re.match(r'^#![Ee]m[Pp]y\s*', flines[0])
+        ):
+            flines.insert(0, '#!empy')
         if flines and re.match(r'^#![Ee]m[Pp]y\s*', flines[0]):
             LOG.debug('Processing with EmPy')
             tvars = copy(template_vars)
-            if rose_vars['empy:suite.rc'] is not None:
-                for key, value in rose_vars['empy:suite.rc'].items():
-                    tvars[key] = literal_eval(value)
+            if extra_vars['empy:suite.rc'] is not None:
+                for key, value in extra_vars['empy:suite.rc'].items():
+                    try:
+                        tvars[key] = literal_eval(value)
+                    except ValueError:
+                        pass
+                for key, value in extra_vars['template vars'].items():
+                    tvars[key] = value
             try:
                 from cylc.flow.parsec.empysupport import empyprocess
             except (ImportError, ModuleNotFoundError):
@@ -276,12 +293,22 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
 
     # process with Jinja2
     if do_jinja2:
+        if (
+            extra_vars['jinja2:suite.rc'] is not None and
+            not re.match(r'^#![jJ]inja2\s*', flines[0])
+        ):
+            flines.insert(0, '#!jinja2')
         if flines and re.match(r'^#![jJ]inja2\s*', flines[0]):
             LOG.debug('Processing with Jinja2')
             tvars = copy(template_vars)
-            if rose_vars['jinja2:suite.rc'] is not None:
-                for key, value in rose_vars['jinja2:suite.rc'].items():
-                    tvars[key] = literal_eval(value)
+            if extra_vars['jinja2:suite.rc'] is not None:
+                for key, value in extra_vars['jinja2:suite.rc'].items():
+                    try:
+                        tvars[key] = literal_eval(value)
+                    except ValueError:
+                        pass
+                for key, value in extra_vars['template vars'].items():
+                    tvars[key] = value
             try:
                 from cylc.flow.parsec.jinja2support import jinja2process
             except (ImportError, ModuleNotFoundError):
@@ -291,14 +318,24 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
 
     # Inject rose-suite.conf environment variables into the workflow env.
     # Appended to ensure that Rose settings over-ride flow.cylc.
-    if rose_vars['env'] is not None:
-        env_lines = [
-            f'        {key} = {value}' for
-            key, value in rose_vars['env'].items()
-        ]
-        flines += ['[scheduler]']
-        flines += ['    [[environment]]']
-        flines += env_lines
+    if not re.match(r'global.*\.cylc', Path(fpath).name):
+        if extra_vars['env'] is not None:
+            env_lines = [
+                f'        {key} = {value}' for
+                key, value in extra_vars['env'].items()
+            ]
+            flines += ['[scheduler]']
+            flines += ['    [[environment]]']
+            flines += env_lines
+
+        if extra_vars['template vars'] is not None:
+            env_lines = [
+                f'        {key} = {value}' for
+                key, value in extra_vars['template vars'].items()
+            ]
+            flines += ['[scheduler]']
+            flines += ['    [[environment]]']
+            flines += env_lines
 
     # concatenate continuation lines
     if do_contin:

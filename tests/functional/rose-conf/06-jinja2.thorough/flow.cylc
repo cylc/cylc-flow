@@ -1,0 +1,55 @@
+# Test with rose `XYZ=xyz suite-run --new -l` (which invokes cylc validate --strict)
+# Rose env vars are logged to the console
+
+# 1. The Jinja2 shebang should be added automatically
+{{ assert(True, "failed 1.1") }}
+
+##
+{% from "subprocess" import Popen %}
+{% from "subprocess" import PIPE %}
+{% from "cylc.flow" import LOG %} # cylc8
+
+# 2. ROSE_SUITE_VARIABLES should contain a mapping of all vars
+{{ assert(ROSE_SUITE_VARIABLES is defined, "failed 2.1") }}
+{{ assert(ROSE_SUITE_VARIABLES["INT"] == 42, "failed 2.2") }}
+{% do LOG.info(ROSE_SUITE_VARIABLES) %}
+
+# 4. Literals should be evaluated
+{{ assert(INT == 42, "failed 4.1") }}
+{{ assert(BOOL == True, "failed 4.2") }}
+{{ assert(LIST == ["a", 1, True], "failed 4.3") }}
+
+# 5. ROSE_VERSION should be provided
+{{ assert(ROSE_VERSION is defined, "failed 5.1") }}
+{% set cli_rose_version = Popen(["rose", "version"], stdout=PIPE).communicate()[0] %}
+{% set cli_rose_version = cli_rose_version.decode() %}
+{% set cli_rose_version = cli_rose_version.replace('Rose ', '') %}  # strip the "Rose " prefix
+{% set cli_rose_version = cli_rose_version.split(' ')[0] %}  # strip the (location) suffix
+{% do LOG.info("$ rose version: " + cli_rose_version) %}
+{{ assert(ROSE_VERSION == cli_rose_version, "failed 5.2") }}
+
+# 6. CYLC_VERSION should be provided
+{{ assert(CYLC_VERSION is defined, "failed 6.1") }}
+{% set cli_cylc_version = Popen(["cylc", "version"], stdout=PIPE).communicate()[0] %}
+{% set cli_cylc_version = cli_cylc_version.decode() %}
+{% set cli_cylc_version = cli_cylc_version.strip() %}  # remove trailing newline
+{% do LOG.info("$ cylc version: " + cli_cylc_version) %}
+{{ assert(CYLC_VERSION == cli_cylc_version, "failed 6.2") }}
+
+# 7. ROSE_ORIG_HOST should be provided (hard to test it is set correctly here)
+{{ assert(ROSE_ORIG_HOST is defined, "failed 7.1") }}
+
+# 8. ROSE_SITE should be provided
+{{ assert(ROSE_SITE is defined, "failed 8.1") }}
+
+
+# chuck in some Cylc stuff to make validate happy
+[scheduling]
+    initial cycle point = now
+    [[dependencies]]
+        R1 = """
+            x
+        """
+
+[runtime]
+    [[x]]
