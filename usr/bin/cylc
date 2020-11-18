@@ -16,54 +16,123 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Wrapper for selection between installed versions of cylc.
-# Author: Matt Shin (Met Office).
-
-#_____________________________
-# INSTALLATION: 
+#------------------------------------------------------------------------------
+# Wrapper script to support multiple Cylc versions installed on the same host.
+# Currently handles Conda and Python virtual environments.
 #
-#  1. Install this script as "cylc" in $PATH for normal users.
+# INSTALL AND CONFIGURE THE WRAPPER
+#----------------------------------
+# Copy this script as "cylc" into the default $PATH on scheduler and job hosts,
+# and modify CYLC_HOME_ROOT(_ALT) below (see "EDIT ME") to point to the parent
+# directory of all installed versions.
 #
-#  2. Install cylc versions as described in the INSTALL file, e.g.:
-#     /opt/cylc-7.6.1/
-#     /opt/cylc-7.7.0/
-#     /opt/cylc -> cylc-7.7.0/  # symlink DEFAULT version
+# HOW IT WORKS
+#-------------
+# Intercept `cylc` commands and re-invoke them with the appropriate cylc-flow
+# version, according to location or version information in the environment:
+# - 1) $CYLC_HOME if defined, or
+# - 2) $CYLC_HOME_ROOT(_ALT)/$CYLC_VERSION
 #
-# Environment variables:
-#  $CYLC_HOME_ROOT: top installation directory, e.g. /opt/
-#  $CYLC_HOME:   a specific version, e.g. /opt/cylc-7.7.0/
-#  $CYLC_VERSION: a specific version string, e.g. 7.7.0
-#
-#  3. Set $CYLC_HOME_ROOT for your site - see "!!! EDIT ME !!! below.
-
-#_____________________________
-# ACTION IN ORDER OF PRIORITY:
+# USERS SHOULD:
+# - Set CYLC_VERSION to select a specific installed version under the ROOT
+# - Set CYLC_HOME in .bashrc (scheduler and job hosts) to select a single
+#   version outside of the ROOT location.
 # 
-# 1) If $CYLC_HOME is defined and exists it will be selected. If it does
-#   not exist the command will fail.
+# The scheduler writes cylc.flow.__version__ to CYLC_VERSION in task job
+# scripts so that jobs see the right version. __version__ only increments with
+# releases so CYLC_VERSION cannot be used for fine-grained selection. Git
+# branches between releases, for example, all have the same version. Use
+# CYLC_HOME to select a venv in your cylc-flow git clone.
 #
-# 2) If $CYLC_VERSION is defined and exists it will be selected. If it
-#   does not exist the default under $CYLC_HOME_ROOT will be selected.
+# CYLC_HOME must be set in .bashrc so that task jobs also see it - otherwise
+# they will try to select their CYLC_VERSION.
+#
+# If USERS set a default CYLC_VERSION in .bashrc it should take an existing
+# value first to avoid overiding task job version selection:
+# - export CYLC_VERSION=${CYLC_VERSION:-8.0.0}
+#
+# INSTALLING CYLC RELEASES WITH CONDA
+#------------------------------------
+# Create environments named cylc-$CYLC_VERSION or cylc-flow-$CYLC_VERSION under
+# a root location such as /opt/cylc:
+#
+# $ conda create -p /opt/cylc/cylc-8.2.0 cylc=8.2.0
 # 
-# 3) If $CYLC_HOME and $CYLC_VERSION are both undefined, the default
-#   under $CYLC_HOME_ROOT will be selected.
+# $ ls /opt/cylc
+# cylc-8.1.0/
+# cylc-8.2.0/
+#
+# Note you can `pip install` cylc-flow from a git clone into a conda
+# environment and then select it by CYLC_VERSION but that will be misleading
+# (the code won't actually be the release version). It is better to use Python
+# venvs and CYLC_HOME for cylc-flow development and testing.
+#
+# INSTALLING CYLC-FLOW RELEASES WITH PIP FOR DEVELOPMENT AND TESTING
+#-------------------------------------------------------------------
+# Create Python virtual environments in-place in your cylc-flow git
+# clones and select them using CYLC_HOME in your .bashrc.
+#
+# Create a new venv and install cylc-flow:
+#   $ cd <my-cylc-flow-clone>
+#   $ python -m venv venv
+#   $ . venv/bin/activate
+#   $ pip install -e . 
+#
+# Set CYLC_HOME in .bashrc to select this venv (see explanation above):
+#   $ echo "export CYLC_HOME=$PWD/venv" >> .bashrc
+#   $ . .bashrc
+#
+# You can also `pip install` cylc-flow releases under a common root location
+# for CYLC_VERSION based selection, like for conda:
+#
+#   $ CYLC_HOME_ROOT=$HOME/cylc-flow/releases  # (set in this wrapper too)
+#   $ python -m venv $CYLC_HOME_ROOT/cylc-flow-8.0a2
+#   $ . $CYLC_HOME_ROOT/cylc-flow-8.0a2/bin/activate
+#   $ python -m pip install cylc-flow==8.0a2
+# 
+# (But there is no need to do this if you have full system releases - i.e. not
+# just cylc-flow - installed via conda anyway.)
  
-#_____________________________
-# NOTES:
-# * Users will typically accept the default or set $CYLC_VERSION, but
-#   they may set $CYLC_HOME to pick up a private cylc installation.
-# * Developers may set $CYLC_HOME to pick up their own repository clone.
-# * Running suites export $CYLC_VERSION to task environments, so that
-#    task messaging commands etc. pick up the compatible cylc version.
-# * Note that $CYLC_ROOT_HOME can be overridden in the environment too.
+##############################!!! EDIT ME !!!##################################
+# Central Cylc conda releases:
+CYLC_HOME_ROOT=${CYLC_HOME_ROOT:-/opt}
+# User Conda releases:
+CYLC_HOME_ROOT_ALT=${CYLC_HOME_ROOT_ALT:-/home/$USER/miniconda3/envs}
+# NOTE: users can set CYLC_HOME in their .bashrc to select a non-release conda
+# or pip virtual environment (located in a cylc-flow git clone, for example).
+###############################################################################
 
-CYLC_HOME_ROOT=${CYLC_HOME_ROOT:-/opt} # !!! EDIT ME !!!
-
+# If CYLC_HOME is not defined, find it using {ROOT} and {VERSION}.
 if [[ -z ${CYLC_HOME:-} ]]; then
-    if [[ -n ${CYLC_VERSION:-} && -d $CYLC_HOME_ROOT/cylc-$CYLC_VERSION ]]; then
-        CYLC_HOME=$CYLC_HOME_ROOT/cylc-$CYLC_VERSION
-    else
-        CYLC_HOME=$CYLC_HOME_ROOT/cylc
+    CYLC_HOME=$CYLC_HOME_ROOT/cylc  # default symlinked version
+    if [[ -n ${CYLC_VERSION:-} ]]; then
+        # Look for matching version in root locations
+        for ROOT in "${CYLC_HOME_ROOT}" "${CYLC_HOME_ROOT_ALT}"; do
+            for NAME in "cylc" "cylc-flow"; do
+                if [[ -d $ROOT/${NAME}-$CYLC_VERSION ]]; then
+                    CYLC_HOME=$ROOT/${NAME}-$CYLC_VERSION
+                    break 2
+                fi
+            done
+         done
     fi
 fi
-exec "$CYLC_HOME/bin/$(basename "$0")" "$@"
+if [[ -d "${CYLC_HOME}/conda-meta" ]]; then
+    # Conda
+    if [[ -f "${CYLC_HOME}/bin/activate" ]]; then
+        # A conda pack installation
+        . ${CYLC_HOME}/bin/activate || exit 1
+    else
+        # A normal conda environment
+        . $(dirname ${CYLC_HOME})/../etc/profile.d/conda.sh
+        conda activate "$(basename ${CYLC_HOME})" || exit 1
+    fi
+elif [[ -f "${CYLC_HOME}/bin/activate" ]]; then
+    # Python venv
+    . ${CYLC_HOME}/bin/activate || exit 1
+else
+    echo 1>&2 "ERROR: cylc installation not found in ${CYLC_HOME}"
+    exit 1
+fi
+# The selected Cylc should now be first in $PATH
+exec "$(basename "$0")" "$@"
