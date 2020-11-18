@@ -5,10 +5,6 @@
     [[_local_background_indep_tcp]]
         hosts = localhost
         install target = localhost
-    [[_local_at_indep_tcp]]
-        hosts = localhost
-        install target = localhost
-        batch system = at
     [[_remote_background_indep_tcp]]
         hosts = _remote_background_indep_tcp
     [[_remote_at_indep_tcp]]
@@ -27,6 +23,10 @@
         communication method = poll
         execution polling intervals = 5*PT1S, PT5S
         submission polling intervals = PT1S
+    # [[_local_at_indep_tcp]]
+    #     hosts = localhost
+    #     install target = localhost
+    #     batch system = at
     # [[_remote_background_shared_tcp]]
     #     hosts = _remote_background_shared_tcp
     # [[_remote_background_shared_poll]]
