@@ -28,8 +28,9 @@ import zmq.auth
 import aiofiles
 
 from cylc.flow import LOG
-from cylc.flow.exceptions import SuiteServiceFileError
-from cylc.flow.pathutil import get_suite_run_dir, make_localhost_symlinks
+from cylc.flow.exceptions import SuiteServiceFileError, WorkflowFilesError
+from cylc.flow.pathutil import (
+    get_suite_run_dir, make_localhost_symlinks, remove_dir)
 from cylc.flow.platforms import get_platform
 from cylc.flow.hostuserutil import (
     get_user,
@@ -557,6 +558,34 @@ def register(reg=None, source=None, redirect=False):
 
     print(f'REGISTERED {reg} -> {source}')
     return reg
+
+
+def clean(reg):
+    """Remove stopped workflows on the local scheduler filesystem.
+
+    Args:
+        reg (str): workflow name.
+    """
+    run_dir = get_suite_run_dir(reg)
+    if not os.path.isdir(run_dir):
+        raise WorkflowFilesError(f'No workflow directory found at {run_dir}')
+    try:
+        detect_old_contact_file(reg)
+    except SuiteServiceFileError as exc:
+        raise SuiteServiceFileError(
+            f'Cannot remove running workflow.\n\n{exc}')
+
+    # TODO: check task_jobs table in database to see what platforms are used
+
+    base_path = os.path.realpath(run_dir)
+    possible_symlinks = [os.path.join(base_path, d) for d in [
+        'log', 'share/cycle', 'share', 'work']]
+    # Note: 'share/cycle' must come before 'share'
+    for path in [*possible_symlinks, run_dir]:
+        # Note: possible_symlinks must come before run_dir
+        remove_dir(path)
+
+    # TODO: what if user creates a symlink ~/cylc-run/foo/work/ -> /net/home/ !
 
 
 def remove_keys_on_server(keys):

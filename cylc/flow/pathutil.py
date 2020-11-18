@@ -203,3 +203,26 @@ def make_symlink(src, dst):
         os.symlink(src, dst, target_is_directory=True)
     except Exception as exc:
         raise WorkflowFilesError(f"Error when symlinking '{exc}'")
+
+
+def remove_dir(path):
+    """Delete a directory including contents, including the target directory
+    if the specified path is a symlink.
+
+    Args:
+        path (str): the path of the directory to delete.
+    """
+    if not os.path.isdir(path):
+        raise NotADirectoryError(path)
+    if os.path.islink(path):
+        if os.path.exists(path):
+            target = os.path.realpath(path)
+            LOG.info(f'Removing symlink target directory: {path} -> {target}')
+            rmtree(target)
+            LOG.info(f'Removing symlink: {path}')
+        else:
+            LOG.info(f'Removing broken symlink: {path}')
+        os.remove(path)
+    else:
+        LOG.info(f'Removing directory: {path}')
+        rmtree(path)
