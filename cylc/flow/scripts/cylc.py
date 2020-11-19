@@ -38,8 +38,9 @@ def get_version(long=False):
     """Return version string, and (if long is True) install location.
 
     The install location returned is the top directory of the virtual
-    environment. This works for normal pip and conda installations
-    but not for "pip install -e ." because of the source links.
+    environment, obtained from the Python executable path. (cylc-flow file
+    locations are buried deep in the library and don't always give the right
+    result, e.g. if installed with `pip install -e .`).
     """
     version = f"{__version__}"
     if long:
