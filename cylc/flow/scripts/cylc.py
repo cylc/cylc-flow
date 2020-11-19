@@ -35,15 +35,16 @@ from cylc.flow.terminal import (
 
 
 def get_version(long=False):
-    """Return the Cylc Flow version and top level installation path.
+    """Return version string, and (if long is True) install location.
 
-    Path reports correctly for normal pip and conda installations
+    The install location returned is the top directory of the virtual
+    environment. This works for normal pip and conda installations
     but not for "pip install -e ." because of the source links.
     """
     version = f"{__version__}"
     if long:
-        parents = Path(__file__).parent.parent.parent
-        version += f" ({parents.parent.parent.parent.parent})"
+        path = Path(__file__).parent.parent.parent.parent.parent.parent.parent
+        version += f" ({path})"
     return version
 
 
