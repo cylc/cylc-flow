@@ -22,7 +22,6 @@ This module provides logic to:
 - Implement basic host select functionality.
 """
 
-from cylc.flow.cylc_subproc import procopen
 import os
 from shlex import quote
 import re

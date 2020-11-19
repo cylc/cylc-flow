@@ -30,7 +30,6 @@ from time import sleep
 
 import cylc.flow.flags
 from cylc.flow import __version__ as CYLC_VERSION
-from cylc.flow import LOG
 from cylc.flow.platforms import get_platform, get_host_from_platform
 
 
