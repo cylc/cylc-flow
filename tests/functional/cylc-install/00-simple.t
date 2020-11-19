@@ -42,7 +42,7 @@ function purge_rnd_suite() {
 }
 
 . "$(dirname "$0")/test_header"
-set_test_number 24
+set_test_number 33
 
 # Use $SUITE_NAME and $SUITE_RUN_DIR defined by test_header
 

@@ -33,7 +33,7 @@ init_suite "${TEST_NAME_BASE}-1" "${PWD}/flow.cylc"
 SUITE_NAME1="${SUITE_NAME}"
 # shellcheck disable=SC2153
 SUITE_NAME2="${SUITE_NAME1%1}2"
-cylc register "${SUITE_NAME2}" "${TEST_DIR}/${SUITE_NAME1}" 2>'/dev/null'
+cylc install "${SUITE_NAME2}" "${TEST_DIR}/${SUITE_NAME1}" 2>'/dev/null'
 
 run_ok "${TEST_NAME_BASE}" cylc diff "${SUITE_NAME1}" "${SUITE_NAME2}"
 cmp_ok "${TEST_NAME_BASE}.stdout" <<__OUT__

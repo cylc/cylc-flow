@@ -49,11 +49,7 @@ suite run directories that link to the same suite definition.
 To "unregister" a suite, delete or rename its run directory (renaming it under
 ~/cylc-run effectively re-registers the original suite with the new name).
 
-Use of "--redirect" is required to allow an existing name (and run directory)
-to be associated with a different suite definition. This is potentially
-dangerous because the new suite will overwrite files in the existing run
-directory. You should consider deleting or renaming an existing run directory
-rather than just re-use it with another suite."""
+"""
 
 
 import os
@@ -70,13 +66,22 @@ from cylc.flow.terminal import cli_function
 def get_option_parser():
     parser = COP(
         __doc__, comms=True, prep=True,
-        argdoc=[("[REG]", "Suite name"),
-                ("[PATH]", "Suite definition directory (defaults to $PWD)")])
+        argdoc=[("[REG]", "Workflow name"),
+                ("[PATH]", "Workflow definition directory (defaults to $PWD)")
+                ])
 
     parser.add_option(
         "--redirect", help="Allow an existing suite name and run directory"
                            " to be used with another suite.",
         action="store_true", default=False, dest="redirect")
+
+    parser.add_option(
+        "--run-name", help="Name the run ",
+        action="store", metavar="RUNDIR", default=None, dest="rundir")
+
+    parser.add_option(
+        "--run-dir", help="Symlink $HOME/cylc-run/REG to RUNDIR/REG.",
+        action="store", metavar="RUNDIR", default=None, dest="rundir")
 
     return parser
 

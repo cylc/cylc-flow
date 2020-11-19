@@ -43,7 +43,7 @@ __FLOW_CONFIG__
 run_fail "${TEST_NAME_BASE}" cylc validate "${SUITE_NAME}"
 
 # This should validate registered good suite
-cylc register "${SUITE_NAME}" "${PWD}/good"
+cylc install "${SUITE_NAME}" "${PWD}/good"
 run_ok "${TEST_NAME_BASE}" cylc validate "${SUITE_NAME}"
 
 purge

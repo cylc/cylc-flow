@@ -153,7 +153,10 @@ DEAD_ENDS = {
     'check-software': (
         'use standard tools to inspect the environment '
         'e.g. https://pypi.org/project/pipdeptree/'
-    )
+    ),
+    'jobscript': 'cylc jobscript has been removed',
+    'submit': 'cylc submit has been removed',
+    'register': 'cylc register had been removed, use cylc install or cylc run'
 }
 
 
