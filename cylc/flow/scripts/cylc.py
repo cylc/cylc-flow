@@ -43,8 +43,7 @@ def get_version(long=False):
     """
     version = f"{__version__}"
     if long:
-        path = Path(__file__).parent.parent.parent.parent.parent.parent.parent
-        version += f" ({path})"
+        version += f" ({Path(sys.executable).parent.parent})"
     return version
 
 
