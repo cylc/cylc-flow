@@ -24,9 +24,15 @@ jobs:
         echo "BRANCH_NAME=$branch_name" >> $GITHUB_ENV
 
     - name: Update copyright year
+      env:
+        README_FILE: 'README.md'
+        SCRIPTS_INIT_FILE: 'cylc/flow/scripts/__init__.py'
       run: |
         pattern="(<span actions:bind='current-year'>).*(<\/span>)"
-        sed -i -E "s/${pattern}/\1${YEAR}\2/" README.md
+        sed -i -E "s/${pattern}/\1${YEAR}\2/" "$README_FILE"
+
+        pattern="(_copyright_year ?= ?)[^ #]*(.*)"
+        sed -i -E "s/${pattern}/\1${YEAR}\2/" "$SCRIPTS_INIT_FILE"
 
     - name: Commit & push
       run : |
