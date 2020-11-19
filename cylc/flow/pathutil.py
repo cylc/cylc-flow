@@ -210,9 +210,11 @@ def remove_dir(path):
     if the specified path is a symlink.
 
     Args:
-        path (str): the path of the directory to delete.
+        path (str): the absolute path of the directory to delete.
     """
-    if not os.path.isdir(path):
+    if not os.path.isabs(path):
+        raise ValueError('Path must be absolute')
+    if os.path.exists(path) and not os.path.isdir(path):
         raise NotADirectoryError(path)
     if os.path.islink(path):
         if os.path.exists(path):
@@ -223,6 +225,8 @@ def remove_dir(path):
         else:
             LOG.info(f'Removing broken symlink: {path}')
         os.remove(path)
+    elif not os.path.exists(path):
+        raise FileNotFoundError(path)
     else:
         LOG.info(f'Removing directory: {path}')
         rmtree(path)

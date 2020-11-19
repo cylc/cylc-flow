@@ -578,14 +578,20 @@ def clean(reg):
     # TODO: check task_jobs table in database to see what platforms are used
 
     base_path = os.path.realpath(run_dir)
-    possible_symlinks = [os.path.join(base_path, d) for d in [
+    possible_symlinks = [(name, os.path.join(base_path, name)) for name in [
         'log', 'share/cycle', 'share', 'work']]
     # Note: 'share/cycle' must come before 'share'
-    for path in [*possible_symlinks, run_dir]:
-        # Note: possible_symlinks must come before run_dir
-        remove_dir(path)
-
-    # TODO: what if user creates a symlink ~/cylc-run/foo/work/ -> /net/home/ !
+    for name, path in possible_symlinks:
+        if os.path.islink(path):
+            target = os.path.realpath(path)
+            target_reg_dir = target.rsplit(name, 1)[0]
+            # Ensure symlink not pointing to wrong directory!
+            if not target_reg_dir.endswith(f'cylc-run/{reg}/'):
+                raise WorkflowFilesError(
+                    f'Symlink target {target} does not match expected pattern')
+            if os.path.isdir(target_reg_dir):
+                remove_dir(target_reg_dir)
+    remove_dir(run_dir)
 
 
 def remove_keys_on_server(keys):

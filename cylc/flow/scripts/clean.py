@@ -24,8 +24,8 @@ NOTE: this command is intended for workflows installed with `cylc install`. If
 this is run for a workflow that was instead written directly in ~/cylc-run and
 not backed up elsewhere, it will be lost.
 
-It will also remove an symlink directory targets. For now, it will fail if
-run on a host which doesn't have access to that filesystem.
+It will also remove an symlink directory targets. For now, it will fail to
+remove workflow files/directories on a remote host.
 
 Suite names can be hierarchical, corresponding to the path under ~/cylc-run.
 
