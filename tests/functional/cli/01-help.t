@@ -72,8 +72,14 @@ run_ok "${TEST_NAME_BASE}-version.stdout" \
 cmp_ok "${TEST_NAME_BASE}-version.stdout" "${TEST_NAME_BASE}---version.stdout"
 cmp_ok "${TEST_NAME_BASE}-version.stdout" "${TEST_NAME_BASE}-V.stdout"
 
+# Check "cylc version --long" output is correct.
 cylc version --long > long1
-echo "$(cylc version) ($(dirname $(dirname $(which cylc))))" > long2
+WHICH="$(which cylc)"
+PARENT1="$(dirname "${WHICH}")"
+PARENT2="$(dirname "${PARENT1}")"
+echo "$(cylc version) (${PARENT2})" > long2
+# the concise version of the above is a shellcheck quoting nightmare:
+# echo "$(cylc version) ($(dirname $(dirname $(which cylc))))" > long2
 cmp_ok long1 long2
 
 # --help with no DISPLAY
