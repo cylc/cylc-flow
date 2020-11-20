@@ -106,8 +106,11 @@ Running Tests Without The Swarm:
 Caveats:
     For TCP comms the firewall on the Docker host must accept packets from
     containers on the "docker0" network adapter:
-        $ iptables -A INPUT -i docker0 -j ACCEPT
-    (must appear early in the table to avoid preemption by reject or drop.)
+        $ sudo iptables -A INPUT -i docker0 -j ACCEPT
+    This must appear early in the table to avoid preemption by reject or drop.
+        $ sudo iptables-save > iptables.txt
+        $ # (edit iptables.txt to change order of rules)
+        $ sudo iptables-restore < iptables.txt
 
     At present TCP comms are not possible FROM the host TO the container.
     This is not generally an issue as the standard test approach is to run
