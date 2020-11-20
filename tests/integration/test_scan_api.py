@@ -16,10 +16,24 @@
 """Test the cylc scan Python API (which is equivalent to the CLI)."""
 
 import json
+from pathlib import Path
+from shutil import (
+    copytree,
+    rmtree
+)
 
 import pytest
 
-from cylc.flow.scripts.scan import main, ScanOptions
+from cylc.flow.scripts.scan import (
+    main,
+    ScanOptions
+)
+from cylc.flow.suite_files import (
+    ContactFileFields,
+    SuiteFiles,
+    dump_contact_file,
+    load_contact_file
+)
 
 
 @pytest.fixture(scope='module')
@@ -228,3 +242,58 @@ async def test_format_rich(flows, mod_test_dir):
             break
     else:
         raise Exception('missing state totals line (colourful)')
+
+
+@pytest.mark.asyncio
+async def test_scan_cleans_stuck_contact_files(
+    run,
+    scheduler,
+    flow,
+    one_conf,
+    run_dir,
+    test_dir
+):
+    """Ensure scan tidies up contact files from crashed flows."""
+    # create a flow
+    reg = flow(one_conf, name='-crashed-')
+    schd = scheduler(reg)
+    srv_dir = Path(run_dir, reg, SuiteFiles.Service.DIRNAME)
+    tmp_dir = test_dir / 'srv'
+    cont = srv_dir / SuiteFiles.Service.CONTACT
+
+    # run the flow, copy the contact, stop the flow, copy back the contact
+    async with run(schd):
+        # remove the source symlink to avoid recursion
+        (srv_dir / SuiteFiles.Service.SOURCE).unlink()
+        copytree(srv_dir, tmp_dir)
+    rmtree(srv_dir)
+    copytree(tmp_dir, srv_dir)
+    rmtree(tmp_dir)
+
+    # the old contact file check uses the CLI command that the flow was run
+    # with to check that whether the flow is running. Because this is an
+    # integration test the process is the pytest process and it is still
+    # running so we need to change the command so that Cylc sees the flow as
+    # having crashed
+    contact_info = load_contact_file(reg)
+    contact_info[ContactFileFields.PROCESS] += 'xyz'
+    dump_contact_file(reg, contact_info)
+
+    # make sure this flow shows for a regular filesystem-only scan
+    opts = ScanOptions(states='running,held', format='name')
+    flows = []
+    await main(opts, write=flows.append, scan_dir=test_dir)
+    assert len(flows) == 1
+    assert '-crashed-' in flows[0]
+
+    # the contact file should still be there
+    assert cont.exists()
+
+    # make sure this flow shows for a regular filesystem-only scan
+    opts = ScanOptions(states='running,held', format='name', ping=True)
+    flows = []
+    await main(opts, write=flows.append, scan_dir=test_dir)
+    assert len(flows) == 0
+
+    # the contact file should have been removed by the scan
+    assert not cont.exists()
