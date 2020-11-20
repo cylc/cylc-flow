@@ -560,12 +560,15 @@ def clean(reg):
     Args:
         reg (str): workflow name.
     """
-    reg = os.path.normpath(reg)
-    # TODO: prevent `cylc clean foo/../` (i.e. rm -r ~/cylc-clean !)
     _validate_reg(reg)
+    reg = os.path.normpath(reg)
+    if reg.startswith('.'):
+        raise WorkflowFilesError(
+            'Workflow name cannot be a path that points to the cylc-run '
+            'directory or above')
     run_dir = get_suite_run_dir(reg)
     if not os.path.isdir(run_dir):
-        raise WorkflowFilesError(f'No workflow directory found at {run_dir}')
+        raise WorkflowFilesError(f'No directory found at {run_dir}')
     try:
         detect_old_contact_file(reg)
     except SuiteServiceFileError as exc:
@@ -580,12 +583,18 @@ def clean(reg):
     # Note: 'share/cycle' must come before 'share'
     for name, path in possible_symlinks:
         if os.path.islink(path):
+            # Ensure symlink is pointing to expected directory
             target = os.path.realpath(path)
-            target_reg_dir = target.rsplit(name, 1)[0]
-            # Ensure symlink not pointing to wrong directory!
-            if not target_reg_dir.endswith(f'cylc-run/{reg}/'):
+            if os.path.exists(target) and not os.path.isdir(target):
                 raise WorkflowFilesError(
-                    f'Symlink target {target} does not match expected pattern')
+                    f'Invalid Cylc symlink directory {path} -> {target}\n'
+                    f'Target is not a directory')
+            expected_end = os.path.join('cylc-run', reg, name)
+            if not target.endswith(expected_end):
+                raise WorkflowFilesError(
+                    f'Invalid Cylc symlink directory {path} -> {target}\n'
+                    f'Expected target to end with "{expected_end}"')
+            target_reg_dir = target.rsplit(name, 1)[0]
             if os.path.isdir(target_reg_dir):
                 remove_dir(target_reg_dir)
     remove_dir(run_dir)
@@ -739,7 +748,7 @@ def check_nested_run_dirs(reg):
 
 
 def is_valid_run_dir(path):
-    """Return True if path is a valid run directory, else False.
+    """Return True if path is a valid, existing run directory, else False.
 
     Args:
         path (str): if this is a relative path, it is taken to be relative to
