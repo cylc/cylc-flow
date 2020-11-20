@@ -212,6 +212,16 @@ def get_option_parser():
         action='store_true'
     )
 
+    parser.add_option(
+        '--ping',
+        help=(
+            'Test the connection to the flow.'
+            ' (scanning will use the filesystem where possible, --ping forces'
+            ' a connection to the flow)'
+        ),
+        action='store_true'
+    )
+
     return parser
 
 
@@ -424,6 +434,10 @@ def get_pipe(opts, formatter, scan_dir=None):
     # add graphql queries / filters to the pipe
     if show_active and graphql_fields:
         pipe |= graphql_query(graphql_fields, filters=graphql_filters)
+    elif opts.ping:
+        # check the flow is running even if not required
+        # by display format or filters
+        pipe |= graphql_query({'status': None})
 
     # yield results as they are processed
     pipe.preserve_order = False
