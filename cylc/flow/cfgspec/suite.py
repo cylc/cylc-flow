@@ -272,6 +272,10 @@ with Conf(
             Conf('abort on timeout', VDR.V_BOOLEAN)
             Conf('abort on inactivity', VDR.V_BOOLEAN)
             Conf('mail events', VDR.V_STRING_LIST, None)
+            Conf('expected task failures', VDR.V_STRING_LIST, desc='''
+                (For Cylc developers writing a functional reference test
+                only) List of tasks that are expected to fail in the test.
+            ''')
 
         with Conf('mail'):
             Conf('footer', VDR.V_STRING, desc='''
@@ -306,9 +310,6 @@ with Conf(
 
                 Useful to prevent being overwhelmed by emails.
             ''')
-
-        with Conf('reference test'):
-            Conf('expected task failures', VDR.V_STRING_LIST)
 
     with Conf('scheduling', desc='''
         This section allows cylc to determine when tasks are ready to run.
@@ -1338,20 +1339,7 @@ def upg(cfg, descr):
     u.obsolete('7.8.1', ['runtime', '__MANY__', 'events', 'reset timer'])
     u.obsolete('8.0.0', ['cylc', 'authentication'])
     u.obsolete('8.0.0', ['cylc', 'log resolved dependencies'])
-    u.obsolete('8.0.0', ['cylc', 'reference test', 'allow task failures'])
-    u.obsolete('8.0.0', ['cylc', 'reference test', 'live mode suite timeout'])
-    u.obsolete('8.0.0', ['cylc', 'reference test', 'dummy mode suite timeout'])
-    u.obsolete(
-        '8.0.0',
-        ['cylc', 'reference test', 'dummy-local mode suite timeout'])
-    u.obsolete(
-        '8.0.0',
-        ['cylc', 'reference test', 'simulation mode suite timeout'])
-    u.obsolete('8.0.0', ['cylc', 'reference test', 'required run mode'])
     u.obsolete('8.0.0', ['cylc', 'required run mode'])
-    u.obsolete(
-        '8.0.0',
-        ['cylc', 'reference test', 'suite shutdown event handler'])
     u.obsolete(
         '8.0.0',
         ['cylc', 'health check interval'])
@@ -1361,6 +1349,11 @@ def upg(cfg, descr):
     u.obsolete('8.0.0', ['cylc', 'events', 'abort if any task fails'])
     u.obsolete('8.0.0', ['cylc', 'events', 'mail retry delays'])
     u.obsolete('8.0.0', ['cylc', 'disable automatic shutdown'])
+    u.deprecate(
+        '8.0.0',
+        ['cylc', 'reference test', 'expected task failures'],
+        ['cylc', 'events', 'expected task failures'])
+    u.obsolete('8.0.0', ['cylc', 'reference test'])
     u.deprecate(
         '8.0.0',
         ['cylc', 'task event mail interval'],

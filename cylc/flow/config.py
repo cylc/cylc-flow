@@ -2221,9 +2221,7 @@ class SuiteConfig:
         - None if there is no expectation either way.
         """
         if self.options.reftest:
-            return self.cfg['scheduler']['reference test'][
-                'expected task failures'
-            ]
+            return self.cfg['scheduler']['events']['expected task failures']
         elif self.options.abort_if_any_task_fails:
             return []
         else:

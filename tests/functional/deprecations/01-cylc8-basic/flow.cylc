@@ -22,6 +22,7 @@
         simulation mode suite timeout =
         required run mode =
         suite shutdown event handler =
+        expected task failures =
 
 [scheduling]
     max active cycle points = 2
