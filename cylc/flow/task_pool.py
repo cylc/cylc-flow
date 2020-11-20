@@ -1059,7 +1059,7 @@ class TaskPool:
     def check_abort_on_task_fails(self):
         """Check whether suite should abort on task failure.
 
-        Return True if a task failed and `abort if any task fails` is set.
+        Return True if a task failed and `--abort-if-any-task-fails` was given.
         """
         return self.abort_task_failed
 
