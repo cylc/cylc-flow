@@ -138,11 +138,10 @@ hierarchy and ability to set site config directory.
 [#3883](https://github.com/cylc/cylc-flow/pull/3883) - Added a new workflow
 config option `[scheduling]stop after cycle point`.
 
-
 [#3961](https://github.com/cylc/cylc-flow/pull/3961) - Added a new command:
 `cylc clean`.
 
-[#XXXX](https://github.com/cylc/cylc-flow/pull/3712) - Global config options
+[#3955](https://github.com/cylc/cylc-flow/pull/3955) - Global config options
 to control the job submission environment.
 
 

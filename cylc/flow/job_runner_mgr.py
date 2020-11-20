@@ -218,7 +218,6 @@ class JobRunnerManager():
             if os.path.isdir(suite_py) and suite_py not in sys.path:
                 sys.path.append(suite_py)
 
-
     def __init__(self, clean_env=False, env=None, path=None):
         """Initialise JobRunnerManager."""
         # Job submission environment.
