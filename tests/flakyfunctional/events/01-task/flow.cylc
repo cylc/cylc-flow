@@ -13,7 +13,6 @@
         abort on stalled = True
         abort on inactivity = True
         inactivity = PT3M
-    [[reference test]]
         expected task failures = bar.1, baz.1
 
 [scheduling]

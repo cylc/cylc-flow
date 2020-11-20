@@ -1,7 +1,7 @@
 [meta]
     title = "Hello, Goodbye, Suicide"
 [scheduler]
-    [[reference test]]
+    [[events]]
         expected task failures = goodbye.1
 
 [scheduling]

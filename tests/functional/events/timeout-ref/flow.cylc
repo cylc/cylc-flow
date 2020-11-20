@@ -2,11 +2,10 @@
     description = This suite is supposed to time out
 
 [scheduler]
-    [[reference test]]
-        expected task failures = foo.1
     [[events]]
         abort on timeout = True
         timeout = PT1S
+        expected task failures = foo.1
 
 [scheduling]
     [[graph]]
