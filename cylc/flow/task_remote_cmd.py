@@ -105,6 +105,7 @@ def remote_init(install_target, rund, *dirs_to_symlink, indirect_comm=None):
         src = os.path.expandvars(val)
         if '$' in src:
             print(REMOTE_INIT_FAILED)
+            return
         make_symlink(src, dst)
     srvd = os.path.join(rund, SuiteFiles.Service.DIRNAME)
     os.makedirs(srvd, exist_ok=True)
@@ -119,6 +120,7 @@ def remote_init(install_target, rund, *dirs_to_symlink, indirect_comm=None):
         if pattern.match(filepath) and f"{install_target}" not in filepath:
             # client key for a different install target exists
             print(REMOTE_INIT_FAILED)
+            return
     try:
         remove_keys_on_client(srvd, install_target)
         create_client_keys(srvd, install_target)
