@@ -479,23 +479,17 @@ def register(reg=None, source=None, redirect=False):
 
     Raise:
         SuiteServiceFileError:
-            No flow.cylc file found in source location.
-            Illegal name (can look like a relative path, but not absolute).
-            Another suite already has this name (unless --redirect).
-            Trying to register a suite nested inside of another.
+            - No flow.cylc file found in source location.
+            - Illegal name (can look like a relative path, but not absolute).
+            - Another suite already has this name (unless --redirect).
+            - Trying to register a suite nested inside of another.
     """
     if reg is None:
         reg = os.path.basename(os.getcwd())
-    make_localhost_symlinks(reg)
-    is_valid, message = SuiteNameValidator.validate(reg)
-    if not is_valid:
-        raise SuiteServiceFileError(f'invalid suite name - {message}')
-
-    if os.path.isabs(reg):
-        raise SuiteServiceFileError(
-            f'suite name cannot be an absolute path: {reg}')
-
+    _validate_reg(reg)
     check_nested_run_dirs(reg)
+
+    make_localhost_symlinks(reg)
 
     if source is not None:
         if os.path.basename(source) == SuiteFiles.FLOW_FILE:
@@ -566,6 +560,9 @@ def clean(reg):
     Args:
         reg (str): workflow name.
     """
+    reg = os.path.normpath(reg)
+    # TODO: prevent `cylc clean foo/../` (i.e. rm -r ~/cylc-clean !)
+    _validate_reg(reg)
     run_dir = get_suite_run_dir(reg)
     if not os.path.isdir(run_dir):
         raise WorkflowFilesError(f'No workflow directory found at {run_dir}')
@@ -685,12 +682,36 @@ def _load_local_item(item, path):
         return None
 
 
+def _validate_reg(reg):
+    """Check suite name is valid.
+
+    Args:
+        reg (str): Suite name
+
+    Raise:
+        SuiteServiceFileError:
+            - reg has form of absolute path or is otherwise not valid
+    """
+    is_valid, message = SuiteNameValidator.validate(reg)
+    if not is_valid:
+        raise SuiteServiceFileError(f'invalid suite name "{reg}" - {message}')
+    if os.path.isabs(reg):
+        raise SuiteServiceFileError(
+            f'suite name cannot be an absolute path: {reg}')
+
+
 def check_nested_run_dirs(reg):
     """Disallow nested run dirs e.g. trying to register foo/bar where foo is
     already a valid suite directory.
 
     Args:
         reg (str): suite name
+
+    Raise:
+        WorkflowFilesError:
+            - reg dir is nested inside a run dir
+            - reg dir contains a nested run dir (if not deeper than max scan
+                depth)
     """
     exc_msg = (
         'Nested run directories not allowed - cannot register suite name '
@@ -700,7 +721,7 @@ def check_nested_run_dirs(reg):
         for result in os.scandir(path):
             if result.is_dir() and not result.is_symlink():
                 if is_valid_run_dir(result.path):
-                    raise SuiteServiceFileError(exc_msg % (reg, result.path))
+                    raise WorkflowFilesError(exc_msg % (reg, result.path))
                 if depth_count < MAX_SCAN_DEPTH:
                     _check_child_dirs(result.path, depth_count + 1)
 
@@ -708,7 +729,7 @@ def check_nested_run_dirs(reg):
     parent_dir = os.path.dirname(reg_path)
     while parent_dir != '':
         if is_valid_run_dir(parent_dir):
-            raise SuiteServiceFileError(
+            raise WorkflowFilesError(
                 exc_msg % (reg, get_cylc_run_abs_path(parent_dir)))
         parent_dir = os.path.dirname(parent_dir)
 

@@ -15,13 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from cylc.flow.suite_files import check_nested_run_dirs
-from cylc.flow.pathutil import make_localhost_symlinks
 import pytest
 from unittest import mock
 
 import os.path
 from cylc.flow import suite_files
-from cylc.flow.exceptions import SuiteServiceFileError
+from cylc.flow.exceptions import SuiteServiceFileError, WorkflowFilesError
 
 
 def get_register_test_cases():
@@ -293,7 +292,7 @@ def test_nested_run_dirs_raise_error(direction, monkeypatch):
         suite_files.check_nested_run_dirs('bright/falls')
         # Nested in a run dir - bad:
         for path in ('bright/falls/light', 'bright/falls/light/and/power'):
-            with pytest.raises(SuiteServiceFileError) as exc:
+            with pytest.raises(WorkflowFilesError) as exc:
                 suite_files.check_nested_run_dirs(path)
             assert 'Nested run directories not allowed' in str(exc.value)
 
@@ -319,9 +318,8 @@ def test_nested_run_dirs_raise_error(direction, monkeypatch):
         for path in ('a/a/a', 'a/b'):
             suite_files.check_nested_run_dirs(path)
         # Run dir nested below - bad:
-
         for path in ('a', 'a/a', 'a/c'):
-            with pytest.raises(SuiteServiceFileError) as exc:
+            with pytest.raises(WorkflowFilesError) as exc:
                 check_nested_run_dirs(path)
             assert 'Nested run directories not allowed' in str(exc.value)
         # Run dir nested below max scan depth - not ideal but passes:
