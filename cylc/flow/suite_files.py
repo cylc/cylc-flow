@@ -598,28 +598,6 @@ def create_server_keys(keys, suite_srv_dir):
     os.umask(old_umask)
 
 
-def _dump_item(path, item, value):
-    """Dump "value" to a file called "item" in the directory "path".
-
-    1. File permission should already be user-read-write-only on
-       creation by mkstemp.
-    2. The combination of os.fsync and os.rename should guarantee
-       that we don't end up with an incomplete file.
-    """
-    os.makedirs(path, exist_ok=True)
-    from tempfile import NamedTemporaryFile
-    handle = NamedTemporaryFile(prefix=item, dir=path, delete=False)
-    try:
-        handle.write(value.encode())
-    except AttributeError:
-        handle.write(value)
-    os.fsync(handle.fileno())
-    handle.close()
-    fname = os.path.join(path, item)
-    os.rename(handle.name, fname)
-    LOG.debug('Generated %s', fname)
-
-
 def get_suite_title(reg):
     """Return the the suite title without a full file parse
 
