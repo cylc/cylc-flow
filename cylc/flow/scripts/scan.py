@@ -215,9 +215,11 @@ def get_option_parser():
     parser.add_option(
         '--ping',
         help=(
-            'Test the connection to the flow.'
-            ' (scanning will use the filesystem where possible, --ping forces'
-            ' a connection to the flow)'
+            'Test the connection to the flow. Scan normally just reads flow'
+            ' contact files, but --ping forces a connection to the scheduler'
+            ' and removes the contact file if it is not found to be running'
+            " (this can happen if the scheduler gets killed and can't clean"
+            ' up after itself).'
         ),
         action='store_true'
     )
