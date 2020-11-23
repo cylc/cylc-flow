@@ -56,7 +56,12 @@ from cylc.flow.task_outputs import (
     TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED,
     TASK_OUTPUT_FAILED)
 from cylc.flow.task_remote_mgr import (
-    REMOTE_INIT_FAILED, TaskRemoteMgr)
+    REMOTE_FILE_INSTALL_FAILED,
+    REMOTE_FILE_INSTALL_IN_PROGRESS,
+    REMOTE_INIT_FAILED,
+    REMOTE_INIT_DONE,
+    TaskRemoteMgr
+)
 from cylc.flow.task_state import (
     TASK_STATUSES_ACTIVE,
     TASK_STATUS_READY,
@@ -91,6 +96,7 @@ class TaskJobManager:
     POLL_FAIL = 'poll failed'
     REMOTE_SELECT_MSG = 'waiting for remote host selection'
     REMOTE_INIT_MSG = 'remote host initialising'
+    REMOTE_FILE_INSTALL_MSG = 'file installation in progress'
     KEY_EXECUTE_TIME_LIMIT = TaskEventsManager.KEY_EXECUTE_TIME_LIMIT
 
     def __init__(self, suite, proc_pool, suite_db_mgr,
@@ -227,10 +233,10 @@ class TaskJobManager:
         for install_target, itasks in sorted(auth_itasks.items()):
             # Re-fetch a copy of platform
             platform = itasks[0].platform
-            is_init = self.task_remote_mgr.remote_init(
-                platform, curve_auth, client_pub_key_dir)
-            if is_init is None:
-                # Remote is waiting to be initialised
+            if install_target not in self.task_remote_mgr.remote_init_map.keys(
+            ) or self.task_remote_mgr.remote_init_map[install_target] is None:
+                self.task_remote_mgr.remote_init(
+                    platform, curve_auth, client_pub_key_dir)
                 for itask in itasks:
                     itask.set_summary_message(self.REMOTE_INIT_MSG)
                     self.job_pool.add_job_msg(
@@ -238,6 +244,19 @@ class TaskJobManager:
                             itask.point, itask.tdef.name, itask.submit_num),
                         self.REMOTE_INIT_MSG)
                 continue
+            elif (self.task_remote_mgr.remote_init_map[install_target]
+                  == REMOTE_INIT_DONE):
+                self.task_remote_mgr.file_install(platform)
+            elif (self.task_remote_mgr.remote_init_map[install_target]
+                  == REMOTE_FILE_INSTALL_IN_PROGRESS):
+                for itask in itasks:
+                    itask.set_summary_message(self.REMOTE_FILE_INSTALL_MSG)
+                    self.job_pool.add_job_msg(
+                        get_task_job_id(
+                            itask.point, itask.tdef.name, itask.submit_num),
+                        self.REMOTE_FILE_INSTALL_MSG)
+                continue
+
             # Ensure that localhost background/at jobs are recorded as running
             # on the host name of the current suite host, rather than just
             # "localhost". On suite restart on a different suite host, this
@@ -268,22 +287,24 @@ class TaskJobManager:
                     'batch_sys_name': itask.summary['batch_sys_name'],
                 })
                 itask.is_manual_submit = False
-            if is_init == REMOTE_INIT_FAILED:
-                # Remote has failed to initialise
-                # Set submit-failed for all affected tasks
-                for itask in itasks:
-                    itask.local_job_file_path = None  # reset for retry
-                    log_task_job_activity(
-                        SubProcContext(
-                            self.JOBS_SUBMIT,
-                            '(init %s)' % host,
-                            err=REMOTE_INIT_FAILED,
-                            ret_code=1),
-                        suite, itask.point, itask.tdef.name)
-                    self.task_events_mgr.process_message(
-                        itask, CRITICAL,
-                        self.task_events_mgr.EVENT_SUBMIT_FAILED)
-                continue
+            for init_error in [REMOTE_INIT_FAILED, REMOTE_FILE_INSTALL_FAILED]:
+                if (self.task_remote_mgr.remote_init_map[install_target]
+                        == init_error):
+                    # Remote has failed to initialise
+                    # Set submit-failed for all affected tasks
+                    for itask in itasks:
+                        itask.local_job_file_path = None  # reset for retry
+                        log_task_job_activity(
+                            SubProcContext(
+                                self.JOBS_SUBMIT,
+                                '(init %s)' % host,
+                                err=init_error,
+                                ret_code=1),
+                            suite, itask.point, itask.tdef.name)
+                        self.task_events_mgr.process_message(
+                            itask, CRITICAL,
+                            self.task_events_mgr.EVENT_SUBMIT_FAILED)
+                    continue
             # Build the "cylc jobs-submit" command
             cmd = [self.JOBS_SUBMIT]
             if LOG.isEnabledFor(DEBUG):
