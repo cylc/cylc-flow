@@ -324,3 +324,152 @@ def test_nested_run_dirs_raise_error(direction, monkeypatch):
             assert 'Nested run directories not allowed' in str(exc.value)
         # Run dir nested below max scan depth - not ideal but passes:
         suite_files.check_nested_run_dirs('a/d')
+
+
+@pytest.mark.parametrize(
+    'reg, expected_err',
+    [('foo/bar/', None),
+     ('/foo/bar', SuiteServiceFileError)]
+)
+def test_validate_reg(reg, expected_err):
+    if expected_err:
+        with pytest.raises(expected_err) as exc:
+            suite_files._validate_reg(reg)
+        assert 'cannot be an absolute path' in str(exc.value)
+    else:
+        suite_files._validate_reg(reg)
+
+
+@pytest.mark.parametrize(
+    'reg, props',
+    [
+        ('foo/bar/', {}),
+        ('foo/..', {
+            'no dir': True,
+            'err': WorkflowFilesError,
+            'err msg': ('cannot be a path that points to the cylc-run '
+                        'directory or above')
+        }),
+        ('foo/../..', {
+            'no dir': True,
+            'err': WorkflowFilesError,
+            'err msg': ('cannot be a path that points to the cylc-run '
+                        'directory or above')
+        }),
+        ('foo', {
+            'not stopped': True,
+            'err': SuiteServiceFileError,
+            'err msg': 'Cannot remove running workflow'
+        }),
+        ('foo', {
+            'no dir': True,
+            'err': WorkflowFilesError,
+            'err msg': 'No directory found'
+        }),
+        ('foo', {
+            'symlink dirs': {
+                'log': 'sym-log',
+                'share': 'sym-share',
+                'share/cycle': 'sym-cycle',
+                'work': 'sym-work'
+            }
+        }),
+        ('foo', {
+            'symlink dirs': {
+                'run': 'sym-run',
+                'log': 'sym-log',
+                'share': 'sym-share',
+                'share/cycle': 'sym-cycle',
+                'work': 'sym-work'
+            }
+        }),
+        ('foo', {
+            'bad symlink': {
+                'type': 'file',
+                'path': 'sym-log/cylc-run/foo/meow.txt'
+            },
+            'err': WorkflowFilesError,
+            'err msg': 'Target is not a directory'
+        }),
+        ('foo', {
+            'bad symlink': {
+                'type': 'dir',
+                'path': 'sym-log/bad/path'
+            },
+            'err': WorkflowFilesError,
+            'err msg': 'Expected target to end with "cylc-run/foo/log"'
+        })
+    ]
+)
+def test_clean(reg, props, monkeypatch, tmp_path):
+    """Test the clean() function.
+
+    Params:
+        reg (str): Workflow name.
+        props (dict): Possible values are (all optional):
+            'err' (Exception): Expected error.
+            'err msg' (str): Message that is expected to be in the exception.
+            'no dir' (bool): If True, do not create run dir for this test case.
+            'not stopped' (bool): If True, simulate that the workflow is
+                still running.
+            'symlink dirs' (dict): As you would find in the global config
+                under [symlink dirs][platform].
+            'bad symlink' (dict): Simulate an invalid log symlink dir:
+                'type' (str): 'file' or 'dir'.
+                'path' (str): Path of the symlink target relative to tmp_path.
+    """
+    # --- Setup ---
+    tmp_path.joinpath('cylc-run').mkdir()
+    run_dir = tmp_path.joinpath('cylc-run', reg)
+    symlink_dirs = props.get('symlink dirs')
+    bad_symlink = props.get('bad symlink')
+    if not props.get('no dir') and (
+            not symlink_dirs or 'run' not in symlink_dirs):
+        run_dir.mkdir(parents=True)
+
+    dirs_to_check = [run_dir]
+    if symlink_dirs:
+        if 'run' in symlink_dirs:
+            dst = tmp_path.joinpath(symlink_dirs['run'], 'cylc-run', reg)
+            dst.mkdir(parents=True)
+            run_dir.symlink_to(dst)
+            dirs_to_check.append(dst)
+            symlink_dirs.pop('run')
+        for s, d in symlink_dirs.items():
+            dst = tmp_path.joinpath(d, 'cylc-run', reg, s)
+            dst.mkdir(parents=True)
+            src = run_dir.joinpath(s)
+            src.symlink_to(dst)
+            dirs_to_check.append(dst.parent)
+    if bad_symlink:
+        dst = tmp_path.joinpath(bad_symlink['path'])
+        if bad_symlink['type'] == 'file':
+            dst.parent.mkdir(parents=True)
+            dst.touch()
+        else:
+            dst.mkdir(parents=True)
+        src = run_dir.joinpath('log')
+        src.symlink_to(dst)
+
+    def mocked_detect_old_contact_file(reg):
+        if props.get('not stopped'):
+            raise SuiteServiceFileError('Mocked error')
+
+    monkeypatch.setattr('cylc.flow.suite_files.detect_old_contact_file',
+                        mocked_detect_old_contact_file)
+    monkeypatch.setattr('cylc.flow.suite_files.get_suite_run_dir',
+                        lambda x: run_dir)
+
+    # --- The actual test ---
+    expected_err = props.get('err')
+    if expected_err:
+        with pytest.raises(expected_err) as exc:
+            suite_files.clean(reg)
+        expected_msg = props.get('err msg')
+        if expected_msg:
+            assert expected_msg in str(exc.value)
+    else:
+        suite_files.clean(reg)
+        for d in dirs_to_check:
+            assert d.exists() is False
+            assert d.is_symlink() is False
