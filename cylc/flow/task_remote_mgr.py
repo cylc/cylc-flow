@@ -172,26 +172,9 @@ class TaskRemoteMgr:
         """
         install_target = platform['install target']
 
-        # See if a previous failed attempt to initialize this platform has
-        # occurred.
-        try:
-            status = self.remote_init_map[install_target]
-        except KeyError:
-            pass  # Not yet initialised
-        else:
-            if status == REMOTE_INIT_FAILED:
-                del self.remote_init_map[install_target]
-            return
-
-        # If task is running locally or the install target is localhost
-        # we can skip the rest of this function
-        if (install_target == 'localhost' or
-                not is_remote_host(get_host_from_platform(platform))):
-            LOG.debug(f"REMOTE INIT NOT REQUIRED for {install_target}")
-            self.ready = True
-            self.remote_init_map[install_target] = REMOTE_INIT_NOT_REQUIRED
-            return
-
+        # Set status of install target to in progress while waiting for remote
+        # initialisation to finish
+        self.remote_init_map[install_target] = REMOTE_INIT_IN_PROGRESS
         # Determine what items to install
         comm_meth = platform['communication method']
         items = self._remote_init_items(comm_meth)
@@ -226,10 +209,6 @@ class TaskRemoteMgr:
             self._remote_init_callback,
             [platform, tmphandle,
              curve_auth, client_pub_key_dir])
-        # Set status of install target to in progress while waiting for command
-        # to finish
-        self.remote_init_map[install_target] = REMOTE_INIT_IN_PROGRESS
-        return
 
     def remote_tidy(self):
         """Remove suite contact files and keys from initialised remotes.
@@ -340,14 +319,13 @@ class TaskRemoteMgr:
                 self.remote_init_map[install_target] = REMOTE_INIT_DONE
                 self.ready = True
                 return
-
         # Bad status
         LOG.error(TaskRemoteMgmtError(
             TaskRemoteMgmtError.MSG_INIT,
             install_target, ' '.join(
                 quote(item) for item in proc_ctx.cmd),
             proc_ctx.ret_code, proc_ctx.out, proc_ctx.err))
-        LOG.error(proc_ctx)
+
         self.remote_init_map[platform['install target']] = REMOTE_INIT_FAILED
         self.ready = True
 
@@ -380,7 +358,6 @@ class TaskRemoteMgr:
             ctx, self._file_install_callback,
             [install_target]
         )
-        return
 
     def _file_install_callback(self, ctx, install_target):
         """Callback when file installation exits.
@@ -405,6 +382,8 @@ class TaskRemoteMgr:
                 install_target, ' '.join(
                     quote(item) for item in ctx.cmd),
                 ctx.ret_code, ctx.out, ctx.err))
+            LOG.error(ctx)
+            self.ready = True
 
     def _remote_init_items(self, comm_meth):
         """Return list of items to install based on communication method.
