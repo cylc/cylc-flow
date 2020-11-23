@@ -121,15 +121,15 @@ if [[ -d "${CYLC_HOME}/conda-meta" ]]; then
     # Conda
     if [[ -f "${CYLC_HOME}/bin/activate" ]]; then
         # A conda pack installation
-        . ${CYLC_HOME}/bin/activate || exit 1
+        . "${CYLC_HOME}/bin/activate" || exit 1
     else
         # A normal conda environment
-        . $(dirname ${CYLC_HOME})/../etc/profile.d/conda.sh
+        . "$(dirname ${CYLC_HOME})/../etc/profile.d/conda.sh"
         conda activate "$(basename ${CYLC_HOME})" || exit 1
     fi
 elif [[ -f "${CYLC_HOME}/bin/activate" ]]; then
     # Python venv
-    . ${CYLC_HOME}/bin/activate || exit 1
+    . "${CYLC_HOME}/bin/activate" || exit 1
 else
     echo 1>&2 "ERROR: cylc installation not found in ${CYLC_HOME}"
     exit 1
