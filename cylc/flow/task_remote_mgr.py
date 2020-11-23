@@ -349,6 +349,7 @@ class TaskRemoteMgr:
             proc_ctx.ret_code, proc_ctx.out, proc_ctx.err))
         LOG.error(proc_ctx)
         self.remote_init_map[platform['install target']] = REMOTE_INIT_FAILED
+        self.ready = True
 
     def file_install(self, platform):
         """Install required files on the remote install target.
