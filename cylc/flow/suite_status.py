@@ -60,7 +60,7 @@ class StopMode(Enum):
     """Suite has reached a state where it can automatically stop"""
 
     AUTO_ON_TASK_FAILURE = 'AUTOMATIC(ON-TASK-FAILURE)'
-    """A task has failed and ``--abort-if-any-task-fails`` was given."""
+    """A task has failed and ``--abort-if-any-task-fails`` was used."""
 
     REQUEST_CLEAN = 'REQUEST(CLEAN)'
     """External shutdown request, will wait for active jobs to complete."""

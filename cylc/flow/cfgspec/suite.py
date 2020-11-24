@@ -1349,10 +1349,6 @@ def upg(cfg, descr):
     u.obsolete('8.0.0', ['cylc', 'events', 'abort if any task fails'])
     u.obsolete('8.0.0', ['cylc', 'events', 'mail retry delays'])
     u.obsolete('8.0.0', ['cylc', 'disable automatic shutdown'])
-    u.deprecate(
-        '8.0.0',
-        ['cylc', 'reference test', 'expected task failures'],
-        ['cylc', 'events', 'expected task failures'])
     u.obsolete('8.0.0', ['cylc', 'reference test'])
     u.deprecate(
         '8.0.0',

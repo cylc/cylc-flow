@@ -7,13 +7,13 @@
     authentication =
     required run mode =
     force run mode =
-    task event mail interval = 
+    task event mail interval =
     disable automatic shutdown =
     [[events]]
-        mail to = 
-        mail from = 
-        mail smtp = 
-        mail footer = 
+        mail to =
+        mail from =
+        mail smtp =
+        mail footer =
     [[reference test]]
         allow task failures =
         live mode suite timeout =
@@ -22,7 +22,6 @@
         simulation mode suite timeout =
         required run mode =
         suite shutdown event handler =
-        expected task failures =
 
 [scheduling]
     max active cycle points = 2
@@ -37,7 +36,7 @@
         [[[job]]]
             shell = fish
         [[[events]]]
-            mail from = 
-            mail to = 
-            mail smtp = 
-            mail retry delays = 
+            mail from =
+            mail to =
+            mail smtp =
+            mail retry delays =
