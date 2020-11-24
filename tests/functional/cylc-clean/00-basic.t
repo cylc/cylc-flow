@@ -37,6 +37,8 @@ init_suite "${TEST_NAME_BASE}" << '__FLOW__'
     [[graph]]
         R1 = darmok
 __FLOW__
+# Create a fake sibling workflow dir in the sym-log dir:
+mkdir "${TEST_DIR}/sym-log/cylc-run/cylctb-${CYLC_TEST_TIME_INIT}/leave-me-alone"
 # -----------------------------------------------------------------------------
 TEST_NAME="run-dir-tree-pre-clean"
 tree --charset=ascii "$SUITE_RUN_DIR" > "${TEST_NAME}.stdout"
@@ -68,10 +70,11 @@ ${TEST_DIR}/sym-cycle
 ${TEST_DIR}/sym-log
 \`-- cylc-run
     \`-- cylctb-${CYLC_TEST_TIME_INIT}
-        \`-- f
-            \`-- cylc-clean
-                \`-- ${TEST_NAME_BASE}
-                    \`-- log
+        |-- f
+        |   \`-- cylc-clean
+        |       \`-- ${TEST_NAME_BASE}
+        |           \`-- log
+        \`-- leave-me-alone
 ${TEST_DIR}/sym-run
 \`-- cylc-run
     \`-- cylctb-${CYLC_TEST_TIME_INIT}
@@ -114,6 +117,8 @@ ${TEST_DIR}/sym-cycle
 \`-- cylc-run
 ${TEST_DIR}/sym-log
 \`-- cylc-run
+    \`-- cylctb-${CYLC_TEST_TIME_INIT}
+        \`-- leave-me-alone
 ${TEST_DIR}/sym-run
 \`-- cylc-run
 ${TEST_DIR}/sym-share

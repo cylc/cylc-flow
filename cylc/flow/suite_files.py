@@ -570,8 +570,8 @@ def clean(reg):
         raise WorkflowFilesError(
             'Workflow name cannot be a path that points to the cylc-run '
             'directory or above')
-    run_dir = get_suite_run_dir(reg)
-    if not os.path.isdir(run_dir):
+    run_dir = Path(get_suite_run_dir(reg))
+    if not run_dir.is_dir():
         raise WorkflowFilesError(f'No directory found at {run_dir}')
     try:
         detect_old_contact_file(reg)
@@ -581,32 +581,62 @@ def clean(reg):
 
     # TODO: check task_jobs table in database to see what platforms are used
 
-    possible_symlinks = [(name, os.path.join(run_dir, name)) for name in [
-        'log', 'share/cycle', 'share', 'work']]
-    # Note: 'share/cycle' must come before 'share'
-    for name, path in [*possible_symlinks, ('', run_dir)]:
-        if os.path.islink(path):
-            # Ensure symlink is pointing to expected directory
-            target = os.path.realpath(path)
-            if os.path.exists(target) and not os.path.isdir(target):
+    possible_symlinks = [(Path(name), Path(run_dir, name)) for name in [
+        'log', 'share/cycle', 'share', 'work', '']]
+    # Note: 'share/cycle' must come before 'share', and '' must come last
+    for name, path in possible_symlinks:
+        if path.is_symlink():
+            # Ensure symlink is pointing to expected directory. If not,
+            # something is wrong and we should abort
+            target = path.resolve()
+            if target.exists() and not target.is_dir():
                 raise WorkflowFilesError(
                     f'Invalid Cylc symlink directory {path} -> {target}\n'
                     f'Target is not a directory')
             expected_end = str(Path('cylc-run', reg, name))
-            if not target.endswith(expected_end):
+            if not str(target).endswith(expected_end):
                 raise WorkflowFilesError(
                     f'Invalid Cylc symlink directory {path} -> {target}\n'
                     f'Expected target to end with "{expected_end}"')
-            reg_depth = len(Path(reg).parts) - 1
-            target_reg_dir = target.rsplit(name, 1)[0] if name else target
-            if reg_depth > 0:
-                target_top_parent = Path(target_reg_dir).parents[reg_depth - 1]
-            else:
-                target_top_parent = target_reg_dir
-            if os.path.isdir(target_top_parent):
-                remove_dir(target_top_parent)
-    run_dir_top_parent = get_suite_run_dir(Path(reg).parts[0])
-    remove_dir(run_dir_top_parent)
+            # Remove <symlink_dir>/cylc-run/<reg>
+            target_cylc_run_dir = str(target).rsplit(str(reg), 1)[0]
+            target_reg_dir = Path(target_cylc_run_dir, reg)
+            if target_reg_dir.is_dir():
+                remove_dir(target_reg_dir)
+            # Remove empty parents
+            _remove_empty_reg_parents(reg, target_reg_dir)
+
+    remove_dir(run_dir)
+    _remove_empty_reg_parents(reg, run_dir)
+
+
+def _remove_empty_reg_parents(reg, path):
+    """If reg is nested e.g. a/b/c, work our way up the tree, removing empty
+    parents only.
+
+    Args:
+        reg (str): workflow name, e.g. a/b/c
+        path (str): path to this directory, e.g. /foo/bar/a/b/c
+
+    Example:
+        _remove_empty_reg_parents('a/b/c', '/foo/bar/a/b/c') would remove
+        /foo/bar/a/b (assuming it's empty), then /foo/bar/a (assuming it's
+        empty).
+    """
+    reg = Path(reg)
+    reg_depth = len(reg.parts) - 1
+    path = Path(path)
+    if not path.is_absolute():
+        raise ValueError('Path must be absolute')
+    for i in range(reg_depth):
+        parent = path.parents[i]
+        if not parent.is_dir():
+            continue
+        try:
+            parent.rmdir()
+            LOG.info(f'Removing directory: {parent}')
+        except OSError:
+            break
 
 
 def remove_keys_on_server(keys):

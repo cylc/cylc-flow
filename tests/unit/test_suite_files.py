@@ -367,7 +367,7 @@ def test_validate_reg(reg, expected_err):
             'err': WorkflowFilesError,
             'err msg': 'No directory found'
         }),
-        ('foo', {
+        ('foo/bar', {
             'symlink dirs': {
                 'log': 'sym-log',
                 'share': 'sym-share',
@@ -475,3 +475,27 @@ def test_clean(reg, props, monkeypatch, tmp_path):
         for d in dirs_to_check:
             assert d.exists() is False
             assert d.is_symlink() is False
+
+
+def test_remove_empty_reg_parents(tmp_path):
+    """Test that _remove_empty_parents() doesn't remove parents containing a
+    sibling."""
+    reg = 'foo/bar/baz/qux'
+    path = tmp_path.joinpath(reg)
+    tmp_path.joinpath('foo/bar/baz').mkdir(parents=True)
+    sibling_reg = 'foo/darmok'
+    sibling_path = tmp_path.joinpath(sibling_reg)
+    sibling_path.mkdir()
+    suite_files._remove_empty_reg_parents(reg, path)
+    assert tmp_path.joinpath('foo/bar').exists() is False
+    assert tmp_path.joinpath('foo').exists() is True
+    # Also path must be absolute
+    with pytest.raises(ValueError) as exc:
+        suite_files._remove_empty_reg_parents('foo/darmok', 'meow/foo/darmok')
+    assert 'Path must be absolute' in str(exc.value)
+    # Check it skips non-existent dirs, and stops at the right place too
+    tmp_path.joinpath('foo/bar').mkdir()
+    sibling_path.rmdir()
+    suite_files._remove_empty_reg_parents(reg, path)
+    assert tmp_path.joinpath('foo').exists() is False
+    assert tmp_path.exists() is True
