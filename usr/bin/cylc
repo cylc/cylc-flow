@@ -56,8 +56,7 @@
 #
 # INSTALLING CYLC RELEASES WITH CONDA
 #------------------------------------
-# Create environments named cylc-$CYLC_VERSION or cylc-flow-$CYLC_VERSION under
-# a root location such as /opt:
+# Create environments named cylc-$CYLC_VERSION under a root location such as /opt:
 #   $ conda create -p /opt/cylc-8.2.0 cylc=8.2.0
 # and create a default version symlink "cylc" to the latest version:
 #   $ ls /opt/cylc*
@@ -88,11 +87,11 @@
 # Note you can also `pip install` cylc-flow releases under a common root
 # location for CYLC_VERSION based selection, like for Conda:
 #   $ CYLC_HOME_ROOT=$HOME/cylc-flow/releases  # (set in this wrapper too)
-#   $ python -m venv $CYLC_HOME_ROOT/cylc-flow-8.0a2
-#   $ . $CYLC_HOME_ROOT/cylc-flow-8.0a2/bin/activate
+#   $ python -m venv $CYLC_HOME_ROOT/cylc-8.0a2
+#   $ . $CYLC_HOME_ROOT/cylc-8.0a2/bin/activate
 #   $ python -m pip install cylc-flow==8.0a2
-# But there is no need to do this if you have full system releases - not just
-# cylc-flow - installed via Conda anyway.
+# But there is no need to do this if you also have full system releases (as
+# opposed to cylc-flow only) installed by Conda.
  
 ##############################!!! EDIT ME !!!##################################
 # Central Cylc Conda releases:
@@ -111,12 +110,10 @@ if [[ -z "${CYLC_HOME:-}" ]]; then
         # Look for matching version in root locations
         for ROOT in "${CYLC_HOME_ROOT}" "${CYLC_HOME_ROOT_ALT}" \
                 "${CYLC7_HOME_ROOT}" "${CYLC7_HOME_ROOT_ALT}"; do
-            for NAME in "cylc" "cylc-flow"; do
-                if [[ -d "${ROOT}/${NAME}-${CYLC_VERSION}" ]]; then
-                    CYLC_HOME="${ROOT}/${NAME}-${CYLC_VERSION}"
-                    break 2
-                fi
-            done
+            if [[ -d "${ROOT}/cylc-${CYLC_VERSION}" ]]; then
+                CYLC_HOME="${ROOT}/cylc-${CYLC_VERSION}"
+                break 2
+            fi
         done
     else
         echo 1>&2 "ERROR: CYLC_HOME not defined or found"
