@@ -345,6 +345,7 @@ def test_validate_reg(reg, expected_err):
     'reg, props',
     [
         ('foo/bar/', {}),
+        ('foo', {'no dir': True}),
         ('foo/..', {
             'no dir': True,
             'err': WorkflowFilesError,
@@ -361,11 +362,6 @@ def test_validate_reg(reg, expected_err):
             'not stopped': True,
             'err': SuiteServiceFileError,
             'err msg': 'Cannot remove running workflow'
-        }),
-        ('foo', {
-            'no dir': True,
-            'err': WorkflowFilesError,
-            'err msg': 'No directory found'
         }),
         ('foo/bar', {
             'symlink dirs': {

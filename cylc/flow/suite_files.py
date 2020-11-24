@@ -572,7 +572,8 @@ def clean(reg):
             'directory or above')
     run_dir = Path(get_suite_run_dir(reg))
     if not run_dir.is_dir():
-        raise WorkflowFilesError(f'No directory found at {run_dir}')
+        LOG.info(f'No workflow directory to clean at {run_dir}')
+        return
     try:
         detect_old_contact_file(reg)
     except SuiteServiceFileError as exc:
