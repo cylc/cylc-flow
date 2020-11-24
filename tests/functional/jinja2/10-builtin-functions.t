@@ -30,7 +30,7 @@ TEST_NAME="${TEST_NAME_BASE}"-fail-assert
 run_fail "${TEST_NAME}" cylc validate "${SUITE_NAME}" \
     -s 'FOO="True"' \
     -s 'ANSWER="43"'
-grep_ok 'Jinja2 Assertation Error: Universal' "${TEST_NAME}.stderr"
+grep_ok 'Jinja2 Assertion Error: Universal' "${TEST_NAME}.stderr"
 TEST_NAME="${TEST_NAME_BASE}"-fail-raise
 run_fail "${TEST_NAME}" cylc validate "${SUITE_NAME}" -s 'ANSWER="42"'
 grep_ok 'Jinja2 Error: FOO must be defined' "${TEST_NAME}.stderr"

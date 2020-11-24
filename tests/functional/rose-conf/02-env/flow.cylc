@@ -1,13 +1,13 @@
 #!jinja2
+{{ assert(environ['EG_INT'] == "42", "Int not exported") }}
+{{ assert(environ['EG_FLOAT'] == "99.99", "Float not exported") }}
+{{ assert(environ['EG_STRING'] == "Sphinx of black quartz, judge my vow!", "String not exported") }}
+
 [meta]
     title = "Suite Filled in With info from ``rose-suite.conf``"
     description = """
     Natively, in Cylc!
     """
-
-[scheduler]
-    [[environment]]
-        here = "to check not over-written"
 
 [scheduling]
     initial cycle point = 20200101

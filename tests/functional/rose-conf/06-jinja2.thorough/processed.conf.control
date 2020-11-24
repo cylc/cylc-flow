@@ -1,0 +1,27 @@
+# Test with rose `XYZ=xyz suite-run --new -l` (which invokes cylc validate --strict)
+# Rose env vars are logged to the console
+# 1. The Jinja2 shebang should be added automatically
+##
+ # cylc8
+# 2. ROSE_SUITE_VARIABLES should contain a mapping of all vars
+# 3. Env vars
+# 3.1 - Local env vars should be templated into rose-suite.conf[env]
+# 3.2 - rose-suite.conf[env] vars should be templated into rose-suite.conf[jinja2:suite.rc]
+# 3.3 - Escaped env vars should not be templated
+# 4. Literals should be evaluated
+# 5. ROSE_VERSION should be provided
+  # strip the "Rose " prefix
+  # strip the (location) suffix
+# 6. CYLC_VERSION should be provided
+  # remove trailing newline
+# 7. ROSE_ORIG_HOST should be provided (hard to test it is set correctly here)
+# 8. ROSE_SITE should be provided
+# chuck in some Cylc stuff to make validate happy
+[scheduling]
+    initial cycle point = now
+    [[dependencies]]
+        R1 = """
+            x
+        """
+[runtime]
+    [[x]]

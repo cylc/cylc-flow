@@ -24,9 +24,7 @@ python -c "import cylc.rose" > /dev/null 2>&1 ||
 set_test_number 1
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-cylc view -p --stdout "${SUITE_NAME}" > processed.conf.test
-
-cmp_ok processed.conf.test processed.conf.control
+run_ok "${TEST_NAME_BASE}" cylc validate "${SUITE_NAME}"
 
 purge
 exit

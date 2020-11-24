@@ -1,3 +1,23 @@
+#!jinja2
+{# Rose Configuration Insertion: Init #}
+{% set BAR="ab" %}
+{% set BOOL=True %}
+{% set ESCAPED_ENV="$HOME" %}
+{% set INT=42 %}
+{% set LIST=["a", 1, True] %}
+{% set LOCAL_ENV="xyz" %}
+{% set ROSE_SUITE_VARIABLES={
+    'BAR': BAR,
+    'BOOL': BOOL,
+    'ESCAPED_ENV': ESCAPED_ENV,
+    'INT': INT,
+    'LIST': LIST,
+    'LOCAL_ENV': LOCAL_ENV,
+} %}
+[cylc]
+    [[environment]]
+        FOO=a
+{# Rose Configuration Insertion: Done #}
 # Test with rose `XYZ=xyz suite-run --new -l` (which invokes cylc validate --strict)
 # Rose env vars are logged to the console
 
@@ -7,7 +27,7 @@
 ##
 {% from "subprocess" import Popen %}
 {% from "subprocess" import PIPE %}
-{% from "cylc.flow" import LOG %} # cylc8
+{% from "cylc" import LOG %} # cylc8
 
 # 2. ROSE_SUITE_VARIABLES should contain a mapping of all vars
 {{ assert(ROSE_SUITE_VARIABLES is defined, "failed 2.1") }}
@@ -55,7 +75,8 @@
 [scheduling]
     initial cycle point = now
     [[dependencies]]
-        R1 = """
+        [[[R1]]]
+        graph = """
             x
         """
 

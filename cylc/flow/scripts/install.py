@@ -42,6 +42,11 @@ def get_option_parser():
 @cli_function(get_option_parser)
 def main(parser, options, suite):
     for entry_point in pkg_resources.iter_entry_points(
+        'cylc.pre_install'
+    ):
+        entry_point.resolve()()
+
+    for entry_point in pkg_resources.iter_entry_points(
         'cylc.post_install'
     ):
         entry_point.resolve()(

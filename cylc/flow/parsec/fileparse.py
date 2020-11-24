@@ -35,10 +35,10 @@ import re
 import sys
 
 import pkg_resources
-from ast import literal_eval
 from copy import copy
 from pathlib import Path
 
+from cylc.flow import __version__
 from cylc.flow import LOG
 from cylc.flow.parsec.exceptions import ParsecError, FileParseError
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
@@ -242,7 +242,8 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
     for entry_point in pkg_resources.iter_entry_points(
         'cylc.pre_configure'
     ):
-        extra_vars = entry_point.resolve()(Path(fpath).parent)
+        plugin_result = entry_point.resolve()(Path(fpath).parent)
+        extra_vars['env'].update(plugin_result.get('env', {}))
 
     if viewcfg:
         if not viewcfg['empy']:
@@ -263,8 +264,10 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
     if (all([extra_vars['empy:suite.rc'], extra_vars['jinja2:suite.rc']])):
         raise FileParseError(
             "Your additional configuration files define both empy and jinja2"
-            "variables. This makes sense."
+            "variables. This doesn't makes sense."
         )
+
+    template_vars['CYLC_VERSION'] = __version__
 
     # process with EmPy
     if do_empy:
@@ -278,11 +281,6 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
             tvars = copy(template_vars)
             if extra_vars['empy:suite.rc'] is not None:
                 for key, value in extra_vars['empy:suite.rc'].items():
-                    try:
-                        tvars[key] = literal_eval(value)
-                    except ValueError:
-                        pass
-                for key, value in extra_vars['template vars'].items():
                     tvars[key] = value
             try:
                 from cylc.flow.parsec.empysupport import empyprocess
@@ -303,11 +301,6 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
             tvars = copy(template_vars)
             if extra_vars['jinja2:suite.rc'] is not None:
                 for key, value in extra_vars['jinja2:suite.rc'].items():
-                    try:
-                        tvars[key] = literal_eval(value)
-                    except ValueError:
-                        pass
-                for key, value in extra_vars['template vars'].items():
                     tvars[key] = value
             try:
                 from cylc.flow.parsec.jinja2support import jinja2process
@@ -315,27 +308,6 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
                 raise ParsecError('Jinja2 Python package must be installed '
                                   'to process file: ' + fpath)
             flines = jinja2process(flines, fdir, tvars)
-
-    # Inject rose-suite.conf environment variables into the workflow env.
-    # Appended to ensure that Rose settings over-ride flow.cylc.
-    if not re.match(r'global.*\.cylc', Path(fpath).name):
-        if extra_vars['env'] is not None:
-            env_lines = [
-                f'        {key} = {value}' for
-                key, value in extra_vars['env'].items()
-            ]
-            flines += ['[scheduler]']
-            flines += ['    [[environment]]']
-            flines += env_lines
-
-        if extra_vars['template vars'] is not None:
-            env_lines = [
-                f'        {key} = {value}' for
-                key, value in extra_vars['template vars'].items()
-            ]
-            flines += ['[scheduler]']
-            flines += ['    [[environment]]']
-            flines += env_lines
 
     # concatenate continuation lines
     if do_contin:
