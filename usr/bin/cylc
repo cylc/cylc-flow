@@ -18,7 +18,7 @@
 
 #------------------------------------------------------------------------------
 # Wrapper script to support multiple Cylc versions installed on the same host.
-# Handles Cylc 8 Conda and Python virtual envs, and plain Cylc 7 installations.
+# Handles Conda and Python virtual envs, and plain Cylc 7 installations.
 #
 # WRAPPER INSTALLATION AND CONFIGURATION
 #---------------------------------------
@@ -28,31 +28,30 @@
 #
 # HOW IT WORKS
 #-------------
-# Intercept `cylc` commands and re-invoke them with the appropriate cylc-flow
+# Intercept "cylc" commands and re-invoke them with the appropriate cylc-flow
 # version, according to location or version information in the environment:
-# - 1) $CYLC_HOME if defined, or
-# - 2) $CYLC[7]_HOME_ROOT[_ALT]/$CYLC_VERSION
+# + 1) $CYLC_HOME if defined, or
+# + 2) $CYLC_HOME_ROOT[_ALT]/$CYLC_VERSION
 #
-# USER INSTRUCTIONS
-#------------------
-# - Set CYLC_VERSION to select an installed version under the ROOT
-#   - this is just the version string, e.g. "8.0.0"
-# - Set CYLC_HOME in .bashrc (scheduler and job hosts) to select a
-#     specific version outside of the ROOT location
-#   - CYLC_HOME should point to a Cylc 8 venv, or a Cylc 7 installation
-#     directory, for a specific Cylc version. It must be set in .bashrc so that
-#     task jobs see it (otherwise they will try to select via CYLC_VERSION)
-# - Do not explicitly select the default "cylc" symlink version.
-# 
-# The scheduler writes cylc.flow.__version__ to CYLC_VERSION in task job
-# scripts so that jobs pick up the same Cylc version as their parent scheduler.
-# The__version__ string only increments with releases so CYLC_VERSION cannot be
-# used for fine-grained selection between e.g. git working copies between
+# In Cylc 8+ the scheduler sets CYLC_VERSION=cylc.flow.__version__ in task
+# job environments so jobs get the same version as their parent scheduler.
+# The__version__ string increments with releases so CYLC_VERSION cannot be
+# used for fine-grained selection among (e.g.) git working copies between
 # releases. Use CYLC_HOME to select a venv in your cylc-flow git clone.
 #
-# If USERS set CYLC_VERSION in their .bashrc it default to an existing value to
-# avoid overiding task job version selection:
-# - export CYLC_VERSION=${CYLC_VERSION:-8.0.0}
+# INSTRUCTIONS FOR USERS
+#-----------------------
+# + Set CYLC_VERSION to select an installed version under the root location
+#   - this is just the version string, e.g. "8.0.0"
+#   - if setting it in .bashrc, be sure to default to an existing value to
+#       avoid overiding task job version selection, e.g.:
+#     $ export CYLC_VERSION=${CYLC_VERSION:-8.0.0}
+#   - do not explicitly select the default "cylc" symlink as a version
+# + Set CYLC_HOME in .bashrc (on scheduler and job hosts) to select a specific
+#     version outside of the ROOT location
+#   - this should point to a Cylc 8 venv, or a Cylc 7 installation directory.
+#     It must be set in .bashrc so that task jobs see it (otherwise they will
+#     select CYLC_VERSION as set by the parent scheduler)
 #
 # INSTALLING CYLC RELEASES WITH CONDA
 #------------------------------------
@@ -94,32 +93,28 @@
 # opposed to cylc-flow only) installed by Conda.
  
 ##############################!!! EDIT ME !!!##################################
-# Central Cylc Conda releases:
+# Centrally installed Cylc releases:
 CYLC_HOME_ROOT="${CYLC_HOME_ROOT:-/opt}"
-# User Conda releases:
-CYLC_HOME_ROOT_ALT="${CYLC_HOME_ROOT_ALT:-$HOME/miniconda3/envs}"
-
-# Legacy Cylc 7 locations if needed:
-CYLC7_HOME_ROOT="${CYLC7_HOME_ROOT_ALT:-/opt}" 
-CYLC7_HOME_ROOT_ALT="${CYLC7_HOME_ROOT_ALT:-$HOME/cylc/cylc-7}" 
+# For an alternate location set CYLC_HOME_ROOT_ALT.
+# CYLC_HOME_ROOT_ALT=${HOME}/miniconda3/envs
 ###############################################################################
 
-if [[ -z "${CYLC_HOME:-}" ]]; then
-    # If CYLC_HOME is not defined try CYLC_HOME_ROOT/cylc-CYLC_VERSION
-    if [[ -n ${CYLC_VERSION:-} ]]; then
-        # Look for matching version in root locations
-        for ROOT in "${CYLC_HOME_ROOT}" "${CYLC_HOME_ROOT_ALT}" \
-                "${CYLC7_HOME_ROOT}" "${CYLC7_HOME_ROOT_ALT}"; do
-            if [[ -d "${ROOT}/cylc-${CYLC_VERSION}" ]]; then
-                CYLC_HOME="${ROOT}/cylc-${CYLC_VERSION}"
-                break
-            fi
-        done
-    else
-        echo 1>&2 "ERROR: CYLC_HOME not defined or found"
-        exit 1
-    fi
+# If CYLC_HOME is not defined try CYLC_HOME_ROOT/cylc-CYLC_VERSION
+if [[ -z "${CYLC_HOME}" && -n ${CYLC_VERSION} ]]; then
+    # Look for matching version in root locations
+    for ROOT in "${CYLC_HOME_ROOT}" "${CYLC_HOME_ROOT_ALT}"; do
+        if [[ -d "${ROOT}/cylc-${CYLC_VERSION}" ]]; then
+            CYLC_HOME="${ROOT}/cylc-${CYLC_VERSION}"
+            break
+        fi
+    done
 fi
+if [[ -z "${CYLC_HOME}" ]]; then
+    echo 1>&2 "ERROR: CYLC_HOME not defined or found"
+    exit 1
+fi
+
+# Find and activate the virtual env, or find the Cylc 7 bin directory.
 BASENAME_PREFIX=""
 if [[ -f "${CYLC_HOME}/bin/activate" ]]; then
     # A Python venv or Conda pack installation
@@ -136,4 +131,6 @@ else
     echo 1>&2 "ERROR: cylc not found in ${CYLC_HOME}"
     exit 1
 fi
-exec "${BASENAME_PREFIX}$(basename "$0")" "$@"
+
+# Execute the command via the selected Cylc installation.
+exec "${BASENAME_PREFIX}${0##*/}" "$@"
