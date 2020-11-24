@@ -105,14 +105,14 @@ CYLC7_HOME_ROOT_ALT="${CYLC7_HOME_ROOT_ALT:-$HOME/cylc/cylc-7}"
 ###############################################################################
 
 if [[ -z "${CYLC_HOME:-}" ]]; then
-    # If CYLC_HOME is not defined find it with CYLC_HOME_ROOT and CYLC_VERSION.
+    # If CYLC_HOME is not defined try CYLC_HOME_ROOT/cylc-CYLC_VERSION
     if [[ -n ${CYLC_VERSION:-} ]]; then
         # Look for matching version in root locations
         for ROOT in "${CYLC_HOME_ROOT}" "${CYLC_HOME_ROOT_ALT}" \
                 "${CYLC7_HOME_ROOT}" "${CYLC7_HOME_ROOT_ALT}"; do
             if [[ -d "${ROOT}/cylc-${CYLC_VERSION}" ]]; then
                 CYLC_HOME="${ROOT}/cylc-${CYLC_VERSION}"
-                break 2
+                break
             fi
         done
     else
@@ -120,25 +120,20 @@ if [[ -z "${CYLC_HOME:-}" ]]; then
         exit 1
     fi
 fi
-if [[ -d "${CYLC_HOME}/conda-meta" ]]; then
-    # A Cylc 8 Conda environment
-    if [[ -f "${CYLC_HOME}/bin/activate" ]]; then
-        # A conda pack installation
-        . "${CYLC_HOME}/bin/activate" || exit 1
-    else
-        # A normal conda environment
-        . "$(dirname "${CYLC_HOME}")"/../etc/profile.d/conda.sh
-        conda activate "$(basename "${CYLC_HOME}")" || exit 1
-    fi
-elif [[ -f "${CYLC_HOME}/bin/activate" ]]; then
-    # A Cylc 8 Python venv
+BASENAME_PREFIX=""
+if [[ -f "${CYLC_HOME}/bin/activate" ]]; then
+    # A Python venv or Conda pack installation
     . "${CYLC_HOME}/bin/activate" || exit 1
+elif [[ -d "${CYLC_HOME}"/conda-meta && \
+        -f "${CYLC_HOME%/*/*}"/etc/profile.d/conda.sh ]]; then
+    # A normal Conda environment
+    . "${CYLC_HOME%/*/*}"/etc/profile.d/conda.sh
+    conda activate "${CYLC_HOME##*/}" || exit 1
 elif [[ -x "${CYLC_HOME}/bin/cylc" ]]; then
     # A Cylc 7 installation
-    exec "${CYLC_HOME}"/bin/"$(basename "$0")" "$@"
+    BASENAME_PREFIX="${CYLC_HOME}"/bin/
 else
     echo 1>&2 "ERROR: cylc not found in ${CYLC_HOME}"
     exit 1
 fi
-# The selected Cylc 8 should now be first in $PATH
-exec "$(basename "$0")" "$@"
+exec "${BASENAME_PREFIX}$(basename "$0")" "$@"
