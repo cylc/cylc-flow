@@ -91,7 +91,9 @@ from cylc.flow.task_id import TaskID
 from cylc.flow.task_job_mgr import TaskJobManager
 from cylc.flow.task_pool import TaskPool
 from cylc.flow.task_proxy import TaskProxy
-from cylc.flow.task_remote_mgr import REMOTE_INIT_IN_PROGRESS
+from cylc.flow.task_remote_mgr import (
+    REMOTE_FILE_INSTALL_IN_PROGRESS, REMOTE_INIT_DONE,
+    REMOTE_INIT_IN_PROGRESS)
 from cylc.flow.task_state import (
     TASK_STATUSES_ACTIVE,
     TASK_STATUSES_NEVER_ACTIVE,
@@ -732,13 +734,17 @@ class Scheduler:
                 platform, self.curve_auth,
                 self.client_pub_key_dir)
             if (self.task_job_mgr.task_remote_mgr.remote_init_map[platform[
-                    'install target']] == REMOTE_INIT_IN_PROGRESS):
+                    'install target']] in [REMOTE_INIT_IN_PROGRESS,
+                                           REMOTE_FILE_INSTALL_IN_PROGRESS]):
                 incomplete_init = True
                 break
+            if self.task_job_mgr.task_remote_mgr.remote_init_map[
+                    platform['install target']] == REMOTE_INIT_DONE:
+                self.task_job_mgr.task_remote_mgr.file_install(platform)
         if incomplete_init:
             # TODO: Review whether this sleep is needed.
             sleep(1.0)
-            # Remote init is done via process pool
+            # Remote init/file-install is done via process pool
             self.proc_pool.process()
         self.command_poll_tasks()
 

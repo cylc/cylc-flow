@@ -372,6 +372,7 @@ class TaskRemoteMgr:
         if ctx.ret_code == 0:
             # Both file installation and remote init success
             LOG.debug(ctx)
+            LOG.debug(f"File installation complete for {install_target}")
             self.remote_init_map[install_target] = REMOTE_FILE_INSTALL_DONE
             self.ready = True
             return

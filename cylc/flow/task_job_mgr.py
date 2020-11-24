@@ -212,7 +212,6 @@ class TaskJobManager:
 
         # Group task jobs by (install target)
         auth_itasks = {}  # {install target: [itask, ...], ...}
-
         for itask in prepared_tasks:
             install_target = get_install_target_from_platform(itask.platform)
             auth_itasks.setdefault(install_target, [])
@@ -220,17 +219,17 @@ class TaskJobManager:
         # Submit task jobs for each platform
         done_tasks = bad_tasks
         for install_target, itasks in sorted(auth_itasks.items()):
+            ri_map = self.task_remote_mgr.remote_init_map
+
             # Re-fetch a copy of platform
             platform = itasks[0].platform
+            # Skip both remote init and remote file install for localhost
             if (install_target == 'localhost' or
                     not is_remote_host(get_host_from_platform(platform))):
                 LOG.debug(f"REMOTE INIT NOT REQUIRED for {install_target}")
-                self.task_remote_mgr.remote_init_map[install_target] = (
-                    REMOTE_FILE_INSTALL_DONE)
-                continue
-            # Not in progress
-            if install_target not in self.task_remote_mgr.remote_init_map.keys(
-            ) or self.task_remote_mgr.remote_init_map[install_target] is None:
+                ri_map[install_target] = (REMOTE_FILE_INSTALL_DONE)
+            # Remote init not in progress, start it
+            if install_target not in ri_map.keys():
                 self.task_remote_mgr.remote_init(
                     platform, curve_auth, client_pub_key_dir)
                 for itask in itasks:
@@ -241,19 +240,17 @@ class TaskJobManager:
                         self.REMOTE_INIT_MSG)
                 continue
             # Already done remote so move on to file install
-            elif (self.task_remote_mgr.remote_init_map[install_target]
-                  == REMOTE_INIT_DONE):
+            elif (ri_map[install_target] == REMOTE_INIT_DONE):
                 self.task_remote_mgr.file_install(platform)
-                continue
-            # Already doing file install
-            if (self.task_remote_mgr.remote_init_map[install_target]
-                    == REMOTE_FILE_INSTALL_IN_PROGRESS):
+            # # Already doing file install
+            elif (ri_map[install_target] == REMOTE_FILE_INSTALL_IN_PROGRESS):
                 for itask in itasks:
                     itask.set_summary_message(self.REMOTE_FILE_INSTALL_MSG)
                     self.job_pool.add_job_msg(
                         get_task_job_id(
                             itask.point, itask.tdef.name, itask.submit_num),
                         self.REMOTE_FILE_INSTALL_MSG)
+                continue
 
             # Ensure that localhost background/at jobs are recorded as running
             # on the host name of the current suite host, rather than just
@@ -286,13 +283,10 @@ class TaskJobManager:
                 })
                 itask.is_manual_submit = False
 
-            if (self.task_remote_mgr.remote_init_map[install_target]
-                    is REMOTE_INIT_FAILED or
-                    self.task_remote_mgr.remote_init_map[install_target]
-                    is REMOTE_FILE_INSTALL_FAILED):
-                init_error = (
-                    self.task_remote_mgr.remote_init_map[install_target])
-                del self.task_remote_mgr.remote_init_map[install_target]
+            if (ri_map[install_target] in [REMOTE_INIT_FAILED,
+                                           REMOTE_FILE_INSTALL_FAILED]):
+                init_error = (ri_map[install_target])
+                del ri_map[install_target]
                 # Remote has failed to initialise
                 # Set submit-failed for all affected tasks
                 for itask in itasks:
@@ -307,7 +301,7 @@ class TaskJobManager:
                     self.task_events_mgr.process_message(
                         itask, CRITICAL,
                         self.task_events_mgr.EVENT_SUBMIT_FAILED)
-                    return done_tasks
+                continue
             # Build the "cylc jobs-submit" command
             cmd = [self.JOBS_SUBMIT]
             if LOG.isEnabledFor(DEBUG):
