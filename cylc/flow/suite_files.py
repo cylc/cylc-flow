@@ -557,6 +557,10 @@ def register(reg=None, source=None, redirect=False):
 def clean(reg):
     """Remove stopped workflows on the local scheduler filesystem.
 
+    Deletes the run dir in ~/cylc-run and any symlink dirs. Note: if the
+    run dir has been manually deleted, it will not be possible to clean the
+    symlink dirs.
+
     Args:
         reg (str): workflow name.
     """
@@ -577,11 +581,10 @@ def clean(reg):
 
     # TODO: check task_jobs table in database to see what platforms are used
 
-    base_path = os.path.realpath(run_dir)
-    possible_symlinks = [(name, os.path.join(base_path, name)) for name in [
+    possible_symlinks = [(name, os.path.join(run_dir, name)) for name in [
         'log', 'share/cycle', 'share', 'work']]
     # Note: 'share/cycle' must come before 'share'
-    for name, path in possible_symlinks:
+    for name, path in [*possible_symlinks, ('', run_dir)]:
         if os.path.islink(path):
             # Ensure symlink is pointing to expected directory
             target = os.path.realpath(path)
@@ -589,15 +592,21 @@ def clean(reg):
                 raise WorkflowFilesError(
                     f'Invalid Cylc symlink directory {path} -> {target}\n'
                     f'Target is not a directory')
-            expected_end = os.path.join('cylc-run', reg, name)
+            expected_end = str(Path('cylc-run', reg, name))
             if not target.endswith(expected_end):
                 raise WorkflowFilesError(
                     f'Invalid Cylc symlink directory {path} -> {target}\n'
                     f'Expected target to end with "{expected_end}"')
-            target_reg_dir = target.rsplit(name, 1)[0]
-            if os.path.isdir(target_reg_dir):
-                remove_dir(target_reg_dir)
-    remove_dir(run_dir)
+            reg_depth = len(Path(reg).parts) - 1
+            target_reg_dir = target.rsplit(name, 1)[0] if name else target
+            if reg_depth > 0:
+                target_top_parent = Path(target_reg_dir).parents[reg_depth - 1]
+            else:
+                target_top_parent = target_reg_dir
+            if os.path.isdir(target_top_parent):
+                remove_dir(target_top_parent)
+    run_dir_top_parent = get_suite_run_dir(Path(reg).parts[0])
+    remove_dir(run_dir_top_parent)
 
 
 def remove_keys_on_server(keys):

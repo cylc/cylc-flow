@@ -19,6 +19,7 @@ import pytest
 from unittest import mock
 
 import os.path
+from pathlib import Path
 from cylc.flow import suite_files
 from cylc.flow.exceptions import SuiteServiceFileError, WorkflowFilesError
 
@@ -421,13 +422,14 @@ def test_clean(reg, props, monkeypatch, tmp_path):
     # --- Setup ---
     tmp_path.joinpath('cylc-run').mkdir()
     run_dir = tmp_path.joinpath('cylc-run', reg)
+    run_dir_top_parent = tmp_path.joinpath('cylc-run', Path(reg).parts[0])
     symlink_dirs = props.get('symlink dirs')
     bad_symlink = props.get('bad symlink')
     if not props.get('no dir') and (
             not symlink_dirs or 'run' not in symlink_dirs):
         run_dir.mkdir(parents=True)
 
-    dirs_to_check = [run_dir]
+    dirs_to_check = [run_dir_top_parent]
     if symlink_dirs:
         if 'run' in symlink_dirs:
             dst = tmp_path.joinpath(symlink_dirs['run'], 'cylc-run', reg)
@@ -458,7 +460,7 @@ def test_clean(reg, props, monkeypatch, tmp_path):
     monkeypatch.setattr('cylc.flow.suite_files.detect_old_contact_file',
                         mocked_detect_old_contact_file)
     monkeypatch.setattr('cylc.flow.suite_files.get_suite_run_dir',
-                        lambda x: run_dir)
+                        lambda x: tmp_path.joinpath('cylc-run', x))
 
     # --- The actual test ---
     expected_err = props.get('err')
