@@ -18,6 +18,9 @@
 # Test the cylc clean command
 
 . "$(dirname "$0")/test_header"
+if ! command -v 'tree' >'/dev/null'; then
+    skip_all '"tree" command not available'
+fi
 set_test_number 5
 
 create_test_global_config "" "
@@ -36,7 +39,7 @@ init_suite "${TEST_NAME_BASE}" << '__FLOW__'
 __FLOW__
 # -----------------------------------------------------------------------------
 TEST_NAME="run-dir-tree-pre-clean"
-tree "$SUITE_RUN_DIR" > "${TEST_NAME}.stdout"
+tree --charset=ascii "$SUITE_RUN_DIR" > "${TEST_NAME}.stdout"
 # Remove last line of output:
 sed -i '$d' "${TEST_NAME}.stdout"
 
@@ -49,7 +52,7 @@ ${HOME}/cylc-run/${SUITE_NAME}
 __TREE__
 
 TEST_NAME="test-dir-tree-pre-clean"
-tree "${TEST_DIR}/sym-"* > "${TEST_NAME}.stdout"
+tree --charset=ascii "${TEST_DIR}/sym-"* > "${TEST_NAME}.stdout"
 # Remove last line of output:
 sed -i '$d' "${TEST_NAME}.stdout"
 # Note: backticks need to be escaped in the heredoc
@@ -102,7 +105,7 @@ TEST_NAME="run-dir-not-exist-post-clean"
 exists_fail "$SUITE_RUN_DIR"
 
 TEST_NAME="test-dir-tree-post-clean"
-tree "${TEST_DIR}/sym-"* > "${TEST_NAME}.stdout"
+tree --charset=ascii "${TEST_DIR}/sym-"* > "${TEST_NAME}.stdout"
 # Remove last line of output:
 sed -i '$d' "${TEST_NAME}.stdout"
 
