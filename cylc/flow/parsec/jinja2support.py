@@ -183,13 +183,6 @@ def jinja2environment(dir_=None, template_vars=None):
     env.globals['raise'] = raise_helper
     env.globals['assert'] = assert_helper
 
-    # if template_vars is not None:
-    #     # I expect multiple things in this block
-    #     if 'ROSE_SUITE_VARIABLES' in template_vars:
-    #         env.globals['ROSE_SUITE_VARIABLES'] = template_vars[
-    #             'ROSE_SUITE_VARIABLES'
-    #         ]
-
     return env
 
 
