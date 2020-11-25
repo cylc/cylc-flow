@@ -140,6 +140,13 @@ elif [[ -d "${CYLC_HOME}"/conda-meta && \
         -f "${CYLC_HOME%/*/*}"/etc/profile.d/conda.sh ]]; then
     # A normal Conda environment
     . "${CYLC_HOME%/*/*}"/etc/profile.d/conda.sh
+    # Unset CONDA_SHLVL in case CONDA_* was inherited from the scheduler
+    # environment (this has no effect in a clean job submission shell). Doing
+    # this avoids an apparent bug where conda.py:reactivate() does not put the
+    # target environment in front of PATH. If bashrc has since prepended the
+    # wrapper location to PATH in the job environment this results in the
+    # wrapper invoking itself again (repeatedly... fork bomb).
+    unset CONDA_SHLVL
     conda activate "${CYLC_HOME##*/}" || exit 1
 elif [[ -x "${CYLC_HOME}/bin/cylc" ]]; then
     # A Cylc 7 installation
