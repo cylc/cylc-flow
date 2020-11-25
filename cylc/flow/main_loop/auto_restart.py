@@ -16,7 +16,7 @@
 """Automatically restart suites if they are running on bad servers.
 
 Loads in the global configuration to check if the server a suite is running
-on is listed in :cylc:conf:`global.cylc[suite servers]condemned hosts`.
+on is listed in :cylc:conf:`global.cylc[scheduler]condemned hosts`.
 
 This is useful if a host needs to be taken off-line e.g. for scheduled
 maintenance.
@@ -26,11 +26,11 @@ settings:
 
 .. cylc-scope:: global.cylc
 
-- :cylc:conf:`[suite servers]auto restart delay`
-- :cylc:conf:`[suite servers]condemned hosts`
-- :cylc:conf:`[suite servers]run hosts`
+- :cylc:conf:`[scheduler]auto restart delay`
+- :cylc:conf:`[scheduler]condemned hosts`
+- :cylc:conf:`[scheduler]run hosts`
 
-.. cylc-scope:: global.cylc[suite servers]
+.. cylc-scope:: global.cylc[scheduler]
 
 The auto stop-restart feature has two modes:
 
@@ -56,7 +56,7 @@ running on ``bar`` will stop immediately, making no attempt to restart.
 
 .. code-block:: cylc
 
-   [suite servers]
+   [scheduler]
        run hosts = pub
        condemned hosts = foo, bar!
 
@@ -107,7 +107,7 @@ async def auto_restart(scheduler, _):
         _set_auto_restart(
             scheduler,
             restart_delay=current_glbl_cfg.get(
-                ['suite servers', 'auto restart delay']
+                ['scheduler', 'auto restart delay']
             ),
             mode=mode
         )
@@ -117,7 +117,7 @@ def _should_auto_restart(scheduler, current_glbl_cfg):
     # check if suite host is condemned - if so auto restart
     if scheduler.stop_mode is None:
         for host in current_glbl_cfg.get(
-                ['suite servers', 'condemned hosts']
+                ['scheduler', 'condemned hosts']
         ):
             if host.endswith('!'):
                 # host ends in an `!` -> force shutdown mode

@@ -61,12 +61,12 @@ def select_suite_host(cached=True):
 
     return select_host(
         # list of suite hosts
-        global_config.get(['suite servers', 'run hosts']) or ['localhost'],
+        global_config.get(['scheduler', 'run hosts']) or ['localhost'],
         # rankings to apply
-        ranking_string=global_config.get(['suite servers', 'ranking']),
+        ranking_string=global_config.get(['scheduler', 'ranking']),
         # list of condemned hosts
         blacklist=global_config.get(
-            ['suite servers', 'condemned hosts']
+            ['scheduler', 'condemned hosts']
         ),
         blacklist_name='condemned host'
     )

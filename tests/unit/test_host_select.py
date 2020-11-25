@@ -138,7 +138,7 @@ def test_suite_host_select(mock_glbl_cfg):
     mock_glbl_cfg(
         'cylc.flow.host_select.glbl_cfg',
         f'''
-            [suite servers]
+            [scheduler]
                 run hosts = {localhost}
         '''
     )
@@ -150,7 +150,7 @@ def test_suite_host_select_default(mock_glbl_cfg):
     mock_glbl_cfg(
         'cylc.flow.host_select.glbl_cfg',
         '''
-            [suite servers]
+            [scheduler]
                 run hosts =
         '''
     )
@@ -169,7 +169,7 @@ def test_suite_host_select_condemned(mock_glbl_cfg):
     mock_glbl_cfg(
         'cylc.flow.host_select.glbl_cfg',
         f'''
-            [suite servers]
+            [scheduler]
                 run hosts = {localhost}
                 condemned hosts = {localhost_fqdn}
         '''
@@ -181,7 +181,7 @@ def test_suite_host_select_condemned(mock_glbl_cfg):
 
 
 def test_condemned_host_ambiguous(mock_glbl_cfg):
-    """Test the [suite servers]condemend host coercer
+    """Test the [scheduler]condemend host coercer
 
     Not actually host_select code but related functionality.
     """
@@ -189,7 +189,7 @@ def test_condemned_host_ambiguous(mock_glbl_cfg):
         mock_glbl_cfg(
             'cylc.flow.host_select.glbl_cfg',
             f'''
-                [suite servers]
+                [scheduler]
                     run hosts = {localhost}
                     condemned hosts = {localhost}
             '''

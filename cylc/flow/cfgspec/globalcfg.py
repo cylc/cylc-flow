@@ -101,6 +101,36 @@ with Conf('global.cylc', desc='''
              desc='''
             The number of old run directory trees to retain at start-up.
         ''')
+        Conf('run hosts', VDR.V_SPACELESS_STRING_LIST, desc='''
+            A list of allowed suite run hosts. One of these hosts will be
+            appointed for a suite to start up on if an explicit host is not
+            provided as an option to a ``run`` or ``restart`` command.
+        ''')
+        Conf('run ports', VDR.V_INTEGER_LIST, list(range(43001, 43101)),
+             desc='''
+            A list of allowed ports for Cylc to use to run suites.
+        ''')
+        Conf('condemned hosts', VDR.V_ABSOLUTE_HOST_LIST, desc='''
+            Hosts specified in ``condemned hosts`` will not be considered as
+            suite run hosts. If suites are already running on ``condemned
+            hosts`` they will be automatically shutdown and restarted (see
+            :ref:`auto-stop-restart`).
+        ''')
+        Conf('auto restart delay', VDR.V_INTERVAL, desc='''
+            Relates to Cylc's auto stop-restart mechanism (see
+            :ref:`auto-stop-restart`).  When a host is set to automatically
+            shutdown/restart it will first wait a random period of time between
+            zero and ``auto restart delay`` seconds before beginning the
+            process. This is to prevent large numbers of suites from restarting
+            simultaneously.
+        ''')
+        Conf('ranking', VDR.V_STRING, desc='''
+            A multiline string containing Python expressions to filter
+            and/or rank hosts. For example:
+            cpu_percent() < 70
+            cpu_percent()
+            to filter by cpu_percent() < 70 then to rank by cpu_percent.
+        ''')
 
         with Conf('events', desc='''
             You can define site defaults for each of the following options,
@@ -578,38 +608,6 @@ with Conf('global.cylc', desc='''
             Use this item to explicitly set the name or IP address of the suite
             host if you have to use the *hardwired* self-identification method.
         ''')
-
-    # suite
-    with Conf('suite servers', desc='''
-        Configure allowed suite hosts and ports for starting up (running or
-        restarting) suites. Additionally configure host selection settings
-        specifying how to determine the most suitable run host at any given
-        time from those configured.
-    '''):
-        Conf('run hosts', VDR.V_SPACELESS_STRING_LIST, desc='''
-            A list of allowed suite run hosts. One of these hosts will be
-            appointed for a suite to start up on if an explicit host is not
-            provided as an option to a ``run`` or ``restart`` command.
-        ''')
-        Conf('run ports', VDR.V_INTEGER_LIST, list(range(43001, 43101)),
-             desc='''
-            A list of allowed ports for Cylc to use to run suites.
-        ''')
-        Conf('condemned hosts', VDR.V_ABSOLUTE_HOST_LIST, desc='''
-            Hosts specified in ``condemned hosts`` will not be considered as
-            suite run hosts. If suites are already running on ``condemned
-            hosts`` they will be automatically shutdown and restarted (see
-            :ref:`auto-stop-restart`).
-        ''')
-        Conf('auto restart delay', VDR.V_INTERVAL, desc='''
-            Relates to Cylc's auto stop-restart mechanism (see
-            :ref:`auto-stop-restart`).  When a host is set to automatically
-            shutdown/restart it will first wait a random period of time between
-            zero and ``auto restart delay`` seconds before beginning the
-            process. This is to prevent large numbers of suites from restarting
-            simultaneously.
-        ''')
-        Conf('ranking', VDR.V_STRING)
 
 
 def upg(cfg, descr):

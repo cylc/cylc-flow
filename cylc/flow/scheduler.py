@@ -528,7 +528,7 @@ class Scheduler:
 
     async def start_servers(self):
         """Start the TCP servers."""
-        port_range = glbl_cfg().get(['suite servers', 'run ports'])
+        port_range = glbl_cfg().get(['scheduler', 'run ports'])
         self.server.start(port_range[0], port_range[-1])
         self.publisher.start(port_range[0], port_range[-1])
         # wait for threads to setup socket ports before continuing

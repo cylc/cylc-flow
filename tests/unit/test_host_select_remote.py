@@ -130,11 +130,11 @@ def test_remote_exclude(monkeypatch):
 
 
 def test_remote_suite_host_select(mock_glbl_cfg):
-    """test [suite servers]run hosts"""
+    """test [scheduler]run hosts"""
     mock_glbl_cfg(
         'cylc.flow.host_select.glbl_cfg',
         f'''
-            [suite servers]
+            [scheduler]
                 run hosts = {remote_platform}
         '''
     )
@@ -142,11 +142,11 @@ def test_remote_suite_host_select(mock_glbl_cfg):
 
 
 def test_remote_suite_host_condemned(mock_glbl_cfg):
-    """test [suite servers]condemned hosts"""
+    """test [scheduler]condemned hosts"""
     mock_glbl_cfg(
         'cylc.flow.host_select.glbl_cfg',
         f'''
-            [suite servers]
+            [scheduler]
                 run hosts = {remote_platform}, {local_host}
                 condemned hosts = {remote_platform}
         '''
@@ -156,11 +156,11 @@ def test_remote_suite_host_condemned(mock_glbl_cfg):
 
 
 def test_remote_suite_host_rankings(mock_glbl_cfg):
-    """test [suite servers]rankings"""
+    """test [scheduler]rankings"""
     mock_glbl_cfg(
         'cylc.flow.host_select.glbl_cfg',
         f'''
-            [suite servers]
+            [scheduler]
                 run hosts = {remote_platform}
                 ranking = """
                     # if this test fails due to race conditions
