@@ -1328,6 +1328,12 @@ def upg(cfg, descr):
         ['cylc', 'task event mail interval'],
         ['cylc', 'mail', 'task event batch interval']
     )
+    u.deprecate('8.0.0', ['cylc', 'parameters'], ['task parameters'])
+    u.deprecate(
+        '8.0.0',
+        ['cylc', 'parameter templates'],
+        ['task parameters', 'templates']
+    )
     # Whole workflow task mail settings
     for mail_setting in ['to', 'from', 'footer']:
         u.deprecate(
