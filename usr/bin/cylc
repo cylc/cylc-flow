@@ -53,8 +53,8 @@
 #     It must be set in .bashrc so that task jobs see it (otherwise they will
 #     select CYLC_VERSION as set by the parent scheduler)
 #
-# INSTALLING CYLC RELEASES WITH CONDA
-#------------------------------------
+# INSTALLING cylc 8+ RELEASES WITH CONDA
+#---------------------------------------
 # Create environments named cylc-$CYLC_VERSION under a root location such as /opt:
 #   $ conda create -p /opt/cylc-8.2.0 cylc=8.2.0
 # and create a default version symlink "cylc" to the latest version:
@@ -68,8 +68,8 @@
 # if the code is not the true release version. It may be better to use Python
 # venvs and CYLC_HOME for cylc-flow development and testing.
 #
-# INSTALLING CYLC-FLOW WORKING COPIES WITH PIP FOR DEVELOPMENT AND TESTING
-#-------------------------------------------------------------------------
+# INSTALLING cylc-flow 8+ WORKING COPIES WITH PIP FOR DEVELOPMENT AND TESTING
+#----------------------------------------------------------------------------
 # Create Python virtual environments in-place in your cylc-flow git
 # clones and select them using CYLC_HOME in your .bashrc.
 #
@@ -91,7 +91,16 @@
 #   $ python -m pip install cylc-flow==8.0a2
 # But there is no need to do this if you also have full system releases (as
 # opposed to cylc-flow only) installed by Conda.
- 
+#
+# INSTALLING LEGACY cylc 7 RELEASE TARBALLS BY HAND
+#--------------------------------------------------
+# The Cylc project was split into multiple repositories when Cylc 8 development
+# started. The scheduler component is now called "cylc-flow" instead of "cylc".
+# To work with this wrapper unpacked Cylc 7 release tarballs must be renamed
+# from (e.g.) "cylc-flow-7.9.1" to "cylc-7.9.1". Then follow version-specific
+# installation instructions. Running "make" should create a file called VERSION
+# that contains just the version string (e.g.) "7.9.1".
+#
 ##############################!!! EDIT ME !!!##################################
 # Centrally installed Cylc releases:
 CYLC_HOME_ROOT="${CYLC_HOME_ROOT:-/opt}"
