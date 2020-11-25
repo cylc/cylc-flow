@@ -40,7 +40,7 @@ init_suite "${TEST_NAME_BASE}" <<< '
 
 create_test_global_config '' "
 ${BASE_GLOBAL_CONFIG}
-[suite servers]
+[scheduler]
     run hosts = localhost
 "
 
@@ -49,7 +49,7 @@ poll_suite_running
 
 create_test_global_config '' "
 ${BASE_GLOBAL_CONFIG}
-[suite servers]
+[scheduler]
     run hosts = localhost
     condemned hosts = $(localhost_fqdn)!
 "
