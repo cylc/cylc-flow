@@ -117,7 +117,11 @@ CYLC_HOME_ROOT="${CYLC_HOME_ROOT:-/opt}"
 ###############################################################################
 
 # If CYLC_HOME is not defined try CYLC_HOME_ROOT/cylc-CYLC_VERSION
-if [[ -z "${CYLC_HOME}" && -n ${CYLC_VERSION} ]]; then
+if [[ -z "${CYLC_HOME}" ]]; then
+    if [[ -z ${CYLC_VERSION} ]]; then
+        echo 1>&2 "ERROR: CYLC_HOME or CYLC_VERSION must be defined"
+        exit 1
+    fi     
     # Look for matching version in root locations
     for ROOT in "${CYLC_HOME_ROOT}" "${CYLC_HOME_ROOT_ALT}"; do
         if [[ -d "${ROOT}/cylc-${CYLC_VERSION}" ]]; then
@@ -127,7 +131,11 @@ if [[ -z "${CYLC_HOME}" && -n ${CYLC_VERSION} ]]; then
     done
 fi
 if [[ -z "${CYLC_HOME}" ]]; then
-    echo 1>&2 "ERROR: CYLC_HOME not defined or found in CYLC_HOME_ROOT[_ALT]"
+    MSG="ERROR: cylc-$CYLC_VERSION not found in $CYLC_HOME_ROOT"
+    if [[ -n "${CYLC_HOME_ROOT_ALT}" ]]; then
+        MSG="${MSG} or ${CYLC_HOME_ROOT_ALT}"
+    fi
+    echo 1>&2 "$MSG"
     exit 1
 fi
 
