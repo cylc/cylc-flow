@@ -4,7 +4,6 @@
     [[events]]
         abort on inactivity = True
         inactivity = P1M
-    [[reference test]]
         expected task failures = t1.19700101T0000Z
 [scheduling]
     initial cycle point=1970

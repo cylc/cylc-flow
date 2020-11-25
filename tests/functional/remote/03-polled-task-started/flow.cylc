@@ -1,6 +1,6 @@
 #!Jinja2
 [scheduler]
-    [[reference test]]
+    [[events]]
         expected task failures = janeway.1
 [scheduling]
     cycling mode = integer

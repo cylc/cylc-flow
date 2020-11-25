@@ -1,7 +1,7 @@
 #!Jinja2
 
 [scheduler]
-    [[reference test]]
+    [[events]]
         expected task failures = foo.1
 
 [scheduling]
@@ -10,7 +10,7 @@
             foo:submit => kill_foo_submit => poll_foo
             foo:submit-fail => stop
         """
-            
+
 [runtime]
     [[foo]]
         platform = {{ environ['CYLC_TEST_PLATFORM'] }}

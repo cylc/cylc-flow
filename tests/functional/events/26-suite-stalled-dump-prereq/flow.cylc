@@ -2,7 +2,6 @@
     UTC mode = True # Ignore DST
     [[events]]
         abort on stalled = true
-    [[reference test]]
         expected task failures = bar.20100101T0000Z
 [scheduling]
     initial cycle point = 20100101T0000Z

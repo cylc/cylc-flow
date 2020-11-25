@@ -1,7 +1,7 @@
 [scheduler]
-   UTC mode = True
-   [[reference test]]
-       expected task failures = bar.20100809T0000Z
+    UTC mode = True
+    [[events]]
+        expected task failures = bar.20100809T0000Z
 
 [scheduling]
     initial cycle point = 20100808T00
