@@ -90,9 +90,8 @@ SuiteConfigError: circular edges detected:  foo.8 => bar.8  bar.8 => baz.8  baz.
 __ERR__
 
 cat >'flow.cylc' <<'__FLOW_CONFIG__'
-[scheduler]
-    [[parameters]]
-        foo = 1..5
+[task parameters]
+    foo = 1..5
 [scheduling]
     [[graph]]
         R1 = """

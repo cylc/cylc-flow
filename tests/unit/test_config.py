@@ -33,10 +33,9 @@ def get_test_inheritance_quotes():
     return [
         # first case, second family name surrounded by double quotes
         b'''
-[scheduler]
-    [[parameters]]
-        major = 1..5
-        minor = 10..20
+[task parameters]
+    major = 1..5
+    minor = 10..20
 [scheduling]
     [[graph]]
         R1 = """hello => MAINFAM<major, minor>
@@ -52,10 +51,9 @@ def get_test_inheritance_quotes():
         ''',
         # second case, second family surrounded by single quotes
         b'''
-[scheduler]
-    [[parameters]]
-        major = 1..5
-        minor = 10..20
+[task parameters]
+    major = 1..5
+    minor = 10..20
 [scheduling]
     [[graph]]
         R1 = """hello => MAINFAM<major, minor>
@@ -71,10 +69,9 @@ def get_test_inheritance_quotes():
         ''',
         # third case, second family name without quotes
         b'''
-[scheduler]
-    [[parameters]]
-        major = 1..5
-        minor = 10..20
+[task parameters]
+    major = 1..5
+    minor = 10..20
 [scheduling]
     [[graph]]
         R1 = """hello => MAINFAM<major, minor>

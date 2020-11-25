@@ -203,46 +203,11 @@ with Conf(
             with Conf('<plugin name>'):
                 Conf('interval', VDR.V_INTERVAL)
 
-        with Conf('parameters', desc='''
-            Define parameter values here for use in expanding
-            :ref:`parameterized tasks <User Guide Param>`.
-        '''):
-            Conf('<parameter>', VDR.V_PARAMETER_LIST, desc='''
-                Examples:
-                - ``run = control, test1, test2``
-                - ``mem = 1..5``  (equivalent to ``1, 2, 3, 4, 5``).
-                - ``mem = -11..-7..2``  (equivalent to ``-11, -9, -7``).
-            ''')
+        with Conf('simulation'):
+            Conf('disable suite event handlers', VDR.V_BOOLEAN, True)
 
-        with Conf('parameter templates', desc='''
-            Parameterized task names are expanded, for each parameter value,
-            using string templates.
-
-            You can assign templates to parameter names here to override the
-            default templates.
-        '''):
-            Conf('<parameter>', VDR.V_STRING, desc='''
-                Default for integer parameters:
-                   ``_p%(p)0Nd``
-                   where ``N`` is the number of digits of the maximum integer
-                   value, e.g. ``foo<run>`` becomes ``foo_run3`` for ``run``
-                   value ``3``.
-                Default for non-integer parameters:
-                   ``_%(p)s`` e.g. ``foo<run>`` becomes ``foo_top`` for
-                   ``run`` value ``top``.
-
-                Example:
-
-                ``run = -R%(run)s`` e.g. ``foo<run>`` becomes ``foo-R3`` for
-                ``run`` value ``3``.
-
-                .. note::
-
-                   The values of a parameter named ``p`` are substituted for
-                   ``%(p)s``.  In ``_run%(run)s`` the first "run" is a string
-                   literal, and the second gets substituted with each value of
-                   the parameter.
-            ''')
+        with Conf('environment'):
+            Conf('<variable>', VDR.V_STRING)
 
         with Conf('events'):
             # Note: default of None for V_STRING_LIST is used to differentiate
@@ -303,6 +268,46 @@ with Conf(
                 into a single email.
 
                 Useful to prevent being overwhelmed by emails.
+            ''')
+
+    with Conf('task parameters', desc='''
+        Define parameter values here for use in expanding
+        :ref:`parameterized tasks <User Guide Param>`.
+    '''):
+        Conf('<parameter>', VDR.V_PARAMETER_LIST, desc='''
+            Examples:
+            - ``run = control, test1, test2``
+            - ``mem = 1..5``  (equivalent to ``1, 2, 3, 4, 5``).
+            - ``mem = -11..-7..2``  (equivalent to ``-11, -9, -7``).
+        ''')
+        with Conf('templates', desc='''
+            Parameterized task names are expanded, for each parameter value,
+            using string templates.
+
+            You can assign templates to parameter names here to override the
+            default templates.
+        '''):
+            Conf('<parameter>', VDR.V_STRING, desc='''
+                Default for integer parameters:
+                    ``_p%(p)0Nd``
+                    where ``N`` is the number of digits of the maximum integer
+                    value, e.g. ``foo<run>`` becomes ``foo_run3`` for ``run``
+                    value ``3``.
+                Default for non-integer parameters:
+                    ``_%(p)s`` e.g. ``foo<run>`` becomes ``foo_top`` for
+                    ``run`` value ``top``.
+
+                Example:
+
+                ``run = -R%(run)s`` e.g. ``foo<run>`` becomes ``foo-R3`` for
+                ``run`` value ``3``.
+
+                .. note::
+
+                    The values of a parameter named ``p`` are substituted for
+                    ``%(p)s``.  In ``_run%(run)s`` the first "run" is a string
+                    literal, and the second gets substituted with each value of
+                    the parameter.
             ''')
 
     with Conf('scheduling', desc='''

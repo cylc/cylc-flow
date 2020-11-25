@@ -271,12 +271,12 @@ class SuiteConfig:
             self.cfg['runtime']['root'] = OrderedDictWithDefaults()
 
         try:
-            parameter_values = self.cfg['scheduler']['parameters']
+            parameter_values = self.cfg['task parameters']
         except KeyError:
             # (Suite config defaults not put in yet.)
             parameter_values = {}
         try:
-            parameter_templates = self.cfg['scheduler']['parameter templates']
+            parameter_templates = self.cfg['task parameters']['templates']
         except KeyError:
             parameter_templates = {}
         # parameter values and templates are normally needed together.

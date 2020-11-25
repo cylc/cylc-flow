@@ -37,9 +37,8 @@ set_test_number 10
 # Restart
 # Suite stops normally at t8.1
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
-[scheduler]
-    [[parameters]]
-        i = 1..8
+[task parameters]
+    i = 1..8
     [[events]]
         abort on stalled = True
         abort on inactivity = True
