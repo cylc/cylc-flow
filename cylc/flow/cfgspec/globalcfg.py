@@ -102,11 +102,11 @@ with Conf('global.cylc', desc='''
             The number of old run directory trees to retain at start-up.
         ''')
         with Conf('run hosts', desc='''
-        Configure allowed suite hosts and ports for starting up (running or
-        restarting) suites. Additionally configure host selection settings
-        specifying how to determine the most suitable run host at any given
-        time from those configured.
-    '''):
+            Configure allowed suite hosts and ports for starting up (running or
+            restarting) suites. Additionally configure host selection settings
+            specifying how to determine the most suitable run host at any given
+            time from those configured.
+        '''):
             Conf('available', VDR.V_SPACELESS_STRING_LIST, desc='''
                 A list of allowed suite run hosts. One of these hosts will be
                 appointed for a suite to start up on if an explicit host is not
