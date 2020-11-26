@@ -112,10 +112,9 @@ with Conf('global.cylc', desc='''
                 appointed for a suite to start up on if an explicit host is not
                 provided as an option to a ``run`` or ``restart`` command.
             ''')
-            Conf(
-                'ports', VDR.V_INTEGER_LIST, list(range(43001, 43101)),
-                desc='''
-                    A list of allowed ports for Cylc to use to run suites.
+            Conf('ports', VDR.V_INTEGER_LIST, list(range(43001, 43101)),
+                 desc='''
+                A list of allowed ports for Cylc to use to run suites.
             ''')
             Conf('condemned', VDR.V_ABSOLUTE_HOST_LIST, desc='''
                 Hosts specified in ``condemned hosts`` will not be considered
