@@ -53,9 +53,10 @@ TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME_BASE}" <<< '
 MAX_RESTART_DELAY=30
 create_test_global_config '' "
 ${BASE_GLOBAL_CONFIG}
-[suite servers]
-    run hosts = localhost
-    auto restart delay = PT${MAX_RESTART_DELAY}S
+[scheduler]
+    [[run hosts]]
+        available = localhost
+        auto restart delay = PT${MAX_RESTART_DELAY}S
 "
 
 # Run suite.
@@ -65,10 +66,11 @@ poll_suite_running
 # Condemn host - trigger stop-restart.
 create_test_global_config '' "
 ${BASE_GLOBAL_CONFIG}
-[suite servers]
-    run hosts = ${CYLC_TEST_HOST}
-    condemned hosts = $(hostname)
-    auto restart delay = PT20S
+[scheduler]
+    [[run hosts]]
+        available = ${CYLC_TEST_HOST}
+        condemned = $(hostname)
+        auto restart delay = PT20S
 "
 
 # Check stop-restart working.

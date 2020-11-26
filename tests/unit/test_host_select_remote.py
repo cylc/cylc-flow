@@ -130,25 +130,27 @@ def test_remote_exclude(monkeypatch):
 
 
 def test_remote_suite_host_select(mock_glbl_cfg):
-    """test [scheduler]run hosts"""
+    """test [scheduler][run hosts]available"""
     mock_glbl_cfg(
         'cylc.flow.host_select.glbl_cfg',
         f'''
             [scheduler]
-                run hosts = {remote_platform}
+                [[run hosts]]
+                    available = {remote_platform}
         '''
     )
     assert select_suite_host() == (remote_platform, remote_platform_fqdn)
 
 
 def test_remote_suite_host_condemned(mock_glbl_cfg):
-    """test [scheduler]condemned hosts"""
+    """test [scheduler][run hosts]condemned hosts"""
     mock_glbl_cfg(
         'cylc.flow.host_select.glbl_cfg',
         f'''
             [scheduler]
-                run hosts = {remote_platform}, {local_host}
-                condemned hosts = {remote_platform}
+                [[run hosts]]
+                    available = {remote_platform}, {local_host}
+                    condemned = {remote_platform}
         '''
     )
     for _ in range(10):
@@ -156,19 +158,20 @@ def test_remote_suite_host_condemned(mock_glbl_cfg):
 
 
 def test_remote_suite_host_rankings(mock_glbl_cfg):
-    """test [scheduler]rankings"""
+    """test [scheduler][run hosts]rankings"""
     mock_glbl_cfg(
         'cylc.flow.host_select.glbl_cfg',
         f'''
             [scheduler]
-                run hosts = {remote_platform}
-                ranking = """
-                    # if this test fails due to race conditions
-                    # then you are very lucky
-                    virtual_memory().available > 123456789123456789
-                    cpu_count() > 512
-                    disk_usage('/').free > 123456789123456789
-                """
+                [[run hosts]]
+                    available = {remote_platform}
+                    ranking = """
+                        # if this test fails due to race conditions
+                        # then you are very lucky
+                        virtual_memory().available > 123456789123456789
+                        cpu_count() > 512
+                        disk_usage('/').free > 123456789123456789
+                    """
         '''
     )
     with pytest.raises(HostSelectException) as excinfo:

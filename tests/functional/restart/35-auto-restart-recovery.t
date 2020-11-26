@@ -31,8 +31,9 @@ BASE_GLOBAL_CONFIG="
         abort on timeout = True
         inactivity = PT2M
         timeout = PT2M
-[suite servers]
-    run hosts = localhost, ${CYLC_TEST_HOST}"
+[scheduler]
+    [[run hosts]]
+        available = localhost, ${CYLC_TEST_HOST}"
 
 TEST_NAME="${TEST_NAME_BASE}"
 TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME}" <<< '
@@ -51,8 +52,9 @@ rm "${SUITE_RUN_DIR}/flow.cylc"
 # condemn localhost
 create_test_global_config '' "
 ${BASE_GLOBAL_CONFIG}
-[suite servers]
-    condemned hosts = $(hostname)
+[scheduler]
+    [[run hosts]]
+        condemned = $(hostname)
 "
 
 FILE=$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)

@@ -24,7 +24,7 @@ from cylc.flow.network.publisher import WorkflowPublisher, serialize_data
 
 @pytest.fixture(scope='session')
 def port_range():
-    ports = glbl_cfg().get(['scheduler', 'run ports'])
+    ports = glbl_cfg().get(['scheduler', 'run hosts', 'ports'])
     return min(ports), max(ports)
 
 

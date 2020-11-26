@@ -117,7 +117,7 @@ def _should_auto_restart(scheduler, current_glbl_cfg):
     # check if suite host is condemned - if so auto restart
     if scheduler.stop_mode is None:
         for host in current_glbl_cfg.get(
-                ['scheduler', 'condemned hosts']
+                ['scheduler', 'run hosts', 'condemned']
         ):
             if host.endswith('!'):
                 # host ends in an `!` -> force shutdown mode

@@ -139,7 +139,8 @@ def test_suite_host_select(mock_glbl_cfg):
         'cylc.flow.host_select.glbl_cfg',
         f'''
             [scheduler]
-                run hosts = {localhost}
+                [[run hosts]]
+                    available= {localhost}
         '''
     )
     assert select_suite_host() == (localhost, localhost_fqdn)
@@ -151,7 +152,8 @@ def test_suite_host_select_default(mock_glbl_cfg):
         'cylc.flow.host_select.glbl_cfg',
         '''
             [scheduler]
-                run hosts =
+                [[run hosts]]
+                    available =
         '''
     )
     hostname, host_fqdn = select_suite_host()
@@ -170,8 +172,9 @@ def test_suite_host_select_condemned(mock_glbl_cfg):
         'cylc.flow.host_select.glbl_cfg',
         f'''
             [scheduler]
-                run hosts = {localhost}
-                condemned hosts = {localhost_fqdn}
+                [[run hosts]]
+                    available = {localhost}
+                    condemned = {localhost_fqdn}
         '''
     )
     with pytest.raises(HostSelectException) as excinfo:
@@ -190,8 +193,9 @@ def test_condemned_host_ambiguous(mock_glbl_cfg):
             'cylc.flow.host_select.glbl_cfg',
             f'''
                 [scheduler]
-                    run hosts = {localhost}
-                    condemned hosts = {localhost}
+                    [[run hosts]]
+                        available = {localhost}
+                        condemned = {localhost}
             '''
         )
     assert 'ambiguous host' in excinfo.value.msg
