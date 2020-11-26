@@ -121,7 +121,7 @@ CYLC_HOME_ROOT="${CYLC_HOME_ROOT:-/opt}"
 
 # If CYLC_HOME is not defined try CYLC_HOME_ROOT/cylc-CYLC_VERSION
 if [[ -z "${CYLC_HOME}" ]]; then
-    if [[ -z ${CYLC_VERSION} ]]; then
+    if [[ -z "${CYLC_VERSION}" ]]; then
         echo 1>&2 "ERROR: CYLC_HOME or CYLC_VERSION must be defined"
         exit 1
     fi     
@@ -142,30 +142,25 @@ if [[ -z "${CYLC_HOME}" ]]; then
     exit 1
 fi
 
-# Find and activate the virtual env, or find the Cylc 7 bin directory.
-BASENAME_PREFIX=""
+# Note "conda activate" fails to prepend the environment bin dir to PATH if
+# local jobs inherit the scheduler environment and bashrc has prepended other
+# paths here. We don't actually rely on PATH to find "cylc" below, but just in
+# case, this makes "conda activate" do the right thing:
+unset CONDA_SHLVL
+
+# If selecting a virtual environment, activate it
 if [[ -f "${CYLC_HOME}/bin/activate" ]]; then
     # A Python venv or Conda pack installation
     . "${CYLC_HOME}/bin/activate" || exit 1
-elif [[ -d "${CYLC_HOME}"/conda-meta && \
-        -f "${CYLC_HOME%/*/*}"/etc/profile.d/conda.sh ]]; then
+elif [[ -d "${CYLC_HOME}/conda-meta" && \
+        -f "${CYLC_HOME%/*/*}/etc/profile.d/conda.sh" ]]; then
     # A normal Conda environment
-    . "${CYLC_HOME%/*/*}"/etc/profile.d/conda.sh
-    # Unset CONDA_SHLVL in case CONDA_* was inherited from the scheduler
-    # environment (this has no effect in a clean job submission shell). Doing
-    # this avoids an apparent bug where conda.py:reactivate() does not put the
-    # target environment in front of PATH. If bashrc has since prepended the
-    # wrapper location to PATH in the job environment this results in the
-    # wrapper invoking itself again (repeatedly... fork bomb).
-    unset CONDA_SHLVL
+    . "${CYLC_HOME%/*/*}/etc/profile.d/conda.sh"
     conda activate "${CYLC_HOME##*/}" || exit 1
-elif [[ -x "${CYLC_HOME}/bin/cylc" ]]; then
-    # A Cylc 7 installation
-    BASENAME_PREFIX="${CYLC_HOME}"/bin/
-else
+fi
+if [[ ! -x "${CYLC_HOME}/bin/cylc" ]]; then
     echo 1>&2 "ERROR: cylc not found in ${CYLC_HOME}"
     exit 1
 fi
-
-# Execute the command via the selected Cylc installation.
-exec "${BASENAME_PREFIX}${0##*/}" "$@"
+# Execute the command in the selected installation.
+exec "${CYLC_HOME}/bin/${0##*/}" "$@"
