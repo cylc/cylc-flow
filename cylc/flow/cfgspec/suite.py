@@ -801,6 +801,11 @@ with Conf(
 
                    ``$CYLC_TASK_CYCLE_POINT/shared/``
             ''')
+            Conf('execution polling intervals', VDR.V_INTERVAL_LIST, None)
+            Conf('execution retry delays', VDR.V_INTERVAL_LIST, None)
+            Conf('execution time limit', VDR.V_INTERVAL)
+            Conf('submission polling intervals', VDR.V_INTERVAL_LIST, None)
+            Conf('submission retry delays', VDR.V_INTERVAL_LIST, None)
 
             with Conf('meta', desc=r'''
                 Section containing metadata items for this task or family
@@ -947,14 +952,6 @@ with Conf(
             '''):
                 Conf('batch system', VDR.V_STRING)
                 Conf('batch submit command template', VDR.V_STRING)
-                # TODO All the remaining items to be moved to top level of
-                # TASK when platforms work is completed.
-                Conf('execution polling intervals', VDR.V_INTERVAL_LIST, None)
-                Conf('execution retry delays', VDR.V_INTERVAL_LIST, None)
-                Conf('execution time limit', VDR.V_INTERVAL)
-                Conf('submission polling intervals', VDR.V_INTERVAL_LIST,
-                     None)
-                Conf('submission retry delays', VDR.V_INTERVAL_LIST, None)
 
             with Conf('remote'):
                 Conf('host', VDR.V_STRING)
@@ -1364,22 +1361,20 @@ def upg(cfg, descr):
         ['scheduling', 'hold after point'],
         ['scheduling', 'hold after cycle point']
     )
-    # TODO uncomment these deprecations when ready - see todo in
-    # [runtime][__MANY__] section.
-    # for job_setting in [
-    #     'execution polling intervals',
-    #     'execution retry delays',
-    #     'execution time limit',
-    #     'submission polling intervals',
-    #     'submission retry delays'
-    # ]:
-    #     u.deprecate(
-    #         '8.0.0',
-    #         ['runtime', '__MANY__', 'job', job_setting],
-    #         ['runtime', '__MANY__', job_setting]
-    #     )
-    # TODO - there are some simple changes to the config (items from [remote]
-    # and [job] moved up 1 level for example) which should be upgraded here.
+
+    for job_setting in [
+        'execution polling intervals',
+        'execution retry delays',
+        'execution time limit',
+        'submission polling intervals',
+        'submission retry delays'
+    ]:
+        u.deprecate(
+            '8.0.0',
+            ['runtime', '__MANY__', 'job', job_setting],
+            ['runtime', '__MANY__', job_setting]
+        )
+
     u.deprecate('8.0.0', ['cylc'], ['scheduler'])
     u.upgrade()
 
