@@ -119,22 +119,23 @@ CYLC_HOME_ROOT="${CYLC_HOME_ROOT:-/opt}"
 # CYLC_HOME_ROOT_ALT=${HOME}/miniconda3/envs
 ###############################################################################
 
-# If CYLC_HOME is not defined try CYLC_HOME_ROOT/cylc-CYLC_VERSION
 if [[ -z "${CYLC_HOME}" ]]; then
-    if [[ -z "${CYLC_VERSION}" ]]; then
-        echo 1>&2 "ERROR: CYLC_HOME or CYLC_VERSION must be defined"
-        exit 1
-    fi     
-    # Look for matching version in root locations
+    # Look for specified or default version under the root locations
+    if [[ -n "${CYLC_VERSION}" ]]; then
+        CYLC_NAME="cylc-$CYLC_VERSION"
+    else
+        # Default version symlink
+        CYLC_NAME="cylc"
+    fi
     for ROOT in "${CYLC_HOME_ROOT}" "${CYLC_HOME_ROOT_ALT}"; do
-        if [[ -d "${ROOT}/cylc-${CYLC_VERSION}" ]]; then
-            CYLC_HOME="${ROOT}/cylc-${CYLC_VERSION}"
+        if [[ -d "${ROOT}/${CYLC_NAME}" ]]; then
+            CYLC_HOME="${ROOT}/${CYLC_NAME}"
             break
         fi
     done
 fi
 if [[ -z "${CYLC_HOME}" ]]; then
-    MSG="ERROR: cylc-$CYLC_VERSION not found in $CYLC_HOME_ROOT"
+    MSG="ERROR: $CYLC_NAME not found in $CYLC_HOME_ROOT"
     if [[ -n "${CYLC_HOME_ROOT_ALT}" ]]; then
         MSG="${MSG} or ${CYLC_HOME_ROOT_ALT}"
     fi
