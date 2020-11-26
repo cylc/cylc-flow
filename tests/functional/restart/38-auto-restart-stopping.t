@@ -32,8 +32,8 @@ BASE_GLOBAL_CONFIG="
         abort on timeout = True
         inactivity = PT1M
         timeout = PT1M
-[suite servers]
-    run hosts = localhost, ${CYLC_TEST_HOST}"
+    [[run hosts]]
+        available = localhost, ${CYLC_TEST_HOST}"
 
 TEST_NAME="${TEST_NAME_BASE}"
 
@@ -57,8 +57,9 @@ cylc suite-state "${SUITE_NAME}" --task='foo' --status='running' --point=1 \
 # condemn localhost
 create_test_global_config '' "
 ${BASE_GLOBAL_CONFIG}
-[suite servers]
-    condemned hosts = $(hostname)
+[scheduler]
+    [[run hosts]]
+        condemned = $(hostname)
 "
 
 # wait for suite to die of natural causes

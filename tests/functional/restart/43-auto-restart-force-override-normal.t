@@ -46,8 +46,9 @@ TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME_BASE}" <<< '
 
 create_test_global_config '' "
 ${BASE_GLOBAL_CONFIG}
-[suite servers]
-    run hosts = ${CYLC_TEST_HOST_1}
+[scheduler]
+    [[run hosts]]
+        available = ${CYLC_TEST_HOST_1}
 "
 
 set_test_number 7
@@ -61,10 +62,11 @@ FILE=$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)
 # condemn the host, the suite will schedule restart in PT60S
 create_test_global_config '' "
 ${BASE_GLOBAL_CONFIG}
-[suite servers]
-    run hosts = ${CYLC_TEST_HOST_1}, ${CYLC_TEST_HOST_2}
-    condemned hosts = ${CYLC_TEST_HOST_1}
+[scheduler]
     auto restart delay = -PT60S  # results in +PT60S delay
+    [[run hosts]]
+        available = ${CYLC_TEST_HOST_1}, ${CYLC_TEST_HOST_2}
+        condemned = ${CYLC_TEST_HOST_1}
 "
 log_scan "${TEST_NAME_BASE}-stop" "${FILE}" 40 1 \
     'The Cylc suite host will soon become un-available' \
@@ -73,8 +75,9 @@ log_scan "${TEST_NAME_BASE}-stop" "${FILE}" 40 1 \
 # condemn the host in "Force Mode", this should cancel the scheduled restart
 create_test_global_config '' "
 ${BASE_GLOBAL_CONFIG}
-[suite servers]
-    condemned hosts = ${CYLC_TEST_HOST_1}!
+[scheduler]
+    [[run hosts]]
+        condemned hosts = ${CYLC_TEST_HOST_1}!
 "
 log_scan "${TEST_NAME_BASE}-stop" "${FILE}" 40 1 \
     'This suite will be shutdown as the suite host is' \

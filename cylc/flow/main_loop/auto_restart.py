@@ -16,7 +16,7 @@
 """Automatically restart suites if they are running on bad servers.
 
 Loads in the global configuration to check if the server a suite is running
-on is listed in :cylc:conf:`global.cylc[suite servers]condemned hosts`.
+on is listed in :cylc:conf:`global.cylc[scheduler]condemned hosts`.
 
 This is useful if a host needs to be taken off-line e.g. for scheduled
 maintenance.
@@ -26,11 +26,11 @@ settings:
 
 .. cylc-scope:: global.cylc
 
-- :cylc:conf:`[suite servers]auto restart delay`
-- :cylc:conf:`[suite servers]condemned hosts`
-- :cylc:conf:`[suite servers]run hosts`
+- :cylc:conf:`[scheduler]auto restart delay`
+- :cylc:conf:`[scheduler][run hosts]condemned`
+- :cylc:conf:`[scheduler][run hosts]available`
 
-.. cylc-scope:: global.cylc[suite servers]
+.. cylc-scope:: global.cylc[scheduler]
 
 The auto stop-restart feature has two modes:
 
@@ -56,9 +56,10 @@ running on ``bar`` will stop immediately, making no attempt to restart.
 
 .. code-block:: cylc
 
-   [suite servers]
-       run hosts = pub
-       condemned hosts = foo, bar!
+   [scheduler]
+        [[run hosts]]
+       available = pub
+       condemned = foo, bar!
 
 .. warning::
 
@@ -67,9 +68,11 @@ running on ``bar`` will stop immediately, making no attempt to restart.
    are evaluated on the suite host server.
 
 To prevent large numbers of suites attempting to restart simultaneously the
-:cylc:conf:`auto restart delay` setting defines a period of time in seconds.
+:cylc:conf:`[scheduler]auto restart delay` setting defines a period of time in
+seconds.
 Suites will wait for a random period of time between zero and
-:cylc:conf:`auto restart delay` seconds before attempting to stop and restart.
+:cylc:conf:`[scheduler]auto restart delay` seconds before attempting to stop
+and restart.
 
 Suites that are started up in no-detach mode cannot auto stop-restart on a
 different host - as it will still end up attached to the condemned host.
@@ -107,7 +110,7 @@ async def auto_restart(scheduler, _):
         _set_auto_restart(
             scheduler,
             restart_delay=current_glbl_cfg.get(
-                ['suite servers', 'auto restart delay']
+                ['scheduler', 'auto restart delay']
             ),
             mode=mode
         )
@@ -117,7 +120,7 @@ def _should_auto_restart(scheduler, current_glbl_cfg):
     # check if suite host is condemned - if so auto restart
     if scheduler.stop_mode is None:
         for host in current_glbl_cfg.get(
-                ['suite servers', 'condemned hosts']
+                ['scheduler', 'run hosts', 'condemned']
         ):
             if host.endswith('!'):
                 # host ends in an `!` -> force shutdown mode
