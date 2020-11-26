@@ -101,6 +101,14 @@ with Conf('global.cylc', desc='''
              desc='''
             The number of old run directory trees to retain at start-up.
         ''')
+        Conf('auto restart delay', VDR.V_INTERVAL, desc='''
+            Relates to Cylc's auto stop-restart mechanism (see
+            :ref:`auto-stop-restart`).  When a host is set to automatically
+            shutdown/restart it will first wait a random period of time
+            between zero and ``auto restart delay`` seconds before
+            beginning the process. This is to prevent large numbers of
+            suites from restarting simultaneously.
+        ''')
         with Conf('run hosts', desc='''
             Configure allowed suite hosts and ports for starting up (running or
             restarting) suites. Additionally configure host selection settings
@@ -122,14 +130,6 @@ with Conf('global.cylc', desc='''
                 ``condemned hosts`` they will be automatically shutdown and
                 restarted (see:ref:`auto-stop-restart`).
             ''')
-            Conf('auto restart delay', VDR.V_INTERVAL, desc='''
-                Relates to Cylc's auto stop-restart mechanism (see
-                :ref:`auto-stop-restart`).  When a host is set to automatically
-                shutdown/restart it will first wait a random period of time
-                between zero and ``auto restart delay`` seconds before
-                beginning the process. This is to prevent large numbers of
-                suites from restarting simultaneously.
-            ''')
             Conf('ranking', VDR.V_STRING, desc='''
                 A multiline string containing Python expressions to filter
                 and/or rank hosts. For example:
@@ -148,29 +148,33 @@ with Conf('global.cylc', desc='''
             might see the suite host differently? If so we would need to be
             able to override the target in suite configurations.
         '''):
-            Conf('method', VDR.V_STRING, 'name', options=[
-                'name', 'address', 'hardwired'
-                ],
+            Conf(
+                'method', VDR.V_STRING, 'name',
+                options=['name', 'address', 'hardwired'],
                 desc='''
-                This item determines how cylc finds the identity of the suite
-                host.For the default *name* method cylc asks the suite host
-                for its host name. This should resolve on remote task hosts to
-                the IP address of the suite host; if it doesn't, adjust
-                network settings or use one of the other methods. For the
-                *address* method, cylc attempts to use a special external
-                "target address" to determine the IP address of the suite
-                host as seen by remote task hosts.  And finally, as a
-                last resort, you can choose the *hardwired* method and manually
-                specify the host name or IP address of the suite host.
+                    This item determines how cylc finds the identity of the
+                    suite host.For the default *name* method cylc asks the
+                    suite host
+                    for its host name. This should resolve on remote task
+                    hosts to
+                    the IP address of the suite host; if it doesn't, adjust
+                    network settings or use one of the other methods. For the
+                    *address* method, cylc attempts to use a special external
+                    "target address" to determine the IP address of the suite
+                    host as seen by remote task hosts.  And finally, as a
+                    last resort, you can choose the *hardwired* method and
+                    manually
+                    specify the host name or IP address of the suite host.
 
-                Options:
+                    Options:
 
-                name
-                Self-identified host name.
-                address
-                Automatically determined IP address (requires *target*).
-                hardwired
-                Manually specified host name or IP address (requires *host*).
+                    name
+                    Self-identified host name.
+                    address
+                    Automatically determined IP address (requires *target*).
+                    hardwired
+                    Manually specified host name or IP address (requires
+                    *host*).
             ''')
             Conf('target', VDR.V_STRING, 'google.com', desc='''
                 This item is required for the *address* self-identification

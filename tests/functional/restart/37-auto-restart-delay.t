@@ -54,9 +54,9 @@ MAX_RESTART_DELAY=30
 create_test_global_config '' "
 ${BASE_GLOBAL_CONFIG}
 [scheduler]
+    auto restart delay = PT${MAX_RESTART_DELAY}S
     [[run hosts]]
         available = localhost
-        auto restart delay = PT${MAX_RESTART_DELAY}S
 "
 
 # Run suite.
@@ -67,10 +67,10 @@ poll_suite_running
 create_test_global_config '' "
 ${BASE_GLOBAL_CONFIG}
 [scheduler]
+    auto restart delay = PT20S
     [[run hosts]]
         available = ${CYLC_TEST_HOST}
         condemned = $(hostname)
-        auto restart delay = PT20S
 "
 
 # Check stop-restart working.

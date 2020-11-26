@@ -63,10 +63,10 @@ FILE=$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)
 create_test_global_config '' "
 ${BASE_GLOBAL_CONFIG}
 [scheduler]
+    auto restart delay = -PT60S  # results in +PT60S delay
     [[run hosts]]
         available = ${CYLC_TEST_HOST_1}, ${CYLC_TEST_HOST_2}
         condemned = ${CYLC_TEST_HOST_1}
-        auto restart delay = -PT60S  # results in +PT60S delay
 "
 log_scan "${TEST_NAME_BASE}-stop" "${FILE}" 40 1 \
     'The Cylc suite host will soon become un-available' \

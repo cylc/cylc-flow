@@ -27,8 +27,8 @@ settings:
 .. cylc-scope:: global.cylc
 
 - :cylc:conf:`[scheduler]auto restart delay`
-- :cylc:conf:`[scheduler]condemned hosts`
-- :cylc:conf:`[scheduler]run hosts`
+- :cylc:conf:`[scheduler][run hosts]condemned`
+- :cylc:conf:`[scheduler][run hosts]available`
 
 .. cylc-scope:: global.cylc[scheduler]
 
@@ -57,8 +57,9 @@ running on ``bar`` will stop immediately, making no attempt to restart.
 .. code-block:: cylc
 
    [scheduler]
-       run hosts = pub
-       condemned hosts = foo, bar!
+        [[run hosts]]
+       available = pub
+       condemned = foo, bar!
 
 .. warning::
 
@@ -67,9 +68,11 @@ running on ``bar`` will stop immediately, making no attempt to restart.
    are evaluated on the suite host server.
 
 To prevent large numbers of suites attempting to restart simultaneously the
-:cylc:conf:`auto restart delay` setting defines a period of time in seconds.
+:cylc:conf:`[scheduler]auto restart delay` setting defines a period of time in
+seconds.
 Suites will wait for a random period of time between zero and
-:cylc:conf:`auto restart delay` seconds before attempting to stop and restart.
+:cylc:conf:`[scheduler]auto restart delay` seconds before attempting to stop
+and restart.
 
 Suites that are started up in no-detach mode cannot auto stop-restart on a
 different host - as it will still end up attached to the condemned host.
