@@ -139,6 +139,52 @@ with Conf('global.cylc', desc='''
                 to filter by cpu_percent() < 70 then to rank by cpu_percent.
             ''')
 
+        with Conf('host self-identification', desc='''
+            The suite host's identity must be determined locally by cylc and
+            passed to running tasks (via ``$CYLC_SUITE_HOST``) so that task
+            messages can target the right suite on the right host.
+
+            .. todo
+            Is it conceivable that different remote task hosts at the same site
+            might see the suite host differently? If so we would need to be
+            able to override the target in suite configurations.
+        '''):
+            Conf('method', VDR.V_STRING, 'name', options=[
+                'name', 'address', 'hardwired'
+                ],
+                desc='''
+                This item determines how cylc finds the identity of the suite
+                host.For the default *name* method cylc asks the suite host
+                for its host name. This should resolve on remote task hosts to
+                the IP address of the suite host; if it doesn't, adjust
+                network settings or use one of the other methods. For the
+                *address* method, cylc attempts to use a special external
+                "target address" to determine the IP address of the suite
+                host as seen by remote task hosts.  And finally, as a
+                last resort, you can choose the *hardwired* method and manually
+                specify the host name or IP address of the suite host.
+
+                Options:
+
+                name
+                Self-identified host name.
+                address
+                Automatically determined IP address (requires *target*).
+                hardwired
+                Manually specified host name or IP address (requires *host*).
+            ''')
+            Conf('target', VDR.V_STRING, 'google.com', desc='''
+                This item is required for the *address* self-identification
+                method. If your suite host sees the internet, a common address
+                such as ``google.com`` will do; otherwise choose a host
+                visible on your intranet.
+            ''')
+            Conf('host', VDR.V_STRING, desc='''
+                Use this item to explicitly set the name or IP address of the
+                suite host if you have to use the *hardwired*
+                self-identification method.
+            ''')
+
         with Conf('events', desc='''
             You can define site defaults for each of the following options,
             details of which can be found under
@@ -572,49 +618,6 @@ with Conf('global.cylc', desc='''
     '''):
         Conf('from', VDR.V_STRING)
         Conf('to', VDR.V_STRING)
-
-    # suite
-    with Conf('suite host self-identification', desc='''
-        The suite host's identity must be determined locally by cylc and passed
-        to running tasks (via ``$CYLC_SUITE_HOST``) so that task messages can
-        target the right suite on the right host.
-
-        .. todo
-           Is it conceivable that different remote task hosts at the same site
-           might see the suite host differently? If so we would need to be able
-           to override the target in suite configurations.
-    '''):
-        Conf('method', VDR.V_STRING, 'name',
-             options=['name', 'address', 'hardwired'], desc='''
-            This item determines how cylc finds the identity of the suite host.
-            For the default *name* method cylc asks the suite host for its host
-            name. This should resolve on remote task hosts to the IP address of
-            the suite host; if it doesn't, adjust network settings or use one
-            of the other methods. For the *address* method, cylc attempts to
-            use a special external "target address" to determine the IP address
-            of the suite host as seen by remote task hosts.  And finally, as a
-            last resort, you can choose the *hardwired* method and manually
-            specify the host name or IP address of the suite host.
-
-            Options:
-
-            name
-               Self-identified host name.
-            address
-               Automatically determined IP address (requires *target*).
-            hardwired
-               Manually specified host name or IP address (requires *host*).
-        ''')
-        Conf('target', VDR.V_STRING, 'google.com', desc='''
-            This item is required for the *address* self-identification method.
-            If your suite host sees the internet, a common address such as
-            ``google.com`` will do; otherwise choose a host visible on your
-            intranet.
-        ''')
-        Conf('host', VDR.V_STRING, desc='''
-            Use this item to explicitly set the name or IP address of the suite
-            host if you have to use the *hardwired* self-identification method.
-        ''')
 
 
 def upg(cfg, descr):

@@ -125,13 +125,13 @@ class HostUtil:
     @staticmethod
     def _get_identification_cfg(key):
         """Return the [suite host self-identification]key global conf."""
-        return glbl_cfg().get(['suite host self-identification', key])
+        return glbl_cfg().get(['scheduler', 'host self-identification', key])
 
     def get_host(self):
         """Return the preferred identifier for the suite (or current) host.
 
-        As specified by the "suite host self-identification" settings in the
-        site/user global.cylc files. This is mainly used for suite host
+        As specified by the "[scheduler][host self-identification]" settings in
+        the site/user global.cylc files. This is mainly used for suite host
         identification by task jobs.
 
         """

@@ -31,15 +31,16 @@ __PYTHON__
 
 #-------------------------------------------------------------------------------
 MY_INET_TARGET=$( \
-    cylc get-global-config '--item=[suite host self-identification]target')
+    cylc get-global-config '--item=[scheduler][host self-identification]target')
 MY_HOST_IP="$(get_local_ip_address "${MY_INET_TARGET}")"
 
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate "${SUITE_NAME}" "--set=MY_HOST_IP=${MY_HOST_IP}"
 
 create_test_global_config '' '
-[suite host self-identification]
-    method = address'
+[scheduler]
+    [[host self-identification]]
+        method = address'
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug --no-detach "${SUITE_NAME}" \
     "--set=MY_HOST_IP=${MY_HOST_IP}"
