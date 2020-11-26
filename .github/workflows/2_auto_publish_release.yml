@@ -18,7 +18,7 @@ jobs:
       github.event.pull_request.merged == true &&
       contains(github.event.pull_request.labels.*.name, 'release')
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
 
     - name: Get the version number
@@ -52,7 +52,7 @@ jobs:
         commitish: ${{ env.MERGE_SHA }}
         tag_name: ${{ env.VERSION }}
         release_name: cylc-flow-${{ env.VERSION }}
-        prerelease: true
+        prerelease: ${{ env.PRERELEASE }}
         body: |
           See [${{ env.CHANGELOG_FILE }}](https://github.com/${{ github.repository }}/blob/master/${{ env.CHANGELOG_FILE }}) for detail.
 
