@@ -282,8 +282,17 @@ class SuiteConfig:
             parameter_values = {}
         try:
             parameter_templates = self.cfg['task parameters']['templates']
+
         except KeyError:
             parameter_templates = {}
+
+        # Check that parameter templates are a section
+        if not hasattr(parameter_templates, 'update'):
+            raise SuiteConfigError(
+                '[task parameters][templates] is a section. Don\'t use it '
+                'as a parameter.'
+            )
+
         # parameter values and templates are normally needed together.
         self.parameters = (parameter_values, parameter_templates)
 
