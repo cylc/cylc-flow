@@ -36,6 +36,7 @@ set_test_number 6
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [task parameters]
     i = 1..10
+[scheduler]
     [[events]]
         abort on stalled = True
         abort on inactivity = True
