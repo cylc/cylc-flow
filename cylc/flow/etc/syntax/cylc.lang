@@ -146,7 +146,6 @@
         <keyword>initial cycle point</keyword>
         <keyword>init-script</keyword>
         <keyword>inherit</keyword>
-        <keyword>include at start-up</keyword>
         <keyword>include</keyword>
         <keyword>inactivity handler</keyword>
         <keyword>inactivity</keyword>
@@ -168,7 +167,6 @@
         <keyword>execution time limit</keyword>
         <keyword>execution retry delays</keyword>
         <keyword>execution polling intervals</keyword>
-        <keyword>exclude at start-up</keyword>
         <keyword>exclude</keyword>
         <keyword>env-script</keyword>
         <keyword>description</keyword>

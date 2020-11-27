@@ -667,8 +667,7 @@ class Scheduler:
             else:
                 LOG.info('Cold Start %s' % self.config.start_point)
 
-        task_list = self.filter_initial_task_list(
-            self.config.get_task_name_list())
+        task_list = self.config.get_task_name_list()
 
         flow_label = self.pool.flow_label_mgr.get_new_label()
         for name in task_list:
@@ -1768,22 +1767,6 @@ class Scheduler:
     def command_force_spawn_children(self, items, outputs):
         """Force spawn task successors."""
         return self.pool.force_spawn_children(items, outputs)
-
-    def filter_initial_task_list(self, inlist):
-        """Return list of initial tasks after applying a filter."""
-        included_by_config = self.config.cfg[
-            'scheduling']['special tasks']['include at start-up']
-        excluded_by_config = self.config.cfg[
-            'scheduling']['special tasks']['exclude at start-up']
-        outlist = []
-        for name in inlist:
-            if name in excluded_by_config:
-                continue
-            if len(included_by_config) > 0:
-                if name not in included_by_config:
-                    continue
-            outlist.append(name)
-        return outlist
 
     def _update_profile_info(self, category, amount, amount_format="%s"):
         """Update the 1, 5, 15 minute dt averages for a given category."""

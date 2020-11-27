@@ -15,8 +15,6 @@ runahead limit = P5
     external-trigger = 
     clock-expire = 
     sequential = 
-    exclude at start-up = 
-    include at start-up = 
 [[xtriggers]]
 [[graph]]
     R1 = OPS:finish-all => VAR
