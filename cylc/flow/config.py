@@ -271,7 +271,12 @@ class SuiteConfig:
             self.cfg['runtime']['root'] = OrderedDictWithDefaults()
 
         try:
-            parameter_values = self.cfg['task parameters']
+            # Ugly hack to avoid templates getting included in parameters
+            parameter_values = {
+                key: value for key, value in
+                self.cfg['task parameters'].items()
+                if key != 'templates'
+            }
         except KeyError:
             # (Suite config defaults not put in yet.)
             parameter_values = {}
@@ -978,7 +983,8 @@ class SuiteConfig:
         """Check for illegal parameter environment templates"""
         parameter_values = dict(
             (key, values[0])
-            for key, values in self.parameters[0].items() if values)
+            for key, values in self.parameters[0].items() if values
+        )
         bads = set()
         for task_name, task_items in self.cfg['runtime'].items():
             if 'environment' not in task_items:

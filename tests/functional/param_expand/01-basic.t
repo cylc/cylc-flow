@@ -112,7 +112,7 @@ foo<i> => bar<i>
 __SUITE__
 run_fail "${TEST_NAME_BASE}-05" cylc validate "flow.cylc"
 cmp_ok "${TEST_NAME_BASE}-05.stderr" <<'__ERR__'
-IllegalValueError: (type=parameter) [scheduler][parameters]i = space is dangerous - (space is dangerous: bad value)
+IllegalValueError: (type=parameter) [task parameters]i = space is dangerous - (space is dangerous: bad value)
 __ERR__
 
 cat >'flow.cylc' <<'__SUITE__'
@@ -131,7 +131,7 @@ foo<i> => bar<i>
 __SUITE__
 run_fail "${TEST_NAME_BASE}-06" cylc validate "flow.cylc"
 cmp_ok "${TEST_NAME_BASE}-06.stderr" <<'__ERR__'
-IllegalValueError: (type=parameter) [scheduler][parameters]i = mix, 1..10 - (mixing int range and str)
+IllegalValueError: (type=parameter) [task parameters]i = mix, 1..10 - (mixing int range and str)
 __ERR__
 
 cat >'flow.cylc' <<'__SUITE__'
@@ -168,7 +168,7 @@ foo<i> => bar<i>
 __SUITE__
 run_fail "${TEST_NAME_BASE}-08" cylc validate "flow.cylc"
 cmp_ok "${TEST_NAME_BASE}-08.stderr" <<'__ERR__'
-IllegalValueError: (type=parameter) [scheduler][parameters]i = 1..2 3..4 - (1..2 3..4: bad value)
+IllegalValueError: (type=parameter) [task parameters]i = 1..2 3..4 - (1..2 3..4: bad value)
 __ERR__
 
 cat >'flow.cylc' <<'__SUITE__'
@@ -208,7 +208,7 @@ ParamExpandError: parameter i is not defined in <i>: foo<i>=>bar<i>
 __ERR__
 
 cat >'flow.cylc' <<'__SUITE__'
-[task parameters\]
+[task parameters]
     j = +1..+5
     [[templates]]
         j = @%(j)03d
@@ -226,7 +226,7 @@ cylc graph --reference 'flow.cylc' >'11.graph'
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/11.graph.ref" '11.graph'
 
 cat >'flow.cylc' <<'__SUITE__'
-[task parameters\]
+[task parameters]
     j = 1..5
     [[templates]]
         j = +%%j%(j)03d
@@ -245,7 +245,7 @@ cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/12.graph.ref" '12.graph'
 
 # Parameter with various meta characters
 cat >'flow.cylc' <<'__SUITE__'
-[task parameters\]
+[task parameters]
     p = -minus, +plus, @at, %percent
     [[templates]]
         p = %(p)s
@@ -286,7 +286,7 @@ cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/14.graph.ref" '14.graph'
 
 # Parameter in middle of family name
 cat >'flow.cylc' <<'__SUITE__'
-[task parameters\]
+[task parameters]
     s = mercury, venus, earth, mars
 [scheduling]
     [[graph]]
@@ -303,7 +303,7 @@ cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/15.graph.ref" '15.graph'
 
 # -ve offset on RHS
 cat >'flow.cylc' <<'__SUITE__'
-[task parameters\]
+[task parameters]
     m = cat, dog
 [scheduling]
     [[graph]]
@@ -319,7 +319,7 @@ cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/16.graph.ref" '16.graph'
 
 # +ve offset
 cat >'flow.cylc' <<'__SUITE__'
-[task parameters\]
+[task parameters]
     m = cat, dog
 [scheduling]
     [[graph]]
@@ -335,7 +335,7 @@ cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/17.graph.ref" '17.graph'
 
 # Negative integers
 cat >'flow.cylc' <<'__SUITE__'
-[task parameters\]
+[task parameters]
     m = -12..12..6
 [scheduling]
     [[graph]]
@@ -351,7 +351,7 @@ cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/18.graph.ref" '18.graph'
 
 # Reference by value, with -+ meta characters
 cat >'flow.cylc' <<'__SUITE__'
-[task parameters\]
+[task parameters]
     lang = c++, fortran-2008
     [[templates]]
         lang = %(lang)s
@@ -376,7 +376,7 @@ cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/19.graph.ref" '19.graph'
 #       Inconsistence between graph/runtime parameter expansion.
 cylc get-config --sparse 'flow.cylc' >'19.cylc'
 cmp_ok '19.cylc' <<'__FLOW_CONFIG__'
-[task parameters\]
+[task parameters]
     lang = c++, fortran-2008
     [[templates]]
         lang = %(lang)s
