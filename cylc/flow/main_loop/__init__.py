@@ -39,7 +39,7 @@ Configuring
 
 Main loop plugins can be activated either by:
 
-* Using the ``-main-loop`` option with ``cylc play`` e.g:
+* Using the ``--main-loop`` option with ``cylc play`` e.g:
 
   .. code-block:: console
 
