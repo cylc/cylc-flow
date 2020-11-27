@@ -28,7 +28,7 @@ SUITE_NAME="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BA
 SUITE_RUN_DIR="$RUN_DIR/${SUITE_NAME}"
 mkdir -p "$(dirname "${SUITE_RUN_DIR}")"
 cp -r "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}" "${SUITE_RUN_DIR}"
-cylc install "${SUITE_NAME}" "${SUITE_RUN_DIR}" 2>'/dev/null'
+cylc install --flow-name=${SUITE_NAME} --no-run-name >&2
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 

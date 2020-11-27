@@ -60,7 +60,7 @@ from cylc.flow.cycling.iso8601 import ingest_time, ISO8601Interval
 import cylc.flow.flags
 from cylc.flow.graphnode import GraphNodeParser
 from cylc.flow.pathutil import (
-    get_suite_run_dir,
+    get_workflow_run_dir,
     get_suite_run_log_dir,
     get_suite_run_share_dir,
     get_suite_run_work_dir,
@@ -157,7 +157,7 @@ class SuiteConfig:
         self.suite = suite  # suite name
         self.fpath = fpath  # suite definition
         self.fdir = os.path.dirname(fpath)
-        self.run_dir = run_dir or get_suite_run_dir(self.suite)
+        self.run_dir = run_dir or get_workflow_run_dir(self.suite)
         self.log_dir = log_dir or get_suite_run_log_dir(self.suite)
         self.share_dir = share_dir or get_suite_run_share_dir(self.suite)
         self.work_dir = work_dir or get_suite_run_work_dir(self.suite)

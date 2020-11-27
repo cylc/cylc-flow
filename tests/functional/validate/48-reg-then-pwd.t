@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test validation order, registered suites before current working directory.
+# Test validation order, installed suites before current working directory.
 . "$(dirname "$0")/test_header"
 set_test_number 2
 
@@ -42,8 +42,8 @@ __FLOW_CONFIG__
 # This should validate bad suite under current directory
 run_fail "${TEST_NAME_BASE}" cylc validate "${SUITE_NAME}"
 
-# This should validate registered good suite
-cylc install "${SUITE_NAME}" "${PWD}/good"
+# This should validate installed good suite
+cylc install --flow-name="${SUITE_NAME}" -C "${PWD}/good"
 run_ok "${TEST_NAME_BASE}" cylc validate "${SUITE_NAME}"
 
 purge

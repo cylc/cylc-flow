@@ -36,7 +36,7 @@ from cylc.flow.hostuserutil import (is_remote_host, is_remote_platform)
 from cylc.flow.pathutil import (
     get_remote_suite_run_dir,
     get_dirs_to_symlink,
-    get_suite_run_dir)
+    get_workflow_run_dir)
 from cylc.flow.remote import construct_rsync_over_ssh_cmd
 from cylc.flow.subprocctx import SubProcContext
 from cylc.flow.suite_files import (
@@ -293,6 +293,35 @@ class TaskRemoteMgr:
             pass
         install_target = platform['install target']
         if proc_ctx.ret_code == 0:
+            if REMOTE_INIT_DONE in proc_ctx.out:
+                src_path = get_workflow_run_dir(self.suite)
+                dst_path = get_remote_suite_run_dir(platform, self.suite)
+                try:
+                    process = procopen(construct_rsync_over_ssh_cmd(
+                        src_path,
+                        dst_path,
+                        platform,
+                        self.rsync_includes),
+                        stdoutpipe=True,
+                        stderrpipe=True,
+                        universal_newlines=True)
+
+                    out, err = process.communicate(timeout=600)
+                    install_target = platform['install target']
+                    if out:
+                        RSYNC_LOG.info(
+                            'File installation information for '
+                            f'{install_target}:\n {out}')
+                        LOG.info("File installation complete.")
+                    if err:
+                        LOG.error(
+                            'File installation error on '
+                            f'{install_target}:\n {err}')
+                except Exception as ex:
+                    LOG.error(f"Problem during rsync: {ex}")
+                    self.remote_init_map[self.install_target] = (
+                        REMOTE_INIT_FAILED)
+                    return
             if "KEYSTART" in proc_ctx.out:
                 regex_result = re.search(
                     'KEYSTART((.|\n|\r)*)KEYEND', proc_ctx.out)

@@ -32,9 +32,9 @@ from cylc.flow.option_parsers import (
     Options
 )
 from cylc.flow.pathutil import (
-    get_suite_run_dir,
+    get_workflow_run_dir,
     get_suite_run_log_name,
-    get_suite_file_install_log_name, make_localhost_symlinks)
+    get_suite_file_install_log_name)
 from cylc.flow.remote import _remote_cylc_cmd
 from cylc.flow.scheduler import Scheduler, SchedulerError
 from cylc.flow.scripts import cylc_header
@@ -261,19 +261,6 @@ RestartOptions = Options(
     get_option_parser(is_restart=True, add_std_opts=True), DEFAULT_OPTS)
 
 
-def _auto_install():
-    """Install a suite installed in the cylc-run directory."""
-    try:
-        reg = suite_files.install()
-    except SuiteServiceFileError as exc:
-        sys.exit(exc)
-    # Replace this process with "cylc run REG ..." for 'ps -f'.
-    os.execv(
-        sys.argv[0],
-        [sys.argv[0]] + sys.argv[1:] + [reg]
-    )
-
-
 def _open_logs(reg, no_detach):
     """Open Cylc log handlers for a flow run."""
     if not no_detach:
@@ -320,8 +307,7 @@ def scheduler_cli(parser, options, args, is_restart=False):
         suite_files.detect_old_contact_file(reg)
     except SuiteServiceFileError as exc:
         sys.exit(exc)
-    make_localhost_symlinks(reg)
-    _check_registration(reg)
+    _check_installation(reg)
 
     # re-execute on another host if required
     _distribute(options.host, is_restart)
@@ -367,8 +353,8 @@ def scheduler_cli(parser, options, args, is_restart=False):
 
 
 def _check_installation(reg):
-    """Ensure the flow is installed."""
-    suite_run_dir = get_suite_run_dir(reg)
+    """Check the flow is installed."""
+    suite_run_dir = get_workflow_run_dir(reg)
     if not os.path.exists(suite_run_dir):
         sys.stderr.write(f'suite service directory not found '
                          f'at: {suite_run_dir}\n')
@@ -435,6 +421,7 @@ def restart(parser, options, *args):
 @cli_function(partial(get_option_parser, is_restart=False))
 def run(parser, options, *args):
     """Implement cylc run."""
+
     if not args:
         _auto_install()
     if options.startcp:

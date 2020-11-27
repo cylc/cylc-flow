@@ -152,7 +152,6 @@ REGISTERED ${RND_SUITE_NAME1} -> ${RND_SUITE_SOURCE}
 __OUT__
 
 TEST_NAME="${TEST_NAME_BASE}-get-dir"
-run_ok "${TEST_NAME}" cylc get-directory "${RND_SUITE_NAME1}"
 contains_ok "${TEST_NAME}.stdout" <<__ERR__
 ${RND_SUITE_SOURCE}
 __ERR__

@@ -43,7 +43,6 @@ __STDERR__
 run_fail "${TEST_NAME_BASE}-get" cylc get
 cmp_ok "${TEST_NAME_BASE}-get.stderr" <<'__STDERR__'
 cylc get: is ambiguous for:
-    cylc get-directory
     cylc get-site-config
     cylc get-suite-config
     cylc get-suite-contact

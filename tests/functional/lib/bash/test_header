@@ -424,7 +424,7 @@ init_suite() {
     SUITE_RUN_DIR="${RUN_DIR}/${SUITE_NAME}"
     mkdir -p "${TEST_DIR}/${SUITE_NAME}/"
     cat "${FLOW_CONFIG}" >"${TEST_DIR}/${SUITE_NAME}/flow.cylc"
-    cylc install "${SUITE_NAME}" "${TEST_DIR}/${SUITE_NAME}" 2>'/dev/null'
+    cylc install --no-run-name --flow-name="${SUITE_NAME}" --directory="${TEST_DIR}/${SUITE_NAME}" 2>'/dev/null'
     cd "${TEST_DIR}/${SUITE_NAME}"
 }
 
@@ -433,10 +433,10 @@ install_suite() {
     local TEST_SOURCE_BASE="${2:-${TEST_NAME}}"
     SUITE_NAME="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME}"
     SUITE_RUN_DIR="${RUN_DIR}/${SUITE_NAME}"
-    mkdir -p "${TEST_DIR}/${SUITE_NAME}/"
+    mkdir -p "${TEST_DIR}/${SUITE_NAME}/" # make source dir
     cp -r "${TEST_SOURCE_DIR}/${TEST_SOURCE_BASE}/"* "${TEST_DIR}/${SUITE_NAME}/"
-    cylc install "${SUITE_NAME}" "${TEST_DIR}/${SUITE_NAME}" 2>'/dev/null'
-    cd "${TEST_DIR}/${SUITE_NAME}"
+    cylc install --no-run-name --flow-name"${SUITE_NAME}" --directory="${TEST_DIR}/${SUITE_NAME}" 2>'/dev/null'
+    cd "${TEST_DIR}/${SUITE_NAME}/"
 }
 
 log_scan () {

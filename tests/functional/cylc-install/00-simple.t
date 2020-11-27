@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #------------------------------------------------------------------------------
-# Test suite registration
+# Test workflow installation
 
 export RND_SUITE_NAME
 export RND_SUITE_SOURCE
@@ -42,165 +42,111 @@ function purge_rnd_suite() {
 }
 
 . "$(dirname "$0")/test_header"
-set_test_number 33
+set_test_number 18
 
-# Use $SUITE_NAME and $SUITE_RUN_DIR defined by test_header
 
-#------------------------------
-# Test fail no suite source dir
-TEST_NAME="${TEST_NAME_BASE}-nodir"
-make_rnd_suite
-rm -rf "${RND_SUITE_SOURCE}"
-run_fail "${TEST_NAME}" cylc install "${RND_SUITE_NAME}" "${RND_SUITE_SOURCE}"
-contains_ok "${TEST_NAME}.stderr" <<__ERR__
-SuiteServiceFileError: no flow.cylc or suite.rc in ${RND_SUITE_SOURCE}
-__ERR__
-purge_rnd_suite
-
-#---------------------------
-# Test fail no flow.cylc file
-TEST_NAME="${TEST_NAME_BASE}-nodir"
-make_rnd_suite
-rm -f "${RND_SUITE_SOURCE}/flow.cylc"
-run_fail "${TEST_NAME}" cylc install "${RND_SUITE_NAME}" "${RND_SUITE_SOURCE}"
-contains_ok "${TEST_NAME}.stderr" <<__ERR__
-SuiteServiceFileError: no flow.cylc or suite.rc in ${RND_SUITE_SOURCE}
-__ERR__
-purge_rnd_suite
-
-#-------------------------------------------------------
-# Test default name: "cylc reg" (suite in $PWD, no args)
-TEST_NAME="${TEST_NAME_BASE}-pwd1"
+# Test default name: "cylc install" (suite in $PWD, no args)
+TEST_NAME="${TEST_NAME_BASE}-basic"
 make_rnd_suite
 pushd "${RND_SUITE_SOURCE}" || exit 1
-run_ok "${TEST_NAME}" cylc install
+run_ok "${TEST_NAME}" cylc install 
+
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-REGISTERED $RND_SUITE_NAME -> ${RND_SUITE_SOURCE}
+INSTALLED $RND_SUITE_NAME from ${RND_SUITE_SOURCE} -> ${RND_SUITE_RUNDIR}/run1
 __OUT__
 popd || exit 1
 purge_rnd_suite
 
-#--------------------------------------------------
-# Test default path: "cylc reg REG" (suite in $PWD)
+# Test default path: "cylc install REG" (flow in $PWD)
 TEST_NAME="${TEST_NAME_BASE}-pwd2"
 make_rnd_suite
 pushd "${RND_SUITE_SOURCE}" || exit 1
 run_ok "${TEST_NAME}" cylc install "${RND_SUITE_NAME}"
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-REGISTERED ${RND_SUITE_NAME} -> ${RND_SUITE_SOURCE}
+INSTALLED $RND_SUITE_NAME from ${RND_SUITE_SOURCE} -> ${RND_SUITE_RUNDIR}/run1
 __OUT__
 popd || exit 1
 purge_rnd_suite
 
-#-------------------------
-# Test "cylc reg REG PATH"
-TEST_NAME="${TEST_NAME_BASE}-normal"
+
+
+# Test default path: "cylc install REG" --no-run-name (flow in $PWD)
+TEST_NAME="${TEST_NAME_BASE}-pwd-no-run-name"
 make_rnd_suite
-run_ok "${TEST_NAME}" cylc install "${RND_SUITE_NAME}" "${RND_SUITE_SOURCE}"
+pushd "${RND_SUITE_SOURCE}" || exit 1
+run_ok "${TEST_NAME}" cylc install "${RND_SUITE_NAME}" --no-run-name
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-REGISTERED ${RND_SUITE_NAME} -> ${RND_SUITE_SOURCE}
+INSTALLED $RND_SUITE_NAME from ${RND_SUITE_SOURCE} -> ${RND_SUITE_RUNDIR}
 __OUT__
+popd || exit 1
 purge_rnd_suite
-
-#--------------------------------------------------------------------
-# Test register existing run directory: "cylc reg REG ~/cylc-run/REG"
-TEST_NAME="${TEST_NAME_BASE}-reg-run-dir"
+# Test "cylc install REG" flow-name given (flow in $PWD)
+TEST_NAME="${TEST_NAME_BASE}-flow-name"
 make_rnd_suite
-mkdir -p "${RND_SUITE_RUNDIR}"
-cp "${RND_SUITE_SOURCE}/flow.cylc" "${RND_SUITE_RUNDIR}"
-run_ok "${TEST_NAME}" cylc install "${RND_SUITE_NAME}" "${RND_SUITE_RUNDIR}"
+pushd "${RND_SUITE_SOURCE}" || exit 1
+run_ok "${TEST_NAME}" cylc install --flow-name="${RND_SUITE_NAME}-olaf" 
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-REGISTERED ${RND_SUITE_NAME} -> ${RND_SUITE_RUNDIR}
+INSTALLED ${RND_SUITE_NAME}-olaf from ${RND_SUITE_SOURCE} -> ${RUN_DIR}/${RND_SUITE_NAME}-olaf/run1
 __OUT__
-SOURCE="$(readlink "${RND_SUITE_RUNDIR}/.service/source")"
-run_ok "${TEST_NAME}-source" test '..' = "${SOURCE}"
-# Run it twice
-run_ok "${TEST_NAME}-2" cylc install "${RND_SUITE_NAME}" "${RND_SUITE_RUNDIR}"
-contains_ok "${TEST_NAME}-2.stdout" <<__OUT__
-REGISTERED ${RND_SUITE_NAME} -> ${RND_SUITE_RUNDIR}
-__OUT__
-SOURCE="$(readlink "${RND_SUITE_RUNDIR}/.service/source")"
-run_ok "${TEST_NAME}-source" test '..' = "${SOURCE}"
+popd || exit 1
+rm -rf ${RUN_DIR}/${RND_SUITE_NAME}-olaf
 purge_rnd_suite
 
-#----------------------------------------------------------------
-# Test fail "cylc reg REG PATH" where REG already points to PATH2
-TEST_NAME="${TEST_NAME_BASE}-dup1"
+# Test "cylc install REG" flow-name given (flow in $PWD)
+TEST_NAME="${TEST_NAME_BASE}-flow-name-no-run-name"
 make_rnd_suite
-run_ok "${TEST_NAME}" cylc install "${RND_SUITE_NAME}" "${RND_SUITE_SOURCE}"
-RND_SUITE_NAME1="${RND_SUITE_NAME}"
-RND_SUITE_SOURCE1="${RND_SUITE_SOURCE}"
-RND_SUITE_RUNDIR1="${RND_SUITE_RUNDIR}"
-make_rnd_suite
-TEST_NAME="${TEST_NAME_BASE}-dup2"
-run_fail "${TEST_NAME}" cylc install "${RND_SUITE_NAME1}" "${RND_SUITE_SOURCE}"
-contains_ok "${TEST_NAME}.stderr" <<__ERR__
-SuiteServiceFileError: the name '${RND_SUITE_NAME1}' already points to ${RND_SUITE_SOURCE1}.
-Use --redirect to re-use an existing name and run directory.
-__ERR__
-# Now force it
-TEST_NAME="${TEST_NAME_BASE}-dup3"
-run_ok "${TEST_NAME}" cylc install --redirect "${RND_SUITE_NAME1}" "${RND_SUITE_SOURCE}"
-sed -i 's/^\t//; s/^.* WARNING - /WARNING - /' "${TEST_NAME}.stderr"
-contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WARNING - the name '${RND_SUITE_NAME1}' points to ${RND_SUITE_SOURCE1}.
-It will now be redirected to ${RND_SUITE_SOURCE}.
-Files in the existing ${RND_SUITE_NAME1} run directory will be overwritten.
-__ERR__
+pushd "${RND_SUITE_SOURCE}" || exit 1
+run_ok "${TEST_NAME}" cylc install --flow-name="${RND_SUITE_NAME}-olaf" --no-run-name
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-REGISTERED ${RND_SUITE_NAME1} -> ${RND_SUITE_SOURCE}
+INSTALLED ${RND_SUITE_NAME}-olaf from ${RND_SUITE_SOURCE} -> ${RUN_DIR}/${RND_SUITE_NAME}-olaf
 __OUT__
-
-TEST_NAME="${TEST_NAME_BASE}-get-dir"
-run_ok "${TEST_NAME}" cylc get-directory "${RND_SUITE_NAME1}"
-contains_ok "${TEST_NAME}.stdout" <<__ERR__
-${RND_SUITE_SOURCE}
-__ERR__
-
+popd || exit 1
+rm -rf ${RUN_DIR}/${RND_SUITE_NAME}-olaf
 purge_rnd_suite
-purge_rnd_suite "${RND_SUITE_SOURCE1}" "${RND_SUITE_RUNDIR1}"
 
-#-----------------------
-# Test alternate run dir
-# 1. Normal case.
-TEST_NAME="${TEST_NAME_BASE}-alt-run-dir"
+# Test "cylc install" --directory given (flow in --directory)
+TEST_NAME="${TEST_NAME_BASE}-option--directory"
 make_rnd_suite
-ALT_RUN_DIR="${PWD}/alt"
-run_ok "${TEST_NAME}" \
-    cylc install --run-dir="${ALT_RUN_DIR}" "${RND_SUITE_NAME}" "${RND_SUITE_SOURCE}"
+run_ok "${TEST_NAME}" cylc install --flow-name="${RND_SUITE_NAME}" --directory="${RND_SUITE_SOURCE}"
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-REGISTERED ${RND_SUITE_NAME} -> ${RND_SUITE_SOURCE}
-__OUT__
-run_ok "${TEST_NAME}-check-link" test -L "${RND_SUITE_RUNDIR}"
-run_ok "${TEST_NAME}-rm-link" rm "${RND_SUITE_RUNDIR}"
-run_ok "${TEST_NAME}-rm-alt-run-dir" rm -r "${ALT_RUN_DIR}"
-purge_rnd_suite
-
-# 2. If reg already exists (as a directory).
-TEST_NAME="${TEST_NAME_BASE}-alt-exists1"
-make_rnd_suite
-ALT_RUN_DIR="${PWD}/alt"
-mkdir -p "${RND_SUITE_RUNDIR}"
-run_fail "${TEST_NAME}" \
-   cylc install --run-dir="${ALT_RUN_DIR}" "${RND_SUITE_NAME}" "${RND_SUITE_SOURCE}"
-contains_ok "${TEST_NAME}.stderr" <<__OUT__
-SuiteServiceFileError: Run directory '${RND_SUITE_RUNDIR}' already exists.
+INSTALLED $RND_SUITE_NAME from ${RND_SUITE_SOURCE} -> ${RND_SUITE_RUNDIR}/run1
 __OUT__
 purge_rnd_suite
 
-# 3. If reg already exists (as a valid symlink).
-TEST_NAME="${TEST_NAME_BASE}-alt-exists2"
+# Test running cylc install twice increments run dirs correctly
+TEST_NAME="${TEST_NAME_BASE}-install-twice"
 make_rnd_suite
-ALT_RUN_DIR="${PWD}/alt"
-TDIR=$(mktemp -d)
-mkdir -p "$(dirname "${RND_SUITE_RUNDIR}")"
-ln -s "${TDIR}" "${RND_SUITE_RUNDIR}"
-run_fail "${TEST_NAME}" \
-    cylc install --run-dir="${ALT_RUN_DIR}" "${RND_SUITE_NAME}" "${RND_SUITE_SOURCE}"
-contains_ok "${TEST_NAME}.stderr" <<__OUT__
-SuiteServiceFileError: Symlink '${RND_SUITE_RUNDIR}' already points to ${TDIR}.
+pushd "${RND_SUITE_SOURCE}" || exit 1
+run_ok "${TEST_NAME}" cylc install "${RND_SUITE_NAME}"
+contains_ok "${TEST_NAME}.stdout" <<__OUT__
+INSTALLED $RND_SUITE_NAME from ${RND_SUITE_SOURCE} -> ${RND_SUITE_RUNDIR}/run1
+__OUT__
+run_ok "${TEST_NAME}" cylc install "${RND_SUITE_NAME}"
+contains_ok "${TEST_NAME}.stdout" <<__OUT__
+INSTALLED $RND_SUITE_NAME from ${RND_SUITE_SOURCE} -> ${RND_SUITE_RUNDIR}/run2
+__OUT__
+popd || exit 1
+
+purge_rnd_suite
+
+
+# Test -C option
+TEST_NAME="${TEST_NAME_BASE}-option-C"
+make_rnd_suite
+run_ok "${TEST_NAME}" cylc install --flow-name="${RND_SUITE_NAME}" -C "${RND_SUITE_SOURCE}"
+contains_ok "${TEST_NAME}.stdout" <<__OUT__
+INSTALLED $RND_SUITE_NAME from ${RND_SUITE_SOURCE} -> ${RND_SUITE_RUNDIR}/run1
 __OUT__
 purge_rnd_suite
-rm -rf "${TDIR}"
+
+# things that still need testing:
+
+# symlink/--no-symlink-dirs option
+# workflow name not abs path:
+# SuiteServiceFileError: Workflow name cannot be an absolute path:
+# test by sending run_ok "${TEST_NAME}" cylc install --flow-name="${RND_SUITE_RUNDIR}-olaf" 
+# source dir contains forbidden
+
+
 
 exit

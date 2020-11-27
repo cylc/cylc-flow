@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -16,27 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc get-directory REG
-
-Retrieve and print the source directory location of suite REG.
-
-Here's an easy way to move to a suite source directory:
-  $ cd $(cylc get-dir REG)."""
-
-from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.suite_files import get_suite_source_dir
-from cylc.flow.terminal import cli_function
+from cylc.flow.exceptions import SuiteServiceFileError
+from cylc.flow.suite_files import validate_source_dir
 
 
-def get_option_parser():
-    return COP(__doc__, prep=True)
+# def test_validate_source_dir(source):
 
+#     expected = raise(SuiteServiceFileError)
+#     source_dir = 
 
-@cli_function(get_option_parser)
-def main(parser, options, suite):
-    """Implement "cylc get-directory"."""
-    print(get_suite_source_dir(suite, options.suite_owner))
-
-
-if __name__ == "__main__":
-    main()
+     

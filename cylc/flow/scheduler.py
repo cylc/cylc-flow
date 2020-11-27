@@ -63,7 +63,7 @@ from cylc.flow.parsec.OrderedDict import DictTree
 from cylc.flow.parsec.util import printcfg
 from cylc.flow.parsec.validate import DurationFloat
 from cylc.flow.pathutil import (
-    get_suite_run_dir,
+    get_workflow_run_dir,
     get_suite_run_log_dir,
     get_suite_run_config_log_dir,
     get_suite_run_share_dir,
@@ -261,9 +261,8 @@ class Scheduler:
         )
 
         # directory information
-        self.suite_dir = suite_files.get_suite_source_dir(self.suite)
         self.flow_file = suite_files.get_flow_file(self.suite)
-        self.suite_run_dir = get_suite_run_dir(self.suite)
+        self.suite_run_dir = get_workflow_run_dir(self.suite)
         self.suite_work_dir = get_suite_run_work_dir(self.suite)
         self.suite_share_dir = get_suite_run_share_dir(self.suite)
         self.suite_log_dir = get_suite_run_log_dir(self.suite)
@@ -280,18 +279,13 @@ class Scheduler:
     async def install(self):
         """Get the filesystem in the right state to run the flow.
 
-        * Install.
         * Install authentication files.
         * Build the directory tree.
         * Copy Python files.
 
         """
-        # Install
-        try:
-            suite_files.get_suite_source_dir(self.suite)
-        except SuiteServiceFileError:
-            # Source path is assumed to be the run directory
-            suite_files.install(self.suite, get_suite_run_dir(self.suite))
+        
+        make_suite_run_tree(self.suite)
 
         # Create ZMQ keys
         key_housekeeping(self.suite, platform=self.options.host or 'localhost')
@@ -301,21 +295,18 @@ class Scheduler:
             suite_files.get_suite_srv_dir(self.suite),
             ['etc/job.sh'])
 
-        make_suite_run_tree(self.suite)
         # Copy local python modules from source to run directory
         for sub_dir in ["python", os.path.join("lib", "python")]:
             # TODO - eventually drop the deprecated "python" sub-dir.
-            suite_py = os.path.join(self.suite_dir, sub_dir)
-            if (os.path.realpath(self.suite_dir) !=
-                    os.path.realpath(self.suite_run_dir) and
-                    os.path.isdir(suite_py)):
+            suite_py = os.path.join(self.suite_run_dir, sub_dir) # change to rundir
+            if os.path.isdir(suite_py)):
                 suite_run_py = os.path.join(self.suite_run_dir, sub_dir)
                 try:
                     rmtree(suite_run_py)
                 except OSError:
                     pass
                 copytree(suite_py, suite_run_py)
-            sys.path.append(os.path.join(self.suite_dir, sub_dir))
+            sys.path.append(os.path.join(self.suite_run_dir, sub_dir))
 
     async def initialise(self):
         """Initialise the components and sub-systems required to run the flow.
@@ -376,7 +367,7 @@ class Scheduler:
             proc_pool=self.proc_pool,
             suite_run_dir=self.suite_run_dir,
             suite_share_dir=self.suite_share_dir,
-            suite_source_dir=self.suite_dir
+            suite_source_dir=self.suite_run_dir
         )
 
         self.task_events_mgr = TaskEventsManager(
@@ -422,10 +413,8 @@ class Scheduler:
         # Copy local python modules from source to run directory
         for sub_dir in ["python", os.path.join("lib", "python")]:
             # TODO - eventually drop the deprecated "python" sub-dir.
-            suite_py = os.path.join(self.suite_dir, sub_dir)
-            if (os.path.realpath(self.suite_dir) !=
-                    os.path.realpath(self.suite_run_dir) and
-                    os.path.isdir(suite_py)):
+            suite_py = os.path.join(self.suite_run_dir, sub_dir)
+            if os.path.isdir(suite_py)):
                 suite_run_py = os.path.join(self.suite_run_dir, sub_dir)
                 try:
                     rmtree(suite_run_py)
