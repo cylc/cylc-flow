@@ -53,9 +53,7 @@ install_requires = [
     'pyuv==1.4.*',
     'pyzmq==19.0.*',
     'psutil>=5.6.0',
-    # 'metomi-rose>=2.*',
     'urwid==2.*',
-    'nest_asyncio',
     'packaging'
 ]
 tests_require = [

@@ -15,22 +15,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test that settings from rose optional configs are inherited correctly.
+# Check that error raised when shebang != [template_engine:suite.rc] section.
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 python -c "import cylc.rose" > /dev/null 2>&1 ||
   skip_all "cylc.rose not installed in environment."
 
 set_test_number 2
+
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-export ROSE_SUITE_OPT_CONF_KEYS=""
+run_fail "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-
-cylc view -p --stdout "${SUITE_NAME}" > processed.conf.test
-
-cmp_ok processed.conf.test processed.conf.control
+cmp_ok "${TEST_NAME_BASE}-validate.stderr" <<__HEREDOC__
+FileParseError: Plugins set templating engine = empy which does not match #!jinja2 set in flow.cylc.
+__HEREDOC__
 
 purge
 exit

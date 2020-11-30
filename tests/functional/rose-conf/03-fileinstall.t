@@ -15,7 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test jinja2 from rose-suite.conf file is processed into a suite.
+# Test that fileinstall section of rose-suite.conf causes files to be
+# installed.
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 python -c "import cylc.rose" > /dev/null 2>&1 ||

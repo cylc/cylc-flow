@@ -15,22 +15,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test that settings from rose optional configs are inherited correctly.
+# Test Cylc CLI over-ride works.
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 python -c "import cylc.rose" > /dev/null 2>&1 ||
   skip_all "cylc.rose not installed in environment."
 
 set_test_number 2
+
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-export ROSE_SUITE_OPT_CONF_KEYS=""
+run_fail "${TEST_NAME_BASE}-fails-if-CLI_VAR-set-by-rose-suite.conf" cylc validate "${SUITE_NAME}"
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-
-cylc view -p --stdout "${SUITE_NAME}" > processed.conf.test
-
-cmp_ok processed.conf.test processed.conf.control
+run_ok "${TEST_NAME_BASE}-ok-if-CLI_VAR-set-by-CLI" cylc validate "${SUITE_NAME}" --set=CLI_VAR="'Wobble'"
 
 purge
 exit

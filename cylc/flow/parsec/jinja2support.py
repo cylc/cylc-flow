@@ -137,7 +137,7 @@ def _load_jinja2_extensions():
     return jinja2_extensions
 
 
-def jinja2environment(dir_=None, template_vars=None):
+def jinja2environment(dir_=None):
     """Set up and return Jinja2 environment."""
     if dir_ is None:
         dir_ = os.getcwd()
@@ -220,7 +220,7 @@ def jinja2process(flines, dir_, template_vars=None):
     # Convert unicode to plain str, ToDo - still needed for parsec?)
 
     try:
-        env = jinja2environment(dir_, template_vars)
+        env = jinja2environment(dir_)
         template = env.from_string('\n'.join(flines[1:]))
         lines = str(template.render(template_vars)).splitlines()
     except TemplateSyntaxError as exc:

@@ -1,0 +1,15 @@
+#!jinja2
+
+# 1. This should fail unless cylc validate --set CLI_VAR=42
+{{ assert(CLI_VAR=="Wobble", "failed 1.1") }}
+
+# chuck in some Cylc stuff to make validate happy
+[scheduling]
+    initial cycle point = now
+    [[dependencies]]
+        R1 = """
+            x
+        """
+
+[runtime]
+    [[x]]

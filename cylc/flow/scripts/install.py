@@ -25,26 +25,30 @@ exit with success status, else exit with error status."""
 
 import os
 import pkg_resources
+from pathlib import Path
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
 from cylc.flow.pathutil import get_suite_run_dir
+from cylc.flow.suite_files import parse_suite_arg
 
 
 def get_option_parser():
     parser = COP(
-        __doc__, comms=True,
+        __doc__, comms=True, prep=True,
         argdoc=[('REG', 'Suite name')])
 
     return parser
 
 
 @cli_function(get_option_parser)
-def main(parser, options, suite):
+def main(parser, options, reg):
+    suite, flow_file = parse_suite_arg(options, reg)
+
     for entry_point in pkg_resources.iter_entry_points(
-        'cylc.pre_install'
+        'cylc.pre_configure'
     ):
-        entry_point.resolve()()
+        entry_point.resolve()(Path(flow_file).parent)
 
     for entry_point in pkg_resources.iter_entry_points(
         'cylc.post_install'
