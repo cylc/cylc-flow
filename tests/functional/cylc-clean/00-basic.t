@@ -21,7 +21,7 @@
 if ! command -v 'tree' >'/dev/null'; then
     skip_all '"tree" command not available'
 fi
-set_test_number 5
+set_test_number 6
 
 create_test_global_config "" "
 [symlink dirs]
@@ -37,8 +37,13 @@ init_suite "${TEST_NAME_BASE}" << '__FLOW__'
     [[graph]]
         R1 = darmok
 __FLOW__
+
+run_ok "${TEST_NAME_BASE}-val" cylc validate "$SUITE_NAME"
+
 # Create a fake sibling workflow dir in the sym-log dir:
 mkdir "${TEST_DIR}/sym-log/cylc-run/cylctb-${CYLC_TEST_TIME_INIT}/leave-me-alone"
+
+FUNCTIONAL_DIR="${TEST_SOURCE_DIR_BASE%/*}"
 # -----------------------------------------------------------------------------
 TEST_NAME="run-dir-tree-pre-clean"
 tree --charset=ascii "$SUITE_RUN_DIR" > "${TEST_NAME}.stdout"
@@ -62,7 +67,7 @@ cmp_ok "${TEST_NAME}.stdout" << __TREE__
 ${TEST_DIR}/sym-cycle
 \`-- cylc-run
     \`-- cylctb-${CYLC_TEST_TIME_INIT}
-        \`-- f
+        \`-- ${FUNCTIONAL_DIR}
             \`-- cylc-clean
                 \`-- ${TEST_NAME_BASE}
                     \`-- share
@@ -70,7 +75,7 @@ ${TEST_DIR}/sym-cycle
 ${TEST_DIR}/sym-log
 \`-- cylc-run
     \`-- cylctb-${CYLC_TEST_TIME_INIT}
-        |-- f
+        |-- ${FUNCTIONAL_DIR}
         |   \`-- cylc-clean
         |       \`-- ${TEST_NAME_BASE}
         |           \`-- log
@@ -78,7 +83,7 @@ ${TEST_DIR}/sym-log
 ${TEST_DIR}/sym-run
 \`-- cylc-run
     \`-- cylctb-${CYLC_TEST_TIME_INIT}
-        \`-- f
+        \`-- ${FUNCTIONAL_DIR}
             \`-- cylc-clean
                 \`-- ${TEST_NAME_BASE}
                     |-- log -> ${TEST_DIR}/sym-log/cylc-run/${SUITE_NAME}/log
@@ -87,7 +92,7 @@ ${TEST_DIR}/sym-run
 ${TEST_DIR}/sym-share
 \`-- cylc-run
     \`-- cylctb-${CYLC_TEST_TIME_INIT}
-        \`-- f
+        \`-- ${FUNCTIONAL_DIR}
             \`-- cylc-clean
                 \`-- ${TEST_NAME_BASE}
                     \`-- share
@@ -95,7 +100,7 @@ ${TEST_DIR}/sym-share
 ${TEST_DIR}/sym-work
 \`-- cylc-run
     \`-- cylctb-${CYLC_TEST_TIME_INIT}
-        \`-- f
+        \`-- ${FUNCTIONAL_DIR}
             \`-- cylc-clean
                 \`-- ${TEST_NAME_BASE}
                     \`-- work
