@@ -1314,8 +1314,9 @@ def upg(cfg, descr):
     u.obsolete(
         '8.0.0',
         ['cylc', 'health check interval'])
-    u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'shell'])
     u.obsolete('8.0.0', ['runtime', '__MANY__', 'events', 'mail retry delays'])
+    u.obsolete('8.0.0', ['runtime', '__MANY__', 'extra log files'])
+    u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'shell'])
     u.obsolete('8.0.0', ['cylc', 'abort if any task fails'])
     u.obsolete('8.0.0', ['cylc', 'events', 'abort if any task fails'])
     u.obsolete('8.0.0', ['cylc', 'events', 'mail retry delays'])

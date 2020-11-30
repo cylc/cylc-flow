@@ -33,6 +33,7 @@
 
 [runtime]
     [[foo, cat, dog]]
+        extra log files =
         [[[job]]]
             shell = fish
         [[[events]]]
