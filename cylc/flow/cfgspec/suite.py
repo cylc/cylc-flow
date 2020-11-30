@@ -502,27 +502,6 @@ with Conf(
                 Example:
                    ``foo, bar``
             ''')
-            Conf('exclude at start-up', VDR.V_STRING_LIST, desc='''
-                Any task listed here will be excluded from the initial task
-                pool (this goes for suite restarts too). If an *inclusion*
-                list is also specified, the initial pool will contain only
-                included tasks that have not been excluded. Excluded tasks can
-                still be inserted at run time.  Other tasks may still depend
-                on excluded tasks if they have not been removed from the suite
-                dependency graph, in which case some manual triggering, or
-                insertion of excluded tasks, may be required.
-            ''')
-            Conf('include at start-up', VDR.V_STRING_LIST, desc='''
-                If this list is not empty, any task *not* listed in it will be
-                excluded from the initial task pool (this goes for suite
-                restarts too).  If an *exclusion* list is also specified, the
-                initial pool will contain only included tasks that have not
-                been excluded. Excluded tasks can still be inserted at run
-                time. Other tasks may still depend on excluded tasks if they
-                have not been removed from the suite dependency graph, in
-                which case some manual triggering, or insertion of excluded
-                tasks, may be required.
-            ''')
 
         with Conf('xtriggers', desc='''
                 This section is for *External Trigger* function declarations -
@@ -1338,6 +1317,8 @@ def upg(cfg, descr):
     u.obsolete('8.0.0', ['cylc', 'force run mode'])
     u.obsolete('7.8.1', ['runtime', '__MANY__', 'events', 'reset timer'])
     u.obsolete('8.0.0', ['cylc', 'authentication'])
+    u.obsolete('8.0.0', ['cylc', 'include at start-up'])
+    u.obsolete('8.0.0', ['cylc', 'exclude at start-up'])
     u.obsolete('8.0.0', ['cylc', 'log resolved dependencies'])
     u.obsolete('8.0.0', ['cylc', 'required run mode'])
     u.obsolete(

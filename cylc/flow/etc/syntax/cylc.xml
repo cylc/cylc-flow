@@ -72,7 +72,6 @@
         <RegExpr attribute='Keyword' String=' initial cycle point '/>
         <RegExpr attribute='Keyword' String=' init-script '/>
         <RegExpr attribute='Keyword' String=' inherit '/>
-        <RegExpr attribute='Keyword' String=' include at start-up '/>
         <RegExpr attribute='Keyword' String=' include '/>
         <RegExpr attribute='Keyword' String=' inactivity handler '/>
         <RegExpr attribute='Keyword' String=' inactivity '/>
@@ -95,7 +94,6 @@
         <RegExpr attribute='Keyword' String=' execution time limit '/>
         <RegExpr attribute='Keyword' String=' execution retry delays '/>
         <RegExpr attribute='Keyword' String=' execution polling intervals '/>
-        <RegExpr attribute='Keyword' String=' exclude at start-up '/>
         <RegExpr attribute='Keyword' String=' exclude '/>
         <RegExpr attribute='Keyword' String=' env-script '/>
         <RegExpr attribute='Keyword' String=' description '/>
