@@ -82,6 +82,12 @@ class SLURMHandler():
         r"\ASubmitted\sbatch\sjob\s(?P<id>\d+)")
     SUBMIT_CMD_TMPL = "sbatch '%(job)s'"
 
+    # Heterogeneous job support
+    #  Match artificial directive prefix
+    REC_HETJOB = re.compile(r"^hetjob_(\d+)_")
+    #  Separator between het job directive sections
+    SEP_HETJOB = "#SBATCH hetjob"
+
     @classmethod
     def format_directives(cls, job_conf):
         """Format the job directives for a job file."""
@@ -99,11 +105,21 @@ class SLURMHandler():
         for key, value in list(job_conf['directives'].items()):
             directives[key] = value
         lines = []
+        seen = set()
         for key, value in directives.items():
-            if value:
-                lines.append("%s%s=%s" % (cls.DIRECTIVE_PREFIX, key, value))
+            m = cls.REC_HETJOB.match(key)
+            if m:
+                n = m.groups()[0]
+                if n != "0" and n not in seen:
+                    lines.append(cls.SEP_HETJOB)
+                seen.add(n)
+                newkey = cls.REC_HETJOB.sub('', key)
             else:
-                lines.append("%s%s" % (cls.DIRECTIVE_PREFIX, key))
+                newkey = key
+            if value:
+                lines.append("%s%s=%s" % (cls.DIRECTIVE_PREFIX, newkey, value))
+            else:
+                lines.append("%s%s" % (cls.DIRECTIVE_PREFIX, newkey))
         return lines
 
     @classmethod

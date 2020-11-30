@@ -1,3 +1,5 @@
+#!/usr/bin/env python2
+
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -13,20 +15,25 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Cylc provides support for the following batch system handlers.
+"""SLURM job submission and manipulation.
 
-.. autosummary::
-   :toctree: batch-sys-handlers
-   :template: automodule_batch_sys_handlers.rst
-
-   cylc.flow.batch_sys_handlers.at
-   cylc.flow.batch_sys_handlers.background
-   cylc.flow.batch_sys_handlers.loadleveler
-   cylc.flow.batch_sys_handlers.lsf
-   cylc.flow.batch_sys_handlers.moab
-   cylc.flow.batch_sys_handlers.pbs
-   cylc.flow.batch_sys_handlers.sge
-   cylc.flow.batch_sys_handlers.slurm
-   cylc.flow.batch_sys_handlers.slurm_packjob
+Includes directive prefix workaround for heterogeneous job support, for older
+Slurm versions that use "packjob" instead of "hetjob".
 
 """
+
+import re
+from cylc.flow.batch_sys_handlers.slurm import SLURMHandler
+
+
+class SLURMPackjobHandler(SLURMHandler):
+    """SLURM job submission and manipulation."""
+
+    # Heterogeneous job support
+    #  Match artificial directive prefix
+    REC_HETJOB = re.compile(r"^packjob_(\d+)_")
+    #  Separator between heterogeneous job directive sections
+    SEP_HETJOB = "#SBATCH packjob"
+
+
+BATCH_SYS_HANDLER = SLURMPackjobHandler()
