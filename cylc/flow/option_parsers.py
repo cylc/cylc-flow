@@ -172,12 +172,16 @@ TASK_GLOB matches task or family names at a given cycle point.
             self.add_std_option(
                 "-s", "--set", metavar="NAME=VALUE",
                 help=(
-                    "Set the value of a Jinja2 template variable in the "
-                    "suite definition. This option can be used multiple "
-                    "times on the command line. "
-                    "NOTE: these settings persist across suite restarts, "
-                    "but can be set again on the \"cylc restart\" "
-                    "command line if they need to be overridden."
+                    "Set the value of a Jinja2 template variable in the"
+                    " suite definition."
+                    " Values should be valid Python literals so strings"
+                    " must be quoted"
+                    " e.g. 'STR=\"string\"', INT=43, BOOL=True."
+                    " This option can be used multiple "
+                    " times on the command line."
+                    " NOTE: these settings persist across suite restarts,"
+                    " but can be set again on the \"cylc restart\""
+                    " command line if they need to be overridden."
                 ),
                 action="append", default=[], dest="templatevars")
 
@@ -187,6 +191,8 @@ TASK_GLOB matches task or family names at a given cycle point.
                     "Set the value of Jinja2 template variables in the "
                     "suite definition from a file containing NAME=VALUE "
                     "pairs (one per line). "
+                    "As with --set values should be valid Python literals "
+                    "so strings must be quoted e.g. STR='string'. "
                     "NOTE: these settings persist across suite restarts, "
                     "but can be set again on the \"cylc restart\" "
                     "command line if they need to be overridden."
