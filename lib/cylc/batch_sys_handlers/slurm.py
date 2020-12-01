@@ -36,6 +36,7 @@ class SLURMHandler(object):
     POLL_CMD = "squeue -h"
     REC_ID_FROM_SUBMIT_OUT = re.compile(
         r"\ASubmitted\sbatch\sjob\s(?P<id>\d+)")
+    REC_ID_FROM_POLL_OUT = re.compile(r"^ *(?P<id>\d+)")
     SUBMIT_CMD_TMPL = "sbatch '%(job)s'"
 
     # Heterogeneous job support
@@ -50,6 +51,20 @@ class SLURMHandler(object):
         # squeue -h -j JOB_ID when JOB_ID has stopped can either exit with
         # non-zero exit code or return blank text.
         return out.strip()
+
+    @classmethod
+    def filter_poll_many_output(cls, out):
+        """Return list of job IDs extracted from job poll stdout.
+
+        Needed to avoid the extension for heterogenous jobs ("+0", "+1" etc.)
+
+        """
+        job_ids = set()
+        for line in out.splitlines():
+            m = cls.REC_ID_FROM_POLL_OUT.match(line)
+            if m:
+                job_ids.add(m.group("id"))
+        return list(job_ids)
 
     @classmethod
     def format_directives(cls, job_conf):
