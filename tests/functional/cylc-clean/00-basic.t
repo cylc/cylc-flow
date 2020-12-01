@@ -23,14 +23,18 @@ if ! command -v 'tree' >'/dev/null'; then
 fi
 set_test_number 6
 
+# Generate random name for symlink dirs to avoid any clashes with other tests
+SYM_NAME="$(mktemp -u)"
+SYM_NAME="${SYM_NAME##*tmp.}"
+
 create_test_global_config "" "
 [symlink dirs]
     [[localhost]]
-        run = ${TEST_DIR}/sym-run
-        log = ${TEST_DIR}/sym-log
-        share = ${TEST_DIR}/sym-share
-        share/cycle = ${TEST_DIR}/sym-cycle
-        work = ${TEST_DIR}/sym-work
+        run = ${TEST_DIR}/${SYM_NAME}-run
+        log = ${TEST_DIR}/${SYM_NAME}-log
+        share = ${TEST_DIR}/${SYM_NAME}-share
+        share/cycle = ${TEST_DIR}/${SYM_NAME}-cycle
+        work = ${TEST_DIR}/${SYM_NAME}-work
 "
 init_suite "${TEST_NAME_BASE}" << '__FLOW__'
 [scheduling]
@@ -41,7 +45,7 @@ __FLOW__
 run_ok "${TEST_NAME_BASE}-val" cylc validate "$SUITE_NAME"
 
 # Create a fake sibling workflow dir in the sym-log dir:
-mkdir "${TEST_DIR}/sym-log/cylc-run/cylctb-${CYLC_TEST_TIME_INIT}/leave-me-alone"
+mkdir "${TEST_DIR}/${SYM_NAME}-log/cylc-run/cylctb-${CYLC_TEST_TIME_INIT}/leave-me-alone"
 
 FUNCTIONAL_DIR="${TEST_SOURCE_DIR_BASE%/*}"
 # -----------------------------------------------------------------------------
@@ -52,19 +56,19 @@ sed -i '$d' "${TEST_NAME}.stdout"
 
 cmp_ok "${TEST_NAME}.stdout" << __TREE__
 ${HOME}/cylc-run/${SUITE_NAME}
-|-- log -> ${TEST_DIR}/sym-log/cylc-run/${SUITE_NAME}/log
-|-- share -> ${TEST_DIR}/sym-share/cylc-run/${SUITE_NAME}/share
-\`-- work -> ${TEST_DIR}/sym-work/cylc-run/${SUITE_NAME}/work
+|-- log -> ${TEST_DIR}/${SYM_NAME}-log/cylc-run/${SUITE_NAME}/log
+|-- share -> ${TEST_DIR}/${SYM_NAME}-share/cylc-run/${SUITE_NAME}/share
+\`-- work -> ${TEST_DIR}/${SYM_NAME}-work/cylc-run/${SUITE_NAME}/work
 
 __TREE__
 
 TEST_NAME="test-dir-tree-pre-clean"
-tree --charset=ascii "${TEST_DIR}/sym-"* > "${TEST_NAME}.stdout"
+tree --charset=ascii "${TEST_DIR}/${SYM_NAME}-"* > "${TEST_NAME}.stdout"
 # Remove last line of output:
 sed -i '$d' "${TEST_NAME}.stdout"
 # Note: backticks need to be escaped in the heredoc
 cmp_ok "${TEST_NAME}.stdout" << __TREE__
-${TEST_DIR}/sym-cycle
+${TEST_DIR}/${SYM_NAME}-cycle
 \`-- cylc-run
     \`-- cylctb-${CYLC_TEST_TIME_INIT}
         \`-- ${FUNCTIONAL_DIR}
@@ -72,7 +76,7 @@ ${TEST_DIR}/sym-cycle
                 \`-- ${TEST_NAME_BASE}
                     \`-- share
                         \`-- cycle
-${TEST_DIR}/sym-log
+${TEST_DIR}/${SYM_NAME}-log
 \`-- cylc-run
     \`-- cylctb-${CYLC_TEST_TIME_INIT}
         |-- ${FUNCTIONAL_DIR}
@@ -80,24 +84,24 @@ ${TEST_DIR}/sym-log
         |       \`-- ${TEST_NAME_BASE}
         |           \`-- log
         \`-- leave-me-alone
-${TEST_DIR}/sym-run
+${TEST_DIR}/${SYM_NAME}-run
 \`-- cylc-run
     \`-- cylctb-${CYLC_TEST_TIME_INIT}
         \`-- ${FUNCTIONAL_DIR}
             \`-- cylc-clean
                 \`-- ${TEST_NAME_BASE}
-                    |-- log -> ${TEST_DIR}/sym-log/cylc-run/${SUITE_NAME}/log
-                    |-- share -> ${TEST_DIR}/sym-share/cylc-run/${SUITE_NAME}/share
-                    \`-- work -> ${TEST_DIR}/sym-work/cylc-run/${SUITE_NAME}/work
-${TEST_DIR}/sym-share
+                    |-- log -> ${TEST_DIR}/${SYM_NAME}-log/cylc-run/${SUITE_NAME}/log
+                    |-- share -> ${TEST_DIR}/${SYM_NAME}-share/cylc-run/${SUITE_NAME}/share
+                    \`-- work -> ${TEST_DIR}/${SYM_NAME}-work/cylc-run/${SUITE_NAME}/work
+${TEST_DIR}/${SYM_NAME}-share
 \`-- cylc-run
     \`-- cylctb-${CYLC_TEST_TIME_INIT}
         \`-- ${FUNCTIONAL_DIR}
             \`-- cylc-clean
                 \`-- ${TEST_NAME_BASE}
                     \`-- share
-                        \`-- cycle -> ${TEST_DIR}/sym-cycle/cylc-run/${SUITE_NAME}/share/cycle
-${TEST_DIR}/sym-work
+                        \`-- cycle -> ${TEST_DIR}/${SYM_NAME}-cycle/cylc-run/${SUITE_NAME}/share/cycle
+${TEST_DIR}/${SYM_NAME}-work
 \`-- cylc-run
     \`-- cylctb-${CYLC_TEST_TIME_INIT}
         \`-- ${FUNCTIONAL_DIR}
@@ -113,22 +117,22 @@ TEST_NAME="run-dir-not-exist-post-clean"
 exists_fail "$SUITE_RUN_DIR"
 
 TEST_NAME="test-dir-tree-post-clean"
-tree --charset=ascii "${TEST_DIR}/sym-"* > "${TEST_NAME}.stdout"
+tree --charset=ascii "${TEST_DIR}/${SYM_NAME}-"* > "${TEST_NAME}.stdout"
 # Remove last line of output:
 sed -i '$d' "${TEST_NAME}.stdout"
 
 cmp_ok "${TEST_NAME}.stdout" << __TREE__
-${TEST_DIR}/sym-cycle
+${TEST_DIR}/${SYM_NAME}-cycle
 \`-- cylc-run
-${TEST_DIR}/sym-log
+${TEST_DIR}/${SYM_NAME}-log
 \`-- cylc-run
     \`-- cylctb-${CYLC_TEST_TIME_INIT}
         \`-- leave-me-alone
-${TEST_DIR}/sym-run
+${TEST_DIR}/${SYM_NAME}-run
 \`-- cylc-run
-${TEST_DIR}/sym-share
+${TEST_DIR}/${SYM_NAME}-share
 \`-- cylc-run
-${TEST_DIR}/sym-work
+${TEST_DIR}/${SYM_NAME}-work
 \`-- cylc-run
 
 __TREE__
