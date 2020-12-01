@@ -49,7 +49,7 @@ __FLOW_CONFIG__
 # run suite on localhost normally
 create_test_global_config '' "${BASE_GLOBAL_CONFIG}"
 run_ok "${TEST_NAME}-suite-start" \
-    cylc run "${SUITE_NAME}" --host=localhost -s 'FOO=foo' -v
+    cylc run "${SUITE_NAME}" --host=localhost -s 'FOO="foo"' -v
 cylc suite-state "${SUITE_NAME}" --task='task_foo01' \
     --status='succeeded' --point=1 --interval=1 --max-polls=20 >& $ERR
 

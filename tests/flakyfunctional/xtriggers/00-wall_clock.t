@@ -19,7 +19,8 @@
 . "$(dirname "$0")/test_header"
 
 run_suite() {
-  cylc run --no-detach --debug "$1" -s "START=$2" -s "HOUR=$3" -s "OFFSET=$4"
+  cylc run --no-detach --debug "$1" \
+    -s "START='$2'" -s "HOUR='$3'" -s "OFFSET='$4'"
 }
 
 set_test_number 5
@@ -33,7 +34,7 @@ HOUR="$(date +%H)"
 OFFSET="PT0S"
 
 run_ok "${TEST_NAME_BASE}-val" cylc validate "${SUITE_NAME}" \
-   -s "START=${START}" -s "HOUR=${HOUR}" -s "OFFSET=${OFFSET}"
+   -s "START='${START}'" -s "HOUR='${HOUR}'" -s "OFFSET='${OFFSET}'"
 
 TEST_NAME="${TEST_NAME_BASE}-now"
 run_ok "${TEST_NAME}" run_suite "${SUITE_NAME}" "${START}" "${HOUR}" "${OFFSET}"

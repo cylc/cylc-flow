@@ -23,9 +23,10 @@ set_test_number 5
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate -s "PLATFORM=${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
+    cylc validate -s "PLATFORM='${CYLC_TEST_PLATFORM}'" "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug --no-detach -s "PLATFORM=${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
+    cylc run --reference-test --debug --no-detach \
+        -s "PLATFORM='${CYLC_TEST_PLATFORM}'" "${SUITE_NAME}"
 
 sed "/'job-logs-retrieve'/!d" \
     "${SUITE_RUN_DIR}/log/job/1/t1/01/job-activity.log" \

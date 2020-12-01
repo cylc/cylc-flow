@@ -20,7 +20,7 @@ if [[ "${CYLC_TASK_CYCLE_POINT}" == '2017' ]]; then
     cylc__job__poll_grep_suite_log -F \
         '[t1.2017] status=submitted: (received)started'
     sleep 2  # make sure status change recorded in DB
-    cylc broadcast "${CYLC_SUITE_NAME}" -p '2017' -n 't1' --set='script=true'
+    cylc broadcast "${CYLC_SUITE_NAME}" -p '2017' -n 't1' --set='script="true"'
     cylc hold "${CYLC_SUITE_NAME}"
     cylc__job__poll_grep_suite_log -F \
         'INFO - Command succeeded: hold()'

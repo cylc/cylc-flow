@@ -35,9 +35,9 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 __FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}" \
-    -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}"
+    -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" \
-    -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}"
+    -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
 RRUND="cylc-run/${SUITE_NAME}"
 RSRVD="${RRUND}/.service"
 poll_grep_suite_log 'Holding all waiting or queued tasks now'

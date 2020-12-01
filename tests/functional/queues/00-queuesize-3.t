@@ -23,9 +23,10 @@ set_test_number 2
 install_suite "${TEST_NAME_BASE}" qsize
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc validate -s q_size=3 "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc validate -s 'q_size="3"' "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_ok "${TEST_NAME}" cylc run --reference-test --debug --no-detach -s q_size=3 "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME}" cylc run --reference-test --debug --no-detach \
+     -s "q_size='3'" "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 purge

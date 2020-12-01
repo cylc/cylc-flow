@@ -25,7 +25,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 sqlite3 "${SUITE_RUN_DIR}/.service/db" <'db.sqlite3'
 suite_run_ok "${TEST_NAME_BASE}-restart" \
     cylc restart --reference-test --debug --no-detach  \
-    -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
+    -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'" "${SUITE_NAME}"
 
 purge
 exit

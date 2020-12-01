@@ -42,11 +42,11 @@ chmod +x "${TEST_DIR}/${SUITE_NAME}/bin/my-rsync"
 
 # shellcheck disable=SC2086
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate ${OPT_SET} -s "PLATFORM=${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
+    cylc validate ${OPT_SET} -s "PLATFORM='${CYLC_TEST_PLATFORM}'" "${SUITE_NAME}"
 # shellcheck disable=SC2086
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug --no-detach ${OPT_SET} \
-       -s "PLATFORM=${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
+       -s "PLATFORM='${CYLC_TEST_PLATFORM}'" "${SUITE_NAME}"
 
 SUITE_LOG_D="$RUN_DIR/${SUITE_NAME}/log"
 sed 's/^.* -v //' "${SUITE_LOG_D}/suite/my-rsync.log" >'my-rsync.log.edited'

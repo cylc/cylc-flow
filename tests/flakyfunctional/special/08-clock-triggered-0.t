@@ -24,27 +24,27 @@ set_test_number 4
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate "${SUITE_NAME}" -s START="$(date '+%Y%m%dT%H%z')" \
-    -s HOUR="$(date '+%H')" -s 'UTC_MODE=False' -s 'TIMEOUT=PT0.2M'
+    cylc validate "${SUITE_NAME}" -s "START='$(date '+%Y%m%dT%H%z')'" \
+    -s "HOUR='$(date '+%H')'" -s 'UTC_MODE="False"' -s 'TIMEOUT="PT0.2M"'
 #-------------------------------------------------------------------------------
 run_ok "${TEST_NAME_BASE}-run-now" \
     cylc run --debug --no-detach "${SUITE_NAME}" \
-    -s START="$(date '+%Y%m%dT%H%z')" \
-    -s HOUR="$(date '+%H')" -s 'UTC_MODE=False' -s 'TIMEOUT=PT0.2M'
+    -s "START='$(date '+%Y%m%dT%H%z')'" \
+    -s "HOUR='$(date '+%H')'" -s 'UTC_MODE="False"' -s 'TIMEOUT="PT0.2M"'
 #-------------------------------------------------------------------------------
 NOW="$(date '+%Y%m%dT%H')"
 START="$(cylc cycle-point "${NOW}" --offset-hour='-10')$(date '+%z')"
 HOUR="$(cylc cycle-point "${NOW}" --offset-hour='-10' --print-hour)"
 run_ok "${TEST_NAME_BASE}-run-past" \
-    cylc run --debug --no-detach "${SUITE_NAME}" -s START="${START}" \
-    -s HOUR="${HOUR}" -s 'UTC_MODE=False' -s 'TIMEOUT=PT1M'
+    cylc run --debug --no-detach "${SUITE_NAME}" -s "START='${START}'" \
+    -s "HOUR='${HOUR}'" -s 'UTC_MODE="False"' -s 'TIMEOUT="PT1M"'
 #-------------------------------------------------------------------------------
 NOW="$(date '+%Y%m%dT%H')"
 START="$(cylc cycle-point "${NOW}" --offset-hour='10')$(date '+%z')"
 HOUR="$(cylc cycle-point "${NOW}" --offset-hour='10' --print-hour)"
 run_fail "${TEST_NAME_BASE}-run-later" \
     cylc run --debug --no-detach "${SUITE_NAME}" -s START="${START}" \
-    -s HOUR="${HOUR}" -s 'UTC_MODE=False' -s 'TIMEOUT=PT0.2M'
+    -s "HOUR='${HOUR}'" -s 'UTC_MODE="False"' -s 'TIMEOUT="PT0.2M"'
 #-------------------------------------------------------------------------------
 purge
 exit

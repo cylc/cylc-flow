@@ -27,9 +27,9 @@ class TestTemplatevars(unittest.TestCase):
 
     def test_load_template_vars_from_string(self):
         pairs = [
-            "name=John",
-            "type=Human",
-            "age=12"
+            "name='John'",
+            "type='Human'",
+            "age='12'"
         ]
         expected = {
             "name": "John",
@@ -41,11 +41,11 @@ class TestTemplatevars(unittest.TestCase):
     def test_load_template_vars_from_file(self):
         with tempfile.NamedTemporaryFile() as tf:
             tf.write("""
-            name=John
-            type=Human
+            name='John'
+            type='Human'
             # a comment
             # type=Test
-            age=12
+            age='12'
             """.encode())
             tf.flush()
             expected = {
@@ -60,16 +60,16 @@ class TestTemplatevars(unittest.TestCase):
     def test_load_template_vars_from_string_and_file(self):
         """Text pair variables take precedence over file."""
         pairs = [
-            "name=John",
-            "age=12"
+            "name='John'",
+            "age='12'"
         ]
         with tempfile.NamedTemporaryFile() as tf:
             tf.write("""
-            name=Mariah
-            type=Human
+            name='Mariah'
+            type='Human'
             # a comment
             # type=Test
-            age=70
+            age='70'
             """.encode())
             tf.flush()
             expected = {
