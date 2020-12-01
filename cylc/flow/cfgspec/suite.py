@@ -203,9 +203,6 @@ with Conf(
             with Conf('<plugin name>'):
                 Conf('interval', VDR.V_INTERVAL)
 
-        with Conf('simulation'):
-            Conf('disable suite event handlers', VDR.V_BOOLEAN, True)
-
         with Conf('environment'):
             Conf('<variable>', VDR.V_STRING)
 
@@ -1322,6 +1319,8 @@ def upg(cfg, descr):
     u.obsolete('8.0.0', ['cylc', 'events', 'mail retry delays'])
     u.obsolete('8.0.0', ['cylc', 'disable automatic shutdown'])
     u.obsolete('8.0.0', ['cylc', 'reference test'])
+    u.obsolete('8.0.0', ['cylc', 'simulation', 'disable suite event handlers'])
+    u.obsolete('8.0.0', ['cylc', 'simulation'])
     u.deprecate(
         '8.0.0',
         ['cylc', 'task event mail interval'],

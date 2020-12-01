@@ -37,7 +37,6 @@
         <RegExpr attribute='Keyword' String=' startup handler '/>
         <RegExpr attribute='Keyword' String=' started handler '/>
         <RegExpr attribute='Keyword' String=' stalled handler '/>
-        <RegExpr attribute='Keyword' String=' disable suite event handlers '/>
         <RegExpr attribute='Keyword' String=' default run length '/>
         <RegExpr attribute='Keyword' String=' speedup factor '/>
         <RegExpr attribute='Keyword' String=' time limit buffer '/>

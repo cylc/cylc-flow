@@ -9,6 +9,8 @@ WARNING -  * (8.0.0) [runtime][foo, cat, dog][job][shell] - DELETED (OBSOLETE)
 WARNING -  * (8.0.0) [cylc][abort if any task fails] - DELETED (OBSOLETE)
 WARNING -  * (8.0.0) [cylc][disable automatic shutdown] - DELETED (OBSOLETE)
 WARNING -  * (8.0.0) [cylc][reference test] - DELETED (OBSOLETE)
+WARNING -  * (8.0.0) [cylc][simulation][disable suite event handlers] - DELETED (OBSOLETE)
+WARNING -  * (8.0.0) [cylc][simulation] - DELETED (OBSOLETE)
 WARNING -  * (8.0.0) [cylc][task event mail interval] -> [cylc][mail][task event batch interval] - value unchanged
 WARNING -  * (8.0.0) [cylc][events][mail to] -> [cylc][mail][to] - value unchanged
 WARNING -  * (8.0.0) [cylc][events][mail from] -> [cylc][mail][from] - value unchanged

@@ -22,6 +22,8 @@
         simulation mode suite timeout =
         required run mode =
         suite shutdown event handler =
+    [[simulation]]
+        disable suite event handlers =
 
 [scheduling]
     max active cycle points = 2

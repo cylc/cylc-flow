@@ -1204,10 +1204,7 @@ class Scheduler:
         conf = self.config
         try:
             if (
-                conf.run_mode('simulation', 'dummy') and
-                conf.cfg['scheduler']['simulation'][
-                    'disable suite event handlers'
-                ]
+                conf.run_mode('simulation', 'dummy')
             ):
                 return
         except KeyError:
