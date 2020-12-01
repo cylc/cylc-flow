@@ -81,6 +81,24 @@ class TestTemplatevars(unittest.TestCase):
                 expected, load_template_vars(template_vars=pairs,
                                              template_vars_file=tf.name))
 
+    def test_load_template_vars_from_string_and_file(self):
+        """Text pair variables take precedence over file."""
+        pairs = [
+            "str='str'",
+            "int=12",
+            "float=12.3",
+            "bool=True",
+            "none=None"
+        ]
+        expected = {
+            'str': 'str',
+            'int': 12,
+            'float': 12.3,
+            'bool': True,
+            'none': None
+        }
+        self.assertEqual(expected, load_template_vars(template_vars=pairs))
+
 
 if __name__ == '__main__':
     unittest.main()
