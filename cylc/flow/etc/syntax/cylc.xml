@@ -105,8 +105,8 @@
         <RegExpr attribute='Keyword' String=' collapsed families '/>
         <RegExpr attribute='Keyword' String=' clock-trigger '/>
         <RegExpr attribute='Keyword' String=' clock-expire '/>
-        <RegExpr attribute='Keyword' String=' batch system '/>
-        <RegExpr attribute='Keyword' String=' batch submit command template '/>
+        <RegExpr attribute='Keyword' String=' job runner '/>
+        <RegExpr attribute='Keyword' String=' job runner command template '/>
         <RegExpr attribute='Keyword' String=' abort on timeout '/>
         <RegExpr attribute='Keyword' String=' abort on stalled '/>
         <RegExpr attribute='Keyword' String=' abort on inactivity '/>

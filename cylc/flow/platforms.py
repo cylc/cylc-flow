@@ -271,7 +271,7 @@ def platform_from_job_info(platforms, job, remote):
         ...         'desktop[0-9][0-9]|laptop[0-9][0-9]': {},
         ...         'sugar': {
         ...             'hosts': 'localhost',
-        ...             'batch system': 'slurm'
+        ...             'job runner': 'slurm'
         ...         }
         ... }
         >>> job = {'batch system': 'slurm'}
@@ -285,9 +285,9 @@ def platform_from_job_info(platforms, job, remote):
 
     # These settings are removed from the incoming dictionaries for special
     # handling later - we want more than a simple match:
-    #   - In the case of host we also want a regex match to the platform name
-    #   - In the case of batch system we want to match the name of the system
-    #     to a platform when host is localhost.
+    #   - In the case of "host" we also want a regex match to the platform name
+    #   - In the case of "batch system" we want to match the name of the
+    #     system/job runner to a platform when host is localhost.
     if 'host' in remote.keys() and remote['host']:
         task_host = remote.pop('host')
     else:
@@ -324,7 +324,7 @@ def platform_from_job_info(platforms, job, remote):
         elif (
             'hosts' in platform_spec.keys() and
             task_host in platform_spec['hosts'] and
-            task_batch_system == platform_spec['batch system']
+            task_batch_system == platform_spec['job runner']
         ):
             # If we have localhost with a non-background batch system we
             # use the batch system to give a sensible guess at the platform
@@ -332,7 +332,7 @@ def platform_from_job_info(platforms, job, remote):
 
         elif (
                 re.fullmatch(platform_name, task_host) and
-                task_batch_system == platform_spec['batch system']
+                task_batch_system == platform_spec['job runner']
         ):
             return task_host
 

@@ -1001,7 +1001,7 @@ class TaskJobManager:
         itask.summary['platforms_used'][
             itask.submit_num] = itask.platform['name']
 
-        itask.summary['batch_sys_name'] = itask.platform['batch system']
+        itask.summary['batch_sys_name'] = itask.platform['job runner']
         try:
             itask.summary[self.KEY_EXECUTE_TIME_LIMIT] = float(
                 rtconfig['execution time limit'])
@@ -1017,9 +1017,9 @@ class TaskJobManager:
         job_file_path = get_remote_suite_run_job_dir(
             itask.platform, suite, job_d, JOB_LOG_JOB)
         return {
-            'batch_system_name': itask.platform['batch system'],
+            'batch_system_name': itask.platform['job runner'],
             'batch_submit_command_template': (
-                itask.platform['batch submit command template']
+                itask.platform['job runner command template']
             ),
             'dependencies': itask.state.get_resolved_dependencies(),
             'directives': rtconfig['directives'],
