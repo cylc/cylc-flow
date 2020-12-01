@@ -1,14 +1,12 @@
 #!jinja2
 # simple generic handler in the suite bin dir:
-{% set HANDLER = "handler.sh" %}
 {% set EVNTLOG = "$CYLC_SUITE_LOG_DIR/events.log" %}
+{% set HANDLER = "EVNTLOG={0} handler.sh".format(EVNTLOG) %}
 
 [meta]
     title = "test all event handlers"
 
 [scheduler]
-    [[environment]]
-        EVNTLOG = {{ EVNTLOG }}
     [[events]]
         abort on stalled = True
         abort on inactivity = True

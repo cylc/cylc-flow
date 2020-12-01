@@ -511,8 +511,8 @@ class Scheduler:
         holdcp = None
         if self.options.holdcp:
             holdcp = self.options.holdcp
-        elif self.config.cfg['scheduling']['hold after point']:
-            holdcp = self.config.cfg['scheduling']['hold after point']
+        elif self.config.cfg['scheduling']['hold after cycle point']:
+            holdcp = self.config.cfg['scheduling']['hold after cycle point']
         if holdcp is not None:
             self.hold_suite(get_point(holdcp))
         if self.options.hold_start:

@@ -75,7 +75,7 @@
         <RegExpr attribute='Keyword' String=' inactivity handler '/>
         <RegExpr attribute='Keyword' String=' inactivity '/>
         <RegExpr attribute='Keyword' String=' host '/>
-        <RegExpr attribute='Keyword' String=' hold after point '/>
+        <RegExpr attribute='Keyword' String=' hold after cycle point '/>
         <RegExpr attribute='Keyword' String=' handlers '/>
         <RegExpr attribute='Keyword' String=' handler retry delays '/>
         <RegExpr attribute='Keyword' String=' handler events '/>

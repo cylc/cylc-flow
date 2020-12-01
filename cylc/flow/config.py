@@ -1498,16 +1498,9 @@ class SuiteConfig:
         os.environ['CYLC_SUITE_FINAL_CYCLE_POINT'] = str(self.final_point)
         os.environ['CYLC_CYCLING_MODE'] = self.cfg['scheduling'][
             'cycling mode']
-        #     (global config auto expands environment variables in local paths)
-        cenv = self.cfg['scheduler']['environment'].copy()
-        for var, val in cenv.items():
-            cenv[var] = os.path.expandvars(val)
-        #     path to suite bin directory for suite and event handlers
-        cenv['PATH'] = os.pathsep.join([
+        # Add suite bin directory to PATH for suite and event handlers
+        os.environ['PATH'] = os.pathsep.join([
             os.path.join(self.fdir, 'bin'), os.environ['PATH']])
-        #     and to suite event handlers in this process.
-        for var, val in cenv.items():
-            os.environ[var] = val
 
     def run_mode(self, *reqmodes):
         """Return the run mode.
