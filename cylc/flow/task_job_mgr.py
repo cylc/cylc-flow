@@ -943,9 +943,6 @@ class TaskJobManager:
             itask.submit_num] = itask.platform['name']
 
         itask.summary['batch_sys_name'] = itask.platform['batch system']
-        for name in rtconfig['extra log files']:
-            itask.summary['logfiles'].append(
-                os.path.expanduser(os.path.expandvars(name)))
         try:
             batch_sys_conf = self.task_events_mgr.get_host_conf(
                 itask, 'batch systems')[itask.summary['batch_sys_name']]

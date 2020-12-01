@@ -8,7 +8,6 @@
     pre-script = 
     script = 
     post-script = 
-    extra log files = 
     work sub-directory = 
     [[[meta]]]
         title = 
@@ -86,7 +85,6 @@
     exit-script = 
     pre-script = 
     post-script = 
-    extra log files = 
     work sub-directory = 
     [[[meta]]]
         title = 
@@ -164,7 +162,6 @@
     exit-script = 
     pre-script = 
     post-script = 
-    extra log files = 
     work sub-directory = 
     [[[meta]]]
         title = 
@@ -242,7 +239,6 @@
     pre-script = 
     script = 
     post-script = 
-    extra log files = 
     work sub-directory = 
     [[[directives]]]
         job_type = serial
@@ -321,7 +317,6 @@
     pre-script = 
     script = 
     post-script = 
-    extra log files = 
     work sub-directory = 
     [[[directives]]]
         job_type = parallel
@@ -400,7 +395,6 @@
     exit-script = 
     pre-script = 
     post-script = 
-    extra log files = 
     work sub-directory = 
     [[[directives]]]
         job_type = serial
@@ -479,7 +473,6 @@
     exit-script = 
     pre-script = 
     post-script = 
-    extra log files = 
     work sub-directory = 
     [[[directives]]]
         job_type = serial
@@ -558,7 +551,6 @@
     exit-script = 
     pre-script = 
     post-script = 
-    extra log files = 
     work sub-directory = 
     [[[directives]]]
         job_type = parallel
@@ -637,7 +629,6 @@
     exit-script = 
     pre-script = 
     post-script = 
-    extra log files = 
     work sub-directory = 
     [[[directives]]]
         job_type = parallel
@@ -716,7 +707,6 @@
     exit-script = 
     pre-script = 
     post-script = 
-    extra log files = 
     work sub-directory = 
     [[[directives]]]
         job_type = serial
@@ -795,7 +785,6 @@
     exit-script = 
     pre-script = 
     post-script = 
-    extra log files = 
     work sub-directory = 
     [[[directives]]]
         job_type = serial
@@ -874,7 +863,6 @@
     exit-script = 
     pre-script = 
     post-script = 
-    extra log files = 
     work sub-directory = 
     [[[directives]]]
         job_type = parallel
@@ -953,7 +941,6 @@
     exit-script = 
     pre-script = 
     post-script = 
-    extra log files = 
     work sub-directory = 
     [[[directives]]]
         job_type = parallel

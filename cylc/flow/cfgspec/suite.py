@@ -778,17 +778,7 @@ with Conf(
                 * :cylc:conf:`[..]exit-script`
 
             ''')
-            Conf('extra log files', VDR.V_STRING_LIST, desc='''
-                A list of user-defined log files associated with a task. Log
-                files must reside in the job log directory
-                ``$CYLC_TASK_LOG_DIR`` and ideally should be named using the
-                ``$CYLC_TASK_LOG_ROOT`` prefix (see :ref:`Task Job Script
-                Variables`).
 
-                Example:
-
-                   ``job.custom-log-name``
-            ''')
             Conf('work sub-directory', VDR.V_STRING, desc='''
                 Task job scripts are executed from within *work directories*
                 created automatically under the suite run directory. A task
@@ -1324,8 +1314,9 @@ def upg(cfg, descr):
     u.obsolete(
         '8.0.0',
         ['cylc', 'health check interval'])
-    u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'shell'])
     u.obsolete('8.0.0', ['runtime', '__MANY__', 'events', 'mail retry delays'])
+    u.obsolete('8.0.0', ['runtime', '__MANY__', 'extra log files'])
+    u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'shell'])
     u.obsolete('8.0.0', ['cylc', 'abort if any task fails'])
     u.obsolete('8.0.0', ['cylc', 'events', 'abort if any task fails'])
     u.obsolete('8.0.0', ['cylc', 'events', 'mail retry delays'])

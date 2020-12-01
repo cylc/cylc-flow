@@ -24,8 +24,6 @@
         """
 [runtime]
     [[root]]
-        # make the event handler log available to gcylc:
-        extra log files = {{ EVNTLOG }}
         script = "true" # fast
 
     [[prep]]
