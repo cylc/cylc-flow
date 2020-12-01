@@ -24,7 +24,6 @@
         """
 [runtime]
     [[root]]
-        # make the event handler log available to gcylc:
         script = "true" # fast
 
     [[prep]]
