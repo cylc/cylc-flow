@@ -32,6 +32,11 @@ templates in [runtime][X][environment].
 
 ### Fixes
 
+[#3948](https://github.com/cylc/cylc-flow/pull/3948) - Only write task
+event timers to the database when they have changed (reverts behaviour
+change in 7.8.6). This corrects last updated timestamps in cylc review and
+reduces filesystem load.
+
 [#3759](https://github.com/cylc/cylc-flow/pull/3754) - Fix a bug in the GUI
 tree view that could cause tasks to be sorted in the wrong order.
 
