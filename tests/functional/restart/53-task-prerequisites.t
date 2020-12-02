@@ -15,9 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test saving and loading of cycle point time zone to/from database on a run
-# followed by a restart. Important for restarting a suite after a system
-# time zone change.
+# Test custom task prerequisites and the task_prerequisites DB table work as
+# expected
 
 . "$(dirname "$0")/test_header"
 
