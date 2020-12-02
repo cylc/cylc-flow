@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Tests for "cylc.flow.pathutil"."""
 
-from tempfile import TemporaryDirectory
 from unittest import TestCase
 from unittest.mock import patch, MagicMock, call
 
@@ -38,8 +37,10 @@ from cylc.flow.pathutil import (
     get_suite_run_config_log_dir,
     get_suite_run_share_dir,
     get_suite_run_work_dir,
-    get_suite_test_log_name, make_localhost_symlinks,
-    make_suite_run_tree, make_symlink,
+    get_suite_test_log_name,
+    make_localhost_symlinks,
+    make_suite_run_tree,
+    remove_dir
 )
 
 
@@ -288,6 +289,83 @@ def test_incorrect_environment_variables_raise_error(
                        " invalid environment variable. Please check "
                        "configuration."):
         make_localhost_symlinks('test_workflow')
+
+
+@pytest.mark.parametrize(
+    'filetype, expected_err',
+    [('dir', None),
+     ('file', NotADirectoryError),
+     (None, FileNotFoundError)]
+)
+def test_remove_dir(filetype, expected_err, tmp_path):
+    """Test that remove_dir() can delete nested dirs and handle bad paths."""
+    test_path = tmp_path.joinpath('foo/bar')
+    if filetype == 'dir':
+        # Test removal of sub directories too
+        sub_dir = test_path.joinpath('baz')
+        sub_dir.mkdir(parents=True)
+        sub_dir_file = sub_dir.joinpath('meow')
+        sub_dir_file.touch()
+    elif filetype == 'file':
+        test_path = tmp_path.joinpath('meow')
+        test_path.touch()
+
+    if expected_err:
+        with pytest.raises(expected_err):
+            remove_dir(test_path)
+    else:
+        remove_dir(test_path)
+        assert test_path.exists() is False
+        assert test_path.is_symlink() is False
+
+
+@pytest.mark.parametrize(
+    'target, expected_err',
+    [('dir', None),
+     ('file', NotADirectoryError),
+     (None, None)]
+)
+def test_remove_dir_symlinks(target, expected_err, tmp_path):
+    """Test that remove_dir() can delete symlinks, including the target."""
+    target_path = tmp_path.joinpath('x/y')
+    target_path.mkdir(parents=True)
+
+    tmp_path.joinpath('a').mkdir()
+    symlink_path = tmp_path.joinpath('a/b')
+
+    if target == 'dir':
+        # Add a file into the the target dir to check it removes that ok
+        target_path.joinpath('meow').touch()
+        symlink_path.symlink_to(target_path)
+    elif target == 'file':
+        target_path = target_path.joinpath('meow')
+        target_path.touch()
+        symlink_path.symlink_to(target_path)
+    elif target is None:
+        symlink_path.symlink_to(target_path)
+        # Break symlink
+        target_path.rmdir()
+
+    if expected_err:
+        with pytest.raises(expected_err):
+            remove_dir(symlink_path)
+    else:
+        remove_dir(symlink_path)
+        for path in [symlink_path, target_path]:
+            assert path.exists() is False
+            assert path.is_symlink() is False
+
+
+def test_remove_dir_relative(tmp_path):
+    """Test that you cannot use remove_dir() on a relative path.
+
+    When removing a path, we want to be absolute-ly sure where it is!
+    """
+    # cd to temp dir in case we accidentally succeed in deleting the path
+    os.chdir(tmp_path)
+    with pytest.raises(ValueError) as cm:
+        remove_dir('foo/bar')
+    assert 'Path must be absolute' in str(cm.value)
 
 
 if __name__ == '__main__':

@@ -122,9 +122,13 @@ hierarchy and ability to set site config directory.
 [#3883](https://github.com/cylc/cylc-flow/pull/3883) - Added a new workflow
 config option `[scheduling]stop after cycle point`.
 
+[#3961](https://github.com/cylc/cylc-flow/pull/3961) - Added a new command:
+`cylc clean`.
+
 ### Fixes
 
-[#3917](https://github.com/cylc/cylc-flow/pull/3917) - Fix a bug that caused one of the hostname resolution tests to fail in certain environments.
+[#3917](https://github.com/cylc/cylc-flow/pull/3917) - Fix a bug that caused
+one of the hostname resolution tests to fail in certain environments.
 
 [#3879](https://github.com/cylc/cylc-flow/pull/3879) - Removed Google
 Groups e-mail from pip packaging metadata. Users browsing PYPI will have
