@@ -59,6 +59,9 @@ symlink to `DIR` (see #3884).
 
 ### Enhancements
 
+[#3791](https://github.com/cylc/cylc-flow/pull/3791) - Support Slurm
+heterogeneous jobs with a special directive prefix.
+
 [#3811](https://github.com/cylc/cylc-flow/pull/3811) - Move from cycle based
 to `n` distance dependency graph window node generation and pruning of the
 data-store (API/visual backing data). Ability to modify distance of live
