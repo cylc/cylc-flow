@@ -19,8 +19,9 @@
 #     This test requires an e.g. [test battery][batch systems][loadleveler]host
 #     entry in site/user config in order to run 'loadleveler' tests (same for
 #     slurm, pbs, etc), otherwise it will be bypassed.
-BATCH_SYS_NAME="$(sed 's/.*\/...\(.*\)\.t/\1/' <<< "$0")"
-export REQUIRE_PLATFORM="batch:$BATCH_SYS_NAME comms:tcp"
+BATCH_SYS="${0##*\/??-}"
+BATCH_SYS_NAME="${BATCH_SYS%%.t}"
+export REQUIRE_PLATFORM="batch:${BATCH_SYS_NAME} comms:tcp"
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 2
