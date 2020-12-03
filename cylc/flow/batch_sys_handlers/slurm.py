@@ -66,7 +66,9 @@ that distinguish repeated directives from one another:
            [[[directives]]]
                --account = QXZ5W2
                hetjob_0_--mem = 1G  # first prefix must be "0"
+               hetjob_0_--nodes = 3
                hetjob_1_--mem = 2G
+               hetjob_0_--nodes = 6
 
 The resulting formatted directives are:
 
@@ -76,8 +78,10 @@ The resulting formatted directives are:
    #SBATCH --time=60:00
    #SBATCH --account=QXZ5W2
    #SBATCH --mem=1G
+   #SBATCH --nodes=3
    #SBATCH hetjob
    #SBATCH --mem=2G
+   #SBATCH --nodes=6
 
 .. note::
 
