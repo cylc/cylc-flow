@@ -37,6 +37,7 @@ from jinja2 import (
 
 from cylc.flow import LOG
 from cylc.flow.parsec.exceptions import Jinja2Error
+from cylc.flow.templatevars import listrange
 
 TRACEBACK_LINENO = re.compile(r'(\s+)?File "<template>", line (\d+)')
 CONTEXT_LINES = 3
@@ -182,6 +183,7 @@ def jinja2environment(dir_=None):
     env.globals['environ'] = os.environ
     env.globals['raise'] = raise_helper
     env.globals['assert'] = assert_helper
+    env.globals['listrange'] = listrange
     return env
 
 

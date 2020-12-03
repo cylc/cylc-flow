@@ -30,6 +30,7 @@ from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import HostSelectException
 from cylc.flow.hostuserutil import get_fqdn_by_host, is_remote_host
 from cylc.flow.remote import _remote_cylc_cmd, run_cmd
+from cylc.flow.safe_eval import SafeVisitor
 from cylc.flow.terminal import parse_dirty_json
 
 
@@ -318,14 +319,12 @@ def _filter_by_ranking(hosts, rankings, results, data=None):
     )
 
 
-class SimpleVisitor(ast.NodeVisitor):
-    """Abstract syntax tree node visitor for simple safe operations."""
+class HostSelectVisitor(SafeVisitor):
+    """Abstract syntax tree node visitor for simple, safe expressions.
 
-    def visit(self, node):
-        if not isinstance(node, self.whitelist):
-            # permit only whitelisted operations
-            raise ValueError(type(node))
-        return super().visit(node)
+    Permits arithmetic, comparisons, literals, etc.
+
+    """
 
     whitelist = (
         ast.Expression,
@@ -372,7 +371,7 @@ def _simple_eval(expr, **variables):
     """
     try:
         node = ast.parse(expr.strip(), mode='eval')
-        SimpleVisitor().visit(node)
+        HostSelectVisitor().visit(node)
         # acceptable use of eval due to restricted language features
         return eval(  # nosec
             compile(node, '<string>', 'eval'),
