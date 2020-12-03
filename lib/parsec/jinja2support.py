@@ -34,6 +34,21 @@ from jinja2 import (
 from parsec import LOG
 
 
+def listrange(*args):
+    """Return a range as a list.
+
+    Python equivalent to the Jinja2:
+        range() | list
+
+        >>> listrange(5)
+        [0, 1, 2, 3, 4]
+        >>> listrange(0, 5, 2)
+        [0, 2, 4]
+
+    """
+    return list(range(*args))
+
+
 class PyModuleLoader(BaseLoader):
     """Load python module as Jinja2 template.
 
@@ -130,6 +145,7 @@ def jinja2environment(dir_=None):
     env.globals['environ'] = os.environ
     env.globals['raise'] = raise_helper
     env.globals['assert'] = assert_helper
+    env.globals['listrange'] = listrange
     return env
 
 

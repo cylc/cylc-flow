@@ -6,6 +6,8 @@
 
 {{ assert(ANSWER | int == 42, 'Universal constant incorrectly set.') }}
 
+{{ assert(listrange(2) == [0, 1], 'issue with listrange') }}
+
 [scheduling]
     [[dependencies]]
         graph = foo
