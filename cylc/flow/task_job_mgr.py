@@ -713,8 +713,8 @@ class TaskJobManager:
             retry = False
 
         if retry:
-            if rtconfig['job']['submission retry delays']:
-                submit_delays = rtconfig['job']['submission retry delays']
+            if rtconfig['submission retry delays']:
+                submit_delays = rtconfig['submission retry delays']
             else:
                 submit_delays = itask.platform['submission retry delays']
             # TODO: same for execution delays?
@@ -727,7 +727,7 @@ class TaskJobManager:
                     ),
                     (
                         TimerFlags.EXECUTION_RETRY,
-                        rtconfig['job']['execution retry delays']
+                        rtconfig['execution retry delays']
                     )
             ]:
                 if delays is None:
@@ -950,7 +950,7 @@ class TaskJobManager:
             batch_sys_conf = {}
         try:
             itask.summary[self.KEY_EXECUTE_TIME_LIMIT] = float(
-                rtconfig['job']['execution time limit'])
+                rtconfig['execution time limit'])
         except TypeError:
             pass
 

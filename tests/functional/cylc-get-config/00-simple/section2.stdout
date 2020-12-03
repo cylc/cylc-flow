@@ -9,6 +9,11 @@
     script = 
     post-script = 
     work sub-directory = 
+    execution polling intervals = 
+    execution retry delays = 
+    execution time limit = 
+    submission polling intervals = 
+    submission retry delays = 
     [[[meta]]]
         title = 
         description = 
@@ -26,11 +31,6 @@
     [[[job]]]
         batch system = 
         batch submit command template = 
-        execution polling intervals = 
-        execution retry delays = 
-        execution time limit = 
-        submission polling intervals = 
-        submission retry delays = 
     [[[remote]]]
         host = 
         owner = 
@@ -86,6 +86,11 @@
     pre-script = 
     post-script = 
     work sub-directory = 
+    execution polling intervals = 
+    execution retry delays = 
+    execution time limit = 
+    submission polling intervals = 
+    submission retry delays = 
     [[[meta]]]
         title = 
         description = 
@@ -103,11 +108,6 @@
     [[[job]]]
         batch system = 
         batch submit command template = 
-        execution polling intervals = 
-        execution retry delays = 
-        execution time limit = 
-        submission polling intervals = 
-        submission retry delays = 
     [[[remote]]]
         host = 
         owner = 
@@ -163,6 +163,11 @@
     pre-script = 
     post-script = 
     work sub-directory = 
+    execution polling intervals = 
+    execution retry delays = 
+    execution time limit = 
+    submission polling intervals = 
+    submission retry delays = 
     [[[meta]]]
         title = 
         description = 
@@ -180,11 +185,6 @@
     [[[job]]]
         batch system = 
         batch submit command template = 
-        execution polling intervals = 
-        execution retry delays = 
-        execution time limit = 
-        submission polling intervals = 
-        submission retry delays = 
     [[[remote]]]
         host = 
         owner = 
@@ -240,6 +240,11 @@
     script = 
     post-script = 
     work sub-directory = 
+    execution polling intervals = 
+    execution retry delays = 
+    execution time limit = 
+    submission polling intervals = 
+    submission retry delays = 
     [[[directives]]]
         job_type = serial
     [[[meta]]]
@@ -259,11 +264,6 @@
     [[[job]]]
         batch system = 
         batch submit command template = 
-        execution polling intervals = 
-        execution retry delays = 
-        execution time limit = 
-        submission polling intervals = 
-        submission retry delays = 
     [[[remote]]]
         host = 
         owner = 
@@ -318,6 +318,11 @@
     script = 
     post-script = 
     work sub-directory = 
+    execution polling intervals = 
+    execution retry delays = 
+    execution time limit = 
+    submission polling intervals = 
+    submission retry delays = 
     [[[directives]]]
         job_type = parallel
     [[[meta]]]
@@ -337,11 +342,6 @@
     [[[job]]]
         batch system = 
         batch submit command template = 
-        execution polling intervals = 
-        execution retry delays = 
-        execution time limit = 
-        submission polling intervals = 
-        submission retry delays = 
     [[[remote]]]
         host = 
         owner = 
@@ -396,6 +396,11 @@
     pre-script = 
     post-script = 
     work sub-directory = 
+    execution polling intervals = 
+    execution retry delays = 
+    execution time limit = 
+    submission polling intervals = 
+    submission retry delays = 
     [[[directives]]]
         job_type = serial
     [[[meta]]]
@@ -415,11 +420,6 @@
     [[[job]]]
         batch system = 
         batch submit command template = 
-        execution polling intervals = 
-        execution retry delays = 
-        execution time limit = 
-        submission polling intervals = 
-        submission retry delays = 
     [[[remote]]]
         host = 
         owner = 
@@ -474,6 +474,11 @@
     pre-script = 
     post-script = 
     work sub-directory = 
+    execution polling intervals = 
+    execution retry delays = 
+    execution time limit = 
+    submission polling intervals = 
+    submission retry delays = 
     [[[directives]]]
         job_type = serial
     [[[meta]]]
@@ -493,11 +498,6 @@
     [[[job]]]
         batch system = 
         batch submit command template = 
-        execution polling intervals = 
-        execution retry delays = 
-        execution time limit = 
-        submission polling intervals = 
-        submission retry delays = 
     [[[remote]]]
         host = 
         owner = 
@@ -552,6 +552,11 @@
     pre-script = 
     post-script = 
     work sub-directory = 
+    execution polling intervals = 
+    execution retry delays = 
+    execution time limit = 
+    submission polling intervals = 
+    submission retry delays = 
     [[[directives]]]
         job_type = parallel
     [[[meta]]]
@@ -571,11 +576,6 @@
     [[[job]]]
         batch system = 
         batch submit command template = 
-        execution polling intervals = 
-        execution retry delays = 
-        execution time limit = 
-        submission polling intervals = 
-        submission retry delays = 
     [[[remote]]]
         host = 
         owner = 
@@ -630,6 +630,11 @@
     pre-script = 
     post-script = 
     work sub-directory = 
+    execution polling intervals = 
+    execution retry delays = 
+    execution time limit = 
+    submission polling intervals = 
+    submission retry delays = 
     [[[directives]]]
         job_type = parallel
     [[[meta]]]
@@ -649,11 +654,6 @@
     [[[job]]]
         batch system = 
         batch submit command template = 
-        execution polling intervals = 
-        execution retry delays = 
-        execution time limit = 
-        submission polling intervals = 
-        submission retry delays = 
     [[[remote]]]
         host = 
         owner = 
@@ -708,6 +708,11 @@
     pre-script = 
     post-script = 
     work sub-directory = 
+    execution polling intervals = 
+    execution retry delays = 
+    execution time limit = 
+    submission polling intervals = 
+    submission retry delays = 
     [[[directives]]]
         job_type = serial
     [[[meta]]]
@@ -727,11 +732,6 @@
     [[[job]]]
         batch system = 
         batch submit command template = 
-        execution polling intervals = 
-        execution retry delays = 
-        execution time limit = 
-        submission polling intervals = 
-        submission retry delays = 
     [[[remote]]]
         host = 
         owner = 
@@ -786,6 +786,11 @@
     pre-script = 
     post-script = 
     work sub-directory = 
+    execution polling intervals = 
+    execution retry delays = 
+    execution time limit = 
+    submission polling intervals = 
+    submission retry delays = 
     [[[directives]]]
         job_type = serial
     [[[meta]]]
@@ -805,11 +810,6 @@
     [[[job]]]
         batch system = 
         batch submit command template = 
-        execution polling intervals = 
-        execution retry delays = 
-        execution time limit = 
-        submission polling intervals = 
-        submission retry delays = 
     [[[remote]]]
         host = 
         owner = 
@@ -864,6 +864,11 @@
     pre-script = 
     post-script = 
     work sub-directory = 
+    execution polling intervals = 
+    execution retry delays = 
+    execution time limit = 
+    submission polling intervals = 
+    submission retry delays = 
     [[[directives]]]
         job_type = parallel
     [[[meta]]]
@@ -883,11 +888,6 @@
     [[[job]]]
         batch system = 
         batch submit command template = 
-        execution polling intervals = 
-        execution retry delays = 
-        execution time limit = 
-        submission polling intervals = 
-        submission retry delays = 
     [[[remote]]]
         host = 
         owner = 
@@ -942,6 +942,11 @@
     pre-script = 
     post-script = 
     work sub-directory = 
+    execution polling intervals = 
+    execution retry delays = 
+    execution time limit = 
+    submission polling intervals = 
+    submission retry delays = 
     [[[directives]]]
         job_type = parallel
     [[[meta]]]
@@ -961,11 +966,6 @@
     [[[job]]]
         batch system = 
         batch submit command template = 
-        execution polling intervals = 
-        execution retry delays = 
-        execution time limit = 
-        submission polling intervals = 
-        submission retry delays = 
     [[[remote]]]
         host = 
         owner = 

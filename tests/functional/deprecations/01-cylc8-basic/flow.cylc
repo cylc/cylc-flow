@@ -41,6 +41,11 @@
         extra log files =
         [[[job]]]
             shell = fish
+            execution polling intervals =
+            execution retry delays =
+            execution time limit =
+            submission polling intervals =
+            submission retry delays =
         [[[events]]]
             mail from =
             mail to =

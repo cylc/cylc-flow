@@ -1318,7 +1318,7 @@ class SuiteConfig:
         for tdef in self.taskdefs.values():
             # Compute simulated run time by scaling the execution limit.
             rtc = tdef.rtconfig
-            limit = rtc['job']['execution time limit']
+            limit = rtc['execution time limit']
             speedup = rtc['simulation']['speedup factor']
             if limit and speedup:
                 sleep_sec = (DurationParser().parse(
@@ -1327,7 +1327,7 @@ class SuiteConfig:
                 sleep_sec = DurationParser().parse(
                     str(rtc['simulation']['default run length'])
                 ).get_seconds()
-            rtc['job']['execution time limit'] = (
+            rtc['execution time limit'] = (
                 sleep_sec + DurationParser().parse(str(
                     rtc['simulation']['time limit buffer'])).get_seconds()
             )

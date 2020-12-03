@@ -155,7 +155,7 @@ def task_mean_elapsed_time(tdef):
     """Calculate task mean elapsed time."""
     if tdef.elapsed_times:
         return sum(tdef.elapsed_times) / len(tdef.elapsed_times)
-    return tdef.rtconfig['job'].get('execution time limit', None)
+    return tdef.rtconfig.get('execution time limit', None)
 
 
 def apply_delta(key, delta, data):
