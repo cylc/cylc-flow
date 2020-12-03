@@ -26,6 +26,10 @@ management and does not bundle Jinja2.
 
 ### Enhancements
 
+[#3970](https://github.com/cylc/cylc-flow/pull/3970) - Support Slurm
+heteregeneous jobs through an artificial "hetjob_<N>_" or "packjob_<N>_"
+directive prefix.
+
 [#3784](https://github.com/cylc/cylc-flow/pull/3784) - Deprecate the
 [runtime][X][parameter environment templates] section and instead allow
 templates in [runtime][X][environment].

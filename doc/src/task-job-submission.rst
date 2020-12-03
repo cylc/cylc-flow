@@ -278,6 +278,44 @@ directive explicitly if ``execution time limit`` is specified.
 Otherwise, the execution time limit known by the suite may be out of sync with
 what is submitted to the batch system.
 
+Cylc supports heterogeneous Slurm jobs via special numbered directive prefixes
+that distinguish repeated directives from one another:
+
+.. code-block:: cylc
+
+   [runtime]
+       # run two heterogenous job components:
+       script = srun sleep 10 : sleep 30
+       [[my_task]]
+           [[[job]]]
+               batch system = slurm
+               execution time limit = PT1H
+           [[[directives]]]
+               --account = QXZ5W2
+               hetjob_0_--mem = 1G  # first prefix must be "0"
+               hetjob_0_--nodes = 3
+               hetjob_1_--mem = 2G
+               hetjob_1_--nodes = 6
+
+The resulting formatted directives are:
+
+.. code-block:: bash
+
+   #!/bin/bash
+   #SBATCH --time=60:00
+   #SBATCH --account=QXZ5W2
+   #SBATCH --mem=1G
+   #SBATCH --nodes=3
+   #SBATCH hetjob
+   #SBATCH --mem=2G
+   #SBATCH --nodes=6
+
+
+.. note::
+
+   For older Slurm versions with *packjob* instead of *hetjob*, use
+   ``batch system = slurm_packjob`` and directive prefixes ``packjob_0_`` etc.
+
 
 Default Directives Provided
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
