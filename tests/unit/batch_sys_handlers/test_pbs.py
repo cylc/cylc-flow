@@ -24,7 +24,6 @@ from cylc.flow.batch_sys_handlers.pbs import BATCH_SYS_HANDLER
     [
         (  # basic
             {
-                'batch_system_conf': {},
                 'directives': {},
                 'execution_time_limit': 180,
                 'job_file_path': '$HOME/cylc-run/chop/log/job/1/axe/01/job',
@@ -44,7 +43,6 @@ from cylc.flow.batch_sys_handlers.pbs import BATCH_SYS_HANDLER
         ),
         (  # super short job name length maximum
             {
-                'batch_system_conf': {'job name length maximum': 6},
                 'directives': {},
                 'execution_time_limit': 180,
                 'job_file_path': '$HOME/cylc-run/chop/log/job/1/axe/01/job',
@@ -64,7 +62,6 @@ from cylc.flow.batch_sys_handlers.pbs import BATCH_SYS_HANDLER
         ),
         (  # some useful directives
             {
-                'batch_system_conf': {},
                 'directives': {
                     '-q': 'forever',
                     '-V': '',

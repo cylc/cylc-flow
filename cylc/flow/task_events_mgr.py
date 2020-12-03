@@ -252,19 +252,27 @@ class TaskEventsManager():
         else:
             return can_poll
 
-    def get_host_conf(self, itask, key, default=None, skey="remote"):
-        """Return a host setting from suite then global configuration."""
+    def _get_remote_conf(self, itask, key):
+        """Get deprecated "[remote]" items that default to platforms."""
         overrides = self.broadcast_mgr.get_broadcast(itask.identity)
-        if skey in overrides and overrides[skey].get(key) is not None:
-            ret = overrides[skey][key]
-        elif itask.tdef.rtconfig[skey].get(key) not in (None, []):
-            ret = itask.tdef.rtconfig[skey][key]
-        else:
-            try:
-                ret = itask.platform[key]
-            except (KeyError, ItemNotFoundError):
-                ret = default
-        return ret
+        SKEY = 'remote'
+        if SKEY not in overrides:
+            overrides[SKEY] = {}
+        return (
+            overrides[SKEY].get(key) or
+            itask.tdef.rtconfig[SKEY][key] or
+            itask.platform[key]
+        )
+
+    def _get_suite_platforms_conf(self, itask, key, default):
+        """Return top level [runtime] items that default to platforms."""
+        overrides = self.broadcast_mgr.get_broadcast(itask.identity)
+        return (
+            overrides.get(key) or
+            itask.tdef.rtconfig[key] or
+            itask.platform[key] or
+            default
+        )
 
     def process_events(self, schd_ctx):
         """Process task events that were created by "setup_event_handlers".
@@ -1001,10 +1009,10 @@ class TaskEventsManager():
         host = get_host_from_platform(itask.platform)
         if (event not in events or
                 not is_remote_host(host) or
-                not self.get_host_conf(itask, "retrieve job logs") or
+                not self._get_remote_conf(itask, "retrieve job logs") or
                 id_key in self._event_timers):
             return
-        retry_delays = self.get_host_conf(
+        retry_delays = self._get_remote_conf(
             itask, "retrieve job logs retry delays")
         if not retry_delays:
             retry_delays = [0]
@@ -1015,7 +1023,7 @@ class TaskEventsManager():
                     self.HANDLER_JOB_LOGS_RETRIEVE,  # key
                     self.HANDLER_JOB_LOGS_RETRIEVE,  # ctx_type
                     itask.platform['name'],
-                    self.get_host_conf(itask, "retrieve job logs max size"),
+                    self._get_remote_conf(itask, "retrieve job logs max size"),
                 ),
                 retry_delays
             )
@@ -1163,9 +1171,9 @@ class TaskEventsManager():
             timeref = itask.summary['started_time']
             timeout_key = 'execution timeout'
             timeout = self._get_events_conf(itask, timeout_key)
-            delays = list(self.get_host_conf(
-                itask, 'execution polling intervals', skey='job',
-                default=[900]))  # Default 15 minute intervals
+            delays = list(self._get_suite_platforms_conf(
+                itask, 'execution polling intervals',
+                default=[900]))  # default 15 minute intervals
             if itask.summary[self.KEY_EXECUTE_TIME_LIMIT]:
                 time_limit = itask.summary[self.KEY_EXECUTE_TIME_LIMIT]
                 time_limit_delays = itask.platform.get(
@@ -1186,9 +1194,9 @@ class TaskEventsManager():
             timeref = itask.summary['submitted_time']
             timeout_key = 'submission timeout'
             timeout = self._get_events_conf(itask, timeout_key)
-            delays = list(self.get_host_conf(
-                itask, 'submission polling intervals', skey='job',
-                default=[900]))  # Default 15 minute intervals
+            delays = list(self._get_suite_platforms_conf(
+                itask, 'submission polling intervals',
+                default=[900]))
         try:
             itask.timeout = timeref + float(timeout)
             timeout_str = intvl_as_str(timeout)
