@@ -58,7 +58,8 @@ home = os.path.expandvars('$HOME/')
     ],
 )
 def test_format_directives(job_conf, lines):
-    assert sorted(BATCH_SYS_HANDLER.format_directives(job_conf)) == sorted(lines)
+    assert sorted(
+        BATCH_SYS_HANDLER.format_directives(job_conf)) == sorted(lines)
 
 
 @pytest.mark.parametrize(
@@ -96,4 +97,5 @@ def test_get_poll_many_cmd(job_ids, cmd):
     ],
 )
 def test_filter_poll_many_output(job_ids, out):
-    assert sorted(BATCH_SYS_HANDLER.filter_poll_many_output(out)) == job_ids
+    assert sorted(
+        BATCH_SYS_HANDLER.filter_poll_many_output(out)) == job_ids

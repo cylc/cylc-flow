@@ -133,7 +133,8 @@ home = os.path.expandvars('$HOME/')
     ],
 )
 def test_format_directives(job_conf, lines):
-    assert sorted(BATCH_SYS_HANDLER.format_directives(job_conf)) == sorted(lines)
+    assert sorted(
+        BATCH_SYS_HANDLER.format_directives(job_conf)) == sorted(lines)
 
 
 @pytest.mark.parametrize(
