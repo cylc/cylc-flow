@@ -1,5 +1,3 @@
-#!/usr/bin/env python2
-
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
