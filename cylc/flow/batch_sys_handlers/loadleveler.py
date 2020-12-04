@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Submits task job scripts to loadleveler by the ``llsubmit`` command.
 
-.. cylc-scope:: flow.cylc[runtime][<namespace>][job]
+.. cylc-scope:: flow.cylc[runtime][<namespace>]
 
 Loadleveler directives can be provided in the flow.cylc file:
 

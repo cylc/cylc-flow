@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Submits task job scripts to the Moab workload manager with ``msub``.
 
-.. cylc-scope:: flow.cylc[runtime][<namespace>][job]
+.. cylc-scope:: flow.cylc[runtime][<namespace>]
 
 Moab directives can be provided in the flow.cylc file; the syntax is
 very similar to PBS:
