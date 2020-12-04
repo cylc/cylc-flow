@@ -4,73 +4,25 @@ Introduction: How Cylc Works
 ============================
 
 
-.. _SchedulingForecastSuites:
-
-Scheduling Forecast Suites
---------------------------
-
-Environmental forecasting suites generate forecast products from a
-potentially large group of interdependent scientific models and
-associated data processing tasks. They are constrained by availability
-of external driving data: typically one or more tasks will wait on real
-time observations and/or model data from an external system, and these
-will drive other downstream tasks, and so on. The dependency diagram for
-a single forecast cycle point in such a system is a *Directed Acyclic Graph*
-as shown in :numref:`fig-dep-one` (in our terminology, a
-*forecast cycle point* is comprised of all tasks with a common *cycle point*,
-which is the nominal analysis time or start time of the forecast
-models in the group). In real time operation processing will consist of
-a series of distinct forecast cycle points that are each initiated, after a
-gap, by arrival of the new cycle point's external driving data.
-
-From a job scheduling perspective task execution order in such a system
-must be carefully controlled in order to avoid dependency violations.
-Ideally, each task should be queued for execution at the instant its
-last prerequisite is satisfied; this is the best that can be done even
-if queued tasks are not able to execute immediately because of resource
-contention.
-
-
-.. _EcoConnect:
-
-EcoConnect
-----------
-
-Cylc was developed for the EcoConnect Forecasting System at NIWA
-(National Institute of Water and Atmospheric Research, New Zealand).
-EcoConnect takes real time atmospheric and stream flow observations, and
-operational global weather forecasts from the Met Office (UK), and uses
-these to drive global sea state and regional data assimilating weather
-models, which in turn drive regional sea state, storm surge, and
-catchment river models, plus tide prediction, and a large number of
-associated data collection, quality control, preprocessing,
-post-processing, product generation, and archiving tasks [1]_.
-The global sea state forecast runs once daily. The regional
-weather forecast runs four times daily but
-it supplies surface winds and pressure to several downstream models that
-run only twice daily, and precipitation accumulations to catchment river
-models that run on an hourly cycle assimilating real time stream flow
-observations and using the most recently available regional weather
-forecast. EcoConnect runs on heterogeneous distributed hardware,
-including a massively parallel supercomputer and several Linux servers.
-
+**This section of the user guide is being rewritten for Cylc 8. For the moment
+we've removed some outdated information, leaving just the description of how
+Cylc manages cycling workflows.** For a more up-to-date description see
+references cited on the Cylc web site.
 
 Dependence Between Tasks
 ------------------------
-
 
 .. _IntracycleDependence:
 
 Intra-cycle Dependence
 ^^^^^^^^^^^^^^^^^^^^^^
 
-
-Most dependence between tasks applies within a single forecast cycle
-point. :numref:`fig-dep-one` shows the dependency diagram for a single
-forecast cycle point of a simple example suite of three forecast models
+Most dependence between tasks applies within a single cycle point.
+:numref:`fig-dep-one` shows the dependency diagram for a single
+cycle point of a simple example suite of three scientific models (say)
 (*a*, *b*, and *c*) and three post processing or product generation
 tasks (*d*, *e* and *f*). A scheduler capable of handling this
-must manage, within a single forecast cycle point, multiple parallel
+must manage, within a single cycle point, multiple parallel
 streams of execution that branch when one task generates output for
 several downstream tasks, and merge when one task takes input from several
 upstream tasks.
@@ -81,11 +33,11 @@ upstream tasks.
    :align: center
 
    A single cycle point dependency graph for a simple suite.
-   The dependency graph for a single forecast cycle point of a simple
-   example suite. Tasks *a*, *b*, and *c* represent forecast models,
+   The dependency graph for a single cycle point of a simple
+   example suite. Tasks *a*, *b*, and *c* represent models,
    *d*, *e* and *f* are post processing or product generation
    tasks, and *x* represents external data that the upstream
-   forecast model depends on.
+   model depends on.
 
 .. _fig-time-one:
 
@@ -139,12 +91,12 @@ diagrams.
 Now the question arises, what happens if the external driving data for
 upcoming cycle points is available in advance, as it would be after a
 significant delay in operations, or when running a historical case
-study?  While the forecast model *a* appears to depend only on the
-external data *x* at this stage of the discussion, in fact it would
-typically also depend on its own previous instance for the model
-*background state* used in initializing the new forecast. Thus, as
-alluded to in :numref:`fig-dep-two-linked`, task *a* could in principle
-start as soon as its predecessor has finished. :numref:`fig-overlap`
+study?  While the model *a* appears to depend only on the
+external data *x*, in fact it could also depend on its own previous instance
+for the model *background state* used in initializing the new run (this is
+almost always the case for atmospheric models used in weather forecasting).
+Thus, as alluded to in :numref:`fig-dep-two-linked`, task *a* could in
+principle start as soon as its predecessor has finished. :numref:`fig-overlap`
 shows, however, that starting a whole new cycle point at this point is
 dangerous - it results in dependency violations in half of the tasks in
 the example suite. In fact the situation could be even worse than this
@@ -160,10 +112,10 @@ start the next cycle point early, as is illustrated in
 Inter-Cycle Dependence
 ^^^^^^^^^^^^^^^^^^^^^^
 
-Forecast models typically depend on their own most recent previous
+Wether forecast models typically depend on their own most recent previous
 forecast for background state or restart files of some kind (this is
 called *warm cycling*) but there can also be inter-cycle dependence
-between different tasks. In an atmospheric forecast analysis suite, for
+between other tasks. In an atmospheric forecast analysis suite, for
 instance, the weather model may generate background states for observation
 processing and data-assimilation tasks in the next cycle point as well as for
 the next forecast model run. In real time operation inter-cycle
@@ -204,9 +156,9 @@ contention or task failures) won't result in dependency violations.
 
    The complete multi-cycle-point dependency graph.
    The complete dependency graph for the example suite, assuming
-   the least possible inter-cycle dependence: the forecast models (*a*,
+   the least possible inter-cycle dependence: the models (*a*,
    *b*, and *c*) depend on their own previous instances. The dashed arrows
-   show connections to previous and subsequent forecast cycle points.
+   show connections to previous and subsequent cycle points.
 
 .. _fig-optimal-two:
 
@@ -235,7 +187,7 @@ with dependency violations.
 
    Comparison of job schedules after a delay. Job
    schedules for the example suite after a delay of almost one whole
-   forecast cycle point, when inter-cycle dependence is
+   cycle point, when inter-cycle dependence is
    taken into account (above the time axis), and when it is not
    (below the time axis). The colored lines indicate the time that
    each cycle point is delayed, and normal "caught up" cycle points
@@ -264,19 +216,19 @@ it is the only safe schedule possible *in general* when it is ignored.
 In the former case, even the cycle point immediately after the delay is hardly
 affected, and subsequent cycle points are all on time, whilst in the latter
 case it takes five full cycle points to catch up to normal real time
-operation [2]_.
+operation [1]_.
 
 Similarly, :numref:`fig-time-two` shows example suite job schedules
 for an historical case study, or when catching up after a very long
 delay; i.e. when the external driving data are available many cycle
-points in advance. Task *a*, which as the most upstream forecast
+points in advance. Task *a*, which as the most upstream 
 model is likely to be a resource intensive atmosphere or ocean model,
 has no upstream dependence on co-temporal tasks and can therefore run
 continuously, regardless of how much downstream processing is yet to be
-completed in its own, or any previous, forecast cycle point (actually,
+completed in its own, or any previous, cycle point (actually,
 task *a* does depend on co-temporal task *x* which waits on the
 external driving data, but that returns immediately when the data is
-available in advance, so the result stands). The other forecast models
+available in advance, so the result stands). The other models
 can also cycle continuously or with a short gap between, and some
 post processing tasks, which have no previous-instance dependence, can
 run continuously or even overlap (e.g. *e* in this case). Thus,
@@ -285,56 +237,12 @@ different cycle points can in principle run simultaneously at any given time.
 
 In fact, if our tasks are able to trigger off internal outputs of
 upstream tasks (message triggers) rather than waiting on full completion,
-then successive instances of the forecast models could overlap as well
-(because model restart outputs are generally completed early in the forecast)
-for an even more efficient job schedule [3]_.
+then successive instances of the models could overlap as well
+(because model restart outputs are generally completed early in the run)
+for an even more efficient job schedule.
 
 
-.. _TheCylcSchedulingAlgorithm:
-
-The Cylc Scheduling Algorithm
------------------------------
-
-.. _fig-task-pool:
-
-.. figure:: graphics/png/orig/task-pool.png
-   :align: center
-
-   The cylc task pool. How cylc sees a suite, in contrast to the
-   multi-cycle-point dependency graph of :numref:`fig-dep-multi`.
-   Task colors represent different cycle points, and the small squares
-   and circles represent different prerequisites and outputs. A task
-   can run when its prerequisites are satisfied by the outputs
-   of other tasks in the pool.
-
-Cylc manages a pool of proxy objects that represent the real tasks in a
-suite. Task proxies know how to run the real tasks that they represent,
-and they receive progress messages from the tasks as they run (usually
-reports of completed outputs). There is no global cycling mechanism to
-advance the suite; instead individual task proxies have their own
-private cycle point and spawn their own successors when the time is
-right. Task proxies are self-contained - they know their own
-prerequisites and outputs but are not aware of the wider suite.
-Inter-cycle dependence is not treated as special, and the task pool can
-be populated with tasks with many different cycle points. The task pool
-is illustrated in :numref:`fig-task-pool`. *Whenever any task
-changes state due to completion of an output, every task checks to see
-if its own prerequisites have been satisfied* [4]_.
-In effect, cylc gets a pool of tasks to self-organize by negotiating
-their own dependencies so that optimal scheduling, as described in the
-previous section, emerges naturally at run time.
-
-
-.. [1] Future plans for EcoConnect include additional deterministic regional
-       weather forecasts and a statistical ensemble.
-.. [2] Note that simply overlapping the single cycle point schedules of
+.. [1] Note that simply overlapping the single cycle point schedules of
        :numref:`fig-time-one` from the same start point would have
        resulted in dependency violation by task *c*.
-.. [3] Finally, we note again that a good job scheduler should be able to
-       dynamically adapt to delays in any part of the suite due to resource
-       contention, varying run times, or anything else that will inevitably
-       modify the depicted job schedules.
-.. [4] In fact this dependency negotiation goes through a broker
-       object (rather than every task literally checking every other task)
-       which scales as *n* (rather than *n*:sup:`2`) where *n* is the number
        of task proxies in the pool.
