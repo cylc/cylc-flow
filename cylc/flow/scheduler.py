@@ -611,7 +611,7 @@ class Scheduler:
             await self.shutdown(exc)
             raise exc from None
 
-        except Exception as exc:
+        except (KeyboardInterrupt, asyncio.CancelledError, Exception) as exc:
             try:
                 await self.shutdown(exc)
             except Exception as exc2:
@@ -643,7 +643,7 @@ class Scheduler:
             await self.configure()
             await self.start_servers()
             await self.log_start()
-        except Exception as exc:
+        except (KeyboardInterrupt, asyncio.CancelledError, Exception) as exc:
             await self.shutdown(exc)
             raise
         else:
