@@ -169,6 +169,10 @@ task outputs/message triggers are now validated.
 workflow in a sub-directory of a run directory (as `cylc scan` would not be
 able to find it).
 
+[#3982](https://github.com/cylc/cylc-flow/pull/3982) - Fix bug preventing
+workflow from shutting down properly on a keyboard interrupt (Ctrl+C) in
+Python 3.8+.
+
 -------------------------------------------------------------------------------
 ## __cylc-8.0a2 (2020-07-03)__
 
