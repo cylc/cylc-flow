@@ -41,7 +41,7 @@ event timers to the database when they have changed (reverts behaviour
 change in 7.8.6). This corrects last updated timestamps in cylc review and
 reduces filesystem load.
 
-[#3759](https://github.com/cylc/cylc-flow/pull/3754) - Fix a bug in the GUI
+[#3759](https://github.com/cylc/cylc-flow/pull/3759) - Fix a bug in the GUI
 tree view that could cause tasks to be sorted in the wrong order.
 
 [#3734](https://github.com/cylc/cylc-flow/pull/3734) - Validate XTrigger
