@@ -23,7 +23,7 @@ set_test_number 2
 create_test_global_config "" "
 [platforms]
     [[$CYLC_TEST_PLATFORM]]
-        batch submit command template = at noon tomorrow
+        job runner command template = at noon tomorrow
 "
 reftest
 purge

@@ -26,8 +26,8 @@ set_test_number 7
 create_test_global_config "
 [platforms]
     [[$CYLC_TEST_PLATFORM]]
-        batch system = at
-        batch submit command template = at oh-no
+        job runner = at
+        job runner command template = at oh-no
 "
 #-------------------------------------------------------------------------------
 install_suite "${TEST_NAME_BASE}" 'submit-failed'

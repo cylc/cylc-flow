@@ -25,7 +25,7 @@ create_test_global_config '
         communication method = poll
         submission polling intervals = PT2S
         execution polling intervals = PT1M
-        batch system = background
+        job runner = background
         execution time limit polling intervals = PT5S
 '
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"

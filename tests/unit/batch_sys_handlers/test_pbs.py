@@ -30,7 +30,7 @@ from cylc.flow.batch_sys_handlers.pbs import BATCH_SYS_HANDLER
                 'suite_name': 'chop',
                 'task_id': 'axe.1',
                 'platform': {
-                    'batch system': 'pbs',
+                    'job runner': 'pbs',
                     'job name length maximum': 100
                 }
             },
@@ -49,7 +49,7 @@ from cylc.flow.batch_sys_handlers.pbs import BATCH_SYS_HANDLER
                 'suite_name': 'chop',
                 'task_id': 'axe.1',
                 'platform': {
-                    'batch system': 'pbs',
+                    'job runner': 'pbs',
                     'job name length maximum': 6
                 }
             },
@@ -72,7 +72,7 @@ from cylc.flow.batch_sys_handlers.pbs import BATCH_SYS_HANDLER
                 'suite_name': 'chop',
                 'task_id': 'axe.1',
                 'platform': {
-                    'batch system': 'pbs',
+                    'job runner': 'pbs',
                     'job name length maximum': 100
                 }
             },

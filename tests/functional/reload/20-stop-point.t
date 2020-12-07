@@ -24,7 +24,7 @@ set_test_number 3
 create_test_global_config "
 [platforms]
     [[$CYLC_TEST_PLATFORM]]
-        batch submit command template = sleep 5
+        job runner command template = sleep 5
         submission retry delays = 3*PT5S
 "
 

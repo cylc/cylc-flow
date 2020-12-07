@@ -24,7 +24,7 @@ set_test_number 4
 create_test_global_config "" "
 [platforms]
   [[${CYLC_TEST_PLATFORM}]]
-    batch system = my_pbs
+    job runner = my_pbs
     hosts = ${CYLC_TEST_BATCH_TASK_HOST}
 "
 

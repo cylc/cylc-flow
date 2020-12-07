@@ -70,7 +70,7 @@ def fixture_get_platform():
 def test_write_prelude_invalid_cylc_command():
     job_conf = {
         "platform": {
-            "batch system": "background",
+            "job runner": "background",
             "hosts": ["localhost"],
             "owner": "me",
             "cylc executable": "sl -a"
@@ -91,7 +91,7 @@ def test_write(mocked_get_remote_suite_run_dir, fixture_get_platform):
         local_job_file_path = local_job_file_path.name
         platform = fixture_get_platform(
             {
-                "batch submit command template": "woof",
+                "job runner command template": "woof",
                 "owner": "me"
             }
         )
@@ -140,11 +140,11 @@ def test_write(mocked_get_remote_suite_run_dir, fixture_get_platform):
                 ' Execution time limit: moo')
 
     platform = fixture_get_platform(
-        {"batch submit command template": "woof"}
+        {"job runner command template": "woof"}
     )
     job_conf = {
         "platform": platform,
-        "batch system": "background",
+        "job runner": "background",
         "execution_time_limit": "moo",
         "suite_name": "farm_noises",
         "task_id": "baa",
@@ -162,8 +162,8 @@ def test_write(mocked_get_remote_suite_run_dir, fixture_get_platform):
         (  # basic
             {
                 "platform": {
-                    "batch system": "loadleveler",
-                    "batch submit command template": "test_suite",
+                    "job runner": "loadleveler",
+                    "job runner command template": "test_suite",
                 },
                 "directives": {"moo": "foo",
                                "cluck": "bar"},
@@ -182,8 +182,8 @@ def test_write(mocked_get_remote_suite_run_dir, fixture_get_platform):
         (  # Check no directives is correctly written
             {
                 "platform": {
-                    "batch system": "slurm",
-                    "batch submit command template": "test_suite"
+                    "job runner": "slurm",
+                    "job runner command template": "test_suite"
                 },
                 "directives": {},
                 "suite_name": "farm_noises",
@@ -200,8 +200,8 @@ def test_write(mocked_get_remote_suite_run_dir, fixture_get_platform):
         (  # Check pbs max job name length
             {
                 "platform": {
-                    "batch system": "pbs",
-                    "batch submit command template": "test_suite",
+                    "job runner": "pbs",
+                    "job runner command template": "test_suite",
                     "job name length maximum": 15
                 },
                 "directives": {},
@@ -218,8 +218,8 @@ def test_write(mocked_get_remote_suite_run_dir, fixture_get_platform):
         (  # Check sge directives are correctly written
             {
                 "platform": {
-                    "batch system": "sge",
-                    "batch submit command template": "test_suite",
+                    "job runner": "sge",
+                    "job runner command template": "test_suite",
                 },
                 "directives": {"-V": "",
                                "-q": "queuename",
@@ -249,10 +249,10 @@ def test_write_directives(fixture_get_platform, job_conf: dict, expected: str):
     "batch_sys",
     ["at", "background", "loadleveler", "pbs", "sge", "slurm"])
 def test_traps_for_each_batch_system(batch_sys: str):
-    """Test traps for each batch system"""
+    """Test traps for each job runner"""
     platform = platform_from_name()
     platform.update({
-        "batch system": f"{batch_sys}",
+        "job runner": f"{batch_sys}",
         "owner": "me"
     })
     job_conf = {
@@ -283,8 +283,8 @@ def test_write_prelude(monkeypatch, fixture_get_platform):
                 + 'CYLC_SUITE_INITIAL_CYCLE_POINT=\'20200101T0000Z\'')
     job_conf = {
         "platform": fixture_get_platform({
-            "batch system": "loadleveler",
-            "batch submit command template": "test_suite",
+            "job runner": "loadleveler",
+            "job runner command template": "test_suite",
             "host": "localhost",
             "owner": "me",
             "copyable environment variables": [

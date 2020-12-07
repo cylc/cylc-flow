@@ -24,14 +24,14 @@ create_test_global_config "" "
 [platforms]
   [[wibble]]
     hosts = localhost
-    batch system = at
-    batch submit command template = sleep 15
+    job runner = at
+    job runner command template = sleep 15
     install target = localhost
 
   [[wobble]]
     hosts = localhost
-    batch system = at
-    batch submit command template = at now
+    job runner = at
+    job runner command template = at now
     install target = localhost
 "
 

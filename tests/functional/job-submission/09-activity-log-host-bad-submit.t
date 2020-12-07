@@ -24,8 +24,8 @@ set_test_number 2
 create_test_global_config '' "
 [platforms]
     [[${CYLC_TEST_PLATFORM}]]
-        batch system = at
-        batch submit command template = at non
+        job runner = at
+        job runner command template = at non
 "
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"

@@ -26,7 +26,7 @@ create_test_global_config "" "
     process pool timeout = PT10S
 [platforms]
     [[$CYLC_TEST_PLATFORM]]
-        batch submit command template = talkingnonsense %(job)s
+        job runner command template = talkingnonsense %(job)s
 "
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
