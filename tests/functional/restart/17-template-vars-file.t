@@ -23,8 +23,8 @@ set_test_number 3
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 cat >'template-vars.list' <<'__LIST__'
-COMMAND=true
-FINAL_CYCLE_POINT=2020
+COMMAND="true"
+FINAL_CYCLE_POINT="2020"
 __LIST__
 
 run_ok "${TEST_NAME_BASE}-validate" \

@@ -24,16 +24,16 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate "${SUITE_NAME}" \
-    --set='FINAL_CYCLE_POINT=2020' --set='COMMAND=true'
+    --set='FINAL_CYCLE_POINT="2020"' --set='COMMAND="true"'
 
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run "${SUITE_NAME}" \
-    --set='FINAL_CYCLE_POINT=2020' --set='COMMAND=true' \
+    --set='FINAL_CYCLE_POINT="2020"' --set='COMMAND="true"' \
     --stop-point=2018 --debug --no-detach
 
 suite_run_ok "${TEST_NAME_BASE}-restart" \
     cylc restart "${SUITE_NAME}" --debug --no-detach --reference-test \
-    --set='FINAL_CYCLE_POINT=2022'
+    --set='FINAL_CYCLE_POINT="2022"'
 
 purge
 exit

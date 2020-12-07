@@ -25,11 +25,11 @@ TEST_SHOW_OUTPUT_PATH="$PWD/${TEST_NAME_BASE}-show.stdout"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate \
-   --set=TEST_OUTPUT_PATH="$TEST_SHOW_OUTPUT_PATH"  "${SUITE_NAME}"
+   --set="TEST_OUTPUT_PATH='$TEST_SHOW_OUTPUT_PATH'"  "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
 run_ok "${TEST_NAME}" cylc run \
-   --no-detach --set=TEST_OUTPUT_PATH="$TEST_SHOW_OUTPUT_PATH" "${SUITE_NAME}"
+   --no-detach --set="TEST_OUTPUT_PATH='$TEST_SHOW_OUTPUT_PATH'" "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-show"
 contains_ok "${TEST_SHOW_OUTPUT_PATH}" << '__OUT__'

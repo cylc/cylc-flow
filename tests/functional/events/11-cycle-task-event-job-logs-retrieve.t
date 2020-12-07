@@ -24,7 +24,7 @@ set_test_number 3
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate -s "HOST=${CYLC_TEST_HOST}" "${SUITE_NAME}"
+    cylc validate -s "HOST='${CYLC_TEST_HOST}'" "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
 

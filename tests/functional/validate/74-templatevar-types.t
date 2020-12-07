@@ -15,17 +15,30 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test remote host job log NN link correctness.
-export REQUIRE_PLATFORM='loc:remote'
+# Test validating xtrigger names in suite.
 . "$(dirname "$0")/test_header"
-set_test_number 2
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-sqlite3 "${SUITE_RUN_DIR}/.service/db" <'db.sqlite3'
-suite_run_ok "${TEST_NAME_BASE}-restart" \
-    cylc restart --reference-test --debug --no-detach  \
-    -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'" "${SUITE_NAME}"
+set_test_number 5
 
-purge
+TEST_NAME="${TEST_NAME_BASE}-val"
+
+# test a valid xtrigger
+cat >'flow.cylc' <<'__FLOW_CONFIG__'
+#!Jinja2
+[scheduling]
+    initial cycle point = {{ ICP - 1 }}
+    cycling mode = integer
+    [[graph]]
+        R1 = foo
+__FLOW_CONFIG__
+run_fail "${TEST_NAME}-valid" cylc validate flow.cylc
+run_fail "${TEST_NAME}-valid" cylc validate flow.cylc -s 'ICP="2000"'
+run_ok "${TEST_NAME}-valid" cylc validate flow.cylc -s 'ICP=2000'
+
+cat >'template' <<'__TEMPLATE__'
+ICP=2000
+__TEMPLATE__
+run_fail "${TEST_NAME}-valid" cylc validate flow.cylc
+run_ok "${TEST_NAME}-valid" cylc validate flow.cylc --set-file=template
+
 exit
