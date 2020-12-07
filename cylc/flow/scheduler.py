@@ -612,12 +612,7 @@ class Scheduler:
             raise exc from None
 
         except (KeyboardInterrupt, asyncio.CancelledError, Exception) as exc:
-            try:
-                await self.shutdown(exc)
-            except Exception as exc2:
-                # In case of exceptions in the shutdown method itself
-                LOG.exception(exc2)
-            raise exc from None
+            await self.handle_exception(exc)
 
         else:
             # main loop ends (not used?)
@@ -644,8 +639,7 @@ class Scheduler:
             await self.start_servers()
             await self.log_start()
         except (KeyboardInterrupt, asyncio.CancelledError, Exception) as exc:
-            await self.shutdown(exc)
-            raise
+            await self.handle_exception(exc)
         else:
             # note start_scheduler handles its own shutdown logic
             await self.start_scheduler()
@@ -1619,16 +1613,19 @@ class Scheduler:
 
         """
         if isinstance(reason, SchedulerStop):
-            LOG.info('Suite shutting down - %s', reason.args[0])
+            LOG.info(f'Suite shutting down - {reason.args[0]}')
         elif isinstance(reason, SchedulerError):
-            LOG.error('Suite shutting down - %s', reason)
+            LOG.error(f'Suite shutting down - {reason}')
         elif isinstance(reason, SuiteConfigError):
             LOG.error(f'{SuiteConfigError.__name__}: {reason}')
         elif isinstance(reason, PlatformLookupError):
             LOG.error(f'{PlatformLookupError.__name__}: {reason}')
         else:
             LOG.exception(reason)
-            LOG.critical('Suite shutting down - %s', reason)
+            if str(reason):
+                LOG.critical(f'Suite shutting down - {reason}')
+            else:
+                LOG.critical('Suite shutting down')
 
         if self.proc_pool:
             self.proc_pool.close()
@@ -1836,3 +1833,18 @@ class Scheduler:
         if stoppoint is not None:
             self.options.stopcp = str(stoppoint)
             self.pool.set_stop_point(get_point(self.options.stopcp))
+
+    async def handle_exception(self, exc):
+        """Gracefully shut down the scheduler.
+
+        This re-raises the caught exception, to be caught higher up.
+
+        Args:
+            exc: The caught exception to be logged during the shutdown.
+        """
+        try:
+            await self.shutdown(exc)
+        except Exception as exc2:
+            # In case of exceptions in the shutdown method itself
+            LOG.exception(exc2)
+        raise exc from None
