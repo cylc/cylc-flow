@@ -1017,7 +1017,7 @@ class TaskJobManager:
         job_file_path = get_remote_suite_run_job_dir(
             itask.platform, suite, job_d, JOB_LOG_JOB)
         return {
-            'batch_system_name': itask.platform['job runner'],
+            'job_runner_name': itask.platform['job runner'],
             'batch_submit_command_template': (
                 itask.platform['job runner command template']
             ),

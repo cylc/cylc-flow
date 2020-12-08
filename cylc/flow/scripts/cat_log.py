@@ -21,7 +21,7 @@
 View Cylc suite and job log files.
 
 Print, view-in-editor, or tail-follow content, print path, or list directory,
-of local or remote task job and suite server logs. Batch-system view commands
+of local or remote task job and suite server logs. Job runner view commands
 (e.g. 'qcat') are used if defined in global config and the job is running.
 
 For standard log types use the short-cut option argument or full filename (e.g.
@@ -149,7 +149,7 @@ def view_log(logpath, mode, tailer_tmpl, batchview_cmd=None, remote=False,
              color=False):
     """View (by mode) local log file. This is only called on the file host.
 
-    batchview_cmd is a batch-system-specific job stdout or stderr cat or tail
+    batchview_cmd is a job-runner-specific job stdout or stderr cat or tail
     command (e.g. 'qcat') that may be implemented for job runners that don't
     write logs to their final locations until after the job completes.
 

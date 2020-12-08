@@ -108,7 +108,7 @@ def test_write(mocked_get_remote_suite_run_dir, fixture_get_platform):
             "job_d": "1/baa/01",
             "try_num": 1,
             "flow_label": "aZ",
-            # "batch_system_name": "background",
+            # "job_runner_name": "background",
             "param_var": {"duck": "quack",
                           "mouse": "squeak"},
             "execution_time_limit": "moo",
@@ -248,7 +248,7 @@ def test_write_directives(fixture_get_platform, job_conf: dict, expected: str):
 @pytest.mark.parametrize(
     "batch_sys",
     ["at", "background", "loadleveler", "pbs", "sge", "slurm"])
-def test_traps_for_each_batch_system(batch_sys: str):
+def test_traps_for_each_job_runner(batch_sys: str):
     """Test traps for each job runner"""
     platform = platform_from_name()
     platform.update({

@@ -65,7 +65,7 @@ The Containers:
 
     Each platform is named using this convention:
 
-        _<submission_locality>_<batch_system>_<filesystem>_<comms_method>
+        _<submission_locality>_<job_runner>_<filesystem>_<comms_method>
 
         submission_locality {local, remote}:
             Where do jobs get submitted?
@@ -73,7 +73,7 @@ The Containers:
             * Locally (on the scheduler host).
             * Remotely (on a remote host).
 
-        batch_system {background, at, slurm, ...}:
+        job_runner {background, at, slurm, ...}:
             The name of the job runner the container is configured to use.
 
         filesystem {indep, shared}:

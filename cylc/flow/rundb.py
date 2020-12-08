@@ -756,7 +756,7 @@ class CylcSuiteDAO:
             'succeeded': 0,
         }
         columns = (
-            'name', 'cycle', 'host', 'batch_system',
+            'name', 'cycle', 'host', 'job_runner',
             'submit_time', 'start_time', 'succeed_time'
         )
         return columns, [r for r in self.connect().execute(q)]

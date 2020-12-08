@@ -715,7 +715,7 @@ _parse_platform_spec () {
     local requirement="$1"
 
     local locality='local'
-    local batch_system='background'
+    local job_runner='background'
     local file_system='*'
     local comms='*'
     for req in ${requirement}; do
@@ -724,7 +724,7 @@ _parse_platform_spec () {
                 locality="${req/loc:/}"
                 ;;
             batch:*)
-                batch_system="${req/batch:/}"
+                job_runner="${req/batch:/}"
                 ;;
             fs:*)
                 file_system="${req/fs:/}"
@@ -738,7 +738,7 @@ _parse_platform_spec () {
                 ;;
         esac
     done
-    echo "_${locality}_${batch_system}_${file_system}_${comms}"
+    echo "_${locality}_${job_runner}_${file_system}_${comms}"
 }
 
 _get_test_platform () {

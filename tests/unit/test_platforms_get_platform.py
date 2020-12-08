@@ -93,7 +93,7 @@ def test_get_platform_from_config_with_platform_name(mock_glbl_cfg):
         ),
         (
             {'job': {'batch system': 'batchyMcBatchFace'}},
-            'local_batch_system'
+            'local_job_runner'
         ),
         (
             {'script': 'true'},
@@ -141,7 +141,7 @@ def test_get_platform_using_platform_from_job_info(
                 job runner = slurm
             [[spice_bg]]
                 hosts = rose, chilli, cumin, paprika
-            [[local_batch_system]]
+            [[local_job_runner]]
                 hosts = localhost
                 job runner = batchyMcBatchFace
             [[cylcdevbox]]

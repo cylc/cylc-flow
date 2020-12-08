@@ -65,7 +65,7 @@ Options:
 
                    Defaults to:
                        host: localhost
-                       batch-system: background
+                       job runner: background
 
                    Can be set to a glob. e.g. '_local*' will match all
                    configuted test platforms with local job submission.

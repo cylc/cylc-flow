@@ -84,7 +84,7 @@ class JobPool:
             submit_num=sub_num,
             state=JOB_STATUSES_ALL[0],
             task_proxy=t_id,
-            batch_sys_name=job_conf['batch_system_name'],
+            batch_sys_name=job_conf['job_runner_name'],
             env_script=job_conf['env-script'],
             err_script=job_conf['err-script'],
             exit_script=job_conf['exit-script'],
