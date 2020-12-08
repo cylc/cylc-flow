@@ -57,7 +57,7 @@ Main loop plugins can be activated either by:
              plugins = health check, auto restart
 
 Main loop plugins can be individually configured in their
-:cylc:conf:`global.cylc[scheduler][main loop][<plugin>] section e.g:
+:cylc:conf:`global.cylc[scheduler][main loop][<plugin name>]` section e.g:
 
 .. code-block:: cylc
 
