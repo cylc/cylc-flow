@@ -1213,10 +1213,10 @@ with Conf(
 
             with Conf('directives', desc='''
                 Batch queue scheduler directives.  Whether or not these are
-                used depends on the batch system. For the built-in methods
-                that support directives (``loadleveler``, ``lsf``, ``pbs``,
-                ``sge``, ``slurm``, ``slurm_packjob``, ``moab``), directives
-                are written to the
+                used depends on the batch system/job runner. For the built-in
+                methods  support directives (``loadleveler``, ``lsf``,
+                ``pbs``, ``sge``, ``slurm``, ``slurm_packjob``, ``moab``),
+                directives  written to the
                 top of the task job script in the correct format for the
                 method. Specifying directives individually like this allows
                 use of default directives that can be individually overridden
@@ -1225,7 +1225,7 @@ with Conf(
                 Conf('<directive>', VDR.V_STRING, desc='''
                     e.g. ``class = parallel``.
 
-                    Example directives for the built-in batch system handlers
+                    Example directives for the built-in job runner handlers
                     are shown in :ref:`AvailableMethods`.
                 ''')
 

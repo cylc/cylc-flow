@@ -25,7 +25,7 @@ Raw output and summary output (in text or HTML format) are available.  Output
 is sent to standard output, unless an output filename is supplied.
 
 Summary Output (the default):
-  Data stratified by host and batch system that provides a statistical
+  Data stratified by host and job runner that provides a statistical
   summary of:
     1. Queue wait time (duration between task submission and start times)
     2. Task run time (duration between start and succeed times)
@@ -39,7 +39,7 @@ Raw Output:
     1. Time of successful submission
     2. Time of task start
     3. Time of task successful completion
-  as well as information about the batch system and remote host to permit
+  as well as information about the job runner and remote host to permit
   stratification/grouping if desired by downstream processors.
 
 Timings are shown only for succeeded tasks.
@@ -286,7 +286,7 @@ class TextTimingSummary(TimingSummary):
     line_width = 80
 
     def write_group_header(self, buf, group):
-        title = 'Host: %s\tBatch System: %s' % group
+        title = 'Host: %s\tJob Runner: %s' % group
         buf.write('=' * self.line_width + '\n')
         buf.write(title.center(self.line_width - 1) + '\n')
         buf.write('=' * self.line_width + '\n')
@@ -346,7 +346,7 @@ class HTMLTimingSummary(TimingSummary):
         buf.write('</body></html>')
 
     def write_group_header(self, buf, group):
-        buf.write('<h1>Timings for host %s using batch system %s</h1>' % group)
+        buf.write('<h1>Timings for host %s using job runner %s</h1>' % group)
 
     def write_category(self, buf, category, df_reshape, df_describe):
         import matplotlib.pyplot as plt

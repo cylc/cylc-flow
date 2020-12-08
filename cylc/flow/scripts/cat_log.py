@@ -150,7 +150,7 @@ def view_log(logpath, mode, tailer_tmpl, batchview_cmd=None, remote=False,
     """View (by mode) local log file. This is only called on the file host.
 
     batchview_cmd is a batch-system-specific job stdout or stderr cat or tail
-    command (e.g. 'qcat') that may be implemented for batch systems that don't
+    command (e.g. 'qcat') that may be implemented for job runners that don't
     write logs to their final locations until after the job completes.
 
     If remote is True, we are executing on a remote host for a log file there.
@@ -262,7 +262,7 @@ def get_option_parser():
 def get_task_job_attrs(suite_name, point, task, submit_num):
     """Return job (platform, batch_sys_name, live_job_id).
 
-    live_job_id is batch system job ID if job is running, else None.
+    live_job_id is the job ID if job is running, else None.
 
     """
     suite_dao = CylcSuiteDAO(
@@ -393,7 +393,7 @@ def main(parser, options, *args, color=False):
         platform = get_platform(platform_name)
         batchview_cmd = None
         if live_job_id is not None:
-            # Job is currently running. Get special batch system log view
+            # Job is currently running. Get special job runner log view
             # command (e.g. qcat) if one exists, and the log is out or err.
             conf_key = None
             if options.filename == JOB_LOG_OUT:

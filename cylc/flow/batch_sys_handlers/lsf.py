@@ -15,6 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Submits task job scripts to IBM Platform LSF by the ``bsub`` command.
 
+# TODO: rewrite the following for platforms:
+
 .. cylc-scope:: flow.cylc[runtime][<namespace>]
 
 LSF directives can be provided in the flow.cylc file:

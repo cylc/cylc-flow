@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test polling with "job.status" missing batch system information.
+# Test polling with "job.status" missing job runner information.
 . "$(dirname "${0}")/test_header"
 
 set_test_number 4
@@ -26,7 +26,7 @@ suite_run_fail "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
 LOG="${SUITE_RUN_DIR}/log/suite/log"
 run_ok "${TEST_NAME_BASE}-log-1" \
-    grep -F '[jobs-poll err] 1/t1/01/job.status: incomplete batch system info' \
+    grep -F '[jobs-poll err] 1/t1/01/job.status: incomplete job runner info' \
     "${LOG}"
 run_ok "${TEST_NAME_BASE}-log-2" \
     grep -F '[t1.1] status=running: (polled)failed' \

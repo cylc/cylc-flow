@@ -15,6 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Submits task job scripts to the Moab workload manager with ``msub``.
 
+# TODO: rewrite the following for platforms:
+
 .. cylc-scope:: flow.cylc[runtime][<namespace>]
 
 Moab directives can be provided in the flow.cylc file; the syntax is
@@ -60,7 +62,7 @@ import re
 
 class MoabHandler:
 
-    """Moab batch system job submission and manipulation."""
+    """Moab job runner job submission and manipulation."""
 
     DIRECTIVE_PREFIX = "#PBS "
     KILL_CMD_TMPL = "mjobctl -c '%(job_id)s'"

@@ -26,7 +26,7 @@ command line interfaces / outputs, etc.
 
 ## How To Run "Non-Generic" Tests?
 
-Some tests require batch systems (e.g. at, slurm, pbs) or remote platforms.
+Some tests require job runners (e.g. at, slurm, pbs) or remote platforms.
 
 To run these tests you must configure remote platforms, your options are:
 
@@ -47,7 +47,7 @@ Once you have defined your remote platforms provide them with the `-p` arg:
 # run ONLY tests compatible with the _remote_background_indep_tcp platform
 $ etc/bin/run-functional-tests -p _remote_background_indep_tcp tests/f
 
-# run tests on the first compatible platform configured 
+# run tests on the first compatible platform configured
 $ etc/bin/run-functional-tests -p '*' tests/f
 ```
 

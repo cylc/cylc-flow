@@ -15,12 +15,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Garbage batch system, for testing."""
+"""Garbage batch system/job runner, for testing."""
 
 
 class BadSubmitHandler:
 
-    """Garbage batch system, for testing."""
+    """Garbage batch system/job runner, for testing."""
 
     SUBMIT_CMD_TMPL = "bad-bad-bad-submit '%(job)s'"
 

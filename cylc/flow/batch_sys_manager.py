@@ -14,22 +14,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Manage submission, poll and kill of a job to the batch systems.
+"""Manage submission, poll and kill of a job to the job runners.
 
 Export the BatchSysManager class.
 
-Batch system handler (a.k.a. job submission method) modules should be placed
+Job runner handler (a.k.a. job submission method) modules should be placed
 under the "cylc.flow.batch_sys_handlers" package. Each module should export the
 symbol "BATCH_SYS_HANDLER" for the singleton instance that implements the job
 system handler logic.
 
-Each batch system handler class should instantiate with no argument, and may
+Each job runner handler class should instantiate with no argument, and may
 have the following constants and methods:
 
 batch_sys.filter_poll_many_output(out) => job_ids
-    * Called after the batch system's poll many command. The method should read
-      the output and return a list of job IDs that are still in the batch
-      system.
+    * Called after the job runner's poll many command. The method should read
+      the output and return a list of job IDs that are still in the
+      job runner.
 
 batch_sys.filter_submit_output(out, err) => new_out, new_err
     * Filter the standard output and standard error of the job submission
@@ -38,7 +38,7 @@ batch_sys.filter_submit_output(out, err) => new_out, new_err
 
 batch_sys.format_directives(job_conf) => lines
     * If relevant, this method formats the job directives for a job file, if
-      job file directives are relevant for the batch system. The argument
+      job file directives are relevant for the job runner. The argument
       "job_conf" is a dict containing the job configuration.
 
 batch_sys.get_poll_many_cmd(job-id-list) => list
@@ -54,7 +54,7 @@ batch_sys.get_submit_stdin(job_file_path: str, submit_opts: dict) => tuple
 
 batch_sys.get_vacation_signal(job_conf) => str
     * If relevant, return a string containing the name of the signal that
-      indicates the job has been vacated by the batch system.
+      indicates the job has been vacated by the job runner.
 
 batch_sys.submit(job_file_path, submit_opts) => ret_code, out, err
     * Submit a job and return an instance of the Popen object for the
@@ -72,7 +72,7 @@ batch_sys.FAIL_SIGNALS => tuple<str>
       script, and its trap is unset at the end of the script.
 
 batch_sys.KILL_CMD_TMPL
-    *  A Python string template for getting the batch system command to remove
+    *  A Python string template for getting the job runner command to remove
        and terminate a job ID. The command is formed using the logic:
            batch_sys.KILL_CMD_TMPL % {"job_id": job_id}
 
@@ -80,14 +80,14 @@ batch_sys.POLL_CANT_CONNECT_ERR
     * A string containing an error message. If this is defined, when a poll
       command returns a non-zero return code and its STDERR contains this
       string, then the poll result will not be trusted, because it is assumed
-      that the batch system is currently unavailable. Jobs submitted to the
-      batch system will be assumed OK until we are able to connect to the batch
-      system again.
+      that the job runner is currently unavailable. Jobs submitted to the
+      job runner will be assumed OK until we are able to connect to the
+      job runner again.
 
 batch_sys.SHOULD_KILL_PROC_GROUP
     * A boolean to indicate whether it is necessary to kill a job by sending
       a signal to its Unix process group. This boolean also indicates that
-      a job submitted via this batch system will physically run on the same
+      a job submitted via this job runner will physically run on the same
       host it is submitted to.
 
 batch_sys.SHOULD_POLL_PROC_GROUP
@@ -101,11 +101,11 @@ batch_sys.REC_ID_FROM_SUBMIT_OUT
 
 batch_sys.SUBMIT_CMD_ENV
     * A Python dict (or an iterable that can be used to update a dict)
-      containing extra environment variables for getting the batch system
+      containing extra environment variables for getting the job runner
       command to submit a job file.
 
 batch_sys.SUBMIT_CMD_TMPL
-    * A Python string template for getting the batch system command to submit a
+    * A Python string template for getting the job runner command to submit a
       job file. The command is formed using the logic:
           batch_sys.SUBMIT_CMD_TMPL % {"job": job_file_path}
       See also "batch_sys._job_submit_impl".
@@ -137,15 +137,15 @@ class JobPollContext():
     """Context object for a job poll."""
     CONTEXT_ATTRIBUTES = (
         'job_log_dir',  # cycle/task/submit_num
-        'batch_sys_name',  # batch system name
-        'batch_sys_job_id',  # job id in batch system
+        'batch_sys_name',  # job runner name
+        'batch_sys_job_id',  # job id in job runner
         'batch_sys_exit_polled',  # 0 for false, 1 for true
         'run_status',  # 0 for success, 1 for failure
         'run_signal',  # signal received on run failure
         'time_submit_exit',  # submit (exit) time
         'time_run',  # run start time
         'time_run_exit',  # run exit time
-        'batch_sys_call_no_lines',  # number of lines in batch sys call stdout
+        'batch_sys_call_no_lines',  # number of lines in job runner call stdout
     )
 
     __slots__ = CONTEXT_ATTRIBUTES + (
@@ -251,7 +251,7 @@ class BatchSysManager():
             return batch_sys.get_vacation_signal(job_conf)
 
     def is_job_local_to_host(self, batch_sys_name):
-        """Return True if batch system runs jobs local to the submit host."""
+        """Return True if job runner runs jobs local to the submit host."""
         return getattr(
             self._get_sys(batch_sys_name), "SHOULD_KILL_PROC_GROUP", False)
 
@@ -263,7 +263,7 @@ class BatchSysManager():
 
         """
         # Note: The more efficient way to do this is to group the jobs by their
-        # batch systems, and call the kill command for each batch system once.
+        # job runners, and call the kill command for each job runner once.
         # However, this will make it more difficult to determine if the kill
         # command for a particular job is successful or not.
         if "$" in job_log_root:
@@ -305,15 +305,15 @@ class BatchSysManager():
             ctx_list.append(ctx)
 
             if not ctx.batch_sys_name or not ctx.batch_sys_job_id:
-                # Lost batch system information for some reason.
-                # Mark the job as if it is no longer in the batch system.
+                # Lost job runner information for some reason.
+                # Mark the job as if it is no longer in the job runner.
                 ctx.batch_sys_exit_polled = 1
                 sys.stderr.write(
-                    "%s/%s: incomplete batch system info\n" % (
+                    "%s/%s: incomplete job runner info\n" % (
                         ctx.job_log_dir, JOB_LOG_STATUS))
 
             # We can trust:
-            # * Jobs previously polled to have exited the batch system.
+            # * Jobs previously polled to have exited the job runner.
             # * Jobs succeeded or failed with ERR/EXIT.
             if (ctx.batch_sys_exit_polled or ctx.run_status == 0 or
                     ctx.run_signal in ["ERR", "EXIT"]):
@@ -379,7 +379,7 @@ class BatchSysManager():
                         self.OUT_PREFIX_COMMAND, now, job_log_dir, key, line))
 
     def job_kill(self, st_file_path):
-        """Ask batch system to terminate the job specified in "st_file_path".
+        """Ask job runner to terminate the job specified in "st_file_path".
 
         Return 0 on success, non-zero integer on failure.
 
@@ -394,7 +394,7 @@ class BatchSysManager():
                     break
             else:
                 return (1,
-                        "Cannot determine batch system from %s file" % (
+                        "Cannot determine job runner from %s file" % (
                             JOB_LOG_STATUS))
             st_file.seek(0, 0)  # rewind
             if getattr(batch_sys, "SHOULD_KILL_PROC_GROUP", False):
@@ -566,8 +566,8 @@ class BatchSysManager():
             sys.stderr.write(err)
             if (ret_code and hasattr(batch_sys, "POLL_CANT_CONNECT_ERR") and
                     batch_sys.POLL_CANT_CONNECT_ERR in err):
-                # Poll command failed because it cannot connect to batch system
-                # Assume jobs are still healthy until the batch system is back.
+                # Poll command failed because it cannot connect to job runner
+                # Assume jobs are still healthy until the job runner is back.
                 bad_ids[:] = []
             elif hasattr(batch_sys, "filter_poll_many_output"):
                 # Allow custom filter
@@ -595,7 +595,7 @@ class BatchSysManager():
         for ctx in my_ctx_list:
             ctx.batch_sys_exit_polled = int(
                 ctx.batch_sys_job_id in bad_job_ids)
-            # Exited batch system, but process still running
+            # Exited job runner, but process still running
             # This can happen to jobs in some "at" implementation
             if ctx.batch_sys_exit_polled and ctx.pid in exp_pids:
                 if ctx.pid not in bad_pids:
@@ -746,7 +746,7 @@ class BatchSysManager():
         job_log_dir = None
         lines = []
         # Get job files from STDIN.
-        # Get batch system name and batch submit command template from each job
+        # Get job runner name and job runner command template from each job
         # file.
         # Write job file in correct location.
         while True:  # Note: "for cur_line in sys.stdin:" may hang

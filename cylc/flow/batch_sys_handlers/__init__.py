@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Cylc provides support for the following batch system handlers.
+"""Cylc provides support for the following job runner handlers.
 
 .. autosummary::
    :toctree: batch-sys-handlers

@@ -15,6 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Submits task job scripts to Sun/Oracle Grid Engine with ``qsub``.
 
+# TODO: rewrite the following for platforms:
+
 .. cylc-scope:: flow.cylc[runtime][<namespace>]
 
 SGE directives can be provided in the flow.cylc file:

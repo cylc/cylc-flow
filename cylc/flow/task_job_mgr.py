@@ -667,7 +667,7 @@ class TaskJobManager:
             self.task_events_mgr.process_message(
                 itask, INFO, TASK_OUTPUT_FAILED, jp_ctx.time_run_exit, flag)
         elif jp_ctx.run_status == 1 and jp_ctx.batch_sys_exit_polled == 1:
-            # Failed by a signal, and no longer in batch system
+            # Failed by a signal, and no longer in job runner
             self.task_events_mgr.process_message(
                 itask, INFO, TASK_OUTPUT_FAILED, jp_ctx.time_run_exit, flag)
             self.task_events_mgr.process_message(
@@ -675,8 +675,8 @@ class TaskJobManager:
                 jp_ctx.time_run_exit,
                 flag)
         elif jp_ctx.run_status == 1:
-            # The job has terminated, but is still managed by batch system.
-            # Some batch system may restart a job in this state, so don't
+            # The job has terminated, but is still managed by job runner.
+            # Some job runners may restart a job in this state, so don't
             # mark as failed yet.
             self.task_events_mgr.process_message(
                 itask, INFO, TASK_OUTPUT_STARTED, jp_ctx.time_run, flag)
@@ -691,16 +691,16 @@ class TaskJobManager:
                 itask, INFO, TASK_OUTPUT_FAILED, get_current_time_string(),
                 flag)
         elif jp_ctx.time_run:
-            # The job has started, and is still managed by batch system
+            # The job has started, and is still managed by job runner
             self.task_events_mgr.process_message(
                 itask, INFO, TASK_OUTPUT_STARTED, jp_ctx.time_run, flag)
         elif jp_ctx.batch_sys_exit_polled == 1:
-            # The job never ran, and no longer in batch system
+            # The job never ran, and no longer in job runner
             self.task_events_mgr.process_message(
                 itask, INFO, self.task_events_mgr.EVENT_SUBMIT_FAILED,
                 jp_ctx.time_submit_exit, flag)
         else:
-            # The job never ran, and is in batch system
+            # The job never ran, and is in job runner
             self.task_events_mgr.process_message(
                 itask, INFO, TASK_STATUS_SUBMITTED, jp_ctx.time_submit_exit,
                 flag)

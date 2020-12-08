@@ -15,6 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Submits task job scripts to loadleveler by the ``llsubmit`` command.
 
+# TODO: rewrite the following for platforms:
+
 .. cylc-scope:: flow.cylc[runtime][<namespace>]
 
 Loadleveler directives can be provided in the flow.cylc file:
@@ -111,7 +113,7 @@ class LoadlevelerHandler():
 
     @classmethod
     def filter_poll_many_output(cls, out):
-        """Return a list of job IDs still in the batch system.
+        """Return a list of job IDs still in the job runner.
 
         Drop STEPID from the JOBID.STEPID returned by 'llq'.
         """

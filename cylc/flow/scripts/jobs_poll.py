@@ -19,7 +19,7 @@
 (This command is for internal use. Users should use "cylc poll".)
 
 Read job status files to obtain the statuses of the jobs. If necessary, Invoke
-the relevant batch system commands to ask the batch systems for more statuses.
+the relevant job runner commands to ask the job runners for more statuses.
 
 """
 from cylc.flow.batch_sys_manager import BatchSysManager
