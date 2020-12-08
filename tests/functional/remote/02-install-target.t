@@ -20,10 +20,8 @@ export REQUIRE_PLATFORM='loc:remote fs:shared comms:tcp'
 . "$(dirname "$0")/test_header"
 set_test_number 3
 
-export CYLC_TEST_PLATFORM="$CYLC_TEST_PLATFORM_WSFS"
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 #!jinja2
-[scheduler]
 [scheduling]
     [[graph]]
         graph = remote => held
