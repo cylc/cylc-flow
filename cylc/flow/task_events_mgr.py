@@ -1076,10 +1076,10 @@ class TaskEventsManager():
         for i, handler in enumerate(handlers):
             if event in self.NON_UNIQUE_EVENTS:
                 key1 = (
-                    '%s-%02d' % (self.HANDLER_CUSTOM, i),
-                    '%s-%d' % (event, itask.non_unique_events.get(event, 1)))
+                    f'{self.HANDLER_CUSTOM}-{i:02d}',
+                    f'{event}-{itask.non_unique_events.get(event, 1):d}')
             else:
-                key1 = ('%s-%02d' % (self.HANDLER_CUSTOM, i), event)
+                key1 = (f'{self.HANDLER_CUSTOM}-{i:02d}', event)
             id_key = (
                 key1, str(itask.point), itask.tdef.name, itask.submit_num)
             if id_key in self._event_timers:
@@ -1131,16 +1131,16 @@ class TaskEventsManager():
                 }
                 cmd = handler % (handler_data)
             except KeyError as exc:
-                message = "%s/%s/%02d %s bad template: %s" % (
-                    itask.point, itask.tdef.name, itask.submit_num, key1, exc)
-                LOG.error(message)
+                LOG.error(
+                    f"{itask.point}/{itask.tdef.name}/{itask.submit_num:02d} "
+                    f"{key1} bad template: {exc}")
                 continue
 
             if cmd == handler:
                 # Nothing substituted, assume classic interface
-                cmd = "%s '%s' '%s' '%s' '%s'" % (
-                    handler, event, self.suite, itask.identity, message)
-            LOG.debug("[%s] -Queueing %s handler: %s", itask, event, cmd)
+                cmd = (f"{handler} '{event}' '{self.suite}' "
+                       f"'{itask.identity}' '{message}'")
+            LOG.debug(f"[{itask}] -Queueing {event} handler: {cmd}")
             self.add_event_timer(
                 id_key,
                 TaskActionTimer(
