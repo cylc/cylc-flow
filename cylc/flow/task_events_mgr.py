@@ -190,7 +190,11 @@ class TaskEventsManager():
         self.mail_smtp = None
         self.mail_footer = None
         self.next_mail_time = None
-        self.event_timers = {}
+        # NOTE: do not mutate directly
+        # use the {add,remove,unset_waiting}_event_timers methods
+        self._event_timers = {}
+        # NOTE: flag for DB use
+        self.event_timers_updated = True
         # To be set by the task pool:
         self.spawn_func = None
         # pflag was set to True to stimulate dependency negotiation in SoS.
@@ -269,7 +273,7 @@ class TaskEventsManager():
         """
         ctx_groups = {}
         now = time()
-        for id_key, timer in self.event_timers.copy().items():
+        for id_key, timer in self._event_timers.copy().items():
             key1, point, name, submit_num = id_key
             if timer.is_waiting:
                 continue
@@ -278,7 +282,7 @@ class TaskEventsManager():
                 if timer.next() is None:
                     LOG.warning("%s/%s/%02d %s failed" % (
                         point, name, submit_num, key1))
-                    del self.event_timers[id_key]
+                    self.remove_event_timer(id_key)
                     continue
                 # Report retries and delayed 1st try
                 tmpl = None
@@ -592,9 +596,9 @@ class TaskEventsManager():
         _, point, name, submit_num = id_key
         log_task_job_activity(ctx, schd_ctx.suite, point, name, submit_num)
         if ctx.ret_code == 0:
-            del self.event_timers[id_key]
+            self.remove_event_timer(id_key)
         else:
-            self.event_timers[id_key].unset_waiting()
+            self.unset_waiting_event_timer(id_key)
 
     def _db_events_insert(self, itask, event="", message=""):
         """Record an event to the DB."""
@@ -661,13 +665,13 @@ class TaskEventsManager():
             key1, point, name, submit_num = id_key
             try:
                 if proc_ctx.ret_code == 0:
-                    del self.event_timers[id_key]
+                    self.remove_event_timer(id_key)
                     log_ctx = SubProcContext((key1, submit_num), None)
                     log_ctx.ret_code = 0
                     log_task_job_activity(
                         log_ctx, schd_ctx.suite, point, name, submit_num)
                 else:
-                    self.event_timers[id_key].unset_waiting()
+                    self.unset_waiting_event_timer(id_key)
             except KeyError as exc:
                 LOG.exception(exc)
 
@@ -744,14 +748,14 @@ class TaskEventsManager():
                 log_ctx = SubProcContext((key1, submit_num), None)
                 if all(fname_oks.values()):
                     log_ctx.ret_code = 0
-                    del self.event_timers[id_key]
+                    self.remove_event_timer(id_key)
                 else:
                     log_ctx.ret_code = 1
                     log_ctx.err = "File(s) not retrieved:"
                     for fname, exist_ok in sorted(fname_oks.items()):
                         if not exist_ok:
                             log_ctx.err += " %s" % fname
-                    self.event_timers[id_key].unset_waiting()
+                    self.unset_waiting_event_timer(id_key)
                 log_task_job_activity(
                     log_ctx, schd_ctx.suite, point, name, submit_num)
             except KeyError as exc:
@@ -998,20 +1002,24 @@ class TaskEventsManager():
         if (event not in events or
                 not is_remote_host(host) or
                 not self.get_host_conf(itask, "retrieve job logs") or
-                id_key in self.event_timers):
+                id_key in self._event_timers):
             return
         retry_delays = self.get_host_conf(
             itask, "retrieve job logs retry delays")
         if not retry_delays:
             retry_delays = [0]
-        self.event_timers[id_key] = TaskActionTimer(
-            TaskJobLogsRetrieveContext(
-                self.HANDLER_JOB_LOGS_RETRIEVE,  # key
-                self.HANDLER_JOB_LOGS_RETRIEVE,  # ctx_type
-                itask.platform['name'],
-                self.get_host_conf(itask, "retrieve job logs max size"),
-            ),
-            retry_delays)
+        self.add_event_timer(
+            id_key,
+            TaskActionTimer(
+                TaskJobLogsRetrieveContext(
+                    self.HANDLER_JOB_LOGS_RETRIEVE,  # key
+                    self.HANDLER_JOB_LOGS_RETRIEVE,  # ctx_type
+                    itask.platform['name'],
+                    self.get_host_conf(itask, "retrieve job logs max size"),
+                ),
+                retry_delays
+            )
+        )
 
     def _setup_event_mail(self, itask, event):
         """Set up task event notification, by email."""
@@ -1022,20 +1030,23 @@ class TaskEventsManager():
         else:
             key1 = (self.HANDLER_MAIL, event)
         id_key = (key1, str(itask.point), itask.tdef.name, itask.submit_num)
-        if (id_key in self.event_timers or
+        if (id_key in self._event_timers or
                 event not in self._get_events_conf(itask, "mail events", [])):
             return
 
-        self.event_timers[id_key] = TaskActionTimer(
-            TaskEventMailContext(
-                self.HANDLER_MAIL,  # key
-                self.HANDLER_MAIL,  # ctx_type
-                self._get_events_conf(  # mail_from
-                    itask,
-                    "from",
-                    "notifications@" + get_host(),
-                ),
-                self._get_events_conf(itask, "to", get_user())  # mail_to
+        self.add_event_timer(
+            id_key,
+            TaskActionTimer(
+                TaskEventMailContext(
+                    self.HANDLER_MAIL,  # key
+                    self.HANDLER_MAIL,  # ctx_type
+                    self._get_events_conf(  # mail_from
+                        itask,
+                        "from",
+                        "notifications@" + get_host(),
+                    ),
+                    self._get_events_conf(itask, "to", get_user())  # mail_to
+                )
             )
         )
 
@@ -1063,7 +1074,7 @@ class TaskEventsManager():
                 key1 = ('%s-%02d' % (self.HANDLER_CUSTOM, i), event)
             id_key = (
                 key1, str(itask.point), itask.tdef.name, itask.submit_num)
-            if id_key in self.event_timers:
+            if id_key in self._event_timers:
                 continue
             # Note: user@host may not always be set for a submit number, e.g.
             # on late event or if host select command fails. Use null string to
@@ -1122,14 +1133,17 @@ class TaskEventsManager():
                 cmd = "%s '%s' '%s' '%s' '%s'" % (
                     handler, event, self.suite, itask.identity, message)
             LOG.debug("[%s] -Queueing %s handler: %s", itask, event, cmd)
-            self.event_timers[id_key] = (
+            self.add_event_timer(
+                id_key,
                 TaskActionTimer(
                     CustomTaskEventHandlerContext(
                         key1,
                         self.HANDLER_CUSTOM,
                         cmd,
                     ),
-                    retry_delays))
+                    retry_delays
+                )
+            )
 
     def _reset_job_timers(self, itask):
         """Set up poll timer and timeout for task."""
@@ -1201,3 +1215,34 @@ class TaskEventsManager():
         LOG.info('[%s] -%s', itask, message)
         # Set next poll time
         self.check_poll_time(itask)
+
+    def add_event_timer(self, id_key, event_timer):
+        """Add a new event timer.
+
+        Args:
+            id_key (str)
+            timer (TaskActionTimer)
+
+        """
+        self._event_timers[id_key] = event_timer
+        self.event_timers_updated = True
+
+    def remove_event_timer(self, id_key):
+        """Remove an event timer.
+
+        Args:
+            id_key (str)
+
+        """
+        del self._event_timers[id_key]
+        self.event_timers_updated = True
+
+    def unset_waiting_event_timer(self, id_key):
+        """Invoke unset_waiting on an event timer.
+
+        Args:
+            key (str)
+
+        """
+        self._event_timers[id_key].unset_waiting()
+        self.event_timers_updated = True

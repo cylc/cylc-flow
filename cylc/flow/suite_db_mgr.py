@@ -357,18 +357,21 @@ class SuiteDatabaseManager:
 
     def put_task_event_timers(self, task_events_mgr):
         """Put statements to update the task_action_timers table."""
-        self.db_deletes_map[self.TABLE_TASK_ACTION_TIMERS].append({})
-        for key, timer in task_events_mgr.event_timers.items():
-            key1, point, name, submit_num = key
-            self.db_inserts_map[self.TABLE_TASK_ACTION_TIMERS].append({
-                "name": name,
-                "cycle": point,
-                "ctx_key": json.dumps((key1, submit_num,)),
-                "ctx": self._namedtuple2json(timer.ctx),
-                "delays": json.dumps(timer.delays),
-                "num": timer.num,
-                "delay": timer.delay,
-                "timeout": timer.timeout})
+        if task_events_mgr.event_timers_updated:
+            self.db_deletes_map[self.TABLE_TASK_ACTION_TIMERS].append({})
+            for key, timer in task_events_mgr._event_timers.items():
+                key1, point, name, submit_num = key
+                self.db_inserts_map[self.TABLE_TASK_ACTION_TIMERS].append({
+                    "name": name,
+                    "cycle": point,
+                    "ctx_key": json.dumps((key1, submit_num,)),
+                    "ctx": self._namedtuple2json(timer.ctx),
+                    "delays": json.dumps(timer.delays),
+                    "num": timer.num,
+                    "delay": timer.delay,
+                    "timeout": timer.timeout
+                })
+            task_events_mgr.event_timers_updated = False
 
     def put_xtriggers(self, sat_xtrig):
         """Put statements to update external triggers table."""

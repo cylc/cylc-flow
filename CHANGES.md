@@ -132,6 +132,11 @@ config option `[scheduling]stop after cycle point`.
 
 ### Fixes
 
+[#3984](https://github.com/cylc/cylc-flow/pull/3984) - Only write task
+event timers to the database when they have changed (reverts behaviour
+change in 7.8.6). This corrects last updated db entries and reduces filesystem
+load.
+
 [#3917](https://github.com/cylc/cylc-flow/pull/3917) - Fix a bug that caused
 one of the hostname resolution tests to fail in certain environments.
 
