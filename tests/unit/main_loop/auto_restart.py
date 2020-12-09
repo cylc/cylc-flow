@@ -27,7 +27,6 @@ from cylc.flow.main_loop.auto_restart import (
     _can_auto_restart,
     _set_auto_restart
 )
-from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.suite_status import (
     AutoRestartMode,
     StopMode

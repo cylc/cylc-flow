@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import pytest
 
-from cylc.flow.cycling.loader import standardise_point_string
 from cylc.flow.data_store_mgr import (
     FAMILY_PROXIES,
     TASKS,
