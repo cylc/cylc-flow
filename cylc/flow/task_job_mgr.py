@@ -302,7 +302,7 @@ class TaskJobManager:
             host = get_host_from_platform(platform)
             if (
                 self.batch_sys_mgr.is_job_local_to_host(
-                    itask.summary['batch_sys_name']
+                    itask.summary['job_runner_name']
                 ) and
                 not is_remote_platform(platform)
             ):
@@ -320,7 +320,7 @@ class TaskJobManager:
                     'try_num': itask.get_try_num(),
                     'time_submit': now_str,
                     'platform_name': platform['name'],
-                    'batch_sys_name': itask.summary['batch_sys_name'],
+                    'job_runner_name': itask.summary['job_runner_name'],
                 })
                 itask.is_manual_submit = False
 
@@ -801,7 +801,7 @@ class TaskJobManager:
         for itask in itasks:
             self._set_retry_timers(itask)
             itask.platform = 'SIMULATION'
-            itask.summary['batch_sys_name'] = 'SIMULATION'
+            itask.summary['job_runner_name'] = 'SIMULATION'
             itask.summary[self.KEY_EXECUTE_TIME_LIMIT] = (
                 itask.tdef.rtconfig['job']['simulated run length'])
             self.task_events_mgr.process_message(
@@ -840,7 +840,7 @@ class TaskJobManager:
         job_d = get_task_job_id(itask.point, itask.tdef.name, itask.submit_num)
         try:
             itask.summary['submit_method_id'] = items[3]
-            self.job_pool.set_job_attr(job_d, 'batch_sys_job_id', items[3])
+            self.job_pool.set_job_attr(job_d, 'job_id', items[3])
         except IndexError:
             itask.summary['submit_method_id'] = None
         if itask.summary['submit_method_id'] == "None":
@@ -989,7 +989,7 @@ class TaskJobManager:
             'is_manual_submit': itask.is_manual_submit,
             'try_num': itask.get_try_num(),
             'time_submit': get_current_time_string(),
-            'batch_sys_name': itask.summary.get('batch_sys_name'),
+            'job_runner_name': itask.summary.get('job_runner_name'),
         })
         itask.is_manual_submit = False
         self.task_events_mgr.process_message(
@@ -1001,7 +1001,7 @@ class TaskJobManager:
         itask.summary['platforms_used'][
             itask.submit_num] = itask.platform['name']
 
-        itask.summary['batch_sys_name'] = itask.platform['job runner']
+        itask.summary['job_runner_name'] = itask.platform['job runner']
         try:
             itask.summary[self.KEY_EXECUTE_TIME_LIMIT] = float(
                 rtconfig['execution time limit'])

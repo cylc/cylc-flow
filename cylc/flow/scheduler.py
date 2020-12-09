@@ -1338,11 +1338,11 @@ class Scheduler:
             for itask in self.pool.get_tasks():
                 if (
                         itask.state(*TASK_STATUSES_ACTIVE)
-                        and itask.summary['batch_sys_name']
+                        and itask.summary['job_runner_name']
                         and not is_remote_platform(itask.platform)
                         and self.task_job_mgr.batch_sys_mgr
                         .is_job_local_to_host(
-                            itask.summary['batch_sys_name'])
+                            itask.summary['job_runner_name'])
                 ):
                     LOG.info('Waiting for jobs running on localhost to '
                              'complete before attempting restart')

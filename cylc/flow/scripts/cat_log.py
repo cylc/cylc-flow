@@ -260,7 +260,7 @@ def get_option_parser():
 
 
 def get_task_job_attrs(suite_name, point, task, submit_num):
-    """Return job (platform, batch_sys_name, live_job_id).
+    """Return job (platform, job_runner_name, live_job_id).
 
     live_job_id is the job ID if job is running, else None.
 
@@ -271,15 +271,15 @@ def get_task_job_attrs(suite_name, point, task, submit_num):
     suite_dao.close()
     if task_job_data is None:
         return (None, None, None)
-    batch_sys_name = task_job_data["batch_sys_name"]
-    batch_sys_job_id = task_job_data["batch_sys_job_id"]
-    if (not batch_sys_name or not batch_sys_job_id
+    job_runner_name = task_job_data["job_runner_name"]
+    job_id = task_job_data["job_id"]
+    if (not job_runner_name or not job_id
             or not task_job_data["time_run"]
             or task_job_data["time_run_exit"]):
         live_job_id = None
     else:
-        live_job_id = batch_sys_job_id
-    return (task_job_data["platform_name"], batch_sys_name, live_job_id)
+        live_job_id = job_id
+    return (task_job_data["platform_name"], job_runner_name, live_job_id)
 
 
 def tmpfile_edit(tmpfile, geditor=False):
@@ -388,7 +388,7 @@ def main(parser, options, *args, color=False):
             except KeyError:
                 # Is already long form (standard log, or custom).
                 pass
-        platform_name, batch_sys_name, live_job_id = get_task_job_attrs(
+        platform_name, job_runner_name, live_job_id = get_task_job_attrs(
             suite_name, point, task, options.submit_num)
         platform = get_platform(platform_name)
         batchview_cmd = None

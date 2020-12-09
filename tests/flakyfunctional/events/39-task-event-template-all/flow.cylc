@@ -15,7 +15,7 @@ wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
 cylc message -p CUSTOM "cheesy peas"
 """
         [[[events]]]
-            custom handler = checkargs suite=%(suite)s job_id=%(batch_sys_job_id)s event=%(event)s point=%(point)s name=%(name)s try_num=%(try_num)s submit_num=%(submit_num)s id=%(id)s batch_sys_name=%(batch_sys_name)s message=%(message)s fish=%(fish)s title=%(title)s URL=%(URL)s suite_title=%(suite_title)s suite_size=%(suite_size)s submit_time=%(submit_time)s start_time=%(start_time)s finish_time=%(finish_time)s platform_name=%(platform_name)s
+            custom handler = checkargs suite=%(suite)s job_id=%(job_id)s event=%(event)s point=%(point)s name=%(name)s try_num=%(try_num)s submit_num=%(submit_num)s id=%(id)s job_runner_name=%(job_runner_name)s message=%(message)s fish=%(fish)s title=%(title)s URL=%(URL)s suite_title=%(suite_title)s suite_size=%(suite_size)s submit_time=%(submit_time)s start_time=%(start_time)s finish_time=%(finish_time)s platform_name=%(platform_name)s
         [[[meta]]]
             title = "a task called foo"
             URL = http://cheesy.peas

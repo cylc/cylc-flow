@@ -137,8 +137,8 @@ class JobPollContext():
     """Context object for a job poll."""
     CONTEXT_ATTRIBUTES = (
         'job_log_dir',  # cycle/task/submit_num
-        'batch_sys_name',  # job runner name
-        'batch_sys_job_id',  # job id in job runner
+        'job_runner_name',
+        'job_id',  # job id in job runner
         'batch_sys_exit_polled',  # 0 for false, 1 for true
         'run_status',  # 0 for success, 1 for failure
         'run_signal',  # signal received on run failure
@@ -155,8 +155,8 @@ class JobPollContext():
 
     def __init__(self, job_log_dir, **attrs):
         self.job_log_dir = job_log_dir
-        self.batch_sys_name = None
-        self.batch_sys_job_id = None
+        self.job_runner_name = None
+        self.job_id = None
         self.batch_sys_exit_polled = None
         self.pid = None
         self.run_status = None
@@ -217,20 +217,19 @@ class BatchSysManager():
             if os.path.isdir(suite_py) and suite_py not in sys.path:
                 sys.path.append(suite_py)
 
-    def _get_sys(self, batch_sys_name):
-        """Return an instance of the class for "batch_sys_name"."""
-        if batch_sys_name in self._INSTANCES:
-            return self._INSTANCES[batch_sys_name]
-        for key in [
-                "cylc.flow.batch_sys_handlers." + batch_sys_name,
-                batch_sys_name]:
+    def _get_sys(self, job_runner_name):
+        """Return an instance of the class for "job_runner_name"."""
+        if job_runner_name in self._INSTANCES:
+            return self._INSTANCES[job_runner_name]
+        for key in [f"cylc.flow.batch_sys_handlers.{job_runner_name}",
+                    job_runner_name]:
             try:
                 mod_of_name = __import__(key, fromlist=[key])
-                self._INSTANCES[batch_sys_name] = getattr(
+                self._INSTANCES[job_runner_name] = getattr(
                     mod_of_name, "BATCH_SYS_HANDLER")
-                return self._INSTANCES[batch_sys_name]
+                return self._INSTANCES[job_runner_name]
             except ImportError:
-                if key == batch_sys_name:
+                if key == job_runner_name:
                     raise
 
     def format_directives(self, job_conf):
@@ -250,10 +249,10 @@ class BatchSysManager():
         if hasattr(batch_sys, "get_vacation_signal"):
             return batch_sys.get_vacation_signal(job_conf)
 
-    def is_job_local_to_host(self, batch_sys_name):
+    def is_job_local_to_host(self, job_runner_name):
         """Return True if job runner runs jobs local to the submit host."""
         return getattr(
-            self._get_sys(batch_sys_name), "SHOULD_KILL_PROC_GROUP", False)
+            self._get_sys(job_runner_name), "SHOULD_KILL_PROC_GROUP", False)
 
     def jobs_kill(self, job_log_root, job_log_dirs):
         """Kill multiple jobs.
@@ -296,7 +295,7 @@ class BatchSysManager():
         self.configure_suite_run_dir(job_log_root.rsplit(os.sep, 2)[0])
 
         ctx_list = []  # Contexts for all relevant jobs
-        ctx_list_by_batch_sys = {}  # {batch_sys_name1: [ctx1, ...], ...}
+        ctx_list_by_batch_sys = {}  # {job_runner_name1: [ctx1, ...], ...}
 
         for job_log_dir in job_log_dirs:
             ctx = self._jobs_poll_status_files(job_log_root, job_log_dir)
@@ -304,7 +303,7 @@ class BatchSysManager():
                 continue
             ctx_list.append(ctx)
 
-            if not ctx.batch_sys_name or not ctx.batch_sys_job_id:
+            if not ctx.job_runner_name or not ctx.job_id:
                 # Lost job runner information for some reason.
                 # Mark the job as if it is no longer in the job runner.
                 ctx.batch_sys_exit_polled = 1
@@ -319,13 +318,13 @@ class BatchSysManager():
                     ctx.run_signal in ["ERR", "EXIT"]):
                 continue
 
-            if ctx.batch_sys_name not in ctx_list_by_batch_sys:
-                ctx_list_by_batch_sys[ctx.batch_sys_name] = []
-            ctx_list_by_batch_sys[ctx.batch_sys_name].append(ctx)
+            if ctx.job_runner_name not in ctx_list_by_batch_sys:
+                ctx_list_by_batch_sys[ctx.job_runner_name] = []
+            ctx_list_by_batch_sys[ctx.job_runner_name].append(ctx)
 
-        for batch_sys_name, my_ctx_list in ctx_list_by_batch_sys.items():
+        for job_runner_name, my_ctx_list in ctx_list_by_batch_sys.items():
             self._jobs_poll_batch_sys(
-                job_log_root, batch_sys_name, my_ctx_list)
+                job_log_root, job_runner_name, my_ctx_list)
 
         cur_time_str = get_current_time_string()
         for ctx in ctx_list:
@@ -358,15 +357,15 @@ class BatchSysManager():
         else:
             items = self._jobs_submit_prep_by_args(job_log_root, job_log_dirs)
         now = get_current_time_string(override_use_utc=utc_mode)
-        for job_log_dir, batch_sys_name, submit_opts in items:
+        for job_log_dir, job_runner_name, submit_opts in items:
             job_file_path = os.path.join(
                 job_log_root, job_log_dir, JOB_LOG_JOB)
-            if not batch_sys_name:
+            if not job_runner_name:
                 sys.stdout.write("%s%s|%s|1|\n" % (
                     self.OUT_PREFIX_SUMMARY, now, job_log_dir))
                 continue
             ret_code, out, err, job_id = self._job_submit_impl(
-                job_file_path, batch_sys_name, submit_opts)
+                job_file_path, job_runner_name, submit_opts)
             sys.stdout.write("%s%s|%s|%d|%s\n" % (
                 self.OUT_PREFIX_SUMMARY, now, job_log_dir, ret_code, job_id))
             for key, value in [("STDERR", err), ("STDOUT", out)]:
@@ -505,9 +504,9 @@ class BatchSysManager():
                 continue
             key, value = line.strip().split("=", 1)
             if key == self.CYLC_BATCH_SYS_NAME:
-                ctx.batch_sys_name = value
+                ctx.job_runner_name = value
             elif key == self.CYLC_BATCH_SYS_JOB_ID:
-                ctx.batch_sys_job_id = value
+                ctx.job_id = value
             elif key == self.CYLC_BATCH_SYS_EXIT_POLLED:
                 ctx.batch_sys_exit_polled = 1
             elif key == CYLC_JOB_PID:
@@ -530,13 +529,13 @@ class BatchSysManager():
 
         return ctx
 
-    def _jobs_poll_batch_sys(self, job_log_root, batch_sys_name, my_ctx_list):
+    def _jobs_poll_batch_sys(self, job_log_root, job_runner_name, my_ctx_list):
         """Helper 2 for self.jobs_poll(job_log_root, job_log_dirs)."""
-        exp_job_ids = [ctx.batch_sys_job_id for ctx in my_ctx_list]
+        exp_job_ids = [ctx.job_id for ctx in my_ctx_list]
         bad_job_ids = list(exp_job_ids)
         exp_pids = []
         bad_pids = []
-        items = [[self._get_sys(batch_sys_name), exp_job_ids, bad_job_ids]]
+        items = [[self._get_sys(job_runner_name), exp_job_ids, bad_job_ids]]
         if getattr(items[0][0], "SHOULD_POLL_PROC_GROUP", False):
             exp_pids = [ctx.pid for ctx in my_ctx_list if ctx.pid is not None]
             bad_pids.extend(exp_pids)
@@ -594,7 +593,7 @@ class BatchSysManager():
         debug_flag = False
         for ctx in my_ctx_list:
             ctx.batch_sys_exit_polled = int(
-                ctx.batch_sys_job_id in bad_job_ids)
+                ctx.job_id in bad_job_ids)
             # Exited job runner, but process still running
             # This can happen to jobs in some "at" implementation
             if ctx.batch_sys_exit_polled and ctx.pid in exp_pids:
@@ -618,7 +617,7 @@ class BatchSysManager():
             ctx.batch_sys_call_no_lines = ', '.join(debug_messages)
 
     def _job_submit_impl(
-            self, job_file_path, batch_sys_name, submit_opts):
+            self, job_file_path, job_runner_name, submit_opts):
         """Helper for self.jobs_submit() and self.job_submit()."""
 
         # Create NN symbolic link, if necessary
@@ -632,11 +631,11 @@ class BatchSysManager():
         # Start new status file
         job_status_file = open(job_file_path + ".status", "w")
         job_status_file.write(
-            "%s=%s\n" % (self.CYLC_BATCH_SYS_NAME, batch_sys_name))
+            "%s=%s\n" % (self.CYLC_BATCH_SYS_NAME, job_runner_name))
         job_status_file.close()
 
         # Submit job
-        batch_sys = self._get_sys(batch_sys_name)
+        batch_sys = self._get_sys(job_runner_name)
         if hasattr(batch_sys, "submit"):
             # batch_sys.submit should handle OSError, if relevant.
             ret_code, out, err = batch_sys.submit(job_file_path, submit_opts)
@@ -705,17 +704,17 @@ class BatchSysManager():
         file.
 
         Return a list, where each element contains something like:
-        (job_log_dir, batch_sys_name, submit_opts)
+        (job_log_dir, job_runner_name, submit_opts)
 
         """
         items = []
         for job_log_dir in job_log_dirs:
             job_file_path = os.path.join(job_log_root, job_log_dir, "job")
-            batch_sys_name = None
+            job_runner_name = None
             submit_opts = {}
             for line in open(job_file_path):
                 if line.startswith(self.LINE_PREFIX_BATCH_SYS_NAME):
-                    batch_sys_name = line.replace(
+                    job_runner_name = line.replace(
                         self.LINE_PREFIX_BATCH_SYS_NAME, "").strip()
                 elif line.startswith(self.LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL):
                     submit_opts["batch_submit_cmd_tmpl"] = line.replace(
@@ -723,7 +722,7 @@ class BatchSysManager():
                 elif line.startswith(self.LINE_PREFIX_EXECUTION_TIME_LIMIT):
                     submit_opts["execution_time_limit"] = float(line.replace(
                         self.LINE_PREFIX_EXECUTION_TIME_LIMIT, "").strip())
-            items.append((job_log_dir, batch_sys_name, submit_opts))
+            items.append((job_log_dir, job_runner_name, submit_opts))
         return items
 
     def _jobs_submit_prep_by_stdin(self, job_log_root, job_log_dirs):
@@ -733,7 +732,7 @@ class BatchSysManager():
         methods and job submission command templates from each job file.
 
         Return a list, where each element contains something like:
-        (job_log_dir, batch_sys_name, submit_opts)
+        (job_log_dir, job_runner_name, submit_opts)
 
         """
         items = [[job_log_dir, None, {}] for job_log_dir in job_log_dirs]
@@ -741,7 +740,7 @@ class BatchSysManager():
         for item in items:
             items_map[item[0]] = item
         handle = None
-        batch_sys_name = None
+        job_runner_name = None
         submit_opts = {}
         job_log_dir = None
         lines = []
@@ -756,7 +755,7 @@ class BatchSysManager():
                     handle.close()
                 break
             if cur_line.startswith(self.LINE_PREFIX_BATCH_SYS_NAME):
-                batch_sys_name = cur_line.replace(
+                job_runner_name = cur_line.replace(
                     self.LINE_PREFIX_BATCH_SYS_NAME, "").strip()
             elif cur_line.startswith(self.LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL):
                 submit_opts["batch_submit_cmd_tmpl"] = cur_line.replace(
@@ -788,12 +787,12 @@ class BatchSysManager():
                     # Rename from "*/job.tmp" to "*/job"
                     os.rename(handle.name, handle.name[:-4])
                     try:
-                        items_map[job_log_dir][1] = batch_sys_name
+                        items_map[job_log_dir][1] = job_runner_name
                         items_map[job_log_dir][2] = submit_opts
                     except KeyError:
                         pass
                     handle = None
                     job_log_dir = None
-                    batch_sys_name = None
+                    job_runner_name = None
                     submit_opts = {}
         return items

@@ -995,10 +995,11 @@ with Conf(
                    Try number
                 ``%(id)s``
                    Task ID (i.e. %(name)s.%(point)s)
-                ``%(batch_sys_name)s``
-                   Batch system name
-                ``%(batch_sys_job_id)``
-                   Batch system job ID
+                ``%(job_runner_name)s``
+                   Job runner name (previously ``%(batch_sys_name)s``)
+                ``%(job_id)s``
+                   Job ID in the job runner
+                   (previously ``%(batch_sys_job_id)s``)
                 ``%(submit_time)s``
                    Date-time when task job is submitted
                 ``%(start_time)s``

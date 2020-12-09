@@ -120,8 +120,10 @@ class EventData(Enum):
     TryNum = 'try_num'
     ID = 'id'
     Message = 'message'
-    BatchSysName = 'batch_sys_name'
-    BatchSysJobID = 'batch_sys_job_id'
+    JobRunnerName_old = 'batch_sys_name'  # deprecated
+    JobRunnerName = 'job_runner_name'
+    JobID_old = 'batch_sys_job_id'  # deprecated
+    JobID = 'job_id'
     SubmitTime = 'submit_time'
     StartTime = 'start_time'
     FinishTime = 'finish_time'
@@ -961,14 +963,14 @@ class TaskEventsManager():
                 itask,
                 itask.summary['submit_num'],
                 itask.summary['platforms_used'][itask.summary['submit_num']],
-                itask.summary['batch_sys_name'],
+                itask.summary['job_runner_name'],
                 itask.summary['submit_method_id'])
         except KeyError:
             pass
         self.suite_db_mgr.put_update_task_jobs(itask, {
             "time_submit_exit": event_time,
             "submit_status": 0,
-            "batch_sys_job_id": itask.summary.get('submit_method_id')})
+            "job_id": itask.summary.get('submit_method_id')})
 
         if itask.tdef.run_mode == 'simulation':
             # Simulate job execution at this point.
@@ -1095,10 +1097,10 @@ class TaskEventsManager():
             # Note quote() fails on None, need str(None).
             try:
                 handler_data = {
-                    EventData.BatchSysJobID.value:
+                    EventData.JobID.value:
                         quote(str(itask.summary['submit_method_id'])),
-                    EventData.BatchSysName.value:
-                        quote(str(itask.summary['batch_sys_name'])),
+                    EventData.JobRunnerName.value:
+                        quote(str(itask.summary['job_runner_name'])),
                     EventData.CyclePoint.value:
                         quote(str(itask.point)),
                     EventData.Event.value:
@@ -1125,6 +1127,11 @@ class TaskEventsManager():
                         quote(str(self.uuid_str)),
                     EventData.TryNum.value:
                         itask.get_try_num(),
+                    # next 2 are deprecated:
+                    EventData.JobID_old.value:
+                        quote(str(itask.summary['submit_method_id'])),
+                    EventData.JobRunnerName_old.value:
+                        quote(str(itask.summary['job_runner_name'])),
                     # task and suite metadata
                     **get_event_handler_data(
                         itask.tdef.rtconfig, self.suite_cfg)
