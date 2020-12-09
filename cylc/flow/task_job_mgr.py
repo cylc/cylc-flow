@@ -645,7 +645,6 @@ class TaskJobManager:
         try:
             job_log_dir, context = line.split('|')[1:3]
             items = json.loads(context)
-            jp_ctx = JobPollContext(job_log_dir, **items)
         except TypeError:
             itask.set_summary_message(self.POLL_FAIL)
             self.job_pool.add_job_msg(job_d, self.POLL_FAIL)
@@ -666,6 +665,8 @@ class TaskJobManager:
                 return
         finally:
             log_task_job_activity(ctx, suite, itask.point, itask.tdef.name)
+
+        jp_ctx = JobPollContext(job_log_dir, **items)
 
         flag = self.task_events_mgr.FLAG_POLLED
         if jp_ctx.run_status == 1 and jp_ctx.run_signal in ["ERR", "EXIT"]:
