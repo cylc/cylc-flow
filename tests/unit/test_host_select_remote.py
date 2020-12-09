@@ -176,7 +176,7 @@ def test_remote_suite_host_rankings(mock_glbl_cfg):
     )
     with pytest.raises(HostSelectException) as excinfo:
         select_suite_host()
-    # ensure that host selection actually evuluated rankings
+    # ensure that host selection actually evaluated rankings
     assert set(excinfo.value.data[remote_platform_fqdn]) == {
         'virtual_memory().available > 123456789123456789',
         'cpu_count() > 512',

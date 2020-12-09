@@ -141,7 +141,7 @@ ALIASES = {
 }
 
 
-# alises for sub-commands which no longer exist
+# aliases for sub-commands which no longer exist
 # {alias_name: message_to_user}
 DEAD_ENDS = {
     'reset': 'cylc reset has been replaced by cylc set-outputs',

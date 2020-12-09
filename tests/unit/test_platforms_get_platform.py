@@ -28,7 +28,7 @@ def test_get_platform_no_args():
 
 
 def test_get_platform_from_platform_name_str(mock_glbl_cfg):
-    # Check that an arbitary string name returns a sensible platform
+    # Check that an arbitrary string name returns a sensible platform
     mock_glbl_cfg(
         'cylc.flow.platforms.glbl_cfg',
         '''

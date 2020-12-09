@@ -68,7 +68,7 @@ __END__
 #
 # Lines are those which should appear after a '<datetimestamp> INFO - Broadcast
 # set' ('+') and later '... INFO - Broadcast cancelled:' ('-') line, where we
-# use as a test case an arbitary task where such setting & cancellation occurs:
+# use as a test case an arbitrary task where such setting & cancellation occurs:
 contains_ok "${SUITE_LOG}" << __LOG_BROADCASTS__
 	+ [f1.2015] [environment]upstream_suite=${SUITE_NAME_UPSTREAM}
 	+ [f1.2015] [environment]upstream_task=foo
