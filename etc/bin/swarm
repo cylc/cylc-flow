@@ -110,7 +110,7 @@ Caveats:
         $ sudo iptables -A INPUT -i docker0 -j ACCEPT
     This must appear early in the table to avoid preemption by reject or drop.
         $ sudo iptables-save > iptables.txt
-        $ # (edit iptables.txt to put the new line at the top)
+        $ # (edit iptables.txt to put the new line above other INPUT lines).
         $ sudo iptables-restore < iptables.txt
 
     At present TCP comms are not possible FROM the host TO the container.
