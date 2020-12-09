@@ -21,7 +21,7 @@
     [[kill_foo_submit]]
         script = """
             wait
-            ID=$(sed -n "s/^CYLC_BATCH_SYS_JOB_ID=//p" \
+            ID=$(sed -n "s/^CYLC_JOB_ID=//p" \
                  $CYLC_SUITE_RUN_DIR/log/job/1/foo/01/job.status)
             atrm $ID
         """

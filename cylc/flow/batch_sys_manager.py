@@ -192,13 +192,13 @@ class BatchSysManager():
 
     """
 
-    CYLC_BATCH_SYS_NAME = "CYLC_BATCH_SYS_NAME"
-    CYLC_BATCH_SYS_JOB_ID = "CYLC_BATCH_SYS_JOB_ID"
-    CYLC_BATCH_SYS_JOB_SUBMIT_TIME = "CYLC_BATCH_SYS_JOB_SUBMIT_TIME"
-    CYLC_BATCH_SYS_EXIT_POLLED = "CYLC_BATCH_SYS_EXIT_POLLED"
+    CYLC_JOB_RUNNER_NAME = "CYLC_JOB_RUNNER_NAME"
+    CYLC_JOB_ID = "CYLC_JOB_ID"
+    CYLC_JOB_RUNNER_SUBMIT_TIME = "CYLC_JOB_RUNNER_SUBMIT_TIME"
+    CYLC_JOB_RUNNER_EXIT_POLLED = "CYLC_JOB_RUNNER_EXIT_POLLED"
     FAIL_SIGNALS = ("EXIT", "ERR", "TERM", "XCPU")
-    LINE_PREFIX_BATCH_SYS_NAME = "# Job submit method: "
-    LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL = "# Job submit command template: "
+    LINE_PREFIX_JOB_RUNNER_NAME = "# Job submit method: "
+    LINE_PREFIX_JOB_RUNNER_CMD_TMPL = "# Job submit command template: "
     LINE_PREFIX_EXECUTION_TIME_LIMIT = "# Execution time limit: "
     LINE_PREFIX_EOF = "#EOF: "
     LINE_PREFIX_JOB_LOG_DIR = "# Job log directory: "
@@ -388,7 +388,7 @@ class BatchSysManager():
         try:
             st_file = open(st_file_path)
             for line in st_file:
-                if line.startswith(self.CYLC_BATCH_SYS_NAME + "="):
+                if line.startswith(f"{self.CYLC_JOB_RUNNER_NAME}="):
                     batch_sys = self._get_sys(line.strip().split("=", 1)[1])
                     break
             else:
@@ -410,7 +410,7 @@ class BatchSysManager():
             st_file.seek(0, 0)  # rewind
             if hasattr(batch_sys, "KILL_CMD_TMPL"):
                 for line in st_file:
-                    if not line.startswith(self.CYLC_BATCH_SYS_JOB_ID + "="):
+                    if not line.startswith(f"{self.CYLC_JOB_ID}="):
                         continue
                     job_id = line.strip().split("=", 1)[1]
                     command = shlex.split(
@@ -479,10 +479,10 @@ class BatchSysManager():
                     if hasattr(batch_sys, "manip_job_id"):
                         job_id = batch_sys.manip_job_id(job_id)
                     job_status_file = open(st_file_path, "a")
-                    job_status_file.write("%s=%s\n" % (
-                        self.CYLC_BATCH_SYS_JOB_ID, job_id))
-                    job_status_file.write("%s=%s\n" % (
-                        self.CYLC_BATCH_SYS_JOB_SUBMIT_TIME,
+                    job_status_file.write("{0}={1}\n".format(
+                        self.CYLC_JOB_ID, job_id))
+                    job_status_file.write("{0}={1}\n".format(
+                        self.CYLC_JOB_RUNNER_SUBMIT_TIME,
                         get_current_time_string()))
                     job_status_file.close()
                     break
@@ -497,21 +497,21 @@ class BatchSysManager():
             handle = open(os.path.join(
                 job_log_root, ctx.job_log_dir, JOB_LOG_STATUS))
         except IOError as exc:
-            sys.stderr.write(str(exc) + "\n")
+            sys.stderr.write(f"{exc}\n")
             return
         for line in handle:
             if "=" not in line:
                 continue
             key, value = line.strip().split("=", 1)
-            if key == self.CYLC_BATCH_SYS_NAME:
+            if key == self.CYLC_JOB_RUNNER_NAME:
                 ctx.job_runner_name = value
-            elif key == self.CYLC_BATCH_SYS_JOB_ID:
+            elif key == self.CYLC_JOB_ID:
                 ctx.job_id = value
-            elif key == self.CYLC_BATCH_SYS_EXIT_POLLED:
+            elif key == self.CYLC_JOB_RUNNER_EXIT_POLLED:
                 ctx.batch_sys_exit_polled = 1
             elif key == CYLC_JOB_PID:
                 ctx.pid = value
-            elif key == self.CYLC_BATCH_SYS_JOB_SUBMIT_TIME:
+            elif key == self.CYLC_JOB_RUNNER_SUBMIT_TIME:
                 ctx.time_submit_exit = value
             elif key == CYLC_JOB_INIT_TIME:
                 ctx.time_run = value
@@ -606,12 +606,12 @@ class BatchSysManager():
                 try:
                     handle = open(os.path.join(
                         job_log_root, ctx.job_log_dir, JOB_LOG_STATUS), "a")
-                    handle.write("%s=%s\n" % (
-                        self.CYLC_BATCH_SYS_EXIT_POLLED,
+                    handle.write("{0}={1}\n".format(
+                        self.CYLC_JOB_RUNNER_EXIT_POLLED,
                         get_current_time_string()))
                     handle.close()
                 except IOError as exc:
-                    sys.stderr.write(str(exc) + "\n")
+                    sys.stderr.write(f"{exc}\n")
 
         if debug_flag:
             ctx.batch_sys_call_no_lines = ', '.join(debug_messages)
@@ -629,9 +629,9 @@ class BatchSysManager():
                 pass
 
         # Start new status file
-        job_status_file = open(job_file_path + ".status", "w")
+        job_status_file = open(f"{job_file_path}.status", "w")
         job_status_file.write(
-            "%s=%s\n" % (self.CYLC_BATCH_SYS_NAME, job_runner_name))
+            "{0}={1}\n".format(self.CYLC_JOB_RUNNER_NAME, job_runner_name))
         job_status_file.close()
 
         # Submit job
@@ -713,12 +713,12 @@ class BatchSysManager():
             job_runner_name = None
             submit_opts = {}
             for line in open(job_file_path):
-                if line.startswith(self.LINE_PREFIX_BATCH_SYS_NAME):
+                if line.startswith(self.LINE_PREFIX_JOB_RUNNER_NAME):
                     job_runner_name = line.replace(
-                        self.LINE_PREFIX_BATCH_SYS_NAME, "").strip()
-                elif line.startswith(self.LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL):
+                        self.LINE_PREFIX_JOB_RUNNER_NAME, "").strip()
+                elif line.startswith(self.LINE_PREFIX_JOB_RUNNER_CMD_TMPL):
                     submit_opts["batch_submit_cmd_tmpl"] = line.replace(
-                        self.LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL, "").strip()
+                        self.LINE_PREFIX_JOB_RUNNER_CMD_TMPL, "").strip()
                 elif line.startswith(self.LINE_PREFIX_EXECUTION_TIME_LIMIT):
                     submit_opts["execution_time_limit"] = float(line.replace(
                         self.LINE_PREFIX_EXECUTION_TIME_LIMIT, "").strip())
@@ -754,12 +754,12 @@ class BatchSysManager():
                 if handle is not None:
                     handle.close()
                 break
-            if cur_line.startswith(self.LINE_PREFIX_BATCH_SYS_NAME):
+            if cur_line.startswith(self.LINE_PREFIX_JOB_RUNNER_NAME):
                 job_runner_name = cur_line.replace(
-                    self.LINE_PREFIX_BATCH_SYS_NAME, "").strip()
-            elif cur_line.startswith(self.LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL):
+                    self.LINE_PREFIX_JOB_RUNNER_NAME, "").strip()
+            elif cur_line.startswith(self.LINE_PREFIX_JOB_RUNNER_CMD_TMPL):
                 submit_opts["batch_submit_cmd_tmpl"] = cur_line.replace(
-                    self.LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL, "").strip()
+                    self.LINE_PREFIX_JOB_RUNNER_CMD_TMPL, "").strip()
             elif cur_line.startswith(self.LINE_PREFIX_EXECUTION_TIME_LIMIT):
                 submit_opts["execution_time_limit"] = float(cur_line.replace(
                     self.LINE_PREFIX_EXECUTION_TIME_LIMIT, "").strip())

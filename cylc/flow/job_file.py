@@ -128,9 +128,9 @@ class JobFileWriter:
                 ("# Suite: ", job_conf['suite_name']),
                 ("# Task: ", job_conf['task_id']),
                 (BatchSysManager.LINE_PREFIX_JOB_LOG_DIR, job_conf['job_d']),
-                (BatchSysManager.LINE_PREFIX_BATCH_SYS_NAME,
+                (BatchSysManager.LINE_PREFIX_JOB_RUNNER_NAME,
                  job_conf['platform']['job runner']),
-                (BatchSysManager.LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL,
+                (BatchSysManager.LINE_PREFIX_JOB_RUNNER_CMD_TMPL,
                  job_conf['platform']['job runner command template']),
                 (BatchSysManager.LINE_PREFIX_EXECUTION_TIME_LIMIT,
                  job_conf['execution_time_limit'])]:
