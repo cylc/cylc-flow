@@ -784,7 +784,6 @@ class TaskJobManager:
                 submit_delays = itask.platform['submission retry delays']
             # TODO: same for execution delays?
 
-        if retry:
             for key, delays in [
                     (
                         TimerFlags.SUBMISSION_RETRY,
