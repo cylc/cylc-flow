@@ -1350,7 +1350,10 @@ class Broadcast(Mutation):
     class Arguments:
         workflows = List(WorkflowID, required=True)
         mode = BroadcastMode(
-            default_value=1,
+            # use the enum name as the default value
+            # https://github.com/graphql-python/graphql-core-legacy/issues/166
+            default_value=BroadcastMode.Set.name,
+            description='What type of broadcast is this?',
             required=True
         )
         cycle_points = List(
