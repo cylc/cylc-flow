@@ -67,8 +67,8 @@ fragment tProxy on TaskProxy {
     extraLogs
     host
     executionTimeLimit
-    batchSysName
-    batchSysJobId
+    jobRunnerName
+    jobId
   }
 }
 '''

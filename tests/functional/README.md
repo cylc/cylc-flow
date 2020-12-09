@@ -21,7 +21,7 @@ These tests ensure end-to-end functionality is as expected.
 With Cylc this typically involves building workflow configurations which
 cause many parts of the system (and other systems) to be activated.
 
-This includes interaction with other systems (e.g. batch schedulers),
+This includes interaction with other systems (e.g. batch schedulers/job runners),
 command line interfaces / outputs, etc.
 
 ## How To Run "Non-Generic" Tests?

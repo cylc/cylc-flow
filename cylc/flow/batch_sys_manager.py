@@ -139,13 +139,13 @@ class JobPollContext():
         'job_log_dir',  # cycle/task/submit_num
         'job_runner_name',
         'job_id',  # job id in job runner
-        'batch_sys_exit_polled',  # 0 for false, 1 for true
+        'job_runner_exit_polled',  # 0 for false, 1 for true
         'run_status',  # 0 for success, 1 for failure
         'run_signal',  # signal received on run failure
         'time_submit_exit',  # submit (exit) time
         'time_run',  # run start time
         'time_run_exit',  # run exit time
-        'batch_sys_call_no_lines',  # number of lines in job runner call stdout
+        'job_runner_call_no_lines',  # line count in job runner call stdout
     )
 
     __slots__ = CONTEXT_ATTRIBUTES + (
@@ -157,14 +157,14 @@ class JobPollContext():
         self.job_log_dir = job_log_dir
         self.job_runner_name = None
         self.job_id = None
-        self.batch_sys_exit_polled = None
+        self.job_runner_exit_polled = None
         self.pid = None
         self.run_status = None
         self.run_signal = None
         self.time_submit_exit = None
         self.time_run = None
         self.time_run_exit = None
-        self.batch_sys_call_no_lines = None
+        self.job_runner_call_no_lines = None
         self.messages = []
 
         if attrs:
@@ -234,20 +234,20 @@ class BatchSysManager():
 
     def format_directives(self, job_conf):
         """Format the job directives for a job file, if relevant."""
-        batch_sys = self._get_sys(job_conf['platform']['job runner'])
-        if hasattr(batch_sys, "format_directives"):
-            return batch_sys.format_directives(job_conf)
+        job_runner = self._get_sys(job_conf['platform']['job runner'])
+        if hasattr(job_runner, "format_directives"):
+            return job_runner.format_directives(job_conf)
 
     def get_fail_signals(self, job_conf):
         """Return a list of failure signal names to trap in the job file."""
-        batch_sys = self._get_sys(job_conf['platform']['job runner'])
-        return getattr(batch_sys, "FAIL_SIGNALS", self.FAIL_SIGNALS)
+        job_runner = self._get_sys(job_conf['platform']['job runner'])
+        return getattr(job_runner, "FAIL_SIGNALS", self.FAIL_SIGNALS)
 
     def get_vacation_signal(self, job_conf):
         """Return the vacation signal name for a job file."""
-        batch_sys = self._get_sys(job_conf['platform']['job runner'])
-        if hasattr(batch_sys, "get_vacation_signal"):
-            return batch_sys.get_vacation_signal(job_conf)
+        job_runner = self._get_sys(job_conf['platform']['job runner'])
+        if hasattr(job_runner, "get_vacation_signal"):
+            return job_runner.get_vacation_signal(job_conf)
 
     def is_job_local_to_host(self, job_runner_name):
         """Return True if job runner runs jobs local to the submit host."""
@@ -295,7 +295,7 @@ class BatchSysManager():
         self.configure_suite_run_dir(job_log_root.rsplit(os.sep, 2)[0])
 
         ctx_list = []  # Contexts for all relevant jobs
-        ctx_list_by_batch_sys = {}  # {job_runner_name1: [ctx1, ...], ...}
+        ctx_list_by_job_runner = {}  # {job_runner_name1: [ctx1, ...], ...}
 
         for job_log_dir in job_log_dirs:
             ctx = self._jobs_poll_status_files(job_log_root, job_log_dir)
@@ -306,7 +306,7 @@ class BatchSysManager():
             if not ctx.job_runner_name or not ctx.job_id:
                 # Lost job runner information for some reason.
                 # Mark the job as if it is no longer in the job runner.
-                ctx.batch_sys_exit_polled = 1
+                ctx.job_runner_exit_polled = 1
                 sys.stderr.write(
                     "%s/%s: incomplete job runner info\n" % (
                         ctx.job_log_dir, JOB_LOG_STATUS))
@@ -314,16 +314,16 @@ class BatchSysManager():
             # We can trust:
             # * Jobs previously polled to have exited the job runner.
             # * Jobs succeeded or failed with ERR/EXIT.
-            if (ctx.batch_sys_exit_polled or ctx.run_status == 0 or
+            if (ctx.job_runner_exit_polled or ctx.run_status == 0 or
                     ctx.run_signal in ["ERR", "EXIT"]):
                 continue
 
-            if ctx.job_runner_name not in ctx_list_by_batch_sys:
-                ctx_list_by_batch_sys[ctx.job_runner_name] = []
-            ctx_list_by_batch_sys[ctx.job_runner_name].append(ctx)
+            if ctx.job_runner_name not in ctx_list_by_job_runner:
+                ctx_list_by_job_runner[ctx.job_runner_name] = []
+            ctx_list_by_job_runner[ctx.job_runner_name].append(ctx)
 
-        for job_runner_name, my_ctx_list in ctx_list_by_batch_sys.items():
-            self._jobs_poll_batch_sys(
+        for job_runner_name, my_ctx_list in ctx_list_by_job_runner.items():
+            self._jobs_poll_runner(
                 job_log_root, job_runner_name, my_ctx_list)
 
         cur_time_str = get_current_time_string()
@@ -389,14 +389,14 @@ class BatchSysManager():
             st_file = open(st_file_path)
             for line in st_file:
                 if line.startswith(f"{self.CYLC_JOB_RUNNER_NAME}="):
-                    batch_sys = self._get_sys(line.strip().split("=", 1)[1])
+                    job_runner = self._get_sys(line.strip().split("=", 1)[1])
                     break
             else:
                 return (1,
                         "Cannot determine job runner from %s file" % (
                             JOB_LOG_STATUS))
             st_file.seek(0, 0)  # rewind
-            if getattr(batch_sys, "SHOULD_KILL_PROC_GROUP", False):
+            if getattr(job_runner, "SHOULD_KILL_PROC_GROUP", False):
                 for line in st_file:
                     if line.startswith(CYLC_JOB_PID + "="):
                         pid = line.strip().split("=", 1)[1]
@@ -408,13 +408,13 @@ class BatchSysManager():
                         else:
                             return (0, "")
             st_file.seek(0, 0)  # rewind
-            if hasattr(batch_sys, "KILL_CMD_TMPL"):
+            if hasattr(job_runner, "KILL_CMD_TMPL"):
                 for line in st_file:
                     if not line.startswith(f"{self.CYLC_JOB_ID}="):
                         continue
                     job_id = line.strip().split("=", 1)[1]
                     command = shlex.split(
-                        batch_sys.KILL_CMD_TMPL % {"job_id": job_id})
+                        job_runner.KILL_CMD_TMPL % {"job_id": job_id})
                     try:
                         proc = procopen(command, stdindevnull=True,
                                         stderrpipe=True)
@@ -427,8 +427,7 @@ class BatchSysManager():
                         return (1, str(exc))
                     else:
                         return (proc.wait(), proc.communicate()[1].decode())
-            return (1, "Cannot determine batch job ID from %s file" % (
-                       JOB_LOG_STATUS))
+            return (1, f"Cannot determine job ID from {JOB_LOG_STATUS} file")
         except IOError as exc:
             return (1, str(exc))
 
@@ -462,22 +461,22 @@ class BatchSysManager():
                     rmtree(
                         os.path.join(task_log_dir, name), ignore_errors=True)
 
-    def _filter_submit_output(self, st_file_path, batch_sys, out, err):
+    def _filter_submit_output(self, st_file_path, job_runner, out, err):
         """Filter submit command output, if relevant."""
         job_id = None
-        if hasattr(batch_sys, "REC_ID_FROM_SUBMIT_ERR"):
+        if hasattr(job_runner, "REC_ID_FROM_SUBMIT_ERR"):
             text = err
-            rec_id = batch_sys.REC_ID_FROM_SUBMIT_ERR
-        elif hasattr(batch_sys, "REC_ID_FROM_SUBMIT_OUT"):
+            rec_id = job_runner.REC_ID_FROM_SUBMIT_ERR
+        elif hasattr(job_runner, "REC_ID_FROM_SUBMIT_OUT"):
             text = out
-            rec_id = batch_sys.REC_ID_FROM_SUBMIT_OUT
+            rec_id = job_runner.REC_ID_FROM_SUBMIT_OUT
         if rec_id:
             for line in str(text).splitlines():
                 match = rec_id.match(line)
                 if match:
                     job_id = match.group("id")
-                    if hasattr(batch_sys, "manip_job_id"):
-                        job_id = batch_sys.manip_job_id(job_id)
+                    if hasattr(job_runner, "manip_job_id"):
+                        job_id = job_runner.manip_job_id(job_id)
                     job_status_file = open(st_file_path, "a")
                     job_status_file.write("{0}={1}\n".format(
                         self.CYLC_JOB_ID, job_id))
@@ -486,8 +485,8 @@ class BatchSysManager():
                         get_current_time_string()))
                     job_status_file.close()
                     break
-        if hasattr(batch_sys, "filter_submit_output"):
-            out, err = batch_sys.filter_submit_output(out, err)
+        if hasattr(job_runner, "filter_submit_output"):
+            out, err = job_runner.filter_submit_output(out, err)
         return out, err, job_id
 
     def _jobs_poll_status_files(self, job_log_root, job_log_dir):
@@ -508,7 +507,7 @@ class BatchSysManager():
             elif key == self.CYLC_JOB_ID:
                 ctx.job_id = value
             elif key == self.CYLC_JOB_RUNNER_EXIT_POLLED:
-                ctx.batch_sys_exit_polled = 1
+                ctx.job_runner_exit_polled = 1
             elif key == CYLC_JOB_PID:
                 ctx.pid = value
             elif key == self.CYLC_JOB_RUNNER_SUBMIT_TIME:
@@ -529,7 +528,7 @@ class BatchSysManager():
 
         return ctx
 
-    def _jobs_poll_batch_sys(self, job_log_root, job_runner_name, my_ctx_list):
+    def _jobs_poll_runner(self, job_log_root, job_runner_name, my_ctx_list):
         """Helper 2 for self.jobs_poll(job_log_root, job_log_dirs)."""
         exp_job_ids = [ctx.job_id for ctx in my_ctx_list]
         bad_job_ids = list(exp_job_ids)
@@ -541,13 +540,13 @@ class BatchSysManager():
             bad_pids.extend(exp_pids)
             items.append([self._get_sys("background"), exp_pids, bad_pids])
         debug_messages = []
-        for batch_sys, exp_ids, bad_ids in items:
-            if hasattr(batch_sys, "get_poll_many_cmd"):
+        for job_runner, exp_ids, bad_ids in items:
+            if hasattr(job_runner, "get_poll_many_cmd"):
                 # Some poll commands may not be as simple
-                cmd = batch_sys.get_poll_many_cmd(exp_ids)
-            else:  # if hasattr(batch_sys, "POLL_CMD"):
+                cmd = job_runner.get_poll_many_cmd(exp_ids)
+            else:  # if hasattr(job_runner, "POLL_CMD"):
                 # Simple poll command that takes a list of job IDs
-                cmd = [batch_sys.POLL_CMD] + exp_ids
+                cmd = [job_runner.POLL_CMD, *exp_ids]
             try:
                 proc = procopen(cmd, stdindevnull=True,
                                 stderrpipe=True, stdoutpipe=True)
@@ -556,21 +555,22 @@ class BatchSysManager():
                 # filename of the executable when it raises an OSError.
                 if not exc.filename:
                     exc.filename = cmd[0]
-                sys.stderr.write(str(exc) + "\n")
+                sys.stderr.write(f"{exc}\n")
                 return
             ret_code = proc.wait()
             out, err = (f.decode() for f in proc.communicate())
-            debug_messages.append('%s - %s' % (
-                batch_sys, len(out.split('\n'))))
+            debug_messages.append('{0} - {1}'.format(
+                job_runner, len(out.split('\n')))
+            )
             sys.stderr.write(err)
-            if (ret_code and hasattr(batch_sys, "POLL_CANT_CONNECT_ERR") and
-                    batch_sys.POLL_CANT_CONNECT_ERR in err):
+            if (ret_code and hasattr(job_runner, "POLL_CANT_CONNECT_ERR") and
+                    job_runner.POLL_CANT_CONNECT_ERR in err):
                 # Poll command failed because it cannot connect to job runner
                 # Assume jobs are still healthy until the job runner is back.
                 bad_ids[:] = []
-            elif hasattr(batch_sys, "filter_poll_many_output"):
+            elif hasattr(job_runner, "filter_poll_many_output"):
                 # Allow custom filter
-                for id_ in batch_sys.filter_poll_many_output(out):
+                for id_ in job_runner.filter_poll_many_output(out):
                     try:
                         bad_ids.remove(id_)
                     except ValueError:
@@ -592,17 +592,17 @@ class BatchSysManager():
 
         debug_flag = False
         for ctx in my_ctx_list:
-            ctx.batch_sys_exit_polled = int(
+            ctx.job_runner_exit_polled = int(
                 ctx.job_id in bad_job_ids)
             # Exited job runner, but process still running
             # This can happen to jobs in some "at" implementation
-            if ctx.batch_sys_exit_polled and ctx.pid in exp_pids:
+            if ctx.job_runner_exit_polled and ctx.pid in exp_pids:
                 if ctx.pid not in bad_pids:
-                    ctx.batch_sys_exit_polled = 0
+                    ctx.job_runner_exit_polled = 0
                 else:
                     debug_flag = True
             # Add information to "job.status"
-            if ctx.batch_sys_exit_polled:
+            if ctx.job_runner_exit_polled:
                 try:
                     handle = open(os.path.join(
                         job_log_root, ctx.job_log_dir, JOB_LOG_STATUS), "a")
@@ -614,7 +614,7 @@ class BatchSysManager():
                     sys.stderr.write(f"{exc}\n")
 
         if debug_flag:
-            ctx.batch_sys_call_no_lines = ', '.join(debug_messages)
+            ctx.job_runner_call_no_lines = ', '.join(debug_messages)
 
     def _job_submit_impl(
             self, job_file_path, job_runner_name, submit_opts):
@@ -635,38 +635,38 @@ class BatchSysManager():
         job_status_file.close()
 
         # Submit job
-        batch_sys = self._get_sys(job_runner_name)
-        if hasattr(batch_sys, "submit"):
-            # batch_sys.submit should handle OSError, if relevant.
-            ret_code, out, err = batch_sys.submit(job_file_path, submit_opts)
+        job_runner = self._get_sys(job_runner_name)
+        if hasattr(job_runner, "submit"):
+            # job_runner.submit should handle OSError, if relevant.
+            ret_code, out, err = job_runner.submit(job_file_path, submit_opts)
         else:
             proc_stdin_arg = None
             # Set command STDIN to DEVNULL by default to prevent leakage of
             # STDIN from current environment.
             proc_stdin_value = DEVNULL  # nosec
-            if hasattr(batch_sys, "get_submit_stdin"):
-                proc_stdin_arg, proc_stdin_value = batch_sys.get_submit_stdin(
+            if hasattr(job_runner, "get_submit_stdin"):
+                proc_stdin_arg, proc_stdin_value = job_runner.get_submit_stdin(
                     job_file_path, submit_opts)
                 if isinstance(proc_stdin_value, str):
                     proc_stdin_value = proc_stdin_value.encode()
             env = None
-            if hasattr(batch_sys, "SUBMIT_CMD_ENV"):
+            if hasattr(job_runner, "SUBMIT_CMD_ENV"):
                 env = dict(os.environ)
-                env.update(batch_sys.SUBMIT_CMD_ENV)
-            batch_submit_cmd_tmpl = submit_opts.get("batch_submit_cmd_tmpl")
-            if batch_submit_cmd_tmpl:
+                env.update(job_runner.SUBMIT_CMD_ENV)
+            job_runner_cmd_tmpl = submit_opts.get("job_runner_cmd_tmpl")
+            if job_runner_cmd_tmpl:
                 # No need to catch OSError when using shell. It is unlikely
                 # that we do not have a shell, and still manage to get as far
                 # as here.
-                batch_sys_cmd = batch_submit_cmd_tmpl % {"job": job_file_path}
-                proc = procopen(batch_sys_cmd, stdin=proc_stdin_arg,
+                job_runner_cmd = job_runner_cmd_tmpl % {"job": job_file_path}
+                proc = procopen(job_runner_cmd, stdin=proc_stdin_arg,
                                 stdoutpipe=True, stderrpipe=True, usesh=True,
                                 env=env)
                 # calls to open a shell are aggregated in
                 # cylc_subproc.procopen()
             else:
                 command = shlex.split(
-                    batch_sys.SUBMIT_CMD_TMPL % {"job": job_file_path})
+                    job_runner.SUBMIT_CMD_TMPL % {"job": job_file_path})
                 try:
                     proc = procopen(command, stdin=proc_stdin_arg,
                                     stdoutpipe=True, stderrpipe=True, env=env)
@@ -689,10 +689,10 @@ class BatchSysManager():
         if out or err:
             try:
                 out, err, job_id = self._filter_submit_output(
-                    job_file_path + ".status", batch_sys, out, err)
+                    f"{job_file_path}.status", job_runner, out, err)
             except OSError:
                 ret_code = 1
-                self.job_kill(job_file_path + ".status")
+                self.job_kill(f"{job_file_path}.status")
 
         return ret_code, out, err, job_id
 
@@ -717,7 +717,7 @@ class BatchSysManager():
                     job_runner_name = line.replace(
                         self.LINE_PREFIX_JOB_RUNNER_NAME, "").strip()
                 elif line.startswith(self.LINE_PREFIX_JOB_RUNNER_CMD_TMPL):
-                    submit_opts["batch_submit_cmd_tmpl"] = line.replace(
+                    submit_opts["job_runner_cmd_tmpl"] = line.replace(
                         self.LINE_PREFIX_JOB_RUNNER_CMD_TMPL, "").strip()
                 elif line.startswith(self.LINE_PREFIX_EXECUTION_TIME_LIMIT):
                     submit_opts["execution_time_limit"] = float(line.replace(
@@ -758,7 +758,7 @@ class BatchSysManager():
                 job_runner_name = cur_line.replace(
                     self.LINE_PREFIX_JOB_RUNNER_NAME, "").strip()
             elif cur_line.startswith(self.LINE_PREFIX_JOB_RUNNER_CMD_TMPL):
-                submit_opts["batch_submit_cmd_tmpl"] = cur_line.replace(
+                submit_opts["job_runner_cmd_tmpl"] = cur_line.replace(
                     self.LINE_PREFIX_JOB_RUNNER_CMD_TMPL, "").strip()
             elif cur_line.startswith(self.LINE_PREFIX_EXECUTION_TIME_LIMIT):
                 submit_opts["execution_time_limit"] = float(cur_line.replace(

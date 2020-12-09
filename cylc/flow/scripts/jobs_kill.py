@@ -19,8 +19,8 @@
 (This command is for internal use. Users should use "cylc kill".)
 
 Read job status files to obtain the names of the job runners and the job IDs
-in the runners. Invoke the relevant job runner commands to ask the batch
-systems to terminate the jobs.
+in the runners. Invoke the relevant job runner commands to ask the job runners
+to terminate the jobs.
 
 """
 from cylc.flow.batch_sys_manager import BatchSysManager

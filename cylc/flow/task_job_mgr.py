@@ -666,7 +666,7 @@ class TaskJobManager:
             # Failed normally
             self.task_events_mgr.process_message(
                 itask, INFO, TASK_OUTPUT_FAILED, jp_ctx.time_run_exit, flag)
-        elif jp_ctx.run_status == 1 and jp_ctx.batch_sys_exit_polled == 1:
+        elif jp_ctx.run_status == 1 and jp_ctx.job_runner_exit_polled == 1:
             # Failed by a signal, and no longer in job runner
             self.task_events_mgr.process_message(
                 itask, INFO, TASK_OUTPUT_FAILED, jp_ctx.time_run_exit, flag)
@@ -685,7 +685,7 @@ class TaskJobManager:
             self.task_events_mgr.process_message(
                 itask, INFO, TASK_OUTPUT_SUCCEEDED, jp_ctx.time_run_exit,
                 flag)
-        elif jp_ctx.time_run and jp_ctx.batch_sys_exit_polled == 1:
+        elif jp_ctx.time_run and jp_ctx.job_runner_exit_polled == 1:
             # The job has terminated without executing the error trap
             self.task_events_mgr.process_message(
                 itask, INFO, TASK_OUTPUT_FAILED, get_current_time_string(),
@@ -694,7 +694,7 @@ class TaskJobManager:
             # The job has started, and is still managed by job runner
             self.task_events_mgr.process_message(
                 itask, INFO, TASK_OUTPUT_STARTED, jp_ctx.time_run, flag)
-        elif jp_ctx.batch_sys_exit_polled == 1:
+        elif jp_ctx.job_runner_exit_polled == 1:
             # The job never ran, and no longer in job runner
             self.task_events_mgr.process_message(
                 itask, INFO, self.task_events_mgr.EVENT_SUBMIT_FAILED,
@@ -1018,7 +1018,7 @@ class TaskJobManager:
             itask.platform, suite, job_d, JOB_LOG_JOB)
         return {
             'job_runner_name': itask.platform['job runner'],
-            'batch_submit_command_template': (
+            'job_runner_command_template': (
                 itask.platform['job runner command template']
             ),
             'dependencies': itask.state.get_resolved_dependencies(),

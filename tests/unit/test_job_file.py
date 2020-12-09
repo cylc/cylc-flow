@@ -246,13 +246,13 @@ def test_write_directives(fixture_get_platform, job_conf: dict, expected: str):
 
 
 @pytest.mark.parametrize(
-    "batch_sys",
+    "job_runner",
     ["at", "background", "loadleveler", "pbs", "sge", "slurm"])
-def test_traps_for_each_job_runner(batch_sys: str):
+def test_traps_for_each_job_runner(job_runner: str):
     """Test traps for each job runner"""
     platform = platform_from_name()
     platform.update({
-        "job runner": f"{batch_sys}",
+        "job runner": f"{job_runner}",
         "owner": "me"
     })
     job_conf = {
@@ -263,7 +263,7 @@ def test_traps_for_each_job_runner(batch_sys: str):
     with io.StringIO() as fake_file:
         JobFileWriter()._write_prelude(fake_file, job_conf)
         output = fake_file.getvalue()
-        if batch_sys == "slurm":
+        if job_runner == "slurm":
             assert(
                 "CYLC_FAIL_SIGNALS='EXIT ERR XCPU" in output)
         else:

@@ -42,8 +42,8 @@ QUERY = '''
           submitNum
           state
           host
-          batchSysName
-          batchSysJobId
+          jobRunnerName
+          jobId
           startedTime
         }
         task {

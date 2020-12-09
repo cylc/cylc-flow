@@ -200,7 +200,7 @@ class TimingSummary:
         })
         self.df = self.df.rename_axis('timing_category', axis='columns')
         self.by_host_and_batch = self.df.groupby(
-            level=['host', 'batch_system']
+            level=['host', 'job_runner']
         )
 
     def write_summary(self, buf=None):
