@@ -27,44 +27,85 @@ This module provides logic to:
 import json
 import os
 from copy import deepcopy
-from logging import CRITICAL, DEBUG, INFO, WARNING
+from logging import (
+    CRITICAL,
+    DEBUG,
+    INFO,
+    WARNING
+)
 from shutil import rmtree
 from time import time
 
 from cylc.flow import LOG
 from cylc.flow.batch_sys_manager import JobPollContext
-from cylc.flow.exceptions import (PlatformLookupError, SuiteConfigError,
-                                  TaskRemoteMgmtError)
-from cylc.flow.hostuserutil import get_host, is_remote_host, is_remote_platform
+from cylc.flow.exceptions import (
+    PlatformLookupError,
+    SuiteConfigError,
+    TaskRemoteMgmtError
+)
+from cylc.flow.hostuserutil import (
+    get_host,
+    is_remote_host,
+    is_remote_platform
+)
 from cylc.flow.job_file import JobFileWriter
-from cylc.flow.parsec.util import pdeepcopy, poverride
+from cylc.flow.parsec.util import (
+    pdeepcopy,
+    poverride
+)
 from cylc.flow.pathutil import get_remote_suite_run_job_dir
-from cylc.flow.platforms import (HOST_REC_COMMAND, PLATFORM_REC_COMMAND,
-                                 get_host_from_platform,
-                                 get_install_target_from_platform,
-                                 get_platform)
+from cylc.flow.platforms import (
+    HOST_REC_COMMAND,
+    PLATFORM_REC_COMMAND,
+    get_host_from_platform,
+    get_install_target_from_platform,
+    get_platform
+)
 from cylc.flow.remote import construct_ssh_cmd
 from cylc.flow.subprocctx import SubProcContext
 from cylc.flow.subprocpool import SubProcPool
-from cylc.flow.task_action_timer import TaskActionTimer, TimerFlags
-from cylc.flow.task_events_mgr import TaskEventsManager, log_task_job_activity
-from cylc.flow.task_job_logs import (JOB_LOG_JOB, NN,
-                                     get_task_job_activity_log,
-                                     get_task_job_id, get_task_job_job_log,
-                                     get_task_job_log)
+from cylc.flow.task_action_timer import (
+    TaskActionTimer,
+    TimerFlags
+)
+from cylc.flow.task_events_mgr import (
+    TaskEventsManager,
+    log_task_job_activity
+)
+from cylc.flow.task_job_logs import (
+    JOB_LOG_JOB,
+    NN,
+    get_task_job_activity_log,
+    get_task_job_id,
+    get_task_job_job_log,
+    get_task_job_log
+)
 from cylc.flow.task_message import FAIL_MESSAGE_PREFIX
-from cylc.flow.task_outputs import (TASK_OUTPUT_FAILED, TASK_OUTPUT_STARTED,
-                                    TASK_OUTPUT_SUBMITTED,
-                                    TASK_OUTPUT_SUCCEEDED)
-from cylc.flow.task_remote_mgr import (REMOTE_FILE_INSTALL_DONE,
-                                       REMOTE_FILE_INSTALL_FAILED,
-                                       REMOTE_FILE_INSTALL_IN_PROGRESS,
-                                       REMOTE_INIT_DONE, REMOTE_INIT_FAILED,
-                                       TaskRemoteMgr)
-from cylc.flow.task_state import (TASK_STATUS_FAILED, TASK_STATUS_READY,
-                                  TASK_STATUS_RUNNING, TASK_STATUS_SUBMITTED,
-                                  TASK_STATUS_SUCCEEDED, TASK_STATUSES_ACTIVE)
-from cylc.flow.wallclock import get_current_time_string, get_utc_mode
+from cylc.flow.task_outputs import (
+    TASK_OUTPUT_FAILED,
+    TASK_OUTPUT_STARTED,
+    TASK_OUTPUT_SUBMITTED,
+    TASK_OUTPUT_SUCCEEDED
+)
+from cylc.flow.task_remote_mgr import (
+    REMOTE_FILE_INSTALL_DONE,
+    REMOTE_FILE_INSTALL_FAILED,
+    REMOTE_FILE_INSTALL_IN_PROGRESS,
+    REMOTE_INIT_DONE, REMOTE_INIT_FAILED,
+    TaskRemoteMgr
+)
+from cylc.flow.task_state import (
+    TASK_STATUS_FAILED,
+    TASK_STATUS_READY,
+    TASK_STATUS_RUNNING,
+    TASK_STATUS_SUBMITTED,
+    TASK_STATUS_SUCCEEDED,
+    TASK_STATUSES_ACTIVE
+)
+from cylc.flow.wallclock import (
+    get_current_time_string,
+    get_utc_mode
+)
 
 
 class TaskJobManager:
@@ -286,9 +327,9 @@ class TaskJobManager:
             if (ri_map[install_target] in [REMOTE_INIT_FAILED,
                                            REMOTE_FILE_INSTALL_FAILED]):
                 init_error = (ri_map[install_target])
+                # Remote has failed to initialise, remove target from remote
+                # init map and set submit-failed for all affected tasks
                 del ri_map[install_target]
-                # Remote has failed to initialise
-                # Set submit-failed for all affected tasks
                 for itask in itasks:
                     itask.local_job_file_path = None  # reset for retry
                     log_task_job_activity(
