@@ -47,7 +47,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}" \
     -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
 suite_run_ok "${TEST_NAME_BASE}-run-ok" cylc run "${SUITE_NAME}" \
-    -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
+    -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'" --debug
 poll_grep_suite_log 'File installation complete'
 TEST_SYM="${TEST_NAME_BASE}-run-symlink-exists-ok"
 if [[ $(readlink "$HOME/cylc-run/${SUITE_NAME}") == \
