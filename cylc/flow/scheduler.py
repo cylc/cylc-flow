@@ -1340,7 +1340,7 @@ class Scheduler:
                         itask.state(*TASK_STATUSES_ACTIVE)
                         and itask.summary['job_runner_name']
                         and not is_remote_platform(itask.platform)
-                        and self.task_job_mgr.batch_sys_mgr
+                        and self.task_job_mgr.job_runner_mgr
                         .is_job_local_to_host(
                             itask.summary['job_runner_name'])
                 ):

@@ -137,7 +137,7 @@ class TaskJobManager:
         self.task_events_mgr = task_events_mgr
         self.job_pool = job_pool
         self.job_file_writer = JobFileWriter()
-        self.batch_sys_mgr = self.job_file_writer.batch_sys_mgr
+        self.job_runner_mgr = self.job_file_writer.job_runner_mgr
         self.task_remote_mgr = TaskRemoteMgr(suite, proc_pool)
 
     def check_task_jobs(self, suite, task_pool):
@@ -301,7 +301,7 @@ class TaskJobManager:
             # suite host.
             host = get_host_from_platform(platform)
             if (
-                self.batch_sys_mgr.is_job_local_to_host(
+                self.job_runner_mgr.is_job_local_to_host(
                     itask.summary['job_runner_name']
                 ) and
                 not is_remote_platform(platform)
@@ -521,7 +521,8 @@ class TaskJobManager:
             suite,
             itasks,
             self._kill_task_job_callback,
-            {self.batch_sys_mgr.OUT_PREFIX_COMMAND: self._job_cmd_out_callback}
+            {self.job_runner_mgr.OUT_PREFIX_COMMAND:
+                self._job_cmd_out_callback}
         )
 
     def _kill_task_job_callback(self, suite, itask, cmd_ctx, line):
@@ -588,7 +589,7 @@ class TaskJobManager:
             if itask.point is not None and itask.submit_num:
                 submit_num = "%02d" % (itask.submit_num)
                 tasks[(str(itask.point), itask.tdef.name, submit_num)] = itask
-        handlers = [(self.batch_sys_mgr.OUT_PREFIX_SUMMARY, summary_callback)]
+        handlers = [(self.job_runner_mgr.OUT_PREFIX_SUMMARY, summary_callback)]
         if more_callbacks:
             for prefix, callback in more_callbacks.items():
                 handlers.append((prefix, callback))
@@ -603,7 +604,7 @@ class TaskJobManager:
                     try:
                         path = line.split("|", 2)[1]  # timestamp, path, status
                         point, name, submit_num = path.split(os.sep, 2)
-                        if prefix == self.batch_sys_mgr.OUT_PREFIX_SUMMARY:
+                        if prefix == self.job_runner_mgr.OUT_PREFIX_SUMMARY:
                             del bad_tasks[(point, name, submit_num)]
                         itask = tasks[(point, name, submit_num)]
                         callback(suite, itask, ctx, line)
@@ -625,7 +626,7 @@ class TaskJobManager:
             suite,
             itasks,
             self._poll_task_job_callback,
-            {self.batch_sys_mgr.OUT_PREFIX_MESSAGE:
+            {self.job_runner_mgr.OUT_PREFIX_MESSAGE:
              self._poll_task_job_message_callback})
 
     def _poll_task_job_callback(self, suite, itask, cmd_ctx, line):
@@ -815,7 +816,8 @@ class TaskJobManager:
             suite,
             itasks,
             self._submit_task_job_callback,
-            {self.batch_sys_mgr.OUT_PREFIX_COMMAND: self._job_cmd_out_callback}
+            {self.job_runner_mgr.OUT_PREFIX_COMMAND:
+                self._job_cmd_out_callback}
         )
 
     def _submit_task_job_callback(self, suite, itask, cmd_ctx, line):

@@ -36,7 +36,7 @@ class JobFileWriter:
 
     def __init__(self):
         self.suite_env = {}
-        self.batch_sys_mgr = JobRunnerManager()
+        self.job_runner_mgr = JobRunnerManager()
 
     def set_suite_env(self, suite_env):
         """Configure suite environment for all job files."""
@@ -139,7 +139,7 @@ class JobFileWriter:
 
     def _write_directives(self, handle, job_conf):
         """Job directives."""
-        lines = self.batch_sys_mgr.format_directives(job_conf)
+        lines = self.job_runner_mgr.format_directives(job_conf)
         if lines:
             handle.write('\n\n# DIRECTIVES:')
             for line in lines:
@@ -165,8 +165,9 @@ class JobFileWriter:
         """Job script prelude."""
         # Variables for traps
         handle.write("\nCYLC_FAIL_SIGNALS='%s'" % " ".join(
-            self.batch_sys_mgr.get_fail_signals(job_conf)))
-        vacation_signals_str = self.batch_sys_mgr.get_vacation_signal(job_conf)
+            self.job_runner_mgr.get_fail_signals(job_conf)))
+        vacation_signals_str = self.job_runner_mgr.get_vacation_signal(
+            job_conf)
         if vacation_signals_str:
             handle.write("\nCYLC_VACATION_SIGNALS='%s'" % vacation_signals_str)
         # Path to cylc executable, if defined.
