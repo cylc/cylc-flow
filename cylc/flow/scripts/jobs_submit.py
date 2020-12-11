@@ -57,7 +57,7 @@ def get_option_parser():
 @cli_function(get_option_parser)
 def main(parser, opts, job_log_root, *job_log_dirs):
     """CLI main."""
-    from cylc.flow.batch_sys_manager import BatchSysManager
+    from cylc.flow.job_runner_mgr import BatchSysManager
     BatchSysManager().jobs_submit(
         job_log_root,
         job_log_dirs,

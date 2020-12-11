@@ -23,7 +23,7 @@ in the runners. Invoke the relevant job runner commands to ask the job runners
 to terminate the jobs.
 
 """
-from cylc.flow.batch_sys_manager import BatchSysManager
+from cylc.flow.job_runner_mgr import BatchSysManager
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
 

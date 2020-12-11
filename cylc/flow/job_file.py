@@ -22,7 +22,7 @@ from subprocess import Popen, PIPE, DEVNULL
 from textwrap import dedent
 
 from cylc.flow import __version__ as CYLC_VERSION
-from cylc.flow.batch_sys_manager import BatchSysManager
+from cylc.flow.job_runner_mgr import BatchSysManager
 import cylc.flow.flags
 from cylc.flow.pathutil import (
     get_remote_suite_run_dir,

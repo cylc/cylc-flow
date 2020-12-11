@@ -102,7 +102,7 @@ class SGEHandler:
     def get_poll_many_cmd(cls, _):
         """Return poll command"""
         # No way to run POLL_CMD on specific job id(s). List all user's jobs.
-        # batch_sys_manager._jobs_poll_runner checks requested id in list.
+        # job_runner_mgr._jobs_poll_runner checks requested id in list.
         return [cls.POLL_CMD]
 
 

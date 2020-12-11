@@ -37,7 +37,7 @@ from shutil import rmtree
 from time import time
 
 from cylc.flow import LOG
-from cylc.flow.batch_sys_manager import JobPollContext
+from cylc.flow.job_runner_mgr import JobPollContext
 from cylc.flow.exceptions import (
     PlatformLookupError,
     SuiteConfigError,
@@ -634,7 +634,7 @@ class TaskJobManager:
         ctx.out = line
         ctx.ret_code = 0
 
-        # See cylc.flow.batch_sys_manager.JobPollContext
+        # See cylc.flow.job_runner_mgr.JobPollContext
         job_d = get_task_job_id(itask.point, itask.tdef.name, itask.submit_num)
         try:
             job_log_dir, context = line.split('|')[1:3]
