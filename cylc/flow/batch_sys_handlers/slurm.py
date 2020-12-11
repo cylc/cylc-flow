@@ -68,7 +68,7 @@ that distinguish repeated directives from one another:
                hetjob_0_--mem = 1G  # first prefix must be "0"
                hetjob_0_--nodes = 3
                hetjob_1_--mem = 2G
-               hetjob_0_--nodes = 6
+               hetjob_1_--nodes = 6
 
 The resulting formatted directives are:
 
