@@ -473,6 +473,23 @@ def test_clean(reg, props, monkeypatch, tmp_path):
             assert d.is_symlink() is False
 
 
+def test_clean_broken_symlink_run_dir(monkeypatch, tmp_path):
+    """Test removing a run dir that is a broken symlink."""
+    reg = 'foo/bar'
+    run_dir = tmp_path.joinpath('cylc-run', reg)
+    run_dir.parent.mkdir(parents=True)
+    target = tmp_path.joinpath('rabbow/cylc-run', reg)
+    target.mkdir(parents=True)
+    run_dir.symlink_to(target)
+    target.rmdir()
+
+    monkeypatch.setattr('cylc.flow.suite_files.get_suite_run_dir',
+                        lambda x: tmp_path.joinpath('cylc-run', x))
+
+    suite_files.clean(reg)
+    assert run_dir.parent.is_dir() is False
+
+
 def test_remove_empty_reg_parents(tmp_path):
     """Test that _remove_empty_parents() doesn't remove parents containing a
     sibling."""
