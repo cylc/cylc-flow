@@ -319,11 +319,15 @@ with Conf('global.cylc', desc='''
 
     with Conf('platforms'):
         with Conf('<platform name>') as Platform:
-            Conf('job runner', VDR.V_STRING, 'background')
+            Conf('job runner', VDR.V_STRING, 'background', desc='''
+                The batch system/job submit method used to run jobs on the
+                platform, e.g., ``background``, ``at``, ``slurm``,
+                ``loadleveler``...
+            ''')
             Conf('job runner command template', VDR.V_STRING)
             Conf('shell', VDR.V_STRING, '/bin/bash')
             Conf('run directory', VDR.V_STRING, '$HOME/cylc-run', desc='''
-                The number of old run directory trees to retain at start-up.
+                The directory in which to install workflows.
             ''')
             Conf('work directory', VDR.V_STRING, '$HOME/cylc-run', desc='''
                 The top level for suite work and share directories. Can contain
