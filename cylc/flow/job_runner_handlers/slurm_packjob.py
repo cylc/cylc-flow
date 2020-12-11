@@ -21,7 +21,7 @@ Slurm versions that use "packjob" instead of "hetjob".
 """
 
 import re
-from cylc.flow.batch_sys_handlers.slurm import SLURMHandler
+from cylc.flow.job_runner_handlers.slurm import SLURMHandler
 
 
 class SLURMPackjobHandler(SLURMHandler):

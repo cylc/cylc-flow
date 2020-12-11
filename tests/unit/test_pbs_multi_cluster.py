@@ -16,7 +16,7 @@
 
 import unittest
 
-from cylc.flow.batch_sys_handlers.pbs_multi_cluster import *
+from cylc.flow.job_runner_handlers.pbs_multi_cluster import *
 
 
 def get_test_filter_poll_many_output():
@@ -60,7 +60,7 @@ class TestPBSMultiCluster(unittest.TestCase):
             self.assertEqual(expected, mod_job_id)
 
     def test_export_handler(self):
-        import cylc.flow.batch_sys_handlers.pbs_multi_cluster as m
+        import cylc.flow.job_runner_handlers.pbs_multi_cluster as m
         self.assertTrue(hasattr(m, 'JOB_RUNNER_HANDLER'))
 
 

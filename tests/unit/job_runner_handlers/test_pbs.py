@@ -16,8 +16,7 @@
 
 import pytest
 
-from cylc.flow.batch_sys_handlers.loadleveler import JOB_RUNNER_HANDLER
-from cylc.flow.batch_sys_handlers.loadleveler import LoadlevelerHandler
+from cylc.flow.job_runner_handlers.pbs import JOB_RUNNER_HANDLER
 
 
 @pytest.mark.parametrize(
@@ -30,16 +29,37 @@ from cylc.flow.batch_sys_handlers.loadleveler import LoadlevelerHandler
                 'job_file_path': '$HOME/cylc-run/chop/log/job/1/axe/01/job',
                 'suite_name': 'chop',
                 'task_id': 'axe.1',
+                'platform': {
+                    'job runner': 'pbs',
+                    'job name length maximum': 100
+                }
             },
             [
-                '# @ job_name = chop.axe.1',
-                '# @ output = cylc-run/chop/log/job/1/axe/01/job.out',
-                '# @ error = cylc-run/chop/log/job/1/axe/01/job.err',
-                '# @ wall_clock_limit = 240,180',
-                '# @ queue'
+                '#PBS -N axe.1.chop',
+                '#PBS -o cylc-run/chop/log/job/1/axe/01/job.out',
+                '#PBS -e cylc-run/chop/log/job/1/axe/01/job.err',
+                '#PBS -l walltime=180',
             ],
         ),
-
+        (  # super short job name length maximum
+            {
+                'directives': {},
+                'execution_time_limit': 180,
+                'job_file_path': '$HOME/cylc-run/chop/log/job/1/axe/01/job',
+                'suite_name': 'chop',
+                'task_id': 'axe.1',
+                'platform': {
+                    'job runner': 'pbs',
+                    'job name length maximum': 6
+                }
+            },
+            [
+                '#PBS -N axe.1.',
+                '#PBS -o cylc-run/chop/log/job/1/axe/01/job.out',
+                '#PBS -e cylc-run/chop/log/job/1/axe/01/job.err',
+                '#PBS -l walltime=180',
+            ],
+        ),
         (  # some useful directives
             {
                 'directives': {
@@ -51,32 +71,22 @@ from cylc.flow.batch_sys_handlers.loadleveler import LoadlevelerHandler
                 'job_file_path': '$HOME/cylc-run/chop/log/job/1/axe/01/job',
                 'suite_name': 'chop',
                 'task_id': 'axe.1',
+                'platform': {
+                    'job runner': 'pbs',
+                    'job name length maximum': 100
+                }
             },
             [
-                '# @ job_name = chop.axe.1',
-                '# @ output = cylc-run/chop/log/job/1/axe/01/job.out',
-                '# @ error = cylc-run/chop/log/job/1/axe/01/job.err',
-                '# @ wall_clock_limit = 240,180',
-                '# @ -q = forever',
-                '# @ -V',
-                '# @ -l mem = 256gb',
-                '# @ queue'
+                '#PBS -N axe.1.chop',
+                '#PBS -o cylc-run/chop/log/job/1/axe/01/job.out',
+                '#PBS -e cylc-run/chop/log/job/1/axe/01/job.err',
+                '#PBS -l walltime=180',
+                '#PBS -q forever',
+                '#PBS -V',
+                '#PBS -l mem=256gb',
             ],
         ),
     ],
 )
 def test_format_directives(job_conf: dict, lines: list):
     assert JOB_RUNNER_HANDLER.format_directives(job_conf) == lines
-
-
-def test_filter_poll_many_output():
-
-    configuration = '''
-Id                 Owner      Submitted   ST PRI Class     Running On
-----------------   ---------- ----------- -- --- --------  ----------
-mars.498.0         brownap     5/20 11:31 R  100 silver    mars
-mars.499.0         brownap     5/20 11:31 R  50  No_Class  mars
-mars.501.0         brownap     5/20 11:31 I  50  silver
-'''
-    out = ['Id', '----------------', 'mars.498', 'mars.499', 'mars.501']
-    assert LoadlevelerHandler.filter_poll_many_output(configuration) == out

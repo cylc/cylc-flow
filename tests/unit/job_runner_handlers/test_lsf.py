@@ -16,7 +16,7 @@
 
 import pytest
 
-from cylc.flow.batch_sys_handlers.lsf import JOB_RUNNER_HANDLER
+from cylc.flow.job_runner_handlers.lsf import JOB_RUNNER_HANDLER
 
 
 @pytest.mark.parametrize(

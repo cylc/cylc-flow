@@ -17,7 +17,7 @@
 import pytest
 import os
 
-from cylc.flow.batch_sys_handlers.slurm_packjob import JOB_RUNNER_HANDLER
+from cylc.flow.job_runner_handlers.slurm_packjob import JOB_RUNNER_HANDLER
 
 home = os.path.expandvars('$HOME/')
 

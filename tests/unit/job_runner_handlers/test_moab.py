@@ -16,7 +16,7 @@
 
 import pytest
 
-from cylc.flow.batch_sys_handlers.moab import JOB_RUNNER_HANDLER
+from cylc.flow.job_runner_handlers.moab import JOB_RUNNER_HANDLER
 
 
 @pytest.mark.parametrize(

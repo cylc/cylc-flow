@@ -17,16 +17,16 @@
 
 .. autosummary::
    :toctree: batch-sys-handlers
-   :template: automodule_batch_sys_handlers.rst
+   :template: automodule_job_runner_handlers.rst
 
-   cylc.flow.batch_sys_handlers.at
-   cylc.flow.batch_sys_handlers.background
-   cylc.flow.batch_sys_handlers.loadleveler
-   cylc.flow.batch_sys_handlers.lsf
-   cylc.flow.batch_sys_handlers.moab
-   cylc.flow.batch_sys_handlers.pbs
-   cylc.flow.batch_sys_handlers.sge
-   cylc.flow.batch_sys_handlers.slurm
-   cylc.flow.batch_sys_handlers.slurm_packjob
+   cylc.flow.job_runner_handlers.at
+   cylc.flow.job_runner_handlers.background
+   cylc.flow.job_runner_handlers.loadleveler
+   cylc.flow.job_runner_handlers.lsf
+   cylc.flow.job_runner_handlers.moab
+   cylc.flow.job_runner_handlers.pbs
+   cylc.flow.job_runner_handlers.sge
+   cylc.flow.job_runner_handlers.slurm
+   cylc.flow.job_runner_handlers.slurm_packjob
 
 """

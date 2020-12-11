@@ -24,7 +24,7 @@ So this PBS handler writes "job_id@server" to the job status file, and appends
 """
 
 import re
-from cylc.flow.batch_sys_handlers.pbs import PBSHandler
+from cylc.flow.job_runner_handlers.pbs import PBSHandler
 
 
 # Match and extract PBS Job ID of the form "<job>.<host>"

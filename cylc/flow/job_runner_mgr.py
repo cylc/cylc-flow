@@ -19,9 +19,9 @@
 Export the JobRunnerManager class.
 
 Job runner handler (a.k.a. job submission method) modules should be placed
-under the "cylc.flow.batch_sys_handlers" package. Each module should export the
-symbol "JOB_RUNNER_HANDLER" for the singleton instance that implements the job
-system handler logic.
+under the "cylc.flow.job_runner_handlers" package. Each module should export
+the symbol "JOB_RUNNER_HANDLER" for the singleton instance that implements the
+job system handler logic.
 
 Each job runner handler class should instantiate with no argument, and may
 have the following constants and methods:
@@ -221,7 +221,7 @@ class JobRunnerManager():
         """Return an instance of the class for "job_runner_name"."""
         if job_runner_name in self._INSTANCES:
             return self._INSTANCES[job_runner_name]
-        for key in [f"cylc.flow.batch_sys_handlers.{job_runner_name}",
+        for key in [f"cylc.flow.job_runner_handlers.{job_runner_name}",
                     job_runner_name]:
             try:
                 mod_of_name = __import__(key, fromlist=[key])
