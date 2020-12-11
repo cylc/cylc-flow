@@ -116,7 +116,7 @@ def make_suite_run_tree(suite):
     dir_ = os.path.expandvars(get_suite_run_dir(suite))
     for i in range(archlen, -1, -1):  # archlen...0
         if i > 0:
-            dpath = dir_ + '.' + str(i)
+            dpath = f'{dir_}.{i}'
         else:
             dpath = dir_
         if os.path.exists(dpath):
@@ -125,7 +125,7 @@ def make_suite_run_tree(suite):
                 rmtree(dpath)
             else:
                 # roll others over
-                os.rename(dpath, dir_ + '.' + str(i + 1))
+                os.rename(dpath, f'{dir_}.{i + 1}')
     # Create
     for dir_ in (
         get_suite_run_dir(suite),
@@ -138,7 +138,7 @@ def make_suite_run_tree(suite):
         dir_ = os.path.expandvars(dir_)
         if dir_:
             os.makedirs(dir_, exist_ok=True)
-            LOG.debug('%s: directory created', dir_)
+            LOG.debug(f'{dir_}: directory created')
 
 
 def make_localhost_symlinks(suite):
