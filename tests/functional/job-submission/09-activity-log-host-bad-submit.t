@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Test bad job submission, activity log has original command and some stderr
 # with the host name written.
-export REQUIRE_PLATFORM='batch:at loc:remote'
+export REQUIRE_PLATFORM='runner:at loc:remote'
 . "$(dirname "$0")/test_header"
 set_test_number 2
 

@@ -16,7 +16,7 @@
 """Cylc provides support for the following job runner handlers.
 
 .. autosummary::
-   :toctree: batch-sys-handlers
+   :toctree: job-runner-handlers
    :template: automodule_job_runner_handlers.rst
 
    cylc.flow.job_runner_handlers.at

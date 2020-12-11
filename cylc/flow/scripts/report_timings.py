@@ -173,7 +173,7 @@ class TimingSummary:
             self.read_timings(filepath_or_buffer)
         else:
             self.df = None
-            self.by_host_and_batch = None
+            self.by_host_and_job_runner = None
 
     def read_timings(self, filepath_or_buffer):
         """
@@ -199,7 +199,7 @@ class TimingSummary:
                 df['succeed_time'] - df['submit_time']).apply(self._dt_to_s),
         })
         self.df = self.df.rename_axis('timing_category', axis='columns')
-        self.by_host_and_batch = self.df.groupby(
+        self.by_host_and_job_runner = self.df.groupby(
             level=['host', 'job_runner']
         )
 
@@ -209,7 +209,7 @@ class TimingSummary:
         if buf is None:
             buf = sys.stdout
         self.write_summary_header(buf)
-        for group, df in self.by_host_and_batch:
+        for group, df in self.by_host_and_runner:
             self.write_group_header(buf, group)
             df_reshape = self._reshape_timings(df)
             df_describe = df.groupby(level='name').describe()

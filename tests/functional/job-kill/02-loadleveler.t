@@ -18,7 +18,7 @@
 # Test killing of jobs submitted to loadleveler, slurm, pbs...
 # TODO Check this test on a dockerized system or VM.
 JOB_RUNNER="${0##*\/??-}"
-export REQUIRE_PLATFORM="batch:${JOB_RUNNER%%.t} comms:tcp"
+export REQUIRE_PLATFORM="runner:${JOB_RUNNER%%.t} comms:tcp"
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 2

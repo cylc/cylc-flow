@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Test execution time limit, background/at job
 JOB_RUNNER="${0##*\/??-}"
-export REQUIRE_PLATFORM="batch:${JOB_RUNNER%%.t}"
+export REQUIRE_PLATFORM="runner:${JOB_RUNNER%%.t}"
 . "$(dirname "$0")/test_header"
 set_test_number 4
 

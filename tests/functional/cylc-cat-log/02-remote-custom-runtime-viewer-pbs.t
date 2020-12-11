@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test "cylc cat-log" for viewing PBS runtime STDOUT/STDERR by a custom command
-export REQUIRE_PLATFORM='batch:pbs'
+export REQUIRE_PLATFORM='runner:pbs'
 . "$(dirname "$0")/test_header"
 
 OUT_VIEWER="$(cylc get-global-config -i \

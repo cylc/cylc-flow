@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Test set stop point then reload. Reload should not reset stop point.
 # https://github.com/cylc/cylc-flow/issues/2964
-export REQUIRE_PLATFORM='batch:at'
+export REQUIRE_PLATFORM='runner:at'
 . "$(dirname "$0")/test_header"
 set_test_number 3
 

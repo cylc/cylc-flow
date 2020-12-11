@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test restarting a simple suite with a submit-failed task
-export REQUIRE_PLATFORM='batch:at'
+export REQUIRE_PLATFORM='runner:at'
 if [[ -z ${TEST_DIR:-} ]]; then
     . "$(dirname "$0")/test_header"
 fi

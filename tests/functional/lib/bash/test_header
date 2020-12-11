@@ -723,8 +723,8 @@ _parse_platform_spec () {
             loc:*)
                 locality="${req/loc:/}"
                 ;;
-            batch:*)
-                job_runner="${req/batch:/}"
+            runner:*)
+                job_runner="${req/runner:/}"
                 ;;
             fs:*)
                 file_system="${req/fs:/}"
@@ -867,7 +867,7 @@ _check_test_requirements () {
     # check the test requirements against the array of test platforms
     if [[ -z "${REQUIRE_PLATFORM:-}" ]]; then
         # if no requirement string is provided default to local, background
-        REQUIRE_PLATFORM='loc:local batch:background'
+        REQUIRE_PLATFORM='loc:local runner:background'
     fi
     if ! _get_test_platform "${REQUIRE_PLATFORM}"; then
         skip_all "requires $REQUIRE_PLATFORM"

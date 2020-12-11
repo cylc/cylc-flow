@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test that job submission kill on timeout results in a failed job submission.
-export REQUIRE_PLATFORM='batch:at comms:tcp'
+export REQUIRE_PLATFORM='runner:at comms:tcp'
 . "$(dirname "$0")/test_header"
 set_test_number 4
 

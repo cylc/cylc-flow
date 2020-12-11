@@ -20,7 +20,7 @@
 # This does not test loadleveler job vacation itself, because the test will
 # require a site admin to pre-empt a job.
 # TODO Check this test on a dockerized system or VM.
-export REQUIRE_PLATFORM="batch:loadleveler"
+export REQUIRE_PLATFORM="runner:loadleveler"
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 6

@@ -21,7 +21,7 @@
 #     slurm, pbs, etc), otherwise it will be bypassed.
 JOB_RUNNER="${0##*\/??-}"
 JOB_RUNNER_NAME="${JOB_RUNNER%%.t}"
-export REQUIRE_PLATFORM="batch:${JOB_RUNNER_NAME} comms:tcp"
+export REQUIRE_PLATFORM="runner:${JOB_RUNNER_NAME} comms:tcp"
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 2
