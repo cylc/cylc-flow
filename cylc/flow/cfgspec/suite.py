@@ -27,6 +27,7 @@ from cylc.flow.parsec.upgrade import upgrader, converter
 from cylc.flow.parsec.validate import (
     DurationFloat, CylcConfigValidator as VDR, cylc_config_validate)
 from cylc.flow.platforms import get_platform
+from cylc.flow.task_events_mgr import EventData
 
 # Regex to check whether a string is a command
 REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
@@ -1383,11 +1384,8 @@ def upg(cfg, descr):
     upgrade_graph_section(cfg, descr)
     upgrade_param_env_templates(cfg, descr)
 
-    if 'runtime' in cfg:
-        for task_name, task_cfg in cfg['runtime'].items():
-            platform = get_platform(task_cfg, task_name, warn_only=True)
-            if type(platform) == str:
-                LOG.warning(platform)
+    warn_about_depr_platform(cfg)
+    warn_about_depr_event_handler_tmpl(cfg)
 
 
 def upgrade_graph_section(cfg, descr):
@@ -1459,6 +1457,38 @@ def upgrade_param_env_templates(cfg, descr):
                     task_items['environment'] = OrderedDictWithDefaults()
                 task_items['environment'].prepend(key, val)
             task_items.pop('parameter environment templates')
+
+
+def warn_about_depr_platform(cfg):
+    """Warn if deprecated host or batch system appear in config."""
+    if 'runtime' in cfg:
+        for task_name, task_cfg in cfg['runtime'].items():
+            platform = get_platform(task_cfg, task_name, warn_only=True)
+            if type(platform) == str:
+                LOG.warning(platform)
+
+
+def warn_about_depr_event_handler_tmpl(cfg):
+    """Warn if deprecated template strings appear in event handlers."""
+    if 'runtime' not in cfg:
+        return
+    deprecation_msg = (
+        'The event handler template variable "%({0})s" is deprecated - '
+        'use "%({1})s" instead.')
+    for task in cfg['runtime']:
+        if 'events' not in cfg['runtime'][task]:
+            continue
+        for event, handler in cfg['runtime'][task]['events'].items():
+            if f'%({EventData.JobID_old.value})' in handler:
+                LOG.warning(
+                    deprecation_msg.format(EventData.JobID_old.value,
+                                           EventData.JobID.value)
+                )
+            if f'%({EventData.JobRunnerName_old.value})' in handler:
+                LOG.warning(
+                    deprecation_msg.format(EventData.JobRunnerName_old.value,
+                                           EventData.JobRunnerName.value)
+                )
 
 
 class RawSuiteConfig(ParsecConfig):

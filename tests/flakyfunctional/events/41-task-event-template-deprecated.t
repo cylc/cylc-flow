@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Test deprecated batch_sys_job_id & batch_sys_name event handler template vars
+# - they should still work but give a validation warning
 
 . "$(dirname "$0")/test_header"
 set_test_number 5
@@ -32,12 +33,13 @@ __FLOW__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
+grep_ok 'WARNING - The event handler template variable "%(batch_sys_job_id)s" is deprecated - use "%(job_id)s" instead' \
+    "${TEST_NAME_BASE}-validate.stderr" -F
+grep_ok 'WARNING - The event handler template variable "%(batch_sys_name)s" is deprecated - use "%(job_runner_name)s" instead' \
+    "${TEST_NAME_BASE}-validate.stderr" -F
+
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run --no-detach "${SUITE_NAME}"
 poll_suite_stopped
-
-SUITE_LOG="${SUITE_RUN_DIR}/log/suite/log"
-grep_ok 'WARNING - The event handler template variable "%(batch_sys_job_id)s" is deprecated - use "%(job_id)s" instead' "$SUITE_LOG" -F
-grep_ok 'WARNING - The event handler template variable "%(batch_sys_name)s" is deprecated - use "%(job_runner_name)s" instead' "$SUITE_LOG" -F
 
 FOO_ACTIVITY_LOG="${SUITE_RUN_DIR}/log/job/1/foo/NN/job-activity.log"
 grep_ok "\[(('event-handler-00', 'started'), 1) out\] job_id = [0-9]\+ ; job_runner_name = background" "$FOO_ACTIVITY_LOG"

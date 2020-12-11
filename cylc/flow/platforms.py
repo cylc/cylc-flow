@@ -208,6 +208,8 @@ def platform_from_job_info(platforms, job, remote):
     Find out which job platform to use given a list of possible platforms
     and the task dictionary with cylc 7 definitions in it.
 
+    (Note: "batch system" and "job runner" mean the same thing)
+
           +------------+ Yes    +-----------------------+
     +-----> Tried all  +------->+ RAISE                 |
     |     | platforms? |        | PlatformNotFoundError |

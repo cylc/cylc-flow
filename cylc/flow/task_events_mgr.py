@@ -1092,20 +1092,6 @@ class TaskEventsManager():
             platform_n = itask.summary['platforms_used'].get(
                 itask.submit_num, ''
             )
-            # Check if deprecated values in handler template string:
-            deprecation_msg = (
-                'The event handler template variable "%({0})s" is '
-                'deprecated - use "%({1})s" instead.')
-            if f'%({EventData.JobID_old.value})' in handler:
-                LOG.warning(
-                    deprecation_msg.format(EventData.JobID_old.value,
-                                           EventData.JobID.value)
-                )
-            if f'%({EventData.JobRunnerName_old.value})' in handler:
-                LOG.warning(
-                    deprecation_msg.format(EventData.JobRunnerName_old.value,
-                                           EventData.JobRunnerName.value)
-                )
             # Custom event handler can be a command template string
             # or a command that takes 4 arguments (classic interface)
             # Note quote() fails on None, need str(None).
@@ -1141,7 +1127,7 @@ class TaskEventsManager():
                         quote(str(self.uuid_str)),
                     EventData.TryNum.value:
                         itask.get_try_num(),
-                    # next 2 are deprecated:
+                    # next 2 are deprecated - still here for back compat:
                     EventData.JobID_old.value:
                         quote(str(itask.summary['submit_method_id'])),
                     EventData.JobRunnerName_old.value:
