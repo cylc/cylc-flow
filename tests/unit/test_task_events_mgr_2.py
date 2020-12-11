@@ -30,7 +30,7 @@ from cylc.flow.task_events_mgr import TaskEventsManager
         (None, None, None, None),
     ]
 )
-def test_get_remote_conf(remote, platforms, broadcast, expected):
+def test_get_remote_conf(broadcast, remote, platforms, expected):
     """Test TaskEventsManager._get_remote_conf()."""
 
     task_events_mgr = TaskEventsManager(
