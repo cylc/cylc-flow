@@ -259,12 +259,10 @@ async def test_scan_cleans_stuck_contact_files(
     schd = scheduler(reg)
     srv_dir = Path(run_dir, reg, SuiteFiles.Service.DIRNAME)
     tmp_dir = test_dir / 'srv'
-    cont = run_dir / SuiteFiles.Service.CONTACT
+    cont = srv_dir / SuiteFiles.Service.CONTACT
 
     # run the flow, copy the contact, stop the flow, copy back the contact
     async with run(schd):
-        # remove the source symlink to avoid recursion
-        (run_dir / SuiteFiles.Install.SOURCE).unlink()
         copytree(srv_dir, tmp_dir)
     rmtree(srv_dir)
     copytree(tmp_dir, srv_dir)

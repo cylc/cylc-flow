@@ -43,7 +43,7 @@ __FLOW_CONFIG__
 run_fail "${TEST_NAME_BASE}" cylc validate "${SUITE_NAME}"
 
 # This should validate installed good suite
-cylc install --flow-name="${SUITE_NAME}" -C "${PWD}/good"
+cylc install --flow-name="${SUITE_NAME}" -C "${PWD}/good" --no-run-name
 run_ok "${TEST_NAME_BASE}" cylc validate "${SUITE_NAME}"
 
 purge

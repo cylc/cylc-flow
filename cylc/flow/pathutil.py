@@ -143,9 +143,19 @@ def make_suite_run_tree(suite):
             LOG.debug(f'{dir_}: directory created')
 
 
-def make_localhost_symlinks(rund, flow_name, log_type=LOG):
-    """Creates symlinks for any configured symlink dirs from glbl_cfg."""
-    dirs_to_symlink = get_dirs_to_symlink('localhost', flow_name)
+def make_localhost_symlinks(rund, named_sub_dir):
+    """Creates symlinks for any configured symlink dirs from glbl_cfg.
+    Args:
+        rund: the entire run directory path
+        named_sub_dir: e.g flow_name/run1
+
+    Returns:
+         dict - A dictionary of Symlinks with sources as keys and
+         destinations as values: ``{source: destination}``
+
+    """
+    dirs_to_symlink = get_dirs_to_symlink('localhost', named_sub_dir)
+    symlinks_created = {}
     for key, value in dirs_to_symlink.items():
         if key == 'run':
             dst = rund
@@ -157,9 +167,11 @@ def make_localhost_symlinks(rund, flow_name, log_type=LOG):
                 f'Unable to create symlink to {src}.'
                 f' \'{value}\' contains an invalid environment variable.'
                 ' Please check configuration.')
-        if log_type:
-            log_type.info(f"Creating symlink from {src} to {dst}")
         make_symlink(src, dst)
+        # symlink info returned for logging purposes, symlinks created
+        # before logs as this dir may be a symlink.
+        symlinks_created[src] = dst
+    return symlinks_created
 
 
 def get_dirs_to_symlink(install_target, flow_name):
@@ -234,7 +246,6 @@ def remove_dir(path):
     else:
         LOG.debug(f'Removing directory: {path}')
         rmtree(path)
-        raise WorkflowFilesError(f"Error when symlinking '{exc}'")
 
 
 def get_next_rundir_number(run_path):

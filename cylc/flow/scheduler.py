@@ -42,7 +42,7 @@ from cylc.flow.config import SuiteConfig
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.data_store_mgr import DataStoreMgr, parse_job_item
 from cylc.flow.exceptions import (
-    CylcError, SuiteConfigError, PlatformLookupError
+    CylcError, SuiteConfigError, PlatformLookupError, WorkflowFilesError
 )
 import cylc.flow.flags
 from cylc.flow.host_select import select_suite_host
@@ -81,7 +81,6 @@ from cylc.flow.subprocpool import SubProcPool
 from cylc.flow.suite_db_mgr import SuiteDatabaseManager
 from cylc.flow.suite_events import (
     SuiteEventContext, SuiteEventHandler)
-from cylc.flow.exceptions import SuiteServiceFileError
 from cylc.flow.suite_status import StopMode, AutoRestartMode
 from cylc.flow import suite_files
 from cylc.flow.taskdef import TaskDef
@@ -261,6 +260,7 @@ class Scheduler:
         )
 
         # directory information
+        self.suite_dir = suite_files.get_suite_source_dir(self.suite)
         self.flow_file = suite_files.get_flow_file(self.suite)
         self.suite_run_dir = get_workflow_run_dir(self.suite)
         self.suite_work_dir = get_suite_run_work_dir(self.suite)
@@ -278,13 +278,25 @@ class Scheduler:
 
     async def install(self):
         """Get the filesystem in the right state to run the flow.
-
+        * Validate flowfiles
         * Install authentication files.
         * Build the directory tree.
         * Copy Python files.
 
         """
-        
+        # Check if flow has been installed
+        if not suite_files.is_installed(self.suite_run_dir):
+            suite_files.register(self.suite, source=self.suite_run_dir)
+        # Install
+        try:
+            suite_files.get_suite_source_dir(self.suite)
+        except WorkflowFilesError:
+            # Source path is assumed to be the run directory
+            suite_files.register(
+                flow_name=self.suite,
+                source=get_workflow_run_dir(
+                    self.suite))
+
         make_suite_run_tree(self.suite)
 
         # Create ZMQ keys
@@ -298,15 +310,17 @@ class Scheduler:
         # Copy local python modules from source to run directory
         for sub_dir in ["python", os.path.join("lib", "python")]:
             # TODO - eventually drop the deprecated "python" sub-dir.
-            suite_py = os.path.join(self.suite_run_dir, sub_dir) # change to rundir
-            if os.path.isdir(suite_py)):
+            suite_py = os.path.join(self.suite_dir, sub_dir)
+            if (os.path.realpath(self.suite_dir) !=
+                    os.path.realpath(self.suite_run_dir) and
+                    os.path.isdir(suite_py)):
                 suite_run_py = os.path.join(self.suite_run_dir, sub_dir)
                 try:
                     rmtree(suite_run_py)
                 except OSError:
                     pass
                 copytree(suite_py, suite_run_py)
-            sys.path.append(os.path.join(self.suite_run_dir, sub_dir))
+            sys.path.append(os.path.join(self.suite_dir, sub_dir))
 
     async def initialise(self):
         """Initialise the components and sub-systems required to run the flow.
@@ -367,7 +381,7 @@ class Scheduler:
             proc_pool=self.proc_pool,
             suite_run_dir=self.suite_run_dir,
             suite_share_dir=self.suite_share_dir,
-            suite_source_dir=self.suite_run_dir
+            suite_source_dir=self.suite_dir
         )
 
         self.task_events_mgr = TaskEventsManager(
@@ -413,8 +427,10 @@ class Scheduler:
         # Copy local python modules from source to run directory
         for sub_dir in ["python", os.path.join("lib", "python")]:
             # TODO - eventually drop the deprecated "python" sub-dir.
-            suite_py = os.path.join(self.suite_run_dir, sub_dir)
-            if os.path.isdir(suite_py)):
+            suite_py = os.path.join(self.suite_dir, sub_dir)
+            if (os.path.realpath(self.suite_dir) !=
+                    os.path.realpath(self.suite_run_dir) and
+                    os.path.isdir(suite_py)):
                 suite_run_py = os.path.join(self.suite_run_dir, sub_dir)
                 try:
                     rmtree(suite_run_py)

@@ -39,7 +39,7 @@ TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate .
 
 TEST_NAME="${TEST_NAME_BASE}-install"
-run_ok "${TEST_NAME}" cylc install --flow-name=${SUITE_NAME} --no-run-name
+run_ok "${TEST_NAME}" cylc install --flow-name="${SUITE_NAME}" --no-run-name
 
 exists_ok "flow.cylc"
 

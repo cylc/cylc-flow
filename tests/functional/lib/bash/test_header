@@ -424,7 +424,7 @@ init_suite() {
     SUITE_RUN_DIR="${RUN_DIR}/${SUITE_NAME}"
     mkdir -p "${TEST_DIR}/${SUITE_NAME}/"
     cat "${FLOW_CONFIG}" >"${TEST_DIR}/${SUITE_NAME}/flow.cylc"
-    cylc install --no-run-name --flow-name="${SUITE_NAME}" --directory="${TEST_DIR}/${SUITE_NAME}" 2>'/dev/null'
+    cylc install --no-run-name --flow-name="${SUITE_NAME}" --directory="${TEST_DIR}/${SUITE_NAME}"
     cd "${TEST_DIR}/${SUITE_NAME}"
 }
 
@@ -435,7 +435,7 @@ install_suite() {
     SUITE_RUN_DIR="${RUN_DIR}/${SUITE_NAME}"
     mkdir -p "${TEST_DIR}/${SUITE_NAME}/" # make source dir
     cp -r "${TEST_SOURCE_DIR}/${TEST_SOURCE_BASE}/"* "${TEST_DIR}/${SUITE_NAME}/"
-    cylc install --no-run-name --flow-name"${SUITE_NAME}" --directory="${TEST_DIR}/${SUITE_NAME}" 2>'/dev/null'
+    cylc install --no-run-name --flow-name="${SUITE_NAME}" --directory="${TEST_DIR}/${SUITE_NAME}" 
     cd "${TEST_DIR}/${SUITE_NAME}/"
 }
 

@@ -49,9 +49,10 @@ mkdir .git .svn dir1 dir2
 touch .git/file1 .svn/file1 dir1/file1 dir2/file1 file1 file2
 run_ok "${TEST_NAME}" cylc install "${RND_SUITE_NAME}" --no-run-name
 
-tree -a -I '*.log|03-file-transfer*' "${RND_SUITE_RUNDIR}/" > 'basic-tree.out'
+tree -a -v -I '*.log|03-file-transfer*' "${RND_SUITE_RUNDIR}/" > 'basic-tree.out'
 cmp_ok 'basic-tree.out'  <<__OUT__
 ${RND_SUITE_RUNDIR}/
+├── .service
 ├── _cylc-install
 │   └── source -> ${RND_SUITE_SOURCE}
 ├── dir1
@@ -63,7 +64,6 @@ ${RND_SUITE_RUNDIR}/
 ├── flow.cylc
 ├── log
 │   └── install
-├── .service
 └── source -> ${RND_SUITE_SOURCE}
 
 8 directories, 5 files
@@ -90,16 +90,16 @@ __END__
 
 run_ok "${TEST_NAME}" cylc install "${RND_SUITE_NAME}" --no-run-name
 
-tree -a -I '*.log|03-file-transfer*' "${RND_SUITE_RUNDIR}/" > 'cylc-ignore-tree.out'
+tree -a -v -I '*.log|03-file-transfer*' "${RND_SUITE_RUNDIR}/" > 'cylc-ignore-tree.out'
 cmp_ok 'cylc-ignore-tree.out'  <<__OUT__
 ${RND_SUITE_RUNDIR}/
+├── .service
 ├── _cylc-install
 │   └── source -> ${RND_SUITE_SOURCE}
 ├── file1
 ├── flow.cylc
 ├── log
 │   └── install
-├── .service
 └── source -> ${RND_SUITE_SOURCE}
 
 6 directories, 2 files
@@ -110,5 +110,3 @@ INSTALLED $RND_SUITE_NAME from ${RND_SUITE_SOURCE} -> ${RND_SUITE_RUNDIR}
 __OUT__
 popd || exit 1
 purge_rnd_suite
-
-

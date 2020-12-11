@@ -4,7 +4,7 @@
 [runtime]
     [[common]]
         script = """
-cylc reg $REG $DEF
+cylc install --flow-name=$REG -C $DEF --no-run-name
 echo "Sub-suite log file is: $PWD/$LOG"
 if cylc run --debug --no-detach $REG > $LOG 2>&1; then
     echo "ERROR: sub-suite did not abort as planned"

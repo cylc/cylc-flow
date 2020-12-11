@@ -25,11 +25,15 @@ NAME1="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}-1
 NAME2="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}-2"
 SUITE1_RUND="${RUND}/${NAME1}"
 mkdir -p "${SUITE1_RUND}"
-cp -p "${TEST_SOURCE_DIR}/basic/flow.cylc" "${SUITE1_RUND}"
-cylc install --flow-name="${NAME1}" --no-run-name --directory="${SUITE1_RUND}"
+RND_SUITE_NAME=x$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c6)
+RND_SUITE_SOURCE="$PWD/${RND_SUITE_NAME}"
+mkdir -p "${RND_SUITE_SOURCE}"
+cp -p "${TEST_SOURCE_DIR}/basic/flow.cylc" "${RND_SUITE_SOURCE}"
+cylc install --flow-name="${NAME1}" --no-run-name --directory="${RND_SUITE_SOURCE}"
 SUITE2_RUND="${RUND}/${NAME2}"
 mkdir -p "${SUITE2_RUND}"
-cat >"${SUITE2_RUND}/flow.cylc" <<__FLOW_CONFIG__
+rm "${RND_SUITE_SOURCE}/flow.cylc"
+cat >"${RND_SUITE_SOURCE}/flow.cylc" <<__FLOW_CONFIG__
 [scheduler]
     [[events]]
 [scheduling]
@@ -39,11 +43,12 @@ cat >"${SUITE2_RUND}/flow.cylc" <<__FLOW_CONFIG__
     [[t1]]
         script=cylc shutdown "${NAME1}"
 __FLOW_CONFIG__
-cylc install --flow-name="${NAME2}" --directory="${SUITE2_RUND}" --no-run-name
+cylc install --flow-name="${NAME2}" --directory="${RND_SUITE_SOURCE}" --no-run-name
 cylc run --no-detach "${NAME1}" 1>'1.out' 2>&1 &
 SUITE_RUN_DIR="${SUITE1_RUND}" poll_suite_running
 run_ok "${TEST_NAME_BASE}" cylc run --no-detach --abort-if-any-task-fails "${NAME2}"
 cylc shutdown "${NAME1}" --max-polls=20 --interval=1 1>'/dev/null' 2>&1 || true
-# purge "${NAME1}"
-# purge "${NAME2}"
+purge "${NAME1}"
+purge "${NAME2}"
+rm -rf "${RND_SUITE_SOURCE}"
 exit

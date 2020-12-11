@@ -17,6 +17,8 @@
 
 #------------------------------------------------------------------------------
 # Test workflow installation
+. "$(dirname "$0")/test_header"
+set_test_number 18
 
 export RND_SUITE_NAME
 export RND_SUITE_SOURCE
@@ -35,15 +37,9 @@ function make_rnd_suite() {
 function purge_rnd_suite() {
     # Remove the suite source created by make_rnd_suite().
     # And remove its run-directory too.
-    RND_SUITE_SOURCE=${1:-$RND_SUITE_SOURCE}
-    RND_SUITE_RUNDIR=${2:-$RND_SUITE_RUNDIR}
     rm -rf "${RND_SUITE_SOURCE}"
     rm -rf "${RND_SUITE_RUNDIR}"
 }
-
-. "$(dirname "$0")/test_header"
-set_test_number 18
-
 
 # Test default name: "cylc install" (suite in $PWD, no args)
 TEST_NAME="${TEST_NAME_BASE}-basic"
@@ -68,8 +64,6 @@ __OUT__
 popd || exit 1
 purge_rnd_suite
 
-
-
 # Test default path: "cylc install REG" --no-run-name (flow in $PWD)
 TEST_NAME="${TEST_NAME_BASE}-pwd-no-run-name"
 make_rnd_suite
@@ -80,6 +74,7 @@ INSTALLED $RND_SUITE_NAME from ${RND_SUITE_SOURCE} -> ${RND_SUITE_RUNDIR}
 __OUT__
 popd || exit 1
 purge_rnd_suite
+
 # Test "cylc install REG" flow-name given (flow in $PWD)
 TEST_NAME="${TEST_NAME_BASE}-flow-name"
 make_rnd_suite
@@ -89,7 +84,7 @@ contains_ok "${TEST_NAME}.stdout" <<__OUT__
 INSTALLED ${RND_SUITE_NAME}-olaf from ${RND_SUITE_SOURCE} -> ${RUN_DIR}/${RND_SUITE_NAME}-olaf/run1
 __OUT__
 popd || exit 1
-rm -rf ${RUN_DIR}/${RND_SUITE_NAME}-olaf
+rm -rf "${RUN_DIR}/${RND_SUITE_NAME}-olaf"
 purge_rnd_suite
 
 # Test "cylc install REG" flow-name given (flow in $PWD)
@@ -101,7 +96,7 @@ contains_ok "${TEST_NAME}.stdout" <<__OUT__
 INSTALLED ${RND_SUITE_NAME}-olaf from ${RND_SUITE_SOURCE} -> ${RUN_DIR}/${RND_SUITE_NAME}-olaf
 __OUT__
 popd || exit 1
-rm -rf ${RUN_DIR}/${RND_SUITE_NAME}-olaf
+rm -rf "${RUN_DIR}/${RND_SUITE_NAME}-olaf"
 purge_rnd_suite
 
 # Test "cylc install" --directory given (flow in --directory)
@@ -126,9 +121,7 @@ contains_ok "${TEST_NAME}.stdout" <<__OUT__
 INSTALLED $RND_SUITE_NAME from ${RND_SUITE_SOURCE} -> ${RND_SUITE_RUNDIR}/run2
 __OUT__
 popd || exit 1
-
 purge_rnd_suite
-
 
 # Test -C option
 TEST_NAME="${TEST_NAME_BASE}-option-C"
@@ -138,15 +131,5 @@ contains_ok "${TEST_NAME}.stdout" <<__OUT__
 INSTALLED $RND_SUITE_NAME from ${RND_SUITE_SOURCE} -> ${RND_SUITE_RUNDIR}/run1
 __OUT__
 purge_rnd_suite
-
-# things that still need testing:
-
-# symlink/--no-symlink-dirs option
-# workflow name not abs path:
-# SuiteServiceFileError: Workflow name cannot be an absolute path:
-# test by sending run_ok "${TEST_NAME}" cylc install --flow-name="${RND_SUITE_RUNDIR}-olaf" 
-# source dir contains forbidden
-
-
 
 exit

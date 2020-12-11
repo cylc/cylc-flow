@@ -64,24 +64,6 @@ def test_is_valid_run_dir(path, expected, is_abs_path, monkeypatch):
         f'Is "{path}" a valid run dir?')
 
 
-@pytest.mark.parametrize('direction', ['parents', 'children'])
-def test_nested_run_dirs_raise_error(direction, monkeypatch):
-    """Test that a suite cannot be contained in a subdir of another suite."""
-    monkeypatch.setattr('cylc.flow.suite_files.get_cylc_run_abs_path',
-                        lambda x: x)
-    if direction == "parents":
-        monkeypatch.setattr('cylc.flow.suite_files.os.scandir', lambda x: [])
-        monkeypatch.setattr('cylc.flow.suite_files.is_valid_run_dir',
-                            lambda x: x == os.path.join('bright', 'falls'))
-        # Not nested in run dir - ok:
-        suite_files.check_nested_run_dirs('alan/wake')
-        # It is itself a run dir - ok:
-        suite_files.check_nested_run_dirs('bright/falls')
-        # Nested in a run dir - bad:
-        for path in ('bright/falls/light', 'bright/falls/light/and/power'):
-            with pytest.raises(WorkflowFilesError) as exc:
-                suite_files.check_nested_run_dirs(path)
-            assert 'Nested run directories not allowed' in str(exc.value)
 @pytest.mark.parametrize(
     'run_dir',
     [
@@ -126,7 +108,7 @@ def test_rundir_parent_that_contains_workflow_raises_error(
     monkeypatch.setattr(
         'cylc.flow.suite_files.os.scandir', lambda x: [])
 
-    with pytest.raises(SuiteServiceFileError) as exc:
+    with pytest.raises(WorkflowFilesError) as exc:
         suite_files.check_nested_run_dirs(run_dir, 'placeholder_flow')
     assert 'Nested run directories not allowed' in str(exc.value)
 
@@ -184,9 +166,10 @@ def test_rundir_children_that_contain_workflows_raise_error(
                             mock.Mock(path=srv_dir[0:len(x) + 2],
                                       is_symlink=lambda: False)])
 
-    with pytest.raises(SuiteServiceFileError) as exc:
+    with pytest.raises(WorkflowFilesError) as exc:
         check_nested_run_dirs(run_dir, 'placeholder_flow')
     assert 'Nested run directories not allowed' in str(exc.value)
+
 
 @pytest.mark.parametrize(
     'reg, expected_err',
@@ -416,7 +399,7 @@ def test_clean(reg, props, monkeypatch, tmp_path):
 
     monkeypatch.setattr('cylc.flow.suite_files.detect_old_contact_file',
                         mocked_detect_old_contact_file)
-    monkeypatch.setattr('cylc.flow.suite_files.get_suite_run_dir',
+    monkeypatch.setattr('cylc.flow.suite_files.get_workflow_run_dir',
                         lambda x: tmp_path.joinpath('cylc-run', x))
 
     # --- The actual test ---
@@ -609,6 +592,7 @@ def test_remove_empty_reg_parents(tmp_path):
     assert tmp_path.joinpath('foo').exists() is False
     assert tmp_path.exists() is True
 
+
 @pytest.mark.parametrize(
     'run_dir, srv_dir',
     [
@@ -637,4 +621,3 @@ def test_symlinkrundir_children_that_contain_workflows_raise_error(
         check_nested_run_dirs(run_dir, 'placeholder_flow')
     except SuiteServiceFileError:
         pytest.fail("Unexpected SuiteServiceFileError, Check symlink logic.")
-

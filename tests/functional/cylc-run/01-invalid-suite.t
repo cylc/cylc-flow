@@ -23,7 +23,7 @@ set_test_number 3
 #-------------------------------------------------------------------------------
 INVALID_SUITE_NAME="broken-parachute-8877-mp5"
 run_fail "${TEST_NAME_BASE}-run" cylc run "${INVALID_SUITE_NAME}"
-grep_ok "suite service directory not found at" "${TEST_NAME_BASE}-run.stderr"
+grep_ok "WorkflowFilesError: Suite not found: ${INVALID_SUITE_NAME}" "${TEST_NAME_BASE}-run.stderr"
 exists_fail "${HOME}/cylc-run/${INVALID_SUITE_NAME}"
 
 exit
