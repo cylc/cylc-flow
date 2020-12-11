@@ -96,7 +96,6 @@ baa => qaz
             trigger1 = "data ready"
 
     [[baa]]
-        extra log files = $HOME/startrek/captains.log
         [[[meta]]]
             description = "some task baa"
         [[[environment]]]

@@ -23,7 +23,7 @@ set_test_number 3
 install_suite "${TEST_NAME_BASE}" commandline-set
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-validate1
-run_ok "${TEST_NAME}" cylc validate --set=TASKNAME=foo --set=STEP=2 "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc validate --set="TASKNAME='foo'" --set="STEP='2'" "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-validate2
 run_ok "${TEST_NAME}" cylc validate \

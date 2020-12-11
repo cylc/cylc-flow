@@ -62,6 +62,11 @@ symlink to `DIR` (see #3884).
 [#3791](https://github.com/cylc/cylc-flow/pull/3791) - Support Slurm
 heterogeneous jobs with a special directive prefix.
 
+[#3974](https://github.com/cylc/cylc-flow/pull/3974) - Template variables,
+both in set files and provided via the -s/--set command line options are
+now parsed using ast.literal_eval. This permits non-string data types,
+strings must now be quoted.
+
 [#3811](https://github.com/cylc/cylc-flow/pull/3811) - Move from cycle based
 to `n` distance dependency graph window node generation and pruning of the
 data-store (API/visual backing data). Ability to modify distance of live
@@ -125,9 +130,18 @@ hierarchy and ability to set site config directory.
 [#3883](https://github.com/cylc/cylc-flow/pull/3883) - Added a new workflow
 config option `[scheduling]stop after cycle point`.
 
+[#3961](https://github.com/cylc/cylc-flow/pull/3961) - Added a new command:
+`cylc clean`.
+
 ### Fixes
 
-[#3917](https://github.com/cylc/cylc-flow/pull/3917) - Fix a bug that caused one of the hostname resolution tests to fail in certain environments.
+[#3984](https://github.com/cylc/cylc-flow/pull/3984) - Only write task
+event timers to the database when they have changed (reverts behaviour
+change in 7.8.6). This corrects last updated db entries and reduces filesystem
+load.
+
+[#3917](https://github.com/cylc/cylc-flow/pull/3917) - Fix a bug that caused
+one of the hostname resolution tests to fail in certain environments.
 
 [#3879](https://github.com/cylc/cylc-flow/pull/3879) - Removed Google
 Groups e-mail from pip packaging metadata. Users browsing PYPI will have
@@ -162,6 +176,10 @@ task outputs/message triggers are now validated.
 [#3852](https://github.com/cylc/cylc-flow/pull/3852) - Prevents registering a
 workflow in a sub-directory of a run directory (as `cylc scan` would not be
 able to find it).
+
+[#3982](https://github.com/cylc/cylc-flow/pull/3982) - Fix bug preventing
+workflow from shutting down properly on a keyboard interrupt (Ctrl+C) in
+Python 3.8+.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0a2 (2020-07-03)__

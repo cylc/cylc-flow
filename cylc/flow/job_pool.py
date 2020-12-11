@@ -21,7 +21,6 @@ their jobs, and is feed-to/used-by the UI Server in resolving queries.
 """
 from copy import deepcopy
 import json
-import os
 from time import time
 
 from cylc.flow import LOG, ID_DELIM
@@ -159,10 +158,6 @@ class JobPool:
                 poverride(rtconfig, overrides, prepend=True)
             else:
                 rtconfig = tdef.rtconfig
-            j_buf.extra_logs.extend(
-                [os.path.expanduser(os.path.expandvars(log_file))
-                 for log_file in rtconfig['extra log files']]
-            )
         except SuiteConfigError:
             LOG.exception((
                 'ignoring job %s from the suite run database\n'

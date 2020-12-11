@@ -110,7 +110,6 @@
         <keyword>startup handler</keyword>
         <keyword>started handler</keyword>
         <keyword>stalled handler</keyword>
-        <keyword>disable suite event handlers</keyword>
         <keyword>default run length</keyword>
         <keyword>speedup factor</keyword>
         <keyword>time limit buffer</keyword>
@@ -150,7 +149,7 @@
         <keyword>inactivity handler</keyword>
         <keyword>inactivity</keyword>
         <keyword>host</keyword>
-        <keyword>hold after point</keyword>
+        <keyword>hold after cycle point</keyword>
         <keyword>handlers</keyword>
         <keyword>handler retry delays</keyword>
         <keyword>handler events</keyword>

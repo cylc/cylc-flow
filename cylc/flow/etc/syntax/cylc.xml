@@ -37,7 +37,6 @@
         <RegExpr attribute='Keyword' String=' startup handler '/>
         <RegExpr attribute='Keyword' String=' started handler '/>
         <RegExpr attribute='Keyword' String=' stalled handler '/>
-        <RegExpr attribute='Keyword' String=' disable suite event handlers '/>
         <RegExpr attribute='Keyword' String=' default run length '/>
         <RegExpr attribute='Keyword' String=' speedup factor '/>
         <RegExpr attribute='Keyword' String=' time limit buffer '/>
@@ -76,7 +75,7 @@
         <RegExpr attribute='Keyword' String=' inactivity handler '/>
         <RegExpr attribute='Keyword' String=' inactivity '/>
         <RegExpr attribute='Keyword' String=' host '/>
-        <RegExpr attribute='Keyword' String=' hold after point '/>
+        <RegExpr attribute='Keyword' String=' hold after cycle point '/>
         <RegExpr attribute='Keyword' String=' handlers '/>
         <RegExpr attribute='Keyword' String=' handler retry delays '/>
         <RegExpr attribute='Keyword' String=' handler events '/>

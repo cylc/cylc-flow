@@ -31,11 +31,10 @@ from cylc.flow.suite_files import (
 )
 from cylc.flow.pathutil import make_symlink
 from cylc.flow.resources import extract_resources
-
-
-REMOTE_INIT_DONE = 'REMOTE INIT DONE'
-REMOTE_INIT_NOT_REQUIRED = 'REMOTE INIT NOT REQUIRED'
-REMOTE_INIT_FAILED = 'REMOTE INIT FAILED'
+from cylc.flow.task_remote_mgr import (
+    REMOTE_INIT_DONE,
+    REMOTE_INIT_FAILED
+)
 
 
 def remove_keys_on_client(srvd, install_target, full_clean=False):

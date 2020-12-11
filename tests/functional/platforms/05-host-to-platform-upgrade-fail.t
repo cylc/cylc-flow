@@ -32,7 +32,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 # Both of these cases should validate ok.
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate "${SUITE_NAME}" \
-         -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}"
+         -s "CYLC_TEST_HOST='${CYLC_TEST_HOST}'"
 
 # Check that the cfgspec/suite.py has issued a warning about upgrades.
 grep_ok "\[not_upgradable_cylc7_settings\]\[remote\]host = parasite"\
@@ -41,7 +41,7 @@ grep_ok "\[not_upgradable_cylc7_settings\]\[remote\]host = parasite"\
 # Run the suite
 suite_run_fail "${TEST_NAME_BASE}-run" \
     cylc run --debug --no-detach \
-    -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}" "${SUITE_NAME}"
+    -s "CYLC_TEST_HOST='${CYLC_TEST_HOST}'" "${SUITE_NAME}"
 
 # Check that the suite failed because no matching platfrom could be found.
 grep_ok "\[jobs-submit err\] No platform found matching your task"\

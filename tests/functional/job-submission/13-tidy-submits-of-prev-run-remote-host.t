@@ -22,10 +22,11 @@ set_test_number 11
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate "${SUITE_NAME}" -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}"
+    cylc validate "${SUITE_NAME}" \
+        -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --debug --no-detach --reference-test "${SUITE_NAME}" \
-    -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}"
+        -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
 RLOGD1="cylc-run/${SUITE_NAME}/log/job/1/t1/01"
 RLOGD2="cylc-run/${SUITE_NAME}/log/job/1/t1/02"
 LOGD1="$RUN_DIR/${SUITE_NAME}/log/job/1/t1/01"
@@ -42,7 +43,7 @@ sed -i 's/script =.*$/script = true/' "flow.cylc"
 sed -i -n '1,/triggered off/p' "reference.log"
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --debug --no-detach --reference-test "${SUITE_NAME}" \
-    -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}"
+        -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
 # shellcheck disable=SC2086
 run_ok "exists-rlogd1" ${SSH} "${CYLC_TEST_HOST}" test -e "${RLOGD1}"
 # shellcheck disable=SC2086

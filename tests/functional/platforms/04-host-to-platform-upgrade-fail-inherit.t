@@ -34,12 +34,12 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 # Both of these cases should validate ok.
 run_ok "${TEST_NAME_BASE}-validate" \
   cylc validate "${SUITE_NAME}" \
-     -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}"
+     -s "CYLC_TEST_HOST='${CYLC_TEST_HOST}'"
 
 # Run the suite
 suite_run_fail "${TEST_NAME_BASE}-run" \
   cylc run --debug --no-detach \
-  -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}" "${SUITE_NAME}"
+  -s "CYLC_TEST_HOST='${CYLC_TEST_HOST}'" "${SUITE_NAME}"
 
 # Grep for inherit-fail to fail later at submit time
 grep_ok "SuiteConfigError:.*non-valid-child.1"\

@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Submits task job scripts to the rudimentary Unix ``at`` scheduler.
 
-.. cylc-scope:: flow.cylc[runtime][<namespace>][job]
+.. cylc-scope:: flow.cylc[runtime][<namespace>]
 
 .. note::
 

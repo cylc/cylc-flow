@@ -16,8 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test execution time limit, background/at job
-CYLC_TEST_BATCH_SYS=${TEST_NAME_BASE##??-}
-export REQUIRE_PLATFORM="batch:$CYLC_TEST_BATCH_SYS"
+BATCH_SYS="${0##*\/??-}"
+export REQUIRE_PLATFORM="batch:${BATCH_SYS%%.t}"
 . "$(dirname "$0")/test_header"
 set_test_number 4
 

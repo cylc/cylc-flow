@@ -133,48 +133,50 @@ with Conf('global.cylc', desc='''
             Conf('ranking', VDR.V_STRING, desc='''
                 A multiline string containing Python expressions to filter
                 and/or rank hosts. For example:
-                cpu_percent() < 70
-                cpu_percent()
-                to filter by cpu_percent() < 70 then to rank by cpu_percent.
+
+                .. code-block:: none
+
+                   cpu_percent() < 70
+                   cpu_percent()
+
+                To filter by ``cpu_percent() < 70`` then to rank by
+                ``cpu_percent``.
             ''')
 
         with Conf('host self-identification', desc='''
             The suite host's identity must be determined locally by cylc and
             passed to running tasks (via ``$CYLC_SUITE_HOST``) so that task
             messages can target the right suite on the right host.
-
-            .. todo
-            Is it conceivable that different remote task hosts at the same site
-            might see the suite host differently? If so we would need to be
-            able to override the target in suite configurations.
         '''):
+            # TODO
+            # Is it conceivable that different remote task hosts at the same
+            # site might see the suite host differently? If so we would need to
+            # be able to override the target in suite configurations.
             Conf(
                 'method', VDR.V_STRING, 'name',
                 options=['name', 'address', 'hardwired'],
                 desc='''
                     This item determines how cylc finds the identity of the
                     suite host.For the default *name* method cylc asks the
-                    suite host
-                    for its host name. This should resolve on remote task
-                    hosts to
-                    the IP address of the suite host; if it doesn't, adjust
-                    network settings or use one of the other methods. For the
-                    *address* method, cylc attempts to use a special external
-                    "target address" to determine the IP address of the suite
-                    host as seen by remote task hosts.  And finally, as a
-                    last resort, you can choose the *hardwired* method and
-                    manually
-                    specify the host name or IP address of the suite host.
+                    suite host for its host name. This should resolve on remote
+                    task hosts to the IP address of the suite host; if it
+                    doesn't, adjust network settings or use one of the other
+                    methods. For the *address* method, cylc attempts to use a
+                    special external "target address" to determine the IP
+                    address of the suite host as seen by remote task hosts.
+                    And finally, as a last resort, you can choose the
+                    *hardwired* method and manually specify the host name or IP
+                    address of the suite host.
 
                     Options:
 
                     name
-                    Self-identified host name.
+                       Self-identified host name.
                     address
-                    Automatically determined IP address (requires *target*).
+                       Automatically determined IP address (requires *target*).
                     hardwired
-                    Manually specified host name or IP address (requires
-                    *host*).
+                       Manually specified host name or IP address (requires
+                       *host*).
             ''')
             Conf('target', VDR.V_STRING, 'google.com', desc='''
                 This item is required for the *address* self-identification
@@ -287,10 +289,10 @@ with Conf('global.cylc', desc='''
 
             Examples::
 
-                ed
-                emacs -nw
-                nano
-                vi
+               ed
+               emacs -nw
+               nano
+               vi
         ''')
         Conf('gui', VDR.V_STRING, desc='''
             A graphical text editor to be used by cylc.
@@ -307,12 +309,12 @@ with Conf('global.cylc', desc='''
 
             Examples::
 
-                atom --wait
-                code -nw
-                emacs
-                gedit -s
-                gvim -fg
-                nedit
+               atom --wait
+               code -nw
+               emacs
+               gedit -s
+               gvim -fg
+               nedit
         ''')
 
     with Conf('platforms'):
@@ -538,9 +540,9 @@ with Conf('global.cylc', desc='''
 
             .. code-block:: cylc
 
-                [platforms]
-                    [[Platform_A]]
-                        install target = localhost
+               [platforms]
+                   [[Platform_A]]
+                       install target = localhost
             ''')
 
         with Conf('localhost', meta=Platform):
@@ -551,10 +553,10 @@ with Conf('global.cylc', desc='''
         with Conf('<group>'):
             Conf('platforms', VDR.V_STRING_LIST)
     # Symlink Dirs
-    with Conf('symlink dirs', desc="""Define directories to be moved, symlinks
-                from the the original ``$HOME/cylc-run`` directories will be
-                created.
-            """):
+    with Conf('symlink dirs', desc="""
+        Define directories to be moved, symlinks from the the original
+        ``$HOME/cylc-run`` directories will be created.
+    """):
         with Conf('<install target>'):
             Conf('run', VDR.V_STRING, None, desc="""
                 Specifies the directory where the workflow run directories are

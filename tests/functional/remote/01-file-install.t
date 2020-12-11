@@ -23,13 +23,13 @@ set_test_number 6
 install_suite "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}" \
-    -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}"
+    -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
 suite_run_ok "${TEST_NAME_BASE}-run1" cylc run "${SUITE_NAME}" \
-    -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}"
+    -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
 RRUND="cylc-run/${SUITE_NAME}"
 poll_grep_suite_log 'Holding all waiting or queued tasks now'
 SSH="$(cylc get-global-config -i "[platforms][$CYLC_TEST_PLATFORM]ssh command")"
-${SSH} "${CYLC_TEST_PLATFORM}" \
+${SSH} "${CYLC_TEST_HOST}" \
 find "${RRUND}/"{app,bin,etc,lib} -type f | sort > 'find.out'
 cmp_ok 'find.out'  <<__OUT__
 ${RRUND}/app/moo
@@ -45,11 +45,13 @@ install_suite "${TEST_NAME_BASE}"
 
 export SECOND_RUN="dir1/, dir2/, file1, file2"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}" \
-    -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}" -s "SECOND_RUN=${SECOND_RUN}"
+    -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'" \
+    -s "SECOND_RUN='${SECOND_RUN}'"
 suite_run_ok "${TEST_NAME_BASE}-run2" cylc run "${SUITE_NAME}" \
-    -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}" -s "SECOND_RUN=${SECOND_RUN}"
+    -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'" \
+    -s "SECOND_RUN='${SECOND_RUN}'"
 poll_grep_suite_log 'Holding all waiting or queued tasks now'
-${SSH} "${CYLC_TEST_PLATFORM}" \
+${SSH} "${CYLC_TEST_HOST}" \
 find "${RRUND}/"{app,bin,dir1,dir2,file1,file2,etc,lib} -type f | sort > 'find.out'
 cmp_ok 'find.out'  <<__OUT__
 ${RRUND}/app/moo

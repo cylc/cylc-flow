@@ -203,12 +203,6 @@ with Conf(
             with Conf('<plugin name>'):
                 Conf('interval', VDR.V_INTERVAL)
 
-        with Conf('simulation'):
-            Conf('disable suite event handlers', VDR.V_BOOLEAN, True)
-
-        with Conf('environment'):
-            Conf('<variable>', VDR.V_STRING)
-
         with Conf('parameters', desc='''
             Define parameter values here for use in expanding
             :ref:`parameterized tasks <User Guide Param>`.
@@ -363,9 +357,9 @@ with Conf(
             point by defining a list of truncated time points under the final
             cycle point constraints.
         ''')
-        Conf('hold after point', VDR.V_CYCLE_POINT, desc='''
-            Cycling tasks are held once they pass the hold after cycle point,
-            if one is specified. Unlike the final cycle point suite will not
+        Conf('hold after cycle point', VDR.V_CYCLE_POINT, desc='''
+            Cycling tasks are held once they pass this cycle point, if
+            specified. Unlike for the final cycle point, the suite will not
             shut down once all tasks have passed this point. If this item
             is provided you can override it on the command line.
         ''')
@@ -778,17 +772,7 @@ with Conf(
                 * :cylc:conf:`[..]exit-script`
 
             ''')
-            Conf('extra log files', VDR.V_STRING_LIST, desc='''
-                A list of user-defined log files associated with a task. Log
-                files must reside in the job log directory
-                ``$CYLC_TASK_LOG_DIR`` and ideally should be named using the
-                ``$CYLC_TASK_LOG_ROOT`` prefix (see :ref:`Task Job Script
-                Variables`).
 
-                Example:
-
-                   ``job.custom-log-name``
-            ''')
             Conf('work sub-directory', VDR.V_STRING, desc='''
                 Task job scripts are executed from within *work directories*
                 created automatically under the suite run directory. A task
@@ -817,6 +801,11 @@ with Conf(
 
                    ``$CYLC_TASK_CYCLE_POINT/shared/``
             ''')
+            Conf('execution polling intervals', VDR.V_INTERVAL_LIST, None)
+            Conf('execution retry delays', VDR.V_INTERVAL_LIST, None)
+            Conf('execution time limit', VDR.V_INTERVAL)
+            Conf('submission polling intervals', VDR.V_INTERVAL_LIST, None)
+            Conf('submission retry delays', VDR.V_INTERVAL_LIST, None)
 
             with Conf('meta', desc=r'''
                 Section containing metadata items for this task or family
@@ -963,14 +952,6 @@ with Conf(
             '''):
                 Conf('batch system', VDR.V_STRING)
                 Conf('batch submit command template', VDR.V_STRING)
-                # TODO All the remaining items to be moved to top level of
-                # TASK when platforms work is completed.
-                Conf('execution polling intervals', VDR.V_INTERVAL_LIST, None)
-                Conf('execution retry delays', VDR.V_INTERVAL_LIST, None)
-                Conf('execution time limit', VDR.V_INTERVAL)
-                Conf('submission polling intervals', VDR.V_INTERVAL_LIST,
-                     None)
-                Conf('submission retry delays', VDR.V_INTERVAL_LIST, None)
 
             with Conf('remote'):
                 Conf('host', VDR.V_STRING)
@@ -1063,10 +1044,9 @@ with Conf(
                 <https://docs.python.org/3/library/stdtypes.html
                 #printf-style-string-formatting>`_.
 
-                Additional information can be passed to event handlers via the
-                ``[scheduler] -> [[environment]]`` (but not via task
-                runtime environments - event handlers are not called by
-                tasks).
+                Additional variables can be passed to event handlers using
+                :ref:`Jinja2 <User Guide Jinja2>`.
+                .
             '''):
                 Conf('execution timeout', VDR.V_INTERVAL, desc='''
                     If a task has not finished after the specified ISO 8601
@@ -1182,16 +1162,16 @@ with Conf(
                 ''')
 
             with Conf('environment', desc='''
-                    The user defined task execution environment. Variables
-                    defined here can refer to cylc suite and task identity
-                    variables, which are exported earlier in the task job
-                    script, and variable assignment expressions can use cylc
-                    utility commands because access to cylc is also configured
-                    earlier in the script.  See also
-                    :ref:`TaskExecutionEnvironment`.
+                The user defined task execution environment. Variables
+                defined here can refer to cylc suite and task identity
+                variables, which are exported earlier in the task job
+                script, and variable assignment expressions can use cylc
+                utility commands because access to cylc is also configured
+                earlier in the script.  See also
+                :ref:`TaskExecutionEnvironment`.
 
-                    You can also specify job environment templates here for
-                    :ref:`parameterized tasks <User Guide Param>`.
+                You can also specify job environment templates here for
+                :ref:`parameterized tasks <User Guide Param>`.
             '''):
                 Conf('<variable>', VDR.V_STRING, desc='''
                     The order of definition is
@@ -1325,13 +1305,17 @@ def upg(cfg, descr):
     u.obsolete(
         '8.0.0',
         ['cylc', 'health check interval'])
-    u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'shell'])
     u.obsolete('8.0.0', ['runtime', '__MANY__', 'events', 'mail retry delays'])
+    u.obsolete('8.0.0', ['runtime', '__MANY__', 'extra log files'])
+    u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'shell'])
     u.obsolete('8.0.0', ['cylc', 'abort if any task fails'])
     u.obsolete('8.0.0', ['cylc', 'events', 'abort if any task fails'])
     u.obsolete('8.0.0', ['cylc', 'events', 'mail retry delays'])
     u.obsolete('8.0.0', ['cylc', 'disable automatic shutdown'])
+    u.obsolete('8.0.0', ['cylc', 'environment'])
     u.obsolete('8.0.0', ['cylc', 'reference test'])
+    u.obsolete('8.0.0', ['cylc', 'simulation', 'disable suite event handlers'])
+    u.obsolete('8.0.0', ['cylc', 'simulation'])
     u.deprecate(
         '8.0.0',
         ['cylc', 'task event mail interval'],
@@ -1371,23 +1355,27 @@ def upg(cfg, descr):
         '8.0.0',
         ['scheduling', 'max active cycle points'],
         ['scheduling', 'runahead limit'],
-        cvtr=converter(lambda x: f'P{x}' if x != '' else '', '"n" -> "Pn"'))
-    # TODO uncomment these deprecations when ready - see todo in
-    # [runtime][__MANY__] section.
-    # for job_setting in [
-    #     'execution polling intervals',
-    #     'execution retry delays',
-    #     'execution time limit',
-    #     'submission polling intervals',
-    #     'submission retry delays'
-    # ]:
-    #     u.deprecate(
-    #         '8.0.0',
-    #         ['runtime', '__MANY__', 'job', job_setting],
-    #         ['runtime', '__MANY__', job_setting]
-    #     )
-    # TODO - there are some simple changes to the config (items from [remote]
-    # and [job] moved up 1 level for example) which should be upgraded here.
+        cvtr=converter(lambda x: f'P{x}' if x != '' else '', '"n" -> "Pn"')
+    )
+    u.deprecate(
+        '8.0.0',
+        ['scheduling', 'hold after point'],
+        ['scheduling', 'hold after cycle point']
+    )
+
+    for job_setting in [
+        'execution polling intervals',
+        'execution retry delays',
+        'execution time limit',
+        'submission polling intervals',
+        'submission retry delays'
+    ]:
+        u.deprecate(
+            '8.0.0',
+            ['runtime', '__MANY__', 'job', job_setting],
+            ['runtime', '__MANY__', job_setting]
+        )
+
     u.deprecate('8.0.0', ['cylc'], ['scheduler'])
     u.upgrade()
 

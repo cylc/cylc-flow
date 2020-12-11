@@ -1,7 +1,7 @@
 [meta]
-    title = "cylc hold after point flow.cylc test"
+    title = "cylc hold after cycle point flow.cylc test"
 
-    description = """Define a hold after point in the flow.cylc"""
+    description = """Define a hold after cycle point in the flow.cylc"""
 
 [scheduler]
     UTC mode = True
@@ -9,7 +9,7 @@
 [scheduling]
     initial cycle point  = 20100101T00Z
     final cycle point    = 20100110T00Z
-    hold after point    = 20100102T00Z
+    hold after cycle point    = 20100102T00Z
     [[graph]]
         R1 = stopper
         T00 = foo[-P1D] => foo

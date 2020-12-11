@@ -22,10 +22,10 @@ set_test_number 3
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate --set="CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
+    cylc validate --set="CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'" "${SUITE_NAME}"
 suite_run_fail "${TEST_NAME_BASE}-run" \
     cylc run --debug --no-detach --reference-test \
-    --set="CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}" \
+    --set="CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'" \
      "${SUITE_NAME}"
 sqlite3 "${SUITE_RUN_DIR}/.service/db" \
     'SELECT cycle,name,run_status FROM task_jobs' >'db.out'

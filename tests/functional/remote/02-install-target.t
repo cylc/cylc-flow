@@ -20,10 +20,8 @@ export REQUIRE_PLATFORM='loc:remote fs:shared comms:tcp'
 . "$(dirname "$0")/test_header"
 set_test_number 3
 
-export CYLC_TEST_PLATFORM="$CYLC_TEST_PLATFORM_WSFS"
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 #!jinja2
-[scheduler]
 [scheduling]
     [[graph]]
         graph = remote => held
@@ -37,9 +35,9 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 __FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}" \
-    -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}"
+    -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run --debug \
-     "${SUITE_NAME}" -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}"
+     "${SUITE_NAME}" -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
 CYLC_SUITE_RUN_DIR="$RUN_DIR/${SUITE_NAME}"
 poll_grep_suite_log 'Suite held'
 grep_ok "REMOTE INIT NOT REQUIRED for localhost" "${CYLC_SUITE_RUN_DIR}/log/suite/log"

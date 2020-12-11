@@ -26,11 +26,11 @@ install_suite "${TEST_NAME_BASE}" test2
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate \
-    --set=TEST_OUTPUT_PATH="${PWD}" "${SUITE_NAME}"
+    --set="TEST_OUTPUT_PATH='${PWD}'" "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
 suite_run_ok "${TEST_NAME}" cylc run --reference-test --debug --no-detach \
-    --set=TEST_OUTPUT_PATH="${PWD}" "${SUITE_NAME}"
+    --set="TEST_OUTPUT_PATH='${PWD}'" "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-check-a"
 cmp_ok "${TEST_SOURCE_DIR}/splitline_refs/a-ref" 'a-prereqs'

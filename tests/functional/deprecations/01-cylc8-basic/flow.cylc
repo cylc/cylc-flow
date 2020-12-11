@@ -9,6 +9,8 @@
     force run mode =
     task event mail interval =
     disable automatic shutdown =
+    [[environment]]
+        darmok =
     [[events]]
         mail to =
         mail from =
@@ -22,9 +24,12 @@
         simulation mode suite timeout =
         required run mode =
         suite shutdown event handler =
+    [[simulation]]
+        disable suite event handlers =
 
 [scheduling]
     max active cycle points = 2
+    hold after point =
 
     initial cycle point = 20150808T00
     final cycle point = 20150808T00
@@ -33,8 +38,14 @@
 
 [runtime]
     [[foo, cat, dog]]
+        extra log files =
         [[[job]]]
             shell = fish
+            execution polling intervals =
+            execution retry delays =
+            execution time limit =
+            submission polling intervals =
+            submission retry delays =
         [[[events]]]
             mail from =
             mail to =

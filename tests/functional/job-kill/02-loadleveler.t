@@ -17,8 +17,8 @@
 #-------------------------------------------------------------------------------
 # Test killing of jobs submitted to loadleveler, slurm, pbs...
 # TODO Check this test on a dockerized system or VM.
-BATCH_SYS_NAME="$(sed 's/.*\/...\(.*\)\.t/\1/' <<< "$0")"
-export REQUIRE_PLATFORM="batch:$BATCH_SYS_NAME comms:tcp"
+BATCH_SYS="${0##*\/??-}"
+export REQUIRE_PLATFORM="batch:${BATCH_SYS%%.t} comms:tcp"
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 2
