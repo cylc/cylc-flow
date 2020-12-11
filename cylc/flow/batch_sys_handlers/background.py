@@ -89,4 +89,4 @@ class BgCommandHandler:
             return (0, "%d\n" % (proc.pid), None)
 
 
-BATCH_SYS_HANDLER = BgCommandHandler()
+JOB_RUNNER_HANDLER = BgCommandHandler()

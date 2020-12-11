@@ -132,4 +132,4 @@ class LoadlevelerHandler():
             return self.VACATION_SIGNAL
 
 
-BATCH_SYS_HANDLER = LoadlevelerHandler()
+JOB_RUNNER_HANDLER = LoadlevelerHandler()

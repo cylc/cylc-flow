@@ -33,4 +33,4 @@ class MyBgCommandHandler(BgCommandHandler):
         return self.VACATION_SIGNAL
 
 
-BATCH_SYS_HANDLER = MyBgCommandHandler()
+JOB_RUNNER_HANDLER = MyBgCommandHandler()

@@ -61,7 +61,7 @@ class TestPBSMultiCluster(unittest.TestCase):
 
     def test_export_handler(self):
         import cylc.flow.batch_sys_handlers.pbs_multi_cluster as m
-        self.assertTrue(hasattr(m, 'BATCH_SYS_HANDLER'))
+        self.assertTrue(hasattr(m, 'JOB_RUNNER_HANDLER'))
 
 
 if __name__ == '__main__':

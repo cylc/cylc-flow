@@ -34,4 +34,4 @@ class SLURMPackjobHandler(SLURMHandler):
     SEP_HETJOB = "#SBATCH packjob"
 
 
-BATCH_SYS_HANDLER = SLURMPackjobHandler()
+JOB_RUNNER_HANDLER = SLURMPackjobHandler()

@@ -182,4 +182,4 @@ class SLURMHandler():
         return shlex.split(cls.POLL_CMD) + ["-j", ",".join(job_ids)]
 
 
-BATCH_SYS_HANDLER = SLURMHandler()
+JOB_RUNNER_HANDLER = SLURMHandler()

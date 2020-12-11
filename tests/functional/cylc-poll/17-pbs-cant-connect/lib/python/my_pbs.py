@@ -30,4 +30,4 @@ class MyPBSHandler(PBSHandler):
         return os.path.join(os.path.dirname(__file__), 'badqstat')
 
 
-BATCH_SYS_HANDLER = MyPBSHandler()
+JOB_RUNNER_HANDLER = MyPBSHandler()

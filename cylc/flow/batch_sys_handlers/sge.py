@@ -106,4 +106,4 @@ class SGEHandler:
         return [cls.POLL_CMD]
 
 
-BATCH_SYS_HANDLER = SGEHandler()
+JOB_RUNNER_HANDLER = SGEHandler()

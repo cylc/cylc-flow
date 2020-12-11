@@ -23,4 +23,4 @@ class MyBgCommandHandler(BgCommandHandler):
     pass
 
 
-BATCH_SYS_HANDLER = MyBgCommandHandler()
+JOB_RUNNER_HANDLER = MyBgCommandHandler()

@@ -109,4 +109,4 @@ class PBSHandler:
         return lines
 
 
-BATCH_SYS_HANDLER = PBSHandler()
+JOB_RUNNER_HANDLER = PBSHandler()

@@ -16,7 +16,7 @@
 
 import pytest
 
-from cylc.flow.batch_sys_handlers.moab import BATCH_SYS_HANDLER
+from cylc.flow.batch_sys_handlers.moab import JOB_RUNNER_HANDLER
 
 
 @pytest.mark.parametrize(
@@ -62,4 +62,4 @@ from cylc.flow.batch_sys_handlers.moab import BATCH_SYS_HANDLER
     ],
 )
 def test_format_directives(job_conf: dict, lines: list):
-    assert BATCH_SYS_HANDLER.format_directives(job_conf) == lines
+    assert JOB_RUNNER_HANDLER.format_directives(job_conf) == lines

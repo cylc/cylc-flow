@@ -25,4 +25,4 @@ class BadSubmitHandler:
     SUBMIT_CMD_TMPL = "bad-bad-bad-submit '%(job)s'"
 
 
-BATCH_SYS_HANDLER = BadSubmitHandler()
+JOB_RUNNER_HANDLER = BadSubmitHandler()

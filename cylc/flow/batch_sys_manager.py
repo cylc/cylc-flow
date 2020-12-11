@@ -20,63 +20,63 @@ Export the BatchSysManager class.
 
 Job runner handler (a.k.a. job submission method) modules should be placed
 under the "cylc.flow.batch_sys_handlers" package. Each module should export the
-symbol "BATCH_SYS_HANDLER" for the singleton instance that implements the job
+symbol "JOB_RUNNER_HANDLER" for the singleton instance that implements the job
 system handler logic.
 
 Each job runner handler class should instantiate with no argument, and may
 have the following constants and methods:
 
-batch_sys.filter_poll_many_output(out) => job_ids
+job_runner.filter_poll_many_output(out) => job_ids
     * Called after the job runner's poll many command. The method should read
       the output and return a list of job IDs that are still in the
       job runner.
 
-batch_sys.filter_submit_output(out, err) => new_out, new_err
+job_runner.filter_submit_output(out, err) => new_out, new_err
     * Filter the standard output and standard error of the job submission
       command. This is useful if the job submission command returns information
-      that should just be ignored. See also "batch_sys.SUBMIT_CMD_TMPL".
+      that should just be ignored. See also "job_runner.SUBMIT_CMD_TMPL".
 
-batch_sys.format_directives(job_conf) => lines
+job_runner.format_directives(job_conf) => lines
     * If relevant, this method formats the job directives for a job file, if
       job file directives are relevant for the job runner. The argument
       "job_conf" is a dict containing the job configuration.
 
-batch_sys.get_poll_many_cmd(job-id-list) => list
+job_runner.get_poll_many_cmd(job-id-list) => list
     * Return a list containing the shell command to poll the jobs in the
       argument list.
 
-batch_sys.get_submit_stdin(job_file_path: str, submit_opts: dict) => tuple
+job_runner.get_submit_stdin(job_file_path: str, submit_opts: dict) => tuple
     * Return a 2-element tuple `(proc_stdin_arg, proc_stdin_value)`.
       Element 1 is suitable for the `stdin=...` argument of `subprocess.Popen`
       so it can be a file handle, `subprocess.PIPE` or `None`. Element 2 is the
       string content to pipe to STDIN of the submit command (relevant only if
       `proc_stdin_arg` is `subprocess.PIPE`.
 
-batch_sys.get_vacation_signal(job_conf) => str
+job_runner.get_vacation_signal(job_conf) => str
     * If relevant, return a string containing the name of the signal that
       indicates the job has been vacated by the job runner.
 
-batch_sys.submit(job_file_path, submit_opts) => ret_code, out, err
+job_runner.submit(job_file_path, submit_opts) => ret_code, out, err
     * Submit a job and return an instance of the Popen object for the
       submission. This method is useful if the job submission requires logic
       beyond just running a system or shell command. See also
-      "batch_sys.SUBMIT_CMD".
+      "job_runner.SUBMIT_CMD".
 
-batch_sys.manip_job_id(job_id) => job_id
+job_runner.manip_job_id(job_id) => job_id
     * Modify the job ID that is returned by the job submit command.
 
-batch_sys.FAIL_SIGNALS => tuple<str>
+job_runner.FAIL_SIGNALS => tuple<str>
     * A tuple containing the names of signals to trap for reporting errors.
       Default is ("EXIT", "ERR", "TERM", "XCPU"). ERR and EXIT are always
       recommended.  EXIT is used to report premature stopping of the job
       script, and its trap is unset at the end of the script.
 
-batch_sys.KILL_CMD_TMPL
+job_runner.KILL_CMD_TMPL
     *  A Python string template for getting the job runner command to remove
        and terminate a job ID. The command is formed using the logic:
-           batch_sys.KILL_CMD_TMPL % {"job_id": job_id}
+           job_runner.KILL_CMD_TMPL % {"job_id": job_id}
 
-batch_sys.POLL_CANT_CONNECT_ERR
+job_runner.POLL_CANT_CONNECT_ERR
     * A string containing an error message. If this is defined, when a poll
       command returns a non-zero return code and its STDERR contains this
       string, then the poll result will not be trusted, because it is assumed
@@ -84,31 +84,31 @@ batch_sys.POLL_CANT_CONNECT_ERR
       job runner will be assumed OK until we are able to connect to the
       job runner again.
 
-batch_sys.SHOULD_KILL_PROC_GROUP
+job_runner.SHOULD_KILL_PROC_GROUP
     * A boolean to indicate whether it is necessary to kill a job by sending
       a signal to its Unix process group. This boolean also indicates that
       a job submitted via this job runner will physically run on the same
       host it is submitted to.
 
-batch_sys.SHOULD_POLL_PROC_GROUP
+job_runner.SHOULD_POLL_PROC_GROUP
     * A boolean to indicate whether it is necessary to poll a job by its PID
       as well as the job ID.
 
-batch_sys.REC_ID_FROM_SUBMIT_ERR
-batch_sys.REC_ID_FROM_SUBMIT_OUT
+job_runner.REC_ID_FROM_SUBMIT_ERR
+job_runner.REC_ID_FROM_SUBMIT_OUT
     * A regular expression (compiled) to extract the job "id" from the standard
       output or standard error of the job submission command.
 
-batch_sys.SUBMIT_CMD_ENV
+job_runner.SUBMIT_CMD_ENV
     * A Python dict (or an iterable that can be used to update a dict)
       containing extra environment variables for getting the job runner
       command to submit a job file.
 
-batch_sys.SUBMIT_CMD_TMPL
+job_runner.SUBMIT_CMD_TMPL
     * A Python string template for getting the job runner command to submit a
       job file. The command is formed using the logic:
-          batch_sys.SUBMIT_CMD_TMPL % {"job": job_file_path}
-      See also "batch_sys._job_submit_impl".
+          job_runner.SUBMIT_CMD_TMPL % {"job": job_file_path}
+      See also "job_runner._job_submit_impl".
 
 """
 
@@ -226,7 +226,7 @@ class BatchSysManager():
             try:
                 mod_of_name = __import__(key, fromlist=[key])
                 self._INSTANCES[job_runner_name] = getattr(
-                    mod_of_name, "BATCH_SYS_HANDLER")
+                    mod_of_name, "JOB_RUNNER_HANDLER")
                 return self._INSTANCES[job_runner_name]
             except ImportError:
                 if key == job_runner_name:

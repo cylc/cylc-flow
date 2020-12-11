@@ -17,7 +17,7 @@
 import pytest
 import os
 
-from cylc.flow.batch_sys_handlers.slurm_packjob import BATCH_SYS_HANDLER
+from cylc.flow.batch_sys_handlers.slurm_packjob import JOB_RUNNER_HANDLER
 
 home = os.path.expandvars('$HOME/')
 
@@ -58,7 +58,7 @@ home = os.path.expandvars('$HOME/')
     ],
 )
 def test_format_directives(job_conf: dict, lines: list):
-    assert BATCH_SYS_HANDLER.format_directives(job_conf) == lines
+    assert JOB_RUNNER_HANDLER.format_directives(job_conf) == lines
 
 
 @pytest.mark.parametrize(
@@ -72,7 +72,7 @@ def test_format_directives(job_conf: dict, lines: list):
     ],
 )
 def test_get_poll_many_cmd(job_ids: list, cmd: list):
-    assert BATCH_SYS_HANDLER.get_poll_many_cmd(job_ids) == cmd
+    assert JOB_RUNNER_HANDLER.get_poll_many_cmd(job_ids) == cmd
 
 
 @pytest.mark.parametrize(
@@ -96,4 +96,4 @@ def test_get_poll_many_cmd(job_ids: list, cmd: list):
     ],
 )
 def test_filter_poll_many_output(job_ids: list, out: str):
-    assert sorted(BATCH_SYS_HANDLER.filter_poll_many_output(out)) == job_ids
+    assert sorted(JOB_RUNNER_HANDLER.filter_poll_many_output(out)) == job_ids

@@ -53,4 +53,4 @@ class PBSMulticlusterHandler(PBSHandler):
         return re.sub(REC_JOB, REP_JOB, job_id.strip())
 
 
-BATCH_SYS_HANDLER = PBSMulticlusterHandler()
+JOB_RUNNER_HANDLER = PBSMulticlusterHandler()

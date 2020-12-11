@@ -101,4 +101,4 @@ class MoabHandler:
         return lines
 
 
-BATCH_SYS_HANDLER = MoabHandler()
+JOB_RUNNER_HANDLER = MoabHandler()

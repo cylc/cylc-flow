@@ -16,7 +16,7 @@
 
 import pytest
 
-from cylc.flow.batch_sys_handlers.lsf import BATCH_SYS_HANDLER
+from cylc.flow.batch_sys_handlers.lsf import JOB_RUNNER_HANDLER
 
 
 @pytest.mark.parametrize(
@@ -62,10 +62,10 @@ from cylc.flow.batch_sys_handlers.lsf import BATCH_SYS_HANDLER
     ],
 )
 def test_format_directives(job_conf: dict, lines: list):
-    assert BATCH_SYS_HANDLER.format_directives(job_conf) == lines
+    assert JOB_RUNNER_HANDLER.format_directives(job_conf) == lines
 
 
 def test_get_submit_stdin():
-    outs = BATCH_SYS_HANDLER.get_submit_stdin(__file__, None)
+    outs = JOB_RUNNER_HANDLER.get_submit_stdin(__file__, None)
     assert outs[0].name == __file__
     assert outs[1] is None

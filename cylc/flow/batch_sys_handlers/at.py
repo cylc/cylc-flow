@@ -111,4 +111,4 @@ class AtCommandHandler():
             return (PIPE, cls.SUBMIT_CMD_STDIN_TMPL % {"job": job_file_path})
 
 
-BATCH_SYS_HANDLER = AtCommandHandler()
+JOB_RUNNER_HANDLER = AtCommandHandler()

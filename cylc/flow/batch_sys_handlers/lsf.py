@@ -91,4 +91,4 @@ class LSFHandler():
         return (open(job_file_path), None)
 
 
-BATCH_SYS_HANDLER = LSFHandler()
+JOB_RUNNER_HANDLER = LSFHandler()
