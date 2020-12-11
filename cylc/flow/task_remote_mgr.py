@@ -48,7 +48,6 @@ from cylc.flow.suite_files import (
     get_contact_file)
 from cylc.flow.platforms import (
     get_platform,
-    get_host_from_platform,
     get_install_target_from_platform)
 from cylc.flow.remote import construct_ssh_cmd
 
@@ -221,8 +220,7 @@ class TaskRemoteMgr:
         procs = {}
         for platform, init_with_contact in self.remote_init_map.items():
             platform = get_platform(platform)
-            host = get_host_from_platform(platform)
-            owner = platform['owner']
+            platform_n = platform['name']
             self.install_target = get_install_target_from_platform(platform)
             if init_with_contact != REMOTE_FILE_INSTALL_DONE:
                 continue
@@ -235,24 +233,24 @@ class TaskRemoteMgr:
                 cmd = construct_ssh_cmd(cmd, platform, timeout='10s')
             else:
                 cmd = ['cylc'] + cmd
-            procs[(host, owner)] = (
+            procs[platform_n] = (
                 cmd,
                 Popen(cmd, stdout=PIPE, stderr=PIPE, stdin=DEVNULL))
         # Wait for commands to complete for a max of 10 seconds
         timeout = time() + 10.0
         while procs and time() < timeout:
-            for (host, owner), (cmd, proc) in procs.copy().items():
+            for platform_n, (cmd, proc) in procs.copy().items():
                 if proc.poll() is None:
                     continue
-                del procs[(host, owner)]
+                del procs[platform_n]
                 out, err = (f.decode() for f in proc.communicate())
                 if proc.wait():
                     LOG.warning(TaskRemoteMgmtError(
                         TaskRemoteMgmtError.MSG_TIDY,
-                        (host, owner), ' '.join(quote(item) for item in cmd),
+                        platform_n, ' '.join(quote(item) for item in cmd),
                         proc.returncode, out, err))
         # Terminate any remaining commands
-        for (host, owner), (cmd, proc) in procs.items():
+        for platform_n, (cmd, proc) in procs.items():
             try:
                 proc.terminate()
             except OSError:
@@ -261,7 +259,7 @@ class TaskRemoteMgr:
             if proc.wait():
                 LOG.warning(TaskRemoteMgmtError(
                     TaskRemoteMgmtError.MSG_TIDY,
-                    (host, owner), ' '.join(quote(item) for item in cmd),
+                    platform_n, ' '.join(quote(item) for item in cmd),
                     proc.returncode, out, err))
 
     def _subshell_eval_callback(self, proc_ctx, cmd_str):
