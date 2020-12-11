@@ -59,6 +59,9 @@ symlink to `DIR` (see #3884).
 
 ### Enhancements
 
+[#3791](https://github.com/cylc/cylc-flow/pull/3791) - Support Slurm
+heterogeneous jobs with a special directive prefix.
+
 [#3974](https://github.com/cylc/cylc-flow/pull/3974) - Template variables,
 both in set files and provided via the -s/--set command line options are
 now parsed using ast.literal_eval. This permits non-string data types,

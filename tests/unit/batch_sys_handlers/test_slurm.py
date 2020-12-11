@@ -100,6 +100,36 @@ home = os.path.expandvars('$HOME/')
                 '#SBATCH --mem=256gb',
             ],
         ),
+        (  # heterogeneous job
+            {
+                'directives': {
+                    '-p': 'middle',
+                    'hetjob_0_--mem': '128gb',
+                    'hetjob_1_--mem': '256gb',
+                },
+                'execution_time_limit': 200,
+                'job_file_path': '$HOME/cylc-run/chop/log/job/1/axe/01/job',
+                'suite_name': 'chop',
+                'task_id': 'axe.1',
+            },
+            [
+                '#SBATCH --job-name=axe.1.chop',
+                (
+                    f'#SBATCH --output='
+                    f'{home}cylc-run/chop/log/job/1/axe/01/job.out'
+                ),
+                (
+                    f'#SBATCH --error='
+                    f'{home}cylc-run/chop/log/job/1/axe/01/job.err'
+                ),
+                '#SBATCH --time=3:20',
+                '#SBATCH -p=middle',
+                '#SBATCH --mem=128gb',
+                '#SBATCH hetjob',
+                '#SBATCH --mem=256gb',
+            ],
+        ),
+
     ],
 )
 def test_format_directives(job_conf: dict, lines: list):
@@ -118,3 +148,27 @@ def test_format_directives(job_conf: dict, lines: list):
 )
 def test_get_poll_many_cmd(job_ids: list, cmd: list):
     assert BATCH_SYS_HANDLER.get_poll_many_cmd(job_ids) == cmd
+
+
+@pytest.mark.parametrize(
+    'out,job_ids',
+    [
+        [
+            """HEADING
+1234567  JOB PROPERTIES
+709394   JOB PROPERTIES
+30624700 JOB PROPERTIES
+""", ['1234567', '30624700', '709394'],
+        ],
+        [
+            """HEADING
+1234567+0 JOB PROPERTIES (HETERO)
+1234567+1 JOB PROPERTIES (HETERO)
+709394    JOB PROPERTIES
+30624700  JOB PROPERTIES
+""", ['1234567', '30624700', '709394'],
+        ],
+    ],
+)
+def test_filter_poll_many_output(job_ids: list, out: str):
+    assert sorted(BATCH_SYS_HANDLER.filter_poll_many_output(out)) == job_ids
