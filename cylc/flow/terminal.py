@@ -53,7 +53,7 @@ def get_width(default=80):
         return default
     try:
         return int(proc.communicate()[0].split()[1]) or default
-    except IndexError:
+    except (IndexError, ValueError):
         return default
 
 
