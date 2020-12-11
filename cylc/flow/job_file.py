@@ -22,7 +22,7 @@ from subprocess import Popen, PIPE, DEVNULL
 from textwrap import dedent
 
 from cylc.flow import __version__ as CYLC_VERSION
-from cylc.flow.job_runner_mgr import BatchSysManager
+from cylc.flow.job_runner_mgr import JobRunnerManager
 import cylc.flow.flags
 from cylc.flow.pathutil import (
     get_remote_suite_run_dir,
@@ -36,7 +36,7 @@ class JobFileWriter:
 
     def __init__(self):
         self.suite_env = {}
-        self.batch_sys_mgr = BatchSysManager()
+        self.batch_sys_mgr = JobRunnerManager()
 
     def set_suite_env(self, suite_env):
         """Configure suite environment for all job files."""
@@ -127,12 +127,12 @@ class JobFileWriter:
         for prefix, value in [
                 ("# Suite: ", job_conf['suite_name']),
                 ("# Task: ", job_conf['task_id']),
-                (BatchSysManager.LINE_PREFIX_JOB_LOG_DIR, job_conf['job_d']),
-                (BatchSysManager.LINE_PREFIX_JOB_RUNNER_NAME,
+                (JobRunnerManager.LINE_PREFIX_JOB_LOG_DIR, job_conf['job_d']),
+                (JobRunnerManager.LINE_PREFIX_JOB_RUNNER_NAME,
                  job_conf['platform']['job runner']),
-                (BatchSysManager.LINE_PREFIX_JOB_RUNNER_CMD_TMPL,
+                (JobRunnerManager.LINE_PREFIX_JOB_RUNNER_CMD_TMPL,
                  job_conf['platform']['job runner command template']),
-                (BatchSysManager.LINE_PREFIX_EXECUTION_TIME_LIMIT,
+                (JobRunnerManager.LINE_PREFIX_EXECUTION_TIME_LIMIT,
                  job_conf['execution_time_limit'])]:
             if value:
                 handle.write("\n%s%s" % (prefix, value))
@@ -353,4 +353,4 @@ class JobFileWriter:
         """Write epilogue."""
         handle.write(f'\n\n. "{run_d}/.service/etc/job.sh"\ncylc__job__main')
         handle.write("\n\n%s%s\n" % (
-            BatchSysManager.LINE_PREFIX_EOF, job_conf['job_d']))
+            JobRunnerManager.LINE_PREFIX_EOF, job_conf['job_d']))

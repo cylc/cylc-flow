@@ -23,7 +23,7 @@ in the runners. Invoke the relevant job runner commands to ask the job runners
 to terminate the jobs.
 
 """
-from cylc.flow.job_runner_mgr import BatchSysManager
+from cylc.flow.job_runner_mgr import JobRunnerManager
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
 
@@ -45,7 +45,7 @@ def get_option_parser():
 @cli_function(get_option_parser)
 def main(parser, options, job_log_root, *job_log_dirs):
     """CLI main."""
-    BatchSysManager().jobs_kill(job_log_root, job_log_dirs)
+    JobRunnerManager().jobs_kill(job_log_root, job_log_dirs)
 
 
 if __name__ == "__main__":

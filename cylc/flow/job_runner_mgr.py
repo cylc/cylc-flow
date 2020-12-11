@@ -16,7 +16,7 @@
 
 """Manage submission, poll and kill of a job to the job runners.
 
-Export the BatchSysManager class.
+Export the JobRunnerManager class.
 
 Job runner handler (a.k.a. job submission method) modules should be placed
 under the "cylc.flow.batch_sys_handlers" package. Each module should export the
@@ -185,7 +185,7 @@ class JobPollContext():
         return '%s|%s' % (self.job_log_dir, json.dumps(ret))
 
 
-class BatchSysManager():
+class JobRunnerManager():
     """Job submission, poll and kill.
 
     Manage the importing of job submission method modules.
