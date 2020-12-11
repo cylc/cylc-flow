@@ -289,10 +289,10 @@ with Conf(
         '''):
             Conf('<parameter>', VDR.V_STRING, desc='''
                 Default for integer parameters:
-                    ``_p%(p)0Nd``
-                    where ``N`` is the number of digits of the maximum integer
-                    value, e.g. ``foo<run>`` becomes ``foo_run3`` for ``run``
-                    value ``3``.
+                   ``_p%(p)0Nd``
+                   where ``N`` is the number of digits of the maximum integer
+                   value, e.g. ``foo<run>`` becomes ``foo_run3`` for ``run``
+                   value ``3``.
                 Default for non-integer parameters:
                     ``_%(p)s`` e.g. ``foo<run>`` becomes ``foo_top`` for
                     ``run`` value ``top``.
@@ -304,10 +304,10 @@ with Conf(
 
                 .. note::
 
-                    The values of a parameter named ``p`` are substituted for
-                    ``%(p)s``.  In ``_run%(run)s`` the first "run" is a string
-                    literal, and the second gets substituted with each value of
-                    the parameter.
+                   The values of a parameter named ``p`` are substituted for
+                   ``%(p)s``.  In ``_run%(run)s`` the first "run" is a string
+                   literal, and the second gets substituted with each value of
+                   the parameter.
             ''')
 
     with Conf('scheduling', desc='''
