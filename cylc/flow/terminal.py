@@ -52,7 +52,7 @@ def get_width(default=80):
     if proc.wait():
         return default
     try:
-        return int(proc.communicate()[0].split()[1])
+        return int(proc.communicate()[0].split()[1]) or default
     except IndexError:
         return default
 
