@@ -27,7 +27,6 @@ home = os.path.expandvars('$HOME/')
     [
         (  # basic
             {
-                'batch_system_conf': {},
                 'directives': {},
                 'execution_time_limit': 180,
                 'job_file_path': '$HOME/cylc-run/chop/log/job/1/axe/01/job',
@@ -49,7 +48,6 @@ home = os.path.expandvars('$HOME/')
         ),
         (  # task name with % character
             {
-                'batch_system_conf': {},
                 'directives': {},
                 'execution_time_limit': 180,
                 'job_file_path': (
@@ -73,7 +71,6 @@ home = os.path.expandvars('$HOME/')
         ),
         (  # some useful directives
             {
-                'batch_system_conf': {},
                 'directives': {
                     '-p': 'middle',
                     '--no-requeue': '',

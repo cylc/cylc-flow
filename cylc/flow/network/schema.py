@@ -712,7 +712,6 @@ class Job(ObjectType):
     pre_script = String()
     script = String()
     work_sub_dir = String()
-    batch_sys_conf = GenericScalar(resolver=resolve_json_dump)
     environment = GenericScalar(resolver=resolve_json_dump)
     directives = GenericScalar(resolver=resolve_json_dump)
     param_var = GenericScalar(resolver=resolve_json_dump)

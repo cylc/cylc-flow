@@ -123,7 +123,6 @@ message PbJob {
     optional string script = 21;
     optional string shell = 22;
     optional string work_sub_dir = 23;
-    optional string batch_sys_conf = 24;
     optional string environment = 25;
     optional string directives = 26;
     optional string param_var = 28;

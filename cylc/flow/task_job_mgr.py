@@ -1003,11 +1003,6 @@ class TaskJobManager:
 
         itask.summary['batch_sys_name'] = itask.platform['batch system']
         try:
-            batch_sys_conf = self.task_events_mgr.get_host_conf(
-                itask, 'batch systems')[itask.summary['batch_sys_name']]
-        except (TypeError, KeyError):
-            batch_sys_conf = {}
-        try:
             itask.summary[self.KEY_EXECUTE_TIME_LIMIT] = float(
                 rtconfig['execution time limit'])
         except TypeError:
@@ -1026,7 +1021,6 @@ class TaskJobManager:
             'batch_submit_command_template': (
                 itask.platform['batch submit command template']
             ),
-            'batch_system_conf': batch_sys_conf,
             'dependencies': itask.state.get_resolved_dependencies(),
             'directives': rtconfig['directives'],
             'environment': rtconfig['environment'],
