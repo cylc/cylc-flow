@@ -325,7 +325,7 @@ class Scheduler:
         """Initialise the components and sub-systems required to run the flow.
 
         * Initialise the network components.
-        * Initialise mangers.
+        * Initialise managers.
 
         """
         self.suite_db_mgr = SuiteDatabaseManager(

@@ -91,6 +91,7 @@ from cylc.flow.task_remote_mgr import (
     REMOTE_FILE_INSTALL_DONE,
     REMOTE_FILE_INSTALL_FAILED,
     REMOTE_FILE_INSTALL_IN_PROGRESS,
+    REMOTE_INIT_IN_PROGRESS,
     REMOTE_INIT_DONE, REMOTE_INIT_FAILED,
     TaskRemoteMgr
 )
@@ -128,6 +129,11 @@ class TaskJobManager:
     REMOTE_INIT_MSG = 'remote host initialising'
     REMOTE_FILE_INSTALL_MSG = 'file installation in progress'
     KEY_EXECUTE_TIME_LIMIT = TaskEventsManager.KEY_EXECUTE_TIME_LIMIT
+
+    IN_PROGRESS = {
+        REMOTE_FILE_INSTALL_IN_PROGRESS: REMOTE_FILE_INSTALL_MSG,
+        REMOTE_INIT_IN_PROGRESS: REMOTE_INIT_MSG
+    }
 
     def __init__(self, suite, proc_pool, suite_db_mgr,
                  task_events_mgr, job_pool):
@@ -261,7 +267,6 @@ class TaskJobManager:
         done_tasks = bad_tasks
         for install_target, itasks in sorted(auth_itasks.items()):
             ri_map = self.task_remote_mgr.remote_init_map
-
             # Re-fetch a copy of platform
             platform = itasks[0].platform
             # Skip both remote init and remote file install for localhost
@@ -283,14 +288,15 @@ class TaskJobManager:
             # Already done remote so move on to file install
             elif (ri_map[install_target] == REMOTE_INIT_DONE):
                 self.task_remote_mgr.file_install(platform)
-            # # Already doing file install
-            elif (ri_map[install_target] == REMOTE_FILE_INSTALL_IN_PROGRESS):
+            # Already doing remote init or file install
+            elif (ri_map[install_target] in self.IN_PROGRESS.keys()):
                 for itask in itasks:
-                    itask.set_summary_message(self.REMOTE_FILE_INSTALL_MSG)
+                    msg = self.IN_PROGRESS[ri_map[install_target]]
+                    itask.set_summary_message(msg)
                     self.job_pool.add_job_msg(
                         get_task_job_id(
                             itask.point, itask.tdef.name, itask.submit_num),
-                        self.REMOTE_FILE_INSTALL_MSG)
+                        msg)
                 continue
 
             # Ensure that localhost background/at jobs are recorded as running
