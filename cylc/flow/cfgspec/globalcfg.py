@@ -531,7 +531,6 @@ with Conf('global.cylc', desc='''
                 if the job name has more than 15 characters; whereas PBS 13
                 accepts up to 236 characters.
             ''')
-            Conf('owner', VDR.V_STRING)
             Conf('install target', VDR.V_STRING, desc='''
             This defaults to the platform name. This will be used as the
             target for remote file installation.
