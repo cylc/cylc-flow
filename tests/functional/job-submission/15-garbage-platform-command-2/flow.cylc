@@ -1,6 +1,5 @@
-[scheduler]
-    [[parameters]]
-        i = 1..5
+[task parameters]
+    i = 1..5
 [scheduling]
     [[graph]]
         R1 = foo<i>

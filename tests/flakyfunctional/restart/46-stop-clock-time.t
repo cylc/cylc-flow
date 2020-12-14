@@ -34,9 +34,9 @@ set_test_number 6
 # Restart
 # Suite runs to stop clock time, reset stop clock time
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
+[task parameters]
+    i = 1..10
 [scheduler]
-    [[parameters]]
-        i = 1..10
     [[events]]
         abort on stalled = True
         abort on inactivity = True

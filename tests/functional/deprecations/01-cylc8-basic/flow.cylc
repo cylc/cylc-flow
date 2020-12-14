@@ -26,7 +26,8 @@
         suite shutdown event handler =
     [[simulation]]
         disable suite event handlers =
-
+    [[parameters]]
+    [[parameter templates]]
 [scheduling]
     max active cycle points = 2
     hold after point =

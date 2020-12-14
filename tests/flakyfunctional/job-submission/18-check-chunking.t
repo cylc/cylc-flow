@@ -31,8 +31,8 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
         abort on inactivity = True
         abort on stalled = True
         inactivity = PT10M
-    [[parameters]]
-        p = 1..202
+[task parameters]
+    p = 1..202
 [scheduling]
     [[graph]]
         R1 = t1<p>

@@ -1,6 +1,5 @@
-[scheduler]
-    [[parameters]]
-        n = 1..7
+[task parameters]
+    n = 1..7
 [scheduling]
     [[queues]]
         [[[q1]]]

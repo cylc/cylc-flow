@@ -271,14 +271,28 @@ class SuiteConfig:
             self.cfg['runtime']['root'] = OrderedDictWithDefaults()
 
         try:
-            parameter_values = self.cfg['scheduler']['parameters']
+            # Ugly hack to avoid templates getting included in parameters
+            parameter_values = {
+                key: value for key, value in
+                self.cfg['task parameters'].items()
+                if key != 'templates'
+            }
         except KeyError:
             # (Suite config defaults not put in yet.)
             parameter_values = {}
         try:
-            parameter_templates = self.cfg['scheduler']['parameter templates']
+            parameter_templates = self.cfg['task parameters']['templates']
+
         except KeyError:
             parameter_templates = {}
+
+        # Check that parameter templates are a section
+        if not hasattr(parameter_templates, 'update'):
+            raise SuiteConfigError(
+                '[task parameters][templates] is a section. Don\'t use it '
+                'as a parameter.'
+            )
+
         # parameter values and templates are normally needed together.
         self.parameters = (parameter_values, parameter_templates)
 
@@ -978,7 +992,8 @@ class SuiteConfig:
         """Check for illegal parameter environment templates"""
         parameter_values = dict(
             (key, values[0])
-            for key, values in self.parameters[0].items() if values)
+            for key, values in self.parameters[0].items() if values
+        )
         bads = set()
         for task_name, task_items in self.cfg['runtime'].items():
             if 'environment' not in task_items:
