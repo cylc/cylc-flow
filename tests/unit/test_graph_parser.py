@@ -306,9 +306,6 @@ class TestGraphParser(unittest.TestCase):
         gp1.parse_graph("bar<i-1,j> => baz<i,j>\nfoo<i=1,j> => qux")
         gp2 = GraphParser()
         gp2.parse_graph("""
-           baz_i0_j0
-           baz_i0_j1
-           baz_i0_j2
            foo_i1_j0 => qux
            foo_i1_j1 => qux
            foo_i1_j2 => qux
@@ -325,9 +322,6 @@ class TestGraphParser(unittest.TestCase):
         gp1.parse_graph("bar<i-1,j> => baz<i,j>")
         gp2 = GraphParser()
         gp2.parse_graph("""
-           baz_i0_j0
-           baz_i0_j1
-           baz_i0_j2
            bar_i0_j0 => baz_i1_j0
            bar_i0_j1 => baz_i1_j1
            bar_i0_j2 => baz_i1_j2""")

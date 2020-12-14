@@ -292,9 +292,9 @@ class GraphParser:
         for line in line_set:
             chain = []
             # "foo => bar => baz" becomes [foo, bar, baz]
-            # "foo_-32768 => bar" becomes [bar] (remove out-of-range nodes)
             # "foo => bar_-32768 => baz" becomes [foo]
-            for index, node in enumerate(line.split(ARROW)):
+            # "foo_-32768 => bar" becomes []
+            for node in line.split(ARROW):
                 # This can happen, e.g. "foo => => bar" produces
                 # "foo, '', bar", so we add so that later it raises
                 # an error
@@ -303,17 +303,14 @@ class GraphParser:
                     continue
                 node = self.REC_NODE_OUT_OF_RANGE.sub('', node)
                 if node == '':
-                    if index == 0:
-                        # For "foo<err> => bar", we simply skip "foo<err>"
-                        continue
-                    else:
-                        # For "foo => bar<err> => baz", we stop once we find
-                        # "bar<err>"
-                        break
+                    # For "foo => bar<err> => baz", stop at "bar<err>"
+                    break
                 else:
                     chain.append(node)
 
             # Auto-trigger lone nodes and initial nodes in a chain.
+            if not chain:
+                continue
             for name, offset, _ in self.__class__.REC_NODES.findall(chain[0]):
                 if not offset and not name.startswith('@'):
                     pairs.add((None, name))
