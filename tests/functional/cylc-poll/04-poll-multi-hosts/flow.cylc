@@ -1,7 +1,7 @@
 #!Jinja2
 [scheduler]
     UTC mode = True
-    [[reference test]]
+    [[events]]
         expected task failures = local-fail-1.1, local-fail-2.1, remote-fail-1.1
 [scheduling]
     [[graph]]

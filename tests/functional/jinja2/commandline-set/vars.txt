@@ -1,2 +1,2 @@
-TASKNAME=foo
-STEP=2
+TASKNAME="foo"
+STEP="2"

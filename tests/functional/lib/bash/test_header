@@ -700,7 +700,7 @@ create_test_global_config() {
     # Tidy in case of previous use of this function.
     rm -fr 'etc'
     mkdir 'etc'
-    # Suite host self-identification method.
+    # Scheduler host self-identification method.
     echo "$PRE" >'etc/global.cylc'
     USER_TESTS_CONF_FILE="${HOME}/.cylc/flow/$(cylc version)/global-tests.cylc"
     if [[ -f "${USER_TESTS_CONF_FILE}" ]]; then

@@ -101,6 +101,94 @@ with Conf('global.cylc', desc='''
              desc='''
             The number of old run directory trees to retain at start-up.
         ''')
+        Conf('auto restart delay', VDR.V_INTERVAL, desc='''
+            Relates to Cylc's auto stop-restart mechanism (see
+            :ref:`auto-stop-restart`).  When a host is set to automatically
+            shutdown/restart it will first wait a random period of time
+            between zero and ``auto restart delay`` seconds before
+            beginning the process. This is to prevent large numbers of
+            suites from restarting simultaneously.
+        ''')
+        with Conf('run hosts', desc='''
+            Configure allowed suite hosts and ports for starting up (running or
+            restarting) suites. Additionally configure host selection settings
+            specifying how to determine the most suitable run host at any given
+            time from those configured.
+        '''):
+            Conf('available', VDR.V_SPACELESS_STRING_LIST, desc='''
+                A list of allowed suite run hosts. One of these hosts will be
+                appointed for a suite to start up on if an explicit host is not
+                provided as an option to a ``run`` or ``restart`` command.
+            ''')
+            Conf('ports', VDR.V_INTEGER_LIST, list(range(43001, 43101)),
+                 desc='''
+                A list of allowed ports for Cylc to use to run suites.
+            ''')
+            Conf('condemned', VDR.V_ABSOLUTE_HOST_LIST, desc='''
+                Hosts specified in ``condemned hosts`` will not be considered
+                as suite run hosts. If suites are already running on
+                ``condemned hosts`` they will be automatically shutdown and
+                restarted (see:ref:`auto-stop-restart`).
+            ''')
+            Conf('ranking', VDR.V_STRING, desc='''
+                A multiline string containing Python expressions to filter
+                and/or rank hosts. For example:
+
+                .. code-block:: none
+
+                   cpu_percent() < 70
+                   cpu_percent()
+
+                To filter by ``cpu_percent() < 70`` then to rank by
+                ``cpu_percent``.
+            ''')
+
+        with Conf('host self-identification', desc='''
+            The suite host's identity must be determined locally by cylc and
+            passed to running tasks (via ``$CYLC_SUITE_HOST``) so that task
+            messages can target the right suite on the right host.
+        '''):
+            # TODO
+            # Is it conceivable that different remote task hosts at the same
+            # site might see the suite host differently? If so we would need to
+            # be able to override the target in suite configurations.
+            Conf(
+                'method', VDR.V_STRING, 'name',
+                options=['name', 'address', 'hardwired'],
+                desc='''
+                    This item determines how cylc finds the identity of the
+                    suite host.For the default *name* method cylc asks the
+                    suite host for its host name. This should resolve on remote
+                    task hosts to the IP address of the suite host; if it
+                    doesn't, adjust network settings or use one of the other
+                    methods. For the *address* method, cylc attempts to use a
+                    special external "target address" to determine the IP
+                    address of the suite host as seen by remote task hosts.
+                    And finally, as a last resort, you can choose the
+                    *hardwired* method and manually specify the host name or IP
+                    address of the suite host.
+
+                    Options:
+
+                    name
+                       Self-identified host name.
+                    address
+                       Automatically determined IP address (requires *target*).
+                    hardwired
+                       Manually specified host name or IP address (requires
+                       *host*).
+            ''')
+            Conf('target', VDR.V_STRING, 'google.com', desc='''
+                This item is required for the *address* self-identification
+                method. If your suite host sees the internet, a common address
+                such as ``google.com`` will do; otherwise choose a host
+                visible on your intranet.
+            ''')
+            Conf('host', VDR.V_STRING, desc='''
+                Use this item to explicitly set the name or IP address of the
+                suite host if you have to use the *hardwired*
+                self-identification method.
+            ''')
 
         with Conf('events', desc='''
             You can define site defaults for each of the following options,
@@ -201,10 +289,10 @@ with Conf('global.cylc', desc='''
 
             Examples::
 
-                ed
-                emacs -nw
-                nano
-                vi
+               ed
+               emacs -nw
+               nano
+               vi
         ''')
         Conf('gui', VDR.V_STRING, desc='''
             A graphical text editor to be used by cylc.
@@ -221,12 +309,12 @@ with Conf('global.cylc', desc='''
 
             Examples::
 
-                atom --wait
-                code -nw
-                emacs
-                gedit -s
-                gvim -fg
-                nedit
+               atom --wait
+               code -nw
+               emacs
+               gedit -s
+               gvim -fg
+               nedit
         ''')
 
     with Conf('platforms'):
@@ -452,9 +540,9 @@ with Conf('global.cylc', desc='''
 
             .. code-block:: cylc
 
-                [platforms]
-                    [[Platform_A]]
-                        install target = localhost
+               [platforms]
+                   [[Platform_A]]
+                       install target = localhost
             ''')
 
         with Conf('localhost', meta=Platform):
@@ -465,10 +553,10 @@ with Conf('global.cylc', desc='''
         with Conf('<group>'):
             Conf('platforms', VDR.V_STRING_LIST)
     # Symlink Dirs
-    with Conf('symlink dirs', desc="""Define directories to be moved, symlinks
-                from the the original ``$HOME/cylc-run`` directories will be
-                created.
-            """):
+    with Conf('symlink dirs', desc="""
+        Define directories to be moved, symlinks from the the original
+        ``$HOME/cylc-run`` directories will be created.
+    """):
         with Conf('<install target>'):
             Conf('run', VDR.V_STRING, None, desc="""
                 Specifies the directory where the workflow run directories are
@@ -535,81 +623,6 @@ with Conf('global.cylc', desc='''
     '''):
         Conf('from', VDR.V_STRING)
         Conf('to', VDR.V_STRING)
-
-    # suite
-    with Conf('suite host self-identification', desc='''
-        The suite host's identity must be determined locally by cylc and passed
-        to running tasks (via ``$CYLC_SUITE_HOST``) so that task messages can
-        target the right suite on the right host.
-
-        .. todo
-           Is it conceivable that different remote task hosts at the same site
-           might see the suite host differently? If so we would need to be able
-           to override the target in suite configurations.
-    '''):
-        Conf('method', VDR.V_STRING, 'name',
-             options=['name', 'address', 'hardwired'], desc='''
-            This item determines how cylc finds the identity of the suite host.
-            For the default *name* method cylc asks the suite host for its host
-            name. This should resolve on remote task hosts to the IP address of
-            the suite host; if it doesn't, adjust network settings or use one
-            of the other methods. For the *address* method, cylc attempts to
-            use a special external "target address" to determine the IP address
-            of the suite host as seen by remote task hosts.  And finally, as a
-            last resort, you can choose the *hardwired* method and manually
-            specify the host name or IP address of the suite host.
-
-            Options:
-
-            name
-               Self-identified host name.
-            address
-               Automatically determined IP address (requires *target*).
-            hardwired
-               Manually specified host name or IP address (requires *host*).
-        ''')
-        Conf('target', VDR.V_STRING, 'google.com', desc='''
-            This item is required for the *address* self-identification method.
-            If your suite host sees the internet, a common address such as
-            ``google.com`` will do; otherwise choose a host visible on your
-            intranet.
-        ''')
-        Conf('host', VDR.V_STRING, desc='''
-            Use this item to explicitly set the name or IP address of the suite
-            host if you have to use the *hardwired* self-identification method.
-        ''')
-
-    # suite
-    with Conf('suite servers', desc='''
-        Configure allowed suite hosts and ports for starting up (running or
-        restarting) suites. Additionally configure host selection settings
-        specifying how to determine the most suitable run host at any given
-        time from those configured.
-    '''):
-        Conf('run hosts', VDR.V_SPACELESS_STRING_LIST, desc='''
-            A list of allowed suite run hosts. One of these hosts will be
-            appointed for a suite to start up on if an explicit host is not
-            provided as an option to a ``run`` or ``restart`` command.
-        ''')
-        Conf('run ports', VDR.V_INTEGER_LIST, list(range(43001, 43101)),
-             desc='''
-            A list of allowed ports for Cylc to use to run suites.
-        ''')
-        Conf('condemned hosts', VDR.V_ABSOLUTE_HOST_LIST, desc='''
-            Hosts specified in ``condemned hosts`` will not be considered as
-            suite run hosts. If suites are already running on ``condemned
-            hosts`` they will be automatically shutdown and restarted (see
-            :ref:`auto-stop-restart`).
-        ''')
-        Conf('auto restart delay', VDR.V_INTERVAL, desc='''
-            Relates to Cylc's auto stop-restart mechanism (see
-            :ref:`auto-stop-restart`).  When a host is set to automatically
-            shutdown/restart it will first wait a random period of time between
-            zero and ``auto restart delay`` seconds before beginning the
-            process. This is to prevent large numbers of suites from restarting
-            simultaneously.
-        ''')
-        Conf('ranking', VDR.V_STRING)
 
 
 def upg(cfg, descr):

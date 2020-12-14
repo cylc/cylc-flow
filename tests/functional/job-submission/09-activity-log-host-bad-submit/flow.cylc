@@ -2,7 +2,7 @@
 
 [scheduler]
     UTC mode = True
-    [[reference test]]
+    [[events]]
         expected task failures = bad-submitter.19990101T0000Z
 
 [scheduling]

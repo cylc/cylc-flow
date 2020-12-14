@@ -91,6 +91,9 @@ from cylc.flow.task_id import TaskID
 from cylc.flow.task_job_mgr import TaskJobManager
 from cylc.flow.task_pool import TaskPool
 from cylc.flow.task_proxy import TaskProxy
+from cylc.flow.task_remote_mgr import (
+    REMOTE_FILE_INSTALL_IN_PROGRESS, REMOTE_INIT_DONE,
+    REMOTE_INIT_IN_PROGRESS)
 from cylc.flow.task_state import (
     TASK_STATUSES_ACTIVE,
     TASK_STATUSES_NEVER_ACTIVE,
@@ -511,8 +514,8 @@ class Scheduler:
         holdcp = None
         if self.options.holdcp:
             holdcp = self.options.holdcp
-        elif self.config.cfg['scheduling']['hold after point']:
-            holdcp = self.config.cfg['scheduling']['hold after point']
+        elif self.config.cfg['scheduling']['hold after cycle point']:
+            holdcp = self.config.cfg['scheduling']['hold after cycle point']
         if holdcp is not None:
             self.hold_suite(get_point(holdcp))
         if self.options.hold_start:
@@ -528,7 +531,7 @@ class Scheduler:
 
     async def start_servers(self):
         """Start the TCP servers."""
-        port_range = glbl_cfg().get(['suite servers', 'run ports'])
+        port_range = glbl_cfg().get(['scheduler', 'run hosts', 'ports'])
         self.server.start(port_range[0], port_range[-1])
         self.publisher.start(port_range[0], port_range[-1])
         # wait for threads to setup socket ports before continuing
@@ -611,13 +614,8 @@ class Scheduler:
             await self.shutdown(exc)
             raise exc from None
 
-        except Exception as exc:
-            try:
-                await self.shutdown(exc)
-            except Exception as exc2:
-                # In case of exceptions in the shutdown method itself
-                LOG.exception(exc2)
-            raise exc from None
+        except (KeyboardInterrupt, asyncio.CancelledError, Exception) as exc:
+            await self.handle_exception(exc)
 
         else:
             # main loop ends (not used?)
@@ -643,9 +641,8 @@ class Scheduler:
             await self.configure()
             await self.start_servers()
             await self.log_start()
-        except Exception as exc:
-            await self.shutdown(exc)
-            raise
+        except (KeyboardInterrupt, asyncio.CancelledError, Exception) as exc:
+            await self.handle_exception(exc)
         else:
             # note start_scheduler handles its own shutdown logic
             await self.start_scheduler()
@@ -667,8 +664,7 @@ class Scheduler:
             else:
                 LOG.info('Cold Start %s' % self.config.start_point)
 
-        task_list = self.filter_initial_task_list(
-            self.config.get_task_name_list())
+        task_list = self.config.get_task_name_list()
 
         flow_label = self.pool.flow_label_mgr.get_new_label()
         for name in task_list:
@@ -734,15 +730,21 @@ class Scheduler:
 
         incomplete_init = False
         for platform in distinct_install_target_platforms:
-            if (self.task_job_mgr.task_remote_mgr.remote_init(
-                    platform, self.curve_auth,
-                    self.client_pub_key_dir) is None):
+            self.task_job_mgr.task_remote_mgr.remote_init(
+                platform, self.curve_auth,
+                self.client_pub_key_dir)
+            if (self.task_job_mgr.task_remote_mgr.remote_init_map[platform[
+                    'install target']] in [REMOTE_INIT_IN_PROGRESS,
+                                           REMOTE_FILE_INSTALL_IN_PROGRESS]):
                 incomplete_init = True
                 break
+            if self.task_job_mgr.task_remote_mgr.remote_init_map[
+                    platform['install target']] == REMOTE_INIT_DONE:
+                self.task_job_mgr.task_remote_mgr.file_install(platform)
         if incomplete_init:
             # TODO: Review whether this sleep is needed.
             sleep(1.0)
-            # Remote init is done via process pool
+            # Remote init/file-install is done via process pool
             self.proc_pool.process()
         self.command_poll_tasks()
 
@@ -1205,10 +1207,7 @@ class Scheduler:
         conf = self.config
         try:
             if (
-                conf.run_mode('simulation', 'dummy') and
-                conf.cfg['scheduler']['simulation'][
-                    'disable suite event handlers'
-                ]
+                conf.run_mode('simulation', 'dummy')
             ):
                 return
         except KeyError:
@@ -1623,16 +1622,19 @@ class Scheduler:
 
         """
         if isinstance(reason, SchedulerStop):
-            LOG.info('Suite shutting down - %s', reason.args[0])
+            LOG.info(f'Suite shutting down - {reason.args[0]}')
         elif isinstance(reason, SchedulerError):
-            LOG.error('Suite shutting down - %s', reason)
+            LOG.error(f'Suite shutting down - {reason}')
         elif isinstance(reason, SuiteConfigError):
             LOG.error(f'{SuiteConfigError.__name__}: {reason}')
         elif isinstance(reason, PlatformLookupError):
             LOG.error(f'{PlatformLookupError.__name__}: {reason}')
         else:
             LOG.exception(reason)
-            LOG.critical('Suite shutting down - %s', reason)
+            if str(reason):
+                LOG.critical(f'Suite shutting down - {reason}')
+            else:
+                LOG.critical('Suite shutting down')
 
         if self.proc_pool:
             self.proc_pool.close()
@@ -1769,22 +1771,6 @@ class Scheduler:
         """Force spawn task successors."""
         return self.pool.force_spawn_children(items, outputs)
 
-    def filter_initial_task_list(self, inlist):
-        """Return list of initial tasks after applying a filter."""
-        included_by_config = self.config.cfg[
-            'scheduling']['special tasks']['include at start-up']
-        excluded_by_config = self.config.cfg[
-            'scheduling']['special tasks']['exclude at start-up']
-        outlist = []
-        for name in inlist:
-            if name in excluded_by_config:
-                continue
-            if len(included_by_config) > 0:
-                if name not in included_by_config:
-                    continue
-            outlist.append(name)
-        return outlist
-
     def _update_profile_info(self, category, amount, amount_format="%s"):
         """Update the 1, 5, 15 minute dt averages for a given category."""
         now = time()
@@ -1856,3 +1842,18 @@ class Scheduler:
         if stoppoint is not None:
             self.options.stopcp = str(stoppoint)
             self.pool.set_stop_point(get_point(self.options.stopcp))
+
+    async def handle_exception(self, exc):
+        """Gracefully shut down the scheduler.
+
+        This re-raises the caught exception, to be caught higher up.
+
+        Args:
+            exc: The caught exception to be logged during the shutdown.
+        """
+        try:
+            await self.shutdown(exc)
+        except Exception as exc2:
+            # In case of exceptions in the shutdown method itself
+            LOG.exception(exc2)
+        raise exc from None

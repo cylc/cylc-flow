@@ -33,8 +33,9 @@ BASE_GLOBAL_CONFIG="
         abort on timeout = True
         inactivity = PT1M
         timeout = PT1M
-[suite servers]
-    run hosts = localhost, ${CYLC_TEST_HOST}"
+[scheduler]
+    [[run hosts]]
+        available = localhost, ${CYLC_TEST_HOST}"
 
 TEST_NAME="${TEST_NAME_BASE}"
 TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME}" - <<'__FLOW_CONFIG__'
@@ -48,15 +49,16 @@ __FLOW_CONFIG__
 # run suite on localhost normally
 create_test_global_config '' "${BASE_GLOBAL_CONFIG}"
 run_ok "${TEST_NAME}-suite-start" \
-    cylc run "${SUITE_NAME}" --host=localhost -s 'FOO=foo' -v
+    cylc run "${SUITE_NAME}" --host=localhost -s 'FOO="foo"' -v
 cylc suite-state "${SUITE_NAME}" --task='task_foo01' \
     --status='succeeded' --point=1 --interval=1 --max-polls=20 >& $ERR
 
 # condemn localhost
 create_test_global_config '' "
 ${BASE_GLOBAL_CONFIG}
-[suite servers]
-    condemned hosts = $(hostname)
+[scheduler]
+    [[run hosts]]
+        condemned = $(hostname)
 "
 # test shutdown procedure - scan the first log file
 FILE=$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)

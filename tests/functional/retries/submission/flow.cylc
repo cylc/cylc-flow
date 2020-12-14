@@ -1,10 +1,9 @@
 [scheduler]
-   [[events]]
-       abort on stalled = True
-       abort on inactivity = True
-       inactivity = PT3M
-   [[reference test]]
-       expected task failures = foo.1
+    [[events]]
+        abort on stalled = True
+        abort on inactivity = True
+        inactivity = PT3M
+        expected task failures = foo.1
 [scheduling]
     [[graph]]
         R1 = "foo:submit-fail => !foo"

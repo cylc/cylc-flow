@@ -1,7 +1,7 @@
 #!Jinja2
 
 [scheduler]
-   [[reference test]]
+   [[events]]
        expected task failures = rem2.1
 
 [scheduling]

@@ -5,10 +5,6 @@
     initial cycle point = 20140101T00
     [[  special tasks  ]]    
         sequential = foo , bar ,  baz   
-        include at start-up =   \
-            foo {% if HELLO %}   ,    \
-            bar    
-            {% endif %}   
     [[   graph  ]]   
         T00, T12  ="""   
         a => b   

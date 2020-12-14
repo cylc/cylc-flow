@@ -1,7 +1,7 @@
 [meta]
     title = "Test job abort with retries and failed handler"
 [scheduler]
-    [[reference test]]
+    [[events]]
         expected task failures = foo.1
 [scheduling]
     [[graph]]

@@ -1,7 +1,6 @@
-#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -14,9 +13,25 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#-------------------------------------------------------------------------------
-# Test include at start-up is working
-. "$(dirname "$0")/test_header"
-set_test_number 2
-reftest
-exit
+"""SLURM job submission and manipulation.
+
+Includes directive prefix workaround for heterogeneous job support, for older
+Slurm versions that use "packjob" instead of "hetjob".
+
+"""
+
+import re
+from cylc.flow.batch_sys_handlers.slurm import SLURMHandler
+
+
+class SLURMPackjobHandler(SLURMHandler):
+    """SLURM job submission and manipulation."""
+
+    # Heterogeneous job support
+    #  Match artificial directive prefix
+    REC_HETJOB = re.compile(r"^packjob_(\d+)_")
+    #  Separator between heterogeneous job directive sections
+    SEP_HETJOB = "#SBATCH packjob"
+
+
+BATCH_SYS_HANDLER = SLURMPackjobHandler()

@@ -31,11 +31,10 @@ from cylc.flow.suite_files import (
 )
 from cylc.flow.pathutil import make_symlink
 from cylc.flow.resources import extract_resources
-
-
-REMOTE_INIT_DONE = 'REMOTE INIT DONE'
-REMOTE_INIT_NOT_REQUIRED = 'REMOTE INIT NOT REQUIRED'
-REMOTE_INIT_FAILED = 'REMOTE INIT FAILED'
+from cylc.flow.task_remote_mgr import (
+    REMOTE_INIT_DONE,
+    REMOTE_INIT_FAILED
+)
 
 
 def remove_keys_on_client(srvd, install_target, full_clean=False):
@@ -105,6 +104,7 @@ def remote_init(install_target, rund, *dirs_to_symlink, indirect_comm=None):
         src = os.path.expandvars(val)
         if '$' in src:
             print(REMOTE_INIT_FAILED)
+            return
         make_symlink(src, dst)
     srvd = os.path.join(rund, SuiteFiles.Service.DIRNAME)
     os.makedirs(srvd, exist_ok=True)
@@ -119,6 +119,7 @@ def remote_init(install_target, rund, *dirs_to_symlink, indirect_comm=None):
         if pattern.match(filepath) and f"{install_target}" not in filepath:
             # client key for a different install target exists
             print(REMOTE_INIT_FAILED)
+            return
     try:
         remove_keys_on_client(srvd, install_target)
         create_client_keys(srvd, install_target)

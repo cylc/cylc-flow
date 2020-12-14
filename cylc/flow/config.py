@@ -1318,7 +1318,7 @@ class SuiteConfig:
         for tdef in self.taskdefs.values():
             # Compute simulated run time by scaling the execution limit.
             rtc = tdef.rtconfig
-            limit = rtc['job']['execution time limit']
+            limit = rtc['execution time limit']
             speedup = rtc['simulation']['speedup factor']
             if limit and speedup:
                 sleep_sec = (DurationParser().parse(
@@ -1327,7 +1327,7 @@ class SuiteConfig:
                 sleep_sec = DurationParser().parse(
                     str(rtc['simulation']['default run length'])
                 ).get_seconds()
-            rtc['job']['execution time limit'] = (
+            rtc['execution time limit'] = (
                 sleep_sec + DurationParser().parse(str(
                     rtc['simulation']['time limit buffer'])).get_seconds()
             )
@@ -1498,16 +1498,9 @@ class SuiteConfig:
         os.environ['CYLC_SUITE_FINAL_CYCLE_POINT'] = str(self.final_point)
         os.environ['CYLC_CYCLING_MODE'] = self.cfg['scheduling'][
             'cycling mode']
-        #     (global config auto expands environment variables in local paths)
-        cenv = self.cfg['scheduler']['environment'].copy()
-        for var, val in cenv.items():
-            cenv[var] = os.path.expandvars(val)
-        #     path to suite bin directory for suite and event handlers
-        cenv['PATH'] = os.pathsep.join([
+        # Add suite bin directory to PATH for suite and event handlers
+        os.environ['PATH'] = os.pathsep.join([
             os.path.join(self.fdir, 'bin'), os.environ['PATH']])
-        #     and to suite event handlers in this process.
-        for var, val in cenv.items():
-            os.environ[var] = val
 
     def run_mode(self, *reqmodes):
         """Return the run mode.
@@ -2221,9 +2214,7 @@ class SuiteConfig:
         - None if there is no expectation either way.
         """
         if self.options.reftest:
-            return self.cfg['scheduler']['reference test'][
-                'expected task failures'
-            ]
+            return self.cfg['scheduler']['events']['expected task failures']
         elif self.options.abort_if_any_task_fails:
             return []
         else:

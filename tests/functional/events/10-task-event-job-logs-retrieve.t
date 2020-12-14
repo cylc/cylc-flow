@@ -34,11 +34,11 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 # shellcheck disable=SC2086
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate ${OPT_SET} \
-    -s "PLATFORM=${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
+    -s "PLATFORM='${CYLC_TEST_PLATFORM}'" "${SUITE_NAME}"
 # shellcheck disable=SC2086
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug --no-detach ${OPT_SET} \
-       -s "PLATFORM=${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
+       -s "PLATFORM='${CYLC_TEST_PLATFORM}'" "${SUITE_NAME}"
 
 sed "/'job-logs-retrieve'/!d" \
     "${SUITE_RUN_DIR}/log/job/1/t1/"{01,02,03}"/job-activity.log" \

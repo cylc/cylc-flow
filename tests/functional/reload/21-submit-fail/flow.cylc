@@ -1,9 +1,8 @@
 #!Jinja2
 [scheduler]
-   [[events]]
-       abort on stalled = True
-   [[reference test]]
-       expected task failures = t1.1
+    [[events]]
+        abort on stalled = True
+        expected task failures = t1.1
 [scheduling]
     [[graph]]
         R1="""

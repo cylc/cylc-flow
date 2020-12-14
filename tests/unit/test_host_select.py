@@ -138,8 +138,9 @@ def test_suite_host_select(mock_glbl_cfg):
     mock_glbl_cfg(
         'cylc.flow.host_select.glbl_cfg',
         f'''
-            [suite servers]
-                run hosts = {localhost}
+            [scheduler]
+                [[run hosts]]
+                    available= {localhost}
         '''
     )
     assert select_suite_host() == (localhost, localhost_fqdn)
@@ -150,8 +151,9 @@ def test_suite_host_select_default(mock_glbl_cfg):
     mock_glbl_cfg(
         'cylc.flow.host_select.glbl_cfg',
         '''
-            [suite servers]
-                run hosts =
+            [scheduler]
+                [[run hosts]]
+                    available =
         '''
     )
     hostname, host_fqdn = select_suite_host()
@@ -169,9 +171,10 @@ def test_suite_host_select_condemned(mock_glbl_cfg):
     mock_glbl_cfg(
         'cylc.flow.host_select.glbl_cfg',
         f'''
-            [suite servers]
-                run hosts = {localhost}
-                condemned hosts = {localhost_fqdn}
+            [scheduler]
+                [[run hosts]]
+                    available = {localhost}
+                    condemned = {localhost_fqdn}
         '''
     )
     with pytest.raises(HostSelectException) as excinfo:
@@ -181,7 +184,7 @@ def test_suite_host_select_condemned(mock_glbl_cfg):
 
 
 def test_condemned_host_ambiguous(mock_glbl_cfg):
-    """Test the [suite servers]condemend host coercer
+    """Test the [scheduler]condemend host coercer
 
     Not actually host_select code but related functionality.
     """
@@ -189,9 +192,10 @@ def test_condemned_host_ambiguous(mock_glbl_cfg):
         mock_glbl_cfg(
             'cylc.flow.host_select.glbl_cfg',
             f'''
-                [suite servers]
-                    run hosts = {localhost}
-                    condemned hosts = {localhost}
+                [scheduler]
+                    [[run hosts]]
+                        available = {localhost}
+                        condemned = {localhost}
             '''
         )
     assert 'ambiguous host' in excinfo.value.msg

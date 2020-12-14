@@ -16,7 +16,7 @@
 """Automatically restart suites if they are running on bad servers.
 
 Loads in the global configuration to check if the server a suite is running
-on is listed in :cylc:conf:`global.cylc[suite servers]condemned hosts`.
+on is listed in :cylc:conf:`global.cylc[scheduler][run hosts]condemned`.
 
 This is useful if a host needs to be taken off-line e.g. for scheduled
 maintenance.
@@ -26,23 +26,25 @@ settings:
 
 .. cylc-scope:: global.cylc
 
-- :cylc:conf:`[suite servers]auto restart delay`
-- :cylc:conf:`[suite servers]condemned hosts`
-- :cylc:conf:`[suite servers]run hosts`
+- :cylc:conf:`[scheduler]auto restart delay`
+- :cylc:conf:`[scheduler][run hosts]condemned`
+- :cylc:conf:`[scheduler][run hosts]available`
 
-.. cylc-scope:: global.cylc[suite servers]
+.. cylc-scope:: global.cylc[scheduler]
 
 The auto stop-restart feature has two modes:
 
 - [Normal Mode]
 
-  - When a host is added to the :cylc:conf:`condemned hosts` list, any suites
+  - When a host is added to the
+    :cylc:conf:`global.cylc[scheduler][run hosts]condemned` list, any suites
     running on that host will automatically shutdown then restart selecting a
-    new host from :cylc:conf:`run hosts`.
+    new host from :cylc:conf:`global.cylc[scheduler][run hosts]available`.
   - For safety, before attempting to stop the suite cylc will first wait
     for any jobs running locally (under background or at) to complete.
   - *In order for Cylc to be able to successfully restart suites the
-    :cylc:conf:`run hosts` must all be on a shared filesystem.*
+    :cylc:conf:`global.cylc[scheduler][run hosts]available` must all be on a
+    shared filesystem.*
 
 - [Force Mode]
 
@@ -56,20 +58,24 @@ running on ``bar`` will stop immediately, making no attempt to restart.
 
 .. code-block:: cylc
 
-   [suite servers]
-       run hosts = pub
-       condemned hosts = foo, bar!
+   [scheduler]
+        [[run hosts]]
+            available = pub
+            condemned = foo, bar!
 
 .. warning::
 
    Cylc will reject hosts with ambiguous names such as ``localhost`` or
-   ``127.0.0.1`` for this configuration as `:cylc:conf:`condemned hosts`
+   ``127.0.0.1`` for this configuration as
+   `:cylc:conf:`[scheduler][run hosts]condemned`
    are evaluated on the suite host server.
 
 To prevent large numbers of suites attempting to restart simultaneously the
-:cylc:conf:`auto restart delay` setting defines a period of time in seconds.
+:cylc:conf:`global.cylc[scheduler]auto restart delay` setting defines a period
+of time in seconds.
 Suites will wait for a random period of time between zero and
-:cylc:conf:`auto restart delay` seconds before attempting to stop and restart.
+:cylc:conf:`global.cylc[scheduler]auto restart delay` seconds before
+attempting to stop and restart.
 
 Suites that are started up in no-detach mode cannot auto stop-restart on a
 different host - as it will still end up attached to the condemned host.
@@ -107,7 +113,7 @@ async def auto_restart(scheduler, _):
         _set_auto_restart(
             scheduler,
             restart_delay=current_glbl_cfg.get(
-                ['suite servers', 'auto restart delay']
+                ['scheduler', 'auto restart delay']
             ),
             mode=mode
         )
@@ -117,7 +123,7 @@ def _should_auto_restart(scheduler, current_glbl_cfg):
     # check if suite host is condemned - if so auto restart
     if scheduler.stop_mode is None:
         for host in current_glbl_cfg.get(
-                ['suite servers', 'condemned hosts']
+                ['scheduler', 'run hosts', 'condemned']
         ):
             if host.endswith('!'):
                 # host ends in an `!` -> force shutdown mode

@@ -40,8 +40,9 @@ init_suite "${TEST_NAME_BASE}" <<< '
 
 create_test_global_config '' "
 ${BASE_GLOBAL_CONFIG}
-[suite servers]
-    run hosts = localhost
+[scheduler]
+    [[run hosts]]
+        available = localhost
 "
 
 cylc run "${SUITE_NAME}" --hold
@@ -49,9 +50,10 @@ poll_suite_running
 
 create_test_global_config '' "
 ${BASE_GLOBAL_CONFIG}
-[suite servers]
-    run hosts = localhost
-    condemned hosts = $(localhost_fqdn)!
+[scheduler]
+    [[run hosts]]
+        available = localhost
+        condemned = $(localhost_fqdn)!
 "
 
 FILE=$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)

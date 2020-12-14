@@ -38,7 +38,7 @@ run_fail "${TEST_NAME_BASE}-validate-fail" \
 # Ensure that you can validate suite
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate "${SUITE_NAME}" \
-        -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}"
+        -s "CYLC_TEST_HOST='${CYLC_TEST_HOST}'"
 
 # Check that the cfgspec/suite.py has issued a warning about upgrades.
 grep_ok "\[upgradeable_cylc7_settings\]\[remote\]host = ${CYLC_TEST_HOST}"\
@@ -56,7 +56,7 @@ grep_ok "\[upgradeable_cylc7_settings\]\[remote\]host = ${CYLC_TEST_HOST}"\
 # Run the suite
 #suite_run_ok "${TEST_NAME_BASE}-run" \
 #    cylc run --debug --no-detach \
-#    -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}" "${SUITE_NAME}"
+#    -s "CYLC_TEST_HOST='${CYLC_TEST_HOST}'" "${SUITE_NAME}"
 
 ## Check that the upgradeable config has been run on a sensible host.
 #grep_ok \

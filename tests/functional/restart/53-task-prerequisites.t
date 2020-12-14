@@ -15,9 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test saving and loading of cycle point time zone to/from database on a run
-# followed by a restart. Important for restarting a suite after a system
-# time zone change.
+# Test custom task prerequisites and the task_prerequisites DB table work as
+# expected
 
 . "$(dirname "$0")/test_header"
 
@@ -28,8 +27,8 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" --stop-point=2
-poll_suite_stopped
+suite_run_fail "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" --stop-point=2 --no-detach
+
 
 DB_FILE="${SUITE_RUN_DIR}/log/db"
 
@@ -44,7 +43,7 @@ cmp_ok "${TEST_NAME}.stdout" << '__EOF__'
 3|bar|apollo|3|The Eagle has landed|0
 __EOF__
 
-suite_run_ok "${TEST_NAME_BASE}-restart" cylc restart "${SUITE_NAME}" --stop-point=3
+suite_run_fail "${TEST_NAME_BASE}-restart" cylc restart "${SUITE_NAME}" --stop-point=3 --no-detach
 poll_suite_stopped
 
 # Check bar.2 is still waiting (i.e. prereqs not satisfied):

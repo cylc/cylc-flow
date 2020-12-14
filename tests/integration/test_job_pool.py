@@ -38,7 +38,6 @@ def job_config(schd):
         'pre-script': None,
         'script': 'sleep 5; echo "I come in peace"',
         'work_d': None,
-        'batch_system_conf': {},
         'directives': {},
         'environment': {},
         'param_var': {},

@@ -519,8 +519,12 @@ class TaskPool:
             if isinstance(key1, list):
                 key1 = tuple(key1)
             key = (key1, cycle, name, submit_num)
-            self.task_events_mgr.event_timers[key] = TaskActionTimer(
-                ctx, delays, num, delay, timeout)
+            self.task_events_mgr.add_event_timer(
+                key,
+                TaskActionTimer(
+                    ctx, delays, num, delay, timeout
+                )
+            )
         else:
             LOG.exception(
                 "%(id)s: skip action timer %(ctx_key)s" %
@@ -914,7 +918,7 @@ class TaskPool:
             return False
         if stop_mode == StopMode.REQUEST_NOW_NOW:
             return True
-        if self.task_events_mgr.event_timers:
+        if self.task_events_mgr._event_timers:
             return False
         for itask in self.get_tasks():
             if (
@@ -952,7 +956,9 @@ class TaskPool:
                 )
             )
 
-        for key1, point, name, submit_num in self.task_events_mgr.event_timers:
+        for key1, point, name, submit_num in (
+                self.task_events_mgr._event_timers
+        ):
             LOG.warning("%s/%s/%s: incomplete task event handler %s" % (
                 point, name, submit_num, key1))
 
@@ -1059,7 +1065,7 @@ class TaskPool:
     def check_abort_on_task_fails(self):
         """Check whether suite should abort on task failure.
 
-        Return True if a task failed and `abort if any task fails` is set.
+        Return True if a task failed and `--abort-if-any-task-fails` was given.
         """
         return self.abort_task_failed
 

@@ -23,37 +23,37 @@ set_test_number 4
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}" \
-    -s "START=$(date '+%Y%m%dT%H')" \
-    -s "HOUR=$(date '+%H')" \
-    -s 'UTC_MODE=False' \
-    -s 'OFFSET=PT0S' \
-    -s 'TIMEOUT=PT12S'
+    -s "START='$(date '+%Y%m%dT%H')'" \
+    -s "HOUR='$(date '+%H')'" \
+    -s 'UTC_MODE="False"' \
+    -s 'OFFSET="PT0S"' \
+    -s 'TIMEOUT="PT12S"'
 #-------------------------------------------------------------------------------
 run_ok "${TEST_NAME_BASE}-run-now" \
     cylc run --debug --no-detach "${SUITE_NAME}" \
-    -s "START=$(date '+%Y%m%dT%H')" \
-    -s "HOUR=$(date '+%H')" \
-    -s 'UTC_MODE=False' \
-    -s 'OFFSET=PT0S' \
-    -s 'TIMEOUT=PT12S'
+    -s "START='$(date '+%Y%m%dT%H')'" \
+    -s "HOUR='$(date '+%H')'" \
+    -s 'UTC_MODE="False"' \
+    -s 'OFFSET="PT0S"' \
+    -s 'TIMEOUT="PT12S"'
 #-------------------------------------------------------------------------------
 NOW="$(date '+%Y%m%dT%H')"
 run_ok "${TEST_NAME_BASE}-run-past" \
     cylc run --debug --no-detach "${SUITE_NAME}" \
-    -s "START=$(cylc cycle-point "${NOW}" --offset-hour='-10')" \
-    -s "HOUR=$(cylc cycle-point "${NOW}" --offset-hour='-10' --print-hour)" \
-    -s 'UTC_MODE=False' \
-    -s 'OFFSET=PT0S' \
-    -s 'TIMEOUT=PT1M'
+    -s "START='$(cylc cycle-point "${NOW}" --offset-hour='-10')'" \
+    -s "HOUR='$(cylc cycle-point "${NOW}" --offset-hour='-10' --print-hour)'" \
+    -s 'UTC_MODE="False"' \
+    -s 'OFFSET="PT0S"' \
+    -s 'TIMEOUT="PT1M"'
 #-------------------------------------------------------------------------------
 NOW="$(date '+%Y%m%dT%H')"
 run_fail "${TEST_NAME_BASE}-run-later" \
     cylc run --debug --no-detach "${SUITE_NAME}" \
-    -s "START=$(cylc cycle-point "${NOW}" --offset-hour='10')" \
-    -s "HOUR=$(cylc cycle-point "${NOW}" --offset-hour='10' --print-hour)" \
-    -s 'UTC_MODE=False' \
-    -s 'OFFSET=PT0S' \
-    -s 'TIMEOUT=PT12S'
+    -s "START='$(cylc cycle-point "${NOW}" --offset-hour='10')'" \
+    -s "HOUR='$(cylc cycle-point "${NOW}" --offset-hour='10' --print-hour)'" \
+    -s 'UTC_MODE="False"' \
+    -s 'OFFSET="PT0S"' \
+    -s 'TIMEOUT="PT12S"'
 #-------------------------------------------------------------------------------
 purge
 exit

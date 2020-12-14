@@ -49,8 +49,9 @@ TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME_BASE}" <<< '
 
 create_test_global_config '' "
 ${BASE_GLOBAL_CONFIG}
-[suite servers]
-    run hosts = ${CYLC_TEST_HOST1}
+[scheduler]
+    [[run hosts]]
+        available = ${CYLC_TEST_HOST1}
 "
 
 cylc run "${SUITE_NAME}"
@@ -64,9 +65,10 @@ cylc suite-state "${SUITE_NAME}" --task='foo' --status='running' --point=1 \
 
 create_test_global_config '' "
 ${BASE_GLOBAL_CONFIG}
-[suite servers]
-    run hosts = ${CYLC_TEST_HOST1}, ${CYLC_TEST_HOST2}
-    condemned hosts = ${CYLC_TEST_HOST1}
+[scheduler]
+    [[run hosts]]
+        available = ${CYLC_TEST_HOST1}, ${CYLC_TEST_HOST2}
+        condemned = ${CYLC_TEST_HOST1}
 "
 
 FILE="$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)"
@@ -94,9 +96,10 @@ cylc suite-state "${SUITE_NAME}" --task='bar' --status='running' --point=1 \
 
 create_test_global_config '' "
 ${BASE_GLOBAL_CONFIG}
-[suite servers]
-    run hosts = ${CYLC_TEST_HOST1}, ${CYLC_TEST_HOST2}
-    condemned hosts = ${CYLC_TEST_HOST2}!
+[scheduler]
+    [[run hosts]]
+        available = ${CYLC_TEST_HOST1}, ${CYLC_TEST_HOST2}
+        condemned = ${CYLC_TEST_HOST2}!
 "
 
 FILE="$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)"

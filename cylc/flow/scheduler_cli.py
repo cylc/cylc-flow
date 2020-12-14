@@ -207,7 +207,7 @@ def get_option_parser(is_restart, add_std_opts=False):
         help=(
             "Specify the host on which to start-up the suite. "
             "If not specified, a host will be selected using "
-            "the 'suite servers' global config."
+            "the '[scheduler]run hosts' global config."
         ),
         metavar="HOST", action="store", dest="host")
 
@@ -406,13 +406,7 @@ async def _run(parser, options, reg, is_restart, scheduler):
     # stop cylc stop
     except SchedulerError:
         ret = 1
-    except KeyboardInterrupt as exc:
-        try:
-            await scheduler.shutdown(exc)
-        except Exception as exc2:
-            # In case of exceptions in the shutdown method itself.
-            LOG.exception(exc2)
-            raise exc2 from None
+    except (KeyboardInterrupt, asyncio.CancelledError):
         ret = 2
     except Exception:
         ret = 3

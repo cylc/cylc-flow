@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Submits task job scripts to Simple Linux Utility for Resource Management.
 
-.. cylc-scope:: flow.cylc[runtime][<namespace>][job]
+.. cylc-scope:: flow.cylc[runtime][<namespace>]
 
 Uses the ``sbatch`` command. SLURM directives can be provided in the flow.cylc
 file:
@@ -51,6 +51,43 @@ If :cylc:conf:`execution time limit` is specified, it is used to generate the
 limit known by the suite may be out of sync with what is submitted to the batch
 system.
 
+Cylc supports heterogeneous Slurm jobs via special numbered directive prefixes
+that distinguish repeated directives from one another:
+
+.. code-block:: cylc
+
+   [runtime]
+       # run two heterogenous job components:
+       script = srun sleep 10 : sleep 30
+       [[my_task]]
+           [[[job]]]
+               batch system = slurm
+               execution time limit = PT1H
+           [[[directives]]]
+               --account = QXZ5W2
+               hetjob_0_--mem = 1G  # first prefix must be "0"
+               hetjob_0_--nodes = 3
+               hetjob_1_--mem = 2G
+               hetjob_1_--nodes = 6
+
+The resulting formatted directives are:
+
+.. code-block:: bash
+
+   #!/bin/bash
+   #SBATCH --time=60:00
+   #SBATCH --account=QXZ5W2
+   #SBATCH --mem=1G
+   #SBATCH --nodes=3
+   #SBATCH hetjob
+   #SBATCH --mem=2G
+   #SBATCH --nodes=6
+
+.. note::
+
+   For older Slurm versions with *packjob* instead of *hetjob*, use
+   ``batch system = slurm_packjob`` and directive prefixes ``packjob_0_`` etc.
+
 .. cylc-scope::
 
 """
@@ -80,7 +117,28 @@ class SLURMHandler():
     POLL_CMD = "squeue -h"
     REC_ID_FROM_SUBMIT_OUT = re.compile(
         r"\ASubmitted\sbatch\sjob\s(?P<id>\d+)")
+    REC_ID_FROM_POLL_OUT = re.compile(r"^ *(?P<id>\d+)")
     SUBMIT_CMD_TMPL = "sbatch '%(job)s'"
+
+    # Heterogeneous job support
+    #  Match artificial directive prefix
+    REC_HETJOB = re.compile(r"^hetjob_(\d+)_")
+    #  Separator between het job directive sections
+    SEP_HETJOB = "#SBATCH hetjob"
+
+    @classmethod
+    def filter_poll_many_output(cls, out):
+        """Return list of job IDs extracted from job poll stdout.
+
+        Needed to avoid the extension for heterogenous jobs ("+0", "+1" etc.)
+
+        """
+        job_ids = set()
+        for line in out.splitlines():
+            m = cls.REC_ID_FROM_POLL_OUT.match(line)
+            if m:
+                job_ids.add(m.group("id"))
+        return list(job_ids)
 
     @classmethod
     def format_directives(cls, job_conf):
@@ -99,11 +157,21 @@ class SLURMHandler():
         for key, value in list(job_conf['directives'].items()):
             directives[key] = value
         lines = []
+        seen = set()
         for key, value in directives.items():
-            if value:
-                lines.append("%s%s=%s" % (cls.DIRECTIVE_PREFIX, key, value))
+            m = cls.REC_HETJOB.match(key)
+            if m:
+                n = m.groups()[0]
+                if n != "0" and n not in seen:
+                    lines.append(cls.SEP_HETJOB)
+                seen.add(n)
+                newkey = cls.REC_HETJOB.sub('', key)
             else:
-                lines.append("%s%s" % (cls.DIRECTIVE_PREFIX, key))
+                newkey = key
+            if value:
+                lines.append("%s%s=%s" % (cls.DIRECTIVE_PREFIX, newkey, value))
+            else:
+                lines.append("%s%s" % (cls.DIRECTIVE_PREFIX, newkey))
         return lines
 
     @classmethod

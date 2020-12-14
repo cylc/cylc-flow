@@ -32,12 +32,12 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate "${SUITE_NAME}" \
-       -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}" \
-       -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}"
+       -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'" \
+       -s "CYLC_TEST_HOST='${CYLC_TEST_HOST}'"
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --debug --no-detach --reference-test \
-    -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}" \
-    -s "CYLC_TEST_PLATFORM=${CYLC_TEST_PLATFORM}" "${SUITE_NAME}"
+    -s "CYLC_TEST_HOST='${CYLC_TEST_HOST}'" \
+    -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'" "${SUITE_NAME}"
 
 purge
 exit

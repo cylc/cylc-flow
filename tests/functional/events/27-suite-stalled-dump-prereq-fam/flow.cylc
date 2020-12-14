@@ -2,7 +2,6 @@
     UTC mode = True # Ignore DST
     [[events]]
         abort on stalled = true
-    [[reference test]]
         expected task failures = foo.1
 [scheduling]
     [[graph]]

@@ -1,6 +1,6 @@
 [scheduler]
-   [[reference test]]
-       expected task failures = b.1
+    [[events]]
+        expected task failures = b.1
 
 [scheduling]
     [[graph]]

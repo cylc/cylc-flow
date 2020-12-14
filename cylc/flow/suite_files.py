@@ -28,8 +28,9 @@ import zmq.auth
 import aiofiles
 
 from cylc.flow import LOG
-from cylc.flow.exceptions import SuiteServiceFileError
-from cylc.flow.pathutil import get_suite_run_dir, make_localhost_symlinks
+from cylc.flow.exceptions import SuiteServiceFileError, WorkflowFilesError
+from cylc.flow.pathutil import (
+    get_suite_run_dir, make_localhost_symlinks, remove_dir)
 from cylc.flow.platforms import get_platform
 from cylc.flow.hostuserutil import (
     get_user,
@@ -478,23 +479,17 @@ def register(reg=None, source=None, redirect=False):
 
     Raise:
         SuiteServiceFileError:
-            No flow.cylc file found in source location.
-            Illegal name (can look like a relative path, but not absolute).
-            Another suite already has this name (unless --redirect).
-            Trying to register a suite nested inside of another.
+            - No flow.cylc file found in source location.
+            - Illegal name (can look like a relative path, but not absolute).
+            - Another suite already has this name (unless --redirect).
+            - Trying to register a suite nested inside of another.
     """
     if reg is None:
         reg = os.path.basename(os.getcwd())
-    make_localhost_symlinks(reg)
-    is_valid, message = SuiteNameValidator.validate(reg)
-    if not is_valid:
-        raise SuiteServiceFileError(f'invalid suite name - {message}')
-
-    if os.path.isabs(reg):
-        raise SuiteServiceFileError(
-            f'suite name cannot be an absolute path: {reg}')
-
+    _validate_reg(reg)
     check_nested_run_dirs(reg)
+
+    make_localhost_symlinks(reg)
 
     if source is not None:
         if os.path.basename(source) == SuiteFiles.FLOW_FILE:
@@ -559,6 +554,92 @@ def register(reg=None, source=None, redirect=False):
     return reg
 
 
+def clean(reg):
+    """Remove stopped workflows on the local scheduler filesystem.
+
+    Deletes the run dir in ~/cylc-run and any symlink dirs. Note: if the
+    run dir has been manually deleted, it will not be possible to clean the
+    symlink dirs.
+
+    Args:
+        reg (str): workflow name.
+    """
+    _validate_reg(reg)
+    reg = os.path.normpath(reg)
+    if reg.startswith('.'):
+        raise WorkflowFilesError(
+            'Workflow name cannot be a path that points to the cylc-run '
+            'directory or above')
+    run_dir = Path(get_suite_run_dir(reg))
+    if not run_dir.is_dir():
+        LOG.info(f'No workflow directory to clean at {run_dir}')
+        return
+    try:
+        detect_old_contact_file(reg)
+    except SuiteServiceFileError as exc:
+        raise SuiteServiceFileError(
+            f'Cannot remove running workflow.\n\n{exc}')
+
+    # TODO: check task_jobs table in database to see what platforms are used
+
+    possible_symlinks = [(Path(name), Path(run_dir, name)) for name in [
+        'log', 'share/cycle', 'share', 'work', '']]
+    # Note: 'share/cycle' must come before 'share', and '' must come last
+    for name, path in possible_symlinks:
+        if path.is_symlink():
+            # Ensure symlink is pointing to expected directory. If not,
+            # something is wrong and we should abort
+            target = path.resolve()
+            if target.exists() and not target.is_dir():
+                raise WorkflowFilesError(
+                    f'Invalid Cylc symlink directory {path} -> {target}\n'
+                    f'Target is not a directory')
+            expected_end = str(Path('cylc-run', reg, name))
+            if not str(target).endswith(expected_end):
+                raise WorkflowFilesError(
+                    f'Invalid Cylc symlink directory {path} -> {target}\n'
+                    f'Expected target to end with "{expected_end}"')
+            # Remove <symlink_dir>/cylc-run/<reg>
+            target_cylc_run_dir = str(target).rsplit(str(reg), 1)[0]
+            target_reg_dir = Path(target_cylc_run_dir, reg)
+            if target_reg_dir.is_dir():
+                remove_dir(target_reg_dir)
+            # Remove empty parents
+            _remove_empty_reg_parents(reg, target_reg_dir)
+
+    remove_dir(run_dir)
+    _remove_empty_reg_parents(reg, run_dir)
+
+
+def _remove_empty_reg_parents(reg, path):
+    """If reg is nested e.g. a/b/c, work our way up the tree, removing empty
+    parents only.
+
+    Args:
+        reg (str): workflow name, e.g. a/b/c
+        path (str): path to this directory, e.g. /foo/bar/a/b/c
+
+    Example:
+        _remove_empty_reg_parents('a/b/c', '/foo/bar/a/b/c') would remove
+        /foo/bar/a/b (assuming it's empty), then /foo/bar/a (assuming it's
+        empty).
+    """
+    reg = Path(reg)
+    reg_depth = len(reg.parts) - 1
+    path = Path(path)
+    if not path.is_absolute():
+        raise ValueError('Path must be absolute')
+    for i in range(reg_depth):
+        parent = path.parents[i]
+        if not parent.is_dir():
+            continue
+        try:
+            parent.rmdir()
+            LOG.info(f'Removing directory: {parent}')
+        except OSError:
+            break
+
+
 def remove_keys_on_server(keys):
     """Removes server-held authentication keys"""
     # WARNING, DESTRUCTIVE. Removes old keys if they already exist.
@@ -598,28 +679,6 @@ def create_server_keys(keys, suite_srv_dir):
     os.umask(old_umask)
 
 
-def _dump_item(path, item, value):
-    """Dump "value" to a file called "item" in the directory "path".
-
-    1. File permission should already be user-read-write-only on
-       creation by mkstemp.
-    2. The combination of os.fsync and os.rename should guarantee
-       that we don't end up with an incomplete file.
-    """
-    os.makedirs(path, exist_ok=True)
-    from tempfile import NamedTemporaryFile
-    handle = NamedTemporaryFile(prefix=item, dir=path, delete=False)
-    try:
-        handle.write(value.encode())
-    except AttributeError:
-        handle.write(value)
-    os.fsync(handle.fileno())
-    handle.close()
-    fname = os.path.join(path, item)
-    os.rename(handle.name, fname)
-    LOG.debug('Generated %s', fname)
-
-
 def get_suite_title(reg):
     """Return the the suite title without a full file parse
 
@@ -650,12 +709,36 @@ def _load_local_item(item, path):
         return None
 
 
+def _validate_reg(reg):
+    """Check suite name is valid.
+
+    Args:
+        reg (str): Suite name
+
+    Raise:
+        SuiteServiceFileError:
+            - reg has form of absolute path or is otherwise not valid
+    """
+    is_valid, message = SuiteNameValidator.validate(reg)
+    if not is_valid:
+        raise SuiteServiceFileError(f'invalid suite name "{reg}" - {message}')
+    if os.path.isabs(reg):
+        raise SuiteServiceFileError(
+            f'suite name cannot be an absolute path: {reg}')
+
+
 def check_nested_run_dirs(reg):
     """Disallow nested run dirs e.g. trying to register foo/bar where foo is
     already a valid suite directory.
 
     Args:
         reg (str): suite name
+
+    Raise:
+        WorkflowFilesError:
+            - reg dir is nested inside a run dir
+            - reg dir contains a nested run dir (if not deeper than max scan
+                depth)
     """
     exc_msg = (
         'Nested run directories not allowed - cannot register suite name '
@@ -665,7 +748,7 @@ def check_nested_run_dirs(reg):
         for result in os.scandir(path):
             if result.is_dir() and not result.is_symlink():
                 if is_valid_run_dir(result.path):
-                    raise SuiteServiceFileError(exc_msg % (reg, result.path))
+                    raise WorkflowFilesError(exc_msg % (reg, result.path))
                 if depth_count < MAX_SCAN_DEPTH:
                     _check_child_dirs(result.path, depth_count + 1)
 
@@ -673,7 +756,7 @@ def check_nested_run_dirs(reg):
     parent_dir = os.path.dirname(reg_path)
     while parent_dir != '':
         if is_valid_run_dir(parent_dir):
-            raise SuiteServiceFileError(
+            raise WorkflowFilesError(
                 exc_msg % (reg, get_cylc_run_abs_path(parent_dir)))
         parent_dir = os.path.dirname(parent_dir)
 
@@ -683,7 +766,7 @@ def check_nested_run_dirs(reg):
 
 
 def is_valid_run_dir(path):
-    """Return True if path is a valid run directory, else False.
+    """Return True if path is a valid, existing run directory, else False.
 
     Args:
         path (str): if this is a relative path, it is taken to be relative to
@@ -704,5 +787,4 @@ def get_cylc_run_abs_path(path):
     """
     if os.path.isabs(path):
         return path
-    cylc_run_dir = os.path.expandvars(get_platform()['run directory'])
-    return os.path.join(cylc_run_dir, path)
+    return get_suite_run_dir(path)

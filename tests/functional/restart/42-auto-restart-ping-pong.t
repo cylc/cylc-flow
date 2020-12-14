@@ -52,9 +52,10 @@ stuck_in_the_middle() {
     JOKERS="${CLOWNS}"; CLOWNS="${temp}"
     create_test_global_config '' "
     ${BASE_GLOBAL_CONFIG}
-    [suite servers]
-        run hosts = ${JOKERS}, ${CLOWNS}
-        condemned hosts = ${CLOWNS}
+    [scheduling]
+        [[run hosts]]
+            available = ${JOKERS}, ${CLOWNS}
+            condemned = ${CLOWNS}
     "
 }
 

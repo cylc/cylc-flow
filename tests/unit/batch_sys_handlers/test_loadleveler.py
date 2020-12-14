@@ -25,7 +25,6 @@ from cylc.flow.batch_sys_handlers.loadleveler import LoadlevelerHandler
     [
         (  # basic
             {
-                'batch_system_conf': {},
                 'directives': {},
                 'execution_time_limit': 180,
                 'job_file_path': '$HOME/cylc-run/chop/log/job/1/axe/01/job',
@@ -43,7 +42,6 @@ from cylc.flow.batch_sys_handlers.loadleveler import LoadlevelerHandler
 
         (  # some useful directives
             {
-                'batch_system_conf': {},
                 'directives': {
                     '-q': 'forever',
                     '-V': '',

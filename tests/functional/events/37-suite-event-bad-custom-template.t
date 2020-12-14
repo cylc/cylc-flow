@@ -28,7 +28,8 @@ LOG="${SUITE_RUN_DIR}/log/suite/log"
 MESSAGE="('suite-event-handler-00', 'startup') bad template: 'rubbish'"
 run_ok "${TEST_NAME_BASE}-run1-log" grep -q -F "ERROR - ${MESSAGE}" "${LOG}"
 suite_run_fail "${TEST_NAME_BASE}-run2" \
-    cylc run --reference-test --debug --no-detach -s 'ABORT=True' "${SUITE_NAME}"
+    cylc run --reference-test --debug --no-detach \
+        -s 'ABORT="True"' "${SUITE_NAME}"
 run_ok "${TEST_NAME_BASE}-run2-err" \
     grep -q -F "Suite shutting down - ${MESSAGE}" \
     "${TEST_NAME_BASE}-run2.stderr"

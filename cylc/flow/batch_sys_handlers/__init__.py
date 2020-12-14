@@ -27,5 +27,6 @@
    cylc.flow.batch_sys_handlers.pbs
    cylc.flow.batch_sys_handlers.sge
    cylc.flow.batch_sys_handlers.slurm
+   cylc.flow.batch_sys_handlers.slurm_packjob
 
 """

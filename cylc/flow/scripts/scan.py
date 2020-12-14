@@ -212,6 +212,18 @@ def get_option_parser():
         action='store_true'
     )
 
+    parser.add_option(
+        '--ping',
+        help=(
+            'Test the connection to the flow. Scan normally just reads flow'
+            ' contact files, but --ping forces a connection to the scheduler'
+            ' and removes the contact file if it is not found to be running'
+            " (this can happen if the scheduler gets killed and can't clean"
+            ' up after itself).'
+        ),
+        action='store_true'
+    )
+
     return parser
 
 
@@ -424,6 +436,10 @@ def get_pipe(opts, formatter, scan_dir=None):
     # add graphql queries / filters to the pipe
     if show_active and graphql_fields:
         pipe |= graphql_query(graphql_fields, filters=graphql_filters)
+    elif opts.ping:
+        # check the flow is running even if not required
+        # by display format or filters
+        pipe |= graphql_query({'status': None})
 
     # yield results as they are processed
     pipe.preserve_order = False

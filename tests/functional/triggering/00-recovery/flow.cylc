@@ -8,7 +8,7 @@
 
 [scheduler]
     UTC mode = True
-    [[reference test]]
+    [[events]]
         expected task failures = model.20110101T1200Z
 
 [scheduling]
