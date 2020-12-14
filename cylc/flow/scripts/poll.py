@@ -51,10 +51,6 @@ def get_option_parser():
             ('REG', 'Suite name'),
             ('[TASK_GLOB ...]', 'Task matching patterns')])
 
-    parser.add_option(
-        "-s", "--succeeded", help="Allow polling of succeeded tasks.",
-        action="store_true", default=False, dest="poll_succ")
-
     return parser
 
 

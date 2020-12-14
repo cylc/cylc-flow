@@ -1637,10 +1637,7 @@ class Poll(Mutation, TaskMutation):
         resolver = partial(mutator, command='poll_tasks')
 
     class Arguments(TaskMutation.Arguments):
-        poll_succeeded = Boolean(
-            description='Allow polling of succeeded tasks.',
-            default_value=False
-        )
+        ...
 
 
 class Remove(Mutation, TaskMutation):

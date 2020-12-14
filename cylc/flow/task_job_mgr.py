@@ -95,11 +95,9 @@ from cylc.flow.task_remote_mgr import (
     TaskRemoteMgr
 )
 from cylc.flow.task_state import (
-    TASK_STATUS_FAILED,
     TASK_STATUS_READY,
     TASK_STATUS_RUNNING,
     TASK_STATUS_SUBMITTED,
-    TASK_STATUS_SUCCEEDED,
     TASK_STATUSES_ACTIVE
 )
 from cylc.flow.wallclock import (
@@ -174,35 +172,19 @@ class TaskJobManager:
             self.JOBS_KILL, suite, to_kill_tasks,
             self._kill_task_jobs_callback)
 
-    def poll_task_jobs(self, suite, itasks, poll_succ=True, msg=None):
+    def poll_task_jobs(self, suite, itasks, msg=None):
         """Poll jobs of specified tasks.
-
-        Any job that is or was submitted or running can be polled, except for
-        retrying tasks - which would poll (correctly) as failed. And don't poll
-        succeeded tasks by default.
 
         This method uses _poll_task_jobs_callback() and
         _manip_task_jobs_callback() as help/callback methods.
 
         _poll_task_job_callback() executes one specific job.
         """
-        to_poll_tasks = []
-        pollable_statuses = {
-            TASK_STATUS_SUBMITTED, TASK_STATUS_RUNNING, TASK_STATUS_FAILED
-        }
-        if poll_succ:
-            pollable_statuses.add(TASK_STATUS_SUCCEEDED)
-        for itask in itasks:
-            if itask.state(*pollable_statuses):
-                to_poll_tasks.append(itask)
-            else:
-                LOG.debug("skipping %s: not pollable, "
-                          "or skipping 'succeeded' tasks" % itask.identity)
-        if to_poll_tasks:
+        if itasks:
             if msg is not None:
                 LOG.info(msg)
             self._run_job_cmd(
-                self.JOBS_POLL, suite, to_poll_tasks,
+                self.JOBS_POLL, suite, itasks,
                 self._poll_task_jobs_callback)
 
     def prep_submit_task_jobs(self, suite, itasks, check_syntax=True):
