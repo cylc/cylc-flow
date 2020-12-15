@@ -1127,7 +1127,11 @@ class TaskEventsManager():
                         quote(str(self.uuid_str)),
                     EventData.TryNum.value:
                         itask.get_try_num(),
-                    # next 2 are deprecated - still here for back compat:
+                    # BACK COMPAT
+                    # For: Cylc < 8
+                    # Remove at: Cylc9 - pending announcement of deprecation
+                    # https://github.com/cylc/cylc-flow/pull/3992
+                    # next 2 (JobID_old, JobRunnerName_old) are deprecated
                     EventData.JobID_old.value:
                         quote(str(itask.summary['submit_method_id'])),
                     EventData.JobRunnerName_old.value:
