@@ -1,4 +1,4 @@
 [flake8]
 max-line-length = 79
 select = B,C,E,F,W,T4,B9,B950
-ignore = E501, W503, E203
+ignore = E402, W503, W504
