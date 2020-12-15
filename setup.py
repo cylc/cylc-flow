@@ -20,23 +20,22 @@
 import codecs
 import re
 from glob import glob
-from os.path import abspath, dirname, join
+from os.path import join, dirname, abspath
 
-from setuptools import find_namespace_packages, setup
+from setuptools import setup, find_namespace_packages
 
 here = abspath(dirname(__file__))
 
 
 def read(*parts):
-    with codecs.open(join(here, *parts), "r") as fp:
+    with codecs.open(join(here, *parts), 'r') as fp:
         return fp.read()
 
 
 def find_version(*file_paths):
     version_file = read(*file_paths)
-    version_match = re.search(
-        r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M
-    )
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
+                              version_file, re.M)
     if version_match:
         return version_match.group(1)
     raise RuntimeError("Unable to find version string.")
@@ -58,46 +57,62 @@ install_requires = [
     'packaging'
 ]
 tests_require = [
-    "async-timeout>=3.0.0",
-    "async_generator",
-    "codecov>=2.0.0",
-    "coverage>=5.0.0",
-    "flake8>=3.0.0",
-    "pycodestyle>=2.5.0",
-    "pytest-asyncio>=0.14.0",
-    "pytest-cov>=2.8.0",
-    "pytest-xdist>=2",
-    "pytest>=6",
-    "testfixtures>=6.11.0",
+    'async-timeout>=3.0.0',
+    'async_generator',
+    'codecov>=2.0.0',
+    'coverage>=5.0.0',
+    'flake8>=3.0.0',
+    'pycodestyle>=2.5.0',
+    'pytest-asyncio>=0.14.0',
+    'pytest-cov>=2.8.0',
+    'pytest-xdist>=2',
+    'pytest>=6',
+    'testfixtures>=6.11.0'
 ]
 
 extra_requires = {
-    "empy": ["EmPy==3.3.*"],
-    "all": [],
-    "report-timings": ["pandas==1.*"],
-    "main_loop-log_data_store": ["pympler", "matplotlib"],
-    "main_loop-log_main_loop": ["matplotlib"],
-    "main_loop-log_memory": ["pympler", "matplotlib"],
-    "dev": ["pre-commit"],
+    'empy': [
+        'EmPy==3.3.*'
+    ],
+    'all': [],
+    'report-timings': [
+        'pandas==1.*'
+    ],
+    'main_loop-log_data_store': [
+        'pympler',
+        'matplotlib'
+    ],
+    'main_loop-log_main_loop': [
+        'matplotlib'
+    ],
+    'main_loop-log_memory': [
+        'pympler',
+        'matplotlib'
+    ],
+    "dev": [
+        "pre-commit"
+    ]
 }
-extra_requires["all"] = tests_require + list(
-    {req for reqs in extra_requires.values() for req in reqs}
+extra_requires['all'] = (
+    tests_require
+    + list({
+        req
+        for reqs in extra_requires.values()
+        for req in reqs
+    })
 )
 
 
 setup(
     version=find_version("cylc", "flow", "__init__.py"),
-    long_description=open("README.md").read(),
+    long_description=open('README.md').read(),
     long_description_content_type="text/markdown",
-    scripts=glob(join("bin", "*")),
+    scripts=glob(join('bin', '*')),
     packages=find_namespace_packages(include=["cylc.*"]),
     package_data={
-        "cylc.flow": [
-            "etc/*.yaml",
-            "etc/flow*.eg",
-            "etc/job.sh",
-            "etc/syntax/*",
-            "etc/cylc-bash-completion",
+        'cylc.flow': [
+            'etc/*.yaml', 'etc/flow*.eg', 'etc/job.sh',
+            'etc/syntax/*', 'etc/cylc-bash-completion'
         ]
     },
     install_requires=install_requires,
@@ -106,6 +121,6 @@ setup(
     project_urls={
         "Documentation": "https://cylc.github.io/documentation.html",
         "Source": "https://github.com/cylc/cylc-flow",
-        "Tracker": "https://github.com/cylc/cylc-flow/issues",
-    },
+        "Tracker": "https://github.com/cylc/cylc-flow/issues"
+    }
 )
