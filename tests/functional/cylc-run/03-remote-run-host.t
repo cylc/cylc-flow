@@ -18,7 +18,7 @@
 # Run a workflow with ``cylc run --host=somewhere-else``
 export REQUIRE_PLATFORM='loc:remote fs:shared batch:background'
 . "$(dirname "$0")/test_header"
-set_test_number 1
+set_test_number 2
 
 # shellcheck disable=SC2016
 TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME_BASE}" <<< '
@@ -30,13 +30,12 @@ TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME_BASE}" <<< '
 
 [runtime]
     [[root]]
-        script = echo "This script ran on $(hostname). Share and Enjoy."
+        script = cylc stop "${CYLC_SUITE_NAME}" --now --now
 '
 
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run "${SUITE_NAME}" --host="${CYLC_TEST_HOST}"
-
+suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" --host="${CYLC_TEST_HOST}"
 
 grep_ok "Suite server:.*${CYLC_TEST_HOST}" "${SUITE_RUN_DIR}/log/suite/log"
 
 purge
+exit
