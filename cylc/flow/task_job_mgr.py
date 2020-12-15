@@ -659,6 +659,7 @@ class TaskJobManager:
                     (key, values[x]) for
                     x, key in enumerate(JobPollContext.CONTEXT_ATTRIBUTES))
                 job_log_dir = items.pop('job_log_dir')
+                jp_ctx = JobPollContext(job_log_dir, **items)
             except (ValueError, IndexError):
                 itask.set_summary_message(self.POLL_FAIL)
                 self.job_pool.add_job_msg(job_d, self.POLL_FAIL)
@@ -784,7 +785,6 @@ class TaskJobManager:
                 submit_delays = itask.platform['submission retry delays']
             # TODO: same for execution delays?
 
-        if retry:
             for key, delays in [
                     (
                         TimerFlags.SUBMISSION_RETRY,

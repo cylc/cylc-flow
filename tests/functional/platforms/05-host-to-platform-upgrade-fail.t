@@ -43,7 +43,7 @@ suite_run_fail "${TEST_NAME_BASE}-run" \
     cylc run --debug --no-detach \
     -s "CYLC_TEST_HOST='${CYLC_TEST_HOST}'" "${SUITE_NAME}"
 
-# Check that the suite failed because no matching platfrom could be found.
+# Check that the suite failed because no matching platform could be found.
 grep_ok "\[jobs-submit err\] No platform found matching your task"\
     "${SUITE_RUN_DIR}/log/suite/log"
 

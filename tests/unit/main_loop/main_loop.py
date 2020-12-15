@@ -16,9 +16,7 @@
 
 import asyncio
 from collections import deque
-from functools import partial
 import logging
-from time import sleep
 
 import pytest
 

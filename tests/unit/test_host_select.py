@@ -37,9 +37,9 @@ localhost, localhost_aliases, _ = socket.gethostbyname_ex('localhost')
 localhost_fqdn = get_fqdn_by_host(localhost)
 
 
-# NOTE: ensure that all localhost aliases are actually alises of localhost,
+# NOTE: ensure that all localhost aliases are actually aliases of localhost,
 #       it would appear that this is not always the case
-#       on Travis-CI on of the alises has a different fqdn from the fqdn
+#       on Travis-CI on of the aliases has a different fqdn from the fqdn
 #       of the host it is an alias of
 localhost_aliases = [
     alias

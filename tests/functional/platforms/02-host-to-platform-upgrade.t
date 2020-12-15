@@ -48,7 +48,7 @@ grep_ok "\[upgradeable_cylc7_settings\]\[remote\]host = ${CYLC_TEST_HOST}"\
 #        for now take the easy road out and just not do it
 #
 #        actual solutions:
-#        * work out why job log retreival isn't working (the best option, dur)
+#        * work out why job log retrieval isn't working (the best option, dur)
 #        * convert to unit test (do we really need a functional test of the
 #          upgrader).
 #        * consider using a local platform (e.g. at job sub)

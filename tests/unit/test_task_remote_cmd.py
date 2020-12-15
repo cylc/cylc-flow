@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Tests for remote initialisation."""
 
-from io import StringIO
 from unittest.mock import patch
 
 from cylc.flow.task_remote_cmd import remote_init

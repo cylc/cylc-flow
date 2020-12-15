@@ -88,7 +88,7 @@ def run_dir_with_symlinks():
     tmp_path2.mkdir()
     init_flows(
         tmp_path2,
-        # make it nested to proove that the link is followed
+        # make it nested to prove that the link is followed
         running=('bar/baz',)
     )
     Path(tmp_path, 'bar').symlink_to(Path(tmp_path2, 'bar'))

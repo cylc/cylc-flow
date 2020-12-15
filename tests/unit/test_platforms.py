@@ -155,7 +155,7 @@ def test_similar_but_not_exact_match():
             'desktop42'
         ),
 
-        # Basic test where the user hasn't sumbitted anything and the task
+        # Basic test where the user hasn't submitted anything and the task
         # returns to default, i.e. localhost.
         (
             {'batch system': 'background'},
