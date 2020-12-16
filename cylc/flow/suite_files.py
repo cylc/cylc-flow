@@ -31,7 +31,7 @@ import aiofiles
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import (
-    PlatformLookupError, SuiteServiceFileError, TaskRemoteMgmtError,
+    CylcError, PlatformLookupError, SuiteServiceFileError, TaskRemoteMgmtError,
     WorkflowFilesError)
 from cylc.flow.pathutil import (
     get_remote_suite_run_dir, get_suite_run_dir, make_localhost_symlinks,
@@ -618,9 +618,9 @@ def init_clean(reg):
             shuffle(platforms)
             # Issue ssh command:
             procs.append(
-                (remote_clean(reg, platforms[0]), platforms[0])
+                (remote_clean(reg, platforms[0]), target, platforms)
             )
-        for proc, platform in procs:
+        for proc, target, platforms in procs:
             ret_code = proc.wait()
             out, err = (f.decode() for f in proc.communicate())
             if out:
@@ -628,9 +628,19 @@ def init_clean(reg):
             if err:
                 LOG.warning(err)
             if ret_code:
-                raise TaskRemoteMgmtError(
-                    TaskRemoteMgmtError.MSG_TIDY, platform['name'],
+                # Try again on the next platform for this install target:
+                this_platform = platforms.pop(0)
+                exc = TaskRemoteMgmtError(
+                    TaskRemoteMgmtError.MSG_TIDY, this_platform['name'],
                     " ".join(proc.args), ret_code, out, err)
+                LOG.error(exc)
+                if platforms:
+                    procs.append(
+                        (remote_clean(reg, platforms[0]), target, platforms)
+                    )
+                else:  # Exhausted list of platforms
+                    raise CylcError(
+                        f'Could not clean on install target: {target}')
 
     # Finally clean on local filesystem:
     clean(reg)
@@ -704,6 +714,7 @@ def remote_clean(reg, platform):
         f'platform: {platform["name"]}')
     cmd = ['remote-clean', reg, get_remote_suite_run_dir(platform, reg)]
     cmd = construct_ssh_cmd(cmd, platform, timeout='10s')
+    LOG.debug(" ".join(cmd))
     return Popen(cmd, stdin=DEVNULL, stdout=PIPE, stderr=PIPE)
 
 
