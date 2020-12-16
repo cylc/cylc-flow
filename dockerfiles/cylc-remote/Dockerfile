@@ -42,5 +42,5 @@ COPY dockerfiles/cylc-remote/configure bin/host-configure
 # configure on boot and start the required services
 ENTRYPOINT service ssh start && \
     atd && \
-    /bin/host-configure && \ 
+    /bin/host-configure && \
     /usr/bin/env bash
