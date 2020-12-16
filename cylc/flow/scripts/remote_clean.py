@@ -16,40 +16,37 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc clean [OPTIONS] ARGS
+"""cylc remote-clean [OPTIONS] ARGS
 
-Remove a stopped workflow from the local scheduler filesystem and remote hosts.
+(This command is for internal use.)
 
-NOTE: this command is intended for workflows installed with `cylc install`. If
-this is run for a workflow that was instead written directly in ~/cylc-run and
-not backed up elsewhere, it will be lost.
-
-It will also remove an symlink directory targets.
-
-Suite names can be hierarchical, corresponding to the path under ~/cylc-run.
-
-Examples:
-  # Remove the workflow at ~/cylc-run/foo/bar
-  $ cylc clean foo/bar
+Remove a stopped workflow from the remote host. This is called on any remote
+hosts when "cylc clean" is called on localhost.
 
 """
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
-from cylc.flow.suite_files import init_clean
+from cylc.flow.suite_files import clean
+
+
+INTERNAL = True
 
 
 def get_option_parser():
     parser = COP(
         __doc__,
-        argdoc=[("REG", "Suite name")]
+        argdoc=[
+            ("REG", "Suite name"),
+            ("[RUND]", "The run directory of the suite")
+        ]
     )
     return parser
 
 
 @cli_function(get_option_parser)
-def main(parser, opts, reg):
-    init_clean(reg)
+def main(parser, opts, reg, rund=None):
+    clean(reg, rund)
 
 
 if __name__ == "__main__":

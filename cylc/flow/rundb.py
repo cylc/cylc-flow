@@ -609,6 +609,11 @@ class CylcSuiteDAO:
         for row_idx, row in enumerate(self.connect().execute(stmt)):
             callback(row_idx, list(row))
 
+    def select_task_job_platforms(self):
+        """Return the set of platform names from task_jobs table."""
+        stmt = f"SELECT platform_name FROM {self.TABLE_TASK_JOBS}"
+        return set(i[0] for i in self.connect().execute(stmt))
+
     def select_submit_nums(self, name, point):
         """Select submit_num and flow_label from task_states table.
 
