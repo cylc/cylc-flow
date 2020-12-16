@@ -144,17 +144,13 @@ class TaskPool:
 
     ERR_PREFIX_TASKID_MATCH = "No matching tasks found: "
 
-    def __init__(
-            self, config, suite_db_mgr, task_events_mgr,
-            job_pool, data_store_mgr
-    ):
+    def __init__(self, config, suite_db_mgr, task_events_mgr, data_store_mgr):
         self.config = config
         self.stop_point = config.final_point
         self.suite_db_mgr = suite_db_mgr
         self.task_events_mgr = task_events_mgr
         # TODO this is ugly:
         self.task_events_mgr.spawn_func = self.spawn_on_output
-        self.job_pool = job_pool
         self.data_store_mgr = data_store_mgr
         self.flow_label_mgr = FlowLabelMgr()
 

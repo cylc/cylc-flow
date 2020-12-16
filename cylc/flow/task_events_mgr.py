@@ -178,7 +178,7 @@ class TaskEventsManager():
     NON_UNIQUE_EVENTS = ('warning', 'critical', 'custom')
 
     def __init__(self, suite, proc_pool, suite_db_mgr, broadcast_mgr,
-                 xtrigger_mgr, job_pool, data_store_mgr, timestamp):
+                 xtrigger_mgr, data_store_mgr, timestamp):
         self.suite = suite
         self.suite_url = None
         self.suite_cfg = {}
@@ -187,7 +187,6 @@ class TaskEventsManager():
         self.suite_db_mgr = suite_db_mgr
         self.broadcast_mgr = broadcast_mgr
         self.xtrigger_mgr = xtrigger_mgr
-        self.job_pool = job_pool
         self.data_store_mgr = data_store_mgr
         self.mail_interval = 0.0
         self.mail_smtp = None
@@ -407,7 +406,7 @@ class TaskEventsManager():
         else:
             new_msg = message
         itask.set_summary_message(new_msg)
-        self.job_pool.add_job_msg(
+        self.data_store_mgr.delta_job_msg(
             get_task_job_id(itask.point, itask.tdef.name, submit_num),
             new_msg)
 
@@ -829,8 +828,8 @@ class TaskEventsManager():
         itask.set_summary_time('finished', event_time)
         job_d = get_task_job_id(
             itask.point, itask.tdef.name, itask.submit_num)
-        self.job_pool.set_job_time(job_d, 'finished', event_time)
-        self.job_pool.set_job_state(job_d, TASK_STATUS_FAILED)
+        self.data_store_mgr.delta_job_time(job_d, 'finished', event_time)
+        self.data_store_mgr.delta_job_state(job_d, TASK_STATUS_FAILED)
         self.suite_db_mgr.put_update_task_jobs(itask, {
             "run_status": 1,
             "time_run_exit": event_time,
@@ -869,8 +868,8 @@ class TaskEventsManager():
             LOG.warning(f"[{itask}] -Vacated job restarted")
         self.pflag = True
         job_d = get_task_job_id(itask.point, itask.tdef.name, itask.submit_num)
-        self.job_pool.set_job_time(job_d, 'started', event_time)
-        self.job_pool.set_job_state(job_d, TASK_STATUS_RUNNING)
+        self.data_store_mgr.delta_job_time(job_d, 'started', event_time)
+        self.data_store_mgr.delta_job_state(job_d, TASK_STATUS_RUNNING)
         itask.set_summary_time('started', event_time)
         self.suite_db_mgr.put_update_task_jobs(itask, {
             "time_run": itask.summary['started_time_string']})
@@ -887,8 +886,8 @@ class TaskEventsManager():
     def _process_message_succeeded(self, itask, event_time):
         """Helper for process_message, handle a succeeded message."""
         job_d = get_task_job_id(itask.point, itask.tdef.name, itask.submit_num)
-        self.job_pool.set_job_time(job_d, 'finished', event_time)
-        self.job_pool.set_job_state(job_d, TASK_STATUS_SUCCEEDED)
+        self.data_store_mgr.delta_job_time(job_d, 'finished', event_time)
+        self.data_store_mgr.delta_job_state(job_d, TASK_STATUS_SUCCEEDED)
         self.pflag = True
         itask.set_summary_time('finished', event_time)
         self.suite_db_mgr.put_update_task_jobs(itask, {
@@ -931,7 +930,7 @@ class TaskEventsManager():
             "submit_status": 1,
         })
         job_d = get_task_job_id(itask.point, itask.tdef.name, itask.submit_num)
-        self.job_pool.set_job_state(job_d, TASK_STATUS_SUBMIT_FAILED)
+        self.data_store_mgr.delta_job_state(job_d, TASK_STATUS_SUBMIT_FAILED)
         itask.summary['submit_method_id'] = None
         self.pflag = True
         if (
@@ -991,8 +990,8 @@ class TaskEventsManager():
 
         itask.set_summary_time('submitted', event_time)
         job_d = get_task_job_id(itask.point, itask.tdef.name, itask.submit_num)
-        self.job_pool.set_job_time(job_d, 'submitted', event_time)
-        self.job_pool.set_job_state(job_d, TASK_STATUS_SUBMITTED)
+        self.data_store_mgr.delta_job_time(job_d, 'submitted', event_time)
+        self.data_store_mgr.delta_job_state(job_d, TASK_STATUS_SUBMITTED)
         # Unset started and finished times in case of resubmission.
         itask.set_summary_time('started')
         itask.set_summary_time('finished')

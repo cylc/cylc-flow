@@ -65,15 +65,20 @@ from time import time
 import zlib
 
 from cylc.flow import __version__ as CYLC_VERSION, LOG, ID_DELIM
+from cylc.flow.exceptions import SuiteConfigError
 from cylc.flow.data_messages_pb2 import (
     PbEdge, PbEntireWorkflow, PbFamily, PbFamilyProxy, PbJob, PbTask,
     PbTaskProxy, PbWorkflow, AllDeltas, EDeltas, FDeltas, FPDeltas,
     JDeltas, TDeltas, TPDeltas, WDeltas)
 from cylc.flow.network import API
+from cylc.flow.platforms import get_platform, get_host_from_platform
 from cylc.flow.suite_status import get_suite_status
-from cylc.flow.task_job_logs import JOB_LOG_OPTS
+from cylc.flow.task_job_logs import JOB_LOG_OPTS, get_task_job_log
 from cylc.flow.task_proxy import TaskProxy
-from cylc.flow.task_state import TASK_STATUS_WAITING, TASK_STATUS_EXPIRED
+from cylc.flow.task_state import (
+    TASK_STATUS_WAITING, TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
+    TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED,
+    TASK_STATUS_FAILED, TASK_STATUS_EXPIRED)
 from cylc.flow.task_state_prop import extract_group_state
 from cylc.flow.taskdef import generate_graph_parents
 from cylc.flow.task_state import TASK_STATUSES_FINAL
@@ -130,6 +135,18 @@ DELTAS_MAP = {
 
 DELTA_FIELDS = {DELTA_ADDED, DELTA_UPDATED, DELTA_PRUNED}
 
+JOB_STATUSES_ALL = [
+    TASK_STATUS_READY,
+    TASK_STATUS_SUBMITTED,
+    TASK_STATUS_SUBMIT_FAILED,
+    TASK_STATUS_RUNNING,
+    TASK_STATUS_SUCCEEDED,
+    TASK_STATUS_FAILED,
+]
+
+# Faster lookup where order not needed.
+JOB_STATUS_SET = set(JOB_STATUSES_ALL)
+
 # Protobuf message merging appends repeated field results on merge,
 # unlike singular fields which are overwritten. This behaviour is
 # desirable in many cases, but there are exceptions.
@@ -144,6 +161,44 @@ CLEAR_FIELD_MAP = {
     TASK_PROXIES: {'prerequisites'},
     WORKFLOW: {'state_totals', 'states'},
 }
+
+
+def parse_job_item(item):
+    """Parse internal job id.
+
+    Args:
+        item (str):
+            point/name/submit_num
+            OR name.point.submit_num syntax.
+    Returns:
+        tuple - (point_str: str, name_str: str, submit_num: [int, None])
+
+    """
+    # BACK COMPAT: name.point.submit_num
+    # url:
+    #     https://github.com/cylc/cylc-admin/pull/115
+    # from:
+    #     Cylc7
+    # to:
+    #     Cylc8
+    # remove at:
+    #     Cylc9
+    submit_num = None
+    if item.count('/') > 1:
+        point_str, name_str, submit_num = item.split('/', 2)
+    elif '/' in item:
+        point_str, name_str = item.split('/', 1)
+    elif item.count('.') > 1:
+        name_str, point_str, submit_num = item.split('.', 2)
+    elif '.' in item:
+        name_str, point_str = item.split('.', 1)
+    else:
+        name_str, point_str = (item, None)
+    try:
+        sub_num = int(submit_num)
+    except (TypeError, ValueError):
+        sub_num = None
+    return (point_str, name_str, sub_num)
 
 
 def generate_checksum(in_strings):
@@ -200,14 +255,18 @@ def apply_delta(key, delta, data):
         for del_id in delta.pruned:
             if del_id not in data[key]:
                 continue
+            # remove relationships
             if key == TASK_PROXIES:
+                # remove relationship from task
                 data[TASKS][data[key][del_id].task].proxies.remove(del_id)
+                # remove relationship from parent/family
                 try:
                     data[FAMILY_PROXIES][
                         data[key][del_id].first_parent
                     ].child_tasks.remove(del_id)
                 except KeyError:
                     pass
+                # remove relationship from workflow
                 getattr(data[WORKFLOW], key).remove(del_id)
             elif key == FAMILY_PROXIES:
                 data[FAMILIES][data[key][del_id].family].proxies.remove(del_id)
@@ -225,6 +284,11 @@ def apply_delta(key, delta, data):
                 if edge.target in data[TASK_PROXIES]:
                     data[TASK_PROXIES][edge.target].edges.remove(del_id)
                 getattr(data[WORKFLOW], key).edges.remove(del_id)
+            elif key == JOBS:
+                # Jobs are only removed if their task is, so only need
+                # to remove relationship from workflow.
+                getattr(data[WORKFLOW], key).remove(del_id)
+            # remove/prune element from data-store
             del data[key][del_id]
 
 
@@ -288,8 +352,7 @@ class DataStoreMgr:
             .family_proxies (dict):
                 cylc.flow.data_messages_pb2.PbFamilyProxy by internal ID.
             .jobs (dict):
-                cylc.flow.data_messages_pb2.PbJob by internal ID, managed by
-                cylc.flow.job_pool.JobPool
+                cylc.flow.data_messages_pb2.PbJob by internal ID.
             .tasks (dict):
                 cylc.flow.data_messages_pb2.PbTask by name (internal ID).
             .task_proxies (dict):
@@ -314,6 +377,9 @@ class DataStoreMgr:
             Workflow scheduler instance.
     """
 
+    ERR_PREFIX_JOBID_MATCH = 'No matching jobs found: '
+    ERR_PREFIX_JOB_NOT_ON_SEQUENCE = 'Invalid cycle point for job: '
+
     def __init__(self, schd):
         self.schd = schd
         self.workflow_id = f'{self.schd.owner}{ID_DELIM}{self.schd.suite}'
@@ -324,6 +390,7 @@ class DataStoreMgr:
         self.updated_state_families = set()
         self.n_edge_distance = 1
         self.next_n_edge_distance = None
+        self.xtrigger_tasks = {}
         # Managed data types
         self.data = {
             self.workflow_id: deepcopy(DATA_TEMPLATE)
@@ -339,7 +406,6 @@ class DataStoreMgr:
             TASK_PROXIES: TPDeltas(),
             WORKFLOW: WDeltas(),
         }
-        self.updates_pending = False
         self.delta_queues = {self.workflow_id: {}}
         self.publish_deltas = []
         self.all_task_pool = set()
@@ -349,7 +415,7 @@ class DataStoreMgr:
         self.prune_trigger_nodes = {}
         self.prune_flagged_nodes = set()
         self.prune_pending = False
-        self.xtrigger_tasks = {}
+        self.updates_pending = False
 
     def initiate_data_model(self, reloaded=False):
         """Initiate or Update data model on start/restart/reload.
@@ -366,27 +432,12 @@ class DataStoreMgr:
         # Static elements
         self.generate_definition_elements()
 
-        # Tidy and reassign task jobs after reload
-        if reloaded:
-            new_tasks = set(self.added[TASK_PROXIES])
-            job_tasks = set(self.schd.job_pool.task_jobs)
-            for tp_id in job_tasks.difference(new_tasks):
-                self.schd.job_pool.remove_task_jobs(tp_id)
-            for tp_id, tp_delta in self.added[TASK_PROXIES].items():
-                tp_delta.jobs[:] = [
-                    j_id
-                    for j_id in self.schd.job_pool.task_jobs.get(tp_id, [])
-                ]
-            self.schd.job_pool.reload_deltas()
-        # Set jobs ref
-        self.data[self.workflow_id][JOBS] = self.schd.job_pool.pool
         # Update workflow statuses and totals (assume needed)
         self.update_workflow()
 
         # Apply current deltas
         self.apply_deltas(reloaded)
         self.updates_pending = False
-        self.schd.job_pool.updates_pending = False
 
         # Gather this batch of deltas for publish
         self.publish_deltas = self.get_publish_deltas()
@@ -863,11 +914,137 @@ class DataStoreMgr:
         elif child_fam not in fp_parent.child_families:
             fp_parent.child_families.append(child_fam)
 
+    def insert_job(self, name, point_string, job_conf):
+        """Insert job into data-store.
+
+        Args:
+            name (str): Corresponding task name.
+            point_string (str): Cycle point string
+            job_conf (dic):
+                Dictionary of job configuration used to generate
+                the job script.
+                (see TaskJobManager._prep_submit_task_job_impl)
+
+        Returns:
+
+            None
+
+        """
+        job_owner = job_conf['owner']
+        sub_num = job_conf['submit_num']
+        tp_id, tproxy = self.store_node_fetcher(name, point_string)
+        if not tproxy:
+            return
+        update_time = time()
+        j_id = f'{tp_id}{ID_DELIM}{sub_num}'
+        j_buf = PbJob(
+            stamp=f'{j_id}@{update_time}',
+            id=j_id,
+            submit_num=sub_num,
+            state=JOB_STATUSES_ALL[0],
+            task_proxy=tp_id,
+            job_runner_name=job_conf['job_runner_name'],
+            env_script=job_conf['env-script'],
+            err_script=job_conf['err-script'],
+            exit_script=job_conf['exit-script'],
+            execution_time_limit=job_conf['execution_time_limit'],
+            host=job_conf['platform']['name'],
+            init_script=job_conf['init-script'],
+            owner=job_owner,
+            post_script=job_conf['post-script'],
+            pre_script=job_conf['pre-script'],
+            script=job_conf['script'],
+            work_sub_dir=job_conf['work_d'],
+            name=tproxy.name,
+            cycle_point=tproxy.cycle_point,
+            directives=json.dumps(job_conf['directives']),
+            environment=json.dumps(job_conf['environment']),
+            param_var=json.dumps(job_conf['param_var'])
+        )
+
+        # Add in log files.
+        j_buf.job_log_dir = get_task_job_log(
+            self.schd.suite, tproxy.cycle_point, tproxy.name, sub_num)
+        j_buf.extra_logs.extend(job_conf['logfiles'])
+
+        self.added[JOBS][j_id] = j_buf
+        getattr(self.updated[WORKFLOW], JOBS).append(j_id)
+        tp_delta = self.updated[TASK_PROXIES].setdefault(
+            tp_id,
+            PbTaskProxy(
+                stamp=f'{tp_id}@{update_time}',
+                id=tp_id,
+            )
+        )
+        tp_delta.job_submits = sub_num
+        tp_delta.jobs.append(j_id)
+        self.updates_pending = True
+
+    def insert_db_job(self, row_idx, row):
+        """Load job element from DB post restart."""
+        if row_idx == 0:
+            LOG.info("LOADING job data")
+        (point_string, name, status, submit_num, time_submit, time_run,
+         time_run_exit, job_runner_name, job_id, platform_name) = row
+        if status not in JOB_STATUS_SET:
+            return
+        tp_id, tproxy = self.store_node_fetcher(name, point_string)
+        if not tproxy:
+            return
+        j_id = f'{tp_id}{ID_DELIM}{submit_num}'
+        try:
+            j_owner = self.schd.owner
+            if platform_name:
+                j_host = get_host_from_platform(
+                    get_platform(platform_name)
+                )
+            else:
+                j_host = self.schd.host
+            update_time = time()
+            j_buf = PbJob(
+                stamp=f'{j_id}@{update_time}',
+                id=j_id,
+                submit_num=submit_num,
+                state=status,
+                task_proxy=tp_id,
+                submitted_time=time_submit,
+                started_time=time_run,
+                finished_time=time_run_exit,
+                job_runner_name=job_runner_name,
+                job_id=job_id,
+                host=j_host,
+                owner=j_owner,
+                name=name,
+                cycle_point=tproxy.cycle_point,
+            )
+            # Add in log files.
+            j_buf.job_log_dir = get_task_job_log(
+                self.schd.suite, point_string, name, submit_num)
+        except SuiteConfigError:
+            LOG.exception((
+                'ignoring job %s from the suite run database\n'
+                '(its task definition has probably been deleted).'
+            ) % j_id)
+        except Exception:
+            LOG.exception('could not load job %s' % j_id)
+        else:
+            self.added[JOBS][j_id] = j_buf
+            getattr(self.updated[WORKFLOW], JOBS).append(j_id)
+            tp_delta = self.updated[TASK_PROXIES].setdefault(
+                tp_id,
+                PbTaskProxy(
+                    stamp=f'{tp_id}@{update_time}',
+                    id=tp_id,
+                )
+            )
+            tp_delta.job_submits = max((submit_num, tp_delta.job_submits))
+            tp_delta.jobs.append(j_id)
+            self.updates_pending = True
+
     def update_data_structure(self, updated_nodes=None):
         """Workflow batch updates in the data structure."""
         # update states and other dynamic fields
         # TODO: Event driven task proxy updates (non-Batch)
-        self.update_dynamic_elements(updated_nodes)
         self.update_family_proxies()
 
         # Avoids changing window edge distance during edge/node creation
@@ -881,11 +1058,10 @@ class DataStoreMgr:
         if self.updates_pending:
             self.update_workflow()
 
-        if self.updates_pending or self.schd.job_pool.updates_pending:
+        if self.updates_pending:
             # Apply current deltas
             self.apply_deltas()
             self.updates_pending = False
-            self.schd.job_pool.updates_pending = False
             # Gather this batch of deltas for publish
             self.publish_deltas = self.get_publish_deltas()
             # Clear deltas
@@ -940,7 +1116,7 @@ class DataStoreMgr:
                 if not self.xtrigger_tasks[sig]:
                     del self.xtrigger_tasks[sig]
             self.deltas[TASK_PROXIES].pruned.append(tp_id)
-            self.schd.job_pool.remove_task_jobs(tp_id)
+            self.deltas[JOBS].pruned.extend(node.jobs)
             self.deltas[EDGES].pruned.extend(node.edges)
             parent_ids.add(node.first_parent)
 
@@ -998,55 +1174,6 @@ class DataStoreMgr:
         checked_ids.add(fp_id)
         if fp_id in parent_ids:
             parent_ids.remove(fp_id)
-
-    def update_dynamic_elements(self, updated_nodes=None):
-        """Update data elements containing dynamic/live fields."""
-        # If no tasks are given update all
-        if updated_nodes is None:
-            updated_nodes = self.schd.pool.get_all_tasks()
-        if not updated_nodes:
-            return
-        self.update_task_proxies(updated_nodes)
-        self.updates_pending = True
-
-    def update_task_proxies(self, updated_tasks=None):
-        """Update dynamic fields of task nodes/proxies.
-
-        Args:
-            updated_tasks (list): [cylc.flow.task_proxy.TaskProxy]
-                Update task-node from corresponding given list of
-                task proxy objects from the workflow task pool.
-
-        """
-        if not updated_tasks:
-            return
-        task_proxies = self.data[self.workflow_id][TASK_PROXIES]
-        update_time = time()
-
-        # update task instance
-        for itask in updated_tasks:
-            name = itask.tdef.name
-            tp_id = (
-                f'{self.workflow_id}{ID_DELIM}{itask.point}{ID_DELIM}{name}')
-            if (tp_id not in task_proxies and
-                    tp_id not in self.added[TASK_PROXIES]):
-                continue
-            # Create new message and copy existing message content.
-            tp_delta = self.updated[TASK_PROXIES].setdefault(
-                tp_id, PbTaskProxy(id=tp_id))
-            tp_delta.stamp = f'{tp_id}@{update_time}'
-            # Job related delta
-            tp_delta.job_submits = itask.submit_num
-            tp_delta.jobs[:] = [
-                j_id
-                for j_id in self.schd.job_pool.task_jobs.get(tp_id, [])
-                if j_id not in task_proxies.get(tp_id, PbTaskProxy()).jobs
-            ]
-
-            # Extras delta?
-            # Clock trigger delta
-            # External trigger delta
-            # Xtrigger Delta
 
     def update_family_proxies(self):
         """Update state & summary of flagged families and ancestors.
@@ -1224,18 +1351,6 @@ class DataStoreMgr:
     # -----------
     # Task Deltas
     # -----------
-    def store_node_fetcher(self, name, point=None, node_type=TASK_PROXIES):
-        """Check that task proxy is in or being added to the store"""
-        if point is None:
-            node_id = f'{self.workflow_id}{ID_DELIM}{name}'
-        else:
-            node_id = f'{self.workflow_id}{ID_DELIM}{point}{ID_DELIM}{name}'
-        if node_id in self.data[self.workflow_id][node_type]:
-            return (node_id, self.data[self.workflow_id][node_type][node_id])
-        elif node_id in self.added[TASK_PROXIES]:
-            return (node_id, self.added[node_type][node_id])
-        return (node_id, False)
-
     def delta_task_state(self, itask):
         """Create delta for change in task proxy state.
 
@@ -1422,16 +1537,93 @@ class DataStoreMgr:
             xtrigger.time = update_time
             self.updates_pending = True
 
+    # -----------
+    # Job Deltas
+    # -----------
+    def delta_job_msg(self, job_d, msg):
+        """Add message to job."""
+        point, name, sub_num = parse_job_item(job_d)
+        j_id, job = self.store_node_fetcher(name, point, sub_num)
+        if not job:
+            return
+        j_delta = PbJob(stamp=f'{j_id}@{time()}')
+        j_delta.messages.append(msg)
+        self.updated[JOBS].setdefault(
+            j_id,
+            PbJob(id=j_id)
+        ).MergeFrom(j_delta)
+        self.updates_pending = True
+
+    def delta_job_attr(self, job_d, attr_key, attr_val):
+        """Set job attribute."""
+        point, name, sub_num = parse_job_item(job_d)
+        j_id, job = self.store_node_fetcher(name, point, sub_num)
+        if not job:
+            return
+        j_delta = PbJob(stamp=f'{j_id}@{time()}')
+        setattr(j_delta, attr_key, attr_val)
+        self.updated[JOBS].setdefault(
+            j_id,
+            PbJob(id=j_id)
+        ).MergeFrom(j_delta)
+        self.updates_pending = True
+
+    def delta_job_state(self, job_d, status):
+        """Set job state."""
+        point, name, sub_num = parse_job_item(job_d)
+        j_id, job = self.store_node_fetcher(name, point, sub_num)
+        if not job or status not in JOB_STATUS_SET:
+            return
+        j_delta = PbJob(
+            stamp=f'{j_id}@{time()}',
+            state=status
+        )
+        self.updated[JOBS].setdefault(
+            j_id,
+            PbJob(id=j_id)
+        ).MergeFrom(j_delta)
+        self.updates_pending = True
+
+    def delta_job_time(self, job_d, event_key, time_str=None):
+        """Set an event time in job pool object.
+
+        Set values of both event_key + '_time' and event_key + '_time_string'.
+        """
+        point, name, sub_num = parse_job_item(job_d)
+        j_id, job = self.store_node_fetcher(name, point, sub_num)
+        if not job:
+            return
+        j_delta = PbJob(stamp=f'{j_id}@{time()}')
+        time_attr = f'{event_key}_time'
+        setattr(j_delta, time_attr, time_str)
+        self.updated[JOBS].setdefault(
+            j_id,
+            PbJob(id=j_id)
+        ).MergeFrom(j_delta)
+        self.updates_pending = True
+
+    def store_node_fetcher(
+            self, name, point=None, sub_num=None, node_type=TASK_PROXIES):
+        """Check that task proxy is in or being added to the store"""
+        if point is None:
+            node_id = f'{self.workflow_id}{ID_DELIM}{name}'
+            node_type = TASKS
+        elif sub_num is None:
+            node_id = f'{self.workflow_id}{ID_DELIM}{point}{ID_DELIM}{name}'
+        else:
+            node_id = (
+                f'{self.workflow_id}{ID_DELIM}{point}'
+                f'{ID_DELIM}{name}{ID_DELIM}{sub_num}'
+            )
+            node_type = JOBS
+        if node_id in self.data[self.workflow_id][node_type]:
+            return (node_id, self.data[self.workflow_id][node_type][node_id])
+        elif node_id in self.added[TASK_PROXIES]:
+            return (node_id, self.added[node_type][node_id])
+        return (node_id, False)
+
     def apply_deltas(self, reloaded=False):
         """Gather and apply deltas."""
-        # Copy in job deltas
-        self.deltas[JOBS].CopyFrom(self.schd.job_pool.deltas)
-        self.added[JOBS] = deepcopy(self.schd.job_pool.added)
-        self.updated[JOBS] = deepcopy(self.schd.job_pool.updated)
-        if self.added[JOBS]:
-            getattr(self.updated[WORKFLOW], JOBS).extend(
-                self.added[JOBS].keys())
-
         # Gather cumulative update element
         for key, elements in self.added.items():
             if elements:
@@ -1469,11 +1661,6 @@ class DataStoreMgr:
                         [getattr(e, s_att)
                          for e in data[key].values()]
                     )
-
-        # Clear job pool changes after their application
-        self.schd.job_pool.deltas.Clear()
-        self.schd.job_pool.added.clear()
-        self.schd.job_pool.updated.clear()
 
     def clear_deltas(self):
         """Clear current deltas."""

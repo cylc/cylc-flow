@@ -135,12 +135,11 @@ class TaskJobManager:
     }
 
     def __init__(self, suite, proc_pool, suite_db_mgr,
-                 task_events_mgr, job_pool, data_store_mgr):
+                 task_events_mgr, data_store_mgr):
         self.suite = suite
         self.proc_pool = proc_pool
         self.suite_db_mgr = suite_db_mgr
         self.task_events_mgr = task_events_mgr
-        self.job_pool = job_pool
         self.data_store_mgr = data_store_mgr
         self.job_file_writer = JobFileWriter()
         self.job_runner_mgr = self.job_file_writer.job_runner_mgr
@@ -265,7 +264,7 @@ class TaskJobManager:
                     platform, curve_auth, client_pub_key_dir)
                 for itask in itasks:
                     itask.set_summary_message(self.REMOTE_INIT_MSG)
-                    self.job_pool.add_job_msg(
+                    self.data_store_mgr.delta_job_msg(
                         get_task_job_id(
                             itask.point, itask.tdef.name, itask.submit_num),
                         self.REMOTE_INIT_MSG)
@@ -278,7 +277,7 @@ class TaskJobManager:
                 for itask in itasks:
                     msg = self.IN_PROGRESS[ri_map[install_target]]
                     itask.set_summary_message(msg)
-                    self.job_pool.add_job_msg(
+                    self.data_store_mgr.delta_job_msg(
                         get_task_job_id(
                             itask.point, itask.tdef.name, itask.submit_num),
                         msg)
@@ -559,7 +558,7 @@ class TaskJobManager:
                 'ignoring job kill result, unexpected task state: %s' %
                 itask.state.status)
         itask.set_summary_message(log_msg)
-        self.job_pool.add_job_msg(
+        self.data_store_mgr.delta_job_msg(
             get_task_job_id(itask.point, itask.tdef.name, itask.submit_num),
             log_msg)
         LOG.log(log_lvl, "[%s] -job(%02d) %s" % (
@@ -644,12 +643,12 @@ class TaskJobManager:
             jp_ctx = JobPollContext(job_log_dir, **items)
         except TypeError:
             itask.set_summary_message(self.POLL_FAIL)
-            self.job_pool.add_job_msg(job_d, self.POLL_FAIL)
+            self.data_store_mgr.delta_job_msg(job_d, self.POLL_FAIL)
             ctx.cmd = cmd_ctx.cmd  # print original command on failure
             return
         except ValueError:
             itask.set_summary_message(self.POLL_FAIL)
-            self.job_pool.add_job_msg(job_d, self.POLL_FAIL)
+            self.data_store_mgr.delta_job_msg(job_d, self.POLL_FAIL)
             ctx.cmd = cmd_ctx.cmd  # print original command on failure
             return
         finally:
@@ -834,7 +833,7 @@ class TaskJobManager:
         job_d = get_task_job_id(itask.point, itask.tdef.name, itask.submit_num)
         try:
             itask.summary['submit_method_id'] = items[3]
-            self.job_pool.set_job_attr(job_d, 'job_id', items[3])
+            self.data_store_mgr.delta_job_attr(job_d, 'job_id', items[3])
         except IndexError:
             itask.summary['submit_method_id'] = None
         if itask.summary['submit_method_id'] == "None":
@@ -955,7 +954,8 @@ class TaskJobManager:
             job_config = deepcopy(job_conf)
             job_config['logfiles'] = deepcopy(itask.summary['logfiles'])
             itask.jobs.append(job_config['job_d'])
-            self.job_pool.insert_job(job_config)
+            self.data_store_mgr.insert_job(
+                itask.tdef.name, itask.point, job_config)
 
             local_job_file_path = get_task_job_job_log(
                 suite, itask.point, itask.tdef.name, itask.submit_num)

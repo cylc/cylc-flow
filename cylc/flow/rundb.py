@@ -548,7 +548,7 @@ class CylcSuiteDAO:
         except sqlite3.DatabaseError:
             return None
 
-    def select_job_pool_for_restart(self, callback):
+    def select_jobs_for_restart(self, callback):
         """Select from task_pool+task_states+task_jobs for restart.
 
         Invoke callback(row_idx, row) on each row, where each row contains:
