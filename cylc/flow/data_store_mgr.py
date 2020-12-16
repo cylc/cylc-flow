@@ -47,9 +47,7 @@ original/generator node(s). Set operations are used to do a diff between the
 nodes of active paths (paths whose node is in the active task pool) and the
 nodes of flagged paths (whose boundary node(s) have become active).
 
-Updates are triggered by changes in the task pool;
-migrations of task instances from runahead to live pool, and
-changes in task state (itask.state.is_updated).
+Updates are created by the event/task/job managers.
 
 Data elements include a "stamp" field, which is a timestamped ID for use
 in assessing changes in the data store, for comparisons of a store sync.
@@ -1041,7 +1039,7 @@ class DataStoreMgr:
             tp_delta.jobs.append(j_id)
             self.updates_pending = True
 
-    def update_data_structure(self, updated_nodes=None):
+    def update_data_structure(self):
         """Workflow batch updates in the data structure."""
         # update states and other dynamic fields
         # TODO: Event driven task proxy updates (non-Batch)
@@ -1227,7 +1225,7 @@ class DataStoreMgr:
             tp_data = self.data[self.workflow_id][TASK_PROXIES]
             tp_updated = self.updated[TASK_PROXIES]
             tp_added = self.added[TASK_PROXIES]
-            # gather child familiy states for count and set is_held
+            # gather child family states for count and set is_held
             state_counter = Counter({})
             is_held_total = 0
             for child_id in fam_node.child_families:
@@ -1453,6 +1451,31 @@ class DataStoreMgr:
         output.time = update_time
         self.updates_pending = True
 
+    def delta_task_outputs(self, itask):
+        """Create delta for change in all task proxy outputs.
+
+        Args:
+            itask (cylc.flow.task_proxy.TaskProxy):
+                Update task-node from corresponding task proxy
+                objects from the workflow task pool.
+
+        """
+        tp_id, tproxy = self.store_node_fetcher(itask.tdef.name, itask.point)
+        if not tproxy:
+            return
+        update_time = time()
+        tp_delta = self.updated[TASK_PROXIES].setdefault(
+            tp_id, PbTaskProxy(id=tp_id))
+        tp_delta.stamp = f'{tp_id}@{update_time}'
+        for label, message, satisfied in itask.state.outputs.get_all():
+            output = tp_delta.outputs[label]
+            output.label = label
+            output.message = message
+            output.satisfied = satisfied
+            output.time = update_time
+
+        self.updates_pending = True
+
     def delta_task_prerequisite(self, itask):
         """Create delta for change in task proxy prerequisite.
 
@@ -1476,6 +1499,7 @@ class DataStoreMgr:
             prereq_obj = prereq.api_dump(self.workflow_id)
             if prereq_obj:
                 prereq_list.append(prereq_obj)
+        del tp_delta.prerequisites[:]
         tp_delta.prerequisites.extend(prereq_list)
         self.updates_pending = True
 
@@ -1637,7 +1661,7 @@ class DataStoreMgr:
             node_type = JOBS
         if node_id in self.data[self.workflow_id][node_type]:
             return (node_id, self.data[self.workflow_id][node_type][node_id])
-        elif node_id in self.added[TASK_PROXIES]:
+        elif node_id in self.added[node_type]:
             return (node_id, self.added[node_type][node_id])
         return (node_id, False)
 

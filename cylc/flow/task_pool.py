@@ -172,7 +172,6 @@ class TaskPool:
         self.rhpool_list = []
         self.pool_changed = False
         self.rhpool_changed = False
-        self.pool_changes = []
 
         self.is_held = False
         self.hold_point = None
@@ -533,7 +532,6 @@ class TaskPool:
         self.pool.setdefault(itask.point, {})
         self.pool[itask.point][itask.identity] = itask
         self.pool_changed = True
-        self.pool_changes.append(itask)
         LOG.debug("[%s] -released to the task pool", itask)
 
         # The following two could be called in separate places,
@@ -634,12 +632,6 @@ class TaskPool:
             for itask_id_maps in self.runahead_pool.values():
                 self.rhpool_list.extend(list(itask_id_maps.values()))
         return self.rhpool_list
-
-    def get_pool_change_tasks(self):
-        """Return a list of task proxies that changed pool."""
-        results = self.pool_changes
-        self.pool_changes = []
-        return results
 
     def get_tasks_by_point(self, incl_runahead):
         """Return a map of task proxies by cycle point."""
@@ -1334,6 +1326,8 @@ class TaskPool:
                     self.data_store_mgr.delta_task_state(itask)
                 LOG.critical('setting %s ready to run', itask)
                 itask.state.set_prerequisites_all_satisfied()
+                self.data_store_mgr.delta_task_prerequisite(itask)
+                self.data_store_mgr.delta_task_outputs(itask)
         return n_warnings
 
     def sim_time_check(self, message_queue):

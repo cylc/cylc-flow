@@ -1483,14 +1483,9 @@ class Scheduler:
             t for t in self.pool.get_all_tasks() if t.state.is_updated]
         has_updated = self.is_updated or updated_tasks
         # Add tasks that have moved moved from runahead to live pool.
-        updated_nodes = set(updated_tasks).union(
-            self.pool.get_pool_change_tasks())
-        if (
-                updated_nodes
-                or self.data_store_mgr.updates_pending
-        ):
-            # WServer incremental data store update
-            self.data_store_mgr.update_data_structure(updated_nodes)
+        if has_updated or self.data_store_mgr.updates_pending:
+            # Collect/apply data store updates/deltas
+            self.data_store_mgr.update_data_structure()
             # Publish updates:
             await self.publisher.publish(self.data_store_mgr.publish_deltas)
         if has_updated:

@@ -33,6 +33,7 @@ from graphene.utils.str_converters import to_snake_case
 
 from cylc.flow import ID_DELIM
 from cylc.flow.broadcast_mgr import ALL_CYCLE_POINTS_STRS, addict
+from cylc.flow.task_outputs import SORT_ORDERS
 from cylc.flow.task_state import (
     TASK_OUTPUT_SUCCEEDED,
     TASK_STATUSES_ORDERED,
@@ -581,11 +582,16 @@ def resolve_json_dump(root, info, **args):
 
 def resolve_mapping_to_list(root, info, **args):
     field = getattr(root, to_snake_case(info.field_name), {}) or {}
+    mapping = {
+        key: field[key]
+        for key in args.get('sort_order', [])
+        if key in field}
+    mapping.update(field)
     satisfied = args.get('satisfied')
     elements = sort_elements(
         [
             val
-            for val in field.values()
+            for val in mapping.values()
             if satisfied is None or val.satisfied is satisfied
         ], args)
     limit = args['limit']
@@ -876,6 +882,10 @@ class TaskProxy(ObjectType):
         Output,
         description="""Task outputs.""",
         sort=SortArgs(default_value=None),
+        sort_order=List(
+            String,
+            default_value=list(SORT_ORDERS)
+        ),
         limit=Int(default_value=0),
         satisfied=Boolean(),
         resolver=resolve_mapping_to_list)
@@ -884,6 +894,7 @@ class TaskProxy(ObjectType):
         XTrigger,
         description="""Task external trigger prerequisites.""",
         sort=SortArgs(default_value=None),
+        sort_order=List(String),
         limit=Int(default_value=0),
         satisfied=Boolean(),
         resolver=resolve_mapping_to_list)
@@ -891,6 +902,7 @@ class TaskProxy(ObjectType):
         XTrigger,
         description="""Task xtrigger prerequisites.""",
         sort=SortArgs(default_value=None),
+        sort_order=List(String),
         limit=Int(default_value=0),
         satisfied=Boolean(),
         resolver=resolve_mapping_to_list)
