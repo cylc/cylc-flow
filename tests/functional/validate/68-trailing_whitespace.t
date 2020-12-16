@@ -27,8 +27,8 @@ cat >'flow.cylc' <<'__FLOW_CONFIG__'
     final cycle point = 20010101T18
     [[graph]]
         T00 = """
-            # NOTE: don't let editor strip trailing space on next line
-            foo | bar \ 
+            # pre-commit hook removes trailing space so add it with sed below
+            foo | bar BACKSLASH_TRAILING_WHITESPACE
             => baz & qux
             pub
         """
@@ -37,6 +37,8 @@ cat >'flow.cylc' <<'__FLOW_CONFIG__'
             baz
         """
 __FLOW_CONFIG__
+
+sed -i 's/BACKSLASH_TRAILING_WHITESPACE/\\ /' 'flow.cylc'
 
 run_fail "${TEST_NAME_BASE}-simple-fail" cylc validate 'flow.cylc'
 cmp_ok "${TEST_NAME_BASE}-simple-fail.stderr" <<'__ERR__'
