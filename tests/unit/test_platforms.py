@@ -19,7 +19,7 @@
 import pytest
 from cylc.flow.platforms import (
     platform_from_name, platform_from_job_info,
-    get_install_target_to_platforms_map)
+    get_install_target_from_platform, get_install_target_to_platforms_map)
 from cylc.flow.exceptions import PlatformLookupError
 
 PLATFORMS = {
@@ -335,6 +335,18 @@ def test_platform_from_job_info_similar_platforms(
 
 # -----------------------------------------------------------------------------
 # Tests for getting install target info
+
+@pytest.mark.parametrize(
+    'platform, expected',
+    [
+        ({'name': 'rick', 'install target': 'desktop'}, 'desktop'),
+        ({'name': 'morty', 'install target': ''}, 'morty')
+    ]
+)
+def test_get_install_target_from_platform(platform, expected):
+    """Test that get_install_target_from_platform works as expected."""
+    assert get_install_target_from_platform(platform) == expected
+
 
 @pytest.mark.parametrize(
     'platform_names, expected_map, expected_err',
