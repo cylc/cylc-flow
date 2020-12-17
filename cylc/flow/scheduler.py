@@ -1133,7 +1133,6 @@ class Scheduler:
                 self.options.icp = value
                 LOG.info('+ initial point = %s' % value)
         elif key in self.suite_db_mgr.KEY_START_CYCLE_POINT_COMPATS:
-            # 'warm_point' for back compat <= 7.6.X
             if self.is_restart and self.options.ignore_startcp:
                 LOG.debug('- start point = %s (ignored)' % value)
             elif self.options.startcp is None:

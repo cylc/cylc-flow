@@ -422,8 +422,12 @@ class TaskPool:
                     for message in json.loads(outputs_str).values():
                         itask.state.outputs.set_completion(message, True)
                 except (AttributeError, TypeError, ValueError):
-                    # Back compat for <=7.6.X
-                    # Each output in separate line as "trigger=message"
+                    # BACK COMPAT: outputs in separate lines
+                    # (as "trigger=message")
+                    # from:
+                    #     <=7.6.X
+                    # remove at:
+                    #     ???
                     try:
                         for output in outputs_str.splitlines():
                             itask.state.outputs.set_completion(
@@ -481,8 +485,7 @@ class TaskPool:
                 {"id": id_, "ctx_key": ctx_key_raw})
             return
         LOG.info("+ %s.%s %s" % (name, cycle, ctx_key))
-        if ctx_key == "poll_timer" or ctx_key[0] == "poll_timers":
-            # "poll_timers" for back compat with <=7.6.X
+        if ctx_key == "poll_timer":
             itask = self.get_task_by_id(id_)
             if itask is None:
                 LOG.warning("%(id)s: task not found, skip" % {"id": id_})

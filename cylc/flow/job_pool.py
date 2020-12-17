@@ -261,10 +261,26 @@ class JobPool:
 
     @staticmethod
     def parse_job_item(item):
-        """Parse internal id
-        point/name/submit_num
-        or name.point.submit_num syntax (back compat).
+        """Parse internal id.
+
+        Args:
+            item (str):
+                point/name/submit_num
+                OR name.point.submit_num syntax.
+
+        Returns:
+            tuple - (point_str: str, name_str: str, submit_num: [int, None])
+
         """
+        # BACK COMPAT: name.point.submit_num
+        # url:
+        #     https://github.com/cylc/cylc-admin/pull/115
+        # from:
+        #     Cylc7
+        # to:
+        #     Cylc8
+        # remove at:
+        #     Cylc9
         submit_num = None
         if item.count('/') > 1:
             point_str, name_str, submit_num = item.split('/', 2)

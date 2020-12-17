@@ -526,8 +526,7 @@ class TaskEventsManager():
                 itask, ("message %s" % str(severity).lower()), message)
         lseverity = str(severity).lower()
         if lseverity in self.NON_UNIQUE_EVENTS:
-            itask.non_unique_events.setdefault(lseverity, 0)
-            itask.non_unique_events[lseverity] += 1
+            itask.non_unique_events.update(lseverity)
             self.setup_event_handlers(itask, lseverity, message)
 
     def _process_message_check(
@@ -1036,7 +1035,8 @@ class TaskEventsManager():
         if event in self.NON_UNIQUE_EVENTS:
             key1 = (
                 self.HANDLER_MAIL,
-                '%s-%d' % (event, itask.non_unique_events.get(event, 1)))
+                '%s-%d' % (event, itask.non_unique_events[event] or 1)
+            )
         else:
             key1 = (self.HANDLER_MAIL, event)
         id_key = (key1, str(itask.point), itask.tdef.name, itask.submit_num)
@@ -1079,7 +1079,8 @@ class TaskEventsManager():
             if event in self.NON_UNIQUE_EVENTS:
                 key1 = (
                     f'{self.HANDLER_CUSTOM}-{i:02d}',
-                    f'{event}-{itask.non_unique_events.get(event, 1):d}')
+                    f'{event}-{itask.non_unique_events[event] or 1:d}'
+                )
             else:
                 key1 = (f'{self.HANDLER_CUSTOM}-{i:02d}', event)
             id_key = (
@@ -1127,10 +1128,13 @@ class TaskEventsManager():
                         quote(str(self.uuid_str)),
                     EventData.TryNum.value:
                         itask.get_try_num(),
-                    # BACK COMPAT
-                    # For: Cylc < 8
-                    # Remove at: Cylc9 - pending announcement of deprecation
-                    # https://github.com/cylc/cylc-flow/pull/3992
+                    # BACK COMPAT: JobID_old, JobRunnerName_old
+                    # url:
+                    #     https://github.com/cylc/cylc-flow/pull/3992
+                    # from:
+                    #     Cylc < 8
+                    # remove at:
+                    #     Cylc9 - pending announcement of deprecation
                     # next 2 (JobID_old, JobRunnerName_old) are deprecated
                     EventData.JobID_old.value:
                         quote(str(itask.summary['submit_method_id'])),

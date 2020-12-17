@@ -635,19 +635,10 @@ class TaskJobManager:
             ctx.cmd = cmd_ctx.cmd  # print original command on failure
             return
         except ValueError:
-            # back compat for cylc 7.7.1 and previous
-            try:
-                values = line.split('|')
-                items = dict(  # done this way to ensure IndexError is raised
-                    (key, values[x]) for
-                    x, key in enumerate(JobPollContext.CONTEXT_ATTRIBUTES))
-                job_log_dir = items.pop('job_log_dir')
-                jp_ctx = JobPollContext(job_log_dir, **items)
-            except (ValueError, IndexError):
-                itask.set_summary_message(self.POLL_FAIL)
-                self.job_pool.add_job_msg(job_d, self.POLL_FAIL)
-                ctx.cmd = cmd_ctx.cmd  # print original command on failure
-                return
+            itask.set_summary_message(self.POLL_FAIL)
+            self.job_pool.add_job_msg(job_d, self.POLL_FAIL)
+            ctx.cmd = cmd_ctx.cmd  # print original command on failure
+            return
         finally:
             log_task_job_activity(ctx, suite, itask.point, itask.tdef.name)
 
