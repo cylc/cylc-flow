@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test user-defined batch system handlers can be used.
+# Test user-defined job runner handlers can be used.
 . "$(dirname "$0")/test_header"
 set_test_number 2
 
@@ -23,11 +23,11 @@ create_test_global_config "" "
 [platforms]
   [[testme]]
     hosts = localhost
-    batch system = my_background
+    job runner = my_background
     install target = localhost
   [[testme2]]
     hosts = localhost
-    batch system = my_background2
+    job runner = my_background2
     install target = localhost
 "
 

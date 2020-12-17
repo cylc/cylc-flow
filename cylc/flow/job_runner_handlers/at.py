@@ -39,7 +39,7 @@ from subprocess import PIPE
 
 
 class AtCommandHandler():
-    """Logic to submit jobs to the "at" batch system."""
+    """Logic to submit jobs to the "at" job runner."""
     # List of known error strings when atd is not running
     ERR_NO_ATD_STRS = [
         "Can't open /var/run/atd.pid to signal atd. No atd running?",
@@ -111,4 +111,4 @@ class AtCommandHandler():
             return (PIPE, cls.SUBMIT_CMD_STDIN_TMPL % {"job": job_file_path})
 
 
-BATCH_SYS_HANDLER = AtCommandHandler()
+JOB_RUNNER_HANDLER = AtCommandHandler()

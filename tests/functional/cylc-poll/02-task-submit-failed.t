@@ -16,14 +16,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test that polling a submit-failed task sets the task state correctly
-export REQUIRE_PLATFORM='batch:at comms:tcp'
+export REQUIRE_PLATFORM='runner:at comms:tcp'
 . "$(dirname "$0")/test_header"
 set_test_number 2
 
 create_test_global_config "" "
 [platforms]
     [[$CYLC_TEST_PLATFORM]]
-        batch submit command template = at noon tomorrow
+        job runner command template = at noon tomorrow
 "
 reftest
 purge

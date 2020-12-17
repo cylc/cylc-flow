@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -15,16 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test loadleveler directives
-#     This test requires an e.g. [test battery][batch systems][loadleveler]host
-#     entry in site/user config in order to run 'loadleveler' tests (same for
-#     slurm, pbs, etc), otherwise it will be bypassed.
-BATCH_SYS="${0##*\/??-}"
-BATCH_SYS_NAME="${BATCH_SYS%%.t}"
-export REQUIRE_PLATFORM="batch:${BATCH_SYS_NAME} comms:tcp"
+# Test job runner directives
+#   (the job runner is given by filename, e.g. 02-slurm.t)
+JOB_RUNNER="${0##*\/??-}"
+JOB_RUNNER_NAME="${JOB_RUNNER%%.t}"
+export REQUIRE_PLATFORM="runner:${JOB_RUNNER_NAME} comms:tcp"
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 2
-reftest "${TEST_NAME_BASE}" "${BATCH_SYS_NAME}"
+reftest "${TEST_NAME_BASE}" "${JOB_RUNNER_NAME}"
 purge
 exit

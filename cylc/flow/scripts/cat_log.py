@@ -21,7 +21,7 @@
 View Cylc suite and job log files.
 
 Print, view-in-editor, or tail-follow content, print path, or list directory,
-of local or remote task job and suite server logs. Batch-system view commands
+of local or remote task job and suite server logs. Job runner view commands
 (e.g. 'qcat') are used if defined in global config and the job is running.
 
 For standard log types use the short-cut option argument or full filename (e.g.
@@ -149,8 +149,8 @@ def view_log(logpath, mode, tailer_tmpl, batchview_cmd=None, remote=False,
              color=False):
     """View (by mode) local log file. This is only called on the file host.
 
-    batchview_cmd is a batch-system-specific job stdout or stderr cat or tail
-    command (e.g. 'qcat') that may be implemented for batch systems that don't
+    batchview_cmd is a job-runner-specific job stdout or stderr cat or tail
+    command (e.g. 'qcat') that may be implemented for job runners that don't
     write logs to their final locations until after the job completes.
 
     If remote is True, we are executing on a remote host for a log file there.
@@ -260,9 +260,9 @@ def get_option_parser():
 
 
 def get_task_job_attrs(suite_name, point, task, submit_num):
-    """Return job (platform, batch_sys_name, live_job_id).
+    """Return job (platform, job_runner_name, live_job_id).
 
-    live_job_id is batch system job ID if job is running, else None.
+    live_job_id is the job ID if job is running, else None.
 
     """
     suite_dao = CylcSuiteDAO(
@@ -271,15 +271,15 @@ def get_task_job_attrs(suite_name, point, task, submit_num):
     suite_dao.close()
     if task_job_data is None:
         return (None, None, None)
-    batch_sys_name = task_job_data["batch_sys_name"]
-    batch_sys_job_id = task_job_data["batch_sys_job_id"]
-    if (not batch_sys_name or not batch_sys_job_id
+    job_runner_name = task_job_data["job_runner_name"]
+    job_id = task_job_data["job_id"]
+    if (not job_runner_name or not job_id
             or not task_job_data["time_run"]
             or task_job_data["time_run_exit"]):
         live_job_id = None
     else:
-        live_job_id = batch_sys_job_id
-    return (task_job_data["platform_name"], batch_sys_name, live_job_id)
+        live_job_id = job_id
+    return (task_job_data["platform_name"], job_runner_name, live_job_id)
 
 
 def tmpfile_edit(tmpfile, geditor=False):
@@ -388,12 +388,12 @@ def main(parser, options, *args, color=False):
             except KeyError:
                 # Is already long form (standard log, or custom).
                 pass
-        platform_name, batch_sys_name, live_job_id = get_task_job_attrs(
+        platform_name, job_runner_name, live_job_id = get_task_job_attrs(
             suite_name, point, task, options.submit_num)
         platform = get_platform(platform_name)
         batchview_cmd = None
         if live_job_id is not None:
-            # Job is currently running. Get special batch system log view
+            # Job is currently running. Get special job runner log view
             # command (e.g. qcat) if one exists, and the log is out or err.
             conf_key = None
             if options.filename == JOB_LOG_OUT:

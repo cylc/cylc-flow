@@ -16,7 +16,7 @@
 
 import pytest
 
-from cylc.flow.batch_sys_handlers.pbs import BATCH_SYS_HANDLER
+from cylc.flow.job_runner_handlers.pbs import JOB_RUNNER_HANDLER
 
 
 @pytest.mark.parametrize(
@@ -30,7 +30,7 @@ from cylc.flow.batch_sys_handlers.pbs import BATCH_SYS_HANDLER
                 'suite_name': 'chop',
                 'task_id': 'axe.1',
                 'platform': {
-                    'batch system': 'pbs',
+                    'job runner': 'pbs',
                     'job name length maximum': 100
                 }
             },
@@ -49,7 +49,7 @@ from cylc.flow.batch_sys_handlers.pbs import BATCH_SYS_HANDLER
                 'suite_name': 'chop',
                 'task_id': 'axe.1',
                 'platform': {
-                    'batch system': 'pbs',
+                    'job runner': 'pbs',
                     'job name length maximum': 6
                 }
             },
@@ -72,7 +72,7 @@ from cylc.flow.batch_sys_handlers.pbs import BATCH_SYS_HANDLER
                 'suite_name': 'chop',
                 'task_id': 'axe.1',
                 'platform': {
-                    'batch system': 'pbs',
+                    'job runner': 'pbs',
                     'job name length maximum': 100
                 }
             },
@@ -89,4 +89,4 @@ from cylc.flow.batch_sys_handlers.pbs import BATCH_SYS_HANDLER
     ],
 )
 def test_format_directives(job_conf: dict, lines: list):
-    assert BATCH_SYS_HANDLER.format_directives(job_conf) == lines
+    assert JOB_RUNNER_HANDLER.format_directives(job_conf) == lines

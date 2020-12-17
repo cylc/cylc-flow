@@ -29,7 +29,7 @@ desired_args = {
     'fish': 'trout',
     'submit_num': '1',
     'try_num': '1',
-    'batch_sys_name': 'background',
+    'job_runner_name': 'background',
     'id': 'foo.1',
     'finish_time': 'None',
     'suite_size': 'large',

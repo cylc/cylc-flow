@@ -16,8 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test execution time limit, background/at job
-BATCH_SYS="${0##*\/??-}"
-export REQUIRE_PLATFORM="batch:${BATCH_SYS%%.t}"
+JOB_RUNNER="${0##*\/??-}"
+export REQUIRE_PLATFORM="runner:${JOB_RUNNER%%.t}"
 . "$(dirname "$0")/test_header"
 set_test_number 4
 

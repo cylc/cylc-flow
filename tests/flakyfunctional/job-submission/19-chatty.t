@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Test job submission with a very chatty command.
 # + Simulate "cylc jobs-submit" getting killed half way through.
-export REQUIRE_PLATFORM='batch:at'
+export REQUIRE_PLATFORM='runner:at'
 . "$(dirname "$0")/test_header"
 set_test_number 15
 
@@ -26,7 +26,7 @@ create_test_global_config "" "
     process pool timeout = PT10S
 [platforms]
     [[$CYLC_TEST_PLATFORM]]
-        batch submit command template = talkingnonsense %(job)s
+        job runner command template = talkingnonsense %(job)s
 "
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"

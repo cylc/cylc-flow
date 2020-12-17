@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test restart with a "ready" task. See GitHub #958 (update: and #2610).
-export REQUIRE_PLATFORM='loc:local batch:at'
+export REQUIRE_PLATFORM='loc:local runner:at'
 . "$(dirname "$0")/test_header"
 set_test_number 3
 
@@ -24,14 +24,14 @@ create_test_global_config "" "
 [platforms]
   [[wibble]]
     hosts = localhost
-    batch system = at
-    batch submit command template = sleep 15
+    job runner = at
+    job runner command template = sleep 15
     install target = localhost
 
   [[wobble]]
     hosts = localhost
-    batch system = at
-    batch submit command template = at now
+    job runner = at
+    job runner command template = at now
     install target = localhost
 "
 

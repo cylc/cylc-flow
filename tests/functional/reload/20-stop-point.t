@@ -17,14 +17,14 @@
 #-------------------------------------------------------------------------------
 # Test set stop point then reload. Reload should not reset stop point.
 # https://github.com/cylc/cylc-flow/issues/2964
-export REQUIRE_PLATFORM='batch:at'
+export REQUIRE_PLATFORM='runner:at'
 . "$(dirname "$0")/test_header"
 set_test_number 3
 
 create_test_global_config "
 [platforms]
     [[$CYLC_TEST_PLATFORM]]
-        batch submit command template = sleep 5
+        job runner command template = sleep 5
         submission retry delays = 3*PT5S
 "
 

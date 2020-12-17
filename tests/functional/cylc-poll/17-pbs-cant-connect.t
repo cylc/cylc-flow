@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test poll PBS connection refused
-export REQUIRE_PLATFORM="batch:pbs"
+export REQUIRE_PLATFORM="runner:pbs"
 . "$(dirname "$0")/test_header"
 
 set_test_number 4
@@ -24,7 +24,7 @@ set_test_number 4
 create_test_global_config "" "
 [platforms]
   [[${CYLC_TEST_PLATFORM}]]
-    batch system = my_pbs
+    job runner = my_pbs
     hosts = ${CYLC_TEST_BATCH_TASK_HOST}
 "
 

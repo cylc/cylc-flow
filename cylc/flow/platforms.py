@@ -208,6 +208,8 @@ def platform_from_job_info(platforms, job, remote):
     Find out which job platform to use given a list of possible platforms
     and the task dictionary with cylc 7 definitions in it.
 
+    (Note: "batch system" and "job runner" mean the same thing)
+
           +------------+ Yes    +-----------------------+
     +-----> Tried all  +------->+ RAISE                 |
     |     | platforms? |        | PlatformNotFoundError |
@@ -271,7 +273,7 @@ def platform_from_job_info(platforms, job, remote):
         ...         'desktop[0-9][0-9]|laptop[0-9][0-9]': {},
         ...         'sugar': {
         ...             'hosts': 'localhost',
-        ...             'batch system': 'slurm'
+        ...             'job runner': 'slurm'
         ...         }
         ... }
         >>> job = {'batch system': 'slurm'}
@@ -285,18 +287,18 @@ def platform_from_job_info(platforms, job, remote):
 
     # These settings are removed from the incoming dictionaries for special
     # handling later - we want more than a simple match:
-    #   - In the case of host we also want a regex match to the platform name
-    #   - In the case of batch system we want to match the name of the system
-    #     to a platform when host is localhost.
+    #   - In the case of "host" we also want a regex match to the platform name
+    #   - In the case of "batch system" we want to match the name of the
+    #     system/job runner to a platform when host is localhost.
     if 'host' in remote.keys() and remote['host']:
         task_host = remote.pop('host')
     else:
         task_host = 'localhost'
     if 'batch system' in job.keys() and job['batch system']:
-        task_batch_system = job.pop('batch system')
+        task_job_runner = job.pop('batch system')
     else:
         # Necessary? Perhaps not if batch system default is 'background'
-        task_batch_system = 'background'
+        task_job_runner = 'background'
 
     # Riffle through the platforms looking for a match to our task settings.
     # reverse dict order so that user config platforms added last are examined
@@ -317,14 +319,14 @@ def platform_from_job_info(platforms, job, remote):
         # batch system match the platform in question.
         if (
                 not is_remote_host(task_host) and
-                task_batch_system == 'background'
+                task_job_runner == 'background'
         ):
             return 'localhost'
 
         elif (
             'hosts' in platform_spec.keys() and
             task_host in platform_spec['hosts'] and
-            task_batch_system == platform_spec['batch system']
+            task_job_runner == platform_spec['job runner']
         ):
             # If we have localhost with a non-background batch system we
             # use the batch system to give a sensible guess at the platform
@@ -332,7 +334,7 @@ def platform_from_job_info(platforms, job, remote):
 
         elif (
                 re.fullmatch(platform_name, task_host) and
-                task_batch_system == platform_spec['batch system']
+                task_job_runner == platform_spec['job runner']
         ):
             return task_host
 

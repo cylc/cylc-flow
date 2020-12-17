@@ -27,6 +27,7 @@ from cylc.flow.parsec.upgrade import upgrader, converter
 from cylc.flow.parsec.validate import (
     DurationFloat, CylcConfigValidator as VDR, cylc_config_validate)
 from cylc.flow.platforms import get_platform
+from cylc.flow.task_events_mgr import EventData
 
 # Regex to check whether a string is a command
 REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
@@ -1000,10 +1001,11 @@ with Conf(
                    Try number
                 ``%(id)s``
                    Task ID (i.e. %(name)s.%(point)s)
-                ``%(batch_sys_name)s``
-                   Batch system name
-                ``%(batch_sys_job_id)``
-                   Batch system job ID
+                ``%(job_runner_name)s``
+                   Job runner name (previously ``%(batch_sys_name)s``)
+                ``%(job_id)s``
+                   Job ID in the job runner
+                   (previously ``%(batch_sys_job_id)s``)
                 ``%(submit_time)s``
                    Date-time when task job is submitted
                 ``%(start_time)s``
@@ -1218,10 +1220,10 @@ with Conf(
 
             with Conf('directives', desc='''
                 Batch queue scheduler directives.  Whether or not these are
-                used depends on the batch system. For the built-in methods
-                that support directives (``loadleveler``, ``lsf``, ``pbs``,
-                ``sge``, ``slurm``, ``slurm_packjob``, ``moab``), directives
-                are written to the
+                used depends on the batch system/job runner. For the built-in
+                methods  support directives (``loadleveler``, ``lsf``,
+                ``pbs``, ``sge``, ``slurm``, ``slurm_packjob``, ``moab``),
+                directives  written to the
                 top of the task job script in the correct format for the
                 method. Specifying directives individually like this allows
                 use of default directives that can be individually overridden
@@ -1230,7 +1232,7 @@ with Conf(
                 Conf('<directive>', VDR.V_STRING, desc='''
                     e.g. ``class = parallel``.
 
-                    Example directives for the built-in batch system handlers
+                    Example directives for the built-in job runner handlers
                     are shown in :ref:`AvailableMethods`.
                 ''')
 
@@ -1393,11 +1395,8 @@ def upg(cfg, descr):
     upgrade_graph_section(cfg, descr)
     upgrade_param_env_templates(cfg, descr)
 
-    if 'runtime' in cfg:
-        for task_name, task_cfg in cfg['runtime'].items():
-            platform = get_platform(task_cfg, task_name, warn_only=True)
-            if type(platform) == str:
-                LOG.warning(platform)
+    warn_about_depr_platform(cfg)
+    warn_about_depr_event_handler_tmpl(cfg)
 
 
 def upgrade_graph_section(cfg, descr):
@@ -1469,6 +1468,38 @@ def upgrade_param_env_templates(cfg, descr):
                     task_items['environment'] = OrderedDictWithDefaults()
                 task_items['environment'].prepend(key, val)
             task_items.pop('parameter environment templates')
+
+
+def warn_about_depr_platform(cfg):
+    """Warn if deprecated host or batch system appear in config."""
+    if 'runtime' in cfg:
+        for task_name, task_cfg in cfg['runtime'].items():
+            platform = get_platform(task_cfg, task_name, warn_only=True)
+            if type(platform) == str:
+                LOG.warning(platform)
+
+
+def warn_about_depr_event_handler_tmpl(cfg):
+    """Warn if deprecated template strings appear in event handlers."""
+    if 'runtime' not in cfg:
+        return
+    deprecation_msg = (
+        'The event handler template variable "%({0})s" is deprecated - '
+        'use "%({1})s" instead.')
+    for task in cfg['runtime']:
+        if 'events' not in cfg['runtime'][task]:
+            continue
+        for event, handler in cfg['runtime'][task]['events'].items():
+            if f'%({EventData.JobID_old.value})' in handler:
+                LOG.warning(
+                    deprecation_msg.format(EventData.JobID_old.value,
+                                           EventData.JobID.value)
+                )
+            if f'%({EventData.JobRunnerName_old.value})' in handler:
+                LOG.warning(
+                    deprecation_msg.format(EventData.JobRunnerName_old.value,
+                                           EventData.JobRunnerName.value)
+                )
 
 
 class RawSuiteConfig(ParsecConfig):

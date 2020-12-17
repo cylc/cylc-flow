@@ -132,10 +132,6 @@ class SuiteConfig:
     """Class for suite configuration items and derived quantities."""
 
     Q_DEFAULT = 'default'
-    TASK_EVENT_TMPL_KEYS = (
-        'event', 'suite', 'suite_uuid', 'point', 'name', 'submit_num', 'id',
-        'message', 'batch_sys_name', 'batch_sys_job_id', 'submit_time',
-        'start_time', 'finish_time', 'platform_name', 'try_num')
 
     def __init__(
         self,

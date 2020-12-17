@@ -84,7 +84,7 @@ class JobPool:
             submit_num=sub_num,
             state=JOB_STATUSES_ALL[0],
             task_proxy=t_id,
-            batch_sys_name=job_conf['batch_system_name'],
+            job_runner_name=job_conf['job_runner_name'],
             env_script=job_conf['env-script'],
             err_script=job_conf['err-script'],
             exit_script=job_conf['exit-script'],
@@ -117,7 +117,7 @@ class JobPool:
         if row_idx == 0:
             LOG.info("LOADING job data")
         (point_string, name, status, submit_num, time_submit, time_run,
-         time_run_exit, batch_sys_name, batch_sys_job_id, platform_name) = row
+         time_run_exit, job_runner_name, job_id, platform_name) = row
         if status not in JOB_STATUS_SET:
             return
         t_id = f'{self.workflow_id}{ID_DELIM}{point_string}{ID_DELIM}{name}'
@@ -140,8 +140,8 @@ class JobPool:
                 submitted_time=time_submit,
                 started_time=time_run,
                 finished_time=time_run_exit,
-                batch_sys_name=batch_sys_name,
-                batch_sys_job_id=batch_sys_job_id,
+                job_runner_name=job_runner_name,
+                job_id=job_id,
                 host=j_host,
                 owner=j_owner,
                 name=name,

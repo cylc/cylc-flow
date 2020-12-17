@@ -13,19 +13,20 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Submits task job scripts to the Moab workload manager with ``msub``.
+"""Submits task job scripts to PBS (or Torque) by the ``qsub`` command.
+
+# TODO: rewrite the following for platforms:
 
 .. cylc-scope:: flow.cylc[runtime][<namespace>]
 
-Moab directives can be provided in the flow.cylc file; the syntax is
-very similar to PBS:
+PBS directives can be provided in the flow.cylc file:
 
 .. code-block:: cylc
 
    [runtime]
        [[my_task]]
            [[[job]]]
-               batch system = moab
+               batch system = pbs
                execution time limit = PT1M
            [[[directives]]]
                -V =
@@ -43,8 +44,6 @@ These are written to the top of the task job script like this:
    #PBS -l nodes=1
    #PBS -l walltime=60
 
-(Moab understands ``#PBS`` directives).
-
 If :cylc:conf:`execution time limit` is specified, it is used to generate the
 ``-l walltime`` directive. Do not specify the ``-l walltime`` directive
 explicitly if :cylc:conf:`execution time limit` is specified.  Otherwise, the
@@ -58,33 +57,44 @@ submitted to the batch system.
 import re
 
 
-class MoabHandler:
+class PBSHandler:
 
-    """Moab batch system job submission and manipulation."""
+    """PBS job submission and manipulation."""
 
     DIRECTIVE_PREFIX = "#PBS "
-    KILL_CMD_TMPL = "mjobctl -c '%(job_id)s'"
+    # PBS fails a job submit if job "name" in "-N name" is too long.
+    # For version 12 or below, this is 15 characters.
+    # You can modify this in the site/user `global.cfg` like this
+    # [platforms]
+    #     [[the-name-of-my-pbs-platform]]
+    #         batch system = pbs
+    #         job name length maximum = 15
+    JOB_NAME_LEN_MAX = 236
+    KILL_CMD_TMPL = "qdel '%(job_id)s'"
     # N.B. The "qstat JOB_ID" command returns 1 if JOB_ID is no longer in the
     # system, so there is no need to filter its output.
-    POLL_CMD = "checkjob"
+    POLL_CMD = "qstat"
+    POLL_CANT_CONNECT_ERR = "Connection refused"
     REC_ID_FROM_SUBMIT_OUT = re.compile(r"""\A\s*(?P<id>\S+)\s*\Z""")
-    SUBMIT_CMD_TMPL = "msub '%(job)s'"
+    SUBMIT_CMD_TMPL = "qsub '%(job)s'"
 
     def format_directives(self, job_conf):
         """Format the job directives for a job file."""
         job_file_path = job_conf["job_file_path"].replace(r"$HOME/", "")
         directives = job_conf["directives"].__class__()  # an ordereddict
 
-        directives["-N"] = (
-            job_conf["task_id"] + "." + job_conf["suite_name"])
+        directives["-N"] = job_conf["task_id"] + "." + job_conf["suite_name"]
+        job_name_len_max = job_conf['platform']["job name length maximum"]
+        if job_name_len_max:
+            directives["-N"] = directives["-N"][0:job_name_len_max]
 
         directives["-o"] = job_file_path + ".out"
         directives["-e"] = job_file_path + ".err"
         if (job_conf["execution_time_limit"] and
                 directives.get("-l walltime") is None):
             directives["-l walltime"] = "%d" % job_conf["execution_time_limit"]
-        # restartable?
-        directives.update(job_conf["directives"])
+        for key, value in list(job_conf["directives"].items()):
+            directives[key] = value
         lines = []
         for key, value in directives.items():
             if value and " " in key:
@@ -99,4 +109,4 @@ class MoabHandler:
         return lines
 
 
-BATCH_SYS_HANDLER = MoabHandler()
+JOB_RUNNER_HANDLER = PBSHandler()

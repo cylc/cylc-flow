@@ -18,12 +18,12 @@
 
 (This command is for internal use. Users should use "cylc kill".)
 
-Read job status files to obtain the names of the batch systems and the job IDs
-in the systems. Invoke the relevant batch system commands to ask the batch
-systems to terminate the jobs.
+Read job status files to obtain the names of the job runners and the job IDs
+in the runners. Invoke the relevant job runner commands to ask the job runners
+to terminate the jobs.
 
 """
-from cylc.flow.batch_sys_manager import BatchSysManager
+from cylc.flow.job_runner_mgr import JobRunnerManager
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
 
@@ -45,7 +45,7 @@ def get_option_parser():
 @cli_function(get_option_parser)
 def main(parser, options, job_log_root, *job_log_dirs):
     """CLI main."""
-    BatchSysManager().jobs_kill(job_log_root, job_log_dirs)
+    JobRunnerManager().jobs_kill(job_log_root, job_log_dirs)
 
 
 if __name__ == "__main__":

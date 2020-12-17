@@ -28,7 +28,7 @@ def job_config(schd):
         'host': 'commet',
         'submit_num': 3,
         'task_id': 'foo.20130808T00',
-        'batch_system_name': 'background',
+        'job_runner_name': 'background',
         'env-script': None,
         'err-script': None,
         'exit-script': None,

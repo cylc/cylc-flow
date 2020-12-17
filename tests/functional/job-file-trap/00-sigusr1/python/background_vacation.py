@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from cylc.flow.batch_sys_handlers.background import BgCommandHandler
+from cylc.flow.job_runner_handlers.background import BgCommandHandler
 
 
 class MyBgCommandHandler(BgCommandHandler):
@@ -33,4 +33,4 @@ class MyBgCommandHandler(BgCommandHandler):
         return self.VACATION_SIGNAL
 
 
-BATCH_SYS_HANDLER = MyBgCommandHandler()
+JOB_RUNNER_HANDLER = MyBgCommandHandler()

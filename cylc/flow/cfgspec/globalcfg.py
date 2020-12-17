@@ -319,11 +319,15 @@ with Conf('global.cylc', desc='''
 
     with Conf('platforms'):
         with Conf('<platform name>') as Platform:
-            Conf('batch system', VDR.V_STRING, 'background')
-            Conf('batch submit command template', VDR.V_STRING)
+            Conf('job runner', VDR.V_STRING, 'background', desc='''
+                The batch system/job submit method used to run jobs on the
+                platform, e.g., ``background``, ``at``, ``slurm``,
+                ``loadleveler``...
+            ''')
+            Conf('job runner command template', VDR.V_STRING)
             Conf('shell', VDR.V_STRING, '/bin/bash')
             Conf('run directory', VDR.V_STRING, '$HOME/cylc-run', desc='''
-                The number of old run directory trees to retain at start-up.
+                The directory in which to install workflows.
             ''')
             Conf('work directory', VDR.V_STRING, '$HOME/cylc-run', desc='''
                 The top level for suite work and share directories. Can contain
@@ -386,7 +390,7 @@ with Conf('global.cylc', desc='''
             Conf('execution time limit polling intervals',
                  VDR.V_INTERVAL_LIST, desc='''
                 The intervals between polling after a task job (submitted to
-                the relevant batch system on the relevant host) exceeds its
+                the relevant job runner on the relevant host) exceeds its
                 execution time limit. The default setting is PT1M, PT2M, PT7M.
                 The accumulated times (in minutes) for these intervals will be
                 roughly 1, 1 + 2 = 3 and 1 + 2 + 7 = 10 after a task job
@@ -525,7 +529,7 @@ with Conf('global.cylc', desc='''
                    qcat -o %(job_id)s
             ''')
             Conf('job name length maximum', VDR.V_INTEGER, desc='''
-                The maximum length for job name acceptable by a batch system on
+                The maximum length for job name acceptable by a job runner on
                 a given host.  Currently, this setting is only meaningful for
                 PBS jobs. For example, PBS 12 or older will fail a job submit
                 if the job name has more than 15 characters; whereas PBS 13

@@ -715,7 +715,7 @@ _parse_platform_spec () {
     local requirement="$1"
 
     local locality='local'
-    local batch_system='background'
+    local job_runner='background'
     local file_system='*'
     local comms='*'
     for req in ${requirement}; do
@@ -723,8 +723,8 @@ _parse_platform_spec () {
             loc:*)
                 locality="${req/loc:/}"
                 ;;
-            batch:*)
-                batch_system="${req/batch:/}"
+            runner:*)
+                job_runner="${req/runner:/}"
                 ;;
             fs:*)
                 file_system="${req/fs:/}"
@@ -738,7 +738,7 @@ _parse_platform_spec () {
                 ;;
         esac
     done
-    echo "_${locality}_${batch_system}_${file_system}_${comms}"
+    echo "_${locality}_${job_runner}_${file_system}_${comms}"
 }
 
 _get_test_platform () {
@@ -867,7 +867,7 @@ _check_test_requirements () {
     # check the test requirements against the array of test platforms
     if [[ -z "${REQUIRE_PLATFORM:-}" ]]; then
         # if no requirement string is provided default to local, background
-        REQUIRE_PLATFORM='loc:local batch:background'
+        REQUIRE_PLATFORM='loc:local runner:background'
     fi
     if ! _get_test_platform "${REQUIRE_PLATFORM}"; then
         skip_all "requires $REQUIRE_PLATFORM"

@@ -16,7 +16,7 @@
 
 import pytest
 
-from cylc.flow.batch_sys_handlers.moab import BATCH_SYS_HANDLER
+from cylc.flow.job_runner_handlers.lsf import JOB_RUNNER_HANDLER
 
 
 @pytest.mark.parametrize(
@@ -31,35 +31,41 @@ from cylc.flow.batch_sys_handlers.moab import BATCH_SYS_HANDLER
                 'task_id': 'axe.1',
             },
             [
-                '#PBS -N axe.1.chop',
-                '#PBS -o cylc-run/chop/log/job/1/axe/01/job.out',
-                '#PBS -e cylc-run/chop/log/job/1/axe/01/job.err',
-                '#PBS -l walltime=180',
+                '#BSUB -J axe.1.chop',
+                '#BSUB -o cylc-run/chop/log/job/1/axe/01/job.out',
+                '#BSUB -e cylc-run/chop/log/job/1/axe/01/job.err',
+                '#BSUB -W 3',
             ],
         ),
         (  # some useful directives
             {
                 'directives': {
                     '-q': 'forever',
-                    '-V': '',
-                    '-l mem': '256gb',
+                    '-B': '',
+                    '-ar': '',
                 },
-                'execution_time_limit': 180,
+                'execution_time_limit': 200,
                 'job_file_path': '$HOME/cylc-run/chop/log/job/1/axe/01/job',
                 'suite_name': 'chop',
                 'task_id': 'axe.1',
             },
             [
-                '#PBS -N axe.1.chop',
-                '#PBS -o cylc-run/chop/log/job/1/axe/01/job.out',
-                '#PBS -e cylc-run/chop/log/job/1/axe/01/job.err',
-                '#PBS -l walltime=180',
-                '#PBS -q forever',
-                '#PBS -V',
-                '#PBS -l mem=256gb',
+                '#BSUB -J axe.1.chop',
+                '#BSUB -o cylc-run/chop/log/job/1/axe/01/job.out',
+                '#BSUB -e cylc-run/chop/log/job/1/axe/01/job.err',
+                '#BSUB -W 4',
+                '#BSUB -q forever',
+                '#BSUB -B',
+                '#BSUB -ar',
             ],
         ),
     ],
 )
 def test_format_directives(job_conf: dict, lines: list):
-    assert BATCH_SYS_HANDLER.format_directives(job_conf) == lines
+    assert JOB_RUNNER_HANDLER.format_directives(job_conf) == lines
+
+
+def test_get_submit_stdin():
+    outs = JOB_RUNNER_HANDLER.get_submit_stdin(__file__, None)
+    assert outs[0].name == __file__
+    assert outs[1] is None

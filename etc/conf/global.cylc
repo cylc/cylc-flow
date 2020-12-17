@@ -9,7 +9,7 @@
         hosts = _remote_background_indep_tcp
     [[_remote_at_indep_tcp]]
         # NOTE: at submission uses the same container as background
-        batch system = at
+        job runner = at
         hosts = _remote_background_indep_tcp
     [[_remote_background_indep_poll]]
         hosts = _remote_background_indep_poll
@@ -18,7 +18,7 @@
         submission polling intervals = PT1S
     [[_remote_at_indep_poll]]
         # NOTE: at submission uses the same container as background
-        batch system = at
+        job runner = at
         hosts = _remote_background_indep_poll
         communication method = poll
         execution polling intervals = 5*PT1S, PT5S

@@ -15,6 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Submits task job scripts to Simple Linux Utility for Resource Management.
 
+# TODO: rewrite the following for platforms:
+
 .. cylc-scope:: flow.cylc[runtime][<namespace>]
 
 Uses the ``sbatch`` command. SLURM directives can be provided in the flow.cylc
@@ -48,8 +50,8 @@ These are written to the top of the task job script like this:
 If :cylc:conf:`execution time limit` is specified, it is used to generate the
 ``--time`` directive. Do not specify the ``--time`` directive explicitly if
 :cylc:conf:`execution time limit` is specified.  Otherwise, the execution time
-limit known by the suite may be out of sync with what is submitted to the batch
-system.
+limit known by the suite may be out of sync with what is submitted to the
+job runner.
 
 Cylc supports heterogeneous Slurm jobs via special numbered directive prefixes
 that distinguish repeated directives from one another:
@@ -180,4 +182,4 @@ class SLURMHandler():
         return shlex.split(cls.POLL_CMD) + ["-j", ",".join(job_ids)]
 
 
-BATCH_SYS_HANDLER = SLURMHandler()
+JOB_RUNNER_HANDLER = SLURMHandler()

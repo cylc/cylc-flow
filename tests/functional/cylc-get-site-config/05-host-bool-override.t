@@ -26,19 +26,19 @@ cat etc/global.cylc <<'__hi__'
     [[desktop\d\d|laptop\d\d]]
     [[sugar]]
         login hosts = localhost
-        batch system = slurm
+        job runner = slurm
     [[hpc]]
         login hosts = hpcl1, hpcl2
         retrieve job logs = True
-        batch system = pbs
+        job runner = pbs
     [[hpcl1-bg]]
         login hosts = hpcl1
         retrieve job logs = True
-        batch system = background
+        job runner = background
     [[hpcl2-bg]]
         login hosts = hpcl2
         retrieve job logs = True
-        batch system = background
+        job runner = background
 __hi__
 
 export CYLC_CONF_PATH="${PWD}/etc"

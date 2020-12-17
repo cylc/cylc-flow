@@ -54,7 +54,7 @@ cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}" "${NAME}"
 NAME='select-task-jobs.out'
 sqlite3 "${DB_FILE}" \
     'SELECT cycle, name, submit_num, try_num, submit_status, run_status,
-            platform_name, batch_sys_name
+            platform_name, job_runner_name
      FROM task_jobs ORDER BY name' \
     >"${NAME}"
 LOCALHOST="$(localhost_fqdn)"

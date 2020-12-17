@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test job submission via at, with SHELL set to tcsh
-export REQUIRE_PLATFORM='batch:at'
+export REQUIRE_PLATFORM='runner:at'
 . "$(dirname "$0")/test_header"
 set_test_number 2
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"

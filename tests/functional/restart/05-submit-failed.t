@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test restarting a simple suite with a submit-failed task
-export REQUIRE_PLATFORM='batch:at'
+export REQUIRE_PLATFORM='runner:at'
 if [[ -z ${TEST_DIR:-} ]]; then
     . "$(dirname "$0")/test_header"
 fi
@@ -26,8 +26,8 @@ set_test_number 7
 create_test_global_config "
 [platforms]
     [[$CYLC_TEST_PLATFORM]]
-        batch system = at
-        batch submit command template = at oh-no
+        job runner = at
+        job runner command template = at oh-no
 "
 #-------------------------------------------------------------------------------
 install_suite "${TEST_NAME_BASE}" 'submit-failed'

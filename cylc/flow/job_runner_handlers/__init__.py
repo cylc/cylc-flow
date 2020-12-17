@@ -13,25 +13,20 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""SLURM job submission and manipulation.
+"""Cylc provides support for the following job runner handlers.
 
-Includes directive prefix workaround for heterogeneous job support, for older
-Slurm versions that use "packjob" instead of "hetjob".
+.. autosummary::
+   :toctree: job-runner-handlers
+   :template: automodule_job_runner_handlers.rst
+
+   cylc.flow.job_runner_handlers.at
+   cylc.flow.job_runner_handlers.background
+   cylc.flow.job_runner_handlers.loadleveler
+   cylc.flow.job_runner_handlers.lsf
+   cylc.flow.job_runner_handlers.moab
+   cylc.flow.job_runner_handlers.pbs
+   cylc.flow.job_runner_handlers.sge
+   cylc.flow.job_runner_handlers.slurm
+   cylc.flow.job_runner_handlers.slurm_packjob
 
 """
-
-import re
-from cylc.flow.batch_sys_handlers.slurm import SLURMHandler
-
-
-class SLURMPackjobHandler(SLURMHandler):
-    """SLURM job submission and manipulation."""
-
-    # Heterogeneous job support
-    #  Match artificial directive prefix
-    REC_HETJOB = re.compile(r"^packjob_(\d+)_")
-    #  Separator between heterogeneous job directive sections
-    SEP_HETJOB = "#SBATCH packjob"
-
-
-BATCH_SYS_HANDLER = SLURMPackjobHandler()
