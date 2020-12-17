@@ -15,19 +15,24 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Submits task job scripts to Sun/Oracle Grid Engine with ``qsub``.
 
-# TODO: rewrite the following for platforms:
-
 .. cylc-scope:: flow.cylc[runtime][<namespace>]
 
 SGE directives can be provided in the flow.cylc file:
 
 .. code-block:: cylc
+   :caption: global.cylc
+
+   [platforms]
+       [[myplatform]]
+           job runner = sge
+
+.. code-block:: cylc
+   :caption: flow.cylc
 
    [runtime]
        [[my_task]]
-           [[[job]]]
-               batch system = sge
-               execution time limit = P1D
+           platform = myplatform
+           execution time limit = P1D
            [[[directives]]]
                -cwd =
                -q = foo

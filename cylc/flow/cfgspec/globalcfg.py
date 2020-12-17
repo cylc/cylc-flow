@@ -359,7 +359,7 @@ with Conf('global.cylc', desc='''
             Conf('submission polling intervals', VDR.V_INTERVAL_LIST, desc='''
                 Cylc can also poll submitted jobs to catch problems that
                 prevent the submitted job from executing at all, such as
-                deletion from an external batch scheduler queue. Routine
+                deletion from an external job runner queue. Routine
                 polling is done only for the polling ``task communication
                 method`` unless suite-specific polling is configured in
                 the suite configuration. A list of interval values can be

@@ -59,6 +59,9 @@ symlink to `DIR` (see #3884).
 
 ### Enhancements
 
+[#3992](https://github.com/cylc/cylc-flow/pull/3992) - Rename
+batch system to job runner.
+
 [#3791](https://github.com/cylc/cylc-flow/pull/3791) - Support Slurm
 heterogeneous jobs with a special directive prefix.
 
