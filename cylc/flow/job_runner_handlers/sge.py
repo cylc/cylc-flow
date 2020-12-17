@@ -23,7 +23,7 @@ SGE directives can be provided in the flow.cylc file:
    :caption: global.cylc
 
    [platforms]
-       [[myplatform]]
+       [[sge_platform]]
            job runner = sge
 
 .. code-block:: cylc
@@ -31,7 +31,7 @@ SGE directives can be provided in the flow.cylc file:
 
    [runtime]
        [[my_task]]
-           platform = myplatform
+           platform = sge_platform
            execution time limit = P1D
            [[[directives]]]
                -cwd =
