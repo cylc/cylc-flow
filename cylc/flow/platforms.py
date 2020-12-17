@@ -421,6 +421,33 @@ def get_install_target_from_platform(platform):
     return platform.get('install target')
 
 
+def get_install_target_to_platforms_map(platform_names):
+    """Get a dictionary of unique install targets and the platforms which use
+    them.
+
+    Return {install_target_1: [platform_1_dict, platform_2_dict, ...], ...}
+
+    Args:
+        platform_names (list): List of platform names to look up in the
+            global config.
+    """
+    platform_names = set(platform_names)
+    platforms = [get_platform(p_name) for p_name in platform_names]
+    # First get mapping of platforms to install targets:
+    platform_names_map = {
+        p_name: get_install_target_from_platform(get_platform(p_name))
+        for p_name in platform_names
+    }
+    install_targets = set(get_install_target_from_platform(platform)
+                          for platform in platforms)
+    # Now get the inverse - the mapping of install targets to platforms:
+    return {
+        target: [platform for platform in platforms
+                 if platform_names_map[platform['name']] == target]
+        for target in install_targets
+    }
+
+
 def is_platform_with_target_in_list(
         install_target, distinct_platforms_list):
     """Determines whether install target is in the list of platforms"""

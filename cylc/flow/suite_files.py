@@ -36,7 +36,8 @@ from cylc.flow.exceptions import (
 from cylc.flow.pathutil import (
     get_remote_suite_run_dir, get_suite_run_dir, make_localhost_symlinks,
     remove_dir)
-from cylc.flow.platforms import get_platform, get_install_target_from_platform
+from cylc.flow.platforms import (
+    get_platform, get_install_target_to_platforms_map)
 from cylc.flow.hostuserutil import (
     get_user,
     is_remote_host,
@@ -591,36 +592,24 @@ def init_clean(reg):
         platform_names = None
 
     if platform_names and platform_names != {'localhost'}:
-        # Get mapping of platforms to install targets:
+        # Clean on remote platforms
         try:
-            platforms = [get_platform(p_name) for p_name in platform_names]
+            install_targets_map = (
+                get_install_target_to_platforms_map(platform_names))
         except PlatformLookupError as exc:
             raise PlatformLookupError(
                 'Cannot clean on remote platforms as the workflow database is '
                 f'out of date/inconsistent with the global config - {exc}')
-        platform_names_map = {
-            p_name: get_install_target_from_platform(get_platform(p_name))
-            for p_name in platform_names
-        }
-        install_targets = set(get_install_target_from_platform(platform)
-                              for platform in platforms)
-        if 'localhost' in install_targets:
-            install_targets.remove('localhost')
-        # Now get the inverse - the mapping of install targets to platforms:
-        install_targets_map = {
-            target: [platform for platform in platforms
-                     if platform_names_map[platform['name']] == target]
-            for target in install_targets
-        }
-        # Clean on remote platforms:
-        procs = []
+        queue = []
         for target, platforms in install_targets_map.items():
+            if target == 'localhost':
+                continue
             shuffle(platforms)
             # Issue ssh command:
-            procs.append(
+            queue.append(
                 (remote_clean(reg, platforms[0]), target, platforms)
             )
-        for proc, target, platforms in procs:
+        for proc, target, platforms in queue:
             ret_code = proc.wait()
             out, err = (f.decode() for f in proc.communicate())
             if out:
@@ -635,7 +624,7 @@ def init_clean(reg):
                     " ".join(proc.args), ret_code, out, err)
                 LOG.error(exc)
                 if platforms:
-                    procs.append(
+                    queue.append(
                         (remote_clean(reg, platforms[0]), target, platforms)
                     )
                 else:  # Exhausted list of platforms
