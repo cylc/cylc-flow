@@ -306,9 +306,6 @@ class TestGraphParser(unittest.TestCase):
         gp1.parse_graph("bar<i-1,j> => baz<i,j>\nfoo<i=1,j> => qux")
         gp2 = GraphParser()
         gp2.parse_graph("""
-           baz_i0_j0
-           baz_i0_j1
-           baz_i0_j2
            foo_i1_j0 => qux
            foo_i1_j1 => qux
            foo_i1_j2 => qux
@@ -325,9 +322,6 @@ class TestGraphParser(unittest.TestCase):
         gp1.parse_graph("bar<i-1,j> => baz<i,j>")
         gp2 = GraphParser()
         gp2.parse_graph("""
-           baz_i0_j0
-           baz_i0_j1
-           baz_i0_j2
            bar_i0_j0 => baz_i1_j0
            bar_i0_j1 => baz_i1_j1
            bar_i0_j2 => baz_i1_j2""")
@@ -460,6 +454,50 @@ class TestGraphParser(unittest.TestCase):
             GraphParseError, gp.parse_graph, "FOO:custom- trigger => baz")
         self.assertRaises(
             GraphParseError, gp.parse_graph, "FOO:custom - trigger => baz")
+
+    def test_parameter_graph_mixing_offset_and_conditional(self):
+        """Test for bug reported in issue #2608 on GitHub:
+        https://github.com/cylc/cylc-flow/issues/2608"""
+        params = {'m': ["cat", "dog"]}
+        templates = {'m': '_%(m)s'}
+        gp = GraphParser(parameters=(params, templates))
+        gp.parse_graph("foo<m-1> & baz => foo<m>")
+        triggers = {
+            'foo_cat': {
+                '': (
+                    [], False
+                ),
+                'baz:succeed': (
+                    ['baz:succeed'], False
+                )
+            },
+            'foo_dog': {
+                'foo_cat:succeed': (
+                    ['foo_cat:succeed'], False
+                ),
+                'baz:succeed': (
+                    ['baz:succeed'], False
+                )
+            },
+            'baz': {
+                '': ([], False)
+            }
+        }
+        self.assertEqual(gp.triggers, triggers)
+
+    def test_param_expand_graph_parser(self):
+        """Test to validate that the graph parser removes out-of-edge nodes:
+        https://github.com/cylc/cylc-flow/pull/3452#issuecomment-677165000"""
+        params = {'m': ["cat"]}
+        templates = {'m': '_%(m)s'}
+        gp = GraphParser(parameters=(params, templates))
+        gp.parse_graph("foo => bar<m-1> => baz")
+        triggers = {
+            'foo': {
+                '': ([], False)
+            }
+        }
+        self.assertEqual(gp.triggers, triggers)
 
 
 if __name__ == "__main__":

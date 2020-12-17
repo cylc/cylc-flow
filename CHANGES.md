@@ -177,6 +177,9 @@ task outputs/message triggers are now validated.
 workflow in a sub-directory of a run directory (as `cylc scan` would not be
 able to find it).
 
+[#3452](https://github.com/cylc/cylc-flow/pull/3452) - Fix param graph
+issue when mixing offset and conditional (e.g. foo<m-1> & baz => foo<m>).
+
 [#3982](https://github.com/cylc/cylc-flow/pull/3982) - Fix bug preventing
 workflow from shutting down properly on a keyboard interrupt (Ctrl+C) in
 Python 3.8+.

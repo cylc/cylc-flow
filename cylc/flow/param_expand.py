@@ -260,8 +260,6 @@ class GraphExpander:
     """Handle parameter expansion of graph string lines."""
 
     _REMOVE = -32768
-    _REMOVE_REC = re.compile(
-        r'(?:^|\s*=>).*' + str(_REMOVE) + r'.*?(?:$|=>\s*?)')
 
     def __init__(self, parameters):
         """Initialize the parameterized task name expander.
@@ -371,8 +369,6 @@ class GraphExpander:
                     raise ParamExpandError('parameter %s is not '
                                            'defined.' % str(exc.args[0]))
                 line = line.replace('<' + p_group + '>', repl)
-                # Remove out-of-range nodes
-                line = self._REMOVE_REC.sub('', line)
             if line:
                 line_set.add(line)
         else:
