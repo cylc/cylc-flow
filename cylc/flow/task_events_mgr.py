@@ -1096,6 +1096,7 @@ class TaskEventsManager():
             # or a command that takes 4 arguments (classic interface)
             # Note quote() fails on None, need str(None).
             try:
+                # fmt: off
                 handler_data = {
                     EventData.JobID.value:
                         quote(str(itask.summary['submit_method_id'])),
@@ -1140,6 +1141,7 @@ class TaskEventsManager():
                     **get_event_handler_data(
                         itask.tdef.rtconfig, self.suite_cfg)
                 }
+                # fmt: on
                 cmd = handler % (handler_data)
             except KeyError as exc:
                 LOG.error(

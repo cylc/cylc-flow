@@ -23,6 +23,7 @@ from cylc.flow import __version__
 from cylc.flow.terminal import get_width
 
 
+# fmt: off
 LOGO_LETTERS = (
     (
         "      ",
@@ -65,6 +66,7 @@ LOGO_LETTERS = (
         "        "
     )
 )
+# fmt: on
 
 LOGO_LINES = [
     ''.join(

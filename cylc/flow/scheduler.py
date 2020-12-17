@@ -1028,6 +1028,7 @@ class Scheduler:
         # Write suite contact file.
         # Preserve contact data in memory, for regular health check.
         fields = suite_files.ContactFileFields
+        # fmt: off
         contact_data = {
             fields.API:
                 str(API),
@@ -1052,6 +1053,7 @@ class Scheduler:
             fields.VERSION:
                 CYLC_VERSION
         }
+        # fmt: on
         suite_files.dump_contact_file(self.suite, contact_data)
         self.contact_data = contact_data
 
