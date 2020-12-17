@@ -15,19 +15,24 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Submits task job scripts to loadleveler by the ``llsubmit`` command.
 
-# TODO: rewrite the following for platforms:
-
 .. cylc-scope:: flow.cylc[runtime][<namespace>]
 
 Loadleveler directives can be provided in the flow.cylc file:
 
 .. code-block:: cylc
+   :caption: global.cylc
+
+   [platforms]
+       [[myplatform]]
+           job runner = loadleveler
+
+.. code-block:: cylc
+   :caption: flow.cylc
 
    [runtime]
        [[my_task]]
+           platform = myplatform
            execution time limit = PT10M
-           [[[job]]]
-               batch system = loadleveler
            [[[directives]]]
                foo = bar
                baz = qux
@@ -54,7 +59,7 @@ If :cylc:conf:`execution time limit` is specified, it is used to generate the
 The hard limit will be set by adding an extra minute to the soft limit.  Do not
 specify the ``wall_clock_limit`` directive explicitly if :cylc:conf:`execution
 time limit` is specified. Otherwise, the execution time limit known by the
-suite may be out of sync with what is submitted to the batch system.
+suite may be out of sync with what is submitted to the job runner.
 
 .. cylc-scope::
 

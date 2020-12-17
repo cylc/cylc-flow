@@ -23,12 +23,19 @@ Uses the ``sbatch`` command. SLURM directives can be provided in the flow.cylc
 file:
 
 .. code-block:: cylc
+   :caption: global.cylc
+
+   [platforms]
+       [[myplatform]]
+           job runner = slurm
+
+.. code-block:: cylc
+   :caption: flow.cylc
 
    [runtime]
        [[my_task]]
-           [[[job]]]
-               batch system = slurm
-               execution time limit = PT1H
+           platform = myplatform
+           execution time limit = PT1H
            [[[directives]]]
                --nodes = 5
                --account = QXZ5W2
@@ -88,7 +95,8 @@ The resulting formatted directives are:
 .. note::
 
    For older Slurm versions with *packjob* instead of *hetjob*, use
-   ``batch system = slurm_packjob`` and directive prefixes ``packjob_0_`` etc.
+   :cylc:conf:`[platforms][<platform name>]job runner = slurm_packjob` and
+   directive prefixes ``packjob_0_`` etc.
 
 .. cylc-scope::
 

@@ -22,12 +22,19 @@
 PBS directives can be provided in the flow.cylc file:
 
 .. code-block:: cylc
+   :caption: global.cylc
+
+   [platforms]
+       [[myplatform]]
+           job runner = pbs
+
+.. code-block:: cylc
+   :caption: flow.cylc
 
    [runtime]
        [[my_task]]
-           [[[job]]]
-               batch system = pbs
-               execution time limit = PT1M
+           platform = myplatform
+           execution time limit = PT1M
            [[[directives]]]
                -V =
                -q = foo
@@ -48,7 +55,7 @@ If :cylc:conf:`execution time limit` is specified, it is used to generate the
 ``-l walltime`` directive. Do not specify the ``-l walltime`` directive
 explicitly if :cylc:conf:`execution time limit` is specified.  Otherwise, the
 execution time limit known by the suite may be out of sync with what is
-submitted to the batch system.
+submitted to the job runner.
 
 .. cylc-scope::
 
@@ -67,7 +74,7 @@ class PBSHandler:
     # You can modify this in the site/user `global.cfg` like this
     # [platforms]
     #     [[the-name-of-my-pbs-platform]]
-    #         batch system = pbs
+    #         job runner = pbs
     #         job name length maximum = 15
     JOB_NAME_LEN_MAX = 236
     KILL_CMD_TMPL = "qdel '%(job_id)s'"
