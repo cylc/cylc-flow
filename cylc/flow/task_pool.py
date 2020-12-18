@@ -418,22 +418,8 @@ class TaskPool:
                     TASK_STATUS_FAILED,
                     TASK_STATUS_SUCCEEDED
             ):
-                try:
-                    for message in json.loads(outputs_str).values():
-                        itask.state.outputs.set_completion(message, True)
-                except (AttributeError, TypeError, ValueError):
-                    # BACK COMPAT: outputs in separate lines
-                    # (as "trigger=message")
-                    # from:
-                    #     <=7.6.X
-                    # remove at:
-                    #     ???
-                    try:
-                        for output in outputs_str.splitlines():
-                            itask.state.outputs.set_completion(
-                                output.split("=", 1)[1], True)
-                    except AttributeError:
-                        pass
+                for message in json.loads(outputs_str).values():
+                    itask.state.outputs.set_completion(message, True)
 
             if platform_name:
                 itask.summary['platforms_used'][
