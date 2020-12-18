@@ -526,7 +526,7 @@ class TaskEventsManager():
                 itask, ("message %s" % str(severity).lower()), message)
         lseverity = str(severity).lower()
         if lseverity in self.NON_UNIQUE_EVENTS:
-            itask.non_unique_events.update(lseverity)
+            itask.non_unique_events.update({lseverity: 1})
             self.setup_event_handlers(itask, lseverity, message)
 
     def _process_message_check(
