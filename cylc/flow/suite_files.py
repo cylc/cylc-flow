@@ -578,60 +578,19 @@ def init_clean(reg):
     if not local_run_dir.is_dir() and not local_run_dir.is_symlink():
         LOG.info(f'No workflow directory to clean at {local_run_dir}')
         return
-    # Get platform names from DB:
-    suite_db_mgr = SuiteDatabaseManager(
-        local_run_dir.joinpath(SuiteFiles.Service.DIRNAME))
-    if Path(suite_db_mgr.pri_path).is_file():
-        pri_dao = suite_db_mgr.get_pri_dao()
-        platform_names = pri_dao.select_task_job_platforms()
-        pri_dao.close()
-    else:
+    platform_names = None
+    try:
+        platform_names = get_platforms_from_db(local_run_dir)
+    except FileNotFoundError:
         LOG.warning(
             'The workflow database is missing - will not be able to clean on '
             'any remote platforms')
-        platform_names = None
+    except SuiteServiceFileError as exc:
+        raise SuiteServiceFileError(f"Cannot clean - {exc}")
 
     if platform_names and platform_names != {'localhost'}:
-        # Clean on remote platforms
-        try:
-            install_targets_map = (
-                get_install_target_to_platforms_map(platform_names))
-        except PlatformLookupError as exc:
-            raise PlatformLookupError(
-                'Cannot clean on remote platforms as the workflow database is '
-                f'out of date/inconsistent with the global config - {exc}')
-        queue = []
-        for target, platforms in install_targets_map.items():
-            if target == 'localhost':
-                continue
-            shuffle(platforms)
-            # Issue ssh command:
-            queue.append(
-                (remote_clean(reg, platforms[0]), target, platforms)
-            )
-        for proc, target, platforms in queue:
-            ret_code = proc.wait()
-            out, err = (f.decode() for f in proc.communicate())
-            if out:
-                LOG.info(out)
-            if err:
-                LOG.warning(err)
-            if ret_code:
-                # Try again on the next platform for this install target:
-                this_platform = platforms.pop(0)
-                exc = TaskRemoteMgmtError(
-                    TaskRemoteMgmtError.MSG_TIDY, this_platform['name'],
-                    " ".join(proc.args), ret_code, out, err)
-                LOG.error(exc)
-                if platforms:
-                    queue.append(
-                        (remote_clean(reg, platforms[0]), target, platforms)
-                    )
-                else:  # Exhausted list of platforms
-                    raise CylcError(
-                        f'Could not clean on install target: {target}')
-
-    # Finally clean on local filesystem:
+        remote_clean(reg, platform_names)
+    # Lastly, clean on local filesystem:
     clean(reg)
 
 
@@ -688,7 +647,56 @@ def clean(reg, run_dir=None):
     _remove_empty_reg_parents(reg, run_dir)
 
 
-def remote_clean(reg, platform):
+def remote_clean(reg, platform_names):
+    """Clean on remote install targets (not localhost), given a set of
+    platform names to look up.
+
+    Args:
+        reg (str): Workflow name.
+        platform_names (list): List of platform names to look up in the global
+            config, in order to determine the install targets to clean on.
+    """
+    try:
+        install_targets_map = (
+            get_install_target_to_platforms_map(platform_names))
+    except PlatformLookupError as exc:
+        raise PlatformLookupError(
+            "Cannot clean on remote platforms as the workflow database is "
+            f"out of date/inconsistent with the global config - {exc}")
+
+    queue = []
+    for target, platforms in install_targets_map.items():
+        if target == 'localhost':
+            continue
+        shuffle(platforms)
+        # Issue ssh command:
+        queue.append(
+            (_remote_clean_cmd(reg, platforms[0]), target, platforms)
+        )
+    for proc, target, platforms in queue:
+        ret_code = proc.wait()
+        out, err = (f.decode() for f in proc.communicate())
+        if out:
+            LOG.info(out)
+        if err:
+            LOG.warning(err)
+        if ret_code:
+            # Try again on the next platform for this install target:
+            this_platform = platforms.pop(0)
+            exc = TaskRemoteMgmtError(
+                TaskRemoteMgmtError.MSG_TIDY, this_platform['name'],
+                " ".join(proc.args), ret_code, out, err)
+            LOG.error(exc)
+            if platforms:
+                queue.append(
+                    (_remote_clean_cmd(reg, platforms[0]), target, platforms)
+                )
+            else:  # Exhausted list of platforms
+                raise CylcError(
+                    f"Could not clean on install target: {target}")
+
+
+def _remote_clean_cmd(reg, platform):
     """Remove a stopped workflow on a remote host.
 
     Call "cylc remote-clean" over ssh and return the subprocess.
@@ -803,6 +811,24 @@ def _load_local_item(item, path):
             return file_.read()
     except IOError:
         return None
+
+
+def get_platforms_from_db(run_dir):
+    """Load the set of names of platforms (that jobs ran on) from the
+    workflow database.
+
+    Args:
+        run_dir (str): The workflow run directory.
+    """
+    suite_db_mgr = SuiteDatabaseManager(
+        os.path.join(run_dir, SuiteFiles.Service.DIRNAME))
+    suite_db_mgr.check_suite_db_compatibility()
+    try:
+        pri_dao = suite_db_mgr.get_pri_dao()
+        platform_names = pri_dao.select_task_job_platforms()
+        return platform_names
+    finally:
+        pri_dao.close()
 
 
 def _validate_reg(reg):

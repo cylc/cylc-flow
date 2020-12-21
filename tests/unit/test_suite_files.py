@@ -14,14 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.flow.suite_files import check_nested_run_dirs
+import logging
+import os.path
+from pathlib import Path
 import pytest
 from unittest import mock
 
-import os.path
-from pathlib import Path
+from cylc.flow import CYLC_LOG
 from cylc.flow import suite_files
 from cylc.flow.exceptions import SuiteServiceFileError, WorkflowFilesError
+from cylc.flow.suite_files import check_nested_run_dirs
 
 
 def get_register_test_cases():
@@ -344,22 +346,118 @@ def test_validate_reg(reg, expected_err, expected_msg):
 
 
 @pytest.mark.parametrize(
+    'reg, props, clean_called, remote_clean_called',
+    [
+        ('foo/bar', {
+            'no dir': True,
+            'log': (logging.INFO, "No workflow directory to clean")
+        }, False, False),
+        ('foo/bar', {
+            'no db': True,
+            'log': (logging.WARNING, "The workflow database is missing")
+        }, True, False),
+        ('foo/bar', {
+            'db platforms': ['localhost', 'localhost']
+        }, True, False),
+        ('foo/bar', {
+            'db platforms': ['horse']
+        }, True, True)
+    ]
+)
+def test_init_clean_ok(
+        reg, props, clean_called, remote_clean_called,
+        monkeypatch, tmp_path, caplog):
+    """Test the init_clean() function logic.
+
+    Params:
+        reg (str): Workflow name.
+        props (dict): Possible values are (all optional):
+            'no dir' (bool): If True, do not create run dir for this test case.
+            'log' (tuple): Of form (severity, msg):
+                severity (logging level): Expected level e.g. logging.INFO.
+                msg (str): Message that is expected to be logged.
+            'db platforms' (list): Platform names that would be loaded from
+                the database.
+            'no db' (bool): If True, workflow database doesn't exist.
+        clean_called (bool): If a local clean is expected to go ahead.
+        remote_clean_called (bool): If a remote clean is expected to go ahead.
+    """
+    # --- Setup ---
+    expected_log = props.get('log')
+    if expected_log:
+        level, msg = expected_log
+        caplog.set_level(level, CYLC_LOG)
+
+    tmp_path.joinpath('cylc-run').mkdir()
+    run_dir = tmp_path.joinpath('cylc-run', reg)
+    if not props.get('no dir'):
+        run_dir.mkdir(parents=True)
+
+    mocked_clean = mock.Mock()
+    monkeypatch.setattr('cylc.flow.suite_files.clean', mocked_clean)
+    mocked_remote_clean = mock.Mock()
+    monkeypatch.setattr('cylc.flow.suite_files.remote_clean',
+                        mocked_remote_clean)
+    monkeypatch.setattr('cylc.flow.suite_files.get_suite_run_dir',
+                        lambda x: tmp_path.joinpath('cylc-run', x))
+
+    _get_platforms_from_db = suite_files.get_platforms_from_db
+
+    def mocked_get_platforms_from_db(run_dir):
+        if props.get('no dir') or props.get('no db'):
+            return _get_platforms_from_db(run_dir)  # Handle as normal
+        return set(props.get('db platforms'))
+
+    monkeypatch.setattr('cylc.flow.suite_files.get_platforms_from_db',
+                        mocked_get_platforms_from_db)
+
+    # --- The actual test ---
+    suite_files.init_clean(reg)
+    if expected_log:
+        assert msg in caplog.text
+    if clean_called:
+        assert mocked_clean.called is True
+    else:
+        assert mocked_clean.called is False
+    if remote_clean_called:
+        assert mocked_remote_clean.called is True
+    else:
+        assert mocked_remote_clean.called is False
+
+
+@pytest.mark.parametrize(
+    'reg, err, err_msg',
+    [('foo/..', WorkflowFilesError,
+      "cannot be a path that points to the cylc-run directory or above"),
+     ('foo/../..', WorkflowFilesError,
+      "cannot be a path that points to the cylc-run directory or above")]
+)
+def test_init_clean_bad(reg, err, err_msg, monkeypatch):
+    """Test the init_clean() function fails appropriately.
+
+    Params:
+        reg (str): Workflow name.
+        err (Exception): Expected error.
+        err_msg (str): Message that is expected to be in the exception.
+    """
+    # We don't want to accidentally delete any files during this test
+    nerfed_os_rmdir = mock.Mock()
+    monkeypatch.setattr('os.rmdir', nerfed_os_rmdir)
+    nerfed_os_remove = mock.Mock()
+    monkeypatch.setattr('os.remove', nerfed_os_remove)
+
+    with pytest.raises(err) as exc:
+        suite_files.init_clean(reg)
+    assert err_msg in str(exc.value)
+    assert nerfed_os_rmdir.called is False
+    assert nerfed_os_remove.called is False
+
+
+@pytest.mark.parametrize(
     'reg, props',
     [
-        ('foo/bar/', {}),
-        ('foo', {'no dir': True}),
-        ('foo/..', {
-            'no dir': True,
-            'err': WorkflowFilesError,
-            'err msg': ('cannot be a path that points to the cylc-run '
-                        'directory or above')
-        }),
-        ('foo/../..', {
-            'no dir': True,
-            'err': WorkflowFilesError,
-            'err msg': ('cannot be a path that points to the cylc-run '
-                        'directory or above')
-        }),
+        ('foo/bar/', {}),  # Works ok
+        ('foo', {'no dir': True}),  # Nothing to clean
         ('foo', {
             'not stopped': True,
             'err': SuiteServiceFileError,
@@ -476,7 +574,7 @@ def test_clean(reg, props, monkeypatch, tmp_path):
 
 
 def test_clean_broken_symlink_run_dir(monkeypatch, tmp_path):
-    """Test removing a run dir that is a broken symlink."""
+    """Test clean() for removing a run dir that is a broken symlink."""
     reg = 'foo/bar'
     run_dir = tmp_path.joinpath('cylc-run', reg)
     run_dir.parent.mkdir(parents=True)
