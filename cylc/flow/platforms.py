@@ -442,8 +442,7 @@ def get_install_target_to_platforms_map(platform_names):
     }
 
 
-def is_platform_with_target_in_list(
-        install_target, distinct_platforms_list):
+def is_platform_with_target_in_list(install_target, distinct_platforms_list):
     """Determines whether install target is in the list of platforms"""
     for distinct_platform in distinct_platforms_list:
         return install_target == distinct_platform['install target']

@@ -328,15 +328,17 @@ def test_nested_run_dirs_raise_error(direction, monkeypatch):
 
 
 @pytest.mark.parametrize(
-    'reg, expected_err',
-    [('foo/bar/', None),
-     ('/foo/bar', SuiteServiceFileError)]
+    'reg, expected_err, expected_msg',
+    [('foo/bar/', None, None),
+     ('/foo/bar', SuiteServiceFileError, "cannot be an absolute path"),
+     ('$HOME/alone', SuiteServiceFileError, "invalid suite name")]
 )
-def test_validate_reg(reg, expected_err):
+def test_validate_reg(reg, expected_err, expected_msg):
     if expected_err:
         with pytest.raises(expected_err) as exc:
             suite_files._validate_reg(reg)
-        assert 'cannot be an absolute path' in str(exc.value)
+        if expected_msg:
+            assert expected_msg in str(exc.value)
     else:
         suite_files._validate_reg(reg)
 
