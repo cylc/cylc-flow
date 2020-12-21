@@ -11,12 +11,12 @@
 [![Anaconda-Server Badge](https://anaconda.org/conda-forge/cylc-flow/badges/version.svg)](https://anaconda.org/conda-forge/cylc-flow)
 [![chat](https://img.shields.io/matrix/cylc-general:matrix.org)](https://matrix.to/#/#cylc-general:matrix.org)
 [![forum](https://img.shields.io/discourse/https/cylc.discourse.group/posts.svg)](https://cylc.discourse.group/)
-[![Documentation](https://img.shields.io/website/https/cylc.github.io/doc/built-sphinx/index.html.svg?color=green&label=documentation&up_message=live)](https://cylc.github.io/doc/built-sphinx/index.html)
+[![Documentation](https://img.shields.io/website/https/cylc.github.io/cylc-doc/current/html/index.html.svg?&label=documentation&up_message=live)](https://cylc.github.io/cylc-doc/current/html/index.html)
 
 </div>
 </center>
 
-Cylc (pronounced silk) is a general purpose workflow engine 
+Cylc (pronounced silk) is a general purpose workflow engine
 that specialises in cycling workflows and has strong scaling characteristics.
 
 Cylc was originally developed to meet the challenges of production weather
@@ -96,6 +96,6 @@ Contributions welcome:
 
 ### Cylc Documentation
 
-[![Documentation](https://img.shields.io/website/https/cylc.github.io/doc/built-sphinx/index.html.svg?color=green&label=documentation&up_message=live)](https://cylc.github.io/doc/built-sphinx/index.html)
+[![Documentation](https://img.shields.io/website/https/cylc.github.io/cylc-doc/current/html/index.html.svg?&label=documentation&up_message=live)](https://cylc.github.io/cylc-doc/current/html/index.html)
 
 * See [The Cylc Website](https://cylc.github.io/)
