@@ -1,0 +1,55 @@
+name: Update copyright year
+
+on:
+  schedule:
+    - cron: '0 4 1 1 *' # Every Jan 1st @ 04:00 UTC
+
+jobs:
+  update-copyright:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+
+    - name: Checkout repo
+      uses: actions/checkout@v2
+
+    - name: Checkout PR branch
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        year=$(date '+%Y' --utc)
+        branch_name="copyright-${year}"
+        git checkout -b "$branch_name"
+        echo "YEAR=$year" >> $GITHUB_ENV
+        echo "BRANCH_NAME=$branch_name" >> $GITHUB_ENV
+
+    - name: Update copyright year
+      env:
+        README_FILE: 'README.md'
+        SCRIPTS_INIT_FILE: 'cylc/flow/scripts/__init__.py'
+      run: |
+        pattern="(<span actions:bind='current-year'>).*(<\/span>)"
+        sed -i -E "s/${pattern}/\1${YEAR}\2/" "$README_FILE"
+
+        pattern="(_copyright_year ?= ?)[^ #]*(.*)"
+        sed -i -E "s/${pattern}/\1${YEAR}\2/" "$SCRIPTS_INIT_FILE"
+
+    - name: Commit & push
+      run : |
+        git commit -a -m "Update copyright year" -m "Workflow: ${{ github.workflow }}, run: ${{ github.run_number }}"
+        git push origin "$BRANCH_NAME"
+
+    - name: Create pull request
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        curl -X POST \
+          https://api.github.com/repos/${{ github.repository }}/pulls \
+          -H "authorization: Bearer ${GH_TOKEN}" \
+          -H 'content-type: application/json' \
+          --data '{
+            "title": "Auto PR: update copyright year",
+            "head": "${{ env.BRANCH_NAME }}",
+            "base": "master",
+            "body": "Happy new year!"
+          }'

@@ -42,7 +42,12 @@ due to being a seldom-used feature. Workflows can still be restarted from the
 last run, or reflow can be used to achieve the same result.
 
 -------------------------------------------------------------------------------
-## __cylc-8.0a3 (2020-08?)__
+<!-- The topmost release date is automatically updated by GitHub Actions. When
+creating a new release entry be sure to copy & paste the span tag with the
+`actions:bind` attribute, which is used by a regex to find the text to be
+updated. Only the first match gets replaced, so it's fine to leave the old
+ones in. -->
+## __cylc-8.0a3 (<span actions:bind='release-date'>2020-08?</span>)__
 
 Fourth alpha release of Cylc 8.
 
