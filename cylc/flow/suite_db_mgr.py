@@ -557,29 +557,38 @@ class SuiteDatabaseManager:
 
     def on_restart(self):
         """Check & vacuum the runtime DB on restart."""
-        if not os.path.isfile(self.pri_path):
+        try:
+            self.check_suite_db_compatibility()
+        except FileNotFoundError:
             raise SuiteServiceFileError(
-                'Cannot restart as suite database not found')
-        self.check_suite_db_compatibility()
+                "Cannot restart as the workflow database was not found")
+        except SuiteServiceFileError as exc:
+            raise SuiteServiceFileError(
+                f"Cannot restart - {exc}")
         pri_dao = self.get_pri_dao()
-        pri_dao.vacuum()
-        self.n_restart = pri_dao.select_suite_params_restart_count() + 1
-        self.put_suite_params_1(self.KEY_RESTART_COUNT, self.n_restart)
-        pri_dao.close()
+        try:
+            pri_dao.vacuum()
+            self.n_restart = pri_dao.select_suite_params_restart_count() + 1
+            self.put_suite_params_1(self.KEY_RESTART_COUNT, self.n_restart)
+        finally:
+            pri_dao.close()
 
     def check_suite_db_compatibility(self):
         """Raises SuiteServiceFileError if the existing suite database is
         incompatible with the current version of Cylc."""
+        if not os.path.isfile(self.pri_path):
+            raise FileNotFoundError(self.pri_path)
+        incompat_msg = (
+            f"Workflow database is incompatible with Cylc {CYLC_VERSION}")
         pri_dao = self.get_pri_dao()
         try:
             last_run_ver = pri_dao.connect().execute(
                 f'SELECT value FROM {self.TABLE_SUITE_PARAMS} '
                 f'WHERE key == "{self.KEY_CYLC_VERSION}"').fetchone()[0]
         except TypeError:
-            raise SuiteServiceFileError(
-                'Cannot restart suite as the suite database is incompatible '
-                f'with Cylc {CYLC_VERSION}')
-        pri_dao.close()
+            raise SuiteServiceFileError(incompat_msg)
+        finally:
+            pri_dao.close()
         try:
             last_run_ver = packaging.version.Version(last_run_ver)
         except packaging.version.InvalidVersion:
@@ -588,5 +597,4 @@ class SuiteDatabaseManager:
             CylcSuiteDAO.RESTART_INCOMPAT_VERSION)
         if last_run_ver <= restart_incompat_ver:
             raise SuiteServiceFileError(
-                f'Cannot restart suite last run with Cylc {last_run_ver} as '
-                f'the suite database is incompatible with Cylc {CYLC_VERSION}')
+                f"{incompat_msg} (workflow last run with Cylc {last_run_ver})")
