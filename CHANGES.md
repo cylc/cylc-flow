@@ -42,7 +42,12 @@ due to being a seldom-used feature. Workflows can still be restarted from the
 last run, or reflow can be used to achieve the same result.
 
 -------------------------------------------------------------------------------
-## __cylc-8.0a3 (2020-08?)__
+<!-- The topmost release date is automatically updated by GitHub Actions. When
+creating a new release entry be sure to copy & paste the span tag with the
+`actions:bind` attribute, which is used by a regex to find the text to be
+updated. Only the first match gets replaced, so it's fine to leave the old
+ones in. -->
+## __cylc-8.0a3 (<span actions:bind='release-date'>2020-08?</span>)__
 
 Fourth alpha release of Cylc 8.
 
@@ -58,6 +63,12 @@ Remove cylc register's option `--run-dir=DIR`, which created a run directory
 symlink to `DIR` (see #3884).
 
 ### Enhancements
+
+[#3992](https://github.com/cylc/cylc-flow/pull/3992) - Rename
+batch system to job runner.
+
+[#3791](https://github.com/cylc/cylc-flow/pull/3791) - Support Slurm
+heterogeneous jobs with a special directive prefix.
 
 [#3974](https://github.com/cylc/cylc-flow/pull/3974) - Template variables,
 both in set files and provided via the -s/--set command line options are
@@ -135,6 +146,10 @@ use plugins to parse suite templating variables and additional files to
 install. Only one such plugin exists at the time of writing, designed to
 parse ``rose-suite.conf`` files in repository "cylc-rose".
 
+[#3955](https://github.com/cylc/cylc-flow/pull/3955) - Global config options
+to control the job submission environment.
+
+
 ### Fixes
 
 [#3984](https://github.com/cylc/cylc-flow/pull/3984) - Only write task
@@ -178,6 +193,9 @@ task outputs/message triggers are now validated.
 [#3852](https://github.com/cylc/cylc-flow/pull/3852) - Prevents registering a
 workflow in a sub-directory of a run directory (as `cylc scan` would not be
 able to find it).
+
+[#3452](https://github.com/cylc/cylc-flow/pull/3452) - Fix param graph
+issue when mixing offset and conditional (e.g. foo<m-1> & baz => foo<m>).
 
 [#3982](https://github.com/cylc/cylc-flow/pull/3982) - Fix bug preventing
 workflow from shutting down properly on a keyboard interrupt (Ctrl+C) in

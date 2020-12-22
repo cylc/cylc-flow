@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""PBS batch system job submission and manipulation: multi-cluster variant.
+"""PBS job submission and manipulation: multi-cluster variant.
 
 Support PBS clients that front heterogeneous clusters where the Job ID returned
 by qsub is <id>.<server>. PBS 13 qstat and qdel need <id>.<server>@<server>.
@@ -24,7 +24,7 @@ So this PBS handler writes "job_id@server" to the job status file, and appends
 """
 
 import re
-from cylc.flow.batch_sys_handlers.pbs import PBSHandler
+from cylc.flow.job_runner_handlers.pbs import PBSHandler
 
 
 # Match and extract PBS Job ID of the form "<job>.<host>"
@@ -53,4 +53,4 @@ class PBSMulticlusterHandler(PBSHandler):
         return re.sub(REC_JOB, REP_JOB, job_id.strip())
 
 
-BATCH_SYS_HANDLER = PBSMulticlusterHandler()
+JOB_RUNNER_HANDLER = PBSMulticlusterHandler()

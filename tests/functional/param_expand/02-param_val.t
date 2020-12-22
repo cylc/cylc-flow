@@ -22,8 +22,7 @@ set_test_number 23
 
 #------------------------------------------------------------------------------
 cat >'flow.cylc' <<'__SUITE__'
-[scheduler]
-    [[parameters]]
+[task parameters]
         i = cat, dog, fish
         j = 1..5
 [scheduling]
@@ -55,10 +54,9 @@ cmp_ok "${TNAME}-graph-nam" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph-nam-1.re
 
 #------------------------------------------------------------------------------
 cat >'flow.cylc' <<'__SUITE__'
-[scheduler]
-    [[parameters]]
-        i = cat, dog, fish
-        j = 1..5
+[task parameters]
+    i = cat, dog, fish
+    j = 1..5
 [scheduling]
     [[graph]]
         R1 = """foo => bar<i,j>
@@ -89,10 +87,9 @@ cmp_ok "${TNAME}-graph-nam" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph-nam-1.re
 #------------------------------------------------------------------------------
 # Same, with white space in the parameter syntax.
 cat >'flow.cylc' <<'__SUITE__'
-[scheduler]
-    [[parameters]]
-        i = cat, dog, fish
-        j = 1..5
+[task parameters]
+    i = cat, dog, fish
+    j = 1..5
 [scheduling]
     [[graph]]
         R1 = """foo => bar< i ,j >
@@ -122,10 +119,9 @@ cmp_ok "${TNAME}-graph-nam" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph-nam-1.re
 
 #------------------------------------------------------------------------------
 cat >'flow.cylc' <<'__SUITE__'
-[scheduler]
-    [[parameters]]
-        i = cat, dog, fish
-        j = 1..5
+[task parameters]
+    i = cat, dog, fish
+    j = 1..5
 [scheduling]
     [[graph]]
         R1 = """foo => bar<i,j>
@@ -155,10 +151,9 @@ cmp_ok "${TNAME}-graph-nam" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph-nam-b.re
 
 #------------------------------------------------------------------------------
 cat >'flow.cylc' <<'__SUITE__'
-[scheduler]
-    [[parameters]]
-        i = cat, dog, fish
-        j = 1..5
+[task parameters]
+    i = cat, dog, fish
+    j = 1..5
 [scheduling]
     [[graph]]
         R1 = """foo => bar<i,j>
@@ -179,10 +174,9 @@ run_ok "${TEST_NAME_BASE}-5" cylc validate "flow.cylc"
 
 #------------------------------------------------------------------------------
 cat >'flow.cylc' <<'__SUITE__'
-[scheduler]
-    [[parameters]]
-        i = cat, dog, fish
-        j = 1..5
+[task parameters]
+    i = cat, dog, fish
+    j = 1..5
 [scheduling]
     [[graph]]
         R1 = """foo => bar<i>_baz<j>"""
@@ -201,10 +195,9 @@ cmp_ok '06.graph' "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/06.graph.ref"
 
 #------------------------------------------------------------------------------
 cat >'flow.cylc' <<'__SUITE__'
-[scheduler]
-    [[parameters]]
-        i = cat, dog, fish
-        j = 1..5
+[task parameters]
+    i = cat, dog, fish
+    j = 1..5
 [scheduling]
     [[graph]]
         R1 = """foo => bar<i,j>
@@ -227,10 +220,9 @@ __ERR__
 
 #------------------------------------------------------------------------------
 cat >'flow.cylc' <<'__SUITE__'
-[scheduler]
-    [[parameters]]
-        i = cat, dog, fish
-        j = 1..5
+[task parameters]
+    i = cat, dog, fish
+    j = 1..5
 [scheduling]
     [[graph]]
         R1 = """foo => bar<i,j>

@@ -28,9 +28,7 @@ global config "[scheduler]process pool size" setting.
 
 The tests ignore normal site/user global config and instead use:
    ~/.cylc/flow/<cylc-version>/global-tests.cylc
-This should specify test platforms under the [test battery] section, plus any
-other critical settings settings, including [platforms] configuration for test
-platforms (and special batchview commands like qcat if available). Additional
+This should specify test platforms under the [platforms] section. Additional
 global config items can be added on the fly using the create_test_global_config
 shell function defined in the test_header.
 
@@ -65,7 +63,7 @@ Options:
 
                    Defaults to:
                        host: localhost
-                       batch-system: background
+                       job runner: background
 
                    Can be set to a glob. e.g. '_local*' will match all
                    configuted test platforms with local job submission.

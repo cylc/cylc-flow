@@ -39,9 +39,8 @@ BASE_GLOBAL_CONFIG="
 
 TEST_NAME="${TEST_NAME_BASE}"
 TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME}" - <<'__FLOW_CONFIG__'
-[scheduler]
-    [[parameters]]
-        foo = 1..25
+[task parameters]
+    foo = 1..25
 [scheduling]
     [[graph]]
         R1 = "task<foo> => task<foo+1>"

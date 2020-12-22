@@ -19,6 +19,13 @@
 . "$(dirname "$0")/test_header"
 set_test_number 3
 
+# This test relies on jobs inheriting the venv python from the scheduler.
+create_test_global_config "
+[platforms]
+    [[localhost]]
+        clean job submission environment = False
+"
+
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"

@@ -150,7 +150,16 @@ def addict(cfig, key, val, parents, index):
         # this item already exists
         if (
             parents[0:2] == ['scheduling', 'graph'] or
-            parents[0:2] == ['scheduling', 'dependencies']  # back compat <=7.X
+            # BACK COMPAT: [scheduling][dependencies]
+            # url:
+            #     https://github.com/cylc/cylc-flow/pull/3191
+            # from:
+            #     Cylc<=7
+            # to:
+            #     Cylc8
+            # remove at:
+            #     Cylc9
+            parents[0:2] == ['scheduling', 'dependencies']
         ):
             # append the new graph string to the existing one
             if not isinstance(cfig, list):

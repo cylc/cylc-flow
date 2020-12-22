@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -49,7 +49,7 @@ __SELECT__
 NAME='select-task-jobs.out'
 sqlite3 "${DB_FILE}" \
     'SELECT cycle, name, submit_num, is_manual_submit, submit_status, run_status,
-            platform_name, batch_sys_name
+            platform_name, job_runner_name
      FROM task_jobs ORDER BY name' \
     >"${NAME}"
 LOCALHOST="$(localhost_fqdn)"

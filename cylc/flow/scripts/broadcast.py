@@ -103,7 +103,7 @@ mutation (
     $bMode: BroadcastMode!,
     $cPoints: [CyclePoint],
     $nSpaces: [NamespaceName],
-    $bSettings: [GenericScalar],
+    $bSettings: [BroadcastSetting],
     $bCutoff: CyclePoint
 ) {
   broadcast (

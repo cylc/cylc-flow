@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -13,19 +14,27 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Cylc provides support for the following batch system handlers.
+#-------------------------------------------------------------------------------
+# Run a workflow with ``cylc run --host=somewhere-else``
+export REQUIRE_PLATFORM='loc:remote fs:shared runner:background'
+. "$(dirname "$0")/test_header"
+set_test_number 2
 
-.. autosummary::
-   :toctree: batch-sys-handlers
-   :template: automodule_batch_sys_handlers.rst
+# shellcheck disable=SC2016
+TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME_BASE}" <<< '
+# A total non-entity workflow - just something to run.
+[scheduling]
+    initial cycle point = 2020
+    [[graph]]
+        R1 = Aleph
 
-   cylc.flow.batch_sys_handlers.at
-   cylc.flow.batch_sys_handlers.background
-   cylc.flow.batch_sys_handlers.loadleveler
-   cylc.flow.batch_sys_handlers.lsf
-   cylc.flow.batch_sys_handlers.moab
-   cylc.flow.batch_sys_handlers.pbs
-   cylc.flow.batch_sys_handlers.sge
-   cylc.flow.batch_sys_handlers.slurm
+[runtime]
+    [[Aleph]]
+'
 
-"""
+suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" --host="${CYLC_TEST_HOST}" --no-detach
+
+grep_ok "Suite server:.*${CYLC_TEST_HOST}" "${SUITE_RUN_DIR}/log/suite/log"
+
+purge
+exit

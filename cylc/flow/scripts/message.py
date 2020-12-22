@@ -105,7 +105,14 @@ def main(parser, options, *args):
         return parser.error('No message supplied')
     cylc.flow.flags.verbose = os.getenv('CYLC_VERBOSE') == 'true'
     cylc.flow.flags.debug = os.getenv('CYLC_DEBUG') == 'true'
-    if len(args) <= 2:  # compat
+    if len(args) <= 2:
+        # BACK COMPAT: args <= 2
+        # from:
+        #     7.6?
+        # remove at:
+        #     9.0?
+        # (As of Dec 2020 some functional tests still use the classic
+        # two arg interface)
         suite = os.getenv('CYLC_SUITE_NAME')
         task_job = os.getenv('CYLC_TASK_JOB')
         message_strs = list(args)

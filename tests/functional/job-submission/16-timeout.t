@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test that job submission kill on timeout results in a failed job submission.
-export REQUIRE_PLATFORM='batch:at comms:tcp'
+export REQUIRE_PLATFORM='runner:at comms:tcp'
 . "$(dirname "$0")/test_header"
 set_test_number 4
 
@@ -25,7 +25,7 @@ create_test_global_config "" "
     process pool timeout = PT10S
 [platforms]
     [[$CYLC_TEST_PLATFORM]]
-        batch submit command template = sleep 30
+        job runner command template = sleep 30
 "
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"

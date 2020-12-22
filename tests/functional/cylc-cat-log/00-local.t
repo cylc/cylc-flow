@@ -60,7 +60,7 @@ grep_ok "jumped over the lazy dog" "${TEST_NAME}.stdout"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-task-status
 run_ok "${TEST_NAME}" cylc cat-log -f s "${SUITE_NAME}" a-task.1
-grep_ok "CYLC_BATCH_SYS_NAME=background" "${TEST_NAME}.stdout"
+grep_ok "CYLC_JOB_RUNNER_NAME=background" "${TEST_NAME}.stdout"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-task-activity
 run_ok "${TEST_NAME}" cylc cat-log -f a "${SUITE_NAME}" a-task.1

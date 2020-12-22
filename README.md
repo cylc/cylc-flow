@@ -11,12 +11,12 @@
 [![Anaconda-Server Badge](https://anaconda.org/conda-forge/cylc-flow/badges/version.svg)](https://anaconda.org/conda-forge/cylc-flow)
 [![chat](https://img.shields.io/matrix/cylc-general:matrix.org)](https://matrix.to/#/#cylc-general:matrix.org)
 [![forum](https://img.shields.io/discourse/https/cylc.discourse.group/posts.svg)](https://cylc.discourse.group/)
-[![Documentation](https://img.shields.io/website/https/cylc.github.io/doc/built-sphinx/index.html.svg?color=green&label=documentation&up_message=live)](https://cylc.github.io/doc/built-sphinx/index.html)
+[![Documentation](https://img.shields.io/website/https/cylc.github.io/cylc-doc/current/html/index.html.svg?&label=documentation&up_message=live)](https://cylc.github.io/cylc-doc/current/html/index.html)
 
 </div>
 </center>
 
-Cylc (pronounced silk) is a general purpose workflow engine 
+Cylc (pronounced silk) is a general purpose workflow engine
 that specialises in cycling workflows and has strong scaling characteristics.
 
 Cylc was originally developed to meet the challenges of production weather
@@ -64,16 +64,16 @@ Cylc 7 versions for production use.
 
 [![License](https://img.shields.io/github/license/cylc/cylc-flow.svg?color=lightgrey)](https://github.com/cylc/cylc-flow/blob/master/COPYING)
 
-Copyright (C) 2008-2020 NIWA & British Crown (Met Office) & Contributors.
- 
+Copyright (C) 2008-<span actions:bind='current-year'>2020</span> NIWA & British Crown (Met Office) & Contributors.
+
 Cylc is free software: you can redistribute it and/or modify it under the terms
 of the GNU General Public License as published by the Free Software Foundation,
 either version 3 of the License, or (at your option) any later version.
- 
+
 Cylc is distributed in the hope that it will be useful, but WITHOUT ANY
 WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 PARTICULAR PURPOSE.  See the GNU General Public License for more details.
- 
+
 You should have received a copy of the GNU General Public License along with
 Cylc.  If not, see [GNU licenses](http://www.gnu.org/licenses/).
 
@@ -96,6 +96,6 @@ Contributions welcome:
 
 ### Cylc Documentation
 
-[![Documentation](https://img.shields.io/website/https/cylc.github.io/doc/built-sphinx/index.html.svg?color=green&label=documentation&up_message=live)](https://cylc.github.io/doc/built-sphinx/index.html)
+[![Documentation](https://img.shields.io/website/https/cylc.github.io/cylc-doc/current/html/index.html.svg?&label=documentation&up_message=live)](https://cylc.github.io/cylc-doc/current/html/index.html)
 
 * See [The Cylc Website](https://cylc.github.io/)

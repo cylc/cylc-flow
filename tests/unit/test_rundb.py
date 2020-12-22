@@ -33,19 +33,19 @@ GLOBAL_CONFIG = """
         # platforms
     [[sugar]]
         hosts = localhost
-        batch system = slurm
+        job runner = slurm
     [[hpc]]
         hosts = hpcl1, hpcl2
         retrieve job logs = True
-        batch system = pbs
+        job runner = pbs
     [[hpcl1-bg]]
         hosts = hpcl1
         retrieve job logs = True
-        batch system = background
+        job runner = background
     [[hpcl2-bg]]
         hosts = hpcl2
         retrieve job logs = True
-        batch system = background
+        job runner = background
 """
 
 

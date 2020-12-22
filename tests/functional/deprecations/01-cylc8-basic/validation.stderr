@@ -13,6 +13,8 @@ WARNING -  * (8.0.0) [cylc][reference test] - DELETED (OBSOLETE)
 WARNING -  * (8.0.0) [cylc][simulation][disable suite event handlers] - DELETED (OBSOLETE)
 WARNING -  * (8.0.0) [cylc][simulation] - DELETED (OBSOLETE)
 WARNING -  * (8.0.0) [cylc][task event mail interval] -> [cylc][mail][task event batch interval] - value unchanged
+WARNING -  * (8.0.0) [cylc][parameters] -> [task parameters] - value unchanged
+WARNING -  * (8.0.0) [cylc][parameter templates] -> [task parameters][templates] - value unchanged
 WARNING -  * (8.0.0) [cylc][events][mail to] -> [cylc][mail][to] - value unchanged
 WARNING -  * (8.0.0) [cylc][events][mail from] -> [cylc][mail][from] - value unchanged
 WARNING -  * (8.0.0) [cylc][events][mail footer] -> [cylc][mail][footer] - value unchanged

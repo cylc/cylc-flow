@@ -1,7 +1,6 @@
-[scheduler]
-    [[parameters]]
-        num = 99..101..2
-        stuff = this, that
+[task parameters]
+    num = 99..101..2
+    stuff = this, that
 [scheduling]
     [[graph]]
         R1 = "t1<num,stuff> => t2<num,stuff>"

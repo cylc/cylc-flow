@@ -17,7 +17,7 @@
 import pytest
 import os
 
-from cylc.flow.batch_sys_handlers.slurm import BATCH_SYS_HANDLER
+from cylc.flow.job_runner_handlers.slurm_packjob import JOB_RUNNER_HANDLER
 
 home = os.path.expandvars('$HOME/')
 
@@ -25,59 +25,12 @@ home = os.path.expandvars('$HOME/')
 @pytest.mark.parametrize(
     'job_conf,lines',
     [
-        (  # basic
+        (  # heterogeneous job, old-style (packjob)
             {
-                'batch_system_conf': {},
-                'directives': {},
-                'execution_time_limit': 180,
-                'job_file_path': '$HOME/cylc-run/chop/log/job/1/axe/01/job',
-                'suite_name': 'chop',
-                'task_id': 'axe.1',
-            },
-            [
-                '#SBATCH --job-name=axe.1.chop',
-                (
-                    f'#SBATCH --output='
-                    f'{home}cylc-run/chop/log/job/1/axe/01/job.out'
-                ),
-                (
-                    f'#SBATCH --error='
-                    f'{home}cylc-run/chop/log/job/1/axe/01/job.err'
-                ),
-                '#SBATCH --time=3:00',
-            ],
-        ),
-        (  # task name with % character
-            {
-                'batch_system_conf': {},
-                'directives': {},
-                'execution_time_limit': 180,
-                'job_file_path': (
-                    '$HOME/cylc-run/chop/log/job/1/axe%40HEAD/01/job'
-                ),
-                'suite_name': 'chop',
-                'task_id': 'axe%40HEAD.1',
-            },
-            [
-                '#SBATCH --job-name=axe%40HEAD.1.chop',
-                (
-                    f'#SBATCH --output'
-                    f'={home}cylc-run/chop/log/job/1/axe%%40HEAD/01/job.out'
-                ),
-                (
-                    f'#SBATCH --error'
-                    f'={home}cylc-run/chop/log/job/1/axe%%40HEAD/01/job.err'
-                ),
-                '#SBATCH --time=3:00',
-            ],
-        ),
-        (  # some useful directives
-            {
-                'batch_system_conf': {},
                 'directives': {
                     '-p': 'middle',
-                    '--no-requeue': '',
-                    '--mem': '256gb',
+                    'packjob_0_--mem': '128gb',
+                    'packjob_1_--mem': '256gb',
                 },
                 'execution_time_limit': 200,
                 'job_file_path': '$HOME/cylc-run/chop/log/job/1/axe/01/job',
@@ -96,14 +49,16 @@ home = os.path.expandvars('$HOME/')
                 ),
                 '#SBATCH --time=3:20',
                 '#SBATCH -p=middle',
-                '#SBATCH --no-requeue',
+                '#SBATCH --mem=128gb',
+                '#SBATCH packjob',
                 '#SBATCH --mem=256gb',
             ],
         ),
+
     ],
 )
 def test_format_directives(job_conf: dict, lines: list):
-    assert BATCH_SYS_HANDLER.format_directives(job_conf) == lines
+    assert JOB_RUNNER_HANDLER.format_directives(job_conf) == lines
 
 
 @pytest.mark.parametrize(
@@ -117,4 +72,28 @@ def test_format_directives(job_conf: dict, lines: list):
     ],
 )
 def test_get_poll_many_cmd(job_ids: list, cmd: list):
-    assert BATCH_SYS_HANDLER.get_poll_many_cmd(job_ids) == cmd
+    assert JOB_RUNNER_HANDLER.get_poll_many_cmd(job_ids) == cmd
+
+
+@pytest.mark.parametrize(
+    'out,job_ids',
+    [
+        [
+            """HEADING
+1234567  JOB PROPERTIES
+709394   JOB PROPERTIES
+30624700 JOB PROPERTIES
+""", ['1234567', '30624700', '709394'],
+        ],
+        [
+            """HEADING
+1234567+0 JOB PROPERTIES (HETERO)
+1234567+1 JOB PROPERTIES (HETERO)
+709394    JOB PROPERTIES
+30624700  JOB PROPERTIES
+""", ['1234567', '30624700', '709394'],
+        ],
+    ],
+)
+def test_filter_poll_many_output(job_ids: list, out: str):
+    assert sorted(JOB_RUNNER_HANDLER.filter_poll_many_output(out)) == job_ids

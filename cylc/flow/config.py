@@ -132,10 +132,6 @@ class SuiteConfig:
     """Class for suite configuration items and derived quantities."""
 
     Q_DEFAULT = 'default'
-    TASK_EVENT_TMPL_KEYS = (
-        'event', 'suite', 'suite_uuid', 'point', 'name', 'submit_num', 'id',
-        'message', 'batch_sys_name', 'batch_sys_job_id', 'submit_time',
-        'start_time', 'finish_time', 'platform_name', 'try_num')
 
     def __init__(
         self,
@@ -271,14 +267,28 @@ class SuiteConfig:
             self.cfg['runtime']['root'] = OrderedDictWithDefaults()
 
         try:
-            parameter_values = self.cfg['scheduler']['parameters']
+            # Ugly hack to avoid templates getting included in parameters
+            parameter_values = {
+                key: value for key, value in
+                self.cfg['task parameters'].items()
+                if key != 'templates'
+            }
         except KeyError:
             # (Suite config defaults not put in yet.)
             parameter_values = {}
         try:
-            parameter_templates = self.cfg['scheduler']['parameter templates']
+            parameter_templates = self.cfg['task parameters']['templates']
+
         except KeyError:
             parameter_templates = {}
+
+        # Check that parameter templates are a section
+        if not hasattr(parameter_templates, 'update'):
+            raise SuiteConfigError(
+                '[task parameters][templates] is a section. Don\'t use it '
+                'as a parameter.'
+            )
+
         # parameter values and templates are normally needed together.
         self.parameters = (parameter_values, parameter_templates)
 
@@ -709,13 +719,25 @@ class SuiteConfig:
         # Replace suite and task name in suite and task URLs.
         self.cfg['meta']['URL'] = self.cfg['meta']['URL'] % {
             'suite_name': self.suite}
-        # back-compat $CYLC_SUITE_NAME:
+        # BACK_COMPAT: CYLC_SUITE_NAME
+        # from:
+        #     Cylc7
+        # to:
+        #     Cylc8
+        # remove at:
+        #     Cylc9
         self.cfg['meta']['URL'] = RE_SUITE_NAME_VAR.sub(
             self.suite, self.cfg['meta']['URL'])
         for name, cfg in self.cfg['runtime'].items():
             cfg['meta']['URL'] = cfg['meta']['URL'] % {
                 'suite_name': self.suite, 'task_name': name}
-            # back-compat $CYLC_SUITE_NAME and $CYLC_TASK_NAME:
+            # BACK_COMPAT: CYLC_SUITE_NAME, CYLC_TASK_NAME
+            # from:
+            #     Cylc7
+            # to:
+            #     Cylc8
+            # remove at:
+            #     Cylc9
             cfg['meta']['URL'] = RE_SUITE_NAME_VAR.sub(
                 self.suite, cfg['meta']['URL'])
             cfg['meta']['URL'] = RE_TASK_NAME_VAR.sub(
@@ -978,7 +1000,8 @@ class SuiteConfig:
         """Check for illegal parameter environment templates"""
         parameter_values = dict(
             (key, values[0])
-            for key, values in self.parameters[0].items() if values)
+            for key, values in self.parameters[0].items() if values
+        )
         bads = set()
         for task_name, task_items in self.cfg['runtime'].items():
             if 'environment' not in task_items:

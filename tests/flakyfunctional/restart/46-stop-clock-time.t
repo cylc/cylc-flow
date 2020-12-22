@@ -34,9 +34,9 @@ set_test_number 6
 # Restart
 # Suite runs to stop clock time, reset stop clock time
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
+[task parameters]
+    i = 1..10
 [scheduler]
-    [[parameters]]
-        i = 1..10
     [[events]]
         abort on stalled = True
         abort on inactivity = True
@@ -82,7 +82,7 @@ __LOG__
 for i in {01..10}; do
     ST_FILE="${SUITE_RUN_DIR}/log/job/1/t_i${i}/01/job.status"
     if [[ -e "${ST_FILE}" ]]; then
-        JOB_ID="$(awk -F= '$1 == "CYLC_BATCH_SYS_JOB_ID" {print $2}' "${ST_FILE}")"
+        JOB_ID="$(awk -F= '$1 == "CYLC_JOB_ID" {print $2}' "${ST_FILE}")"
         poll_pid_done "${JOB_ID}"
     fi
 done

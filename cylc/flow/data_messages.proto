@@ -108,8 +108,8 @@ message PbJob {
     optional string submitted_time = 6;
     optional string started_time = 7;
     optional string finished_time = 8;
-    optional string batch_sys_job_id = 9;
-    optional string batch_sys_name = 10;
+    optional string job_id = 9;
+    optional string job_runner_name = 10;
     optional string env_script = 11;
     optional string err_script = 12;
     optional string exit_script = 13;
@@ -123,7 +123,6 @@ message PbJob {
     optional string script = 21;
     optional string shell = 22;
     optional string work_sub_dir = 23;
-    optional string batch_sys_conf = 24;
     optional string environment = 25;
     optional string directives = 26;
     optional string param_var = 28;

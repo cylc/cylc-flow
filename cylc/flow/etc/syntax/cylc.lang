@@ -178,8 +178,8 @@
         <keyword>collapsed families</keyword>
         <keyword>clock-trigger</keyword>
         <keyword>clock-expire</keyword>
-        <keyword>batch system</keyword>
-        <keyword>batch submit command template</keyword>
+        <keyword>job runner</keyword>
+        <keyword>job runner command template</keyword>
         <keyword>abort on timeout</keyword>
         <keyword>abort on stalled</keyword>
         <keyword>abort on inactivity</keyword>

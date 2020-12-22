@@ -15,8 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Test the cylc.flow.remote module."""
 
-from subprocess import PIPE
-
 from cylc.flow.remote import run_cmd
 
 

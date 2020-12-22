@@ -16,6 +16,7 @@
 
 """Provide a class to represent a task proxy in a running suite."""
 
+from collections import Counter
 from time import time
 
 from metomi.isodatetime.timezone import get_local_time_zone
@@ -59,7 +60,7 @@ class TaskProxy:
         .manual_trigger (boolean):
             Has this task received a manual trigger command? This flag is reset
             on trigger.
-        .non_unique_events (dict):
+        .non_unique_events (collections.Counter):
             Count non-unique events (e.g. critical, warning, custom).
         .point (cylc.flow.cycling.PointBase):
             Cycle point of the task.
@@ -75,8 +76,8 @@ class TaskProxy:
         .submit_num (int):
             Number of times the task has attempted job submission.
         .summary (dict):
-            batch_sys_name (str):
-                Name of batch system where latest job is submitted.
+            job_runner_name (str):
+                Name of job runner where latest job is submitted.
             description (str):
                 Same as the .tdef.rtconfig['meta']['description'] attribute.
             execution_time_limit (float):
@@ -100,7 +101,7 @@ class TaskProxy:
             started_time_string (str):
                 Latest job execution start time as string.
             submit_method_id (str):
-                Latest ID of job in batch system.
+                Latest ID of job in job runner.
             submit_num (int):
                 Same as the .submit_num attribute.
             submitted_time (float):
@@ -207,7 +208,7 @@ class TaskProxy:
             'logfiles': [],
             'platforms_used': {},
             'execution_time_limit': None,
-            'batch_sys_name': None,
+            'job_runner_name': None,
             'submit_method_id': None,
             'flow_label': None
         }
@@ -221,9 +222,7 @@ class TaskProxy:
         self.poll_timer = None
         self.timeout = None
         self.try_timers = {}
-        # Use dict here for Python 2.6 compat.
-        # Should use collections.Counter in Python 2.7+
-        self.non_unique_events = {}
+        self.non_unique_events = Counter()
 
         self.clock_trigger_time = None
         self.expire_time = None

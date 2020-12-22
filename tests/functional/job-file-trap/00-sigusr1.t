@@ -34,11 +34,11 @@ run_tests() {
     # Make sure t1.1.1's status file is in place
     T1_STATUS_FILE="${SUITE_RUN_DIR}/log/job/1/t1/01/job.status"
 
-    poll_grep -E 'CYLC_BATCH_SYS_JOB_ID=' "${T1_STATUS_FILE}"
+    poll_grep -E 'CYLC_JOB_ID=' "${T1_STATUS_FILE}"
     poll_grep -E 'CYLC_JOB_INIT_TIME=' "${T1_STATUS_FILE}"
 
     # Kill the job and see what happens
-    T1_PID="$(awk -F= '$1=="CYLC_BATCH_SYS_JOB_ID" {print $2}' "${T1_STATUS_FILE}")"
+    T1_PID="$(awk -F= '$1=="CYLC_JOB_ID" {print $2}' "${T1_STATUS_FILE}")"
     kill -s 'USR1' "${T1_PID}"
     poll_grep -E 'WARNING|vacated/USR1' "${T1_STATUS_FILE}"
     poll_grep_suite_log 'vacated/USR1'

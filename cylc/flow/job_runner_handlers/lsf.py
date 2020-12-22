@@ -20,12 +20,19 @@
 LSF directives can be provided in the flow.cylc file:
 
 .. code-block:: cylc
+   :caption: global.cylc
+
+   [platforms]
+       [[myplatform]]
+           job runner = lsf
+
+.. code-block:: cylc
+   :caption: flow.cylc
 
    [runtime]
        [[my_task]]
+           platform = myplatform
            execution time limit = PT10M
-           [[[job]]]
-               batch system = lsf
            [[[directives]]]
                -q = foo
 
@@ -42,7 +49,7 @@ If :cylc:conf:`execution time limit` is specified, it is used to generate the
 ``-W`` directive. Do not specify the ``-W`` directive
 explicitly if :cylc:conf:`execution time limit` is specified. Otherwise, the
 execution time limit known by the suite may be out of sync with what is
-submitted to the batch system.
+submitted to the job runner.
 
 .. cylc-scope::
 
@@ -89,4 +96,4 @@ class LSFHandler():
         return (open(job_file_path), None)
 
 
-BATCH_SYS_HANDLER = LSFHandler()
+JOB_RUNNER_HANDLER = LSFHandler()

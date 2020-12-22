@@ -12,7 +12,7 @@ wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>'/dev/null' || true
 trap '' EXIT
 trap '' ERR
 ST_FNAME="${CYLC_TASK_LOG_ROOT}.status"
-sed -i '/\(CYLC_BATCH_SYS_NAME\|CYLC_BATCH_SYS_JOB_ID\)/d' "${ST_FNAME}"
+sed -i '/\(CYLC_JOB_RUNNER_NAME\|CYLC_JOB_ID\)/d' "${ST_FNAME}"
 #echo 'CYLC_JOB_EXIT=SUCCEEDED' >>"${ST_FNAME}"
 #echo "CYLC_JOB_EXIT_TIME=$(date -u +%FT%H:%M:%SZ)" >>"${ST_FNAME}"
 exit 0

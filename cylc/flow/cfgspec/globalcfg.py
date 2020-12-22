@@ -33,6 +33,18 @@ from cylc.flow.parsec.validate import (
 # - value_type: value type (compulsory).
 # - default: the default value (optional).
 # - allowed_2, ...: the only other allowed values of this setting (optional).
+
+# Standard executable search paths to pass to job submission subprocesses.
+SYSPATH = [
+    '/bin',
+    '/usr/bin',
+    '/usr/local/bin',
+    '/sbin',
+    '/usr/sbin',
+    '/usr/local/sbin'
+]
+
+
 with Conf('global.cylc', desc='''
     The global configuration which defines default Cylc Flow settings
     for a user or site.
@@ -319,11 +331,15 @@ with Conf('global.cylc', desc='''
 
     with Conf('platforms'):
         with Conf('<platform name>') as Platform:
-            Conf('batch system', VDR.V_STRING, 'background')
-            Conf('batch submit command template', VDR.V_STRING)
+            Conf('job runner', VDR.V_STRING, 'background', desc='''
+                The batch system/job submit method used to run jobs on the
+                platform, e.g., ``background``, ``at``, ``slurm``,
+                ``loadleveler``...
+            ''')
+            Conf('job runner command template', VDR.V_STRING)
             Conf('shell', VDR.V_STRING, '/bin/bash')
             Conf('run directory', VDR.V_STRING, '$HOME/cylc-run', desc='''
-                The number of old run directory trees to retain at start-up.
+                The directory in which to install workflows.
             ''')
             Conf('work directory', VDR.V_STRING, '$HOME/cylc-run', desc='''
                 The top level for suite work and share directories. Can contain
@@ -355,7 +371,7 @@ with Conf('global.cylc', desc='''
             Conf('submission polling intervals', VDR.V_INTERVAL_LIST, desc='''
                 Cylc can also poll submitted jobs to catch problems that
                 prevent the submitted job from executing at all, such as
-                deletion from an external batch scheduler queue. Routine
+                deletion from an external job runner queue. Routine
                 polling is done only for the polling ``task communication
                 method`` unless suite-specific polling is configured in
                 the suite configuration. A list of interval values can be
@@ -386,7 +402,7 @@ with Conf('global.cylc', desc='''
             Conf('execution time limit polling intervals',
                  VDR.V_INTERVAL_LIST, desc='''
                 The intervals between polling after a task job (submitted to
-                the relevant batch system on the relevant host) exceeds its
+                the relevant job runner on the relevant host) exceeds its
                 execution time limit. The default setting is PT1M, PT2M, PT7M.
                 The accumulated times (in minutes) for these intervals will be
                 roughly 1, 1 + 2 = 3 and 1 + 2 + 7 = 10 after a task job
@@ -525,13 +541,12 @@ with Conf('global.cylc', desc='''
                    qcat -o %(job_id)s
             ''')
             Conf('job name length maximum', VDR.V_INTEGER, desc='''
-                The maximum length for job name acceptable by a batch system on
+                The maximum length for job name acceptable by a job runner on
                 a given host.  Currently, this setting is only meaningful for
                 PBS jobs. For example, PBS 12 or older will fail a job submit
                 if the job name has more than 15 characters; whereas PBS 13
                 accepts up to 236 characters.
             ''')
-            Conf('owner', VDR.V_STRING)
             Conf('install target', VDR.V_STRING, desc='''
             This defaults to the platform name. This will be used as the
             target for remote file installation.
@@ -545,6 +560,40 @@ with Conf('global.cylc', desc='''
                        install target = localhost
             ''')
 
+            Conf('clean job submission environment', VDR.V_BOOLEAN, False,
+                 desc='''
+                Job submission subprocesses inherit their parent environment by
+                default. So remote job submissions inherit the default
+                non-interactive shell environment, but local ones inherit the
+                scheduler environment. This means local jobs see the scheduler
+                environment unless the local batch system prevents it, which
+                can cause problems - e.g. scheduler ``$PYTHON...`` variables
+                can affect Python programs executed by task job scripts. For
+                consistent handling of local and remote jobs a clean job
+                submission environment is recommended, but it is not the
+                default because it prevents local task jobs from running unless
+                the ``cylc`` version selection wrapper script is installed in
+                ``$PATH`` (a clean environment prevents local jobs from seeing
+                the scheduler's virtual environment).
+
+                Specific environment variables can be singled out to pass
+                through to the clean environment, if necessary.
+
+                A standard set of executable paths is passed through to clean
+                environments, and can be added to if necessary.
+            ''')
+
+            Conf('job submission environment pass-through', VDR.V_STRING_LIST,
+                 desc='''
+                Minimal list of environment variable names to pass through to
+                job submission subprocesses. $HOME is passed automatically.
+                You are unlikely to need this.
+            ''')
+            Conf('job submission executable paths', VDR.V_STRING_LIST, desc='''
+                Additional executable locations to pass to the job
+                submission subprocess beyond the standard locations''' +
+                 ', '.join(SYSPATH) + '''. You are unlikely to need this.
+            ''')
         with Conf('localhost', meta=Platform):
             Conf('hosts', VDR.V_STRING_LIST, ['localhost'])
 

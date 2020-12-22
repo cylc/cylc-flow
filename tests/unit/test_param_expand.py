@@ -154,9 +154,9 @@ class TestParamExpand(unittest.TestCase):
         """Test graph expansion with a -ve offset."""
         self.assertEqual(
             self.graph_expander.expand("bar<i-1,j>=>baz<i,j>"),
-            set(["baz_i0_j0",
-                 "baz_i0_j1",
-                 "baz_i0_j2",
+            set(["bar_i-32768_j0=>baz_i0_j0",
+                 "bar_i-32768_j1=>baz_i0_j1",
+                 "bar_i-32768_j2=>baz_i0_j2",
                  "bar_i0_j0=>baz_i1_j0",
                  "bar_i0_j1=>baz_i1_j1",
                  "bar_i0_j2=>baz_i1_j2"])
@@ -166,7 +166,8 @@ class TestParamExpand(unittest.TestCase):
         """Test graph expansion with a +ve offset."""
         self.assertEqual(
             self.graph_expander.expand("baz<i>=>baz<i+1>"),
-            set(["baz_i0=>baz_i1"])
+            set(["baz_i0=>baz_i1",
+                 "baz_i1=>baz_i-32768"])
         )
 
     def test_graph_expand_specific(self):
@@ -202,6 +203,147 @@ class TestParamExpand(unittest.TestCase):
             ParamExpandError, self.name_expander.expand, 'foo<k>')
         self.assertRaises(
             ParamExpandError, self.graph_expander.expand, 'foo<k>')
+
+    def _param_expand_params(self):
+        """Test data for test_parameter_graph_mixing_offset_and_conditional.
+
+            params_map, templates, expanded_str, expanded_values
+            params_map     : map of parameters used in the graph expression
+            templates      : parameters template
+            expanded_str   : graph string, using params/template
+            expanded_values: values expected to exist after params expanded
+        """
+        return (
+            # original case from #2608
+            (
+                {'m': ["cat", "dog"]},
+                {'m': '_%(m)s'},
+                "foo<m-1> & baz => foo<m>",
+                [
+                    'foo_-32768 & baz => foo_cat',
+                    'foo_cat & baz => foo_dog'
+                ]
+            ),
+            # cases from comments from #2608
+            # see cylc/cylc-flow/pull/3452#issuecomment-670782800
+            (
+                # single element, so bar<m-1> does not exist
+                {'m': ["cat"]},
+                {'m': '_%(m)s'},
+                "foo & bar<m-1> & baz => qux",
+                [
+                    "foo & bar_-32768 & baz => qux"
+                ]
+            ),
+            # cases from comments from #2608
+            # see cylc/cylc-flow/pull/3452#issuecomment-670776749
+            (
+                {'m': ["1", "2"]},
+                {'m': '_%(m)s'},
+                "foo<m-1> => bar<m> => baz",
+                [
+                    "foo_-32768 => bar_1 => baz",
+                    "foo_1 => bar_2 => baz"
+                ]
+            ),
+            # cases from comments from #2608
+            # see cylc/cylc-flow/pull/3452#discussion_r430967867
+            (
+                {'m': ["cat", "dog"]},
+                {'m': '_%(m)s'},
+                "baz & foo<m-1> & pub => foo<m>",
+                [
+                    "baz & foo_-32768 & pub => foo_cat",
+                    "baz & foo_cat & pub => foo_dog"
+                ]
+            ),
+            (
+                {'m': ["cat", "dog"]},
+                {'m': '_%(m)s'},
+                "bar & foo<m-1> & pub<m-1> & qux => foo<m>",
+                [
+                    "bar & foo_-32768 & pub_-32768 & qux => foo_cat",
+                    "bar & foo_cat & pub_cat & qux => foo_dog"
+                ]
+            ),
+            # GraphParser strips spaces!
+            (
+                {'m': ["cat"]},
+                {'m': '_%(m)s'},
+                "foo&bar<m-1>&baz=>qux",
+                [
+                    "foo&bar_-32768&baz=>qux"
+                ]
+            ),
+            (
+                {'m': ["cat", "dog"]},
+                {'m': '_%(m)s'},
+                "foo&bar<m-1>&baz=>qux",
+                [
+                    "foo&bar_-32768&baz=>qux",
+                    "foo&bar_cat&baz=>qux"
+                ]
+            ),
+            # must support & and | in graph expressions
+            (
+                {'m': ["cat", "dog"]},
+                {'m': '_%(m)s'},
+                "foo|bar<m-1>|baz=>qux",
+                [
+                    "foo|bar_-32768|baz=>qux",
+                    "foo|bar_cat|baz=>qux"
+                ]
+            ),
+            (
+                {'m': ["cat", "dog"]},
+                {'m': '_%(m)s'},
+                "foo&bar<m-1>|baz=>qux",
+                [
+                    "foo&bar_-32768|baz=>qux",
+                    "foo&bar_cat|baz=>qux"
+                ]
+            ),
+            (
+                {'m': ["cat", "dog"]},
+                {'m': '_%(m)s'},
+                "foo&bar<m-1>|baz=>qux",
+                [
+                    "foo&bar_-32768|baz=>qux",
+                    "foo&bar_cat|baz=>qux"
+                ]
+            ),
+            (
+                {'m': ["cat"]},
+                {'m': '_%(m)s'},
+                "foo => bar<m-1> => baz",
+                [
+                    "foo=>bar_-32768=>baz"
+                ]
+            )
+        )
+
+    def test_parameter_graph_mixing_offset_and_conditional(self):
+        """Test for bug reported in issue #2608 on GitHub."""
+        for test_case in self._param_expand_params():
+            params_map, templates, expanded_str, expanded_values = \
+                test_case
+            graph_expander = GraphExpander((params_map, templates))
+            # Ignore white spaces.
+            expanded = [expanded.replace(' ', '') for expanded in
+                        graph_expander.expand(expanded_str)]
+            self.assertEqual(
+                len(expanded_values),
+                len(expanded),
+                f"Invalid length for expected {expanded_values} and "
+                f"{expanded}")
+            # When testing, we don't really care for white spaces,as they
+            # are removed in the GraphParser anyway. That's why we have
+            # ''.replace(' ', '').
+            for expected in expanded_values:
+                self.assertTrue(
+                    expected.replace(' ', '') in expanded,
+                    f"Expected value {expected.replace(' ', '')} "
+                    f"not in {expanded}")
 
 
 if __name__ == "__main__":

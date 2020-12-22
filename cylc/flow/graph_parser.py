@@ -143,6 +143,23 @@ class GraphParser:
         r'(' + TaskID.NAME_RE + r')(<([\w.\-/]+)::(' +
         TaskID.NAME_RE + r')(' + _RE_TRIG + r')?>)')
 
+    # Remove out-of-range nodes
+    # <TASK_NAME_PART> : [^\s&\|] # i.e. sequence of not <AND|OR|SPACE>
+    # <REMOVE_TOKEN>   : <TASK_NAME_PART> <_REMOVE>
+    #                    <TASK_NAME_PART>?
+    _TASK_NAME_PART = rf'[^\s{OP_AND}{OP_OR}]'
+    _REMOVE_TOKEN = rf'{_TASK_NAME_PART}+{str(GraphExpander._REMOVE)}?' \
+                    rf'{_TASK_NAME_PART}+'
+    REC_NODE_OUT_OF_RANGE = re.compile(rf'''
+        (                                     #
+            ^{_REMOVE_TOKEN}[{OP_AND}{OP_OR}] # ^<REMOVE> <AND|OR>
+            |                                 #
+            [{OP_AND}{OP_OR}]{_REMOVE_TOKEN}  # <AND|OR> <REMOVE>
+            |                                 #
+            ^{_REMOVE_TOKEN}$                 # ^<REMOVE>$
+        )                                     #
+        ''', re.X)
+
     def __init__(self, family_map=None, parameters=None):
         """Initializing the graph string parser.
 
@@ -273,9 +290,27 @@ class GraphParser:
         # Parameterization can duplicate some dependencies, so use a set.
         pairs = set()
         for line in line_set:
+            chain = []
             # "foo => bar => baz" becomes [foo, bar, baz]
-            chain = line.split(ARROW)
+            # "foo => bar_-32768 => baz" becomes [foo]
+            # "foo_-32768 => bar" becomes []
+            for node in line.split(ARROW):
+                # This can happen, e.g. "foo => => bar" produces
+                # "foo, '', bar", so we add so that later it raises
+                # an error
+                if node == '':
+                    chain.append(node)
+                    continue
+                node = self.REC_NODE_OUT_OF_RANGE.sub('', node)
+                if node == '':
+                    # For "foo => bar<err> => baz", stop at "bar<err>"
+                    break
+                else:
+                    chain.append(node)
+
             # Auto-trigger lone nodes and initial nodes in a chain.
+            if not chain:
+                continue
             for name, offset, _ in self.__class__.REC_NODES.findall(chain[0]):
                 if not offset and not name.startswith('@'):
                     pairs.add((None, name))

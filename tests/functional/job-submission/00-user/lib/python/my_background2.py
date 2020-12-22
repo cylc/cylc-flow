@@ -16,11 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.flow.batch_sys_handlers.background import BgCommandHandler
+from cylc.flow.job_runner_handlers.background import BgCommandHandler
 
 
 class MyBgCommandHandler(BgCommandHandler):
     pass
 
 
-BATCH_SYS_HANDLER = MyBgCommandHandler()
+JOB_RUNNER_HANDLER = MyBgCommandHandler()

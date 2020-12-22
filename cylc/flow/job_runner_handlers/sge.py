@@ -20,12 +20,19 @@
 SGE directives can be provided in the flow.cylc file:
 
 .. code-block:: cylc
+   :caption: global.cylc
+
+   [platforms]
+       [[sge_platform]]
+           job runner = sge
+
+.. code-block:: cylc
+   :caption: flow.cylc
 
    [runtime]
        [[my_task]]
-           [[[job]]]
-               batch system = sge
-               execution time limit = P1D
+           platform = sge_platform
+           execution time limit = P1D
            [[[directives]]]
                -cwd =
                -q = foo
@@ -46,8 +53,8 @@ These are written to the top of the task job script like this:
 If :cylc:conf:`execution time limit` is specified, it is used to generate the
 ``-l h_rt`` directive. Do not specify the ``-l h_rt`` directive explicitly if
 :cylc:conf:`execution time limit` is specified.  Otherwise, the execution time
-limit known by the suite may be out of sync with what is submitted to the batch
-system.
+limit known by the suite may be out of sync with what is submitted to the
+job runner.
 
 .. cylc-scope::
 
@@ -100,8 +107,8 @@ class SGEHandler:
     def get_poll_many_cmd(cls, _):
         """Return poll command"""
         # No way to run POLL_CMD on specific job id(s). List all user's jobs.
-        # batch_sys_manager._jobs_poll_batch_sys checks requested id in list.
+        # job_runner_mgr._jobs_poll_runner checks requested id in list.
         return [cls.POLL_CMD]
 
 
-BATCH_SYS_HANDLER = SGEHandler()
+JOB_RUNNER_HANDLER = SGEHandler()

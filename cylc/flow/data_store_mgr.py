@@ -626,7 +626,7 @@ class DataStoreMgr:
             if not levels:
                 self.n_window_boundary_nodes[active_id][0] = {active_id}
                 levels = (0,)
-            # Only trigger pruning for futhest set of boundary nodes
+            # Only trigger pruning for furthest set of boundary nodes
             for tp_id in self.n_window_boundary_nodes[active_id][max(levels)]:
                 self.prune_trigger_nodes.setdefault(
                     tp_id, set()).add(active_id)

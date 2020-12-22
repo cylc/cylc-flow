@@ -19,7 +19,7 @@
 import os
 
 
-from cylc.flow.batch_sys_handlers.pbs import PBSHandler
+from cylc.flow.job_runner_handlers.pbs import PBSHandler
 
 
 class MyPBSHandler(PBSHandler):
@@ -30,4 +30,4 @@ class MyPBSHandler(PBSHandler):
         return os.path.join(os.path.dirname(__file__), 'badqstat')
 
 
-BATCH_SYS_HANDLER = MyPBSHandler()
+JOB_RUNNER_HANDLER = MyPBSHandler()

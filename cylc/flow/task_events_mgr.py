@@ -120,8 +120,10 @@ class EventData(Enum):
     TryNum = 'try_num'
     ID = 'id'
     Message = 'message'
-    BatchSysName = 'batch_sys_name'
-    BatchSysJobID = 'batch_sys_job_id'
+    JobRunnerName_old = 'batch_sys_name'  # deprecated
+    JobRunnerName = 'job_runner_name'
+    JobID_old = 'batch_sys_job_id'  # deprecated
+    JobID = 'job_id'
     SubmitTime = 'submit_time'
     StartTime = 'start_time'
     FinishTime = 'finish_time'
@@ -252,19 +254,27 @@ class TaskEventsManager():
         else:
             return can_poll
 
-    def get_host_conf(self, itask, key, default=None, skey="remote"):
-        """Return a host setting from suite then global configuration."""
+    def _get_remote_conf(self, itask, key):
+        """Get deprecated "[remote]" items that default to platforms."""
         overrides = self.broadcast_mgr.get_broadcast(itask.identity)
-        if skey in overrides and overrides[skey].get(key) is not None:
-            ret = overrides[skey][key]
-        elif itask.tdef.rtconfig[skey].get(key) not in (None, []):
-            ret = itask.tdef.rtconfig[skey][key]
-        else:
-            try:
-                ret = itask.platform[key]
-            except (KeyError, ItemNotFoundError):
-                ret = default
-        return ret
+        SKEY = 'remote'
+        if SKEY not in overrides:
+            overrides[SKEY] = {}
+        return (
+            overrides[SKEY].get(key) or
+            itask.tdef.rtconfig[SKEY][key] or
+            itask.platform[key]
+        )
+
+    def _get_suite_platforms_conf(self, itask, key, default):
+        """Return top level [runtime] items that default to platforms."""
+        overrides = self.broadcast_mgr.get_broadcast(itask.identity)
+        return (
+            overrides.get(key) or
+            itask.tdef.rtconfig[key] or
+            itask.platform[key] or
+            default
+        )
 
     def process_events(self, schd_ctx):
         """Process task events that were created by "setup_event_handlers".
@@ -516,8 +526,7 @@ class TaskEventsManager():
                 itask, ("message %s" % str(severity).lower()), message)
         lseverity = str(severity).lower()
         if lseverity in self.NON_UNIQUE_EVENTS:
-            itask.non_unique_events.setdefault(lseverity, 0)
-            itask.non_unique_events[lseverity] += 1
+            itask.non_unique_events.update({lseverity: 1})
             self.setup_event_handlers(itask, lseverity, message)
 
     def _process_message_check(
@@ -953,14 +962,14 @@ class TaskEventsManager():
                 itask,
                 itask.summary['submit_num'],
                 itask.summary['platforms_used'][itask.summary['submit_num']],
-                itask.summary['batch_sys_name'],
+                itask.summary['job_runner_name'],
                 itask.summary['submit_method_id'])
         except KeyError:
             pass
         self.suite_db_mgr.put_update_task_jobs(itask, {
             "time_submit_exit": event_time,
             "submit_status": 0,
-            "batch_sys_job_id": itask.summary.get('submit_method_id')})
+            "job_id": itask.summary.get('submit_method_id')})
 
         if itask.tdef.run_mode == 'simulation':
             # Simulate job execution at this point.
@@ -1001,10 +1010,10 @@ class TaskEventsManager():
         host = get_host_from_platform(itask.platform)
         if (event not in events or
                 not is_remote_host(host) or
-                not self.get_host_conf(itask, "retrieve job logs") or
+                not self._get_remote_conf(itask, "retrieve job logs") or
                 id_key in self._event_timers):
             return
-        retry_delays = self.get_host_conf(
+        retry_delays = self._get_remote_conf(
             itask, "retrieve job logs retry delays")
         if not retry_delays:
             retry_delays = [0]
@@ -1015,7 +1024,7 @@ class TaskEventsManager():
                     self.HANDLER_JOB_LOGS_RETRIEVE,  # key
                     self.HANDLER_JOB_LOGS_RETRIEVE,  # ctx_type
                     itask.platform['name'],
-                    self.get_host_conf(itask, "retrieve job logs max size"),
+                    self._get_remote_conf(itask, "retrieve job logs max size"),
                 ),
                 retry_delays
             )
@@ -1026,7 +1035,8 @@ class TaskEventsManager():
         if event in self.NON_UNIQUE_EVENTS:
             key1 = (
                 self.HANDLER_MAIL,
-                '%s-%d' % (event, itask.non_unique_events.get(event, 1)))
+                '%s-%d' % (event, itask.non_unique_events[event] or 1)
+            )
         else:
             key1 = (self.HANDLER_MAIL, event)
         id_key = (key1, str(itask.point), itask.tdef.name, itask.submit_num)
@@ -1068,10 +1078,11 @@ class TaskEventsManager():
         for i, handler in enumerate(handlers):
             if event in self.NON_UNIQUE_EVENTS:
                 key1 = (
-                    '%s-%02d' % (self.HANDLER_CUSTOM, i),
-                    '%s-%d' % (event, itask.non_unique_events.get(event, 1)))
+                    f'{self.HANDLER_CUSTOM}-{i:02d}',
+                    f'{event}-{itask.non_unique_events[event] or 1:d}'
+                )
             else:
-                key1 = ('%s-%02d' % (self.HANDLER_CUSTOM, i), event)
+                key1 = (f'{self.HANDLER_CUSTOM}-{i:02d}', event)
             id_key = (
                 key1, str(itask.point), itask.tdef.name, itask.submit_num)
             if id_key in self._event_timers:
@@ -1086,11 +1097,12 @@ class TaskEventsManager():
             # or a command that takes 4 arguments (classic interface)
             # Note quote() fails on None, need str(None).
             try:
+                # fmt: off
                 handler_data = {
-                    EventData.BatchSysJobID.value:
+                    EventData.JobID.value:
                         quote(str(itask.summary['submit_method_id'])),
-                    EventData.BatchSysName.value:
-                        quote(str(itask.summary['batch_sys_name'])),
+                    EventData.JobRunnerName.value:
+                        quote(str(itask.summary['job_runner_name'])),
                     EventData.CyclePoint.value:
                         quote(str(itask.point)),
                     EventData.Event.value:
@@ -1117,22 +1129,35 @@ class TaskEventsManager():
                         quote(str(self.uuid_str)),
                     EventData.TryNum.value:
                         itask.get_try_num(),
+                    # BACK COMPAT: JobID_old, JobRunnerName_old
+                    # url:
+                    #     https://github.com/cylc/cylc-flow/pull/3992
+                    # from:
+                    #     Cylc < 8
+                    # remove at:
+                    #     Cylc9 - pending announcement of deprecation
+                    # next 2 (JobID_old, JobRunnerName_old) are deprecated
+                    EventData.JobID_old.value:
+                        quote(str(itask.summary['submit_method_id'])),
+                    EventData.JobRunnerName_old.value:
+                        quote(str(itask.summary['job_runner_name'])),
                     # task and suite metadata
                     **get_event_handler_data(
                         itask.tdef.rtconfig, self.suite_cfg)
                 }
+                # fmt: on
                 cmd = handler % (handler_data)
             except KeyError as exc:
-                message = "%s/%s/%02d %s bad template: %s" % (
-                    itask.point, itask.tdef.name, itask.submit_num, key1, exc)
-                LOG.error(message)
+                LOG.error(
+                    f"{itask.point}/{itask.tdef.name}/{itask.submit_num:02d} "
+                    f"{key1} bad template: {exc}")
                 continue
 
             if cmd == handler:
                 # Nothing substituted, assume classic interface
-                cmd = "%s '%s' '%s' '%s' '%s'" % (
-                    handler, event, self.suite, itask.identity, message)
-            LOG.debug("[%s] -Queueing %s handler: %s", itask, event, cmd)
+                cmd = (f"{handler} '{event}' '{self.suite}' "
+                       f"'{itask.identity}' '{message}'")
+            LOG.debug(f"[{itask}] -Queueing {event} handler: {cmd}")
             self.add_event_timer(
                 id_key,
                 TaskActionTimer(
@@ -1163,9 +1188,9 @@ class TaskEventsManager():
             timeref = itask.summary['started_time']
             timeout_key = 'execution timeout'
             timeout = self._get_events_conf(itask, timeout_key)
-            delays = list(self.get_host_conf(
-                itask, 'execution polling intervals', skey='job',
-                default=[900]))  # Default 15 minute intervals
+            delays = list(self._get_suite_platforms_conf(
+                itask, 'execution polling intervals',
+                default=[900]))  # default 15 minute intervals
             if itask.summary[self.KEY_EXECUTE_TIME_LIMIT]:
                 time_limit = itask.summary[self.KEY_EXECUTE_TIME_LIMIT]
                 time_limit_delays = itask.platform.get(
@@ -1186,9 +1211,9 @@ class TaskEventsManager():
             timeref = itask.summary['submitted_time']
             timeout_key = 'submission timeout'
             timeout = self._get_events_conf(itask, timeout_key)
-            delays = list(self.get_host_conf(
-                itask, 'submission polling intervals', skey='job',
-                default=[900]))  # Default 15 minute intervals
+            delays = list(self._get_suite_platforms_conf(
+                itask, 'submission polling intervals',
+                default=[900]))
         try:
             itask.timeout = timeref + float(timeout)
             timeout_str = intvl_as_str(timeout)

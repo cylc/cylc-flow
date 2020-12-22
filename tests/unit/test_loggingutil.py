@@ -20,7 +20,7 @@ import unittest
 
 from unittest import mock
 
-from cylc.flow import LOG, RSYNC_LOG
+from cylc.flow import LOG
 from cylc.flow.loggingutil import TimestampRotatingFileHandler
 
 

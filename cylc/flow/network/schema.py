@@ -698,8 +698,8 @@ class Job(ObjectType):
     submitted_time = String()
     started_time = String()
     finished_time = String()
-    batch_sys_job_id = ID()
-    batch_sys_name = String()
+    job_id = ID()
+    job_runner_name = String()
     env_script = String()
     err_script = String()
     exit_script = String()
@@ -712,7 +712,6 @@ class Job(ObjectType):
     pre_script = String()
     script = String()
     work_sub_dir = String()
-    batch_sys_conf = GenericScalar(resolver=resolve_json_dump)
     environment = GenericScalar(resolver=resolve_json_dump)
     directives = GenericScalar(resolver=resolve_json_dump)
     param_var = GenericScalar(resolver=resolve_json_dump)
@@ -1219,6 +1218,23 @@ class BroadcastMode(Enum):
         return ''
 
 
+class BroadcastSetting(GenericScalar):
+    """A [runtime] key=value configuration for a namespace.
+
+    Should be a key=value pair where sections are wrapped with square
+    brackets.
+
+    Examples:
+        script=true
+        [environment]ANSWER=42
+
+    Nested sections should only have one set of square brackets e.g:
+
+        [section][subsection][subsubsection]=value
+
+    """
+
+
 class TaskStatus(Enum):
     """The status of a task in a workflow."""
 
@@ -1312,8 +1328,7 @@ class SuiteStopMode(Enum):
 class Broadcast(Mutation):
     class Meta:
         description = sstrip('''
-            Override or add new [runtime] config in targeted namespaces in
-            a running suite.
+            Override or add new [runtime] config in targeted namespaces.
 
             Uses for broadcast include making temporary changes to task
             behaviour, and task-to-downstream-task communication via
@@ -1350,7 +1365,10 @@ class Broadcast(Mutation):
     class Arguments:
         workflows = List(WorkflowID, required=True)
         mode = BroadcastMode(
-            default_value=1,
+            # use the enum name as the default value
+            # https://github.com/graphql-python/graphql-core-legacy/issues/166
+            default_value=BroadcastMode.Set.name,
+            description='What type of broadcast is this?',
             required=True
         )
         cycle_points = List(
@@ -1366,11 +1384,11 @@ class Broadcast(Mutation):
             default_value=['root']
         )
         settings = List(
-            GenericScalar,
+            BroadcastSetting,
             description=sstrip('''
                 The cylc namespace for the setting to modify.
-                e.g. `{environment: {variable_name: "value",. . .}. . .}`.
             '''),
+            # e.g. `{environment: {variable_name: "value",. . .}. . .}`.
         )
         cutoff = CyclePoint(
             description='Clear broadcasts ealier than cutoff cycle point.'
@@ -1638,10 +1656,7 @@ class Poll(Mutation, TaskMutation):
         resolver = partial(mutator, command='poll_tasks')
 
     class Arguments(TaskMutation.Arguments):
-        poll_succeeded = Boolean(
-            description='Allow polling of succeeded tasks.',
-            default_value=False
-        )
+        ...
 
 
 class Remove(Mutation, TaskMutation):
@@ -1690,30 +1705,43 @@ class Trigger(Mutation, TaskMutation):
         reflow = Boolean()
 
 
+def _mut_field(cls):
+    """Convert a mutation class into a field.
+
+    Sets the field metadata appropriately.
+
+    Args:
+        field (class):
+            Subclass of graphene.Mutation
+
+    Returns:
+        graphene.Field
+
+    """
+    return cls.Field(description=cls._meta.description)
+
+
 # Mutation declarations
 
 class Mutations(ObjectType):
     # workflow actions
-    broadcast = Broadcast.Field(description=Message._meta.description)
-    ext_trigger = ExtTrigger.Field(
-        description=ExtTrigger._meta.description)
-    hold = Hold.Field(description=Hold._meta.description)
-    message = Message.Field(description=Message._meta.description)
-    ping = Ping.Field(description=Ping._meta.description)
-    release = Release.Field(description=Release._meta.description)
-    reload = Reload.Field(description=Reload._meta.description)
-    set_verbosity = SetVerbosity.Field(
-        description=SetVerbosity._meta.description)
-    set_graph_window_extent = SetGraphWindowExtent.Field(
-        description=SetGraphWindowExtent._meta.description)
-    stop = Stop.Field(description=Stop._meta.description)
+    broadcast = _mut_field(Broadcast)
+    ext_trigger = _mut_field(ExtTrigger)
+    hold = _mut_field(Hold)
+    message = _mut_field(Message)
+    ping = _mut_field(Ping)
+    release = _mut_field(Release)
+    reload = _mut_field(Reload)
+    set_verbosity = _mut_field(SetVerbosity)
+    set_graph_window_extent = _mut_field(SetGraphWindowExtent)
+    stop = _mut_field(Stop)
 
     # task actions
-    kill = Kill.Field(description=Kill._meta.description)
-    poll = Poll.Field(description=Poll._meta.description)
-    remove = Remove.Field(description=Remove._meta.description)
-    set_outputs = SetOutputs.Field(description=SetOutputs._meta.description)
-    trigger = Trigger.Field(description=Trigger._meta.description)
+    kill = _mut_field(Kill)
+    poll = _mut_field(Poll)
+    remove = _mut_field(Remove)
+    set_outputs = _mut_field(SetOutputs)
+    trigger = _mut_field(Trigger)
 
     # job actions
     # TODO

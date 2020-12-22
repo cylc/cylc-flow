@@ -30,7 +30,6 @@ from time import sleep
 
 import cylc.flow.flags
 from cylc.flow import __version__ as CYLC_VERSION
-from cylc.flow import LOG
 from cylc.flow.platforms import get_platform, get_host_from_platform
 
 
@@ -199,7 +198,6 @@ def construct_rsync_over_ssh_cmd(
     rsync_cmd.append("--exclude=*")  # exclude everything else
     rsync_cmd.append(f"{src_path}/")
     rsync_cmd.append(f"{dst_host}:{dst_path}/")
-    LOG.debug(f"rsync cmd use for file install: {' '.join(rsync_cmd)}")
     return rsync_cmd
 
 

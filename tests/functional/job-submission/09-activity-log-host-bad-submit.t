@@ -17,15 +17,15 @@
 #-------------------------------------------------------------------------------
 # Test bad job submission, activity log has original command and some stderr
 # with the host name written.
-export REQUIRE_PLATFORM='batch:at loc:remote'
+export REQUIRE_PLATFORM='runner:at loc:remote'
 . "$(dirname "$0")/test_header"
 set_test_number 2
 
 create_test_global_config '' "
 [platforms]
     [[${CYLC_TEST_PLATFORM}]]
-        batch system = at
-        batch submit command template = at non
+        job runner = at
+        job runner command template = at non
 "
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"

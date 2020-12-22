@@ -236,8 +236,8 @@ class CylcSuiteDAO:
             ["run_signal"],
             ["run_status", {"datatype": "INTEGER"}],
             ["platform_name"],
-            ["batch_sys_name"],
-            ["batch_sys_job_id"],
+            ["job_runner_name"],
+            ["job_id"],
         ],
         TABLE_TASK_EVENTS: [
             ["name"],
@@ -553,7 +553,7 @@ class CylcSuiteDAO:
 
         Invoke callback(row_idx, row) on each row, where each row contains:
             [cycle, name, status, submit_num, time_submit, time_run,
-             time_run_exit, batch_sys_name, batch_sys_job_id, platform_name]
+             time_run_exit, job_runner_name, job_id, platform_name]
         """
         form_stmt = r"""
             SELECT
@@ -564,8 +564,8 @@ class CylcSuiteDAO:
                 %(task_jobs)s.time_submit,
                 %(task_jobs)s.time_run,
                 %(task_jobs)s.time_run_exit,
-                %(task_jobs)s.batch_sys_name,
-                %(task_jobs)s.batch_sys_job_id,
+                %(task_jobs)s.job_runner_name,
+                %(task_jobs)s.job_id,
                 %(task_jobs)s.platform_name
             FROM
                 %(task_jobs)s
@@ -743,7 +743,7 @@ class CylcSuiteDAO:
                 name,
                 cycle,
                 platform_name,
-                batch_sys_name,
+                job_runner_name,
                 time_submit,
                 time_run,
                 time_run_exit
@@ -756,7 +756,7 @@ class CylcSuiteDAO:
             'succeeded': 0,
         }
         columns = (
-            'name', 'cycle', 'host', 'batch_system',
+            'name', 'cycle', 'host', 'job_runner',
             'submit_time', 'start_time', 'succeed_time'
         )
         return columns, [r for r in self.connect().execute(q)]

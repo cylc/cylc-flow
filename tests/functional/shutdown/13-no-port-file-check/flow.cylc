@@ -19,8 +19,7 @@
         script = """
 wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
 # Remove contact file and don't report back to suite
-SRVD="$RUN_DIR/${CYLC_SUITE_NAME}/.service"
-rm -f "${SRVD}/contact"
+rm -f "${CYLC_SUITE_RUN_DIR}/.service/contact"
 trap '' EXIT
 exit
 """

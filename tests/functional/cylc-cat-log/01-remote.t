@@ -56,7 +56,7 @@ grep_ok "jumped over the lazy dog" "${TEST_NAME}.out"
 # remote
 TEST_NAME=${TEST_NAME_BASE}-task-status
 cylc cat-log -f s "${SUITE_NAME}" a-task.1 >"${TEST_NAME}.out"
-grep_ok "CYLC_BATCH_SYS_NAME=background" "${TEST_NAME}.out"
+grep_ok "CYLC_JOB_RUNNER_NAME=background" "${TEST_NAME}.out"
 #-------------------------------------------------------------------------------
 # local
 TEST_NAME=${TEST_NAME_BASE}-task-activity

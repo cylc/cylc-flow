@@ -22,53 +22,53 @@ from cylc.flow.exceptions import PlatformLookupError
 
 PLATFORMS = {
     'desktop[0-9]{2}|laptop[0-9]{2}': {
-        'batch system': 'background'
+        'job runner': 'background'
     },
     'sugar': {
         'hosts': 'localhost',
-        'batch system': 'slurm',
+        'job runner': 'slurm',
     },
     'hpc': {
         'hosts': ['hpc1', 'hpc2'],
-        'batch system': 'pbs',
+        'job runner': 'pbs',
     },
     'hpc1-bg': {
         'hosts': 'hpc1',
-        'batch system': 'background',
+        'job runner': 'background',
     },
     'hpc2-bg': {
         'hosts': 'hpc2',
-        'batch system': 'background'
+        'job runner': 'background'
     },
     'localhost': {
         'hosts': 'localhost',
-        'batch system': 'background'
+        'job runner': 'background'
     }
 }
 
 PLATFORMS_NO_UNIQUE = {
     'sugar': {
         'hosts': 'localhost',
-        'batch system': 'slurm'
+        'job runner': 'slurm'
     },
     'pepper': {
         'hosts': ['hpc1', 'hpc2'],
-        'batch system': 'slurm'
+        'job runner': 'slurm'
     },
 
 }
 
 PLATFORMS_WITH_RE = {
-    'hpc.*': {'hosts': 'hpc1', 'batch system': 'background'},
+    'hpc.*': {'hosts': 'hpc1', 'job runner': 'background'},
     'h.*': {'hosts': 'hpc3'},
     r'vld\d{2,3}': {},
     'nu.*': {
-        'batch system': 'slurm',
+        'job runner': 'slurm',
         'hosts': ['localhost']
     },
     'localhost': {
         'hosts': 'localhost',
-        'batch system': 'background'
+        'job runner': 'background'
     }
 }
 
@@ -80,7 +80,7 @@ PLATFORMS_WITH_RE = {
     "PLATFORMS, platform, expected",
     [
         (PLATFORMS_WITH_RE, "nutmeg", {
-            "batch system": "slurm",
+            "job runner": "slurm",
             "name": "nutmeg",
             "hosts": ['localhost']
         }),
@@ -91,7 +91,7 @@ PLATFORMS_WITH_RE = {
             "sugar",
             {
                 "hosts": "localhost",
-                "batch system": "slurm",
+                "job runner": "slurm",
                 "name": "sugar"
             },
         ),
@@ -101,11 +101,11 @@ PLATFORMS_WITH_RE = {
             {
                 "hosts": "localhost",
                 "name": "localhost",
-                "batch system": "background"
+                "job runner": "background"
             },
         ),
         (PLATFORMS, "laptop22", {
-            "batch system": "background",
+            "job runner": "background",
             "name": "laptop22",
             "hosts": ["laptop22"]
         }),
@@ -114,7 +114,7 @@ PLATFORMS_WITH_RE = {
             "hpc1-bg",
             {
                 "hosts": "hpc1",
-                "batch system": "background",
+                "job runner": "background",
                 "name": "hpc1-bg"
             },
         ),
@@ -155,7 +155,7 @@ def test_similar_but_not_exact_match():
             'desktop42'
         ),
 
-        # Basic test where the user hasn't sumbitted anything and the task
+        # Basic test where the user hasn't submitted anything and the task
         # returns to default, i.e. localhost.
         (
             {'batch system': 'background'},
@@ -255,10 +255,10 @@ def test_platform_from_job_info_two_spices(
     platforms = {
         'sugar': {
             'hosts': ['sugar', 'localhost'],
-            'batch system': 'slurm',
+            'job runner': 'slurm',
         },
         'pepper': {
-            'batch system': 'slurm',
+            'job runner': 'slurm',
             'hosts': 'pepper'
         },
 
@@ -266,15 +266,15 @@ def test_platform_from_job_info_two_spices(
     assert platform_from_job_info(platforms, job, remote) == returns
 
 
-# An example of two platforms with the same hosts and batch system settings
+# An example of two platforms with the same hosts and job runner settings
 # but some other setting different
 @pytest.mark.parametrize(
     'job, remote, returns',
     [
         (
             {
-                'batch system': 'background',
-                'batch submit command template': '',
+                'job runner': 'background',
+                'job runner command template': '',
                 'shell': '/bin/fish'
             },
             {
@@ -296,18 +296,18 @@ def test_platform_from_job_info_similar_platforms(
         'my-platform-with-bash': {
             'hosts': 'desktop01',
             'shell': '/bin/bash',
-            'batch system': 'background'
+            'job runner': 'background'
         },
         # An extra platform to check that we only pick up the first match
         'my-platform-with-fish-not-this-one': {
             'hosts': 'desktop01',
             'shell': '/bin/fish',
-            'batch system': 'background'
+            'job runner': 'background'
         },
         'my-platform-with-fish': {
             'hosts': 'desktop01',
             'shell': '/bin/fish',
-            'batch system': 'background'
+            'job runner': 'background'
         },
     }
     assert platform_from_job_info(platforms, job, remote) == returns

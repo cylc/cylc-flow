@@ -57,7 +57,7 @@ class TestTemplatevars(unittest.TestCase):
                 expected, load_template_vars(template_vars=None,
                                              template_vars_file=tf.name))
 
-    def test_load_template_vars_from_string_and_file(self):
+    def test_load_template_vars_from_string_and_file_1(self):
         """Text pair variables take precedence over file."""
         pairs = [
             "name='John'",
@@ -81,7 +81,7 @@ class TestTemplatevars(unittest.TestCase):
                 expected, load_template_vars(template_vars=pairs,
                                              template_vars_file=tf.name))
 
-    def test_load_template_vars_from_string_and_file(self):
+    def test_load_template_vars_from_string_and_file_2(self):
         """Text pair variables take precedence over file."""
         pairs = [
             "str='str'",

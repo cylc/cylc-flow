@@ -28,19 +28,19 @@ def test_get_platform_no_args():
 
 
 def test_get_platform_from_platform_name_str(mock_glbl_cfg):
-    # Check that an arbitary string name returns a sensible platform
+    # Check that an arbitrary string name returns a sensible platform
     mock_glbl_cfg(
         'cylc.flow.platforms.glbl_cfg',
         '''
         [platforms]
             [[saffron]]
                 hosts = saff01
-                batch system = slurm
+                job runner = slurm
         '''
     )
     platform = get_platform('saffron')
     assert platform['hosts'] == ['saff01']
-    assert platform['batch system'] == 'slurm'
+    assert platform['job runner'] == 'slurm'
 
 
 def test_get_platform_cylc7_8_syntax_mix_fails(mock_glbl_cfg):
@@ -68,13 +68,13 @@ def test_get_platform_from_config_with_platform_name(mock_glbl_cfg):
         [platforms]
             [[mace]]
                 hosts = mace001, mace002
-                batch system = slurm
+                job runner = slurm
         '''
     )
     task_conf = {'platform': 'mace'}
     platform = get_platform(task_conf)
     assert platform['hosts'] == ['mace001', 'mace002']
-    assert platform['batch system'] == 'slurm'
+    assert platform['job runner'] == 'slurm'
 
 
 @pytest.mark.parametrize(
@@ -93,7 +93,7 @@ def test_get_platform_from_config_with_platform_name(mock_glbl_cfg):
         ),
         (
             {'job': {'batch system': 'batchyMcBatchFace'}},
-            'local_batch_system'
+            'local_job_runner'
         ),
         (
             {'script': 'true'},
@@ -138,12 +138,12 @@ def test_get_platform_using_platform_from_job_info(
         [platforms]
             [[ras_el_hanout]]
                 hosts = rose, chilli, cumin, paprika
-                batch system = slurm
+                job runner = slurm
             [[spice_bg]]
                 hosts = rose, chilli, cumin, paprika
-            [[local_batch_system]]
+            [[local_job_runner]]
                 hosts = localhost
-                batch system = batchyMcBatchFace
+                job runner = batchyMcBatchFace
             [[cylcdevbox]]
                 hosts = cylcdevbox
         '''

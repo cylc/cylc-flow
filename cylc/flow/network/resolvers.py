@@ -584,15 +584,12 @@ class Resolvers(BaseResolvers):
         self.schd.command_queue.put(("remove_tasks", (tasks,), {}))
         return (True, 'Command queued')
 
-    def poll_tasks(self, tasks=None, poll_succeeded=False):
+    def poll_tasks(self, tasks=None):
         """Request the suite to poll task jobs.
 
         Args:
             tasks (list, optional):
                 List of identifiers, see `task globs`_
-            poll_succeeded (bool, optional):
-                Allow polling of remote tasks if True.
-
         Returns:
             tuple: (outcome, message)
 
@@ -603,7 +600,7 @@ class Resolvers(BaseResolvers):
 
         """
         self.schd.command_queue.put(
-            ("poll_tasks", (tasks,), {"poll_succ": poll_succeeded}))
+            ("poll_tasks", (tasks,), {}))
         return (True, 'Command queued')
 
     def put_ext_trigger(self, message, id):

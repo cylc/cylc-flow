@@ -16,8 +16,8 @@
 
 import pytest
 
-from cylc.flow.batch_sys_handlers.loadleveler import BATCH_SYS_HANDLER
-from cylc.flow.batch_sys_handlers.loadleveler import LoadlevelerHandler
+from cylc.flow.job_runner_handlers.loadleveler import JOB_RUNNER_HANDLER
+from cylc.flow.job_runner_handlers.loadleveler import LoadlevelerHandler
 
 
 @pytest.mark.parametrize(
@@ -25,7 +25,6 @@ from cylc.flow.batch_sys_handlers.loadleveler import LoadlevelerHandler
     [
         (  # basic
             {
-                'batch_system_conf': {},
                 'directives': {},
                 'execution_time_limit': 180,
                 'job_file_path': '$HOME/cylc-run/chop/log/job/1/axe/01/job',
@@ -43,7 +42,6 @@ from cylc.flow.batch_sys_handlers.loadleveler import LoadlevelerHandler
 
         (  # some useful directives
             {
-                'batch_system_conf': {},
                 'directives': {
                     '-q': 'forever',
                     '-V': '',
@@ -68,7 +66,7 @@ from cylc.flow.batch_sys_handlers.loadleveler import LoadlevelerHandler
     ],
 )
 def test_format_directives(job_conf: dict, lines: list):
-    assert BATCH_SYS_HANDLER.format_directives(job_conf) == lines
+    assert JOB_RUNNER_HANDLER.format_directives(job_conf) == lines
 
 
 def test_filter_poll_many_output():

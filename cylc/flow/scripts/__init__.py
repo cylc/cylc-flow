@@ -23,6 +23,9 @@ from cylc.flow import __version__
 from cylc.flow.terminal import get_width
 
 
+_copyright_year = 2020  # This is set by GH Actions update_copyright workflow
+
+# fmt: off
 LOGO_LETTERS = (
     (
         "      ",
@@ -65,6 +68,7 @@ LOGO_LETTERS = (
         "        "
     )
 )
+# fmt: on
 
 LOGO_LINES = [
     ''.join(
@@ -79,7 +83,7 @@ LOGO_LINES = [
 
 LICENCE = dedent(f"""
     The Cylc Workflow Engine [{__version__}]
-    Copyright (C) 2008-2020 NIWA
+    Copyright (C) 2008-{_copyright_year} NIWA
     & British Crown (Met Office) & Contributors.
 """)
 

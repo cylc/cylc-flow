@@ -19,10 +19,10 @@
 (This command is for internal use. Users should use "cylc poll".)
 
 Read job status files to obtain the statuses of the jobs. If necessary, Invoke
-the relevant batch system commands to ask the batch systems for more statuses.
+the relevant job runner commands to ask the job runners for more statuses.
 
 """
-from cylc.flow.batch_sys_manager import BatchSysManager
+from cylc.flow.job_runner_mgr import JobRunnerManager
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
 
@@ -44,7 +44,7 @@ def get_option_parser():
 @cli_function(get_option_parser)
 def main(parser, options, job_log_root, *job_log_dirs):
     """CLI main."""
-    BatchSysManager().jobs_poll(job_log_root, job_log_dirs)
+    JobRunnerManager().jobs_poll(job_log_root, job_log_dirs)
 
 
 if __name__ == "__main__":

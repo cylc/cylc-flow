@@ -14,19 +14,25 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#-------------------------------------------------------------------------------
+#------------------------------------------------------------------------------
 # Test job submission with a very chatty command.
 # + Simulate "cylc jobs-submit" getting killed half way through.
-export REQUIRE_PLATFORM='batch:at'
+
+export REQUIRE_PLATFORM='runner:at'
+
 . "$(dirname "$0")/test_header"
 set_test_number 15
 
-create_test_global_config "" "
-[scheduler]
-    process pool timeout = PT10S
+# This test relies on jobs inheriting the scheduler environment: the job
+# submission command bin/talkingnonsense reads COPYING from $CYLC_REPO_DIR
+# and writes to $CYLC_SUITE_RUN_DIR.
+
+create_test_global_config "
+process pool timeout = PT10S
 [platforms]
     [[$CYLC_TEST_PLATFORM]]
-        batch submit command template = talkingnonsense %(job)s
+        job runner command template = talkingnonsense %(job)s
+        clean job submission environment = False
 "
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"

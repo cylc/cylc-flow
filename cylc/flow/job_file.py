@@ -22,7 +22,7 @@ from subprocess import Popen, PIPE, DEVNULL
 from textwrap import dedent
 
 from cylc.flow import __version__ as CYLC_VERSION
-from cylc.flow.batch_sys_manager import BatchSysManager
+from cylc.flow.job_runner_mgr import JobRunnerManager
 import cylc.flow.flags
 from cylc.flow.pathutil import (
     get_remote_suite_run_dir,
@@ -36,7 +36,7 @@ class JobFileWriter:
 
     def __init__(self):
         self.suite_env = {}
-        self.batch_sys_mgr = BatchSysManager()
+        self.job_runner_mgr = JobRunnerManager()
 
     def set_suite_env(self, suite_env):
         """Configure suite environment for all job files."""
@@ -127,19 +127,19 @@ class JobFileWriter:
         for prefix, value in [
                 ("# Suite: ", job_conf['suite_name']),
                 ("# Task: ", job_conf['task_id']),
-                (BatchSysManager.LINE_PREFIX_JOB_LOG_DIR, job_conf['job_d']),
-                (BatchSysManager.LINE_PREFIX_BATCH_SYS_NAME,
-                 job_conf['platform']['batch system']),
-                (BatchSysManager.LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL,
-                 job_conf['platform']['batch submit command template']),
-                (BatchSysManager.LINE_PREFIX_EXECUTION_TIME_LIMIT,
+                (JobRunnerManager.LINE_PREFIX_JOB_LOG_DIR, job_conf['job_d']),
+                (JobRunnerManager.LINE_PREFIX_JOB_RUNNER_NAME,
+                 job_conf['platform']['job runner']),
+                (JobRunnerManager.LINE_PREFIX_JOB_RUNNER_CMD_TMPL,
+                 job_conf['platform']['job runner command template']),
+                (JobRunnerManager.LINE_PREFIX_EXECUTION_TIME_LIMIT,
                  job_conf['execution_time_limit'])]:
             if value:
                 handle.write("\n%s%s" % (prefix, value))
 
     def _write_directives(self, handle, job_conf):
         """Job directives."""
-        lines = self.batch_sys_mgr.format_directives(job_conf)
+        lines = self.job_runner_mgr.format_directives(job_conf)
         if lines:
             handle.write('\n\n# DIRECTIVES:')
             for line in lines:
@@ -165,8 +165,9 @@ class JobFileWriter:
         """Job script prelude."""
         # Variables for traps
         handle.write("\nCYLC_FAIL_SIGNALS='%s'" % " ".join(
-            self.batch_sys_mgr.get_fail_signals(job_conf)))
-        vacation_signals_str = self.batch_sys_mgr.get_vacation_signal(job_conf)
+            self.job_runner_mgr.get_fail_signals(job_conf)))
+        vacation_signals_str = self.job_runner_mgr.get_vacation_signal(
+            job_conf)
         if vacation_signals_str:
             handle.write("\nCYLC_VACATION_SIGNALS='%s'" % vacation_signals_str)
         # Path to cylc executable, if defined.
@@ -353,4 +354,4 @@ class JobFileWriter:
         """Write epilogue."""
         handle.write(f'\n\n. "{run_d}/.service/etc/job.sh"\ncylc__job__main')
         handle.write("\n\n%s%s\n" % (
-            BatchSysManager.LINE_PREFIX_EOF, job_conf['job_d']))
+            JobRunnerManager.LINE_PREFIX_EOF, job_conf['job_d']))

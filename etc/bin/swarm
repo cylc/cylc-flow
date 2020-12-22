@@ -65,7 +65,7 @@ The Containers:
 
     Each platform is named using this convention:
 
-        _<submission_locality>_<batch_system>_<filesystem>_<comms_method>
+        _<submission_locality>_<job_runner>_<filesystem>_<comms_method>
 
         submission_locality {local, remote}:
             Where do jobs get submitted?
@@ -73,8 +73,8 @@ The Containers:
             * Locally (on the scheduler host).
             * Remotely (on a remote host).
 
-        batch_system {background, at, slurm, ...}:
-            The name of the batch system the container is configured to use.
+        job_runner {background, at, slurm, ...}:
+            The name of the job runner the container is configured to use.
 
         filesystem {indep, shared}:
             What is the relationship between the filesystem in the contaier to
@@ -127,7 +127,7 @@ Port Mapping:
     Each container uses one port to enable SSH, the SSH config maps these
     ports to hostnames. The ports are as follows:
 
-    Batch System:
+    Job Runner:
         * 42200 - "background/at"
 
     Filesystem:
@@ -229,7 +229,7 @@ append_config () {
             if [[ "$POS" == top ]]; then
                 # ... at the top of the file
                 sed -i "1i$LINE" "$LOC"
-            elif [[ "$POS" == bottom ]]; then 
+            elif [[ "$POS" == bottom ]]; then
                 # ... at the bottom of the file
                 echo -e "\n$LINE" >> "$LOC"
             else

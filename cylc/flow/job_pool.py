@@ -84,7 +84,7 @@ class JobPool:
             submit_num=sub_num,
             state=JOB_STATUSES_ALL[0],
             task_proxy=t_id,
-            batch_sys_name=job_conf['batch_system_name'],
+            job_runner_name=job_conf['job_runner_name'],
             env_script=job_conf['env-script'],
             err_script=job_conf['err-script'],
             exit_script=job_conf['exit-script'],
@@ -98,7 +98,6 @@ class JobPool:
             work_sub_dir=job_conf['work_d'],
             name=name,
             cycle_point=point_string,
-            batch_sys_conf=json.dumps(job_conf['batch_system_conf']),
             directives=json.dumps(job_conf['directives']),
             environment=json.dumps(job_conf['environment']),
             param_var=json.dumps(job_conf['param_var'])
@@ -118,7 +117,7 @@ class JobPool:
         if row_idx == 0:
             LOG.info("LOADING job data")
         (point_string, name, status, submit_num, time_submit, time_run,
-         time_run_exit, batch_sys_name, batch_sys_job_id, platform_name) = row
+         time_run_exit, job_runner_name, job_id, platform_name) = row
         if status not in JOB_STATUS_SET:
             return
         t_id = f'{self.workflow_id}{ID_DELIM}{point_string}{ID_DELIM}{name}'
@@ -141,8 +140,8 @@ class JobPool:
                 submitted_time=time_submit,
                 started_time=time_run,
                 finished_time=time_run_exit,
-                batch_sys_name=batch_sys_name,
-                batch_sys_job_id=batch_sys_job_id,
+                job_runner_name=job_runner_name,
+                job_id=job_id,
                 host=j_host,
                 owner=j_owner,
                 name=name,
@@ -262,10 +261,26 @@ class JobPool:
 
     @staticmethod
     def parse_job_item(item):
-        """Parse internal id
-        point/name/submit_num
-        or name.point.submit_num syntax (back compat).
+        """Parse internal id.
+
+        Args:
+            item (str):
+                point/name/submit_num
+                OR name.point.submit_num syntax.
+
+        Returns:
+            tuple - (point_str: str, name_str: str, submit_num: [int, None])
+
         """
+        # BACK COMPAT: name.point.submit_num
+        # url:
+        #     https://github.com/cylc/cylc-admin/pull/115
+        # from:
+        #     Cylc7
+        # to:
+        #     Cylc8
+        # remove at:
+        #     Cylc9
         submit_num = None
         if item.count('/') > 1:
             point_str, name_str, submit_num = item.split('/', 2)
