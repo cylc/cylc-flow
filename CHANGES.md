@@ -141,6 +141,10 @@ config option `[scheduling]stop after cycle point`.
 [#3961](https://github.com/cylc/cylc-flow/pull/3961) - Added a new command:
 `cylc clean`.
 
+[#3955](https://github.com/cylc/cylc-flow/pull/3955) - Global config options
+to control the job submission environment.
+
+
 ### Fixes
 
 [#3984](https://github.com/cylc/cylc-flow/pull/3984) - Only write task

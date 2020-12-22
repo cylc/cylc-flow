@@ -33,19 +33,20 @@ RUN_DIR="$RUN_DIR/${SUITE_NAME}"
 LOG="${RUN_DIR}/log/suite/log"
 sed -n 's/^.*\(cylc jobs-submit\)/\1/p' "${LOG}" | sort -u >'edited-suite-log'
 
+PATHOPTS="--path=/bin --path=/usr/bin --path=/usr/local/bin --path=/sbin --path=/usr/sbin --path=/usr/local/sbin" 
 sort >'edited-suite-log-ref' <<__LOG__
-cylc jobs-submit --debug --utc-mode -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 20200101T0000Z/t0/01 20200101T0000Z/t1/01 20200101T0000Z/t2/01 20200101T0000Z/t3/01
-cylc jobs-submit --debug --utc-mode -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 20210101T0000Z/t0/01 20210101T0000Z/t1/01 20210101T0000Z/t2/01 20210101T0000Z/t3/01
-cylc jobs-submit --debug --utc-mode -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 20220101T0000Z/t0/01 20220101T0000Z/t1/01 20220101T0000Z/t2/01 20220101T0000Z/t3/01
-cylc jobs-submit --debug --utc-mode -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 20230101T0000Z/t0/01 20230101T0000Z/t1/01 20230101T0000Z/t2/01 20230101T0000Z/t3/01
-cylc jobs-submit --debug --utc-mode -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 20240101T0000Z/t0/01 20240101T0000Z/t1/01 20240101T0000Z/t2/01 20240101T0000Z/t3/01
-cylc jobs-submit --debug --utc-mode -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 20250101T0000Z/t0/01 20250101T0000Z/t1/01 20250101T0000Z/t2/01 20250101T0000Z/t3/01
-cylc jobs-submit --debug --utc-mode --remote-mode -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 20200101T0000Z/t4/01 20200101T0000Z/t5/01 20200101T0000Z/t6/01
-cylc jobs-submit --debug --utc-mode --remote-mode -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 20210101T0000Z/t4/01 20210101T0000Z/t5/01 20210101T0000Z/t6/01
-cylc jobs-submit --debug --utc-mode --remote-mode -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 20220101T0000Z/t4/01 20220101T0000Z/t5/01 20220101T0000Z/t6/01
-cylc jobs-submit --debug --utc-mode --remote-mode -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 20230101T0000Z/t4/01 20230101T0000Z/t5/01 20230101T0000Z/t6/01
-cylc jobs-submit --debug --utc-mode --remote-mode -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 20240101T0000Z/t4/01 20240101T0000Z/t5/01 20240101T0000Z/t6/01
-cylc jobs-submit --debug --utc-mode --remote-mode -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 20250101T0000Z/t4/01 20250101T0000Z/t5/01 20250101T0000Z/t6/01
+cylc jobs-submit --debug --utc-mode $PATHOPTS -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 20200101T0000Z/t0/01 20200101T0000Z/t1/01 20200101T0000Z/t2/01 20200101T0000Z/t3/01
+cylc jobs-submit --debug --utc-mode $PATHOPTS -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 20210101T0000Z/t0/01 20210101T0000Z/t1/01 20210101T0000Z/t2/01 20210101T0000Z/t3/01
+cylc jobs-submit --debug --utc-mode $PATHOPTS -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 20220101T0000Z/t0/01 20220101T0000Z/t1/01 20220101T0000Z/t2/01 20220101T0000Z/t3/01
+cylc jobs-submit --debug --utc-mode $PATHOPTS -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 20230101T0000Z/t0/01 20230101T0000Z/t1/01 20230101T0000Z/t2/01 20230101T0000Z/t3/01
+cylc jobs-submit --debug --utc-mode $PATHOPTS -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 20240101T0000Z/t0/01 20240101T0000Z/t1/01 20240101T0000Z/t2/01 20240101T0000Z/t3/01
+cylc jobs-submit --debug --utc-mode $PATHOPTS -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 20250101T0000Z/t0/01 20250101T0000Z/t1/01 20250101T0000Z/t2/01 20250101T0000Z/t3/01
+cylc jobs-submit --debug --utc-mode --remote-mode $PATHOPTS -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 20200101T0000Z/t4/01 20200101T0000Z/t5/01 20200101T0000Z/t6/01
+cylc jobs-submit --debug --utc-mode --remote-mode $PATHOPTS -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 20210101T0000Z/t4/01 20210101T0000Z/t5/01 20210101T0000Z/t6/01
+cylc jobs-submit --debug --utc-mode --remote-mode $PATHOPTS -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 20220101T0000Z/t4/01 20220101T0000Z/t5/01 20220101T0000Z/t6/01
+cylc jobs-submit --debug --utc-mode --remote-mode $PATHOPTS -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 20230101T0000Z/t4/01 20230101T0000Z/t5/01 20230101T0000Z/t6/01
+cylc jobs-submit --debug --utc-mode --remote-mode $PATHOPTS -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 20240101T0000Z/t4/01 20240101T0000Z/t5/01 20240101T0000Z/t6/01
+cylc jobs-submit --debug --utc-mode --remote-mode $PATHOPTS -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 20250101T0000Z/t4/01 20250101T0000Z/t5/01 20250101T0000Z/t6/01
 __LOG__
 cmp_ok 'edited-suite-log' 'edited-suite-log-ref'
 

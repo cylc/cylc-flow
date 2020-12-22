@@ -19,7 +19,7 @@
         script = """
 wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
 # Corrupt port file and don't report back to suite
-SRVD="$RUN_DIR/${CYLC_SUITE_NAME}/.service"
+SRVD="${CYLC_SUITE_RUN_DIR}/.service"
 echo 'Haha! I have corrupted the port file!' >"${SRVD}/contact"
 trap '' EXIT
 exit

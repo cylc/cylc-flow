@@ -75,6 +75,7 @@ class BgCommandHandler:
                      timeout_str),
                     job_file_path,
                 ],
+                env=submit_opts.get('env'),
                 preexec_fn=os.setpgrp,
                 stdin=DEVNULL,
                 stdout=open(os.devnull, "wb"),
