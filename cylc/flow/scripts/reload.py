@@ -32,6 +32,8 @@ If the suite was started with Jinja2 template variables set on the command line
 If the modified suite definition does not parse, failure to reload will
 be reported but no harm will be done to the running suite."""
 
+import os.path
+
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.terminal import cli_function
@@ -57,6 +59,7 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser, options, suite):
+    suite = os.path.normpath(suite)
     pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
 
     mutation_kwargs = {

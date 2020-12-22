@@ -38,6 +38,7 @@ poll and kill commands, however, will be executed prior to shutdown, unless
 This command exits immediately unless --max-polls is greater than zero, in
 which case it polls to wait for suite shutdown."""
 
+import os.path
 import sys
 
 from cylc.flow.command_polling import Poller
@@ -151,6 +152,7 @@ def main(parser, options, suite, shutdown_arg=None):
     if options.flow_label and int(options.max_polls) > 0:
         parser.error("ERROR: --flow is not compatible with --max-polls")
 
+    suite = os.path.normpath(suite)
     pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
 
     if int(options.max_polls) > 0:
