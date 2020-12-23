@@ -619,8 +619,8 @@ def clean(reg, run_dir=None):
             f'Cannot remove running workflow.\n\n{exc}')
 
     possible_symlinks = [(Path(name), Path(run_dir, name)) for name in [
-        'log', 'share/cycle', 'share', 'work', '']]
-    # Note: 'share/cycle' must come before 'share', and '' must come last
+        'share/cycle', 'share', 'log', 'work', '']]
+    # Note: 'share/cycle' must come first, and '' must come last
     for name, path in possible_symlinks:
         if path.is_symlink():
             # Ensure symlink is pointing to expected directory. If not,
