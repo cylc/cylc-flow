@@ -303,7 +303,7 @@ class TaskJobManager:
             for itask in itasks:
                 # Log and persist
                 LOG.info(
-                    '[%s] -submit-num=%02d, owner@host=%s',
+                    '[%s] -submit-num=%02d, host=%s',
                     itask, itask.submit_num, host)
                 self.suite_db_mgr.put_insert_task_jobs(itask, {
                     'is_manual_submit': itask.is_manual_submit,
@@ -489,14 +489,10 @@ class TaskJobManager:
     @staticmethod
     def _job_cmd_out_callback(suite, itask, cmd_ctx, line):
         """Callback on job command STDOUT/STDERR."""
-        if cmd_ctx.cmd_kwargs.get("host") and cmd_ctx.cmd_kwargs.get("user"):
-            owner_at_host = "(%(user)s@%(host)s) " % cmd_ctx.cmd_kwargs
-        elif cmd_ctx.cmd_kwargs.get("host"):
-            owner_at_host = "(%(host)s) " % cmd_ctx.cmd_kwargs
-        elif cmd_ctx.cmd_kwargs.get("user"):
-            owner_at_host = "(%(user)s@localhost) " % cmd_ctx.cmd_kwargs
+        if cmd_ctx.cmd_kwargs.get("host"):
+            host = "(%(host)s) " % cmd_ctx.cmd_kwargs
         else:
-            owner_at_host = ""
+            host = ""
         try:
             timestamp, _, content = line.split("|")
         except ValueError:
@@ -509,10 +505,10 @@ class TaskJobManager:
             with open(os.path.expandvars(job_activity_log), "ab") as handle:
                 if not line.endswith("\n"):
                     line += "\n"
-                handle.write((owner_at_host + line).encode())
+                handle.write((host + line).encode())
         except IOError as exc:
             LOG.warning("%s: write failed\n%s" % (job_activity_log, exc))
-            LOG.warning("[%s] -%s%s", itask, owner_at_host, line)
+            LOG.warning("[%s] -%s%s", itask, host, line)
 
     def _kill_task_jobs_callback(self, ctx, suite, itasks):
         """Callback when kill tasks command exits."""
@@ -717,8 +713,9 @@ class TaskJobManager:
     def _run_job_cmd(self, cmd_key, suite, itasks, callback):
         """Run job commands, e.g. poll, kill, etc.
 
-        Group itasks with their platform_name, host and owner.
+        Group itasks with their platform_name and host.
         Put a job command for each group to the multiprocess pool.
+
         """
         if not itasks:
             return
@@ -1029,7 +1026,6 @@ class TaskJobManager:
             'job_file_path': job_file_path,
             'job_d': job_d,
             'namespace_hierarchy': itask.tdef.namespace_hierarchy,
-            'owner': itask.task_owner,
             'param_var': itask.tdef.param_var,
             'post-script': scripts[2],
             'pre-script': scripts[0],

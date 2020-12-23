@@ -154,7 +154,7 @@ class TaskRemoteMgr:
                 del self.remote_command_map[key]
 
     def remote_init(self, platform, curve_auth, client_pub_key_dir):
-        """Initialise a remote [owner@]host if necessary.
+        """Initialise a remote host if necessary.
 
         Call "cylc remote-init" to install suite items to remote:
             ".service/contact": For TCP task communication

@@ -745,7 +745,6 @@ class Job(ObjectType):
     host = String()
     init_script = String()
     job_log_dir = String()
-    owner = String()
     post_script = String()
     pre_script = String()
     script = String()

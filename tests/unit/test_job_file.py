@@ -72,7 +72,6 @@ def test_write_prelude_invalid_cylc_command():
         "platform": {
             "job runner": "background",
             "hosts": ["localhost"],
-            "owner": "me",
             "cylc executable": "sl -a"
         }
     }
@@ -92,7 +91,6 @@ def test_write(mocked_get_remote_suite_run_dir, fixture_get_platform):
         platform = fixture_get_platform(
             {
                 "job runner command template": "woof",
-                "owner": "me"
             }
         )
         job_conf = {
@@ -253,7 +251,6 @@ def test_traps_for_each_job_runner(job_runner: str):
     platform = platform_from_name()
     platform.update({
         "job runner": f"{job_runner}",
-        "owner": "me"
     })
     job_conf = {
         "platform": platform,
@@ -286,7 +283,6 @@ def test_write_prelude(monkeypatch, fixture_get_platform):
             "job runner": "loadleveler",
             "job runner command template": "test_suite",
             "host": "localhost",
-            "owner": "me",
             "copyable environment variables": [
                 "CYLC_SUITE_INITIAL_CYCLE_POINT"
             ],
@@ -329,7 +325,6 @@ def test_write_suite_environment(fixture_get_platform, monkeypatch):
     job_conf = {
         "platform": fixture_get_platform({
             "host": "localhost",
-            "owner": "me",
         }),
         "suite_name": "farm_noises",
         "remote_suite_d": "remote/suite/dir",
@@ -370,7 +365,6 @@ def test_write_suite_environment_no_remote_suite_d(
     job_conf = {
         "platform": fixture_get_platform({
             "host": "localhost",
-            "owner": "me",
         }),
         "suite_name": "farm_noises",
         "uuid_str": "neigh",
