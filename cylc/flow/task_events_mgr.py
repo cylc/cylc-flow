@@ -54,7 +54,7 @@ from cylc.flow.task_message import (
     ABORT_MESSAGE_PREFIX, FAIL_MESSAGE_PREFIX, VACATION_MESSAGE_PREFIX)
 from cylc.flow.task_state import (
     TASK_STATUSES_ACTIVE,
-    TASK_STATUS_READY,
+    TASK_STATUS_PREPARING,
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_RUNNING,
@@ -989,7 +989,7 @@ class TaskEventsManager():
         itask.set_summary_message(TASK_OUTPUT_SUBMITTED)
 
         self.pflag = True
-        if itask.state.status == TASK_STATUS_READY:
+        if itask.state.status == TASK_STATUS_PREPARING:
             # The job started message can (rarely) come in before the submit
             # command returns - in which case do not go back to 'submitted'.
             if itask.state.reset(TASK_STATUS_SUBMITTED):

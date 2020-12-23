@@ -20,7 +20,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_WAITING,
     TASK_STATUS_QUEUED,
     TASK_STATUS_EXPIRED,
-    TASK_STATUS_READY,
+    TASK_STATUS_PREPARING,
     TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_RUNNING,
@@ -75,7 +75,7 @@ TASK_ICONS = {
     f'{TASK_STATUS_WAITING}': '\u25cb',
 
     # TODO: remove with https://github.com/cylc/cylc-admin/pull/47
-    f'{TASK_STATUS_READY}': '\u25cb',
+    f'{TASK_STATUS_PREPARING}': '\u25cb',
     f'{TASK_STATUS_QUEUED}': '\u25cb',
     # TODO: remove with https://github.com/cylc/cylc-admin/pull/47
 
