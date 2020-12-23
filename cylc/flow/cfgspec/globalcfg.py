@@ -223,8 +223,8 @@ with Conf('global.cylc', desc='''
                 DurationFloat(300),
                 desc='''
                     Default for
-                    :cylc:conf:
-                    `flow.cylc[scheduler][mail]task event batch interval`.
+                    :cylc:conf:`flow.cylc
+                    [scheduler][mail]task event batch interval`
                 '''
             )
 
