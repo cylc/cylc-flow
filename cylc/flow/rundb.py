@@ -297,11 +297,12 @@ class CylcSuiteDAO:
         ],
     }
 
-    def __init__(self, db_file_name=None, is_public=False):
-        """Initialise object.
+    def __init__(self, db_file_name, is_public=False):
+        """Initialise database access object.
 
-        db_file_name - Path to the database file
-        is_public - If True, allow retries, etc
+        Args:
+            db_file_name (str): Path to the database file.
+            is_public (bool): If True, allow retries, etc.
 
         """
         self.db_file_name = expandvars(db_file_name)

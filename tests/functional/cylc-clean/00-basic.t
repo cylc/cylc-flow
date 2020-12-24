@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -49,23 +49,13 @@ mkdir "${TEST_DIR}/${SYM_NAME}-log/cylc-run/cylctb-${CYLC_TEST_TIME_INIT}/leave-
 
 FUNCTIONAL_DIR="${TEST_SOURCE_DIR_BASE%/*}"
 # -----------------------------------------------------------------------------
-TEST_NAME="run-dir-tree-pre-clean"
-tree --charset=ascii "$SUITE_RUN_DIR" > "${TEST_NAME}.stdout"
-# Remove last line of output:
-sed -i '$d' "${TEST_NAME}.stdout"
+TEST_NAME="run-dir-readlink-pre-clean"
+readlink "$SUITE_RUN_DIR" > "${TEST_NAME}.stdout"
 
-cmp_ok "${TEST_NAME}.stdout" << __TREE__
-${HOME}/cylc-run/${SUITE_NAME}
-|-- log -> ${TEST_DIR}/${SYM_NAME}-log/cylc-run/${SUITE_NAME}/log
-|-- share -> ${TEST_DIR}/${SYM_NAME}-share/cylc-run/${SUITE_NAME}/share
-\`-- work -> ${TEST_DIR}/${SYM_NAME}-work/cylc-run/${SUITE_NAME}/work
-
-__TREE__
+cmp_ok "${TEST_NAME}.stdout" <<< "${TEST_DIR}/${SYM_NAME}-run/cylc-run/${SUITE_NAME}"
 
 TEST_NAME="test-dir-tree-pre-clean"
-tree --charset=ascii "${TEST_DIR}/${SYM_NAME}-"* > "${TEST_NAME}.stdout"
-# Remove last line of output:
-sed -i '$d' "${TEST_NAME}.stdout"
+tree --noreport --charset=ascii "${TEST_DIR}/${SYM_NAME}-"* > "${TEST_NAME}.stdout"
 # Note: backticks need to be escaped in the heredoc
 cmp_ok "${TEST_NAME}.stdout" << __TREE__
 ${TEST_DIR}/${SYM_NAME}-cycle
@@ -108,7 +98,6 @@ ${TEST_DIR}/${SYM_NAME}-work
             \`-- cylc-clean
                 \`-- ${TEST_NAME_BASE}
                     \`-- work
-
 __TREE__
 # -----------------------------------------------------------------------------
 run_ok "cylc-clean" cylc clean "$SUITE_NAME"
@@ -117,9 +106,7 @@ TEST_NAME="run-dir-not-exist-post-clean"
 exists_fail "$SUITE_RUN_DIR"
 
 TEST_NAME="test-dir-tree-post-clean"
-tree --charset=ascii "${TEST_DIR}/${SYM_NAME}-"* > "${TEST_NAME}.stdout"
-# Remove last line of output:
-sed -i '$d' "${TEST_NAME}.stdout"
+tree --noreport --charset=ascii "${TEST_DIR}/${SYM_NAME}-"* > "${TEST_NAME}.stdout"
 
 cmp_ok "${TEST_NAME}.stdout" << __TREE__
 ${TEST_DIR}/${SYM_NAME}-cycle
@@ -134,7 +121,6 @@ ${TEST_DIR}/${SYM_NAME}-share
 \`-- cylc-run
 ${TEST_DIR}/${SYM_NAME}-work
 \`-- cylc-run
-
 __TREE__
 # -----------------------------------------------------------------------------
 purge

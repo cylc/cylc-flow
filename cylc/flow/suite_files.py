@@ -595,7 +595,7 @@ def init_clean(reg):
 
 
 def clean(reg, run_dir=None):
-    """Remove a stopped workflow from the local filesystem.
+    """Remove a stopped workflow from the local filesystem only.
 
     Deletes the workflow run directory and any symlink dirs. Note: if the
     run dir has already been manually deleted, it will not be possible to
@@ -603,7 +603,7 @@ def clean(reg, run_dir=None):
 
     Args:
         reg (str): Workflow name.
-        run_dir (str): Path to the run dir on the filesystem.
+        run_dir (str): Path to the workflow run dir on the filesystem.
     """
     if run_dir:
         run_dir = Path(run_dir)
@@ -618,10 +618,10 @@ def clean(reg, run_dir=None):
         raise SuiteServiceFileError(
             f'Cannot remove running workflow.\n\n{exc}')
 
-    possible_symlinks = [(Path(name), Path(run_dir, name)) for name in [
-        'share/cycle', 'share', 'log', 'work', '']]
     # Note: 'share/cycle' must come first, and '' must come last
-    for name, path in possible_symlinks:
+    for possible_symlink in ('share/cycle', 'share', 'log', 'work', ''):
+        name = Path(possible_symlink)
+        path = Path(run_dir, possible_symlink)
         if path.is_symlink():
             # Ensure symlink is pointing to expected directory. If not,
             # something is wrong and we should abort
@@ -648,8 +648,8 @@ def clean(reg, run_dir=None):
 
 
 def remote_clean(reg, platform_names):
-    """Clean on remote install targets (not localhost), given a set of
-    platform names to look up.
+    """Run subprocesses to clean workflows on remote install targets
+    (skip localhost), given a set of platform names to look up.
 
     Args:
         reg (str): Workflow name.
@@ -707,8 +707,8 @@ def _remote_clean_cmd(reg, platform):
             workflow.
     """
     LOG.info(
-        f'Cleaning on install target: {platform["install target"]}, '
-        f'platform: {platform["name"]}')
+        f'Cleaning on install target: {platform["install target"]} '
+        f'(platform: {platform["name"]})')
     cmd = ['remote-clean', reg, get_remote_suite_run_dir(platform, reg)]
     cmd = construct_ssh_cmd(cmd, platform, timeout='10s')
     LOG.debug(" ".join(cmd))
