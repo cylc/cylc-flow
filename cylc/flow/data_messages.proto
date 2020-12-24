@@ -78,8 +78,8 @@ message PbWorkflow {
     optional double last_updated = 13;
     optional PbMeta meta = 14;
     optional string newest_runahead_cycle_point = 15;
-    optional string newest_cycle_point = 16;
-    optional string oldest_cycle_point = 17;
+    optional string newest_active_cycle_point = 16;
+    optional string oldest_active_cycle_point = 17;
     optional bool reloaded = 18;
     optional string run_mode = 19;
     optional string cycling_mode = 20;

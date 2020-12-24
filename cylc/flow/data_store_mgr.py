@@ -1284,68 +1284,87 @@ class DataStoreMgr:
         self.next_n_edge_distance = n_edge_distance
         self.updates_pending = True
 
-    def set_workflow_ports(self):
-        # Create new message and copy existing message content
-        workflow = self.updated[WORKFLOW]
-        workflow.id = self.workflow_id
-        workflow.last_updated = time()
-        workflow.stamp = f'{workflow.id}@{workflow.last_updated}'
-
-        workflow.port = self.schd.port
-        workflow.pub_port = self.schd.pub_port
-
-        self.updates_pending = True
-
     def update_workflow(self):
         """Update workflow element status and state totals."""
         # Create new message and copy existing message content
-        workflow = self.updated[WORKFLOW]
-        workflow.id = self.workflow_id
-        workflow.last_updated = time()
-        workflow.stamp = f'{workflow.id}@{workflow.last_updated}'
-
         data = self.data[self.workflow_id]
+        w_data = data[WORKFLOW]
+        w_delta = self.updated[WORKFLOW]
+        delta_set = False
 
         # new updates/deltas not applied yet
         # so need to search/use updated states if available.
-        state_counter = Counter({})
-        is_held_total = 0
-        for root_id in set(
-                [n.id
-                 for n in data[FAMILY_PROXIES].values()
-                 if n.name == 'root'] +
-                [n.id
-                 for n in self.added[FAMILY_PROXIES].values()
-                 if n.name == 'root']
-        ):
-            root_node = self.updated[FAMILY_PROXIES].get(
-                root_id, data.get(root_id))
-            if root_node is not None and root_node.state:
-                is_held_total += root_node.is_held_total
-                state_counter += Counter(dict(root_node.state_totals))
-        workflow.states[:] = state_counter.keys()
-        for state, state_cnt in state_counter.items():
-            workflow.state_totals[state] = state_cnt
+        if self.updated_state_families:
+            state_counter = Counter({})
+            is_held_total = 0
+            for root_id in set(
+                    [n.id
+                     for n in data[FAMILY_PROXIES].values()
+                     if n.name == 'root'] +
+                    [n.id
+                     for n in self.added[FAMILY_PROXIES].values()
+                     if n.name == 'root']
+            ):
+                root_node = self.updated[FAMILY_PROXIES].get(
+                    root_id, data.get(root_id))
+                if root_node is not None and root_node.state:
+                    is_held_total += root_node.is_held_total
+                    state_counter += Counter(dict(root_node.state_totals))
+            w_delta.states[:] = state_counter.keys()
+            for state, state_cnt in state_counter.items():
+                w_delta.state_totals[state] = state_cnt
 
-        workflow.is_held_total = is_held_total
+            w_delta.is_held_total = is_held_total
+            delta_set = True
 
-        # Construct a workflow status string for use by monitoring clients.
-        workflow.status, workflow.status_msg = map(
+        # Set status & msg if changed.
+        status, status_msg = map(
             str, get_suite_status(self.schd))
+        if w_data.status != status or w_data.status_msg != status_msg:
+            w_delta.status = status
+            w_delta.status_msg = status_msg
+            delta_set = True
 
         if self.schd.pool.pool:
             pool_points = set(self.schd.pool.pool)
-            workflow.oldest_cycle_point = str(min(pool_points))
-            workflow.newest_cycle_point = str(max(pool_points))
+            oldest_point = str(min(pool_points))
+            if w_data.oldest_active_cycle_point != oldest_point:
+                w_delta.oldest_active_cycle_point = oldest_point
+                delta_set = True
+            newest_point = str(max(pool_points))
+            if w_data.newest_active_cycle_point != newest_point:
+                w_delta.newest_active_cycle_point = newest_point
+                delta_set = True
         if self.schd.pool.runahead_pool:
-            workflow.newest_runahead_cycle_point = str(
-                max(set(self.schd.pool.runahead_pool))
-            )
+            newest_runahead_point = str(max(set(self.schd.pool.runahead_pool)))
+            if w_data.newest_runahead_cycle_point != newest_runahead_point:
+                w_delta.newest_runahead_cycle_point = newest_runahead_point
+                delta_set = True
+
+        if delta_set:
+            w_delta.id = self.workflow_id
+            w_delta.last_updated = time()
+            w_delta.stamp = f'{w_delta.id}@{w_delta.last_updated}'
+
+    def delta_workflow_ports(self):
+        """Set or update the workflow comms ports."""
+        w_delta = self.updated[WORKFLOW]
+        w_delta.id = self.workflow_id
+        w_delta.last_updated = time()
+        w_delta.stamp = f'{w_delta.id}@{w_delta.last_updated}'
+
+        w_delta.port = self.schd.port
+        w_delta.pub_port = self.schd.pub_port
+        self.updates_pending = True
 
     def delta_broadcast(self):
         """Collects broadcasts on change event."""
-        workflow = self.updated[WORKFLOW]
-        workflow.broadcasts = json.dumps(self.schd.broadcast_mgr.broadcasts)
+        w_delta = self.updated[WORKFLOW]
+        w_delta.id = self.workflow_id
+        w_delta.last_updated = time()
+        w_delta.stamp = f'{w_delta.id}@{w_delta.last_updated}'
+
+        w_delta.broadcasts = json.dumps(self.schd.broadcast_mgr.broadcasts)
         self.updates_pending = True
 
     # -----------
