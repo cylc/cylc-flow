@@ -433,17 +433,11 @@ def get_install_target_to_platforms_map(platform_names):
     """
     platform_names = set(platform_names)
     platforms = [get_platform(p_name) for p_name in platform_names]
-    # First get mapping of platforms to install targets:
-    platform_names_map = {
-        p_name: get_install_target_from_platform(get_platform(p_name))
-        for p_name in platform_names
-    }
     install_targets = set(get_install_target_from_platform(platform)
                           for platform in platforms)
-    # Now get the inverse - the mapping of install targets to platforms:
     return {
         target: [platform for platform in platforms
-                 if platform_names_map[platform['name']] == target]
+                 if get_install_target_from_platform(platform) == target]
         for target in install_targets
     }
 
