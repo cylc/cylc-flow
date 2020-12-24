@@ -561,30 +561,50 @@ def register(reg=None, source=None, redirect=False):
     return reg
 
 
-def init_clean(reg):
-    """Remove a stopped workflow from the local scheduler filesystem and remote
-    hosts.
+def _clean_check(reg, run_dir):
+    """Check whether a workflow can be cleaned.
 
     Args:
-        reg (str): workflow name.
+        reg (str): Workflow name.
+        run_dir (str): Path to the workflow run dir on the filesystem.
     """
     _validate_reg(reg)
     reg = os.path.normpath(reg)
     if reg.startswith('.'):
         raise WorkflowFilesError(
-            'Workflow name cannot be a path that points to the cylc-run '
-            'directory or above')
+            "Workflow name cannot be a path that points to the cylc-run "
+            "directory or above")
+    if not run_dir.is_dir() and not run_dir.is_symlink():
+        msg = f"No directory to clean at {run_dir}"
+        raise FileNotFoundError(msg)
+    try:
+        detect_old_contact_file(reg)
+    except SuiteServiceFileError as exc:
+        raise SuiteServiceFileError(
+            f"Cannot remove running workflow.\n\n{exc}")
+
+
+def init_clean(reg):
+    """Initiate the process of removing a stopped workflow from the local
+    scheduler filesystem and remote hosts.
+
+    Args:
+        reg (str): Workflow name.
+    """
     local_run_dir = Path(get_suite_run_dir(reg))
-    if not local_run_dir.is_dir() and not local_run_dir.is_symlink():
-        LOG.info(f'No workflow directory to clean at {local_run_dir}')
+    try:
+        _clean_check(reg, local_run_dir)
+    except FileNotFoundError as exc:
+        LOG.info(str(exc))
         return
+
     platform_names = None
     try:
         platform_names = get_platforms_from_db(local_run_dir)
     except FileNotFoundError:
         LOG.warning(
-            'The workflow database is missing - will not be able to clean on '
-            'any remote platforms')
+            "The workflow database is missing - will not be able to clean on "
+            "any remote platforms")
     except SuiteServiceFileError as exc:
         raise SuiteServiceFileError(f"Cannot clean - {exc}")
 
@@ -609,14 +629,11 @@ def clean(reg, run_dir=None):
         run_dir = Path(run_dir)
     else:
         run_dir = Path(get_suite_run_dir(reg))
-    if not run_dir.is_dir() and not run_dir.is_symlink():
-        LOG.info(f'No workflow directory to clean at {run_dir}')
-        return
     try:
-        detect_old_contact_file(reg)
-    except SuiteServiceFileError as exc:
-        raise SuiteServiceFileError(
-            f'Cannot remove running workflow.\n\n{exc}')
+        _clean_check(reg, run_dir)
+    except FileNotFoundError as exc:
+        LOG.info(str(exc))
+        return
 
     # Note: 'share/cycle' must come first, and '' must come last
     for possible_symlink in ('share/cycle', 'share', 'log', 'work', ''):

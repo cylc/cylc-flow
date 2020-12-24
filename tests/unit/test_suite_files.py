@@ -346,11 +346,41 @@ def test_validate_reg(reg, expected_err, expected_msg):
 
 
 @pytest.mark.parametrize(
+    'reg, not_stopped, err, err_msg',
+    [('foo/..', False, WorkflowFilesError,
+      "cannot be a path that points to the cylc-run directory or above"),
+     ('foo/../..', False, WorkflowFilesError,
+      "cannot be a path that points to the cylc-run directory or above"),
+     ('foo', True, SuiteServiceFileError, "Cannot remove running workflow")]
+)
+def test_clean_check(reg, not_stopped, err, err_msg, monkeypatch):
+    """Test that _clean_check() fails appropriately.
+
+    Params:
+        reg (str): Workflow name.
+        err (Exception): Expected error.
+        err_msg (str): Message that is expected to be in the exception.
+    """
+    run_dir = mock.Mock()
+
+    def mocked_detect_old_contact_file(reg):
+        if not_stopped:
+            raise SuiteServiceFileError('Mocked error')
+
+    monkeypatch.setattr('cylc.flow.suite_files.detect_old_contact_file',
+                        mocked_detect_old_contact_file)
+
+    with pytest.raises(err) as exc:
+        suite_files._clean_check(reg, run_dir)
+    assert err_msg in str(exc.value)
+
+
+@pytest.mark.parametrize(
     'reg, props, clean_called, remote_clean_called',
     [
         ('foo/bar', {
             'no dir': True,
-            'log': (logging.INFO, "No workflow directory to clean")
+            'log': (logging.INFO, "No directory to clean")
         }, False, False),
         ('foo/bar', {
             'no db': True,
@@ -423,34 +453,6 @@ def test_init_clean_ok(
         assert mocked_remote_clean.called is True
     else:
         assert mocked_remote_clean.called is False
-
-
-@pytest.mark.parametrize(
-    'reg, err, err_msg',
-    [('foo/..', WorkflowFilesError,
-      "cannot be a path that points to the cylc-run directory or above"),
-     ('foo/../..', WorkflowFilesError,
-      "cannot be a path that points to the cylc-run directory or above")]
-)
-def test_init_clean_bad(reg, err, err_msg, monkeypatch):
-    """Test the init_clean() function fails appropriately.
-
-    Params:
-        reg (str): Workflow name.
-        err (Exception): Expected error.
-        err_msg (str): Message that is expected to be in the exception.
-    """
-    # We don't want to accidentally delete any files during this test
-    nerfed_os_rmdir = mock.Mock()
-    monkeypatch.setattr('os.rmdir', nerfed_os_rmdir)
-    nerfed_os_remove = mock.Mock()
-    monkeypatch.setattr('os.remove', nerfed_os_remove)
-
-    with pytest.raises(err) as exc:
-        suite_files.init_clean(reg)
-    assert err_msg in str(exc.value)
-    assert nerfed_os_rmdir.called is False
-    assert nerfed_os_remove.called is False
 
 
 @pytest.mark.parametrize(
