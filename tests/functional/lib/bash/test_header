@@ -127,6 +127,8 @@
 #         Get the FQDN of the current host using the same mechanism Cylc uses.
 #     get_fqdn [TARGET]
 #         SSH to TARGET and return `hostname -f`.
+#     dump_std TEST_NAME
+#         Dump stdout and stderr of TEST_NAME to the test log dir.
 #-------------------------------------------------------------------------------
 set -eu
 
@@ -190,14 +192,19 @@ fail() {
     fi
 }
 
+dump_std() {
+    local TEST_NAME="$1"
+    mkdir -p "${TEST_LOG_DIR}"  # directory may not exist if run fails very early
+    cp -p "${TEST_NAME}.stdout" "${TEST_LOG_DIR}/${TEST_NAME}.stdout"
+    cp -p "${TEST_NAME}.stderr" "${TEST_LOG_DIR}/${TEST_NAME}.stderr"
+}
+
 run_ok() {
     local TEST_NAME="$1"
     shift 1
     if ! "$@" 1>"${TEST_NAME}.stdout" 2>"${TEST_NAME}.stderr"; then
         fail "${TEST_NAME}"
-        mkdir -p "${TEST_LOG_DIR}"
-        cp -p "${TEST_NAME}.stdout" "${TEST_LOG_DIR}/${TEST_NAME}.stdout"
-        cp -p "${TEST_NAME}.stderr" "${TEST_LOG_DIR}/${TEST_NAME}.stderr"
+        dump_std "${TEST_NAME}"
         return
     fi
     ok "${TEST_NAME}"
@@ -208,9 +215,7 @@ run_fail() {
     shift 1
     if "$@" 1>"${TEST_NAME}.stdout" 2>"${TEST_NAME}.stderr"; then
         fail "${TEST_NAME}"
-        mkdir -p "${TEST_LOG_DIR}"
-        cp -p "${TEST_NAME}.stdout" "${TEST_LOG_DIR}/${TEST_NAME}.stdout"
-        cp -p "${TEST_NAME}.stderr" "${TEST_LOG_DIR}/${TEST_NAME}.stderr"
+        dump_std "${TEST_NAME}"
         return
     fi
     ok "${TEST_NAME}"

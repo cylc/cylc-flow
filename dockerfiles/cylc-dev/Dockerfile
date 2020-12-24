@@ -33,7 +33,7 @@ COPY "$CYLC_FLOW_DIR" "cylc"
 RUN apt-get update && \
     # build-deps: build-essential
     # run deps: procps, rsync
-    apt-get -qq -y install build-essential procps rsync && \
+    apt-get -qq -y install build-essential procps rsync tree && \
     # install conda stuff
     conda init bash && \
     . ./usr/local/etc/profile.d/conda.sh && \

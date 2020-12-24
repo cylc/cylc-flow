@@ -100,7 +100,9 @@ ${TEST_DIR}/${SYM_NAME}-work
                     \`-- work
 __TREE__
 # -----------------------------------------------------------------------------
-run_ok "cylc-clean" cylc clean "$SUITE_NAME"
+TEST_NAME="cylc-clean"
+run_ok "$TEST_NAME" cylc clean "$SUITE_NAME"
+dump_std "$TEST_NAME"
 # -----------------------------------------------------------------------------
 TEST_NAME="run-dir-not-exist-post-clean"
 exists_fail "$SUITE_RUN_DIR"
