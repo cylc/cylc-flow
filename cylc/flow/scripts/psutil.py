@@ -20,6 +20,7 @@
 
 For internal use with the `cylc.flow.host_select` module.
 """
+
 import json
 import sys
 
@@ -39,9 +40,8 @@ def get_option_parser():
     return OptionParser(__doc__)
 
 
-@cli_function(get_option_parser)
-def main(parser, options):
-    metrics = parse_dirty_json(sys.stdin.read())
+def _psutil(metrics_json):
+    metrics = parse_dirty_json(metrics_json)
 
     ret = [
         getattr(psutil, key[0])(*key[1:])
@@ -53,4 +53,13 @@ def main(parser, options):
         if hasattr(item, '_asdict'):
             ret[ind] = item._asdict()
 
-    print(json.dumps(ret))
+    return ret
+
+
+@cli_function(get_option_parser)
+def main(*_):
+    print(
+        json.dumps(
+            _psutil(sys.stdin.read())
+        )
+    )
