@@ -1,0 +1,10 @@
+[scheduling]
+    initial cycle point = 2020
+    [[dependencies]]
+        [[[R1]]]
+            graph = pointless
+
+
+[runtime]
+    [[pointless]]
+        script = true

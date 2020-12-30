@@ -93,7 +93,7 @@ def raise_helper(message, error_type='Error'):
 def assert_helper(logical, message):
     """Provides a Jinja2 function for asserting logical expressions."""
     if not logical:
-        raise_helper(message, 'Assertation Error')
+        raise_helper(message, 'Assertion Error')
     return ''  # Prevent None return value polluting output.
 
 
@@ -182,6 +182,7 @@ def jinja2environment(dir_=None):
     env.globals['environ'] = os.environ
     env.globals['raise'] = raise_helper
     env.globals['assert'] = assert_helper
+
     return env
 
 

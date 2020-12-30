@@ -1,0 +1,10 @@
+#!jinja2
+[scheduling]
+    initial cycle point = now
+    [[dependencies]]
+        R1 = """
+            x
+        """
+
+[runtime]
+    [[x]]

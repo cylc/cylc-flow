@@ -141,6 +141,11 @@ config option `[scheduling]stop after cycle point`.
 [#3961](https://github.com/cylc/cylc-flow/pull/3961) - Added a new command:
 `cylc clean`.
 
+[#3913](https://github.com/cylc/cylc-flow/pull/3913) - Added the ability to
+use plugins to parse suite templating variables and additional files to
+install. Only one such plugin exists at the time of writing, designed to
+parse ``rose-suite.conf`` files in repository "cylc-rose".
+
 [#3955](https://github.com/cylc/cylc-flow/pull/3955) - Global config options
 to control the job submission environment.
 

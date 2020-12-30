@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -15,24 +15,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# jinja2 test cylc-provided functions.
+# Test empy from rose-suite.conf file is processed into a suite.
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 5
-#-------------------------------------------------------------------------------
+python -c "import cylc.rose" > /dev/null 2>&1 ||
+  skip_all "cylc.rose not installed in environment."
+
+set_test_number 2
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-#-------------------------------------------------------------------------------
-TEST_NAME="${TEST_NAME_BASE}"-pass
-run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}" \
-    -s 'FOO="True"' \
-    -s 'ANSWER="42"'
-TEST_NAME="${TEST_NAME_BASE}"-fail-assert
-run_fail "${TEST_NAME}" cylc validate "${SUITE_NAME}" \
-    -s 'FOO="True"' \
-    -s 'ANSWER="43"'
-grep_ok 'Jinja2 Assertion Error: Universal' "${TEST_NAME}.stderr"
-TEST_NAME="${TEST_NAME_BASE}"-fail-raise
-run_fail "${TEST_NAME}" cylc validate "${SUITE_NAME}" -s 'ANSWER="42"'
-grep_ok 'Jinja2 Error: FOO must be defined' "${TEST_NAME}.stderr"
-#-------------------------------------------------------------------------------
-purge
+
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+
+cylc view -p --stdout "${SUITE_NAME}" > processed.conf.test
+
+cmp_ok processed.conf.test processed.conf.control
+
+exit
