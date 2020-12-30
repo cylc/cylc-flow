@@ -389,7 +389,7 @@ def pycoverage(cmd_args):
     to your local working directory before running coverage combine:
 
     $ cd /cylc/working/directory
-    $ ssh remote-host cd /cylc/remote/working/directory && covrage combine
+    $ ssh remote-host cd /cylc/remote/working/directory && coverage combine
     $ scp \
     >     remote-host/cylc/remote/working/directory/.coverage \
     >    .coverage.remote-host.12345.12345
@@ -420,7 +420,7 @@ def pycoverage(cmd_args):
     from pathlib import Path
 
     # the cylc working directory
-    cylc_wc = Path(cylc.flow.__file__).parent.parent.parent
+    cylc_wc = Path(cylc.flow.__file__).parents[2]
 
     # intiate coverage
     try:
