@@ -27,6 +27,7 @@ import os
 import pkg_resources
 from pathlib import Path
 
+from cylc.flow.exceptions import PluginError
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
 from cylc.flow.pathutil import get_suite_run_dir
@@ -48,16 +49,34 @@ def main(parser, options, reg):
     for entry_point in pkg_resources.iter_entry_points(
         'cylc.pre_configure'
     ):
-        entry_point.resolve()(Path(flow_file).parent)
+        try:
+            entry_point.resolve()(Path(flow_file).parent)
+        except Exception as exc:
+            # NOTE: except Exception (purposefully vague)
+            # this is to separate plugin from core Cylc errors
+            raise PluginError(
+                'cylc.pre_configure',
+                entry_point.name,
+                exc
+            ) from None
 
     for entry_point in pkg_resources.iter_entry_points(
         'cylc.post_install'
     ):
-        entry_point.resolve()(
-            dir_=os.getcwd(),
-            opts=options,
-            dest_root=get_suite_run_dir(suite)
-        )
+        try:
+            entry_point.resolve()(
+                dir_=os.getcwd(),
+                opts=options,
+                dest_root=get_suite_run_dir(suite)
+            )
+        except Exception as exc:
+            # NOTE: except Exception (purposefully vague)
+            # this is to separate plugin from core Cylc errors
+            raise PluginError(
+                'cylc.post_install',
+                entry_point.name,
+                exc
+            ) from None
 
 
 if __name__ == "__main__":
