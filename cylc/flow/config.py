@@ -132,6 +132,7 @@ class SuiteConfig:
     """Class for suite configuration items and derived quantities."""
 
     Q_DEFAULT = 'default'
+    CHECK_CIRCULAR_LIMIT = 100  # If no. tasks > this, don't check circular
 
     def __init__(
         self,
@@ -842,14 +843,19 @@ class SuiteConfig:
 
     def _check_circular(self):
         """Check for circular dependence in graph."""
-        start_point_string = (
-            self.cfg['visualization']['initial cycle point'])
+        if (len(self.taskdefs) > self.CHECK_CIRCULAR_LIMIT and
+                not getattr(self.options, 'check_circular', False)):
+            LOG.warning(
+                f"Number of tasks is > {self.CHECK_CIRCULAR_LIMIT}; will not "
+                "check graph for circular dependencies. To enforce this "
+                "check, use the option --check-circular.")
+            return
+        start_point_string = self.cfg['visualization']['initial cycle point']
+        raw_graph = self.get_graph_raw(start_point_string,
+                                       stop_point_string=None)
         lhs2rhss = {}  # left hand side to right hand sides
         rhs2lhss = {}  # right hand side to left hand sides
-        for lhs, rhs in self.get_graph_raw(
-            start_point_string,
-            stop_point_string=None,
-        ):
+        for lhs, rhs in raw_graph:
             lhs2rhss.setdefault(lhs, set())
             lhs2rhss[lhs].add(rhs)
             rhs2lhss.setdefault(rhs, set())
@@ -1962,8 +1968,6 @@ class SuiteConfig:
                         continue
                     if l_id is not None and actual_first_point > l_id[1]:
                         # Check that l_id is not earlier than start time.
-                        # NOTE BUG GITHUB #919
-                        # sct = start_point
                         if (r_id is None or r_id[1] < actual_first_point or
                                 is_validate):
                             continue
