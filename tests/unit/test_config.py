@@ -25,6 +25,7 @@ from cylc.flow import CYLC_LOG
 from cylc.flow.config import SuiteConfig
 from cylc.flow.cycling import loader
 from cylc.flow.exceptions import SuiteConfigError
+from cylc.flow.suite_files import SuiteFiles
 from cylc.flow.wallclock import get_utc_mode, set_utc_mode
 
 
@@ -527,3 +528,45 @@ def test_process_runahead_limit(cfg_scheduling, valid, cycling_mode):
         with pytest.raises(SuiteConfigError) as exc:
             SuiteConfig.process_runahead_limit(mock_config)
         assert "bad runahead limit" in str(exc.value).lower()
+
+
+@pytest.mark.parametrize(
+    'opt', [None, 'check_circular', 'strict']
+)
+def test_check_circular(opt, monkeypatch, caplog, tmp_path):
+    """Test SuiteConfig._check_circular()."""
+    # ----- Setup -----
+    caplog.set_level(logging.WARNING, CYLC_LOG)
+
+    options = Mock(spec=[], is_validate=True)
+    if opt:
+        setattr(options, opt, True)
+
+    flow_config = """
+    [scheduling]
+        cycling mode = integer
+        [[graph]]
+            R1 = "a => b => c => d => e => a"
+    [runtime]
+        [[a, b, c, d, e]]
+            script = True
+    """
+    flow_file = tmp_path.joinpath(SuiteFiles.FLOW_FILE)
+    flow_file.write_text(flow_config)
+
+    def SuiteConfig__assert_err_raised():
+        with pytest.raises(SuiteConfigError) as exc:
+            SuiteConfig(suite='circular', fpath=flow_file, options=options)
+        assert "circular edges detected" in str(exc.value)
+
+    # ----- The actual test -----
+    SuiteConfig__assert_err_raised()
+    # Now artificially lower the limit and re-test:
+    monkeypatch.setattr('cylc.flow.config.SuiteConfig.CHECK_CIRCULAR_LIMIT', 4)
+    if opt != 'check_circular':
+        # Will no longer raise
+        SuiteConfig(suite='circular', fpath=flow_file, options=options)
+        msg = "will not check graph for circular dependencies"
+        assert msg in caplog.text
+    else:
+        SuiteConfig__assert_err_raised()
