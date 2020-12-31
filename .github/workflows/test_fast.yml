@@ -35,12 +35,17 @@ jobs:
 
       - name: Doctests
         run: |
-          pytest -n 5 cylc/flow
+          pytest --cov --cov-append -n 5 cylc/flow
 
       - name: Unit Tests
         run: |
-          pytest -n 5 tests/unit
+          pytest --cov --cov-append -n 5 tests/unit
 
       - name: Integration Tests
         run: |
-          pytest -n 5 tests/integration
+          pytest --cov --cov-append -n 5 tests/integration
+
+      - name: Coverage
+        run: |
+          coverage report
+          bash <(curl -s https://codecov.io/bash)

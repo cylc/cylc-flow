@@ -12,6 +12,12 @@ $ etc/bin/run-functional-tests tests/f
 
 # split the tests into 4 "chunks" and run the first chunk
 $ CHUNK='1/4' etc/bin/run-functional-tests tests/f
+
+# measure code coverage
+# (coverage files are not automatically transfered from remote platforms)
+$ export CYLC_COVERAGE=1
+$ etc/bin/run-functional-tests tests/f
+$ coverage combine
 ```
 
 ## What Are Functional Tests?

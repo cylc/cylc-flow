@@ -1,6 +1,7 @@
 *
 *.py[cod]
 __pycache__
+!.coveragerc
 !.docker*
 !README.md
 !bin

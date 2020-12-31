@@ -23,7 +23,7 @@ __pycache__/
 
 # coverage
 .coverage
-.coverage.*
+.coverage*
 coverage.xml
 htmlcov/
 
