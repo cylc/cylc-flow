@@ -23,7 +23,7 @@ from cylc.flow import __version__
 from cylc.flow.terminal import get_width
 
 
-_copyright_year = 2020  # This is set by GH Actions update_copyright workflow
+_copyright_year = 2021  # This is set by GH Actions update_copyright workflow
 
 # fmt: off
 LOGO_LETTERS = (
