@@ -149,6 +149,10 @@ parse ``rose-suite.conf`` files in repository "cylc-rose".
 [#3955](https://github.com/cylc/cylc-flow/pull/3955) - Global config options
 to control the job submission environment.
 
+[#4020](https://github.com/cylc/cylc-flow/pull/4020) - `cylc validate` will no
+longer check for a cyclic/circular graph if there are more than 100 tasks,
+unless the option  `--check-circular` is used. This is to improved performance.
+
 
 ### Fixes
 
