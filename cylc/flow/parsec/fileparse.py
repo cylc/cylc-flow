@@ -39,7 +39,8 @@ from pathlib import Path
 
 from cylc.flow import __version__
 from cylc.flow import LOG
-from cylc.flow.parsec.exceptions import ParsecError, FileParseError
+from cylc.flow.exceptions import PluginError
+from cylc.flow.parsec.exceptions import FileParseError, ParsecError
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.include import inline
 from cylc.flow.parsec.util import itemstr
@@ -223,7 +224,16 @@ def process_plugins(fpath):
     for entry_point in pkg_resources.iter_entry_points(
         'cylc.pre_configure'
     ):
-        plugin_result = entry_point.resolve()(fpath)
+        try:
+            plugin_result = entry_point.resolve()(fpath)
+        except Exception as exc:
+            # NOTE: except Exception (purposefully vague)
+            # this is to separate plugin from core Cylc errors
+            raise PluginError(
+                'cylc.pre_configure',
+                entry_point.name,
+                exc
+            ) from None
         for section in ['env', 'template_variables']:
             if section in plugin_result and plugin_result[section] is not None:
                 # Raise error if multiple plugins try to update the same keys.

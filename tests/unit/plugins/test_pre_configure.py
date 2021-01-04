@@ -19,6 +19,7 @@ from random import random
 
 import pytest
 
+from cylc.flow.exceptions import PluginError
 from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.parsec.fileparse import process_plugins
 
@@ -53,6 +54,12 @@ def pre_configure_templating_detected(*_):
     return {
         'templating_detected': str(random())
     }
+
+
+@EntryPointWrapper
+def pre_configure_error(*_):
+    """Plugin that raises an exception."""
+    raise Exception('foo')
 
 
 def test_pre_configure(monkeypatch):
@@ -97,3 +104,18 @@ def test_pre_configure_templating_detected(monkeypatch):
     )
     with pytest.raises(ParsecError):
         process_plugins(None)
+
+
+def test_pre_configure_exception(monkeypatch):
+    """It should wrap plugin errors."""
+    monkeypatch.setattr(
+        'cylc.flow.parsec.fileparse.pkg_resources.iter_entry_points',
+        lambda x: [pre_configure_error]
+    )
+    with pytest.raises(PluginError) as exc_ctx:
+        process_plugins(None)
+    # the context of the original error should be preserved in the raised
+    # exception
+    assert exc_ctx.value.entry_point == 'cylc.pre_configure'
+    assert exc_ctx.value.plugin_name == 'pre_configure_error'
+    assert str(exc_ctx.value.exc) == 'foo'
