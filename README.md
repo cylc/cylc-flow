@@ -64,7 +64,7 @@ Cylc 7 versions for production use.
 
 [![License](https://img.shields.io/github/license/cylc/cylc-flow.svg?color=lightgrey)](https://github.com/cylc/cylc-flow/blob/master/COPYING)
 
-Copyright (C) 2008-<span actions:bind='current-year'>2020</span> NIWA & British Crown (Met Office) & Contributors.
+Copyright (C) 2008-<span actions:bind='current-year'>2021</span> NIWA & British Crown (Met Office) & Contributors.
 
 Cylc is free software: you can redistribute it and/or modify it under the terms
 of the GNU General Public License as published by the Free Software Foundation,
