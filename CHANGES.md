@@ -133,8 +133,10 @@ hierarchy and ability to set site config directory.
 [#3883](https://github.com/cylc/cylc-flow/pull/3883) - Added a new workflow
 config option `[scheduling]stop after cycle point`.
 
-[#3961](https://github.com/cylc/cylc-flow/pull/3961) - Added a new command:
-`cylc clean`.
+[#3961](https://github.com/cylc/cylc-flow/pull/3961),
+[#4017](https://github.com/cylc/cylc-flow/pull/4017) - Added a new command:
+`cylc clean`, for removing stopped workflows on the local and any remote
+filesystems.
 
 ### Fixes
 
