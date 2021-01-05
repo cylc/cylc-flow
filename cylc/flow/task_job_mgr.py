@@ -862,7 +862,7 @@ class TaskJobManager:
         else:
             rtconfig = itask.tdef.rtconfig
 
-        # TODO - remove host logic at Cylc 9
+        # BACK COMPAT: host logic
         # Determine task host or platform now, just before job submission,
         # because dynamic host/platform selection may be used.
         # cases:
@@ -875,6 +875,8 @@ class TaskJobManager:
         #    tasks which will fail anyway later.
         # - Platform exists, host doesn't = eval platform_n
         # - host exists - eval host_n
+        # remove at:
+        #     Cylc9
         if (
             rtconfig['platform'] is not None and
             rtconfig['remote']['host'] is not None

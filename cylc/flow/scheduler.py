@@ -504,7 +504,6 @@ class Scheduler:
 
         # Main loop plugins
         self.main_loop_plugins = main_loop.load(
-            # TODO: this doesn't work, we need to merge the two configs
             self.cylc_config.get('main loop', {}),
             self.options.main_loop
         )

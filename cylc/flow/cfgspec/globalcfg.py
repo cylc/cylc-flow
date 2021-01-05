@@ -711,19 +711,24 @@ class GlobalConfig(ParsecConfig):
     """
 
     _DEFAULT = None
-    _HOME = os.getenv('HOME') or get_user_home()
     CONF_BASENAME = "global.cylc"
+    SITE_CONF_PATH = (
+        os.getenv('CYLC_SITE_CONF_PATH')
+        or os.path.join(os.sep, 'etc', 'cylc', 'flow')
+    )
+    USER_CONF_PATH = os.path.join(
+        os.getenv('HOME') or get_user_home(),
+        '.cylc',
+        'flow'
+    )
+    VERSION_HIERARCHY = get_version_hierarchy(CYLC_VERSION)
 
     def __init__(self, *args, **kwargs):
-        self.SITE_CONF_PATH = (os.getenv('CYLC_SITE_CONF_PATH') or
-                               os.path.join(os.sep, 'etc', 'cylc', 'flow'))
-        self.USER_CONF_PATH = os.path.join(self._HOME, '.cylc', 'flow')
-        version_hierarchy = get_version_hierarchy(CYLC_VERSION)
-        self.CONF_DIR_HIERARCHY = [
+        self.conf_dir_hierarchy = [
             *[(upgrader.SITE_CONFIG, os.path.join(self.SITE_CONF_PATH, ver))
-              for ver in version_hierarchy],
+              for ver in self.VERSION_HIERARCHY],
             *[(upgrader.USER_CONFIG, os.path.join(self.USER_CONF_PATH, ver))
-              for ver in version_hierarchy]
+              for ver in self.VERSION_HIERARCHY]
         ]
         super().__init__(*args, **kwargs)
 
@@ -760,7 +765,7 @@ class GlobalConfig(ParsecConfig):
                 self.loadcfg(fname, upgrader.USER_CONFIG)
         elif conf_path_str is None:
             # Use default locations.
-            for conf_type, conf_dir in self.CONF_DIR_HIERARCHY:
+            for conf_type, conf_dir in self.conf_dir_hierarchy:
                 fname = os.path.join(conf_dir, self.CONF_BASENAME)
                 if not os.access(fname, os.F_OK | os.R_OK):
                     continue
