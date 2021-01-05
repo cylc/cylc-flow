@@ -16,9 +16,6 @@
 
 """Suite service files management."""
 
-# Note: Some modules are NOT imported in the header. Expensive modules are only
-# imported on demand.
-
 import os
 from pathlib import Path
 from random import shuffle
@@ -34,8 +31,7 @@ from cylc.flow.exceptions import (
     CylcError, PlatformLookupError, SuiteServiceFileError, TaskRemoteMgmtError,
     WorkflowFilesError)
 from cylc.flow.pathutil import (
-    get_remote_suite_run_dir, get_suite_run_dir, make_localhost_symlinks,
-    remove_dir)
+    get_suite_run_dir, make_localhost_symlinks, remove_dir)
 from cylc.flow.platforms import (
     get_platform, get_install_target_to_platforms_map)
 from cylc.flow.hostuserutil import (
@@ -614,7 +610,7 @@ def init_clean(reg):
     clean(reg)
 
 
-def clean(reg, run_dir=None):
+def clean(reg):
     """Remove a stopped workflow from the local filesystem only.
 
     Deletes the workflow run directory and any symlink dirs. Note: if the
@@ -623,12 +619,8 @@ def clean(reg, run_dir=None):
 
     Args:
         reg (str): Workflow name.
-        run_dir (str): Path to the workflow run dir on the filesystem.
     """
-    if run_dir:
-        run_dir = Path(run_dir)
-    else:
-        run_dir = Path(get_suite_run_dir(reg))
+    run_dir = Path(get_suite_run_dir(reg))
     try:
         _clean_check(reg, run_dir)
     except FileNotFoundError as exc:
@@ -716,7 +708,7 @@ def remote_clean(reg, platform_names):
 def _remote_clean_cmd(reg, platform):
     """Remove a stopped workflow on a remote host.
 
-    Call "cylc remote-clean" over ssh and return the subprocess.
+    Call "cylc clean --local-only" over ssh and return the subprocess.
 
     Args:
         reg (str): Workflow name.
@@ -726,7 +718,7 @@ def _remote_clean_cmd(reg, platform):
     LOG.info(
         f'Cleaning on install target: {platform["install target"]} '
         f'(platform: {platform["name"]})')
-    cmd = ['remote-clean', reg, get_remote_suite_run_dir(platform, reg)]
+    cmd = ['clean', '--local-only', reg]
     cmd = construct_ssh_cmd(cmd, platform, timeout='10s')
     LOG.debug(" ".join(cmd))
     return Popen(cmd, stdin=DEVNULL, stdout=PIPE, stderr=PIPE)

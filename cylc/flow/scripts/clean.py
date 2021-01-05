@@ -24,7 +24,7 @@ NOTE: this command is intended for workflows installed with `cylc install`. If
 this is run for a workflow that was instead written directly in ~/cylc-run and
 not backed up elsewhere, it will be lost.
 
-It will also remove an symlink directory targets.
+It will also remove any symlink directory targets.
 
 Suite names can be hierarchical, corresponding to the path under ~/cylc-run.
 
@@ -36,20 +36,30 @@ Examples:
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
-from cylc.flow.suite_files import init_clean
+from cylc.flow.suite_files import clean, init_clean
 
 
 def get_option_parser():
     parser = COP(
         __doc__,
-        argdoc=[("REG", "Suite name")]
+        argdoc=[('REG', "Workflow name")]
     )
+
+    parser.add_option(
+        '--local-only', '--local',
+        help="Only clean on the local filesystem (not remote hosts).",
+        action='store_true', dest='local_only'
+    )
+
     return parser
 
 
 @cli_function(get_option_parser)
 def main(parser, opts, reg):
-    init_clean(reg)
+    if opts.local_only:
+        clean(reg)
+    else:
+        init_clean(reg)
 
 
 if __name__ == "__main__":
