@@ -59,12 +59,10 @@ multiple workflow run directories that link to the same suite definition.
 """
 
 
-import os
 import pkg_resources
 
 from cylc.flow.exceptions import PluginError
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.pathutil import get_workflow_run_dir
 from cylc.flow.suite_files import install_workflow
 from cylc.flow.terminal import cli_function
 
@@ -139,21 +137,22 @@ def main(parser, opts, flow_name=None, src=None):
                 exc
             ) from None
 
-    flow_name = install_workflow(
+    source_dir, rundir, _flow_name = install_workflow(
         flow_name=opts.flow_name,
         source=opts.source,
         run_name=opts.run_name,
         no_run_name=opts.no_run_name,
-        no_symlinks=opts.no_symlinks)
+        no_symlinks=opts.no_symlinks
+    )
 
     for entry_point in pkg_resources.iter_entry_points(
         'cylc.post_install'
     ):
         try:
             entry_point.resolve()(
-                dir_=os.getcwd(),
+                dir_=source_dir,
                 opts=opts,
-                dest_root=get_workflow_run_dir(flow_name)
+                dest_root=str(rundir)
             )
         except Exception as exc:
             # NOTE: except Exception (purposefully vague)

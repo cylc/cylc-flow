@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y \
     python3.7-dev \
     sqlite3 \
     wget \
+    rsync \
     && python3.7 -m pip install -U pip setuptools \
     && rm -rf /var/lib/apt/lists/*
 

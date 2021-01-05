@@ -28,13 +28,10 @@ set_test_number 3
 SOURCE_DIR="${PWD}/cylc-source-dir"
 mkdir "${SOURCE_DIR}"
 cp -r "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}" "${SOURCE_DIR}/03-fileinstall"
-# cp -r  "${CYLC_REPO_DIR}/tests/functional/rose-conf/fileinstall_data/" "${SOURCE_DIR}/03-fileinstall"
-
 sed -i "s@REPLACE_THIS@${CYLC_REPO_DIR}/tests/functional/rose-conf/fileinstall_data@g" "${SOURCE_DIR}/03-fileinstall/rose-suite.conf"
 SUITE_NAME="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}"
 SUITE_RUN_DIR="${RUN_DIR}/${SUITE_NAME}/03-fileinstall"
-
-run_ok "{TEST_NAME_BASE}-install" cylc install --no-run-name --flow-name="${SUITE_NAME}" --directory="${SOURCE_DIR}/03-fileinstall"
+run_ok "{TEST_NAME_BASE}-install" cylc install --no-run-name --flow-name="${SUITE_NAME}/03-fileinstall" --directory="${SOURCE_DIR}/03-fileinstall"
 
 # Test that data files have been concatenated.
 DATA_INSTALLED_PATH="${SUITE_RUN_DIR}/data"

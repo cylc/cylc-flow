@@ -39,7 +39,7 @@ run_ok "${TEST_NAME_BASE}-install" \
 
 suite_run_ok "${TEST_NAME_BASE}" \
     cylc run --debug --no-detach --reference-test "${SUITE_NAME}"
-
+# shellcheck disable=SC2086
 ssh ${SSH_OPTS} "${CYLC_TEST_HOST}" \
     rm -rf cylctb-cylc-source
 purge

@@ -18,7 +18,7 @@
 #------------------------------------------------------------------------------
 # Test workflow installation
 . "$(dirname "$0")/test_header"
-set_test_number 18
+set_test_number 20
 
 export RND_SUITE_NAME
 export RND_SUITE_SOURCE
@@ -52,6 +52,19 @@ INSTALLED $RND_SUITE_NAME from ${RND_SUITE_SOURCE} -> ${RND_SUITE_RUNDIR}/run1
 __OUT__
 popd || exit 1
 purge_rnd_suite
+
+# Test default name: "cylc install" (suite in $PWD, flow.cylc given as arg)
+TEST_NAME="${TEST_NAME_BASE}-basic"
+make_rnd_suite
+pushd "${RND_SUITE_SOURCE}" || exit 1
+run_ok "${TEST_NAME}" cylc install flow.cylc
+
+contains_ok "${TEST_NAME}.stdout" <<__OUT__
+INSTALLED $RND_SUITE_NAME from ${RND_SUITE_SOURCE} -> ${RND_SUITE_RUNDIR}/run1
+__OUT__
+popd || exit 1
+purge_rnd_suite
+
 
 # Test default path: "cylc install REG" (flow in $PWD)
 TEST_NAME="${TEST_NAME_BASE}-pwd2"

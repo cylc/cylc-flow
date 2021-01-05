@@ -1002,6 +1002,7 @@ def install_workflow(flow_name=None, source=None, run_name=None,
                      no_run_name=False, no_symlinks=False):
     """Install a workflow, or renew its installation.
 
+    Install workflow into new run directory.
     Create symlink to suite source location, creating any symlinks for run,
     work, log, share, share/cycle directories.
 
@@ -1014,7 +1015,9 @@ def install_workflow(flow_name=None, source=None, run_name=None,
         rundir (str): for overriding the default cylc-run directory.
 
     Return:
-        str: The installed suite name (which may be computed here).
+        source (Path): The source direcory.
+        rundir (Path): The directory the workflow has been installed into.
+        flow_name (str): The installed suite name (which may be computed here).
 
     Raise:
         WorkflowFilesError:
@@ -1111,7 +1114,7 @@ def install_workflow(flow_name=None, source=None, run_name=None,
     INSTALL_LOG.info(f'INSTALLED {flow_name} from {source} -> {rundir}')
     print(f'INSTALLED {flow_name} from {source} -> {rundir}')
     _close_install_log()
-    return flow_name
+    return source, rundir, flow_name
 
 
 def create_workflow_srv_dir(rundir=None, source=None):

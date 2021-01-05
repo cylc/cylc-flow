@@ -41,7 +41,7 @@ function purge_rnd_suite() {
 }
 
 . "$(dirname "$0")/test_header"
-set_test_number 18
+set_test_number 20
 
 # Test fail no suite source dir
 TEST_NAME="${TEST_NAME_BASE}-nodir"
@@ -72,6 +72,14 @@ WorkflowFilesError: Workflow name cannot be an absolute path: ${RND_SUITE_SOURCE
 __ERR__
 purge_rnd_suite
 
+# Test cylc install fails when given run-name _cylc-install
+TEST_NAME="${TEST_NAME_BASE}-run-name-cylc-install-forbidden"
+make_rnd_suite
+run_fail "${TEST_NAME}" cylc install --run-name=_cylc-install -C "${RND_SUITE_SOURCE}"
+contains_ok "${TEST_NAME}.stderr" <<__ERR__
+WorkflowFilesError: Run name cannot be "_cylc-install". Please choose another run name.
+__ERR__
+purge_rnd_suite
 
 # Test source dir can not contain '_cylc-install, log, share, work' dirs
 for DIR in 'work' 'share' 'log' '_cylc-install'; do

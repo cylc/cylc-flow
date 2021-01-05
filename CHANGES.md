@@ -59,13 +59,16 @@ The filenames `suite.rc` and `global.rc` are now deprecated in favour of
 compatibility, the `cylc run` command will automatically symlink an existing
 `suite.rc` file to `flow.cylc`.
 
-Remove cylc register's option `--run-dir=DIR`, which created a run directory
-symlink to `DIR` (see #3884).
+Remove `cylc register` command
+([#4000](https://github.com/cylc/cylc-flow/pull/4000)).
 
 ### Enhancements
 
 [#4014](https://github.com/cylc/cylc-flow/pull/4014) - Rename "ready" task
 state to "preparing".
+
+[#4000](https://github.com/cylc/cylc-flow/pull/4000) - Cylc install command
+added. Install workflows into cylc run directory from arbitrary locations.
 
 [#3992](https://github.com/cylc/cylc-flow/pull/3992) - Rename
 batch system to job runner.
