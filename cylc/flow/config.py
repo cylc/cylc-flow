@@ -719,7 +719,7 @@ class SuiteConfig:
         # Replace suite and task name in suite and task URLs.
         self.cfg['meta']['URL'] = self.cfg['meta']['URL'] % {
             'suite_name': self.suite}
-        # BACK_COMPAT: CYLC_SUITE_NAME
+        # BACK COMPAT: CYLC_SUITE_NAME
         # from:
         #     Cylc7
         # to:
@@ -731,7 +731,7 @@ class SuiteConfig:
         for name, cfg in self.cfg['runtime'].items():
             cfg['meta']['URL'] = cfg['meta']['URL'] % {
                 'suite_name': self.suite, 'task_name': name}
-            # BACK_COMPAT: CYLC_SUITE_NAME, CYLC_TASK_NAME
+            # BACK COMPAT: CYLC_SUITE_NAME, CYLC_TASK_NAME
             # from:
             #     Cylc7
             # to:
@@ -916,7 +916,8 @@ class SuiteConfig:
 
         TODO - this will have an impact on memory footprint for large suites
         with a lot of runtime config. We should consider ditching OrderedDict
-        and instead using an ordinary dict with a separate list of keys.
+        and instead using an ordinary dict
+
         """
         if (not self.parameters[0] and
                 not any(',' in ns for ns in self.cfg['runtime'])):

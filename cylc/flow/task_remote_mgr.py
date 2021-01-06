@@ -97,12 +97,14 @@ class TaskRemoteMgr:
               'localhost'
             - Otherwise, return the evaluated host name on success.
 
-        TODO:
-            At Cylc 9, strip of all references to host.
+
 
         Raise TaskRemoteMgmtError on error.
 
         """
+        # BACK COMPAT: references to "host"
+        # remove at:
+        #     Cylc9
         if not command:
             return 'localhost'
 

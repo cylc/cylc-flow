@@ -18,32 +18,28 @@
 # Parent and child tasks are both valid, before inheritance calculated.
 # Child function not valid after inheritance.
 # Check for task failure at job-submit.
-export REQUIRE_PLATFORM='loc:remote'
 . "$(dirname "$0")/test_header"
-skip_all 'TODO test does not make sense, come back later'
 set_test_number 3
 
 create_test_global_config '' "
+# non-existent platform
 [platforms]
-  [[${CYLC_TEST_PLATFORM}]]
-    retrieve job logs = True
+    [[_wibble]]
 "
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 # Both of these cases should validate ok.
 run_ok "${TEST_NAME_BASE}-validate" \
-  cylc validate "${SUITE_NAME}" \
-     -s "CYLC_TEST_HOST='${CYLC_TEST_HOST}'"
+    cylc validate "${SUITE_NAME}"
 
 # Run the suite
 suite_run_fail "${TEST_NAME_BASE}-run" \
-  cylc run --debug --no-detach \
-  -s "CYLC_TEST_HOST='${CYLC_TEST_HOST}'" "${SUITE_NAME}"
+    cylc run --debug --no-detach "${SUITE_NAME}"
 
 # Grep for inherit-fail to fail later at submit time
-grep_ok "SuiteConfigError:.*non-valid-child.1"\
-  "${TEST_NAME_BASE}-run.stderr"
+grep_ok "SuiteConfigError:.*non-valid-child.1" \
+    "${TEST_NAME_BASE}-run.stderr"
 
 purge
 exit

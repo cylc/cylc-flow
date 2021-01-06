@@ -684,6 +684,20 @@ reftest() {
     purge
 }
 
+_get_test_config_file() {
+    # print the path to the most specific global-tests.cylc on the system
+    # (or print nothing if no test configs are present)
+    python3 -c "
+from pathlib import Path
+from cylc.flow.cfgspec.globalcfg import get_version_hierarchy
+for version in reversed(get_version_hierarchy('$(cylc version)')):
+    path = Path('${HOME}/.cylc/flow', version, 'global-tests.cylc')
+    if path.exists():
+        print(path)
+        break
+    "
+}
+
 create_test_global_config() {
     # (Documented in file header).
     local PRE=
@@ -702,8 +716,8 @@ create_test_global_config() {
     mkdir 'etc'
     # Scheduler host self-identification method.
     echo "$PRE" >'etc/global.cylc'
-    USER_TESTS_CONF_FILE="${HOME}/.cylc/flow/$(cylc version)/global-tests.cylc"
-    if [[ -f "${USER_TESTS_CONF_FILE}" ]]; then
+    USER_TESTS_CONF_FILE="$(_get_test_config_file)"
+    if [[ -n "${USER_TESTS_CONF_FILE}" ]]; then
         cat "${USER_TESTS_CONF_FILE}" >>'etc/global.cylc'
     fi
     echo "$POST" >>'etc/global.cylc'

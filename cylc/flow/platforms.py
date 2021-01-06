@@ -36,6 +36,14 @@ HOST_REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
 PLATFORM_REC_COMMAND = re.compile(r'(\$\()\s*(.*)\s*([)])$')
 
 
+# BACK COMPAT: get_platform
+#     At Cylc 9 remove all Cylc7 upgrade logic.
+# from:
+#     Cylc8
+# to:
+#     Cylc9
+# remove at:
+#     Cylc9
 def get_platform(task_conf=None, task_id='unknown task', warn_only=False):
     """Get a platform.
 
@@ -58,10 +66,7 @@ def get_platform(task_conf=None, task_id='unknown task', warn_only=False):
             platform_from_job_info(), but to the user these look the same.
             When working in warn_only mode, warnings are returned as strings.
 
-    TODO:
-        At Cylc 9 remove all Cylc7 upgrade logic.
     """
-
     if task_conf is None:
         # Just a simple way of accessing localhost items.
         output = platform_from_name()

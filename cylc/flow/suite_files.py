@@ -201,15 +201,6 @@ class ContactFileFields:
     SUITE_RUN_DIR_ON_SUITE_HOST = 'CYLC_SUITE_RUN_DIR_ON_SUITE_HOST'
     """The path to the suite run directory as seen from ``HOST``."""
 
-    TASK_MSG_MAX_TRIES = 'CYLC_TASK_MSG_MAX_TRIES'
-    """TODO: Unused at present, waiting on #3331."""
-
-    TASK_MSG_RETRY_INTVL = 'CYLC_TASK_MSG_RETRY_INTVL'
-    """TODO: Unused at present, waiting on #3331."""
-
-    TASK_MSG_TIMEOUT = 'CYLC_TASK_MSG_TIMEOUT'
-    """TODO: Unused at present, waiting on #3331."""
-
     UUID = 'CYLC_SUITE_UUID'
     """Unique ID for this run of the suite."""
 

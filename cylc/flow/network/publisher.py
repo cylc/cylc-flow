@@ -45,8 +45,6 @@ class WorkflowPublisher(ZMQSocketBase):
 
     This class contains the logic for the ZMQ message Publisher.
 
-    Note: Security TODO
-
     Usage:
         * Define ...
 
