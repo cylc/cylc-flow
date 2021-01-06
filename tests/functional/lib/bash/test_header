@@ -851,16 +851,14 @@ _get_test_install_target () {
 get_host_from_platform () {
     local platform="$1"
 
-    cylc get-global-config \
-        -i "[platforms][${platform}]hosts" \
+    cylc config -i "[platforms][${platform}]hosts" \
         | cut -d ',' -f 1
 }
 
 get_install_target_from_platform () {
     local platform="$1"
 
-    cylc get-global-config \
-        -i "[platforms][${platform}]install target" \
+    cylc config -i "[platforms][${platform}]install target" \
         | cut -d ',' -f 1
 }
 
@@ -877,7 +875,7 @@ get_fqdn () {
 }
 
 _get_test_platforms () {
-    cylc get-global-config -i '[platforms]' --sparse \
+    cylc config -i '[platforms]' --sparse \
         | sed -n 's/\[\[\(_.*\)\]\]/\1/p'
 }
 
@@ -951,7 +949,7 @@ delete_db() {
 
 PATH="${CYLC_REPO_DIR}/bin:${PATH}"
 
-RUN_DIR="$(eval echo "$(cylc get-global-config --print-run-dir --color=never)")"
+RUN_DIR="$(eval echo "$(cylc config --print-run-dir --color=never)")"
 export RUN_DIR
 TEST_NAME_BASE="$(basename "$0" '.t')"
 TEST_SOURCE_DIR="$(cd "$(dirname "$0")" && pwd)"

@@ -16,54 +16,51 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc get-suite-config [OPTIONS] ARGS
+"""cylc config [OPTIONS] ARGS
 
-Print parsed suite configuration items, after runtime inheritance.
+Print parsed configuration, after runtime inheritance. If REG is specified,
+print the workflow configuration, otherwise print the global configuration.
 
 Note:
-  This is different to `cylc view` which doesn't parse the configuration
+  This is different to `cylc view` which doesn't parse the configuration,
   so is useful for debugging Jinja2.
-
-By default all settings are printed. For specific sections or items
-use -i/--item and wrap sections in square brackets, e.g.:
-  $ cylc get-suite-config --item '[scheduling]initial cycle point'
-Multiple items can be retrieved at once.
 
 By default, unset values are printed as an empty string, or (for
 historical reasons) as "None" with -o/--one-line. These defaults
 can be changed with the -n/--null-value option.
 
-Example:
-  |# FLOW.CYLC
-  |[runtime]
-  |    [[modelX]]
-  |        [[[environment]]]
-  |            FOO = foo
-  |            BAR = bar
+Examples:
+  # print global configuration
+  $ cylc config
 
-  $ cylc get-suite-config --item=[runtime][modelX][environment]FOO SUITE
-  foo
+  # print workflow configuration
+  $ cylc config myflow
 
-  $ cylc get-suite-config --item=[runtime][modelX][environment] SUITE
-  FOO = foo
-  BAR = bar
+  # print specific setting from the global config
+  $ cylc config -i '[platforms][myplatform]hosts
 
-  $ cylc get-suite-config --item=[runtime][modelX] SUITE
-  ...
-  [[[environment]]]
-      FOO = foo
-      BAR = bar
-  ..."""
+  # print specific section from workflow config
+  $ cylc config -i '[scheduling][graph]' myflow
 
+  # print workflow config, first setting the initial cycle point
+  $ cylc config --initial-cycle-point=now myflow
+"""
+
+from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.config import SuiteConfig
 from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.platforms import get_platform
 from cylc.flow.suite_files import parse_suite_arg
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow.terminal import cli_function
 
 
 def get_option_parser():
-    parser = COP(__doc__, jset=True, prep=True, icp=True)
+    parser = COP(
+        __doc__,
+        argdoc=[("[REG]", "Workflow name or path")],
+        jset=True, prep=True, icp=True
+    )
 
     parser.add_option(
         "-i", "--item", metavar="[SEC...]ITEM",
@@ -112,11 +109,25 @@ def get_option_parser():
         help="Get config for suite run mode.", action="store", default="live",
         dest="run_mode", choices=['live', 'dummy', 'simulation'])
 
+    parser.add_option(
+        "--print-run-dir",
+        help="Print the configured top level run directory.",
+        action="store_true", default=False, dest="print_run_dir")
+
     return parser
 
 
 @cli_function(get_option_parser)
-def main(parser, options, reg):
+def main(parser, options, reg=None):
+    if options.print_run_dir:
+        print(get_platform()['run directory'])
+        return
+
+    if reg is None:
+        glbl_cfg().idump(
+            options.item, sparse=options.sparse, pnative=options.pnative)
+        return
+
     suite, flow_file = parse_suite_arg(options, reg)
 
     if options.markup:

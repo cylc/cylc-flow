@@ -21,7 +21,7 @@
 View a processed suite configuration.
 
 Note:
-  This is different to `cylc get-config` which displays the parsed
+  This is different to `cylc config` which displays the parsed
   configuration (as Cylc would see it).
 
 View a read-only temporary copy of suite NAME's flow.cylc file, in your

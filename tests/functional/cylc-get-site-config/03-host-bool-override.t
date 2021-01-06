@@ -28,7 +28,7 @@ create_test_global_config '' '
         use login shell = False'
 
 run_ok "${TEST_NAME_BASE}" \
-    cylc get-global-config --item='[platforms][mytesthost]use login shell'
+    cylc config --item='[platforms][mytesthost]use login shell'
 cmp_ok "${TEST_NAME_BASE}.stdout" <<<'False'
 cmp_ok "${TEST_NAME_BASE}.stderr" <'/dev/null'
 exit

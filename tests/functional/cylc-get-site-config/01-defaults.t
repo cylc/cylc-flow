@@ -22,11 +22,11 @@
 set_test_number 1
 
 # Empty it (of non-default global-tests.cylc items, which would then be retrieved
-# by "cylc get-global-config" below).
+# by "cylc config" below).
 echo '' > "$CYLC_CONF_PATH/global.cylc"
 
 # Replace it entirely with system defaults.
-cylc get-global-config > "$CYLC_CONF_PATH/global.cylc"
+cylc config > "$CYLC_CONF_PATH/global.cylc"
 
 # Check that the new file parses OK.
-run_ok "${TEST_NAME_BASE}" cylc get-global-config
+run_ok "${TEST_NAME_BASE}" cylc config
