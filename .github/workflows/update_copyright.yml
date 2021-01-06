@@ -6,6 +6,7 @@ on:
 
 jobs:
   update-copyright:
+    if: github.repository_owner == 'cylc'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -13,15 +14,11 @@ jobs:
     - name: Checkout repo
       uses: actions/checkout@v2
 
+    - name: Configure git
+      uses: cylc/release-actions/configure-git@v1
+
     - name: Checkout PR branch
-      run: |
-        git config --global user.name "github-actions[bot]"
-        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        year=$(date '+%Y' --utc)
-        branch_name="copyright-${year}"
-        git checkout -b "$branch_name"
-        echo "YEAR=$year" >> $GITHUB_ENV
-        echo "BRANCH_NAME=$branch_name" >> $GITHUB_ENV
+      uses: cylc/release-actions/checkout-copyright-branch@v1
 
     - name: Update copyright year
       env:
@@ -37,19 +34,13 @@ jobs:
     - name: Commit & push
       run : |
         git commit -a -m "Update copyright year" -m "Workflow: ${{ github.workflow }}, run: ${{ github.run_number }}"
-        git push origin "$BRANCH_NAME"
+        git push
 
     - name: Create pull request
+      uses: cylc/release-actions/create-pr@v1
       env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        curl -X POST \
-          https://api.github.com/repos/${{ github.repository }}/pulls \
-          -H "authorization: Bearer ${GH_TOKEN}" \
-          -H 'content-type: application/json' \
-          --data '{
-            "title": "Auto PR: update copyright year",
-            "head": "${{ env.BRANCH_NAME }}",
-            "base": "master",
-            "body": "Happy new year!"
-          }'
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        head: ${{ env.BRANCH_NAME }}
+        title: 'Auto PR: update copyright year'
+        body: 'Happy new year!'
