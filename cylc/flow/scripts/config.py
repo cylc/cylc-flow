@@ -59,7 +59,7 @@ def get_option_parser():
     parser = COP(
         __doc__,
         argdoc=[("[REG]", "Workflow name or path")],
-        jset=True, prep=True, icp=True
+        jset=True, icp=True
     )
 
     parser.add_option(
