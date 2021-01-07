@@ -73,12 +73,6 @@ def get_option_parser():
         action="store_true", default=False, dest="sparse")
 
     parser.add_option(
-        "-a", "--all-tasks",
-        help="For [runtime] items (e.g. --item='script') report "
-        "values for all tasks prefixed by task name.",
-        action="store_true", default=False, dest="alltasks")
-
-    parser.add_option(
         "-n", "--null-value",
         help="The string to print for unset values (default nothing).",
         metavar="STRING", action="store", default='', dest="none_str")
@@ -87,12 +81,6 @@ def get_option_parser():
         "-o", "--one-line",
         help="Print multiple single-value items at once.",
         action="store_true", default=False, dest="oneline")
-
-    parser.add_option(
-        "-t", "--tasks",
-        help="Print the suite task list "
-             "[DEPRECATED: use 'cylc list SUITE'].",
-        action="store_true", default=False, dest="tasks")
 
     parser.add_option(
         "--print-run-dir",
@@ -119,20 +107,10 @@ def main(parser, options, reg=None):
         flow_file,
         options,
         load_template_vars(options.templatevars, options.templatevars_file))
-    if options.tasks:
-        for task in config.get_task_name_list():
-            print(task)
-    elif options.alltasks:
-        for task in config.get_task_name_list():
-            items = ['[runtime][' + task + ']' + i for i in options.item]
-            print(task, end=' ')
-            config.pcfg.idump(
-                items, options.sparse, oneline=options.oneline,
-                none_str=options.none_str)
-    else:
-        config.pcfg.idump(
-            options.item, options.sparse, oneline=options.oneline,
-            none_str=options.none_str)
+
+    config.pcfg.idump(
+        options.item, options.sparse, oneline=options.oneline,
+        none_str=options.none_str)
 
 
 if __name__ == "__main__":
