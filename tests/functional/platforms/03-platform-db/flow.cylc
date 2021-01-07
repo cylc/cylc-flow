@@ -1,0 +1,10 @@
+[scheduling]
+    [[graph]]
+        R1 = frozen & disney
+[runtime]
+    [[frozen]]
+        script = "echo let it go"
+        platform = elsa
+    [[disney]]
+        script = "echo cant hold it back anymore"
+        platform = olaf
