@@ -30,7 +30,7 @@ jobs:
           brew install shellcheck sqlite3
 
       - name: Apt-Get Install
-        if: endsWith(matrix.os, 'ubuntu')
+        if: startsWith(matrix.os, 'ubuntu')
         run: |
           sudo apt-get update
           sudo apt-get install -y shellcheck sqlite3
