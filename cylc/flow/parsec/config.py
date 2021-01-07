@@ -119,7 +119,7 @@ class ParsecConfig:
 
         return cfg
 
-    def idump(self, items=None, sparse=False, pnative=False, prefix='',
+    def idump(self, items=None, sparse=False, prefix='',
               oneline=False, none_str=''):
         """
         items is a list of --item style inputs:
@@ -136,9 +136,9 @@ class ParsecConfig:
                 mkeys.append(j)
         if null:
             mkeys = [[]]
-        self.mdump(mkeys, sparse, pnative, prefix, oneline, none_str)
+        self.mdump(mkeys, sparse, prefix, oneline, none_str)
 
-    def mdump(self, mkeys=None, sparse=False, pnative=False, prefix='',
+    def mdump(self, mkeys=None, sparse=False, prefix='',
               oneline=False, none_str=''):
         if oneline:
             items = []
@@ -154,17 +154,13 @@ class ParsecConfig:
             print(prefix + ' '.join(items))
         elif mkeys:
             for keys in mkeys:
-                self.dump(keys, sparse, pnative, prefix, none_str)
+                self.dump(keys, sparse, prefix, none_str)
 
-    def dump(self, keys=None, sparse=False, pnative=False, prefix='',
-             none_str=''):
+    def dump(self, keys=None, sparse=False, prefix='', none_str=''):
         if not keys:
             keys = []
         cfg = self.get(keys, sparse)
-        if pnative:
-            print(cfg)
-        else:
-            printcfg(cfg, prefix=prefix, level=len(keys), none_str=none_str)
+        printcfg(cfg, prefix=prefix, level=len(keys), none_str=none_str)
 
 
 class ConfigNode(ContextNode):

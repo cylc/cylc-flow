@@ -120,11 +120,14 @@ def listjoin(lst, none_str=''):
 
 
 def printcfg(cfg, level=0, indent=0, prefix='', none_str='',
-             handle=sys.stdout):
+             handle=None):
     """Pretty-print a parsec config item or section (nested dict).
 
     As returned by parse.config.get().
     """
+    # Note: default handle=sys.stdout, but explicitly setting this interferes
+    # with pytest capsys:
+    # https://github.com/pytest-dev/pytest/issues/1132#issuecomment-147506107
     stack = [("", cfg, level, indent)]
     while stack:
         key_i, cfg_i, level_i, indent_i = stack.pop()
@@ -139,9 +142,13 @@ def printcfg(cfg, level=0, indent=0, prefix='', none_str='',
                 # Print heading
                 msg = "%s%s%s%s%s\n" % (
                     prefix, spacer, '[' * level_i, str(key_i), ']' * level_i)
-                if not isinstance(handle, StringIO) and 'b' in handle.mode:
+                if (handle is not None and not isinstance(handle, StringIO)
+                        and 'b' in handle.mode):
                     msg = msg.encode()
-                handle.write(msg)
+                if handle is None:
+                    sys.stdout.write(msg)
+                else:
+                    handle.write(msg)
 
             # Nested sections are printed after normal settings
             subsections = []
@@ -171,9 +178,13 @@ def printcfg(cfg, level=0, indent=0, prefix='', none_str='',
                 value = str(cfg_i)
             if value is not None:
                 msg = "%s%s%s%s\n" % (prefix, spacer, key, value)
-                if not isinstance(handle, StringIO) and 'b' in handle.mode:
+                if (handle is not None and not isinstance(handle, StringIO)
+                        and 'b' in handle.mode):
                     msg = msg.encode()
-                handle.write(msg)
+                if handle is None:
+                    sys.stdout.write(msg)
+                else:
+                    handle.write(msg)
 
 
 def replicate(target, source):

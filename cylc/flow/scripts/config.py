@@ -73,11 +73,6 @@ def get_option_parser():
         action="store_true", default=False, dest="sparse")
 
     parser.add_option(
-        "-p", "--python",
-        help="Print native Python format.",
-        action="store_true", default=False, dest="pnative")
-
-    parser.add_option(
         "-a", "--all-tasks",
         help="For [runtime] items (e.g. --item='script') report "
         "values for all tasks prefixed by task name.",
@@ -124,8 +119,7 @@ def main(parser, options, reg=None):
         return
 
     if reg is None:
-        glbl_cfg().idump(
-            options.item, sparse=options.sparse, pnative=options.pnative)
+        glbl_cfg().idump(options.item, sparse=options.sparse)
         return
 
     suite, flow_file = parse_suite_arg(options, reg)
@@ -148,12 +142,12 @@ def main(parser, options, reg=None):
             items = ['[runtime][' + task + ']' + i for i in options.item]
             print(prefix + task, end=' ')
             config.pcfg.idump(
-                items, options.sparse, options.pnative, prefix,
-                options.oneline, none_str=options.none_str)
+                items, options.sparse, prefix, options.oneline,
+                none_str=options.none_str)
     else:
         config.pcfg.idump(
-            options.item, options.sparse, options.pnative, prefix,
-            options.oneline, none_str=options.none_str)
+            options.item, options.sparse, prefix, options.oneline,
+            none_str=options.none_str)
 
 
 if __name__ == "__main__":
