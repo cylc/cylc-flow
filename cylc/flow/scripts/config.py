@@ -95,11 +95,6 @@ def get_option_parser():
         action="store_true", default=False, dest="tasks")
 
     parser.add_option(
-        "-u", "--run-mode",
-        help="Get config for suite run mode.", action="store", default="live",
-        dest="run_mode", choices=['live', 'dummy', 'simulation'])
-
-    parser.add_option(
         "--print-run-dir",
         help="Print the configured top level run directory.",
         action="store_true", default=False, dest="print_run_dir")
