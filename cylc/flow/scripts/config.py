@@ -84,11 +84,6 @@ def get_option_parser():
         metavar="STRING", action="store", default='', dest="none_str")
 
     parser.add_option(
-        "-m", "--mark-up",
-        help="Prefix each line with '!cylc!'.",
-        action="store_true", default=False, dest="markup")
-
-    parser.add_option(
         "-o", "--one-line",
         help="Print multiple single-value items at once.",
         action="store_true", default=False, dest="oneline")
@@ -124,11 +119,6 @@ def main(parser, options, reg=None):
 
     suite, flow_file = parse_suite_arg(options, reg)
 
-    if options.markup:
-        prefix = '!cylc!'
-    else:
-        prefix = ''
-
     config = SuiteConfig(
         suite,
         flow_file,
@@ -136,17 +126,17 @@ def main(parser, options, reg=None):
         load_template_vars(options.templatevars, options.templatevars_file))
     if options.tasks:
         for task in config.get_task_name_list():
-            print(prefix + task)
+            print(task)
     elif options.alltasks:
         for task in config.get_task_name_list():
             items = ['[runtime][' + task + ']' + i for i in options.item]
-            print(prefix + task, end=' ')
+            print(task, end=' ')
             config.pcfg.idump(
-                items, options.sparse, prefix, options.oneline,
+                items, options.sparse, oneline=options.oneline,
                 none_str=options.none_str)
     else:
         config.pcfg.idump(
-            options.item, options.sparse, prefix, options.oneline,
+            options.item, options.sparse, oneline=options.oneline,
             none_str=options.none_str)
 
 
