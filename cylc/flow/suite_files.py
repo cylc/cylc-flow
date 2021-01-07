@@ -682,6 +682,7 @@ def remote_clean(reg, platform_names):
         queue.append(
             (_remote_clean_cmd(reg, platforms[0]), target, platforms)
         )
+    failed_targets = []
     for proc, target, platforms in queue:
         ret_code = proc.wait()
         out, err = (f.decode() for f in proc.communicate())
@@ -701,8 +702,10 @@ def remote_clean(reg, platform_names):
                     (_remote_clean_cmd(reg, platforms[0]), target, platforms)
                 )
             else:  # Exhausted list of platforms
-                raise CylcError(
-                    f"Could not clean on install target: {target}")
+                failed_targets.append(target)
+    if failed_targets:
+        raise CylcError(
+            f"Could not clean on install targets: {', '.join(failed_targets)}")
 
 
 def _remote_clean_cmd(reg, platform):
