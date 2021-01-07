@@ -307,7 +307,7 @@ def platform_from_job_info(platforms, job, remote):
         # Handle all the items requiring an exact match.
         for task_section in [job, remote]:
             shared_items = set(
-                task_section).intersection(set(platform_spec.keys()))
+                task_section).intersection(set(platform_spec))
             generic_items_match = all((
                 platform_spec[item] == task_section[item]
                 for item in shared_items
