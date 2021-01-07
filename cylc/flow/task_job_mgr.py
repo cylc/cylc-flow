@@ -240,48 +240,59 @@ class TaskJobManager:
 
         if not prepared_tasks:
             return bad_tasks
-
-        # Group task jobs by (install target)
-        auth_itasks = {}  # {install target: [itask, ...], ...}
+        auth_itasks = {}  # {platform: [itask, ...], ...}
         for itask in prepared_tasks:
-            install_target = get_install_target_from_platform(itask.platform)
-            auth_itasks.setdefault(install_target, [])
-            auth_itasks[install_target].append(itask)
+            platform_name = itask.platform['name']
+            auth_itasks.setdefault(platform_name, [])
+            auth_itasks[platform_name].append(itask)
         # Submit task jobs for each platform
         done_tasks = bad_tasks
-        for install_target, itasks in sorted(auth_itasks.items()):
-            ri_map = self.task_remote_mgr.remote_init_map
-            # Re-fetch a copy of platform
+
+        for platform_name, itasks in sorted(auth_itasks.items()):
             platform = itasks[0].platform
-            # Skip both remote init and remote file install for localhost
-            if (install_target == 'localhost' or
-                    not is_remote_host(get_host_from_platform(platform))):
-                LOG.debug(f"REMOTE INIT NOT REQUIRED for {install_target}")
-                ri_map[install_target] = (REMOTE_FILE_INSTALL_DONE)
-            # Remote init not in progress, start it
-            if install_target not in ri_map.keys():
-                self.task_remote_mgr.remote_init(
-                    platform, curve_auth, client_pub_key_dir)
-                for itask in itasks:
-                    itask.set_summary_message(self.REMOTE_INIT_MSG)
-                    self.data_store_mgr.delta_job_msg(
-                        get_task_job_id(
-                            itask.point, itask.tdef.name, itask.submit_num),
-                        self.REMOTE_INIT_MSG)
-                continue
-            # Already done remote so move on to file install
-            elif (ri_map[install_target] == REMOTE_INIT_DONE):
-                self.task_remote_mgr.file_install(platform)
-            # Already doing remote init or file install
-            elif (ri_map[install_target] in self.IN_PROGRESS.keys()):
-                for itask in itasks:
-                    msg = self.IN_PROGRESS[ri_map[install_target]]
-                    itask.set_summary_message(msg)
-                    self.data_store_mgr.delta_job_msg(
-                        get_task_job_id(
-                            itask.point, itask.tdef.name, itask.submit_num),
-                        msg)
-                continue
+            install_target = get_install_target_from_platform(platform)
+            ri_map = self.task_remote_mgr.remote_init_map
+
+            # Skip to jobs (use .get() to avoid KeyError)
+            if (ri_map.get(install_target) != REMOTE_FILE_INSTALL_DONE):
+
+                # Skip both remote init and remote file install for localhost
+                if (install_target == 'localhost' or
+                        not is_remote_host(get_host_from_platform(platform))):
+                    LOG.debug(f"REMOTE INIT NOT REQUIRED for {install_target}")
+                    ri_map[install_target] = (REMOTE_FILE_INSTALL_DONE)
+
+                # Remote init not in progress for target, so start it
+                elif install_target not in ri_map.keys():
+                    self.task_remote_mgr.remote_init(
+                        platform, curve_auth, client_pub_key_dir)
+                    for itask in itasks:
+                        itask.set_summary_message(self.REMOTE_INIT_MSG)
+                        self.data_store_mgr.delta_job_msg(
+                            get_task_job_id(
+                                itask.point,
+                                itask.tdef.name,
+                                itask.submit_num),
+                            self.REMOTE_INIT_MSG)
+                    continue
+
+                # Already done remote so move on to file install
+                elif (ri_map[install_target] == REMOTE_INIT_DONE):
+                    self.task_remote_mgr.file_install(platform)
+                    continue
+
+                # Remote init or file install in progress
+                elif (ri_map[install_target] in self.IN_PROGRESS.keys()):
+                    for itask in itasks:
+                        msg = self.IN_PROGRESS[ri_map[install_target]]
+                        itask.set_summary_message(msg)
+                        self.data_store_mgr.delta_job_msg(
+                            get_task_job_id(
+                                itask.point,
+                                itask.tdef.name,
+                                itask.submit_num),
+                            msg)
+                    continue
 
             # Ensure that localhost background/at jobs are recorded as running
             # on the host name of the current suite host, rather than just
@@ -298,6 +309,28 @@ class TaskJobManager:
             ):
                 host = get_host()
 
+            # Remote has failed to initialise. Set submit-failed for all
+            # affected tasks  and remove target from remote init map
+            # - this enables new tasks to re-initialise that target
+
+            if (ri_map[install_target] in [REMOTE_INIT_FAILED,
+                                           REMOTE_FILE_INSTALL_FAILED]):
+                init_error = (ri_map[install_target])
+                del ri_map[install_target]
+                for itask in itasks:
+                    itask.local_job_file_path = None  # reset for retry
+                    log_task_job_activity(
+                        SubProcContext(
+                            self.JOBS_SUBMIT,
+                            '(init %s)' % host,
+                            err=init_error,
+                            ret_code=1),
+                        suite, itask.point, itask.tdef.name)
+                    self.task_events_mgr.process_message(
+                        itask, CRITICAL,
+                        self.task_events_mgr.EVENT_SUBMIT_FAILED)
+                continue
+
             now_str = get_current_time_string()
             done_tasks.extend(itasks)
             for itask in itasks:
@@ -313,26 +346,6 @@ class TaskJobManager:
                     'job_runner_name': itask.summary['job_runner_name'],
                 })
                 itask.is_manual_submit = False
-
-            if (ri_map[install_target] in [REMOTE_INIT_FAILED,
-                                           REMOTE_FILE_INSTALL_FAILED]):
-                init_error = (ri_map[install_target])
-                # Remote has failed to initialise, remove target from remote
-                # init map and set submit-failed for all affected tasks
-                del ri_map[install_target]
-                for itask in itasks:
-                    itask.local_job_file_path = None  # reset for retry
-                    log_task_job_activity(
-                        SubProcContext(
-                            self.JOBS_SUBMIT,
-                            '(init %s)' % host,
-                            err=init_error,
-                            ret_code=1),
-                        suite, itask.point, itask.tdef.name)
-                    self.task_events_mgr.process_message(
-                        itask, CRITICAL,
-                        self.task_events_mgr.EVENT_SUBMIT_FAILED)
-                continue
             # Build the "cylc jobs-submit" command
             cmd = [self.JOBS_SUBMIT]
             if LOG.isEnabledFor(DEBUG):
