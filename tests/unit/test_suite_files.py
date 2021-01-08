@@ -22,7 +22,8 @@ from unittest import mock
 
 from cylc.flow import CYLC_LOG
 from cylc.flow import suite_files
-from cylc.flow.exceptions import SuiteServiceFileError, WorkflowFilesError
+from cylc.flow.exceptions import (
+    CylcError, SuiteServiceFileError, TaskRemoteMgmtError, WorkflowFilesError)
 from cylc.flow.suite_files import check_nested_run_dirs
 
 
@@ -590,6 +591,140 @@ def test_clean_broken_symlink_run_dir(monkeypatch, tmp_path):
 
     suite_files.clean(reg)
     assert run_dir.parent.is_dir() is False
+
+
+PLATFORMS = {
+    'enterprise': {
+        'hosts': ['kirk', 'picard'],
+        'install target': 'picard',
+        'name': 'enterprise'
+    },
+    'voyager': {
+        'hosts': ['janeway'],
+        'install target': 'janeway',
+        'name': 'voyager'
+    },
+    'stargazer': {
+        'hosts': ['picard'],
+        'install target': 'picard',
+        'name': 'stargazer'
+    },
+    'exeter': {
+        'hosts': ['localhost'],
+        'install target': 'localhost',
+        'name': 'exeter'
+    }
+}
+
+
+@pytest.mark.parametrize(
+    'install_targets_map, failed_platforms, expected_platforms, expected_err',
+    [
+        (
+            {'localhost': [PLATFORMS['exeter']]}, None, None, None
+        ),
+        (
+            {
+                'localhost': [PLATFORMS['exeter']],
+                'picard': [PLATFORMS['enterprise']]
+            },
+            None,
+            ['enterprise'],
+            None
+        ),
+        (
+            {
+                'picard': [PLATFORMS['enterprise'], PLATFORMS['stargazer']],
+                'janeway': [PLATFORMS['voyager']]
+            },
+            None,
+            ['enterprise', 'voyager'],
+            None
+        ),
+        (
+            {
+                'picard': [PLATFORMS['enterprise'], PLATFORMS['stargazer']],
+                'janeway': [PLATFORMS['voyager']]
+            },
+            ['enterprise'],
+            ['enterprise', 'stargazer', 'voyager'],
+            None
+        ),
+        (
+            {
+                'picard': [PLATFORMS['enterprise'], PLATFORMS['stargazer']],
+                'janeway': [PLATFORMS['voyager']]
+            },
+            ['enterprise', 'stargazer'],
+            ['enterprise', 'stargazer', 'voyager'],
+            (CylcError, "Could not clean on install targets: picard")
+        ),
+        (
+            {
+                'picard': [PLATFORMS['enterprise']],
+                'janeway': [PLATFORMS['voyager']]
+            },
+            ['enterprise', 'voyager'],
+            ['enterprise', 'voyager'],
+            (CylcError, "Could not clean on install targets: picard, janeway")
+        )
+    ]
+)
+def test_remote_clean(install_targets_map, failed_platforms,
+                      expected_platforms, expected_err, monkeypatch, caplog):
+    """Test remote_clean() logic.
+
+    Params:
+        install_targets_map (dict): The map that would be returned by
+            platforms.get_install_target_to_platforms_map()
+        failed_platforms (list): If specified, any platforms that clean will
+            artificially fail on in this test case.
+        expected_platforms (list): If specified, all the platforms that the
+            remote clean cmd is expected to run on.
+        expected_err (tuple):  If specified, a tuple of the form
+            (Exception, str) giving an exception that is expected to be raised.
+    """
+    # ----- Setup -----
+    caplog.set_level(logging.ERROR, CYLC_LOG)
+    monkeypatch.setattr(
+        'cylc.flow.suite_files.get_install_target_to_platforms_map',
+        lambda x: install_targets_map)
+    # Remove randomness:
+    mocked_shuffle = mock.Mock()
+    monkeypatch.setattr('cylc.flow.suite_files.shuffle', mocked_shuffle)
+
+    def mocked_remote_clean_cmd_side_effect(reg, platform):
+        proc_ret_code = 0
+        if failed_platforms and platform['name'] in failed_platforms:
+            proc_ret_code = 1
+        return mock.Mock(
+            wait=lambda: proc_ret_code,
+            communicate=lambda: (b"", b""),
+            args=[])
+
+    mocked_remote_clean_cmd = mock.Mock(
+        side_effect=mocked_remote_clean_cmd_side_effect)
+    monkeypatch.setattr(
+        'cylc.flow.suite_files._remote_clean_cmd', mocked_remote_clean_cmd)
+    # ----- Test -----
+    reg = 'foo'
+    platform_names = (
+        "This arg bypassed as we provide the install targets map in the test")
+    if expected_err:
+        err, msg = expected_err
+        with pytest.raises(err) as exc:
+            suite_files.remote_clean(reg, platform_names)
+        assert msg in str(exc.value)
+    else:
+        suite_files.remote_clean(reg, platform_names)
+    if expected_platforms:
+        for p_name in expected_platforms:
+            mocked_remote_clean_cmd.assert_any_call(reg, PLATFORMS[p_name])
+    else:
+        mocked_remote_clean_cmd.assert_not_called()
+    if failed_platforms:
+        for p_name in failed_platforms:
+            assert f"{p_name}: {TaskRemoteMgmtError.MSG_TIDY}" in caplog.text
 
 
 def test_remove_empty_reg_parents(tmp_path):
