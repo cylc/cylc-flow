@@ -973,12 +973,14 @@ def _close_install_log():
 
 def get_rsync_rund_cmd(src, dst, restart=False):
     """Create and return the rsync command used for cylc install/re-install.
-        Args:
-            src (str): file path location of source directory
-            dst (str): file path location of destination directory
-            restart (bool): indicate restart (--delete option added)
 
-        Return: rsync_cmd: command used for rsync.
+    Args:
+        src (str): file path location of source directory
+        dst (str): file path location of destination directory
+        restart (bool): indicate restart (--delete option added)
+
+    Return:
+        list: command to use for rsync.
 
     """
 
