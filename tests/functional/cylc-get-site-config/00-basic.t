@@ -18,18 +18,14 @@
 # Test getting the global config
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 5
+set_test_number 3
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-get-config"
 run_ok "${TEST_NAME}.validate" cylc config
-run_ok "${TEST_NAME}.print-run-dir" cylc config --print-run-dir
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-get-items"
 run_fail "${TEST_NAME}.non-existent" \
     cylc config --item='[this][doesnt]exist'
-#-------------------------------------------------------------------------------
-TEST_NAME="${TEST_NAME_BASE}-run-dir"
-run_ok "${TEST_NAME}" cylc config --print-run-dir
 #-------------------------------------------------------------------------------
 VAL1="$(cylc config --item '[platforms][localhost]use login shell')"
 VAL2="$(cylc config | sed -n '/\[\[localhost\]\]/,$p' | \

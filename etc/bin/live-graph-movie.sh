@@ -55,7 +55,7 @@ FRAME_SIZE="1200x800" # pixels
 FRAME_RATE=5 # frames per second
 
 # Move to the suite share directory.
-cd $( cylc config --print-run-dir )/$SUITE/share
+cd "${HOME}/cylc-run/${SUITE}/share"
 
 N_FILES=$(ls frame-*.dot 2> /dev/null | wc -l)
 if [[ $N_FILES -eq 0 ]]; then

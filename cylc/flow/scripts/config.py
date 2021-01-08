@@ -49,7 +49,6 @@ Examples:
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.config import SuiteConfig
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.platforms import get_platform
 from cylc.flow.suite_files import parse_suite_arg
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow.terminal import cli_function
@@ -82,20 +81,11 @@ def get_option_parser():
         help="Print multiple single-value items at once.",
         action="store_true", default=False, dest="oneline")
 
-    parser.add_option(
-        "--print-run-dir",
-        help="Print the configured top level run directory.",
-        action="store_true", default=False, dest="print_run_dir")
-
     return parser
 
 
 @cli_function(get_option_parser)
 def main(parser, options, reg=None):
-    if options.print_run_dir:
-        print(get_platform()['run directory'])
-        return
-
     if reg is None:
         glbl_cfg().idump(options.item, sparse=options.sparse)
         return
