@@ -57,7 +57,8 @@ def get_option_parser():
     parser.add_option(
         "--check-circular",
         help="Check for circular dependencies in graphs when the number of "
-             "tasks is greater than 100. This can be slow when the number of "
+             "tasks is greater than 100 (smaller graphs are always checked). "
+             "This can be slow when the number of "
              "tasks is high.",
         action="store_true", default=False, dest="check_circular")
 
