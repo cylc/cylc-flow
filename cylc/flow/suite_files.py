@@ -988,7 +988,7 @@ def get_rsync_rund_cmd(src, dst, restart=False):
     rsync_cmd.append("-av")
     if restart:
         rsync_cmd.append('--delete')
-    ignore_dirs = ['.git', '.svn', '.cylcignore']
+    ignore_dirs = ['.git', '.svn', '.cylcignore', SuiteFiles.Install.DIRNAME]
     for exclude in ignore_dirs:
         if Path(src).joinpath(exclude).exists():
             rsync_cmd.append(f"--exclude={exclude}")
@@ -1015,6 +1015,9 @@ def install_workflow(flow_name=None, source=None, run_name=None,
                         If specified, cylc install will not create runN
                         symlink.
         rundir (str): for overriding the default cylc-run directory.
+        no_run_name (bool): Flag as True to install workflow into
+                            ~/cylc-run/$(basename $PWD)
+        no_symlinks (bool): Flag as True to skip making localhost symlink dirs
 
     Return:
         source (Path): The source direcory.
@@ -1028,6 +1031,7 @@ def install_workflow(flow_name=None, source=None, run_name=None,
             Another suite already has this name (unless --redirect).
             Trying to install a workflow that is nested inside of another.
     """
+
     if not source:
         source = Path.cwd()
     elif Path(source).name == SuiteFiles.FLOW_FILE:
@@ -1043,7 +1047,7 @@ def install_workflow(flow_name=None, source=None, run_name=None,
     validate_source_dir(source)
     run_path_base = Path(get_workflow_run_dir(flow_name)).expanduser()
     relink = False
-    run_num = int()
+    run_num = 0
     if no_run_name:
         rundir = run_path_base
     elif run_name:
@@ -1072,11 +1076,6 @@ def install_workflow(flow_name=None, source=None, run_name=None,
     except OSError as e:
         if e.strerror == "File exists":
             raise WorkflowFilesError(f"Run directory already exists : {e}")
-    # create source symlink to be used as the basis of ensuring runs are
-    # from a constistent source dir.
-    base_source_link = run_path_base.joinpath(SuiteFiles.Install.SOURCE)
-    if not base_source_link.exists():
-        run_path_base.joinpath(SuiteFiles.Install.SOURCE).symlink_to(source)
     if relink:
         link_runN(rundir)
     create_workflow_srv_dir(rundir)
@@ -1103,16 +1102,20 @@ def install_workflow(flow_name=None, source=None, run_name=None,
         INSTALL_LOG.warning(
             f"An error occurred when copying files from {source} to {rundir}")
         INSTALL_LOG.warning(f" Error: {stderr}")
-    cylc_install = Path(rundir, SuiteFiles.Install.DIRNAME)
-    cylc_install.mkdir(parents=True)
+    cylc_install = Path(rundir.parent, SuiteFiles.Install.DIRNAME)
+    if no_run_name:
+        cylc_install = Path(rundir, SuiteFiles.Install.DIRNAME)
     source_link = cylc_install.joinpath(SuiteFiles.Install.SOURCE)
-    # check source link matches the source symlink from workflow dir.
-    if os.readlink(base_source_link) == str(source):
+    cylc_install.mkdir(parents=True, exist_ok=True)
+    if not source_link.exists():
         INSTALL_LOG.info(f"Creating symlink from {source_link}")
         source_link.symlink_to(source)
+    elif source_link.exists() and (os.readlink(source_link) == str(source)):
+        INSTALL_LOG.info("Symlink from {source_link} to {source} in place.")
     else:
         raise WorkflowFilesError(
             "Source directory between runs are not consistent")
+    # check source link matches the source symlink from workflow dir.
     INSTALL_LOG.info(f'INSTALLED {flow_name} from {source} -> {rundir}')
     print(f'INSTALLED {flow_name} from {source} -> {rundir}')
     _close_install_log()

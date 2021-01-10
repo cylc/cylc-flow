@@ -31,7 +31,7 @@ run_ok "${TEST_NAME_BASE}-add-run" cylc run --debug --hold "${SUITE_NAME}"
 
 # change the flow.cylc file
 cp "${TEST_SOURCE_DIR}/graphing-change/flow-1.cylc" \
-    "${TEST_DIR}/${SUITE_NAME}/flow.cylc"
+    "${RUN_DIR}/${SUITE_NAME}/flow.cylc"
 
 # reload suite
 run_ok "${TEST_NAME_BASE}-add-reload" cylc reload "${SUITE_NAME}"
@@ -46,7 +46,7 @@ grep_ok "Added task: 'one'" "${LOG_FILE}"
 
 # change the flow.cylc file
 cp "${TEST_SOURCE_DIR}/graphing-change/flow.cylc" \
-    "${TEST_DIR}/${SUITE_NAME}/flow.cylc"
+    "${RUN_DIR}/${SUITE_NAME}/flow.cylc"
 
 # reload suite
 run_ok "${TEST_NAME_BASE}-remove-reload" cylc reload "${SUITE_NAME}"
@@ -61,7 +61,7 @@ grep_ok "Removed task: 'one'" "${LOG_FILE}"
 
 # change the flow.cylc file
 cp "${TEST_SOURCE_DIR}/graphing-change/flow-2.cylc" \
-    "${TEST_DIR}/${SUITE_NAME}/flow.cylc"
+    "${RUN_DIR}/${SUITE_NAME}/flow.cylc"
 
 cylc set-outputs "${SUITE_NAME}"  foo.1
 cylc set-outputs "${SUITE_NAME}"  baz.1

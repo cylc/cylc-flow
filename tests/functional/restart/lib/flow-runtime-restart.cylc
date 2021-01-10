@@ -5,7 +5,7 @@
             for i in {0..10}; do
                 ctb-select-task-states \
                     "${CYLC_SUITE_RUN_DIR}" "${CYLC_TASK_NAME}" \
-                    > {{ TEST_DIR }}/$OUTPUT_SUFFIX-db && break
+                    > "${CYLC_SUITE_RUN_DIR}/$OUTPUT_SUFFIX-db" && break
                 sleep 1
             done
         """

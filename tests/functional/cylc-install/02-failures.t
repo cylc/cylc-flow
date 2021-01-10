@@ -41,7 +41,30 @@ function purge_rnd_suite() {
 }
 
 . "$(dirname "$0")/test_header"
-set_test_number 20
+set_test_number 23
+
+# Test source directory between runs that are not consistent result in error
+
+TEST_NAME="${TEST_NAME_BASE}-forbid-inconsistent-source-dir-between-runs"
+SOURCE_DIR_1="test-install-${CYLC_TEST_TIME_INIT}/${TEST_NAME_BASE}"
+mkdir -p "${PWD}/${SOURCE_DIR_1}"
+pushd "${SOURCE_DIR_1}" || exit 1
+touch flow.cylc
+
+run_ok "${TEST_NAME}" cylc install
+popd || exit 1
+SOURCE_DIR_2="test-install-${CYLC_TEST_TIME_INIT}2/${TEST_NAME_BASE}"
+mkdir -p "${PWD}/${SOURCE_DIR_2}"
+pushd "${SOURCE_DIR_2}" || exit 1
+touch flow.cylc
+run_fail "${TEST_NAME}" cylc install
+
+contains_ok "${TEST_NAME}.stderr" <<__ERR__
+WorkflowFilesError: Source directory between runs are not consistent
+__ERR__
+rm -rf "${PWD:?}/${SOURCE_DIR_1}" "${PWD:?}/${SOURCE_DIR_2}"
+rm -rf "${RUN_DIR:?}/${TEST_NAME_BASE}"
+popd || exit
 
 # Test fail no suite source dir
 TEST_NAME="${TEST_NAME_BASE}-nodir"

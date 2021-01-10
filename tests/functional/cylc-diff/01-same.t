@@ -37,8 +37,8 @@ cylc install --flow-name="${SUITE_NAME2}" --directory="${TEST_DIR}/${SUITE_NAME1
 
 run_ok "${TEST_NAME_BASE}" cylc diff "${SUITE_NAME1}" "${SUITE_NAME2}"
 cmp_ok "${TEST_NAME_BASE}.stdout" <<__OUT__
-Parsing ${SUITE_NAME1} (${TEST_DIR}/${SUITE_NAME1}/flow.cylc)
-Parsing ${SUITE_NAME2} (${TEST_DIR}/${SUITE_NAME1}/flow.cylc)
+Parsing ${SUITE_NAME1} (${RUN_DIR}/${SUITE_NAME1}/flow.cylc)
+Parsing ${SUITE_NAME2} (${RUN_DIR}/${SUITE_NAME2}/flow.cylc)
 Suite definitions ${SUITE_NAME1} and ${SUITE_NAME2} are identical
 __OUT__
 cmp_ok "${TEST_NAME_BASE}.stderr" <'/dev/null'

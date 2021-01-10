@@ -30,15 +30,14 @@ create_test_global_config "" "
 OPT_SET='-s GLOBALCFG=True'
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-
-mkdir -p "${TEST_DIR}/${SUITE_NAME}/bin"
-cat >"${TEST_DIR}/${SUITE_NAME}/bin/my-rsync" <<'__BASH__'
+mkdir -p "${SUITE_RUN_DIR}/bin"
+cat >"${SUITE_RUN_DIR}/bin/my-rsync" <<'__BASH__'
 #!/usr/bin/env bash
 set -eu
 echo "$@" >>"${CYLC_SUITE_LOG_DIR}/my-rsync.log"
 exec rsync -a "$@"
 __BASH__
-chmod +x "${TEST_DIR}/${SUITE_NAME}/bin/my-rsync"
+chmod +x "${SUITE_RUN_DIR}/bin/my-rsync"
 
 # shellcheck disable=SC2086
 run_ok "${TEST_NAME_BASE}-validate" \

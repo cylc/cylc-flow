@@ -62,11 +62,10 @@ ${RND_SUITE_RUNDIR}/
 ├── file1
 ├── file2
 ├── flow.cylc
-├── log
-│   └── install
-└── source -> ${RND_SUITE_SOURCE}
+└── log
+    └── install
 
-8 directories, 5 files
+7 directories, 5 files
 __OUT__
 
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
@@ -98,11 +97,10 @@ ${RND_SUITE_RUNDIR}/
 │   └── source -> ${RND_SUITE_SOURCE}
 ├── file1
 ├── flow.cylc
-├── log
-│   └── install
-└── source -> ${RND_SUITE_SOURCE}
+└── log
+    └── install
 
-6 directories, 2 files
+5 directories, 2 files
 __OUT__
 
 contains_ok "${TEST_NAME}.stdout" <<__OUT__

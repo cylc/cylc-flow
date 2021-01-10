@@ -20,9 +20,11 @@
 set_test_number 2
 install_suite "${TEST_NAME_BASE}" 'suite'
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}" \
+        -s "SUITE_SRC_DIR='${TEST_DIR}/${SUITE_NAME}'"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
+    cylc run --reference-test --debug --no-detach "${SUITE_NAME}" \
+        -s "SUITE_SRC_DIR='${TEST_DIR}/${SUITE_NAME}'"
 
 for SUFFIX in '' '-shutdown' '-startup' '-timeout'; do
     purge "${SUITE_NAME}${SUFFIX}"
