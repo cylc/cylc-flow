@@ -151,7 +151,7 @@ to control the job submission environment.
 
 [#4020](https://github.com/cylc/cylc-flow/pull/4020) - `cylc validate` will no
 longer check for a cyclic/circular graph if there are more than 100 tasks,
-unless the option  `--check-circular` is used. This is to improved performance.
+unless the option  `--check-circular` is used. This is to improve performance.
 
 
 ### Fixes
