@@ -55,6 +55,14 @@ def get_option_parser():
         action="store_true", default=False, dest="strict")
 
     parser.add_option(
+        "--check-circular",
+        help="Check for circular dependencies in graphs when the number of "
+             "tasks is greater than 100 (smaller graphs are always checked). "
+             "This can be slow when the number of "
+             "tasks is high.",
+        action="store_true", default=False, dest="check_circular")
+
+    parser.add_option(
         "--output", "-o",
         help="Specify a file name to dump the processed flow.cylc.",
         metavar="FILENAME", action="store", dest="output")
