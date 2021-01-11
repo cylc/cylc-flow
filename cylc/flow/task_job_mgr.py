@@ -255,7 +255,6 @@ class TaskJobManager:
 
             # Skip to jobs (use .get() to avoid KeyError)
             if (ri_map.get(install_target) != REMOTE_FILE_INSTALL_DONE):
-
                 # Skip both remote init and remote file install for localhost
                 if (install_target == 'localhost' or
                         not is_remote_host(get_host_from_platform(platform))):
@@ -309,6 +308,21 @@ class TaskJobManager:
             ):
                 host = get_host()
 
+            now_str = get_current_time_string()
+            done_tasks.extend(itasks)
+            for itask in itasks:
+                # Log and persist
+                LOG.info(
+                    '[%s] -submit-num=%02d, owner@host=%s',
+                    itask, itask.submit_num, host)
+                self.suite_db_mgr.put_insert_task_jobs(itask, {
+                    'is_manual_submit': itask.is_manual_submit,
+                    'try_num': itask.get_try_num(),
+                    'time_submit': now_str,
+                    'platform_name': itask.platform['name'],
+                    'job_runner_name': itask.summary['job_runner_name'],
+                })
+                itask.is_manual_submit = False
             # Remote has failed to initialise. Set submit-failed for all
             # affected tasks  and remove target from remote init map
             # - this enables new tasks to re-initialise that target
@@ -326,26 +340,11 @@ class TaskJobManager:
                             err=init_error,
                             ret_code=1),
                         suite, itask.point, itask.tdef.name)
-                    self.task_events_mgr.process_message(
-                        itask, CRITICAL,
-                        self.task_events_mgr.EVENT_SUBMIT_FAILED)
-                continue
+                    self._prep_submit_task_job_error(
+                        suite, itask, '(remote init)', ''
+                    )
 
-            now_str = get_current_time_string()
-            done_tasks.extend(itasks)
-            for itask in itasks:
-                # Log and persist
-                LOG.info(
-                    '[%s] -submit-num=%02d, owner@host=%s',
-                    itask, itask.submit_num, host)
-                self.suite_db_mgr.put_insert_task_jobs(itask, {
-                    'is_manual_submit': itask.is_manual_submit,
-                    'try_num': itask.get_try_num(),
-                    'time_submit': now_str,
-                    'platform_name': itask.platform['name'],
-                    'job_runner_name': itask.summary['job_runner_name'],
-                })
-                itask.is_manual_submit = False
+                continue
             # Build the "cylc jobs-submit" command
             cmd = [self.JOBS_SUBMIT]
             if LOG.isEnabledFor(DEBUG):

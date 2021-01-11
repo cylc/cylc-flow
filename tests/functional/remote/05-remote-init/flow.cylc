@@ -1,0 +1,39 @@
+[scheduler]
+    [[events]]
+        abort on stalled = true
+        abort on inactivity = true
+[scheduling]
+    [[graph]]
+    R1 = """
+a & b & g      
+# a & b setup to submit-fail, g (localhost) does not require remote init
+b:submitted => c
+b:start  => d 
+# c & d should not be triggered
+b:submit-fail => e & f 
+#  e and f on a same install target but with a different platform name - these should execute
+"""
+[runtime]
+    [[task]]
+        script="sleep 1; echo hello"
+    [[a]]
+        inherit=task
+        platform=belle
+    [[b]]
+        inherit=task
+        platform=belle  
+    [[c]]
+        inherit=task
+        platform=belle 
+    [[d]]
+        inherit=task
+        platform= belle
+    [[e]]
+        inherit=task
+        platform=ariel
+    [[f]]
+        inherit=task
+        platform=ariel
+    [[g]]
+        inherit=task
+        platform=localhost
