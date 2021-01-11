@@ -205,6 +205,10 @@ issue when mixing offset and conditional (e.g. foo<m-1> & baz => foo<m>).
 workflow from shutting down properly on a keyboard interrupt (Ctrl+C) in
 Python 3.8+.
 
+[#4011](https://github.com/cylc/cylc-flow/pull/4011) - Fix bug where including
+a trailing slash in the suite/workflow name would cause `cylc stop`
+(and possibly other commands) to silently fail.
+
 -------------------------------------------------------------------------------
 ## __cylc-8.0a2 (2020-07-03)__
 

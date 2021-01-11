@@ -25,6 +25,8 @@ Examples:
   $ cylc kill REG TASK_GLOB ...  # kill one or more active tasks
 """
 
+import os.path
+
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.terminal import cli_function
@@ -57,6 +59,7 @@ def get_option_parser():
 @cli_function(get_option_parser)
 def main(parser, options, suite, *task_globs):
     """CLI of "cylc kill"."""
+    suite = os.path.normpath(suite)
     pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
 
     mutation_kwargs = {

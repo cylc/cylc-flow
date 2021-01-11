@@ -314,7 +314,7 @@ def scheduler_cli(parser, options, args, is_restart=False):
     functionality.
 
     """
-    reg = args[0]
+    reg = os.path.normpath(args[0])
     # Check suite is not already running before start of host selection.
     try:
         suite_files.detect_old_contact_file(reg)
