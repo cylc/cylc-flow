@@ -29,14 +29,14 @@ from cylc.flow.task_job_logs import get_task_job_log
 from cylc.flow.parsec.util import pdeepcopy, poverride
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_state import (
-    TASK_STATUS_READY, TASK_STATUS_SUBMITTED, TASK_STATUS_SUBMIT_FAILED,
+    TASK_STATUS_PREPARING, TASK_STATUS_SUBMITTED, TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED,
     TASK_STATUS_FAILED)
 from cylc.flow.data_messages_pb2 import PbJob, JDeltas
 from cylc.flow.platforms import get_platform, get_host_from_platform
 
 JOB_STATUSES_ALL = [
-    TASK_STATUS_READY,
+    TASK_STATUS_PREPARING,
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_RUNNING,

@@ -96,7 +96,7 @@ from cylc.flow.task_remote_mgr import (
     TaskRemoteMgr
 )
 from cylc.flow.task_state import (
-    TASK_STATUS_READY,
+    TASK_STATUS_PREPARING,
     TASK_STATUS_RUNNING,
     TASK_STATUS_SUBMITTED,
     TASK_STATUSES_ACTIVE
@@ -394,7 +394,7 @@ class TaskJobManager:
                     # write flag so that subsequent manual retrigger will
                     # generate a new job file.
                     itask.local_job_file_path = None
-                    itask.state.reset(TASK_STATUS_READY)
+                    itask.state.reset(TASK_STATUS_PREPARING)
                     if itask.state.outputs.has_custom_triggers():
                         self.suite_db_mgr.put_update_task_outputs(itask)
 
