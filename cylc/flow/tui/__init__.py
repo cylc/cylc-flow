@@ -74,7 +74,6 @@ SUITE_COLOURS = {
 TASK_ICONS = {
     f'{TASK_STATUS_WAITING}': '\u25cb',
 
-    # TODO: remove with https://github.com/cylc/cylc-admin/pull/47
     f'{TASK_STATUS_PREPARING}': '\u25cb',
     f'{TASK_STATUS_QUEUED}': '\u25cb',
     # TODO: remove with https://github.com/cylc/cylc-admin/pull/47
