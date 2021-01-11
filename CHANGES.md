@@ -64,6 +64,9 @@ symlink to `DIR` (see #3884).
 
 ### Enhancements
 
+[#4014](https://github.com/cylc/cylc-flow/pull/4014) - Rename "ready" task
+state to "preparing".
+
 [#3992](https://github.com/cylc/cylc-flow/pull/3992) - Rename
 batch system to job runner.
 
