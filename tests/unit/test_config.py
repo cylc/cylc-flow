@@ -14,17 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import pytest
 import logging
 from unittest.mock import Mock
-from tempfile import TemporaryDirectory, NamedTemporaryFile
-from pathlib import Path
+from tempfile import NamedTemporaryFile
 
 from cylc.flow import CYLC_LOG
 from cylc.flow.config import SuiteConfig
 from cylc.flow.cycling import loader
 from cylc.flow.exceptions import SuiteConfigError
+from cylc.flow.suite_files import SuiteFiles
 from cylc.flow.wallclock import get_utc_mode, set_utc_mode
 
 
@@ -91,7 +90,7 @@ def get_test_inheritance_quotes():
 class TestSuiteConfig:
     """Test class for the Cylc SuiteConfig object."""
 
-    def test_xfunction_imports(self, mock_glbl_cfg):
+    def test_xfunction_imports(self, mock_glbl_cfg, tmp_path):
         """Test for a suite configuration with valid xtriggers"""
         mock_glbl_cfg(
             'cylc.flow.platforms.glbl_cfg',
@@ -101,30 +100,25 @@ class TestSuiteConfig:
                     hosts = localhost
             '''
         )
-        with TemporaryDirectory() as temp_dir:
-            python_dir = Path(os.path.join(temp_dir, "lib", "python"))
-            python_dir.mkdir(parents=True)
-            name_a_tree_file = python_dir / "name_a_tree.py"
-            with name_a_tree_file.open(mode="w") as f:
-                # NB: we are not returning a lambda, instead we have a scalar
-                f.write("""name_a_tree = lambda: 'jacaranda'""")
-                f.flush()
-            flow_file = Path(temp_dir, "flow.cylc")
-            with flow_file.open(mode="w") as f:
-                f.write("""
-    [scheduling]
-        initial cycle point = 2018-01-01
-        [[xtriggers]]
-            tree = name_a_tree()
-        [[graph]]
-            R1 = '@tree => qux'
-                """)
-                f.flush()
-                suite_config = SuiteConfig(suite="name_a_tree", fpath=f.name)
-                config = suite_config
-                assert 'tree' in config.xtrigger_mgr.functx_map
+        python_dir = tmp_path / "lib" / "python"
+        python_dir.mkdir(parents=True)
+        name_a_tree_file = python_dir / "name_a_tree.py"
+        # NB: we are not returning a lambda, instead we have a scalar
+        name_a_tree_file.write_text("""name_a_tree = lambda: 'jacaranda'""")
+        flow_file = tmp_path / SuiteFiles.FLOW_FILE
+        flow_config = """
+        [scheduling]
+            initial cycle point = 2018-01-01
+            [[xtriggers]]
+                tree = name_a_tree()
+            [[graph]]
+                R1 = '@tree => qux'
+        """
+        flow_file.write_text(flow_config)
+        suite_config = SuiteConfig(suite="name_a_tree", fpath=flow_file)
+        assert 'tree' in suite_config.xtrigger_mgr.functx_map
 
-    def test_xfunction_import_error(self, mock_glbl_cfg):
+    def test_xfunction_import_error(self, mock_glbl_cfg, tmp_path):
         """Test for error when a xtrigger function cannot be imported."""
         mock_glbl_cfg(
             'cylc.flow.platforms.glbl_cfg',
@@ -134,30 +128,26 @@ class TestSuiteConfig:
                     hosts = localhost
             '''
         )
-        with TemporaryDirectory() as temp_dir:
-            python_dir = Path(os.path.join(temp_dir, "lib", "python"))
-            python_dir.mkdir(parents=True)
-            caiman_file = python_dir / "caiman.py"
-            with caiman_file.open(mode="w") as f:
-                # NB: we are not returning a lambda, instead we have a scalar
-                f.write("""caiman = lambda: True""")
-                f.flush()
-            flow_file = Path(temp_dir, "flow.cylc")
-            with flow_file.open(mode="w") as f:
-                f.write("""
-    [scheduling]
-        initial cycle point = 2018-01-01
-        [[xtriggers]]
-            oopsie = piranha()
-        [[graph]]
-            R1 = '@oopsie => qux'
-                """)
-                f.flush()
-                with pytest.raises(ImportError) as excinfo:
-                    SuiteConfig(suite="caiman_suite", fpath=f.name)
-                assert "not found" in str(excinfo.value)
+        python_dir = tmp_path / "lib" / "python"
+        python_dir.mkdir(parents=True)
+        caiman_file = python_dir / "caiman.py"
+        # NB: we are not returning a lambda, instead we have a scalar
+        caiman_file.write_text("""caiman = lambda: True""")
+        flow_file = tmp_path / SuiteFiles.FLOW_FILE
+        flow_config = """
+        [scheduling]
+            initial cycle point = 2018-01-01
+            [[xtriggers]]
+                oopsie = piranha()
+            [[graph]]
+                R1 = '@oopsie => qux'
+        """
+        flow_file.write_text(flow_config)
+        with pytest.raises(ImportError) as excinfo:
+            SuiteConfig(suite="caiman_suite", fpath=flow_file)
+        assert "not found" in str(excinfo.value)
 
-    def test_xfunction_attribute_error(self, mock_glbl_cfg):
+    def test_xfunction_attribute_error(self, mock_glbl_cfg, tmp_path):
         """Test for error when a xtrigger function cannot be imported."""
         mock_glbl_cfg(
             'cylc.flow.platforms.glbl_cfg',
@@ -167,30 +157,26 @@ class TestSuiteConfig:
                     hosts = localhost
             '''
         )
-        with TemporaryDirectory() as temp_dir:
-            python_dir = Path(os.path.join(temp_dir, "lib", "python"))
-            python_dir.mkdir(parents=True)
-            capybara_file = python_dir / "capybara.py"
-            with capybara_file.open(mode="w") as f:
-                # NB: we are not returning a lambda, instead we have a scalar
-                f.write("""toucan = lambda: True""")
-                f.flush()
-            flow_file = Path(temp_dir, "flow.cylc")
-            with flow_file.open(mode="w") as f:
-                f.write("""
-    [scheduling]
-        initial cycle point = 2018-01-01
-        [[xtriggers]]
-            oopsie = capybara()
-        [[graph]]
-            R1 = '@oopsie => qux'
-                """)
-                f.flush()
-                with pytest.raises(AttributeError) as excinfo:
-                    SuiteConfig(suite="capybara_suite", fpath=f.name)
-                assert "not found" in str(excinfo.value)
+        python_dir = tmp_path / "lib" / "python"
+        python_dir.mkdir(parents=True)
+        capybara_file = python_dir / "capybara.py"
+        # NB: we are not returning a lambda, instead we have a scalar
+        capybara_file.write_text("""toucan = lambda: True""")
+        flow_file = tmp_path / SuiteFiles.FLOW_FILE
+        flow_config = """
+        [scheduling]
+            initial cycle point = 2018-01-01
+            [[xtriggers]]
+                oopsie = capybara()
+            [[graph]]
+                R1 = '@oopsie => qux'
+        """
+        flow_file.write_text(flow_config)
+        with pytest.raises(AttributeError) as excinfo:
+            SuiteConfig(suite="capybara_suite", fpath=flow_file)
+        assert "not found" in str(excinfo.value)
 
-    def test_xfunction_not_callable(self, mock_glbl_cfg):
+    def test_xfunction_not_callable(self, mock_glbl_cfg, tmp_path):
         """Test for error when a xtrigger function is not callable."""
         mock_glbl_cfg(
             'cylc.flow.platforms.glbl_cfg',
@@ -200,28 +186,24 @@ class TestSuiteConfig:
                     hosts = localhost
             '''
         )
-        with TemporaryDirectory() as temp_dir:
-            python_dir = Path(os.path.join(temp_dir, "lib", "python"))
-            python_dir.mkdir(parents=True)
-            not_callable_file = python_dir / "not_callable.py"
-            with not_callable_file.open(mode="w") as f:
-                # NB: we are not returning a lambda, instead we have a scalar
-                f.write("""not_callable = 42""")
-                f.flush()
-            flow_file = Path(temp_dir, "flow.cylc")
-            with flow_file.open(mode="w") as f:
-                f.write("""
-    [scheduling]
-        initial cycle point = 2018-01-01
-        [[xtriggers]]
-            oopsie = not_callable()
-        [[graph]]
-            R1 = '@oopsie => qux'
-                """)
-                f.flush()
-                with pytest.raises(ValueError) as excinfo:
-                    SuiteConfig(suite="suite_with_not_callable", fpath=f.name)
-                assert "callable" in str(excinfo.value)
+        python_dir = tmp_path / "lib" / "python"
+        python_dir.mkdir(parents=True)
+        not_callable_file = python_dir / "not_callable.py"
+        # NB: we are not returning a lambda, instead we have a scalar
+        not_callable_file.write_text("""not_callable = 42""")
+        flow_file = tmp_path / SuiteFiles.FLOW_FILE
+        flow_config = """
+        [scheduling]
+            initial cycle point = 2018-01-01
+            [[xtriggers]]
+                oopsie = not_callable()
+            [[graph]]
+                R1 = '@oopsie => qux'
+        """
+        flow_file.write_text(flow_config)
+        with pytest.raises(ValueError) as excinfo:
+            SuiteConfig(suite="suite_with_not_callable", fpath=flow_file)
+        assert "callable" in str(excinfo.value)
 
     def test_family_inheritance_and_quotes(self, mock_glbl_cfg):
         """Test that inheritance does not ignore items, if not all quoted.
@@ -275,7 +257,7 @@ def test_queue_config_repeated(caplog, tmp_path):
        inherit = A, B
    [[y]]
     """
-    flow_file = tmp_path / "flow.cylc"
+    flow_file = tmp_path / SuiteFiles.FLOW_FILE
     flow_file.write_text(flow_file_content)
     SuiteConfig(suite="qtest", fpath=flow_file.absolute())
     log = caplog.messages[0].split('\n')
@@ -301,7 +283,7 @@ def test_queue_config_not_used_not_defined(caplog, tmp_path):
    [[foo]]
    # bar not even defined
     """
-    flow_file = tmp_path / "flow.cylc"
+    flow_file = tmp_path / SuiteFiles.FLOW_FILE
     flow_file.write_text(flow_file_content)
     SuiteConfig(suite="qtest", fpath=flow_file.absolute())
     log = caplog.messages[0].split('\n')
@@ -455,7 +437,7 @@ def test_cycle_point_tz(caplog, monkeypatch):
         _test(**case)
 
 
-def test_rsync_includes_will_not_accept_sub_directories():
+def test_rsync_includes_will_not_accept_sub_directories(tmp_path):
 
     flow_cylc_content = """
     [scheduling]
@@ -464,19 +446,16 @@ def test_rsync_includes_will_not_accept_sub_directories():
             graph = "blah => deeblah"
     [scheduler]
         install = dir/, dir2/subdir2/, file1, file2
-        """
-    with TemporaryDirectory() as temp_dir:
-        flow_cylc = Path(temp_dir, "flow.cylc")
-        with flow_cylc.open(mode="w") as f:
-            f.write(flow_cylc_content)
-            f.flush()
+    """
+    flow_cylc = tmp_path.joinpath(SuiteFiles.FLOW_FILE)
+    flow_cylc.write_text(flow_cylc_content)
 
-        with pytest.raises(SuiteConfigError) as exc:
-            SuiteConfig(suite="rsynctest", fpath=flow_cylc)
-        assert "Directories can only be from the top level" in str(exc.value)
+    with pytest.raises(SuiteConfigError) as exc:
+        SuiteConfig(suite="rsynctest", fpath=flow_cylc)
+    assert "Directories can only be from the top level" in str(exc.value)
 
 
-def test_valid_rsync_includes_returns_correct_list():
+def test_valid_rsync_includes_returns_correct_list(tmp_path):
     """Test that the rsync includes in the correct """
 
     flow_cylc_content = """
@@ -486,17 +465,14 @@ def test_valid_rsync_includes_returns_correct_list():
             graph = "blah => deeblah"
     [scheduler]
         install = dir/, dir2/, file1, file2
-        """
-    with TemporaryDirectory() as temp_dir:
-        flow_cylc = Path(temp_dir, "flow.cylc")
-        with flow_cylc.open(mode="w") as f:
-            f.write(flow_cylc_content)
-            f.flush()
+    """
+    flow_cylc = tmp_path.joinpath(SuiteFiles.FLOW_FILE)
+    flow_cylc.write_text(flow_cylc_content)
 
-        config = SuiteConfig(suite="rsynctest", fpath=flow_cylc)
+    config = SuiteConfig(suite="rsynctest", fpath=flow_cylc)
 
-        rsync_includes = SuiteConfig.get_validated_rsync_includes(config)
-        assert rsync_includes == ['dir/', 'dir2/', 'file1', 'file2']
+    rsync_includes = SuiteConfig.get_validated_rsync_includes(config)
+    assert rsync_includes == ['dir/', 'dir2/', 'file1', 'file2']
 
 
 @pytest.mark.parametrize(
@@ -527,3 +503,45 @@ def test_process_runahead_limit(cfg_scheduling, valid, cycling_mode):
         with pytest.raises(SuiteConfigError) as exc:
             SuiteConfig.process_runahead_limit(mock_config)
         assert "bad runahead limit" in str(exc.value).lower()
+
+
+@pytest.mark.parametrize(
+    'opt', [None, 'check_circular', 'strict']
+)
+def test_check_circular(opt, monkeypatch, caplog, tmp_path):
+    """Test SuiteConfig._check_circular()."""
+    # ----- Setup -----
+    caplog.set_level(logging.WARNING, CYLC_LOG)
+
+    options = Mock(spec=[], is_validate=True)
+    if opt:
+        setattr(options, opt, True)
+
+    flow_config = """
+    [scheduling]
+        cycling mode = integer
+        [[graph]]
+            R1 = "a => b => c => d => e => a"
+    [runtime]
+        [[a, b, c, d, e]]
+            script = True
+    """
+    flow_file = tmp_path.joinpath(SuiteFiles.FLOW_FILE)
+    flow_file.write_text(flow_config)
+
+    def SuiteConfig__assert_err_raised():
+        with pytest.raises(SuiteConfigError) as exc:
+            SuiteConfig(suite='circular', fpath=flow_file, options=options)
+        assert "circular edges detected" in str(exc.value)
+
+    # ----- The actual test -----
+    SuiteConfig__assert_err_raised()
+    # Now artificially lower the limit and re-test:
+    monkeypatch.setattr('cylc.flow.config.SuiteConfig.CHECK_CIRCULAR_LIMIT', 4)
+    if opt != 'check_circular':
+        # Will no longer raise
+        SuiteConfig(suite='circular', fpath=flow_file, options=options)
+        msg = "will not check graph for circular dependencies"
+        assert msg in caplog.text
+    else:
+        SuiteConfig__assert_err_raised()

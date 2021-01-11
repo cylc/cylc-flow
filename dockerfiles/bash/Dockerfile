@@ -44,9 +44,8 @@ RUN update-alternatives --install /bin/bash bash /bash/bash-3.2 1 && \
     update-alternatives --force --all && \
     update-alternatives --list bash
 
-# TODO: remove this hardcoded path after #3689
-COPY global.cylc /root/.cylc/flow/8.0a3.dev/global.cylc
-COPY global.cylc /root/.cylc/flow/8.0a3.dev/global-tests.cylc
+COPY global.cylc /root/.cylc/flow/global.cylc
+COPY global.cylc /root/.cylc/flow/global-tests.cylc
 
 # To change the system bash version, use for example:
 # `update-alternatives --set bash /bash/bash-4.2`

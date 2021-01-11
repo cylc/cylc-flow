@@ -1,0 +1,70 @@
+name: Release stage 2 - auto publish
+
+on:
+  pull_request:  # types AND paths
+    types: [closed]
+    paths: ['cylc/flow/__init__.py']
+    # NOTE: While this is too generic, we use the `if` condition of the job to narrow it down
+    # NOTE: Don't use `branches` as we might create release on any branch
+
+env:
+  # Best not to include the GH token here, only do it for the steps that need it
+  MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+  CHANGELOG_FILE: CHANGES.md
+
+jobs:
+  publish:
+    if: >-  # NOTE: Can't use top-level env here unfortunately
+      github.event.pull_request.merged == true &&
+      contains(github.event.pull_request.labels.*.name, 'release')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+
+    - name: Checkout repo
+      uses: actions/checkout@v2
+      with:
+        ref: ${{ env.MERGE_SHA }}
+
+    - name: Setup Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: Get the version number
+      uses: cylc/release-actions/stage-2/get-version-from-pr@v1
+
+    - name: Build
+      uses: cylc/release-actions/build-python-package@v1
+
+    - name: Publish distribution to PyPI
+      uses: pypa/gh-action-pypi-publish@v1.4.1
+      with:
+        user: __token__ # uses the API token feature of PyPI - least permissions possible
+        password: ${{ secrets.PYPI_TOKEN }}
+        # # Can try using this for testing:
+        # repository_url: https://test.pypi.org/legacy/
+
+    - name: Publish GitHub release
+      id: create-release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        commitish: ${{ env.MERGE_SHA }}
+        tag_name: ${{ env.VERSION }}
+        release_name: cylc-flow-${{ env.VERSION }}
+        prerelease: ${{ env.PRERELEASE }}
+        body: |
+          See [${{ env.CHANGELOG_FILE }}](https://github.com/${{ github.repository }}/blob/master/${{ env.CHANGELOG_FILE }}) for detail.
+
+          [Cylc-8 is installed by conda - you don't need to download this cylc-flow release directly.](https://github.com/cylc/cylc-conda#cylc-8-conda-installation-instructions)
+        # TODO: Get topmost changelog section somehow and use that as the body?
+
+    - name: Comment on the release PR with the results & next steps
+      if: always()
+      uses: cylc/release-actions/stage-2/comment-on-pr@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        release-url: ${{ steps.create-release.outputs.html_url }}

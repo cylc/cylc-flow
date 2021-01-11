@@ -46,7 +46,7 @@ class SuiteDatabaseManager:
         KEY_INITIAL_CYCLE_POINT, 'initial_point')
     KEY_START_CYCLE_POINT = 'startcp'
     KEY_START_CYCLE_POINT_COMPATS = (
-        KEY_START_CYCLE_POINT, 'start_point', 'warm_point')
+        KEY_START_CYCLE_POINT, 'start_point')
     KEY_FINAL_CYCLE_POINT = 'fcp'
     KEY_FINAL_CYCLE_POINT_COMPATS = (KEY_FINAL_CYCLE_POINT, 'final_point')
     KEY_STOP_CYCLE_POINT = 'stopcp'

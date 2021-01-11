@@ -34,6 +34,7 @@ Use the retry options in case the target suite is down or out of contact.
 
 Note: to manually trigger a task use 'cylc trigger', not this command."""
 
+import os.path
 from time import sleep
 
 from cylc.flow import LOG
@@ -89,6 +90,7 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser, options, suite, event_msg, event_id):
+    suite = os.path.normpath(suite)
     LOG.info('Send to suite %s: "%s" (%s)', suite, event_msg, event_id)
 
     pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)

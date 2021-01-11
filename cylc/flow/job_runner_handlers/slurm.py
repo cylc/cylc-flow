@@ -15,8 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Submits task job scripts to Simple Linux Utility for Resource Management.
 
-# TODO: rewrite the following for platforms:
-
 .. cylc-scope:: flow.cylc[runtime][<namespace>]
 
 Uses the ``sbatch`` command. SLURM directives can be provided in the flow.cylc
@@ -26,7 +24,7 @@ file:
    :caption: global.cylc
 
    [platforms]
-       [[myplatform]]
+       [[slurm_platform]]
            job runner = slurm
 
 .. code-block:: cylc
@@ -34,7 +32,7 @@ file:
 
    [runtime]
        [[my_task]]
-           platform = myplatform
+           platform = slurm_platform
            execution time limit = PT1H
            [[[directives]]]
                --nodes = 5
@@ -69,9 +67,8 @@ that distinguish repeated directives from one another:
        # run two heterogenous job components:
        script = srun sleep 10 : sleep 30
        [[my_task]]
-           [[[job]]]
-               batch system = slurm
-               execution time limit = PT1H
+           execution time limit = PT1H
+           platform = slurm_platform
            [[[directives]]]
                --account = QXZ5W2
                hetjob_0_--mem = 1G  # first prefix must be "0"
@@ -95,8 +92,8 @@ The resulting formatted directives are:
 .. note::
 
    For older Slurm versions with *packjob* instead of *hetjob*, use
-   :cylc:conf:`[platforms][<platform name>]job runner = slurm_packjob` and
-   directive prefixes ``packjob_0_`` etc.
+   :cylc:conf:`global.cylc[platforms][<platform name>]job runner =
+   slurm_packjob` and directive prefixes ``packjob_0_`` etc.
 
 .. cylc-scope::
 

@@ -56,6 +56,8 @@
             submission retry delays = PT3S
      [[baz]]
         # submitted, submission timeout, started, failed
+        # Delay in init-script to cause submission timeout.
+        # (Note CYLC_SUITE_LOG_DIR is not defined at this point!)
         init-script = """
             while ! grep -q 'submission timeout *baz\.1' "${CYLC_SUITE_LOG_DIR}/events.log"
             do

@@ -1,3 +1,5 @@
+#!Jinja2
+
 [scheduler]
     UTC mode = True
 
@@ -15,5 +17,5 @@
             host = parasite
 
     [[non-valid-child]]
-        platform = wibble
         inherit = VALID_PARENT
+        platform = _wibble

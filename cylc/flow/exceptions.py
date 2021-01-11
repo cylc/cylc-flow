@@ -27,6 +27,21 @@ class CylcError(Exception):
     """
 
 
+class PluginError(CylcError):
+    """Represents an error arising from a Cylc plugin."""
+
+    def __init__(self, entry_point, plugin_name, exc):
+        self.entry_point = entry_point
+        self.plugin_name = plugin_name
+        self.exc = exc
+
+    def __str__(self):
+        return (
+            f'Error in plugin {self.entry_point}.{self.plugin_name}'
+            f'\n{self.exc}'
+        )
+
+
 class UserInputError(CylcError):
     """Exception covering erroneous user input to a Cylc interface.
 

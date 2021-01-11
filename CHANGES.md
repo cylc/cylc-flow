@@ -42,7 +42,12 @@ due to being a seldom-used feature. Workflows can still be restarted from the
 last run, or reflow can be used to achieve the same result.
 
 -------------------------------------------------------------------------------
-## __cylc-8.0a3 (2020-08?)__
+<!-- The topmost release date is automatically updated by GitHub Actions. When
+creating a new release entry be sure to copy & paste the span tag with the
+`actions:bind` attribute, which is used by a regex to find the text to be
+updated. Only the first match gets replaced, so it's fine to leave the old
+ones in. -->
+## __cylc-8.0a3 (<span actions:bind='release-date'>2020-08?</span>)__
 
 Fourth alpha release of Cylc 8.
 
@@ -58,6 +63,9 @@ Remove cylc register's option `--run-dir=DIR`, which created a run directory
 symlink to `DIR` (see #3884).
 
 ### Enhancements
+
+[#4014](https://github.com/cylc/cylc-flow/pull/4014) - Rename "ready" task
+state to "preparing".
 
 [#3992](https://github.com/cylc/cylc-flow/pull/3992) - Rename
 batch system to job runner.
@@ -138,6 +146,19 @@ config option `[scheduling]stop after cycle point`.
 `cylc clean`, for removing stopped workflows on the local and any remote
 filesystems.
 
+[#3913](https://github.com/cylc/cylc-flow/pull/3913) - Added the ability to
+use plugins to parse suite templating variables and additional files to
+install. Only one such plugin exists at the time of writing, designed to
+parse ``rose-suite.conf`` files in repository "cylc-rose".
+
+[#3955](https://github.com/cylc/cylc-flow/pull/3955) - Global config options
+to control the job submission environment.
+
+[#4020](https://github.com/cylc/cylc-flow/pull/4020) - `cylc validate` will no
+longer check for a cyclic/circular graph if there are more than 100 tasks,
+unless the option  `--check-circular` is used. This is to improve performance.
+
+
 ### Fixes
 
 [#3984](https://github.com/cylc/cylc-flow/pull/3984) - Only write task
@@ -188,6 +209,10 @@ issue when mixing offset and conditional (e.g. foo<m-1> & baz => foo<m>).
 [#3982](https://github.com/cylc/cylc-flow/pull/3982) - Fix bug preventing
 workflow from shutting down properly on a keyboard interrupt (Ctrl+C) in
 Python 3.8+.
+
+[#4011](https://github.com/cylc/cylc-flow/pull/4011) - Fix bug where including
+a trailing slash in the suite/workflow name would cause `cylc stop`
+(and possibly other commands) to silently fail.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0a2 (2020-07-03)__

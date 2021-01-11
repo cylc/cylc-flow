@@ -74,12 +74,11 @@ from standard input.
 Broadcast cannot change [runtime] inheritance.
 
 See also 'cylc reload' - reload a modified suite definition at run time."""
+
+import os.path
 import sys
-
 import re
-
 from tempfile import NamedTemporaryFile
-
 from ansimarkup import parse as cparse
 
 from cylc.flow import ID_DELIM
@@ -103,7 +102,7 @@ mutation (
     $bMode: BroadcastMode!,
     $cPoints: [CyclePoint],
     $nSpaces: [NamespaceName],
-    $bSettings: [GenericScalar],
+    $bSettings: [BroadcastSetting],
     $bCutoff: CyclePoint
 ) {
   broadcast (
@@ -296,6 +295,7 @@ def get_option_parser():
 @cli_function(get_option_parser)
 def main(_, options, suite):
     """Implement cylc broadcast."""
+    suite = os.path.normpath(suite)
     pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
 
     mutation_kwargs = {

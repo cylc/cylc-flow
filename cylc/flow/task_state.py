@@ -32,8 +32,8 @@ from cylc.flow.wallclock import get_current_time_string
 TASK_STATUS_WAITING = "waiting"
 # Prerequisites met, but held back in a limited internal queue:
 TASK_STATUS_QUEUED = "queued"
-# Ready (prerequisites met) to be passed to job submission system:
-TASK_STATUS_READY = "ready"
+# Preparing for job submission
+TASK_STATUS_PREPARING = "preparing"
 # Prerequisites unmet for too long - will never be submitted now:
 TASK_STATUS_EXPIRED = "expired"
 # Job submitted to run:
@@ -56,7 +56,7 @@ TASK_STATUS_DESC = {
         'Depencies are satisfied, placed in internal queue.',
     TASK_STATUS_EXPIRED:
         'Execution skipped.',
-    TASK_STATUS_READY:
+    TASK_STATUS_PREPARING:
         'Cylc is preparing a job for submission.',
     TASK_STATUS_SUBMIT_FAILED:
         'Job submission has failed.',
@@ -75,7 +75,7 @@ TASK_STATUSES_ORDERED = [
     TASK_STATUS_WAITING,
     TASK_STATUS_QUEUED,
     TASK_STATUS_EXPIRED,
-    TASK_STATUS_READY,
+    TASK_STATUS_PREPARING,
     TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_RUNNING,
@@ -90,7 +90,7 @@ TASK_STATUS_DISPLAY_ORDER = [
     TASK_STATUS_RUNNING,
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_EXPIRED,
-    TASK_STATUS_READY,
+    TASK_STATUS_PREPARING,
     TASK_STATUS_SUCCEEDED,
     TASK_STATUS_QUEUED,
     TASK_STATUS_WAITING,
@@ -110,7 +110,7 @@ TASK_STATUSES_RESTRICTED = set([
 # Tasks statuses to show in restricted monitoring mode.
 TASK_STATUSES_NO_JOB_FILE = set([
     TASK_STATUS_WAITING,
-    TASK_STATUS_READY,
+    TASK_STATUS_PREPARING,
     TASK_STATUS_EXPIRED,
     TASK_STATUS_QUEUED
 ])
@@ -144,7 +144,7 @@ TASK_STATUSES_FINAL = TASK_STATUSES_SUCCESS | TASK_STATUSES_FAILURE
 TASK_STATUSES_NEVER_ACTIVE = set([
     TASK_STATUS_WAITING,
     TASK_STATUS_QUEUED,
-    TASK_STATUS_READY,
+    TASK_STATUS_PREPARING,
 ])
 
 # Task statuses that are externally active

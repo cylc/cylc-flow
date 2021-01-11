@@ -504,7 +504,6 @@ class Scheduler:
 
         # Main loop plugins
         self.main_loop_plugins = main_loop.load(
-            # TODO: this doesn't work, we need to merge the two configs
             self.cylc_config.get('main loop', {}),
             self.options.main_loop
         )
@@ -1028,6 +1027,7 @@ class Scheduler:
         # Write suite contact file.
         # Preserve contact data in memory, for regular health check.
         fields = suite_files.ContactFileFields
+        # fmt: off
         contact_data = {
             fields.API:
                 str(API),
@@ -1052,6 +1052,7 @@ class Scheduler:
             fields.VERSION:
                 CYLC_VERSION
         }
+        # fmt: on
         suite_files.dump_contact_file(self.suite, contact_data)
         self.contact_data = contact_data
 
@@ -1133,7 +1134,6 @@ class Scheduler:
                 self.options.icp = value
                 LOG.info('+ initial point = %s' % value)
         elif key in self.suite_db_mgr.KEY_START_CYCLE_POINT_COMPATS:
-            # 'warm_point' for back compat <= 7.6.X
             if self.is_restart and self.options.ignore_startcp:
                 LOG.debug('- start point = %s (ignored)' % value)
             elif self.options.startcp is None:

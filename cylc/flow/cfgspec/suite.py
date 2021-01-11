@@ -127,8 +127,8 @@ with Conf(
             format, see :cylc:conf:`flow.cylc[scheduler]cycle point time zone`.
             To just alter the number of expanded year digits (for years
             below 0 or above 9999), see
-            :cylc:conf:
-            `flow.cylc[scheduler]cycle point num expanded year digits`.
+            :cylc:conf:`flow.cylc
+            [scheduler]cycle point num expanded year digits`.
 
             Cylc usually uses a ``CCYYMMDDThhmmZ`` (``Z`` in the special
             case of UTC) or ``CCYYMMDDThhmm±hhmm`` format for writing
@@ -327,7 +327,7 @@ with Conf(
             for this, it will be assumed to be local time, or in UTC if
             :cylc:conf:`flow.cylc[scheduler]UTC mode` is set, or in the time
             zone determined by
-            :cylc:conf`flow.cylc[scheduler][cycle point time zone]`.
+            :cylc:conf:`flow.cylc[scheduler]cycle point time zone`.
 
             The string ``now`` converts to the current date-time on the suite
             host (adjusted to UTC if the suite is in UTC mode but the host is
@@ -349,7 +349,7 @@ with Conf(
             for this, it will be assumed to be local time, or in UTC if
             :cylc:conf:`flow.cylc[scheduler]UTC mode`
             is set, or in the time zone determined by
-            :cylc:conf`flow.cylc[scheduler][cycle point time zone]`.
+            :cylc:conf:`flow.cylc[scheduler]cycle point time zone`.
         ''')
         Conf('initial cycle point constraints', VDR.V_STRING_LIST, desc='''
             in a cycling suite it is possible to restrict the initial cycle
@@ -463,7 +463,7 @@ with Conf(
 
             Example:
 
-               ``foo(PT1H30M), bar(PT1.5H), baz``
+            ``foo(PT1H30M), bar(PT1.5H), baz``
             ''')
             Conf('external-trigger', VDR.V_STRING_LIST, desc='''
                 .. note::
@@ -491,7 +491,9 @@ with Conf(
                    * May be positive or negative
                    * The offset may be omitted if it is zero.
 
-                Example: ``PT1H`` - 1 hour
+                Example:
+
+                ``PT1H`` - 1 hour
             ''')
             Conf('sequential', VDR.V_STRING_LIST, desc='''
                 Sequential tasks automatically depend on their own
@@ -500,7 +502,8 @@ with Conf(
                 :ref:`SequentialTasks`.
 
                 Example:
-                   ``foo, bar``
+
+                ``foo, bar``
             ''')
 
         with Conf('xtriggers', desc='''
@@ -793,8 +796,8 @@ with Conf(
 
                 The top level share and work directory location can be changed
                 (e.g. to a large data area) by a global config setting (see
-                :cylc:conf:`
-                global.cylc[platforms][<platform name>]work directory`).
+                :cylc:conf:`global.cylc
+                [platforms][<platform name>]work directory`).
 
                 .. note::
 
@@ -805,7 +808,7 @@ with Conf(
 
                 Example:
 
-                   ``$CYLC_TASK_CYCLE_POINT/shared/``
+                ``$CYLC_TASK_CYCLE_POINT/shared/``
             ''')
             Conf('execution polling intervals', VDR.V_INTERVAL_LIST, None)
             Conf('execution retry delays', VDR.V_INTERVAL_LIST, None)
@@ -860,9 +863,8 @@ with Conf(
 
                         Example:
 
-                    '''
-                    + '   ``http://my-site.com/suites/%(suite_name)s/'
-                    + '%(task_name)s.html``')
+                        ``http://my-site.com/suites/%(suite_name)s/'''
+                    '%(task_name)s.html``')
                 Conf('<custom metadata>', VDR.V_STRING, '', desc='''
                     Any user-defined metadata item.
                     These, like title, URL, etc. can be passed to task event
@@ -888,7 +890,7 @@ with Conf(
 
                     Example:
 
-                       ``10.0``
+                    ``10.0``
                 ''')
                 Conf('time limit buffer', VDR.V_INTERVAL, DurationFloat(30),
                      desc='''
@@ -899,7 +901,7 @@ with Conf(
 
                     Example:
 
-                       ``PT10S``
+                    ``PT10S``
                 ''')
                 Conf('fail cycle points', VDR.V_STRING_LIST, desc='''
                     Configure simulated or dummy jobs to fail at certain cycle
@@ -1070,7 +1072,7 @@ with Conf(
 
                     Example:
 
-                       ``submission failed, failed``
+                    ``submission failed, failed``
                 ''')
                 Conf('handler retry delays', VDR.V_INTERVAL_LIST, None,
                      desc='''
@@ -1081,7 +1083,7 @@ with Conf(
 
                     Example:
 
-                       ``PT10S, PT1M, PT5M``
+                    ``PT10S, PT1M, PT5M``
                 ''')
                 Conf('mail events', VDR.V_STRING_LIST, None, desc='''
                     Specify the events for which notification emails should be
@@ -1089,7 +1091,7 @@ with Conf(
 
                     Example:
 
-                       ``submission failed, failed``
+                    ``submission failed, failed``
                 ''')
                 Conf('submission timeout', VDR.V_INTERVAL, desc='''
                     If a task has not started after the specified ISO 8601

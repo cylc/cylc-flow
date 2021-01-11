@@ -279,11 +279,16 @@ def _construct_ssh_cmd(
 
     # Pass CYLC_VERSION and optionally, CYLC_CONF_PATH & CYLC_UTC through.
     command += ['env', quote(r'CYLC_VERSION=%s' % CYLC_VERSION)]
-    try:
-        command.append(
-            quote(r'CYLC_CONF_PATH=%s' % os.environ['CYLC_CONF_PATH']))
-    except KeyError:
-        pass
+
+    for envvar in [
+        'CYLC_CONF_PATH',
+        'CYLC_COVERAGE'
+    ]:
+        if envvar in os.environ:
+            command.append(
+                quote(f'{envvar}={os.environ[envvar]}')
+            )
+
     if set_UTC and os.getenv('CYLC_UTC') in ["True", "true"]:
         command.append(quote(r'CYLC_UTC=True'))
         command.append(quote(r'TZ=UTC'))

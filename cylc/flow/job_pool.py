@@ -29,14 +29,14 @@ from cylc.flow.task_job_logs import get_task_job_log
 from cylc.flow.parsec.util import pdeepcopy, poverride
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_state import (
-    TASK_STATUS_READY, TASK_STATUS_SUBMITTED, TASK_STATUS_SUBMIT_FAILED,
+    TASK_STATUS_PREPARING, TASK_STATUS_SUBMITTED, TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED,
     TASK_STATUS_FAILED)
 from cylc.flow.data_messages_pb2 import PbJob, JDeltas
 from cylc.flow.platforms import get_platform, get_host_from_platform
 
 JOB_STATUSES_ALL = [
-    TASK_STATUS_READY,
+    TASK_STATUS_PREPARING,
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_RUNNING,
@@ -261,10 +261,26 @@ class JobPool:
 
     @staticmethod
     def parse_job_item(item):
-        """Parse internal id
-        point/name/submit_num
-        or name.point.submit_num syntax (back compat).
+        """Parse internal id.
+
+        Args:
+            item (str):
+                point/name/submit_num
+                OR name.point.submit_num syntax.
+
+        Returns:
+            tuple - (point_str: str, name_str: str, submit_num: [int, None])
+
         """
+        # BACK COMPAT: name.point.submit_num
+        # url:
+        #     https://github.com/cylc/cylc-admin/pull/115
+        # from:
+        #     Cylc7
+        # to:
+        #     Cylc8
+        # remove at:
+        #     Cylc9
         submit_num = None
         if item.count('/') > 1:
             point_str, name_str, submit_num = item.split('/', 2)

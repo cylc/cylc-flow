@@ -1,0 +1,46 @@
+name: Update copyright year
+
+on:
+  schedule:
+    - cron: '0 4 1 1 *' # Every Jan 1st @ 04:00 UTC
+
+jobs:
+  update-copyright:
+    if: github.repository_owner == 'cylc'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+
+    - name: Checkout repo
+      uses: actions/checkout@v2
+
+    - name: Configure git
+      uses: cylc/release-actions/configure-git@v1
+
+    - name: Checkout PR branch
+      uses: cylc/release-actions/checkout-copyright-branch@v1
+
+    - name: Update copyright year
+      env:
+        README_FILE: 'README.md'
+        SCRIPTS_INIT_FILE: 'cylc/flow/scripts/__init__.py'
+      run: |
+        pattern="(<span actions:bind='current-year'>).*(<\/span>)"
+        sed -i -E "s/${pattern}/\1${YEAR}\2/" "$README_FILE"
+
+        pattern="(_copyright_year ?= ?)[^ #]*(.*)"
+        sed -i -E "s/${pattern}/\1${YEAR}\2/" "$SCRIPTS_INIT_FILE"
+
+    - name: Commit & push
+      run : |
+        git commit -a -m "Update copyright year" -m "Workflow: ${{ github.workflow }}, run: ${{ github.run_number }}"
+        git push
+
+    - name: Create pull request
+      uses: cylc/release-actions/create-pr@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        head: ${{ env.BRANCH_NAME }}
+        title: 'Auto PR: update copyright year'
+        body: 'Happy new year!'

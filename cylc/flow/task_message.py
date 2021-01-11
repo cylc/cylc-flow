@@ -91,6 +91,7 @@ def record_messages(suite, task_job, messages):
     # Write to job.status
     _append_job_status_file(suite, task_job, event_time, messages)
     # Send messages
+    suite = os.path.normpath(suite)
     try:
         pclient = SuiteRuntimeClient(suite)
     except SuiteStopped:

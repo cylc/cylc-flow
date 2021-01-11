@@ -132,6 +132,7 @@ class SuiteConfig:
     """Class for suite configuration items and derived quantities."""
 
     Q_DEFAULT = 'default'
+    CHECK_CIRCULAR_LIMIT = 100  # If no. tasks > this, don't check circular
 
     def __init__(
         self,
@@ -719,13 +720,25 @@ class SuiteConfig:
         # Replace suite and task name in suite and task URLs.
         self.cfg['meta']['URL'] = self.cfg['meta']['URL'] % {
             'suite_name': self.suite}
-        # back-compat $CYLC_SUITE_NAME:
+        # BACK COMPAT: CYLC_SUITE_NAME
+        # from:
+        #     Cylc7
+        # to:
+        #     Cylc8
+        # remove at:
+        #     Cylc9
         self.cfg['meta']['URL'] = RE_SUITE_NAME_VAR.sub(
             self.suite, self.cfg['meta']['URL'])
         for name, cfg in self.cfg['runtime'].items():
             cfg['meta']['URL'] = cfg['meta']['URL'] % {
                 'suite_name': self.suite, 'task_name': name}
-            # back-compat $CYLC_SUITE_NAME and $CYLC_TASK_NAME:
+            # BACK COMPAT: CYLC_SUITE_NAME, CYLC_TASK_NAME
+            # from:
+            #     Cylc7
+            # to:
+            #     Cylc8
+            # remove at:
+            #     Cylc9
             cfg['meta']['URL'] = RE_SUITE_NAME_VAR.sub(
                 self.suite, cfg['meta']['URL'])
             cfg['meta']['URL'] = RE_TASK_NAME_VAR.sub(
@@ -830,14 +843,19 @@ class SuiteConfig:
 
     def _check_circular(self):
         """Check for circular dependence in graph."""
-        start_point_string = (
-            self.cfg['visualization']['initial cycle point'])
+        if (len(self.taskdefs) > self.CHECK_CIRCULAR_LIMIT and
+                not getattr(self.options, 'check_circular', False)):
+            LOG.warning(
+                f"Number of tasks is > {self.CHECK_CIRCULAR_LIMIT}; will not "
+                "check graph for circular dependencies. To enforce this "
+                "check, use the option --check-circular.")
+            return
+        start_point_string = self.cfg['visualization']['initial cycle point']
+        raw_graph = self.get_graph_raw(start_point_string,
+                                       stop_point_string=None)
         lhs2rhss = {}  # left hand side to right hand sides
         rhs2lhss = {}  # right hand side to left hand sides
-        for lhs, rhs in self.get_graph_raw(
-            start_point_string,
-            stop_point_string=None,
-        ):
+        for lhs, rhs in raw_graph:
             lhs2rhss.setdefault(lhs, set())
             lhs2rhss[lhs].add(rhs)
             rhs2lhss.setdefault(rhs, set())
@@ -904,7 +922,8 @@ class SuiteConfig:
 
         TODO - this will have an impact on memory footprint for large suites
         with a lot of runtime config. We should consider ditching OrderedDict
-        and instead using an ordinary dict with a separate list of keys.
+        and instead using an ordinary dict
+
         """
         if (not self.parameters[0] and
                 not any(',' in ns for ns in self.cfg['runtime'])):
@@ -1950,8 +1969,6 @@ class SuiteConfig:
                         continue
                     if l_id is not None and actual_first_point > l_id[1]:
                         # Check that l_id is not earlier than start time.
-                        # NOTE BUG GITHUB #919
-                        # sct = start_point
                         if (r_id is None or r_id[1] < actual_first_point or
                                 is_validate):
                             continue

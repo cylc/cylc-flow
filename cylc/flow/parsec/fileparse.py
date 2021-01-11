@@ -31,11 +31,16 @@ parsec config file parsing:
 """
 
 import os
-import sys
 import re
+import sys
 
+import pkg_resources
+from pathlib import Path
+
+from cylc.flow import __version__
 from cylc.flow import LOG
-from cylc.flow.parsec.exceptions import ParsecError, FileParseError
+from cylc.flow.exceptions import PluginError
+from cylc.flow.parsec.exceptions import FileParseError, ParsecError
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.include import inline
 from cylc.flow.parsec.util import itemstr
@@ -146,7 +151,16 @@ def addict(cfig, key, val, parents, index):
         # this item already exists
         if (
             parents[0:2] == ['scheduling', 'graph'] or
-            parents[0:2] == ['scheduling', 'dependencies']  # back compat <=7.X
+            # BACK COMPAT: [scheduling][dependencies]
+            # url:
+            #     https://github.com/cylc/cylc-flow/pull/3191
+            # from:
+            #     Cylc<=7
+            # to:
+            #     Cylc8
+            # remove at:
+            #     Cylc9
+            parents[0:2] == ['scheduling', 'dependencies']
         ):
             # append the new graph string to the existing one
             if not isinstance(cfig, list):
@@ -200,6 +214,64 @@ def multiline(flines, value, index, maxline):
     return quot + newvalue + line, index
 
 
+def process_plugins(fpath):
+    # Load Rose Vars, if a ``rose-suite.conf`` file is present.
+    extra_vars = {
+        'env': {},
+        'template_variables': {},
+        'templating_detected': None
+    }
+    for entry_point in pkg_resources.iter_entry_points(
+        'cylc.pre_configure'
+    ):
+        try:
+            plugin_result = entry_point.resolve()(fpath)
+        except Exception as exc:
+            # NOTE: except Exception (purposefully vague)
+            # this is to separate plugin from core Cylc errors
+            raise PluginError(
+                'cylc.pre_configure',
+                entry_point.name,
+                exc
+            ) from None
+        for section in ['env', 'template_variables']:
+            if section in plugin_result and plugin_result[section] is not None:
+                # Raise error if multiple plugins try to update the same keys.
+                section_update = plugin_result.get(section, {})
+                keys_collision = (
+                    extra_vars[section].keys() & section_update.keys()
+                )
+                if keys_collision:
+                    raise ParsecError(
+                        f"{entry_point.name} is trying to alter "
+                        f"[{section}]{', '.join(sorted(keys_collision))}."
+                    )
+                extra_vars[section].update(section_update)
+
+        if (
+            'templating_detected' in plugin_result and
+            plugin_result['templating_detected'] is not None and
+            extra_vars['templating_detected'] is not None and
+            extra_vars['templating_detected'] !=
+                plugin_result['templating_detected']
+        ):
+            # Don't allow subsequent plugins with different templating_detected
+            raise ParsecError(
+                "Can't merge templating languages "
+                f"{extra_vars['templating_detected']} and "
+                f"{plugin_result['templating_detected']}"
+            )
+        elif(
+            'templating_detected' in plugin_result and
+            plugin_result['templating_detected'] is not None
+        ):
+            extra_vars['templating_detected'] = plugin_result[
+                'templating_detected'
+            ]
+
+    return extra_vars
+
+
 def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
     """
     Read a cylc parsec config file (at fpath), inline any include files,
@@ -224,6 +296,12 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
     do_empy = True
     do_jinja2 = True
     do_contin = True
+
+    extra_vars = process_plugins(Path(fpath).parent)
+
+    if not template_vars:
+        template_vars = {}
+
     if viewcfg:
         if not viewcfg['empy']:
             do_empy = False
@@ -239,8 +317,37 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
         flines = inline(
             flines, fdir, fpath, False, viewcfg=viewcfg, for_edit=asedit)
 
+    template_vars['CYLC_VERSION'] = __version__
+
+    # Push template_vars into extra_vars so that duplicates come from
+    # template_vars.
+    if extra_vars['templating_detected'] is not None:
+        will_be_overwritten = (
+            template_vars.keys() &
+            extra_vars['template_variables'].keys()
+        )
+        for key in will_be_overwritten:
+            LOG.warning(
+                f'Overriding {key}: {extra_vars["template_variables"][key]} ->'
+                f' {template_vars[key]}'
+            )
+        extra_vars['template_variables'].update(template_vars)
+        template_vars = extra_vars['template_variables']
+
     # process with EmPy
     if do_empy:
+        if (
+            extra_vars['templating_detected'] == 'empy' and
+            not re.match(r'^#![Ee]m[Pp]y\s*', flines[0])
+        ):
+            if not re.match(r'^#!', flines[0]):
+                flines.insert(0, '#!empy')
+            else:
+                raise FileParseError(
+                    "Plugins set templating engine = "
+                    f"{extra_vars['templating_detected']}"
+                    f" which does not match {flines[0]} set in flow.cylc."
+                )
         if flines and re.match(r'^#![Ee]m[Pp]y\s*', flines[0]):
             LOG.debug('Processing with EmPy')
             try:
@@ -248,10 +355,24 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
             except (ImportError, ModuleNotFoundError):
                 raise ParsecError('EmPy Python package must be installed '
                                   'to process file: ' + fpath)
-            flines = empyprocess(flines, fdir, template_vars)
+            flines = empyprocess(
+                flines, fdir, template_vars
+            )
 
     # process with Jinja2
     if do_jinja2:
+        if (
+            extra_vars['templating_detected'] == 'jinja2' and
+            not re.match(r'^#![jJ]inja2\s*', flines[0])
+        ):
+            if not re.match(r'^#!', flines[0]):
+                flines.insert(0, '#!jinja2')
+            else:
+                raise FileParseError(
+                    "Plugins set templating engine = "
+                    f"{extra_vars['templating_detected']}"
+                    f" which does not match {flines[0]} set in flow.cylc."
+                )
         if flines and re.match(r'^#![jJ]inja2\s*', flines[0]):
             LOG.debug('Processing with Jinja2')
             try:
@@ -259,7 +380,9 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
             except (ImportError, ModuleNotFoundError):
                 raise ParsecError('Jinja2 Python package must be installed '
                                   'to process file: ' + fpath)
-            flines = jinja2process(flines, fdir, template_vars)
+            flines = jinja2process(
+                flines, fdir, template_vars
+            )
 
     # concatenate continuation lines
     if do_contin:

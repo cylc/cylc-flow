@@ -44,7 +44,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_WAITING,
     TASK_STATUS_EXPIRED,
     TASK_STATUS_QUEUED,
-    TASK_STATUS_READY,
+    TASK_STATUS_PREPARING,
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_RUNNING,
     TASK_STATUS_SUCCEEDED,
@@ -408,7 +408,7 @@ class TaskPool:
                     itask.set_summary_time('started', time_run)
                 if timeout is not None:
                     itask.timeout = timeout
-            elif status == TASK_STATUS_READY:
+            elif status == TASK_STATUS_PREPARING:
                 # put back to be readied again.
                 status = TASK_STATUS_WAITING
 
@@ -418,18 +418,8 @@ class TaskPool:
                     TASK_STATUS_FAILED,
                     TASK_STATUS_SUCCEEDED
             ):
-                try:
-                    for message in json.loads(outputs_str).values():
-                        itask.state.outputs.set_completion(message, True)
-                except (AttributeError, TypeError, ValueError):
-                    # Back compat for <=7.6.X
-                    # Each output in separate line as "trigger=message"
-                    try:
-                        for output in outputs_str.splitlines():
-                            itask.state.outputs.set_completion(
-                                output.split("=", 1)[1], True)
-                    except AttributeError:
-                        pass
+                for message in json.loads(outputs_str).values():
+                    itask.state.outputs.set_completion(message, True)
 
             if platform_name:
                 itask.summary['platforms_used'][
@@ -481,8 +471,7 @@ class TaskPool:
                 {"id": id_, "ctx_key": ctx_key_raw})
             return
         LOG.info("+ %s.%s %s" % (name, cycle, ctx_key))
-        if ctx_key == "poll_timer" or ctx_key[0] == "poll_timers":
-            # "poll_timers" for back compat with <=7.6.X
+        if ctx_key == "poll_timer":
             itask = self.get_task_by_id(id_)
             if itask is None:
                 LOG.warning("%(id)s: task not found, skip" % {"id": id_})
@@ -728,7 +717,7 @@ class TaskPool:
             if n_limit:
                 for itask in tasks:
                     if itask.state(
-                            TASK_STATUS_READY,
+                            TASK_STATUS_PREPARING,
                             TASK_STATUS_SUBMITTED,
                             TASK_STATUS_RUNNING,
                             is_held=False
@@ -739,7 +728,7 @@ class TaskPool:
             # 2.2) release queued tasks if not limited or if manually forced
             for itask in tasks:
                 if not itask.state(TASK_STATUS_QUEUED):
-                    # (This excludes tasks remaining TASK_STATUS_READY because
+                    # (Excludes tasks remaining TASK_STATUS_PREPARING because
                     # job submission has been stopped with 'cylc shutdown').
                     continue
                 if itask.manual_trigger or not n_limit or n_release > 0:
@@ -1126,7 +1115,7 @@ class TaskPool:
 
         for c_task in suicide:
             if c_task.state(
-                    TASK_STATUS_READY,
+                    TASK_STATUS_PREPARING,
                     TASK_STATUS_SUBMITTED,
                     TASK_STATUS_RUNNING,
                     is_held=False):

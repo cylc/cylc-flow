@@ -17,9 +17,11 @@
 # Tests for the platform lookup.
 
 import pytest
+from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.platforms import (
     platform_from_name, platform_from_job_info,
     get_install_target_from_platform, get_install_target_to_platforms_map)
+
 from cylc.flow.exceptions import PlatformLookupError
 
 PLATFORMS = {
@@ -219,6 +221,20 @@ def test_similar_but_not_exact_match():
 )
 def test_platform_from_job_info_basic(job, remote, returns):
     assert platform_from_job_info(PLATFORMS, job, remote) == returns
+
+
+def test_platform_from_job_info_ordered_dict_comparison():
+    """Check that we are only comparing set items in OrderedDictWithDefaults.
+    """
+    job = {'batch system': 'background', 'Made up key': 'Zaphod'}
+    remote = {'host': 'hpc1', 'Made up key': 'Arthur'}
+    # Set up a fake OrderedDictWith a fake unset default.
+    platform = OrderedDictWithDefaults()
+    platform.defaults_ = {k: None for k in PLATFORMS['hpc1-bg'].keys()}
+    platform.defaults_['Made up key'] = {}
+    platform.update(PLATFORMS['hpc1-bg'])
+    platforms = {'hpc1-bg': platform, 'dobbie': PLATFORMS['sugar']}
+    assert platform_from_job_info(platforms, job, remote) == 'hpc1-bg'
 
 
 # Cases where the error ought to be raised because no matching platform should

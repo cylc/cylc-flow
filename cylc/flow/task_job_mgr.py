@@ -96,7 +96,7 @@ from cylc.flow.task_remote_mgr import (
     TaskRemoteMgr
 )
 from cylc.flow.task_state import (
-    TASK_STATUS_READY,
+    TASK_STATUS_PREPARING,
     TASK_STATUS_RUNNING,
     TASK_STATUS_SUBMITTED,
     TASK_STATUSES_ACTIVE
@@ -105,6 +105,7 @@ from cylc.flow.wallclock import (
     get_current_time_string,
     get_utc_mode
 )
+from cylc.flow.cfgspec.globalcfg import SYSPATH
 
 
 class TaskJobManager:
@@ -307,7 +308,7 @@ class TaskJobManager:
                     'is_manual_submit': itask.is_manual_submit,
                     'try_num': itask.get_try_num(),
                     'time_submit': now_str,
-                    'platform_name': platform['name'],
+                    'platform_name': itask.platform['name'],
                     'job_runner_name': itask.summary['job_runner_name'],
                 })
                 itask.is_manual_submit = False
@@ -342,6 +343,15 @@ class TaskJobManager:
                 cmd.append('--remote-mode')
             else:
                 remote_mode = False
+            if itask.platform[
+                    'clean job submission environment']:
+                cmd.append('--clean-env')
+            for var in itask.platform[
+                    'job submission environment pass-through']:
+                cmd.append(f"--env={var}")
+            for path in itask.platform[
+                    'job submission executable paths'] + SYSPATH:
+                cmd.append(f"--path={path}")
             cmd.append('--')
             cmd.append(
                 get_remote_suite_run_job_dir(
@@ -384,7 +394,7 @@ class TaskJobManager:
                     # write flag so that subsequent manual retrigger will
                     # generate a new job file.
                     itask.local_job_file_path = None
-                    itask.state.reset(TASK_STATUS_READY)
+                    itask.state.reset(TASK_STATUS_PREPARING)
                     if itask.state.outputs.has_custom_triggers():
                         self.suite_db_mgr.put_update_task_outputs(itask)
 
@@ -635,19 +645,10 @@ class TaskJobManager:
             ctx.cmd = cmd_ctx.cmd  # print original command on failure
             return
         except ValueError:
-            # back compat for cylc 7.7.1 and previous
-            try:
-                values = line.split('|')
-                items = dict(  # done this way to ensure IndexError is raised
-                    (key, values[x]) for
-                    x, key in enumerate(JobPollContext.CONTEXT_ATTRIBUTES))
-                job_log_dir = items.pop('job_log_dir')
-                jp_ctx = JobPollContext(job_log_dir, **items)
-            except (ValueError, IndexError):
-                itask.set_summary_message(self.POLL_FAIL)
-                self.job_pool.add_job_msg(job_d, self.POLL_FAIL)
-                ctx.cmd = cmd_ctx.cmd  # print original command on failure
-                return
+            itask.set_summary_message(self.POLL_FAIL)
+            self.job_pool.add_job_msg(job_d, self.POLL_FAIL)
+            ctx.cmd = cmd_ctx.cmd  # print original command on failure
+            return
         finally:
             log_task_job_activity(ctx, suite, itask.point, itask.tdef.name)
 
@@ -861,7 +862,7 @@ class TaskJobManager:
         else:
             rtconfig = itask.tdef.rtconfig
 
-        # TODO - remove host logic at Cylc 9
+        # BACK COMPAT: host logic
         # Determine task host or platform now, just before job submission,
         # because dynamic host/platform selection may be used.
         # cases:
@@ -874,6 +875,8 @@ class TaskJobManager:
         #    tasks which will fail anyway later.
         # - Platform exists, host doesn't = eval platform_n
         # - host exists - eval host_n
+        # remove at:
+        #     Cylc9
         if (
             rtconfig['platform'] is not None and
             rtconfig['remote']['host'] is not None

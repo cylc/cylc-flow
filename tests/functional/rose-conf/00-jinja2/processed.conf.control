@@ -1,0 +1,30 @@
+[meta]
+    title = "Add jinja2 vars from a rose-suite.conf"
+    description = """
+    Natively, in Cylc!
+    """
+[scheduling]
+    initial cycle point = 1
+    final cycle point = 1
+    cycling mode = integer
+    [[graph]]
+        P1 = respond => plunge_control => allow
+        P1 = respond => plunge_yan => allow
+        P1 = respond => plunge_tan => allow
+        P1 = respond => plunge_tethera => allow
+        P1 = allow => 1_auf_deutsch_ist_ein => fin
+        P1 = allow => 2_auf_deutsch_ist_zwei => fin
+        P1 = allow => 3_auf_deutsch_ist_drei => fin
+[runtime]
+    [[root]]
+        script = echo "This task is ${CYLC_TASK_ID}"
+    [[respond]]
+    [[plunge_control]]
+    [[plunge_yan]]
+    [[plunge_tan]]
+    [[plunge_tethera]]
+    [[allow]]
+    [[1_auf_deutsch_ist_ein]]
+    [[2_auf_deutsch_ist_zwei]]
+    [[3_auf_deutsch_ist_drei]]
+    [[fin]]

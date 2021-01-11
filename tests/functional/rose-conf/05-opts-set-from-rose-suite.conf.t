@@ -1,21 +1,4 @@
-#!/usr/bin/perl
-
-# Add licensing preamble to source files. If the file is a script
-# put it immediately after the '#!' interpreter line, otherwise 
-# put it right at the top.
-
-$count = 0;
-while (<>) {
-    if ( $count == 0 ) {
-        if ( m/#!/ ) {
-            $skip = 1;
-        } else {
-            $skip = 0;
-        }
-    }
-    if ( $skip and $count == 1 or ! $skip and $count == 0 ) {
-        print <<eof
-
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -31,8 +14,23 @@ while (<>) {
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-eof
-    }
-    $count += 1;
-    print;
-}
+#-------------------------------------------------------------------------------
+# Test that settings from rose optional configs are inherited correctly.
+. "$(dirname "$0")/test_header"
+#-------------------------------------------------------------------------------
+python -c "import cylc.rose" > /dev/null 2>&1 ||
+  skip_all "cylc.rose not installed in environment."
+
+set_test_number 2
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+
+export ROSE_SUITE_OPT_CONF_KEYS=""
+
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+
+cylc view -p --stdout "${SUITE_NAME}" > processed.conf.test
+
+cmp_ok processed.conf.test processed.conf.control
+
+purge
+exit

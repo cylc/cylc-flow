@@ -5,10 +5,11 @@ on: [pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 35
     strategy:
       fail-fast: false
       matrix:
+        os: ['ubuntu-latest']
         python-version: ['3.7']
         tests: [
           # local tests
@@ -23,10 +24,17 @@ jobs:
           ['tests/f tests/k', '1/1',
            '_remote_background_indep_tcp _remote_at_indep_tcp']
         ]
+        include:
+          - os: 'macos-latest'
+            python-version: '3.7'
+            tests: ['tests/f', '1/4', '_local_background*']
+
     env:
       BASE: ${{ matrix.tests[0] }}
       CHUNK: ${{ matrix.tests[1] }}
       CYLC_TEST_PLATFORMS: ${{ matrix.tests[2] }}
+      CYLC_COVERAGE: 1
+
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -36,7 +44,25 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Apt-Get
+      - name: Brew Install
+        if: startsWith(matrix.os, 'macos')
+        run: |
+          # apply DNS patch
+          patch cylc/flow/hostuserutil.py < etc/conf/macos-patch
+
+          # install system deps
+          brew update
+          brew install bash coreutils gnu-sed
+
+          # add GNU coreutils and sed to the user PATH
+          # (see instructions in brew install output)
+          cat >> "$HOME/.bashrc" <<__HERE__
+          PATH="$(brew --prefix)/opt/coreutils/libexec/gnubin:$PATH"
+          PATH="/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"
+          __HERE__
+
+      - name: Apt-Get Install
+        if: startsWith(matrix.os, 'ubuntu')
         run: |
           sudo apt-get update
           sudo apt-get install -y sqlite3 tree
@@ -47,11 +73,13 @@ jobs:
 
       - name: Install
         run: |
-          pip install ."[all]"
+          pip install git+https://github.com/metomi/rose@master
+          pip install -e ."[all]"
+          pip install --no-deps git+https://github.com/cylc/cylc-rose.git@master
           mkdir "$HOME/cylc-run"
 
       - name: Configure Atrun
-        if: matrix.tests[2] == '_local_background* _local_at*'
+        if: contains(matrix.tests[2], '_local_at')
         run: |
           PTH="$HOME/.cylc/flow/$(cylc version)"
           mkdir -p "${PTH}"
@@ -66,7 +94,7 @@ jobs:
           etc/bin/swarm --yes --debug configure
 
       - name: Swarm Build
-        if: matrix.tests[2] != '_local_background* _local_at*'
+        if: contains(matrix.tests[2], '_remote')
         run: |
           # `swarm configure` seems to get ignored so override the user config
           cp etc/conf/ssh_config $HOME/.ssh/config
@@ -98,11 +126,6 @@ jobs:
                   --state=save,failed
           )
 
-      - name: Shutdown
-        if: always()
-        run: |
-          etc/bin/swarm kill
-
       - name: Debug
         if: failure()
         run: |
@@ -125,3 +148,35 @@ jobs:
         with:
           name: Upload cylc-run artifact
           path: cylc-run
+
+      - name: Fetch Remote Coverage
+        if: contains(matrix.tests[2], '_remote')
+        run: |
+          # pick the first host in the list
+          host="$(cut -d ' ' -f 1 <<< "${{ matrix.tests[2] }}")"
+          # copy back the remote coverage files
+          rsync -av \
+            "${host}:/cylc/" \
+            '.' \
+            --include='.coverage*' \
+            --exclude='*' \
+            >rsyncout
+          cat rsyncout
+          # fiddle the python source location to match the local system
+          for db in $(grep --color=never '.coverage\.' rsyncout); do
+            sqlite3 "$db" "
+              UPDATE file
+              SET path = REPLACE(path, '/cylc/cylc/', '$PWD/cylc/')
+            "
+          done
+
+      - name: Shutdown
+        if: always()
+        run: |
+          etc/bin/swarm kill
+
+      - name: Coverage
+        run: |
+          coverage combine -a
+          coverage report
+          bash <(curl -s https://codecov.io/bash)
