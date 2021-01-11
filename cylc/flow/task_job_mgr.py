@@ -256,8 +256,7 @@ class TaskJobManager:
             # Skip to jobs (use .get() to avoid KeyError)
             if (ri_map.get(install_target) != REMOTE_FILE_INSTALL_DONE):
                 # Skip both remote init and remote file install for localhost
-                if (install_target == 'localhost' or
-                        not is_remote_host(get_host_from_platform(platform))):
+                if install_target == 'localhost':
                     LOG.debug(f"REMOTE INIT NOT REQUIRED for {install_target}")
                     ri_map[install_target] = (REMOTE_FILE_INSTALL_DONE)
 

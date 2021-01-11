@@ -15,11 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Checks configured files/directories along with default files/directories
-# (app, bin, etc, lib) are correctly installed on the remote platform.
+# File install tests
 export REQUIRE_PLATFORM='loc:remote comms:tcp'
 . "$(dirname "$0")/test_header"
-set_test_number 6
+set_test_number 8
+
+# Test configured files/directories along with default files/directories
+# (app, bin, etc, lib) are correctly installed on the remote platform.
+
 install_suite "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}" \
@@ -65,6 +68,53 @@ ${RRUND}/lib/moo
 __OUT__
 
 cylc stop --max-polls=60 --interval=1 "${SUITE_NAME}"
+purge
 
+# Test file install completes before dependent tasks are executed
+create_test_global_config "" "
+[platforms]
+    [[cinderella]]
+        hosts = ${CYLC_TEST_HOST}
+        install target = ${CYLC_TEST_INSTALL_TARGET}
+    "
+
+init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
+[scheduler]
+    install = dir1/, dir2/
+    [[events]]
+        abort on stalled = true
+        abort on inactivity = true
+[scheduling]
+    [[graph]]
+        R1 = setup => olaf => sven
+[runtime]
+    [[setup]]
+    # This task generates a large file, ready for the file install. The aim is
+    # to slow rsync and ensure tasks do not start until file install has
+    # completed.
+        platform = localhost
+        script = """
+    for DIR in "dir1" "dir2"
+    do
+        mkdir -p "${CYLC_SUITE_RUN_DIR}/${DIR}"
+        xfs_mkfile 1024m "${CYLC_SUITE_RUN_DIR}/${DIR}/moo"
+    done
+    """
+
+    [[olaf]]
+        # task dependent on file install already being complete
+        script = cat ${CYLC_SUITE_RUN_DIR}/dir1/moo
+        platform = cinderella
+
+    [[sven]]
+        # task dependent on file install already being complete
+        script = rm -r ${CYLC_SUITE_RUN_DIR}/dir1 ${CYLC_SUITE_RUN_DIR}/dir2
+        platform = cinderella
+
+__FLOW_CONFIG__
+
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}-run" \
+    cylc run --debug --no-detach "${SUITE_NAME}"
 purge
 exit

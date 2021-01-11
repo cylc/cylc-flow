@@ -32,6 +32,7 @@ create_test_global_config "" "
         install target = ${CYLC_TEST_INSTALL_TARGET}
         ssh command = garbage
     "
+
 #-------------------------------------------------------------------------------
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
@@ -58,3 +59,5 @@ grep_ok "WARNING - Suite stalled with unhandled failed tasks:" \
 grep_ok "* b.1 (submit-failed)
 	* a.1 (submit-failed)" \
     "${TEST_NAME_BASE}-run.stderr" 
+purge
+exit
