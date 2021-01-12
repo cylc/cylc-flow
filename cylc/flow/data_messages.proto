@@ -97,6 +97,7 @@ message PbWorkflow {
     repeated string jobs = 32;
     optional int32 pub_port = 33;
     optional string broadcasts = 34;
+    optional int32 is_queued_total = 35;
 }
 
 message PbJob {
@@ -211,6 +212,7 @@ message PbTaskProxy {
     optional PbClockTrigger clock_trigger = 22;
     map<string, PbTrigger> external_triggers = 23;
     map<string, PbTrigger> xtriggers = 24;
+    optional bool is_queued = 25;
 }
 
 message PbFamily {
@@ -242,6 +244,8 @@ message PbFamilyProxy {
     repeated string states = 14;
     map<string, int32> state_totals = 15;
     optional int32 is_held_total = 16;
+    optional bool is_queued = 17;
+    optional int32 is_queued_total = 18;
 }
 
 message PbEdge {

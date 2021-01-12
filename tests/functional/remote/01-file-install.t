@@ -30,7 +30,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}" \
 suite_run_ok "${TEST_NAME_BASE}-run1" cylc play "${SUITE_NAME}" \
     -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
 RRUND="cylc-run/${SUITE_NAME}"
-poll_grep_suite_log 'Holding all waiting or queued tasks now'
+poll_grep_suite_log 'Holding all waiting tasks now'
 SSH="$(cylc get-global-config -i "[platforms][$CYLC_TEST_PLATFORM]ssh command")"
 ${SSH} "${CYLC_TEST_HOST}" \
 find "${RRUND}/"{app,bin,etc,lib} -type f | sort > 'find.out'
@@ -54,7 +54,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}" \
 suite_run_ok "${TEST_NAME_BASE}-run2" cylc play "${SUITE_NAME}" \
     -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'" \
     -s "SECOND_RUN='${SECOND_RUN}'"
-poll_grep_suite_log 'Holding all waiting or queued tasks now'
+poll_grep_suite_log 'Holding all waiting tasks now'
 ${SSH} "${CYLC_TEST_HOST}" \
 find "${RRUND}/"{app,bin,dir1,dir2,file1,file2,etc,lib} -type f | sort > 'find.out'
 cmp_ok 'find.out'  <<__OUT__

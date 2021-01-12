@@ -16,8 +16,8 @@
             sleep 10  # sleep, should still be held after 10 seconds
             cylc dump -s -t "${CYLC_SUITE_NAME}" >'cylc-dump.out'
             diff -u 'cylc-dump.out' - <<'__OUT__'
-            1, killer, running, unheld
-            1, sleeper, waiting, held
+            1, killer, running, unheld, unqueued
+            1, sleeper, waiting, held, unqueued
             __OUT__
             cylc release "${CYLC_SUITE_NAME}" "sleeper.1"
         """

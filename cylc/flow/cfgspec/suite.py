@@ -440,6 +440,13 @@ with Conf(
             for the whole suite just set the limit on the *default* queue as
             required. See also :ref:`InternalQueues`.
         '''):
+            Conf('type', VDR.V_STRING, "classic",
+                 options=["classic", "overlapping"], desc='''
+                "classic" (FIFO with independent limit groups - "default" queue
+                is for tasks not assigend to other queues) or "overlapping"
+                (FIFO with overlapping limit groups - "default" queue provides
+                a global limit.)
+            ''')
             with Conf('default'):
                 Conf('limit', VDR.V_INTEGER, 0, desc='''
                     The maximum number of active tasks allowed at any one

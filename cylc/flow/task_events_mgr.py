@@ -500,7 +500,9 @@ class TaskEventsManager():
             # Believe this and change state without polling (could poll?).
             self.pflag = True
             if itask.state.reset(TASK_STATUS_SUBMITTED):
+                itask.state.reset(is_queued=False)
                 self.data_store_mgr.delta_task_state(itask)
+                self.data_store_mgr.delta_task_queued(itask)
             self._reset_job_timers(itask)
             # We should really have a special 'vacated' handler, but given that
             # this feature can only be used on the deprecated loadleveler
@@ -1002,9 +1004,11 @@ class TaskEventsManager():
             # The job started message can (rarely) come in before the submit
             # command returns - in which case do not go back to 'submitted'.
             if itask.state.reset(TASK_STATUS_SUBMITTED):
+                itask.state.reset(is_queued=False)
                 self.setup_event_handlers(
                     itask, self.EVENT_SUBMITTED, f'job {self.EVENT_SUBMITTED}')
                 self.data_store_mgr.delta_task_state(itask)
+                self.data_store_mgr.delta_task_queued(itask)
             self._reset_job_timers(itask)
 
     def _setup_job_logs_retrieval(self, itask, event):

@@ -40,7 +40,7 @@ suite_run_ok "${TEST_NAME_BASE}-run" cylc play "${SUITE_NAME}" \
     --debug -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
 RRUND="cylc-run/${SUITE_NAME}"
 RSRVD="${RRUND}/.service"
-poll_grep_suite_log 'Holding all waiting or queued tasks now'
+poll_grep_suite_log 'Holding all waiting tasks now'
 SSH='ssh -n -oBatchMode=yes -oConnectTimeout=5'
 
 ${SSH} "${CYLC_TEST_HOST}" \

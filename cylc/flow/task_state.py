@@ -30,8 +30,6 @@ from cylc.flow.wallclock import get_current_time_string
 # Task status names and meanings.
 # Held back from job submission due to un-met prerequisites:
 TASK_STATUS_WAITING = "waiting"
-# Prerequisites met, but held back in a limited internal queue:
-TASK_STATUS_QUEUED = "queued"
 # Preparing for job submission
 TASK_STATUS_PREPARING = "preparing"
 # Prerequisites unmet for too long - will never be submitted now:
@@ -52,8 +50,6 @@ TASK_STATUS_FAILED = "failed"
 TASK_STATUS_DESC = {
     TASK_STATUS_WAITING:
         'Waiting for dependencies to be satisfied.',
-    TASK_STATUS_QUEUED:
-        'Depencies are satisfied, placed in internal queue.',
     TASK_STATUS_EXPIRED:
         'Execution skipped.',
     TASK_STATUS_PREPARING:
@@ -73,7 +69,6 @@ TASK_STATUS_DESC = {
 # Task statuses ordered according to task runtime progression.
 TASK_STATUSES_ORDERED = [
     TASK_STATUS_WAITING,
-    TASK_STATUS_QUEUED,
     TASK_STATUS_EXPIRED,
     TASK_STATUS_PREPARING,
     TASK_STATUS_SUBMIT_FAILED,
@@ -92,7 +87,6 @@ TASK_STATUS_DISPLAY_ORDER = [
     TASK_STATUS_EXPIRED,
     TASK_STATUS_PREPARING,
     TASK_STATUS_SUCCEEDED,
-    TASK_STATUS_QUEUED,
     TASK_STATUS_WAITING,
 ]
 
@@ -112,7 +106,6 @@ TASK_STATUSES_NO_JOB_FILE = set([
     TASK_STATUS_WAITING,
     TASK_STATUS_PREPARING,
     TASK_STATUS_EXPIRED,
-    TASK_STATUS_QUEUED
 ])
 
 # Task statuses we can manually reset a task TO.
@@ -143,7 +136,6 @@ TASK_STATUSES_FINAL = TASK_STATUSES_SUCCESS | TASK_STATUSES_FAILURE
 # - held: which is placeholder state, not a real state.
 TASK_STATUSES_NEVER_ACTIVE = set([
     TASK_STATUS_WAITING,
-    TASK_STATUS_QUEUED,
     TASK_STATUS_PREPARING,
 ])
 
@@ -156,7 +148,6 @@ TASK_STATUSES_ACTIVE = set([
 # Task statuses that can be manually triggered.
 TASK_STATUSES_TRIGGERABLE = set([
     TASK_STATUS_WAITING,
-    TASK_STATUS_QUEUED,
     TASK_STATUS_EXPIRED,
     TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_SUCCEEDED,
@@ -184,6 +175,8 @@ class TaskState:
             External triggers as {trigger (str): satisfied (boolean), ...}.
         .is_held (bool):
             True if the task is "held" else False.
+        .is_queued (bool):
+            True if the task is queued else False.
         .identity (str):
             The task ID as `TASK.CYCLE` associated with this object.
         .is_updated (boolean):
@@ -212,6 +205,7 @@ class TaskState:
     __slots__ = [
         "external_triggers",
         "is_held",
+        "is_queued",
         "identity",
         "is_updated",
         "kill_failed",
@@ -229,6 +223,7 @@ class TaskState:
         self.identity = TaskID.get(tdef.name, str(point))
         self.status = status
         self.is_held = is_held
+        self.is_queued = False
         self.is_updated = False
         self.time_updated = None
 
@@ -258,13 +253,15 @@ class TaskState:
         self.kill_failed = False
 
     def __str__(self):
-        """Print status (is_held)."""
+        """Print status (is_held) (is_queued)."""
         ret = self.status
         if self.is_held:
             ret += ' (held)'
+        if self.is_queued:
+            ret += ' (queued)'
         return ret
 
-    def __call__(self, *status, is_held=None):
+    def __call__(self, *status, is_held=None, is_queued=None):
         """Compare task state attributes.
 
         Args:
@@ -280,7 +277,11 @@ class TaskState:
                     Check the task is_held attribute is the same as provided
                 ``None``
                     Do not check the is_held attribute
-
+            is_queued (bool):
+                ``bool``
+                    Check the task is_queued attribute is the same as provided
+                ``None``
+                    Do not check the is_queued attribute
         """
         return (
             (
@@ -289,7 +290,11 @@ class TaskState:
             ) and (
                 is_held is None
                 or self.is_held == is_held
+            ) and (
+                is_queued is None
+                or self.is_queued == is_queued
             )
+
         )
 
     def satisfy_me(self, all_task_outputs):
@@ -367,14 +372,12 @@ class TaskState:
         return list(sorted(dep for prereq in self.prerequisites for dep in
                            prereq.get_resolved_dependencies()))
 
-    def reset(self, status=None, is_held=None):
+    def reset(self, status=None, is_held=None, is_queued=None):
         """Change status, and manipulate outputs and prerequisites accordingly.
 
         Outputs are manipulated on manual state reset to reflect the new task
-        status.
-
-        Note this method could take an additional argument to distinguish
-        internal and manually forced state changes, if needed.
+        status. Since spawn-on-demand implementation, state reset is only used
+        for internal state changes.
 
         Args:
             status (str):
@@ -389,11 +392,13 @@ class TaskState:
         """
         current_status = (
             self.status,
-            self.is_held
+            self.is_held,
+            self.is_queued
         )
         requested_status = (
             status if status is not None else self.status,
-            is_held if is_held is not None else self.is_held
+            is_held if is_held is not None else self.is_held,
+            is_queued if is_queued is not None else self.is_queued
         )
         if current_status == requested_status:
             # no change - do nothing
@@ -402,7 +407,7 @@ class TaskState:
         prev_message = str(self)
 
         # perform the actual state change
-        self.status, self.is_held = requested_status
+        self.status, self.is_held, self.is_queued = requested_status
 
         self.time_updated = get_current_time_string()
         self.is_updated = True

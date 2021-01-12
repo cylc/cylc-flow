@@ -36,7 +36,7 @@ suite_run_ok "${TEST_NAME}" \
 delete_db
 TEST_NAME=${TEST_NAME_BASE}-check-c
 cylc play "${SUITE_NAME}" --hold 1>'out' 2>&1
-poll_grep_suite_log 'Holding all waiting or queued tasks now'
+poll_grep_suite_log 'Holding all waiting tasks now'
 cylc show "${SUITE_NAME}" 'c.1' | sed -n "/prerequisites/,/outputs/p" > 'c-prereqs'
 contains_ok "${TEST_SOURCE_DIR}/multiline_and_refs/c-ref-2" 'c-prereqs'
 cylc shutdown --max-polls=20 --interval=2 --now "${SUITE_NAME}"

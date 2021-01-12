@@ -267,6 +267,9 @@ class Scheduler:
         # create thread sync barrier for setup
         self.barrier = Barrier(3, timeout=10)
 
+        # queue-released tasks yet to complete prep (host select, remote init)
+        self.pre_submit_tasks = []
+
     async def install(self):
         """Get the filesystem in the right state to run the flow.
         * Validate flowfiles
@@ -1187,28 +1190,50 @@ class Scheduler:
             self.host, self.server.port))
 
     def process_task_pool(self):
-        """Process ALL TASKS whenever something has changed that might
-        require renegotiation of dependencies, etc"""
+        """Queue and release task, and submit task jobs.
+
+        The task queue manages references to task proxies in the task pool.
+
+        Newly queue-released are tracked (via self.pre_submit_tasks) and passed
+        to job submission multiple times until associated asynchronous host
+        select and remote init and remote install processes are done.
+
+        """
         LOG.debug("BEGIN TASK PROCESSING")
         time0 = time()
         if self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT):
             self.set_suite_inactivity_timer()
+
+        # Forget tasks that are no longer preparing for job submission.
+        self.pre_submit_tasks = [
+            itask for itask in self.pre_submit_tasks if
+            itask.waiting_on_job_prep
+        ]
+
         if self.stop_mode is None and self.auto_restart_time is None:
-            itasks = self.pool.get_ready_tasks()
-            if itasks:
+            self.pool.queue_tasks_if_ready()
+            released_tasks = self.pool.release_queued_tasks()
+            for itask in released_tasks:
+                itask.waiting_on_job_prep = True
+                # Status has changed to PREPARING
+                self.data_store_mgr.delta_task_state(itask)
+                self.data_store_mgr.delta_task_queued(itask)
+
+            # Add newly released tasks to those still preparing.
+            self.pre_submit_tasks += released_tasks
+            if self.pre_submit_tasks:
                 self.is_updated = True
-            self.task_job_mgr.task_remote_mgr.rsync_includes = (
-                self.config.get_validated_rsync_includes())
-            for itask in self.task_job_mgr.submit_task_jobs(
-                    self.suite,
-                    itasks,
-                    self.curve_auth,
-                    self.client_pub_key_dir,
-                    self.config.run_mode('simulation')
-            ):
-                # TODO log itask.flow_label here (beware effect on ref tests)
-                LOG.info('[%s] -triggered off %s',
-                         itask, itask.state.get_resolved_dependencies())
+                self.task_job_mgr.task_remote_mgr.rsync_includes = (
+                    self.config.get_validated_rsync_includes())
+                for itask in self.task_job_mgr.submit_task_jobs(
+                        self.suite,
+                        self.pre_submit_tasks,
+                        self.curve_auth,
+                        self.client_pub_key_dir,
+                        self.config.run_mode('simulation')):
+                    # TODO log flow labels here (beware effect on ref tests)
+                    LOG.info('[%s] -triggered off %s',
+                             itask, itask.state.get_resolved_dependencies())
 
         self.broadcast_mgr.expire_broadcast(self.pool.get_min_point())
         self.xtrigger_mgr.housekeep()

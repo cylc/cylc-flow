@@ -69,11 +69,7 @@ Suite definitions ${SUITE_NAME1} and ${SUITE_NAME2} differ
    [runtime] [[barley]]
  >   script = true
 
-3 common items differ ${SUITE_NAME1}(<) ${SUITE_NAME2}(>)
-
-   [scheduling] [[queues]] [[[default]]]
- <   members = ['foo', 'bar']
- >   members = ['food', 'barley']
+2 common items differ ${SUITE_NAME1}(<) ${SUITE_NAME2}(>)
 
    [scheduling] [[graph]]
  <   R1 = foo => bar
