@@ -55,6 +55,7 @@ from cylc.flow.task_state import (
 )
 from cylc.flow.wallclock import get_current_time_string
 from cylc.flow.platforms import get_platform
+from cylc.flow.task_queues import QueueManager
 
 
 class FlowLabelMgr:
@@ -168,9 +169,6 @@ class TaskPool:
 
         self.pool = {}
         self.runahead_pool = {}
-        self.myq = {}
-        self.queues = {}
-        self.assign_queues()
 
         self.pool_list = []
         self.rhpool_list = []
@@ -189,6 +187,8 @@ class TaskPool:
 
         self.orphans = []
         self.task_name_list = self.config.get_task_name_list()
+        self.queue_mgr = QueueManager(self.config.cfg['scheduling']['queues'])
+        self.ready_tasks = []
 
     def set_stop_task(self, task_id):
         """Set stop after a task."""
@@ -212,12 +212,6 @@ class TaskPool:
             return True
         else:
             return False
-
-    def assign_queues(self):
-        """self.myq[taskname] = qfoo"""
-        self.myq.clear()
-        for queue, qconfig in self.config.cfg['scheduling']['queues'].items():
-            self.myq.update((name, queue) for name in qconfig['members'])
 
     def add_to_runahead_pool(self, itask, is_new=True):
         """Add a new task to the runahead pool if possible.
@@ -521,18 +515,12 @@ class TaskPool:
             return
 
     def release_runahead_task(self, itask):
-        """Release itask to the appropriate queue in the active pool.
+        """Release itask to the active pool.
 
         Also auto-spawn next instance if:
         - no parents to do it
         - has absolute triggers (these are satisfied already by definition)
         """
-        try:
-            queue = self.myq[itask.tdef.name]
-        except KeyError:
-            queue = self.config.Q_DEFAULT
-        self.queues.setdefault(queue, OrderedDict())
-        self.queues[queue][itask.identity] = itask
         self.pool.setdefault(itask.point, {})
         self.pool[itask.point][itask.identity] = itask
         self.pool_changed = True
@@ -576,8 +564,7 @@ class TaskPool:
                     parent_id=itask.identity)
 
     def remove(self, itask, reason=""):
-        """Remove a task from the pool."""
-
+        """Remove a task from the pool (e.g. after a reload)."""
         msg = "task proxy removed"
         if reason:
             msg += " (%s)" % reason
@@ -589,15 +576,14 @@ class TaskPool:
             try:
                 del self.pool[itask.point][itask.identity]
             except KeyError:
-                # Not in main pool (forced spawn uses temporary non-pool tasks)
+                # TODO: not possible under SoD?
                 return
             else:
-                # In main pool: remove from pool and queues.
+                # Remove from main pool and queues.
                 if not self.pool[itask.point]:
                     del self.pool[itask.point]
                 self.pool_changed = True
-                if itask.tdef.name in self.myq:  # A reload can remove a task
-                    del self.queues[self.myq[itask.tdef.name]][itask.identity]
+                self.queue_mgr.remove(itask)
                 if itask.tdef.max_future_prereq_offset is not None:
                     self.set_max_future_offset()
         else:
@@ -624,8 +610,9 @@ class TaskPool:
         if self.pool_changed:
             self.pool_changed = False
             self.pool_list = []
-            for itask_id_maps in self.queues.values():
-                self.pool_list.extend(list(itask_id_maps.values()))
+            for _, itask_id_map in self.pool.items():
+                for __, itask in itask_id_map.items():
+                    self.pool_list.append(itask)
         return self.pool_list
 
     def get_rh_tasks(self):
@@ -658,90 +645,22 @@ class TaskPool:
         return point_itasks
 
     def get_task_by_id(self, id_):
-        """Return task by ID if in the runahead pool or main pool.
-
-        Return None if task does not exist.
-        """
+        """Return task with ID id_ if it exists, or None."""
         for itask_ids in (
-                list(self.queues.values())
+                list(self.pool.values())
                 + list(self.runahead_pool.values())):
             try:
                 return itask_ids[id_]
             except KeyError:
                 pass
 
-    def get_ready_tasks(self):
-        """
-        1) queue tasks that are ready to run (prerequisites satisfied,
-        clock-trigger time up) or if their manual trigger flag is set.
+    def queue_tasks_if_ready(self):
+        """Queue tasks that are ready to run."""
+        self.queue_mgr.queue_tasks_if_ready(self.get_tasks())
 
-        2) then submit queued tasks if their queue limit has not been
-        reached or their manual trigger flag is set.
-
-        If TASK_STATUS_QUEUED the task will submit as soon as its internal
-        queue allows (or immediately if manually triggered first).
-
-        Use of "cylc trigger" sets a task's manual trigger flag. Then,
-        below, an unqueued task will be queued whether or not it is
-        ready to run; and a queued task will be submitted whether or not
-        its queue limit has been reached. The flag is immediately unset
-        after use so that two manual trigger ops are required to submit
-        an initially unqueued task that is queue-limited.
-
-        Return the tasks that are dequeued.
-
-        """
-        ready_tasks = []
-        qconfig = self.config.cfg['scheduling']['queues']
-
-        for queue in self.queues:
-            # 1) queue unqueued tasks that are ready to run or manually forced
-            for itask in list(self.queues[queue].values()):
-                if not itask.state(TASK_STATUS_QUEUED):
-                    # only need to check that unqueued tasks are ready
-                    if itask.is_ready():
-                        # queue the task
-                        itask.state.reset(TASK_STATUS_QUEUED)
-                        itask.reset_manual_trigger()
-                        # move the task to the back of the queue
-                        self.queues[queue][itask.identity] = \
-                            self.queues[queue].pop(itask.identity)
-
-            # 2) submit queued tasks if manually forced or not queue-limited
-            n_active = 0
-            n_release = 0
-            n_limit = qconfig[queue]['limit']
-            tasks = list(self.queues[queue].values())
-
-            # 2.1) count active tasks and compare to queue limit
-            if n_limit:
-                for itask in tasks:
-                    if itask.state(
-                            TASK_STATUS_PREPARING,
-                            TASK_STATUS_SUBMITTED,
-                            TASK_STATUS_RUNNING,
-                            is_held=False
-                    ):
-                        n_active += 1
-                n_release = n_limit - n_active
-
-            # 2.2) release queued tasks if not limited or if manually forced
-            for itask in tasks:
-                if not itask.state(TASK_STATUS_QUEUED):
-                    # (Excludes tasks remaining TASK_STATUS_PREPARING because
-                    # job submission has been stopped with 'cylc shutdown').
-                    continue
-                if itask.manual_trigger or not n_limit or n_release > 0:
-                    # manual release, or no limit, or not currently limited
-                    n_release -= 1
-                    ready_tasks.append(itask)
-                    itask.reset_manual_trigger()
-                    # (Set to 'ready' is done just before job submission).
-                # else leaved queued
-
-        LOG.debug('%d task(s) de-queued' % len(ready_tasks))
-
-        return ready_tasks
+    def release_queued_tasks(self):
+        """Return list of queue-released tasks for job prep."""
+        return self.queue_mgr.release()
 
     def get_min_point(self):
         """Return the minimum cycle point currently in the pool."""
@@ -802,19 +721,6 @@ class TaskPool:
         # adjust the new suite config to handle the orphans
         self.config.adopt_orphans(self.orphans)
 
-        # reassign live tasks from the old queues to the new.
-        # self.queues[queue][id_] = task
-        self.assign_queues()
-        new_queues = {}
-        for queue in self.queues:
-            for id_, itask in self.queues[queue].items():
-                if itask.tdef.name not in self.myq:
-                    continue
-                key = self.myq[itask.tdef.name]
-                new_queues.setdefault(key, OrderedDict())
-                new_queues[key][id_] = itask
-        self.queues = new_queues
-
     def reload_taskdefs(self):
         """Reload the definitions of task proxies in the pool.
 
@@ -838,6 +744,7 @@ class TaskPool:
         for name in self.orphans:
             if name not in (itask.tdef.name for itask in tasks):
                 LOG.warning("Removed task: '%s'", name)
+        new_tasks = []
         for itask in tasks:
             if itask.tdef.name in self.orphans:
                 if (
@@ -863,12 +770,18 @@ class TaskPool:
                         itask.flow_label, itask.state.status,
                         submit_num=itask.submit_num))
                 itask.copy_to_reload_successor(new_task)
+                new_tasks.append(new_task)
                 LOG.info('[%s] -reloaded task definition', itask)
                 if itask.state(*TASK_STATUSES_ACTIVE):
                     LOG.warning(
                         "[%s] -job(%02d) active with pre-reload settings",
                         itask,
                         itask.submit_num)
+
+        # Reassign live tasks to the reconfigured queues.
+        self.queue_mgr = QueueManager(self.config.cfg['scheduling']['queues'])
+        self.queue_mgr.queue_tasks_if_ready(new_tasks)
+
         LOG.info("Reload completed.")
         self.do_reload = False
 
