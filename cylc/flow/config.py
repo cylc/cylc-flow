@@ -131,7 +131,6 @@ def interpolate_template(tmpl, params_dict):
 class SuiteConfig:
     """Class for suite configuration items and derived quantities."""
 
-    Q_DEFAULT = 'default'
     CHECK_CIRCULAR_LIMIT = 100  # If no. tasks > this, don't check circular
 
     def __init__(
@@ -345,8 +344,6 @@ class SuiteConfig:
         self.compute_inheritance()
         self.mem_log("config.py: after inheritance")
 
-        # self.print_inheritance() # (debugging)
-
         # filter task environment variables after inheritance
         self.filter_env()
 
@@ -471,8 +468,6 @@ class SuiteConfig:
         self.mem_log("config.py: after load_graph()")
 
         self.process_runahead_limit()
-
-        self.configure_queues()
 
         if self.run_mode('simulation', 'dummy', 'dummy-local'):
             self.configure_sim_modes()
@@ -1220,100 +1215,8 @@ class SuiteConfig:
         # definitions have been removed from the suite. Keep them
         # in the default queue and under the root family, until they
         # run their course and disappear.
-        queues = self.cfg['scheduling']['queues']
         for orphan in orphans:
             self.runtime['linearized ancestors'][orphan] = [orphan, 'root']
-            queues[self.Q_DEFAULT]['members'].append(orphan)
-
-    def configure_queues(self):
-        """Assign tasks to internal queues."""
-        # Note this modifies the parsed config dict.
-        queues = self.cfg['scheduling']['queues']
-
-        LOG.debug("Configuring internal queues")
-
-        # First add all tasks to the default queue.
-        all_task_names = self.get_task_name_list()
-        queues[self.Q_DEFAULT]['members'] = all_task_names
-
-        # Then reassign to other queues as requested.
-        warnings = []
-        requeued = []
-        # Record non-default queues by task name, to avoid spurious warnings
-        # about tasks "already added to a queue", when the queue is the same.
-        myq = {}
-        for key, queue in list(queues.copy().items()):
-            myq[key] = []
-            if key == self.Q_DEFAULT:
-                continue
-            # Assign tasks to queue and remove them from default.
-            qmembers = []
-            for qmember in queue['members']:
-                # Is a family.
-                if qmember in self.runtime['descendants']:
-                    # Replace with member tasks.
-                    for fmem in self.runtime['descendants'][qmember]:
-                        # This includes sub-families.
-                        if qmember not in qmembers:
-                            try:
-                                queues[self.Q_DEFAULT]['members'].remove(fmem)
-                            except ValueError:
-                                if fmem in requeued and fmem not in myq[key]:
-                                    msg = "%s: ignoring %s from %s (%s)" % (
-                                        key, fmem, qmember,
-                                        'already assigned to a queue')
-                                    warnings.append(msg)
-                                else:
-                                    # Ignore: task not used in the graph.
-                                    pass
-                            else:
-                                myq[key] = fmem
-                                qmembers.append(fmem)
-                                requeued.append(fmem)
-                else:
-                    # Is a task.
-                    if qmember not in qmembers:
-                        try:
-                            queues[self.Q_DEFAULT]['members'].remove(qmember)
-                        except ValueError:
-                            if qmember in requeued:
-                                msg = "%s: ignoring %s (%s)" % (
-                                    key, qmember,
-                                    'already assigned to a queue')
-                                warnings.append(msg)
-                            elif qmember not in all_task_names:
-                                if qmember not in self.cfg['runtime']:
-                                    err = 'task not defined'
-                                else:
-                                    err = 'task not used in the graph'
-                                msg = "%s: ignoring %s (%s)" % (
-                                    key, qmember, err)
-                                warnings.append(msg)
-                            else:
-                                # Ignore: task not used in the graph.
-                                pass
-                        else:
-                            myq[key] = qmember
-                            qmembers.append(qmember)
-                            requeued.append(qmember)
-            if qmembers:
-                queue['members'] = qmembers
-            else:
-                del queues[key]
-
-        if warnings:
-            err_msg = "Queue configuration warnings:"
-            for msg in warnings:
-                err_msg += "\n+ %s" % msg
-            LOG.warning(err_msg)
-
-        if cylc.flow.flags.verbose and len(queues) > 1:
-            log_msg = "Internal queues created:"
-            for key, queue in queues.items():
-                if key == self.Q_DEFAULT:
-                    continue
-                log_msg += "\n+ %s: %s" % (key, ', '.join(queue['members']))
-            LOG.debug(log_msg)
 
     def configure_suite_state_polling_tasks(self):
         # Check custom script is not defined for automatic suite polling tasks.

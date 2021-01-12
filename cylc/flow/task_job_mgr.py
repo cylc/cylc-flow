@@ -95,7 +95,6 @@ from cylc.flow.task_remote_mgr import (
     TaskRemoteMgr
 )
 from cylc.flow.task_state import (
-    TASK_STATUS_PREPARING,
     TASK_STATUS_RUNNING,
     TASK_STATUS_SUBMITTED,
     TASK_STATUSES_ACTIVE
@@ -216,13 +215,15 @@ class TaskJobManager:
 
     def submit_task_jobs(self, suite, itasks, curve_auth,
                          client_pub_key_dir, is_simulation=False):
-        """Prepare and submit task jobs.
+        """Prepare for job submission and submit task jobs.
 
-        Submit tasks where possible. Ignore tasks that are waiting for host
-        select command to complete, or tasks that are waiting for remote
-        initialisation. Bad host select command, error writing to a job file or
-        bad remote initialisation will cause a bad task - leading to submission
-        failure.
+        Preparation (host selection, remote host init, and remote install)
+        is done asynchronously. Newly released tasks may be sent here several
+        times until these init subprocesses have returned. Failure during
+        preparation is considered to be job submission failure.
+
+        Once preparation has completed or failed, reset .waiting_on_job_prep in
+        task instances so the scheduler knows to stop sending them back here.
 
         This method uses prep_submit_task_job() as helper.
 
@@ -252,15 +253,14 @@ class TaskJobManager:
             install_target = get_install_target_from_platform(platform)
             ri_map = self.task_remote_mgr.remote_init_map
 
-            # Skip to jobs (use .get() to avoid KeyError)
             if (ri_map.get(install_target) != REMOTE_FILE_INSTALL_DONE):
-                # Skip both remote init and remote file install for localhost
                 if install_target == 'localhost':
+                    # Skip init and file install for localhost.
                     LOG.debug(f"REMOTE INIT NOT REQUIRED for {install_target}")
                     ri_map[install_target] = (REMOTE_FILE_INSTALL_DONE)
 
-                # Remote init not in progress for target, so start it
                 elif install_target not in ri_map:
+                    # Remote init not in progress for target, so start it.
                     self.task_remote_mgr.remote_init(
                         platform, curve_auth, client_pub_key_dir)
                     for itask in itasks:
@@ -273,13 +273,13 @@ class TaskJobManager:
                             self.REMOTE_INIT_MSG)
                     continue
 
-                # Already done remote so move on to file install
                 elif (ri_map[install_target] == REMOTE_INIT_DONE):
+                    # Already done remote init so move on to file install
                     self.task_remote_mgr.file_install(platform)
                     continue
 
-                # Remote init or file install in progress
                 elif (ri_map[install_target] in self.IN_PROGRESS.keys()):
+                    # Remote init or file install in progress.
                     for itask in itasks:
                         msg = self.IN_PROGRESS[ri_map[install_target]]
                         itask.set_summary_message(msg)
@@ -321,15 +321,16 @@ class TaskJobManager:
                     'job_runner_name': itask.summary['job_runner_name'],
                 })
                 itask.is_manual_submit = False
-            # Remote has failed to initialise. Set submit-failed for all
-            # affected tasks  and remove target from remote init map
-            # - this enables new tasks to re-initialise that target
 
             if (ri_map[install_target] in [REMOTE_INIT_FAILED,
                                            REMOTE_FILE_INSTALL_FAILED]):
+                # Remote init or install failed. Set submit-failed for all
+                # affected tasks and remove target from remote init map
+                # - this enables new tasks to re-initialise that target
                 init_error = (ri_map[install_target])
                 del ri_map[install_target]
                 for itask in itasks:
+                    itask.waiting_on_job_prep = False
                     itask.local_job_file_path = None  # reset for retry
                     log_task_job_activity(
                         SubProcContext(
@@ -409,11 +410,10 @@ class TaskJobManager:
                     # write flag so that subsequent manual retrigger will
                     # generate a new job file.
                     itask.local_job_file_path = None
-                    if itask.state.reset(TASK_STATUS_PREPARING):
-                        self.data_store_mgr.delta_task_state(itask)
                     if itask.state.outputs.has_custom_triggers():
                         self.suite_db_mgr.put_update_task_outputs(itask)
 
+                    itask.waiting_on_job_prep = False
                 self.proc_pool.put_command(
                     SubProcContext(
                         self.JOBS_SUBMIT,
@@ -802,6 +802,7 @@ class TaskJobManager:
     def _simulation_submit_task_jobs(self, itasks):
         """Simulation mode task jobs submission."""
         for itask in itasks:
+            itask.waiting_on_job_prep = False
             self._set_retry_timers(itask)
             itask.platform = 'SIMULATION'
             itask.summary['job_runner_name'] = 'SIMULATION'
@@ -912,6 +913,7 @@ class TaskJobManager:
                 )
         except TaskRemoteMgmtError as exc:
             # Submit number not yet incremented
+            itask.waiting_on_job_prep = False
             itask.submit_num += 1
             itask.summary['platforms_used'][itask.submit_num] = ''
             # Retry delays, needed for the try_num
@@ -942,6 +944,7 @@ class TaskJobManager:
                 platform = get_platform(rtconfig)
             except PlatformLookupError as exc:
                 # Submit number not yet incremented
+                itask.waiting_on_job_prep = False
                 itask.submit_num += 1
                 itask.summary['platforms_used'][itask.submit_num] = ''
                 # Retry delays, needed for the try_num
@@ -974,11 +977,12 @@ class TaskJobManager:
                                        check_syntax=check_syntax)
         except Exception as exc:
             # Could be a bad command template, IOError, etc
+            itask.waiting_on_job_prep = False
             self._prep_submit_task_job_error(
                 suite, itask, '(prepare job file)', exc)
             return False
-        itask.local_job_file_path = local_job_file_path
 
+        itask.local_job_file_path = local_job_file_path
         return itask
 
     def _prep_submit_task_job_error(self, suite, itask, action, exc):

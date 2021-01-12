@@ -31,14 +31,22 @@ from cylc.flow.tui import (
 from cylc.flow.wallclock import get_unix_time_from_time_string
 
 
-def get_task_icon(status, is_held, start_time=None, mean_time=None):
+def get_task_icon(
+        status,
+        *,
+        is_held=False,
+        is_queued=False,
+        start_time=None,
+        mean_time=None):
     """Return a Unicode string to represent a task.
 
     Arguments:
         status (str):
             A Cylc task status string.
         is_held (bool):
-            True if the task is in a held state.
+            True if the task is held.
+        is_queued (bool):
+            True if the task is queued.
         start_time (str):
             Start date time string.
         mean_time (int):
@@ -52,6 +60,8 @@ def get_task_icon(status, is_held, start_time=None, mean_time=None):
     ret = []
     if is_held:
         ret.append(TASK_MODIFIERS['held'])
+    elif is_queued:
+        ret.append(TASK_MODIFIERS['queued'])
     if (
             status == TASK_STATUS_RUNNING
             and start_time
@@ -304,7 +314,8 @@ def render_node(node, data, type_):
         # the task icon
         ret = get_task_icon(
             data['state'],
-            data['isHeld'],
+            is_held=data['isHeld'],
+            is_queued=data['isQueued'],
             start_time=start_time,
             mean_time=mean_time
         )
@@ -323,7 +334,8 @@ def render_node(node, data, type_):
         return [
             get_task_icon(
                 data['state'],
-                data['isHeld']
+                is_held=data['isHeld'],
+                is_queued=data['isQueued']
             ),
             ' ',
             data['id'].rsplit(ID_DELIM, 1)[-1]

@@ -70,7 +70,7 @@ def filter_task_state(app):
 
     checkboxes = [
         urwid.CheckBox(
-            get_task_icon(state, False)
+            get_task_icon(state)
             + [' ' + state],
             state=is_on,
             on_state_change=partial(toggle, state)
@@ -158,7 +158,7 @@ def help_info(app):
     for state in TASK_STATUSES_ORDERED:
         items.append(
             urwid.Text(
-                get_task_icon(state, is_held=False)
+                get_task_icon(state)
                 + [' ', state]
             )
         )
@@ -168,6 +168,12 @@ def help_info(app):
         urwid.Text(
             get_task_icon(TASK_STATUS_WAITING, is_held=True)
             + [' ', 'held']
+        )
+    )
+    items.append(
+        urwid.Text(
+            get_task_icon(TASK_STATUS_WAITING, is_queued=True)
+            + [' ', 'queued']
         )
     )
 

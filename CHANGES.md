@@ -59,6 +59,10 @@ The filenames `suite.rc` and `global.rc` are now deprecated in favour of
 compatibility, the `cylc run` command will automatically symlink an existing
 `suite.rc` file to `flow.cylc`.
 
+Obsolete *queued* task state replaced by *waiting*, with a queued flag;
+queueing logic centralized.
+([#4088](https://github.com/cylc/cylc-flow/pull/4088)).
+
 `cylc register` has been replaced by `cylc install`
 ([#4000](https://github.com/cylc/cylc-flow/pull/4000)).
 
