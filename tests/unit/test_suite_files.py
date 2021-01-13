@@ -698,7 +698,7 @@ def test_remote_clean(install_targets_map, failed_platforms,
         if failed_platforms and platform['name'] in failed_platforms:
             proc_ret_code = 1
         return mock.Mock(
-            wait=lambda: proc_ret_code,
+            poll=lambda: proc_ret_code,
             communicate=lambda: (b"", b""),
             args=[])
 

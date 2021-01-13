@@ -22,6 +22,7 @@ from random import shuffle
 import re
 import shutil
 from subprocess import Popen, PIPE, DEVNULL
+import time
 import zmq.auth
 
 import aiofiles
@@ -664,36 +665,43 @@ def remote_clean(reg, platform_names):
             "Cannot clean on remote platforms as the workflow database is "
             f"out of date/inconsistent with the global config - {exc}")
 
-    queue = []
+    pool = []
     for target, platforms in install_targets_map.items():
         if target == 'localhost':
             continue
         shuffle(platforms)
         # Issue ssh command:
-        queue.append(
+        pool.append(
             (_remote_clean_cmd(reg, platforms[0]), target, platforms)
         )
     failed_targets = []
-    for proc, target, platforms in queue:
-        ret_code = proc.wait()
-        out, err = (f.decode() for f in proc.communicate())
-        if out:
-            LOG.info(out)
-        if err:
-            LOG.warning(err)
-        if ret_code:
-            # Try again on the next platform for this install target:
-            this_platform = platforms.pop(0)
-            exc = TaskRemoteMgmtError(
-                TaskRemoteMgmtError.MSG_TIDY, this_platform['name'],
-                " ".join(proc.args), ret_code, out, err)
-            LOG.error(exc)
-            if platforms:
-                queue.append(
-                    (_remote_clean_cmd(reg, platforms[0]), target, platforms)
-                )
-            else:  # Exhausted list of platforms
-                failed_targets.append(target)
+    # Handle subproc pool results almost concurrently:
+    while pool:
+        for proc, target, platforms in pool:
+            ret_code = proc.poll()
+            if ret_code is None:  # proc still running
+                continue
+            pool.remove((proc, target, platforms))
+            out, err = (f.decode() for f in proc.communicate())
+            if out:
+                LOG.info(out)
+            if err:
+                LOG.warning(err)
+            if ret_code:
+                # Try again using the next platform for this install target:
+                this_platform = platforms.pop(0)
+                exc = TaskRemoteMgmtError(
+                    TaskRemoteMgmtError.MSG_TIDY, this_platform['name'],
+                    " ".join(proc.args), ret_code, out, err)
+                LOG.error(exc)
+                if platforms:
+                    pool.append(
+                        (_remote_clean_cmd(reg, platforms[0]),
+                         target, platforms)
+                    )
+                else:  # Exhausted list of platforms
+                    failed_targets.append(target)
+        time.sleep(0.2)
     if failed_targets:
         raise CylcError(
             f"Could not clean on install targets: {', '.join(failed_targets)}")
