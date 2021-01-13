@@ -443,7 +443,7 @@ def test_init_clean_ok(
                         mocked_get_platforms_from_db)
 
     # --- The actual test ---
-    suite_files.init_clean(reg)
+    suite_files.init_clean(reg, opts=mock.Mock())
     if expected_log:
         assert msg in caplog.text
     if clean_called:
@@ -693,7 +693,7 @@ def test_remote_clean(install_targets_map, failed_platforms,
     mocked_shuffle = mock.Mock()
     monkeypatch.setattr('cylc.flow.suite_files.shuffle', mocked_shuffle)
 
-    def mocked_remote_clean_cmd_side_effect(reg, platform):
+    def mocked_remote_clean_cmd_side_effect(reg, platform, timeout):
         proc_ret_code = 0
         if failed_platforms and platform['name'] in failed_platforms:
             proc_ret_code = 1
@@ -713,13 +713,14 @@ def test_remote_clean(install_targets_map, failed_platforms,
     if expected_err:
         err, msg = expected_err
         with pytest.raises(err) as exc:
-            suite_files.remote_clean(reg, platform_names)
+            suite_files.remote_clean(reg, platform_names, timeout='irrelevant')
         assert msg in str(exc.value)
     else:
-        suite_files.remote_clean(reg, platform_names)
+        suite_files.remote_clean(reg, platform_names, timeout='irrelevant')
     if expected_platforms:
         for p_name in expected_platforms:
-            mocked_remote_clean_cmd.assert_any_call(reg, PLATFORMS[p_name])
+            mocked_remote_clean_cmd.assert_any_call(
+                reg, PLATFORMS[p_name], 'irrelevant')
     else:
         mocked_remote_clean_cmd.assert_not_called()
     if failed_platforms:

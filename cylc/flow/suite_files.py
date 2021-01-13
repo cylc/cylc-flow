@@ -572,12 +572,13 @@ def _clean_check(reg, run_dir):
             f"Cannot remove running workflow.\n\n{exc}")
 
 
-def init_clean(reg):
+def init_clean(reg, opts):
     """Initiate the process of removing a stopped workflow from the local
     scheduler filesystem and remote hosts.
 
     Args:
         reg (str): Workflow name.
+        opts (optparse.Values): CLI options object for cylc clean.
     """
     local_run_dir = Path(get_suite_run_dir(reg))
     try:
@@ -597,7 +598,7 @@ def init_clean(reg):
         raise SuiteServiceFileError(f"Cannot clean - {exc}")
 
     if platform_names and platform_names != {'localhost'}:
-        remote_clean(reg, platform_names)
+        remote_clean(reg, platform_names, opts.remote_timeout)
     # Lastly, clean on local filesystem:
     clean(reg)
 
@@ -648,7 +649,7 @@ def clean(reg):
     _remove_empty_reg_parents(reg, run_dir)
 
 
-def remote_clean(reg, platform_names):
+def remote_clean(reg, platform_names, timeout):
     """Run subprocesses to clean workflows on remote install targets
     (skip localhost), given a set of platform names to look up.
 
@@ -656,6 +657,7 @@ def remote_clean(reg, platform_names):
         reg (str): Workflow name.
         platform_names (list): List of platform names to look up in the global
             config, in order to determine the install targets to clean on.
+        timeout (str): Number of seconds to wait before cancelling.
     """
     try:
         install_targets_map = (
@@ -672,7 +674,7 @@ def remote_clean(reg, platform_names):
         shuffle(platforms)
         # Issue ssh command:
         pool.append(
-            (_remote_clean_cmd(reg, platforms[0]), target, platforms)
+            (_remote_clean_cmd(reg, platforms[0], timeout), target, platforms)
         )
     failed_targets = []
     # Handle subproc pool results almost concurrently:
@@ -696,7 +698,7 @@ def remote_clean(reg, platform_names):
                 LOG.error(exc)
                 if platforms:
                     pool.append(
-                        (_remote_clean_cmd(reg, platforms[0]),
+                        (_remote_clean_cmd(reg, platforms[0], timeout),
                          target, platforms)
                     )
                 else:  # Exhausted list of platforms
@@ -707,7 +709,7 @@ def remote_clean(reg, platform_names):
             f"Could not clean on install targets: {', '.join(failed_targets)}")
 
 
-def _remote_clean_cmd(reg, platform):
+def _remote_clean_cmd(reg, platform, timeout):
     """Remove a stopped workflow on a remote host.
 
     Call "cylc clean --local-only" over ssh and return the subprocess.
@@ -716,12 +718,13 @@ def _remote_clean_cmd(reg, platform):
         reg (str): Workflow name.
         platform (dict): Config for the platform on which to remove the
             workflow.
+        timeout (str): Number of seconds to wait before cancelling the command.
     """
     LOG.info(
         f'Cleaning on install target: {platform["install target"]} '
         f'(platform: {platform["name"]})')
     cmd = ['clean', '--local-only', reg]
-    cmd = construct_ssh_cmd(cmd, platform, timeout='10s')
+    cmd = construct_ssh_cmd(cmd, platform, timeout=timeout)
     LOG.debug(" ".join(cmd))
     return Popen(cmd, stdin=DEVNULL, stdout=PIPE, stderr=PIPE)
 

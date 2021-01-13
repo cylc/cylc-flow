@@ -51,6 +51,13 @@ def get_option_parser():
         action='store_true', dest='local_only'
     )
 
+    parser.add_option(
+        '--timeout',
+        help="The number of seconds to wait for cleaning to take place on "
+             "remote hosts before cancelling.",
+        action='store', default='120', dest='remote_timeout'
+    )
+
     return parser
 
 
@@ -59,7 +66,7 @@ def main(parser, opts, reg):
     if opts.local_only:
         clean(reg)
     else:
-        init_clean(reg)
+        init_clean(reg, opts)
 
 
 if __name__ == "__main__":
