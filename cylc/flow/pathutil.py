@@ -219,15 +219,15 @@ def remove_dir(path):
     if os.path.islink(path):
         if os.path.exists(path):
             target = os.path.realpath(path)
-            LOG.info(
+            LOG.debug(
                 f'Removing symlink target directory: ({path} ->) {target}')
             rmtree(target)
-            LOG.info(f'Removing symlink: {path}')
+            LOG.debug(f'Removing symlink: {path}')
         else:
-            LOG.info(f'Removing broken symlink: {path}')
+            LOG.debug(f'Removing broken symlink: {path}')
         os.remove(path)
     elif not os.path.exists(path):
         raise FileNotFoundError(path)
     else:
-        LOG.info(f'Removing directory: {path}')
+        LOG.debug(f'Removing directory: {path}')
         rmtree(path)

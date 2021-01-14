@@ -31,6 +31,7 @@ from cylc.flow import LOG
 from cylc.flow.exceptions import (
     CylcError, PlatformLookupError, SuiteServiceFileError, TaskRemoteMgmtError,
     WorkflowFilesError)
+import cylc.flow.flags
 from cylc.flow.pathutil import (
     get_suite_run_dir, make_localhost_symlinks, remove_dir)
 from cylc.flow.platforms import (
@@ -591,15 +592,13 @@ def init_clean(reg, opts):
     try:
         platform_names = get_platforms_from_db(local_run_dir)
     except FileNotFoundError:
-        LOG.warning(
-            "The workflow database is missing - will not be able to clean on "
-            "any remote platforms")
+        LOG.info("No workflow database - will only clean locally")
     except SuiteServiceFileError as exc:
         raise SuiteServiceFileError(f"Cannot clean - {exc}")
 
     if platform_names and platform_names != {'localhost'}:
         remote_clean(reg, platform_names, opts.remote_timeout)
-    # Lastly, clean on local filesystem:
+    LOG.info("Cleaning on local filesystem")
     clean(reg)
 
 
@@ -672,6 +671,8 @@ def remote_clean(reg, platform_names, timeout):
         if target == 'localhost':
             continue
         shuffle(platforms)
+        LOG.info(
+            f"Cleaning on install target: {platforms[0]['install target']}")
         # Issue ssh command:
         pool.append(
             (_remote_clean_cmd(reg, platforms[0], timeout), target, platforms)
@@ -686,16 +687,14 @@ def remote_clean(reg, platform_names, timeout):
             pool.remove((proc, target, platforms))
             out, err = (f.decode() for f in proc.communicate())
             if out:
-                LOG.info(out)
-            if err:
-                LOG.warning(err)
+                LOG.debug(out)
             if ret_code:
                 # Try again using the next platform for this install target:
                 this_platform = platforms.pop(0)
                 exc = TaskRemoteMgmtError(
                     TaskRemoteMgmtError.MSG_TIDY, this_platform['name'],
                     " ".join(proc.args), ret_code, out, err)
-                LOG.error(exc)
+                LOG.debug(exc)
                 if platforms:
                     pool.append(
                         (_remote_clean_cmd(reg, platforms[0], timeout),
@@ -703,6 +702,8 @@ def remote_clean(reg, platform_names, timeout):
                     )
                 else:  # Exhausted list of platforms
                     failed_targets.append(target)
+            elif err:
+                LOG.debug(err)
         time.sleep(0.2)
     if failed_targets:
         raise CylcError(
@@ -720,10 +721,12 @@ def _remote_clean_cmd(reg, platform, timeout):
             workflow.
         timeout (str): Number of seconds to wait before cancelling the command.
     """
-    LOG.info(
+    LOG.debug(
         f'Cleaning on install target: {platform["install target"]} '
-        f'(platform: {platform["name"]})')
+        f'(using platform: {platform["name"]})')
     cmd = ['clean', '--local-only', reg]
+    if cylc.flow.flags.debug:
+        cmd.append('--debug')
     cmd = construct_ssh_cmd(cmd, platform, timeout=timeout)
     LOG.debug(" ".join(cmd))
     return Popen(cmd, stdin=DEVNULL, stdout=PIPE, stderr=PIPE)
@@ -753,7 +756,7 @@ def _remove_empty_reg_parents(reg, path):
             continue
         try:
             parent.rmdir()
-            LOG.info(f'Removing directory: {parent}')
+            LOG.debug(f'Removing directory: {parent}')
         except OSError:
             break
 

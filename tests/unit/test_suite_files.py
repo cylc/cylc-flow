@@ -385,7 +385,8 @@ def test_clean_check(reg, not_stopped, err, err_msg, monkeypatch):
         }, False, False),
         ('foo/bar', {
             'no db': True,
-            'log': (logging.WARNING, "The workflow database is missing")
+            'log': (logging.INFO,
+                    "No workflow database - will only clean locally")
         }, True, False),
         ('foo/bar', {
             'db platforms': ['localhost', 'localhost']
@@ -685,7 +686,7 @@ def test_remote_clean(install_targets_map, failed_platforms,
             (Exception, str) giving an exception that is expected to be raised.
     """
     # ----- Setup -----
-    caplog.set_level(logging.ERROR, CYLC_LOG)
+    caplog.set_level(logging.DEBUG, CYLC_LOG)
     monkeypatch.setattr(
         'cylc.flow.suite_files.get_install_target_to_platforms_map',
         lambda x: install_targets_map)

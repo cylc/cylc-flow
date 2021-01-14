@@ -34,6 +34,9 @@ Examples:
 
 """
 
+import cylc.flow.flags
+from cylc.flow import LOG
+from cylc.flow.loggingutil import CylcLogFormatter
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
 from cylc.flow.suite_files import clean, init_clean
@@ -63,6 +66,12 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser, opts, reg):
+    if not cylc.flow.flags.debug:
+        # for readability omit timestamps from logging unless in debug mode
+        for handler in LOG.handlers:
+            if isinstance(handler.formatter, CylcLogFormatter):
+                handler.formatter.configure(timestamp=False)
+
     if opts.local_only:
         clean(reg)
     else:
