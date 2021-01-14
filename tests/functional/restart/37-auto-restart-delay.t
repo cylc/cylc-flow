@@ -41,7 +41,7 @@ BASE_GLOBAL_CONFIG="
 "
 #-------------------------------------------------------------------------------
 # Test the delayed restart feature
-TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME_BASE}" <<< '
+init_suite "${TEST_NAME_BASE}" <<< '
 [scheduler]
     UTC mode = True
 [scheduling]

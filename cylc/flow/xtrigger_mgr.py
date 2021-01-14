@@ -94,7 +94,6 @@ class XtriggerManager:
         proc_pool (SubProcPool): pool of Subprocesses
         suite_run_dir (str): suite run directory
         suite_share_dir (str): suite share directory
-        suite_source_dir (str): suite source directory
 
     """
 
@@ -108,7 +107,6 @@ class XtriggerManager:
         proc_pool: SubProcPool = None,
         suite_run_dir: str = None,
         suite_share_dir: str = None,
-        suite_source_dir: str = None,
     ):
         # Suite function and clock triggers by label.
         self.functx_map = {}
@@ -120,6 +118,8 @@ class XtriggerManager:
         self.active = []
         # All trigger and clock signatures in the current task pool.
         self.all_xtrig = []
+
+        self.suite_run_dir = suite_run_dir
 
         self.pflag = False
 
@@ -136,7 +136,6 @@ class XtriggerManager:
         self.proc_pool = proc_pool
         self.broadcast_mgr = broadcast_mgr
         self.data_store_mgr = data_store_mgr
-        self.suite_source_dir = suite_source_dir
 
     @staticmethod
     def validate_xtrigger(fname: str, fdir: str):
@@ -272,7 +271,7 @@ class XtriggerManager:
             kwargs[key] = val
         ctx.func_args = args
         ctx.func_kwargs = kwargs
-        ctx.update_command(self.suite_source_dir)
+        ctx.update_command(self.suite_run_dir)
         return ctx
 
     def satisfy_xtriggers(self, itask: TaskProxy):

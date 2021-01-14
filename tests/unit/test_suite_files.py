@@ -172,9 +172,10 @@ def test_rundir_children_that_contain_workflows_raise_error(
 
 
 @pytest.mark.parametrize(
-    'reg, expected_err',
-    [('foo/bar/', None),
-     ('/foo/bar', SuiteServiceFileError)]
+    'reg, expected_err, expected_msg',
+    [('foo/bar/', None, None),
+     ('/foo/bar', SuiteServiceFileError, "cannot be an absolute path"),
+     ('$HOME/alone', SuiteServiceFileError, "invalid suite name")]
 )
 def test_validate_reg(reg, expected_err, expected_msg):
     if expected_err:
@@ -270,7 +271,7 @@ def test_init_clean_ok(
     mocked_remote_clean = mock.Mock()
     monkeypatch.setattr('cylc.flow.suite_files.remote_clean',
                         mocked_remote_clean)
-    monkeypatch.setattr('cylc.flow.suite_files.get_suite_run_dir',
+    monkeypatch.setattr('cylc.flow.suite_files.get_workflow_run_dir',
                         lambda x: tmp_path.joinpath('cylc-run', x))
 
     _get_platforms_from_db = suite_files.get_platforms_from_db
@@ -427,7 +428,7 @@ def test_clean_broken_symlink_run_dir(monkeypatch, tmp_path):
     run_dir.symlink_to(target)
     target.rmdir()
 
-    monkeypatch.setattr('cylc.flow.suite_files.get_suite_run_dir',
+    monkeypatch.setattr('cylc.flow.suite_files.get_workflow_run_dir',
                         lambda x: tmp_path.joinpath('cylc-run', x))
 
     suite_files.clean(reg)

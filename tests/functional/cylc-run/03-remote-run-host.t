@@ -21,7 +21,7 @@ export REQUIRE_PLATFORM='loc:remote fs:shared runner:background'
 set_test_number 2
 
 # shellcheck disable=SC2016
-TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME_BASE}" <<< '
+init_suite "${TEST_NAME_BASE}" <<< '
 # A total non-entity workflow - just something to run.
 [scheduling]
     initial cycle point = 2020

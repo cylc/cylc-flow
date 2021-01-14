@@ -26,7 +26,7 @@ CURRENT_TZ_UTC_OFFSET="$(date +%z)"
 if [[ $CURRENT_TZ_UTC_OFFSET == '+0000' ]]; then
     CURRENT_TZ_UTC_OFFSET="Z"
 fi
-sed -i "s/Z/$CURRENT_TZ_UTC_OFFSET/g" 'reference.log'
+sed -i "s/Z/$CURRENT_TZ_UTC_OFFSET/g" "${SUITE_RUN_DIR}/reference.log"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"

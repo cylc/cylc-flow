@@ -41,32 +41,31 @@ init_suite "${TEST_NAME_BASE}" <<__FLOW_CONFIG__
         [[[events]]]
             succeeded handler = cat "${CYLC_REPO_DIR}/COPYING" "${CYLC_REPO_DIR}/COPYING" "${CYLC_REPO_DIR}/COPYING" && echo
 __FLOW_CONFIG__
+cd "$SUITE_RUN_DIR" || exit 1
 cat >'reference.log' <<'__REFLOG__'
 Initial point: 1
 Final point: 1
 [t1.1] -triggered off []
 __REFLOG__
-
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --debug --no-detach --reference-test "${SUITE_NAME}"
 
-cylc cat-log "${SUITE_NAME}" >'log'
-sed -n 's/^.*\(GNU GENERAL PUBLIC LICENSE\)/\1/p' 'log' >'log-1'
+cylc cat-log "${SUITE_NAME}" >'catlog'
+sed -n 's/^.*\(GNU GENERAL PUBLIC LICENSE\)/\1/p' 'catlog' >'log-1'
 contains_ok 'log-1' <<'__LOG__'
 GNU GENERAL PUBLIC LICENSE
 GNU GENERAL PUBLIC LICENSE
 GNU GENERAL PUBLIC LICENSE
 __LOG__
 run_ok "log-event-handler-00-out" \
-    grep -qF "[(('event-handler-00', 'succeeded'), 1) out]" 'log'
+    grep -qF "[(('event-handler-00', 'succeeded'), 1) out]" 'catlog'
 run_ok "log-event-handler-ret-code" \
-    grep -qF "[(('event-handler-00', 'succeeded'), 1) ret_code] 0" 'log'
+    grep -qF "[(('event-handler-00', 'succeeded'), 1) ret_code] 0" 'catlog'
     
 purge
-# Forcibly remove log directory
-rm -rf "${TEST_DIR}/${SUITE_NAME}/log"
+
 # REPEAT: Long STDERR output
 init_suite "${TEST_NAME_BASE}" <<__FLOW_CONFIG__
 [scheduling]
@@ -78,6 +77,7 @@ init_suite "${TEST_NAME_BASE}" <<__FLOW_CONFIG__
         [[[events]]]
             succeeded handler = cat "${CYLC_REPO_DIR}/COPYING" "${CYLC_REPO_DIR}/COPYING" "${CYLC_REPO_DIR}/COPYING" >&2 && echo
 __FLOW_CONFIG__
+cd "${SUITE_RUN_DIR}" || exit 1
 cat >'reference.log' <<'__REFLOG__'
 Initial point: 1
 Final point: 1
@@ -89,17 +89,17 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --debug --no-detach --reference-test "${SUITE_NAME}"
 
-cylc cat-log "${SUITE_NAME}" >'log'
-sed -n 's/^.*\(GNU GENERAL PUBLIC LICENSE\)/\1/p' 'log' >'log-1'
+cylc cat-log "${SUITE_NAME}" >'catlog'
+sed -n 's/^.*\(GNU GENERAL PUBLIC LICENSE\)/\1/p' 'catlog' >'log-1'
 contains_ok 'log-1' <<'__LOG__'
 GNU GENERAL PUBLIC LICENSE
 GNU GENERAL PUBLIC LICENSE
 GNU GENERAL PUBLIC LICENSE
 __LOG__
 run_ok "log-event-handler-00-err" \
-    grep -qF "[(('event-handler-00', 'succeeded'), 1) err]" 'log'
+    grep -qF "[(('event-handler-00', 'succeeded'), 1) err]" 'catlog'
 run_ok "log-event-handler-00-ret-code" \
-    grep -qF "[(('event-handler-00', 'succeeded'), 1) ret_code] 0" 'log'
+    grep -qF "[(('event-handler-00', 'succeeded'), 1) ret_code] 0" 'catlog'
 
 purge
 

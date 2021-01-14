@@ -23,7 +23,6 @@ fi
 set_test_number 6
 #-------------------------------------------------------------------------------
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-export TEST_DIR
 #-------------------------------------------------------------------------------
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 if ! command -v 'sqlite3' > /dev/null; then
@@ -38,7 +37,7 @@ suite_run_ok "${TEST_NAME_BASE}-restart-run" \
 #-------------------------------------------------------------------------------
 # The waiting tasks below have two parents and are spawned by the earlier
 # intercycle dependencies.
-cmp_ok "${TEST_DIR}/pre-restart-db" <<'__DB_DUMP__'
+cmp_ok "${SUITE_RUN_DIR}/pre-restart-db" <<'__DB_DUMP__'
 bar|20130923T0000Z|1|1|succeeded
 bar|20130923T1200Z|1|1|succeeded
 bar|20130924T0000Z|1|1|succeeded
@@ -51,7 +50,7 @@ foo|20130924T0000Z|1|1|succeeded
 foo|20130924T1200Z|1|1|succeeded
 foo|20130925T0000Z|0||waiting
 __DB_DUMP__
-contains_ok "${TEST_DIR}/post-restart-db" <<'__DB_DUMP__'
+contains_ok "${SUITE_RUN_DIR}/post-restart-db" <<'__DB_DUMP__'
 bar|20130923T0000Z|1|1|succeeded
 bar|20130923T1200Z|1|1|succeeded
 bar|20130924T0000Z|1|1|succeeded

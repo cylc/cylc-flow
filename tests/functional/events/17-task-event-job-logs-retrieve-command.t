@@ -30,14 +30,14 @@ create_test_global_config "" "
 OPT_SET='-s GLOBALCFG=True'
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-mkdir -p "${SUITE_RUN_DIR}/bin"
-cat >"${SUITE_RUN_DIR}/bin/my-rsync" <<'__BASH__'
+mkdir -p "${RUN_DIR}/${SUITE_NAME}/bin"
+cat >"${RUN_DIR}/${SUITE_NAME}/bin/my-rsync" <<'__BASH__'
 #!/usr/bin/env bash
 set -eu
 echo "$@" >>"${CYLC_SUITE_LOG_DIR}/my-rsync.log"
 exec rsync -a "$@"
 __BASH__
-chmod +x "${SUITE_RUN_DIR}/bin/my-rsync"
+chmod +x "${RUN_DIR}/${SUITE_NAME}/bin/my-rsync"
 
 # shellcheck disable=SC2086
 run_ok "${TEST_NAME_BASE}-validate" \
@@ -47,7 +47,7 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug --no-detach ${OPT_SET} \
        -s "PLATFORM='${CYLC_TEST_PLATFORM}'" "${SUITE_NAME}"
 
-SUITE_LOG_D="$RUN_DIR/${SUITE_NAME}/log"
+SUITE_LOG_D="${RUN_DIR}/${SUITE_NAME}/log"
 sed 's/^.* -v //' "${SUITE_LOG_D}/suite/my-rsync.log" >'my-rsync.log.edited'
 
 OPT_HEAD='--include=/1 --include=/1/t1'

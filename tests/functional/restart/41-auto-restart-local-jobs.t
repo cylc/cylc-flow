@@ -36,7 +36,7 @@ BASE_GLOBAL_CONFIG="
         timeout = PT2M
 "
 
-TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME_BASE}" <<< '
+init_suite "${TEST_NAME_BASE}" <<< '
 [scheduling]
     [[graph]]
         R1 = foo => bar
@@ -46,6 +46,7 @@ TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME_BASE}" <<< '
     [[bar]]
         script = sleep 60
 '
+cd "${SUITE_RUN_DIR}" || exit 1
 
 create_test_global_config '' "
 ${BASE_GLOBAL_CONFIG}

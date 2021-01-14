@@ -37,7 +37,7 @@ for datum in data['tasks']:
     assert isinstance(datum['meanElapsedTime'], float)
 __PYTHON__
 }
-
+cd "${SUITE_RUN_DIR}" || exit 1
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
 RUND="${RUN_DIR}/${SUITE_NAME}"
@@ -47,7 +47,7 @@ suite_run_ok "${TEST_NAME_BASE}-restart-1" \
     cylc restart "${SUITE_NAME}" --stop-point=2028 --debug --no-detach
 sed -n '/LOADING task run times/,+2{s/^.* INFO - //;s/[0-9]\(,\|$\)/%d\1/g;p}' \
     "${RUND}/log/suite/log" >'restart-1.out'
-contains_ok 'restart-1.out' <<'__OUT__'
+contains_ok "restart-1.out" <<'__OUT__'
 LOADING task run times
 + t2: %d,%d,%d,%d,%d
 + t1: %d,%d,%d,%d,%d

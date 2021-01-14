@@ -50,7 +50,7 @@ $(declare -f poll_grep)
 
 # Remove bar and tell the server to reload.
 if (( CYLC_TASK_CYCLE_POINT == CYLC_SUITE_INITIAL_CYCLE_POINT )); then
-   sed -i 's/^.*remove*$//g' "\${CYLC_SUITE_DEF_PATH}/flow.cylc"
+   sed -i 's/^.*remove*$//g' "\${CYLC_SUITE_RUN_DIR}/flow.cylc"
    cylc reload "\${CYLC_SUITE_NAME}"
    poll_grep -F 'Reload complete' "\${CYLC_SUITE_RUN_DIR}/log/suite/log"
    # kill the long-running orphaned bar task.

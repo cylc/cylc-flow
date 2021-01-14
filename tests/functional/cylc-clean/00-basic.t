@@ -89,7 +89,6 @@ ${TEST_DIR}/${SYM_NAME}-run
                     |-- flow.cylc
                     |-- log -> ${TEST_DIR}/${SYM_NAME}-log/cylc-run/${SUITE_NAME}/log
                     |-- share -> ${TEST_DIR}/${SYM_NAME}-share/cylc-run/${SUITE_NAME}/share
-                    |-- source -> ${TEST_DIR}/${SUITE_NAME}
                     \`-- work -> ${TEST_DIR}/${SYM_NAME}-work/cylc-run/${SUITE_NAME}/work
 ${TEST_DIR}/${SYM_NAME}-share
 \`-- cylc-run

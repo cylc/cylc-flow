@@ -66,6 +66,7 @@ rm -rf "${PWD:?}/${SOURCE_DIR_1}" "${PWD:?}/${SOURCE_DIR_2}"
 rm -rf "${RUN_DIR:?}/${TEST_NAME_BASE}"
 popd || exit
 
+
 # Test fail no suite source dir
 TEST_NAME="${TEST_NAME_BASE}-nodir"
 make_rnd_suite
@@ -112,7 +113,7 @@ for DIR in 'work' 'share' 'log' '_cylc-install'; do
     mkdir ${DIR}
     run_fail "${TEST_NAME}" cylc install
     contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WorkflowFilesError: Installation failed. - ${DIR} exists in source directory.
+WorkflowFilesError: ${RND_SUITE_NAME} installation failed. - ${DIR} exists in source directory.
 __ERR__
     purge_rnd_suite
     popd || exit 1
@@ -125,7 +126,7 @@ mkdir -p "${RUN_DIR}/${BASE_NAME}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME}" && cd "$
 touch flow.cylc
 run_fail "${TEST_NAME}" cylc install
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WorkflowFilesError: Installation failed. Source directory should not be in ${RUN_DIR}
+WorkflowFilesError: ${TEST_NAME} installation failed. Source directory should not be in ${RUN_DIR}
 __ERR__
 cd "${RUN_DIR}" || exit
 rm -rf "${BASE_NAME}"

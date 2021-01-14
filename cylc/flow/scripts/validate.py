@@ -86,11 +86,13 @@ def main(_, options, reg):
     """cylc validate CLI."""
     profiler = Profiler(None, options.profile_mode)
     profiler.start()
+
     if not cylc.flow.flags.debug:
         # for readability omit timestamps from logging unless in debug mode
         for handler in LOG.handlers:
             if isinstance(handler.formatter, CylcLogFormatter):
                 handler.formatter.configure(timestamp=False)
+
     suite, flow_file = parse_suite_arg(options, reg)
     cfg = SuiteConfig(
         suite,

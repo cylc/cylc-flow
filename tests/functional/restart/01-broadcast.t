@@ -22,18 +22,18 @@ fi
 #-------------------------------------------------------------------------------
 set_test_number 8
 #-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" broadcast
-cp "$TEST_SOURCE_DIR/lib/flow-runtime-restart.cylc" "$RUN_DIR/${SUITE_NAME}/"
+install_suite "${TEST_NAME_BASE}" 'broadcast'
+cp "$TEST_SOURCE_DIR/lib/flow-runtime-restart.cylc" "${SUITE_RUN_DIR}/"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 cmp_ok "${TEST_NAME}.stderr" <'/dev/null'
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_ok "${TEST_NAME}" cylc run --no-detach --abort-if-any-task-fails "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME}" cylc run --debug --no-detach --abort-if-any-task-fails "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-restart-run"
-suite_run_ok "${TEST_NAME}" cylc restart --no-detach --abort-if-any-task-fails "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME}" cylc restart --no-detach --debug --abort-if-any-task-fails "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 grep_ok "send_a_broadcast_task|20130923T0000Z|1|1|succeeded" \
     "${SUITE_RUN_DIR}/pre-restart-db"
@@ -41,9 +41,9 @@ contains_ok "${SUITE_RUN_DIR}/post-restart-db" <<'__DB_DUMP__'
 send_a_broadcast_task|20130923T0000Z|1|1|succeeded
 shutdown|20130923T0000Z|1|1|succeeded
 __DB_DUMP__
-"${TEST_SOURCE_DIR}/bin/ctb-select-task-states" "${SUITE_RUN_DIR}" \
-    > "${SUITE_RUN_DIR}/db"
-contains_ok "${RUN_DIR}/db" <<'__DB_DUMP__'
+"${SUITE_RUN_DIR}/bin/ctb-select-task-states" "${SUITE_RUN_DIR}" \
+    > "${TEST_DIR}/db"
+contains_ok "${TEST_DIR}/db" <<'__DB_DUMP__'
 broadcast_task|20130923T0000Z|1|1|succeeded
 finish|20130923T0000Z|1|1|succeeded
 output_states|20130923T0000Z|1|1|succeeded

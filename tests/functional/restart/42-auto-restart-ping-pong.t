@@ -35,7 +35,7 @@ BASE_GLOBAL_CONFIG='
         timeout = PT2M
 '
 
-TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME_BASE}" <<< '
+init_suite "${TEST_NAME_BASE}" <<< '
 [scheduling]
     initial cycle point = 2000
     final cycle point = 9999  # test cylc/cylc-flow/issues/2799
@@ -45,7 +45,7 @@ TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME_BASE}" <<< '
     [[root]]
         script = sleep 5
 '
-
+cd "${SUITE_RUN_DIR}" || exit 1
 stuck_in_the_middle() {
     # swap the condemned host forcing the suite to jump ship
     local temp="${JOKERS}"

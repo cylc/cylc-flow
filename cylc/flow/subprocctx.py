@@ -142,12 +142,12 @@ class SubFuncContext(SubProcContext):
         super(SubFuncContext, self).__init__(
             'xtrigger-func', cmd=[], shell=False)
 
-    def update_command(self, suite_source_dir):
+    def update_command(self, suite_run_dir):
         """Update the function wrap command after changes."""
         self.cmd = ['cylc', 'function-run', self.func_name,
                     json.dumps(self.func_args),
                     json.dumps(self.func_kwargs),
-                    suite_source_dir]
+                    suite_run_dir]
 
     def get_signature(self):
         """Return the function call signature (as a string)."""

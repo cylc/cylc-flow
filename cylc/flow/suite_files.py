@@ -18,6 +18,7 @@
 
 import aiofiles
 from enum import Enum
+import logging
 import os
 from pathlib import Path
 from random import shuffle
@@ -44,13 +45,12 @@ from cylc.flow.platforms import (
     get_platform, get_install_target_to_platforms_map)
 from cylc.flow.hostuserutil import (
     get_user,
-    is_remote_host,
-    is_remote_user
+    is_remote_host
 )
 from cylc.flow.remote import construct_ssh_cmd
 from cylc.flow.suite_db_mgr import SuiteDatabaseManager
-from cylc.flow.unicode_rules import SuiteNameValidator
 from cylc.flow.loggingutil import CylcLogFormatter
+from cylc.flow.unicode_rules import SuiteNameValidator
 from cylc.flow.wallclock import get_current_time_string
 
 
@@ -362,35 +362,34 @@ def get_contact_file(reg):
         get_suite_srv_dir(reg), SuiteFiles.Service.CONTACT)
 
 
-def get_flow_file(reg, suite_owner=None):
+def get_flow_file(reg):
     """Return the path of a suite's flow.cylc file."""
-    return os.path.join(
-        get_suite_source_dir(reg, suite_owner), SuiteFiles.FLOW_FILE)
+    flow_file = os.path.join(get_workflow_run_dir(reg), SuiteFiles.FLOW_FILE)
+    if os.path.exists(flow_file):
+        return flow_file
 
 
-def get_suite_source_dir(reg, suite_owner=None):
-    """Return the source directory path of a suite.
-
-    Will register un-registered suites located in the cylc run dir.
+def get_suite_source_dir(reg):
+    """Return the source directory path of a workflow.
     """
-    srv_d = get_suite_srv_dir(reg, suite_owner)
-    fname = os.path.join(get_workflow_run_dir(reg), SuiteFiles.SOURCE)
+    cwd = Path.cwd()
+    source_path = Path(
+        cwd,
+        SuiteFiles.Install.DIRNAME,
+        SuiteFiles.SOURCE)
+    alt_source_path = Path(
+        cwd.parent,
+        SuiteFiles.Install.DIRNAME,
+        SuiteFiles.SOURCE)
     try:
-        source = os.readlink(fname)
+        source = os.readlink(source_path)
     except OSError:
-        suite_d = os.path.dirname(srv_d)
-        if os.path.exists(suite_d) and not is_remote_user(suite_owner):
-            register(flow_name=reg, source=suite_d)
-            return suite_d
-        raise WorkflowFilesError(f"Suite not found: {reg}")
-    else:
-        if not os.path.isabs(source):
-            source = os.path.normpath(os.path.join(srv_d, source))
-        flow_file_path = os.path.join(source, SuiteFiles.FLOW_FILE)
-        if not os.path.exists(flow_file_path):
-            # suite exists but is probably using deprecated suite.rc
-            register(flow_name=reg, source=source)
-        return source
+        try:
+            source = os.readlink(alt_source_path)
+        except OSError:
+            source = None
+
+    return source
 
 
 def get_suite_srv_dir(reg, suite_owner=None):
@@ -461,9 +460,8 @@ def parse_suite_arg(options, arg):
         path = os.path.abspath(arg)
     else:
         name = arg
-        try:
-            path = get_flow_file(arg)
-        except WorkflowFilesError:
+        path = get_flow_file(arg)
+        if not path:
             arg = os.path.abspath(arg)
             if os.path.isdir(arg):
                 path = os.path.join(arg, SuiteFiles.FLOW_FILE)
@@ -472,7 +470,7 @@ def parse_suite_arg(options, arg):
                     # Probably using deprecated suite.rc
                     path = os.path.join(arg, SuiteFiles.SUITE_RC)
                     if not os.path.exists(path):
-                        raise SuiteServiceFileError(
+                        raise WorkflowFilesError(
                             f'no {SuiteFiles.FLOW_FILE} or '
                             f'{SuiteFiles.SUITE_RC} in {arg}')
                     else:
@@ -592,7 +590,7 @@ def init_clean(reg, opts):
         reg (str): Workflow name.
         opts (optparse.Values): CLI options object for cylc clean.
     """
-    local_run_dir = Path(get_suite_run_dir(reg))
+    local_run_dir = Path(get_workflow_run_dir(reg))
     try:
         _clean_check(reg, local_run_dir)
     except FileNotFoundError as exc:
@@ -623,7 +621,7 @@ def clean(reg):
     Args:
         reg (str): Workflow name.
     """
-    run_dir = Path(get_suite_run_dir(reg))
+    run_dir = Path(get_workflow_run_dir(reg))
     try:
         _clean_check(reg, run_dir)
     except FileNotFoundError as exc:
@@ -1044,7 +1042,7 @@ def install_workflow(flow_name=None, source=None, run_name=None,
         raise WorkflowFilesError(
             'Run name cannot be "_cylc-install".'
             ' Please choose another run name.')
-    validate_source_dir(source)
+    validate_source_dir(source, flow_name)
     run_path_base = Path(get_workflow_run_dir(flow_name)).expanduser()
     relink = False
     run_num = 0
@@ -1138,7 +1136,7 @@ def validate_flow_name(flow_name):
             f'Workflow name cannot be an absolute path: {flow_name}')
 
 
-def validate_source_dir(source):
+def validate_source_dir(source, flow_name):
     """Ensure the source directory is valid.
 
     Args:
@@ -1154,15 +1152,16 @@ def validate_source_dir(source):
         path_to_check = Path(source, dir_)
         if path_to_check.exists():
             raise WorkflowFilesError(
-                f'Installation failed. - {dir_} exists in source directory.')
+                f'{flow_name} installation failed. - {dir_} exists in source '
+                'directory.')
     cylc_run_dir = Path(
         get_platform()['run directory'].replace('$HOME', '~')
     ).expanduser()
     if os.path.abspath(os.path.realpath(cylc_run_dir)
                        ) in os.path.abspath(os.path.realpath(source)):
         raise WorkflowFilesError(
-            f'Installation failed. Source directory should not be in'
-            f' {cylc_run_dir}')
+            f'{flow_name} installation failed. Source directory should not be '
+            f'in {cylc_run_dir}')
 
 
 def unlink_runN(run_n):

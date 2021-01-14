@@ -23,8 +23,7 @@ fi
 set_test_number 7
 #-------------------------------------------------------------------------------
 install_suite "${TEST_NAME_BASE}" 'failed'
-cp "$TEST_SOURCE_DIR/lib/flow-runtime-restart.cylc" "$TEST_DIR/${SUITE_NAME}/"
-export TEST_DIR
+cp "$TEST_SOURCE_DIR/lib/flow-runtime-restart.cylc" "${RUN_DIR}/${SUITE_NAME}/"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
@@ -37,14 +36,14 @@ TEST_NAME="${TEST_NAME_BASE}-restart-run"
 suite_run_ok "${TEST_NAME}" cylc restart --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 grep_ok "failed_task|20130923T0000Z|1|1|failed" \
-    "${TEST_DIR}/pre-restart-db"
-contains_ok "${TEST_DIR}/post-restart-db" <<'__DB_DUMP__'
+    "${RUN_DIR}/${SUITE_NAME}/pre-restart-db"
+contains_ok "${RUN_DIR}/${SUITE_NAME}/post-restart-db" <<'__DB_DUMP__'
 failed_task|20130923T0000Z|1|1|failed
 shutdown|20130923T0000Z|1|1|succeeded
 __DB_DUMP__
 "${TEST_SOURCE_DIR}/bin/ctb-select-task-states" "${SUITE_RUN_DIR}" \
-    > "${TEST_DIR}/db"
-contains_ok "${TEST_DIR}/db" <<'__DB_DUMP__'
+    > "${RUN_DIR}/${SUITE_NAME}/db"
+contains_ok "${RUN_DIR}/${SUITE_NAME}/db" <<'__DB_DUMP__'
 failed_task|20130923T0000Z|1|1|failed
 finish|20130923T0000Z|1|1|succeeded
 output_states|20130923T0000Z|1|1|succeeded

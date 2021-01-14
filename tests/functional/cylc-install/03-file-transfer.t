@@ -18,6 +18,9 @@
 #------------------------------------------------------------------------------
 # Test rsync of workflow installation
 . "$(dirname "$0")/test_header"
+if ! command -v 'tree' >'/dev/null'; then
+    skip_all '"tree" command not available'
+fi
 set_test_number 6
 
 export RND_SUITE_NAME

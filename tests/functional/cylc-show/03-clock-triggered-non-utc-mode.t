@@ -22,6 +22,7 @@ set_test_number 3
 #-------------------------------------------------------------------------------
 install_suite "${TEST_NAME_BASE}" clock-triggered-non-utc-mode
 #-------------------------------------------------------------------------------
+cd "${SUITE_RUN_DIR}" || exit 1
 TEST_SHOW_OUTPUT_PATH="$PWD/${TEST_NAME_BASE}-show.stdout"
 TZ_OFFSET_EXTENDED=$(date +%:z | sed "/^%/d")
 if [[ -z "${TZ_OFFSET_EXTENDED}" ]]; then

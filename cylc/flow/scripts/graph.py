@@ -26,7 +26,7 @@ graph of a suite.
 
 from cylc.flow.config import SuiteConfig
 from cylc.flow.cycling.loader import get_point
-from cylc.flow.exceptions import UserInputError, WorkflowFilesError
+from cylc.flow.exceptions import UserInputError
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.suite_files import get_flow_file
 from cylc.flow.templatevars import load_template_vars
@@ -168,10 +168,9 @@ def graph_inheritance(config):
 
 def get_config(suite, opts, template_vars=None):
     """Return a SuiteConfig object for the provided reg / path."""
-    try:
-        flow_file = get_flow_file(suite)
-    except WorkflowFilesError:
-        # could not find suite, assume we have been given a path instead
+    flow_file = get_flow_file(suite)
+    # could not find suite, assume we have been given a path instead
+    if not flow_file:
         flow_file = suite
         suite = 'test'
     return SuiteConfig(suite, flow_file, opts, template_vars=template_vars)

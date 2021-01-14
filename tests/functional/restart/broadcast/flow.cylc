@@ -1,11 +1,10 @@
 #!jinja2
-
+{%- set TEST_DIR = environ['TEST_DIR'] %}
 [scheduler]
     UTC mode = True
     [[events]]
         abort on timeout = True
         timeout = PT1M
-
 [scheduling]
     initial cycle point = 20130923T00
     final cycle point   = 20130923T00
@@ -16,15 +15,10 @@
             output_states => broadcast_task
             broadcast_task => finish
         """
-
 [runtime]
     [[send_a_broadcast_task]]
         script = """
-            cylc broadcast \
-                -n broadcast_task \
-                -p $CYLC_TASK_CYCLE_POINT \
-                -s "[environment]MY_VALUE='something'" \
-                $CYLC_SUITE_NAME
+            cylc broadcast -n broadcast_task -p $CYLC_TASK_CYCLE_POINT -s "[environment]MY_VALUE='something'" $CYLC_SUITE_NAME
             cylc broadcast -d $CYLC_SUITE_NAME
         """
         [[[meta]]]
@@ -41,5 +35,4 @@
             description = "Broadcast-recipient task (runs after restart)"
         [[[environment]]]
             MY_VALUE=nothing
-
 {% include 'flow-runtime-restart.cylc' %}
