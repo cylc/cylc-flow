@@ -51,17 +51,17 @@ cylc run "${SUITE_NAME}"
 
 poll_grep_suite_log 'start.2025.*succeeded'
 
-cylc show "${SUITE_NAME}" foo.2025 | grep -E '^  o' > foo.2025.log
-cylc show "${SUITE_NAME}" foo.2026 | grep -E '^  o' > foo.2026.log
+cylc show "${SUITE_NAME}" foo.2025 | grep -E '^  - xtrigger' > foo.2025.log
+cylc show "${SUITE_NAME}" foo.2026 | grep -E '^  - xtrigger' > foo.2026.log
 
 # foo.2025 should get only xtrigger e1.
 cmp_ok foo.2025.log - <<__END__
-  o  xtrigger "e1 = echo(name=bob)" ... NOT satisfied
+  - xtrigger "e1 = echo(name=bob)"
 __END__
 
 # foo.2026 should get only xtrigger e2.
 cmp_ok foo.2026.log - <<__END__
-  o  xtrigger "e2 = echo(name=alice)" ... NOT satisfied
+  - xtrigger "e2 = echo(name=alice)"
 __END__
 
 cylc stop --now --max-polls=10 --interval=2 "${SUITE_NAME}"

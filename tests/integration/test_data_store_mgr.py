@@ -29,7 +29,6 @@ from cylc.flow.data_store_mgr import (
 from cylc.flow.task_state import (
     TASK_STATUS_FAILED,
     TASK_STATUS_SUCCEEDED,
-    TASK_STATUS_WAITING
 )
 from cylc.flow.wallclock import get_current_time_string
 
@@ -72,16 +71,6 @@ def job_db_row():
         '20542',
         'localhost',
     ]
-
-
-@pytest.fixture
-@pytest.mark.asyncio
-async def myflow(flow, scheduler):
-    schd = scheduler(reg)
-    await schd.install()
-    await schd.initialise()
-    await schd.configure()
-    return schd
 
 
 def ext_id(schd):
@@ -260,6 +249,7 @@ def test_update_data_structure(harness):
     schd.data_store_mgr.data[w_id] = data
     assert TASK_STATUS_FAILED not in set(collect_states(data, TASK_PROXIES))
     assert TASK_STATUS_FAILED not in set(collect_states(data, FAMILY_PROXIES))
+    assert TASK_STATUS_FAILED not in data[WORKFLOW].state_totals
     assert len({t.is_held for t in data[TASK_PROXIES].values()}) == 2
     for itask in schd.pool.get_all_tasks():
         itask.state.reset(TASK_STATUS_FAILED)
@@ -269,6 +259,8 @@ def test_update_data_structure(harness):
     assert TASK_STATUS_FAILED in set(collect_states(data, TASK_PROXIES))
     # family state changed and applied
     assert TASK_STATUS_FAILED in set(collect_states(data, FAMILY_PROXIES))
+    # state totals changed
+    assert TASK_STATUS_FAILED in data[WORKFLOW].state_totals
     # Shows prunning worked
     assert len({t.is_held for t in data[TASK_PROXIES].values()}) == 1
 
@@ -291,16 +283,3 @@ def test_delta_task_prerequisite(harness):
         p.satisfied
         for t in schd.data_store_mgr.updated[TASK_PROXIES].values()
         for p in t.prerequisites})
-
-
-@pytest.mark.skip('TODO: fix this test')
-def test_update_workflow(harness):
-    """Test method that updates the dynamic fields of the workflow msg."""
-    schd, data = harness
-    schd.data_store_mgr.apply_deltas()
-    old_time = data[WORKFLOW].last_updated
-    schd.data_store_mgr.clear_deltas()
-    schd.data_store_mgr.update_workflow()
-    schd.data_store_mgr.apply_deltas()
-    new_time = data[WORKFLOW].last_updated
-    assert new_time > old_time

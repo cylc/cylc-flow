@@ -284,30 +284,26 @@ def main(_, options, suite, *task_args):
                             or t_proxy['externalTriggers']
                             or t_proxy['xtriggers']
                     ):
+                        ansiprint(
+                            '\n<bold>other</bold>'
+                            ' (<red>- => not satisfied</red>):')
                         if t_proxy['clockTrigger']['timeString']:
                             state = t_proxy['clockTrigger']['satisfied']
-                            print(
-                                f'  o  Clock trigger time reached ... {state}')
                             time_str = t_proxy['clockTrigger']['timeString']
-                            print('\nother:')
-                            print(f'  o  Triggers at ... {time_str}')
-                        else:
-                            print('\nother:')
+                            print_msg_state(
+                                'Clock trigger time reached',
+                                state)
+                            print(f'  o Triggers at ... {time_str}')
                         for ext_trig in t_proxy['externalTriggers']:
-                            if ext_trig['satisfied']:
-                                msg = 'satisfied'
-                            else:
-                                msg = 'NOT satisfied'
-                            info = f'{ext_trig["label"]}'
-                            print('  o  %s ... %s' % (info, msg))
+                            state = ext_trig['satisfied']
+                            print_msg_state(
+                                f'{ext_trig["label"]} ... {state}',
+                                state)
                         for xtrig in t_proxy['xtriggers']:
-                            if xtrig['satisfied']:
-                                msg = 'satisfied'
-                            else:
-                                msg = 'NOT satisfied'
-                            info = (
-                                f'xtrigger "{xtrig["label"]} = {xtrig["id"]}"')
-                            print('  o  %s ... %s' % (info, msg))
+                            state = xtrig['satisfied']
+                            print_msg_state(
+                                f'xtrigger "{xtrig["label"]} = {xtrig["id"]}"',
+                                state)
         if not results['taskProxies']:
             ansiprint(
                 f"<red>No matching tasks found: {task_ids}",

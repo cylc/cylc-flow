@@ -62,9 +62,9 @@ outputs (- => not completed):
   - foo.20140808T0900$TZ_OFFSET_BASIC succeeded
   - foo.20140808T0900$TZ_OFFSET_BASIC failed
 
-other:
-  o  Clock trigger time reached ... True
-  o  Triggers at ... 2014-08-08T09:05:00$TZ_OFFSET_EXTENDED
+other (- => not satisfied):
+  + Clock trigger time reached
+  o Triggers at ... 2014-08-08T09:05:00$TZ_OFFSET_EXTENDED
 __SHOW_OUTPUT__
 #-------------------------------------------------------------------------------
 purge

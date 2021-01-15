@@ -74,7 +74,7 @@ from cylc.flow.suite_status import get_suite_status
 from cylc.flow.task_job_logs import JOB_LOG_OPTS, get_task_job_log
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_state import (
-    TASK_STATUS_WAITING, TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
+    TASK_STATUS_WAITING, TASK_STATUS_PREPARING, TASK_STATUS_SUBMITTED,
     TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED,
     TASK_STATUS_FAILED, TASK_STATUS_EXPIRED)
 from cylc.flow.task_state_prop import extract_group_state
@@ -134,7 +134,7 @@ DELTAS_MAP = {
 DELTA_FIELDS = {DELTA_ADDED, DELTA_UPDATED, DELTA_PRUNED}
 
 JOB_STATUSES_ALL = [
-    TASK_STATUS_READY,
+    TASK_STATUS_PREPARING,
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_RUNNING,
@@ -791,7 +791,7 @@ class DataStoreMgr:
             flow_label=itask.flow_label
         )
         if is_parent and tp_id not in self.n_window_nodes:
-            # TODO: Load task info from DB
+            # TODO: Load task info from DB, including itask prerequisites
             tproxy.state = TASK_STATUS_EXPIRED
         else:
             tproxy.state = TASK_STATUS_WAITING
@@ -803,6 +803,12 @@ class DataStoreMgr:
             for a_name in self.ancestors[task_def.name]
             if a_name != task_def.name]
         tproxy.first_parent = tproxy.ancestors[0]
+
+        for prereq in itask.state.prerequisites:
+            # Protobuf messages populated within
+            prereq_obj = prereq.api_dump(self.workflow_id)
+            if prereq_obj:
+                tproxy.prerequisites.append(prereq_obj)
 
         for label, message, satisfied in itask.state.outputs.get_all():
             output = tproxy.outputs[label]
@@ -1470,7 +1476,6 @@ class DataStoreMgr:
         for label, message, satisfied in itask.state.outputs.get_all():
             output = tp_delta.outputs[label]
             output.label = label
-            output.message = message
             output.satisfied = satisfied
             output.time = update_time
 

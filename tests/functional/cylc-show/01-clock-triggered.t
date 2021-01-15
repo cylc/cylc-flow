@@ -49,9 +49,9 @@ outputs (- => not completed):
   - foo.20141106T0900Z succeeded
   - foo.20141106T0900Z failed
 
-other:
-  o  Clock trigger time reached ... True
-  o  Triggers at ... 2014-11-06T09:05:00Z
+other (- => not satisfied):
+  + Clock trigger time reached
+  o Triggers at ... 2014-11-06T09:05:00Z
 __SHOW_OUTPUT__
 #-------------------------------------------------------------------------------
 purge
