@@ -16,16 +16,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from cylc.flow.scheduler_cli import (  # noqa: F401
-    main as scheduler_main,
-    RESTART_DOC as __doc__
+    play as main,
+    PLAY_DOC as __doc__
 )
 
-# CLI of "cylc restart". See cylc.flow.scheduler_cli for detail.
-
-
-def main(*args):
-    scheduler_main(*args, is_restart=True)
-
+# CLI of "cylc play". See cylc.flow.scheduler_cli for details.
 
 if __name__ == "__main__":
     main()

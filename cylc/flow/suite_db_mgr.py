@@ -312,7 +312,7 @@ class SuiteDatabaseManager:
             self.KEY_CYCLE_POINT_TIME_ZONE
         ):
             value = getattr(schd.options, key, None)
-            if value is not None:
+            if value is not None and value != 'ignore':
                 self.db_inserts_map[self.TABLE_SUITE_PARAMS].append({
                     "key": key, "value": value})
         for key in (self.KEY_STOP_CLOCK_TIME, self.KEY_STOP_TASK):
@@ -555,13 +555,17 @@ class SuiteDatabaseManager:
                 f"{self.pri_dao.db_file_name}")
             self.pub_dao.n_tries = 0
 
-    def on_restart(self):
-        """Check & vacuum the runtime DB on restart."""
+    def restart_check(self):
+        """Check & vacuum the runtime DB for a restart.
+
+        Raises SuiteServiceFileError if DB is incompatible.
+
+        Returns False if DB doesn't exist, else True.
+        """
         try:
             self.check_suite_db_compatibility()
         except FileNotFoundError:
-            raise SuiteServiceFileError(
-                "Cannot restart as the workflow database was not found")
+            return False
         except SuiteServiceFileError as exc:
             raise SuiteServiceFileError(
                 f"Cannot restart - {exc}")
@@ -572,6 +576,7 @@ class SuiteDatabaseManager:
             self.put_suite_params_1(self.KEY_RESTART_COUNT, self.n_restart)
         finally:
             pri_dao.close()
+        return True
 
     def check_suite_db_compatibility(self):
         """Raises SuiteServiceFileError if the existing suite database is
@@ -586,7 +591,7 @@ class SuiteDatabaseManager:
                 f'SELECT value FROM {self.TABLE_SUITE_PARAMS} '
                 f'WHERE key == "{self.KEY_CYLC_VERSION}"').fetchone()[0]
         except TypeError:
-            raise SuiteServiceFileError(incompat_msg)
+            raise SuiteServiceFileError(f"{incompat_msg}, or is corrupted")
         finally:
             pri_dao.close()
         try:

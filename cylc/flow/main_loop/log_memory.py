@@ -20,7 +20,7 @@
    This plugin is for Cylc developers debugging cylc memory usage.
 
    For general interest memory measurement try
-   ``/usr/bin/time -v cylc run`` or ``cylc run --profile``.
+   ``/usr/bin/time -v cylc play`` or ``cylc play --profile``.
 
 .. note::
 

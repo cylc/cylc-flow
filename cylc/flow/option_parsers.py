@@ -179,8 +179,8 @@ TASK_GLOB matches task or family names at a given cycle point.
                     " e.g. 'STR=\"string\"', INT=43, BOOL=True."
                     " This option can be used multiple "
                     " times on the command line."
-                    " NOTE: these settings persist across suite restarts,"
-                    " but can be set again on the \"cylc restart\""
+                    " NOTE: these settings persist across workflow restarts,"
+                    " but can be set again on the \"cylc play\""
                     " command line if they need to be overridden."
                 ),
                 action="append", default=[], dest="templatevars")
@@ -193,8 +193,8 @@ TASK_GLOB matches task or family names at a given cycle point.
                     "pairs (one per line). "
                     "As with --set values should be valid Python literals "
                     "so strings must be quoted e.g. STR='string'. "
-                    "NOTE: these settings persist across suite restarts, "
-                    "but can be set again on the \"cylc restart\" "
+                    "NOTE: these settings persist across workflow restarts, "
+                    "but can be set again on the \"cylc play\" "
                     "command line if they need to be overridden."
                 ),
                 action="store", default=None, dest="templatevars_file")

@@ -39,12 +39,12 @@ Configuring
 
 Main loop plugins can be activated either by:
 
-* Using the ``-main-loop`` option with ``cylc run`` or ``cylc restart`` e.g:
+* Using the ``-main-loop`` option with ``cylc play`` e.g:
 
   .. code-block:: console
 
      $ # run a workflow using the "health check" and "auto restart" plugins:
-     $ cylc run my-workflow --main-loop 'health check' \
+     $ cylc play my-workflow --main-loop 'health check' \
        --main-loop 'auto restart'
 
 * Adding them to the default list of plugins in

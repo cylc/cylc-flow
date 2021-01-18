@@ -91,7 +91,7 @@ for GROUP in nwp tst opr; do
     mkdir -p $DEST/$SUITE
     cp -r flow.cylc $DEST/$SUITE
     cylc reg $DEST/$SUITE $DEST/$SUITE
-    cylc run $DEST/$SUITE > /dev/null &
+    cylc play $DEST/$SUITE > /dev/null &
   done
 done
 
