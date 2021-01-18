@@ -30,10 +30,7 @@ from uuid import uuid1
 from cylc.flow import CYLC_LOG
 from cylc.flow.suite_files import SuiteFiles
 from cylc.flow.scheduler import Scheduler
-from cylc.flow.scheduler_cli import (
-    RunOptions,
-    RestartOptions
-)
+from cylc.flow.scheduler_cli import RunOptions
 from cylc.flow.suite_status import StopMode
 
 from .flow_writer import flow_config_str
@@ -54,16 +51,13 @@ def _make_flow(run_dir, test_dir, conf, name=None):
     return reg
 
 
-def _make_scheduler(reg, is_restart=False, **opts):
+def _make_scheduler(reg, **opts):
     """Return a scheduler object for a flow registration."""
+    # This allows hold_start to be overriden:
     opts = {'hold_start': True, **opts}
-    # get options object
-    if is_restart:
-        options = RestartOptions(**opts)
-    else:
-        options = RunOptions(**opts)
+    options = RunOptions(**opts)
     # create workflow
-    return Scheduler(reg, options, is_restart=is_restart)
+    return Scheduler(reg, options)
 
 
 @asynccontextmanager

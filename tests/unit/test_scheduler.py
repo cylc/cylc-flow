@@ -29,7 +29,7 @@ from cylc.flow.scheduler import Scheduler
         (
             {
                 'self.is_restart': True,
-                'self.options.ignore_stopcp': True,
+                'self.options.stopcp': 'ignore',
             },
             '2000'
         ),
@@ -72,7 +72,6 @@ def test_process_cylc_stop_point(get_point, options, expected):
     get_point.return_value = None
     inputs = {
         'self.is_restart': False,
-        'self.options.ignore_stopcp': False,
         'self.options.stopcp': '1990',
         'self.pool.stop_point': '1991',
         'self.config.final_point': '2000',
@@ -91,7 +90,6 @@ def test_process_cylc_stop_point(get_point, options, expected):
     scheduler.is_restart = inputs['self.is_restart']
     # Set-up a fake options object.
     scheduler.options = SimpleNamespace(
-        ignore_stopcp=inputs['self.options.ignore_stopcp'],
         stopcp=inputs['self.options.stopcp']
     )
     # Set-up fake config object

@@ -15,12 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """CLI of "cylc run". See cylc.flow.scheduler_cli for detail."""
-from cylc.flow.scheduler_cli import main as scheduler_main
-
-
-def main():
-    scheduler_main(is_restart=False)
-
+from cylc.flow.scheduler_cli import play as main
 
 if __name__ == "__main__":
     main()
