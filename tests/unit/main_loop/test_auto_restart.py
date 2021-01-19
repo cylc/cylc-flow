@@ -121,12 +121,18 @@ def test_should_auto_restart(
         stop_mode,
         condemned_hosts,
         auto_restart_time,
-        should_auto_restart
+        should_auto_restart,
+        monkeypatch
 ):
     """Ensure the suite only auto-restarts when appropriate."""
+    # factor out networking and FQDNs for testing purposes
+    monkeypatch.setattr(
+        'cylc.flow.main_loop.auto_restart.get_fqdn_by_host',
+        lambda x: x
+    )
     # mock a scheduler object
     scheduler = Mock(
-        host=get_fqdn_by_host(host),
+        host=host,
         stop_mode=stop_mode,
         auto_restart_time=auto_restart_time
     )

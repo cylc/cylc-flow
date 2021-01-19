@@ -4,7 +4,7 @@ on: [pull_request]
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     strategy:
       matrix:
@@ -26,8 +26,17 @@ jobs:
       - name: Brew Install
         if: startsWith(matrix.os, 'macos')
         run: |
+          # apply DNS patch
+          patch cylc/flow/hostuserutil.py < etc/conf/macos-patch
+
           brew update
-          brew install shellcheck sqlite3
+          brew install shellcheck sqlite3 bash coreutils
+
+          # add GNU coreutils and sed to the user PATH
+          # (see instructions in brew install output)
+          echo \
+            "$(brew --prefix)/opt/coreutils/libexec/gnubin" \
+            >> "${GITHUB_PATH}"
 
       - name: Apt-Get Install
         if: startsWith(matrix.os, 'ubuntu')

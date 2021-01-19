@@ -1,38 +1,56 @@
 name: functional tests
 
-on: [pull_request]
+on: [pull_request, workflow_dispatch]
 
 jobs:
   test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 35
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.name || matrix.chunk }}
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
         os: ['ubuntu-latest']
         python-version: ['3.7']
-        tests: [
-          # local tests
-          ['tests/f', '1/4', '_local_background* _local_at*'],
-          ['tests/f', '2/4', '_local_background* _local_at*'],
-          ['tests/f', '3/4', '_local_background* _local_at*'],
-          ['tests/f', '4/4', '_local_background* _local_at*'],
-          ['tests/k', '1/1', '_local_background* _local_at*'],
-          # remote tests
-          ['tests/f tests/k', '1/1',
-           '_remote_background_indep_poll _remote_at_indep_poll'],
-          ['tests/f tests/k', '1/1',
-           '_remote_background_indep_tcp _remote_at_indep_tcp']
-        ]
+        test-base: ['tests/f']
+        chunk: ['1/4', '2/4', '3/4', '4/4']
+        platform: ['_local_background* _local_at*']
+        # NOTE: includes must define ALL of the matrix values
         include:
-          - os: 'macos-latest'
+          # tests/k
+          - name: 'flaky'
+            os: 'ubuntu-latest'
             python-version: '3.7'
-            tests: ['tests/f', '1/4', '_local_background*']
+            test-base: 'tests/k'
+            chunk: '1/1'
+            platform: '_local_background* _local_at*'
+          # remote platforms
+          - name: '_remote_background_indep_poll'
+            os: 'ubuntu-latest'
+            python-version: '3.7'
+            test-base: 'tests/f tests/k'
+            chunk: '1/1'
+            platform: '_remote_background_indep_poll _remote_at_indep_poll'
+          - name: '_remote_background_indep_tcp'
+            os: 'ubuntu-latest'
+            test-base: 'tests/f tests/k'
+            python-version: '3.7'
+            chunk: '1/1'
+            platform: '_remote_background_indep_tcp _remote_at_indep_tcp'
+          # macos
+          - name: 'macos'
+            os: 'macos-latest'
+            python-version: '3.7'
+            test-base: 'tests/f'
+            chunk: '1/4'
+            platform: '_local_background*'
 
     env:
-      BASE: ${{ matrix.tests[0] }}
-      CHUNK: ${{ matrix.tests[1] }}
-      CYLC_TEST_PLATFORMS: ${{ matrix.tests[2] }}
+      # Use non-UTC time zone
+      TZ: XXX-05:30
+      # these vars are used by etc/bin/run-functional-tests
+      CHUNK: ${{ matrix.chunk }}
+      CYLC_TEST_PLATFORMS: ${{ matrix.platform }}
       CYLC_COVERAGE: 1
 
     steps:
@@ -56,9 +74,17 @@ jobs:
 
           # add GNU coreutils and sed to the user PATH
           # (see instructions in brew install output)
-          cat >> "$HOME/.bashrc" <<__HERE__
-          PATH="$(brew --prefix)/opt/coreutils/libexec/gnubin:$PATH"
-          PATH="/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"
+          echo \
+            "$(brew --prefix)/opt/coreutils/libexec/gnubin" \
+            >> "${GITHUB_PATH}"
+          echo \
+            "/usr/local/opt/gnu-sed/libexec/gnubin" \
+            >> "${GITHUB_PATH}"
+
+          # add coreutils to the bashrc too (for jobs)
+          cat >> "${HOME}/.bashrc" <<__HERE__
+          PATH="$(brew --prefix)/opt/coreutils/libexec/gnubin:/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"
+          export PATH
           __HERE__
 
       - name: Apt-Get Install
@@ -79,22 +105,23 @@ jobs:
           mkdir "$HOME/cylc-run"
 
       - name: Configure Atrun
-        if: contains(matrix.tests[2], '_local_at')
+        if: contains(matrix.platform, '_local_at')
         run: |
-          PTH="$HOME/.cylc/flow/$(cylc version)"
+          PTH="$HOME/.cylc/flow/"
           mkdir -p "${PTH}"
-          cat > "${PTH}/global-test.cylc" << __HERE__
+          cat > "${PTH}/global.cylc" << __HERE__
             [platforms]
                 [[_local_at_indep_tcp]]
-                    hostname = localhost
+                    hosts = localhost
           __HERE__
+          cp "${PTH}/global.cylc" "${PTH}/global-tests.cylc"
 
       - name: Swarm Configure
         run: |
           etc/bin/swarm --yes --debug configure
 
       - name: Swarm Build
-        if: contains(matrix.tests[2], '_remote')
+        if: contains(matrix.platform, '_remote')
         run: |
           # `swarm configure` seems to get ignored so override the user config
           cp etc/conf/ssh_config $HOME/.ssh/config
@@ -106,54 +133,79 @@ jobs:
           ssh -vv _remote_background_indep_poll hostname
 
       - name: Test
+        id: test
+        timeout-minutes: 35
+        continue-on-error: true
         run: |
-          # Use non-UTC time zone
-          export TZ=XXX-05:30
-
-          if [[ "${BASE}" == 'tests/k' ]]; then
+          if [[ '${{ matrix.test-base }}' == 'tests/k' ]]; then
               NPROC=4
           else
               NPROC=8
           fi
-          # NOTE: $BASE is purposefully un-quoted
+          # NOTE: test base is purposefully un-quoted
           etc/bin/run-functional-tests \
               -j "${NPROC}" \
-              --state=save ${BASE} \
-          || (
-              echo '=== Re-running Failed Tests ==='
-              CHUNK= etc/bin/run-functional-tests \
-                  -j "${NPROC}" \
-                  --state=save,failed
-          )
+              --state=save \
+              ${{ matrix.test-base }} \
+              || (touch tests-did-not-time-out && false)
 
-      - name: Debug
-        if: failure()
+      - name: Re-run failed tests
+        timeout-minutes: 10
+        if: steps.test.outcome == 'failure'
         run: |
-          cylc scan
-          find "$HOME/cylc-run" -name '*.err' -type f \
-              -exec echo '==== {} ====' \; -exec cat '{}' \;
-          find "$HOME/cylc-run" -name 'log.*' -type f \
-              -exec echo '==== {} ====' \; -exec cat '{}' \;
-          find "${TMPDIR:-/tmp}/${USER}/cylctb-"* -type f \
-              -exec echo '==== {} ====' \; -exec cat '{}' \;
+          if [[ ! -f tests-did-not-time-out ]]; then
+            echo "the preious test run timed out -> not re-running tests"
+            # this false causes the workflow to fail
+            false
+          fi
+          # TODO: make the tests deterministic so we don't need to do this
+          etc/bin/run-functional-tests \
+              -j 1 \
+              -v \
+              --state=save,failed ${{ matrix.test-base }}
 
       - name: Copy cylc-run out of container
-        if: failure()
-        run: |
-          docker cp bash:/root/cylc-run .
-
-      - name: Upload
-        if: failure()
-        uses: actions/upload-artifact@v2
-        with:
-          name: Upload cylc-run artifact
-          path: cylc-run
-
-      - name: Fetch Remote Coverage
-        if: contains(matrix.tests[2], '_remote')
+        if: failure() && steps.test.outcome == 'failure' && contains(matrix.platform, '_remote')
         run: |
           # pick the first host in the list
-          host="$(cut -d ' ' -f 1 <<< "${{ matrix.tests[2] }}")"
+          host="$(cut -d ' ' -f 1 <<< "${{ matrix.platform }}")"
+          # copy back the remote cylc-run dir
+          rsync -av \
+            "${host}:/root/cylc-run/" \
+            "${HOME}/cylc-run/${host}/"
+
+      - name: Debug
+        if: failure() && steps.test.outcome == 'failure'
+        timeout-minutes: 1
+        run: |
+          cylc scan --state=all --format=rich --color-blind
+          find "$HOME/cylc-run" -name '*.err' -type f \
+              -exec echo '====== {} ======' \; -exec cat '{}' \;
+          find "$HOME/cylc-run" -name 'log.*' -type f \
+              -exec echo '====== {} ======' \; -exec cat '{}' \;
+          find "${TMPDIR:-/tmp}/${USER}/cylctb-"* -type f \
+              -exec echo '====== {} ======' \; -exec cat '{}' \;
+
+      - name: Set Upload Name
+        if: failure() && steps.test.outcome == 'failure'
+        id: uploadname
+        run: |
+          # artifact name cannot contain '/' characters
+          CID="$(sed 's|/|-|g' <<< "${{ matrix.name || matrix.chunk }}")"
+          echo "::set-output name=uploadname::$CID"
+
+      - name: Upload
+        if: failure() && steps.test.outcome == 'failure'
+        uses: actions/upload-artifact@v2
+        with:
+          name: cylc-run (${{ steps.uploadname.outputs.uploadname }})
+          path: ~/cylc-run/
+
+      - name: Fetch Remote Coverage
+        if: contains(matrix.platform, '_remote')
+        run: |
+          # pick the first host in the list
+          host="$(cut -d ' ' -f 1 <<< "${{ matrix.platform }}")"
           # copy back the remote coverage files
           rsync -av \
             "${host}:/cylc/" \
