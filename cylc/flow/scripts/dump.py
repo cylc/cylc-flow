@@ -85,8 +85,8 @@ fragment fProxy on FamilyProxy {
 WORKFLOW_SUMMARY_FRAGMENT = '''
 fragment wFlow on Workflow {
   name
-  oldestCyclePoint
-  newestCyclePoint
+  oldestActiveCyclePoint
+  newestActiveCyclePoint
   newestRunaheadCyclePoint
   timeZoneInfo {
     hours

@@ -144,17 +144,13 @@ class TaskPool:
 
     ERR_PREFIX_TASKID_MATCH = "No matching tasks found: "
 
-    def __init__(
-            self, config, suite_db_mgr, task_events_mgr,
-            job_pool, data_store_mgr
-    ):
+    def __init__(self, config, suite_db_mgr, task_events_mgr, data_store_mgr):
         self.config = config
         self.stop_point = config.final_point
         self.suite_db_mgr = suite_db_mgr
         self.task_events_mgr = task_events_mgr
         # TODO this is ugly:
         self.task_events_mgr.spawn_func = self.spawn_on_output
-        self.job_pool = job_pool
         self.data_store_mgr = data_store_mgr
         self.flow_label_mgr = FlowLabelMgr()
 
@@ -176,7 +172,6 @@ class TaskPool:
         self.rhpool_list = []
         self.pool_changed = False
         self.rhpool_changed = False
-        self.pool_changes = []
 
         self.is_held = False
         self.hold_point = None
@@ -420,6 +415,7 @@ class TaskPool:
             ):
                 for message in json.loads(outputs_str).values():
                     itask.state.outputs.set_completion(message, True)
+                    self.data_store_mgr.delta_task_output(itask, message)
 
             if platform_name:
                 itask.summary['platforms_used'][
@@ -536,7 +532,6 @@ class TaskPool:
         self.pool.setdefault(itask.point, {})
         self.pool[itask.point][itask.identity] = itask
         self.pool_changed = True
-        self.pool_changes.append(itask)
         LOG.debug("[%s] -released to the task pool", itask)
 
         # The following two could be called in separate places,
@@ -544,8 +539,9 @@ class TaskPool:
         # Register pool node reference data-store with ID_DELIM format
         self.data_store_mgr.add_pool_node(itask.tdef.name, itask.point)
         # Create new data-store n-distance graph window about this task
-        self.data_store_mgr.increment_graph_window(
-            itask.tdef.name, itask.point, itask.flow_label)
+        self.data_store_mgr.increment_graph_window(itask)
+        self.data_store_mgr.delta_task_state(itask)
+        self.data_store_mgr.delta_task_held(itask)
 
         del self.runahead_pool[itask.point][itask.identity]
         if not self.runahead_pool[itask.point]:
@@ -637,12 +633,6 @@ class TaskPool:
                 self.rhpool_list.extend(list(itask_id_maps.values()))
         return self.rhpool_list
 
-    def get_pool_change_tasks(self):
-        """Return a list of task proxies that changed pool."""
-        results = self.pool_changes
-        self.pool_changes = []
-        return results
-
     def get_tasks_by_point(self, incl_runahead):
         """Return a map of task proxies by cycle point."""
         point_itasks = {}
@@ -699,13 +689,20 @@ class TaskPool:
             for itask in list(self.queues[queue].values()):
                 if not itask.state(TASK_STATUS_QUEUED):
                     # only need to check that unqueued tasks are ready
-                    if itask.is_ready():
+                    check_items = itask.is_ready()
+                    # use this periodic checking point for data-store delta
+                    # creation, some items aren't event driven (i.e. clock).
+                    if itask.tdef.clocktrigger_offset is not None:
+                        self.data_store_mgr.delta_task_clock_trigger(
+                            itask, check_items)
+                    if all(check_items):
                         # queue the task
                         itask.state.reset(TASK_STATUS_QUEUED)
                         itask.reset_manual_trigger()
                         # move the task to the back of the queue
                         self.queues[queue][itask.identity] = \
                             self.queues[queue].pop(itask.identity)
+                        self.data_store_mgr.delta_task_state(itask)
 
             # 2) submit queued tasks if manually forced or not queue-limited
             n_active = 0
@@ -893,7 +890,8 @@ class TaskPool:
                     "[%s] -not running (beyond suite stop cycle) %s",
                     itask,
                     self.stop_point)
-                itask.state.reset(is_held=True)
+                if itask.state.reset(is_held=True):
+                    self.data_store_mgr.delta_task_held(itask)
         return self.stop_point
 
     def can_stop(self, stop_mode):
@@ -1023,20 +1021,23 @@ class TaskPool:
         if point is not None:
             for itask in self.get_all_tasks():
                 if itask.point > point:
-                    itask.state.reset(is_held=True)
+                    if itask.state.reset(is_held=True):
+                        self.data_store_mgr.delta_task_held(itask)
 
     def hold_tasks(self, items):
         """Hold tasks with IDs matching any item in "ids"."""
         itasks, bad_items = self.filter_task_proxies(items)
         for itask in itasks:
-            itask.state.reset(is_held=True)
+            if itask.state.reset(is_held=True):
+                self.data_store_mgr.delta_task_held(itask)
         return len(bad_items)
 
     def release_tasks(self, items):
         """Release held tasks with IDs matching any item in "ids"."""
         itasks, bad_items = self.filter_task_proxies(items)
         for itask in itasks:
-            itask.state.reset(is_held=False)
+            if itask.state.reset(is_held=False):
+                self.data_store_mgr.delta_task_held(itask)
         return len(bad_items)
 
     def hold_all_tasks(self):
@@ -1044,7 +1045,8 @@ class TaskPool:
         LOG.info("Holding all waiting or queued tasks now")
         self.is_held = True
         for itask in self.get_all_tasks():
-            itask.state.reset(is_held=True)
+            if itask.state.reset(is_held=True):
+                self.data_store_mgr.delta_task_held(itask)
 
     def release_all_tasks(self):
         """Release all held tasks."""
@@ -1106,6 +1108,7 @@ class TaskPool:
                 for t in tasks:
                     t.state.satisfy_me(
                         set([(itask.tdef.name, str(itask.point), output)]))
+                    self.data_store_mgr.delta_task_prerequisite(t)
                 # Event-driven suicide.
                 if (c_task.state.suicide_prerequisites and
                         c_task.state.suicide_prerequisites_all_satisfied()):
@@ -1221,7 +1224,8 @@ class TaskPool:
             # Hold if beyond the suite hold point
             LOG.info("[%s] -holding (beyond suite hold point) %s",
                      itask, self.hold_point)
-            itask.state.reset(is_held=True)
+            if itask.state.reset(is_held=True):
+                self.data_store_mgr.delta_task_held(itask)
         if self.stop_point and itask.point <= self.stop_point:
             future_trigger_overrun = False
             for pct in itask.state.prerequisites_get_target_points():
@@ -1235,7 +1239,8 @@ class TaskPool:
                 and itask.state(TASK_STATUS_WAITING, is_held=False)):
             # Hold newly-spawned tasks in a held suite (e.g. due to manual
             # triggering of a held task).
-            itask.state.reset(is_held=True)
+            if itask.state.reset(is_held=True):
+                self.data_store_mgr.delta_task_held(itask)
 
         # Attempt to satisfy any absolute triggers now.
         # TODO: consider doing this only for tasks with absolute prerequisites.
@@ -1317,9 +1322,12 @@ class TaskPool:
             if itask is not None:
                 # (If None, spawner reports cycle bounds errors).
                 itask.manual_trigger = True
-                itask.state.reset(TASK_STATUS_WAITING)
+                if itask.state.reset(TASK_STATUS_WAITING):
+                    self.data_store_mgr.delta_task_state(itask)
                 LOG.critical('setting %s ready to run', itask)
                 itask.state.set_prerequisites_all_satisfied()
+                self.data_store_mgr.delta_task_prerequisite(itask)
+                self.data_store_mgr.delta_task_outputs(itask)
         return n_warnings
 
     def sim_time_check(self, message_queue):
@@ -1376,7 +1384,9 @@ class TaskPool:
             self.task_events_mgr.setup_event_handlers(itask, "expired", msg)
             # TODO succeeded and expired states are useless due to immediate
             # removal under all circumstances (unhandled failed is still used).
-            itask.state.reset(TASK_STATUS_EXPIRED, is_held=False)
+            if itask.state.reset(TASK_STATUS_EXPIRED, is_held=False):
+                self.data_store_mgr.delta_task_state(itask)
+                self.data_store_mgr.delta_task_held(itask)
             self.remove(itask, 'expired')
             return True
         return False

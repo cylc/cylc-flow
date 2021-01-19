@@ -119,15 +119,17 @@ cmp_json "${TEST_NAME}-taskinstance" "${TEST_NAME}-taskinstance" \
                 "satisfied": true
             }
         ],
-        "outputs": {
-            "expired": false,
-            "submitted": true,
-            "submit-failed": false,
-            "started": true,
-            "succeeded": false,
-            "failed": false
-        },
-        "extras": {}
+        "outputs": [
+            {"label": "expired", "message": "expired", "satisfied": false},
+            {"label": "submitted", "message": "submitted", "satisfied": true},
+            {"label": "submit-failed", "message": "submit-failed", "satisfied": false},
+            {"label": "started", "message": "started", "satisfied": true},
+            {"label": "succeeded", "message": "succeeded", "satisfied": false},
+            {"label": "failed", "message": "failed", "satisfied": false}
+        ],
+        "clockTrigger": {"timeString": "", "satisfied": false},
+        "externalTriggers": [],
+        "xtriggers": []
     }
 }
 __SHOW_OUTPUT__

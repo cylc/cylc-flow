@@ -91,8 +91,26 @@ query ($wFlows: [ID]!, $taskIds: [ID]) {
       }
       satisfied
     }
-    outputs
-    extras
+    outputs {
+      label
+      message
+      satisfied
+    }
+    clockTrigger {
+      timeString
+      satisfied
+    }
+    externalTriggers {
+      id
+      label
+      message
+      satisfied
+    }
+    xtriggers {
+      id
+      label
+      satisfied
+    }
   }
 }
 '''
@@ -258,12 +276,34 @@ def main(_, options, suite, *task_args):
                         ' (<red>- => not completed</red>):')
                     if not t_proxy['outputs']:
                         print('  (None)')
-                    for key, val in t_proxy['outputs'].items():
-                        print_msg_state(f'{task_id} {key}', val)
-                    if t_proxy['extras']:
-                        print('\nother:')
-                        for key, value in t_proxy['extras'].items():
-                            print('  o  %s ... %s' % (key, value))
+                    for output in t_proxy['outputs']:
+                        info = f'{task_id} {output["label"]}'
+                        print_msg_state(info, output['satisfied'])
+                    if (
+                            t_proxy['clockTrigger']['timeString']
+                            or t_proxy['externalTriggers']
+                            or t_proxy['xtriggers']
+                    ):
+                        ansiprint(
+                            '\n<bold>other</bold>'
+                            ' (<red>- => not satisfied</red>):')
+                        if t_proxy['clockTrigger']['timeString']:
+                            state = t_proxy['clockTrigger']['satisfied']
+                            time_str = t_proxy['clockTrigger']['timeString']
+                            print_msg_state(
+                                'Clock trigger time reached',
+                                state)
+                            print(f'  o Triggers at ... {time_str}')
+                        for ext_trig in t_proxy['externalTriggers']:
+                            state = ext_trig['satisfied']
+                            print_msg_state(
+                                f'{ext_trig["label"]} ... {state}',
+                                state)
+                        for xtrig in t_proxy['xtriggers']:
+                            state = xtrig['satisfied']
+                            print_msg_state(
+                                f'xtrigger "{xtrig["label"]} = {xtrig["id"]}"',
+                                state)
         if not results['taskProxies']:
             ansiprint(
                 f"<red>No matching tasks found: {task_ids}",

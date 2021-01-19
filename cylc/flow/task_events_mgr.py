@@ -177,8 +177,8 @@ class TaskEventsManager():
     KEY_EXECUTE_TIME_LIMIT = 'execution_time_limit'
     NON_UNIQUE_EVENTS = ('warning', 'critical', 'custom')
 
-    def __init__(self, suite, proc_pool, suite_db_mgr,
-                 broadcast_mgr, xtrigger_mgr, job_pool, timestamp):
+    def __init__(self, suite, proc_pool, suite_db_mgr, broadcast_mgr,
+                 xtrigger_mgr, data_store_mgr, timestamp):
         self.suite = suite
         self.suite_url = None
         self.suite_cfg = {}
@@ -187,7 +187,7 @@ class TaskEventsManager():
         self.suite_db_mgr = suite_db_mgr
         self.broadcast_mgr = broadcast_mgr
         self.xtrigger_mgr = xtrigger_mgr
-        self.job_pool = job_pool
+        self.data_store_mgr = data_store_mgr
         self.mail_interval = 0.0
         self.mail_smtp = None
         self.mail_footer = None
@@ -406,7 +406,7 @@ class TaskEventsManager():
         else:
             new_msg = message
         itask.set_summary_message(new_msg)
-        self.job_pool.add_job_msg(
+        self.data_store_mgr.delta_job_msg(
             get_task_job_id(itask.point, itask.tdef.name, submit_num),
             new_msg)
 
@@ -416,6 +416,7 @@ class TaskEventsManager():
         msg0 = message.split('/')[0]
         completed_trigger = itask.state.outputs.set_msg_trg_completion(
             message=msg0, is_completed=True)
+        self.data_store_mgr.delta_task_output(itask, msg0)
 
         # Check the `started` event has not been missed e.g. due to
         # polling delay
@@ -498,7 +499,8 @@ class TaskEventsManager():
             itask.job_vacated = True
             # Believe this and change state without polling (could poll?).
             self.pflag = True
-            itask.state.reset(TASK_STATUS_SUBMITTED)
+            if itask.state.reset(TASK_STATUS_SUBMITTED):
+                self.data_store_mgr.delta_task_state(itask)
             self._reset_job_timers(itask)
             # We should really have a special 'vacated' handler, but given that
             # this feature can only be used on the deprecated loadleveler
@@ -812,7 +814,8 @@ class TaskEventsManager():
                 os.getenv("CYLC_SUITE_RUN_DIR")
             )
             itask.state.add_xtrigger(label)
-        itask.state.reset(TASK_STATUS_WAITING)
+        if itask.state.reset(TASK_STATUS_WAITING):
+            self.data_store_mgr.delta_task_state(itask)
 
     def _process_message_failed(self, itask, event_time, message):
         """Helper for process_message, handle a failed message.
@@ -825,8 +828,8 @@ class TaskEventsManager():
         itask.set_summary_time('finished', event_time)
         job_d = get_task_job_id(
             itask.point, itask.tdef.name, itask.submit_num)
-        self.job_pool.set_job_time(job_d, 'finished', event_time)
-        self.job_pool.set_job_state(job_d, TASK_STATUS_FAILED)
+        self.data_store_mgr.delta_job_time(job_d, 'finished', event_time)
+        self.data_store_mgr.delta_job_state(job_d, TASK_STATUS_FAILED)
         self.suite_db_mgr.put_update_task_jobs(itask, {
             "run_status": 1,
             "time_run_exit": event_time,
@@ -839,6 +842,7 @@ class TaskEventsManager():
             # No retry lined up: definitive failure.
             if itask.state.reset(TASK_STATUS_FAILED):
                 self.setup_event_handlers(itask, self.EVENT_FAILED, message)
+                self.data_store_mgr.delta_task_state(itask)
             LOG.critical(
                 "[%s] -job(%02d) %s", itask, itask.submit_num, "failed")
             no_retries = True
@@ -864,14 +868,15 @@ class TaskEventsManager():
             LOG.warning(f"[{itask}] -Vacated job restarted")
         self.pflag = True
         job_d = get_task_job_id(itask.point, itask.tdef.name, itask.submit_num)
-        self.job_pool.set_job_time(job_d, 'started', event_time)
-        self.job_pool.set_job_state(job_d, TASK_STATUS_RUNNING)
+        self.data_store_mgr.delta_job_time(job_d, 'started', event_time)
+        self.data_store_mgr.delta_job_state(job_d, TASK_STATUS_RUNNING)
         itask.set_summary_time('started', event_time)
         self.suite_db_mgr.put_update_task_jobs(itask, {
             "time_run": itask.summary['started_time_string']})
         if itask.state.reset(TASK_STATUS_RUNNING):
             self.setup_event_handlers(
                 itask, self.EVENT_STARTED, f'job {self.EVENT_STARTED}')
+            self.data_store_mgr.delta_task_state(itask)
         self._reset_job_timers(itask)
 
         # submission was successful so reset submission try number
@@ -881,8 +886,8 @@ class TaskEventsManager():
     def _process_message_succeeded(self, itask, event_time):
         """Helper for process_message, handle a succeeded message."""
         job_d = get_task_job_id(itask.point, itask.tdef.name, itask.submit_num)
-        self.job_pool.set_job_time(job_d, 'finished', event_time)
-        self.job_pool.set_job_state(job_d, TASK_STATUS_SUCCEEDED)
+        self.data_store_mgr.delta_job_time(job_d, 'finished', event_time)
+        self.data_store_mgr.delta_job_state(job_d, TASK_STATUS_SUCCEEDED)
         self.pflag = True
         itask.set_summary_time('finished', event_time)
         self.suite_db_mgr.put_update_task_jobs(itask, {
@@ -908,6 +913,7 @@ class TaskEventsManager():
         if itask.state.reset(TASK_STATUS_SUCCEEDED):
             self.setup_event_handlers(
                 itask, self.EVENT_SUCCEEDED, f"job {self.EVENT_SUCCEEDED}")
+            self.data_store_mgr.delta_task_state(itask)
         self._reset_job_timers(itask)
 
     def _process_message_submit_failed(self, itask, event_time):
@@ -924,7 +930,7 @@ class TaskEventsManager():
             "submit_status": 1,
         })
         job_d = get_task_job_id(itask.point, itask.tdef.name, itask.submit_num)
-        self.job_pool.set_job_state(job_d, TASK_STATUS_SUBMIT_FAILED)
+        self.data_store_mgr.delta_job_state(job_d, TASK_STATUS_SUBMIT_FAILED)
         itask.summary['submit_method_id'] = None
         self.pflag = True
         if (
@@ -938,6 +944,7 @@ class TaskEventsManager():
                 self.setup_event_handlers(
                     itask, self.EVENT_SUBMIT_FAILED,
                     f'job {self.EVENT_SUBMIT_FAILED}')
+                self.data_store_mgr.delta_task_state(itask)
         else:
             # There is a submission retry lined up.
             timer = itask.try_timers[TimerFlags.SUBMISSION_RETRY]
@@ -975,14 +982,16 @@ class TaskEventsManager():
             # Simulate job execution at this point.
             itask.set_summary_time('submitted', event_time)
             itask.set_summary_time('started', event_time)
-            itask.state.reset(TASK_STATUS_RUNNING)
+            if itask.state.reset(TASK_STATUS_RUNNING):
+                self.data_store_mgr.delta_task_state(itask)
             itask.state.outputs.set_completion(TASK_OUTPUT_STARTED, True)
+            self.data_store_mgr.delta_task_output(itask, TASK_OUTPUT_STARTED)
             return
 
         itask.set_summary_time('submitted', event_time)
         job_d = get_task_job_id(itask.point, itask.tdef.name, itask.submit_num)
-        self.job_pool.set_job_time(job_d, 'submitted', event_time)
-        self.job_pool.set_job_state(job_d, TASK_STATUS_SUBMITTED)
+        self.data_store_mgr.delta_job_time(job_d, 'submitted', event_time)
+        self.data_store_mgr.delta_job_state(job_d, TASK_STATUS_SUBMITTED)
         # Unset started and finished times in case of resubmission.
         itask.set_summary_time('started')
         itask.set_summary_time('finished')
@@ -995,6 +1004,7 @@ class TaskEventsManager():
             if itask.state.reset(TASK_STATUS_SUBMITTED):
                 self.setup_event_handlers(
                     itask, self.EVENT_SUBMITTED, f'job {self.EVENT_SUBMITTED}')
+                self.data_store_mgr.delta_task_state(itask)
             self._reset_job_timers(itask)
 
     def _setup_job_logs_retrieval(self, itask, event):

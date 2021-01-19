@@ -13,4 +13,4 @@
     [[BAZ]]
     [[foo]]
         inherit = BAZ
-        script = sleep 60
+        script = sleep 20

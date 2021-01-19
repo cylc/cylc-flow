@@ -14,7 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.flow.data_store_mgr import task_mean_elapsed_time
+from cylc.flow.data_store_mgr import task_mean_elapsed_time, parse_job_item
+
+
+def int_id():
+    return '20130808T00/foo/03'
 
 
 class FakeTDef:
@@ -25,3 +29,20 @@ def test_task_mean_elapsed_time():
     tdef = FakeTDef()
     result = task_mean_elapsed_time(tdef)
     assert result == 5.0
+
+
+def test_parse_job_item():
+    """Test internal id parsing method."""
+    point, name, sub_num = parse_job_item(int_id())
+    tpoint, tname, tsub_num = int_id().split('/', 2)
+    assert (point, name, sub_num) == (tpoint, tname, int(tsub_num))
+    tpoint, tname, tsub_num = parse_job_item(f'{point}/{name}')
+    assert name, None == (point, (tpoint, tname, tsub_num))
+    tpoint, tname, tsub_num = parse_job_item(f'{name}.{point}.{sub_num}')
+    assert name, sub_num == (point, (tpoint, tname, tsub_num))
+    tpoint, tname, tsub_num = parse_job_item(f'{name}.{point}.NotNumber')
+    assert name, None == (point, (tpoint, tname, tsub_num))
+    tpoint, tname, tsub_num = parse_job_item(f'{name}.{point}')
+    assert name, None == (point, (tpoint, tname, tsub_num))
+    tpoint, tname, tsub_num = parse_job_item(f'{name}')
+    assert name, None == (None, (tpoint, tname, tsub_num))

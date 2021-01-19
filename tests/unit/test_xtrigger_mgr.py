@@ -15,9 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
+from unittest.mock import create_autospec
 
 from cylc.flow.broadcast_mgr import BroadcastMgr
+from cylc.flow.data_store_mgr import DataStoreMgr
 from cylc.flow.cycling.iso8601 import ISO8601Point, ISO8601Sequence, init
+from cylc.flow.scheduler import Scheduler
 from cylc.flow.subprocctx import SubFuncContext
 from cylc.flow.subprocpool import SubProcPool
 from cylc.flow.task_proxy import TaskProxy
@@ -417,7 +420,8 @@ def xtrigger_mgr() -> XtriggerManager:
     """
     xtrigger_mgr = XtriggerManager(
         suite="suitea",
-        user="john-foo")
+        user="john-foo",
+        data_store_mgr=DataStoreMgr(create_autospec(Scheduler)))
     xtrigger_mgr.validate_xtrigger = lambda fn, fdir: True
     return xtrigger_mgr
 
@@ -454,7 +458,8 @@ def xtrigger_mgr_procpool_broadcast() -> XtriggerManager:
         user="john-foo",
         proc_pool=MockedProcPool(),
         broadcast_mgr=MockedBroadcastMgr(
-            suite_db_mgr=None, data_store_mgr=None)
+            suite_db_mgr=None, data_store_mgr=None),
+        data_store_mgr=DataStoreMgr(create_autospec(Scheduler))
     )
     xtrigger_mgr.validate_xtrigger = lambda fn, fdir: True
     return xtrigger_mgr

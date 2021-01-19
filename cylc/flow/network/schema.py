@@ -20,6 +20,7 @@ from copy import deepcopy
 from functools import partial
 import json
 import logging
+from operator import attrgetter
 from textwrap import dedent
 from typing import AsyncGenerator, Any
 
@@ -32,6 +33,7 @@ from graphene.utils.str_converters import to_snake_case
 
 from cylc.flow import ID_DELIM
 from cylc.flow.broadcast_mgr import ALL_CYCLE_POINTS_STRS, addict
+from cylc.flow.task_outputs import SORT_ORDERS
 from cylc.flow.task_state import (
     TASK_OUTPUT_SUCCEEDED,
     TASK_STATUSES_ORDERED,
@@ -68,6 +70,22 @@ def sstrip(text):
 
     """
     return dedent(text).strip()
+
+
+def sort_elements(elements, args):
+    """Sort iterable of elements by given attribute."""
+    sort_args = args.get('sort')
+    if sort_args and elements:
+        sort_keys = [
+            key
+            for key in [to_snake_case(k) for k in sort_args.keys]
+            if hasattr(elements[0], key)
+        ]
+        if sort_keys:
+            elements.sort(
+                key=attrgetter(*sort_keys),
+                reverse=sort_args.reverse)
+    return elements
 
 
 PROXY_NODES = 'proxy_nodes'
@@ -562,6 +580,26 @@ def resolve_json_dump(root, info, **args):
     return json.loads(field)
 
 
+def resolve_mapping_to_list(root, info, **args):
+    field = getattr(root, to_snake_case(info.field_name), {}) or {}
+    mapping = {
+        key: field[key]
+        for key in args.get('sort_order', [])
+        if key in field}
+    mapping.update(field)
+    satisfied = args.get('satisfied')
+    elements = sort_elements(
+        [
+            val
+            for val in mapping.values()
+            if satisfied is None or val.satisfied is satisfied
+        ], args)
+    limit = args['limit']
+    if elements and limit:
+        elements = elements[:limit]
+    return elements
+
+
 # Types:
 class NodeMeta(ObjectType):
     class Meta:
@@ -656,8 +694,8 @@ class Workflow(ObjectType):
     last_updated = Float()
     meta = Field(NodeMeta)
     newest_runahead_cycle_point = String()
-    newest_cycle_point = String()
-    oldest_cycle_point = String()
+    newest_active_cycle_point = String()
+    oldest_active_cycle_point = String()
     reloaded = Boolean()
     run_mode = String()
     is_held_total = Int()
@@ -795,6 +833,33 @@ class Prerequisite(ObjectType):
     satisfied = Boolean()
 
 
+class Output(ObjectType):
+    class Meta:
+        description = """Task output"""
+    label = String()
+    message = String()
+    satisfied = Boolean()
+    time = Float()
+
+
+class ClockTrigger(ObjectType):
+    class Meta:
+        description = """Task clock-trigger"""
+    time = Float()
+    time_string = String()
+    satisfied = Boolean()
+
+
+class XTrigger(ObjectType):
+    class Meta:
+        description = """Task trigger"""
+    id = String()
+    label = String()
+    message = String()
+    satisfied = Boolean()
+    time = Float()
+
+
 class TaskProxy(ObjectType):
     class Meta:
         description = """Task cycle instance."""
@@ -813,7 +878,34 @@ class TaskProxy(ObjectType):
     depth = Int()
     job_submits = Int()
     latest_message = String()
-    outputs = GenericScalar(resolver=resolve_json_dump)
+    outputs = List(
+        Output,
+        description="""Task outputs.""",
+        sort=SortArgs(default_value=None),
+        sort_order=List(
+            String,
+            default_value=list(SORT_ORDERS)
+        ),
+        limit=Int(default_value=0),
+        satisfied=Boolean(),
+        resolver=resolve_mapping_to_list)
+    clock_trigger = Field(ClockTrigger)
+    external_triggers = List(
+        XTrigger,
+        description="""Task external trigger prerequisites.""",
+        sort=SortArgs(default_value=None),
+        sort_order=List(String),
+        limit=Int(default_value=0),
+        satisfied=Boolean(),
+        resolver=resolve_mapping_to_list)
+    xtriggers = List(
+        XTrigger,
+        description="""Task xtrigger prerequisites.""",
+        sort=SortArgs(default_value=None),
+        sort_order=List(String),
+        limit=Int(default_value=0),
+        satisfied=Boolean(),
+        resolver=resolve_mapping_to_list)
     extras = GenericScalar(resolver=resolve_json_dump)
     # name & namespace for filtering/sorting
     name = String()

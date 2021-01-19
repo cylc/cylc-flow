@@ -44,8 +44,8 @@ query {
       description
     }
     newestRunaheadCyclePoint
-    newestCyclePoint
-    oldestCyclePoint
+    newestActiveCyclePoint
+    oldestActiveCyclePoint
     reloaded
     runMode
     stateTotals
@@ -93,8 +93,8 @@ cat > expected << __HERE__
                 "description": "bar"
             },
             "newestRunaheadCyclePoint": "",
-            "newestCyclePoint": "1",
-            "oldestCyclePoint": "1",
+            "newestActiveCyclePoint": "1",
+            "oldestActiveCyclePoint": "1",
             "reloaded": false,
             "runMode": "live",
             "stateTotals": {

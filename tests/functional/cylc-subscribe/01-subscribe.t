@@ -34,11 +34,11 @@ run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
 
 TEST_NAME="${TEST_NAME_BASE}-subscribe-1"
 run_ok "${TEST_NAME}" cylc subscribe --once --topics="workflow" "${SUITE_NAME}"
-grep_ok "running" "${TEST_NAME}.stdout"
+grep_ok "lastUpdated" "${TEST_NAME}.stdout"
 
 TEST_NAME="${TEST_NAME_BASE}-subscribe-2"
 run_ok "${TEST_NAME}" cylc subscribe --once --topics="workflow" "${SUITE_NAME}"
-grep_ok "running" "${TEST_NAME}.stdout"
+grep_ok "lastUpdated" "${TEST_NAME}.stdout"
 
 cylc stop --kill --max-polls=20 --interval=1 "${SUITE_NAME}"
 purge

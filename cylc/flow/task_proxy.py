@@ -325,15 +325,16 @@ class TaskProxy:
 
         """
         if self.manual_trigger:
-            return True
+            return (True,)
         if self.state.is_held:
-            return False
+            return (False,)
         if self.state.status in self.try_timers:
-            return self.try_timers[self.state.status].is_delay_done()
+            return (self.try_timers[self.state.status].is_delay_done(),)
         return (
-            self.state(TASK_STATUS_WAITING)
-            and self.is_waiting_clock_done()
-            and self.is_waiting_prereqs_done())
+            self.state(TASK_STATUS_WAITING),
+            self.is_waiting_clock_done(),
+            self.is_waiting_prereqs_done()
+        )
 
     def reset_manual_trigger(self):
         """This is called immediately after manual trigger flag used."""

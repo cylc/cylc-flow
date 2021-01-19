@@ -35,12 +35,12 @@ from zmq.auth.thread import ThreadAuthenticator
 
 from metomi.isodatetime.parsers import TimePointParser
 
-from cylc.flow import LOG
-from cylc.flow import main_loop
+from cylc.flow import LOG, main_loop, ID_DELIM, __version__ as CYLC_VERSION
 from cylc.flow.broadcast_mgr import BroadcastMgr
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.config import SuiteConfig
 from cylc.flow.cycling.loader import get_point
+from cylc.flow.data_store_mgr import DataStoreMgr, parse_job_item
 from cylc.flow.exceptions import (
     CylcError, SuiteConfigError, PlatformLookupError
 )
@@ -51,7 +51,6 @@ from cylc.flow.hostuserutil import (
     get_user,
     is_remote_platform
 )
-from cylc.flow.job_pool import JobPool
 from cylc.flow.loggingutil import (
     TimestampRotatingFileHandler,
     ReferenceLogFileHandler
@@ -99,8 +98,6 @@ from cylc.flow.task_state import (
     TASK_STATUSES_NEVER_ACTIVE,
     TASK_STATUS_FAILED)
 from cylc.flow.templatevars import load_template_vars
-from cylc.flow import __version__ as CYLC_VERSION
-from cylc.flow.data_store_mgr import DataStoreMgr, ID_DELIM
 from cylc.flow.wallclock import (
     get_current_time_string,
     get_seconds_as_interval_string,
@@ -226,7 +223,6 @@ class Scheduler:
     task_events_mgr: TaskEventsManager = None
     suite_event_handler: SuiteEventHandler = None
     data_store_mgr: DataStoreMgr = None
-    job_pool: JobPool = None
     suite_db_mgr: SuiteDatabaseManager = None
     broadcast_mgr: BroadcastMgr = None
     xtrigger_mgr: XtriggerManager = None
@@ -371,12 +367,12 @@ class Scheduler:
         self.message_queue = Queue()
         self.ext_trigger_queue = Queue()
         self.suite_event_handler = SuiteEventHandler(self.proc_pool)
-        self.job_pool = JobPool(self)
 
         self.xtrigger_mgr = XtriggerManager(
             self.suite,
             self.owner,
             broadcast_mgr=self.broadcast_mgr,
+            data_store_mgr=self.data_store_mgr,
             proc_pool=self.proc_pool,
             suite_run_dir=self.suite_run_dir,
             suite_share_dir=self.suite_share_dir,
@@ -389,7 +385,7 @@ class Scheduler:
             self.suite_db_mgr,
             self.broadcast_mgr,
             self.xtrigger_mgr,
-            self.job_pool,
+            self.data_store_mgr,
             self.options.log_timestamp
         )
         self.task_events_mgr.uuid_str = self.uuid_str
@@ -399,7 +395,7 @@ class Scheduler:
             self.proc_pool,
             self.suite_db_mgr,
             self.task_events_mgr,
-            self.job_pool
+            self.data_store_mgr
         )
         self.task_job_mgr.task_remote_mgr.uuid_str = self.uuid_str
 
@@ -468,7 +464,6 @@ class Scheduler:
             self.config,
             self.suite_db_mgr,
             self.task_events_mgr,
-            self.job_pool,
             self.data_store_mgr)
 
         self.data_store_mgr.initiate_data_model()
@@ -537,7 +532,7 @@ class Scheduler:
         self.barrier.wait()
         self.port = self.server.port
         self.pub_port = self.publisher.port
-        self.data_store_mgr.set_workflow_ports()
+        self.data_store_mgr.delta_workflow_ports()
 
     async def log_start(self):
         if self.is_restart:
@@ -697,8 +692,8 @@ class Scheduler:
             self._load_task_run_times)
         self.suite_db_mgr.pri_dao.select_task_pool_for_restart(
             self.pool.load_db_task_pool_for_restart)
-        self.suite_db_mgr.pri_dao.select_job_pool_for_restart(
-            self.job_pool.insert_db_job)
+        self.suite_db_mgr.pri_dao.select_jobs_for_restart(
+            self.data_store_mgr.insert_db_job)
         self.suite_db_mgr.pri_dao.select_task_action_timers(
             self.pool.load_db_task_action_timers)
         self.suite_db_mgr.pri_dao.select_xtriggers_for_restart(
@@ -773,8 +768,7 @@ class Scheduler:
             except Empty:
                 break
             self.message_queue.task_done()
-            cycle, task_name, submit_num = (
-                self.job_pool.parse_job_item(task_job))
+            cycle, task_name, submit_num = parse_job_item(task_job)
             task_id = TaskID.get(task_name, cycle)
             messages.setdefault(task_id, [])
             messages[task_id].append(
@@ -924,6 +918,7 @@ class Scheduler:
             for itask in itasks:
                 if itask.state(*TASK_STATUSES_ACTIVE):
                     itask.state.reset(TASK_STATUS_FAILED)
+                    self.data_store_mgr.delta_task_state(itask)
             return len(bad_items)
         self.task_job_mgr.kill_task_jobs(self.suite, itasks)
         return len(bad_items)
@@ -1488,15 +1483,9 @@ class Scheduler:
             t for t in self.pool.get_all_tasks() if t.state.is_updated]
         has_updated = self.is_updated or updated_tasks
         # Add tasks that have moved moved from runahead to live pool.
-        updated_nodes = set(updated_tasks).union(
-            self.pool.get_pool_change_tasks())
-        if (
-                updated_nodes or
-                self.data_store_mgr.updates_pending or
-                self.job_pool.updates_pending
-        ):
-            # WServer incremental data store update
-            self.data_store_mgr.update_data_structure(updated_nodes)
+        if has_updated or self.data_store_mgr.updates_pending:
+            # Collect/apply data store updates/deltas
+            self.data_store_mgr.update_data_structure()
             # Publish updates:
             await self.publisher.publish(self.data_store_mgr.publish_deltas)
         if has_updated:
@@ -1597,7 +1586,7 @@ class Scheduler:
                 process = True
             if self.pool.set_expired_task(itask, time()):
                 process = True
-            if itask.is_ready():
+            if all(itask.is_ready()):
                 process = True
         if (
             self.config.run_mode('simulation') and
@@ -1732,7 +1721,6 @@ class Scheduler:
         """Hold all tasks in suite."""
         if point is None:
             self.pool.hold_all_tasks()
-            self.data_store_mgr.hold_release_tasks()
             self.task_events_mgr.pflag = True
             self.suite_db_mgr.put_suite_hold()
             LOG.info('Suite held.')
@@ -1751,7 +1739,6 @@ class Scheduler:
             LOG.info("RELEASE: new tasks will be queued when ready")
         self.pool.set_hold_point(None)
         self.pool.release_all_tasks()
-        self.data_store_mgr.hold_release_tasks(hold=False)
         self.suite_db_mgr.delete_suite_hold()
 
     def paused(self):

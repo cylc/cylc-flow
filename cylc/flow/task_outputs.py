@@ -24,7 +24,7 @@ TASK_OUTPUT_STARTED = "started"
 TASK_OUTPUT_SUCCEEDED = "succeeded"
 TASK_OUTPUT_FAILED = "failed"
 
-_SORT_ORDERS = (
+SORT_ORDERS = (
     TASK_OUTPUT_EXPIRED,
     TASK_OUTPUT_SUBMITTED,
     TASK_OUTPUT_SUBMIT_FAILED,
@@ -59,7 +59,7 @@ class TaskOutputs:
         self._by_message = {}
         self._by_trigger = {}
         # Add standard outputs.
-        for output in _SORT_ORDERS:
+        for output in SORT_ORDERS:
             self.add(output)
         # Add custom message outputs.
         for trigger, message in tdef.outputs:
@@ -102,13 +102,13 @@ class TaskOutputs:
         """
         ret = []
         for value in self.get_all():
-            if value[_IS_COMPLETED] and value[_TRIGGER] not in _SORT_ORDERS:
+            if value[_IS_COMPLETED] and value[_TRIGGER] not in SORT_ORDERS:
                 ret.append((value[_TRIGGER], value[_MESSAGE]))
         return ret
 
     def has_custom_triggers(self):
         """Return True if it has any custom triggers."""
-        return any(key not in _SORT_ORDERS for key in self._by_trigger)
+        return any(key not in SORT_ORDERS for key in self._by_trigger)
 
     def get_not_completed(self):
         """Return all not-completed output messages."""
@@ -172,6 +172,20 @@ class TaskOutputs:
             else:
                 return item[_TRIGGER]
 
+    def get_item(self, message):
+        """Return output item by message.
+
+        Args:
+            message (str): Output message.
+
+        Returns:
+            item (tuple):
+                label (str), message (str), satisfied (bool)
+
+        """
+        if message in self._by_message:
+            return self._by_message[message]
+
     def _get_item(self, message, trigger):
         """Return self._by_trigger[trigger] or self._by_message[message].
 
@@ -186,7 +200,7 @@ class TaskOutputs:
     def msg_sort_key(item):
         """Compare by _MESSAGE."""
         try:
-            ind = _SORT_ORDERS.index(item[_MESSAGE])
+            ind = SORT_ORDERS.index(item[_MESSAGE])
         except ValueError:
             ind = 999
         return (ind, item[_MESSAGE] or '')
