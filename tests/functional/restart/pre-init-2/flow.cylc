@@ -3,9 +3,9 @@
 
 # INSTRUCTIONS:
 # 1) first run to set up the restart:
-#      cylc run --until=20100808T00 SUITE 20100808T00
+#      cylc play --until=20100808T00 SUITE 20100808T00
 # 2) the restart as reference test:
-#      cylc restart --debug --reference-test SUITE
+#      cylc play --debug --reference-test SUITE
 
 [scheduler]
     cycle point format = %Y%m%dT%H

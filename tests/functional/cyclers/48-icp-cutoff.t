@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -34,7 +34,7 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITE__'
     [[foo, qux]]
         script = true
 __SUITE__
-run_ok "${TEST_NAME_BASE}" cylc run "${SUITE_NAME}" --no-detach
+run_ok "${TEST_NAME_BASE}" cylc play "${SUITE_NAME}" --no-detach
 
 purge
 exit

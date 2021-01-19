@@ -81,7 +81,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
 # run the suite
 stuck_in_the_middle
-cylc run "${SUITE_NAME}" --host="${JOKERS}" --abort-if-any-task-fails
+cylc play "${SUITE_NAME}" --host="${JOKERS}" --abort-if-any-task-fails
 poll_suite_running
 sleep 1
 

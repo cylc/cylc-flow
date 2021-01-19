@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -22,7 +22,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run "${SUITE_NAME}" --debug --no-detach --abort-if-any-task-fails
+    cylc play "${SUITE_NAME}" --debug --no-detach --abort-if-any-task-fails
 
 sqlite3 "${SUITE_RUN_DIR}/log/db" \
     'SELECT value FROM suite_params WHERE key=="is_held"' >'suite-is-held.out'
@@ -37,7 +37,7 @@ cmp_ok 'suite-stopped.out' <<'__OUT__'
 2017|t1|waiting
 __OUT__
 
-cylc restart "${SUITE_NAME}" --debug --no-detach 1>"${TEST_NAME_BASE}-restart.out" 2>&1 &
+cylc play "${SUITE_NAME}" --debug --no-detach 1>"${TEST_NAME_BASE}-restart.out" 2>&1 &
 CYLC_RESTART_PID=$!
 # Ensure suite has started
 poll_suite_running

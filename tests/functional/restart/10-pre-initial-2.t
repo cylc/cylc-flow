@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -25,12 +25,12 @@ ICP='20100808T00'
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate --initial-cycle-point="${ICP}" "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --debug --no-detach \
+    cylc play --debug --no-detach \
     --initial-cycle-point="${ICP}" \
     --stop-cycle-point="${ICP}" \
     "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-restart" \
-    cylc restart --debug --no-detach --reference-test "${SUITE_NAME}"
+    cylc play --debug --no-detach --reference-test "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 purge
 exit

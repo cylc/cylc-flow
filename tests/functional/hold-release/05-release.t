@@ -70,7 +70,7 @@ __FLOW_CONFIG__
 run_ok "${TEST_NAME_BASE}-val" cylc validate "${SUITE_NAME}"
 
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --debug --no-detach --abort-if-any-task-fails "${SUITE_NAME}"
+    cylc play --debug --no-detach --abort-if-any-task-fails "${SUITE_NAME}"
 
 # Should shut down with all non-released tasks in the held state, and dog1.1
 # finished and gone from the task pool.

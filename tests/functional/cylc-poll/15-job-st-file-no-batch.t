@@ -23,7 +23,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_fail "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
+    cylc play --reference-test --debug --no-detach "${SUITE_NAME}"
 LOG="${SUITE_RUN_DIR}/log/suite/log"
 run_ok "${TEST_NAME_BASE}-log-1" \
     grep -F '[jobs-poll err] 1/t1/01/job.status: incomplete job runner info' \

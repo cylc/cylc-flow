@@ -42,7 +42,7 @@ create_test_global_config '' '
     [[host self-identification]]
         method = address'
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug --no-detach "${SUITE_NAME}" \
+    cylc play --reference-test --debug --no-detach "${SUITE_NAME}" \
     --set="MY_HOST_IP='${MY_HOST_IP}'"
 #-------------------------------------------------------------------------------
 

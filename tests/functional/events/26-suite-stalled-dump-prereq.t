@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -24,21 +24,21 @@ run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate "${SUITE_NAME}"
 
 suite_run_fail "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
+    cylc play --reference-test --debug --no-detach "${SUITE_NAME}"
 
 grep_ok "Abort on suite stalled is set" "${TEST_NAME_BASE}-run.stderr"
 
 grep_ok "WARNING - Suite stalled with unhandled failed tasks:" \
-    "${TEST_NAME_BASE}-run.stderr" 
+    "${TEST_NAME_BASE}-run.stderr"
 grep_ok "\* bar.20100101T0000Z (failed)" \
-    "${TEST_NAME_BASE}-run.stderr" 
+    "${TEST_NAME_BASE}-run.stderr"
 
 grep_ok "WARNING - Some partially satisfied prerequisites left over:" \
-    "${TEST_NAME_BASE}-run.stderr" 
+    "${TEST_NAME_BASE}-run.stderr"
 grep_ok "foo.20100101T0600Z is waiting on:" \
-    "${TEST_NAME_BASE}-run.stderr" 
+    "${TEST_NAME_BASE}-run.stderr"
 grep_ok "\* bar.20100101T0000Z succeeded" \
-    "${TEST_NAME_BASE}-run.stderr" 
+    "${TEST_NAME_BASE}-run.stderr"
 
 purge
 exit

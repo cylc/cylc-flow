@@ -22,9 +22,9 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-run_ok "${TEST_NAME_BASE}-run" cylc run --debug --no-detach "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-run" cylc play --debug --no-detach "${SUITE_NAME}"
 run_ok "${TEST_NAME_BASE}-restart" \
-    cylc restart --debug --no-detach "${SUITE_NAME}"
+    cylc play --debug --no-detach "${SUITE_NAME}"
 # Check that the suite has emitted a single late event.
 grep -c 'WARNING.*late (late-time=.*)' \
     <(cat "${SUITE_RUN_DIR}/log/suite/log."*) \

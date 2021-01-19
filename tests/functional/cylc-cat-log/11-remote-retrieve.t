@@ -30,7 +30,7 @@ TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 
 TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_ok "${TEST_NAME}" cylc run --debug --no-detach "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME}" cylc play --debug --no-detach "${SUITE_NAME}"
 
 # Local job.out should exist (retrieved).
 LOCAL_JOB_OUT=$(cylc cat-log -f a -m d "${SUITE_NAME}" a-task.1)/job.out

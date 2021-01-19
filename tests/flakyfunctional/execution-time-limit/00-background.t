@@ -26,7 +26,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate "${SUITE_NAME}"
 suite_run_fail "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug --no-detach --abort-if-any-task-fails "${SUITE_NAME}"
+    cylc play --reference-test --debug --no-detach --abort-if-any-task-fails "${SUITE_NAME}"
 
 LOGD="${RUN_DIR}/${SUITE_NAME}/log/job/1/foo"
 grep_ok '# Execution time limit: 5.0' "${LOGD}/01/job"

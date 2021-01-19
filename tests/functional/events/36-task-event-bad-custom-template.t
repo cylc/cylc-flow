@@ -28,7 +28,7 @@ cmp_ok "${TEST_NAME_BASE}-validate.stderr" <<'__ERR__'
 SuiteConfigError: bad task event handler template t1: echo %(rubbish)s: KeyError('rubbish')
 __ERR__
 suite_run_fail "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
+    cylc play --reference-test --debug --no-detach "${SUITE_NAME}"
 grep_ok \
     'SuiteConfigError: bad task event handler template t1: echo %(rubbish)s: KeyError(.rubbish.)' \
     "${SUITE_RUN_DIR}/log/suite/log"

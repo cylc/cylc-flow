@@ -36,7 +36,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 export BEEF=wellington
 export CHEESE=melted
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --debug --no-detach "${SUITE_NAME}"
+    cylc play --debug --no-detach "${SUITE_NAME}"
 cylc cat-log "${SUITE_NAME}" foo.1 > job.out
 
 grep_ok "BEEF wellington" job.out

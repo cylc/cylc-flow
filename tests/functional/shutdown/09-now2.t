@@ -22,7 +22,7 @@ set_test_number 9
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run --no-detach "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}-run" cylc play --no-detach "${SUITE_NAME}"
 LOGD="$RUN_DIR/${SUITE_NAME}/log"
 grep_ok 'INFO - Suite shutting down - REQUEST(NOW-NOW)' "${LOGD}/suite/log"
 grep_ok 'WARNING - Orphaned task jobs' "${LOGD}/suite/log"
@@ -41,6 +41,6 @@ run_fail "${TEST_NAME_BASE}-activity-log-started" \
 exists_fail "${LOGD}/job/1/t2"
 # In SoD the restart does not stall and abort, because t1.1:failed can be removed
 # as handled.
-suite_run_ok "${TEST_NAME_BASE}-run" cylc restart --no-detach "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}-restart" cylc play --no-detach "${SUITE_NAME}"
 purge
 exit

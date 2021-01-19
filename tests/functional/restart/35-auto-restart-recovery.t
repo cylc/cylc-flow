@@ -43,7 +43,7 @@ init_suite "${TEST_NAME}" <<< '
 '
 create_test_global_config '' "${BASE_GLOBAL_CONFIG}"
 run_ok "${TEST_NAME}-suite-start" \
-    cylc run "${SUITE_NAME}" --host=localhost --hold
+    cylc play "${SUITE_NAME}" --host=localhost --hold
 poll_suite_running
 
 # corrupt suite

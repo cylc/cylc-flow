@@ -55,7 +55,7 @@ ${BASE_GLOBAL_CONFIG}
         available = ${CYLC_TEST_HOST1}
 "
 
-cylc run "${SUITE_NAME}"
+cylc play "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 # auto stop-restart - normal mode:
 #     ensure the suite WAITS for local jobs to complete before restarting

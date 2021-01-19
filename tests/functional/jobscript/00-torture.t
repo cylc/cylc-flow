@@ -31,6 +31,6 @@ create_test_global_config '' "
         cylc executable = $PATH_TO_CYLC_BIN/cylc"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_ok "${TEST_NAME}" cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME}" cylc play --reference-test --debug --no-detach "${SUITE_NAME}"
 
 purge

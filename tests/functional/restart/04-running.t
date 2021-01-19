@@ -39,13 +39,13 @@ __FLOW_CONFIG__
 #-------------------------------------------------------------------------------
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --debug --no-detach "${SUITE_NAME}"
+    cylc play --debug --no-detach "${SUITE_NAME}"
 sqlite3 "${SUITE_RUN_DIR}/log/db" 'SELECT cycle, name, status FROM task_pool' >'sqlite3.out'
 cmp_ok 'sqlite3.out' <<'__DB_DUMP__'
 1|t1|running
 __DB_DUMP__
 suite_run_ok "${TEST_NAME_BASE}-restart" \
-    cylc restart --debug --no-detach "${SUITE_NAME}"
+    cylc play --debug --no-detach "${SUITE_NAME}"
 sqlite3 "${SUITE_RUN_DIR}/log/db" 'SELECT * FROM task_pool' >'sqlite3.out'
 cmp_ok 'sqlite3.out' <'/dev/null'
 #-------------------------------------------------------------------------------

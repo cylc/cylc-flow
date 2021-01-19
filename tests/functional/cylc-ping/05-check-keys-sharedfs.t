@@ -36,7 +36,7 @@ __FLOW_CYLC__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}" \
     -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" \
+suite_run_ok "${TEST_NAME_BASE}-run" cylc play "${SUITE_NAME}" \
     -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
 RRUND="cylc-run/${SUITE_NAME}"
 RSRVD="${RRUND}/.service"

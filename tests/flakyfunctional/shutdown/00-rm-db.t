@@ -36,7 +36,7 @@ pri_db="${SUITE_RUN_DIR}/.service/db"
 pub_db="${SUITE_RUN_DIR}/log/db"
 
 TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_ok "${TEST_NAME}" cylc run "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME}" cylc play "${SUITE_NAME}"
 
 poll_suite_stopped  # This waits for contact file to be removed
 # Delete the DB without delay

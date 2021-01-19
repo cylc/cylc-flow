@@ -30,30 +30,30 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
+    cylc play --reference-test --debug --no-detach "${SUITE_NAME}"
 cmp_json "${TEST_NAME_BASE}-out" \
     "${SUITE_RUN_DIR}/ctb-get-graph-raw.out" <<'__OUT__'
 [
     [
         [
-            "t1.20200202T0000Z", 
-            null, 
-            null, 
-            false, 
+            "t1.20200202T0000Z",
+            null,
+            null,
+            false,
             false
-        ], 
+        ],
         [
-            "t1.20200202T0000Z", 
-            "t1.20200203T0000Z", 
-            null, 
-            false, 
+            "t1.20200202T0000Z",
+            "t1.20200203T0000Z",
+            null,
+            false,
             false
         ]
-    ], 
-    {}, 
+    ],
+    {},
     [
         "t1"
-    ], 
+    ],
     [
         "t1"
     ]

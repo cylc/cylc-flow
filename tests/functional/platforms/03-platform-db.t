@@ -24,7 +24,7 @@ create_test_global_config '' "
 [platforms]
     [[elsa]]
         hosts = ${CYLC_TEST_HOST}
-        install target = ${CYLC_TEST_INSTALL_TARGET}        
+        install target = ${CYLC_TEST_INSTALL_TARGET}
     [[olaf]]
         hosts = ${CYLC_TEST_HOST}
         install target = ${CYLC_TEST_INSTALL_TARGET}
@@ -35,7 +35,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --debug --no-detach "${SUITE_NAME}"
+    cylc play --debug --no-detach "${SUITE_NAME}"
 
 DB_FILE="${SUITE_RUN_DIR}/log/db"
 NAME='select-name-platform.out'

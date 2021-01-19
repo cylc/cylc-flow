@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -21,11 +21,11 @@ set_test_number 4
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" --debug --no-detach
+suite_run_ok "${TEST_NAME_BASE}-run" cylc play "${SUITE_NAME}" --debug --no-detach
 sqlite3 "${SUITE_RUN_DIR}/log/db" \
   'SELECT * FROM broadcast_states' >'sqlite3.out'
 cmp_ok 'sqlite3.out' <<<'*|root|[events]submission timeout|60.0'
 suite_run_ok "${TEST_NAME_BASE}-restart" \
-    cylc restart "${SUITE_NAME}" --debug --no-detach --reference-test
+    cylc play "${SUITE_NAME}" --debug --no-detach --reference-test
 purge
 exit

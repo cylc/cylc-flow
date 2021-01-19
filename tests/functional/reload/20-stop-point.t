@@ -32,7 +32,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --debug --no-detach --reference-test "${SUITE_NAME}"
+    cylc play --debug --no-detach --reference-test "${SUITE_NAME}"
 sqlite3 "${SUITE_RUN_DIR}/.service/db" \
     'SELECT cycle,name,run_status FROM task_jobs' | sort >'db.out'
 cmp_ok 'db.out' <<'__OUT__'

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -22,6 +22,6 @@ set_test_number 1
 # Run Jinja2 custom filters suite.
 TEST_NAME="${TEST_NAME_BASE}"-run-filters
 install_suite "${TEST_NAME_BASE}-install-filter-suite" "${TEST_NAME_BASE}"
-run_ok "${TEST_NAME}" cylc run "${SUITE_NAME}" --reference-test --debug --no-detach
+run_ok "${TEST_NAME}" cylc play "${SUITE_NAME}" --reference-test --debug --no-detach
 #-------------------------------------------------------------------------------
 purge

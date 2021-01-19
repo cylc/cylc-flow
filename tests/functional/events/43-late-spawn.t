@@ -21,7 +21,7 @@ set_test_number 3
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-run_ok "${TEST_NAME_BASE}-run" cylc run --debug --no-detach "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-run" cylc play --debug --no-detach "${SUITE_NAME}"
 grep -c 'WARNING.*late (late-time=.*)' \
     <"${SUITE_RUN_DIR}/log/suite/log" >'grep-log.out'
 cmp_ok 'grep-log.out' <<<'2'

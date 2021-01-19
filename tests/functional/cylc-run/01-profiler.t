@@ -36,7 +36,7 @@ run_ok "${TEST_NAME_BASE}-validate" \
 exists_ok 'profile.prof'
 
 run_ok "${TEST_NAME_BASE}-run" \
-    cylc run "${SUITE_NAME}" --profile --no-detach
+    cylc play "${SUITE_NAME}" --profile --no-detach
 
 exists_ok "${RUN_DIR}/${SUITE_NAME}/log/suite/profile.prof"
 

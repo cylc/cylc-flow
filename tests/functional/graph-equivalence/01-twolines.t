@@ -29,7 +29,7 @@ run_ok "${TEST_NAME}" cylc validate \
     --set="TEST_OUTPUT_PATH='${PWD}'" "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_ok "${TEST_NAME}" cylc run --reference-test --debug --no-detach \
+suite_run_ok "${TEST_NAME}" cylc play --reference-test --debug --no-detach \
     --set="TEST_OUTPUT_PATH='${PWD}'" "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-check-a"

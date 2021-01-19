@@ -49,7 +49,7 @@ ${BASE_GLOBAL_CONFIG}
         available = localhost
 "
 
-cylc run "${SUITE_NAME}" --debug
+cylc play "${SUITE_NAME}" --debug
 poll_suite_running
 
 create_test_global_config '' "

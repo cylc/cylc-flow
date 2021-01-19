@@ -41,9 +41,9 @@ run_ok "${TEST_NAME_BASE}-val-1" cylc validate "${SUITE_NAME}"
 run_ok "${TEST_NAME_BASE}-val-2" \
     cylc validate --set 'WEATHER="good"' "${SUITE_NAME}"
 
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run --no-detach "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}-run" cylc play --no-detach "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-restart" \
-    cylc restart --set 'WEATHER="good"' --no-detach "${SUITE_NAME}"
+    cylc play --set 'WEATHER="good"' --no-detach "${SUITE_NAME}"
 
 # Check for 3 generated *.cylc files
 LOGD="${RUN_DIR}/${SUITE_NAME}/log/flow-config"

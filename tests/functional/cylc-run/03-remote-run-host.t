@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Run a workflow with ``cylc run --host=somewhere-else``
+# Run a workflow with ``cylc play --host=somewhere-else``
 export REQUIRE_PLATFORM='loc:remote fs:shared runner:background'
 . "$(dirname "$0")/test_header"
 set_test_number 2
@@ -32,7 +32,7 @@ init_suite "${TEST_NAME_BASE}" <<< '
     [[Aleph]]
 '
 
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" --host="${CYLC_TEST_HOST}" --no-detach
+suite_run_ok "${TEST_NAME_BASE}-run" cylc play "${SUITE_NAME}" --host="${CYLC_TEST_HOST}" --no-detach
 
 grep_ok "Suite server:.*${CYLC_TEST_HOST}" "${SUITE_RUN_DIR}/log/suite/log"
 

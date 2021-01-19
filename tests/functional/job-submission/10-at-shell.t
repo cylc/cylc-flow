@@ -25,7 +25,7 @@ run_ok "${TEST_NAME_BASE}-validate" \
 # By setting "SHELL=/bin/tcsh", "at" would run its command under "/bin/tcsh",
 # which would cause a failure of this test without the fix in #1749.
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    env 'SHELL=/bin/tcsh' cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
+    env 'SHELL=/bin/tcsh' cylc play --reference-test --debug --no-detach "${SUITE_NAME}"
 
 purge
 exit

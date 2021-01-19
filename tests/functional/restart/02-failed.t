@@ -30,10 +30,10 @@ run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 cmp_ok "${TEST_NAME}.stderr" <'/dev/null'
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_ok "${TEST_NAME}" cylc run --debug --no-detach "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME}" cylc play --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-restart-run"
-suite_run_ok "${TEST_NAME}" cylc restart --debug --no-detach "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME}" cylc play --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 grep_ok "failed_task|20130923T0000Z|1|1|failed" \
     "${RUN_DIR}/${SUITE_NAME}/pre-restart-db"

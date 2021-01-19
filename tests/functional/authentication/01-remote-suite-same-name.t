@@ -39,6 +39,7 @@ run_ok "${TEST_NAME_BASE}-install" \
     --no-run-name --directory="${SRC_DIR}"
 
 suite_run_ok "${TEST_NAME_BASE}" \
-    cylc run --debug --no-detach --reference-test "${SUITE_NAME}"
+    cylc play --debug --no-detach --reference-test "${SUITE_NAME}"
+
 purge
 exit

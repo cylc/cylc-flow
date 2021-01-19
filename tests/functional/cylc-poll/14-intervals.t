@@ -29,7 +29,7 @@ create_test_global_config '
         execution polling intervals = 2*PT1S,10*PT6S'
 
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
+    cylc play --reference-test --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 LOG_FILE="${SUITE_RUN_DIR}/log/suite/log"
 

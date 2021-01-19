@@ -60,7 +60,7 @@ ${BASE_GLOBAL_CONFIG}
 "
 
 # Run suite.
-cylc run "${SUITE_NAME}" --hold
+cylc play "${SUITE_NAME}" --hold
 poll_suite_running
 
 # Condemn host - trigger stop-restart.

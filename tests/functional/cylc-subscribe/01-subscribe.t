@@ -30,7 +30,7 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 __FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-run" cylc play "${SUITE_NAME}"
 
 TEST_NAME="${TEST_NAME_BASE}-subscribe-1"
 run_ok "${TEST_NAME}" cylc subscribe --once --topics="workflow" "${SUITE_NAME}"

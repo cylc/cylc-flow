@@ -26,9 +26,9 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 # Ensure that you can validate suite
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate "${SUITE_NAME}"
-         
+
 run_ok "${TEST_NAME_BASE}-run" \
-    cylc run "${SUITE_NAME}" --no-detach --mode=dummy-local
+    cylc play "${SUITE_NAME}" --no-detach --mode=dummy-local
 
 # Check that the upgradeable config has been run on a sensible host.
 grep_ok \

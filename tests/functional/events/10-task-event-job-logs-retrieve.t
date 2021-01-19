@@ -37,7 +37,7 @@ run_ok "${TEST_NAME_BASE}-validate" \
     -s "PLATFORM='${CYLC_TEST_PLATFORM}'" "${SUITE_NAME}"
 # shellcheck disable=SC2086
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug --no-detach ${OPT_SET} \
+    cylc play --reference-test --debug --no-detach ${OPT_SET} \
        -s "PLATFORM='${CYLC_TEST_PLATFORM}'" "${SUITE_NAME}"
 
 sed "/'job-logs-retrieve'/!d" \

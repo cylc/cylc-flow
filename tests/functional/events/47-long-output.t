@@ -50,7 +50,7 @@ __REFLOG__
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --debug --no-detach --reference-test "${SUITE_NAME}"
+    cylc play --debug --no-detach --reference-test "${SUITE_NAME}"
 
 cylc cat-log "${SUITE_NAME}" >'catlog'
 sed -n 's/^.*\(GNU GENERAL PUBLIC LICENSE\)/\1/p' 'catlog' >'log-1'
@@ -87,7 +87,7 @@ __REFLOG__
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --debug --no-detach --reference-test "${SUITE_NAME}"
+    cylc play --debug --no-detach --reference-test "${SUITE_NAME}"
 
 cylc cat-log "${SUITE_NAME}" >'catlog'
 sed -n 's/^.*\(GNU GENERAL PUBLIC LICENSE\)/\1/p' 'catlog' >'log-1'

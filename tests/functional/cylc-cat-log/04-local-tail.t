@@ -30,7 +30,7 @@ TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 # Run detached.
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}-run" cylc play "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------

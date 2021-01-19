@@ -28,7 +28,7 @@ hosts = notahost
 #-------------------------------------------------------------------------------
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
+    cylc play --reference-test --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 if ! command -v 'sqlite3' >'/dev/null'; then
     sqlite3 \

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -22,12 +22,12 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 SUITED="$RUN_DIR/${SUITE_NAME}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" --debug --no-detach
+suite_run_ok "${TEST_NAME_BASE}-run" cylc play "${SUITE_NAME}" --debug --no-detach
 sqlite3 "${SUITED}/log/db" \
     'SELECT COUNT(*) FROM task_action_timers WHERE ctx_key GLOB "*event-handler-00*"' \
     >"${TEST_NAME_BASE}-db-n-entries"
 cmp_ok "${TEST_NAME_BASE}-db-n-entries" <<<'1'
-suite_run_ok "${TEST_NAME_BASE}-restart" cylc restart "${SUITE_NAME}" --debug --no-detach
+suite_run_ok "${TEST_NAME_BASE}-restart" cylc play "${SUITE_NAME}" --debug --no-detach
 cmp_ok "${SUITED}/file" <<'__TEXT__'
 1
 2
