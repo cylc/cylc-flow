@@ -51,8 +51,10 @@ ${BASE_GLOBAL_CONFIG}
         available = ${CYLC_TEST_HOST_1}
 "
 
-set_test_number 7
+set_test_number 8
 #-------------------------------------------------------------------------------
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+
 # run suite
 cylc run "${SUITE_NAME}" --abort-if-any-task-fails
 poll_suite_running
@@ -77,7 +79,7 @@ create_test_global_config '' "
 ${BASE_GLOBAL_CONFIG}
 [scheduler]
     [[run hosts]]
-        condemned hosts = ${CYLC_TEST_HOST_1}!
+        condemned = ${CYLC_TEST_HOST_1}!
 "
 log_scan "${TEST_NAME_BASE}-stop" "${FILE}" 40 1 \
     'This suite will be shutdown as the suite host is' \

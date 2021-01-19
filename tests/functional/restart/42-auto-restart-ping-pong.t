@@ -52,7 +52,7 @@ stuck_in_the_middle() {
     JOKERS="${CLOWNS}"; CLOWNS="${temp}"
     create_test_global_config '' "
     ${BASE_GLOBAL_CONFIG}
-    [scheduling]
+    [scheduler]
         [[run hosts]]
             available = ${JOKERS}, ${CLOWNS}
             condemned = ${CLOWNS}
@@ -74,8 +74,10 @@ log_scan2() {
 }
 
 EARS=5  # number of times to bounce the suite between hosts
-NO_TESTS="$(( EARS * 5 ))"
+NO_TESTS="$(( EARS * 5 + 1 ))"
 set_test_number "${NO_TESTS}"
+
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
 # run the suite
 stuck_in_the_middle
