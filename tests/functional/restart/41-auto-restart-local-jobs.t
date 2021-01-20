@@ -21,7 +21,7 @@ export REQUIRE_PLATFORM='loc:remote fs:shared'
 export CYLC_TEST_HOST2="${CYLC_TEST_HOST}"
 export CYLC_TEST_HOST1="${HOSTNAME}"
 if ${CYLC_TEST_DEBUG:-false}; then ERR=2; else ERR=1; fi
-set_test_number 11
+set_test_number 12
 #-------------------------------------------------------------------------------
 BASE_GLOBAL_CONFIG="
 [scheduler]
@@ -107,7 +107,8 @@ log_scan "${TEST_NAME}-stop" "${FILE}" 40 1 \
     'The Cylc suite host will soon become un-available' \
     'This suite will be shutdown as the suite host is unable to continue' \
     'Suite shutting down - REQUEST(NOW)' \
-    'bar.1: orphaned task'
+    'Orphaned task jobs:' \
+    '* bar.1 (running)'
 
 cylc stop "${SUITE_NAME}" --now --now 2>/dev/null || true
 poll_suite_stopped
