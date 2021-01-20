@@ -45,7 +45,6 @@ from cylc.flow.exceptions import (
 )
 from cylc.flow.hostuserutil import (
     get_host,
-    is_remote_host,
     is_remote_platform
 )
 from cylc.flow.job_file import JobFileWriter
@@ -261,7 +260,7 @@ class TaskJobManager:
                     ri_map[install_target] = (REMOTE_FILE_INSTALL_DONE)
 
                 # Remote init not in progress for target, so start it
-                elif install_target not in ri_map.keys():
+                elif install_target not in ri_map:
                     self.task_remote_mgr.remote_init(
                         platform, curve_auth, client_pub_key_dir)
                     for itask in itasks:
