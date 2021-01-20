@@ -32,9 +32,15 @@ PLATFORMS = {
         'hosts': 'localhost',
         'job runner': 'slurm',
     },
-    'hpc': {
+    'hpc-no-logs': {
         'hosts': ['hpc1', 'hpc2'],
         'job runner': 'pbs',
+        'retrieve job logs': False
+    },
+    'hpc-logs': {
+        'hosts': ['hpc1', 'hpc2'],
+        'job runner': 'pbs',
+        'retrieve job logs': True
     },
     'hpc1-bg': {
         'hosts': 'hpc1',
@@ -196,7 +202,7 @@ def test_similar_but_not_exact_match():
         (
             {'batch system': 'pbs'},
             {'host': 'hpc1'},
-            'hpc'
+            'hpc-logs'
         ),
         # When the user asks for hpc1 without specifying pbs user gets platform
         # hpc bg1
@@ -216,7 +222,13 @@ def test_similar_but_not_exact_match():
             {'batch system': None},
             {'host': None},
             'localhost'
-        )
+        ),
+        (
+            # Check that all generic items are matched
+            {'batch system': 'pbs'},
+            {'host': 'hpc1', 'retrieve job logs': False},
+            'hpc-no-logs'
+        ),
     ]
 )
 def test_platform_from_job_info_basic(job, remote, returns):
