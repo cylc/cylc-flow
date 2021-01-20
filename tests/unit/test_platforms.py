@@ -20,7 +20,9 @@ import pytest
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.platforms import (
     platform_from_name, platform_from_job_info,
-    get_install_target_from_platform, get_install_target_to_platforms_map)
+    get_install_target_from_platform, get_install_target_to_platforms_map,
+    generic_items_match
+)
 
 from cylc.flow.exceptions import PlatformLookupError
 
@@ -426,3 +428,28 @@ def test_get_install_target_to_platforms_map(
                 _map[install_target] = sorted(_map[install_target],
                                               key=lambda k: k['name'])
         assert result == expected_map
+
+
+@pytest.mark.parametrize(
+    'platform, job, remote, expect',
+    [
+        (
+            # Default, no old settings.
+            {'ship': 'Enterprise'}, {}, {}, True
+        ),
+        (
+            {'captain': 'Kirk'},
+            {'captain': 'Picard'},
+            {},
+            False
+        ),
+        (
+            {'captain': 'Sisko'},
+            {},
+            {'captain': 'Janeway'},
+            False
+        )
+    ]
+)
+def test_generic_items_match(platform, job, remote, expect):
+    assert generic_items_match(platform, job, remote) == expect
