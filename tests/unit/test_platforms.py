@@ -18,7 +18,10 @@
 
 import pytest
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
-from cylc.flow.platforms import platform_from_name, platform_from_job_info
+from cylc.flow.platforms import (
+    platform_from_name, platform_from_job_info,
+    get_install_target_from_platform, get_install_target_to_platforms_map)
+
 from cylc.flow.exceptions import PlatformLookupError
 
 PLATFORMS = {
@@ -70,6 +73,24 @@ PLATFORMS_WITH_RE = {
     'localhost': {
         'hosts': 'localhost',
         'job runner': 'background'
+    }
+}
+
+PLATFORMS_TREK = {
+    'enterprise': {
+        'hosts': ['kirk', 'picard'],
+        'install target': 'picard',
+        'name': 'enterprise'
+    },
+    'voyager': {
+        'hosts': ['janeway'],
+        'install target': 'janeway',
+        'name': 'voyager'
+    },
+    'stargazer': {
+        'hosts': ['picard'],
+        'install target': 'picard',
+        'name': 'stargazer'
     }
 }
 
@@ -326,3 +347,70 @@ def test_platform_from_job_info_similar_platforms(
         },
     }
     assert platform_from_job_info(platforms, job, remote) == returns
+
+
+# -----------------------------------------------------------------------------
+# Tests for getting install target info
+
+@pytest.mark.parametrize(
+    'platform, expected',
+    [
+        ({'name': 'rick', 'install target': 'desktop'}, 'desktop'),
+        ({'name': 'morty', 'install target': ''}, 'morty')
+    ]
+)
+def test_get_install_target_from_platform(platform, expected):
+    """Test that get_install_target_from_platform works as expected."""
+    assert get_install_target_from_platform(platform) == expected
+
+
+@pytest.mark.parametrize(
+    'platform_names, expected_map, expected_err',
+    [
+        (
+            ['enterprise', 'stargazer'],
+            {
+                'picard': [
+                    PLATFORMS_TREK['enterprise'],
+                    PLATFORMS_TREK['stargazer']
+                ]
+            },
+            None
+        ),
+        (
+            ['enterprise', 'voyager', 'enterprise'],
+            {
+                'picard': [
+                    PLATFORMS_TREK['enterprise']
+                ],
+                'janeway': [
+                    PLATFORMS_TREK['voyager']
+                ]
+            },
+            None
+        ),
+        (
+            ['enterprise', 'discovery'],
+            None,
+            PlatformLookupError
+        )
+    ]
+)
+def test_get_install_target_to_platforms_map(
+        platform_names, expected_map, expected_err, monkeypatch):
+    """Test that get_install_target_to_platforms_map works as expected."""
+
+    monkeypatch.setattr('cylc.flow.platforms.get_platform',
+                        lambda x: platform_from_name(x, PLATFORMS_TREK))
+
+    if expected_err:
+        with pytest.raises(expected_err):
+            get_install_target_to_platforms_map(platform_names)
+    else:
+        result = get_install_target_to_platforms_map(platform_names)
+        # Sort the maps:
+        for _map in (result, expected_map):
+            for install_target in _map:
+                _map[install_target] = sorted(_map[install_target],
+                                              key=lambda k: k['name'])
+        assert result == expected_map

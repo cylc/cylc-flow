@@ -18,39 +18,64 @@
 
 """cylc clean [OPTIONS] ARGS
 
-Remove a stopped workflow from the local scheduler filesystem.
+Remove a stopped workflow from the local scheduler filesystem and remote hosts.
 
 NOTE: this command is intended for workflows installed with `cylc install`. If
 this is run for a workflow that was instead written directly in ~/cylc-run and
 not backed up elsewhere, it will be lost.
 
-It will also remove an symlink directory targets. For now, it will fail to
-remove workflow files/directories on a remote host.
+It will also remove any symlink directory targets.
 
 Suite names can be hierarchical, corresponding to the path under ~/cylc-run.
 
 Examples:
-  # Remove the workflow at ~/cylc-run/foo
-  $ cylc clean foo
+  # Remove the workflow at ~/cylc-run/foo/bar
+  $ cylc clean foo/bar
 
 """
 
+import cylc.flow.flags
+from cylc.flow import LOG
+from cylc.flow.loggingutil import CylcLogFormatter
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
-from cylc.flow.suite_files import clean
+from cylc.flow.suite_files import clean, init_clean
 
 
 def get_option_parser():
     parser = COP(
         __doc__,
-        argdoc=[("REG", "Suite name")]
+        argdoc=[('REG', "Workflow name")]
     )
+
+    parser.add_option(
+        '--local-only', '--local',
+        help="Only clean on the local filesystem (not remote hosts).",
+        action='store_true', dest='local_only'
+    )
+
+    parser.add_option(
+        '--timeout',
+        help="The number of seconds to wait for cleaning to take place on "
+             "remote hosts before cancelling.",
+        action='store', default='120', dest='remote_timeout'
+    )
+
     return parser
 
 
 @cli_function(get_option_parser)
 def main(parser, opts, reg):
-    clean(reg)
+    if not cylc.flow.flags.debug:
+        # for readability omit timestamps from logging unless in debug mode
+        for handler in LOG.handlers:
+            if isinstance(handler.formatter, CylcLogFormatter):
+                handler.formatter.configure(timestamp=False)
+
+    if opts.local_only:
+        clean(reg)
+    else:
+        init_clean(reg, opts)
 
 
 if __name__ == "__main__":

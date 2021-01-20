@@ -426,8 +426,28 @@ def get_install_target_from_platform(platform):
     return platform.get('install target')
 
 
-def is_platform_with_target_in_list(
-        install_target, distinct_platforms_list):
+def get_install_target_to_platforms_map(platform_names):
+    """Get a dictionary of unique install targets and the platforms which use
+    them.
+
+    Return {install_target_1: [platform_1_dict, platform_2_dict, ...], ...}
+
+    Args:
+        platform_names (list): List of platform names to look up in the
+            global config.
+    """
+    platform_names = set(platform_names)
+    platforms = [get_platform(p_name) for p_name in platform_names]
+    install_targets = set(get_install_target_from_platform(platform)
+                          for platform in platforms)
+    return {
+        target: [platform for platform in platforms
+                 if get_install_target_from_platform(platform) == target]
+        for target in install_targets
+    }
+
+
+def is_platform_with_target_in_list(install_target, distinct_platforms_list):
     """Determines whether install target is in the list of platforms"""
     for distinct_platform in distinct_platforms_list:
         return install_target == distinct_platform['install target']

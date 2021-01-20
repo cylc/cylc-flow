@@ -14,14 +14,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.flow.suite_files import check_nested_run_dirs
+import logging
+import os.path
+from pathlib import Path
 import pytest
 from unittest import mock
 
-import os.path
-from pathlib import Path
+from cylc.flow import CYLC_LOG
 from cylc.flow import suite_files
-from cylc.flow.exceptions import SuiteServiceFileError, WorkflowFilesError
+from cylc.flow.exceptions import (
+    CylcError, SuiteServiceFileError, TaskRemoteMgmtError, WorkflowFilesError)
+from cylc.flow.suite_files import check_nested_run_dirs
 
 
 def get_register_test_cases():
@@ -328,36 +331,137 @@ def test_nested_run_dirs_raise_error(direction, monkeypatch):
 
 
 @pytest.mark.parametrize(
-    'reg, expected_err',
-    [('foo/bar/', None),
-     ('/foo/bar', SuiteServiceFileError)]
+    'reg, expected_err, expected_msg',
+    [('foo/bar/', None, None),
+     ('/foo/bar', SuiteServiceFileError, "cannot be an absolute path"),
+     ('$HOME/alone', SuiteServiceFileError, "invalid suite name")]
 )
-def test_validate_reg(reg, expected_err):
+def test_validate_reg(reg, expected_err, expected_msg):
     if expected_err:
         with pytest.raises(expected_err) as exc:
             suite_files._validate_reg(reg)
-        assert 'cannot be an absolute path' in str(exc.value)
+        if expected_msg:
+            assert expected_msg in str(exc.value)
     else:
         suite_files._validate_reg(reg)
 
 
 @pytest.mark.parametrize(
+    'reg, not_stopped, err, err_msg',
+    [('foo/..', False, WorkflowFilesError,
+      "cannot be a path that points to the cylc-run directory or above"),
+     ('foo/../..', False, WorkflowFilesError,
+      "cannot be a path that points to the cylc-run directory or above"),
+     ('foo', True, SuiteServiceFileError, "Cannot remove running workflow")]
+)
+def test_clean_check(reg, not_stopped, err, err_msg, monkeypatch):
+    """Test that _clean_check() fails appropriately.
+
+    Params:
+        reg (str): Workflow name.
+        err (Exception): Expected error.
+        err_msg (str): Message that is expected to be in the exception.
+    """
+    run_dir = mock.Mock()
+
+    def mocked_detect_old_contact_file(reg):
+        if not_stopped:
+            raise SuiteServiceFileError('Mocked error')
+
+    monkeypatch.setattr('cylc.flow.suite_files.detect_old_contact_file',
+                        mocked_detect_old_contact_file)
+
+    with pytest.raises(err) as exc:
+        suite_files._clean_check(reg, run_dir)
+    assert err_msg in str(exc.value)
+
+
+@pytest.mark.parametrize(
+    'reg, props, clean_called, remote_clean_called',
+    [
+        ('foo/bar', {
+            'no dir': True,
+            'log': (logging.INFO, "No directory to clean")
+        }, False, False),
+        ('foo/bar', {
+            'no db': True,
+            'log': (logging.INFO,
+                    "No workflow database - will only clean locally")
+        }, True, False),
+        ('foo/bar', {
+            'db platforms': ['localhost', 'localhost']
+        }, True, False),
+        ('foo/bar', {
+            'db platforms': ['horse']
+        }, True, True)
+    ]
+)
+def test_init_clean_ok(
+        reg, props, clean_called, remote_clean_called,
+        monkeypatch, tmp_path, caplog):
+    """Test the init_clean() function logic.
+
+    Params:
+        reg (str): Workflow name.
+        props (dict): Possible values are (all optional):
+            'no dir' (bool): If True, do not create run dir for this test case.
+            'log' (tuple): Of form (severity, msg):
+                severity (logging level): Expected level e.g. logging.INFO.
+                msg (str): Message that is expected to be logged.
+            'db platforms' (list): Platform names that would be loaded from
+                the database.
+            'no db' (bool): If True, workflow database doesn't exist.
+        clean_called (bool): If a local clean is expected to go ahead.
+        remote_clean_called (bool): If a remote clean is expected to go ahead.
+    """
+    # --- Setup ---
+    expected_log = props.get('log')
+    if expected_log:
+        level, msg = expected_log
+        caplog.set_level(level, CYLC_LOG)
+
+    tmp_path.joinpath('cylc-run').mkdir()
+    run_dir = tmp_path.joinpath('cylc-run', reg)
+    if not props.get('no dir'):
+        run_dir.mkdir(parents=True)
+
+    mocked_clean = mock.Mock()
+    monkeypatch.setattr('cylc.flow.suite_files.clean', mocked_clean)
+    mocked_remote_clean = mock.Mock()
+    monkeypatch.setattr('cylc.flow.suite_files.remote_clean',
+                        mocked_remote_clean)
+    monkeypatch.setattr('cylc.flow.suite_files.get_suite_run_dir',
+                        lambda x: tmp_path.joinpath('cylc-run', x))
+
+    _get_platforms_from_db = suite_files.get_platforms_from_db
+
+    def mocked_get_platforms_from_db(run_dir):
+        if props.get('no dir') or props.get('no db'):
+            return _get_platforms_from_db(run_dir)  # Handle as normal
+        return set(props.get('db platforms'))
+
+    monkeypatch.setattr('cylc.flow.suite_files.get_platforms_from_db',
+                        mocked_get_platforms_from_db)
+
+    # --- The actual test ---
+    suite_files.init_clean(reg, opts=mock.Mock())
+    if expected_log:
+        assert msg in caplog.text
+    if clean_called:
+        assert mocked_clean.called is True
+    else:
+        assert mocked_clean.called is False
+    if remote_clean_called:
+        assert mocked_remote_clean.called is True
+    else:
+        assert mocked_remote_clean.called is False
+
+
+@pytest.mark.parametrize(
     'reg, props',
     [
-        ('foo/bar/', {}),
-        ('foo', {'no dir': True}),
-        ('foo/..', {
-            'no dir': True,
-            'err': WorkflowFilesError,
-            'err msg': ('cannot be a path that points to the cylc-run '
-                        'directory or above')
-        }),
-        ('foo/../..', {
-            'no dir': True,
-            'err': WorkflowFilesError,
-            'err msg': ('cannot be a path that points to the cylc-run '
-                        'directory or above')
-        }),
+        ('foo/bar/', {}),  # Works ok
+        ('foo', {'no dir': True}),  # Nothing to clean
         ('foo', {
             'not stopped': True,
             'err': SuiteServiceFileError,
@@ -471,6 +575,158 @@ def test_clean(reg, props, monkeypatch, tmp_path):
         for d in dirs_to_check:
             assert d.exists() is False
             assert d.is_symlink() is False
+
+
+def test_clean_broken_symlink_run_dir(monkeypatch, tmp_path):
+    """Test clean() for removing a run dir that is a broken symlink."""
+    reg = 'foo/bar'
+    run_dir = tmp_path.joinpath('cylc-run', reg)
+    run_dir.parent.mkdir(parents=True)
+    target = tmp_path.joinpath('rabbow/cylc-run', reg)
+    target.mkdir(parents=True)
+    run_dir.symlink_to(target)
+    target.rmdir()
+
+    monkeypatch.setattr('cylc.flow.suite_files.get_suite_run_dir',
+                        lambda x: tmp_path.joinpath('cylc-run', x))
+
+    suite_files.clean(reg)
+    assert run_dir.parent.is_dir() is False
+
+
+PLATFORMS = {
+    'enterprise': {
+        'hosts': ['kirk', 'picard'],
+        'install target': 'picard',
+        'name': 'enterprise'
+    },
+    'voyager': {
+        'hosts': ['janeway'],
+        'install target': 'janeway',
+        'name': 'voyager'
+    },
+    'stargazer': {
+        'hosts': ['picard'],
+        'install target': 'picard',
+        'name': 'stargazer'
+    },
+    'exeter': {
+        'hosts': ['localhost'],
+        'install target': 'localhost',
+        'name': 'exeter'
+    }
+}
+
+
+@pytest.mark.parametrize(
+    'install_targets_map, failed_platforms, expected_platforms, expected_err',
+    [
+        (
+            {'localhost': [PLATFORMS['exeter']]}, None, None, None
+        ),
+        (
+            {
+                'localhost': [PLATFORMS['exeter']],
+                'picard': [PLATFORMS['enterprise']]
+            },
+            None,
+            ['enterprise'],
+            None
+        ),
+        (
+            {
+                'picard': [PLATFORMS['enterprise'], PLATFORMS['stargazer']],
+                'janeway': [PLATFORMS['voyager']]
+            },
+            None,
+            ['enterprise', 'voyager'],
+            None
+        ),
+        (
+            {
+                'picard': [PLATFORMS['enterprise'], PLATFORMS['stargazer']],
+                'janeway': [PLATFORMS['voyager']]
+            },
+            ['enterprise'],
+            ['enterprise', 'stargazer', 'voyager'],
+            None
+        ),
+        (
+            {
+                'picard': [PLATFORMS['enterprise'], PLATFORMS['stargazer']],
+                'janeway': [PLATFORMS['voyager']]
+            },
+            ['enterprise', 'stargazer'],
+            ['enterprise', 'stargazer', 'voyager'],
+            (CylcError, "Could not clean on install targets: picard")
+        ),
+        (
+            {
+                'picard': [PLATFORMS['enterprise']],
+                'janeway': [PLATFORMS['voyager']]
+            },
+            ['enterprise', 'voyager'],
+            ['enterprise', 'voyager'],
+            (CylcError, "Could not clean on install targets: picard, janeway")
+        )
+    ]
+)
+def test_remote_clean(install_targets_map, failed_platforms,
+                      expected_platforms, expected_err, monkeypatch, caplog):
+    """Test remote_clean() logic.
+
+    Params:
+        install_targets_map (dict): The map that would be returned by
+            platforms.get_install_target_to_platforms_map()
+        failed_platforms (list): If specified, any platforms that clean will
+            artificially fail on in this test case.
+        expected_platforms (list): If specified, all the platforms that the
+            remote clean cmd is expected to run on.
+        expected_err (tuple):  If specified, a tuple of the form
+            (Exception, str) giving an exception that is expected to be raised.
+    """
+    # ----- Setup -----
+    caplog.set_level(logging.DEBUG, CYLC_LOG)
+    monkeypatch.setattr(
+        'cylc.flow.suite_files.get_install_target_to_platforms_map',
+        lambda x: install_targets_map)
+    # Remove randomness:
+    mocked_shuffle = mock.Mock()
+    monkeypatch.setattr('cylc.flow.suite_files.shuffle', mocked_shuffle)
+
+    def mocked_remote_clean_cmd_side_effect(reg, platform, timeout):
+        proc_ret_code = 0
+        if failed_platforms and platform['name'] in failed_platforms:
+            proc_ret_code = 1
+        return mock.Mock(
+            poll=lambda: proc_ret_code,
+            communicate=lambda: (b"", b""),
+            args=[])
+
+    mocked_remote_clean_cmd = mock.Mock(
+        side_effect=mocked_remote_clean_cmd_side_effect)
+    monkeypatch.setattr(
+        'cylc.flow.suite_files._remote_clean_cmd', mocked_remote_clean_cmd)
+    # ----- Test -----
+    reg = 'foo'
+    platform_names = (
+        "This arg bypassed as we provide the install targets map in the test")
+    if expected_err:
+        err, msg = expected_err
+        with pytest.raises(err) as exc:
+            suite_files.remote_clean(reg, platform_names, timeout='irrelevant')
+        assert msg in str(exc.value)
+    else:
+        suite_files.remote_clean(reg, platform_names, timeout='irrelevant')
+    if expected_platforms:
+        for p_name in expected_platforms:
+            mocked_remote_clean_cmd.assert_any_call(
+                reg, PLATFORMS[p_name], 'irrelevant')
+    else:
+        mocked_remote_clean_cmd.assert_not_called()
+    if failed_platforms:
+        for p_name in failed_platforms:
+            assert f"{p_name}: {TaskRemoteMgmtError.MSG_TIDY}" in caplog.text
 
 
 def test_remove_empty_reg_parents(tmp_path):

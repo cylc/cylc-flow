@@ -30,7 +30,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 TEST_NAME="${TEST_NAME_BASE}-restart-fail"
 suite_run_fail "$TEST_NAME" cylc restart "${SUITE_NAME}"
 
-grep_ok 'suite database is incompatible' "${TEST_NAME}.stderr"
+grep_ok 'Workflow database is incompatible' "${TEST_NAME}.stderr"
 
 purge
 
@@ -42,7 +42,7 @@ install_suite
 TEST_NAME="54-no-db-restart-fail"
 suite_run_fail "$TEST_NAME" cylc restart "${SUITE_NAME}"
 
-grep_ok 'Cannot restart as suite database not found' "${TEST_NAME}.stderr"
+grep_ok 'the workflow database was not found' "${TEST_NAME}.stderr"
 
 purge
 exit

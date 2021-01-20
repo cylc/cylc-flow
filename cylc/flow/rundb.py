@@ -297,11 +297,12 @@ class CylcSuiteDAO:
         ],
     }
 
-    def __init__(self, db_file_name=None, is_public=False):
-        """Initialise object.
+    def __init__(self, db_file_name, is_public=False):
+        """Initialise database access object.
 
-        db_file_name - Path to the database file
-        is_public - If True, allow retries, etc
+        Args:
+            db_file_name (str): Path to the database file.
+            is_public (bool): If True, allow retries, etc.
 
         """
         self.db_file_name = expandvars(db_file_name)
@@ -608,6 +609,11 @@ class CylcSuiteDAO:
             r" WHERE run_status==0 GROUP BY name ORDER BY time_run_exit")
         for row_idx, row in enumerate(self.connect().execute(stmt)):
             callback(row_idx, list(row))
+
+    def select_task_job_platforms(self):
+        """Return the set of platform names from task_jobs table."""
+        stmt = f"SELECT DISTINCT platform_name FROM {self.TABLE_TASK_JOBS}"
+        return set(i[0] for i in self.connect().execute(stmt))
 
     def select_submit_nums(self, name, point):
         """Select submit_num and flow_label from task_states table.

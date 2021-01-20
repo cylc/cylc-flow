@@ -16,27 +16,33 @@
 
 """Suite service files management."""
 
-# Note: Some modules are NOT imported in the header. Expensive modules are only
-# imported on demand.
-
 import os
 from pathlib import Path
+from random import shuffle
 import re
 import shutil
+from subprocess import Popen, PIPE, DEVNULL
+import time
 import zmq.auth
 
 import aiofiles
 
 from cylc.flow import LOG
-from cylc.flow.exceptions import SuiteServiceFileError, WorkflowFilesError
+from cylc.flow.exceptions import (
+    CylcError, PlatformLookupError, SuiteServiceFileError, TaskRemoteMgmtError,
+    WorkflowFilesError)
+import cylc.flow.flags
 from cylc.flow.pathutil import (
     get_suite_run_dir, make_localhost_symlinks, remove_dir)
-from cylc.flow.platforms import get_platform
+from cylc.flow.platforms import (
+    get_platform, get_install_target_to_platforms_map)
 from cylc.flow.hostuserutil import (
     get_user,
     is_remote_host,
     is_remote_user
 )
+from cylc.flow.remote import construct_ssh_cmd
+from cylc.flow.suite_db_mgr import SuiteDatabaseManager
 from cylc.flow.unicode_rules import SuiteNameValidator
 
 from enum import Enum
@@ -275,9 +281,8 @@ def detect_old_contact_file(reg, check_host_port=None):
         import shlex
         ssh_str = get_platform()["ssh command"]
         cmd = shlex.split(ssh_str) + ["-n", old_host] + cmd
-    from subprocess import Popen, PIPE, DEVNULL  # nosec
     from time import sleep, time
-    proc = Popen(cmd, stdin=DEVNULL, stdout=PIPE, stderr=PIPE)  # nosec
+    proc = Popen(cmd, stdin=DEVNULL, stdout=PIPE, stderr=PIPE)
     # Terminate command after 10 seconds to prevent hanging SSH, etc.
     timeout = time() + 10.0
     while proc.poll() is None:
@@ -545,38 +550,79 @@ def register(reg=None, source=None, redirect=False):
     return reg
 
 
-def clean(reg):
-    """Remove stopped workflows on the local scheduler filesystem.
-
-    Deletes the run dir in ~/cylc-run and any symlink dirs. Note: if the
-    run dir has been manually deleted, it will not be possible to clean the
-    symlink dirs.
+def _clean_check(reg, run_dir):
+    """Check whether a workflow can be cleaned.
 
     Args:
-        reg (str): workflow name.
+        reg (str): Workflow name.
+        run_dir (str): Path to the workflow run dir on the filesystem.
     """
     _validate_reg(reg)
     reg = os.path.normpath(reg)
     if reg.startswith('.'):
         raise WorkflowFilesError(
-            'Workflow name cannot be a path that points to the cylc-run '
-            'directory or above')
-    run_dir = Path(get_suite_run_dir(reg))
-    if not run_dir.is_dir():
-        LOG.info(f'No workflow directory to clean at {run_dir}')
-        return
+            "Workflow name cannot be a path that points to the cylc-run "
+            "directory or above")
+    if not run_dir.is_dir() and not run_dir.is_symlink():
+        msg = f"No directory to clean at {run_dir}"
+        raise FileNotFoundError(msg)
     try:
         detect_old_contact_file(reg)
     except SuiteServiceFileError as exc:
         raise SuiteServiceFileError(
-            f'Cannot remove running workflow.\n\n{exc}')
+            f"Cannot remove running workflow.\n\n{exc}")
 
-    # TODO: check task_jobs table in database to see what platforms are used
 
-    possible_symlinks = [(Path(name), Path(run_dir, name)) for name in [
-        'log', 'share/cycle', 'share', 'work', '']]
-    # Note: 'share/cycle' must come before 'share', and '' must come last
-    for name, path in possible_symlinks:
+def init_clean(reg, opts):
+    """Initiate the process of removing a stopped workflow from the local
+    scheduler filesystem and remote hosts.
+
+    Args:
+        reg (str): Workflow name.
+        opts (optparse.Values): CLI options object for cylc clean.
+    """
+    local_run_dir = Path(get_suite_run_dir(reg))
+    try:
+        _clean_check(reg, local_run_dir)
+    except FileNotFoundError as exc:
+        LOG.info(str(exc))
+        return
+
+    platform_names = None
+    try:
+        platform_names = get_platforms_from_db(local_run_dir)
+    except FileNotFoundError:
+        LOG.info("No workflow database - will only clean locally")
+    except SuiteServiceFileError as exc:
+        raise SuiteServiceFileError(f"Cannot clean - {exc}")
+
+    if platform_names and platform_names != {'localhost'}:
+        remote_clean(reg, platform_names, opts.remote_timeout)
+    LOG.info("Cleaning on local filesystem")
+    clean(reg)
+
+
+def clean(reg):
+    """Remove a stopped workflow from the local filesystem only.
+
+    Deletes the workflow run directory and any symlink dirs. Note: if the
+    run dir has already been manually deleted, it will not be possible to
+    clean the symlink dirs.
+
+    Args:
+        reg (str): Workflow name.
+    """
+    run_dir = Path(get_suite_run_dir(reg))
+    try:
+        _clean_check(reg, run_dir)
+    except FileNotFoundError as exc:
+        LOG.info(str(exc))
+        return
+
+    # Note: 'share/cycle' must come first, and '' must come last
+    for possible_symlink in ('share/cycle', 'share', 'log', 'work', ''):
+        name = Path(possible_symlink)
+        path = Path(run_dir, possible_symlink)
         if path.is_symlink():
             # Ensure symlink is pointing to expected directory. If not,
             # something is wrong and we should abort
@@ -600,6 +646,90 @@ def clean(reg):
 
     remove_dir(run_dir)
     _remove_empty_reg_parents(reg, run_dir)
+
+
+def remote_clean(reg, platform_names, timeout):
+    """Run subprocesses to clean workflows on remote install targets
+    (skip localhost), given a set of platform names to look up.
+
+    Args:
+        reg (str): Workflow name.
+        platform_names (list): List of platform names to look up in the global
+            config, in order to determine the install targets to clean on.
+        timeout (str): Number of seconds to wait before cancelling.
+    """
+    try:
+        install_targets_map = (
+            get_install_target_to_platforms_map(platform_names))
+    except PlatformLookupError as exc:
+        raise PlatformLookupError(
+            "Cannot clean on remote platforms as the workflow database is "
+            f"out of date/inconsistent with the global config - {exc}")
+
+    pool = []
+    for target, platforms in install_targets_map.items():
+        if target == 'localhost':
+            continue
+        shuffle(platforms)
+        LOG.info(
+            f"Cleaning on install target: {platforms[0]['install target']}")
+        # Issue ssh command:
+        pool.append(
+            (_remote_clean_cmd(reg, platforms[0], timeout), target, platforms)
+        )
+    failed_targets = []
+    # Handle subproc pool results almost concurrently:
+    while pool:
+        for proc, target, platforms in pool:
+            ret_code = proc.poll()
+            if ret_code is None:  # proc still running
+                continue
+            pool.remove((proc, target, platforms))
+            out, err = (f.decode() for f in proc.communicate())
+            if out:
+                LOG.debug(out)
+            if ret_code:
+                # Try again using the next platform for this install target:
+                this_platform = platforms.pop(0)
+                exc = TaskRemoteMgmtError(
+                    TaskRemoteMgmtError.MSG_TIDY, this_platform['name'],
+                    " ".join(proc.args), ret_code, out, err)
+                LOG.debug(exc)
+                if platforms:
+                    pool.append(
+                        (_remote_clean_cmd(reg, platforms[0], timeout),
+                         target, platforms)
+                    )
+                else:  # Exhausted list of platforms
+                    failed_targets.append(target)
+            elif err:
+                LOG.debug(err)
+        time.sleep(0.2)
+    if failed_targets:
+        raise CylcError(
+            f"Could not clean on install targets: {', '.join(failed_targets)}")
+
+
+def _remote_clean_cmd(reg, platform, timeout):
+    """Remove a stopped workflow on a remote host.
+
+    Call "cylc clean --local-only" over ssh and return the subprocess.
+
+    Args:
+        reg (str): Workflow name.
+        platform (dict): Config for the platform on which to remove the
+            workflow.
+        timeout (str): Number of seconds to wait before cancelling the command.
+    """
+    LOG.debug(
+        f'Cleaning on install target: {platform["install target"]} '
+        f'(using platform: {platform["name"]})')
+    cmd = ['clean', '--local-only', reg]
+    if cylc.flow.flags.debug:
+        cmd.append('--debug')
+    cmd = construct_ssh_cmd(cmd, platform, timeout=timeout)
+    LOG.debug(" ".join(cmd))
+    return Popen(cmd, stdin=DEVNULL, stdout=PIPE, stderr=PIPE)
 
 
 def _remove_empty_reg_parents(reg, path):
@@ -626,7 +756,7 @@ def _remove_empty_reg_parents(reg, path):
             continue
         try:
             parent.rmdir()
-            LOG.info(f'Removing directory: {parent}')
+            LOG.debug(f'Removing directory: {parent}')
         except OSError:
             break
 
@@ -698,6 +828,24 @@ def _load_local_item(item, path):
             return file_.read()
     except IOError:
         return None
+
+
+def get_platforms_from_db(run_dir):
+    """Load the set of names of platforms (that jobs ran on) from the
+    workflow database.
+
+    Args:
+        run_dir (str): The workflow run directory.
+    """
+    suite_db_mgr = SuiteDatabaseManager(
+        os.path.join(run_dir, SuiteFiles.Service.DIRNAME))
+    suite_db_mgr.check_suite_db_compatibility()
+    try:
+        pri_dao = suite_db_mgr.get_pri_dao()
+        platform_names = pri_dao.select_task_job_platforms()
+        return platform_names
+    finally:
+        pri_dao.close()
 
 
 def _validate_reg(reg):

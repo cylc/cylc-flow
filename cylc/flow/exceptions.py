@@ -99,18 +99,18 @@ class WorkflowFilesError(CylcError):
 class TaskRemoteMgmtError(CylcError):
     """Exceptions initialising suite run directory of remote job host."""
 
-    MSG_INIT = '%s: initialisation did not complete:\n'  # %s owner_at_host
-    MSG_SELECT = '%s: host selection failed:\n'  # %s host
-    MSG_TIDY = '%s: clean up did not complete:\n'  # %s owner_at_host
+    MSG_INIT = "initialisation did not complete"
+    MSG_SELECT = "host selection failed"
+    MSG_TIDY = "clean up did not complete"
 
     def __str__(self):
         msg, platform_n, cmd_str, ret_code, out, err = self.args
-        ret = (msg + 'COMMAND FAILED (%d): %s\n') % (
-            platform_n, ret_code, cmd_str)
+        ret = (f"{platform_n}: {msg}:\n"
+               f"COMMAND FAILED ({ret_code}): {cmd_str}\n")
         for label, item in ('STDOUT', out), ('STDERR', err):
             if item:
                 for line in item.splitlines(True):  # keep newline chars
-                    ret += 'COMMAND %s: %s' % (label, line)
+                    ret += f"COMMAND {label}: {line}"
         return ret
 
 
