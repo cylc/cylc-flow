@@ -310,15 +310,8 @@ def platform_from_job_info(platforms, job, remote):
     # before site config platforms.
     for platform_name, platform_spec in reversed(list(platforms.items())):
         # Handle all the items requiring an exact match.
-        for task_section in [job, remote]:
-            shared_items = set(
-                task_section).intersection(set(platform_spec))
-            generic_items_match = all((
-                platform_spec[item] == task_section[item]
-                for item in shared_items
-            ))
         # All items other than batch system and host must be an exact match
-        if not generic_items_match:
+        if not generic_items_match(platform_spec, job, remote):
             continue
         # We have some special logic to identify whether task host and task
         # batch system match the platform in question.
@@ -344,6 +337,17 @@ def platform_from_job_info(platforms, job, remote):
             return task_host
 
     raise PlatformLookupError('No platform found matching your task')
+
+
+def generic_items_match(platform_spec, job, remote):
+    for task_section in [job, remote]:
+        shared_items = set(
+            task_section).intersection(set(platform_spec))
+        generic_items_match = all((
+            platform_spec[item] == task_section[item]
+            for item in shared_items
+        ))
+    return generic_items_match
 
 
 def get_host_from_platform(platform, method='random'):
