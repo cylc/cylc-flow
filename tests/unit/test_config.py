@@ -415,6 +415,35 @@ def test_process_icp(
         assert opt_icp == expected_opt_icp
 
 
+@pytest.mark.parametrize(
+    'startcp, expected',
+    [('2021-01-20T17Z', '20210120T1700Z'),
+     ('now', '20050102T0615Z'),
+     (None, '18990501T0000Z')]
+)
+def test_process_startcp(startcp: str, expected: str,
+                         monkeypatch, cycling_mode):
+    """Test SuiteConfig.process_start_cycle_point().
+
+    An icp of 1899-05-01T00Z is assumed, and "now" is assumed to be
+    2005-01-02T06:15Z
+
+    Params:
+        startcp: The start cycle point given by cli option.
+        expected: The expected startcp value that gets set.
+    """
+    iso8601.init()
+    cycling_mode(integer=False)
+    mocked_config = Mock()
+    mocked_config.initial_point = '18990501T0000Z'
+    mocked_config.options.startcp = startcp
+    monkeypatch.setattr('cylc.flow.config.get_current_time_string',
+                        lambda: '20050102T0615Z')
+
+    SuiteConfig.process_start_cycle_point(mocked_config)
+    assert str(mocked_config.start_point) == expected
+
+
 def test_utc_mode(caplog, mock_glbl_cfg):
     """Test that UTC mode is handled correctly."""
     caplog.set_level(logging.WARNING, CYLC_LOG)

@@ -368,14 +368,7 @@ class SuiteConfig:
         # Initial point from suite definition (or CLI override above).
         self.process_initial_cycle_point()
 
-        if getattr(self.options, 'startcp', None) is not None:
-            # Warm start from a point later than initial point.
-            if self.options.startcp == "now":
-                self.options.startcp = get_current_time_string()
-            self.start_point = get_point(self.options.startcp).standardise()
-        else:
-            # Cold start.
-            self.start_point = self.initial_point
+        self.process_start_cycle_point()
 
         if (
             self.cfg['scheduling']['final cycle point'] is not None and
@@ -837,6 +830,22 @@ class SuiteConfig:
                 raise SuiteConfigError(
                     f"Initial cycle point {self.initial_point} does not meet "
                     f"the constraints {constraints}")
+
+    def process_start_cycle_point(self):
+        """Set the start cycle point from options.
+
+        Sets:
+            self.options.startcp
+            self.start_point
+        """
+        if getattr(self.options, 'startcp', None) is not None:
+            # Warm start from a point later than initial point.
+            if self.options.startcp == 'now':
+                self.options.startcp = get_current_time_string()
+            self.start_point = get_point(self.options.startcp).standardise()
+        else:
+            # Cold start.
+            self.start_point = self.initial_point
 
     def _check_circular(self):
         """Check for circular dependence in graph."""
