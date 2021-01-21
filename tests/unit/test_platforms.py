@@ -460,6 +460,12 @@ def test_get_install_target_to_platforms_map(
             {'captain': 'Picard'},
             {'ship': 'Defiant'},
             False
+        ),
+        (
+            {'captain': 'Picard', 'ship': 'Enterprise'},
+            {'captain': 'Picard'},
+            {},
+            True
         )
     ]
 )
