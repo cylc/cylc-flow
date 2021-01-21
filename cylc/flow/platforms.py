@@ -342,15 +342,14 @@ def platform_from_job_info(platforms, job, remote):
 def generic_items_match(platform_spec, job, remote):
     """Checks generic items from job/remote against a platform.
     """
-    generic_items_match = True
     for task_section in [job, remote]:
         shared_items = set(task_section).intersection(set(platform_spec))
         if not all([
             platform_spec[item] == task_section[item]
             for item in shared_items
         ]):
-            generic_items_match = False
-    return generic_items_match
+            return False
+    return True
 
 
 def get_host_from_platform(platform, method='random'):
