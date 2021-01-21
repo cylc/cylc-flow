@@ -367,66 +367,8 @@ class SuiteConfig:
 
         # Initial point from suite definition (or CLI override above).
         self.process_initial_cycle_point()
-
         self.process_start_cycle_point()
-
-        if (
-            self.cfg['scheduling']['final cycle point'] is not None and
-            not self.cfg['scheduling']['final cycle point'].strip()
-        ):
-            self.cfg['scheduling']['final cycle point'] = None
-        fcp_str = getattr(self.options, 'fcp', None)
-        if fcp_str is None:
-            fcp_str = self.cfg['scheduling']['final cycle point']
-        if fcp_str is not None:
-            # Is the final "point"(/interval) relative to initial?
-            if self.cycling_type == INTEGER_CYCLING_TYPE:
-                if "P" in fcp_str:
-                    # Relative, integer cycling.
-                    self.final_point = get_point_relative(
-                        self.cfg['scheduling']['final cycle point'],
-                        self.initial_point
-                    ).standardise()
-            else:
-                try:
-                    # Relative, ISO8601 cycling.
-                    self.final_point = get_point_relative(
-                        fcp_str, self.initial_point).standardise()
-                except IsodatetimeError:
-                    # (not relative)
-                    pass
-            if self.final_point is None:
-                # Must be absolute.
-                self.final_point = get_point(fcp_str).standardise()
-            self.cfg['scheduling']['final cycle point'] = str(self.final_point)
-
-        if (self.final_point is not None and
-                self.initial_point > self.final_point):
-            raise SuiteConfigError(
-                "The initial cycle point:" +
-                str(self.initial_point) + " is after the final cycle point:" +
-                str(self.final_point) + ".")
-
-        # Validate final cycle point against any constraints
-        if (
-            self.final_point is not None and
-            self.cfg['scheduling']['final cycle point constraints']
-        ):
-            valid_fcp = False
-            for entry in (
-                self.cfg['scheduling']['final cycle point constraints']
-            ):
-                possible_pt = get_point_relative(
-                    entry, self.final_point).standardise()
-                if self.final_point == possible_pt:
-                    valid_fcp = True
-                    break
-            if not valid_fcp:
-                constraints_str = str(
-                    self.cfg['scheduling']['final cycle point constraints'])
-                raise SuiteConfigError(
-                    "Final cycle point %s does not meet the constraints %s" % (
-                        str(self.final_point), constraints_str))
+        self.process_final_cycle_point()
 
         # Parse special task cycle point offsets, and replace family names.
         LOG.debug("Parsing [special tasks]")
@@ -846,6 +788,66 @@ class SuiteConfig:
         else:
             # Cold start.
             self.start_point = self.initial_point
+
+    def process_final_cycle_point(self):
+        """Validate and set the final cycle point from flow.cylc or options.
+
+        Sets:
+            self.final_point
+            self.cfg['scheduling']['final cycle point']
+        Raises:
+            SuiteConfigError - if it fails to validate
+        """
+        if (
+            self.cfg['scheduling']['final cycle point'] is not None and
+            not self.cfg['scheduling']['final cycle point'].strip()
+        ):
+            self.cfg['scheduling']['final cycle point'] = None
+        fcp_str = getattr(self.options, 'fcp', None)
+        if fcp_str is None:
+            fcp_str = self.cfg['scheduling']['final cycle point']
+        if fcp_str is not None:
+            # Is the final "point"(/interval) relative to initial?
+            if self.cycling_type == INTEGER_CYCLING_TYPE:
+                if "P" in fcp_str:
+                    # Relative, integer cycling.
+                    self.final_point = get_point_relative(
+                        self.cfg['scheduling']['final cycle point'],
+                        self.initial_point
+                    ).standardise()
+            else:
+                try:
+                    # Relative, ISO8601 cycling.
+                    self.final_point = get_point_relative(
+                        fcp_str, self.initial_point).standardise()
+                except IsodatetimeError:
+                    # (not relative)
+                    pass
+            if self.final_point is None:
+                # Must be absolute.
+                self.final_point = get_point(fcp_str).standardise()
+            self.cfg['scheduling']['final cycle point'] = str(self.final_point)
+
+        if (self.final_point is not None and
+                self.initial_point > self.final_point):
+            raise SuiteConfigError(
+                f"The initial cycle point:{self.initial_point} is after the "
+                f"final cycle point:{self.final_point}.")
+
+        # Validate final cycle point against any constraints
+        constraints = self.cfg['scheduling']['final cycle point constraints']
+        if constraints and self.final_point is not None:
+            valid_fcp = False
+            for entry in constraints:
+                possible_pt = get_point_relative(
+                    entry, self.final_point).standardise()
+                if self.final_point == possible_pt:
+                    valid_fcp = True
+                    break
+            if not valid_fcp:
+                raise SuiteConfigError(
+                    f"Final cycle point {self.final_point} does not "
+                    f"meet the constraints {constraints}")
 
     def _check_circular(self):
         """Check for circular dependence in graph."""

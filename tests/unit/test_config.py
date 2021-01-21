@@ -444,6 +444,187 @@ def test_process_startcp(startcp: str, expected: str,
     assert str(mocked_config.start_point) == expected
 
 
+@pytest.mark.parametrize(
+    'scheduling_cfg, options_fcp, expected_fcp, expected_err',
+    [
+        pytest.param(
+            {
+                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'initial cycle point': '2021',
+                'final cycle point': None,
+                'final cycle point constraints': []
+            },
+            None,
+            None,
+            None,
+            id="No fcp"
+        ),
+        pytest.param(
+            {
+                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'initial cycle point': '2016',
+                'final cycle point': '2021',
+                'final cycle point constraints': []
+            },
+            None,
+            '20210101T0000Z',
+            None,
+            id="fcp in cfg"
+        ),
+        pytest.param(
+            {
+                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'initial cycle point': '2016',
+                'final cycle point': '2021',
+                'final cycle point constraints': []
+            },
+            '2019',
+            '20190101T0000Z',
+            None,
+            id="Overriden by cli option"
+        ),
+        pytest.param(
+            {
+                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'initial cycle point': '2017-02-11',
+                'final cycle point': '+P4D',
+                'final cycle point constraints': []
+            },
+            None,
+            '20170215T0000Z',
+            None,
+            id="Relative fcp"
+        ),
+        pytest.param(
+            {
+                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'initial cycle point': '2017-02-11',
+                'final cycle point': '---04',
+                'final cycle point constraints': []
+            },
+            None,
+            '20170215T0000Z',
+            None,
+            id="Relative truncated fcp", marks=pytest.mark.xfail
+            # https://github.com/metomi/isodatetime/issues/80
+        ),
+        pytest.param(
+            {
+                'cycling mode': loader.INTEGER_CYCLING_TYPE,
+                'initial cycle point': '1',
+                'final cycle point': '4',
+                'final cycle point constraints': []
+            },
+            None,
+            '4',
+            None,
+            id="Integer cycling"
+        ),
+        pytest.param(
+            {
+                'cycling mode': loader.INTEGER_CYCLING_TYPE,
+                'initial cycle point': '1',
+                'final cycle point': '+P2',
+                'final cycle point constraints': []
+            },
+            None,
+            '3',
+            None,
+            id="Relative fcp, integer cycling"
+        ),
+        pytest.param(
+            {
+                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'initial cycle point': '2013',
+                'final cycle point': '2009',
+                'final cycle point constraints': []
+            },
+            None,
+            None,
+            (SuiteConfigError,
+             "initial cycle point:20130101T0000Z is after the "
+             "final cycle point"),
+            id="fcp before icp"
+        ),
+        pytest.param(
+            {
+                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'initial cycle point': '2013',
+                'final cycle point': '-PT1S',
+                'final cycle point constraints': []
+            },
+            None,
+            None,
+            (SuiteConfigError,
+             "initial cycle point:20130101T0000Z is after the "
+             "final cycle point"),
+            id="Negative relative fcp"
+        ),
+        pytest.param(
+            {
+                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'initial cycle point': '2013',
+                'final cycle point': '2021',
+                'final cycle point constraints': ['T00', 'T12']
+            },
+            None,
+            '20210101T0000Z',
+            None,
+            id="Constraints"
+        ),
+        pytest.param(
+            {
+                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'initial cycle point': '2013',
+                'final cycle point': '2021-01-19',
+                'final cycle point constraints': ['--01-19', '--01-21']
+            },
+            '2021-01-20',
+            None,
+            (SuiteConfigError, "does not meet the constraints"),
+            id="Violated constraints"
+        ),
+    ]
+)
+def test_process_fcp(scheduling_cfg: dict, options_fcp: Optional[str],
+                     expected_fcp: Optional[str],
+                     expected_err: Optional[Tuple[Type[Exception], str]],
+                     cycling_mode):
+    """Test SuiteConfig.process_final_cycle_point().
+
+    Params:
+        scheduling_cfg: 'scheduling' section of workflow config.
+        options_fcp: The fcp set by cli option.
+        expected_fcp: The expected fcp value that gets set.
+        expected_err: Exception class expected to be raised plus the message.
+    """
+    if scheduling_cfg['cycling mode'] == loader.ISO8601_CYCLING_TYPE:
+        iso8601.init()
+        cycling_mode(integer=False)
+    else:
+        cycling_mode(integer=True)
+    mocked_config = Mock()
+    mocked_config.cycling_type = scheduling_cfg['cycling mode']
+    mocked_config.cfg = {
+        'scheduling': scheduling_cfg
+    }
+    mocked_config.initial_point = loader.get_point(
+        scheduling_cfg['initial cycle point']).standardise()
+    mocked_config.final_point = None
+    mocked_config.options.fcp = options_fcp
+
+    if expected_err:
+        err, msg = expected_err
+        with pytest.raises(err) as exc:
+            SuiteConfig.process_final_cycle_point(mocked_config)
+        assert msg in str(exc.value)
+    else:
+        SuiteConfig.process_final_cycle_point(mocked_config)
+        assert mocked_config.cfg[
+            'scheduling']['final cycle point'] == expected_fcp
+        assert str(mocked_config.final_point) == str(expected_fcp)
+
+
 def test_utc_mode(caplog, mock_glbl_cfg):
     """Test that UTC mode is handled correctly."""
     caplog.set_level(logging.WARNING, CYLC_LOG)
