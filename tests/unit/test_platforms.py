@@ -20,7 +20,9 @@ import pytest
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.platforms import (
     platform_from_name, platform_from_job_info,
-    get_install_target_from_platform, get_install_target_to_platforms_map)
+    get_install_target_from_platform, get_install_target_to_platforms_map,
+    generic_items_match
+)
 
 from cylc.flow.exceptions import PlatformLookupError
 
@@ -32,9 +34,15 @@ PLATFORMS = {
         'hosts': 'localhost',
         'job runner': 'slurm',
     },
-    'hpc': {
+    'hpc-no-logs': {
         'hosts': ['hpc1', 'hpc2'],
         'job runner': 'pbs',
+        'retrieve job logs': False
+    },
+    'hpc-logs': {
+        'hosts': ['hpc1', 'hpc2'],
+        'job runner': 'pbs',
+        'retrieve job logs': True
     },
     'hpc1-bg': {
         'hosts': 'hpc1',
@@ -196,7 +204,7 @@ def test_similar_but_not_exact_match():
         (
             {'batch system': 'pbs'},
             {'host': 'hpc1'},
-            'hpc'
+            'hpc-logs'
         ),
         # When the user asks for hpc1 without specifying pbs user gets platform
         # hpc bg1
@@ -216,7 +224,13 @@ def test_similar_but_not_exact_match():
             {'batch system': None},
             {'host': None},
             'localhost'
-        )
+        ),
+        (
+            # Check that all generic items are matched
+            {'batch system': 'pbs'},
+            {'host': 'hpc1', 'retrieve job logs': False},
+            'hpc-no-logs'
+        ),
     ]
 )
 def test_platform_from_job_info_basic(job, remote, returns):
@@ -414,3 +428,46 @@ def test_get_install_target_to_platforms_map(
                 _map[install_target] = sorted(_map[install_target],
                                               key=lambda k: k['name'])
         assert result == expected_map
+
+
+@pytest.mark.parametrize(
+    'platform, job, remote, expect',
+    [
+        (
+            # Default, no old settings.
+            {'ship': 'Enterprise'}, {}, {}, True
+        ),
+        (
+            {'captain': 'Kirk'},
+            {'captain': 'Picard'},
+            {},
+            False
+        ),
+        (
+            {'captain': 'Sisko'},
+            {},
+            {'captain': 'Janeway'},
+            False
+        ),
+        (
+            {'captain': 'Picard', 'ship': 'Enterprise'},
+            {'captain': 'Picard'},
+            {'ship': 'Enterprise'},
+            True
+        ),
+        (
+            {'captain': 'Picard', 'ship': 'Enterprise'},
+            {'captain': 'Picard'},
+            {'ship': 'Defiant'},
+            False
+        ),
+        (
+            {'captain': 'Picard', 'ship': 'Enterprise'},
+            {'captain': 'Picard'},
+            {},
+            True
+        )
+    ]
+)
+def test_generic_items_match(platform, job, remote, expect):
+    assert generic_items_match(platform, job, remote) == expect
