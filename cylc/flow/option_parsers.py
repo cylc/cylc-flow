@@ -201,7 +201,7 @@ TASK_GLOB matches task or family names at a given cycle point.
 
         if self.icp:
             self.add_option(
-                "--initial-cycle-point", "--initial-point", "--icp", "--ict",
+                "--initial-cycle-point", "--icp",
                 metavar="CYCLE_POINT",
                 help=(
                     "Set the initial cycle point. "

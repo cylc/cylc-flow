@@ -42,9 +42,9 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
 RUND="${RUN_DIR}/${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play "${SUITE_NAME}" --debug --no-detach --stop-point=2020
+    cylc play "${SUITE_NAME}" --debug --no-detach --stopcp=2020
 suite_run_ok "${TEST_NAME_BASE}-restart-1" \
-    cylc play "${SUITE_NAME}" --stop-point=2028 --debug --no-detach
+    cylc play "${SUITE_NAME}" --stopcp=2028 --debug --no-detach
 sed -n '/LOADING task run times/,+2{s/^.* INFO - //;s/[0-9]\(,\|$\)/%d\1/g;p}' \
     "${RUND}/log/suite/log" >'restart-1.out'
 contains_ok "restart-1.out" <<'__OUT__'
@@ -53,7 +53,7 @@ LOADING task run times
 + t1: %d,%d,%d,%d,%d
 __OUT__
 suite_run_ok "${TEST_NAME_BASE}-restart-2" \
-    cylc play "${SUITE_NAME}" --stop-point=2030 --debug --no-detach
+    cylc play "${SUITE_NAME}" --stopcp=2030 --debug --no-detach
 sed -n '/LOADING task run times/,+2{s/^.* INFO - //;s/[0-9]\(,\|$\)/%d\1/g;p}' \
     "${RUND}/log/suite/log" >'restart-2.out'
 contains_ok 'restart-2.out' <<'__OUT__'

@@ -96,7 +96,7 @@ def get_option_parser(add_std_opts=False):
         action="store_true", dest="profile_mode")
 
     parser.add_option(
-        "--start-cycle-point", "--start-point", "--startcp",
+        "--start-cycle-point", "--startcp",
         help=(
             "Set the start cycle point. This results in a warm start."
             "(Not to be confused with the initial cycle point.)"
@@ -104,12 +104,12 @@ def get_option_parser(add_std_opts=False):
         metavar="CYCLE_POINT", action="store", dest="startcp")
 
     parser.add_option(
-        "--final-cycle-point", "--final-point", "--until", "--fcp",
+        "--final-cycle-point", "--fcp",
         help="Set the final cycle point.",
         metavar="CYCLE_POINT", action="store", dest="fcp")
 
     parser.add_option(
-        "--stop-cycle-point", "--stop-point", "--stopcp",
+        "--stop-cycle-point", "--stopcp",
         help=(
             "Set stop point. "
             "Shut down after all tasks have PASSED this cycle point. "
