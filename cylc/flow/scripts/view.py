@@ -31,9 +31,6 @@ The edit process is spawned in the foreground as follows:
   $ <editor> flow.cylc
 Where <editor> can be set in cylc global config.
 
-For remote host or owner, the suite will be printed to stdout unless
-the '-g,--gui' flag is used to spawn a remote GUI edit session.
-
 See also 'cylc edit'."""
 
 import sys

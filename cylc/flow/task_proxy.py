@@ -170,7 +170,6 @@ class TaskProxy:
         'state',
         'summary',
         'platform',
-        'task_owner',
         'timeout',
         'try_timers',
         'graph_children',
@@ -216,7 +215,6 @@ class TaskProxy:
         self.local_job_file_path = None
 
         self.platform = get_platform()
-        self.task_owner = None
 
         self.job_vacated = False
         self.poll_timer = None
@@ -255,7 +253,6 @@ class TaskProxy:
         reload_successor.local_job_file_path = self.local_job_file_path
         reload_successor.try_timers = self.try_timers
         reload_successor.platform = self.platform
-        reload_successor.task_owner = self.task_owner
         reload_successor.job_vacated = self.job_vacated
         reload_successor.poll_timer = self.poll_timer
         reload_successor.timeout = self.timeout
