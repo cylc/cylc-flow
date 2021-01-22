@@ -148,9 +148,6 @@ class SuiteFiles:
     SUITE_RC = 'suite.rc'
     """Deprecated workflow configuration file."""
 
-    SOURCE = 'source'
-    """Symlink to the workflow source directory (For workflow dir)"""
-
     class Service:
         """The directory containing Cylc system files."""
 
@@ -376,11 +373,11 @@ def get_suite_source_dir(reg):
     source_path = Path(
         cwd,
         SuiteFiles.Install.DIRNAME,
-        SuiteFiles.SOURCE)
+        SuiteFiles.Install.SOURCE)
     alt_source_path = Path(
         cwd.parent,
         SuiteFiles.Install.DIRNAME,
-        SuiteFiles.SOURCE)
+        SuiteFiles.Install.SOURCE)
     try:
         source = os.readlink(source_path)
     except OSError:
@@ -1044,29 +1041,21 @@ def install_workflow(flow_name=None, source=None, run_name=None,
             ' Please choose another run name.')
     validate_source_dir(source, flow_name)
     run_path_base = Path(get_workflow_run_dir(flow_name)).expanduser()
-    relink = False
-    run_num = 0
-    if no_run_name:
-        rundir = run_path_base
-    elif run_name:
-        rundir = run_path_base.joinpath(run_name)
-    else:
-        run_n = Path(run_path_base, 'runN').expanduser()
-        run_num = get_next_rundir_number(run_path_base)
-        rundir = Path(run_path_base, f'run{run_num}')
-        if run_num == 1 and rundir.exists():
-            WorkflowFilesError(
-                f"This path: {rundir} exists. Try using --run-name")
-        unlink_runN(run_n)
-        relink = True
+    relink, run_num, rundir = get_run_dir(run_path_base, run_name, no_run_name)
+    if Path(rundir).exists():
+        raise WorkflowFilesError(
+            f"\"{rundir}\" exists."
+            " Try using cylc reinstall. Alternatively, install with another"
+            " name, using the --run-name option.")
     check_nested_run_dirs(rundir, flow_name)
+    symlinks_created = {}
     if not no_symlinks:
         sub_dir = flow_name
         if run_num:
             sub_dir += '/' + f'run{run_num}'
         symlinks_created = make_localhost_symlinks(rundir, sub_dir)
     _open_install_log(rundir)
-    if not no_symlinks and bool(symlinks_created):
+    if not no_symlinks and bool(symlinks_created) is True:
         for src, dst in symlinks_created.items():
             INSTALL_LOG.info(f"Symlink created from {src} to {dst}")
     try:
@@ -1112,12 +1101,80 @@ def install_workflow(flow_name=None, source=None, run_name=None,
         INSTALL_LOG.info("Symlink from {source_link} to {source} in place.")
     else:
         raise WorkflowFilesError(
-            "Source directory between runs are not consistent")
+            "Source directory between runs are not consistent.")
     # check source link matches the source symlink from workflow dir.
     INSTALL_LOG.info(f'INSTALLED {flow_name} from {source} -> {rundir}')
     print(f'INSTALLED {flow_name} from {source} -> {rundir}')
     _close_install_log()
     return source, rundir, flow_name
+
+
+def get_run_dir(run_path_base, run_name, no_run_name):
+    """ Build run directory for current install.
+
+    Args:
+        run_path_base (Path):
+            The workflow directory.
+        run_name (str):
+            Name of the run.
+        no_run_name (bool):
+            Flag as True to incidate no run name - worklow installed into
+            ~/cylc-run/$(basename $PWD).
+
+    Returns:
+        relink (bool):
+            True if runN symlink needs updating.
+        run_num (int):
+            Run number of the current install.
+        rundir (Path):
+            Run directory.
+    """
+    relink = False
+    run_num = 0
+    if no_run_name:
+        rundir = run_path_base
+    elif run_name:
+        rundir = run_path_base.joinpath(run_name)
+        if (run_path_base.exists() and
+                detect_flow_exists(run_path_base, True)):
+            raise WorkflowFilesError(
+                f"This path: \"{run_path_base}\" contains installed numbered"
+                " runs. Try again, using cylc install without --run-name.")
+    else:
+        run_n = Path(run_path_base, 'runN').expanduser()
+        run_num = get_next_rundir_number(run_path_base)
+        rundir = Path(run_path_base, f'run{run_num}')
+        if run_path_base.exists() and detect_flow_exists(run_path_base, False):
+            raise WorkflowFilesError(
+                f"This path: \"{run_path_base}\" contains an installed"
+                " workflow. Try again, using --run-name.")
+        unlink_runN(run_n)
+        relink = True
+    return relink, run_num, rundir
+
+
+def detect_flow_exists(run_path_base, numbered):
+    """Returns True if installed flow already exists.
+
+    Args:
+        run_path_base (Path):
+            Workflow run directory
+        numbered (bool):
+            If true, will detect if numbered runs exist
+            If false, will detect if non-numbered runs exist, i.e. runs
+            installed by --run-name)
+
+    Returns:
+        True if installed flows exist.
+
+    """
+    for entry in Path(run_path_base).iterdir():
+        isNumbered = bool(re.search(r'^run\d+$', entry.name))
+        if (entry.is_dir() and
+            entry.name not in [SuiteFiles.Install.DIRNAME, 'runN'] and
+                Path(entry, SuiteFiles.FLOW_FILE).exists() and
+                isNumbered == numbered):
+            return True
 
 
 def create_workflow_srv_dir(rundir=None, source=None):
