@@ -214,6 +214,9 @@ Python 3.8+.
 a trailing slash in the suite/workflow name would cause `cylc stop`
 (and possibly other commands) to silently fail.
 
+[#4046](https://github.com/cylc/cylc-flow/pull/4046) - Fix bug where a workflow
+database could still be active for a short time after the workflow stops.
+
 -------------------------------------------------------------------------------
 ## __cylc-8.0a2 (2020-07-03)__
 
