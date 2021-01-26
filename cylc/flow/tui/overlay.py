@@ -38,6 +38,7 @@ Parameters:
 """
 
 from functools import partial
+import sys
 
 import urwid
 
@@ -144,7 +145,10 @@ def help_info(app):
 
     # mouse interaction
     items.extend([
-        urwid.Text('Shift+Click to select text'),
+        urwid.Text(
+            'fn + ⌥ & click to select text' if sys.platform == 'darwin' else
+            'Shift & click to select text'
+        ),
         urwid.Divider()
     ])
 
