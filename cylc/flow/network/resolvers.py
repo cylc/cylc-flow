@@ -527,17 +527,17 @@ class Resolvers(BaseResolvers):
 
     def hold(
             self, tasks: Optional[Iterable[str]] = None,
-            time: Optional[str] = None
+            point: Optional[str] = None
     ) -> Tuple[bool, str]:
         """Hold tasks."""
-        if (tasks and time) or not (tasks or time):
-            return (False, 'Argument must be either tasks or time (not both)')
+        if (tasks and point) or not (tasks or point):
+            return (False, 'Argument must be either tasks or point (not both)')
         self.schd.command_queue.put((
             'hold',
             tuple(),
             filter_none({
                 'task_globs': tasks or None,
-                'time': time
+                'point': point
             })
         ))
         return (True, 'Command queued')

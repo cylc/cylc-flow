@@ -53,12 +53,12 @@ MUTATION = '''
 mutation (
   $wFlows: [WorkflowID]!,
   $tasks: [NamespaceIDGlob],
-  $time: TimePoint
+  $point: TimePoint
 ) {
   hold (
     workflows: $wFlows,
     tasks: $tasks,
-    time: $time
+    point: $point
   ) {
     result
   }
@@ -104,7 +104,7 @@ def main(parser, options, workflow, *task_globs):
         'variables': {
             'wFlows': [workflow],
             'tasks': list(task_globs),
-            'time': options.hold_point_string,
+            'point': options.hold_point_string,
         }
     }
 

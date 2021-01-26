@@ -1527,10 +1527,9 @@ class Hold(Mutation):
             NamespaceIDGlob,
             description='Hold matching tasks.'
         )
-        time = TimePoint(description=sstrip('''
-            Hold all tasks only after the specified wallclock time
-            has passed.
-        '''))
+        point = TimePoint(
+            description='Hold all tasks after the specified cycle point.'
+        )
 
     result = GenericScalar()
 

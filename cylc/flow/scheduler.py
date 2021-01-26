@@ -498,7 +498,7 @@ class Scheduler:
         elif self.config.cfg['scheduling']['hold after cycle point']:
             holdcp = self.config.cfg['scheduling']['hold after cycle point']
         if holdcp is not None:
-            self.command_hold(time=holdcp)
+            self.command_hold(point=holdcp)
 
         if self.options.paused_start:
             LOG.info("Paused on start up")
@@ -917,17 +917,17 @@ class Scheduler:
 
     def command_hold(
             self, task_globs: Optional[Iterable[str]] = None,
-            time: Optional[str] = None
+            point: Optional[str] = None
     ) -> int:
         """Hold specified tasks now, or all tasks after a specified
         cycle point.
         """
-        if (task_globs and time) or not (task_globs or time):
+        if (task_globs and point) or not (task_globs or point):
             raise TypeError(
-                "command_hold() accepts either 'task_globs' or 'time' "
+                "command_hold() accepts either 'task_globs' or 'point' "
                 "(not both)")
-        if time:
-            point = TaskID.get_standardised_point(time)
+        if point:
+            point = TaskID.get_standardised_point(point)
             LOG.info(
                 f"Setting hold cycle point: {point}\n"
                 'All tasks after this point will be held.')
