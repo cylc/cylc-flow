@@ -137,6 +137,7 @@ jobs:
         timeout-minutes: 35
         continue-on-error: true
         run: |
+          echo "::set-output name=finished::false"
           if [[ '${{ matrix.test-base }}' == 'tests/k' ]]; then
               NPROC=4
           else
@@ -147,17 +148,22 @@ jobs:
               -j "${NPROC}" \
               --state=save \
               ${{ matrix.test-base }} \
-              || (touch tests-did-not-time-out && false)
+              || (echo "::set-output name=finished::true" && false)
+
+      - name: Time Out
+        if: steps.test.outcome == 'failure' && steps.test.outputs.finished != 'true'
+        run: |
+          echo '::error:: tests timed-out'
+          # help to identify the tests that were running at the time
+          cylc scan --state=all --format=rich --color-blind
+          # fail the workflow
+          false
 
       - name: Re-run failed tests
         timeout-minutes: 10
-        if: steps.test.outcome == 'failure'
+        if: steps.test.outcome == 'failure' && steps.test.outputs.finished == 'true'
         run: |
-          if [[ ! -f tests-did-not-time-out ]]; then
-            echo "the preious test run timed out -> not re-running tests"
-            # this false causes the workflow to fail
-            false
-          fi
+          # re-run failed tests providing that they didn't time out first time
           # TODO: make the tests deterministic so we don't need to do this
           etc/bin/run-functional-tests \
               -j 1 \
@@ -178,7 +184,6 @@ jobs:
         if: failure() && steps.test.outcome == 'failure'
         timeout-minutes: 1
         run: |
-          cylc scan --state=all --format=rich --color-blind
           find "$HOME/cylc-run" -name '*.err' -type f \
               -exec echo '====== {} ======' \; -exec cat '{}' \;
           find "$HOME/cylc-run" -name 'log.*' -type f \
