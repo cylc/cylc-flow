@@ -41,7 +41,7 @@ function purge_rnd_suite() {
 }
 
 . "$(dirname "$0")/test_header"
-set_test_number 35
+set_test_number 37
 
 # Test source directory between runs that are not consistent result in error
 
@@ -108,6 +108,17 @@ contains_ok "${TEST_NAME}.stderr" <<__ERR__
 WorkflowFilesError: Run name cannot be "_cylc-install". Please choose another run name.
 __ERR__
 purge_rnd_suite
+
+# Test cylc install invalid flow-name
+
+TEST_NAME="${TEST_NAME_BASE}--invalid-flow-name-cylc-install"
+make_rnd_suite
+run_fail "${TEST_NAME}" cylc install --flow-name=\.invalid -C "${RND_SUITE_SOURCE}"
+contains_ok "${TEST_NAME}.stderr" <<__ERR__
+WorkflowFilesError: Invalid workflow name - cannot start with: \`\`.\`\`, \`\`-\`\`
+__ERR__
+purge_rnd_suite
+
 
 # Test source dir can not contain '_cylc-install, log, share, work' dirs
 

@@ -148,6 +148,9 @@ class SuiteFiles:
     SUITE_RC = 'suite.rc'
     """Deprecated workflow configuration file."""
 
+    RUN_N = 'runN'
+    """Symbolic link for latest run"""
+
     class Service:
         """The directory containing Cylc system files."""
 
@@ -366,8 +369,8 @@ def get_flow_file(reg):
         return flow_file
 
 
-def get_suite_source_dir(reg):
-    """Return the source directory path of a workflow.
+def get_suite_source_dir():
+    """Return the source directory path of the workflow in CWD.
     """
     cwd = Path.cwd()
     source_path = Path(
@@ -463,18 +466,7 @@ def parse_suite_arg(options, arg):
             if os.path.isdir(arg):
                 path = os.path.join(arg, SuiteFiles.FLOW_FILE)
                 name = os.path.basename(arg)
-                if not os.path.exists(path):
-                    # Probably using deprecated suite.rc
-                    path = os.path.join(arg, SuiteFiles.SUITE_RC)
-                    if not os.path.exists(path):
-                        raise WorkflowFilesError(
-                            f'no {SuiteFiles.FLOW_FILE} or '
-                            f'{SuiteFiles.SUITE_RC} in {arg}')
-                    else:
-                        LOG.warning(
-                            f'The filename "{SuiteFiles.SUITE_RC}" is '
-                            f'deprecated in favour of '
-                            f'"{SuiteFiles.FLOW_FILE}".')
+                check_flow_file(arg, 'LOG')
             else:
                 path = arg
                 name = os.path.basename(os.path.dirname(arg))
@@ -1066,20 +1058,7 @@ def install_workflow(flow_name=None, source=None, run_name=None,
     if relink:
         link_runN(rundir)
     create_workflow_srv_dir(rundir)
-    # flow.cylc must exist so we can detect accidentally reversed args.
-    flow_file_path = source.joinpath(SuiteFiles.FLOW_FILE)
-    if not flow_file_path.is_file():
-        # If using deprecated suite.rc, symlink it into flow.cylc:
-        suite_rc_path = source.joinpath(SuiteFiles.SUITE_RC)
-        if suite_rc_path.is_file():
-            flow_file_path.symlink_to(suite_rc_path)
-            INSTALL_LOG.warning(
-                f'The filename "{SuiteFiles.SUITE_RC}" is deprecated in favour'
-                f' of "{SuiteFiles.FLOW_FILE}". Symlink created.')
-        else:
-            raise WorkflowFilesError(
-                f'no {SuiteFiles.FLOW_FILE} or {SuiteFiles.SUITE_RC}'
-                f' in {source}')
+    check_flow_file(source, 'INSTALL')
     rsync_cmd = get_rsync_rund_cmd(source, rundir)
     proc = Popen(rsync_cmd, stdout=PIPE, stderr=PIPE, universal_newlines=True)
     stdout, stderr = proc.communicate()
@@ -1141,7 +1120,7 @@ def get_run_dir(run_path_base, run_name, no_run_name):
                 f"This path: \"{run_path_base}\" contains installed numbered"
                 " runs. Try again, using cylc install without --run-name.")
     else:
-        run_n = Path(run_path_base, 'runN').expanduser()
+        run_n = Path(run_path_base, SuiteFiles.RUN_N).expanduser()
         run_num = get_next_rundir_number(run_path_base)
         rundir = Path(run_path_base, f'run{run_num}')
         if run_path_base.exists() and detect_flow_exists(run_path_base, False):
@@ -1171,10 +1150,35 @@ def detect_flow_exists(run_path_base, numbered):
     for entry in Path(run_path_base).iterdir():
         isNumbered = bool(re.search(r'^run\d+$', entry.name))
         if (entry.is_dir() and
-            entry.name not in [SuiteFiles.Install.DIRNAME, 'runN'] and
-                Path(entry, SuiteFiles.FLOW_FILE).exists() and
+            entry.name not in [SuiteFiles.Install.DIRNAME, SuiteFiles.RUN_N]
+            and Path(entry, SuiteFiles.FLOW_FILE).exists() and
                 isNumbered == numbered):
             return True
+
+
+def check_flow_file(path, log_type):
+    """Raises error if no flow file in path sent.
+
+       Creates a symlink to flow.cylc file if suite.rc file exists.
+
+       Args:
+          path: Path to check for either suite.rc or flow.cylc file
+          log_type: Which log to log error
+
+    """
+    flow_file_path = Path(path, SuiteFiles.FLOW_FILE)
+    suite_rc_path = Path(path, SuiteFiles.SUITE_RC)
+    msg = (f'The filename "{SuiteFiles.SUITE_RC}" is deprecated in favour'
+           f' of "{SuiteFiles.FLOW_FILE}". Symlink created')
+    if flow_file_path.exists():
+        return
+    if suite_rc_path.exists():
+        log_type.warning(msg)
+        flow_file_path.symlink_to(suite_rc_path)
+    else:
+        raise WorkflowFilesError(
+            f'no {SuiteFiles.FLOW_FILE} or '
+            f'{SuiteFiles.SUITE_RC} in {path}')
 
 
 def create_workflow_srv_dir(rundir=None, source=None):
@@ -1232,7 +1236,7 @@ def unlink_runN(run_n):
 def link_runN(latest_run):
     """Create symlink runN, pointing at the latest run"""
     latest_run = Path(latest_run).expanduser()
-    run_n = Path(latest_run.parent, 'runN')
+    run_n = Path(latest_run.parent, SuiteFiles.RUN_N)
     try:
         run_n.symlink_to(latest_run)
     except OSError:
