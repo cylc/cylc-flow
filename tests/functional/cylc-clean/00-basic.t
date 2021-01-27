@@ -58,6 +58,15 @@ cmp_ok "${TEST_NAME}.stdout" <<< "${TEST_DIR}/${SYM_NAME}-run/cylc-run/${SUITE_N
 INSTALL_LOG_FILE=$(ls "${TEST_DIR}/${SYM_NAME}-log/cylc-run/${SUITE_NAME}/log/install")
 TEST_NAME="test-dir-tree-pre-clean"
 tree --noreport --charset=ascii "${TEST_DIR}/${SYM_NAME}-"* > "${TEST_NAME}.stdout"
+
+# If rose-cylc plugin is installed add install files to tree.
+export ROSE_FILES=''
+python -c "import cylc.rose" > /dev/null 2>&1 &&
+    export ROSE_FILES="
+                    |-- opt
+                    |   \`-- rose-suite-cylc-install.conf
+                    |-- rose-suite.conf"
+
 # Note: backticks need to be escaped in the heredoc
 cmp_ok "${TEST_NAME}.stdout" << __TREE__
 ${TEST_DIR}/${SYM_NAME}-cycle
@@ -87,7 +96,7 @@ ${TEST_DIR}/${SYM_NAME}-run
                     |-- _cylc-install
                     |   \`-- source -> ${TEST_DIR}/${SUITE_NAME}
                     |-- flow.cylc
-                    |-- log -> ${TEST_DIR}/${SYM_NAME}-log/cylc-run/${SUITE_NAME}/log
+                    |-- log -> ${TEST_DIR}/${SYM_NAME}-log/cylc-run/${SUITE_NAME}/log${ROSE_FILES}
                     |-- share -> ${TEST_DIR}/${SYM_NAME}-share/cylc-run/${SUITE_NAME}/share
                     \`-- work -> ${TEST_DIR}/${SYM_NAME}-work/cylc-run/${SUITE_NAME}/work
 ${TEST_DIR}/${SYM_NAME}-share

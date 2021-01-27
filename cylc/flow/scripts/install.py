@@ -113,6 +113,44 @@ def get_option_parser():
         default=False,
         dest="no_symlinks")
 
+    # If cylc-rose plugin is available ad the --option/-O config
+    try:
+        __import__('cylc.rose')
+        parser.add_option(
+            "--opt-conf-key", "-O",
+            help=(
+                "Use optional Rose Config Setting"
+                "(If Cylc-Rose is installed)"
+            ),
+            action="append",
+            default=[],
+            dest="opt_conf_keys"
+        )
+        parser.add_option(
+            "--define", '-D',
+            help=(
+                "Each of these overrides the `[SECTION]KEY` setting in a "
+                "`rose-suite.conf` file. "
+                "Can be used to disable a setting using the syntax "
+                "`--define=[SECTION]!KEY` or even `--define=[!SECTION]`."
+            ),
+            action="append",
+            default=[],
+            dest="defines"
+        )
+        parser.add_option(
+            "--define-suite", "--define-flow", '-S',
+            help=(
+                "As `--define`, but with an implicit `[SECTION]` for "
+                "workflow variables."
+            ),
+            action="append",
+            default=[],
+            dest="define_suites"
+        )
+    except ImportError:
+        pass
+
     return parser
 
 
@@ -127,7 +165,7 @@ def main(parser, opts, flow_name=None, src=None):
         'cylc.pre_configure'
     ):
         try:
-            entry_point.resolve()(opts.source)
+            entry_point.resolve()(dir_=opts.source, opts=opts)
         except Exception as exc:
             # NOTE: except Exception (purposefully vague)
             # this is to separate plugin from core Cylc errors
