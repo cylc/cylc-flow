@@ -1642,7 +1642,7 @@ class Scheduler:
             self.server.stop()
         if self.publisher:
             await self.publisher.publish(
-                [(b'shutdown', f'{str(reason)}'.encode('utf-8'))]
+                [(b'shutdown', str(reason).encode('utf-8'))]
             )
             self.publisher.stop()
         self.curve_auth.stop()  # stop the authentication thread
@@ -1651,15 +1651,6 @@ class Scheduler:
         sys.stdout.flush()
         sys.stderr.flush()
 
-        if self.contact_data:
-            fname = suite_files.get_contact_file(self.suite)
-            try:
-                os.unlink(fname)
-            except OSError as exc:
-                LOG.warning("failed to remove suite contact file: %s", fname)
-                LOG.exception(exc)
-            if self.task_job_mgr:
-                self.task_job_mgr.task_remote_mgr.remote_tidy()
         try:
             # Remove ZMQ keys from scheduler
             LOG.debug("Removing authentication keys from scheduler")
@@ -1672,6 +1663,19 @@ class Scheduler:
             self.suite_db_mgr.on_suite_shutdown()
         except Exception as exc:
             LOG.exception(exc)
+
+        # NOTE: Removing the contact file should happen last of all (apart
+        # from running event handlers), because the existence of the file is
+        # used to determine if the workflow is running
+        if self.contact_data:
+            fname = suite_files.get_contact_file(self.suite)
+            try:
+                os.unlink(fname)
+            except OSError as exc:
+                LOG.warning(f"failed to remove suite contact file: {fname}")
+                LOG.exception(exc)
+            if self.task_job_mgr:
+                self.task_job_mgr.task_remote_mgr.remote_tidy()
 
         # The getattr() calls and if tests below are used in case the
         # suite is not fully configured before the shutdown is called.
