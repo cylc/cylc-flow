@@ -42,11 +42,12 @@ RRUND="cylc-run/${SUITE_NAME}"
 RSRVD="${RRUND}/.service"
 poll_grep_suite_log 'Holding all waiting or queued tasks now'
 SSH='ssh -n -oBatchMode=yes -oConnectTimeout=5'
+ 
 ${SSH} "${CYLC_TEST_HOST}" \
 find "${RSRVD}" -type f -name "*key*"|awk -F/ '{print $NF}'|sort >'find.out'
 cmp_ok 'find.out' <<__OUT__
+client_${CYLC_TEST_INSTALL_TARGET}.key
 client.key_secret
-client_$CYLC_TEST_PLATFORM.key
 server.key
 __OUT__
 cylc stop --max-polls=60 --interval=1 "${SUITE_NAME}"
