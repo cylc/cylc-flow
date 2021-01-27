@@ -19,8 +19,11 @@
 import pytest
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.platforms import (
+    get_all_platforms_for_install_target,
+    get_random_platform_for_install_target,
     platform_from_name, platform_from_job_info,
-    get_install_target_from_platform, get_install_target_to_platforms_map,
+    get_install_target_from_platform,
+    get_install_target_to_platforms_map,
     generic_items_match
 )
 
@@ -471,3 +474,54 @@ def test_get_install_target_to_platforms_map(
 )
 def test_generic_items_match(platform, job, remote, expect):
     assert generic_items_match(platform, job, remote) == expect
+
+
+def test_get_all_platforms_for_install_target(mock_glbl_cfg):
+    mock_glbl_cfg(
+        'cylc.flow.platforms.glbl_cfg',
+        '''
+                [platforms]
+                    [[localhost]]
+                        hosts = localhost
+                        install target = localhost
+                    [[olaf]]
+                        hosts = snow, ice, sparkles
+                        install target = arendelle
+                    [[snow white]]
+                        hosts = happy, sleepy, dopey
+                        install target = forest
+                    [[kristoff]]
+                        hosts = anna, elsa, hans
+                        install target = arendelle
+                    [[belle]]
+                        hosts = beast, maurice
+                        install target = france
+                    [[bambi]]
+                        hosts = thumper, faline, flower
+                        install target = forest
+                    [[merida]]
+                        hosts = angus, fergus
+                        install target = forest
+                    [[forest]]
+                        hosts = oak, elm, fir
+                '''
+    )
+    actual = get_all_platforms_for_install_target('forest')
+    expected = [{'hosts': ['happy', 'sleepy', 'dopey'],
+                 'install target':'forest',
+                 'name':'snow white'},
+                {'hosts': ['thumper', 'faline', 'flower'],
+                 'install target':'forest',
+                 'name':'bambi'},
+                {'hosts': ['angus', 'fergus'],
+                 'install target':'forest',
+                 'name':'merida'},
+                {'hosts': ['oak', 'elm', 'fir'],
+                 'name':'forest'}]
+    assert actual == expected
+    platforms = [{'hosts': ['snow', 'ice', 'sparkles'],
+                  'install target':'arendelle',
+                  'name':'olaf'}, {'hosts': ['anna', 'elsa', 'hans'],
+                                   'install target':'arendelle',
+                                   'name':'kristoff'}]
+    assert get_random_platform_for_install_target('arendelle') in platforms
