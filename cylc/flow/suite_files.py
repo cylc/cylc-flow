@@ -466,7 +466,7 @@ def parse_suite_arg(options, arg):
             if os.path.isdir(arg):
                 path = os.path.join(arg, SuiteFiles.FLOW_FILE)
                 name = os.path.basename(arg)
-                check_flow_file(arg, 'LOG')
+                check_flow_file(arg, LOG)
             else:
                 path = arg
                 name = os.path.basename(os.path.dirname(arg))
@@ -512,23 +512,12 @@ def register(flow_name=None, source=None):
         source = os.getcwd()
     # flow.cylc must exist so we can detect accidentally reversed args.
     source = os.path.abspath(source)
-    flow_file_path = os.path.join(source, SuiteFiles.FLOW_FILE)
-    if not os.path.isfile(flow_file_path):
-        # If using deprecated suite.rc, symlink it into flow.cylc:
-        suite_rc_path = os.path.join(source, SuiteFiles.SUITE_RC)
-        if os.path.isfile(suite_rc_path):
-            os.symlink(suite_rc_path, flow_file_path)
-            LOG.warning(
-                f'The filename "{SuiteFiles.SUITE_RC}" is deprecated in favor '
-                f'of "{SuiteFiles.FLOW_FILE}". Symlink created.')
-        else:
-            raise WorkflowFilesError(
-                f'no flow.cylc or suite.rc in {source}')
+    check_flow_file(source, LOG)
     symlinks_created = make_localhost_symlinks(
         get_workflow_run_dir(flow_name), flow_name)
     if bool(symlinks_created):
         for src, dst in symlinks_created.items():
-            INSTALL_LOG.info(f"Symlink created from {src} to {dst}")
+            LOG.info(f"Symlink created from {src} to {dst}")
     # Create service dir if necessary.
     srv_d = get_suite_srv_dir(flow_name)
     os.makedirs(srv_d, exist_ok=True)
@@ -1058,7 +1047,7 @@ def install_workflow(flow_name=None, source=None, run_name=None,
     if relink:
         link_runN(rundir)
     create_workflow_srv_dir(rundir)
-    check_flow_file(source, 'INSTALL')
+    check_flow_file(source, INSTALL_LOG)
     rsync_cmd = get_rsync_rund_cmd(source, rundir)
     proc = Popen(rsync_cmd, stdout=PIPE, stderr=PIPE, universal_newlines=True)
     stdout, stderr = proc.communicate()
@@ -1169,11 +1158,11 @@ def check_flow_file(path, log_type):
     flow_file_path = Path(path, SuiteFiles.FLOW_FILE)
     suite_rc_path = Path(path, SuiteFiles.SUITE_RC)
     msg = (f'The filename "{SuiteFiles.SUITE_RC}" is deprecated in favour'
-           f' of "{SuiteFiles.FLOW_FILE}". Symlink created')
+           f' of "{SuiteFiles.FLOW_FILE}". Symlink created.')
     if flow_file_path.exists():
         return
     if suite_rc_path.exists():
-        log_type.warning(msg)
+        log_type.warning(f"{msg}")
         flow_file_path.symlink_to(suite_rc_path)
     else:
         raise WorkflowFilesError(
