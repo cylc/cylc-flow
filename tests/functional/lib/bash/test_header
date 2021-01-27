@@ -503,13 +503,22 @@ purge () {
         return 0
     fi
 
+    if [[ -z $SUITE_NAME ]]; then
+        echo 'no flow to purge' >&2
+        return 1
+    fi
+
     local SUITE_RUN_DIR="${RUN_DIR}/${SUITE_NAME}"
 
     # wait for local processes to let go of their file handles
     if ${HAS_LSOF}; then
         # NOTE: lsof can hang, so call with "timeout".
         # NOTE: lsof can raise warnings with some filesystems so ignore stderr
-        while grep -q "${SUITE_RUN_DIR}" < <(timeout 5 lsof 2>/dev/null); do
+        # shellcheck disable=SC2034
+        for try in $(seq 1 5); do
+            if grep -q "${SUITE_RUN_DIR}" < <(timeout 5 lsof 2>/dev/null); then
+                break
+            fi
             sleep 1
         done
     fi
