@@ -23,8 +23,7 @@ set_test_number 7
 init_suiterc() {
     local TEST_NAME="$1"
     local FLOW_CONFIG="${2:--}"
-    SUITE_NAME="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}"
-    SUITE_RUN_DIR="$RUN_DIR/${SUITE_NAME}"
+    SUITE_NAME="${CYLC_TEST_REG_BASE}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME}"
     mkdir -p "${TEST_DIR}/${SUITE_NAME}/"
     cat "${FLOW_CONFIG}" >"${TEST_DIR}/${SUITE_NAME}/suite.rc"
     cd "${TEST_DIR}/${SUITE_NAME}" || exit

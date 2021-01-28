@@ -183,6 +183,9 @@ export TMPDIR
 # test environment
 export CYLC_TEST_SKIP=${CYLC_TEST_SKIP:-}
 CYLC_TEST_TIME_INIT="$(date -u +'%Y%m%dT%H%M%SZ')"
+CYLC_TEST_UID="$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c4)"
+CYLC_TEST_REG_BASE="${CYLC_TEST_REG_BASE:-cylctb-${CYLC_TEST_UID}-${CYLC_TEST_TIME_INIT}}"
+export CYLC_TEST_REG_BASE
 export CYLC_TEST_TIME_INIT
 
 # get number of cores

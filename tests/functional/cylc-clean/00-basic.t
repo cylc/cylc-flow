@@ -21,20 +21,20 @@
 if ! command -v 'tree' >'/dev/null'; then
     skip_all '"tree" command not available'
 fi
-set_test_number 6
+set_test_number 8
 
-# Generate random name for symlink dirs to avoid any clashes with other tests
+# Generate randome name for symlink firs to avoid any clashed with other tests
 SYM_NAME="$(mktemp -u)"
 SYM_NAME="${SYM_NAME##*tmp.}"
 
 create_test_global_config "" "
 [symlink dirs]
     [[localhost]]
-        run = ${TEST_DIR}/${SYM_NAME}-run
-        log = ${TEST_DIR}/${SYM_NAME}-log
-        share = ${TEST_DIR}/${SYM_NAME}-share
-        share/cycle = ${TEST_DIR}/${SYM_NAME}-cycle
-        work = ${TEST_DIR}/${SYM_NAME}-work
+        run = ${TEST_DIR}/${SYM_NAME}/run
+        log = ${TEST_DIR}/${SYM_NAME}/log
+        share = ${TEST_DIR}/${SYM_NAME}/share
+        share/cycle = ${TEST_DIR}/${SYM_NAME}/cycle
+        work = ${TEST_DIR}/${SYM_NAME}/work
 "
 init_suite "${TEST_NAME_BASE}" << '__FLOW__'
 [scheduling]
@@ -44,76 +44,60 @@ __FLOW__
 
 run_ok "${TEST_NAME_BASE}-val" cylc validate "$SUITE_NAME"
 
-# Create a fake sibling workflow dir in the sym-log dir:
-mkdir "${TEST_DIR}/${SYM_NAME}-log/cylc-run/cylctb-${CYLC_TEST_TIME_INIT}/leave-me-alone"
+# Create a fake sibling workflow dir in the ${SYM_NAME}/log dir:
+mkdir "${TEST_DIR}/${SYM_NAME}/log/cylc-run/${CYLC_TEST_REG_BASE}/leave-me-alone"
 
 FUNCTIONAL_DIR="${TEST_SOURCE_DIR_BASE%/*}"
 # -----------------------------------------------------------------------------
 TEST_NAME="run-dir-readlink-pre-clean"
 readlink "$SUITE_RUN_DIR" > "${TEST_NAME}.stdout"
 
-cmp_ok "${TEST_NAME}.stdout" <<< "${TEST_DIR}/${SYM_NAME}-run/cylc-run/${SUITE_NAME}"
+cmp_ok "${TEST_NAME}.stdout" <<< "${TEST_DIR}/${SYM_NAME}/run/cylc-run/${SUITE_NAME}"
 
 
-INSTALL_LOG_FILE=$(ls "${TEST_DIR}/${SYM_NAME}-log/cylc-run/${SUITE_NAME}/log/install")
+INSTALL_LOG_FILE=$(ls "${TEST_DIR}/${SYM_NAME}/log/cylc-run/${SUITE_NAME}/log/install")
 TEST_NAME="test-dir-tree-pre-clean"
-tree --noreport --charset=ascii "${TEST_DIR}/${SYM_NAME}-"* > "${TEST_NAME}.stdout"
-
-# If rose-cylc plugin is installed add install files to tree.
-export ROSE_FILES=''
-python -c "import cylc.rose" > /dev/null 2>&1 &&
-    export ROSE_FILES="
-                    |-- opt
-                    |   \`-- rose-suite-cylc-install.conf
-                    |-- rose-suite.conf"
-
+run_ok "${TEST_NAME}" tree --noreport --charset=ascii "${TEST_DIR}/${SYM_NAME}/"*"/cylc-run/${CYLC_TEST_REG_BASE}"
 # Note: backticks need to be escaped in the heredoc
 cmp_ok "${TEST_NAME}.stdout" << __TREE__
-${TEST_DIR}/${SYM_NAME}-cycle
-\`-- cylc-run
-    \`-- cylctb-${CYLC_TEST_TIME_INIT}
-        \`-- ${FUNCTIONAL_DIR}
-            \`-- cylc-clean
-                \`-- ${TEST_NAME_BASE}
-                    \`-- share
-                        \`-- cycle
-${TEST_DIR}/${SYM_NAME}-log
-\`-- cylc-run
-    \`-- cylctb-${CYLC_TEST_TIME_INIT}
-        |-- ${FUNCTIONAL_DIR}
-        |   \`-- cylc-clean
-        |       \`-- ${TEST_NAME_BASE}
-        |           \`-- log
-        |               \`-- install
-        |                   \`-- ${INSTALL_LOG_FILE}
-        \`-- leave-me-alone
-${TEST_DIR}/${SYM_NAME}-run
-\`-- cylc-run
-    \`-- cylctb-${CYLC_TEST_TIME_INIT}
-        \`-- ${FUNCTIONAL_DIR}
-            \`-- cylc-clean
-                \`-- ${TEST_NAME_BASE}
-                    |-- _cylc-install
-                    |   \`-- source -> ${TEST_DIR}/${SUITE_NAME}
-                    |-- flow.cylc
-                    |-- log -> ${TEST_DIR}/${SYM_NAME}-log/cylc-run/${SUITE_NAME}/log${ROSE_FILES}
-                    |-- share -> ${TEST_DIR}/${SYM_NAME}-share/cylc-run/${SUITE_NAME}/share
-                    \`-- work -> ${TEST_DIR}/${SYM_NAME}-work/cylc-run/${SUITE_NAME}/work
-${TEST_DIR}/${SYM_NAME}-share
-\`-- cylc-run
-    \`-- cylctb-${CYLC_TEST_TIME_INIT}
-        \`-- ${FUNCTIONAL_DIR}
-            \`-- cylc-clean
-                \`-- ${TEST_NAME_BASE}
-                    \`-- share
-                        \`-- cycle -> ${TEST_DIR}/${SYM_NAME}-cycle/cylc-run/${SUITE_NAME}/share/cycle
-${TEST_DIR}/${SYM_NAME}-work
-\`-- cylc-run
-    \`-- cylctb-${CYLC_TEST_TIME_INIT}
-        \`-- ${FUNCTIONAL_DIR}
-            \`-- cylc-clean
-                \`-- ${TEST_NAME_BASE}
-                    \`-- work
+${TEST_DIR}/${SYM_NAME}/cycle/cylc-run/${CYLC_TEST_REG_BASE}
+\`-- ${FUNCTIONAL_DIR}
+    \`-- cylc-clean
+        \`-- ${TEST_NAME_BASE}
+            \`-- share
+                \`-- cycle
+${TEST_DIR}/${SYM_NAME}/log/cylc-run/${CYLC_TEST_REG_BASE}
+|-- ${FUNCTIONAL_DIR}
+|   \`-- cylc-clean
+|       \`-- ${TEST_NAME_BASE}
+|           \`-- log
+|               \`-- install
+|                   \`-- ${INSTALL_LOG_FILE}
+\`-- leave-me-alone
+${TEST_DIR}/${SYM_NAME}/run/cylc-run/${CYLC_TEST_REG_BASE}
+\`-- ${FUNCTIONAL_DIR}
+    \`-- cylc-clean
+        \`-- ${TEST_NAME_BASE}
+            |-- _cylc-install
+            |   \`-- source -> ${TEST_DIR}/${SUITE_NAME}
+            |-- flow.cylc
+            |-- log -> ${TEST_DIR}/${SYM_NAME}/log/cylc-run/${SUITE_NAME}/log
+            |-- opt
+            |   \`-- rose-suite-cylc-install.conf
+            |-- rose-suite.conf
+            |-- share -> ${TEST_DIR}/${SYM_NAME}/share/cylc-run/${SUITE_NAME}/share
+            \`-- work -> ${TEST_DIR}/${SYM_NAME}/work/cylc-run/${SUITE_NAME}/work
+${TEST_DIR}/${SYM_NAME}/share/cylc-run/${CYLC_TEST_REG_BASE}
+\`-- ${FUNCTIONAL_DIR}
+    \`-- cylc-clean
+        \`-- ${TEST_NAME_BASE}
+            \`-- share
+                \`-- cycle -> ${TEST_DIR}/${SYM_NAME}/cycle/cylc-run/${SUITE_NAME}/share/cycle
+${TEST_DIR}/${SYM_NAME}/work/cylc-run/${CYLC_TEST_REG_BASE}
+\`-- ${FUNCTIONAL_DIR}
+    \`-- cylc-clean
+        \`-- ${TEST_NAME_BASE}
+            \`-- work
 __TREE__
 # -----------------------------------------------------------------------------
 TEST_NAME="cylc-clean"
@@ -124,21 +108,11 @@ TEST_NAME="run-dir-not-exist-post-clean"
 exists_fail "$SUITE_RUN_DIR"
 
 TEST_NAME="test-dir-tree-post-clean"
-tree --noreport --charset=ascii "${TEST_DIR}/${SYM_NAME}-"* > "${TEST_NAME}.stdout"
+run_ok "${TEST_NAME}" tree --noreport --charset=ascii "${TEST_DIR}/${SYM_NAME}/"*"/cylc-run/${CYLC_TEST_REG_BASE}"
 
 cmp_ok "${TEST_NAME}.stdout" << __TREE__
-${TEST_DIR}/${SYM_NAME}-cycle
-\`-- cylc-run
-${TEST_DIR}/${SYM_NAME}-log
-\`-- cylc-run
-    \`-- cylctb-${CYLC_TEST_TIME_INIT}
-        \`-- leave-me-alone
-${TEST_DIR}/${SYM_NAME}-run
-\`-- cylc-run
-${TEST_DIR}/${SYM_NAME}-share
-\`-- cylc-run
-${TEST_DIR}/${SYM_NAME}-work
-\`-- cylc-run
+${TEST_DIR}/${SYM_NAME}/log/cylc-run/${CYLC_TEST_REG_BASE}
+\`-- leave-me-alone
 __TREE__
 # -----------------------------------------------------------------------------
 purge

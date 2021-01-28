@@ -25,20 +25,20 @@ SSH_CMD="$(cylc get-global-config -i "[platforms][${CYLC_TEST_PLATFORM}]ssh comm
 if ! $SSH_CMD command -v 'tree' > '/dev/null'; then
     skip_all "'tree' command not available on remote host ${CYLC_TEST_HOST}"
 fi
-set_test_number 8
+set_test_number 10
 
-# Generate random name for symlink dirs to avoid any clashes with other tests
+# Generate randome name for symlink firs to avoid any clashed with other tests
 SYM_NAME="$(mktemp -u)"
 SYM_NAME="${SYM_NAME##*tmp.}"
 
 create_test_global_config "" "
 [symlink dirs]
     [[${CYLC_TEST_INSTALL_TARGET}]]
-        run = ${TEST_DIR}/${SYM_NAME}-run
-        log = ${TEST_DIR}/${SYM_NAME}-other
-        share = ${TEST_DIR}/${SYM_NAME}-other
-        share/cycle = ${TEST_DIR}/${SYM_NAME}-cycle
-        work = ${TEST_DIR}/${SYM_NAME}-other
+        run = ${TEST_DIR}/${SYM_NAME}/run
+        log = ${TEST_DIR}/${SYM_NAME}/other
+        share = ${TEST_DIR}/${SYM_NAME}/other
+        share/cycle = ${TEST_DIR}/${SYM_NAME}/cycle
+        work = ${TEST_DIR}/${SYM_NAME}/other
 "
 init_suite "${TEST_NAME_BASE}" << __FLOW__
 [scheduling]
@@ -57,49 +57,47 @@ suite_run_ok "${TEST_NAME_BASE}-run" cylc play "$SUITE_NAME"
 poll_suite_stopped
 
 # Create a fake sibling workflow dir:
-$SSH_CMD mkdir "${TEST_DIR}/${SYM_NAME}-cycle/cylc-run/cylctb-${CYLC_TEST_TIME_INIT}/leave-me-alone"
+$SSH_CMD mkdir "${TEST_DIR}/${SYM_NAME}/cycle/cylc-run/${CYLC_TEST_REG_BASE}/leave-me-alone"
 
 # -----------------------------------------------------------------------------
 
 TEST_NAME="run-dir-readlink-pre-clean.remote"
 $SSH_CMD readlink "\$HOME/cylc-run/${SUITE_NAME}" > "${TEST_NAME}.stdout"
-cmp_ok "${TEST_NAME}.stdout" <<< "${TEST_DIR}/${SYM_NAME}-run/cylc-run/${SUITE_NAME}"
+cmp_ok "${TEST_NAME}.stdout" <<< "${TEST_DIR}/${SYM_NAME}/run/cylc-run/${SUITE_NAME}"
 
 TEST_NAME="test-dir-tree-pre-clean.remote"
-$SSH_CMD tree -L 8 --noreport --charset=ascii "${TEST_DIR}/${SYM_NAME}-"'*' > "${TEST_NAME}.stdout"
+run_ok "${TEST_NAME}" $SSH_CMD tree -L 8 --noreport --charset=ascii \
+    "${TEST_DIR}/${SYM_NAME}/"'*'"/cylc-run/${CYLC_TEST_REG_BASE}"
 # Note: backticks need to be escaped in the heredoc
 cmp_ok "${TEST_NAME}.stdout" << __TREE__
-${TEST_DIR}/${SYM_NAME}-cycle
-\`-- cylc-run
-    \`-- cylctb-${CYLC_TEST_TIME_INIT}
-        |-- ${FUNCTIONAL_DIR}
-        |   \`-- cylc-clean
-        |       \`-- ${TEST_NAME_BASE}
-        |           \`-- share
-        |               \`-- cycle
-        \`-- leave-me-alone
-${TEST_DIR}/${SYM_NAME}-other
-\`-- cylc-run
-    \`-- cylctb-${CYLC_TEST_TIME_INIT}
-        \`-- ${FUNCTIONAL_DIR}
-            \`-- cylc-clean
-                \`-- ${TEST_NAME_BASE}
-                    |-- log
-                    |   \`-- job
-                    |       \`-- 1
-                    |-- share
-                    |   \`-- cycle -> ${TEST_DIR}/${SYM_NAME}-cycle/cylc-run/${SUITE_NAME}/share/cycle
-                    \`-- work
-                        \`-- 1
-${TEST_DIR}/${SYM_NAME}-run
-\`-- cylc-run
-    \`-- cylctb-${CYLC_TEST_TIME_INIT}
-        \`-- ${FUNCTIONAL_DIR}
-            \`-- cylc-clean
-                \`-- ${TEST_NAME_BASE}
-                    |-- log -> ${TEST_DIR}/${SYM_NAME}-other/cylc-run/${SUITE_NAME}/log
-                    |-- share -> ${TEST_DIR}/${SYM_NAME}-other/cylc-run/${SUITE_NAME}/share
-                    \`-- work -> ${TEST_DIR}/${SYM_NAME}-other/cylc-run/${SUITE_NAME}/work
+${TEST_DIR}/${SYM_NAME}/cycle/cylc-run/${CYLC_TEST_REG_BASE}
+|-- ${FUNCTIONAL_DIR}
+|   \`-- cylc-clean
+|       \`-- ${TEST_NAME_BASE}
+|           \`-- share
+|               \`-- cycle
+\`-- leave-me-alone
+${TEST_DIR}/${SYM_NAME}/other/cylc-run/${CYLC_TEST_REG_BASE}
+\`-- ${FUNCTIONAL_DIR}
+    \`-- cylc-clean
+        \`-- ${TEST_NAME_BASE}
+            |-- log
+            |   \`-- job
+            |       \`-- 1
+            |           \`-- santa
+            |               |-- 01
+            |               \`-- NN -> 01
+            |-- share
+            |   \`-- cycle -> ${TEST_DIR}/${SYM_NAME}/cycle/cylc-run/${SUITE_NAME}/share/cycle
+            \`-- work
+                \`-- 1
+${TEST_DIR}/${SYM_NAME}/run/cylc-run/${CYLC_TEST_REG_BASE}
+\`-- ${FUNCTIONAL_DIR}
+    \`-- cylc-clean
+        \`-- ${TEST_NAME_BASE}
+            |-- log -> ${TEST_DIR}/${SYM_NAME}/other/cylc-run/${SUITE_NAME}/log
+            |-- share -> ${TEST_DIR}/${SYM_NAME}/other/cylc-run/${SUITE_NAME}/share
+            \`-- work -> ${TEST_DIR}/${SYM_NAME}/other/cylc-run/${SUITE_NAME}/work
 __TREE__
 
 # -----------------------------------------------------------------------------
@@ -124,17 +122,12 @@ else
 fi
 
 TEST_NAME="test-dir-tree-post-clean.remote"
-$SSH_CMD tree --noreport --charset=ascii "${TEST_DIR}/${SYM_NAME}-"'*' > "${TEST_NAME}.stdout"
+run_ok "${TEST_NAME}" $SSH_CMD tree --noreport --charset=ascii \
+    "${TEST_DIR}/${SYM_NAME}/"'*'"/cylc-run/${CYLC_TEST_REG_BASE}"
 # Note: backticks need to be escaped in the heredoc
 cmp_ok "${TEST_NAME}.stdout" << __TREE__
-${TEST_DIR}/${SYM_NAME}-cycle
-\`-- cylc-run
-    \`-- cylctb-${CYLC_TEST_TIME_INIT}
-        \`-- leave-me-alone
-${TEST_DIR}/${SYM_NAME}-other
-\`-- cylc-run
-${TEST_DIR}/${SYM_NAME}-run
-\`-- cylc-run
+${TEST_DIR}/${SYM_NAME}/cycle/cylc-run/${CYLC_TEST_REG_BASE}
+\`-- leave-me-alone
 __TREE__
 
 purge

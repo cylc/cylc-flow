@@ -420,7 +420,7 @@ graph_suite() {
 init_suite() {
     local TEST_NAME="$1"
     local FLOW_CONFIG="${2:--}"
-    SUITE_NAME="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME}"
+    SUITE_NAME="${CYLC_TEST_REG_BASE}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME}"
     SUITE_RUN_DIR="${RUN_DIR}/${SUITE_NAME}"
     mkdir -p "${TEST_DIR}/${SUITE_NAME}/"
     cat "${FLOW_CONFIG}" >"${TEST_DIR}/${SUITE_NAME}/flow.cylc"
@@ -431,7 +431,7 @@ init_suite() {
 install_suite() {
     local TEST_NAME="${1:-${TEST_NAME_BASE}}"
     local TEST_SOURCE_BASE="${2:-${TEST_NAME}}"
-    SUITE_NAME="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME}"
+    SUITE_NAME="${CYLC_TEST_REG_BASE}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME}"
     SUITE_RUN_DIR="${RUN_DIR}/${SUITE_NAME}"
     mkdir -p "${TEST_DIR}/${SUITE_NAME}/" # make source dir
     cp -r "${TEST_SOURCE_DIR}/${TEST_SOURCE_BASE}/"* "${TEST_DIR}/${SUITE_NAME}/"
@@ -921,7 +921,8 @@ TEST_SOURCE_DIR="$(cd "$(dirname "$0")" && pwd)"
 TEST_DIR="$(mktemp -d)"
 cd "${TEST_DIR}"
 TEST_SOURCE_DIR_BASE="${TEST_SOURCE_DIR##*tests/}"
-TEST_LOG_DIR_BASE="${TMPDIR:-/tmp}/${USER}/cylctb-${CYLC_TEST_TIME_INIT}"
+# this prevents test runs started at the same time from conflicting
+TEST_LOG_DIR_BASE="${TMPDIR:-/tmp}/${USER}/${CYLC_TEST_REG_BASE}"
 TEST_LOG_DIR="${TEST_LOG_DIR_BASE}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}"
 SUITE_RUN_FAILS=false
 
