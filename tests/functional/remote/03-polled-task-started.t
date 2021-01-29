@@ -27,6 +27,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "$SUITE_NAME"
 
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run --reference-test --no-detach "$SUITE_NAME"
 
+# Check 'started' event handlers ran
 PICARD_ACTIVITY_LOG="${SUITE_RUN_DIR}/log/job/1/picard/01/job-activity.log"
 grep_ok "[(('event-handler-00', 'started'), 1) out] THERE ARE FOUR LIGHTS" "$PICARD_ACTIVITY_LOG" -F
 
