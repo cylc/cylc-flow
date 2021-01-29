@@ -1324,11 +1324,9 @@ class Scheduler:
 
     def suite_auto_restart(self, max_retries=3):
         """Attempt to restart the suite assuming it has already stopped."""
+        cmd = ['cylc', 'play', quote(self.suite)]
         if self.options.abort_if_any_task_fails:
-            cmd = ['cylc', 'play', '--abort-if-any-task-fails',
-                   quote(self.suite)]
-        else:
-            cmd = ['cylc', 'play', quote(self.suite)]
+            cmd.append('--abort-if-any-task-fails')
 
         for attempt_no in range(max_retries):
             new_host = select_suite_host(cached=False)[0]
@@ -1341,17 +1339,18 @@ class Scheduler:
             if proc.wait():
                 msg = 'Could not restart suite'
                 if attempt_no < max_retries:
-                    msg += (' will retry in %ss'
-                            % self.INTERVAL_AUTO_RESTART_ERROR)
-                LOG.critical(msg + '. Restart error:\n%s',
-                             proc.communicate()[1].decode())
+                    msg += (
+                        f' will retry in {self.INTERVAL_AUTO_RESTART_ERROR}s')
+                LOG.critical(
+                    f"{msg}. Restart error:\n",
+                    f"{proc.communicate()[1].decode()}")
                 sleep(self.INTERVAL_AUTO_RESTART_ERROR)
             else:
-                LOG.info('Suite now running on "%s".', new_host)
+                LOG.info(f'Suite now running on "{new_host}".')
                 return True
         LOG.critical(
-            'Suite unable to automatically restart after %s tries - '
-            'manual restart required.', max_retries)
+            'Suite unable to automatically restart after '
+            f'{max_retries} tries - manual restart required.')
         return False
 
     def update_profiler_logs(self, tinit):
@@ -1780,7 +1779,7 @@ class Scheduler:
         * From the final point for ``cylc play --stopcp=ignore``.
         * From the command line (``cylc play --stopcp=XYZ``).
         * From the database.
-        * From the flow.cylc file (``[scheduler]stop after cycle point``).
+        * From the flow.cylc file (``[scheduling]stop after cycle point``).
         """
         stoppoint = None
         if self.is_restart and self.options.stopcp == 'ignore':

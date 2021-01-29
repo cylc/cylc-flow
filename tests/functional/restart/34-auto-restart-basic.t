@@ -45,6 +45,7 @@ init_suite "${TEST_NAME}" - <<'__FLOW_CONFIG__'
     [[graph]]
         R1 = "task<foo> => task<foo+1>"
 __FLOW_CONFIG__
+
 # run suite on localhost normally
 create_test_global_config '' "${BASE_GLOBAL_CONFIG}"
 run_ok "${TEST_NAME}-suite-start" \
