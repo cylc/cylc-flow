@@ -45,12 +45,11 @@ SSH='ssh -n -oBatchMode=yes -oConnectTimeout=5'
  
 ${SSH} "${CYLC_TEST_HOST}" \
 find "${RSRVD}" -type f -name "*key*"|awk -F/ '{print $NF}'|sort >'find.out'
-sort >'keys' <<__OUT__
+cmp_ok 'find.out' <<__OUT__
 client_${CYLC_TEST_INSTALL_TARGET}.key
 client.key_secret
 server.key
 __OUT__
-cmp_ok 'find.out' 'keys'
 cylc stop --max-polls=60 --interval=1 "${SUITE_NAME}"
 
 grep_ok "Removing authentication keys and contact file from remote: \"${CYLC_TEST_INSTALL_TARGET}\"" "${SUITE_RUN_DIR}/log/suite/log"

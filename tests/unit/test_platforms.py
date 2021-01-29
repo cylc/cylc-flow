@@ -517,11 +517,14 @@ def test_get_all_platforms_for_install_target(mock_glbl_cfg):
                  'install target':'forest',
                  'name':'merida'},
                 {'hosts': ['oak', 'elm', 'fir'],
-                 'name':'forest'}]
+                 'name':'forest'}
+                ]
     assert actual == expected
     platforms = [{'hosts': ['snow', 'ice', 'sparkles'],
                   'install target':'arendelle',
-                  'name':'olaf'}, {'hosts': ['anna', 'elsa', 'hans'],
-                                   'install target':'arendelle',
-                                   'name':'kristoff'}]
+                  'name':'olaf'},
+                 {'hosts': ['anna', 'elsa', 'hans'],
+                  'install target':'arendelle',
+                  'name':'kristoff'}
+                 ]
     assert get_random_platform_for_install_target('arendelle') in platforms

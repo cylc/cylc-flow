@@ -226,7 +226,7 @@ class TaskRemoteMgr:
             cmd = ['remote-tidy']
             if cylc.flow.flags.debug:
                 cmd.append('--debug')
-            cmd.append(str(f'{install_target}'))
+            cmd.append(install_target)
             cmd.append(get_remote_suite_run_dir(platform, self.suite))
             cmd = construct_ssh_cmd(cmd, platform, timeout='10s')
             LOG.debug(
