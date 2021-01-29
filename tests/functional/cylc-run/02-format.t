@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #------------------------------------------------------------------------
 
-# test the output of `cylc run` with different `--format` options
+# test the output of `cylc play` with different `--format` options
 
 . "$(dirname "$0")/test_header"
 
@@ -36,7 +36,7 @@ run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 
 # format=plain
 TEST_NAME="${TEST_NAME_BASE}-run-format=plain"
-suite_run_ok "${TEST_NAME}" cylc run --format plain "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME}" cylc play --format plain "${SUITE_NAME}"
 grep_ok 'listening on tcp:' "${TEST_NAME}.stdout"
 grep_ok 'publishing on tcp:' "${TEST_NAME}.stdout"
 grep_ok 'To view suite server program contact information:' \
@@ -45,9 +45,10 @@ grep_ok 'Other ways to see if the suite is still running:' \
     "${TEST_NAME}.stdout"
 poll_suite_stopped
 
+delete_db
 # format=json
 TEST_NAME="${TEST_NAME_BASE}-run-format=plain"
-suite_run_ok "${TEST_NAME}" cylc run --format json "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME}" cylc play --format json "${SUITE_NAME}"
 run_ok "${TEST_NAME}-fields" python3 -c '
 import json
 import sys

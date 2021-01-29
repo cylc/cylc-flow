@@ -31,10 +31,11 @@ run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
 suite_run_ok "${TEST_NAME}" \
-    cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
+    cylc play --reference-test --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
+delete_db
 TEST_NAME=${TEST_NAME_BASE}-check-c
-cylc run "${SUITE_NAME}" --hold 1>'out' 2>&1
+cylc play "${SUITE_NAME}" --hold 1>'out' 2>&1
 poll_grep_suite_log 'Holding all waiting or queued tasks now'
 cylc show "${SUITE_NAME}" 'c.1' | sed -n "/prerequisites/,/outputs/p" > 'c-prereqs'
 contains_ok "${TEST_SOURCE_DIR}/multiline_and_refs/c-ref-2" 'c-prereqs'

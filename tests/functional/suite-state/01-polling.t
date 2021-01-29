@@ -59,13 +59,13 @@ __END__
 
 #-------------------------------------------------------------------------------
 # run the upstream suite and detach (not a test)
-cylc run "${UPSTREAM}" 1>'upstream.out' 2>&1
+cylc play "${UPSTREAM}" 1>'upstream.out' 2>&1
 
 #-------------------------------------------------------------------------------
 # run the suite-state polling test suite
 TEST_NAME="${TEST_NAME_BASE}-run"
 suite_run_ok "${TEST_NAME}" \
-    cylc run --reference-test --debug --no-detach --set="UPSTREAM='${UPSTREAM}'" \
+    cylc play --reference-test --debug --no-detach --set="UPSTREAM='${UPSTREAM}'" \
     "${SUITE_NAME}"
 
 #-------------------------------------------------------------------------------

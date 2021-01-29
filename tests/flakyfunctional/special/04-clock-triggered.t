@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -30,25 +30,27 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}" \
     -s 'TIMEOUT="PT12S"'
 #-------------------------------------------------------------------------------
 run_ok "${TEST_NAME_BASE}-run-now" \
-    cylc run --debug --no-detach "${SUITE_NAME}" \
+    cylc play --debug --no-detach "${SUITE_NAME}" \
     -s "START='$(date '+%Y%m%dT%H')'" \
     -s "HOUR='$(date '+%H')'" \
     -s 'UTC_MODE="False"' \
     -s 'OFFSET="PT0S"' \
     -s 'TIMEOUT="PT12S"'
 #-------------------------------------------------------------------------------
+delete_db
 NOW="$(date '+%Y%m%dT%H')"
 run_ok "${TEST_NAME_BASE}-run-past" \
-    cylc run --debug --no-detach "${SUITE_NAME}" \
+    cylc play --debug --no-detach "${SUITE_NAME}" \
     -s "START='$(cylc cycle-point "${NOW}" --offset-hour='-10')'" \
     -s "HOUR='$(cylc cycle-point "${NOW}" --offset-hour='-10' --print-hour)'" \
     -s 'UTC_MODE="False"' \
     -s 'OFFSET="PT0S"' \
     -s 'TIMEOUT="PT1M"'
 #-------------------------------------------------------------------------------
+delete_db
 NOW="$(date '+%Y%m%dT%H')"
 run_fail "${TEST_NAME_BASE}-run-later" \
-    cylc run --debug --no-detach "${SUITE_NAME}" \
+    cylc play --debug --no-detach "${SUITE_NAME}" \
     -s "START='$(cylc cycle-point "${NOW}" --offset-hour='10')'" \
     -s "HOUR='$(cylc cycle-point "${NOW}" --offset-hour='10' --print-hour)'" \
     -s 'UTC_MODE="False"' \

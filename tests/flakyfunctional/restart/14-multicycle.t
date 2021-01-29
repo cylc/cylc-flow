@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -31,9 +31,9 @@ if ! command -v 'sqlite3' > /dev/null; then
     exit 0
 fi
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --debug --no-detach "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-restart-run" \
-    cylc restart --debug --no-detach "${SUITE_NAME}"
+    cylc play --debug --no-detach "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}-restart" \
+    cylc play --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 # The waiting tasks below have two parents and are spawned by the earlier
 # intercycle dependencies.

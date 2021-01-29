@@ -35,10 +35,13 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 __FLOW_CONFIG__
 #-------------------------------------------------------------------------------
 suite_run_ok "${TEST_NAME_BASE}-run-reflog" \
-    cylc run --debug --no-detach --reference-log "${SUITE_NAME}"
+    cylc play --debug --no-detach --reference-log "${SUITE_NAME}"
+
 exists_ok "${HOME}/cylc-run/${SUITE_NAME}/reference.log"
+
+delete_db
 suite_run_ok "${TEST_NAME_BASE}-run-reftest" \
-    cylc run --debug --no-detach --reference-test "${SUITE_NAME}"
+    cylc play --debug --no-detach --reference-test "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 purge
 exit

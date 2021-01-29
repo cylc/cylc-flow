@@ -15,8 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test "cylc run SUITE now" and "cylc run --icp=now SUITE".
-# And "cylc run --icp=next(...) SUITE" and "cylc run --icp=previous(...) SUITE"
+# Test "cylc play SUITE now" and "cylc play --icp=now SUITE".
+# And "cylc play --icp=next(...) SUITE" and "cylc play --icp=previous(...) SUITE"
 # And restart.
 
 . "$(dirname "$0")/test_header"
@@ -37,14 +37,15 @@ __FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate --icp='now' "${SUITE_NAME}"
 
-# Test "cylc run SUITE now"
+# Test "cylc play SUITE now"
 suite_run_ok "${TEST_NAME_BASE}-run-now" \
-    cylc run --debug --no-detach "${SUITE_NAME}" 'now'
+    cylc play --debug --no-detach "${SUITE_NAME}" --icp='now'
 # MY_CYCLE="$(sqlite3 "${SUITE_RUN_DIR}/log/db" 'SELECT cycle FROM task_pool')"
 suite_run_ok "${TEST_NAME_BASE}-restart-now" \
-    cylc restart --debug --no-detach "${SUITE_NAME}"
+    cylc play --debug --no-detach "${SUITE_NAME}"
 sqlite3 "${SUITE_RUN_DIR}/log/db" 'SELECT cycle, name, status FROM task_pool' >'task_pool.out'
 cmp_ok 'task_pool.out' <'/dev/null'
+delete_db
 # pre-SoD:
 # sqlite3 "${SUITE_RUN_DIR}/log/db" 'SELECT * FROM task_pool' >'task_pool.out'
 # cmp_ok 'task_pool.out' <<__OUT__
@@ -53,17 +54,18 @@ cmp_ok 'task_pool.out' <'/dev/null'
 # TODO - is this test still useful? consider a task_states table test.
 
 # Tests:
-# "cylc run --icp=now SUITE"
-# "cylc run --icp=next(T00) SUITE"
-# "cylc run --icp=previous(T00) SUITE"
+# "cylc play --icp=now SUITE"
+# "cylc play --icp=next(T00) SUITE"
+# "cylc play --icp=previous(T00) SUITE"
 for ICP in 'now' 'next(T00)' 'previous(T00)'; do
     suite_run_ok "${TEST_NAME_BASE}-run-icp-now" \
-        cylc run --debug --no-detach --icp="${ICP}" "${SUITE_NAME}"
+        cylc play --debug --no-detach --icp="${ICP}" "${SUITE_NAME}"
     # MY_CYCLE="$(sqlite3 "${SUITE_RUN_DIR}/log/db" 'SELECT cycle FROM task_pool')"
     suite_run_ok "${TEST_NAME_BASE}-restart-icp-now" \
-        cylc restart --debug --no-detach "${SUITE_NAME}"
+        cylc play --debug --no-detach "${SUITE_NAME}"
     sqlite3 "${SUITE_RUN_DIR}/log/db" 'SELECT cycle, name, status FROM task_pool' >'task_pool.out'
     cmp_ok 'task_pool.out' <'/dev/null'
+    delete_db
     # pre-SoD:
     # sqlite3 "${SUITE_RUN_DIR}/log/db" 'SELECT * FROM task_pool' >'task_pool.out'
     #     cmp_ok 'task_pool.out' <<__OUT__

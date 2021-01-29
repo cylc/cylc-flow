@@ -19,7 +19,7 @@
 # incompatibility, and that suitable error message is given
 
 . "$(dirname "$0")/test_header"
-set_test_number 5
+set_test_number 3
 
 install_suite
 # install the cylc7 restart database
@@ -28,21 +28,14 @@ sqlite3 "${SUITE_RUN_DIR}/.service/db" < 'db.sqlite3'
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
 TEST_NAME="${TEST_NAME_BASE}-restart-fail"
-suite_run_fail "$TEST_NAME" cylc restart "${SUITE_NAME}"
+suite_run_fail "$TEST_NAME" cylc play "${SUITE_NAME}"
 
 grep_ok 'Workflow database is incompatible' "${TEST_NAME}.stderr"
 
 purge
 
-# -----------------------------------------------------------------------------
-# Test that trying to restart a suite without a database gives suitable
-# error message
-install_suite
+# Note: The test for "trying to restart a suite without a database gives
+# suitable error message" was removed with the change from cylc run/restart to
+# cylc play, as if the database is not present it will simply do a cold start
 
-TEST_NAME="54-no-db-restart-fail"
-suite_run_fail "$TEST_NAME" cylc restart "${SUITE_NAME}"
-
-grep_ok 'the workflow database was not found' "${TEST_NAME}.stderr"
-
-purge
 exit

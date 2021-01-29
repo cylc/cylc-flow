@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -32,7 +32,7 @@ cylc install --flow-name="${UPSTREAM}" -C "${TEST_DIR}/upstream" --no-run-name
 #-------------------------------------------------------------------------------
 # validate both suites as tests
 TEST_NAME="${TEST_NAME_BASE}-validate-upstream"
-run_ok "${TEST_NAME}" cylc val --debug "${UPSTREAM}" 
+run_ok "${TEST_NAME}" cylc val --debug "${UPSTREAM}"
 
 TEST_NAME=${TEST_NAME_BASE}-validate-polling
 run_ok "${TEST_NAME}" \
@@ -40,7 +40,7 @@ run_ok "${TEST_NAME}" \
 
 #-------------------------------------------------------------------------------
 # run the upstream suite and detach (not a test)
-cylc run "${UPSTREAM}" 
+cylc play "${UPSTREAM}"
 
 #-------------------------------------------------------------------------------
 # check auto-generated task script for lbad
@@ -65,7 +65,7 @@ __END__
 # run the suite-state polling test suite
 TEST_NAME="${TEST_NAME_BASE}-run"
 suite_run_ok "${TEST_NAME}" \
-    cylc run --reference-test --debug --no-detach \
+    cylc play --reference-test --debug --no-detach \
     --set="UPSTREAM='${UPSTREAM}'" "${SUITE_NAME}"
 
 #-------------------------------------------------------------------------------

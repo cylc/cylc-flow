@@ -75,7 +75,7 @@ __FLOW_CONFIG__
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run "${SUITE_NAME}" --no-detach --stop-point=2018
+    cylc play "${SUITE_NAME}" --no-detach --stopcp=2018
 dumpdbtables
 cmp_ok 'stopcp.out' <<<'stopcp|2018'
 cmp_ok 'taskpool.out' <<'__OUT__'
@@ -83,7 +83,7 @@ cmp_ok 'taskpool.out' <<'__OUT__'
 __OUT__
 
 suite_run_ok "${TEST_NAME_BASE}-restart-1" \
-    cylc restart "${SUITE_NAME}" --no-detach
+    cylc play "${SUITE_NAME}" --no-detach
 dumpdbtables
 cmp_ok 'stopcp.out' <'/dev/null'
 cmp_ok 'taskpool.out' <<'__OUT__'
@@ -91,7 +91,7 @@ cmp_ok 'taskpool.out' <<'__OUT__'
 __OUT__
 
 suite_run_ok "${TEST_NAME_BASE}-restart-2" \
-    cylc restart "${SUITE_NAME}" --no-detach
+    cylc play "${SUITE_NAME}" --no-detach
 dumpdbtables
 cmp_ok 'stopcp.out' <<<'stopcp|2021'
 cmp_ok 'taskpool.out' <<'__OUT__'
@@ -99,7 +99,7 @@ cmp_ok 'taskpool.out' <<'__OUT__'
 __OUT__
 
 suite_run_ok "${TEST_NAME_BASE}-restart-3" \
-    cylc restart "${SUITE_NAME}" --no-detach
+    cylc play "${SUITE_NAME}" --no-detach
 dumpdbtables
 cmp_ok 'stopcp.out' <'/dev/null'
 cmp_ok 'taskpool.out' <<'__OUT__'
@@ -107,7 +107,7 @@ cmp_ok 'taskpool.out' <<'__OUT__'
 __OUT__
 
 suite_run_ok "${TEST_NAME_BASE}-restart-4" \
-    cylc restart "${SUITE_NAME}" --no-detach
+    cylc play "${SUITE_NAME}" --no-detach
 dumpdbtables
 cmp_ok 'stopcp.out' <'/dev/null'
 cmp_ok 'taskpool.out' <'/dev/null'

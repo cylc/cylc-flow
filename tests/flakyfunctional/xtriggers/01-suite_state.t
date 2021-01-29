@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -34,12 +34,12 @@ run_ok "${TEST_NAME_BASE}-val" \
     cylc val --debug --set="UPSTREAM='${SUITE_NAME_UPSTREAM}'" "${SUITE_NAME}"
 
 # Run the upstream suite and detach (not a test).
-cylc run "${SUITE_NAME_UPSTREAM}"
+cylc play "${SUITE_NAME_UPSTREAM}"
 
 # Run the test suite - it should fail after inactivity ...
 TEST_NAME="${TEST_NAME_BASE}-run-fail"
 suite_run_fail "${TEST_NAME}" \
-   cylc run --set="UPSTREAM='${SUITE_NAME_UPSTREAM}'" --no-detach "${SUITE_NAME}"
+   cylc play --set="UPSTREAM='${SUITE_NAME_UPSTREAM}'" --no-detach "${SUITE_NAME}"
 
 SUITE_LOG="$(cylc cat-log -m 'p' "${SUITE_NAME}")"
 grep_ok 'WARNING - suite timed out after inactivity for PT10S' "${SUITE_LOG}"

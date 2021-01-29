@@ -47,44 +47,44 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
         inactivity = P1M
 [scheduling]
     initial cycle point = 2015
-    final cycle point = 2020
+    final cycle point = 2018
     [[graph]]
         P1Y = t1[-P1Y] => t1
 [runtime]
     [[t1]]
         script = """
-case "${CYLC_TASK_CYCLE_POINT}" in
-2015)
-    cylc stop "${CYLC_SUITE_NAME}"
-    :;;
-esac
-"""
+            case "${CYLC_TASK_CYCLE_POINT}" in
+            2015)
+                cylc stop "${CYLC_SUITE_NAME}"
+                :;;
+            esac
+        """
 __FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run "${SUITE_NAME}" --no-detach --fcp=2018
+    cylc play "${SUITE_NAME}" --no-detach --fcp=2017
 dumpdbtables
-cmp_ok 'fcp.out' <<<'fcp|2018'
+cmp_ok 'fcp.out' <<<'fcp|2017'
 cmp_ok 'taskpool.out' <<'__OUT__'
 2016|t1|waiting
 __OUT__
 
 suite_run_ok "${TEST_NAME_BASE}-restart-1" \
-    cylc restart "${SUITE_NAME}" --no-detach
+    cylc play "${SUITE_NAME}" --no-detach
 dumpdbtables
-cmp_ok 'fcp.out' <<<'fcp|2018'
+cmp_ok 'fcp.out' <<<'fcp|2017'
 cmp_ok 'taskpool.out' <'/dev/null'
 
 suite_run_ok "${TEST_NAME_BASE}-restart-2" \
-    cylc restart "${SUITE_NAME}" --no-detach
+    cylc play "${SUITE_NAME}" --no-detach
 dumpdbtables
-cmp_ok 'fcp.out' <<<'fcp|2018'
+cmp_ok 'fcp.out' <<<'fcp|2017'
 cmp_ok 'taskpool.out' <'/dev/null'
 
 suite_run_ok "${TEST_NAME_BASE}-restart-3" \
-    cylc restart "${SUITE_NAME}" --no-detach --ignore-final-cycle-point
+    cylc play "${SUITE_NAME}" --no-detach --fcp=ignore
 dumpdbtables
 cmp_ok 'fcp.out' <'/dev/null'
 cmp_ok 'taskpool.out' <'/dev/null'

@@ -25,7 +25,7 @@ SUITE_NAME_REF="${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-ref"
 suite_run_ok "${TEST_NAME}" \
-    cylc run --reference-test --debug --no-detach "${SUITE_NAME_REF}"
+    cylc play --reference-test --debug --no-detach "${SUITE_NAME_REF}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-cli-template"
 run_ok "${TEST_NAME}" \
@@ -36,7 +36,7 @@ install_suite "${TEST_NAME_BASE}" 'template'
 TEST_NAME="${TEST_NAME_BASE}-runtime"
 #-------------------------------------------------------------------------------
 suite_run_ok "${TEST_NAME}" \
-    cylc run --reference-test --debug --no-detach "${SUITE_NAME}" \
+    cylc play --reference-test --debug --no-detach "${SUITE_NAME}" \
     --set="REF_SUITE='${SUITE_NAME_REF}'"
 #-------------------------------------------------------------------------------
 purge "${SUITE_NAME_REF}"

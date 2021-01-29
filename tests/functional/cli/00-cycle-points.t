@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -28,14 +28,16 @@ TEST_NAME="${TEST_NAME_BASE}-val"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_ok "${TEST_NAME}" cylc run --debug --no-detach "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME}" cylc play --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
+delete_db
 TEST_NAME=${TEST_NAME_BASE}-run-override
 # This will fail if the in-suite final cycle point does not get overridden.
-suite_run_ok "${TEST_NAME}" cylc run --until=2015-04 --debug --no-detach "${SUITE_NAME}" 2015-04
+suite_run_ok "${TEST_NAME}" cylc play --fcp=2015-04 --icp=2015-04 --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
+delete_db
 TEST_NAME=${TEST_NAME_BASE}-run-fail
 # This should fail as the final cycle point  is < the initial one.
-suite_run_fail "${TEST_NAME}" cylc run --until=2015-03 --debug --no-detach "${SUITE_NAME}" 2015-04
+suite_run_fail "${TEST_NAME}" cylc play --fcp=2015-03 --icp=2015-04 --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 purge
