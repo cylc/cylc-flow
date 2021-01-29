@@ -86,18 +86,25 @@
       <!-- To regenerate this keyword list, create a minimal flow.cylc file and run something like:
         cylc get-config my-minimal-suite | sed "/^[^=]*$/d; s/=.*//g; s/^ *//g; s/ *$//g" | sort -r | uniq | sed "s/\(.*\)/<keyword>\1<\/keyword>/g"
         -->
+        <!--TAG_FOR_AUTO_UPDATE-->
+        <keyword>xtriggers</keyword>
         <keyword>work sub-directory</keyword>
         <keyword>warning handler</keyword>
-        <keyword>critical handler</keyword>
+        <keyword>visualization</keyword>
         <keyword>verbose mode</keyword>
         <keyword>user</keyword>
+        <keyword>use node fillcolor for edges</keyword>
         <keyword>use node color for labels</keyword>
         <keyword>use node color for edges</keyword>
+        <keyword>to</keyword>
         <keyword>title</keyword>
         <keyword>timeout handler</keyword>
         <keyword>timeout</keyword>
-        <keyword>template</keyword>
-        <keyword>suite shutdown event handler</keyword>
+        <keyword>time limit buffer</keyword>
+        <keyword>templates</keyword>
+        <keyword>task parameters</keyword>
+        <keyword>task event batch interval</keyword>
+        <keyword>suite state polling</keyword>
         <keyword>suite definition directory</keyword>
         <keyword>succeeded handler</keyword>
         <keyword>submitted handler</keyword>
@@ -107,40 +114,50 @@
         <keyword>submission retry delays</keyword>
         <keyword>submission polling intervals</keyword>
         <keyword>submission failed handler</keyword>
+        <keyword>stop after cycle point</keyword>
         <keyword>startup handler</keyword>
         <keyword>started handler</keyword>
         <keyword>stalled handler</keyword>
-        <keyword>default run length</keyword>
         <keyword>speedup factor</keyword>
-        <keyword>time limit buffer</keyword>
-        <keyword>fail cycle points</keyword>
-        <keyword>fail try 1 only</keyword>
-        <keyword>disable task event handlers</keyword>
+        <keyword>special tasks</keyword>
+        <keyword>simulation</keyword>
         <keyword>shutdown handler</keyword>
-        <keyword>shell</keyword>
         <keyword>sequential</keyword>
         <keyword>script</keyword>
+        <keyword>scheduling</keyword>
+        <keyword>scheduler</keyword>
+        <keyword>runtime</keyword>
         <keyword>runahead limit</keyword>
         <keyword>run-dir</keyword>
-        <keyword>root</keyword>
         <keyword>retry handler</keyword>
         <keyword>retrieve job logs retry delays</keyword>
         <keyword>retrieve job logs max size</keyword>
         <keyword>retrieve job logs</keyword>
-        <keyword>required run mode</keyword>
-        <keyword>public</keyword>
+        <keyword>remote</keyword>
+        <keyword>queues</keyword>
         <keyword>pre-script</keyword>
         <keyword>post-script</keyword>
+        <keyword>platform</keyword>
+        <keyword>parameter environment templates</keyword>
         <keyword>owner</keyword>
+        <keyword>outputs</keyword>
         <keyword>number of cycle points</keyword>
+        <keyword>node penwidth</keyword>
+        <keyword>node groups</keyword>
+        <keyword>node attributes</keyword>
+        <keyword>meta</keyword>
+        <keyword>message</keyword>
         <keyword>members</keyword>
         <keyword>max-polls</keyword>
-        <keyword>to</keyword>
-        <keyword>smtp</keyword>
-        <keyword>from</keyword>
-        <keyword>events</keyword>
+        <keyword>main loop</keyword>
+        <keyword>mail events</keyword>
+        <keyword>mail</keyword>
         <keyword>limit</keyword>
+        <keyword>late offset</keyword>
+        <keyword>late handler</keyword>
+        <keyword>job</keyword>
         <keyword>interval</keyword>
+        <keyword>install</keyword>
         <keyword>initial cycle point constraints</keyword>
         <keyword>initial cycle point</keyword>
         <keyword>init-script</keyword>
@@ -154,32 +171,50 @@
         <keyword>handler retry delays</keyword>
         <keyword>handler events</keyword>
         <keyword>graph</keyword>
+        <keyword>from</keyword>
+        <keyword>footer</keyword>
+        <keyword>flow.cylc</keyword>
         <keyword>final cycle point constraints</keyword>
         <keyword>final cycle point</keyword>
         <keyword>failed handler</keyword>
-        <keyword>extra log files</keyword>
+        <keyword>fail try 1 only</keyword>
+        <keyword>fail cycle points</keyword>
         <keyword>external-trigger</keyword>
         <keyword>expired handler</keyword>
         <keyword>expected task failures</keyword>
+        <keyword>exit-script</keyword>
         <keyword>execution timeout handler</keyword>
         <keyword>execution timeout</keyword>
         <keyword>execution time limit</keyword>
         <keyword>execution retry delays</keyword>
         <keyword>execution polling intervals</keyword>
         <keyword>exclude</keyword>
+        <keyword>events</keyword>
+        <keyword>err-script</keyword>
+        <keyword>environment filter</keyword>
+        <keyword>environment</keyword>
         <keyword>env-script</keyword>
+        <keyword>edge penwidth</keyword>
+        <keyword>disable task event handlers</keyword>
+        <keyword>disable suite event handlers</keyword>
+        <keyword>directives</keyword>
         <keyword>description</keyword>
+        <keyword>default run length</keyword>
         <keyword>default node attributes</keyword>
         <keyword>default edge attributes</keyword>
+        <keyword>default</keyword>
         <keyword>cycling mode</keyword>
         <keyword>cycle point time zone</keyword>
         <keyword>cycle point num expanded year digits</keyword>
         <keyword>cycle point format</keyword>
+        <keyword>custom handler</keyword>
+        <keyword>critical handler</keyword>
         <keyword>collapsed families</keyword>
         <keyword>clock-trigger</keyword>
         <keyword>clock-expire</keyword>
-        <keyword>job runner</keyword>
-        <keyword>job runner command template</keyword>
+        <keyword>batch system</keyword>
+        <keyword>batch submit command template</keyword>
+        <keyword>aborted handler</keyword>
         <keyword>abort on timeout</keyword>
         <keyword>abort on stalled</keyword>
         <keyword>abort on inactivity</keyword>
@@ -190,6 +225,7 @@
         <keyword>abort if inactivity handler fails</keyword>
         <keyword>UTC mode</keyword>
         <keyword>URL</keyword>
+        <!--END_TAG_FOR_AUTO_UPDATE-->
     </context>
     <context id="cylc-subshell" style-ref="string">
       <match>"""</match>
