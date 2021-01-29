@@ -43,6 +43,7 @@ __OUT__
 
 cylc stop --max-polls=60 --interval=1 "${SUITE_NAME}"
 purge
+# -----------------------------------------------------------------------------
 
 install_suite "${TEST_NAME_BASE}"
 
@@ -69,6 +70,7 @@ __OUT__
 
 cylc stop --max-polls=60 --interval=1 "${SUITE_NAME}"
 purge
+# -----------------------------------------------------------------------------
 
 # Test file install completes before dependent tasks are executed
 create_test_global_config "" "
@@ -115,6 +117,7 @@ __FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --debug --no-detach "${SUITE_NAME}"
+    cylc play --debug --no-detach "${SUITE_NAME}"
+
 purge
 exit

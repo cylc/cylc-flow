@@ -20,22 +20,19 @@
 
 . "$(dirname "$0")/test_header"
 
-set_test_number 7
+set_test_number 8
 
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduling]
     [[dependencies]]
         R1 = foo
-[runtime]
-    [[foo]]
-        script = cylc stop --now --now "${CYLC_SUITE_NAME}"
 __FLOW_CONFIG__
 
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 
 # format=plain
-TEST_NAME="${TEST_NAME_BASE}-run-format=plain"
+TEST_NAME="${TEST_NAME_BASE}-run-format-plain"
 suite_run_ok "${TEST_NAME}" cylc play --format plain "${SUITE_NAME}"
 grep_ok 'listening on tcp:' "${TEST_NAME}.stdout"
 grep_ok 'publishing on tcp:' "${TEST_NAME}.stdout"
@@ -46,8 +43,9 @@ grep_ok 'Other ways to see if the suite is still running:' \
 poll_suite_stopped
 
 delete_db
+
 # format=json
-TEST_NAME="${TEST_NAME_BASE}-run-format=plain"
+TEST_NAME="${TEST_NAME_BASE}-run-format-json"
 suite_run_ok "${TEST_NAME}" cylc play --format json "${SUITE_NAME}"
 run_ok "${TEST_NAME}-fields" python3 -c '
 import json
@@ -56,7 +54,7 @@ data = json.load(open(sys.argv[1], "r"))
 print(list(sorted(data)), file=sys.stderr)
 assert list(sorted(data)) == [
     "host", "pid", "ps_opts", "pub_url", "suite", "url"]
-' "${TEST_NAME}.stdout" >&2 2>&2
+' "${TEST_NAME}.stdout"
 poll_suite_stopped
 
 purge

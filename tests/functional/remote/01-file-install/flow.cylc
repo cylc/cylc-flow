@@ -14,17 +14,17 @@
 [runtime]
     [[startup]]
         script = """
-        for DIR in "bin" "app" "etc" "lib" "dir1" "dir2"
-    do
-        mkdir -p "${CYLC_SUITE_RUN_DIR}/${DIR}"
-        touch "${CYLC_SUITE_RUN_DIR}/${DIR}/moo"
-    done
+            for DIR in "bin" "app" "etc" "lib" "dir1" "dir2"
+            do
+                mkdir -p "${CYLC_SUITE_RUN_DIR}/${DIR}"
+                touch "${CYLC_SUITE_RUN_DIR}/${DIR}/moo"
+            done
 
-    for FILE in "file1" "file2"
-    do
-        touch "${CYLC_SUITE_RUN_DIR}/${FILE}"
-    done
-    """
+            for FILE in "file1" "file2"
+            do
+                touch "${CYLC_SUITE_RUN_DIR}/${FILE}"
+            done
+        """
         platform = localhost
     [[holder]]
         script = """cylc hold "${CYLC_SUITE_NAME}" """
