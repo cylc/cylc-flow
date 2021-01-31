@@ -21,6 +21,7 @@ import os
 import sys
 
 from ansimarkup import parse as cparse
+from pathlib import Path
 
 from cylc.flow import LOG, RSYNC_LOG
 from cylc.flow.exceptions import SuiteServiceFileError
@@ -32,9 +33,9 @@ from cylc.flow.option_parsers import (
     Options
 )
 from cylc.flow.pathutil import (
-    get_suite_run_dir,
+    get_workflow_run_dir,
     get_suite_run_log_name,
-    get_suite_file_install_log_name, make_localhost_symlinks)
+    get_suite_file_install_log_name)
 from cylc.flow.remote import _remote_cylc_cmd
 from cylc.flow.scheduler import Scheduler, SchedulerError
 from cylc.flow.scripts import cylc_header
@@ -52,14 +53,14 @@ state, see 'cylc restart --help'.
 
 The scheduler will run as a daemon unless you specify --no-detach.
 
-If the suite is not already registered (by "cylc register" or a previous run)
-it will be registered on the fly before start up.
+If the suite is not already installed (by "cylc install" or a previous run)
+it will be installed on the fly before start up.
 
 Examples:
-    # Run the suite registered with name REG.
+    # Run the suite installed with name REG.
     $ cylc run REG
 
-    # Register $PWD/flow.cylc as $(basename $PWD) and run it.
+    # Install $PWD/flow.cylc as $(basename $PWD) and run it.
     # Note REG must be given explicitly if START_POINT is on the command line.
     $ cylc run
 
@@ -261,8 +262,8 @@ RestartOptions = Options(
     get_option_parser(is_restart=True, add_std_opts=True), DEFAULT_OPTS)
 
 
-def _auto_register():
-    """Register a suite installed in the cylc-run directory."""
+def _auto_install():
+    """Register workflow installed in the cylc-run directory"""
     try:
         reg = suite_files.register()
     except SuiteServiceFileError as exc:
@@ -320,8 +321,7 @@ def scheduler_cli(parser, options, args, is_restart=False):
         suite_files.detect_old_contact_file(reg)
     except SuiteServiceFileError as exc:
         sys.exit(exc)
-    make_localhost_symlinks(reg)
-    _check_registration(reg)
+    _check_srvd(reg)
 
     # re-execute on another host if required
     _distribute(options.host, is_restart)
@@ -366,12 +366,13 @@ def scheduler_cli(parser, options, args, is_restart=False):
     sys.exit(ret)
 
 
-def _check_registration(reg):
-    """Ensure the flow is registered."""
-    suite_run_dir = get_suite_run_dir(reg)
-    if not os.path.exists(suite_run_dir):
+def _check_srvd(reg):
+    """Check the run dir contains .service dir"""
+    workflow_run_dir = get_workflow_run_dir(reg)
+    if not Path(workflow_run_dir,
+                suite_files.SuiteFiles.Service.DIRNAME).exists:
         sys.stderr.write(f'suite service directory not found '
-                         f'at: {suite_run_dir}\n')
+                         f'at: {workflow_run_dir}\n')
         sys.exit(1)
 
 
@@ -436,7 +437,7 @@ def restart(parser, options, *args):
 def run(parser, options, *args):
     """Implement cylc run."""
     if not args:
-        _auto_register()
+        _auto_install()
     if options.startcp:
         options.warm = True
     if len(args) >= 2:

@@ -36,7 +36,7 @@ __FLOW_CONFIG__
 #-------------------------------------------------------------------------------
 suite_run_ok "${TEST_NAME_BASE}-run-reflog" \
     cylc run --debug --no-detach --reference-log "${SUITE_NAME}"
-exists_ok 'reference.log'
+exists_ok "${HOME}/cylc-run/${SUITE_NAME}/reference.log"
 suite_run_ok "${TEST_NAME_BASE}-run-reftest" \
     cylc run --debug --no-detach --reference-test "${SUITE_NAME}"
 #-------------------------------------------------------------------------------

@@ -29,8 +29,8 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
         -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
 RLOGD1="cylc-run/${SUITE_NAME}/log/job/1/t1/01"
 RLOGD2="cylc-run/${SUITE_NAME}/log/job/1/t1/02"
-LOGD1="$RUN_DIR/${SUITE_NAME}/log/job/1/t1/01"
-LOGD2="$RUN_DIR/${SUITE_NAME}/log/job/1/t1/02"
+LOGD1="${RUN_DIR}/${SUITE_NAME}/log/job/1/t1/01"
+LOGD2="${RUN_DIR}/${SUITE_NAME}/log/job/1/t1/02"
 
 SSH='ssh -n -oBatchMode=yes -oConnectTimeout=5'
 # shellcheck disable=SC2086
@@ -39,8 +39,9 @@ run_ok "exists-rlogd1" ${SSH} "${CYLC_TEST_HOST}" test -e "${RLOGD1}"
 run_ok "exists-rlogd2" ${SSH} "${CYLC_TEST_HOST}" test -e "${RLOGD2}"
 exists_ok "${LOGD1}"
 exists_ok "${LOGD2}"
-sed -i 's/script =.*$/script = true/' "flow.cylc"
-sed -i -n '1,/triggered off/p' "reference.log"
+sed -i 's/script =.*$/script = true/' "${RUN_DIR}/${SUITE_NAME}/flow.cylc"
+sed -i -n '1,/triggered off/p' "${RUN_DIR}/${SUITE_NAME}/reference.log"
+
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --debug --no-detach --reference-test "${SUITE_NAME}" \
         -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"

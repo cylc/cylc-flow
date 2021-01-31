@@ -20,7 +20,6 @@ export REQUIRE_PLATFORM='loc:remote fs:shared comms:tcp'
 . "$(dirname "$0")/test_header"
 set_test_number 4
 
-export CYLC_TEST_PLATFORM="$CYLC_TEST_PLATFORM_WSFS"
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CYLC__'
 #!jinja2
 [scheduler]
@@ -43,7 +42,7 @@ RRUND="cylc-run/${SUITE_NAME}"
 RSRVD="${RRUND}/.service"
 poll_grep_suite_log 'Holding all waiting or queued tasks now'
 SSH="$(cylc get-global-config -i "[platforms][$CYLC_TEST_PLATFORM]ssh command")"
-${SSH} "${CYLC_TEST_PLATFORM}" \
+${SSH} "${CYLC_TEST_HOST}" \
 find "${RSRVD}" -type f -name "*key*"|awk -F/ '{print $NF}'|sort >'find.out'
 cmp_ok 'find.out' <<'__OUT__'
 client.key_secret
@@ -52,7 +51,7 @@ server.key
 server.key_secret
 __OUT__
 cylc stop --max-polls=60 --interval=1 "${SUITE_NAME}"
-${SSH} "${CYLC_TEST_PLATFORM}" \
+${SSH} "${CYLC_TEST_HOST}" \
 find "${RRUND}" -type f -name "*key*"|awk -F/ '{print $NF}'|sort >'find.out'
 cmp_ok 'find.out' <<'__OUT__'
 __OUT__

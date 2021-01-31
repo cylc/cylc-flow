@@ -36,7 +36,7 @@ BASE_GLOBAL_CONFIG="
         available = localhost, ${CYLC_TEST_HOST}"
 
 TEST_NAME="${TEST_NAME_BASE}"
-TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME}" <<< '
+init_suite "${TEST_NAME}" <<< '
 [scheduling]
     [[graph]]
         R1 = foo

@@ -24,11 +24,11 @@ set_test_number 5
 #-------------------------------------------------------------------------------
 install_suite "${TEST_NAME_BASE}" 'polling'
 #-------------------------------------------------------------------------------
-# copy the upstream suite to the test directory and register it
+# copy the upstream suite to the test directory and install it
 cp -r "${TEST_SOURCE_DIR}/upstream" "${TEST_DIR}/"
 # use full range of characters in the suite-to-be-polled name:
 UPSTREAM="${SUITE_NAME}-up_stre.am"
-cylc reg "${UPSTREAM}" "${TEST_DIR}/upstream"
+cylc install --flow-name="${UPSTREAM}" -C "${TEST_DIR}/upstream" --no-run-name
 #-------------------------------------------------------------------------------
 # validate both suites as tests
 TEST_NAME="${TEST_NAME_BASE}-validate-upstream"

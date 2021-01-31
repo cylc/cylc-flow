@@ -36,7 +36,7 @@ from cylc.flow.hostuserutil import (is_remote_host, is_remote_platform)
 from cylc.flow.pathutil import (
     get_remote_suite_run_dir,
     get_dirs_to_symlink,
-    get_suite_run_dir)
+    get_workflow_run_dir)
 from cylc.flow.remote import construct_rsync_over_ssh_cmd
 from cylc.flow.subprocctx import SubProcContext
 from cylc.flow.suite_files import (
@@ -342,7 +342,7 @@ class TaskRemoteMgr:
         """
         install_target = platform['install target']
         self.remote_init_map[install_target] = REMOTE_FILE_INSTALL_IN_PROGRESS
-        src_path = get_suite_run_dir(self.suite)
+        src_path = get_workflow_run_dir(self.suite)
         dst_path = get_remote_suite_run_dir(platform, self.suite)
         install_target = platform['install target']
         ctx = SubProcContext(

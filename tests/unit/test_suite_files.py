@@ -27,223 +27,6 @@ from cylc.flow.exceptions import (
 from cylc.flow.suite_files import check_nested_run_dirs
 
 
-def get_register_test_cases():
-    """Test cases for suite_files.register function."""
-    return [
-        # 1 no parameters provided, current directory is not a symlink,
-        # and contains a valid flow.cylc
-        (None,  # reg
-         None,  # source
-         False,  # redirect,
-         "/home/user/cylc-run/suite1",  # cwd
-         False,  # isabs
-         True,  # isfile
-         "/home/user/cylc-run/suite1/.service",  # suite_srv_dir
-         "/home/user/cylc-run/suite1",  # readlink
-         None,  # expected symlink
-         "suite1",  # expected return value
-         None,  # expected exception
-         None  # expected part of exception message
-         ),
-        # 2 suite name provided, current directory is not a symlink,
-        # and contains a valid flow.cylc
-        ("super-suite-2",  # reg
-         None,  # source
-         False,  # redirect,
-         "/home/user/cylc-run/suite2",  # cwd
-         False,  # isabs
-         True,  # isfile
-         "/home/user/cylc-run/suite2/.service",  # suite_srv_dir
-         "/home/user/cylc-run/suite2",  # readlink
-         None,  # expected symlink
-         "super-suite-2",  # expected return value
-         None,  # expected exception
-         None  # expected part of exception message
-         ),
-        # 3 suite name and directory location of flow.cylc provided,
-        # current directory is not a symlink, and contains a valid flow.cylc
-        ("suite3",  # reg
-         "/home/user/cylc-run/suite3/flow.cylc",  # source
-         False,  # redirect,
-         "/home/user/cylc-run/suite3",  # cwd
-         False,  # isabs
-         True,  # isfile
-         "/home/user/cylc-run/suite3/.service",  # suite_srv_dir
-         "/home/user/cylc-run/suite3",  # readlink
-         None,  # expected symlink
-         "suite3",  # expected return value
-         None,  # expected exception
-         None  # expected part of exception message
-         ),
-        # 4 suite name and directory location of flow.cylc provided,
-        # current directory is not a symlink, but the flow.cylc does not
-        # exist
-        ("suite4",  # reg
-         "/home/user/cylc-run/suite4/suite.txt",  # source
-         False,  # redirect,
-         "/home/user/cylc-run/suite4",  # cwd
-         False,  # isabs
-         False,  # isfile
-         "/home/user/cylc-run/suite4/.service",  # suite_srv_dir
-         "/home/user/cylc-run/suite4",  # readlink
-         None,  # expected symlink
-         "suite4",  # expected return value
-         SuiteServiceFileError,  # expected exception
-         "no flow.cylc"  # expected part of exception message
-         ),
-        # 5 the source directory and the resolved symlink for $SOURCE in
-        # $SOURCE/.service are not the same directory. No redirect
-        # specified, so it must raise an error
-        ("suite5",  # reg
-         "/home/user/cylc-run/suite5/suite.txt",  # source
-         False,  # redirect,
-         "/home/user/cylc-run/suite5",  # cwd
-         False,  # isabs
-         True,  # isfile
-         "/home/user/cylc-run/suite5/.service",  # suite_srv_dir
-         "/home/hercules/cylc-run/suite5",  # readlink
-         "/home/user/cylc-run/suite5",  # expected symlink
-         "suite5",  # expected return value
-         SuiteServiceFileError,  # expected exception
-         "already points to"  # expected part of exception message
-         ),
-        # 6 the source directory and the resolved symlink for $SOURCE in
-        # $SOURCE/.service are not the same directory. The redirect
-        # flag is true, so it must simply delete the old source link
-        ("suite6",  # reg
-         "/home/user/cylc-run/suite6/flow.cylc",  # source
-         True,  # redirect,
-         "/home/user/cylc-run/suite6",  # cwd
-         False,  # isabs
-         True,  # isfile
-         "/home/hercules/cylc-run/suite6/.service",  # suite_srv_dir
-         "/home/hercules/cylc-run/suite6",  # readlink
-         "/home/user/cylc-run/suite6",  # expected symlink
-         "suite6",  # expected return value
-         None,  # expected exception
-         None  # expected part of exception message
-         ),
-        # 7 the source directory and the resolved symlink for $SOURCE in
-        # $SOURCE/.service are not the same directory. The redirect
-        # flag is true. But the resolved orig_source's parent directory,
-        # is the source directory. So the symlink must be '..'
-        ("suite7",  # reg
-         "/home/user/cylc-run/suite7/flow.cylc",  # source
-         True,  # redirect,
-         "/home/user/cylc-run/suite7",  # cwd
-         False,  # isabs
-         True,  # isfile
-         "/home/user/cylc-run/suite7/.service",  # suite_srv_dir
-         "/home/user/cylc-run/suites/suite7",  # readlink
-         "..",  # expected symlink
-         "suite7",  # expected return value
-         None,  # expected exception
-         None  # expected part of exception message
-         ),
-        # 8 fails to readlink, resulting in a new symlink created
-        ("suite8",  # reg
-         "/home/user/cylc-run/suite8/flow.cylc",  # source
-         False,  # redirect,
-         "/home/user/cylc-run/suite8",  # cwd
-         False,  # isabs
-         True,  # isfile
-         "/home/user/cylc-run/suite8/.service",  # suite_srv_dir
-         OSError,  # readlink
-         "..",  # expected symlink
-         "suite8",  # expected return value
-         None,  # expected exception
-         None  # expected part of exception message
-         ),
-        # 9 the suite name is an absolute path
-        ("/suite9/",  # reg
-         None,  # source
-         False,  # redirect,
-         None,  # cwd
-         True,  # isabs
-         True,  # isfile
-         None,  # suite_srv_dir
-         None,  # readlink
-         None,  # expected symlink
-         None,  # expected return value
-         SuiteServiceFileError,  # expected exception
-         "cannot be an absolute path"  # expected part of exception message
-         ),
-        # 10 invalid suite name
-        ("-foo",  # reg
-         None,  # source
-         False,  # redirect,
-         None,  # cwd
-         True,  # isabs
-         True,  # isfile
-         None,  # suite_srv_dir
-         None,  # readlink
-         None,  # expected symlink
-         None,  # expected return value
-         SuiteServiceFileError,  # expected exception
-         "cannot start with: ``.``, ``-``"  # expected part of exception msg
-         )
-    ]
-
-
-@mock.patch('cylc.flow.suite_files.make_localhost_symlinks')
-@mock.patch('os.unlink')
-@mock.patch('os.makedirs')
-@mock.patch('os.symlink')
-@mock.patch('os.readlink')
-@mock.patch('os.path.isfile')
-@mock.patch('os.path.isabs')
-@mock.patch('os.getcwd')
-@mock.patch('os.path.abspath')
-@mock.patch('cylc.flow.suite_files.get_suite_srv_dir')
-@mock.patch('cylc.flow.suite_files.check_nested_run_dirs')
-def test_register(mocked_check_nested_run_dirs,
-                  mocked_get_suite_srv_dir,
-                  mocked_abspath,
-                  mocked_getcwd,
-                  mocked_isabs,
-                  mocked_isfile,
-                  mocked_readlink,
-                  mocked_symlink,
-                  mocked_makedirs,
-                  mocked_unlink,
-                  mocked_make_localhost_symlinks
-                  ):
-    """Test the register function."""
-    def mkdirs_standin(_, exist_ok=False):
-        return True
-
-    mocked_abspath.side_effect = lambda x: x
-    # mocked_check_nested_run_dirs - no side effect as we're just ignoring it
-
-    for (reg, source, redirect, cwd, isabs, isfile, suite_srv_dir,
-            readlink, expected_symlink, expected, e_expected,
-            e_message) in get_register_test_cases():
-        mocked_getcwd.side_effect = lambda: cwd
-        mocked_isabs.side_effect = lambda x: isabs
-
-        mocked_isfile.side_effect = lambda x: isfile
-        mocked_get_suite_srv_dir.return_value = str(suite_srv_dir)
-        mocked_makedirs.return_value = True
-        mocked_unlink.return_value = True
-        if readlink == OSError:
-            mocked_readlink.side_effect = readlink
-        else:
-            mocked_readlink.side_effect = lambda x: readlink
-
-        if e_expected is None:
-            reg = suite_files.register(reg, source, redirect)
-            assert reg == expected
-            if mocked_symlink.call_count > 0:
-                # first argument, of the first call
-                arg0 = mocked_symlink.call_args[0][0]
-                assert arg0 == expected_symlink
-        else:
-            with pytest.raises(e_expected) as exc:
-                suite_files.register(reg, source, redirect)
-            if e_message is not None:
-                assert e_message in str(exc.value)
-
-
 @pytest.mark.parametrize(
     'path, expected',
     [('a/b/c', '/mock_cylc_dir/a/b/c'),
@@ -281,53 +64,111 @@ def test_is_valid_run_dir(path, expected, is_abs_path, monkeypatch):
         f'Is "{path}" a valid run dir?')
 
 
-@pytest.mark.parametrize('direction', ['parents', 'children'])
-def test_nested_run_dirs_raise_error(direction, monkeypatch):
-    """Test that a suite cannot be contained in a subdir of another suite."""
-    monkeypatch.setattr('cylc.flow.suite_files.get_cylc_run_abs_path',
-                        lambda x: x)
-    if direction == "parents":
-        monkeypatch.setattr('cylc.flow.suite_files.os.scandir', lambda x: [])
-        monkeypatch.setattr('cylc.flow.suite_files.is_valid_run_dir',
-                            lambda x: x == os.path.join('bright', 'falls'))
-        # Not nested in run dir - ok:
-        suite_files.check_nested_run_dirs('alan/wake')
-        # It is itself a run dir - ok:
-        suite_files.check_nested_run_dirs('bright/falls')
-        # Nested in a run dir - bad:
-        for path in ('bright/falls/light', 'bright/falls/light/and/power'):
-            with pytest.raises(WorkflowFilesError) as exc:
-                suite_files.check_nested_run_dirs(path)
-            assert 'Nested run directories not allowed' in str(exc.value)
+@pytest.mark.parametrize(
+    'run_dir',
+    [
+        ('bright/falls/light'),
+        ('bright/falls/light/dark')
+    ]
+)
+def test_rundir_parent_that_does_not_contain_workflow_no_error(
+        run_dir, monkeypatch):
+    """Test that a workflow raises no error when a parent directory is not also
+        a workflow directory."""
 
-    else:
-        dirs = ['a', 'a/a', 'a/R', 'a/a/a', 'a/a/R',
-                'a/b', 'a/b/a', 'a/b/b',
-                'a/c', 'a/c/a', 'a/c/a/a', 'a/c/a/a/a', 'a/c/a/a/a/R',
-                'a/d', 'a/d/a', 'a/d/a/a', 'a/d/a/a/a', 'a/d/a/a/a/a',
-                'a/d/a/a/a/a/R']
-        run_dirs = [d for d in dirs if 'R' in d]
+    monkeypatch.setattr('cylc.flow.suite_files.os.path.isdir',
+                        lambda x: False if x.find('.service') > 0
+                        else True)
+    monkeypatch.setattr(
+        'cylc.flow.suite_files.get_cylc_run_abs_path', lambda x: x)
+    monkeypatch.setattr(
+        'cylc.flow.suite_files.os.scandir', lambda x: [])
 
-        def mock_scandir(path):
-            return [mock.Mock(path=d, is_dir=lambda: True,
-                              is_symlink=lambda: False) for d in dirs
-                    if (d.startswith(path) and len(d) == len(path) + 2)]
-        monkeypatch.setattr('cylc.flow.suite_files.os.scandir', mock_scandir)
-        monkeypatch.setattr('cylc.flow.suite_files.os.path.isdir',
-                            lambda x: x in dirs)
-        monkeypatch.setattr('cylc.flow.suite_files.is_valid_run_dir',
-                            lambda x: x in run_dirs)
+    try:
+        suite_files.check_nested_run_dirs(run_dir, 'placeholder_flow')
+    except Exception:
+        pytest.fail("check_nested_run_dirs raised exception unexpectedly.")
 
-        # No run dir nested below - ok:
-        for path in ('a/a/a', 'a/b'):
-            suite_files.check_nested_run_dirs(path)
-        # Run dir nested below - bad:
-        for path in ('a', 'a/a', 'a/c'):
-            with pytest.raises(WorkflowFilesError) as exc:
-                check_nested_run_dirs(path)
-            assert 'Nested run directories not allowed' in str(exc.value)
-        # Run dir nested below max scan depth - not ideal but passes:
-        suite_files.check_nested_run_dirs('a/d')
+
+@pytest.mark.parametrize(
+    'run_dir, srv_dir',
+    [
+        ('bright/falls/light', 'bright/falls/.service'),
+        ('bright/falls/light/dark', 'bright/falls/light/.service')
+    ]
+)
+def test_rundir_parent_that_contains_workflow_raises_error(
+        run_dir, srv_dir, monkeypatch):
+    """Test that a workflow that contains another worfkflow raises error."""
+
+    monkeypatch.setattr(
+        'cylc.flow.suite_files.os.path.isdir', lambda x: x == srv_dir)
+    monkeypatch.setattr(
+        'cylc.flow.suite_files.get_cylc_run_abs_path', lambda x: x)
+    monkeypatch.setattr(
+        'cylc.flow.suite_files.os.scandir', lambda x: [])
+
+    with pytest.raises(WorkflowFilesError) as exc:
+        suite_files.check_nested_run_dirs(run_dir, 'placeholder_flow')
+    assert 'Nested run directories not allowed' in str(exc.value)
+
+
+@pytest.mark.parametrize(
+    'run_dir',
+    [
+        ('a'),
+        ('d/a'),
+        ('z/d/a/a')
+    ]
+)
+def test_rundir_children_that_do_not_contain_workflows_no_error(
+        run_dir, monkeypatch):
+    """Test that a run directory that contains no other workflows does not
+    raise an error."""
+
+    monkeypatch.setattr('cylc.flow.suite_files.os.path.isdir',
+                        lambda x: False if x.find('.service')
+                        else True)
+    monkeypatch.setattr(
+        'cylc.flow.suite_files.get_cylc_run_abs_path',
+        lambda x: x)
+    monkeypatch.setattr('cylc.flow.suite_files.os.scandir',
+                        lambda x: [
+                            mock.Mock(path=run_dir[0:len(x) + 2],
+                                      is_symlink=lambda: False)])
+    try:
+        suite_files.check_nested_run_dirs(run_dir, 'placeholder_flow')
+    except Exception:
+        pytest.fail("check_nested_run_dirs raised exception unexpectedly.")
+
+
+@pytest.mark.parametrize(
+    'run_dir, srv_dir',
+    [
+        ('a', 'a/R/.service'),
+        ('d/a', 'd/a/a/R/.service'),
+        ('z/d/a/a', 'z/d/a/a/R/.service')
+    ]
+)
+def test_rundir_children_that_contain_workflows_raise_error(
+        run_dir, srv_dir, monkeypatch):
+    """Test that a workflow cannot be contained in a subdir of another
+    workflow."""
+    monkeypatch.setattr('cylc.flow.suite_files.os.path.isdir',
+                        lambda x: False if (
+                            x.find('.service') > 0 and x != srv_dir)
+                        else True)
+    monkeypatch.setattr(
+        'cylc.flow.suite_files.get_cylc_run_abs_path',
+        lambda x: x)
+    monkeypatch.setattr('cylc.flow.suite_files.os.scandir',
+                        lambda x: [
+                            mock.Mock(path=srv_dir[0:len(x) + 2],
+                                      is_symlink=lambda: False)])
+
+    with pytest.raises(WorkflowFilesError) as exc:
+        check_nested_run_dirs(run_dir, 'placeholder_flow')
+    assert 'Nested run directories not allowed' in str(exc.value)
 
 
 @pytest.mark.parametrize(
@@ -430,7 +271,7 @@ def test_init_clean_ok(
     mocked_remote_clean = mock.Mock()
     monkeypatch.setattr('cylc.flow.suite_files.remote_clean',
                         mocked_remote_clean)
-    monkeypatch.setattr('cylc.flow.suite_files.get_suite_run_dir',
+    monkeypatch.setattr('cylc.flow.suite_files.get_workflow_run_dir',
                         lambda x: tmp_path.joinpath('cylc-run', x))
 
     _get_platforms_from_db = suite_files.get_platforms_from_db
@@ -559,7 +400,7 @@ def test_clean(reg, props, monkeypatch, tmp_path):
 
     monkeypatch.setattr('cylc.flow.suite_files.detect_old_contact_file',
                         mocked_detect_old_contact_file)
-    monkeypatch.setattr('cylc.flow.suite_files.get_suite_run_dir',
+    monkeypatch.setattr('cylc.flow.suite_files.get_workflow_run_dir',
                         lambda x: tmp_path.joinpath('cylc-run', x))
 
     # --- The actual test ---
@@ -587,7 +428,7 @@ def test_clean_broken_symlink_run_dir(monkeypatch, tmp_path):
     run_dir.symlink_to(target)
     target.rmdir()
 
-    monkeypatch.setattr('cylc.flow.suite_files.get_suite_run_dir',
+    monkeypatch.setattr('cylc.flow.suite_files.get_workflow_run_dir',
                         lambda x: tmp_path.joinpath('cylc-run', x))
 
     suite_files.clean(reg)
@@ -751,3 +592,33 @@ def test_remove_empty_reg_parents(tmp_path):
     suite_files._remove_empty_reg_parents(reg, path)
     assert tmp_path.joinpath('foo').exists() is False
     assert tmp_path.exists() is True
+
+
+@pytest.mark.parametrize(
+    'run_dir, srv_dir',
+    [
+        ('a', 'a/R/.service'),
+        ('d/a', 'd/a/a/R/.service'),
+        ('z/d/a/a', 'z/d/a/a/R/.service')
+    ]
+)
+def test_symlinkrundir_children_that_contain_workflows_raise_error(
+        run_dir, srv_dir, monkeypatch):
+    """Test that a workflow cannot be contained in a subdir of another
+    workflow."""
+    monkeypatch.setattr('cylc.flow.suite_files.os.path.isdir',
+                        lambda x: False if (
+                            x.find('.service') > 0 and x != srv_dir)
+                        else True)
+    monkeypatch.setattr(
+        'cylc.flow.suite_files.get_cylc_run_abs_path',
+        lambda x: x)
+    monkeypatch.setattr('cylc.flow.suite_files.os.scandir',
+                        lambda x: [
+                            mock.Mock(path=srv_dir[0:len(x) + 2],
+                                      is_symlink=lambda: True)])
+
+    try:
+        check_nested_run_dirs(run_dir, 'placeholder_flow')
+    except SuiteServiceFileError:
+        pytest.fail("Unexpected SuiteServiceFileError, Check symlink logic.")

@@ -31,8 +31,7 @@ create_test_global_config "
 "
 #-------------------------------------------------------------------------------
 install_suite "${TEST_NAME_BASE}" 'submit-failed'
-cp "$TEST_SOURCE_DIR/lib/flow-runtime-restart.cylc" "$TEST_DIR/${SUITE_NAME}/"
-export TEST_DIR
+cp "$TEST_SOURCE_DIR/lib/flow-runtime-restart.cylc" "$RUN_DIR/${SUITE_NAME}/"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
@@ -45,11 +44,11 @@ TEST_NAME="${TEST_NAME_BASE}-restart"
 suite_run_ok "${TEST_NAME}" cylc restart --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 grep_ok "submit_failed_task|20130923T0000Z|1|1|submit-failed" \
-    "${TEST_DIR}/pre-restart-db"
-contains_ok "${TEST_DIR}/post-restart-db" <<'__DB_DUMP__'
+    "${SUITE_RUN_DIR}/pre-restart-db"
+contains_ok "${SUITE_RUN_DIR}/post-restart-db" <<'__DB_DUMP__'
 submit_failed_task|20130923T0000Z|1|1|submit-failed
 __DB_DUMP__
-"${TEST_SOURCE_DIR}/bin/ctb-select-task-states" "${SUITE_RUN_DIR}" \
+"${SUITE_RUN_DIR}/bin/ctb-select-task-states" "${SUITE_RUN_DIR}" \
     > "${TEST_DIR}/db"
 contains_ok "${TEST_DIR}/db" <<'__DB_DUMP__'
 submit_failed_task|20130923T0000Z|1|1|submit-failed

@@ -27,18 +27,18 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
 SSH_OPTS='-oBatchMode=yes -oConnectTimeout=5'
 # shellcheck disable=SC2029,SC2086
-ssh ${SSH_OPTS} "${CYLC_TEST_HOST}" mkdir -p "cylc-run/${SUITE_NAME}"
+#ssh ${SSH_OPTS} "${CYLC_TEST_HOST}" mkdir -p "cylctb-cylc-source/${SUITE_NAME}"
+SRC_DIR="$(ssh ${SSH_OPTS} "${CYLC_TEST_HOST}" mktemp -d)"
 # shellcheck disable=SC2086
 scp ${SSH_OPTS} -pqr "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/"* \
-    "${CYLC_TEST_HOST}:cylc-run/${SUITE_NAME}"
+    "${CYLC_TEST_HOST}:${SRC_DIR}"
 # shellcheck disable=SC2086
-run_ok "${TEST_NAME_BASE}-register" \
+run_ok "${TEST_NAME_BASE}-install" \
     ssh ${SSH_OPTS} "${CYLC_TEST_HOST}" \
-    CYLC_VERSION="$(cylc version)" cylc register "${SUITE_NAME}" \
-    "cylc-run/${SUITE_NAME}"
+    CYLC_VERSION="$(cylc version)" cylc install --flow-name="${SUITE_NAME}" \
+    --no-run-name --directory="${SRC_DIR}"
 
 suite_run_ok "${TEST_NAME_BASE}" \
     cylc run --debug --no-detach --reference-test "${SUITE_NAME}"
-
 purge
 exit

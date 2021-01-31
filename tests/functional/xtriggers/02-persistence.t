@@ -31,8 +31,9 @@ set_test_number 6
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 # Install the succeeding xtrigger function.
+cd "${SUITE_RUN_DIR}" || exit 1
 mkdir -p 'lib/python'
-cp "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/faker_succ.py" 'lib/python/faker.py'
+cp "${SUITE_RUN_DIR}/faker_succ.py" 'lib/python/faker.py'
 
 # Validate the test suite.
 run_ok "${TEST_NAME_BASE}-val" cylc val --debug "${SUITE_NAME}"
@@ -46,7 +47,7 @@ cylc cat-log "${SUITE_NAME}" 'foo.2010' >'foo.2010.out'
 grep_ok 'NAME is bob' 'foo.2010.out'
 
 # Replace the xtrigger function with one that will fail if called again.
-cp "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/faker_fail.py" 'lib/python/faker.py'
+cp "${SUITE_RUN_DIR}/faker_fail.py" 'lib/python/faker.py'
 
 # Validate again (with the new xtrigger function).
 run_ok "${TEST_NAME_BASE}-val2" cylc val --debug "${SUITE_NAME}"

@@ -38,7 +38,7 @@ BASE_GLOBAL_CONFIG="
         available = localhost, ${CYLC_TEST_HOST}"
 
 TEST_NAME="${TEST_NAME_BASE}"
-TEST_DIR="$HOME/cylc-run/" init_suite "${TEST_NAME}" - <<'__FLOW_CONFIG__'
+init_suite "${TEST_NAME}" - <<'__FLOW_CONFIG__'
 [task parameters]
     foo = 1..25
 [scheduling]

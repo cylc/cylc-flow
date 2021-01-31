@@ -20,7 +20,6 @@
 . "$(dirname "$0")/test_header"
 set_test_number 2
 
-mkdir etc/
 cat etc/global.cylc <<'__hi__'
 [platforms]
     [[desktop\d\d|laptop\d\d]]

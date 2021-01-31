@@ -33,12 +33,12 @@ init_suite "${TEST_NAME_BASE}-1" "${PWD}/flow.cylc"
 SUITE_NAME1="${SUITE_NAME}"
 # shellcheck disable=SC2153
 SUITE_NAME2="${SUITE_NAME1%1}2"
-cylc register "${SUITE_NAME2}" "${TEST_DIR}/${SUITE_NAME1}" 2>'/dev/null'
+cylc install --flow-name="${SUITE_NAME2}" --directory="${TEST_DIR}/${SUITE_NAME1}" --no-run-name 2>'/dev/null'
 
 run_ok "${TEST_NAME_BASE}" cylc diff "${SUITE_NAME1}" "${SUITE_NAME2}"
 cmp_ok "${TEST_NAME_BASE}.stdout" <<__OUT__
-Parsing ${SUITE_NAME1} (${TEST_DIR}/${SUITE_NAME1}/flow.cylc)
-Parsing ${SUITE_NAME2} (${TEST_DIR}/${SUITE_NAME1}/flow.cylc)
+Parsing ${SUITE_NAME1} (${RUN_DIR}/${SUITE_NAME1}/flow.cylc)
+Parsing ${SUITE_NAME2} (${RUN_DIR}/${SUITE_NAME2}/flow.cylc)
 Suite definitions ${SUITE_NAME1} and ${SUITE_NAME2} are identical
 __OUT__
 cmp_ok "${TEST_NAME_BASE}.stderr" <'/dev/null'

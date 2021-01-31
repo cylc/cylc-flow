@@ -29,7 +29,7 @@
             sleep 5
             ctb-select-task-states \
                 "${CYLC_SUITE_RUN_DIR}" "${CYLC_TASK_NAME}" \
-                > {{ TEST_DIR }}/$OUTPUT_SUFFIX-db
+                > "${CYLC_SUITE_RUN_DIR}/$OUTPUT_SUFFIX-db"
         """
     [[shutdown]]
         inherit = OUTPUT

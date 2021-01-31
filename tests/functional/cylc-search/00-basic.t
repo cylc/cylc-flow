@@ -22,6 +22,7 @@ set_test_number 2
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}"
+cd "${SUITE_RUN_DIR}" || exit 1
 run_ok "${TEST_NAME}" cylc search "${SUITE_NAME}" 'initial cycle point'
 cmp_ok "${TEST_NAME}.stdout" <<__OUT__
 

@@ -26,7 +26,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 # Register and validate the upstream suite.
 SUITE_NAME_UPSTREAM="${SUITE_NAME}-upstream"
-cylc reg "${SUITE_NAME_UPSTREAM}" "${TEST_DIR}/${SUITE_NAME}/upstream"
+cylc install --flow-name="${SUITE_NAME_UPSTREAM}" -C "${TEST_DIR}/${SUITE_NAME}/upstream" --no-run-name
 run_ok "${TEST_NAME_BASE}-val-up" cylc val --debug "${SUITE_NAME_UPSTREAM}"
 
 # Validate the downstream test suite.

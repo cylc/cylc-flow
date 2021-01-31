@@ -23,7 +23,6 @@ from optparse import Values
 import os
 from queue import Empty, Queue
 from shlex import quote
-from shutil import copytree, rmtree
 from subprocess import Popen, PIPE, DEVNULL
 import sys
 from threading import Barrier
@@ -63,7 +62,7 @@ from cylc.flow.parsec.OrderedDict import DictTree
 from cylc.flow.parsec.util import printcfg
 from cylc.flow.parsec.validate import DurationFloat
 from cylc.flow.pathutil import (
-    get_suite_run_dir,
+    get_workflow_run_dir,
     get_suite_run_log_dir,
     get_suite_run_config_log_dir,
     get_suite_run_share_dir,
@@ -81,7 +80,6 @@ from cylc.flow.subprocpool import SubProcPool
 from cylc.flow.suite_db_mgr import SuiteDatabaseManager
 from cylc.flow.suite_events import (
     SuiteEventContext, SuiteEventHandler)
-from cylc.flow.exceptions import SuiteServiceFileError
 from cylc.flow.suite_status import StopMode, AutoRestartMode
 from cylc.flow import suite_files
 from cylc.flow.taskdef import TaskDef
@@ -261,9 +259,8 @@ class Scheduler:
         )
 
         # directory information
-        self.suite_dir = suite_files.get_suite_source_dir(self.suite)
         self.flow_file = suite_files.get_flow_file(self.suite)
-        self.suite_run_dir = get_suite_run_dir(self.suite)
+        self.suite_run_dir = get_workflow_run_dir(self.suite)
         self.suite_work_dir = get_suite_run_work_dir(self.suite)
         self.suite_share_dir = get_suite_run_share_dir(self.suite)
         self.suite_log_dir = get_suite_run_log_dir(self.suite)
@@ -279,19 +276,20 @@ class Scheduler:
 
     async def install(self):
         """Get the filesystem in the right state to run the flow.
-
-        * Register.
+        * Validate flowfiles
         * Install authentication files.
         * Build the directory tree.
         * Copy Python files.
 
         """
-        # Register
-        try:
-            suite_files.get_suite_source_dir(self.suite)
-        except SuiteServiceFileError:
-            # Source path is assumed to be the run directory
-            suite_files.register(self.suite, get_suite_run_dir(self.suite))
+        # Install
+        source = suite_files.get_suite_source_dir()
+        if source is None:
+            # register workflow
+            rund = get_workflow_run_dir(self.suite)
+            suite_files.register(self.suite, source=rund)
+
+        make_suite_run_tree(self.suite)
 
         # Create ZMQ keys
         key_housekeeping(self.suite, platform=self.options.host or 'localhost')
@@ -300,22 +298,12 @@ class Scheduler:
         extract_resources(
             suite_files.get_suite_srv_dir(self.suite),
             ['etc/job.sh'])
-
-        make_suite_run_tree(self.suite)
-        # Copy local python modules from source to run directory
+        # Add python dirs to sys.path
         for sub_dir in ["python", os.path.join("lib", "python")]:
             # TODO - eventually drop the deprecated "python" sub-dir.
-            suite_py = os.path.join(self.suite_dir, sub_dir)
-            if (os.path.realpath(self.suite_dir) !=
-                    os.path.realpath(self.suite_run_dir) and
-                    os.path.isdir(suite_py)):
-                suite_run_py = os.path.join(self.suite_run_dir, sub_dir)
-                try:
-                    rmtree(suite_run_py)
-                except OSError:
-                    pass
-                copytree(suite_py, suite_run_py)
-            sys.path.append(os.path.join(self.suite_dir, sub_dir))
+            suite_py = os.path.join(self.suite_run_dir, sub_dir)
+            if os.path.isdir(suite_py):
+                sys.path.append(os.path.join(self.suite_run_dir, sub_dir))
 
     async def initialise(self):
         """Initialise the components and sub-systems required to run the flow.
@@ -376,7 +364,6 @@ class Scheduler:
             proc_pool=self.proc_pool,
             suite_run_dir=self.suite_run_dir,
             suite_share_dir=self.suite_share_dir,
-            suite_source_dir=self.suite_dir
         )
 
         self.task_events_mgr = TaskEventsManager(
@@ -418,20 +405,6 @@ class Scheduler:
             pri_dao.select_suite_params(self._load_suite_params)
             pri_dao.select_suite_template_vars(self._load_template_vars)
             pri_dao.execute_queued_items()
-
-        # Copy local python modules from source to run directory
-        for sub_dir in ["python", os.path.join("lib", "python")]:
-            # TODO - eventually drop the deprecated "python" sub-dir.
-            suite_py = os.path.join(self.suite_dir, sub_dir)
-            if (os.path.realpath(self.suite_dir) !=
-                    os.path.realpath(self.suite_run_dir) and
-                    os.path.isdir(suite_py)):
-                suite_run_py = os.path.join(self.suite_run_dir, sub_dir)
-                try:
-                    rmtree(suite_run_py)
-                except OSError:
-                    pass
-                copytree(suite_py, suite_run_py)
 
         self.profiler.log_memory("scheduler.py: before load_flow_file")
         self.load_flow_file()
