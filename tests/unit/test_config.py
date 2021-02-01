@@ -27,6 +27,8 @@ from cylc.flow.exceptions import SuiteConfigError
 from cylc.flow.suite_files import SuiteFiles
 from cylc.flow.wallclock import get_utc_mode, set_utc_mode
 
+Fixture = Any
+
 
 def get_test_inheritance_quotes():
     """Provide test data for test_family_inheritance_and_quotes."""
@@ -374,7 +376,7 @@ def test_process_icp(
         scheduling_cfg: Dict[str, Any], expected_icp: Optional[str],
         expected_opt_icp: Optional[str],
         expected_err: Optional[Tuple[Type[Exception], str]],
-        monkeypatch, cycling_mode):
+        monkeypatch: Fixture, cycling_mode: Fixture):
     """Test SuiteConfig.process_initial_cycle_point().
 
     "now" is assumed to be 2005-01-02T06:15Z
@@ -422,7 +424,7 @@ def test_process_icp(
      (None, '18990501T0000Z')]
 )
 def test_process_startcp(startcp: str, expected: str,
-                         monkeypatch, cycling_mode):
+                         monkeypatch: Fixture, cycling_mode: Fixture):
     """Test SuiteConfig.process_start_cycle_point().
 
     An icp of 1899-05-01T00Z is assumed, and "now" is assumed to be
@@ -589,7 +591,7 @@ def test_process_startcp(startcp: str, expected: str,
 def test_process_fcp(scheduling_cfg: dict, options_fcp: Optional[str],
                      expected_fcp: Optional[str],
                      expected_err: Optional[Tuple[Type[Exception], str]],
-                     cycling_mode):
+                     cycling_mode: Fixture):
     """Test SuiteConfig.process_final_cycle_point().
 
     Params:
