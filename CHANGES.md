@@ -59,8 +59,12 @@ The filenames `suite.rc` and `global.rc` are now deprecated in favour of
 compatibility, the `cylc run` command will automatically symlink an existing
 `suite.rc` file to `flow.cylc`.
 
-Remove `cylc register` command
+`cylc register` has been replaced by `cylc install`
 ([#4000](https://github.com/cylc/cylc-flow/pull/4000)).
+
+`cylc run` and `cylc restart` have been replaced by `cylc play`, simplifying
+how workflows are restarted
+([#4040](https://github.com/cylc/cylc-flow/pull/4040)).
 
 ### Enhancements
 
