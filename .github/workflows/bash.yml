@@ -1,7 +1,11 @@
 # Workflow for testing multiple bash versions with Docker
 name: bash
 
-on: [pull_request]
+on:
+  pull_request:
+  workflow_dispatch:
+  push:
+    branches: [master]
 
 jobs:
   bash-docker:
