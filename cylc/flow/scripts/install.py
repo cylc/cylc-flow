@@ -165,7 +165,11 @@ def main(parser, opts, flow_name=None, src=None):
         'cylc.pre_configure'
     ):
         try:
-            entry_point.resolve()(dir_=opts.source, opts=opts)
+            if opts.source:
+                entry_point.resolve()(dir_=opts.source, opts=opts)
+            else:
+                from pathlib import Path
+                entry_point.resolve()(dir_=Path().cwd(), opts=opts)
         except Exception as exc:
             # NOTE: except Exception (purposefully vague)
             # this is to separate plugin from core Cylc errors
