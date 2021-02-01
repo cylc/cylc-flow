@@ -921,18 +921,25 @@ def get_cylc_run_abs_path(path):
     return get_workflow_run_dir(path)
 
 
-def _open_install_log(rund):
+def _open_install_log(rund, reinstall=False):
     """Open Cylc log handlers for an install."""
     time_str = get_current_time_string(
         override_use_utc=True, use_basic_format=True,
         display_sub_seconds=False
     )
     rund = Path(rund).expanduser()
-    log_path = Path(
+    if not reinstall:
+        log_path = Path(
         rund,
         'log',
         'install',
         f"{time_str}-install.log")
+    else:
+        log_path = Path(
+        rund,
+        'log',
+        'install',
+        f"{time_str}-reinstall.log")
     log_parent_dir = log_path.parent
     log_parent_dir.mkdir(exist_ok=True, parents=True)
     handler = logging.FileHandler(log_path)
@@ -949,13 +956,19 @@ def _close_install_log():
             pass
 
 
-def get_rsync_rund_cmd(src, dst, restart=False):
+def get_rsync_rund_cmd(src, dst, reinstall=False, dry_run=False):
     """Create and return the rsync command used for cylc install/re-install.
 
     Args:
-        src (str): file path location of source directory
-        dst (str): file path location of destination directory
-        restart (bool): indicate restart (--delete option added)
+        src (str):
+            file path location of source directory
+        dst (str):
+            file path location of destination directory
+        reinstall (bool):
+            indicate reinstall (--delete option added)
+        dry-run (bool):
+            indicate dry-run, rsync will not take place but report output if a
+            real run were to be executed
 
     Return:
         list: command to use for rsync.
@@ -964,7 +977,9 @@ def get_rsync_rund_cmd(src, dst, restart=False):
 
     rsync_cmd = ["rsync"]
     rsync_cmd.append("-av")
-    if restart:
+    if dry_run:
+        rsync_cmd.append("--dry-run")
+    if reinstall:
         rsync_cmd.append('--delete')
     ignore_dirs = ['.git', '.svn', '.cylcignore', SuiteFiles.Install.DIRNAME]
     for exclude in ignore_dirs:
@@ -979,7 +994,7 @@ def get_rsync_rund_cmd(src, dst, restart=False):
 
 
 def install_workflow(flow_name=None, source=None, run_name=None,
-                     no_run_name=False, no_symlinks=False):
+                     no_run_name=False, no_symlinks=False, reinstall=False):
     """Install a workflow, or renew its installation.
 
     Install workflow into new run directory.
