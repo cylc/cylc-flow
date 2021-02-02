@@ -23,27 +23,6 @@ if ! command -v 'tree' >'/dev/null'; then
 fi
 set_test_number 6
 
-export RND_SUITE_NAME
-export RND_SUITE_SOURCE
-export RND_SUITE_RUNDIR
-
-function make_rnd_suite() {
-    # Create a randomly-named suite source directory.
-    # Define its run directory.
-    RND_SUITE_NAME=x$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c6)
-    RND_SUITE_SOURCE="$PWD/${RND_SUITE_NAME}"
-    mkdir -p "${RND_SUITE_SOURCE}"
-    touch "${RND_SUITE_SOURCE}/flow.cylc"
-    RND_SUITE_RUNDIR="${RUN_DIR}/${RND_SUITE_NAME}"
-}
-
-function purge_rnd_suite() {
-    # Remove the suite source created by make_rnd_suite().
-    # And remove its run-directory too.
-    rm -rf "${RND_SUITE_SOURCE}"
-    rm -rf "${RND_SUITE_RUNDIR}"
-}
-
 # Test cylc install copies files to run dir successfully.
 TEST_NAME="${TEST_NAME_BASE}-basic"
 make_rnd_suite

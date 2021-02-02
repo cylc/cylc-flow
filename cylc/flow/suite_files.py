@@ -42,7 +42,8 @@ from cylc.flow.pathutil import (
     remove_dir,
     get_next_rundir_number)
 from cylc.flow.platforms import (
-    get_platform, get_install_target_to_platforms_map)
+    get_platform,
+    get_install_target_to_platforms_map)
 from cylc.flow.hostuserutil import (
     get_user,
     is_remote_host
@@ -251,10 +252,6 @@ To start a new run, stop the old one first with one or more of these:
 * ssh -n "%(host)s" kill %(pid)s   # final brute force!
 """
 
-INSTALL_LOG = logging.getLogger('cylc-install')
-INSTALL_LOG.addHandler(logging.NullHandler())
-INSTALL_LOG.setLevel(logging.INFO)
-
 FORBIDDEN_SOURCE_DIR = ['log', 'share', 'work', SuiteFiles.Install.DIRNAME]
 
 
@@ -371,16 +368,19 @@ def get_flow_file(reg):
         return flow_file
 
 
-def get_suite_source_dir():
-    """Return the source directory path of the workflow in CWD.
+def get_workflow_source_dir(dir_):
+    """Return the source directory path of the workflow in directory provided.
+        Args:
+            dir_ (path):
+                directory to check for an installed flow
     """
-    cwd = Path.cwd()
+
     source_path = Path(
-        cwd,
+        dir_,
         SuiteFiles.Install.DIRNAME,
         SuiteFiles.Install.SOURCE)
     alt_source_path = Path(
-        cwd.parent,
+        dir_.parent,
         SuiteFiles.Install.DIRNAME,
         SuiteFiles.Install.SOURCE)
     try:
@@ -494,9 +494,8 @@ def register(flow_name=None, source=None):
 
     Raise:
         WorkflowFilesError:
-           - No flow.cylc file found in source location.
+           - No flow.cylc or suite.rc file found in source location.
            - Illegal name (can look like a relative path, but not absolute).
-           - Another suite already has this name (unless --redirect).
            - Nested workflow run directories.
     """
     if flow_name is None:
@@ -921,35 +920,41 @@ def get_cylc_run_abs_path(path):
     return get_workflow_run_dir(path)
 
 
-def _open_install_log(rund, reinstall=False):
-    """Open Cylc log handlers for an install."""
+def _get_logger(rund, log_name):
+    """Get log and create and open if necessary."""
+    logger = logging.getLogger(log_name)
+    if not logger.getEffectiveLevel == logging.INFO:
+        logger.setLevel(logging.INFO)
+    if not logger.hasHandlers():
+        _open_install_log(rund, logger)
+    return logger
+
+
+def _open_install_log(rund, logger):
+    """Open Cylc log handlers for install/reinstall."""
     time_str = get_current_time_string(
         override_use_utc=True, use_basic_format=True,
         display_sub_seconds=False
     )
     rund = Path(rund).expanduser()
-    if not reinstall:
-        log_path = Path(
+    log_type = logger.name[logger.name.startswith('cylc-') and len('cylc-'):]
+    log_path = Path(
         rund,
         'log',
         'install',
-        f"{time_str}-install.log")
-    else:
-        log_path = Path(
-        rund,
-        'log',
-        'install',
-        f"{time_str}-reinstall.log")
+        f"{time_str}-{log_type}.log")
     log_parent_dir = log_path.parent
     log_parent_dir.mkdir(exist_ok=True, parents=True)
     handler = logging.FileHandler(log_path)
     handler.setFormatter(CylcLogFormatter())
-    INSTALL_LOG.addHandler(handler)
+    logger.addHandler(handler)
 
 
-def _close_install_log():
-    """Close Cylc log handlers for a flow run."""
-    for handler in INSTALL_LOG.handlers:
+def _close_install_log(logger):
+    """Close Cylc log handlers for install/reinstall.
+        Args:
+            logger (constant)"""
+    for handler in logger.handlers:
         try:
             handler.close()
         except IOError:
@@ -981,9 +986,16 @@ def get_rsync_rund_cmd(src, dst, reinstall=False, dry_run=False):
         rsync_cmd.append("--dry-run")
     if reinstall:
         rsync_cmd.append('--delete')
-    ignore_dirs = ['.git', '.svn', '.cylcignore', SuiteFiles.Install.DIRNAME]
+    ignore_dirs = [
+        '.git',
+        '.svn',
+        '.cylcignore',
+        'log',
+        SuiteFiles.Install.DIRNAME,
+        SuiteFiles.Service.DIRNAME]
     for exclude in ignore_dirs:
-        if Path(src).joinpath(exclude).exists():
+        if (Path(src).joinpath(exclude).exists() or
+                Path(dst).joinpath(exclude).exists()):
             rsync_cmd.append(f"--exclude={exclude}")
     if Path(src).joinpath('.cylcignore').exists():
         rsync_cmd.append("--exclude-from=.cylcignore")
@@ -991,6 +1003,42 @@ def get_rsync_rund_cmd(src, dst, reinstall=False, dry_run=False):
     rsync_cmd.append(f"{dst}/")
 
     return rsync_cmd
+
+
+def reinstall_workflow(named_run, rundir, source, dry_run=False):
+    """ Reinstall workflow.
+
+    Args:
+        named_run (str):
+            name of the run e.g. my-flow/run1
+        rundir (path):
+            run directory
+        source (path):
+            source directory
+        dry_run (bool):
+            if True, will not exectute the file transfer but report what would
+            be changed.
+    """
+    validate_source_dir(source, named_run)
+    check_nested_run_dirs(rundir, named_run)
+    REINSTALL_LOG = _get_logger(rundir, 'cylc-reinstall')
+    REINSTALL_LOG.info(f"Reinstalling \"{named_run}\", from "
+                       f"\"{source}\" to \"{rundir}\"")
+    rsync_cmd = get_rsync_rund_cmd(
+        source, rundir, reinstall=True, dry_run=dry_run)
+    proc = Popen(rsync_cmd, stdout=PIPE, stderr=PIPE, universal_newlines=True)
+    stdout, stderr = proc.communicate()
+    REINSTALL_LOG.info(f"Copying files from {source} to {rundir}")
+    REINSTALL_LOG.info(f"{stdout}")
+    if stderr:
+        REINSTALL_LOG.warning(
+            f"An error occurred when copying files from {source} to {rundir}")
+        REINSTALL_LOG.warning(f" Error: {stderr}")
+    check_flow_file(rundir, REINSTALL_LOG)
+    REINSTALL_LOG.info(f'REINSTALLED {named_run} from {source} -> {rundir}')
+    print(f'REINSTALLED {named_run} from {source} -> {rundir}')
+    _close_install_log(REINSTALL_LOG)
+    return
 
 
 def install_workflow(flow_name=None, source=None, run_name=None,
@@ -1052,7 +1100,7 @@ def install_workflow(flow_name=None, source=None, run_name=None,
         if run_num:
             sub_dir += '/' + f'run{run_num}'
         symlinks_created = make_localhost_symlinks(rundir, sub_dir)
-    _open_install_log(rundir)
+    INSTALL_LOG = _get_logger(rundir, 'cylc-install')
     if not no_symlinks and bool(symlinks_created) is True:
         for src, dst in symlinks_created.items():
             INSTALL_LOG.info(f"Symlink created from {src} to {dst}")
@@ -1064,7 +1112,6 @@ def install_workflow(flow_name=None, source=None, run_name=None,
     if relink:
         link_runN(rundir)
     create_workflow_srv_dir(rundir)
-    check_flow_file(source, INSTALL_LOG)
     rsync_cmd = get_rsync_rund_cmd(source, rundir)
     proc = Popen(rsync_cmd, stdout=PIPE, stderr=PIPE, universal_newlines=True)
     stdout, stderr = proc.communicate()
@@ -1075,6 +1122,7 @@ def install_workflow(flow_name=None, source=None, run_name=None,
             f"An error occurred when copying files from {source} to {rundir}")
         INSTALL_LOG.warning(f" Error: {stderr}")
     cylc_install = Path(rundir.parent, SuiteFiles.Install.DIRNAME)
+    check_flow_file(rundir, INSTALL_LOG)
     if no_run_name:
         cylc_install = Path(rundir, SuiteFiles.Install.DIRNAME)
     source_link = cylc_install.joinpath(SuiteFiles.Install.SOURCE)
@@ -1083,14 +1131,15 @@ def install_workflow(flow_name=None, source=None, run_name=None,
         INSTALL_LOG.info(f"Creating symlink from {source_link}")
         source_link.symlink_to(source)
     elif source_link.exists() and (os.readlink(source_link) == str(source)):
-        INSTALL_LOG.info("Symlink from {source_link} to {source} in place.")
+        INSTALL_LOG.info(
+            f"Symlink from \"{source_link}\" to \"{source}\" in place.")
     else:
         raise WorkflowFilesError(
             "Source directory between runs are not consistent.")
     # check source link matches the source symlink from workflow dir.
     INSTALL_LOG.info(f'INSTALLED {flow_name} from {source} -> {rundir}')
     print(f'INSTALLED {flow_name} from {source} -> {rundir}')
-    _close_install_log()
+    _close_install_log(INSTALL_LOG)
     return source, rundir, flow_name
 
 
@@ -1143,7 +1192,7 @@ def detect_flow_exists(run_path_base, numbered):
 
     Args:
         run_path_base (Path):
-            Workflow run directory
+            Workflow run directory i.e ~/cylc-run/<flow_name>
         numbered (bool):
             If true, will detect if numbered runs exist
             If false, will detect if non-numbered runs exist, i.e. runs
@@ -1162,14 +1211,14 @@ def detect_flow_exists(run_path_base, numbered):
             return True
 
 
-def check_flow_file(path, log_type):
+def check_flow_file(path, log_type=None, symlink=True):
     """Raises error if no flow file in path sent.
 
-       Creates a symlink to flow.cylc file if suite.rc file exists.
-
        Args:
-          path: Path to check for either suite.rc or flow.cylc file
-          log_type: Which log to log error
+          path (path): Path to check for either suite.rc or flow.cylc file
+          log_type (logger object): Which log to log error
+          symlink (bool): When True, creates a symlink to flow.cylc file,
+                          if suite.rc file exists.
 
     """
     flow_file_path = Path(path, SuiteFiles.FLOW_FILE)
@@ -1178,9 +1227,12 @@ def check_flow_file(path, log_type):
            f' of "{SuiteFiles.FLOW_FILE}". Symlink created.')
     if flow_file_path.exists():
         return
-    if suite_rc_path.exists():
-        log_type.warning(f"{msg}")
+    if symlink and suite_rc_path.exists():
         flow_file_path.symlink_to(suite_rc_path)
+        if log_type:
+            log_type.warning(f"{msg}")
+    elif not symlink and suite_rc_path.exists():
+        return
     else:
         raise WorkflowFilesError(
             f'no {SuiteFiles.FLOW_FILE} or '
@@ -1229,6 +1281,7 @@ def validate_source_dir(source, flow_name):
         raise WorkflowFilesError(
             f'{flow_name} installation failed. Source directory should not be '
             f'in {cylc_run_dir}')
+    check_flow_file(source, symlink=False)
 
 
 def unlink_runN(run_n):
