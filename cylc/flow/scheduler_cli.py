@@ -44,35 +44,39 @@ from cylc.flow.terminal import cli_function
 
 PLAY_DOC = r"""cylc [control] play [OPTIONS] [ARGS]
 
-Start a workflow run, or resume from the previous state if the workflow was
-previously run, or resume a paused workflow.
+Start running a workflow, or restart a stopped workflow from its previous
+state/cycle point, or resume a paused workflow by releasing all tasks.
 
 The scheduler will run as a daemon unless you specify --no-detach.
 
-If the suite is not already installed (by "cylc install" or a previous run)
+If the workflow is not already installed (by "cylc install" or a previous run)
 it will be installed on the fly before start up.
 
 Examples:
-    # Run/resume the workflow with name REG.
+    # Start/restart the workflow with name REG.
     $ cylc play REG
 
-    # Install $PWD/flow.cylc as $(basename $PWD) and run it.
-    # Run/resume the workflow in $PWD.
+    # Install $PWD/flow.cylc as $(basename $PWD) and start it.
     $ cylc play
 
-A "cold start" (the default for a fresh run) starts from the initial cycle
-point (specified in flow.cylc or on the command line). Any dependence on tasks
-prior to the suite initial cycle point is ignored.
+A "cold start" (the default for a freshly-installed workflow) starts from the
+initial cycle point (specified in flow.cylc or on the command line). Any
+dependence on tasks prior to the initial cycle point is ignored.
 
-A "warm start" starts from a given cycle point (--startcp=CYCLE_POINT) that is
-later than the initial cycle point specified in flow.cylc. The
-initial cycle point is preserved, but all tasks and dependencies before the
-given warm start cycle point are ignored.
+A "warm start" starts (a freshly-installed workflow) from a given cycle point
+(--startcp=CYCLE_POINT) that is later than the initial cycle point specified in
+flow.cylc. The initial cycle point is preserved, but all tasks and dependencies
+before the given start cycle point are ignored.
 
-A "restart" resumes from the earliest cycle point that was incomplete when
-shutdown occurred, so --icp and --startcp cannot be used. Tasks recorded as
-submitted or running are polled at restart to determine what happened to them
-while the workflow was down."""
+A "restart" continues the workflow from the earliest cycle point that was
+incomplete when shutdown occurred. Tasks recorded as submitted or running are
+polled at restart to determine what happened to them while the workflow was
+shut down. The initial, final, start and stop cycle points are saved on
+shutdown. However, in a restart, you can ignore these saved values using the
+command line options (e.g., --icp=ignore) (but you cannot specify new initial
+or start cycle points). This will cause the values to default to those
+specified in flow.cylc."""
+
 
 FLOW_NAME_ARG_DOC = ("[REG]", "Workflow name")
 
@@ -105,17 +109,21 @@ def get_option_parser(add_std_opts=False):
 
     parser.add_option(
         "--final-cycle-point", "--fcp",
-        help="Set the final cycle point.",
+        help=(
+            "Set the final cycle point."
+            "This command line option overrides the workflow"
+            "config option '[scheduling]final cycle point'."
+        ),
         metavar="CYCLE_POINT", action="store", dest="fcp")
 
     parser.add_option(
         "--stop-cycle-point", "--stopcp",
         help=(
-            "Set stop point. "
+            "Set the stop cycle point. "
             "Shut down after all tasks have PASSED this cycle point. "
             "(Not to be confused with the final cycle point.)"
-            "Adding this command line option over-rides the workflow"
-            "config option [scheduling]stop after cycle point"
+            "This command line option overrides the workflow"
+            "config option '[scheduling]stop after cycle point'."
         ),
         metavar="CYCLE_POINT", action="store", dest="stopcp")
 
