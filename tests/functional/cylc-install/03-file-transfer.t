@@ -66,6 +66,7 @@ else
 fi
 
 tree -a -v -I '*.log|03-file-transfer*' --charset UTF8 --noreport "${RND_SUITE_RUNDIR}/" > 'basic-tree.out'
+
 cmp_ok 'basic-tree.out'  <<__OUT__
 ${RND_SUITE_RUNDIR}/
 ├── .service
@@ -103,6 +104,7 @@ __END__
 run_ok "${TEST_NAME}" cylc install "${RND_SUITE_NAME}" --no-run-name
 
 tree -a -v -I '*.log|03-file-transfer*' --charset UTF8 --noreport "${RND_SUITE_RUNDIR}/" > 'cylc-ignore-tree.out'
+
 cmp_ok 'cylc-ignore-tree.out'  <<__OUT__
 ${RND_SUITE_RUNDIR}/
 ├── .service
