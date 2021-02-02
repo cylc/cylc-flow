@@ -54,13 +54,18 @@ run_ok "${TEST_NAME}" cylc install "${RND_SUITE_NAME}" --no-run-name
 
 # If rose-cylc plugin is installed add install files to tree.
 export ROSE_FILES=''
-python -c "import cylc.rose" > /dev/null 2>&1 &&
-    export ROSE_FILES="
-                    |-- opt
-                    |   \`-- rose-suite-cylc-install.conf
-                    |-- rose-suite.conf"
+if python -c "import cylc.rose" > /dev/null 2>&1; then
+    export ROSE_FILES="""├── log
+│   └── install
+├── opt
+│   └── rose-suite-cylc-install.conf
+└── rose-suite.conf"""
+else
+    export ROSE_FILES="""└── log
+    └── install"""
+fi
 
-tree -a -v -I '*.log|03-file-transfer*' --charset UTF8 "${RND_SUITE_RUNDIR}/" > 'basic-tree.out'
+tree -a -v -I '*.log|03-file-transfer*' --charset UTF8 --noreport "${RND_SUITE_RUNDIR}/" > 'basic-tree.out'
 cmp_ok 'basic-tree.out'  <<__OUT__
 ${RND_SUITE_RUNDIR}/
 ├── .service
@@ -73,13 +78,7 @@ ${RND_SUITE_RUNDIR}/
 ├── file1
 ├── file2
 ├── flow.cylc
-├── log
-│   └── install
-├── opt
-│   └── rose-suite-cylc-install.conf
-└── rose-suite.conf
-
-8 directories, 7 files
+${ROSE_FILES}
 __OUT__
 
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
@@ -103,7 +102,7 @@ __END__
 
 run_ok "${TEST_NAME}" cylc install "${RND_SUITE_NAME}" --no-run-name
 
-tree -a -v -I '*.log|03-file-transfer*' --charset UTF8 "${RND_SUITE_RUNDIR}/" > 'cylc-ignore-tree.out'
+tree -a -v -I '*.log|03-file-transfer*' --charset UTF8 --noreport "${RND_SUITE_RUNDIR}/" > 'cylc-ignore-tree.out'
 cmp_ok 'cylc-ignore-tree.out'  <<__OUT__
 ${RND_SUITE_RUNDIR}/
 ├── .service
@@ -111,13 +110,7 @@ ${RND_SUITE_RUNDIR}/
 │   └── source -> ${RND_SUITE_SOURCE}
 ├── file1
 ├── flow.cylc
-├── log
-│   └── install
-├── opt
-│   └── rose-suite-cylc-install.conf
-└── rose-suite.conf
-
-6 directories, 4 files
+${ROSE_FILES}
 __OUT__
 
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
