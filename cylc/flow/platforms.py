@@ -465,8 +465,9 @@ def get_all_platforms_for_install_target(install_target):
     all_platforms = glbl_cfg(cached=True).get(['platforms'], sparse=False)
     for k, v in all_platforms.iteritems():
         if (v.get('install target', k) == install_target):
-            v['name'] = k
-            platforms.append(v)
+            v_copy = deepcopy(v)
+            v_copy['name'] = k
+            platforms.append(v_copy)
     return platforms
 
 
