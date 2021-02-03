@@ -503,28 +503,15 @@ def test_get_all_platforms_for_install_target(mock_glbl_cfg):
                         hosts = angus, fergus
                         install target = forest
                     [[forest]]
-                        hosts = oak, elm, fir
+                        hosts = fir, oak, elm
                 '''
     )
     actual = get_all_platforms_for_install_target('forest')
-    expected = [{'hosts': ['happy', 'sleepy', 'dopey'],
-                 'install target':'forest',
-                 'name':'snow white'},
-                {'hosts': ['thumper', 'faline', 'flower'],
-                 'install target':'forest',
-                 'name':'bambi'},
-                {'hosts': ['angus', 'fergus'],
-                 'install target':'forest',
-                 'name':'merida'},
-                {'hosts': ['oak', 'elm', 'fir'],
-                 'name':'forest'}
-                ]
-    assert actual == expected
-    platforms = [{'hosts': ['snow', 'ice', 'sparkles'],
-                  'install target':'arendelle',
-                  'name':'olaf'},
-                 {'hosts': ['anna', 'elsa', 'hans'],
-                  'install target':'arendelle',
-                  'name':'kristoff'}
-                 ]
-    assert get_random_platform_for_install_target('arendelle') in platforms
+    expected = ['snow white', 'bambi', 'merida', 'forest']
+    for platform in actual:
+        assert platform['name'] in expected
+    arendelle_platforms = ['kristoff', 'olaf']
+    assert get_random_platform_for_install_target(
+        'arendelle')['name'] in arendelle_platforms
+    assert get_random_platform_for_install_target(
+        'forest')['name'] not in arendelle_platforms
