@@ -28,6 +28,7 @@ import re
 from subprocess import Popen, PIPE, DEVNULL
 import tarfile
 from time import time
+from typing import Any, Dict, TYPE_CHECKING
 
 from cylc.flow import LOG, RSYNC_LOG
 from cylc.flow.exceptions import TaskRemoteMgmtError
@@ -48,6 +49,9 @@ from cylc.flow.suite_files import (
     get_contact_file)
 from cylc.flow.platforms import get_random_platform_for_install_target
 from cylc.flow.remote import construct_ssh_cmd
+
+if TYPE_CHECKING:
+    from zmq.auth.thread import ThreadAuthenticator
 
 # Remote installation literals
 REMOTE_INIT_DONE = 'REMOTE INIT DONE'
@@ -151,7 +155,9 @@ class TaskRemoteMgr:
             if value is not None:
                 del self.remote_command_map[key]
 
-    def remote_init(self, platform, curve_auth, client_pub_key_dir):
+    def remote_init(
+            self, platform: Dict[str, Any], curve_auth: 'ThreadAuthenticator',
+            client_pub_key_dir: str) -> None:
         """Initialise a remote host if necessary.
 
         Call "cylc remote-init" to install suite items to remote:
@@ -159,13 +165,11 @@ class TaskRemoteMgr:
             "python/": if source exists
 
         Args:
-            curve_auth (ThreadAuthenticator):
-                The ZMQ authenticator.
-            client_pub_key_dir (str):
-                Client public key directory, used by the ZMQ authenticator.
-            platform (dict):
-                A dictionary containing settings relating to platform used in
+            platform: A dict containing settings relating to platform used in
                 this remote installation.
+            curve_auth: The ZMQ authenticator.
+            client_pub_key_dir: Client public key directory, used by the
+                ZMQ authenticator.
 
         """
         install_target = platform['install target']
