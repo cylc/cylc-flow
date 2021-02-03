@@ -395,10 +395,14 @@ class Scheduler:
 
         """
         self.profiler.log_memory("scheduler.py: start configure")
+
         self.is_restart = self.suite_db_mgr.restart_check()
         # Note: since cylc play replaced cylc run/restart, we wait until this
         # point before creating the attr self.is_restart as we couldn't tell if
         # we're restarting until now.
+
+        self.process_cycle_point_opts()
+
         if self.is_restart:
             pri_dao = self.suite_db_mgr.get_pri_dao()
             try:
@@ -1770,6 +1774,29 @@ class Scheduler:
         """Return a named [scheduler][[events]] configuration."""
         return self.suite_event_handler.get_events_conf(
             self.config, key, default)
+
+    def process_cycle_point_opts(self) -> None:
+        """Check the values of --icp, --fcp, --startcp, --stopcp.
+
+        Reset the values to None if necessary:
+        * The value 'ignore' is not used in a first start.
+        * The opts --icp and --startcp cannot be used in a restart.
+        """
+        if self.is_restart:
+            for opt in ('icp', 'startcp'):
+                val = getattr(self.options, opt, None)
+                if val not in (None, 'ignore'):
+                    LOG.warning(
+                        f"Ignoring option: --{opt}={val}. The only valid "
+                        "value for a restart is 'ignore'.")
+                    setattr(self.options, opt, None)
+        else:
+            for opt in ('icp', 'fcp', 'startcp', 'stopcp'):
+                if getattr(self.options, opt, None) == 'ignore':
+                    LOG.warning(
+                        f"Ignoring option: --{opt}=ignore. The value cannot "
+                        "be 'ignore' unless restarting the workflow.")
+                    setattr(self.options, opt, None)
 
     def process_cylc_stop_point(self):
         """
