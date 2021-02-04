@@ -55,7 +55,6 @@ if TYPE_CHECKING:
 
 # Remote installation literals
 REMOTE_INIT_DONE = 'REMOTE INIT DONE'
-REMOTE_INIT_NOT_REQUIRED = 'REMOTE INIT NOT REQUIRED'
 REMOTE_INIT_FAILED = 'REMOTE INIT FAILED'
 REMOTE_INIT_IN_PROGRESS = 'REMOTE INIT IN PROGRESS'
 REMOTE_FILE_INSTALL_DONE = 'REMOTE FILE INSTALL DONE'
@@ -98,8 +97,6 @@ class TaskRemoteMgr:
               to 'localhost', _and_ host_check is set to True then
               'localhost'
             - Otherwise, return the evaluated host name on success.
-
-
 
         Raise TaskRemoteMgmtError on error.
 
@@ -174,7 +171,7 @@ class TaskRemoteMgr:
         """
         install_target = platform['install target']
         if install_target == 'localhost':
-            self.remote_init_map[install_target] = REMOTE_INIT_NOT_REQUIRED
+            self.remote_init_map[install_target] = REMOTE_FILE_INSTALL_DONE
             return
         # Set status of install target to in progress while waiting for remote
         # initialisation to finish

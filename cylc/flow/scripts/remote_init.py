@@ -30,9 +30,7 @@ configured in the global.flow.
 Return:
     0:
         On success or if initialisation not required:
-        - Print task_remote_cmd.REMOTE_INIT_NOT_REQUIRED if initialisation
-          not required (e.g. remote has shared file system with suite host).
-        - Print task_remote_cmd.REMOTE_INIT_DONE on success.
+        - Print task_remote_cmd.REMOTE_INIT_DONE
     1:
         On failure.
 
