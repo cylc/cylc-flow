@@ -169,9 +169,13 @@ class TaskRemoteMgr:
 
         """
         install_target = platform['install target']
+        if install_target == 'localhost':
+            self.remote_init_map[install_target] = REMOTE_INIT_NOT_REQUIRED
+            return
         # Set status of install target to in progress while waiting for remote
         # initialisation to finish
         self.remote_init_map[install_target] = REMOTE_INIT_IN_PROGRESS
+
         # Determine what items to install
         comm_meth = platform['communication method']
         items = self._remote_init_items(comm_meth)
