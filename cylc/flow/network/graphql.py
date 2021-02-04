@@ -21,6 +21,7 @@ GraphQL Middleware defined here also.
 
 from functools import partial
 import logging
+from typing import Tuple
 
 from inspect import isclass, iscoroutinefunction
 
@@ -44,7 +45,7 @@ logger = logging.getLogger(__name__)
 
 STRIP_ARG = 'strip_null'
 NULL_VALUE = None
-EMPTY_VALUES = ([], {})
+EMPTY_VALUES: Tuple[list, dict] = ([], {})
 STRIP_OPS = {'query', 'subscription'}
 
 

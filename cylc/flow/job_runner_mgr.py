@@ -207,7 +207,7 @@ class JobRunnerManager():
     OUT_PREFIX_MESSAGE = "[TASK JOB MESSAGE]"
     OUT_PREFIX_SUMMARY = "[TASK JOB SUMMARY]"
     OUT_PREFIX_CMD_ERR = "[TASK JOB ERROR]"
-    _INSTANCES = {}
+    _INSTANCES: dict = {}
 
     @classmethod
     def configure_suite_run_dir(cls, suite_run_dir):

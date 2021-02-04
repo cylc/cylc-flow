@@ -1455,10 +1455,11 @@ class Broadcast(Mutation):
 
     class Arguments:
         workflows = List(WorkflowID, required=True)
+
         mode = BroadcastMode(
             # use the enum name as the default value
             # https://github.com/graphql-python/graphql-core-legacy/issues/166
-            default_value=BroadcastMode.Set.name,
+            default_value=BroadcastMode.Set.name,  # type: ignore
             description='What type of broadcast is this?',
             required=True
         )

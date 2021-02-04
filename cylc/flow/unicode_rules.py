@@ -152,7 +152,7 @@ def disallow_char_if_not_at_end_of_first_word(char):
 
 class UnicodeRuleChecker():
 
-    RULES = []
+    RULES: list = []
 
     @classmethod
     def __init_subclass__(cls):

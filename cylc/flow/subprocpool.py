@@ -31,7 +31,7 @@ from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.cylc_subproc import procopen
 from cylc.flow.wallclock import get_current_time_string
 
-_XTRIG_FUNCS = {}
+_XTRIG_FUNCS: dict = {}
 
 
 def get_func(func_name, src_dir):

@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# (hack to allow importing __doc__ from another file)
+# type: ignore
 from cylc.flow.scheduler_cli import (  # noqa: F401
     main as scheduler_main,
     RESTART_DOC as __doc__

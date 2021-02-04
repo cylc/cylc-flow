@@ -75,8 +75,8 @@ class WorkflowSubscriber(ZMQSocketBase):
         if not (host and port):
             host, _, port = get_location(suite)
         if topics is None:
-            self.topics = set(b'')
-        self.topics = topics
+            topics = [b'']
+        self.topics: Iterable[bytes] = topics
         # Connect the ZMQ socket on instantiation
         self.start(host, port, srv_public_key_loc)
 

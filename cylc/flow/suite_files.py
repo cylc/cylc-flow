@@ -678,10 +678,10 @@ def remote_clean(reg, platform_names, timeout):
             if ret_code:
                 # Try again using the next platform for this install target:
                 this_platform = platforms.pop(0)
-                exc = TaskRemoteMgmtError(
+                excn = TaskRemoteMgmtError(
                     TaskRemoteMgmtError.MSG_TIDY, this_platform['name'],
                     " ".join(proc.args), ret_code, out, err)
-                LOG.debug(exc)
+                LOG.debug(excn)
                 if platforms:
                     pool.append(
                         (_remote_clean_cmd(reg, platforms[0], timeout),
