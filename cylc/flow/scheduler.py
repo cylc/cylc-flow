@@ -258,13 +258,6 @@ class Scheduler:
             self.options.templatevars_file
         )
 
-        # directory information
-        self.flow_file = suite_files.get_flow_file(self.suite)
-        self.suite_run_dir = get_workflow_run_dir(self.suite)
-        self.suite_work_dir = get_suite_run_work_dir(self.suite)
-        self.suite_share_dir = get_suite_run_share_dir(self.suite)
-        self.suite_log_dir = get_suite_run_log_dir(self.suite)
-
         # mutable defaults
         self._profile_amounts = {}
         self._profile_update_times = {}
@@ -290,6 +283,13 @@ class Scheduler:
             suite_files.register(self.suite, source=rund)
 
         make_suite_run_tree(self.suite)
+
+        # directory information
+        self.flow_file = suite_files.get_flow_file(self.suite)
+        self.suite_run_dir = get_workflow_run_dir(self.suite)
+        self.suite_work_dir = get_suite_run_work_dir(self.suite)
+        self.suite_share_dir = get_suite_run_share_dir(self.suite)
+        self.suite_log_dir = get_suite_run_log_dir(self.suite)
 
         # Create ZMQ keys
         key_housekeeping(self.suite, platform=self.options.host or 'localhost')
