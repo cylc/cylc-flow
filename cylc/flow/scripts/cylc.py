@@ -92,30 +92,12 @@ Task Identification:
 USAGE = format_shell_examples(USAGE)
 USAGE = cparse(USAGE)
 
-# bash sub-commands
-# {name: (description, usage)}
-BASH_COMMANDS = {
-    'graph-diff': (
-        'Compare the graphs of two workflows in text format.',
-        'cylc graph-diff [OPTIONS] SUITE1 SUITE2 -- '
-        '[GRAPH_OPTIONS_ARGS]'
-    )
-}
-
 # all sub-commands
 # {name: entry_point}
 COMMANDS: dict = {
-    # python sub-commands
-    **{
-        entry_point.name: entry_point
-        for entry_point
-        in pkg_resources.iter_entry_points('cylc.command')
-    },
-    # bash sub-commands
-    **{
-        cmd: None
-        for cmd in BASH_COMMANDS
-    }
+    entry_point.name: entry_point
+    for entry_point
+    in pkg_resources.iter_entry_points('cylc.command')
 }
 
 
@@ -143,51 +125,40 @@ ALIASES = {
 
 # aliases for sub-commands which no longer exist
 # {alias_name: message_to_user}
+# fmt: off
 DEAD_ENDS = {
-    'reset': 'cylc reset has been replaced by cylc set-outputs',
-    'documentation': 'Cylc documentation is now at http://cylc.org',
-    'gscan': 'cylc gscan has been removed, use the web UI',
-    'gui': 'cylc gui has been removed, use the web UI',
-    'insert': 'inserting tasks is now done automatically',
-    'check-software': (
-        'use standard tools to inspect the environment '
-        'e.g. https://pypi.org/project/pipdeptree/'
-    ),
-    'jobscript': 'cylc jobscript has been removed',
-    'submit': 'cylc submit has been removed',
-    'register': (
-        'cylc register has been removed; use cylc install or cylc play'),
-    'get-directory': 'cylc get-directory has been removed.',
-    'run': 'cylc run & cylc restart have been replaced by cylc play',
-    'restart': 'cylc run & cylc restart have been replaced by cylc play',
-    'start': 'cylc start & cylc restart have been replaced by cylc play'
+    'check-software':
+        'use standard tools to inspect the environment'
+        ' e.g. https://pypi.org/project/pipdeptree/',
+    'documentation':
+        'Cylc documentation is now at http://cylc.org',
+    'get-directory':
+        'cylc get-directory has been removed.',
+    'graph-diff':
+        'cylc graph-diff has been removed,'
+        ' use cylc graph <flow1> --diff <flow2>',
+    'gscan':
+        'cylc gscan has been removed, use the web UI',
+    'gui':
+        'cylc gui has been removed, use the web UI',
+    'insert':
+        'inserting tasks is now done automatically',
+    'jobscript':
+        'cylc jobscript has been removed',
+    'register':
+        'cylc register has been removed; use cylc install or cylc play',
+    'reset':
+        'cylc reset has been replaced by cylc set-outputs',
+    'restart':
+        'cylc run & cylc restart have been replaced by cylc play',
+    'run':
+        'cylc run & cylc restart have been replaced by cylc play',
+    'submit':
+        'cylc submit has been removed',
+    'start':
+        'cylc start & cylc restart have been replaced by cylc play'
 }
-
-
-def execute_bash(cmd, *args):
-    """Execute Bash sub-command.
-
-    Note:
-        Replaces the current process with that of the sub-command.
-
-    """
-    cmd = f'cylc-{cmd}'
-    try:
-        os.execvp(cmd, [cmd] + list(args))  # nosec
-    except OSError as exc:
-        if exc.filename is None:
-            exc.filename = cmd
-        raise click.ClickException(exc)
-
-
-def execute_python(cmd, *args):
-    """Execute a Python sub-command.
-
-    Note:
-        Imports the function and calls it in the current Python session.
-
-    """
-    COMMANDS[cmd].resolve()(*args)
+# fmt: on
 
 
 def execute_cmd(cmd, *args):
@@ -200,10 +171,7 @@ def execute_cmd(cmd, *args):
             List of command line arguments to pass to that command.
 
     """
-    if cmd in BASH_COMMANDS:
-        execute_bash(cmd, *args)
-    else:
-        execute_python(cmd, *args)
+    COMMANDS[cmd].resolve()(*args)
     sys.exit()
 
 
@@ -307,10 +275,6 @@ def iter_commands():
                 # do not list internal commands
                 continue
             usage, desc = parse_docstring(module.__doc__)
-            yield (cmd, desc, usage)
-        elif cmd in BASH_COMMANDS:
-            # bash command
-            desc, usage = BASH_COMMANDS[cmd]
             yield (cmd, desc, usage)
         else:
             raise ValueError(f'Unrecognised command "{cmd}"')
@@ -510,13 +474,7 @@ def main(cmd_args, version, help_):
                 # check if this is a command abbreviation or exit
                 command = match_command(command)
 
-            if command == "graph-diff":
-                if len(cmd_args) > 2:
-                    for arg in cmd_args[2:]:
-                        if arg.startswith("-"):
-                            cmd_args.insert(cmd_args.index(arg), "--")
-                            break
-            elif command == "jobs-submit":
+            if command == "jobs-submit":
                 if len(cmd_args) > 1:
                     for arg in cmd_args:
                         if not arg.startswith("-"):

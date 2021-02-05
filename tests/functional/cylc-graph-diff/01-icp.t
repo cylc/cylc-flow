@@ -46,7 +46,7 @@ __FLOW_CONFIG__
 SUITE_NAME2="${SUITE_NAME}"
 
 run_fail "${TEST_NAME_BASE}" \
-    cylc graph-diff "${SUITE_NAME1}" "${SUITE_NAME2}" -- --icp='20200101T0000Z'
+    cylc graph "${SUITE_NAME1}" --diff "${SUITE_NAME2}" --icp='20200101T0000Z'
 contains_ok "${TEST_NAME_BASE}.stdout" <<__OUT__
 -edge "foo.20200101T0000Z" "bar.20200101T0000Z"
 +edge "food.20200101T0000Z" "barley.20200101T0000Z"
