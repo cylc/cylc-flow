@@ -73,14 +73,7 @@ purge
 # -----------------------------------------------------------------------------
 
 # Test file install completes before dependent tasks are executed
-create_test_global_config "" "
-[platforms]
-    [[cinderella]]
-        hosts = ${CYLC_TEST_HOST}
-        install target = ${CYLC_TEST_INSTALL_TARGET}
-    "
-
-init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
+init_suite "${TEST_NAME_BASE}" <<__FLOW_CONFIG__
 [scheduler]
     install = dir1/, dir2/
     [[events]]
@@ -98,20 +91,20 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
         script = """
     for DIR in "dir1" "dir2"
     do
-        mkdir -p "${CYLC_SUITE_RUN_DIR}/${DIR}"
-        xfs_mkfile 1024m "${CYLC_SUITE_RUN_DIR}/${DIR}/moo"
+        mkdir -p "\${CYLC_SUITE_RUN_DIR}/\${DIR}"
+        xfs_mkfile 1024m "\${CYLC_SUITE_RUN_DIR}/\${DIR}/moo"
     done
     """
 
     [[olaf]]
         # task dependent on file install already being complete
-        script = cat ${CYLC_SUITE_RUN_DIR}/dir1/moo
-        platform = cinderella
+        script = cat \${CYLC_SUITE_RUN_DIR}/dir1/moo
+        platform = $CYLC_TEST_PLATFORM
 
     [[sven]]
         # task dependent on file install already being complete
-        script = rm -r ${CYLC_SUITE_RUN_DIR}/dir1 ${CYLC_SUITE_RUN_DIR}/dir2
-        platform = cinderella
+        script = rm -r \${CYLC_SUITE_RUN_DIR}/dir1 \${CYLC_SUITE_RUN_DIR}/dir2
+        platform = $CYLC_TEST_PLATFORM
 
 __FLOW_CONFIG__
 

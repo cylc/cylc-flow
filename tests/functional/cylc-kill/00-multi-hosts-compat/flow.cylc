@@ -1,23 +1,30 @@
 #!Jinja2
+
 [scheduler]
     UTC mode = True
     [[events]]
         expected task failures = local-1.1, local-2.1, local-3.1, remote-1.1, remote-2.1
+
 [scheduling]
     [[graph]]
-        R1="""
-KILLABLE:start-all => killer
-"""
+        R1 = """
+            KILLABLE:start-all => killer
+        """
+
 [runtime]
     [[KILLABLE]]
-        script=sleep 60
+        # sleep needs to be long enough to cover
+        # * job submission
+        # * remote init
+        # * remote file installation
+        script = sleep 360
     [[local-1, local-2, local-3]]
         inherit = KILLABLE
     [[remote-1, remote-2]]
         inherit = KILLABLE
         platform = {{CYLC_TEST_PLATFORM}}
     [[killer]]
-        script="""
-cylc kill "${CYLC_SUITE_NAME}" KILLABLE 1
-cylc stop "${CYLC_SUITE_NAME}"
-"""
+        script = """
+            cylc kill "${CYLC_SUITE_NAME}" KILLABLE 1
+            cylc stop "${CYLC_SUITE_NAME}"
+        """

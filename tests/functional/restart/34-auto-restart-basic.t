@@ -77,7 +77,7 @@ log_scan "${TEST_NAME}-restart" "${FILE}" 20 1 \
     "Suite server: url=tcp://$(get_fqdn "${CYLC_TEST_HOST}")"
 run_ok "${TEST_NAME}-restart-success" cylc suite-state "${SUITE_NAME}" \
     --task="$(printf 'task_foo%02d' $(( LATEST_TASK + 3 )))" \
-    --status='succeeded' --point=1 --interval=1 --max-polls=20
+    --status='succeeded' --point=1 --interval=1 --max-polls=60
 
 # check the command the suite has been restarted with
 run_ok "${TEST_NAME}-contact" cylc get-contact "${SUITE_NAME}"

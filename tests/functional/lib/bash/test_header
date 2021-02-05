@@ -730,6 +730,15 @@ create_test_global_config() {
     mkdir 'etc'
     # Scheduler host self-identification method.
     echo "$PRE" >'etc/global.cylc'
+    cat >>'etc/global.cylc' <<__HERE__
+    # set a default timeout for all flow runs to avoid hanging tests
+    [scheduler]
+        [[events]]
+            inactivity = PT5M
+            timeout = PT5M
+            abort on inactivity = true
+            abort on timeout = true
+__HERE__
     USER_TESTS_CONF_FILE="$(_get_test_config_file)"
     if [[ -n "${USER_TESTS_CONF_FILE}" ]]; then
         cat "${USER_TESTS_CONF_FILE}" >>'etc/global.cylc'
@@ -743,7 +752,7 @@ _parse_platform_spec () {
     local requirement="$1"
 
     local locality='local'
-    local job_runner='background'
+    local job_runner='*'
     local file_system='*'
     local comms='*'
     for req in ${requirement}; do
@@ -909,7 +918,6 @@ delete_db() {
 }
 
 
-
 # tags
 
 PATH="${CYLC_REPO_DIR}/bin:${PATH}"
@@ -957,6 +965,8 @@ _get_test_host
 # extract a test install target from the test platform
 # provides: CYLC_TEST_INSTALL_TARGET
 _get_test_install_target
+
+echo "# $TEST_NAME_BASE" >&2
 
 set +x
 set +e

@@ -23,7 +23,7 @@ if ! command -v 'tree' >'/dev/null'; then
 fi
 set_test_number 8
 
-# Generate randome name for symlink firs to avoid any clashed with other tests
+# Generate random name for symlink dirs to avoid any clashes with other tests
 SYM_NAME="$(mktemp -u)"
 SYM_NAME="${SYM_NAME##*tmp.}"
 

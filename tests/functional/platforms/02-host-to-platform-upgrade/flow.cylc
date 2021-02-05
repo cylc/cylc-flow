@@ -6,17 +6,16 @@
 [scheduling]
     [[graph]]
         R1 = """
-            no_settings
-            upgradeable_cylc7_settings
+            no_settings & upgradeable_cylc7_settings => fin
         """
 
 [runtime]
     [[root]]
         script = true
 
-    [[no_settings]]
+    [[no_settings, fin]]
 
     [[upgradeable_cylc7_settings]]
-        script = echo "The hostname is $(hostname -f)"
+        script = test {{CYLC_TEST_HOST_FQDN}} == "$(hostname -f)"
         [[[remote]]]
             host = {{CYLC_TEST_HOST}}

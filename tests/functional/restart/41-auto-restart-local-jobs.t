@@ -42,7 +42,8 @@ init_suite "${TEST_NAME_BASE}" <<< '
         R1 = foo => bar
 [runtime]
     [[foo]]
-        script = sleep 15
+        # we will trigger bar manually later
+        script = sleep 15; false
     [[bar]]
         script = sleep 60
 '

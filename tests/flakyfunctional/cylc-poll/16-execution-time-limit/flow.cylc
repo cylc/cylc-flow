@@ -1,3 +1,5 @@
+#!Jinja2
+
 [scheduler]
     [[events]]
         abort on stalled = True
@@ -10,6 +12,7 @@
         """
 [runtime]
     [[foo]]
+        platform = {{ environ['CYLC_TEST_PLATFORM'] }}
         script = """
             wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
             trap '' EXIT

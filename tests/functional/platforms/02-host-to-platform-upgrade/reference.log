@@ -1,0 +1,5 @@
+Initial point: 1
+Final point: 1
+[no_settings.1] -triggered off []
+[upgradeable_cylc7_settings.1] -triggered off []
+[fin.1] -triggered off ['no_settings.1', 'upgradeable_cylc7_settings.1']

@@ -27,7 +27,7 @@ if ! $SSH_CMD command -v 'tree' > '/dev/null'; then
 fi
 set_test_number 10
 
-# Generate randome name for symlink firs to avoid any clashed with other tests
+# Generate random name for symlink dirs to avoid any clashes with other tests
 SYM_NAME="$(mktemp -u)"
 SYM_NAME="${SYM_NAME##*tmp.}"
 
@@ -53,8 +53,7 @@ FUNCTIONAL_DIR="${TEST_SOURCE_DIR_BASE%/*}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "$SUITE_NAME"
 
-suite_run_ok "${TEST_NAME_BASE}-run" cylc play "$SUITE_NAME"
-poll_suite_stopped
+suite_run_ok "${TEST_NAME_BASE}-run" cylc play "$SUITE_NAME" --no-detach
 
 # Create a fake sibling workflow dir:
 $SSH_CMD mkdir "${TEST_DIR}/${SYM_NAME}/cycle/cylc-run/${CYLC_TEST_REG_BASE}/leave-me-alone"
@@ -66,6 +65,7 @@ $SSH_CMD readlink "\$HOME/cylc-run/${SUITE_NAME}" > "${TEST_NAME}.stdout"
 cmp_ok "${TEST_NAME}.stdout" <<< "${TEST_DIR}/${SYM_NAME}/run/cylc-run/${SUITE_NAME}"
 
 TEST_NAME="test-dir-tree-pre-clean.remote"
+# shellcheck disable=SC2086
 run_ok "${TEST_NAME}" $SSH_CMD tree -L 8 --noreport --charset=ascii \
     "${TEST_DIR}/${SYM_NAME}/"'*'"/cylc-run/${CYLC_TEST_REG_BASE}"
 # Note: backticks need to be escaped in the heredoc
@@ -122,6 +122,7 @@ else
 fi
 
 TEST_NAME="test-dir-tree-post-clean.remote"
+# shellcheck disable=SC2086
 run_ok "${TEST_NAME}" $SSH_CMD tree --noreport --charset=ascii \
     "${TEST_DIR}/${SYM_NAME}/"'*'"/cylc-run/${CYLC_TEST_REG_BASE}"
 # Note: backticks need to be escaped in the heredoc

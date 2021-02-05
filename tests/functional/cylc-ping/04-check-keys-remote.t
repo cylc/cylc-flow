@@ -44,19 +44,26 @@ poll_grep_suite_log 'Holding all waiting or queued tasks now'
 SSH='ssh -n -oBatchMode=yes -oConnectTimeout=5'
 
 ${SSH} "${CYLC_TEST_HOST}" \
-find "${RSRVD}" -type f -name "*key*"|awk -F/ '{print $NF}'|sort >'find.out'
-
-sort >'keys'<<__OUT__
-client_${CYLC_TEST_INSTALL_TARGET}.key
+LANG=C find "${RSRVD}" -type f -name "*key*"|awk -F/ '{print $NF}'|sort >'find.out'
+if [[ "$CYLC_TEST_PLATFORM" == *shared* ]]; then
+    cmp_ok 'find.out' <<__OUT__
 client.key_secret
+client_${CYLC_TEST_INSTALL_TARGET}.key
+server.key
+server.key_secret
+__OUT__
+else
+    cmp_ok 'find.out' <<__OUT__
+client.key_secret
+client_${CYLC_TEST_INSTALL_TARGET}.key
 server.key
 __OUT__
-cmp_ok 'find.out' 'keys'
+fi
 cylc stop --max-polls=60 --interval=1 "${SUITE_NAME}"
 
 grep_ok "Removing authentication keys and contact file from remote: \"${CYLC_TEST_INSTALL_TARGET}\"" "${SUITE_RUN_DIR}/log/suite/log"
 ${SSH} "${CYLC_TEST_HOST}" \
-find "${RRUND}" -type f -name "*key*"|awk -F/ '{print $NF}'|sort >'find.out'
+LANG=C find "${RRUND}" -type f -name "*key*"|awk -F/ '{print $NF}'|sort >'find.out'
 cmp_ok 'find.out' <<'__OUT__'
 __OUT__
 purge

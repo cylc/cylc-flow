@@ -16,4 +16,4 @@
     [[t1, t2]]
         script = sleep $((RANDOM % 2 + 6))
         [[[job]]]
-            execution time limit = PT15S
+            execution time limit = PT25S
