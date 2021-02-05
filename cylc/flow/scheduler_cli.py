@@ -62,20 +62,15 @@ Examples:
 A "cold start" (the default for a freshly-installed workflow) starts from the
 initial cycle point (specified in flow.cylc or on the command line). Any
 dependence on tasks prior to the initial cycle point is ignored.
-
-A "warm start" starts (a freshly-installed workflow) from a given cycle point
-(--startcp=CYCLE_POINT) that is later than the initial cycle point specified in
-flow.cylc. The initial cycle point is preserved, but all tasks and dependencies
-before the given start cycle point are ignored.
+It is also possible to start from a point that is later than the initial cycle
+point, using the option --startcp=CYCLE_POINT. The initial cycle point is
+preserved, but the workflow does not start there and instead starts part-way
+through the graph (historically known as a "warm start").
 
 A "restart" continues the workflow from the earliest cycle point that was
 incomplete when shutdown occurred. Tasks recorded as submitted or running are
 polled at restart to determine what happened to them while the workflow was
-shut down. The initial, final, start and stop cycle points are saved on
-shutdown. However, in a restart, you can ignore these saved values using the
-command line options (e.g., --icp=ignore) (but you cannot specify new initial
-or start cycle points). This will cause the values to default to those
-specified in flow.cylc."""
+shut down."""
 
 
 FLOW_NAME_ARG_DOC = ("[REG]", "Workflow name")
@@ -102,7 +97,9 @@ def get_option_parser(add_std_opts=False):
     parser.add_option(
         "--start-cycle-point", "--startcp",
         help=(
-            "Set the start cycle point. This results in a warm start."
+            "Set the start cycle point, which may be after the initial cycle"
+            "point. If the specified start point is not in the sequeunce, the"
+            "next on-sequence point will be used."
             "(Not to be confused with the initial cycle point.)"
         ),
         metavar="CYCLE_POINT", action="store", dest="startcp")
