@@ -377,26 +377,6 @@ class SuiteConfig:
             # Cold start.
             self.start_point = self.initial_point
 
-        # Validate initial cycle point against any constraints
-        if self.cfg['scheduling']['initial cycle point constraints']:
-            valid_icp = False
-            for entry in (
-                self.cfg['scheduling']['initial cycle point constraints']
-            ):
-                possible_pt = get_point_relative(
-                    entry, self.initial_point
-                ).standardise()
-                if self.initial_point == possible_pt:
-                    valid_icp = True
-                    break
-            if not valid_icp:
-                constraints_str = str(
-                    self.cfg['scheduling']['initial cycle point constraints'])
-                raise SuiteConfigError(
-                    ("Initial cycle point %s does not meet the constraints " +
-                     "%s") % (str(self.initial_point), constraints_str)
-                )
-
         if (
             self.cfg['scheduling']['final cycle point'] is not None and
             not self.cfg['scheduling']['final cycle point'].strip()
@@ -812,7 +792,7 @@ class SuiteConfig:
         self.cfg['scheduler']['cycle point time zone'] = orig_cp_tz
 
     def process_initial_cycle_point(self):
-        """Validate and set initial cycle point from flow.cylc.
+        """Validate and set initial cycle point from flow.cylc or options.
 
         Sets:
             self.initial_point
@@ -837,9 +817,26 @@ class SuiteConfig:
             except IsodatetimeError as exc:
                 raise SuiteConfigError(str(exc))
         if orig_icp != icp:
+            # now/next()/prev() was used, need to store evaluated point in DB
             self.options.icp = icp
         self.initial_point = get_point(icp).standardise()
         self.cfg['scheduling']['initial cycle point'] = str(self.initial_point)
+
+        # Validate initial cycle point against any constraints
+        constraints = self.cfg['scheduling']['initial cycle point constraints']
+        if constraints:
+            valid_icp = False
+            for entry in constraints:
+                possible_pt = get_point_relative(
+                    entry, self.initial_point
+                ).standardise()
+                if self.initial_point == possible_pt:
+                    valid_icp = True
+                    break
+            if not valid_icp:
+                raise SuiteConfigError(
+                    f"Initial cycle point {self.initial_point} does not meet "
+                    f"the constraints {constraints}")
 
     def _check_circular(self):
         """Check for circular dependence in graph."""
