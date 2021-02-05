@@ -161,6 +161,13 @@ to control the job submission environment.
 longer check for a cyclic/circular graph if there are more than 100 tasks,
 unless the option  `--check-circular` is used. This is to improve performance.
 
+[#4023](https://github.com/cylc/cylc-flow/pull/4023) - Add ability to use
+post-install entry point from rose-cylc to use Rose style CLI settings of
+configurations in Cylc install. If Cylc-rose is installed three new CLI
+options will be available:
+- `--opt_conf_keys="foo, bar"`
+- `--defines="[env]FOO=BAR"`
+- `--suite-defines="FOO=BAR"
 
 ### Fixes
 
