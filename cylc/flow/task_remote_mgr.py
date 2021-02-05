@@ -32,7 +32,7 @@ from time import time
 from cylc.flow import LOG, RSYNC_LOG
 from cylc.flow.exceptions import TaskRemoteMgmtError
 import cylc.flow.flags
-from cylc.flow.hostuserutil import (is_remote_host, is_remote_platform)
+from cylc.flow.hostuserutil import is_remote_host
 from cylc.flow.pathutil import (
     get_remote_suite_run_dir,
     get_dirs_to_symlink,
@@ -46,9 +46,7 @@ from cylc.flow.suite_files import (
     KeyType,
     get_suite_srv_dir,
     get_contact_file)
-from cylc.flow.platforms import (
-    get_platform,
-    get_install_target_from_platform)
+from cylc.flow.platforms import get_random_platform_for_install_target
 from cylc.flow.remote import construct_ssh_cmd
 
 # Remote installation literals
@@ -171,7 +169,6 @@ class TaskRemoteMgr:
 
         """
         install_target = platform['install target']
-
         # Set status of install target to in progress while waiting for remote
         # initialisation to finish
         self.remote_init_map[install_target] = REMOTE_INIT_IN_PROGRESS
@@ -219,21 +216,22 @@ class TaskRemoteMgr:
         """
         # Issue all SSH commands in parallel
         procs = {}
-        for platform, init_with_contact in self.remote_init_map.items():
-            platform = get_platform(platform)
-            platform_n = platform['name']
-            self.install_target = get_install_target_from_platform(platform)
-            if init_with_contact != REMOTE_FILE_INSTALL_DONE:
+        for install_target, message in self.remote_init_map.items():
+            if message != REMOTE_FILE_INSTALL_DONE:
                 continue
+            if install_target == 'localhost':
+                continue
+            platform = get_random_platform_for_install_target(install_target)
+            platform_n = platform['name']
             cmd = ['remote-tidy']
             if cylc.flow.flags.debug:
                 cmd.append('--debug')
-            cmd.append(str(f'{self.install_target}'))
+            cmd.append(install_target)
             cmd.append(get_remote_suite_run_dir(platform, self.suite))
-            if is_remote_platform(platform):
-                cmd = construct_ssh_cmd(cmd, platform, timeout='10s')
-            else:
-                cmd = ['cylc'] + cmd
+            cmd = construct_ssh_cmd(cmd, platform, timeout='10s')
+            LOG.debug(
+                "Removing authentication keys and contact file "
+                f"from remote: \"{install_target}\"")
             procs[platform_n] = (
                 cmd,
                 Popen(cmd, stdout=PIPE, stderr=PIPE, stdin=DEVNULL))

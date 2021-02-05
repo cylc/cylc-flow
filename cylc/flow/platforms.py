@@ -457,3 +457,21 @@ def is_platform_with_target_in_list(install_target, distinct_platforms_list):
     """Determines whether install target is in the list of platforms"""
     for distinct_platform in distinct_platforms_list:
         return install_target == distinct_platform['install target']
+
+
+def get_all_platforms_for_install_target(install_target):
+    """Return list of platform dictionaries for given install target."""
+    platforms = []
+    all_platforms = glbl_cfg(cached=True).get(['platforms'], sparse=False)
+    for k, v in all_platforms.iteritems():
+        if (v.get('install target', k) == install_target):
+            v_copy = deepcopy(v)
+            v_copy['name'] = k
+            platforms.append(v_copy)
+    return platforms
+
+
+def get_random_platform_for_install_target(install_target):
+    """Return a randomly selected platform (dict) for given install target."""
+    platforms = get_all_platforms_for_install_target(install_target)
+    return random.choice(platforms)
