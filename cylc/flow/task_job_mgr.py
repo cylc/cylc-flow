@@ -201,7 +201,6 @@ class TaskJobManager:
         a job file will cause a bad task - leading to submission failure.
 
         Return [list, list]: list of good tasks, list of bad tasks
-
         """
         prepared_tasks = []
         bad_tasks = []
@@ -218,9 +217,9 @@ class TaskJobManager:
                          client_pub_key_dir, is_simulation=False):
         """Prepare for job submission and submit task jobs.
 
-        Preparation (dynamic host selection, and remote host init and install)
-        is down asynchronously. Newly released tasks may be sent here several
-        times until those subprocesses have returned. Failure during
+        Preparation (host selection, remote host init, and remote install)
+        is done asynchronously. Newly released tasks may be sent here several
+        times until these init subprocesses have returned. Failure during
         preparation is considered to be job submission failure.
 
         Once preparation has completed or failed, reset .waiting_on_job_prep in
@@ -229,7 +228,6 @@ class TaskJobManager:
         This method uses prep_submit_task_job() as helper.
 
         Return (list): list of tasks that attempted submission.
-
         """
         if is_simulation:
             return self._simulation_submit_task_jobs(itasks)
@@ -242,7 +240,6 @@ class TaskJobManager:
 
         if not prepared_tasks:
             return bad_tasks
-
         auth_itasks = {}  # {platform: [itask, ...], ...}
         for itask in prepared_tasks:
             platform_name = itask.platform['name']
@@ -409,7 +406,6 @@ class TaskJobManager:
                     # write flag so that subsequent manual retrigger will
                     # generate a new job file.
                     itask.local_job_file_path = None
-
                     if itask.state.outputs.has_custom_triggers():
                         self.suite_db_mgr.put_update_task_outputs(itask)
 

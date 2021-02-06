@@ -344,8 +344,6 @@ class SuiteConfig:
         self.compute_inheritance()
         self.mem_log("config.py: after inheritance")
 
-        # self.print_inheritance() # (debugging)
-
         # filter task environment variables after inheritance
         self.filter_env()
 

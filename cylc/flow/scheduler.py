@@ -1190,13 +1190,13 @@ class Scheduler:
             self.host, self.server.port))
 
     def process_task_pool(self):
-        """Queue and release task, and submit task jobs.
+        """Queue and release tasks, and submit task jobs.
 
         The task queue manages references to task proxies in the task pool.
 
-        Newly queue-released are tracked (via self.pre_submit_tasks) and passed
-        to job submission multiple times until associated asynchronous host
-        select and remote init and remote install processes are done.
+        Newly released tasks are passed to job submission multiple times until
+        associated asynchronous host select, remote init, and remote install
+        processes are done.
 
         """
         LOG.debug("BEGIN TASK PROCESSING")

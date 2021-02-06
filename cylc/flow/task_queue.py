@@ -25,6 +25,7 @@ from cylc.flow.task_state import TASK_STATUS_PREPARING
 
 
 class Limiter:
+    """Limit group logic: group members and active task limit."""
     def __init__(self, limit: int, members: Set[str]) -> None:
         """Initialize limiter for active tasks."""
         self.limit = limit  # max active tasks
@@ -43,14 +44,15 @@ class Limiter:
         return n_active >= self.limit
 
     def adopt(self, orphans: List[str]) -> None:
+        """Add orphan task names to members."""
         self.members.update(orphans)
 
 
 class TaskQueue:
-    """Cylc task FIFO queue with multiple limit groups.
+    """Cylc task queue with multiple limit groups.
 
-    Tasks are released from the queue until it is empty, then limited tasks
-    are pushed back on, in the same order they came off.
+    A single FIFO queue, but tasks whose release would violate any active task
+    limits are pushed back on in the same order they came off.
 
     1. "classic" queue (as for Cylc 7 and earlier):
 
@@ -63,7 +65,7 @@ class TaskQueue:
     includes all tasks, so it provides a global limit.
 
     """
-    Q_DEFAULT = 'default'
+    Q_DEFAULT = "default"
 
     def __init__(self,
                  qconfig: dict,
@@ -93,7 +95,7 @@ class TaskQueue:
                 qmembers = set(all_task_names)
             else:
                 qmembers = set()
-                for mem in queue['members']:
+                for mem in queue["members"]:
                     if mem in descendants:
                         # Family name.
                         for fmem in descendants[mem]:
@@ -105,47 +107,54 @@ class TaskQueue:
                         # Task name.
                         qmembers.add(mem)
             queues[qname] = {}
-            queues[qname]['members'] = qmembers
-            queues[qname]['limit'] = queue['limit']
+            queues[qname]["members"] = qmembers
+            queues[qname]["limit"] = queue["limit"]
         return queues
 
     def _make_indep(self, in_queues: dict) -> dict:
+        """For classic queues tasks cannot belong to multiple limit groups.
+
+        Latest assigned group takes precedence. So, for example, the "default"
+        group will only contain tasks not assigned to any other queue.
+
+        """
         queues: Dict[str, Any] = {}
         seen: Dict[str, str] = {}
         for qname, qconfig in in_queues.items():
             queues[qname] = {}
-            queues[qname]['members'] = qconfig['members']
-            queues[qname]['limit'] = qconfig['limit']
+            queues[qname]["members"] = qconfig["members"]
+            queues[qname]["limit"] = qconfig["limit"]
             if qname == self.Q_DEFAULT:
                 continue
-            for qmem in qconfig['members']:
+            for qmem in qconfig["members"]:
                 # Remove from default queue
                 try:
-                    queues[self.Q_DEFAULT]['members'].remove(qmem)
+                    queues[self.Q_DEFAULT]["members"].remove(qmem)
                 except KeyError:
                     # Already removed.
                     pass
                 if qmem in seen:
                     # Override previous queue assignment.
                     oldq = seen[qmem]
-                    queues[oldq]['members'].remove(qmem)
+                    queues[oldq]["members"].remove(qmem)
                 else:
-                    queues[qname]['members'].add(qmem)
+                    queues[qname]["members"].add(qmem)
                 seen[qmem] = qname
         return queues
 
     def _configure_limiters(self, queues: dict) -> None:
+        """Create a Limiter for each limit group."""
         for name, config in queues.items():
-            self.limiters[name] = Limiter(config['limit'], config['members'])
+            self.limiters[name] = Limiter(config["limit"], config["members"])
 
     def add(self, itask: TaskProxy) -> None:
-        """Queue tasks."""
-        LOG.debug(f"QUEUE: add {itask.identity}")
+        """Queue a task."""
+        LOG.debug(f"Queue add: {itask.identity}")
         itask.state.reset(is_queued=True)
         itask.reset_manual_trigger()
         self.task_deque.appendleft(itask)
 
-    def is_limited(self, itask: TaskProxy, active: Counter[str]) -> bool:
+    def _is_limited(self, itask: TaskProxy, active: Counter[str]) -> bool:
         """Return True if the task is limited, else False."""
         for name, limiter in self.limiters.items():
             if limiter.is_limited(itask, active):
@@ -162,7 +171,7 @@ class TaskQueue:
             except IndexError:
                 # queue empty
                 break
-            if self.is_limited(candidate, active):
+            if self._is_limited(candidate, active):
                 rejects.append(candidate)
             else:
                 # Not limited by any groups.
@@ -171,22 +180,22 @@ class TaskQueue:
                 released.append(candidate)
                 active.update({candidate.tdef.name: 1})
 
-        # Re-queue rejected tasks in the original order.
+        # Re-queue rejected tasks, in the original order.
         for itask in reversed(rejects):
             self.task_deque.append(itask)
-
         if released:
-            LOG.debug("QUEUE: release:")
+            LOG.debug("Queue release:")
         for r in released:
             LOG.debug(f"  {r.identity}")
-
         return released
 
     def remove(self, itask: TaskProxy) -> None:
+        """Remove a task from the queue."""
         try:
             self.task_deque.remove(itask)
         except ValueError:
             pass
 
     def adopt_orphans(self, orphans: List[str]) -> None:
+        """Adopt orphaned tasks to the default group."""
         self.limiters[self.Q_DEFAULT].adopt(orphans)
