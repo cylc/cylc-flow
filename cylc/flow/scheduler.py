@@ -680,7 +680,6 @@ class Scheduler:
         Note: tasks should all be in the runahead pool at this point.
 
         """
-
         distinct_install_target_platforms = []
 
         for itask in self.pool.get_rh_tasks():
@@ -700,13 +699,13 @@ class Scheduler:
             self.task_job_mgr.task_remote_mgr.remote_init(
                 platform, self.curve_auth,
                 self.client_pub_key_dir)
-            if (self.task_job_mgr.task_remote_mgr.remote_init_map[platform[
-                    'install target']] in [REMOTE_INIT_IN_PROGRESS,
-                                           REMOTE_FILE_INSTALL_IN_PROGRESS]):
+            status = self.task_job_mgr.task_remote_mgr.remote_init_map[
+                platform['install target']]
+            if status in (REMOTE_INIT_IN_PROGRESS,
+                          REMOTE_FILE_INSTALL_IN_PROGRESS):
                 incomplete_init = True
                 break
-            if self.task_job_mgr.task_remote_mgr.remote_init_map[
-                    platform['install target']] == REMOTE_INIT_DONE:
+            if status == REMOTE_INIT_DONE:
                 self.task_job_mgr.task_remote_mgr.file_install(platform)
         if incomplete_init:
             # TODO: Review whether this sleep is needed.

@@ -28,6 +28,7 @@ import re
 from subprocess import Popen, PIPE, DEVNULL
 import tarfile
 from time import time
+from typing import Any, Dict, TYPE_CHECKING
 
 from cylc.flow import LOG, RSYNC_LOG
 from cylc.flow.exceptions import TaskRemoteMgmtError
@@ -49,9 +50,11 @@ from cylc.flow.suite_files import (
 from cylc.flow.platforms import get_random_platform_for_install_target
 from cylc.flow.remote import construct_ssh_cmd
 
+if TYPE_CHECKING:
+    from zmq.auth.thread import ThreadAuthenticator
+
 # Remote installation literals
 REMOTE_INIT_DONE = 'REMOTE INIT DONE'
-REMOTE_INIT_NOT_REQUIRED = 'REMOTE INIT NOT REQUIRED'
 REMOTE_INIT_FAILED = 'REMOTE INIT FAILED'
 REMOTE_INIT_IN_PROGRESS = 'REMOTE INIT IN PROGRESS'
 REMOTE_FILE_INSTALL_DONE = 'REMOTE FILE INSTALL DONE'
@@ -94,8 +97,6 @@ class TaskRemoteMgr:
               to 'localhost', _and_ host_check is set to True then
               'localhost'
             - Otherwise, return the evaluated host name on success.
-
-
 
         Raise TaskRemoteMgmtError on error.
 
@@ -151,7 +152,9 @@ class TaskRemoteMgr:
             if value is not None:
                 del self.remote_command_map[key]
 
-    def remote_init(self, platform, curve_auth, client_pub_key_dir):
+    def remote_init(
+            self, platform: Dict[str, Any], curve_auth: 'ThreadAuthenticator',
+            client_pub_key_dir: str) -> None:
         """Initialise a remote host if necessary.
 
         Call "cylc remote-init" to install suite items to remote:
@@ -159,19 +162,21 @@ class TaskRemoteMgr:
             "python/": if source exists
 
         Args:
-            curve_auth (ThreadAuthenticator):
-                The ZMQ authenticator.
-            client_pub_key_dir (str):
-                Client public key directory, used by the ZMQ authenticator.
-            platform (dict):
-                A dictionary containing settings relating to platform used in
+            platform: A dict containing settings relating to platform used in
                 this remote installation.
+            curve_auth: The ZMQ authenticator.
+            client_pub_key_dir: Client public key directory, used by the
+                ZMQ authenticator.
 
         """
         install_target = platform['install target']
+        if install_target == 'localhost':
+            self.remote_init_map[install_target] = REMOTE_FILE_INSTALL_DONE
+            return
         # Set status of install target to in progress while waiting for remote
         # initialisation to finish
         self.remote_init_map[install_target] = REMOTE_INIT_IN_PROGRESS
+
         # Determine what items to install
         comm_meth = platform['communication method']
         items = self._remote_init_items(comm_meth)
