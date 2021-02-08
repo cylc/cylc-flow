@@ -94,18 +94,19 @@ def get_option_parser(add_std_opts=False):
     parser.add_option(
         "--start-cycle-point", "--startcp",
         help=(
-            "Set the start cycle point, which may be after the initial cycle"
-            "point. If the specified start point is not in the sequeunce, the"
-            "next on-sequence point will be used."
-            "(Not to be confused with the initial cycle point.)"
+            "Set the start cycle point, which may be after the initial cycle "
+            "point. If the specified start point is not in the sequeunce, the "
+            "next on-sequence point will be used. "
+            "(Not to be confused with the initial cycle point.) "
+            "This replaces the Cylc 7 --warm option."
         ),
         metavar="CYCLE_POINT", action="store", dest="startcp")
 
     parser.add_option(
         "--final-cycle-point", "--fcp",
         help=(
-            "Set the final cycle point."
-            "This command line option overrides the workflow"
+            "Set the final cycle point. "
+            "This command line option overrides the workflow "
             "config option '[scheduling]final cycle point'."
         ),
         metavar="CYCLE_POINT", action="store", dest="fcp")
@@ -115,8 +116,8 @@ def get_option_parser(add_std_opts=False):
         help=(
             "Set the stop cycle point. "
             "Shut down after all tasks have PASSED this cycle point. "
-            "(Not to be confused with the final cycle point.)"
-            "This command line option overrides the workflow"
+            "(Not to be confused with the final cycle point.) "
+            "This command line option overrides the workflow "
             "config option '[scheduling]stop after cycle point'."
         ),
         metavar="CYCLE_POINT", action="store", dest="stopcp")
@@ -263,7 +264,8 @@ def scheduler_cli(parser, options, args):
     reg = os.path.normpath(args[0])
     try:
         suite_files.detect_old_contact_file(reg)
-    except SuiteServiceFileError:
+    except SuiteServiceFileError as exc:
+        LOG.debug(exc)
         # TODO: unpause
         sys.exit("Workflow is already running")
 

@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # -----------------------------------------------------------------------------
 # Test that invalid cycle point cli options for `cylc play` on
-# run vs restart are ignored
+# start vs restart are ignored
 
 . "$(dirname "$0")/test_header"
 
@@ -43,20 +43,16 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
 # Cannot use 'ignore' on first start:
 TEST_NAME="${TEST_NAME_BASE}-run"
-run_ok "$TEST_NAME" cylc play "${SUITE_NAME}" --no-detach --fcp=ignore
+suite_run_ok "$TEST_NAME" cylc play "${SUITE_NAME}" --no-detach --fcp=ignore
 log_scan "${TEST_NAME}-log-scan" "${SUITE_RUN_DIR}/log/suite/log" 20 2 \
     "WARNING - Ignoring option: --fcp=ignore" \
     "INFO - Final point: 3"
 
-poll_suite_stopped
-
 # Cannot use --icp or --startcp on restart:
 TEST_NAME="${TEST_NAME_BASE}-restart"
-run_ok "$TEST_NAME" cylc play "${SUITE_NAME}" --no-detach --icp=2
+suite_run_ok "$TEST_NAME" cylc play "${SUITE_NAME}" --no-detach --icp=2
 log_scan "${TEST_NAME}-log-scan" "${SUITE_RUN_DIR}/log/suite/log" 20 2 \
     "WARNING - Ignoring option: --icp=2" \
     "INFO - Initial point: 1"
-
-poll_suite_stopped
 
 purge
