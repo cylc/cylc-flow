@@ -534,12 +534,43 @@ with Conf(
                 Example Recurrences:
 
                 date-time cycling:
-                   ``T00,T06,T12,T18`` or ``PT6H`` - *every six hours*
+                   * ``R1`` - once at the intial cycle point
+                   * ``T00,T06,T12,T18`` - daily at 00:00, 06:00, 12:00
+                     & 18:00
+                   * ``PT6H`` - every six hours starting at the initial
+                     cycle point
                 integer cycling:
-                   ``P2`` - *every other cycle*
+                   * ``R1`` - once at the intial cycle point
+                   * ``P2`` - every other cycle
+                   * ``P3,P5`` - every third or fifth cycle
 
-                See :ref:`GraphTypes` for more on recurrence expressions, and
-                how multiple graphs combine.
+                .. note::
+
+                   Unlike other Cylc configurations duplicate recurrences
+                   are additive and do not override.
+
+                   For example this:
+
+                   .. code-block:: cylc
+
+                      [scheduling]
+                          [[graph]]
+                              R1 = a => b
+                              R1 = c => d
+
+                   Is equivalent to this:
+
+                   .. code-block:: cylc
+
+                      [scheduling]
+                          [[graph]]
+                              R1 = """
+                                  a => b
+                                  c => d
+                              """
+
+                   See :ref:`GraphTypes` for more on recurrence expressions,
+                   and how multiple graphs combine.
 
                 The value should be a dependency graph the given recurrence.
                 Syntax examples follow; see also :ref:`User Guide Scheduling`
