@@ -26,7 +26,8 @@ from typing import AsyncGenerator, Any
 
 from graphene import (
     Boolean, Field, Float, ID, InputObjectType, Int,
-    List, Mutation, ObjectType, Schema, String, Union, Enum
+    List, Mutation, ObjectType, Schema, String, Union, Enum,
+    Argument
 )
 from graphene.types.generic import GenericScalar
 from graphene.utils.str_converters import to_snake_case
@@ -205,7 +206,11 @@ class SortArgs(InputObjectType):
 
 
 GHOSTS_DEFAULT = Boolean(default_value=False)
-STRIP_NULL_DEFAULT = Boolean()
+STRIP_NULL_DEFAULT = Argument(
+    Boolean, description="A flag that when enabled strips out those fields"
+                         "not set in the protobuf object. And when this flag"
+                         "is disabled the default values of Protobuf fields"
+                         "are provided (boolean=false, list=[], string=\"\".")
 DELTA_STORE_DEFAULT = Boolean(default_value=False)
 DELTA_TYPE_DEFAULT = String(default_value='added')
 
