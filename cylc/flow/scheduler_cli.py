@@ -56,9 +56,6 @@ Examples:
     # Start/restart the workflow with name REG.
     $ cylc play REG
 
-    # Install $PWD/flow.cylc as $(basename $PWD) and start it.
-    $ cylc play
-
 A "cold start" (the default for a freshly-installed workflow) starts from the
 initial cycle point (specified in flow.cylc or on the command line). Any
 dependence on tasks prior to the initial cycle point is ignored.
@@ -73,7 +70,7 @@ polled at restart to determine what happened to them while the workflow was
 shut down."""
 
 
-FLOW_NAME_ARG_DOC = ("[REG]", "Workflow name")
+FLOW_NAME_ARG_DOC = ("REG", "Workflow name")
 
 
 @lru_cache()
