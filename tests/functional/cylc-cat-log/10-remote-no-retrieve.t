@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test "cylc cat-log" for remote tasks with no auto-retrieval.
-export REQUIRE_PLATFORM='loc:remote'
+export REQUIRE_PLATFORM='loc:remote fs:indep'
 . "$(dirname "$0")/test_header"
 set_test_number 5
 

@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Checks configured symlinks are created for run, work, share, share/cycle, log
 # # directories on localhost and the remote platform.
-export REQUIRE_PLATFORM='loc:remote comms:tcp'
+export REQUIRE_PLATFORM='loc:remote comms:tcp fs:indep'
 . "$(dirname "$0")/test_header"
 
 if [[ -z ${TMPDIR:-} || -z ${USER:-} || $TMPDIR/$USER == "$HOME" ]]; then

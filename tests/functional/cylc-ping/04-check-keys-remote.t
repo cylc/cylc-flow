@@ -42,7 +42,6 @@ RRUND="cylc-run/${SUITE_NAME}"
 RSRVD="${RRUND}/.service"
 poll_grep_suite_log 'Holding all waiting or queued tasks now'
 SSH='ssh -n -oBatchMode=yes -oConnectTimeout=5'
-
 ${SSH} "${CYLC_TEST_HOST}" \
 LANG=C find "${RSRVD}" -type f -name "*key*"|awk -F/ '{print $NF}'|sort >'find.out'
 if [[ "$CYLC_TEST_PLATFORM" == *shared* ]]; then
@@ -61,7 +60,12 @@ __OUT__
 fi
 cylc stop --max-polls=60 --interval=1 "${SUITE_NAME}"
 
-grep_ok "Removing authentication keys and contact file from remote: \"${CYLC_TEST_INSTALL_TARGET}\"" "${SUITE_RUN_DIR}/log/suite/log"
+if [[ "$CYLC_TEST_PLATFORM" == *shared* ]]; then
+    skip 1
+else
+    grep_ok "Removing authentication keys and contact file from remote: \"${CYLC_TEST_INSTALL_TARGET}\"" "${SUITE_RUN_DIR}/log/suite/log"
+fi
+
 ${SSH} "${CYLC_TEST_HOST}" \
 LANG=C find "${RRUND}" -type f -name "*key*"|awk -F/ '{print $NF}'|sort >'find.out'
 cmp_ok 'find.out' <<'__OUT__'

@@ -18,7 +18,7 @@
 # Test remote initialisation - when remote init fails for an install target,
 # check other platforms with same install target can be initialised.
 
-export REQUIRE_PLATFORM='loc:remote'
+export REQUIRE_PLATFORM='loc:remote fs:indep'
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 5

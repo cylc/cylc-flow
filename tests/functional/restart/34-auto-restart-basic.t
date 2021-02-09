@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-export REQUIRE_PLATFORM='loc:remote fs:shared'
+export REQUIRE_PLATFORM='loc:remote fs:shared runner:background'
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 9

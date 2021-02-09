@@ -24,6 +24,7 @@ init_suiterc() {
     local TEST_NAME="$1"
     local FLOW_CONFIG="${2:--}"
     SUITE_NAME="${CYLC_TEST_REG_BASE}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME}"
+    SUITE_RUN_DIR="$RUN_DIR/$SUITE_NAME"
     mkdir -p "${TEST_DIR}/${SUITE_NAME}/"
     cat "${FLOW_CONFIG}" >"${TEST_DIR}/${SUITE_NAME}/suite.rc"
     cd "${TEST_DIR}/${SUITE_NAME}" || exit

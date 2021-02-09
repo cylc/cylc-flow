@@ -789,7 +789,9 @@ _get_test_platform () {
         # we are purposfully allowing pattern matching here
         # shellcheck disable=SC2053
         if [[ "$platform" == $required_platform ]]; then
-            export CYLC_TEST_PLATFORM="$platform"
+            CYLC_TEST_PLATFORM="$platform"
+            CYLC_TEST_JOB_RUNNER="$(cut -d '_' -f 3 <<< "$platform")"
+            export CYLC_TEST_PLATFORM CYLC_TEST_JOB_RUNNER
             return 0
         fi
     done

@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Check that "Force Mode" can override a scheduler "Normal Mode" restart.
-export REQUIRE_PLATFORM='loc:remote fs:shared'
+export REQUIRE_PLATFORM='loc:remote fs:shared runner:background'
 . "$(dirname "$0")/test_header"
 # shellcheck disable=SC2153
 export CYLC_TEST_HOST_2="${CYLC_TEST_HOST}"
