@@ -1,6 +1,19 @@
 name: functional tests
 
-on: [pull_request, workflow_dispatch]
+on:
+  pull_request:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths-ignore:
+      - '.github/workflows/*.ya?ml'
+      - '!.github/workflows/test_functional.yml'
+      - 'cylc/flow/etc/syntax/**'
+      - 'etc/syntax/**'
+      - 'tests/unit/**'
+      - 'tests/integration/**'
+      - '**.md'
+      - '**/README*/**'
 
 jobs:
   test:

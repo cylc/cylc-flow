@@ -82,7 +82,7 @@ class ContextNode():
     LEAF_NAME_FMT = '{name}'
     SEP = '/'
 
-    DATA = {}
+    DATA: dict = {}
 
     def __init__(self, name):
         self.name = name

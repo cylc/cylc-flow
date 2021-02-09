@@ -19,10 +19,14 @@
 import random
 import re
 from copy import deepcopy
+from typing import Any, Dict, Iterable, List, TYPE_CHECKING
 
 from cylc.flow.exceptions import PlatformLookupError
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.hostuserutil import is_remote_host
+
+if TYPE_CHECKING:
+    from collections import OrderedDict
 
 
 FORBIDDEN_WITH_PLATFORM = (
@@ -417,30 +421,27 @@ def fail_if_platform_and_host_conflict(task_conf, task_name):
             )
 
 
-def get_install_target_from_platform(platform):
+def get_install_target_from_platform(platform: Dict[str, Any]) -> str:
     """Sets install target to configured or default platform name.
 
-    Args:
-        platform (dict):
-            A dict representing a platform.
-
-    Returns install target."""
-
+    Returns install target.
+    """
     if not platform['install target']:
         platform['install target'] = platform['name']
 
-    return platform.get('install target')
+    return platform['install target']
 
 
-def get_install_target_to_platforms_map(platform_names):
+def get_install_target_to_platforms_map(
+        platform_names: Iterable[str]
+) -> Dict[str, List['OrderedDict[str, Any]']]:
     """Get a dictionary of unique install targets and the platforms which use
     them.
 
-    Return {install_target_1: [platform_1_dict, platform_2_dict, ...], ...}
-
     Args:
-        platform_names (list): List of platform names to look up in the
-            global config.
+        platform_names: List of platform names to look up in the global config.
+
+    Return {install_target_1: [platform_1_dict, platform_2_dict, ...], ...}
     """
     platform_names = set(platform_names)
     platforms = [get_platform(p_name) for p_name in platform_names]
@@ -453,10 +454,15 @@ def get_install_target_to_platforms_map(platform_names):
     }
 
 
-def is_platform_with_target_in_list(install_target, distinct_platforms_list):
+def is_platform_with_target_in_list(
+        install_target: str,
+        distinct_platforms_list: Iterable[Dict[str, Any]]
+) -> bool:
     """Determines whether install target is in the list of platforms"""
     for distinct_platform in distinct_platforms_list:
-        return install_target == distinct_platform['install target']
+        if install_target == distinct_platform['install target']:
+            return True
+    return False
 
 
 def get_all_platforms_for_install_target(install_target):

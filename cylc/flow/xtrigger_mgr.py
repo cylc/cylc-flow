@@ -109,15 +109,15 @@ class XtriggerManager:
         suite_share_dir: str = None,
     ):
         # Suite function and clock triggers by label.
-        self.functx_map = {}
+        self.functx_map: dict = {}
         # When next to call a function, by signature.
-        self.t_next_call = {}
+        self.t_next_call: dict = {}
         # Satisfied triggers and their function results, by signature.
-        self.sat_xtrig = {}
+        self.sat_xtrig: dict = {}
         # Signatures of active functions (waiting on callback).
-        self.active = []
+        self.active: list = []
         # All trigger and clock signatures in the current task pool.
-        self.all_xtrig = []
+        self.all_xtrig: list = []
 
         self.suite_run_dir = suite_run_dir
 
@@ -126,16 +126,16 @@ class XtriggerManager:
         # For function arg templating.
         if not user:
             user = get_user()
-        self.farg_templ = {
+        self.farg_templ: dict = {
             TMPL_SUITE_NAME: suite,
             TMPL_USER_NAME: user,
             TMPL_SUITE_RUN_DIR: suite_run_dir,
             TMPL_SUITE_SHARE_DIR: suite_share_dir,
             TMPL_DEBUG_MODE: cylc.flow.flags.debug
         }
-        self.proc_pool = proc_pool
-        self.broadcast_mgr = broadcast_mgr
-        self.data_store_mgr = data_store_mgr
+        self.proc_pool: 'SubProcPool' = proc_pool
+        self.broadcast_mgr: 'BroadcastMgr' = broadcast_mgr
+        self.data_store_mgr: 'DataStoreMgr' = data_store_mgr
 
     @staticmethod
     def validate_xtrigger(fname: str, fdir: str):

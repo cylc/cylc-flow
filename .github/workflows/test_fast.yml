@@ -1,6 +1,10 @@
 name: fast tests
 
-on: [pull_request]
+on:
+  pull_request:
+  workflow_dispatch:
+  push:
+    branches: [master]
 
 jobs:
   test:
@@ -48,11 +52,15 @@ jobs:
         run: |
           pip install ."[all]"
 
-      - name: Style
+      - name: style
         run: |
           pycodestyle
           flake8
           etc/bin/shellchecker
+
+      - name: typing
+        run: |
+          mypy
 
       - name: Doctests
         run: |

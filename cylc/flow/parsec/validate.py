@@ -582,7 +582,7 @@ class CylcConfigValidator(ParsecValidator):
     V_PARAMETER_LIST = 'V_PARAMETER_LIST'
     V_XTRIGGER = 'V_XTRIGGER'
 
-    V_TYPE_HELP = {
+    V_TYPE_HELP: dict = {
         # V_TYPE: (quick_name, help_string, examples_list, see_also)
         V_CYCLE_POINT: (
             'cycle point',

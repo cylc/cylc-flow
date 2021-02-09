@@ -28,6 +28,7 @@ import sys
 from threading import Barrier
 from time import sleep, time
 import traceback
+from typing import Optional
 from uuid import uuid4
 import zmq
 from zmq.auth.thread import ThreadAuthenticator
@@ -163,54 +164,54 @@ class Scheduler:
     )
 
     # flow information
-    suite: str = None
-    owner: str = None
-    host: str = None
-    id: str = None  # owner|suite
-    uuid_str: SchedulerUUID = None
-    contact_data: dict = None
+    suite: Optional[str] = None
+    owner: Optional[str] = None
+    host: Optional[str] = None
+    id: Optional[str] = None  # owner|suite
+    uuid_str: Optional[SchedulerUUID] = None
+    contact_data: Optional[dict] = None
 
     # run options
-    template_vars: dict = None
-    options: Values = None
+    template_vars: Optional[dict] = None
+    options: Optional[Values] = None
 
     # suite params
     stop_mode: StopMode = None
-    stop_task: str = None
-    stop_clock_time: int = None
+    stop_task: Optional[str] = None
+    stop_clock_time: Optional[int] = None
 
     # configuration
     config: SuiteConfig = None  # flow config
     cylc_config: DictTree = None  # [scheduler] config
-    flow_file: str = None
-    flow_file_update_time: float = None
+    flow_file: Optional[str] = None
+    flow_file_update_time: Optional[float] = None
 
     # directories
-    suite_dir: str = None
-    suite_log_dir: str = None
-    suite_run_dir: str = None
-    suite_share_dir: str = None
-    suite_work_dir: str = None
+    suite_dir: Optional[str] = None
+    suite_log_dir: Optional[str] = None
+    suite_run_dir: Optional[str] = None
+    suite_share_dir: Optional[str] = None
+    suite_work_dir: Optional[str] = None
 
     # task event loop
-    is_updated: bool = None
-    is_stalled: bool = None
+    is_updated: Optional[bool] = None
+    is_stalled: Optional[bool] = None
 
     # main loop
     main_loop_intervals: deque = deque(maxlen=10)
-    main_loop_plugins: dict = None
+    main_loop_plugins: Optional[dict] = None
     auto_restart_mode: AutoRestartMode = None
-    auto_restart_time: float = None
+    auto_restart_time: Optional[float] = None
 
     # tcp / zmq
     zmq_context: zmq.Context = None
-    port: int = None
-    pub_port: int = None
+    port: Optional[int] = None
+    pub_port: Optional[int] = None
     server: SuiteRuntimeServer = None
     publisher: WorkflowPublisher = None
-    barrier: Barrier = None
+    barrier: Optional[Barrier] = None
     curve_auth: ThreadAuthenticator = None
-    client_pub_key_dir: str = None
+    client_pub_key_dir: Optional[str] = None
 
     # managers
     profiler: Profiler = None
@@ -225,13 +226,13 @@ class Scheduler:
     xtrigger_mgr: XtriggerManager = None
 
     # queues
-    command_queue: Queue = None
-    message_queue: Queue = None
-    ext_trigger_queue: Queue = None
+    command_queue: Optional[Queue] = None
+    message_queue: Optional[Queue] = None
+    ext_trigger_queue: Optional[Queue] = None
 
     # profiling
-    _profile_amounts: dict = None
-    _profile_update_times: dict = None
+    _profile_amounts: Optional[dict] = None
+    _profile_update_times: Optional[dict] = None
     previous_profile_point: float = 0
     count: int = 0
 
@@ -240,7 +241,7 @@ class Scheduler:
     suite_timer_active: bool = False
     suite_inactivity_timeout: float = 0.0
     already_inactive: bool = False
-    time_next_kill: float = None
+    time_next_kill: Optional[float] = None
     already_timed_out: bool = False
 
     def __init__(self, reg, options):
@@ -255,13 +256,6 @@ class Scheduler:
             self.options.templatevars,
             self.options.templatevars_file
         )
-
-        # directory information
-        self.flow_file = suite_files.get_flow_file(self.suite)
-        self.suite_run_dir = get_workflow_run_dir(self.suite)
-        self.suite_work_dir = get_suite_run_work_dir(self.suite)
-        self.suite_share_dir = get_suite_run_share_dir(self.suite)
-        self.suite_log_dir = get_suite_run_log_dir(self.suite)
 
         # mutable defaults
         self._profile_amounts = {}
@@ -288,6 +282,13 @@ class Scheduler:
             suite_files.register(self.suite, source=rund)
 
         make_suite_run_tree(self.suite)
+
+        # directory information
+        self.flow_file = suite_files.get_flow_file(self.suite)
+        self.suite_run_dir = get_workflow_run_dir(self.suite)
+        self.suite_work_dir = get_suite_run_work_dir(self.suite)
+        self.suite_share_dir = get_suite_run_share_dir(self.suite)
+        self.suite_log_dir = get_suite_run_log_dir(self.suite)
 
         # Create ZMQ keys
         key_housekeeping(self.suite, platform=self.options.host or 'localhost')
@@ -686,7 +687,6 @@ class Scheduler:
         Note: tasks should all be in the runahead pool at this point.
 
         """
-
         distinct_install_target_platforms = []
 
         for itask in self.pool.get_rh_tasks():
@@ -706,13 +706,13 @@ class Scheduler:
             self.task_job_mgr.task_remote_mgr.remote_init(
                 platform, self.curve_auth,
                 self.client_pub_key_dir)
-            if (self.task_job_mgr.task_remote_mgr.remote_init_map[platform[
-                    'install target']] in [REMOTE_INIT_IN_PROGRESS,
-                                           REMOTE_FILE_INSTALL_IN_PROGRESS]):
+            status = self.task_job_mgr.task_remote_mgr.remote_init_map[
+                platform['install target']]
+            if status in (REMOTE_INIT_IN_PROGRESS,
+                          REMOTE_FILE_INSTALL_IN_PROGRESS):
                 incomplete_init = True
                 break
-            if self.task_job_mgr.task_remote_mgr.remote_init_map[
-                    platform['install target']] == REMOTE_INIT_DONE:
+            if status == REMOTE_INIT_DONE:
                 self.task_job_mgr.task_remote_mgr.file_install(platform)
         if incomplete_init:
             # TODO: Review whether this sleep is needed.
