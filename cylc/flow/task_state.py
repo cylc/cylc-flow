@@ -174,7 +174,7 @@ class TaskState:
         .external_triggers (dict):
             External triggers as {trigger (str): satisfied (boolean), ...}.
         .is_held (bool):
-            True if the task is "held" else False.
+            True if the task is held else False.
         .is_queued (bool):
             True if the task is queued else False.
         .identity (str):

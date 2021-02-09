@@ -166,7 +166,8 @@ def test_get_task_icon(
             datetime.utcnow() - timedelta(seconds=start_offset)
         )
     assert (
-        get_task_icon(status, is_held, is_queued, start_time, mean_time)
+        get_task_icon(status, is_held=is_held, is_queued=is_queued,
+                      start_time=start_time, mean_time=mean_time)
     ) == expected
 
 

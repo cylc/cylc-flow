@@ -154,13 +154,6 @@ class TaskQueue:
         itask.reset_manual_trigger()
         self.task_deque.appendleft(itask)
 
-    def _is_limited(self, itask: TaskProxy, active: Counter[str]) -> bool:
-        """Return True if the task is limited, else False."""
-        for name, limiter in self.limiters.items():
-            if limiter.is_limited(itask, active):
-                return True
-        return False
-
     def release(self, active: Counter[str]) -> List[TaskProxy]:
         """Release queued tasks."""
         released: List[TaskProxy] = []
@@ -171,7 +164,9 @@ class TaskQueue:
             except IndexError:
                 # queue empty
                 break
-            if self._is_limited(candidate, active):
+            if any(limiter.is_limited(candidate, active)
+                   for name, limiter in self.limiters.items()):
+                # Limited by at least one group
                 rejects.append(candidate)
             else:
                 # Not limited by any groups.
@@ -185,8 +180,8 @@ class TaskQueue:
             self.task_deque.append(itask)
         if released:
             LOG.debug("Queue release:")
-        for r in released:
-            LOG.debug(f"  {r.identity}")
+            for r in released:
+                LOG.debug(f"  {r.identity}")
         return released
 
     def remove(self, itask: TaskProxy) -> None:

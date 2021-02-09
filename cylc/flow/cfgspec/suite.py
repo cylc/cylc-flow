@@ -442,10 +442,9 @@ with Conf(
         '''):
             Conf('type', VDR.V_STRING, "classic",
                  options=["classic", "overlapping"], desc='''
-                "classic" (FIFO with independent limit groups - "default" queue
-                is for tasks not assigend to other queues) or "overlapping"
-                (FIFO with overlapping limit groups - "default" queue provides
-                a global limit.)
+                "classic" (tasks can only belong to one active task limit
+                group) or "overlapping" (tasks can belong to multiple active
+                task limit groups).
             ''')
             with Conf('default'):
                 Conf('limit', VDR.V_INTEGER, 0, desc='''
