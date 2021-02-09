@@ -150,7 +150,7 @@ class C3:
 
 
 if __name__ == "__main__":
-    parents = {}
+    parents: dict = {}
     parents['root'] = []
     parents['a'] = ['root']
     parents['b'] = ['root']

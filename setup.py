@@ -61,6 +61,7 @@ tests_require = [
     'async_generator',
     'coverage>=5.0.0',
     'flake8>=3.0.0',
+    'mypy>=0.800',
     'pycodestyle>=2.5.0',
     'pytest-asyncio>=0.14.0',
     'pytest-cov>=2.8.0',

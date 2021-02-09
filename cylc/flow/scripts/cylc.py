@@ -104,7 +104,7 @@ BASH_COMMANDS = {
 
 # all sub-commands
 # {name: entry_point}
-COMMANDS = {
+COMMANDS: dict = {
     # python sub-commands
     **{
         entry_point.name: entry_point
