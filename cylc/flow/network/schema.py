@@ -207,9 +207,9 @@ class SortArgs(InputObjectType):
 
 GHOSTS_DEFAULT = Boolean(default_value=False)
 STRIP_NULL_DEFAULT = Argument(
-    Boolean, description="A flag that when enabled strips out those fields"
-                         "not set in the protobuf object. And when this flag"
-                         "is disabled the default values of Protobuf fields"
+    Boolean, description="A flag that when enabled strips out those fields "
+                         "not set in the protobuf object. And when this flag "
+                         "is disabled the default values of Protobuf fields "
                          "are provided (boolean=false, list=[], string=\"\".")
 DELTA_STORE_DEFAULT = Boolean(default_value=False)
 DELTA_TYPE_DEFAULT = String(default_value='added')
