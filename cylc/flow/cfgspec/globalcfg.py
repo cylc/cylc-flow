@@ -16,6 +16,7 @@
 """Cylc site and user configuration file spec."""
 
 import os
+from typing import List, Optional, Tuple
 import packaging.version
 
 from cylc.flow import LOG
@@ -717,12 +718,12 @@ def upg(cfg, descr):
     u.upgrade()
 
 
-def get_version_hierarchy(version):
+def get_version_hierarchy(version: str) -> List[str]:
     """Return list of versions whose global configs are compatible, in
     ascending priority.
 
     Args:
-        version (str): A PEP 440 compliant version number.
+        version: A PEP 440 compliant version tag.
 
     Example:
         >>> get_version_hierarchy('8.0.1a2.dev')
@@ -747,21 +748,21 @@ class GlobalConfig(ParsecConfig):
     User file values override site file values.
     """
 
-    _DEFAULT = None
-    CONF_BASENAME = "global.cylc"
-    SITE_CONF_PATH = (
+    _DEFAULT: Optional['GlobalConfig'] = None
+    CONF_BASENAME: str = "global.cylc"
+    SITE_CONF_PATH: str = (
         os.getenv('CYLC_SITE_CONF_PATH')
         or os.path.join(os.sep, 'etc', 'cylc', 'flow')
     )
-    USER_CONF_PATH = os.path.join(
+    USER_CONF_PATH: str = os.path.join(
         os.getenv('HOME') or get_user_home(),
         '.cylc',
         'flow'
     )
-    VERSION_HIERARCHY = get_version_hierarchy(CYLC_VERSION)
+    VERSION_HIERARCHY: List[str] = get_version_hierarchy(CYLC_VERSION)
 
     def __init__(self, *args, **kwargs):
-        self.conf_dir_hierarchy = [
+        self.conf_dir_hierarchy: List[Tuple[str, str]] = [
             *[(upgrader.SITE_CONFIG, os.path.join(self.SITE_CONF_PATH, ver))
               for ver in self.VERSION_HIERARCHY],
             *[(upgrader.USER_CONFIG, os.path.join(self.USER_CONF_PATH, ver))
