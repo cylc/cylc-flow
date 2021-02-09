@@ -18,7 +18,7 @@
 # Test cylc get-config
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 15
+set_test_number 19
 #-------------------------------------------------------------------------------
 init_suite "${TEST_NAME_BASE}" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/flow.cylc"
 #-------------------------------------------------------------------------------
@@ -55,5 +55,15 @@ sort "$TEST_SOURCE_DIR/${TEST_NAME_BASE}/section2.stdout" > stdout.2
 cmp_ok stdout.1 stdout.2
 cmp_ok "${TEST_NAME}.stderr" - </dev/null
 #-------------------------------------------------------------------------------
+# Basic test that --print-hierarchy works
+TEST_NAME="${TEST_NAME_BASE}-hierarchy"
+run_ok "${TEST_NAME}-global" cylc get-config --print-hierarchy
+run_ok "${TEST_NAME}-all" cylc get-config --print-hierarchy "${SUITE_NAME}"
+# The two should be same with last line of latter removed
+cmp_ok "${TEST_NAME}-global.stdout" <<< "$( sed '$d' "${TEST_NAME}-all.stdout" )"
+# The last line should be the workflow run dir
+sed '$!d' "${TEST_NAME}-all.stdout" > "flow_path.out"
+cmp_ok "flow_path.out" <<< "${SUITE_RUN_DIR}/flow.cylc"
+
 purge
 exit

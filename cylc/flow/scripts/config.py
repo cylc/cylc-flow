@@ -46,10 +46,14 @@ Examples:
   $ cylc config --initial-cycle-point=now myflow
 """
 
+import os.path
+from typing import List, Optional
+
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.config import SuiteConfig
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.suite_files import parse_suite_arg
+from cylc.flow.pathutil import get_workflow_run_dir
+from cylc.flow.suite_files import SuiteFiles, parse_suite_arg
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow.terminal import cli_function
 
@@ -81,11 +85,31 @@ def get_option_parser():
         help="Print multiple single-value items at once.",
         action="store_true", default=False, dest="oneline")
 
+    parser.add_option(
+        "--print-hierarchy", "--print-filenames", "--hierarchy",
+        help=(
+            "Print the list of locations in which configuration files are "
+            "looked for. An existing configuration file lower down the list "
+            "overrides any settings it shares with those higher up."),
+        action="store_true", default=False, dest="print_hierarchy")
+
     return parser
+
+
+def get_config_file_hierarchy(reg: Optional[str] = None) -> List[str]:
+    filepaths = [os.path.join(path, glbl_cfg().CONF_BASENAME)
+                 for _, path in glbl_cfg().conf_dir_hierarchy]
+    if reg is not None:
+        filepaths.append(get_workflow_run_dir(reg, SuiteFiles.FLOW_FILE))
+    return filepaths
 
 
 @cli_function(get_option_parser)
 def main(parser, options, reg=None):
+    if options.print_hierarchy:
+        print("\n".join(get_config_file_hierarchy(reg)))
+        return
+
     if reg is None:
         glbl_cfg().idump(options.item, sparse=options.sparse)
         return
