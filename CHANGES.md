@@ -68,6 +68,9 @@ how workflows are restarted
 
 ### Enhancements
 
+[#4071](https://github.com/cylc/cylc-flow/pull/4071) - Cylc reinstall command
+added.
+
 [#4014](https://github.com/cylc/cylc-flow/pull/4014) - Rename "ready" task
 state to "preparing".
 

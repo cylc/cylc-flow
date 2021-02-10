@@ -94,7 +94,7 @@ popd || exit 1
 purge_rnd_suite
 
 
-# Test cylc install copies files to run dir successfully.
+# Test cylc reinstall creates flow.cylc given suite.rc.
 TEST_NAME="${TEST_NAME_BASE}-reinstall-creates-flow.cylc-given-suite.rc"
 make_rnd_suite
 pushd "${RND_SUITE_SOURCE}" || exit 1

@@ -18,7 +18,7 @@
 #------------------------------------------------------------------------------
 # Test workflow reinstallation expected failures
 . "$(dirname "$0")/test_header"
-set_test_number 20
+set_test_number 23
 
 # Test fails is there is a nested run directory structure in the run directory to be reinstalled
 
@@ -84,5 +84,20 @@ __ERR__
     purge_rnd_suite
     popd || exit 1
 done
+
+# Test cylc reinstall (no args given) raises error when no source dir.
+TEST_NAME="${TEST_NAME_BASE}-reinstall-no-source-rasies-error"
+make_rnd_suite
+pushd "${RND_SUITE_SOURCE}" || exit 1
+run_ok "${TEST_NAME}-install" cylc install --no-run-name --flow-name="${RND_SUITE_NAME}"
+pushd "${RND_SUITE_RUNDIR}" || exit 1
+rm -rf "_cylc-install"
+run_fail "${TEST_NAME}-reinstall" cylc reinstall
+contains_ok "${TEST_NAME}-reinstall.stderr" <<__ERR__
+WorkflowFilesError: Cannot find an installed flow in \$PWD. Try again, stating the named run. E.g. cylc reinstall my-flow/run1
+__ERR__
+popd || exit 1
+popd || exit 1
+purge_rnd_suite
 
 exit
