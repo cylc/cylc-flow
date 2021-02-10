@@ -1,0 +1,18 @@
+#!Jinja2
+
+[scheduler]
+    [[events]]
+        abort on inactivity = True
+        abort on stalled = True
+        inactivity = PT10M
+
+[task parameters]
+    p = 1..5
+
+[scheduling]
+    [[graph]]
+        R1 = t1<p> => fin
+
+[runtime]
+    [[t1<p>]]
+        platform = {{ CYLC_TEST_PLATFORM }}

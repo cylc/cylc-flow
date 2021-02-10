@@ -20,38 +20,29 @@
 . "$(dirname "$0")/test_header"
 set_test_number 3
 
-create_test_global_config '' '
+create_test_global_config '' "
 [scheduler]
     process pool size = 1
-'
+[platforms]
+    [[$CYLC_TEST_PLATFORM]]
+        max batch submit size = 2
+"
 
-init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
-[scheduler]
-    [[events]]
-        abort on inactivity = True
-        abort on stalled = True
-        inactivity = PT10M
-[task parameters]
-    p = 1..202
-[scheduling]
-    [[graph]]
-        R1 = t1<p>
-[runtime]
-    [[t1<p>]]
-        # Reduce the load on many jobs sending the "started" message
-        init-script = """
-            sleep $((RANDOM % 10))
-        """
-        script = """
-            wait
-            sleep $((RANDOM % 5))
-        """
-__FLOW_CONFIG__
+install_suite
 
+run_ok "${TEST_NAME_BASE}-validate" cylc validate \
+    -s "CYLC_TEST_PLATFORM='$CYLC_TEST_PLATFORM'" \
+    "${SUITE_NAME}"
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-run_ok "${TEST_NAME_BASE}-run" cylc play --debug --no-detach "${SUITE_NAME}"
-grep_ok "# will invoke in batches, sizes=\[68, 68, 66\]" \
+suite_run_ok "${TEST_NAME_BASE}-run" cylc play \
+    -s "CYLC_TEST_PLATFORM='$CYLC_TEST_PLATFORM'" \
+    --debug \
+    --no-detach \
+    --reference-test \
+    "${SUITE_NAME}"
+
+grep_ok \
+    "# will invoke in batches, sizes=\[2, 2, 1\]" \
     "${SUITE_RUN_DIR}/log/suite/log"
 
 # tidy up

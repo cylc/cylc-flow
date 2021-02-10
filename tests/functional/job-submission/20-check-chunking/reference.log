@@ -1,0 +1,8 @@
+Initial point: 1
+Final point: 1
+[t1_p3.1] -triggered off []
+[t1_p4.1] -triggered off []
+[t1_p2.1] -triggered off []
+[t1_p5.1] -triggered off []
+[t1_p1.1] -triggered off []
+[fin.1] -triggered off ['t1_p1.1', 't1_p2.1', 't1_p3.1', 't1_p4.1', 't1_p5.1']

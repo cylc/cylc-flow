@@ -594,6 +594,16 @@ with Conf('global.cylc', desc='''
                 submission subprocess beyond the standard locations''' +
                  ', '.join(SYSPATH) + '''. You are unlikely to need this.
             ''')
+            Conf('max batch submit size', VDR.V_INTEGER, default=100, desc='''
+                Limits the maximum number of jobs that can be submitted at
+                once.
+
+                Where possible Cylc will batch together job submissions to
+                the same platform for efficiency. Submitting very large
+                numbers of jobs can cause problems with some submission
+                systems so for safety there is an upper limit on the number
+                of job submissions which can be batched together.
+            ''')
         with Conf('localhost', meta=Platform):
             Conf('hosts', VDR.V_STRING_LIST, ['localhost'])
 
