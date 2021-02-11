@@ -968,7 +968,11 @@ _get_test_host
 # provides: CYLC_TEST_INSTALL_TARGET
 _get_test_install_target
 
-echo "# $TEST_NAME_BASE" >&2
+if ${CYLC_SHOW_TEST_EXECUTION:-false}; then
+    # write the name of tests as they are run
+    # (helpful for debugging hanging tests)
+    echo "# $TEST_NAME_BASE" >&2
+fi
 
 set +x
 set +e
