@@ -27,17 +27,10 @@ pushd "${RND_SUITE_SOURCE}" || exit 1
 mkdir .git .svn dir1 dir2-be-removed 
 touch .git/file1 .svn/file1 dir1/file1 dir2-be-removed/file1 file1 file2
 run_ok "${TEST_NAME}" cylc install "${RND_SUITE_NAME}"
-# If rose-cylc plugin is installed add install files to tree.
-export ROSE_FILES=''
-if python -c "import cylc.rose" > /dev/null 2>&1; then
-    export ROSE_FILES="├── opt
-│   └── rose-suite-cylc-install.conf
-└── rose-suite.conf"
-else
-    export ROSE_FILES=""
-fi
 
-tree -a -v -I '*.log|01-file-transfer*' --charset UTF8 --noreport "${RND_SUITE_RUNDIR}/run1" > '01-file-transfer-basic-tree.out'
+tree_excludes='*.log|01-file-transfer*|rose-suite*.conf|opt'
+
+tree -a -v -I "${tree_excludes}" --charset UTF8 --noreport "${RND_SUITE_RUNDIR}/run1" > '01-file-transfer-basic-tree.out'
 
 cmp_ok '01-file-transfer-basic-tree.out'  <<__OUT__
 ${RND_SUITE_RUNDIR}/run1
@@ -49,9 +42,8 @@ ${RND_SUITE_RUNDIR}/run1
 ├── file1
 ├── file2
 ├── flow.cylc
-├── log
-│   └── install
-${ROSE_FILES}
+└── log
+    └── install
 __OUT__
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
 INSTALLED $RND_SUITE_NAME from ${RND_SUITE_SOURCE} -> ${RND_SUITE_RUNDIR}/run1
@@ -68,7 +60,7 @@ grep_ok "deleting dir2-be-removed/file1
          new_dir/new_file1
          new_dir/new_file2" "${REINSTALL_LOG}"
         
-tree -a -v -I '*.log|01-file-transfer*' --charset UTF8 --noreport "${RND_SUITE_RUNDIR}/run2" > 'after-reinstall-run2-tree.out'
+tree -a -v -I "${tree_excludes}" --charset UTF8 --noreport "${RND_SUITE_RUNDIR}/run2" > 'after-reinstall-run2-tree.out'
 cmp_ok 'after-reinstall-run2-tree.out'  <<__OUT__
 ${RND_SUITE_RUNDIR}/run2
 ├── .service
@@ -78,17 +70,16 @@ ${RND_SUITE_RUNDIR}/run2
 ├── flow.cylc
 ├── log
 │   └── install
-├── new_dir
-│   ├── new_file1
-│   └── new_file2
-${ROSE_FILES}
+└── new_dir
+    ├── new_file1
+    └── new_file2
 __OUT__
 contains_ok "${TEST_NAME}-reinstall.stdout" <<__OUT__
 REINSTALLED $RND_SUITE_NAME/run2 from ${RND_SUITE_SOURCE} -> ${RND_SUITE_RUNDIR}/run2
 __OUT__
 
 # Test cylc reinstall affects only named run, i.e. run1 should be unaffected in this case
-tree -a -v -I '*.log|01-file-transfer*' --charset UTF8 --noreport "${RND_SUITE_RUNDIR}/run1" > 'after-reinstall-run1-tree.out'
+tree -a -v -I "${tree_excludes}" --charset UTF8 --noreport "${RND_SUITE_RUNDIR}/run1" > 'after-reinstall-run1-tree.out'
 cmp_ok 'after-reinstall-run1-tree.out' '01-file-transfer-basic-tree.out'
 popd || exit 1
 purge_rnd_suite
