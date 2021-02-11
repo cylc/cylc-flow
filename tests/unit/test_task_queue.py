@@ -141,6 +141,7 @@ def test_queue_and_release(
     for name in READY_TASK_NAMES:
         itask = Mock()
         itask.tdef.name = name
+        itask.state.is_held = False
         queue.add(itask)
         itask.state.reset.assert_called_with(is_queued=True)
         itask.reset_manual_trigger.assert_called()

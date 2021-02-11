@@ -164,9 +164,10 @@ class TaskQueue:
             except IndexError:
                 # queue empty
                 break
-            if any(limiter.is_limited(candidate, active)
-                   for name, limiter in self.limiters.items()):
-                # Limited by at least one group
+            if (candidate.state.is_held or
+                any(limiter.is_limited(candidate, active)
+                    for name, limiter in self.limiters.items())):
+                # Task held, or limited by at least one limit group
                 rejects.append(candidate)
             else:
                 # Not limited by any groups.
