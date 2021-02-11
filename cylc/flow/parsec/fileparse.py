@@ -337,7 +337,7 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
     # process with EmPy
     if do_empy:
         if (
-            extra_vars['templating_detected'] == 'empy' and
+            extra_vars['templating_detected'] == 'empy:suite.rc' and
             not re.match(r'^#![Ee]m[Pp]y\s*', flines[0])
         ):
             if not re.match(r'^#!', flines[0]):
@@ -362,7 +362,7 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
     # process with Jinja2
     if do_jinja2:
         if (
-            extra_vars['templating_detected'] == 'jinja2' and
+            extra_vars['templating_detected'] == 'jinja2:suite.rc' and
             not re.match(r'^#![jJ]inja2\s*', flines[0])
         ):
             if not re.match(r'^#!', flines[0]):
