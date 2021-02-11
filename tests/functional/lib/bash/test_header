@@ -245,8 +245,7 @@ suite_run_ok() {
     SUITE_RUN_FAILS=true
     SUITE_LOG_DIR="${SUITE_RUN_DIR}/log/suite"
     mkdir -p "${SUITE_LOG_DIR}" # directory may not exist if run fails very early
-    cp -p "${TEST_NAME}.stdout" "${SUITE_LOG_DIR}/out"
-    cp -p "${TEST_NAME}.stderr" "${SUITE_LOG_DIR}/err"
+    dump_std "${TEST_NAME}"
 }
 
 suite_run_fail() {
@@ -260,8 +259,7 @@ suite_run_fail() {
     SUITE_RUN_FAILS=true
     SUITE_LOG_DIR="${SUITE_RUN_DIR}/log/suite"
     mkdir -p "${SUITE_LOG_DIR}" # directory may not exist if run fails very early
-    cp -p "${TEST_NAME}.stdout" "${SUITE_LOG_DIR}/out"
-    cp -p "${TEST_NAME}.stderr" "${SUITE_LOG_DIR}/err"
+    dump_std "${TEST_NAME}"
 }
 
 cmp_ok() {

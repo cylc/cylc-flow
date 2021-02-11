@@ -17,5 +17,6 @@
     [[no_settings]]
 
     [[upgradeable_cylc7_settings]]
+        script = echo "The hostname is $(hostname -f)"
         [[[remote]]]
             host = {{CYLC_TEST_HOST}}

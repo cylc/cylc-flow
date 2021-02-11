@@ -51,7 +51,7 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 
 ## Check that the upgradeable config has been run on a sensible host.
 grep_ok \
-    "@$(ssh "${CYLC_TEST_HOST}" hostname -f)" \
+    "The hostname is $(ssh "${CYLC_TEST_HOST}" hostname -f)" \
     "${SUITE_RUN_DIR}/log/job/1/upgradeable_cylc7_settings/NN/job.out"
 
 purge
