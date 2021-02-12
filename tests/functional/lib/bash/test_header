@@ -516,7 +516,7 @@ purge () {
         # NOTE: lsof can raise warnings with some filesystems so ignore stderr
         # shellcheck disable=SC2034
         for try in $(seq 1 5); do
-            if grep -q "${SUITE_RUN_DIR}" < <(timeout 5 lsof 2>/dev/null); then
+            if ! grep -q "${SUITE_RUN_DIR}" < <(timeout 5 lsof 2>/dev/null); then
                 break
             fi
             sleep 1
