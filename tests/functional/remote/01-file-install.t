@@ -15,87 +15,118 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# File install tests
+# test file installation to remote platforms
+
 export REQUIRE_PLATFORM='loc:remote comms:tcp'
 . "$(dirname "$0")/test_header"
 set_test_number 8
 
+create_files () {
+    # dump some files into the run dir
+    for DIR in "bin" "app" "etc" "lib" "dir1" "dir2"
+    do
+        mkdir -p "${SUITE_RUN_DIR}/${DIR}"
+        touch "${SUITE_RUN_DIR}/${DIR}/moo"
+    done
+    for FILE in "file1" "file2"
+    do
+        touch "${SUITE_RUN_DIR}/${FILE}"
+    done
+}
+
 # Test configured files/directories along with default files/directories
 # (app, bin, etc, lib) are correctly installed on the remote platform.
+TEST_NAME="${TEST_NAME_BASE}-default-paths"
+init_suite "${TEST_NAME}" <<__FLOW_CONFIG__
+[scheduling]
+    [[graph]]
+        R1 = foo
+[runtime]
+    [[foo]]
+        platform = $CYLC_TEST_PLATFORM
+__FLOW_CONFIG__
+RUN_DIR_REL="${SUITE_RUN_DIR#$HOME/}"
 
-install_suite "${TEST_NAME_BASE}"
+create_files
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}" \
+# run the flow
+run_ok "${TEST_NAME}-validate" cylc validate "${SUITE_NAME}" \
     -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
-suite_run_ok "${TEST_NAME_BASE}-run1" cylc play "${SUITE_NAME}" \
+suite_run_ok "${TEST_NAME}-run1" cylc play "${SUITE_NAME}" \
+    --no-detach \
     -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
-RRUND="cylc-run/${SUITE_NAME}"
-poll_grep_suite_log 'Holding all waiting or queued tasks now'
+
+# ensure these files get installed on the remote platform
 SSH="$(cylc get-global-config -i "[platforms][$CYLC_TEST_PLATFORM]ssh command")"
 ${SSH} "${CYLC_TEST_HOST}" \
-find "${RRUND}/"{app,bin,etc,lib} -type f | sort > 'find.out'
+    find "${RUN_DIR_REL}/"{app,bin,etc,lib} -type f | sort > 'find.out'
 cmp_ok 'find.out'  <<__OUT__
-${RRUND}/app/moo
-${RRUND}/bin/moo
-${RRUND}/etc/moo
-${RRUND}/lib/moo
+${RUN_DIR_REL}/app/moo
+${RUN_DIR_REL}/bin/moo
+${RUN_DIR_REL}/etc/moo
+${RUN_DIR_REL}/lib/moo
 __OUT__
 
-cylc stop --max-polls=60 --interval=1 "${SUITE_NAME}"
 purge
 # -----------------------------------------------------------------------------
 
-install_suite "${TEST_NAME_BASE}"
+# Test the [scheduler]install configuration
+TEST_NAME="${TEST_NAME_BASE}-configured-paths"
+init_suite "${TEST_NAME}" <<__FLOW_CONFIG__
+[scheduler]
+    install = dir1/, dir2/, file1, file2
+[scheduling]
+    [[graph]]
+        R1 = foo
+[runtime]
+    [[foo]]
+        platform = $CYLC_TEST_PLATFORM
+__FLOW_CONFIG__
+RUN_DIR_REL="${SUITE_RUN_DIR#$HOME/}"
 
-export SECOND_RUN="dir1/, dir2/, file1, file2"
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}" \
-    -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'" \
-    -s "SECOND_RUN='${SECOND_RUN}'"
-suite_run_ok "${TEST_NAME_BASE}-run2" cylc play "${SUITE_NAME}" \
-    -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'" \
-    -s "SECOND_RUN='${SECOND_RUN}'"
-poll_grep_suite_log 'Holding all waiting or queued tasks now'
+create_files
+
+run_ok "${TEST_NAME}-validate" cylc validate "${SUITE_NAME}" \
+    -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
+suite_run_ok "${TEST_NAME}-run2" cylc play "${SUITE_NAME}" \
+    --no-detach \
+    -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
+
 ${SSH} "${CYLC_TEST_HOST}" \
-find "${RRUND}/"{app,bin,dir1,dir2,file1,file2,etc,lib} -type f | sort > 'find.out'
+    find "${RUN_DIR_REL}/"{app,bin,dir1,dir2,file1,file2,etc,lib} -type f | sort > 'find.out'
 cmp_ok 'find.out'  <<__OUT__
-${RRUND}/app/moo
-${RRUND}/bin/moo
-${RRUND}/dir1/moo
-${RRUND}/dir2/moo
-${RRUND}/etc/moo
-${RRUND}/file1
-${RRUND}/file2
-${RRUND}/lib/moo
+${RUN_DIR_REL}/app/moo
+${RUN_DIR_REL}/bin/moo
+${RUN_DIR_REL}/dir1/moo
+${RUN_DIR_REL}/dir2/moo
+${RUN_DIR_REL}/etc/moo
+${RUN_DIR_REL}/file1
+${RUN_DIR_REL}/file2
+${RUN_DIR_REL}/lib/moo
 __OUT__
 
-cylc stop --max-polls=60 --interval=1 "${SUITE_NAME}"
 purge
 # -----------------------------------------------------------------------------
+
+if ! command -v xfs_mkfile; then
+    skip 2
+    exit
+fi
 
 # Test file install completes before dependent tasks are executed
-init_suite "${TEST_NAME_BASE}" <<__FLOW_CONFIG__
+TEST_NAME="${TEST_NAME_BASE}-installation-timing"
+init_suite "${TEST_NAME}" <<__FLOW_CONFIG__
 [scheduler]
     install = dir1/, dir2/
     [[events]]
         abort on stalled = true
         abort on inactivity = true
+
 [scheduling]
     [[graph]]
-        R1 = setup => olaf => sven
-[runtime]
-    [[setup]]
-    # This task generates a large file, ready for the file install. The aim is
-    # to slow rsync and ensure tasks do not start until file install has
-    # completed.
-        platform = localhost
-        script = """
-    for DIR in "dir1" "dir2"
-    do
-        mkdir -p "\${CYLC_SUITE_RUN_DIR}/\${DIR}"
-        xfs_mkfile 1024m "\${CYLC_SUITE_RUN_DIR}/\${DIR}/moo"
-    done
-    """
+        R1 = olaf => sven
 
+[runtime]
     [[olaf]]
         # task dependent on file install already being complete
         script = cat \${CYLC_SUITE_RUN_DIR}/dir1/moo
@@ -108,8 +139,16 @@ init_suite "${TEST_NAME_BASE}" <<__FLOW_CONFIG__
 
 __FLOW_CONFIG__
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" \
+# This generates a large file, ready for the file install. The aim is
+# to slow rsync and ensure tasks do not start until file install has
+# completed.
+for DIR in "dir1" "dir2"; do
+    mkdir -p "${SUITE_RUN_DIR}/${DIR}"
+    xfs_mkfile 1024m "${SUITE_RUN_DIR}/${DIR}/moo"
+done
+
+run_ok "${TEST_NAME}-validate" cylc validate "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME}-run" \
     cylc play --debug --no-detach "${SUITE_NAME}"
 
 purge
