@@ -18,19 +18,33 @@
 
 """cylc hold [OPTIONS] ARGS
 
-Hold a workflow or tasks.
-
-Examples:
-  $ cylc hold REG  # hold a workflow
-  $ cylc hold REG TASK_GLOB ...  # hold one or more tasks in a workflow
+Hold one or more tasks in a workflow.
 
 Held tasks do not submit their jobs even if ready to run.
+
+Examples:
+  # Hold mytask at cycle point 1234 in my_flow
+  $ cylc hold my_flow mytask.1234
+
+  # Hold all active tasks at cycle 1234 in my_flow (tasks before/after this
+  # will not be held)
+  $ cylc hold my_flow '*.1234'
+
+  # Hold all active instances of mytask in my_flow
+  $ cylc hold my_flow 'mytask.*'
+
+  # Hold all tasks after cycle point 1234 in my_flow
+  $ cylc hold my_flow --after=1234
+
+Note: To pause a workflow (immediately preventing all job submission), use
+'cylc pause' instead.
 
 See also 'cylc release'.
 """
 
 import os.path
 
+from cylc.flow.exceptions import UserInputError
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.terminal import cli_function
@@ -56,26 +70,39 @@ def get_option_parser():
     parser = COP(
         __doc__, comms=True, multitask=True,
         argdoc=[
-            ("REG", "Suite name"),
-            ('[TASK_GLOB ...]', 'Task matching patterns')])
+            ('REG', "Workflow name"),
+            ('[TASK_GLOB ...]', "Task matching patterns")]
+    )
 
     parser.add_option(
         "--after",
-        help="Hold whole suite AFTER this cycle point.",
+        help="Hold all tasks after this cycle point.",
         metavar="CYCLE_POINT", action="store", dest="hold_point_string")
 
     return parser
 
 
 @cli_function(get_option_parser)
-def main(parser, options, suite, *task_globs):
-    suite = os.path.normpath(suite)
-    pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
+def main(parser, options, workflow, *task_globs):
+
+    if options.hold_point_string:
+        if task_globs:
+            raise UserInputError(
+                "Cannot combine --after with TASK_GLOB(s).\n"
+                "`cylc hold --after` holds all tasks after the given "
+                "cycle point.")
+    else:
+        if not task_globs:
+            raise UserInputError(
+                "Missing arguments: TASK_GLOB [...]. See `cylc hold --help`.")
+
+    workflow = os.path.normpath(workflow)
+    pclient = SuiteRuntimeClient(workflow, timeout=options.comms_timeout)
 
     mutation_kwargs = {
         'request_string': MUTATION,
         'variables': {
-            'wFlows': [suite],
+            'wFlows': [workflow],
             'tasks': list(task_globs),
             'time': options.hold_point_string,
         }

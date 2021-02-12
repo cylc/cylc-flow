@@ -29,7 +29,7 @@ import sys
 from threading import Barrier
 from time import sleep, time
 import traceback
-from typing import Optional, List
+from typing import Iterable, Optional, List
 from uuid import uuid4
 import zmq
 from zmq.auth.thread import ThreadAuthenticator
@@ -196,6 +196,7 @@ class Scheduler:
     suite_work_dir: Optional[str] = None
 
     # task event loop
+    is_paused: Optional[bool] = None
     is_updated: Optional[bool] = None
     is_stalled: Optional[bool] = None
 
@@ -491,18 +492,18 @@ class Scheduler:
             self.options.main_loop
         )
 
-        # Determine whether suite is held or should be held
-        # Determine whether suite can be auto shutdown
         holdcp = None
         if self.options.holdcp:
             holdcp = self.options.holdcp
         elif self.config.cfg['scheduling']['hold after cycle point']:
             holdcp = self.config.cfg['scheduling']['hold after cycle point']
         if holdcp is not None:
-            self.hold_suite(get_point(holdcp))
-        if self.options.hold_start:
-            LOG.info("Held on start-up (no tasks will be submitted)")
-            self.hold_suite()
+            self.command_hold(time=holdcp)
+
+        if self.options.paused_start:
+            LOG.info("Paused on start up")
+            self.pause_workflow()
+
         self.profiler.log_memory("scheduler.py: begin run while loop")
         self.is_updated = True
         if self.options.profile_mode:
@@ -882,10 +883,17 @@ class Scheduler:
         self.proc_pool.set_stopping()
         self.stop_mode = stop_mode
 
-    def command_release(self, ids=None):
-        if ids:
-            return self.pool.release_tasks(ids)
-        self.release_suite()
+    def command_release(
+            self, task_globs: Optional[Iterable[str]] = None) -> int:
+        """Release held tasks.
+
+        If no task globs specified, release all tasks.
+        """
+        return self.pool.release_tasks(task_globs)
+
+    def command_resume(self) -> None:
+        """Resume paused workflow."""
+        self.resume_workflow()
 
     def command_poll_tasks(self, items=None):
         """Poll pollable tasks or a task/family if options are provided."""
@@ -907,16 +915,29 @@ class Scheduler:
         self.task_job_mgr.kill_task_jobs(self.suite, itasks)
         return len(bad_items)
 
-    def command_hold(self, tasks=None, time=None):
-        if tasks:
-            self.pool.hold_tasks(tasks)
+    def command_hold(
+            self, task_globs: Optional[Iterable[str]] = None,
+            time: Optional[str] = None
+    ) -> int:
+        """Hold specified tasks now, or all tasks after a specified
+        cycle point.
+        """
+        if (task_globs and time) or not (task_globs or time):
+            raise TypeError(
+                "command_hold() accepts either 'task_globs' or 'time' "
+                "(not both)")
         if time:
             point = TaskID.get_standardised_point(time)
-            self.hold_suite(point)
             LOG.info(
-                'The suite will pause when all tasks have passed %s', point)
-        if not (tasks or time):
-            self.hold_suite()
+                f"Setting hold cycle point: {point}\n"
+                'All tasks after this point will be held.')
+            self.pool.set_hold_point(point)
+            return 0
+        return self.pool.hold_tasks(task_globs)
+
+    def command_pause(self) -> None:
+        """Pause the workflow."""
+        self.pause_workflow()
 
     @staticmethod
     def command_set_verbosity(lvl):
@@ -1100,7 +1121,7 @@ class Scheduler:
         * Start/Stop Cycle points.
         * Stop task.
         * Suite UUID.
-        * A flag to indicate if the suite should be held or not.
+        * A flag to indicate if the suite should be paused or not.
         * Original suite run time zone.
         """
         if row_idx == 0:
@@ -1137,10 +1158,10 @@ class Scheduler:
         elif key == self.suite_db_mgr.KEY_UUID_STR:
             self.uuid_str.value = value
             LOG.info('+ suite UUID = %s', value)
-        elif key == self.suite_db_mgr.KEY_HOLD:
-            if self.options.hold_start is None:
-                self.options.hold_start = bool(value)
-                LOG.info('+ hold suite = %s', bool(value))
+        elif key == self.suite_db_mgr.KEY_PAUSED:
+            if self.options.paused_start is None:
+                self.options.paused_start = bool(value)
+                LOG.info(f'+ paused = {bool(value)}')
         elif key == self.suite_db_mgr.KEY_HOLD_CYCLE_POINT:
             if self.options.holdcp is None:
                 self.options.holdcp = value
@@ -1389,7 +1410,7 @@ class Scheduler:
                 self.count, get_current_time_string()))
         self.count += 1
 
-    def release_tasks(self):
+    def release_runahead_tasks(self) -> None:
         if self.pool.release_runahead_tasks():
             self.is_updated = True
             self.task_events_mgr.pflag = True
@@ -1408,7 +1429,8 @@ class Scheduler:
                     self.data_store_mgr.publish_deltas)
 
             self.process_command_queue()
-            self.release_tasks()
+            if not self.is_paused:
+                self.release_runahead_tasks()
             self.proc_pool.process()
 
             if self.should_process_tasks():
@@ -1543,10 +1565,13 @@ class Scheduler:
             if self._get_events_conf(self.EVENT_TIMEOUT):
                 self.set_suite_timer()
 
-    def should_process_tasks(self):
+    def should_process_tasks(self) -> bool:
         """Return True if waiting tasks are ready."""
         # do we need to do a pass through the main task processing loop?
         process = False
+
+        if self.is_paused:
+            return False
 
         # New-style xtriggers.
         self.xtrigger_mgr.check_xtriggers(self.pool.get_tasks())
@@ -1600,6 +1625,9 @@ class Scheduler:
         """
         if isinstance(reason, SchedulerStop):
             LOG.info(f'Suite shutting down - {reason.args[0]}')
+            # Unset the "paused" status of the workflow if not auto-restarting
+            if self.auto_restart_mode != AutoRestartMode.RESTART_NORMAL:
+                self.resume_workflow(quiet=True)
         elif isinstance(reason, SchedulerError):
             LOG.error(f'Suite shutting down - {reason}')
         elif isinstance(reason, SuiteConfigError):
@@ -1704,6 +1732,8 @@ class Scheduler:
 
     def check_auto_shutdown(self):
         """Check if we should do an automatic shutdown: main pool empty."""
+        if self.is_paused:
+            return False
         self.pool.release_runahead_tasks()
         if self.pool.get_tasks():
             return False
@@ -1714,33 +1744,29 @@ class Scheduler:
             self.suite_db_mgr.delete_suite_stop_cycle_point()
         return True
 
-    def hold_suite(self, point=None):
-        """Hold all tasks in suite."""
-        if point is None:
-            self.pool.hold_all_tasks()
-            self.task_events_mgr.pflag = True
-            self.suite_db_mgr.put_suite_hold()
-            LOG.info('Suite held.')
-        else:
-            LOG.info(
-                'Setting suite hold cycle point: %s.'
-                '\nThe suite will hold once all tasks have passed this point.',
-                point
-            )
-            self.pool.set_hold_point(point)
-            self.suite_db_mgr.put_suite_hold_cycle_point(point)
+    def pause_workflow(self) -> None:
+        """Pause the workflow."""
+        if self.is_paused:
+            LOG.info("Workflow is already paused")
+            return
+        LOG.info("PAUSING the workflow now")
+        self.is_paused = True
+        self.suite_db_mgr.put_suite_paused()
 
-    def release_suite(self):
-        """Release (un-hold) all tasks in suite."""
-        if self.pool.is_held:
-            LOG.info("RELEASE: new tasks will be queued when ready")
-        self.pool.set_hold_point(None)
-        self.pool.release_all_tasks()
-        self.suite_db_mgr.delete_suite_hold()
+    def resume_workflow(self, quiet: bool = False) -> None:
+        """Resume the workflow.
 
-    def paused(self):
-        """Is the suite paused?"""
-        return self.pool.is_held
+        Args:
+            quiet: whether to log anything.
+        """
+        if not self.is_paused:
+            if not quiet:
+                LOG.warning("Cannot resume - workflow is not paused")
+            return
+        if not quiet:
+            LOG.info("RESUMING the workflow now")
+        self.is_paused = False
+        self.suite_db_mgr.delete_suite_paused()
 
     def command_force_trigger_tasks(self, items, reflow=False):
         """Trigger tasks."""

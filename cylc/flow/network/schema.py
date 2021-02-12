@@ -1517,7 +1517,7 @@ class Broadcast(Mutation):
 class Hold(Mutation):
     class Meta:
         description = sstrip('''
-            Hold a workflow or tasks within it.
+            Hold tasks within a workflow.
         ''')
         resolver = partial(mutator, command='hold')
 
@@ -1525,12 +1525,25 @@ class Hold(Mutation):
         workflows = List(WorkflowID, required=True)
         tasks = List(
             NamespaceIDGlob,
-            description='Hold the specified tasks rather than the workflow.'
+            description='Hold matching tasks.'
         )
         time = TimePoint(description=sstrip('''
-            Get the workflow to hold after the specified wallclock time
+            Hold all tasks only after the specified wallclock time
             has passed.
         '''))
+
+    result = GenericScalar()
+
+
+class Pause(Mutation):
+    class Meta:
+        description = sstrip('''
+            Pause a workflow.
+        ''')
+        resolver = partial(mutator, command='pause')
+
+    class Arguments:
+        workflows = List(WorkflowID, required=True)
 
     result = GenericScalar()
 
@@ -1581,7 +1594,7 @@ class Message(Mutation):
 class Release(Mutation):
     class Meta:
         description = sstrip('''
-            Release a held workflow or tasks within it.
+            Release held tasks within a workflow.
 
             See also the opposite command `hold`.
         ''')
@@ -1592,9 +1605,25 @@ class Release(Mutation):
         tasks = List(
             NamespaceIDGlob,
             description=sstrip('''
-                Release matching tasks rather than the workflow as whole.
+                Release matching tasks or, if not specified, release all tasks
+                and remove the hold point if set.
             ''')
         )
+
+    result = GenericScalar()
+
+
+class Resume(Mutation):
+    class Meta:
+        description = sstrip('''
+            Resume a paused workflow.
+
+            See also the opposite command `pause`.
+        ''')
+        resolver = partial(mutator, command='resume')
+
+    class Arguments:
+        workflows = List(WorkflowID, required=True)
 
     result = GenericScalar()
 
@@ -1833,18 +1862,20 @@ class Mutations(ObjectType):
     # workflow actions
     broadcast = _mut_field(Broadcast)
     ext_trigger = _mut_field(ExtTrigger)
-    hold = _mut_field(Hold)
     message = _mut_field(Message)
+    pause = _mut_field(Pause)
     ping = _mut_field(Ping)
-    release = _mut_field(Release)
     reload = _mut_field(Reload)
+    resume = _mut_field(Resume)
     set_verbosity = _mut_field(SetVerbosity)
     set_graph_window_extent = _mut_field(SetGraphWindowExtent)
     stop = _mut_field(Stop)
 
     # task actions
+    hold = _mut_field(Hold)
     kill = _mut_field(Kill)
     poll = _mut_field(Poll)
+    release = _mut_field(Release)
     remove = _mut_field(Remove)
     set_outputs = _mut_field(SetOutputs)
     trigger = _mut_field(Trigger)

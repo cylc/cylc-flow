@@ -16,43 +16,32 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc release [OPTIONS] ARGS
+"""cylc pause [OPTIONS] ARGS
 
-Release held tasks.
+Pause a workflow.
+
+This prevents submission of any task jobs.
 
 Examples:
-  # Release mytask at cycle 1234 in my_flow
-  $ cylc release my_flow mytask.1234
+  $ cylc pause my_flow
 
-  # Release all active tasks at cycle 1234 in my_flow
-  $ cylc release my_flow '*.1234'
+To resume a paused workflow, use 'cylc play'.
 
-  # Release all active instances of mytask in my_flow
-  $ cylc release my_flow 'mytask.*'
-
-  # Release all held tasks and remove the hold point
-  $ cylc release my_flow --all
-
-Held tasks do not submit their jobs even if ready to run.
-
-See also 'cylc hold'.
+Not to be confused with `cylc hold`.
 """
 
 import os.path
 
-from cylc.flow.exceptions import UserInputError
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.terminal import cli_function
 
 MUTATION = '''
 mutation (
-  $wFlows: [WorkflowID]!,
-  $tasks: [NamespaceIDGlob],
+  $wFlows: [WorkflowID]!
 ) {
-  release (
-    workflows: $wFlows,
-    tasks: $tasks,
+  pause (
+    workflows: $wFlows
   ) {
     result
   }
@@ -63,33 +52,14 @@ mutation (
 def get_option_parser():
     parser = COP(
         __doc__, comms=True, multitask=True,
-        argdoc=[
-            ('REG', "Workflow name"),
-            ('[TASK_GLOB ...]', "Task matching patterns")]
+        argdoc=[('REG', "Workflow name")]
     )
-
-    parser.add_option(
-        "--all",
-        help=(
-            "Release all held tasks and remove the 'hold after cycle point', "
-            "if set."),
-        action="store_true", dest="release_all")
 
     return parser
 
 
 @cli_function(get_option_parser)
-def main(parser, options, workflow, *task_globs):
-
-    if options.release_all:
-        if task_globs:
-            raise UserInputError("Cannot combine --all with TASK_GLOB(s).")
-    else:
-        if not task_globs:
-            raise UserInputError(
-                "Missing arguments: TASK_GLOB [...]. "
-                "See `cylc release --help`.")
-
+def main(parser, options, workflow):
     workflow = os.path.normpath(workflow)
     pclient = SuiteRuntimeClient(workflow, timeout=options.comms_timeout)
 
@@ -97,12 +67,11 @@ def main(parser, options, workflow, *task_globs):
         'request_string': MUTATION,
         'variables': {
             'wFlows': [workflow],
-            'tasks': list(task_globs),
-        }  # If --all, the list of task_globs is empty
+        }
     }
 
     pclient('graphql', mutation_kwargs)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

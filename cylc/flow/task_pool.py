@@ -18,11 +18,12 @@
 
 """
 
+from collections import Counter
 from fnmatch import fnmatchcase
 from string import ascii_letters
 import json
 from time import time
-from collections import Counter
+from typing import Iterable, Optional, TYPE_CHECKING, Union
 
 from cylc.flow.parsec.OrderedDict import OrderedDict
 
@@ -56,6 +57,9 @@ from cylc.flow.task_state import (
 from cylc.flow.wallclock import get_current_time_string
 from cylc.flow.platforms import get_platform
 from cylc.flow.task_queues.independent import IndepQueueManager
+
+if TYPE_CHECKING:
+    from cylc.flow.cycling import PointBase
 
 
 class FlowLabelMgr:
@@ -171,7 +175,6 @@ class TaskPool:
         self.pool_changed = False
         self.rhpool_changed = False
 
-        self.is_held = False
         self.hold_point = None
         self.abs_outputs_done = set()
 
@@ -912,13 +915,11 @@ class TaskPool:
                 point, name, submit_num, key1))
 
     def is_stalled(self):
-        """Return True if the suite is stalled.
+        """Return True if the workflow is stalled.
 
-        A suite is stalled if it is not held and the active pool contains only
-        unhandled failed tasks.
+        A workflow is stalled if the active pool contains only unhandled
+        failed tasks.
         """
-        if self.is_held:
-            return False
         unhandled_failed = []
         for itask in self.get_tasks():
             if itask.state(*TASK_STATUSES_FAILURE):
@@ -977,43 +978,41 @@ class TaskPool:
                 )
             )
 
-    def set_hold_point(self, point):
-        """Set the point after which tasks must be held."""
+    def set_hold_point(self, point: Union['PointBase', None]) -> None:
+        """Set the point after which all tasks must be held.
+
+        If None, unset the hold point.
+        """
         self.hold_point = point
-        if point is not None:
+        if point is None:
+            self.suite_db_mgr.delete_suite_hold_cycle_point()
+        else:
             for itask in self.get_all_tasks():
                 if itask.point > point:
                     if itask.state.reset(is_held=True):
                         self.data_store_mgr.delta_task_held(itask)
+            self.suite_db_mgr.put_suite_hold_cycle_point(point)
 
-    def hold_tasks(self, items):
-        """Hold tasks with IDs matching any item in "ids"."""
+    def hold_tasks(self, items: Iterable[str]) -> int:
+        """Hold tasks with IDs matching the specified items."""
         itasks, bad_items = self.filter_task_proxies(items)
         for itask in itasks:
             if itask.state.reset(is_held=True):
                 self.data_store_mgr.delta_task_held(itask)
         return len(bad_items)
 
-    def release_tasks(self, items):
-        """Release held tasks with IDs matching any item in "ids"."""
-        itasks, bad_items = self.filter_task_proxies(items)
+    def release_tasks(self, items: Optional[Iterable[str]] = None) -> int:
+        """Release held tasks with IDs matching any specified items, or release
+        all tasks and unset the hold point if no items specified."""
+        if items:
+            itasks, bad_items = self.filter_task_proxies(items)
+        else:
+            itasks, bad_items = self.get_all_tasks(), []
+            self.set_hold_point(None)
         for itask in itasks:
             if itask.state.reset(is_held=False):
                 self.data_store_mgr.delta_task_held(itask)
         return len(bad_items)
-
-    def hold_all_tasks(self):
-        """Hold all tasks."""
-        LOG.info("Holding all waiting tasks now")
-        self.is_held = True
-        for itask in self.get_all_tasks():
-            if itask.state.reset(is_held=True):
-                self.data_store_mgr.delta_task_held(itask)
-
-    def release_all_tasks(self):
-        """Release all held tasks."""
-        self.is_held = False
-        self.release_tasks(None)
 
     def check_abort_on_task_fails(self):
         """Check whether suite should abort on task failure.
@@ -1197,12 +1196,6 @@ class TaskPool:
             if future_trigger_overrun:
                 LOG.warning("[%s] -won't run: depends on a "
                             "task beyond the stop point", itask)
-        if (self.is_held
-                and itask.state(TASK_STATUS_WAITING, is_held=False)):
-            # Hold newly-spawned tasks in a held suite (e.g. due to manual
-            # triggering of a held task).
-            if itask.state.reset(is_held=True):
-                self.data_store_mgr.delta_task_held(itask)
 
         # Attempt to satisfy any absolute triggers now.
         # TODO: consider doing this only for tasks with absolute prerequisites.

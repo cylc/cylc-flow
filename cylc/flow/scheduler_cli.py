@@ -28,6 +28,7 @@ from cylc.flow.exceptions import SuiteServiceFileError
 from cylc.flow.host_select import select_suite_host
 from cylc.flow.hostuserutil import is_remote_host
 from cylc.flow.loggingutil import TimestampRotatingFileHandler
+from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
     Options
@@ -71,6 +72,18 @@ happened to them while the workflow was shut down."""
 
 FLOW_NAME_ARG_DOC = ("REG", "Workflow name")
 
+RESUME_MUTATION = '''
+mutation (
+  $wFlows: [WorkflowID]!
+) {
+  resume (
+    workflows: $wFlows
+  ) {
+    result
+  }
+}
+'''
+
 
 @lru_cache()
 def get_option_parser(add_std_opts=False):
@@ -79,6 +92,7 @@ def get_option_parser(add_std_opts=False):
         PLAY_DOC,
         icp=True,
         jset=True,
+        comms=True,
         argdoc=[FLOW_NAME_ARG_DOC])
 
     parser.add_option(
@@ -122,16 +136,13 @@ def get_option_parser(add_std_opts=False):
         metavar="CYCLE_POINT", action="store", dest="stopcp")
 
     parser.add_option(
-        "--hold",
-        help="Hold suite immediately on starting.",
-        action="store_true", dest="hold_start")
+        "--pause",
+        help="Pause the workflow immediately on start up.",
+        action="store_true", dest="paused_start")
 
     parser.add_option(
-        "--hold-point", "--hold-after",
-        help=(
-            "Set hold cycle point. "
-            "Hold suite AFTER all tasks have PASSED this cycle point."
-        ),
+        "--hold-after", "--hold-cycle-point", "--holdcp",
+        help="Hold all tasks after this cycle point.",
         metavar="CYCLE_POINT", action="store", dest="holdcp")
 
     parser.add_option(
@@ -264,8 +275,15 @@ def scheduler_cli(parser, options, reg):
     try:
         suite_files.detect_old_contact_file(reg)
     except SuiteServiceFileError as exc:
-        # TODO: unpause
-        print(f"Workflow is already running\n\n{exc}")
+        print(f"Resuming already-running workflow\n\n{exc}")
+        pclient = SuiteRuntimeClient(reg, timeout=options.comms_timeout)
+        mutation_kwargs = {
+            'request_string': RESUME_MUTATION,
+            'variables': {
+                'wFlows': [reg]
+            }
+        }
+        pclient('graphql', mutation_kwargs)
         sys.exit(0)
 
     _check_srvd(reg)

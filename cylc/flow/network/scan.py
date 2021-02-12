@@ -343,8 +343,8 @@ async def graphql_query(flow, fields, filters=None):
                # state must be running
                [('state',), 'running']
 
-               # state must be running or held
-               [('state',), ('running', 'held')]
+               # state must be running or paused
+               [('state',), ('running', 'paused')]
 
     """
     query = f'query {{ workflows(ids: ["{flow["name"]}"]) {{ {fields} }} }}'

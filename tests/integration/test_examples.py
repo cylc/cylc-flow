@@ -137,7 +137,7 @@ async def test_task_pool(flow, scheduler, one_conf):
     await schd.configure()
 
     # pump the scheduler's heart manually
-    schd.release_tasks()
+    schd.release_runahead_tasks()
     assert len(schd.pool.pool) == 1
 
 
