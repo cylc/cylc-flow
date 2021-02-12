@@ -423,7 +423,7 @@ def test_process_icp(
      ('now', '20050102T0615Z'),
      (None, '18990501T0000Z')]
 )
-def test_process_startcp(startcp: str, expected: str,
+def test_process_startcp(startcp: Optional[str], expected: str,
                          monkeypatch: Fixture, cycling_mode: Fixture):
     """Test SuiteConfig.process_start_cycle_point().
 
@@ -436,8 +436,7 @@ def test_process_startcp(startcp: str, expected: str,
     """
     iso8601.init()
     cycling_mode(integer=False)
-    mocked_config = Mock()
-    mocked_config.initial_point = '18990501T0000Z'
+    mocked_config = Mock(initial_point='18990501T0000Z')
     mocked_config.options.startcp = startcp
     monkeypatch.setattr('cylc.flow.config.get_current_time_string',
                         lambda: '20050102T0615Z')
@@ -586,6 +585,18 @@ def test_process_startcp(startcp: str, expected: str,
             (SuiteConfigError, "does not meet the constraints"),
             id="Violated constraints"
         ),
+        pytest.param(
+            {
+                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'initial cycle point': '2013',
+                'final cycle point': '2021',
+                'final cycle point constraints': []
+            },
+            'ignore',
+            '20210101T0000Z',
+            None,
+            id="--fcp=ignore"
+        ),
     ]
 )
 def test_process_fcp(scheduling_cfg: dict, options_fcp: Optional[str],
@@ -605,8 +616,7 @@ def test_process_fcp(scheduling_cfg: dict, options_fcp: Optional[str],
         cycling_mode(integer=False)
     else:
         cycling_mode(integer=True)
-    mocked_config = Mock()
-    mocked_config.cycling_type = scheduling_cfg['cycling mode']
+    mocked_config = Mock(cycling_type=scheduling_cfg['cycling mode'])
     mocked_config.cfg = {
         'scheduling': scheduling_cfg
     }
