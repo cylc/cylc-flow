@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Any, Dict, Optional, Tuple, Type
 import pytest
 import logging
 from unittest.mock import Mock
@@ -21,10 +22,12 @@ from tempfile import NamedTemporaryFile
 
 from cylc.flow import CYLC_LOG
 from cylc.flow.config import SuiteConfig
-from cylc.flow.cycling import loader
+from cylc.flow.cycling import iso8601, loader
 from cylc.flow.exceptions import SuiteConfigError
 from cylc.flow.suite_files import SuiteFiles
 from cylc.flow.wallclock import get_utc_mode, set_utc_mode
+
+Fixture = Any
 
 
 def get_test_inheritance_quotes():
@@ -115,7 +118,8 @@ class TestSuiteConfig:
                 R1 = '@tree => qux'
         """
         flow_file.write_text(flow_config)
-        suite_config = SuiteConfig(suite="name_a_tree", fpath=flow_file)
+        suite_config = SuiteConfig(suite="name_a_tree", fpath=flow_file,
+                                   options=Mock(spec=[]))
         assert 'tree' in suite_config.xtrigger_mgr.functx_map
 
     def test_xfunction_import_error(self, mock_glbl_cfg, tmp_path):
@@ -144,7 +148,8 @@ class TestSuiteConfig:
         """
         flow_file.write_text(flow_config)
         with pytest.raises(ImportError) as excinfo:
-            SuiteConfig(suite="caiman_suite", fpath=flow_file)
+            SuiteConfig(suite="caiman_suite", fpath=flow_file,
+                        options=Mock(spec=[]))
         assert "not found" in str(excinfo.value)
 
     def test_xfunction_attribute_error(self, mock_glbl_cfg, tmp_path):
@@ -173,7 +178,8 @@ class TestSuiteConfig:
         """
         flow_file.write_text(flow_config)
         with pytest.raises(AttributeError) as excinfo:
-            SuiteConfig(suite="capybara_suite", fpath=flow_file)
+            SuiteConfig(suite="capybara_suite", fpath=flow_file,
+                        options=Mock(spec=[]))
         assert "not found" in str(excinfo.value)
 
     def test_xfunction_not_callable(self, mock_glbl_cfg, tmp_path):
@@ -202,7 +208,8 @@ class TestSuiteConfig:
         """
         flow_file.write_text(flow_config)
         with pytest.raises(ValueError) as excinfo:
-            SuiteConfig(suite="suite_with_not_callable", fpath=flow_file)
+            SuiteConfig(suite="suite_with_not_callable", fpath=flow_file,
+                        options=Mock(spec=[]))
         assert "callable" in str(excinfo.value)
 
     def test_family_inheritance_and_quotes(self, mock_glbl_cfg):
@@ -231,7 +238,8 @@ class TestSuiteConfig:
                 config = SuiteConfig(
                     'test',
                     tf.name,
-                    template_vars=template_vars)
+                    template_vars=template_vars,
+                    options=Mock(spec=[]))
                 assert 'goodbye_0_major1_minor10' in \
                        (config.runtime['descendants']
                         ['MAINFAM_major1_minor10'])
@@ -259,7 +267,8 @@ def test_queue_config_repeated(caplog, tmp_path):
     """
     flow_file = tmp_path / SuiteFiles.FLOW_FILE
     flow_file.write_text(flow_file_content)
-    SuiteConfig(suite="qtest", fpath=flow_file.absolute())
+    SuiteConfig(suite="qtest", fpath=flow_file.absolute(),
+                options=Mock(spec=[]))
     log = caplog.messages[0].split('\n')
     assert log[0] == "Queue configuration warnings:"
     assert log[1] == "+ q2: ignoring x (already assigned to a queue)"
@@ -285,7 +294,8 @@ def test_queue_config_not_used_not_defined(caplog, tmp_path):
     """
     flow_file = tmp_path / SuiteFiles.FLOW_FILE
     flow_file.write_text(flow_file_content)
-    SuiteConfig(suite="qtest", fpath=flow_file.absolute())
+    SuiteConfig(suite="qtest", fpath=flow_file.absolute(),
+                options=Mock(spec=[]))
     log = caplog.messages[0].split('\n')
     assert log[0] == "Queue configuration warnings:"
     assert log[1] == "+ q1: ignoring foo (task not used in the graph)"
@@ -307,20 +317,314 @@ def test_missing_initial_cycle_point():
     assert "This suite requires an initial cycle point" in str(exc.value)
 
 
-def test_integer_cycling_default_initial_point(cycling_mode):
-    """Test that the initial cycle point defaults to 1 for integer cycling
-    mode."""
-    cycling_mode(integer=True)  # This is a pytest fixture; sets cycling mode
+@pytest.mark.parametrize(
+    'scheduling_cfg, expected_icp, expected_opt_icp, expected_err',
+    [
+        (  # Lack of icp
+            {
+                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'initial cycle point': None,
+                'initial cycle point constraints': []
+            },
+            None,
+            None,
+            (SuiteConfigError, "requires an initial cycle point")
+        ),
+        (  # Default icp for integer cycling mode
+            {
+                'cycling mode': loader.INTEGER_CYCLING_TYPE,
+                'initial cycle point': None,
+                'initial cycle point constraints': []
+            },
+            '1',
+            None,
+            None
+        ),
+        (  # "now"
+            {
+                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'initial cycle point': 'now',
+                'initial cycle point constraints': []
+            },
+            '20050102T0615Z',
+            '20050102T0615Z',
+            None
+        ),
+        (  # Constraints
+            {
+                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'initial cycle point': '2013',
+                'initial cycle point constraints': ['T00', 'T12']
+            },
+            '20130101T0000Z',
+            None,
+            None
+        ),
+        (  # Violated constraints
+            {
+                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'initial cycle point': '2021-01-20',
+                'initial cycle point constraints': ['--01-19', '--01-21']
+            },
+            None,
+            None,
+            (SuiteConfigError, "does not meet the constraints")
+        ),
+    ]
+)
+def test_process_icp(
+        scheduling_cfg: Dict[str, Any], expected_icp: Optional[str],
+        expected_opt_icp: Optional[str],
+        expected_err: Optional[Tuple[Type[Exception], str]],
+        monkeypatch: Fixture, cycling_mode: Fixture):
+    """Test SuiteConfig.process_initial_cycle_point().
+
+    "now" is assumed to be 2005-01-02T06:15Z
+
+    Params:
+        scheduling_cfg: 'scheduling' section of workflow config.
+        expected_icp: The expected icp value that gets set.
+        expected_opt_icp: The expected value of options.icp that gets set
+            (this gets stored in the workflow DB).
+        expected_err: Exception class expected to be raised plus the message.
+    """
+    int_cycling_mode = True
+    if scheduling_cfg['cycling mode'] == loader.ISO8601_CYCLING_TYPE:
+        int_cycling_mode = False
+        iso8601.init()
+    cycling_mode(integer=int_cycling_mode)
     mocked_config = Mock()
     mocked_config.cfg = {
-        'scheduling': {
-            'cycling mode': 'integer',
-            'initial cycle point': None
-        }
+        'scheduling': scheduling_cfg
     }
-    SuiteConfig.process_initial_cycle_point(mocked_config)
-    assert mocked_config.cfg['scheduling']['initial cycle point'] == '1'
-    assert mocked_config.initial_point == loader.get_point(1)
+    mocked_config.options.icp = None
+    monkeypatch.setattr('cylc.flow.config.get_current_time_string',
+                        lambda: '20050102T0615Z')
+
+    if expected_err:
+        err, msg = expected_err
+        with pytest.raises(err) as exc:
+            SuiteConfig.process_initial_cycle_point(mocked_config)
+        assert msg in str(exc.value)
+    else:
+        SuiteConfig.process_initial_cycle_point(mocked_config)
+        assert mocked_config.cfg[
+            'scheduling']['initial cycle point'] == expected_icp
+        assert str(mocked_config.initial_point) == expected_icp
+        opt_icp = mocked_config.options.icp
+        if opt_icp is not None:
+            opt_icp = str(loader.get_point(opt_icp).standardise())
+        assert opt_icp == expected_opt_icp
+
+
+@pytest.mark.parametrize(
+    'startcp, expected',
+    [('2021-01-20T17Z', '20210120T1700Z'),
+     ('now', '20050102T0615Z'),
+     (None, '18990501T0000Z')]
+)
+def test_process_startcp(startcp: str, expected: str,
+                         monkeypatch: Fixture, cycling_mode: Fixture):
+    """Test SuiteConfig.process_start_cycle_point().
+
+    An icp of 1899-05-01T00Z is assumed, and "now" is assumed to be
+    2005-01-02T06:15Z
+
+    Params:
+        startcp: The start cycle point given by cli option.
+        expected: The expected startcp value that gets set.
+    """
+    iso8601.init()
+    cycling_mode(integer=False)
+    mocked_config = Mock()
+    mocked_config.initial_point = '18990501T0000Z'
+    mocked_config.options.startcp = startcp
+    monkeypatch.setattr('cylc.flow.config.get_current_time_string',
+                        lambda: '20050102T0615Z')
+
+    SuiteConfig.process_start_cycle_point(mocked_config)
+    assert str(mocked_config.start_point) == expected
+
+
+@pytest.mark.parametrize(
+    'scheduling_cfg, options_fcp, expected_fcp, expected_err',
+    [
+        pytest.param(
+            {
+                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'initial cycle point': '2021',
+                'final cycle point': None,
+                'final cycle point constraints': []
+            },
+            None,
+            None,
+            None,
+            id="No fcp"
+        ),
+        pytest.param(
+            {
+                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'initial cycle point': '2016',
+                'final cycle point': '2021',
+                'final cycle point constraints': []
+            },
+            None,
+            '20210101T0000Z',
+            None,
+            id="fcp in cfg"
+        ),
+        pytest.param(
+            {
+                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'initial cycle point': '2016',
+                'final cycle point': '2021',
+                'final cycle point constraints': []
+            },
+            '2019',
+            '20190101T0000Z',
+            None,
+            id="Overriden by cli option"
+        ),
+        pytest.param(
+            {
+                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'initial cycle point': '2017-02-11',
+                'final cycle point': '+P4D',
+                'final cycle point constraints': []
+            },
+            None,
+            '20170215T0000Z',
+            None,
+            id="Relative fcp"
+        ),
+        pytest.param(
+            {
+                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'initial cycle point': '2017-02-11',
+                'final cycle point': '---04',
+                'final cycle point constraints': []
+            },
+            None,
+            '20170215T0000Z',
+            None,
+            id="Relative truncated fcp", marks=pytest.mark.xfail
+            # https://github.com/metomi/isodatetime/issues/80
+        ),
+        pytest.param(
+            {
+                'cycling mode': loader.INTEGER_CYCLING_TYPE,
+                'initial cycle point': '1',
+                'final cycle point': '4',
+                'final cycle point constraints': []
+            },
+            None,
+            '4',
+            None,
+            id="Integer cycling"
+        ),
+        pytest.param(
+            {
+                'cycling mode': loader.INTEGER_CYCLING_TYPE,
+                'initial cycle point': '1',
+                'final cycle point': '+P2',
+                'final cycle point constraints': []
+            },
+            None,
+            '3',
+            None,
+            id="Relative fcp, integer cycling"
+        ),
+        pytest.param(
+            {
+                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'initial cycle point': '2013',
+                'final cycle point': '2009',
+                'final cycle point constraints': []
+            },
+            None,
+            None,
+            (SuiteConfigError,
+             "initial cycle point:20130101T0000Z is after the "
+             "final cycle point"),
+            id="fcp before icp"
+        ),
+        pytest.param(
+            {
+                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'initial cycle point': '2013',
+                'final cycle point': '-PT1S',
+                'final cycle point constraints': []
+            },
+            None,
+            None,
+            (SuiteConfigError,
+             "initial cycle point:20130101T0000Z is after the "
+             "final cycle point"),
+            id="Negative relative fcp"
+        ),
+        pytest.param(
+            {
+                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'initial cycle point': '2013',
+                'final cycle point': '2021',
+                'final cycle point constraints': ['T00', 'T12']
+            },
+            None,
+            '20210101T0000Z',
+            None,
+            id="Constraints"
+        ),
+        pytest.param(
+            {
+                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'initial cycle point': '2013',
+                'final cycle point': '2021-01-19',
+                'final cycle point constraints': ['--01-19', '--01-21']
+            },
+            '2021-01-20',
+            None,
+            (SuiteConfigError, "does not meet the constraints"),
+            id="Violated constraints"
+        ),
+    ]
+)
+def test_process_fcp(scheduling_cfg: dict, options_fcp: Optional[str],
+                     expected_fcp: Optional[str],
+                     expected_err: Optional[Tuple[Type[Exception], str]],
+                     cycling_mode: Fixture):
+    """Test SuiteConfig.process_final_cycle_point().
+
+    Params:
+        scheduling_cfg: 'scheduling' section of workflow config.
+        options_fcp: The fcp set by cli option.
+        expected_fcp: The expected fcp value that gets set.
+        expected_err: Exception class expected to be raised plus the message.
+    """
+    if scheduling_cfg['cycling mode'] == loader.ISO8601_CYCLING_TYPE:
+        iso8601.init()
+        cycling_mode(integer=False)
+    else:
+        cycling_mode(integer=True)
+    mocked_config = Mock()
+    mocked_config.cycling_type = scheduling_cfg['cycling mode']
+    mocked_config.cfg = {
+        'scheduling': scheduling_cfg
+    }
+    mocked_config.initial_point = loader.get_point(
+        scheduling_cfg['initial cycle point']).standardise()
+    mocked_config.final_point = None
+    mocked_config.options.fcp = options_fcp
+
+    if expected_err:
+        err, msg = expected_err
+        with pytest.raises(err) as exc:
+            SuiteConfig.process_final_cycle_point(mocked_config)
+        assert msg in str(exc.value)
+    else:
+        SuiteConfig.process_final_cycle_point(mocked_config)
+        assert mocked_config.cfg[
+            'scheduling']['final cycle point'] == expected_fcp
+        assert str(mocked_config.final_point) == str(expected_fcp)
 
 
 def test_utc_mode(caplog, mock_glbl_cfg):
@@ -451,7 +755,7 @@ def test_rsync_includes_will_not_accept_sub_directories(tmp_path):
     flow_cylc.write_text(flow_cylc_content)
 
     with pytest.raises(SuiteConfigError) as exc:
-        SuiteConfig(suite="rsynctest", fpath=flow_cylc)
+        SuiteConfig(suite="rsynctest", fpath=flow_cylc, options=Mock(spec=[]))
     assert "Directories can only be from the top level" in str(exc.value)
 
 
@@ -469,7 +773,8 @@ def test_valid_rsync_includes_returns_correct_list(tmp_path):
     flow_cylc = tmp_path.joinpath(SuiteFiles.FLOW_FILE)
     flow_cylc.write_text(flow_cylc_content)
 
-    config = SuiteConfig(suite="rsynctest", fpath=flow_cylc)
+    config = SuiteConfig(suite="rsynctest", fpath=flow_cylc,
+                         options=Mock(spec=[]))
 
     rsync_includes = SuiteConfig.get_validated_rsync_includes(config)
     assert rsync_includes == ['dir/', 'dir2/', 'file1', 'file2']
