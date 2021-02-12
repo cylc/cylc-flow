@@ -259,7 +259,7 @@ class TaskRemoteMgr:
                 proc.terminate()
             except OSError:
                 pass
-            out, err = proc.communicate()
+            out, err = (f.decode() for f in proc.communicate())
             if proc.wait():
                 LOG.warning(TaskRemoteMgmtError(
                     TaskRemoteMgmtError.MSG_TIDY,
