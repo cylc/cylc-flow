@@ -8,16 +8,15 @@
 [scheduling]
     [[graph]]
         R1 = """
+            # wait for the remote tasks to start before triggering the
+            # local ones in order to factor out remote-init time
+            remote-1:start & remote-2:start => local-1 & local-2 & local-3
             KILLABLE:start-all => killer
         """
 
 [runtime]
     [[KILLABLE]]
-        # sleep needs to be long enough to cover
-        # * job submission
-        # * remote init
-        # * remote file installation
-        script = sleep 360
+        script = sleep 60
     [[local-1, local-2, local-3]]
         inherit = KILLABLE
     [[remote-1, remote-2]]
