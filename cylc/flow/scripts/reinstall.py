@@ -21,20 +21,19 @@
 Reinstall a previously installed workflow.
 
 Examples:
-
- Having previously installed:
+  # Having previously installed:
   $ cylc install myflow
- To reinstall this workflow run:
+  # To reinstall this workflow run:
   $ cylc reinstall myflow/run1
 
- Having previously installed:
- $ cylc install myflow --no-run-name
- To reinstall this workflow run:
+  # Having previously installed:
+  $ cylc install myflow --no-run-name
+  # To reinstall this workflow run:
   $ cylc reinstall myflow
 
- To reinstall a workflow from within the cylc-run directory of a previously
- installed workflow:
- $ cylc reinstall
+  # To reinstall a workflow from within the cylc-run directory of a previously
+  # installed workflow:
+  $ cylc reinstall
 
 """
 
